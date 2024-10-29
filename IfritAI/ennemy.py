@@ -1,8 +1,8 @@
 import copy
 import os
 
-from command import Command
-from gamedata import GameData
+from . command import Command
+from . gamedata import GameData
 
 
 class Ennemy():
@@ -18,10 +18,10 @@ class Ennemy():
         self.origin_file_checksum = ""
         self.subsection_ai_offset = {'init_code': 0, 'ennemy_turn': 0, 'counter_attack': 0, 'death': 0, 'unknown': 0}
         self.section_raw_data = [bytearray()] * self.NUMBER_SECTION
-        self.header_data = copy.deepcopy(game_data.SECTION_HEADER_DICT)
-        self.model_animation_data = copy.deepcopy(game_data.SECTION_MODEL_ANIM_DICT)
-        self.info_stat_data = copy.deepcopy(game_data.SECTION_INFO_STAT_DICT)
-        self.battle_script_data = copy.deepcopy(game_data.SECTION_BATTLE_SCRIPT_DICT)
+        self.header_data = copy.deepcopy(game_data.AIData.SECTION_HEADER_DICT)
+        self.model_animation_data = copy.deepcopy(game_data.AIData.SECTION_MODEL_ANIM_DICT)
+        self.info_stat_data = copy.deepcopy(game_data.AIData.SECTION_INFO_STAT_DICT)
+        self.battle_script_data = copy.deepcopy(game_data.AIData.SECTION_BATTLE_SCRIPT_DICT)
         self.sound_data = bytes()  # Section 9
         self.sound_unknown_data = bytes()  # Section 10
         self.sound_texture_data = bytes()  # Section 11
@@ -84,43 +84,44 @@ class Ennemy():
 
         # Number of subsection doesn't change, neither the offset to AI-sub-section
         self.section_raw_data[8] = bytearray()
-        self.__add_section_raw_data_from_game_data(8, game_data.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB)
-        self.__add_section_raw_data_from_game_data(8, game_data.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_AI_SUB)
+        self.__add_section_raw_data_from_game_data(8, game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB)
+        self.__add_section_raw_data_from_game_data(8, game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_AI_SUB)
 
         # The AI section will change in change so we come back to the sub-section later
         # The offset need to take into account the different offset themself !
         offset_value_current_section = 0
-        for offset in game_data.SECTION_BATTLE_SCRIPT_AI_OFFSET_LIST_DATA:
+        for offset in game_data.AIData.SECTION_BATTLE_SCRIPT_AI_OFFSET_LIST_DATA:
             offset_value_current_section += offset['size']
         raw_ai_section = bytearray()
         raw_ai_offset = bytearray()
         for index, section in enumerate(self.battle_script_data['ai_data']):
             if section:  # Ignoring the last section that is empty
                 raw_ai_offset.extend(
-                    self.__get_byte_from_int_from_game_data(offset_value_current_section, game_data.SECTION_BATTLE_SCRIPT_AI_OFFSET_LIST_DATA[index]))
+                    self.__get_byte_from_int_from_game_data(offset_value_current_section, game_data.AIData.SECTION_BATTLE_SCRIPT_AI_OFFSET_LIST_DATA[index]))
                 for command in section:
                     raw_ai_section.append(command.get_id())
                     raw_ai_section.extend(command.get_op_code())
                     offset_value_current_section += 1 + len(command.get_op_code())
 
         # Now changing text offset
-        sect_data = game_data.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_OFFSET_SUB
+        sect_data = game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_OFFSET_SUB
         # offset_value_current_section contains the offset from AI code. Need to add the header list + the offset list of AI
         offset_text_offset = offset_value_current_section
-        for offset in game_data.SECTION_BATTLE_SCRIPT_BATTLE_SCRIPT_HEADER_LIST_DATA:
+        for offset in game_data.AIData.SECTION_BATTLE_SCRIPT_BATTLE_SCRIPT_HEADER_LIST_DATA:
             offset_text_offset += offset['size']
         self.__add_section_raw_data_from_game_data(8, sect_data, self.__get_byte_from_int_from_game_data(offset_text_offset, sect_data))
-        sect_data = game_data.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_SUB
+        sect_data = game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_SUB
         self.__add_section_raw_data_from_game_data(8, sect_data, self.__get_byte_from_int_from_game_data(
-            offset_text_offset + len(self.battle_script_data['text_offset']) * game_data.SECTION_BATTLE_SCRIPT_TEXT_OFFSET['size'], sect_data))
+            offset_text_offset + len(self.battle_script_data['text_offset']) * game_data.AIData.SECTION_BATTLE_SCRIPT_TEXT_OFFSET['size'], sect_data))
 
         # Changing offset code
         self.section_raw_data[8].extend(raw_ai_offset)
         self.section_raw_data[8].extend(raw_ai_section)
-        txt_offset_data = game_data.SECTION_BATTLE_SCRIPT_TEXT_OFFSET
+        txt_offset_data = game_data.AIData.SECTION_BATTLE_SCRIPT_TEXT_OFFSET
         for x in self.battle_script_data['text_offset']:
             self.section_raw_data[8].extend(x.to_bytes(txt_offset_data['size'], txt_offset_data['byteorder']))
-        self.section_raw_data[8].extend(raw_data_save_text)
+        for battle_text in self.battle_script_data['battle_text']:
+            self.section_raw_data[8].extend(battle_text.get_data_hex())
 
         # And now we can add section 8 !
         raw_data_to_write.extend(self.section_raw_data[8])
@@ -131,7 +132,7 @@ class Ennemy():
 
         # Modifying the header section now that all sized are known
         # Modifying the section position
-        header_pos_data = game_data.SECTION_HEADER_SECTION_POSITION
+        header_pos_data = game_data.AIData.SECTION_HEADER_SECTION_POSITION
         file_size = 0
         for i in range(0, self.NUMBER_SECTION):
             start = header_pos_data['offset'] + i * header_pos_data['size']
@@ -139,7 +140,7 @@ class Ennemy():
             file_size += len(self.section_raw_data[i])
             self.section_raw_data[0][start:end] = self.__get_byte_from_int_from_game_data(file_size, header_pos_data)
 
-        header_file_data = game_data.SECTION_HEADER_FILE_SIZE
+        header_file_data = game_data.AIData.SECTION_HEADER_FILE_SIZE
         self.section_raw_data[0][header_file_data['offset']:header_file_data['offset'] + header_file_data['size']] = file_size.to_bytes(
             header_pos_data['size'], header_file_data['byteorder'])
         raw_data_to_write[0:len(self.section_raw_data[0])] = self.section_raw_data[0]
@@ -176,28 +177,28 @@ class Ennemy():
         return self.file_raw_data[section_offset + data_info['offset']:section_offset + data_info['offset'] + data_info['size']]
 
     def __analyze_header_section(self, game_data):
-        self.header_data['nb_section'] = self.__get_int_value_from_info(game_data.SECTION_HEADER_NB_SECTION)
+        self.header_data['nb_section'] = self.__get_int_value_from_info(game_data.AIData.SECTION_HEADER_NB_SECTION)
         sect_position = [0]  # Adding to the list the header as a section 0
         for i in range(self.header_data['nb_section']):
             sect_position.append(
-                int.from_bytes(self.file_raw_data[game_data.SECTION_HEADER_SECTION_POSITION['offset'] + i * game_data.SECTION_HEADER_SECTION_POSITION['size']:
-                                                  game_data.SECTION_HEADER_SECTION_POSITION['offset'] +
-                                                  game_data.SECTION_HEADER_SECTION_POSITION['size'] * (i + 1)],
-                               game_data.SECTION_HEADER_SECTION_POSITION['byteorder']))
+                int.from_bytes(self.file_raw_data[game_data.AIData.SECTION_HEADER_SECTION_POSITION['offset'] + i * game_data.AIData.SECTION_HEADER_SECTION_POSITION['size']:
+                                                  game_data.AIData.SECTION_HEADER_SECTION_POSITION['offset'] +
+                                                  game_data.AIData.SECTION_HEADER_SECTION_POSITION['size'] * (i + 1)],
+                               game_data.AIData.SECTION_HEADER_SECTION_POSITION['byteorder']))
         self.header_data['section_pos'] = sect_position
         file_size_section_offset = 4 + self.header_data['nb_section'] * 4
         self.header_data['file_size'] = int.from_bytes(
-            self.file_raw_data[file_size_section_offset:file_size_section_offset + game_data.SECTION_HEADER_FILE_SIZE['size']],
-            game_data.SECTION_HEADER_FILE_SIZE['byteorder'])
+            self.file_raw_data[file_size_section_offset:file_size_section_offset + game_data.AIData.SECTION_HEADER_FILE_SIZE['size']],
+            game_data.AIData.SECTION_HEADER_FILE_SIZE['byteorder'])
 
     def __analyze_info_stat(self, game_data):
         SECTION_NUMBER = 7
-        for el in game_data.SECTION_INFO_STAT_LIST_DATA:
+        for el in game_data.AIData.SECTION_INFO_STAT_LIST_DATA:
             raw_data_selected = self.__get_raw_value_from_info(el, SECTION_NUMBER)
             data_size = len(raw_data_selected)
             if el['name'] in ['monster_name']:
                 value = game_data.translate_hex_to_str(raw_data_selected)
-            elif el['name'] in (game_data.stat_values + ['card', 'devour']):
+            elif el['name'] in ([x['name'] for x in game_data.stat_data_json['stat']] + ['card', 'devour']):
                 value = list(raw_data_selected)
             elif el['name'] in ['med_lvl', 'high_lvl', 'extra_xp', 'xp', 'ap', ]:
                 value = int.from_bytes(raw_data_selected, byteorder=el['byteorder'])
@@ -213,7 +214,7 @@ class Ennemy():
                 value = list(raw_data_selected)
                 for i in range(data_size):
                     value[i] = 900 - value[i] * 10  # Give percentage
-            elif el['name'] in game_data.ABILITIES_HIGHNESS_ORDER:
+            elif el['name'] in game_data.AIData.ABILITIES_HIGHNESS_ORDER:
                 list_data = list(raw_data_selected)
                 value = []
                 for i in range(0, data_size - 1, 4):
@@ -222,34 +223,22 @@ class Ennemy():
                 value = list(raw_data_selected)
                 for i in range(data_size):
                     value[i] = value[i] - 100  # Give percentage, 155 means immune.
-                if 'UNKNOWN_STAT' not in game_data.game_info_test.keys():
-                    game_data.game_info_test['UNKNOWN_STAT'] = {}
-            elif el['name'] in game_data.BYTE_FLAG_LIST:  # Flag in byte management
+            elif el['name'] in game_data.AIData.BYTE_FLAG_LIST:  # Flag in byte management
                 byte_value = format((int.from_bytes(raw_data_selected)), '08b')[::-1]  # Reversing
                 value = {}
                 if el['name'] == 'byte_flag_0':
-                    byte_list = game_data.SECTION_INFO_STAT_BYTE_FLAG_0_LIST_VALUE
+                    byte_list = game_data.AIData.SECTION_INFO_STAT_BYTE_FLAG_0_LIST_VALUE
                 elif el['name'] == 'byte_flag_1':
-                    byte_list = game_data.SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE
+                    byte_list = game_data.AIData.SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE
                 elif el['name'] == 'byte_flag_2':
-                    byte_list = game_data.SECTION_INFO_STAT_BYTE_FLAG_2_LIST_VALUE
+                    byte_list = game_data.AIData.SECTION_INFO_STAT_BYTE_FLAG_2_LIST_VALUE
                 elif el['name'] == 'byte_flag_3':
-                    byte_list = game_data.SECTION_INFO_STAT_BYTE_FLAG_3_LIST_VALUE
+                    byte_list = game_data.AIData.SECTION_INFO_STAT_BYTE_FLAG_3_LIST_VALUE
                 else:
                     print("Unexpected byte flag {}".format(el['name']))
-                    byte_list = game_data.SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE
+                    byte_list = game_data.AIData.SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE
                 for index, bit_name in enumerate(byte_list):
                     value[bit_name] = +bool(int(byte_value[index]))
-                    # For monster.txt purpose
-                    if value[bit_name] == 1 and self.info_stat_data['monster_name'] != '\\n{NewPage}\\n{x0c00}/${x1000}{x0900}{x0c02}':
-                        if bit_name not in game_data.game_info_test.keys():
-                            game_data.game_info_test[bit_name] = []
-                        # if self.info_stat_data['monster_name'] not in game_data.game_info_test.keys():
-                        #    game_data.game_info_test[self.info_stat_data['monster_name']] = []
-                        game_data.game_info_test[bit_name].append(self.info_stat_data['monster_name'] + " " + self.origin_file_name)
-                        # game_data.game_info_test[self.info_stat_data['monster_name']].append({'bit_name':bit_name, 'bit_value':value[bit_name]})
-
-                    # End monster.txt purpose
             elif el['name'] in 'renzokuken':
                 value = []
                 for i in range(0, el['size'], 2):  # List of 8 value of 2 bytes
@@ -267,22 +256,22 @@ class Ennemy():
         section_offset = self.header_data['section_pos'][SECTION_NUMBER]
 
         # Reading header
-        self.battle_script_data['battle_nb_sub'] = self.__get_int_value_from_info(game_data.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB, SECTION_NUMBER)
-        self.battle_script_data['offset_ai_sub'] = self.__get_int_value_from_info(game_data.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_AI_SUB, SECTION_NUMBER)
-        self.battle_script_data['offset_text_offset'] = self.__get_int_value_from_info(game_data.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_OFFSET_SUB,
+        self.battle_script_data['battle_nb_sub'] = self.__get_int_value_from_info(game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB, SECTION_NUMBER)
+        self.battle_script_data['offset_ai_sub'] = self.__get_int_value_from_info(game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_AI_SUB, SECTION_NUMBER)
+        self.battle_script_data['offset_text_offset'] = self.__get_int_value_from_info(game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_OFFSET_SUB,
                                                                                        SECTION_NUMBER)
-        self.battle_script_data['offset_text_sub'] = self.__get_int_value_from_info(game_data.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_SUB, SECTION_NUMBER)
+        self.battle_script_data['offset_text_sub'] = self.__get_int_value_from_info(game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_SUB, SECTION_NUMBER)
 
         # Reading text offset subsection
         nb_text = self.battle_script_data['offset_text_sub'] - self.battle_script_data['offset_text_offset']
-        for i in range(0, nb_text, game_data.SECTION_BATTLE_SCRIPT_TEXT_OFFSET['size']):
+        for i in range(0, nb_text, game_data.AIData.SECTION_BATTLE_SCRIPT_TEXT_OFFSET['size']):
             start_data = section_offset + self.battle_script_data['offset_text_offset'] + i
-            end_data = start_data + game_data.SECTION_BATTLE_SCRIPT_TEXT_OFFSET['size']
+            end_data = start_data + game_data.AIData.SECTION_BATTLE_SCRIPT_TEXT_OFFSET['size']
             text_list_raw_data = self.file_raw_data[start_data:end_data]
             #if i > 0 and text_list_raw_data == b'\x00\x00':  # Weird case where there is several pointer by the diff but several are 0 (which point to the same value)
             #    break
             self.battle_script_data['text_offset'].append(
-                int.from_bytes(text_list_raw_data, byteorder=game_data.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_OFFSET_SUB['byteorder']))
+                int.from_bytes(text_list_raw_data, byteorder=game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_OFFSET_SUB['byteorder']))
         # Reading text sub-section
         for text_pointer in self.battle_script_data['text_offset']:  # Reading each text from the text offset
             combat_text_raw_data = bytearray()
@@ -305,7 +294,7 @@ class Ennemy():
 
         ## Reading offset
         ai_offset = section_offset + self.battle_script_data['offset_ai_sub']
-        for offset_param in game_data.SECTION_BATTLE_SCRIPT_AI_OFFSET_LIST_DATA:
+        for offset_param in game_data.AIData.SECTION_BATTLE_SCRIPT_AI_OFFSET_LIST_DATA:
             start_data = ai_offset + offset_param['offset']
             end_data = ai_offset + offset_param['offset'] + offset_param['size']
             self.battle_script_data[offset_param['name']] = int.from_bytes(self.file_raw_data[start_data:end_data], offset_param['byteorder'])
@@ -341,7 +330,7 @@ class Ennemy():
                     start_param = index_read + 1
                     end_param = index_read + 1 + op_code_ref['size']
                     command = Command(code[index_read], code[start_param:end_param], game_data=game_data, battle_text=self.battle_script_data['battle_text'],
-                                      info_stat_data_monster_name=self.info_stat_data['monster_name'], color=game_data.color)
+                                      info_stat_data_monster_name=self.info_stat_data['monster_name'], color=game_data.AIData.COLOR)
                     list_result.append(command)
                     index_read += 1 + op_code_ref['size']
             self.battle_script_data['ai_data'].append(list_result)

@@ -144,11 +144,10 @@ class GameData():
         self.ennemy_abilities_values = {}
         self.ennemy_abilities_type_values = {}
         self.translate_hex_to_str_table = []
-        self.game_info_test = {}
         self.special_action = {}
         self.monster_values = {}
         self.ai_data_json = []
-        self.color = "#0055ff"
+
         self.__init_hex_to_str_table()
 
 

@@ -1,4 +1,4 @@
-from gamedata import GameData
+from FF8GameData.gamedata import GameData
 
 
 class Command():
@@ -39,7 +39,7 @@ class Command():
         op_info = self.__get_op_code_line_info()
         self.__op_code = [0] * op_info["size"]
 
-        self.id_possible_list=[{'id': x['op_code'], 'data': x['short_text']} for x in self.game_data.ai_data_json['op_code_info']]
+        self.id_possible_list = [{'id': x['op_code'], 'data': x['short_text']} for x in self.game_data.ai_data_json['op_code_info']]
         self.__analyse_op_data()
 
     def set_op_code(self, op_code):
@@ -89,38 +89,38 @@ class Command():
                                   self.game_data.ai_data_json["list_var"]]
                     self.param_possible_list.append(param_list)
                 elif type == "special_action":
-                    if self.__op_code[op_index] < len(self.game_data.special_action):
-                        param_value.append(self.game_data.special_action[self.__op_code[op_index]]['name'])
-                        self.param_possible_list.append([{'id': id, 'data': val_dict['name']} for id, val_dict in
-                                                         self.game_data.special_action.items()])
+                    if self.__op_code[op_index] < len(self.game_data.special_action_data_json["special_action"]):
+                        param_value.append(self.game_data.special_action_data_json["special_action"][self.__op_code[op_index]]['name'])
+                        self.param_possible_list.append(
+                            [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.special_action_data_json["special_action"])])
                     else:
                         param_value.append("UNKNOWN SPECIAL_ACTION")
                 elif type == "card":
-                    if self.__op_code[op_index] < len(self.game_data.card_values):
-                        param_value.append(self.game_data.card_values[self.__op_code[op_index]]['name'])
-                        self.param_possible_list.append([{'id': id, 'data': val_dict['name']} for id, val_dict in
-                                                         self.game_data.card_values.items()])
+                    if self.__op_code[op_index] < len(self.game_data.card_data_json["card_info"]):
+                        param_value.append(self.game_data.card_data_json["card_info"][self.__op_code[op_index]]['name'])
+                        self.param_possible_list.append(
+                            [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.card_data_json["card_info"])])
                     else:
                         param_value.append("UNKNOWN CARD")
                 elif type == "monster":
-                    if self.__op_code[op_index] < len(self.game_data.monster_values):
-                        param_value.append(self.game_data.monster_values[self.__op_code[op_index]])
-                        self.param_possible_list.append([{'id': i, 'data': self.game_data.monster_values[i]} for i in
-                                                         range(len(self.game_data.monster_values))])
+                    if self.__op_code[op_index] < len(self.game_data.monster_data_json["monster"]):
+                        param_value.append(self.game_data.monster_data_json["monster"][self.__op_code[op_index]]['name'])
+                        self.param_possible_list.append(
+                            [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.monster_data_json["monster"])])
                     else:
                         param_value.append("UNKNOWN MONSTER")
                 elif type == "item":
-                    if self.__op_code[op_index] < len(self.game_data.item_values):
-                        param_value.append(self.game_data.item_values[self.__op_code[op_index]]['name'])
-                        self.param_possible_list.append([{'id': id, 'data': val_dict['name']} for id, val_dict in
-                                                         self.game_data.item_values.items()])
+                    if self.__op_code[op_index] < len(self.game_data.item_data_json["items"]):
+                        param_value.append(self.game_data.item_data_json["items"][self.__op_code[op_index]]['name'])
+                        self.param_possible_list.append(
+                            [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.item_data_json["items"])])
                     else:
                         param_value.append("UNKNOWN ITEM")
                 elif type == "gforce":
-                    if self.__op_code[op_index] < len(self.game_data.gforce_values):
-                        param_value.append(self.game_data.gforce_values[self.__op_code[op_index]])
-                        self.param_possible_list.append([{'id': i, 'data': self.game_data.gforce_values[i]} for i in
-                                                         range(len(self.game_data.gforce_values))])
+                    if self.__op_code[op_index] < len(self.game_data.gforce_data_json["gforce"]):
+                        param_value.append(self.game_data.gforce_data_json["gforce"][self.__op_code[op_index]]['name'])
+                        self.param_possible_list.append(
+                            [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.gforce_data_json["gforce"])])
                     else:
                         param_value.append("UNKNOWN GFORCE")
                 elif type == "target":
@@ -148,8 +148,8 @@ class Command():
         return [ret, []]
 
     def __op_38_analysis(self, op_code):
-        if op_code[3] < len(self.game_data.status_ia_values):
-            status = self.game_data.status_ia_values[op_code[3]]['name']
+        if op_code[3] < len(self.game_data.status_data_json["status_ai"]):
+            status = self.game_data.status_data_json["status_ai"][op_code[3]]['name']
         else:
             status = "UNKNOWN STATUS"
 
@@ -158,7 +158,7 @@ class Command():
         self.param_possible_list.append(self.__get_target_list())
         self.param_possible_list.append([])
         param_possible = []
-        for index, el in self.game_data.status_ia_values.items():
+        for index, el in enumerate(self.game_data.status_data_json["status_ai"]):
             param_possible.append({'id': index, 'data': el['name']})
         self.param_possible_list.append(param_possible)
         ret = "TARGET {} WITH STATUS {}{}"
@@ -175,7 +175,7 @@ class Command():
             aptitude_text = aptitude_info[0]['text']
         else:
             aptitude_text = "Unknown aptitude"
-        self.param_possible_list.append([{"id": x["aptitude_id"], "data" :x['text']} for x in self.game_data.ai_data_json['aptitude_list']])
+        self.param_possible_list.append([{"id": x["aptitude_id"], "data": x['text']} for x in self.game_data.ai_data_json['aptitude_list']])
         self.param_possible_list.append([])
         if op_code[1] == 10:
             return ["REINIT {} TO BASE VALUE", [aptitude_text, op_code[1] / 10]]
@@ -196,15 +196,15 @@ class Command():
 
     def __op_45_analysis(self, op_code):
         # op_2D = ['element', 'elementval', '?']
-        if op_code[0] < len(self.game_data.magic_type_values):
-            element = self.game_data.magic_type_values[op_code[0]]
+        if op_code[0] < len(self.game_data.magic_data_json['magic']):
+            element = self.game_data.magic_data_json['magic'][op_code[0]]
         else:
             element = "UNKNOWN ELEMENT TYPE"
         element_val = op_code[1]
         op_code_unknown = op_code[2]
         param_possible = []
-        for i in range(len(self.game_data.magic_type_values)):
-            param_possible.append({'id':i, 'data': self.game_data.magic_type_values[i]})
+        for i in range(len(self.game_data.magic_data_json['magic'])):
+            param_possible.append({'id': i, 'data': self.game_data.magic_data_json['magic'][i]['name']})
         self.param_possible_list.append(param_possible)
         self.param_possible_list.append([])
         self.param_possible_list.append([])
@@ -223,7 +223,7 @@ class Command():
             ret = "/!\\SHOW BATTLE BUT NO BATTLE TO SHOW"
             param_return = []
         possible_param = []
-        for i in range (len(self.__battle_text)):
+        for i in range(len(self.__battle_text)):
             possible_param.append({'id': i, 'data': self.__battle_text[i]})
         self.param_possible_list.append(possible_param)
         return [ret, param_return]
@@ -285,9 +285,9 @@ class Command():
         elif subject_id == 3:
             right_subject = {'text': '{}', 'param': [op_code_right_condition_param]}
         elif subject_id == 4:
-            right_subject = {'text': '{}', 'param': [self.game_data.status_ia_values[op_code_right_condition_param]['name']]}
+            right_subject = {'text': '{}', 'param': [self.game_data.status_data_json["status_ai"][op_code_right_condition_param]['name']]}
         elif subject_id == 5:
-            right_subject = {'text': '{}', 'param': [self.game_data.status_ia_values[op_code_right_condition_param]['name']]}
+            right_subject = {'text': '{}', 'param': [self.game_data.status_data_json["status_ai"][op_code_right_condition_param]['name']]}
         elif subject_id == 6:
             right_subject = {'text': '{}', 'param': [op_code_right_condition_param]}
         elif subject_id == 9:
@@ -324,14 +324,14 @@ class Command():
             elif op_code[1] == 4:
                 if op_code_right_condition_param >= 64:
                     attack_left_condition_param = [attack_left_condition_param[0][0]]
-                    attack_right_condition_param = [self.game_data.gforce_values[op_code_right_condition_param - 64]]
+                    attack_right_condition_param = [self.game_data.gforce_data_json["gforce"][op_code_right_condition_param - 64]]
                 else:
                     if self.was_magic:
-                        ret = self.game_data.magic_values[op_code_right_condition_param]['name']
+                        ret = self.game_data.magic_data_json["magic"][op_code_right_condition_param]['name']
                     elif self.was_item:
-                        ret = self.game_data.item_values[op_code_right_condition_param]['name']
+                        ret = self.game_data.item_data_json["items"][op_code_right_condition_param]['name']
                     elif self.was_physical:
-                        ret = self.game_data.special_action[op_code_right_condition_param]['name']
+                        ret = self.game_data.special_action_data_json["special_action"][op_code_right_condition_param]['name']
                     else:
                         ret = str(op_code_right_condition_param)
                     attack_left_condition_param = [attack_left_condition_param[0][1]]
@@ -340,7 +340,7 @@ class Command():
                     self.was_item = False
                     self.was_physical = False
             elif op_code[1] == 5:
-                attack_right_condition_param = [str(self.game_data.magic_type_values[op_code_right_condition_param])]
+                attack_right_condition_param = [str(self.game_data.magic_data_json['magic_type'][op_code_right_condition_param])]
             else:
                 attack_left_text = "Unknown attack type {}"
                 attack_right_condition_param = [op_code_right_condition_param]
@@ -372,7 +372,7 @@ class Command():
         if if_subject_left_data:
             self.param_possible_list.append(list_param_possible_left)
         else:
-            self.param_possible_list.append([{"id": op_code_left_condition_param, "data":"UNUSED"}])
+            self.param_possible_list.append([{"id": op_code_left_condition_param, "data": "UNUSED"}])
         # List of "Comparator" possible list
         self.param_possible_list.append([{"id": i, "data": self.game_data.ai_data_json["list_comparator"][i]} for i in
                                          range(len(self.game_data.ai_data_json["list_comparator"]))])
@@ -413,13 +413,13 @@ class Command():
         list_target = []
         for i in range(len(self.game_data.ai_data_json['list_target_char'])):
             list_target.append({"id": i, "data": self.game_data.ai_data_json['list_target_char'][i]})
-        for i in range(0, len(self.game_data.monster_values)):
-            list_target.append({"id": i + 16, "data": self.game_data.monster_values[i]})
+        for i in range(0, len(self.game_data.monster_data_json["monster"])):
+            list_target.append({"id": i + 16, "data": self.game_data.monster_data_json["monster"][i]["name"]})
         for el in self.game_data.ai_data_json['target_special']:
             if el['param_type'] == "reverse":  # C8 data
                 if reverse:
                     data = [x['text'] for x in self.game_data.ai_data_json['target_special'] if x['param_id'] == 204][
-                        0] + "(by reverse)" # Same than param id 204. No check as we are sure 204 is there
+                               0] + "(by reverse)"  # Same than param id 204. No check as we are sure 204 is there
                 else:
                     data = self.info_stat_data_monster_name
             elif el['param_type'] == "monster_name":  # Same than param id 204
