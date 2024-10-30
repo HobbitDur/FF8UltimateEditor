@@ -2,8 +2,6 @@ import copy
 import os
 from math import floor
 
-from simple_file_checksum import get_checksum
-
 from gamedata import GameData
 
 
@@ -115,7 +113,7 @@ class Ennemy():
                 self.file_raw_data.extend(el)
         self.__analyze_header_section(game_data)
         self.origin_file_name = os.path.basename(file)
-        self.origin_file_checksum = get_checksum(file, algorithm='SHA256')
+        #self.origin_file_checksum = get_checksum(file, algorithm='SHA256')
 
     def analyse_loaded_data(self, game_data, analyse_ia):
         """This is the main function. Here we have several cases.
