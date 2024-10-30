@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  create_assets:
+  release-version:
       runs-on: windows-latest
       steps:
       - name: Checkout repository
@@ -75,43 +75,33 @@ jobs:
           cd release/IfritEnhanced
           7z  a -tzip "../IfritEnhanced-continuous-${{ github.sha}}.zip" .
           pwd
+          cd ..
+          ls -al
+          cd ..
+          ls -al
       - name: zip name tag
         shell: bash
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           cd release/IfritEnhanced
-          7z  a -tzip "../IfritEnhanced-${{  github.ref_name }}.zip" .  
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+          7z  a -tzip "../IfritEnhanced-${{  github.ref_name }}.zip" .
+      - name: Deploy Package
+        if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
+        uses: crowbarmaster/GH-Automatic-Releases@latest
         with:
-          name: "artifact-${{ github.sha}}"
-          path: ${{ github.workspace }}/release/
-  release_assets:
-    name: Release
-    needs:
-    - create_assets
-    runs-on: windows-latest
-    concurrency: release-${{ github.ref }}
-    steps:
-    - name: Download Files
-      uses: actions/download-artifact@v4
-    - name: Deploy Package
-      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
-      uses: crowbarmaster/GH-Automatic-Releases@latest
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "continuous"
-        prerelease: true
-        title: "Unstable Build"
-        files: |
-          release/artifact-*/*
-    - name: Deploy tag Package
-      if:  startsWith(github.ref, 'refs/tags/')
-      uses: crowbarmaster/GH-Automatic-Releases@latest
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        prerelease: false
-        automatic_release_tag: ${{ github.ref_name }}
-        title: "IfritEnhanced-${{ github.ref_name }}"
-        files: |
-          release/artifact-*/*
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "continuous"
+          prerelease: true
+          title: "Unstable Build"
+          files: |
+            release/IfritEnhanced-*.zip
+      - name: Deploy tag Package
+        if:  startsWith(github.ref, 'refs/tags/')
+        uses: crowbarmaster/GH-Automatic-Releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          automatic_release_tag: ${{ github.ref_name }}
+          title: "IfritEnhanced-${{ github.ref_name }}"
+          files: |
+            release/IfritEnhanced-*.zip
