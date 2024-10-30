@@ -68,20 +68,20 @@ jobs:
         shell: bash
         if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
         run: |
-          cd release/IfritEnhanced
-          7z  a -tzip "../IfritEnhanced-continuous-${{  github.sha }}.zip" .
+          cd release/ShumiTranslator
+          7z  a -tzip "../IfritEnhanced-continuous-${{ github.sha}}.zip" .
           pwd
       - name: zip name tag
         shell: bash
-        if: github.event.ref_type == 'tag'
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
-          cd release/IfritEnhanced
-          7z  a -tzip "../IfritEnhanced${{  github.ref_name }}.zip" .  
+          cd release/ShumiTranslator
+          7z  a -tzip "../IfritEnhanced-${{  github.ref_name }}.zip" .  
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: "artifact-${{ github.sha }}"
-          path: ${{ github.workspace }}/release/IfritEnhanced*.zip
+          name: "artifact-${{ github.sha}}"
+          path: ${{ github.workspace }}/release/
   release_assets:
     name: Release
     needs:
@@ -91,10 +91,6 @@ jobs:
     steps:
     - name: Download Files
       uses: actions/download-artifact@v4
-    - name: Test
-      shell: bash
-      run: |
-        ls -al
     - name: Deploy Package
       if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
       uses: crowbarmaster/GH-Automatic-Releases@latest
@@ -104,13 +100,14 @@ jobs:
         prerelease: true
         title: "Unstable Build"
         files: |
-          artifact-*/*
-    - name: Deploy Package
-      if: github.event.ref_type == 'tag'
+          release/artifact-*/*
+    - name: Deploy tag Package
+      if:  startsWith(github.ref, 'refs/tags/')
       uses: crowbarmaster/GH-Automatic-Releases@latest
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         prerelease: false
-        title: ${{ github.event.ref }}
+        automatic_release_tag: ${{ github.ref_name }}
+        title: "IfritEnhanced-${{ github.ref_name }}"
         files: |
-          artifact-*/*
+          release/artifact-*/*
