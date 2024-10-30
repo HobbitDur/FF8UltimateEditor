@@ -18,7 +18,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r ifrit-AI/requirements.txt
+          pip install -r IfritAI/requirements.txt
+          pip install -r IfritXlsx/requirements.txt
           pip install pyinstaller
           python --version
           pip freeze
@@ -26,8 +27,8 @@ jobs:
       - name: Create xlsx release
         shell: bash
         run: |
-          cd ifrit-xlsx/
-          pyinstaller -n ifrit-xlsx -F --specpath release/build --distpath release --workpath release/build  main.py
+          cd IfritXlsx/
+          pyinstaller -n ifritXlsx -F --specpath release/build --distpath release --workpath release/build  main.py
           cp -r Resources/ release/
           rm -rf OriginalFiles/decompressed_battle 
           mkdir -p release/OriginalFiles/
@@ -37,8 +38,8 @@ jobs:
       - name: Create ai release
         shell: bash
         run: |
-          cd ifrit-AI/
-          pyinstaller -n ifrit-ai -F --specpath release/build --distpath release --workpath release/build --onefile --noconsole --icon=../../Resources/icon.ico main.py
+          cd IfritAI/
+          pyinstaller -n IfritAI -F --specpath release/build --distpath release --workpath release/build --onefile --noconsole --icon=../../Resources/icon.ico main.py
           mkdir -p release/OriginalFiles/
           cp -r Resources/ release/
           cp -r OriginalFiles/ release/
@@ -48,33 +49,33 @@ jobs:
       - name: Create full release - Start
         shell: bash
         run: |
-          mkdir -p release/ifrit-enhanced
-          mkdir -p release/ifrit-enhanced/ifrit-gui
-          mkdir -p release/ifrit-enhanced/ifrit-ai
-          mkdir -p release/ifrit-enhanced/ifrit-xlsx
-          cp -R ifrit-ai/release/* release/ifrit-enhanced/ifrit-ai/
-          cp -R ifrit-xlsx/release/* release/ifrit-enhanced/ifrit-xlsx/
-          cp -R ifrit-gui/publish/* release/ifrit-enhanced/ifrit-gui/
-          rm -rf ifrit-ai/release
-          rm -rf ifrit-xlsx/release
+          mkdir -p release/IfritEnhanced
+          mkdir -p release/IfritEnhanced/IfritGui
+          mkdir -p release/IfritEnhanced/IfritAI
+          mkdir -p release/IfritEnhanced/IfritXlsx
+          cp -R IfritAI/release/* release/IfritEnhanced/IfritAI/
+          cp -R IfritXlsx/release/* release/IfritEnhanced/IfritXlsx/
+          cp -R IfritGui/publish/* release/IfritEnhanced/IfritGui/
+          rm -rf IfritAI/release
+          rm -rf IfritXlsx/release
       - name: zip name continuous
         shell: bash
         if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
         run: |
-          cd release/ifrit-enhanced
-          7z  a -tzip "../ifrit-enhanced-continuous-${{  github.sha }}.zip" .
+          cd release/IfritEnhanced
+          7z  a -tzip "../IfritEnhanced-continuous-${{  github.sha }}.zip" .
           pwd
       - name: zip name tag
         shell: bash
         if: github.event.ref_type == 'tag'
         run: |
-          cd release/ifrit-enhanced
-          7z  a -tzip "../ifrit-enhanced${{  github.ref_name }}.zip" .  
+          cd release/IfritEnhanced
+          7z  a -tzip "../IfritEnhanced${{  github.ref_name }}.zip" .  
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: "artifact-${{ github.sha }}"
-          path: ${{ github.workspace }}/release/ifrit-enhanced*.zip
+          path: ${{ github.workspace }}/release/IfritEnhanced*.zip
   release_assets:
     name: Release
     needs:

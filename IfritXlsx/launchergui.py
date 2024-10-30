@@ -1,7 +1,7 @@
 import sys
 
-from PyQt5.QtCore import Qt, QCoreApplication
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QHBoxLayout, QLineEdit, QSpinBox
+from PyQt6.QtCore import Qt, QCoreApplication
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QHBoxLayout, QLineEdit, QSpinBox
 
 
 class WindowLauncher(QWidget):
@@ -9,7 +9,7 @@ class WindowLauncher(QWidget):
 
     def __init__(self, ifrit_manager, list_lang, list_launch_option):
         QWidget.__init__(self)
-        self.setLayoutDirection(Qt.LeftToRight)
+        self.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.ifrit_manager = ifrit_manager
         self.setWindowTitle("Ifrit-XLSX Launcher")
         # self.setMinimumSize(300,200)
@@ -84,12 +84,12 @@ class WindowLauncher(QWidget):
         lang = str(self.lang_option.currentText())
         launch_option = str(self.launch_option.currentText())
         limit_option = self.limit_option.value()
-        no_pack_option = self.no_pack_option.checkState()
-        open_xlsx_option = self.open_xlsx.checkState()
-        delete_option = self.delete.checkState()
+        no_pack_option = self.no_pack_option.isChecked()
+        open_xlsx_option = self.open_xlsx.isChecked()
+        delete_option = self.delete.isChecked()
         copy_option = self.copy_option.text()
-        analyse_ia_option = self.analyse_ia.checkState()
-        self.ifrit_manager.exec(lang, launch_option, limit_option, no_pack_option, open_xlsx_option, delete_option, copy_option, analyse_ia_option)
+        analyse_ai_option = self.analyse_ia.isChecked()
+        self.ifrit_manager.exec(lang, launch_option, limit_option, no_pack_option, open_xlsx_option, delete_option, copy_option, analyse_ai_option)
         # QCoreApplication.quit()
 
     def launch_option_changed(self):

@@ -5,7 +5,7 @@ import re
 import shutil
 import sys
 
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 
 import fshandler
 import xlsxmanager
@@ -15,7 +15,7 @@ from launchergui import WindowLauncher
 from xlsxmanager import XlsxToDat, DatToXlsx
 
 
-class IfritManager():
+class IfritManager:
     LIST_LANG = ('eng', 'fre', 'ita')
     LIST_OPTION = ('fs_to_xlsx', 'xlsx_to_fs', 'both')
     FOLDER_INPUT = "OriginalFiles"
@@ -48,7 +48,7 @@ class IfritManager():
         parser.add_argument("-o", "--open", help="Open xlsx file for faster management", action='store_true')
         parser.add_argument("--nopack", help="Doesn't create a pack, only let intermediate file. Only applied to fs_to_xlsx", action='store_true')
         parser.add_argument("--lang", help="Choose the language you use", choices=self.LIST_LANG, default='eng', nargs='?')
-        parser.add_argument("--analyse-ia", help="Analyse the IA", action='store_true')
+        parser.add_argument("--analyse-ai", help="Analyse the AI", action='store_true')
         return parser.parse_args()
 
     def __gui_launch(self):
@@ -58,10 +58,10 @@ class IfritManager():
 
         window_installer = WindowLauncher(self, self.LIST_LANG, self.LIST_OPTION)
 
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
 
     def exec(self, lang=LIST_LANG[0], launch_option=LIST_OPTION[0], limit_option=-1, no_pack_option=False, open_xlsx_option=False, delete_option=False,
-             ff8_path="", analyse_ia=True):
+             ff8_path="", analyse_ai=True):
         if not self.gui:
             args = self.__cmd_setup()
             local_lang = args.lang
@@ -71,7 +71,7 @@ class IfritManager():
             local_copy = args.copy
             local_open = args.open
             local_delete = args.delete
-            local_analyse_ia = args.analyse_ia
+            local_analyse_ai = args.analyse_ai
         else:
             local_lang = lang
             local_launch_option = launch_option
@@ -80,7 +80,7 @@ class IfritManager():
             local_copy = ff8_path
             local_open = open_xlsx_option
             local_delete = delete_option
-            local_analyse_ia = analyse_ia
+            local_analyse_ai = analyse_ai
 
 
 
@@ -106,7 +106,7 @@ class IfritManager():
                 file_monster = [file_monster[local_limit_option]]  # Just to not work on all files everytime
             print("-------Transforming dat to XLSX-------")
             os.makedirs(self.FOLDER_OUTPUT, exist_ok=True)
-            self.dat_to_xlsx(file_monster, dat_to_xlsx_mananager, local_analyse_ia)
+            self.dat_to_xlsx(file_monster, dat_to_xlsx_mananager, local_analyse_ai)
 
         if local_launch_option == "xlsx_to_fs" or local_launch_option == "both":
             xlsx_to_dat_mananager = XlsxToDat(self.FILE_XLSX)
@@ -118,7 +118,7 @@ class IfritManager():
                 shutil.copytree(FILE_MONSTER_INPUT_PATH, FILE_MONSTER_OUTPUT_PATH, dirs_exist_ok=True)
 
             print("-------Transforming XLSX to dat-------")
-            self.xlsx_to_dat(FILE_MONSTER_OUTPUT_PATH, xlsx_to_dat_mananager, local_limit_option, local_analyse_ia)
+            self.xlsx_to_dat(FILE_MONSTER_OUTPUT_PATH, xlsx_to_dat_mananager, local_limit_option, local_analyse_ai)
 
             if not local_no_pack:
                 print("-------Packing to fs file-------")
@@ -153,7 +153,7 @@ class IfritManager():
     #    with open(os.path.join(self.FOLDER_OUTPUT, file_name), "w") as f:
     #        f.write("File name: {} | Checksum: {}\n".format(ennemy.origin_file_name, ennemy.origin_file_checksum))
 
-    def dat_to_xlsx(self, file_list, dat_xlsx_manager, analyse_ia):
+    def dat_to_xlsx(self, file_list, dat_xlsx_manager, analyse_ai):
         monster = {}
 
         print("Getting game data")
@@ -169,16 +169,16 @@ class IfritManager():
             print("Reading file {}".format(file_name))
             monster = Ennemy(game_data)
             monster.load_file_data(monster_file, game_data)
-            monster.analyse_loaded_data(game_data, analyse_ia)
+            monster.analyse_loaded_data(game_data, analyse_ai)
 
             # print("Creating checksum file")
             # self.create_checksum_file(monster, "checksum_origin_file.txt")
             print("Writing to xlsx file")
-            dat_xlsx_manager.export_to_xlsx(monster, file_name, game_data, analyse_ia)
+            dat_xlsx_manager.export_to_xlsx(monster, file_name, game_data, analyse_ai)
 
         dat_xlsx_manager.create_ref_data(game_data)
 
-    def xlsx_to_dat(self, output_path, xlsx_dat_manager: XlsxToDat, local_limit, analyse_ia=True):
+    def xlsx_to_dat(self, output_path, xlsx_dat_manager: XlsxToDat, local_limit, analyse_ai=True):
         print("Getting game data")
         game_data = GameData()
         game_data.load_all()
@@ -188,10 +188,10 @@ class IfritManager():
                 if local_limit > 0 and local_limit != monster_index:  # Only doing the monster asked
                     continue
                 print("Importing data from xlsx")
-                ennemy = xlsx_dat_manager.import_from_xlsx(sheet, game_data, output_path, local_limit, analyse_ia)
+                ennemy = xlsx_dat_manager.import_from_xlsx(sheet, game_data, output_path, local_limit, analyse_ai)
                 if ennemy:
                     print("Writing data to dat files")
-                    ennemy.write_data_to_file(game_data, output_path, analyse_ia)
+                    ennemy.write_data_to_file(game_data, output_path, analyse_ai)
 
                 # print("Creating checksum file")
                 # self.create_checksum_file(ennemy, "checksum_output_file.txt")

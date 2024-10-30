@@ -1,8 +1,5 @@
 import copy
-import glob
 import os
-import re
-import shutil
 from math import floor
 
 from simple_file_checksum import get_checksum
