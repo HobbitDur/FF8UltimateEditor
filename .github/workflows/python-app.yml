@@ -40,18 +40,24 @@ jobs:
           mkdir -p release/OriginalFiles/
           cp OriginalFiles/en_battle/battle.* release/OriginalFiles
           rm -r release/build
+		  ls -al
           cd ..
       - name: Create ai release
         shell: bash
         run: |
           cd IfritAI/
-          pyinstaller -n IfritAI -F --specpath release/build --distpath release --workpath release/build --onefile --noconsole --icon=../../Resources/icon.ico main.py
-          mkdir -p release/OriginalFiles/
-          cp -r Resources/ release/
-          cp -r OriginalFiles/ release/
-          rm -r release/build
-          ls -al
-          cd ..
+          pyinstaller -n ShumiTranslator -F --specpath release/build --distpath release --workpath release/build --onefile --icon=../../Resources/icon.ico main.py
+          mkdir -p release/IfritAI
+          mkdir -p release/IfritAI/FF8GameData
+          cp -R Resources release/IfritAI/
+          cp -R FF8GameData/Resources release/IfritAI/FF8GameData/
+          cp release/*.exe release/IfritAI/
+          cd release
+          rm -r build
+          rm *.exe
+		  cd ..
+		  ls -al
+		  cd ..
       - name: Create full release - Start
         shell: bash
         run: |
