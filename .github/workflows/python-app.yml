@@ -55,9 +55,9 @@ jobs:
           cd release
           rm -r build
           rm *.exe
-		  cd ..
-		  ls -al
-		  cd ..
+          cd ..
+          ls -al
+          cd ..
       - name: Create full release - Start
         shell: bash
         run: |
