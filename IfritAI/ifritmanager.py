@@ -1,10 +1,9 @@
+from FF8GameData.gamedata import GameData
 from ennemy import Ennemy
-from gamedata import GameData
-
-class IfritManager():
+class IfritManager:
 
     def __init__(self):
-        self.game_data = GameData()
+        self.game_data = GameData("FF8GameData")
         self.game_data.load_all()
         self.ennemy = Ennemy(self.game_data)
         self.ai_data = []

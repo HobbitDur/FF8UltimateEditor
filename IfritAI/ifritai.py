@@ -54,7 +54,7 @@ class IfritAI(QWidget):
         self.reset_button.clicked.connect(self.__reload_file)
 
         self.script_section = QComboBox()
-        self.script_section.addItems(self.ifrit_manager.game_data.AI_SECTION_LIST)
+        self.script_section.addItems(self.ifrit_manager.game_data.AIData.AI_SECTION_LIST)
         self.script_section.activated.connect(self.__section_change)
 
         self.button_color_picker = QPushButton()
@@ -248,11 +248,11 @@ class IfritAI(QWidget):
 
     def __setup_section_data(self):
         line_index = 0
-        index_section = self.ifrit_manager.game_data.AI_SECTION_LIST.index(self.script_section.currentText())
+        index_section = self.ifrit_manager.game_data.AIData.AI_SECTION_LIST.index(self.script_section.currentText())
         if self.ifrit_manager.ai_data:
             for command in self.ifrit_manager.ai_data[index_section]:
                 command.line_index = line_index
-                command.set_color(self.ifrit_manager.game_data.color)
+                command.set_color(self.ifrit_manager.game_data.AIData.COLOR)
                 self.__add_line(command)
                 line_index += 1
         self.__compute_if()

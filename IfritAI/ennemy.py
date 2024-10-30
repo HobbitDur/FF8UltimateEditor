@@ -1,8 +1,8 @@
 import copy
 import os
 
-from . command import Command
-from . gamedata import GameData
+from FF8GameData.gamedata import GameData
+from command import Command
 
 
 class Ennemy():
