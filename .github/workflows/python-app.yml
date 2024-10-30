@@ -68,14 +68,14 @@ jobs:
         shell: bash
         if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
         run: |
-          cd release/ShumiTranslator
+          cd release/IfritEnhanced
           7z  a -tzip "../IfritEnhanced-continuous-${{ github.sha}}.zip" .
           pwd
       - name: zip name tag
         shell: bash
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          cd release/ShumiTranslator
+          cd release/IfritEnhanced
           7z  a -tzip "../IfritEnhanced-${{  github.ref_name }}.zip" .  
       - name: Upload artifact
         uses: actions/upload-artifact@v4
