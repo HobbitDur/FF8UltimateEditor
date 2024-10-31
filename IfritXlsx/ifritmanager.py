@@ -49,6 +49,7 @@ class IfritManager:
         parser.add_argument("--nopack", help="Doesn't create a pack, only let intermediate file. Only applied to fs_to_xlsx", action='store_true')
         parser.add_argument("--lang", help="Choose the language you use", choices=self.LIST_LANG, default='eng', nargs='?')
         parser.add_argument("--analyse-ai", help="Analyse the AI", action='store_true')
+        parser.add_argument("--remaster", help="Use remaster version", action='store_true')
         return parser.parse_args()
 
     def __gui_launch(self):
@@ -61,7 +62,7 @@ class IfritManager:
         sys.exit(app.exec())
 
     def exec(self, lang=LIST_LANG[0], launch_option=LIST_OPTION[0], limit_option=-1, no_pack_option=False, open_xlsx_option=False, delete_option=False,
-             ff8_path="", analyse_ai=True):
+             ff8_path="", analyse_ai=True, remaster=False):
         if not self.gui:
             args = self.__cmd_setup()
             local_lang = args.lang
@@ -72,6 +73,7 @@ class IfritManager:
             local_open = args.open
             local_delete = args.delete
             local_analyse_ai = args.analyse_ai
+            local_remaster = args.remaster
         else:
             local_lang = lang
             local_launch_option = launch_option
@@ -81,6 +83,7 @@ class IfritManager:
             local_open = open_xlsx_option
             local_delete = delete_option
             local_analyse_ai = analyse_ai
+            local_remaster = remaster
 
 
 
@@ -122,7 +125,7 @@ class IfritManager:
 
             if not local_no_pack:
                 print("-------Packing to fs file-------")
-                fshandler.pack(FILE_MONSTER_INPUT_PATH, self.FILE_OUTPUT_BATTLE, local_lang)
+                fshandler.pack(FILE_MONSTER_INPUT_PATH, self.FILE_OUTPUT_BATTLE, local_lang, local_remaster)
             if local_delete:
                 # Delete files
                 print("-------Deleting files-------")

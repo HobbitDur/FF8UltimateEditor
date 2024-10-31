@@ -5,7 +5,8 @@ from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QCh
 
 
 class WindowLauncher(QWidget):
-    MOD_CHECK_DEFAULT = ['FFNx', 'FFNxFF8Music']
+    FF8_VERSION = ['PC 2000', 'Steam 2013', 'Steam Remaster']
+
 
     def __init__(self, ifrit_manager, list_lang, list_launch_option):
         QWidget.__init__(self)
@@ -17,6 +18,10 @@ class WindowLauncher(QWidget):
         self.lang_option = QComboBox()
         self.lang_option.addItems(list_lang)
         self.lang_option_label = QLabel("Language: ")
+
+        self.ff8_version_option = QComboBox()
+        self.ff8_version_option.addItems(self.FF8_VERSION)
+        self.ff8_version_option_label = QLabel("Version: ")
 
         self.launch_option = QComboBox()
         self.launch_option.addItems(list_launch_option)
@@ -48,6 +53,7 @@ class WindowLauncher(QWidget):
         self.copy_option_label.hide()
 
         self.general_layout = QVBoxLayout()
+        self.ff8_version_layout = QHBoxLayout()
         self.lang_layout = QHBoxLayout()
         self.launch_option_layout = QHBoxLayout()
         self.copy_option_layout = QHBoxLayout()
@@ -59,6 +65,8 @@ class WindowLauncher(QWidget):
         self.show()
 
     def setup_layout(self):
+        self.ff8_version_layout.addWidget(self.ff8_version_option_label)
+        self.ff8_version_layout.addWidget(self.ff8_version_option)
         self.lang_layout.addWidget(self.lang_option_label)
         self.lang_layout.addWidget(self.lang_option)
         self.launch_option_layout.addWidget(self.launch_option_label)
@@ -68,6 +76,7 @@ class WindowLauncher(QWidget):
         self.copy_option_layout.addWidget(self.copy_option_label)
         self.copy_option_layout.addWidget(self.copy_option)
 
+        self.general_layout.addLayout(self.ff8_version_layout)
         self.general_layout.addLayout(self.lang_layout)
         self.general_layout.addLayout(self.launch_option_layout)
         self.general_layout.addWidget(self.delete)
@@ -81,6 +90,10 @@ class WindowLauncher(QWidget):
         self.setLayout(self.general_layout)
 
     def launch_click(self):
+        if  self.ff8_version_option.currentIndex() == 2:
+            remaster = True
+        else:
+            remaster = False
         lang = str(self.lang_option.currentText())
         launch_option = str(self.launch_option.currentText())
         limit_option = self.limit_option.value()
@@ -89,7 +102,7 @@ class WindowLauncher(QWidget):
         delete_option = self.delete.isChecked()
         copy_option = self.copy_option.text()
         analyse_ai_option = self.analyse_ia.isChecked()
-        self.ifrit_manager.exec(lang, launch_option, limit_option, no_pack_option, open_xlsx_option, delete_option, copy_option, analyse_ai_option)
+        self.ifrit_manager.exec(lang, launch_option, limit_option, no_pack_option, open_xlsx_option, delete_option, copy_option, analyse_ai_option, remaster)
         # QCoreApplication.quit()
 
     def launch_option_changed(self):
