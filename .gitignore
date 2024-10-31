@@ -11,3 +11,5 @@
 **/ifrit-gui/Ifrit.csproj.user
 **/ifrit-gui/.vs/
 *.sh
+IfritXlsx/OriginalFiles
+IfritXlsx/OutputFiles
