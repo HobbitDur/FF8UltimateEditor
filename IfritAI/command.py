@@ -139,6 +139,34 @@ class Command():
                 *['<span style="color:' + self.__color_param + ';">' + str(x) + '</span>' for x in call_result[1]])
             self.__text += " (size:{}bytes)".format(op_info['size'] + 1)
 
+    def __get_possible_target(self):
+        return  [x for x in self.__get_target_list()]
+
+    def __get_possible_var(self):
+        return  [{"id": x['op_code'], "data": x['var_name']} for x in self.game_data.ai_data_json["list_var"]]
+
+    def __get_possible_magic(self):
+        return  [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.magic_data_json["magic"])]
+
+    def __get_possible_magic_type(self):
+        return  [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.magic_data_json["magic_type"])]
+
+    def __get_possible_item(self):
+        return   [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.item_data_json["items"])]
+
+    def __get_possible_gforce(self):
+        return  [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.gforce_data_json["gforce"])]
+
+    def __get_possible_monster(self):
+        return  [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.monster_data_json["monster"])]
+
+    def __get_possible_card(self):
+        return   [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.card_data_json["card_info"])]
+
+    def __get_possible_special_action(self):
+        return   [{'id': id, 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.special_action_data_json["special_action"])]
+
+
     def __op_23_analysis(self, op_code):
         if op_code[0] > 0:
             ret = "DEACTIVATE RUN"
@@ -250,6 +278,7 @@ class Command():
 
         if_subject_left_data = [x for x in self.game_data.ai_data_json["if_subject"] if x["subject_id"] == subject_id]
         list_param_possible_left = []
+        list_param_possible_right = []
         if if_subject_left_data:
             if_subject_left_data = if_subject_left_data[0]
             if if_subject_left_data["complexity"] == "simple":
@@ -301,12 +330,14 @@ class Command():
             if not subject_left_data:
                 attack_left_text = "Unknown last attack {}"
             else:
-                attack_left_condition_param = subject_left_data
+                attack_left_condition_param = subject_left_data[0][0]
             if op_code[1] == 0:
                 attack_right_condition_param = [str(op_code[3])]
             elif op_code[1] == 1:
-                attack_right_condition_param = [target]
-            elif op_code[1] == 3:
+                attack_right_condition_param = [self.__get_target(op_code_right_condition_param)]
+                list_param_possible_right.extend(self.__get_possible_target())
+            elif op_code[1] == 3: # Need to handle better the was_magic
+                list_param_possible_right.extend([{"id":1 , "data":"Physical damage"},{"id":2 , "data":"Magical damage"},{"id":4 , "data":"Item"},{"id":254 , "data":"G-Force"}])
                 if op_code_right_condition_param == 1:
                     attack_right_condition_param = ["Physical damage"]
                     self.was_physical = True
@@ -323,24 +354,29 @@ class Command():
                     attack_right_condition_param = ["Unknown {}".format(op_code_right_condition_param)]
             elif op_code[1] == 4:
                 if op_code_right_condition_param >= 64:
-                    attack_left_condition_param = [attack_left_condition_param[0][0]]
-                    attack_right_condition_param = [self.game_data.gforce_data_json["gforce"][op_code_right_condition_param - 64]]
+                    attack_left_condition_param = subject_left_data[0][0]
+                    attack_right_condition_param = [self.game_data.gforce_data_json["gforce"][op_code_right_condition_param - 64]['name']]
+                    list_param_possible_right.extend(self.__get_possible_gforce())
                 else:
                     if self.was_magic:
                         ret = self.game_data.magic_data_json["magic"][op_code_right_condition_param]['name']
+                        list_param_possible_right.extend(self.__get_possible_magic())
                     elif self.was_item:
                         ret = self.game_data.item_data_json["items"][op_code_right_condition_param]['name']
+                        list_param_possible_right.extend(self.__get_possible_item())
                     elif self.was_physical:
                         ret = self.game_data.special_action_data_json["special_action"][op_code_right_condition_param]['name']
+                        list_param_possible_right.extend(self.__get_possible_special_action())
                     else:
                         ret = str(op_code_right_condition_param)
-                    attack_left_condition_param = [attack_left_condition_param[0][1]]
+                    attack_left_condition_param = subject_left_data[0][1]
                     attack_right_condition_param = [ret]
                     self.was_magic = False
                     self.was_item = False
                     self.was_physical = False
             elif op_code[1] == 5:
-                attack_right_condition_param = [str(self.game_data.magic_data_json['magic_type'][op_code_right_condition_param])]
+                attack_right_condition_param = [str(self.game_data.magic_data_json['magic_type'][op_code_right_condition_param]['name'])]
+                list_param_possible_right.extend(self.__get_possible_magic_type())
             else:
                 attack_left_text = "Unknown attack type {}"
                 attack_right_condition_param = [op_code_right_condition_param]
@@ -377,7 +413,7 @@ class Command():
         self.param_possible_list.append([{"id": i, "data": self.game_data.ai_data_json["list_comparator"][i]} for i in
                                          range(len(self.game_data.ai_data_json["list_comparator"]))])
         # List of "Right subject" possible list
-        self.param_possible_list.append([])
+        self.param_possible_list.append(list_param_possible_right)
         # List of "Jump1" possible list
         self.param_possible_list.append([])
         # List of "Jump2" possible list
