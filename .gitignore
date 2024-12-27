@@ -1,6 +1,7 @@
 **/.idea
 
 **/OutputFiles/**
+**/OriginalFiles/**
 **/__pycache__/
 **/decompressed_battle/
 **/release
