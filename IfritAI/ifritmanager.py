@@ -1,4 +1,4 @@
-from FF8GameData.gamedata import GameData
+from IfritEnhanced.FF8GameData.gamedata import GameData
 from ennemy import Ennemy
 class IfritManager:
 

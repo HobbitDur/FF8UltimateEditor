@@ -1,7 +1,7 @@
-from FF8GameData.gamedata import GameData
+from IfritEnhanced.FF8GameData.gamedata import GameData
 
 
-class Command():
+class Command:
 
     def __init__(self, op_id: int, op_code: list, game_data: GameData, battle_text=(), info_stat_data_monster_name="",
                  line_index=0, color="#0055ff"):

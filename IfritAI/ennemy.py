@@ -1,7 +1,7 @@
 import copy
 import os
 
-from FF8GameData.gamedata import GameData
+from IfritEnhanced.FF8GameData.gamedata import GameData
 from IfritEnhanced.IfritAI.command import Command
 
 
