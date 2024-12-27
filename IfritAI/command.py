@@ -1,4 +1,4 @@
-from IfritEnhanced.FF8GameData.gamedata import GameData
+from FF8GameData.gamedata import GameData
 
 
 class Command:

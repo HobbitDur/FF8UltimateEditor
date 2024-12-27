@@ -1,8 +1,8 @@
 import copy
 import os
 
-from IfritEnhanced.FF8GameData.gamedata import GameData
-from IfritEnhanced.IfritAI.command import Command
+from FF8GameData.gamedata import GameData
+from IfritAI.command import Command
 
 
 class Ennemy():

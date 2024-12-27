@@ -1,7 +1,7 @@
 from PyQt6.QtCore import QObject, pyqtSignal, QSignalBlocker
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QSpinBox, QFrame, QSizePolicy, QLabel, QComboBox
 
-from IfritEnhanced.IfritAI.command import Command
+from IfritAI.command import Command
 
 
 class OpIdChangedEmmiter(QObject):

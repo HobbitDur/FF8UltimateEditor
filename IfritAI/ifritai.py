@@ -6,9 +6,9 @@ from PyQt6.QtGui import QIcon, QFont
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QLabel, \
     QColorDialog, QCheckBox
 
-from IfritEnhanced.IfritAI.command import Command
-from IfritEnhanced.IfritAI.commandwidget import CommandWidget
-from IfritEnhanced.IfritAI.ifritmanager import IfritManager
+from IfritAI.command import Command
+from IfritAI.commandwidget import CommandWidget
+from IfritAI.ifritmanager import IfritManager
 
 
 class IfritAI(QWidget):
