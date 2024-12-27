@@ -1,0 +1,6 @@
+[submodule "IfritGui"]
+	path = IfritGui
+	url = https://github.com/HobbitDur/IfritGui.git
+[submodule "IfritXlsx"]
+	path = IfritXlsx
+	url = https://github.com/HobbitDur/IfritXlsx.git
