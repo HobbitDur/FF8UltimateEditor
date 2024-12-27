@@ -22,10 +22,11 @@ jobs:
         with:
           python-version: "3.12"
       - name: recursive submodule
+        shell: bash
         run: |
           ls -al IfritAI/ 
           git submodule update --init --recursive
-          ls -al IfritAI/ 
+          ls -al IfritAI/
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
