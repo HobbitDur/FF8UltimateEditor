@@ -51,7 +51,7 @@ jobs:
           mkdir -p release/FF8GameData
           mkdir OriginalFiles/
           cp -R Resources release/
-          cp -R ../FF8GameData/Resources release/FF8GameData/
+          cp -R FF8GameData/Resources release/FF8GameData/
           cd release
           rm -r build
           ls -al
