@@ -4,3 +4,6 @@
 [submodule "IfritXlsx"]
 	path = IfritXlsx
 	url = https://github.com/HobbitDur/IfritXlsx.git
+[submodule "IfritAI"]
+	path = IfritAI
+	url = https://github.com/HobbitDur/IfritAI.git
