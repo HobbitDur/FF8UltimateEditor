@@ -49,8 +49,10 @@ jobs:
           cd IfritAI/
           pyinstaller -n IfritAI -F --specpath release/build --distpath release --workpath release/build --onefile --icon=../../Resources/icon.ico main.py
           mkdir -p release/FF8GameData
+          ls -al
+          ls release/ -al
           cp -R Resources release/
-          cp -R ../FF8GameData/Resources ../release/FF8GameData/
+          cp -R ../FF8GameData/Resources release/FF8GameData/
           cd release
           rm -r build
           ls -al
