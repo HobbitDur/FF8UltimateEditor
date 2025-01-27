@@ -41,21 +41,22 @@ jobs:
         shell: bash
         run: |
           pyinstaller -n IfritEnhanced -F --specpath release/build --distpath release --workpath release/build  main.py
-          mkdir -p release/FF8GameData
+          mkdir -p release/IfritXlsx
           mkdir -p release/IfritGui
           mkdir -p release/IfritAI
           mkdir -p release/IfritXlsx/FF8GameData
           mkdir -p release/IfritGui/FF8GameData
           mkdir -p release/IfritAI/FF8GameData
-          mkdir -p release/IfritXlsx/FF8GameData
+          mkdir -p release/IfritXlsx/Resources
+          mkdir -p release/IfritGui/Resources
+          mkdir -p release/IfritAI/Resources
           cp -R Resources/ release/
-          cp -R Resources/IfritGui release/IfritGui/
-          cp -R Resources/IfritAI release/IfritAI/
-          cp -R Resources/IfritXlsx release/IfritXlsx/
+          cp -R IfritXlsx/Resources release/IfritXlsx/
+          cp -R IfritGui/Resources release/IfritGui/
+          cp -R IfritAI/Resources release/IfritAI/
           cp -R IfritGui/FF8GameData/Resources release/IfritGui/FF8GameData/
           cp -R IfritAI/FF8GameData/Resources release/IfritAI/FF8GameData/
           cp -R IfritXlsx/FF8GameData/Resources release/IfritXlsx/FF8GameData/
-          cp -R FF8GameData/Resources release/FF8GameData/
           rm -R release/build
           cd release
           ls -al
