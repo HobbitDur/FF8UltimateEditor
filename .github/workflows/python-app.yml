@@ -45,7 +45,6 @@ jobs:
           mkdir -p release/IfritGui
           mkdir -p release/IfritAI
           mkdir -p release/IfritXlsx/FF8GameData
-          mkdir -p release/IfritGui/FF8GameData
           mkdir -p release/IfritAI/FF8GameData
           mkdir -p release/IfritXlsx/Resources
           mkdir -p release/IfritGui/Resources
@@ -54,9 +53,8 @@ jobs:
           cp -R IfritXlsx/Resources release/IfritXlsx/
           cp -R IfritGui/Resources release/IfritGui/
           cp -R IfritAI/Resources release/IfritAI/
-          cp -R IfritGui/FF8GameData/Resources release/IfritGui/FF8GameData/
-          cp -R IfritAI/FF8GameData/Resources release/IfritAI/FF8GameData/
           cp -R IfritXlsx/FF8GameData/Resources release/IfritXlsx/FF8GameData/
+          cp -R IfritAI/FF8GameData/Resources release/IfritAI/FF8GameData/
           rm -R release/build
           cd release
           ls -al
