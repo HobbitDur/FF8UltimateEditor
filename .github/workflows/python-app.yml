@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r IfritAI/requirements.txt
           pip install -r IfritXlsx/requirements.txt
-          pip install -r IfritEnhanced/requirements.txt
+          pip install -r requirements.txt
           pip install pyinstaller
           pip freeze
       - uses: milliewalky/setup-7-zip@v1
