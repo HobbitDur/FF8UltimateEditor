@@ -64,10 +64,8 @@ jobs:
         if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
         run: |
           cd release
-          7z  a -tzip "../IfritEnhanced-continuous-${{ github.sha}}.zip" .
+          7z  a -tzip "IfritEnhanced-continuous-${{ github.sha}}.zip" .
           pwd
-          cd ..
-          ls -al
           cd ..
           ls -al
       - name: zip name tag
@@ -75,7 +73,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           cd release
-          7z  a -tzip "../IfritEnhanced-${{  github.ref_name }}.zip" .
+          7z  a -tzip "IfritEnhanced-${{  github.ref_name }}.zip" .
+          cd ..
       - name: Deploy Package
         if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
         uses: crowbarmaster/GH-Automatic-Releases@latest
