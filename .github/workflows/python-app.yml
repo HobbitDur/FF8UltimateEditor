@@ -52,6 +52,7 @@ jobs:
           cp -R IfritAI/Resources release/IfritAI/
           cp -R IfritXlsx/FF8GameData/Resources release/IfritXlsx/FF8GameData/
           cp -R IfritAI/FF8GameData/Resources release/IfritAI/FF8GameData/
+          cp -R IfritGui/publish release/IfritGui
           rm -R release/build
           cd release
           ls -al
