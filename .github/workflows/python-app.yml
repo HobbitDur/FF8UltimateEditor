@@ -32,7 +32,6 @@ jobs:
           pip install -r IfritXlsx/requirements.txt
           pip install -r IfritEnhanced/requirements.txt
           pip install pyinstaller
-          python --version
           pip freeze
       - uses: milliewalky/setup-7-zip@v1
       - name: Create release
