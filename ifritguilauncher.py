@@ -34,7 +34,6 @@ class IfritGuiLauncher:
         """
         if self.process:
             self.process.wait()  # Wait for the process to terminate
-            print(f"Program '{self.exe_path}' has exited.")
             if self.callback:
                 self.callback()
 
@@ -54,7 +53,6 @@ class IfritGuiLauncher:
         """
         if self.is_running():
             self.process.terminate()
-            print(f"Program '{self.exe_path}' was terminated.")
 
 # Example usage
 if __name__ == "__main__":

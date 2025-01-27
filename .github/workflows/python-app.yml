@@ -32,49 +32,34 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r IfritAI/requirements.txt
           pip install -r IfritXlsx/requirements.txt
+          pip install -r IfritEnhanced/requirements.txt
           pip install pyinstaller
           python --version
           pip freeze
       - uses: milliewalky/setup-7-zip@v1
-      - name: Create xlsx release
+      - name: Create release
         shell: bash
         run: |
-          
-          cd IfritXlsx/
-          pyinstaller -n IfritXlsx -F --specpath release/build --distpath release --workpath release/build  main.py
-          cp -r Resources/ release/
-          mkdir -p release/OriginalFiles/
-          mkdir -p release/OutputFiles/
-          rm -r release/build
-          cd release
-          ls -al
-          cd ..
-          cd ..
-      - name: Create ai release
-        shell: bash
-        run: |
-          cd IfritAI/
-          pyinstaller -n IfritAI -F --specpath release/build --distpath release --workpath release/build --onefile --icon=../../Resources/icon.ico main.py
+          pyinstaller -n IfritEnhanced -F --specpath release/build --distpath release --workpath release/build  main.py
           mkdir -p release/FF8GameData
-          mkdir OriginalFiles/
-          cp -R Resources release/
+          mkdir -p release/IfritGui
+          mkdir -p release/IfritAI
+          mkdir -p release/IfritXlsx/FF8GameData
+          mkdir -p release/IfritGui/FF8GameData
+          mkdir -p release/IfritAI/FF8GameData
+          mkdir -p release/IfritXlsx/FF8GameData
+          cp -R Resources/ release/
+          cp -R Resources/IfritGui release/IfritGui/
+          cp -R Resources/IfritAI release/IfritAI/
+          cp -R Resources/IfritXlsx release/IfritXlsx/
+          cp -R IfritGui/FF8GameData/Resources release/IfritGui/FF8GameData/
+          cp -R IfritAI/FF8GameData/Resources release/IfritAI/FF8GameData/
+          cp -R IfritXlsx/FF8GameData/Resources release/IfritXlsx/FF8GameData/
           cp -R FF8GameData/Resources release/FF8GameData/
+          rm -R release/build
           cd release
-          rm -r build
           ls -al
           cd ..
-      - name: Create full release - Start
-        shell: bash
-        run: |
-          mkdir -p release/IfritEnhanced
-          mkdir -p release/IfritEnhanced/IfritGui
-          mkdir -p release/IfritEnhanced/IfritAI
-          mkdir -p release/IfritEnhanced/IfritXlsx
-          cp -R IfritAI/release/* release/IfritEnhanced/IfritAI/
-          cp -R IfritXlsx/release/* release/IfritEnhanced/IfritXlsx/
-          cp -R IfritGui/publish/* release/IfritEnhanced/IfritGui/
-          rm -rf IfritAI/release
-          rm -rf IfritXlsx/release
       - name: zip name continuous
         shell: bash
         if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'

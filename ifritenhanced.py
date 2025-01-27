@@ -1,11 +1,9 @@
 import os
-import subprocess
 
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout
+from PyQt6.QtWidgets import QWidget
 
-from IfritAI.IfritAI.ifritaiwidget import IfritAIWidget
-from IfritXlsx.ifritxlsxmanager import IfritXlsxManager
+from IfritAI.ifritaiwidget import IfritAIWidget
 from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from ifritguilauncher import IfritGuiLauncher
 
@@ -19,13 +17,12 @@ class IfritEnhancedWidget(QWidget):
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'icon.ico')))
 
         # Man made widget
-        self.ifritAI_widget = IfritAIWidget(icon_path='Resources')
-        self.ifritxlsx_widget = IfritXlsxWidget()
+        self.ifritAI_widget = IfritAIWidget(icon_path=os.path.join("IfritAI", "Resources"), game_data_folder=os.path.join("IfritAI", "FF8GameData"))
+        self.ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join("IfritXlsx", "Resources"))
         self.ifritGui_launcher = IfritGuiLauncher(os.path.join("IfritGui", "publish", "Ifrit.exe"), callback=self.ifritGui_exit)
         self.ifritGui_launcher.launch()
 
     def ifritGui_exit(self):
-        print("Callback: IfritGui has exited.")
         if not self.ifritAI_widget.isVisible() and not self.ifritxlsx_widget.isVisible():
             exit(0)
 
