@@ -4,7 +4,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget
 
 from IfritAI.ifritaiwidget import IfritAIWidget
-from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
+from IfritXlsx.IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from ifritguilauncher import IfritGuiLauncher
 
 
