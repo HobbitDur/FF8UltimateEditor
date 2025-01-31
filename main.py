@@ -3,6 +3,7 @@ import sys
 from PyQt6.QtWidgets import QApplication
 sys.path.append("IfritAI")
 sys.path.append("IfritXlsx")
+sys.path.append("FF8GameData")
 from ifritenhanced import IfritEnhancedWidget
 
 sys._excepthook = sys.excepthook

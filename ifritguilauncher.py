@@ -20,7 +20,6 @@ class IfritGuiLauncher:
         """
         try:
             self.process = subprocess.Popen([self.exe_path], shell=True)
-            print(f"Program '{self.exe_path}' started.")
             self.thread = threading.Thread(target=self._monitor_process, daemon=True)
             self.thread.start()
         except FileNotFoundError:
