@@ -19,7 +19,7 @@ class IfritEnhancedWidget(QWidget):
 
         # Man made widget
         self.ifritAI_widget = IfritAIWidget(icon_path=os.path.join("IfritAI", "Resources"), game_data_folder=os.path.join("IfritAI", "FF8GameData"))
-        self.ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join("IfritXlsx", "Resources"), game_data_folder=os.path.join("IfritAI", "FF8GameData"))
+        self.ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join("IfritXlsx", "Resources"), game_data_folder=os.path.join("IfritXlsx", "FF8GameData"))
         self.ifritGui_launcher = IfritGuiLauncher(os.path.join("IfritGui", "publish", "Ifrit.exe"), callback=self.ifritGui_exit)
         self.ifritGui_launcher.launch()
 
