@@ -1,9 +1,3 @@
-[submodule "IfritGui"]
-	path = IfritGui
-	url = https://github.com/HobbitDur/IfritGui.git
-[submodule "IfritXlsx"]
-	path = IfritXlsx
-	url = https://github.com/HobbitDur/IfritXlsx.git
-[submodule "IfritAI"]
-	path = IfritAI
-	url = https://github.com/HobbitDur/IfritAI.git
+[submodule "FF8GameData"]
+	path = FF8GameData
+	url = https://github.com/HobbitDur/FF8GameData.git

@@ -1,11 +1,8 @@
 import sys
 
 from PyQt6.QtWidgets import QApplication
-sys.path.append("IfritAI")
-sys.path.append("IfritXlsx")
-sys.path.append("FF8GameData")
-from ifritenhanced import IfritEnhancedWidget
 
+from ff8ultimateeditorwidget import FF8UltimateEditorWidget
 sys._excepthook = sys.excepthook
 def exception_hook(exctype, value, traceback):
     print(exctype, value, traceback)
@@ -20,5 +17,6 @@ if __name__ == '__main__':
         app = QApplication(sys.argv)
         if app.style().objectName() == "windows11":
             app.setStyle("Fusion")
-    main_window = IfritEnhancedWidget()
+    main_window = FF8UltimateEditorWidget()
+    main_window.show()
     sys.exit(app.exec())
