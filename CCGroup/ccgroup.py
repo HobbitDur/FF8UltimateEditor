@@ -15,7 +15,7 @@ class CCGroupWidget(QWidget):
     LANG_LIST = ["en", "fr"]
     MOD_LIST = ["Original", "Tripod (Mcindus)", "Xylomod (ducladoncladon)"]
 
-    def __init__(self, icon_path='Resources'):
+    def __init__(self, icon_path='Resources', game_data_path="FF8GameData"):
         QWidget.__init__(self)
 
         # Window management
@@ -90,7 +90,7 @@ class CCGroupWidget(QWidget):
         self.__layout_top.addStretch(1)
 
         self.current_file_data = bytearray()
-        self.game_data = GameData("FF8GameData")
+        self.game_data = GameData(game_data_path)
         self.game_data.load_card_data()
         self.game_data.load_exe_data()
 

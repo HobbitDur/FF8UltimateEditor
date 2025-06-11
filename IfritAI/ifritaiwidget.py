@@ -87,7 +87,7 @@ class IfritAIWidget(QWidget):
         self.button_color_picker.clicked.connect(self.__select_color)
         self.button_color_picker.setToolTip("To choose which color to highlight the variable")
 
-        self._xlsx_manager = IfritXlsxManager()
+        self._xlsx_manager = IfritXlsxManager(game_data_folder)
 
         # Ifrit xlsx/md import/export
         self._import_xlsx_button = QPushButton()
@@ -412,8 +412,6 @@ class IfritAIWidget(QWidget):
             self.__setup_section_data()
 
     def __reload_file(self):
-        print("reload")
-        print(f"length self.command_line_widget: {len(self.command_line_widget)}")
         self.__load_file(self.file_loaded)
 
     def __clear_lines(self, delete_data=False):
@@ -473,7 +471,6 @@ class IfritAIWidget(QWidget):
                 content = file.read()
             # Use regex to extract all code blocks between ```
             code_blocks = re.findall(r'```.*?\n(.*?)\n```', content, re.DOTALL)
-            print(self.ifrit_manager.enemy.battle_script_data['ai_data'][0])
             self.__clear_lines(delete_data=False)
             # Analyse code
             for index_code, code in enumerate(code_blocks):

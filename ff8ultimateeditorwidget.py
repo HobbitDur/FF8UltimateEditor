@@ -2,7 +2,7 @@ import os
 
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QSizePolicy
+from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QSizePolicy, QFrame
 
 from CCGroup.ccgroup import CCGroupWidget
 from ExeLauncher.ifritguilauncher import IfritGuiLauncher
@@ -15,11 +15,11 @@ from TonberryShop.tonberryshop import TonberryShop
 
 class FF8UltimateEditorWidget(QWidget):
 
-    def __init__(self, icon_path='Resources'):
+    def __init__(self, resources_path='Resources', game_data_path='FF8GameData'):
         QWidget.__init__(self)
         self.setWindowTitle("FF8 ultimate editor")
         #self.setMinimumSize(1280, 720)
-        self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
+        self.setWindowIcon(QIcon(os.path.join(resources_path, 'hobbitdur.ico')))
         self._main_layout = QVBoxLayout()
         self.setLayout(self._main_layout)
 
@@ -39,35 +39,35 @@ class FF8UltimateEditorWidget(QWidget):
         # External program
         self._external_program_title = QLabel("External program:")
         self._ifrit_gui_button = QPushButton()
-        self._ifrit_gui_button.setIcon(QIcon(os.path.join(icon_path, 'ifritGui.ico')))
+        self._ifrit_gui_button.setIcon(QIcon(os.path.join(resources_path, 'ifritGui.ico')))
         self._ifrit_gui_button.setIconSize(QSize(30, 30))
         self._ifrit_gui_button.setFixedSize(40, 40)
         self._ifrit_gui_button.clicked.connect(self._launch_ifritGui)
         self._ifrit_gui_button.setToolTip("Launch original ifrit soft")
 
         self._Quezacotl_button = QPushButton()
-        self._Quezacotl_button.setIcon(QIcon(os.path.join(icon_path, 'Quezacotl.ico')))
+        self._Quezacotl_button.setIcon(QIcon(os.path.join(resources_path, 'Quezacotl.ico')))
         self._Quezacotl_button.setIconSize(QSize(30, 30))
         self._Quezacotl_button.setFixedSize(40, 40)
         self._Quezacotl_button.clicked.connect(self._launch_Quezacotl)
         self._Quezacotl_button.setToolTip("Launch Quezacotl (init.out editor)")
 
         self._siren_button = QPushButton()
-        self._siren_button.setIcon(QIcon(os.path.join(icon_path, 'siren.ico')))
+        self._siren_button.setIcon(QIcon(os.path.join(resources_path, 'siren.ico')))
         self._siren_button.setIconSize(QSize(30, 30))
         self._siren_button.setFixedSize(40, 40)
         self._siren_button.clicked.connect(self._launch_siren)
         self._siren_button.setToolTip("Launch siren (price.bin editor)")
 
         self._junkshop_button = QPushButton()
-        self._junkshop_button.setIcon(QIcon(os.path.join(icon_path, 'junkshop.ico')))
+        self._junkshop_button.setIcon(QIcon(os.path.join(resources_path, 'junkshop.ico')))
         self._junkshop_button.setIconSize(QSize(30, 30))
         self._junkshop_button.setFixedSize(40, 40)
         self._junkshop_button.clicked.connect(self._launch_junkshop)
         self._junkshop_button.setToolTip("Launch junkshop (mweapon.bin editor)")
 
         self._doomtrain_button = QPushButton()
-        self._doomtrain_button.setIcon(QIcon(os.path.join(icon_path, 'doomtrain.ico')))
+        self._doomtrain_button.setIcon(QIcon(os.path.join(resources_path, 'doomtrain.ico')))
         self._doomtrain_button.setIconSize(QSize(30, 30))
         self._doomtrain_button.setFixedSize(40, 40)
         self._doomtrain_button.clicked.connect(self._launch_doomtrain)
@@ -82,20 +82,24 @@ class FF8UltimateEditorWidget(QWidget):
         self._external_program_layout.addWidget(self._doomtrain_button)
         self._external_program_layout.addStretch(1)
 
+        self._enhance_end_separator_line = QFrame()
+        self._enhance_end_separator_line.setFrameStyle(0x04)# Horizontal line
+        self._enhance_end_separator_line.setLineWidth(2)
 
         self._enhance_layout = QHBoxLayout()
         self._enhance_layout.addLayout(self._program_option_layout)
         self._enhance_layout.addLayout(self._external_program_layout)
+        self._enhance_layout.addWidget(self._enhance_end_separator_line)
         self._enhance_layout.addStretch(1)
 
 
 
         # Man made widget
-        self._ifritAI_widget = IfritAIWidget(icon_path=os.path.join("Resources"), game_data_folder=os.path.join("FF8GameData"))
-        self._ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join("Resources"), game_data_folder=os.path.join("FF8GameData"))
-        self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join("Resources"), game_data_folder=os.path.join("FF8GameData"))
-        self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join("Resources"))
-        self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join("Resources"))
+        self._ifritAI_widget = IfritAIWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path))
+        self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path) )
 
         self._ifritAI_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self._ifritxlsx_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
