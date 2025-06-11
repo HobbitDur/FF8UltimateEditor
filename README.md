@@ -20,6 +20,7 @@ This depot contains lots of tools for FF8:
 
 ## Other tools made by others modder that I updated for some:
   - IfritGui for editing monster stat
+
 ![image](https://github.com/HobbitDur/ifrit-enhanced/assets/19329243/0f1d58c2-4ed4-49c7-b5cb-d9cb8e5120ae)
   - Siren price editor
 

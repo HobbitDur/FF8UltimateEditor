@@ -37,17 +37,19 @@ jobs:
         shell: bash
         run: |
           pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
-          mkdir -p release/FF8UltimateEditor
-          mkdir -p release/FF8UltimateEditor/Resources
+          mkdir -p release/Resources
           mkdir -p release/Junkshop
           mkdir -p release/Quezacotl
           mkdir -p release/Doomtrain
           mkdir -p release/Siren
+          mkdir -p release/FF8GameData
+          mkdir -p release/FF8GameData/Resources
           cp -R Resources/ release/FF8UltimateEditor/
           cp -R Junkshop release/Junkshop/
           cp -R Quezacotl release/Quezacotl/
           cp -R Doomtrain release/Doomtrain/
           cp -R Siren release/Siren/
+          cp -R FF8GameData/Resources release/FF8GameData/Resources 
           rm -R release/build
           cd release
           ls -al
