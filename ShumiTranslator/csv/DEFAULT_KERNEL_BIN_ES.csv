@@ -1,0 +1,1538 @@
+Section data name;Section Widget id;Text Sub id;Text
+Battle command text section;0;0;
+Battle command text section;0;1;
+Battle command text section;0;2;Atacar
+Battle command text section;0;3;Ataca con un arma.
+Battle command text section;0;4;Magia
+Battle command text section;0;5;Aplica una magia.
+Battle command text section;0;6;G. F.
+Battle command text section;0;7;Invoca a un Guardián{x0e49}{x0e53}Fuerza.
+Battle command text section;0;8;Objeto
+Battle command text section;0;9;Utiliza un objeto.
+Battle command text section;0;10;Samurai
+Battle command text section;0;11;Ataca con estocadas múltiples.
+Battle command text section;0;12;Extraer
+Battle command text section;0;13;Extrae magia.
+Battle command text section;0;14;Engullir
+Battle command text section;0;15;Engulle a un {x0e38}.
+Battle command text section;0;16;
+Battle command text section;0;17;
+Battle command text section;0;18;Aplicar
+Battle command text section;0;19;Aplica {x0e53}magia extraída.
+Battle command text section;0;20;Guardar
+Battle command text section;0;21;Guarda {x0e53}magia extraída.
+Battle command text section;0;22;Kiai
+Battle command text section;0;23;Pelea con artes marciales.
+Battle command text section;0;24;Arrebatar
+Battle command text section;0;25;Aprovecha {x0e52}ataque para arrebatar objetos.
+Battle command text section;0;26;
+Battle command text section;0;27;
+Battle command text section;0;28;Duelo
+Battle command text section;0;29;Ataca al {x0e38} con municiones disponibles.
+Battle command text section;0;30;Magia azul
+Battle command text section;0;31;Ataca con técnicas aprendidas{x0e49}monstruos.
+Battle command text section;0;32;Ruleta
+Battle command text section;0;33;Aplica una magia seleccionada al azar.
+Battle command text section;0;34;Sed de venganza
+Battle command text section;0;35;Ataca con {x0e53}espada.
+Battle command text section;0;36;Gran magia
+Battle command text section;0;37;Efectúa un ataque mágico.
+Battle command text section;0;38;Llamada
+Battle command text section;0;39;Ape{x0e53}a una fuerza amiga.
+Battle command text section;0;40;Especial
+Battle command text section;0;41;{x0e58} 
+Battle command text section;0;42;Especial
+Battle command text section;0;43;{x0e58} 
+Battle command text section;0;44;Especial
+Battle command text section;0;45;{x0e58} 
+Battle command text section;0;46;Defensa
+Battle command text section;0;47;Reduce el daño hasta actuar otra vez.
+Battle command text section;0;48;Acometida
+Battle command text section;0;49;Pone al grupo en EST Prisa, Locura y Coraza.
+Battle command text section;0;50;Sanar
+Battle command text section;0;51;Sana los estados alterados.
+Battle command text section;0;52;Recuperar
+Battle command text section;0;53;Restablece {x0e53}vitalidad.
+Battle command text section;0;54;Resucitar
+Battle command text section;0;55;Reanima a un compañero K.O..
+Battle command text section;0;56;Sacrificio
+Battle command text section;0;57;Ataca a costa{x0e49}{x0e53}propia vitalidad.
+Battle command text section;0;58;Carta
+Battle command text section;0;59;Transforma a un monstruo en carta.
+Battle command text section;0;60;Condena
+Battle command text section;0;61;Condena a muerte a un {x0e38}.
+Battle command text section;0;62;Kamikaze
+Battle command text section;0;63;Daña al {x0e38}, pero {x0e52}guerrero es eliminado.
+Battle command text section;0;64;Absorber
+Battle command text section;0;65;Absorbe {x0e53}vitalidad d{x0e52}{x0e38}.
+Battle command text section;0;66;Nivel↓
+Battle command text section;0;67;Disminuye {x0e52}niv{x0e52}de un monstruo.
+Battle command text section;0;68;Nivel↑
+Battle command text section;0;69;Aumenta {x0e52}niv{x0e52}de un monstruo.
+Battle command text section;0;70;Simple
+Battle command text section;0;71;{x0e59}una vez.
+Battle command text section;0;72;Doble
+Battle command text section;0;73;{x0e59}dos veces.
+Battle command text section;0;74;Triple
+Battle command text section;0;75;{x0e59}tres veces.
+Battle command text section;0;76;Mogurito
+Battle command text section;0;77;Llama a un mogurito.
+Magic text section;1;0;
+Magic text section;1;1;
+Magic text section;1;2;Piro
+Magic text section;1;3;{x0e35}Fuego a un {x0e38}.
+Magic text section;1;4;Piro+
+Magic text section;1;5;{x0e35}Fuego a un {x0e38}.
+Magic text section;1;6;Piro++
+Magic text section;1;7;{x0e35}Fuego a un {x0e38}.
+Magic text section;1;8;Hielo
+Magic text section;1;9;{x0e35}Frío a un {x0e38}.
+Magic text section;1;10;Hielo+
+Magic text section;1;11;{x0e35}Frío a un {x0e38}.
+Magic text section;1;12;Hielo++
+Magic text section;1;13;{x0e35}Frío a un {x0e38}.
+Magic text section;1;14;Electro
+Magic text section;1;15;{x0e35}Rayo a un {x0e38}.
+Magic text section;1;16;Electro+
+Magic text section;1;17;{x0e35}Rayo a un {x0e38}.
+Magic text section;1;18;Electro++
+Magic text section;1;19;{x0e35}Rayo a un {x0e38}.
+Magic text section;1;20;Aqua
+Magic text section;1;21;{x0e35}Agua a un {x0e38}.
+Magic text section;1;22;Aero
+Magic text section;1;23;{x0e35}Aire a un {x0e38}.
+Magic text section;1;24;Bio
+Magic text section;1;25;Envenena y daña con ELM Veneno a un rival.
+Magic text section;1;26;Gravedad
+Magic text section;1;27;Reduce {x0e53}vitalidad{x0e49}un {x0e38} a 3/4.
+Magic text section;1;28;Sanctus
+Magic text section;1;29;{x0e35}Sacro a un {x0e38}.
+Magic text section;1;30;Fulgor
+Magic text section;1;31;{x0e4a}daño no {x0e37} a un {x0e38}.
+Magic text section;1;32;Meteo
+Magic text section;1;33;{x0e4a}daño no {x0e37} al azar.
+Magic text section;1;34;Seísmo
+Magic text section;1;35;{x0e4a}daño ELM Tierra a todos los {x0e38}s.
+Magic text section;1;36;Tornado
+Magic text section;1;37;{x0e4a}daño ELM Aire a todos los {x0e38}s.
+Magic text section;1;38;Artema
+Magic text section;1;39;{x0e4a}daño no {x0e37} a todos los {x0e38}s.
+Magic text section;1;40;Apocalipsis
+Magic text section;1;41;{x0e4a}daño no {x0e37} a todos los {x0e38}s.
+Magic text section;1;42;Cura
+Magic text section;1;43;{x0e46} 
+Magic text section;1;44;Cura+
+Magic text section;1;45;{x0e46} 
+Magic text section;1;46;Cura++
+Magic text section;1;47;{x0e46} 
+Magic text section;1;48;Lázaro
+Magic text section;1;49;Reanima a un compañero K.O..
+Magic text section;1;50;Lázaro+
+Magic text section;1;51;Reanima d{x0e52}todo a alguien K.O..
+Magic text section;1;52;Revitalia
+Magic text section;1;53;Restablece {x0e53}vitalidad a intervalos.
+Magic text section;1;54;Esna
+Magic text section;1;55;Sana los estados alterados.
+Magic text section;1;56;Antimagia
+Magic text section;1;57;Anu{x0e53}los efectos{x0e49}{x0e53}magia.
+Magic text section;1;58;Coraza
+Magic text section;1;59;Reduce {x0e47} {x0e52}daño físico.
+Magic text section;1;60;Escudo
+Magic text section;1;61;Reduce {x0e47} {x0e52}daño mágico.
+Magic text section;1;62;Espejo
+Magic text section;1;63;Hace rebotar {x0e47} ataques mágicos.
+Magic text section;1;64;Aura
+Magic text section;1;65;Facilita {x0e52}uso{x0e49}técnicas especiales.
+Magic text section;1;66;Doble
+Magic text section;1;67;Permite aplicar una magia dos veces seguidas.
+Magic text section;1;68;Triple
+Magic text section;1;69;Permite aplicar una magia tres veces seguidas.
+Magic text section;1;70;Prisa
+Magic text section;1;71;Aumenta {x0e47} {x0e53}velocidad.
+Magic text section;1;72;Freno
+Magic text section;1;73;Disminuye {x0e47} {x0e53}velocidad.
+Magic text section;1;74;Paro
+Magic text section;1;75;Inmobiliza {x0e47}.
+Magic text section;1;76;Tiniebla
+Magic text section;1;77;{x0e4a}ceguera.
+Magic text section;1;78;Confu
+Magic text section;1;79;Crea un estado{x0e49}confusión.
+Magic text section;1;80;Morfeo
+Magic text section;1;81;Hace dormir.
+Magic text section;1;82;Mutis
+Magic text section;1;83;{x0e4a}mudez.
+Magic text section;1;84;Petra
+Magic text section;1;85;Convierte en piedra.
+Magic text section;1;86;Muerte
+Magic text section;1;87;{x0e4a}{x0e53}muerte súbita.
+Magic text section;1;88;Drenaje
+Magic text section;1;89;Absorbe vitalidad.
+Magic text section;1;90;Dolor
+Magic text section;1;91;{x0e4a}ceguera, mudez y envenenamiento.
+Magic text section;1;92;Locura
+Magic text section;1;93;{x0e4a}locura.
+Magic text section;1;94;Lévita
+Magic text section;1;95;Suspende a un individuo en {x0e52}aire.
+Magic text section;1;96;Zombi
+Magic text section;1;97;Convierte en zombi.
+Magic text section;1;98;Fusión
+Magic text section;1;99;{x0e4a}daño no {x0e37} y reduce {x0e53}RST a 0.
+Magic text section;1;100;Libra
+Magic text section;1;101;Muestra VIT y puntos débiles d{x0e52}{x0e38}.
+Magic text section;1;102;Cura total
+Magic text section;1;103;Restablece VIT y cura EST{x0e49}todo {x0e52}grupo.
+Magic text section;1;104;Muro
+Magic text section;1;105;Protege a todo {x0e52}grupo con Coraza y Escudo.
+Magic text section;1;106;Lévita++
+Magic text section;1;107;Hace desaparecer al {x0e38}.
+Magic text section;1;108; 
+Magic text section;1;109; 
+Magic text section;1;110; 
+Magic text section;1;111; 
+Magic text section;1;112;The End
+Magic text section;1;113;Elimina a todos los {x0e38}s.
+Junctionable GF text section;2;0;Tormenta eléctrica
+Junctionable GF text section;2;1;{x0e36}{x0e49}ELM Rayo.
+Junctionable GF text section;2;2;Polvo de diamantes
+Junctionable GF text section;2;3;{x0e36}{x0e49}ELM Frío.
+Junctionable GF text section;2;4;Llamas del infierno
+Junctionable GF text section;2;5;{x0e36}{x0e49}ELM Fuego.
+Junctionable GF text section;2;6;Canto mesmerizante
+Junctionable GF text section;2;7;{x0e36} que daña y enmudece.
+Junctionable GF text section;2;8;Amor fraternal
+Junctionable GF text section;2;9;{x0e36}{x0e49}ELM Tierra.
+Junctionable GF text section;2;10;Emisario de la noche
+Junctionable GF text section;2;11;{x0e36} no {x0e37}.
+Junctionable GF text section;2;12;Resplandor de rubí
+Junctionable GF text section;2;13;Aplica {x0e53}magia Espejo a todos {x0e52}grupo.
+Junctionable GF text section;2;14;Rugido oceánico
+Junctionable GF text section;2;15;{x0e36}{x0e49}ELM Agua.
+Junctionable GF text section;2;16;Zona huracanada
+Junctionable GF text section;2;17;{x0e36}{x0e49}ELM Aire.
+Junctionable GF text section;2;18;Custodio del averno
+Junctionable GF text section;2;19;Aplica las magias Doble y Triple al grupo.
+Junctionable GF text section;2;20;Veredicto final
+Junctionable GF text section;2;21;{x0e36}{x0e49}ELM Sacro.
+Junctionable GF text section;2;22;Vías de eternidad
+Junctionable GF text section;2;23;{x0e36}{x0e49}ELM Veneno.
+Junctionable GF text section;2;24;Megafulgor
+Junctionable GF text section;2;25;{x0e36} no {x0e37}.
+Junctionable GF text section;2;26;Miles de espinas
+Junctionable GF text section;2;27;{x0e36} no {x0e37}.
+Junctionable GF text section;2;28;Cuchilla
+Junctionable GF text section;2;29;{x0e36} no {x0e37}.
+Junctionable GF text section;2;30;Extremaunción
+Junctionable GF text section;2;31;{x0e36} no {x0e37}.
+Enemy attack text section;3;0;
+Enemy attack text section;3;1;
+Enemy attack text section;3;2;
+Enemy attack text section;3;3;
+Enemy attack text section;3;4;
+Enemy attack text section;3;5;Cornada cortante
+Enemy attack text section;3;6;Coz
+Enemy attack text section;3;7;Bumerán
+Enemy attack text section;3;8;Rayo bomba
+Enemy attack text section;3;9;Hálito de tormenta
+Enemy attack text section;3;10;Niebla oscura
+Enemy attack text section;3;11;Constricción
+Enemy attack text section;3;12;Colisión
+Enemy attack text section;3;13;Mandíbulas de acero
+Enemy attack text section;3;14;
+Enemy attack text section;3;15;Cola de escorpión
+Enemy attack text section;3;16;Brazo sable
+Enemy attack text section;3;17;Aliento fétido
+Enemy attack text section;3;18;
+Enemy attack text section;3;19;Mirada petrificante
+Enemy attack text section;3;20;Chupasangre
+Enemy attack text section;3;21;Niebla venenosa
+Enemy attack text section;3;22;Contrasierra
+Enemy attack text section;3;23;Contramáser
+Enemy attack text section;3;24;
+Enemy attack text section;3;25;Mil espinas
+Enemy attack text section;3;26;Rompecorazones
+Enemy attack text section;3;27;Pezuñazo
+Enemy attack text section;3;28;Descarga eléctrica
+Enemy attack text section;3;29;Mirada petrificante
+Enemy attack text section;3;30;
+Enemy attack text section;3;31;Dentelladas
+Enemy attack text section;3;32;Gas venenoso
+Enemy attack text section;3;33;Gas venenoso
+Enemy attack text section;3;34;Gas venenoso
+Enemy attack text section;3;35;Ácido
+Enemy attack text section;3;36;Ojo fundidor
+Enemy attack text section;3;37;Hálito
+Enemy attack text section;3;38;Aliento helado
+Enemy attack text section;3;39;Tormenta de arena
+Enemy attack text section;3;40;
+Enemy attack text section;3;41;
+Enemy attack text section;3;42;
+Enemy attack text section;3;43;
+Enemy attack text section;3;44;
+Enemy attack text section;3;45;
+Enemy attack text section;3;46;
+Enemy attack text section;3;47;
+Enemy attack text section;3;48;Absorción
+Enemy attack text section;3;49;Terremoto
+Enemy attack text section;3;50;
+Enemy attack text section;3;51;
+Enemy attack text section;3;52;
+Enemy attack text section;3;53;Metamorfosis
+Enemy attack text section;3;54;Beso
+Enemy attack text section;3;55;Clavado mortal
+Enemy attack text section;3;56;Balonmano
+Enemy attack text section;3;57;Bolos
+Enemy attack text section;3;58;Onda ultrasónica
+Enemy attack text section;3;59;
+Enemy attack text section;3;60;Mandíbulas asesinas
+Enemy attack text section;3;61;Pistola
+Enemy attack text section;3;62;Kamikaze
+Enemy attack text section;3;63;Onda ultrasónica
+Enemy attack text section;3;64;Aliento de ultratumba
+Enemy attack text section;3;65;Aliento infeccioso
+Enemy attack text section;3;66;Manos viscosas
+Enemy attack text section;3;67;Golpe de hombro
+Enemy attack text section;3;68;Biometralla
+Enemy attack text section;3;69;Cañonazo
+Enemy attack text section;3;70;Fuegonutrido
+Enemy attack text section;3;71;Concentración
+Enemy attack text section;3;72;Desintegrador
+Enemy attack text section;3;73;Telekinesis
+Enemy attack text section;3;74;
+Enemy attack text section;3;75;
+Enemy attack text section;3;76;Hipnosis
+Enemy attack text section;3;77;Líquido gástrico
+Enemy attack text section;3;78;
+Enemy attack text section;3;79;
+Enemy attack text section;3;80;Tormenta de arena
+Enemy attack text section;3;81;
+Enemy attack text section;3;82;
+Enemy attack text section;3;83;
+Enemy attack text section;3;84;Mirada fija
+Enemy attack text section;3;85;Suspiro
+Enemy attack text section;3;86;Maldición
+Enemy attack text section;3;87;
+Enemy attack text section;3;88;
+Enemy attack text section;3;89;
+Enemy attack text section;3;90;
+Enemy attack text section;3;91;
+Enemy attack text section;3;92;
+Enemy attack text section;3;93;Alta presión
+Enemy attack text section;3;94;Hálito
+Enemy attack text section;3;95;Dos espadas
+Enemy attack text section;3;96;Estocada
+Enemy attack text section;3;97;Alta esgrima
+Enemy attack text section;3;98;Megavibración
+Enemy attack text section;3;99;
+Enemy attack text section;3;100;Hilos viscosos
+Enemy attack text section;3;101;
+Enemy attack text section;3;102;Hálito
+Enemy attack text section;3;103;Coletazo lacerante
+Enemy attack text section;3;104;
+Enemy attack text section;3;105;
+Enemy attack text section;3;106;Ultradescarga 
+Enemy attack text section;3;107;Embestida
+Enemy attack text section;3;108;
+Enemy attack text section;3;109;
+Enemy attack text section;3;110;Ventosidad
+Enemy attack text section;3;111;Picadura
+Enemy attack text section;3;112;Líquido gástrico
+Enemy attack text section;3;113;Gas somnífero
+Enemy attack text section;3;114;Hálito
+Enemy attack text section;3;115;
+Enemy attack text section;3;116;
+Enemy attack text section;3;117;
+Enemy attack text section;3;118;Cañón de rayos
+Enemy attack text section;3;119;
+Enemy attack text section;3;120;Magma
+Enemy attack text section;3;121;Resonancia
+Enemy attack text section;3;122;Electroplasma
+Enemy attack text section;3;123;Electroplasma
+Enemy attack text section;3;124;Muerte nivel 5
+Enemy attack text section;3;125;Mordiscón
+Enemy attack text section;3;126;Abrazo del oso
+Enemy attack text section;3;127;Gas
+Enemy attack text section;3;128;Explosión
+Enemy attack text section;3;129;Explosión
+Enemy attack text section;3;130;Explosión
+Enemy attack text section;3;131;¡GARRHHH!
+Enemy attack text section;3;132;
+Enemy attack text section;3;133;Vendaval
+Enemy attack text section;3;134;
+Enemy attack text section;3;135;Libra
+Enemy attack text section;3;136;
+Enemy attack text section;3;137;
+Enemy attack text section;3;138;
+Enemy attack text section;3;139;Cañón de rayos
+Enemy attack text section;3;140;
+Enemy attack text section;3;141;
+Enemy attack text section;3;142;
+Enemy attack text section;3;143;
+Enemy attack text section;3;144;
+Enemy attack text section;3;145;
+Enemy attack text section;3;146;Vaho acuático
+Enemy attack text section;3;147;
+Enemy attack text section;3;148;
+Enemy attack text section;3;149;
+Enemy attack text section;3;150;
+Enemy attack text section;3;151;
+Enemy attack text section;3;152;Ojos malvados
+Enemy attack text section;3;153;Manos vengativas
+Enemy attack text section;3;154;Metralla pesada
+Enemy attack text section;3;155;Láser penetrante
+Enemy attack text section;3;156;
+Enemy attack text section;3;157;Burbujas corrosivas
+Enemy attack text section;3;158;Pinzas asesinas
+Enemy attack text section;3;159;Bumerán de filo
+Enemy attack text section;3;160;
+Enemy attack text section;3;161;
+Enemy attack text section;3;162;
+Enemy attack text section;3;163;
+Enemy attack text section;3;164;
+Enemy attack text section;3;165;
+Enemy attack text section;3;166;Cortahombres
+Enemy attack text section;3;167;
+Enemy attack text section;3;168;Descarga síquica
+Enemy attack text section;3;169;Hilos viscosos
+Enemy attack text section;3;170;
+Enemy attack text section;3;171;
+Enemy attack text section;3;172;
+Enemy attack text section;3;173;
+Enemy attack text section;3;174;Temblor desértico
+Enemy attack text section;3;175;Saliva
+Enemy attack text section;3;176;Rayo láser
+Enemy attack text section;3;177;Rayos aleatorios
+Enemy attack text section;3;178;
+Enemy attack text section;3;179;
+Enemy attack text section;3;180;Chorro de aceite
+Enemy attack text section;3;181;Onda oleaginosa
+Enemy attack text section;3;182;Onda sónica
+Enemy attack text section;3;183;Lluvia ácida
+Enemy attack text section;3;184;Aliento fétido
+Enemy attack text section;3;185;Onda metaacústica
+Enemy attack text section;3;186;
+Enemy attack text section;3;187;
+Enemy attack text section;3;188;
+Enemy attack text section;3;189;
+Enemy attack text section;3;190;
+Enemy attack text section;3;191;
+Enemy attack text section;3;192;Danza de ochú
+Enemy attack text section;3;193;Terremoto
+Enemy attack text section;3;194;Chupamagia
+Enemy attack text section;3;195;
+Enemy attack text section;3;196;
+Enemy attack text section;3;197;
+Enemy attack text section;3;198;
+Enemy attack text section;3;199;Cornada
+Enemy attack text section;3;200;Rayo bomba
+Enemy attack text section;3;201;Micromisiles
+Enemy attack text section;3;202;
+Enemy attack text section;3;203;
+Enemy attack text section;3;204;Puñetazo astral
+Enemy attack text section;3;205;
+Enemy attack text section;3;206;
+Enemy attack text section;3;207;
+Enemy attack text section;3;208;
+Enemy attack text section;3;209;
+Enemy attack text section;3;210;Especial Trueno
+Enemy attack text section;3;211;
+Enemy attack text section;3;212;
+Enemy attack text section;3;213;Especial Hermanos
+Enemy attack text section;3;214;Escisión
+Enemy attack text section;3;215;Aniquilación
+Enemy attack text section;3;216;Mutilación
+Enemy attack text section;3;217;
+Enemy attack text section;3;218;
+Enemy attack text section;3;219;
+Enemy attack text section;3;220;Mazazo bestial
+Enemy attack text section;3;221;
+Enemy attack text section;3;222;Cuchilla
+Enemy attack text section;3;223;Rencor de la raza
+Enemy attack text section;3;224;
+Enemy attack text section;3;225;
+Enemy attack text section;3;226;Obsequios del rey
+Enemy attack text section;3;227;Recién afilada
+Enemy attack text section;3;228;
+Enemy attack text section;3;229;
+Enemy attack text section;3;230;Diez mil espinas
+Enemy attack text section;3;231;Diez mil toneladas
+Enemy attack text section;3;232;
+Enemy attack text section;3;233;Hálito de tormenta
+Enemy attack text section;3;234;Megafulgor
+Enemy attack text section;3;235;Cambio de defensa
+Enemy attack text section;3;236;
+Enemy attack text section;3;237;
+Enemy attack text section;3;238;
+Enemy attack text section;3;239;
+Enemy attack text section;3;240;
+Enemy attack text section;3;241;
+Enemy attack text section;3;242;Lluvia de rayos
+Enemy attack text section;3;243;Cuernos de muerte
+Enemy attack text section;3;244;
+Enemy attack text section;3;245;
+Enemy attack text section;3;246;
+Enemy attack text section;3;247;
+Enemy attack text section;3;248;
+Enemy attack text section;3;249;
+Enemy attack text section;3;250;
+Enemy attack text section;3;251;
+Enemy attack text section;3;252;
+Enemy attack text section;3;253;
+Enemy attack text section;3;254;
+Enemy attack text section;3;255;
+Enemy attack text section;3;256;
+Enemy attack text section;3;257;Ultragravedad
+Enemy attack text section;3;258;
+Enemy attack text section;3;259;
+Enemy attack text section;3;260;
+Enemy attack text section;3;261;Invocación
+Enemy attack text section;3;262;Barrera total
+Enemy attack text section;3;263;Condena a muerte
+Enemy attack text section;3;264;
+Enemy attack text section;3;265;
+Enemy attack text section;3;266;
+Enemy attack text section;3;267;
+Enemy attack text section;3;268;
+Enemy attack text section;3;269;
+Enemy attack text section;3;270;
+Enemy attack text section;3;271;Electro
+Enemy attack text section;3;272;Electro+
+Enemy attack text section;3;273;Electro++
+Enemy attack text section;3;274;Sable justiciero
+Enemy attack text section;3;275;
+Enemy attack text section;3;276;Viento blanco
+Enemy attack text section;3;277;
+Enemy attack text section;3;278;
+Enemy attack text section;3;279;
+Enemy attack text section;3;280;Carga
+Enemy attack text section;3;281;Láser autoguiado
+Enemy attack text section;3;282;Láser autoguiado
+Enemy attack text section;3;283;Láser doble
+Enemy attack text section;3;284;Corona
+Enemy attack text section;3;285;Descarga sísmica
+Enemy attack text section;3;286;
+Enemy attack text section;3;287;
+Enemy attack text section;3;288;
+Enemy attack text section;3;289;
+Enemy attack text section;3;290;
+Enemy attack text section;3;291;
+Enemy attack text section;3;292;Cañón megaláser
+Enemy attack text section;3;293;Cañón miniláser
+Enemy attack text section;3;294;
+Enemy attack text section;3;295;Barrera total
+Enemy attack text section;3;296;
+Enemy attack text section;3;297;
+Enemy attack text section;3;298;
+Enemy attack text section;3;299;
+Enemy attack text section;3;300;
+Enemy attack text section;3;301;
+Enemy attack text section;3;302;
+Enemy attack text section;3;303;
+Enemy attack text section;3;304;
+Enemy attack text section;3;305;Fulgor negro
+Enemy attack text section;3;306;
+Enemy attack text section;3;307;Acero letal
+Enemy attack text section;3;308;Metaenergía
+Enemy attack text section;3;309;Ultragravedad
+Enemy attack text section;3;310;Descarga sísmica
+Enemy attack text section;3;311;Disrupción cósmica
+Enemy attack text section;3;312;
+Enemy attack text section;3;313;
+Enemy attack text section;3;314;Torbellino fatal
+Enemy attack text section;3;315;Ritual sangriento
+Enemy attack text section;3;316;Bola de energía 
+Enemy attack text section;3;317;
+Enemy attack text section;3;318;
+Enemy attack text section;3;319;
+Enemy attack text section;3;320;
+Enemy attack text section;3;321;
+Enemy attack text section;3;322;
+Enemy attack text section;3;323;
+Enemy attack text section;3;324;
+Enemy attack text section;3;325;
+Enemy attack text section;3;326;
+Enemy attack text section;3;327;
+Enemy attack text section;3;328;
+Enemy attack text section;3;329;Sable justiciero
+Enemy attack text section;3;330;
+Enemy attack text section;3;331;
+Enemy attack text section;3;332;
+Enemy attack text section;3;333;
+Enemy attack text section;3;334;
+Enemy attack text section;3;335;
+Enemy attack text section;3;336;
+Enemy attack text section;3;337;
+Enemy attack text section;3;338;Maelstrom
+Enemy attack text section;3;339;
+Enemy attack text section;3;340;
+Enemy attack text section;3;341;
+Enemy attack text section;3;342;
+Enemy attack text section;3;343;
+Enemy attack text section;3;344;
+Enemy attack text section;3;345;
+Enemy attack text section;3;346;
+Enemy attack text section;3;347;
+Enemy attack text section;3;348;
+Enemy attack text section;3;349;
+Enemy attack text section;3;350;
+Enemy attack text section;3;351;
+Enemy attack text section;3;352;
+Enemy attack text section;3;353;
+Enemy attack text section;3;354;
+Enemy attack text section;3;355;
+Enemy attack text section;3;356;
+Enemy attack text section;3;357;Extraer Apocalipsis
+Enemy attack text section;3;358;Veredicto infernal
+Enemy attack text section;3;359;Drenaje
+Enemy attack text section;3;360;Colisión astral
+Enemy attack text section;3;361;
+Enemy attack text section;3;362;Onda expansiva
+Enemy attack text section;3;363;
+Enemy attack text section;3;364;Esna
+Enemy attack text section;3;365;Maelstrom
+Enemy attack text section;3;366;
+Enemy attack text section;3;367;
+Enemy attack text section;3;368;
+Enemy attack text section;3;369;Onda de vacío
+Enemy attack text section;3;370;
+Enemy attack text section;3;371;
+Enemy attack text section;3;372;
+Enemy attack text section;3;373;Apocalipsis
+Enemy attack text section;3;374;
+Enemy attack text section;3;375;Sablazo demoledor
+Enemy attack text section;3;376;
+Enemy attack text section;3;377;
+Enemy attack text section;3;378;Artema
+Enemy attack text section;3;379;Sanctus
+Enemy attack text section;3;380;Seísmo
+Enemy attack text section;3;381;Tornado
+Enemy attack text section;3;382;A382
+Enemy attack text section;3;383;A383
+Weapon text section;4;0;Revólver
+Weapon text section;4;1;Kiat recto
+Weapon text section;4;2;Curtis revólver
+Weapon text section;4;3;Curtis-Kiat
+Weapon text section;4;4;Avenger ranurado
+Weapon text section;4;5;Avenger súper
+Weapon text section;4;6;Lionheart
+Weapon text section;4;7;Guantes de lucha
+Weapon text section;4;8;Maverick
+Weapon text section;4;9;Full Metal
+Weapon text section;4;10;Ehrgeiz
+Weapon text section;4;11;Valiant
+Weapon text section;4;12;Ulises
+Weapon text section;4;13;Bismark
+Weapon text section;4;14;Exeter
+Weapon text section;4;15;Látigo de cadena
+Weapon text section;4;16;Cola de Sleipnir
+Weapon text section;4;17;Red Scorpion
+Weapon text section;4;18;Gold Snake
+Weapon text section;4;19;Luna llena
+Weapon text section;4;20;Valkiria
+Weapon text section;4;21;Sol naciente
+Weapon text section;4;22;Cardenal
+Weapon text section;4;23;Lethal Wings
+Weapon text section;4;24;Cadet
+Weapon text section;4;25;Deadly Iron
+Weapon text section;4;26;Cielo nocturno
+Weapon text section;4;27;Infalible
+Weapon text section;4;28;Hyperion
+Weapon text section;4;29;(No usa armas.)
+Weapon text section;4;30;Ametralladora
+Weapon text section;4;31;Kathar
+Weapon text section;4;32;Harpón
+Renzokuken finishers text section;5;0;Mandoble final
+Renzokuken finishers text section;5;1;{x0e33} 
+Renzokuken finishers text section;5;2;Círculo letal
+Renzokuken finishers text section;5;3;{x0e34} 
+Renzokuken finishers text section;5;4;Guillotina cósmica
+Renzokuken finishers text section;5;5;{x0e34} 
+Renzokuken finishers text section;5;6;Súmmum
+Renzokuken finishers text section;5;7;{x0e33} 
+Character names section;6;0;
+Character names section;6;1;Zell
+Character names section;6;2;Irvine
+Character names section;6;3;Quistis
+Character names section;6;4;
+Character names section;6;5;Selphie
+Character names section;6;6;Seifer
+Character names section;6;7;Edea
+Character names section;6;8;Laguna
+Character names section;6;9;Kiros
+Character names section;6;10;Ward
+Battle item names section;7;0;
+Battle item names section;7;1;
+Battle item names section;7;2;Poción
+Battle item names section;7;3;{x0e3f}200 puntos de {x0e57}.
+Battle item names section;7;4;Poción+
+Battle item names section;7;5;{x0e3f}400 puntos de {x0e57}.
+Battle item names section;7;6;Ultrapoción
+Battle item names section;7;7;{x0e3f}1.000 puntos de {x0e57}.
+Battle item names section;7;8;Ultrapoción+
+Battle item names section;7;9;{x0e3f}2.000 puntos de {x0e57}.
+Battle item names section;7;10;Poción X
+Battle item names section;7;11;{x0e3f}{x0e53}{x0e57} por completo.
+Battle item names section;7;12;Omnipoción
+Battle item names section;7;13;{x0e3f}1.000 puntos de {x0e57} a todo {x0e52}grupo.
+Battle item names section;7;14;Cola de fénix
+Battle item names section;7;15;Reanima a un aliado fuera de combate.
+Battle item names section;7;16;Omnifénix
+Battle item names section;7;17;Reanima a todos los aliados fuera de combate.
+Battle item names section;7;18;Elixir
+Battle item names section;7;19;{x0e3f}{x0e53}{x0e57} por completo y cura EST.
+Battle item names section;7;20;Superelixir
+Battle item names section;7;21;{x0e3f}{x0e53}{x0e57} y cura EST de todo {x0e52}grupo.
+Battle item names section;7;22;Antídoto
+Battle item names section;7;23;Cura {x0e52}envenenamiento.
+Battle item names section;7;24;Aguja de oro
+Battle item names section;7;25;Cura {x0e53}petrificación.
+Battle item names section;7;26;Colirio
+Battle item names section;7;27;Cura {x0e53}ceguera.
+Battle item names section;7;28;Hierba del eco
+Battle item names section;7;29;Cura {x0e53}mudez.
+Battle item names section;7;30;Agua bendita
+Battle item names section;7;31;Cura los estados Zombi y Maldición.
+Battle item names section;7;32;Panacea
+Battle item names section;7;33;Cura los estados alterados.
+Battle item names section;7;34;Panacea+
+Battle item names section;7;35;Cura EST alterados y los efectos de {x0e53}magia.
+Battle item names section;7;36;Sal heroica beta
+Battle item names section;7;37;A veces, hace al sujeto invulnerable al ataque.
+Battle item names section;7;38;Sal heroica
+Battle item names section;7;39;Hace al sujeto invulnerable al ataque.
+Battle item names section;7;40;Sal sacra beta
+Battle item names section;7;41;A veces, hace al grupo invulnerable al ataque.
+Battle item names section;7;42;Sal sacra
+Battle item names section;7;43;Hace al grupo invulnerable al ataque.
+Battle item names section;7;44;Piedra Escudo
+Battle item names section;7;45;{x0e40}Escudo.
+Battle item names section;7;46;Piedra Coraza
+Battle item names section;7;47;{x0e40}Coraza.
+Battle item names section;7;48;Piedra Aura
+Battle item names section;7;49;{x0e40}Aura.
+Battle item names section;7;50;Piedra Muerte
+Battle item names section;7;51;{x0e40}Muerte.
+Battle item names section;7;52;Piedra Sanctus
+Battle item names section;7;53;{x0e40}Sanctus.
+Battle item names section;7;54;Piedra Fulgor
+Battle item names section;7;55;{x0e40}Fulgor.
+Battle item names section;7;56;Piedra Meteo
+Battle item names section;7;57;{x0e40}Meteo.
+Battle item names section;7;58;Piedra Artema
+Battle item names section;7;59;{x0e40}Artema.
+Battle item names section;7;60;Verdura gysahl
+Battle item names section;7;61;Huele a chocobo...
+Battle item names section;7;62;Ala de fénix
+Battle item names section;7;63;Si se usa durante {x0e53}batalla...
+Battle item names section;7;64;Señal de lealtad
+Battle item names section;7;65;Si se usa durante {x0e53}batalla...
+Non-battle item names section;8;0;Tienda de lona
+Non-battle item names section;8;1;{x0e3f}{x0e53}{x0e57} y cura EST{x0e49}todo {x0e52}grupo.
+Non-battle item names section;8;2;Caseta
+Non-battle item names section;8;3;{x0e3f}{x0e53}{x0e57} por completo a todos los{x0e4e}
+Non-battle item names section;8;4;Chalé
+Non-battle item names section;8;5;{x0e3f}{x0e57} y cura EST d{x0e52}grupo y los{x0e4e}
+Non-battle item names section;8;6;Poción G. F.
+Non-battle item names section;8;7;{x0e3f}200 puntos{x0e49}{x0e57} a un{x0e4e}
+Non-battle item names section;8;8;Ultrapoción G. F.
+Non-battle item names section;8;9;{x0e3f}1.000 puntos{x0e49}{x0e57} a un{x0e4e}
+Non-battle item names section;8;10;Omnipoción G. F.
+Non-battle item names section;8;11;{x0e3f}1.000 puntos{x0e49}{x0e57} a todos los{x0e4e}
+Non-battle item names section;8;12;Resucitador G. F.
+Non-battle item names section;8;13;Reanima a un{x0e4e} fuera{x0e49}combate.
+Non-battle item names section;8;14;Cáliz bautismal
+Non-battle item names section;8;15;Permite cambiar {x0e52}nombre a un{x0e4e}
+Non-battle item names section;8;16;Sal amnésica
+Non-battle item names section;8;17;Hace olvidar una habilidad a un{x0e4e}
+Non-battle item names section;8;18;Libro de la VIT
+Non-battle item names section;8;19;{x0e3c}Enlace {x0e57}.
+Non-battle item names section;8;20;Libro de la FRZ
+Non-battle item names section;8;21;{x0e3c}Enlace FRZ.
+Non-battle item names section;8;22;Libro de la RST
+Non-battle item names section;8;23;{x0e3c}Enlace RST.
+Non-battle item names section;8;24;Libro del PM
+Non-battle item names section;8;25;{x0e3c}Enlace PM.
+Non-battle item names section;8;26;Libro del ESP
+Non-battle item names section;8;27;{x0e3c}Enlace ESP.
+Non-battle item names section;8;28;Libro de la RAP
+Non-battle item names section;8;29;{x0e3c}Enlace RAP.
+Non-battle item names section;8;30;Libro de la SUE
+Non-battle item names section;8;31;{x0e3c}Enlace SUE.
+Non-battle item names section;8;32;Égida
+Non-battle item names section;8;33;{x0e3c}Enlace EVS.
+Non-battle item names section;8;34;Papiro atq. ELM
+Non-battle item names section;8;35;{x0e3c}Enl. ataque ELM.
+Non-battle item names section;8;36;Papiro def. ELM
+Non-battle item names section;8;37;{x0e3c}Enl. def. ELM x4.
+Non-battle item names section;8;38;Papiro atq. EST
+Non-battle item names section;8;39;{x0e3c}Enl. ataque EST.
+Non-battle item names section;8;40;Papiro def. EST
+Non-battle item names section;8;41;{x0e3c}Enl. def. EST x4.
+Non-battle item names section;8;42;Piedra Rosetta
+Non-battle item names section;8;43;{x0e3c}4 habilidades.
+Non-battle item names section;8;44;Libro de magia
+Non-battle item names section;8;45;{x0e3c}Magia.
+Non-battle item names section;8;46;Libro de los G. F.
+Non-battle item names section;8;47;{x0e3c}G. F.
+Non-battle item names section;8;48;Libro extracción
+Non-battle item names section;8;49;{x0e3c}Extraer.
+Non-battle item names section;8;50;Libro objetos
+Non-battle item names section;8;51;{x0e3c}Objeto.
+Non-battle item names section;8;52;Alma lúdica
+Non-battle item names section;8;53;{x0e3c}Carta.
+Non-battle item names section;8;54;Anillo de cura
+Non-battle item names section;8;55;{x0e3c}Recuperar.
+Non-battle item names section;8;56;Alma de fénix
+Non-battle item names section;8;57;{x0e3c}Resucitar.
+Non-battle item names section;8;58;Estetoscopio
+Non-battle item names section;8;59;{x0e3c}Sanar.
+Non-battle item names section;8;60;Alma de bom
+Non-battle item names section;8;61;{x0e3c}Kamikaze.
+Non-battle item names section;8;62;Olla del hambre
+Non-battle item names section;8;63;{x0e3c}Engullir.
+Non-battle item names section;8;64;Amuleto Mogu
+Non-battle item names section;8;65;{x0e3c}Mogurito.
+Non-battle item names section;8;66;Tubo de hierro
+Non-battle item names section;8;67;{x0e3c}Magia{x0e4e} +1{x0e56}
+Non-battle item names section;8;68;Polvo estelar
+Non-battle item names section;8;69;{x0e3c}Magia{x0e4e} +2{x0e56}
+Non-battle item names section;8;70;Energía pura
+Non-battle item names section;8;71;{x0e3c}Magia{x0e4e} +3{x0e56}
+Non-battle item names section;8;72;Alma de Tábata
+Non-battle item names section;8;73;{x0e3c}Magia{x0e4e} +4{x0e56}
+Non-battle item names section;8;74;Malla de vida
+Non-battle item names section;8;75;{x0e3c}{x0e57}{x0e4e} +1{x0e56}
+Non-battle item names section;8;76;Malla de plata
+Non-battle item names section;8;77;{x0e3c}{x0e57}{x0e4e} +2{x0e56}
+Non-battle item names section;8;78;Coraza de oro
+Non-battle item names section;8;79;{x0e3c}{x0e57}{x0e4e} +3{x0e56}
+Non-battle item names section;8;80;Coraza diamante
+Non-battle item names section;8;81;{x0e3c}{x0e57}{x0e4e} +4{x0e56}
+Non-battle item names section;8;82;Anillo de Enoc
+Non-battle item names section;8;83;{x0e3c}{x0e57} +2{x0e56}
+Non-battle item names section;8;84;Anillo de gigante
+Non-battle item names section;8;85;{x0e3c}{x0e57} +4{x0e56}
+Non-battle item names section;8;86;Anillo de Gaia
+Non-battle item names section;8;87;{x0e3c}{x0e57} +8{x0e56}
+Non-battle item names section;8;88;Cinto de fuerza
+Non-battle item names section;8;89;{x0e3c}FRZ +2{x0e56}
+Non-battle item names section;8;90;Brazal de poder
+Non-battle item names section;8;91;{x0e3c}FRZ +4{x0e56}
+Non-battle item names section;8;92;Brazal de titán
+Non-battle item names section;8;93;{x0e3c}FRZ +6{x0e56}
+Non-battle item names section;8;94;Caparazón
+Non-battle item names section;8;95;{x0e3c}RST +2{x0e56}
+Non-battle item names section;8;96;Orichalcum
+Non-battle item names section;8;97;{x0e3c}RST +4{x0e56}
+Non-battle item names section;8;98;Adamantino
+Non-battle item names section;8;99;{x0e3c}RST +6{x0e56}
+Non-battle item names section;8;100;Manilla de Lun
+Non-battle item names section;8;101;{x0e3c}ESP +2{x0e56}
+Non-battle item names section;8;102;Manilla de Mitra
+Non-battle item names section;8;103;{x0e3c}ESP +4{x0e56}
+Non-battle item names section;8;104;Manilla de Osiris
+Non-battle item names section;8;105;{x0e3c}ESP +6{x0e56}
+Non-battle item names section;8;106;Tiara mágica
+Non-battle item names section;8;107;{x0e3c}PM +2{x0e56}
+Non-battle item names section;8;108;Corona de Juno
+Non-battle item names section;8;109;{x0e3c}PM +4{x0e56}
+Non-battle item names section;8;110;Corona real
+Non-battle item names section;8;111;{x0e3c}PM +6{x0e56}
+Non-battle item names section;8;112;Motor de jet
+Non-battle item names section;8;113;{x0e3c}RAP +2{x0e56}
+Non-battle item names section;8;114;Motor de cohete
+Non-battle item names section;8;115;{x0e3c}RAP +4{x0e56}
+Non-battle item names section;8;116;Manto de luna
+Non-battle item names section;8;117;{x0e3c}Autoescudo.
+Non-battle item names section;8;118;Manto de hierro
+Non-battle item names section;8;119;{x0e3c}Autocoraza.
+Non-battle item names section;8;120;Manto de luz
+Non-battle item names section;8;121;{x0e3c}Autoespejo.
+Non-battle item names section;8;122;Acelerador
+Non-battle item names section;8;123;{x0e3c}Autoprisa.
+Non-battle item names section;8;124;Alma monacal
+Non-battle item names section;8;125;{x0e3c}Contraataque.
+Non-battle item names section;8;126;Alma guerrera
+Non-battle item names section;8;127;{x0e3c}Proteger.
+Non-battle item names section;8;128;Diploma médico
+Non-battle item names section;8;129;{x0e3c}Saber médico.
+Non-battle item names section;8;130;Cien espinas
+Non-battle item names section;8;131;{x0e3c}Devolver daño.
+Non-battle item names section;8;132;Tres estrellas
+Non-battle item names section;8;133;{x0e3c}3 magias por 1.
+Non-battle item names section;8;134;Cinta
+Non-battle item names section;8;135;{x0e3c}Cinta.
+Non-battle item names section;8;136;Bala común
+Non-battle item names section;8;137;Munición común para rifle.
+Non-battle item names section;8;138;Bala expansiva
+Non-battle item names section;8;139;{x0e4a}daño a todos los enemigos.
+Non-battle item names section;8;140;Bala negra
+Non-battle item names section;8;141;{x0e4a}diversos estados alterados.
+Non-battle item names section;8;142;Bala pírica
+Non-battle item names section;8;143;Munición cargada con elemento Fuego.
+Non-battle item names section;8;144;Bala de poder
+Non-battle item names section;8;145;Tres veces más potente que una ba{x0e53}común.
+Non-battle item names section;8;146;Bala rápida
+Non-battle item names section;8;147;Permite disparar repetidamente sin pausas.
+Non-battle item names section;8;148;Bala antitanque
+Non-battle item names section;8;149;Perfora cualquier tipo{x0e49}blindaje.
+Non-battle item names section;8;150;Bala iónica
+Non-battle item names section;8;151;Munición cargada con gran cantidad{x0e49}energía.
+Non-battle item names section;8;152;Grava mágica
+Non-battle item names section;8;153;Contiene sólo un poco{x0e49}poder mágico.
+Non-battle item names section;8;154;Piedra mágica
+Non-battle item names section;8;155;Contiene poder mágico.
+Non-battle item names section;8;156;Roca mágica
+Non-battle item names section;8;157;Contiene un gran poder mágico.
+Non-battle item names section;8;158;Antena de ochú
+Non-battle item names section;8;159;Flexible y resistente.
+Non-battle item names section;8;160;Agua de vida
+Non-battle item names section;8;161;Contiene fuerza vital.
+Non-battle item names section;8;162;Ala de cocatoris
+Non-battle item names section;8;163;Contiene poder petrificante.
+Non-battle item names section;8;164;Polvo de zombi
+Non-battle item names section;8;165;Puede causar contagio.
+Non-battle item names section;8;166;Botines raudos
+Non-battle item names section;8;167;Hacen sentirse liviano a quien los calza.
+Non-battle item names section;8;168;Uña puntiaguda
+Non-battle item names section;8;169;Larga y afilada.
+Non-battle item names section;8;170;Tornillo
+Non-battle item names section;8;171;Frecuentemente utilizado para reformar armas.
+Non-battle item names section;8;172;Hoja de sierra
+Non-battle item names section;8;173;Muy afilada.
+Non-battle item names section;8;174;Hoja de unipladio
+Non-battle item names section;8;175;Larga y afilada.
+Non-battle item names section;8;176;Diente sangriento
+Non-battle item names section;8;177;Proviene{x0e49}un monstruo vampiro.
+Non-battle item names section;8;178;Piedra del vigor
+Non-battle item names section;8;179;Impregnada{x0e49}espíritu{x0e49}lucha.
+Non-battle item names section;8;180;Sable traidor
+Non-battle item names section;8;181;Induce a quien lo lleva a atacar a sus aliados.
+Non-battle item names section;8;182;Polvo somnífero
+Non-battle item names section;8;183;Provoca sueño.
+Non-battle item names section;8;184;Anillo de vida
+Non-battle item names section;8;185;Contiene fuerza vital.
+Non-battle item names section;8;186;Diente de dragón
+Non-battle item names section;8;187;Posee poder{x0e49}recuperación.
+Non-battle item names section;8;188;Tela de araña
+Non-battle item names section;8;189;{x0e3b}azul Megavibración.
+Non-battle item names section;8;190;Trozo de coral
+Non-battle item names section;8;191;{x0e3b}azul Electroshock.
+Non-battle item names section;8;192;Uña maldita
+Non-battle item names section;8;193;{x0e3b}azul Muerte niv{x0e52}?.
+Non-battle item names section;8;194;Agujero negro
+Non-battle item names section;8;195;{x0e3b}azul Desintegrador.
+Non-battle item names section;8;196;Agua cristal
+Non-battle item names section;8;197;{x0e3b}azul Vaho acuático.
+Non-battle item names section;8;198;Misil
+Non-battle item names section;8;199;{x0e3b}azul Micromisiles.
+Non-battle item names section;8;200;Fluido misterioso
+Non-battle item names section;8;201;{x0e3b}azul Lluvia ácida.
+Non-battle item names section;8;202;Bioametralladora
+Non-battle item names section;8;203;{x0e3b}azul Biometralla.
+Non-battle item names section;8;204;Pelo de dragón
+Non-battle item names section;8;205;{x0e3b}azul Llamarada.
+Non-battle item names section;8;206;Tentáculo molbol
+Non-battle item names section;8;207;{x0e3b}azul Aliento fétido.
+Non-battle item names section;8;208;Rumor del viento
+Non-battle item names section;8;209;{x0e3b}azul Viento blanco.
+Non-battle item names section;8;210;Cañón láser
+Non-battle item names section;8;211;{x0e3b}Láser autoguiado.
+Non-battle item names section;8;212;Blindaje
+Non-battle item names section;8;213;{x0e3b}azul Barrera total.
+Non-battle item names section;8;214;Generador
+Non-battle item names section;8;215;{x0e3b}azul Rayo bomba.
+Non-battle item names section;8;216;Materia oscura
+Non-battle item names section;8;217;{x0e3b}azul Onda expansiva.
+Non-battle item names section;8;218;Trozo de bom
+Non-battle item names section;8;219;Contiene elemento Fuego.
+Non-battle item names section;8;220;Colmillo rojo
+Non-battle item names section;8;221;Diente{x0e49}dragón impregnado{x0e49}ELM Fuego.
+Non-battle item names section;8;222;Aire antártico
+Non-battle item names section;8;223;Contiene elemento Frío.
+Non-battle item names section;8;224;Aire ártico
+Non-battle item names section;8;225;Contiene una alta concentración{x0e49}ELM Frío.
+Non-battle item names section;8;226;Piedra dínamo
+Non-battle item names section;8;227;Contiene elemento Rayo.
+Non-battle item names section;8;228;Pluma
+Non-battle item names section;8;229;De un ave, criatura d{x0e52}aire.
+Non-battle item names section;8;230;Colmillo venenoso
+Non-battle item names section;8;231;Proviene{x0e49}un monstruo armado con veneno.
+Non-battle item names section;8;232;Bola de hierro
+Non-battle item names section;8;233;Muy pesada. Contiene {x0e52}poder{x0e49}{x0e53}gravedad.
+Non-battle item names section;8;234;Piedra lunar
+Non-battle item names section;8;235;De {x0e53}luna sagrada, morada{x0e49}los monstruos.
+Non-battle item names section;8;236;Hueso jurásico
+Non-battle item names section;8;237;Un hueso{x0e49}tamaño impresionante.
+Non-battle item names section;8;238;Molinete
+Non-battle item names section;8;239;Ha absorbido {x0e53}energía d{x0e52}viento.
+Non-battle item names section;8;240;Piel de dragón
+Non-battle item names section;8;241;Resistente e impermeable.
+Non-battle item names section;8;242;Aleta de pez
+Non-battle item names section;8;243;Aleta dorsal{x0e49}un pez{x0e49}mar.
+Non-battle item names section;8;244;Uña de dragón
+Non-battle item names section;8;245;Extremadamente dura.
+Non-battle item names section;8;246;Polvo del silencio
+Non-battle item names section;8;247;Posee poder enmudecedor.
+Non-battle item names section;8;248;Polvo venenoso
+Non-battle item names section;8;249;Posee {x0e53}capacidad{x0e49}envenenar.
+Non-battle item names section;8;250;Alma en pena
+Non-battle item names section;8;251;Encierra {x0e52}poder{x0e49}causar {x0e53}muerte súbita.
+Non-battle item names section;8;252;Cuchilla
+Non-battle item names section;8;253;Pertenecía a un tomberi.
+Non-battle item names section;8;254;Espina de cactus
+Non-battle item names section;8;255;Proviene{x0e49}un cactilio.
+Non-battle item names section;8;256;Piedra del sabio
+Non-battle item names section;8;257;Encierra misteriosos poderes.
+Non-battle item names section;8;258;Combustible
+Non-battle item names section;8;259;Para los coches{x0e49}alquiler.
+Non-battle item names section;8;260;“Mil Novias”
+Non-battle item names section;8;261;Una revista llena{x0e49}fotos excitantes.
+Non-battle item names section;8;262;Carta de Edea
+Non-battle item names section;8;263;La carta de presentación de Edea.
+Non-battle item names section;8;264;Carné chocobo
+Non-battle item names section;8;265;Permite cambiar {x0e52}nombre a un chocobo.
+Non-battle item names section;8;266;Carné mascota
+Non-battle item names section;8;267;Permite cambiar {x0e52}nombre al perro.
+Non-battle item names section;8;268;Anillo de Salomón
+Non-battle item names section;8;269;Antiguo y aparentemente inservible.
+Non-battle item names section;8;270;Lámpara mágica
+Non-battle item names section;8;271;Altamente peligrosa. Guardar antes de usarla.
+Non-battle item names section;8;272;Dosis de VIT
+Non-battle item names section;8;273;Aumenta la vitalidad del guerrero.
+Non-battle item names section;8;274;Dosis de FRZ
+Non-battle item names section;8;275;{x0e43}{x0e53}fuerza d{x0e52}guerrero.
+Non-battle item names section;8;276;Dosis de RST
+Non-battle item names section;8;277;{x0e43}{x0e53}resistencia d{x0e52}guerrero.
+Non-battle item names section;8;278;Dosis de PM
+Non-battle item names section;8;279;{x0e43}{x0e52}poder mágico d{x0e52}guerrero.
+Non-battle item names section;8;280;Dosis de ESP
+Non-battle item names section;8;281;Fortalece {x0e52}espíritu d{x0e52}guerrero.
+Non-battle item names section;8;282;Dosis de RAP
+Non-battle item names section;8;283;{x0e43}{x0e53}rapidez d{x0e52}guerrero.
+Non-battle item names section;8;284;Dosis de SUE
+Non-battle item names section;8;285;Mejora {x0e53}suerte d{x0e52}guerrero.
+Non-battle item names section;8;286;Anillo nupcial
+Non-battle item names section;8;287;{x0e43}{x0e53}afinidad d{x0e52}guerrero con sus{x0e4e}
+Non-battle item names section;8;288;“Armas”, núm. 1
+Non-battle item names section;8;289;{x0e39}
+Non-battle item names section;8;290;“Armas” Marzo
+Non-battle item names section;8;291;{x0e39}
+Non-battle item names section;8;292;“Armas” Abril
+Non-battle item names section;8;293;{x0e39}
+Non-battle item names section;8;294;“Armas” Mayo
+Non-battle item names section;8;295;{x0e39}
+Non-battle item names section;8;296;“Armas” Junio
+Non-battle item names section;8;297;{x0e39}
+Non-battle item names section;8;298;“Armas” Julio
+Non-battle item names section;8;299;{x0e39}
+Non-battle item names section;8;300;“Armas” Agosto
+Non-battle item names section;8;301;{x0e39}
+Non-battle item names section;8;302;“Karateka” 001
+Non-battle item names section;8;303;{x0e45}
+Non-battle item names section;8;304;“Karateka” 002
+Non-battle item names section;8;305;{x0e45}
+Non-battle item names section;8;306;“Karateka” 003
+Non-battle item names section;8;307;{x0e45}
+Non-battle item names section;8;308;“Karateka” 004
+Non-battle item names section;8;309;{x0e45}
+Non-battle item names section;8;310;“Karateka” 005
+Non-battle item names section;8;311;{x0e45}
+Non-battle item names section;8;312;“Hocicos”, N. 1
+Non-battle item names section;8;313;{x0e3a}
+Non-battle item names section;8;314;“Hocicos”, N. 2
+Non-battle item names section;8;315;{x0e3a}
+Non-battle item names section;8;316;“Hocicos”, N. 3
+Non-battle item names section;8;317;{x0e3a}
+Non-battle item names section;8;318;“Hocicos”, N. 4
+Non-battle item names section;8;319;{x0e3a}
+Non-battle item names section;8;320;“Hocicos”, N. 5
+Non-battle item names section;8;321;{x0e3a}
+Non-battle item names section;8;322;“Hocicos”, N. 6
+Non-battle item names section;8;323;{x0e3a}
+Non-battle item names section;8;324;“Expediente F” 1
+Non-battle item names section;8;325;{x0e51}Últimas noticias
+Non-battle item names section;8;326;“Expediente F” 2
+Non-battle item names section;8;327;{x0e51}Núm.{x0e49}fotografías
+Non-battle item names section;8;328;“Expediente F” 3
+Non-battle item names section;8;329;{x0e51}Especial tesoros
+Non-battle item names section;8;330;“Expediente F” 4
+Non-battle item names section;8;331;{x0e51}Núm.{x0e49}actualidad
+Non-junctionable GF attack name section;9;0;Sable justiciero
+Non-junctionable GF attack name section;9;1;Llamas de vida
+Non-junctionable GF attack name section;9;2;Chocofuego
+Non-junctionable GF attack name section;9;3;Chocofulgor
+Non-junctionable GF attack name section;9;4;Chocometeo
+Non-junctionable GF attack name section;9;5;Chocomole
+Non-junctionable GF attack name section;9;6;Baile del moguri
+Non-junctionable GF attack name section;9;7;Excalibur
+Non-junctionable GF attack name section;9;8;Excalibur oxidada
+Non-junctionable GF attack name section;9;9;Masamune
+Non-junctionable GF attack name section;9;10;Sable justiciero
+Non-junctionable GF attack name section;9;11;¡{Angelo} al ataque!
+Non-junctionable GF attack name section;9;12;Doctor {Angelo}
+Non-junctionable GF attack name section;9;13;{Angelo} resurrector
+Non-junctionable GF attack name section;9;14;{Angelo} sabueso
+Non-junctionable GF attack name section;9;15;Mumbamumbamumba
+Junction abilities text section;10;0;
+Junction abilities text section;10;1;
+Junction abilities text section;10;2;Enlace VIT
+Junction abilities text section;10;3;{x0e41} {x0e53}vitalidad.
+Junction abilities text section;10;4;Enlace FRZ
+Junction abilities text section;10;5;{x0e41} {x0e53}fuerza.
+Junction abilities text section;10;6;Enlace RST
+Junction abilities text section;10;7;{x0e41} {x0e53}resistencia.
+Junction abilities text section;10;8;Enlace PM
+Junction abilities text section;10;9;{x0e41}l poder mágico.
+Junction abilities text section;10;10;Enlace ESP
+Junction abilities text section;10;11;{x0e41}l espíritu.
+Junction abilities text section;10;12;Enlace RAP
+Junction abilities text section;10;13;{x0e41} {x0e53}rapidez.
+Junction abilities text section;10;14;Enlace EVS
+Junction abilities text section;10;15;{x0e41} {x0e53}evasión.
+Junction abilities text section;10;16;Enlace PNT
+Junction abilities text section;10;17;{x0e41} {x0e53}puntería.
+Junction abilities text section;10;18;Enlace SUE
+Junction abilities text section;10;19;{x0e41} {x0e53}suerte.
+Junction abilities text section;10;20;Enl. ataque ELM
+Junction abilities text section;10;21;{x0e41}l ataque ELM.
+Junction abilities text section;10;22;Enl. ataque EST
+Junction abilities text section;10;23;{x0e41}l ataque EST.
+Junction abilities text section;10;24;Enl. defensa ELM
+Junction abilities text section;10;25;{x0e41} {x0e53}defensa ELM.
+Junction abilities text section;10;26;Enl. defensa EST
+Junction abilities text section;10;27;{x0e41} {x0e53}defensa EST.
+Junction abilities text section;10;28;Enl. def. ELM x2
+Junction abilities text section;10;29;{x0e54}2{x0e4f}ELM.
+Junction abilities text section;10;30;Enl. def. ELM x4
+Junction abilities text section;10;31;{x0e54}4{x0e4f}ELM.
+Junction abilities text section;10;32;Enl. def. EST x2
+Junction abilities text section;10;33;{x0e54}2{x0e4f}EST.
+Junction abilities text section;10;34;Enl. def. EST x4
+Junction abilities text section;10;35;{x0e54}4{x0e4f}EST.
+Junction abilities text section;10;36;3 habilidades
+Junction abilities text section;10;37;Permite utilizar 3{x0e55}
+Junction abilities text section;10;38;4 habilidades
+Junction abilities text section;10;39;Permite utilizar 4{x0e55}
+Command abilities text section;11;0;Magia
+Command abilities text section;11;1;{x0e42}Magia.
+Command abilities text section;11;2;G. F.
+Command abilities text section;11;3;{x0e42}G. F.
+Command abilities text section;11;4;Extraer
+Command abilities text section;11;5;{x0e42}Extraer.
+Command abilities text section;11;6;Objeto
+Command abilities text section;11;7;{x0e42}Objeto.
+Command abilities text section;11;8; 
+Command abilities text section;11;9; 
+Command abilities text section;11;10;Carta
+Command abilities text section;11;11;{x0e42}Carta.
+Command abilities text section;11;12;Condena
+Command abilities text section;11;13;{x0e42}Condena.
+Command abilities text section;11;14;Acometida
+Command abilities text section;11;15;{x0e42}Acometida.
+Command abilities text section;11;16;Sanar
+Command abilities text section;11;17;{x0e42}Sanar.
+Command abilities text section;11;18;Defensa
+Command abilities text section;11;19;{x0e42}Defensa.
+Command abilities text section;11;20;Sacrificio
+Command abilities text section;11;21;{x0e42}Sacrificio.
+Command abilities text section;11;22;Recuperar
+Command abilities text section;11;23;{x0e42}Recuperar.
+Command abilities text section;11;24;Absorber
+Command abilities text section;11;25;{x0e42}Absorber.
+Command abilities text section;11;26;Resucitar
+Command abilities text section;11;27;{x0e42}Resucitar.
+Command abilities text section;11;28;Nivel↓
+Command abilities text section;11;29;{x0e42}Nivel↓.
+Command abilities text section;11;30;Nivel↑
+Command abilities text section;11;31;{x0e42}Nivel↑.
+Command abilities text section;11;32;Kamikaze
+Command abilities text section;11;33;{x0e42}Kamikaze.
+Command abilities text section;11;34;Engullir
+Command abilities text section;11;35;{x0e42}Engullir.
+Command abilities text section;11;36;Mogurito
+Command abilities text section;11;37;{x0e42}Mogurito.
+Stat percentage increasing abilities text section;12;0;VIT +20%
+Stat percentage increasing abilities text section;12;1;{x0e43}{x0e53}vitalidad{x0e4d}2{x0e56}
+Stat percentage increasing abilities text section;12;2;VIT +40%
+Stat percentage increasing abilities text section;12;3;{x0e43}{x0e53}vitalidad{x0e4d}4{x0e56}
+Stat percentage increasing abilities text section;12;4;VIT +80%
+Stat percentage increasing abilities text section;12;5;{x0e43}{x0e53}vitalidad{x0e4d}8{x0e56}
+Stat percentage increasing abilities text section;12;6;FRZ +20%
+Stat percentage increasing abilities text section;12;7;{x0e43}{x0e53}fuerza{x0e4d}2{x0e56}
+Stat percentage increasing abilities text section;12;8;FRZ +40%
+Stat percentage increasing abilities text section;12;9;{x0e43}{x0e53}fuerza{x0e4d}4{x0e56}
+Stat percentage increasing abilities text section;12;10;FRZ +60%
+Stat percentage increasing abilities text section;12;11;{x0e43}{x0e53}fuerza{x0e4d}6{x0e56}
+Stat percentage increasing abilities text section;12;12;RST +20%
+Stat percentage increasing abilities text section;12;13;{x0e43}{x0e53}resistencia{x0e4d}2{x0e56}
+Stat percentage increasing abilities text section;12;14;RST +40%
+Stat percentage increasing abilities text section;12;15;{x0e43}{x0e53}resistencia{x0e4d}4{x0e56}
+Stat percentage increasing abilities text section;12;16;RST +60%
+Stat percentage increasing abilities text section;12;17;{x0e43}{x0e53}resistencia{x0e4d}6{x0e56}
+Stat percentage increasing abilities text section;12;18;PM +20%
+Stat percentage increasing abilities text section;12;19;{x0e43}{x0e52}poder mágico{x0e4d}2{x0e56}
+Stat percentage increasing abilities text section;12;20;PM +40%
+Stat percentage increasing abilities text section;12;21;{x0e43}{x0e52}poder mágico{x0e4d}4{x0e56}
+Stat percentage increasing abilities text section;12;22;PM +60%
+Stat percentage increasing abilities text section;12;23;{x0e43}{x0e52}poder mágico{x0e4d}6{x0e56}
+Stat percentage increasing abilities text section;12;24;ESP +20%
+Stat percentage increasing abilities text section;12;25;Refuerza {x0e52}espíritu{x0e4d}2{x0e56}
+Stat percentage increasing abilities text section;12;26;ESP +40%
+Stat percentage increasing abilities text section;12;27;Refuerza {x0e52}espíritu{x0e4d}4{x0e56}
+Stat percentage increasing abilities text section;12;28;ESP +60%
+Stat percentage increasing abilities text section;12;29;Refuerza {x0e52}espíritu{x0e4d}6{x0e56}
+Stat percentage increasing abilities text section;12;30;RAP +20%
+Stat percentage increasing abilities text section;12;31;{x0e43}{x0e53}rapidez{x0e4d}2{x0e56}
+Stat percentage increasing abilities text section;12;32;RAP +40%
+Stat percentage increasing abilities text section;12;33;{x0e43}{x0e53}rapidez{x0e4d}4{x0e56}
+Stat percentage increasing abilities text section;12;34;EVS +30%
+Stat percentage increasing abilities text section;12;35;{x0e43}{x0e53}capacidad{x0e49}evasión{x0e4d}3{x0e56}
+Stat percentage increasing abilities text section;12;36;SUE +50%
+Stat percentage increasing abilities text section;12;37;Mejora {x0e53}suerte{x0e4d}5{x0e56}
+Character ability text section;13;0;Arrebatar
+Character ability text section;13;1;Reemplaza {x0e52}comando Atacar por Arrebatar.
+Character ability text section;13;2;Saber médico
+Character ability text section;13;3;Aumenta al doble {x0e52}efecto{x0e49}los brebajes.
+Character ability text section;13;4;Contraataque
+Character ability text section;13;5;El guerrero responde inmediatamente al ataque.
+Character ability text section;13;6;Devolver daño
+Character ability text section;13;7;El guerrero devuelve al enemigo 1/4 d{x0e52}daño.
+Character ability text section;13;8;Proteger
+Character ability text section;13;9;El guerrero recibe ataques en vez{x0e49}un aliado.
+Character ability text section;13;10;Iniciativa
+Character ability text section;13;11;Permite entrar en acción al comenzar {x0e53}lucha.
+Character ability text section;13;12;VIT al andar
+Character ability text section;13;13;El guerrero recupera {x0e57}alidad con sólo andar.
+Character ability text section;13;14;Premio en VIT
+Character ability text section;13;15;30 puntos más{x0e49}{x0e57} básica al subir{x0e49}nivel.
+Character ability text section;13;16;Premio en FUE
+Character ability text section;13;17;1 punto extra{x0e49}fuerza al subir{x0e49}nivel.
+Character ability text section;13;18;Premio en RES
+Character ability text section;13;19;1 punto extra{x0e49}resistencia al subir{x0e49}nivel.
+Character ability text section;13;20;Premio en PM
+Character ability text section;13;21;1 punto extra{x0e49}poder mágico al subir{x0e49}nivel.
+Character ability text section;13;22;Premio en ESP
+Character ability text section;13;23;1 punto extra{x0e49}espíritu al subir{x0e49}nivel.
+Character ability text section;13;24;Autocoraza
+Character ability text section;13;25;Efecto{x0e49}magia Coraza durante {x0e53}batalla.
+Character ability text section;13;26;Autoescudo
+Character ability text section;13;27;Efecto{x0e49}magia Escudo durante {x0e53}batalla.
+Character ability text section;13;28;Autoespejo
+Character ability text section;13;29;Efecto{x0e49}magia Espejo durante {x0e53}batalla.
+Character ability text section;13;30;Autoprisa
+Character ability text section;13;31;Efecto{x0e49}magia Prisa durante {x0e53}batalla.
+Character ability text section;13;32;Autopoción
+Character ability text section;13;33;El guerrero toma pociones apenas lo dañan.
+Character ability text section;13;34;2 magias por 1
+Character ability text section;13;35;Permite usar magias dobles gastando sólo una.
+Character ability text section;13;36;3 magias por 1
+Character ability text section;13;37;Permite usar magias triples gastando sólo una.
+Character ability text section;13;38;Cinta
+Character ability text section;13;39;Protege contra todos los estados alterados.
+Party ability text section;14;0;Cautela
+Party ability text section;14;1;Evita que {x0e52}grupo sea atacado por {x0e53}espalda.
+Party ability text section;14;2;Ojo observador
+Party ability text section;14;3;Reve{x0e53}puntos{x0e49}grabación/extracción ocultos.
+Party ability text section;14;4;Mitad encuentros
+Party ability text section;14;5;Reduce a 1/2 los encuentros con monstruos.
+Party ability text section;14;6;Ningún encuentro
+Party ability text section;14;7;Evita todo encuentro con monstruos y enemigos.
+Party ability text section;14;8;Objetos raros
+Party ability text section;14;9;Hace más probable hallar objetos poco comunes.
+GF ability text section;15;0;Magia G.F. +10%
+GF ability text section;15;1;{x0e48}1{x0e4b}
+GF ability text section;15;2;Magia G.F. +20%
+GF ability text section;15;3;{x0e48}2{x0e4b}
+GF ability text section;15;4;Magia G.F. +30%
+GF ability text section;15;5;{x0e48}3{x0e4b}
+GF ability text section;15;6;Magia G.F. +40%
+GF ability text section;15;7;{x0e48}4{x0e4b}
+GF ability text section;15;8;VIT G.F. +10%
+GF ability text section;15;9;{x0e48}1{x0e4c}
+GF ability text section;15;10;VIT G.F. +20%
+GF ability text section;15;11;{x0e48}2{x0e4c}
+GF ability text section;15;12;VIT G.F. +30%
+GF ability text section;15;13;{x0e48}3{x0e4c}
+GF ability text section;15;14;VIT G.F. +40%
+GF ability text section;15;15;{x0e48}4{x0e4c}
+GF ability text section;15;16;Apoyo
+GF ability text section;15;17;Permite ayudar al{x0e4e} durante el combate.
+Menu ability text section;16;0;Regatear
+Menu ability text section;16;1;Permite comprar más barato en las tiendas.
+Menu ability text section;16;2;Vender más caro
+Menu ability text section;16;3;Permite vender objetos a mejor precio.
+Menu ability text section;16;4;Buen cliente
+Menu ability text section;16;5;Las tiendas ofrecen objetos poco comunes.
+Menu ability text section;16;6;Tiendas a pedido
+Menu ability text section;16;7;Permite acceder a las tiendas desde {x0e52}menú.
+Menu ability text section;16;8;Armero a pedido
+Menu ability text section;16;9;Permite llamar al armero desde {x0e52}menú.
+Menu ability text section;16;10;Magia ELM Rayo
+Menu ability text section;16;11;{x0e44}de Rayo y Aire.
+Menu ability text section;16;12;Magia ELM Frío
+Menu ability text section;16;13;{x0e44}de Agua y Frío.
+Menu ability text section;16;14;Magia ELM Fuego
+Menu ability text section;16;15;{x0e44}de ELM Fuego.
+Menu ability text section;16;16;Magia de vida
+Menu ability text section;16;17;{x0e44}de vida y VIT.
+Menu ability text section;16;18;Magia de T-E
+Menu ability text section;16;19;Cambia objetos en magias{x0e49}tiempo/espacio.
+Menu ability text section;16;20;Magia de estado
+Menu ability text section;16;21;Cambia objetos en magias alteradoras{x0e49}EST.
+Menu ability text section;16;22;Magia de apoyo
+Menu ability text section;16;23;{x0e44}de apoyo.
+Menu ability text section;16;24;Magia prohibida
+Menu ability text section;16;25;{x0e44}prohibidas.
+Menu ability text section;16;26;Remedios VIT
+Menu ability text section;16;27;Transforma objetos en remedios de VIT.
+Menu ability text section;16;28;Remedios EST
+Menu ability text section;16;29;Transforma objetos en remedios de EST.
+Menu ability text section;16;30;Municiones
+Menu ability text section;16;31;Produce municiones a partir{x0e49}otros objetos.
+Menu ability text section;16;32;Objetos varios
+Menu ability text section;16;33;Transforma diversos objetos en otros objetos.
+Menu ability text section;16;34;Brebajes fuertes
+Menu ability text section;16;35;Produce brebajes fuertes a partir{x0e49}objetos.
+Menu ability text section;16;36;Remedios G. F.
+Menu ability text section;16;37;Produce remedios{x0e49}{x0e4e} a partir{x0e49}objetos.
+Menu ability text section;16;38;Adiestrar G. F.
+Menu ability text section;16;39;Cambia objetos en material educativo{x0e49}{x0e4e}
+Menu ability text section;16;40;Magias clase +
+Menu ability text section;16;41;{x0e50}.
+Menu ability text section;16;42;Magias clase ++
+Menu ability text section;16;43;{x0e50}+.
+Menu ability text section;16;44;Mejorar brebajes
+Menu ability text section;16;45;Cambia brebajes menores en brebajes fuertes.
+Menu ability text section;16;46;Convertir cartas
+Menu ability text section;16;47;Produce objetos a partir{x0e49}cartas.
+Temporary character limit break text section;17;0;Exterminio
+Temporary character limit break text section;17;1;{x0e34} 
+Temporary character limit break text section;17;2;Luz helada
+Temporary character limit break text section;17;3;{x0e33} 
+Temporary character limit break text section;17;4;Desperado
+Temporary character limit break text section;17;5;{x0e34} 
+Temporary character limit break text section;17;6;Carnicería
+Temporary character limit break text section;17;7;{x0e33} 
+Temporary character limit break text section;17;8;Mataballenas
+Temporary character limit break text section;17;9;{x0e34} 
+Blue magic text section;18;0;Ojo máser
+Blue magic text section;18;1;Daña a un {x0e38}.
+Blue magic text section;18;2;Megavibración
+Blue magic text section;18;3;Daña a todos los {x0e38}s.
+Blue magic text section;18;4;Electroshock
+Blue magic text section;18;5;{x0e4a}daño ELM Rayo a todos los {x0e38}s.
+Blue magic text section;18;6;Muerte nivel ?
+Blue magic text section;18;7;Mata a un {x0e38}{x0e49}un niv{x0e52}determinado.
+Blue magic text section;18;8;Desintegrador
+Blue magic text section;18;9;Hace desaparecer a un {x0e38}.
+Blue magic text section;18;10;Vaho acuático
+Blue magic text section;18;11;{x0e4a}daño ELM Agua a todos los {x0e38}s.
+Blue magic text section;18;12;Micromisiles
+Blue magic text section;18;13;Daña a un {x0e38}.
+Blue magic text section;18;14;Lluvia ácida
+Blue magic text section;18;15;Pone a un {x0e38} en estado alterado.
+Blue magic text section;18;16;Biometralla
+Blue magic text section;18;17;Daña a un {x0e38}.
+Blue magic text section;18;18;Llamarada
+Blue magic text section;18;19;{x0e4a}daño ELM Fuego a todos los {x0e38}s.
+Blue magic text section;18;20;Aliento fétido
+Blue magic text section;18;21;Pone a todos los {x0e38}s en estado alterado.
+Blue magic text section;18;22;Viento blanco
+Blue magic text section;18;23;Restablece {x0e53}vitalidad{x0e49}todo {x0e52}grupo.
+Blue magic text section;18;24;Láser autoguiado
+Blue magic text section;18;25;Daña a un {x0e38}.
+Blue magic text section;18;26;Barrera total
+Blue magic text section;18;27;Protege a todo {x0e52}grupo.
+Blue magic text section;18;28;Rayo bomba
+Blue magic text section;18;29;Daña a todos los {x0e38}s.
+Blue magic text section;18;30;Onda expansiva
+Blue magic text section;18;31;Daña gravemente a todos los {x0e38}s.
+Shot text section;19;0;Tiro normal
+Shot text section;19;1;Daña a un enemigo.
+Shot text section;19;2;Tiro múltiple
+Shot text section;19;3;Daña a todos los enemigos.
+Shot text section;19;4;Tiro venenoso
+Shot text section;19;5;Daña al enemigo y lo pone en estado alterado.
+Shot text section;19;6;Tiro incendiario
+Shot text section;19;7;Daña a todos los enemigos con fuego.
+Shot text section;19;8;Tiro devastador
+Shot text section;19;9;Daña a un enemigo.
+Shot text section;19;10;Tiro continuo
+Shot text section;19;11;Daña a un enemigo.
+Shot text section;19;12;Tiro penetrante
+Shot text section;19;13;Daña a un enemigo traspasando sus defensas.
+Shot text section;19;14;Tiro fulmíneo
+Shot text section;19;15;Daña a un enemigo.
+Duel text section;20;0;Lluvia de puños
+Duel text section;20;1;{x0e33}
+Duel text section;20;2;Rodillazo
+Duel text section;20;3;{x0e33}
+Duel text section;20;4;Golpe de talón
+Duel text section;20;5;{x0e33}
+Duel text section;20;6;Patada lateral
+Duel text section;20;7;{x0e33}
+Duel text section;20;8;Ataque del delfín
+Duel text section;20;9;{x0e33}
+Duel text section;20;10;Titán
+Duel text section;20;11;{x0e33}
+Duel text section;20;12;Furia ardiente
+Duel text section;20;13;{x0e34}
+Duel text section;20;14;Bala humana
+Duel text section;20;15;{x0e33}
+Duel text section;20;16;Novamás
+Duel text section;20;17;{x0e33}
+Duel text section;20;18;Mi juicio final
+Duel text section;20;19;{x0e34}
+Rinoa limit break (part 1) text section;21;0;{Angelo}
+Rinoa limit break (part 1) text section;21;1;Lucha junto con {Angelo}
+Rinoa limit break (part 1) text section;21;2;Hada
+Rinoa limit break (part 1) text section;21;3;Entra en estado Hada.
+Rinoa limit break (part 2) text section;22;0;Cañón {Angelo}
+Rinoa limit break (part 2) text section;22;1;¡{Angelo} al rescate!
+Rinoa limit break (part 2) text section;22;2;Luna invisible
+Rinoa limit break (part 2) text section;22;3;Estrella fugaz
+Rinoa limit break (part 2) text section;22;4;Hada
+Devour text section;23;0;¡Mm, no está mal...!
+Devour text section;23;1;¡Buenísimo!
+Devour text section;23;2;¡Me ha sentado de maravilla!
+Devour text section;23;3;¡Estaba rancio!
+Devour text section;23;4;¡Qué gusto más raro!
+Devour text section;23;5;¡Mis ojos...! ¡No puedo ver...!
+Devour text section;23;6;¡Qué malo!
+Devour text section;23;7;¡Puaj!
+Devour text section;23;8;Arghhhh... craso... error...
+Devour text section;23;9;¡Uf, no sabe a nada!
+Devour text section;23;10;¡Me siento mucho más fuerte!
+Devour text section;23;11;¡Esto sí que es sano!
+Devour text section;23;12;¡Me ha despejado la cabeza!
+Devour text section;23;13;¡Me ha levantado el ánimo!
+Devour text section;23;14;¡Qué ágil me siento!
+Devour text section;23;15;¡Me siento en plena forma!
+Misc text section;24;0;Te han aniquilado...
+Misc text section;24;1;¡Has logrado escapar!
+Misc text section;24;2;G. F.
+Misc text section;24;3;PAUSA
+Misc text section;24;4;No hay escapatoria.
+Misc text section;24;5;¡Ha fallado la extracción!
+Misc text section;24;6;¡Has obtenido {x0a23}!
+Misc text section;24;7;ha aprendido
+Misc text section;24;8;N/A
+Misc text section;24;9;¡Has obtenido
+Misc text section;24;10;????
+Misc text section;24;11; 0123456789ABCDEF:/·,
+Misc text section;24;12;Todos los enemigos
+Misc text section;24;13;Todos los compañeros
+Misc text section;24;14;Todos
+Misc text section;24;15;No queda espacio.
+Misc text section;24;16;Has obtenido la Carta de
+Misc text section;24;17;No ha podido robar nada.
+Misc text section;24;18;No tiene nada.
+Misc text section;24;19;Ha robado
+Misc text section;24;20;Opción no disponible
+Misc text section;24;21;Objetos obtenidos
+Misc text section;24;22; Confirmar.
+Misc text section;24;23;Experiencia
+Misc text section;24;24;Objetos desechados ({x0a23})\npor exceder las 100 unidades.
+Misc text section;24;25; - Terminar.
+Misc text section;24;26;N/A
+Misc text section;24;27;ha perdido el estado
+Misc text section;24;28;No hay ningún objeto.
+Misc text section;24;29;Exp. adquirida:
+Misc text section;24;30;Exp. actual:
+Misc text section;24;31;Para subir nivel:
+Misc text section;24;32;
+Misc text section;24;33;Nivel
+Misc text section;24;34;VIT
+Misc text section;24;35;Condición
+Misc text section;24;36;
+Misc text section;24;37;Muy vulnerable a
+Misc text section;24;38;Vulnerable a
+Misc text section;24;39;Resistente a
+Misc text section;24;40;Invulnerable a
+Misc text section;24;41;Absorbe
+Misc text section;24;42;Invulnerable al ataque
+Misc text section;24;43;Vulnerable al ataque
+Misc text section;24;44;¡Puedes atacar primero!
+Misc text section;24;45;¡Te van a atacar por la espalda!
+Misc text section;24;46;¡Te han atacado por sorpresa!
+Misc text section;24;47;¡Puedes atacar por la espalda!
+Misc text section;24;48;¡Sube nivel!
+Misc text section;24;49;No ha podido ganar experiencia.
+Misc text section;24;50;¡No se puede transformar en carta!
+Misc text section;24;51;¡Has conseguido a
+Misc text section;24;52;No sirve para los G. F.
+Misc text section;24;53;No te alcanza el dinero
+Misc text section;24;54;¡Los G. F. han recuperado la VIT!
+Misc text section;24;55;No ha sucedido nada.
+Misc text section;24;56;no está por aquí.
+Misc text section;24;57;K. O.
+Misc text section;24;58;Veneno
+Misc text section;24;59;Piedra
+Misc text section;24;60;Ceguera
+Misc text section;24;61;Mudez
+Misc text section;24;62;Locura
+Misc text section;24;63;Zombi
+Misc text section;24;64;¡Has encontrado
+Misc text section;24;65;x
+Misc text section;24;66;Aplicar
+Misc text section;24;67;Repetir
+Misc text section;24;68;Utilizar la magia indicada.
+Misc text section;24;69;Girar la ruleta una vez más.
+Misc text section;24;70;PH adquiridos
+Misc text section;24;71;N/A
+Misc text section;24;72;El mogurito no está por aquí.
+Misc text section;24;73;Sueño
+Misc text section;24;74;Prisa
+Misc text section;24;75;Freno
+Misc text section;24;76;Paro
+Misc text section;24;77;Revitalia
+Misc text section;24;78;Coraza
+Misc text section;24;79;Escudo
+Misc text section;24;80;Espejo
+Misc text section;24;81;Aura
+Misc text section;24;82;Maldición
+Misc text section;24;83;Condena
+Misc text section;24;84;Invulnerable
+Misc text section;24;85;>Piedra
+Misc text section;24;86;Levitación
+Misc text section;24;87;Confusión
+Misc text section;24;88;El nivel de
+Misc text section;24;89;ha subido
+Misc text section;24;90;Doble
+Misc text section;24;91;Triple
+Misc text section;24;92;Defensa
+Misc text section;24;93;Invulnerable al ataque físico
+Misc text section;24;94;Invulnerable a la magia
+Misc text section;24;95;ha bajado
+Misc text section;24;96;Ataque por la espalda
+Misc text section;24;97;Resistencia 0
+Misc text section;24;98;Hada
+Misc text section;24;99;Monstruo volador
+Misc text section;24;100;No puede utilizar magia.
+Misc text section;24;101;{Drain}
+Misc text section;24;102;{x055e}
+Misc text section;24;103;{x055f}
+Misc text section;24;104;{x0560}
+Misc text section;24;105;{x0561}
+Misc text section;24;106;{x0562}
+Misc text section;24;107;{x0563}
+Misc text section;24;108;{x0564}
+Misc text section;24;109;¡Los G. F. han adquirido {x0a20} PH!
+Misc text section;24;110;Carta de {x0a23}
+Misc text section;24;111;Desarrollo de los G. F.
+Misc text section;24;112;¡No se ha dejado comer!
+Misc text section;24;113;?????
+Misc text section;24;114;Muerto viviente
+Misc text section;24;115;ha perdido la magia
+Misc text section;24;116;ha perdido el estado
+Misc text section;24;117;se ha desvanecido en otra dimensión!
+Misc text section;24;118;!
+Misc text section;24;119;.
+Misc text section;24;120; x 
+Misc text section;24;121;G. F. 
+Misc text section;24;122;¡
+Misc text section;24;123;.
+Misc text section;24;124;magia(s)
+Misc text section;24;125;D
+Misc text section;24;126;.
+Misc text section;24;127;ha adquirido la habilidad

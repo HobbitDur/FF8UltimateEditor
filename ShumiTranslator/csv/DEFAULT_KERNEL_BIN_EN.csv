@@ -1,0 +1,1538 @@
+Section data name|Section Widget id|Text Sub id|Text
+Battle command text section|0|0|
+Battle command text section|0|1|
+Battle command text section|0|2|Attack
+Battle command text section|0|3|Attack{ w}ith equipped{ w}eap{on}
+Battle command text section|0|4|Magic
+Battle command text section|0|5|Cast m{ag}ic
+Battle command text section|0|6|GF
+Battle command text section|0|7|Summ{on}{s }Gu{ar}dian Force
+Battle command text section|0|8|Item
+Battle command text section|0|9|Us{e }item
+Battle command text section|0|10|Renzokuken
+Battle command text section|0|11|Attack{ w}ith Renzokuken
+Battle command text section|0|12|Draw
+Battle command text section|0|13|Draw m{ag}ic
+Battle command text section|0|14|Devour
+Battle command text section|0|15|Devour m{on}sters
+Battle command text section|0|16|nomsg
+Battle command text section|0|17|
+Battle command text section|0|18|Cast
+Battle command text section|0|19|Cast drawn m{ag}ic
+Battle command text section|0|20|Stock
+Battle command text section|0|21|S{to}ck drawn m{ag}ic
+Battle command text section|0|22|Duel
+Battle command text section|0|23|Combat styl{e }attack
+Battle command text section|0|24|Mug
+Battle command text section|0|25|Attack and stea{l }items
+Battle command text section|0|26|nomsg
+Battle command text section|0|27|
+Battle command text section|0|28|Shot
+Battle command text section|0|29|Us{e }amm{o }{to} attack
+Battle command text section|0|30|Blue Magic
+Battle command text section|0|31|Us{e }m{on}ster'{s }sk{il}l
+Battle command text section|0|32|Slot
+Battle command text section|0|33|Attack{ w}ith m{ag}ic chosen at{ r}andom
+Battle command text section|0|34|Fire Cross
+Battle command text section|0|35|Attack{ w}ith sword
+Battle command text section|0|36|Sorcery
+Battle command text section|0|37|Attack{ w}ith m{ag}ic
+Battle command text section|0|38|Combine
+Battle command text section|0|39|Ca{ll} someth{in}g
+Battle command text section|0|40|Limit
+Battle command text section|0|41|Attack{ w}ith Limit B{re}aks
+Battle command text section|0|42|Limit
+Battle command text section|0|43|Attack{ w}ith Limit B{re}aks
+Battle command text section|0|44|Limit
+Battle command text section|0|45|Attack{ w}ith Limit B{re}aks
+Battle command text section|0|46|Defend
+Battle command text section|0|47|Reduc{e }dam{ag}{e }u{nt}{il} {ne}xt command
+Battle command text section|0|48|Mad Rush
+Battle command text section|0|49|Us{e }Haste, Berserk, Protect {on} a{ll}
+Battle command text section|0|50|Treatment
+Battle command text section|0|51|Remov{e }abnorma{l }status
+Battle command text section|0|52|Recover
+Battle command text section|0|53|Res{to}{re} {HP}
+Battle command text section|0|54|Revive
+Battle command text section|0|55|Remov{e }KO
+Battle command text section|0|56|Darkside
+Battle command text section|0|57|Expend {HP} {to} attack
+Battle command text section|0|58|Card
+Battle command text section|0|59|Turn m{on}ster{s }{in}{to} c{ar}ds
+Battle command text section|0|60|Doom
+Battle command text section|0|61|Us{e }Doom {on} {on}{e }e{ne}my
+Battle command text section|0|62|Kamikaze
+Battle command text section|0|63|Dam{ag}{e }{on}{e }e{ne}my b{ef}o{re} gett{in}g KO'd
+Battle command text section|0|64|Absorb
+Battle command text section|0|65|Absorb {HP}
+Battle command text section|0|66|LV Down
+Battle command text section|0|67|Lower m{on}ster level
+Battle command text section|0|68|LV Up
+Battle command text section|0|69|Rais{e }m{on}ster level
+Battle command text section|0|70|Single
+Battle command text section|0|71|Choos{e }{on}ce
+Battle command text section|0|72|Double
+Battle command text section|0|73|Choos{e }t{wi}ce
+Battle command text section|0|74|Triple
+Battle command text section|0|75|Choos{e }3 times
+Battle command text section|0|76|MiniMog
+Battle command text section|0|77|Ca{ll} M{in}iMog
+Magic text section|1|0|
+Magic text section|1|1|
+Magic text section|1|2|Fire
+Magic text section|1|3|Fi{re} m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|4|Fira
+Magic text section|1|5|Fi{re} m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|6|Firaga
+Magic text section|1|7|Fi{re} m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|8|Blizzard
+Magic text section|1|9|Ic{e }m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|10|Blizzara
+Magic text section|1|11|Ic{e }m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|12|Blizzaga
+Magic text section|1|13|Ic{e }m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|14|Thunder
+Magic text section|1|15|Thunder m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|16|Thundara
+Magic text section|1|17|Thunder m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|18|Thundaga
+Magic text section|1|19|Thunder m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|20|Water
+Magic text section|1|21|Water m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|22|Aero
+Magic text section|1|23|W{in}d m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|24|Bio
+Magic text section|1|25|Pois{on} dam{ag}{e }+ statu{s }change/{on}{e }e{ne}my
+Magic text section|1|26|Demi
+Magic text section|1|27|M{ag}ic {to}{ r}educ{e }{on}{e }e{ne}my'{s }{HP} by 1/4
+Magic text section|1|28|Holy
+Magic text section|1|29|Holy m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|30|Flare
+Magic text section|1|31|N{on}-eleme{nt}a{l }m{ag}ic dam{ag}e/{on}{e }e{ne}my
+Magic text section|1|32|Meteor
+Magic text section|1|33|N{on}-eleme{nt}a{l }m{ag}ic dam{ag}e/a{ll} e{ne}mies
+Magic text section|1|34|Quake
+Magic text section|1|35|E{ar}th m{ag}ic dam{ag}e/a{ll} e{ne}mies
+Magic text section|1|36|Tornado
+Magic text section|1|37|W{in}d m{ag}ic dam{ag}e/a{ll} e{ne}mies
+Magic text section|1|38|Ultima
+Magic text section|1|39|N{on}-eleme{nt}a{l }m{ag}ic dam{ag}e/a{ll} e{ne}mies
+Magic text section|1|40|Apocalypse
+Magic text section|1|41|N{on}-eleme{nt}a{l }m{ag}ic dam{ag}e/a{ll} e{ne}mies
+Magic text section|1|42|Cure
+Magic text section|1|43|Res{to}{re} {HP}
+Magic text section|1|44|Cura
+Magic text section|1|45|Res{to}{re} {HP}
+Magic text section|1|46|Curaga
+Magic text section|1|47|Res{to}{re} {HP}
+Magic text section|1|48|Life
+Magic text section|1|49|Reviv{e }from KO
+Magic text section|1|50|Full-life
+Magic text section|1|51|Res{to}{re} {HP} fu{ll}y,{ r}eviv{e }from KO
+Magic text section|1|52|Regen
+Magic text section|1|53|Res{to}{re} {HP} at{ r}egul{ar} {in}terval
+Magic text section|1|54|Esuna
+Magic text section|1|55|Remov{e }abnorma{l }status
+Magic text section|1|56|Dispel
+Magic text section|1|57|Remov{e }m{ag}ic {ef}fect
+Magic text section|1|58|Protect
+Magic text section|1|59|Reduc{e }physica{l }dam{ag}{e }tempor{ar}{il}y
+Magic text section|1|60|Shell
+Magic text section|1|61|Reduc{e }m{ag}ic dam{ag}{e }tempor{ar}{il}y
+Magic text section|1|62|Reflect
+Magic text section|1|63|R{ef}lect m{ag}ic tempor{ar}{il}y
+Magic text section|1|64|Aura
+Magic text section|1|65|Abl{e }{to} us{e }Limit B{re}ak{s }mo{re} often
+Magic text section|1|66|Double
+Magic text section|1|67|Us{e }m{ag}ic successively
+Magic text section|1|68|Triple
+Magic text section|1|69|Abl{e }{to} us{e }m{ag}ic 3 times
+Magic text section|1|70|Haste
+Magic text section|1|71|Inc{re}ase{s }speed tempor{ar}{il}y
+Magic text section|1|72|Slow
+Magic text section|1|73|Reduce{s }speed tempor{ar}{il}y
+Magic text section|1|74|Stop
+Magic text section|1|75|S{to}p{s }tempor{ar}{il}y
+Magic text section|1|76|Blind
+Magic text section|1|77|Caus{e }D{ar}k{ne}ss
+Magic text section|1|78|Confuse
+Magic text section|1|79|Caus{e }C{on}fuse
+Magic text section|1|80|Sleep
+Magic text section|1|81|Caus{e }Sleep
+Magic text section|1|82|Silence
+Magic text section|1|83|Caus{e }S{il}ence
+Magic text section|1|84|Break
+Magic text section|1|85|Caus{e }Petrify
+Magic text section|1|86|Death
+Magic text section|1|87|Caus{e }Death
+Magic text section|1|88|Drain
+Magic text section|1|89|Absorb {HP}
+Magic text section|1|90|Pain
+Magic text section|1|91|Caus{e }Pois{on}, D{ar}k{ne}ss, and{ S}{il}ence
+Magic text section|1|92|Berserk
+Magic text section|1|93|Caus{e }Berserk
+Magic text section|1|94|Float
+Magic text section|1|95|Floats
+Magic text section|1|96|Zombie
+Magic text section|1|97|Caus{e }Zombie
+Magic text section|1|98|Meltdown
+Magic text section|1|99|N{on}-eleme{nt}a{l }dam{ag}{e }+ mak{e }e{ne}my Vit 0
+Magic text section|1|100|Scan
+Magic text section|1|101|Scan e{ne}my'{s }{HP} and{ w}eak{ne}ss
+Magic text section|1|102|Full-cure
+Magic text section|1|103|Res{to}{re}{s }{HP} and abnorma{l }statu{s }{to} a{ll}
+Magic text section|1|104|Wall
+Magic text section|1|105|She{ll} and Protect {on} a{ll} p{ar}ty members
+Magic text section|1|106|Rapture
+Magic text section|1|107|Remove{s }e{ne}my
+Magic text section|1|108|Percent
+Magic text section|1|109|Put e{ne}mie{s }{ne}{ar} death
+Magic text section|1|110|Catastrophe
+Magic text section|1|111|Major dam{ag}{e }{to} a{ll} e{ne}mies
+Magic text section|1|112|The End
+Magic text section|1|113|D{ef}eat{s }a{ll} e{ne}mies
+Junctionable GF text section|2|0|Thunder Storm
+Junctionable GF text section|2|1|Summ{on}{s }Thunder attack {GF}
+Junctionable GF text section|2|2|Diamond Dust
+Junctionable GF text section|2|3|Summ{on}{s }Ic{e }attack {GF}
+Junctionable GF text section|2|4|Hell Fire
+Junctionable GF text section|2|5|Summ{on}{s }Fi{re} attack {GF}
+Junctionable GF text section|2|6|Silent Voice
+Junctionable GF text section|2|7|Summ{on}{s }S{il}ence+dam{ag}{e }attack {GF}
+Junctionable GF text section|2|8|Brotherly Love
+Junctionable GF text section|2|9|Summ{on}{s }E{ar}th attack {GF}
+Junctionable GF text section|2|10|Dark Messenger
+Junctionable GF text section|2|11|Summ{on}{s }n{on}- eleme{nt}a{l }attack {GF}
+Junctionable GF text section|2|12|Ruby Light
+Junctionable GF text section|2|13|Summ{on}{s }R{ef}lect m{ag}ic {GF}
+Junctionable GF text section|2|14|Tsunami
+Junctionable GF text section|2|15|Summ{on}{s }Water attack {GF}
+Junctionable GF text section|2|16|Tornado Zone
+Junctionable GF text section|2|17|Summ{on}{s }W{in}d attack {GF}
+Junctionable GF text section|2|18|Counter Rockets
+Junctionable GF text section|2|19|Summ{on}{s }Double/Tripl{e }m{ag}ic {GF}
+Junctionable GF text section|2|20|Holy Judgment
+Junctionable GF text section|2|21|Summ{on}{s }Holy attack {GF}
+Junctionable GF text section|2|22|Runaway Train
+Junctionable GF text section|2|23|Summ{on}{s }Pois{on} attack {GF}
+Junctionable GF text section|2|24|Mega Flare
+Junctionable GF text section|2|25|Summ{on}{s }n{on}-eleme{nt}a{l }attack {GF}
+Junctionable GF text section|2|26|1,000 Needles
+Junctionable GF text section|2|27|Summ{on}{s }n{on}-eleme{nt}a{l }attack {GF}
+Junctionable GF text section|2|28|Chef's Knife
+Junctionable GF text section|2|29|Summ{on}{s }n{on}-eleme{nt}a{l }attack {GF}
+Junctionable GF text section|2|30|Eternal Breath
+Junctionable GF text section|2|31|Summ{on}{s }n{on}-eleme{nt}a{l }attack {GF}
+Enemy attack text section|3|0|
+Enemy attack text section|3|1|
+Enemy attack text section|3|2|
+Enemy attack text section|3|3|
+Enemy attack text section|3|4|
+Enemy attack text section|3|5|Blade Slice
+Enemy attack text section|3|6|Hind Kick
+Enemy attack text section|3|7|Blade Shot
+Enemy attack text section|3|8|Ray-Bomb
+Enemy attack text section|3|9|Storm Breath
+Enemy attack text section|3|10|Dark Mist
+Enemy attack text section|3|11|Squeeze
+Enemy attack text section|3|12|Clash
+Enemy attack text section|3|13|Arm Crush
+Enemy attack text section|3|14|
+Enemy attack text section|3|15|Tail Needle
+Enemy attack text section|3|16|Arm Slash
+Enemy attack text section|3|17|Bad Breath
+Enemy attack text section|3|18|
+Enemy attack text section|3|19|Petrify Stare
+Enemy attack text section|3|20|Vampire
+Enemy attack text section|3|21|Poison Mist
+Enemy attack text section|3|22|Counter Slice
+Enemy attack text section|3|23|Counter Laser-Eye
+Enemy attack text section|3|24|
+Enemy attack text section|3|25|1,000 Needles
+Enemy attack text section|3|26|Heartbreak
+Enemy attack text section|3|27|Upward Kick
+Enemy attack text section|3|28|Electric Discharge
+Enemy attack text section|3|29|Petrify Stare
+Enemy attack text section|3|30|
+Enemy attack text section|3|31|Bite
+Enemy attack text section|3|32|Poison Gas
+Enemy attack text section|3|33|Poison Gas
+Enemy attack text section|3|34|Poison Gas
+Enemy attack text section|3|35|Acid
+Enemy attack text section|3|36|Melt-Eye
+Enemy attack text section|3|37|Breath
+Enemy attack text section|3|38|Ice Breath
+Enemy attack text section|3|39|Sand Storm
+Enemy attack text section|3|40|
+Enemy attack text section|3|41|
+Enemy attack text section|3|42|
+Enemy attack text section|3|43|
+Enemy attack text section|3|44|
+Enemy attack text section|3|45|
+Enemy attack text section|3|46|
+Enemy attack text section|3|47|
+Enemy attack text section|3|48|Draw
+Enemy attack text section|3|49|Earthquake
+Enemy attack text section|3|50|
+Enemy attack text section|3|51|
+Enemy attack text section|3|52|
+Enemy attack text section|3|53|Morph
+Enemy attack text section|3|54|Arm Hug
+Enemy attack text section|3|55|Power Bomb
+Enemy attack text section|3|56|Dribble
+Enemy attack text section|3|57|Shoot
+Enemy attack text section|3|58|Ultrasonic Waves
+Enemy attack text section|3|59|
+Enemy attack text section|3|60|BiteBite
+Enemy attack text section|3|61|Shotgun
+Enemy attack text section|3|62|Suicide
+Enemy attack text section|3|63|Ultrasonic Waves
+Enemy attack text section|3|64|Breath of Death
+Enemy attack text section|3|65|Disease Breath
+Enemy attack text section|3|66|Sticky Icky
+Enemy attack text section|3|67|Shoulder Charge
+Enemy attack text section|3|68|Gatling Gun
+Enemy attack text section|3|69|Cannon Blow
+Enemy attack text section|3|70|Wild Cannon Blow
+Enemy attack text section|3|71|Store
+Enemy attack text section|3|72|Degenerator
+Enemy attack text section|3|73|Telekinesis
+Enemy attack text section|3|74|
+Enemy attack text section|3|75|
+Enemy attack text section|3|76|Hypnotize
+Enemy attack text section|3|77|Gastric Juice
+Enemy attack text section|3|78|
+Enemy attack text section|3|79|
+Enemy attack text section|3|80|Sand Storm
+Enemy attack text section|3|81|
+Enemy attack text section|3|82|
+Enemy attack text section|3|83|
+Enemy attack text section|3|84|Stare
+Enemy attack text section|3|85|Sigh
+Enemy attack text section|3|86|Curse
+Enemy attack text section|3|87|
+Enemy attack text section|3|88|
+Enemy attack text section|3|89|
+Enemy attack text section|3|90|
+Enemy attack text section|3|91|
+Enemy attack text section|3|92|
+Enemy attack text section|3|93|Grab Punch
+Enemy attack text section|3|94|Breath
+Enemy attack text section|3|95|Double Sword
+Enemy attack text section|3|96|Thrust
+Enemy attack text section|3|97|Iai Blow
+Enemy attack text section|3|98|Ultra Waves
+Enemy attack text section|3|99|
+Enemy attack text section|3|100|Sticky Web
+Enemy attack text section|3|101|
+Enemy attack text section|3|102|Breath
+Enemy attack text section|3|103|Tail Blade
+Enemy attack text section|3|104|
+Enemy attack text section|3|105|
+Enemy attack text section|3|106|Mega Spark
+Enemy attack text section|3|107|Onrush
+Enemy attack text section|3|108|
+Enemy attack text section|3|109|
+Enemy attack text section|3|110|Fart
+Enemy attack text section|3|111|Needle
+Enemy attack text section|3|112|Gastric Juice
+Enemy attack text section|3|113|Sleeping Gas
+Enemy attack text section|3|114|Breath
+Enemy attack text section|3|115|
+Enemy attack text section|3|116|
+Enemy attack text section|3|117|
+Enemy attack text section|3|118|Beam Cannon
+Enemy attack text section|3|119|
+Enemy attack text section|3|120|Magma Breath
+Enemy attack text section|3|121|Resonance
+Enemy attack text section|3|122|Blaster
+Enemy attack text section|3|123|Blaster
+Enemy attack text section|3|124|LV5 Death
+Enemy attack text section|3|125|Death Claw
+Enemy attack text section|3|126|Bear Hug
+Enemy attack text section|3|127|Gas
+Enemy attack text section|3|128|Explosion
+Enemy attack text section|3|129|Explosion
+Enemy attack text section|3|130|Explosion
+Enemy attack text section|3|131|“Brrawghh!”
+Enemy attack text section|3|132|
+Enemy attack text section|3|133|Wind Blast
+Enemy attack text section|3|134|
+Enemy attack text section|3|135|Scan
+Enemy attack text section|3|136|
+Enemy attack text section|3|137|
+Enemy attack text section|3|138|
+Enemy attack text section|3|139|Beam Cannon
+Enemy attack text section|3|140|
+Enemy attack text section|3|141|
+Enemy attack text section|3|142|
+Enemy attack text section|3|143|
+Enemy attack text section|3|144|
+Enemy attack text section|3|145|
+Enemy attack text section|3|146|Aqua Breath
+Enemy attack text section|3|147|
+Enemy attack text section|3|148|
+Enemy attack text section|3|149|
+Enemy attack text section|3|150|
+Enemy attack text section|3|151|
+Enemy attack text section|3|152|Evil-Eye
+Enemy attack text section|3|153|Counter Twist
+Enemy attack text section|3|154|Chain Gun
+Enemy attack text section|3|155|Snipe Laser
+Enemy attack text section|3|156|
+Enemy attack text section|3|157|Melting Bubble
+Enemy attack text section|3|158|Super Arm
+Enemy attack text section|3|159|Boomerang Sword
+Enemy attack text section|3|160|
+Enemy attack text section|3|161|
+Enemy attack text section|3|162|
+Enemy attack text section|3|163|
+Enemy attack text section|3|164|
+Enemy attack text section|3|165|
+Enemy attack text section|3|166|Grand Sword
+Enemy attack text section|3|167|
+Enemy attack text section|3|168|Psycho Blast
+Enemy attack text section|3|169|Sticky Web
+Enemy attack text section|3|170|
+Enemy attack text section|3|171|
+Enemy attack text section|3|172|
+Enemy attack text section|3|173|
+Enemy attack text section|3|174|Sand Shake
+Enemy attack text section|3|175|Saliva
+Enemy attack text section|3|176|Beam Laser
+Enemy attack text section|3|177|Reflect Beam
+Enemy attack text section|3|178|
+Enemy attack text section|3|179|
+Enemy attack text section|3|180|Oil Shot
+Enemy attack text section|3|181|Oil Blast
+Enemy attack text section|3|182|Sonic Wave
+Enemy attack text section|3|183|Disolving Acid
+Enemy attack text section|3|184|Bad Breath
+Enemy attack text section|3|185|Eerie Sound Wave
+Enemy attack text section|3|186|
+Enemy attack text section|3|187|
+Enemy attack text section|3|188|
+Enemy attack text section|3|189|
+Enemy attack text section|3|190|
+Enemy attack text section|3|191|
+Enemy attack text section|3|192|Ochu Dance
+Enemy attack text section|3|193|Earthquake
+Enemy attack text section|3|194|Drink Magic
+Enemy attack text section|3|195|
+Enemy attack text section|3|196|
+Enemy attack text section|3|197|
+Enemy attack text section|3|198|
+Enemy attack text section|3|199|Assault Horn
+Enemy attack text section|3|200|Ray-Bomb
+Enemy attack text section|3|201|Micro Missiles
+Enemy attack text section|3|202|
+Enemy attack text section|3|203|
+Enemy attack text section|3|204|Astral Punch
+Enemy attack text section|3|205|
+Enemy attack text section|3|206|
+Enemy attack text section|3|207|
+Enemy attack text section|3|208|
+Enemy attack text section|3|209|
+Enemy attack text section|3|210|Raijin Special
+Enemy attack text section|3|211|
+Enemy attack text section|3|212|
+Enemy attack text section|3|213|Mad Cow Special
+Enemy attack text section|3|214|Zan
+Enemy attack text section|3|215|Metsu
+Enemy attack text section|3|216|Sai
+Enemy attack text section|3|217|
+Enemy attack text section|3|218|
+Enemy attack text section|3|219|
+Enemy attack text section|3|220|Mower
+Enemy attack text section|3|221|
+Enemy attack text section|3|222|Chef's Knife
+Enemy attack text section|3|223|Everyone's Grudge
+Enemy attack text section|3|224|
+Enemy attack text section|3|225|
+Enemy attack text section|3|226|Junk
+Enemy attack text section|3|227|It's sharp!
+Enemy attack text section|3|228|
+Enemy attack text section|3|229|
+Enemy attack text section|3|230|10,000 Needles
+Enemy attack text section|3|231|Ker Plunk
+Enemy attack text section|3|232|
+Enemy attack text section|3|233|Storm Breath
+Enemy attack text section|3|234|Mega Flare
+Enemy attack text section|3|235|Barrier Change
+Enemy attack text section|3|236|
+Enemy attack text section|3|237|
+Enemy attack text section|3|238|
+Enemy attack text section|3|239|
+Enemy attack text section|3|240|
+Enemy attack text section|3|241|
+Enemy attack text section|3|242|Thunder Summon
+Enemy attack text section|3|243|Deadly Horn
+Enemy attack text section|3|244|
+Enemy attack text section|3|245|
+Enemy attack text section|3|246|
+Enemy attack text section|3|247|
+Enemy attack text section|3|248|
+Enemy attack text section|3|249|
+Enemy attack text section|3|250|
+Enemy attack text section|3|251|
+Enemy attack text section|3|252|
+Enemy attack text section|3|253|
+Enemy attack text section|3|254|
+Enemy attack text section|3|255|
+Enemy attack text section|3|256|
+Enemy attack text section|3|257|Gravija
+Enemy attack text section|3|258|
+Enemy attack text section|3|259|
+Enemy attack text section|3|260|
+Enemy attack text section|3|261|Magic Summon
+Enemy attack text section|3|262|Mighty Guard
+Enemy attack text section|3|263|Doom
+Enemy attack text section|3|264|
+Enemy attack text section|3|265|
+Enemy attack text section|3|266|
+Enemy attack text section|3|267|
+Enemy attack text section|3|268|
+Enemy attack text section|3|269|
+Enemy attack text section|3|270|
+Enemy attack text section|3|271|Thunder
+Enemy attack text section|3|272|Thundara
+Enemy attack text section|3|273|Thundaga
+Enemy attack text section|3|274|Zantetsuken
+Enemy attack text section|3|275|
+Enemy attack text section|3|276|White Wind
+Enemy attack text section|3|277|
+Enemy attack text section|3|278|
+Enemy attack text section|3|279|
+Enemy attack text section|3|280|Charge
+Enemy attack text section|3|281|Homing Laser
+Enemy attack text section|3|282|Homing Laser
+Enemy attack text section|3|283|Twin Homing Laser
+Enemy attack text section|3|284|Corona
+Enemy attack text section|3|285|Megido Flame
+Enemy attack text section|3|286|
+Enemy attack text section|3|287|
+Enemy attack text section|3|288|
+Enemy attack text section|3|289|
+Enemy attack text section|3|290|
+Enemy attack text section|3|291|
+Enemy attack text section|3|292|Mega Pulse Cannon
+Enemy attack text section|3|293|Mini Pulse Cannon
+Enemy attack text section|3|294|
+Enemy attack text section|3|295|Mighty Guard
+Enemy attack text section|3|296|
+Enemy attack text section|3|297|
+Enemy attack text section|3|298|
+Enemy attack text section|3|299|
+Enemy attack text section|3|300|
+Enemy attack text section|3|301|
+Enemy attack text section|3|302|
+Enemy attack text section|3|303|
+Enemy attack text section|3|304|
+Enemy attack text section|3|305|Dark Flare
+Enemy attack text section|3|306|
+Enemy attack text section|3|307|Soul Crush
+Enemy attack text section|3|308|Light Pillar
+Enemy attack text section|3|309|Gravija
+Enemy attack text section|3|310|Megido Flame
+Enemy attack text section|3|311|Terra Break
+Enemy attack text section|3|312|
+Enemy attack text section|3|313|
+Enemy attack text section|3|314|Demon Slice
+Enemy attack text section|3|315|Bloodfest
+Enemy attack text section|3|316|Energy Bomber
+Enemy attack text section|3|317|
+Enemy attack text section|3|318|
+Enemy attack text section|3|319|
+Enemy attack text section|3|320|
+Enemy attack text section|3|321|
+Enemy attack text section|3|322|
+Enemy attack text section|3|323|
+Enemy attack text section|3|324|
+Enemy attack text section|3|325|
+Enemy attack text section|3|326|
+Enemy attack text section|3|327|
+Enemy attack text section|3|328|
+Enemy attack text section|3|329|Zantetsuken
+Enemy attack text section|3|330|
+Enemy attack text section|3|331|
+Enemy attack text section|3|332|
+Enemy attack text section|3|333|
+Enemy attack text section|3|334|
+Enemy attack text section|3|335|
+Enemy attack text section|3|336|
+Enemy attack text section|3|337|
+Enemy attack text section|3|338|Maelstrom
+Enemy attack text section|3|339|
+Enemy attack text section|3|340|
+Enemy attack text section|3|341|
+Enemy attack text section|3|342|
+Enemy attack text section|3|343|
+Enemy attack text section|3|344|
+Enemy attack text section|3|345|
+Enemy attack text section|3|346|
+Enemy attack text section|3|347|
+Enemy attack text section|3|348|
+Enemy attack text section|3|349|
+Enemy attack text section|3|350|
+Enemy attack text section|3|351|
+Enemy attack text section|3|352|
+Enemy attack text section|3|353|
+Enemy attack text section|3|354|
+Enemy attack text section|3|355|
+Enemy attack text section|3|356|
+Enemy attack text section|3|357|Draw Apocalypse
+Enemy attack text section|3|358|Hell's Judgement
+Enemy attack text section|3|359|Drain
+Enemy attack text section|3|360|Great Attractor
+Enemy attack text section|3|361|
+Enemy attack text section|3|362|Shockwave Pulsar
+Enemy attack text section|3|363|
+Enemy attack text section|3|364|Esuna
+Enemy attack text section|3|365|Maelstrom
+Enemy attack text section|3|366|
+Enemy attack text section|3|367|
+Enemy attack text section|3|368|
+Enemy attack text section|3|369|Vacuum Wave
+Enemy attack text section|3|370|
+Enemy attack text section|3|371|
+Enemy attack text section|3|372|
+Enemy attack text section|3|373|Apocalypse
+Enemy attack text section|3|374|
+Enemy attack text section|3|375|Gigantic Sword
+Enemy attack text section|3|376|
+Enemy attack text section|3|377|
+Enemy attack text section|3|378|Ultima
+Enemy attack text section|3|379|Holy
+Enemy attack text section|3|380|Quake
+Enemy attack text section|3|381|Tornado
+Enemy attack text section|3|382|A382
+Enemy attack text section|3|383|A383
+Weapon text section|4|0|Revolver
+Weapon text section|4|1|Shear Trigger
+Weapon text section|4|2|Cutting Trigger
+Weapon text section|4|3|Flame Saber
+Weapon text section|4|4|Twin Lance
+Weapon text section|4|5|Punishment
+Weapon text section|4|6|Lion Heart
+Weapon text section|4|7|Metal Knuckle
+Weapon text section|4|8|Maverick
+Weapon text section|4|9|Gauntlet
+Weapon text section|4|10|Ehrgeiz
+Weapon text section|4|11|Valiant
+Weapon text section|4|12|Ulysses
+Weapon text section|4|13|Bismarck
+Weapon text section|4|14|Exeter
+Weapon text section|4|15|Chain Whip
+Weapon text section|4|16|Slaying Tail
+Weapon text section|4|17|Red Scorpion
+Weapon text section|4|18|Save the Queen
+Weapon text section|4|19|Pinwheel
+Weapon text section|4|20|Valkyrie
+Weapon text section|4|21|Rising Sun
+Weapon text section|4|22|Cardinal
+Weapon text section|4|23|Shooting Star
+Weapon text section|4|24|Flail
+Weapon text section|4|25|Morning Star
+Weapon text section|4|26|Crescent Wish
+Weapon text section|4|27|Strange Vision
+Weapon text section|4|28|Hyperion
+Weapon text section|4|29|None
+Weapon text section|4|30|Machine Gun
+Weapon text section|4|31|Katal
+Weapon text section|4|32|Harpoon
+Renzokuken finishers text section|5|0|Rough Divide
+Renzokuken finishers text section|5|1|Dam{ag}{e }{on}{e }e{ne}my
+Renzokuken finishers text section|5|2|Fated Circle
+Renzokuken finishers text section|5|3|Dam{ag}{e }a{ll} e{ne}mies
+Renzokuken finishers text section|5|4|Blasting Zone
+Renzokuken finishers text section|5|5|Dam{ag}{e }a{ll} e{ne}mies
+Renzokuken finishers text section|5|6|Lion Heart
+Renzokuken finishers text section|5|7|Dam{ag}{e }{on}{e }e{ne}my
+Character names section|6|0|
+Character names section|6|1|Zell
+Character names section|6|2|Irvine
+Character names section|6|3|Quistis
+Character names section|6|4|
+Character names section|6|5|Selphie
+Character names section|6|6|Seifer
+Character names section|6|7|Edea
+Character names section|6|8|Laguna
+Character names section|6|9|Kiros
+Character names section|6|10|Ward
+Battle item names section|7|0|
+Battle item names section|7|1|
+Battle item names section|7|2|Potion
+Battle item names section|7|3|{x0e33} {HP} by 200
+Battle item names section|7|4|Potion+
+Battle item names section|7|5|{x0e33} {HP} by 400
+Battle item names section|7|6|Hi-Potion
+Battle item names section|7|7|{x0e33} {HP} by 1000
+Battle item names section|7|8|Hi-Potion+
+Battle item names section|7|9|{x0e33} {HP} by 2000
+Battle item names section|7|10|X-Potion
+Battle item names section|7|11|Fu{ll}y {x0e33} {HP}
+Battle item names section|7|12|Mega-Potion
+Battle item names section|7|13|{x0e33} {HP} by 1000 {to} a{ll} members
+Battle item names section|7|14|Phoenix Down
+Battle item names section|7|15|Remove{s }KO {x0e34}
+Battle item names section|7|16|Mega Phoenix
+Battle item names section|7|17|Remove{s }KO {x0e34} from a{ll} members
+Battle item names section|7|18|Elixir
+Battle item names section|7|19|Fu{ll}y{ r}es{to}{re}{s }abnorma{l }statu{s }and {HP}
+Battle item names section|7|20|Megalixir
+Battle item names section|7|21|Fu{ll}y{ r}es{to}{re}{s }abnorma{l }statu{s }and {HP} {to} a{ll}
+Battle item names section|7|22|Antidote
+Battle item names section|7|23|Cu{re}{s }Pois{on}
+Battle item names section|7|24|Soft
+Battle item names section|7|25|Cu{re}{s }Petrify
+Battle item names section|7|26|Eye Drops
+Battle item names section|7|27|Cu{re}{s }D{ar}k{ne}ss
+Battle item names section|7|28|Echo Screen
+Battle item names section|7|29|Cu{re}{s }S{il}ence
+Battle item names section|7|30|Holy Water
+Battle item names section|7|31|Cu{re}{s }Zombie, Curse
+Battle item names section|7|32|Remedy
+Battle item names section|7|33|Cu{re}{s }abnorma{l }{x0e34}
+Battle item names section|7|34|Remedy+
+Battle item names section|7|35|Cu{re}{s }abnorma{l }{x0e34} and {x0e37} {ef}fects
+Battle item names section|7|36|Hero-trial
+Battle item names section|7|37|Make{s }ch{ar}acter {in}v{in}cibl{e }sometimes
+Battle item names section|7|38|Hero
+Battle item names section|7|39|Make{s }ch{ar}acter {in}v{in}cible
+Battle item names section|7|40|Holy War-trial
+Battle item names section|7|41|Make{s }a{ll} p{ar}ty member{s }{in}v{in}cibl{e }sometimes
+Battle item names section|7|42|Holy War
+Battle item names section|7|43|Make{s }a{ll} p{ar}ty member{s }{in}v{in}cible
+Battle item names section|7|44|Shell Stone
+Battle item names section|7|45|Sam{e }{ef}fect a{s }She{ll}
+Battle item names section|7|46|Protect Stone
+Battle item names section|7|47|Sam{e }{ef}fect a{s }Protect
+Battle item names section|7|48|Aura Stone
+Battle item names section|7|49|Sam{e }{ef}fect a{s }Aura
+Battle item names section|7|50|Death Stone
+Battle item names section|7|51|Sam{e }{ef}fect a{s }Death
+Battle item names section|7|52|Holy Stone
+Battle item names section|7|53|Sam{e }{ef}fect a{s }Holy
+Battle item names section|7|54|Flare Stone
+Battle item names section|7|55|Sam{e }{ef}fect a{s }Fl{ar}e
+Battle item names section|7|56|Meteor Stone
+Battle item names section|7|57|Sam{e }{ef}fect a{s }Meteor
+Battle item names section|7|58|Ultima Stone
+Battle item names section|7|59|Sam{e }{ef}fect a{s }Ultima
+Battle item names section|7|60|Gysahl Greens
+Battle item names section|7|61|Chocob{o }{re}lated...?
+Battle item names section|7|62|Phoenix Pinion
+Battle item names section|7|63|When used {in} battle...
+Battle item names section|7|64|Friendship
+Battle item names section|7|65|When used {in} battle...
+Non-battle item names section|8|0|Tent
+Non-battle item names section|8|1|Fu{ll}y{ r}es{to}{re}{s }abnorma{l }statu{s }and {HP} {to} a{ll}
+Non-battle item names section|8|2|Pet House
+Non-battle item names section|8|3|{x0e33} {HP} {to} a{ll} {GF}
+Non-battle item names section|8|4|Cottage
+Non-battle item names section|8|5|Sam{e }{ef}fect a{s }Te{nt} plu{s }{re}s{to}{re}{s }a{ll} {GF}
+Non-battle item names section|8|6|G-Potion
+Non-battle item names section|8|7|{x0e33} 200 {HP} {to} {GF}
+Non-battle item names section|8|8|G-Hi-Potion
+Non-battle item names section|8|9|{x0e33} 1000 {HP} {to} {GF}
+Non-battle item names section|8|10|G-Mega-Potion
+Non-battle item names section|8|11|{x0e33} 1000 {HP} {to} a{ll} {GF}
+Non-battle item names section|8|12|G-Returner
+Non-battle item names section|8|13|Revive{s }{GF} from KO
+Non-battle item names section|8|14|Rename Card
+Non-battle item names section|8|15|Change{s }{GF}'{s }name
+Non-battle item names section|8|16|Amnesia Greens
+Non-battle item names section|8|17|Make{s }{GF} forget an {x0e36}
+Non-battle item names section|8|18|HP-J Scroll
+Non-battle item names section|8|19|{GF} {x0e35} {HP}-J {x0e36}
+Non-battle item names section|8|20|Str-J Scroll
+Non-battle item names section|8|21|{GF} {x0e35}{ S}tr-J {x0e36}
+Non-battle item names section|8|22|Vit-J Scroll
+Non-battle item names section|8|23|{GF} {x0e35} Vit-J {x0e36}
+Non-battle item names section|8|24|Mag-J Scroll
+Non-battle item names section|8|25|{GF} {x0e35} M{ag}-J {x0e36}
+Non-battle item names section|8|26|Spr-J Scroll
+Non-battle item names section|8|27|{GF} {x0e35}{ S}pr-J {x0e36}
+Non-battle item names section|8|28|Spd-J Scroll
+Non-battle item names section|8|29|{GF} {x0e35}{ S}pd-J {x0e36}
+Non-battle item names section|8|30|Luck-J Scroll
+Non-battle item names section|8|31|{GF} {x0e35} Luck-J {x0e36}
+Non-battle item names section|8|32|Aegis Amulet
+Non-battle item names section|8|33|{GF} {x0e35} Eva-J {x0e36}
+Non-battle item names section|8|34|Elem Atk
+Non-battle item names section|8|35|{GF} {x0e35} Elem-Atk-J {x0e36}
+Non-battle item names section|8|36|Elem Guard
+Non-battle item names section|8|37|{GF} {x0e35} Elem-D{ef}x4 {x0e36}
+Non-battle item names section|8|38|Status Atk
+Non-battle item names section|8|39|{GF} {x0e35}{ S}T-Atk-J {x0e36}
+Non-battle item names section|8|40|Status Guard
+Non-battle item names section|8|41|{GF} {x0e35}{ S}T-D{ef}x4 {x0e36}
+Non-battle item names section|8|42|Rosetta Stone
+Non-battle item names section|8|43|{GF} {x0e35} {x0e36}x4 {x0e36}
+Non-battle item names section|8|44|Magic Scroll
+Non-battle item names section|8|45|{GF} {x0e35} {x0e37} {x0e36}
+Non-battle item names section|8|46|GF Scroll
+Non-battle item names section|8|47|{GF} {x0e35} {GF} {x0e36}
+Non-battle item names section|8|48|Draw Scroll
+Non-battle item names section|8|49|{GF} {x0e35} Draw {x0e36}
+Non-battle item names section|8|50|Item Scroll
+Non-battle item names section|8|51|{GF} {x0e35} Item {x0e36}
+Non-battle item names section|8|52|Gambler Spirit
+Non-battle item names section|8|53|{GF} {x0e35} C{ar}d {x0e36}
+Non-battle item names section|8|54|Healing Ring
+Non-battle item names section|8|55|{GF} {x0e35} Recover {x0e36}
+Non-battle item names section|8|56|Phoenix Spirit
+Non-battle item names section|8|57|{GF} {x0e35} Reviv{e }{x0e36}
+Non-battle item names section|8|58|Med Kit
+Non-battle item names section|8|59|{GF} {x0e35} T{re}atme{nt} {x0e36}
+Non-battle item names section|8|60|Bomb Spirit
+Non-battle item names section|8|61|{GF} {x0e35} Kamikaz{e }{x0e36}
+Non-battle item names section|8|62|Hungry Cookpot
+Non-battle item names section|8|63|{GF} {x0e35} Devour {x0e36}
+Non-battle item names section|8|64|Mog's Amulet
+Non-battle item names section|8|65|{GF} {x0e35} M{in}iMog {x0e36}
+Non-battle item names section|8|66|Steel Pipe
+Non-battle item names section|8|67|{GF} {x0e35}{ S}umM{ag}+10% {x0e36}
+Non-battle item names section|8|68|Star Fragment
+Non-battle item names section|8|69|{GF} {x0e35}{ S}umM{ag}+20% {x0e36}
+Non-battle item names section|8|70|Energy Crystal
+Non-battle item names section|8|71|{GF} {x0e35}{ S}umM{ag}+30% {x0e36}
+Non-battle item names section|8|72|Samantha Soul
+Non-battle item names section|8|73|{GF} {x0e35}{ S}umM{ag}+40% {x0e36}
+Non-battle item names section|8|74|Healing Mail
+Non-battle item names section|8|75|{GF} {x0e35} {GF}{HP}+10% {x0e36}
+Non-battle item names section|8|76|Silver Mail
+Non-battle item names section|8|77|{GF} {x0e35} {GF}{HP}+20% {x0e36}
+Non-battle item names section|8|78|Gold Armor
+Non-battle item names section|8|79|{GF} {x0e35} {GF}{HP}+30% {x0e36}
+Non-battle item names section|8|80|Diamond Armor
+Non-battle item names section|8|81|{GF} {x0e35} {GF}{HP}+40% {x0e36}
+Non-battle item names section|8|82|Regen Ring
+Non-battle item names section|8|83|{GF} {x0e35} {HP}+20% {x0e36}
+Non-battle item names section|8|84|Giant's Ring
+Non-battle item names section|8|85|{GF} {x0e35} {HP}+40% {x0e36}
+Non-battle item names section|8|86|Gaea's Ring
+Non-battle item names section|8|87|{GF} {x0e35} {HP}+80% {x0e36}
+Non-battle item names section|8|88|Strength Love
+Non-battle item names section|8|89|{GF} {x0e35}{ S}tr+20% {x0e36}
+Non-battle item names section|8|90|Power Wrist
+Non-battle item names section|8|91|{GF} {x0e35}{ S}tr+40% {x0e36}
+Non-battle item names section|8|92|Hyper Wrist
+Non-battle item names section|8|93|{GF} {x0e35}{ S}tr+60% {x0e36}
+Non-battle item names section|8|94|Turtle Shell
+Non-battle item names section|8|95|{GF} {x0e35} Vit+20% {x0e36}
+Non-battle item names section|8|96|Orihalcon
+Non-battle item names section|8|97|{GF} {x0e35} Vit+40% {x0e36}
+Non-battle item names section|8|98|Adamantine
+Non-battle item names section|8|99|{GF} {x0e35} Vit+60% {x0e36}
+Non-battle item names section|8|100|Rune Armlet
+Non-battle item names section|8|101|{GF} {x0e35}{ S}pr+20% {x0e36}
+Non-battle item names section|8|102|Force Armlet
+Non-battle item names section|8|103|{GF} {x0e35}{ S}pr+40% {x0e36}
+Non-battle item names section|8|104|Magic Armlet
+Non-battle item names section|8|105|{GF} {x0e35}{ S}pr+60% {x0e36}
+Non-battle item names section|8|106|Circlet
+Non-battle item names section|8|107|{GF} {x0e35} M{ag}+20% {x0e36}
+Non-battle item names section|8|108|Hypno Crown
+Non-battle item names section|8|109|{GF} {x0e35} M{ag}+40% {x0e36}
+Non-battle item names section|8|110|Royal Crown
+Non-battle item names section|8|111|{GF} {x0e35} M{ag}+60% {x0e36}
+Non-battle item names section|8|112|Jet Engine
+Non-battle item names section|8|113|{GF} {x0e35}{ S}pd+20% {x0e36}
+Non-battle item names section|8|114|Rocket Engine
+Non-battle item names section|8|115|{GF} {x0e35}{ S}pd+40% {x0e36}
+Non-battle item names section|8|116|Moon Curtain
+Non-battle item names section|8|117|{GF} {x0e35} Au{to}-She{ll} {x0e36}
+Non-battle item names section|8|118|Steel Curtain
+Non-battle item names section|8|119|{GF} {x0e35} Au{to}-Protect {x0e36}
+Non-battle item names section|8|120|Glow Curtain
+Non-battle item names section|8|121|{GF} {x0e35} Au{to}-R{ef}lect {x0e36}
+Non-battle item names section|8|122|Accelerator
+Non-battle item names section|8|123|{GF} {x0e35} Au{to}-Hast{e }{x0e36}
+Non-battle item names section|8|124|Monk's Code
+Non-battle item names section|8|125|{GF} {x0e35} Cou{nt}er {x0e36}
+Non-battle item names section|8|126|Knight's Code
+Non-battle item names section|8|127|{GF} {x0e35} Cover {x0e36}
+Non-battle item names section|8|128|Doc's Code
+Non-battle item names section|8|129|{GF} {x0e35} Med Data {x0e36}
+Non-battle item names section|8|130|Hundred Needles
+Non-battle item names section|8|131|{GF} {x0e35} Return Dam{ag}{e }{x0e36}
+Non-battle item names section|8|132|Three Stars
+Non-battle item names section|8|133|{GF} {x0e35} Expendx3-1 {x0e36}
+Non-battle item names section|8|134|Ribbon
+Non-battle item names section|8|135|{GF} {x0e35} Ribb{on} {x0e36}
+Non-battle item names section|8|136|Normal Ammo
+Non-battle item names section|8|137|Norma{l }Ammo
+Non-battle item names section|8|138|Shotgun Ammo
+Non-battle item names section|8|139|Amm{o }that attack{s }a{ll} opp{on}e{nt}s
+Non-battle item names section|8|140|Dark Ammo
+Non-battle item names section|8|141|Amm{o }{wi}th {x0e34} chang{in}g {ef}fect
+Non-battle item names section|8|142|Fire Ammo
+Non-battle item names section|8|143|Amm{o }{wi}th Fi{re} eleme{nt}
+Non-battle item names section|8|144|Demolition Ammo
+Non-battle item names section|8|145|Amm{o }3 time{s }mo{re} powerfu{l }than Norma{l }Ammo
+Non-battle item names section|8|146|Fast Ammo
+Non-battle item names section|8|147|Amm{o }for{ r}apid {fi}{re}
+Non-battle item names section|8|148|AP Ammo
+Non-battle item names section|8|149|Armor-pierc{in}g ammo
+Non-battle item names section|8|150|Pulse Ammo
+Non-battle item names section|8|151|Amm{o }that c{on}ta{in}{s }powerfu{l }e{ne}rgy
+Non-battle item names section|8|152|M-Stone Piece
+Non-battle item names section|8|153|S{to}{ne}{ w}ith a littl{e }{x0e37} power
+Non-battle item names section|8|154|Magic Stone
+Non-battle item names section|8|155|S{to}{ne}{ w}ith {x0e37} power
+Non-battle item names section|8|156|Wizard Stone
+Non-battle item names section|8|157|S{to}{ne}{ w}ith str{on}g {x0e37} power
+Non-battle item names section|8|158|Ochu Tentacle
+Non-battle item names section|8|159|Str{on}g, flexibl{e }te{nt}acle
+Non-battle item names section|8|160|Healing Water
+Non-battle item names section|8|161|Water{ w}ith lif{e }force
+Non-battle item names section|8|162|Cockatrice Pinion
+Non-battle item names section|8|163|Feather{ w}ith petrify{in}g power
+Non-battle item names section|8|164|Zombie Powder
+Non-battle item names section|8|165|Powder{ w}ith Zombi{e }{ef}fect
+Non-battle item names section|8|166|Lightweight
+Non-battle item names section|8|167|Shoe{s }{to} mak{e }you light {on} your feet
+Non-battle item names section|8|168|Sharp Spike
+Non-battle item names section|8|169|L{on}g, sh{ar}p claw
+Non-battle item names section|8|170|Screw
+Non-battle item names section|8|171|Us{e }{to}{ r}emode{l }weap{on}s
+Non-battle item names section|8|172|Saw Blade
+Non-battle item names section|8|173|Serrated blade
+Non-battle item names section|8|174|Mesmerize Blade
+Non-battle item names section|8|175|L{on}g, sh{ar}p blade
+Non-battle item names section|8|176|Vampire Fang
+Non-battle item names section|8|177|Fang that make{s }Vampi{re} attack
+Non-battle item names section|8|178|Fury Fragment
+Non-battle item names section|8|179|S{to}{ne} that c{on}ta{in}{s }morale
+Non-battle item names section|8|180|Betrayal Sword
+Non-battle item names section|8|181|Sword that betray{s }a{ll}ies
+Non-battle item names section|8|182|Sleep Powder
+Non-battle item names section|8|183|Induce{s }sleep
+Non-battle item names section|8|184|Life Ring
+Non-battle item names section|8|185|R{in}g{ w}ith lif{e }force
+Non-battle item names section|8|186|Dragon Fang
+Non-battle item names section|8|187|Dr{ag}{on}'{s }fang{ w}ith{ r}ecovery force
+Non-battle item names section|8|188|Spider Web
+Non-battle item names section|8|189|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Ultra Waves
+Non-battle item names section|8|190|Coral Fragment
+Non-battle item names section|8|191|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Electrocute
+Non-battle item names section|8|192|Curse Spike
+Non-battle item names section|8|193|Quisti{s }can le{ar}n Blu{e }M{ag}ic, LV?Death
+Non-battle item names section|8|194|Black Hole
+Non-battle item names section|8|195|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Dege{ne}ra{to}r
+Non-battle item names section|8|196|Water Crystal
+Non-battle item names section|8|197|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Aqua B{re}ath
+Non-battle item names section|8|198|Missile
+Non-battle item names section|8|199|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Micr{o }Miss{il}es
+Non-battle item names section|8|200|Mystery Fluid
+Non-battle item names section|8|201|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Acid
+Non-battle item names section|8|202|Running Fire
+Non-battle item names section|8|203|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Gatl{in}g Gun
+Non-battle item names section|8|204|Inferno Fang
+Non-battle item names section|8|205|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Fi{re} B{re}ath
+Non-battle item names section|8|206|Malboro Tentacle
+Non-battle item names section|8|207|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Bad B{re}ath
+Non-battle item names section|8|208|Whisper
+Non-battle item names section|8|209|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Whit{e }W{in}d
+Non-battle item names section|8|210|Laser Cannon
+Non-battle item names section|8|211|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Hom{in}g Laser
+Non-battle item names section|8|212|Barrier
+Non-battle item names section|8|213|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Mighty Gu{ar}d
+Non-battle item names section|8|214|Power Generator
+Non-battle item names section|8|215|Quisti{s }can le{ar}n Blu{e }M{ag}ic, Ray-Bomb
+Non-battle item names section|8|216|Dark Matter
+Non-battle item names section|8|217|Quisti{s }can le{ar}n Blu{e }M{ag}ic,{ S}hockwav{e }Puls{ar}
+Non-battle item names section|8|218|Bomb Fragment
+Non-battle item names section|8|219|S{to}{ne}{ w}ith Fi{re} eleme{nt}
+Non-battle item names section|8|220|Red Fang
+Non-battle item names section|8|221|Dr{ag}{on}'{s }fang{ w}ith Fi{re} eleme{nt}
+Non-battle item names section|8|222|Arctic Wind
+Non-battle item names section|8|223|C{on}ta{in}{s }Ic{e }eleme{nt}{ w}{in}d
+Non-battle item names section|8|224|North Wind
+Non-battle item names section|8|225|C{on}ta{in}{s }str{on}g Ic{e }eleme{nt}{ w}{in}d
+Non-battle item names section|8|226|Dynamo Stone
+Non-battle item names section|8|227|S{to}{ne}{ w}ith Thunder eleme{nt}
+Non-battle item names section|8|228|Shear Feather
+Non-battle item names section|8|229|Bird'{s }feather that flie{s }{on}{ w}{in}d
+Non-battle item names section|8|230|Venom Fang
+Non-battle item names section|8|231|Pois{on}ou{s }m{on}ster fang
+Non-battle item names section|8|232|Steel Orb
+Non-battle item names section|8|233|Stee{l }orb{ w}ith gravitati{on}a{l }power
+Non-battle item names section|8|234|Moon Stone
+Non-battle item names section|8|235|Holy mo{on} s{to}{ne}{ w}ith m{on}ster{s }liv{in}g {in}side
+Non-battle item names section|8|236|Dino Bone
+Non-battle item names section|8|237|L{ar}g{e }d{in}osaur b{on}e
+Non-battle item names section|8|238|Windmill
+Non-battle item names section|8|239|W{in}dm{il}{l }c{on}ta{in}{in}g{ w}{in}d e{ne}rgy
+Non-battle item names section|8|240|Dragon Skin
+Non-battle item names section|8|241|Durabl{e }dr{ag}{on} sk{in}
+Non-battle item names section|8|242|Fish Fin
+Non-battle item names section|8|243|Fish'{s }{fi}n
+Non-battle item names section|8|244|Dragon Fin
+Non-battle item names section|8|245|Very h{ar}d dr{ag}{on}'{s }scale
+Non-battle item names section|8|246|Silence Powder
+Non-battle item names section|8|247|Powder c{on}ta{in}{in}g{ S}{il}ence
+Non-battle item names section|8|248|Poison Powder
+Non-battle item names section|8|249|Powder c{on}ta{in}{in}g Pois{on}
+Non-battle item names section|8|250|Dead Spirit
+Non-battle item names section|8|251|C{on}ta{in}{s }Death
+Non-battle item names section|8|252|Chef's Knife
+Non-battle item names section|8|253|T{on}berry'{s }knife
+Non-battle item names section|8|254|Cactus Thorn
+Non-battle item names section|8|255|Cactu{ar}'{s }thorn
+Non-battle item names section|8|256|Shaman Stone
+Non-battle item names section|8|257|S{to}{ne}{ w}ith mystica{l }power
+Non-battle item names section|8|258|Fuel
+Non-battle item names section|8|259|Fue{l }for a{ r}e{nt}a{l }c{ar}
+Non-battle item names section|8|260|Girl Next Door
+Non-battle item names section|8|261|Naughty {x0e3c}
+Non-battle item names section|8|262|Sorceress' Letter
+Non-battle item names section|8|263|Edea'{s }{in}troducti{on} letter
+Non-battle item names section|8|264|Chocobo's Tag
+Non-battle item names section|8|265|Change{s }Chocobo'{s }name
+Non-battle item names section|8|266|Pet Nametag
+Non-battle item names section|8|267|Change{s }pet'{s }name
+Non-battle item names section|8|268|Solomon Ring
+Non-battle item names section|8|269|Mysteriou{s }old{ r}{in}g
+Non-battle item names section|8|270|Magical Lamp
+Non-battle item names section|8|271|You should{ S}av{e }your gam{e }b{ef}o{re} us{in}g it!
+Non-battle item names section|8|272|HP Up
+Non-battle item names section|8|273|{x0e3a} {HP}
+Non-battle item names section|8|274|Str Up
+Non-battle item names section|8|275|{x0e3a}{ S}t{re}ngth
+Non-battle item names section|8|276|Vit Up
+Non-battle item names section|8|277|{x0e3a} Vitality
+Non-battle item names section|8|278|Mag Up
+Non-battle item names section|8|279|{x0e3a} {x0e37}
+Non-battle item names section|8|280|Spr Up
+Non-battle item names section|8|281|{x0e3a}{ S}pirit
+Non-battle item names section|8|282|Spd Up
+Non-battle item names section|8|283|{x0e3a}{ S}peed
+Non-battle item names section|8|284|Luck Up
+Non-battle item names section|8|285|{x0e3a} Luck
+Non-battle item names section|8|286|LuvLuv G
+Non-battle item names section|8|287|{x0e3a} compatib{il}ity{ w}ith a{ll} {GF}
+Non-battle item names section|8|288|Weapons Mon 1st
+Non-battle item names section|8|289|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|290|Weapons Mon Mar
+Non-battle item names section|8|291|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|292|Weapons Mon Apr
+Non-battle item names section|8|293|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|294|Weapons Mon May
+Non-battle item names section|8|295|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|296|Weapons Mon Jun
+Non-battle item names section|8|297|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|298|Weapons Mon Jul
+Non-battle item names section|8|299|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|300|Weapons Mon Aug
+Non-battle item names section|8|301|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|302|Combat King 001
+Non-battle item names section|8|303|{x0e3c} for {fi}ghters
+Non-battle item names section|8|304|Combat King 002
+Non-battle item names section|8|305|{x0e3c} for {fi}ghters
+Non-battle item names section|8|306|Combat King 003
+Non-battle item names section|8|307|{x0e3c} for {fi}ghters
+Non-battle item names section|8|308|Combat King 004
+Non-battle item names section|8|309|{x0e3c} for {fi}ghters
+Non-battle item names section|8|310|Combat King 005
+Non-battle item names section|8|311|{x0e3c} for {fi}ghters
+Non-battle item names section|8|312|Pet Pals Vol.1
+Non-battle item names section|8|313|{x0e3c} for dog lovers
+Non-battle item names section|8|314|Pet Pals Vol.2
+Non-battle item names section|8|315|{x0e3c} for dog lovers
+Non-battle item names section|8|316|Pet Pals Vol.3
+Non-battle item names section|8|317|{x0e3c} for dog lovers
+Non-battle item names section|8|318|Pet Pals Vol.4
+Non-battle item names section|8|319|{x0e3c} for dog lovers
+Non-battle item names section|8|320|Pet Pals Vol.5
+Non-battle item names section|8|321|{x0e3c} for dog lovers
+Non-battle item names section|8|322|Pet Pals Vol.6
+Non-battle item names section|8|323|{x0e3c} for dog lovers
+Non-battle item names section|8|324|Occult Fan I
+Non-battle item names section|8|325|World'{s }Mysterie{s }{x0e3c} { S}coop Issue
+Non-battle item names section|8|326|Occult Fan II
+Non-battle item names section|8|327|World'{s }Mysterie{s }{x0e3c}  Pho{to} Issue
+Non-battle item names section|8|328|Occult Fan III
+Non-battle item names section|8|329|World'{s }Mysterie{s }{x0e3c}  {x0e37} Issue
+Non-battle item names section|8|330|Occult Fan IV
+Non-battle item names section|8|331|World'{s }Mysterie{s }{x0e3c}  Report Issue
+Non-junctionable GF attack name section|9|0|Zantetsuken
+Non-junctionable GF attack name section|9|1|Rebirth Flame
+Non-junctionable GF attack name section|9|2|ChocoFire
+Non-junctionable GF attack name section|9|3|ChocoFlare
+Non-junctionable GF attack name section|9|4|ChocoMeteor
+Non-junctionable GF attack name section|9|5|ChocoBocle
+Non-junctionable GF attack name section|9|6|Moogle Dance
+Non-junctionable GF attack name section|9|7|Excaliber
+Non-junctionable GF attack name section|9|8|Excalipoor
+Non-junctionable GF attack name section|9|9|Masamune
+Non-junctionable GF attack name section|9|10|Zantetsuken
+Non-junctionable GF attack name section|9|11|{Angelo} Rush
+Non-junctionable GF attack name section|9|12|{Angelo} Recover
+Non-junctionable GF attack name section|9|13|{Angelo} Reverse
+Non-junctionable GF attack name section|9|14|{Angelo} Search
+Non-junctionable GF attack name section|9|15|MoombaMoomba
+Junction abilities text section|10|0|
+Junction abilities text section|10|1|
+Junction abilities text section|10|2|HP-J
+Junction abilities text section|10|3|{x0e39} {x0e37} {to} {HP}
+Junction abilities text section|10|4|Str-J
+Junction abilities text section|10|5|{x0e39} {x0e37} {to}{ S}t{re}ngth
+Junction abilities text section|10|6|Vit-J
+Junction abilities text section|10|7|{x0e39} {x0e37} {to} Vitality
+Junction abilities text section|10|8|Mag-J
+Junction abilities text section|10|9|{x0e39} {x0e37} {to} {x0e37}
+Junction abilities text section|10|10|Spr-J
+Junction abilities text section|10|11|{x0e39} {x0e37} {to}{ S}pirit
+Junction abilities text section|10|12|Spd-J
+Junction abilities text section|10|13|{x0e39} {x0e37} {to}{ S}peed
+Junction abilities text section|10|14|Eva-J
+Junction abilities text section|10|15|{x0e39} {x0e37} {to} Evade
+Junction abilities text section|10|16|Hit-J
+Junction abilities text section|10|17|{x0e39} {x0e37} {to} Hit
+Junction abilities text section|10|18|Luck-J
+Junction abilities text section|10|19|{x0e39} {x0e37} {to} Luck
+Junction abilities text section|10|20|Elem-Atk-J
+Junction abilities text section|10|21|{x0e39} {x0e37} {to} Elem-Atk
+Junction abilities text section|10|22|ST-Atk-J
+Junction abilities text section|10|23|{x0e39} {x0e37} {to}{ S}T-Atk
+Junction abilities text section|10|24|Elem-Def-J
+Junction abilities text section|10|25|{x0e39} {x0e37} {to} Elem-D{ef}
+Junction abilities text section|10|26|ST-Def-J
+Junction abilities text section|10|27|{x0e39} {x0e37} {to}{ S}T-D{ef}
+Junction abilities text section|10|28|Elem-Defx2
+Junction abilities text section|10|29|{x0e39} 2 {x0e37} {to} Elem-D{ef}
+Junction abilities text section|10|30|Elem-Defx4
+Junction abilities text section|10|31|{x0e39} 4 {x0e37} {to} Elem-D{ef}
+Junction abilities text section|10|32|ST-Def-Jx2
+Junction abilities text section|10|33|{x0e39} 2 {x0e37} {to}{ S}T-D{ef}
+Junction abilities text section|10|34|ST-Def-Jx4
+Junction abilities text section|10|35|{x0e39} 4 {x0e37} {to} {to}{ S}T-D{ef}
+Junction abilities text section|10|36|Abilityx3
+Junction abilities text section|10|37|Set up {to} 3 ab{il}ities
+Junction abilities text section|10|38|Abilityx4
+Junction abilities text section|10|39|Set up {to} 4 ab{il}ities
+Command abilities text section|11|0|Magic
+Command abilities text section|11|1|Us{e }{x0e37} {x0e3b}
+Command abilities text section|11|2|GF
+Command abilities text section|11|3|Us{e }{GF} {x0e3b}
+Command abilities text section|11|4|Draw
+Command abilities text section|11|5|Us{e }Draw {x0e3b}
+Command abilities text section|11|6|Item
+Command abilities text section|11|7|Us{e }Item {x0e3b}
+Command abilities text section|11|8|Empty
+Command abilities text section|11|9|Empty
+Command abilities text section|11|10|Card
+Command abilities text section|11|11|Us{e }C{ar}d {x0e3b}
+Command abilities text section|11|12|Doom
+Command abilities text section|11|13|Us{e }Doom {x0e3b}
+Command abilities text section|11|14|Mad Rush
+Command abilities text section|11|15|Us{e }Mad Rush {x0e3b}
+Command abilities text section|11|16|Treatment
+Command abilities text section|11|17|Us{e }T{re}atme{nt} {x0e3b}
+Command abilities text section|11|18|Defend
+Command abilities text section|11|19|Us{e }D{ef}end {x0e3b}
+Command abilities text section|11|20|Darkside
+Command abilities text section|11|21|Us{e }D{ar}ksid{e }{x0e3b}
+Command abilities text section|11|22|Recover
+Command abilities text section|11|23|Us{e }Recover {x0e3b}
+Command abilities text section|11|24|Absorb
+Command abilities text section|11|25|Us{e }Absorb {x0e3b}
+Command abilities text section|11|26|Revive
+Command abilities text section|11|27|Us{e }Reviv{e }{x0e3b}
+Command abilities text section|11|28|LV Down
+Command abilities text section|11|29|Us{e }LV Down {x0e3b}
+Command abilities text section|11|30|LV Up
+Command abilities text section|11|31|Us{e }LV Up {x0e3b}
+Command abilities text section|11|32|Kamikaze
+Command abilities text section|11|33|Us{e }Kamikaz{e }{x0e3b}
+Command abilities text section|11|34|Devour
+Command abilities text section|11|35|Us{e }Devour {x0e3b}
+Command abilities text section|11|36|MiniMog
+Command abilities text section|11|37|Us{e }M{in}iMog {x0e3b}
+Stat percentage increasing abilities text section|12|0|HP+20%
+Stat percentage increasing abilities text section|12|1|{x0e3a} {HP} by 20%
+Stat percentage increasing abilities text section|12|2|HP+40%
+Stat percentage increasing abilities text section|12|3|{x0e3a} {HP} by 40%
+Stat percentage increasing abilities text section|12|4|HP+80%
+Stat percentage increasing abilities text section|12|5|{x0e3a} {HP} by 80%
+Stat percentage increasing abilities text section|12|6|Str+20%
+Stat percentage increasing abilities text section|12|7|{x0e3a}{ S}tr by 20%
+Stat percentage increasing abilities text section|12|8|Str+40%
+Stat percentage increasing abilities text section|12|9|{x0e3a}{ S}tr by 40%
+Stat percentage increasing abilities text section|12|10|Str+60%
+Stat percentage increasing abilities text section|12|11|{x0e3a}{ S}tr by 60%
+Stat percentage increasing abilities text section|12|12|Vit+20%
+Stat percentage increasing abilities text section|12|13|{x0e3a} Vit by 20%
+Stat percentage increasing abilities text section|12|14|Vit+40%
+Stat percentage increasing abilities text section|12|15|{x0e3a} Vit by 40%
+Stat percentage increasing abilities text section|12|16|Vit+60%
+Stat percentage increasing abilities text section|12|17|{x0e3a} Vit by 60%
+Stat percentage increasing abilities text section|12|18|Mag+20%
+Stat percentage increasing abilities text section|12|19|{x0e3a} M{ag}ic dam{ag}{e }by 20%
+Stat percentage increasing abilities text section|12|20|Mag+40%
+Stat percentage increasing abilities text section|12|21|{x0e3a} M{ag}ic dam{ag}{e }by 40%
+Stat percentage increasing abilities text section|12|22|Mag+60%
+Stat percentage increasing abilities text section|12|23|{x0e3a} M{ag}ic dam{ag}{e }by 60%
+Stat percentage increasing abilities text section|12|24|Spr+20%
+Stat percentage increasing abilities text section|12|25|{x0e3a}{ S}pr by 20%
+Stat percentage increasing abilities text section|12|26|Spr+40%
+Stat percentage increasing abilities text section|12|27|{x0e3a}{ S}pr by 40%
+Stat percentage increasing abilities text section|12|28|Spr+60%
+Stat percentage increasing abilities text section|12|29|{x0e3a}{ S}pr by 60%
+Stat percentage increasing abilities text section|12|30|Spd+20%
+Stat percentage increasing abilities text section|12|31|{x0e3a}{ S}pd by 20%
+Stat percentage increasing abilities text section|12|32|Spd+40%
+Stat percentage increasing abilities text section|12|33|{x0e3a}{ S}pd by 40%
+Stat percentage increasing abilities text section|12|34|Eva+30%
+Stat percentage increasing abilities text section|12|35|{x0e3a} Eva by 30%
+Stat percentage increasing abilities text section|12|36|Luck+50%
+Stat percentage increasing abilities text section|12|37|{x0e3a} Luck by 50%
+Character ability text section|13|0|Mug
+Character ability text section|13|1|Chang{e }Attack {to} Mug
+Character ability text section|13|2|Med Data
+Character ability text section|13|3|Double{s }th{e }{ef}fect of medic{in}e
+Character ability text section|13|4|Counter
+Character ability text section|13|5|Cou{nt}erattack{s }when attacked
+Character ability text section|13|6|Return Damage
+Character ability text section|13|7|Return{s }1/4 of th{e }dam{ag}{e }{to} th{e }opp{on}e{nt}
+Character ability text section|13|8|Cover
+Character ability text section|13|9|Receive{s }attack {in} plac{e }of a p{ar}ty member
+Character ability text section|13|10|Initiative
+Character ability text section|13|11|Enable{s }acti{on} a{s }so{on} a{s }battl{e }beg{in}s
+Character ability text section|13|12|Move-HP Up
+Character ability text section|13|13|{x0e33} {HP} by{ w}alk{in}g
+Character ability text section|13|14|HP Bonus
+Character ability text section|13|15|+30 B{on}u{s }{to} {HP} at leve{l }up
+Character ability text section|13|16|Str Bonus
+Character ability text section|13|17|+1 B{on}u{s }{to}{ S}tr at leve{l }up
+Character ability text section|13|18|Vit Bonus
+Character ability text section|13|19|+1 B{on}u{s }{to} Vit at leve{l }up
+Character ability text section|13|20|Mag Bonus
+Character ability text section|13|21|+1 B{on}u{s }{to} M{ag} at leve{l }up
+Character ability text section|13|22|Spr Bonus
+Character ability text section|13|23|+1 B{on}u{s }{to}{ S}pr at leve{l }up
+Character ability text section|13|24|Auto-Protect
+Character ability text section|13|25|Protect activate{s }au{to}matica{ll}y {in} battle
+Character ability text section|13|26|Auto-Shell
+Character ability text section|13|27|She{ll} activate{s }au{to}matica{ll}y {in} battle
+Character ability text section|13|28|Auto-Reflect
+Character ability text section|13|29|R{ef}lect activate{s }au{to}matica{ll}y {in} battle
+Character ability text section|13|30|Auto-Haste
+Character ability text section|13|31|Hast{e }activate{s }au{to}matica{ll}y {in} battle
+Character ability text section|13|32|Auto-Potion
+Character ability text section|13|33|Us{e }{re}covery item{s }au{to}matica{ll}y{ w}hen hit
+Character ability text section|13|34|Expendx2-1
+Character ability text section|13|35|Only 1 {x0e37} spe{nt}{ w}h{il}{e }Double
+Character ability text section|13|36|Expendx3-1
+Character ability text section|13|37|Only 1 {x0e37} spe{nt}{ w}h{il}{e }Triple
+Character ability text section|13|38|Ribbon
+Character ability text section|13|39|P{re}ve{nt}{s }a{ll} {x0e34} abnormality
+Party ability text section|14|0|Alert
+Party ability text section|14|1|P{re}ve{nt}{s }Back Attack
+Party ability text section|14|2|Move-Find
+Party ability text section|14|3|F{in}d{s }hidden{ S}ave/Draw Po{in}ts
+Party ability text section|14|4|Enc-Half
+Party ability text section|14|5|Cut{s }encou{nt}er{ r}at{e }by half
+Party ability text section|14|6|Enc-None
+Party ability text section|14|7|N{o }encou{nt}ers
+Party ability text section|14|8|Rare Item
+Party ability text section|14|9|Mo{re} likely {to}{ r}eceiv{e }r{ar}{e }items
+GF ability text section|15|0|SumMag+10%
+GF ability text section|15|1|{x0e3a}{ S}umM{ag} dam{ag}{e }by 10%
+GF ability text section|15|2|SumMag+20%
+GF ability text section|15|3|{x0e3a}{ S}umM{ag} dam{ag}{e }by 20%
+GF ability text section|15|4|SumMag+30%
+GF ability text section|15|5|{x0e3a}{ S}umM{ag} dam{ag}{e }by 30%
+GF ability text section|15|6|SumMag+40%
+GF ability text section|15|7|{x0e3a}{ S}umM{ag} dam{ag}{e }by 40%
+GF ability text section|15|8|GFHP+10%
+GF ability text section|15|9|{x0e3a} {GF}'{s }{HP} by 10%
+GF ability text section|15|10|GFHP+20%
+GF ability text section|15|11|{x0e3a} {GF}'{s }{HP} by 20%
+GF ability text section|15|12|GFHP+30%
+GF ability text section|15|13|{x0e3a} {GF}'{s }{HP} by 30%
+GF ability text section|15|14|GFHP+40%
+GF ability text section|15|15|{x0e3a} {GF}'{s }{HP} by 40%
+GF ability text section|15|16|Boost
+GF ability text section|15|17|Boost {GF}
+Menu ability text section|16|0|Haggle
+Menu ability text section|16|1|Receiv{e }discou{nt}{s }at shops
+Menu ability text section|16|2|Sell-High
+Menu ability text section|16|3|Se{ll} high at shops
+Menu ability text section|16|4|Familiar
+Menu ability text section|16|5|Easier {to} buy{ r}{ar}{e }items
+Menu ability text section|16|6|Call Shop
+Menu ability text section|16|7|Ca{ll} shop{s }from menu sc{re}en
+Menu ability text section|16|8|Junk Shop
+Menu ability text section|16|9|Ca{ll} junk shop from menu sc{re}en
+Menu ability text section|16|10|T Mag-RF
+Menu ability text section|16|11|{x0e38} Lightn{in}g/W{in}d {x0e37} from an item
+Menu ability text section|16|12|I Mag-RF
+Menu ability text section|16|13|{x0e38} Water/Ic{e }{x0e37} from an item
+Menu ability text section|16|14|F Mag-RF
+Menu ability text section|16|15|{x0e38} Fi{re} {x0e37} from an item
+Menu ability text section|16|16|L Mag-RF
+Menu ability text section|16|17|{x0e38} Life/Recovery {x0e37} from an item
+Menu ability text section|16|18|Time Mag-RF
+Menu ability text section|16|19|{x0e38} Time/Spac{e }{x0e37} from an item
+Menu ability text section|16|20|ST Mag-RF
+Menu ability text section|16|21|{x0e38} {x0e34} {x0e37} from an item
+Menu ability text section|16|22|Supt Mag-RF
+Menu ability text section|16|23|{x0e38}{ S}upport {x0e37} from an item
+Menu ability text section|16|24|Forbid Mag-RF
+Menu ability text section|16|25|{x0e38} Forbidden {x0e37} from an item
+Menu ability text section|16|26|Recov Med-RF
+Menu ability text section|16|27|{x0e38} Recovery Medic{in}{e }from an item
+Menu ability text section|16|28|ST Med-RF
+Menu ability text section|16|29|{x0e38} {x0e34} Recovery Medic{in}{e }from an item
+Menu ability text section|16|30|Ammo-RF
+Menu ability text section|16|31|{x0e38} Ammuniti{on} from an item
+Menu ability text section|16|32|Tool-RF
+Menu ability text section|16|33|{x0e38} Tool{s }from an item
+Menu ability text section|16|34|Forbid Med-RF
+Menu ability text section|16|35|{x0e38} Forbidden Medic{in}{e }from an item
+Menu ability text section|16|36|GFRecov Med-RF
+Menu ability text section|16|37|{x0e38} Recovery Medic{in}{e }for {GF} from an item
+Menu ability text section|16|38|GFAbl Med-RF
+Menu ability text section|16|39|R{ef}{in}{e }ab{il}ity le{ar}n{in}g medic{in}{e }for {GF} from items
+Menu ability text section|16|40|Mid Mag-RF
+Menu ability text section|16|41|{x0e38} Mid-Leve{l }{x0e37} from other {x0e37}
+Menu ability text section|16|42|High Mag-RF
+Menu ability text section|16|43|{x0e38} High Leve{l }{x0e37} from other {x0e37}
+Menu ability text section|16|44|Med LV Up
+Menu ability text section|16|45|Level{s }up medic{in}e
+Menu ability text section|16|46|Card Mod
+Menu ability text section|16|47|{x0e38} item{s }from c{ar}ds
+Temporary character limit break text section|17|0|No Mercy
+Temporary character limit break text section|17|1|Dam{ag}{e }a{ll} e{ne}mies
+Temporary character limit break text section|17|2|Ice Strike
+Temporary character limit break text section|17|3|Dam{ag}{e }{on}{e }e{ne}my
+Temporary character limit break text section|17|4|Desperado
+Temporary character limit break text section|17|5|Dam{ag}{e }a{ll} e{ne}mies
+Temporary character limit break text section|17|6|Blood Pain
+Temporary character limit break text section|17|7|Dam{ag}{e }{on}{e }e{ne}my
+Temporary character limit break text section|17|8|Massive Anchor
+Temporary character limit break text section|17|9|Dam{ag}{e }a{ll} e{ne}mies
+Blue magic text section|18|0|Laser Eye
+Blue magic text section|18|1|Dam{ag}{e }{on}{e }e{ne}my
+Blue magic text section|18|2|Ultra Waves
+Blue magic text section|18|3|Dam{ag}{e }a{ll} e{ne}mies
+Blue magic text section|18|4|Electrocute
+Blue magic text section|18|5|Thunder dam{ag}{e }{to} a{ll} e{ne}mies
+Blue magic text section|18|6|LV?Death
+Blue magic text section|18|7|Death {ag}a{in}st certa{in} e{ne}mies
+Blue magic text section|18|8|Degenerator
+Blue magic text section|18|9|K{il}{l }{on}{e }e{ne}my
+Blue magic text section|18|10|Aqua Breath
+Blue magic text section|18|11|Water dam{ag}{e }{to} a{ll} e{ne}mies
+Blue magic text section|18|12|Micro Missiles
+Blue magic text section|18|13|Dam{ag}{e }{on}{e }e{ne}my
+Blue magic text section|18|14|Acid
+Blue magic text section|18|15|Statu{s }chang{e }{on} {on}{e }e{ne}my
+Blue magic text section|18|16|Gatling Gun
+Blue magic text section|18|17|Dam{ag}{e }{on}{e }e{ne}my
+Blue magic text section|18|18|Fire Breath
+Blue magic text section|18|19|Fi{re} dam{ag}{e }{to} a{ll} e{ne}mies
+Blue magic text section|18|20|Bad Breath
+Blue magic text section|18|21|Statu{s }chang{e }{to} a{ll} e{ne}mies
+Blue magic text section|18|22|White Wind
+Blue magic text section|18|23|Res{to}{re}{s }{HP} {to} a{ll} p{ar}ty members
+Blue magic text section|18|24|Homing Laser
+Blue magic text section|18|25|Dam{ag}{e }{on}{e }e{ne}my
+Blue magic text section|18|26|Mighty Guard
+Blue magic text section|18|27|D{ef}end a{ll} p{ar}ty members
+Blue magic text section|18|28|Ray-Bomb
+Blue magic text section|18|29|Dam{ag}{e }a{ll} e{ne}mies
+Blue magic text section|18|30|Shockwave Pulsar
+Blue magic text section|18|31|Major dam{ag}{e }{to} a{ll} e{ne}mies
+Shot text section|19|0|Normal Shot
+Shot text section|19|1|Dam{ag}{e }{on}{e }e{ne}my
+Shot text section|19|2|Scatter Shot
+Shot text section|19|3|Dam{ag}{e }a{ll} e{ne}mies
+Shot text section|19|4|Dark Shot
+Shot text section|19|5|Dam{ag}{e }and statu{s }chang{e }{on}{e }e{ne}my
+Shot text section|19|6|Flame Shot
+Shot text section|19|7|Fi{re} dam{ag}{e }a{ll} e{ne}mies
+Shot text section|19|8|Canister Shot
+Shot text section|19|9|Dam{ag}{e }{on}{e }e{ne}my
+Shot text section|19|10|Quick Shot
+Shot text section|19|11|Dam{ag}{e }{on}{e }e{ne}my
+Shot text section|19|12|Armor Shot
+Shot text section|19|13|D{ef}ense-ignor{in}g dam{ag}{e }{to} {on}{e }e{ne}my
+Shot text section|19|14|Hyper Shot
+Shot text section|19|15|Dam{ag}{e }{on}{e }e{ne}my
+Duel text section|20|0|Punch Rush
+Duel text section|20|1|Dam{ag}{e }{on}{e }e{ne}my
+Duel text section|20|2|Booya
+Duel text section|20|3|Dam{ag}{e }{on}{e }e{ne}my
+Duel text section|20|4|Heel Drop
+Duel text section|20|5|Dam{ag}{e }{on}{e }e{ne}my
+Duel text section|20|6|Mach Kick
+Duel text section|20|7|Dam{ag}{e }{on}{e }e{ne}my
+Duel text section|20|8|Dolphin Blow
+Duel text section|20|9|Dam{ag}{e }{on}{e }e{ne}my
+Duel text section|20|10|Meteor Strike
+Duel text section|20|11|Dam{ag}{e }{on}{e }e{ne}my
+Duel text section|20|12|Burning Rave
+Duel text section|20|13|Dam{ag}{e }a{ll} e{ne}mies
+Duel text section|20|14|Meteor Barret
+Duel text section|20|15|Dam{ag}{e }{on}{e }e{ne}my
+Duel text section|20|16|Different Beat
+Duel text section|20|17|Dam{ag}{e }{on}{e }e{ne}my
+Duel text section|20|18|My Final Heaven
+Duel text section|20|19|Dam{ag}{e }a{ll} e{ne}mies
+Rinoa limit break (part 1) text section|21|0|{Angelo}
+Rinoa limit break (part 1) text section|21|1|Fight together with 
+Rinoa limit break (part 1) text section|21|2|Angel Wing
+Rinoa limit break (part 1) text section|21|3|Use Angel Wing
+Rinoa limit break (part 2) text section|22|0|{Angelo} Cannon
+Rinoa limit break (part 2) text section|22|1|{Angelo} Strike
+Rinoa limit break (part 2) text section|22|2|Invincible Moon
+Rinoa limit break (part 2) text section|22|3|Wishing Star
+Rinoa limit break (part 2) text section|22|4|Angel Wing
+Devour text section|23|0|Tastes okay...
+Devour text section|23|1|Delicious!!!
+Devour text section|23|2|Refreshing!
+Devour text section|23|3|It's rotten...
+Devour text section|23|4|Tastes funny...
+Devour text section|23|5|Can't see anything
+Devour text section|23|6|Tastes awful!!!
+Devour text section|23|7|Barf...Bwahhh!!!
+Devour text section|23|8|Shouldn't have...eaten...it
+Devour text section|23|9|No good!
+Devour text section|23|10|Gained strength
+Devour text section|23|11|Feel healthier
+Devour text section|23|12|Clear head!
+Devour text section|23|13|Increased morale!
+Devour text section|23|14|Light on my feet!
+Devour text section|23|15|All systems go!
+Misc text section|24|0|Game over...
+Misc text section|24|1|Escaped
+Misc text section|24|2|GF
+Misc text section|24|3|PAUSE
+Misc text section|24|4|Can't escape
+Misc text section|24|5|Draw failed!
+Misc text section|24|6|Received {x0a23}
+Misc text section|24|7|learned!
+Misc text section|24|8|s!
+Misc text section|24|9|Received
+Misc text section|24|10|????
+Misc text section|24|11| 0123456789ABCDEF:/·,
+Misc text section|24|12|All enemies
+Misc text section|24|13|All party members
+Misc text section|24|14|All
+Misc text section|24|15|No more space
+Misc text section|24|16|Card]
+Misc text section|24|17|Couldn't steal
+Misc text section|24|18|Has nothing
+Misc text section|24|19|Stole
+Misc text section|24|20|Can't select
+Misc text section|24|21|Item received
+Misc text section|24|22|to confirm
+Misc text section|24|23|EXP received
+Misc text section|24|24|{x0a23}\nover 100 was discarded
+Misc text section|24|25|End
+Misc text section|24|26|is
+Misc text section|24|27|'s
+Misc text section|24|28|Couldn't find any items!
+Misc text section|24|29|EXP Acquired
+Misc text section|24|30|Current EXP
+Misc text section|24|31|Next LEVEL
+Misc text section|24|32|LEVEL UP!
+Misc text section|24|33|LEVEL
+Misc text section|24|34|HP
+Misc text section|24|35|Status
+Misc text section|24|36|Monster
+Misc text section|24|37|Very weak against
+Misc text section|24|38|Weak against
+Misc text section|24|39|Strong against
+Misc text section|24|40|has no effect
+Misc text section|24|41|Absorbs
+Misc text section|24|42|attack ineffective
+Misc text section|24|43|attack effective
+Misc text section|24|44|Chance for first strike!
+Misc text section|24|45|Back attacked!
+Misc text section|24|46|Struck first!
+Misc text section|24|47|Back attack!
+Misc text section|24|48|LEVEL UP!
+Misc text section|24|49|Didn't receive EXP
+Misc text section|24|50|Can't turn into a card!
+Misc text section|24|51|Acquired
+Misc text section|24|52|Can't use on GF
+Misc text section|24|53|Not enough money
+Misc text section|24|54|GF recovered HP!
+Misc text section|24|55|Nothing happened
+Misc text section|24|56|is not here
+Misc text section|24|57|KO
+Misc text section|24|58|Poison
+Misc text section|24|59|Petrify
+Misc text section|24|60|Darkness
+Misc text section|24|61|Silence
+Misc text section|24|62|Berserk
+Misc text section|24|63|Zombie
+Misc text section|24|64|] Found!
+Misc text section|24|65|Times
+Misc text section|24|66|Cast
+Misc text section|24|67|Do over
+Misc text section|24|68|Use indicated magic
+Misc text section|24|69|Turn the slot again
+Misc text section|24|70|AP received
+Misc text section|24|71|[
+Misc text section|24|72|MiniMog is not here
+Misc text section|24|73|Sleep
+Misc text section|24|74|Haste
+Misc text section|24|75|Slow
+Misc text section|24|76|Stop
+Misc text section|24|77|Regen
+Misc text section|24|78|Protect
+Misc text section|24|79|Shell
+Misc text section|24|80|Reflect
+Misc text section|24|81|Aura
+Misc text section|24|82|Curse
+Misc text section|24|83|Doom
+Misc text section|24|84|Invincible
+Misc text section|24|85|Petrifying
+Misc text section|24|86|Float
+Misc text section|24|87|Confuse
+Misc text section|24|88|'s Level went 
+Misc text section|24|89|up by
+Misc text section|24|90|Double
+Misc text section|24|91|Triple
+Misc text section|24|92|Defend
+Misc text section|24|93|Physical attack ineffective
+Misc text section|24|94|Magic ineffective
+Misc text section|24|95|down by
+Misc text section|24|96|Back attack
+Misc text section|24|97|Vit 0
+Misc text section|24|98|Angel Wing
+Misc text section|24|99|Fly
+Misc text section|24|100|Can't use magic
+Misc text section|24|101|{Drain}
+Misc text section|24|102|{x055e}
+Misc text section|24|103|{x055f}
+Misc text section|24|104|{x0560}
+Misc text section|24|105|{x0561}
+Misc text section|24|106|{x0562}
+Misc text section|24|107|{x0563}
+Misc text section|24|108|{x0564}
+Misc text section|24|109|GF received {x0a20}AP!
+Misc text section|24|110|{x0a23}'s Card
+Misc text section|24|111|Raising GF
+Misc text section|24|112|Couldn't Devour!
+Misc text section|24|113|?????
+Misc text section|24|114|Undead
+Misc text section|24|115|]
+Misc text section|24|116|wore off!
+Misc text section|24|117|was blown away!
+Misc text section|24|118|!
+Misc text section|24|119|s
+Misc text section|24|120|learned
+Misc text section|24|121|GF 
+Misc text section|24|122|Dummy
+Misc text section|24|123|Dummy
+Misc text section|24|124|Dummy
+Misc text section|24|125|Dummy
+Misc text section|24|126|!
+Misc text section|24|127|learned

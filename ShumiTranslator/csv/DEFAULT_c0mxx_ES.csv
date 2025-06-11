@@ -1,0 +1,520 @@
+Section data name;Section Widget id;Text Sub id;Text
+GIM52A;0;0;GIM52A
+Blinura;1;0;Blinura
+Bipla;2;0;Bipla
+Bipla;2;1;{Irvine} ─Me había olvidado de decírtelo...
+Bipla;2;2;─Para aplicar mi técnica especial Duelo...
+Bipla;2;3;... selecciona el tipo de bala...
+Bipla;2;4;... y aprieta el gatillo {R1}.
+Álagar;3;0;Álagar
+Bejelmejel;4;0;Bejelmejel
+Bejelmejel;4;1;Está sonriente.
+Bejelmejel;4;2;Está enfadado.
+Bejelmejel;4;3;¡Bejelmejel se ha reído!
+Bejelmejel;4;4;¡Bejelmejel se ha puesto furioso!
+Bejelmejel;4;5;¡Contraataque de furia de Bejelmejel!
+Bejelmejel;4;6;¡Contraataque de risa de Bejelmejel!
+Medusa;5;0;Medusa
+SAM08G;6;0;SAM08G
+GIM47N;7;0;GIM47N
+Unipladio;8;0;Unipladio
+Unipladio;8;1;¡Ha perdido el cuerno!
+Buel;9;0;Buel
+Andro;10;0;Andro
+Esfinge;11;0;Esfinge
+Foca mutante;12;0;Foca mutante
+Venoma;13;0;Venoma
+Venoma;13;1;Seifer ─¡Eh, vosotros, escuchad!
+Venoma;13;2;─El último ataque da más experiencia.
+Venoma;13;3;─Dejadlo para mí, ¿entendido?
+Grat;14;0;Grat
+Cocatoris;15;0;Cocatoris
+Kedachiku;16;0;Kedachiku
+Mordélago;17;0;Mordélago
+Mordélago;17;1;{Quistis} ─Recuerda, {Squall}...
+Mordélago;17;2;─{R1} es el gatillo del sable pistola.
+Mordélago;17;3;─Úsalo al golpear para causar más daño.
+Blitz;18;0;Blitz
+Blitz;18;1;¡Blitz se ha cargado de electricidad!
+Blitz;18;2;Está cargado.
+Focarrol;19;0;Focarrol
+Focarrol;20;0;Focarrol
+Guésper;21;0;Guésper
+Sombra;22;0;Sombra
+Seisojos;23;0;Seisojos
+Globulus;24;0;Globulus
+Invencible;25;0;Invencible
+Acorazado;26;0;Acorazado
+Acorazado;26;1;¡El acorazado se ha caído!
+Acorazado;26;2;¡El acorazado se ha levantado!
+Mosquito;27;0;Mosquito
+Mosquito;27;1;{Quistis} ─Recuerda, {Squall}...
+Mosquito;27;2;─{R1} es el gatillo del sable pistola.
+Mosquito;27;3;─Úsalo al golpear para causar más daño.
+Mosquito;27;4;─Usa también {R1} para la técnica Samurai.
+Abrazador;28;0;Abrazador
+Abrazador;28;1;Estado de defensa normal
+Abrazador;28;2;Estado de defensa total
+Abrazador;28;3;Estado de defensa mágica
+Abrazador;28;4;Estado de defensa física
+Neodragón;29;0;Neodragón
+Neodragón;29;1;─ACTIVANDO MODO CONTRAATAQUE
+Neodragón;29;2;─ATAQUE ELEMENTAL NULO, EXCEPTO...
+Túlipo;30;0;Túlipo
+Wendigo;31;0;Wendigo
+Gueila;32;0;Gueila
+Namtal-utok;33;0;Namtal-utok
+Namtal-utok;33;1;{Zell} ─¿Qué... qué porras...?
+Namtal-utok;33;2;{Squall} ─Así que era un monstruo...
+Namtal-utok;33;3;{Selphie} ─¡Qué pinta más asquerosa!
+Oso de Trabia;34;0;Oso de Trabia
+Tricéfalo;35;0;Tricéfalo
+Langosta;36;0;Langosta
+Cristalino;37;0;Cristalino
+Cristalino;37;1;─¡ATACADME CON MAGIA O LO QUE SEA!
+Cristalino;37;2;─¡OS ARREPENTIRÉIS!
+Siniestra;38;0;Siniestra
+Diestra;39;0;Diestra
+Draco;40;0;Draco
+Esqueleto;41;0;Esqueleto
+Bom;42;0;Bom
+Bom;42;1;{Quistis} ─El bom... monstruo de Fuego.
+Bom;42;2;─Lo afecta el elemento Frío.
+Bom;42;3;─Puedes comprobarlo con la magia Libra.
+Gusano Ebis;43;0;Gusano Ebis
+Ochú;44;0;Ochú
+Adamantaimai;45;0;Adamantaimai
+Quimera;46;0;Quimera
+Molbol;47;0;Molbol
+Férreo;48;0;Férreo
+Bégimo;49;0;Bégimo
+Arqueosaurio;50;0;Arqueosaurio
+Arqueosaurio;50;1;{Quistis} ─¡Un arqueosaurio!
+Arqueosaurio;50;2;─Cuidado {Squall}, es muy poderoso.
+Arqueosaurio;50;3;─¡A veces lo mejor es huír!
+Gran dragón;51;0;Gran dragón
+Grendel;52;0;Grendel
+Faz;53;0;Faz
+Cactilio;54;0;Cactilio
+Cactilio;54;1;Ha escapado...
+Tomberi;55;0;Tomberi
+Tomberi;55;1;El tomberi se ha caído...
+Bengal;56;0;Bengal
+Fungo;57;0;Fungo
+Galkimasera;58;0;Galkimasera
+Alienígena;59;0;Alienígena
+Alienígena;59;1;─¡Dame Elixir!
+Alienígena;59;2;─¡Más, más!
+Alienígena;59;3;─¡Gracias!
+Alienígena;59;4;─Ahhhhh...
+Ifrit;60;0;Ifrit
+Ifrit;60;1;{Squall} ─¡¿No lo afecta el Fuego?!
+Ifrit;60;2;{Quistis} ─El Fuego no le hace nada...
+Ifrit;60;3;─Hm... No está mal, para ser humanos.
+Ifrit;60;4;─¡¿Tienen a {Shiva} como aliada?!
+Ifrit;60;5;─Yo, Ifrit, perder ante simples humanos...
+Ifrit;60;6;─Había subestimado a {Shiva}...
+Ifrit;60;7;─De ahora en más os ayudaré.
+Ifrit;60;8;─¡Insolentes humanos!
+Minotauro;61;0;Minotauro
+Minotauro;61;1;Minotauro ─Hermano, te los dejo a tí...
+Minotauro;61;2;Minotauro ─Los hermanos, derrotados...
+Minotauro;61;3;Minotauro ─Tenéis excepcional fuerza.
+Minotauro;61;4;Minotauro ─Seremos vuestros aliados.
+Seclet;62;0;Seclet
+Seclet;62;1;Seclet ─¡Estos tíos son muy fuertes!
+Seclet;62;2;Seclet ─Hermano, me han dao duro...
+Seclet;62;3;Seclet ─Los hermanos, derrotaos...
+Seclet;62;4;Seclet ─'ta bien... Iremo' con vosotros.
+Comandante;63;0;Comandante
+Comandante;63;1;─¡Ha llegado la hora de ponerse serios!
+Comandante;63;2;─¡¿Cómo os atrevéis...?!
+Comandante;63;3;─¿Serán del “jardín”?
+Comandante;63;4;─¡A atacar su punto débil!
+Comandante;63;5;─¡Los freiremos con magia!
+Cerbero;64;0;Cerbero
+Cerbero;64;1;{Squall} ─¿En Galbadia usan G. F.?
+Cerbero;64;2;{Quistis} ─¿Aquí también usan G. F.?
+Cerbero;64;3;{Zell} ─¿Estos tíos usan G. F.?
+Cerbero;64;4;{Selphie} ─¿Será un G. F.?
+Cerbero;64;5;{Irvine} ─¿Y esto? Antes no estaba...
+Cerbero;64;6;{Rinoa} ─¿Esto... será un G. F.?
+Cerbero;64;7;{Squall} ─Mejor que nos lo llevemos.
+Cerbero;64;8;{Quistis} ─¿Por qué no nos lo llevamos?
+Cerbero;64;9;{Zell} ─¿Nos lo llevamos, tíos?
+Cerbero;64;10;{Selphie} ─¿Nos lo llevamos, nos lo llevamos?
+Cerbero;64;11;{Irvine} ─Si aquí nadie lo usa...
+Cerbero;64;12;{Rinoa} ─Señor G. F., con permiso...
+Cerbero;64;13;Cerbero ─Os tenéis mucha confianza...
+Cerbero;64;14;Cerbero ─A ver qué tal lo hacéis.
+Cerbero;64;15;Cerbero ─¿Eso es todo? ¡Qué vergüenza!
+Cerbero;64;16;Cerbero ─Más fuertes de lo que creía...
+Diablo;65;0;Diablo
+Diablo;65;1;─¿Quién ha osado despertarme?
+Diablo;65;2;─Mi largo sueño me ha debilitado...
+Bahamut;66;0;Bahamut
+Bahamut;66;1;─Soy... Bahamut.
+Bahamut;66;2;{Squall} ─El gran G. F. Bahamut.
+Bahamut;66;3;{Zell} ─El gran G. F. Bahamut.
+Bahamut;66;4;{Quistis} ─El gran G. F. Bahamut.
+Bahamut;66;5;{Selphie} ─El gran G. F. Bahamut.
+Bahamut;66;6;{Irvine} ─El gran G. F. Bahamut.
+Bahamut;66;7;{Rinoa} ─El gran G. F. Bahamut.
+Bahamut;66;8;Bahamut ─¿G. F.? ¿Te refieres a mí?
+Bahamut;66;9;Bahamut ─¿Pretendéis utilizarme...
+Bahamut;66;10;Bahamut ─... para vuestros fines? ¡JA!
+Bahamut;66;11;Bahamut ─¿Has hallado la respuesta...?
+Trono blindado;67;0;Trono blindado
+Trono blindado;67;1;Norg ─GARRRL...
+Trono blindado;67;2;Norg ─AZUL - AMARILLO - ROJO.
+Trono blindado;67;3;Norg ─¡ROJO - ES - MUCHA - MAGIA!
+Trono blindado;67;4;Norg ─SI - NO - CAMBIA - COLOR...
+Trono blindado;67;5;Norg ─... MI - MAGIA - SERÁ - LETAL.
+Empleado;68;0;Empleado
+Empleado;68;1;─¡A por ellos!
+Empleado;68;2;─¡Norg es el único amo del “jardín”!
+Empleado;68;3;─¡Al ataque!
+Empleado;68;4;─¡Que no escapen!
+Empleado;68;5;─¡Este “jardín” pertenece a Norg!
+Empleado;68;6;─¡¿Más Seeds?!
+Empleado;68;7;─¡¿Partidarios del director?!
+Empleado;68;8;─¡Los oponentes de Norg deben morir!
+Empleado;68;9;─¡Que aprendan la lección!
+Odín;69;0;Odín
+Odín;69;1;Odín ─¡Intrépidos paladines!
+Odín;69;2;Odín ─Merecéis mi eterna fidelidad.
+Odín;69;3;Odín ─Mi acero está a vuestro servicio.
+Odín;69;4;Odín ─Acudiré cuando me necesitéis.
+Odín;69;5;Odín ─Hasta aquí habéis llegado...
+Odín;69;6;Odín ─¡SERÉIS VAINA DE MI ESPADA!
+Soldado G.;70;0;Soldado G.
+Soldado G.;70;1;─¿Éstos son los refuerzos de Dollet?
+Soldado G.;70;2;─¡Si son unos mocosos!
+Soldado G.;70;3;─Pero son la élite del “jardín”...
+Soldado G.;70;4;─¿Éstos son los famosos Seed?
+Soldado G.;70;5;─¡Ay, ay, ay! ¡Quema!
+Soldado élite;71;0;Soldado élite
+Soldado élite;71;1;─¡Alto ahí! ¿Adónde creéis que vais?
+Soldado élite;71;2;Sargento ─¡El trasto se ha recalentado!
+Soldado élite;71;3;Soldado 2 ─¿Qué hacemos, sargento?
+Soldado élite;71;4;Soldado 1 ─Hay que repararlo, si no...
+Soldado élite;71;5;Sargento ─Eso después... ¡Primero ellos!
+Soldado élite;71;6;─Ay, ay, ay... ¡Cómo quema!
+Wedge;72;0;Wedge
+Wedge;72;1;Biggs ─¡Maldición! Estos tipos son buenos.
+Wedge;72;2;Wedge ─¡¡AAAaahhhh!!
+Wedge;72;3;Wedge ─Capitán...
+Wedge;72;4;Wedge ─¿Ya ha reparado la antena?
+Wedge;72;5;Wedge ─¡¿Qué hace el enemigo aquí?!
+Wedge;72;6;Biggs ─¡Wedge! ¿Dónde te has metido?
+Wedge;72;7;Biggs ─Este mes te quedas sin paga.
+Wedge;72;8;Wedge ─¡Hoy mejor me quedaba en casa!
+Biggs;73;0;Biggs
+Biggs;73;1;Biggs ─¡Veréis lo que es bueno, mocosos!
+Biggs;73;2;Biggs ─¡Maldición! Estos tipos son buenos.
+Biggs;73;3;Wedge ─Capitán...
+Biggs;73;4;Wedge ─¿Ya ha reparado la antena?
+Biggs;73;5;Wedge ─¡¿Qué hace el enemigo aquí?!
+Biggs;73;6;Biggs ─¡Wedge! ¿Dónde te has metido?
+Biggs;73;7;Biggs ─Este mes te quedas sin paga.
+Biggs;73;8;Wedge ─¡Hoy mejor me quedaba en casa!
+Biggs;73;9;Wedge ─Capitán, nos va a caer un puro...
+Biggs;73;10;Biggs ─¡Deja de lamentarte de una vez!
+Biggs;73;11;Biggs ─¿Qué diablos...?
+Doble;74;0;Doble
+Doble;74;1;Doble ─HaBÉis... caíDO... en la TRAmpa...
+Doble;74;2;Doble ─MOriD... re... BEldeS...
+Doble;74;3;Doble ─¡QUÉ... diVER... tido!
+Doble;74;4;Doble ─Jo, JO, Jo...
+Carcelero;75;0;Carcelero
+Carcelero;75;1;─¡ALTO AHÍ!
+Carcelero;75;2;─¿Quién anda ahí?
+Carcelero;75;3;─¡Los Seeds se han escapado!
+Carcelero;75;4;─¡Hey, he encontrado a los Seeds!
+Carcelero;75;5;─¡Seeds o no Seeds, no escaparéis!
+Norg;76;0;Norg
+Norg;76;1;Norg ─¡MALDITOS - SEEDS!
+Norg;76;2;Norg ─¡ÉSTE - ES - MI - “JARDÍN”!
+Norg;76;3;Norg ─¡DEBÉIS - OBEDECERME!
+Norg;76;4;Norg ─GARRRL... ESTOY - ACABADO...
+Norg;76;5;Norg ─¡SOIS - DEMASIADO - FUERTES!
+Norg;76;6;Norg ─NO - ME - MEREZCO - ESTO...
+Soldado E.;77;0;Soldado E.
+Soldado E.;78;0;Soldado E.
+Ocular-I;79;0;Ocular-I
+Ocular-D;80;0;Ocular-D
+Sable pistola;81;0;Sable pistola
+Rey tomberi;82;0;Rey tomberi
+Rey tomberi;82;1;Parece que se ha asustado un poco.
+Rey tomberi;82;2;─Lo... lo siento.
+Rey tomberi;82;3;¡El tomberi se ha convertido en aliado!
+Cactilión;83;0;Cactilión
+Cactilión;83;1;Cactilión se está poniendo nervioso.
+Seifer;84;0;Seifer
+Seifer;84;1;Seifer ─¡{Squall}, prepárate a sufrir!
+Seifer;84;2;Seifer ─¡¿Yo... derrotado?!
+Seifer;84;3;Seifer ─¿Creías que había muerto?
+Seifer;84;4;Seifer ─¡No moriré sin cumplir mi sueño!
+Seifer;84;5;Seifer ─¡A ajustar cuentas, {Squall}!
+Seifer;84;6;Seifer ─Agh... No está nada mal...
+Seifer;85;0;Seifer
+Seifer;85;1;Seifer ─¡A acabar con los monstruos!
+Seifer;85;2;Seifer ─A ver cómo luchan los nenes...
+Seifer;85;3;Seifer ─¡Yo os enseñaré quién vale más!
+Seifer;85;4;Seifer ─¡Vaya, una caricia!
+Seifer;85;5;Seifer ─¡Todavía no estoy acabado!
+Seifer;85;6;Seifer ─¿Por qué no puedo vencerte?
+Seifer;85;7;Seifer ─{Squall}, ha llegado tu hora.
+Seifer;85;8;Seifer ─¡Lamentarás haber nacido!
+Seifer;86;0;Seifer
+Seifer;86;1;Seifer ─Soy el caballero de la bruja.
+Seifer;86;2;─No dejaré que os acerquéis a ella.
+Seifer;86;3;Seifer ─Ya no puedo permitirme perder.
+Seifer;86;4;Seifer ─Arghh...
+Seifer;86;5;Seifer ─El caballero de la bruja, vencido...
+Edea;87;0;Edea
+Edea;87;1;{Rinoa} ─Con vosotros no tengo miedo.
+Edea;87;2;{Rinoa} ─¡He venido a luchar!
+Edea;87;3;{Irvine} ─He pasado suficiente vergüenza...
+Edea;87;4;Edea ─Seeds... Semillas malditas.
+Edea;87;5;Edea ─¡Esperaba más de los Seeds!
+Edea;87;6;Edea ─Qué aburrimiento...
+Edea;87;7;Edea ─Seeds... Ha llegado vuestro fin.
+Edea;87;8;Edea ─¡Seeds insolentes!
+Gestalt;88;0;Gestalt
+Ente Artema;89;0;Ente Artema
+Elviore;90;0;Elviore
+Elviore;90;1;{Zell} ─¿Qué porras es eso?
+Elviore;90;2;{Squall} ─¿Y eso...?
+Elviore;90;3;{Selphie} ─Oye, oye, ¿qué es eso?
+X-ATM092;91;0;X-ATM092
+X-ATM092;91;1;{Zell} ─¡¿Se ha reparado a sí mismo?!
+X-ATM092;91;2;{Squall} ─Se ha reparado a sí mismo...
+X-ATM092;91;3;{Selphie} ─¿Qué...?
+X-ATM092;91;4;{Zell} ─Larguémonos de aquí, ¡ahora!
+X-ATM092;91;5;{Selphie} ─¡Rápido, al punto de encuentro!
+X-ATM092;91;6;{Squall} ─¡Retirada!
+X-ATM092;91;7;Pulsa {L2} y {R2} para escapar.
+X-ATM092;91;8;Reparando... 20%
+X-ATM092;91;9;Reparando... 40%
+X-ATM092;91;10;Reparando... 60%
+X-ATM092;91;11;Reparando... 80%
+X-ATM092;91;12;{Zell} ─¡Otra vez, no!
+X-ATM092;91;13;{Squall} ─¿Es que no se acaba nunca?
+X-ATM092;91;14;{Selphie} ─¡No lo puedo creer!
+Gárgola;92;0;Gárgola
+Gárgola;92;1;{Irvine} ─ ¡Hay que salvar a {Rinoa}!
+Gárgola;92;2;{Irvine} ─Me había olvidado de decírtelo...
+Gárgola;92;3;─Para aplicar mi técnica especial Duelo...
+Gárgola;92;4;... selecciona el tipo de bala...
+Gárgola;92;5;... y aprieta el gatillo {R1}.
+Gargantúa;93;0;Gargantúa
+Yuraba;94;0;Yuraba
+Petro;95;0;Petro
+Gestalt;96;0;Gestalt
+Gestalt;97;0;Gestalt
+Oleoplasto;98;0;Oleoplasto
+Edea;99;0;Edea
+Edea;99;1;Edea ─Te han derrotado... Eres un inútil.
+Edea;99;2;Edea ─¡Seeds, preparaos para morir!
+Edea;99;3;Edea ─A... ahhh...
+BGH251F2;100;0;BGH251F2
+BGH251F2;100;1;Sargento ─¡A punto el cañón!
+BGH251F2;100;2;Soldado 1 ─¡Sí, señor!
+BGH251F2;100;3;Sargento ─¡Disparad otra vez!
+BGH251F2;100;4;Soldado 2 ─¡Fijando objetivo!
+BGH251F2;100;5;Soldado 2 ─¡Ahh! ¡Sargento...!
+BGH251F2;100;6;Sargento ─Es sólo un cilindro, imbécil.
+BGH251F2;100;7;Soldado 1 ─¡Está fuera de control, señor!
+BGH251F2;100;8;Sargento ─¡¿Qué?!
+BGH251F2;100;9;Sargento ─¡Quitad la traba de seguridad!
+BGH251F2;100;10;Soldado 2 ─¡Sargento, salgamos de aquí!
+BGH251F2;100;11;Sargento ─¡Debemos defender el equipo!
+BGH251F2;101;0;BGH251F2
+BGH251F2;101;1;{Rinoa} ─¡Mirad eso!
+BGH251F2;101;2;{Zell} ─¡Vaya pedazo de máquina!
+BGH251F2;101;3;{Irvine} ─¡Mira, debe ser un arma nueva!
+BGH251F2;101;4;{Quistis} ─Una novedad de Galbadia...
+BGH251F2;101;5;{Squall} ─Acabemos con ella.
+Abadón;102;0;Abadón
+Abadón;102;1;{Squall} ─Parece un muerto en vida.
+Abadón;102;2;─Usad magias y objetos de VIT.
+Abadón;103;0;Abadón
+Unidad IB-8;104;0;Unidad IB-8
+Unidad IB-8;104;1;Contraataque integrado ACTIVADO
+Unidad IB-8;104;2;Contraataque independiente DESACTIVADO
+Unidad IB-8;104;3;Contraataque integrado DESACTIVADO
+Unidad IB-8;104;4;Contraataque independiente ACTIVADO
+Módulo I;105;0;Módulo I
+Módulo D;106;0;Módulo D
+Comando;107;0;Comando
+Comando;107;1;─¡El plan es eliminar a los del “jardín”!
+Comando;107;2;{Quistis} ─¡No lo permitiremos!
+Comando;107;3;{Squall} ─Ni hablar.
+Comando;107;4;{Irvine} ─¿Eliminar...? Así no se habla, tío.
+Comando;107;5;{Selphie} ─¡No, no y no!
+Comando;107;6;─Estos niñatos Seeds...
+Dolmen;108;0;Dolmen
+Dolmen;108;1;¡Dolmen se ha despetrificado!
+Minimen;109;0;Minimen
+Gestalt;110;0;Gestalt
+Adel;111;0;Adel
+Adel;111;1;{Squall} ─¡Atacad sólo a Adel!
+Adel;111;2;{Zell} ─¡Tenemos que salvar a {Rinoa}!
+Adel;111;3;{Selphie} ─¡Hay que salvar a {Rinoa}!
+Adel;111;4;{Quistis} ─¡Debemos salvar a {Rinoa}!
+Adel;111;5;{Rinoa} ─Aahhh...
+Adel;111;6;¡Adel concentra sus poderes mágicos!
+{Rinoa};112;0;{Rinoa}
+{Rinoa};112;1;{Rinoa} ─Aahhh...
+{Rinoa};112;2;{Rinoa}...
+{Rinoa};112;3;{Rinoa} ─Aahhh...
+{Rinoa};112;4;{Rinoa} ─Aahhh...
+{Rinoa};112;5;{Rinoa} ─Aahhh...
+Ente Omega;113;0;Ente Omega
+Bruja;114;0;Bruja
+Bruja;114;1;Continúa la compresión del tiempo...
+Bruja;115;0;Bruja
+Bruja;116;0;Bruja
+Bruja;116;1;5
+Bruja;116;2;4
+Bruja;116;3;3
+Bruja;116;4;2
+Bruja;116;5;1
+OVNI;117;0;OVNI
+Viento;118;0;Viento
+Viento;118;1;Viento ─Eleone, ¿dónde?
+Viento;118;2;Viento ─Yo, retirar. Trueno... por favor.
+Viento;118;3;Viento ─Yo, derrota...
+Trueno;119;0;Trueno
+Trueno;119;1;{Zell} ─¡Te acordarás de esto, Trueno!
+Trueno;119;2;Trueno ─Ahora vamo' a hablá en serio.
+Trueno;119;3;Trueno ─¡Ay! No está ná mal.
+Trueno;119;4;Trueno ─Ugh... Estoy listo, tío.
+Trueno;119;5;Trueno ─No suelo pegá a la' mujeres.
+Trueno;119;6;Trueno ─Vaya que dais trabajo.
+Trueno;119;7;Trueno ─Viento... Hasta aquí he llegao.
+Trueno;119;8;Trueno ─¡Fuerza, Viento!
+Trueno;119;9;Trueno ─Viento, me ha llegao el turno...
+Artemisa;120;0;Artemisa
+Artemisa;120;1;─Invocaré al ser que más temes.
+Artemisa;120;2;─¡Cuanto más fuerte sea en tu mente...
+Artemisa;120;3;─... peor será tu tortura!
+Artemisa;120;4;─¡JA, JA, JA!
+Artemisa;120;5;Se ha desvanecido en el flujo del tiempo...
+{Griever};121;0;{Griever}
+{Griever};121;1;Se ha desvanecido en el flujo del tiempo...
+{Griever};121;2;¡La magia se ha fundido en el tiempo!
+{Griever};121;3;¡Ha desaparecido el apoyo de los G. F.!
+{Griever};121;4;Artemisa ─¿Que quitan la memoria, decís?
+{Griever};121;5;─No conocéis el real horror de los G. F.
+{Griever};121;6;─Dejad que os lo muestre...
+{Griever};121;7;─¡{Griever}! ¡Que conozcan tu poder!
+ ;122;0; 
+ ;122;1;─¡Basta de preámbulos!
+ ;122;2;─¡Ahora me enlazaré yo a {Griever}!
+Artemisa;123;0;Artemisa
+Artemisa;123;1;Se ha desvanecido en el flujo del tiempo...
+Artemisa;123;2;¡La magia se ha fundido en el tiempo!
+Artemisa;123;3;¡Ha desaparecido el apoyo de los G. F.!
+Artemisa;123;4;─¡Basta de preámbulos!
+Artemisa;123;5;─¡Ahora me enlazaré yo a {Griever}!
+Artemisa;123;6;─Aarghhh...
+Hélix;124;0;Hélix
+Artemisa;125;0;Artemisa
+Artemisa;125;1;Se ha desvanecido en el flujo del tiempo...
+Artemisa;125;2;─Soy Artemisa.
+Artemisa;125;3;¡Ha desaparecido el apoyo de los G. F.!
+Artemisa;125;4;─Comprimiré el tiempo...
+Artemisa;125;5;... y negaré toda existencia.
+Artemisa;125;6;─¿Habéis pensado alguna vez...
+Artemisa;125;7;... en vuestra infancia?
+Artemisa;125;8;─Vuestras sensaciones...
+Artemisa;125;9;─Vuestras palabras...
+Artemisa;125;10;─Vuestras emociones...
+Artemisa;125;11;─Al convertirse en adulto...
+Artemisa;125;12;... uno deja muchas cosas atrás.
+Artemisa;125;13;─El tiempo no perdona.
+Artemisa;125;14;─Aunque uno intente detenerlo...
+Artemisa;125;15;... se aleja irremisiblemente.
+Artemisa;125;16;─Y entonces...
+Seifer;126;0;Seifer
+Seifer;126;1;─Las espadas son mi pasión...
+Seifer;126;2;─Veo que tienes un arma magnífica.
+Seifer;126;3;─¡La agregaré a mi colección!
+Seifer;126;4;─¡En guardia!
+Seifer;126;5;─Ugh...
+Seifer;126;6;─¡Aaahhh...!
+Seifer;126;7;─No era rival digno de mi acero...
+Seifer;126;8;{Squall} ─¡¿Odín?!
+Seifer;126;9;Seifer ─Je... No me ha hecho ni cosquillas.
+Seifer;126;10;Seifer ─{Squall}, ¿qué esperas?
+Seifer;126;11;Seifer ─Te haré una cicatriz nueva.
+Seifer;126;12;Seifer ─¿Aquí se acaba mi fuerza...?
+As de hockey;127;0;As de hockey
+As de hockey;127;1;─¡A la carga, por honor de Galbadia!
+As de hockey;127;2;─¡Formación G, al ataque!
+As de hockey;127;3;─¡Formación M, al ataque!
+As de hockey;127;4;─¡A sus órdenes!
+Gigante;128;0;Gigante
+Gigante;128;1;─¡JA! ¿ATAQUES FÍSICOS? ¡COSQUILLAS!
+Gigante;128;2;─¡ESA MAGIA NO ME AFECTA!
+Gigante;128;3;─ESE G. F. NO SIRVE DE NADA.
+Gigante;128;4;─¡UAH! ¡GRAVEDAD, NO!
+Gigante;128;5;─¡{Diablos}...! ¡DERROTA INMINENTE!
+Elnoir;129;0;Elnoir
+Tiamant;130;0;Tiamant
+Tiamant;130;1;F           
+Tiamant;130;2;Fu          
+Tiamant;130;3;Fulg        
+Tiamant;130;4;Fulgor      
+Tiamant;130;5;Fulgor ne   
+Catoblepas;131;0;Catoblepas
+Catoblepas;131;1;─Mi nombre es Catoblepas.
+Catoblepas;131;2;─¿Cómo unos humanos insignificantes...
+Catoblepas;131;3;... osan desafiarme a mí, amo del Rayo?
+Wedge;132;0;Wedge
+Wedge;132;1;Wedge ─¡Ay!
+Wedge;132;2;Wedge ─Otra vez estos tíos...
+Wedge;132;3;Wedge ─¡No quiero bajar más de rango!
+Wedge;132;4;Wedge ─¡Hey! ¿Qué he hecho yo?
+Wedge;132;5;Wedge ─¡Por eso no quería hacerlo!
+Wedge;132;6;¡Se ha enfadado!
+Wedge;132;7;Está furioso.
+Biggs;133;0;Biggs
+Biggs;133;1;Biggs ─Por culpa vuestra...
+Biggs;133;2;Biggs ─... ahora soy un simple sargento.
+Biggs;133;3;Biggs ─¡Me vengaré!
+Biggs;133;4;Biggs ─¡Esto sólo es el principio!
+Biggs;133;5;Biggs ─¡Idiota! ¡¿Qué haces?!
+Biggs;133;6;Biggs ─Ya me veo cabo...
+Biggs;133;7;Wedge ─Madre mía, ¿que me ha pasado?
+Viento;134;0;Viento
+Viento;134;1;Viento ─Yo, decidir.
+Viento;134;2;Viento ─Vencer enemigos. Ayudar Seifer.
+Viento;134;3;Viento ─Humillación...
+Trueno;135;0;Trueno
+Trueno;135;1;Trueno ─¿Ves? Sabía que pasaría esto.
+Trueno;135;2;Viento ─......
+Trueno;135;3;Trueno ─De... de nuevo me han derrotao.
+Trueno;135;4;Trueno ─Vaya que estás fuerte, {Squall}.
+Trueno;135;5;Trueno ─Veo por qué Seifer te respeta.
+Trueno;135;6;Trueno ─Eres... muy fuerte.
+Trueno;135;7;Trueno ─Como pa' que Seifer te tema.
+Trueno;135;8;Trueno ─Ahora a peleá en serio, ¿eh?
+Trueno;135;9;Trueno ─¡Prepárate pa' perder!
+Trueno;135;10;Trueno ─¡No te perdonaré por ser mujé!
+OVNI;136;0;OVNI
+OVNI;137;0;OVNI
+OVNI;138;0;OVNI
+OVNI;139;0;OVNI
+Sable pistola;140;0;Sable pistola
+Sable pistola;140;1;{Zell}“...The hell is this!?”
+Sable pistola;140;2;{Squall}“What the...”
+Sable pistola;140;3;{Selphie}“Ewww!  Nasty!”
+Guardia;141;0;Guardia
+Guardia;141;1;─¡Comandante, son muy fuertes!
+Guardia;141;2;─Co... comandante...
+Guardia;141;3;─¡Ughhh!
+Guardia;141;4;─¿Cómo os atrevéis a interferir?
+Guardia;141;5;─¡De ésta no saldréis con vida!

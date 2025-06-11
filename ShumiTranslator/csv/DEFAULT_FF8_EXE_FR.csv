@@ -1,0 +1,309 @@
+Section data name;Section Widget id;Text Sub id;Text
+Draw text;0;0;Le couvercle du compartiment\nà disque est ouvert.
+Draw text;0;1;Veuillez insérer le CD {Var17}\nde FINAL FANTASY{xa8}
+Draw text;0;2;Source de magie\n{x0c20} en stock
+Draw text;0;3;Une source de magie!\nElle est vide...
+Draw text;0;4;Qui va voler?\nNe rien voler\n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   
+Draw text;0;5;{Squall} a stocké {Var17} {x0c20}(s).
+Draw text;0;6;{Squall} ne peut stocker aucun(e) {x0c20}.
+Draw text;0;7;Une source de magie!\nImpossible de rien voler
+Draw text;0;8;Une source de magie!\nVol impossible
+Card misc text data;1;0;\n
+Card misc text data;1;1;Vous confirmez\nOui\nNon
+Card misc text data;1;2;Choisissez 
+Card misc text data;1;3; carte(s)
+Card misc text data;1;4; Carte gagnée
+Card misc text data;1;5; Carte perdue
+Card misc text data;1;6;Rejouer?\nOui\nNon
+Card misc text data;1;7;Règles: 
+Card misc text data;1;8;· 
+Card misc text data;1;9;/
+Card misc text data;1;10;Ari
+Card misc text data;1;11;\n· Open
+Card misc text data;1;12;\n· Aléatoire
+Card misc text data;1;13;\n· Mort Subite
+Card misc text data;1;14;Identique
+Card misc text data;1;15;Plus
+Card misc text data;1;16;Même Mur
+Card misc text data;1;17;\n· Elémentaire
+Card misc text data;1;18;\n· Règle du vainqueur: 
+Card misc text data;1;19;Null
+Card misc text data;1;20;One
+Card misc text data;1;21;Change
+Card misc text data;1;22;Directe
+Card misc text data;1;23;Totale
+Card misc text data;1;24;\nJouer\nAnnuler
+Card misc text data;1;25;Utilisée
+Card misc text data;1;26;
+Card misc text data;1;27;
+Card misc text data;1;28;
+Card name;2;0;Bogomile
+Card name;2;1;Fungus
+Card name;2;2;Elmidea
+Card name;2;3;Nocturnus
+Card name;2;4;Incube
+Card name;2;5;Aphide
+Card name;2;6;Elastos
+Card name;2;7;Diodon
+Card name;2;8;Carnidea
+Card name;2;9;Larva
+Card name;2;10;Gallus
+Card name;2;11;Orchida
+Card name;2;12;Schizoïd
+Card name;2;13;Licorne
+Card name;2;14;Xylopode
+Card name;2;15;Koatl
+Card name;2;16;Malaku
+Card name;2;17;Arconada
+Card name;2;18;Formicide
+Card name;2;19;Feng
+Card name;2;20;Héra
+Card name;2;21;Selek
+Card name;2;22;Weevil
+Card name;2;23;Scavenger
+Card name;2;24;Adéphage
+Card name;2;25;Phantom
+Card name;2;26;Satyrux
+Card name;2;27;Trogiidae
+Card name;2;28;Barbarian
+Card name;2;29;Berserker
+Card name;2;30;Pampa
+Card name;2;31;Tomberry
+Card name;2;32;Célébis
+Card name;2;33;Eiffel
+Card name;2;34;Cariatide
+Card name;2;35;T-Rex
+Card name;2;36;Succube
+Card name;2;37;Tikal
+Card name;2;38;Wendigo
+Card name;2;39;Marsupial
+Card name;2;40;Draconus
+Card name;2;41;Moloch
+Card name;2;42;Ao
+Card name;2;43;Polyphage
+Card name;2;44;Ekarissor
+Card name;2;45;Kanibal
+Card name;2;46;Chimaira
+Card name;2;47;Koyo K
+Card name;2;48;Protesis
+Card name;2;49;Pikasso
+Card name;2;50;Xylomid
+Card name;2;51;Griffon
+Card name;2;52;Sulfor
+Card name;2;53;Tomberry Sr
+Card name;2;54;Wedge/Biggs
+Card name;2;55;Fujin/Raijin
+Card name;2;56;Sulfura
+Card name;2;57;Goliath
+Card name;2;58;Lygus
+Card name;2;59;Ecorché
+Card name;2;60;Iguanor
+Card name;2;61;Hornet
+Card name;2;62;Flotix
+Card name;2;63;Cyanide
+Card name;2;64;Shumi
+Card name;2;65;Krystal
+Card name;2;66;Alienator
+Card name;2;67;Pampa Senior
+Card name;2;68;Acron
+Card name;2;69;Agamemnon
+Card name;2;70;Anakronox
+Card name;2;71;Mithra
+Card name;2;72;Acarnan
+Card name;2;73;Omniborg
+Card name;2;74;Attila
+Card name;2;75;Fabryce
+Card name;2;76;Monarch
+Card name;2;77;GroChocobo
+Card name;2;78;Angel
+Card name;2;79;Gilgamesh
+Card name;2;80;MiniMog
+Card name;2;81;Chicobo
+Card name;2;82;Golgotha
+Card name;2;83;Shiva
+Card name;2;84;Ifrit
+Card name;2;85;Ondine
+Card name;2;86;Tauros
+Card name;2;87;Taurux
+Card name;2;88;Ahuri
+Card name;2;89;Nosferatu
+Card name;2;90;Léviathan
+Card name;2;91;Odin
+Card name;2;92;Zéphyr
+Card name;2;93;Cerbères
+Card name;2;94;Alexander
+Card name;2;95;Phénix
+Card name;2;96;Bahamut
+Card name;2;97;Helltrain
+Card name;2;98;Orbital
+Card name;2;99;Ward
+Card name;2;100;Kiros
+Card name;2;101;Laguna
+Card name;2;102;Selphie
+Card name;2;103;Quistis
+Card name;2;104;Irvine
+Card name;2;105;Zell
+Card name;2;106;Linoa
+Card name;2;107;Edea
+Card name;2;108;Seifer
+Card name;2;109;Squall
+Scan text;3;0;Possède une\ngunblade.\nUtilise Renzokuken.\nFroid, silencieux\net impitoyable.
+Scan text;3;1;Adore les bretzels.\nUtilise diverses\nméthodes de\ncombat rapproché.\nGare à ses coups\nde pieds et à son\npunch légendaire.
+Scan text;3;2;Un tireur d'élite.\nIl se sert parfois\nde balles spéciales.\nPlutôt nerveux lors\ndes combats\nrisqués.
+Scan text;3;3;Utilise un fouet.\nA la faculté\nd'apprendre les\nsorts de ses\nennemis.\nElle a un fan club\nà la BGU!
+Scan text;3;4;Résistante des\n'Hiboux de la forêt'.\nUtilise une arme\nboomerang et sa\nchienne pour des\nattaques spéciales.
+Scan text;3;5;Une jeune recrue\nde la BGU.\nSon arme est un\nnunchaku géant.\nElle utilise aussi\nla magie.
+Scan text;3;6;Un des meilleurs\ncombattants de la\nBGU. Son caractère\ndifficile l'empêche\nde devenir un Seed.\nUtilise une gunblade.
+Scan text;3;7;Prêtresse. En tant\nque telle, sa magie\nest sans limite. Elle\ndispose d'un sort\nspécial nommé\nSorcellerie.
+Scan text;3;8;Un dur au grand\ncoeur. Il se sert\nd'une mitrailleuse.
+Scan text;3;9;Utilise des lames\nacérées: les Katal.\nSon style de\ncombat est inconnu,\net son arme est\nunique.
+Scan text;3;10;Une vraie force\nde la nature. Pour\nattaquer, il lance\nson fameux harpon.
+Scan text;3;11;12
+Scan text;3;12;13
+Scan text;3;13;14
+Scan text;3;14;15
+Scan text;3;15;16
+Scan text;3;16;DUMMY
+Scan text;3;17;Un robot fabriqué\npar Galbadia pour\naider l'infanterie.\nEnvoie des missiles\net des sortilèges.
+Scan text;3;18;Une créature quasi\nliquide. Résiste aux\nattaques armées.\nSes faiblesses\nélémentales varient\nselon les cas.
+Scan text;3;19;Un monstre ailé\nvenant de Galbadia.\nAttaque en piqué.\nSes morsures sont\nredoutables.\nProvoque des\nrafales de vent.
+Scan text;3;20;Vit dans les marais.\nIl attaque par\nsurprise tout ce qui\npasse à sa portée.\nA maturité, il\nutilise des attaques\nmentales.
+Scan text;3;21;Son visage est muni\nd'une lame rotative.\nQuand il change de\nface, il modifie\nsa stratégie.
+Scan text;3;22;Flotte dans les\nairs, a la magie\nNeige. A court d'HP,\nil utilise ses crocs\nde vampire pour\nabsorber les HP des\nses adversaires.
+Scan text;3;23;Arme biologique\nGalbadienne.\nA un canon 155\nmm sur chaque\népaule + 1 mortier\nVulcan 60mm dans\nla bouche.
+Scan text;3;24;Un ancien modèle\nd'arme de soutien.\nDoté d'un canon\nlaser, il se sert\naussi de ses poings\nen acier.
+Scan text;3;25;Une corne effilée\ncomme un rasoir.\nCette lame, utilisée\ncomme objet, donne\ndes forces\nmagiques et\ncuratives.
+Scan text;3;26;Très résistant à la\nmagie, qui n'a\npratiquement aucun\neffet sur lui. Mais\nvulnérable aux\nattaques armées.
+Scan text;3;27;Garde la citadelle\nd'Ultimecia. Ses\npouvoirs sont\nénormes (ceux de\n ses adversaires\nsont désactivés!).
+Scan text;3;28;Véritable forme de\nBrahman. Style de\ncombat différent.\nInvoque d'autres\nmonstres et utilise\nla Châtiment.
+Scan text;3;29;Un grand monstre\ndes plaines du nord.\nDifficile à vaincre\nen raison de ses HP\nélevés. Utilise la\nmagie glaçante.
+Scan text;3;30;Ce grand serpent\nvenimeux attaque\nen vous étouffant.\nQuand son niveau\nd'HP est bas, il\ncrache du venin.
+Scan text;3;31;Son corps n'est\nqu'un tube digestif.\nIl tue ses ennemis\navec ses\ntentacules.\nPossède le gaz\nMorphée.
+Scan text;3;32;Son regard pétrifie\nses ennemis. Ses\nbattements d'ailes\ninvoquent la Foudre.\nA maturité il peut\nutiliser Firmament.
+Scan text;3;33;Malgré son air\nbalourd, il attaque\ntrès rapidement.\nSon sort Ultra\nWaves atteint tous\nses ennemis.
+Scan text;3;34;Une sorte de\nchauve-souris très\nvorace.  Embusquée\ndans de sombres\nrecoins, elle\nattaque en piqué et\nmord sa victime.
+Scan text;3;35;S'électrifie quand\nil reçoit la Foudre.\nSi vous l'attaquez\nlorsqu'il est\nélectrifié, vous\nserez foudroyé.
+Scan text;3;36;Un poisson\nterrestre dont vous\nne voyez dépasser\nque l'aileron.\nS'agit-il d'un\nrequin?
+Scan text;3;37;Un poisson\nterrestre dont vous\nne voyez dépasser\nque l'aileron.\nS'agit-il d'un\nrequin?
+Scan text;3;38;Une arme ratée\nconçue il y a 20\nans à Esthar.\nAttaque aussi bien\nalliés qu'ennemis.
+Scan text;3;39;Telle une ombre...\nOn dit qu'il s'agit\nd'un être biologique.\nTue ses ennemis en\nrendant son dernier\nsoupir.
+Scan text;3;40;Une mutation de\ndragon à 6 globes\noculaires. Utilise\nBrasier et des\nsouffles mortels.
+Scan text;3;41;Rempli d'un gaz\nqui lui permet de\nflotter. Paraît\nfaible mais ses\nmultiples attaques\nmentales sont\nredoutables.
+Scan text;3;42;Arme d'Esthar\nantipersonnelle.\nPossède 1 réacteur\nantigravité. Peut\nvoler. Attaque\navec 4 membres\narticulés en acier.
+Scan text;3;43;Les attaques\narmées sont peu\nefficaces face à sa\nrobuste carapace.\nAttaquez en force\npour lui faire perdre\nl'équilibre.
+Scan text;3;44;Il faut beaucoup de\ncalme pour\natteindre cet\ninsecte volant. Il\nest très mobile,\nmais peu résistant.
+Scan text;3;45;Change de tactique\nen cours combat.\nEmploie au hasard\nBrasier, Glacier,\nFoudre, etc.
+Scan text;3;46;Une arme vivante\nqu'Ultimecia a créée\nà l'aide d'un\ndragon.  Craint\nBrasier et Glacier.\nMais évolue en\ncours de combat.
+Scan text;3;47;Utilise la magie et\nses serres acérées.\nModifie sa défense\nen fonction de vos\nattaques.
+Scan text;3;48;Puissant mais sans\nréelle  magie. Ses\nattaques armées\nsont redoutables.
+Scan text;3;49;Utilise Morphée\navant d'attaquer.\nSa salive est\nempoisonnée.
+Scan text;3;50;Un monstre qui se\nprend pour Deling.\nUtilise ses bras\nmonstrueux et des\nattaques mentales.
+Scan text;3;51;Possède 4 serres\nacérées. Attaques\npeu puissantes,\nmais utilise un gaz\nmortel.
+Scan text;3;52;Les 2 têtes\nlatérales sont des\nmirages, mais elles\nmordent et\ncrachent un poison\nbien réel.
+Scan text;3;53;Un habitant des\nmarais revenu sur\nla terre ferme.\nEmpale ses ennemis\navec son énorme\néperon.
+Scan text;3;54;Né d'un joyau de la\ncitadelle d'Ultimecia.\nContre-attaque\ntrès rapidement.
+Scan text;3;55;Monstrueuse\nmain gauche\nsortant de nulle\npart. Au niveau\nsupérieur, soigne\njoueurs ayant des\nanomalies mentales.
+Scan text;3;56;Une horrible main\ndroite surgissant\ndu sol.\nSans magie mais\ntrès puissante.
+Scan text;3;57;Une espèce de\ndragon bipède. Son\nsouffle lui sert\nd'attaque mentale.\nIl possède un objet\nrare.
+Scan text;3;58;Un soldat immortel,\ninsensible à la\ndouleur. Son souffle\nfatal peut tuer en\nun seul coup.
+Scan text;3;59;Un monstre de feu.\nCalme, mais devient\nénorme et peut\nexploser lorsqu'il\nest attaqué.
+Scan text;3;60;Une tête sortant\ndu sol. C'est la\npartie exposée d'un\nêtre souterrain.\nArme: tremblement\nde Terre.
+Scan text;3;61;Un habitant des\nforêts. Attaque\navec ses\ntentacules mais\naussi avec de\nnombreux sorts\nmentaux.
+Scan text;3;62;Cette créature très\nrésistante possède\nde nombreux objets\nrares.
+Scan text;3;63;Ses 4 têtes lui\npermettent des\nattaques magiques,\narmées et mentales.\nSon sort favori:\nle Fréon.
+Scan text;3;64;Utilise un sort\nqui provoque des\naltérations\nmentales diverses.\nAjustez vos\ndéfenses mentales\navant le combat.
+Scan text;3;65;Son armure en\nacier est difficile à\nendommager. Ne\ndispose pas de sort\nmagique mais son\narme tranche\ntous les matériaux.
+Scan text;3;66;Son arme principale,\nc'est sa taille.\nUtilise la magie\n(surtout Météore).\nDifficile à vaincre.
+Scan text;3;67;Un des ancêtres de\nla Terre.\nSa puissance n'a\nd'égale que sa\nrésistance. Seule\nsolution: la fuite.
+Scan text;3;68;Un dragon puissant\net rusé. Si vous\nl'attaquez avec\nBoomerang, il se\njette également ce\nsort pour annuler\nvotre attaque.
+Scan text;3;69;Un dragon plus\npetit que les autres\nqui attaque souvent\npar paire.\nMéfiance, sa taille\ncache une terrible\npuissance.
+Scan text;3;70;Un monstre en\nforme de statue.\nUtilise la magie et\ndes attaques\nspéciales. Utilise\nparfois Gangrène\net Fatima.
+Scan text;3;71;Un vrai bolide ce\ncactus! Il évite\nles attaques grâce\nà d'incroyables\nréflexes. Son sort\nspécial élimine\n1000 HP.
+Scan text;3;72;Créature étrange\nvivant dans les\ndonjons. Se déplace\nlentement, mais son\nDésosseur est \nmortel.
+Scan text;3;73;Assis, il utilise\nde nombreux sorts\nmagiques. Quand\nil se lève, sa force\nse révèle encore\nplus étonnante.
+Scan text;3;74;Ce champignon\ngéant utilise des\nattaques mentales.\nAttention, il est\nplus dangereux\nqu'on ne le croit.
+Scan text;3;75;Cette créature\ndiabolique, malgré\nsa taille, utilise\ndes sorts très\npuissants. Méfiez\nvous!
+Scan text;3;76;Un extra-terrestre\nperdu sur terre\ndepuis la\ndestruction de\nson aéronef.
+Scan text;3;77;G-Force de Feu.\nFacile à vaincre\n(fait partie du\nprogramme éducatif\nde la BGU!)
+Scan text;3;78;G-Force terrestre.\nA des pouvoirs\ncuratifs, qu'il ne\npeut utiliser que\ns'il est au sol.
+Scan text;3;79;Cette G-Force\nterrestre habite la\nTombe du Roi\nInconnu. Attaque\nà l'aide de sa\nformidable masse\nd'arme en acier.
+Scan text;3;80;Chef de la sécurité\ndans la base\ndes missiles de\nGalbadia. Plus\nrésistant que les\nautres soldats.
+Scan text;3;81;Quand il utilise\nTriple, les 3 têtes\nde ce chien de\nl'enfer attaquent\navec 3 magies\ndifférentes. Méfiez\nvous de sa queue.
+Scan text;3;82;Etrange G-Force\nvivant dans une\nautre dimension.\nSon pouvoir\ndémesuré ôte\nvos points HP\nen un seul coup.
+Scan text;3;83;Puissante G-Force.\nAucune défense ne\nrésiste à son\nOuroboros. Lorsqu'il\ntrouve son maître,\nc'est le plus docile\ndes serviteurs.
+Scan text;3;84;L'armure de NORG.\nVous devrez\nd'abord la détruire\navant de pouvoir\nattaquer le\nredoutable Shumi.
+Scan text;3;85;PAS UN ENNEMI
+Scan text;3;86;Légendaire G-Force\nvivant dans un\ndonjon. Son sort\nZantetsuken\ndétruit ce qui se\ntrouve sur son\nchemin.
+Scan text;3;87;Soldat Galbadien.\nSon épée jette des\nsorts. Bien\nqu'assez résistant,\nun bon Seed doit le\nvaincre aisément.
+Scan text;3;88;Un officier à la\nsolde de Galbadia.\nTuez-le en premier\ncar il peut guérir\nses alliés.
+Scan text;3;89;Soldat Galbadien\ngardant la tour de\ncommunication à\nDollet. Il est le\nsouffre-douleur de\nBiggs, son chef.
+Scan text;3;90;Cet officier des\nrenseignements\nn'est pas un bon\nguerrier. Chargé de\nréparer la tour\nsatellite de Dollet.\nColérique.
+Scan text;3;91;Doublure de Deling.\nSes attaques sont\nspéciales, mais il\nn'est pas très\nrésistant.
+Scan text;3;92;Gardien de prison.\nSoldat de Galbadia\nutilisant Morphée\npour capturer les\névadés.
+Scan text;3;93;Maître de la BGU.\nIl veut prendre le\ncontrôle de la Fac\nen éliminant son\nex-associé: Cid.
+Scan text;3;94;Soldat d'Esthar.\nUtilise une arme à\nfeu et une épée.\nSes coups sont\nredoutables, mais\nil n'est pas très\nrésistant.
+Scan text;3;95;Ce cyborg est la\nréplique du soldat\nd'Esthar, mais est\nplus puissant.\nSe sert d'attaques\narmées uniquement.
+Scan text;3;96;Système de défense\nde NORG. Fonction\nauto-réparatrice.\nPrivilégie les\nattaques mentales.
+Scan text;3;97;Mécanisme défensif\nde NORG. Fonction\nd'auto-entretien.\nAttaques magiques.
+Scan text;3;98;PAS UN ENNEMI
+Scan text;3;99;Le père de Tomberry.\nApparaît à chaque\nfois que Tomberry\nest vaincu. Bien\nplus résistant que\nson fils.
+Scan text;3;100;En plein soleil,\nun cactus peut\ndevenir gigantesque.\nEn voilà la preuve.
+Scan text;3;101;Après avoir quitté\nla BGU, est devenu\nle chevalier de la\nprêtresse Edea.\nPossède magie de\nFeu et une épée\nsurpuissante.
+Scan text;3;102;Ennemi juré des\nSeeds. Prenez\ngarde à son épée,\nelle n'est pas\ncomme les autres.
+Scan text;3;103;Bien que vaincu une\npremière fois, il\nveut venger son\nhonneur. Ses HP ont\ndiminué, mais ses\ncapacités restent\neffrayantes.
+Scan text;3;104;Cette puissante\nsorcière règne sur\nGalbadia. Ses\npouvoirs sont sans\nlimites.
+Scan text;3;105;Un extra-terrestre\nvivant à l'intérieur\nde l'Hydre. Très\nagressif, il attaque\ntout ce qui bouge.
+Scan text;3;106;Le plus puissant\ndes ennemis?\nOn dit qu'il est\ninvincible.
+Scan text;3;107;Cette bestiole vit\ndans la tour de\ncommunication de\nDollet. Origine\ninconnue.
+Scan text;3;108;La 'Veuve Noire'.\nArme secrète de\nGalbadia. Tant que\nses ennemis sont\nvivants, il poursuit\nsa course.
+Scan text;3;109;Une mutation de\ngargouille. Attaque\navec Fossile, et\nsait manier le\nBoomerang.
+Scan text;3;110;Gigantesque mais\nne dispose que\nd'attaques\nmagiques, sauf si\nvous multipliez les\nattaques armées.
+Scan text;3;111;Une sorte d'insecte.\nUn survivant d'une\nautre époque.\nUtilise son dard et\nsa queue pour\nattaquer.
+Scan text;3;112;Son corps de pierre\ndonne une\nimpression\nde lenteur, mais il\nest très rapide. Ce\nmonstre se déplace\nsouvent en meute.
+Scan text;3;113;Cette créature de\nl'espace a colonisé\nl'Hydre. Elle s'en\nprend à tout ce qui\nbouge.
+Scan text;3;114;Ce monstre extra-\nterrestre habite\ndans l'Hydre. Il\nest carnivore et\naffamé.
+Scan text;3;115;Créature\nsouterraine au\ncorps spongieux,\nremplie d'une huile\nempoisonnée qu'elle\ncrache sur ses\nennemis.
+Scan text;3;116;Cette Prêtresse ne\ndésire qu'une\nchose: régner sur\nle monde.\nA pris le contrôle\nde Galbadia pour\ndétruire les Seeds.
+Scan text;3;117;Blindage en\nacier trempé\nquasi-indestrutible.\nCanon principal\nplus dévastateur\nque rayons du\nrobot Goliath.
+Scan text;3;118;Après sa\ndestruction à la\nbase de missiles,\nil a perdu tout\ncontrôle. Un\nadversaire plutôt\nfacile à vaincre.
+Scan text;3;119;Un squelette vivant,\nsorti du grand lac\nsalé. Revenu à la\nvie après l'étrange\nassèchement du lac.
+Scan text;3;120;PAS UN ENNEMI
+Scan text;3;121;Un vieux dispositif\nde défense, oublié\nà Lunatic Pandora\npar les chercheurs\nd'Esthar. Ses\nrayons lasers\nsont dévastateurs.
+Scan text;3;122;Epaulière gauche.\nSystème de combat\nautonome.\nFonction auto-\nréparatrice.
+Scan text;3;123;Epaulière droite\nmobile. Un engin\nde guerre autonome.\nSystème d'auto-\nentretien.
+Scan text;3;124;Soldat de la Fac\nde Galbadia.\nSpécialiste des\nembuscades. Plus\nrésistant que le\nsoldat Galbadien\nde base.
+Scan text;3;125;Ultimecia a redonné\nvie à cette arme\nfuturiste. Son\ncanon à impulsions\nest dévastateur.
+Scan text;3;126;Ersatz de Flotix.\nArme de soutien. Sa\ntaille réduite ne\nl'empêche pas\nd'utiliser également\nun canon laser.
+Scan text;3;127;Un extra-terrestre\nvivant à l'intérieur\nde l'Hydre. Très\nagressif, il attaque\ntout ce qui bouge.
+Scan text;3;128;Mage d'Esthar\navant que Laguna\nne le neutralise.\nLiberé par\nUltimecia. Sur le\npoint de retrouver\nses pouvoirs.
+Scan text;3;129;{Rinoa} a été\nfusionnée à Adel.\nL'infâme créature\nandrogyne se\nnourrit des HP\nde la jeune fille.
+Scan text;3;130;Un de vos plus\ndangereux ennemis.\nPeut-être le plus\ncoriace de tous vos\nadversaires.
+Scan text;3;131;Sorcière de l'au-\ndelà apparue avec\nla compression\ntemporelle. Utilise\nune magie peu\npuissante.
+Scan text;3;132;Prêtresse du temps\njadis. Adepte de la\nsorcellerie. Plus\neffrayante que\ndangereuse.
+Scan text;3;133;Pythie de l'au-\ndelà apparue avec\nla compression\ntemporelle.
+Scan text;3;134;Objet Volant\nNon Identifié.
+Scan text;3;135;Sous les ordres\nde Keifer. Capable\nd'utiliser l'étrange\nmagie du Vent.\nAttaque avec\nRotator.
+Scan text;3;136;Acolyte de Fujin.\nPuissantes\nattaques armées.
+Scan text;3;137;Tente de\ncontrôler le monde,\nvia la compression\ntemporelle. Absorbe\nles pouvoirs de\ntoutes les sorcières\ndes siècles passés.
+Scan text;3;138;En tant qu'alliée,\nla plus puissante\ndes G-Forces. En\ntant que suppôt\nd'Ultimecia, un\nmonstre quasi-\nindestructible.
+Scan text;3;139;PAS UN ENNEMI
+Scan text;3;140;Association de\n{Griever} et\nd'Ultimecia. Un\neffroyable ennemi,\ncombinant les\npouvoirs de ces\n2 créatures.
+Scan text;3;141;Amplificateur\nmagique d'Ultimecia.\nSi deux mécanismes\nsemblables sont\nutilisés, la force\nde la sorcière est\ndécuplée à l'infini.
+Scan text;3;142;Mutation d'Ultimecia\naprès la fusion\ntemporelle.\nUtilise des pouvoirs\nliés au temps et\nà l'espace.
+Scan text;3;143;Source des\nnombreux pouvoirs\nmagiques\nd'Ultimecia. Lance\ndes maléfices\nd'une violence\nincommensurable.
+Scan text;3;144;Prêt à tout pour\nconserver son\nstatut de chevalier\nde la Prêtresse,\nSes pouvoirs sont\ndevenus maléfiques.
+Scan text;3;145;Monstre étudiant à\nla fac de Galbadia.\nUtilise ses\nconnaissances du\nHockey pour tuer\nses ennemis.
+Scan text;3;146;Mécanisme géant\nalimenté par magie.\nSes pouvoirs\ndéfensifs le rendent\ndifficile à vaincre.\nUtilisez la magie ou\nvos G-Forces.
+Scan text;3;147;Très puissant, ce\nmonstre utilise la\nmagie et des\naiguillades\ndévastatrices.
+Scan text;3;148;G-Force devenue\nun monstre sous les\nordres d'Ultimecia.\nSes hypocaustes\ndétruisent tout\nsur leur passage.
+Scan text;3;149;Utilise aussi bien\nla magie que les\nattaques armées.\nSa connaissance de\nla magie Tonnerre\naccroît les effets\nde ses assauts.
+Scan text;3;150;Dégradé (avec\nBiggs) après le\nfiasco de\nl'opération à la\ntour de Dollet.\nCollabore toujours\navec Biggs.
+Scan text;3;151;Ancien officier,\ndégradé après\nl'échec de\nl'opération\nà la tour satellite\nde Dollet. Déteste\nles Seeds.
+Scan text;3;152;Soutient Keifer\nà bord de Lunatic\nPandora. Sa magie\ns'est améliorée.\nUtilise des sorts\nde défense et\nd'attaque.
+Scan text;3;153;Collabore avec\nFujin et Keifer. Ne\ncompte que sur sa\nforce mais peut\nutiliser de la\nmagie défensive.
+Scan text;3;154;PAS UNE CIBLE
+Scan text;3;155;PAS UNE CIBLE
+Scan text;3;156;PAS UNE CIBLE
+Scan text;3;157;PAS UNE CIBLE
+Scan text;3;158;Un monstre qui se\nfait passer pour.\nDeling. Attaque\navec ses bras\ndécharnés\net utilise des\nattaques mentales.
+Scan text;3;159;Garde de la base de\nmissiles de Galbadia.\nMieux payé et plus\ncombatif que les\nsoldats classiques.

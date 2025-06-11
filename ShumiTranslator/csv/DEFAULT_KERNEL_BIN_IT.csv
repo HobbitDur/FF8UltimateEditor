@@ -1,0 +1,1538 @@
+Section data name;Section Widget id;Text Sub id;Text
+Battle command text section;0;0;
+Battle command text section;0;1;
+Battle command text section;0;2;Attacco
+Battle command text section;0;3;Attacca con le armi a disposizione
+Battle command text section;0;4;Magie
+Battle command text section;0;5;Permette di richiamare magie
+Battle command text section;0;6;G.F.
+Battle command text section;0;7;Invoca i Guardian Force
+Battle command text section;0;8;Oggetti
+Battle command text section;0;9;Permette di usare oggetti
+Battle command text section;0;10;Renzokuken
+Battle command text section;0;11;Permette l'attacco Renzokuken
+Battle command text section;0;12;Assimila
+Battle command text section;0;13;Cattura le magie degli avversari
+Battle command text section;0;14;Divora
+Battle command text section;0;15;Permette di divorare i mostri
+Battle command text section;0;16;
+Battle command text section;0;17;
+Battle command text section;0;18;Usa subito
+Battle command text section;0;19;Scaglia la magia catturata contro il nemico
+Battle command text section;0;20;Accumula
+Battle command text section;0;21;Conserva la magia catturata
+Battle command text section;0;22;Duello
+Battle command text section;0;23;Combattimento corpo a corpo con il nemico
+Battle command text section;0;24;Ruba
+Battle command text section;0;25;Permette di ottenere oggetti dopo l'attacco
+Battle command text section;0;26;
+Battle command text section;0;27;
+Battle command text section;0;28;Shot
+Battle command text section;0;29;Attacco con oggetti tipo proiettili/munizioni
+Battle command text section;0;30;Magia blu
+Battle command text section;0;31;Utilizzo delle tecniche dei mostri
+Battle command text section;0;32;Slot
+Battle command text section;0;33;Attacco con magie scelte a caso
+Battle command text section;0;34;Shimatsuken
+Battle command text section;0;35;Attacco con la spada
+Battle command text section;0;36;Sortilegio
+Battle command text section;0;37;Attacco magico
+Battle command text section;0;38;Combinazione
+Battle command text section;0;39;Chiama......qualcuno
+Battle command text section;0;40;Limite
+Battle command text section;0;41;Attacco con Tecniche speciali
+Battle command text section;0;42;Limite
+Battle command text section;0;43;Attacco con Tecniche speciali
+Battle command text section;0;44;Limite
+Battle command text section;0;45;Attacco con Tecniche speciali
+Battle command text section;0;46;Protezione
+Battle command text section;0;47;Limita % danni fino a nuovo comando
+Battle command text section;0;48;Assalto
+Battle command text section;0;49;Haste, Berserk, Protect per tutta la squadra
+Battle command text section;0;50;Vitamina
+Battle command text section;0;51;Cura alterazione di status
+Battle command text section;0;52;Recupero
+Battle command text section;0;53;Ripristina HP
+Battle command text section;0;54;Risveglio
+Battle command text section;0;55;Riattiva assetto di guerra
+Battle command text section;0;56;Sacrificio
+Battle command text section;0;57;Permette attacco consumando il proprio HP
+Battle command text section;0;58;Carta
+Battle command text section;0;59;Trasforma i mostri in carte
+Battle command text section;0;60;Sentenza
+Battle command text section;0;61;Causa status Sentenza
+Battle command text section;0;62;Kamikaze
+Battle command text section;0;63;Danneggia tutti i nemici, ma esce di battaglia
+Battle command text section;0;64;Assorbi
+Battle command text section;0;65;Assorbe HP
+Battle command text section;0;66;LV down
+Battle command text section;0;67;Abbassa il livello dei mostri
+Battle command text section;0;68;LV up
+Battle command text section;0;69;Aumenta il livello dei mostri
+Battle command text section;0;70;Singolo
+Battle command text section;0;71;Permette di scegliere una volta
+Battle command text section;0;72;Double
+Battle command text section;0;73;Permette di scegliere due volte
+Battle command text section;0;74;Triple
+Battle command text section;0;75;Permette di scegliere tre volte
+Battle command text section;0;76;Komoguri
+Battle command text section;0;77;Chiama il Komoguri
+Magic text section;1;0;
+Magic text section;1;1;
+Magic text section;1;2;Fire
+Magic text section;1;3;{x0e35} Fuoco
+Magic text section;1;4;Fira
+Magic text section;1;5;{x0e35} Fuoco
+Magic text section;1;6;Firaga
+Magic text section;1;7;{x0e35} Fuoco
+Magic text section;1;8;Blizzard
+Magic text section;1;9;{x0e35} Gelo
+Magic text section;1;10;Blizzara
+Magic text section;1;11;{x0e35} Gelo
+Magic text section;1;12;Blizzaga
+Magic text section;1;13;{x0e35} Gelo
+Magic text section;1;14;Thunder
+Magic text section;1;15;{x0e35} Tuono
+Magic text section;1;16;Thundara
+Magic text section;1;17;{x0e35} Tuono
+Magic text section;1;18;Thundaga
+Magic text section;1;19;{x0e35} Tuono
+Magic text section;1;20;Idro
+Magic text section;1;21;{x0e35} Acqua
+Magic text section;1;22;Aero
+Magic text section;1;23;{x0e35} Vento 
+Magic text section;1;24;Bio
+Magic text section;1;25;Attacco magico elem. Veleno, status Veleno
+Magic text section;1;26;Antima
+Magic text section;1;27;Magia che toglie 1/4 di HP al nemico
+Magic text section;1;28;Sancta
+Magic text section;1;29;{x0e35} Sacro
+Magic text section;1;30;Flare
+Magic text section;1;31;Attacco magico singolo {x0e37}
+Magic text section;1;32;Meteor
+Magic text section;1;33;Attacco magico globale non elementale casuale
+Magic text section;1;34;Quake
+Magic text section;1;35;Attacco magico globale, {x0e38} Terra
+Magic text section;1;36;Tornado
+Magic text section;1;37;Attacco magico globale, {x0e38} Vento
+Magic text section;1;38;Ultima
+Magic text section;1;39;Attacco magico globale {x0e37}
+Magic text section;1;40;Apocalypse
+Magic text section;1;41;Attacco magico globale {x0e37}
+Magic text section;1;42;Energia
+Magic text section;1;43;Recupera HP
+Magic text section;1;44;Energira
+Magic text section;1;45;Recupera HP
+Magic text section;1;46;Energiga
+Magic text section;1;47;Recupera HP
+Magic text section;1;48;Reiz
+Magic text section;1;49;Riattiva assetto di guerra
+Magic text section;1;50;Areiz
+Magic text section;1;51;Riattiva assetto di guerra e ripristina HP
+Magic text section;1;52;Rigene
+Magic text section;1;53;Recupera HP con lo scorrere del tempo
+Magic text section;1;54;Esna
+Magic text section;1;55;Guarisce status alterato
+Magic text section;1;56;Dispel
+Magic text section;1;57;Elimina l'effetto di varie magie
+Magic text section;1;58;Protect
+Magic text section;1;59;Diminuisce danno attacco fisico
+Magic text section;1;60;Shell
+Magic text section;1;61;Diminuisce danno attacco magico
+Magic text section;1;62;Reflex
+Magic text section;1;63;Respinge magie temporaneamente
+Magic text section;1;64;Aura
+Magic text section;1;65;Permette tecniche speciali più spesso
+Magic text section;1;66;Double
+Magic text section;1;67;Permette uso di 2 magie in successione
+Magic text section;1;68;Triple
+Magic text section;1;69;Permette uso di 3 magie in successione
+Magic text section;1;70;Haste
+Magic text section;1;71;Aumenta la velocità temporaneamente
+Magic text section;1;72;Slow
+Magic text section;1;73;Diminuisce la velocità temporaneamente
+Magic text section;1;74;Stop
+Magic text section;1;75;Blocca i movimenti temporaneamente
+Magic text section;1;76;Blind
+Magic text section;1;77;Provoca status Blind
+Magic text section;1;78;Caos
+Magic text section;1;79;Provoca status Caos
+Magic text section;1;80;Morfeo
+Magic text section;1;81;Provoca status Sonno
+Magic text section;1;82;Novox
+Magic text section;1;83;Provoca status Mutismo
+Magic text section;1;84;Medusa
+Magic text section;1;85;Provoca status Pietra
+Magic text section;1;86;Ade
+Magic text section;1;87;Provoca status Morte
+Magic text section;1;88;Drain
+Magic text section;1;89;Assorbe HP
+Magic text section;1;90;Pain
+Magic text section;1;91;Provoca status Veleno, Blind, Mutismo
+Magic text section;1;92;Berserk
+Magic text section;1;93;Provoca status Berserk 
+Magic text section;1;94;Levita
+Magic text section;1;95;Permette di fluttuare in aria
+Magic text section;1;96;Zombie
+Magic text section;1;97;Provoca status Zombie
+Magic text section;1;98;Zero
+Magic text section;1;99;Azzera RES nemico con attacco {x0e37}
+Magic text section;1;100;Scan
+Magic text section;1;101;Trova HP e punti deboli del nemico
+Magic text section;1;102;Megaene
+Magic text section;1;103;Recupera HP e ripristina status squadra
+Magic text section;1;104;Mura
+Magic text section;1;105;Shell e Protect a tutta la squadra
+Magic text section;1;106;Estasi
+Magic text section;1;107;Cancella il nemico
+Magic text section;1;108;Percent
+Magic text section;1;109;Provoca al nemico lo stato di coma
+Magic text section;1;110;Catasth
+Magic text section;1;111;Danneggia notevolmente tutti i nemici
+Magic text section;1;112;The End
+Magic text section;1;113;Cancella tutti i nemici
+Junctionable GF text section;2;0;Tempesta di tuoni
+Junctionable GF text section;2;1;{x0e36}di {x0e38} Tuono
+Junctionable GF text section;2;2;Polvere di diamante
+Junctionable GF text section;2;3;{x0e36}di {x0e38} Gelo
+Junctionable GF text section;2;4;Fiamme infernali
+Junctionable GF text section;2;5;{x0e36}di {x0e38} Fuoco
+Junctionable GF text section;2;6;Voce del silenzio
+Junctionable GF text section;2;7;G.F.: causa Mutismo e altri danni
+Junctionable GF text section;2;8;Dovere fraterno
+Junctionable GF text section;2;9;{x0e36}di {x0e38} Terra
+Junctionable GF text section;2;10;Messaggero della notte
+Junctionable GF text section;2;11; {x0e36}{x0e37}
+Junctionable GF text section;2;12;Bagliore di rubini
+Junctionable GF text section;2;13;G.F.: applica magia Reflex a tutta la squadra 
+Junctionable GF text section;2;14;Ruggito oceanico
+Junctionable GF text section;2;15;{x0e36}di {x0e38} Acqua
+Junctionable GF text section;2;16;Attacco ciclonico
+Junctionable GF text section;2;17;{x0e36}di {x0e38} Vento
+Junctionable GF text section;2;18;Contrattacco satanico
+Junctionable GF text section;2;19;G.F.: status Double/Triple alla squadra
+Junctionable GF text section;2;20;Verdetto divino
+Junctionable GF text section;2;21;{x0e36}di {x0e38} Sacro  
+Junctionable GF text section;2;22;Caos infernale
+Junctionable GF text section;2;23;{x0e36}di {x0e38} Veleno
+Junctionable GF text section;2;24;Megaflare
+Junctionable GF text section;2;25; {x0e36}{x0e37}
+Junctionable GF text section;2;26;1000 e 1 ago
+Junctionable GF text section;2;27; {x0e36}{x0e37}
+Junctionable GF text section;2;28;Coltello da chef
+Junctionable GF text section;2;29; {x0e36}{x0e37}
+Junctionable GF text section;2;30;Respiro eterno
+Junctionable GF text section;2;31; {x0e36}{x0e37}
+Enemy attack text section;3;0;
+Enemy attack text section;3;1;
+Enemy attack text section;3;2;
+Enemy attack text section;3;3;
+Enemy attack text section;3;4;
+Enemy attack text section;3;5;Colpo di lama
+Enemy attack text section;3;6;Retrocalcio
+Enemy attack text section;3;7;Lama rotante
+Enemy attack text section;3;8;Termocaos
+Enemy attack text section;3;9;Soffio di tuono
+Enemy attack text section;3;10;Nebbia oscura
+Enemy attack text section;3;11;Strangolamento
+Enemy attack text section;3;12;Scontro violento
+Enemy attack text section;3;13;Braccio stritolante
+Enemy attack text section;3;14;
+Enemy attack text section;3;15;Coda appuntita
+Enemy attack text section;3;16;Braccio letale
+Enemy attack text section;3;17;Alito fetido
+Enemy attack text section;3;18;
+Enemy attack text section;3;19;Sguardo pietrificante
+Enemy attack text section;3;20;Vampiria
+Enemy attack text section;3;21;Nebbia velenosa
+Enemy attack text section;3;22;ControSlice
+Enemy attack text section;3;23;ControLaser
+Enemy attack text section;3;24;
+Enemy attack text section;3;25;1000 aghi
+Enemy attack text section;3;26;Spezzacuore
+Enemy attack text section;3;27;Calcio alto
+Enemy attack text section;3;28;Scarica elettrica
+Enemy attack text section;3;29;Sguardo pietrificante
+Enemy attack text section;3;30;
+Enemy attack text section;3;31;Morso
+Enemy attack text section;3;32;Gas velenoso
+Enemy attack text section;3;33;Gas velenoso
+Enemy attack text section;3;34;Gas velenoso
+Enemy attack text section;3;35;Acido
+Enemy attack text section;3;36;Melt eye
+Enemy attack text section;3;37;Respiro
+Enemy attack text section;3;38;Respiro gelido
+Enemy attack text section;3;39;Tempesta di sabbia
+Enemy attack text section;3;40;
+Enemy attack text section;3;41;
+Enemy attack text section;3;42;
+Enemy attack text section;3;43;
+Enemy attack text section;3;44;
+Enemy attack text section;3;45;
+Enemy attack text section;3;46;
+Enemy attack text section;3;47;
+Enemy attack text section;3;48;Assimila
+Enemy attack text section;3;49;Quake
+Enemy attack text section;3;50;
+Enemy attack text section;3;51;
+Enemy attack text section;3;52;
+Enemy attack text section;3;53;Metamorfosi
+Enemy attack text section;3;54;Stretta mortale
+Enemy attack text section;3;55;Potere esplosivo
+Enemy attack text section;3;56;Bava letale
+Enemy attack text section;3;57;Shot
+Enemy attack text section;3;58;Ultrasuoni
+Enemy attack text section;3;59;
+Enemy attack text section;3;60;Multimorso
+Enemy attack text section;3;61;Fucile
+Enemy attack text section;3;62;Kamikaze
+Enemy attack text section;3;63;Ultrasuoni
+Enemy attack text section;3;64;Soffio di morte
+Enemy attack text section;3;65;Soffio dannato
+Enemy attack text section;3;66;Sticky Icky
+Enemy attack text section;3;67;Shoulder charge
+Enemy attack text section;3;68;Biomitragliatore
+Enemy attack text section;3;69;Cannone
+Enemy attack text section;3;70;Raffica di cannone
+Enemy attack text section;3;71;Accumulo d'energia
+Enemy attack text section;3;72;Disintegrazione
+Enemy attack text section;3;73;Telecinesi
+Enemy attack text section;3;74;
+Enemy attack text section;3;75;
+Enemy attack text section;3;76;Ipnosi
+Enemy attack text section;3;77;Liquido gastrico
+Enemy attack text section;3;78;
+Enemy attack text section;3;79;
+Enemy attack text section;3;80;Tempesta di sabbia
+Enemy attack text section;3;81;
+Enemy attack text section;3;82;
+Enemy attack text section;3;83;
+Enemy attack text section;3;84;Sguardo maledetto
+Enemy attack text section;3;85;Sospiro
+Enemy attack text section;3;86;Maledizione
+Enemy attack text section;3;87;
+Enemy attack text section;3;88;
+Enemy attack text section;3;89;
+Enemy attack text section;3;90;
+Enemy attack text section;3;91;
+Enemy attack text section;3;92;
+Enemy attack text section;3;93;Respiro di morte
+Enemy attack text section;3;94;Respiro
+Enemy attack text section;3;95;Doppia lama
+Enemy attack text section;3;96;Scontro
+Enemy attack text section;3;97;Iainuki
+Enemy attack text section;3;98;Onde soniche
+Enemy attack text section;3;99;
+Enemy attack text section;3;100;Filo appiccicoso
+Enemy attack text section;3;101;
+Enemy attack text section;3;102;Respiro
+Enemy attack text section;3;103;Coda tagliente
+Enemy attack text section;3;104;
+Enemy attack text section;3;105;
+Enemy attack text section;3;106;MegaSpark
+Enemy attack text section;3;107;Carica
+Enemy attack text section;3;108;
+Enemy attack text section;3;109;
+Enemy attack text section;3;110;Peto
+Enemy attack text section;3;111;Aculeo
+Enemy attack text section;3;112;Liquido gastrico
+Enemy attack text section;3;113;Gas ipnotico
+Enemy attack text section;3;114;Respiro di drago
+Enemy attack text section;3;115;
+Enemy attack text section;3;116;
+Enemy attack text section;3;117;
+Enemy attack text section;3;118;Cannone a raggi
+Enemy attack text section;3;119;
+Enemy attack text section;3;120;Respiro magmatico
+Enemy attack text section;3;121;Risonanza
+Enemy attack text section;3;122;Blaster
+Enemy attack text section;3;123;Blaster
+Enemy attack text section;3;124;Livello Ade 5
+Enemy attack text section;3;125;Artigli di morte
+Enemy attack text section;3;126;Stretta dell'orso
+Enemy attack text section;3;127;Gas
+Enemy attack text section;3;128;Esplosione
+Enemy attack text section;3;129;Esplosione
+Enemy attack text section;3;130;Esplosione
+Enemy attack text section;3;131;Grrrr!!!
+Enemy attack text section;3;132;
+Enemy attack text section;3;133;Wind blast
+Enemy attack text section;3;134;
+Enemy attack text section;3;135;Scan
+Enemy attack text section;3;136;
+Enemy attack text section;3;137;
+Enemy attack text section;3;138;
+Enemy attack text section;3;139;Cannone a raggi
+Enemy attack text section;3;140;
+Enemy attack text section;3;141;
+Enemy attack text section;3;142;
+Enemy attack text section;3;143;
+Enemy attack text section;3;144;
+Enemy attack text section;3;145;
+Enemy attack text section;3;146;Respiro marino
+Enemy attack text section;3;147;
+Enemy attack text section;3;148;
+Enemy attack text section;3;149;
+Enemy attack text section;3;150;
+Enemy attack text section;3;151;
+Enemy attack text section;3;152;Occhi diabolici
+Enemy attack text section;3;153;Controtorsione
+Enemy attack text section;3;154;Automitragliatore
+Enemy attack text section;3;155;Snipe laser
+Enemy attack text section;3;156;
+Enemy attack text section;3;157;Bolle dissolventi
+Enemy attack text section;3;158;Super colpo
+Enemy attack text section;3;159;Spada boomerang
+Enemy attack text section;3;160;
+Enemy attack text section;3;161;
+Enemy attack text section;3;162;
+Enemy attack text section;3;163;
+Enemy attack text section;3;164;
+Enemy attack text section;3;165;
+Enemy attack text section;3;166;GranSpada
+Enemy attack text section;3;167;
+Enemy attack text section;3;168;Psycho blast
+Enemy attack text section;3;169;Filo appiccicoso
+Enemy attack text section;3;170;
+Enemy attack text section;3;171;
+Enemy attack text section;3;172;
+Enemy attack text section;3;173;
+Enemy attack text section;3;174;Sisma di sabbia
+Enemy attack text section;3;175;Saliva
+Enemy attack text section;3;176;Raggio laser
+Enemy attack text section;3;177;Raggio riflettente
+Enemy attack text section;3;178;
+Enemy attack text section;3;179;
+Enemy attack text section;3;180;Oil shot
+Enemy attack text section;3;181;Oil blast
+Enemy attack text section;3;182;Onde soniche
+Enemy attack text section;3;183;Liquido letale
+Enemy attack text section;3;184;Alito fetido
+Enemy attack text section;3;185;Eerie
+Enemy attack text section;3;186;
+Enemy attack text section;3;187;
+Enemy attack text section;3;188;
+Enemy attack text section;3;189;
+Enemy attack text section;3;190;
+Enemy attack text section;3;191;
+Enemy attack text section;3;192;Ochu dance
+Enemy attack text section;3;193;Quake
+Enemy attack text section;3;194;Magic drink
+Enemy attack text section;3;195;
+Enemy attack text section;3;196;
+Enemy attack text section;3;197;
+Enemy attack text section;3;198;
+Enemy attack text section;3;199;Corno d'assalto
+Enemy attack text section;3;200;Termocaos
+Enemy attack text section;3;201;Micromissili
+Enemy attack text section;3;202;
+Enemy attack text section;3;203;
+Enemy attack text section;3;204;Pugno astrale
+Enemy attack text section;3;205;
+Enemy attack text section;3;206;
+Enemy attack text section;3;207;
+Enemy attack text section;3;208;
+Enemy attack text section;3;209;
+Enemy attack text section;3;210;Raijin Tecnica Segreta
+Enemy attack text section;3;211;
+Enemy attack text section;3;212;
+Enemy attack text section;3;213;Attacco fraterno
+Enemy attack text section;3;214;ZAN
+Enemy attack text section;3;215;METSU
+Enemy attack text section;3;216;SAI
+Enemy attack text section;3;217;
+Enemy attack text section;3;218;
+Enemy attack text section;3;219;
+Enemy attack text section;3;220;Nagiharai
+Enemy attack text section;3;221;
+Enemy attack text section;3;222;Coltello da chef
+Enemy attack text section;3;223;Odio totale
+Enemy attack text section;3;224;
+Enemy attack text section;3;225;
+Enemy attack text section;3;226;Junk
+Enemy attack text section;3;227;AffilaAffila
+Enemy attack text section;3;228;
+Enemy attack text section;3;229;
+Enemy attack text section;3;230;10.000 aghi
+Enemy attack text section;3;231;Ker Plunk
+Enemy attack text section;3;232;
+Enemy attack text section;3;233;Soffio di uragano
+Enemy attack text section;3;234;Megaflare
+Enemy attack text section;3;235;Barrier change
+Enemy attack text section;3;236;
+Enemy attack text section;3;237;
+Enemy attack text section;3;238;
+Enemy attack text section;3;239;
+Enemy attack text section;3;240;
+Enemy attack text section;3;241;
+Enemy attack text section;3;242;Invocazione di tuono
+Enemy attack text section;3;243;Corno di morte
+Enemy attack text section;3;244;
+Enemy attack text section;3;245;
+Enemy attack text section;3;246;
+Enemy attack text section;3;247;
+Enemy attack text section;3;248;
+Enemy attack text section;3;249;
+Enemy attack text section;3;250;
+Enemy attack text section;3;251;
+Enemy attack text section;3;252;
+Enemy attack text section;3;253;
+Enemy attack text section;3;254;
+Enemy attack text section;3;255;
+Enemy attack text section;3;256;
+Enemy attack text section;3;257;Antima
+Enemy attack text section;3;258;
+Enemy attack text section;3;259;
+Enemy attack text section;3;260;
+Enemy attack text section;3;261;Invocazione magica
+Enemy attack text section;3;262;Multidifesa
+Enemy attack text section;3;263;Sentenza
+Enemy attack text section;3;264;
+Enemy attack text section;3;265;
+Enemy attack text section;3;266;
+Enemy attack text section;3;267;
+Enemy attack text section;3;268;
+Enemy attack text section;3;269;
+Enemy attack text section;3;270;
+Enemy attack text section;3;271;Thunder
+Enemy attack text section;3;272;Thundara
+Enemy attack text section;3;273;Thundaga
+Enemy attack text section;3;274;Colpo letale
+Enemy attack text section;3;275;
+Enemy attack text section;3;276;Bianco vento
+Enemy attack text section;3;277;
+Enemy attack text section;3;278;
+Enemy attack text section;3;279;
+Enemy attack text section;3;280;Charge
+Enemy attack text section;3;281;Multilaser
+Enemy attack text section;3;282;Multilaser
+Enemy attack text section;3;283;Multilaser 2
+Enemy attack text section;3;284;Corona
+Enemy attack text section;3;285;Megid Flame
+Enemy attack text section;3;286;
+Enemy attack text section;3;287;
+Enemy attack text section;3;288;
+Enemy attack text section;3;289;
+Enemy attack text section;3;290;
+Enemy attack text section;3;291;
+Enemy attack text section;3;292;Pulse Megacannon
+Enemy attack text section;3;293;Pulse Minicannon
+Enemy attack text section;3;294;
+Enemy attack text section;3;295;Multidifesa
+Enemy attack text section;3;296;
+Enemy attack text section;3;297;
+Enemy attack text section;3;298;
+Enemy attack text section;3;299;
+Enemy attack text section;3;300;
+Enemy attack text section;3;301;
+Enemy attack text section;3;302;
+Enemy attack text section;3;303;
+Enemy attack text section;3;304;
+Enemy attack text section;3;305;Dark Flare
+Enemy attack text section;3;306;
+Enemy attack text section;3;307;Soul crash
+Enemy attack text section;3;308;Lihid zoil
+Enemy attack text section;3;309;Antigrav
+Enemy attack text section;3;310;Megid flame
+Enemy attack text section;3;311;Terra brake
+Enemy attack text section;3;312;
+Enemy attack text section;3;313;
+Enemy attack text section;3;314;Demon slice
+Enemy attack text section;3;315;Bloodfest
+Enemy attack text section;3;316;Energy bomber
+Enemy attack text section;3;317;
+Enemy attack text section;3;318;
+Enemy attack text section;3;319;
+Enemy attack text section;3;320;
+Enemy attack text section;3;321;
+Enemy attack text section;3;322;
+Enemy attack text section;3;323;
+Enemy attack text section;3;324;
+Enemy attack text section;3;325;
+Enemy attack text section;3;326;
+Enemy attack text section;3;327;
+Enemy attack text section;3;328;
+Enemy attack text section;3;329;Zantetsuken
+Enemy attack text section;3;330;
+Enemy attack text section;3;331;
+Enemy attack text section;3;332;
+Enemy attack text section;3;333;
+Enemy attack text section;3;334;
+Enemy attack text section;3;335;
+Enemy attack text section;3;336;
+Enemy attack text section;3;337;
+Enemy attack text section;3;338;Maelstrom
+Enemy attack text section;3;339;
+Enemy attack text section;3;340;
+Enemy attack text section;3;341;
+Enemy attack text section;3;342;
+Enemy attack text section;3;343;
+Enemy attack text section;3;344;
+Enemy attack text section;3;345;
+Enemy attack text section;3;346;
+Enemy attack text section;3;347;
+Enemy attack text section;3;348;
+Enemy attack text section;3;349;
+Enemy attack text section;3;350;
+Enemy attack text section;3;351;
+Enemy attack text section;3;352;
+Enemy attack text section;3;353;
+Enemy attack text section;3;354;
+Enemy attack text section;3;355;
+Enemy attack text section;3;356;
+Enemy attack text section;3;357;Assimila Apocalypse
+Enemy attack text section;3;358;Giudizio infernale
+Enemy attack text section;3;359;Drain
+Enemy attack text section;3;360;Attrazione fatale
+Enemy attack text section;3;361;
+Enemy attack text section;3;362;Onda cosmica
+Enemy attack text section;3;363;
+Enemy attack text section;3;364;Esna
+Enemy attack text section;3;365;Maelstrom
+Enemy attack text section;3;366;
+Enemy attack text section;3;367;
+Enemy attack text section;3;368;
+Enemy attack text section;3;369;Onda celeste
+Enemy attack text section;3;370;
+Enemy attack text section;3;371;
+Enemy attack text section;3;372;
+Enemy attack text section;3;373;Apocalypse
+Enemy attack text section;3;374;
+Enemy attack text section;3;375;Gikant sod
+Enemy attack text section;3;376;
+Enemy attack text section;3;377;
+Enemy attack text section;3;378;Ultima
+Enemy attack text section;3;379;Sancta
+Enemy attack text section;3;380;Quake
+Enemy attack text section;3;381;Tornado
+Enemy attack text section;3;382;A382
+Enemy attack text section;3;383;A383
+Weapon text section;4;0;Revolver
+Weapon text section;4;1;Kastlet
+Weapon text section;4;2;Cutting Trigger
+Weapon text section;4;3;Flame Tank
+Weapon text section;4;4;Twin Lance
+Weapon text section;4;5;Crime & Penalty
+Weapon text section;4;6;Lion Heart
+Weapon text section;4;7;Metal Knuckle
+Weapon text section;4;8;Maverick
+Weapon text section;4;9;Gauntlet
+Weapon text section;4;10;Ehrgeiz
+Weapon text section;4;11;Valiant
+Weapon text section;4;12;Ulysses
+Weapon text section;4;13;Bismark
+Weapon text section;4;14;Exeter
+Weapon text section;4;15;Chain Wip
+Weapon text section;4;16;Slaying Tail
+Weapon text section;4;17;Red Scorpion
+Weapon text section;4;18;Save the Queen
+Weapon text section;4;19;Boomerfriz
+Weapon text section;4;20;Valkyrie
+Weapon text section;4;21;Rising Sun
+Weapon text section;4;22;Cardinal
+Weapon text section;4;23;Shooting Star
+Weapon text section;4;24;Flail
+Weapon text section;4;25;Morning Star
+Weapon text section;4;26;Crescent Wish
+Weapon text section;4;27;Strange Vision
+Weapon text section;4;28;Hyperion
+Weapon text section;4;29;Niente
+Weapon text section;4;30;Mitragliatore
+Weapon text section;4;31;Katal
+Weapon text section;4;32;Arpione
+Renzokuken finishers text section;5;0;Colpo imperiale
+Renzokuken finishers text section;5;1;Danneggia un nemico
+Renzokuken finishers text section;5;2;Cerchio fatato
+Renzokuken finishers text section;5;3;Danneggia tutti i nemici
+Renzokuken finishers text section;5;4;Raggio esplosivo
+Renzokuken finishers text section;5;5;Danneggia tutti i nemici
+Renzokuken finishers text section;5;6;Cuore di pietra
+Renzokuken finishers text section;5;7;Danneggia un nemico
+Character names section;6;0;
+Character names section;6;1;Zell
+Character names section;6;2;Irvine
+Character names section;6;3;Quistis
+Character names section;6;4;
+Character names section;6;5;Selphie
+Character names section;6;6;Seifer
+Character names section;6;7;Edea
+Character names section;6;8;Laguna
+Character names section;6;9;Kiros
+Character names section;6;10;Ward
+Battle item names section;7;0;
+Battle item names section;7;1;
+Battle item names section;7;2;Pozione
+Battle item names section;7;3;Recupera 200 HP
+Battle item names section;7;4;Pozione+
+Battle item names section;7;5;Recupera 400 HP
+Battle item names section;7;6;Granpozione
+Battle item names section;7;7;Recupera 1000 HP
+Battle item names section;7;8;Granpozione+
+Battle item names section;7;9;Recupera 2000 HP
+Battle item names section;7;10;Extrapozione
+Battle item names section;7;11;Ripristina HP totale
+Battle item names section;7;12;Megapozione
+Battle item names section;7;13;Recupera 1000 HP personaggi
+Battle item names section;7;14;Coda di fenice
+Battle item names section;7;15;Riattiva assetto di guerra
+Battle item names section;7;16;Megafenice
+Battle item names section;7;17;Riattiva assetto di guerra personaggi
+Battle item names section;7;18;Elisir
+Battle item names section;7;19;Ripristina HP e status normale
+Battle item names section;7;20;Megaelisir
+Battle item names section;7;21;Ripristina HP e status normale personaggi
+Battle item names section;7;22;Antidoto
+Battle item names section;7;23;Cura status Veleno
+Battle item names section;7;24;Ago dorato
+Battle item names section;7;25;Cura status Pietra
+Battle item names section;7;26;Collirio
+Battle item names section;7;27;Cura status Blind
+Battle item names section;7;28;Erba dell'eco
+Battle item names section;7;29;Cura status Mutismo
+Battle item names section;7;30;Acquasanta
+Battle item names section;7;31;Cura status Zombie e Maledizione
+Battle item names section;7;32;Panacea
+Battle item names section;7;33;Cura alterazione di status
+Battle item names section;7;34;Panacea+
+Battle item names section;7;35;Cura alterazione di status e effetti magie
+Battle item names section;7;36;Med dell'eroe ß
+Battle item names section;7;37;A volte rende invincibili
+Battle item names section;7;38;Med dell'eroe
+Battle item names section;7;39;Rende invincibili
+Battle item names section;7;40;Med del mago ß
+Battle item names section;7;41;A volte rende invincibile la squadra
+Battle item names section;7;42;Med del mago
+Battle item names section;7;43;Rende invincibile la squadra
+Battle item names section;7;44;Gemma Shell
+Battle item names section;7;45;{x0e40}Shell
+Battle item names section;7;46;Gemma Protect
+Battle item names section;7;47;{x0e40}Protect
+Battle item names section;7;48;Gemma Aura
+Battle item names section;7;49;{x0e40}Aura
+Battle item names section;7;50;Gemma Ade
+Battle item names section;7;51;{x0e40}Ade
+Battle item names section;7;52;Gemma Sancta
+Battle item names section;7;53;{x0e40}Sancta
+Battle item names section;7;54;Gemma Flare
+Battle item names section;7;55;{x0e40}Flare
+Battle item names section;7;56;Gemma Meteo
+Battle item names section;7;57;{x0e40}Meteor
+Battle item names section;7;58;Gemma Ultima
+Battle item names section;7;59;{x0e40}Ultima
+Battle item names section;7;60;Erba Ghisal
+Battle item names section;7;61;Ha a che fare con il Chocobo...
+Battle item names section;7;62;Piuma di fenice
+Battle item names section;7;63;Usandolo in battaglia...
+Battle item names section;7;64;Superamico
+Battle item names section;7;65;Usandolo in battaglia...
+Non-battle item names section;8;0;Tenda
+Non-battle item names section;8;1;Ripristina HP e status personaggi
+Non-battle item names section;8;2;Cuccia
+Non-battle item names section;8;3;Ripristina HP di ogni G.F.
+Non-battle item names section;8;4;Cottage
+Non-battle item names section;8;5;Ripristina HP e status di G.F. e personaggi
+Non-battle item names section;8;6;Pozione G
+Non-battle item names section;8;7;Recupera 200 HP G.F.
+Non-battle item names section;8;8;Granpozione G
+Non-battle item names section;8;9;Recupera 1000 HP G.F.
+Non-battle item names section;8;10;Megapozione G
+Non-battle item names section;8;11;Recupera 1000 HP per ogni G.F.
+Non-battle item names section;8;12;Rivitalizzatore G
+Non-battle item names section;8;13;Riattiva assetto di guerra del G.F.
+Non-battle item names section;8;14;Carta d'identità
+Non-battle item names section;8;15;Cambia il nome del G.F.
+Non-battle item names section;8;16;Smemorerba
+Non-battle item names section;8;17;Fa dimenticare le abilità al G.F.
+Non-battle item names section;8;18;Vol HP
+Non-battle item names section;8;19;{x0e3a}J HP al G.F.
+Non-battle item names section;8;20;Vol forza
+Non-battle item names section;8;21;{x0e3a}J FRZ al G.F.
+Non-battle item names section;8;22;Vol resistenza
+Non-battle item names section;8;23;{x0e3a}J RES al G.F.
+Non-battle item names section;8;24;Vol forza mag
+Non-battle item names section;8;25;{x0e3a}J MAG al G.F.
+Non-battle item names section;8;26;Vol spirito
+Non-battle item names section;8;27;{x0e3a}J SPR al G.F.
+Non-battle item names section;8;28;Vol velocità
+Non-battle item names section;8;29;{x0e3a}J VEL al G.F.
+Non-battle item names section;8;30;Vol fortuna
+Non-battle item names section;8;31;{x0e3a}J FOR al G.F.
+Non-battle item names section;8;32;Amuleto di Kuzna
+Non-battle item names section;8;33;{x0e3a}J DST al G.F.
+Non-battle item names section;8;34;Vol attacco
+Non-battle item names section;8;35;{x0e3a}J Elem-Att al G.F.
+Non-battle item names section;8;36;Vol difesa
+Non-battle item names section;8;37;{x0e3a}J Elem-Dif 4x al G.F.
+Non-battle item names section;8;38;Vol attacco ST
+Non-battle item names section;8;39;{x0e3a}J ST-Att al G.F.
+Non-battle item names section;8;40;Vol difesa ST
+Non-battle item names section;8;41;{x0e3a}J ST-Dif 4x al G.F.
+Non-battle item names section;8;42;Stele di Rosetta
+Non-battle item names section;8;43;{x0e3a}Abilità 4x al G.F.
+Non-battle item names section;8;44;Libro di Magie
+Non-battle item names section;8;45;{x0e3a}Magie al G.F.
+Non-battle item names section;8;46;Libro sui G.F.
+Non-battle item names section;8;47;{x0e3a}G.F. al G.F.
+Non-battle item names section;8;48;Libro di Scienze
+Non-battle item names section;8;49;{x0e3a}Assimila al G.F.
+Non-battle item names section;8;50;Libro Oggetti
+Non-battle item names section;8;51;{x0e3a}Oggetti al G.F.
+Non-battle item names section;8;52;Anima del baro
+Non-battle item names section;8;53;{x0e3a}Carta al G.F.
+Non-battle item names section;8;54;Anello ossidato
+Non-battle item names section;8;55;{x0e3a}Recupero al G.F.
+Non-battle item names section;8;56;Anima di fenice
+Non-battle item names section;8;57;{x0e3a}Risveglio al G.F.
+Non-battle item names section;8;58;Kit di soccorso
+Non-battle item names section;8;59;{x0e3a}Vitamina al G.F.
+Non-battle item names section;8;60;Anima di Piros
+Non-battle item names section;8;61;{x0e3a}Kamikaze al G.F.
+Non-battle item names section;8;62;Pentola magica
+Non-battle item names section;8;63;{x0e3a}Divora al G.F.
+Non-battle item names section;8;64;Amuleto Moghy
+Non-battle item names section;8;65;{x0e3a}Komoguri al G.F.
+Non-battle item names section;8;66;Tubo di ferro
+Non-battle item names section;8;67;{x0e3a}MagInvocate+10% al G.F.
+Non-battle item names section;8;68;Scheggia stella
+Non-battle item names section;8;69;{x0e3a}MagInvocate+20% al G.F.
+Non-battle item names section;8;70;Biocristallo
+Non-battle item names section;8;71;{x0e3a}MagInvocate+30% al G.F.
+Non-battle item names section;8;72;Anima di Samasa
+Non-battle item names section;8;73;{x0e3a}MagInvocate+40% al G.F.
+Non-battle item names section;8;74;Abito eroico
+Non-battle item names section;8;75;{x0e3a}GF HP+10% al G.F.
+Non-battle item names section;8;76;Abito fatato
+Non-battle item names section;8;77;{x0e3a}GF HP+20% al G.F.
+Non-battle item names section;8;78;Armatura d'oro
+Non-battle item names section;8;79;{x0e3a}GF HP+30% al G.F.
+Non-battle item names section;8;80;Armatura di Leda
+Non-battle item names section;8;81;{x0e3a}GF HP+40% al G.F.
+Non-battle item names section;8;82;Anello sacro
+Non-battle item names section;8;83;{x0e3a}HP+20% al G.F.
+Non-battle item names section;8;84;Anello di Titano
+Non-battle item names section;8;85;{x0e3a}HP+40% al G.F.
+Non-battle item names section;8;86;Anello di Gaia
+Non-battle item names section;8;87;{x0e3a}HP+80% al G.F.
+Non-battle item names section;8;88;Lista della forza
+Non-battle item names section;8;89;{x0e3a}FRZ+20% al G.F.
+Non-battle item names section;8;90;Lista dei poteri
+Non-battle item names section;8;91;{x0e3a}FRZ+40% al G.F.
+Non-battle item names section;8;92;Lista magica
+Non-battle item names section;8;93;{x0e3a}FRZ+60% al G.F.
+Non-battle item names section;8;94;Guscio di sauro
+Non-battle item names section;8;95;{x0e3a}RES+20% al G.F.
+Non-battle item names section;8;96;Orialco
+Non-battle item names section;8;97;{x0e3a}RES+40% al G.F.
+Non-battle item names section;8;98;Adamantio
+Non-battle item names section;8;99;{x0e3a}RES+60% al G.F.
+Non-battle item names section;8;100;Bracciale di Rah
+Non-battle item names section;8;101;{x0e3a}SPR+20% al G.F.
+Non-battle item names section;8;102;Bracciale di Aya
+Non-battle item names section;8;103;{x0e3a}SPR+40% al G.F.
+Non-battle item names section;8;104;Bracciale magico
+Non-battle item names section;8;105;{x0e3a}SPR+60% al G.F.
+Non-battle item names section;8;106;Corona ossidata
+Non-battle item names section;8;107;{x0e3a}MAG+20% al G.F.
+Non-battle item names section;8;108;Corona di Yupu
+Non-battle item names section;8;109;{x0e3a}MAG+40% al G.F.
+Non-battle item names section;8;110;Corona reale
+Non-battle item names section;8;111;{x0e3a}MAG+60% al G.F.
+Non-battle item names section;8;112;Motore Jet
+Non-battle item names section;8;113;{x0e3a}VEL+20% al G.F.
+Non-battle item names section;8;114;Reattore
+Non-battle item names section;8;115;{x0e3a}VEL+40% al G.F.
+Non-battle item names section;8;116;Cortina lunare
+Non-battle item names section;8;117;{x0e3a}Autoshell al G.F.
+Non-battle item names section;8;118;Cortina di ferro
+Non-battle item names section;8;119;{x0e3a}Autoprotect al G.F.
+Non-battle item names section;8;120;Cortina luminosa
+Non-battle item names section;8;121;{x0e3a}Autoreflex al G.F.
+Non-battle item names section;8;122;Acceleratore
+Non-battle item names section;8;123;{x0e3a}Autohaste al G.F.
+Non-battle item names section;8;124;Arte del monaco
+Non-battle item names section;8;125;{x0e3a}Contrattacco al G.F.
+Non-battle item names section;8;126;Arte guerriera
+Non-battle item names section;8;127;{x0e3a}Altruismo al G.F.
+Non-battle item names section;8;128;Arte del medico
+Non-battle item names section;8;129;{x0e3a}Nozioni mediche al G.F.
+Non-battle item names section;8;130;Set 100 aculei
+Non-battle item names section;8;131;{x0e3a}Occhio x occhio al G.F.
+Non-battle item names section;8;132;Triostella
+Non-battle item names section;8;133;{x0e3a}Detriplica al G.F.     
+Non-battle item names section;8;134;Fiocco
+Non-battle item names section;8;135;{x0e3a}Fiocco al G.F.
+Non-battle item names section;8;136;Colpi normali
+Non-battle item names section;8;137;Colpi normali
+Non-battle item names section;8;138;Colpi di piombo
+Non-battle item names section;8;139;Colpi multipli contro tutti i nemici
+Non-battle item names section;8;140;Colpi accecanti
+Non-battle item names section;8;141;Colpi che causano alterazione di status
+Non-battle item names section;8;142;Incendiari
+Non-battle item names section;8;143;Colpi con proprietà elementale Fuoco
+Non-battle item names section;8;144;Granate
+Non-battle item names section;8;145;Colpi 3 volte più potenti di quelli normali
+Non-battle item names section;8;146;Colpi veloci
+Non-battle item names section;8;147;Colpi velocissimi
+Non-battle item names section;8;148;Colpi perforanti
+Non-battle item names section;8;149;Colpi che perforano qualsiasi superficie
+Non-battle item names section;8;150;Colpi vibranti
+Non-battle item names section;8;151;Colpi di notevole energia
+Non-battle item names section;8;152;Quarzo magico
+Non-battle item names section;8;153;Pietra con poca forza magica
+Non-battle item names section;8;154;Ametista magica
+Non-battle item names section;8;155;Pietra con grande forza magica
+Non-battle item names section;8;156;Giada magica
+Non-battle item names section;8;157;Pietra con enorme forza magica
+Non-battle item names section;8;158;Antenna di Ochu
+Non-battle item names section;8;159;Forte ed elastica
+Non-battle item names section;8;160;Acqua torbida
+Non-battle item names section;8;161;Acqua dal potere vitale
+Non-battle item names section;8;162;Piuma Cokatoris
+Non-battle item names section;8;163;Piume dal potere pietrificante
+Non-battle item names section;8;164;Polvere Zombie
+Non-battle item names section;8;165;Polvere che trasforma in Zombie
+Non-battle item names section;8;166;Scarpe veloci
+Non-battle item names section;8;167;Scarpe che rendono più leggeri
+Non-battle item names section;8;168;Artiglio affilato
+Non-battle item names section;8;169;Unghia lunga ed affilata
+Non-battle item names section;8;170;Vite
+Non-battle item names section;8;171;Si usa spesso per migliorare le armi
+Non-battle item names section;8;172;Lama da sega
+Non-battle item names section;8;173;Lama dentata
+Non-battle item names section;8;174;Lama Mesmerize
+Non-battle item names section;8;175;Lama lunga e tagliente
+Non-battle item names section;8;176;Zanna vampira
+Non-battle item names section;8;177;Zanna mostruosa succhia sangue
+Non-battle item names section;8;178;Pietra dell'ira
+Non-battle item names section;8;179;Pietra che rende particolarmente dinamici
+Non-battle item names section;8;180;Spada maledetta
+Non-battle item names section;8;181;Spada dall'istinto omicida
+Non-battle item names section;8;182;Sonnifero
+Non-battle item names section;8;183;Medicinale che provoca sonnolenza
+Non-battle item names section;8;184;Anello vitale
+Non-battle item names section;8;185;Anello che sprigiona forza vitale
+Non-battle item names section;8;186;Zanne di grifone
+Non-battle item names section;8;187;Zanne con potenza rigeneratrice
+Non-battle item names section;8;188;Ragnatela
+Non-battle item names section;8;189;{x0e39}Onde soniche
+Non-battle item names section;8;190;Scheggia corallo
+Non-battle item names section;8;191;{x0e39}Elettroshock
+Non-battle item names section;8;192;Artiglio malefico
+Non-battle item names section;8;193;{x0e39}Livello Ade ?
+Non-battle item names section;8;194;Buco nero
+Non-battle item names section;8;195;{x0e39}Disintegrazione
+Non-battle item names section;8;196;Idrocristallo
+Non-battle item names section;8;197;{x0e39}Respiro marino
+Non-battle item names section;8;198;Missile
+Non-battle item names section;8;199;{x0e39}Micromissili
+Non-battle item names section;8;200;Fluido misterioso
+Non-battle item names section;8;201;{x0e39}Liquido letale
+Non-battle item names section;8;202;Mitra
+Non-battle item names section;8;203;{x0e39}Biomitragliatore
+Non-battle item names section;8;204;Zanna di drago
+Non-battle item names section;8;205;{x0e39}Respiro infuocato
+Non-battle item names section;8;206;Antenna Molboro
+Non-battle item names section;8;207;{x0e39}Alito fetido
+Non-battle item names section;8;208;Polvere di vento
+Non-battle item names section;8;209;{x0e39}Bianco vento
+Non-battle item names section;8;210;Cannone laser
+Non-battle item names section;8;211;{x0e39}Multilaser
+Non-battle item names section;8;212;Sistema zeta
+Non-battle item names section;8;213;{x0e39}Multidifesa
+Non-battle item names section;8;214;Generatore
+Non-battle item names section;8;215;{x0e39}Termocaos
+Non-battle item names section;8;216;Dagmata
+Non-battle item names section;8;217;{x0e39}Onda cosmica
+Non-battle item names section;8;218;Scheggia Piros
+Non-battle item names section;8;219;Pietra di {x0e38} Fuoco  
+Non-battle item names section;8;220;Zanna rossa
+Non-battle item names section;8;221;Zanna di drago di {x0e38} Fuoco
+Non-battle item names section;8;222;Vento antartico
+Non-battle item names section;8;223;Vento glaciale di {x0e38} Gelo
+Non-battle item names section;8;224;Vento artico
+Non-battle item names section;8;225;Vento glaciale e fortissimo di {x0e38} Gelo
+Non-battle item names section;8;226;Dinamo
+Non-battle item names section;8;227;Generatore di energia di {x0e38} Tuono
+Non-battle item names section;8;228;Piuma del vento
+Non-battle item names section;8;229;Piuma che vola al soffio del vento
+Non-battle item names section;8;230;Zanna velenosa
+Non-battle item names section;8;231;Zanna con alta dose di veleno
+Non-battle item names section;8;232;Palla di ferro
+Non-battle item names section;8;233;Fatta di metallo molto pesante
+Non-battle item names section;8;234;Pietra lunare
+Non-battle item names section;8;235;Proviene da dove vivono i mostri
+Non-battle item names section;8;236;Osso di drago
+Non-battle item names section;8;237;Appartiene ad un drago enorme
+Non-battle item names section;8;238;Girandola
+Non-battle item names section;8;239;Gira grazie alla forza del vento
+Non-battle item names section;8;240;Pelle di drago
+Non-battle item names section;8;241;Robusta e coriacea
+Non-battle item names section;8;242;Pinna di pesce
+Non-battle item names section;8;243;Pinna anteriore di pesce di mare
+Non-battle item names section;8;244;Squama di drago
+Non-battle item names section;8;245;Molto forte e resistente
+Non-battle item names section;8;246;Mutolicina
+Non-battle item names section;8;247;Medicina che causa mutismo
+Non-battle item names section;8;248;Polvere velenosa
+Non-battle item names section;8;249;Veleno potentissimo
+Non-battle item names section;8;250;Anima dei morti
+Non-battle item names section;8;251;Causa status Morte immediata
+Non-battle item names section;8;252;Coltello da chef
+Non-battle item names section;8;253;È quello che possiede Tomberry
+Non-battle item names section;8;254;Ago di cactus
+Non-battle item names section;8;255;Uno degli aculei usati da Kyactus
+Non-battle item names section;8;256;Monolite
+Non-battle item names section;8;257;Pietra dall'incantesimo misterioso
+Non-battle item names section;8;258;Carburante
+Non-battle item names section;8;259;Carburante per la macchina
+Non-battle item names section;8;260;‘La mia vicina'
+Non-battle item names section;8;261;Contiene foto erotiche
+Non-battle item names section;8;262;Lettera di Edea
+Non-battle item names section;8;263;Lettera di presentazione di Edea
+Non-battle item names section;8;264;Targa Chocobo
+Non-battle item names section;8;265;Cambia il nome del Kochocobo
+Non-battle item names section;8;266;Collare
+Non-battle item names section;8;267;Cambia il nome del cane
+Non-battle item names section;8;268;Anello di Salem
+Non-battle item names section;8;269;Uso non identificato
+Non-battle item names section;8;270;Lampada magica
+Non-battle item names section;8;271;Meglio salvare il gioco prima di usarla!
+Non-battle item names section;8;272;HP UP
+Non-battle item names section;8;273;{x0e45}HP
+Non-battle item names section;8;274;FRZ UP
+Non-battle item names section;8;275;{x0e45}Forza
+Non-battle item names section;8;276;RES UP
+Non-battle item names section;8;277;{x0e45}Resistenza 
+Non-battle item names section;8;278;MAG UP
+Non-battle item names section;8;279;{x0e45}Forza magica
+Non-battle item names section;8;280;SPR UP 
+Non-battle item names section;8;281;{x0e45}Spirito
+Non-battle item names section;8;282;VEL UP
+Non-battle item names section;8;283;{x0e45}Velocità
+Non-battle item names section;8;284;FORT UP
+Non-battle item names section;8;285;{x0e45}Fortuna
+Non-battle item names section;8;286;Love Love G
+Non-battle item names section;8;287;Aumenta il livello di affinità con il G.F.
+Non-battle item names section;8;288;Armi mese, n°1
+Non-battle item names section;8;289;{x0e3b}
+Non-battle item names section;8;290;Armi mese, n°3
+Non-battle item names section;8;291;{x0e3b}
+Non-battle item names section;8;292;Armi mese, n°4
+Non-battle item names section;8;293;{x0e3b}
+Non-battle item names section;8;294;Armi mese, n°5
+Non-battle item names section;8;295;{x0e3b}
+Non-battle item names section;8;296;Armi mese, n°6
+Non-battle item names section;8;297;{x0e3b}
+Non-battle item names section;8;298;Armi mese, n°7
+Non-battle item names section;8;299;{x0e3b}
+Non-battle item names section;8;300;Armi mese, n°8
+Non-battle item names section;8;301;{x0e3b}
+Non-battle item names section;8;302;La guerra 001
+Non-battle item names section;8;303;{x0e3c}
+Non-battle item names section;8;304;La guerra 002
+Non-battle item names section;8;305;{x0e3c}
+Non-battle item names section;8;306;La guerra 003
+Non-battle item names section;8;307;{x0e3c}
+Non-battle item names section;8;308;La guerra 004
+Non-battle item names section;8;309;{x0e3c}
+Non-battle item names section;8;310;La guerra 005
+Non-battle item names section;8;311;{x0e3c}
+Non-battle item names section;8;312;Il cane n°1
+Non-battle item names section;8;313;{x0e3f}
+Non-battle item names section;8;314;Il cane n°2
+Non-battle item names section;8;315;{x0e3f}
+Non-battle item names section;8;316;Il cane n°3
+Non-battle item names section;8;317;{x0e3f}
+Non-battle item names section;8;318;Il cane n°4
+Non-battle item names section;8;319;{x0e3f}
+Non-battle item names section;8;320;Il cane n°5
+Non-battle item names section;8;321;{x0e3f}
+Non-battle item names section;8;322;Il cane n°6
+Non-battle item names section;8;323;{x0e3f}
+Non-battle item names section;8;324;L'occulto I
+Non-battle item names section;8;325;I misteri del mondo, speciale n° avvenimenti
+Non-battle item names section;8;326;L'occulto II
+Non-battle item names section;8;327;I misteri del mondo, speciale n° fotografico
+Non-battle item names section;8;328;L'occulto III
+Non-battle item names section;8;329;I misteri del mondo, il mondo della magia
+Non-battle item names section;8;330;L'occulto IV
+Non-battle item names section;8;331;I misteri del mondo, speciale n° informativo
+Non-junctionable GF attack name section;9;0;Zantetsuken
+Non-junctionable GF attack name section;9;1;Fenice di fuoco
+Non-junctionable GF attack name section;9;2;Chocofire
+Non-junctionable GF attack name section;9;3;Chocoflare
+Non-junctionable GF attack name section;9;4;Chocometeor
+Non-junctionable GF attack name section;9;5;Chocobox
+Non-junctionable GF attack name section;9;6;Moguridance
+Non-junctionable GF attack name section;9;7;Excalibur
+Non-junctionable GF attack name section;9;8;Excalibur ossidata
+Non-junctionable GF attack name section;9;9;Masamune
+Non-junctionable GF attack name section;9;10;Zantetsuken
+Non-junctionable GF attack name section;9;11;{Angelo} alla carica
+Non-junctionable GF attack name section;9;12;{Angelo} in soccorso
+Non-junctionable GF attack name section;9;13;{Angelo} aiutatutti
+Non-junctionable GF attack name section;9;14;{Angelo} trovatutto
+Non-junctionable GF attack name section;9;15;Mumba Mumba Mumba
+Junction abilities text section;10;0;
+Junction abilities text section;10;1;
+Junction abilities text section;10;2;J HP
+Junction abilities text section;10;3;{x0e41}HP
+Junction abilities text section;10;4;J FRZ
+Junction abilities text section;10;5;{x0e41}Forza (FRZ)
+Junction abilities text section;10;6;J RES
+Junction abilities text section;10;7;{x0e41}Resistenza (RES)
+Junction abilities text section;10;8;J MAG
+Junction abilities text section;10;9;{x0e41}Forza magica (MAG)
+Junction abilities text section;10;10;J SPR
+Junction abilities text section;10;11;{x0e41}Spirito (SPR)
+Junction abilities text section;10;12;J VEL
+Junction abilities text section;10;13;{x0e41}Velocità (VEL)
+Junction abilities text section;10;14;J DST
+Junction abilities text section;10;15;{x0e41}Destrezza (DST)
+Junction abilities text section;10;16;J MIRA
+Junction abilities text section;10;17;{x0e41}Mira
+Junction abilities text section;10;18;J FOR
+Junction abilities text section;10;19;{x0e41}Fortuna (FORT)
+Junction abilities text section;10;20;J Elem-Att
+Junction abilities text section;10;21;{x0e41}Attacco elementale
+Junction abilities text section;10;22;J ST-Att
+Junction abilities text section;10;23;{x0e41}Attacco status
+Junction abilities text section;10;24;J Elem-Dif
+Junction abilities text section;10;25;{x0e41}Difesa elementale
+Junction abilities text section;10;26;J ST-Dif
+Junction abilities text section;10;27;{x0e41}Difesa status
+Junction abilities text section;10;28;J Elem-Dif 2x
+Junction abilities text section;10;29;Abilita 2 Junction a Difesa elementale
+Junction abilities text section;10;30;J Elem-Dif 4x
+Junction abilities text section;10;31;Abilita 4 Junction a Difesa elementale
+Junction abilities text section;10;32;J ST-Dif 2x
+Junction abilities text section;10;33;Abilita 2 Junction a Difesa status
+Junction abilities text section;10;34;J ST-Dif 4x
+Junction abilities text section;10;35;Abilita 4 Junction a Difesa status
+Junction abilities text section;10;36;Abilità 3x
+Junction abilities text section;10;37;Permette attivazione di 3 abilità
+Junction abilities text section;10;38;Abilità 4x
+Junction abilities text section;10;39;Permette attivazione di 4 abilità
+Command abilities text section;11;0;Magie
+Command abilities text section;11;1;{x0e42}Magie
+Command abilities text section;11;2;G.F.
+Command abilities text section;11;3;{x0e42}G.F.
+Command abilities text section;11;4;Assimila
+Command abilities text section;11;5;{x0e42}Assimila
+Command abilities text section;11;6;Oggetti
+Command abilities text section;11;7;{x0e42}Oggetti
+Command abilities text section;11;8; 
+Command abilities text section;11;9; 
+Command abilities text section;11;10;Carta
+Command abilities text section;11;11;{x0e42}Carta
+Command abilities text section;11;12;Sentenza
+Command abilities text section;11;13;{x0e42}Sentenza
+Command abilities text section;11;14;Assalto
+Command abilities text section;11;15;{x0e42}Assalto
+Command abilities text section;11;16;Vitamina
+Command abilities text section;11;17;{x0e42}Vitamina
+Command abilities text section;11;18;Protezione
+Command abilities text section;11;19;{x0e42}Difesa
+Command abilities text section;11;20;Sacrificio
+Command abilities text section;11;21;{x0e42}Sacrificio
+Command abilities text section;11;22;Recupero
+Command abilities text section;11;23;{x0e42}Recupero
+Command abilities text section;11;24;Assorbi
+Command abilities text section;11;25;{x0e42}Assorbi
+Command abilities text section;11;26;Risveglio
+Command abilities text section;11;27;{x0e42}Risveglio
+Command abilities text section;11;28;LV down
+Command abilities text section;11;29;{x0e42}LV down
+Command abilities text section;11;30;LV up
+Command abilities text section;11;31;{x0e42}LV up
+Command abilities text section;11;32;Kamikaze
+Command abilities text section;11;33;{x0e42}Kamikaze
+Command abilities text section;11;34;Divora
+Command abilities text section;11;35;{x0e42}Divora
+Command abilities text section;11;36;Komoguri
+Command abilities text section;11;37;{x0e42}Komoguri
+Stat percentage increasing abilities text section;12;0;HP+20%
+Stat percentage increasing abilities text section;12;1;{x0e43}HP del 20%
+Stat percentage increasing abilities text section;12;2;HP+40%
+Stat percentage increasing abilities text section;12;3;{x0e43}HP del 40%
+Stat percentage increasing abilities text section;12;4;HP+80%
+Stat percentage increasing abilities text section;12;5;{x0e43}HP dell'80%
+Stat percentage increasing abilities text section;12;6;FRZ+20%
+Stat percentage increasing abilities text section;12;7;{x0e43}Forza del 20%
+Stat percentage increasing abilities text section;12;8;FRZ+40%
+Stat percentage increasing abilities text section;12;9;{x0e43}Forza del 40%
+Stat percentage increasing abilities text section;12;10;FRZ+60%
+Stat percentage increasing abilities text section;12;11;{x0e43}Forza del 60%
+Stat percentage increasing abilities text section;12;12;RES+20%
+Stat percentage increasing abilities text section;12;13;{x0e43}Resistenza del 20%
+Stat percentage increasing abilities text section;12;14;RES+40%
+Stat percentage increasing abilities text section;12;15;{x0e43}Resistenza del 40%
+Stat percentage increasing abilities text section;12;16;RES+60%
+Stat percentage increasing abilities text section;12;17;{x0e43}Resistenza del 60%
+Stat percentage increasing abilities text section;12;18;MAG+20%
+Stat percentage increasing abilities text section;12;19;{x0e43}Forza magica del 20%
+Stat percentage increasing abilities text section;12;20;MAG+40%
+Stat percentage increasing abilities text section;12;21;{x0e43}Forza magica del 40%
+Stat percentage increasing abilities text section;12;22;MAG+60%
+Stat percentage increasing abilities text section;12;23;{x0e43}Forza magica del 60%
+Stat percentage increasing abilities text section;12;24;SPR+20%
+Stat percentage increasing abilities text section;12;25;{x0e43}Spirito del 20%
+Stat percentage increasing abilities text section;12;26;SPR+40%
+Stat percentage increasing abilities text section;12;27;{x0e43}Spirito del 40%
+Stat percentage increasing abilities text section;12;28;SPR+60%
+Stat percentage increasing abilities text section;12;29;{x0e43}Spirito del 60%
+Stat percentage increasing abilities text section;12;30;VEL+20%
+Stat percentage increasing abilities text section;12;31;{x0e43}Velocità del 20%
+Stat percentage increasing abilities text section;12;32;VEL+40%
+Stat percentage increasing abilities text section;12;33;{x0e43}Velocità del 40%
+Stat percentage increasing abilities text section;12;34;DST+30%
+Stat percentage increasing abilities text section;12;35;{x0e43}Destrezza del 30%
+Stat percentage increasing abilities text section;12;36;FORT+50%
+Stat percentage increasing abilities text section;12;37;{x0e43}Fortuna del 50%
+Character ability text section;13;0;Ruba
+Character ability text section;13;1;Cambia Attacco in Ruba
+Character ability text section;13;2;Nozioni mediche
+Character ability text section;13;3;Raddoppia l'effetto medicine
+Character ability text section;13;4;Contrattacco
+Character ability text section;13;5;Ricevuto il colpo, contrattacco immediato
+Character ability text section;13;6;Occhio x occhio
+Character ability text section;13;7;Restituisce 1/4 del danno subito
+Character ability text section;13;8;Altruismo
+Character ability text section;13;9;Si viene colpiti al posto dell'alleato
+Character ability text section;13;10;Iniziativa
+Character ability text section;13;11;Azione immediata appena inizia la battaglia
+Character ability text section;13;12;Via x l'energia
+Character ability text section;13;13;Aumenta HP camminando
+Character ability text section;13;14;Bonus HP
+Character ability text section;13;15;Bonus 30 HP con Level up
+Character ability text section;13;16;Bonus FRZ
+Character ability text section;13;17;Bonus Forza + 1 con Level up
+Character ability text section;13;18;Bonus RES
+Character ability text section;13;19;Bonus Resistenza + 1 con Level up
+Character ability text section;13;20;Bonus MAG
+Character ability text section;13;21;Bonus Forza magica + 1 con Level up
+Character ability text section;13;22;Bonus SPR
+Character ability text section;13;23;Bonus Spirito + 1 con Level up
+Character ability text section;13;24;Autoprotect
+Character ability text section;13;25;Magia Protect automatica in battaglia
+Character ability text section;13;26;Autoshell
+Character ability text section;13;27;Magia Shell automatica in battaglia
+Character ability text section;13;28;Autoreflex
+Character ability text section;13;29;Magia Reflex automatica in battaglia
+Character ability text section;13;30;Autohaste
+Character ability text section;13;31;Magia Haste automatica in battaglia
+Character ability text section;13;32;Autopozione
+Character ability text section;13;33;Uso automatico di oggetti per ripristino HP
+Character ability text section;13;34;Deduplica
+Character ability text section;13;35;Anche con status 'Double' si usa 1 sola magia
+Character ability text section;13;36;Detriplica
+Character ability text section;13;37;Anche con status 'Triple' si usa 1 sola magia
+Character ability text section;13;38;Fiocco
+Character ability text section;13;39;Protegge da magie che alterano status
+Party ability text section;14;0;Vigilanza
+Party ability text section;14;1;Protegge da attacchi alle spalle
+Party ability text section;14;2;Rivela-zone
+Party ability text section;14;3;Scopre Save Point e fonti energetiche
+Party ability text section;14;4;Incontri-50%
+Party ability text section;14;5;Dimezza il numero di incontri nemici minori
+Party ability text section;14;6;Incontri 0
+Party ability text section;14;7;Annulla il numero di incontri nemici minori
+Party ability text section;14;8;Oggetti Rari
+Party ability text section;14;9;Aumenta % scoperta oggetti rari
+GF ability text section;15;0;MagInvocate+10%
+GF ability text section;15;1;{x0e43}potenza Magie invocate 10%
+GF ability text section;15;2;MagInvocate+20%
+GF ability text section;15;3;{x0e43}potenza Magie invocate 20%
+GF ability text section;15;4;MagInvocate+30%
+GF ability text section;15;5;{x0e43}potenza Magie invocate 30%
+GF ability text section;15;6;MagInvocate+40%
+GF ability text section;15;7;{x0e43}potenza Magie invocate 40% 
+GF ability text section;15;8;G.F. HP+10%
+GF ability text section;15;9;{x0e43}HP G.F. 10%
+GF ability text section;15;10;G.F. HP+20%
+GF ability text section;15;11;{x0e43}HP G.F. 20%
+GF ability text section;15;12;G.F. HP+30%
+GF ability text section;15;13;{x0e43}HP G.F. 30%
+GF ability text section;15;14;G.F. HP+40%
+GF ability text section;15;15;{x0e43}HP G.F. 40%
+GF ability text section;15;16;Supporto
+GF ability text section;15;17;Permette di dare supporto al G.F.
+Menu ability text section;16;0;Sconto
+Menu ability text section;16;1;Permette acquisti a minor prezzo
+Menu ability text section;16;2;Rincaro
+Menu ability text section;16;3;Permette di vendere oggetti a prezzo maggiore
+Menu ability text section;16;4;Familiarità
+Menu ability text section;16;5;Aumenta il numero di oggetti acquistabili
+Menu ability text section;16;6;Chiama negozio
+Menu ability text section;16;7;Richiama il negozio dal menu
+Menu ability text section;16;8;Chiama JunkShop
+Menu ability text section;16;9;Richiama il JunkShop dal menu
+Menu ability text section;16;10;ElbMag Tuono
+Menu ability text section;16;11;{x0e44}elem. Vento, Tuono, menu Abilità
+Menu ability text section;16;12;ElbMag Gelo
+Menu ability text section;16;13;{x0e44}elem. Acqua, Gelo, menu Abilità
+Menu ability text section;16;14;ElbMag Fuoco
+Menu ability text section;16;15;{x0e44}elem. Fuoco, menu Abilità
+Menu ability text section;16;16;ElbMag vitali
+Menu ability text section;16;17;{x0e44}vitali e recupero, menu Abilità
+Menu ability text section;16;18;ElbMag spa-temp
+Menu ability text section;16;19;{x0e44}temporali-spaziali, menu Abilità
+Menu ability text section;16;20;ElbMag ST
+Menu ability text section;16;21;{x0e44}status, menu Abilità
+Menu ability text section;16;22;ElbMag supporto
+Menu ability text section;16;23;{x0e44}di supporto, menu Abilità
+Menu ability text section;16;24;ElbMag proibite
+Menu ability text section;16;25;{x0e44}proibite, menu Abilità
+Menu ability text section;16;26;ElbMed recupero
+Menu ability text section;16;27;Elabora medicine di recupero, menu Abilità
+Menu ability text section;16;28;ElbMed ST
+Menu ability text section;16;29;Elabora medicine ripristino status, menu Abilità
+Menu ability text section;16;30;Elb Munizioni
+Menu ability text section;16;31;Elabora munizioni da menu Abilità
+Menu ability text section;16;32;Elb Strumenti
+Menu ability text section;16;33;Elabora strumenti da menu Abilità
+Menu ability text section;16;34;ElbMed proibite
+Menu ability text section;16;35;Elabora medicine proibite, menu Abilità
+Menu ability text section;16;36;ElbMed rec GF
+Menu ability text section;16;37;Elabora medicine Recupero G.F., menu Abilità
+Menu ability text section;16;38;ElbMed fac GF
+Menu ability text section;16;39;Elabora medicine Abilità G.F., menu Abilità
+Menu ability text section;16;40;ElbMag class 1
+Menu ability text section;16;41;{x0e44}di classe media, menu Magie 
+Menu ability text section;16;42;ElbMag class 2
+Menu ability text section;16;43;{x0e44}di classe alta, menu Magie
+Menu ability text section;16;44;Med Level up
+Menu ability text section;16;45;Aumenta il livello delle medicine
+Menu ability text section;16;46;Transcard
+Menu ability text section;16;47;Elabora oggetti dalle carte
+Temporary character limit break text section;17;0;Girandola di fuoco
+Temporary character limit break text section;17;1;Danneggia tutti i nemici
+Temporary character limit break text section;17;2;Colpo glaciale
+Temporary character limit break text section;17;3;Danneggia un nemico
+Temporary character limit break text section;17;4;Desperado
+Temporary character limit break text section;17;5;Danneggia tutti i nemici
+Temporary character limit break text section;17;6;Fiume di sangue
+Temporary character limit break text section;17;7;Danneggia un nemico
+Temporary character limit break text section;17;8;Arpione d'acciaio 
+Temporary character limit break text section;17;9;Danneggia tutti i nemici
+Blue magic text section;18;0;Sguardo laser
+Blue magic text section;18;1;Danneggia un nemico
+Blue magic text section;18;2;Onde soniche
+Blue magic text section;18;3;Danneggia tutti i nemici
+Blue magic text section;18;4;Elettroshock
+Blue magic text section;18;5;Causa danni di {x0e38} Tuono a tutti i nemici
+Blue magic text section;18;6;Livello Ade ?
+Blue magic text section;18;7;Magia Ade contro nemici di un det. livello
+Blue magic text section;18;8;Disintegrazione
+Blue magic text section;18;9;Disintegra il nemico
+Blue magic text section;18;10;Respiro marino
+Blue magic text section;18;11;Causa danni di {x0e38} Acqua a tutti i nemici
+Blue magic text section;18;12;Micromissili
+Blue magic text section;18;13;Danneggia un nemico
+Blue magic text section;18;14;Liquido letale
+Blue magic text section;18;15;Danni e alterazione di status
+Blue magic text section;18;16;Biomitragliatore
+Blue magic text section;18;17;Danneggia un nemico
+Blue magic text section;18;18;Respiro infuocato
+Blue magic text section;18;19;Causa danni di {x0e38} Fuoco a tutti i nemici
+Blue magic text section;18;20;Alito fetido
+Blue magic text section;18;21;Altera status di tutti i nemici
+Blue magic text section;18;22;Bianco vento
+Blue magic text section;18;23;Ripristina HP di tutta la squadra
+Blue magic text section;18;24;Multilaser
+Blue magic text section;18;25;Danneggia un nemico
+Blue magic text section;18;26;Multidifesa
+Blue magic text section;18;27;Applica scudo di difesa a tutta la squadra
+Blue magic text section;18;28;Termocaos
+Blue magic text section;18;29;Danneggia tutti i nemici
+Blue magic text section;18;30;Onda cosmica
+Blue magic text section;18;31;Danneggia gravemente tutti i nemici
+Shot text section;19;0;Colpo normale
+Shot text section;19;1;Danneggia un nemico
+Shot text section;19;2;Colpo multiplo
+Shot text section;19;3;Danneggia tutti i nemici
+Shot text section;19;4;Colpo oscuro
+Shot text section;19;5;Danni e alterazione status
+Shot text section;19;6;Colpo infuocato
+Shot text section;19;7;Causa danno di elemento Fuoco a tutti i nemici
+Shot text section;19;8;Colpo compresso
+Shot text section;19;9;Danneggia un nemico
+Shot text section;19;10;Colpo veloce
+Shot text section;19;11;Danneggia un nemico
+Shot text section;19;12;Colpo penetrante
+Shot text section;19;13;{x0e33} superando ogni difesa
+Shot text section;19;14;Ipercolpo
+Shot text section;19;15;Danneggia un nemico
+Duel text section;20;0;Colpo al volto
+Duel text section;20;1;{x0e33} 
+Duel text section;20;2;Booya
+Duel text section;20;3;{x0e33} 
+Duel text section;20;4;Calcio rovesciato
+Duel text section;20;5;{x0e33} 
+Duel text section;20;6;Calcio laterale
+Duel text section;20;7;{x0e33} 
+Duel text section;20;8;Colpo di delfino
+Duel text section;20;9;{x0e33} 
+Duel text section;20;10;Meteostrike
+Duel text section;20;11;{x0e33} 
+Duel text section;20;12;Estasi di fuoco
+Duel text section;20;13;{x0e34} 
+Duel text section;20;14;Meteoattacco
+Duel text section;20;15;{x0e33} 
+Duel text section;20;16;Attacco multiplo
+Duel text section;20;17;{x0e33}
+Duel text section;20;18;Giudizio finale
+Duel text section;20;19;{x0e34} 
+Rinoa limit break (part 1) text section;21;0;{Angelo}
+Rinoa limit break (part 1) text section;21;1;Permette di combattere con {Angelo}
+Rinoa limit break (part 1) text section;21;2;Ali di fata
+Rinoa limit break (part 1) text section;21;3;Permette di usare Ali di fata
+Rinoa limit break (part 2) text section;22;0;{Angelo} cannone
+Rinoa limit break (part 2) text section;22;1;Furore di {Angelo}
+Rinoa limit break (part 2) text section;22;2;Luna invisibile
+Rinoa limit break (part 2) text section;22;3;Cometa siderale
+Rinoa limit break (part 2) text section;22;4;Ali di fata
+Devour text section;23;0;Mah, niente male!
+Devour text section;23;1;Buonissimo!
+Devour text section;23;2;Mi sento benissimo!
+Devour text section;23;3;È marcio...
+Devour text section;23;4;Che strano gusto!
+Devour text section;23;5;Non vedo niente!
+Devour text section;23;6;Che schifo!
+Devour text section;23;7;Woosh! 
+Devour text section;23;8;Ahhh... Meglio se stavo a dieta!!!
+Devour text section;23;9;Ma che roba è!?
+Devour text section;23;10;Mi sento più forte!
+Devour text section;23;11;Mi sento meglio!
+Devour text section;23;12;Ora sì, che sto bene!
+Devour text section;23;13;Ho il morale a 1000!
+Devour text section;23;14;Mi sento leggero come una piuma!
+Devour text section;23;15;Troppo forte!!!
+Misc text section;24;0;Sconfitta totale
+Misc text section;24;1;Fuga
+Misc text section;24;2;G.F.
+Misc text section;24;3;Pausa
+Misc text section;24;4;Impossibile fuggire
+Misc text section;24;5;Impossibile assimilare
+Misc text section;24;6;Ottenuto {x0a23}
+Misc text section;24;7;appresa!
+Misc text section;24;8;magia
+Misc text section;24;9;Ottenuto:
+Misc text section;24;10;????
+Misc text section;24;11; 0123456789ABCDEF:/·,‘'
+Misc text section;24;12;Tutti i nemici
+Misc text section;24;13;Tutti gli alleati
+Misc text section;24;14;Tutti
+Misc text section;24;15;Non c'è spazio
+Misc text section;24;16;carta
+Misc text section;24;17;Impossibile rubare
+Misc text section;24;18;Non possiedi niente
+Misc text section;24;19;Rubato:
+Misc text section;24;20;Non selezionabile
+Misc text section;24;21;Oggetti ottenuti
+Misc text section;24;22;continua
+Misc text section;24;23;EXP ottenuti
+Misc text section;24;24;{x0a23}: \n gettate le unità eccedenti le 100
+Misc text section;24;25; Fine
+Misc text section;24;26; è
+Misc text section;24;27;ST
+Misc text section;24;28;Nessun oggetto trovato
+Misc text section;24;29;EXP ottenuti
+Misc text section;24;30;EXP attuali
+Misc text section;24;31;Fino a Level up
+Misc text section;24;32;LEVEL UP!
+Misc text section;24;33;Livello
+Misc text section;24;34;HP
+Misc text section;24;35;Status
+Misc text section;24;36;
+Misc text section;24;37;molto debole contro
+Misc text section;24;38;debole contro
+Misc text section;24;39;forte contro
+Misc text section;24;40;non ha effetto
+Misc text section;24;41;Assorbe
+Misc text section;24;42;Attacco senza effetto
+Misc text section;24;43;Attacco con alta % effetto
+Misc text section;24;44;Attacco prioritario!
+Misc text section;24;45;Nemico: attacco alle spalle
+Misc text section;24;46;Nemico: attacco prioritario
+Misc text section;24;47;Attacco alle spalle
+Misc text section;24;48;Level up!
+Misc text section;24;49;È stato impossibile ottenere EXP
+Misc text section;24;50;Impossibile trasformare in carta
+Misc text section;24;51;ottenuto!
+Misc text section;24;52;Impossibile usare col G.F.
+Misc text section;24;53;Non bastano i soldi
+Misc text section;24;54;HP del G.F. recuperato
+Misc text section;24;55;Non è successo niente
+Misc text section;24;56;non è qui
+Misc text section;24;57;K.O.
+Misc text section;24;58;Veleno
+Misc text section;24;59;Pietra
+Misc text section;24;60;Blind
+Misc text section;24;61;Mutismo
+Misc text section;24;62;Berserk
+Misc text section;24;63;Zombie
+Misc text section;24;64;Trovato:
+Misc text section;24;65;volte
+Misc text section;24;66;Usa subito
+Misc text section;24;67;Ripeti
+Misc text section;24;68;Utilizza magia indicata
+Misc text section;24;69;Nuovo giro di slot
+Misc text section;24;70;Ottenuti AP
+Misc text section;24;71;‘
+Misc text section;24;72;Il Komoguri è andato via 
+Misc text section;24;73;Sonno
+Misc text section;24;74;Haste
+Misc text section;24;75;Lentezza
+Misc text section;24;76;Arresto
+Misc text section;24;77;Rigene
+Misc text section;24;78;Protect
+Misc text section;24;79;Shell
+Misc text section;24;80;Reflex
+Misc text section;24;81;Aura
+Misc text section;24;82;Maledizione
+Misc text section;24;83;Sentenza
+Misc text section;24;84;Invincibilità
+Misc text section;24;85;Pietrifica
+Misc text section;24;86;Levita
+Misc text section;24;87;Caos
+Misc text section;24;88;Il livello di 
+Misc text section;24;89;: +
+Misc text section;24;90;Double
+Misc text section;24;91;Triple
+Misc text section;24;92;Protezione
+Misc text section;24;93;Attacco fisico inefficace 
+Misc text section;24;94;Magia inefficace
+Misc text section;24;95;: -
+Misc text section;24;96;Attacco alle spalle
+Misc text section;24;97;RES 0
+Misc text section;24;98;Ali di fata
+Misc text section;24;99;Mostro volante
+Misc text section;24;100;Impossibile usare magie
+Misc text section;24;101;{Drain}
+Misc text section;24;102;{x055e}
+Misc text section;24;103;{x055f}
+Misc text section;24;104;{x0560}
+Misc text section;24;105;{x0561}
+Misc text section;24;106;{x0562}
+Misc text section;24;107;{x0563}
+Misc text section;24;108;{x0564}
+Misc text section;24;109;I G.F. hanno ottenuto {x0a20} AP
+Misc text section;24;110;Carta {x0a23} 
+Misc text section;24;111;Sviluppo G.F.
+Misc text section;24;112;Impossibile mangiare!
+Misc text section;24;113;????
+Misc text section;24;114;mostro non-morto
+Misc text section;24;115;????
+Misc text section;24;116;: scomparso
+Misc text section;24;117;: scomparsa
+Misc text section;24;118;,
+Misc text section;24;119;unità
+Misc text section;24;120;di
+Misc text section;24;121;G.F. 
+Misc text section;24;122;Mag
+Misc text section;24;123;Dummy 
+Misc text section;24;124;Dummy 
+Misc text section;24;125;Dummy 
+Misc text section;24;126;!
+Misc text section;24;127;ha appreso l'abilità

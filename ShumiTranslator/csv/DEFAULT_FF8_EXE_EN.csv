@@ -1,0 +1,309 @@
+Section data name|Section Widget id|Text Sub id|Text
+Draw text|0|0|The disc cover is open.
+Draw text|0|1|Please insert FINAL FANTASY{xa8}\nDISC {Var17}.
+Draw text|0|2|Found a draw point!\n{x0c20} found.
+Draw text|0|3|Found a draw point!\nNothing there...
+Draw text|0|4|Who will draw?\nDon't draw\n{Darkgrey}{Squall}      \n{Darkgrey}{Squall}      \n{Darkgrey}{Squall}      
+Draw text|0|5|{Squall} stocked {Var17} {x0c20}s.
+Draw text|0|6|{Squall} is unable to stock {x0c20}.
+Draw text|0|7|Found a draw point!\nNo one can draw...
+Draw text|0|8|Disc error
+Card misc text data|1|0|\n
+Card misc text data|1|1|Are you sure?\nYes\nNo
+Card misc text data|1|2|Select 
+Card misc text data|1|3| card(s) you want
+Card misc text data|1|4|Card acquired
+Card misc text data|1|5|Card lost
+Card misc text data|1|6|Play again?\nYes\nNo
+Card misc text data|1|7|Rules: 
+Card misc text data|1|8|· 
+Card misc text data|1|9|/
+Card misc text data|1|10|Ari
+Card misc text data|1|11|\n· Open
+Card misc text data|1|12|\n· Random
+Card misc text data|1|13|\n· Sudden Death
+Card misc text data|1|14|Same
+Card misc text data|1|15|Plus
+Card misc text data|1|16|Same Wall
+Card misc text data|1|17|\n· Elemental
+Card misc text data|1|18|\n· Trade Rule: 
+Card misc text data|1|19|Null
+Card misc text data|1|20|One
+Card misc text data|1|21|Diff
+Card misc text data|1|22|Direct
+Card misc text data|1|23|All
+Card misc text data|1|24|\nPlay\nQuit
+Card misc text data|1|25|Used up
+Card misc text data|1|26|
+Card misc text data|1|27|
+Card misc text data|1|28|
+Card name|2|0|Geezard
+Card name|2|1|Funguar
+Card name|2|2|Bite Bug
+Card name|2|3|Red Bat
+Card name|2|4|Blobra
+Card name|2|5|Gayla
+Card name|2|6|Gesper
+Card name|2|7|Fastitocalon-F
+Card name|2|8|Blood Soul
+Card name|2|9|Caterchipillar
+Card name|2|10|Cockatrice
+Card name|2|11|Grat
+Card name|2|12|Buel
+Card name|2|13|Mesmerize
+Card name|2|14|Glacial Eye
+Card name|2|15|Belhelmel
+Card name|2|16|Thrustaevis
+Card name|2|17|Anacondaur
+Card name|2|18|Creeps
+Card name|2|19|Grendel
+Card name|2|20|Jelleye
+Card name|2|21|Grand Mantis
+Card name|2|22|Forbidden
+Card name|2|23|Armadodo
+Card name|2|24|Tri-Face
+Card name|2|25|Fastitocalon
+Card name|2|26|Snow Lion
+Card name|2|27|Ochu
+Card name|2|28|SAM08G
+Card name|2|29|Death Claw
+Card name|2|30|Cactuar
+Card name|2|31|Tonberry
+Card name|2|32|Abyss Worm
+Card name|2|33|Turtapod
+Card name|2|34|Vysage
+Card name|2|35|T-Rexaur
+Card name|2|36|Bomb
+Card name|2|37|Blitz
+Card name|2|38|Wendigo
+Card name|2|39|Torama
+Card name|2|40|Imp
+Card name|2|41|Blue Dragon
+Card name|2|42|Adamantoise
+Card name|2|43|Hexadragon
+Card name|2|44|Iron Giant
+Card name|2|45|Behemoth
+Card name|2|46|Chimera
+Card name|2|47|PuPu
+Card name|2|48|Elastoid
+Card name|2|49|GIM47N
+Card name|2|50|Malboro
+Card name|2|51|Ruby Dragon
+Card name|2|52|Elnoyle
+Card name|2|53|Tonberry King
+Card name|2|54|Wedge, Biggs
+Card name|2|55|Fujin, Raijin
+Card name|2|56|Elvoret
+Card name|2|57|X-ATM092
+Card name|2|58|Granaldo
+Card name|2|59|Gerogero
+Card name|2|60|Iguion
+Card name|2|61|Abadon
+Card name|2|62|Trauma
+Card name|2|63|Oilboyle
+Card name|2|64|Shumi Tribe
+Card name|2|65|Krysta
+Card name|2|66|Propagator
+Card name|2|67|Jumbo Cactuar
+Card name|2|68|Tri-Point
+Card name|2|69|Gargantua
+Card name|2|70|Mobile Type 8
+Card name|2|71|Sphinxara
+Card name|2|72|Tiamat
+Card name|2|73|BGH251F2
+Card name|2|74|Red Giant
+Card name|2|75|Catoblepas
+Card name|2|76|Ultima Weapon
+Card name|2|77|Chubby Chocobo
+Card name|2|78|Angelo
+Card name|2|79|Gilgamesh
+Card name|2|80|MiniMog
+Card name|2|81|Chicobo
+Card name|2|82|Quezacotl
+Card name|2|83|Shiva
+Card name|2|84|Ifrit
+Card name|2|85|Siren
+Card name|2|86|Sacred
+Card name|2|87|Minotaur
+Card name|2|88|Carbuncle
+Card name|2|89|Diablos
+Card name|2|90|Leviathan
+Card name|2|91|Odin
+Card name|2|92|Pandemona
+Card name|2|93|Cerberus
+Card name|2|94|Alexander
+Card name|2|95|Phoenix
+Card name|2|96|Bahamut
+Card name|2|97|Doomtrain
+Card name|2|98|Eden
+Card name|2|99|Ward
+Card name|2|100|Kiros
+Card name|2|101|Laguna
+Card name|2|102|Selphie
+Card name|2|103|Quistis
+Card name|2|104|Irvine
+Card name|2|105|Zell
+Card name|2|106|Rinoa
+Card name|2|107|Edea
+Card name|2|108|Seifer
+Card name|2|109|Squall
+Scan text|3|0|Uses a sword called\na gunblade.\nSpecial skill is\nRenzokuken, using\nthe gunblade.\nSilent, and a bit\ncold.
+Scan text|3|1|Loves the hot dogs\nsold in the Garden\ncafeteria.\nUses close combat\nfighting skills to\ndefeat enemies with\npunches and kicks.
+Scan text|3|2|An expert marks-\nman.  Can use\nspecialized bullets\nto attack enemies.\nDoesn't perform\nvery well under\npressure.
+Scan text|3|3|Uses a whip.\nWhen in danger,\nuses monster skills\nshe has learned.\nHer admirers in the\nGarden have\nformed a fan club.
+Scan text|3|4|A member of the\nTimber resistance\ngroup,\n‘Forest Owls'.\nUses her dog\nto make special\nattacks.
+Scan text|3|5|A transfer student\nto Balamb Garden.\nUses giant\nnunchaku and\nspecial magic.
+Scan text|3|6|One of the top\nfighters of the\nGarden.  His\ntemperament kept\nhim from becoming\na SeeD member.\nUses a gunblade.
+Scan text|3|7|A sorceress.\nAs a sorceress,\nshe is well-versed\nin magic.\nUses a special\nmagic attack\ncalled Sorcery.
+Scan text|3|8|An energetic man\nwith a big heart.\nUses a machine gun.\nFires bursts at\nenemies to help\nparty members in\ndanger.
+Scan text|3|9|Wears sharp blade\ncalled Katal on\nboth arms.\nHis fighting style is\nalso unique, like his\nweapon.
+Scan text|3|10|A big, powerful man.\nUses the Harpoon,\nan unusually heavy\nweapon, and\nattacks by throwing\nit at the enemy.
+Scan text|3|11|12.
+Scan text|3|12|13.
+Scan text|3|13|14.
+Scan text|3|14|15.
+Scan text|3|15|16.
+Scan text|3|16|0.
+Scan text|3|17|A Galbadian\nmachine that\nattacks with magic\nand missiles.\nThe more advanced\nmodels use high-\npowered beams.
+Scan text|3|18|A half-liquid\ncreature resistant\nto physical\nattacks.\nElemental weakness\ndiffer with each one\nthat appears.
+Scan text|3|19|A monster on the\nGalbadia continent.\nUsually swoops down\nto attack enemies,\nbut also bites and\ncauses wind gusts\nwhen in danger.
+Scan text|3|20|Lives in humid\nplaces.\nIt sneak-attacks\nhumans that pass\nby.\nUses status attacks\nwhen fully grown.
+Scan text|3|21|Has a rotating\nblade around its\nface.\nIts battle tactics\nchange when its\nface changes.
+Scan text|3|22|A floating monster\nthat uses Ice\nmagic.\nWhen running low on\nHP, uses Vampire\nto suck HP from\nopponents.
+Scan text|3|23|A living weapon\nmade by Galbadia.\nCarries a 155mm\ncannon on both\nshoulders and a\n60mm Vulcan\ncannon in its mouth.
+Scan text|3|24|An older type of\nGalbadian support\nweapon.\nHas a laser cannon,\nbut mostly punches\nusing the steel orbs\non both hands.
+Scan text|3|25|Has a large blade\nfor a horn.\nThis blade has a\nhealing effect when\nused as an item or\nto make magic.
+Scan text|3|26|Any magic attacks\nare almost\ncompletely\nineffective.\nHowever, very weak\nagainst physical\nattacks.
+Scan text|3|27|Protects the hall of\nUltimecia Castle.\nDefeated many\nenemies whose\nabilities were\nsealed.
+Scan text|3|28|Sphinx's true form.\nAttack tactics\nchange completely\nin this form.\nSummons other\nmonsters and uses\nDoom.
+Scan text|3|29|Lives in the\nnorthern snow\nfields.  Takes time\nto defeat because\nof its high HP.\nUses Ice Breath\nwhen angry.
+Scan text|3|30|A large venomous\nsnake that uses\nsqueeze attacks.\nUse caution when\nits HP are low; it\nspits poisonous\nfluid.
+Scan text|3|31|Its body is mostly\na digestive bag.\nDigests enemies by\ncatching them with\nits vine.\nUses a gas attack\nthat causes Sleep.
+Scan text|3|32|Petrifies enemies\nwith its stare.\nUses thunder by\nflapping its wings.\nUses Electrocute\nwhen fully grown.
+Scan text|3|33|Uses an attack\ncalled Ultra Waves\nthat damages all\nenemies.
+Scan text|3|34|A type of bat with\na huge mouth.\nLurks in dark\nplaces.\nDives quickly from\nthe air to bite its\ntarget.
+Scan text|3|35|Becomes electrified\nwhen attacked with\nThunder.\nAttacking it while\nelectrified\ncauses thunder\ndamage.
+Scan text|3|36|A fish that swims\nin the ground.\nOnly the fin can\nbe seen.\nOne theory says\nthat it may be a\nshark.
+Scan text|3|37|A fish that swims\nin the ground.\nOnly the fin can\nbe seen.\nOne theory says\nthat it may be a\nshark.
+Scan text|3|38|Esthar's defective\nweapon.\nAttacks enemies\nand allies alike.\nDegenerator\ndestroys\nopponents.
+Scan text|3|39|Has a flat black\nbody like a shadow.\nSaid to be a living\ncreature.\nKills its opponent\nwhen it dies.
+Scan text|3|40|A type of mutated\ndragon born with\nsix eyes.\nUses fire magic and\nspecial breath\nattacks.
+Scan text|3|41|Floats with gas\nthat fills its body.\nLooks weak, but\nits status-changing\nattacks may prove\notherwise.
+Scan text|3|42|Anti-personnel\nweapon made in\nEsthar.\nFloats with an anti-\ngravity engine.\nAttacks with its 4\npliable metallic legs.
+Scan text|3|43|The legs are small\ncompared to the\nbody, and it falls\neasily when\nattacked with force.
+Scan text|3|44|A bug monster\nthat flies.\nStay calm and\nattack precisely.\nIt's not a very\nstrong enemy.
+Scan text|3|45|Changes tactics\nas the battle\nprogresses.\nIts magic also\nchanges from fire\nto ice, to thunder,\netc.
+Scan text|3|46|A living weapon\nUltimecia made\nout of a dragon.\nFire or ice are\nits weak points,\nbut they change\nwhen attacked.
+Scan text|3|47|Attacks with magic\nand sharp claws.\nWhen attacked,\nit may change to\ndefense mode in\norder to protect\nitself from damage.
+Scan text|3|48|A strong monster,\nbut not good at\nusing magic.\nUses powerful\nphysical attacks\nrelying on its\nstrength instead.
+Scan text|3|49|Puts enemies to\nsleep, then\nattacks.  Spits\nfluid which removes\nan enemy's\nstrength while\nasleep.
+Scan text|3|50|A monster that\nposed as President\nDeling.\nAttacks with its\ndeformed arms and\nstatus attacks.
+Scan text|3|51|A monster with 4\nsharp claws.\nAttacks with sheer\npower, but also\nuses gas attacks.
+Scan text|3|52|A monster with 3\nheads.\nThe 2 heads on the\nside are not real,\nbut they bite and\nspit poison as if\nthey were.
+Scan text|3|53|Used to live in\nwater, but now\nlives above ground.\nSkewers enemies\nwith its large claw\nand causes major\ndamage.
+Scan text|3|54|Born of a jewel in\nUltimecia's Castle.\nResponds quickly\nto attacks.\nCounter-attacks\nimmediately.
+Scan text|3|55|A large left hand\nprotruding from the\nearth.\nSometimes cures\nparty members\nwith status\nabnormalities.
+Scan text|3|56|A large right hand\nprotruding the\nearth.\nCan't use magic.\nUses its strength\nto attack with\nforce.
+Scan text|3|57|A dragon that walks\non 2 legs.\nAttacks with breath\nthat causes status\nchanges and drops\na rare item called\nFury Fragment.
+Scan text|3|58|Undead soldier.\nNot afraid of death.\nIts death blow kills\nenemies with 1 hit.
+Scan text|3|59|A monster powered\nby fire.  Usually\ncalm, but still a\ndangerous monster\nthat becomes\ngigantic or explodes\nwhen attacked.
+Scan text|3|60|A head protruding\nthe earth.\nOnly a part of the\nbody is exposed.\nUses Earthquake\nwhen attacked by\nenemies.
+Scan text|3|61|Likes to live in\nforests.\nAttacks with its\ntentacles and also\nuses status-\nchanging attacks.
+Scan text|3|62|Its high defense\nability makes it\ndifficult to defeat.\nOwns rare items\nthat make it worth\nthe effort.
+Scan text|3|63|A monster with 4\nheads that use\nmagic, physical,\nattacks, status-\nchanges, and their\noriginal skill, Aqua\nBreath.
+Scan text|3|64|Uses Bad Breath,\nwhich causes all\nstatus\nabnormalities.\nBe ready with\nstatus defenses\nbefore fighting.
+Scan text|3|65|Hard to damage due\nto the steel armor.\nDoesn't use magic,\nbut its sword\ncauses significant\ndamage.
+Scan text|3|66|Uses powerful\nmagic, such as\nMeteor.\nA strong enemy\nthat's hard to\ndefeat.
+Scan text|3|67|Alive since the\nbeginning of time,\nits power and HP\nare very high.\nIt's better to run\nif you encounter\none.
+Scan text|3|68|Strong and smart\ndragon.\nIf enemies are using\nReflect, it casts\nReflect on itself to\nmirror the attack.
+Scan text|3|69|A smaller type of\ndragon, sometimes\nappears in groups\nof 2.\nMay be more\ndangerous than\nother dragons.
+Scan text|3|70|A monster shaped\nlike a face.\nUses support magic\nand special attacks\nwhen attacking with\nRighty and Lefty\ntogether.
+Scan text|3|71|A speedy cactus of\nthe desert.\nDamage always\namounts to 1,000\nwith its special\nskill, 1,000 Needles.
+Scan text|3|72|Mysterious being\nliving in dungeons.\nWalks slowly toward\nthe enemy and kills\nthat enemy with the\nChef's Knife.
+Scan text|3|73|Uses multiple\nmagic attacks while\nsitting down.\nEven more powerful\nwhen it stands up\nto use its blaster\nattacks.
+Scan text|3|74|A giant walking\nmushroom.  Uses\nstatus change\nattacks with\ndamage attacks.
+Scan text|3|75|A devilish-looking\nmonster with wings.\nUses powerful magic\ndespite its small\nsize.
+Scan text|3|76|An alien from\nanother planet.\nSomeone destroyed\nits UFO, and the\nalien is in need of\nhelp.
+Scan text|3|77|Fire GF; uses fire\nmagic.  It's a\nstrong opponent,\nbut, as it is a part\nof Garden's exam,\nnot impossible to\ndefeat.
+Scan text|3|78|Sacred's older\nbrother.\nThis Earth GF has\nhealing ability, \nas long as his feet\nare on the ground.
+Scan text|3|79|Earth GF\nin Tomb of the\nUnknown King.\nRecovers by power\nof the earth.\nAttacks with a\nlarge steel orb.
+Scan text|3|80|Galbadia Missile\nBase security\nleader.\nStronger than\nregular Galbadian\nsoldiers.
+Scan text|3|81|A 3-headed demon-\ndog of hell.\nIn Triple, each of\nthe 3 heads uses\ndifferent magic.\nThe tail is also\npowerful.
+Scan text|3|82|A mysterious GF\nliving in another\ndimension.\nUses a powerful\ngravity attack\ncalled Gravija.
+Scan text|3|83|Called the King of\nGF; its Mega Flare\nignores all defense.\nGives assistance\nfreely to those who\nshow their power.
+Scan text|3|84|A defense shelter\nprotecting Master\nNORG.  The shelter\nmust be destroyed\nin order to attack\nNORG, who is inside\nthe shelter.
+Scan text|3|85|NOT A TARGET.
+Scan text|3|86|A legendary GF\nthat sleeps in\na dungeon.\nZantetsuken cuts\nanything that\nstands in its way.
+Scan text|3|87|Galbadian soldier\nthat uses magic\nwith a sword.\nStrong enough,\nbut nowhere near\nas strong as any\nSeeD member.
+Scan text|3|88|An officer acting\ntogether with\nGalbadian soldiers.\nDefeat him first,\nbefore he uses\nrecovery magic on\nthe other soldiers.
+Scan text|3|89|A Galbadian soldier\nassigned to Dollet\ncommunication\ntower.\nAlways picked on by\nhis superior, Major\nBiggs.
+Scan text|3|90|A Galbadian Major.\nActivated the\nDollet\nCommunication\nTower.\nVery\nshort-tempered.
+Scan text|3|91|President Deling's\ndouble.\nAttacks in a\nstrange way, but\nnot very strong.\nHowever...
+Scan text|3|92|Prison security\nguard.\nA Galbadian soldier\ntrained in sleep\nmagic to capture\nescapees.
+Scan text|3|93|Master of Balamb\nGarden.\nOpposes\nHeadmaster Cid in\ntrying to control\nBalamb Garden.
+Scan text|3|94|Esthar soldier who\nuses both gun and\nsword.  Shotgun\nattack can cause\nmajor damage.\nNot a strong\nenemy.
+Scan text|3|95|A cyborg in the\nform of an Esthar\nsoldier, but far\nstronger.\nIt only uses\nphysical attacks.
+Scan text|3|96|NORG's support\nsystem with auto-\nrecover functions\nthat restore any\ndamage.\nUses status-\nchanging attacks.
+Scan text|3|97|NORG's support\nsystem with auto-\nrecover functions\nthat restore any\ndamage.\nUses attack\nmagics.
+Scan text|3|98|NOT A TARGET.
+Scan text|3|99|The king of the\nTonberries.\nAppears to seek\nrevenge for all\ndefeated\nTonberries.
+Scan text|3|100|Some Cactuars live\nlong lives and\ngrow huge.\nThis Jumbo Cactuar\nis one of those.
+Scan text|3|101|Decided to become\na Sorceress'\nKnight under Edea.\nUses fire magic in\nconjunction with\nsword attacks.
+Scan text|3|102|Attacks with Edea\nto destroy SeeD.\nHis sword skills\nhave been refined,\nand he has gained\nmore skills.
+Scan text|3|103|Defeated once, and\nstill trying to fight\nto save his pride.\nHP is lower due to\nthe defeat, but\nskills are higher.
+Scan text|3|104|A powerful\nsorceress and\nruler of Galbadia.\nHer sorceress\npowers may be the\nmost powerful in the\nworld.
+Scan text|3|105|A monster living\nin the Spaceship\nRagnarok.  Very\nviolent in nature,\nit attacks anything\nthat moves within\nthe ship.
+Scan text|3|106|The strongest,\nultimate monster.\nIt's said to be\nimpossible to\ndefeat.
+Scan text|3|107|A monster that\nlives in the\nabandoned Dollet\ncommunication\ntower.\nNo one knows where\nit came from.
+Scan text|3|108|Galbadia's mobile\nattack weapon.\nAKA “Black Widow.”\nDoesn't stop until\nit kills all enemies\nin its path.
+Scan text|3|109|A mutation of a\ngateway decoration.\nUses Petrify\nattacks.\nSomeone has given\nit the Reflect power.
+Scan text|3|110|A large monster,\nbut it mainly uses\nmagic to attack.\nPhysical attacks\nanger it, and it\nmay counterattack.
+Scan text|3|111|A large insect-type\nmonster that is a\nsurvivor of some\nancient race.\nUses its large\nspikes and tail to\nattack.
+Scan text|3|112|May look slow due\nto its stone-like\nbody, but it is\nactually quite\nfast.\nMay appear in\nnumbers.
+Scan text|3|113|A monster living\nin the Spaceship\nRagnarok.  Very\nviolent in nature,\nit attacks anything\nthat moves within\nthe ship.
+Scan text|3|114|A monster living\nin the Spaceship\nRagnarok.  Very\nviolent in nature,\nit attacks anything\nthat moves within\nthe ship.
+Scan text|3|115|This creature lives\nunderground.\nIts slimy body is\nfull of oil.\nAttacks by spitting\noil.
+Scan text|3|116|A sorceress bent\non conquering the\nworld.\nHired Galbadia\nGarden forces to\ndestroy SeeD, which\nstands in her way.
+Scan text|3|117|Named Iron Clad\nfor its defense\ncapability.\nThe main cannon\nis more powerful\nthan X-ATMO92's\nRay-Bomb.
+Scan text|3|118|Out of control after\nbeing destroyed at\nthe Missile Base.\nCan only fight for\na short amount of\ntime.
+Scan text|3|119|A monster born of\nancient bones deep\nin Great Salt Lake.\nIt's assumed that it\ncame to life after\nthe Great Salt Lake\ndried up.
+Scan text|3|120|NOT A TARGET.
+Scan text|3|121|Its beam and laser\nattacks go far\nbeyond the damage\nof any modern\nweapons.
+Scan text|3|122|Mobile Type 8's left\nshoulder.\nActs on its own as\na machine.\nHas auto-recovery\nand attack\nfunctions.
+Scan text|3|123|Mobile Type 8's\nright shoulder.\nActs on its own as\na machine.\nHas auto-recovery\nand attack\nfunctions.
+Scan text|3|124|Soldier assigned\nto Galbadia Garden.\nSpecializes in sneak\nattacks.\nMuch stronger than\nregular Galbadian\nsoldiers.
+Scan text|3|125|Ultimecia gave\npartial life to this\nweapon of the\nfuture.\nPulse Cannon\ndestroys any\nenemies in its way.
+Scan text|3|126|Born from Trauma,\na small support\nmachine.\nDespite its small\nsize, uses Pulse\nCannon just like\nTrauma.
+Scan text|3|127|A monster living\nin the Spaceship\nRagnarok.  Very\nviolent in nature,\nit attacks anything\nthat moves within\nthe ship.
+Scan text|3|128|Esthar's ruler\nbefore Laguna and\ncompany confined\nher.\nReleased by\nUltimecia, and\nregaining strength.
+Scan text|3|129|{Rinoa} being\njunctioned by Adel.\nImmobile, because\nAdel is absorbing\nher powers.\nCan be released by\ndefeating Adel.
+Scan text|3|130|Stronger than\nUltima Weapon,\nOmega Weapon is\nthe strongest\nmonster.  It is\nbad luck to run\ninto this monster.
+Scan text|3|131|Sorceress from\nbeyond time who\nappeared due to\nTime Compression.\nUses magic, but it\nis not very\npowerful.
+Scan text|3|132|Sorceress from\nbeyond time who\nappeared due to\nTime Compression.\nUses magic, but it\nis not very\npowerful.
+Scan text|3|133|Sorceress from\nbeyond time who\nappeared due to\nTime Compression.\nUses magic, but it\nis not very\npowerful.
+Scan text|3|134|Unidentified flying\nobject from outer\nspace.
+Scan text|3|135|Looking for Ellone\nunder Seifer's\ncommand.\nUses wind magic\nand attacks\nwith Pinwheel.
+Scan text|3|136|Looking for Ellone\nwith Fujin.\nGood at physical\nattacks.\nTries to act cool\naround other\npeople.
+Scan text|3|137|A sorceress trying\nto change the world\nby compressing time\nand taking power\nfrom all\nsorceresses.
+Scan text|3|138|In {Squall}'s\nmind, the strongest\nGF.\nThrough Ultimecia's\npower, continues\nfighting without\nvanishing.
+Scan text|3|139|NOT A TARGET.
+Scan text|3|140|Ultimecia junctioned\nto {Griever}.\nA powerful monster\nthat combines\nUltimecia's and\n{Griever}'s\nforces.
+Scan text|3|141|Ultimecia's magic\npower amplifier.\nBy combining the\n2 amplifiers, her\npower can be\namplified greatly..
+Scan text|3|142|Ultimecia,\ntransformed to\nabsorb all time\nand space.\nAbsorbing all\nexistence as we\nspeak.
+Scan text|3|143|The point from\nwhich Ultimecia's\nmagic power\ngenerates.\nCasts the ultimate\nmagic through power\ngenerated here.
+Scan text|3|144|To retain his pride\nas Sorceress'\nKnight, he is\ndetermined to win.\nHis skills are even\nmore deadly.
+Scan text|3|145|A member of\nGalbadia Garden's\ndemi-human ice-\nhockey club.\nAttacks with speed\nand team work.
+Scan text|3|146|A giant machine\npowered by magic.\nIts high defensive\npower makes it\ndifficult to damage,\nexcept with magic\nor GF.
+Scan text|3|147|A powerful monster.\nUses magic, but\nalso uses Tail\nNeedle,\nwhich causes heavy\ndamage.
+Scan text|3|148|Used to be a GF.\nBecame a monster\nunder Ultimecia's\npower.\nIts Dark Flare\ndestroys all\nenemies.
+Scan text|3|149|Uses magic as well\nas physical\nattacks.\nIts skill with\nThunder magic\nallows it to\nincrease damage.
+Scan text|3|150|Demoted along with\nBiggs for his part\nin the Dollet\nCommunication\nTower Operation.\nUnfortunately, still\nworks under Biggs.
+Scan text|3|151|He was a major\nduring the Dollet\nCommunication\nTower Operation,\nbut was demoted\nafter the operation\nfailed.  Hates SeeD.
+Scan text|3|152|Assisting Seifer\ninside Lunatic\nPandora.\nUses support magic,\nas well as attack\nmagic.
+Scan text|3|153|Works with Fujin\nand Seifer.\nStill relies on his\nstrength, but can\nnow use support\nmagic as well.
+Scan text|3|154|NOT A TARGET.
+Scan text|3|155|NOT A TARGET.
+Scan text|3|156|NOT A TARGET.
+Scan text|3|157|NOT A TARGET.
+Scan text|3|158|The monster that\nwas posing as\nPresident Deling.\nAttacks with its\ndeformed arms and\nstatus-change\nattacks.
+Scan text|3|159|Galbadia Missile\nBase security\nsoldiers.\nPaid a little better\nthan regular\nGalbadian soldiers.

@@ -1,0 +1,308 @@
+"Text","Comment"
+"#worldmap","0"
+"{x0e2f}",""
+"{x0e30}",""
+"{x0e31}",""
+"{Esthar}, Stazione aerea",""
+"{Blue}{x0e2f}{White}. Scendi ?
+Sì
+No",""
+"{Blue}{x0e30}{White}. Scendi ?
+Sì
+No",""
+"{Blue}{x0e31}{White}. Scendi ?
+Sì
+No",""
+"“{Blue}Treno per {Timber}{White}:”
+3000 guil per salire
+Non salgo",""
+"“{Blue}{Dollet}{White} Treno per {Dollet}{White}:”
+3000 guil per salire
+Non salgo ",""
+"“{Blue}Treno per {x0e2d}{White}:”
+3000 guil per salire
+Non salgo ",""
+"{White}“Non avete il denaro necessario.”",""
+"Selphie:
+“Allora!
+ Andiamo alla {Blue}[Base missilistica]{White}.”",""
+"Soldato di {Galbadia}:
+“Rinuncia!”",""
+"Soldato di {Galbadia}:
+“Non intrometterti.”",""
+"Soldato di {Galbadia}:
+“Non ce la farai!!”",""
+"Soldato di {Galbadia}:
+“È il nostro dovere...”",""
+"Soldato di {Galbadia}:
+“È normale routine...”",""
+"Soldato di {Galbadia}:
+“Ehi, bella, sei libera?...”",""
+" Fonte energetica trovata!
+Ma nessuno può assimilare...",""
+" Fonte energetica trovata!
+Non c'era niente...",""
+" Fonte energetica!
+",""
+" Trovato ",""
+" non posso portarne di più",""
+" Comando assimila non abilitato",""
+" Scegliere il personaggio
+",""
+" impossibile assimilare",""
+" ha accumulato ",""
+" ",""
+"
+",""
+"0",""
+"{Squall}",""
+"{Zell}",""
+"{Irvine}",""
+"{Quistis}",""
+"{Rinoa}",""
+"{Selphie}",""
+"{Seifer}",""
+"{Edea}",""
+"{Laguna}",""
+"{Kiros}",""
+"{Ward}",""
+"{White}",""
+"{Grey}",""
+"{RedBlink}{x0dc2}{WhiteBlink} finito!",""
+"{Red}{x0dc2}{White} rimasto",""
+" unità",""
+"Andiamo a ",""
+"{x0541}",""
+"{x0540}",""
+"{Yellow}Comandi della macchina{White}
+         {x0524}: indietro
+  {x0527}: avanti
+         {x0526}: sali/scendi
+ Tasti direzionali: direzione
+
+
+ {x0521}: cambia P.D.V.",""
+"{Yellow}Comandi del Garden{White}
+         {x0524}: indietro
+  {x0527}: avanti  {x0525}: ponte di comando
+         {x0526}: sali/scendi
+ Tasti direzionali: direzione
+
+
+ {x0521}: cambia P.D.V",""
+"{Yellow}Comandi del Chocobo{White}
+  {x0526}: scendi
+ Tasti direzionali: direzione
+
+ {x0521}: cambia P.D.V.",""
+"{Yellow}Comandi dell'astronave{White}
+         {x0524}: indietro
+  {x0527}: avanti  {x0525}: ponte di comando
+         {x0526}: sali/scendi
+ Tasti direzionali: direzione
+
+
+ {x0521}: cambia P.D.V.",""
+"(Questo posto mi ricorda qualcosa.)",""
+"Sembra che non ci sia nessuno
+Questo posto è in rovina...",""
+"“Huh!?”",""
+"Nida:
+”Gli strumenti sono impazziti!?”",""
+"(Non possiamo scendere...)",""
+"Questo dovrebbe essere il lago Obel.
+Tiro una pietra
+Provo a canticchiare",""
+"Questo è il lago Obel.
+Tiro una pietra
+Provo a canticchiare",""
+"Un ombra nera sulla superficie del lago.
+Tiro una pietra
+Provo a canticchiare",""
+"L'ombra nera è sparita.",""
+"La pietra è sprofondata.",""
+" ·
+La pietra ha fatto 1 salto.",""
+" ·
+ ·
+La pietra ha fatto 2 salti.",""
+" ·
+ ·
+ ·
+La pietra ha fatto 3 salti.",""
+" ·
+ ·
+ ·
+ ·
+La pietra ha fatto 4 salti.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+La pietra ha fatto 5 salti.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+ ·
+La pietra ha fatto 6 salti.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+ ·
+La pietra ha fatto 
+moltissimi salti.",""
+"Ombra nera:
+“Buon giorno signore.
+ Che bella canzone.”",""
+"Un ombra nera sale in superficie:
+“Buon giorno.”",""
+"(C'è qualcosa di grande, lì...)",""
+"“Per piacere!”",""
+"“Uhm.”",""
+"“Mi puoi fare un piacere?”
+(Che cosa vuoi?)
+(Non voglio sentire...)",""
+"“Vorrei che cercassi il mio miglior amico
+ il signor scimmia.”",""
+"“Per piacere......”",""
+"“......”",""
+"“Il signor scimmia è in qualche
+ foresta qua vicino. Se giri qua attorno
+ lo troverai sicuramente.”",""
+"“Ah sì, lo sapevi?”",""
+"“Sì, sì.”",""
+"“Ma che bella giornata.”",""
+"“Ma cosa significa?”",""
+"“Misteriosi caratteri sulla pietra.”",""
+"“Anche il signor scimmia
+ possedeva una pietra simile...”",""
+"“Prendi un po' di respiro al ponte di ferro.”",""
+"“Prendi un po' di respiro
+ alla penisola di Eldbeak.”",""
+"“Deve essere un posto stupendo.”",""
+"Ho detto dov'era il signor scimmia.",""
+"“Grazie!”",""
+"C'è una scimmia!
+Tiro una pietra
+Provo a cantare",""
+"“Buono a nulla.”",""
+"La scimmia è scomparsa nella foresta...",""
+"La scimmia ti ha insultato
+ ed è scomparsa nella foresta...",""
+"“Accidenti!
+ Sei proprio un incapace
+ Io ho fatto fare più salti 
+ alle pietre di quanti tu 
+ ne possa contare!
+ Stupido, scemo, cretino!
+ Tua madre è una cicciona!”",""
+"“Scemo!
+ mi hai fatto male.
+ Me la pagherai!!!”",""
+"La scimmia ti tira una pietra e scappa!",""
+"Guardando bene la pietra,
+sembra artificiale e con inciso qualcosa sopra.",""
+"Hai trovato la scimmia.
+Brutto scemo...",""
+"Peccato!
+La scimmia è scappata.",""
+"Ma cos'è questo!?",""
+"Hai trovato un frammento
+di pietra ai tuoi piedi.",""
+"Sembra fatta a mano
+e con inciso qualcosa sopra...",""
+"Ma è solo una pietra...",""
+"Un uccello che cova le uova.
+Verifico meglio
+Lascio stare",""
+"Sembra che l'uccello
+sia andato a cercare del cibo...",""
+"Hai trovato un frammento di pietra lì.",""
+"Non c'è niente qui.",""
+"{Grey} S I D I U P ",""
+"{Grey} O L R M R I ",""
+"{Grey} R T E O A A ",""
+"{Grey} O E D R D N ",""
+"‘{Grey} S I D I U P {White}'
+‘{Grey} O L R M R I {White}'
+‘{Grey} R T E O A A {White}'
+‘{Grey} O E D R D N {White}'",""
+"“Alla spiaggia di {Balamb} qualche volta
+ giunge a riva qualcosa di speciale.”",""
+"“Troverai qualcosa anche
+ all'isola ad Est di Timber.”",""
+"“C'è qualcosa sopra la montagna dove
+ c'è la caverna con il lago.”",""
+"“Una volta a Sud di qui
+ c'era un piccolo ma grazioso villaggio
+ circondato da una grande foresta.
+ Tutti vivevano felici laggiù...”",""
+"C'è una colonna di pietra.
+Se guardi bene c'è scritto qualcosa.",""
+"‘TEUNPOSORODI
+ SCARESPIROLAMANGA'",""
+"(...?)",""
+"Trovato: {x0d29}!",""
+"Trovato: {x0d50}!",""
+"Trovato: {x0d83}!",""
+"Trovato: {x0d21}!",""
+"Il suono è scomparso dentro il lago...",""
+"Ci sono molte pietre multicolore
+ognuna con una faccia diversa...",""
+"Una roccia con la faccia nera ti dice...:
+“Per il tesoro segui la stella del Nord.”",""
+"Una roccia con la faccia bianca ti dice:
+“A Est.”",""
+"Una roccia con la faccia bianca ti dice:
+“A Ovest.”",""
+"Una roccia con la faccia bianca ti dice:
+“A Sud.”",""
+"Una roccia con la faccia bianca ti dice:
+“A Nord.”",""
+"Una roccia con la faccia rossa ti dice:
+“Il blu è un bugiardo!”",""
+"Una roccia con la faccia rossa ti dice:
+“Il tesoro è ad Est!”",""
+"Una roccia con la faccia rossa ti dice:
+“Il tesoro è ad Ovest!”",""
+"Una roccia con la faccia rossa ti dice:
+“Il tesoro è a Sud!”",""
+"Una roccia con la faccia rossa ti dice:
+“Il tesoro è a Nord!”",""
+"Una roccia con la faccia rossa ti dice:
+“Il tesoro qui non c'è!”",""
+"Una roccia con la faccia blu ti dice:
+“...Non so dove sta il tesoro!”",""
+"Una roccia con la faccia blu ti dice:
+“...Tutti ci chiamano sempre
+ pietre bugiarde.”",""
+"Una roccia con la faccia blu ti dice:
+“...Ci sono pietre che dicono
+ sempre la stessa cosa.”",""
+"Una roccia con la faccia blu ti dice:
+“...Alcune di noi dicono
+ cose che non hanno senso.”",""
+"Una roccia con la faccia blu ti dice:
+“...Alcune di noi dicono
+ sempre il contrario di tutto.”",""
+"Qui ci sono solo delle
+rovine che riposano nell'erba...",""
+"Assolutamente niente.",""
+"(È questa.........parte di qualche cosa?)",""
+"(È uguale alla roccia che ho preso prima...)",""
+"(Dovrebbero esserci tutte...)",""
+"“Le rocce dovrebbero esserci tutte.”",""
+"“Se il signor scimmia non è qua vicino
+ ...forse ha preso il treno per {Dollet}.”",""
+"(Mi ricordo......questa è la casa di Edea.
+ Ma cos'è questa sensazione?
+ C'è qualcosa di enorme, qua vicino.)",""
+".",""
+"?
+Sì
+No",""

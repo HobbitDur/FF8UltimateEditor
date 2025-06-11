@@ -1,0 +1,520 @@
+Section data name;Section Widget id;Text Sub id;Text
+GIM52A;0;0;GIM52A
+Prinula;1;0;Prinula
+Thrust Avis;2;0;Thrust Avis
+Thrust Avis;2;1;{Irvine} “Ach ja, vergeßt nicht,”
+Thrust Avis;2;2;“beim [Shot] die Munition auszuwählen.”
+Thrust Avis;2;3;“Mit {R1} macht{xba}s PÄNG! PÄNG!
+Thrust Avis;2;4;“Alles klar~?”
+Heulechse;3;0;Heulechse
+Belhel Melhel;4;0;Belhel Melhel
+Belhel Melhel;4;1;Lacht immer noch
+Belhel Melhel;4;2;Ist immer noch wütend
+Belhel Melhel;4;3;Belhel Melhel lacht!
+Belhel Melhel;4;4;Belhel Melhel ist wütend!
+Belhel Melhel;4;5;Belhel Melhels Wut-Konter!
+Belhel Melhel;4;6;Belhel Melhels Lach-Konter!
+Guheys Eye;5;0;Guheys Eye
+SAM08G;6;0;SAM08G
+GIM47N;7;0;GIM47N
+Mesmerize;8;0;Mesmerize
+Mesmerize;8;1;Das Horn ist abgebrochen!
+Buel;9;0;Buel
+Sphinx;10;0;Sphinx
+Andro;11;0;Andro
+Gogue Seal;12;0;Gogue Seal
+Heckenschlange;13;0;Heckenschlange
+Heckenschlange;13;1;Cifer “Die meisten EXP kassiert der,”
+Heckenschlange;13;2;“der den Gegner fertig macht.”
+Heckenschlange;13;3;“Laßt mir also welche übrig!”
+Gratt;14;0;Gratt
+Cockatrice;15;0;Cockatrice
+Stichraupe;16;0;Stichraupe
+Purpurmaus;17;0;Purpurmaus
+Purpurmaus;17;1;{Quistis} “{Squall}!”
+Purpurmaus;17;2;“Mit {R1} löst du die Gun-Blade aus.”
+Purpurmaus;17;3;“Drück, wenn du den Gegner triffst.”
+Blitzer;18;0;Blitzer
+Blitzer;18;1;Blitzer ist aufgeladen!
+Blitzer;18;2;Lädt sich auf
+Focarol;19;0;Focarol
+Focarol;20;0;Focarol
+Gesper;21;0;Gesper
+Schattenkriecher;22;0;Schattenkriecher
+Schmelzdrache;23;0;Schmelzdrache
+Blood Soul;24;0;Blood Soul
+Invictus;25;0;Invictus
+Esansuci;26;0;Esansuci
+Esansuci;26;1;Esansuci stolpert!
+Esansuci;26;2;Esansuci steht auf!
+Beißkäfer;27;0;Beißkäfer
+Beißkäfer;27;1;{Quistis} “{Squall}!”
+Beißkäfer;27;2;“Mit {R1} löst du die Gun-Blade aus.”
+Beißkäfer;27;3;“Drück, wenn du den Gegner triffst.”
+Beißkäfer;27;4;“Auch beim [Multi], {R1} nicht vergessen!”
+Doppel-Hacker;28;0;Doppel-Hacker
+Doppel-Hacker;28;1;Standard-Abwehr-Modus
+Doppel-Hacker;28;2;Total-Abwehr-Modus
+Doppel-Hacker;28;3;Zauber-Abwehr-Modus
+Doppel-Hacker;28;4;Waffen-Abwehr-Modus
+Tripel-Klinge;29;0;Tripel-Klinge
+Tripel-Klinge;29;1;“Element-Angriffe, gegen die ich”
+Tripel-Klinge;29;2;“immun bin, werden gekontert.”
+Granatomb;30;0;Granatomb
+Wendigo;31;0;Wendigo
+Geira;32;0;Geira
+Namtal-Utok;33;0;Namtal-Utok
+Namtal-Utok;33;1;{Zell} “Wa-was zum Henker?!”
+Namtal-Utok;33;2;{Squall} “Verdammtes Biest!”
+Namtal-Utok;33;3;{Selphie} “Bähh, wie ekelhaft!”
+Wild Hook;34;0;Wild Hook
+Tripel-Visage;35;0;Tripel-Visage
+Grande Arlo;36;0;Grande Arlo
+Cocutos;37;0;Cocutos
+Cocutos;37;1;“Greift mich an!”
+Cocutos;37;2;“Ich mache euch alle fertig!”
+Gomani;38;0;Gomani
+Dromani;39;0;Dromani
+Drachen-Isolde;40;0;Drachen-Isolde
+Lebensverbieter;41;0;Lebensverbieter
+Bomber;42;0;Bomber
+Bomber;42;1;{Quistis} “Bomber besitzen Hitze-Elemente.”
+Bomber;42;2;“Gegen Hitze-Monster helfen Kälte-Attacken.”
+Bomber;42;3;“Taste die Monster mit Analyse ab.”
+Abyss-Wurm;43;0;Abyss-Wurm
+Küßchen;44;0;Küßchen
+Adaman Taimai;45;0;Adaman Taimai
+Chimära;46;0;Chimära
+Morbol;47;0;Morbol
+Stahlgigant;48;0;Stahlgigant
+Behemoth;49;0;Behemoth
+Archeodinos;50;0;Archeodinos
+Archeodinos;50;1;{Quistis} “Ein Archeodinos!”
+Archeodinos;50;2;“{Squall}, paß lieber auf!”
+Archeodinos;50;3;“Lauf weg, wenn der Gegner zu stark ist.”
+Rubrum-Drache;51;0;Rubrum-Drache
+Grendel;52;0;Grendel
+Bisage;53;0;Bisage
+Kaktor;54;0;Kaktor
+Kaktor;54;1;Flucht ergriffen...
+Tombery;55;0;Tombery
+Tombery;55;1;Tombery ist hingefallen...
+Qual;56;0;Qual
+Fongo Ongo;57;0;Fongo Ongo
+Galchimäsera;58;0;Galchimäsera
+Koyo-Koyo;59;0;Koyo-Koyo
+Koyo-Koyo;59;1;“Ich will Elixire!”
+Koyo-Koyo;59;2;“Mehr Elixire!”
+Koyo-Koyo;59;3;“Danke!”
+Koyo-Koyo;59;4;“Aaahhhhh......”
+Ifrit;60;0;Ifrit
+Ifrit;60;1;{Squall} “Wirken Hitze-Zauber nicht!?”
+Ifrit;60;2;{Quistis} “Ich wußte, daß es nicht wirkt.”
+Ifrit;60;3;“Nicht schlecht für einen Menschen.”
+Ifrit;60;4;“Ihr habt {Shiva}!?”
+Ifrit;60;5;“Ich...verliere gegen Menschen!?”
+Ifrit;60;6;“Gegen {Shiva} bin ich machtlos...”
+Ifrit;60;7;“Ich verleihe euch meine Macht.”
+Ifrit;60;8;“Ihr aufmüpfigen Menschen!”
+Minotaurus;61;0;Minotaurus
+Minotaurus;61;1;Minotaurus “Ich ziehe mich zurück...”
+Minotaurus;61;2;Minotaurus “Wir haben verloren...!?”
+Minotaurus;61;3;Minotaurus “Meine Helden!
+Minotaurus;61;4;Minotaurus “Nehmt uns bitte auf!”
+Secreto;62;0;Secreto
+Secreto;62;1;Secreto “Die sind ja stark!”
+Secreto;62;2;Secreto “Ich bin weg...”
+Secreto;62;3;Secreto “Wir haben verloren!?”
+Secreto;62;4;Secreto “Ok! Wir kommen mit!”
+Kommandeur;63;0;Kommandeur
+Kommandeur;63;1;“Schluß mit dem Spielchen!”
+Kommandeur;63;2;“Hmpf, meine Truppe!”
+Kommandeur;63;3;“Kommen die vom Garden?”
+Kommandeur;63;4;“Nicht nachgeben!”
+Kommandeur;63;5;“Zauber-Angriff!”
+Cerberus;64;0;Cerberus
+Cerberus;64;1;{Squall} “Die benutzen auch G.F.?”
+Cerberus;64;2;{Quistis} “Hier sind normal keine G.F...”
+Cerberus;64;3;{Zell} “Die benutzen G.F.!?”
+Cerberus;64;4;{Selphie} “Das ist jaa ein G.F.!”
+Cerberus;64;5;{Irvine} “Wo kommt der denn her?”
+Cerberus;64;6;{Rinoa} “Ist das ein G.F.?”
+Cerberus;64;7;{Squall} “Den holen wir uns.”
+Cerberus;64;8;{Quistis} “Der gehört jetzt uns.”
+Cerberus;64;9;{Zell} “Den lassen wir mitgehen!”
+Cerberus;64;10;{Selphie} “Haben will!”
+Cerberus;64;11;{Irvine} “Wenn ihn keiner will...”
+Cerberus;64;12;{Rinoa} “Lieber G.F., komm zu uns.”
+Cerberus;64;13;Cerberus “...wie selbstsicher.”
+Cerberus;64;14;Cerberus “Wir...werden ja sehen.”
+Cerberus;64;15;Cerberus “Zeigt mir eure Macht!”
+Cerberus;64;16;Cerberus “Ich habe eure Macht gespürt.”
+Diabolos;65;0;Diabolos
+Diabolos;65;1;“Wer wagt es, mich im Schlaf zu stören?”
+Diabolos;65;2;“Es scheint, ich habe zu lange geruht...”
+Bahamut;66;0;Bahamut
+Bahamut;66;1;“Man nennt mich... Bahamut.”
+Bahamut;66;2;{Squall} “Der König der G.F... Bahamut.”
+Bahamut;66;3;{Zell} “Der König der G.F... Bahamut.”
+Bahamut;66;4;{Quistis} “Der König der G.F... Bahamut.”
+Bahamut;66;5;{Selphie} “Der König der G.F... Bahamut.”
+Bahamut;66;6;{Irvine} “Der König der G.F... Bahamut.”
+Bahamut;66;7;{Rinoa} “Der König der G.F... Bahamut.”
+Bahamut;66;8;Bahamut “Ihr nennt uns...G.F.?”
+Bahamut;66;9;Bahamut “So nutzt ihr also...”
+Bahamut;66;10;Bahamut “...unsere Macht.”
+Bahamut;66;11;Bahamut “Habt ihr die Antwort gefunden?”
+Celt Hisari;67;0;Celt Hisari
+Celt Hisari;67;1;Norg “Gfrrr...”
+Celt Hisari;67;2;Norg “Rot, Gelb, Blau.”
+Celt Hisari;67;3;Norg “Wenn-Rot-dann-viel-Zauber!”
+Celt Hisari;67;4;Norg “Solange-Farbe-nicht-verändert,”
+Celt Hisari;67;5;Norg “mache-SEED-mit-Zauber-fertig!”
+Garden-Ausbilder;68;0;Garden-Ausbilder
+Garden-Ausbilder;68;1;“Greift sie an!”
+Garden-Ausbilder;68;2;“Norg führt den Garden!”
+Garden-Ausbilder;68;3;“Los, Angriff!”
+Garden-Ausbilder;68;4;“Hier kommt ihr nicht weiter.”
+Garden-Ausbilder;68;5;“Der Garden gehört Norg!”
+Garden-Ausbilder;68;6;“SEEDS!”
+Garden-Ausbilder;68;7;“Wieso helft ihr Cid!?”
+Garden-Ausbilder;68;8;“Ihr widersetzt euch Norg!?”
+Garden-Ausbilder;68;9;“Sollen euch die Monster holen!”
+Odin;69;0;Odin
+Odin;69;1;Odin “Sagenhaft!”
+Odin;69;2;Odin “Meine Macht gehört euch.”
+Odin;69;3;Odin “Wann immer ihr euch nach mir sehnt,”
+Odin;69;4;Odin “werde ich zur Stelle sein.”
+Odin;69;5;Odin “Ihr seid des Schicksals.”
+Odin;69;6;Odin “Ihr sollet mein Schwert nähren!!”
+Galbadia-Soldat;70;0;Galbadia-Soldat
+Galbadia-Soldat;70;1;“Sind das Verstärkungstruppen?”
+Galbadia-Soldat;70;2;“Das sind doch noch Kinder.”
+Galbadia-Soldat;70;3;“Von Wegen, Elite-Kämpfer.”
+Galbadia-Soldat;70;4;“Die Spezialeinheit SEED?”
+Galbadia-Soldat;70;5;“Waaaahhhhhh!!”
+Elitesoldat;71;0;Elitesoldat
+Elitesoldat;71;1;“Laßt sie nicht entkommen!”
+Elitesoldat;71;2;Offizier “Scheiß Überhitztung!”
+Elitesoldat;71;3;Soldat 2 “Was sollen wir machen, Sir?”
+Elitesoldat;71;4;Soldat 1 “Es läßt sich nicht mehr steuern.”
+Elitesoldat;71;5;Offizier “Wir reparieren das Ding später!”
+Elitesoldat;71;6;“Waaahhhh! Heeeeißßß!!”
+Wedge;72;0;Wedge
+Wedge;72;1;Biggs “Scheiße, sind die stark!”
+Wedge;72;2;Wedge “Wahhh, ahhh!”
+Wedge;72;3;Wedge “Sir!”
+Wedge;72;4;Wedge “Ist die Antenne repariert?”
+Wedge;72;5;Wedge “Whoa! Hier sind ja Feinde!”
+Wedge;72;6;Biggs “Hey, Wedge! Wo warst du!?”
+Wedge;72;7;Biggs “Diesen Monat gibt{xba}s keinen Sold!”
+Wedge;72;8;Wedge “Ich hätte nicht herkommen dürfen...”
+Biggs;73;0;Biggs
+Biggs;73;1;Biggs “Macht euch bereit, Kinder!”
+Biggs;73;2;Biggs “Scheiße, sind die stark!”
+Biggs;73;3;Wedge “Sir!”
+Biggs;73;4;Wedge “Ist die Antenne repariert?”
+Biggs;73;5;Wedge “Whoa! Hier sind ja Feinde!”
+Biggs;73;6;Biggs “Wedge! Wo warst du!?”
+Biggs;73;7;Biggs “Diesen Monat gibt{xba}s keinen Sold!”
+Biggs;73;8;Wedge “Ich hätte nicht herkommen dürfen...”
+Biggs;73;9;Wedge “Sir, es sieht schlecht aus!”
+Biggs;73;10;Biggs “Jammere nicht herum!”
+Biggs;73;11;Biggs “Wa-was zum Henker!?”
+Double;74;0;Double
+Double;74;1;Double “He...hereingefal...len”
+Double;74;2;Double “Re...bellen...töten...”
+Double;74;3;Double “Das...macht...Spaß...Spaß...”
+Double;74;4;Double “Häähähä...hihihihi...”
+Wachsoldat;75;0;Wachsoldat
+Wachsoldat;75;1;“Halt, was ist da los!?”
+Wachsoldat;75;2;“Wer da!?”
+Wachsoldat;75;3;“Die SEEDS fliehen!”
+Wachsoldat;75;4;“Da sind sie!”
+Wachsoldat;75;5;“Ihr entkommt uns nicht!”
+Norg;76;0;Norg
+Norg;76;1;Norg “Verdämmt-SEEDS!”
+Norg;76;2;Norg “Däs-ist-mein-Gärden!”
+Norg;76;3;Norg “Ihr-werdet-däs-bereuen!”
+Norg;76;4;Norg “Muäääh... ich-känn-nicht-mehr!”
+Norg;76;5;Norg “Mehr-Ängst-vor-Euch-als-Hexe!”
+Norg;76;6;Norg “Womit-häb-ich-däs-verdient...”
+Esthar-Soldat;77;0;Esthar-Soldat
+Esthar-Soldat;78;0;Esthar-Soldat
+Solt-Hisari;79;0;Solt-Hisari
+Sugt-Hisari;80;0;Sugt-Hisari
+Gun-Blade;81;0;Gun-Blade
+Tombery-König;82;0;Tombery-König
+Tombery-König;82;1;Er ist etwas eingeschüchtert
+Tombery-König;82;2;“Es tut mir Leid!”
+Tombery-König;82;3;Tombery schließt sich euch an!!
+Kaktorius;83;0;Kaktorius
+Kaktorius;83;1;Kaktorius hat Angst
+Cifer;84;0;Cifer
+Cifer;84;1;Cifer “Komm nur, {Squall}!”
+Cifer;84;2;Cifer “Ich hab abgeloost!?”
+Cifer;84;3;Cifer “Ihr dachtet wohl, ich wäre tot?”
+Cifer;84;4;Cifer “So einfach gehe ich nicht drauf!”
+Cifer;84;5;Cifer “Um Leben oder Tod!”
+Cifer;84;6;Cifer “Uh, nicht schlecht...”
+Cifer;85;0;Cifer
+Cifer;85;1;Cifer “Die Monster-Jagd beginnt!”
+Cifer;85;2;Cifer “Amateure!”
+Cifer;85;3;Cifer “So macht's ein Profi!”
+Cifer;85;4;Cifer “Scheiße...!”
+Cifer;85;5;Cifer “Ich bin noch nicht fertig.”
+Cifer;85;6;Cifer “Warum verliere ich gegen dich!?”
+Cifer;85;7;Cifer “Sprich dein Gebet, {Squall}.”
+Cifer;85;8;Cifer “Spüre die Macht des [Hexen-Ritters].”
+Cifer;86;0;Cifer
+Cifer;86;1;Cifer “Ich bin Edeas Hexen-Ritter.”
+Cifer;86;2;“Niemand rührt Edea an!”
+Cifer;86;3;Cifer “Ich darf nicht mehr verlieren.”
+Cifer;86;4;Cifer “Uooh!!”
+Cifer;86;5;Cifer “Ich..bin ein Hexen-Ritter...
+Edea;87;0;Edea
+Edea;87;1;{Rinoa} “Mit dir kann ich kämpfen!”
+Edea;87;2;{Rinoa} “Ich kämpfe mit!”
+Edea;87;3;{Irvine} “Ich muß was gutmachen.”
+Edea;87;4;Edea “...SEEDS. Samen des Unheils.”
+Edea;87;5;Edea “Das war alles?”
+Edea;87;6;Edea “Wie erbärmlich...”
+Edea;87;7;Edea “Es ist zu Ende.”
+Edea;87;8;Edea “Verfluchte SEEDS!”
+Propagator;88;0;Propagator
+Ultima Weapon;89;0;Ultima Weapon
+El Viole;90;0;El Viole
+El Viole;90;1;{Zell} “Was{xba}n das für einer?”
+El Viole;90;2;{Squall} “Was ist das?”
+El Viole;90;3;{Selphie} “Was ist DAS denn?”
+X-ATM092;91;0;X-ATM092
+X-ATM092;91;1;{Zell} “Er hat sich selbst repariert!?”
+X-ATM092;91;2;{Squall} “Hat er sich selbst repariert!?”
+X-ATM092;91;3;{Selphie} “Was ist passiert?”
+X-ATM092;91;4;{Zell} “Laßt uns bloß abhauen!”
+X-ATM092;91;5;{Selphie} “Schnell zum Sammelpunkt!”
+X-ATM092;91;6;{Squall} “Ok, weg hier.”
+X-ATM092;91;7;Flucht ergrifen mit {L2} & {R2} gleichzeitig
+X-ATM092;91;8;Reparatur 20%
+X-ATM092;91;9;Reparatur 40%
+X-ATM092;91;10;Reparatur 60%
+X-ATM092;91;11;Reparatur 80%
+X-ATM092;91;12;{Zell} “Nicht noch mal!!!”
+X-ATM092;91;13;{Squall} “Es nimmt kein Ende...”
+X-ATM092;91;14;{Selphie} “Bääh, ich will nicht mehr!”
+Schmelke;92;0;Schmelke
+Schmelke;92;1;{Irvine} “Wir müssen {Rinoa} retten!”
+Schmelke;92;2;{Irvine} “Ach ja, nicht vergessen,”
+Schmelke;92;3;“Beim [Shot] die Munition wählen.”
+Schmelke;92;4;“Mit {R1} macht{xba}s PÄNG! PÄNG!”
+Schmelke;92;5;“Alles klar~?”
+Gargantur;93;0;Gargantur
+Granaldo;94;0;Granaldo
+Raldo;95;0;Raldo
+Propagator;96;0;Propagator
+Propagator;97;0;Propagator
+Ölspucker;98;0;Ölspucker
+Edea;99;0;Edea
+Edea;99;1;Edea “Du Versager.”
+Edea;99;2;Edea “Das Spiel ist aus!”
+Edea;99;3;Edea “Ahhh...ahh...”
+BGH251F2;100;0;BGH251F2
+BGH251F2;100;1;Offizier “Strahlenkanone fertig!”
+BGH251F2;100;2;Soldat 1 “Eye Sir!”
+BGH251F2;100;3;Offizier “Nachladen!”
+BGH251F2;100;4;Soldat 2 “Ziel ist erfaßt!”
+BGH251F2;100;5;Soldat 2 “Wa-waahh, Sir!!”
+BGH251F2;100;6;Offizier “Das war bloß ein Zylinder!”
+BGH251F2;100;7;Soldat 1 “Sir! Die Steuerung ist futsch!”
+BGH251F2;100;8;Offizier “Waaas!?”
+BGH251F2;100;9;Offizier “Entfernt das Energie-Ventil!”
+BGH251F2;100;10;Soldat 2 “Sir! Wir sollten lieber flüchten!”
+BGH251F2;100;11;Offizier “Kommt gar nicht in Frage!!”
+BGH251F2;101;0;BGH251F2
+BGH251F2;101;1;{Rinoa} “Achtung, Leute!”
+BGH251F2;101;2;{Zell} “Was ist denn das!?”
+BGH251F2;101;3;{Irvine} “Ist das ne Geheimwaffe?”
+BGH251F2;101;4;{Quistis} “Eine Infantrie-Waffe!”
+BGH251F2;101;5;{Squall} “Im Schnelldurchlauf erledigen!”
+Abadon;102;0;Abadon
+Abadon;102;1;{Squall} “Das ist ein Untoter.”
+Abadon;102;2;“Heilzauber und Items sind wirksam.”
+Abadon;103;0;Abadon
+Mobilwaffe BIS-8;104;0;Mobilwaffe BIS-8
+Mobilwaffe BIS-8;104;1;Konter-Modus der Mobilwaffe: EIN
+Mobilwaffe BIS-8;104;2;Konter-Modus der Hilfssysteme: AUS
+Mobilwaffe BIS-8;104;3;Konter-Modus der Mobilwaffe: AUS
+Mobilwaffe BIS-8;104;4;Konter-Modus der Hilfssysteme: EIN
+Hilfssystem L;105;0;Hilfssystem L
+Hilfssystem R;106;0;Hilfssystem R
+Luftjäger;107;0;Luftjäger
+Luftjäger;107;1;“Beseitigt jeden hier!”
+Luftjäger;107;2;{Quistis} “Das lassen wir nicht zu!”
+Luftjäger;107;3;{Squall} “Sonst noch Wünsche?”
+Luftjäger;107;4;{Irvine} “Beseitigen? Wie schrecklich~!”
+Luftjäger;107;5;{Selphie} “Das werdet ihr sein lassen~!”
+Luftjäger;107;6;“Verdammte SEEDS...”
+Dormen;108;0;Dormen
+Dormen;108;1;Dormen ist nicht mehr versteinert!
+Arinyumen;109;0;Arinyumen
+Propagator;110;0;Propagator
+Adell;111;0;Adell
+Adell;111;1;{Squall} “Nur auf Adell zielen!”
+Adell;111;2;{Zell} “Wir müssen {Rinoa} retten!”
+Adell;111;3;{Selphie} “Wir retten {Rinoa}!”
+Adell;111;4;{Quistis} “Wir holen {Rinoa} da raus!”
+Adell;111;5;{Rinoa} “Aahhh...!”
+Adell;111;6;Adell konzentriert die Magie.
+{Rinoa};112;0;{Rinoa}
+{Rinoa};112;1;{Rinoa} “Aaahhh...!”
+{Rinoa};112;2;{Rinoa}......
+{Rinoa};112;3;{Rinoa} “Aaahhh...!”
+{Rinoa};112;4;{Rinoa} “Aaahhh...!”
+{Rinoa};112;5;{Rinoa} “Aaahhh...!”
+Omega Weapon;113;0;Omega Weapon
+Hexe;114;0;Hexe
+Hexe;114;1;Die Zeit wird weiter komprimiert...
+Hexe;115;0;Hexe
+Hexe;116;0;Hexe
+Hexe;116;1;5
+Hexe;116;2;4
+Hexe;116;3;3
+Hexe;116;4;2
+Hexe;116;5;1
+UFO?;117;0;UFO?
+Fu-Jin;118;0;Fu-Jin
+Fu-Jin;118;1;Fu-Jin “Ellione, wo?”
+Fu-Jin;118;2;Fu-Jin “Rückzug.”
+Fu-Jin;118;3;Fu-Jin “Niederlage...”
+Rai-Jin;119;0;Rai-Jin
+Rai-Jin;119;1;{Zell} “Mach dich fertig, Rai-Jin!”
+Rai-Jin;119;2;Rai-Jin “Jetzt mal ein bißchen ernst.”
+Rai-Jin;119;3;Rai-Jin “Das war mal nicht schlecht.”
+Rai-Jin;119;4;Rai-Jin “Hmpf, das war{xba}s mal.”
+Rai-Jin;119;5;Rai-Jin “Frauen schlage ich mal nicht.”
+Rai-Jin;119;6;Rai-Jin “Mal reine Zeitverschwendung.”
+Rai-Jin;119;7;Rai-Jin “Sorry, Fu-Jin. Ich bin mal K.O.”
+Rai-Jin;119;8;Rai-Jin “Fu-Jin, bist du mal Ok?”
+Rai-Jin;119;9;Rai-Jin “Fu-Jin, ich bin auch mal K.O.”
+Artemisia;120;0;Artemisia
+Artemisia;120;1;“Was ist für dich die absolute Macht?”
+Artemisia;120;2;“Je stärker dein Wille,”
+Artemisia;120;3;“...um so größer dein Schmerz.”
+Artemisia;120;4;“Seht euch der Macht gegenüber!”
+Artemisia;120;5;Vom Sog der Zeit verschlungen...
+{Griever};121;0;{Griever}
+{Griever};121;1;Vom Sog der Zeit verschlungen...
+{Griever};121;2;Die Magie ist erloschen!
+{Griever};121;3;Der Schutz der G.F. ist erloschen!
+{Griever};121;4;Artemisia “Gedächtnisverlust?”
+{Griever};121;5;“...davor habt ihr Angst?”
+{Griever};121;6;“Zeig ihnen deine wahre Macht!”
+{Griever};121;7;“Zeig es ihnen, {Griever}!”
+ ;122;0; 
+ ;122;1;Artemisia “Das Spiel ist aus!”
+ ;122;2;“Ich werde {Griever} koppeln!”
+Artemisia;123;0;Artemisia
+Artemisia;123;1;Vom Sog der Zeit verschlungen...
+Artemisia;123;2;Die Magie ist erloschen!
+Artemisia;123;3;Der Schutz der G.F. ist erloschen!
+Artemisia;123;4;Artemisia “Das Spiel ist aus!”
+Artemisia;123;5;“Ich werde {Griever} koppeln!”
+Artemisia;123;6;“Ughhh...”
+Helix;124;0;Helix
+Artemisia;125;0;Artemisia
+Artemisia;125;1;Vom Sog der Zeit verschlungen...
+Artemisia;125;2;“Ich bin Artemisia.”
+Artemisia;125;3;Der Schutz der G.F. ist erloschen!
+Artemisia;125;4;“Ich verschmelze die Zeit.”
+Artemisia;125;5;“Ich verneine das Dasein.”
+Artemisia;125;6;Artemisia “Erinnerungen...”
+Artemisia;125;7;“aus ferner Kindheit.”
+Artemisia;125;8;“Jenes Empfinden...”
+Artemisia;125;9;“Jene Worte...”
+Artemisia;125;10;“Jene Gefühle...”
+Artemisia;125;11;“Mit dem erwachsen werden,”
+Artemisia;125;12;“geht vieles verloren.”
+Artemisia;125;13;“Die Zeit wartet nicht.”
+Artemisia;125;14;“Man hält sie fest,”
+Artemisia;125;15;“und doch zerrinnt sie.”
+Artemisia;125;16;“Doch jetzt...”
+Cifer;126;0;Cifer
+Cifer;126;1;“Das vierte Schwert...”
+Cifer;126;2;“Seid Ihr es etwa?”
+Cifer;126;3;“Dann wehre er meine Klinge ab!”
+Cifer;126;4;“Sei er bereit!!”
+Cifer;126;5;“Ughh”
+Cifer;126;6;“Gnaaaaahhhh!!”
+Cifer;126;7;“Wo ist der Sog der Zeit?”
+Cifer;126;8;{Squall} “Odin!?”
+Cifer;126;9;Cifer “Dachtest du wohl?”
+Cifer;126;10;Cifer “Komm her, {Squall}!”
+Cifer;126;11;Cifer “Ich bin unbesiegbar!”
+Cifer;126;12;Cifer “Warum...?”
+Jason;127;0;Jason
+Jason;127;1;“Macht euch bereit!”
+Jason;127;2;“Formation G, los!”
+Jason;127;3;“Formation M, und ab!”
+Jason;127;4;“Verstanden!”
+Wolframator;128;0;Wolframator
+Wolframator;128;1;“Mit Waffen erreicht ihr nichts!”
+Wolframator;128;2;“Dieser Zauber wirkt nicht!”
+Wolframator;128;3;“Diese G.F. wirkt nicht!”
+Wolframator;128;4;“Gegen Gravit bin ich machtlos!”
+Wolframator;128;5;“{Diablos}!? Das halte ich nicht aus!”
+El Noire;129;0;El Noire
+Tiamat;130;0;Tiamat
+Tiamat;130;1;Sc           
+Tiamat;130;2;Scha         
+Tiamat;130;3;Schatt       
+Tiamat;130;4;Schatten     
+Tiamat;130;5;Schattenhau  
+Catblepus;131;0;Catblepus
+Catblepus;131;1;“Ich bin Catblepus.”
+Catblepus;131;2;“Ich herrsche über”
+Catblepus;131;3;“das Donner-Element.”
+Wedge;132;0;Wedge
+Wedge;132;1;Wedge “Aua!”
+Wedge;132;2;Wedge “Mit denen hat man nur Ärger.”
+Wedge;132;3;Wedge “Ich hab die Schnauze voll!”
+Wedge;132;4;Wedge “Wääh, das ist Mobbing!”
+Wedge;132;5;Wedge “Ich mag nicht mehr!”
+Wedge;132;6;Wedge dreht durch!
+Wedge;132;7;Voll durchgedreht...
+Biggs;133;0;Biggs
+Biggs;133;1;Biggs “Ich bin degradiert worden!”
+Biggs;133;2;Biggs “Vom Major zum Unteroffizier!”
+Biggs;133;3;Biggs “Das werdet ihr mir büßen!”
+Biggs;133;4;Biggs “Ich bin noch lange nicht fertig!”
+Biggs;133;5;Biggs “Wa-was soll das, Vollidiot!”
+Biggs;133;6;Biggs “Jetzt bin ich ein Gefreiter...”
+Biggs;133;7;Wedge “Was habe ich getan!?”
+Fu-Jin;134;0;Fu-Jin
+Fu-Jin;134;1;Fu-Jin “Entschluß!”
+Fu-Jin;134;2;Fu-Jin “Cifer helfen!”
+Fu-Jin;134;3;Fu-Jin “Schande...”
+Rai-Jin;135;0;Rai-Jin
+Rai-Jin;135;1;Rai-Jin “Das hab ich doch gewußt.”
+Rai-Jin;135;2;Fu-Jin “......”
+Rai-Jin;135;3;Rai-Jin “Wieder mal verloren...”
+Rai-Jin;135;4;Rai-Jin “Nicht mal schlecht, {Squall}!”
+Rai-Jin;135;5;Rai-Jin “Du und Cifer...”
+Rai-Jin;135;6;Rai-Jin “Mal wow!”
+Rai-Jin;135;7;Rai-Jin “Cifer fürchtet dich.”
+Rai-Jin;135;8;Rai-Jin “Wart{xba}s mal nur ab!”
+Rai-Jin;135;9;Rai-Jin “Mach mal dein Testament!”
+Rai-Jin;135;10;Rai-Jin “Heute gibt{xba}s mal keine Gnade!”
+UFO?;136;0;UFO?
+UFO?;137;0;UFO?
+UFO?;138;0;UFO?
+UFO?;139;0;UFO?
+Gun-Blade;140;0;Gun-Blade
+Gun-Blade;140;1;{Zell}“...The hell is this!?”
+Gun-Blade;140;2;{Squall}“What the...”
+Gun-Blade;140;3;{Selphie}“Ewww!  Nasty!”
+Kommando;141;0;Kommando
+Kommando;141;1;“Die sind wirklich stark!”
+Kommando;141;2;“Si-Sir...”
+Kommando;141;3;“Gnaaahh!”
+Kommando;141;4;“Wagt es bloß nicht!”
+Kommando;141;5;“Ihr kommt nicht lebend davon...”

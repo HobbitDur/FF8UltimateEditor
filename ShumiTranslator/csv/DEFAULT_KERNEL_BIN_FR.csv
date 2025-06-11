@@ -1,0 +1,1538 @@
+Section data name;Section Widget id;Text Sub id;Text
+Battle command text section;0;0;
+Battle command text section;0;1;
+Battle command text section;0;2;Attaquer
+Battle command text section;0;3;Attaquer avec arme choisie
+Battle command text section;0;4;Magie
+Battle command text section;0;5;Lancer magie
+Battle command text section;0;6;G-Force
+Battle command text section;0;7;Invoquer Guardian Force
+Battle command text section;0;8;Objets
+Battle command text section;0;9;Utiliser objet
+Battle command text section;0;10;Renzokuken
+Battle command text section;0;11;Utiliser Renzokuken
+Battle command text section;0;12;Voler
+Battle command text section;0;13;Voler magie
+Battle command text section;0;14;Cannibale
+Battle command text section;0;15;Dévorer monstres
+Battle command text section;0;16;
+Battle command text section;0;17;
+Battle command text section;0;18;Lancer
+Battle command text section;0;19;Lancer magie volée
+Battle command text section;0;20;Stocker
+Battle command text section;0;21;Stocker magie volée 
+Battle command text section;0;22;Ring Master
+Battle command text section;0;23;Attaque armée
+Battle command text section;0;24;Piller
+Battle command text section;0;25;Attaquer + voler objets
+Battle command text section;0;26;
+Battle command text section;0;27;
+Battle command text section;0;28;Buffalo Drill
+Battle command text section;0;29;Attaquer avec des balles
+Battle command text section;0;30;Initiation
+Battle command text section;0;31;Utiliser capacités du monstre
+Battle command text section;0;32;Jackpot
+Battle command text section;0;33;Utiliser magie choisie au hasard
+Battle command text section;0;34;Fire Cross
+Battle command text section;0;35;Attaquer à l'épée
+Battle command text section;0;36;Sorcellerie
+Battle command text section;0;37;Attaquer avec Magie
+Battle command text section;0;38;Inu
+Battle command text section;0;39;Invocation
+Battle command text section;0;40;Limit B
+Battle command text section;0;41;Utiliser Limit Break
+Battle command text section;0;42;Limit B
+Battle command text section;0;43;Utiliser Limit Break
+Battle command text section;0;44;Limit B
+Battle command text section;0;45;Utiliser Limit Break
+Battle command text section;0;46;Défense
+Battle command text section;0;47;Limite dégâts temporairement
+Battle command text section;0;48;Mad Rush
+Battle command text section;0;49;Booster, Furie, Carapace sur équipe
+Battle command text section;0;50;Traitement
+Battle command text section;0;51;Annuler problèmes mentaux
+Battle command text section;0;52;Arnica
+Battle command text section;0;53;Récupérer HP
+Battle command text section;0;54;Ranimer
+Battle command text section;0;55;Supprimer KO
+Battle command text section;0;56;Combustion
+Battle command text section;0;57;Augmenter HP pour attaquer
+Battle command text section;0;58;Carte
+Battle command text section;0;59;Transformer monstres en cartes
+Battle command text section;0;60;Châtiment
+Battle command text section;0;61;Châtiment sur 1 ennemi
+Battle command text section;0;62;Kamikaze
+Battle command text section;0;63;Endommager 1 ennemi avant KO
+Battle command text section;0;64;Phagocyte
+Battle command text section;0;65;Absorber HP
+Battle command text section;0;66;NV Moins
+Battle command text section;0;67;Baisser niveau monstre
+Battle command text section;0;68;NV plus
+Battle command text section;0;69;Augmenter niveau monstre 
+Battle command text section;0;70;Simple
+Battle command text section;0;71;Choix X1
+Battle command text section;0;72;Double
+Battle command text section;0;73;Choix X2 
+Battle command text section;0;74;Triple
+Battle command text section;0;75;Choix X3 
+Battle command text section;0;76;MiniKikou
+Battle command text section;0;77;Appeler Minikikou
+Magic text section;1;0;
+Magic text section;1;1;
+Magic text section;1;2;Brasier
+Magic text section;1;3;Dégât Feu{x0e38}
+Magic text section;1;4;Brasier+
+Magic text section;1;5;Dégât Feu{x0e38}
+Magic text section;1;6;BrasierX
+Magic text section;1;7;Dégât Feu{x0e38}
+Magic text section;1;8;Glacier
+Magic text section;1;9;Dégât Neige{x0e38}
+Magic text section;1;10;Glacier+
+Magic text section;1;11;Dégât Neige{x0e38}
+Magic text section;1;12;GlacierX
+Magic text section;1;13;Dégât Neige{x0e38}
+Magic text section;1;14;Foudre
+Magic text section;1;15;Dégât Tonnerre{x0e38}
+Magic text section;1;16;Foudre+
+Magic text section;1;17;Dégât Tonnerre{x0e38}
+Magic text section;1;18;FoudreX
+Magic text section;1;19;Dégât Tonnerre{x0e38}
+Magic text section;1;20;H2o
+Magic text section;1;21;Dégât Eau{x0e38}
+Magic text section;1;22;Rafale
+Magic text section;1;23;Dégât Vent{x0e38}
+Magic text section;1;24;Cyanure
+Magic text section;1;25;Attaque Poison et mentale/ 1 ennemi
+Magic text section;1;26;Quart
+Magic text section;1;27;Réduire HP ennemi de 25%
+Magic text section;1;28;Sidéral
+Magic text section;1;29;Dégât Sacré{x0e38}
+Magic text section;1;30;Fournaise
+Magic text section;1;31;Dégât {x0e39}{x0e38} 
+Magic text section;1;32;Météore
+Magic text section;1;33;Dégât {x0e39} aléatoire/Tous
+Magic text section;1;34;Quake
+Magic text section;1;35;Dégât Terre/Tous
+Magic text section;1;36;Tornade
+Magic text section;1;37;Dégât Vent/Tous
+Magic text section;1;38;Ultima
+Magic text section;1;39;Dégât {x0e39} /Tous
+Magic text section;1;40;Apocalypse
+Magic text section;1;41;Dégât {x0e39} /Tous
+Magic text section;1;42;Soin
+Magic text section;1;43;Rétablir HP
+Magic text section;1;44;Soin +
+Magic text section;1;45;Rétablir HP
+Magic text section;1;46;Soin Max
+Magic text section;1;47;Rétablir HP
+Magic text section;1;48;Vie
+Magic text section;1;49;Ranimer après KO
+Magic text section;1;50;Vie Max
+Magic text section;1;51;Rétablir HP maxi, ranimer KO 
+Magic text section;1;52;Récup
+Magic text section;1;53;Rétablir HP par intervalles
+Magic text section;1;54;Esuna
+Magic text section;1;55;Annule attaque mentale
+Magic text section;1;56;Anti-sort
+Magic text section;1;57;Annule sortilège
+Magic text section;1;58;Carapace
+Magic text section;1;59;Limite temporairement atq armée
+Magic text section;1;60;Blindage
+Magic text section;1;61;Limite temporairement atq magique
+Magic text section;1;62;Boomrg
+Magic text section;1;63;Boomerang temporaire
+Magic text section;1;64;Aura
+Magic text section;1;65;Utilisation + fréquente Limit Break
+Magic text section;1;66;Double
+Magic text section;1;67;Deux sorts à la suite
+Magic text section;1;68;Triple
+Magic text section;1;69;3 sorts utilisables
+Magic text section;1;70;Booster
+Magic text section;1;71;Augmente vitesse temporairement 
+Magic text section;1;72;Somni
+Magic text section;1;73;Réduit vitesse temporairement 
+Magic text section;1;74;Stop
+Magic text section;1;75;Stoppe temporairement
+Magic text section;1;76;Cécité
+Magic text section;1;77;Provoque Darkness
+Magic text section;1;78;Folie
+Magic text section;1;79;Provoque Folie
+Magic text section;1;80;Morphée
+Magic text section;1;81;Provoque Morphée
+Magic text section;1;82;Aphasie
+Magic text section;1;83;Provoque Aphasie
+Magic text section;1;84;Mégalith
+Magic text section;1;85;Provoque Fossile
+Magic text section;1;86;Ankou
+Magic text section;1;87;Provoque Mort/ KO
+Magic text section;1;88;Saignée
+Magic text section;1;89;Absorbe HP
+Magic text section;1;90;Supplice
+Magic text section;1;91;Provoque Poison, Darkness, Aphasie
+Magic text section;1;92;Furie
+Magic text section;1;93;Provoque Furie
+Magic text section;1;94;Décubitus
+Magic text section;1;95;Flotte dans les airs
+Magic text section;1;96;Zombie
+Magic text section;1;97;Provoque Zombie
+Magic text section;1;98;Meltdown
+Magic text section;1;99;Dégâts non-élémentaux + Dfs 0
+Magic text section;1;100;Scan
+Magic text section;1;101;Scan HP et faiblesses adversaire
+Magic text section;1;102;Joobu
+Magic text section;1;103;Rétablir HP, annuler Atq-Mtl équipe
+Magic text section;1;104;Wall
+Magic text section;1;105;Blindage et Carapace de tous
+Magic text section;1;106;Arkange
+Magic text section;1;107;Annule l'ennemi
+Magic text section;1;108; 
+Magic text section;1;109; 
+Magic text section;1;110; 
+Magic text section;1;111; 
+Magic text section;1;112;The End
+Magic text section;1;113;Triomphe général
+Junctionable GF text section;2;0;Feu purificateur
+Junctionable GF text section;2;1;{x0e37}Tonnerre 
+Junctionable GF text section;2;2;Transcendantale
+Junctionable GF text section;2;3;{x0e37}Neige
+Junctionable GF text section;2;4;Divine comédie
+Junctionable GF text section;2;5;{x0e37}Feu
+Junctionable GF text section;2;6;Andersen
+Junctionable GF text section;2;7;{x0e37}Aphasie
+Junctionable GF text section;2;8;Auroch
+Junctionable GF text section;2;9;{x0e37}Terre
+Junctionable GF text section;2;10;Carpathes knight
+Junctionable GF text section;2;11;{x0e37}{x0e39} 
+Junctionable GF text section;2;12;Underground
+Junctionable GF text section;2;13;{x0e37}Boomerang
+Junctionable GF text section;2;14;Tsunami
+Junctionable GF text section;2;15;{x0e37}Eau
+Junctionable GF text section;2;16;Twister
+Junctionable GF text section;2;17;{x0e37}Vent
+Junctionable GF text section;2;18;Sépulcre
+Junctionable GF text section;2;19;{x0e37}Double/Triple
+Junctionable GF text section;2;20;Jugement Dernier
+Junctionable GF text section;2;21;{x0e37}Sacrée
+Junctionable GF text section;2;22;Death Express
+Junctionable GF text section;2;23;{x0e37}Poison
+Junctionable GF text section;2;24;Ouroboros
+Junctionable GF text section;2;25;{x0e37}{x0e39} 
+Junctionable GF text section;2;26;1000 épines
+Junctionable GF text section;2;27;{x0e37}{x0e39} 
+Junctionable GF text section;2;28;Force verte
+Junctionable GF text section;2;29;{x0e37}{x0e39} 
+Junctionable GF text section;2;30;Otono
+Junctionable GF text section;2;31;{x0e37}{x0e39} 
+Enemy attack text section;3;0;
+Enemy attack text section;3;1;
+Enemy attack text section;3;2;
+Enemy attack text section;3;3;
+Enemy attack text section;3;4;
+Enemy attack text section;3;5;Couperet
+Enemy attack text section;3;6;Crochet
+Enemy attack text section;3;7;Blade
+Enemy attack text section;3;8;Shockwave
+Enemy attack text section;3;9;Haleine putride
+Enemy attack text section;3;10;Dark Mist
+Enemy attack text section;3;11;Encerclement
+Enemy attack text section;3;12;Clash
+Enemy attack text section;3;13;Krush
+Enemy attack text section;3;14;
+Enemy attack text section;3;15;Aiguillade
+Enemy attack text section;3;16;Slash
+Enemy attack text section;3;17;Puanteur
+Enemy attack text section;3;18;
+Enemy attack text section;3;19;Vision mortelle
+Enemy attack text section;3;20;Goule
+Enemy attack text section;3;21;Ciguë
+Enemy attack text section;3;22;Contre-blade
+Enemy attack text section;3;23;Regard fatal
+Enemy attack text section;3;24;
+Enemy attack text section;3;25;1000 épines
+Enemy attack text section;3;26;Infarctus
+Enemy attack text section;3;27;Total kick
+Enemy attack text section;3;28;Electrocution
+Enemy attack text section;3;29;Vision mortelle
+Enemy attack text section;3;30;
+Enemy attack text section;3;31;Morsure
+Enemy attack text section;3;32;Gaz mortel
+Enemy attack text section;3;33;Gaz mortel
+Enemy attack text section;3;34;Gaz mortel
+Enemy attack text section;3;35;Acid
+Enemy attack text section;3;36;Fusion nucléaire
+Enemy attack text section;3;37;Exhalaison
+Enemy attack text section;3;38;Haleine glacée
+Enemy attack text section;3;39;Tempête des sables
+Enemy attack text section;3;40;
+Enemy attack text section;3;41;
+Enemy attack text section;3;42;
+Enemy attack text section;3;43;
+Enemy attack text section;3;44;
+Enemy attack text section;3;45;
+Enemy attack text section;3;46;
+Enemy attack text section;3;47;
+Enemy attack text section;3;48;Voler
+Enemy attack text section;3;49;Séisme
+Enemy attack text section;3;50;
+Enemy attack text section;3;51;
+Enemy attack text section;3;52;
+Enemy attack text section;3;53;Morphing
+Enemy attack text section;3;54;Etreinte fatale
+Enemy attack text section;3;55;Explosif
+Enemy attack text section;3;56;Nitro G
+Enemy attack text section;3;57;Fusillade
+Enemy attack text section;3;58;Ultra Waves
+Enemy attack text section;3;59;
+Enemy attack text section;3;60;Piqûre hurlante
+Enemy attack text section;3;61;Exécution
+Enemy attack text section;3;62;Suicide
+Enemy attack text section;3;63;Ultra Waves
+Enemy attack text section;3;64;Haleine d'enfer
+Enemy attack text section;3;65;Exhalation funeste
+Enemy attack text section;3;66;Poisse
+Enemy attack text section;3;67;Avalanche
+Enemy attack text section;3;68;Mitraille
+Enemy attack text section;3;69;Artillerie
+Enemy attack text section;3;70;Mortier
+Enemy attack text section;3;71;Stockage
+Enemy attack text section;3;72;Dégénérator
+Enemy attack text section;3;73;Télékinésie
+Enemy attack text section;3;74;
+Enemy attack text section;3;75;
+Enemy attack text section;3;76;Hypnotize
+Enemy attack text section;3;77;Acide gastrique
+Enemy attack text section;3;78;
+Enemy attack text section;3;79;
+Enemy attack text section;3;80;Tempête des sables
+Enemy attack text section;3;81;
+Enemy attack text section;3;82;
+Enemy attack text section;3;83;
+Enemy attack text section;3;84;Transpercement
+Enemy attack text section;3;85;Soupir
+Enemy attack text section;3;86;Fléau
+Enemy attack text section;3;87;
+Enemy attack text section;3;88;
+Enemy attack text section;3;89;
+Enemy attack text section;3;90;
+Enemy attack text section;3;91;
+Enemy attack text section;3;92;
+Enemy attack text section;3;93;Compression
+Enemy attack text section;3;94;Souffle foudroyant
+Enemy attack text section;3;95;Double-lames
+Enemy attack text section;3;96;Propulsion
+Enemy attack text section;3;97;Coup ardent
+Enemy attack text section;3;98;Ultra Waves
+Enemy attack text section;3;99;
+Enemy attack text section;3;100;Arachno-toile
+Enemy attack text section;3;101;
+Enemy attack text section;3;102;Souffle foudroyant
+Enemy attack text section;3;103;Dard
+Enemy attack text section;3;104;
+Enemy attack text section;3;105;
+Enemy attack text section;3;106;Méga Spark
+Enemy attack text section;3;107;Draconien
+Enemy attack text section;3;108;
+Enemy attack text section;3;109;
+Enemy attack text section;3;110;Pet
+Enemy attack text section;3;111;Epine
+Enemy attack text section;3;112;Bile
+Enemy attack text section;3;113;Somni-gaz
+Enemy attack text section;3;114;Souffle foudroyant
+Enemy attack text section;3;115;
+Enemy attack text section;3;116;
+Enemy attack text section;3;117;
+Enemy attack text section;3;118;Obusier
+Enemy attack text section;3;119;
+Enemy attack text section;3;120;Magma
+Enemy attack text section;3;121;Résonance
+Enemy attack text section;3;122;Blaster
+Enemy attack text section;3;123;Blaster
+Enemy attack text section;3;124;Trépas 5
+Enemy attack text section;3;125;Etreinte sanglante
+Enemy attack text section;3;126;Fureur fatale
+Enemy attack text section;3;127;Asphyxiant
+Enemy attack text section;3;128;Explosion
+Enemy attack text section;3;129;Explosion
+Enemy attack text section;3;130;Explosion
+Enemy attack text section;3;131;Dissection
+Enemy attack text section;3;132;
+Enemy attack text section;3;133;Rafale
+Enemy attack text section;3;134;
+Enemy attack text section;3;135;Scan
+Enemy attack text section;3;136;
+Enemy attack text section;3;137;
+Enemy attack text section;3;138;
+Enemy attack text section;3;139;Obusier
+Enemy attack text section;3;140;
+Enemy attack text section;3;141;
+Enemy attack text section;3;142;
+Enemy attack text section;3;143;
+Enemy attack text section;3;144;
+Enemy attack text section;3;145;
+Enemy attack text section;3;146;Fréon
+Enemy attack text section;3;147;
+Enemy attack text section;3;148;
+Enemy attack text section;3;149;
+Enemy attack text section;3;150;
+Enemy attack text section;3;151;
+Enemy attack text section;3;152;Mauvais oeil
+Enemy attack text section;3;153;Contre-offensive
+Enemy attack text section;3;154;Tank
+Enemy attack text section;3;155;Lacérator
+Enemy attack text section;3;156;
+Enemy attack text section;3;157;Dissolvant
+Enemy attack text section;3;158;Techno punch
+Enemy attack text section;3;159;Epée cercle
+Enemy attack text section;3;160;
+Enemy attack text section;3;161;
+Enemy attack text section;3;162;
+Enemy attack text section;3;163;
+Enemy attack text section;3;164;
+Enemy attack text section;3;165;
+Enemy attack text section;3;166;Méga-sabre
+Enemy attack text section;3;167;
+Enemy attack text section;3;168;Psycho Blast
+Enemy attack text section;3;169;Arachno-toile
+Enemy attack text section;3;170;
+Enemy attack text section;3;171;
+Enemy attack text section;3;172;
+Enemy attack text section;3;173;
+Enemy attack text section;3;174;Sand Shake
+Enemy attack text section;3;175;Saliva
+Enemy attack text section;3;176;Faisceau sadique
+Enemy attack text section;3;177;Faisceau sonic
+Enemy attack text section;3;178;
+Enemy attack text section;3;179;
+Enemy attack text section;3;180;Corrosion
+Enemy attack text section;3;181;Détonation
+Enemy attack text section;3;182;Vague Sonic
+Enemy attack text section;3;183;White spirit
+Enemy attack text section;3;184;Puanteur
+Enemy attack text section;3;185;Ultra Sons
+Enemy attack text section;3;186;
+Enemy attack text section;3;187;
+Enemy attack text section;3;188;
+Enemy attack text section;3;189;
+Enemy attack text section;3;190;
+Enemy attack text section;3;191;
+Enemy attack text section;3;192;Trogiidae Twist
+Enemy attack text section;3;193;Séisme
+Enemy attack text section;3;194;Nectar
+Enemy attack text section;3;195;
+Enemy attack text section;3;196;
+Enemy attack text section;3;197;
+Enemy attack text section;3;198;
+Enemy attack text section;3;199;Corne d'assaut
+Enemy attack text section;3;200;Shockwave
+Enemy attack text section;3;201;Micro Missiles
+Enemy attack text section;3;202;
+Enemy attack text section;3;203;
+Enemy attack text section;3;204;Astral Punch
+Enemy attack text section;3;205;
+Enemy attack text section;3;206;
+Enemy attack text section;3;207;
+Enemy attack text section;3;208;
+Enemy attack text section;3;209;
+Enemy attack text section;3;210;Raijin's kick
+Enemy attack text section;3;211;
+Enemy attack text section;3;212;
+Enemy attack text section;3;213;Vache folle
+Enemy attack text section;3;214;Zan
+Enemy attack text section;3;215;Metsu
+Enemy attack text section;3;216;Saï
+Enemy attack text section;3;217;
+Enemy attack text section;3;218;
+Enemy attack text section;3;219;
+Enemy attack text section;3;220;Attila
+Enemy attack text section;3;221;
+Enemy attack text section;3;222;Force verte
+Enemy attack text section;3;223;Calamité
+Enemy attack text section;3;224;
+Enemy attack text section;3;225;
+Enemy attack text section;3;226;Déménagement
+Enemy attack text section;3;227;Ça coupe
+Enemy attack text section;3;228;
+Enemy attack text section;3;229;
+Enemy attack text section;3;230;10000 épines
+Enemy attack text section;3;231;Badaboum
+Enemy attack text section;3;232;
+Enemy attack text section;3;233;Tourmente
+Enemy attack text section;3;234;Ouroboros
+Enemy attack text section;3;235;Vierge
+Enemy attack text section;3;236;
+Enemy attack text section;3;237;
+Enemy attack text section;3;238;
+Enemy attack text section;3;239;
+Enemy attack text section;3;240;
+Enemy attack text section;3;241;
+Enemy attack text section;3;242;Fulguration
+Enemy attack text section;3;243;Corne d'acier
+Enemy attack text section;3;244;
+Enemy attack text section;3;245;
+Enemy attack text section;3;246;
+Enemy attack text section;3;247;
+Enemy attack text section;3;248;
+Enemy attack text section;3;249;
+Enemy attack text section;3;250;
+Enemy attack text section;3;251;
+Enemy attack text section;3;252;
+Enemy attack text section;3;253;
+Enemy attack text section;3;254;
+Enemy attack text section;3;255;
+Enemy attack text section;3;256;
+Enemy attack text section;3;257;Gravija
+Enemy attack text section;3;258;
+Enemy attack text section;3;259;
+Enemy attack text section;3;260;
+Enemy attack text section;3;261;Conjuration
+Enemy attack text section;3;262;Mother
+Enemy attack text section;3;263;Châtiment
+Enemy attack text section;3;264;
+Enemy attack text section;3;265;
+Enemy attack text section;3;266;
+Enemy attack text section;3;267;
+Enemy attack text section;3;268;
+Enemy attack text section;3;269;
+Enemy attack text section;3;270;
+Enemy attack text section;3;271;Foudre
+Enemy attack text section;3;272;Foudre +
+Enemy attack text section;3;273;Foudre X
+Enemy attack text section;3;274;Zantetsuken
+Enemy attack text section;3;275;
+Enemy attack text section;3;276;Mistral
+Enemy attack text section;3;277;
+Enemy attack text section;3;278;
+Enemy attack text section;3;279;
+Enemy attack text section;3;280;Assaut
+Enemy attack text section;3;281;Laser
+Enemy attack text section;3;282;Laser
+Enemy attack text section;3;283;Double laser
+Enemy attack text section;3;284;Corona
+Enemy attack text section;3;285;Ardeur
+Enemy attack text section;3;286;
+Enemy attack text section;3;287;
+Enemy attack text section;3;288;
+Enemy attack text section;3;289;
+Enemy attack text section;3;290;
+Enemy attack text section;3;291;
+Enemy attack text section;3;292;Méga Pulse
+Enemy attack text section;3;293;Mini Pulse
+Enemy attack text section;3;294;
+Enemy attack text section;3;295;Mother
+Enemy attack text section;3;296;
+Enemy attack text section;3;297;
+Enemy attack text section;3;298;
+Enemy attack text section;3;299;
+Enemy attack text section;3;300;
+Enemy attack text section;3;301;
+Enemy attack text section;3;302;
+Enemy attack text section;3;303;
+Enemy attack text section;3;304;
+Enemy attack text section;3;305;Hypocauste
+Enemy attack text section;3;306;
+Enemy attack text section;3;307;Soul crush
+Enemy attack text section;3;308;Flamboiement
+Enemy attack text section;3;309;Gravija
+Enemy attack text section;3;310;Etuve
+Enemy attack text section;3;311;Terra break
+Enemy attack text section;3;312;
+Enemy attack text section;3;313;
+Enemy attack text section;3;314;Effilage
+Enemy attack text section;3;315;Orgie
+Enemy attack text section;3;316;Energy Bomber
+Enemy attack text section;3;317;
+Enemy attack text section;3;318;
+Enemy attack text section;3;319;
+Enemy attack text section;3;320;
+Enemy attack text section;3;321;
+Enemy attack text section;3;322;
+Enemy attack text section;3;323;
+Enemy attack text section;3;324;
+Enemy attack text section;3;325;
+Enemy attack text section;3;326;
+Enemy attack text section;3;327;
+Enemy attack text section;3;328;
+Enemy attack text section;3;329;Zantetsuken
+Enemy attack text section;3;330;
+Enemy attack text section;3;331;
+Enemy attack text section;3;332;
+Enemy attack text section;3;333;
+Enemy attack text section;3;334;
+Enemy attack text section;3;335;
+Enemy attack text section;3;336;
+Enemy attack text section;3;337;
+Enemy attack text section;3;338;Maelström
+Enemy attack text section;3;339;
+Enemy attack text section;3;340;
+Enemy attack text section;3;341;
+Enemy attack text section;3;342;
+Enemy attack text section;3;343;
+Enemy attack text section;3;344;
+Enemy attack text section;3;345;
+Enemy attack text section;3;346;
+Enemy attack text section;3;347;
+Enemy attack text section;3;348;
+Enemy attack text section;3;349;
+Enemy attack text section;3;350;
+Enemy attack text section;3;351;
+Enemy attack text section;3;352;
+Enemy attack text section;3;353;
+Enemy attack text section;3;354;
+Enemy attack text section;3;355;
+Enemy attack text section;3;356;
+Enemy attack text section;3;357;Cataclysme
+Enemy attack text section;3;358;Jugement Dernier
+Enemy attack text section;3;359;Saignée
+Enemy attack text section;3;360;Gravitation
+Enemy attack text section;3;361;
+Enemy attack text section;3;362;Outerspace
+Enemy attack text section;3;363;
+Enemy attack text section;3;364;Esuna
+Enemy attack text section;3;365;Maelström
+Enemy attack text section;3;366;
+Enemy attack text section;3;367;
+Enemy attack text section;3;368;
+Enemy attack text section;3;369;Trou noir
+Enemy attack text section;3;370;
+Enemy attack text section;3;371;
+Enemy attack text section;3;372;
+Enemy attack text section;3;373;Apocalypse
+Enemy attack text section;3;374;
+Enemy attack text section;3;375;Cimeterre
+Enemy attack text section;3;376;
+Enemy attack text section;3;377;
+Enemy attack text section;3;378;Ultima
+Enemy attack text section;3;379;Sidéral
+Enemy attack text section;3;380;Quake
+Enemy attack text section;3;381;Tornade
+Enemy attack text section;3;382;A382
+Enemy attack text section;3;383;A383
+Weapon text section;4;0;Pistolame
+Weapon text section;4;1;Nacre Blade
+Weapon text section;4;2;Dragon Blade
+Weapon text section;4;3;Sabreur
+Weapon text section;4;4;Katana
+Weapon text section;4;5;Kendo
+Weapon text section;4;6;Lion Heart
+Weapon text section;4;7;Metal Glove
+Weapon text section;4;8;Maverick
+Weapon text section;4;9;Gauntlet
+Weapon text section;4;10;Ehrgeiz
+Weapon text section;4;11;W.W.West
+Weapon text section;4;12;Roosevelt
+Weapon text section;4;13;Bertha
+Weapon text section;4;14;Steel Gun
+Weapon text section;4;15;Gibet
+Weapon text section;4;16;Totally S.M.
+Weapon text section;4;17;Red Scorpio
+Weapon text section;4;18;Smiley
+Weapon text section;4;19;Rotator
+Weapon text section;4;20;Walkyrie
+Weapon text section;4;21;Ninja Sun
+Weapon text section;4;22;Ptérodactyle
+Weapon text section;4;23;Tronçonneur 
+Weapon text section;4;24;Nunchak Red
+Weapon text section;4;25;Nunchak Blue
+Weapon text section;4;26;Islam Star
+Weapon text section;4;27;Sagaie
+Weapon text section;4;28;Hypérion
+Weapon text section;4;29;Nada
+Weapon text section;4;30;Kalachnikov
+Weapon text section;4;31;Katal
+Weapon text section;4;32;Harpoon
+Renzokuken finishers text section;5;0;Lamineur
+Renzokuken finishers text section;5;1;Endommager 1 ennemi
+Renzokuken finishers text section;5;2;Atomiseur
+Renzokuken finishers text section;5;3;Blesser tous les adversaires
+Renzokuken finishers text section;5;4;Déflagration
+Renzokuken finishers text section;5;5;Blesser tous les adversaires
+Renzokuken finishers text section;5;6;Lion Heart
+Renzokuken finishers text section;5;7;Endommager 1 ennemi
+Character names section;6;0;
+Character names section;6;1;Zell
+Character names section;6;2;Irvine
+Character names section;6;3;Quistis
+Character names section;6;4;
+Character names section;6;5;Selphie
+Character names section;6;6;Seifer
+Character names section;6;7;Edea
+Character names section;6;8;Laguna
+Character names section;6;9;Kiros
+Character names section;6;10;Ward
+Battle item names section;7;0;
+Battle item names section;7;1;
+Battle item names section;7;2;Potion
+Battle item names section;7;3;Augmente HP de 200 points
+Battle item names section;7;4;Potion+
+Battle item names section;7;5;Augmente HP de 400 points
+Battle item names section;7;6;Hypra-Potion
+Battle item names section;7;7;Augmente HP de 1000 points
+Battle item names section;7;8;Maxi potion
+Battle item names section;7;9;Augmente HP de 2000 points
+Battle item names section;7;10;Potion totale
+Battle item names section;7;11;Rétablit tous les HP
+Battle item names section;7;12;Méga potion
+Battle item names section;7;13;Ajoute 1000 HP à toute l'équipe
+Battle item names section;7;14;MT-Psy
+Battle item names section;7;15;Annule KO
+Battle item names section;7;16;Maxi MT-Psy
+Battle item names section;7;17;Annule KO pour toute l'équipe
+Battle item names section;7;18;Elixir
+Battle item names section;7;19;Rétablit HP et annule attaques mentales
+Battle item names section;7;20;Mégalixir
+Battle item names section;7;21;Rétablit HP et annule Atq-Mtl pour tous
+Battle item names section;7;22;Antidote
+Battle item names section;7;23;Soigne Poison
+Battle item names section;7;24;Défijeur
+Battle item names section;7;25;Soigne Fossile
+Battle item names section;7;26;Lasik
+Battle item names section;7;27;Soigne Darkness
+Battle item names section;7;28;Bocca
+Battle item names section;7;29;Soigne Aphasie
+Battle item names section;7;30;Eau bénite
+Battle item names section;7;31;Soigne Zombie, Fléau
+Battle item names section;7;32;Remède
+Battle item names section;7;33;Soigne attaques mentales
+Battle item names section;7;34;Remède +
+Battle item names section;7;35;Soigne attaques mentales et magiques
+Battle item names section;7;36;1-20-Syble
+Battle item names section;7;37;Rend personnage invincible (parfois)
+Battle item names section;7;38;Invulnérable
+Battle item names section;7;39;Rend personnage invulnérable 
+Battle item names section;7;40;1-destructible
+Battle item names section;7;41;Rend équipe invincible (parfois)
+Battle item names section;7;42;Croisade
+Battle item names section;7;43;Rend équipe invulnérable 
+Battle item names section;7;44;Roc cosse
+Battle item names section;7;45;Même effet que Blindage
+Battle item names section;7;46;Roc carapace
+Battle item names section;7;47;Même effet que Carapace
+Battle item names section;7;48;Roc d'Aura
+Battle item names section;7;49;Même effet qu'Aura
+Battle item names section;7;50;Roc mortel
+Battle item names section;7;51;Même effet qu'Ankou
+Battle item names section;7;52;Roc sacré
+Battle item names section;7;53;Même effet que Sidéral
+Battle item names section;7;54;Roc flamboyant
+Battle item names section;7;55;Même effet que Fournaise
+Battle item names section;7;56;Roc Météore
+Battle item names section;7;57;Même effet que Météore
+Battle item names section;7;58;Roc Ultima
+Battle item names section;7;59;Même effet qu'Ultima
+Battle item names section;7;60;ChocoLégume
+Battle item names section;7;61;Nourriture magique Chocobo
+Battle item names section;7;62;Golgotha
+Battle item names section;7;63;Effet non identifié
+Battle item names section;7;64;Pen Pal
+Battle item names section;7;65;Effet inconnu...
+Non-battle item names section;8;0;Red Kross
+Non-battle item names section;8;1;Rétablit HP et annule Atq-Mtl de tous 
+Non-battle item names section;8;2;Zoologie
+Non-battle item names section;8;3;Rétablit HP des G-Forces
+Non-battle item names section;8;4;Saindoux
+Non-battle item names section;8;5;Rétablit HP, annule Atq-Mtl équipe/G-Force
+Non-battle item names section;8;6;Potion GF
+Non-battle item names section;8;7;Ajoute 200 HP à votre G-Force
+Non-battle item names section;8;8;Potion GF +
+Non-battle item names section;8;9;Ajoute 1000 HP à votre G-Force
+Non-battle item names section;8;10;Mégapotion GF
+Non-battle item names section;8;11;Ajoute 1000 HP à toutes les G-Forces 
+Non-battle item names section;8;12;Sel marin
+Non-battle item names section;8;13;Annule KO d'une G-Force
+Non-battle item names section;8;14;Carte baptême
+Non-battle item names section;8;15;Permet de changer nom G-Force
+Non-battle item names section;8;16;Décapaciteur
+Non-battle item names section;8;17;G-Force oublie une capacité 
+Non-battle item names section;8;18;Livret HP-A
+Non-battle item names section;8;19;{x0e3a}HP-A
+Non-battle item names section;8;20;Livret Vgr-A
+Non-battle item names section;8;21;{x0e3a}Vgr-A
+Non-battle item names section;8;22;Livret Dfs-A
+Non-battle item names section;8;23;{x0e3a}Dfs-A
+Non-battle item names section;8;24;Livret Mgi-A
+Non-battle item names section;8;25;{x0e3a}Mgi-A
+Non-battle item names section;8;26;Livret Psy-A
+Non-battle item names section;8;27;{x0e3a}Psy-A
+Non-battle item names section;8;28;Livret Vts-A
+Non-battle item names section;8;29;{x0e3a}Vts-A
+Non-battle item names section;8;30;Livret Chc-A 
+Non-battle item names section;8;31;{x0e3a}Chc-A
+Non-battle item names section;8;32;Shadow
+Non-battle item names section;8;33;{x0e3a}Esq-A
+Non-battle item names section;8;34;Assaut Elé
+Non-battle item names section;8;35;{x0e3a}Atq-Elé-A
+Non-battle item names section;8;36;Antichoc Elé
+Non-battle item names section;8;37;{x0e3a}Déf-EléX4
+Non-battle item names section;8;38;Assaut Mtl
+Non-battle item names section;8;39;{x0e3a}Atq-Mtl-A
+Non-battle item names section;8;40;Antichoc Mtl 
+Non-battle item names section;8;41;{x0e3a}Déf-MtlX4
+Non-battle item names section;8;42;Roc Rosette
+Non-battle item names section;8;43;G-Force apprend CapacitéX4
+Non-battle item names section;8;44;GrimoMagic
+Non-battle item names section;8;45;G-Force acquiert capacité Magie
+Non-battle item names section;8;46;GrimoForce
+Non-battle item names section;8;47;G-Force acquiert capacité G-Force 
+Non-battle item names section;8;48;GrimoVole
+Non-battle item names section;8;49;G-Force acquiert capacité Voler
+Non-battle item names section;8;50;GrimObjets
+Non-battle item names section;8;51;G-Force acquiert capacité Objets
+Non-battle item names section;8;52;Vegas Feel
+Non-battle item names section;8;53;G-Force acquiert capacité Carte
+Non-battle item names section;8;54;Sanatorium
+Non-battle item names section;8;55;{x0e3a}Arnica
+Non-battle item names section;8;56;MétemPsy
+Non-battle item names section;8;57;{x0e3a}Ranimer
+Non-battle item names section;8;58;Bandage
+Non-battle item names section;8;59;{x0e3a}Traitement
+Non-battle item names section;8;60;Nova
+Non-battle item names section;8;61;{x0e3a}Kamikaze
+Non-battle item names section;8;62;Régime
+Non-battle item names section;8;63;{x0e3a}Cannibale
+Non-battle item names section;8;64;Kikkou Mania
+Non-battle item names section;8;65;{x0e3a}Minikikou
+Non-battle item names section;8;66;Samâdhi
+Non-battle item names section;8;67;{x0e3a}Invoc+10% 
+Non-battle item names section;8;68;Zodiaque
+Non-battle item names section;8;69;{x0e3a}Invoc+20% 
+Non-battle item names section;8;70;Nuclide
+Non-battle item names section;8;71;{x0e3a}Invoc+30% 
+Non-battle item names section;8;72;Sacrum
+Non-battle item names section;8;73;{x0e3a}Invoc+40% 
+Non-battle item names section;8;74;Billet
+Non-battle item names section;8;75;{x0e3a}HP-GF+10% 
+Non-battle item names section;8;76;Vierge
+Non-battle item names section;8;77;{x0e3a}HP-GF+20% 
+Non-battle item names section;8;78;Armure d'or
+Non-battle item names section;8;79;{x0e3a}HP-GF+30% 
+Non-battle item names section;8;80;Cuirasse
+Non-battle item names section;8;81;{x0e3a}HP-GF+40% 
+Non-battle item names section;8;82;Anneau Récup
+Non-battle item names section;8;83;{x0e3a}HP+20% 
+Non-battle item names section;8;84;Alliance
+Non-battle item names section;8;85;{x0e3a}HP+40% 
+Non-battle item names section;8;86;Bague Gaêa
+Non-battle item names section;8;87;{x0e3a}HP+80% 
+Non-battle item names section;8;88;Vitamine
+Non-battle item names section;8;89;{x0e3a}Vgr+20% 
+Non-battle item names section;8;90;Sagou
+Non-battle item names section;8;91;{x0e3a}Vgr+40% 
+Non-battle item names section;8;92;Sagette
+Non-battle item names section;8;93;{x0e3a}Vgr+60% 
+Non-battle item names section;8;94;Coquille
+Non-battle item names section;8;95;{x0e3a}Dfs+20% 
+Non-battle item names section;8;96;Halcyon
+Non-battle item names section;8;97;{x0e3a}Dfs+40% 
+Non-battle item names section;8;98;Adamantine
+Non-battle item names section;8;99;{x0e3a}Dfs+60% 
+Non-battle item names section;8;100;Obole
+Non-battle item names section;8;101;{x0e3a}Psy+20% 
+Non-battle item names section;8;102;Tao
+Non-battle item names section;8;103;{x0e3a}Psy+40% 
+Non-battle item names section;8;104;Lacan
+Non-battle item names section;8;105;{x0e3a}Psy+60% 
+Non-battle item names section;8;106;Garcinord
+Non-battle item names section;8;107;{x0e3a}Mgi+20% 
+Non-battle item names section;8;108;Merlin
+Non-battle item names section;8;109;{x0e3a}Mgi+40% 
+Non-battle item names section;8;110;Magax
+Non-battle item names section;8;111;{x0e3a}Mgi+60% 
+Non-battle item names section;8;112;Injection
+Non-battle item names section;8;113;{x0e3a}Vts+20% 
+Non-battle item names section;8;114;SuperSonic
+Non-battle item names section;8;115;{x0e3a}Vts+40% 
+Non-battle item names section;8;116;Pied de biche
+Non-battle item names section;8;117;{x0e3a}Auto-Blindage
+Non-battle item names section;8;118;Ecaille
+Non-battle item names section;8;119;{x0e3a}Auto-Carapace
+Non-battle item names section;8;120;Tasmania
+Non-battle item names section;8;121;{x0e3a}Auto-Boomerang
+Non-battle item names section;8;122;Speedy
+Non-battle item names section;8;123;{x0e3a}Auto-Booster
+Non-battle item names section;8;124;Réactor
+Non-battle item names section;8;125;{x0e3a}Amorce
+Non-battle item names section;8;126;Protector
+Non-battle item names section;8;127;{x0e3a}Empathie
+Non-battle item names section;8;128;Pasteur
+Non-battle item names section;8;129;{x0e3a}Schweitzer
+Non-battle item names section;8;130;Manivelle
+Non-battle item names section;8;131;{x0e3a}Backlash
+Non-battle item names section;8;132;Trilogie
+Non-battle item names section;8;133;{x0e3a}TriplEco
+Non-battle item names section;8;134;Freud
+Non-battle item names section;8;135;{x0e3a}Freud
+Non-battle item names section;8;136;Balles normales
+Non-battle item names section;8;137;Munitions
+Non-battle item names section;8;138;Mitra-balles
+Non-battle item names section;8;139;Munitions multi-ennemis
+Non-battle item names section;8;140;Dark balles
+Non-battle item names section;8;141;Munitions mentales
+Non-battle item names section;8;142;Balles foudre
+Non-battle item names section;8;143;Munitions élémentales (feu)
+Non-battle item names section;8;144;Balles tornade
+Non-battle item names section;8;145;3 fois + puissantes que balles normales
+Non-battle item names section;8;146;Balles véloces
+Non-battle item names section;8;147;Munitions ultra-rapides
+Non-battle item names section;8;148;Balles anti-char
+Non-battle item names section;8;149;Munitions anti-blindage
+Non-battle item names section;8;150;Balles Pulsar
+Non-battle item names section;8;151;Balles explosives
+Non-battle item names section;8;152;Caillou magik
+Non-battle item names section;8;153;Pierre faiblement magique
+Non-battle item names section;8;154;Roc initiatique
+Non-battle item names section;8;155;Pierre mystique
+Non-battle item names section;8;156;Roc féerique
+Non-battle item names section;8;157;Pierre hautement mystique
+Non-battle item names section;8;158;Tentacule
+Non-battle item names section;8;159;Tentacule surnaturelle
+Non-battle item names section;8;160;Onde bénite
+Non-battle item names section;8;161;Eau vive
+Non-battle item names section;8;162;Plumage
+Non-battle item names section;8;163;Plume fossilisante
+Non-battle item names section;8;164;Poudre Zombie
+Non-battle item names section;8;165;Poudre aux pouvoirs vaudous 
+Non-battle item names section;8;166;Bottes de 7km
+Non-battle item names section;8;167;Chaussures véloces
+Non-battle item names section;8;168;9 inch nail
+Non-battle item names section;8;169;Griffe de monstre industriel
+Non-battle item names section;8;170;Enclume
+Non-battle item names section;8;171;Permet de réparer vos armes
+Non-battle item names section;8;172;Cimeterre
+Non-battle item names section;8;173;Sabre recourbé
+Non-battle item names section;8;174;Corne
+Non-battle item names section;8;175;Pointe effilée
+Non-battle item names section;8;176;Sanguine
+Non-battle item names section;8;177;Dent de vampire
+Non-battle item names section;8;178;EuFurysant
+Non-battle item names section;8;179;Pierre mystique
+Non-battle item names section;8;180;Epée trompeuse
+Non-battle item names section;8;181;Permet d'attaquer en traître
+Non-battle item names section;8;182;Poudre Morphée
+Non-battle item names section;8;183;Potion somnifère
+Non-battle item names section;8;184;Anneau de vie
+Non-battle item names section;8;185;Bague magique (médicale)
+Non-battle item names section;8;186;Lochness
+Non-battle item names section;8;187;Dent de dragon au pouvoir régénérant
+Non-battle item names section;8;188;U-Boat
+Non-battle item names section;8;189;Quistis peut apprendre Ultra Waves
+Non-battle item names section;8;190;Etoile
+Non-battle item names section;8;191;{x0e3b}Firmament
+Non-battle item names section;8;192;Weirdo
+Non-battle item names section;8;193;{x0e3b}Freak
+Non-battle item names section;8;194;Gen-X
+Non-battle item names section;8;195;Quistis peut apprendre Dégénérator
+Non-battle item names section;8;196;Fluide
+Non-battle item names section;8;197;{x0e3b}Fréon
+Non-battle item names section;8;198;M-Double
+Non-battle item names section;8;199;Quistis peut apprendre Micro Missiles
+Non-battle item names section;8;200;House
+Non-battle item names section;8;201;{x0e3b}Acid
+Non-battle item names section;8;202;Chevrotine
+Non-battle item names section;8;203;{x0e3b}Mitraille
+Non-battle item names section;8;204;Canicule
+Non-battle item names section;8;205;{x0e3b}Dead Heat
+Non-battle item names section;8;206;Germe
+Non-battle item names section;8;207;{x0e3b}Infection
+Non-battle item names section;8;208;Rhône 
+Non-battle item names section;8;209;{x0e3b}Mistral
+Non-battle item names section;8;210;Rayon
+Non-battle item names section;8;211;{x0e3b}Laser
+Non-battle item names section;8;212;Vierge
+Non-battle item names section;8;213;Quistis peut apprendre Mother
+Non-battle item names section;8;214;V-Choc
+Non-battle item names section;8;215;{x0e3b}Shockwave
+Non-battle item names section;8;216;H-Espace
+Non-battle item names section;8;217;{x0e3b}Outerspace
+Non-battle item names section;8;218;Hot Rock
+Non-battle item names section;8;219;Pierre élémentale (feu)
+Non-battle item names section;8;220;Molaire
+Non-battle item names section;8;221;Dent de griffon (magie feu)
+Non-battle item names section;8;222;Blizzard
+Non-battle item names section;8;223;Contient de la magie glaçante
+Non-battle item names section;8;224;Nunatak
+Non-battle item names section;8;225;Contient de la magie Neige
+Non-battle item names section;8;226;Gemma Luce
+Non-battle item names section;8;227;Contient de la magie Tonnerre
+Non-battle item names section;8;228;Aigrette
+Non-battle item names section;8;229;Plume d'oiseau surnaturel
+Non-battle item names section;8;230;Canine
+Non-battle item names section;8;231;Dent de monstre venimeux
+Non-battle item names section;8;232;Globe d'acier
+Non-battle item names section;8;233;Sphère au pouvoir gravitationnel
+Non-battle item names section;8;234;Roc lunaire
+Non-battle item names section;8;235;Contient une puissance monstrueuse
+Non-battle item names section;8;236;Fémur
+Non-battle item names section;8;237;Os de dinosaure
+Non-battle item names section;8;238;Aquilon
+Non-battle item names section;8;239;Concentré de vent
+Non-battle item names section;8;240;Derme
+Non-battle item names section;8;241;Peau de dragon
+Non-battle item names section;8;242;Zygène
+Non-battle item names section;8;243;Aileron de monstre
+Non-battle item names section;8;244;Shark
+Non-battle item names section;8;245;Ecaille de dragon
+Non-battle item names section;8;246;Poudre Aphasie
+Non-battle item names section;8;247;Potion somnifère
+Non-battle item names section;8;248;Venin
+Non-battle item names section;8;249;Poudre empoisonnée
+Non-battle item names section;8;250;Revenant
+Non-battle item names section;8;251;Potion de l'Ankou
+Non-battle item names section;8;252;Désosseur 
+Non-battle item names section;8;253;Dague de Tomberry
+Non-battle item names section;8;254;Kaktos
+Non-battle item names section;8;255;Epine de Pampa
+Non-battle item names section;8;256;Roc Shaman
+Non-battle item names section;8;257;Pierre mystique
+Non-battle item names section;8;258;Essence
+Non-battle item names section;8;259;Carburant (pour voiture de location)
+Non-battle item names section;8;260;Comtesse Cochon
+Non-battle item names section;8;261;Roman érotico-historique
+Non-battle item names section;8;262;Missive d'Edea
+Non-battle item names section;8;263;Lettre d'introduction d'Edea
+Non-battle item names section;8;264;Collier Chocobo
+Non-battle item names section;8;265;Change le nom du Chicobo
+Non-battle item names section;8;266;Collier chien
+Non-battle item names section;8;267;Change le nom du chien
+Non-battle item names section;8;268;Bague du chef
+Non-battle item names section;8;269;Bague mystérieuse
+Non-battle item names section;8;270;Aladore
+Non-battle item names section;8;271;Sauvegarder avant d'utiliser!
+Non-battle item names section;8;272;Bonus Hp
+Non-battle item names section;8;273;Augmente HP
+Non-battle item names section;8;274;Bonus Vgr
+Non-battle item names section;8;275;Augmente Vigueur
+Non-battle item names section;8;276;Bonus Dfs
+Non-battle item names section;8;277;Augmente Défense
+Non-battle item names section;8;278;Bonus Mgi
+Non-battle item names section;8;279;Augmente Magie
+Non-battle item names section;8;280;Bonus Psy
+Non-battle item names section;8;281;Augmente Psy
+Non-battle item names section;8;282;Bonus Vts
+Non-battle item names section;8;283;Augmente Vitesse
+Non-battle item names section;8;284;Bonus Chc
+Non-battle item names section;8;285;Augmente Chance
+Non-battle item names section;8;286;Amour bestial
+Non-battle item names section;8;287;Améliore compatibilité avec G-Forces
+Non-battle item names section;8;288;F.F.F. Fév
+Non-battle item names section;8;289;{x0e3c}
+Non-battle item names section;8;290;F.F.F. Mar
+Non-battle item names section;8;291;{x0e3c}
+Non-battle item names section;8;292;F.F.F. Avr
+Non-battle item names section;8;293;{x0e3c}
+Non-battle item names section;8;294;F.F.F. Mai
+Non-battle item names section;8;295;{x0e3c}
+Non-battle item names section;8;296;F.F.F. Jun
+Non-battle item names section;8;297;{x0e3c}
+Non-battle item names section;8;298;F.F.F. Jul
+Non-battle item names section;8;299;{x0e3c}
+Non-battle item names section;8;300;F.F.F. Aoû
+Non-battle item names section;8;301;{x0e3c}
+Non-battle item names section;8;302;Baston mag 1
+Non-battle item names section;8;303;{x0e3f}
+Non-battle item names section;8;304;Baston mag 2
+Non-battle item names section;8;305;{x0e3f}
+Non-battle item names section;8;306;Baston mag 3
+Non-battle item names section;8;307;{x0e3f}
+Non-battle item names section;8;308;Baston mag 4
+Non-battle item names section;8;309;{x0e3f}
+Non-battle item names section;8;310;Baston mag 5
+Non-battle item names section;8;311;{x0e3f}
+Non-battle item names section;8;312;L'A D bêtes 1
+Non-battle item names section;8;313;{x0e40}
+Non-battle item names section;8;314;L'A D bêtes 2
+Non-battle item names section;8;315;{x0e40}
+Non-battle item names section;8;316;L'A D bêtes 3
+Non-battle item names section;8;317;{x0e40}
+Non-battle item names section;8;318;L'A D bêtes 4
+Non-battle item names section;8;319;{x0e40}
+Non-battle item names section;8;320;L'A D bêtes 5
+Non-battle item names section;8;321;{x0e40}
+Non-battle item names section;8;322;L'A D bêtes 6
+Non-battle item names section;8;323;{x0e40}
+Non-battle item names section;8;324;Occult Fan I
+Non-battle item names section;8;325;{x0e41}Numéro spécial
+Non-battle item names section;8;326;Occult Fan II
+Non-battle item names section;8;327;{x0e41}Spécial Photo
+Non-battle item names section;8;328;Occult Fan III
+Non-battle item names section;8;329;{x0e41}Spécial Magie
+Non-battle item names section;8;330;Occult Fan IV
+Non-battle item names section;8;331;{x0e41}Spécial Enquêtes
+Non-junctionable GF attack name section;9;0;Zantetsuken
+Non-junctionable GF attack name section;9;1;Terre brûlée
+Non-junctionable GF attack name section;9;2;ChocoBraise
+Non-junctionable GF attack name section;9;3;ChocoFlammes
+Non-junctionable GF attack name section;9;4;ChocoMétéore
+Non-junctionable GF attack name section;9;5;GroChocobo
+Non-junctionable GF attack name section;9;6;Saturday Night
+Non-junctionable GF attack name section;9;7;Excalibur
+Non-junctionable GF attack name section;9;8;Excaliberne
+Non-junctionable GF attack name section;9;9;Masamune
+Non-junctionable GF attack name section;9;10;Zantetsuken
+Non-junctionable GF attack name section;9;11;{Angelo} Dingo
+Non-junctionable GF attack name section;9;12;{Angelo} Shepherd
+Non-junctionable GF attack name section;9;13;{Angelo} Dachshund
+Non-junctionable GF attack name section;9;14;{Angelo} Borzoï
+Non-junctionable GF attack name section;9;15;MoombaMoomba
+Junction abilities text section;10;0;
+Junction abilities text section;10;1;
+Junction abilities text section;10;2;HP-A
+Junction abilities text section;10;3;{x0e33}HP
+Junction abilities text section;10;4;Vgr-A
+Junction abilities text section;10;5;{x0e33}Vigueur
+Junction abilities text section;10;6;Dfs-A
+Junction abilities text section;10;7;{x0e33}Défense
+Junction abilities text section;10;8;Mgi-A
+Junction abilities text section;10;9;{x0e33}Magie
+Junction abilities text section;10;10;Psy-A
+Junction abilities text section;10;11;{x0e33}Psy
+Junction abilities text section;10;12;Vts-A
+Junction abilities text section;10;13;{x0e33}Vitesse
+Junction abilities text section;10;14;Esq-A
+Junction abilities text section;10;15;{x0e33}Esquive
+Junction abilities text section;10;16;Prc-A
+Junction abilities text section;10;17;{x0e33}Précision
+Junction abilities text section;10;18;Chc-A
+Junction abilities text section;10;19;{x0e33}Chance
+Junction abilities text section;10;20;Atq-Elé-A
+Junction abilities text section;10;21;{x0e33}Atq-Elé
+Junction abilities text section;10;22;Atq-Mtl-A
+Junction abilities text section;10;23;{x0e33}Atq-Mtl
+Junction abilities text section;10;24;Déf-Elé-A
+Junction abilities text section;10;25;{x0e33}Déf-Elé
+Junction abilities text section;10;26;Déf-Mtl-A
+Junction abilities text section;10;27;{x0e33}Déf-Mtl
+Junction abilities text section;10;28;Déf-EléX2
+Junction abilities text section;10;29;Associer 2 Magies à Déf-Elé
+Junction abilities text section;10;30;Déf-EléX4
+Junction abilities text section;10;31;Associer 4 Magies à Déf-Elé
+Junction abilities text section;10;32;Déf-Mtl-Ax2
+Junction abilities text section;10;33;Associer 2 Magies à Déf-Mtl
+Junction abilities text section;10;34;Déf-Mtl-Ax4
+Junction abilities text section;10;35;Associer 4 Magies à Déf-Mtl
+Junction abilities text section;10;36;CapacitéX3
+Junction abilities text section;10;37;Sélectionner 3 capacités maxi
+Junction abilities text section;10;38;CapacitéX4
+Junction abilities text section;10;39;Sélectionner 4 capacités maxi
+Command abilities text section;11;0;Magie
+Command abilities text section;11;1;{x0e34}Magie
+Command abilities text section;11;2;G-Force
+Command abilities text section;11;3;{x0e34}G-Force
+Command abilities text section;11;4;Voler
+Command abilities text section;11;5;{x0e34}Voler
+Command abilities text section;11;6;Objets
+Command abilities text section;11;7;{x0e34}Objets
+Command abilities text section;11;8; 
+Command abilities text section;11;9; 
+Command abilities text section;11;10;Carte
+Command abilities text section;11;11;{x0e34}Carte
+Command abilities text section;11;12;Châtiment
+Command abilities text section;11;13;Utiliser action Châtiment
+Command abilities text section;11;14;Mad Rush
+Command abilities text section;11;15;{x0e34}Mad Rush
+Command abilities text section;11;16;Traitement
+Command abilities text section;11;17;{x0e34}Traitement
+Command abilities text section;11;18;Défense
+Command abilities text section;11;19;{x0e34}Défense
+Command abilities text section;11;20;Combustion
+Command abilities text section;11;21;{x0e34}Combustion
+Command abilities text section;11;22;Arnica
+Command abilities text section;11;23;{x0e34}Arnica
+Command abilities text section;11;24;Phagocyte
+Command abilities text section;11;25;{x0e34}Phagocyte
+Command abilities text section;11;26;Ranimer
+Command abilities text section;11;27;{x0e34}Ranimer
+Command abilities text section;11;28;Nv Moins
+Command abilities text section;11;29;{x0e34}Nv Plus
+Command abilities text section;11;30;Nv Plus
+Command abilities text section;11;31;{x0e34}Nv Moins
+Command abilities text section;11;32;Kamikaze
+Command abilities text section;11;33;{x0e34}Kamikaze
+Command abilities text section;11;34;Cannibale
+Command abilities text section;11;35;{x0e34}Cannibale
+Command abilities text section;11;36;MiniMog
+Command abilities text section;11;37;{x0e34}MiniMog
+Stat percentage increasing abilities text section;12;0;HP+20%
+Stat percentage increasing abilities text section;12;1;Augmenter HP de 20%
+Stat percentage increasing abilities text section;12;2;HP+40%
+Stat percentage increasing abilities text section;12;3;Augmenter HP de 40%
+Stat percentage increasing abilities text section;12;4;HP+80%
+Stat percentage increasing abilities text section;12;5;Augmenter HP de 80%
+Stat percentage increasing abilities text section;12;6;Vgr+20%
+Stat percentage increasing abilities text section;12;7;Augmenter Vgr de 20%
+Stat percentage increasing abilities text section;12;8;Vgr+40%
+Stat percentage increasing abilities text section;12;9;Augmenter Vgr de 40%
+Stat percentage increasing abilities text section;12;10;Vgr+60%
+Stat percentage increasing abilities text section;12;11;Augmenter Vgr de 60%
+Stat percentage increasing abilities text section;12;12;Dfs+20%
+Stat percentage increasing abilities text section;12;13;Augmenter Dfs de 20%
+Stat percentage increasing abilities text section;12;14;Dfs+40%
+Stat percentage increasing abilities text section;12;15;Augmenter Dfs de 40%
+Stat percentage increasing abilities text section;12;16;Dfs+60%
+Stat percentage increasing abilities text section;12;17;Augmenter Dfs de 60%
+Stat percentage increasing abilities text section;12;18;Mgi+20%
+Stat percentage increasing abilities text section;12;19;Augmenter Mgi de 20%
+Stat percentage increasing abilities text section;12;20;Mgi+40%
+Stat percentage increasing abilities text section;12;21;Augmenter Mgi de 40%
+Stat percentage increasing abilities text section;12;22;Mgi+60%
+Stat percentage increasing abilities text section;12;23;Augmenter Mgi de 60%
+Stat percentage increasing abilities text section;12;24;Psy+20%
+Stat percentage increasing abilities text section;12;25;Augmenter Psy de 20%
+Stat percentage increasing abilities text section;12;26;Psy+40%
+Stat percentage increasing abilities text section;12;27;Augmenter Psy de 40%
+Stat percentage increasing abilities text section;12;28;Psy+60%
+Stat percentage increasing abilities text section;12;29;Augmenter Psy de 60%
+Stat percentage increasing abilities text section;12;30;Vts+20%
+Stat percentage increasing abilities text section;12;31;Augmenter Vts de 20%
+Stat percentage increasing abilities text section;12;32;Vts+40%
+Stat percentage increasing abilities text section;12;33;Augmenter Vts de 40%
+Stat percentage increasing abilities text section;12;34;Esq+30%
+Stat percentage increasing abilities text section;12;35;Augmenter Esq de 30%
+Stat percentage increasing abilities text section;12;36;Chc+50%
+Stat percentage increasing abilities text section;12;37;Augmenter Chance de 50%
+Character ability text section;13;0;Piller
+Character ability text section;13;1;Changer Attaquer en Piller
+Character ability text section;13;2;Schweitzer
+Character ability text section;13;3;Doubler les effets médicaux
+Character ability text section;13;4;Amorce
+Character ability text section;13;5;Contre-attaque immédiate
+Character ability text section;13;6;Backlash
+Character ability text section;13;7;1/4 dégâts renvoyés vers adversaire
+Character ability text section;13;8;Empathie
+Character ability text section;13;9;Protéger 1 allié faible
+Character ability text section;13;10;Genki
+Character ability text section;13;11;Agir dès le début du combat
+Character ability text section;13;12;Atlas-HP
+Character ability text section;13;13;Récupérer HP en marchant
+Character ability text section;13;14;Bonus HP
+Character ability text section;13;15;+30 Bonus HP au NiVeau supérieur 
+Character ability text section;13;16;Bonus Vgr
+Character ability text section;13;17;+1 Bonus Vgr au NiVeau supérieur 
+Character ability text section;13;18;Bonus Dfs
+Character ability text section;13;19;+1 Bonus Dfs au NiVeau supérieur 
+Character ability text section;13;20;Bonus Mgi
+Character ability text section;13;21;+1 Bonus Mgi au NiVeau supérieur 
+Character ability text section;13;22;Bonus Psy
+Character ability text section;13;23;+1 Bonus Psy au NiVeau supérieur
+Character ability text section;13;24;Auto-Carapace
+Character ability text section;13;25;Carapace automatique lors des combats
+Character ability text section;13;26;Auto-Blindage
+Character ability text section;13;27;Blindage automatique lors des combats 
+Character ability text section;13;28;Auto-Boomerang
+Character ability text section;13;29;Boomerang automatique lors des combats 
+Character ability text section;13;30;Auto-Booster
+Character ability text section;13;31;Booster automatique lors des combats 
+Character ability text section;13;32;Auto-Potion
+Character ability text section;13;33;Soins automatiques en cas de blessure
+Character ability text section;13;34;DoublEco
+Character ability text section;13;35;1 seule Magie par Double
+Character ability text section;13;36;TriplEco
+Character ability text section;13;37;1 seule Magie par Triple
+Character ability text section;13;38;Freud
+Character ability text section;13;39;Bloquer les attaques mentales
+Party ability text section;14;0;Prudence
+Party ability text section;14;1;Bloquer les attaques par derrière 
+Party ability text section;14;2;Clairvoyance
+Party ability text section;14;3;Trouver sources de magie et PDS cachés
+Party ability text section;14;4;Mi-Combat
+Party ability text section;14;5;Moins 50% pour les combats aléatoires
+Party ability text section;14;6;No-Combat
+Party ability text section;14;7;Aucun combat aléatoire
+Party ability text section;14;8;Sensor
+Party ability text section;14;9;+ de dons d'objets rares
+GF ability text section;15;0;Invoc+10%
+GF ability text section;15;1;Augmenter dégâts Invoc de 10%
+GF ability text section;15;2;Invoc+20%
+GF ability text section;15;3;Augmenter dégâts Invoc de 20%
+GF ability text section;15;4;Invoc+30%
+GF ability text section;15;5;Augmenter dégâts Invoc de 30%
+GF ability text section;15;6;Invoc+40%
+GF ability text section;15;7;Augmenter dégâts Invoc de 40%
+GF ability text section;15;8;HP-GF+10%
+GF ability text section;15;9;Augmenter HP G-Force de 10%
+GF ability text section;15;10;HP-GF+20%
+GF ability text section;15;11;Augmenter HP G-Force de 20%
+GF ability text section;15;12;HP-GF+30%
+GF ability text section;15;13;Augmenter HP G-Force de 30%
+GF ability text section;15;14;HP-GF+40%
+GF ability text section;15;15;Augmenter HP G-Force de 40%
+GF ability text section;15;16;Turbo
+GF ability text section;15;17;Renforcer G-Force
+Menu ability text section;16;0;Souk
+Menu ability text section;16;1;Acheter à prix bas
+Menu ability text section;16;2;Sentier
+Menu ability text section;16;3;Vendre à prix élevé
+Menu ability text section;16;4;Connaisseur
+Menu ability text section;16;5;Trouver des objets rares
+Menu ability text section;16;6;Boutiques
+Menu ability text section;16;7;Accéder aux boutiques à partir du menu
+Menu ability text section;16;8;Bazars
+Menu ability text section;16;9;Accéder aux bazars à partir du menu
+Menu ability text section;16;10;Créa-Mgi-Cél
+Menu ability text section;16;11;Créer Magie céleste avec 1 objet
+Menu ability text section;16;12;Créa-Mgi-Gla
+Menu ability text section;16;13;Créer Magie glaçante avec 1 objet
+Menu ability text section;16;14;Créa-Mgi-Inc
+Menu ability text section;16;15;Créer Magie incandescente avec 1 objet
+Menu ability text section;16;16;Créa-Mgi-Méd
+Menu ability text section;16;17;Créer Magie médicale avec 1 objet
+Menu ability text section;16;18;Créa-Mgi-Temp
+Menu ability text section;16;19;Créer Magie temporelle avec 1 objet
+Menu ability text section;16;20;Créa-Mgi-Mtl
+Menu ability text section;16;21;Créer Magie mentale avec 1 objet
+Menu ability text section;16;22;Créa-Mgi-Pro
+Menu ability text section;16;23;Créer Magie protectrice avec 1 objet
+Menu ability text section;16;24;Créa-Mgi-Tab
+Menu ability text section;16;25;Créer Magie taboue avec 1 objet
+Menu ability text section;16;26;Créa-Mgi-Thér
+Menu ability text section;16;27;Créer Objet thérapeutique avec 1 objet
+Menu ability text section;16;28;Créa-Mgi-Ana
+Menu ability text section;16;29;Créer Objet soignant avec 1 objet
+Menu ability text section;16;30;Créa-Balles
+Menu ability text section;16;31;Créer balles avec 1 objet
+Menu ability text section;16;32;Créa-Outils
+Menu ability text section;16;33;Créer outils avec 1 objet
+Menu ability text section;16;34;Créa-Thér-Tab
+Menu ability text section;16;35;Créer Thérapie taboue avec 1 objet
+Menu ability text section;16;36;Créa-Thér-GF
+Menu ability text section;16;37;Créer Thérapie G-Forces avec 1 objet
+Menu ability text section;16;38;Créa-Capa-GF
+Menu ability text section;16;39;Créer Capacités G-Forces avec 1 objet
+Menu ability text section;16;40;Créa-Mgi-Plus
+Menu ability text section;16;41;Créer Magie Plus avec de la magie
+Menu ability text section;16;42;Créa-Mgi-Max
+Menu ability text section;16;43;Créer Magie Max avec de la magie
+Menu ability text section;16;44;Soins NV +
+Menu ability text section;16;45;Renforcer les thérapies
+Menu ability text section;16;46;Mode Carte
+Menu ability text section;16;47;Créer des objets avec des cartes
+Temporary character limit break text section;17;0;No Mercy
+Temporary character limit break text section;17;1;Blesser tous les adversaires
+Temporary character limit break text section;17;2;Ice Strike
+Temporary character limit break text section;17;3;Endommager 1 ennemi
+Temporary character limit break text section;17;4;Desperado
+Temporary character limit break text section;17;5;Blesser tous les adversaires
+Temporary character limit break text section;17;6;Black Blood
+Temporary character limit break text section;17;7;Endommager 1 ennemi
+Temporary character limit break text section;17;8;Titanic
+Temporary character limit break text section;17;9;Blesser tous les adversaires
+Blue magic text section;18;0;Fovéa
+Blue magic text section;18;1;Endommager 1 ennemi
+Blue magic text section;18;2;Ultra Waves
+Blue magic text section;18;3;Blesser tous les adversaires
+Blue magic text section;18;4;Firmament
+Blue magic text section;18;5;Attaque Tonnerre contre tous 
+Blue magic text section;18;6;Freak
+Blue magic text section;18;7;Mort de certains ennemis
+Blue magic text section;18;8;Dégénérator
+Blue magic text section;18;9;Tuer un ennemi
+Blue magic text section;18;10;Fréon
+Blue magic text section;18;11;Attaque d'Eau contre tous 
+Blue magic text section;18;12;Micro Missiles
+Blue magic text section;18;13;Endommager 1 ennemi
+Blue magic text section;18;14;Acid
+Blue magic text section;18;15;Attaque mentale 1 ennemi
+Blue magic text section;18;16;Mitraille
+Blue magic text section;18;17;Endommager 1 ennemi
+Blue magic text section;18;18;Dead Heat
+Blue magic text section;18;19;Attaque Feu contre tous 
+Blue magic text section;18;20;Infection
+Blue magic text section;18;21;Attaque mentale sur tous 
+Blue magic text section;18;22;Mistral
+Blue magic text section;18;23;Rétablir HP de l'équipe
+Blue magic text section;18;24;Laser
+Blue magic text section;18;25;Endommager 1 ennemi
+Blue magic text section;18;26;Mother
+Blue magic text section;18;27;Défendre toute l'équipe 
+Blue magic text section;18;28;Shockwave
+Blue magic text section;18;29;Blesser tous les adversaires
+Blue magic text section;18;30;Outerspace
+Blue magic text section;18;31;Puissante attaque contre tous
+Shot text section;19;0;Furioso
+Shot text section;19;1;Endommager 1 ennemi
+Shot text section;19;2;Fluxion
+Shot text section;19;3;Blesser tous les adversaires
+Shot text section;19;4;Fracas
+Shot text section;19;5;Attaque mentale et armée 1 ennemi
+Shot text section;19;6;Fusion
+Shot text section;19;7;Attaque Feu contre tous adversaires
+Shot text section;19;8;Barbacane
+Shot text section;19;9;Endommager 1 ennemi
+Shot text section;19;10;Mach 4
+Shot text section;19;11;Endommager 1 ennemi
+Shot text section;19;12;Apogée
+Shot text section;19;13;Attaque anti-protection/1 ennemi
+Shot text section;19;14;Percuteur
+Shot text section;19;15;Endommager 1 ennemi
+Duel text section;20;0;Top Punch
+Duel text section;20;1;{x0e35}
+Duel text section;20;2;Feinte
+Duel text section;20;3;{x0e35}
+Duel text section;20;4;Achille
+Duel text section;20;5;{x0e35}
+Duel text section;20;6;Forcing
+Duel text section;20;7;{x0e35}
+Duel text section;20;8;Delphinium
+Duel text section;20;9;{x0e35}
+Duel text section;20;10;Apesanteur
+Duel text section;20;11;{x0e35}
+Duel text section;20;12;Fahrenheit
+Duel text section;20;13;{x0e36}
+Duel text section;20;14;Stratosphère
+Duel text section;20;15;{x0e35}
+Duel text section;20;16;Trapèze
+Duel text section;20;17;{x0e35}
+Duel text section;20;18;Global Wave
+Duel text section;20;19;{x0e36}
+Rinoa limit break (part 1) text section;21;0;{Angelo}
+Rinoa limit break (part 1) text section;21;1;Combat au côté d'{Angelo}
+Rinoa limit break (part 1) text section;21;2;Canonisation
+Rinoa limit break (part 1) text section;21;3;Utiliser Canonisation
+Rinoa limit break (part 2) text section;22;0;{Angelo} Laïka
+Rinoa limit break (part 2) text section;22;1;{Angelo} Nordfolk
+Rinoa limit break (part 2) text section;22;2;Sélénium
+Rinoa limit break (part 2) text section;22;3;Phantasm
+Rinoa limit break (part 2) text section;22;4;Canonisation
+Devour text section;23;0;Pas mauvais...
+Devour text section;23;1;Un délice!!!
+Devour text section;23;2;Rafraîchissant!
+Devour text section;23;3;C'est pourri...
+Devour text section;23;4;Quel goût bizarre...
+Devour text section;23;5;On voit rien!
+Devour text section;23;6;C'est infâme!!!
+Devour text section;23;7;A vomir!!!
+Devour text section;23;8;Grave erreur culinaire!
+Devour text section;23;9;Dégoûtant!
+Devour text section;23;10;Ça donne la pêche!
+Devour text section;23;11;En pleine forme!
+Devour text section;23;12;Requinquant!
+Devour text section;23;13;Tonifiant!
+Devour text section;23;14;Stimulant!
+Devour text section;23;15;C'est parti comme en 40!
+Misc text section;24;0;Game over...
+Misc text section;24;1;Fuite
+Misc text section;24;2;G-Force
+Misc text section;24;3;PAUSE
+Misc text section;24;4;Fuite impossible!
+Misc text section;24;5;Vol raté
+Misc text section;24;6;Gain: {x0a23}
+Misc text section;24;7;acquis
+Misc text section;24;8;?
+Misc text section;24;9;Gain:
+Misc text section;24;10;????
+Misc text section;24;11; 0123456789ABCDEF:/·,‘'
+Misc text section;24;12;Tous les ennemis
+Misc text section;24;13;Toute l'équipe
+Misc text section;24;14;Tous
+Misc text section;24;15;Plein
+Misc text section;24;16;Reçue: Carte
+Misc text section;24;17;Vol impossible
+Misc text section;24;18;Pas d'objet
+Misc text section;24;19;Vol de
+Misc text section;24;20;Choix impossible
+Misc text section;24;21;Objet reçu
+Misc text section;24;22;confirmer
+Misc text section;24;23;EXP acquis
+Misc text section;24;24;Elimination {x0a23}\nsupérieur à 100
+Misc text section;24;25;Fin
+Misc text section;24;26;est
+Misc text section;24;27;de
+Misc text section;24;28;Aucun objet
+Misc text section;24;29;EXP reçus
+Misc text section;24;30;EXP actuels
+Misc text section;24;31;Niveau suivant
+Misc text section;24;32;NV Sup.
+Misc text section;24;33;Niveau
+Misc text section;24;34;HP
+Misc text section;24;35;Situation
+Misc text section;24;36;
+Misc text section;24;37;Impuissant contre
+Misc text section;24;38;Faible face à
+Misc text section;24;39;Résistant à
+Misc text section;24;40;Inefficace
+Misc text section;24;41;Absorbe
+Misc text section;24;42;attaque inefficace
+Misc text section;24;43;attaque performante
+Misc text section;24;44;1ère attaque possible
+Misc text section;24;45;Coup en traître!
+Misc text section;24;46;Attaque ennemie
+Misc text section;24;47;Attaque surprise
+Misc text section;24;48;NV Sup.
+Misc text section;24;49;Pas d'EXP reçus
+Misc text section;24;50;Impossible changer en carte
+Misc text section;24;51;Gain:
+Misc text section;24;52;Impossible sur GF
+Misc text section;24;53;Pas assez de gils
+Misc text section;24;54;HP G-Force récupérés
+Misc text section;24;55;Aucun effet
+Misc text section;24;56;n'est pas lÀ
+Misc text section;24;57;KO
+Misc text section;24;58;Poison
+Misc text section;24;59;Fossile
+Misc text section;24;60;Darkness
+Misc text section;24;61;Aphasie
+Misc text section;24;62;Furie
+Misc text section;24;63;Zombie
+Misc text section;24;64;Gain:
+Misc text section;24;65;fois
+Misc text section;24;66;Lancer
+Misc text section;24;67;Faire défiler
+Misc text section;24;68;Utiliser cette magie 
+Misc text section;24;69;Choisir magie au hasard
+Misc text section;24;70;PDC obtenus
+Misc text section;24;71; 
+Misc text section;24;72;MiniMog est absent
+Misc text section;24;73;Morphée
+Misc text section;24;74;Booster
+Misc text section;24;75;Somni
+Misc text section;24;76;Stop
+Misc text section;24;77;Récup
+Misc text section;24;78;Carapace
+Misc text section;24;79;Blindage
+Misc text section;24;80;Boomerang
+Misc text section;24;81;Aura
+Misc text section;24;82;Fléau
+Misc text section;24;83;Châtiment
+Misc text section;24;84;Invincible
+Misc text section;24;85;SubFossile
+Misc text section;24;86;Décubitus
+Misc text section;24;87;Folie
+Misc text section;24;88;passe au niveau
+Misc text section;24;89;: +
+Misc text section;24;90;Double
+Misc text section;24;91;Triple
+Misc text section;24;92;Défense
+Misc text section;24;93;Attaque armée inefficace
+Misc text section;24;94;Magie inopérante
+Misc text section;24;95;: -
+Misc text section;24;96;Coup en traître 
+Misc text section;24;97;Dfs 0
+Misc text section;24;98;Niveau
+Misc text section;24;99;Planer
+Misc text section;24;100;Magie inutilisable
+Misc text section;24;101;{Drain}
+Misc text section;24;102;{x055e}
+Misc text section;24;103;{x055f}
+Misc text section;24;104;{x0560}
+Misc text section;24;105;{x0561}
+Misc text section;24;106;{x0562}
+Misc text section;24;107;{x0563}
+Misc text section;24;108;{x0564}
+Misc text section;24;109;G-Force reçoit {x0a20} PDC
+Misc text section;24;110;Carte {x0a23}
+Misc text section;24;111;Eduquer GF
+Misc text section;24;112;Cannibale impossible
+Misc text section;24;113;?????
+Misc text section;24;114;Mort-vivant
+Misc text section;24;115;s'est enfui!
+Misc text section;24;116;utilisé(e)
+Misc text section;24;117;!
+Misc text section;24;118;Vol de
+Misc text section;24;119;(s)
+Misc text section;24;120;Inefficace
+Misc text section;24;121;G-Force 
+Misc text section;24;122;Dummy
+Misc text section;24;123;Dummy
+Misc text section;24;124;Dummy
+Misc text section;24;125;Dummy
+Misc text section;24;126;!
+Misc text section;24;127;appris

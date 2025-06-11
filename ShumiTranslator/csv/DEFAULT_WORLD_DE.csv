@@ -1,0 +1,311 @@
+"Text","Comment"
+"#worldmap","0"
+"{x0e2f}",""
+"{x0e30}",""
+"{x0e31}",""
+"{Esthar}-Airstation",""
+"In {Blue}{x0e2f}{White} aussteigen?
+Ja
+Nein",""
+"In {Blue}{x0e30}{White} aussteigen? 
+Ja
+Nein",""
+"In {Blue}{x0e31}{White} aussteigen?
+Ja
+Nein",""
+"“Der fährt nach {Blue}{Timber}{White}”. 
+Für 3000 Gil mitfahren.
+Nicht mitfahren.",""
+"“Der fährt nach {Blue}{Dollet}{White}.”
+Für 3000 Gil mitfahren.
+Nicht mitfahren.",""
+"“Der fährt nach {Blue}{x0e2d}{White}.”
+Für 3000 Gil mitfahren.
+Nicht mitfahren.",""
+"{White}“Das Geld reicht nicht für eine Fahrkarte.”",""
+"Selphie
+“Sooo!
+ Auf zur {Blue}[Raketenbasis]{White}!”",""
+"{Galbadia}-Soldat
+“...gib endlich auf.”",""
+"{Galbadia}-Soldat
+“Stör mich nicht.”",""
+"{Galbadia}-Soldat
+“Hier kommt ihr nicht durch!!”",""
+"{Galbadia}-Soldat
+“Es ist unser Job...”",""
+"{Galbadia}-Soldat
+“Wie immer...”",""
+"{Galbadia}-Soldat
+“Na, Kleine? Wie wär{xba}s mit uns beiden?”",""
+"Draw-Punkt entdeckt!
+Aber niemand kann ziehen...",""
+"Draw-Punkt entdeckt!
+Aber es ist nichts da...",""
+"Draw-Punkt entdeckt!
+",""
+" gefunden!",""
+"Schon voll!",""
+"Draw-Befehl fehlt!",""
+"Wer soll ziehen?
+",""
+"Nicht ziehen",""
+" hat ",""
+" gezogen.",""
+"
+",""
+"0",""
+"{Squall}",""
+"{Zell}",""
+"{Irvine}",""
+"{Quistis}",""
+"{Rinoa}",""
+"{Selphie}",""
+"{Seifer}",""
+"{Edea}",""
+"{Laguna}",""
+"{Kiros}",""
+"{Ward}",""
+"{White}",""
+"{Grey}",""
+"{RedBlink}{x0dc2}{WhiteBlink}-Mangel!",""
+" Vom {Red}{x0dc2}{White} bleiben ",""
+" übrig",""
+" ansteuern?
+Ja
+Nein",""
+"{x0541}",""
+"{x0540}",""
+"{Yellow}Steuern von PKWs{White}
+           {x0524}: Rückwärts
+  {x0527}: Vorwärts
+           {x0526}: Ein-/Aussteigen
+Richtungstaste: Richtung angeben
+
+
+{x0521}: Perspektive verändern",""
+"{Yellow}Steuern des Gardens{White}
+           {x0524}: Rückwärts
+  {x0527}: Vorwärts  {x0525}: Auf die Brücke
+           {x0526}: Ein-/Aussteigen
+Richtungstaste: Richtung angeben
+
+
+{x0521}: Perspektive verändern",""
+"{Yellow}Steuern von Chocobos{White}
+ {x0526}: Absteigen
+Richtungstaste: Herumlaufen
+
+{x0521}: Perspektive verändern",""
+"{Yellow}Steuern des Luftschiffes{White}
+           {x0524}: Rückwärts
+  {x0527}: Vorwärts  {x0525}: Ins Cockpit
+           {x0526}: Ein-/Aussteigen
+Richtungstaste: Höhe und Richtung ändern
+
+
+{x0521}: Perspektive verändern",""
+"(Irgendwie...kommt mir der Ort bekannt vor.)",""
+"Niemand scheint hier zu wohnen.
+Es ist vollkommen heruntergekommen...",""
+"“Whoa!?”",""
+"Niida
+“Die Instrumente spielen verrückt!?”",""
+"(Ich kann jetzt schlecht aussteigen...)",""
+"Das muß der Obersee sein.
+Einen Stein werfen.
+Vor sich hin summen.",""
+"Der Ober-See.
+Einen Stein werfen.
+Vor sich hin summen.",""
+"Im Wasser erscheint ein Schatten.
+Einen Stein werfen.
+Nochmal vor sich hin summen.",""
+"Der schwarze Schatten ist verschwunden.",""
+"...der Stein versinkt im Wasser.",""
+" ·
+Der Stein springt 1 Mal.",""
+" ·
+ ·
+Der Stein springt 2 Mal.",""
+" ·
+ ·
+ ·
+Der Stein springt 3 Mal.",""
+" ·
+ ·
+ ·
+ ·
+Der Stein springt 4 Mal.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+Der Stein springt 5 Mal.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+ ·
+Der Stein springt 6 Mal.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+ ·
+Der Stein springt so oft,
+daß man nicht mehr mitzählen kann.",""
+"Schwarzer Schatten
+“...guten Tag, lieber Mensch.
+  Ein schönes Lied.”",""
+"Im Wasser erscheint ein Schatten.
+“Hallo!”",""
+"(...da ist etwas großes...)",""
+"“Danke daß du mich wieder
+ angesprochen hast!”",""
+"“......sag mal,”",""
+"“...kannst du mir einen Gefallen tun?”
+(Nur zu.)
+(Ich will nichts mit dir zu tun haben...)",""
+"“Kannst du mir helfen
+ meinen Freund, den Affen zu finden?”",""
+"“Bitte...”",""
+"“......”",""
+"“Der Affe ist irgendwo in einem Wald.
+ Du mußt nur herumlaufen.
+ Dann triffst du ihn.”",""
+"“Ach ja,
+ kennst du die folgende Geschichte?”",""
+"“Ach ja, genau...”",""
+"“...ein schöner Tag.”",""
+"“...was das wohl bedeuten mag?”",""
+"“...Hieroglyphen auf einem Stein...?”",""
+"“...ich glaube, der Affe besitzt
+ auch so einen ähnlichen Stein...”",""
+"[{WhiteBlink}Rast{White} auf einer Eisenbrücke]",""
+"[{WhiteBlink}RAST{White}-los in Erdwig]",""
+"“Bestimmt ein schöner Ort.”",""
+"Den Ort wo sich der Affe aufhält mitgeteilt.",""
+"“Danke!”",""
+"Da ist der Affe!
+Einen Stein werfen.
+Singen.",""
+"“Das ist ja gräßlich!”",""
+"...der Affe verschwindet im Wald...",""
+"...der Affe motzt und
+   verschwindet im Wald...",""
+"“Whoa! ...Verdammt!
+ Du...du bist nicht so toll
+ wie du denkst! Ich kann einen Stein
+ unendlich oft auf dem Wasser
+ hüpfen lassen!
+ Idiot! Blödmann! Schwachkopf!
+ Du blöder Esel...”",""
+"“...autsch!
+ ...ver-verdammt!
+ ...du wirst es noch bereuen!”",""
+"Der Affe wirft einen Stein und flüchtet.",""
+"...auf dem Stein, den der Affe geworfen hat
+ steht etwas geschrieben...",""
+"Da ist ein Affe.
+“Ääätsch bääätsch!”",""
+"...um ein Haar getroffen.
+Der Affe flüchtet.",""
+"...............das ist dooch!?",""
+"...am Boden liegt ein Stein.",""
+"Er sieht künstlich aus.
+Etwas steht darauf geschrieben...",""
+"......scheint ein stinknormaler Stein zu sein...",""
+"Ein Vogel brütet Eier aus.
+Hineinlangen.
+In Ruhe lassen.",""
+"Der Vogel ist weg und sucht
+wahrscheinlich nach Futter...",""
+"...ein Stein befindet sich im Nest.",""
+"...da ist nichts.",""
+"{Grey} EI  ZI  LL  ER ",""
+"{Grey} NS  ST  DR  GR ",""
+"{Grey} CH  IN  ET  AB ",""
+"{Grey} AT  MO  TV  EN ",""
+"[{Grey} EI  ZI  LL  ER {White}]
+[{Grey} NS  ST  DR  GR {White}]
+[{Grey} CH  IN  ET  AB {White}]
+[{Grey} AT  MO  TV  EN {White}]",""
+"“An der Küste von {Balamb}
+ werden gelegentlich wertvolle Sachen
+ an Land gespült.”",""
+"“Auf der Insel östlich von {Timber}
+ soll auch etwas sein.”",""
+"“Auf dem Berg, wo sich die Grotte
+ mit dem See befindet,
+ soll auch etwas sein.”",""
+"“...früher war südlich von hier
+ ein Dorf das von einem Wald
+ umgeben war. Die Menschen
+ dort waren alle glücklich...”",""
+"Ein steinerner Pfahl.
+Wenn man genau hinsieht,
+steht etwas geschrieben.",""
+"【REIANFSUND
+ TINBSONGTO!】",""
+"(...?)",""
+"{x0d29} gefunden!",""
+"{x0d50} gefunden!",""
+"{x0d83} gefunden!",""
+"{x0d21} gefunden",""
+"...die Töne wurden vom See verschlungen...",""
+"Rings herum liegen unzählige Steine
+mit Eingravierungen zerstreut...",""
+"Der schwarze Stein sagt...
+[Der Schatz liegt in Richtung
+ des Polarsterns.]",""
+"Der weiße Stein sagt,
+“Im Osten.”",""
+"Der weiße Stein sagt,
+“Im Westen.”",""
+"Der weiße Stein sagt,
+“Im Süden.”",""
+"Der weiße Stein sagt,
+“Im Norden.”",""
+"Der rote Stein sagt,
+“Der blaue lügt!”",""
+"Der rote Stein sagt,
+“Der Schatz liegt im Osten!”",""
+"Der rote Stein sagt,
+“Der Schatz liegt im Westen!”",""
+"Der rote Stein sagt,
+“Der Schatz liegt im Süden!”",""
+"Der rote Stein sagt,
+“Der Schatz liegt im Norden!”",""
+"Der rote Stein sagt,
+“Der Schatz ist nicht hier!”",""
+"Der blaue Stein sagt,
+“...ich weiß nicht, wo der Schatz ist.”",""
+"Der blaue Stein sagt,
+“...Man nennt uns
+ [Die lügenden Steine].”",""
+"Der blaue Stein sagt,
+“...da ist einer, 
+ der immer nur das selbe sagt.”",""
+"Der blaue Stein sagt,
+“...da ist einer, der nur lügt.”",""
+"Der blaue Stein sagt,
+“...Da ist einer, der
+ immer das Gegenteil behauptet.”",""
+"...hier liegen zwischen
+ Grashalmen nur Trümmer...",""
+"...hier ist sonst nichts.",""
+"(...ist das......ein Teil eines Ganzen?)",""
+"(...dieser Stein sieht dem anderen ähnlich...)",""
+"(......das scheinen wohl alle zu sein...)",""
+"“...die Steine scheinen komplett zu sein.”",""
+"“Wenn dieser Affe nicht in der Nähe ist,
+ muß er wohl den Zug nach Dollet
+ genomme haben.”",""
+"(Genau! Das hier ist [Edeas Haus]!
+ Aber was ist das für ein komisches Gefühl?
+ Irgend etwas riesiges ist in der Nähe...)",""
+" ",""
