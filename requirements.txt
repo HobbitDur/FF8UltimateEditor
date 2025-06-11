@@ -1,0 +1,5 @@
+PyQt6>=6.8.1
+beautifulsoup4>=4.13.4
+XlsxWriter>=3.2.2
+openpyxl>=3.1.5
+pillow>=11.1.0

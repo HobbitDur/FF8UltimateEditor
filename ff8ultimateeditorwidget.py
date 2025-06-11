@@ -2,14 +2,15 @@ import os
 
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon
-from PyQt6.QtNetwork import QSslKey
-from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QFileDialog, QSizePolicy
+from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QSizePolicy
 
+from CCGroup.ccgroup import CCGroupWidget
+from ExeLauncher.ifritguilauncher import IfritGuiLauncher
+from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from IfritAI.ifritaiwidget import IfritAIWidget
-from IfritAI.ifritmanager import IfritManager
 from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from ShumiTranslator.shumitranslator import ShumiTranslator
-from ifritguilauncher import IfritGuiLauncher
+from TonberryShop.tonberryshop import TonberryShop
 
 
 class FF8UltimateEditorWidget(QWidget):
@@ -22,7 +23,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._main_layout = QVBoxLayout()
         self.setLayout(self._main_layout)
 
-        self.HOBBIT_OPTION_ITEMS = ["AI editor (IfritAI)", "Stat editor (IfritXlsx)", "Kernel text editor (ShumiTranslator)"]
+        self.HOBBIT_OPTION_ITEMS = ["AI editor (IfritAI)", "Stat editor (IfritXlsx)", "Kernel text editor (ShumiTranslator)", "Shop editor (TonberryShop)", "Card value editor (CCGroup)"]
 
         # Top widget to select what option we want
         self._program_option_title = QLabel("Hobbit tools:")
@@ -44,9 +45,41 @@ class FF8UltimateEditorWidget(QWidget):
         self._ifrit_gui_button.clicked.connect(self._launch_ifritGui)
         self._ifrit_gui_button.setToolTip("Launch original ifrit soft")
 
+        self._Quezacotl_button = QPushButton()
+        self._Quezacotl_button.setIcon(QIcon(os.path.join(icon_path, 'Quezacotl.ico')))
+        self._Quezacotl_button.setIconSize(QSize(30, 30))
+        self._Quezacotl_button.setFixedSize(40, 40)
+        self._Quezacotl_button.clicked.connect(self._launch_Quezacotl)
+        self._Quezacotl_button.setToolTip("Launch Quezacotl (init.out editor)")
+
+        self._siren_button = QPushButton()
+        self._siren_button.setIcon(QIcon(os.path.join(icon_path, 'siren.ico')))
+        self._siren_button.setIconSize(QSize(30, 30))
+        self._siren_button.setFixedSize(40, 40)
+        self._siren_button.clicked.connect(self._launch_siren)
+        self._siren_button.setToolTip("Launch siren (price.bin editor)")
+
+        self._junkshop_button = QPushButton()
+        self._junkshop_button.setIcon(QIcon(os.path.join(icon_path, 'junkshop.ico')))
+        self._junkshop_button.setIconSize(QSize(30, 30))
+        self._junkshop_button.setFixedSize(40, 40)
+        self._junkshop_button.clicked.connect(self._launch_junkshop)
+        self._junkshop_button.setToolTip("Launch junkshop (mweapon.bin editor)")
+
+        self._doomtrain_button = QPushButton()
+        self._doomtrain_button.setIcon(QIcon(os.path.join(icon_path, 'doomtrain.ico')))
+        self._doomtrain_button.setIconSize(QSize(30, 30))
+        self._doomtrain_button.setFixedSize(40, 40)
+        self._doomtrain_button.clicked.connect(self._launch_doomtrain)
+        self._doomtrain_button.setToolTip("Launch doomtrain (kernel.bin editor)")
+
         self._external_program_layout = QHBoxLayout()
         self._external_program_layout.addWidget(self._external_program_title)
         self._external_program_layout.addWidget(self._ifrit_gui_button)
+        self._external_program_layout.addWidget(self._Quezacotl_button)
+        self._external_program_layout.addWidget(self._siren_button)
+        self._external_program_layout.addWidget(self._junkshop_button)
+        self._external_program_layout.addWidget(self._doomtrain_button)
         self._external_program_layout.addStretch(1)
 
 
@@ -61,17 +94,27 @@ class FF8UltimateEditorWidget(QWidget):
         self._ifritAI_widget = IfritAIWidget(icon_path=os.path.join("IfritAI", "Resources"), game_data_folder=os.path.join("FF8GameData"))
         self._ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join("IfritXlsx", "Resources"), game_data_folder=os.path.join("FF8GameData"))
         self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join("ShumiTranslator", "Resources"), game_data_folder=os.path.join("FF8GameData"))
+        self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join("TonberryShop", "Resources"))
+        self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join("CCGroup", "Resources"))
 
         self._ifritAI_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self._ifritxlsx_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self._ifritxlsx_widget.hide()
         self._shumi_translator_widget.hide()
+        self._tonberry_shop_widget.hide()
+        self._ccgroup_widget.hide()
         self.ifritGui_launcher = IfritGuiLauncher(os.path.join("IfritGui", "publish", "Ifrit.exe"), callback=self._ifritGui_exit)
+        self.Quezacotl_launcher = QuezacotlLauncher(os.path.join("Quezacotl", "Quezacotl.exe"), callback=None)
+        self.siren_launcher = QuezacotlLauncher(os.path.join("Siren", "Siren.exe"), callback=None)
+        self.junkshop_launcher = QuezacotlLauncher(os.path.join("Junkshop", "Junkshop.exe"), callback=None)
+        self.doomtrain_launcher = QuezacotlLauncher(os.path.join("Doomtrain", "Doomtrain.exe"), callback=None)
 
         self._main_layout.addLayout(self._enhance_layout)
         self._main_layout.addWidget(self._ifritAI_widget)
         self._main_layout.addWidget(self._ifritxlsx_widget)
         self._main_layout.addWidget(self._shumi_translator_widget)
+        self._main_layout.addWidget(self._tonberry_shop_widget)
+        self._main_layout.addWidget(self._ccgroup_widget)
 
         self._ifritAI_widget.adjustSize()
         self._ifritxlsx_widget.adjustSize()
@@ -79,6 +122,14 @@ class FF8UltimateEditorWidget(QWidget):
 
     def _launch_ifritGui(self):
         self.ifritGui_launcher.launch()
+    def _launch_Quezacotl(self):
+        self.Quezacotl_launcher.launch()
+    def _launch_junkshop(self):
+        self.junkshop_launcher.launch()
+    def _launch_siren(self):
+        self.siren_launcher.launch()
+    def _launch_doomtrain(self):
+        self.doomtrain_launcher.launch()
 
     def _ifritGui_exit(self):
         pass
@@ -90,14 +141,32 @@ class FF8UltimateEditorWidget(QWidget):
             self._ifritAI_widget.show()
             self._ifritxlsx_widget.hide()
             self._shumi_translator_widget.hide()
+            self._tonberry_shop_widget.hide()
+            self._ccgroup_widget.hide()
         elif self._program_option.currentIndex() == 1:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.show()
             self._shumi_translator_widget.hide()
+            self._tonberry_shop_widget.hide()
+            self._ccgroup_widget.hide()
         elif self._program_option.currentIndex() == 2:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.hide()
             self._shumi_translator_widget.show()
+            self._tonberry_shop_widget.hide()
+            self._ccgroup_widget.hide()
+        elif self._program_option.currentIndex() == 3:
+            self._ifritAI_widget.hide()
+            self._ifritxlsx_widget.hide()
+            self._shumi_translator_widget.hide()
+            self._tonberry_shop_widget.show()
+            self._ccgroup_widget.hide()
+        elif self._program_option.currentIndex() == 4:
+            self._ifritAI_widget.hide()
+            self._ifritxlsx_widget.hide()
+            self._shumi_translator_widget.hide()
+            self._tonberry_shop_widget.hide()
+            self._ccgroup_widget.show()
         else:
             print(f"Unexpected program option index:{self._program_option.currentIndex()} and name {self._program_option.currentText()}")
 
