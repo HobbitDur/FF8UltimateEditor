@@ -44,7 +44,7 @@ jobs:
           mkdir -p release/Siren
           mkdir -p release/FF8GameData
           mkdir -p release/FF8GameData/Resources
-          cp -R Resources/ release/FF8UltimateEditor/
+          cp -R Resources/ release/Resources/
           cp -R Junkshop release/Junkshop/
           cp -R Quezacotl release/Quezacotl/
           cp -R Doomtrain release/Doomtrain/
