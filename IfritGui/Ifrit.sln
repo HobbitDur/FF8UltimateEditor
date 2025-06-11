@@ -1,0 +1,20 @@
+
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C# Express 2010
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ifrit", "Ifrit.csproj", "{A20143EE-F9FC-4B71-A8D6-434E5D1D6D4A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A20143EE-F9FC-4B71-A8D6-434E5D1D6D4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A20143EE-F9FC-4B71-A8D6-434E5D1D6D4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A20143EE-F9FC-4B71-A8D6-434E5D1D6D4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A20143EE-F9FC-4B71-A8D6-434E5D1D6D4A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

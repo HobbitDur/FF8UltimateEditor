@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<!-- Sitemap 1.0 -->
+<!-- Put Java help object tag here -->
+</HEAD>
+<BODY>
+<UL>
+   <LI> <OBJECT type="text/sitemap">
+   <param name="name" Value = "Draw">
+   <param name="Local" Value = "FFVIII simple enemy editor_Form_Main.htm#Main_tabControl_2">
+   </OBJECT>
+   <LI> <OBJECT type="text/sitemap">
+   <param name="name" Value = "File">
+   <param name="Local" Value = "FFVIII simple enemy editor_Form_Main.htm#Main_fileToolStripMenuItem">
+   </OBJECT>
+   <LI> <OBJECT type="text/sitemap">
+   <param name="name" Value = "Grid">
+   <param name="Local" Value = "FFVIII simple enemy editor_Form_Report.htm#Report_panelMid">
+   </OBJECT>
+   <LI> <OBJECT type="text/sitemap">
+   <param name="name" Value = "Help">
+   <param name="Local" Value = "FFVIII simple enemy editor_Form_Main.htm#Main_helpToolStripMenuItem">
+   </OBJECT>
+   <LI> <OBJECT type="text/sitemap">
+   <param name="name" Value = "IFRIT &#45; Simple FFVIII Enemy Edit...">
+   <param name="Local" Value = "FFVIII simple enemy editor_Form_Main.htm">
+   </OBJECT>
+   <LI> <OBJECT type="text/sitemap">
+   <param name="name" Value = "Items">
+   <param name="Local" Value = "FFVIII simple enemy editor_Form_Main.htm#Main_tabControl_1">
+   </OBJECT>
+   <LI> <OBJECT type="text/sitemap">
+   <param name="name" Value = "Report">
+   <param name="Local" Value = "FFVIII simple enemy editor_Form_Report.htm">
+   </OBJECT>
+   <LI> <OBJECT type="text/sitemap">
+   <param name="name" Value = "Specs">
+   <param name="Local" Value = "FFVIII simple enemy editor_Form_Main.htm#Main_tabControl_0">
+   </OBJECT>
+   <LI> <OBJECT type="text/sitemap">
+   <param name="name" Value = "Tools">
+   <param name="Local" Value = "FFVIII simple enemy editor_Form_Report.htm#Report_panelMid">
+   </OBJECT>
+</UL>
+</BODY>
+</HTML>
+

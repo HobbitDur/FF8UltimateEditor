@@ -19,11 +19,11 @@ class FF8UltimateEditorWidget(QWidget):
         QWidget.__init__(self)
         self.setWindowTitle("FF8 ultimate editor")
         #self.setMinimumSize(1280, 720)
-        self.setWindowIcon(QIcon(os.path.join(icon_path, 'icon.ico')))
+        self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
         self._main_layout = QVBoxLayout()
         self.setLayout(self._main_layout)
 
-        self.HOBBIT_OPTION_ITEMS = ["AI editor (IfritAI)", "Stat editor (IfritXlsx)", "Kernel text editor (ShumiTranslator)", "Shop editor (TonberryShop)", "Card value editor (CCGroup)"]
+        self.HOBBIT_OPTION_ITEMS = ["AI editor (IfritAI)", "Stat editor (IfritXlsx)", "All text editor (ShumiTranslator)", "Shop editor (TonberryShop)", "Card value editor (CCGroup)"]
 
         # Top widget to select what option we want
         self._program_option_title = QLabel("Hobbit tools:")
@@ -91,11 +91,11 @@ class FF8UltimateEditorWidget(QWidget):
 
 
         # Man made widget
-        self._ifritAI_widget = IfritAIWidget(icon_path=os.path.join("IfritAI", "Resources"), game_data_folder=os.path.join("FF8GameData"))
-        self._ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join("IfritXlsx", "Resources"), game_data_folder=os.path.join("FF8GameData"))
-        self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join("ShumiTranslator", "Resources"), game_data_folder=os.path.join("FF8GameData"))
-        self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join("TonberryShop", "Resources"))
-        self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join("CCGroup", "Resources"))
+        self._ifritAI_widget = IfritAIWidget(icon_path=os.path.join("Resources"), game_data_folder=os.path.join("FF8GameData"))
+        self._ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join("Resources"), game_data_folder=os.path.join("FF8GameData"))
+        self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join("Resources"), game_data_folder=os.path.join("FF8GameData"))
+        self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join("Resources"))
+        self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join("Resources"))
 
         self._ifritAI_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self._ifritxlsx_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)

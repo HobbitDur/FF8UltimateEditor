@@ -1,0 +1,128 @@
+/* CSS Document */
+
+body {
+width:100%; 
+padding:0;
+margin:0;
+font-family:Verdana, Arial, Helvetica, sans-serif;
+font-size:0.8em;
+text-align:center;
+}
+
+#pagewidth {
+/* width:  860px; 100%*/
+padding:0;
+text-align: left; 
+background:url('images/bck_all.gif') repeat-y 0 0;
+}
+
+.left_column{
+float:left;
+width:285px;
+
+margin:0 5px 0 5px;
+font-size:0.8em;
+}
+
+.right_column{
+margin: 0px 5px 0 290px;
+left: 2px;
+padding:5px; /* was 10*/
+/*background: pink; */
+}
+
+.clear{
+clear:both;
+/*height:0;*/
+}
+
+.white {
+color:#FFFFFF;
+}
+
+a{
+color:#990000;
+text-decoration:none;
+}
+
+a:hover{
+color:#000000;
+text-decoration:underline;
+}
+
+.f11{
+font-size:11px;
+}
+
+#header{
+background:url('images/bck_top_right.gif') repeat-x 0 0;
+height:83px;
+padding:0;
+margin:0
+}
+
+
+#header_left{
+float:left;
+background:url('images/bck_top_left.gif') repeat-x 0 0;
+height:83px;
+width:280px
+}
+
+#header_right{
+float:left;
+height:83px;
+display:block;
+}
+
+.menu{
+height:24px;
+margin-top:49px;
+}
+
+#header_center{
+float:left;
+background:url('images/bck_top_center.gif') no-repeat 0 0;
+height:83px;
+width:9px
+}
+
+.top_right{
+float:right;
+height:15px;
+line-height:15px;
+/*width:500px; oorspr*/
+width:450px;
+background:#4E4B56 url('images/start_top_right.gif') no-repeat 0 0;
+color:#FFFFFF;
+padding-left:20px; padding-right:20px; padding-top:0; padding-bottom:0
+}
+
+.top_right_header{
+float:right;
+height:45px;
+line-height:55px;
+width:500px;
+color:#FFFFFF;
+padding:0 20px 0 20px;
+font-size:1.2em;
+font-weight:bold;
+}
+
+#top_text{
+float:right;
+height:35px;
+line-height:35px;
+color:#FFFFFF;
+padding:20px 20px 0 0;
+font-size:1.2em;
+}
+
+#footer{
+background:#38393A;
+height:20px;
+line-height:20px;
+color:#FFFFFF;
+text-align:center;
+clear: both; 
+}

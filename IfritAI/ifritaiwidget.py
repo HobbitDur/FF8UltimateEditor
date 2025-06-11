@@ -394,7 +394,7 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        file_to_load = os.path.join("../IfritAI/OriginalFiles", "c0m001.dat")  # For developing faster
+        #file_to_load = os.path.join("../IfritAI/OriginalFiles", "c0m001.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat",
                                                             directory=os.getcwd())[0]
@@ -450,8 +450,8 @@ class IfritAIWidget(QWidget):
     def _load_xlsx_file(self):
         # Read the xlsx
         xlsx_manager = IfritXlsxManager()
-        #xlsx_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Xlsx file", filter="*.xlsx")[0]
-        xlsx_file_to_load = os.path.join("../IfritXlsx/OutputFiles", "ifrit.xlsx")  # For developing faster
+        xlsx_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Xlsx file", filter="*.xlsx")[0]
+        #xlsx_file_to_load = os.path.join("../IfritXlsx/OutputFiles", "ifrit.xlsx")  # For developing faster
         if xlsx_file_to_load:
             xlsx_manager.load_file(xlsx_file_to_load)
             current_monster_id = int(re.search(r'\d{3}', self.ifrit_manager.enemy.origin_file_name).group())
@@ -466,8 +466,8 @@ class IfritAIWidget(QWidget):
             self.__setup_section_data()
 
     def _load_md_file(self):
-        # md_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Md file to import", filter="*.md")[0]
-        md_file_to_load = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
+        md_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Md file to import", filter="*.md")[0]
+        # md_file_to_load = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if md_file_to_load:
             with open(md_file_to_load, 'r', encoding='utf-8') as file:
                 content = file.read()

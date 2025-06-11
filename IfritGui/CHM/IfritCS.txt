@@ -1,0 +1,14 @@
+Version=1.0
+FFVIII simple enemy editor_Form_About.htm=A9E67652
+FFVIII simple enemy editor_Form_Main.htm=5820F823
+FFVIII simple enemy editor_Form_Report.htm=FD4439DD
+Dialogs.htm=55367DD0
+GettingStarted.htm=5B6DDF9F
+IfritTOC.htm=C08865B4
+Installation.htm=32978F8B
+StartingTheProgram.htm=F23158A2
+Tutorial.htm=28E62173
+Welcome.htm=BADDA1AE
+main.htm=187C10E4
+QA.htm=C6F0E070
+ss.html=F856A3D6

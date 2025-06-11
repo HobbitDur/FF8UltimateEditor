@@ -23,7 +23,7 @@ class IfritXlsxWidget(QWidget):
         self.dat_file_selected = []
         self.xlsx_file_selected = ""
         self.logger = logging.getLogger(__name__)
-        logging.basicConfig(filename='ifritXlsx.log', level=logging.INFO)
+        #logging.basicConfig(filename='ifritXlsx.log', level=logging.INFO)
         self.__ifrit_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
         # self.setMinimumSize(300,200)
 

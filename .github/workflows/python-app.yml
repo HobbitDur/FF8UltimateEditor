@@ -28,10 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r IfritAI/requirements.txt
-          pip install -r IfritAI/FF8GameData/requirements.txt
-          pip install -r IfritXlsx/FF8GameData/requirements.txt
-          pip install -r IfritXlsx/requirements.txt
+          pip install -r FF8GameData/requirements.txt
           pip install -r requirements.txt
           pip install pyinstaller
           pip freeze
@@ -39,22 +36,18 @@ jobs:
       - name: Create release
         shell: bash
         run: |
-          pyinstaller -n IfritEnhanced -F --specpath release/build --distpath release --workpath release/build --onefile --hidden-import IfritAI --hidden-import IfritXlsx --icon=../../Resources/icon.ico --paths=IfritAI --paths=IfritXlsx main.py
-          mkdir -p release/IfritXlsx
-          mkdir -p release/IfritGui
-          mkdir -p release/IfritAI
-          mkdir -p release/IfritXlsx/FF8GameData
-          mkdir -p release/IfritAI/FF8GameData
-          mkdir -p release/IfritXlsx/Resources
-          mkdir -p release/IfritGui/Resources
-          mkdir -p release/IfritAI/Resources
-          cp -R Resources/ release/
-          cp -R IfritXlsx/Resources release/IfritXlsx/
-          cp -R IfritGui/Resources release/IfritGui/
-          cp -R IfritAI/Resources release/IfritAI/
-          cp -R IfritXlsx/FF8GameData/Resources release/IfritXlsx/FF8GameData/
-          cp -R IfritAI/FF8GameData/Resources release/IfritAI/FF8GameData/
-          cp -R IfritGui/publish release/IfritGui
+          pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
+          mkdir -p release/FF8UltimateEditor
+          mkdir -p release/FF8UltimateEditor/Resources
+          mkdir -p release/Junkshop
+          mkdir -p release/Quezacotl
+          mkdir -p release/Doomtrain
+          mkdir -p release/Siren
+          cp -R Resources/ FF8UltimateEditor/release/
+          cp -R Junkshop release/Junkshop/
+          cp -R Quezacotl release/Quezacotl/
+          cp -R Doomtrain release/Doomtrain/
+          cp -R Siren release/Siren/
           rm -R release/build
           cd release
           ls -al
@@ -64,7 +57,7 @@ jobs:
         if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
         run: |
           cd release
-          7z  a -tzip "IfritEnhanced-continuous-${{ github.sha}}.zip" .
+          7z  a -tzip "FF8UltimateEditor-continuous-${{ github.sha}}.zip" .
           pwd
           cd ..
           ls -al
@@ -73,7 +66,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           cd release
-          7z  a -tzip "IfritEnhanced-${{  github.ref_name }}.zip" .
+          7z  a -tzip "FF8UltimateEditor-${{  github.ref_name }}.zip" .
           cd ..
       - name: Deploy Package
         if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
@@ -92,6 +85,6 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
           automatic_release_tag: ${{ github.ref_name }}
-          title: "IfritEnhanced-${{ github.ref_name }}"
+          title: "FF8UltimateEditor-${{ github.ref_name }}"
           files: |
-            release/IfritEnhanced-*.zip
+            release/FF8UltimateEditor-*.zip

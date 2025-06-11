@@ -27,12 +27,12 @@ class TonberryManager():
                       "Esthar Pet Shop (Cheryl's store)", "Esthar Book Store (Karen's shop)",
                       "Esthar Shop!!! (Johnny's shop)"]
 
-    def __init__(self, ressource_folder=os.path.join("Resources")):
+    def __init__(self, resource_folder=os.path.join("Resources")):
         self.shop_file_data = bytearray()
         self.file_path = ""
         self.shop_info = [Shop() for x in range(self.NB_SHOP)]
         self.item_values = {}
-        self._item_file = os.path.join(ressource_folder, "item.txt")
+        self._item_file = os.path.join(resource_folder, "item.txt")
         self.__load_item_data(self._item_file)
 
 
