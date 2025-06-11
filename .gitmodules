@@ -1,0 +1,3 @@
+[submodule "FF8GameData"]
+	path = FF8GameData
+	url = https://github.com/HobbitDur/FF8GameData.git

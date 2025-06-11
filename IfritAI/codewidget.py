@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QWidget, QTextEdit, QPushButton, QVBoxLayout
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
-from codeanalyser import CodeAnalyser
+from IfritAI.codeanalyser import CodeAnalyser
 
 
 class CodeWidget(QWidget):

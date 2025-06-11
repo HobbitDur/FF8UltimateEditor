@@ -8,9 +8,9 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
     QColorDialog, QCheckBox, QMessageBox
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
-from codewidget import CodeWidget
-from commandwidget import CommandWidget
-from ifritmanager import IfritManager
+from IfritAI.codewidget import CodeWidget
+from IfritAI.commandwidget import CommandWidget
+from IfritAI.ifritmanager import IfritManager
 
 
 class IfritAIWidget(QWidget):
@@ -139,7 +139,7 @@ class IfritAIWidget(QWidget):
         self.layout_main.addLayout(self.layout_top)
         self.layout_main.addLayout(self.main_horizontal_layout)
 
-        self.show()
+        #self.show()
 
     def __show_info(self):
         message_box = QMessageBox()
