@@ -77,7 +77,7 @@ jobs:
           prerelease: true
           title: "Unstable Build"
           files: |
-            release/IfritEnhanced-*.zip
+            release/FF8UltimateEditor-*.zip
       - name: Deploy tag Package
         if:  startsWith(github.ref, 'refs/tags/')
         uses: crowbarmaster/GH-Automatic-Releases@latest
