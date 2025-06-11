@@ -1,0 +1,98 @@
+<HTML><HEAD><TITLE>IFRIT - Simple FFVIII Enemy Editor v0.9</TITLE>
+<META name=GENERATOR content="MSHTML 8.00.6001.18783">
+<META name=HELP-GENERATOR-VERSION content="5.08 [01-APR-09]">
+<META name=HELP-GENERATOR-FORM-NAME content=Main>
+<META name=HELP-GENERATOR-TOC-EXCLUDE-LIST content="">
+<META content="text/html; charset=windows-1252" http-equiv=Content-Type><LINK rel=stylesheet type=text/css href="Office11.css"></HEAD>
+<BODY><!-- + FORM Main + --><!-- + FORM TITLE + -->
+<H1>IFRIT - Simple FFVIII Enemy Editor v0.9</H1><!-- - FORM TITLE - --><!-- + CONTROLS MAP + --><MAP name=Main><AREA href="#Main_toolStrip1" shape=RECT alt=Strip1 coords=4,46,868,71 FRAME=""><AREA href="#Main_listBox" shape=RECT alt=Box coords=4,71,227,649 FRAME=""><AREA href="#Main_tabControl_0" shape=RECT alt=Specs coords=229,71,269,91 FRAME=""><AREA href="#Main_txtbName" shape=RECT alt=Name coords=239,106,403,126 FRAME=""><AREA href="#Main_groupBox1" shape=RECT alt=Levels coords=239,132,617,210 FRAME=""><AREA href="#Main_groupBox2" shape=RECT alt="Element  Status" coords=239,216,617,647 FRAME=""><AREA href="#Main_gbStats" shape=RECT alt=Stats coords=617,100,858,647 FRAME=""><AREA href="#Main_tabControl_1" shape=RECT alt=Items coords=269,71,309,91 FRAME=""><AREA href="#Main_tabControl_2" shape=RECT alt=Draw coords=309,71,344,91 FRAME=""><AREA href="#Main_statusStrip" shape=RECT alt=Strip coords=4,654,868,676 FRAME=""></MAP><!-- - CONTROLS MAP - --><!-- + MAIN IMAGE + --><IMG border=0 hspace=0 alt=main align=baseline src="images\Main.JPG"> <!-- - MAIN IMAGE - --><!-- + MENUS LIST + -->
+<H2>Menus:</H2>
+<UL>
+<LI><A href="#Main_fileToolStripMenuItem">File</A> 
+<LI><A href="#Main_helpToolStripMenuItem">Help</A> </LI></UL>
+<HR>
+<!-- - MENUS LIST - -->
+<H2><A name=Main_fileToolStripMenuItem>File</A></H2>
+<H2>Open...<A name=Main_tmiOpen></A></H2>
+<P>Opens a .dat file. You can also drag and drop a .dat file in the form to get the same effect.</P>
+<H2>Open folder...</H2>
+<P>Select a folder that contains the extracted files from battle.fs. After choosing a folder, all the .dat files inside will be listed if they are recognized.</P>
+<P><IMG border=0 hspace=0 alt=List align=baseline src="images\ListBox.JPG"></P>
+<P>The active path is displayed below the list: </P>
+<P><IMG border=0 hspace=0 alt=Path align=baseline src="images\Path.JPG"></P>
+<P>Note that the active file may not be among this list if you opened a file from another folder, or opened a new folder. If you change the index in the list the corresponding file will open. If you have altered the previous active file, you will be asked to save or not.</P>
+<H2>Save</H2>
+<P>Saves the opened file, NOT all the files in the active list.</P>
+<H2>Exit</H2>
+<P>Exit Ifrit.</P>
+<H2><A name=Main_helpToolStripMenuItem>Help</A></H2>
+<H2>Contents</H2>
+<P>Opens the file you now are reading.</P>
+<H2>About</H2>
+<P>Information about nothing and Ifrit. Opens the form below:<BR><IMG border=0 hspace=0 alt=About align=baseline src="images\FFVIII simple enemy editor_Form_About.jpg"><BR></P>
+<P>
+<HR>
+
+<P></P>
+<H2><A name=Main_helpToolStripMenuItem>Toolbar</A><BR><BR><BR><IMG border=0 hspace=0 alt=Toolbar align=baseline src="images\Toolbar.JPG"></H2>
+<P>The same tools as in the menu can be found in the toolbar, except the exit button. You can also type in a folder to open:</P>
+<P>&nbsp;</P>
+<P>
+<HR>
+
+<P></P><!-- + CONTROLS LIST + -->
+<H2>
+<H2><A name=Main_listBox></A></H2><A name=Main_tabControl>TABS</A></H2>
+<UL>
+<LI><A href="#Main_tabControl">Specs</A> 
+<LI><A href="#Main_tabControl">Items</A> 
+<LI><A href="#Main_tabControl">Draw</A> </LI></UL>
+<H2><A name=Main_tabControl_0>Specs</A></H2><!-- + CONTROLS MAP + --><MAP name=Main_tabControl_0><AREA href="#Main_txtbName" shape=RECT alt=Name coords=10,35,174,55 FRAME=""><AREA href="#Main_groupBox1" shape=RECT alt=Levels coords=10,61,388,139 FRAME=""><AREA href="#Main_groupBox2" shape=RECT alt="Element  Status" coords=10,145,388,576 FRAME=""><AREA href="#Main_gbStats" shape=RECT alt=Stats coords=388,29,629,576 FRAME=""></MAP><!-- - CONTROLS MAP - --><!-- + CONTROL IMAGE + --><IMG border=0 hspace=0 alt=specs align=baseline src="images\Specs.JPG"> <!-- - CONTROL IMAGE - -->
+<H2>Name &amp; Levels</H2><!-- + CONTROLS MAP + --><MAP name=Main_groupBox1><AREA href="#Main_nudMedStart" shape=RECT alt=MedStart coords=171,42,232,63 FRAME=""><AREA href="#Main_nudHighStart" shape=RECT alt=HighStart coords=283,42,344,63 FRAME=""></MAP><!-- - CONTROLS MAP - --><!-- + CONTROL IMAGE + --><IMG border=0 hspace=0 alt=LevelName align=baseline src="images\Level&amp;Name.JPG"> 
+<P>The enemy's name can be altered here.&nbsp;Please note that not all values are known (to me). Take caution when altering names. Ifrit will attempt&nbsp;to show the real name if you type in unknown values, displayed to the right&nbsp;of the name&nbsp;text box.</P>
+<P>Concerning the starting level of the enemy's medium and high levels: These levels will affect what the enemy will drop at certain levels, and what to steal and draw.&nbsp;</P>
+<H2>Elements and statuses</H2><!-- + CONTROLS MAP + --><MAP name=Main_groupBox2><AREA href="#Main_tbFire" shape=RECT alt=Thnd. coords=58,43,330,77 FRAME=""><AREA href="#Main_tbThunder" shape=RECT alt=Thunder coords=58,71,330,105 FRAME=""><AREA href="#Main_tbWater" shape=RECT alt=300% coords=58,99,330,133 FRAME=""><AREA href="#Main_tbPoison" shape=RECT alt=Poison coords=58,127,330,161 FRAME=""><AREA href="#Main_tbIce" shape=RECT alt=Ice coords=58,159,330,193 FRAME=""><AREA href="#Main_tbEarth" shape=RECT alt=300% coords=58,187,330,221 FRAME=""><AREA href="#Main_tbWind" shape=RECT alt=Water coords=59,215,331,249 FRAME=""><AREA href="#Main_tbHoly" shape=RECT alt=Holy coords=58,241,330,275 FRAME=""><AREA href="#Main_txtbStDeath" shape=RECT alt=StDeath coords=58,281,96,302 FRAME=""><AREA href="#Main_txtbStPoison" shape=RECT alt=StPoison coords=140,281,178,302 FRAME=""><AREA href="#Main_txtbStPetrify" shape=RECT alt=StPetrify coords=224,281,262,302 FRAME=""><AREA href="#Main_txtbStBlind" shape=RECT alt=StBlind coords=306,281,344,302 FRAME=""><AREA href="#Main_txtbStSilence" shape=RECT alt=StSilence coords=58,308,96,329 FRAME=""><AREA href="#Main_txtbStBerserk" shape=RECT alt=StBerserk coords=140,308,178,329 FRAME=""><AREA href="#Main_txtbStZombie" shape=RECT alt=StZombie coords=224,308,262,329 FRAME=""><AREA href="#Main_txtbStSleep" shape=RECT alt=StSleep coords=306,308,344,329 FRAME=""><AREA href="#Main_txtbStHaste" shape=RECT alt=StHaste coords=58,335,96,356 FRAME=""><AREA href="#Main_txtbStSlow" shape=RECT alt=StSlow coords=140,335,178,356 FRAME=""><AREA href="#Main_txtbStStop" shape=RECT alt=StStop coords=224,335,262,356 FRAME=""><AREA href="#Main_txtbStRegen" shape=RECT alt=StRegen coords=306,335,344,356 FRAME=""><AREA href="#Main_txtbStReflect" shape=RECT alt=StReflect coords=58,362,96,383 FRAME=""><AREA href="#Main_txtbStDoom" shape=RECT alt=StDoom coords=140,362,178,383 FRAME=""><AREA href="#Main_txtbStPetrCount" shape=RECT alt=StPetrCount coords=224,362,262,383 FRAME=""><AREA href="#Main_txtbStFloat" shape=RECT alt=StFloat coords=306,362,344,383 FRAME=""><AREA href="#Main_txtbStConfu" shape=RECT alt=StConfu coords=140,389,178,410 FRAME=""><AREA href="#Main_txtbStDrain" shape=RECT alt=StDrain coords=59,388,97,409 FRAME=""><AREA href="#Main_txtbStVit0" shape=RECT alt=StVit0 coords=224,389,262,410 FRAME=""><AREA href="#Main_txtbStPercent" shape=RECT alt=StPercent coords=306,389,344,410 FRAME=""></MAP><!-- - CONTROLS MAP - --><!-- + CONTROL IMAGE + --><IMG border=0 hspace=0 alt=EandS align=baseline src="images\Ele&amp;Stat.JPG"> 
+<P>The enemy can absorb, resist, nullify or be weak against one or more elements. When dragging the arrow in the track bar you will see how the percentage changes. The elemental rate can only be dividable by 10.</P>
+<P>&nbsp;</P>
+<P>100% :&nbsp;Normal damage</P>
+<P>10% - 90% : Percentage of damage. Damage is in other words&nbsp;reduced for this element.</P>
+<P>0% : The enemy is immune to this element.</P>
+<P>-X% (negative value)&nbsp;:&nbsp; The enemy will absorb X% of the damage, in other words heal it.</P>
+<P>100%+ : The enemy becomes weak towards this element.</P>
+<P>&nbsp;</P>
+<P>Under the elements you can specify each status resistance in %.</P>
+<H2>Stats</H2>
+<P><!-- + CONTROLS MAP + --><MAP name=Main_gbStats><AREA href="#Main_shapeContainer1" shape=RECT alt=Container1 coords=7,40,242,567 FRAME=""><AREA href="#Main_txtbHP1" shape=RECT alt=HP1 coords=65,52,119,73 FRAME=""><AREA href="#Main_txtbHP2" shape=RECT alt=VIT_3 coords=184,52,238,73 FRAME=""><AREA href="#Main_txtbHP3" shape=RECT alt=HP3 coords=65,77,119,98 FRAME=""><AREA href="#Main_txtbHP4" shape=RECT alt=VIT_4 coords=184,77,238,98 FRAME=""><AREA href="#Main_txtbStr1" shape=RECT alt=Str1 coords=65,111,119,132 FRAME=""><AREA href="#Main_txtbStr2" shape=RECT alt=SPR_1 coords=184,111,238,132 FRAME=""><AREA href="#Main_txtbStr3" shape=RECT alt=Str3 coords=65,136,119,157 FRAME=""><AREA href="#Main_txtbStr4" shape=RECT alt=SPR_2 coords=184,136,238,157 FRAME=""><AREA href="#Main_txtbMag1" shape=RECT alt=Mag1 coords=65,170,119,191 FRAME=""><AREA href="#Main_txtbMag2" shape=RECT alt=SPR_3 coords=184,170,238,191 FRAME=""><AREA href="#Main_txtbMag3" shape=RECT alt=Mag3 coords=65,195,119,216 FRAME=""><AREA href="#Main_txtbMag4" shape=RECT alt=SPR_4 coords=184,195,238,216 FRAME=""><AREA href="#Main_txtbVit1" shape=RECT alt=Vit1 coords=65,229,119,250 FRAME=""><AREA href="#Main_txtbVit2" shape=RECT alt=SPD_1 coords=184,229,238,250 FRAME=""><AREA href="#Main_txtbVit3" shape=RECT alt=Vit3 coords=65,254,119,275 FRAME=""><AREA href="#Main_txtbVit4" shape=RECT alt=SPD_2 coords=184,254,238,275 FRAME=""><AREA href="#Main_txtbSpr1" shape=RECT alt=Spr1 coords=65,288,119,309 FRAME=""><AREA href="#Main_txtbSpr2" shape=RECT alt=SPD_3 coords=184,288,238,309 FRAME=""><AREA href="#Main_txtbSpr3" shape=RECT alt=Spr3 coords=65,314,119,335 FRAME=""><AREA href="#Main_txtbSpr4" shape=RECT alt=SPD_4 coords=184,314,238,335 FRAME=""><AREA href="#Main_txtbSpd1" shape=RECT alt=Spd1 coords=65,347,119,368 FRAME=""><AREA href="#Main_txtbSpd2" shape=RECT alt=EVA_1 coords=184,347,238,368 FRAME=""><AREA href="#Main_txtbSpd3" shape=RECT alt=Spd3 coords=65,373,119,394 FRAME=""><AREA href="#Main_txtbSpd4" shape=RECT alt=EVA_2 coords=184,373,238,394 FRAME=""><AREA href="#Main_txtbEva1" shape=RECT alt=Eva1 coords=65,406,119,427 FRAME=""><AREA href="#Main_txtbEva2" shape=RECT alt=EVA_3 coords=184,406,238,427 FRAME=""><AREA href="#Main_txtbEva3" shape=RECT alt=Eva3 coords=65,432,119,453 FRAME=""><AREA href="#Main_txtbEva4" shape=RECT alt=EVA_4 coords=184,432,238,453 FRAME=""><AREA href="#Main_txtbEXP" shape=RECT alt=EXP coords=51,467,128,488 FRAME=""><AREA href="#Main_txtbAP" shape=RECT alt=AP coords=184,467,238,488 FRAME=""><AREA href="#Main_txtbXexp" shape=RECT alt=Xexp coords=92,493,169,514 FRAME=""><AREA href="#Main_btnStat" shape=RECT alt="Show stats pr level" coords=92,520,238,549 FRAME=""></MAP><!-- - CONTROLS MAP - --><!-- + CONTROL IMAGE + --><IMG border=0 hspace=0 alt=Stats align=baseline src="images\Stats.JPG"> </P>
+<P>In FFVIII the enemies pretty much follows your level. Thus their stats can change too. Square decided to base 4 variables on each stat to get the actual value at each level. The actual values&nbsp;follow these formulas (<STRONG>x</STRONG> is a value of monster level):</P>
+<P>&nbsp;</P>
+<P>HP:<BR>(hp_1 * x * x / 20) + (hp_1 + hp_3 * 100) * x + hp_2 * 10 + hp_4 * 1000<BR><BR>STR:<BR>(x * str_1 / 10 + x / str_2 - x * x / 2 / str_4 + str_3) / 4&nbsp;&nbsp; *PLEASE NOTE: I'm not 100% sure on the STR formula, but it should be accurate enough to get the general idea.<BR><BR>MAG:<BR>exactly like STR<BR><BR>VIT:<BR>x / vit_2 - x / vit_4 + x * vit_1 + vit_3<BR><BR>SPR, SPD, EVA:<BR>Exactly like VIT<BR><BR>EXP:<BR>exp_value * (5 * (x - average_party_level) / average_party_level + 4)<BR><BR>Extra EXP:<BR>exp_extra_value * (5 * (x - finish_char_level) / finish_char_level + 4)</P>
+<H2>Show stats pr. level</H2>
+<P>Clicking this button will open a new dialog (form) displaying the actual stat values for each level. You can choose how many levels you want to view at a time. Changing values in the main form will update this form without closing it. Note that only exp. and extra exp. are the only values affected by the party's level.</P>
+<H2><A name=Main_tabControl_1>Items</A></H2><!-- + CONTROLS MAP + --><MAP name=Main_tabControl_1><AREA href="#Main_txtbMugRate" shape=RECT alt=MugRate coords=101,528,174,548 FRAME=""><AREA href="#Main_txtbDropRate" shape=RECT alt=DropRate coords=421,528,494,548 FRAME=""><AREA href="#Main_gbItemsLow" shape=RECT alt="Low level mug" coords=10,61,313,206 FRAME=""><AREA href="#Main_groupBox3" shape=RECT alt="Med. level mug" coords=10,212,313,357 FRAME=""><AREA href="#Main_groupBox4" shape=RECT alt="High level mug" coords=10,363,313,508 FRAME=""><AREA href="#Main_groupBox5" shape=RECT alt="Low level Drop" coords=326,61,629,206 FRAME=""><AREA href="#Main_groupBox6" shape=RECT alt="Med. level drop" coords=326,212,629,357 FRAME=""><AREA href="#Main_groupBox7" shape=RECT alt="High level drop" coords=326,363,629,508 FRAME=""></MAP><!-- - CONTROLS MAP - --><!-- + CONTROL IMAGE + -->
+<P><IMG border=0 hspace=0 alt=Items align=baseline src="images\Items.JPG"> </P>
+<P>&nbsp;</P>
+<P><IMG border=0 hspace=0 alt=Rate align=baseline src="images\Rate.JPG"></P>
+<P>Mugrate and droprate are how likely it is in % the drop or mug will occur.<!-- - CONTROL IMAGE - --></P>
+<H2>
+<H2><IMG border=0 hspace=0 alt=Item align=baseline src="images\Item.JPG"></H2><A name=Main_txtbDropRate></A></H2>
+<P><!-- + CONTROLS MAP + --><MAP name=Main_gbItemsLow>Each enemy holds up to 4 different items&nbsp;in drop and mug. However only 1 of these items may be claimed. To the right of each item the quantity&nbsp;is displayed and may be changed as well. The different drops also depends on Low, Medium and High levels.<AREA href="#Main_cbMugLow1" shape=RECT alt=Rare coords=68,43,210,66 FRAME=""><AREA href="#Main_nudMugLow1" shape=RECT alt=MugLow1 coords=237,44,290,65 FRAME=""><AREA href="#Main_cbMugLow2" shape=RECT alt=x coords=68,72,210,95 FRAME=""><AREA href="#Main_nudMugLow2" shape=RECT alt=MugLow2 coords=237,73,290,94 FRAME=""><AREA href="#Main_cbMugLow3" shape=RECT alt=MugLow3 coords=68,101,210,124 FRAME=""><AREA href="#Main_nudMugLow3" shape=RECT alt=MugLow3 coords=237,102,290,123 FRAME=""><AREA href="#Main_cbMugLow4" shape=RECT alt=x coords=68,130,210,153 FRAME=""><AREA href="#Main_nudMugLow4" shape=RECT alt=MugLow4 coords=237,131,290,152 FRAME=""></MAP><!-- - CONTROLS MAP - --><!-- + CONTROL IMAGE + --></P>
+<P>&nbsp;</P>
+<H2><A name=Main_tabControl_2>Draw</A> <BR><BR><IMG border=0 hspace=0 alt=Draw align=baseline src="images\Draw.JPG"></H2>
+<H2><!-- - CONTROL IMAGE - --></H2>
+<H2><IMG border=0 hspace=0 alt=ds align=baseline src="images\DrawSingle.JPG"></H2>
+<P>Each enemy can hold max 4 magics to draw. Depending on which level the enemy are at, the enemy may hold different magics. Like items there are Low, Medium and High levels. The '??' are unknown values (for me), and&nbsp;editing these will not change when you save the file. I merely made this to see if something other than 0 ever were loaded.</P><!-- + CONTROLS MAP + --><MAP name=Main_groupBox8><AREA href="#Main_cbDrawLow1" shape=RECT alt=DrawLow1 coords=18,46,160,69 FRAME=""><AREA href="#Main_nudDrawLow1" shape=RECT alt=DrawLow1 coords=187,47,240,68 FRAME=""><AREA href="#Main_cbDrawLow2" shape=RECT alt=DrawLow2 coords=18,75,160,98 FRAME=""><AREA href="#Main_nudDrawLow2" shape=RECT alt=DrawLow2 coords=187,76,240,97 FRAME=""><AREA href="#Main_cbDrawLow3" shape=RECT alt=DrawLow3 coords=18,104,160,127 FRAME=""><AREA href="#Main_nudDrawLow3" shape=RECT alt=DrawLow3 coords=187,105,240,126 FRAME=""><AREA href="#Main_cbDrawLow4" shape=RECT alt=DrawLow4 coords=18,133,160,156 FRAME=""><AREA href="#Main_nudDrawLow4" shape=RECT alt=DrawLow4 coords=187,134,240,155 FRAME=""></MAP><!-- - CONTROLS MAP - --><!-- + CONTROL IMAGE + --><!-- - CONTROL IMAGE - -->
+<H2>
+<H2><A name=Main_groupBox9></A></H2><!-- + CONTROLS MAP + --><MAP name=Main_groupBox9><AREA href="#Main_cbDrawMed1" shape=RECT alt=DrawMed1 coords=18,46,160,69 FRAME=""><AREA href="#Main_nudDrawMed1" shape=RECT alt=DrawMed1 coords=187,47,240,68 FRAME=""><AREA href="#Main_cbDrawMed2" shape=RECT alt=DrawMed2 coords=18,75,160,98 FRAME=""><AREA href="#Main_nudDrawMed2" shape=RECT alt=DrawMed2 coords=187,76,240,97 FRAME=""><AREA href="#Main_cbDrawMed3" shape=RECT alt=DrawMed3 coords=18,104,160,127 FRAME=""><AREA href="#Main_nudDrawMed3" shape=RECT alt=DrawMed3 coords=187,105,240,126 FRAME=""><AREA href="#Main_cbDrawMed4" shape=RECT alt=DrawMed4 coords=18,133,160,156 FRAME=""><AREA href="#Main_nudDrawMed4" shape=RECT alt=DrawMed4 coords=187,134,240,155 FRAME=""></MAP><!-- - CONTROLS MAP - --><!-- + CONTROL IMAGE + --><!-- - CONTROL IMAGE - --></H2>
+<H2>
+<H2><A name=Main_nudDrawHigh4></A></H2></H2><!-- - FORM Main - -->
+<SCRIPT id=wbh type=text/javascript>
+<!--
+try {
+    var ext = window.external;
+    if (top == self) if (window.document.designMode == "Inherit") top.location.href="main.htm?"+String.fromCharCode(34)+location.href+String.fromCharCode(34);
+}
+catch(e){
+}
+//-->
+</SCRIPT>
+</BODY></HTML>

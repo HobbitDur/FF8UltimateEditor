@@ -29,7 +29,7 @@ class IfritXlsxWidget(QWidget):
 
         self.general_info_label_widget = QLabel(
             "This tool process is pretty simple<br/>"
-            "First you transform c0mxxx.dat files (with deling for example)<br/>"
+            "First you extract c0mxxx.dat files (with deling for example)<br/>"
             "With this, you'll transform those .dat in a xlsx file<br/>"
             "Then you can edit this xlsx file with either Excel (recommended) or libreOffice<br/>"
             "Once you have finished editing the xlsx file, you save it<br/>"
@@ -42,7 +42,7 @@ class IfritXlsxWidget(QWidget):
         self.process_selector = QComboBox()
         self.process_selector.addItems(self.WORK_OPTION)
         self.process_selector.setCurrentIndex(0)
-        self.process_selector.setFixedSize(100, 30)
+        #self.process_selector.setFixedSize(100, 30)
         self.process_selector.activated.connect(self.__process_change)
 
         self.process_layout = QHBoxLayout()

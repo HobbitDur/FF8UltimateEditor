@@ -1,0 +1,28 @@
+<HTML><HEAD><TITLE>QA</TITLE>
+<META name=GENERATOR content="MSHTML 8.00.6001.18783">
+<META name=HELP-GENERATOR-VERSION content="5.08 [01-APR-09]">
+<META content="text/html; charset=windows-1252" http-equiv=Content-Type><LINK rel=stylesheet type=text/css href="Office11.css"></HEAD>
+<BODY>
+<H1>QA</H1>
+<P>&nbsp;</P>
+<P>Known issues</P>
+<P>Changing the names may not have the desired effect, but should work on most enemies. This is due to some values are unknown (to me).<BR><BR>When you save and a folder is active, but the active file is not inside the folder, the list names will be updated anyway. However no files within the chosen folder will be affected. This occurs only if the file name is identical to one inside the active folder. This is not actually an issue, but may cause confusion.</P>
+<P>Somewhat unknown issue (:P)<BR>I'm not entirely sure the HP and MP stats shown pr. level are correct.</P>
+<P><BR>Q: Can't I edit the battle.fs directly?<BR>A: Sorry, not yet.</P>
+<P>Q: How can I know when re-naming an enemy -may- cause problems?<BR>A: After opening a file; before you alter anything else, try re-naming the enemy. Then re-name it back to the original. Now, if the save button still is enabled (not grayed out) it means you can't get the original name back. Reopen the file without saving to reset the value.</P>
+<P>Q: Is this really all I can edit?<BR>A: With this program, yes.</P>
+<P>Q: What's up with the elemental editing?<BR>A: Each enemy can have pretty unique resistances, weaknesses and absorbings. Even pretty high values (I think :P). Why limit it?</P>
+<P>Q: Why are the stat values this confusing?<BR>A: In FFVIII the enemies are always rounded down to your level. Because of this their stats varies too. Therefore Square apparently decided to have four variables for each stats which, based on the enemy's level, changes the stat value. Making it like this was the simplest way of doing it. I may add a more user-friendly approach in the future. As for now, however, you must view the "stat pr. level" window to see the actual values.</P>
+<P>Q: What are those '??' in the draw tab?<BR>A: I'm not sure. They load from the bytes next to the magic drawn and are always 0. You can change those values, but will not be saved. At least as of yet.</P>
+<P>Q: I changed the '??' values next to the draw magic, but when I reload the enemy they're still 0. Why?<BR>A: See previous question. They are dummied out.<BR></P>
+<SCRIPT id=wbh type=text/javascript>
+<!--
+try {
+    var ext = window.external;
+    if (top == self) if (window.document.designMode == "Inherit") top.location.href="main.htm?"+String.fromCharCode(34)+location.href+String.fromCharCode(34);
+}
+catch(e){
+}
+//-->
+</SCRIPT>
+</BODY></HTML>

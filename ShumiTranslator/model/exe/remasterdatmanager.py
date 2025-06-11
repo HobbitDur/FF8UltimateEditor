@@ -1,8 +1,4 @@
-import os
 import pathlib
-
-from FF8GameData.ExeSection.exefile import SectionExeFile
-import csv
 
 from FF8GameData.GenericSection.offsetandtext import SectionOffsetAndText
 from FF8GameData.GenericSection.sizeandoffsetandtext import SectionSizeAndOffsetAndText

@@ -1,0 +1,61 @@
+[Options]
+Binary index = No
+Compatibility = 1.1 Or later
+Compiled file = Ifrit.chm
+Contents file = Ifrit.hhc
+index file = Ifrit.hhk
+Default Topic = Welcome.htm
+Display compile progress=Yes
+Full-text search=Yes
+Language=0x409 English (United States)
+Title=Ifrit help
+[Files]
+Dialogs.htm
+FFVIII simple enemy editor_Form_About.htm
+FFVIII simple enemy editor_Form_Main.htm
+FFVIII simple enemy editor_Form_Report.htm
+GettingStarted.htm
+IfritTOC.htm
+Installation.htm
+QA.htm
+ss.html
+StartingTheProgram.htm
+Welcome.htm
+images\Draw.JPG
+images\DrawSingle.JPG
+images\Ele&Stat.JPG
+images\FFVIII simple enemy editor_Form_About.jpg
+images\ffviii-ifrit-real.jpg
+images\Item.JPG
+images\Items.JPG
+images\Level&Name.JPG
+images\ListBox.JPG
+images\Main.JPG
+images\Path.JPG
+images\Rate.JPG
+images\Specs.JPG
+images\StatprLevel.JPG
+images\StatprLevelCombobox.JPG
+images\Stats.JPG
+images\StatsExample.JPG
+images\StatsExamplewMain.JPG
+images\Toolbar.JPG
+
+[ALIAS]
+IDH_Dialogs=Dialogs.htm
+IDH_FFVIII simple enemy editor_Form_About=FFVIII simple enemy editor_Form_About.htm
+IDH_FFVIII simple enemy editor_Form_Main=FFVIII simple enemy editor_Form_Main.htm
+IDH_FFVIII simple enemy editor_Form_Report=FFVIII simple enemy editor_Form_Report.htm
+IDH_GettingStarted=GettingStarted.htm
+IDH_IfritTOC=IfritTOC.htm
+IDH_Installation=Installation.htm
+IDH_QA=QA.htm
+IDH_ss=ss.html
+IDH_StartingTheProgram=StartingTheProgram.htm
+IDH_Welcome=Welcome.htm
+
+[MAP]
+#include Ifrit.h
+[TEXT POPUPS]
+#include Ifrit.h
+#include Ifrit.txt

@@ -5,7 +5,7 @@ import re
 from FF8GameData.gamedata import GameData
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from IfritXlsx import xlsxmanager
-from IfritXlsx.xlsxmanager import DatToXlsx, XlsxToDat
+from IfritXlsx.xlsxmanager import XlsxToDat, DatToXlsx
 
 
 class IfritXlsxManager:
@@ -61,14 +61,17 @@ class IfritXlsxManager:
                     ennemy.write_data_to_file(self.game_data, current_dat_file)
         self._xlsx_to_dat_manager.close_file()
 
-    def get_monster_data_from_xlsx(self, load_all_data=False, load_only_first=False) -> dict:
+    def get_monster_data_from_xlsx(self, load_all_data=False, load_only_first=False, load_monster_id=-1) -> dict:
         monster_list = {}
         for sheet in self._xlsx_to_dat_manager.workbook:
-            print(sheet.title)
             if sheet.title != xlsxmanager.REF_DATA_SHEET_TITLE:
-                current_monster = MonsterAnalyser(self.game_data)
+
                 original_file_name = self._xlsx_to_dat_manager.read_original_file(sheet)
-                print(original_file_name)
+                monster_id = int(re.search(r'\d{3}', original_file_name).group())
+                if load_monster_id != -1 and load_monster_id != monster_id:
+                    continue
+                print(sheet.title)
+                current_monster = MonsterAnalyser(self.game_data)
                 self._xlsx_to_dat_manager.read_monster_name(self.game_data, sheet, current_monster)
                 self._xlsx_to_dat_manager.read_stat(self.game_data, sheet, current_monster)
                 self._xlsx_to_dat_manager.read_def(self.game_data, sheet, current_monster)

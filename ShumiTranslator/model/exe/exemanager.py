@@ -1,8 +1,6 @@
 import os
 
 from FF8GameData.ExeSection.exefile import SectionExeFile
-import csv
-
 from FF8GameData.gamedata import GameData, MsdType
 
 

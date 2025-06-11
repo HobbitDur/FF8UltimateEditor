@@ -355,6 +355,9 @@ class CodeAnalyser:
         temp_command_list = CodeAnalyseTool.analyse_loop(self._section_lines, op_if_info['func_name'], op_else_info['func_name'], self.game_data,
                                                          self.enemy_data)
 
+        print("analyse code")
+        print(self._section_lines)
+        print(temp_command_list)
         # Changing line index of each command as they should be in the correct order
         # Also remove empty lines
         index = 0
@@ -368,7 +371,7 @@ class CodeAnalyser:
         current_if_type = CurrentIfType.NONE
         for i in range(len(self._command_list)):
             current_if_type = self._command_list[i].compute_op_data(current_if_type)
-
+        print(temp_command_list)
     def get_command(self):
         return self._command_list
 

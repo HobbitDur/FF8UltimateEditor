@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<!-- Sitemap 1.0 -->
+<!-- Put Java help object tag here -->
+</HEAD>
+<BODY>
+<UL>
+        <LI>  <OBJECT type="text/sitemap">
+                <param name="Name" value="Ifrit">
+                <param name="Local" value="Welcome.htm">
+                </OBJECT>
+        <UL>
+                <LI>  <OBJECT type="text/sitemap">
+                        <param name="Name" value="Introduction + Credits">
+                        <param name="Local" value="Welcome.htm">
+                        </OBJECT>
+                <UL>
+                </UL>
+                <LI>  <OBJECT type="text/sitemap">
+                        <param name="Name" value="Getting Started">
+                        <param name="Local" value="GettingStarted.htm">
+                        </OBJECT>
+                <UL>
+                        <LI>  <OBJECT type="text/sitemap">
+                                <param name="Name" value="Installation">
+                                <param name="Local" value="Installation.htm">
+                                </OBJECT>
+                        <UL>
+                        </UL>
+                        <LI>  <OBJECT type="text/sitemap">
+                                <param name="Name" value="Starting the program">
+                                <param name="Local" value="StartingTheProgram.htm">
+                                </OBJECT>
+                        <UL>
+                        </UL>
+                </UL>
+                <LI>  <OBJECT type="text/sitemap">
+                        <param name="Name" value="Dialogs">
+                        <param name="Local" value="Dialogs.htm">
+                        </OBJECT>
+                <UL>
+                        <LI>  <OBJECT type="text/sitemap">
+                                <param name="Name" value="Main window">
+                                <param name="Local" value="FFVIII simple enemy editor_Form_Main.htm">
+                                </OBJECT>
+                        <UL>
+                                <LI>  <OBJECT type="text/sitemap">
+                                        <param name="Name" value="File">
+                                        <param name="Local" value="FFVIII simple enemy editor_Form_Main.htm#Main_fileToolStripMenuItem">
+                                        </OBJECT>
+                                <LI>  <OBJECT type="text/sitemap">
+                                        <param name="Name" value="Help">
+                                        <param name="Local" value="FFVIII simple enemy editor_Form_Main.htm#Main_helpToolStripMenuItem">
+                                        </OBJECT>
+                                <LI>  <OBJECT type="text/sitemap">
+                                        <param name="Name" value="Toolbar">
+                                        <param name="Local" value="FFVIII simple enemy editor_Form_Main.htm#Main_helpToolStripMenuItem">
+                                        </OBJECT>
+                                <LI>  <OBJECT type="text/sitemap">
+                                        <param name="Name" value="Specs">
+                                        <param name="Local" value="FFVIII simple enemy editor_Form_Main.htm#Main_tabControl_0">
+                                        </OBJECT>
+                                <LI>  <OBJECT type="text/sitemap">
+                                        <param name="Name" value="Items">
+                                        <param name="Local" value="FFVIII simple enemy editor_Form_Main.htm#Main_tabControl_1">
+                                        </OBJECT>
+                                <LI>  <OBJECT type="text/sitemap">
+                                        <param name="Name" value="Draw">
+                                        <param name="Local" value="FFVIII simple enemy editor_Form_Main.htm#Main_tabControl_2">
+                                        </OBJECT>
+
+                        </UL>
+                        <LI>  <OBJECT type="text/sitemap">
+                                <param name="Name" value="Report">
+                                <param name="Local" value="FFVIII simple enemy editor_Form_Report.htm">
+                                </OBJECT>
+                        <UL>
+                                <LI>  <OBJECT type="text/sitemap">
+                                        <param name="Name" value="Grid">
+                                        <param name="Local" value="FFVIII simple enemy editor_Form_Report.htm#Report_panelMid">
+                                        </OBJECT>
+
+                        </UL>
+                </UL>
+                <LI>  <OBJECT type="text/sitemap">
+                        <param name="Name" value="QA">
+                        <param name="Local" value="QA.htm">
+                        </OBJECT>
+                <UL>
+                </UL>
+        </UL>
+</UL>
+</BODY>
+</HTML>
+

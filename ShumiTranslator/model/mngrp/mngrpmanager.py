@@ -1,14 +1,16 @@
 from FF8GameData.FF8HexReader.mngrp import Mngrp
 from FF8GameData.FF8HexReader.mngrphd import Mngrphd
-from ShumiTranslator.model.mngrp.m00x.m00xmanager import m00XManager
-from ShumiTranslator.model.mngrp.textbox.sectiontextboxentry import SectionTextBoxEntry
-from ShumiTranslator.model.mngrp.textbox.textboxmanager import TextBoxManager
-from ShumiTranslator.model.mngrp.textbox.sectionmaptextbox import SectionMapTextBox
-from ShumiTranslator.model.mngrp.m00x.sectionm00bin import Sectionm00Bin
-from ShumiTranslator.model.mngrp.string.sectionstring import SectionString
+
+import csv
 
 from FF8GameData.gamedata import GameData, SectionType
 from FF8GameData.GenericSection.listff8text import ListFF8Text
+from ShumiTranslator.model.mngrp.m00x.m00xmanager import m00XManager
+from ShumiTranslator.model.mngrp.m00x.sectionm00bin import Sectionm00Bin
+from ShumiTranslator.model.mngrp.string.sectionstring import SectionString
+from ShumiTranslator.model.mngrp.textbox.sectionmaptextbox import SectionMapTextBox
+from ShumiTranslator.model.mngrp.textbox.sectiontextboxentry import SectionTextBoxEntry
+from ShumiTranslator.model.mngrp.textbox.textboxmanager import TextBoxManager
 from ShumiTranslator.model.mngrp.tkmnmes.sectiontkmnmes import SectionTkmnmes
 
 

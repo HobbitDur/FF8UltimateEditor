@@ -8,16 +8,16 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
     QMessageBox, QComboBox
 
 from FF8GameData.gamedata import GameData, FileType, SectionType, RemasterCardType
-from ShumiTranslator.model.battle.battlemanager import BattleManager
-from ShumiTranslator.model.exe.exemanager import ExeManager
-from ShumiTranslator.model.exe.remasterdatmanager import RemasterDatManager
-from ShumiTranslator.model.field.fieldfsmanager import FieldFsManager
-from ShumiTranslator.model.kernel.kernelmanager import KernelManager
-from ShumiTranslator.model.mngrp.mngrpmanager import MngrpManager
-from ShumiTranslator.model.mngrp.string.sectionstring import SectionString
-from ShumiTranslator.model.world.worldfsmanager import WorldFsManager
-from ShumiTranslator.view.sectionwidget import SectionWidget
-from ShumiTranslator.view.tabholderwidget import TabHolderWidget
+from .model.battle.battlemanager import BattleManager
+from .model.exe.exemanager import ExeManager
+from .model.exe.remasterdatmanager import RemasterDatManager
+from .model.field.fieldfsmanager import FieldFsManager
+from .model.kernel.kernelmanager import KernelManager
+from .model.mngrp.mngrpmanager import MngrpManager
+from .model.mngrp.string.sectionstring import SectionString
+from .model.world.worldfsmanager import WorldFsManager
+from .view.sectionwidget import SectionWidget
+from .view.tabholderwidget import TabHolderWidget
 
 
 class ShumiTranslator(QWidget):
@@ -25,7 +25,7 @@ class ShumiTranslator(QWidget):
     FILE_MANAGED = ['kernel.bin', 'namedic.bin', 'mngrp.bin', 'FF8.exe/remaster.dat', 'c0mxx.dat', 'field.fs', 'world.fs']
     FILE_MANAGED_REGEX = ['*kernel*.bin', '*namedic*.bin', '*mngrp*.bin', 'FF8*.exe;off_cards_names_*.dat', "c0m*.dat", 'field*.fs', 'world*.fs']
 
-    def __init__(self, icon_path='Resources', game_data_folder=os.path.join("FF8GameData")):
+    def __init__(self, icon_path='Resources',game_data_folder="FF8GameData"):
         QWidget.__init__(self)
 
         # Special data

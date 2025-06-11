@@ -1,0 +1,56 @@
+.shadetabs{
+padding:  0;  /*weggehaald 3px mvr*/
+margin-left: 0;
+margin-right: 0;
+margin-top: 49px;/*puts tabs in header area*/
+margin-bottom: 0;
+/*font: bold 12px Verdana;*/
+/*list-style-type: none;*/
+} 
+
+.shadetabs li{
+float: left; /* test s */ 
+height: 30px; /* test s */
+display: inline;
+margin: 0;
+}
+
+.shadetabs li a{
+margin-right: 0px; /*weggehaald 3px mvr*/
+border: 1px solid #778;
+color: #2d2b2b;
+}
+
+.shadetabs li a:hover{
+text-decoration: underline;
+color: #2d2b2b;
+}
+
+.shadetabs li.selected{
+position: relative;
+top: 1px;
+}
+
+.shadetabs li.selected a{ /*selected main tab style */
+border-bottom-color: white
+}
+
+.shadetabs li.selected a:hover{ /*selected main tab style */
+text-decoration: none;
+}
+
+.tabcontentstyle /*style of tab content oontainer*/
+/*width: 450px;  was 450*/
+margin-bottom: 1em;
+/*padding: 10px;*/
+}
+
+.tabcontent{
+display:none;  
+}
+
+@media print {
+.tabcontent {
+display:block!important;
+}
+}

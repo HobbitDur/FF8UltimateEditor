@@ -1,0 +1,219 @@
+/* Style Sheet Last updated - 3/1/00 */ 
+/* This style sheet is for IE 4.02 and up */ 
+
+
+/* BODY = default paragraph font */ 
+	body		{bgcolor: #ffffff; font-family: Tahoma, Arial, Helvetica, sans-serif; font-size: 70%; margin: 0px;}
+		
+/* HYPERLINKS */ 
+	a:link		{color: #0000cc; text-decoration: none;}
+	a:hover		{text-decoration: underline;}
+	a:active	{color: #0000cc;}
+	a:visited	{color: #990099; text-decoration: none;}
+	a:visited:hover		{text-decoration: underline;}	
+	.pop		{text-decoration: none;}
+	.homelink	{font-size: 85%; text-decoration: none; color: #0000CC;}
+	.homelink:hover	{text-decoration: underline; color: #0000CC;}
+	.homelink:visited	{color: #0000CC;}
+	.bannerlink	{text-decoration: none; color: #0000CC;}
+	.bannerlink:hover	{text-decoration: underline; color: #0000CC;}
+	.bannerlink:visited	{color: #0000CC;}
+
+/* LISTS */ 
+	ol		{font-size: 100%; margin-top: .5em; margin-bottom: 0em; margin-left: 4.5em; margin-right: 1em;}
+	ul		{font-size: 100%; margin-bottom: 0em; margin-top: .5em; list-style-image: url("../images/bluedot.gif"); margin-left: 4em; margin-right: 1em;}
+	ol ul	{list-style-image: url("../images/bluedot.gif"); margin-top: .5em;}
+	ul ul	{list-style-image: url("../images/bluedot.gif"); margin-top: .5em;}
+	li		{margin-bottom: .7em; margin-left: -1.5em;}
+	.tourul	{margin-left: 3em;}
+
+
+/* PREFORMATTING/CODE */ 
+	pre		 {font-size: 100%; margin-top: 1.2em; margin-bottom: 1.5em;}
+	code	 {font-family: "courier new", courier; font-size: 125%; }
+	
+/* TABLES */ 
+	table	{font-size: 100%; margin-bottom: 0em; font-family: Tahoma, Arial, Helvetica, sans-serif;}
+	th		{text-align: left; background: #DDDDDD; margin: .25em; vertical-align: bottom;}
+	tr		{vertical-align: top;}
+	td		{margin: .25em; vertical-align: top;}
+	
+/* HELP CENTER LAYOUT TABLE STYLES */ 
+	.hctable	{font-size: 100%; margin-top: 0em; font-family: Tahoma; padding-left: 10px;  width: 100%; background-color: #E7E7D6;}
+	.prlbannertbl	{border-bottom: 2px solid #999999; background-color: #9999FF;}
+	.grnbannertbl	{border-bottom: 2px solid #999999; background-color: #99CC99;}
+	.titletdprl	{padding-left: 10px; background-color: #CCCCFF; vertical-align: top;}
+	.titletdgrn	{padding-left: 10px; background-color: #CCFFCC; vertical-align: top;}
+	.bannertd	{padding-top: 10px; padding-left: 10px; vertical-align: middle; text-align: left; font-size: 145%;}
+	.hometd		{vertical-align: top; background-color: #E7E7D6; text-align: left;}
+
+
+/* PARAGRAPH */ 
+	p		{margin-top: .6em; margin-bottom: .6em; margin-left: 1em; margin-right: 1em;}
+
+/* Heading styles---------------------------------------------------------------------------- */ 
+
+	h1			{font-size: 125%; margin-top: .4em; margin-bottom: .5em; margin-left: 1em; margin-right: 1em;}
+	h2			{font-size: 110%; margin-top: 2em; margin-bottom: .5em; margin-left: 1em; margin-right: 1em;}
+	h3			{font-size: 100%; margin-top: 1.2em; margin-bottom: .5em; font-weight: bold; margin-left: 1em; margin-right: 1em;}
+	h4			{font-size: 100%; margin-top: 1.2em; font-weight: bold; margin-left: 1em; margin-right: 1em;}
+	h5			{font-size: 100%; margin-top: 1.2em; font-weight: bold; margin-left: 1em; margin-right: 1em;}
+	.lproch		{font-weight: bold ;margin-top: 1.2em; margin-left: 1em; margin-right: 1em;}/* Heading 9,List Procedure Heading,lproch */ 
+
+
+/* Defined List styles ----------------------------------------------------------------------- */
+
+	dt		{font-weight: bold; }
+	dd		{margin-left: 2em; margin-bottom: .6em; }
+
+
+/* Paragraph styles--------------------------------------------------------------------------- */ 
+
+	.ac			{font-size: 90%; } 
+	.alpha		{font-size: 125%; font-weight: bold; }
+	.hang		{text-indent: -2em; margin-left: 2em;}
+	.BPhide 	{display: none }
+	.BPshow 	{  }
+	.fixp		{color: #00ff00;}	/* *fix this paragraph for incorrectly used styles / green */ 
+	.ind		{margin-left: 2em;}
+	.box	{background-color: #FFFFCC; padding-top: 8px; padding-left: 8px; padding-right: 8px; padding-bottom: 13px; border: 1px solid #CCCCCC; font-size: 80%; font-family: Tahoma; size: 50%; align: center; margin: 10px;}
+	.header	{color: #333333;}
+
+
+
+
+/* MAYBE KEEP .LBR1 IN CASE WE CAN GET HANGING INDENT TO WORK IN IE5.0? */ 
+	.mt			{margin-top:  2em; font-weight: bold; }
+	.noborder	{border: none; }
+	.rtt		{text-align: right; font-size: 90%; }
+	.tableup	{margin-top: 0em; }
+
+/* spacing styles */ 
+	.4			{line-height: 4pt;}
+	.6			{line-height: 6pt;}
+
+
+/* Language Reference styles */
+
+
+/* code comments */
+	.comment {color: darkgreen;
+		}
+
+/* Object model blue box */ 
+	.omblue { height: 16px;
+		width: 180px;
+		padding: 0px 0px 0px 2px;
+		background-color: #99FFFF;
+		border: 1px solid windowframe;
+		color: windowtext;
+		font-weight: bold;
+		text-decoration: none;
+		cursor: hand;
+		}
+
+/* Object model blue dashed box */ 
+	.ombluedash { height: 16px;
+		width: 180px;
+		padding: 0px 0px 0px 2px;
+		background-color: #99FFFF;
+		border: 1px dashed windowframe;
+		color: windowtext;
+		text-decoration: none;
+		cursor: hand;
+		}
+
+/* Object model yellow box */ 
+	.omyellow { height: 16px;
+		width: 180px;
+		padding: 0px 0px 0px 2px;
+		background-color: #FFFF99;
+		border: 1px solid windowframe;
+		color: windowtext;
+		font-weight: bold;
+		text-decoration: none;
+		cursor: hand;
+		}
+
+/* Object model yellow dashed box */ 
+	.omyellowdash { height: 16px;
+		width: 180px;
+		padding: 0px 0px 0px 2px;
+		background-color: #FFFF99;
+		border: 1px dashed windowframe;
+		color: windowtext;
+		text-decoration: none;
+		cursor: hand;
+		}
+
+/* Navigation hyperlink list container */
+	.ofvbaispan { position: absolute;
+		padding: 0px 0px 0px 0px;
+		border: 1px solid windowframe;
+		color: windowtext;
+		display: none;
+		z-index: +1;
+		}
+
+/* Navigation area */
+	.ofvbanav { padding: 0px 0px 10px 0px;
+		}
+
+/* Active navigation area jumps */
+	.ofvbanavreuse { width: 75px;
+		color: #0000cc;
+		cursor: hand;
+		}
+
+/* Inactive navigation area jump */
+	.ofvbanavunused { width: 75px;
+		color: graytext;
+		}
+
+/* Navigation hyperlink list topic description toggle */
+	.ofvbashowdesc { color:#0000cc;
+		cursor:hand;
+		font-size:smaller;
+		text-decoration:underline;
+		}
+
+/* Navigation hyperlink list topic description sections */
+	.ofvbadesc { color: windowtext;
+		display: none;
+		}
+
+/* Example navigation area jumps */
+	.ofvbanavex { text-decoration: none;
+		}
+
+/* Syntax box */
+	.ofvbasyn { width: 100%;
+		padding: 0px 8px 0px 8px;
+		background-color: lightgrey;
+		}
+
+/* Dropdown styles --------------------------------------------------------------------------- */
+
+.DropDown	{text-decoration: none; font-weight: normal; top: 0pt;} 
+.DropDown:hover	{text-decoration: underline; }
+
+			
+.HidePopUp 	{text-decoration: none; }
+.HidePopUp:hover{text-decoration: underline; }
+
+.Glossary	{text-decoration: none; }
+.glossary:hover	{text-decoration: underline; }
+				
+.Glossarydef	{color: #008C00; text-decoration: none;}
+
+.srcContent 	{ }
+
+.expfav		{font-size: 80%; text-align: Right; margin-top: -1em; margin-bottom: 0; }
+
+.expanded	{font-weight: normal; }	
+
+.collapsed	{display: none;}	
+			 	
+.def		{margin-top: 40pt;}	
+
+#theIFRAME	{position: absolute; display:none; }

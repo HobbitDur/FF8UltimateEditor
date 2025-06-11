@@ -1,7 +1,7 @@
 from FF8GameData.gamedata import SectionType
-from ShumiTranslator.model.mngrp.textbox.textboxentry import TextBoxEntry
-from ShumiTranslator.model.mngrp.textbox.sectiontextboxentry import SectionTextBoxEntry
 from ShumiTranslator.model.mngrp.textbox.sectionmaptextbox import SectionMapTextBox
+from ShumiTranslator.model.mngrp.textbox.sectiontextboxentry import SectionTextBoxEntry
+from ShumiTranslator.model.mngrp.textbox.textboxentry import TextBoxEntry
 
 
 class TextBoxManager:

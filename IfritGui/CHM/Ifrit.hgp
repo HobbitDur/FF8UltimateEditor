@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<HelpGenProject>
+  <Project level = "1" Name = "Ifrit" SUID = "{0ACC5981-28A6-4904-B3C9-75E103941A05}" HUID = "{4A07B801-6EFF-47D1-92EE-A47E12F49278}"  caption = "Ifrit"  TemplateHtmlFile = "Welcome.htm"  GeneratedHtmlFile = "Welcome.htm"  PicsSubfolderName = "images\"  Charset = "windows-1252"  CSSFullpath = "Office11.css" 
+          key="Project" 
+          icon="hlpclose" 
+          title="Ifrit help"  >
+    <Introduction level = "2"  caption = "Introduction + Credits"  TemplateHtmlFile = "Welcome.htm"  GeneratedHtmlFile = "Welcome.htm" 
+            key="Introduction" 
+            pkey="Project" 
+            nnodekey="GetStart" 
+            icon="helptopic" 
+            title="Introduction + Credits"  />
+    <GetStart level = "2"  caption = "Getting Started"  TemplateHtmlFile = "GettingStarted.htm"  GeneratedHtmlFile = "GettingStarted.htm" 
+            key="GetStart" 
+            pkey="Project" 
+            pnodekey="Introduction" 
+            nnodekey="Dialogs" 
+            icon="hlpclose" 
+            title="Getting Started"  >
+      <Install level = "3"  caption = "Installation"  TemplateHtmlFile = "Installation.htm"  GeneratedHtmlFile = "Installation.htm" 
+              key="Install" 
+              pkey="GetStart" 
+              nnodekey="StartProgram" 
+              icon="helptopic" 
+              title="Installation"  />
+      <StartProgram level = "3"  caption = "Starting the program"  TemplateHtmlFile = "StartingTheProgram.htm"  GeneratedHtmlFile = "StartingTheProgram.htm" 
+              key="StartProgram" 
+              pkey="GetStart" 
+              pnodekey="Install" 
+              icon="helptopic" 
+              title="Starting the program"  />
+    </GetStart>
+    <Dialogs level = "2"  caption = "Dialogs"  TemplateHtmlFile = "Dialogs.htm"  GeneratedHtmlFile = "Dialogs.htm" 
+            key="Dialogs" 
+            pkey="Project" 
+            pnodekey="GetStart" 
+            nnodekey="x8509597" 
+            icon="hlpclose" 
+            title="All Dialogs" 
+            ProcessCode="1"  >
+      <FORM level = "3"  name = "Main"  type = "2"  caption = "Main window"  TemplateHtmlFile = "Form.htm"  GeneratedHtmlFile = "FFVIII simple enemy editor_Form_Main.htm"  SourceProjectType = "C#"  SourceProjectName = "FFVIII simple enemy editor" 
+              key="FFVIII simple enemy editor.Form_Main" 
+              pkey="Dialogs" 
+              nnodekey="FFVIII simple enemy editor.Form_Report" 
+              icon="hlpclose" 
+              title="Main window" 
+              ProcessCode="999"  />
+      <FORM level = "3"  name = "Report"  type = "2"  caption = "Report"  TemplateHtmlFile = "Form.htm"  GeneratedHtmlFile = "FFVIII simple enemy editor_Form_Report.htm"  SourceProjectType = "C#"  SourceProjectName = "FFVIII simple enemy editor" 
+              key="FFVIII simple enemy editor.Form_Report" 
+              pkey="Dialogs" 
+              pnodekey="FFVIII simple enemy editor.Form_Main" 
+              icon="hlpclose" 
+              title="Report" 
+              ProcessCode="999"  />
+    </Dialogs>
+    <newNode level = "2"  caption = "QA"  TemplateHtmlFile = "Default.htm"  GeneratedHtmlFile = "QA.htm"  Charset = "windows-1252"  CSSFullpath = "Office11.css" 
+            key="x8509597" 
+            pkey="Project" 
+            pnodekey="Dialogs" 
+            icon="helptopic" 
+            title="QA" 
+            OriginalKey="x8509597" 
+            POriginalKey="Project"  />
+  </Project>
+<Settings>
+<Options>
+    <Option Name = "Version" Value = "5.08" />
+    <Option Name = "Application" Value = "Ifrit" />
+    <Option Name = "Organization" Value = "Omega Corporation" />
+    <Option Name = "Author" Value = "Øyvind Bettum" />
+    <Option Name = "Copyright" Value = "" />
+    <Option Name = "Website" Value = "" />
+    <Option Name = "EMail" Value = "gjoerulv@hotmail.com" />
+    <Option Name = "Registration" Value = "" />
+    <Option Name = "IdentifyBy" Value = "Caption" />
+    <Option Name = "SnapshotFormat" Value = "Jpeg" />
+    <Option Name = "BulletedControlsAndMenus" Value = "true" />
+    <Option Name = "AddHotSpots" Value = "true" />
+    <Option Name = "AssociateHelpIndex" Value = "true" />
+    <Option Name = "NoReportsScreenshots" Value = "true" />
+    <Option Name = "FolderForGeneratedHelp" Value = "{Project Location}CHM" />
+    <Option Name = "CompileHTMLHelp" Value = "false" />
+    <Option Name = "OpenHTMLHelp" Value = "false" />
+    <Option Name = "SaveApplicationChanges" Value = "true" />
+    <Option Name = "Charset" Value = "windows&#45;1252" />
+    <Option Name = "AddControlsListForMenuList" Value = "true" />
+    <Option Name = "AddControlsSectionForMenuList" Value = "true" />
+    <Option Name = "AddImageForForm" Value = "true" />
+    <Option Name = "AddHotSpotsForForm" Value = "true" />
+    <Option Name = "AddControlsListForForm" Value = "true" />
+    <Option Name = "AddControlsSectionForForm" Value = "true" />
+    <Option Name = "AddImageForReport" Value = "false" />
+    <Option Name = "AddControlsListForReport" Value = "true" />
+    <Option Name = "AddControlsSectionForReport" Value = "true" />
+    <Option Name = "SubFolderForScreenshots" Value = "images&#92;" />
+    <Option Name = "FillIndexFromAppObjectsAndControls" Value = "true" />
+    <Option Name = "Language" Value = "English" />
+    <Option Name = "AddSearchTabToHelp" Value = "true" />
+    <Option Name = "CapturePreviewAreaOnly" Value = "false" />
+    <Option Name = "OpenHTMLEditor" Value = "true" />
+    <Option Name = "SkipInvisibleControls" Value = "true" />
+    <Option Name = "InsertExternalDescriptions" Value = "false" />
+    <Option Name = "ListOfTagsToParseContentsFrom" Value = "H2" />
+    <Option Name = "SyncTOCOnHTMLPageNavigationComplete" Value = "true" />
+    <Option Name = "GenerateHelpForForms" Value = "true" />
+    <Option Name = "GenerateHelpForReports" Value = "true" />
+    <Option Name = "HelpProjectName" Value = "Ifrit" />
+    <Option Name = "HelpProjectTitle" Value = "Ifrit help" />
+    <Option Name = "CSSFullPath" Value = "C:&#92;Program Files&#92;Help Generator&#92;Visual Studio 2008&#92;Templates&#92;Common&#92;Office11.css" />
+    <Option Name = "MakeNormalViewScreenshots" Value = "false" />
+    <Option Name = "LanguageCode" Value = "en" />
+    <Option Name = "GenerateHelpForTables" Value = "true" />
+    <Option Name = "MSWordTOCLowerHeadingLevel" Value = "2" />
+    <Option Name = "AutomatedTestModeOn" Value = "false" />
+    <Option Name = "GenerateHelpForQueries" Value = "true" />
+    <Option Name = "GenerateHelpForMacros" Value = "true" />
+    <Option Name = "UseProjectGroupAsSource" Value = "true" />
+    <Option Name = "UnattendedExecution" Value = "false" />
+</Options>
+</Settings>
+</HelpGenProject>

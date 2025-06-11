@@ -1,0 +1,236 @@
+<html>
+<head>
+<meta name="GENERATOR" content="Help Generator Add-In v.5.08 [01-APR-09]">
+<meta name="HTML-HELP-GENERATOR-VERSION" content="5.08 [01-APR-09]" >
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<script language="JavaScript" type="text/javascript" src="simpletreemenu.js"></script>
+<link rel="stylesheet" type="text/css" href="tabcontent.css" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+<link href="simpletree.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="tabcontent.js">
+/***********************************************
+/* Tab Content script- © Dynamic Drive DHTML code library (www.dynamicdrive.com)
+/* This notice MUST stay intact for legal use
+/* Visit Dynamic Drive at http://www.dynamicdrive.com/ for full source code
+***********************************************/
+</script>
+</head>
+<body>
+ <div id="pagewidth">
+ <div id="header">
+ <div id="header_left"> 
+
+<ul id="maintab" class="shadetabs">
+<li class="selected"><a href="Welcome.htm" rel="tcontent1">
+<img src="images/tab_01.gif" border="0" width="91" height="24" /></a></li>
+<li><a href="#" rel="tcontent2"><img src="images/tab_02.gif" border="0" width="90" height="24" /></a></li>
+<li><a href="#" rel="tcontent3"> <img src="images/tab_03.gif" border="0" width="90" height="24" /></a></li>
+
+</ul>
+
+ </div>  <!--header_left-->
+ 
+ <div id="header_center"></div>
+
+ <div class="top_right">
+   <div align="right">    
+    <a href="javascript:history.go(-1)">
+    <img src="images/goback.gif" hspace="10" align="absmiddle" width="9" height="15" border="0"/></a>    
+    <a href="javascript:history.go(1)">
+    <img src="images/goforward.gif" hspace="10" align="absmiddle" width="9" height="15" border="0"/></a>  
+    <img src="images/backhome.gif" hspace="10" align="absmiddle" width="9" height="15"/>
+    <a href="Welcome.htm" target="right" class="white f11">Home Page</a> 
+  
+   </div>
+ </div>
+  
+ <div class="top_right_header">
+  <div align="right">Ifrit help</div>
+ </div>
+<div class="clear"> </div>
+ </div><!--header-->
+<!------------------------------------------------------------------------------------->
+	<div class="left_column">
+ <div class="tabcontentstyle">
+<div id="tcontent1" class="tabcontent"> 
+<ul id="treemenu1" class="treeview">
+        <li><a href="Welcome.htm" target="right">Ifrit</a> </li>
+	<UL>
+                <li>  <a href="Welcome.htm" target="right">Introduction + Credits</a> </li>
+                <li>  <a href="GettingStarted.htm" target="right">Getting Started</a> </li>
+                <UL>
+                        <li>  <a href="Installation.htm" target="right">Installation</a> </li>
+                        <li>  <a href="StartingTheProgram.htm" target="right">Starting the program</a> </li>
+                </UL>
+                <li>  <a href="Dialogs.htm" target="right">Dialogs</a> </li>
+                <UL>
+                        <li>  <a href="FFVIII simple enemy editor_Form_Main.htm" target="right">Main window</a> </li>
+                        <UL>
+                                <li>  <a href="FFVIII simple enemy editor_Form_Main.htm#Main_fileToolStripMenuItem" target="right">File</a> </li>
+
+
+                                <li>  <a href="FFVIII simple enemy editor_Form_Main.htm#Main_helpToolStripMenuItem" target="right">Help</a> </li>
+
+
+                                <li>  <a href="FFVIII simple enemy editor_Form_Main.htm#Main_helpToolStripMenuItem" target="right">Toolbar</a> </li>
+
+
+                                <li>  <a href="FFVIII simple enemy editor_Form_Main.htm#Main_tabControl_0" target="right">Specs</a> </li>
+
+
+                                <li>  <a href="FFVIII simple enemy editor_Form_Main.htm#Main_tabControl_1" target="right">Items</a> </li>
+
+
+                                <li>  <a href="FFVIII simple enemy editor_Form_Main.htm#Main_tabControl_2" target="right">Draw</a> </li>
+
+
+                        </UL>
+                        <li>  <a href="FFVIII simple enemy editor_Form_Report.htm" target="right">Report</a> </li>
+                        <UL>
+                                <li>  <a href="FFVIII simple enemy editor_Form_Report.htm#Report_panelMid" target="right">Grid</a> </li>
+
+
+                        </UL>
+                </UL>
+                <li>  <a href="QA.htm" target="right">QA</a> </li>
+        </UL>
+
+	</li> 
+</ul>
+
+<script type="text/javascript">
+// code v Ian
+var attribstring = location.search ? unescape(location.search.substring(1)): '';
+
+var spage="Welcome.htm";			
+if (attribstring !='') spage=attribstring;
+
+//ddtreemenu.createTree(treeid, enablepersist, opt_persist_in_days (default is 1))
+
+ddtreemenu.createTree("treemenu1", true)
+
+</script>
+</div><!--tcontent1--> 
+
+<div id="tcontent2" class="tabcontent">
+<SCRIPT type="text/javascript">
+<!--
+//==========================================================================//
+//	Function:	searchSelectBox(in_sFormName, in_sInputName, in_sSelectName)
+//	Purpose: Acts as a "searchable" input for a given select box.
+//	Parameters:
+//		in_sFormName 	- The form name where the elements live
+//		in_sInputName 	- The "search input element name.
+//		in_sSelectName	- The select box to search against.
+//
+//==========================================================================//
+function searchSelectBox(in_sFormName, in_sInputName, in_sSelectName)
+{
+	sSearchString = document.forms[in_sFormName].elements[in_sInputName].value.toUpperCase();
+	iSearchTextLength = sSearchString.length;
+
+	for (j=0; j < document.forms[in_sFormName].elements[in_sSelectName].options.length; j++)
+	{
+		sOptionText = document.forms[in_sFormName].elements[in_sSelectName].options[j].text;
+		sOptionComp = sOptionText.substr(0, iSearchTextLength).toUpperCase();
+
+		if(sSearchString == sOptionComp)
+		{
+			document.forms[in_sFormName].elements[in_sSelectName].selectedIndex = j;
+			break;
+		}
+	}
+}
+//-->
+
+<!--
+function goSelect(cbSearchSelect) {
+with(cbSearchSelect) {
+parent.frames['right'].location=options[selectedIndex].value; // jump to that option's value
+}
+}
+//-->
+</SCRIPT>
+
+<FORM name="SearchForm">
+<INPUT type="text" name="edSeachInput" onKeyUp="JavaScript: searchSelectBox('SearchForm', 'edSeachInput', 'cbSearchSelect')" size="25">
+
+<SELECT name='cbSearchSelect' size='8' id="gowhere" style="width:260"
+onchange="JavaScript: goSelect(cbSearchSelect);">
+<option value="Dialogs.htm">Dialogs</option>
+        <option value="GettingStarted.htm">Getting Started</option>
+        <option value="Installation.htm">Installation</option>
+        <option value="Welcome.htm">Introduction + Credits</option>
+        <option value="FFVIII simple enemy editor_Form_Main.htm">Main window</option>
+        <option value="QA.htm">QA</option>
+        <option value="FFVIII simple enemy editor_Form_Report.htm">Report</option>
+        <option value="StartingTheProgram.htm">Starting the program</option>
+</SELECT>
+<p></p>
+<button name="btnOK" onclick="goSelect(cbSearchSelect)">Display</button>
+</FORM>
+</div>
+<!--tcontent2--> 
+
+<div id="tcontent3" class="tabcontent">
+<form action="ss.html" target=right> 
+Search this helpfile
+<input type=text name="s" size="20">
+<input type=submit value="Go">
+</form>
+</div>
+<!--
+uses ss.exe and ss.html. In case of changes, 1.run the ss.exe- this makes a new array.
+2.Remove the generated Help-button from ss.html. 3.Remove the search box from the search results frame by replacing the entire 
+<form>...</form> tag in ss.html with... 
+<form>
+<input type="hidden" name="s">
+</form>-->
+
+<!--tcontent3--> 
+
+
+<script type="text/javascript">
+//Start Tab Content script for UL with id="maintab" Separate multiple ids each with a comma.
+initializetabcontent("maintab")
+</script>
+
+ </div><!--tabcontentstyle--> 
+	</div><!--? left column?-->
+	
+
+<div class="right_column"> <!--ian, hele right--> 
+<script type="text/javascript">
+<!--	document.write('<IFRAME NAME="right"  border="0" frameborder="1" width="100%" height="100%" src='+spage+' > </IFRAME>');-->
+	document.write('<iframe  NAME="right" width="100%" (notIE? height="100%") id="iframe_id" frameborder="0" src='+spage+'  onload=resize_iframe(this)></iframe>');
+</script>
+
+<script type="text/javascript">
+<!--
+notIE=document.getElementById&&!document.all
+<!--heightOffset=20-->
+
+function resize_iframe(obj){
+this.obj=obj
+this.obj.style.height="" // for Firefox and Opera
+setTimeout("this.obj.style.height=this.obj.contentWindow.document.body.scrollHeight+(notIE?heightOffset:0)",10)
+
+	if(spage != '')
+	{
+		ddtreemenu.expandSelectedTree('treemenu1',spage);
+		spage = ''
+	}
+
+}
+
+// -->
+</script>
+
+</div><!--right_column-->
+ 
+<div id="footer">This help was made using <a style="color:#FFCF88" href="http://www.helpgenerator.com/">Help Generator</a></div>
+
+</div><!---pagewidth-->
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+**/.idea
+**/OutputFiles/**
+**/OriginalFiles/**
+**/__pycache__/
+**/decompressed_battle/
+**/release
+**/decompressed_battle
+**/ifrit-gui/bin/
+**/ifrit-gui/obj/
+**/ifrit-gui/Properties/
+**/ifrit-gui/Ifrit.csproj.user
+**/ifrit-gui/.vs/
+*.sh
+IfritXlsx/OriginalFiles
+IfritXlsx/OutputFiles
+*.egg-info/

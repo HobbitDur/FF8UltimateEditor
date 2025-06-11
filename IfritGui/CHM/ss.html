@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Site Search</title>
+<style type="text/css">
+<!--
+body {color:#000000;font:10pt Verdana,Tahoma,Arial,Helvetica,sans-serif}
+em {color:#0000FF;font:bold 10pt Verdana,Tahoma,Arial,Helvetica,sans-serif}
+b {font-weight:bold}
+-->
+</style>
+<script language="JavaScript">
+<!--
+function f(fn,ft,fd){
+ this.fn=fn;
+ this.ft=ft;
+ this.fd=fd;
+}
+var Fs=new Array (
+new f("Dialogs.htm","Dialogs",""),new f("FFVIII simple enemy editor_Form_About.htm","IFRIT - About v0.9",""),new f("FFVIII simple enemy editor_Form_Main.htm","IFRIT - Simple FFVIII Enemy Editor v0.9",""),new f("FFVIII simple enemy editor_Form_Report.htm","Report",""),new f("GettingStarted.htm","Getting Started",""),new f("Installation.htm","Installation",""),new f("QA.htm","QA",""),new f("StartingTheProgram.htm","Starting the program",""),new f("Welcome.htm","Ifrit help",""));
+var L=2, D=0, M=0, Ws=new Array (
+"about$%","absorb%","absorbings)","accurate&%","active&)%","actual)%","actually)","add)","affected)%","affects%&",
+"after)%(","against%","all)(%","allow(","also(%","alter)+*&","altered%","altering%","always)","among%",
+"and'()+&%","another%","any*(","anything)","anyway)","apparently)","application+","approach)","are+*(&)%","arrow%",
+"asked%","attacks+","attempt%","average%&","axis&","back)","bar%","base%","based)","basic(",
+"battle*)%+","because)","becomes%","before)","below&%","blow&","box%","but*%)","button)%","bytes)",
+"can*+&)%","cause)","caused&","caution%","cautious*","certain%","changed)%","changes+)%","changing)%","char%&",
+"character&","check+","choose%","choosing%","chosen)","claimed%","click*","clicking%","close$","closing%",
+"colly+","com+","complete(","concerned(","concerning%","confusing)","confusion)","consult'","contact(","contains%",
+"contents%","controls&$","corporation+","correct)","corresponding%","current(","damage%","dat%+*","data+","decided)%",
+"delete(","deleting(","depending%","depends%","desired)","dialogs%#+","different%","directly+)","disc(","display&",
+"displayed&%","displaying%","dividable%","doing)","don*","double*","down)&","download(","downwards&","drag%",
+"dragging%","draw)%","drawn+)","droprate%","drops+%","due)","dummied)","each&)%","easy*","edit)+",
+"editing)%","editor%","effect)%","elemental+)%","elements%","else)","enabled)","enemies+%)","enemy+&)%","enough+%",
+"entirely)","etc+&","eva%","even)","ever%","exactly%","example&","except%","exit%","exp%&",
+"expand(","experience&","explained+","extra%&","extract+","extracted%","fantasy+","feedback+","ffviii)%","files+&*)%",
+"final&+","finish&%","finished&","folder()%","following'","follows%","for')&+%","formations+","forms+%&","formulas&%",
+"found%","four)","framework(","friendly)","from)(+*%","future)","general+(%","get+)%","getting+'","given&",
+"goes+","grayed)","grid&","hardly(","have%)","heal%","help%","here%","high+)%","higher(",
+"hkey(","holds%","horizontally&","how+*)&%","however%)","icon*","idea%","identical)","ifrit#*(+%","immune%",
+"increase&","increasement&","index%","information+'%","inside&%)","install+(","installation('","into&","issues)","items+%",
+"just(","kidding*","know*)&","known)%","least)","levels+)&%","like)%","likely%","limit)","list)%",
+"listed%","load)","loaded&%","located+","low%","made%","mag%","magics+)%","mail+$","main%&",
+"make+","making)","many&%","max%","may&()%","means)","meant*","medium+%","menus(%","merely%",
+"microsoft(","minor(","monster%","more)%","most)","moves+","much*%","mug+%","mugrate%","must)",
+"nah*","names+)%","naming)","need+","negative%","net(","new%&","next)","normal%","not&*+%)",
+"note%","nothing%","now%)","nullify%","occurs)%","omega+","one)%","only*)&%","opened%","opening)",
+"opens+(*&%","original)","other%","out+)","packs(","pages'","party&%","path%","pay(","percentage%",
+"pie*","please+%","points&","possible&","power(","press(","pretty*%)","previous)%","problems)","processor(",
+"program+*)('","properties+","providing+","qhimm+","quantity%","questions+)","ram(","rate%","reading%","real%",
+"really)","recognized%","reduced%","regedit(","registry(","reload)","remove(","reopen)","report#&","represents&",
+"requirements(","requires(","reset)","resist%","resistances)%","right*%","rounded)","run(","same%","saved)",
+"saves)%","saving)","scan+","section+","see&)%","select%","should*)%","show&%","shown)&","simple%",
+"simplest)","software(","some)","something%","somewhat)","sorry*)","space(","spd%","specify%","specs%",
+"spr%","square)%","start*(","started'+","starting+*%'","statics&","stats+&%)","status+%","statuses%","steal%",
+"step&","still)","str%","stuff(","sure%)","system(","tabs)%","take%","text+%","than%",
+"thanks+","that&%","the*('+&)%","their)%","then)&(","there%","therefore*)","these%","they%)","think)",
+"this$+(&%)","those)","though(","thus&%","time%","too)%","toolbar%","tools%&","top&","topic+",
+"towards%","track%","transaction(","try)","type(*%","under&%","uninstall(","unique)","unknown)%","update&%",
+"updated)&","use'(","used+(","user)(","values&)%","variables)%","varies)","various&","version+","vertically&",
+"view)%","viii+","visual(","vit%","want(%","was)","way)","weak%","weaknesses)","well(%",
+"were%","what)%","when)%","which)%","while&","why)","will)&%","windows)($","with+(&)","within)",
+"without)%","words%","work)","yes)","yet+)","you+*()&%","your)%");
+var FN=Fs.length, WN=Ws.length, BW=window.opener;
+var AR=new Array(FN), AI=new Array(FN), M2=FN>1563;
+function Let(c){return c>='a'&&c<='z'||c>='0'&&c<='9'||c>''||c=='*'||c=='?';}
+function Dig(s){
+ for(var i=0;i<s.length;++i){
+	var c=s.charAt(i);
+	if(c>='0'&&c<='9') return 0;
+ }
+ return 1;
+}
+function C(l){
+ location.href=l;
+}
+function AW(s){
+ var i,n;
+ for(i=0;Let(s.charAt(i));++i);
+ if(s.charAt(i)==' ') ++i;
+ for(var m=1;i<s.length;){
+	n=s.charCodeAt(i++)-35;
+	if(n<0) n=(n+20)*92+s.charCodeAt(i++)-35;
+	else if(M2) n=n*92+s.charCodeAt(i++)-35;
+	AI[n]+=m++;
+ }
+}
+function MK(s,n){
+ var i;
+ for(i=0;i<FN;++i) AI[i]=0;
+ s=s.replace(/\*/g,'[^ ]*');
+ s=s.replace(/\?/g,'[^ ]');
+ s = '^'+s;
+ for(i=0;i<WN;++i) if(Ws[i].search(s)==0) AW(Ws[i]);
+ for(i=0;i<FN;++i) if(n) AR[i]*=AI[i]; else AR[i]=AI[i];
+}
+function MT(){
+ var c,i,n,t="",ss="",s=document.forms[0].s.value.toLowerCase()+' ';
+ for(i=0;i<FN;++i) AR[i]=M;
+ for(i=n=0;i<s.length;++i){
+	c=s.charAt(i);
+	ss+=(c=='<')?"&lt;":c;
+	if(Let(c)) t+=c;
+	else {
+		if(t.length>L&&(D||Dig(t))) MK(t,n++);
+		t="";
+	}
+ }
+ t='You searched for "<b> '+ss+'</b>".<p>\n';
+ for(n=0;;++n){
+	var m=0,im=-1;
+	for(i=0;i<FN;++i) if(AR[i]>m) m=AR[im=i];
+	if(im<0){
+		if(n==0) t+="<div align=center><p><b>No results found.</b></div><p>\n";
+		break;
+	}
+	AR[im]=0;
+	t+=("<b>"+(n+1)+".</b> <a href='javascript:C(\""+Fs[im].fn+"\")'>"+Fs[im].ft+"</a><br>\n"+Fs[im].fd+"<p>\n");
+ }
+ return t;
+}
+function NS(){
+ if(document.getElementById) document.getElementById('txt').innerHTML=MT();
+ else document.forms[0].submit();
+ return false;
+}
+function SS(){
+ if(location.search){
+	var o="€‚ƒ„…†‡ˆ‰Š‹Œ‘’“”•–—˜™š›œŸ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞßàáâãäåæçèéêëìíîïğñòóôõö÷øùúûüışÿ";
+	var t="";
+	for(var i=3; i<location.search.length; t+=c) {
+		var c=location.search.charAt(i++);
+		if(c=='+') c=' ';
+		if(c=='%') {
+			var v=parseInt(location.search.substring(i,i+2),16);
+			if(v<128) c=String.fromCharCode(v);
+			else c=o.charAt(v-128);
+			i+=2;
+		}
+	}
+	document.forms[0].s.value=t;
+ }
+}
+//-->
+</script>
+</head>
+<body>
+<form>
+<input type=hidden name="s" size=24 onKeyDown="if(event.keyCode==13)return NS()">
+</form>
+<script>
+<!--
+if(window.opener) document.write("<div align=center><a href='javascript:window.close()'>Close window</a></div><p>");
+//-->
+</script>
+<div id=txt>
+<script>
+<!--
+SS();
+document.write( MT() );
+//-->
+</script>
+</div>
+<div align=center>
+<p>
+<script>
+<!--
+if(window.opener) document.write("| <a href='javascript:window.close()'>Close</a>");
+//-->
+</script>
+</div>
+</body>
+</html>

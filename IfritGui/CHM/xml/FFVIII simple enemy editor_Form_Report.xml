@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Form Name = "Report" Text = "Report" WindowSize = "918, 437" ClientAreaOffset = "4, 22" BorderStyle = "1" HasMap = "True" Charset="windows-1252" Stylesheet="Office11.css" PicFileName="FFVIII simple enemy editor_Form_Report.jpg" HtmlFileName="FFVIII simple enemy editor_Form_Report.htm" HelpContextId = "140" NewHelpContextIdsCount = "1" SourceProjectType = "C#" SourceProjectName = "FFVIII simple enemy editor" OriginalClassName = "clsWinForm" Indexes = "Report" >
+<Controls>
+  <Panel Name = "panelMid" Text = "Mid" ClassName = "Panel" Location = "0, 30" Size = "912, 382" TabIndex = "75" HelpContextId = "150" PicFileName = "FFVIII_simple_enemy_editor_Form_Report_panelMid.jpg" HotSpot = "4,52,916,434" Level = "1" Indexes = "Tools|Grid" >
+  <Controls>
+    <DataGridView Name = "gridView" Text = "View" ClassName = "DataGridView" Location = "0, 30" Size = "912, 346" TabIndex = "4" HelpContextId = "160" PicFileName = "FFVIII_simple_enemy_editor_Form_Report_gridView.jpg" HotSpot = "4,52,916,398" Level = "2" Indexes = "View" >
+    <Controls>
+      <DataGridViewTextBoxColumn Name = "ColumnHP" Text = "HP" ClassName = "DataGridViewTextBoxColumn" Location = "90, 30" Size = "100, 19" TabIndex = "0" HotSpot = "94,52,194,71" Level = "3" Indexes = "HP" />
+      <DataGridViewTextBoxColumn Name = "ColumnSTR" Text = "STR" ClassName = "DataGridViewTextBoxColumn" Location = "190, 30" Size = "100, 19" TabIndex = "1" HotSpot = "194,52,294,71" Level = "3" Indexes = "STR" />
+      <DataGridViewTextBoxColumn Name = "ColumnMAG" Text = "MAG" ClassName = "DataGridViewTextBoxColumn" Location = "290, 30" Size = "100, 19" TabIndex = "2" HotSpot = "294,52,394,71" Level = "3" Indexes = "MAG" />
+      <DataGridViewTextBoxColumn Name = "ColumnVIT" Text = "VIT" ClassName = "DataGridViewTextBoxColumn" Location = "390, 30" Size = "100, 19" TabIndex = "3" HotSpot = "394,52,494,71" Level = "3" Indexes = "VIT" />
+      <DataGridViewTextBoxColumn Name = "ColumnSPR" Text = "SPR" ClassName = "DataGridViewTextBoxColumn" Location = "490, 30" Size = "100, 19" TabIndex = "4" HotSpot = "494,52,594,71" Level = "3" Indexes = "SPR" />
+      <DataGridViewTextBoxColumn Name = "ColumnSPD" Text = "SPD" ClassName = "DataGridViewTextBoxColumn" Location = "590, 30" Size = "100, 19" TabIndex = "5" HotSpot = "594,52,694,71" Level = "3" Indexes = "SPD" />
+      <DataGridViewTextBoxColumn Name = "ColumnEVA" Text = "EVA" ClassName = "DataGridViewTextBoxColumn" Location = "690, 30" Size = "100, 19" TabIndex = "6" HotSpot = "694,52,794,71" Level = "3" Indexes = "EVA" />
+      <DataGridViewTextBoxColumn Name = "ColumnEXP" Text = "EXP" ClassName = "DataGridViewTextBoxColumn" Location = "790, 30" Size = "100, 19" TabIndex = "7" HotSpot = "794,52,894,71" Level = "3" Indexes = "EXP" />
+      <DataGridViewTextBoxColumn Name = "ColumnExtraEXP" Text = "Extra EXP" ClassName = "DataGridViewTextBoxColumn" Location = "890, 30" Size = "100, 19" TabIndex = "8" HotSpot = "894,52,994,71" Level = "3" Indexes = "Extra EXP" />
+    </Controls>
+    </DataGridView>
+    <Button Name = "btnClose" Text = "Close" ClassName = "Button" Location = "797, 376" Size = "115, 36" TabIndex = "4" HelpContextId = "170" HotSpot = "801,398,916,434" Level = "2" Indexes = "Close" />
+  </Controls>
+  </Panel>
+  <Panel Name = "panelTop" Text = "Top" ClassName = "Panel" Location = "0, 0" Size = "912, 26" TabIndex = "77" HelpContextId = "180" PicFileName = "FFVIII_simple_enemy_editor_Form_Report_panelTop.jpg" HotSpot = "4,22,916,48" Level = "1" Indexes = "Top" >
+  <Controls>
+    <ComboBox Name = "cbAvaragePartyLevel" Text = "AvaragePartyLevel" ClassName = "ComboBox" Location = "141, 3" Size = "77, 22" TabIndex = "1" HelpContextId = "190" HotSpot = "145,25,222,47" Level = "2" Indexes = "AvaragePartyLevel" />
+    <ComboBox Name = "cbFinnishedCharLvl" Text = "FinnishedCharLvl" ClassName = "ComboBox" Location = "367, 2" Size = "77, 22" TabIndex = "2" HelpContextId = "200" HotSpot = "371,24,448,46" Level = "2" Indexes = "FinnishedCharLvl" />
+    <NumericUpDown Name = "nudLevelPrRow" Text = "LevelPrRow" ClassName = "NumericUpDown" Location = "586, 4" Size = "61, 20" TabIndex = "3" HelpContextId = "210" HotSpot = "590,26,651,46" Level = "2" Indexes = "LevelPrRow" />
+    <Label Name = "lblAverageLvl" Text = "Average party level" ClassName = "Label" Location = "12, 6" Size = "123, 14" TabIndex = "75" HelpContextId = "220" HotSpot = "16,28,139,42" Level = "2" Indexes = "Average party level" />
+    <Label Name = "label1" Text = "Level increasement" ClassName = "Label" Location = "460, 6" Size = "120, 14" TabIndex = "76" HelpContextId = "230" HotSpot = "464,28,584,42" Level = "2" Indexes = "Level increasement" />
+    <Label Name = "lblFinishedCharLvl" Text = "Finished char. level" ClassName = "Label" Location = "238, 6" Size = "121, 14" TabIndex = "78" HelpContextId = "240" HotSpot = "242,28,363,42" Level = "2" Indexes = "Finished char. level" />
+  </Controls>
+  </Panel>
+</Controls>
+<Documented>
+<Controls>
+<Item  Name="panelMid" Bmk="panelMid" Caption="Grid"  />
+</Controls>
+</Documented>
+</Form>

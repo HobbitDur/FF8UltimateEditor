@@ -1,17 +1,23 @@
 import os
 import pathlib
+import re
+from email.policy import default
 from typing import List
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon, QFont
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QLabel, \
     QColorDialog, QCheckBox, QMessageBox
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
+from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+from IfritAI.codeanalyser import CodeAnalyser
 from IfritAI.codewidget import CodeWidget
+
 from IfritAI.commandwidget import CommandWidget
 from IfritAI.ifritmanager import IfritManager
-
+from IfritXlsx.ifritxlsxmanager import IfritXlsxManager
+from bs4 import BeautifulSoup
 
 class IfritAIWidget(QWidget):
     ADD_LINE_SELECTOR_ITEMS = ["Condition", "Command"]
@@ -29,19 +35,19 @@ class IfritAIWidget(QWidget):
         self.setLayout(self.window_layout)
         self.scroll_widget = QWidget()
         self.scroll_area = QScrollArea()
-        self.window_layout.addWidget(self.scroll_area)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.scroll_widget)
         self.ifrit_manager = IfritManager(game_data_folder)
         self.current_if_type = CurrentIfType.NONE
         # Main window
         self.setWindowTitle("IfritAI")
-        self.setMinimumSize(1280, 720)
+        self.setMinimumSize(1280, 600)
         self.__ifrit_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
         self.setWindowIcon(self.__ifrit_icon)
         self.save_button = QPushButton()
         self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.save_button.setFixedSize(30, 30)
+        self.save_button.setIconSize(QSize(30, 30))
+        self.save_button.setFixedSize(40, 40)
         self.save_button.clicked.connect(self.__save_file)
         self.layout_main = QVBoxLayout()
         self.save_button.setToolTip("Save all modification in the .dat (irreversible)")
@@ -49,20 +55,23 @@ class IfritAIWidget(QWidget):
         self.file_dialog = QFileDialog()
         self.file_dialog_button = QPushButton()
         self.file_dialog_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.file_dialog_button.setFixedSize(30, 30)
+        self.file_dialog_button.setIconSize(QSize(30, 30))
+        self.file_dialog_button.setFixedSize(40, 40)
         self.file_dialog_button.clicked.connect(self.__load_file)
         self.file_dialog_button.setToolTip("Open a .dat file")
 
         self.reset_button = QPushButton()
         self.reset_button.setIcon(QIcon(os.path.join(icon_path, 'reset.png')))
-        self.reset_button.setFixedSize(30, 30)
+        self.reset_button.setIconSize(QSize(30, 30))
+        self.reset_button.setFixedSize(40, 40)
         self.reset_button.clicked.connect(self.__reload_file)
         self.reset_button.setToolTip("Reload the file. /!\\ This will delete any local unsaved change made")
 
         self.info_button = QPushButton()
         self.info_button.setIcon(QIcon(os.path.join(icon_path, 'info.png')))
-        # self.info_button.setIconSize(QSize(30, 30))
-        self.info_button.setFixedSize(30, 30)
+        # self.info_button.setIconSize(QSize(40, 40))
+        self.info_button.setIconSize(QSize(30, 30))
+        self.info_button.setFixedSize(40, 40)
         self.info_button.setToolTip("Show toolmaker info")
         self.info_button.clicked.connect(self.__show_info)
 
@@ -74,9 +83,36 @@ class IfritAIWidget(QWidget):
 
         self.button_color_picker = QPushButton()
         self.button_color_picker.setText('Color')
-        self.button_color_picker.setFixedSize(35, 30)
+        self.button_color_picker.setFixedSize(40, 40)
         self.button_color_picker.clicked.connect(self.__select_color)
         self.button_color_picker.setToolTip("To choose which color to highlight the variable")
+
+        self._xlsx_manager = IfritXlsxManager()
+
+        # Ifrit xlsx/md import/export
+        self._import_xlsx_button = QPushButton()
+        self._import_xlsx_button.setIcon(QIcon(os.path.join(icon_path, 'csv_upload.png')))
+        self._import_xlsx_button.setIconSize(QSize(30, 30))
+        self._import_xlsx_button.setFixedSize(40, 40)
+        self._import_xlsx_button.setToolTip("This allow to import XLSX file to update abilities")
+        self._import_xlsx_button.clicked.connect(self._load_xlsx_file)
+        self._import_xlsx_button.setEnabled(False)
+
+        self._import_md_button = QPushButton()
+        self._import_md_button.setIcon(QIcon(os.path.join(icon_path, 'md_upload.png')))
+        self._import_md_button.setIconSize(QSize(30, 30))
+        self._import_md_button.setFixedSize(40, 40)
+        self._import_md_button.setToolTip("This allow to import AI from md files")
+        self._import_md_button.clicked.connect(self._load_md_file)
+        self._import_md_button.setEnabled(False)
+
+        self._export_md_button = QPushButton()
+        self._export_md_button.setIcon(QIcon(os.path.join(icon_path, 'md_save.png')))
+        self._export_md_button.setIconSize(QSize(30, 30))
+        self._export_md_button.setFixedSize(40, 40)
+        self._export_md_button.setToolTip("This allow to export AI to md files")
+        self._export_md_button.clicked.connect(self._export_md_file)
+        self._export_md_button.setEnabled(False)
 
         expert_tooltip_text = "IfritAI offer 4 different mod of editing:<br/>" + \
                               self.EXPERT_SELECTOR_ITEMS[0] + ": For modifying having a set of expected value<br/>" + \
@@ -101,6 +137,7 @@ class IfritAIWidget(QWidget):
         self.hex_selector.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.hex_selector.toggled.connect(self.__change_hex)
         self.hex_selector.setToolTip("Change all int value to hex value. Doesn't work on IfritAI code")
+        self.hex_selector.setEnabled(0)
 
         self.monster_name_label = QLabel()
         self.monster_name_label.hide()
@@ -111,13 +148,16 @@ class IfritAIWidget(QWidget):
         self.layout_top.addWidget(self.reset_button)
         self.layout_top.addWidget(self.info_button)
         self.layout_top.addWidget(self.button_color_picker)
+        self.layout_top.addWidget(self._import_xlsx_button)
+        self.layout_top.addWidget(self._import_md_button)
+        self.layout_top.addWidget(self._export_md_button)
         self.layout_top.addLayout(self.expert_layout)
         self.layout_top.addWidget(self.hex_selector)
         self.layout_top.addWidget(self.script_section)
         self.layout_top.addWidget(self.monster_name_label)
         self.layout_top.addStretch(1)
 
-        self.code_widget = CodeWidget(self.ifrit_manager.game_data, ennemy_data=self.ifrit_manager.ennemy, expert_level=self.expert_selector.currentIndex(),
+        self.code_widget = CodeWidget(self.ifrit_manager.game_data, ennemy_data=self.ifrit_manager.enemy, expert_level=self.expert_selector.currentIndex(),
                                       code_changed_hook=self.code_expert_changed_hook)
         self.code_widget.hide()
 
@@ -135,8 +175,9 @@ class IfritAIWidget(QWidget):
         self.add_button_widget = []
         self.remove_button_widget = []
 
+        self.window_layout.addLayout(self.layout_top)
+        self.window_layout.addWidget(self.scroll_area)
         self.scroll_widget.setLayout(self.layout_main)
-        self.layout_main.addLayout(self.layout_top)
         self.layout_main.addLayout(self.main_horizontal_layout)
 
         #self.show()
@@ -147,7 +188,8 @@ class IfritAIWidget(QWidget):
                             f"You can support me on <a href='https://www.patreon.com/HobbitMods'>Patreon</a>.<br/>"
                             f"Special thanks to :<br/>"
                             f"&nbsp;&nbsp;-<b>Nihil</b> for beta testing and finding unknown values.<br/>"
-                            f"&nbsp;&nbsp;-<b>myst6re</b> for all the retro-engineering.")
+                            f"&nbsp;&nbsp;-<b>myst6re</b> for all the retro-engineering.<br/>"
+                            f"For more info on the command, you can check the <a href=\"https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/battle/battle-scripts/\">wiki</a>.")
         message_box.setIcon(QMessageBox.Icon.Information)
         message_box.setWindowIcon(self.__ifrit_icon)
         message_box.setWindowTitle("IfritAI - Info")
@@ -175,6 +217,14 @@ class IfritAIWidget(QWidget):
                 self.add_button_widget[i].show()
             for i in range(len(self.remove_button_widget)):
                 self.remove_button_widget[i].show()
+        if expert_chosen == 3:
+            self.hex_selector.setEnabled(0)
+            for i in range(len(self.command_line_widget)):
+                self.command_line_widget[i].hide()
+        else:
+            self.hex_selector.setEnabled(1)
+            for i in range(len(self.command_line_widget)):
+                self.command_line_widget[i].show()
 
     def __change_expert(self):
         expert_chosen = self.expert_selector.currentIndex()
@@ -219,11 +269,11 @@ class IfritAIWidget(QWidget):
 
     def __append_line(self, new_command: CommandAnalyser = None, create_data=True):
         if not new_command:
-            new_command = CommandAnalyser(0, [], self.ifrit_manager.game_data, info_stat_data=self.ifrit_manager.ennemy.info_stat_data,
-                                          battle_text=self.ifrit_manager.ennemy.battle_script_data['battle_text'], line_index=len(self.command_line_widget),current_if_type=self.current_if_type)
+            new_command = CommandAnalyser(0, [], self.ifrit_manager.game_data, info_stat_data=self.ifrit_manager.enemy.info_stat_data,
+                                          battle_text=self.ifrit_manager.enemy.battle_script_data['battle_text'], line_index=len(self.command_line_widget),current_if_type=self.current_if_type)
             self.current_if_type = new_command.get_current_if_type()
         if create_data:
-            self.ifrit_manager.ennemy.insert_command(self.script_section.currentIndex(), new_command, len(self.command_line_widget))
+            self.ifrit_manager.enemy.insert_command(self.script_section.currentIndex(), new_command, len(self.command_line_widget))
 
         self.__add_line(new_command)
         self.__compute_if()
@@ -239,11 +289,11 @@ class IfritAIWidget(QWidget):
             index_insert = 0
 
         if not new_command: # Shouldn't need the current if type
-            new_command = CommandAnalyser(0, [], self.ifrit_manager.game_data, info_stat_data=self.ifrit_manager.ennemy.info_stat_data,
-                                          battle_text=self.ifrit_manager.ennemy.battle_script_data['battle_text'], line_index=index_insert)
+            new_command = CommandAnalyser(0, [], self.ifrit_manager.game_data, info_stat_data=self.ifrit_manager.enemy.info_stat_data,
+                                          battle_text=self.ifrit_manager.enemy.battle_script_data['battle_text'], line_index=index_insert)
 
         if create_data:
-            self.ifrit_manager.ennemy.insert_command(self.script_section.currentIndex(), new_command, index_insert)
+            self.ifrit_manager.enemy.insert_command(self.script_section.currentIndex(), new_command, index_insert)
 
         self.__add_line(new_command)
         self.__compute_if()
@@ -252,11 +302,11 @@ class IfritAIWidget(QWidget):
         # Add the + button
         add_button = QPushButton()
         add_button.setText("+")
-        add_button.setFixedSize(30, 30)
+        add_button.setFixedSize(40, 40)
         add_button.clicked.connect(lambda: self.__insert_line(command, create_data=True))
         remove_button = QPushButton()
         remove_button.setText("-")
-        remove_button.setFixedSize(30, 30)
+        remove_button.setFixedSize(40, 40)
         remove_button.clicked.connect(lambda: self.__remove_line(command, delete_data=True))
         # Creating new element to list
         self.add_button_widget.insert(command.line_index, add_button)
@@ -279,6 +329,7 @@ class IfritAIWidget(QWidget):
     def __remove_line(self, command, delete_data=True):
         # Removing the widget
         index_to_remove = -1
+
         # Updating the line index of all command widget
         for index, command_widget in enumerate(self.command_line_widget):
             if command_widget.get_command().line_index == command.line_index:
@@ -286,7 +337,7 @@ class IfritAIWidget(QWidget):
             elif command_widget.get_command().line_index > command.line_index:
                 command_widget.get_command().line_index -= 1
         if delete_data:
-            self.ifrit_manager.ennemy.remove_command(self.script_section.currentIndex(), index_to_remove)
+            self.ifrit_manager.enemy.remove_command(self.script_section.currentIndex(), index_to_remove)
 
         self.add_button_widget[index_to_remove].deleteLater()
         self.add_button_widget[index_to_remove].setParent(None)
@@ -343,21 +394,26 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        # file_to_load = os.path.join("OriginalFiles", "c0m065.dat")  # For developing faster
+        file_to_load = os.path.join("../IfritAI/OriginalFiles", "c0m001.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat",
                                                             directory=os.getcwd())[0]
         if file_to_load:
+            self._import_xlsx_button.setEnabled(True)
+            self._import_md_button.setEnabled(True)
+            self._export_md_button.setEnabled(True)
             self.__clear_lines(delete_data=True)
             self.ifrit_manager.init_from_file(file_to_load)
             self.monster_name_label.setText(
-                "Monster : {}, file: {}".format(self.ifrit_manager.ennemy.info_stat_data['monster_name'].get_str(),
+                "Monster : {}, file: {}".format(self.ifrit_manager.enemy.info_stat_data['monster_name'].get_str(),
                                                 pathlib.Path(file_to_load).name))
             self.monster_name_label.show()
             self.file_loaded = file_to_load
             self.__setup_section_data()
 
     def __reload_file(self):
+        print("reload")
+        print(f"length self.command_line_widget: {len(self.command_line_widget)}")
         self.__load_file(self.file_loaded)
 
     def __clear_lines(self, delete_data=False):
@@ -390,3 +446,59 @@ class IfritAIWidget(QWidget):
         label = QLabel("Text")
         label.setFont(font)
         self.layout_title.addWidget(label)
+
+    def _load_xlsx_file(self):
+        # Read the xlsx
+        xlsx_manager = IfritXlsxManager()
+        #xlsx_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Xlsx file", filter="*.xlsx")[0]
+        xlsx_file_to_load = os.path.join("../IfritXlsx/OutputFiles", "ifrit.xlsx")  # For developing faster
+        if xlsx_file_to_load:
+            xlsx_manager.load_file(xlsx_file_to_load)
+            current_monster_id = int(re.search(r'\d{3}', self.ifrit_manager.enemy.origin_file_name).group())
+            monster_data = xlsx_manager.get_monster_data_from_xlsx(load_all_data=True, load_only_first=False, load_monster_id=current_monster_id)
+            if not monster_data:
+                print("Monster not found in xlsx file")
+                return
+
+            self.ifrit_manager.enemy.info_stat_data = monster_data[self.ifrit_manager.enemy.origin_file_name].info_stat_data
+            self.ifrit_manager.update_from_xlsx()
+            self.__clear_lines(delete_data=False)
+            self.__setup_section_data()
+
+    def _load_md_file(self):
+        # md_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Md file to import", filter="*.md")[0]
+        md_file_to_load = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
+        if md_file_to_load:
+            with open(md_file_to_load, 'r', encoding='utf-8') as file:
+                content = file.read()
+            # Use regex to extract all code blocks between ```
+            code_blocks = re.findall(r'```.*?\n(.*?)\n```', content, re.DOTALL)
+            print(self.ifrit_manager.enemy.battle_script_data['ai_data'][0])
+            self.__clear_lines(delete_data=False)
+            # Analyse code
+            for index_code, code in enumerate(code_blocks):
+                code_analyser = CodeAnalyser(self.ifrit_manager.game_data, self.ifrit_manager.enemy, code.splitlines())
+                self.ifrit_manager.enemy.battle_script_data['ai_data'][index_code] = code_analyser.get_command()
+            self.ifrit_manager.enemy.ai = self.ifrit_manager.enemy.battle_script_data['ai_data']
+            self.__setup_section_data()
+
+    def _export_md_file(self):
+        section_text = ["# Init code", "# Enemy turn", "# Counter-attack", "# Death", "# Before dying or taking a hit"]
+        default_name = self.ifrit_manager.enemy.origin_file_name.replace('.dat', '.md')
+        md_file_to_export =self.file_dialog.getSaveFileName(parent=self, caption="Md file to save", directory=default_name)[0]
+        #md_file_to_export = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
+        if md_file_to_export:
+            code_text = ""
+            for index_section, section in enumerate(self.ifrit_manager.enemy.battle_script_data['ai_data']):
+                if index_section == len(self.ifrit_manager.enemy.battle_script_data['ai_data']) - 1:  # Ignore last section that is just an empty one to know when it's the end
+                    break
+                code_text += section_text[index_section] + "\n```\n"
+                code_text += CodeAnalyser.set_ifrit_ai_code_from_command(self.ifrit_manager.game_data, section)
+                code_text += "```\n\n"
+            soup = BeautifulSoup(code_text, "html.parser")
+            for br in soup.find_all("br"):
+                br.replace_with("\n")
+            # Extract text content
+            text_content = soup.get_text().replace("\xa0", " ")
+            with open(md_file_to_export, 'w', encoding='utf-8') as file:
+                file.write(text_content)

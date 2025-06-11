@@ -1,6 +1,6 @@
 from FF8GameData.GenericSection.section import Section
+from FF8GameData.GenericSection.sectiondata import SectionData
 from FF8GameData.gamedata import GameData, SectionType
-from ShumiTranslator.model.mngrp.sectiondata import SectionData
 from ShumiTranslator.model.mngrp.string.sectionstring import SectionString
 
 

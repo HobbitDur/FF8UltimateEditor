@@ -1,6 +1,7 @@
+from FF8GameData.GenericSection.ff8data import FF8Data
 from FF8GameData.GenericSection.section import Section
 from FF8GameData.gamedata import GameData
-from ShumiTranslator.model.general.ff8data import FF8Data
+
 
 
 class SubSectionData(Section):

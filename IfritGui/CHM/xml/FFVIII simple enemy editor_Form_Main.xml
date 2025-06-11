@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Form Name = "Main" Text = "Main window" WindowSize = "874, 683" ClientAreaOffset = "4, 22" BorderStyle = "1" HasMap = "True" Charset="windows-1252" Stylesheet="Office11.css" PicFileName="FFVIII simple enemy editor_Form_Main.jpg" HtmlFileName="FFVIII simple enemy editor_Form_Main.htm" HelpContextId = "60" NewHelpContextIdsCount = "1" SourceProjectType = "C#" SourceProjectName = "FFVIII simple enemy editor" OriginalClassName = "clsWinForm" Indexes = "IFRIT &#45; Simple FFVIII Enemy Edit..." >
+<Menu>
+<MenuEntry Name = "fileToolStripMenuItem" Caption = "&#38;File" Indexes = "File" />
+<MenuEntry Name = "tmiOpen" Caption = "&#38;Open..." Indexes = "Open..." />
+<MenuEntry Name = "tmiOFolder" Caption = "Open &#38;folder..." Indexes = "Open folder..." />
+<MenuEntry Name = "tmiSave" Caption = "&#38;Save file" Indexes = "Save file" />
+<MenuEntry Name = "exitToolStripMenuItem" Caption = "&#38;Exit" Indexes = "Exit" />
+<MenuEntry Name = "helpToolStripMenuItem" Caption = "&#38;Help" Indexes = "Help" />
+<MenuEntry Name = "tmiHelp" Caption = "&#38;Contents" Indexes = "Contents" />
+<MenuEntry Name = "tmiAbout" Caption = "&#38;About" Indexes = "About" />
+</Menu>
+<Controls>
+  <ToolStrip Name = "toolStrip1" Text = "Strip1" ClassName = "ToolStrip" Location = "0, 24" Size = "864, 25" TabIndex = "1" HelpContextId = "70" HotSpot = "4,46,868,71" Level = "1" Indexes = "Strip1" />
+  <ListBox Name = "listBox" Text = "Box" ClassName = "ListBox" Location = "0, 49" Size = "223, 578" TabIndex = "2" HelpContextId = "80" HotSpot = "4,71,227,649" Level = "1" Indexes = "Box" />
+  <TabControl Name = "tabControl" Text = "Control" ClassName = "TabControl" Location = "225, 49" Size = "639, 580" TabIndex = "3" HelpContextId = "90" HotSpot = "229,71,868,651" Level = "1" Indexes = "Control" >
+  <Controls>
+    <Page Name = "tabControl_0" Text = "Specs" ClassName = "Page" OriginalClassName = "TabPage" Location = "225, 49" Size = "639, 580" TabIndex = "0" HelpContextId = "100" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_tabControl_0.jpg" HotSpot = "229,71,868,651" TabPageTab = "225,49,40,20" Level = "2" TabPageIndex = "0" Indexes = "Specs" >
+    <Controls>
+      <TextBox Name = "txtbName" Text = "Name" ClassName = "TextBox" Location = "235, 84" Size = "164, 20" TabIndex = "4" HotSpot = "239,106,403,126" Level = "3" Indexes = "Name" />
+      <Label Name = "label41" Text = "Real name:" ClassName = "Label" Location = "399, 87" Size = "72, 14" TabIndex = "24" HotSpot = "403,109,475,123" Level = "3" Indexes = "Real name" />
+      <GroupBox Name = "groupBox1" Text = "Levels" ClassName = "GroupBox" Location = "235, 110" Size = "378, 78" TabIndex = "100" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_groupBox1.jpg" HotSpot = "239,132,617,210" Level = "3" Indexes = "Levels" >
+      <Controls>
+        <Label Name = "label12" Text = "Med." ClassName = "Label" Location = "365, 154" Size = "38, 15" TabIndex = "0" HotSpot = "369,176,407,191" Level = "4" Indexes = "Med." />
+        <Label Name = "lbl50" Text = "High lvl" ClassName = "Label" Location = "485, 182" Size = "60, 15" TabIndex = "2" HotSpot = "489,204,549,219" Level = "4" Indexes = "High lvl" />
+        <Label Name = "lbl40" Text = "Med lvl" ClassName = "Label" Location = "358, 182" Size = "55, 15" TabIndex = "3" HotSpot = "362,204,417,219" Level = "4" Indexes = "Med lvl" />
+        <Label Name = "label8" Text = "High" ClassName = "Label" Location = "473, 154" Size = "39, 15" TabIndex = "4" HotSpot = "477,176,516,191" Level = "4" Indexes = "High" />
+        <NumericUpDown Name = "nudMedStart" Text = "MedStart" ClassName = "NumericUpDown" Location = "406, 152" Size = "61, 21" TabIndex = "5" HotSpot = "410,174,471,195" Level = "4" Indexes = "MedStart" />
+        <NumericUpDown Name = "nudHighStart" Text = "HighStart" ClassName = "NumericUpDown" Location = "518, 152" Size = "61, 21" TabIndex = "6" HotSpot = "522,174,583,195" Level = "4" Indexes = "HighStart" />
+        <Label Name = "lblMedlvls" Text = "&#38;#45;" ClassName = "Label" Location = "409, 180" Size = "14, 17" TabIndex = "7" HotSpot = "413,202,427,219" Level = "4" Indexes = "#45;" />
+        <Label Name = "lblHighlvls" Text = "&#38;#45;" ClassName = "Label" Location = "541, 180" Size = "14, 17" TabIndex = "8" HotSpot = "545,202,559,219" Level = "4" Indexes = "#45;" />
+        <Label Name = "label9" Text = "Low lvl" ClassName = "Label" Location = "246, 180" Size = "53, 15" TabIndex = "9" HotSpot = "250,202,303,217" Level = "4" Indexes = "Low lvl" />
+        <Label Name = "lblLowlvls" Text = "&#38;#45;" ClassName = "Label" Location = "296, 180" Size = "14, 17" TabIndex = "10" HotSpot = "300,202,314,219" Level = "4" Indexes = "#45;" />
+        <Label Name = "label39" Text = "Level start:" ClassName = "Label" Location = "280, 154" Size = "82, 15" TabIndex = "11" HotSpot = "284,176,366,191" Level = "4" Indexes = "Level start" />
+      </Controls>
+      </GroupBox>
+      <GroupBox Name = "groupBox2" Text = "Element  Status" ClassName = "GroupBox" Location = "235, 194" Size = "378, 431" TabIndex = "101" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_groupBox2.jpg" HotSpot = "239,216,617,647" Level = "3" Indexes = "Element  Status" >
+      <Controls>
+        <Label Name = "label36" Text = "Fire" ClassName = "Label" Location = "259, 241" Size = "34, 14" TabIndex = "0" HotSpot = "263,263,297,277" Level = "4" Indexes = "Fire" />
+        <Label Name = "lblEleFire" Text = "300%" ClassName = "Label" Location = "561, 241" Size = "41, 14" TabIndex = "2" HotSpot = "565,263,606,277" Level = "4" Indexes = "300%" />
+        <Label Name = "label38" Text = "Ice" ClassName = "Label" Location = "264, 357" Size = "25, 14" TabIndex = "3" HotSpot = "268,379,293,393" Level = "4" Indexes = "Ice" />
+        <Label Name = "lblEIce" Text = "300%" ClassName = "Label" Location = "561, 357" Size = "41, 14" TabIndex = "5" HotSpot = "565,379,606,393" Level = "4" Indexes = "300%" />
+        <Label Name = "label40" Text = "Thnd." ClassName = "Label" Location = "254, 269" Size = "46, 14" TabIndex = "6" HotSpot = "258,291,304,305" Level = "4" Indexes = "Thnd." />
+        <TrackBar Name = "tbFire" Text = "Thnd." ClassName = "TrackBar" Location = "293, 237" Size = "272, 34" TabIndex = "7" HotSpot = "297,259,569,293" Level = "4" Indexes = "Thnd." />
+        <TrackBar Name = "tbThunder" Text = "Thunder" ClassName = "TrackBar" Location = "293, 265" Size = "272, 34" TabIndex = "8" HotSpot = "297,287,569,321" Level = "4" Indexes = "Thunder" />
+        <Label Name = "lblEThunder" Text = "300%" ClassName = "Label" Location = "561, 269" Size = "41, 14" TabIndex = "8" HotSpot = "565,291,606,305" Level = "4" Indexes = "300%" />
+        <Label Name = "label42" Text = "Earth" ClassName = "Label" Location = "251, 385" Size = "45, 14" TabIndex = "9" HotSpot = "255,407,300,421" Level = "4" Indexes = "Earth" />
+        <TrackBar Name = "tbWater" Text = "300%" ClassName = "TrackBar" Location = "293, 293" Size = "272, 34" TabIndex = "9" HotSpot = "297,315,569,349" Level = "4" Indexes = "300%" />
+        <TrackBar Name = "tbPoison" Text = "Poison" ClassName = "TrackBar" Location = "293, 321" Size = "272, 34" TabIndex = "10" HotSpot = "297,343,569,377" Level = "4" Indexes = "Poison" />
+        <TrackBar Name = "tbIce" Text = "Ice" ClassName = "TrackBar" Location = "293, 353" Size = "272, 34" TabIndex = "11" HotSpot = "297,375,569,409" Level = "4" Indexes = "Ice" />
+        <Label Name = "lblEEarth" Text = "300%" ClassName = "Label" Location = "561, 385" Size = "41, 14" TabIndex = "11" HotSpot = "565,407,606,421" Level = "4" Indexes = "300%" />
+        <TrackBar Name = "tbEarth" Text = "300%" ClassName = "TrackBar" Location = "293, 381" Size = "272, 34" TabIndex = "12" HotSpot = "297,403,569,437" Level = "4" Indexes = "300%" />
+        <Label Name = "label44" Text = "Water" ClassName = "Label" Location = "251, 297" Size = "48, 14" TabIndex = "12" HotSpot = "255,319,303,333" Level = "4" Indexes = "Water" />
+        <TrackBar Name = "tbWind" Text = "Water" ClassName = "TrackBar" Location = "294, 409" Size = "272, 34" TabIndex = "13" HotSpot = "298,431,570,465" Level = "4" Indexes = "Water" />
+        <Label Name = "lblEWater" Text = "300%" ClassName = "Label" Location = "561, 297" Size = "41, 14" TabIndex = "14" HotSpot = "565,319,606,333" Level = "4" Indexes = "300%" />
+        <TrackBar Name = "tbHoly" Text = "Holy" ClassName = "TrackBar" Location = "293, 435" Size = "272, 34" TabIndex = "14" HotSpot = "297,457,569,491" Level = "4" Indexes = "Holy" />
+        <Label Name = "label46" Text = "Wind" ClassName = "Label" Location = "259, 413" Size = "42, 14" TabIndex = "15" HotSpot = "263,435,305,449" Level = "4" Indexes = "Wind" />
+        <TextBox Name = "txtbStDeath" Text = "StDeath" ClassName = "TextBox" Location = "293, 475" Size = "38, 21" TabIndex = "15" HotSpot = "297,497,335,518" Level = "4" Indexes = "StDeath" />
+        <TextBox Name = "txtbStPoison" Text = "StPoison" ClassName = "TextBox" Location = "375, 475" Size = "38, 21" TabIndex = "16" HotSpot = "379,497,417,518" Level = "4" Indexes = "StPoison" />
+        <Label Name = "lblEWind" Text = "300%" ClassName = "Label" Location = "561, 413" Size = "41, 14" TabIndex = "17" HotSpot = "565,435,606,449" Level = "4" Indexes = "300%" />
+        <TextBox Name = "txtbStPetrify" Text = "StPetrify" ClassName = "TextBox" Location = "459, 475" Size = "38, 21" TabIndex = "17" HotSpot = "463,497,501,518" Level = "4" Indexes = "StPetrify" />
+        <Label Name = "label48" Text = "Bio" ClassName = "Label" Location = "259, 325" Size = "27, 14" TabIndex = "18" HotSpot = "263,347,290,361" Level = "4" Indexes = "Bio" />
+        <TextBox Name = "txtbStBlind" Text = "StBlind" ClassName = "TextBox" Location = "541, 475" Size = "38, 21" TabIndex = "18" HotSpot = "545,497,583,518" Level = "4" Indexes = "StBlind" />
+        <TextBox Name = "txtbStSilence" Text = "StSilence" ClassName = "TextBox" Location = "293, 502" Size = "38, 21" TabIndex = "19" HotSpot = "297,524,335,545" Level = "4" Indexes = "StSilence" />
+        <Label Name = "lblEPoison" Text = "300%" ClassName = "Label" Location = "561, 325" Size = "41, 14" TabIndex = "20" HotSpot = "565,347,606,361" Level = "4" Indexes = "300%" />
+        <TextBox Name = "txtbStBerserk" Text = "StBerserk" ClassName = "TextBox" Location = "375, 502" Size = "38, 21" TabIndex = "20" HotSpot = "379,524,417,545" Level = "4" Indexes = "StBerserk" />
+        <Label Name = "label50" Text = "Holy" ClassName = "Label" Location = "259, 441" Size = "37, 14" TabIndex = "21" HotSpot = "263,463,300,477" Level = "4" Indexes = "Holy" />
+        <TextBox Name = "txtbStZombie" Text = "StZombie" ClassName = "TextBox" Location = "459, 502" Size = "38, 21" TabIndex = "21" HotSpot = "463,524,501,545" Level = "4" Indexes = "StZombie" />
+        <TextBox Name = "txtbStSleep" Text = "StSleep" ClassName = "TextBox" Location = "541, 502" Size = "38, 21" TabIndex = "22" HotSpot = "545,524,583,545" Level = "4" Indexes = "StSleep" />
+        <Label Name = "lblEHoly" Text = "300%" ClassName = "Label" Location = "561, 441" Size = "41, 14" TabIndex = "23" HotSpot = "565,463,606,477" Level = "4" Indexes = "300%" />
+        <TextBox Name = "txtbStHaste" Text = "StHaste" ClassName = "TextBox" Location = "293, 529" Size = "38, 21" TabIndex = "23" HotSpot = "297,551,335,572" Level = "4" Indexes = "StHaste" />
+        <TextBox Name = "txtbStSlow" Text = "StSlow" ClassName = "TextBox" Location = "375, 529" Size = "38, 21" TabIndex = "24" HotSpot = "379,551,417,572" Level = "4" Indexes = "StSlow" />
+        <TextBox Name = "txtbStStop" Text = "StStop" ClassName = "TextBox" Location = "459, 529" Size = "38, 21" TabIndex = "25" HotSpot = "463,551,501,572" Level = "4" Indexes = "StStop" />
+        <TextBox Name = "txtbStRegen" Text = "StRegen" ClassName = "TextBox" Location = "541, 529" Size = "38, 21" TabIndex = "26" HotSpot = "545,551,583,572" Level = "4" Indexes = "StRegen" />
+        <TextBox Name = "txtbStReflect" Text = "StReflect" ClassName = "TextBox" Location = "293, 556" Size = "38, 21" TabIndex = "27" HotSpot = "297,578,335,599" Level = "4" Indexes = "StReflect" />
+        <TextBox Name = "txtbStDoom" Text = "StDoom" ClassName = "TextBox" Location = "375, 556" Size = "38, 21" TabIndex = "28" HotSpot = "379,578,417,599" Level = "4" Indexes = "StDoom" />
+        <TextBox Name = "txtbStPetrCount" Text = "StPetrCount" ClassName = "TextBox" Location = "459, 556" Size = "38, 21" TabIndex = "29" HotSpot = "463,578,501,599" Level = "4" Indexes = "StPetrCount" />
+        <TextBox Name = "txtbStFloat" Text = "StFloat" ClassName = "TextBox" Location = "541, 556" Size = "38, 21" TabIndex = "30" HotSpot = "545,578,583,599" Level = "4" Indexes = "StFloat" />
+        <TextBox Name = "txtbStConfu" Text = "StConfu" ClassName = "TextBox" Location = "375, 583" Size = "38, 21" TabIndex = "31" HotSpot = "379,605,417,626" Level = "4" Indexes = "StConfu" />
+        <TextBox Name = "txtbStDrain" Text = "StDrain" ClassName = "TextBox" Location = "294, 582" Size = "38, 21" TabIndex = "31" HotSpot = "298,604,336,625" Level = "4" Indexes = "StDrain" />
+        <TextBox Name = "txtbStVit0" Text = "StVit0" ClassName = "TextBox" Location = "459, 583" Size = "38, 21" TabIndex = "32" HotSpot = "463,605,501,626" Level = "4" Indexes = "StVit0" />
+        <TextBox Name = "txtbStPercent" Text = "StPercent" ClassName = "TextBox" Location = "541, 583" Size = "38, 21" TabIndex = "33" HotSpot = "545,605,583,626" Level = "4" Indexes = "StPercent" />
+        <Label Name = "label43" Text = "Death" ClassName = "Label" Location = "251, 478" Size = "46, 14" TabIndex = "48" HotSpot = "255,500,301,514" Level = "4" Indexes = "Death" />
+        <Label Name = "label45" Text = "Poison" ClassName = "Label" Location = "333, 478" Size = "49, 14" TabIndex = "50" HotSpot = "337,500,386,514" Level = "4" Indexes = "Poison" />
+        <Label Name = "label49" Text = "Petrfy" ClassName = "Label" Location = "417, 478" Size = "48, 14" TabIndex = "52" HotSpot = "421,500,469,514" Level = "4" Indexes = "Petrfy" />
+        <Label Name = "label47" Text = "Blind" ClassName = "Label" Location = "499, 478" Size = "42, 14" TabIndex = "54" HotSpot = "503,500,545,514" Level = "4" Indexes = "Blind" />
+        <Label Name = "label54" Text = "Mute" ClassName = "Label" Location = "251, 505" Size = "40, 14" TabIndex = "56" HotSpot = "255,527,295,541" Level = "4" Indexes = "Mute" />
+        <Label Name = "label53" Text = "Bersk" ClassName = "Label" Location = "333, 505" Size = "43, 14" TabIndex = "58" HotSpot = "337,527,380,541" Level = "4" Indexes = "Bersk" />
+        <Label Name = "label52" Text = "Zmbie" ClassName = "Label" Location = "417, 505" Size = "48, 14" TabIndex = "60" HotSpot = "421,527,469,541" Level = "4" Indexes = "Zmbie" />
+        <Label Name = "label51" Text = "Sleep" ClassName = "Label" Location = "499, 505" Size = "41, 14" TabIndex = "62" HotSpot = "503,527,544,541" Level = "4" Indexes = "Sleep" />
+        <Label Name = "label58" Text = "Haste" ClassName = "Label" Location = "251, 532" Size = "44, 14" TabIndex = "64" HotSpot = "255,554,299,568" Level = "4" Indexes = "Haste" />
+        <Label Name = "label57" Text = "Slow" ClassName = "Label" Location = "333, 532" Size = "36, 14" TabIndex = "66" HotSpot = "337,554,373,568" Level = "4" Indexes = "Slow" />
+        <Label Name = "label56" Text = "Stop" ClassName = "Label" Location = "417, 532" Size = "35, 14" TabIndex = "68" HotSpot = "421,554,456,568" Level = "4" Indexes = "Stop" />
+        <Label Name = "label55" Text = "Regen" ClassName = "Label" Location = "499, 532" Size = "46, 14" TabIndex = "70" HotSpot = "503,554,549,568" Level = "4" Indexes = "Regen" />
+        <Label Name = "label62" Text = "Reflct" ClassName = "Label" Location = "251, 559" Size = "45, 14" TabIndex = "72" HotSpot = "255,581,300,595" Level = "4" Indexes = "Reflct" />
+        <Label Name = "label61" Text = "Doom" ClassName = "Label" Location = "333, 559" Size = "43, 14" TabIndex = "74" HotSpot = "337,581,380,595" Level = "4" Indexes = "Doom" />
+        <Label Name = "label60" Text = "PetrfC" ClassName = "Label" Location = "417, 559" Size = "48, 14" TabIndex = "76" HotSpot = "421,581,469,595" Level = "4" Indexes = "PetrfC" />
+        <Label Name = "label59" Text = "Float" ClassName = "Label" Location = "499, 559" Size = "41, 14" TabIndex = "78" HotSpot = "503,581,544,595" Level = "4" Indexes = "Float" />
+        <Label Name = "label66" Text = "Confu" ClassName = "Label" Location = "333, 586" Size = "45, 14" TabIndex = "80" HotSpot = "337,608,382,622" Level = "4" Indexes = "Confu" />
+        <Label Name = "label65" Text = "Drain" ClassName = "Label" Location = "251, 586" Size = "45, 14" TabIndex = "82" HotSpot = "255,608,300,622" Level = "4" Indexes = "Drain" />
+        <Label Name = "label64" Text = "Vit0" ClassName = "Label" Location = "417, 586" Size = "36, 14" TabIndex = "84" HotSpot = "421,608,457,622" Level = "4" Indexes = "Vit0" />
+        <Label Name = "label63" Text = "Prcnt" ClassName = "Label" Location = "499, 586" Size = "43, 14" TabIndex = "86" HotSpot = "503,608,546,622" Level = "4" Indexes = "Prcnt" />
+      </Controls>
+      </GroupBox>
+      <GroupBox Name = "gbStats" Text = "Stats" ClassName = "GroupBox" Location = "613, 78" Size = "241, 547" TabIndex = "102" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_gbStats.jpg" HotSpot = "617,100,858,647" Level = "3" Indexes = "Stats" >
+      <Controls>
+        <Label Name = "label3" Text = "HP_1" ClassName = "Label" Location = "624, 133" Size = "40, 15" TabIndex = "0" HotSpot = "628,155,668,170" Level = "4" Indexes = "HP_1" />
+        <Label Name = "label4" Text = "HP_2" ClassName = "Label" Location = "743, 133" Size = "42, 15" TabIndex = "6" HotSpot = "747,155,789,170" Level = "4" Indexes = "HP_2" />
+        <Label Name = "label5" Text = "HP_3" ClassName = "Label" Location = "624, 158" Size = "42, 15" TabIndex = "8" HotSpot = "628,180,670,195" Level = "4" Indexes = "HP_3" />
+        <Label Name = "label6" Text = "HP_4" ClassName = "Label" Location = "743, 158" Size = "42, 15" TabIndex = "10" HotSpot = "747,180,789,195" Level = "4" Indexes = "HP_4" />
+        <Label Name = "label13" Text = "STR_1" ClassName = "Label" Location = "624, 192" Size = "48, 15" TabIndex = "13" HotSpot = "628,214,676,229" Level = "4" Indexes = "STR_1" />
+        <Label Name = "label11" Text = "STR_2" ClassName = "Label" Location = "743, 192" Size = "50, 15" TabIndex = "15" HotSpot = "747,214,797,229" Level = "4" Indexes = "STR_2" />
+        <Label Name = "label10" Text = "STR_3" ClassName = "Label" Location = "624, 217" Size = "50, 15" TabIndex = "17" HotSpot = "628,239,678,254" Level = "4" Indexes = "STR_3" />
+        <Label Name = "label7" Text = "STR_4" ClassName = "Label" Location = "743, 217" Size = "50, 15" TabIndex = "19" HotSpot = "747,239,797,254" Level = "4" Indexes = "STR_4" />
+        <Microsoft.VisualBasic.PowerPacks.ShapeContainer Name = "shapeContainer1" Text = "Container1" ClassName = "Microsoft.VisualBasic.PowerPacks.ShapeContainer" Location = "620, 118" Size = "235, 527" TabIndex = "21" HotSpot = "624,140,859,667" Level = "4" Indexes = "Container1" />
+        <Label Name = "label17" Text = "MAG_1" ClassName = "Label" Location = "624, 251" Size = "53, 15" TabIndex = "22" HotSpot = "628,273,681,288" Level = "4" Indexes = "MAG_1" />
+        <Label Name = "label16" Text = "MAG_2" ClassName = "Label" Location = "743, 251" Size = "55, 15" TabIndex = "24" HotSpot = "747,273,802,288" Level = "4" Indexes = "MAG_2" />
+        <Label Name = "label15" Text = "MAG_3" ClassName = "Label" Location = "624, 276" Size = "55, 15" TabIndex = "26" HotSpot = "628,298,683,313" Level = "4" Indexes = "MAG_3" />
+        <Label Name = "label14" Text = "MAG_4" ClassName = "Label" Location = "743, 276" Size = "55, 15" TabIndex = "28" HotSpot = "747,298,802,313" Level = "4" Indexes = "MAG_4" />
+        <Label Name = "label21" Text = "VIT_1" ClassName = "Label" Location = "624, 310" Size = "45, 15" TabIndex = "30" HotSpot = "628,332,673,347" Level = "4" Indexes = "VIT_1" />
+        <Label Name = "label20" Text = "VIT_2" ClassName = "Label" Location = "743, 310" Size = "47, 15" TabIndex = "32" HotSpot = "747,332,794,347" Level = "4" Indexes = "VIT_2" />
+        <TextBox Name = "txtbHP1" Text = "HP1" ClassName = "TextBox" Location = "678, 130" Size = "54, 21" TabIndex = "34" HotSpot = "682,152,736,173" Level = "4" Indexes = "HP1" />
+        <Label Name = "label19" Text = "VIT_3" ClassName = "Label" Location = "624, 335" Size = "47, 15" TabIndex = "34" HotSpot = "628,357,675,372" Level = "4" Indexes = "VIT_3" />
+        <TextBox Name = "txtbHP2" Text = "VIT_3" ClassName = "TextBox" Location = "797, 130" Size = "54, 21" TabIndex = "35" HotSpot = "801,152,855,173" Level = "4" Indexes = "VIT_3" />
+        <TextBox Name = "txtbHP3" Text = "HP3" ClassName = "TextBox" Location = "678, 155" Size = "54, 21" TabIndex = "36" HotSpot = "682,177,736,198" Level = "4" Indexes = "HP3" />
+        <Label Name = "label18" Text = "VIT_4" ClassName = "Label" Location = "743, 335" Size = "47, 15" TabIndex = "36" HotSpot = "747,357,794,372" Level = "4" Indexes = "VIT_4" />
+        <TextBox Name = "txtbHP4" Text = "VIT_4" ClassName = "TextBox" Location = "797, 155" Size = "54, 21" TabIndex = "37" HotSpot = "801,177,855,198" Level = "4" Indexes = "VIT_4" />
+        <TextBox Name = "txtbStr1" Text = "Str1" ClassName = "TextBox" Location = "678, 189" Size = "54, 21" TabIndex = "38" HotSpot = "682,211,736,232" Level = "4" Indexes = "Str1" />
+        <Label Name = "label25" Text = "SPR_1" ClassName = "Label" Location = "624, 370" Size = "47, 15" TabIndex = "38" HotSpot = "628,392,675,407" Level = "4" Indexes = "SPR_1" />
+        <TextBox Name = "txtbStr2" Text = "SPR_1" ClassName = "TextBox" Location = "797, 189" Size = "54, 21" TabIndex = "39" HotSpot = "801,211,855,232" Level = "4" Indexes = "SPR_1" />
+        <TextBox Name = "txtbStr3" Text = "Str3" ClassName = "TextBox" Location = "678, 214" Size = "54, 21" TabIndex = "40" HotSpot = "682,236,736,257" Level = "4" Indexes = "Str3" />
+        <Label Name = "label24" Text = "SPR_2" ClassName = "Label" Location = "743, 370" Size = "49, 15" TabIndex = "40" HotSpot = "747,392,796,407" Level = "4" Indexes = "SPR_2" />
+        <TextBox Name = "txtbStr4" Text = "SPR_2" ClassName = "TextBox" Location = "797, 214" Size = "54, 21" TabIndex = "41" HotSpot = "801,236,855,257" Level = "4" Indexes = "SPR_2" />
+        <TextBox Name = "txtbMag1" Text = "Mag1" ClassName = "TextBox" Location = "678, 248" Size = "54, 21" TabIndex = "42" HotSpot = "682,270,736,291" Level = "4" Indexes = "Mag1" />
+        <Label Name = "label23" Text = "SPR_3" ClassName = "Label" Location = "624, 395" Size = "49, 15" TabIndex = "42" HotSpot = "628,417,677,432" Level = "4" Indexes = "SPR_3" />
+        <TextBox Name = "txtbMag2" Text = "SPR_3" ClassName = "TextBox" Location = "797, 248" Size = "54, 21" TabIndex = "43" HotSpot = "801,270,855,291" Level = "4" Indexes = "SPR_3" />
+        <TextBox Name = "txtbMag3" Text = "Mag3" ClassName = "TextBox" Location = "678, 273" Size = "54, 21" TabIndex = "44" HotSpot = "682,295,736,316" Level = "4" Indexes = "Mag3" />
+        <Label Name = "label22" Text = "SPR_4" ClassName = "Label" Location = "743, 395" Size = "49, 15" TabIndex = "44" HotSpot = "747,417,796,432" Level = "4" Indexes = "SPR_4" />
+        <TextBox Name = "txtbMag4" Text = "SPR_4" ClassName = "TextBox" Location = "797, 273" Size = "54, 21" TabIndex = "45" HotSpot = "801,295,855,316" Level = "4" Indexes = "SPR_4" />
+        <TextBox Name = "txtbVit1" Text = "Vit1" ClassName = "TextBox" Location = "678, 307" Size = "54, 21" TabIndex = "46" HotSpot = "682,329,736,350" Level = "4" Indexes = "Vit1" />
+        <Label Name = "label29" Text = "SPD_1" ClassName = "Label" Location = "624, 429" Size = "47, 15" TabIndex = "46" HotSpot = "628,451,675,466" Level = "4" Indexes = "SPD_1" />
+        <TextBox Name = "txtbVit2" Text = "SPD_1" ClassName = "TextBox" Location = "797, 307" Size = "54, 21" TabIndex = "47" HotSpot = "801,329,855,350" Level = "4" Indexes = "SPD_1" />
+        <TextBox Name = "txtbVit3" Text = "Vit3" ClassName = "TextBox" Location = "678, 332" Size = "54, 21" TabIndex = "48" HotSpot = "682,354,736,375" Level = "4" Indexes = "Vit3" />
+        <Label Name = "label28" Text = "SPD_2" ClassName = "Label" Location = "743, 429" Size = "49, 15" TabIndex = "48" HotSpot = "747,451,796,466" Level = "4" Indexes = "SPD_2" />
+        <TextBox Name = "txtbVit4" Text = "SPD_2" ClassName = "TextBox" Location = "797, 332" Size = "54, 21" TabIndex = "49" HotSpot = "801,354,855,375" Level = "4" Indexes = "SPD_2" />
+        <TextBox Name = "txtbSpr1" Text = "Spr1" ClassName = "TextBox" Location = "678, 366" Size = "54, 21" TabIndex = "50" HotSpot = "682,388,736,409" Level = "4" Indexes = "Spr1" />
+        <Label Name = "label27" Text = "SPD_3" ClassName = "Label" Location = "624, 454" Size = "49, 15" TabIndex = "50" HotSpot = "628,476,677,491" Level = "4" Indexes = "SPD_3" />
+        <TextBox Name = "txtbSpr2" Text = "SPD_3" ClassName = "TextBox" Location = "797, 366" Size = "54, 21" TabIndex = "51" HotSpot = "801,388,855,409" Level = "4" Indexes = "SPD_3" />
+        <TextBox Name = "txtbSpr3" Text = "Spr3" ClassName = "TextBox" Location = "678, 392" Size = "54, 21" TabIndex = "52" HotSpot = "682,414,736,435" Level = "4" Indexes = "Spr3" />
+        <Label Name = "label26" Text = "SPD_4" ClassName = "Label" Location = "743, 454" Size = "49, 15" TabIndex = "52" HotSpot = "747,476,796,491" Level = "4" Indexes = "SPD_4" />
+        <TextBox Name = "txtbSpr4" Text = "SPD_4" ClassName = "TextBox" Location = "797, 392" Size = "54, 21" TabIndex = "53" HotSpot = "801,414,855,435" Level = "4" Indexes = "SPD_4" />
+        <TextBox Name = "txtbSpd1" Text = "Spd1" ClassName = "TextBox" Location = "678, 425" Size = "54, 21" TabIndex = "54" HotSpot = "682,447,736,468" Level = "4" Indexes = "Spd1" />
+        <Label Name = "label33" Text = "EVA_1" ClassName = "Label" Location = "624, 488" Size = "50, 15" TabIndex = "54" HotSpot = "628,510,678,525" Level = "4" Indexes = "EVA_1" />
+        <TextBox Name = "txtbSpd2" Text = "EVA_1" ClassName = "TextBox" Location = "797, 425" Size = "54, 21" TabIndex = "55" HotSpot = "801,447,855,468" Level = "4" Indexes = "EVA_1" />
+        <TextBox Name = "txtbSpd3" Text = "Spd3" ClassName = "TextBox" Location = "678, 451" Size = "54, 21" TabIndex = "56" HotSpot = "682,473,736,494" Level = "4" Indexes = "Spd3" />
+        <Label Name = "label32" Text = "EVA_2" ClassName = "Label" Location = "744, 488" Size = "52, 15" TabIndex = "56" HotSpot = "748,510,800,525" Level = "4" Indexes = "EVA_2" />
+        <TextBox Name = "txtbSpd4" Text = "EVA_2" ClassName = "TextBox" Location = "797, 451" Size = "54, 21" TabIndex = "57" HotSpot = "801,473,855,494" Level = "4" Indexes = "EVA_2" />
+        <TextBox Name = "txtbEva1" Text = "Eva1" ClassName = "TextBox" Location = "678, 484" Size = "54, 21" TabIndex = "58" HotSpot = "682,506,736,527" Level = "4" Indexes = "Eva1" />
+        <Label Name = "label31" Text = "EVA_3" ClassName = "Label" Location = "624, 513" Size = "52, 15" TabIndex = "58" HotSpot = "628,535,680,550" Level = "4" Indexes = "EVA_3" />
+        <TextBox Name = "txtbEva2" Text = "EVA_3" ClassName = "TextBox" Location = "797, 484" Size = "54, 21" TabIndex = "59" HotSpot = "801,506,855,527" Level = "4" Indexes = "EVA_3" />
+        <TextBox Name = "txtbEva3" Text = "Eva3" ClassName = "TextBox" Location = "678, 510" Size = "54, 21" TabIndex = "60" HotSpot = "682,532,736,553" Level = "4" Indexes = "Eva3" />
+        <Label Name = "label30" Text = "EVA_4" ClassName = "Label" Location = "744, 513" Size = "52, 15" TabIndex = "60" HotSpot = "748,535,800,550" Level = "4" Indexes = "EVA_4" />
+        <TextBox Name = "txtbEva4" Text = "EVA_4" ClassName = "TextBox" Location = "797, 510" Size = "54, 21" TabIndex = "61" HotSpot = "801,532,855,553" Level = "4" Indexes = "EVA_4" />
+        <Label Name = "label35" Text = "EXP" ClassName = "Label" Location = "624, 548" Size = "34, 15" TabIndex = "62" HotSpot = "628,570,662,585" Level = "4" Indexes = "EXP" />
+        <TextBox Name = "txtbEXP" Text = "EXP" ClassName = "TextBox" Location = "664, 545" Size = "77, 21" TabIndex = "62" HotSpot = "668,567,745,588" Level = "4" Indexes = "EXP" />
+        <TextBox Name = "txtbAP" Text = "AP" ClassName = "TextBox" Location = "797, 545" Size = "54, 21" TabIndex = "63" HotSpot = "801,567,855,588" Level = "4" Indexes = "AP" />
+        <Label Name = "label34" Text = "Extra EXP" ClassName = "Label" Location = "624, 573" Size = "75, 15" TabIndex = "64" HotSpot = "628,595,703,610" Level = "4" Indexes = "Extra EXP" />
+        <TextBox Name = "txtbXexp" Text = "Xexp" ClassName = "TextBox" Location = "705, 571" Size = "77, 21" TabIndex = "64" HotSpot = "709,593,786,614" Level = "4" Indexes = "Xexp" />
+        <Button Name = "btnStat" Text = "Show stats pr level" ClassName = "Button" Location = "705, 598" Size = "146, 29" TabIndex = "65" HotSpot = "709,620,855,649" Level = "4" Indexes = "Show stats pr level" />
+        <Label Name = "label37" Text = "AP" ClassName = "Label" Location = "771, 548" Size = "25, 15" TabIndex = "68" HotSpot = "775,570,800,585" Level = "4" Indexes = "AP" />
+      </Controls>
+      </GroupBox>
+    </Controls>
+    </Page>
+    <Page Name = "tabControl_1" Text = "Items" ClassName = "Page" OriginalClassName = "TabPage" Location = "225, 49" Size = "639, 580" TabIndex = "0" HelpContextId = "110" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_tabControl_1.jpg" HotSpot = "229,71,868,651" TabPageTab = "265,49,40,20" Level = "2" TabPageIndex = "1" Indexes = "Items" >
+    <Controls>
+      <Label Name = "label114" Text = "Droprate%" ClassName = "Label" Location = "562, 579" Size = "78, 15" TabIndex = "17" HotSpot = "566,601,644,616" Level = "3" Indexes = "Droprate%" />
+      <Label Name = "label115" Text = "Mugrate%" ClassName = "Label" Location = "246, 579" Size = "74, 15" TabIndex = "20" HotSpot = "250,601,324,616" Level = "3" Indexes = "Mugrate%" />
+      <TextBox Name = "txtbMugRate" Text = "MugRate" ClassName = "TextBox" Location = "326, 577" Size = "73, 20" TabIndex = "30" HotSpot = "330,599,403,619" Level = "3" Indexes = "MugRate" />
+      <TextBox Name = "txtbDropRate" Text = "DropRate" ClassName = "TextBox" Location = "646, 577" Size = "73, 20" TabIndex = "54" HotSpot = "650,599,723,619" Level = "3" Indexes = "DropRate" />
+      <GroupBox Name = "gbItemsLow" Text = "Low level mug" ClassName = "GroupBox" Location = "235, 110" Size = "303, 145" TabIndex = "102" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_gbItemsLow.jpg" HotSpot = "239,132,542,277" Level = "3" Indexes = "Low level mug" >
+      <Controls>
+        <Label Name = "label2" Text = "Normal" ClassName = "Label" Location = "250, 156" Size = "57, 15" TabIndex = "0" HotSpot = "254,178,311,193" Level = "4" Indexes = "Normal" />
+        <Label Name = "label68" Text = "x" ClassName = "Label" Location = "451, 156" Size = "15, 15" TabIndex = "3" HotSpot = "455,178,470,193" Level = "4" Indexes = "x" />
+        <Label Name = "label69" Text = "Rare" ClassName = "Label" Location = "250, 214" Size = "39, 15" TabIndex = "5" HotSpot = "254,236,293,251" Level = "4" Indexes = "Rare" />
+        <ComboBox Name = "cbMugLow1" Text = "Rare" ClassName = "ComboBox" Location = "303, 153" Size = "142, 23" TabIndex = "6" HotSpot = "307,175,449,198" Level = "4" Indexes = "Rare" />
+        <NumericUpDown Name = "nudMugLow1" Text = "MugLow1" ClassName = "NumericUpDown" Location = "472, 154" Size = "53, 21" TabIndex = "7" HotSpot = "476,176,529,197" Level = "4" Indexes = "MugLow1" />
+        <Label Name = "label67" Text = "x" ClassName = "Label" Location = "451, 214" Size = "15, 15" TabIndex = "7" HotSpot = "455,236,470,251" Level = "4" Indexes = "x" />
+        <ComboBox Name = "cbMugLow2" Text = "x" ClassName = "ComboBox" Location = "303, 182" Size = "142, 23" TabIndex = "8" HotSpot = "307,204,449,227" Level = "4" Indexes = "x" />
+        <Label Name = "label71" Text = "Normal" ClassName = "Label" Location = "250, 185" Size = "57, 15" TabIndex = "9" HotSpot = "254,207,311,222" Level = "4" Indexes = "Normal" />
+        <NumericUpDown Name = "nudMugLow2" Text = "MugLow2" ClassName = "NumericUpDown" Location = "472, 183" Size = "53, 21" TabIndex = "9" HotSpot = "476,205,529,226" Level = "4" Indexes = "MugLow2" />
+        <ComboBox Name = "cbMugLow3" Text = "MugLow3" ClassName = "ComboBox" Location = "303, 211" Size = "142, 23" TabIndex = "10" HotSpot = "307,233,449,256" Level = "4" Indexes = "MugLow3" />
+        <NumericUpDown Name = "nudMugLow3" Text = "MugLow3" ClassName = "NumericUpDown" Location = "472, 212" Size = "53, 21" TabIndex = "11" HotSpot = "476,234,529,255" Level = "4" Indexes = "MugLow3" />
+        <Label Name = "label70" Text = "x" ClassName = "Label" Location = "451, 185" Size = "15, 15" TabIndex = "11" HotSpot = "455,207,470,222" Level = "4" Indexes = "x" />
+        <ComboBox Name = "cbMugLow4" Text = "x" ClassName = "ComboBox" Location = "303, 240" Size = "142, 23" TabIndex = "12" HotSpot = "307,262,449,285" Level = "4" Indexes = "x" />
+        <Label Name = "label73" Text = "Rare" ClassName = "Label" Location = "250, 243" Size = "39, 15" TabIndex = "13" HotSpot = "254,265,293,280" Level = "4" Indexes = "Rare" />
+        <NumericUpDown Name = "nudMugLow4" Text = "MugLow4" ClassName = "NumericUpDown" Location = "472, 241" Size = "53, 21" TabIndex = "13" HotSpot = "476,263,529,284" Level = "4" Indexes = "MugLow4" />
+        <Label Name = "label72" Text = "x" ClassName = "Label" Location = "451, 243" Size = "15, 15" TabIndex = "15" HotSpot = "455,265,470,280" Level = "4" Indexes = "x" />
+      </Controls>
+      </GroupBox>
+      <GroupBox Name = "groupBox3" Text = "Med. level mug" ClassName = "GroupBox" Location = "235, 261" Size = "303, 145" TabIndex = "117" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_groupBox3.jpg" HotSpot = "239,283,542,428" Level = "3" Indexes = "Med. level mug" >
+      <Controls>
+        <Label Name = "label81" Text = "Normal" ClassName = "Label" Location = "250, 307" Size = "57, 15" TabIndex = "0" HotSpot = "254,329,311,344" Level = "4" Indexes = "Normal" />
+        <Label Name = "label80" Text = "x" ClassName = "Label" Location = "451, 307" Size = "15, 15" TabIndex = "3" HotSpot = "455,329,470,344" Level = "4" Indexes = "x" />
+        <Label Name = "label79" Text = "Rare" ClassName = "Label" Location = "250, 365" Size = "39, 15" TabIndex = "5" HotSpot = "254,387,293,402" Level = "4" Indexes = "Rare" />
+        <Label Name = "label78" Text = "x" ClassName = "Label" Location = "451, 365" Size = "15, 15" TabIndex = "7" HotSpot = "455,387,470,402" Level = "4" Indexes = "x" />
+        <Label Name = "label77" Text = "Normal" ClassName = "Label" Location = "250, 336" Size = "57, 15" TabIndex = "9" HotSpot = "254,358,311,373" Level = "4" Indexes = "Normal" />
+        <Label Name = "label76" Text = "x" ClassName = "Label" Location = "451, 336" Size = "15, 15" TabIndex = "11" HotSpot = "455,358,470,373" Level = "4" Indexes = "x" />
+        <Label Name = "label75" Text = "Rare" ClassName = "Label" Location = "250, 394" Size = "39, 15" TabIndex = "13" HotSpot = "254,416,293,431" Level = "4" Indexes = "Rare" />
+        <ComboBox Name = "cbMugMed1" Text = "Rare" ClassName = "ComboBox" Location = "303, 304" Size = "142, 23" TabIndex = "14" HotSpot = "307,326,449,349" Level = "4" Indexes = "Rare" />
+        <NumericUpDown Name = "nudMugMed1" Text = "MugMed1" ClassName = "NumericUpDown" Location = "472, 305" Size = "53, 21" TabIndex = "15" HotSpot = "476,327,529,348" Level = "4" Indexes = "MugMed1" />
+        <Label Name = "label74" Text = "x" ClassName = "Label" Location = "451, 394" Size = "15, 15" TabIndex = "15" HotSpot = "455,416,470,431" Level = "4" Indexes = "x" />
+        <ComboBox Name = "cbMugMed2" Text = "x" ClassName = "ComboBox" Location = "303, 333" Size = "142, 23" TabIndex = "16" HotSpot = "307,355,449,378" Level = "4" Indexes = "x" />
+        <NumericUpDown Name = "nudMugMed2" Text = "MugMed2" ClassName = "NumericUpDown" Location = "472, 334" Size = "53, 21" TabIndex = "17" HotSpot = "476,356,529,377" Level = "4" Indexes = "MugMed2" />
+        <ComboBox Name = "cbMugMed3" Text = "MugMed3" ClassName = "ComboBox" Location = "303, 362" Size = "142, 23" TabIndex = "18" HotSpot = "307,384,449,407" Level = "4" Indexes = "MugMed3" />
+        <NumericUpDown Name = "nudMugMed3" Text = "MugMed3" ClassName = "NumericUpDown" Location = "472, 363" Size = "53, 21" TabIndex = "19" HotSpot = "476,385,529,406" Level = "4" Indexes = "MugMed3" />
+        <ComboBox Name = "cbMugMed4" Text = "MugMed4" ClassName = "ComboBox" Location = "303, 391" Size = "142, 23" TabIndex = "20" HotSpot = "307,413,449,436" Level = "4" Indexes = "MugMed4" />
+        <NumericUpDown Name = "nudMugMed4" Text = "MugMed4" ClassName = "NumericUpDown" Location = "472, 392" Size = "53, 21" TabIndex = "21" HotSpot = "476,414,529,435" Level = "4" Indexes = "MugMed4" />
+      </Controls>
+      </GroupBox>
+      <GroupBox Name = "groupBox4" Text = "High level mug" ClassName = "GroupBox" Location = "235, 412" Size = "303, 145" TabIndex = "118" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_groupBox4.jpg" HotSpot = "239,434,542,579" Level = "3" Indexes = "High level mug" >
+      <Controls>
+        <Label Name = "label89" Text = "Normal" ClassName = "Label" Location = "250, 458" Size = "57, 15" TabIndex = "0" HotSpot = "254,480,311,495" Level = "4" Indexes = "Normal" />
+        <Label Name = "label88" Text = "x" ClassName = "Label" Location = "451, 458" Size = "15, 15" TabIndex = "3" HotSpot = "455,480,470,495" Level = "4" Indexes = "x" />
+        <Label Name = "label87" Text = "Rare" ClassName = "Label" Location = "250, 516" Size = "39, 15" TabIndex = "5" HotSpot = "254,538,293,553" Level = "4" Indexes = "Rare" />
+        <Label Name = "label86" Text = "x" ClassName = "Label" Location = "451, 516" Size = "15, 15" TabIndex = "7" HotSpot = "455,538,470,553" Level = "4" Indexes = "x" />
+        <Label Name = "label85" Text = "Normal" ClassName = "Label" Location = "250, 487" Size = "57, 15" TabIndex = "9" HotSpot = "254,509,311,524" Level = "4" Indexes = "Normal" />
+        <Label Name = "label84" Text = "x" ClassName = "Label" Location = "451, 487" Size = "15, 15" TabIndex = "11" HotSpot = "455,509,470,524" Level = "4" Indexes = "x" />
+        <Label Name = "label83" Text = "Rare" ClassName = "Label" Location = "250, 545" Size = "39, 15" TabIndex = "13" HotSpot = "254,567,293,582" Level = "4" Indexes = "Rare" />
+        <Label Name = "label82" Text = "x" ClassName = "Label" Location = "451, 545" Size = "15, 15" TabIndex = "15" HotSpot = "455,567,470,582" Level = "4" Indexes = "x" />
+        <ComboBox Name = "cbMugHigh1" Text = "MugHigh1" ClassName = "ComboBox" Location = "303, 455" Size = "142, 23" TabIndex = "22" HotSpot = "307,477,449,500" Level = "4" Indexes = "MugHigh1" />
+        <NumericUpDown Name = "nudMugHigh1" Text = "MugHigh1" ClassName = "NumericUpDown" Location = "472, 456" Size = "53, 21" TabIndex = "23" HotSpot = "476,478,529,499" Level = "4" Indexes = "MugHigh1" />
+        <ComboBox Name = "cbMugHigh2" Text = "MugHigh2" ClassName = "ComboBox" Location = "303, 484" Size = "142, 23" TabIndex = "24" HotSpot = "307,506,449,529" Level = "4" Indexes = "MugHigh2" />
+        <NumericUpDown Name = "nudMugHigh2" Text = "MugHigh2" ClassName = "NumericUpDown" Location = "472, 485" Size = "53, 21" TabIndex = "25" HotSpot = "476,507,529,528" Level = "4" Indexes = "MugHigh2" />
+        <ComboBox Name = "cbMugHigh3" Text = "MugHigh3" ClassName = "ComboBox" Location = "303, 513" Size = "142, 23" TabIndex = "26" HotSpot = "307,535,449,558" Level = "4" Indexes = "MugHigh3" />
+        <NumericUpDown Name = "nudMugHigh3" Text = "MugHigh3" ClassName = "NumericUpDown" Location = "472, 514" Size = "53, 21" TabIndex = "27" HotSpot = "476,536,529,557" Level = "4" Indexes = "MugHigh3" />
+        <ComboBox Name = "cbMugHigh4" Text = "MugHigh4" ClassName = "ComboBox" Location = "303, 542" Size = "142, 23" TabIndex = "28" HotSpot = "307,564,449,587" Level = "4" Indexes = "MugHigh4" />
+        <NumericUpDown Name = "nudMugHigh4" Text = "MugHigh4" ClassName = "NumericUpDown" Location = "472, 543" Size = "53, 21" TabIndex = "29" HotSpot = "476,565,529,586" Level = "4" Indexes = "MugHigh4" />
+      </Controls>
+      </GroupBox>
+      <GroupBox Name = "groupBox5" Text = "Low level Drop" ClassName = "GroupBox" Location = "551, 110" Size = "303, 145" TabIndex = "119" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_groupBox5.jpg" HotSpot = "555,132,858,277" Level = "3" Indexes = "Low level Drop" >
+      <Controls>
+        <Label Name = "label97" Text = "Normal" ClassName = "Label" Location = "566, 156" Size = "57, 15" TabIndex = "0" HotSpot = "570,178,627,193" Level = "4" Indexes = "Normal" />
+        <Label Name = "label96" Text = "x" ClassName = "Label" Location = "767, 156" Size = "15, 15" TabIndex = "3" HotSpot = "771,178,786,193" Level = "4" Indexes = "x" />
+        <Label Name = "label95" Text = "Rare" ClassName = "Label" Location = "566, 214" Size = "39, 15" TabIndex = "5" HotSpot = "570,236,609,251" Level = "4" Indexes = "Rare" />
+        <Label Name = "label94" Text = "x" ClassName = "Label" Location = "767, 214" Size = "15, 15" TabIndex = "7" HotSpot = "771,236,786,251" Level = "4" Indexes = "x" />
+        <Label Name = "label93" Text = "Normal" ClassName = "Label" Location = "566, 185" Size = "57, 15" TabIndex = "9" HotSpot = "570,207,627,222" Level = "4" Indexes = "Normal" />
+        <Label Name = "label92" Text = "x" ClassName = "Label" Location = "767, 185" Size = "15, 15" TabIndex = "11" HotSpot = "771,207,786,222" Level = "4" Indexes = "x" />
+        <Label Name = "label91" Text = "Rare" ClassName = "Label" Location = "566, 243" Size = "39, 15" TabIndex = "13" HotSpot = "570,265,609,280" Level = "4" Indexes = "Rare" />
+        <Label Name = "label90" Text = "x" ClassName = "Label" Location = "767, 243" Size = "15, 15" TabIndex = "15" HotSpot = "771,265,786,280" Level = "4" Indexes = "x" />
+        <ComboBox Name = "cbDropLow1" Text = "DropLow1" ClassName = "ComboBox" Location = "619, 153" Size = "142, 23" TabIndex = "31" HotSpot = "623,175,765,198" Level = "4" Indexes = "DropLow1" />
+        <NumericUpDown Name = "nudDropLow1" Text = "DropLow1" ClassName = "NumericUpDown" Location = "788, 154" Size = "53, 21" TabIndex = "32" HotSpot = "792,176,845,197" Level = "4" Indexes = "DropLow1" />
+        <ComboBox Name = "cbDropLow2" Text = "DropLow2" ClassName = "ComboBox" Location = "619, 182" Size = "142, 23" TabIndex = "33" HotSpot = "623,204,765,227" Level = "4" Indexes = "DropLow2" />
+        <NumericUpDown Name = "nudDropLow2" Text = "DropLow2" ClassName = "NumericUpDown" Location = "788, 183" Size = "53, 21" TabIndex = "34" HotSpot = "792,205,845,226" Level = "4" Indexes = "DropLow2" />
+        <ComboBox Name = "cbDropLow3" Text = "DropLow3" ClassName = "ComboBox" Location = "619, 211" Size = "142, 23" TabIndex = "35" HotSpot = "623,233,765,256" Level = "4" Indexes = "DropLow3" />
+        <NumericUpDown Name = "nudDropLow3" Text = "DropLow3" ClassName = "NumericUpDown" Location = "788, 212" Size = "53, 21" TabIndex = "36" HotSpot = "792,234,845,255" Level = "4" Indexes = "DropLow3" />
+        <ComboBox Name = "cbDropLow4" Text = "DropLow4" ClassName = "ComboBox" Location = "619, 240" Size = "142, 23" TabIndex = "37" HotSpot = "623,262,765,285" Level = "4" Indexes = "DropLow4" />
+        <NumericUpDown Name = "nudDropLow4" Text = "DropLow4" ClassName = "NumericUpDown" Location = "788, 241" Size = "53, 21" TabIndex = "38" HotSpot = "792,263,845,284" Level = "4" Indexes = "DropLow4" />
+      </Controls>
+      </GroupBox>
+      <GroupBox Name = "groupBox6" Text = "Med. level drop" ClassName = "GroupBox" Location = "551, 261" Size = "303, 145" TabIndex = "120" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_groupBox6.jpg" HotSpot = "555,283,858,428" Level = "3" Indexes = "Med. level drop" >
+      <Controls>
+        <Label Name = "label105" Text = "Normal" ClassName = "Label" Location = "566, 307" Size = "57, 15" TabIndex = "0" HotSpot = "570,329,627,344" Level = "4" Indexes = "Normal" />
+        <Label Name = "label104" Text = "x" ClassName = "Label" Location = "767, 307" Size = "15, 15" TabIndex = "3" HotSpot = "771,329,786,344" Level = "4" Indexes = "x" />
+        <Label Name = "label103" Text = "Rare" ClassName = "Label" Location = "566, 365" Size = "39, 15" TabIndex = "5" HotSpot = "570,387,609,402" Level = "4" Indexes = "Rare" />
+        <Label Name = "label102" Text = "x" ClassName = "Label" Location = "767, 365" Size = "15, 15" TabIndex = "7" HotSpot = "771,387,786,402" Level = "4" Indexes = "x" />
+        <Label Name = "label101" Text = "Normal" ClassName = "Label" Location = "566, 336" Size = "57, 15" TabIndex = "9" HotSpot = "570,358,627,373" Level = "4" Indexes = "Normal" />
+        <Label Name = "label100" Text = "x" ClassName = "Label" Location = "767, 336" Size = "15, 15" TabIndex = "11" HotSpot = "771,358,786,373" Level = "4" Indexes = "x" />
+        <Label Name = "label99" Text = "Rare" ClassName = "Label" Location = "566, 394" Size = "39, 15" TabIndex = "13" HotSpot = "570,416,609,431" Level = "4" Indexes = "Rare" />
+        <Label Name = "label98" Text = "x" ClassName = "Label" Location = "767, 394" Size = "15, 15" TabIndex = "15" HotSpot = "771,416,786,431" Level = "4" Indexes = "x" />
+        <ComboBox Name = "cbDropMed1" Text = "DropMed1" ClassName = "ComboBox" Location = "619, 304" Size = "142, 23" TabIndex = "39" HotSpot = "623,326,765,349" Level = "4" Indexes = "DropMed1" />
+        <NumericUpDown Name = "nudDropMed1" Text = "DropMed1" ClassName = "NumericUpDown" Location = "788, 305" Size = "53, 21" TabIndex = "40" HotSpot = "792,327,845,348" Level = "4" Indexes = "DropMed1" />
+        <ComboBox Name = "cbDropMed2" Text = "DropMed2" ClassName = "ComboBox" Location = "619, 333" Size = "142, 23" TabIndex = "41" HotSpot = "623,355,765,378" Level = "4" Indexes = "DropMed2" />
+        <NumericUpDown Name = "nudDropMed2" Text = "DropMed2" ClassName = "NumericUpDown" Location = "788, 334" Size = "53, 21" TabIndex = "42" HotSpot = "792,356,845,377" Level = "4" Indexes = "DropMed2" />
+        <ComboBox Name = "cbDropMed3" Text = "DropMed3" ClassName = "ComboBox" Location = "619, 362" Size = "142, 23" TabIndex = "43" HotSpot = "623,384,765,407" Level = "4" Indexes = "DropMed3" />
+        <NumericUpDown Name = "nudDropMed3" Text = "DropMed3" ClassName = "NumericUpDown" Location = "788, 363" Size = "53, 21" TabIndex = "44" HotSpot = "792,385,845,406" Level = "4" Indexes = "DropMed3" />
+        <ComboBox Name = "cbDropMed4" Text = "DropMed4" ClassName = "ComboBox" Location = "619, 391" Size = "142, 23" TabIndex = "45" HotSpot = "623,413,765,436" Level = "4" Indexes = "DropMed4" />
+        <NumericUpDown Name = "nudDropMed4" Text = "DropMed4" ClassName = "NumericUpDown" Location = "788, 392" Size = "53, 21" TabIndex = "46" HotSpot = "792,414,845,435" Level = "4" Indexes = "DropMed4" />
+      </Controls>
+      </GroupBox>
+      <GroupBox Name = "groupBox7" Text = "High level drop" ClassName = "GroupBox" Location = "551, 412" Size = "303, 145" TabIndex = "121" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_groupBox7.jpg" HotSpot = "555,434,858,579" Level = "3" Indexes = "High level drop" >
+      <Controls>
+        <Label Name = "label113" Text = "Normal" ClassName = "Label" Location = "566, 458" Size = "57, 15" TabIndex = "0" HotSpot = "570,480,627,495" Level = "4" Indexes = "Normal" />
+        <Label Name = "label112" Text = "x" ClassName = "Label" Location = "767, 458" Size = "15, 15" TabIndex = "3" HotSpot = "771,480,786,495" Level = "4" Indexes = "x" />
+        <Label Name = "label111" Text = "Rare" ClassName = "Label" Location = "566, 516" Size = "39, 15" TabIndex = "5" HotSpot = "570,538,609,553" Level = "4" Indexes = "Rare" />
+        <Label Name = "label110" Text = "x" ClassName = "Label" Location = "767, 516" Size = "15, 15" TabIndex = "7" HotSpot = "771,538,786,553" Level = "4" Indexes = "x" />
+        <Label Name = "label109" Text = "Normal" ClassName = "Label" Location = "566, 487" Size = "57, 15" TabIndex = "9" HotSpot = "570,509,627,524" Level = "4" Indexes = "Normal" />
+        <Label Name = "label108" Text = "x" ClassName = "Label" Location = "767, 487" Size = "15, 15" TabIndex = "11" HotSpot = "771,509,786,524" Level = "4" Indexes = "x" />
+        <Label Name = "label107" Text = "Rare" ClassName = "Label" Location = "566, 545" Size = "39, 15" TabIndex = "13" HotSpot = "570,567,609,582" Level = "4" Indexes = "Rare" />
+        <Label Name = "label106" Text = "x" ClassName = "Label" Location = "767, 545" Size = "15, 15" TabIndex = "15" HotSpot = "771,567,786,582" Level = "4" Indexes = "x" />
+        <ComboBox Name = "cbDropHigh1" Text = "DropHigh1" ClassName = "ComboBox" Location = "619, 455" Size = "142, 23" TabIndex = "47" HotSpot = "623,477,765,500" Level = "4" Indexes = "DropHigh1" />
+        <NumericUpDown Name = "nudDropHigh1" Text = "DropHigh1" ClassName = "NumericUpDown" Location = "788, 456" Size = "53, 21" TabIndex = "48" HotSpot = "792,478,845,499" Level = "4" Indexes = "DropHigh1" />
+        <ComboBox Name = "cbDropHigh2" Text = "DropHigh2" ClassName = "ComboBox" Location = "619, 484" Size = "142, 23" TabIndex = "49" HotSpot = "623,506,765,529" Level = "4" Indexes = "DropHigh2" />
+        <NumericUpDown Name = "nudDropHigh2" Text = "DropHigh2" ClassName = "NumericUpDown" Location = "788, 485" Size = "53, 21" TabIndex = "50" HotSpot = "792,507,845,528" Level = "4" Indexes = "DropHigh2" />
+        <ComboBox Name = "cbDropHigh3" Text = "DropHigh3" ClassName = "ComboBox" Location = "619, 513" Size = "142, 23" TabIndex = "51" HotSpot = "623,535,765,558" Level = "4" Indexes = "DropHigh3" />
+        <NumericUpDown Name = "nudDropHigh3" Text = "DropHigh3" ClassName = "NumericUpDown" Location = "788, 514" Size = "53, 21" TabIndex = "52" HotSpot = "792,536,845,557" Level = "4" Indexes = "DropHigh3" />
+        <ComboBox Name = "cbDropHigh4" Text = "DropHigh4" ClassName = "ComboBox" Location = "619, 542" Size = "142, 23" TabIndex = "53" HotSpot = "623,564,765,587" Level = "4" Indexes = "DropHigh4" />
+        <NumericUpDown Name = "nudDropHigh4" Text = "DropHigh4" ClassName = "NumericUpDown" Location = "788, 543" Size = "53, 21" TabIndex = "54" HotSpot = "792,565,845,586" Level = "4" Indexes = "DropHigh4" />
+      </Controls>
+      </GroupBox>
+    </Controls>
+    </Page>
+    <Page Name = "tabControl_2" Text = "Draw" ClassName = "Page" OriginalClassName = "TabPage" Location = "225, 49" Size = "639, 580" TabIndex = "0" HelpContextId = "120" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_tabControl_2.jpg" HotSpot = "229,71,868,651" TabPageTab = "305,49,35,20" Level = "2" TabPageIndex = "2" Indexes = "Draw" >
+    <Controls>
+      <GroupBox Name = "groupBox8" Text = "Low level Draw" ClassName = "GroupBox" Location = "462, 110" Size = "250, 145" TabIndex = "122" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_groupBox8.jpg" HotSpot = "466,132,716,277" Level = "3" Indexes = "Low level Draw" >
+      <Controls>
+        <Label Name = "label122" Text = "label122" ClassName = "Label" Location = "477, 156" Size = "0, 15" TabIndex = "0" HotSpot = "481,178,481,193" Level = "4" Indexes = "label122" />
+        <Label Name = "label121" Text = "??" ClassName = "Label" Location = "628, 159" Size = "21, 15" TabIndex = "3" HotSpot = "632,181,653,196" Level = "4" Indexes = "??" />
+        <ComboBox Name = "cbDrawLow1" Text = "DrawLow1" ClassName = "ComboBox" Location = "480, 156" Size = "142, 23" TabIndex = "5" HotSpot = "484,178,626,201" Level = "4" Indexes = "DrawLow1" />
+        <Label Name = "label120" Text = "label120" ClassName = "Label" Location = "477, 214" Size = "0, 15" TabIndex = "5" HotSpot = "481,236,481,251" Level = "4" Indexes = "label120" />
+        <NumericUpDown Name = "nudDrawLow1" Text = "DrawLow1" ClassName = "NumericUpDown" Location = "649, 157" Size = "53, 21" TabIndex = "6" HotSpot = "653,179,706,200" Level = "4" Indexes = "DrawLow1" />
+        <Label Name = "label119" Text = "??" ClassName = "Label" Location = "628, 217" Size = "21, 15" TabIndex = "7" HotSpot = "632,239,653,254" Level = "4" Indexes = "??" />
+        <ComboBox Name = "cbDrawLow2" Text = "DrawLow2" ClassName = "ComboBox" Location = "480, 185" Size = "142, 23" TabIndex = "7" HotSpot = "484,207,626,230" Level = "4" Indexes = "DrawLow2" />
+        <NumericUpDown Name = "nudDrawLow2" Text = "DrawLow2" ClassName = "NumericUpDown" Location = "649, 186" Size = "53, 21" TabIndex = "8" HotSpot = "653,208,706,229" Level = "4" Indexes = "DrawLow2" />
+        <ComboBox Name = "cbDrawLow3" Text = "DrawLow3" ClassName = "ComboBox" Location = "480, 214" Size = "142, 23" TabIndex = "9" HotSpot = "484,236,626,259" Level = "4" Indexes = "DrawLow3" />
+        <Label Name = "label118" Text = "label118" ClassName = "Label" Location = "477, 185" Size = "0, 15" TabIndex = "9" HotSpot = "481,207,481,222" Level = "4" Indexes = "label118" />
+        <NumericUpDown Name = "nudDrawLow3" Text = "DrawLow3" ClassName = "NumericUpDown" Location = "649, 215" Size = "53, 21" TabIndex = "10" HotSpot = "653,237,706,258" Level = "4" Indexes = "DrawLow3" />
+        <Label Name = "label117" Text = "??" ClassName = "Label" Location = "628, 188" Size = "21, 15" TabIndex = "11" HotSpot = "632,210,653,225" Level = "4" Indexes = "??" />
+        <ComboBox Name = "cbDrawLow4" Text = "DrawLow4" ClassName = "ComboBox" Location = "480, 243" Size = "142, 23" TabIndex = "11" HotSpot = "484,265,626,288" Level = "4" Indexes = "DrawLow4" />
+        <NumericUpDown Name = "nudDrawLow4" Text = "DrawLow4" ClassName = "NumericUpDown" Location = "649, 244" Size = "53, 21" TabIndex = "12" HotSpot = "653,266,706,287" Level = "4" Indexes = "DrawLow4" />
+        <Label Name = "label1" Text = "??" ClassName = "Label" Location = "628, 246" Size = "21, 15" TabIndex = "15" HotSpot = "632,268,653,283" Level = "4" Indexes = "??" />
+      </Controls>
+      </GroupBox>
+      <GroupBox Name = "groupBox9" Text = "Med. level Draw" ClassName = "GroupBox" Location = "462, 261" Size = "250, 145" TabIndex = "123" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_groupBox9.jpg" HotSpot = "466,283,716,428" Level = "3" Indexes = "Med. level Draw" >
+      <Controls>
+        <Label Name = "label128" Text = "label128" ClassName = "Label" Location = "477, 307" Size = "0, 15" TabIndex = "0" HotSpot = "481,329,481,344" Level = "4" Indexes = "label128" />
+        <Label Name = "label127" Text = "??" ClassName = "Label" Location = "628, 310" Size = "21, 15" TabIndex = "3" HotSpot = "632,332,653,347" Level = "4" Indexes = "??" />
+        <Label Name = "label126" Text = "label126" ClassName = "Label" Location = "477, 365" Size = "0, 15" TabIndex = "5" HotSpot = "481,387,481,402" Level = "4" Indexes = "label126" />
+        <Label Name = "label125" Text = "??" ClassName = "Label" Location = "628, 368" Size = "21, 15" TabIndex = "7" HotSpot = "632,390,653,405" Level = "4" Indexes = "??" />
+        <Label Name = "label124" Text = "label124" ClassName = "Label" Location = "477, 336" Size = "0, 15" TabIndex = "9" HotSpot = "481,358,481,373" Level = "4" Indexes = "label124" />
+        <Label Name = "label123" Text = "??" ClassName = "Label" Location = "628, 339" Size = "21, 15" TabIndex = "11" HotSpot = "632,361,653,376" Level = "4" Indexes = "??" />
+        <ComboBox Name = "cbDrawMed1" Text = "DrawMed1" ClassName = "ComboBox" Location = "480, 307" Size = "142, 23" TabIndex = "13" HotSpot = "484,329,626,352" Level = "4" Indexes = "DrawMed1" />
+        <NumericUpDown Name = "nudDrawMed1" Text = "DrawMed1" ClassName = "NumericUpDown" Location = "649, 308" Size = "53, 21" TabIndex = "14" HotSpot = "653,330,706,351" Level = "4" Indexes = "DrawMed1" />
+        <ComboBox Name = "cbDrawMed2" Text = "DrawMed2" ClassName = "ComboBox" Location = "480, 336" Size = "142, 23" TabIndex = "15" HotSpot = "484,358,626,381" Level = "4" Indexes = "DrawMed2" />
+        <Label Name = "label116" Text = "??" ClassName = "Label" Location = "628, 397" Size = "21, 15" TabIndex = "15" HotSpot = "632,419,653,434" Level = "4" Indexes = "??" />
+        <NumericUpDown Name = "nudDrawMed2" Text = "DrawMed2" ClassName = "NumericUpDown" Location = "649, 337" Size = "53, 21" TabIndex = "16" HotSpot = "653,359,706,380" Level = "4" Indexes = "DrawMed2" />
+        <ComboBox Name = "cbDrawMed3" Text = "DrawMed3" ClassName = "ComboBox" Location = "480, 365" Size = "142, 23" TabIndex = "17" HotSpot = "484,387,626,410" Level = "4" Indexes = "DrawMed3" />
+        <NumericUpDown Name = "nudDrawMed3" Text = "DrawMed3" ClassName = "NumericUpDown" Location = "649, 366" Size = "53, 21" TabIndex = "18" HotSpot = "653,388,706,409" Level = "4" Indexes = "DrawMed3" />
+        <ComboBox Name = "cbDrawMed4" Text = "DrawMed4" ClassName = "ComboBox" Location = "480, 394" Size = "142, 23" TabIndex = "19" HotSpot = "484,416,626,439" Level = "4" Indexes = "DrawMed4" />
+        <NumericUpDown Name = "nudDrawMed4" Text = "DrawMed4" ClassName = "NumericUpDown" Location = "649, 395" Size = "53, 21" TabIndex = "20" HotSpot = "653,417,706,438" Level = "4" Indexes = "DrawMed4" />
+      </Controls>
+      </GroupBox>
+      <GroupBox Name = "groupBox10" Text = "High level Draw" ClassName = "GroupBox" Location = "462, 412" Size = "250, 145" TabIndex = "124" PicFileName = "FFVIII_simple_enemy_editor_Form_Main_groupBox10.jpg" HotSpot = "466,434,716,579" Level = "3" Indexes = "High level Draw" >
+      <Controls>
+        <Label Name = "label135" Text = "label135" ClassName = "Label" Location = "477, 458" Size = "0, 15" TabIndex = "0" HotSpot = "481,480,481,495" Level = "4" Indexes = "label135" />
+        <Label Name = "label134" Text = "??" ClassName = "Label" Location = "628, 461" Size = "21, 15" TabIndex = "3" HotSpot = "632,483,653,498" Level = "4" Indexes = "??" />
+        <Label Name = "label133" Text = "label133" ClassName = "Label" Location = "477, 516" Size = "0, 15" TabIndex = "5" HotSpot = "481,538,481,553" Level = "4" Indexes = "label133" />
+        <Label Name = "label132" Text = "??" ClassName = "Label" Location = "628, 519" Size = "21, 15" TabIndex = "7" HotSpot = "632,541,653,556" Level = "4" Indexes = "??" />
+        <Label Name = "label131" Text = "label131" ClassName = "Label" Location = "477, 487" Size = "0, 15" TabIndex = "9" HotSpot = "481,509,481,524" Level = "4" Indexes = "label131" />
+        <Label Name = "label130" Text = "??" ClassName = "Label" Location = "628, 490" Size = "21, 15" TabIndex = "11" HotSpot = "632,512,653,527" Level = "4" Indexes = "??" />
+        <Label Name = "label129" Text = "??" ClassName = "Label" Location = "628, 548" Size = "21, 15" TabIndex = "15" HotSpot = "632,570,653,585" Level = "4" Indexes = "??" />
+        <ComboBox Name = "cbDrawHigh1" Text = "DrawHigh1" ClassName = "ComboBox" Location = "480, 458" Size = "142, 23" TabIndex = "21" HotSpot = "484,480,626,503" Level = "4" Indexes = "DrawHigh1" />
+        <NumericUpDown Name = "nudDrawHigh1" Text = "DrawHigh1" ClassName = "NumericUpDown" Location = "649, 459" Size = "53, 21" TabIndex = "22" HotSpot = "653,481,706,502" Level = "4" Indexes = "DrawHigh1" />
+        <ComboBox Name = "cbDrawHigh2" Text = "DrawHigh2" ClassName = "ComboBox" Location = "480, 487" Size = "142, 23" TabIndex = "23" HotSpot = "484,509,626,532" Level = "4" Indexes = "DrawHigh2" />
+        <NumericUpDown Name = "nudDrawHigh2" Text = "DrawHigh2" ClassName = "NumericUpDown" Location = "649, 488" Size = "53, 21" TabIndex = "24" HotSpot = "653,510,706,531" Level = "4" Indexes = "DrawHigh2" />
+        <ComboBox Name = "cbDrawHigh3" Text = "DrawHigh3" ClassName = "ComboBox" Location = "480, 516" Size = "142, 23" TabIndex = "25" HotSpot = "484,538,626,561" Level = "4" Indexes = "DrawHigh3" />
+        <NumericUpDown Name = "nudDrawHigh3" Text = "DrawHigh3" ClassName = "NumericUpDown" Location = "649, 517" Size = "53, 21" TabIndex = "26" HotSpot = "653,539,706,560" Level = "4" Indexes = "DrawHigh3" />
+        <ComboBox Name = "cbDrawHigh4" Text = "DrawHigh4" ClassName = "ComboBox" Location = "480, 545" Size = "142, 23" TabIndex = "27" HotSpot = "484,567,626,590" Level = "4" Indexes = "DrawHigh4" />
+        <NumericUpDown Name = "nudDrawHigh4" Text = "DrawHigh4" ClassName = "NumericUpDown" Location = "649, 546" Size = "53, 21" TabIndex = "28" HotSpot = "653,568,706,589" Level = "4" Indexes = "DrawHigh4" />
+      </Controls>
+      </GroupBox>
+    </Controls>
+    </Page>
+  </Controls>
+  </TabControl>
+  <StatusStrip Name = "statusStrip" Text = "Strip" ClassName = "StatusStrip" Location = "0, 632" Size = "864, 22" TabIndex = "8" HelpContextId = "130" HotSpot = "4,654,868,676" Level = "1" Indexes = "Strip" />
+</Controls>
+<Documented>
+<Controls>
+<Item  Name="fileToolStripMenuItem" Bmk="fileToolStripMenuItem" Caption="File"  />
+<Item  Name="helpToolStripMenuItem" Bmk="helpToolStripMenuItem" Caption="Help"  />
+<Item  Name="helpToolStripMenuItem" Bmk="helpToolStripMenuItem" Caption="Toolbar"  />
+<Item  Name="tabControl_0" Bmk="tabControl_0" Caption="Specs"  />
+<Item  Name="tabControl_1" Bmk="tabControl_1" Caption="Items"  />
+<Item  Name="tabControl_2" Bmk="tabControl_2" Caption="Draw"  />
+</Controls>
+</Documented>
+</Form>

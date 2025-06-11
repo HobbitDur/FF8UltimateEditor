@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Form Name = "About" Text = "IFRIT &#45; About v0.9" WindowSize = "395, 340" ClientAreaOffset = "4, 22" BorderStyle = "1" HasMap = "True" Charset="windows-1252" Stylesheet="Office11.css" PicFileName="FFVIII simple enemy editor_Form_About.jpg" HtmlFileName="FFVIII simple enemy editor_Form_About.htm" HelpContextId = "10" NewHelpContextIdsCount = "1" SourceProjectType = "C#" SourceProjectName = "FFVIII simple enemy editor" OriginalClassName = "clsWinForm" Indexes = "IFRIT &#45; About v0.9" >
+<Controls>
+  <Button Name = "btnClose" Text = "Close this window" ClassName = "Button" Location = "248, 274" Size = "129, 29" TabIndex = "66" HelpContextId = "20" HotSpot = "252,296,381,325" Level = "1" Indexes = "Close this window" />
+  <Label Name = "label1" Text = "Made by Gjørulv" ClassName = "Label" Location = "12, 97" Size = "114, 15" TabIndex = "67" HelpContextId = "30" HotSpot = "16,119,130,134" Level = "1" Indexes = "Made by Gjørulv" />
+  <LinkLabel Name = "linkLabel1" Text = "E&#38;#45;Mail" ClassName = "LinkLabel" Location = "31, 112" Size = "45, 15" TabIndex = "68" HelpContextId = "40" HotSpot = "35,134,80,149" Level = "1" Indexes = "E&#45;Mail" />
+  <Label Name = "label2" Text = "2009 &#169; Omega corporation" ClassName = "Label" Location = "15, 290" Size = "166, 14" TabIndex = "69" HelpContextId = "50" HotSpot = "19,312,185,326" Level = "1" Indexes = "2009 &#169; Omega corporation" />
+</Controls>
+<Documented>
+<Controls>
+<Item  Name="btnClose" Bmk="btnClose" Caption="Close this window"  />
+<Item  Name="linkLabel1" Bmk="linkLabel1" Caption="E&#45;Mail"  />
+</Controls>
+</Documented>
+</Form>
