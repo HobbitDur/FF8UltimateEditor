@@ -5,9 +5,6 @@ from PyQt6.QtGui import QPixmap
 
 from PIL import Image
 
-from FF8GameData.gamedata import GameData
-
-
 class Card():
     TILES_WIDTH = 64
     TILES_WIDTH_EL = 128
