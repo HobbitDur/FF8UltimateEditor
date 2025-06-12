@@ -5,8 +5,12 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QSizePolicy, QFrame
 
 from CCGroup.ccgroup import CCGroupWidget
+from ExeLauncher.cactiliolauncher import CactilioLauncher
+from ExeLauncher.doomtrainlauncher import DoomtrainLauncher
 from ExeLauncher.ifritguilauncher import IfritGuiLauncher
+from ExeLauncher.junkshop import JunkshopLauncher
 from ExeLauncher.quezacotllauncher import QuezacotlLauncher
+from ExeLauncher.sirenlauncher import SirenLauncher
 from IfritAI.ifritaiwidget import IfritAIWidget
 from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from ShumiTranslator.shumitranslator import ShumiTranslator
@@ -73,6 +77,13 @@ class FF8UltimateEditorWidget(QWidget):
         self._doomtrain_button.clicked.connect(self._launch_doomtrain)
         self._doomtrain_button.setToolTip("Launch doomtrain (kernel.bin editor)")
 
+        self._cactilio_button = QPushButton()
+        self._cactilio_button.setIcon(QIcon(os.path.join(resources_path, 'cactilio.ico')))
+        self._cactilio_button.setIconSize(QSize(30, 30))
+        self._cactilio_button.setFixedSize(40, 40)
+        self._cactilio_button.clicked.connect(self._launch_cactilio)
+        self._cactilio_button.setToolTip("Launch cactilio (Scene.out editor)")
+
         self._external_program_layout = QHBoxLayout()
         self._external_program_layout.addWidget(self._external_program_title)
         self._external_program_layout.addWidget(self._ifrit_gui_button)
@@ -80,22 +91,22 @@ class FF8UltimateEditorWidget(QWidget):
         self._external_program_layout.addWidget(self._siren_button)
         self._external_program_layout.addWidget(self._junkshop_button)
         self._external_program_layout.addWidget(self._doomtrain_button)
+        self._external_program_layout.addWidget(self._cactilio_button)
         self._external_program_layout.addStretch(1)
 
         self._enhance_end_separator_line = QFrame()
         self._enhance_end_separator_line.setFrameStyle(0x04)# Horizontal line
-        self._enhance_end_separator_line.setLineWidth(2)
+        self._enhance_end_separator_line.setLineWidth(1)
 
         self._enhance_layout = QHBoxLayout()
         self._enhance_layout.addLayout(self._program_option_layout)
         self._enhance_layout.addLayout(self._external_program_layout)
-        self._enhance_layout.addWidget(self._enhance_end_separator_line)
         self._enhance_layout.addStretch(1)
 
 
 
         # Man made widget
-        self._ifritAI_widget = IfritAIWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._ifritAI_widget = IfritAIWidget(icon_path=resources_path, game_data_folder=os.path.join(game_data_path))
         self._ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path))
@@ -109,11 +120,13 @@ class FF8UltimateEditorWidget(QWidget):
         self._ccgroup_widget.hide()
         self.ifritGui_launcher = IfritGuiLauncher(os.path.join("IfritGui", "publish", "Ifrit.exe"), callback=self._ifritGui_exit)
         self.Quezacotl_launcher = QuezacotlLauncher(os.path.join("Quezacotl", "Quezacotl.exe"), callback=None)
-        self.siren_launcher = QuezacotlLauncher(os.path.join("Siren", "Siren.exe"), callback=None)
-        self.junkshop_launcher = QuezacotlLauncher(os.path.join("Junkshop", "Junkshop.exe"), callback=None)
-        self.doomtrain_launcher = QuezacotlLauncher(os.path.join("Doomtrain", "Doomtrain.exe"), callback=None)
+        self.siren_launcher = SirenLauncher(os.path.join("Siren", "Siren.exe"), callback=None)
+        self.junkshop_launcher = JunkshopLauncher(os.path.join("Junkshop", "Junkshop.exe"), callback=None)
+        self.doomtrain_launcher = DoomtrainLauncher(os.path.join("Doomtrain", "Doomtrain.exe"), callback=None)
+        self.cactilio_launcher = CactilioLauncher(os.path.join("Cactilio", "Cactilio.exe"), callback=None)
 
         self._main_layout.addLayout(self._enhance_layout)
+        self._main_layout.addWidget(self._enhance_end_separator_line)
         self._main_layout.addWidget(self._ifritAI_widget)
         self._main_layout.addWidget(self._ifritxlsx_widget)
         self._main_layout.addWidget(self._shumi_translator_widget)
@@ -122,6 +135,9 @@ class FF8UltimateEditorWidget(QWidget):
 
         self._ifritAI_widget.adjustSize()
         self._ifritxlsx_widget.adjustSize()
+        self._shumi_translator_widget.adjustSize()
+        self._ccgroup_widget.adjustSize()
+        self._tonberry_shop_widget.adjustSize()
         self.adjustSize()
 
     def _launch_ifritGui(self):
@@ -134,6 +150,8 @@ class FF8UltimateEditorWidget(QWidget):
         self.siren_launcher.launch()
     def _launch_doomtrain(self):
         self.doomtrain_launcher.launch()
+    def _launch_cactilio(self):
+        self.cactilio_launcher.launch()
 
     def _ifritGui_exit(self):
         pass

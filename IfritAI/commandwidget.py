@@ -67,6 +67,11 @@ class CommandWidget(QWidget):
 
         self.__hide_show_expert()
 
+    def __str__(self):
+        return str(self._command)
+    def __repr__(self):
+        return self.__str__()
+
     def get_command(self):
         return self._command
 

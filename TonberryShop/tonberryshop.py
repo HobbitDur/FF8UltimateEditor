@@ -1,6 +1,6 @@
 import os
 
-from PyQt6.QtCore import Qt, QSignalBlocker
+from PyQt6.QtCore import Qt, QSignalBlocker, QSize
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QCheckBox, QLabel, QFrame, QComboBox, QHBoxLayout, \
     QFileDialog, QLayout
@@ -33,12 +33,14 @@ class TonberryShop(QWidget):
         self.file_dialog = QFileDialog()
         self.file_dialog_button = QPushButton()
         self.file_dialog_button.setIcon(QIcon(os.path.join(resource_folder, 'folder.png')))
-        self.file_dialog_button.setFixedSize(30, 30)
+        self.file_dialog_button.setIconSize(QSize(30, 30))
+        self.file_dialog_button.setFixedSize(40, 40)
         self.file_dialog_button.clicked.connect(self.load_file)
 
         self.save_button = QPushButton()
         self.save_button.setIcon(QIcon(os.path.join(resource_folder, 'save.svg')))
-        self.save_button.setFixedSize(30, 30)
+        self.save_button.setIconSize(QSize(30, 30))
+        self.save_button.setFixedSize(40, 40)
         self.save_button.clicked.connect(self.save_file)
 
         self.shop_list = QComboBox()

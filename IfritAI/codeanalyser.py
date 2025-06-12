@@ -426,9 +426,13 @@ class CodeAnalyser:
                     func_line_text += command.get_text(with_size=False, for_code=True, html=True)
                     func_list.append(func_line_text)
                 elif jump_value >= 0 and not just_finished_if:  # It's an independant jump
+                    last_else = True
+                    else_list_count.append(jump_value)  # Adding the else size himself
+                    command_text = CodeAnalyser.ELSE_TEXT
                     func_line_text = op_info['func_name'] + ": "
-                    func_line_text += command.get_text(with_size=False, for_code=True, html=True)
+                    func_line_text += command_text
                     func_list.append(func_line_text)
+                    func_list.append('{')
                 elif jump_value > 0:  # We don't add the endif
                     last_else = True
                     else_list_count.append(jump_value)  # Adding the else size himself

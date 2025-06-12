@@ -79,9 +79,10 @@ class CodeWidget(QWidget):
         self.code_area_widget.setText(CodeAnalyser.set_ifrit_ai_code_from_command(self.game_data, command_list))
 
     def _compute_ifrit_ai_code_to_command(self):
-        self._command_list = []
         self._command_list = CodeAnalyser.compute_ifrit_ai_code_to_command(self.game_data, self.ennemy_data, self.code_area_widget.toPlainText())
+        self._command_list = self.ennemy_data.update_stop_on_list(self.game_data, self._command_list)
         self.code_changed_hook(self._command_list)
+
 
     def set_text_from_command(self, command_list: List[CommandAnalyser]):
         self._command_list = command_list

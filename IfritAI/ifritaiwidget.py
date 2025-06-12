@@ -41,7 +41,8 @@ class IfritAIWidget(QWidget):
         self.current_if_type = CurrentIfType.NONE
         # Main window
         self.setWindowTitle("IfritAI")
-        self.setMinimumSize(1280, 600)
+        #self.setMinimumSize(1280, 600)
+        self.setMinimumHeight(600)
         self.__ifrit_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
         self.setWindowIcon(self.__ifrit_icon)
         self.save_button = QPushButton()
@@ -201,6 +202,7 @@ class IfritAIWidget(QWidget):
             self.__remove_line(command, delete_data=True)
         for command in command_list:
             self.__append_line(new_command=command, create_data=True)
+        self.__change_expert()
         self.__hide_show_expert()
 
     def __hide_show_expert(self):
@@ -273,7 +275,7 @@ class IfritAIWidget(QWidget):
                                           battle_text=self.ifrit_manager.enemy.battle_script_data['battle_text'], line_index=len(self.command_line_widget),current_if_type=self.current_if_type)
             self.current_if_type = new_command.get_current_if_type()
         if create_data:
-            self.ifrit_manager.enemy.insert_command(self.script_section.currentIndex(), new_command, len(self.command_line_widget))
+            self.ifrit_manager.enemy.append_command(self.script_section.currentIndex(), new_command)
 
         self.__add_line(new_command)
         self.__compute_if()
@@ -394,7 +396,7 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        #file_to_load = os.path.join("../IfritAI/OriginalFiles", "c0m001.dat")  # For developing faster
+        #file_to_load = os.path.join("c0m028.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat",
                                                             directory=os.getcwd())[0]

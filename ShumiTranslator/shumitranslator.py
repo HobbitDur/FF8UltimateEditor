@@ -64,7 +64,7 @@ class ShumiTranslator(QWidget):
         self.scroll_widget.setLayout(self.layout_main)
 
         self.setWindowTitle("ShumiTranslator")
-        self.setMinimumSize(800, 800)
+        #self.setMinimumSize(800, 800)
         self.__shumi_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
         self.setWindowIcon(self.__shumi_icon)
 

@@ -29,7 +29,7 @@ class CCGroupWidget(QWidget):
         self.__layout_main = QVBoxLayout()
         self.scroll_widget.setLayout(self.__layout_main)
         self.setWindowTitle("CC Group")
-        self.setMinimumSize(600, 600)
+        #self.setMinimumSize(600, 600)
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'icon.ico')))
 
         self.__file_dialog = QFileDialog()

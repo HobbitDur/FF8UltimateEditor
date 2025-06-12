@@ -15,3 +15,4 @@ IfritXlsx/OriginalFiles
 IfritXlsx/OutputFiles
 *.log
 test
+*.dat
