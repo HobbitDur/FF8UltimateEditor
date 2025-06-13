@@ -330,13 +330,9 @@ class ShumiTranslator(QWidget):
         self.scroll_area.setEnabled(False)
         if self.file_loaded:
             if not csv_to_load:
-                if os.path.isdir(self.CSV_FOLDER):
-                    directory = self.CSV_FOLDER
-                else:
-                    directory = os.getcwd()
                 csv_to_load = \
                     self.csv_save_dialog.getOpenFileName(parent=self, caption="Find csv file (in UTF8 format only)",
-                                                         filter="*.csv", directory=directory)[0]
+                                                         filter="*.csv")[0]
             if csv_to_load:
                 try:
                     if self.file_loaded_type == FileType.FIELD_FS or self.file_loaded_type == FileType.WORLD_FS:
