@@ -1,0 +1,295 @@
+"Text","Comment"
+"#worldmap","0"
+"{x0e2f}",""
+"{x0e30}",""
+"{x0e31}",""
+"Aérodrome d'{Esthar}",""
+"{Blue}{x0e2f}{White} Descendre?
+Oui
+Non",""
+"{Blue}{x0e30}{White} Descendre?
+Oui
+Non",""
+"{Blue}{x0e31}{White} Descendre?
+Oui
+Non",""
+"Destination: {Blue}{Timber}{White}.
+Acheter ticket 3000 gils
+Rester sur place",""
+"Destination: {Blue}{Dollet}{White}.
+Acheter ticket 3000 gils
+Rester sur place",""
+"Destination: {Blue}{x0e2d}{White}.
+Acheter ticket 3000 gils
+Rester sur place",""
+"{White}Pas assez d'argent",""
+"Selphie:
+Allez, on file à la {Blue}[Base des Missiles]{White}!",""
+"Soldat de {Galbadia}:
+Laissez tomber!",""
+"Soldat de {Galbadia}:
+J'ai à faire!",""
+"Soldat de {Galbadia}:
+Vous ne passerez pas!",""
+"Soldat de {Galbadia}:
+On obéit aux ordres!",""
+"Soldat de {Galbadia}:
+Comme d'habitude...",""
+"Soldat de {Galbadia}:
+Hé! T'es pas trop moche, toi!",""
+"Y'a une source de magie!
+Mais on peut rien voler...",""
+"C'est une source de magie!
+Mais elle est vide...",""
+"Une source de magie!
+",""
+" en stock",""
+"Inventaire plein",""
+"Option 'Voler' indisponible",""
+"Qui va 'voler'?
+",""
+"Rien voler",""
+" ",""
+" a stocké ",""
+"
+",""
+"0",""
+"{Squall}",""
+"{Zell}",""
+"{Irvine}",""
+"{Quistis}",""
+"{Rinoa}",""
+"{Selphie}",""
+"{Seifer}",""
+"{Edea}",""
+"{Laguna}",""
+"{Kiros}",""
+"{Ward}",""
+"{White}",""
+"{Grey}",""
+"Plus d'{RedBlink}{x0dc2}{WhiteBlink}!",""
+"{Red}{x0dc2}{White} en stock ",""
+" ŒÂ",""
+"? On y va?
+Oui
+Non",""
+"{x0541}",""
+"{x0540}",""
+"{Yellow}Piloter ce véhicule{White}
+            {x0524}: Marche arrière
+ {x0527}: Marche avant
+            {x0526}: Monter/Descendre
+Dirigez avec les touches directionnelles
+
+
+{x0521}:Changer Vision",""
+"{Yellow}Piloter la BGU{White}
+            {x0524}: Marche arrière
+ {x0527}: Marche avant  {x0525}: Plate-forme
+            {x0526}: Monter/Descendre
+Dirigez avec les touches directionnelles
+
+
+{x0521}:Changer Vision",""
+"{Yellow}Voyager en Chocobo{White}
+ {x0526}: Descendre
+Touches directionnelles pour avancer
+
+{x0521}: Changer Vision",""
+"{Yellow}Commandes du vaisseau{White}
+            {x0524}: Marche arrière
+ {x0527}: Marche avant  {x0525}: Cockpit
+            {x0526}: Monter/Descendre
+Touches directionnelles pour vous déplacer
+
+
+{x0521}: Changer Vision",""
+"(Cet endroit me dit quelque chose)",""
+"C'est à l'abandon...",""
+"Quoi!?",""
+"Nida:
+Le compteur s'affole!!!",""
+"(Pas le moment de faire ça...)",""
+"C'est sûrement le lac Obel
+Faire un ricochet
+Fredonner un air",""
+"Le lac Obel...
+Faire un ricochet
+Fredonner un air",""
+"Une ombre apparaît à la surface.
+Faire un ricochet
+Fredonner un air",""
+"L'ombre a disparu...",""
+"La pierre a coulé...",""
+" ·
+La pierre a rebondi 1 fois.",""
+" ·
+ ·
+La pierre a rebondi 2 fois.",""
+" ·
+ ·
+ ·
+La pierre a rebondi 3 fois.",""
+" ·
+ ·
+ ·
+ ·
+La pierre a rebondi 4 fois.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+La pierre a rebondi 5 fois.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+ ·
+La pierre a rebondi 6 fois.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+ ·
+La pierre a rebondi 
+un nombre incalculable de fois.",""
+"Ombre:
+Salut, humain...
+Sympa ta chanson!",""
+"Une ombre apparaît à la surface.
+Booyaka qu'elle dit!",""
+"(C'est quoi ce gros truc?)",""
+"Sympa de revenir me voir...",""
+"......",""
+"Tu peux me rendre un service?
+(Lequel?)
+(J'ai pas le temps)",""
+"C'est mon ami, Ryo l'idiot...
+Tu peux le retrouver?",""
+"S'il te plaît...",""
+"......",""
+"Ryo l'idiot est dans la fôret...
+Continue ton chemin, et tu le trouveras.",""
+"Je vais te dire un secret.",""
+"Oh, j'oubliais...",""
+"Quelle belle journée!",""
+"Qu'est-ce que ça veut dire?",""
+"Des inscriptions incompréhensibles.",""
+"Ce caillou appartient
+à Ryo l'idiot, non?",""
+"Repose-toi près du pont de chemin de fer",""
+"Retire tes pompes à Eldbeak Peninsula.",""
+"C'est un endroit merveilleux, non?",""
+"Lui dire où se trouve Ryo l'idiot.",""
+"Merci",""
+"Voilà l'idiot!
+Jeter un caillou
+Chanter",""
+"T'es naze!",""
+"L'idiot s'est enfui...",""
+"L'idiot a fait une grimace et a disparu.",""
+"Nom de Dieu!
+C'est pas possible d'être aussi nul!
+Quel empoté, vraiment!
+Je fais 100 fois plus de ricochets que toi!",""
+"AIE!
+Ça fait mal, bon sang!
+Tu vas me le payer!",""
+"En s'enfuyant, un idiot vous a jeté une pierre!",""
+"Il y a quelque chose d'écrit
+sur cette étrange pierre",""
+"Tu as trouvé l'idiot!
+Pauvre débile!!!",""
+"...Presque!
+L'idiot s'est sauvé.",""
+".....C'est quoi!?",""
+"Il y a un caillou à vos pieds...",""
+"Quelqu'un a gravé
+quelque chose dessus.",""
+"Juste une simple pierre?",""
+"Un oiseau couve un oeuf
+Aller voir
+Rester tranquille",""
+"L'oiseau cherche
+de la nourriture...",""
+"Une belle pierre...",""
+"Y'a rien...",""
+"{Grey}  R R R Y ",""
+"{Grey}  D A E A ",""
+"{Grey}  O M S 1 ",""
+"{Grey}  R O O T ",""
+"[{Grey} R R R Y {White}]
+[{Grey} D A E A {White}]
+[{Grey} O M S 1 {White}]
+[{Grey} R O O T {White}]",""
+"Sur la plage de {Balamb}, la
+marée apporte de drôles de choses.",""
+"Une surprise t'attend sur
+une île à l'est de {Timber}.",""
+"Quelque chose t'attend
+en haut de la montagne
+près du lac de la caverne.",""
+"Jadis, il y avait un très
+joli village, au beau milieu
+d'une forêt, située au sud d'ici.",""
+"Il y a quelque chose
+d'écrit sur ce pilier.",""
+"TRESTESORA
+ILEPOMMINDEPES",""
+"(...?)",""
+"Trouvé: {x0d29}!",""
+"Trouvée: {x0d50}!",""
+"Trouvées: {x0d83}!",""
+"Trouvée: {x0d21}!",""
+"Le son a été avalé par le lac",""
+"Des pierres multicolores
+qui ressemblent à des visages...",""
+"Ebène:
+Le trésor est vers l'étoile nordique.",""
+"Chine:
+A l'est!",""
+"Chine:
+A l'ouest!",""
+"Chine:
+Au sud!",""
+"Chine:
+Au nord!",""
+"Oxyde:
+Azur picole trop!",""
+"Oxyde:
+Le trésor est à l'Est, crétin!",""
+"Oxyde:
+Le trésor est à l'Ouest, triple idiot!",""
+"Oxyde:
+Le trésor est au Sud, pauvre demeuré!",""
+"Oxyde:
+Le trésor est au Nord, espèce d'incapable!",""
+"Oxyde:
+Le trésor n'est pas là, abruti!",""
+"Azur:
+Je ne sais pas où se trouve le trésor",""
+"Azur:
+On nous appelle les pierres trompeuses.",""
+"Azur:
+Certaines de nous répètent
+la même chose ad nauseam.",""
+"Azur:
+Certaines de nous disent
+vraiment n'importe quoi.",""
+"Azur:
+Certaines de nous disent le
+contraire de ce qu'elles pensent.",""
+"Des ruines...",""
+"Rien du tout...",""
+"(Ça fait partie d'un ensemble?)",""
+"(J'ai déjà ramassé cette pierre, non?)",""
+"(Je les ai toutes?)",""
+"Les pierres sont toutes là.",""
+"S'il n'est pas là, il a peut-être 
+pris le train pour Dollet.",""
+"(L'orphelinat! Je m'en souviens.
+ Il y a quelque chose près d'ici...
+ Quelque chose d'énorme...)",""

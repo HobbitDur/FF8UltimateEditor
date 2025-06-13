@@ -1,309 +1,309 @@
-Section data name;Section Widget id;Text Sub id;Text
-Draw text;0;0;Das CD-Fach ist offen.
-Draw text;0;1;Bitte FINALFANTASY{xa8}\nCD {Var17} einlegen.
-Draw text;0;2;Draw-Punkt entdeckt!\n{x0c20} gefunden.
-Draw text;0;3;Draw-Punkt entdeckt!\nJedoch nichts gefunden...
-Draw text;0;4;Wer soll ziehen?\nNicht ziehen.\n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   
-Draw text;0;5;{Squall} hat {Var17} × {x0c20} gezogen.
-Draw text;0;6;{Squall} kann {x0c20} nicht lagern.
-Draw text;0;7;Draw-Punkt entdeckt!!\nAber niemand kann ziehen...
-Draw text;0;8;Fehler auf der CD.
-Card misc text data;1;0;\n
-Card misc text data;1;1;Ok?      \nJa\nNein
-Card misc text data;1;2;Bitte wähle 
-Card misc text data;1;3; Karte(n) aus.
-Card misc text data;1;4;-Karte erhalten.
-Card misc text data;1;5;-Karte verloren.
-Card misc text data;1;6;Noch einmal?\nJa\nNein
-Card misc text data;1;7;Regel: 
-Card misc text data;1;8;· 
-Card misc text data;1;9;/
-Card misc text data;1;10;Ari
-Card misc text data;1;11;\n· Open
-Card misc text data;1;12;\n· Random-Hand
-Card misc text data;1;13;\n· Suddendeath
-Card misc text data;1;14;Same
-Card misc text data;1;15;Plus
-Card misc text data;1;16;Wall-Same
-Card misc text data;1;17;\n· Element
-Card misc text data;1;18;\n· Tausch-Regeln: 
-Card misc text data;1;19;Null
-Card misc text data;1;20;One
-Card misc text data;1;21;Diff
-Card misc text data;1;22;Direct
-Card misc text data;1;23;Full
-Card misc text data;1;24;\nSpielen\nAufhören
-Card misc text data;1;25;Nicht existent
-Card misc text data;1;26;
-Card misc text data;1;27;
-Card misc text data;1;28;
-Card name;2;0;Heulechse
-Card name;2;1;Fongo Ongo
-Card name;2;2;Beißkäfer
-Card name;2;3;Purpurmaus
-Card name;2;4;Prinula
-Card name;2;5;Geira
-Card name;2;6;Gesper
-Card name;2;7;Foca-Double
-Card name;2;8;Blood Soul
-Card name;2;9;Stichraupe
-Card name;2;10;Cockatrice
-Card name;2;11;Gratt
-Card name;2;12;Buel
-Card name;2;13;Mesmerize
-Card name;2;14;Guheys Eye
-Card name;2;15;Belhel Melhel
-Card name;2;16;Thrust Avis
-Card name;2;17;Heckenschlange
-Card name;2;18;S-Kriecher
-Card name;2;19;Grendel
-Card name;2;20;Doppel-Hacker
-Card name;2;21;Grande Arlo
-Card name;2;22;L-Verbieter
-Card name;2;23;Esansuci
-Card name;2;24;Tripel-Visage
-Card name;2;25;Focarol
-Card name;2;26;Gogue Seal
-Card name;2;27;Küßchen
-Card name;2;28;SAM08G
-Card name;2;29;Wild Hook
-Card name;2;30;Kaktor
-Card name;2;31;Tombery
-Card name;2;32;Abyss-Wurm
-Card name;2;33;Granatomb
-Card name;2;34;Bisage
-Card name;2;35;Archeodinos
-Card name;2;36;Bomber
-Card name;2;37;Blitzer
-Card name;2;38;Wendigo
-Card name;2;39;Qual
-Card name;2;40;Galchimäsera
-Card name;2;41;Drachen-Isolde
-Card name;2;42;Adaman Taimai
-Card name;2;43;Schmelzdrache
-Card name;2;44;Stahlgigant
-Card name;2;45;Behemoth
-Card name;2;46;Chimära
-Card name;2;47;Koyo-Koyo
-Card name;2;48;Invictus
-Card name;2;49;GIM47N
-Card name;2;50;Morbol
-Card name;2;51;Rubrum-Drache
-Card name;2;52;El Noire
-Card name;2;53;Tombery-König
-Card name;2;54;Wedge·Biggs
-Card name;2;55;Fu-Jin·Rai-Jin
-Card name;2;56;El Viole
-Card name;2;57;X-ATM092
-Card name;2;58;Granaldo
-Card name;2;59;Namtal-Utok
-Card name;2;60;Schmelke
-Card name;2;61;Abadon
-Card name;2;62;Dormen
-Card name;2;63;Ölspucker
-Card name;2;64;Shumi-Stamm
-Card name;2;65;Cocutos
-Card name;2;66;Propagator
-Card name;2;67;Kaktorius
-Card name;2;68;Tripel-Klinge
-Card name;2;69;Gargantur
-Card name;2;70;BIS-8
-Card name;2;71;Andro
-Card name;2;72;Tiamat
-Card name;2;73;BGH251F2
-Card name;2;74;Wolframator
-Card name;2;75;Catblepus
-Card name;2;76;Ultima Weapon
-Card name;2;77;Choco-Blob
-Card name;2;78;Angel
-Card name;2;79;Gilgamesh
-Card name;2;80;Mogry-Kid
-Card name;2;81;Chocobo-Kid
-Card name;2;82;Quezacotl
-Card name;2;83;Shiva
-Card name;2;84;Ifrit
-Card name;2;85;Siren
-Card name;2;86;Secreto
-Card name;2;87;Minotaurus
-Card name;2;88;Carbuncle
-Card name;2;89;Diabolos
-Card name;2;90;Leviathan
-Card name;2;91;Odin
-Card name;2;92;Pandemona
-Card name;2;93;Cerberus
-Card name;2;94;Alexander
-Card name;2;95;Phönix
-Card name;2;96;Bahamut
-Card name;2;97;Doomtrain
-Card name;2;98;Eden
-Card name;2;99;Ward
-Card name;2;100;Kiros
-Card name;2;101;Laguna
-Card name;2;102;Selphie
-Card name;2;103;Quistis
-Card name;2;104;Irvine
-Card name;2;105;Xell
-Card name;2;106;Rinoa
-Card name;2;107;Edea
-Card name;2;108;Cifer
-Card name;2;109;Squall
-Scan text;3;0;Ein meisterhafter\nGun-Blade-Kämpfer.\nMit seinem 【Multi-\nSlash】 bezwingt er\nfast jeden Gegner.\nAnsonsten ein eher\ngelassener Typ.
-Scan text;3;1;Er liebt die Hot\nDogs aus der Mensa\nüber alles. Ein\nExperte in Sachen\nKampfsport. Seine\nSpezial-Technik\n【Duell】 ist tödlich.
-Scan text;3;2;Ein hervorragender\nSchütze. Mit seiner\nSpezial-Technik\n【Shot】 richtet er\ngroßen Schaden an,\nist aber dem Druck\nnicht gewachsen.
-Scan text;3;3;Sie benutzt die\nPeitsche als Waffe.\nSie hinterläßt einen\nleicht unterkühlten\nEindruck. Aber im\nBalamb-Garden gibt\nes einen Fanclub.
-Scan text;3;4;Mitglied der\nWiderstandsgruppe\n【Waldeule】. Sie\nbenutzt Fernwaffen.\nIhr treuer Hund\nhilft ihr stets,\nwenn Gefehr droht.
-Scan text;3;5;Sie wechselte von\nTrabia nach Balamb\num SEED zu werden.\nNunchakus und die\nSpezial-Technik,\nZauber-【Tombola】,\nsind ihre Stärken.
-Scan text;3;6;Fast eine Legende\ndes Balamb-Garden.\nWegen seiner etwas\nschrägen Art, hat\ner es nie bis zum\nSEED geschafft. Ein\nGun-Blade-Meister.
-Scan text;3;7;Sie ist eine echte\nHexe. Neben Zauber\nbeherrscht sie die\nMacht einer Hexe,\ndie reine Magie.\nIhr 【Eisiger Zorn】\ndurchbohrt Feinde.
-Scan text;3;8;Ein etwas schräger,\ndoch hilfsbereiter\nTyp. Er benutzt ein\nMG. Bei Gefahr\nschießt er wild um\nsich, um seine\nTruppe zu retten.
-Scan text;3;9;Kämpft mit 2 Katar-\nMessern. Mit dieser\nrelativ unbekannten\nWaffe, entwickelte\ner seinen ziemlich\ncharakteristischen\nKampfstil.
-Scan text;3;10;Ein extrem kräftig\ngebauter Mann.\nSeine Waffe ist eine\nmegatonnenschwere\nHarpune, die er dem\nGegner aus dem\nHandgelenk zuwirft.
-Scan text;3;11;Dummy
-Scan text;3;12;Dummy
-Scan text;3;13;Dummy
-Scan text;3;14;Dummy
-Scan text;3;15;Dummy
-Scan text;3;16;Und hier bin ich\nDummy\nDummy\nDummy\nDummy\nDummy\nDummy
-Scan text;3;17;Dieses Kampfgerät\nwurde zur direkten\nUnterstützung der\nGalbadia-Truppen\nentwickelt. Neben\nRaketen, feuert es\nauch mit Laser.
-Scan text;3;18;Halbflüssiges\nMonster. Starke\nAbwehr gegen\nphysikalische\nAngriffe. Seine\nSchwachstellen\nvariieren.
-Scan text;3;19;Ein Flug-Monster,\ndas man oft auf\ndem Galbadia-\nKontinent antrifft.\nEs beißt die Gegner\nund greift sie mit\nBöen an.
-Scan text;3;20;Es hält sich oft in\nfeuchten Gegenden\nauf, schleicht sich\nunauffällig heran\nund greift plötzlich\nan. Mit steigendem\nLevel, ZU-Angriffe.
-Scan text;3;21;Um sein drehbares\nGesicht ist eine\nSäge angebracht.\nWenn es sein\nGesicht dreht,\nändert sich seine\nAngriffsart.
-Scan text;3;22;Ein Flug-Monster,\ndas Kälte-Zauber\nanwendet. Wenn\nsein HP fällt,\nversucht es, die\nHP von Gegnern\nabzusaugen.
-Scan text;3;23;Eine Bio-Waffe der\nGalbadia-Truppen.\nAn seiner Schulter\nbefindet sich eine\n155mm Kanone, aus\ndem Mund ragt ein\n60mm MG heraus.
-Scan text;3;24;Eine etwas ältere\nGalbadia-Waffe,\ndie vornehmlich zur\nUnterstützung der\nInfanterie gebaut\nwurde. Greift mit\nEisenkugeln an.
-Scan text;3;25;Monster mit einem\nschwertförmigen\nHorn, das enorme\nHeilwirkung besitzt.\nDeswegen auch ein\nbeliebtes Ziel von\nFreizeitjägern.
-Scan text;3;26;Ein Monster, das\ngegen Zauber fast\nimmun ist. Dafür\nist es aber extrem\nschwach gegen alle\nphysikalischen\nAngriffe.
-Scan text;3;27;Bewacht das Schloß\nvon Artemisia.\nBisher fielen fast\nalle Eindringlinge\nihr zum Opfer. Der\nFluch des Schlosses\nmacht sie stark.
-Scan text;3;28;Die wahre Sphinx.\nSie beschwört\nununterbrochen\nMonster herbei.\nManchmal benutzt\nsie den Befehl\n【Todesurteil】.
-Scan text;3;29;Riesiges Monster,\ndas im Norden lebt.\nWegen der hohen HP\nist es zeitraubend,\nihn zu besiegen.\nWendet 【Eisigen\nHauch】 an.
-Scan text;3;30;Eine Giftschlange,\ndie dem Gegner mit\n【Umwickeln】 großen\nSchaden zufügt. Bei\nGefahr, startet sie\noftmals tödliche\nGiftangriffe.
-Scan text;3;31;Der Magen ist das\nHauptbestandteil\nseines Körpers. Es\nbetäubt seine Beute\nmit Schlafgas und\nfängt sie mit den\nFangarmen.
-Scan text;3;32;Dieser Vogel kann\nden Gegner durch\nseinen Blick in\n【Stein】 verwandeln.\nErzeugt Strom mit\nseinen Flügeln und\ngreift damit an.
-Scan text;3;33;Dieses Monster ist\nüberraschend flink\nund greift seine\nGegner mit seinem\nganzen Körper an.\nWendet auch oft\n【Hyper-Vibra】 an.
-Scan text;3;34;Eine Fledermaus,\ndie sich in Höhlen\nund dunklen Stellen\nversteckt. Mit\nihrem riesigen Mund,\ngreift sie die Opfer\naus der Höhe an.
-Scan text;3;35;Ein Monster, das\nmit Donner-Zauber\nangreift. Wenn es\nangegriffen wird,\nbeginnt es, sich\naufzuladen. Danach\nentlädt es sich.
-Scan text;3;36;Ein Fisch, der unter\nder Erde schwimmt.\nBisher wurde nur die\nFlosse gesichtet.\nSein Aussehen ist\nunbekannt. Es heißt,\ner ähnelt einem Hai.
-Scan text;3;37;Ein Fisch, der unter\nder Erde schwimmt.\nBisher wurde nur die\nFlosse gesichtet.\nSein Aussehen ist\nunbekannt. Es heißt,\ner ähnelt einem Hai.
-Scan text;3;38;Eine mißlungene\nWaffe aus Esthar.\nSie greift jeden\nwahllos an. Mit dem\n【Desionator】 löscht\nsie den Gegner\neinfach aus.
-Scan text;3;39;Ein Schattewesen.\nNäheres ist jedoch\nnicht bekannt.\nEs heißt, daß es\nandere mit in den\nTod reißt, wenn\nes stirbt.
-Scan text;3;40;Aus unerklärlichen\nGründen mutierter\nDrache, der sechs\nAugen besitzt. Er\nwendet bevorzugt\nHitze-Zauber und\n【Hauch】 an.
-Scan text;3;41;Ein Flug-Monster.\nEs schwebt durch\nseine Körpergase.\nSeine ZU-Angriffe\nrufen unnatürliche\nZustände wie z.B.\n【Zombie】 hervor.
-Scan text;3;42;Eine Flug-Waffe\naus Esthar, das\nzur Bekämpfung von\nfeindlichen Truppen\nentwickelt wurde.\nSie verwendet ihre\n4 Beine zum Angriff.
-Scan text;3;43;Eingehüllt in einer\nharten Panzerhaut,\nist es resistent\ngegen physikalische\nAngriffe. Aufgrund\ndes Körpergewichts,\nziemlich träge.
-Scan text;3;44;Ein Insekt, das\ngeschwind in der\nGegend herumfliegt.\nDa es nicht sehr\nstark ist, sollten\nKämpfe keine\nProbleme darstellen.
-Scan text;3;45;Es verändert sein\nAbwehrverhalten im\nKampf. Dabei wendet\nes unterschiedliche\nZauber mit Hitze-,\nKälte- und Donner-\nElementen an.
-Scan text;3;46;Eine Biowaffe, das\naus einem Drachen\nentwickelt wurde.\nIhre Schwachstellen\nsind Hitze & Kälte.\nSie wechselt stets\ndie EL-Abwehr.
-Scan text;3;47;Ein Monster, das\nmit Zauber und\nseinen scharfen\nKrallen angreift.\nEs verformt sich,\nwenn es Angriffe\nabwehrt.
-Scan text;3;48;Ein Monster mit\nenormer Kraft.\nDafür wendet es\nkeine Zauber,\nsondern nur\nphysikalische\nAngriffe an.
-Scan text;3;49;Seine Stärken sind\nZauber, die den\nGegner einschläfern.\nEr greift mit seinem\nVerdauungssaft an.\nDabei wird die\nAbwehr geschwächt.
-Scan text;3;50;Dieser Zombie war\ndas Double von\nPräsident Deling.\nEr wendet Angriffe\nan, die eine\nVeränderung des\nZustands bewirken.
-Scan text;3;51;Ein Monster mit 4\nscharfen Krallen.\nEr greift nicht nur\nan, sondern wendet\nhin und wieder Gase\nan, die 【Schlaf】\nverursachen.
-Scan text;3;52;Ein Monster mit 3\nKöpfen. Die beiden\nseitlichen Köpfe\nwerden nur beim\nAngriff verwendet.\nSie verursachen\n【Gift】-Zustände.
-Scan text;3;53;Früher lebte dieses\nMonster im Wasser.\nBei Kämpfen, greift\nes mit seinen 8\nriesigen Krallen an\nund fängt damit\nseine Beute.
-Scan text;3;54;Entstand aus einem\nEdelstein im\nArtemisia-Schloß.\nWenn es angegriffen\nwird, kontert es auf\nder Stelle mit seiner\ntödlichen Kralle.
-Scan text;3;55;Eine riesige Hand,\ndie aus der Erde\nragt. In höheren\nLevel, kann sie\nalle unnatürlichen\nZustände mit\n【Medica】 kurieren.
-Scan text;3;56;Eine riesige Hand,\ndie aus der Erde\nragt. Sie kann\nnicht zaubern,\nbesitzt dafür eine\nhohe physikalsiche\nAngriffskraft.
-Scan text;3;57;Ein Drache, der auf\nzwei Füßen steht.\nEr verursacht oft\nunnatürliche\nZustände. Verliert\ngelegentlich einen\n【Kampfbrocken】.
-Scan text;3;58;Ein untoter Kämpfer\nmit einem Schwert.\nDa er bereits tot\nist, fürchtet er den\nTod nicht. Er kann\neinen Gegner sogar\ntöten.
-Scan text;3;59;Ein Hitze-Monster.\nWenn es angegriffen\nwird, bläht es sich\nauf und kann sich\nselbst zerstören,\nwobei es dem Feind\nSchaden zufügt.
-Scan text;3;60;Ein Wurm, der unter\nder Erde lebt. Das\nwas sichtbar ist,\nist nur ein kleiner\nTeil seines Körpers.\nGelegentlich kontert\ner mit 【Beben】.
-Scan text;3;61;Ein Monster, das\nsich am liebsten\nin den Wäldern\naufhält. Es greift\nmit seinen Fühlern\nan, und verursacht\nZU-Schäden.
-Scan text;3;62;Dieses Monster ist\nsowohl gegen\nZauber, als auch\ngegen physikalische\nAngriffe resistent.\nEs besitzt ein sehr\nseltenes Item.
-Scan text;3;63;Ein vierköpfiges\nMonster. Jeder Kopf\ngreift auf seine\nWeise an: Zauber,\ndirekter Angriff,\nZU-Angriff und\n【Nasser Hauch】.
-Scan text;3;64;Greift mit extremen\nMundgeruch an, der\nböse ZU-Schäden\nanrichtet. Vor dem\nKampf sollte eine\nwirksame ZU-Abwehr\ngekoppelt werden.
-Scan text;3;65;Sein Körper ist mit\neiner Stahlrüstung\numhüllt und bewirkt\neine starke Abwehr.\nSein Riesenschwert\nverursacht einen\ngroßen Schaden.
-Scan text;3;66;Eines der stärksten\nMonster überhaupt.\nEs greift bevorzugt\nmit physikalischen\nKräften und dem\nmächtigen Zauber\n【Meteor】 an.
-Scan text;3;67;Ein Lebewesen, das\nseit Urzeiten auf\ndem Planeten lebt.\nEs hat hohe HP-\nund Stärke-Werte.\nDer Klügere sollte\nhier nachgeben.
-Scan text;3;68;Er ist stark und\nsehr intelligent.\nWenn der Gegner\n【Reflek】 benutzt,\nwendet er ihn auch\nan, um Zauber zu\nreflektierern.
-Scan text;3;69;Ein kleiner Drache,\nder in Wäldern lebt.\nManchmal taucht er\nin Horden auf.\nDann wird es sehr\nschwierig, sie zu\nbesiegen.
-Scan text;3;70;Ein Monster, das\neinem Gesicht sehr\nähnlelt. Es wendet\nHilfs-Zauber an.\nWenn seine 2 Hände\ndabei sind, ist\nVorsicht geboten.
-Scan text;3;71;Ein Kaktus, der\nmit unglaublicher\nGeschwindigkeit\ndurch die Wüste\nrennt. Greift mit\nseinen Stacheln\ndie Gegner an.
-Scan text;3;72;Ein mysteriöses\nLebewesen, das in\nden Höhlen lebt.\nEs nähert sich\nlangsam dem Gegner\nund greift ihn mit\nseinem Messer an.
-Scan text;3;73;Während es sitzt, \ngreift es mit vielen\nZauberarten an,\ndoch sobald es\naufsteht, wendet es\n【Blaster】 (Stein\nbzw. Tod-ZU) an.
-Scan text;3;74;Ein Pilz, der aus\nirgendeinem Grund\naufrecht geht.\nEr wendet Angriffe\nan, die dem Gegner\nböse ZU-Schäden\nzufügen.
-Scan text;3;75;Ein teufelähnliches\nWesen mit Flügeln.\nNach einer gewissen\nZeit benutzt es\nstarke Zauber, in\nhöheren Leveln\nsogar 【Holy】.
-Scan text;3;76;Ein Alien, der \naus einem anderen\nUniversum stammt.\nZur Zeit hat er ein\ngroßes Problem, da\nsein UFO irgendwie\nzerstört wurde.
-Scan text;3;77;Eine Hitze-G.F.,\ndie Hitze-Zauber\nbenutzt. Sie ist\nnicht allzu stark,\nda sie Bestandteil\nder SEED-Prüfung\ndes B-Garden ist.
-Scan text;3;78;Älterer Bruder von\nSecreto. Er ist zwar\nkleiner, doch viel\nstärker als sein\n“kleiner” Bruder.\nEr ist ebenfalls\neine Erd-G.F.
-Scan text;3;79;Eine Erd-G.F., die\nein Grab bewacht.\nSie wird durch die\nErd-Macht geheilt.\nEin übergroßer\nMorgenstern dient\nals Angriffswaffe.
-Scan text;3;80;Ein Truppenführer\nder galbadianischen\nRaketenbasis. Er\nbewacht die Basis\nund ist wesentlich\nstärker als die\nElitesoldaten.
-Scan text;3;81;Ein dreiköpfiger\nWachhund aus der\nHölle. Nachdem er\nTripel benutzt hat,\nwenden die 3 Köpfe\nalle verschiedene\nZauber an.
-Scan text;3;82;Eine G.F., die in\neiner anderen\nDimension lebt. Sie\nverwendet Angriffe,\nmit der ein Großteil\nder HP des Gegners\nverringert wird.
-Scan text;3;83;Dieser Drache wird\nals König der G.F.\nbezeichnet. Hilft\ndenen, die ihre\nkämpferische und\nseelische Stärke\nbeweisen können.
-Scan text;3;84;Eine Schutzhülle,\ndie den Master\nNorg beschützt.\nMaster Norg ist\nunverwundbar,\nsolange man sie\nnicht zerstört.
-Scan text;3;85;Kein Zielobjekt.
-Scan text;3;86;Eine legendäre G.F.\nDer Eisenschneider\nzerschneidet alles.\nWenn jemand diese\nTechnik zu sehen\nbekommt, ist sein\nTod schon sicher.
-Scan text;3;87;Dieser Galbadia-\nSoldat kann sowohl\nmit Schwert, als\nauch mit Zauber\nkämpfen. Kein\nernstzunehmender\nGegner.
-Scan text;3;88;Ein galbadianischer\nOffizier, der die\nSoldaten befehligt.\nWendet Heilzauber\nan. Daher sollte er\nvor allen anderen\nbeseitigt werden.
-Scan text;3;89;Er gehört zum\nBesatzungstrupp\nder Galbadianer.\nDank seines\nAnführers Biggs,\ngerät er immer\nin Schwierigkeiten.
-Scan text;3;90;Der Anführer des\nBesatzungstrupps.\nEr kann zwar etwas\nkämpfen, ist jedoch\nnicht so stark.\nVerliert schnell\ndie Beherrschung.
-Scan text;3;91;Das Double von\nPräsident Deling.\nEr greift aus einer\nseltsamen Haltung\nheraus an. Er ist\nzwar nicht so stark,\naber......
-Scan text;3;92;Wie der Name schon\nsagt, ist er einer\nder Wachen in der\nAnstalt. Er wendet\nSchlafzauber an,\num Flüchtige wieder\neinzufangen.
-Scan text;3;93;Der Master des\nBalamb-Gardens.\nEr versucht die\nvollständige Macht\nüber den Garden\nzu erlangen. Der\nErzrivale von Cid.
-Scan text;3;94;Ein Esthar-Soldat,\nder Pistolen und\nMesser abwechselnd\nbenutzt. Seine\nSchrotflinte ist\nstark, wird aber\nnur selten benutzt.
-Scan text;3;95;Er sieht zwar aus\nwie ein Esthar-\nSoldat, ist jedoch\nein Cyborg. Er ist\nwesentlich stärker\nals ein normaler\nEsthar-Soldat.
-Scan text;3;96;Ein Hilfssystem des\nMaster Norg. Es\nkann jeden Schaden\nreparieren und\nwendet Zauber an,\nder ZU-Schäden\nverursacht.
-Scan text;3;97;Ein Hilfssystem des\nMaster Norg. Es\nkann jeden Schaden\nreparieren und\nwendet vornehmlich\nAngriffszauber mit\nElementen an.
-Scan text;3;98;Kein Zielobjekt
-Scan text;3;99;Der König des\nTombery-Stammes.\nEr ist gekommen,\num seine besiegten\nStammesgenossen\nzu rächen. Benutzt\n【Blankes Messer】.
-Scan text;3;100;Unter den Kaktoren\nbefindet sich ab und\nzu einer, der immer\ngrößer und größer\nwird. Dieser Jumbo-\nKaktor ist ein gutes\nBeispiel dafür.
-Scan text;3;101;Ein Kämpfer, der\nzum Hexen-Ritter\nwurde, nachdem er\nvom Balamb-Garden\nflog. Er greift mit\nSchwert und Hitze-\nZauber an.
-Scan text;3;102;Er kämpft nun, um\ndie SEEDS zu\nbesiegen. Nach der\nletzten Niederlage\nhat er trainiert\nund einige neue\nTechniken erlernt.
-Scan text;3;103;Trotz Niederlage\nversucht er durch\neinen weiteren\nKampf, sein Gesicht\nals Hexen-Ritter\nzu wahren. Er ist\nnun stärker.
-Scan text;3;104;Eine Hexe mit einer\nimmensen Macht.\nSie herrscht über\nGalbadia. Niemand\nbesitzt stärkere\nMagie. Sie wendet\nExtrem-Zauber an.
-Scan text;3;105;Ein Alien, der sich\nim Flugschiff\neingenistet hat.\nEin aggressives\nMonster, das alles\nangreift, was sich\nirgendwie bewegt.
-Scan text;3;106;Dieses legendäre\nMonster gilt als das\nstärkste überhaupt.\nEs heißt, daß\nniemand es besiegen\nkann. Vorsicht vor\nder 【Lichtsäule】!
-Scan text;3;107;Dieses Monster hat\nsich im Sendeturm\neingenistet. Es ist\nnicht bekannt,\nwoher es gekommen\nist. Greift mit\n【Sturmhauch】 an.
-Scan text;3;108;Eine galbadianische\nMobilwaffe, die auch\nals 【Black Widow】\nbezeichnet wird.\nSie verfolgt das\nerfaßte Ziel bis\nzum bitteren Ende.
-Scan text;3;109;Ein Monster, das\nvon Edea belebt\nwurde. Es wendet\n【Lava-Hauch】 mit\n【Stein】-Effekt an.\nEs ist im ständigen\nReflek-Zustand.
-Scan text;3;110;Ein Monster, das\nvornehmlich Zauber\nanwendet. Jegliche\nphysikalische\nAngriffe werden\ngekontert. Benutzt\n【Bösen Blick】.
-Scan text;3;111;Insektenähnliches\nMonster. Dieses\nLebewesen galt als\nausgestorben. Er\ngreift mit seinen\nKrallen und seinem\nSchwanz an.
-Scan text;3;112;Trotz seines\nAussehens, ist es\nein sehr flinkes\nMonster. Wenn sie\nin Horden kommen,\ndroht ernsthafte\nGefahr.
-Scan text;3;113;Ein Alien, der sich\nim Flugschiff\neingenistet hat.\nEin aggressives\nMonster, das alles\nangreift, was sich\nirgendwie bewegt.
-Scan text;3;114;Ein Alien, der sich\nim Flugschiff\neingenistet hat.\nEin aggressives\nMonster, das alles\nangreift, was sich\nirgendwie bewegt.
-Scan text;3;115;Ein Monster, das\nunter der Erde lebt.\nSein glatter Körper\nist mit Öl gefüllt.\nEr greift den Feind\nmit dem Öl aus\nseinem Körper an.
-Scan text;3;116;Eine Hexe, die im\nBegriff ist, die\nWelt zu erobern.\nUm die SEEDS zu\nbeseitigen, hatte\nsie Truppen nach\nBalamb geschickt.
-Scan text;3;117;Eine Mobilwaffe der\ngalbadianischen\nArmee. Ihre\n【Strahlenkanone】\nübertrifft die\n【Strahlenbombe】\ndes X-ATM092.
-Scan text;3;118;Nachdem sie in \nder Raketenbasis\ndemoliert wurde,\nging die Kontrolle\nverloren. Sie kann\njeden Moment in\ndie Luft gehen.
-Scan text;3;119;Dieses Monster soll\naus Knochenresten\nentstanden sein, die\nim Wasser lagen.\nDurch die Dürre,\nwurden die Knochen\nzusammengetragen.
-Scan text;3;120;Kein Zielobjekt
-Scan text;3;121;Eine Mobilwaffe aus\nEsthar, die in der\nLunatic Pandora\nvergessen wurde.\nIhre Laserwaffen\nübertreffen alle\nWaffensysteme.
-Scan text;3;122;Linkes Schulterteil\nder BIS-8. Agiert\nauch selbstständig\nund startet von\nalleine Angriffe.\nEs kann sich sogar\nselbst reparieren.
-Scan text;3;123;Rechtes Schulterteil\nder BIS-8. Agiert\nauch selbstständig\nund startet von\nalleine Angriffe.\nEs kann sich sogar\nselbst reparieren.
-Scan text;3;124;Elite-Soldat der\ngalbadianischen\nLuftlandeeinheit.\nLandet hinter den\nfeindlichen Linien\nund attackiert als\nerster den Feind.
-Scan text;3;125;Diese Waffe wurde\nvon Artemisia\nzum Leben erweckt.\nIhre 【Pulskanone】\näschert alles ein,\nwas sich in ihrer\nReichweite befindet.
-Scan text;3;126;Eine Hilfswaffe,\ndie dem Dormen\nentsprungen ist.\nTrotz ihrer Größe\nbesitzt sie eine\nMini-Ausführung\nder 【Pulskanone】.
-Scan text;3;127;Ein Alien, der sich\nim Flugschiff\neingenistet hat.\nEin aggressives\nMonster, das alles\nangreift, was sich\nirgendwie bewegt.
-Scan text;3;128;Herrschte ehemals\nüber Esthar, bis\nsie von Laguna\nversiegelt wurde.\nWurde von Artemisia\nbefreit und erlangt\nihre Macht wieder.
-Scan text;3;129;{Rinoa},\nverschmlozen mit\nAdell. Ihre HP \nwird langsam von\nAdell aufgesogen.\nKommt frei, wenn\nAdell besiegt ist.
-Scan text;3;130;Es ist weitaus\nstärker als die\nUltima Weapon. Ist\nsomit das stärkste\nMonster überhaupt.\nNiemand weiß, wie\nes hierher kam.
-Scan text;3;131;Eine Hexe, die\ndurch Artemisias\nZeitkomprimierung\nhierher bewschworen\nwurde. Sie wendet\nZauber an, ist aber\nnicht sehr stark.
-Scan text;3;132;Eine Hexe, die\ndurch Artemisias\nZeitkomprimierung\nhierher bewschworen\nwurde. Sie wendet\nZauber an, ist aber\nnicht sehr stark.
-Scan text;3;133;Eine Hexe, die\ndurch Artemisias\nZeitkomprimierung\nhierher bewschworen\nwurde. Sie wendet\nZauber an, ist aber\nnicht sehr stark.
-Scan text;3;134;Unidentifiziertes\nfliegendes Objekt\naus dem Weltall.\nNäheres ist nicht\nbekannt......
-Scan text;3;135;Sie hat im Auftrag\nvon Cifer Ellione\ngesucht. Sie wendet\nWind-Zauber an,\nindem sie die Macht\neiner gekoppelten\nG.F. nutzt.
-Scan text;3;136;Hat von Cifer den\nAuftrag bekommen,\nEllione zu finden.\nEr beherrscht nur\nphysikalische\nAngriffe. Redet\nmanchmal zu viel.
-Scan text;3;137;Eine Hexe, die durch\ndie eingeleitete\nZeitkomprimierung\nversucht, die Macht\naller Hexen in sich\nzu vereinen. Besitzt\nunsägliche Kräfte.
-Scan text;3;138;Nach Meinung von\n{Squall},\ndas stärkste Wesen,\ndas exisitiert. Es\nwurde von Artemisia\nals eine Art G.F.\nhierher beschworen.
-Scan text;3;139;Kein Zielobjekt
-Scan text;3;140;Ein Wesen, das\ndurch die\nVerschmelzung\nvon Artemisia und\n{Griever}\nentstanden ist. Ein\nmächtiges Monster.
-Scan text;3;141;Verstärkt die\nMagie Artemisias.\nDurch Kombination\nder beiden Geräte\nkönnen ihre\nmagischen Kräfte\nvervielfacht werden.
-Scan text;3;142;Eine mutierte Form\nArtemisias. Sie\nverformt sich, um\nalle Dimensionen\nund Zeitepochen\nin sich vereinen\nzu können.
-Scan text;3;143;Hier entsteht die\ndie Magie von der\nHexe Artemisia.\nDie gesamte Energie\nwird hier gesammelt,\ndie anschließend\nausgestoßen wird.
-Scan text;3;144;Nach der letzten\nNiederlage hat er\nnur das eine Ziel,\ndie SEEDS zu\nbeseitigen. Seine\nEhre steht nun\nauf dem Spiel.
-Scan text;3;145;Stammspieler des\nGalbadia-Garden-\nEishockey-Vereins.\nSie sind sog.\nHalbmenschen und\ngreifen durch\nTeamwork an.
-Scan text;3;146;Ein Stahlgigant,\nder durch Zauber\nzum Leben erweckt\nwurde. Er nimmt\nnur durch ganz\nbestimmte Zauber\nbzw. G.F. Schäden.
-Scan text;3;147;Ein Monster mit\nphysischer und\nmagischer Stärke.\nGreift bevorzugt\nmit Zauber, aber\nauch mit seinem\nSchwanz an.
-Scan text;3;148;War ursprünglich\neine G.F., wurde\naber durch die\nHexe Artemisia\nzum Monster. Sein\n【Schattenhauch】\nlöscht alles aus.
-Scan text;3;149;Dieses Monster\nwendet sowohl\nphysische als auch\nmagische Angriffe\nan. Neben Donner-\nZauber besitzt es\nauch 【Meteor】.
-Scan text;3;150;Wurde zusammen mit\nBiggs, seinem Chef,\ndegradiert, hat ihn\naber immer noch als\nVorgesetzten. Ein\nbedauernswerter\nKerl......
-Scan text;3;151;Ehemals ein Major,\nder aufgrund der\nverpatzten Mission\nin Dollet degradiert\nwurde. Aus diesem\nGrund will er sich an\nden SEEDS rächen.
-Scan text;3;152;Folgte Cifer zur\nLunatic Pandora,\num ihm zu helfen.\nSie benutzt zu\nBeginn Hilfs-Zauber,\nnach einer gewissen\nZeit Angriffszauber.
-Scan text;3;153;Er ist stets mit\nFu-Jin und Cifer\nzusammen. Er greift\nmit seiner Waffe an.\nLernte nach der\nletzten Begegnung\nHilfs-Zauber dazu.
-Scan text;3;154;Kein Zielobjekt
-Scan text;3;155;Kein Zielobjekt
-Scan text;3;156;Kein Zielobjekt
-Scan text;3;157;Kein Zielobjekt
-Scan text;3;158;Dieses Monster\nhatte die Gestalt\ndes Präsidenten\nangenommen.\nWendet Zauber an,\ndie ZU-Schäden\nverursachen.
-Scan text;3;159;Ein Soldat, der\ndie Raketenbasis\nbewacht. Er ist\nnicht stärker als\nein normaler Soldat,\nbekommt aber etwas\nmehr Sold.
+Section data name|Section Widget id|Text Sub id|Text
+Draw text|0|0|Das CD-Fach ist offen.
+Draw text|0|1|Bitte FINALFANTASY{xa8}\nCD {Var17} einlegen.
+Draw text|0|2|Draw-Punkt entdeckt!\n{x0c20} gefunden.
+Draw text|0|3|Draw-Punkt entdeckt!\nJedoch nichts gefunden...
+Draw text|0|4|Wer soll ziehen?\nNicht ziehen.\n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   
+Draw text|0|5|{Squall} hat {Var17} × {x0c20} gezogen.
+Draw text|0|6|{Squall} kann {x0c20} nicht lagern.
+Draw text|0|7|Draw-Punkt entdeckt!!\nAber niemand kann ziehen...
+Draw text|0|8|Fehler auf der CD.
+Card misc text data|1|0|\n
+Card misc text data|1|1|Ok?      \nJa\nNein
+Card misc text data|1|2|Bitte wähle 
+Card misc text data|1|3| Karte(n) aus.
+Card misc text data|1|4|-Karte erhalten.
+Card misc text data|1|5|-Karte verloren.
+Card misc text data|1|6|Noch einmal?\nJa\nNein
+Card misc text data|1|7|Regel: 
+Card misc text data|1|8|· 
+Card misc text data|1|9|/
+Card misc text data|1|10|Ari
+Card misc text data|1|11|\n· Open
+Card misc text data|1|12|\n· Random-Hand
+Card misc text data|1|13|\n· Suddendeath
+Card misc text data|1|14|Same
+Card misc text data|1|15|Plus
+Card misc text data|1|16|Wall-Same
+Card misc text data|1|17|\n· Element
+Card misc text data|1|18|\n· Tausch-Regeln: 
+Card misc text data|1|19|Null
+Card misc text data|1|20|One
+Card misc text data|1|21|Diff
+Card misc text data|1|22|Direct
+Card misc text data|1|23|Full
+Card misc text data|1|24|\nSpielen\nAufhören
+Card misc text data|1|25|Nicht existent
+Card misc text data|1|26|
+Card misc text data|1|27|
+Card misc text data|1|28|
+Card name|2|0|Heulechse
+Card name|2|1|Fongo Ongo
+Card name|2|2|Beißkäfer
+Card name|2|3|Purpurmaus
+Card name|2|4|Prinula
+Card name|2|5|Geira
+Card name|2|6|Gesper
+Card name|2|7|Foca-Double
+Card name|2|8|Blood Soul
+Card name|2|9|Stichraupe
+Card name|2|10|Cockatrice
+Card name|2|11|Gratt
+Card name|2|12|Buel
+Card name|2|13|Mesmerize
+Card name|2|14|Guheys Eye
+Card name|2|15|Belhel Melhel
+Card name|2|16|Thrust Avis
+Card name|2|17|Heckenschlange
+Card name|2|18|S-Kriecher
+Card name|2|19|Grendel
+Card name|2|20|Doppel-Hacker
+Card name|2|21|Grande Arlo
+Card name|2|22|L-Verbieter
+Card name|2|23|Esansuci
+Card name|2|24|Tripel-Visage
+Card name|2|25|Focarol
+Card name|2|26|Gogue Seal
+Card name|2|27|Küßchen
+Card name|2|28|SAM08G
+Card name|2|29|Wild Hook
+Card name|2|30|Kaktor
+Card name|2|31|Tombery
+Card name|2|32|Abyss-Wurm
+Card name|2|33|Granatomb
+Card name|2|34|Bisage
+Card name|2|35|Archeodinos
+Card name|2|36|Bomber
+Card name|2|37|Blitzer
+Card name|2|38|Wendigo
+Card name|2|39|Qual
+Card name|2|40|Galchimäsera
+Card name|2|41|Drachen-Isolde
+Card name|2|42|Adaman Taimai
+Card name|2|43|Schmelzdrache
+Card name|2|44|Stahlgigant
+Card name|2|45|Behemoth
+Card name|2|46|Chimära
+Card name|2|47|Koyo-Koyo
+Card name|2|48|Invictus
+Card name|2|49|GIM47N
+Card name|2|50|Morbol
+Card name|2|51|Rubrum-Drache
+Card name|2|52|El Noire
+Card name|2|53|Tombery-König
+Card name|2|54|Wedge·Biggs
+Card name|2|55|Fu-Jin·Rai-Jin
+Card name|2|56|El Viole
+Card name|2|57|X-ATM092
+Card name|2|58|Granaldo
+Card name|2|59|Namtal-Utok
+Card name|2|60|Schmelke
+Card name|2|61|Abadon
+Card name|2|62|Dormen
+Card name|2|63|Ölspucker
+Card name|2|64|Shumi-Stamm
+Card name|2|65|Cocutos
+Card name|2|66|Propagator
+Card name|2|67|Kaktorius
+Card name|2|68|Tripel-Klinge
+Card name|2|69|Gargantur
+Card name|2|70|BIS-8
+Card name|2|71|Andro
+Card name|2|72|Tiamat
+Card name|2|73|BGH251F2
+Card name|2|74|Wolframator
+Card name|2|75|Catblepus
+Card name|2|76|Ultima Weapon
+Card name|2|77|Choco-Blob
+Card name|2|78|Angel
+Card name|2|79|Gilgamesh
+Card name|2|80|Mogry-Kid
+Card name|2|81|Chocobo-Kid
+Card name|2|82|Quezacotl
+Card name|2|83|Shiva
+Card name|2|84|Ifrit
+Card name|2|85|Siren
+Card name|2|86|Secreto
+Card name|2|87|Minotaurus
+Card name|2|88|Carbuncle
+Card name|2|89|Diabolos
+Card name|2|90|Leviathan
+Card name|2|91|Odin
+Card name|2|92|Pandemona
+Card name|2|93|Cerberus
+Card name|2|94|Alexander
+Card name|2|95|Phönix
+Card name|2|96|Bahamut
+Card name|2|97|Doomtrain
+Card name|2|98|Eden
+Card name|2|99|Ward
+Card name|2|100|Kiros
+Card name|2|101|Laguna
+Card name|2|102|Selphie
+Card name|2|103|Quistis
+Card name|2|104|Irvine
+Card name|2|105|Xell
+Card name|2|106|Rinoa
+Card name|2|107|Edea
+Card name|2|108|Cifer
+Card name|2|109|Squall
+Scan text|3|0|Ein meisterhafter\nGun-Blade-Kämpfer.\nMit seinem 【Multi-\nSlash】 bezwingt er\nfast jeden Gegner.\nAnsonsten ein eher\ngelassener Typ.
+Scan text|3|1|Er liebt die Hot\nDogs aus der Mensa\nüber alles. Ein\nExperte in Sachen\nKampfsport. Seine\nSpezial-Technik\n【Duell】 ist tödlich.
+Scan text|3|2|Ein hervorragender\nSchütze. Mit seiner\nSpezial-Technik\n【Shot】 richtet er\ngroßen Schaden an,\nist aber dem Druck\nnicht gewachsen.
+Scan text|3|3|Sie benutzt die\nPeitsche als Waffe.\nSie hinterläßt einen\nleicht unterkühlten\nEindruck. Aber im\nBalamb-Garden gibt\nes einen Fanclub.
+Scan text|3|4|Mitglied der\nWiderstandsgruppe\n【Waldeule】. Sie\nbenutzt Fernwaffen.\nIhr treuer Hund\nhilft ihr stets,\nwenn Gefehr droht.
+Scan text|3|5|Sie wechselte von\nTrabia nach Balamb\num SEED zu werden.\nNunchakus und die\nSpezial-Technik,\nZauber-【Tombola】,\nsind ihre Stärken.
+Scan text|3|6|Fast eine Legende\ndes Balamb-Garden.\nWegen seiner etwas\nschrägen Art, hat\ner es nie bis zum\nSEED geschafft. Ein\nGun-Blade-Meister.
+Scan text|3|7|Sie ist eine echte\nHexe. Neben Zauber\nbeherrscht sie die\nMacht einer Hexe,\ndie reine Magie.\nIhr 【Eisiger Zorn】\ndurchbohrt Feinde.
+Scan text|3|8|Ein etwas schräger,\ndoch hilfsbereiter\nTyp. Er benutzt ein\nMG. Bei Gefahr\nschießt er wild um\nsich, um seine\nTruppe zu retten.
+Scan text|3|9|Kämpft mit 2 Katar-\nMessern. Mit dieser\nrelativ unbekannten\nWaffe, entwickelte\ner seinen ziemlich\ncharakteristischen\nKampfstil.
+Scan text|3|10|Ein extrem kräftig\ngebauter Mann.\nSeine Waffe ist eine\nmegatonnenschwere\nHarpune, die er dem\nGegner aus dem\nHandgelenk zuwirft.
+Scan text|3|11|Dummy
+Scan text|3|12|Dummy
+Scan text|3|13|Dummy
+Scan text|3|14|Dummy
+Scan text|3|15|Dummy
+Scan text|3|16|Und hier bin ich\nDummy\nDummy\nDummy\nDummy\nDummy\nDummy
+Scan text|3|17|Dieses Kampfgerät\nwurde zur direkten\nUnterstützung der\nGalbadia-Truppen\nentwickelt. Neben\nRaketen, feuert es\nauch mit Laser.
+Scan text|3|18|Halbflüssiges\nMonster. Starke\nAbwehr gegen\nphysikalische\nAngriffe. Seine\nSchwachstellen\nvariieren.
+Scan text|3|19|Ein Flug-Monster,\ndas man oft auf\ndem Galbadia-\nKontinent antrifft.\nEs beißt die Gegner\nund greift sie mit\nBöen an.
+Scan text|3|20|Es hält sich oft in\nfeuchten Gegenden\nauf, schleicht sich\nunauffällig heran\nund greift plötzlich\nan. Mit steigendem\nLevel, ZU-Angriffe.
+Scan text|3|21|Um sein drehbares\nGesicht ist eine\nSäge angebracht.\nWenn es sein\nGesicht dreht,\nändert sich seine\nAngriffsart.
+Scan text|3|22|Ein Flug-Monster,\ndas Kälte-Zauber\nanwendet. Wenn\nsein HP fällt,\nversucht es, die\nHP von Gegnern\nabzusaugen.
+Scan text|3|23|Eine Bio-Waffe der\nGalbadia-Truppen.\nAn seiner Schulter\nbefindet sich eine\n155mm Kanone, aus\ndem Mund ragt ein\n60mm MG heraus.
+Scan text|3|24|Eine etwas ältere\nGalbadia-Waffe,\ndie vornehmlich zur\nUnterstützung der\nInfanterie gebaut\nwurde. Greift mit\nEisenkugeln an.
+Scan text|3|25|Monster mit einem\nschwertförmigen\nHorn, das enorme\nHeilwirkung besitzt.\nDeswegen auch ein\nbeliebtes Ziel von\nFreizeitjägern.
+Scan text|3|26|Ein Monster, das\ngegen Zauber fast\nimmun ist. Dafür\nist es aber extrem\nschwach gegen alle\nphysikalischen\nAngriffe.
+Scan text|3|27|Bewacht das Schloß\nvon Artemisia.\nBisher fielen fast\nalle Eindringlinge\nihr zum Opfer. Der\nFluch des Schlosses\nmacht sie stark.
+Scan text|3|28|Die wahre Sphinx.\nSie beschwört\nununterbrochen\nMonster herbei.\nManchmal benutzt\nsie den Befehl\n【Todesurteil】.
+Scan text|3|29|Riesiges Monster,\ndas im Norden lebt.\nWegen der hohen HP\nist es zeitraubend,\nihn zu besiegen.\nWendet 【Eisigen\nHauch】 an.
+Scan text|3|30|Eine Giftschlange,\ndie dem Gegner mit\n【Umwickeln】 großen\nSchaden zufügt. Bei\nGefahr, startet sie\noftmals tödliche\nGiftangriffe.
+Scan text|3|31|Der Magen ist das\nHauptbestandteil\nseines Körpers. Es\nbetäubt seine Beute\nmit Schlafgas und\nfängt sie mit den\nFangarmen.
+Scan text|3|32|Dieser Vogel kann\nden Gegner durch\nseinen Blick in\n【Stein】 verwandeln.\nErzeugt Strom mit\nseinen Flügeln und\ngreift damit an.
+Scan text|3|33|Dieses Monster ist\nüberraschend flink\nund greift seine\nGegner mit seinem\nganzen Körper an.\nWendet auch oft\n【Hyper-Vibra】 an.
+Scan text|3|34|Eine Fledermaus,\ndie sich in Höhlen\nund dunklen Stellen\nversteckt. Mit\nihrem riesigen Mund,\ngreift sie die Opfer\naus der Höhe an.
+Scan text|3|35|Ein Monster, das\nmit Donner-Zauber\nangreift. Wenn es\nangegriffen wird,\nbeginnt es, sich\naufzuladen. Danach\nentlädt es sich.
+Scan text|3|36|Ein Fisch, der unter\nder Erde schwimmt.\nBisher wurde nur die\nFlosse gesichtet.\nSein Aussehen ist\nunbekannt. Es heißt,\ner ähnelt einem Hai.
+Scan text|3|37|Ein Fisch, der unter\nder Erde schwimmt.\nBisher wurde nur die\nFlosse gesichtet.\nSein Aussehen ist\nunbekannt. Es heißt,\ner ähnelt einem Hai.
+Scan text|3|38|Eine mißlungene\nWaffe aus Esthar.\nSie greift jeden\nwahllos an. Mit dem\n【Desionator】 löscht\nsie den Gegner\neinfach aus.
+Scan text|3|39|Ein Schattewesen.\nNäheres ist jedoch\nnicht bekannt.\nEs heißt, daß es\nandere mit in den\nTod reißt, wenn\nes stirbt.
+Scan text|3|40|Aus unerklärlichen\nGründen mutierter\nDrache, der sechs\nAugen besitzt. Er\nwendet bevorzugt\nHitze-Zauber und\n【Hauch】 an.
+Scan text|3|41|Ein Flug-Monster.\nEs schwebt durch\nseine Körpergase.\nSeine ZU-Angriffe\nrufen unnatürliche\nZustände wie z.B.\n【Zombie】 hervor.
+Scan text|3|42|Eine Flug-Waffe\naus Esthar, das\nzur Bekämpfung von\nfeindlichen Truppen\nentwickelt wurde.\nSie verwendet ihre\n4 Beine zum Angriff.
+Scan text|3|43|Eingehüllt in einer\nharten Panzerhaut,\nist es resistent\ngegen physikalische\nAngriffe. Aufgrund\ndes Körpergewichts,\nziemlich träge.
+Scan text|3|44|Ein Insekt, das\ngeschwind in der\nGegend herumfliegt.\nDa es nicht sehr\nstark ist, sollten\nKämpfe keine\nProbleme darstellen.
+Scan text|3|45|Es verändert sein\nAbwehrverhalten im\nKampf. Dabei wendet\nes unterschiedliche\nZauber mit Hitze-,\nKälte- und Donner-\nElementen an.
+Scan text|3|46|Eine Biowaffe, das\naus einem Drachen\nentwickelt wurde.\nIhre Schwachstellen\nsind Hitze & Kälte.\nSie wechselt stets\ndie EL-Abwehr.
+Scan text|3|47|Ein Monster, das\nmit Zauber und\nseinen scharfen\nKrallen angreift.\nEs verformt sich,\nwenn es Angriffe\nabwehrt.
+Scan text|3|48|Ein Monster mit\nenormer Kraft.\nDafür wendet es\nkeine Zauber,\nsondern nur\nphysikalische\nAngriffe an.
+Scan text|3|49|Seine Stärken sind\nZauber, die den\nGegner einschläfern.\nEr greift mit seinem\nVerdauungssaft an.\nDabei wird die\nAbwehr geschwächt.
+Scan text|3|50|Dieser Zombie war\ndas Double von\nPräsident Deling.\nEr wendet Angriffe\nan, die eine\nVeränderung des\nZustands bewirken.
+Scan text|3|51|Ein Monster mit 4\nscharfen Krallen.\nEr greift nicht nur\nan, sondern wendet\nhin und wieder Gase\nan, die 【Schlaf】\nverursachen.
+Scan text|3|52|Ein Monster mit 3\nKöpfen. Die beiden\nseitlichen Köpfe\nwerden nur beim\nAngriff verwendet.\nSie verursachen\n【Gift】-Zustände.
+Scan text|3|53|Früher lebte dieses\nMonster im Wasser.\nBei Kämpfen, greift\nes mit seinen 8\nriesigen Krallen an\nund fängt damit\nseine Beute.
+Scan text|3|54|Entstand aus einem\nEdelstein im\nArtemisia-Schloß.\nWenn es angegriffen\nwird, kontert es auf\nder Stelle mit seiner\ntödlichen Kralle.
+Scan text|3|55|Eine riesige Hand,\ndie aus der Erde\nragt. In höheren\nLevel, kann sie\nalle unnatürlichen\nZustände mit\n【Medica】 kurieren.
+Scan text|3|56|Eine riesige Hand,\ndie aus der Erde\nragt. Sie kann\nnicht zaubern,\nbesitzt dafür eine\nhohe physikalsiche\nAngriffskraft.
+Scan text|3|57|Ein Drache, der auf\nzwei Füßen steht.\nEr verursacht oft\nunnatürliche\nZustände. Verliert\ngelegentlich einen\n【Kampfbrocken】.
+Scan text|3|58|Ein untoter Kämpfer\nmit einem Schwert.\nDa er bereits tot\nist, fürchtet er den\nTod nicht. Er kann\neinen Gegner sogar\ntöten.
+Scan text|3|59|Ein Hitze-Monster.\nWenn es angegriffen\nwird, bläht es sich\nauf und kann sich\nselbst zerstören,\nwobei es dem Feind\nSchaden zufügt.
+Scan text|3|60|Ein Wurm, der unter\nder Erde lebt. Das\nwas sichtbar ist,\nist nur ein kleiner\nTeil seines Körpers.\nGelegentlich kontert\ner mit 【Beben】.
+Scan text|3|61|Ein Monster, das\nsich am liebsten\nin den Wäldern\naufhält. Es greift\nmit seinen Fühlern\nan, und verursacht\nZU-Schäden.
+Scan text|3|62|Dieses Monster ist\nsowohl gegen\nZauber, als auch\ngegen physikalische\nAngriffe resistent.\nEs besitzt ein sehr\nseltenes Item.
+Scan text|3|63|Ein vierköpfiges\nMonster. Jeder Kopf\ngreift auf seine\nWeise an: Zauber,\ndirekter Angriff,\nZU-Angriff und\n【Nasser Hauch】.
+Scan text|3|64|Greift mit extremen\nMundgeruch an, der\nböse ZU-Schäden\nanrichtet. Vor dem\nKampf sollte eine\nwirksame ZU-Abwehr\ngekoppelt werden.
+Scan text|3|65|Sein Körper ist mit\neiner Stahlrüstung\numhüllt und bewirkt\neine starke Abwehr.\nSein Riesenschwert\nverursacht einen\ngroßen Schaden.
+Scan text|3|66|Eines der stärksten\nMonster überhaupt.\nEs greift bevorzugt\nmit physikalischen\nKräften und dem\nmächtigen Zauber\n【Meteor】 an.
+Scan text|3|67|Ein Lebewesen, das\nseit Urzeiten auf\ndem Planeten lebt.\nEs hat hohe HP-\nund Stärke-Werte.\nDer Klügere sollte\nhier nachgeben.
+Scan text|3|68|Er ist stark und\nsehr intelligent.\nWenn der Gegner\n【Reflek】 benutzt,\nwendet er ihn auch\nan, um Zauber zu\nreflektierern.
+Scan text|3|69|Ein kleiner Drache,\nder in Wäldern lebt.\nManchmal taucht er\nin Horden auf.\nDann wird es sehr\nschwierig, sie zu\nbesiegen.
+Scan text|3|70|Ein Monster, das\neinem Gesicht sehr\nähnlelt. Es wendet\nHilfs-Zauber an.\nWenn seine 2 Hände\ndabei sind, ist\nVorsicht geboten.
+Scan text|3|71|Ein Kaktus, der\nmit unglaublicher\nGeschwindigkeit\ndurch die Wüste\nrennt. Greift mit\nseinen Stacheln\ndie Gegner an.
+Scan text|3|72|Ein mysteriöses\nLebewesen, das in\nden Höhlen lebt.\nEs nähert sich\nlangsam dem Gegner\nund greift ihn mit\nseinem Messer an.
+Scan text|3|73|Während es sitzt, \ngreift es mit vielen\nZauberarten an,\ndoch sobald es\naufsteht, wendet es\n【Blaster】 (Stein\nbzw. Tod-ZU) an.
+Scan text|3|74|Ein Pilz, der aus\nirgendeinem Grund\naufrecht geht.\nEr wendet Angriffe\nan, die dem Gegner\nböse ZU-Schäden\nzufügen.
+Scan text|3|75|Ein teufelähnliches\nWesen mit Flügeln.\nNach einer gewissen\nZeit benutzt es\nstarke Zauber, in\nhöheren Leveln\nsogar 【Holy】.
+Scan text|3|76|Ein Alien, der \naus einem anderen\nUniversum stammt.\nZur Zeit hat er ein\ngroßes Problem, da\nsein UFO irgendwie\nzerstört wurde.
+Scan text|3|77|Eine Hitze-G.F.,\ndie Hitze-Zauber\nbenutzt. Sie ist\nnicht allzu stark,\nda sie Bestandteil\nder SEED-Prüfung\ndes B-Garden ist.
+Scan text|3|78|Älterer Bruder von\nSecreto. Er ist zwar\nkleiner, doch viel\nstärker als sein\n“kleiner” Bruder.\nEr ist ebenfalls\neine Erd-G.F.
+Scan text|3|79|Eine Erd-G.F., die\nein Grab bewacht.\nSie wird durch die\nErd-Macht geheilt.\nEin übergroßer\nMorgenstern dient\nals Angriffswaffe.
+Scan text|3|80|Ein Truppenführer\nder galbadianischen\nRaketenbasis. Er\nbewacht die Basis\nund ist wesentlich\nstärker als die\nElitesoldaten.
+Scan text|3|81|Ein dreiköpfiger\nWachhund aus der\nHölle. Nachdem er\nTripel benutzt hat,\nwenden die 3 Köpfe\nalle verschiedene\nZauber an.
+Scan text|3|82|Eine G.F., die in\neiner anderen\nDimension lebt. Sie\nverwendet Angriffe,\nmit der ein Großteil\nder HP des Gegners\nverringert wird.
+Scan text|3|83|Dieser Drache wird\nals König der G.F.\nbezeichnet. Hilft\ndenen, die ihre\nkämpferische und\nseelische Stärke\nbeweisen können.
+Scan text|3|84|Eine Schutzhülle,\ndie den Master\nNorg beschützt.\nMaster Norg ist\nunverwundbar,\nsolange man sie\nnicht zerstört.
+Scan text|3|85|Kein Zielobjekt.
+Scan text|3|86|Eine legendäre G.F.\nDer Eisenschneider\nzerschneidet alles.\nWenn jemand diese\nTechnik zu sehen\nbekommt, ist sein\nTod schon sicher.
+Scan text|3|87|Dieser Galbadia-\nSoldat kann sowohl\nmit Schwert, als\nauch mit Zauber\nkämpfen. Kein\nernstzunehmender\nGegner.
+Scan text|3|88|Ein galbadianischer\nOffizier, der die\nSoldaten befehligt.\nWendet Heilzauber\nan. Daher sollte er\nvor allen anderen\nbeseitigt werden.
+Scan text|3|89|Er gehört zum\nBesatzungstrupp\nder Galbadianer.\nDank seines\nAnführers Biggs,\ngerät er immer\nin Schwierigkeiten.
+Scan text|3|90|Der Anführer des\nBesatzungstrupps.\nEr kann zwar etwas\nkämpfen, ist jedoch\nnicht so stark.\nVerliert schnell\ndie Beherrschung.
+Scan text|3|91|Das Double von\nPräsident Deling.\nEr greift aus einer\nseltsamen Haltung\nheraus an. Er ist\nzwar nicht so stark,\naber......
+Scan text|3|92|Wie der Name schon\nsagt, ist er einer\nder Wachen in der\nAnstalt. Er wendet\nSchlafzauber an,\num Flüchtige wieder\neinzufangen.
+Scan text|3|93|Der Master des\nBalamb-Gardens.\nEr versucht die\nvollständige Macht\nüber den Garden\nzu erlangen. Der\nErzrivale von Cid.
+Scan text|3|94|Ein Esthar-Soldat,\nder Pistolen und\nMesser abwechselnd\nbenutzt. Seine\nSchrotflinte ist\nstark, wird aber\nnur selten benutzt.
+Scan text|3|95|Er sieht zwar aus\nwie ein Esthar-\nSoldat, ist jedoch\nein Cyborg. Er ist\nwesentlich stärker\nals ein normaler\nEsthar-Soldat.
+Scan text|3|96|Ein Hilfssystem des\nMaster Norg. Es\nkann jeden Schaden\nreparieren und\nwendet Zauber an,\nder ZU-Schäden\nverursacht.
+Scan text|3|97|Ein Hilfssystem des\nMaster Norg. Es\nkann jeden Schaden\nreparieren und\nwendet vornehmlich\nAngriffszauber mit\nElementen an.
+Scan text|3|98|Kein Zielobjekt
+Scan text|3|99|Der König des\nTombery-Stammes.\nEr ist gekommen,\num seine besiegten\nStammesgenossen\nzu rächen. Benutzt\n【Blankes Messer】.
+Scan text|3|100|Unter den Kaktoren\nbefindet sich ab und\nzu einer, der immer\ngrößer und größer\nwird. Dieser Jumbo-\nKaktor ist ein gutes\nBeispiel dafür.
+Scan text|3|101|Ein Kämpfer, der\nzum Hexen-Ritter\nwurde, nachdem er\nvom Balamb-Garden\nflog. Er greift mit\nSchwert und Hitze-\nZauber an.
+Scan text|3|102|Er kämpft nun, um\ndie SEEDS zu\nbesiegen. Nach der\nletzten Niederlage\nhat er trainiert\nund einige neue\nTechniken erlernt.
+Scan text|3|103|Trotz Niederlage\nversucht er durch\neinen weiteren\nKampf, sein Gesicht\nals Hexen-Ritter\nzu wahren. Er ist\nnun stärker.
+Scan text|3|104|Eine Hexe mit einer\nimmensen Macht.\nSie herrscht über\nGalbadia. Niemand\nbesitzt stärkere\nMagie. Sie wendet\nExtrem-Zauber an.
+Scan text|3|105|Ein Alien, der sich\nim Flugschiff\neingenistet hat.\nEin aggressives\nMonster, das alles\nangreift, was sich\nirgendwie bewegt.
+Scan text|3|106|Dieses legendäre\nMonster gilt als das\nstärkste überhaupt.\nEs heißt, daß\nniemand es besiegen\nkann. Vorsicht vor\nder 【Lichtsäule】!
+Scan text|3|107|Dieses Monster hat\nsich im Sendeturm\neingenistet. Es ist\nnicht bekannt,\nwoher es gekommen\nist. Greift mit\n【Sturmhauch】 an.
+Scan text|3|108|Eine galbadianische\nMobilwaffe, die auch\nals 【Black Widow】\nbezeichnet wird.\nSie verfolgt das\nerfaßte Ziel bis\nzum bitteren Ende.
+Scan text|3|109|Ein Monster, das\nvon Edea belebt\nwurde. Es wendet\n【Lava-Hauch】 mit\n【Stein】-Effekt an.\nEs ist im ständigen\nReflek-Zustand.
+Scan text|3|110|Ein Monster, das\nvornehmlich Zauber\nanwendet. Jegliche\nphysikalische\nAngriffe werden\ngekontert. Benutzt\n【Bösen Blick】.
+Scan text|3|111|Insektenähnliches\nMonster. Dieses\nLebewesen galt als\nausgestorben. Er\ngreift mit seinen\nKrallen und seinem\nSchwanz an.
+Scan text|3|112|Trotz seines\nAussehens, ist es\nein sehr flinkes\nMonster. Wenn sie\nin Horden kommen,\ndroht ernsthafte\nGefahr.
+Scan text|3|113|Ein Alien, der sich\nim Flugschiff\neingenistet hat.\nEin aggressives\nMonster, das alles\nangreift, was sich\nirgendwie bewegt.
+Scan text|3|114|Ein Alien, der sich\nim Flugschiff\neingenistet hat.\nEin aggressives\nMonster, das alles\nangreift, was sich\nirgendwie bewegt.
+Scan text|3|115|Ein Monster, das\nunter der Erde lebt.\nSein glatter Körper\nist mit Öl gefüllt.\nEr greift den Feind\nmit dem Öl aus\nseinem Körper an.
+Scan text|3|116|Eine Hexe, die im\nBegriff ist, die\nWelt zu erobern.\nUm die SEEDS zu\nbeseitigen, hatte\nsie Truppen nach\nBalamb geschickt.
+Scan text|3|117|Eine Mobilwaffe der\ngalbadianischen\nArmee. Ihre\n【Strahlenkanone】\nübertrifft die\n【Strahlenbombe】\ndes X-ATM092.
+Scan text|3|118|Nachdem sie in \nder Raketenbasis\ndemoliert wurde,\nging die Kontrolle\nverloren. Sie kann\njeden Moment in\ndie Luft gehen.
+Scan text|3|119|Dieses Monster soll\naus Knochenresten\nentstanden sein, die\nim Wasser lagen.\nDurch die Dürre,\nwurden die Knochen\nzusammengetragen.
+Scan text|3|120|Kein Zielobjekt
+Scan text|3|121|Eine Mobilwaffe aus\nEsthar, die in der\nLunatic Pandora\nvergessen wurde.\nIhre Laserwaffen\nübertreffen alle\nWaffensysteme.
+Scan text|3|122|Linkes Schulterteil\nder BIS-8. Agiert\nauch selbstständig\nund startet von\nalleine Angriffe.\nEs kann sich sogar\nselbst reparieren.
+Scan text|3|123|Rechtes Schulterteil\nder BIS-8. Agiert\nauch selbstständig\nund startet von\nalleine Angriffe.\nEs kann sich sogar\nselbst reparieren.
+Scan text|3|124|Elite-Soldat der\ngalbadianischen\nLuftlandeeinheit.\nLandet hinter den\nfeindlichen Linien\nund attackiert als\nerster den Feind.
+Scan text|3|125|Diese Waffe wurde\nvon Artemisia\nzum Leben erweckt.\nIhre 【Pulskanone】\näschert alles ein,\nwas sich in ihrer\nReichweite befindet.
+Scan text|3|126|Eine Hilfswaffe,\ndie dem Dormen\nentsprungen ist.\nTrotz ihrer Größe\nbesitzt sie eine\nMini-Ausführung\nder 【Pulskanone】.
+Scan text|3|127|Ein Alien, der sich\nim Flugschiff\neingenistet hat.\nEin aggressives\nMonster, das alles\nangreift, was sich\nirgendwie bewegt.
+Scan text|3|128|Herrschte ehemals\nüber Esthar, bis\nsie von Laguna\nversiegelt wurde.\nWurde von Artemisia\nbefreit und erlangt\nihre Macht wieder.
+Scan text|3|129|{Rinoa},\nverschmlozen mit\nAdell. Ihre HP \nwird langsam von\nAdell aufgesogen.\nKommt frei, wenn\nAdell besiegt ist.
+Scan text|3|130|Es ist weitaus\nstärker als die\nUltima Weapon. Ist\nsomit das stärkste\nMonster überhaupt.\nNiemand weiß, wie\nes hierher kam.
+Scan text|3|131|Eine Hexe, die\ndurch Artemisias\nZeitkomprimierung\nhierher bewschworen\nwurde. Sie wendet\nZauber an, ist aber\nnicht sehr stark.
+Scan text|3|132|Eine Hexe, die\ndurch Artemisias\nZeitkomprimierung\nhierher bewschworen\nwurde. Sie wendet\nZauber an, ist aber\nnicht sehr stark.
+Scan text|3|133|Eine Hexe, die\ndurch Artemisias\nZeitkomprimierung\nhierher bewschworen\nwurde. Sie wendet\nZauber an, ist aber\nnicht sehr stark.
+Scan text|3|134|Unidentifiziertes\nfliegendes Objekt\naus dem Weltall.\nNäheres ist nicht\nbekannt......
+Scan text|3|135|Sie hat im Auftrag\nvon Cifer Ellione\ngesucht. Sie wendet\nWind-Zauber an,\nindem sie die Macht\neiner gekoppelten\nG.F. nutzt.
+Scan text|3|136|Hat von Cifer den\nAuftrag bekommen,\nEllione zu finden.\nEr beherrscht nur\nphysikalische\nAngriffe. Redet\nmanchmal zu viel.
+Scan text|3|137|Eine Hexe, die durch\ndie eingeleitete\nZeitkomprimierung\nversucht, die Macht\naller Hexen in sich\nzu vereinen. Besitzt\nunsägliche Kräfte.
+Scan text|3|138|Nach Meinung von\n{Squall},\ndas stärkste Wesen,\ndas exisitiert. Es\nwurde von Artemisia\nals eine Art G.F.\nhierher beschworen.
+Scan text|3|139|Kein Zielobjekt
+Scan text|3|140|Ein Wesen, das\ndurch die\nVerschmelzung\nvon Artemisia und\n{Griever}\nentstanden ist. Ein\nmächtiges Monster.
+Scan text|3|141|Verstärkt die\nMagie Artemisias.\nDurch Kombination\nder beiden Geräte\nkönnen ihre\nmagischen Kräfte\nvervielfacht werden.
+Scan text|3|142|Eine mutierte Form\nArtemisias. Sie\nverformt sich, um\nalle Dimensionen\nund Zeitepochen\nin sich vereinen\nzu können.
+Scan text|3|143|Hier entsteht die\ndie Magie von der\nHexe Artemisia.\nDie gesamte Energie\nwird hier gesammelt,\ndie anschließend\nausgestoßen wird.
+Scan text|3|144|Nach der letzten\nNiederlage hat er\nnur das eine Ziel,\ndie SEEDS zu\nbeseitigen. Seine\nEhre steht nun\nauf dem Spiel.
+Scan text|3|145|Stammspieler des\nGalbadia-Garden-\nEishockey-Vereins.\nSie sind sog.\nHalbmenschen und\ngreifen durch\nTeamwork an.
+Scan text|3|146|Ein Stahlgigant,\nder durch Zauber\nzum Leben erweckt\nwurde. Er nimmt\nnur durch ganz\nbestimmte Zauber\nbzw. G.F. Schäden.
+Scan text|3|147|Ein Monster mit\nphysischer und\nmagischer Stärke.\nGreift bevorzugt\nmit Zauber, aber\nauch mit seinem\nSchwanz an.
+Scan text|3|148|War ursprünglich\neine G.F., wurde\naber durch die\nHexe Artemisia\nzum Monster. Sein\n【Schattenhauch】\nlöscht alles aus.
+Scan text|3|149|Dieses Monster\nwendet sowohl\nphysische als auch\nmagische Angriffe\nan. Neben Donner-\nZauber besitzt es\nauch 【Meteor】.
+Scan text|3|150|Wurde zusammen mit\nBiggs, seinem Chef,\ndegradiert, hat ihn\naber immer noch als\nVorgesetzten. Ein\nbedauernswerter\nKerl......
+Scan text|3|151|Ehemals ein Major,\nder aufgrund der\nverpatzten Mission\nin Dollet degradiert\nwurde. Aus diesem\nGrund will er sich an\nden SEEDS rächen.
+Scan text|3|152|Folgte Cifer zur\nLunatic Pandora,\num ihm zu helfen.\nSie benutzt zu\nBeginn Hilfs-Zauber,\nnach einer gewissen\nZeit Angriffszauber.
+Scan text|3|153|Er ist stets mit\nFu-Jin und Cifer\nzusammen. Er greift\nmit seiner Waffe an.\nLernte nach der\nletzten Begegnung\nHilfs-Zauber dazu.
+Scan text|3|154|Kein Zielobjekt
+Scan text|3|155|Kein Zielobjekt
+Scan text|3|156|Kein Zielobjekt
+Scan text|3|157|Kein Zielobjekt
+Scan text|3|158|Dieses Monster\nhatte die Gestalt\ndes Präsidenten\nangenommen.\nWendet Zauber an,\ndie ZU-Schäden\nverursachen.
+Scan text|3|159|Ein Soldat, der\ndie Raketenbasis\nbewacht. Er ist\nnicht stärker als\nein normaler Soldat,\nbekommt aber etwas\nmehr Sold.

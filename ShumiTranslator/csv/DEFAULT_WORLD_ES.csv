@@ -1,0 +1,315 @@
+"Text","Comment"
+"#worldmap","0"
+"{x0e2f}",""
+"{x0e30}",""
+"{x0e31}",""
+"Aeropuerto de {Esthar}",""
+"{Blue}{x0e2f}{White}. ¿Bajas?
+Sí.
+No.",""
+"{Blue}{x0e30}{White}. ¿Bajas?
+Sí.
+No.",""
+"{Blue}{x0e31}{White}. ¿Bajas?
+Sí.
+No.",""
+"«Tren para {Blue}{Timber}»{White}
+Subir pagando 3.000 guiles.
+No subir.",""
+"«Tren para {Blue}{Dollet}»{White}
+Subir pagando 3.000 guiles.
+No subir.",""
+"«Tren para {Blue}{x0e2d}»{White}
+Subir pagando 3.000 guiles.
+No subir.",""
+"{White}«No se permite subir a pasajeros
+sin el dinero suficiente.»",""
+"Selphie
+─¡Vamos!
+¡A la {Blue}[base de misiles]{White} se ha dicho!",""
+"Soldado de {Galbadia}
+─Ni lo intentes.",""
+"Soldado de {Galbadia}
+─No molestes.",""
+"Soldado de {Galbadia}
+─¡Por aquí no pasas!",""
+"Soldado de {Galbadia}
+─Éste es nuestro trabajo.",""
+"Soldado de {Galbadia}
+─Lo mismo de siempre...",""
+"Soldado de {Galbadia}
+─Oye bonita,
+¿no quieres dar un paseo?",""
+"¡Has encontrado un punto de extracción!
+Pero nadie puede extraer...",""
+"¡Has encontrado un punto de extracción!
+Pero está agotado...",""
+"¡Has encontrado un punto de extracción!
+",""
+"Contiene la magia ",""
+"No le caben más",""
+"No tiene la habilidad Extraer.",""
+"¿Quién extraerá?
+",""
+"Nadie.",""
+" magia(s) ",""
+" ha guardado ",""
+"
+",""
+"0",""
+"{Squall}",""
+"{Zell}",""
+"{Irvine}",""
+"{Quistis}",""
+"{Rinoa}",""
+"{Selphie}",""
+"{Seifer}",""
+"{Edea}",""
+"{Laguna}",""
+"{Kiros}",""
+"{Ward}",""
+"{White}",""
+"{Grey}",""
+"¡Se ha agotado el {RedBlink}{x0dc2}{WhiteBlink}!",""
+"{Red}{x0dc2}{White} restante: ",""
+" unidad(es)",""
+"¿Quieres ir a ",""
+"{x0541}",""
+"{x0540}",""
+"{Yellow}Manejo del vehículo{White}
+          {x0524} Retroceder
+  {x0527} Avanzar
+          {x0526} Subir o bajar
+Dirígelo con los botones de dirección o la
+
+
+para avanzar o retroceder.
+El botón {x0521} fija el ángulo de visión.",""
+"{Yellow}Manejo del “jardín”{White}
+          {x0524} Retroceder
+  {x0527} Avanzar  {x0525} Al puente de mando
+          {x0526} Subir o bajar
+Dirígelo con los botones de dirección o la
+
+
+para avanzar o retroceder.
+El botón {x0521} fija el ángulo de visión.",""
+"{Yellow}Instrucciones para montar en chocobo{White}
+Usa los botones de dirección o la
+
+Pulsa {x0526} para bajar y {x0521} para fijar
+el ángulo de visión.",""
+"{Yellow}Manejo de la nave aeroespacial{White}
+          {x0524} Retroceder
+  {x0527} Avanzar  {x0525} Al puente de mando
+          {x0526} Subir o bajar de la nave
+
+Ascender, descender o cambiar de rumbo.
+
+para avanzar o retroceder.
+El botón {x0521} fija el ángulo de visión.",""
+"(Este lugar... me resulta conocido.)",""
+"(Parece que nadie ha vivido aquí
+por mucho tiempo...)",""
+"─¿Eh?",""
+"Nida
+─¡Algo está afectando
+los instrumentos!",""
+"(Bajarse aquí no es buena idea...)",""
+"Estás frente al lago Aubert.
+Arrojar una piedra.
+Tararear algo.",""
+"Estás frente al lago Aubert.
+Arrojar una piedra.
+Tararear algo.",""
+"Aparece una silueta oscura bajo el agua.
+Arrojar una piedra.
+Tararear otra vez.",""
+"La silueta ha huído...",""
+"La piedra se ha hundido de inmediato.",""
+" ·
+La piedra ha rebotado una vez.",""
+" ·
+ ·
+La piedra ha rebotado dos veces.",""
+" ·
+ ·
+ ·
+La piedra ha rebotado tres veces.",""
+" ·
+ ·
+ ·
+ ·
+La piedra ha rebotado cuatro veces.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+La piedra ha rebotado cinco veces.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+ ·
+La piedra ha rebotado seis veces.",""
+" ·
+ ·
+ ·
+ ·
+ ·
+ ·
+La piedra ha rebotado y rebotado,
+tantas veces que no se pueden contar.",""
+"Silueta oscura
+─Hola, humano.
+Me gusta como cantas.",""
+"Aparece una silueta oscura bajo el agua.
+─¡Hola!",""
+"(No sé qué es, pero parece enorme...)",""
+"─¡Gracias por hablarme de nuevo!",""
+"─Oye...",""
+"─¿Puedo pedirte un favor?
+(Bueno, si es sólo pedir.)
+(No quiero meterme en líos.)",""
+"─Quisiera que buscaras
+a mi amigo el mono.",""
+"─¡Ojalá lo encuentres!",""
+"─......",""
+"─El mono debe de estar en algún bosque.
+Camina y lo encontrarás.",""
+"─Ah... ¿Conoces esta historia?",""
+"─Ah...",""
+"─Bonito día, ¿verdad?",""
+"─¿De qué hablas?",""
+"─Una piedra con letras misteriosas...",""
+"─Creo que el mono también tenía
+una piedra como ésta.",""
+"[Un descanso en el puente de hierro]",""
+"[Un momento de reposo en Eldpeak]",""
+"─Debe de ser un lugar muy hermoso.",""
+"Le has enseñado dónde está el mono.",""
+"¡Gracias!",""
+"¡Has encontrado un mono!
+Arrojar una piedra.
+Cantar algo.",""
+"─¡Huy, qué malo!",""
+"El mono ha desaparecido en el bosque
+en un abrir y cerrar de ojos...",""
+"Habiéndote insultado lo suficiente,
+el mono ha desaparecido en el bosque...",""
+"─¡Hey! Oye, ¿por qué no vas a tirar
+piedras al lago? No, claro, eres
+tan torpe que no te rebotan ni dos
+veces. ¡A mí me rebotan tantas veces 
+que no se pueden contar! ¡Imbécil!
+¡Zopenco! ¡Zoquete!",""
+"─¡Ay! ¿Cómo te atreves? 
+Ya verás lo que es bueno...",""
+"¡El mono te ha tirado una piedra y ha huido!",""
+"Observando la piedra, adviertes
+que parece artificial y tiene
+una inscripción...",""
+"Hay un mono.
+─¡Zopenco! ¡Zoquete!",""
+"¡Lástima...!
+El mono ha huido precipitadamente.",""
+"¿Y esto...?",""
+"A tus pies hay un fragmento de piedra...",""
+"Parece artificial, y tiene
+una inscripción...",""
+"... Es una piedra común y corriente.",""
+"Un ave empolla un huevo.
+Investigar.
+Dejarla tranquila.",""
+"Parece que el ave
+ha ido a buscar comida...",""
+"Has encontrado un fragmento de piedra.",""
+"No hay nada...",""
+"{Grey} D E U L O E H",""
+"{Grey} R M R L S S A",""
+"{Grey} E O A A E O Y",""
+"{Grey} D R D N N R T",""
+"[{Grey} D E U L O E H {White}]
+[{Grey} R M R L S S A {White}]
+[{Grey} E O A A E O Y {White}]
+[{Grey} D R D N N R T {White}]",""
+"─Dicen que de vez en cuando
+el mar arroja objetos de valor
+a la costa de {Balamb}...",""
+"─En la isleta al este de {Timber}
+parece que hay algo interesante...",""
+"─También encontrarás algo sobre la
+montaña de la caverna con un lago...",""
+"─¿Sabes? Hace tiempo, en un lejano
+bosque al sur de aquí, había
+un pequeño y hermoso pueblo
+donde todos vivían muy felices...",""
+"Hay una columna de piedra.
+La observas y encuentras
+una inscripción.",""
+"«TESUBOROENUBLAISUBLASUBCALAMANGUBA»",""
+"(¿...?)",""
+"¡Has encontrado {x0d29}!",""
+"¡Has encontrado {x0d50}!",""
+"¡Has encontrado {x0d83}!",""
+"¡Has encontrado {x0d21}!",""
+"El sonido se ha desvanecido en el lago...",""
+"Hasta donde alcanza la vista
+el suelo está cubierto de piedras
+de todos colores... ¡con cara humana!",""
+"Una piedra negra comienza a
+hablar solemnemente...
+─El tesoro ha de estar en la
+dirección de la estrella polar...",""
+"Una piedra blanca dice con desgano:
+─Al este...",""
+"Una piedra blanca dice con desgano:
+─Al oeste...",""
+"Una piedra blanca dice con desgano:
+─Al sur...",""
+"Una piedra blanca dice con desgano:
+─Al norte...",""
+"Una piedra roja dice de prisa:
+─Las azules son unas mentirosas.",""
+"Una piedra roja dice de prisa:
+─Te digo que el tesoro está al este.",""
+"Una piedra roja dice de prisa:
+─Te digo que el tesoro está al oeste.",""
+"Una piedra roja dice de prisa:
+─Te digo que el tesoro está al sur.",""
+" Una piedra roja dice de prisa:
+─Te digo que el tesoro está al norte.",""
+"Una piedra roja dice de prisa:
+─Te digo que el tesoro no está aquí.",""
+"Una piedra azul murmura:
+─¿Qué sé yo dónde está el tesoro?",""
+"Una piedra azul murmura:
+─“Piedras mentirosas”...
+Así es como nos llaman.",""
+"Una piedra azul murmura:
+─Algunas dicen siempre lo mismo.",""
+"Una piedra azul murmura:
+─Algunas inventan todo lo que dicen.",""
+"Una piedra azul murmura:
+─Algunas dicen siempre lo contrario.",""
+"Aquí sólo hay escombros
+esparcidos en la hierba.",""
+"Nada fuera de lo común.",""
+"(¿Y esto? ¿Será parte de algo?)",""
+"(Es muy similar a una piedra
+que recogí antes...)",""
+"(Parece que las tengo todas.)",""
+"─Creo que no hay más piedras.",""
+"─Si no está por aquí cerca...
+¿Habrá tomado el tren para Dollet?",""
+"(Ahora recuerdo... Ésta es
+la casa de Edea.
+Pero ¿qué será este rumor sordo?
+Como si aquí cerca hubiera
+algo inmenso...)",""
+".",""
+"?
+Sí.
+No.",""

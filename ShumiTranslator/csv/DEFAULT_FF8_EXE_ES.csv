@@ -1,309 +1,309 @@
-Section data name;Section Widget id;Text Sub id;Text
-Draw text;0;0;La cubierta del disco está abierta.
-Draw text;0;1;FINAL FANTASY {xa8}\nColoca el disco {Var17}.
-Draw text;0;2;¡Has encontrado un punto de extracción!\nContiene la magia {x0c20}.
-Draw text;0;3;¡Has encontrado un punto de extracción!\nPero está agotado...
-Draw text;0;4;¿Quién extraerá?\nNadie.\n{Darkgrey}{Squall}.   \n{Darkgrey}{Squall}.   \n{Darkgrey}{Squall}.   
-Draw text;0;5;{Squall} ha guardado\n{Var17} magia(s) {x0c20}.
-Draw text;0;6;{Squall} no puede\nguardar la magia {x0c20}.
-Draw text;0;7;¡Has encontrado un punto de extracción!\nPero nadie puede extraer...
-Draw text;0;8;ERROR DE DISCO
-Card misc text data;1;0;\n
-Card misc text data;1;1;¿Está bien?\nSí.\nNo.
-Card misc text data;1;2;Escoge 
-Card misc text data;1;3; carta(s).
-Card misc text data;1;4;Has obtenido la carta de 
-Card misc text data;1;5;Has perdido la carta de 
-Card misc text data;1;6;¿Juegas de nuevo?\nSí.\nNo.
-Card misc text data;1;7;Reglas: 
-Card misc text data;1;8;· 
-Card misc text data;1;9;/
-Card misc text data;1;10;Ari
-Card misc text data;1;11;\n· Abierto
-Card misc text data;1;12;\n· Mano mezclada
-Card misc text data;1;13;\n· Hasta la muerte
-Card misc text data;1;14;Igual
-Card misc text data;1;15;Suma
-Card misc text data;1;16;Pared
-Card misc text data;1;17;\n· Elemental
-Card misc text data;1;18;\n· Regla de pago: 
-Card misc text data;1;19;Null
-Card misc text data;1;20;Una
-Card misc text data;1;21;Diferencia
-Card misc text data;1;22;Directo
-Card misc text data;1;23;Todas
-Card misc text data;1;24;\nJugar.\nNo jugar.
-Card misc text data;1;25;Desaparecida
-Card misc text data;1;26;
-Card misc text data;1;27;
-Card misc text data;1;28;{x08}
-Card name;2;0;Álagar
-Card name;2;1;Fungo
-Card name;2;2;Mosquito
-Card name;2;3;Mordélago
-Card name;2;4;Blinura
-Card name;2;5;Gueila
-Card name;2;6;Guésper
-Card name;2;7;Focarrol falso
-Card name;2;8;Globulus
-Card name;2;9;Kedachiku
-Card name;2;10;Cocatoris
-Card name;2;11;Grat
-Card name;2;12;Buel
-Card name;2;13;Unipladio
-Card name;2;14;Medusa
-Card name;2;15;Bejelmejel
-Card name;2;16;Bipla
-Card name;2;17;Venoma
-Card name;2;18;Sombra
-Card name;2;19;Grendel
-Card name;2;20;Abrazador
-Card name;2;21;Langosta
-Card name;2;22;Esqueleto
-Card name;2;23;Acorazado
-Card name;2;24;Tricéfalo
-Card name;2;25;Focarrol
-Card name;2;26;Foca mutante
-Card name;2;27;Ochú
-Card name;2;28;SAM08G
-Card name;2;29;Oso de Trabia
-Card name;2;30;Cactilio
-Card name;2;31;Tomberi
-Card name;2;32;Gusano Ebis
-Card name;2;33;Túlipo
-Card name;2;34;Las manos
-Card name;2;35;Arqueosaurio
-Card name;2;36;Bom
-Card name;2;37;Blitz
-Card name;2;38;Wendigo
-Card name;2;39;Bengal
-Card name;2;40;Galkimasera
-Card name;2;41;Draco
-Card name;2;42;Adamantaimai
-Card name;2;43;Seisojos
-Card name;2;44;Férreo
-Card name;2;45;Bégimo
-Card name;2;46;Quimera
-Card name;2;47;Alienígena
-Card name;2;48;Invencible
-Card name;2;49;GIM47N
-Card name;2;50;Molbol
-Card name;2;51;Gran dragón
-Card name;2;52;Elnoir
-Card name;2;53;Rey tomberi
-Card name;2;54;Wedge y Biggs
-Card name;2;55;Viento y Trueno
-Card name;2;56;Elviore
-Card name;2;57;X-ATM092
-Card name;2;58;Yuraba
-Card name;2;59;Namtal-utok
-Card name;2;60;Gárgola
-Card name;2;61;Abadón
-Card name;2;62;Dolmen
-Card name;2;63;Oleoplasto
-Card name;2;64;Shumi
-Card name;2;65;Cristalino
-Card name;2;66;Gestalt
-Card name;2;67;Cactilión
-Card name;2;68;Neodragón
-Card name;2;69;Gargantúa
-Card name;2;70;Unidad IB-8
-Card name;2;71;Esfinge
-Card name;2;72;Tiamant
-Card name;2;73;BGH251F2
-Card name;2;74;Gigante
-Card name;2;75;Catoblepas
-Card name;2;76;Ente Artema
-Card name;2;77;Chocogordo
-Card name;2;78;Angelo
-Card name;2;79;Gilgamesh
-Card name;2;80;Mogurito
-Card name;2;81;Chocobito
-Card name;2;82;Quetzal
-Card name;2;83;Shiva
-Card name;2;84;Ifrit
-Card name;2;85;Sirena
-Card name;2;86;Seclet
-Card name;2;87;Minotauro
-Card name;2;88;Rubí
-Card name;2;89;Diablo
-Card name;2;90;Leviatán
-Card name;2;91;Odín
-Card name;2;92;Eolo
-Card name;2;93;Cerbero
-Card name;2;94;Alejandro
-Card name;2;95;Fénix
-Card name;2;96;Bahamut
-Card name;2;97;Helltrain
-Card name;2;98;Edén
-Card name;2;99;Ward
-Card name;2;100;Kiros
-Card name;2;101;Laguna
-Card name;2;102;Selphie
-Card name;2;103;Quistis
-Card name;2;104;Irvine
-Card name;2;105;Zell
-Card name;2;106;Rinoa
-Card name;2;107;Edea
-Card name;2;108;Seifer
-Card name;2;109;Squall
-Scan text;3;0;Guerrero hábil en el\nuso del sable\npistola, con el que\naplica variedad de\ntécnicas especiales.\nEs frío y poco\nhablador.
-Scan text;3;1;Experto karateka,\ncuando se ve en\nproblemas usa\ntécnicas secretas.\nAma los bocatas\ndel comedor\ndel “jardín”.
-Scan text;3;2;Hábil tirador que\nutiliza también\nbalas mágicas. A\npesar de su gran\ndestreza, no\nresponde muy bien\nbajo presión.
-Scan text;3;3;Si bien su arma es\nel látigo, ante el\nriesgo usa técnicas\naprendidas de los\nmonstruos. Tiene\nun club de fans\nen el “jardín”.
-Scan text;3;4;Miembro de “Búhos\ndel bosque”, grupo\nde resistencia de\nTimber. Usa armas\narrojadizas y\ntécnicas especiales\njunto con su perro.
-Scan text;3;5;Llegó al Jardín de\nBalamb al cambiar\nde escuela. Maneja\nun nunchaku\nenorme, y a veces\naplica magias que\nno tiene en reserva.
-Scan text;3;6;Uno de los mejores\nguerreros del\nJardín de Balamb.\nPor su carácter\nrebelde, aún no es\nSeed. Su arma es\nel sable pistola.
-Scan text;3;7;Bruja de grandes\npoderes mágicos.\nCuando la situación\nlo requiere, recurre\na lo más temible de\nsu repertorio:\nla Gran Magia.
-Scan text;3;8;Tipo simpático, de\ngran corazón. Su\narma favorita es la\nametralladora. Si el\ngrupo corre peligro\nse lanza a proteger\na sus compañeros.
-Scan text;3;9;Guerrero que porta\nuna espada Khatar\nen cada mano. Su\nestilo de lucha,\ncomo su arma, es\nmuy personal, pero\nnunca lo cambiaría.
-Scan text;3;10;Guerrero de gran\nfuerza. Utiliza un\narpón enorme que\nmaneja como una\npluma, aunque un\nhombre común no\npodría ni alzarlo.
-Scan text;3;11;12.
-Scan text;3;12;13.
-Scan text;3;13;14.
-Scan text;3;14;15.
-Scan text;3;15;16.
-Scan text;3;16;0.
-Scan text;3;17;Arma de apoyo\ndel ejército de\nGalbadia. Ataca\ncon misiles y\nmagia. Los últimos\nmodelos emiten un\nrayo muy potente.
-Scan text;3;18;Ser semilíquido,\nmuy resistente al\nataque físico.\nCada blinura es\nafín a un ELM\ndiferente, lo que\ndificulta el ataque.
-Scan text;3;19;Monstruo volador\nde Galbadia que\nataca lanzándose\nen picado. Si lo\nhieren ataca\ngenerando viento\ncon las alas.
-Scan text;3;20;Vive en lugares\nhúmedos. Se\nacerca sin hacer\nruido y ataca con\nferocidad. En la\nadultez, causa\nestados alterados.
-Scan text;3;21;Monstruo con una\nespecie de sierra\ncircular en torno a\nla cara. Su modo\nde ataque varía\nsegún su estado\nde ánimo.
-Scan text;3;22;Monstruo flotante\nque usa magias de\nELM Frío. Al estar\nbaja de VIT, quita\nVIT a sus víctimas\nchupándoles la\nsangre.
-Scan text;3;23;Arma viviente del\nejército de Galbadia\ncon cañones de\n155 mm en los\nhombros y un cañón\nVulcan de 60 mm en\nla boca.
-Scan text;3;24;Robot veterano\ndel ejército de\nGalbadia. Además\nde su cañón láser,\ntiene macizas\nbolas de hierro\na guisa de puños.
-Scan text;3;25;Monstruo que posee\nuna hoja muy\nafilada. Esta hoja\ntiene cualidades\ncurativas y es muy\nútil para producir\nobjetos o magias.
-Scan text;3;26;Monstruo muy\nresistente a\nmagias, pero\nvulnerable al\nataque con con\nespada u otras\narmas.
-Scan text;3;27;Guardia del castillo\nde Artemisa.\nMuchos han muerto\nen sus manos al no\npoder usar magias\nni otros recursos\ndentro del castillo.
-Scan text;3;28;Alter ego de Andro.\nAtaca con técnicas\ndiferentes a las de\nsu otro yo. Puede\ninvocar a otros\nmonstruos y dictar\ncondenas a muerte.
-Scan text;3;29;Es oriunda de las\nestepas nevadas\ndel norte. Por su\ngran vitalidad, es\narduo derribarla.\nAl enfadarse, lanza\nun aliento helado.
-Scan text;3;30;Gran serpiente\nvenenosa. Ataca\nenroscándose a sus\npresas. Cuando\nestá baja de\nvitalidad, expulsa\nun fluido tóxico.
-Scan text;3;31;Su cuerpo es una\nespecie de bolsa\ndigestiva, en la que\ndeshace a la presa\ntras atraparla con\nlas antenas. Emite\nun gas somnífero.
-Scan text;3;32;Puede petrificar al\nrival con la mirada.\nAfín al ELM Rayo,\ngenera electricidad\ncon las alas. Con\nlos años aprende a\nusar Electroshock.
-Scan text;3;33;Es muy ágil,\naunque no parece.\nUsa la técnica\nMegavibración,\ncon la que puede\natacar a la vez\na varias presas.
-Scan text;3;34;Especie de\nmurciélago que es\ncasi pura boca.\nVive en lugares\noscuros y se lanza\nen picado a morder\na sus víctimas.
-Scan text;3;35;Monstruo afín al\nELM Rayo. Al ser\natacado con\nese ELM se carga\neléctricamente.\nMejor no atacarlo\nen ese momento.
-Scan text;3;36;Misterioso pez que\nnada bajo la tierra.\nComo al nadar sólo\nmuestra su aleta\ndorsal, no muchos\nconocen su real\napariencia.
-Scan text;3;37;Misterioso pez que\nnada bajo la tierra.\nComo al nadar sólo\nmuestra su aleta\ndorsal, no muchos\nconocen su real\napariencia.
-Scan text;3;38;Arma antipersonal\nde Esthar. Por\nun fallo de diseño,\nno distingue aliados\nde enemigos.\nSu mejor arma es\nel desintegrador.
-Scan text;3;39;Fino como una\nhoja, se supone\nque es un ser vivo\npero no se sabe\ncon certeza. Dicen\nque al morir lleva\nconsigo al enemigo.
-Scan text;3;40;Dragón nacido con\n6 ojos debido a una\nmutación. Utiliza\nmagias de ELM\nFuego, así como\nataques de hálito\ny otros.
-Scan text;3;41;Organismo gaseoso\nque flota. Parece\ndébil, pero domina\nmagias que causan\nestados alterados.\nEsto lo convierte en\nun rival respetable.
-Scan text;3;42;Arma antipersonal\nde Esthar que\nflota en el aire por\nobra de un motor\nantigravedad.\nAtaca apoyándose\nen sus patas.
-Scan text;3;43;Su coraza lo hace\nresistente al\nataque físico.\nEs paticorto, con\npoco equilibrio, y\nes fácil tumbarlo\ncon un buen golpe.
-Scan text;3;44;Insecto mutante\nvolador. No es un\noponente temible,\npor lo que si se lo\nataca con calma\nresulta fácil\nderrotarlo.
-Scan text;3;45;Monstruo voluble\nque alterna magias\nbasadas en Fuego,\nFrío y Rayo,\nsegún sus\nmetamorfosis\ndurante la lucha.
-Scan text;3;46;Lo creó Artemisa\na partir de un\ndragón. Lo afectan\nataques de Frío\ny Fuego, pero\ncambia sus puntos\ndébiles al luchar.
-Scan text;3;47;Monstruo de púas\nafiladas que ataca\ncon magia. Cuando\nlo hieren, toma una\npostura defensiva\npara reducir\nel daño recibido.
-Scan text;3;48;Monstruo hercúleo\nque desconoce la\nmagia. En sus\nvarios ataques\nfísicos hace gala\nde su increíble\nmusculatura.
-Scan text;3;49;Su especialidad es\ndormir al rival\ny atacarlo luego.\nA veces lanza por\nla boca un jugo\ngástrico que baja\nla resistencia.
-Scan text;3;50;Personalidad real\ndel doble del\npresidente Deling.\nAtaca con sus\nbrazos viscosos y\npuede provocar\nestados alterados.
-Scan text;3;51;Tiene cuatro\ngarras enormes y\nafiladas. Además\nde la fuerza bruta,\nusa técnicas como\nla expulsión de\ngases nocivos.
-Scan text;3;52;Monstruo de tres\ncabezas. Las de\nlos costados son\nfalsas, pero\nmuerden y arrojan\nveneno como si\nfueran auténticas.
-Scan text;3;53;Antiguamente era\nun ser acúatico,\npero se adaptó a\nla vida en tierra.\nDe adulto puede\natravesar al rival\ncon sus pinzas.
-Scan text;3;54;Artemisa lo creó a\npartir de piedras\npreciosas de\nsu tesoro. Tiene\nbuenos reflejos y\ncontraataca de\ninmediato.
-Scan text;3;55;Gran mano\nizquierda que sale\nde la tierra. Las\nde cierto nivel\npueden sanar\nestados alterados\nde sus aliados.
-Scan text;3;56;Gran mano derecha\nque emerge de la\ntierra.\nNo sabe usar magia,\npero compensa esa\ncarencia con una\nfuerza prodigiosa.
-Scan text;3;57;Causa estados\nalterados con su\nhálito. Al vencerlo,\na veces es posible\nobtener Piedras\ndel vigor y otros\nobjetos preciosos.
-Scan text;3;58;Guerrero del más\nallá. Lucha sin\ntregua, ya que por\nsu condición no\nteme a la muerte.\nDomina el letal arte\nde la alta esgrima.
-Scan text;3;59;Monstruo movido\npor la energía\ndel fuego. Cuando\nlo atacan empieza\na inflarse, hasta\nque causa una\ntremenda explosión.
-Scan text;3;60;Monstruo inmenso\nque ataca con la\ncabeza, ya que\ntiene el resto del\ncuerpo bajo tierra.\nAl ser atacado,\ncausa terremotos.
-Scan text;3;61;Monstruo que suele\nvivir en el bosque.\nAtaca con sus\nfuertes tentáculos\ny aplica magias\nque causan\nestados alterados.
-Scan text;3;62;De gran capacidad\ndefensiva, es muy\nresistente a los\nataques físicos y\nmágicos. Derribarlo\nvale la pena: posee\nobjetos de valor.
-Scan text;3;63;Tiene 4 cabezas.\nUna hace ataques\nfísicos, otra\nmágicos, la 3ra.\naltera estados\ny la cuarta lanza\nun vaho acuático.
-Scan text;3;64;Puede provocar\ncasi cualquier\nestado alterado\ncon su aliento\nfétido. Conviene\nprotegerse contra\neste ataque.
-Scan text;3;65;Guerrero con un\nblindaje metálico\nque lo hace muy\nresistente. No\nconoce la magia,\npero sus sablazos\nson devastadores.
-Scan text;3;66;Monstruo de fuerza\nextraordinaria.\nTambién domina\nmagias poderosas\ncomo Meteo, que\nlo convierten en un\ntemible adversario.
-Scan text;3;67;Monstruo\nprehistórico que ha\nacumulado fuerza\ny VIT con los años.\nEs tan poderoso\nque hay que huir\nde él enseguida.
-Scan text;3;68;Es fuerte y listo.\nSi el rival usa la\nmagia Espejo, él\ntambién, y luego se\naplica magias de\nataque para que\nreboten al rival.
-Scan text;3;69;No es un dragón\nmuy grande, pero\nsuele atacar en\npareja. Por eso es\nmás temible que\notros dragones de\nmayor tamaño.
-Scan text;3;70;Cabeza monstruosa\nque emerge de la\ntierra y usa magias\nde apoyo. Aplica\ntécnicas de grupo\ncuando lucha con\nDiestra y Siniestra.
-Scan text;3;71;Cactus que viaja\nvelozmente por\nel desierto, ágil y\nesquivo. Su técnica\nMil espinas inflige\ninfaliblemente\nun daño de 1.000.
-Scan text;3;72;Ser que habita en\nlas mazmorras. Se\nacerca paso a\npaso al enemigo y\nle asesta una\nestocada letal con\nsu cuchilla.
-Scan text;3;73;Ataca con magias\nsin alzarse. Al\nlevantarse es aún\nmás peligroso, ya\nque recurre a\nla temible técnica\nElectroplasma.
-Scan text;3;74;Gran seta capaz\nde desplazarse.\nPuede causar\nestados alterados.\nAl luchar con él, no\nhay que bajar\nnunca la guardia.
-Scan text;3;75;Monstruo diabólico\ncon alas, pequeño\npero matón: en un\ndescuido usa magia\nde gran poder y\npone al rival en\ngraves aprietos.
-Scan text;3;76;Alienígena que llegó\na este planeta tras\nun largo viaje por\nel espacio sideral.\nSu nave ha sido\ndestruida y está\nen graves apuros.
-Scan text;3;77;G. F. afín al ELM\nFuego. Es duro,\npero no invencible,\ncomo lo indica el\nhecho de que sea\nmateria de examen\nen el “jardín”.
-Scan text;3;78;Hermano mayor de\nSeclet, más bajito\npero más fuerte.\nEs un G. F. afín a\nla Tierra, y gana\nVIT mientras está\nparado en el suelo.
-Scan text;3;79;G. F. afín al ELM\nTierra que vive en\nla Tumba del Rey\nsin Nombre. Gana\nVIT al estar en\ntierra. Ataca con\nun mazo de hierro.
-Scan text;3;80;Oficial de la unidad\nde vigilancia de la\nbase de misiles de\nGalbadia. Es más\nfuerte que los\nsoldados de élite.
-Scan text;3;81;Perro demoníaco de\ntres cabezas. Es\ncapaz de usar\nmagias diferentes\ncon cada cabeza.\nSus coletazos son\nmuy destructivos.
-Scan text;3;82;Misterioso G. F.\nque habita en otra\ndimensión. Posee\ntécnicas de tipo\ngravitatorio que\nreducen en gran\nmedida la vitalidad.
-Scan text;3;83;Conocido como el\nrey de los G. F.,\ncon su Megafulgor\npuede atravesar\ncualquier defensa.\nAyuda a quien le\nmuestre coraje.
-Scan text;3;84;Mecanismo\nprotector del amo\nNorg. Para atacar\na Norg, hay que\ndestruir primero\nesta gran barrera\ndefensiva.
-Scan text;3;85;NOT TARGET
-Scan text;3;86;Legendario G. F.\nque dormía en un\noscuro laberinto.\nDicen que su Sable\njusticiero puede\ncercenar cualquier\nobjeto, vivo o no.
-Scan text;3;87;Miembro de la\ninfantería de\nGalbadia. Usa el\nsable y la magia.\nEs menos fuerte\nque los guerreros\ndel “jardín”.
-Scan text;3;88;Oficial de Galbadia\nque patrulla junto\na soldados rasos.\nUsa magias de\nrecuperación para\nreanimar a sus\ncompañeros.
-Scan text;3;89;Soldado de Galbadia\nasignado a la torre\nde transmisión de\nDollet. Su superior,\nel capitán Biggs, le\nhace la vida\nimposible.
-Scan text;3;90;Capitán técnico de\nGalbadia, a cargo\nde hacer funcionar\nla torre de Dollet.\nNo es muy fuerte,\nes despistado\ny tiene mal genio.
-Scan text;3;91;Doble del presidente\nDeling. Tiene\nunos tics muy\nextraños al atacar\ny no parece\nespecialmente\nfuerte, aunque...
-Scan text;3;92;Vigilante de la\nprisión del desierto.\nUtiliza la magia\nMorfeo para\natrapar a\nprisioneros que\nintenten fugarse.
-Scan text;3;93;Amo del Jardín de\nBalamb. Lidera\nuna rebelión contra\nel director Kramer\npara conseguir el\ncontrol absoluto\ndel “jardín”.
-Scan text;3;94;Está equipado con\nuna cuchilla que\nes a la vez arma\nde fuego. A veces\nlanza disparos de\ngran poder\ndestructivo.
-Scan text;3;95;Parece un soldado\nde Esthar normal,\npero en realidad es\nun androide más\nfuerte. Aún así, sus\npatrones de ataque\nson predecibles.
-Scan text;3;96;Aparato defensivo\nde Norg, con un\ndispositivo para\ncompensar de\ninmediato el daño\nrecibido. Aplica\nmagias de estado.
-Scan text;3;97;Aparato defensivo\nde Norg, con un\ndispositivo para\ncompensar de\ninmediato el daño\nrecibido. Aplica\nmagias de estado.
-Scan text;3;98;NOT TARGET
-Scan text;3;99;Monarca de los\ntomberis, raza\nque mora en las\nmazmorras. Ha\nvenido a vengar\nla muerte de\nsus súbditos.
-Scan text;3;100;Ejemplar de cactilio\nque sobrepasa la\nesperanza de vida\nmedia de la especie,\ny con los años\nadquiere un tamaño\nmonumental.
-Scan text;3;101;Al irse del “jardín”\nse convirtió en el\ncaballero de la\nbruja Edea.\nCombina magias de\nFuego con técnicas\nde esgrima.
-Scan text;3;102;Lucha con Edea\ncontra los Seeds.\nHa mejorado su\narte de liberar\nenergía con la\nespada, y conoce\nnuevas técnicas.
-Scan text;3;103;Tras ser vencido,\nsu orgullo lo\nimpulsa a luchar\notra vez. Ha\nperdido vitalidad,\npero ha mejorado\nsu técnica.
-Scan text;3;104;Temible bruja que\ntiene a Galbadia\nprácticamente en\nsus manos. Su\npoder mágico no\ntiene parangón\nen el mundo.
-Scan text;3;105;Se infiltró en la\nnave Lagunamov,\nque ahora es su\ncubil. Muy agresivo,\nse lanza sobre\ncualquier cosa\nque se mueva.
-Scan text;3;106;De fuerza colosal,\nsu existencia está\nenvuelta en un velo\nde misterio. Dicen\nque no hay nadie en\nel mundo capaz de\nvencerlo.
-Scan text;3;107;Habita la torre\nabandonada de\nDollet. De origen\nincierto, incluso\nlos habitantes de\nDollet desconocían\nsu presencia.
-Scan text;3;108;Máquina de guerra\nno tripulada de\nGalbadia, conocida\ncomo “la viuda\nnegra”. Persigue al\nenemigo hasta\neliminarlo.
-Scan text;3;109;Creada a partir de\nuna escultura del\nArco de Triunfo,\npuede petrificar al\nrival. Una fuerza\nexterna le otorga\nel efecto Espejo.
-Scan text;3;110;A pesar de su\naspecto colosal,\nbasa sus ataques\nen la magia.\nResponde a los\nataques físicos\nferozmente.
-Scan text;3;111;Gran insecto\nvolador prehistórico\nque ataca con las\ngarras y la cola.\nNo se sabe cómo\nha conseguido\nsobrevivir.
-Scan text;3;112;Su aspecto rocoso\nda impresión de\nlentitud y pesadez,\npero en realidad\nes muy ágil.\nA veces ataca\nen grupo.
-Scan text;3;113;Se infiltró en la\nnave Lagunamov,\nque ahora es su\ncubil. Muy agresivo,\nse lanza sobre\ncualquier cosa\nque se mueva.
-Scan text;3;114;Se infiltró en la\nnave Lagunamov,\nque ahora es su\ncubil. Muy agresivo,\nse lanza sobre\ncualquier cosa\nque se mueva.
-Scan text;3;115;Monstruo\nsubterráneo de\napariencia viscosa.\nSu cuerpo contiene\naceite, que expulsa\npara atacar a sus\nvíctimas.
-Scan text;3;116;Bruja que quiere\ndominar el mundo.\nLidera las fuerzas\ndel Jardín de\nGalbadia contra\nlos Seeds, su único\nobstáculo.
-Scan text;3;117;Arma de Galbadia,\napodada “la\ninexpugnable” por\nsu sólida carcasa.\nSu cañón supera\nen potencia al\ndel X-ATM092.
-Scan text;3;118;Está sin control\npor los daños que\nsufrió en la base\nde misiles. Está\nal tope de su\npotencia, pero le\nqueda poca vida.
-Scan text;3;119;Hecho de huesos\nprehistóricos, se\ncree que adquirió\nvida a causa de la\ndesecación que\ncreó la Gran\nSalina de Esthar.
-Scan text;3;120;NOT TARGET
-Scan text;3;121;Robot guardián del\nLunatic Pandora.\nEs un modelo\nviejo, pero tiene\nrayos láser más\npotentes que las\narmas actuales.
-Scan text;3;122;Sección superior\nizquierda del robot\nIB-8. Ataca\nindependientemente\ny dispone de un\nmecanismo de\nautorrecuperación.
-Scan text;3;123;Sección superior\nderecha del robot\nIB-8. Ataca\nindependientemente\ny dispone de un\nmecanismo de\nautorrecuperación.
-Scan text;3;124;Miembro de la\nfuerza de asalto\ndel Jardín de\nGalbadia, a cargo\nde las primeras\nincursiones en\nterritorio enemigo.
-Scan text;3;125;Arma de guerra del\nfuturo a la que\nArtemisa otorgó\nuna vida falsa. Su\ncañón megaláser\ntiene una potencia\ndevastadora.
-Scan text;3;126;Mecanismos de\nbatalla auxiliares\ngenerados por el\nDolmen. Aunque son\npequeños, sus\ncañones láser son\nmuy potentes.
-Scan text;3;127;Se infiltró en la\nnave Lagunamov,\nque ahora es su\ncubil. Muy agresivo,\nse lanza sobre\ncualquier cosa\nque se mueva.
-Scan text;3;128;Ex dictadora de\nEsthar, derrocada\ny encerrada por\nLaguna. Artemisa\nla ha liberado\ny está recuperando\nsus poderes.
-Scan text;3;129;Adel la ha poseído\ny ha absorbido la\nmayor parte de su\nfuerza: {Rinoa}\nno puede moverse.\nPara liberarla, hay\nque vencer a Adel.
-Scan text;3;130;Es el monstruo más\nfuerte conocido,\nmás poderoso que\nel Ente Artema. Al\nque se cruce con\nél, sólo le queda\nmaldecir su suerte.
-Scan text;3;131;Una de las brujas\ndel espacio-tiempo\naparecidas como\nresultado de la\ncompresión. No\nson muy fuertes\nindividualmente.
-Scan text;3;132;Una de las brujas\ndel espacio-tiempo\naparecidas como\nresultado de la\ncompresión. No\nson muy fuertes\nindividualmente.
-Scan text;3;133;Una de las brujas\ndel espacio-tiempo\naparecidas como\nresultado de la\ncompresión. No\nson muy fuertes\nindividualmente.
-Scan text;3;134;Misterioso objeto\nvolador llegado del\nespacio exterior.\nSe desconoce su\norigen y propósito.
-Scan text;3;135;Busca a Eleone por\nencargo de Seifer.\nEs capaz de\naplicar magias de\nELM Viento, y usa\ndiestramente\nel arma Luna llena.
-Scan text;3;136;Busca a Eleone\ncon Viento. Lucha\na los golpes, pero\nante desconocidos\nprueba técnicas\nsofisticadas para\nllamar la atención.
-Scan text;3;137;Bruja que intenta\nabsorber los\npoderes de sus\npares de todas las\népocas mediante\nla compresión\ndel tiempo.
-Scan text;3;138;“Ser más poderoso”\nsegún {Squall},\ninvocado como G. F.\npor Artemisa. La\nmagia de la bruja le\npermite luchar sin\ndesaparecer.
-Scan text;3;139;NOT TARGET
-Scan text;3;140;Ente creado por el\nenlace de Artemisa\ncon {Griever}.\nPosee la magia\nde la bruja y la\nfuerza ofensiva de\n{Griever}.
-Scan text;3;141;Mecanismo\namplificador de los\npoderes mágicos\nde Artemisa, quien\nusa dos unidades\npara aumentar su\ncapacidad ofensiva.
-Scan text;3;142;Nueva constitución\nde Artemisa para\nabsorber el tiempo\ny el espacio tras\nla compresión. La\nabsorción universal\nestá en marcha.
-Scan text;3;143;Punto donde se\ngeneran los poderes\nde Artemisa. Aquí\nalmacena energía\npara liberarla luego\ncomo magias de\nde fuerza inusitada.
-Scan text;3;144;Derrotado como\ncaballero de la\nbruja, está\ndecidido a\nrecuperar su honor\ny ha perfeccionado\nsu técnica.
-Scan text;3;145;Pertenece al equipo\ndel Jardín de\nGalbadia, de\njugadores\nsemihumanos.\nAtaca con rapidez\ny en equipo.
-Scan text;3;146;Gran máquina de\nguerra movida por\nfuerzas mágicas.\nDe gran capacidad\ndefensiva, sólo la\nafectan ciertas\nmagias y G. F.
-Scan text;3;147;Monstruo muy\ndesarrollado.\nEmplea sobre todo\nla magia, pero sus\ncoletazos también\npueden causar\ngraves daños.
-Scan text;3;148;G. F. que se volvió\nmonstruo cuando\nArtemisa capturó\nsu alma. Pocos\nguerreros siguen\nen pie tras recibir\nsu Fulgor negro.
-Scan text;3;149;Es muy fuerte y\nposee poder mágico.\nDomina magias de\nELM Rayo, aunque\na veces echa mano\na hechizos más\npoderosos.
-Scan text;3;150;Tras la derrota de\nla torre de Dollet\nha sido degradado,\ncomo su superior,\nBiggs. Es tan gafe\nque sigue teniendo\na Biggs de jefe.
-Scan text;3;151;Antes de la batalla\nde la torre de Dollet\nera capitán. Tras\nla derrota lo han\ndegradado, por eso\nodia con toda su\nalma a los Seeds.
-Scan text;3;152;Ha ido al Lunatic\nPandora para\nayudar a Seifer. Al\nluchar, usa magias\nde apoyo y luego\nuna retahíla de\nmagias de ataque.
-Scan text;3;153;Compañero de\nSeifer y Viento. Su\nestilo de lucha es\naún primitivo,\npero ha aprendido\na utilizar algunas\nmagias de apoyo.
-Scan text;3;154;NOT TARGET
-Scan text;3;155;NOT TARGET
-Scan text;3;156;NOT TARGET
-Scan text;3;157;NOT TARGET
-Scan text;3;158;Personalidad real\ndel doble del\npresidente Deling.\nAtaca con sus\nbrazos viscosos y\npuede provocar\nestados alterados.
-Scan text;3;159;Soldado encargado\nde la vigilancia en\nla base de misiles\nde Galbadia. Tiene\nla capacidad de un\nsoldado raso,\npero cobra más.
+Section data name|Section Widget id|Text Sub id|Text
+Draw text|0|0|La cubierta del disco está abierta.
+Draw text|0|1|FINAL FANTASY {xa8}\nColoca el disco {Var17}.
+Draw text|0|2|¡Has encontrado un punto de extracción!\nContiene la magia {x0c20}.
+Draw text|0|3|¡Has encontrado un punto de extracción!\nPero está agotado...
+Draw text|0|4|¿Quién extraerá?\nNadie.\n{Darkgrey}{Squall}.   \n{Darkgrey}{Squall}.   \n{Darkgrey}{Squall}.   
+Draw text|0|5|{Squall} ha guardado\n{Var17} magia(s) {x0c20}.
+Draw text|0|6|{Squall} no puede\nguardar la magia {x0c20}.
+Draw text|0|7|¡Has encontrado un punto de extracción!\nPero nadie puede extraer...
+Draw text|0|8|ERROR DE DISCO
+Card misc text data|1|0|\n
+Card misc text data|1|1|¿Está bien?\nSí.\nNo.
+Card misc text data|1|2|Escoge 
+Card misc text data|1|3| carta(s).
+Card misc text data|1|4|Has obtenido la carta de 
+Card misc text data|1|5|Has perdido la carta de 
+Card misc text data|1|6|¿Juegas de nuevo?\nSí.\nNo.
+Card misc text data|1|7|Reglas: 
+Card misc text data|1|8|· 
+Card misc text data|1|9|/
+Card misc text data|1|10|Ari
+Card misc text data|1|11|\n· Abierto
+Card misc text data|1|12|\n· Mano mezclada
+Card misc text data|1|13|\n· Hasta la muerte
+Card misc text data|1|14|Igual
+Card misc text data|1|15|Suma
+Card misc text data|1|16|Pared
+Card misc text data|1|17|\n· Elemental
+Card misc text data|1|18|\n· Regla de pago: 
+Card misc text data|1|19|Null
+Card misc text data|1|20|Una
+Card misc text data|1|21|Diferencia
+Card misc text data|1|22|Directo
+Card misc text data|1|23|Todas
+Card misc text data|1|24|\nJugar.\nNo jugar.
+Card misc text data|1|25|Desaparecida
+Card misc text data|1|26|
+Card misc text data|1|27|
+Card misc text data|1|28|{x08}
+Card name|2|0|Álagar
+Card name|2|1|Fungo
+Card name|2|2|Mosquito
+Card name|2|3|Mordélago
+Card name|2|4|Blinura
+Card name|2|5|Gueila
+Card name|2|6|Guésper
+Card name|2|7|Focarrol falso
+Card name|2|8|Globulus
+Card name|2|9|Kedachiku
+Card name|2|10|Cocatoris
+Card name|2|11|Grat
+Card name|2|12|Buel
+Card name|2|13|Unipladio
+Card name|2|14|Medusa
+Card name|2|15|Bejelmejel
+Card name|2|16|Bipla
+Card name|2|17|Venoma
+Card name|2|18|Sombra
+Card name|2|19|Grendel
+Card name|2|20|Abrazador
+Card name|2|21|Langosta
+Card name|2|22|Esqueleto
+Card name|2|23|Acorazado
+Card name|2|24|Tricéfalo
+Card name|2|25|Focarrol
+Card name|2|26|Foca mutante
+Card name|2|27|Ochú
+Card name|2|28|SAM08G
+Card name|2|29|Oso de Trabia
+Card name|2|30|Cactilio
+Card name|2|31|Tomberi
+Card name|2|32|Gusano Ebis
+Card name|2|33|Túlipo
+Card name|2|34|Las manos
+Card name|2|35|Arqueosaurio
+Card name|2|36|Bom
+Card name|2|37|Blitz
+Card name|2|38|Wendigo
+Card name|2|39|Bengal
+Card name|2|40|Galkimasera
+Card name|2|41|Draco
+Card name|2|42|Adamantaimai
+Card name|2|43|Seisojos
+Card name|2|44|Férreo
+Card name|2|45|Bégimo
+Card name|2|46|Quimera
+Card name|2|47|Alienígena
+Card name|2|48|Invencible
+Card name|2|49|GIM47N
+Card name|2|50|Molbol
+Card name|2|51|Gran dragón
+Card name|2|52|Elnoir
+Card name|2|53|Rey tomberi
+Card name|2|54|Wedge y Biggs
+Card name|2|55|Viento y Trueno
+Card name|2|56|Elviore
+Card name|2|57|X-ATM092
+Card name|2|58|Yuraba
+Card name|2|59|Namtal-utok
+Card name|2|60|Gárgola
+Card name|2|61|Abadón
+Card name|2|62|Dolmen
+Card name|2|63|Oleoplasto
+Card name|2|64|Shumi
+Card name|2|65|Cristalino
+Card name|2|66|Gestalt
+Card name|2|67|Cactilión
+Card name|2|68|Neodragón
+Card name|2|69|Gargantúa
+Card name|2|70|Unidad IB-8
+Card name|2|71|Esfinge
+Card name|2|72|Tiamant
+Card name|2|73|BGH251F2
+Card name|2|74|Gigante
+Card name|2|75|Catoblepas
+Card name|2|76|Ente Artema
+Card name|2|77|Chocogordo
+Card name|2|78|Angelo
+Card name|2|79|Gilgamesh
+Card name|2|80|Mogurito
+Card name|2|81|Chocobito
+Card name|2|82|Quetzal
+Card name|2|83|Shiva
+Card name|2|84|Ifrit
+Card name|2|85|Sirena
+Card name|2|86|Seclet
+Card name|2|87|Minotauro
+Card name|2|88|Rubí
+Card name|2|89|Diablo
+Card name|2|90|Leviatán
+Card name|2|91|Odín
+Card name|2|92|Eolo
+Card name|2|93|Cerbero
+Card name|2|94|Alejandro
+Card name|2|95|Fénix
+Card name|2|96|Bahamut
+Card name|2|97|Helltrain
+Card name|2|98|Edén
+Card name|2|99|Ward
+Card name|2|100|Kiros
+Card name|2|101|Laguna
+Card name|2|102|Selphie
+Card name|2|103|Quistis
+Card name|2|104|Irvine
+Card name|2|105|Zell
+Card name|2|106|Rinoa
+Card name|2|107|Edea
+Card name|2|108|Seifer
+Card name|2|109|Squall
+Scan text|3|0|Guerrero hábil en el\nuso del sable\npistola, con el que\naplica variedad de\ntécnicas especiales.\nEs frío y poco\nhablador.
+Scan text|3|1|Experto karateka,\ncuando se ve en\nproblemas usa\ntécnicas secretas.\nAma los bocatas\ndel comedor\ndel “jardín”.
+Scan text|3|2|Hábil tirador que\nutiliza también\nbalas mágicas. A\npesar de su gran\ndestreza, no\nresponde muy bien\nbajo presión.
+Scan text|3|3|Si bien su arma es\nel látigo, ante el\nriesgo usa técnicas\naprendidas de los\nmonstruos. Tiene\nun club de fans\nen el “jardín”.
+Scan text|3|4|Miembro de “Búhos\ndel bosque”, grupo\nde resistencia de\nTimber. Usa armas\narrojadizas y\ntécnicas especiales\njunto con su perro.
+Scan text|3|5|Llegó al Jardín de\nBalamb al cambiar\nde escuela. Maneja\nun nunchaku\nenorme, y a veces\naplica magias que\nno tiene en reserva.
+Scan text|3|6|Uno de los mejores\nguerreros del\nJardín de Balamb.\nPor su carácter\nrebelde, aún no es\nSeed. Su arma es\nel sable pistola.
+Scan text|3|7|Bruja de grandes\npoderes mágicos.\nCuando la situación\nlo requiere, recurre\na lo más temible de\nsu repertorio:\nla Gran Magia.
+Scan text|3|8|Tipo simpático, de\ngran corazón. Su\narma favorita es la\nametralladora. Si el\ngrupo corre peligro\nse lanza a proteger\na sus compañeros.
+Scan text|3|9|Guerrero que porta\nuna espada Khatar\nen cada mano. Su\nestilo de lucha,\ncomo su arma, es\nmuy personal, pero\nnunca lo cambiaría.
+Scan text|3|10|Guerrero de gran\nfuerza. Utiliza un\narpón enorme que\nmaneja como una\npluma, aunque un\nhombre común no\npodría ni alzarlo.
+Scan text|3|11|12.
+Scan text|3|12|13.
+Scan text|3|13|14.
+Scan text|3|14|15.
+Scan text|3|15|16.
+Scan text|3|16|0.
+Scan text|3|17|Arma de apoyo\ndel ejército de\nGalbadia. Ataca\ncon misiles y\nmagia. Los últimos\nmodelos emiten un\nrayo muy potente.
+Scan text|3|18|Ser semilíquido,\nmuy resistente al\nataque físico.\nCada blinura es\nafín a un ELM\ndiferente, lo que\ndificulta el ataque.
+Scan text|3|19|Monstruo volador\nde Galbadia que\nataca lanzándose\nen picado. Si lo\nhieren ataca\ngenerando viento\ncon las alas.
+Scan text|3|20|Vive en lugares\nhúmedos. Se\nacerca sin hacer\nruido y ataca con\nferocidad. En la\nadultez, causa\nestados alterados.
+Scan text|3|21|Monstruo con una\nespecie de sierra\ncircular en torno a\nla cara. Su modo\nde ataque varía\nsegún su estado\nde ánimo.
+Scan text|3|22|Monstruo flotante\nque usa magias de\nELM Frío. Al estar\nbaja de VIT, quita\nVIT a sus víctimas\nchupándoles la\nsangre.
+Scan text|3|23|Arma viviente del\nejército de Galbadia\ncon cañones de\n155 mm en los\nhombros y un cañón\nVulcan de 60 mm en\nla boca.
+Scan text|3|24|Robot veterano\ndel ejército de\nGalbadia. Además\nde su cañón láser,\ntiene macizas\nbolas de hierro\na guisa de puños.
+Scan text|3|25|Monstruo que posee\nuna hoja muy\nafilada. Esta hoja\ntiene cualidades\ncurativas y es muy\nútil para producir\nobjetos o magias.
+Scan text|3|26|Monstruo muy\nresistente a\nmagias, pero\nvulnerable al\nataque con con\nespada u otras\narmas.
+Scan text|3|27|Guardia del castillo\nde Artemisa.\nMuchos han muerto\nen sus manos al no\npoder usar magias\nni otros recursos\ndentro del castillo.
+Scan text|3|28|Alter ego de Andro.\nAtaca con técnicas\ndiferentes a las de\nsu otro yo. Puede\ninvocar a otros\nmonstruos y dictar\ncondenas a muerte.
+Scan text|3|29|Es oriunda de las\nestepas nevadas\ndel norte. Por su\ngran vitalidad, es\narduo derribarla.\nAl enfadarse, lanza\nun aliento helado.
+Scan text|3|30|Gran serpiente\nvenenosa. Ataca\nenroscándose a sus\npresas. Cuando\nestá baja de\nvitalidad, expulsa\nun fluido tóxico.
+Scan text|3|31|Su cuerpo es una\nespecie de bolsa\ndigestiva, en la que\ndeshace a la presa\ntras atraparla con\nlas antenas. Emite\nun gas somnífero.
+Scan text|3|32|Puede petrificar al\nrival con la mirada.\nAfín al ELM Rayo,\ngenera electricidad\ncon las alas. Con\nlos años aprende a\nusar Electroshock.
+Scan text|3|33|Es muy ágil,\naunque no parece.\nUsa la técnica\nMegavibración,\ncon la que puede\natacar a la vez\na varias presas.
+Scan text|3|34|Especie de\nmurciélago que es\ncasi pura boca.\nVive en lugares\noscuros y se lanza\nen picado a morder\na sus víctimas.
+Scan text|3|35|Monstruo afín al\nELM Rayo. Al ser\natacado con\nese ELM se carga\neléctricamente.\nMejor no atacarlo\nen ese momento.
+Scan text|3|36|Misterioso pez que\nnada bajo la tierra.\nComo al nadar sólo\nmuestra su aleta\ndorsal, no muchos\nconocen su real\napariencia.
+Scan text|3|37|Misterioso pez que\nnada bajo la tierra.\nComo al nadar sólo\nmuestra su aleta\ndorsal, no muchos\nconocen su real\napariencia.
+Scan text|3|38|Arma antipersonal\nde Esthar. Por\nun fallo de diseño,\nno distingue aliados\nde enemigos.\nSu mejor arma es\nel desintegrador.
+Scan text|3|39|Fino como una\nhoja, se supone\nque es un ser vivo\npero no se sabe\ncon certeza. Dicen\nque al morir lleva\nconsigo al enemigo.
+Scan text|3|40|Dragón nacido con\n6 ojos debido a una\nmutación. Utiliza\nmagias de ELM\nFuego, así como\nataques de hálito\ny otros.
+Scan text|3|41|Organismo gaseoso\nque flota. Parece\ndébil, pero domina\nmagias que causan\nestados alterados.\nEsto lo convierte en\nun rival respetable.
+Scan text|3|42|Arma antipersonal\nde Esthar que\nflota en el aire por\nobra de un motor\nantigravedad.\nAtaca apoyándose\nen sus patas.
+Scan text|3|43|Su coraza lo hace\nresistente al\nataque físico.\nEs paticorto, con\npoco equilibrio, y\nes fácil tumbarlo\ncon un buen golpe.
+Scan text|3|44|Insecto mutante\nvolador. No es un\noponente temible,\npor lo que si se lo\nataca con calma\nresulta fácil\nderrotarlo.
+Scan text|3|45|Monstruo voluble\nque alterna magias\nbasadas en Fuego,\nFrío y Rayo,\nsegún sus\nmetamorfosis\ndurante la lucha.
+Scan text|3|46|Lo creó Artemisa\na partir de un\ndragón. Lo afectan\nataques de Frío\ny Fuego, pero\ncambia sus puntos\ndébiles al luchar.
+Scan text|3|47|Monstruo de púas\nafiladas que ataca\ncon magia. Cuando\nlo hieren, toma una\npostura defensiva\npara reducir\nel daño recibido.
+Scan text|3|48|Monstruo hercúleo\nque desconoce la\nmagia. En sus\nvarios ataques\nfísicos hace gala\nde su increíble\nmusculatura.
+Scan text|3|49|Su especialidad es\ndormir al rival\ny atacarlo luego.\nA veces lanza por\nla boca un jugo\ngástrico que baja\nla resistencia.
+Scan text|3|50|Personalidad real\ndel doble del\npresidente Deling.\nAtaca con sus\nbrazos viscosos y\npuede provocar\nestados alterados.
+Scan text|3|51|Tiene cuatro\ngarras enormes y\nafiladas. Además\nde la fuerza bruta,\nusa técnicas como\nla expulsión de\ngases nocivos.
+Scan text|3|52|Monstruo de tres\ncabezas. Las de\nlos costados son\nfalsas, pero\nmuerden y arrojan\nveneno como si\nfueran auténticas.
+Scan text|3|53|Antiguamente era\nun ser acúatico,\npero se adaptó a\nla vida en tierra.\nDe adulto puede\natravesar al rival\ncon sus pinzas.
+Scan text|3|54|Artemisa lo creó a\npartir de piedras\npreciosas de\nsu tesoro. Tiene\nbuenos reflejos y\ncontraataca de\ninmediato.
+Scan text|3|55|Gran mano\nizquierda que sale\nde la tierra. Las\nde cierto nivel\npueden sanar\nestados alterados\nde sus aliados.
+Scan text|3|56|Gran mano derecha\nque emerge de la\ntierra.\nNo sabe usar magia,\npero compensa esa\ncarencia con una\nfuerza prodigiosa.
+Scan text|3|57|Causa estados\nalterados con su\nhálito. Al vencerlo,\na veces es posible\nobtener Piedras\ndel vigor y otros\nobjetos preciosos.
+Scan text|3|58|Guerrero del más\nallá. Lucha sin\ntregua, ya que por\nsu condición no\nteme a la muerte.\nDomina el letal arte\nde la alta esgrima.
+Scan text|3|59|Monstruo movido\npor la energía\ndel fuego. Cuando\nlo atacan empieza\na inflarse, hasta\nque causa una\ntremenda explosión.
+Scan text|3|60|Monstruo inmenso\nque ataca con la\ncabeza, ya que\ntiene el resto del\ncuerpo bajo tierra.\nAl ser atacado,\ncausa terremotos.
+Scan text|3|61|Monstruo que suele\nvivir en el bosque.\nAtaca con sus\nfuertes tentáculos\ny aplica magias\nque causan\nestados alterados.
+Scan text|3|62|De gran capacidad\ndefensiva, es muy\nresistente a los\nataques físicos y\nmágicos. Derribarlo\nvale la pena: posee\nobjetos de valor.
+Scan text|3|63|Tiene 4 cabezas.\nUna hace ataques\nfísicos, otra\nmágicos, la 3ra.\naltera estados\ny la cuarta lanza\nun vaho acuático.
+Scan text|3|64|Puede provocar\ncasi cualquier\nestado alterado\ncon su aliento\nfétido. Conviene\nprotegerse contra\neste ataque.
+Scan text|3|65|Guerrero con un\nblindaje metálico\nque lo hace muy\nresistente. No\nconoce la magia,\npero sus sablazos\nson devastadores.
+Scan text|3|66|Monstruo de fuerza\nextraordinaria.\nTambién domina\nmagias poderosas\ncomo Meteo, que\nlo convierten en un\ntemible adversario.
+Scan text|3|67|Monstruo\nprehistórico que ha\nacumulado fuerza\ny VIT con los años.\nEs tan poderoso\nque hay que huir\nde él enseguida.
+Scan text|3|68|Es fuerte y listo.\nSi el rival usa la\nmagia Espejo, él\ntambién, y luego se\naplica magias de\nataque para que\nreboten al rival.
+Scan text|3|69|No es un dragón\nmuy grande, pero\nsuele atacar en\npareja. Por eso es\nmás temible que\notros dragones de\nmayor tamaño.
+Scan text|3|70|Cabeza monstruosa\nque emerge de la\ntierra y usa magias\nde apoyo. Aplica\ntécnicas de grupo\ncuando lucha con\nDiestra y Siniestra.
+Scan text|3|71|Cactus que viaja\nvelozmente por\nel desierto, ágil y\nesquivo. Su técnica\nMil espinas inflige\ninfaliblemente\nun daño de 1.000.
+Scan text|3|72|Ser que habita en\nlas mazmorras. Se\nacerca paso a\npaso al enemigo y\nle asesta una\nestocada letal con\nsu cuchilla.
+Scan text|3|73|Ataca con magias\nsin alzarse. Al\nlevantarse es aún\nmás peligroso, ya\nque recurre a\nla temible técnica\nElectroplasma.
+Scan text|3|74|Gran seta capaz\nde desplazarse.\nPuede causar\nestados alterados.\nAl luchar con él, no\nhay que bajar\nnunca la guardia.
+Scan text|3|75|Monstruo diabólico\ncon alas, pequeño\npero matón: en un\ndescuido usa magia\nde gran poder y\npone al rival en\ngraves aprietos.
+Scan text|3|76|Alienígena que llegó\na este planeta tras\nun largo viaje por\nel espacio sideral.\nSu nave ha sido\ndestruida y está\nen graves apuros.
+Scan text|3|77|G. F. afín al ELM\nFuego. Es duro,\npero no invencible,\ncomo lo indica el\nhecho de que sea\nmateria de examen\nen el “jardín”.
+Scan text|3|78|Hermano mayor de\nSeclet, más bajito\npero más fuerte.\nEs un G. F. afín a\nla Tierra, y gana\nVIT mientras está\nparado en el suelo.
+Scan text|3|79|G. F. afín al ELM\nTierra que vive en\nla Tumba del Rey\nsin Nombre. Gana\nVIT al estar en\ntierra. Ataca con\nun mazo de hierro.
+Scan text|3|80|Oficial de la unidad\nde vigilancia de la\nbase de misiles de\nGalbadia. Es más\nfuerte que los\nsoldados de élite.
+Scan text|3|81|Perro demoníaco de\ntres cabezas. Es\ncapaz de usar\nmagias diferentes\ncon cada cabeza.\nSus coletazos son\nmuy destructivos.
+Scan text|3|82|Misterioso G. F.\nque habita en otra\ndimensión. Posee\ntécnicas de tipo\ngravitatorio que\nreducen en gran\nmedida la vitalidad.
+Scan text|3|83|Conocido como el\nrey de los G. F.,\ncon su Megafulgor\npuede atravesar\ncualquier defensa.\nAyuda a quien le\nmuestre coraje.
+Scan text|3|84|Mecanismo\nprotector del amo\nNorg. Para atacar\na Norg, hay que\ndestruir primero\nesta gran barrera\ndefensiva.
+Scan text|3|85|NOT TARGET
+Scan text|3|86|Legendario G. F.\nque dormía en un\noscuro laberinto.\nDicen que su Sable\njusticiero puede\ncercenar cualquier\nobjeto, vivo o no.
+Scan text|3|87|Miembro de la\ninfantería de\nGalbadia. Usa el\nsable y la magia.\nEs menos fuerte\nque los guerreros\ndel “jardín”.
+Scan text|3|88|Oficial de Galbadia\nque patrulla junto\na soldados rasos.\nUsa magias de\nrecuperación para\nreanimar a sus\ncompañeros.
+Scan text|3|89|Soldado de Galbadia\nasignado a la torre\nde transmisión de\nDollet. Su superior,\nel capitán Biggs, le\nhace la vida\nimposible.
+Scan text|3|90|Capitán técnico de\nGalbadia, a cargo\nde hacer funcionar\nla torre de Dollet.\nNo es muy fuerte,\nes despistado\ny tiene mal genio.
+Scan text|3|91|Doble del presidente\nDeling. Tiene\nunos tics muy\nextraños al atacar\ny no parece\nespecialmente\nfuerte, aunque...
+Scan text|3|92|Vigilante de la\nprisión del desierto.\nUtiliza la magia\nMorfeo para\natrapar a\nprisioneros que\nintenten fugarse.
+Scan text|3|93|Amo del Jardín de\nBalamb. Lidera\nuna rebelión contra\nel director Kramer\npara conseguir el\ncontrol absoluto\ndel “jardín”.
+Scan text|3|94|Está equipado con\nuna cuchilla que\nes a la vez arma\nde fuego. A veces\nlanza disparos de\ngran poder\ndestructivo.
+Scan text|3|95|Parece un soldado\nde Esthar normal,\npero en realidad es\nun androide más\nfuerte. Aún así, sus\npatrones de ataque\nson predecibles.
+Scan text|3|96|Aparato defensivo\nde Norg, con un\ndispositivo para\ncompensar de\ninmediato el daño\nrecibido. Aplica\nmagias de estado.
+Scan text|3|97|Aparato defensivo\nde Norg, con un\ndispositivo para\ncompensar de\ninmediato el daño\nrecibido. Aplica\nmagias de estado.
+Scan text|3|98|NOT TARGET
+Scan text|3|99|Monarca de los\ntomberis, raza\nque mora en las\nmazmorras. Ha\nvenido a vengar\nla muerte de\nsus súbditos.
+Scan text|3|100|Ejemplar de cactilio\nque sobrepasa la\nesperanza de vida\nmedia de la especie,\ny con los años\nadquiere un tamaño\nmonumental.
+Scan text|3|101|Al irse del “jardín”\nse convirtió en el\ncaballero de la\nbruja Edea.\nCombina magias de\nFuego con técnicas\nde esgrima.
+Scan text|3|102|Lucha con Edea\ncontra los Seeds.\nHa mejorado su\narte de liberar\nenergía con la\nespada, y conoce\nnuevas técnicas.
+Scan text|3|103|Tras ser vencido,\nsu orgullo lo\nimpulsa a luchar\notra vez. Ha\nperdido vitalidad,\npero ha mejorado\nsu técnica.
+Scan text|3|104|Temible bruja que\ntiene a Galbadia\nprácticamente en\nsus manos. Su\npoder mágico no\ntiene parangón\nen el mundo.
+Scan text|3|105|Se infiltró en la\nnave Lagunamov,\nque ahora es su\ncubil. Muy agresivo,\nse lanza sobre\ncualquier cosa\nque se mueva.
+Scan text|3|106|De fuerza colosal,\nsu existencia está\nenvuelta en un velo\nde misterio. Dicen\nque no hay nadie en\nel mundo capaz de\nvencerlo.
+Scan text|3|107|Habita la torre\nabandonada de\nDollet. De origen\nincierto, incluso\nlos habitantes de\nDollet desconocían\nsu presencia.
+Scan text|3|108|Máquina de guerra\nno tripulada de\nGalbadia, conocida\ncomo “la viuda\nnegra”. Persigue al\nenemigo hasta\neliminarlo.
+Scan text|3|109|Creada a partir de\nuna escultura del\nArco de Triunfo,\npuede petrificar al\nrival. Una fuerza\nexterna le otorga\nel efecto Espejo.
+Scan text|3|110|A pesar de su\naspecto colosal,\nbasa sus ataques\nen la magia.\nResponde a los\nataques físicos\nferozmente.
+Scan text|3|111|Gran insecto\nvolador prehistórico\nque ataca con las\ngarras y la cola.\nNo se sabe cómo\nha conseguido\nsobrevivir.
+Scan text|3|112|Su aspecto rocoso\nda impresión de\nlentitud y pesadez,\npero en realidad\nes muy ágil.\nA veces ataca\nen grupo.
+Scan text|3|113|Se infiltró en la\nnave Lagunamov,\nque ahora es su\ncubil. Muy agresivo,\nse lanza sobre\ncualquier cosa\nque se mueva.
+Scan text|3|114|Se infiltró en la\nnave Lagunamov,\nque ahora es su\ncubil. Muy agresivo,\nse lanza sobre\ncualquier cosa\nque se mueva.
+Scan text|3|115|Monstruo\nsubterráneo de\napariencia viscosa.\nSu cuerpo contiene\naceite, que expulsa\npara atacar a sus\nvíctimas.
+Scan text|3|116|Bruja que quiere\ndominar el mundo.\nLidera las fuerzas\ndel Jardín de\nGalbadia contra\nlos Seeds, su único\nobstáculo.
+Scan text|3|117|Arma de Galbadia,\napodada “la\ninexpugnable” por\nsu sólida carcasa.\nSu cañón supera\nen potencia al\ndel X-ATM092.
+Scan text|3|118|Está sin control\npor los daños que\nsufrió en la base\nde misiles. Está\nal tope de su\npotencia, pero le\nqueda poca vida.
+Scan text|3|119|Hecho de huesos\nprehistóricos, se\ncree que adquirió\nvida a causa de la\ndesecación que\ncreó la Gran\nSalina de Esthar.
+Scan text|3|120|NOT TARGET
+Scan text|3|121|Robot guardián del\nLunatic Pandora.\nEs un modelo\nviejo, pero tiene\nrayos láser más\npotentes que las\narmas actuales.
+Scan text|3|122|Sección superior\nizquierda del robot\nIB-8. Ataca\nindependientemente\ny dispone de un\nmecanismo de\nautorrecuperación.
+Scan text|3|123|Sección superior\nderecha del robot\nIB-8. Ataca\nindependientemente\ny dispone de un\nmecanismo de\nautorrecuperación.
+Scan text|3|124|Miembro de la\nfuerza de asalto\ndel Jardín de\nGalbadia, a cargo\nde las primeras\nincursiones en\nterritorio enemigo.
+Scan text|3|125|Arma de guerra del\nfuturo a la que\nArtemisa otorgó\nuna vida falsa. Su\ncañón megaláser\ntiene una potencia\ndevastadora.
+Scan text|3|126|Mecanismos de\nbatalla auxiliares\ngenerados por el\nDolmen. Aunque son\npequeños, sus\ncañones láser son\nmuy potentes.
+Scan text|3|127|Se infiltró en la\nnave Lagunamov,\nque ahora es su\ncubil. Muy agresivo,\nse lanza sobre\ncualquier cosa\nque se mueva.
+Scan text|3|128|Ex dictadora de\nEsthar, derrocada\ny encerrada por\nLaguna. Artemisa\nla ha liberado\ny está recuperando\nsus poderes.
+Scan text|3|129|Adel la ha poseído\ny ha absorbido la\nmayor parte de su\nfuerza: {Rinoa}\nno puede moverse.\nPara liberarla, hay\nque vencer a Adel.
+Scan text|3|130|Es el monstruo más\nfuerte conocido,\nmás poderoso que\nel Ente Artema. Al\nque se cruce con\nél, sólo le queda\nmaldecir su suerte.
+Scan text|3|131|Una de las brujas\ndel espacio-tiempo\naparecidas como\nresultado de la\ncompresión. No\nson muy fuertes\nindividualmente.
+Scan text|3|132|Una de las brujas\ndel espacio-tiempo\naparecidas como\nresultado de la\ncompresión. No\nson muy fuertes\nindividualmente.
+Scan text|3|133|Una de las brujas\ndel espacio-tiempo\naparecidas como\nresultado de la\ncompresión. No\nson muy fuertes\nindividualmente.
+Scan text|3|134|Misterioso objeto\nvolador llegado del\nespacio exterior.\nSe desconoce su\norigen y propósito.
+Scan text|3|135|Busca a Eleone por\nencargo de Seifer.\nEs capaz de\naplicar magias de\nELM Viento, y usa\ndiestramente\nel arma Luna llena.
+Scan text|3|136|Busca a Eleone\ncon Viento. Lucha\na los golpes, pero\nante desconocidos\nprueba técnicas\nsofisticadas para\nllamar la atención.
+Scan text|3|137|Bruja que intenta\nabsorber los\npoderes de sus\npares de todas las\népocas mediante\nla compresión\ndel tiempo.
+Scan text|3|138|“Ser más poderoso”\nsegún {Squall},\ninvocado como G. F.\npor Artemisa. La\nmagia de la bruja le\npermite luchar sin\ndesaparecer.
+Scan text|3|139|NOT TARGET
+Scan text|3|140|Ente creado por el\nenlace de Artemisa\ncon {Griever}.\nPosee la magia\nde la bruja y la\nfuerza ofensiva de\n{Griever}.
+Scan text|3|141|Mecanismo\namplificador de los\npoderes mágicos\nde Artemisa, quien\nusa dos unidades\npara aumentar su\ncapacidad ofensiva.
+Scan text|3|142|Nueva constitución\nde Artemisa para\nabsorber el tiempo\ny el espacio tras\nla compresión. La\nabsorción universal\nestá en marcha.
+Scan text|3|143|Punto donde se\ngeneran los poderes\nde Artemisa. Aquí\nalmacena energía\npara liberarla luego\ncomo magias de\nde fuerza inusitada.
+Scan text|3|144|Derrotado como\ncaballero de la\nbruja, está\ndecidido a\nrecuperar su honor\ny ha perfeccionado\nsu técnica.
+Scan text|3|145|Pertenece al equipo\ndel Jardín de\nGalbadia, de\njugadores\nsemihumanos.\nAtaca con rapidez\ny en equipo.
+Scan text|3|146|Gran máquina de\nguerra movida por\nfuerzas mágicas.\nDe gran capacidad\ndefensiva, sólo la\nafectan ciertas\nmagias y G. F.
+Scan text|3|147|Monstruo muy\ndesarrollado.\nEmplea sobre todo\nla magia, pero sus\ncoletazos también\npueden causar\ngraves daños.
+Scan text|3|148|G. F. que se volvió\nmonstruo cuando\nArtemisa capturó\nsu alma. Pocos\nguerreros siguen\nen pie tras recibir\nsu Fulgor negro.
+Scan text|3|149|Es muy fuerte y\nposee poder mágico.\nDomina magias de\nELM Rayo, aunque\na veces echa mano\na hechizos más\npoderosos.
+Scan text|3|150|Tras la derrota de\nla torre de Dollet\nha sido degradado,\ncomo su superior,\nBiggs. Es tan gafe\nque sigue teniendo\na Biggs de jefe.
+Scan text|3|151|Antes de la batalla\nde la torre de Dollet\nera capitán. Tras\nla derrota lo han\ndegradado, por eso\nodia con toda su\nalma a los Seeds.
+Scan text|3|152|Ha ido al Lunatic\nPandora para\nayudar a Seifer. Al\nluchar, usa magias\nde apoyo y luego\nuna retahíla de\nmagias de ataque.
+Scan text|3|153|Compañero de\nSeifer y Viento. Su\nestilo de lucha es\naún primitivo,\npero ha aprendido\na utilizar algunas\nmagias de apoyo.
+Scan text|3|154|NOT TARGET
+Scan text|3|155|NOT TARGET
+Scan text|3|156|NOT TARGET
+Scan text|3|157|NOT TARGET
+Scan text|3|158|Personalidad real\ndel doble del\npresidente Deling.\nAtaca con sus\nbrazos viscosos y\npuede provocar\nestados alterados.
+Scan text|3|159|Soldado encargado\nde la vigilancia en\nla base de misiles\nde Galbadia. Tiene\nla capacidad de un\nsoldado raso,\npero cobra más.

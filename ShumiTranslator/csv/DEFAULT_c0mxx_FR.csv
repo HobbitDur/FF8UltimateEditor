@@ -1,520 +1,520 @@
-Section data name;Section Widget id;Text Sub id;Text
-ExoSkelet;0;0;ExoSkelet
-Incube;1;0;Incube
-Malaku;2;0;Malaku
-Malaku;2;1;{Irvine}: Pour activer
-Malaku;2;2;mon Limit Break
-Malaku;2;3;utilise {R1}
-Malaku;2;4;Pigé?
-Bogomile;3;0;Bogomile
-Koatl;4;0;Koatl
-Koatl;4;1;Koatl crache!
-Koatl;4;2;Koatl grogne!
-Koatl;4;3;Koatl hurle!
-Koatl;4;4;Attaque forcenée
-Koatl;4;5;Attaque démoniaque
-Koatl;4;6;Attaque hurlante
-Xylopode;5;0;Xylopode
-Barbarian;6;0;Barbarian
-Pikasso;7;0;Pikasso
-Licorne;8;0;Licorne
-Licorne;8;1;La corne est brisée
-Schizoïd;9;0;Schizoïd
-Brahman;10;0;Brahman
-Shiva;11;0;Shiva
-Satyrux;12;0;Satyrux
-Arconada;13;0;Arconada
-Arconada;13;1;Seifer: Le coup de grâce
-Arconada;13;2;détermine le niveau d'EXP
-Arconada;13;3;Réserve-le moi!
-Orchida;14;0;Orchida
-Gallus;15;0;Gallus
-Larva;16;0;Larva
-Nocturnus;17;0;Nocturnus
-Nocturnus;17;1;{Quistis}: Tu as compris, {Squall}?
-Nocturnus;17;2;{R1} c'est la gâchette
-Nocturnus;17;3;Utilise-la au moment de frapper
-Tikal;18;0;Tikal
-Tikal;18;1;Tikal s'est rechargé!
-Tikal;18;2;Tikal se recharge!
-Diodon;19;0;Diodon
-Phantom;20;0;Phantom
-Elastos;21;0;Elastos
-Formicide;22;0;Formicide
-Polyphage;23;0;Polyphage
-Carnidea;24;0;Carnidea
-Protesis;25;0;Protesis
-Scavenger;26;0;Scavenger
-Scavenger;26;1;Scavenger est à terre
-Scavenger;26;2;Scavenger se relève
-Elmidea;27;0;Elmidea
-Elmidea;27;1;{Quistis}: Pour un effet maximum
-Elmidea;27;2;appuie sur {R1}
-Elmidea;27;3;au moment de frapper
-Elmidea;27;4;Même chose pour le Renzokuken!
-Héra;28;0;Héra
-Héra;28;1;Morph défensif normal
-Héra;28;2;Morph défensif global
-Héra;28;3;Morph anti-magie
-Héra;28;4;Morph anti-armes
-Acron;29;0;Acron
-Acron;29;1;La force élémentale que je n'utilise pas
-Acron;29;2;serait capable de me détruire...
-Eiffel;30;0;Eiffel
-Wendigo;31;0;Wendigo
-Aphide;32;0;Aphide
-Ecorché;33;0;Ecorché
-Ecorché;33;1;{Zell}: C'est quoi ce truc?
-Ecorché;33;2;{Squall}: Un monstre
-Ecorché;33;3;{Selphie}: Ouh, qu'il est moche!
-Berserker;34;0;Berserker
-Adéphage;35;0;Adéphage
-Selek;36;0;Selek
-Krystal;37;0;Krystal
-Krystal;37;1;Vous êtes pathétiques!
-Krystal;37;2;Quelle impudence!
-Gangrène;38;0;Gangrène
-Fatima;39;0;Fatima
-Moloch;40;0;Moloch
-Weevil;41;0;Weevil
-Succube;42;0;Succube
-Succube;42;1;{Quistis}: Un monstre élémental
-Succube;42;2;Utilise une attaque de glace
-Succube;42;3;Découvre ses faiblesses avec le Scan
-Célébis;43;0;Célébis
-Trogiidae;44;0;Trogiidae
-Ao;45;0;Ao
-Chimaira;46;0;Chimaira
-Xylomid;47;0;Xylomid
-Ekarissor;48;0;Ekarissor
-Kanibal;49;0;Kanibal
-T-Rex;50;0;T-Rex
-T-Rex;50;1;{Quistis}: Un tyrannosaure!
-T-Rex;50;2;{Squall} attention!
-T-Rex;50;3;La fuite est préférable!
-Griffon;51;0;Griffon
-Feng;52;0;Feng
-Cariatide;53;0;Cariatide
-Pampa;54;0;Pampa
-Pampa;54;1;Fuite
-Tomberry;55;0;Tomberry
-Tomberry;55;1;Yodo est blessé
-Marsupial;56;0;Marsupial
-Fungus;57;0;Fungus
-Draconus;58;0;Draconus
-Koyo K;59;0;Koyo K
-Koyo K;59;1;J'ai besoin d'élixirs!
-Koyo K;59;2;Il me faut un autre élixir!
-Koyo K;59;3;Merci
-Koyo K;59;4;Ah! Je revis...
-Ifrit;60;0;Ifrit
-Ifrit;60;1;{Squall}: La magie du feu est inefficace!
-Ifrit;60;2;{Quistis}: Le feu n'a aucun effet!
-Ifrit;60;3;Surprenants humains
-Ifrit;60;4;Ils possèdent {Shiva}!”
-Ifrit;60;5;Perdre face à des êtres aussi frustres!
-Ifrit;60;6;La force de {Shiva} est dévastatrice
-Ifrit;60;7;J'abdique...
-Ifrit;60;8;Arrogants jeunes gens!
-Taurux;61;0;Taurux
-Taurux;61;1;Taurux: Notre destin est joué
-Taurux;61;2;Taurux: Les forces étaient inégales
-Taurux;61;3;Taurux: Fascinants humains
-Taurux;61;4;Taurux: Nous serons vos serviteurs
-Tauros;62;0;Tauros
-Tauros;62;1;Tauros: Leur force est invraisemblable!
-Tauros;62;2;Tauros: Nous sommes terrassés
-Tauros;62;3;Tauros: Vous nous avez vaincus
-Tauros;62;4;Tauros: Nous rendons les armes
-Commandeur;63;0;Commandeur
-Commandeur;63;1;Ça ne se passera pas comme ça!
-Commandeur;63;2;Comment osez-vous?
-Commandeur;63;3;Pff, de simples étudiants!
-Commandeur;63;4;Eliminons l'élève le plus faible!
-Commandeur;63;5;Utilisons notre magie!
-Cerbères;64;0;Cerbères
-Cerbères;64;1;{Squall}: Galbadia utilise des G-Forces?
-Cerbères;64;2;{Quistis}: Les G-Forces sont inconnues ici
-Cerbères;64;3;{Zell}: L'ennemi a une G-Force?
-Cerbères;64;4;{Selphie}: C'est une G-Force ça?
-Cerbères;64;5;{Irvine}: C'est quoi ça?
-Cerbères;64;6;{Rinoa}: Est-ce une G-Force?
-Cerbères;64;7;{Squall}: Prenons-la!
-Cerbères;64;8;{Quistis}: Saisissons-la!
-Cerbères;64;9;{Zell}: Emparons-nous de ce truc!
-Cerbères;64;10;{Selphie}: Je veux ce truc, moi!
-Cerbères;64;11;{Irvine}: Jamais vu cette G-Force de ma vie
-Cerbères;64;12;{Rinoa}: Cette G-Force est incroyable!
-Cerbères;64;13;Cerbères: Quelle arrogance!
-Cerbères;64;14;Cerbères: De simples mortels!
-Cerbères;64;15;Montrez ce dont vous êtes capables!
-Cerbères;64;16;Cerbères: Intéressant
-Nosferatu;65;0;Nosferatu
-Nosferatu;65;1;Qui ose troubler mon sommeil?
-Nosferatu;65;2;Quelle agaçante faiblesse!
-Bahamut;66;0;Bahamut
-Bahamut;66;1;Je suis Bahamut
-Bahamut;66;2;{Squall}: Bahamut est une G-Force
-Bahamut;66;3;{Zell}: Bahamut? C'est une G-Force!
-Bahamut;66;4;{Quistis}: Bahamut est une G-Force
-Bahamut;66;5;{Selphie}: Bahamut? C'est une G-Force
-Bahamut;66;6;{Irvine}: Bahamut? La G-Force?
-Bahamut;66;7;{Rinoa}: Bahamut est une G-Force
-Bahamut;66;8;Bahamut: Une G-Force? Moi?
-Bahamut;66;9;Bahamut: Montrez-moi votre valeur!
-Bahamut;66;10;Bahamut: Vous forcez mon respect
-Bahamut;66;11;Bahamut: Je serai votre serviteur
-Odyssey;67;0;Odyssey
-Odyssey;67;1;Norg: Bujurururu!
-Odyssey;67;2;Norg: Bleu - Jaune - Rouge
-Odyssey;67;3;Norg: Le rouge couleur de magie!
-Odyssey;67;4;Tant que je verrais du rouge...
-Odyssey;67;5;les forces occultes seront avec moi!
-Templier;68;0;Templier
-Templier;68;1;Serfs, saisissez-vous d'eux
-Templier;68;2;NORG est le seul Maître en ces lieux
-Templier;68;3;Faites vite, serfs!
-Templier;68;4;Tuez-les tous!
-Templier;68;5;Cette université appartient à NORG
-Templier;68;6;Encore d'autres Seeds?!
-Templier;68;7;Vous soutenez le proviseur?
-Templier;68;8;Les infidèles doivent périr
-Templier;68;9;Notre serf se chargera de vous!
-Odin;69;0;Odin
-Odin;69;1;Odin: Preux chevaliers
-Odin;69;2;Odin: Je m'engage à votre service
-Odin;69;3;Odin: A partir de ce jour
-Odin;69;4;Odin: Convoquez-moi et je viendrai
-Odin;69;5;Odin: Votre insipide existence...
-Odin;69;6;Odin: ... prend fin en ce jour!
-Galbadien;70;0;Galbadien
-Galbadien;70;1;C'est des soldats de Dollet?
-Galbadien;70;2;On dirait plutôt des gosses
-Galbadien;70;3;Des mercenaires de la BGU?
-Galbadien;70;4;Quoi?! Des Seeds?!
-Galbadien;70;5;Ouh la! Ça craint!
-Elite-T;71;0;Elite-T
-Elite-T;71;1;Que personne ne bouge!
-Elite-T;71;2;Capitaine: Quel tas de ferraille!
-Elite-T;71;3;Soldat 2: On fait quoi maintenant?
-Elite-T;71;4;Soldat 1: Faut appeler les réparateurs
-Elite-T;71;5;Capitaine: Je vais les égorger!
-Elite-T;71;6;Aïe! Ça chauffe!
-Wedge;72;0;Wedge
-Wedge;72;1;Biggs: Ils sont redoutables ces gosses
-Wedge;72;2;Wedge: Aaahhhh!
-Wedge;72;3;Wedge: Capitaine...
-Wedge;72;4;Wedge: Les réparations sont terminées?
-Wedge;72;5;Wedge: Qui sont ces jeunes?
-Wedge;72;6;Biggs: WEDGE! Pas trop tôt!
-Wedge;72;7;Biggs: Pas de salaire ce mois-ci!
-Wedge;72;8;Wedge: J'aurais dû rester chez moi
-Biggs;73;0;Biggs
-Biggs;73;1;Biggs: Vous allez voir, bande de morveux
-Biggs;73;2;Biggs: Bon sang! Ils sont pas mauvais!
-Biggs;73;3;Wedge: Capitaine...
-Biggs;73;4;Wedge: Les réparations sont terminées?
-Biggs;73;5;Wedge: Que font ces gamins ici?
-Biggs;73;6;Biggs: WEDGE! Quand même!
-Biggs;73;7;Biggs: Pas de paie ce mois-ci!
-Biggs;73;8;Wedge: J'aurais dû rester chez moi!
-Biggs;73;9;Wedge: Nous sommes fichus!
-Biggs;73;10;Biggs: Assez de pleurnicheries
-Biggs;73;11;Biggs: Bon Dieu!
-Doublure;74;0;Doublure
-Doublure;74;1;vOUs AlLEz lE RegREtteR!
-Doublure;74;2;c'eSt lA fiN dE lA réSisTAncE...
-Doublure;74;3;QuEllE gaLéjAdE!
-Doublure;74;4;AaAhh aAHhaaAhH!
-Trooper;75;0;Trooper
-Trooper;75;1;Qu'est-ce que vous fabriquez?
-Trooper;75;2;Qui sont ces gosses?
-Trooper;75;3;Les Seeds se sont échappés!
-Trooper;75;4;J'ai trouvé les Seeds!
-Trooper;75;5;Vous vous en sortirez pas comme ça!
-Norg;76;0;Norg
-Norg;76;1;NORG: SOYEZ-MAUDITS-MEPRISABLES-SEEDS
-Norg;76;2;NORG: CETTE-UNIVERSITE-EST-MIENNE
-Norg;76;3;NORG: JE-SUIS-LE-SEUL-MAITRE-ICI
-Norg;76;4;NORG: TOUT-EST-FINI
-Norg;76;5;NORG: VOUS-M'ETONNEZ!
-Norg;76;6;NORG: C'EST-IMPOSSIBLE
-S-Borg;77;0;S-Borg
-T-Borg;78;0;T-Borg
-Tupolev;79;0;Tupolev
-Spootnik;80;0;Spootnik
-Gunblade;81;0;Gunblade
-Tomberry Sr;82;0;Tomberry Sr
-Tomberry Sr;82;1;Ça fait un peu peur
-Tomberry Sr;82;2;Dé... Désolé
-Tomberry Sr;82;3;Tomberry a rejoint votre camp
-Pampa Senior;83;0;Pampa Senior
-Pampa Senior;83;1;Pampa Senior commence à s'énerver
-Seifer;84;0;Seifer
-Seifer;84;1;Seifer: {Squall}, tu vas mourir!
-Seifer;84;2;Seifer: J'ai perdu?
-Seifer;84;3;Seifer: Tu m'as cru mort, hein?
-Seifer;84;4;Seifer: Je n'abandonnerai pas mon rêve
-Seifer;84;5;Seifer: {Squall}, tout est fini!
-Seifer;84;6;Seifer: Arrgh! Impressionnant!
-Seifer;85;0;Seifer
-Seifer;85;1;Seifer: Vous allez tous mourir!
-Seifer;85;2;Seifer: Montre ce dont tu es capable
-Seifer;85;3;Seifer: Je vous domine totalement
-Seifer;85;4;Seifer: C'est tout ce que tu peux faire?
-Seifer;85;5;Seifer: Nul ne peut me vaincre
-Seifer;85;6;Seifer: C'est impossible!
-Seifer;85;7;Seifer: Tu es prêt à mourir, {Squall}?
-Seifer;85;8;Seifer: A genoux, devant ton maître!
-Seifer;86;0;Seifer
-Seifer;86;1;Seifer: Je suis le chevalier d'Edea
-Seifer;86;2;Je vous tuerai tous!
-Seifer;86;3;Seifer: Nul ne peut me battre
-Seifer;86;4;Seifer: Aaaaargh!
-Seifer;86;5;Seifer: J'ai échoué!
-Edea;87;0;Edea
-Edea;87;1;{Rinoa}: Je veux me battre
-Edea;87;2;{Rinoa}: Je veux être utile!
-Edea;87;3;{Irvine}: Je dois me faire pardonner
-Edea;87;4;Edea: Damnés Seeds
-Edea;87;5;Edea: Votre fin est proche
-Edea;87;6;Edea: Vous m'insupportez
-Edea;87;7;Edea: Tout est fini pour vous
-Edea;87;8;Edea: Prétentieuses créatures
-Alienator;88;0;Alienator
-Monarch;89;0;Monarch
-Sulfura;90;0;Sulfura
-Sulfura;90;1;{Zell}: C'est quoi ce délire?
-Sulfura;90;2;{Squall}: Quoi?!
-Sulfura;90;3;{Selphie}: Je pige pas!
-Goliath;91;0;Goliath
-Goliath;91;1;{Zell}: Hé! Ça se répare tout seul!
-Goliath;91;2;{Squall}: Un système d'auto-entretien?
-Goliath;91;3;{Selphie}: Mais qu'est-ce qui se passe?
-Goliath;91;4;{Zell}: Fichons le camp!
-Goliath;91;5;{Selphie}: Retournons à la plage!
-Goliath;91;6;{Squall}: Ok, replions-nous!
-Goliath;91;7;{L2}, {R2} pour fuir
-Goliath;91;8;Réparations: 20%
-Goliath;91;9;Réparations: 40%
-Goliath;91;10;Réparations: 60%
-Goliath;91;11;Réparations: 80%
-Goliath;91;12;{Zell}: Ouah! Ça recommence!!!
-Goliath;91;13;{Squall}: Il n'y a rien à faire!
-Goliath;91;14;{Selphie}: Ras le bol!
-Iguanor;92;0;Iguanor
-Iguanor;92;1;{Irvine}: Il faut sauver {Rinoa}!
-Iguanor;92;2;{Irvine}: N'oublie pas mon Limit Break!
-Iguanor;92;3;Pour l'activer...
-Iguanor;92;4;Appuie sur la touche {R1}
-Iguanor;92;5;C'est clair?
-Agamemnon;93;0;Agamemnon
-Lygus;94;0;Lygus
-Cujo;95;0;Cujo
-Alienator;96;0;Alienator
-Alienator;97;0;Alienator
-Cyanide;98;0;Cyanide
-Edea;99;0;Edea
-Edea;99;1;Edea: Vaines créatures
-Edea;99;2;Edea: Tous les Seeds doivent mourir!
-Edea;99;3;Edea: Ah... Ahhh!
-Omniborg;100;0;Omniborg
-Omniborg;100;1;Commandeur: Activez le canon-laser
-Omniborg;100;2;Soldat 1: A vos ordres!
-Omniborg;100;3;Commandeur: Tirez encore!
-Omniborg;100;4;Soldat 2: Cible repérée
-Omniborg;100;5;Soldat 2: Commandeuuuur!
-Omniborg;100;6;Commandeur: On va pas se laisser faire!
-Omniborg;100;7;Soldat 1: C'est incontrôlable ce machin!
-Omniborg;100;8;Commandeur: QUOI?!
-Omniborg;100;9;Commandeur: Eliminez-les tous!
-Omniborg;100;10;Soldat 2: Fichons le camp!
-Omniborg;100;11;Commandeur: Protégez nos possessions!
-Omniborg;101;0;Omniborg
-Omniborg;101;1;{Rinoa}: Qu'est-ce que c'est?
-Omniborg;101;2;{Zell}: Encore un robot débile!
-Omniborg;101;3;{Irvine}: Ce truc est énorme!
-Omniborg;101;4;{Quistis}: Une nouvelle arme Galbadienne?
-Omniborg;101;5;{Squall}: Détruisons ce truc!
-Hornet;102;0;Hornet
-Hornet;102;1;{Squall}: Un mort-vivant!
-Hornet;102;2;Utilisons la magie et les objets de Soin
-Hornet;103;0;Hornet
-Anakronox;104;0;Anakronox
-Anakronox;104;1;Arme techno-mobile activée
-Anakronox;104;2;POD d'armement annexe OFF
-Anakronox;104;3;Arme techno-mobile désactivée
-Anakronox;104;4;POD d'armement annexe ON
-A-G Pod;105;0;A-G Pod
-A-D Pod;106;0;A-D Pod
-ParaBorg;107;0;ParaBorg
-ParaBorg;107;1;Suivez les instructions, rasez la BGU!
-ParaBorg;107;2;{Quistis}: Vous devrez nous tuer d'abord!
-ParaBorg;107;3;{Squall}: C'est hors de question
-ParaBorg;107;4;{Irvine}: 'Raser', carrément?!
-ParaBorg;107;5;{Selphie}: Ils délirent ou quoi?!
-ParaBorg;107;6;Vous perdez rien pour attendre, morveux!
-Flotix;108;0;Flotix
-Flotix;108;1;Plus de puissance magique pétrifiante!
-Bibendum;109;0;Bibendum
-Alienator;110;0;Alienator
-Adel;111;0;Adel
-Adel;111;1;{Squall}: On doit éviter {Rinoa}!
-Adel;111;2;{Zell}: Faut seulement toucher Adel!
-Adel;111;3;{Selphie}: Mon Dieu, {Rinoa}!
-Adel;111;4;{Quistis}: On doit sauver {Rinoa}
-Adel;111;5;{Rinoa}: Aaaaaahh
-Adel;111;6;Forces élémentales pointées sur Adel
-{Rinoa};112;0;{Rinoa}
-{Rinoa};112;1;{Rinoa}: Aaaahhh...
-{Rinoa};112;2;{Rinoa}: Aidez moi!
-{Rinoa};112;3;{Rinoa}: J'ai mal!
-{Rinoa};112;4;{Rinoa}: Aaaaaaaah!
-{Rinoa};112;5;{Rinoa}: Je souffre!
-Minotaure;113;0;Minotaure
-Nécromancienne;114;0;Nécromancienne
-Nécromancienne;114;1;La compression temporelle commence...
-Nécromancienne;115;0;Nécromancienne
-Nécromancienne;116;0;Nécromancienne
-Nécromancienne;116;1;5
-Nécromancienne;116;2;4
-Nécromancienne;116;3;3
-Nécromancienne;116;4;2
-Nécromancienne;116;5;1
-UFO;117;0;UFO
-Fujin;118;0;Fujin
-Fujin;118;1;Fujin: Où est Ellone?
-Fujin;118;2;Fujin: Impossible! Raijin, fuyons!
-Fujin;118;3;Fujin: Nous sommes vaincus!
-Raijin;119;0;Raijin
-Raijin;119;1;{Zell}: Tu me le paieras, Raijin!
-Raijin;119;2;Raijin: Passons aux choses sérieuses
-Raijin;119;3;Raijin: Hé, pas mal comme coup!
-Raijin;119;4;Raijin: Aïe! Ça fait mal!
-Raijin;119;5;Raijin: Je frappe pas les filles, moi!
-Raijin;119;6;Raijin: Quelle boule de nerfs!
-Raijin;119;7;Raijin: Fujin, je suis blessé!
-Raijin;119;8;Raijin: Fujin, on dégage!
-Raijin;119;9;Raijin: Moi aussi ils m'ont battu, Fujin
-Ultimecia;120;0;Ultimecia
-Ultimecia;120;1;Je peux créer le monstre suprême
-Ultimecia;120;2;La créature de vos cauchemars...
-Ultimecia;120;3;Soyez victimes de votre imagination
-Ultimecia;120;4;Ah ah ah!
-Ultimecia;120;5;La rivière du temps l'a emporté
-{Griever};121;0;{Griever}
-{Griever};121;1;Le temps l'a dévoré
-{Griever};121;2;L'espace a avalé ce sort
-{Griever};121;3;La G-Force n'a eu aucun effet
-{Griever};121;4;Ultimecia: Tout ne fait que commencer
-{Griever};121;5;Moi aussi, je possède une G-Force
-{Griever};121;6;Vous allez être surpris
-{Griever};121;7;{Griever} achève-les!
- ;122;0; 
- ;122;1;Ultimecia: Vous n'avez encore rien vu...
- ;122;2;Vous allez découvrir ma vraie nature
-Ultimecia;123;0;Ultimecia
-Ultimecia;123;1;L'espace s'en est emparé
-Ultimecia;123;2;Pouvoir magique aspiré par le temps
-Ultimecia;123;3;Invocation G-Force impossible
-Ultimecia;123;4;Ultimecia: Assez d'enfantillages!
-Ultimecia;123;5;{Griever} va vous exterminer!
-Ultimecia;123;6;Aaaaarrrgh...
-Hélix;124;0;Hélix
-Ultimecia;125;0;Ultimecia
-Ultimecia;125;1;Noyé dans la rivière du temps...
-Ultimecia;125;2;Je suis Ultimecia
-Ultimecia;125;3;Cette G-Force est impuissante
-Ultimecia;125;4;Je vais compresser le temps
-Ultimecia;125;5;Et faire disparaître toute forme de vie
-Ultimecia;125;6;Souviens-toi de ton...
-Ultimecia;125;7;Enfance
-Ultimecia;125;8;Cette sensation intense
-Ultimecia;125;9;Ta façon de parler...
-Ultimecia;125;10;Ces émotions brutes
-Ultimecia;125;11;En grandissant
-Ultimecia;125;12;Tu as oublié la moitié de toi-même
-Ultimecia;125;13;Mais le temps n'attend pas
-Ultimecia;125;14;Quel que soit ton désir
-Ultimecia;125;15;Le temps s'écoule comme du sable
-Ultimecia;125;16;Et...
-Seifer;126;0;Seifer
-Seifer;126;1;M'as-tu donné le quatrième?
-Seifer;126;2;Qui es-tu?
-Seifer;126;3;Essaie de parer ce coup divin
-Seifer;126;4;Tu vas périr, misérable!
-Seifer;126;5;Aaargh!
-Seifer;126;6;Aaaaaah!
-Seifer;126;7;Où est l'intervalle dimensionnel?
-Seifer;126;8;{Squall}: Odin?!
-Seifer;126;9;Seifer: Je n'abandonnerai pas!
-Seifer;126;10;Seifer: {Squall}, montre-moi tes talents!”
-Seifer;126;11;Seifer: Tu veux une autre balafre?
-Seifer;126;12;Seifer: Je dois pouvoir faire mieux!
-Jason;127;0;Jason
-Jason;127;1;En avant, Galbadia!”
-Jason;127;2;Equipe G en formation!
-Jason;127;3;Equipe M, en avant!
-Jason;127;4;Ecrasons-les!
-Attila;128;0;Attila
-Attila;128;1;Toute attaque armée est inutile
-Attila;128;2;Cette magie ne peut m'atteindre!
-Attila;128;3;Cette G-Force est inefficace!
-Attila;128;4;Aaaargh! Ces Quarts sont redoutables!
-Attila;128;5;{Diablos} est impitoyable!
-Sulfor;129;0;Sulfor
-Acarnan;130;0;Acarnan
-Acarnan;130;1;Hy        
-Acarnan;130;2;Hyp       
-Acarnan;130;3;Hypo      
-Acarnan;130;4;Hypoc     
-Acarnan;130;5;Hypocaus  
-Fabryce;131;0;Fabryce
-Fabryce;131;1;Mon nom est Fabryce
-Fabryce;131;2;Je suis sur terre...
-Fabryce;131;3;pour faire de ta vie un enfer!
-Wedge;132;0;Wedge
-Wedge;132;1;Wedge: Ouille!
-Wedge;132;2;Vous nous causez que des problèmes!
-Wedge;132;3;Wedge: Y'en a marre d'être rétrogradé!
-Wedge;132;4;Je suis toujours le bouc émissaire!
-Wedge;132;5;Wedge: Pourquoi moi?
-Wedge;132;6;Wedge: J'en ai vraiment assez!
-Wedge;132;7;Ras le bol!
-Biggs;133;0;Biggs
-Biggs;133;1;Biggs: J'ai été rétrogradé à cause de vous
-Biggs;133;2;Maintenant, je suis juste lieutenant!
-Biggs;133;3;Biggs: Vous allez me le payer!
-Biggs;133;4;Biggs: Ça ne se passera pas comme ça!
-Biggs;133;5;Biggs: Que fais-tu, imbécile?!
-Biggs;133;6;Biggs: Moi, lieutenant? C'est scandaleux!
-Biggs;133;7;Wedge: Ouh la! C'est la cata!
-Fujin ;134;0;Fujin 
-Fujin ;134;1;Fujin: Il faut faire un choix!
-Fujin ;134;2;Fujin: Nous devons aider Seifer
-Fujin ;134;3;Fujin: Misérables traîtres!
-Raijin ;135;0;Raijin 
-Raijin ;135;1;Raijin: Je te l'avais dit, Fujin
-Raijin ;135;2;Fujin: Je les hais!
-Raijin ;135;3;Raijin: Ils m'ont encore battu
-Raijin ;135;4;Raijin: Impressionnant, {Squall}
-Raijin ;135;5;Raijin: Mais Seifer est meilleur que toi
-Raijin ;135;6;Raijin: Ouaaaah!
-Raijin ;135;7;Raijin: Peut-être aussi bon que Seifer
-Raijin ;135;8;Raijin: Bon, assez rigolé
-Raijin ;135;9;Raijin: Ta dernière heure est venue
-Raijin ;135;10;Raijin: Tu ne t'en sortiras pas comme ça
-UFO;136;0;UFO
-UFO;137;0;UFO
-UFO;138;0;UFO
-UFO;139;0;UFO
-Gunblade;140;0;Gunblade
-Gunblade;140;1;{Zell}“...The hell is this!?”
-Gunblade;140;2;{Squall}“What the...”
-Gunblade;140;3;{Selphie}“Ewww!  Nasty!”
-Soldat;141;0;Soldat
-Soldat;141;1;Capitaine, ils sont trop forts!
-Soldat;141;2;Ca... Capitaine?
-Soldat;141;3;Aaargh!
-Soldat;141;4;Que faites-vous ici?
-Soldat;141;5;Vous allez regretter votre impertinence!
+Section data name|Section Widget id|Text Sub id|Text
+ExoSkelet|0|0|ExoSkelet
+Incube|1|0|Incube
+Malaku|2|0|Malaku
+Malaku|2|1|{Irvine}: Pour activer
+Malaku|2|2|mon Limit Break
+Malaku|2|3|utilise {R1}
+Malaku|2|4|Pigé?
+Bogomile|3|0|Bogomile
+Koatl|4|0|Koatl
+Koatl|4|1|Koatl crache!
+Koatl|4|2|Koatl grogne!
+Koatl|4|3|Koatl hurle!
+Koatl|4|4|Attaque forcenée
+Koatl|4|5|Attaque démoniaque
+Koatl|4|6|Attaque hurlante
+Xylopode|5|0|Xylopode
+Barbarian|6|0|Barbarian
+Pikasso|7|0|Pikasso
+Licorne|8|0|Licorne
+Licorne|8|1|La corne est brisée
+Schizoïd|9|0|Schizoïd
+Brahman|10|0|Brahman
+Shiva|11|0|Shiva
+Satyrux|12|0|Satyrux
+Arconada|13|0|Arconada
+Arconada|13|1|Seifer: Le coup de grâce
+Arconada|13|2|détermine le niveau d'EXP
+Arconada|13|3|Réserve-le moi!
+Orchida|14|0|Orchida
+Gallus|15|0|Gallus
+Larva|16|0|Larva
+Nocturnus|17|0|Nocturnus
+Nocturnus|17|1|{Quistis}: Tu as compris, {Squall}?
+Nocturnus|17|2|{R1} c'est la gâchette
+Nocturnus|17|3|Utilise-la au moment de frapper
+Tikal|18|0|Tikal
+Tikal|18|1|Tikal s'est rechargé!
+Tikal|18|2|Tikal se recharge!
+Diodon|19|0|Diodon
+Phantom|20|0|Phantom
+Elastos|21|0|Elastos
+Formicide|22|0|Formicide
+Polyphage|23|0|Polyphage
+Carnidea|24|0|Carnidea
+Protesis|25|0|Protesis
+Scavenger|26|0|Scavenger
+Scavenger|26|1|Scavenger est à terre
+Scavenger|26|2|Scavenger se relève
+Elmidea|27|0|Elmidea
+Elmidea|27|1|{Quistis}: Pour un effet maximum
+Elmidea|27|2|appuie sur {R1}
+Elmidea|27|3|au moment de frapper
+Elmidea|27|4|Même chose pour le Renzokuken!
+Héra|28|0|Héra
+Héra|28|1|Morph défensif normal
+Héra|28|2|Morph défensif global
+Héra|28|3|Morph anti-magie
+Héra|28|4|Morph anti-armes
+Acron|29|0|Acron
+Acron|29|1|La force élémentale que je n'utilise pas
+Acron|29|2|serait capable de me détruire...
+Eiffel|30|0|Eiffel
+Wendigo|31|0|Wendigo
+Aphide|32|0|Aphide
+Ecorché|33|0|Ecorché
+Ecorché|33|1|{Zell}: C'est quoi ce truc?
+Ecorché|33|2|{Squall}: Un monstre
+Ecorché|33|3|{Selphie}: Ouh, qu'il est moche!
+Berserker|34|0|Berserker
+Adéphage|35|0|Adéphage
+Selek|36|0|Selek
+Krystal|37|0|Krystal
+Krystal|37|1|Vous êtes pathétiques!
+Krystal|37|2|Quelle impudence!
+Gangrène|38|0|Gangrène
+Fatima|39|0|Fatima
+Moloch|40|0|Moloch
+Weevil|41|0|Weevil
+Succube|42|0|Succube
+Succube|42|1|{Quistis}: Un monstre élémental
+Succube|42|2|Utilise une attaque de glace
+Succube|42|3|Découvre ses faiblesses avec le Scan
+Célébis|43|0|Célébis
+Trogiidae|44|0|Trogiidae
+Ao|45|0|Ao
+Chimaira|46|0|Chimaira
+Xylomid|47|0|Xylomid
+Ekarissor|48|0|Ekarissor
+Kanibal|49|0|Kanibal
+T-Rex|50|0|T-Rex
+T-Rex|50|1|{Quistis}: Un tyrannosaure!
+T-Rex|50|2|{Squall} attention!
+T-Rex|50|3|La fuite est préférable!
+Griffon|51|0|Griffon
+Feng|52|0|Feng
+Cariatide|53|0|Cariatide
+Pampa|54|0|Pampa
+Pampa|54|1|Fuite
+Tomberry|55|0|Tomberry
+Tomberry|55|1|Yodo est blessé
+Marsupial|56|0|Marsupial
+Fungus|57|0|Fungus
+Draconus|58|0|Draconus
+Koyo K|59|0|Koyo K
+Koyo K|59|1|J'ai besoin d'élixirs!
+Koyo K|59|2|Il me faut un autre élixir!
+Koyo K|59|3|Merci
+Koyo K|59|4|Ah! Je revis...
+Ifrit|60|0|Ifrit
+Ifrit|60|1|{Squall}: La magie du feu est inefficace!
+Ifrit|60|2|{Quistis}: Le feu n'a aucun effet!
+Ifrit|60|3|Surprenants humains
+Ifrit|60|4|Ils possèdent {Shiva}!”
+Ifrit|60|5|Perdre face à des êtres aussi frustres!
+Ifrit|60|6|La force de {Shiva} est dévastatrice
+Ifrit|60|7|J'abdique...
+Ifrit|60|8|Arrogants jeunes gens!
+Taurux|61|0|Taurux
+Taurux|61|1|Taurux: Notre destin est joué
+Taurux|61|2|Taurux: Les forces étaient inégales
+Taurux|61|3|Taurux: Fascinants humains
+Taurux|61|4|Taurux: Nous serons vos serviteurs
+Tauros|62|0|Tauros
+Tauros|62|1|Tauros: Leur force est invraisemblable!
+Tauros|62|2|Tauros: Nous sommes terrassés
+Tauros|62|3|Tauros: Vous nous avez vaincus
+Tauros|62|4|Tauros: Nous rendons les armes
+Commandeur|63|0|Commandeur
+Commandeur|63|1|Ça ne se passera pas comme ça!
+Commandeur|63|2|Comment osez-vous?
+Commandeur|63|3|Pff, de simples étudiants!
+Commandeur|63|4|Eliminons l'élève le plus faible!
+Commandeur|63|5|Utilisons notre magie!
+Cerbères|64|0|Cerbères
+Cerbères|64|1|{Squall}: Galbadia utilise des G-Forces?
+Cerbères|64|2|{Quistis}: Les G-Forces sont inconnues ici
+Cerbères|64|3|{Zell}: L'ennemi a une G-Force?
+Cerbères|64|4|{Selphie}: C'est une G-Force ça?
+Cerbères|64|5|{Irvine}: C'est quoi ça?
+Cerbères|64|6|{Rinoa}: Est-ce une G-Force?
+Cerbères|64|7|{Squall}: Prenons-la!
+Cerbères|64|8|{Quistis}: Saisissons-la!
+Cerbères|64|9|{Zell}: Emparons-nous de ce truc!
+Cerbères|64|10|{Selphie}: Je veux ce truc, moi!
+Cerbères|64|11|{Irvine}: Jamais vu cette G-Force de ma vie
+Cerbères|64|12|{Rinoa}: Cette G-Force est incroyable!
+Cerbères|64|13|Cerbères: Quelle arrogance!
+Cerbères|64|14|Cerbères: De simples mortels!
+Cerbères|64|15|Montrez ce dont vous êtes capables!
+Cerbères|64|16|Cerbères: Intéressant
+Nosferatu|65|0|Nosferatu
+Nosferatu|65|1|Qui ose troubler mon sommeil?
+Nosferatu|65|2|Quelle agaçante faiblesse!
+Bahamut|66|0|Bahamut
+Bahamut|66|1|Je suis Bahamut
+Bahamut|66|2|{Squall}: Bahamut est une G-Force
+Bahamut|66|3|{Zell}: Bahamut? C'est une G-Force!
+Bahamut|66|4|{Quistis}: Bahamut est une G-Force
+Bahamut|66|5|{Selphie}: Bahamut? C'est une G-Force
+Bahamut|66|6|{Irvine}: Bahamut? La G-Force?
+Bahamut|66|7|{Rinoa}: Bahamut est une G-Force
+Bahamut|66|8|Bahamut: Une G-Force? Moi?
+Bahamut|66|9|Bahamut: Montrez-moi votre valeur!
+Bahamut|66|10|Bahamut: Vous forcez mon respect
+Bahamut|66|11|Bahamut: Je serai votre serviteur
+Odyssey|67|0|Odyssey
+Odyssey|67|1|Norg: Bujurururu!
+Odyssey|67|2|Norg: Bleu - Jaune - Rouge
+Odyssey|67|3|Norg: Le rouge couleur de magie!
+Odyssey|67|4|Tant que je verrais du rouge...
+Odyssey|67|5|les forces occultes seront avec moi!
+Templier|68|0|Templier
+Templier|68|1|Serfs, saisissez-vous d'eux
+Templier|68|2|NORG est le seul Maître en ces lieux
+Templier|68|3|Faites vite, serfs!
+Templier|68|4|Tuez-les tous!
+Templier|68|5|Cette université appartient à NORG
+Templier|68|6|Encore d'autres Seeds?!
+Templier|68|7|Vous soutenez le proviseur?
+Templier|68|8|Les infidèles doivent périr
+Templier|68|9|Notre serf se chargera de vous!
+Odin|69|0|Odin
+Odin|69|1|Odin: Preux chevaliers
+Odin|69|2|Odin: Je m'engage à votre service
+Odin|69|3|Odin: A partir de ce jour
+Odin|69|4|Odin: Convoquez-moi et je viendrai
+Odin|69|5|Odin: Votre insipide existence...
+Odin|69|6|Odin: ... prend fin en ce jour!
+Galbadien|70|0|Galbadien
+Galbadien|70|1|C'est des soldats de Dollet?
+Galbadien|70|2|On dirait plutôt des gosses
+Galbadien|70|3|Des mercenaires de la BGU?
+Galbadien|70|4|Quoi?! Des Seeds?!
+Galbadien|70|5|Ouh la! Ça craint!
+Elite-T|71|0|Elite-T
+Elite-T|71|1|Que personne ne bouge!
+Elite-T|71|2|Capitaine: Quel tas de ferraille!
+Elite-T|71|3|Soldat 2: On fait quoi maintenant?
+Elite-T|71|4|Soldat 1: Faut appeler les réparateurs
+Elite-T|71|5|Capitaine: Je vais les égorger!
+Elite-T|71|6|Aïe! Ça chauffe!
+Wedge|72|0|Wedge
+Wedge|72|1|Biggs: Ils sont redoutables ces gosses
+Wedge|72|2|Wedge: Aaahhhh!
+Wedge|72|3|Wedge: Capitaine...
+Wedge|72|4|Wedge: Les réparations sont terminées?
+Wedge|72|5|Wedge: Qui sont ces jeunes?
+Wedge|72|6|Biggs: WEDGE! Pas trop tôt!
+Wedge|72|7|Biggs: Pas de salaire ce mois-ci!
+Wedge|72|8|Wedge: J'aurais dû rester chez moi
+Biggs|73|0|Biggs
+Biggs|73|1|Biggs: Vous allez voir, bande de morveux
+Biggs|73|2|Biggs: Bon sang! Ils sont pas mauvais!
+Biggs|73|3|Wedge: Capitaine...
+Biggs|73|4|Wedge: Les réparations sont terminées?
+Biggs|73|5|Wedge: Que font ces gamins ici?
+Biggs|73|6|Biggs: WEDGE! Quand même!
+Biggs|73|7|Biggs: Pas de paie ce mois-ci!
+Biggs|73|8|Wedge: J'aurais dû rester chez moi!
+Biggs|73|9|Wedge: Nous sommes fichus!
+Biggs|73|10|Biggs: Assez de pleurnicheries
+Biggs|73|11|Biggs: Bon Dieu!
+Doublure|74|0|Doublure
+Doublure|74|1|vOUs AlLEz lE RegREtteR!
+Doublure|74|2|c'eSt lA fiN dE lA réSisTAncE...
+Doublure|74|3|QuEllE gaLéjAdE!
+Doublure|74|4|AaAhh aAHhaaAhH!
+Trooper|75|0|Trooper
+Trooper|75|1|Qu'est-ce que vous fabriquez?
+Trooper|75|2|Qui sont ces gosses?
+Trooper|75|3|Les Seeds se sont échappés!
+Trooper|75|4|J'ai trouvé les Seeds!
+Trooper|75|5|Vous vous en sortirez pas comme ça!
+Norg|76|0|Norg
+Norg|76|1|NORG: SOYEZ-MAUDITS-MEPRISABLES-SEEDS
+Norg|76|2|NORG: CETTE-UNIVERSITE-EST-MIENNE
+Norg|76|3|NORG: JE-SUIS-LE-SEUL-MAITRE-ICI
+Norg|76|4|NORG: TOUT-EST-FINI
+Norg|76|5|NORG: VOUS-M'ETONNEZ!
+Norg|76|6|NORG: C'EST-IMPOSSIBLE
+S-Borg|77|0|S-Borg
+T-Borg|78|0|T-Borg
+Tupolev|79|0|Tupolev
+Spootnik|80|0|Spootnik
+Gunblade|81|0|Gunblade
+Tomberry Sr|82|0|Tomberry Sr
+Tomberry Sr|82|1|Ça fait un peu peur
+Tomberry Sr|82|2|Dé... Désolé
+Tomberry Sr|82|3|Tomberry a rejoint votre camp
+Pampa Senior|83|0|Pampa Senior
+Pampa Senior|83|1|Pampa Senior commence à s'énerver
+Seifer|84|0|Seifer
+Seifer|84|1|Seifer: {Squall}, tu vas mourir!
+Seifer|84|2|Seifer: J'ai perdu?
+Seifer|84|3|Seifer: Tu m'as cru mort, hein?
+Seifer|84|4|Seifer: Je n'abandonnerai pas mon rêve
+Seifer|84|5|Seifer: {Squall}, tout est fini!
+Seifer|84|6|Seifer: Arrgh! Impressionnant!
+Seifer|85|0|Seifer
+Seifer|85|1|Seifer: Vous allez tous mourir!
+Seifer|85|2|Seifer: Montre ce dont tu es capable
+Seifer|85|3|Seifer: Je vous domine totalement
+Seifer|85|4|Seifer: C'est tout ce que tu peux faire?
+Seifer|85|5|Seifer: Nul ne peut me vaincre
+Seifer|85|6|Seifer: C'est impossible!
+Seifer|85|7|Seifer: Tu es prêt à mourir, {Squall}?
+Seifer|85|8|Seifer: A genoux, devant ton maître!
+Seifer|86|0|Seifer
+Seifer|86|1|Seifer: Je suis le chevalier d'Edea
+Seifer|86|2|Je vous tuerai tous!
+Seifer|86|3|Seifer: Nul ne peut me battre
+Seifer|86|4|Seifer: Aaaaargh!
+Seifer|86|5|Seifer: J'ai échoué!
+Edea|87|0|Edea
+Edea|87|1|{Rinoa}: Je veux me battre
+Edea|87|2|{Rinoa}: Je veux être utile!
+Edea|87|3|{Irvine}: Je dois me faire pardonner
+Edea|87|4|Edea: Damnés Seeds
+Edea|87|5|Edea: Votre fin est proche
+Edea|87|6|Edea: Vous m'insupportez
+Edea|87|7|Edea: Tout est fini pour vous
+Edea|87|8|Edea: Prétentieuses créatures
+Alienator|88|0|Alienator
+Monarch|89|0|Monarch
+Sulfura|90|0|Sulfura
+Sulfura|90|1|{Zell}: C'est quoi ce délire?
+Sulfura|90|2|{Squall}: Quoi?!
+Sulfura|90|3|{Selphie}: Je pige pas!
+Goliath|91|0|Goliath
+Goliath|91|1|{Zell}: Hé! Ça se répare tout seul!
+Goliath|91|2|{Squall}: Un système d'auto-entretien?
+Goliath|91|3|{Selphie}: Mais qu'est-ce qui se passe?
+Goliath|91|4|{Zell}: Fichons le camp!
+Goliath|91|5|{Selphie}: Retournons à la plage!
+Goliath|91|6|{Squall}: Ok, replions-nous!
+Goliath|91|7|{L2}, {R2} pour fuir
+Goliath|91|8|Réparations: 20%
+Goliath|91|9|Réparations: 40%
+Goliath|91|10|Réparations: 60%
+Goliath|91|11|Réparations: 80%
+Goliath|91|12|{Zell}: Ouah! Ça recommence!!!
+Goliath|91|13|{Squall}: Il n'y a rien à faire!
+Goliath|91|14|{Selphie}: Ras le bol!
+Iguanor|92|0|Iguanor
+Iguanor|92|1|{Irvine}: Il faut sauver {Rinoa}!
+Iguanor|92|2|{Irvine}: N'oublie pas mon Limit Break!
+Iguanor|92|3|Pour l'activer...
+Iguanor|92|4|Appuie sur la touche {R1}
+Iguanor|92|5|C'est clair?
+Agamemnon|93|0|Agamemnon
+Lygus|94|0|Lygus
+Cujo|95|0|Cujo
+Alienator|96|0|Alienator
+Alienator|97|0|Alienator
+Cyanide|98|0|Cyanide
+Edea|99|0|Edea
+Edea|99|1|Edea: Vaines créatures
+Edea|99|2|Edea: Tous les Seeds doivent mourir!
+Edea|99|3|Edea: Ah... Ahhh!
+Omniborg|100|0|Omniborg
+Omniborg|100|1|Commandeur: Activez le canon-laser
+Omniborg|100|2|Soldat 1: A vos ordres!
+Omniborg|100|3|Commandeur: Tirez encore!
+Omniborg|100|4|Soldat 2: Cible repérée
+Omniborg|100|5|Soldat 2: Commandeuuuur!
+Omniborg|100|6|Commandeur: On va pas se laisser faire!
+Omniborg|100|7|Soldat 1: C'est incontrôlable ce machin!
+Omniborg|100|8|Commandeur: QUOI?!
+Omniborg|100|9|Commandeur: Eliminez-les tous!
+Omniborg|100|10|Soldat 2: Fichons le camp!
+Omniborg|100|11|Commandeur: Protégez nos possessions!
+Omniborg|101|0|Omniborg
+Omniborg|101|1|{Rinoa}: Qu'est-ce que c'est?
+Omniborg|101|2|{Zell}: Encore un robot débile!
+Omniborg|101|3|{Irvine}: Ce truc est énorme!
+Omniborg|101|4|{Quistis}: Une nouvelle arme Galbadienne?
+Omniborg|101|5|{Squall}: Détruisons ce truc!
+Hornet|102|0|Hornet
+Hornet|102|1|{Squall}: Un mort-vivant!
+Hornet|102|2|Utilisons la magie et les objets de Soin
+Hornet|103|0|Hornet
+Anakronox|104|0|Anakronox
+Anakronox|104|1|Arme techno-mobile activée
+Anakronox|104|2|POD d'armement annexe OFF
+Anakronox|104|3|Arme techno-mobile désactivée
+Anakronox|104|4|POD d'armement annexe ON
+A-G Pod|105|0|A-G Pod
+A-D Pod|106|0|A-D Pod
+ParaBorg|107|0|ParaBorg
+ParaBorg|107|1|Suivez les instructions, rasez la BGU!
+ParaBorg|107|2|{Quistis}: Vous devrez nous tuer d'abord!
+ParaBorg|107|3|{Squall}: C'est hors de question
+ParaBorg|107|4|{Irvine}: 'Raser', carrément?!
+ParaBorg|107|5|{Selphie}: Ils délirent ou quoi?!
+ParaBorg|107|6|Vous perdez rien pour attendre, morveux!
+Flotix|108|0|Flotix
+Flotix|108|1|Plus de puissance magique pétrifiante!
+Bibendum|109|0|Bibendum
+Alienator|110|0|Alienator
+Adel|111|0|Adel
+Adel|111|1|{Squall}: On doit éviter {Rinoa}!
+Adel|111|2|{Zell}: Faut seulement toucher Adel!
+Adel|111|3|{Selphie}: Mon Dieu, {Rinoa}!
+Adel|111|4|{Quistis}: On doit sauver {Rinoa}
+Adel|111|5|{Rinoa}: Aaaaaahh
+Adel|111|6|Forces élémentales pointées sur Adel
+{Rinoa}|112|0|{Rinoa}
+{Rinoa}|112|1|{Rinoa}: Aaaahhh...
+{Rinoa}|112|2|{Rinoa}: Aidez moi!
+{Rinoa}|112|3|{Rinoa}: J'ai mal!
+{Rinoa}|112|4|{Rinoa}: Aaaaaaaah!
+{Rinoa}|112|5|{Rinoa}: Je souffre!
+Minotaure|113|0|Minotaure
+Nécromancienne|114|0|Nécromancienne
+Nécromancienne|114|1|La compression temporelle commence...
+Nécromancienne|115|0|Nécromancienne
+Nécromancienne|116|0|Nécromancienne
+Nécromancienne|116|1|5
+Nécromancienne|116|2|4
+Nécromancienne|116|3|3
+Nécromancienne|116|4|2
+Nécromancienne|116|5|1
+UFO|117|0|UFO
+Fujin|118|0|Fujin
+Fujin|118|1|Fujin: Où est Ellone?
+Fujin|118|2|Fujin: Impossible! Raijin, fuyons!
+Fujin|118|3|Fujin: Nous sommes vaincus!
+Raijin|119|0|Raijin
+Raijin|119|1|{Zell}: Tu me le paieras, Raijin!
+Raijin|119|2|Raijin: Passons aux choses sérieuses
+Raijin|119|3|Raijin: Hé, pas mal comme coup!
+Raijin|119|4|Raijin: Aïe! Ça fait mal!
+Raijin|119|5|Raijin: Je frappe pas les filles, moi!
+Raijin|119|6|Raijin: Quelle boule de nerfs!
+Raijin|119|7|Raijin: Fujin, je suis blessé!
+Raijin|119|8|Raijin: Fujin, on dégage!
+Raijin|119|9|Raijin: Moi aussi ils m'ont battu, Fujin
+Ultimecia|120|0|Ultimecia
+Ultimecia|120|1|Je peux créer le monstre suprême
+Ultimecia|120|2|La créature de vos cauchemars...
+Ultimecia|120|3|Soyez victimes de votre imagination
+Ultimecia|120|4|Ah ah ah!
+Ultimecia|120|5|La rivière du temps l'a emporté
+{Griever}|121|0|{Griever}
+{Griever}|121|1|Le temps l'a dévoré
+{Griever}|121|2|L'espace a avalé ce sort
+{Griever}|121|3|La G-Force n'a eu aucun effet
+{Griever}|121|4|Ultimecia: Tout ne fait que commencer
+{Griever}|121|5|Moi aussi, je possède une G-Force
+{Griever}|121|6|Vous allez être surpris
+{Griever}|121|7|{Griever} achève-les!
+ |122|0| 
+ |122|1|Ultimecia: Vous n'avez encore rien vu...
+ |122|2|Vous allez découvrir ma vraie nature
+Ultimecia|123|0|Ultimecia
+Ultimecia|123|1|L'espace s'en est emparé
+Ultimecia|123|2|Pouvoir magique aspiré par le temps
+Ultimecia|123|3|Invocation G-Force impossible
+Ultimecia|123|4|Ultimecia: Assez d'enfantillages!
+Ultimecia|123|5|{Griever} va vous exterminer!
+Ultimecia|123|6|Aaaaarrrgh...
+Hélix|124|0|Hélix
+Ultimecia|125|0|Ultimecia
+Ultimecia|125|1|Noyé dans la rivière du temps...
+Ultimecia|125|2|Je suis Ultimecia
+Ultimecia|125|3|Cette G-Force est impuissante
+Ultimecia|125|4|Je vais compresser le temps
+Ultimecia|125|5|Et faire disparaître toute forme de vie
+Ultimecia|125|6|Souviens-toi de ton...
+Ultimecia|125|7|Enfance
+Ultimecia|125|8|Cette sensation intense
+Ultimecia|125|9|Ta façon de parler...
+Ultimecia|125|10|Ces émotions brutes
+Ultimecia|125|11|En grandissant
+Ultimecia|125|12|Tu as oublié la moitié de toi-même
+Ultimecia|125|13|Mais le temps n'attend pas
+Ultimecia|125|14|Quel que soit ton désir
+Ultimecia|125|15|Le temps s'écoule comme du sable
+Ultimecia|125|16|Et...
+Seifer|126|0|Seifer
+Seifer|126|1|M'as-tu donné le quatrième?
+Seifer|126|2|Qui es-tu?
+Seifer|126|3|Essaie de parer ce coup divin
+Seifer|126|4|Tu vas périr, misérable!
+Seifer|126|5|Aaargh!
+Seifer|126|6|Aaaaaah!
+Seifer|126|7|Où est l'intervalle dimensionnel?
+Seifer|126|8|{Squall}: Odin?!
+Seifer|126|9|Seifer: Je n'abandonnerai pas!
+Seifer|126|10|Seifer: {Squall}, montre-moi tes talents!”
+Seifer|126|11|Seifer: Tu veux une autre balafre?
+Seifer|126|12|Seifer: Je dois pouvoir faire mieux!
+Jason|127|0|Jason
+Jason|127|1|En avant, Galbadia!”
+Jason|127|2|Equipe G en formation!
+Jason|127|3|Equipe M, en avant!
+Jason|127|4|Ecrasons-les!
+Attila|128|0|Attila
+Attila|128|1|Toute attaque armée est inutile
+Attila|128|2|Cette magie ne peut m'atteindre!
+Attila|128|3|Cette G-Force est inefficace!
+Attila|128|4|Aaaargh! Ces Quarts sont redoutables!
+Attila|128|5|{Diablos} est impitoyable!
+Sulfor|129|0|Sulfor
+Acarnan|130|0|Acarnan
+Acarnan|130|1|Hy        
+Acarnan|130|2|Hyp       
+Acarnan|130|3|Hypo      
+Acarnan|130|4|Hypoc     
+Acarnan|130|5|Hypocaus  
+Fabryce|131|0|Fabryce
+Fabryce|131|1|Mon nom est Fabryce
+Fabryce|131|2|Je suis sur terre...
+Fabryce|131|3|pour faire de ta vie un enfer!
+Wedge|132|0|Wedge
+Wedge|132|1|Wedge: Ouille!
+Wedge|132|2|Vous nous causez que des problèmes!
+Wedge|132|3|Wedge: Y'en a marre d'être rétrogradé!
+Wedge|132|4|Je suis toujours le bouc émissaire!
+Wedge|132|5|Wedge: Pourquoi moi?
+Wedge|132|6|Wedge: J'en ai vraiment assez!
+Wedge|132|7|Ras le bol!
+Biggs|133|0|Biggs
+Biggs|133|1|Biggs: J'ai été rétrogradé à cause de vous
+Biggs|133|2|Maintenant, je suis juste lieutenant!
+Biggs|133|3|Biggs: Vous allez me le payer!
+Biggs|133|4|Biggs: Ça ne se passera pas comme ça!
+Biggs|133|5|Biggs: Que fais-tu, imbécile?!
+Biggs|133|6|Biggs: Moi, lieutenant? C'est scandaleux!
+Biggs|133|7|Wedge: Ouh la! C'est la cata!
+Fujin |134|0|Fujin 
+Fujin |134|1|Fujin: Il faut faire un choix!
+Fujin |134|2|Fujin: Nous devons aider Seifer
+Fujin |134|3|Fujin: Misérables traîtres!
+Raijin |135|0|Raijin 
+Raijin |135|1|Raijin: Je te l'avais dit, Fujin
+Raijin |135|2|Fujin: Je les hais!
+Raijin |135|3|Raijin: Ils m'ont encore battu
+Raijin |135|4|Raijin: Impressionnant, {Squall}
+Raijin |135|5|Raijin: Mais Seifer est meilleur que toi
+Raijin |135|6|Raijin: Ouaaaah!
+Raijin |135|7|Raijin: Peut-être aussi bon que Seifer
+Raijin |135|8|Raijin: Bon, assez rigolé
+Raijin |135|9|Raijin: Ta dernière heure est venue
+Raijin |135|10|Raijin: Tu ne t'en sortiras pas comme ça
+UFO|136|0|UFO
+UFO|137|0|UFO
+UFO|138|0|UFO
+UFO|139|0|UFO
+Gunblade|140|0|Gunblade
+Gunblade|140|1|{Zell}“...The hell is this!?”
+Gunblade|140|2|{Squall}“What the...”
+Gunblade|140|3|{Selphie}“Ewww!  Nasty!”
+Soldat|141|0|Soldat
+Soldat|141|1|Capitaine, ils sont trop forts!
+Soldat|141|2|Ca... Capitaine?
+Soldat|141|3|Aaargh!
+Soldat|141|4|Que faites-vous ici?
+Soldat|141|5|Vous allez regretter votre impertinence!

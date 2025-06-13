@@ -64,7 +64,7 @@ class ShumiTranslator(QWidget):
         self.scroll_widget.setLayout(self.layout_main)
 
         self.setWindowTitle("ShumiTranslator")
-        #self.setMinimumSize(800, 800)
+        self.setMinimumHeight(600)
         self.__shumi_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
         self.setWindowIcon(self.__shumi_icon)
 
@@ -274,7 +274,7 @@ class ShumiTranslator(QWidget):
                 self.mngrp_manager.save_file(self.file_loaded, self.file_mngrphd_loaded)
                 popup_text = "Data saved to file <b>{}</b>".format(pathlib.Path(self.file_loaded).name)
             elif self.file_loaded_type == FileType.EXE:
-                folder_to_save = self.file_dialog.getExistingDirectory(parent=self, caption="Save msd file", directory=os.getcwd())
+                folder_to_save = self.file_dialog.getExistingDirectory(parent=self, caption="Save msd file")
                 if folder_to_save:
                     self.exe_manager.save_file(folder_to_save)
                     popup_text = "Msd files saved to folder <b>{}</b>".format(pathlib.Path(folder_to_save).name)
@@ -293,7 +293,7 @@ class ShumiTranslator(QWidget):
                 self.scroll_area.setEnabled(False)
                 self.csv_upload_button.setEnabled(False)
                 self.csv_save_button.setEnabled(False)
-                folder_to_save = self.file_dialog.getExistingDirectory(parent=self, caption="Save field fs unpacked", directory=os.getcwd())
+                folder_to_save = self.file_dialog.getExistingDirectory(parent=self, caption="Save field fs unpacked")
                 if folder_to_save:
                     self.field_fs_manager.save_file(folder_to_save)
                     popup_text = "Msd files saved to folder <b>{}</b>".format(pathlib.Path(folder_to_save).name)
@@ -306,7 +306,7 @@ class ShumiTranslator(QWidget):
                 self.scroll_area.setEnabled(False)
                 self.csv_upload_button.setEnabled(False)
                 self.csv_save_button.setEnabled(False)
-                folder_to_save = self.file_dialog.getExistingDirectory(parent=self, caption="Save world fs unpacked", directory=os.getcwd())
+                folder_to_save = self.file_dialog.getExistingDirectory(parent=self, caption="Save world fs unpacked")
                 if folder_to_save:
                     self.world_fs_manager.save_file(folder_to_save)
                     popup_text = "wmsetxx.obj file saved to folder <b>{}</b>".format(pathlib.Path(folder_to_save).name)
@@ -451,7 +451,7 @@ class ShumiTranslator(QWidget):
         if not file_to_load:
             filter_file = self.FILE_MANAGED_REGEX[self.file_type_selection_widget.currentIndex()]
             if self.file_type_selection_widget.currentIndex() == 4:  # c0mxx.dat
-                file_to_load = self.file_dialog.getOpenFileNames(parent=self, caption="Find file", filter=filter_file, directory=os.getcwd())[0]
+                file_to_load = self.file_dialog.getOpenFileNames(parent=self, caption="Find file", filter=filter_file)[0]
                 new_file_to_load = []
                 for file in file_to_load:
                     file_name = pathlib.Path(file).name.split('.')[0].split("m")[1]
@@ -459,7 +459,7 @@ class ShumiTranslator(QWidget):
                         new_file_to_load.append(file)
                 file_to_load = new_file_to_load
             else:
-                file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Find file", filter=filter_file, directory=os.getcwd())[0]
+                file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Find file", filter=filter_file)[0]
 
         if file_to_load:
             self.file_dialog_button.setEnabled(False)
@@ -503,8 +503,7 @@ class ShumiTranslator(QWidget):
             elif "mngrp" in file_name and ".bin" in file_name:
                 self.file_loaded_type = FileType.MNGRP
                 #self.file_mngrphd_loaded = os.path.join("OriginalFiles", "mngrphd.bin")  # For developing faster
-                self.file_mngrphd_loaded = self.file_dialog.getOpenFileName(parent=self, caption="Find mngrphd", filter="*mngrphd*.bin",
-                                                                           directory=os.getcwd())[0]
+                self.file_mngrphd_loaded = self.file_dialog.getOpenFileName(parent=self, caption="Find mngrphd", filter="*mngrphd*.bin")[0]
 
                 if self.file_mngrphd_loaded:
                     self.mngrp_manager.load_file(self.file_mngrphd_loaded, self.file_loaded)

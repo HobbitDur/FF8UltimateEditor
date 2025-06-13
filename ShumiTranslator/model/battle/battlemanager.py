@@ -55,5 +55,6 @@ class BattleManager:
                 self.ennemy_list[i].info_stat_data['monster_name'] = self.section_text_list[i].get_text_list()[0]
                 for j, text in enumerate(self.section_text_list[i].get_text_list()[1:]):
                     self.ennemy_list[i].battle_script_data['battle_text'][j] = text
+            print(f"Writing to file enemy {self.ennemy_list[i].info_stat_data['monster_name'].get_str()}")
             self.ennemy_list[i].write_data_to_file(self.game_data, self.file_list[i])
 
