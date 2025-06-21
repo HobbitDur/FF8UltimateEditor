@@ -82,7 +82,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._cactilio_button.setIconSize(QSize(30, 30))
         self._cactilio_button.setFixedSize(40, 40)
         self._cactilio_button.clicked.connect(self._launch_cactilio)
-        self._cactilio_button.setToolTip("Launch cactilio (Scene.out editor)")
+        self._cactilio_button.setToolTip("Launch Jumbo cactuar (Scene.out editor)")
 
         self._external_program_layout = QHBoxLayout()
         self._external_program_layout.addWidget(self._external_program_title)
@@ -123,7 +123,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.siren_launcher = SirenLauncher(os.path.join("Siren", "Siren.exe"), callback=None)
         self.junkshop_launcher = JunkshopLauncher(os.path.join("Junkshop", "Junkshop.exe"), callback=None)
         self.doomtrain_launcher = DoomtrainLauncher(os.path.join("Doomtrain", "Doomtrain.exe"), callback=None)
-        self.cactilio_launcher = CactilioLauncher(os.path.join("Cactilio", "Cactilio.exe"), callback=None)
+        self.cactilio_launcher = CactilioLauncher(os.path.join("Cactilio", "Jumbo Cactuar.exe"), callback=None)
 
         self._main_layout.addLayout(self._enhance_layout)
         self._main_layout.addWidget(self._enhance_end_separator_line)
