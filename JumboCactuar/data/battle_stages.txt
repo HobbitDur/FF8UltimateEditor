@@ -3,8 +3,8 @@ Dollet Bridge
 Dollet Trasmission Tower path
 Dollet Transmission Tower (Top)
 Dollet Transmission Tower (Elevator)
-Dollet Transmission Tower (Elevator 2 ?)
-Dollet City ? (Spice Spice Shop)
+Dollet Transmission Tower (Elevator 2)
+Dollet City
 Balamb Garden entrance gate
 Balamb Garden 1st Floor Hall
 Balamb Garden 2nd Floor Corridor
@@ -24,23 +24,23 @@ Balamb Garden Class Room
 Galbadia Garden Corridor ?
 Galbadia Garden Corridor 2 ?
 Galbadia Missile Base
-Deep Sea Research Center (Entrance?)
-Balamb Town (Balamb Hotel road)
+Deep Sea Research Center (Bahamut Fight)
+Balamb Town (Balamb Hotel Road)
 Balamb Town (Balamb Hotel Hall)
-? Diabolous Lair?
-Fire Cavern (path)
+Cement Floor with Night Sky (Unused)
+Fire Cavern (Path)
 Fire Cavern (Ifrit Lair)
 Galbadia Garden Hall
-Galbadia Garden Auditorium (Edea's battle?)
-Galbadia Garden Auditorium 2? (Edea's battle?)
+Galbadia Garden Auditorium (Seifer Fight)
+Galbadia Garden Auditorium 2 (Edea Fight)
 Galbadia Garden Corridor
 Galbadia Garden (Ice Hockey Field)
-?? Some broken wall place..Ultimecia Castle?
-StarField?
-Desert Prison? (elevator?)
+Ultimecia Junct. w/ Griever Arena
+Final Ultimecia Space
+Desert Prison? (Elevator?)
 Desert Prison? (Floor?)
-Esthar City (road)
-Desert Prison? (Top?)
+Esthar City (Road)
+Desert Prison (Top)
 Esthar City (road2 ?)
 Missile Base? Hangar?
 Missile Base? Hangar2?
@@ -52,13 +52,13 @@ Tomb of the Unknown King (Boss Fight room)?
 Fisherman Horizon (Road)
 Fisherman Horizon (Train Station Square)
 Desert Prison? (Floor?)
-Salt Lake?
+Great Salt Lake
 Ultima Weapon Stage
-Salt Lake 2?
+Great Salt Lake 2 (Abadon Fight)
 Esthar Road
 Ultimecia's Castle (bridge)
 Esthar (square?)
-Esthar (?)
+Esthar Sorceress Memorial (Unused)
 Esthar (cave?)
 Esthar (cave2?)
 Esthar (Centra excavation site)
@@ -82,7 +82,7 @@ Centra excavation site (Entrance)
 Trabia Canyon
 Ragnarok?
 Ragnarok?
-? Diabolous Lair?
+Diablos' Lair
 Deep Sea Research Center (Entrance)
 Deep Sea Research Center
 Deep Sea Research Center
@@ -90,7 +90,7 @@ Deep Sea Research Center
 Deep Sea Research Center
 Deep Sea Research Center
 Deep Sea Research Center
-? ?
+Floating Platform during Time Compression
 ? Esthar shops?
 Tear's Point
 Esthar
@@ -99,22 +99,22 @@ Ultimecia's Castle
 Ultimecia's Castle
 Ultimecia's Castle
 Deling City (Edea's Room)
-Balamb Plains?
-Desert Canyon?
-Desert?
+Grassy Plains
+Badlands
+Desert
 SnowyPlains? (Trabia Region?)
 Forest
-SnowyForest
+Snowy Forest
 Beach
-?Snow Beach?
+Snowy Beach
 Esthar City
 Esthar City
-Generic Landscape? Dirt Ground
-Generic Landscape? Grass Ground
-Generic Landscape? Dirt Ground
-Generic Landscape? Snow Covered Mountains
+Top of Plateau
+Next to Plateau on Grassy Plains
+Next to Plateau on Badlands
+Next to Snowy Mountains on Snow
 Esthar City
-Esthar City
+Esthar City - Blue road w/ Lunatic Pandora (Unused)
 Generic Landscape?
 Esthar City
 Esthar City
@@ -132,9 +132,9 @@ Generic Landscape?
 Generic Landscape?
 Generic Landscape?
 Next to Balamb Mountains
-Esthar City
-Generic Landscape?
-Generic Landscape? (Beach at night?)
+Esthar City Shop (Unused)
+Badlands (Night)
+Beach (Night)
 Commencement Room
 Ultimecia's Castle
 Ultimecia's Castle (Tiamat)
@@ -148,7 +148,7 @@ Edea's Parade Vehicle
 Tomb of the Unknown King (Boss Fight room)?
 Desert Prison?
 Galbadian something?
-Generic Landscape?
+Dirt Dunes (Unused)
 Generic Landscape?
 Balamb Garden (External Corridor?)
 Balamb Garden (External Corridor?)

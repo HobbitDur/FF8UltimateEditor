@@ -18,10 +18,11 @@ class SeqWidget(QWidget):
     MAX_OP_CODE_VALUE = 255
     MIN_OP_CODE_VALUE = 0
 
-    def __init__(self, seq: List):
+    def __init__(self, seq: bytearray, id: int ):
         QWidget.__init__(self)
         # Parameters
         self._sequence = seq
+        self._id = id
 
         # signal
         self.op_id_changed_signal_emitter = OpIdChangedEmitter()
@@ -30,9 +31,9 @@ class SeqWidget(QWidget):
         self.setLayout(self.main_layout)
 
         # op_id widget
-        self.sequence_title = QLabel("Title")
+        self.sequence_title = QLabel(f"Seq ID {id}:")
         self.sequence_text_widget = QPlainTextEdit()
-        self.sequence_text_widget.setPlainText(str(self._sequence))
+        self.sequence_text_widget.setPlainText(self._sequence.hex(" "))
 
 
         self.sequence_layout = QHBoxLayout()
@@ -48,5 +49,8 @@ class SeqWidget(QWidget):
         return str(self._sequence)
     def __repr__(self):
         return self.__str__()
+
+    def getByteData(self):
+        return bytearray.fromhex(self.sequence_text_widget.toPlainText())
 
 

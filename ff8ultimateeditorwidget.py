@@ -34,7 +34,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._program_option_title = QLabel("Hobbit tools:")
         self._program_option = QComboBox()
         self._program_option.addItems(self.HOBBIT_OPTION_ITEMS)
-        self._program_option.setCurrentIndex(5)
+        self._program_option.setCurrentIndex(0)
 
         self._program_option.activated.connect(self._program_option_change)
         self._program_option.setToolTip("Choose which program to edit your c0m file")
@@ -145,7 +145,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._tonberry_shop_widget.adjustSize()
         self.adjustSize()
 
-        self._program_option_change()  # For dev faster
+        #self._program_option_change()  # For dev faster
 
     def _launch_ifritGui(self):
         self.ifritGui_launcher.launch()

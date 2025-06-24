@@ -1,0 +1,3072 @@
+Encounter ID 0:
+Main: 0, 0 | Secondary: 1, 3
+
+Encounter ID 1:
+Main: 0, 1 | Secondary: 2, 0
+
+Encounter ID 2:
+Main: 0, 2 | Secondary: 2, 1
+
+Encounter ID 3:
+Main: 0, 3 | Secondary: 2, 2
+
+Encounter ID 4:
+Main: 0, 4 | Secondary: 2, 3
+
+Encounter ID 5:
+Main: 0, 6 | Secondary: 1, 2
+
+Encounter ID 6:
+Main: 0, 5 | Secondary: 2, 4
+
+Encounter ID 7:
+Main: 0, 6 | Secondary: 0, 6
+
+Encounter ID 8:
+Main: 1, 4 | Secondary: 1, 6
+
+Encounter ID 9:
+Main: 1, 7 | Secondary: 0, 7
+
+Encounter ID 10:
+Main: 1, 0 | Secondary: 1, 5
+
+Encounter ID 11:
+Main: 0, 0 | Secondary: 0, 3
+
+Encounter ID 12:
+Main: 0, 1 | Secondary: 0, 4
+
+Encounter ID 13:
+Main: 0, 2 | Secondary: 0, 5
+
+Encounter ID 14:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 15:
+Main: 0, 4 | Secondary: 1, 6
+
+Encounter ID 16:
+Main: 1, 1 | Secondary: 0, 1
+
+Encounter ID 17:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 18:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 19:
+Main: 1, 2 | Secondary: 1, 4
+
+Encounter ID 20:
+Main: 0, 0 | Secondary: 2, 6
+
+Encounter ID 21:
+Main: 2, 7 | Secondary: 3, 0
+
+Encounter ID 22:
+Main: 0, 3 | Secondary: 0, 5
+
+Encounter ID 23:
+Main: 0, 6 | Secondary: 1, 5
+
+Encounter ID 24:
+Main: 3, 1 | Secondary: 3, 2
+
+Encounter ID 25:
+Main: 3, 3 | Secondary: 3, 4
+
+Encounter ID 26:
+Main: 0, 2 | Secondary: 0, 7
+
+Encounter ID 27:
+Main: 1, 0 | Secondary: 1, 3
+
+Encounter ID 28:
+Main: 1, 7 | Secondary: 1, 7
+
+Encounter ID 29:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 30:
+Main: 0, 3 | Secondary: 0, 0
+
+Encounter ID 31:
+Main: 0, 1 | Secondary: 0, 5
+
+Encounter ID 32:
+Main: 0, 0 | Secondary: 0, 3
+
+Encounter ID 33:
+Main: 0, 2 | Secondary: 0, 5
+
+Encounter ID 34:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 35:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 36:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 37:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 38:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 39:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 40:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 41:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 42:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 43:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 44:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 45:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 46:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 47:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 48:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 49:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 50:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 51:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 52:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 53:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 54:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 55:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 56:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 57:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 58:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 59:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 60:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 61:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 62:
+Main: 1, 0 | Secondary: 1, 0
+
+Encounter ID 63:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 64:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 65:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 66:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 67:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 68:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 69:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 70:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 71:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 72:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 73:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 74:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 75:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 76:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 77:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 78:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 79:
+Main: 0, 6 | Secondary: 0, 6
+
+Encounter ID 80:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 81:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 82:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 83:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 84:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 85:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 86:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 87:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 88:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 89:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 90:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 91:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 92:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 93:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 94:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 95:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 96:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 97:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 98:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 99:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 100:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 101:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 102:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 103:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 104:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 105:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 106:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 107:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 108:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 109:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 110:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 111:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 112:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 113:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 114:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 115:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 116:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 117:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 118:
+Main: 0, 6 | Secondary: 0, 6
+
+Encounter ID 119:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 120:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 121:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 122:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 123:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 124:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 125:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 126:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 127:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 128:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 129:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 130:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 131:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 132:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 133:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 134:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 135:
+Main: 0, 1 | Secondary: 0, 1
+
+Encounter ID 136:
+Main: 0, 1 | Secondary: 0, 1
+
+Encounter ID 137:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 138:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 139:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 140:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 141:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 142:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 143:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 144:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 145:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 146:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 147:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 148:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 149:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 150:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 151:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 152:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 153:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 154:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 155:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 156:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 157:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 158:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 159:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 160:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 161:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 162:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 163:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 164:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 165:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 166:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 167:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 168:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 169:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 170:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 171:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 172:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 173:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 174:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 175:
+Main: 0, 6 | Secondary: 0, 6
+
+Encounter ID 176:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 177:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 178:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 179:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 180:
+Main: 3, 0 | Secondary: 3, 1
+
+Encounter ID 181:
+Main: 3, 2 | Secondary: 3, 3
+
+Encounter ID 182:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 183:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 184:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 185:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 186:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 187:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 188:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 189:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 190:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 191:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 192:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 193:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 194:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 195:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 196:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 197:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 198:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 199:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 200:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 201:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 202:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 203:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 204:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 205:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 206:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 207:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 208:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 209:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 210:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 211:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 212:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 213:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 214:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 215:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 216:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 217:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 218:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 219:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 220:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 221:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 222:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 223:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 224:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 225:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 226:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 227:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 228:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 229:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 230:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 231:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 232:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 233:
+Main: 0, 4 | Secondary: 0, 4
+
+Encounter ID 234:
+Main: 0, 5 | Secondary: 0, 5
+
+Encounter ID 235:
+Main: 0, 6 | Secondary: 0, 6
+
+Encounter ID 236:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 237:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 238:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 239:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 240:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 241:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 242:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 243:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 244:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 245:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 246:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 247:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 248:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 249:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 250:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 251:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 252:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 253:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 254:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 255:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 256:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 257:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 258:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 259:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 260:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 261:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 262:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 263:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 264:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 265:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 266:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 267:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 268:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 269:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 270:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 271:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 272:
+Main: 0, 1 | Secondary: 0, 1
+
+Encounter ID 273:
+Main: 0, 2 | Secondary: 0, 2
+
+Encounter ID 274:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 275:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 276:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 277:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 278:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 279:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 280:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 281:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 282:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 283:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 284:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 285:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 286:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 287:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 288:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 289:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 290:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 291:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 292:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 293:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 294:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 295:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 296:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 297:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 298:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 299:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 300:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 301:
+Main: 0, 4 | Secondary: 0, 4
+
+Encounter ID 302:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 303:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 304:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 305:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 306:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 307:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 308:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 309:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 310:
+Main: 0, 1 | Secondary: 0, 1
+
+Encounter ID 311:
+Main: 0, 2 | Secondary: 0, 2
+
+Encounter ID 312:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 313:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 314:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 315:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 316:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 317:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 318:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 319:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 320:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 321:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 322:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 323:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 324:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 325:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 326:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 327:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 328:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 329:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 330:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 331:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 332:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 333:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 334:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 335:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 336:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 337:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 338:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 339:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 340:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 341:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 342:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 343:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 344:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 345:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 346:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 347:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 348:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 349:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 350:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 351:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 352:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 353:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 354:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 355:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 356:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 357:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 358:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 359:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 360:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 361:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 362:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 363:
+Main: 2, 0 | Secondary: 2, 0
+
+Encounter ID 364:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 365:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 366:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 367:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 368:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 369:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 370:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 371:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 372:
+Main: 1, 0 | Secondary: 1, 0
+
+Encounter ID 373:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 374:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 375:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 376:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 377:
+Main: 1, 0 | Secondary: 1, 0
+
+Encounter ID 378:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 379:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 380:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 381:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 382:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 383:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 384:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 385:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 386:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 387:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 388:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 389:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 390:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 391:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 392:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 393:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 394:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 395:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 396:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 397:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 398:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 399:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 400:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 401:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 402:
+Main: 3, 0 | Secondary: 3, 1
+
+Encounter ID 403:
+Main: 3, 2 | Secondary: 3, 3
+
+Encounter ID 404:
+Main: 3, 4 | Secondary: 3, 5
+
+Encounter ID 405:
+Main: 3, 6 | Secondary: 3, 7
+
+Encounter ID 406:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 407:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 408:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 409:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 410:
+Main: 1, 0 | Secondary: 1, 0
+
+Encounter ID 411:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 412:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 413:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 414:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 415:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 416:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 417:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 418:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 419:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 420:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 421:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 422:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 423:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 424:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 425:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 426:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 427:
+Main: 3, 0 | Secondary: 3, 1
+
+Encounter ID 428:
+Main: 3, 2 | Secondary: 3, 3
+
+Encounter ID 429:
+Main: 3, 4 | Secondary: 3, 5
+
+Encounter ID 430:
+Main: 3, 6 | Secondary: 3, 7
+
+Encounter ID 431:
+Main: 4, 0 | Secondary: 4, 0
+
+Encounter ID 432:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 433:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 434:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 435:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 436:
+Main: 1, 0 | Secondary: 1, 0
+
+Encounter ID 437:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 438:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 439:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 440:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 441:
+Main: 1, 0 | Secondary: 1, 0
+
+Encounter ID 442:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 443:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 444:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 445:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 446:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 447:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 448:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 449:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 450:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 451:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 452:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 453:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 454:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 455:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 456:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 457:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 458:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 459:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 460:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 461:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 462:
+Main: 1, 0 | Secondary: 1, 0
+
+Encounter ID 463:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 464:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 465:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 466:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 467:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 468:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 469:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 470:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 471:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 472:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 473:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 474:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 475:
+Main: 3, 0 | Secondary: 3, 1
+
+Encounter ID 476:
+Main: 3, 2 | Secondary: 3, 3
+
+Encounter ID 477:
+Main: 3, 4 | Secondary: 3, 5
+
+Encounter ID 478:
+Main: 3, 6 | Secondary: 3, 7
+
+Encounter ID 479:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 480:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 481:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 482:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 483:
+Main: 1, 0 | Secondary: 1, 0
+
+Encounter ID 484:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 485:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 486:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 487:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 488:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 489:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 490:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 491:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 492:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 493:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 494:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 495:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 496:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 497:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 498:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 499:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 500:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 501:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 502:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 503:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 504:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 505:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 506:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 507:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 508:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 509:
+Main: 0, 1 | Secondary: 0, 1
+
+Encounter ID 510:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 511:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 512:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 513:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 514:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 515:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 516:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 517:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 518:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 519:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 520:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 521:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 522:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 523:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 524:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 525:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 526:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 527:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 528:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 529:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 530:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 531:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 532:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 533:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 534:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 535:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 536:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 537:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 538:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 539:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 540:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 541:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 542:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 543:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 544:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 545:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 546:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 547:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 548:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 549:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 550:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 551:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 552:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 553:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 554:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 555:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 556:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 557:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 558:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 559:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 560:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 561:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 562:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 563:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 564:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 565:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 566:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 567:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 568:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 569:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 570:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 571:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 572:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 573:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 574:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 575:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 576:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 577:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 578:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 579:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 580:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 581:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 582:
+Main: 3, 6 | Secondary: 3, 7
+
+Encounter ID 583:
+Main: 4, 0 | Secondary: 4, 1
+
+Encounter ID 584:
+Main: 4, 2 | Secondary: 4, 3
+
+Encounter ID 585:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 586:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 587:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 588:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 589:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 590:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 591:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 592:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 593:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 594:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 595:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 596:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 597:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 598:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 599:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 600:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 601:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 602:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 603:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 604:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 605:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 606:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 607:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 608:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 609:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 610:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 611:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 612:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 613:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 614:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 615:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 616:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 617:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 618:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 619:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 620:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 621:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 622:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 623:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 624:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 625:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 626:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 627:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 628:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 629:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 630:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 631:
+Main: 3, 4 | Secondary: 3, 5
+
+Encounter ID 632:
+Main: 3, 6 | Secondary: 3, 7
+
+Encounter ID 633:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 634:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 635:
+Main: 3, 0 | Secondary: 3, 1
+
+Encounter ID 636:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 637:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 638:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 639:
+Main: 4, 0 | Secondary: 4, 1
+
+Encounter ID 640:
+Main: 4, 2 | Secondary: 4, 3
+
+Encounter ID 641:
+Main: 4, 4 | Secondary: 4, 5
+
+Encounter ID 642:
+Main: 4, 6 | Secondary: 4, 7
+
+Encounter ID 643:
+Main: 5, 0 | Secondary: 5, 1
+
+Encounter ID 644:
+Main: 5, 2 | Secondary: 5, 3
+
+Encounter ID 645:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 646:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 647:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 648:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 649:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 650:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 651:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 652:
+Main: 3, 2 | Secondary: 3, 3
+
+Encounter ID 653:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 654:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 655:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 656:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 657:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 658:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 659:
+Main: 5, 4 | Secondary: 5, 5
+
+Encounter ID 660:
+Main: 5, 6 | Secondary: 5, 7
+
+Encounter ID 661:
+Main: 6, 0 | Secondary: 6, 1
+
+Encounter ID 662:
+Main: 6, 2 | Secondary: 6, 3
+
+Encounter ID 663:
+Main: 6, 4 | Secondary: 6, 5
+
+Encounter ID 664:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 665:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 666:
+Main: 3, 4 | Secondary: 3, 5
+
+Encounter ID 667:
+Main: 3, 6 | Secondary: 3, 7
+
+Encounter ID 668:
+Main: 4, 0 | Secondary: 4, 1
+
+Encounter ID 669:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 670:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 671:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 672:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 673:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 674:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 675:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 676:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 677:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 678:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 679:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 680:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 681:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 682:
+Main: 6, 6 | Secondary: 6, 7
+
+Encounter ID 683:
+Main: 7, 0 | Secondary: 7, 1
+
+Encounter ID 684:
+Main: 7, 2 | Secondary: 7, 3
+
+Encounter ID 685:
+Main: 7, 4 | Secondary: 7, 5
+
+Encounter ID 686:
+Main: 7, 6 | Secondary: 7, 7
+
+Encounter ID 687:
+Main: 8, 0 | Secondary: 8, 1
+
+Encounter ID 688:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 689:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 690:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 691:
+Main: 3, 0 | Secondary: 3, 1
+
+Encounter ID 692:
+Main: 3, 2 | Secondary: 3, 3
+
+Encounter ID 693:
+Main: 3, 4 | Secondary: 3, 5
+
+Encounter ID 694:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 695:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 696:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 697:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 698:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 699:
+Main: 4, 4 | Secondary: 4, 5
+
+Encounter ID 700:
+Main: 4, 6 | Secondary: 4, 7
+
+Encounter ID 701:
+Main: 5, 0 | Secondary: 5, 1
+
+Encounter ID 702:
+Main: 5, 2 | Secondary: 5, 3
+
+Encounter ID 703:
+Main: 5, 4 | Secondary: 5, 5
+
+Encounter ID 704:
+Main: 5, 6 | Secondary: 5, 7
+
+Encounter ID 705:
+Main: 6, 0 | Secondary: 6, 1
+
+Encounter ID 706:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 707:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 708:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 709:
+Main: 3, 0 | Secondary: 3, 1
+
+Encounter ID 710:
+Main: 3, 2 | Secondary: 3, 3
+
+Encounter ID 711:
+Main: 3, 4 | Secondary: 3, 5
+
+Encounter ID 712:
+Main: 3, 6 | Secondary: 3, 6
+
+Encounter ID 713:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 714:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 715:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 716:
+Main: 3, 6 | Secondary: 3, 7
+
+Encounter ID 717:
+Main: 4, 0 | Secondary: 4, 1
+
+Encounter ID 718:
+Main: 4, 2 | Secondary: 4, 3
+
+Encounter ID 719:
+Main: 4, 4 | Secondary: 4, 5
+
+Encounter ID 720:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 721:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 722:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 723:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 724:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 725:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 726:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 727:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 728:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 729:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 730:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 731:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 732:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 733:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 734:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 735:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 736:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 737:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 738:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 739:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 740:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 741:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 742:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 743:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 744:
+Main: 3, 0 | Secondary: 3, 1
+
+Encounter ID 745:
+Main: 3, 2 | Secondary: 3, 2
+
+Encounter ID 746:
+Main: 6, 2 | Secondary: 6, 2
+
+Encounter ID 747:
+Main: 1, 6 | Secondary: 1, 6
+
+Encounter ID 748:
+Main: 3, 7 | Secondary: 3, 7
+
+Encounter ID 749:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 750:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 751:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 752:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 753:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 754:
+Main: 0, 1 | Secondary: 0, 1
+
+Encounter ID 755:
+Main: 0, 2 | Secondary: 0, 2
+
+Encounter ID 756:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 757:
+Main: 0, 1 | Secondary: 0, 1
+
+Encounter ID 758:
+Main: 0, 2 | Secondary: 0, 2
+
+Encounter ID 759:
+Main: 0, 3 | Secondary: 0, 3
+
+Encounter ID 760:
+Main: 0, 5 | Secondary: 0, 5
+
+Encounter ID 761:
+Main: 0, 4 | Secondary: 0, 4
+
+Encounter ID 762:
+Main: 0, 3 | Secondary: 0, 3
+
+Encounter ID 763:
+Main: 0, 4 | Secondary: 0, 4
+
+Encounter ID 764:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 765:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 766:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 767:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 768:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 769:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 770:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 771:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 772:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 773:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 774:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 775:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 776:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 777:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 778:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 779:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 780:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 781:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 782:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 783:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 784:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 785:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 786:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 787:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 788:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 789:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 790:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 791:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 792:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 793:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 794:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 795:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 796:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 797:
+Main: 0, 2 | Secondary: 0, 3
+
+Encounter ID 798:
+Main: 0, 4 | Secondary: 0, 5
+
+Encounter ID 799:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 800:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 801:
+Main: 2, 4 | Secondary: 2, 5
+
+Encounter ID 802:
+Main: 2, 6 | Secondary: 2, 7
+
+Encounter ID 803:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 804:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 805:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 806:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 807:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 808:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 809:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 810:
+Main: 0, 6 | Secondary: 0, 6
+
+Encounter ID 811:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 812:
+Main: 0, 4 | Secondary: 0, 4
+
+Encounter ID 813:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 814:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 815:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 816:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 817:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 818:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 819:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 820:
+Main: 0, 2 | Secondary: 0, 2
+
+Encounter ID 821:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 822:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 823:
+Main: 2, 0 | Secondary: 2, 1
+
+Encounter ID 824:
+Main: 2, 2 | Secondary: 2, 3
+
+Encounter ID 825:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 826:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 827:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 828:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 829:
+Main: 1, 6 | Secondary: 1, 7
+
+Encounter ID 830:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 831:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 832:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 833:
+Main: 1, 2 | Secondary: 1, 2
+
+Encounter ID 834:
+Main: 1, 3 | Secondary: 1, 3
+
+Encounter ID 835:
+Main: 1, 0 | Secondary: 1, 0
+
+Encounter ID 836:
+Main: 0, 4 | Secondary: 0, 4
+
+Encounter ID 837:
+Main: 0, 4 | Secondary: 0, 4
+
+Encounter ID 838:
+Main: 0, 4 | Secondary: 0, 4
+
+Encounter ID 839:
+Main: 0, 4 | Secondary: 0, 4
+
+Encounter ID 840:
+Main: 1, 1 | Secondary: 1, 1
+
+Encounter ID 841:
+Main: 0, 4 | Secondary: 0, 4
+
+Encounter ID 842:
+Main: 1, 4 | Secondary: 1, 5
+
+Encounter ID 843:
+Main: 0, 6 | Secondary: 0, 7
+
+Encounter ID 844:
+Main: 1, 0 | Secondary: 1, 1
+
+Encounter ID 845:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 846:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 847:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 848:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 849:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 850:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 851:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 852:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 853:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 854:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 855:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 856:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 857:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 858:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 859:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 860:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 861:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 862:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 863:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 864:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 865:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 866:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 867:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 868:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 869:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 870:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 871:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 872:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 873:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 874:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 875:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 876:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 877:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 878:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 879:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 880:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 881:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 882:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 883:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 884:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 885:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 886:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 887:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 888:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 889:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 890:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 891:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 892:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 893:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 894:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 895:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 896:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 897:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 898:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 899:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 900:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 901:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 902:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 903:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 904:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 905:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 906:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 907:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 908:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 909:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 910:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 911:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 912:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 913:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 914:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 915:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 916:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 917:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 918:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 919:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 920:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 921:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 922:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 923:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 924:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 925:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 926:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 927:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 928:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 929:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 930:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 931:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 932:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 933:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 934:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 935:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 936:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 937:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 938:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 939:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 940:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 941:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 942:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 943:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 944:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 945:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 946:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 947:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 948:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 949:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 950:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 951:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 952:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 953:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 954:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 955:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 956:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 957:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 958:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 959:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 960:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 961:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 962:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 963:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 964:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 965:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 966:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 967:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 968:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 969:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 970:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 971:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 972:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 973:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 974:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 975:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 976:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 977:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 978:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 979:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 980:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 981:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 982:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 983:
+Main: 3, 2 | Secondary: 3, 2
+
+Encounter ID 984:
+Main: 6, 2 | Secondary: 6, 2
+
+Encounter ID 985:
+Main: 1, 6 | Secondary: 1, 6
+
+Encounter ID 986:
+Main: 3, 7 | Secondary: 3, 7
+
+Encounter ID 987:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 988:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 989:
+Main: 1, 0 | Secondary: 1, 0
+
+Encounter ID 990:
+Main: 1, 2 | Secondary: 1, 3
+
+Encounter ID 991:
+Main: 6, 3 | Secondary: 6, 3
+
+Encounter ID 992:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 993:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 994:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 995:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 996:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 997:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 998:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 999:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 1000:
+Main: 0, 1 | Secondary: 0, 1
+
+Encounter ID 1001:
+Main: 1, 1 | Secondary: 2, 5
+
+Encounter ID 1002:
+Main: 1, 0 | Secondary: 1, 0
+
+Encounter ID 1003:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 1004:
+Main: 0, 6 | Secondary: 0, 6
+
+Encounter ID 1005:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 1006:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 1007:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 1008:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 1009:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 1010:
+Main: 0, 1 | Secondary: 0, 1
+
+Encounter ID 1011:
+Main: 0, 2 | Secondary: 0, 2
+
+Encounter ID 1012:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 1013:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 1014:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 1015:
+Main: 0, 0 | Secondary: 0, 0
+
+Encounter ID 1016:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 1017:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 1018:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 1019:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 1020:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 1021:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 1022:
+Main: 0, 0 | Secondary: 0, 1
+
+Encounter ID 1023:
+Main: 0, 0 | Secondary: 0, 1
+

@@ -77,9 +77,7 @@ class IfritSeqWidget(QWidget):
         self.info_button.setToolTip("Show toolmaker info")
         self.info_button.clicked.connect(self.__show_info)
 
-
-
-
+        self.seq_data_widget= []
         self.monster_name_label = QLabel()
         self.monster_name_label.hide()
 
@@ -92,21 +90,14 @@ class IfritSeqWidget(QWidget):
         self.layout_top.addStretch(1)
 
 
-        self.main_horizontal_layout = QHBoxLayout()
-
         # The main horizontal will be for code expert, when ai layout will be for others
 
-        self.ai_layout = QVBoxLayout()
-        self.main_horizontal_layout.addLayout(self.ai_layout)
-        self.ai_layout.addLayout(QHBoxLayout())
-        self.ai_layout.addStretch(1)
-        self.seq_data_widget = []
-
+        self.main_vertical_layout = QVBoxLayout()
 
         self.window_layout.addLayout(self.layout_top)
         self.window_layout.addWidget(self.scroll_area)
         self.scroll_widget.setLayout(self.layout_main)
-        self.layout_main.addLayout(self.main_horizontal_layout)
+        self.layout_main.addLayout(self.main_vertical_layout)
 
         #self.show()
 
@@ -125,13 +116,14 @@ class IfritSeqWidget(QWidget):
 
 
     def __save_file(self):
+        self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'] = []
+        for index, seq_widget in enumerate(self.seq_data_widget):
+            self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'].append(seq_widget.getByteData())
         self.ifrit_manager.save_file(self.file_loaded)
         print("File saved")
 
-
-
     def __load_file(self, file_to_load: str = ""):
-        file_to_load = os.path.join("c0m028.dat")  # For developing faster
+        #file_to_load = os.path.join("c0m028.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat",
                                                             directory=os.getcwd())[0]
@@ -146,18 +138,20 @@ class IfritSeqWidget(QWidget):
             self.__setup_section_data()
 
     def __reload_file(self):
+        self.clear_lines()
+
         self.__load_file(self.file_loaded)
 
-    def __clear_lines(self, delete_data=False):
-        pass
-        #command_list = [x.get_command() for x in self.command_line_widget]
-        #for command in command_list:
-        #    self.__remove_line(command, delete_data)
+    def clear_lines(self):
+        for index_to_remove in range(len(self.seq_data_widget)):
+            self.seq_data_widget[index_to_remove].deleteLater()
+            self.seq_data_widget[index_to_remove].setParent(None)
+            self.main_vertical_layout.takeAt(index_to_remove)
+        self.seq_data_widget= []
 
     def __setup_section_data(self):
-        print("__setup_section_data")
         for index, seq_data in enumerate(self.ifrit_manager.enemy.seq_animation_data['seq_animation_data']):
-            print(seq_data.hex())
-            print(len(seq_data))
-            self.seq_data_widget.append(SeqWidget(seq_data))
+            self.seq_data_widget.append(SeqWidget(seq_data, index))
+        for index, seq_widget in enumerate( self.seq_data_widget):
+            self.main_vertical_layout.addWidget(seq_widget)
 
