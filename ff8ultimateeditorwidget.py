@@ -12,6 +12,7 @@ from ExeLauncher.junkshop import JunkshopLauncher
 from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from ExeLauncher.sirenlauncher import SirenLauncher
 from IfritAI.ifritaiwidget import IfritAIWidget
+from IfritSeq.ifritseqwidget import IfritSeqWidget
 from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from ShumiTranslator.shumitranslator import ShumiTranslator
 from TonberryShop.tonberryshop import TonberryShop
@@ -27,13 +28,14 @@ class FF8UltimateEditorWidget(QWidget):
         self._main_layout = QVBoxLayout()
         self.setLayout(self._main_layout)
 
-        self.HOBBIT_OPTION_ITEMS = ["AI editor (IfritAI)", "Stat editor (IfritXlsx)", "All text editor (ShumiTranslator)", "Shop editor (TonberryShop)", "Card value editor (CCGroup)"]
+        self.HOBBIT_OPTION_ITEMS = ["AI editor (IfritAI)", "Stat editor (IfritXlsx)", "All text editor (ShumiTranslator)", "Shop editor (TonberryShop)", "Card value editor (CCGroup)", "IfritSeq (Anim seq editor)"]
 
         # Top widget to select what option we want
         self._program_option_title = QLabel("Hobbit tools:")
         self._program_option = QComboBox()
         self._program_option.addItems(self.HOBBIT_OPTION_ITEMS)
-        self._program_option.setCurrentIndex(0)
+        self._program_option.setCurrentIndex(5)
+
         self._program_option.activated.connect(self._program_option_change)
         self._program_option.setToolTip("Choose which program to edit your c0m file")
         self._program_option_layout = QHBoxLayout()
@@ -111,6 +113,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path))
         self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path) )
+        self._ifritseq_widget = IfritSeqWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path) )
 
         self._ifritAI_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self._ifritxlsx_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
@@ -118,6 +121,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._shumi_translator_widget.hide()
         self._tonberry_shop_widget.hide()
         self._ccgroup_widget.hide()
+        self._ifritseq_widget.hide()
         self.ifritGui_launcher = IfritGuiLauncher(os.path.join("IfritGui", "publish", "Ifrit.exe"), callback=self._ifritGui_exit)
         self.Quezacotl_launcher = QuezacotlLauncher(os.path.join("Quezacotl", "Quezacotl.exe"), callback=None)
         self.siren_launcher = SirenLauncher(os.path.join("Siren", "Siren.exe"), callback=None)
@@ -132,6 +136,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._main_layout.addWidget(self._shumi_translator_widget)
         self._main_layout.addWidget(self._tonberry_shop_widget)
         self._main_layout.addWidget(self._ccgroup_widget)
+        self._main_layout.addWidget(self._ifritseq_widget)
 
         self._ifritAI_widget.adjustSize()
         self._ifritxlsx_widget.adjustSize()
@@ -139,6 +144,8 @@ class FF8UltimateEditorWidget(QWidget):
         self._ccgroup_widget.adjustSize()
         self._tonberry_shop_widget.adjustSize()
         self.adjustSize()
+
+        self._program_option_change()  # For dev faster
 
     def _launch_ifritGui(self):
         self.ifritGui_launcher.launch()
@@ -165,30 +172,42 @@ class FF8UltimateEditorWidget(QWidget):
             self._shumi_translator_widget.hide()
             self._tonberry_shop_widget.hide()
             self._ccgroup_widget.hide()
+            self._ifritseq_widget.hide()
         elif self._program_option.currentIndex() == 1:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.show()
             self._shumi_translator_widget.hide()
             self._tonberry_shop_widget.hide()
             self._ccgroup_widget.hide()
+            self._ifritseq_widget.hide()
         elif self._program_option.currentIndex() == 2:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.hide()
             self._shumi_translator_widget.show()
             self._tonberry_shop_widget.hide()
             self._ccgroup_widget.hide()
+            self._ifritseq_widget.hide()
         elif self._program_option.currentIndex() == 3:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.hide()
             self._shumi_translator_widget.hide()
             self._tonberry_shop_widget.show()
             self._ccgroup_widget.hide()
+            self._ifritseq_widget.hide()
         elif self._program_option.currentIndex() == 4:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.hide()
             self._shumi_translator_widget.hide()
             self._tonberry_shop_widget.hide()
             self._ccgroup_widget.show()
+            self._ifritseq_widget.hide()
+        elif self._program_option.currentIndex() == 5:
+            self._ifritAI_widget.hide()
+            self._ifritxlsx_widget.hide()
+            self._shumi_translator_widget.hide()
+            self._tonberry_shop_widget.hide()
+            self._ccgroup_widget.hide()
+            self._ifritseq_widget.show()
         else:
             print(f"Unexpected program option index:{self._program_option.currentIndex()} and name {self._program_option.currentText()}")
 
