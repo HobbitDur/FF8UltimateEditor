@@ -39,7 +39,7 @@ class SeqWidget(QWidget):
         self.sequence_layout = QHBoxLayout()
         self.sequence_layout.addWidget(self.sequence_title)
         self.sequence_layout.addWidget(self.sequence_text_widget)
-        self.sequence_layout.addStretch(1)
+        #self.sequence_layout.addStretch(1)
 
 
         self.main_layout.addLayout(self.sequence_layout)

@@ -125,8 +125,7 @@ class IfritSeqWidget(QWidget):
     def __load_file(self, file_to_load: str = ""):
         #file_to_load = os.path.join("c0m028.dat")  # For developing faster
         if not file_to_load:
-            file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat",
-                                                            directory=os.getcwd())[0]
+            file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
             #self.__clear_lines(delete_data=True)
             self.ifrit_manager.init_from_file(file_to_load)
@@ -135,6 +134,7 @@ class IfritSeqWidget(QWidget):
                                                 pathlib.Path(file_to_load).name))
             self.monster_name_label.show()
             self.file_loaded = file_to_load
+            self.clear_lines()
             self.__setup_section_data()
 
     def __reload_file(self):
