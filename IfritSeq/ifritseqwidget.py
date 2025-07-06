@@ -167,7 +167,6 @@ class IfritSeqWidget(QWidget):
     def __analyze_sequence(self):
         text_analyze = ""
         for seq_widget in self.seq_data_widget:
-            print(f"id: {seq_widget}")
             text_analyze += f"--- seq {seq_widget.getId()} ---\n"
             text_analyze +=  SequenceAnalyser(game_data=self.ifrit_manager.game_data, model_anim_data=self.ifrit_manager.enemy.model_animation_data, sequence=seq_widget.getByteData()).get_text()
             text_analyze += "\n"
