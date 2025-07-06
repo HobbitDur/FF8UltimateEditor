@@ -7,10 +7,11 @@ from typing import List
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon, QFont
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QLabel, \
-    QColorDialog, QCheckBox, QMessageBox
+    QColorDialog, QCheckBox, QMessageBox, QPlainTextEdit
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+from FF8GameData.dat.sequenceanalyser import SequenceAnalyser
 from IfritAI.codeanalyser import CodeAnalyser
 from IfritAI.codewidget import CodeWidget
 
@@ -81,6 +82,9 @@ class IfritSeqWidget(QWidget):
         self.monster_name_label = QLabel()
         self.monster_name_label.hide()
 
+        self.seq_analyze_textarea = QPlainTextEdit()
+        self.seq_analyze_button = QPushButton("Analyze")
+        self.seq_analyze_button.clicked.connect(self.__analyze_sequence)
         self.layout_top = QHBoxLayout()
         self.layout_top.addWidget(self.file_dialog_button)
         self.layout_top.addWidget(self.save_button)
@@ -93,11 +97,15 @@ class IfritSeqWidget(QWidget):
         # The main horizontal will be for code expert, when ai layout will be for others
 
         self.main_vertical_layout = QVBoxLayout()
-
+        self.main_horizontal_layout = QHBoxLayout()
+        self.main_horizontal_layout.addLayout(self.main_vertical_layout)
+        self.main_horizontal_layout.addWidget(self.seq_analyze_textarea)
         self.window_layout.addLayout(self.layout_top)
+
+        self.window_layout.addWidget(self.seq_analyze_button)
         self.window_layout.addWidget(self.scroll_area)
         self.scroll_widget.setLayout(self.layout_main)
-        self.layout_main.addLayout(self.main_vertical_layout)
+        self.layout_main.addLayout(self.main_horizontal_layout)
 
         #self.show()
 
@@ -118,7 +126,7 @@ class IfritSeqWidget(QWidget):
     def __save_file(self):
         self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'] = []
         for index, seq_widget in enumerate(self.seq_data_widget):
-            self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'].append(seq_widget.getByteData())
+            self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'].append({"id": seq_widget.getId(), "data":seq_widget.getByteData()})
         self.ifrit_manager.save_file(self.file_loaded)
         print("File saved")
 
@@ -136,6 +144,7 @@ class IfritSeqWidget(QWidget):
             self.file_loaded = file_to_load
             self.clear_lines()
             self.__setup_section_data()
+            self.__analyze_sequence()
 
     def __reload_file(self):
         self.clear_lines()
@@ -151,7 +160,16 @@ class IfritSeqWidget(QWidget):
 
     def __setup_section_data(self):
         for index, seq_data in enumerate(self.ifrit_manager.enemy.seq_animation_data['seq_animation_data']):
-            self.seq_data_widget.append(SeqWidget(seq_data, index))
+            self.seq_data_widget.append(SeqWidget(seq_data["data"], seq_data['id']))
         for index, seq_widget in enumerate( self.seq_data_widget):
             self.main_vertical_layout.addWidget(seq_widget)
+
+    def __analyze_sequence(self):
+        text_analyze = ""
+        for seq_widget in self.seq_data_widget:
+            print(f"id: {seq_widget}")
+            text_analyze += f"--- seq {seq_widget.getId()} ---\n"
+            text_analyze +=  SequenceAnalyser(game_data=self.ifrit_manager.game_data, model_anim_data=self.ifrit_manager.enemy.model_animation_data, sequence=seq_widget.getByteData()).get_text()
+            text_analyze += "\n"
+        self.seq_analyze_textarea.setPlainText(text_analyze)
 

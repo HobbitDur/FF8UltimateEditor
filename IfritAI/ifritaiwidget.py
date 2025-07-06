@@ -398,8 +398,7 @@ class IfritAIWidget(QWidget):
     def __load_file(self, file_to_load: str = ""):
         #file_to_load = os.path.join("c0m028.dat")  # For developing faster
         if not file_to_load:
-            file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat",
-                                                            directory=os.getcwd())[0]
+            file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
             self._import_xlsx_button.setEnabled(True)
             self._import_md_button.setEnabled(True)

@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtWidgets import QApplication
 
-
+from IfritSeq.ifritseqwidget import IfritSeqWidget
 
 sys._excepthook = sys.excepthook
 def exception_hook(exctype, value, traceback):

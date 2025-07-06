@@ -52,5 +52,7 @@ class SeqWidget(QWidget):
 
     def getByteData(self):
         return bytearray.fromhex(self.sequence_text_widget.toPlainText())
+    def getId(self):
+        return self._id
 
 
