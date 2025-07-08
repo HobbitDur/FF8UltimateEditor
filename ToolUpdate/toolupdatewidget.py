@@ -142,6 +142,8 @@ class ToolUpdateWidget(QWidget):
 
         # Launch updater and close this app
         if updater_path.exists():
+            QMessageBox.information(self, "Update in progress",
+                                 "Self updating, the program will restart")
             subprocess.Popen([str(updater_path)])
             QApplication.quit()
         else:

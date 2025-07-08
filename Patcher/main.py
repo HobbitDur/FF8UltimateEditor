@@ -9,7 +9,7 @@ def main():
     # Paths configuration
     temp_dir = Path("ToolDownload")  # Where new version was extracted
     target_dir = Path(".")  # Where main app lives
-    exe_name = "ff8ultimateeditor.exe"  # Your main executable name
+    exe_name = "FF8UltimateEditor.exe"  # Your main executable name
 
     # Wait a moment to ensure main app has closed
     time.sleep(2)
@@ -18,10 +18,6 @@ def main():
         # Copy all files from temp to target
         for item in temp_dir.glob("*"):
             target = target_dir / item.name
-
-            # Skip the updater itself if it's in the temp folder
-            if item.name == "updater.exe":
-                continue
 
             # Remove existing file/dir if it exists
             if target.exists():

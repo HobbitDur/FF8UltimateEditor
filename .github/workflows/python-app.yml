@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p Patcher
-          pyinstaller -n Patcher -F --specpath release/build --distpath release/Patcher --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico Patcher/main.py
+          pyinstaller -n Patcher -F --specpath release/build --distpath release/Patcher --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico Patcher/main.py
           rm -R release/build
           cd release
           ls -al
@@ -45,7 +45,7 @@ jobs:
       - name: Create release
         shell: bash
         run: |
-          pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
+          pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
           mkdir -p release/Resources
           mkdir -p release/Junkshop
           mkdir -p release/Quezacotl
@@ -58,6 +58,7 @@ jobs:
           mkdir -p release/ToolUpdate
           cp ToolUpdate/list.json release/ToolUpdate/
           cp -R FF8GameData/Resources/. release/FF8GameData/Resources/
+          cp -R Resources/. release/Resources/
           rm -R release/build
           cd release
           ls -al
