@@ -16,3 +16,9 @@ IfritXlsx/OutputFiles
 *.log
 test
 *.dat
+Quezacotl/*
+Siren/*
+IfritGui/*
+JumboCactuar/*
+Junkshop/*
+*.exe

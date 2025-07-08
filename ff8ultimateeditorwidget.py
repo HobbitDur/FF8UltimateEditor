@@ -16,6 +16,7 @@ from IfritSeq.ifritseqwidget import IfritSeqWidget
 from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from ShumiTranslator.shumitranslator import ShumiTranslator
 from TonberryShop.tonberryshop import TonberryShop
+from ToolUpdate.toolupdatewidget import ToolUpdateWidget
 
 
 class FF8UltimateEditorWidget(QWidget):
@@ -86,7 +87,10 @@ class FF8UltimateEditorWidget(QWidget):
         self._cactilio_button.clicked.connect(self._launch_cactilio)
         self._cactilio_button.setToolTip("Launch Jumbo cactuar (Scene.out editor)")
 
+        self._tool_update_widget = ToolUpdateWidget()
+
         self._external_program_layout = QHBoxLayout()
+        self._external_program_layout.addWidget(self._tool_update_widget)
         self._external_program_layout.addWidget(self._external_program_title)
         self._external_program_layout.addWidget(self._ifrit_gui_button)
         self._external_program_layout.addWidget(self._Quezacotl_button)
@@ -104,6 +108,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._enhance_layout.addLayout(self._program_option_layout)
         self._enhance_layout.addLayout(self._external_program_layout)
         self._enhance_layout.addStretch(1)
+
 
 
 

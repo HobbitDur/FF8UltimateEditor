@@ -33,6 +33,15 @@ jobs:
           pip install pyinstaller
           pip freeze
       - uses: milliewalky/setup-7-zip@v1
+      - name: Create patcher
+        shell: bash
+        run: |
+          mkdir -p Patcher
+          pyinstaller -n Patcher -F --specpath release/build --distpath release/Patcher --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico Patcher/main.py
+          rm -R release/build
+          cd release
+          ls -al
+          cd ..
       - name: Create release
         shell: bash
         run: |
@@ -42,15 +51,10 @@ jobs:
           mkdir -p release/Quezacotl
           mkdir -p release/Doomtrain
           mkdir -p release/JumboCactuar
+          mkdir -p release/IfritGui
           mkdir -p release/Siren
           mkdir -p release/FF8GameData
           mkdir -p release/FF8GameData/Resources
-          cp -R Resources/. release/Resources/
-          cp -R Junkshop/. release/Junkshop/
-          cp -R Quezacotl/. release/Quezacotl/
-          cp -R Doomtrain/. release/Doomtrain/
-          cp -R JumboCactuar/. release/JumboCactuar/
-          cp -R Siren/. release/Siren/
           cp -R FF8GameData/Resources/. release/FF8GameData/Resources/
           rm -R release/build
           cd release

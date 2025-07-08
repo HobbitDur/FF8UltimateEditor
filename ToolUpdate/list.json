@@ -1,0 +1,28 @@
+{
+  "ExternalTools":{
+	"JumboCactuar":{
+	  "link":"https://github.com/Nihil-1/JumboCactuar"
+	},
+	"Junkshop":    {
+	  "link":"https://github.com/HobbitDur/junkshop-enhanced"
+	},
+	"Quezacotl":   {
+	  "link":"https://github.com/HobbitDur/quezacotl-enhanced"
+	},
+	"Siren":       {
+	  "link":"https://github.com/HobbitDur/Siren-enhanced"
+	},
+	"Doomtrain":   {
+	  "link":"https://github.com/DarkShinryu/doomtrain"
+	},
+	"IfritGui":   {
+	  "link":"https://github.com/HobbitDur/IfritGui"
+	}
+  },
+  "7zip": {
+	"link": "https://www.7-zip.org/a/7z2500-x64.exe"
+  },
+  "SelfUpdate": {
+	"link": "https://github.com/HobbitDur/FF8UltimateEditor"
+  }
+}
