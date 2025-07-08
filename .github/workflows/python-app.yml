@@ -55,6 +55,8 @@ jobs:
           mkdir -p release/Siren
           mkdir -p release/FF8GameData
           mkdir -p release/FF8GameData/Resources
+          mkdir -p release/ToolUpdate
+          cp ToolUpdate/list.json release/ToolUpdate/
           cp -R FF8GameData/Resources/. release/FF8GameData/Resources/
           rm -R release/build
           cd release
