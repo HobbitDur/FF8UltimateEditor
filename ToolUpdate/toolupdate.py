@@ -11,8 +11,8 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 
 
 class ToolDownloader:
-    # TOOL_LIST = ["Doomtrain", "JumboCactuar", "Siren", "Quezacotl", "Junkshop", "IfritGui"]
-    TOOL_LIST = ["Doomtrain"]
+    TOOL_LIST = ["Doomtrain", "JumboCactuar", "Siren", "Quezacotl", "Junkshop", "IfritGui"]
+    #TOOL_LIST = ["Doomtrain"] # For developing faster
     GITHUB_RELEASE_TAG_PATH = "/releases/tag/"
     GITHUB_RELEASE_PATH = "/releases"
     FOLDER_DOWNLOAD = "ToolDownload"
