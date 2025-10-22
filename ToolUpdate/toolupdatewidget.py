@@ -24,7 +24,7 @@ class Installer(QObject):
         for index, tool_name in enumerate(tool_updater.TOOL_LIST):
             tool_updater.update_one_tool(tool_name, self.download_progress.emit, canary=canary)
             self.progress.emit(index + 1)
-        tool_updater.update_self(self.download_progress.emit, canary=canary)
+        #tool_updater.update_self(self.download_progress.emit, canary=canary)
         self.completed.emit(len(tool_updater.TOOL_LIST))
 
 
