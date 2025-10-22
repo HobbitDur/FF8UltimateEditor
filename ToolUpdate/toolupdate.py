@@ -8,8 +8,8 @@ import requests
 
 
 class ToolDownloader:
-    TOOL_LIST = ["Doomtrain", "JumboCactuar", "Siren", "Quezacotl", "Junkshop", "IfritGui"]
-    #TOOL_LIST = ["Doomtrain"] # For developing faster
+    TOOL_LIST = ["Doomtrain", "JumboCactuar", "Siren", "Quezacotl", "Junkshop", "IfritGui", "Deling"]
+    #TOOL_LIST = ["Deling"] # For developing faster
     GITHUB_RELEASE_TAG_PATH = "/releases/tag/"
     GITHUB_RELEASE_PATH = "/releases"
     FOLDER_DOWNLOAD = "ToolDownload"
@@ -27,21 +27,40 @@ class ToolDownloader:
         dd_url = self.__get_github_url_file(self.json_data['ExternalTools'][tool_name], "assets_url", canary)
         json_file = self.__download_file(dd_url, download_update_func, headers={'content-type': 'application/json'})[0].json()
         asset_link = ""
-        if len(json_file) == 1:
+        if len(json_file) == 1: # If only 1 asset available
+            asset_link = json_file[0]['browser_download_url']
+        else:
+            for i, json_asset in enumerate(json_file):
+                for asset_name in self.json_data['ExternalTools'][tool_name]["asset_name"]:
+                    if asset_name == json_asset['name']:
+                        asset_link = json_file[i]['browser_download_url']
+                        break
+                if asset_link != "":
+                    break
+        if asset_link == "":
             asset_link = json_file[0]['browser_download_url']
         dd_file_name = self.__download_file(asset_link, download_update_func, write_file=True)[1]
-        self._unzip_tool(dd_file_name, tool_name)
+        if "install_path" in self.json_data["ExternalTools"][tool_name]:
+            install_path = self.json_data["ExternalTools"][tool_name]["install_path"]
+        else:
+            install_path = tool_name
+
+        if "ignore_first_folder" in self.json_data["ExternalTools"][tool_name]:
+            ignore_first_folder = self.json_data["ExternalTools"][tool_name]["ignore_first_folder"]
+        else:
+            ignore_first_folder = False
+        self._unzip_tool(dd_file_name, install_path, ignore_first_folder)
         shutil.rmtree(self.FOLDER_DOWNLOAD)
 
     def update_self(self, download_update_func: types.MethodType = None, canary=True):
-        # os.makedirs(self.FOLDER_DOWNLOAD, exist_ok=True)
-        # dd_url = self.__get_github_url_file(self.json_data['SelfUpdate'], "assets_url", canary)
-        # json_file = self.__download_file(dd_url, download_update_func, headers={'content-type': 'application/json'})[0].json()
-        # asset_link = ""
-        # if len(json_file) == 1:
-        #     asset_link = json_file[0]['browser_download_url']
-        # dd_file_name = self.__download_file(asset_link, download_update_func, write_file=True)[1]
-        # self._unzip_tool(dd_file_name, ".")
+        os.makedirs(self.FOLDER_DOWNLOAD, exist_ok=True)
+        dd_url = self.__get_github_url_file(self.json_data['SelfUpdate'], "assets_url", canary)
+        json_file = self.__download_file(dd_url, download_update_func, headers={'content-type': 'application/json'})[0].json()
+        asset_link = ""
+        if len(json_file) == 1:
+            asset_link = json_file[0]['browser_download_url']
+        dd_file_name = self.__download_file(asset_link, download_update_func, write_file=True)[1]
+        self._unzip_tool(dd_file_name, ".")
         pass
 
 
@@ -106,7 +125,7 @@ class ToolDownloader:
         dd_url = ""
         if canary:
             for el in json_file:
-                if el['tag_name'] == "canary" and el['tag_name'] == "prerelease" and el['tag_name'].count('.') == 1:
+                if el['prerelease']:
                     dd_url = el[json_url]
                     break
         if not dd_url:  # No pre-release found, taking latest
@@ -118,7 +137,7 @@ class ToolDownloader:
                         dd_url = el[json_url]
         return dd_url
 
-    def _unzip_tool(self, dd_file_name: str, tool_folder: str):
+    def _unzip_tool(self, dd_file_name: str, tool_folder: str, ignore_first_folder = False):
         # Unzip locally then copy all files, so we don't have problem erasing files while unziping
         if '.zip' in dd_file_name:
             archive = "tempzip"
@@ -132,6 +151,8 @@ class ToolDownloader:
             index_folder = -1
         if index_folder >= 0:  # If the extract contain the folder name itself
             archive_to_copy = os.path.join(archive, list_dir[index_folder])
+        elif ignore_first_folder:
+            archive_to_copy = os.path.join(archive, list_dir[0])
         else:
             archive_to_copy = archive
         futur_path = tool_folder

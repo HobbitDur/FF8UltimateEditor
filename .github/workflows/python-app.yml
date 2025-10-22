@@ -55,7 +55,12 @@ jobs:
           mkdir -p release/Siren
           mkdir -p release/FF8GameData
           mkdir -p release/FF8GameData/Resources
+          mkdir -p release/FF8GameData/fs
+          mkdir -p release/FF8GameData/fs/DelingCli
           mkdir -p release/ToolUpdate
+          mkdir -p release/ShumiTranslator
+          mkdir -p release/ShumiTranslator/csv
+          cp -R ShumiTranslator/csv/. release/ShumiTranslator/csv
           cp ToolUpdate/list.json release/ToolUpdate/
           cp -R FF8GameData/Resources/. release/FF8GameData/Resources/
           cp -R Resources/. release/Resources/

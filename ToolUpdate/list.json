@@ -17,7 +17,13 @@
 	},
 	"IfritGui":   {
 	  "link":"https://github.com/HobbitDur/IfritGui"
-	}
+	},
+	"Deling": {
+	  "link": "https://github.com/myst6re/deling",
+	  "install_path": "FF8GameData/fs/DelingCli",
+	  "asset_name": ["deling-continuous-cli-win_x64.zip", "deling-cli-win64.zip"],
+	  "ignore_first_folder": "True"
+  	}
   },
   "7zip": {
 	"link": "https://www.7-zip.org/a/7z2500-x64.exe"
