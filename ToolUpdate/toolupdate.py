@@ -2,12 +2,9 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import types
-from pathlib import Path
 from zipfile import ZipFile
 import requests
-from PyQt6.QtWidgets import QApplication, QMessageBox
 
 
 class ToolDownloader:

@@ -404,7 +404,7 @@ class ShumiTranslator(QWidget):
                 self.csv_upload_button.setEnabled(False)
                 self.csv_save_button.setEnabled(False)
                 self.field_fs_manager.save_csv(file_to_save)
-            if self.file_loaded_type == FileType.WORLD_FS:
+            elif self.file_loaded_type == FileType.WORLD_FS:
                 self.scroll_area.setEnabled(False)
                 self.csv_upload_button.setEnabled(False)
                 self.csv_save_button.setEnabled(False)
