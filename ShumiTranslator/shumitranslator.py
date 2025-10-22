@@ -171,7 +171,7 @@ class ShumiTranslator(QWidget):
             "msd files that need to be put in the folder direct/exe/<br/>")
         self.warning_exe_label_widget.hide()
         self.warning_field_label_widget = QLabel(
-            "This tool use deling, an external tool done my myst6re, to manage all field text (what character says). <br/> Due to this, the tool doesn't offer direct "
+            "This tool use deling (please download with the button after canal), an external tool done my myst6re, to manage all field text (what character says). <br/> Due to this, the tool doesn't offer direct "
             "modification but allows to export and import csv. <br/> "
             "The input is the field.fs file (need the .fi and .fl with same name and in same folder than field.fs)<br/>"
             "It will output a folder containing only the msd files which correspond to the file text.<br/>"
@@ -180,7 +180,7 @@ class ShumiTranslator(QWidget):
             "The save put all files in a field folder that can be directly put in the direct folder of FFNx.")
         self.warning_field_label_widget.hide()
         self.warning_world_label_widget = QLabel(
-            "This tool use deling, an external tool done my myst6re, to manage all world text (Draw point, aubel,...). <br/> Due to this, the tool doesn't offer direct "
+            "This tool use deling (please download with the button after canal), an external tool done my myst6re, to manage all world text (Draw point, aubel,...). <br/> Due to this, the tool doesn't offer direct "
             "modification but allows to export and import csv. <br/> "
             "The input is the world.fs file (need the .fi and .fl with same name and in same folder than world.fs)<br/>"
             "It will output a folder containing only the msd files which correspond to the file text.<br/>"
