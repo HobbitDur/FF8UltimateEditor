@@ -4,3 +4,4 @@ beautifulsoup4>=4.13.4
 XlsxWriter>=3.2.3
 openpyxl>=3.1.5
 requests>=2.32.4
+psutil>=7.1.1
