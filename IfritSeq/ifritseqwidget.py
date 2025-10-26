@@ -1,25 +1,17 @@
 import os
 import pathlib
-import re
-from email.policy import default
-from typing import List
+import xml.etree.ElementTree as ET
 
-from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QIcon, QFont
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QLabel, \
-    QColorDialog, QCheckBox, QMessageBox, QPlainTextEdit
+from PyQt6.QtCore import QSize
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QHBoxLayout, QLabel, \
+    QMessageBox, QPlainTextEdit
 
-from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
-from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+from FF8GameData.dat.commandanalyser import CurrentIfType
 from FF8GameData.dat.sequenceanalyser import SequenceAnalyser
-from IfritAI.codeanalyser import CodeAnalyser
-from IfritAI.codewidget import CodeWidget
-
-from IfritAI.commandwidget import CommandWidget
 from IfritAI.ifritmanager import IfritManager
 from IfritSeq.seqwidget import SeqWidget
-from IfritXlsx.ifritxlsxmanager import IfritXlsxManager
-from bs4 import BeautifulSoup
+
 
 class IfritSeqWidget(QWidget):
     ADD_LINE_SELECTOR_ITEMS = ["Condition", "Command"]
@@ -70,9 +62,24 @@ class IfritSeqWidget(QWidget):
         self.reset_button.clicked.connect(self.__reload_file)
         self.reset_button.setToolTip("Reload the file. /!\\ This will delete any local unsaved change made")
 
+        self._import_xml_button = QPushButton()
+        self._import_xml_button.setIcon(QIcon(os.path.join(icon_path, 'xml_upload.png')))
+        self._import_xml_button.setIconSize(QSize(30, 30))
+        self._import_xml_button.setFixedSize(40, 40)
+        self._import_xml_button.setToolTip("This allow to import sequence from xml file")
+        self._import_xml_button.clicked.connect(self._load_xml_file)
+        self._import_xml_button.setEnabled(False)
+
+        self._export_xml_button = QPushButton()
+        self._export_xml_button.setIcon(QIcon(os.path.join(icon_path, 'xml_save.png')))
+        self._export_xml_button.setIconSize(QSize(30, 30))
+        self._export_xml_button.setFixedSize(40, 40)
+        self._export_xml_button.setToolTip("This allow to export sequence to xml file")
+        self._export_xml_button.clicked.connect(self._export_xml_file)
+        self._export_xml_button.setEnabled(False)
+
         self.info_button = QPushButton()
         self.info_button.setIcon(QIcon(os.path.join(icon_path, 'info.png')))
-        # self.info_button.setIconSize(QSize(40, 40))
         self.info_button.setIconSize(QSize(30, 30))
         self.info_button.setFixedSize(40, 40)
         self.info_button.setToolTip("Show toolmaker info")
@@ -89,6 +96,8 @@ class IfritSeqWidget(QWidget):
         self.layout_top.addWidget(self.file_dialog_button)
         self.layout_top.addWidget(self.save_button)
         self.layout_top.addWidget(self.reset_button)
+        self.layout_top.addWidget(self._import_xml_button)
+        self.layout_top.addWidget(self._export_xml_button)
         self.layout_top.addWidget(self.info_button)
         self.layout_top.addWidget(self.monster_name_label)
         self.layout_top.addStretch(1)
@@ -145,6 +154,8 @@ class IfritSeqWidget(QWidget):
             self.clear_lines()
             self.__setup_section_data()
             self.__analyze_sequence()
+        self._export_xml_button.setEnabled(True)
+        self._import_xml_button.setEnabled(True)
 
     def __reload_file(self):
         self.clear_lines()
@@ -171,4 +182,65 @@ class IfritSeqWidget(QWidget):
             text_analyze +=  SequenceAnalyser(game_data=self.ifrit_manager.game_data, model_anim_data=self.ifrit_manager.enemy.model_animation_data, sequence=seq_widget.getByteData()).get_text()
             text_analyze += "\n"
         self.seq_analyze_textarea.setPlainText(text_analyze)
+
+    def _export_xml_file(self):
+        default_name = self.ifrit_manager.enemy.origin_file_name.replace('.dat', '.xml')
+        xml_file_to_export = self.file_dialog.getSaveFileName(parent=self, caption="Xml file to save", directory=default_name)[0]
+        # xml_file_to_export = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
+        if xml_file_to_export:
+            xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<sequence_animations>']
+
+            for item in self.ifrit_manager.enemy.seq_animation_data['seq_animation_data']:
+                # Convert bytearray to hex string with spaces and uppercase
+                if item['data']:
+                    hex_data = ' '.join(f'{byte:02X}' for byte in item['data'])
+                else:
+                    hex_data = ""
+                xml_lines.append(f'  <animation id="{item["id"]}">')
+                xml_lines.append(f'    <data>{hex_data}</data>')
+                xml_lines.append('  </animation>')
+
+            xml_lines.append('</sequence_animations>')
+
+            # Write to file
+            with open(xml_file_to_export, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(xml_lines))
+
+    def _load_xml_file(self):
+        xml_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Xml file to import", filter="*.xml")[0]
+        # xml_file_to_load = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
+        if xml_file_to_load:
+            try:
+                tree = ET.parse(xml_file_to_load)
+                root = tree.getroot()
+
+                seq_animation_data = []
+
+                for animation_elem in root.findall('animation'):
+                    anim_id = int(animation_elem.get('id'))
+                    data_elem = animation_elem.find('data')
+
+                    if data_elem.text and data_elem.text.strip():
+                        # Convert space-separated hex string back to bytearray
+                        hex_values = data_elem.text.strip().split()
+                        byte_data = bytearray(int(hex_val, 16) for hex_val in hex_values)
+                    else:
+                        byte_data = bytearray()
+
+                    seq_animation_data.append({
+                        'id': anim_id,
+                        'data': byte_data
+                    })
+
+                self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'] = seq_animation_data
+                self.clear_lines()
+                self.__setup_section_data()
+                self.__analyze_sequence()
+
+            except ET.ParseError as e:
+                print(f"Error parsing XML file: {e}")
+                return None
+            except FileNotFoundError:
+                print(f"XML file not found: {xml_file_to_load}")
+                return None
 

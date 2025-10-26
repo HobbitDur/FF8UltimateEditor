@@ -120,8 +120,8 @@ class FF8UltimateEditorWidget(QWidget):
         self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path) )
         self._ifritseq_widget = IfritSeqWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path) )
 
-        self._ifritAI_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        self._ifritxlsx_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        #self._ifritAI_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        #self._ifritxlsx_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self._ifritxlsx_widget.hide()
         self._shumi_translator_widget.hide()
         self._tonberry_shop_widget.hide()
@@ -134,7 +134,9 @@ class FF8UltimateEditorWidget(QWidget):
         self.doomtrain_launcher = DoomtrainLauncher(os.path.join("Doomtrain", "Doomtrain.exe"), callback=None)
         self.cactilio_launcher = CactilioLauncher(os.path.join("JumboCactuar", "Jumbo Cactuar.exe"), callback=None)
 
-        self._main_layout.addLayout(self._enhance_layout)
+        self._enhance_container = QWidget()
+        self._enhance_container.setLayout(self._enhance_layout)
+        self._main_layout.addWidget(self._enhance_container)
         self._main_layout.addWidget(self._enhance_end_separator_line)
         self._main_layout.addWidget(self._ifritAI_widget)
         self._main_layout.addWidget(self._ifritxlsx_widget)
@@ -143,11 +145,13 @@ class FF8UltimateEditorWidget(QWidget):
         self._main_layout.addWidget(self._ccgroup_widget)
         self._main_layout.addWidget(self._ifritseq_widget)
 
+        self._enhance_container.setFixedHeight(self._enhance_container.sizeHint().height())
         self._ifritAI_widget.adjustSize()
         self._ifritxlsx_widget.adjustSize()
         self._shumi_translator_widget.adjustSize()
         self._ccgroup_widget.adjustSize()
         self._tonberry_shop_widget.adjustSize()
+        # After adding to layout, get the natural height and set it as fixed
         self.adjustSize()
 
         #self._program_option_change()  # For dev faster

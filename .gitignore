@@ -22,3 +22,5 @@ IfritGui/*
 JumboCactuar/*
 Junkshop/*
 *.exe
+**.xml
+IfritGui
