@@ -183,7 +183,7 @@ class IfritSeqWidget(QWidget):
             text_analyze += "\n"
         self.seq_analyze_textarea.setPlainText(text_analyze)
 
-    def _export_xml_file(self):
+    def export_xml_file(self):
         default_name = self.ifrit_manager.enemy.origin_file_name.replace('.dat', '.xml')
         xml_file_to_export = self.file_dialog.getSaveFileName(parent=self, caption="Xml file to save", directory=default_name)[0]
         # xml_file_to_export = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
@@ -206,7 +206,7 @@ class IfritSeqWidget(QWidget):
             with open(xml_file_to_export, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(xml_lines))
 
-    def _load_xml_file(self):
+    def load_xml_file(self):
         xml_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Xml file to import", filter="*.xml")[0]
         # xml_file_to_load = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if xml_file_to_load:
