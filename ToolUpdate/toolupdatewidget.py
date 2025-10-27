@@ -102,7 +102,7 @@ class ToolUpdateWidget(QWidget):
 
     def install_completed(self, nb_install_done):
         self.progress.setValue(nb_install_done)
-        self.install_over.exec()
+        #self.install_over.exec()
 
         self.progress.setValue(0)
         self.progress_current_download.setValue(0)
