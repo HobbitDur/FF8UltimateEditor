@@ -237,7 +237,7 @@ class FF8UltimateEditorWidget(QWidget):
             os.makedirs('logs')
 
         # Log file with timestamp
-        log_file = f"logs/app_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        log_file = f"logs/FF8UltimateEditor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
         # Redirect stdout and stderr to file
         sys.stdout = open(log_file, 'w')

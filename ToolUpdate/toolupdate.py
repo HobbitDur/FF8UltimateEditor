@@ -135,14 +135,54 @@ class ToolDownloader:
                         dd_url = el[json_url]
         return dd_url
 
-    def _unzip_tool(self, dd_file_name: str, tool_folder: str, ignore_first_folder = False):
+    # def _unzip_tool(self, dd_file_name: str, tool_folder: str, ignore_first_folder = False):
+    #     # Unzip locally then copy all files, so we don't have problem erasing files while unziping
+    #     if '.zip' in dd_file_name:
+    #         archive = "tempzip"
+    #         os.makedirs(archive, exist_ok=True)
+    #         with ZipFile(os.path.join(self.FOLDER_DOWNLOAD, dd_file_name), 'r') as zip_ref:
+    #             zip_ref.extractall(archive)
+    #     list_dir = os.listdir(archive)
+    #     try:
+    #         index_folder = os.listdir(archive).index(dd_file_name.rsplit('.', 1)[0])
+    #     except ValueError:
+    #         index_folder = -1
+    #     if index_folder >= 0:  # If the extract contain the folder name itself
+    #         archive_to_copy = os.path.join(archive, list_dir[index_folder])
+    #     elif ignore_first_folder:
+    #         archive_to_copy = os.path.join(archive, list_dir[0])
+    #     else:
+    #         archive_to_copy = archive
+    #     futur_path = tool_folder
+    #
+    #     if archive_to_copy and futur_path:
+    #         shutil.copytree(archive_to_copy, futur_path, dirs_exist_ok=True,
+    #                         copy_function=shutil.copy)  # shutil.copy to make it works on linux proton
+    #     if archive != "":
+    #         shutil.rmtree(archive)
+
+
+    def _unzip_tool(self, dd_file_name: str, tool_folder: str, ignore_first_folder=False):
         # Unzip locally then copy all files, so we don't have problem erasing files while unziping
         if '.zip' in dd_file_name:
             archive = "tempzip"
             os.makedirs(archive, exist_ok=True)
             with ZipFile(os.path.join(self.FOLDER_DOWNLOAD, dd_file_name), 'r') as zip_ref:
                 zip_ref.extractall(archive)
+
+        # DEBUG: Print the entire directory structure
+        print("Contents of tempzip:")
+        for root, dirs, files in os.walk(archive):
+            level = root.replace(archive, '').count(os.sep)
+            indent = ' ' * 2 * level
+            print(f'{indent}{os.path.basename(root)}/')
+            subindent = ' ' * 2 * (level + 1)
+            for file in files:
+                print(f'{subindent}{file}')
+
         list_dir = os.listdir(archive)
+        print(f"Top level contents: {list_dir}")
+
         try:
             index_folder = os.listdir(archive).index(dd_file_name.rsplit('.', 1)[0])
         except ValueError:
