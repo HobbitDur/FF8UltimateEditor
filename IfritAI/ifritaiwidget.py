@@ -10,7 +10,6 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
     QColorDialog, QCheckBox, QMessageBox
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
-from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from IfritAI.codeanalyser import CodeAnalyser
 from IfritAI.codewidget import CodeWidget
 
