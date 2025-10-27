@@ -20,8 +20,8 @@ class Installer(QObject):
     download_progress = pyqtSignal(int, int)
     update_mod_list_completed = pyqtSignal()
 
-    @pyqtSlot(ToolDownloader, bool)
-    def install(self, tool_updater, canary, tool_list):
+    @pyqtSlot(ToolDownloader, bool, list)
+    def install(self, tool_updater:ToolDownloader, canary:bool, tool_list:list):
         for index, tool_name in enumerate(tool_list):
             tool_updater.update_one_tool(tool_name, self.download_progress.emit, canary=canary)
             self.progress.emit(index + 1)
@@ -30,7 +30,7 @@ class Installer(QObject):
 
 
 class ToolUpdateWidget(QWidget):
-    install_requested = pyqtSignal(ToolDownloader, bool)
+    install_requested = pyqtSignal(ToolDownloader, bool, list)
 
     def __init__(self,tool_list_callback:Callable, resource_path: str = "Resources" ):
         QWidget.__init__(self)
@@ -114,11 +114,12 @@ class ToolUpdateWidget(QWidget):
         self.start_update_process()
 
     def update_download(self, advancement: int, max_size: int):
+        tool_list = self._tool_list_callback()
         if advancement >= 0 and max_size >= 0:
-            if self.progress_install_index >= len(self.tool_updater.TOOL_LIST):
+            if self.progress_install_index >= len(tool_list):
                 progress_name = "FF8UltimateEditor"
             else:
-                progress_name = self.tool_updater.TOOL_LIST[self.progress_install_index]
+                progress_name = tool_list[self.progress_install_index]
             self.progress_current_download.setFormat(f"Downloading {progress_name}")
             self.progress_current_download.setRange(0, max_size)
             self.progress_current_download.setValue(advancement)
@@ -130,15 +131,15 @@ class ToolUpdateWidget(QWidget):
         self.download_button_widget.setEnabled(False)
         self.progress.show()
         self.progress_current_download.show()
-        tool_list = self._tool_list_callback
-        nb_tools = len(self._tool_list_callback)
+        tool_list = self._tool_list_callback()
+        nb_tools = len(tool_list)
         self.progress.setRange(0, nb_tools+1)
         self.progress.setValue(0)
         if self.canal_widget.currentIndex() == 0:
             canary = False
         else:
             canary = True
-        self.install_requested.emit(self.tool_updater, canary, self._tool_list_callback)
+        self.install_requested.emit(self.tool_updater, canary, tool_list)
 
     def start_update_process(self):
         # Path to the updater executable

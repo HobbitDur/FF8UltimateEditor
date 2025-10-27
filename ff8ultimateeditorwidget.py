@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel
 
 from CCGroup.ccgroup import CCGroupWidget
 from ExeLauncher.cactiliolauncher import CactilioLauncher
+from ExeLauncher.delinglauncher import DelingLauncher
 from ExeLauncher.doomtrainlauncher import DoomtrainLauncher
 from ExeLauncher.ifritguilauncher import IfritGuiLauncher
 from ExeLauncher.junkshop import JunkshopLauncher
@@ -53,6 +54,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._junkshop_button = ExternalToolWidget(os.path.join(resources_path, 'junkshop.ico'), self._launch_junkshop, "Launch junkshop (mweapon.bin editor)")
         self._doomtrain_button = ExternalToolWidget(os.path.join(resources_path, 'doomtrain.ico'), self._launch_doomtrain, "Launch doomtrain (kernel.bin editor)")
         self._cactilio_button = ExternalToolWidget(os.path.join(resources_path, 'jumbo_cactuar.ico'), self._launch_cactilio, "Launch Jumbo cactuar (Scene.out editor)")
+        self._deling_button = ExternalToolWidget(os.path.join(resources_path, 'deling.ico'), self._launch_deling, "Launch deling (Archive editor)")
 
         self._tool_update_widget = ToolUpdateWidget(self.tools_to_update)
 
@@ -65,6 +67,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._external_program_layout.addWidget(self._junkshop_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._doomtrain_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._cactilio_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._external_program_layout.addWidget(self._deling_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addStretch(1)
 
         self._enhance_end_separator_line = QFrame()
@@ -87,8 +90,6 @@ class FF8UltimateEditorWidget(QWidget):
         self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path) )
         self._ifritseq_widget = IfritSeqWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path) )
 
-        #self._ifritAI_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        #self._ifritxlsx_widget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self._ifritxlsx_widget.hide()
         self._shumi_translator_widget.hide()
         self._tonberry_shop_widget.hide()
@@ -100,6 +101,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.junkshop_launcher = JunkshopLauncher(os.path.join("Junkshop", "Junkshop.exe"), callback=None)
         self.doomtrain_launcher = DoomtrainLauncher(os.path.join("Doomtrain", "Doomtrain.exe"), callback=None)
         self.cactilio_launcher = CactilioLauncher(os.path.join("JumboCactuar", "Jumbo Cactuar.exe"), callback=None)
+        self.deling_launcher = DelingLauncher(os.path.join("Deling", "Deling.exe"), callback=None)
 
         self._enhance_container = QWidget()
         self._enhance_container.setLayout(self._enhance_layout)
@@ -112,7 +114,12 @@ class FF8UltimateEditorWidget(QWidget):
         self._main_layout.addWidget(self._ccgroup_widget)
         self._main_layout.addWidget(self._ifritseq_widget)
 
+        self._tool_update_widget.progress.show()
+        self._tool_update_widget.progress_current_download.show()
         self._enhance_container.setFixedHeight(self._enhance_container.sizeHint().height())
+        self._tool_update_widget.progress.hide()
+        self._tool_update_widget.progress_current_download.hide()
+
         self._ifritAI_widget.adjustSize()
         self._ifritxlsx_widget.adjustSize()
         self._shumi_translator_widget.adjustSize()
@@ -135,6 +142,8 @@ class FF8UltimateEditorWidget(QWidget):
         self.doomtrain_launcher.launch()
     def _launch_cactilio(self):
         self.cactilio_launcher.launch()
+    def _launch_deling(self):
+        self.deling_launcher.launch()
 
     def _ifritGui_exit(self):
         pass
@@ -203,9 +212,12 @@ class FF8UltimateEditorWidget(QWidget):
             tool_list.append("Junkshop")
         if self._doomtrain_button.update_selected:
             tool_list.append("Doomtrain")
-        if self._cactilio_button .update_selected:
+        if self._cactilio_button.update_selected:
             tool_list.append("JumboCactuar")
-        tool_list.append("Deling")
+        if self._deling_button.update_selected:
+            tool_list.append("Deling")
+            tool_list.append("DelingCli")
+        return tool_list
 
 
 

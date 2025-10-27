@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QCheckBox
 
 
 class ExternalToolWidget(QWidget):
-    def __init__(self, icon_path:str,  func_callback:Callable, tooltip_text:str=""):
+    def __init__(self, icon_path: str, func_callback: Callable, tooltip_text: str = ""):
         QWidget.__init__(self)
         self.update_selected = False
 
@@ -27,11 +27,9 @@ class ExternalToolWidget(QWidget):
 
         self.main_layout.addWidget(self._check_update, alignment=Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self._tool_button, alignment=Qt.AlignmentFlag.AlignCenter)
-        self.adjustSize()
-    def _on_checkbox_changed(self, state):
-        if state == Qt.CheckState.Checked:
+
+    def _on_checkbox_changed(self):
+        if self._check_update.checkState() == Qt.CheckState.Checked:
             self.update_selected = True
-        elif state == Qt.CheckState.Unchecked:
+        elif self._check_update.checkState() == Qt.CheckState.Unchecked:
             self.update_selected = False
-        elif state == Qt.CheckState.PartiallyChecked:
-            print("partially selected ????")
