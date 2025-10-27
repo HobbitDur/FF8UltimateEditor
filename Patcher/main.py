@@ -23,8 +23,8 @@ def wait_for_exit(exe_name, timeout=30):
 
 
 def main():
-    temp_dir = Path("..") / "SelfUpdate"
-    target_dir = Path("..")
+    temp_dir = Path("SelfUpdate")
+    target_dir = Path(".")
     exe_name = "FF8UltimateEditor.exe"
     patcher_exe = "Patcher.exe"  # Name of the patcher executable to exclude
 
