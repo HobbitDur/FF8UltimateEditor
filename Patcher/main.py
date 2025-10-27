@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 import psutil
 
+
 def wait_for_exit(exe_name, timeout=30):
     """
     Wait until the process exe_name is no longer running.
@@ -18,10 +19,12 @@ def wait_for_exit(exe_name, timeout=30):
         time.sleep(0.5)
     return False
 
+
 def main():
     temp_dir = Path("SelfUpdate")
     target_dir = Path(".")
     exe_name = "FF8UltimateEditor.exe"
+    patcher_exe = "Patcher.exe"  # Name of the patcher executable to exclude
 
     # Wait for the main application to fully exit
     print(f"Waiting for {exe_name} to close...")
@@ -31,8 +34,13 @@ def main():
         return
 
     try:
-        # Copy all files from temp_dir to target_dir
+        # Copy all files from temp_dir to target_dir, excluding the patcher
         for item in temp_dir.glob("*"):
+            # Skip the patcher executable
+            if item.name == patcher_exe:
+                print(f"Skipping {patcher_exe} (protected file)")
+                continue
+
             target = target_dir / item.name
             if target.exists():
                 if target.is_dir():
@@ -54,6 +62,7 @@ def main():
 
     # Clean up temporary folder
     shutil.rmtree(temp_dir, ignore_errors=True)
+
 
 if __name__ == "__main__":
     main()
