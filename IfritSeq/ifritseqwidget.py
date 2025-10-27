@@ -7,10 +7,10 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QHBoxLayout, QLabel, \
     QMessageBox, QPlainTextEdit
 
-from FF8GameData.dat.commandanalyser import CurrentIfType
-from FF8GameData.dat.sequenceanalyser import SequenceAnalyser
+from FF8UltimateEditor.FF8GameData.dat.sequenceanalyser import SequenceAnalyser
+from FF8UltimateEditor.IfritSeq.seqwidget import SeqWidget
 from IfritAI.ifritmanager import IfritManager
-from IfritSeq.seqwidget import SeqWidget
+
 
 
 class IfritSeqWidget(QWidget):
@@ -188,9 +188,15 @@ class IfritSeqWidget(QWidget):
         xml_file_to_export = self.file_dialog.getSaveFileName(parent=self, caption="Xml file to save", directory=default_name)[0]
         # xml_file_to_export = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if xml_file_to_export:
+            self.create_anim_seq_xml(self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'], xml_file_to_export)
+
+    @staticmethod
+    def create_anim_seq_xml(seq_animation_data:dict, xml_file:str):
+
+        if xml_file:
             xml_lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<sequence_animations>']
 
-            for item in self.ifrit_manager.enemy.seq_animation_data['seq_animation_data']:
+            for item in seq_animation_data:
                 # Convert bytearray to hex string with spaces and uppercase
                 if item['data']:
                     hex_data = ' '.join(f'{byte:02X}' for byte in item['data'])
@@ -203,15 +209,26 @@ class IfritSeqWidget(QWidget):
             xml_lines.append('</sequence_animations>')
 
             # Write to file
-            with open(xml_file_to_export, 'w', encoding='utf-8') as f:
+            with open(xml_file, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(xml_lines))
 
     def load_xml_file(self):
         xml_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Xml file to import", filter="*.xml")[0]
         # xml_file_to_load = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if xml_file_to_load:
+            seq_animation_data = self.create_anim_seq_data_from_xml(xml_file_to_load)
+            if seq_animation_data:
+                self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'] = seq_animation_data
+                self.clear_lines()
+                self.__setup_section_data()
+                self.__analyze_sequence()
+
+
+    @staticmethod
+    def create_anim_seq_data_from_xml(xml_file: str) -> list[dict[str, bytearray | int]]:
+        if xml_file:
             try:
-                tree = ET.parse(xml_file_to_load)
+                tree = ET.parse(xml_file)
                 root = tree.getroot()
 
                 seq_animation_data = []
@@ -231,16 +248,14 @@ class IfritSeqWidget(QWidget):
                         'id': anim_id,
                         'data': byte_data
                     })
-
-                self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'] = seq_animation_data
-                self.clear_lines()
-                self.__setup_section_data()
-                self.__analyze_sequence()
+                return seq_animation_data
 
             except ET.ParseError as e:
                 print(f"Error parsing XML file: {e}")
                 return None
             except FileNotFoundError:
-                print(f"XML file not found: {xml_file_to_load}")
+                print(f"XML file not found: {xml_file}")
                 return None
+
+
 
