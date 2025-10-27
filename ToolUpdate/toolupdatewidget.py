@@ -1,6 +1,7 @@
 import os
 import subprocess
 from pathlib import Path
+from typing import Callable
 
 from PyQt6.QtCore import QObject, pyqtSignal, QThread, Qt, pyqtSlot
 from PyQt6.QtGui import QIcon
@@ -20,8 +21,8 @@ class Installer(QObject):
     update_mod_list_completed = pyqtSignal()
 
     @pyqtSlot(ToolDownloader, bool)
-    def install(self, tool_updater, canary):
-        for index, tool_name in enumerate(tool_updater.TOOL_LIST):
+    def install(self, tool_updater, canary, tool_list):
+        for index, tool_name in enumerate(tool_list):
             tool_updater.update_one_tool(tool_name, self.download_progress.emit, canary=canary)
             self.progress.emit(index + 1)
         #tool_updater.update_self(self.download_progress.emit, canary=canary)
@@ -31,8 +32,10 @@ class Installer(QObject):
 class ToolUpdateWidget(QWidget):
     install_requested = pyqtSignal(ToolDownloader, bool)
 
-    def __init__(self, resource_path: str = "Resources"):
+    def __init__(self,tool_list_callback:Callable, resource_path: str = "Resources" ):
         QWidget.__init__(self)
+        self._tool_list_callback = tool_list_callback
+
         # Managing thread
         self.installer = Installer()
         self.installer_thread = QThread()
@@ -127,14 +130,15 @@ class ToolUpdateWidget(QWidget):
         self.download_button_widget.setEnabled(False)
         self.progress.show()
         self.progress_current_download.show()
-        nb_tools = len(self.tool_updater.TOOL_LIST)
+        tool_list = self._tool_list_callback
+        nb_tools = len(self._tool_list_callback)
         self.progress.setRange(0, nb_tools+1)
         self.progress.setValue(0)
         if self.canal_widget.currentIndex() == 0:
             canary = False
         else:
             canary = True
-        self.install_requested.emit(self.tool_updater, canary)
+        self.install_requested.emit(self.tool_updater, canary, self._tool_list_callback)
 
     def start_update_process(self):
         # Path to the updater executable

@@ -1,6 +1,6 @@
 import os
 
-from PyQt6.QtCore import QSize
+from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QSizePolicy, QFrame
 
@@ -15,6 +15,7 @@ from IfritAI.ifritaiwidget import IfritAIWidget
 from IfritSeq.ifritseqwidget import IfritSeqWidget
 from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from ShumiTranslator.shumitranslator import ShumiTranslator
+from SmallWidget.externaltoolwidget import ExternalToolWidget
 from TonberryShop.tonberryshop import TonberryShop
 from ToolUpdate.toolupdatewidget import ToolUpdateWidget
 
@@ -45,59 +46,25 @@ class FF8UltimateEditorWidget(QWidget):
 
         # External program
         self._external_program_title = QLabel("External program:")
-        self._ifrit_gui_button = QPushButton()
-        self._ifrit_gui_button.setIcon(QIcon(os.path.join(resources_path, 'ifritGui.ico')))
-        self._ifrit_gui_button.setIconSize(QSize(30, 30))
-        self._ifrit_gui_button.setFixedSize(40, 40)
-        self._ifrit_gui_button.clicked.connect(self._launch_ifritGui)
-        self._ifrit_gui_button.setToolTip("Launch original ifrit soft")
 
-        self._Quezacotl_button = QPushButton()
-        self._Quezacotl_button.setIcon(QIcon(os.path.join(resources_path, 'Quezacotl.ico')))
-        self._Quezacotl_button.setIconSize(QSize(30, 30))
-        self._Quezacotl_button.setFixedSize(40, 40)
-        self._Quezacotl_button.clicked.connect(self._launch_Quezacotl)
-        self._Quezacotl_button.setToolTip("Launch Quezacotl (init.out editor)")
+        self._ifrit_gui_button = ExternalToolWidget(os.path.join(resources_path, 'ifritGui.ico'), self._launch_ifritGui, "Launch original ifrit soft")
+        self._Quezacotl_button = ExternalToolWidget(os.path.join(resources_path, 'Quezacotl.ico'), self._launch_Quezacotl, "Launch Quezacotl (init.out editor)")
+        self._siren_button = ExternalToolWidget(os.path.join(resources_path, 'siren.ico'), self._launch_siren, "Launch siren (price.bin editor)")
+        self._junkshop_button = ExternalToolWidget(os.path.join(resources_path, 'junkshop.ico'), self._launch_junkshop, "Launch junkshop (mweapon.bin editor)")
+        self._doomtrain_button = ExternalToolWidget(os.path.join(resources_path, 'doomtrain.ico'), self._launch_doomtrain, "Launch doomtrain (kernel.bin editor)")
+        self._cactilio_button = ExternalToolWidget(os.path.join(resources_path, 'jumbo_cactuar.ico'), self._launch_cactilio, "Launch Jumbo cactuar (Scene.out editor)")
 
-        self._siren_button = QPushButton()
-        self._siren_button.setIcon(QIcon(os.path.join(resources_path, 'siren.ico')))
-        self._siren_button.setIconSize(QSize(30, 30))
-        self._siren_button.setFixedSize(40, 40)
-        self._siren_button.clicked.connect(self._launch_siren)
-        self._siren_button.setToolTip("Launch siren (price.bin editor)")
-
-        self._junkshop_button = QPushButton()
-        self._junkshop_button.setIcon(QIcon(os.path.join(resources_path, 'junkshop.ico')))
-        self._junkshop_button.setIconSize(QSize(30, 30))
-        self._junkshop_button.setFixedSize(40, 40)
-        self._junkshop_button.clicked.connect(self._launch_junkshop)
-        self._junkshop_button.setToolTip("Launch junkshop (mweapon.bin editor)")
-
-        self._doomtrain_button = QPushButton()
-        self._doomtrain_button.setIcon(QIcon(os.path.join(resources_path, 'doomtrain.ico')))
-        self._doomtrain_button.setIconSize(QSize(30, 30))
-        self._doomtrain_button.setFixedSize(40, 40)
-        self._doomtrain_button.clicked.connect(self._launch_doomtrain)
-        self._doomtrain_button.setToolTip("Launch doomtrain (kernel.bin editor)")
-
-        self._cactilio_button = QPushButton()
-        self._cactilio_button.setIcon(QIcon(os.path.join(resources_path, 'jumbo_cactuar.ico')))
-        self._cactilio_button.setIconSize(QSize(30, 30))
-        self._cactilio_button.setFixedSize(40, 40)
-        self._cactilio_button.clicked.connect(self._launch_cactilio)
-        self._cactilio_button.setToolTip("Launch Jumbo cactuar (Scene.out editor)")
-
-        self._tool_update_widget = ToolUpdateWidget()
+        self._tool_update_widget = ToolUpdateWidget(self.tools_to_update)
 
         self._external_program_layout = QHBoxLayout()
-        self._external_program_layout.addWidget(self._tool_update_widget)
-        self._external_program_layout.addWidget(self._external_program_title)
-        self._external_program_layout.addWidget(self._ifrit_gui_button)
-        self._external_program_layout.addWidget(self._Quezacotl_button)
-        self._external_program_layout.addWidget(self._siren_button)
-        self._external_program_layout.addWidget(self._junkshop_button)
-        self._external_program_layout.addWidget(self._doomtrain_button)
-        self._external_program_layout.addWidget(self._cactilio_button)
+        self._external_program_layout.addWidget(self._tool_update_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._external_program_layout.addWidget(self._external_program_title, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._external_program_layout.addWidget(self._ifrit_gui_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._external_program_layout.addWidget(self._Quezacotl_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._external_program_layout.addWidget(self._siren_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._external_program_layout.addWidget(self._junkshop_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._external_program_layout.addWidget(self._doomtrain_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._external_program_layout.addWidget(self._cactilio_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addStretch(1)
 
         self._enhance_end_separator_line = QFrame()
@@ -223,6 +190,24 @@ class FF8UltimateEditorWidget(QWidget):
         self._ifritAI_widget.adjustSize()
         self._ifritxlsx_widget.adjustSize()
         self.adjustSize()
+
+    def tools_to_update(self):
+        tool_list = []
+        if self._ifrit_gui_button.update_selected:
+            tool_list.append("IfritGui")
+        if self._Quezacotl_button.update_selected:
+            tool_list.append("Quezacotl")
+        if self._siren_button.update_selected:
+            tool_list.append("Siren")
+        if self._junkshop_button.update_selected:
+            tool_list.append("Junkshop")
+        if self._doomtrain_button.update_selected:
+            tool_list.append("Doomtrain")
+        if self._cactilio_button .update_selected:
+            tool_list.append("JumboCactuar")
+        tool_list.append("Deling")
+
+
 
 
 
