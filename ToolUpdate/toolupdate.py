@@ -8,8 +8,6 @@ import requests
 
 
 class ToolDownloader:
-    TOOL_LIST = ["Doomtrain", "JumboCactuar", "Siren", "Quezacotl", "Junkshop", "IfritGui", "Deling"]
-    #TOOL_LIST = ["Deling"] # For developing faster
     GITHUB_RELEASE_TAG_PATH = "/releases/tag/"
     GITHUB_RELEASE_PATH = "/releases"
     FOLDER_DOWNLOAD = "ToolDownload"

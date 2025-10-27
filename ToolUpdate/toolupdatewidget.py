@@ -154,6 +154,5 @@ class ToolUpdateWidget(QWidget):
             QApplication.quit()
         else:
             shutil.rmtree("SelfUpdate", ignore_errors=True)
-            shutil.rmtree("ToolDownload", ignore_errors=True)
             QMessageBox.critical(self, "Update Error",
                 "Updater tool not found. Please update manually.")

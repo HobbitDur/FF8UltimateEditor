@@ -21,9 +21,9 @@ def wait_for_exit(exe_name, timeout=30):
 
 
 def main():
-    temp_dir = Path("SelfUpdate")
-    target_dir = Path(".")
-    exe_name = "FF8UltimateEditor.exe"
+    temp_dir = Path("..") / "SelfUpdate"
+    target_dir = Path("..")
+    exe_name = Path("..") / "FF8UltimateEditor.exe"
     patcher_exe = "Patcher.exe"  # Name of the patcher executable to exclude
 
     # Wait for the main application to fully exit
@@ -34,23 +34,16 @@ def main():
         return
 
     try:
-        # Copy all files from temp_dir to target_dir, excluding the patcher
-        for item in temp_dir.glob("*"):
-            # Skip the patcher executable
-            if item.name == patcher_exe:
-                print(f"Skipping {patcher_exe} (protected file)")
-                continue
+        # Create ignore function that excludes the patcher executable
+        def ignore_func(dir, names):
+            return {name for name in names if name == patcher_exe}
 
-            target = target_dir / item.name
-            if target.exists():
-                if target.is_dir():
-                    shutil.rmtree(target)
-                else:
-                    os.remove(target)
-            if item.is_dir():
-                shutil.copytree(item, target)
-            else:
-                shutil.copy2(item, target)
+        # Use copytree with the ignore function
+        if temp_dir.exists():
+            shutil.copytree(temp_dir, target_dir, dirs_exist_ok=True, ignore=ignore_func)
+            print(f"Copied all files from {temp_dir} to {target_dir} except {patcher_exe}")
+        else:
+            print(f"Source directory {temp_dir} does not exist")
 
         # Launch the updated application independently
         subprocess.Popen([str(target_dir / exe_name)], close_fds=True)
@@ -59,9 +52,9 @@ def main():
     except Exception as e:
         print(f"Update failed: {e}")
         input("Press Enter to exit...")
-
     # Clean up temporary folder
     shutil.rmtree(temp_dir, ignore_errors=True)
+
 
 
 if __name__ == "__main__":
