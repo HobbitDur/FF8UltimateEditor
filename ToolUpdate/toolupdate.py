@@ -60,8 +60,8 @@ class ToolDownloader:
         if len(json_file) == 1:
             asset_link = json_file[0]['browser_download_url']
         dd_file_name = self.__download_file(asset_link, download_update_func, write_file=True)[1]
-        self._unzip_tool(dd_file_name, ".")
-        pass
+        self._unzip_tool(dd_file_name, "SelfUpdate")
+        shutil.rmtree(self.FOLDER_DOWNLOAD)
 
 
 

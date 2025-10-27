@@ -1,4 +1,6 @@
 import os
+import sys
+from datetime import datetime
 
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon
@@ -25,13 +27,17 @@ class FF8UltimateEditorWidget(QWidget):
 
     def __init__(self, resources_path='Resources', game_data_path='FF8GameData'):
         QWidget.__init__(self)
+        # Call this at the start of your script
+        if getattr(sys, 'frozen', False):  # Check if running as exe
+            self.setup_logging()
         self.setWindowTitle("FF8 ultimate editor")
-        #self.setMinimumSize(1280, 720)
+        # self.setMinimumSize(1280, 720)
         self.setWindowIcon(QIcon(os.path.join(resources_path, 'hobbitdur.ico')))
         self._main_layout = QVBoxLayout()
         self.setLayout(self._main_layout)
 
-        self.HOBBIT_OPTION_ITEMS = ["AI editor (IfritAI)", "Stat editor (IfritXlsx)", "All text editor (ShumiTranslator)", "Shop editor (TonberryShop)", "Card value editor (CCGroup)", "IfritSeq (Anim seq editor)"]
+        self.HOBBIT_OPTION_ITEMS = ["AI editor (IfritAI)", "Stat editor (IfritXlsx)", "All text editor (ShumiTranslator)", "Shop editor (TonberryShop)",
+                                    "Card value editor (CCGroup)", "IfritSeq (Anim seq editor)"]
 
         # Top widget to select what option we want
         self._program_option_title = QLabel("Hobbit tools:")
@@ -52,8 +58,10 @@ class FF8UltimateEditorWidget(QWidget):
         self._Quezacotl_button = ExternalToolWidget(os.path.join(resources_path, 'Quezacotl.ico'), self._launch_Quezacotl, "Launch Quezacotl (init.out editor)")
         self._siren_button = ExternalToolWidget(os.path.join(resources_path, 'siren.ico'), self._launch_siren, "Launch siren (price.bin editor)")
         self._junkshop_button = ExternalToolWidget(os.path.join(resources_path, 'junkshop.ico'), self._launch_junkshop, "Launch junkshop (mweapon.bin editor)")
-        self._doomtrain_button = ExternalToolWidget(os.path.join(resources_path, 'doomtrain.ico'), self._launch_doomtrain, "Launch doomtrain (kernel.bin editor)")
-        self._cactilio_button = ExternalToolWidget(os.path.join(resources_path, 'jumbo_cactuar.ico'), self._launch_cactilio, "Launch Jumbo cactuar (Scene.out editor)")
+        self._doomtrain_button = ExternalToolWidget(os.path.join(resources_path, 'doomtrain.ico'), self._launch_doomtrain,
+                                                    "Launch doomtrain (kernel.bin editor)")
+        self._cactilio_button = ExternalToolWidget(os.path.join(resources_path, 'jumbo_cactuar.ico'), self._launch_cactilio,
+                                                   "Launch Jumbo cactuar (Scene.out editor)")
         self._deling_button = ExternalToolWidget(os.path.join(resources_path, 'deling.ico'), self._launch_deling, "Launch deling (Archive editor)")
 
         self._tool_update_widget = ToolUpdateWidget(self.tools_to_update)
@@ -71,7 +79,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._external_program_layout.addStretch(1)
 
         self._enhance_end_separator_line = QFrame()
-        self._enhance_end_separator_line.setFrameStyle(0x04)# Horizontal line
+        self._enhance_end_separator_line.setFrameStyle(0x04)  # Horizontal line
         self._enhance_end_separator_line.setLineWidth(1)
 
         self._enhance_layout = QHBoxLayout()
@@ -79,16 +87,13 @@ class FF8UltimateEditorWidget(QWidget):
         self._enhance_layout.addLayout(self._external_program_layout)
         self._enhance_layout.addStretch(1)
 
-
-
-
         # Man made widget
         self._ifritAI_widget = IfritAIWidget(icon_path=resources_path, game_data_folder=os.path.join(game_data_path))
         self._ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path))
-        self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path) )
-        self._ifritseq_widget = IfritSeqWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path) )
+        self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path))
+        self._ifritseq_widget = IfritSeqWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
 
         self._ifritxlsx_widget.hide()
         self._shumi_translator_widget.hide()
@@ -128,26 +133,32 @@ class FF8UltimateEditorWidget(QWidget):
         # After adding to layout, get the natural height and set it as fixed
         self.adjustSize()
 
-        #self._program_option_change()  # For dev faster
+        # self._program_option_change()  # For dev faster
 
     def _launch_ifritGui(self):
         self.ifritGui_launcher.launch()
+
     def _launch_Quezacotl(self):
         self.Quezacotl_launcher.launch()
+
     def _launch_junkshop(self):
         self.junkshop_launcher.launch()
+
     def _launch_siren(self):
         self.siren_launcher.launch()
+
     def _launch_doomtrain(self):
         self.doomtrain_launcher.launch()
+
     def _launch_cactilio(self):
         self.cactilio_launcher.launch()
+
     def _launch_deling(self):
         self.deling_launcher.launch()
 
     def _ifritGui_exit(self):
         pass
-        #if not self._ifritAI_widget.isVisible() and not self._ifritxlsx_widget.isVisible():
+        # if not self._ifritAI_widget.isVisible() and not self._ifritxlsx_widget.isVisible():
         #    exit(0)
 
     def _program_option_change(self):
@@ -219,14 +230,15 @@ class FF8UltimateEditorWidget(QWidget):
             tool_list.append("DelingCli")
         return tool_list
 
+    @staticmethod
+    def setup_logging():
+        # Create logs directory
+        if not os.path.exists('logs'):
+            os.makedirs('logs')
 
+        # Log file with timestamp
+        log_file = f"logs/app_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
-
-
-
-
-
-
-
-
-
+        # Redirect stdout and stderr to file
+        sys.stdout = open(log_file, 'w')
+        sys.stderr = sys.stdout

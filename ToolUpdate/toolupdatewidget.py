@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Callable
@@ -25,8 +26,8 @@ class Installer(QObject):
         for index, tool_name in enumerate(tool_list):
             tool_updater.update_one_tool(tool_name, self.download_progress.emit, canary=canary)
             self.progress.emit(index + 1)
-        #tool_updater.update_self(self.download_progress.emit, canary=canary)
-        self.completed.emit(len(tool_updater.TOOL_LIST))
+        tool_updater.update_self(self.download_progress.emit, canary=canary)
+        self.completed.emit(len(tool_list))
 
 
 class ToolUpdateWidget(QWidget):
@@ -111,7 +112,7 @@ class ToolUpdateWidget(QWidget):
         self.progress_install_index = 0
         self.progress_current_download.hide()
         self.download_button_widget.setEnabled(True)
-        self.start_update_process()
+        self.start_self_update_process()
 
     def update_download(self, advancement: int, max_size: int):
         tool_list = self._tool_list_callback()
@@ -141,7 +142,7 @@ class ToolUpdateWidget(QWidget):
             canary = True
         self.install_requested.emit(self.tool_updater, canary, tool_list)
 
-    def start_update_process(self):
+    def start_self_update_process(self):
         # Path to the updater executable
         updater_path = Path("Patcher/Patcher.exe")
 
@@ -152,5 +153,7 @@ class ToolUpdateWidget(QWidget):
             subprocess.Popen([str(updater_path)])
             QApplication.quit()
         else:
+            shutil.rmtree("SelfUpdate", ignore_errors=True)
+            shutil.rmtree("ToolDownload", ignore_errors=True)
             QMessageBox.critical(self, "Update Error",
                 "Updater tool not found. Please update manually.")

@@ -19,7 +19,7 @@ def wait_for_exit(exe_name, timeout=30):
     return False
 
 def main():
-    temp_dir = Path("ToolDownload")
+    temp_dir = Path("SelfUpdate")
     target_dir = Path(".")
     exe_name = "FF8UltimateEditor.exe"
 
