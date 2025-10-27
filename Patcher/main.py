@@ -1,7 +1,9 @@
 import os
 import shutil
 import subprocess
+import sys
 import time
+from datetime import datetime
 from pathlib import Path
 import psutil
 
@@ -56,6 +58,23 @@ def main():
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
+def setup_logging():
+    # Create logs directory
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+
+    # Log file with timestamp
+    log_file = f"logs/FF8UltimateEditor_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+
+    # Redirect stdout and stderr to file
+    sys.stdout = open(log_file, 'w')
+    sys.stderr = sys.stdout
+
+
 
 if __name__ == "__main__":
+    print("Current directory: {}".format(os.getcwd()))
+    # Call this at the start of your script
+    if getattr(sys, 'frozen', False):  # Check if running as exe
+        setup_logging()
     main()
