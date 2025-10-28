@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
     QColorDialog, QCheckBox, QMessageBox
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
+from FF8GameData.gamedata import GameData
 from IfritAI.codeanalyser import CodeAnalyser
 from IfritAI.codewidget import CodeWidget
 
@@ -17,6 +18,9 @@ from IfritAI.commandwidget import CommandWidget
 from IfritAI.ifritmanager import IfritManager
 from IfritXlsx.ifritxlsxmanager import IfritXlsxManager
 from bs4 import BeautifulSoup
+
+from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+
 
 class IfritAIWidget(QWidget):
     ADD_LINE_SELECTOR_ITEMS = ["Condition", "Command"]
@@ -26,7 +30,7 @@ class IfritAIWidget(QWidget):
     MAX_OP_CODE_VALUE = 255
     MIN_OP_CODE_VALUE = 0
 
-    def __init__(self, icon_path="Resources",game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
         QWidget.__init__(self)
         self.current_if_index = 0
         self.file_loaded = ""
@@ -40,7 +44,7 @@ class IfritAIWidget(QWidget):
         self.current_if_type = CurrentIfType.NONE
         # Main window
         self.setWindowTitle("IfritAI")
-        #self.setMinimumSize(1280, 600)
+        # self.setMinimumSize(1280, 600)
         self.setMinimumHeight(600)
         self.__ifrit_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
         self.setWindowIcon(self.__ifrit_icon)
@@ -180,7 +184,7 @@ class IfritAIWidget(QWidget):
         self.scroll_widget.setLayout(self.layout_main)
         self.layout_main.addLayout(self.main_horizontal_layout)
 
-        #self.show()
+        # self.show()
 
     def __show_info(self):
         message_box = QMessageBox()
@@ -258,7 +262,6 @@ class IfritAIWidget(QWidget):
                 command_widget.get_command().set_color(color.name())
                 command_widget.set_text()
 
-
     def __save_file(self):
         self.ifrit_manager.save_file(self.file_loaded)
         self.__section_change()
@@ -271,7 +274,8 @@ class IfritAIWidget(QWidget):
     def __append_line(self, new_command: CommandAnalyser = None, create_data=True):
         if not new_command:
             new_command = CommandAnalyser(0, [], self.ifrit_manager.game_data, info_stat_data=self.ifrit_manager.enemy.info_stat_data,
-                                          battle_text=self.ifrit_manager.enemy.battle_script_data['battle_text'], line_index=len(self.command_line_widget),current_if_type=self.current_if_type)
+                                          battle_text=self.ifrit_manager.enemy.battle_script_data['battle_text'], line_index=len(self.command_line_widget),
+                                          current_if_type=self.current_if_type)
             self.current_if_type = new_command.get_current_if_type()
         if create_data:
             self.ifrit_manager.enemy.append_command(self.script_section.currentIndex(), new_command)
@@ -289,7 +293,7 @@ class IfritAIWidget(QWidget):
         else:
             index_insert = 0
 
-        if not new_command: # Shouldn't need the current if type
+        if not new_command:  # Shouldn't need the current if type
             new_command = CommandAnalyser(0, [], self.ifrit_manager.game_data, info_stat_data=self.ifrit_manager.enemy.info_stat_data,
                                           battle_text=self.ifrit_manager.enemy.battle_script_data['battle_text'], line_index=index_insert)
 
@@ -395,7 +399,7 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        #file_to_load = os.path.join("c0m028.dat")  # For developing faster
+        # file_to_load = os.path.join("c0m028.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
@@ -449,7 +453,7 @@ class IfritAIWidget(QWidget):
         # Read the xlsx
         xlsx_manager = IfritXlsxManager()
         xlsx_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Xlsx file", filter="*.xlsx")[0]
-        #xlsx_file_to_load = os.path.join("../IfritXlsx/OutputFiles", "ifrit.xlsx")  # For developing faster
+        # xlsx_file_to_load = os.path.join("../IfritXlsx/OutputFiles", "ifrit.xlsx")  # For developing faster
         if xlsx_file_to_load:
             xlsx_manager.load_file(xlsx_file_to_load)
             current_monster_id = int(re.search(r'\d{3}', self.ifrit_manager.enemy.origin_file_name).group())
@@ -467,35 +471,47 @@ class IfritAIWidget(QWidget):
         md_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Md file to import", filter="*.md")[0]
         # md_file_to_load = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if md_file_to_load:
-            with open(md_file_to_load, 'r', encoding='utf-8') as file:
-                content = file.read()
-            # Use regex to extract all code blocks between ```
-            code_blocks = re.findall(r'```.*?\n(.*?)\n```', content, re.DOTALL)
+            print(self.ifrit_manager.enemy.battle_script_data['ai_data'])
             self.__clear_lines(delete_data=False)
-            # Analyse code
-            for index_code, code in enumerate(code_blocks):
-                code_analyser = CodeAnalyser(self.ifrit_manager.game_data, self.ifrit_manager.enemy, code.splitlines())
-                self.ifrit_manager.enemy.battle_script_data['ai_data'][index_code] = code_analyser.get_command()
+            self.create_ai_data_from_md(md_file_to_load, self.ifrit_manager.game_data, self.ifrit_manager.enemy, self.ifrit_manager.enemy.battle_script_data['ai_data'])
+            print(self.ifrit_manager.enemy.battle_script_data['ai_data'])
             self.ifrit_manager.enemy.ai = self.ifrit_manager.enemy.battle_script_data['ai_data']
             self.__setup_section_data()
 
+    @staticmethod
+    def create_ai_data_from_md(md_file: str, game_data:GameData, enemy: MonsterAnalyser, ai_data):
+        if md_file:
+            with open(md_file, 'r', encoding='utf-8') as file:
+                content = file.read()
+            # Use regex to extract all code blocks between ```
+            code_blocks = re.findall(r'```.*?\n(.*?)\n```', content, re.DOTALL)
+            # Analyse code
+            for index_code, code in enumerate(code_blocks):
+                code_analyser = CodeAnalyser(game_data, enemy, code.splitlines())
+                ai_data[index_code] = code_analyser.get_command()
+
     def _export_md_file(self):
-        section_text = ["# Init code", "# Enemy turn", "# Counter-attack", "# Death", "# Before dying or taking a hit"]
         default_name = self.ifrit_manager.enemy.origin_file_name.replace('.dat', '.md')
-        md_file_to_export =self.file_dialog.getSaveFileName(parent=self, caption="Md file to save", directory=default_name)[0]
-        #md_file_to_export = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
+        md_file_to_export = self.file_dialog.getSaveFileName(parent=self, caption="Md file to save", directory=default_name)[0]
+        # md_file_to_export = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if md_file_to_export:
-            code_text = ""
-            for index_section, section in enumerate(self.ifrit_manager.enemy.battle_script_data['ai_data']):
-                if index_section == len(self.ifrit_manager.enemy.battle_script_data['ai_data']) - 1:  # Ignore last section that is just an empty one to know when it's the end
-                    break
-                code_text += section_text[index_section] + "\n```\n"
-                code_text += CodeAnalyser.set_ifrit_ai_code_from_command(self.ifrit_manager.game_data, section)
-                code_text += "```\n\n"
-            soup = BeautifulSoup(code_text, "html.parser")
-            for br in soup.find_all("br"):
-                br.replace_with("\n")
-            # Extract text content
-            text_content = soup.get_text().replace("\xa0", " ")
-            with open(md_file_to_export, 'w', encoding='utf-8') as file:
-                file.write(text_content)
+            self.create_md_from_ai_data(md_file_to_export, self.ifrit_manager.game_data, self.ifrit_manager.enemy.battle_script_data['ai_data'])
+
+    @staticmethod
+    def create_md_from_ai_data(md_file: str, game_data: GameData, ai_data):
+        section_text = ["# Init code", "# Enemy turn", "# Counter-attack", "# Death", "# Before dying or taking a hit"]
+        code_text = ""
+        for index_section, section in enumerate(ai_data):
+            if index_section == len(
+                    ai_data) - 1:  # Ignore last section that is just an empty one to know when it's the end
+                break
+            code_text += section_text[index_section] + "\n```\n"
+            code_text += CodeAnalyser.set_ifrit_ai_code_from_command(game_data, section)
+            code_text += "```\n\n"
+        soup = BeautifulSoup(code_text, "html.parser")
+        for br in soup.find_all("br"):
+            br.replace_with("\n")
+        # Extract text content
+        text_content = soup.get_text().replace("\xa0", " ")
+        with open(md_file, 'w', encoding='utf-8') as file:
+            file.write(text_content)
