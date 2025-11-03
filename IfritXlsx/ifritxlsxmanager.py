@@ -54,7 +54,7 @@ class IfritXlsxManager:
                     if current_dat_file:
                         current_dat_file = current_dat_file[0]
                     else:
-                        print(f"Unexpected monster index: {monster_index}")
+                        print(f"Monster dat file not found for index: {monster_index}")
                         continue
                 ennemy = self._xlsx_to_dat_manager.import_from_xlsx(sheet, self.game_data, pathlib.Path(current_dat_file).resolve().parent, local_limit)
                 if ennemy:
