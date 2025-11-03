@@ -377,7 +377,8 @@ class CodeAnalyser:
 
     @staticmethod
     def compute_ifrit_ai_code_to_command(game_data: GameData, enemy_data, ifrit_ai_code: str):
-        command_text_list = ifrit_ai_code.splitlines()
+        processed_text = CodeAnalyser.preprocessing_code_txt(ifrit_ai_code)
+        command_text_list = processed_text.splitlines()
         code_analyser = CodeAnalyser(game_data, enemy_data, command_text_list)
         return code_analyser.get_command()
 
@@ -457,6 +458,104 @@ class CodeAnalyser:
             code_text += func_name
             code_text += '<br/>'
         return code_text
+        temp = CodeAnalyser.postprocessing_code_txt(code_text)
+        return CodeAnalyser.format_c_style_indentation(temp)
+
+    @staticmethod
+    def postprocessing_code_txt(code_text):
+        """
+        Transform "jump: ELSE { if: ... }" patterns to "elseif: ..."
+        Handles HTML formatting and proper brace counting.
+        """
+
+        def process_else_blocks(text):
+            # First, let's work with a simplified version to count braces properly
+            lines = text.split('<br/>')
+            result_lines = []
+            i = 0
+
+            while i < len(lines):
+                line = lines[i].strip()
+
+                # Check for "jump: ELSE" pattern
+                if 'jump: ELSE' in line.upper():
+                    # Look ahead to find the opening brace
+                    brace_line_index = None
+                    for j in range(i + 1, min(i + 3, len(lines))):
+                        if lines[j].strip() == '{':
+                            brace_line_index = j
+                            break
+
+                    if brace_line_index is not None:
+                        # Now find the corresponding if statement after the brace
+                        if_line_index = None
+                        for j in range(brace_line_index + 1, len(lines)):
+                            if 'if:' in lines[j]:
+                                if_line_index = j
+                                break
+
+                        if if_line_index is not None:
+                            # Extract the if content
+                            if_line = lines[if_line_index].strip()
+                            if_content = if_line.replace('if:', '', 1).strip()
+
+                            # Count braces to find the matching closing brace
+                            brace_count = 1
+                            closing_brace_index = None
+
+                            for j in range(if_line_index + 1, len(lines)):
+                                line_content = lines[j].strip()
+                                if line_content == '{':
+                                    brace_count += 1
+                                elif line_content == '}':
+                                    brace_count -= 1
+                                    if brace_count == 0:
+                                        closing_brace_index = j
+                                        break
+
+                            if closing_brace_index is not None:
+                                # Replace the jump: ELSE block with elseif
+                                result_lines.append('elseif:' + if_content)
+
+                                # Skip all the lines we're replacing
+                                i = closing_brace_index + 1
+                                continue
+
+                # If no transformation applied, keep the line
+                result_lines.append(lines[i])
+                i += 1
+
+            return '<br/>'.join(result_lines)
+
+        print("Original text:")
+        print(code_text)
+
+        # Apply the transformation
+        transformed_text = process_else_blocks(code_text)
+
+        print("\nTransformed text:")
+        print(transformed_text)
+
+        return CodeAnalyser.format_c_style_indentation(transformed_text)
+
+    @staticmethod
+    def preprocessing_code_txt(code_text):
+        """
+        Transform "elseif: ..." patterns back to "jump:Else{if: ... }" format
+        with proper HTML formatting for line breaks and indentation.
+        """
+        # Pattern to match elseif: followed by any content
+        # We'll assume each elseif: starts a new logical block
+        pattern = r'elseif:(.*?)(?=}|$)'
+
+        def replacement(match):
+            # Extract the content after elseif:
+            content = match.group(1).strip()
+            return f'jump: ELSE\n{{\n    if: {content}\n}}\n'
+
+        transformed_text = re.sub(pattern, replacement, code_text, flags=re.IGNORECASE | re.DOTALL)
+
+        return transformed_text
 
     @staticmethod
     def compute_indent_bracket(func_list: List):
@@ -472,3 +571,52 @@ class CodeAnalyser:
                 indent += 1
             new_text += func_list[i] + "<br/>"
         return func_list
+    @staticmethod
+    def format_c_style_indentation(html_text):
+        """
+        Comprehensive C-style formatting that properly handles elseif: statements.
+        """
+        # Step 1: Completely remove all existing indentation
+        cleaned_text = re.sub(r'(&nbsp;)+', '', html_text)  # Remove all &nbsp;
+        cleaned_text = re.sub(r'[ \t]+', ' ', cleaned_text)  # Normalize spaces
+        cleaned_text = re.sub(r'\s+<br/>\s+', '<br/>', cleaned_text)  # Clean around <br/>
+
+        lines = cleaned_text.split('<br/>')
+        formatted_lines = []
+        indent_level = 0
+
+        i = 0
+        while i < len(lines):
+            original_line = lines[i].strip()
+
+            if not original_line:
+                formatted_lines.append('')
+                i += 1
+                continue
+
+            # Remove any remaining whitespace
+            line = original_line.strip()
+
+            # Check line type
+            is_elseif = line.startswith('elseif:')
+            is_control = line.startswith(('if:', 'elseif:', 'jump:'))
+
+            # Count braces in this exact line
+            open_braces = line.count('{')
+            close_braces = line.count('}')
+
+            # Calculate current indentation level
+            current_indent = max(0, indent_level - close_braces)
+            indent = "&nbsp;" * (4 * current_indent)
+
+            # Format the line with proper indentation
+            formatted_line = indent + line
+            formatted_lines.append(formatted_line)
+
+            # Update indent level for next lines
+            indent_level = current_indent + open_braces
+
+            i += 1
+
+        transformed_text = '<br/>'.join(formatted_lines)
+        return transformed_text
