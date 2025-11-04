@@ -15,7 +15,7 @@ class CodePostprocessing:
         working_text = code_text
         while True:
             # Matches: jump:...Else...{
-            pattern = re.compile(r'jump:[^{}]*ELSE[^{}]*\{', re.MULTILINE | re.IGNORECASE)
+            pattern = re.compile(r'jump:.*?ELSE.*?\{', re.MULTILINE | re.IGNORECASE | re.DOTALL)
             match = pattern.search(working_text)
             if not match:
                 break
@@ -23,13 +23,14 @@ class CodePostprocessing:
             start = match.start()
             match_end = match.end()
             depth = 1  # found one '{'
-
+            current_text_read = ""
             # Scan ahead to find the matching closing brace
             while match_end < len(working_text) and depth > 0:
-                if code_text[match_end] == '{':
+                if working_text[match_end] == '{':
                     depth += 1
-                elif code_text[match_end] == '}':
+                elif working_text[match_end] == '}':
                     depth -= 1
+                current_text_read += code_text[match_end]
                 match_end += 1
 
             if depth == 0:
@@ -39,11 +40,10 @@ class CodePostprocessing:
 
             pattern = r'jump:.*?ELSE.*?{(?:\s|&nbsp;|<br/>)*if:'
 
-            else_blocks_modified, count = re.subn(pattern, 'elseif:', else_blocks, count=1, flags=re.IGNORECASE)
+            else_blocks_modified, count = re.subn(pattern, 'elseif:', else_blocks, count=1, flags=re.IGNORECASE | re.DOTALL)
             if count == 0:  # It's a end without an if after, so just remove it from the work in progress string
                 working_text = working_text.replace(else_blocks, '')
                 continue
-
             # Removing last }
             if count > 0:
                 text = else_blocks_modified
@@ -54,7 +54,7 @@ class CodePostprocessing:
             code_text = code_text.replace(else_blocks, else_blocks_modified, 1)
             working_text = working_text.replace(else_blocks, else_blocks_modified, 1)
 
-        return CodePostprocessing.format_c_style_indentation(code_text)
+        return code_text
 
     @staticmethod
     def format_c_style_indentation(html_text):
@@ -110,21 +110,22 @@ class CodePostprocessing:
 # Example usage and testing
 if __name__ == "__main__":
     # Test code with jump: ELSE patterns
-    #test_code = """if: If with Subject ID <span style="color:#0055ff;">[4]</span>, STATUS_SPE OF <span style="color:#0055ff;">[SELF]</span> <span style="color:#0055ff;">[==]</span> <span style="color:#0055ff;">[Aura]</span>  <br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;statChange: Set <span style="color:#0055ff;">[Strength]</span> to <span style="color:#0055ff;">[200]</span>% of original<br/>&nbsp;&nbsp;&nbsp;&nbsp;statChange: Set <span style="color:#0055ff;">[Magic]</span> to <span style="color:#0055ff;">[200]</span>% of original<br/>}<br/>jump: ELSE<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;statChange: Set <span style="color:#0055ff;">[Strength]</span> to <span style="color:#0055ff;">[100]</span>% of original<br/>&nbsp;&nbsp;&nbsp;&nbsp;statChange: Set <span style="color:#0055ff;">[Magic]</span> to <span style="color:#0055ff;">[100]</span>% of original<br/>}<br/>if: If with Subject ID <span style="color:#0055ff;">[2]</span>, RANDOM VALUE BETWEEN 0 AND <span style="color:#0055ff;">[2]</span> <span style="color:#0055ff;">[==]</span> <span style="color:#0055ff;">[0]</span>  <br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;stop: Stop<br/>}<br/>if: If with Subject ID <span style="color:#0055ff;">[9]</span>, ALIVE <span style="color:#0055ff;">[!=]</span> <span style="color:#0055ff;">[Elite Soldier]</span>  <br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;var: Set <span style="color:#0055ff;">[varA]</span> to <span style="color:#0055ff;">[1]</span> (scope:monster)<br/>}<br/>jump: ELSE<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;if: If with Subject ID <span style="color:#0055ff;">[220]</span>, LOCAL VAR <span style="color:#0055ff;">[varA]</span> <span style="color:#0055ff;">[==]</span> <span style="color:#0055ff;">[1]</span>  <br/>&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var: Set <span style="color:#0055ff;">[varA]</span> to <span style="color:#0055ff;">[0]</span> (scope:monster)<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if: If with Subject ID <span style="color:#0055ff;">[2]</span>, RANDOM VALUE BETWEEN 0 AND <span style="color:#0055ff;">[2]</span> <span style="color:#0055ff;">[==]</span> <span style="color:#0055ff;">[0]</span>  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target: Target <span style="color:#0055ff;">[ALL ENEMIES]</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;use: Execute ability line <span style="color:#0055ff;">[1]</span> (Low - Ray Bomb | Med - Ray Bomb | High - Ray Bomb )<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stop: Stop<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;jump: ELSE<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target: Target <span style="color:#0055ff;">[RANDOM ENEMY]</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;useRandom: Randomly use ability line <span style="color:#0055ff;">[0]</span> (Low - Physical attack | Med - Physical attack | High - Physical attack ) or <span style="color:#0055ff;">[2]</span> (Low - Micro Missiles | Med - Micro Missiles | High - Micro Missiles ) or <span style="color:#0055ff;">[3]</span> (Low - Thundara | Med - Thundara | High - Thundaga )<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stop: Stop<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>&nbsp;&nbsp;&nbsp;&nbsp;}<br/>}<br/>if: If with Subject ID <span style="color:#0055ff;">[220]</span>, LOCAL VAR <span style="color:#0055ff;">[varA]</span> <span style="color:#0055ff;">[&gt;=]</span> <span style="color:#0055ff;">[5]</span>  <br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;var: Set <span style="color:#0055ff;">[varA]</span> to <span style="color:#0055ff;">[1]</span> (scope:monster)<br/>&nbsp;&nbsp;&nbsp;&nbsp;target: Target <span style="color:#0055ff;">[ALL ENEMIES]</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;use: Execute ability line <span style="color:#0055ff;">[1]</span> (Low - Ray Bomb | Med - Ray Bomb | High - Ray Bomb )<br/>&nbsp;&nbsp;&nbsp;&nbsp;stop: Stop<br/>}<br/>target: Target <span style="color:#0055ff;">[RANDOM ENEMY]</span><br/>useRandom: Randomly use ability line <span style="color:#0055ff;">[0]</span> (Low - Physical attack | Med - Physical attack | High - Physical attack ) or <span style="color:#0055ff;">[0]</span> (Low - Physical attack | Med - Physical attack | High - Physical attack ) or <span style="color:#0055ff;">[2]</span> (Low - Micro Missiles | Med - Micro Missiles | High - Micro Missiles )<br/>stop: Stop<br/>stop: Stop<br/>stop: Stop<br/>stop: Stop<br/>stop: Stop<br/>"""
-#
-    #print("=== ORIGINAL CODE ===")
-    #print(test_code)
-    #print("\n" + "=" * 50 + "\n")
+    test_code = """if: If with Subject ID <span style="color:#0055ff;">[4]</span>, STATUS_SPE OF <span style="color:#0055ff;">[SELF]</span> <span style="color:#0055ff;">[==]</span> <span style="color:#0055ff;">[Aura]</span>  <br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;statChange: Set <span style="color:#0055ff;">[Strength]</span> to <span style="color:#0055ff;">[200]</span>% of original<br/>&nbsp;&nbsp;&nbsp;&nbsp;statChange: Set <span style="color:#0055ff;">[Magic]</span> to <span style="color:#0055ff;">[200]</span>% of original<br/>}<br/>jump: ELSE<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;statChange: Set <span style="color:#0055ff;">[Strength]</span> to <span style="color:#0055ff;">[100]</span>% of original<br/>&nbsp;&nbsp;&nbsp;&nbsp;statChange: Set <span style="color:#0055ff;">[Magic]</span> to <span style="color:#0055ff;">[100]</span>% of original<br/>}<br/>if: If with Subject ID <span style="color:#0055ff;">[2]</span>, RANDOM VALUE BETWEEN 0 AND <span style="color:#0055ff;">[2]</span> <span style="color:#0055ff;">[==]</span> <span style="color:#0055ff;">[0]</span>  <br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;stop: Stop<br/>}<br/>if: If with Subject ID <span style="color:#0055ff;">[9]</span>, ALIVE <span style="color:#0055ff;">[!=]</span> <span style="color:#0055ff;">[Elite Soldier]</span>  <br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;var: Set <span style="color:#0055ff;">[varA]</span> to <span style="color:#0055ff;">[1]</span> (scope:monster)<br/>}<br/>jump: ELSE<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;if: If with Subject ID <span style="color:#0055ff;">[220]</span>, LOCAL VAR <span style="color:#0055ff;">[varA]</span> <span style="color:#0055ff;">[==]</span> <span style="color:#0055ff;">[1]</span>  <br/>&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var: Set <span style="color:#0055ff;">[varA]</span> to <span style="color:#0055ff;">[0]</span> (scope:monster)<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if: If with Subject ID <span style="color:#0055ff;">[2]</span>, RANDOM VALUE BETWEEN 0 AND <span style="color:#0055ff;">[2]</span> <span style="color:#0055ff;">[==]</span> <span style="color:#0055ff;">[0]</span>  <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target: Target <span style="color:#0055ff;">[ALL ENEMIES]</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;use: Execute ability line <span style="color:#0055ff;">[1]</span> (Low - Ray Bomb | Med - Ray Bomb | High - Ray Bomb )<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stop: Stop<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;jump: ELSE<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target: Target <span style="color:#0055ff;">[RANDOM ENEMY]</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;useRandom: Randomly use ability line <span style="color:#0055ff;">[0]</span> (Low - Physical attack | Med - Physical attack | High - Physical attack ) or <span style="color:#0055ff;">[2]</span> (Low - Micro Missiles | Med - Micro Missiles | High - Micro Missiles ) or <span style="color:#0055ff;">[3]</span> (Low - Thundara | Med - Thundara | High - Thundaga )<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stop: Stop<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>&nbsp;&nbsp;&nbsp;&nbsp;}<br/>}<br/>if: If with Subject ID <span style="color:#0055ff;">[220]</span>, LOCAL VAR <span style="color:#0055ff;">[varA]</span> <span style="color:#0055ff;">[&gt;=]</span> <span style="color:#0055ff;">[5]</span>  <br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;var: Set <span style="color:#0055ff;">[varA]</span> to <span style="color:#0055ff;">[1]</span> (scope:monster)<br/>&nbsp;&nbsp;&nbsp;&nbsp;target: Target <span style="color:#0055ff;">[ALL ENEMIES]</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;use: Execute ability line <span style="color:#0055ff;">[1]</span> (Low - Ray Bomb | Med - Ray Bomb | High - Ray Bomb )<br/>&nbsp;&nbsp;&nbsp;&nbsp;stop: Stop<br/>}<br/>target: Target <span style="color:#0055ff;">[RANDOM ENEMY]</span><br/>useRandom: Randomly use ability line <span style="color:#0055ff;">[0]</span> (Low - Physical attack | Med - Physical attack | High - Physical attack ) or <span style="color:#0055ff;">[0]</span> (Low - Physical attack | Med - Physical attack | High - Physical attack ) or <span style="color:#0055ff;">[2]</span> (Low - Micro Missiles | Med - Micro Missiles | High - Micro Missiles )<br/>stop: Stop<br/>stop: Stop<br/>stop: Stop<br/>stop: Stop<br/>stop: Stop<br/>"""
+
+    print("=== ORIGINAL CODE ===")
+    print(test_code)
+    print("\n" + "=" * 50 + "\n")
 
     # Apply postprocessing
-    #processed_code = CodePostprocessing.postprocessing_code_txt(test_code)
-#
-    #print("=== PROCESSED CODE (with elseif) ===")
-    #print(processed_code)
-    #print("\n" + "=" * 50 + "\n")
+    processed_code = CodePostprocessing.postprocessing_code_txt(test_code)
+
+    print("=== PROCESSED CODE (with elseif) ===")
+    print(processed_code)
+    print("\n" + "=" * 50 + "\n")
 
     # Test with a simpler example to show the transformation clearly
-    simple_test_code = """if: condition1
+    simple_test_code = """
+if: condition1
 {
     target: something
 }
@@ -134,14 +135,15 @@ jump: ELSE
     {
         target: something else
     }
-}
-jump: ELSE
-{
-    if: condition3
+    jump: ELSE
     {
-        target: another thing
+        if: condition3
+        {
+            target: another thing
+        }
     }
-}"""
+}
+"""
 
     print("=== SIMPLE TEST - ORIGINAL ===")
     print(simple_test_code)
