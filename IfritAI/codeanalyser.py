@@ -1,9 +1,11 @@
+import copy
 from typing import List
 import re
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
+from IfritAI.codepreprocessing import CodePreprocessing
 
 
 class CodeAnalyseTool:
@@ -105,7 +107,9 @@ class CodeLine:
         self._analyse_line()
 
     def _analyse_line(self):
-        replaced_line = self._code_text_line.replace(' ', '')
+        code_part, separator, comment_part = self._code_text_line.partition('//')
+        replaced_line = code_part.rstrip()
+        replaced_line = replaced_line.replace(' ', '')
         replaced_line = replaced_line.replace('\t', '')
         if replaced_line in ('{', '}'):
             print(f"Unexpected {{ or }}: {replaced_line}")
@@ -113,6 +117,7 @@ class CodeLine:
         elif replaced_line == "":
             print(f"Unexpected empty line")
             return
+
         code_split = self._code_text_line.split(':', 1)
         func_name = code_split[0].replace(' ', '')
         func_name = func_name.replace('\t', '')
@@ -208,10 +213,11 @@ class CodeLine:
             for i, param_index in enumerate(op_info['param_index']):
                 op_code_list[param_index] = original_op_list[i]
 
+
         self._command = CommandAnalyser(op_id=op_info['op_code'], op_code=op_code_list, game_data=self.game_data,
                                         battle_text=self.enemy_data.battle_script_data['battle_text'],
                                         info_stat_data=self.enemy_data.info_stat_data,
-                                        line_index=self._line_index, text_param=True)
+                                        line_index=self._line_index, text_param=True, comment=comment_part)
 
     def get_command(self):
         return self._command
@@ -377,7 +383,8 @@ class CodeAnalyser:
 
     @staticmethod
     def compute_ifrit_ai_code_to_command(game_data: GameData, enemy_data, ifrit_ai_code: str):
-        processed_text = CodeAnalyser.preprocessing_code_txt(ifrit_ai_code)
+        preprocessing_engine = CodePreprocessing()
+        processed_text = preprocessing_engine.transform_all_elseif_blocks(ifrit_ai_code)
         command_text_list = processed_text.splitlines()
         code_analyser = CodeAnalyser(game_data, enemy_data, command_text_list)
         return code_analyser.get_command()
@@ -457,7 +464,6 @@ class CodeAnalyser:
         for func_name in func_list:
             code_text += func_name
             code_text += '<br/>'
-        return code_text
         temp = CodeAnalyser.postprocessing_code_txt(code_text)
         return CodeAnalyser.format_c_style_indentation(temp)
 
@@ -467,95 +473,53 @@ class CodeAnalyser:
         Transform "jump: ELSE { if: ... }" patterns to "elseif: ..."
         Handles HTML formatting and proper brace counting.
         """
+        working_text = code_text
+        while True:
+            # Matches: jump:...Else...{
+            pattern = re.compile(r'jump:[^{}]*ELSE[^{}]*\{', re.MULTILINE | re.IGNORECASE)
+            match = pattern.search(working_text)
+            if not match:
+                break
 
-        def process_else_blocks(text):
-            # First, let's work with a simplified version to count braces properly
-            lines = text.split('<br/>')
-            result_lines = []
-            i = 0
+            start = match.start()
+            match_end = match.end()
+            depth = 1  # found one '{'
 
-            while i < len(lines):
-                line = lines[i].strip()
+            # Scan ahead to find the matching closing brace
+            while match_end < len(working_text) and depth > 0:
+                if code_text[match_end] == '{':
+                    depth += 1
+                elif code_text[match_end] == '}':
+                    depth -= 1
+                match_end += 1
 
-                # Check for "jump: ELSE" pattern
-                if 'jump: ELSE' in line.upper():
-                    # Look ahead to find the opening brace
-                    brace_line_index = None
-                    for j in range(i + 1, min(i + 3, len(lines))):
-                        if lines[j].strip() == '{':
-                            brace_line_index = j
-                            break
+            if depth == 0:
+                else_blocks = working_text[start:match_end]
+            else:
+                else_blocks = ""
 
-                    if brace_line_index is not None:
-                        # Now find the corresponding if statement after the brace
-                        if_line_index = None
-                        for j in range(brace_line_index + 1, len(lines)):
-                            if 'if:' in lines[j]:
-                                if_line_index = j
-                                break
+            pattern = r'jump:.*?ELSE.*?{(?:\s|&nbsp;|<br/>)*if:'
 
-                        if if_line_index is not None:
-                            # Extract the if content
-                            if_line = lines[if_line_index].strip()
-                            if_content = if_line.replace('if:', '', 1).strip()
+            else_blocks_modified, count = re.subn(pattern, 'elseif:', else_blocks, count=1,flags=re.IGNORECASE)
+            if count == 0:# It's a end without an if after, so just remove it from the work in progress string
+                working_text = working_text.replace(else_blocks, '')
+                continue
 
-                            # Count braces to find the matching closing brace
-                            brace_count = 1
-                            closing_brace_index = None
+            # Removing last }
+            if count > 0:
+                text = else_blocks_modified
+                last_index = text.rfind('}<br/>')
+                if last_index != -1:
+                    # Remove 5 characters: '}' + '<br/>' (total 5 chars)
+                    else_blocks_modified = text[:last_index] + text[last_index + 6:]
+            code_text = code_text.replace(else_blocks, else_blocks_modified, 1)
+            working_text = working_text.replace(else_blocks, else_blocks_modified, 1)
 
-                            for j in range(if_line_index + 1, len(lines)):
-                                line_content = lines[j].strip()
-                                if line_content == '{':
-                                    brace_count += 1
-                                elif line_content == '}':
-                                    brace_count -= 1
-                                    if brace_count == 0:
-                                        closing_brace_index = j
-                                        break
-
-                            if closing_brace_index is not None:
-                                # Replace the jump: ELSE block with elseif
-                                result_lines.append('elseif:' + if_content)
-
-                                # Skip all the lines we're replacing
-                                i = closing_brace_index + 1
-                                continue
-
-                # If no transformation applied, keep the line
-                result_lines.append(lines[i])
-                i += 1
-
-            return '<br/>'.join(result_lines)
-
-        print("Original text:")
-        print(code_text)
-
-        # Apply the transformation
-        transformed_text = process_else_blocks(code_text)
-
-        print("\nTransformed text:")
-        print(transformed_text)
-
-        return CodeAnalyser.format_c_style_indentation(transformed_text)
+        return CodeAnalyser.format_c_style_indentation(code_text)
 
     @staticmethod
     def preprocessing_code_txt(code_text):
-        """
-        Transform "elseif: ..." patterns back to "jump:Else{if: ... }" format
-        with proper HTML formatting for line breaks and indentation.
-        """
-        # Pattern to match elseif: followed by any content
-        # We'll assume each elseif: starts a new logical block
-        pattern = r'elseif:(.*?)(?=}|$)'
-
-        def replacement(match):
-            # Extract the content after elseif:
-            content = match.group(1).strip()
-            return f'jump: ELSE\n{{\n    if: {content}\n}}\n'
-
-        transformed_text = re.sub(pattern, replacement, code_text, flags=re.IGNORECASE | re.DOTALL)
-
-        return transformed_text
+        return code_text
 
     @staticmethod
     def compute_indent_bracket(func_list: List):
@@ -571,6 +535,7 @@ class CodeAnalyser:
                 indent += 1
             new_text += func_list[i] + "<br/>"
         return func_list
+
     @staticmethod
     def format_c_style_indentation(html_text):
         """

@@ -16,6 +16,8 @@ IfritXlsx/OutputFiles
 *.log
 test
 *.dat
+*.md
+*.xml
 Quezacotl/*
 Siren/*
 IfritGui/*

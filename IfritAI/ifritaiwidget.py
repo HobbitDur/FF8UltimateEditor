@@ -399,7 +399,7 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        #file_to_load = os.path.join("c0m039.dat")  # For developing faster
+        # file_to_load = os.path.join("c0m000.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
@@ -471,10 +471,8 @@ class IfritAIWidget(QWidget):
         md_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Md file to import", filter="*.md")[0]
         # md_file_to_load = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if md_file_to_load:
-            print(self.ifrit_manager.enemy.battle_script_data['ai_data'])
             self.__clear_lines(delete_data=False)
             self.create_ai_data_from_md(md_file_to_load, self.ifrit_manager.game_data, self.ifrit_manager.enemy, self.ifrit_manager.enemy.battle_script_data['ai_data'])
-            print(self.ifrit_manager.enemy.battle_script_data['ai_data'])
             self.ifrit_manager.enemy.ai = self.ifrit_manager.enemy.battle_script_data['ai_data']
             self.__setup_section_data()
 
@@ -487,8 +485,7 @@ class IfritAIWidget(QWidget):
             code_blocks = re.findall(r'```.*?\n(.*?)\n```', content, re.DOTALL)
             # Analyse code
             for index_code, code in enumerate(code_blocks):
-                code_analyser = CodeAnalyser(game_data, enemy, code.splitlines())
-                ai_data[index_code] = code_analyser.get_command()
+                ai_data[index_code] = CodeAnalyser.compute_ifrit_ai_code_to_command(game_data, enemy, code)
 
     def _export_md_file(self):
         default_name = self.ifrit_manager.enemy.origin_file_name.replace('.dat', '.md')
@@ -515,3 +512,7 @@ class IfritAIWidget(QWidget):
         text_content = soup.get_text().replace("\xa0", " ")
         with open(md_file, 'w', encoding='utf-8') as file:
             file.write(text_content)
+
+
+
+
