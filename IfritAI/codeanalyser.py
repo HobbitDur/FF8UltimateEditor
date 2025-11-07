@@ -142,7 +142,11 @@ class CodeLine:
                         op_code_original_str_list.insert(0, str(var_found[0]['op_code']))
 
                 # Subject ID (0)
-                subject_id = int(op_code_original_str_list[0])
+                var_data = [x for x in self.game_data.ai_data_json['list_var'] if x['var_name'] == op_code_original_str_list[0]]
+                if var_data:  # Local var is str of var name instead of an ID
+                    subject_id = var_data[0]['op_code']
+                else:
+                    subject_id = int(op_code_original_str_list[0])
                 op_code_list.append(subject_id)
                 if subject_id <= 20:
                     subject_id_info = [x for x in self.game_data.ai_data_json['if_subject'] if x['subject_id'] == subject_id][0]
