@@ -12,7 +12,6 @@ class CodePostprocessing:
         Transform "jump: ELSE { if: ... }" patterns to "elseif: ..."
         Handles HTML formatting and proper brace counting.
         """
-        print(code_text)
         working_text = code_text
         while True:
             # Matches: jump:...Else...{
@@ -54,7 +53,6 @@ class CodePostprocessing:
                     else_blocks_modified = text[:last_index] + text[last_index + 6:]
             code_text = code_text.replace(else_blocks, else_blocks_modified, 1)
             working_text = working_text.replace(else_blocks, else_blocks_modified, 1)
-        print(code_text)
 
         return code_text
 

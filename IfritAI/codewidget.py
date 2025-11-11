@@ -1,9 +1,11 @@
 from os.path import split
 from typing import List
 
-from PyQt6.QtWidgets import QWidget, QTextEdit, QPushButton, QVBoxLayout
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QTextEdit, QPushButton, QVBoxLayout, QMessageBox
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
+from FF8GameData.dat.daterrors import AICodeError
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
 from IfritAI.codeanalyser import CodeAnalyser
@@ -79,11 +81,27 @@ class CodeWidget(QWidget):
         self.code_area_widget.setText(CodeAnalyser.set_ifrit_ai_code_from_command(self.game_data, command_list))
 
     def _compute_ifrit_ai_code_to_command(self):
-        self._command_list = CodeAnalyser.compute_ifrit_ai_code_to_command(self.game_data, self.ennemy_data, self.code_area_widget.toPlainText())
-        self._command_list = self.ennemy_data.update_stop_on_list(self.game_data, self._command_list)
-        self.code_changed_hook(self._command_list)
+        try:
+            self._command_list = CodeAnalyser.compute_ifrit_ai_code_to_command(self.game_data, self.ennemy_data, self.code_area_widget.toPlainText())
+            if AICodeError.has_errors():
+                self.show_ai_errors()
+            else:
+                self._command_list = self.ennemy_data.update_stop_on_list(self.game_data, self._command_list)
+                self.code_changed_hook(self._command_list)
+        except AICodeError:
+            self.show_ai_errors()
 
 
+    def show_ai_errors(self):
+        if AICodeError.has_errors():
+            msg = QMessageBox()
+            msg.setTextFormat(Qt.TextFormat.RichText)
+            msg.setIcon(QMessageBox.Icon.Critical)
+            msg.setWindowTitle("AI code Errors")
+            msg.setText(AICodeError.format_errors_for_display())
+            # msg.setDetailedText()
+            msg.exec()
+            AICodeError.clear_errors()
     def set_text_from_command(self, command_list: List[CommandAnalyser]):
         self._command_list = command_list
         func_list = []

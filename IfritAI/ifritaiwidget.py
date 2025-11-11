@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
     QColorDialog, QCheckBox, QMessageBox
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
+from FF8GameData.dat.daterrors import AICodeError
 from FF8GameData.gamedata import GameData
 from IfritAI.codeanalyser import CodeAnalyser
 from IfritAI.codewidget import CodeWidget
@@ -399,7 +400,7 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        # file_to_load = os.path.join("c0m001.dat")  # For developing faster
+        file_to_load = os.path.join("c0m028.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
@@ -486,6 +487,7 @@ class IfritAIWidget(QWidget):
             # Analyse code
             for index_code, code in enumerate(code_blocks):
                 ai_data[index_code] = CodeAnalyser.compute_ifrit_ai_code_to_command(game_data, enemy, code)
+
 
     def _export_md_file(self):
         default_name = self.ifrit_manager.enemy.origin_file_name.replace('.dat', '.md')

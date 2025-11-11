@@ -3,6 +3,8 @@ from typing import List
 import re
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
+from FF8GameData.dat.daterrors import FuncNameNotFound, AICodeError, BracketError, SectionError, FuncNameUnexpected, LineError, EmptyLineError, ParamCountError, \
+    LineUnexpectedCharaError
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
 from IfritAI.codepostprocessing import CodePostprocessing
@@ -91,7 +93,7 @@ class CodeAnalyseTool:
             elif func_found == else_func_name:
                 section_command_list = CodeElseSection(game_data, enemy_data, section_lines[if_start_index: if_end_index + 1], if_start_index)
             else:
-                print(f"Unexpected func found: {func_found}")
+                raise FuncNameUnexpected(func_found, "if and else")
                 section_command_list = None
             command_list.extend(section_command_list.get_command())
             last_line += section_command_list.get_nb_line()
@@ -112,22 +114,25 @@ class CodeLine:
         replaced_line = code_part.rstrip()
         replaced_line = replaced_line.replace(' ', '')
         replaced_line = replaced_line.replace('\t', '')
-        if replaced_line in ('{', '}'):
-            print(f"Unexpected {{ or }}: {replaced_line}")
-            return
-        elif replaced_line == "":
-            print(f"Unexpected empty line")
-            return
+        try:
+            if replaced_line in ('{', '}'):
+                raise LineUnexpectedCharaError("{{ or }}", replaced_line)
+            if replaced_line == "":
+                raise EmptyLineError()
+        except EmptyLineError:
+            pass
 
         code_split = self._code_text_line.split(':', 1)
         func_name = code_split[0].replace(' ', '')
         func_name = func_name.replace('\t', '')
         op_code_list = re.findall(rf"{re.escape(CommandAnalyser.PARAM_CHAR_LEFT)}(.*?){re.escape(CommandAnalyser.PARAM_CHAR_RIGHT)}", code_split[1])
         op_info = [x for x in self.game_data.ai_data_json['op_code_info'] if x["func_name"] == func_name]
-        if op_info:
-            op_info = op_info[0]
-        else:
-            print(f"Didn't find func name: {func_name}, assuming stop")
+        try:
+            if op_info:
+                op_info = op_info[0]
+            else:
+                raise FuncNameNotFound(func_name)
+        except AICodeError:
             op_info = self.game_data.ai_data_json['op_code_info'][0]
 
         # Adding missing param when needed
@@ -166,7 +171,7 @@ class CodeLine:
                     elif subject_id_info['param_left_type'] == "subject10":
                         pass  # It's a param on itself
                     else:
-                        print(f"Unexpected param_left_type for analyse line: {subject_id_info['param_left_type']}")
+                        raise LineError(f"Unexpected param_left_type for analyse line: {subject_id_info['param_left_type']}")
                 elif subject_id_info['param_left_type'] == "int_right" and subject_id_info['param_right_type'] == "alive":
                     alive_left_value = str(op_code_original_str_list[1])
                 op_code_list.append(op_code_original_str_list[1])
@@ -181,7 +186,7 @@ class CodeLine:
                     elif subject_id_info['param_left_type'] == "int_right" and subject_id_info['param_right_type'] == "alive":
                         op_code_original_str_list.insert(3, alive_left_value)
                     else:
-                        print(f"Unexpected param_right_type for analyse line: {subject_id_info['param_right_type']}")
+                        raise LineError(f"Unexpected param_right_type for analyse line: {subject_id_info['param_right_type']}")
                 # Right param takes 2 bytes, but we gives only one parameters so we add an empty one
                 op_code_list.append(op_code_original_str_list[3])
                 op_code_list.append(0)
@@ -210,8 +215,7 @@ class CodeLine:
                 op_code_list[1] = high_byte
                 op_code_list.append(low_byte)
             else:
-                print(
-                    f"When analysing command, wrong size of parameter ({len(op_code_list)} instead of {op_info['size']}) with op id unexpected {op_info['op_code']}")
+                raise ParamCountError(f"When analysing command, wrong size of parameter ({len(op_code_list)} instead of {op_info['size']}) with op id unexpected {op_info['op_code']}")
         # Putting the parameters in the correct order (if not done previously)
         else:
             original_op_list = op_code_list.copy()
@@ -244,23 +248,27 @@ class CodeIfSection:
         # First remove first bracket and last bracket
         next_line_to_start = 1  # Starting after the IF
         end_line = len(self._section_lines)
-        if self._section_lines[1].replace(' ', '') == '{':
-            next_line_to_start += 1
-        else:
-            print(f"Not a bracket following if: {self._section_lines[1]}")
-        if self._section_lines[-1].replace(' ', '') == '}':
-            end_line -= 1
-        else:
-            print(f"Not a bracket ending if: {self._section_lines[-1]}")
+        try:
+            if self._section_lines[1].replace(' ', '') == '{':
+                next_line_to_start += 1
+            else:
+                raise BracketError(f"Not a bracket following if: <b>{self._section_lines[1]}</b>")
+            if self._section_lines[-1].replace(' ', '') == '}':
+                end_line -= 1
+            else:
+                raise BracketError(f"Not a bracket ending if: {self._section_lines[-1]}")
+        except IndexError:
+            raise BracketError(f"Probably missing bracket")
+
         # Checking the section is correct
         ## Size should be at least 2
         if len(self._section_lines) < 2:
-            print(f"Section too short, should be at least 2, but it's {len(self._section_lines)} lines")
+            raise BracketError(f"Section too short, should be at least 2 lines, but it's <b>{len(self._section_lines)}</b> lines")
         ## IF first line is an IF
         op_if_info = [x for x in self.game_data.ai_data_json['op_code_info'] if x["op_code"] == 2][0]
         op_else_info = [x for x in self.game_data.ai_data_json['op_code_info'] if x["op_code"] == 35][0]
         if op_if_info['func_name'] not in self._section_lines[0]:
-            print(f"Unexpected first line of if section: {self._section_lines[0]}")
+            raise SectionError(f"Unexpected first line of if section: <b>{self._section_lines[0]}</b>")
         # Analysing the content of the IF
         self._command_list = CodeAnalyseTool.analyse_loop(self._section_lines[next_line_to_start:end_line], op_if_info['func_name'], op_else_info['func_name'],
                                                           self.game_data, self.enemy_data)
@@ -313,20 +321,23 @@ class CodeElseSection:
         # First remove first bracket and last bracket
         next_line_to_start = 1  # Starting after the IF
         end_line = len(self._section_lines)
-        if self._section_lines[1].replace(' ', '') == '{':
-            next_line_to_start += 1
-        else:
-            print(f"Not a bracket following if: {self._section_lines[1]}")
-        if self._section_lines[-1].replace(' ', '') == '}':
-            end_line -= 1
-        else:
-            print(f"Not a bracket ending if: {self._section_lines[-1]}")
+        try:
+            if self._section_lines[1].replace(' ', '') == '{':
+                next_line_to_start += 1
+            else:
+                raise BracketError(f"Not a bracket following else: <b>{self._section_lines[1]}</b>")
+            if self._section_lines[-1].replace(' ', '') == '}':
+                end_line -= 1
+            else:
+                raise BracketError(f"Not a bracket ending else: {self._section_lines[-1]}")
+        except IndexError:
+            raise BracketError(f"Probably missing bracket")
         # Checking the section is correct
         ## If first line is an else
         op_if_info = [x for x in self.game_data.ai_data_json['op_code_info'] if x["op_code"] == 2][0]
         op_else_info = [x for x in self.game_data.ai_data_json['op_code_info'] if x["op_code"] == 35][0]
         if op_else_info['func_name'] not in self._section_lines[0]:
-            print(f"Unexpected first line of else section: {self._section_lines[0]}")
+            raise SectionError(f"Unexpected first line of else section: <b>{self._section_lines[0]}</b>")
 
         # Analysing the content of the IF
         self._command_list = CodeAnalyseTool.analyse_loop(self._section_lines[next_line_to_start:end_line], op_if_info['func_name'], op_else_info['func_name'],
