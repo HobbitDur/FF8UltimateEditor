@@ -222,7 +222,7 @@ class ToolUpdateWidget(QWidget):
         self.progress_current_download.show()
 
         nb_tools = len(tool_list)
-        self.progress.setRange(0, nb_tools+1)
+        self.progress.setRange(0, nb_tools)
         self.progress.setValue(0)
         if self.canal_widget.currentIndex() == 0:
             canary = False

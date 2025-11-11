@@ -5,7 +5,7 @@ import shutil
 import types
 from zipfile import ZipFile
 import requests
-
+from packaging import version
 
 class ToolDownloader:
     GITHUB_RELEASE_TAG_PATH = "/releases/tag/"
@@ -127,12 +127,20 @@ class ToolDownloader:
                     dd_url = el[json_url]
                     break
         if not dd_url:  # No pre-release found, taking latest
-            current_tag_version = ""
+            current_tag_version = None
             for el in json_file:
-                if el['tag_name'].count('.') >= 1:
-                    if not current_tag_version or el['tag_name'] > current_tag_version:
-                        current_tag_version = el['tag_name']
-                        dd_url = el[json_url]
+                tag = el['tag_name']
+                if tag.count('.') >= 1:
+                    try:
+                        # Parse the version properly
+                        parsed_version = version.parse(tag)
+
+                        if not current_tag_version or parsed_version > version.parse(current_tag_version):
+                            current_tag_version = tag  # Store the original tag name
+                            dd_url = el[json_url]  # Replace with your actual URL key
+                    except:
+                        # Skip if version parsing fails
+                        continue
         return dd_url
 
     def _unzip_tool(self, dd_file_name: str, tool_folder: str, ignore_first_folder = False):

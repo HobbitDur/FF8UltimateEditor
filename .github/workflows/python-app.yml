@@ -47,13 +47,13 @@ jobs:
         run: |
           pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
           mkdir -p release/Resources
-          mkdir -p release/Junkshop
-          mkdir -p release/Quezacotl
-          mkdir -p release/Doomtrain
-          mkdir -p release/JumboCactuar
-          mkdir -p release/IfritGui
-          mkdir -p release/Siren
-          mkdir -p release/Hyne
+          mkdir -p release/ExternalTools/Junkshop
+          mkdir -p release/ExternalTools/Quezacotl
+          mkdir -p release/ExternalTools/Doomtrain
+          mkdir -p release/ExternalTools/JumboCactuar
+          mkdir -p release/ExternalTools/IfritGui
+          mkdir -p release/ExternalTools/Siren
+          mkdir -p release/ExternalTools/Hyne
           mkdir -p release/Deling
           mkdir -p release/logs
           mkdir -p release/FF8GameData
