@@ -54,7 +54,7 @@ jobs:
           mkdir -p release/ExternalTools/IfritGui
           mkdir -p release/ExternalTools/Siren
           mkdir -p release/ExternalTools/Hyne
-          mkdir -p release/Deling
+          mkdir -p release/ExternalTools/Deling
           mkdir -p release/logs
           mkdir -p release/FF8GameData
           mkdir -p release/FF8GameData/Resources
