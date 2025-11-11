@@ -50,7 +50,7 @@ class ToolDownloader:
         self._unzip_tool(dd_file_name, install_path, ignore_first_folder)
         shutil.rmtree(self.FOLDER_DOWNLOAD)
 
-    def update_self(self, download_update_func: types.MethodType = None, canary=True):
+    def download_self(self, download_update_func: types.MethodType = None, canary=True):
         os.makedirs(self.FOLDER_DOWNLOAD, exist_ok=True)
         dd_url = self.__get_github_url_file(self.json_data['SelfUpdate'], "assets_url", canary)
         json_file = self.__download_file(dd_url, download_update_func, headers={'content-type': 'application/json'})[0].json()

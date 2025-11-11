@@ -2,14 +2,16 @@ import os
 import sys
 from datetime import datetime
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QSizePolicy, QFrame
+from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel, QFrame
 
 from CCGroup.ccgroup import CCGroupWidget
 from ExeLauncher.cactiliolauncher import CactilioLauncher
 from ExeLauncher.delinglauncher import DelingLauncher
 from ExeLauncher.doomtrainlauncher import DoomtrainLauncher
+from ExeLauncher.ff8ultimatelauncher import FF8UltimateLauncher
+from ExeLauncher.hynelauncher import HyneLauncher
 from ExeLauncher.ifritguilauncher import IfritGuiLauncher
 from ExeLauncher.junkshop import JunkshopLauncher
 from ExeLauncher.quezacotllauncher import QuezacotlLauncher
@@ -54,6 +56,7 @@ class FF8UltimateEditorWidget(QWidget):
         # External program
         self._external_program_title = QLabel("External program:")
 
+        self._self_button = ExternalToolWidget(os.path.join(resources_path, 'hobbitdur.ico'), self._launch_FF8Ultimate, "Launch FF8UltimateEditor")
         self._ifrit_gui_button = ExternalToolWidget(os.path.join(resources_path, 'ifritGui.ico'), self._launch_ifritGui, "Launch original ifrit soft")
         self._Quezacotl_button = ExternalToolWidget(os.path.join(resources_path, 'Quezacotl.ico'), self._launch_Quezacotl, "Launch Quezacotl (init.out editor)")
         self._siren_button = ExternalToolWidget(os.path.join(resources_path, 'siren.ico'), self._launch_siren, "Launch siren (price.bin editor)")
@@ -63,18 +66,22 @@ class FF8UltimateEditorWidget(QWidget):
         self._cactilio_button = ExternalToolWidget(os.path.join(resources_path, 'jumbo_cactuar.ico'), self._launch_cactilio,
                                                    "Launch Jumbo cactuar (Scene.out editor)")
         self._deling_button = ExternalToolWidget(os.path.join(resources_path, 'deling.ico'), self._launch_deling, "Launch deling (Archive editor)")
+        self._hyne_button = ExternalToolWidget(os.path.join(resources_path, 'hyne.ico'), self._launch_hyne, "Launch hyne (Save editor)")
+        self._ff8_ultimate_button = ExternalToolWidget(os.path.join(resources_path, 'hobbitdur.ico'), self._launch_FF8Ultimate, "Launch FF8Ultimate (This editor)")
 
         self._tool_update_widget = ToolUpdateWidget(self.tools_to_update)
 
         self._external_program_layout = QHBoxLayout()
         self._external_program_layout.addWidget(self._tool_update_widget, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._external_program_title, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._external_program_layout.addWidget(self._self_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._ifrit_gui_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._Quezacotl_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._siren_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._junkshop_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._doomtrain_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._cactilio_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._external_program_layout.addWidget(self._hyne_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._deling_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addStretch(1)
 
@@ -107,6 +114,8 @@ class FF8UltimateEditorWidget(QWidget):
         self.doomtrain_launcher = DoomtrainLauncher(os.path.join("Doomtrain", "Doomtrain.exe"), callback=None)
         self.cactilio_launcher = CactilioLauncher(os.path.join("JumboCactuar", "Jumbo Cactuar.exe"), callback=None)
         self.deling_launcher = DelingLauncher(os.path.join("Deling", "Deling.exe"), callback=None)
+        self.hyne_launcher = HyneLauncher(os.path.join("Hyne", "Hyne.exe"), callback=None)
+        self.ff8ultimate_launcher = FF8UltimateLauncher(os.path.join("", "FF8UltimateEditor.exe"), callback=None)
 
         self._enhance_container = QWidget()
         self._enhance_container.setLayout(self._enhance_layout)
@@ -155,6 +164,12 @@ class FF8UltimateEditorWidget(QWidget):
 
     def _launch_deling(self):
         self.deling_launcher.launch()
+
+    def _launch_hyne(self):
+        self.hyne_launcher.launch()
+
+    def _launch_FF8Ultimate(self):
+        self.ff8ultimate_launcher.launch()
 
     def _ifritGui_exit(self):
         pass
@@ -213,6 +228,8 @@ class FF8UltimateEditorWidget(QWidget):
 
     def tools_to_update(self):
         tool_list = []
+        if self._self_button.update_selected:
+            tool_list.append("Self")
         if self._ifrit_gui_button.update_selected:
             tool_list.append("IfritGui")
         if self._Quezacotl_button.update_selected:
@@ -225,6 +242,8 @@ class FF8UltimateEditorWidget(QWidget):
             tool_list.append("Doomtrain")
         if self._cactilio_button.update_selected:
             tool_list.append("JumboCactuar")
+        if self._hyne_button.update_selected:
+            tool_list.append("Hyne")
         if self._deling_button.update_selected:
             tool_list.append("Deling")
             tool_list.append("DelingCli")

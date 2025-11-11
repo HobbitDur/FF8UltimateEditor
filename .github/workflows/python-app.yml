@@ -53,6 +53,7 @@ jobs:
           mkdir -p release/JumboCactuar
           mkdir -p release/IfritGui
           mkdir -p release/Siren
+          mkdir -p release/Hyne
           mkdir -p release/Deling
           mkdir -p release/logs
           mkdir -p release/FF8GameData

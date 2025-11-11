@@ -18,6 +18,12 @@
 	"IfritGui":   {
 	  "link":"https://github.com/HobbitDur/IfritGui"
 	},
+	"Hyne": {
+	  "link": "https://github.com/myst6re/hyne",
+	  "install_path": "Hyne",
+	  "asset_name": ["hyne-continuous-win_x64.zip", "hyne-1.11.4-win32.zip"],
+	  "ignore_first_folder": "True"
+  	},
 	"DelingCli": {
 	  "link": "https://github.com/myst6re/deling",
 	  "install_path": "FF8GameData/fs/DelingCli",
