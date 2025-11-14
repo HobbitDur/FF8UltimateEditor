@@ -21,3 +21,5 @@ ExternalTools/Deling/*
 *.exe
 **.xml
 SelfUpdate
+*.hext
+*.csv

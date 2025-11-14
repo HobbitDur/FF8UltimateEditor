@@ -8,7 +8,7 @@ from PIL import Image
 from FF8GameData.gamedata import GameData
 
 
-class Card():
+class Card:
     TILES_WIDTH = 64
     TILES_WIDTH_EL = 128
     TILES_HEIGHT = 64

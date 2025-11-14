@@ -150,7 +150,7 @@ class CCGroupWidget(QWidget):
 
     def __save_file(self):
         default_file_name = os.path.join(os.getcwd(), "monster_card_injection_" + self.__language_widget.currentText() + ".hext")
-        file_to_save = self.__save_dialog.getSaveFileName(parent=self, caption="Find csv file", filter="*.hext",
+        file_to_save = self.__save_dialog.getSaveFileName(parent=self, caption="Save hext file", filter="*.hext",
                                                           directory=default_file_name)[0]
         hext_str = ""
         # First writing base data (not sure why necessary, but everyone does it)
