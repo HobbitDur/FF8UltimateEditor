@@ -1,9 +1,24 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QComboBox, QTableWidget, QHeaderView, QTableWidgetItem, QCheckBox
+from PyQt6.QtWidgets import QComboBox, QTableWidget, QHeaderView, QTableWidgetItem, QCheckBox, QWidget, QHBoxLayout
 
 from DrawEditor.draw import Draw
 from FF8GameData.gamedata import GameData
 
+
+class CenteredCheckBox(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.checkbox = QCheckBox()
+        layout = QHBoxLayout(self)
+        layout.addWidget(self.checkbox)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+    def isChecked(self):
+        return self.checkbox.isChecked()
+
+    def setChecked(self, state):
+        self.checkbox.setChecked(state)
 
 class DrawWidget(QTableWidget):
 
@@ -20,6 +35,8 @@ class DrawWidget(QTableWidget):
 
     def get_draw(self) -> [Draw]:
         return self._draw
+
+
 
     def setup_table(self):
         # Create table with 256 rows and 4 columns
@@ -55,17 +72,15 @@ class DrawWidget(QTableWidget):
             self.setCellWidget(row, 1, combo)
 
             # HighYield column - QCheckBox
-            high_yield_check = QCheckBox()
-            high_yield_check.setStyleSheet("margin-left:50%; margin-right:50%;")
+
+            high_yield_check = CenteredCheckBox()
             if draw.high_yield:
                 high_yield_check.setChecked(True)
             else:
                 high_yield_check.setChecked(False)
             self.setCellWidget(row, 2, high_yield_check)
 
-            # Refill column - QCheckBox
-            refill_check = QCheckBox()
-            refill_check.setStyleSheet("margin-left:50%; margin-right:50%;")
+            refill_check = CenteredCheckBox()
             if draw.refill:
                 refill_check.setChecked(True)
             else:
