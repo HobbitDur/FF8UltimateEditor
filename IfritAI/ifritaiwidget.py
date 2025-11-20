@@ -65,6 +65,8 @@ class IfritAIWidget(QWidget):
         self.file_dialog_button.clicked.connect(self.__load_file)
         self.file_dialog_button.setToolTip("Open a .dat file")
 
+        self.file_dialog_export = QFileDialog()
+
         self.reset_button = QPushButton()
         self.reset_button.setIcon(QIcon(os.path.join(icon_path, 'reset.png')))
         self.reset_button.setIconSize(QSize(30, 30))
@@ -469,7 +471,7 @@ class IfritAIWidget(QWidget):
             self.__setup_section_data()
 
     def _load_md_file(self):
-        md_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Md file to import", filter="*.md")[0]
+        md_file_to_load = self.file_dialog_export.getOpenFileName(parent=self, caption="Md file to import", filter="*.md")[0]
         # md_file_to_load = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if md_file_to_load:
             self.__clear_lines(delete_data=False)
