@@ -69,11 +69,13 @@ class DrawWidget(QTableWidget):
             combo = QComboBox()
             combo.addItems(magic_options)
             combo.setCurrentIndex(draw.magic_index)
+            combo.currentIndexChanged.connect(lambda state, r=row: self._magic_changed(state, r))
             self.setCellWidget(row, 1, combo)
 
             # HighYield column - QCheckBox
 
             high_yield_check = CenteredCheckBox()
+            high_yield_check.checkbox.stateChanged.connect( lambda state, r=row: self._high_yield_changed(state, r))
             if draw.high_yield:
                 high_yield_check.setChecked(True)
             else:
@@ -81,6 +83,7 @@ class DrawWidget(QTableWidget):
             self.setCellWidget(row, 2, high_yield_check)
 
             refill_check = CenteredCheckBox()
+            refill_check.checkbox.stateChanged.connect(lambda state, r=row: self._refill_changed(state, r))
             if draw.refill:
                 refill_check.setChecked(True)
             else:
@@ -93,3 +96,18 @@ class DrawWidget(QTableWidget):
             location_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft)
             self.setItem(row, 4, location_item)
         self.setEnabled(True)
+
+
+    def _magic_changed(self, index, row):
+        self._draw[row].magic_index = index
+        #print(f"Row {row}: magic_index = {index}")
+
+    def _high_yield_changed(self, state, row):
+        is_checked = (state == Qt.CheckState.Checked.value)
+        self._draw[row].high_yield = is_checked
+        #print(f"Row {row}: high_yield = {is_checked}")
+
+    def _refill_changed(self, state, row):
+        is_checked = (state == Qt.CheckState.Checked.value)
+        self._draw[row].refill = is_checked
+        #print(f"Row {row}: refill = {is_checked}")
