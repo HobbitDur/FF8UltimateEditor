@@ -49,7 +49,7 @@ class DrawWidget(QTableWidget):
         self.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         self.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
-
+        self.verticalHeader().setVisible(False)
         # Populate the table
         self._populate_table()
 
