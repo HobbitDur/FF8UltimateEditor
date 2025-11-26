@@ -213,6 +213,7 @@ class IfritXlsxWidget(QWidget):
             message_box.setWindowIcon(self.__ifrit_icon)
             message_box.setWindowTitle("IfritXlsx - Error")
             message_box.exec()
+            return
         else:
             if self.limit_option.value() != -1:
                 dat_file_current_list = []
@@ -240,4 +241,10 @@ class IfritXlsxWidget(QWidget):
                 self.ifrit_manager.xlsx_to_dat(dat_file_current_list, self.limit_option.value())
             if self.open_xlsx.isChecked():
                 os.startfile(self.xlsx_file_selected)
+        message_box = QMessageBox()
+        message_box.setText("Successful !")
+        message_box.setIcon(QMessageBox.Icon.Information)
+        message_box.setWindowIcon(self.__ifrit_icon)
+        message_box.setWindowTitle("IfritXlsx - Success")
+        message_box.exec()
         print("Launch over !")

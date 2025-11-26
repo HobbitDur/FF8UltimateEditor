@@ -24,3 +24,4 @@ SelfUpdate
 *.hext
 *.csv
 **/*.bin
+*.xlsx
