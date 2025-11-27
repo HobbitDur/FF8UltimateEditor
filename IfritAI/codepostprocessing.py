@@ -38,7 +38,7 @@ class CodePostprocessing:
             else:
                 else_blocks = ""
 
-            pattern = r'jump:.*?ELSE(?:\s|&nbsp;|<br/>)*{(?:\s|&nbsp;|<br/>)*if:'
+            pattern = r'jump:\s*ELSE(?:\s|&nbsp;|<br/>)*{(?:\s|&nbsp;|<br/>)*if:'
 
             else_blocks_modified, count = re.subn(pattern, 'elseif:', else_blocks, count=1, flags=re.IGNORECASE | re.DOTALL)
             if count == 0:  # It's a end without an if after, so just remove it from the work in progress string
@@ -125,21 +125,21 @@ if __name__ == "__main__":
 
     # Test with a simpler example to show the transformation clearly
     simple_test_code = """
-if: condition1
+if: If with Subject ID [3], COMBAT SCENE [==] [1]
 {
-    target: something
+    target: [Squall]
 }
 jump: ELSE
 {
-    if: condition2
+    if: If with Subject ID [3], COMBAT SCENE [==] [1]
     {
-        target: something else
+          target: [Squall]
     }
     jump: ELSE
     {
-        if: condition3
+        if: If with Subject ID [3], COMBAT SCENE [==] [1]
         {
-            target: another thing
+              target: [Squall]
         }
     }
 }
