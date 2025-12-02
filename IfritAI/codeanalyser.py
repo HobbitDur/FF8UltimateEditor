@@ -482,6 +482,7 @@ class CodeAnalyser:
             code_text += '<br/>'
         temp = CodePostprocessing.postprocessing_code_txt(code_text)
         return CodePostprocessing.format_c_style_indentation(temp)
+        #return CodePostprocessing.format_c_style_indentation(code_text)
 
 
     @staticmethod
