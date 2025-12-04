@@ -158,5 +158,105 @@ class TestAICodeGenerator:
 
         assert bytecode == expected, f"Expected {expected}, got {bytecode}"
 
+    def test_complex_nested_if_statements(self, ai_compiler):
+        """Test complex nested if statements"""
+        code_generator = ai_compiler.generator
+
+        # Create AST for:
+        # if (220, 225, 0, 24) {
+        #     if (220, 225, 0, 23) {
+        #         prepareMagic(0);
+        #     } else {
+        #         if (220, 225, 0, 22) {
+        #             prepareMagic(3);
+        #         }
+        #     }
+        # } else {
+        #     prepareMagic(1);
+        # }
+        # stop;
+
+        # Create innermost if (220, 225, 0, 22) { prepareMagic(3); }
+        innermost_condition_params = ParamList(params=[
+            Value("220"),
+            Value("225"),
+            Value("0"),
+            Value("22")
+        ])
+        innermost_condition = Condition(params=innermost_condition_params)
+        innermost_magic = Command(name="prepareMagic", params=ParamList(params=[Value("3")]))
+        innermost_then_block = Block(statements=[innermost_magic])
+        innermost_if = IfStatement(
+            condition=innermost_condition,
+            then_block=innermost_then_block,
+            elif_branches=[],
+            else_block=None
+        )
+
+        # Create middle else block containing the innermost if
+        middle_else_block = Block(statements=[innermost_if])
+
+        # Create middle if (220, 225, 0, 23) { prepareMagic(0); } else { ... }
+        middle_condition_params = ParamList(params=[
+            Value("220"),
+            Value("225"),
+            Value("0"),
+            Value("23")
+        ])
+        middle_condition = Condition(params=middle_condition_params)
+        middle_magic = Command(name="prepareMagic", params=ParamList(params=[Value("0")]))
+        middle_then_block = Block(statements=[middle_magic])
+        middle_if = IfStatement(
+            condition=middle_condition,
+            then_block=middle_then_block,
+            elif_branches=[],
+            else_block=middle_else_block
+        )
+
+        # Create outer else block: prepareMagic(1);
+        outer_else_magic = Command(name="prepareMagic", params=ParamList(params=[Value("1")]))
+        outer_else_block = Block(statements=[outer_else_magic])
+
+        # Create stop command
+        stop_command = Command(name="stop", params=None)
+
+        # Create outer if (220, 225, 0, 24) { ... } else { ... }
+        outer_condition_params = ParamList(params=[
+            Value("220"),
+            Value("225"),
+            Value("0"),
+            Value("24")
+        ])
+        outer_condition = Condition(params=outer_condition_params)
+        outer_then_block = Block(statements=[middle_if])
+        outer_if = IfStatement(
+            condition=outer_condition,
+            then_block=outer_then_block,
+            elif_branches=[],
+            else_block=outer_else_block
+        )
+
+        # Create final block with outer if and stop command
+        final_block = Block(statements=[outer_if, stop_command])
+
+        # Generate bytecode
+        bytecode = code_generator.generate(final_block)
+
+        # Expected bytecode (formatted for readability)
+        expected = [
+            2, 220, 225, 0, 24, 0, 29, 0,  # Outer IF
+            2, 220, 225, 0, 23, 0, 5, 0,  # Middle IF
+            3, 0,  # prepareMagic(0)
+            35, 13, 0,  # JUMP 13
+            2, 220, 225, 0, 22, 0, 5, 0,  # Innermost IF
+            3, 3,  # prepareMagic(3)
+            35, 0, 0,  # JUMP 0
+            35, 2, 0,  # JUMP 2
+            3, 1,  # prepareMagic(1)
+            0  # stop
+        ]
+
+        assert bytecode == expected, f"Expected {expected}, got {bytecode}"
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-x", "--tb=short"])

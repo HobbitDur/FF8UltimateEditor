@@ -9,7 +9,6 @@ from IfritAI.AICompiler.AICompiler import AICompiler
 @pytest.fixture
 def ai_compiler():
     """Create an AICompiler instance for testing"""
-    # Create a mock game_data object
     game_data = GameData("..\\..\\..\\FF8GameData")
     game_data.load_all()
     return AICompiler(game_data)
