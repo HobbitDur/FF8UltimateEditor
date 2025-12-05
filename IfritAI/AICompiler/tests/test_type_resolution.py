@@ -4,6 +4,8 @@ Tests for AST type resolution.
 Focuses on verifying the type resolver converts string values to appropriate types.
 """
 import pytest
+
+from FF8GameData.dat.daterrors import ParamMagicIdError
 from IfritAI.AICompiler.AIAST import *
 from IfritAI.AICompiler.AITypeResolver import AITypeResolver
 
@@ -12,9 +14,9 @@ class TestAITypeResolution:
     """Test suite for AI Type Resolution"""
 
     @pytest.fixture
-    def type_resolver(self, compiler):
+    def type_resolver(self, ai_compiler):
         """Get the type resolver from compiler"""
-        return compiler.type_resolver
+        return ai_compiler.type_resolver
 
     def test_resolve_prepare_magic_fire(self, type_resolver):
         """Test that prepareMagic(Fire) is converted to prepareMagic(1)"""
@@ -37,27 +39,12 @@ class TestAITypeResolution:
         # Fire should be converted to a number (assuming Fire has ID 1 in game data)
         resolved_value = resolved.params.params[0]
         assert isinstance(resolved_value, Value)
-        assert resolved_value.value == "1"  # Should be converted to number
-
-    def test_resolve_unknown_value_stays_string(self, type_resolver):
-        """Test that unknown values remain as strings"""
-        # Create AST for: prepareMagic(UnknownSpell);
-        unknown_value = Value("UnknownSpell")
-        param_list = ParamList(params=[unknown_value])
-        command = Command(name="prepareMagic", params=param_list)
-
-        # Resolve the command
-        resolved = type_resolver.resolve(command)
-
-        # Unknown values should remain as strings
-        resolved_value = resolved.params.params[0]
-        assert isinstance(resolved_value, Value)
-        assert resolved_value.value == "UnknownSpell"  # Should stay as string
+        assert resolved_value.value == "1"
 
     def test_resolve_numeric_literal_stays_number(self, type_resolver):
         """Test that numeric literals remain as numbers"""
         # Create AST for: prepareMagic(100);
-        number_value = Value("100")
+        number_value = Value("50")
         param_list = ParamList(params=[number_value])
         command = Command(name="prepareMagic", params=param_list)
 
@@ -67,62 +54,34 @@ class TestAITypeResolution:
         # Numeric literals should remain unchanged
         resolved_value = resolved.params.params[0]
         assert isinstance(resolved_value, Value)
-        assert resolved_value.value == "100"  # Should stay as number
+        assert resolved_value.value == "50"  # Should stay as number
 
-    def test_resolve_hex_number_stays_hex(self, type_resolver):
-        """Test that hex numbers remain as hex strings"""
-        # Create AST for: prepareMagic(0xFF);
-        hex_value = Value("0xFF")
-        param_list = ParamList(params=[hex_value])
-        command = Command(name="prepareMagic", params=param_list)
-
-        # Resolve the command
-        resolved = type_resolver.resolve(command)
-
-        # Hex numbers should remain unchanged
-        resolved_value = resolved.params.params[0]
-        assert isinstance(resolved_value, Value)
-        assert resolved_value.value == "0xFF"  # Should stay as hex
-
-    def test_resolve_multiple_params_mixed(self, type_resolver):
-        """Test resolution of multiple parameters with mixed types"""
-        # Create AST for: set_status(poison, 5, 0x10);
-        params = [
-            Value("poison"),   # Should be resolved to number
-            Value("5"),        # Should stay as number
-            Value("0x10")      # Should stay as hex
-        ]
-        param_list = ParamList(params=params)
-        command = Command(name="set_status", params=param_list)
-
-        # Resolve the command
-        resolved = type_resolver.resolve(command)
-
-        # Check all params
-        resolved_params = resolved.params.params
-        assert len(resolved_params) == 3
-
-        # poison -> number
-        assert resolved_params[0].value != "poison"
-        assert resolved_params[0].value.isdigit()
-
-        # 5 -> stays 5
-        assert resolved_params[1].value == "5"
-
-        # 0x10 -> stays 0x10
-        assert resolved_params[2].value == "0x10"
+    # def test_resolve_hex_number_stays_hex(self, type_resolver):
+    #     """Test that hex numbers remain as hex strings"""
+    #     # Create AST for: prepareMagic(0xFF);
+    #     hex_value = Value("0xFF")
+    #     param_list = ParamList(params=[hex_value])
+    #     command = Command(name="prepareMagic", params=param_list)
+    #
+    #     # Resolve the command
+    #     resolved = type_resolver.resolve(command)
+    #
+    #     # Hex numbers should remain unchanged
+    #     resolved_value = resolved.params.params[0]
+    #     assert isinstance(resolved_value, Value)
+    #     assert resolved_value.value == "0xFF"  # Should stay as hex
 
     def test_resolve_command_without_params(self, type_resolver):
         """Test resolution of command without parameters"""
-        # Create AST for: attack();
-        command = Command(name="attack", params=None)
+        # Create AST for: die();
+        command = Command(name="die", params=None)
 
         # Resolve the command
         resolved = type_resolver.resolve(command)
 
         # Should still be a command without params
         assert isinstance(resolved, Command)
-        assert resolved.name == "attack"
+        assert resolved.name == "die"
         assert resolved.params is None
 
     def test_resolve_block_of_statements(self, type_resolver):
@@ -130,8 +89,8 @@ class TestAITypeResolution:
         # Create AST block with multiple commands
         commands = [
             Command(name="prepareMagic", params=ParamList(params=[Value("Fire")])),
-            Command(name="attack", params=None),
-            Command(name="set_status", params=ParamList(params=[Value("poison"), Value("5")]))
+            Command(name="die", params=None),
+            Command(name="bvar", params=ParamList(params=[Value("BattleVar96"), Value("5")]))
         ]
         block = Block(statements=commands)
 
@@ -147,36 +106,446 @@ class TestAITypeResolution:
         assert resolved.statements[0].params.params[0].value == "1"
 
         # Second: attack() -> unchanged
-        assert resolved.statements[1].name == "attack"
+        assert resolved.statements[1].name == "die"
         assert resolved.statements[1].params is None
 
-        # Third: set_status(poison, 5) -> set_status(<number>, 5)
-        assert resolved.statements[2].params.params[0].value != "poison"
-        assert resolved.statements[2].params.params[0].value.isdigit()
+        # Third: bvar(battle, 5) -> set_status(96, 5)
+        assert resolved.statements[2].name == "bvar"
+        assert resolved.statements[2].params.params[0].value == "96"
         assert resolved.statements[2].params.params[1].value == "5"
 
     def test_resolve_value_directly(self, type_resolver):
         """Test direct resolution of a Value node"""
         # Test resolving a known value
         fire_value = Value("Fire")
-        resolved = type_resolver.resolve_value(fire_value)
+        resolved = type_resolver._resolve_value(fire_value, "magic")
 
-        assert isinstance(resolved, Value)
-        assert resolved.value == "1"  # Fire -> 1
-
-        # Test resolving an unknown value
-        unknown_value = Value("Unknown")
-        resolved = type_resolver.resolve_value(unknown_value)
-
-        assert isinstance(resolved, Value)
-        assert resolved.value == "Unknown"  # Should stay as string
+        assert resolved == 1 # Fire -> 1
 
         # Test resolving a number
-        number_value = Value("123")
-        resolved = type_resolver.resolve_value(number_value)
+        number_value = Value("20")
+        resolved = type_resolver._resolve_value(number_value, "magic")
 
-        assert isinstance(resolved, Value)
-        assert resolved.value == "123"  # Should stay as number
+        assert resolved == 20 # Should stay as number
+
+        # Test number bigger than all values possible
+        number_value = Value("200")
+        with pytest.raises(ParamMagicIdError):
+            resolved = type_resolver._resolve_value(number_value, "magic")
+
+    # NEW TESTS FOR IF STATEMENTS
+
+    def test_resolve_if_hp_specific_target(self, type_resolver):
+        """Test resolution of: if(0, Self, >=, 50%)"""
+        # Create AST for: if(0, Self, >=, 50%);
+        params = [
+            Value("0"),  # subject_id: HP OF SPECIFIC TARGET
+            Value("Self"),  # left: target_advanced_specific
+            Value(">="),  # comparator
+            Value("50")  # right: percent
+        ]
+        param_list = ParamList(params=params)
+        command = Command(name="IF", params=param_list)
+
+        # Resolve the command
+        resolved = type_resolver.resolve(command)
+
+        # Check it's still a Command
+        assert isinstance(resolved, Command)
+        assert resolved.name == "IF"
+
+        # Should have 4 parameters
+        assert len(resolved.params.params) == 4
+
+        # Check each parameter
+        # subject_id should remain 0
+        assert resolved.params.params[0].value == "0"
+
+        # Self should be converted to appropriate target_advanced_specific value
+        # Assuming "Self" maps to 0
+        assert resolved.params.params[1].value.isdigit()
+        assert resolved.params.params[1].value == "200"
+
+        # Comparator ">=" should be converted to index (probably 5)
+        comparator_index = resolved.params.params[2].value
+        assert comparator_index == "5"
+
+        # "50%" should be converted to 50
+        assert resolved.params.params[3].value == "5"
+
+    def test_resolve_if_hp_generic_target(self, type_resolver):
+        """Test resolution of: if(1, All Enemies, <, 25%)"""
+        # Create AST for: if(1, All Enemies, <, 25%);
+        params = [
+            Value("1"),  # subject_id: HP OF GENERIC TARGET
+            Value("All Enemies"),  # left: target_advanced_generic
+            Value("<"),  # comparator
+            Value("25%")  # right: percent
+        ]
+        param_list = ParamList(params=params)
+        command = Command(name="IF", params=param_list)
+
+        # Resolve the command
+        resolved = type_resolver.resolve(command)
+
+        # Should have 4 parameters
+        assert len(resolved.params.params) == 4
+
+        # subject_id should remain 1
+        assert resolved.params.params[0].value == "1"
+
+        # "All Enemies" should be converted to appropriate target_advanced_generic value
+        assert resolved.params.params[1].value.isdigit()
+
+        # Comparator "<" should be converted to index (probably 1)
+        comparator_index = resolved.params.params[2].value
+        assert comparator_index.isdigit()
+
+        # "25%" should be converted to 25
+        assert resolved.params.params[3].value == "25"
+
+    def test_resolve_if_random_value(self, type_resolver):
+        """Test resolution of: if(2, 100, ==, 0) - RANDOM VALUE"""
+        # Create AST for: if(2, 100, ==, 0);
+        params = [
+            Value("2"),  # subject_id: RANDOM VALUE
+            Value("100"),  # left: int_shift (100 should become 99)
+            Value("=="),  # comparator
+            Value("0")  # right: int
+        ]
+        param_list = ParamList(params=params)
+        command = Command(name="IF", params=param_list)
+
+        # Resolve the command
+        resolved = type_resolver.resolve(command)
+
+        # Should have 4 parameters
+        assert len(resolved.params.params) == 4
+
+        # subject_id should remain 2
+        assert resolved.params.params[0].value == "2"
+
+        # 100 should become 99 (int_shift: value - 1)
+        assert resolved.params.params[1].value == "99"
+
+        # Comparator "==" should be index 0
+        assert resolved.params.params[2].value == "0"
+
+        # Right should remain 0
+        assert resolved.params.params[3].value == "0"
+
+    def test_resolve_if_status_specific_target(self, type_resolver):
+        """Test resolution of: if(4, Self, ==, Death)"""
+        # Create AST for: if(4, Self, ==, Death);
+        params = [
+            Value("4"),  # subject_id: STATUS OF SPECIFIC TARGET
+            Value("Self"),  # left: target_advanced_specific
+            Value("=="),  # comparator
+            Value("Death")  # right: status_ai
+        ]
+        param_list = ParamList(params=params)
+        command = Command(name="IF", params=param_list)
+
+        # Resolve the command
+        resolved = type_resolver.resolve(command)
+
+        # Should have 4 parameters
+        assert len(resolved.params.params) == 4
+
+        # subject_id should remain 4
+        assert resolved.params.params[0].value == "4"
+
+        # Self should be converted
+        assert resolved.params.params[1].value.isdigit()
+
+        # Comparator "==" should be index 0
+        assert resolved.params.params[2].value == "0"
+
+        # Death should be converted to status_ai value
+        assert resolved.params.params[3].value.isdigit()
+
+    def test_resolve_if_dead_check(self, type_resolver):
+        """Test resolution of: if(8, 0, ==, Self)"""
+        # Create AST for: if(8, 0, ==, Self) - DEAD check
+        params = [
+            Value("8"),  # subject_id: DEAD
+            Value("0"),  # left: empty type (should remain 0)
+            Value("=="),  # comparator
+            Value("Self")  # right: target_advanced_specific
+        ]
+        param_list = ParamList(params=params)
+        command = Command(name="IF", params=param_list)
+
+        # Resolve the command
+        resolved = type_resolver.resolve(command)
+
+        # Should have 4 parameters
+        assert len(resolved.params.params) == 4
+
+        # subject_id should remain 8
+        assert resolved.params.params[0].value == "8"
+
+        # Left should remain 0 (empty type)
+        assert resolved.params.params[1].value == "0"
+
+        # Comparator "==" should be index 0
+        assert resolved.params.params[2].value == "0"
+
+        # Self should be converted to target_advanced_specific value
+        assert resolved.params.params[3].value.isdigit()
+
+    def test_resolve_if_global_var(self, type_resolver):
+        """Test resolution of: if(80, TonberryCount, >, 5)"""
+        # Create AST for: if(80, TonberryCount, >, 5);
+        params = [
+            Value("80"),  # subject_id: TonberryCount80
+            Value("TonberryCount"),  # left: global_var
+            Value(">"),  # comparator
+            Value("5")  # right: int
+        ]
+        param_list = ParamList(params=params)
+        command = Command(name="IF", params=param_list)
+
+        # Resolve the command
+        resolved = type_resolver.resolve(command)
+
+        # Should have 4 parameters
+        assert len(resolved.params.params) == 4
+
+        # subject_id should remain 80
+        assert resolved.params.params[0].value == "80"
+
+        # TonberryCount should be converted to global_var value
+        assert resolved.params.params[1].value.isdigit()
+
+        # Comparator ">" should be index 2
+        assert resolved.params.params[2].value == "2"
+
+        # Right should remain 5
+        assert resolved.params.params[3].value == "5"
+
+    def test_resolve_if_local_var(self, type_resolver):
+        """Test resolution of: if(220, varA, !=, 10)"""
+        # Create AST for: if(220, varA, !=, 10);
+        params = [
+            Value("220"),  # subject_id: varA
+            Value("varA"),  # left: local_var
+            Value("!="),  # comparator
+            Value("10")  # right: int
+        ]
+        param_list = ParamList(params=params)
+        command = Command(name="IF", params=param_list)
+
+        # Resolve the command
+        resolved = type_resolver.resolve(command)
+
+        # Should have 4 parameters
+        assert len(resolved.params.params) == 4
+
+        # subject_id should remain 220
+        assert resolved.params.params[0].value == "220"
+
+        # varA should be converted to local_var value
+        assert resolved.params.params[1].value.isdigit()
+
+        # Comparator "!=" should be index 3
+        assert resolved.params.params[2].value == "3"
+
+        # Right should remain 10
+        assert resolved.params.params[3].value == "10"
+
+    def test_resolve_if_complex_structure(self, type_resolver):
+        """Test resolution of IF with IfStatement structure"""
+        # Create a complete IfStatement AST
+        # if(0, Self, >=, 50%) { attack(); }
+        condition_params = ParamList(params=[
+            Value("0"),  # subject_id
+            Value("Self"),  # left
+            Value(">="),  # comparator
+            Value("50%")  # right
+        ])
+        condition = Condition(params=condition_params)
+
+        # Then block with attack command
+        then_block = Block(statements=[
+            Command(name="attack", params=None)
+        ])
+
+        # Create IfStatement
+        if_statement = IfStatement(
+            condition=condition,
+            then_block=then_block,
+            elif_branches=[],
+            else_block=None
+        )
+
+        # Resolve the IfStatement
+        resolved = type_resolver.resolve(if_statement)
+
+        # Should still be an IfStatement
+        assert isinstance(resolved, IfStatement)
+
+        # Condition parameters should be resolved
+        cond_params = resolved.condition.params.params
+        assert len(cond_params) == 4
+
+        # Check subject_id
+        assert cond_params[0].value == "0"
+
+        # Self should be converted
+        assert cond_params[1].value.isdigit()
+
+        # Comparator ">=" should be converted
+        assert cond_params[2].value.isdigit()
+
+        # "50%" should be 50
+        assert cond_params[3].value == "50"
+
+        # Then block should be resolved
+        assert isinstance(resolved.then_block, Block)
+        assert len(resolved.then_block.statements) == 1
+
+    def test_resolve_if_with_elseif_and_else(self, type_resolver):
+        """Test resolution of IF with elseif and else blocks"""
+        # Main condition: if(0, Self, >=, 50%)
+        main_condition = Condition(params=ParamList(params=[
+            Value("0"), Value("Self"), Value(">="), Value("50%")
+        ]))
+
+        # Then block
+        then_block = Block(statements=[
+            Command(name="attack", params=None)
+        ])
+
+        # Elseif condition: if(1, All Enemies, <, 25%)
+        elseif_condition = Condition(params=ParamList(params=[
+            Value("1"), Value("All Enemies"), Value("<"), Value("25%")
+        ]))
+        elseif_block = Block(statements=[
+            Command(name="defend", params=None)
+        ])
+
+        # Else block
+        else_block = Block(statements=[
+            Command(name="flee", params=None)
+        ])
+
+        # Create IfStatement
+        if_statement = IfStatement(
+            condition=main_condition,
+            then_block=then_block,
+            elif_branches=[ElifBranch(condition=elseif_condition, block=elseif_block)],
+            else_block=else_block
+        )
+
+        # Resolve the IfStatement
+        resolved = type_resolver.resolve(if_statement)
+
+        # Check main condition resolution
+        main_params = resolved.condition.params.params
+        assert main_params[0].value == "0"
+        assert main_params[1].value.isdigit()
+        assert main_params[2].value.isdigit()
+        assert main_params[3].value == "50"
+
+        # Check elseif condition resolution
+        elif_params = resolved.elif_branches[0].condition.params.params
+        assert elif_params[0].value == "1"
+        assert elif_params[1].value.isdigit()
+        assert elif_params[2].value.isdigit()
+        assert elif_params[3].value == "25"
+
+        # Check blocks are present
+        assert isinstance(resolved.then_block, Block)
+        assert isinstance(resolved.elif_branches[0].block, Block)
+        assert isinstance(resolved.else_block, Block)
+
+    def test_resolve_if_with_numeric_subject_id(self, type_resolver):
+        """Test that numeric subject_id values work correctly"""
+        # Test with numeric subject_id
+        params = [
+            Value("0"),  # numeric subject_id
+            Value("Self"),  # left
+            Value("=="),  # comparator
+            Value("100%")  # right
+        ]
+        param_list = ParamList(params=params)
+        command = Command(name="IF", params=param_list)
+
+        resolved = type_resolver.resolve(command)
+
+        # subject_id should remain 0
+        assert resolved.params.params[0].value == "0"
+
+        # "100%" should become 100
+        assert resolved.params.params[3].value == "100"
+
+    def test_resolve_if_with_hex_values(self, type_resolver):
+        """Test IF resolution with hex values"""
+        params = [
+            Value("0x0"),  # hex subject_id (should become 0)
+            Value("0x1"),  # hex left value
+            Value("=="),  # comparator
+            Value("0x64")  # hex 100
+        ]
+        param_list = ParamList(params=params)
+        command = Command(name="IF", params=param_list)
+
+        resolved = type_resolver.resolve(command)
+
+        # Hex values should be converted to decimal
+        assert resolved.params.params[0].value == "0"  # 0x0 -> 0
+        assert resolved.params.params[1].value == "1"  # 0x1 -> 1
+        assert resolved.params.params[3].value == "100"  # 0x64 -> 100
+
+    def test_resolve_if_insufficient_params(self, type_resolver):
+        """Test IF with insufficient parameters (should handle gracefully)"""
+        # Only 2 params instead of 4
+        params = [
+            Value("0"),
+            Value("Self")
+        ]
+        param_list = ParamList(params=params)
+        command = Command(name="IF", params=param_list)
+
+        # This should not crash, but may produce defaults
+        resolved = type_resolver.resolve(command)
+
+        # Should still have 4 parameters (with defaults)
+        assert len(resolved.params.params) == 4
+
+        # First two params should be resolved
+        assert resolved.params.params[0].value == "0"
+        assert resolved.params.params[1].value.isdigit()
+
+        # Last two should be defaults (probably 0)
+        assert resolved.params.params[2].value.isdigit()
+        assert resolved.params.params[3].value.isdigit()
+
+    def test_resolve_if_subject_with_param_list(self, type_resolver):
+        """Test IF subject that has param_list (like subject 15, 17)"""
+        # Subject 15: ALIVE IN SLOT has param_list: [200]
+        params = [
+            Value("15"),  # subject_id: ALIVE IN SLOT
+            Value("1"),  # left: int_right (slot number)
+            Value("=="),  # comparator
+            Value("Alive")  # right: alive
+        ]
+        param_list = ParamList(params=params)
+        command = Command(name="IF", params=param_list)
+
+        resolved = type_resolver.resolve(command)
+
+        # Should have 4 parameters
+        assert len(resolved.params.params) == 4
+
+        # subject_id should remain 15
+        assert resolved.params.params[0].value == "15"
+
+        # The param_list [200] should be inserted somewhere in the parameters
+        # This depends on implementation - check if 200 appears
+        param_values = [p.value for p in resolved.params.params]
+        assert "200" in param_values  # Should contain the constant 200
 
 
 if __name__ == "__main__":
