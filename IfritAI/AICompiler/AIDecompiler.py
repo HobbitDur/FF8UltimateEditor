@@ -11,58 +11,95 @@ class AIDecompiler:
         func_list = []
         if_list_count = []
         else_list_count = []
+        pending_elseif = False  # Track if we're expecting an elseif
 
-        for command in command_list:
+        for command_index, command in enumerate(command_list):
             last_else = False
-            just_finished_if = False
+
+            # Update block counters
             for i in range(len(if_list_count)):
                 if_list_count[i] -= command.get_size()
                 if if_list_count[i] == 0:
                     func_list.append('}')
-                    just_finished_if = True
+
             for i in range(len(else_list_count)):
+                else_list_count[i] -= command.get_size()
                 if else_list_count[i] == 0:
                     func_list.append('}')
+
+            # Remove completed blocks
             while 0 in else_list_count:
                 else_list_count.remove(0)
             while 0 in if_list_count:
                 if_list_count.remove(0)
+
             op_info = [x for x in game_data.ai_data_json['op_code_info'] if x["op_code"] == command.get_id()][0]
+
             if command.get_id() == 2:  # IF
                 op_list = command.get_op_code()
                 jump_value = int.from_bytes(bytearray([op_list[5], op_list[6]]), byteorder='little')
-                if_list_count.append(jump_value)
-                func_line_text = op_info['func_name']
-                func_line_text += command.get_text(for_decompiled=True)
-                # func_line_text += "//" + command_text
-                func_list.append(func_line_text)
-                func_list.append('{')
-            elif command.get_id() == 35:
+
+                # Check if this is an elseif (IF after a JUMP that created an else)
+                if pending_elseif:
+                    # This IF is actually an elseif
+                    func_line_text = 'elseif'
+                    func_line_text += command.get_text(for_decompiled=True)
+                    func_list.append(func_line_text)
+                    func_list.append('{')
+                    pending_elseif = False
+                else:
+                    # Regular IF
+                    if_list_count.append(jump_value)
+                    func_line_text = "if"
+                    func_line_text += command.get_text(for_decompiled=True)
+                    func_list.append(func_line_text)
+                    func_list.append('{')
+
+            elif command.get_id() == 35:  # JUMP
                 op_list = command.get_op_code()
                 jump_value = int.from_bytes(bytearray([op_list[0], op_list[1]]), byteorder='little')
-                if jump_value & 0x8000 != 0:  # Jump backward so we don't add anything related to else, just a jump backward for the moment
+
+                if jump_value & 0x8000 != 0:  # Jump backward (loop)
                     func_line_text = op_info['func_name']
                     func_line_text += command.get_text(for_decompiled=True)
                     func_list.append(func_line_text)
-                elif jump_value >= 0 and not just_finished_if:  # It's an independant jump
-                    last_else = True
-                    else_list_count.append(jump_value)  # Adding the else size himself
-                    func_list.append("else")
-                    func_list.append('{')
-                elif jump_value > 0:  # We don't add the endif
-                    last_else = True
-                    else_list_count.append(jump_value)  # Adding the else size himself
-                    func_list.append("else")
-                    func_list.append('{')
+
+                elif jump_value > 0:
+                    # Check if next command is an IF (would be elseif)
+                    if (command_index + 1 < len(command_list) and
+                            command_list[command_index + 1].get_id() == 2):
+                        # This JUMP + next IF = elseif
+                        # Don't output "else" now, just mark that we expect an elseif
+                        pending_elseif = True
+                        # Still need to track the else block size for the jump
+                        else_list_count.append(jump_value - 3)  # Don't count JUMP itself
+                    else:
+                        # Regular else
+                        last_else = True
+                        else_list_count.append(jump_value - 3)  # Don't count JUMP itself
+                        func_list.append("else")
+                        func_list.append('{')
+
+                else:  # jump_value == 0
+                    # Empty jump (no else)
+                    pass
+
             else:
                 func_line_text = op_info['func_name']
-                func_line_text += command.get_text(for_decompiled=True) + ";"
+                func_line_text += command.get_text(for_decompiled=True)
                 func_list.append(func_line_text)
-            # The else are closing after the function (you don't count the jump contrary to an if)
+
+            # Update else counters (skip the newly added else)
             for i in range(len(else_list_count)):
-                if i == len(else_list_count) - 1 and last_else:  # Don't update the else we just added with his own size !
+                if i == len(else_list_count) - 1 and last_else:
                     continue
                 else_list_count[i] -= command.get_size()
+
+        # Close any remaining blocks
+        for _ in range(len(if_list_count)):
+            func_list.append('}')
+        for _ in range(len(else_list_count)):
+            func_list.append('}')
 
         func_list = AIDecompiler.compute_indent_bracket(func_list)
         code_text = ""

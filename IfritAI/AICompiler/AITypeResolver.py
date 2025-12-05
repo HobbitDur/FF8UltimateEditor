@@ -66,6 +66,24 @@ class AITypeResolver:
                     for magic in self.game_data.magic_data_json['magic']:
                         normalized = self._normalize_string(magic['name'])
                         mappings['type_values']['magic'][normalized] = magic['id']
+                elif category == "local_var":
+                    for var in self.game_data.ai_data_json['list_var']:
+                        if var['var_type'] == "local":
+                            normalized = self._normalize_string(var['var_name'])
+                            mappings['type_values']['local_var'][normalized] = var['op_code']
+                elif category == "battle_var":
+                    for var in self.game_data.ai_data_json['list_var']:
+                        if var['var_type'] == "battle":
+                            normalized = self._normalize_string(var['var_name'])
+                            mappings['type_values']['battle_var'][normalized] = var['op_code']
+                elif category == "global_var":
+                    for var in self.game_data.ai_data_json['list_var']:
+                        if var['var_type'] == "global":
+                            normalized = self._normalize_string(var['var_name'])
+                            mappings['type_values']['global_var'][normalized] = var['op_code']
+                else:
+                    print(f"Unknown category: {category}")
+        print(mappings)
         return mappings
 
     def _normalize_string(self, text):
@@ -91,7 +109,6 @@ class AITypeResolver:
                     resolved_params.append(param)
 
             node.params = ParamList(params=resolved_params)
-
         return node
 
     def _resolve_typed_value(self, string_value, expected_type):

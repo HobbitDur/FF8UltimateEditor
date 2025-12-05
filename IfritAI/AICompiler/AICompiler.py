@@ -9,7 +9,7 @@ from IfritAI.AICompiler.AITypeResolver import AITypeResolver
 
 class AICompiler:
     grammar = r"""
-    start: stmt+
+    start: stmt*
 
     stmt: if_stmt | command
 
@@ -26,7 +26,11 @@ class AICompiler:
     OPERATOR: /[><!]=?|==/
 
     %import common.WS
+    %import common.CPP_COMMENT    // For // comments
+    %import common.C_COMMENT      // For /* ... */ comments
     %ignore WS
+    %ignore CPP_COMMENT
+    %ignore C_COMMENT
     """
 
     def __init__(self, game_data):

@@ -25,7 +25,7 @@ from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 
 class IfritAIWidget(QWidget):
     ADD_LINE_SELECTOR_ITEMS = ["Condition", "Command"]
-    EXPERT_SELECTOR_ITEMS = ["User-friendly", "Hex-editor", "Raw-code", "IfritAI-code"]
+    EXPERT_SELECTOR_ITEMS = ["User-friendly", "Hex-editor", "Raw-code", "IfritAI-code-legacy", "IfritAI-code"]
     MAX_COMMAND_PARAM = 7
     MAX_OP_ID = 61
     MAX_OP_CODE_VALUE = 255
@@ -125,12 +125,13 @@ class IfritAIWidget(QWidget):
                               self.EXPERT_SELECTOR_ITEMS[0] + ": For modifying having a set of expected value<br/>" + \
                               self.EXPERT_SELECTOR_ITEMS[1] + ": For modifying directly the hex<br/>" + \
                               self.EXPERT_SELECTOR_ITEMS[2] + ": For getting raw function with list of value<br/>" + \
-                              self.EXPERT_SELECTOR_ITEMS[3] + ": AI editor with IfritAI language."
+                              self.EXPERT_SELECTOR_ITEMS[3] + ": AI editor with IfritAI-legacy language. Don't use it for new stuff" + \
+                              self.EXPERT_SELECTOR_ITEMS[4] + ": AI editor with IfritAI language."
         self.expert_selector_title = QLabel("Expert mode: ")
         self.expert_selector_title.setToolTip(expert_tooltip_text)
         self.expert_selector = QComboBox()
         self.expert_selector.addItems(self.EXPERT_SELECTOR_ITEMS)
-        self.expert_selector.setCurrentIndex(3)
+        self.expert_selector.setCurrentIndex(4)
         self.expert_selector.activated.connect(self.__change_expert)
 
         self.expert_layout = QHBoxLayout()
@@ -164,7 +165,7 @@ class IfritAIWidget(QWidget):
         self.layout_top.addWidget(self.monster_name_label)
         self.layout_top.addStretch(1)
 
-        self.code_widget = CodeWidget(self.ifrit_manager.game_data, ennemy_data=self.ifrit_manager.enemy, expert_level=self.expert_selector.currentIndex(),
+        self.code_widget = CodeWidget(self.ifrit_manager.game_data, current_ai_section=self.script_section.currentIndex(), ennemy_data=self.ifrit_manager.enemy, expert_level=self.expert_selector.currentIndex(),
                                       code_changed_hook=self.code_expert_changed_hook)
         self.code_widget.hide()
 
@@ -204,16 +205,20 @@ class IfritAIWidget(QWidget):
 
     def code_expert_changed_hook(self, command_list: List[CommandAnalyser]):
         command_list_from_widget = [command_widget.get_command() for command_widget in self.command_line_widget]
+        if self.expert_selector.currentIndex() == 3:
+            delete_data = True
+        else:
+            delete_data = False
         for command in command_list_from_widget:
-            self.__remove_line(command, delete_data=True)
+            self.__remove_line(command, delete_data=delete_data)
         for command in command_list:
-            self.__append_line(new_command=command, create_data=True)
+            self.__append_line(new_command=command, create_data=delete_data)
         self.__change_expert()
         self.__hide_show_expert()
 
     def __hide_show_expert(self):
         expert_chosen = self.expert_selector.currentIndex()
-        if expert_chosen == 2 or expert_chosen == 3:  # Expert mode
+        if expert_chosen in (2, 3, 4):  # Expert mode
             self.code_widget.show()
             for i in range(len(self.add_button_widget)):
                 self.add_button_widget[i].hide()
@@ -225,7 +230,7 @@ class IfritAIWidget(QWidget):
                 self.add_button_widget[i].show()
             for i in range(len(self.remove_button_widget)):
                 self.remove_button_widget[i].show()
-        if expert_chosen == 3:
+        if expert_chosen in (3, 4):
             self.hex_selector.setEnabled(0)
             for i in range(len(self.command_line_widget)):
                 self.command_line_widget[i].hide()
@@ -246,10 +251,12 @@ class IfritAIWidget(QWidget):
         command_list = [command_widget.get_command() for command_widget in self.command_line_widget]
         if expert_chosen == 2:  # Raw data
             self.code_widget.set_text_from_command(command_list)
-        elif expert_chosen == 3:  # IfritAI language
+        elif expert_chosen == 3:  # IfritAI legacy language
+            self.code_widget.set_ifrit_ai_legacy_code_from_command(command_list)
+        elif expert_chosen == 4:  # IfritAI language
             self.code_widget.set_ifrit_ai_code_from_command(command_list)
-        if expert_chosen in (2, 3):
-            self.code_widget.change_expert_level(expert_chosen)
+        if expert_chosen in (2, 3, 4):
+            self.code_widget.change_expert_level(expert_chosen, self.script_section.currentIndex())
 
     def __change_hex(self):
         hex_chosen = self.hex_selector.isChecked()
@@ -402,7 +409,7 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        # file_to_load = os.path.join("c0m028.dat")  # For developing faster
+        file_to_load = os.path.join("c0m001.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:

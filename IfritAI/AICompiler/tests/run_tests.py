@@ -16,7 +16,7 @@ def run_single_test(test_name, description):
     cmd = [
         sys.executable,
         "-m", "pytest",
-        "../tests/test_code_generator.py",
+        "../tests/test_code_byte_generator.py",
         f"-k {test_name}",
         "-v",  # Verbose
         "-s",  # Show print output

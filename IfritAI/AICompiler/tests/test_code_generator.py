@@ -1,4 +1,4 @@
-# test_code_generator.py
+# test_code_byte_generator.py
 """
 Tests for AI Code Generator.
 Tests that AST nodes are correctly converted to FF8 bytecode.

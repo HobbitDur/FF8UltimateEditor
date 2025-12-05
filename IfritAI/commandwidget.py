@@ -95,7 +95,7 @@ class CommandWidget(QWidget):
         self.__hide_show_expert()
 
     def __hide_show_expert(self):
-        if self._expert_chosen == 2 or self._expert_chosen == 3:
+        if self._expert_chosen in (2, 3, 4):
             for i in range(len(self.widget_op_code)):
                 self.widget_op_code[i].hide()
                 if i >= len(self._command.get_op_code()):

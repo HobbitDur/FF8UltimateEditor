@@ -7,6 +7,8 @@ from FF8GameData.dat.daterrors import FuncNameNotFound, AICodeError, BracketErro
     LineUnexpectedCharaError
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
+from IfritAI.AICompiler.AICompiler import AICompiler
+from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritAI.codepostprocessing import CodePostprocessing
 from IfritAI.codepreprocessing import CodePreprocessing
 
@@ -398,7 +400,7 @@ class CodeAnalyser:
         return self._command_list
 
     @staticmethod
-    def compute_ifrit_ai_code_to_command(game_data: GameData, enemy_data, ifrit_ai_code: str):
+    def compute_ifrit_ai_legacy_code_to_command(game_data: GameData, enemy_data: MonsterAnalyser, ifrit_ai_code: str):
         preprocessing_engine = CodePreprocessing()
         processed_text = preprocessing_engine.transform_all_elseif_blocks(ifrit_ai_code)
         command_text_list = processed_text.splitlines()
@@ -406,7 +408,7 @@ class CodeAnalyser:
         return code_analyser.get_command()
 
     @staticmethod
-    def set_ifrit_ai_code_from_command(game_data: GameData, command_list: List[CommandAnalyser]):
+    def set_ifrit_ai_legacy_code_from_command(game_data: GameData, command_list: List[CommandAnalyser]):
         func_list = []
         if_list_count = []
         else_list_count = []

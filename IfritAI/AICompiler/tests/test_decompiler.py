@@ -106,7 +106,7 @@ class TestAIDecompiler:
         if_cmd = self.create_test_command(ai_compiler.game_data,0 , 0x02, [1, 2, 3, 2, 0, 4, 0])
         die_cmd = self.create_test_command(ai_compiler.game_data,1,  0x08, [])  # die()
         jump_cmd = self.create_test_command(ai_compiler.game_data,2,  0x23, [3, 0])  # JUMP 3
-        stat_change_cmd = self.create_test_command(ai_compiler.game_data, 3, 40, [4, 5])  # statChange(5,6)
+        stat_change_cmd = self.create_test_command(ai_compiler.game_data, 3, 40, [4, 5])  # statChange(4,5)
 
         command_list = [if_cmd, die_cmd, jump_cmd, stat_change_cmd]
         code = AIDecompiler.decompile_from_command_list(ai_compiler.game_data, command_list)
@@ -119,9 +119,75 @@ class TestAIDecompiler:
         assert "if(1,Irvine,!=,20)" in normalized
         assert "die();" in normalized
         assert "else" in normalized
-        assert "{" in normalized
+        opening_brace_count = normalized.count('{')
+        assert opening_brace_count == 2, f"Expected 2 opening braces, found {opening_brace_count}"
+        closing_brace_count = normalized.count('}')
+        assert closing_brace_count == 2, f"Expected 2 opening braces, found {closing_brace_count}"
         assert "statChange(Speed,50);" in normalized
-        assert "}" in normalized
+
+    def test_decompile_if_else_nested_statement(self, ai_compiler):
+        """Test decompiling if-else statement"""
+
+        if_cmd = self.create_test_command(ai_compiler.game_data,0 , 0x02, [1, 2, 3, 2, 0, 4, 0])
+        die_cmd = self.create_test_command(ai_compiler.game_data,1,  0x08, [])  # die()
+        jump_cmd = self.create_test_command(ai_compiler.game_data,2,  0x23, [12, 0])  # JUMP 3
+        stop_cmd = self.create_test_command(ai_compiler.game_data, 3, 0x00, [])  # stop()
+        if2_cmd = self.create_test_command(ai_compiler.game_data, 4, 0x02, [1, 2, 3, 2, 0, 4, 0])
+        stat_change_cmd = self.create_test_command(ai_compiler.game_data, 5, 40, [4, 5])  # statChange(4,5)
+
+        command_list = [if_cmd, die_cmd, jump_cmd, stop_cmd, if2_cmd, stat_change_cmd]
+        code = AIDecompiler.decompile_from_command_list(ai_compiler.game_data, command_list)
+
+        print(f"\n=== Decompiled if-else nested statement ===")
+        print(code)
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        if_count = normalized.count("if(1,Irvine,!=,20)")
+        assert if_count == 2, f"Expected 2 if(1,Irvine,!=,20), found {if_count}"
+        assert "die();" in normalized
+        assert "else" in normalized
+        opening_brace_count = normalized.count('{')
+        assert opening_brace_count == 3, f"Expected 3 opening braces, found {opening_brace_count}"
+        closing_brace_count = normalized.count('}')
+        assert closing_brace_count == 3, f"Expected 3 opening braces, found {closing_brace_count}"
+        assert "statChange(Speed,50);" in normalized
+        assert "stop" in normalized
+
+    def test_decompile_if_elseif_else_statement(self, ai_compiler):
+        """Test decompiling if-else statement"""
+        # Create commands for: if (1,2,3,4) { die(); } else { statChange(5,6); }
+        # Note: This test might fail due to CommandAnalyser issues with statChange
+        # We'll handle this gracefully
+
+
+        # IF command
+        if_cmd = self.create_test_command(ai_compiler.game_data,0 , 0x02, [1, 2, 3, 2, 0, 6, 0])
+        die_cmd = self.create_test_command(ai_compiler.game_data,1,  0x08, [])  # die()
+        jump1_cmd = self.create_test_command(ai_compiler.game_data, 2, 0x23, [17, 0])  # JUMP 3
+        if2_cmd = self.create_test_command(ai_compiler.game_data, 0, 0x02, [1, 2, 3, 1, 0, 6, 0])
+        stat_change_cmd1 = self.create_test_command(ai_compiler.game_data, 3, 40, [3, 2])  # statChange(3,2)
+        jump2_cmd = self.create_test_command(ai_compiler.game_data,2,  0x23, [3, 0])  # JUMP 3
+        stat_change_cmd2 = self.create_test_command(ai_compiler.game_data, 3, 40, [4, 5])  # statChange(4,5)
+
+        command_list = [if_cmd, die_cmd, jump1_cmd, if2_cmd, stat_change_cmd1, jump2_cmd, stat_change_cmd2 ]
+        code = AIDecompiler.decompile_from_command_list(ai_compiler.game_data, command_list)
+
+        print(f"\n=== Decompiled if-else statement ===")
+        print(code)
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        assert "if(1,Irvine,!=,20)" in normalized
+        assert "die();" in normalized
+        assert "elseif(1,Irvine,!=,10)" in normalized
+        opening_brace_count = normalized.count('{')
+        assert opening_brace_count == 3, f"Expected 3 opening braces, found {opening_brace_count}"
+        closing_brace_count = normalized.count('}')
+        assert closing_brace_count == 3, f"Expected 3 closing braces, found {closing_brace_count}"
+        assert "statChange(Spirit,20);" in normalized
+        assert "else" in normalized
+        assert "statChange(Speed,50);" in normalized
 
 
     def test_compute_indent_bracket(self):

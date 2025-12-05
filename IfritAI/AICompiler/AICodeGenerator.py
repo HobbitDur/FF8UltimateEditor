@@ -1,4 +1,4 @@
-# AICodeGenerator.py
+# AICodeByteGenerator.py
 from IfritAI.AICompiler.AIAST import *
 
 
@@ -47,7 +47,6 @@ class AICodeGenerator:
             self.visit(stmt)
 
     def visit_IfStatement(self, node):
-        print("visit_IfStatement")
         """Generate code for an if-statement with optional elseif/else"""
 
         # For a simple if/else:

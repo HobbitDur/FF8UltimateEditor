@@ -20,6 +20,7 @@ class TestFF8MonsterAIParser:
                 nodes.append(node)
         return nodes
 
+
     # Test 1: Simple command without parameters (but with empty parentheses)
     def test_simple_command_no_params(self, parser):
         """Test parsing a simple command without parameters"""
@@ -48,6 +49,139 @@ class TestFF8MonsterAIParser:
         # Empty parentheses might not create a param_list node
 
         # Verify the command ends with semicolon (might not be in the tree structure)
+
+    # Test 1.1: test comment
+    def test_comment(self, parser):
+        """Test parsing code with comments"""
+        # Test single line comment
+        input_code = "die(); // Tutu"
+        tree = parser.parse(input_code)
+
+        # Verify the tree structure ignores the comment
+        assert str(tree.data) == 'start'
+        assert len(tree.children) == 1
+
+        stmt = tree.children[0]
+        assert str(stmt.data) == 'stmt'
+
+        # Should parse only the command, ignoring the comment
+        command = stmt.children[0]
+        assert str(command.data) == 'command'
+        assert command.children[0].value == 'die'
+
+        # Verify no comment tokens in the tree
+        tokens = list(tree.scan_values(lambda v: isinstance(v, Token)))
+        # Should only have ID and maybe parentheses/semicolon tokens
+        # No comment tokens should appear
+
+        # Test comment at end of line with whitespace
+        input_code = "die();   // This is a comment"
+        tree = parser.parse(input_code)
+        assert str(tree.data) == 'start'
+
+        # Test comment on its own line
+        input_code = """
+        die();
+        // This is a comment
+        """
+        tree = parser.parse(input_code)
+
+        # Test comment before code
+        input_code = """
+        // Comment before
+        die();
+        """
+        tree = parser.parse(input_code)
+        assert str(tree.data) == 'start'
+
+        # Test comment in the middle of a condition
+        input_code = """
+        if (hp, >, 50 // comment in condition
+            , mp, <, 20) {
+            heal(100);
+        }
+        """
+        tree = parser.parse(input_code)
+        assert str(tree.data) == 'start'
+
+        # Test multiple comments
+        input_code = """
+        // Comment 1
+        die();
+        // Comment 2
+        prepareMagic(2); // Comment 3
+        // Comment 4
+        """
+        tree = parser.parse(input_code)
+        # Should have 2 commands
+        commands = self.find_nodes(tree, 'command')
+        assert len(commands) == 2
+
+        # Test comment inside block
+        input_code = """
+        if (1,2,3,4) {
+            // Comment inside block
+            die();
+            // Another comment
+        }
+        """
+        tree = parser.parse(input_code)
+        blocks = self.find_nodes(tree, 'block')
+        assert len(blocks) == 1
+
+    def test_comments_comprehensive(self, parser):
+        """Test comprehensive comment scenarios"""
+        test_cases = [
+            # (code, description, expected_command_count)
+            ("die(); // inline comment", "Inline comment", 1),
+            ("// comment only\n", "Comment only line", 0),
+            ("// comment\n\ndie();", "Comment then empty line then code", 1),
+            ("die();\n// comment\nprepareMagic(2);", "Code, comment, code", 2),
+            ("if (1,2,3,4) {\n    // comment in block\n    die();\n}",
+             "Comment inside block", 1),
+            ("// multiple\n// line\n// comments\ndie();",
+             "Multiple comment lines before code", 1),
+        ]
+
+        for code, description, expected_commands in test_cases:
+            try:
+                tree = parser.parse(code)
+                commands = self.find_nodes(tree, 'command')
+                assert len(commands) == expected_commands, \
+                    f"Failed for {description}: expected {expected_commands} commands, got {len(commands)}"
+            except Exception as e:
+                pytest.fail(f"{description} failed to parse:\n{code}\nError: {e}")
+
+    def test_block_comments(self, parser):
+        """Test parsing with block comments"""
+        # Test block comment
+        input_code = "die(); /* block comment */"
+        tree = parser.parse(input_code)
+        assert str(tree.data) == 'start'
+
+        # Test multi-line block comment
+        input_code = """
+        /*
+         * Multi-line
+         * block comment
+         */
+        die();
+        """
+        tree = parser.parse(input_code)
+
+        # Test block comment spanning multiple lines
+        input_code = """
+        die(); /*
+        comment continues
+        on next line */ prepareMagic(2);
+        """
+        tree = parser.parse(input_code)
+        commands = self.find_nodes(tree, 'command')
+        assert len(commands) == 2
+
+        # Test nested comments (won't work with simple C_COMMENT)
+        # input_code = "/* outer /* inner */ outer */ die();"
+        # This would need special handling
 
     # Test 2: Command without parentheses (valid when no params)
     def test_command_no_parentheses_valid(self, parser):

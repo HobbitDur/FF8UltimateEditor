@@ -8,13 +8,15 @@ from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.dat.daterrors import AICodeError
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
+from IfritAI.AICompiler.AICompiler import AICompiler
+from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritAI.codeanalyser import CodeAnalyser
 
 
 class CodeWidget(QWidget):
     IF_INDENT_SIZE = 3
 
-    def __init__(self, game_data: GameData, ennemy_data: MonsterAnalyser, expert_level=2, command_list: List[CommandAnalyser] = (), code_changed_hook=None,
+    def __init__(self, game_data: GameData, ennemy_data: MonsterAnalyser, current_ai_section, expert_level=2, command_list: List[CommandAnalyser] = (), code_changed_hook=None,
                  hex_chosen: bool = False):
         QWidget.__init__(self)
         self.game_data = game_data
@@ -24,12 +26,12 @@ class CodeWidget(QWidget):
         self._expert_level = expert_level
         self.code_area_widget = QTextEdit()
         self.code_area_widget.setFontPointSize(15)
-
+        self._current_section_ai_index = current_ai_section
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
         self.compute_button = QPushButton()
-        self.compute_button.setText("Compute")
-        self.change_expert_level(expert_level)
+        self.compute_button.setText("Compile")
+        self.change_expert_level(expert_level, current_ai_section)
 
         self.main_layout.addWidget(self.compute_button)
         self.main_layout.addWidget(self.code_area_widget)
@@ -37,8 +39,10 @@ class CodeWidget(QWidget):
         self._command_list = command_list
         self.set_text_from_command(self._command_list)
 
-    def change_expert_level(self, expert_level):
+
+    def change_expert_level(self, expert_level, ai_section):
         self._expert_level = expert_level
+        self._current_section_ai_index = ai_section
         try:
             self.compute_button.clicked.disconnect()
         except TypeError:
@@ -46,7 +50,9 @@ class CodeWidget(QWidget):
         if expert_level == 2:
             self.compute_button.clicked.connect(self._compute_text_to_command)
         elif expert_level == 3:
-            self.compute_button.clicked.connect(self._compute_ifrit_ai_code_to_command)
+            self.compute_button.clicked.connect(self._compute_ifrit_ai_legacy_code_to_command)
+        elif expert_level == 4:
+            self.compute_button.clicked.connect(self._compile_ifrit_ai_code_to_command)
         else:
             self.compute_button.clicked.connect(lambda: None)
             # print(f"Unexpected expert level in codewidget: {expert_level}")
@@ -76,13 +82,33 @@ class CodeWidget(QWidget):
                 new_code_text += command_id_text + op_code_new_text + "\n"
             self.code_area_widget.setText(new_code_text)
 
+    def set_ifrit_ai_legacy_code_from_command(self, command_list: List[CommandAnalyser]):
+        self._command_list = command_list
+        self.code_area_widget.setText(CodeAnalyser.set_ifrit_ai_legacy_code_from_command(self.game_data, command_list))
+
     def set_ifrit_ai_code_from_command(self, command_list: List[CommandAnalyser]):
         self._command_list = command_list
-        self.code_area_widget.setText(CodeAnalyser.set_ifrit_ai_code_from_command(self.game_data, command_list))
+        self.code_area_widget.setText(AIDecompiler.decompile_from_command_list(self.game_data, command_list))
 
-    def _compute_ifrit_ai_code_to_command(self):
+    def _compile_ifrit_ai_code_to_command(self):
+        print("_compile_ifrit_ai_code_to_command")
         try:
-            self._command_list = CodeAnalyser.compute_ifrit_ai_code_to_command(self.game_data, self.ennemy_data, self.code_area_widget.toPlainText())
+            ai_compiler = AICompiler(self.game_data)
+            print(ai_compiler)
+            compiled_code = ai_compiler.compile(self.code_area_widget.toPlainText())
+            print(compiled_code)
+            self._command_list = self.ennemy_data.set_ai_section_from_bytes(compiled_code, self._current_section_ai_index, self.game_data)
+            print(self._command_list)
+            if AICodeError.has_errors():
+                self.show_ai_errors()
+            else:
+                self.code_changed_hook(self._command_list)
+        except AICodeError:
+            self.show_ai_errors()
+
+    def _compute_ifrit_ai_legacy_code_to_command(self):
+        try:
+            self._command_list = CodeAnalyser.compute_ifrit_ai_legacy_code_to_command(self.game_data, self.ennemy_data, self.code_area_widget.toPlainText())
             if AICodeError.has_errors():
                 self.show_ai_errors()
             else:
