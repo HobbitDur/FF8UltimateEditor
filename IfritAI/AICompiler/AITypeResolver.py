@@ -1,14 +1,16 @@
 # AITypeResolver.py - Complete implementation with error handling
 from FF8GameData.dat.daterrors import LineError, ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, ParamSpecialActionError, \
     ParamTargetBasicError, ParamTargetGenericError, ParamTargetSpecificError, ParamTargetSlotError, ParamAptitudeError, ParamSceneOutSlotIdError, ParamSlotIdEnableError, \
-    ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError
+    ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
 
 class AITypeResolver:
-    def __init__(self, game_data: GameData):
+    def __init__(self, game_data: GameData,  battle_text=(), info_stat_data={}):
         self.game_data = game_data
+        self._battle_text = battle_text
+        self._info_stat_data = info_stat_data
         self.type_mappings = self._build_type_mappings()
 
         # Define which types are lookup types vs formula types
@@ -41,7 +43,7 @@ class AITypeResolver:
             'int': lambda x: self._parse_int(x),
             'percent': lambda x: self._parse_percent(x),
             'percent_elem': lambda x: self._parse_percent_elem(x),
-            'int_shift': lambda x: self._parse_int_shift(x),
+            'int_shift': lambda x, y: self._parse_int_shift(x, y),
             'subject_id': lambda x: self._parse_subject_id(x),
             'bool': lambda x: self._parse_bool(x),
             '': lambda x: 0  # Empty type
@@ -62,8 +64,11 @@ class AITypeResolver:
 
     def _parse_percent(self, value_str):
         """Parse percentage value (formula type)"""
+        # Often people add %, so let's just remove it
+        value_str = value_str.replace('%', '')
+        value_str = value_str.replace(' ', '')
         try:
-            return int(value_str)/10
+            return int(int(value_str)/10)
         except ValueError:
             raise LineError(f"Invalid percentage value: '{value_str}'")
 
@@ -74,13 +79,15 @@ class AITypeResolver:
         except ValueError:
             raise LineError(f"Invalid percentage elem value: '{value_str}'")
 
-    def _parse_int_shift(self, value_str):
+    def _parse_int_shift(self, value_str, param):
         """Parse int_shift value (formula type) - shift by -1"""
         try:
             value = int(value_str)
-            return value - 1
+            if value - param[0] <0:
+                raise ValueError
+            return value + param[0]
         except ValueError:
-            raise LineError(f"Invalid int_shift value: '{value_str}'")
+            raise ParamIntShiftError(value_str, param[0])
 
     def _parse_subject_id(self, value_str):
         """Parse subject_id value (formula type)"""
@@ -116,11 +123,11 @@ class AITypeResolver:
 
         # Build mappings for each type from the JSON
         if hasattr(self.game_data, 'ai_data_json'):
-            data = self.game_data.ai_data_json
+            ai_data = self.game_data.ai_data_json
 
             # Map command names to their parameter types
             mappings['command_signatures'] = {}
-            for op_info in data.get('op_code_info', []):
+            for op_info in ai_data.get('op_code_info', []):
                 func_name = op_info.get('func_name')
                 param_types = op_info.get('param_type', [])
                 if func_name:
@@ -134,41 +141,42 @@ class AITypeResolver:
                 mappings['type_values'][category] = {}
 
             # Populate known mappings
-            if 'magic' in mappings['type_values']:
-                for magic in self.game_data.magic_data_json.get('magic', []):
-                    normalized = self._normalize_string(magic['name'])
-                    mappings['type_values']['magic'][normalized] = magic['id']
-
-            if 'comparator' in mappings['type_values']:
-                for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator_ifritAI', [])):
-                    mappings['type_values']['comparator'][comp] = i
-
-            if 'local_var' in mappings['type_values']:
-                for var in data.get('list_var', []):
-                    if var.get('var_type') == "local":
-                        normalized = self._normalize_string(var['var_name'])
-                        mappings['type_values']['local_var'][normalized] = var['op_code']
-
-            if 'battle_var' in mappings['type_values']:
-                for var in data.get('list_var', []):
-                    if var.get('var_type') == "battle":
-                        normalized = self._normalize_string(var['var_name'])
-                        mappings['type_values']['battle_var'][normalized] = var['op_code']
-
-            if 'global_var' in mappings['type_values']:
-                for var in data.get('list_var', []):
-                    if var.get('var_type') == "global":
-                        normalized = self._normalize_string(var['var_name'])
-                        mappings['type_values']['global_var'][normalized] = var['op_code']
-
-            if "target_advanced_specific" in mappings['type_values']:
-                for target_dict in self.__get_target_list(advanced=True, specific=True):
-                    mappings['type_values']['target_advanced_specific'][target_dict['data']] = target_dict['id']
-
-            if "target_advanced_generic" in mappings['type_values']:
-                for target_dict in self.__get_target_list(advanced=True, specific=False):
-                    mappings['type_values']['target_advanced_generic'][target_dict['data']] = target_dict['id']
-
+            # magic
+            for magic in self.game_data.magic_data_json.get('magic', []):
+                normalized = self._normalize_string(magic['name'])
+                mappings['type_values']['magic'][normalized] = magic['id']
+            # comparator
+            for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator_ifritAI', [])):
+                mappings['type_values']['comparator'][comp] = i
+            # local_var
+            for var in ai_data.get('list_var', []):
+                if var.get('var_type') == "local":
+                    normalized = self._normalize_string(var['var_name'])
+                    mappings['type_values']['local_var'][normalized] = var['op_code']
+            # battle_var
+            for var in ai_data.get('list_var', []):
+                if var.get('var_type') == "battle":
+                    normalized = self._normalize_string(var['var_name'])
+                    mappings['type_values']['battle_var'][normalized] = var['op_code']
+            # global_var
+            for var in ai_data.get('list_var', []):
+                if var.get('var_type') == "global":
+                    normalized = self._normalize_string(var['var_name'])
+                    mappings['type_values']['global_var'][normalized] = var['op_code']
+            # target_advanced_specific
+            for target_dict in self.__get_target_list(advanced=True, specific=True):
+                mappings['type_values']['target_advanced_specific'][self._normalize_string(target_dict['data'])] = target_dict['id']
+            # target_advanced_generic
+            for target_dict in self.__get_target_list(advanced=True, specific=False):
+                mappings['type_values']['target_advanced_generic'][self._normalize_string(target_dict['data'])] = target_dict['id']
+            # subject_id
+            for subject in ai_data.get('if_subject', []):
+                normalized = self._normalize_string(subject['short_text'])
+                mappings['type_values']['subject_id'][normalized] = subject['subject_id']
+            # status_ai
+            for status_ai in self.game_data.status_data_json.get('status_ai', []):
+                normalized = self._normalize_string(status_ai['name'])
+                mappings['type_values']['status_ai'][normalized] = status_ai['id']
         return mappings
 
     def _normalize_string(self, text):
@@ -205,20 +213,13 @@ class AITypeResolver:
         # Parameters: [subject_id, left_condition, comparator, right_condition]
         params = node.params.params
 
-        # Create context for error messages
-        context = f"IF command parameter"
-
         # 1. Resolve subject_id (first parameter)
-        try:
-            subject_id_val = self._resolve_value(params[0], 'subject_id' + " 0 (subject_id)")
-            subject_id = int(subject_id_val) if isinstance(subject_id_val, (int, float)) else 0
-        except (ValueError, LineError):
-            subject_id = 0
+        subject_id = int(self._resolve_value(params[0], "subject_id"))
 
         # 2. Get subject info
         subject_info = self.if_subject_map.get(subject_id)
         if not subject_info:
-            raise LineError(f"Unknown subject_id: {subject_id}")
+            raise AICodeError(f"Unknown subject_id: {subject_id}")
 
         # 3. Get parameter types for this subject
         left_type = subject_info.get('param_left_type', '')
@@ -226,7 +227,9 @@ class AITypeResolver:
 
         # 4. Handle special cases with param_list
         if 'param_list' in subject_info and subject_info['param_list']:
-            return self._resolve_if_with_constants(node, subject_info)
+            param_list = subject_info['param_list']
+        else:
+            param_list = None
 
         # 5. Resolve each parameter
         resolved_params = []
@@ -236,36 +239,18 @@ class AITypeResolver:
 
         # Left condition
         if left_type:
-            try:
-                resolved_left = self._resolve_value(params[1], left_type + " 1 (left condition)")
-                resolved_params.append(Value(str(resolved_left)))
-            except LineError as e:
-                # Raise specific error based on type
-                self._raise_specific_error(left_type, params[1].value, e.message)
-        else:
-            # No type specified, keep original
-            resolved_params.append(params[1])
+            resolved_left = self._resolve_value(params[1], left_type, param_list)
+            resolved_params.append(Value(str(resolved_left)))
 
         # Comparator
         if len(params) > 2:
-            try:
-                resolved_comparator = self._resolve_value(params[2], 'comparator' + " 2 (comparator)")
-                resolved_params.append(Value(str(resolved_comparator)))
-            except LineError:
-                raise ComparatorError(params[2].value)
-        else:
-            resolved_params.append(Value("0"))  # Default comparator "=="
+            resolved_comparator = self._resolve_value(params[2], 'comparator', param_list)
+            resolved_params.append(Value(str(resolved_comparator)))
 
         # Right condition
         if right_type:
-            try:
-                resolved_right = self._resolve_value(params[3], right_type + " 3 (right condition)")
-                resolved_params.append(Value(str(resolved_right)))
-            except LineError as e:
-                # Raise specific error based on type
-                self._raise_specific_error(right_type, params[3].value, e.message)
-        else:
-            resolved_params.append(params[3] if len(params) > 3 else Value("0"))
+            resolved_right = self._resolve_value(params[3], right_type, param_list)
+            resolved_params.append(Value(str(resolved_right)))
 
         # Update node parameters
         node.params = ParamList(params=resolved_params)
@@ -291,71 +276,11 @@ class AITypeResolver:
             'assign_slot_id': ParamAssignSlotIdError,
             'local_var_param': ParamLocalVarParamError,
             'comparator': ComparatorError,
+            'subject_id': SubjectIdError,
         }
 
         error_class = error_classes.get(param_type, LineError)
         raise error_class(value)
-
-    def _resolve_if_with_constants(self, node, subject_info):
-        """Handle IF subjects that have constant parameters in param_list"""
-        subject_id = subject_info['subject_id']
-        param_list = subject_info.get('param_list', [])
-        params = node.params.params
-
-        resolved_params = []
-
-        # Add subject_id
-        resolved_params.append(Value(str(subject_id)))
-
-        # Add constant parameters from param_list
-        for const_val in param_list:
-            resolved_params.append(Value(str(const_val)))
-
-        # Fill remaining slots with resolved parameters
-        left_type = subject_info.get('param_left_type', '')
-        right_type = subject_info.get('param_right_type', '')
-
-        context = f"IF command (subject {subject_id})"
-
-        # We need to handle up to 4 parameters total
-        for i in range(1, 4):  # Skip subject_id at index 0
-            if i < len(resolved_params):
-                # This slot is already filled by a constant
-                continue
-
-            if i < len(params):
-                param = params[i]
-                if i == 1 and left_type:  # Left condition
-                    try:
-                        resolved = self._resolve_value(param, left_type + f" parameter {i}")
-                        resolved_params.append(Value(str(resolved)))
-                    except LineError as e:
-                        self._raise_specific_error(left_type, param.value, e.message)
-                elif i == 2:  # Comparator
-                    try:
-                        resolved = self._resolve_value(param, 'comparator' + f" parameter {i}")
-                        resolved_params.append(Value(str(resolved)))
-                    except LineError:
-                        raise ComparatorError(param.value)
-                elif i == 3 and right_type:  # Right condition
-                    try:
-                        resolved = self._resolve_value(param, right_type + f" parameter {i}")
-                        resolved_params.append(Value(str(resolved)))
-                    except LineError as e:
-                        self._raise_specific_error(right_type, param.value, e.message)
-                else:
-                    resolved_params.append(param)
-            else:
-                # No parameter provided, use default
-                resolved_params.append(Value("0"))
-
-        # Ensure we have exactly 4 parameters
-        while len(resolved_params) < 4:
-            resolved_params.append(Value("0"))
-        resolved_params = resolved_params[:4]
-
-        node.params = ParamList(params=resolved_params)
-        return node
 
     def _resolve_param_list(self, params, expected_types, command_name=""):
         """Resolve a list of parameters based on expected types"""
@@ -370,23 +295,33 @@ class AITypeResolver:
                 self._raise_specific_error(expected_type, param.value, e.message)
         return resolved
 
-    def _resolve_value(self, value_node, expected_type):
+    def _resolve_value(self, value_node, expected_type, param=None):
         """Resolve a single value based on type. Returns int if resolved, raises error otherwise."""
         value_str = value_node.value
 
+        # Managing hex value
+        if "0x" in value_str:
+            value_str = str(int(value_str, 16))
         # Check if it's a formula type first
         if expected_type in self.formula_types:
-            return self.formula_types[expected_type](value_str)
+            if param and expected_type in ("int_shift", ):
+                return self.formula_types[expected_type](value_str, param)
+            else:
+                return self.formula_types[expected_type](value_str)
 
         # Check if it's a lookup type
         elif expected_type in self.lookup_types and expected_type in self.type_mappings['type_values']:
+            print("lookup type")
             # Look up in type mappings
             normalized = self._normalize_string(value_str)
             mapping = self.type_mappings['type_values'][expected_type]
-
+            print(f"Mapping: {mapping}")
+            # If it's already an integer, check that the ID is a possible value
+            if value_str.isdigit():
+                if int(value_str) in mapping.values():
+                    return value_str
             if normalized in mapping:
                 return mapping[normalized]  # Returns int
-
             # NOT FOUND - raise error with valid values
             self._raise_specific_error(expected_type, value_str)
         # Unknown/unexpected type
