@@ -28,24 +28,26 @@ class AITypeResolver:
         """Define which types require dictionary lookup"""
         return [
             "battle_text", "magic", "target_basic",
-            "monster_ability", "monster_line_ability", "local_var",
+            "monster_ability", "local_var",
             "local_var_param", "battle_var", "global_var",
             "target_slot", "special_action", "target_advanced_generic",
             "target_advanced_specific", "comparator", "status_ai",
             "activate", "aptitude", "magic_type", "gforce",
             "scene_out_slot_id", "slot_id_enable", "assign_slot_id",
-            "card", "item", "gender", "special_byte_check", "alive"
+            "card", "item", "gender", "special_byte_check", "subject_id"
         ]
 
     def _get_formula_type_handlers(self):
         """Define handlers for formula-based type conversions"""
         return {
             'int': lambda x: self._parse_int(x),
+            'monster_line_ability': lambda x: self._parse_int(x),
             'percent': lambda x: self._parse_percent(x),
             'percent_elem': lambda x: self._parse_percent_elem(x),
             'int_shift': lambda x, y: self._parse_int_shift(x, y),
             'subject_id': lambda x: self._parse_subject_id(x),
             'bool': lambda x: self._parse_bool(x),
+            'alive': lambda x: self._parse_int_shift(x, [3]),
             '': lambda x: 0  # Empty type
         }
 
@@ -141,18 +143,30 @@ class AITypeResolver:
                 mappings['type_values'][category] = {}
 
             # Populate known mappings
+
+            # battle_text
+            for i, battle_text in enumerate(self._battle_text):
+                normalized = self._normalize_string(battle_text)
+                mappings['type_values']['magic'][normalized] = i
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])
                 mappings['type_values']['magic'][normalized] = magic['id']
-            # comparator
-            for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator_ifritAI', [])):
-                mappings['type_values']['comparator'][comp] = i
+            # target_basic
+            for target_dict in self.__get_target_list(advanced=False, specific=False):
+                mappings['type_values']['target_basic'][self._normalize_string(target_dict['data'])] = target_dict['id']
+            # monster_ability
+            for monster_ability in self.game_data.enemy_abilities_data_json.get('abilities', []):
+                normalized = self._normalize_string(monster_ability['name'])
+                mappings['type_values']['monster_ability'][normalized] = monster_ability['id']
             # local_var
             for var in ai_data.get('list_var', []):
                 if var.get('var_type') == "local":
                     normalized = self._normalize_string(var['var_name'])
                     mappings['type_values']['local_var'][normalized] = var['op_code']
+            # local_var_param
+            for local_var_param in self.__get_possible_local_var_param():
+                mappings['type_values']['local_var_param'][self._normalize_string(local_var_param['data'])] = local_var_param['id']
             # battle_var
             for var in ai_data.get('list_var', []):
                 if var.get('var_type') == "battle":
@@ -163,12 +177,23 @@ class AITypeResolver:
                 if var.get('var_type') == "global":
                     normalized = self._normalize_string(var['var_name'])
                     mappings['type_values']['global_var'][normalized] = var['op_code']
-            # target_advanced_specific
-            for target_dict in self.__get_target_list(advanced=True, specific=True):
-                mappings['type_values']['target_advanced_specific'][self._normalize_string(target_dict['data'])] = target_dict['id']
+            # target_slot
+            for target_slot in self.game_data.ai_data_json.get('target_slot', []):
+                normalized = self._normalize_string(target_slot['name'])
+                mappings['type_values']['target_slot'][normalized] = target_slot['id']
+            # special_action
+            for special_action in self.game_data.special_action_data_json.get('special_action', []):
+                normalized = self._normalize_string(special_action['name'])
+                mappings['type_values']['special_action'][normalized] = special_action['id']
             # target_advanced_generic
             for target_dict in self.__get_target_list(advanced=True, specific=False):
                 mappings['type_values']['target_advanced_generic'][self._normalize_string(target_dict['data'])] = target_dict['id']
+            # target_advanced_specific
+            for target_dict in self.__get_target_list(advanced=True, specific=True):
+                mappings['type_values']['target_advanced_specific'][self._normalize_string(target_dict['data'])] = target_dict['id']
+            # comparator
+            for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator_ifritAI', [])):
+                mappings['type_values']['comparator'][comp] = i
             # subject_id
             for subject in ai_data.get('if_subject', []):
                 normalized = self._normalize_string(subject['short_text'])
@@ -177,6 +202,50 @@ class AITypeResolver:
             for status_ai in self.game_data.status_data_json.get('status_ai', []):
                 normalized = self._normalize_string(status_ai['name'])
                 mappings['type_values']['status_ai'][normalized] = status_ai['id']
+            # activate
+            for activate in self.game_data.ai_data_json.get('activate_type', []):
+                normalized = self._normalize_string(activate['name'])
+                mappings['type_values']['activate'][normalized] = activate['name']
+            # aptitude
+            for aptitude in self.game_data.ai_data_json.get('aptitude_list', []):
+                normalized = self._normalize_string(aptitude['text'])
+                mappings['type_values']['aptitude'][normalized] = aptitude['aptitude_id']
+            # magic_type
+            for magic_type in self.game_data.magic_data_json.get('magic_type', []):
+                normalized = self._normalize_string(magic_type['name'])
+                mappings['type_values']['magic_type'][normalized] = magic_type['id']
+            # gforce
+            for gforce in self.game_data.gforce_data_json.get('gforce', []):
+                normalized = self._normalize_string(gforce['name'])
+                mappings['type_values']['gforce'][normalized] = gforce['id']
+            # scene_out_slot_id
+            for scene_out_slot_id in self.game_data.ai_data_json.get('scene_out_slot_id', []):
+                normalized = self._normalize_string(scene_out_slot_id['name'])
+                mappings['type_values']['scene_out_slot_id'][normalized] = scene_out_slot_id['param_id']
+            # slot_id_enable
+            for slot_id_enable in self.game_data.ai_data_json.get('slot_id_enable', []):
+                normalized = self._normalize_string(slot_id_enable['name'])
+                mappings['type_values']['slot_id_enable'][normalized] = slot_id_enable['param_id']
+            # assign_slot_id
+            for assign_slot_id in self.game_data.ai_data_json.get('slot_id_enable', []):
+                normalized = self._normalize_string(assign_slot_id['name'])
+                mappings['type_values']['assign_slot_id'][normalized] = assign_slot_id['param_id']
+            # card
+            for card in self.game_data.card_data_json.get('card_info', []):
+                normalized = self._normalize_string(card['name'])
+                mappings['type_values']['card'][normalized] = card['id']
+            # item
+            for item in self.game_data.card_data_json.get('items', []):
+                normalized = self._normalize_string(item['name'])
+                mappings['type_values']['item'][normalized] = item['id']
+            # gender
+            for gender in self.game_data.ai_data_json.get('gender_type', []):
+                normalized = self._normalize_string(gender['type'])
+                mappings['type_values']['gender'][normalized] = gender['id']
+            # special_byte_check
+            for special_byte_check in self.game_data.ai_data_json.get('special_byte_check', []):
+                normalized = self._normalize_string(special_byte_check['data'])
+                mappings['type_values']['special_byte_check'][normalized] = special_byte_check['id']
         return mappings
 
     def _normalize_string(self, text):
@@ -425,3 +494,14 @@ class AITypeResolver:
         else:
             print("Unexpected target with id: {}".format(id))
             return "UNKNOWN TARGET"
+
+    def __get_possible_local_var_param(self):
+        param_possible = []
+        special_param_id = [val_dict["param_id"] for val_dict in self.game_data.ai_data_json["local_var_param"]]
+        for i in range(0, 256):
+            if i in special_param_id:
+                param_possible.append([{'id': val_dict['param_id'], 'data': val_dict['text']}
+                                       for val_dict in self.game_data.ai_data_json["local_var_param"] if val_dict['param_id'] == i][0])
+            else:
+                param_possible.append({'id': i, 'data': str(i)})
+        return param_possible

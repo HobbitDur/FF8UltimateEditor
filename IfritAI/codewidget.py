@@ -93,7 +93,7 @@ class CodeWidget(QWidget):
     def _compile_ifrit_ai_code_to_command(self):
         print("_compile_ifrit_ai_code_to_command")
         try:
-            ai_compiler = AICompiler(self.game_data)
+            ai_compiler = AICompiler(self.game_data, self.ennemy_data.battle_script_data['battle_text'], self.ennemy_data.info_stat_data)
             print(ai_compiler)
             compiled_code = ai_compiler.compile(self.code_area_widget.toPlainText())
             print(compiled_code)

@@ -33,11 +33,11 @@ class AICompiler:
     %ignore C_COMMENT
     """
 
-    def __init__(self, game_data):
+    def __init__(self, game_data, battle_text=(), info_stat_data={}):
         self.game_data = game_data
         self.parser = Lark(self.grammar, start='start', parser='lalr')
         self.transformer = AIASTTransformer()
-        self.type_resolver = AITypeResolver(game_data)
+        self.type_resolver = AITypeResolver(game_data,  battle_text, info_stat_data)
         self.generator = AICodeGenerator(game_data)
 
     def compile(self, source_code):
