@@ -1,21 +1,25 @@
 # AITypeResolver.py - Complete implementation with error handling
-from FF8GameData.dat.daterrors import LineError, ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, ParamSpecialActionError, \
+from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, ParamSpecialActionError, \
     ParamTargetBasicError, ParamTargetGenericError, ParamTargetSpecificError, ParamTargetSlotError, ParamAptitudeError, ParamSceneOutSlotIdError, ParamSlotIdEnableError, \
-    ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError
+    ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, ParamIntError, \
+    ParamPercentError, ParamPercentElemError, ParamBoolError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
 
 class AITypeResolver:
-    def __init__(self, game_data: GameData,  battle_text=(), info_stat_data={}):
+    def __init__(self, game_data: GameData, battle_text=(), info_stat_data={}):
         self.game_data = game_data
         self._battle_text = battle_text
         self._info_stat_data = info_stat_data
-        self.type_mappings = self._build_type_mappings()
 
         # Define which types are lookup types vs formula types
         self.lookup_types = self._get_lookup_type_categories()
         self.formula_types = self._get_formula_type_handlers()
+
+        self.type_mappings = self._build_type_mappings()
+        print("Type mapping")
+        print(self.type_mappings)
 
         # Build if_subject lookup
         self.if_subject_map = {}
@@ -45,7 +49,6 @@ class AITypeResolver:
             'percent': lambda x: self._parse_percent(x),
             'percent_elem': lambda x: self._parse_percent_elem(x),
             'int_shift': lambda x, y: self._parse_int_shift(x, y),
-            'subject_id': lambda x: self._parse_subject_id(x),
             'bool': lambda x: self._parse_bool(x),
             'alive': lambda x: self._parse_int_shift(x, [3]),
             '': lambda x: 0  # Empty type
@@ -62,7 +65,7 @@ class AITypeResolver:
             else:
                 return int(value_str)
         except ValueError:
-            raise LineError(f"Invalid integer value: '{value_str}'")
+            raise ParamIntError(value_str)
 
     def _parse_percent(self, value_str):
         """Parse percentage value (formula type)"""
@@ -70,22 +73,22 @@ class AITypeResolver:
         value_str = value_str.replace('%', '')
         value_str = value_str.replace(' ', '')
         try:
-            return int(int(value_str)/10)
+            return int(int(value_str) / 10)
         except ValueError:
-            raise LineError(f"Invalid percentage value: '{value_str}'")
+            raise ParamPercentError(value_str)
 
     def _parse_percent_elem(self, value_str):
         """Parse elemental percentage value (formula type)"""
         try:
-            return 900 - int(value_str)*10
+            return 900 - int(value_str) * 10
         except ValueError:
-            raise LineError(f"Invalid percentage elem value: '{value_str}'")
+            raise ParamPercentElemError(value_str)
 
     def _parse_int_shift(self, value_str, param):
         """Parse int_shift value (formula type) - shift by -1"""
         try:
             value = int(value_str)
-            if value - param[0] <0:
+            if value - param[0] < 0:
                 raise ValueError
             return value + param[0]
         except ValueError:
@@ -104,8 +107,7 @@ class AITypeResolver:
                     return subject['subject_id']
 
             # Not found as integer or named subject
-            raise LineError(f"Invalid subject_id: '{value_str}'. "
-                            f"Must be a number or a valid subject name.")
+            raise SubjectIdError(value_str)
 
     def _parse_bool(self, value_str):
         """Parse boolean value (formula type)"""
@@ -117,7 +119,7 @@ class AITypeResolver:
         try:
             return int(value_str)
         except ValueError:
-            raise LineError(f"Invalid boolean value: '{value_str}'")
+            raise ParamBoolError(f"Invalid boolean value: '{value_str}'")
 
     def _build_type_mappings(self):
         """Build lookup dictionaries from the JSON data"""
@@ -146,8 +148,8 @@ class AITypeResolver:
 
             # battle_text
             for i, battle_text in enumerate(self._battle_text):
-                normalized = self._normalize_string(battle_text)
-                mappings['type_values']['magic'][normalized] = i
+                normalized = self._normalize_string("\"" + battle_text + "\"")
+                mappings['type_values']['battle_text'][normalized] = i
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])
@@ -179,8 +181,8 @@ class AITypeResolver:
                     mappings['type_values']['global_var'][normalized] = var['op_code']
             # target_slot
             for target_slot in self.game_data.ai_data_json.get('target_slot', []):
-                normalized = self._normalize_string(target_slot['name'])
-                mappings['type_values']['target_slot'][normalized] = target_slot['id']
+                normalized = self._normalize_string(target_slot['text'])
+                mappings['type_values']['target_slot'][normalized] = target_slot['param_id']
             # special_action
             for special_action in self.game_data.special_action_data_json.get('special_action', []):
                 normalized = self._normalize_string(special_action['name'])
@@ -220,15 +222,15 @@ class AITypeResolver:
                 mappings['type_values']['gforce'][normalized] = gforce['id']
             # scene_out_slot_id
             for scene_out_slot_id in self.game_data.ai_data_json.get('scene_out_slot_id', []):
-                normalized = self._normalize_string(scene_out_slot_id['name'])
+                normalized = self._normalize_string(scene_out_slot_id['text'])
                 mappings['type_values']['scene_out_slot_id'][normalized] = scene_out_slot_id['param_id']
             # slot_id_enable
             for slot_id_enable in self.game_data.ai_data_json.get('slot_id_enable', []):
-                normalized = self._normalize_string(slot_id_enable['name'])
+                normalized = self._normalize_string(slot_id_enable['text'])
                 mappings['type_values']['slot_id_enable'][normalized] = slot_id_enable['param_id']
             # assign_slot_id
-            for assign_slot_id in self.game_data.ai_data_json.get('slot_id_enable', []):
-                normalized = self._normalize_string(assign_slot_id['name'])
+            for assign_slot_id in self.game_data.ai_data_json.get('assign_slot_id', []):
+                normalized = self._normalize_string(assign_slot_id['text'])
                 mappings['type_values']['assign_slot_id'][normalized] = assign_slot_id['param_id']
             # card
             for card in self.game_data.card_data_json.get('card_info', []):
@@ -270,7 +272,7 @@ class AITypeResolver:
         if cmd_name in self.type_mappings['command_signatures']:
             expected_types = self.type_mappings['command_signatures'][cmd_name]
             if node.params:
-                resolved_params = self._resolve_param_list(node.params.params, expected_types, cmd_name)
+                resolved_params = self._resolve_param_list(node.params.params, expected_types)
                 node.params = ParamList(params=resolved_params)
         return node
 
@@ -326,8 +328,12 @@ class AITypeResolver:
         return node
 
     def _raise_specific_error(self, param_type, value):
+        print("_raise_specific_error")
+        print(f"param_type: {param_type}")
+        print(f"value: {value}")
         """Raise specific error based on parameter type"""
         error_classes = {
+            'battle_text': ParamBattleTextError,
             'magic': ParamMagicIdError,
             'magic_type': ParamMagicTypeError,
             'status_ai': ParamStatusAIError,
@@ -348,23 +354,24 @@ class AITypeResolver:
             'subject_id': SubjectIdError,
         }
 
-        error_class = error_classes.get(param_type, LineError)
+        error_class = error_classes.get(param_type, AICodeError)
+        print(f"error_class: {error_class}")
         raise error_class(value)
 
-    def _resolve_param_list(self, params, expected_types, command_name=""):
+    def _resolve_param_list(self, params, expected_types):
         """Resolve a list of parameters based on expected types"""
         resolved = []
         for i, (param, expected_type) in enumerate(zip(params, expected_types)):
-            context = f"{command_name} parameter {i}"
-            try:
-                resolved_val = self._resolve_value(param, expected_type)
-                resolved.append(Value(str(resolved_val)))
-            except LineError as e:
-                # Raise specific error based on type
-                self._raise_specific_error(expected_type, param.value, e.message)
+            resolved_val = self._resolve_value(param, expected_type)
+            resolved.append(Value(str(resolved_val)))
         return resolved
 
     def _resolve_value(self, value_node, expected_type, param=None):
+        print("_resolve_value")
+        print(f"value_node: {value_node}")
+        print(f"expected_type: {expected_type}")
+        print(f"param: {param}")
+
         """Resolve a single value based on type. Returns int if resolved, raises error otherwise."""
         value_str = value_node.value
 
@@ -373,7 +380,7 @@ class AITypeResolver:
             value_str = str(int(value_str, 16))
         # Check if it's a formula type first
         if expected_type in self.formula_types:
-            if param and expected_type in ("int_shift", ):
+            if param and expected_type in ("int_shift",):
                 return self.formula_types[expected_type](value_str, param)
             else:
                 return self.formula_types[expected_type](value_str)
@@ -385,17 +392,21 @@ class AITypeResolver:
             normalized = self._normalize_string(value_str)
             mapping = self.type_mappings['type_values'][expected_type]
             print(f"Mapping: {mapping}")
+            print(f"normalized: {normalized}")
             # If it's already an integer, check that the ID is a possible value
             if value_str.isdigit():
+                print("Digit")
                 if int(value_str) in mapping.values():
                     return value_str
             if normalized in mapping:
+                print("mapping normalized")
+                print(normalized)
                 return mapping[normalized]  # Returns int
             # NOT FOUND - raise error with valid values
             self._raise_specific_error(expected_type, value_str)
         # Unknown/unexpected type
         else:
-            raise LineError(f"Cannot resolve value: '{value_str}"
+            raise AICodeError(f"Cannot resolve value: '{value_str}"
                             f"Unknown type: {expected_type}")
 
     def visit_IfStatement(self, node):

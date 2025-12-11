@@ -19,11 +19,12 @@ class AICompiler:
     command: ID ("(" param_list? ")")? ";"
 
     param_list: value ("," value)*
-    value: ID | NUMBER | OPERATOR
+    value: ID | NUMBER | OPERATOR | STRING 
 
     ID: /[a-zA-Z_][a-zA-Z_0-9]*/
     NUMBER: /[0-9]+/
     OPERATOR: /[><!]=?|==/
+    STRING: /"(?:[^"\\]|\\.)*"/
 
     %import common.WS
     %import common.CPP_COMMENT    // For // comments
@@ -41,11 +42,17 @@ class AICompiler:
         self.generator = AICodeGenerator(game_data)
 
     def compile(self, source_code):
-        try:
-            tree = self.parser.parse(source_code)
-            ast = self.transformer.transform(tree)
-            resolved_ast = self.type_resolver.resolve(ast)
-            ff8_assembly = self.generator.generate(resolved_ast)
-            return ff8_assembly
-        except Exception as e:
-            return f"Compilation error: {e}"
+        print("compile")
+        tree = self.parser.parse(source_code)
+        print("tree")
+        print(tree)
+        ast = self.transformer.transform(tree)
+        print("ast")
+        print(ast)
+        resolved_ast = self.type_resolver.resolve(ast)
+        print("resolved_ast")
+        print(resolved_ast)
+        ff8_assembly = self.generator.generate(resolved_ast)
+        print("ff8_assembly")
+        print(ff8_assembly)
+        return ff8_assembly

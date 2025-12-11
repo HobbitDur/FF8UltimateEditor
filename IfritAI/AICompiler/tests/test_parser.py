@@ -564,7 +564,16 @@ class TestFF8MonsterAIParser:
             except Exception as e:
                 pytest.fail(f"{description} failed to parse: {code}\nError: {e}")
 
+    def test_battle_text(self, parser):
+        """Test parsing a command with multiple parameters"""
+        input_code = "print(\"Tutu\");"
+        tree = parser.parse(input_code)
+
+        # Verify structure
+        param_lists = self.find_nodes(tree, 'param_list')
+        assert len(param_lists) == 1
+
 
 if __name__ == "__main__":
     # Run tests and stop at first failure
-    pytest.main([__file__, "-v", "-x", "--tb=short"])
+    pytest.main([__file__, "-v", "-x", "--tb=short", "-s"])

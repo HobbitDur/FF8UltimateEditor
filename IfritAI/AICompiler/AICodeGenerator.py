@@ -134,10 +134,13 @@ class AICodeGenerator:
         return total_size
 
     def _emit_condition(self, condition, jump_offset):
+        print("_emit_condition")
         """Emit condition parameters for IF command with jump offset"""
         params = condition.params.params
+        print(f"params: {params}")
 
         if len(params) >= 4:
+            print("len > 4")
             # Subject ID
             self.emit_byte(int(params[0].value))
 
@@ -151,10 +154,12 @@ class AICodeGenerator:
             value = int(params[3].value)
             self.emit_byte(value & 0xFF)
             self.emit_byte((value >> 8) & 0xFF)
+            print(f"value: {value}")
 
             # Jump offset (2 bytes, little-endian)
             self.emit_byte(jump_offset & 0xFF)
             self.emit_byte((jump_offset >> 8) & 0xFF)
+            print(f"jump_offset: {jump_offset}")
         else:
             # Not enough parameters
             for _ in range(6):
