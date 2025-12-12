@@ -5,7 +5,7 @@ Tests that AST nodes are correctly converted to FF8 bytecode.
 """
 import pytest
 
-from FF8GameData.dat.daterrors import ParamBattleTextError
+from FF8GameData.dat.daterrors import ParamBattleTextError, ParamAptitudeError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 from IfritAI.AICompiler.AICompiler import AICompiler
@@ -38,33 +38,18 @@ class TestAICompiler:
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-    def test_if(self, compiler: AICompiler):
-        source_code_raw = \
-        """
-        if(0,200, 3, 5)
-        {
-            stop;
-        }
-        """
-
-        code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [2, 0, 200, 3, 5, 0, 4, 0, 0, 35, 0, 0]
-
-        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-
-
 
     def test_print(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
         """
-        print("First battle text");
+        print(1);
         """
         ## Type data
         source_code_type = \
         """
-        print("First battle text");
+        print("Second battle text");
         """
         ## Error data
         source_code_error = \
@@ -72,7 +57,7 @@ class TestAICompiler:
         print("Text not existing");
         """
         # The expected output
-        expected = [0x01, 0x00]
+        expected = [0x01, 0x01]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -84,7 +69,84 @@ class TestAICompiler:
         with pytest.raises(ParamBattleTextError):
             compiler.compile(source_code_error)
 
+    def test_statChange(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        statChange(5,6);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        statChange(Evade,60%);
+        """
+        ## Error data
+        source_code_error = \
+        """
+        statChange(Evadeu,60%);
+        """
+        # The expected output
+        expected = [40, 5, 6]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+        with pytest.raises(ParamAptitudeError):
+            compiler.compile(source_code_error)
+
+    def test_if(self, compiler: AICompiler):
+        source_code_raw = \
+        """
+        if(0,200, 3, 5)
+        {
+            stop;
+        }
+        """
+        source_code_type = \
+        """
+        if(HP_OF_SPECIFIC_TARGET,Self, !=, 50%)
+        {
+            stop;
+        }
+        """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 0, 200, 3, 5, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_else(self, compiler: AICompiler):
+        source_code_raw = \
+        """
+        if (1,200,3,4) { die(); } else { statChange(5,6); } 
+        """
+        source_code_type = \
+        """
+        if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
+        {
+            die;
+        }
+        else
+        {
+           statChange(Evade,60%); 
+        }
+        """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 3, 0, 40, 5, 6]
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+
 
 if __name__ == "__main__":
-    #pytest.main([__file__, "-v", "-x", "--tb=short"]) Capture all print
-    pytest.main([__file__, "-v", "-x", "--tb=short", "-s"])
+    pytest.main([__file__, "-v", "-x", "--tb=short"]) # Capture all print
+    #pytest.main([__file__, "-v", "-x", "--tb=short", "-s"])

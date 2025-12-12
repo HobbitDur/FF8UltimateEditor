@@ -38,7 +38,7 @@ class AITypeResolver:
             "target_advanced_specific", "comparator", "status_ai",
             "activate", "aptitude", "magic_type", "gforce",
             "scene_out_slot_id", "slot_id_enable", "assign_slot_id",
-            "card", "item", "gender", "special_byte_check", "subject_id"
+            "card", "item", "gender", "special_byte_check", "subject_id", "hp_percent"
         ]
 
     def _get_formula_type_handlers(self):
@@ -68,14 +68,18 @@ class AITypeResolver:
             raise ParamIntError(value_str)
 
     def _parse_percent(self, value_str):
+        print("parse_percent")
+        print(value_str)
         """Parse percentage value (formula type)"""
-        # Often people add %, so let's just remove it
-        value_str = value_str.replace('%', '')
-        value_str = value_str.replace(' ', '')
-        try:
-            return int(int(value_str) / 10)
-        except ValueError:
-            raise ParamPercentError(value_str)
+        if '%' in value_str:
+            value_str = value_str.replace('%', '')
+            value_str = value_str.replace(' ', '')
+            try:
+                return int(int(value_str) / 10)
+            except ValueError:
+                raise ParamPercentError(value_str)
+        else:
+            return int(value_str)
 
     def _parse_percent_elem(self, value_str):
         """Parse elemental percentage value (formula type)"""
@@ -248,6 +252,10 @@ class AITypeResolver:
             for special_byte_check in self.game_data.ai_data_json.get('special_byte_check', []):
                 normalized = self._normalize_string(special_byte_check['data'])
                 mappings['type_values']['special_byte_check'][normalized] = special_byte_check['id']
+            # hp_percent
+            for hp_percent in self.game_data.ai_data_json.get('hp_percent', []):
+                normalized = self._normalize_string(hp_percent['data'])
+                mappings['type_values']['hp_percent'][normalized] = hp_percent['id']
         return mappings
 
     def _normalize_string(self, text):

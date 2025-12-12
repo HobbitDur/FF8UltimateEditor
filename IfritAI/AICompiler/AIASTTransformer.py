@@ -17,6 +17,9 @@ class AIASTTransformer(Transformer):
     def OPERATOR(self, token):
         return Value(token.value)
 
+    def STRING(self, token):
+        return Value(str(token.value))
+
     def value(self, items):
         return items[0]
 
