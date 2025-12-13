@@ -5,7 +5,7 @@ Tests that AST nodes are correctly converted to FF8 bytecode.
 """
 import pytest
 
-from FF8GameData.dat.daterrors import ParamBattleTextError, ParamAptitudeError
+from FF8GameData.dat.daterrors import ParamBattleTextError, ParamAptitudeError, ParamMagicIdError, ParamTargetBasicError, ParamIntError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 from IfritAI.AICompiler.AICompiler import AICompiler
@@ -65,8 +65,100 @@ class TestAICompiler:
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamBattleTextError):
+            compiler.compile(source_code_error)
+
+
+    def test_prepareMagic(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        prepareMagic(1);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        prepareMagic(Fire);
+        """
+        ## Error data
+        source_code_error = \
+        """
+        prepareMagic(Tutu);
+        """
+        # The expected output
+        expected = [3, 1]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+        with pytest.raises(ParamMagicIdError):
+            compiler.compile(source_code_error)
+
+    def test_target(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        target(1);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        target(Zell);
+        """
+        ## Error data
+        source_code_error = \
+        """
+        target(Tutu);
+        """
+        # The expected output
+        expected = [4, 1]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+        with pytest.raises(ParamTargetBasicError):
+            compiler.compile(source_code_error)
+
+
+    def test_prepareAnim(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        prepareAnim(1);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        prepareAnim(1);
+        """
+        ## Error data
+        source_code_error = \
+        """
+        prepareAnim(-10);
+        """
+        # The expected output
+        expected = [5, 1]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+        with pytest.raises(ParamIntError):
             compiler.compile(source_code_error)
 
     def test_statChange(self, compiler: AICompiler):
