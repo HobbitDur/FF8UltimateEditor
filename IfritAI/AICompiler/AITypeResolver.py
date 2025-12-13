@@ -1,8 +1,11 @@
 # AITypeResolver.py - Complete implementation with error handling
-from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, ParamSpecialActionError, \
-    ParamTargetBasicError, ParamTargetGenericError, ParamTargetSpecificError, ParamTargetSlotError, ParamAptitudeError, ParamSceneOutSlotIdError, ParamSlotIdEnableError, \
-    ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, ParamIntError, \
-    ParamPercentError, ParamPercentElemError, ParamBoolError
+from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, \
+    ParamSpecialActionError, \
+    ParamTargetBasicError, ParamTargetGenericError, ParamTargetSpecificError, ParamTargetSlotError, ParamAptitudeError, ParamSceneOutSlotIdError, \
+    ParamSlotIdEnableError, \
+    ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
+    ParamIntError, \
+    ParamPercentError, ParamPercentElemError, ParamBoolError, ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
@@ -57,6 +60,8 @@ class AITypeResolver:
     def _parse_int(self, value_str):
         """Parse integer value (formula type)"""
         try:
+            if '-' in value_str:
+                raise ParamIntError(value_str)
             # Handle hex, binary, decimal
             if value_str.startswith('0x'):
                 return int(value_str, 16)
@@ -152,8 +157,11 @@ class AITypeResolver:
 
             # battle_text
             for i, battle_text in enumerate(self._battle_text):
-                normalized = self._normalize_string("\"" + battle_text + "\"")
+                normalized = self._normalize_string(battle_text)
+                print("battle_text")
+                print(normalized)
                 mappings['type_values']['battle_text'][normalized] = i
+            print(mappings['type_values']['battle_text'])
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])
@@ -166,23 +174,23 @@ class AITypeResolver:
                 normalized = self._normalize_string(monster_ability['name'])
                 mappings['type_values']['monster_ability'][normalized] = monster_ability['id']
             # local_var
-            for var in ai_data.get('list_var', []):
-                if var.get('var_type') == "local":
-                    normalized = self._normalize_string(var['var_name'])
-                    mappings['type_values']['local_var'][normalized] = var['op_code']
+            for local_var in ai_data.get('list_var', []):
+                if local_var.get('var_type') == "local":
+                    normalized = self._normalize_string(local_var['var_name'])
+                    mappings['type_values']['local_var'][normalized] = local_var['op_code']
             # local_var_param
             for local_var_param in self.__get_possible_local_var_param():
                 mappings['type_values']['local_var_param'][self._normalize_string(local_var_param['data'])] = local_var_param['id']
             # battle_var
-            for var in ai_data.get('list_var', []):
-                if var.get('var_type') == "battle":
-                    normalized = self._normalize_string(var['var_name'])
-                    mappings['type_values']['battle_var'][normalized] = var['op_code']
+            for battle_var in ai_data.get('list_var', []):
+                if battle_var.get('var_type') == "battle":
+                    normalized = self._normalize_string(battle_var['var_name'])
+                    mappings['type_values']['battle_var'][normalized] = battle_var['op_code']
             # global_var
-            for var in ai_data.get('list_var', []):
-                if var.get('var_type') == "global":
-                    normalized = self._normalize_string(var['var_name'])
-                    mappings['type_values']['global_var'][normalized] = var['op_code']
+            for global_var in ai_data.get('list_var', []):
+                if global_var.get('var_type') == "global":
+                    normalized = self._normalize_string(global_var['var_name'])
+                    mappings['type_values']['global_var'][normalized] = global_var['op_code']
             # target_slot
             for target_slot in self.game_data.ai_data_json.get('target_slot', []):
                 normalized = self._normalize_string(target_slot['text'])
@@ -357,9 +365,13 @@ class AITypeResolver:
             'scene_out_slot_id': ParamSceneOutSlotIdError,
             'slot_id_enable': ParamSlotIdEnableError,
             'assign_slot_id': ParamAssignSlotIdError,
+            'local_var': ParamLocalVarError,
+            'battle_var': ParamBattleVarError,
+            'global_var': ParamGlobalVarError,
             'local_var_param': ParamLocalVarParamError,
             'comparator': ComparatorError,
             'subject_id': SubjectIdError,
+            'monster_ability': ParamMonsterAbilityError,
         }
 
         error_class = error_classes.get(param_type, AICodeError)
@@ -375,6 +387,7 @@ class AITypeResolver:
         return resolved
 
     def _resolve_value(self, value_node, expected_type, param=None):
+
         print("_resolve_value")
         print(f"value_node: {value_node}")
         print(f"expected_type: {expected_type}")
@@ -382,7 +395,11 @@ class AITypeResolver:
 
         """Resolve a single value based on type. Returns int if resolved, raises error otherwise."""
         value_str = value_node.value
-
+        # Removing the "" for string
+        if value_str[0] == "\"" and value_str[-1] == "\"" :
+            print(value_str)
+            value_str = value_str[1:-1]
+            print(value_str)
         # Managing hex value
         if "0x" in value_str:
             value_str = str(int(value_str, 16))
