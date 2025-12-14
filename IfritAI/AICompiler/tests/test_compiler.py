@@ -603,6 +603,408 @@ class TestAICompiler:
             compiler.compile(source_code_error)
 
 
+    def test_recover(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            recover;
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        expected = [0x16]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+
+
+    def test_setEscape(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+            """
+            setEscape(1);
+            setEscape(0);
+            """
+        ## Type data
+        source_code_type = \
+            """
+            setEscape(true);
+            setEscape(false);
+            """
+        ## Error data
+        source_code_error = \
+            """
+            setEscape(lux_is_op);
+            """
+        # The expected output
+        expected = [23, 1, 23, 0]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+        with pytest.raises(ParamIntError):
+            compiler.compile(source_code_error)
+
+
+    def test_printSpeed(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        printSpeed(1);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        printSpeed("Second battle text");
+        """
+        ## Error data
+        source_code_error = \
+        """
+        printSpeed("Text not existing");
+        """
+        # The expected output
+        expected = [24, 1]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        with pytest.raises(ParamBattleTextError):
+            compiler.compile(source_code_error)
+
+
+    def test_doNothing(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        doNothing(1);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        doNothing(1);
+        """
+        
+        # The expected output
+        expected = [25, 1]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+
+
+    def test_printAndLock(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        printAndLock(1);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        printAndLock("Second battle text");
+        """
+        ## Error data
+        source_code_error = \
+        """
+        printAndLock("Text not existing");
+        """
+        # The expected output
+        expected = [26, 1]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        with pytest.raises(ParamBattleTextError):
+            compiler.compile(source_code_error)
+
+
+    def test_enterAlt(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        enterAlt(1, 0);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        enterAlt(1, 0);
+        """
+        
+        # The expected output
+        expected = [27, 1, 0]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+
+
+    def test_waitText(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        waitText(2);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        waitText(2);
+        """
+        
+        # The expected output
+        expected = [28, 2]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+
+
+    def test_leave(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        leave(3);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        leave(3);
+        """
+        source_code_error = \
+        """
+        leave(8);
+        """
+        # The expected output
+        expected = [29, 3]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        with pytest.raises(ParamBattleTextError):
+            compiler.compile(source_code_error)
+
+
+    def test_specialAction(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        specialAction(17);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        specialAction(Elvoret Entrance);
+        """
+        source_code_error = \
+        """
+        specialAction(nerf lux op champ);
+        """
+        # The expected output
+        expected = [30, 17]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        with pytest.raises(ParamBattleTextError):
+            compiler.compile(source_code_error)  
+
+
+    def test_enter(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        enter(3);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        enter(3);
+        """
+        source_code_error = \
+        """
+        enter(8);
+        """
+        # The expected output
+        expected = [31, 3]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        with pytest.raises(ParamBattleTextError):
+            compiler.compile(source_code_error)
+
+
+    def test_waitTextFast(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        waitTextFast(2);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        waitTextFast(2);
+        """
+        
+        # The expected output
+        expected = [32, 2]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+
+
+    def test_printAlt(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        printAlt(1);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        printAlt("Second battle text");
+        """
+        ## Error data
+        source_code_error = \
+        """
+        printAlt("Text not existing");
+        """
+        # The expected output
+        expected = [34, 1]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        with pytest.raises(ParamBattleTextError):
+            compiler.compile(source_code_error)
+
+
+    def test_jump(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        jump(-10)
+        """
+        ## Type data
+        source_code_type = \
+        """
+        jump(-10)
+        """
+        ## Error data
+        source_code_error = \
+        """
+        jump(-10000000000)
+        """
+        # The expected output
+        expected = [35, 246, 255]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        with pytest.raises(ParamBattleTextError):
+            compiler.compile(source_code_error)
+
+
+    def test_fillAtb(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            fillAtb;
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        expected = [36]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+
+
+
+    def test_setScanText(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+        """
+        setScanText(1);
+        """
+        ## Type data
+        source_code_type = \
+        """
+        setScanText("Second battle text");
+        """
+        ## Error data
+        source_code_error = \
+        """
+        setScanText("Text not existing");
+        """
+        # The expected output
+        expected = [37, 1]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        with pytest.raises(ParamBattleTextError):
+            compiler.compile(source_code_error)
+
 
 
     def test_if(self, compiler: AICompiler):
