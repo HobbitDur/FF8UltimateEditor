@@ -5,7 +5,8 @@ from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, Pa
     ParamSlotIdEnableError, \
     ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
     ParamIntError, \
-    ParamPercentError, ParamPercentElemError, ParamBoolError, ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError
+    ParamPercentError, ParamPercentElemError, ParamBoolError, ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, \
+    ParamInt16Error
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
@@ -48,6 +49,7 @@ class AITypeResolver:
         """Define handlers for formula-based type conversions"""
         return {
             'int': lambda x: self._parse_int(x),
+            'int16': lambda x: self._parse_int16(x),
             'monster_line_ability': lambda x: self._parse_int(x),
             'percent': lambda x: self._parse_percent(x),
             'percent_elem': lambda x: self._parse_percent_elem(x),
@@ -64,17 +66,39 @@ class AITypeResolver:
                 raise ParamIntError(value_str)
             # Handle hex, binary, decimal
             if value_str.startswith('0x'):
-                return int(value_str, 16)
+                value_return = int(value_str, 16)
             elif value_str.startswith('0b'):
-                return int(value_str, 2)
+                value_return = int(value_str, 2)
             else:
-                return int(value_str)
+                value_return = int(value_str)
+            if value_return > 255 or value_return < 0:
+                raise ParamIntError(value_str)
+            else:
+                return value_return
         except ValueError:
             raise ParamIntError(value_str)
 
-    def _parse_percent(self, value_str):
-        print("parse_percent")
+    def _parse_int16(self, value_str):
+        print("_parse_int16")
         print(value_str)
+        print(int(value_str))
+        """Parse integer value (formula type)"""
+        try:
+            # Handle hex, binary, decimal
+            if value_str.startswith('0x'):
+                value_return = int(value_str, 16)
+            elif value_str.startswith('0b'):
+                value_return = int(value_str, 2)
+            else:
+                value_return = int(value_str)
+            if value_return > 32767 or value_return < -32767:
+                raise ParamInt16Error(value_str)
+            else:
+                return value_return
+        except ValueError:
+            raise ParamInt16Error(value_str)
+
+    def _parse_percent(self, value_str):
         """Parse percentage value (formula type)"""
         if '%' in value_str:
             value_str = value_str.replace('%', '')
@@ -120,12 +144,12 @@ class AITypeResolver:
 
     def _parse_bool(self, value_str):
         """Parse boolean value (formula type)"""
-        lower_val = str(value_str).lower()
-        if lower_val in ['true', '1', 'yes', 'on']:
-            return 1
-        elif lower_val in ['false', '0', 'no', 'off']:
-            return 0
         try:
+            lower_val = str(value_str).lower()
+            if lower_val in ['true', '1', 'yes', 'on']:
+                return 1
+            elif lower_val in ['false', '0', 'no', 'off']:
+                return 0
             return int(value_str)
         except ValueError:
             raise ParamBoolError(f"Invalid boolean value: '{value_str}'")

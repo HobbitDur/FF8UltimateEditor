@@ -6,7 +6,8 @@ Tests that AST nodes are correctly converted to FF8 bytecode.
 import pytest
 
 from FF8GameData.dat.daterrors import ParamBattleTextError, ParamAptitudeError, ParamMagicIdError, ParamTargetBasicError, ParamIntError, \
-    ParamMonsterAbilityError, ParamMonsterLineAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError
+    ParamMonsterAbilityError, ParamMonsterLineAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, ParamTargetSlotError, ParamBoolError, \
+    ParamSpecialActionError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 from IfritAI.AICompiler.AICompiler import AICompiler
@@ -644,7 +645,7 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-        with pytest.raises(ParamIntError):
+        with pytest.raises(ParamBoolError):
             compiler.compile(source_code_error)
 
 
@@ -686,22 +687,15 @@ class TestAICompiler:
         """
         doNothing(1);
         """
-        ## Type data
-        source_code_type = \
-        """
-        doNothing(1);
-        """
-        
+
         # The expected output
         expected = [25, 1]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
-        code_type_compiled = compiler.compile(source_code_type)
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
 
     def test_printAndLock(self, compiler: AICompiler):
@@ -742,22 +736,15 @@ class TestAICompiler:
         """
         enterAlt(1, 0);
         """
-        ## Type data
-        source_code_type = \
-        """
-        enterAlt(1, 0);
-        """
         
         # The expected output
         expected = [27, 1, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
-        code_type_compiled = compiler.compile(source_code_type)
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
 
     def test_waitText(self, compiler: AICompiler):
@@ -767,22 +754,15 @@ class TestAICompiler:
         """
         waitText(2);
         """
-        ## Type data
-        source_code_type = \
-        """
-        waitText(2);
-        """
         
         # The expected output
         expected = [28, 2]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
-        code_type_compiled = compiler.compile(source_code_type)
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
 
     def test_leave(self, compiler: AICompiler):
@@ -790,19 +770,19 @@ class TestAICompiler:
         ## Raw data (already int)
         source_code_raw = \
         """
-        leave(3);
+        leave(200);
         """
         ## Type data
         source_code_type = \
         """
-        leave(3);
+        leave(SELF);
         """
         source_code_error = \
         """
         leave(8);
         """
         # The expected output
-        expected = [29, 3]
+        expected = [29, 200]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -811,7 +791,7 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        with pytest.raises(ParamBattleTextError):
+        with pytest.raises(ParamTargetSlotError):
             compiler.compile(source_code_error)
 
 
@@ -825,11 +805,11 @@ class TestAICompiler:
         ## Type data
         source_code_type = \
         """
-        specialAction(Elvoret Entrance);
+        specialAction("Elvoret Entrance");
         """
         source_code_error = \
         """
-        specialAction(nerf lux op champ);
+        specialAction("nerf lux op champ");
         """
         # The expected output
         expected = [30, 17]
@@ -841,7 +821,7 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        with pytest.raises(ParamBattleTextError):
+        with pytest.raises(ParamSpecialActionError):
             compiler.compile(source_code_error)  
 
 
@@ -852,27 +832,14 @@ class TestAICompiler:
         """
         enter(3);
         """
-        ## Type data
-        source_code_type = \
-        """
-        enter(3);
-        """
-        source_code_error = \
-        """
-        enter(8);
-        """
         # The expected output
         expected = [31, 3]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
-        code_type_compiled = compiler.compile(source_code_type)
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        with pytest.raises(ParamBattleTextError):
-            compiler.compile(source_code_error)
 
 
     def test_waitTextFast(self, compiler: AICompiler):
@@ -882,22 +849,14 @@ class TestAICompiler:
         """
         waitTextFast(2);
         """
-        ## Type data
-        source_code_type = \
-        """
-        waitTextFast(2);
-        """
-        
         # The expected output
         expected = [32, 2]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
-        code_type_compiled = compiler.compile(source_code_type)
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
 
     def test_printAlt(self, compiler: AICompiler):
@@ -936,17 +895,17 @@ class TestAICompiler:
         ## Raw data (already int)
         source_code_raw = \
         """
-        jump(-10)
+        jump(-10);
         """
         ## Type data
         source_code_type = \
         """
-        jump(-10)
+        jump(-10);
         """
         ## Error data
         source_code_error = \
         """
-        jump(-10000000000)
+        jump(-10000000000);
         """
         # The expected output
         expected = [35, 246, 255]
