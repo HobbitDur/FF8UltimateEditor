@@ -38,8 +38,13 @@ class AICodeGenerator:
 
     def emit_int16_le(self, value):
         """Emit a 16-bit integer in little-endian format"""
-        self.emit_byte(value & 0xFF)  # Low byte
-        self.emit_byte((value >> 8) & 0xFF)  # High byte
+        if value & 0x8000 != 0:
+            signed=True
+        else:
+            signed=False
+        int16 = value.to_bytes(signed=signed,  length=2, byteorder='little')
+        for i, param in enumerate(list(int16)):
+            self.emit_byte(int(param))
 
     def visit_Block(self, node):
         """Generate code for a block of statements"""
@@ -195,17 +200,23 @@ class AICodeGenerator:
             opcode = op_info.get('op_code', 0)
             size = op_info.get('size', 0)
             complexity = op_info.get('complexity', 0)
-
             # Emit opcode
             self.emit_byte(opcode)
-
             # Emit parameters if any
             if node.params and size > 0:
                 params = node.params.params
-
-                for i, param in enumerate(params):
-                    # No type info, just emit as byte
-                    self.emit_byte(int(param.value))
+                param_type = self.opcode_map[node.name]["param_type"]
+                # First re-arrange the params:
+                param_index = self.opcode_map[node.name]["param_index"]
+                inverse = [0] * len(param_index)
+                for orig, new in enumerate(param_index):
+                    inverse[new] = orig
+                result =  [params[i] for i in inverse]
+                for i, param in enumerate(result):
+                    if param_type[i] in ("int16", "percent_elem"):
+                        self.emit_int16_le(int(param.value))
+                    else:
+                        self.emit_byte(int(param.value))
 
     def visit(self, node):
         """Generic visitor"""

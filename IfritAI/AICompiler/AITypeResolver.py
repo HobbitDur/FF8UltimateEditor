@@ -6,7 +6,7 @@ from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, Pa
     ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
     ParamIntError, \
     ParamPercentError, ParamPercentElemError, ParamBoolError, ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, \
-    ParamInt16Error
+    ParamInt16Error, ParamActivateError, ParamSlotIdError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
@@ -41,7 +41,7 @@ class AITypeResolver:
             "target_slot", "special_action", "target_advanced_generic",
             "target_advanced_specific", "comparator", "status_ai",
             "activate", "aptitude", "magic_type", "gforce",
-            "scene_out_slot_id", "slot_id_enable", "assign_slot_id",
+            "scene_out_slot_id", "slot_id_enable", "assign_slot_id", "slot_id",
             "card", "item", "gender", "special_byte_check", "subject_id", "hp_percent"
         ]
 
@@ -243,7 +243,7 @@ class AITypeResolver:
             # activate
             for activate in self.game_data.ai_data_json.get('activate_type', []):
                 normalized = self._normalize_string(activate['name'])
-                mappings['type_values']['activate'][normalized] = activate['name']
+                mappings['type_values']['activate'][normalized] = activate['id']
             # aptitude
             for aptitude in self.game_data.ai_data_json.get('aptitude_list', []):
                 normalized = self._normalize_string(aptitude['text'])
@@ -268,12 +268,16 @@ class AITypeResolver:
             for assign_slot_id in self.game_data.ai_data_json.get('assign_slot_id', []):
                 normalized = self._normalize_string(assign_slot_id['text'])
                 mappings['type_values']['assign_slot_id'][normalized] = assign_slot_id['param_id']
+            # slot_id
+            for slot_id in self.game_data.ai_data_json.get('slot_id', []):
+                normalized = self._normalize_string(slot_id['text'])
+                mappings['type_values']['slot_id'][normalized] = slot_id['param_id']
             # card
             for card in self.game_data.card_data_json.get('card_info', []):
                 normalized = self._normalize_string(card['name'])
                 mappings['type_values']['card'][normalized] = card['id']
             # item
-            for item in self.game_data.card_data_json.get('items', []):
+            for item in self.game_data.item_data_json.get('items', []):
                 normalized = self._normalize_string(item['name'])
                 mappings['type_values']['item'][normalized] = item['id']
             # gender
@@ -389,6 +393,7 @@ class AITypeResolver:
             'scene_out_slot_id': ParamSceneOutSlotIdError,
             'slot_id_enable': ParamSlotIdEnableError,
             'assign_slot_id': ParamAssignSlotIdError,
+            'slot_id': ParamSlotIdError,
             'local_var': ParamLocalVarError,
             'battle_var': ParamBattleVarError,
             'global_var': ParamGlobalVarError,
@@ -396,6 +401,7 @@ class AITypeResolver:
             'comparator': ComparatorError,
             'subject_id': SubjectIdError,
             'monster_ability': ParamMonsterAbilityError,
+            'activate': ParamActivateError,
         }
 
         error_class = error_classes.get(param_type, AICodeError)
