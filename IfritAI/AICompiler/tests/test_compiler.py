@@ -647,7 +647,7 @@ class TestAICompiler:
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamBattleTextError):
             compiler.compile(source_code_error)
 
@@ -696,7 +696,7 @@ class TestAICompiler:
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamBattleTextError):
             compiler.compile(source_code_error)
 
@@ -762,7 +762,7 @@ class TestAICompiler:
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamTargetSlotError):
             compiler.compile(source_code_error)
 
@@ -792,7 +792,7 @@ class TestAICompiler:
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamSpecialActionError):
             compiler.compile(source_code_error)  
 
@@ -857,7 +857,7 @@ class TestAICompiler:
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamBattleTextError):
             compiler.compile(source_code_error)
 
@@ -950,7 +950,7 @@ class TestAICompiler:
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamBattleTextError):
             compiler.compile(source_code_error)
 
@@ -982,7 +982,7 @@ class TestAICompiler:
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamTargetGenericError):
             compiler.compile(source_code_error)
 
@@ -1014,7 +1014,7 @@ class TestAICompiler:
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamActivateError):
             compiler.compile(source_code_error)
 
