@@ -1500,6 +1500,122 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
+    def test_if_hp_generic_target(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(1,200, 1, 5)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(HP_OF_GENERIC_TARGET,enemy_team, <, 50%)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 1, 200, 1, 5, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_rand(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(2, 3, 0, 0)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(RANDOM VALUE, 3, ==, 0)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 2, 3, 0, 0, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_enc_id(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(3, 0, 0, 123)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(COMBAT_SCENE, ==, 123)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 3, 0, 0, 123, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_status_specific_target(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(4, 200, 0, 1)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(STATUS_OF_SPECIFIC_TARGET, Self, ==, Poison)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 4, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_status_generic_target(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(5, 200, ==, 3)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(STATUS_OF_GENERIC_TARGET, ally_team, ==, Blind)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 5, 201, 0, 3, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+
     def test_if_else(self, compiler: AICompiler):
         source_code_raw = \
             """
