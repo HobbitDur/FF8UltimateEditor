@@ -1595,7 +1595,7 @@ class TestAICompiler:
     def test_if_status_generic_target(self, compiler: AICompiler):
         source_code_raw = \
             """
-            if(5, 200, ==, 3)
+            if(5, 200, 0, 3)
             {
                 stop;
             }
@@ -1611,6 +1611,98 @@ class TestAICompiler:
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
         expected = [2, 5, 201, 0, 3, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_alive_in_team(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(6, 201, 0, 0)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(NUMBER_OF_MEMBER, ally_team, ==, 1)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 6, 201, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_level(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(7, 200, 1, 10)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(LEVEL_CHECK, Self, <, 10)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 7, 200, 1, 10, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_dead(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(8, 0, 0, 7)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(DEAD, ==, Edea)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 8, 0, 0, 7, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_dead(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(9, 0, 0, 4)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(ALIVE, ==, Rinoa)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 9, 0, 0, 4, 0, 4, 0, 0, 35, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
