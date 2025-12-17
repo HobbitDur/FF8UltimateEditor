@@ -1707,6 +1707,260 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
+    def test_if_last_dmg_type(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(10, 0, 0, 1)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(LAST_ATTACK_DAMAGE_TYPE_IS, ==, Physical)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 10, 0, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_last_attacker(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(10, 1, 0, 1)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(LAST_ATTACKER_IS, ==, Zell)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 10, 1, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_turn_counter(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(10, 2, 0, 2)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(SELF_TURN_COUNTER_IS, ==, 2)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 10, 2, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_last_dmg_type(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(10, 3, 0, 4)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(LAST_ATTACKER_USED_COMMAND_TYPE, ==, Item)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 10, 3, 0, 4, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_last_action_id(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(10, 4, 0, 1)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(LAST_ACTION_LAUNCH_WAS, ==, 1)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 10, 4, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_last_action_id(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(10, 5, 0, 2)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(LAST_ATTACK_WAS_OF_ELEMENT, ==, Thunder)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 10, 5, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_last_attacker_id(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(10, 203, 0, 200)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(LAST_ATTACKER_IS_c0m_ID, ==, Self)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 10, 203, 0, 200, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_difficulty(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(14, 200, 5, 1)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(LAST_ATTACKER_IS_c0m_ID, ==, Self)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 14, 200, 5, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_alive_in_slot(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(15, 0, 3, 4)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(ALIVE_IN_SLOT, !=, 4)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 15, 0, 3, 4, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_gender_in_team(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(16, 0, 0, 202)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(GENDER_CHECK, ==, Male)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 16, 0, 0, 202, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_gforce_drawn(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(17, 200, 3, 204)
+            {
+                stop;
+            }
+            """
+        # 204 here should be true
+        source_code_type = \
+            """
+            if(GFORCE_OBTAINED, !=, 204)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 17, 200, 3, 204, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
 
     def test_if_else(self, compiler: AICompiler):
         source_code_raw = \
