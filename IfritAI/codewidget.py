@@ -39,6 +39,9 @@ class CodeWidget(QWidget):
         self._command_list = command_list
         self.set_text_from_command(self._command_list)
 
+        self.compiler = AICompiler(game_data, self.ennemy_data.battle_script_data['battle_text'], self.ennemy_data.info_stat_data)
+        self.decompiler = AIDecompiler(game_data, self.ennemy_data.battle_script_data['battle_text'], self.ennemy_data.info_stat_data)
+
 
     def change_expert_level(self, expert_level, ai_section):
         self._expert_level = expert_level
@@ -88,16 +91,15 @@ class CodeWidget(QWidget):
 
     def set_ifrit_ai_code_from_command(self, command_list: List[CommandAnalyser]):
         self._command_list = command_list
-        self.code_area_widget.setText(AIDecompiler.decompile_from_command_list(self.game_data, command_list))
+        self.code_area_widget.setText(self.decompiler.decompile_from_command_list(command_list))
 
     def _compile_ifrit_ai_code_to_command(self):
         print("_compile_ifrit_ai_code_to_command")
         try:
-            ai_compiler = AICompiler(self.game_data, self.ennemy_data.battle_script_data['battle_text'], self.ennemy_data.info_stat_data)
-            print(ai_compiler)
-            compiled_code = ai_compiler.compile(self.code_area_widget.toPlainText())
+            compiled_code = self.compiler.compile(self.code_area_widget.toPlainText())
             print(compiled_code)
-            self._command_list = self.ennemy_data.set_ai_section_from_bytes(compiled_code, self._current_section_ai_index, self.game_data)
+            decompiled_code = self.decompiler.decompile_bytecode_to_command_list(compiled_code)
+            self._command_list = self.ennemy_data.set_ai_section_from_bytes(decompiled_code, self._current_section_ai_index)
             print(self._command_list)
             if AICodeError.has_errors():
                 self.show_ai_errors()

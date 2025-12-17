@@ -1,13 +1,50 @@
 import re
 from typing import List
 
-from FF8GameData.dat.commandanalyser import CommandAnalyser
+from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.gamedata import GameData
 
 
 class AIDecompiler:
-    @staticmethod
-    def decompile_from_command_list(game_data: GameData, command_list: List[CommandAnalyser]):
+    def __init__(self, game_data:GameData, battle_text, info_stat):
+        self.game_data = game_data
+        self.battle_text = battle_text
+        self.info_stat = info_stat
+
+    def decompile(self, bytecode: List[int]):
+        print("decompile")
+        command_list = self.decompile_bytecode_to_command_list(bytecode)
+        print(command_list)
+        command_list_typed =
+        code = self.decompile_from_command_list(command_list)
+        print(code)
+        return code
+
+    def decompile_bytecode_to_command_list(self, code: List[int]):
+        print("_get_command_list_from_ai_bytes_section")
+        current_if_type = CurrentIfType.NONE
+        index_read = 0
+        list_result = []
+        while index_read < len(code):
+            all_op_code_info = self.game_data.ai_data_json["op_code_info"]
+            op_code_ref = [x for x in all_op_code_info if x["op_code"] == code[index_read]]
+            if not op_code_ref and code[index_read] >= 0x40:
+                index_read += 1
+                continue
+            elif op_code_ref:  # >0x40 not used
+                op_code_ref = op_code_ref[0]
+                start_param = index_read + 1
+                end_param = index_read + 1 + op_code_ref['size']
+                command = CommandAnalyser(code[index_read], code[start_param:end_param], game_data=self.game_data,
+                                          battle_text=self.battle_text,
+                                          info_stat_data=self.info_stat, color=self.game_data.AIData.COLOR, current_if_type=current_if_type, line_index=len(list_result))
+                current_if_type = command.get_current_if_type()
+                list_result.append(command)
+                index_read += 1 + op_code_ref['size']
+        print(list_result)
+        return list_result
+
+    def decompile_from_command_list(self, command_list: List[CommandAnalyser]):
         func_list = []
         if_list_count = []
         else_list_count = []
@@ -33,7 +70,7 @@ class AIDecompiler:
             while 0 in if_list_count:
                 if_list_count.remove(0)
 
-            op_info = [x for x in game_data.ai_data_json['op_code_info'] if x["op_code"] == command.get_id()][0]
+            op_info = [x for x in self.game_data.ai_data_json['op_code_info'] if x["op_code"] == command.get_id()][0]
 
             if command.get_id() == 2:  # IF
                 op_list = command.get_op_code()

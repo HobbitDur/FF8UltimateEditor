@@ -11,7 +11,7 @@ from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
 
-class AITypeResolver:
+class AIDecompilerTypeResolver:
     def __init__(self, game_data: GameData, battle_text=(), info_stat_data={}):
         self.game_data = game_data
         self._battle_text = battle_text
@@ -177,11 +177,11 @@ class AITypeResolver:
             # battle_text
             for i, battle_text in enumerate(self._battle_text):
                 normalized = self._normalize_string(battle_text)
-                mappings['type_values']['battle_text'][normalized] = i
+                mappings['type_values']['battle_text'][i] = battle_text
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])
-                mappings['type_values']['magic'][normalized] = magic['id']
+                mappings['type_values']['magic'][magic['id']] = magic['name']
             # target_basic
             for target_dict in self.__get_target_list(advanced=False, specific=False):
                 mappings['type_values']['target_basic'][self._normalize_string(target_dict['data'])] = target_dict['id']

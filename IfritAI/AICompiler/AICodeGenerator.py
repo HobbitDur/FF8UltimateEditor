@@ -62,7 +62,6 @@ class AICodeGenerator:
 
         # Calculate size of then-block
         then_block_size = self._calculate_block_size(node.then_block)
-        print(f"then_block_size: {then_block_size}")
 
         # Emit IF command
         self.emit_byte(0x02)  # IF opcode
@@ -79,7 +78,6 @@ class AICodeGenerator:
             # For elseif: JUMP over next part, then IF
             # Calculate size of the entire remaining structure
             remaining_size = self._calculate_remaining_size(elif_branch, node.elif_branches, node.else_block)
-            print(f"remaining_size: {then_block_size}")
             # Emit jump to skip to end if previous condition was true
             self.emit_byte(0x23)  # JUMP opcode
             self.emit_int16_le(remaining_size)
@@ -96,7 +94,6 @@ class AICodeGenerator:
         if node.else_block:
             # Calculate size of else block
             else_block_size = self._calculate_block_size(node.else_block)
-            print(f"else_block_size: {else_block_size}")
 
             # Emit jump to skip else block if we executed then-block or elseif
             self.emit_byte(0x23)  # JUMP opcode
@@ -113,7 +110,6 @@ class AICodeGenerator:
     def _calculate_remaining_size(self, current_elif, remaining_elifs, else_block):
         """Calculate size from current point to end of if-structure"""
         # We need to calculate: current elif block + remaining elifs + else
-        print("_calculate_remaining_size")
         total_size = 0
 
         # Size of current elif's IF command and condition (8 bytes)
@@ -139,13 +135,10 @@ class AICodeGenerator:
         return total_size
 
     def _emit_condition(self, condition, jump_offset):
-        print("_emit_condition")
         """Emit condition parameters for IF command with jump offset"""
         params = condition.params.params
-        print(f"params: {params}")
 
         if len(params) >= 4:
-            print("len > 4")
             # Subject ID
             self.emit_byte(int(params[0].value))
 
@@ -159,12 +152,10 @@ class AICodeGenerator:
             value = int(params[3].value)
             self.emit_byte(value & 0xFF)
             self.emit_byte((value >> 8) & 0xFF)
-            print(f"value: {value}")
 
             # Jump offset (2 bytes, little-endian)
             self.emit_byte(jump_offset & 0xFF)
             self.emit_byte((jump_offset >> 8) & 0xFF)
-            print(f"jump_offset: {jump_offset}")
         else:
             # Not enough parameters
             for _ in range(6):
