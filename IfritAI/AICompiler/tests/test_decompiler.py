@@ -239,7 +239,7 @@ class TestAIDecompiler:
 
     def test_decompile_if_elseif_else_statement(self, decompiler):
         """Test decompiling if-else statement"""
-        bytecode = [2, 1, 2, 3, 2, 0, 6, 0, 8, 35, 17, 0, 2, 1, 2, 3, 1, 0, 6, 0, 40, 3, 2, 35, 3, 0, 40, 4, 5]
+        bytecode = [2, 1, 2, 3, 2, 0, 4, 0, 8, 35, 17, 0, 2, 1, 2, 3, 1, 0, 6, 0, 40, 3, 2, 35, 3, 0, 40, 4, 5]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled if-elseif-else statement ===")
         print(self.pretty_code(code))
