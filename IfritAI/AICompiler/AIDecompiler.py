@@ -3,19 +3,24 @@ from typing import List
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.gamedata import GameData
+from IfritAI.AICompiler.AIDecompilerTypeResolver import AIDecompilerTypeResolver
 
 
 class AIDecompiler:
-    def __init__(self, game_data:GameData, battle_text, info_stat):
+    def __init__(self, game_data: GameData, battle_text, info_stat):
         self.game_data = game_data
         self.battle_text = battle_text
         self.info_stat = info_stat
+        self.type_resolver = AIDecompilerTypeResolver(game_data, battle_text, info_stat)
 
     def decompile(self, bytecode: List[int]):
         print("decompile")
         command_list = self.decompile_bytecode_to_command_list(bytecode)
+        print("command_list")
         print(command_list)
-        command_list_typed =
+        self.type_resolver.resolve(command_list)
+        print("command_list_typed")
+        print(command_list)
         code = self.decompile_from_command_list(command_list)
         print(code)
         return code
@@ -45,6 +50,7 @@ class AIDecompiler:
         return list_result
 
     def decompile_from_command_list(self, command_list: List[CommandAnalyser]):
+        print("decompile_from_command_list")
         func_list = []
         if_list_count = []
         else_list_count = []
@@ -80,7 +86,7 @@ class AIDecompiler:
                 if pending_elseif:
                     # This IF is actually an elseif
                     func_line_text = 'elseif'
-                    func_line_text += command.get_text(for_decompiled=True)
+                    func_line_text += command.get_param_text()
                     func_list.append(func_line_text)
                     func_list.append('{')
                     pending_elseif = False
@@ -88,7 +94,7 @@ class AIDecompiler:
                     # Regular IF
                     if_list_count.append(jump_value)
                     func_line_text = "if"
-                    func_line_text += command.get_text(for_decompiled=True)
+                    func_line_text += command.get_param_text()
                     func_list.append(func_line_text)
                     func_list.append('{')
 
@@ -98,7 +104,7 @@ class AIDecompiler:
 
                 if jump_value & 0x8000 != 0:  # Jump backward (loop)
                     func_line_text = op_info['func_name']
-                    func_line_text += command.get_text(for_decompiled=True)
+                    func_line_text += command.get_param_text()
                     func_list.append(func_line_text)
 
                 elif jump_value > 0:
@@ -123,7 +129,7 @@ class AIDecompiler:
 
             else:
                 func_line_text = op_info['func_name']
-                func_line_text += command.get_text(for_decompiled=True)
+                func_line_text += command.get_param_text()
                 func_list.append(func_line_text)
 
             # Update else counters (skip the newly added else)

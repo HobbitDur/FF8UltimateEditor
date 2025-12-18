@@ -1,4 +1,9 @@
 # AITypeResolver.py - Complete implementation with error handling
+from math import floor
+
+from openpyxl.styles.builtins import normal
+
+from FF8GameData.dat.commandanalyser import CommandAnalyser
 from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, \
     ParamSpecialActionError, \
     ParamTargetBasicError, ParamTargetGenericError, ParamTargetSpecificError, ParamTargetSlotError, ParamAptitudeError, ParamSceneOutSlotIdError, \
@@ -57,97 +62,29 @@ class AIDecompilerTypeResolver:
             '': lambda x: 0  # Empty type
         }
 
-    def _parse_int(self, value_str):
+    def _parse_int(self, value: int):
         """Parse integer value (formula type)"""
-        try:
-            if '-' in value_str:
-                raise ParamIntError(value_str)
-            # Handle hex, binary, decimal
-            if value_str.startswith('0x'):
-                value_return = int(value_str, 16)
-            elif value_str.startswith('0b'):
-                value_return = int(value_str, 2)
-            else:
-                value_return = int(value_str)
-            if value_return > 255 or value_return < 0:
-                raise ParamIntError(value_str)
-            else:
-                return value_return
-        except ValueError:
-            raise ParamIntError(value_str)
+        return str(value)
 
-    def _parse_int16(self, value_str):
+    def _parse_int16(self, value:List[int]):
         """Parse integer value (formula type)"""
-        try:
-            # Handle hex, binary, decimal
-            if value_str.startswith('0x'):
-                value_return = int(value_str, 16)
-            elif value_str.startswith('0b'):
-                value_return = int(value_str, 2)
-            else:
-                value_return = int(value_str)
-            if value_return > 32767 or value_return < -32767:
-                raise ParamInt16Error(value_str)
-            else:
-                return value_return
-        except ValueError:
-            raise ParamInt16Error(value_str)
+        return int.from_bytes(bytes(value), byteorder='little')
 
-    def _parse_percent(self, value_str):
+    def _parse_percent(self, value: int):
         """Parse percentage value (formula type)"""
-        if '%' in value_str:
-            value_str = value_str.replace('%', '')
-            value_str = value_str.replace(' ', '')
-            try:
-                return int(int(value_str) / 10)
-            except ValueError:
-                raise ParamPercentError(value_str)
-        else:
-            return int(value_str)
+        return str(value*10) + '%'
 
-    def _parse_percent_elem(self, value_str):
+    def _parse_percent_elem(self, value:int):
         """Parse elemental percentage value (formula type)"""
-        try:
-            return 900 - int(value_str) * 10
-        except ValueError:
-            raise ParamPercentElemError(value_str)
+        return str(floor((900 - value) / 10))
 
-    def _parse_int_shift(self, value_str, param):
-        """Parse int_shift value (formula type) - shift by -1"""
-        try:
-            value = int(value_str)
-            if value - param[0] < 0:
-                raise ValueError
-            return value + param[0]
-        except ValueError:
-            raise ParamIntShiftError(value_str, param[0])
+    def _parse_int_shift(self, value: int, param: List):
+        """Parse int_shift value (formula type)"""
+        return str(value + param[0])
 
-    def _parse_subject_id(self, value_str):
-        """Parse subject_id value (formula type)"""
-        try:
-            # First try direct integer conversion
-            return int(value_str)
-        except ValueError:
-            # Check if it's a named subject
-            normalized_val = self._normalize_string(value_str)
-            for subject in self.game_data.ai_data_json.get('if_subject', []):
-                if self._normalize_string(subject['short_text']) == normalized_val:
-                    return subject['subject_id']
-
-            # Not found as integer or named subject
-            raise SubjectIdError(value_str)
-
-    def _parse_bool(self, value_str):
+    def _parse_bool(self, value: int):
         """Parse boolean value (formula type)"""
-        try:
-            lower_val = str(value_str).lower()
-            if lower_val in ['true', '1', 'yes', 'on']:
-                return 1
-            elif lower_val in ['false', '0', 'no', 'off']:
-                return 0
-            return int(value_str)
-        except ValueError:
-            raise ParamBoolError(f"Invalid boolean value: '{value_str}'")
+        return str(bool(value))
 
     def _build_type_mappings(self):
         """Build lookup dictionaries from the JSON data"""
@@ -160,10 +97,10 @@ class AIDecompilerTypeResolver:
             # Map command names to their parameter types
             mappings['command_signatures'] = {}
             for op_info in ai_data.get('op_code_info', []):
-                func_name = op_info.get('func_name')
+                func_id = op_info.get('op_code')
                 param_types = op_info.get('param_type', [])
-                if func_name:
-                    mappings['command_signatures'][func_name.upper()] = param_types
+                if func_id:
+                    mappings['command_signatures'][func_id] = param_types
 
             # Build type value mappings for lookup types
             mappings['type_values'] = {}
@@ -181,19 +118,19 @@ class AIDecompilerTypeResolver:
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])
-                mappings['type_values']['magic'][magic['id']] = magic['name']
+                mappings['type_values']['magic'][magic['id']] = normalized
             # target_basic
             for target_dict in self.__get_target_list(advanced=False, specific=False):
                 mappings['type_values']['target_basic'][self._normalize_string(target_dict['data'])] = target_dict['id']
             # monster_ability
             for monster_ability in self.game_data.enemy_abilities_data_json.get('abilities', []):
                 normalized = self._normalize_string(monster_ability['name'])
-                mappings['type_values']['monster_ability'][normalized] = monster_ability['id']
+                mappings['type_values']['monster_ability'][monster_ability['id']] = normalized
             # local_var
             for local_var in ai_data.get('list_var', []):
                 if local_var.get('var_type') == "local":
                     normalized = self._normalize_string(local_var['var_name'])
-                    mappings['type_values']['local_var'][normalized] = local_var['op_code']
+                    mappings['type_values']['local_var'][local_var['op_code']] = normalized
             # local_var_param
             for local_var_param in self.__get_possible_local_var_param():
                 mappings['type_values']['local_var_param'][self._normalize_string(local_var_param['data'])] = local_var_param['id']
@@ -201,89 +138,89 @@ class AIDecompilerTypeResolver:
             for battle_var in ai_data.get('list_var', []):
                 if battle_var.get('var_type') == "battle":
                     normalized = self._normalize_string(battle_var['var_name'])
-                    mappings['type_values']['battle_var'][normalized] = battle_var['op_code']
+                    mappings['type_values']['battle_var'][battle_var['op_code']] = normalized
             # global_var
             for global_var in ai_data.get('list_var', []):
                 if global_var.get('var_type') == "global":
                     normalized = self._normalize_string(global_var['var_name'])
-                    mappings['type_values']['global_var'][normalized] = global_var['op_code']
+                    mappings['type_values']['global_var'][global_var['op_code']] = normalized
             # target_slot
             for target_slot in self.game_data.ai_data_json.get('target_slot', []):
                 normalized = self._normalize_string(target_slot['text'])
-                mappings['type_values']['target_slot'][normalized] = target_slot['param_id']
+                mappings['type_values']['target_slot'][target_slot['param_id']] = normalized
             # special_action
             for special_action in self.game_data.special_action_data_json.get('special_action', []):
                 normalized = self._normalize_string(special_action['name'])
-                mappings['type_values']['special_action'][normalized] = special_action['id']
+                mappings['type_values']['special_action'][ special_action['id']] =normalized
             # target_advanced_generic
             for target_dict in self.__get_target_list(advanced=True, specific=False):
-                mappings['type_values']['target_advanced_generic'][self._normalize_string(target_dict['data'])] = target_dict['id']
+                mappings['type_values']['target_advanced_generic'][target_dict['id']] = self._normalize_string(target_dict['data'])
             # target_advanced_specific
             for target_dict in self.__get_target_list(advanced=True, specific=True):
-                mappings['type_values']['target_advanced_specific'][self._normalize_string(target_dict['data'])] = target_dict['id']
+                mappings['type_values']['target_advanced_specific'][target_dict['id']] = self._normalize_string(target_dict['data'])
             # comparator
             for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator_ifritAI', [])):
-                mappings['type_values']['comparator'][comp] = i
+                mappings['type_values']['comparator'][i] = comp
             # subject_id
             for subject in ai_data.get('if_subject', []):
                 normalized = self._normalize_string(subject['short_text'])
-                mappings['type_values']['subject_id'][normalized] = subject['subject_id']
+                mappings['type_values']['subject_id'][ subject['subject_id']] =normalized
             # status_ai
             for status_ai in self.game_data.status_data_json.get('status_ai', []):
                 normalized = self._normalize_string(status_ai['name'])
-                mappings['type_values']['status_ai'][normalized] = status_ai['id']
+                mappings['type_values']['status_ai'][status_ai['id']] = normalized
             # activate
             for activate in self.game_data.ai_data_json.get('activate_type', []):
                 normalized = self._normalize_string(activate['name'])
-                mappings['type_values']['activate'][normalized] = activate['id']
+                mappings['type_values']['activate'][activate['id']] = normalized
             # aptitude
             for aptitude in self.game_data.ai_data_json.get('aptitude_list', []):
                 normalized = self._normalize_string(aptitude['text'])
-                mappings['type_values']['aptitude'][normalized] = aptitude['aptitude_id']
+                mappings['type_values']['aptitude'][aptitude['aptitude_id']] = normalized
             # magic_type
             for magic_type in self.game_data.magic_data_json.get('magic_type', []):
                 normalized = self._normalize_string(magic_type['name'])
-                mappings['type_values']['magic_type'][normalized] = magic_type['id']
+                mappings['type_values']['magic_type'][magic_type['id']] = normalized
             # gforce
             for gforce in self.game_data.gforce_data_json.get('gforce', []):
                 normalized = self._normalize_string(gforce['name'])
-                mappings['type_values']['gforce'][normalized] = gforce['id']
+                mappings['type_values']['gforce'][gforce['id']] = normalized
             # scene_out_slot_id
             for scene_out_slot_id in self.game_data.ai_data_json.get('scene_out_slot_id', []):
                 normalized = self._normalize_string(scene_out_slot_id['text'])
-                mappings['type_values']['scene_out_slot_id'][normalized] = scene_out_slot_id['param_id']
+                mappings['type_values']['scene_out_slot_id'][ scene_out_slot_id['param_id']] = normalized
             # slot_id_enable
             for slot_id_enable in self.game_data.ai_data_json.get('slot_id_enable', []):
                 normalized = self._normalize_string(slot_id_enable['text'])
-                mappings['type_values']['slot_id_enable'][normalized] = slot_id_enable['param_id']
+                mappings['type_values']['slot_id_enable'][slot_id_enable['param_id']] = normalized
             # assign_slot_id
             for assign_slot_id in self.game_data.ai_data_json.get('assign_slot_id', []):
                 normalized = self._normalize_string(assign_slot_id['text'])
-                mappings['type_values']['assign_slot_id'][normalized] = assign_slot_id['param_id']
+                mappings['type_values']['assign_slot_id'][assign_slot_id['param_id']] = normalized
             # slot_id
             for slot_id in self.game_data.ai_data_json.get('slot_id', []):
                 normalized = self._normalize_string(slot_id['text'])
-                mappings['type_values']['slot_id'][normalized] = slot_id['param_id']
+                mappings['type_values']['slot_id'][slot_id['param_id']] = normalized
             # card
             for card in self.game_data.card_data_json.get('card_info', []):
                 normalized = self._normalize_string(card['name'])
-                mappings['type_values']['card'][normalized] = card['id']
+                mappings['type_values']['card'][card['id']] = normalized
             # item
             for item in self.game_data.item_data_json.get('items', []):
                 normalized = self._normalize_string(item['name'])
-                mappings['type_values']['item'][normalized] = item['id']
+                mappings['type_values']['item'][item['id']] = normalized
             # gender
             for gender in self.game_data.ai_data_json.get('gender_type', []):
                 normalized = self._normalize_string(gender['type'])
-                mappings['type_values']['gender'][normalized] = gender['id']
+                mappings['type_values']['gender'][gender['id']] = normalized
             # special_byte_check
             for special_byte_check in self.game_data.ai_data_json.get('special_byte_check', []):
                 normalized = self._normalize_string(special_byte_check['data'])
-                mappings['type_values']['special_byte_check'][normalized] = special_byte_check['id']
+                mappings['type_values']['special_byte_check'][special_byte_check['id']] = normalized
             # hp_percent
             for hp_percent in self.game_data.ai_data_json.get('hp_percent', []):
                 normalized = self._normalize_string(hp_percent['data'])
-                mappings['type_values']['hp_percent'][normalized] = hp_percent['id']
+                mappings['type_values']['hp_percent'][hp_percent['id']] = normalized
         return mappings
 
     def _normalize_string(self, text):
@@ -292,36 +229,64 @@ class AIDecompilerTypeResolver:
             return ""
         return str(text).upper().replace(' ', '_').replace('-', '_')
 
-    def resolve(self, ast):
-        """Resolve all symbolic names to their numeric values"""
-        return self.visit(ast)
-
-    def visit_Command(self, node):
+    def resolve(self, command_list:List[CommandAnalyser]):
         """Resolve command parameters based on command signature"""
-        cmd_name = node.name.upper()
+        print("resolve_decompiler")
+        for command_index, command in enumerate(command_list):
+            cmd_id = command.get_id()
+            print(f"cmd_id: {cmd_id}")
 
-        # Handle IF command specially
-        if cmd_name == 'IF':
-            return self._resolve_if_command(node)
+            # Handle IF command specially
+            if cmd_id == 0x02:
+                self._resolve_if_command(command)
+            else:
+                # Handle other commands
+                type_param = []
+                if cmd_id in self.type_mappings['command_signatures']:
+                    expected_types = self.type_mappings['command_signatures'][cmd_id]
+                    print(f"expected_types: {expected_types}")
+                    ignore_iter = False
+                    for i, op_code in enumerate(command.get_op_code()):
+                        if ignore_iter:
+                            ignore_iter = False
+                            continue
+                        if expected_types[i] in ("int16", ):# 2 params
+                            type_param.append(self._resolve_value([op_code,command.get_op_code()[i+1]] , expected_types[i]))
+                            ignore_iter = True
+                        else:
+                         type_param.append( self._resolve_value(op_code, expected_types[i]))
+                print(f"type_param: {type_param}")
+                command_list[command_index].param_typed = type_param
 
+
+    def _resolve_value(self, value, expected_type, special_param=None):
+        print(f"expected_type: {expected_type}")
+
+        if expected_type in self.lookup_types:
+            print(f"self.type_mappings['type_values'][expected_type]: {self.type_mappings['type_values'][expected_type]}")
+            return self.type_mappings['type_values'][expected_type][value]
+        elif expected_type in self.formula_types:
+            if value and expected_type in ("int_shift",):
+                return self.formula_types[expected_type](value, special_param)
+            else:
+                return self.formula_types[expected_type](value)
+
+
+    def _resolve_if_command(self, command:CommandAnalyser):
         # Handle other commands
-        if cmd_name in self.type_mappings['command_signatures']:
-            expected_types = self.type_mappings['command_signatures'][cmd_name]
-            if node.params:
-                resolved_params = self._resolve_param_list(node.params.params, expected_types)
-                node.params = ParamList(params=resolved_params)
-        return node
+        type_param = []
 
-    def _resolve_if_command(self, node):
-        """Special handling for IF command based on if_subject structure"""
-        if not node.params or len(node.params.params) < 4:
-            raise ParamCountError(f"IF command expects 4 parameters, got {len(node.params.params) if node.params else 0}")
+        if not command.get_op_code() or len(command.get_op_code()) < 7:
+            raise ParamCountError(f"IF command expects 7 parameters, got {len(command.get_op_code()) if command.get_op_code() else 0}")
 
         # Parameters: [subject_id, left_condition, comparator, right_condition]
-        params = node.params.params
+        params = command.get_op_code()
 
         # 1. Resolve subject_id (first parameter)
-        subject_id = int(self._resolve_value(params[0], "subject_id"))
+        subject_id = params[0]
+        print(f"subject_id: {subject_id}")
+
+        subject_str = self._resolve_value(subject_id, "subject_id")
 
         # 2. Get subject info
         subject_info = self.if_subject_map.get(subject_id)
@@ -341,27 +306,27 @@ class AIDecompilerTypeResolver:
         # 5. Resolve each parameter
         resolved_params = []
 
-        # Subject ID - always resolved as int
-        resolved_params.append(Value(str(subject_id)))
+        # Subject ID
+        resolved_params.append(subject_str)
 
         # Left condition
         if left_type:
             resolved_left = self._resolve_value(params[1], left_type, param_list)
-            resolved_params.append(Value(str(resolved_left)))
+            resolved_params.append(resolved_left)
 
         # Comparator
         if len(params) > 2:
-            resolved_comparator = self._resolve_value(params[2], 'comparator', param_list)
-            resolved_params.append(Value(str(resolved_comparator)))
+            resolved_comparator = self._resolve_value(params[2], 'comparator')
+            resolved_params.append(resolved_comparator)
 
         # Right condition
         if right_type:
-            resolved_right = self._resolve_value(params[3], right_type, param_list)
-            resolved_params.append(Value(str(resolved_right)))
+            right_param = int.from_bytes(params[3].to_bytes(length=2, byteorder='little'), byteorder='little')
+            resolved_right = self._resolve_value(right_param, right_type, param_list)
+            resolved_params.append(resolved_right)
 
-        # Update node parameters
-        node.params = ParamList(params=resolved_params)
-        return node
+        command.param_typed = resolved_params
+
 
     def _raise_specific_error(self, param_type, value):
         """Raise specific error based on parameter type"""
@@ -404,91 +369,6 @@ class AIDecompilerTypeResolver:
             resolved_val = self._resolve_value(param, expected_type)
             resolved.append(Value(str(resolved_val)))
         return resolved
-
-    def _resolve_value(self, value_node, expected_type, param=None):
-        """Resolve a single value based on type. Returns int if resolved, raises error otherwise."""
-        value_str = value_node.value
-        # Removing the "" for string
-        if value_str[0] == "\"" and value_str[-1] == "\"" :
-            value_str = value_str[1:-1]
-        # Managing hex value
-        if "0x" in value_str:
-            value_str = str(int(value_str, 16))
-        # Check if it's a formula type first
-        if expected_type in self.formula_types:
-            if param and expected_type in ("int_shift",):
-                return self.formula_types[expected_type](value_str, param)
-            else:
-                return self.formula_types[expected_type](value_str)
-
-        # Check if it's a lookup type
-        elif expected_type in self.lookup_types and expected_type in self.type_mappings['type_values']:
-            # Look up in type mappings
-            normalized = self._normalize_string(value_str)
-            mapping = self.type_mappings['type_values'][expected_type]
-            # If it's already an integer, check that the ID is a possible value
-            if value_str.isdigit():
-                if int(value_str) in mapping.values():
-                    return value_str
-            if normalized in mapping:
-                return mapping[normalized]  # Returns int
-            # NOT FOUND - raise error with valid values
-            self._raise_specific_error(expected_type, value_str)
-        # Unknown/unexpected type
-        else:
-            raise AICodeError(f"Cannot resolve value: '{value_str}"
-                            f"Unknown type: {expected_type}")
-
-    def visit_IfStatement(self, node):
-        # Resolve the main condition
-        if node.condition and node.condition.params:
-            # The condition in an IfStatement uses the same structure as Command('IF')
-            # So we need to handle it similarly
-            self._resolve_if_condition(node.condition)
-
-        # Resolve then block
-        self.visit(node.then_block)
-
-        # Resolve elseif branches
-        for elif_branch in node.elif_branches:
-            if elif_branch.condition and elif_branch.condition.params:
-                self._resolve_if_condition(elif_branch.condition)
-            self.visit(elif_branch.block)
-
-        # Resolve else block
-        if node.else_block:
-            self.visit(node.else_block)
-
-        return node
-
-    def _resolve_if_condition(self, condition_node):
-        """Resolve an IF condition in an IfStatement"""
-        # Create a temporary Command node to reuse the IF resolution logic
-        temp_cmd = Command(name='IF', params=condition_node.params)
-        resolved_cmd = self._resolve_if_command(temp_cmd)
-        condition_node.params = resolved_cmd.params
-        return condition_node
-
-    def visit_Block(self, node):
-        for i, stmt in enumerate(node.statements):
-            node.statements[i] = self.visit(stmt)
-        return node
-
-    def visit_ParamList(self, node):
-        # ParamList itself doesn't need resolution, its params are resolved elsewhere
-        return node
-
-    def visit_Value(self, node):
-        # Value nodes are terminal, no resolution needed here
-        return node
-
-    def visit(self, node):
-        method_name = f'visit_{type(node).__name__}'
-        visitor = getattr(self, method_name, self.generic_visit)
-        return visitor(node)
-
-    def generic_visit(self, node):
-        return node
 
     def __get_target_list(self, advanced=False, specific=False, slot=False):
         list_target = []

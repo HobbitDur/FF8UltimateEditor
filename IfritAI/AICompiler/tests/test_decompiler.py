@@ -159,7 +159,7 @@ class TestAIDecompiler:
         command_expected = [cmd]
         command_decompiled = decompiler.decompile_bytecode_to_command_list(bytecode)
         assert command_expected == command_decompiled
-        code_decompiled = decompiler.decompile_from_command_list(command_decompiled)
+        code_decompiled = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled simple command ===")
         print(self.pretty_code(code_decompiled))
         print("================================")
@@ -193,7 +193,7 @@ class TestAIDecompiler:
         print("===============================")
 
         normalized = self.normalize_code(code)
-        assert "if(1,IRVINE,!=,20%){die();}" in normalized
+        assert "if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%){die();}" in normalized
 
     def test_decompile_if_else_statement(self, decompiler):
         """Test decompiling if-else statement"""
@@ -208,7 +208,7 @@ class TestAIDecompiler:
         print("==================================")
 
         normalized = self.normalize_code(code)
-        assert "if(1,IRVINE,!=,20%){die();}else{statChange(SPEED,50);}" in normalized
+        assert "if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%){die();}else{statChange(SPEED,50);}" in normalized
 
     def test_decompile_if_else_nested_statement(self, decompiler):
         """Test decompiling if-else statement"""
@@ -221,14 +221,14 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(1,IRVINE,!=,20%)
+            if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%)
             {
                 die();
             }
             else
             {
                 stop();
-                if(1,IRVINE,!=,20%)
+                if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%)
                 {
                     statChange(SPEED,50);
                 }
@@ -248,11 +248,11 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(1,IRVINE,!=,20)
+            if(HP_OF_GENERIC_TARGET,IRVINE,!=,20)
             {
                 die();
             }
-            elseif(1,IRVINE,!=,10)
+            elseif(HP_OF_GENERIC_TARGET,IRVINE,!=,10)
             {
                 statChange(SPIRIT,20);
             }
