@@ -1533,7 +1533,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(RANDOM VALUE, 3, ==, 0)
+            if(RANDOM_VALUE, 3, ==, 0)
             {
                 stop;
             }
@@ -1541,7 +1541,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 2, 3, 0, 0, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 2, 2, 0, 0, 0, 4, 0, 0, 35, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1595,7 +1595,7 @@ class TestAICompiler:
     def test_if_status_generic_target(self, compiler: AICompiler):
         source_code_raw = \
             """
-            if(5, 200, 0, 3)
+            if(5, 201, 0, 3)
             {
                 stop;
             }
@@ -1618,7 +1618,7 @@ class TestAICompiler:
     def test_if_alive_in_team(self, compiler: AICompiler):
         source_code_raw = \
             """
-            if(6, 201, 0, 0)
+            if(6, 201, 0, 1)
             {
                 stop;
             }

@@ -40,7 +40,8 @@ class AITypeResolver:
             "target_advanced_specific", "comparator", "status_ai",
             "activate", "aptitude", "magic_type", "gforce",
             "scene_out_slot_id", "slot_id_enable", "assign_slot_id", "slot_id",
-            "card", "item", "gender", "special_byte_check", "subject_id", "hp_percent"
+            "card", "item", "gender", "special_byte_check", "subject_id", "hp_percent",
+            "subject10", "attack_type", "command_type"
         ]
 
     def _get_formula_type_handlers(self):
@@ -284,6 +285,18 @@ class AITypeResolver:
             for hp_percent in self.game_data.ai_data_json.get('hp_percent', []):
                 normalized = self._normalize_string(hp_percent['data'])
                 mappings['type_values']['hp_percent'][normalized] = hp_percent['id']
+            # subject10
+            for subject10 in self.game_data.ai_data_json.get('subject_left_10', []):
+                normalized = self._normalize_string(subject10['data'])
+                mappings['type_values']['subject10'][normalized] = subject10['id']
+            # attack_type
+            for attack_type in self.game_data.ai_data_json.get('attack_type', []):
+                normalized = self._normalize_string(attack_type['data'])
+                mappings['type_values']['attack_type'][normalized] = attack_type['id']
+            # command_type
+            for command_type in self.game_data.ai_data_json.get('command_type', []):
+                normalized = self._normalize_string(command_type['data'])
+                mappings['type_values']['command_type'][normalized] = command_type['id']
         return mappings
 
     def _normalize_string(self, text):
@@ -314,8 +327,8 @@ class AITypeResolver:
 
     def _resolve_if_command(self, node):
         """Special handling for IF command based on if_subject structure"""
-        if not node.params or len(node.params.params) < 4:
-            raise ParamCountError(f"IF command expects 4 parameters, got {len(node.params.params) if node.params else 0}")
+        if not node.params or len(node.params.params) < 3:
+            raise ParamCountError(f"IF command expects 3 or 4 parameters, got {len(node.params.params) if node.params else 0}")
 
         # Parameters: [subject_id, left_condition, comparator, right_condition]
         params = node.params.params
@@ -329,8 +342,8 @@ class AITypeResolver:
             raise AICodeError(f"Unknown subject_id: {subject_id}")
 
         # 3. Get parameter types for this subject
-        left_type = subject_info.get('param_left_type', '')
-        right_type = subject_info.get('param_right_type', '')
+        left_type = subject_info['param_left_type']
+        right_type = subject_info['param_right_type']
 
         # 4. Handle special cases with param_list
         if 'param_list' in subject_info and subject_info['param_list']:
@@ -345,14 +358,22 @@ class AITypeResolver:
         resolved_params.append(Value(str(subject_id)))
 
         # Left condition
-        if left_type:
+        print(f"TUTU: {params}")
+        if left_type and len(params) == 4:
             resolved_left = self._resolve_value(params[1], left_type, param_list)
             resolved_params.append(Value(str(resolved_left)))
+        elif not left_type and len(params) == 3:  # Left param is not used
+            params.insert(1, Value(str(0)))
+            resolved_params.append(params[1])
+        elif not left_type:
+            resolved_left = self._resolve_value(params[1], "int")
+            resolved_params.append(Value(str(resolved_left)))
+
+
 
         # Comparator
-        if len(params) > 2:
-            resolved_comparator = self._resolve_value(params[2], 'comparator', param_list)
-            resolved_params.append(Value(str(resolved_comparator)))
+        resolved_comparator = self._resolve_value(params[2], 'comparator', param_list)
+        resolved_params.append(Value(str(resolved_comparator)))
 
         # Right condition
         if right_type:
@@ -409,7 +430,7 @@ class AITypeResolver:
         """Resolve a single value based on type. Returns int if resolved, raises error otherwise."""
         value_str = value_node.value
         # Removing the "" for string
-        if value_str[0] == "\"" and value_str[-1] == "\"" :
+        if value_str[0] == "\"" and value_str[-1] == "\"":
             value_str = value_str[1:-1]
         # Managing hex value
         if "0x" in value_str:
@@ -437,7 +458,7 @@ class AITypeResolver:
         # Unknown/unexpected type
         else:
             raise AICodeError(f"Cannot resolve value: '{value_str}"
-                            f"Unknown type: {expected_type}")
+                              f"Unknown type: {expected_type}")
 
     def visit_IfStatement(self, node):
         # Resolve the main condition

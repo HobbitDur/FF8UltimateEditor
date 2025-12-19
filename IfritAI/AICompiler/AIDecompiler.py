@@ -69,7 +69,6 @@ class AIDecompiler:
                 else_list_count[i] -= command.get_size()
                 if else_list_count[i] == 0:
                     func_list.append('}')
-
             # Remove completed blocks
             while 0 in else_list_count:
                 else_list_count.remove(0)
@@ -85,6 +84,7 @@ class AIDecompiler:
                 # Check if this is an elseif (IF after a JUMP that created an else)
                 if pending_elseif:
                     # This IF is actually an elseif
+                    if_list_count.append(jump_value)
                     func_line_text = 'elseif'
                     func_line_text += command.get_param_text()
                     func_list.append(func_line_text)

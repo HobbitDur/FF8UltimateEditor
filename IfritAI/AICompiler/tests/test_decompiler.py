@@ -208,7 +208,7 @@ class TestAIDecompiler:
         print("==================================")
 
         normalized = self.normalize_code(code)
-        assert "if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%){die();}else{statChange(SPEED,50);}" in normalized
+        assert "if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%){die();}else{statChange(SPEED,50%);}" in normalized
 
     def test_decompile_if_else_nested_statement(self, decompiler):
         """Test decompiling if-else statement"""
@@ -230,7 +230,7 @@ class TestAIDecompiler:
                 stop();
                 if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%)
                 {
-                    statChange(SPEED,50);
+                    statChange(SPEED,50%);
                 }
             }
             """
@@ -248,23 +248,23 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(HP_OF_GENERIC_TARGET,IRVINE,!=,20)
+            if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%)
             {
                 die();
             }
-            elseif(HP_OF_GENERIC_TARGET,IRVINE,!=,10)
+            elseif(HP_OF_GENERIC_TARGET,IRVINE,!=,10%)
             {
-                statChange(SPIRIT,20);
+                statChange(SPIRIT,20%);
             }
             else
             {
-                statChange(SPEED,50);
+                statChange(SPEED,50%);
             }
             """
         )
         assert expected in normalized
 
-    def test_compute_indent_bracket(self):
+    def test_compute_indent_bracket(self, decompiler):
         """Test the compute_indent_bracket static method"""
         func_list = [
             "if (1,2,3,4)",
@@ -277,7 +277,7 @@ class TestAIDecompiler:
             "}"
         ]
 
-        indented = AIDecompiler.compute_indent_bracket(func_list)
+        indented = decompiler.compute_indent_bracket(func_list)
 
         print(f"\n=== Indented list ===")
         for line in indented:
@@ -294,19 +294,19 @@ class TestAIDecompiler:
         assert indented[6] == "&nbsp;&nbsp;&nbsp;&nbsp;stop();"  # 4 spaces indent
         assert indented[7] == "}"  # Back to no indent
 
-    def test_empty_command_list(self, ai_compiler):
+    def test_empty_command_list(self, decompiler):
         """Test decompiling empty command list"""
         command_list = []
-        code = AIDecompiler.decompile_from_command_list(ai_compiler.game_data, command_list)
+        code = decompiler.decompile_from_command_list(command_list)
 
         assert code == "" or code is None or code == "\n"
 
-    def test_single_command_no_params(self, ai_compiler):
+    def test_single_command_no_params(self, decompiler):
         """Test decompiling single command without parameters"""
-        cmd = self.create_test_command(ai_compiler.game_data, 0, 0x00, [])  # stop()
+        cmd = self.create_test_command(decompiler.game_data, 0, 0x00, [])  # stop()
 
         command_list = [cmd]
-        code = AIDecompiler.decompile_from_command_list(ai_compiler.game_data, command_list)
+        code = decompiler.decompile_from_command_list(command_list)
 
         normalized = self.normalize_code(code)
         assert "stop();" in normalized
