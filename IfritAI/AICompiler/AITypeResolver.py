@@ -6,7 +6,7 @@ from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, Pa
     ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
     ParamIntError, \
     ParamPercentError, ParamPercentElemError, ParamBoolError, ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, \
-    ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError
+    ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError, SubjectIdTenError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
@@ -55,6 +55,7 @@ class AITypeResolver:
             'int_shift': lambda x, y: self._parse_int_shift(x, y),
             'bool': lambda x: self._parse_bool(x),
             'alive': lambda x: self._parse_int_shift(x, [3]),
+            'const': lambda x: self._parse_int(x),
             '': lambda x: 0  # Empty type
         }
 
@@ -287,11 +288,11 @@ class AITypeResolver:
                 mappings['type_values']['hp_percent'][normalized] = hp_percent['id']
             # subject10
             for subject10 in self.game_data.ai_data_json.get('subject_left_10', []):
-                normalized = self._normalize_string(subject10['data'])
-                mappings['type_values']['subject10'][normalized] = subject10['id']
+                normalized = self._normalize_string(subject10['text'])
+                mappings['type_values']['subject10'][normalized] = subject10['param_id']
             # attack_type
             for attack_type in self.game_data.ai_data_json.get('attack_type', []):
-                normalized = self._normalize_string(attack_type['data'])
+                normalized = self._normalize_string(attack_type['type'])
                 mappings['type_values']['attack_type'][normalized] = attack_type['id']
             # command_type
             for command_type in self.game_data.ai_data_json.get('command_type', []):
@@ -326,30 +327,40 @@ class AITypeResolver:
         return node
 
     def _resolve_if_command(self, node):
+        print("_resolve_if_command")
         """Special handling for IF command based on if_subject structure"""
-        if not node.params or len(node.params.params) < 3:
-            raise ParamCountError(f"IF command expects 3 or 4 parameters, got {len(node.params.params) if node.params else 0}")
 
         # Parameters: [subject_id, left_condition, comparator, right_condition]
         params = node.params.params
-
+        print(f"params: {params}")
         # 1. Resolve subject_id (first parameter)
-        subject_id = int(self._resolve_value(params[0], "subject_id"))
-
+        ## Managing the subject 10 case not mandatory
+        subject_id = -1
+        if not params[0].value.isdigit() and len(params) == 3:
+            subject10id_exist = next((item["param_id"] for item in  self.game_data.ai_data_json['subject_left_10'] if self._normalize_string(item["text"]) == self._normalize_string(params[0].value)), None)
+            if subject10id_exist is not None:
+                subject_id = 10
+                params.insert(0, Value(str(subject_id)))
+        if subject_id == -1:
+            subject_id = int(self._resolve_value(params[0], "subject_id"))
         # 2. Get subject info
         subject_info = self.if_subject_map.get(subject_id)
         if not subject_info:
-            raise AICodeError(f"Unknown subject_id: {subject_id}")
+            raise SubjectIdError(str(subject_id))
 
         # 3. Get parameter types for this subject
         left_type = subject_info['param_left_type']
         right_type = subject_info['param_right_type']
 
         # 4. Handle special cases with param_list
-        if 'param_list' in subject_info and subject_info['param_list']:
-            param_list = subject_info['param_list']
+        if 'param_left_list' in subject_info and subject_info['param_left_list']:
+            param_left_list = subject_info['param_left_list']
         else:
-            param_list = None
+            param_left_list = None
+        if 'param_right_list' in subject_info and subject_info['param_right_list']:
+            param_right_list = subject_info['param_right_list']
+        else:
+            param_right_list = None
 
         # 5. Resolve each parameter
         resolved_params = []
@@ -359,26 +370,47 @@ class AITypeResolver:
 
         # Left condition
         print(f"TUTU: {params}")
+
         if left_type and len(params) == 4:
-            resolved_left = self._resolve_value(params[1], left_type, param_list)
+            resolved_left = self._resolve_value(params[1], left_type, param_left_list)
             resolved_params.append(Value(str(resolved_left)))
         elif not left_type and len(params) == 3:  # Left param is not used
             params.insert(1, Value(str(0)))
+            resolved_params.append(params[1])
+        elif left_type == "const" :  # Left param is not used
+            params.insert(1, Value(str(param_left_list[0])))
             resolved_params.append(params[1])
         elif not left_type:
             resolved_left = self._resolve_value(params[1], "int")
             resolved_params.append(Value(str(resolved_left)))
 
 
-
         # Comparator
-        resolved_comparator = self._resolve_value(params[2], 'comparator', param_list)
+        resolved_comparator = self._resolve_value(params[2], 'comparator')
         resolved_params.append(Value(str(resolved_comparator)))
 
         # Right condition
-        if right_type:
-            resolved_right = self._resolve_value(params[3], right_type, param_list)
+        if left_type == "subject10":
+            print("Subject10 left type")
+            print(params[1])
+            try:
+                if params[1].value.isdigit():
+                    right_type = [x['right_type'] for x in self.game_data.ai_data_json['subject_left_10'] if int(params[1].value) == x['param_id']][0]
+                else:
+                    right_type = [x['right_type'] for x in self.game_data.ai_data_json['subject_left_10'] if self._normalize_string(params[1].value) == self._normalize_string(x['text'])][0]
+            except IndexError:
+                raise SubjectIdTenError(str(params[1]))
+        if right_type == "const" :  # Left param is not used
+            params.insert(3, Value(str(param_right_list[0])))
+            resolved_params.append(params[3])
+        elif right_type:
+            resolved_right = self._resolve_value(params[3], right_type, param_right_list)
             resolved_params.append(Value(str(resolved_right)))
+        elif not right_type:
+            resolved_left = self._resolve_value(params[1], "int")
+            resolved_params.append(Value(str(resolved_left)))
+
+
 
         # Update node parameters
         node.params = ParamList(params=resolved_params)
@@ -418,7 +450,7 @@ class AITypeResolver:
         error_class = error_classes.get(param_type, AICodeError)
         raise error_class(value)
 
-    def _resolve_param_list(self, params, expected_types):
+    def _resolve_param_list(self, params: list[Value], expected_types: str):
         """Resolve a list of parameters based on expected types"""
         resolved = []
         for i, (param, expected_type) in enumerate(zip(params, expected_types)):
@@ -426,7 +458,7 @@ class AITypeResolver:
             resolved.append(Value(str(resolved_val)))
         return resolved
 
-    def _resolve_value(self, value_node, expected_type, param=None):
+    def _resolve_value(self, value_node: Value, expected_type: str, param=None):
         """Resolve a single value based on type. Returns int if resolved, raises error otherwise."""
         value_str = value_node.value
         # Removing the "" for string

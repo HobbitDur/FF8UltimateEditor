@@ -1717,7 +1717,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(LAST_ATTACK_DAMAGE_TYPE_IS, ==, Physical)
+            if(LAST_ATTACK_DAMAGE_TYPE_IS, ==, Magical)
             {
                 stop;
             }
@@ -1776,7 +1776,7 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
-    def test_if_last_dmg_type(self, compiler: AICompiler):
+    def test_if_last_attacker_used_command_type(self, compiler: AICompiler):
         source_code_raw = \
             """
             if(10, 3, 0, 4)
@@ -1855,7 +1855,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(LAST_ATTACKER_IS_c0m_ID, ==, Self)
+            if(LAST_ATTACKER_c0m_ID, ==, Self)
             {
                 stop;
             }
@@ -1878,7 +1878,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(LAST_ATTACKER_IS_c0m_ID, ==, Self)
+            if("GROUP LEVEL", >=, 1)
             {
                 stop;
             }
@@ -1894,7 +1894,7 @@ class TestAICompiler:
     def test_if_alive_in_slot(self, compiler: AICompiler):
         source_code_raw = \
             """
-            if(15, 0, 3, 4)
+            if(15, 200, 3, 4)
             {
                 stop;
             }
@@ -1909,7 +1909,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 15, 0, 3, 4, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 15, 200, 3, 4, 0, 4, 0, 0, 35, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1948,7 +1948,7 @@ class TestAICompiler:
         # 204 here should be true
         source_code_type = \
             """
-            if(GFORCE_OBTAINED, !=, 204)
+            if(GFORCE_OBTAINED, !=)
             {
                 stop;
             }
