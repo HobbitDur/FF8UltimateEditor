@@ -7,7 +7,7 @@ from IfritAI.AICompiler.AIDecompilerTypeResolver import AIDecompilerTypeResolver
 
 
 class AIDecompiler:
-    def __init__(self, game_data: GameData, battle_text, info_stat):
+    def __init__(self, game_data: GameData, battle_text=(), info_stat={}):
         self.game_data = game_data
         self.battle_text = battle_text
         self.info_stat = info_stat

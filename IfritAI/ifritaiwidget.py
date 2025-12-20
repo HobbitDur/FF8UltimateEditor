@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.dat.daterrors import AICodeError
 from FF8GameData.gamedata import GameData
+from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritAI.codeanalyser import CodeAnalyser
 from IfritAI.codewidget import CodeWidget
 
@@ -49,6 +50,7 @@ class IfritAIWidget(QWidget):
         self.setMinimumHeight(600)
         self.__ifrit_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
         self.setWindowIcon(self.__ifrit_icon)
+
         self.save_button = QPushButton()
         self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
         self.save_button.setIconSize(QSize(30, 30))
@@ -409,7 +411,7 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        #file_to_load = os.path.join("c0m001.dat")  # For developing faster
+        file_to_load = os.path.join("c0m001.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
@@ -436,6 +438,7 @@ class IfritAIWidget(QWidget):
     def __setup_section_data(self):
         line_index = 0
         index_section = self.ifrit_manager.game_data.AIData.AI_SECTION_LIST.index(self.script_section.currentText())
+        self.
         if self.ifrit_manager.ai_data:
             for command in self.ifrit_manager.ai_data[index_section]:
                 command.line_index = line_index

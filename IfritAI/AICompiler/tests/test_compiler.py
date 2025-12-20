@@ -1549,14 +1549,14 @@ class TestAICompiler:
     def test_if_enc_id(self, compiler: AICompiler):
         source_code_raw = \
             """
-            if(3, 0, 0, 123)
+            if(3, 0, 0, 1024)
             {
                 stop;
             }
             """
         source_code_type = \
             """
-            if(COMBAT_SCENE, ==, 123)
+            if(COMBAT_SCENE, ==, 1024)
             {
                 stop;
             }
@@ -1564,7 +1564,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 3, 0, 0, 123, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 3, 0, 0, 0, 4, 4, 0, 0, 35, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
