@@ -7,7 +7,8 @@ import pytest
 
 from FF8GameData.dat.daterrors import ParamBattleTextError, ParamAptitudeError, ParamMagicIdError, ParamTargetBasicError, ParamIntError, \
     ParamMonsterAbilityError, ParamMonsterLineAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, ParamTargetSlotError, ParamBoolError, \
-    ParamSpecialActionError, ParamInt16Error, ParamTargetGenericError, ParamActivateError, ParamSceneOutSlotIdError, ParamMagicTypeError, ParamGfError, ParamSlotIdEnableError, \
+    ParamSpecialActionError, ParamInt16Error, ParamTargetGenericError, ParamActivateError, ParamSceneOutSlotIdError, ParamMagicTypeError, ParamGfError, \
+    ParamSlotIdEnableError, \
     ParamCardError, ParamAssignSlotIdError, ParamItemError, ParamSlotIdError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
@@ -41,7 +42,6 @@ class TestAICompiler:
         expected = [0x00]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-
 
     def test_print(self, compiler: AICompiler):
         # First declare different source code case
@@ -204,7 +204,6 @@ class TestAICompiler:
         with pytest.raises(ParamMonsterAbilityError):
             compiler.compile(source_code_error)
 
-
     def test_die(self, compiler: AICompiler):
         source_code_raw = \
             """
@@ -215,8 +214,6 @@ class TestAICompiler:
         expected = [8]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-
-
 
     def test_anim(self, compiler: AICompiler):
         # First declare different source code case
@@ -247,7 +244,6 @@ class TestAICompiler:
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamIntError):
             compiler.compile(source_code_error)
-
 
     def test_useRandom(self, compiler: AICompiler):
         # First declare different source code case
@@ -392,7 +388,6 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
-
     def test_bvar(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
@@ -422,8 +417,6 @@ class TestAICompiler:
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamBattleVarError):
             compiler.compile(source_code_error)
-
-
 
     def test_gvar(self, compiler: AICompiler):
         # First declare different source code case
@@ -455,8 +448,6 @@ class TestAICompiler:
         with pytest.raises(ParamGlobalVarError):
             compiler.compile(source_code_error)
 
-
-
     def test_add(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
@@ -487,8 +478,6 @@ class TestAICompiler:
         with pytest.raises(ParamLocalVarError):
             compiler.compile(source_code_error)
 
-
-
     def test_add_specialCases(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
@@ -511,7 +500,6 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-
 
     def test_badd(self, compiler: AICompiler):
         # First declare different source code case
@@ -543,8 +531,6 @@ class TestAICompiler:
         with pytest.raises(ParamBattleVarError):
             compiler.compile(source_code_error)
 
-
-
     def test_gadd(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
@@ -575,7 +561,6 @@ class TestAICompiler:
         with pytest.raises(ParamGlobalVarError):
             compiler.compile(source_code_error)
 
-
     def test_recover(self, compiler: AICompiler):
         source_code_raw = \
             """
@@ -586,7 +571,6 @@ class TestAICompiler:
         expected = [0x16]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-
 
     def test_setEscape(self, compiler: AICompiler):
         # First declare different source code case
@@ -620,24 +604,23 @@ class TestAICompiler:
         with pytest.raises(ParamBoolError):
             compiler.compile(source_code_error)
 
-
     def test_printSpeed(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        printSpeed(1);
-        """
+            """
+            printSpeed(1);
+            """
         ## Type data
         source_code_type = \
-        """
-        printSpeed("Second battle text");
-        """
+            """
+            printSpeed("Second battle text");
+            """
         ## Error data
         source_code_error = \
-        """
-        printSpeed("Text not existing");
-        """
+            """
+            printSpeed("Text not existing");
+            """
         # The expected output
         expected = [24, 1]
 
@@ -651,14 +634,13 @@ class TestAICompiler:
         with pytest.raises(ParamBattleTextError):
             compiler.compile(source_code_error)
 
-
     def test_doNothing(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        doNothing(1);
-        """
+            """
+            doNothing(1);
+            """
 
         # The expected output
         expected = [25, 1]
@@ -669,24 +651,23 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-
     def test_printAndLock(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        printAndLock(1);
-        """
+            """
+            printAndLock(1);
+            """
         ## Type data
         source_code_type = \
-        """
-        printAndLock("Second battle text");
-        """
+            """
+            printAndLock("Second battle text");
+            """
         ## Error data
         source_code_error = \
-        """
-        printAndLock("Text not existing");
-        """
+            """
+            printAndLock("Text not existing");
+            """
         # The expected output
         expected = [26, 1]
 
@@ -700,15 +681,14 @@ class TestAICompiler:
         with pytest.raises(ParamBattleTextError):
             compiler.compile(source_code_error)
 
-
     def test_enterAlt(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        enterAlt(1, 0);
-        """
-        
+            """
+            enterAlt(1, 0);
+            """
+
         # The expected output
         expected = [27, 1, 0]
 
@@ -718,15 +698,14 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-
     def test_waitText(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        waitText(2);
-        """
-        
+            """
+            waitText(2);
+            """
+
         # The expected output
         expected = [28, 2]
 
@@ -736,23 +715,22 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-
     def test_leave(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        leave(200);
-        """
+            """
+            leave(200);
+            """
         ## Type data
         source_code_type = \
-        """
-        leave(SELF);
-        """
+            """
+            leave(SELF);
+            """
         source_code_error = \
-        """
-        leave(8);
-        """
+            """
+            leave(8);
+            """
         # The expected output
         expected = [29, 200]
 
@@ -766,23 +744,22 @@ class TestAICompiler:
         with pytest.raises(ParamTargetSlotError):
             compiler.compile(source_code_error)
 
-
     def test_specialAction(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        specialAction(17);
-        """
+            """
+            specialAction(17);
+            """
         ## Type data
         source_code_type = \
-        """
-        specialAction("Elvoret Entrance");
-        """
+            """
+            specialAction("Elvoret Entrance");
+            """
         source_code_error = \
-        """
-        specialAction("nerf lux op champ");
-        """
+            """
+            specialAction("nerf lux op champ");
+            """
         # The expected output
         expected = [30, 17]
 
@@ -794,16 +771,15 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamSpecialActionError):
-            compiler.compile(source_code_error)  
-
+            compiler.compile(source_code_error)
 
     def test_enter(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        enter(3);
-        """
+            """
+            enter(3);
+            """
         # The expected output
         expected = [31, 3]
 
@@ -813,14 +789,13 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-
     def test_waitTextFast(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        waitTextFast(2);
-        """
+            """
+            waitTextFast(2);
+            """
         # The expected output
         expected = [32, 2]
 
@@ -830,24 +805,23 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-
     def test_printAlt(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        printAlt(1);
-        """
+            """
+            printAlt(1);
+            """
         ## Type data
         source_code_type = \
-        """
-        printAlt("Second battle text");
-        """
+            """
+            printAlt("Second battle text");
+            """
         ## Error data
         source_code_error = \
-        """
-        printAlt("Text not existing");
-        """
+            """
+            printAlt("Text not existing");
+            """
         # The expected output
         expected = [34, 1]
 
@@ -861,20 +835,18 @@ class TestAICompiler:
         with pytest.raises(ParamBattleTextError):
             compiler.compile(source_code_error)
 
-
-
     def test_jump(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        jump(10);
-        """
+            """
+            jump(10);
+            """
         ## Error data
         source_code_error = \
-        """
-        jump(10000000000);
-        """
+            """
+            jump(10000000000);
+            """
         # The expected output
         expected = [35, 10, 0]
 
@@ -886,19 +858,18 @@ class TestAICompiler:
         with pytest.raises(ParamInt16Error):
             compiler.compile(source_code_error)
 
-
     def test_jump_negative(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        jump(-10);
-        """
+            """
+            jump(-10);
+            """
         ## Error data
         source_code_error = \
-        """
-        jump(-10000000000);
-        """
+            """
+            jump(-10000000000);
+            """
         # The expected output
         expected = [35, 246, 255]
 
@@ -909,7 +880,6 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         with pytest.raises(ParamInt16Error):
             compiler.compile(source_code_error)
-
 
     def test_fillAtb(self, compiler: AICompiler):
         source_code_raw = \
@@ -922,25 +892,23 @@ class TestAICompiler:
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-
-
     def test_setScanText(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        setScanText(1);
-        """
+            """
+            setScanText(1);
+            """
         ## Type data
         source_code_type = \
-        """
-        setScanText("Second battle text");
-        """
+            """
+            setScanText("Second battle text");
+            """
         ## Error data
         source_code_error = \
-        """
-        setScanText("Text not existing");
-        """
+            """
+            setScanText("Text not existing");
+            """
         # The expected output
         expected = [37, 1]
 
@@ -954,25 +922,23 @@ class TestAICompiler:
         with pytest.raises(ParamBattleTextError):
             compiler.compile(source_code_error)
 
-
-
     def test_targetStatus(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        targetStatus(200, 3, 1, 0);
-        """
+            """
+            targetStatus(200, 3, 1, 0);
+            """
         ## Type data
         source_code_type = \
-        """
-        targetStatus("ENEMY TEAM", !=, Poison, False);
-        """
+            """
+            targetStatus("ENEMY TEAM", !=, Poison, False);
+            """
         ## Error data
         source_code_error = \
-        """
-        targetStatus(250, 3, 1, 0);
-        """
+            """
+            targetStatus(250, 3, 1, 0);
+            """
         # The expected output
         expected = [38, 0, 200, 3, 1]
 
@@ -986,25 +952,23 @@ class TestAICompiler:
         with pytest.raises(ParamTargetGenericError):
             compiler.compile(source_code_error)
 
-
-
     def test_autoStatus(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
-        """
-        autoStatus(1, 2);
-        """
+            """
+            autoStatus(1, 2);
+            """
         ## Type data
         source_code_type = \
-        """
-        autoStatus(ACTIVATE, Petrify);
-        """
+            """
+            autoStatus(ACTIVATE, Petrify);
+            """
         ## Error data
         source_code_error = \
-        """
-        autoStatus(2, 2);
-        """
+            """
+            autoStatus(2, 2);
+            """
         # The expected output
         expected = [39, 2, 1]
 
@@ -1174,7 +1138,6 @@ class TestAICompiler:
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-
     def test_giveGF(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
@@ -1227,7 +1190,6 @@ class TestAICompiler:
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-
     def test_enable(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
@@ -1257,7 +1219,6 @@ class TestAICompiler:
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamSceneOutSlotIdError):
             compiler.compile(source_code_error)
-
 
     def test_loadAndTargetable(self, compiler: AICompiler):
         # First declare different source code case
@@ -1330,7 +1291,6 @@ class TestAICompiler:
         with pytest.raises(ParamCardError):
             compiler.compile(source_code_error)
 
-
     def test_giveItem(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
@@ -1360,7 +1320,6 @@ class TestAICompiler:
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamItemError):
             compiler.compile(source_code_error)
-
 
     def test_gameOver(self, compiler: AICompiler):
         source_code_raw = \
@@ -1433,7 +1392,6 @@ class TestAICompiler:
         with pytest.raises(ParamSceneOutSlotIdError):
             compiler.compile(source_code_error)
 
-
     def test_addMaxHP(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
@@ -1464,7 +1422,6 @@ class TestAICompiler:
         with pytest.raises(ParamIntError):
             compiler.compile(source_code_error)
 
-
     def test_proofOfOmega(self, compiler: AICompiler):
         source_code_raw = \
             """
@@ -1475,7 +1432,6 @@ class TestAICompiler:
         expected = [61]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-
 
     def test_if_hp_specific_target(self, compiler: AICompiler):
         source_code_raw = \
@@ -1961,6 +1917,97 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
+    def test_if_var(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(222, 200, 0, 1)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(varC, Self, ==, 1)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 222, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_bvar(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(100, 200, 2, 3)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(BATTLEVAR100, >, 3)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 100, 200, 2, 3, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_gvar(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(84, 200, 0, 1)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(FIRSTBUGSEEN, ==, 1)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 84, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_var_of_target(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(220, 203, 0, 1)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(VARA, LAST_ATTACKER, ==, 1)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 220, 203, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
     def test_if_else(self, compiler: AICompiler):
         source_code_raw = \
@@ -1982,6 +2029,218 @@ class TestAICompiler:
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
         expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 3, 0, 40, 5, 6]
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_else_elseif_nested(self, compiler: AICompiler):
+        source_code_raw = """
+                                if(100, 200, 3, 99)
+                                {
+                                    if(100, 200, 4, 2)
+                                    {
+                                        if(101, 200, 5, 4)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(100, 200, 0, 10)
+                                    {
+                                        die;
+                                        if(101, 200, 5, 2)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(100, 200, 0, 20)
+                                    {
+                                        die;
+                                        if(101, 200, 4, 5)
+                                        {
+                                            die;
+                                        }
+                                        elseif(101, 200, 5, 6)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(100, 200, 0, 30)
+                                    {
+                                        die;
+                                        if(101, 200, 4, 3)
+                                        {
+                                            die;
+                                        }
+                                        elseif(101, 200, 5, 6)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    die;
+                                    if(2, 3, 0, 0)
+                                    {
+                                        if(6, 202, 3, 1)
+                                        {
+                                            if(1, 87, 2, 0)
+                                            {
+                                                if(9, 0, 3, 88)
+                                                {
+                                                    if(227, 200, 1, 64)
+                                                    {
+                                                        if(6, 200, 2, 1)
+                                                        {
+                                                            die;
+                                                            if(6, 20, 0, 3)
+                                                            {
+                                                                die;
+                                                                if(2, 3, 0, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                                elseif(2, 2, 0, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                            }
+                                                            elseif(6, 200, 0, 2)
+                                                            {
+                                                                die;
+                                                                if(2, 2, 0, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    elseif(227, 200, 1, 128)
+                                                    {
+                                                        die;
+                                                    }
+                                                    elseif(227, 200, 1, 192)
+                                                    {
+                                                        die;
+                                                    }
+                                                    else
+                                                    {
+                                                        die;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                """
+        source_code_type = """
+                                if(BattleVar100, !=, 99)
+                                {
+                                    if(BattleVar100, <=, 2)
+                                    {
+                                        if(BattleVar101, >=, 4)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(BattleVar100, ==, 10)
+                                    {
+                                        die;
+                                        if(BattleVar101, >=, 2)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(BattleVar100, ==, 20)
+                                    {
+                                        die;
+                                        if(BattleVar101, <=, 5)
+                                        {
+                                            die;
+                                        }
+                                        elseif(BattleVar101, >=, 6)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(BattleVar100, ==, 30)
+                                    {
+                                        die;
+                                        if(BattleVar101, <=, 3)
+                                        {
+                                            die;
+                                        }
+                                        elseif(BattleVar101, >=, 6)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    die;
+                                    if(RANDOM, 3, ==, 0)
+                                    {
+                                        if(ALIVE_IN_TEAM, ALLY_TEAM, !=, 1)
+                                        {
+                                            if(HP_IN_TEAM, G-Soldier, > 0%)
+                                            {
+                                                if(IS_ALIVE, !=, "Elite Soldier")
+                                                {
+                                                    if(varH, Self, <, 64)
+                                                    {
+                                                        if(ALIVE_IN_TEAM, ENEMY_TEAM, >, 1)
+                                                        {
+                                                            die;
+                                                            if(ALIVE_IN_TEAM, ENEMY_TEAM, ==, 3)
+                                                            {
+                                                                die;
+                                                                if(RANDOM, 3, ==, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                                elseif(RANDOM, 2, ==, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                            }
+                                                            elseif(ALIVE_IN_TEAM, ENEMY_TEAM, ==, 2)
+                                                            {
+                                                                die;
+                                                                if(RANDOM, 2, ==, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    elseif(varH, Self, <, 128)
+                                                    {
+                                                        die;
+                                                    }
+                                                    elseif(varH, Self, <, 192)
+                                                    {
+                                                        die;
+                                                    }
+                                                    else
+                                                    {
+                                                        die;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 100, 200, 3, 99, 0, 122, 0, 2, 100, 200, 4, 2, 0, 15, 0, 2, 101, 200, 5, 4, 0, 4, 0, 8, 35, 0, 0, 35, 96, 0, 2, 100, 200, 0, 10, 0, 16,
+                    0, 8, 2, 101, 200, 5, 2, 0, 4, 0, 8, 35, 0, 0, 35, 72, 0, 2, 100, 200, 0, 20, 0, 28, 0, 8, 2, 101, 200, 4, 5, 0, 4, 0, 8, 35, 0, 0, 2, 101,
+                    200, 5, 6, 0, 4, 0, 8, 35, 0, 0, 35, 194, 0, 2, 100, 200, 0, 30, 0, 28, 0, 8, 2, 101, 200, 4, 3, 0, 4, 0, 8, 35, 0, 0, 2, 101, 200, 5, 6, 0,
+                    4, 0, 8, 35, 0, 0, 35, 0, 0, 35, 155, 0, 8, 2, 2, 3, 0, 0, 0, 146, 0, 2, 6, 201, 3, 1, 0, 136, 0, 2, 1, 87, 2, 0, 0, 132, 0, 2, 9, 0, 3, 88,
+                    0, 120, 0, 2, 227, 200, 1, 64, 0, 75, 0, 2, 6, 200, 2, 1, 0, 64, 0, 8, 2, 6, 200, 0, 3, 0, 28, 0, 8, 2, 2, 3, 0, 0, 0, 4, 0, 8, 35, 0, 0, 2,
+                    2, 2, 0, 0, 0, 4, 0, 8, 35, 0, 0, 35, 0, 0, 2, 6, 200, 0, 2, 0, 16, 0, 8, 2, 2, 2, 0, 0, 0, 4, 0, 8, 35, 0, 0, 35, 0, 0, 35, 0, 0, 35, 0, 0,
+                    2, 227, 200, 1, 128, 0, 4, 0, 8, 35, 13, 0, 2, 227, 200, 1, 192, 0, 4, 0, 8, 35, 1, 0, 8, 35, 0, 0, 35, 0, 0, 35, 0, 0, 35, 0, 0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 

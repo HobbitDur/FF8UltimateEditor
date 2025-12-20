@@ -20,7 +20,7 @@ class AICompiler:
     param_list: value ("," value)*
     value: ID | NUMBER | OPERATOR | STRING 
 
-    ID: /[a-zA-Z_][a-zA-Z_0-9%]*|[0-9]+%/    # <-- Allows 50%, 25%, etc.
+    ID: /[a-zA-Z_][a-zA-Z_0-9%]*|[0-9]+%/
     NUMBER: /-?[0-9]+/
     OPERATOR: /[><!]=?|==/
     STRING: /"(?:[^"\\]|\\.)*"/
