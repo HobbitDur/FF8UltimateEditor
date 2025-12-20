@@ -1,0 +1,11 @@
+{
+  "stat":[
+	{"id":0, "name":"hp"},
+	{"id":1, "name":"str"},
+	{"id":2, "name":"vit"},
+	{"id":3, "name":"mag"},
+	{"id":4, "name":"spr"},
+	{"id":5, "name":"spd"},
+	{"id":6, "name":"eva"}
+  ]
+}
