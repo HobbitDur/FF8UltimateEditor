@@ -2032,6 +2032,29 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
+    def test_if_var_of_target2(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(220, 203, 0, 2)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(VARA, LAST_ATTACKER, ==, 2)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 220, 203, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
     def test_if_else_elseif_nested(self, compiler: AICompiler):
         source_code_raw = """
                                 if(100, 200, 3, 99)
