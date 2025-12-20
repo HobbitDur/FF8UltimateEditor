@@ -1961,6 +1961,97 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
+    def test_if_var(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(222, 200, 0, 1)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(varC, Self, ==, 1)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 222, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_bvar(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(100, 200, 2, 3)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(BattleVar100, >, 1)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 100, 200, 2, 3, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_gvar(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(84, 200, 0, 1)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(FirstBugSeen, ==, 1)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 84, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_var_of_target(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(220, 203, 0, 1)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(varA, LAST_ATTACKER, ==, 1)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 220, 203, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
     def test_if_else(self, compiler: AICompiler):
         source_code_raw = \
@@ -1969,7 +2060,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
+            if(HP IN TEAM,ENEMY_TEAM, !=, 40%)
             {
                 die;
             }
@@ -1982,6 +2073,16 @@ class TestAICompiler:
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
         expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 3, 0, 40, 5, 6]
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_else_structure(self, if_else_structure_data, compiler: AICompiler):
+        source_code_raw = if_else_structure_data["source_code_raw"]
+        source_code_type = if_else_structure_data["source_code_type"]
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = if_else_structure_data["bytecode"]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
