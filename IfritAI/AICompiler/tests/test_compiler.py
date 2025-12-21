@@ -108,8 +108,6 @@ class TestAICompiler:
             }
             """
         code_raw_compiled = compiler.compile(source_code_raw)
-        code_raw_compiled[57] = 3
-        code_raw_compiled[71] = 2
         expected = [2, 100, 200, 3, 99, 0, 17, 0, 2, 101, 200, 5, 4, 0, 6, 0, 15, 100, 99, 35, 0, 0, 35, 70, 0, 14, 227, 0, 2, 227, 200, 1, 64, 0, 59, 0, 2, 6, 200, 2, 1, 0, 48, 0, 14, 220, 0, 2, 6, 200, 0, 3, 0, 34, 0, 2, 2, 3, 0, 0, 0, 6, 0, 15, 100, 0, 35, 17, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 1, 35, 3, 0, 15, 100, 2, 35, 0, 0, 35, 0, 0, 35, 0, 0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 

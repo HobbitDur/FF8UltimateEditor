@@ -264,6 +264,39 @@ class TestAIDecompiler:
         )
         assert expected in normalized
 
+    def test_stop(self, decompiler):
+        bytecode = [0x00]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            stop();
+            """
+        )
+        assert expected in normalized
+
+
+    def test_print(self, decompiler):
+        bytecode = [0x01, 0x01]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            print("Second battle text");
+            """
+        )
+        assert expected in normalized
+
+
+
     def test_compute_indent_bracket(self, decompiler):
         """Test the compute_indent_bracket static method"""
         func_list = [

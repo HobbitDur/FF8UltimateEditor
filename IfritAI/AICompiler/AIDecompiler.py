@@ -16,11 +16,7 @@ class AIDecompiler:
     def decompile(self, bytecode: List[int]):
         print("decompile")
         command_list = self.decompile_bytecode_to_command_list(bytecode)
-        print("command_list")
-        print(command_list)
-        self.type_resolver.resolve(command_list)
-        print("command_list_typed")
-        print(command_list)
+        print(f"command_list: {command_list}")
         code = self.decompile_from_command_list(command_list)
         print(code)
         return code
@@ -46,6 +42,7 @@ class AIDecompiler:
                 current_if_type = command.get_current_if_type()
                 list_result.append(command)
                 index_read += 1 + op_code_ref['size']
+        self.type_resolver.resolve(list_result)
         print(list_result)
         return list_result
 
