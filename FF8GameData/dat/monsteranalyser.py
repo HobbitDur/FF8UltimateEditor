@@ -656,9 +656,14 @@ class MonsterAnalyser:
         list_code = [init_code, ennemy_turn_code, counterattack_code, death_code, before_dying_or_hit_code]
         self.battle_script_data['ai_data'] = []
         for index, code in enumerate(list_code):
-            decompiler = AIDecompiler(game_data, self.battle_script_data['battle_text'], self.info_stat_data)
-            self.battle_script_data['ai_data'].append(decompiler.decompile_bytecode_to_command_list(code))
-        self.battle_script_data['ai_data'].append([])  # Adding a end section that is empty to mark the end of the all IA section
+            self.decompiler.battle_text= self.battle_script_data['battle_text']
+            self.decompiler.info_stat= self.info_stat_data
+            command_list_decompiled = self.decompiler.decompile_bytecode_to_command_list(code)
+            code_decompiled = self.decompiler.decompile(code)
+            self.battle_script_data['ai_data'].append({"bytecode": code, "code": code_decompiled, "command": command_list_decompiled})
+        self.battle_script_data['ai_data'].append({})  # Adding a end section that is empty to mark the end of the all IA section
+
+
 
     def set_ai_section_from_bytes(self, command_list:List[CommandAnalyser], section_index):
         print("set_ai_section_from_bytes")

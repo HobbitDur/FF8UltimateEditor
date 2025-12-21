@@ -108,9 +108,14 @@ class CommandAnalyser:
 
     def get_param_text(self):
         print("get_param_text")
+        print(f"param_type: {self.param_typed}")
         text = "("
-        for i,param in enumerate(self.param_typed):
-            text += self._normalize_string(param)
+        value_to_check = [' ', '+', '\t', '\r', '\n']
+        for i, param in enumerate(self.param_typed):
+            if any (value in param for value in value_to_check):
+                text += "\"" + param + "\""
+            else:
+                text += param
             if i  < len(self.param_typed) - 1:
                 text+=","
         text += ")"
