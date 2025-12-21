@@ -68,7 +68,7 @@ class AIDecompilerTypeResolver:
 
     def _parse_int16(self, value:List[int]):
         """Parse integer value (formula type)"""
-        return int.from_bytes(bytes(value), byteorder='little')
+        return str(int.from_bytes(bytes(value), byteorder='little', signed=True))
 
     def _parse_percent(self, value: int):
         """Parse percentage value (formula type)"""
@@ -96,11 +96,15 @@ class AIDecompilerTypeResolver:
 
             # Map command names to their parameter types
             mappings['command_signatures'] = {}
+            mappings['command_param_index'] = {}
             for op_info in ai_data.get('op_code_info', []):
                 func_id = op_info.get('op_code')
                 param_types = op_info.get('param_type', [])
+                param_index = op_info.get('param_index', [])
                 if func_id:
                     mappings['command_signatures'][func_id] = param_types
+                    mappings['command_param_index'][func_id] = param_index
+
 
             # Build type value mappings for lookup types
             mappings['type_values'] = {}
@@ -121,29 +125,29 @@ class AIDecompilerTypeResolver:
                 mappings['type_values']['magic'][magic['id']] = normalized
             # target_basic
             for target_dict in self.__get_target_list(advanced=False, specific=False):
-                mappings['type_values']['target_basic'][self._normalize_string(target_dict['data'])] = target_dict['id']
+                mappings['type_values']['target_basic'][ target_dict['id']] =self._normalize_string(target_dict['data'])
             # monster_ability
             for monster_ability in self.game_data.enemy_abilities_data_json.get('abilities', []):
                 normalized = self._normalize_string(monster_ability['name'])
-                mappings['type_values']['monster_ability'][monster_ability['id']] = normalized
+                mappings['type_values']['monster_ability'][monster_ability['id']] = monster_ability['name']
             # local_var
             for local_var in ai_data.get('list_var', []):
                 if local_var.get('var_type') == "local":
                     normalized = self._normalize_string(local_var['var_name'])
-                    mappings['type_values']['local_var'][local_var['op_code']] = normalized
+                    mappings['type_values']['local_var'][local_var['op_code']] = local_var['var_name']
             # local_var_param
             for local_var_param in self.__get_possible_local_var_param():
-                mappings['type_values']['local_var_param'][self._normalize_string(local_var_param['data'])] = local_var_param['id']
+                mappings['type_values']['local_var_param'][local_var_param['id']] = self._normalize_string(local_var_param['data'])
             # battle_var
             for battle_var in ai_data.get('list_var', []):
                 if battle_var.get('var_type') == "battle":
                     normalized = self._normalize_string(battle_var['var_name'])
-                    mappings['type_values']['battle_var'][battle_var['op_code']] = normalized
+                    mappings['type_values']['battle_var'][battle_var['op_code']] = battle_var['var_name']
             # global_var
             for global_var in ai_data.get('list_var', []):
                 if global_var.get('var_type') == "global":
                     normalized = self._normalize_string(global_var['var_name'])
-                    mappings['type_values']['global_var'][global_var['op_code']] = normalized
+                    mappings['type_values']['global_var'][global_var['op_code']] = global_var['var_name']
             # target_slot
             for target_slot in self.game_data.ai_data_json.get('target_slot', []):
                 normalized = self._normalize_string(target_slot['text'])
@@ -151,7 +155,7 @@ class AIDecompilerTypeResolver:
             # special_action
             for special_action in self.game_data.special_action_data_json.get('special_action', []):
                 normalized = self._normalize_string(special_action['name'])
-                mappings['type_values']['special_action'][ special_action['id']] =normalized
+                mappings['type_values']['special_action'][ special_action['id']] =special_action['name']
             # target_advanced_generic
             for target_dict in self.__get_target_list(advanced=True, specific=False):
                 mappings['type_values']['target_advanced_generic'][target_dict['id']] = self._normalize_string(target_dict['data'])
@@ -204,11 +208,11 @@ class AIDecompilerTypeResolver:
             # card
             for card in self.game_data.card_data_json.get('card_info', []):
                 normalized = self._normalize_string(card['name'])
-                mappings['type_values']['card'][card['id']] = normalized
+                mappings['type_values']['card'][card['id']] = card['name']
             # item
             for item in self.game_data.item_data_json.get('items', []):
                 normalized = self._normalize_string(item['name'])
-                mappings['type_values']['item'][item['id']] = normalized
+                mappings['type_values']['item'][item['id']] = item['name']
             # gender
             for gender in self.game_data.ai_data_json.get('gender_type', []):
                 normalized = self._normalize_string(gender['type'])
@@ -246,17 +250,25 @@ class AIDecompilerTypeResolver:
                     expected_types = self.type_mappings['command_signatures'][cmd_id]
                     print(f"expected_types: {expected_types}")
                     ignore_iter = False
-                    for i, op_code in enumerate(command.get_op_code()):
+
+                    param_list = command.get_op_code()
+                    print(f"param_list: {param_list}")
+                    print(f"self.type_mappings['command_param_index']: {self.type_mappings['command_param_index']}")
+                    param_index = self.type_mappings['command_param_index'][cmd_id]
+                    param_ordered = [param_list[i] for i in param_index]
+
+                    print(f"param_ordered: {param_list}")
+                    for i, op_code in enumerate(param_ordered):
                         if ignore_iter:
                             ignore_iter = False
                             continue
                         if expected_types[i] in ("int16", ):# 2 params
-                            type_param.append(self._resolve_value([op_code,command.get_op_code()[i+1]] , expected_types[i]))
+                            type_param.append(self._resolve_value([op_code,param_list[i+1]] , expected_types[i]))
                             ignore_iter = True
                         else:
                          type_param.append( self._resolve_value(op_code, expected_types[i]))
-                print(f"type_param: {type_param}")
-                command_list[command_index].param_typed = type_param
+                if type_param:
+                    command_list[command_index].param_typed = type_param
 
 
     def _resolve_value(self, value, expected_type, special_param=None):

@@ -150,7 +150,40 @@ class TestAIDecompiler:
             comment=""
         )
 
-    def test_decompile_simple_command(self, decompiler):
+
+    def test_stop(self, decompiler):
+        bytecode = [0x00]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            stop();
+            """
+        )
+        assert expected in normalized
+
+
+    def test_print(self, decompiler):
+        bytecode = [0x01, 0x01]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            print("Second battle text");
+            """
+        )
+        assert expected in normalized
+
+
+    def test_prepareMagic(self, decompiler):
         """Test decompiling a simple command"""
         # Create prepareMagic(2) command
         bytecode = [3, 2]
@@ -167,6 +200,870 @@ class TestAIDecompiler:
         # Check if it contains the expected command
         normalized = self.normalize_code(code_decompiled)
         assert "prepareMagic(FIRA);" in normalized
+
+    def test_target(self, decompiler):
+        bytecode = [4, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            target(ZELL);
+            """
+        )
+        assert expected in normalized
+
+    def test_prepareAnim(self, decompiler):
+        bytecode = [5, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            prepareAnim(1);
+            """
+        )
+        assert expected in normalized
+
+    def test_usePrepared(self, decompiler):
+        bytecode = [6]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            usePrepared();
+            """
+        )
+        assert expected in normalized
+
+    def test_prepareMonsterAbility(self, decompiler):
+        bytecode = [7, 3]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            prepareMonsterAbility("Attack (Cronos)");
+            """
+        )
+        assert expected in normalized
+
+    def test_die(self, decompiler):
+        bytecode = [8]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            die();
+            """
+        )
+        assert expected in normalized
+
+
+    def test_anim(self, decompiler):
+        bytecode = [9, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            anim(1);
+            """
+        )
+        assert expected in normalized
+
+    def test_useRandom(self, decompiler):
+        bytecode = [11, 1, 2, 3]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            useRandom(1,2,3);
+            """
+        )
+        assert expected in normalized
+
+    def test_use(self, decompiler):
+        bytecode = [12, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            use(1);
+            """
+        )
+        assert expected in normalized
+
+    def test_unknown13(self, decompiler):
+        bytecode = [13, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+             unknown13(1);
+            """
+        )
+        assert expected in normalized
+
+
+    def test_var(self, decompiler):
+        bytecode = [14, 221, 10]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+             var(varB, 10);
+            """
+        )
+        assert expected in normalized
+
+
+    def test_var_specialCases(self, decompiler):
+        bytecode = [14, 221, 203]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+             var(varB, LAST_ATTACKER_SLOT_ID);
+            """
+        )
+        assert expected in normalized
+
+    def test_bvar(self, decompiler):
+        bytecode = [15, 96, 10]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            bvar(BattleVar96, 10);
+            """
+        )
+        assert expected in normalized
+
+    def test_gvar(self, decompiler):
+        bytecode = [17, 80, 10]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            gvar(GlobalVar80, 10);
+            """
+        )
+        assert expected in normalized
+
+
+    def test_add(self, decompiler):
+        bytecode = [18, 221, 10]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            add(varB, 10);
+            """
+        )
+        assert expected in normalized
+
+    def test_add_specialCases(self, decompiler):
+        bytecode = [18, 221, 203]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            add(varB, LAST_ATTACKER_SLOT_ID);
+            """
+        )
+        assert expected in normalized
+
+    def test_badd(self, decompiler):
+        bytecode = [19, 96, 10]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            badd(BattleVar96, 10);
+            """
+        )
+        assert expected in normalized
+
+    def test_gadd(self, decompiler):
+        bytecode = [21, 80, 10]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            gadd(GlobalVar80, 10);
+            """
+        )
+        assert expected in normalized
+
+    def test_recover(self, decompiler):
+        bytecode = [0x16]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            recover();
+            """
+        )
+        assert expected in normalized
+
+    def test_setEscape(self, decompiler):
+        # Test both true and false cases
+        bytecode_true = [23, 1]
+        bytecode_false = [23, 0]
+
+        # Test true case
+        code_true = decompiler.decompile(bytecode_true)
+        normalized_true = self.normalize_code(code_true)
+        expected_true = self.normalize_code(
+            """
+            setEscape(true);
+            """
+        )
+        assert expected_true in normalized_true
+
+        # Test false case
+        code_false = decompiler.decompile(bytecode_false)
+        normalized_false = self.normalize_code(code_false)
+        expected_false = self.normalize_code(
+            """
+            setEscape(false);
+            """
+        )
+        assert expected_false in normalized_false
+
+    def test_printSpeed(self, decompiler):
+        bytecode = [24, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            printSpeed("Second battle text");
+            """
+        )
+        assert expected in normalized
+
+    def test_doNothing(self, decompiler):
+        bytecode = [25, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        # doNothing takes raw int parameters, not symbolic names
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            doNothing(1);
+            """
+        )
+        assert expected in normalized
+
+    def test_printAndLock(self, decompiler):
+        bytecode = [26, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            printAndLock("Second battle text");
+            """
+        )
+        assert expected in normalized
+
+    def test_enterAlt(self, decompiler):
+        bytecode = [27, 1, 0]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            enterAlt(1, 0);
+            """
+        )
+        assert expected in normalized
+
+    def test_waitText(self, decompiler):
+        bytecode = [28, 2]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            waitText(2);
+            """
+        )
+        assert expected in normalized
+
+    def test_leave(self, decompiler):
+        bytecode = [29, 200]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            leave(SELF);
+            """
+        )
+        assert expected in normalized
+
+    def test_specialAction(self, decompiler):
+        bytecode = [30, 17]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            specialAction("Elvoret Entrance");
+            """
+        )
+        assert expected in normalized
+
+    def test_enter(self, decompiler):
+        bytecode = [31, 3]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            enter(3);
+            """
+        )
+        assert expected in normalized
+
+    def test_waitTextFast(self, decompiler):
+        bytecode = [32, 2]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            waitTextFast(2);
+            """
+        )
+        assert expected in normalized
+
+    def test_printAlt(self, decompiler):
+        bytecode = [34, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            printAlt("Second battle text");
+            """
+        )
+        assert expected in normalized
+
+    # def test_jump(self, decompiler):
+    #     # Test positive jump
+    #     bytecode_positive = [35, 10, 0]
+    #     code_positive = decompiler.decompile(bytecode_positive)
+    #     normalized_positive = self.normalize_code(code_positive)
+    #     expected_positive = self.normalize_code(
+    #         """
+    #         jump(10);
+    #         """
+    #     )
+    #     assert expected_positive in normalized_positive
+
+    def test_jump_negative(self, decompiler):
+        # Test negative jump (note: 246, 255 is -10 in signed 16-bit)
+        bytecode_negative = [35, 246, 255]
+        code_negative = decompiler.decompile(bytecode_negative)
+        normalized_negative = self.normalize_code(code_negative)
+        expected_negative = self.normalize_code(
+            """
+            jump(-10);
+            """
+        )
+        assert expected_negative in normalized_negative
+
+    def test_fillAtb(self, decompiler):
+        bytecode = [36]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            fillAtb();
+            """
+        )
+        assert expected in normalized
+
+    def test_setScanText(self, decompiler):
+        bytecode = [37, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            setScanText("Second battle text");
+            """
+        )
+        assert expected in normalized
+
+    def test_targetStatus(self, decompiler):
+        bytecode = [38, 0, 200, 3, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            targetStatus(ENEMY_TEAM, !=, Poison, False);
+            """
+        )
+        assert expected in normalized
+
+    def test_autoStatus(self, decompiler):
+        bytecode = [39, 2, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            autoStatus(ACTIVATE, Petrify);
+            """
+        )
+        assert expected in normalized
+
+    def test_statChange(self, decompiler):
+        bytecode = [40, 5, 6]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            statChange(Evade,60%);
+            """
+        )
+        assert expected in normalized
+
+    def test_draw(self, decompiler):
+        bytecode = [41]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            draw();
+            """
+        )
+        assert expected in normalized
+
+    def test_cast(self, decompiler):
+        bytecode = [42]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            cast();
+            """
+        )
+        assert expected in normalized
+
+    def test_targetAllySlot(self, decompiler):
+        bytecode = [43, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            targetAllySlot(1);
+            """
+        )
+        assert expected in normalized
+
+    def test_remain(self, decompiler):
+        bytecode = [44]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            remain();
+            """
+        )
+        assert expected in normalized
+
+    def test_elemDmgMod(self, decompiler):
+        bytecode = [45, 2, 100, 0]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            elemDmgMod(Thunder, 80);
+            """
+        )
+        assert expected in normalized
+
+    def test_blowAway(self, decompiler):
+        bytecode = [46]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            blowAway();
+            """
+        )
+        assert expected in normalized
+
+    def test_targetable(self, decompiler):
+        bytecode = [47]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            targetable();
+            """
+        )
+        assert expected in normalized
+
+    def test_untargetable(self, decompiler):
+        bytecode = [48]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            untargetable();
+            """
+        )
+        assert expected in normalized
+
+    def test_giveGF(self, decompiler):
+        bytecode = [49, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            giveGF(Shiva);
+            """
+        )
+        assert expected in normalized
+
+    def test_prepareSummon(self, decompiler):
+        bytecode = [50]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            prepareSummon();
+            """
+        )
+        assert expected in normalized
+
+    def test_activate(self, decompiler):
+        bytecode = [51]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            activate();
+            """
+        )
+        assert expected in normalized
+
+    def test_enable(self, decompiler):
+        bytecode = [52, 1]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            enable(1);
+            """
+        )
+        assert expected in normalized
+
+    def test_loadAndTargetable(self, decompiler):
+        bytecode = [53, 209]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            loadAndTargetable(LAST_ENABLED_MONSTER);
+            """
+        )
+        assert expected in normalized
+
+    def test_gilgamesh(self, decompiler):
+        bytecode = [54]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            gilgamesh();
+            """
+        )
+        assert expected in normalized
+
+    def test_giveCard(self, decompiler):
+        bytecode = [55, 2]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            giveCard("Bite Bug");
+            """
+        )
+        assert expected in normalized
+
+    def test_giveItem(self, decompiler):
+        bytecode = [56, 2]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            giveItem("Potion+");
+            """
+        )
+        assert expected in normalized
+
+    def test_gameOver(self, decompiler):
+        bytecode = [57]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            gameOver();
+            """
+        )
+        assert expected in normalized
+
+    def test_targetableSlot(self, decompiler):
+        bytecode = [58, 2]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            targetableSlot(2);
+            """
+        )
+        assert expected in normalized
+
+    def test_assignSlot(self, decompiler):
+        bytecode = [59, 2, 0]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            assignSlot(2, FIRST_SLOT_AVAILABLE);
+            """
+        )
+        assert expected in normalized
+
+    def test_addMaxHP(self, decompiler):
+        bytecode = [60, 10]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            addMaxHP(10);
+            """
+        )
+        assert expected in normalized
+
+    def test_proofOfOmega(self, decompiler):
+        bytecode = [61]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            proofOfOmega();
+            """
+        )
+        assert expected in normalized
 
     def test_decompile_multiple_commands(self, decompiler):
         """Test decompiling multiple commands"""
@@ -263,38 +1160,6 @@ class TestAIDecompiler:
             """
         )
         assert expected in normalized
-
-    def test_stop(self, decompiler):
-        bytecode = [0x00]
-        code = decompiler.decompile(bytecode)
-        print(f"\n=== Decompiled ===")
-        print(self.pretty_code(code))
-        print("==================================")
-
-        normalized = self.normalize_code(code)
-        expected = self.normalize_code(
-            """
-            stop();
-            """
-        )
-        assert expected in normalized
-
-
-    def test_print(self, decompiler):
-        bytecode = [0x01, 0x01]
-        code = decompiler.decompile(bytecode)
-        print(f"\n=== Decompiled ===")
-        print(self.pretty_code(code))
-        print("==================================")
-
-        normalized = self.normalize_code(code)
-        expected = self.normalize_code(
-            """
-            print("Second battle text");
-            """
-        )
-        assert expected in normalized
-
 
 
     def test_compute_indent_bracket(self, decompiler):

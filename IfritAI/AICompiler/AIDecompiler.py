@@ -36,7 +36,8 @@ class AIDecompiler:
                 op_code_ref = op_code_ref[0]
                 start_param = index_read + 1
                 end_param = index_read + 1 + op_code_ref['size']
-                command = CommandAnalyser(code[index_read], code[start_param:end_param], game_data=self.game_data,
+                param_list = code[start_param:end_param]
+                command = CommandAnalyser(code[index_read], param_list, game_data=self.game_data,
                                           battle_text=self.battle_text,
                                           info_stat_data=self.info_stat, color=self.game_data.AIData.COLOR, current_if_type=current_if_type, line_index=len(list_result))
                 current_if_type = command.get_current_if_type()
