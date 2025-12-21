@@ -1,0 +1,54 @@
+{
+  "lang":{
+    "offset": "0x108",
+    "german_value": "0xF0",
+    "english_value": "0x95",
+    "spanish_value": "0xF3",
+    "french_value": "0x0C",
+    "italian_value": "0x88"
+  },
+
+   "draw_text_offset":{
+    "eng_section_start": "0x7921E4",
+    "nb_offset":         "0x12",
+    "offset_size":       "0x02",
+    "fr_offset":       "0x118",
+    "it_offset":       "0x118",
+    "de_offset":       "0x120",
+    "es_offset":       "0x120"
+  },
+
+  "card_data_offset":{
+    "card_data_size":        "0x08",
+    "eng_menu":              "0x796508",
+    "eng_card_misc_text_start": "0x874b58",
+    "card_misc_text_fr_offset": "+0x168",
+    "card_misc_text_es_offset": "+0x190",
+    "card_misc_text_de_offset": "+0x140",
+    "card_misc_text_it_offset": "+0x130",
+    "eng_game_data":         "0x874D00",
+    "eng_name_section_start":"0x875074",
+    "eng_name_section_end":  "0x87551f",
+    "fr_offset":             "+0x180",
+    "it_offset":             "+0x158",
+    "de_offset":             "+0x160",
+    "es_offset":             "+0x1C8"
+  },
+
+   "scan_data_offset":{
+    "eng_section_start":     "0x1487474",
+    "eng_section_end":       "0x14875B3",
+    "nb_offset":         "0xA0",
+    "offset_size":       "0x02",
+    "fr_offset":       "-0x13C",
+    "it_offset":       "0x770",
+    "de_offset":       "0xE3C",
+    "es_offset":       "0xAE0"
+
+  },
+  "draw_data_offset":{
+    "og_eng_start":     "0x792328",
+    "size":     "0x100"
+  }
+
+}

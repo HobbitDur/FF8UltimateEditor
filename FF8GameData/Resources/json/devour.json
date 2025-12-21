@@ -1,0 +1,21 @@
+{
+  "devour":[
+	{"id":0,  "name":"HP Recovery"},
+	{"id":1,  "name":"Full HP Recovery"},
+	{"id":2,  "name":"HP & Status Rec."},
+	{"id":3,  "name":"Damage & Zombie"},
+	{"id":4,  "name":"Damage(m) & Poison"},
+	{"id":5,  "name":"Damage & Dark"},
+	{"id":6,  "name":"Damage(s) & Poison"},
+	{"id":7,  "name":"Damage"},
+	{"id":8,  "name":"Dmg&Random Status"},
+	{"id":9,  "name":"No Change"},
+	{"id":10, "name":"Strength +1"},
+	{"id":11, "name":"Defense +1"},
+	{"id":12, "name":"Magic +1"},
+	{"id":13, "name":"Spirit +1"},
+	{"id":14, "name":"Speed +1"},
+	{"id":15, "name":"Max HP +10"},
+	{"id":255,"name":"Immune"}
+  ]
+}

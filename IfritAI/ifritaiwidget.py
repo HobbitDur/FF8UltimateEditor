@@ -438,8 +438,9 @@ class IfritAIWidget(QWidget):
     def __setup_section_data(self):
         line_index = 0
         index_section = self.ifrit_manager.game_data.AIData.AI_SECTION_LIST.index(self.script_section.currentText())
-        if self.ifrit_manager.ai_data:
-            for command in self.ifrit_manager.ai_data[index_section]:
+        #self.
+        if self.ifrit_manager.enemy.battle_script_data['ai_data']:
+            for command in self.ifrit_manager.enemy.battle_script_data['ai_data'][index_section]:
                 command.line_index = line_index
                 command.set_color(self.ifrit_manager.game_data.AIData.COLOR)
                 self.__append_line(command, create_data=False)
