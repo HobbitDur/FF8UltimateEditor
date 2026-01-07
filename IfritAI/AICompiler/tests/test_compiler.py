@@ -32,345 +32,8 @@ class TestAICompiler:
         compiler = AICompiler(game_data, battle_text, info_stat_data)
         return compiler
 
-    def test_if_else_structure_test(self, compiler: AICompiler):
-        source_code_raw = """
-                                if(100, 200, 3, 99)
-                                {
-                                    if(100, 200, 4, 2)
-                                    {
-                                        if(101, 200, 5, 4)
-                                        {
-                                            die;
-                                        }
-                                    }
-                                    elseif(100, 200, 0, 10)
-                                    {
-                                        die;
-                                        if(101, 200, 5, 2)
-                                        {
-                                            die;
-                                        }
-                                    }
-                                    elseif(100, 200, 0, 20)
-                                    {
-                                        die;
-                                        if(101, 200, 4, 5)
-                                        {
-                                            die;
-                                        }
-                                        elseif(101, 200, 5, 6)
-                                        {
-                                            die;
-                                        }
-                                    }
-                                    elseif(100, 200, 0, 30)
-                                    {
-                                        die;
-                                        if(101, 200, 4, 3)
-                                        {
-                                            die;
-                                        }
-                                        elseif(101, 200, 5, 6)
-                                        {
-                                            die;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    die;
-                                    if(2, 3, 0, 0)
-                                    {
-                                        if(6, 201, 3, 1)
-                                        {
-                                            if(1, 87, 2, 0)
-                                            {
-                                                if(9, 0, 3, 88)
-                                                {
-                                                    if(227, 200, 1, 64)
-                                                    {
-                                                        if(6, 200, 2, 1)
-                                                        {
-                                                            die;
-                                                            if(6, 20, 0, 3)
-                                                            {
-                                                                die;
-                                                                if(2, 3, 0, 0)
-                                                                {
-                                                                    die;
-                                                                }
-                                                                elseif(2, 2, 0, 0)
-                                                                {
-                                                                    die;
-                                                                }
-                                                            }
-                                                            elseif(6, 200, 0, 2)
-                                                            {
-                                                                die;
-                                                                if(2, 2, 0, 0)
-                                                                {
-                                                                    die;
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    elseif(227, 200, 1, 128)
-                                                    {
-                                                        die;
-                                                    }
-                                                    elseif(227, 200, 1, 192)
-                                                    {
-                                                        die;
-                                                    }
-                                                    else
-                                                    {
-                                                        die;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                """
-        source_code_type = """
-                                if(BattleVar100, !=, 99)
-                                {
-                                    if(BattleVar100, <=, 2)
-                                    {
-                                        if(BattleVar101, >=, 4)
-                                        {
-                                            die;
-                                        }
-                                    }
-                                    elseif(BattleVar100, ==, 10)
-                                    {
-                                        die;
-                                        if(BattleVar101, >=, 2)
-                                        {
-                                            die;
-                                        }
-                                    }
-                                    elseif(BattleVar100, ==, 20)
-                                    {
-                                        die;
-                                        if(BattleVar101, <=, 5)
-                                        {
-                                            die;
-                                        }
-                                        elseif(BattleVar101, >=, 6)
-                                        {
-                                            die;
-                                        }
-                                    }
-                                    elseif(BattleVar100, ==, 30)
-                                    {
-                                        die;
-                                        if(BattleVar101, <=, 3)
-                                        {
-                                            die;
-                                        }
-                                        elseif(BattleVar101, >=, 6)
-                                        {
-                                            die;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    die;
-                                    if(RANDOM, 3, ==, 0)
-                                    {
-                                        if(ALIVE_IN_TEAM, ALLY_TEAM, !=, 1)
-                                        {
-                                            if(HP_IN_TEAM, "G-Soldier", > 0%)
-                                            {
-                                                if(IS_ALIVE, !=, "Elite Soldier")
-                                                {
-                                                    if(varH, Self, <, 64)
-                                                    {
-                                                        if(ALIVE_IN_TEAM, ENEMY_TEAM, >, 1)
-                                                        {
-                                                            die;
-                                                            if(ALIVE_IN_TEAM, ENEMY_TEAM, ==, 3)
-                                                            {
-                                                                die;
-                                                                if(RANDOM, 3, ==, 0)
-                                                                {
-                                                                    die;
-                                                                }
-                                                                elseif(RANDOM, 2, ==, 0)
-                                                                {
-                                                                    die;
-                                                                }
-                                                            }
-                                                            elseif(ALIVE_IN_TEAM, ENEMY_TEAM, ==, 2)
-                                                            {
-                                                                die;
-                                                                if(RANDOM, 2, ==, 0)
-                                                                {
-                                                                    die;
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    elseif(varH, Self, <, 128)
-                                                    {
-                                                        die;
-                                                    }
-                                                    elseif(varH, Self, <, 192)
-                                                    {
-                                                        die;
-                                                    }
-                                                    else
-                                                    {
-                                                        die;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                """
 
-        code_raw_compiled = compiler.compile(source_code_raw)
-        # code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 100, 200, 3, 99, 0, 122, 0, 2, 100, 200, 4, 2, 0, 15, 0, 2, 101, 200, 5, 4, 0, 4, 0, 8, 35, 0, 0, 35, 96, 0, 2, 100, 200, 0, 10, 0, 16, 0, 8, 2, 101, 200, 5, 2, 0, 4, 0, 8, 35, 0, 0, 35, 72, 0, 2, 100, 200, 0, 20, 0, 28, 0, 8, 2, 101, 200, 4, 5, 0, 4, 0, 8, 35, 0, 0, 2, 101, 200, 5, 6, 0, 4, 0, 8, 35, 0, 0, 35, 36, 0, 2, 100, 200, 0, 30, 0, 28, 0, 8, 2, 101, 200, 4, 3, 0, 4, 0, 8, 35, 0, 0, 2, 101, 200, 5, 6, 0, 4, 0, 8, 35, 0, 0, 35, 0, 0, 35, 155, 0, 8, 2, 2, 3, 0, 0, 0, 146, 0, 2, 6, 201, 3, 1, 0, 136, 0, 2, 1, 87, 2, 0, 0, 132, 0, 2, 9, 0, 3, 88, 0, 120, 0, 2, 227, 200, 1, 64, 0, 75, 0, 2, 6, 200, 2, 1, 0, 64, 0, 8, 2, 6, 200, 0, 3, 0, 28, 0, 8, 2, 2, 3, 0, 0, 0, 4, 0, 8, 35, 0, 0, 2, 2, 2, 0, 0, 0, 4, 0, 8, 35, 0, 0, 35, 0, 0, 2, 6, 200, 0, 2, 0, 16, 0, 8, 2, 2, 2, 0, 0, 0, 4, 0, 8, 35, 0, 0, 35, 0, 0, 35, 0, 0, 35, 0, 0, 2, 227, 200, 1, 128, 0, 4, 0, 8, 35, 13, 0, 2, 227, 200, 1, 192, 0, 4, 0, 8, 35, 1, 0, 8, 35, 0, 0, 35, 0, 0, 35, 0, 0, 35, 0, 0]
-        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        # assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
-    def test_if_else_structure_test2(self, compiler: AICompiler):
-        source_code_type = \
-            """
-            if(100, 200, 3, 99)
-            {
-            	if(101, 200, 5, 4)
-            	{
-            		bvar(100, 99);
-            		bvar(101, 0);
-            	}
-            }
-            else
-            {
-            	var(227, 0);
-            	add(227, 203);
-            	if(227, 200, 1, 64)
-            	{
-            		if(6, 200, 2, 1)
-            		{
-            			print(0);
-            			if(6, 200, 0, 3)
-            			{
-            				if(2, 3, 0, 0)
-            				{
-            					bvar(100, 0);
-            				}
-            				elseif(2, 2, 0, 0)
-            				{
-            					bvar(100, 1);
-            				}
-            				else
-            				{
-            					bvar(100, 2);
-            				}
-            			}
-            			elseif(6, 200, 0, 2)
-            			{
-            				if(2, 2, 0, 0)
-            				{
-            					bvar(100, 0);
-            				}
-            				else
-            				{
-            					bvar(100, 1);
-            				}
-            			}
-            		}
-            	}
-            }
-            """
-
-        code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 100, 200, 3, 99, 0, 20, 0, 2, 101, 200, 5, 4, 0, 9, 0, 15, 100, 99, 15, 101, 0, 35, 0, 0, 35, 100, 0, 14, 227, 0, 18, 227, 203, 2, 227, 200, 1, 64, 0, 86, 0, 2, 6, 200, 2, 1, 0, 75, 0, 1, 0, 2, 6, 200, 0, 3, 0, 34, 0, 2, 2, 3, 0, 0, 0, 6, 0, 15, 100, 0, 35, 17, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 1, 35, 3, 0, 15, 100, 2, 35, 28, 0, 2, 6, 200, 0, 2, 0, 20, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 0, 35, 3, 0, 15, 100, 1, 35, 0, 0, 35, 0, 0, 35, 0, 0]
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-
-    def test_if_elseif_else(self, compiler: AICompiler):
-        source_code_raw = \
-            """
-            if (1,200,3,4) { die(); } elseif(220, 200, 0, 0) { die; } else { statChange(5,6); } 
-            """
-        source_code_type = \
-            """
-            if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
-            {
-                die;
-            }
-            elseif(varA, Self, ==, 0)
-            {
-                die();
-            }
-            else
-            {
-               statChange(Evade,60%); 
-            }
-            """
-
-        code_raw_compiled = compiler.compile(source_code_raw)
-        code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 15, 0, 2, 220, 200, 0, 0, 0, 4, 0, 8, 35, 3, 0, 40, 5, 6]
-        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-
-    def test_if_elseif_else2(self, compiler: AICompiler):
-        source_code_raw = \
-            """
-            if (1,200,3,4) { die(); } 
-            elseif(220, 200, 0, 0) { if(220, 200, 3, 3) { die; } } 
-            else { statChange(5,6); } 
-            """
-        code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 26, 0, 2, 220, 200, 0, 0, 0, 15, 0, 2, 220, 200, 3, 3, 0, 4, 0, 8, 35, 0, 0, 35, 3, 0, 40, 5, 6]
-        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-
-    def test_if_else_structure_test2_simple(self, compiler: AICompiler):
-        source_code_raw = \
-            """
-            if(100, 200, 3, 99)
-            {
-            	if(101, 200, 5, 4)
-            	{
-            		bvar(100, 99);
-            	}
-            }
-            else
-            {
-            	var(227, 0);
-            	if(227, 200, 1, 64)
-            	{
-            		if(6, 200, 2, 1)
-            		{
-            			var(220, 0);
-            			if(6, 200, 0, 3)
-            			{
-            				if(2, 3, 0, 0)
-            				{
-            					bvar(100, 0);
-            				}
-            				elseif(2, 2, 0, 0)
-            				{
-            					bvar(100, 1);
-            				}
-            				else
-            				{
-            					bvar(100, 2);
-            				}
-            			}
-            		}
-            	}
-            }
-            """
-        code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [2, 100, 200, 3, 99, 0, 17, 0, 2, 101, 200, 5, 4, 0, 6, 0, 15, 100, 99, 35, 0, 0, 35, 70, 0, 14, 227, 0, 2, 227, 200, 1, 64, 0, 59, 0, 2, 6, 200, 2, 1, 0, 48, 0, 14, 220, 0, 2, 6, 200, 0, 3, 0, 34, 0, 2, 2, 3, 0, 0, 0, 6, 0, 15, 100, 0, 35, 17, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 1, 35, 3, 0, 15, 100, 2, 35, 0, 0, 35, 0, 0, 35, 0, 0]
-        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
     def test_stop(self, compiler: AICompiler):
         source_code_raw = \
@@ -2372,6 +2035,501 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
+
+
+    def test_if_elseif(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if (1,200,3,4) { die(); } elseif(220, 200, 0, 0) { die; } 
+            """
+        source_code_type = \
+            """
+            if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
+            {
+                die;
+            }
+            elseif(varA, Self, ==, 0)
+            {
+                die();
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = \
+            [2, 1, 200, 3, 4, 0, 4, 0,
+             8,
+             35, 12, 0,
+             2, 220, 200, 0, 0, 0, 4, 0,
+             8,
+             35, 0, 0]
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+
+    def test_if_elseif_else(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if (1,200,3,4) { die(); } elseif(220, 200, 0, 0) { die; } else { statChange(5,6); } 
+            """
+        source_code_type = \
+            """
+            if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
+            {
+                die;
+            }
+            elseif(varA, Self, ==, 0)
+            {
+                die();
+            }
+            else
+            {
+               statChange(Evade,60%); 
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 15, 0, 2, 220, 200, 0, 0, 0, 4, 0, 8, 35, 3, 0, 40, 5, 6]
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+
+    def test_if_elseif_else2(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if (1,200,3,4) { die(); } 
+            elseif(220, 200, 0, 0) { if(220, 200, 3, 3) { die; } } 
+            else { statChange(5,6); } 
+            """
+        code_raw_compiled = compiler.compile(source_code_raw)
+        expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 26, 0, 2, 220, 200, 0, 0, 0, 15, 0, 2, 220, 200, 3, 3, 0, 4, 0, 8, 35, 0, 0, 35, 3, 0, 40, 5, 6]
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+
+    def test_if_elseif2_else(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if (1,200,3,4) { 
+                die(); 
+            } 
+            elseif(220, 200, 0, 0) { 
+                die; 
+            } 
+            elseif(220, 200, 0, 1) { 
+                stop; 
+            } 
+            else{ 
+                statChange(5,6); 
+            } 
+            """
+        source_code_type = \
+            """
+            if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
+            {
+                die;
+            }
+            elseif(varA, Self, ==, 0)
+            {
+                die();
+            }
+            elseif(varA, Self, ==, 1)
+            {
+                stop();
+            }
+            else
+            {
+               statChange(Evade,60%); 
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [
+            2, 1, 200, 3, 4, 0, 4, 0,
+            8,
+            35, 27, 0,
+            2, 220, 200, 0, 0, 0, 4, 0,
+            8,
+            35, 15, 0,
+            2, 220, 200, 0, 1, 0, 4, 0,
+            0,
+            35, 3, 0,
+            40, 5, 6]
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_if_else_complexe_case_1(self, compiler: AICompiler):
+        source_code_type = \
+            """
+            if(100, 200, 3, 99)
+            {
+                if(101, 200, 5, 4)
+                {
+                    bvar(100, 99);
+                    bvar(101, 0);
+                }
+            }
+            else
+            {
+                var(227, 0);
+                add(227, 203);
+                if(227, 200, 1, 64)
+                {
+                    if(6, 200, 2, 1)
+                    {
+                        print(0);
+                        if(6, 200, 0, 3)
+                        {
+                            if(2, 3, 0, 0)
+                            {
+                                bvar(100, 0);
+                            }
+                            elseif(2, 2, 0, 0)
+                            {
+                                bvar(100, 1);
+                            }
+                            else
+                            {
+                                bvar(100, 2);
+                            }
+                        }
+                        elseif(6, 200, 0, 2)
+                        {
+                            if(2, 2, 0, 0)
+                            {
+                                bvar(100, 0);
+                            }
+                            else
+                            {
+                                bvar(100, 1);
+                            }
+                        }
+                    }
+                }
+            }
+            """
+
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 100, 200, 3, 99, 0, 20, 0, 2, 101, 200, 5, 4, 0, 9, 0, 15, 100, 99, 15, 101, 0, 35, 0, 0, 35, 100, 0, 14, 227, 0, 18, 227, 203, 2, 227, 200, 1, 64, 0, 86, 0,
+                    2, 6, 200, 2, 1, 0, 75, 0, 1, 0, 2, 6, 200, 0, 3, 0, 34, 0, 2, 2, 3, 0, 0, 0, 6, 0, 15, 100, 0, 35, 17, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 1, 35, 3, 0, 15,
+                    100, 2, 35, 28, 0, 2, 6, 200, 0, 2, 0, 20, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 0, 35, 3, 0, 15, 100, 1, 35, 0, 0, 35, 0, 0, 35, 0, 0]
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+
+    def test_if_else_complexe_case_2(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(100, 200, 3, 99)
+            {
+            	if(101, 200, 5, 4)
+            	{
+            		bvar(100, 99);
+            	}
+            }
+            else
+            {
+            	var(227, 0);
+            	if(227, 200, 1, 64)
+            	{
+            		if(6, 200, 2, 1)
+            		{
+            			var(220, 0);
+            			if(6, 200, 0, 3)
+            			{
+            				if(2, 3, 0, 0)
+            				{
+            					bvar(100, 0);
+            				}
+            				elseif(2, 2, 0, 0)
+            				{
+            					bvar(100, 1);
+            				}
+            				else
+            				{
+            					bvar(100, 2);
+            				}
+            			}
+            		}
+            	}
+            }
+            """
+        code_raw_compiled = compiler.compile(source_code_raw)
+        expected = [2, 100, 200, 3, 99, 0, 17, 0, 2, 101, 200, 5, 4, 0, 6, 0, 15, 100, 99, 35, 0, 0, 35, 70, 0, 14, 227, 0, 2, 227, 200, 1, 64, 0, 59, 0, 2, 6, 200, 2, 1, 0, 48, 0, 14, 220, 0, 2, 6, 200, 0, 3, 0, 34, 0, 2, 2, 3, 0, 0, 0, 6, 0, 15, 100, 0, 35, 17, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 1, 35, 3, 0, 15, 100, 2, 35, 0, 0, 35, 0, 0, 35, 0, 0]
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+
+
+    def test_if_else_complexe_case_3(self, compiler: AICompiler):
+        source_code_raw = """
+                                if(100, 200, 3, 99)
+                                {
+                                    if(100, 200, 4, 2)
+                                    {
+                                        if(101, 200, 5, 4)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(100, 200, 0, 10)
+                                    {
+                                        die;
+                                        if(101, 200, 5, 2)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(100, 200, 0, 20)
+                                    {
+                                        die;
+                                        if(101, 200, 4, 5)
+                                        {
+                                            die;
+                                        }
+                                        elseif(101, 200, 5, 6)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(100, 200, 0, 30)
+                                    {
+                                        die;
+                                        if(101, 200, 4, 3)
+                                        {
+                                            die;
+                                        }
+                                        elseif(101, 200, 5, 6)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    die;
+                                    if(2, 3, 0, 0)
+                                    {
+                                        if(6, 201, 3, 1)
+                                        {
+                                            if(1, 87, 2, 0)
+                                            {
+                                                if(9, 0, 3, 88)
+                                                {
+                                                    if(227, 200, 1, 64)
+                                                    {
+                                                        if(6, 200, 2, 1)
+                                                        {
+                                                            die;
+                                                            if(6, 20, 0, 3)
+                                                            {
+                                                                die;
+                                                                if(2, 3, 0, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                                elseif(2, 2, 0, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                            }
+                                                            elseif(6, 200, 0, 2)
+                                                            {
+                                                                die;
+                                                                if(2, 2, 0, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    elseif(227, 200, 1, 128)
+                                                    {
+                                                        die;
+                                                    }
+                                                    elseif(227, 200, 1, 192)
+                                                    {
+                                                        die;
+                                                    }
+                                                    else
+                                                    {
+                                                        die;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                """
+        source_code_type = """
+                                if(BattleVar100, !=, 99)
+                                {
+                                    if(BattleVar100, <=, 2)
+                                    {
+                                        if(BattleVar101, >=, 4)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(BattleVar100, ==, 10)
+                                    {
+                                        die;
+                                        if(BattleVar101, >=, 2)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(BattleVar100, ==, 20)
+                                    {
+                                        die;
+                                        if(BattleVar101, <=, 5)
+                                        {
+                                            die;
+                                        }
+                                        elseif(BattleVar101, >=, 6)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                    elseif(BattleVar100, ==, 30)
+                                    {
+                                        die;
+                                        if(BattleVar101, <=, 3)
+                                        {
+                                            die;
+                                        }
+                                        elseif(BattleVar101, >=, 6)
+                                        {
+                                            die;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    die;
+                                    if(RANDOM_VALUE, 3, ==, 0)
+                                    {
+                                        if(ALIVE_IN_TEAM, ALLY_TEAM, !=, 1)
+                                        {
+                                            if(HP_IN_TEAM, "G-Soldier", >,  0%)
+                                            {
+                                                if(IS_ALIVE, !=, "Elite Soldier")
+                                                {
+                                                    if(varH, Self, <, 64)
+                                                    {
+                                                        if(ALIVE_IN_TEAM, ENEMY_TEAM, >, 1)
+                                                        {
+                                                            die;
+                                                            if(ALIVE_IN_TEAM, ENEMY_TEAM, ==, 3)
+                                                            {
+                                                                die;
+                                                                if(RANDOM_VALUE, 3, ==, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                                elseif(RANDOM_VALUE, 2, ==, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                            }
+                                                            elseif(ALIVE_IN_TEAM, ENEMY_TEAM, ==, 2)
+                                                            {
+                                                                die;
+                                                                if(RANDOM_VALUE, 2, ==, 0)
+                                                                {
+                                                                    die;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    elseif(varH, Self, <, 128)
+                                                    {
+                                                        die;
+                                                    }
+                                                    elseif(varH, Self, <, 192)
+                                                    {
+                                                        die;
+                                                    }
+                                                    else
+                                                    {
+                                                        die;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        #code_type_compiled = compiler.compile(source_code_type)
+        expected = [
+2, 100, 200, 3, 99, 0, 122, 0,
+	2, 100, 200, 4, 2, 0, 15, 0,
+		2, 101, 200, 5, 4, 0, 4, 0,
+			8,
+		35, 0, 0,
+	35, 96, 0,
+	2, 100, 200, 0, 10, 0, 16, 0,
+		8,
+		2, 101, 200, 5, 2, 0, 4, 0,
+			8,
+		35, 0, 0,
+	35, 72, 0,
+	2, 100, 200, 0, 20, 0, 28, 0,
+		8,
+		2, 101, 200, 4, 5, 0, 4, 0,
+			8,
+		35, 12, 0,
+		2, 101, 200, 5, 6, 0, 4, 0,
+			8,
+		35, 0, 0,
+	35, 36, 0,
+	2, 100, 200, 0, 30, 0, 28, 0,
+		8,
+		2, 101, 200, 4, 3, 0, 4, 0,
+			8,
+		35, 12, 0,
+		2, 101, 200, 5, 6, 0, 4, 0,
+			8,
+		35, 0, 0,
+	35, 0, 0,
+            35, 153, 0,  # else
+            8,  # die
+            2, 2, 3, 0, 0, 0, 144, 0,  # if(2, 3, 0, 0)
+            2, 6, 201, 3, 1, 0, 133, 0,  # if(6, 201, 3, 1)
+            2, 1, 87, 2, 0, 0, 122, 0,  # if(1, 87, 2, 0)
+            2, 9, 0, 3, 88, 0, 111, 0,  # if(9, 0, 3, 88)
+            2, 227, 200, 1, 64, 0, 75, 0,  # if(227, 200, 1, 64)
+            2, 6, 200, 2, 1, 0, 64, 0,  # if(6, 200, 2, 1)
+            8,  # die;
+            2, 6, 20, 0, 3, 0, 28, 0,  # if(6, 20, 0, 3)
+            8,  # die
+            2, 2, 3, 0, 0, 0, 4, 0,  # if(2, 3, 0, 0)
+            8,
+            35, 12, 0,
+            2, 2, 2, 0, 0, 0, 4, 0,  # elseif(2, 2, 0, 0)
+            8,  # die;
+            35, 0, 0,
+            35, 24, 0,
+            2, 6, 200, 0, 2, 0, 16, 0,  # elseif(6, 200, 0, 2)
+            8,
+            2, 2, 2, 0, 0, 0, 4, 0,
+            8,
+            35, 0, 0,
+            35, 0, 0,
+            35, 0, 0,
+            35, 25, 0,
+            2, 227, 200, 1, 128, 0, 4, 0,  # elseif(227, 200, 1, 128)
+            8,
+            35, 13, 0,
+            2, 227, 200, 1, 192, 0, 4, 0,  # elseif(227, 200, 1, 192)
+            8,
+            35, 1, 0,
+            8,
+            35, 0, 0,
+            35, 0, 0,
+            35, 0, 0,
+            35, 0, 0]
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        #assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "-x", "--tb=short"])  # Capture all print
+    pytest.main([__file__, "-vv", "-x", "--tb=short"])  # Capture all print
     # pytest.main([__file__, "-v", "-x", "--tb=short", "-s"])
