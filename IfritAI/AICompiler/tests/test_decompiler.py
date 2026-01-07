@@ -1071,7 +1071,7 @@ class TestAIDecompiler:
         bytecode = [3, 1, 0, 8]
         code = decompiler.decompile(bytecode)
 
-        print(f"\n=== Decompiled multiple commands ===")
+        print(f"\n=== Decompiled ===")
         print(self.pretty_code(code))
         print("=====================================")
 
@@ -1080,17 +1080,144 @@ class TestAIDecompiler:
         assert "stop" in normalized
         assert "die" in normalized
 
-    def test_decompile_if_statement(self, decompiler):
+    def test_if_hp_specific_target(self, decompiler):
         """Test decompiling if statement"""
-        bytecode = [2, 1, 2, 3, 2, 0, 4, 0, 8, 35, 0, 0]
+        bytecode = [2, 0, 200, 3, 5, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
 
-        print(f"\n=== Decompiled if statement ===")
+        print(f"\n=== Decompiled ===")
         print(self.pretty_code(code))
         print("===============================")
 
         normalized = self.normalize_code(code)
-        assert "if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%){die();}" in normalized
+        expected = self.normalize_code(
+            """
+            if(HP_OF_SPECIFIC_TARGET,SELF, !=, 50%)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected in normalized
+
+    def test_if_hp_generic_target(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 1, 200, 1, 5, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(HP_OF_GENERIC_TARGET,enemy_team, <, 50%)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected in normalized
+
+    def test_if_rand(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 2, 3, 0, 0, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(RANDOM_VALUE, 3, ==, 0)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected in normalized
+
+
+    def test_if_enc_id(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 3, 0, 0, 0, 4, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(COMBAT_SCENE, ==, 1024)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected in normalized
+
+
+    def test_if_difficulty(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 14, 200, 5, 1, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(GROUP_LEVEL, >=, 1)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected in normalized
+
+    def test_example(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 220, 225, 0, 24, 0, 29, 0, 2, 220, 225, 0, 23, 0, 5, 0, 3, 0, 35, 13, 0, 2, 220, 225, 0, 22, 0, 5, 0, 3, 3, 35, 0, 0, 35, 2, 0, 3, 1, 0, 0, 0, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+if(VARA,SLOT_ID_FROM_VARF,==,24)
+{
+    if(VARA,SLOT_ID_FROM_VARF,==,23)
+    {
+        prepareMagic(NOTHING);
+    }
+    elseif(VARA,SLOT_ID_FROM_VARF,==,22)
+    {
+        prepareMagic(FIRAGA);
+    }
+}
+else
+{
+    prepareMagic(FIRE);
+    stop();
+    stop();
+    stop();
+    stop();
+    stop();
+}
+            """
+        )
+        assert expected in normalized
+
 
     def test_decompile_if_else_statement(self, decompiler):
         """Test decompiling if-else statement"""

@@ -658,6 +658,8 @@ class MonsterAnalyser:
         for index, code in enumerate(list_code):
             self.decompiler.battle_text= self.battle_script_data['battle_text']
             self.decompiler.info_stat= self.info_stat_data
+            print("code before decompiled:")
+            print(code)
             command_list_decompiled = self.decompiler.decompile_bytecode_to_command_list(code)
             code_decompiled = self.decompiler.decompile(code)
             self.battle_script_data['ai_data'].append({"bytecode": code, "code": code_decompiled, "command": command_list_decompiled})

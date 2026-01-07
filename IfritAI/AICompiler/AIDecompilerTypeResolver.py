@@ -52,13 +52,14 @@ class AIDecompilerTypeResolver:
         """Define handlers for formula-based type conversions"""
         return {
             'int': lambda x: self._parse_int(x),
-            'int16': lambda x: self._parse_int16(x),
+            'int16': lambda x: self._parse_int(x),
             'monster_line_ability': lambda x: self._parse_int(x),
             'percent': lambda x: self._parse_percent(x),
             'percent_elem': lambda x: self._parse_percent_elem(x),
             'int_shift': lambda x, y: self._parse_int_shift(x, y),
             'bool': lambda x: self._parse_bool(x),
             'alive': lambda x: self._parse_int_shift(x, [3]),
+            'const': lambda x: None,
             '': lambda x: 0  # Empty type
         }
 
@@ -263,7 +264,9 @@ class AIDecompilerTypeResolver:
                             ignore_iter = False
                             continue
                         if expected_types[i] in ("int16", ):# 2 params
-                            type_param.append(self._resolve_value([op_code,param_list[i+1]] , expected_types[i]))
+                            print("int16 expected type")
+                            print(param_list)
+                            type_param.append(self._resolve_value(int.from_bytes([op_code,param_list[i+1]], signed=True, byteorder='little') , expected_types[i]))
                             ignore_iter = True
                         else:
                          type_param.append( self._resolve_value(op_code, expected_types[i]))
@@ -272,7 +275,9 @@ class AIDecompilerTypeResolver:
 
 
     def _resolve_value(self, value, expected_type, special_param=None):
+        print("_resolve_value")
         print(f"expected_type: {expected_type}")
+        print(f"value: {value}")
 
         if expected_type in self.lookup_types:
             print(f"self.type_mappings['type_values'][expected_type]: {self.type_mappings['type_values'][expected_type]}")
@@ -333,8 +338,7 @@ class AIDecompilerTypeResolver:
 
         # Right condition
         if right_type:
-            right_param = int.from_bytes(params[3].to_bytes(length=2, byteorder='little'), byteorder='little')
-            resolved_right = self._resolve_value(right_param, right_type, param_list)
+            resolved_right = self._resolve_value(int.from_bytes(bytes(params[3:5]), byteorder='little', signed=True), right_type, param_list)
             resolved_params.append(resolved_right)
 
         command.param_typed = resolved_params
@@ -376,6 +380,8 @@ class AIDecompilerTypeResolver:
 
     def _resolve_param_list(self, params, expected_types):
         """Resolve a list of parameters based on expected types"""
+        print("_resolve_param_list")
+        print(params)
         resolved = []
         for i, (param, expected_type) in enumerate(zip(params, expected_types)):
             resolved_val = self._resolve_value(param, expected_type)

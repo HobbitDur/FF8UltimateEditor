@@ -223,8 +223,6 @@ class AITypeResolver:
             # target_advanced_specific
             for target_dict in self.__get_target_list(advanced=True, specific=True):
                 mappings['type_values']['target_advanced_specific'][self._normalize_string(target_dict['data'])] = target_dict['id']
-                print("toto mapping")
-                print( mappings['type_values']['target_advanced_specific'])
             # comparator
             for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator_ifritAI', [])):
                 mappings['type_values']['comparator'][comp] = i

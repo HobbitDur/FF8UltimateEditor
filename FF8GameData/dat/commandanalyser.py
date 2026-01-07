@@ -112,6 +112,8 @@ class CommandAnalyser:
         text = "("
         value_to_check = [' ', '+', '\t', '\r', '\n']
         for i, param in enumerate(self.param_typed):
+            if param is None:
+                continue
             if any (value in param for value in value_to_check):
                 text += "\"" + param + "\""
             else:
