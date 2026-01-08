@@ -99,7 +99,7 @@ class CodeWidget(QWidget):
             compiled_code = self.compiler.compile(self.code_area_widget.toPlainText())
             print(compiled_code)
             decompiled_code = self.decompiler.decompile_bytecode_to_command_list(compiled_code)
-            self._command_list = self.ennemy_data.set_ai_section_from_bytes(decompiled_code, self._current_section_ai_index)
+            self._command_list = self.ennemy_data.set_ai_section_from_command_list(decompiled_code, self._current_section_ai_index, self.game_data)
             print(self._command_list)
             if AICodeError.has_errors():
                 self.show_ai_errors()

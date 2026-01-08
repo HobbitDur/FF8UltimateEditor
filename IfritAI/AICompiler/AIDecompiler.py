@@ -56,6 +56,9 @@ class AIDecompiler:
 
         for command_index, command in enumerate(command_list):
             last_else = False
+            print("1")
+            print(f"if_list_count: {if_list_count}")
+            print(f"else_list_count: {else_list_count}")
 
             # Update block counters
             for i in range(len(if_list_count)):
@@ -136,11 +139,18 @@ class AIDecompiler:
                     continue
                 else_list_count[i] -= command.get_size()
 
+        print("5")
+        print(f"if_list_count: {if_list_count}")
+        print(f"else_list_count: {else_list_count}")
         # Close any remaining blocks
         for _ in range(len(if_list_count)):
             func_list.append('}')
         for _ in range(len(else_list_count)):
             func_list.append('}')
+
+        print("6")
+        print(f"if_list_count: {if_list_count}")
+        print(f"else_list_count: {else_list_count}")
 
         func_list = AIDecompiler.compute_indent_bracket(func_list)
         code_text = ""

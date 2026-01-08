@@ -89,10 +89,13 @@ class MonsterAnalyser:
             print(f"Garbage file {self.origin_file_name}")
             raise GarbageFileError
 
-    def update_stop(self, game_data: GameData):
+    def update_stop(self, game_data: GameData, section_index_to_modify=None):
         """To remove all too much 0 and add new one till %4 for rainbow fix"""
         new_end = CommandAnalyser(0, [], game_data, line_index=0)
+
         for index_section, section in enumerate(self.battle_script_data['ai_data']):
+            if section_index_to_modify is not None and index_section != section_index_to_modify:
+                continue
             if index_section != len(self.battle_script_data['ai_data']) - 1:  # Last section is actually a fake one for internal purpose
                 # Must always have a stop at the end, so adding one:
                 self.append_command(index_section, copy.deepcopy(new_end))
@@ -131,43 +134,7 @@ class MonsterAnalyser:
                     self.append_command(index_section, copy.deepcopy(new_end))
                     section_size += 1
 
-    def update_stop_on_list(self, game_data: GameData, list_to_update: [CommandAnalyser]):
-        """To remove all too much 0 and add new one till %4 for rainbow fix"""
-        new_end = CommandAnalyser(0, [], game_data)
-        # Must always have a stop at the end, so adding one:
-        list_to_update.append(copy.deepcopy(new_end))
-        if len(list_to_update) == 1:
-            list_to_update[-1].line_index = 0
-        else:
-            list_to_update[-1].line_index = list_to_update[-2].line_index + 1
-        # First do it by removing exceeding of stop
-        while len(list_to_update) >= 2 and list_to_update[-1].get_id() == 0 and list_to_update[-2].get_id() == 0:
-            del list_to_update[-1]
-        # Now compute the size of all command
-        section_size = 0
-        # Last jump position is to manage the case where you jump in the middle of lots of stop so that you don't remove useful ones.
-        last_jump_position = 0
-        for command in list_to_update:
-            section_size += command.get_size()
-            if section_size + command.get_jump_value() > last_jump_position and command.get_jump_value() > 0:
-                last_jump_position = section_size + command.get_jump_value()
 
-        if last_jump_position > 0:
-            while section_size <= last_jump_position + 1:
-                list_to_update.append(copy.deepcopy(new_end))
-                if len(list_to_update) == 1:
-                    list_to_update[-1].line_index = 0
-                else:
-                    list_to_update[-1].line_index = list_to_update[-2].line_index + 1
-                section_size += 1
-        while section_size % 4 != 0 or section_size == 0:
-            list_to_update.append(copy.deepcopy(new_end))
-            if len(list_to_update) == 1:
-                list_to_update[-1].line_index = 0
-            else:
-                list_to_update[-1].line_index = list_to_update[-2].line_index + 1
-            section_size += 1
-        return list_to_update
 
     def write_data_to_file(self, game_data: GameData, dat_path):
         raw_data_to_write = bytearray()
@@ -667,10 +634,11 @@ class MonsterAnalyser:
 
 
 
-    def set_ai_section_from_bytes(self, command_list:List[CommandAnalyser], section_index):
+    def set_ai_section_from_command_list(self, command_list:List[CommandAnalyser], section_index:int, game_data: GameData):
         print("set_ai_section_from_bytes")
         print(self.battle_script_data['ai_data'][section_index])
         self.battle_script_data['ai_data'][section_index] = command_list
+        self.update_stop(game_data, section_index)
         print(self.battle_script_data['ai_data'][section_index])
         return self.battle_script_data['ai_data'][section_index]
 

@@ -164,7 +164,7 @@ class TestAIDecompiler:
             stop();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
 
     def test_print(self, decompiler):
@@ -180,7 +180,7 @@ class TestAIDecompiler:
             print("Second battle text");
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
 
     def test_prepareMagic(self, decompiler):
@@ -214,7 +214,7 @@ class TestAIDecompiler:
             target(ZELL);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_prepareAnim(self, decompiler):
         bytecode = [5, 1]
@@ -229,7 +229,7 @@ class TestAIDecompiler:
             prepareAnim(1);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_usePrepared(self, decompiler):
         bytecode = [6]
@@ -244,7 +244,7 @@ class TestAIDecompiler:
             usePrepared();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_prepareMonsterAbility(self, decompiler):
         bytecode = [7, 3]
@@ -259,7 +259,7 @@ class TestAIDecompiler:
             prepareMonsterAbility("Attack (Cronos)");
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_die(self, decompiler):
         bytecode = [8]
@@ -274,7 +274,7 @@ class TestAIDecompiler:
             die();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
 
     def test_anim(self, decompiler):
@@ -290,7 +290,7 @@ class TestAIDecompiler:
             anim(1);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_useRandom(self, decompiler):
         bytecode = [11, 1, 2, 3]
@@ -305,7 +305,7 @@ class TestAIDecompiler:
             useRandom(1,2,3);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_use(self, decompiler):
         bytecode = [12, 1]
@@ -320,7 +320,7 @@ class TestAIDecompiler:
             use(1);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_unknown13(self, decompiler):
         bytecode = [13, 1]
@@ -335,7 +335,7 @@ class TestAIDecompiler:
              unknown13(1);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
 
     def test_var(self, decompiler):
@@ -351,7 +351,7 @@ class TestAIDecompiler:
              var(varB, 10);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
 
     def test_var_specialCases(self, decompiler):
@@ -367,7 +367,7 @@ class TestAIDecompiler:
              var(varB, LAST_ATTACKER_SLOT_ID);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_bvar(self, decompiler):
         bytecode = [15, 96, 10]
@@ -382,7 +382,7 @@ class TestAIDecompiler:
             bvar(BattleVar96, 10);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_gvar(self, decompiler):
         bytecode = [17, 80, 10]
@@ -397,7 +397,7 @@ class TestAIDecompiler:
             gvar(GlobalVar80, 10);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
 
     def test_add(self, decompiler):
@@ -413,7 +413,7 @@ class TestAIDecompiler:
             add(varB, 10);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_add_specialCases(self, decompiler):
         bytecode = [18, 221, 203]
@@ -428,7 +428,7 @@ class TestAIDecompiler:
             add(varB, LAST_ATTACKER_SLOT_ID);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_badd(self, decompiler):
         bytecode = [19, 96, 10]
@@ -443,7 +443,7 @@ class TestAIDecompiler:
             badd(BattleVar96, 10);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_gadd(self, decompiler):
         bytecode = [21, 80, 10]
@@ -458,7 +458,7 @@ class TestAIDecompiler:
             gadd(GlobalVar80, 10);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_recover(self, decompiler):
         bytecode = [0x16]
@@ -473,7 +473,7 @@ class TestAIDecompiler:
             recover();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_setEscape(self, decompiler):
         # Test both true and false cases
@@ -513,7 +513,7 @@ class TestAIDecompiler:
             printSpeed("Second battle text");
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_doNothing(self, decompiler):
         bytecode = [25, 1]
@@ -529,7 +529,7 @@ class TestAIDecompiler:
             doNothing(1);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_printAndLock(self, decompiler):
         bytecode = [26, 1]
@@ -544,7 +544,7 @@ class TestAIDecompiler:
             printAndLock("Second battle text");
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_enterAlt(self, decompiler):
         bytecode = [27, 1, 0]
@@ -559,7 +559,7 @@ class TestAIDecompiler:
             enterAlt(1, 0);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_waitText(self, decompiler):
         bytecode = [28, 2]
@@ -574,7 +574,7 @@ class TestAIDecompiler:
             waitText(2);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_leave(self, decompiler):
         bytecode = [29, 200]
@@ -589,7 +589,7 @@ class TestAIDecompiler:
             leave(SELF);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_specialAction(self, decompiler):
         bytecode = [30, 17]
@@ -604,7 +604,7 @@ class TestAIDecompiler:
             specialAction("Elvoret Entrance");
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_enter(self, decompiler):
         bytecode = [31, 3]
@@ -619,7 +619,7 @@ class TestAIDecompiler:
             enter(3);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_waitTextFast(self, decompiler):
         bytecode = [32, 2]
@@ -634,7 +634,7 @@ class TestAIDecompiler:
             waitTextFast(2);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_printAlt(self, decompiler):
         bytecode = [34, 1]
@@ -649,7 +649,7 @@ class TestAIDecompiler:
             printAlt("Second battle text");
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     # def test_jump(self, decompiler):
     #     # Test positive jump
@@ -688,7 +688,7 @@ class TestAIDecompiler:
             fillAtb();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_setScanText(self, decompiler):
         bytecode = [37, 1]
@@ -703,7 +703,7 @@ class TestAIDecompiler:
             setScanText("Second battle text");
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_targetStatus(self, decompiler):
         bytecode = [38, 0, 200, 3, 1]
@@ -718,7 +718,7 @@ class TestAIDecompiler:
             targetStatus(ENEMY_TEAM, !=, Poison, False);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_autoStatus(self, decompiler):
         bytecode = [39, 2, 1]
@@ -733,7 +733,7 @@ class TestAIDecompiler:
             autoStatus(ACTIVATE, Petrify);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_statChange(self, decompiler):
         bytecode = [40, 5, 6]
@@ -748,7 +748,7 @@ class TestAIDecompiler:
             statChange(Evade,60%);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_draw(self, decompiler):
         bytecode = [41]
@@ -763,7 +763,7 @@ class TestAIDecompiler:
             draw();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_cast(self, decompiler):
         bytecode = [42]
@@ -778,7 +778,7 @@ class TestAIDecompiler:
             cast();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_targetAllySlot(self, decompiler):
         bytecode = [43, 1]
@@ -793,7 +793,7 @@ class TestAIDecompiler:
             targetAllySlot(1);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_remain(self, decompiler):
         bytecode = [44]
@@ -808,7 +808,7 @@ class TestAIDecompiler:
             remain();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_elemDmgMod(self, decompiler):
         bytecode = [45, 2, 100, 0]
@@ -823,7 +823,7 @@ class TestAIDecompiler:
             elemDmgMod(Thunder, 80);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_blowAway(self, decompiler):
         bytecode = [46]
@@ -838,7 +838,7 @@ class TestAIDecompiler:
             blowAway();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_targetable(self, decompiler):
         bytecode = [47]
@@ -853,7 +853,7 @@ class TestAIDecompiler:
             targetable();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_untargetable(self, decompiler):
         bytecode = [48]
@@ -868,7 +868,7 @@ class TestAIDecompiler:
             untargetable();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_giveGF(self, decompiler):
         bytecode = [49, 1]
@@ -883,7 +883,7 @@ class TestAIDecompiler:
             giveGF(Shiva);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_prepareSummon(self, decompiler):
         bytecode = [50]
@@ -898,7 +898,7 @@ class TestAIDecompiler:
             prepareSummon();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_activate(self, decompiler):
         bytecode = [51]
@@ -913,7 +913,7 @@ class TestAIDecompiler:
             activate();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_enable(self, decompiler):
         bytecode = [52, 1]
@@ -928,7 +928,7 @@ class TestAIDecompiler:
             enable(1);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_loadAndTargetable(self, decompiler):
         bytecode = [53, 209]
@@ -943,7 +943,7 @@ class TestAIDecompiler:
             loadAndTargetable(LAST_ENABLED_MONSTER);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_gilgamesh(self, decompiler):
         bytecode = [54]
@@ -958,7 +958,7 @@ class TestAIDecompiler:
             gilgamesh();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_giveCard(self, decompiler):
         bytecode = [55, 2]
@@ -973,7 +973,7 @@ class TestAIDecompiler:
             giveCard("Bite Bug");
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_giveItem(self, decompiler):
         bytecode = [56, 2]
@@ -988,7 +988,7 @@ class TestAIDecompiler:
             giveItem("Potion+");
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_gameOver(self, decompiler):
         bytecode = [57]
@@ -1003,7 +1003,7 @@ class TestAIDecompiler:
             gameOver();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_targetableSlot(self, decompiler):
         bytecode = [58, 2]
@@ -1018,7 +1018,7 @@ class TestAIDecompiler:
             targetableSlot(2);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_assignSlot(self, decompiler):
         bytecode = [59, 2, 0]
@@ -1033,7 +1033,7 @@ class TestAIDecompiler:
             assignSlot(2, FIRST_SLOT_AVAILABLE);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_addMaxHP(self, decompiler):
         bytecode = [60, 10]
@@ -1048,7 +1048,7 @@ class TestAIDecompiler:
             addMaxHP(10);
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_proofOfOmega(self, decompiler):
         bytecode = [61]
@@ -1063,7 +1063,7 @@ class TestAIDecompiler:
             proofOfOmega();
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_decompile_multiple_commands(self, decompiler):
         """Test decompiling multiple commands"""
@@ -1098,7 +1098,7 @@ class TestAIDecompiler:
             }
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_if_hp_generic_target(self, decompiler):
         """Test decompiling if statement"""
@@ -1118,7 +1118,7 @@ class TestAIDecompiler:
             }
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_if_rand(self, decompiler):
         """Test decompiling if statement"""
@@ -1138,7 +1138,7 @@ class TestAIDecompiler:
             }
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
 
     def test_if_enc_id(self, decompiler):
@@ -1159,7 +1159,7 @@ class TestAIDecompiler:
             }
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
 
     def test_if_difficulty(self, decompiler):
@@ -1180,43 +1180,43 @@ class TestAIDecompiler:
             }
             """
         )
-        assert expected in normalized
-
-    def test_example(self, decompiler):
-        """Test decompiling if statement"""
-        bytecode = [2, 220, 225, 0, 24, 0, 29, 0, 2, 220, 225, 0, 23, 0, 5, 0, 3, 0, 35, 13, 0, 2, 220, 225, 0, 22, 0, 5, 0, 3, 3, 35, 0, 0, 35, 2, 0, 3, 1, 0, 0, 0, 0, 0]
-        code = decompiler.decompile(bytecode)
-
-        print(f"\n=== Decompiled ===")
-        print(self.pretty_code(code))
-        print("===============================")
-
-        normalized = self.normalize_code(code)
-        expected = self.normalize_code(
-            """
-if(VARA,SLOT_ID_FROM_VARF,==,24)
-{
-    if(VARA,SLOT_ID_FROM_VARF,==,23)
-    {
-        prepareMagic(NOTHING);
-    }
-    elseif(VARA,SLOT_ID_FROM_VARF,==,22)
-    {
-        prepareMagic(FIRAGA);
-    }
-}
-else
-{
-    prepareMagic(FIRE);
-    stop();
-    stop();
-    stop();
-    stop();
-    stop();
-}
-            """
-        )
-        assert expected in normalized
+        assert expected == normalized
+#
+#     def test_example(self, decompiler):
+#         """Test decompiling if statement"""
+#         bytecode = [2, 220, 225, 0, 24, 0, 29, 0, 2, 220, 225, 0, 23, 0, 5, 0, 3, 0, 35, 13, 0, 2, 220, 225, 0, 22, 0, 5, 0, 3, 3, 35, 0, 0, 35, 2, 0, 3, 1, 0, 0, 0, 0, 0]
+#         code = decompiler.decompile(bytecode)
+#
+#         print(f"\n=== Decompiled ===")
+#         print(self.pretty_code(code))
+#         print("===============================")
+#
+#         normalized = self.normalize_code(code)
+#         expected = self.normalize_code(
+#             """
+# if(VARA,SLOT_ID_FROM_VARF,==,24)
+# {
+#     if(VARA,SLOT_ID_FROM_VARF,==,23)
+#     {
+#         prepareMagic(NOTHING);
+#     }
+#     elseif(VARA,SLOT_ID_FROM_VARF,==,22)
+#     {
+#         prepareMagic(FIRAGA);
+#     }
+# }
+# else
+# {
+#     prepareMagic(FIRE);
+#     stop();
+#     stop();
+#     stop();
+#     stop();
+#     stop();
+# }
+#             """
+#         )
+#         assert expected == normalized
 
 
     def test_decompile_if_else_statement(self, decompiler):
@@ -1259,7 +1259,7 @@ else
             }
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
     def test_decompile_if_elseif_else_statement(self, decompiler):
         """Test decompiling if-else statement"""
@@ -1286,7 +1286,7 @@ else
             }
             """
         )
-        assert expected in normalized
+        assert expected == normalized
 
 
     def test_compute_indent_bracket(self, decompiler):

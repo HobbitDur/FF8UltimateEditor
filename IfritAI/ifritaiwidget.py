@@ -12,7 +12,6 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.dat.daterrors import AICodeError
 from FF8GameData.gamedata import GameData
-from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritAI.codeanalyser import CodeAnalyser
 from IfritAI.codewidget import CodeWidget
 
