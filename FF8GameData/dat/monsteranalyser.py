@@ -90,6 +90,7 @@ class MonsterAnalyser:
             raise GarbageFileError
 
     def update_stop(self, game_data: GameData, section_index_to_modify=None):
+        print("update_stop")
         """To remove all too much 0 and add new one till %4 for rainbow fix"""
         new_end = CommandAnalyser(0, [], game_data, line_index=0)
 
@@ -98,11 +99,16 @@ class MonsterAnalyser:
                 continue
             if index_section != len(self.battle_script_data['ai_data']) - 1:  # Last section is actually a fake one for internal purpose
                 # Must always have a stop at the end, so adding one:
-                self.append_command(index_section, copy.deepcopy(new_end))
+                print("beforepedning")
+                print(self.battle_script_data['ai_data'][1])
                 if not self.battle_script_data['ai_data'][index_section]:
                     new_end.line_index = 0
                 else:
                     new_end.line_index = self.battle_script_data['ai_data'][index_section][-1].line_index + 1
+                self.append_command(index_section, copy.deepcopy(new_end))
+                print("afterpending")
+                print(self.battle_script_data['ai_data'][1])
+
 
                 # First do it by removing exceeding of stop
                 while len(section) >= 2 and section[-1].get_id() == 0 and section[-2].get_id() == 0:

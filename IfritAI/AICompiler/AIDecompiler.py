@@ -52,6 +52,7 @@ class AIDecompiler:
         func_list = []
         if_list_count = []
         else_list_count = []
+        elseif_list_count = []
         pending_elseif = False  # Track if we're expecting an elseif
 
         for command_index, command in enumerate(command_list):
@@ -70,11 +71,18 @@ class AIDecompiler:
                 else_list_count[i] -= command.get_size()
                 if else_list_count[i] == 0:
                     func_list.append('}')
+
+            for i in range(len(elseif_list_count)):
+                elseif_list_count[i] -= command.get_size()
+                if elseif_list_count[i] == 0:
+                    func_list.append('}')
             # Remove completed blocks
             while 0 in else_list_count:
                 else_list_count.remove(0)
             while 0 in if_list_count:
                 if_list_count.remove(0)
+            while 0 in elseif_list_count:
+                elseif_list_count.remove(0)
 
             op_info = [x for x in self.game_data.ai_data_json['op_code_info'] if x["op_code"] == command.get_id()][0]
 
@@ -85,7 +93,8 @@ class AIDecompiler:
                 # Check if this is an elseif (IF after a JUMP that created an else)
                 if pending_elseif:
                     # This IF is actually an elseif
-                    if_list_count.append(jump_value)
+                    elseif_list_count.append(jump_value)
+                    del else_list_count[-1]
                     func_line_text = 'elseif'
                     func_line_text += command.get_param_text()
                     func_list.append(func_line_text)

@@ -1232,7 +1232,7 @@ class TestAIDecompiler:
         print("==================================")
 
         normalized = self.normalize_code(code)
-        assert "if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%){die();}else{statChange(SPEED,50%);}" in normalized
+        assert "if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%){die();}else{statChange(SPEED,50%);}" == normalized
 
     def test_decompile_if_else_nested_statement(self, decompiler):
         """Test decompiling if-else statement"""
@@ -1283,6 +1283,48 @@ class TestAIDecompiler:
             else
             {
                 statChange(SPEED,50%);
+            }
+            """
+        )
+        assert expected == normalized
+
+
+    def test_if_elseif2_else(self, decompiler):
+        """Test decompiling if-else statement"""
+        bytecode =  [
+            2, 1, 200, 3, 4, 0, 4, 0,
+            8,
+            35, 27, 0,
+            2, 220, 200, 0, 0, 0, 4, 0,
+            8,
+            35, 15, 0,
+            2, 220, 200, 0, 1, 0, 4, 0,
+            0,
+            35, 3, 0,
+            40, 5, 6]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled if-elseif-else statement ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
+            {
+                die();
+            }
+            elseif(VARA,SELF, ==, 0)
+            {
+                die();
+            }
+            elseif(VARA,SELF, ==, 1)
+            {
+                stop();
+            }
+            else
+            {
+               statChange(EVADE,60%); 
             }
             """
         )
