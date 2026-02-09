@@ -92,6 +92,7 @@ class AIDecompiler:
 
                 # Check if this is an elseif (IF after a JUMP that created an else)
                 if pending_elseif:
+                    print("elseif")
                     # This IF is actually an elseif
                     elseif_list_count.append(jump_value)
                     del else_list_count[-1]
@@ -101,6 +102,7 @@ class AIDecompiler:
                     func_list.append('{')
                     pending_elseif = False
                 else:
+                    print("Regular if")
                     # Regular IF
                     if_list_count.append(jump_value)
                     func_line_text = "if"
@@ -109,24 +111,30 @@ class AIDecompiler:
                     func_list.append('{')
 
             elif command.get_id() == 35:  # JUMP
+                print("jump")
                 op_list = command.get_op_code()
                 jump_value = int.from_bytes(bytearray([op_list[0], op_list[1]]), byteorder='little')
+                print(f"Jump value: {jump_value}")
 
                 if jump_value & 0x8000 != 0:  # Jump backward (loop)
+                    print("jump backward")
                     func_line_text = op_info['func_name']
                     func_line_text += command.get_param_text()
                     func_list.append(func_line_text)
 
                 elif jump_value > 0:
+                    print("jump value positive")
                     # Check if next command is an IF (would be elseif)
                     if (command_index + 1 < len(command_list) and
                             command_list[command_index + 1].get_id() == 2):
+                        print("Entering an elseif")
                         # This JUMP + next IF = elseif
                         # Don't output "else" now, just mark that we expect an elseif
                         pending_elseif = True
                         # Still need to track the else block size for the jump
                         else_list_count.append(jump_value - 3)  # Don't count JUMP itself
                     else:
+                        print("regular else")
                         # Regular else
                         last_else = True
                         else_list_count.append(jump_value - 3)  # Don't count JUMP itself
