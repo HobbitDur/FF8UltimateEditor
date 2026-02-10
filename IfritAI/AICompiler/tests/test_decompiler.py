@@ -1181,42 +1181,6 @@ class TestAIDecompiler:
             """
         )
         assert expected == normalized
-#
-#     def test_example(self, decompiler):
-#         """Test decompiling if statement"""
-#         bytecode = [2, 220, 225, 0, 24, 0, 29, 0, 2, 220, 225, 0, 23, 0, 5, 0, 3, 0, 35, 13, 0, 2, 220, 225, 0, 22, 0, 5, 0, 3, 3, 35, 0, 0, 35, 2, 0, 3, 1, 0, 0, 0, 0, 0]
-#         code = decompiler.decompile(bytecode)
-#
-#         print(f"\n=== Decompiled ===")
-#         print(self.pretty_code(code))
-#         print("===============================")
-#
-#         normalized = self.normalize_code(code)
-#         expected = self.normalize_code(
-#             """
-# if(VARA,SLOT_ID_FROM_VARF,==,24)
-# {
-#     if(VARA,SLOT_ID_FROM_VARF,==,23)
-#     {
-#         prepareMagic(NOTHING);
-#     }
-#     elseif(VARA,SLOT_ID_FROM_VARF,==,22)
-#     {
-#         prepareMagic(FIRAGA);
-#     }
-# }
-# else
-# {
-#     prepareMagic(FIRE);
-#     stop();
-#     stop();
-#     stop();
-#     stop();
-#     stop();
-# }
-#             """
-#         )
-#         assert expected == normalized
 
 
     def test_decompile_if_else_statement(self, decompiler):
@@ -1329,7 +1293,6 @@ class TestAIDecompiler:
             """
         )
         assert expected == normalized
-
 
     def test_compute_indent_bracket(self, decompiler):
         """Test the compute_indent_bracket static method"""

@@ -3,6 +3,7 @@ import os
 import sys
 from lark import Lark
 
+from IfritAI.AICompiler.AIAST import Block, Command, IfStatement, Value, ParamList
 from IfritAI.AICompiler.AIASTTransformer import AIASTTransformer
 from IfritAI.AICompiler.AICodeGenerator import AICodeGenerator
 from IfritAI.AICompiler.AITypeResolver import AITypeResolver
@@ -49,48 +50,149 @@ class AICompiler:
         ast = self.transformer.transform(tree)
         print("ast")
         print(ast)
+
         resolved_ast = self.type_resolver.resolve(ast)
         print("resolved_ast")
         print(resolved_ast)
-        ff8_assembly = self.generator.generate(resolved_ast)
+
+        ast_rainbow_fixed = self.update_stop(resolved_ast)
+        ff8_assembly = self.generator.generate(ast_rainbow_fixed)
         print("ff8_assembly")
         print(ff8_assembly)
         return ff8_assembly
 
-    # def _update_stop_on_list(self, list_to_update: [CommandAnalyser]):
-    #     """To remove all too much 0 and add new one till %4 for rainbow fix"""
-    #     new_end = CommandAnalyser(0, [], self.game_data)
-    #     # Must always have a stop at the end, so adding one:
-    #     list_to_update.append(copy.deepcopy(new_end))
-    #     if len(list_to_update) == 1:
-    #         list_to_update[-1].line_index = 0
-    #     else:
-    #         list_to_update[-1].line_index = list_to_update[-2].line_index + 1
-    #     # First do it by removing exceeding of stop
-    #     while len(list_to_update) >= 2 and list_to_update[-1].get_id() == 0 and list_to_update[-2].get_id() == 0:
-    #         del list_to_update[-1]
-    #     # Now compute the size of all command
-    #     section_size = 0
-    #     # Last jump position is to manage the case where you jump in the middle of lots of stop so that you don't remove useful ones.
-    #     last_jump_position = 0
-    #     for command in list_to_update:
-    #         section_size += command.get_size()
-    #         if section_size + command.get_jump_value() > last_jump_position and command.get_jump_value() > 0:
-    #             last_jump_position = section_size + command.get_jump_value()
-    #
-    #     if last_jump_position > 0:
-    #         while section_size <= last_jump_position + 1:
-    #             list_to_update.append(copy.deepcopy(new_end))
-    #             if len(list_to_update) == 1:
-    #                 list_to_update[-1].line_index = 0
-    #             else:
-    #                 list_to_update[-1].line_index = list_to_update[-2].line_index + 1
-    #             section_size += 1
-    #     while section_size % 4 != 0 or section_size == 0:
-    #         list_to_update.append(copy.deepcopy(new_end))
-    #         if len(list_to_update) == 1:
-    #             list_to_update[-1].line_index = 0
-    #         else:
-    #             list_to_update[-1].line_index = list_to_update[-2].line_index + 1
-    #         section_size += 1
-    #     return list_to_update
+    def update_stop(self, ast):
+        """Ensure exactly one stop at the end and size is multiple of 4"""
+        print("update_stop")
+        # First, ensure we have exactly one stop at the end
+        ast = self._ensure_single_trailing_stop(ast)
+        print("ast after removing trailing")
+        print(ast)
+        # Calculate the current size
+        current_size = self._calculate_tree_size(ast)
+        print(f"current_size: {current_size}")
+        # Add padding to make it a multiple of 4
+        padding_needed = (4 - (current_size % 4)) % 4
+        print(f"padding_needed: {padding_needed}")
+
+        if padding_needed > 0:
+            ast = self._add_padding(ast, padding_needed)
+        print("ast at the end")
+        print(ast)
+        return ast
+
+    def _ensure_single_trailing_stop(self, node):
+        """Ensure exactly one Command('stop') at the end of blocks"""
+        if isinstance(node, Block):
+            # Process all statements recursively first
+            processed_statements = []
+            for stmt in node.statements:
+                processed_statements.append(self._ensure_single_trailing_stop(stmt))
+
+            # Remove all trailing stops
+            while processed_statements and self._is_stop_command(processed_statements[-1]):
+                processed_statements.pop()
+
+            # Add exactly one stop at the end
+            processed_statements.append(Command('stop'))
+
+            # Update the node's statements
+            node.statements = processed_statements
+            return node
+
+        elif isinstance(node, IfStatement):
+            # Process then block
+            node.then_block = self._ensure_single_trailing_stop(node.then_block)
+
+            # Process elseif branches
+            for elif_branch in node.elif_branches:
+                elif_branch.block = self._ensure_single_trailing_stop(elif_branch.block)
+
+            # Process else block
+            if node.else_block:
+                node.else_block = self._ensure_single_trailing_stop(node.else_block)
+
+            return node
+
+        # Command nodes are leaf nodes, just return them
+        return node
+
+    def _calculate_tree_size(self, node):
+        """Calculate the total size of the tree based on your rules"""
+        if isinstance(node, Block):
+            # Each statement in the block contributes its size
+            total_size = 0
+            for stmt in node.statements:
+                total_size += self._calculate_tree_size(stmt)
+            return total_size
+
+        elif isinstance(node, IfStatement):
+            # Condition adds 5
+            # ThenBlock adds 3 plus its content
+            size = 5  # for the condition
+
+            # Add size of then block
+            size += 3  # for the ThenBlock wrapper
+            size += self._calculate_tree_size(node.then_block)
+
+            # Add size of elseif branches
+            for elif_branch in node.elif_branches:
+                size += 5  # for the elseif condition
+                size += 3  # for the block wrapper
+                size += self._calculate_tree_size(elif_branch.block)
+
+            # Add size of else block if present
+            if node.else_block:
+                size += 3  # for the else block wrapper
+                size += self._calculate_tree_size(node.else_block)
+
+            return size
+
+        elif isinstance(node, Command):
+            # Each command has at least 1 for the command itself
+            # Plus each parameter adds 1
+            size = 1  # for the command
+
+            if node.params and node.params.params:
+                size += len(node.params.params)
+
+            return size
+
+        elif isinstance(node, Value):
+            # Each Value contributes 1
+            return 1
+
+        elif isinstance(node, ParamList):
+            # ParamList size is the sum of its values
+            size = 0
+            if node.params:
+                for param in node.params:
+                    size += self._calculate_tree_size(param)
+            return size
+
+        # Default for unknown node types
+        return 0
+
+    def _add_padding(self, ast, padding_needed):
+        """Add padding commands to make the size a multiple of 4"""
+        # Create padding commands (could be nop or stop commands)
+        # Let's use stop commands for padding
+        padding_stops = [Command('stop') for _ in range(padding_needed)]
+
+        # If the AST is a Block, add padding to its statements
+        if isinstance(ast, Block):
+            # Remove the last stop (we'll re-add it after padding)
+            if ast.statements and self._is_stop_command(ast.statements[-1]):
+                ast.statements.pop()
+
+            # Add padding stops
+            ast.statements.extend(padding_stops)
+
+            # Add back the final stop
+            ast.statements.append(Command('stop'))
+
+        return ast
+
+    def _is_stop_command(self, node):
+        """Check if a node is a Command('stop')"""
+        return isinstance(node, Command) and node.name.lower() == 'stop'

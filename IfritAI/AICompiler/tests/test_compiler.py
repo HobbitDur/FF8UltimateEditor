@@ -2158,6 +2158,34 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
+    #
+    # def test_if_rainbow_bug(self, compiler: AICompiler):
+    #     source_code_raw = \
+    #         """
+    #         if(222, 200, 0, 1)
+    #         {
+    #             stop;
+    #         }
+    #         stop;
+    #         stop;
+    #         """
+    #     source_code_type = \
+    #         """
+    #         if(varC, Self, ==, 1)
+    #         {
+    #             stop;
+    #         }
+    #         stop;
+    #         stop;
+    #         """
+    #
+    #     code_raw_compiled = compiler.compile(source_code_raw)
+    #     code_type_compiled = compiler.compile(source_code_type)
+    #     expected = [2, 222, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0]
+    #
+    #     assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+    #     assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
     def test_if_else_complexe_case_1(self, compiler: AICompiler):
         source_code_type = \
             """
