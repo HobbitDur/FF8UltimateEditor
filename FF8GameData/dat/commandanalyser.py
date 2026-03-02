@@ -127,6 +127,8 @@ class CommandAnalyser:
         return text
 
     def get_text(self, with_size=True, raw=False, for_code=False, html=False, comment=True, for_decompiled=False):
+        print("get_text")
+        print(f"self.__raw_text: {self.__raw_text}")
         text = self.__raw_text
         parameters = self.__raw_parameters.copy()
 
@@ -157,6 +159,7 @@ class CommandAnalyser:
                 parameters.append(self.PARAM_CHAR_LEFT + str(parameter) + self.PARAM_CHAR_RIGHT)
 
         if html:
+            #print("HTML")
             if for_code:
                 list_comparator_destination = self.game_data.ai_data_json['list_comparator_ifritAI_html']
             else:
@@ -581,8 +584,10 @@ class CommandAnalyser:
         return self.__current_if_type
 
     def __analyse_op_data(self):
+        print("__analyse_op_data")
         self.reset_data()
         op_info = self.__get_op_code_line_info()
+        print(f"op info : {op_info}")
         # Searching for errors in json file
         if len(op_info["param_type"]) != op_info["size"] and op_info['complexity'] == 'simple':
             print(f"Error on JSON for op_code_id: {self.__op_id}")
@@ -851,6 +856,8 @@ class CommandAnalyser:
             else:
                 for i, param_index in enumerate(op_info['param_index']):
                     self.param_possible_list[param_index] = original_param_possible[i]
+            print("Before raw text simple")
+            print(op_info['text'])
             self.__raw_text = op_info['text']
             self.__raw_parameters = param_value
         elif op_info["complexity"] == "complex":

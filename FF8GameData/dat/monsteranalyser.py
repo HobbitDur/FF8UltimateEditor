@@ -265,10 +265,12 @@ class MonsterAnalyser:
         raw_ai_subsection = []
 
         # To fix rainbow, remove excess stop then add to fill % 4
-        self.update_stop(game_data)
+        #self.update_stop(game_data)
         # first computing ai subsection
         for index, section in enumerate(self.battle_script_data['ai_data']):
             if section:  # Ignoring the last section that is empty
+                print(f"Section: {section}")
+
                 raw_ai_subsection.append(bytearray())
                 for command in section:
                     raw_ai_subsection[-1].append(command.get_id())
@@ -644,7 +646,7 @@ class MonsterAnalyser:
         print("set_ai_section_from_bytes")
         print(self.battle_script_data['ai_data'][section_index])
         self.battle_script_data['ai_data'][section_index] = command_list
-        self.update_stop(game_data, section_index)
+        #self.update_stop(game_data, section_index)
         print(self.battle_script_data['ai_data'][section_index])
         return self.battle_script_data['ai_data'][section_index]
 
