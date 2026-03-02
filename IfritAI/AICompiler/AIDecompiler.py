@@ -68,7 +68,6 @@ class AIDecompiler:
                     func_list.append('}')
 
             for i in range(len(else_list_count)):
-                else_list_count[i] -= command.get_size()
                 if else_list_count[i] == 0:
                     func_list.append('}')
 
@@ -132,12 +131,12 @@ class AIDecompiler:
                         # Don't output "else" now, just mark that we expect an elseif
                         pending_elseif = True
                         # Still need to track the else block size for the jump
-                        else_list_count.append(jump_value - 3)  # Don't count JUMP itself
+                        else_list_count.append(jump_value)  # Don't count JUMP itself
                     else:
                         print("regular else")
                         # Regular else
                         last_else = True
-                        else_list_count.append(jump_value - 3)  # Don't count JUMP itself
+                        else_list_count.append(jump_value)  # Don't count JUMP itself
                         func_list.append("else")
                         func_list.append('{')
 
@@ -150,11 +149,17 @@ class AIDecompiler:
                 func_line_text += command.get_param_text()
                 func_list.append(func_line_text)
 
+            print("2")
+            print(f"if_list_count: {if_list_count}")
+            print(f"else_list_count: {else_list_count}")
             # Update else counters (skip the newly added else)
             for i in range(len(else_list_count)):
                 if i == len(else_list_count) - 1 and last_else:
                     continue
                 else_list_count[i] -= command.get_size()
+            print("3")
+            print(f"if_list_count: {if_list_count}")
+            print(f"else_list_count: {else_list_count}")
 
         print("5")
         print(f"if_list_count: {if_list_count}")

@@ -1294,6 +1294,39 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
+    def test_com1(self, decompiler):
+        """Test decompiling if-else statement"""
+        bytecode =  [
+            2, 4, 200, 0, 24, 0, 9, 0,
+            40, 0, 20,
+            40, 2, 20,
+            35, 6, 0,
+            40, 0, 10,
+            40, 2, 10,
+            0]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled if com1 ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(STATUS_OF_SPECIFIC_TARGET,SELF,==,AURA)
+            {
+                statChange(STRENGTH,200%);
+                statChange(MAGIC,200%);
+            }
+            else
+            {
+                statChange(STRENGTH,100%);
+                statChange(MAGIC,100%); 
+            }
+            stop();
+            """
+        )
+        assert expected == normalized
+
     def test_compute_indent_bracket(self, decompiler):
         """Test the compute_indent_bracket static method"""
         func_list = [
