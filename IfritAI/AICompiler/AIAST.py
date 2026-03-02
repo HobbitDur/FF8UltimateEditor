@@ -18,10 +18,11 @@ class ASTNode:
 @dataclass
 class Value(ASTNode):
     value: str
+    size: int = 1
 
     def _to_str(self, indent=0):
         spaces = "  " * indent
-        return f"{spaces}Value('{self.value}')"
+        return f"{spaces}Value('{str(self.value)}, size:{str(self.size)}')"
 
 
 @dataclass

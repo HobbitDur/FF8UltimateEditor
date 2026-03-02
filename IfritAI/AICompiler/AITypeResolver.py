@@ -1,4 +1,6 @@
 # AITypeResolver.py - Complete implementation with error handling
+import copy
+
 from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, \
     ParamSpecialActionError, \
     ParamTargetBasicError, ParamTargetGenericError, ParamTargetSpecificError, ParamTargetSlotError, ParamAptitudeError, ParamSceneOutSlotIdError, \
@@ -342,7 +344,7 @@ class AITypeResolver:
                 subject_id = 10
                 params.insert(0, Value(str(subject_id)))
         if subject_id == -1:
-            subject_id = int(self._resolve_value(params[0], "subject_id"))
+            subject_id = int(self._resolve_value(params[0], "subject_id").value)
         # 2. Get subject info
         subject_info = self.if_subject_map.get(subject_id)
         if not subject_info:
@@ -372,7 +374,7 @@ class AITypeResolver:
         print(f"TUTU: {params}")
 
         if left_type and len(params) == 4:
-            resolved_left = self._resolve_value(params[1], left_type, param_left_list)
+            resolved_left = self._resolve_value(params[1], left_type, param_left_list).value
             resolved_params.append(Value(str(resolved_left)))
         elif not left_type and len(params) == 3:  # Left param is not used
             params.insert(1, Value(str(0)))
@@ -381,12 +383,12 @@ class AITypeResolver:
             params.insert(1, Value(str(param_left_list[0])))
             resolved_params.append(params[1])
         elif not left_type:
-            resolved_left = self._resolve_value(params[1], "int")
+            resolved_left = self._resolve_value(params[1], "int").value
             resolved_params.append(Value(str(resolved_left)))
 
 
         # Comparator
-        resolved_comparator = self._resolve_value(params[2], 'comparator')
+        resolved_comparator = self._resolve_value(params[2], 'comparator').value
         resolved_params.append(Value(str(resolved_comparator)))
 
         # Right condition
@@ -401,14 +403,14 @@ class AITypeResolver:
             except IndexError:
                 raise SubjectIdTenError(str(params[1]))
         if right_type == "const" :  # Left param is not used
-            params.insert(3, Value(str(param_right_list[0])))
+            params.insert(3, Value(str(param_right_list[0]), size=2))
             resolved_params.append(params[3])
         elif right_type:
-            resolved_right = self._resolve_value(params[3], right_type, param_right_list)
-            resolved_params.append(Value(str(resolved_right)))
+            resolved_right = self._resolve_value(params[3], right_type, param_right_list, value_forced_size=2)
+            resolved_params.append(resolved_right)
         elif not right_type:
-            resolved_left = self._resolve_value(params[1], "int")
-            resolved_params.append(Value(str(resolved_left)))
+            resolved_left = self._resolve_value(params[1], "int", value_forced_size=2)
+            resolved_params.append(resolved_left)
 
 
 
@@ -416,7 +418,7 @@ class AITypeResolver:
         node.params = ParamList(params=resolved_params)
         return node
 
-    def _raise_specific_error(self, param_type, value):
+    def _raise_specific_error(self, param_type, value: str):
         """Raise specific error based on parameter type"""
         error_classes = {
             'battle_text': ParamBattleTextError,
@@ -455,41 +457,50 @@ class AITypeResolver:
         resolved = []
         for i, (param, expected_type) in enumerate(zip(params, expected_types)):
             resolved_val = self._resolve_value(param, expected_type)
-            resolved.append(Value(str(resolved_val)))
+            resolved.append(resolved_val)
         return resolved
 
-    def _resolve_value(self, value_node: Value, expected_type: str, param=None):
+    def _resolve_value(self, value_node: Value, expected_type: str, param=None, value_forced_size:int = 1):
         """Resolve a single value based on type. Returns int if resolved, raises error otherwise."""
-        value_str = value_node.value
+        value_resolved = copy.deepcopy(value_node)
         # Removing the "" for string
-        if value_str[0] == "\"" and value_str[-1] == "\"":
-            value_str = value_str[1:-1]
+        if value_node.value[0] == "\"" and value_node.value[-1] == "\"":
+            value_resolved.value = value_node.value[1:-1]
         # Managing hex value
-        if "0x" in value_str:
-            value_str = str(int(value_str, 16))
+        if "0x" in value_node.value:
+            value_resolved.value = str(int(value_node.value, 16))
         # Check if it's a formula type first
+        if expected_type in ("int16", "percent_elem", "hp_percent"):
+            value_resolved.size = 2
+        elif value_forced_size > 0:
+            value_resolved.size = value_forced_size
+        else:
+            value_resolved.size = 1
         if expected_type in self.formula_types:
             if param and expected_type in ("int_shift",):
-                return self.formula_types[expected_type](value_str, param)
+                value_resolved.value = self.formula_types[expected_type](value_resolved.value, param)
+                return value_resolved
             else:
-                return self.formula_types[expected_type](value_str)
+                value_resolved.value = self.formula_types[expected_type](value_resolved.value)
+                return value_resolved
 
         # Check if it's a lookup type
         elif expected_type in self.lookup_types and expected_type in self.type_mappings['type_values']:
             # Look up in type mappings
-            normalized = self._normalize_string(value_str)
+            normalized = self._normalize_string(value_resolved.value)
             mapping = self.type_mappings['type_values'][expected_type]
             # If it's already an integer, check that the ID is a possible value
-            if value_str.isdigit():
-                if int(value_str) in mapping.values():
-                    return value_str
+            if value_resolved.value.isdigit():
+                if int(value_resolved.value) in mapping.values():
+                    return value_resolved
             if normalized in mapping:
-                return mapping[normalized]  # Returns int
+                value_resolved.value = str(mapping[normalized])  # Returns int
+                return value_resolved
             # NOT FOUND - raise error with valid values
-            self._raise_specific_error(expected_type, value_str)
+            self._raise_specific_error(expected_type, value_node.value)
         # Unknown/unexpected type
         else:
-            raise AICodeError(f"Cannot resolve value: '{value_str}"
+            raise AICodeError(f"Cannot resolve value: '{value_node.value}"
                               f"Unknown type: {expected_type}")
 
     def visit_IfStatement(self, node):

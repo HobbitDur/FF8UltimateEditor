@@ -43,155 +43,191 @@ class AICompiler:
         self.generator = AICodeGenerator(game_data)
 
     def compile(self, source_code):
-        print("compile")
+        #print("compile")
         tree = self.parser.parse(source_code)
-        print("tree")
-        print(tree)
+        #print("tree")
+        #print(tree)
         ast = self.transformer.transform(tree)
-        print("ast")
-        print(ast)
+        #print("ast")
+        #print(ast)
 
         resolved_ast = self.type_resolver.resolve(ast)
-        print("resolved_ast")
-        print(resolved_ast)
+        #print("resolved_ast")
+        #print(resolved_ast)
 
         ast_rainbow_fixed = self.update_stop(resolved_ast)
         ff8_assembly = self.generator.generate(ast_rainbow_fixed)
-        print("ff8_assembly")
-        print(ff8_assembly)
+        #print("ff8_assembly")
+        #print(ff8_assembly)
         return ff8_assembly
 
     def update_stop(self, ast):
         """Ensure exactly one stop at the end and size is multiple of 4"""
-        print("update_stop")
-        # First, ensure we have exactly one stop at the end
-        ast = self._ensure_single_trailing_stop(ast)
-        print("ast after removing trailing")
-        print(ast)
+        #print("\n=== UPDATE STOP ===")
+        #print(f"Initial AST: {self._ast_to_string(ast)}")
+
+        # Ensure we have a Block at the top level
+        if not isinstance(ast, Block):
+            #print(f"Root is not a Block, wrapping in Block")
+            ast = Block(statements=[ast])
+
+        # Ensure the top-level block ends with exactly one stop
+        ast = self._ensure_top_level_stop(ast)
+        #print(f"After _ensure_top_level_stop: {self._ast_to_string(ast)}")
+
         # Calculate the current size
         current_size = self._calculate_tree_size(ast)
-        print(f"current_size: {current_size}")
+        #print(f"Current size: {current_size}")
+
         # Add padding to make it a multiple of 4
         padding_needed = (4 - (current_size % 4)) % 4
-        print(f"padding_needed: {padding_needed}")
+        #print(f"Padding needed: {padding_needed}")
 
         if padding_needed > 0:
-            ast = self._add_padding(ast, padding_needed)
-        print("ast at the end")
-        print(ast)
+            ast = self._add_top_level_padding(ast, padding_needed)
+            #print(f"After _add_top_level_padding: {self._ast_to_string(ast)}")
+
+        # Verify final size
+        final_size = self._calculate_tree_size(ast)
+        #print(f"Final size: {final_size} (multiple of 4: {final_size % 4 == 0})")
+        #print("=== END UPDATE STOP ===\n")
+
         return ast
 
-    def _ensure_single_trailing_stop(self, node):
-        """Ensure exactly one Command('stop') at the end of blocks"""
-        if isinstance(node, Block):
-            # Process all statements recursively first
-            processed_statements = []
-            for stmt in node.statements:
-                processed_statements.append(self._ensure_single_trailing_stop(stmt))
+    def _ensure_top_level_stop(self, block):
+        """Ensure the top-level block ends with exactly one stop"""
+        if not isinstance(block, Block):
+            return block
 
-            # Remove all trailing stops
-            while processed_statements and self._is_stop_command(processed_statements[-1]):
-                processed_statements.pop()
+        # Remove all trailing stops from the top level
+        while block.statements and self._is_stop_command(block.statements[-1]):
+            removed = block.statements.pop()
+            #print(f"    Removed top-level stop: {self._ast_to_string(removed)}")
 
-            # Add exactly one stop at the end
-            processed_statements.append(Command('stop'))
+        # Add exactly one stop at the end
+        block.statements.append(Command('stop'))
+        #print(f"    Added final top-level stop")
 
-            # Update the node's statements
-            node.statements = processed_statements
-            return node
+        return block
 
-        elif isinstance(node, IfStatement):
-            # Process then block
-            node.then_block = self._ensure_single_trailing_stop(node.then_block)
+    def _add_top_level_padding(self, block, padding_needed):
+        """Add padding stops to the top-level block only"""
+        #print(f"  _add_top_level_padding: need {padding_needed} padding stops")
 
-            # Process elseif branches
-            for elif_branch in node.elif_branches:
-                elif_branch.block = self._ensure_single_trailing_stop(elif_branch.block)
+        # Create padding commands
+        padding_stops = [Command('stop') for _ in range(padding_needed)]
+        #print(f"    Created {len(padding_stops)} padding stops")
 
-            # Process else block
-            if node.else_block:
-                node.else_block = self._ensure_single_trailing_stop(node.else_block)
+        if not isinstance(block, Block):
+            #print(f"    WARNING: Expected Block, got {type(block)}")
+            return block
 
-            return node
+        # Insert padding stops right before the last statement (which should be the final stop)
+        if block.statements and len(block.statements) >= 1:
+            #print(f"    Inserting {padding_needed} padding stops before last statement")
+            block.statements[-1:-1] = padding_stops
+        else:
+            #print(f"    Block is empty, setting statements to padding + stop")
+            block.statements = padding_stops + [Command('stop')]
 
-        # Command nodes are leaf nodes, just return them
-        return node
+        #print(f"    Block now has {len(block.statements)} statements")
+        return block
 
     def _calculate_tree_size(self, node):
         """Calculate the total size of the tree based on your rules"""
         if isinstance(node, Block):
-            # Each statement in the block contributes its size
-            total_size = 0
+            total = 0
             for stmt in node.statements:
-                total_size += self._calculate_tree_size(stmt)
-            return total_size
+                total += self._calculate_tree_size(stmt)
+            return total
 
         elif isinstance(node, IfStatement):
-            # Condition adds 5
-            # ThenBlock adds 3 plus its content
-            size = 5  # for the condition
-
-            # Add size of then block
-            size += 3  # for the ThenBlock wrapper
+            size = 8  # for the condition
+            # Add size of then block (just its content, no extra for the block itself)
             size += self._calculate_tree_size(node.then_block)
 
             # Add size of elseif branches
             for elif_branch in node.elif_branches:
-                size += 5  # for the elseif condition
-                size += 3  # for the block wrapper
+                size += 8  # for the elseif condition
+                size += 3  # The jump for the elseif
                 size += self._calculate_tree_size(elif_branch.block)
 
             # Add size of else block if present
             if node.else_block:
-                size += 3  # for the else block wrapper
                 size += self._calculate_tree_size(node.else_block)
+                size +=3 # The jump for the else
 
+            if not  node.else_block:
+                size += 3 # Need a endif in this case.
             return size
 
         elif isinstance(node, Command):
-            # Each command has at least 1 for the command itself
-            # Plus each parameter adds 1
-            size = 1  # for the command
-
-            if node.params and node.params.params:
-                size += len(node.params.params)
-
+            size = 1  # for the command itself
+            if node.params:
+                size += self._calculate_tree_size(node.params)
             return size
 
         elif isinstance(node, Value):
-            # Each Value contributes 1
-            return 1
+            return node.size
 
         elif isinstance(node, ParamList):
-            # ParamList size is the sum of its values
             size = 0
             if node.params:
                 for param in node.params:
                     size += self._calculate_tree_size(param)
             return size
 
-        # Default for unknown node types
         return 0
 
-    def _add_padding(self, ast, padding_needed):
-        """Add padding commands to make the size a multiple of 4"""
-        # Create padding commands (could be nop or stop commands)
-        # Let's use stop commands for padding
-        padding_stops = [Command('stop') for _ in range(padding_needed)]
+    def _ast_to_string(self, node, indent=0):
+        """Helper to convert AST to string for #printing"""
+        spaces = "  " * indent
 
-        # If the AST is a Block, add padding to its statements
-        if isinstance(ast, Block):
-            # Remove the last stop (we'll re-add it after padding)
-            if ast.statements and self._is_stop_command(ast.statements[-1]):
-                ast.statements.pop()
+        if isinstance(node, Block):
+            result = f"{spaces}Block:\n"
+            for stmt in node.statements:
+                result += self._ast_to_string(stmt, indent + 1)
+            return result
 
-            # Add padding stops
-            ast.statements.extend(padding_stops)
+        elif isinstance(node, IfStatement):
+            result = f"{spaces}IfStatement:\n"
+            if node.condition:
+                result += f"{spaces}  Condition:\n"
+                result += self._ast_to_string(node.condition, indent + 2)
+            result += f"{spaces}  ThenBlock:\n"
+            result += self._ast_to_string(node.then_block, indent + 2)
+            for i, elif_branch in enumerate(node.elif_branches):
+                result += f"{spaces}  ElseIf {i}:\n"
+                result += self._ast_to_string(elif_branch.block, indent + 2)
+            if node.else_block:
+                result += f"{spaces}  ElseBlock:\n"
+                result += self._ast_to_string(node.else_block, indent + 2)
+            return result
 
-            # Add back the final stop
-            ast.statements.append(Command('stop'))
+        elif isinstance(node, Command):
+            params = ""
+            if node.params and node.params.params:
+                params = "(" + ", ".join([str(p.value) for p in node.params.params]) + ")"
+            return f"{spaces}Command('{node.name}'{params})\n"
 
-        return ast
+        elif isinstance(node, Value):
+            return f"{spaces}Value('{node.value}')\n"
+
+        elif isinstance(node, ParamList):
+            result = f"{spaces}ParamList:\n"
+            for param in node.params:
+                result += self._ast_to_string(param, indent + 1)
+            return result
+
+        elif isinstance(node, list):
+            result = f"{spaces}List [{len(node)} items]:\n"
+            for item in node:
+                result += self._ast_to_string(item, indent + 1)
+            return result
+
+        else:
+            return f"{spaces}{str(node)}\n"
+
 
     def _is_stop_command(self, node):
         """Check if a node is a Command('stop')"""

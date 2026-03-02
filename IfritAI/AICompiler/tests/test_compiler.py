@@ -42,7 +42,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [0x00]
+        expected = [0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -64,7 +64,7 @@ class TestAICompiler:
             print("Text not existing");
             """
         # The expected output
-        expected = [0x01, 0x01]
+        expected = [0x01, 0x01, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -94,7 +94,7 @@ class TestAICompiler:
             prepareMagic(Tutu);
             """
         # The expected output
-        expected = [3, 1]
+        expected = [3, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -124,7 +124,7 @@ class TestAICompiler:
             target(Tutu);
             """
         # The expected output
-        expected = [4, 1]
+        expected = [4, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -154,7 +154,7 @@ class TestAICompiler:
             prepareAnim(-10);
             """
         # The expected output
-        expected = [5, 1]
+        expected = [5, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -173,7 +173,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [6]
+        expected = [6, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -195,7 +195,7 @@ class TestAICompiler:
             prepareMonsterAbility(Tutu);
             """
         # The expected output
-        expected = [7, 3]
+        expected = [7, 3, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -214,7 +214,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [8]
+        expected = [8, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -236,7 +236,7 @@ class TestAICompiler:
             anim(-10);
             """
         # The expected output
-        expected = [9, 1]
+        expected = [9, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -266,7 +266,7 @@ class TestAICompiler:
             useRandom(tutu, tata, toto);
             """
         # The expected output
-        expected = [11, 1, 2, 3]
+        expected = [11, 1, 2, 3,0,0,0,0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -296,7 +296,7 @@ class TestAICompiler:
             use(tutu);
             """
         # The expected output
-        expected = [12, 1]
+        expected = [12, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -326,7 +326,7 @@ class TestAICompiler:
             unknown13(tutu);
             """
         # The expected output
-        expected = [13, 1]
+        expected = [13, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -356,7 +356,7 @@ class TestAICompiler:
             var(GlobalVar80, 10);
             """
         # The expected output
-        expected = [14, 221, 10]
+        expected = [14, 221, 10, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -381,7 +381,7 @@ class TestAICompiler:
              var(varB, "LAST ATTACKER SLOT ID");
             """
         # The expected output
-        expected = [14, 221, 203]
+        expected = [14, 221, 203, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -409,7 +409,7 @@ class TestAICompiler:
             bvar(GlobalVar80, 10);
             """
         # The expected output
-        expected = [15, 96, 10]
+        expected = [15, 96, 10, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -439,7 +439,7 @@ class TestAICompiler:
             gvar(BattleVar96, 10);
             """
         # The expected output
-        expected = [17, 80, 10]
+        expected = [17, 80, 10, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -469,7 +469,7 @@ class TestAICompiler:
             add(GlobalVar80, 10);
             """
         # The expected output
-        expected = [18, 221, 10]
+        expected = [18, 221, 10, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -494,7 +494,7 @@ class TestAICompiler:
              add(varB, "LAST ATTACKER SLOT ID");
             """
         # The expected output
-        expected = [18, 221, 203]
+        expected = [18, 221, 203, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -522,7 +522,7 @@ class TestAICompiler:
             badd(GlobalVar80, 10);
             """
         # The expected output
-        expected = [19, 96, 10]
+        expected = [19, 96, 10, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -552,7 +552,7 @@ class TestAICompiler:
             gadd(BattleVar96, 10);
             """
         # The expected output
-        expected = [21, 80, 10]
+        expected = [21, 80, 10, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -571,7 +571,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [0x16]
+        expected = [0x16, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -595,7 +595,7 @@ class TestAICompiler:
             setEscape(lux_is_op);
             """
         # The expected output
-        expected = [23, 1, 23, 0]
+        expected = [23, 1, 23, 0,0,0,0,0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -625,7 +625,7 @@ class TestAICompiler:
             printSpeed("Text not existing");
             """
         # The expected output
-        expected = [24, 1]
+        expected = [24, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -646,7 +646,7 @@ class TestAICompiler:
             """
 
         # The expected output
-        expected = [25, 1]
+        expected = [25, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -672,7 +672,7 @@ class TestAICompiler:
             printAndLock("Text not existing");
             """
         # The expected output
-        expected = [26, 1]
+        expected = [26, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -693,7 +693,7 @@ class TestAICompiler:
             """
 
         # The expected output
-        expected = [27, 1, 0]
+        expected = [27, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -710,7 +710,7 @@ class TestAICompiler:
             """
 
         # The expected output
-        expected = [28, 2]
+        expected = [28, 2, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -735,7 +735,7 @@ class TestAICompiler:
             leave(8);
             """
         # The expected output
-        expected = [29, 200]
+        expected = [29, 200, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -764,7 +764,7 @@ class TestAICompiler:
             specialAction("nerf lux op champ");
             """
         # The expected output
-        expected = [30, 17]
+        expected = [30, 17, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -784,7 +784,7 @@ class TestAICompiler:
             enter(3);
             """
         # The expected output
-        expected = [31, 3]
+        expected = [31, 3, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -800,7 +800,7 @@ class TestAICompiler:
             waitTextFast(2);
             """
         # The expected output
-        expected = [32, 2]
+        expected = [32, 2, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -826,7 +826,7 @@ class TestAICompiler:
             printAlt("Text not existing");
             """
         # The expected output
-        expected = [34, 1]
+        expected = [34, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -851,7 +851,7 @@ class TestAICompiler:
             jump(10000000000);
             """
         # The expected output
-        expected = [35, 10, 0]
+        expected = [35, 10, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -874,7 +874,7 @@ class TestAICompiler:
             jump(-10000000000);
             """
         # The expected output
-        expected = [35, 246, 255]
+        expected = [35, 246, 255, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -891,7 +891,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [36]
+        expected = [36, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -913,7 +913,7 @@ class TestAICompiler:
             setScanText("Text not existing");
             """
         # The expected output
-        expected = [37, 1]
+        expected = [37, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -943,7 +943,7 @@ class TestAICompiler:
             targetStatus(250, 3, 1, 0);
             """
         # The expected output
-        expected = [38, 0, 200, 3, 1]
+        expected = [38, 0, 200, 3, 1, 0, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -973,7 +973,7 @@ class TestAICompiler:
             autoStatus(2, 2);
             """
         # The expected output
-        expected = [39, 2, 1]
+        expected = [39, 2, 1, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1003,7 +1003,7 @@ class TestAICompiler:
             statChange(Evadeu,60%);
             """
         # The expected output
-        expected = [40, 5, 6]
+        expected = [40, 5, 6, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1022,7 +1022,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [41]
+        expected = [41, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1033,7 +1033,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [42]
+        expected = [42,0,0,0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1055,7 +1055,7 @@ class TestAICompiler:
             targetAllySlot(8);
             """
         # The expected output
-        expected = [43, 1]
+        expected = [43, 1,0,0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1074,7 +1074,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [44]
+        expected = [44,0,0,0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1096,7 +1096,7 @@ class TestAICompiler:
             elemDmgMod(Turlututu, 80);
             """
         # The expected output
-        expected = [45, 2, 100, 0]
+        expected = [45, 2, 100, 0, 0, 0, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1115,7 +1115,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [46]
+        expected = [46,0,0,0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1126,7 +1126,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [47]
+        expected = [47,0,0,0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1137,7 +1137,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [48]
+        expected = [48,0,0,0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1159,7 +1159,7 @@ class TestAICompiler:
             giveGF(50);
             """
         # The expected output
-        expected = [49, 1]
+        expected = [49, 1,0,0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1178,7 +1178,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [50]
+        expected = [50,0,0,0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1189,7 +1189,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [51]
+        expected = [51,0,0,0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1211,7 +1211,7 @@ class TestAICompiler:
             enable(8);
             """
         # The expected output
-        expected = [52, 1]
+        expected = [52, 1,0,0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1241,7 +1241,7 @@ class TestAICompiler:
             loadAndTargetable(8);
             """
         # The expected output
-        expected = [53, 209]
+        expected = [53, 209,0,0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1260,7 +1260,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [54]
+        expected = [54,0,0,0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1282,7 +1282,7 @@ class TestAICompiler:
             giveCard(120);
             """
         # The expected output
-        expected = [55, 2]
+        expected = [55, 2,0,0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1312,7 +1312,7 @@ class TestAICompiler:
             giveItem(220);
             """
         # The expected output
-        expected = [56, 2]
+        expected = [56, 2,0,0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1331,7 +1331,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [57]
+        expected = [57,0,0,0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1353,7 +1353,7 @@ class TestAICompiler:
             targetableSlot(8);
             """
         # The expected output
-        expected = [58, 2]
+        expected = [58, 2,0,0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1383,7 +1383,7 @@ class TestAICompiler:
             assignSlot(8, "FIRST SLOT AVAILABLE");
             """
         # The expected output
-        expected = [59, 2, 0]
+        expected = [59, 2, 0,0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1413,7 +1413,7 @@ class TestAICompiler:
             addMaxHP(-10);
             """
         # The expected output
-        expected = [60, 10]
+        expected = [60, 10,0,0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1432,7 +1432,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [61]
+        expected = [61,0,0,0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1454,7 +1454,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 0, 200, 3, 5, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 0, 200, 3, 5, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1477,7 +1477,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 1, 200, 1, 5, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 1, 200, 1, 5, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1500,7 +1500,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 2, 3, 0, 0, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 2, 3, 0, 0, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1523,7 +1523,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 3, 0, 0, 0, 4, 4, 0, 0, 35, 0, 0]
+        expected = [2, 3, 0, 0, 0, 4, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1546,7 +1546,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 4, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 4, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1569,7 +1569,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 5, 201, 0, 3, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 5, 201, 0, 3, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1592,7 +1592,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 6, 201, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 6, 201, 0, 1, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1615,7 +1615,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 7, 200, 1, 10, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 7, 200, 1, 10, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1638,7 +1638,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 8, 0, 0, 7, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 8, 0, 0, 7, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1661,7 +1661,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 9, 0, 0, 4, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 9, 0, 0, 4, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1684,7 +1684,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 10, 0, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 10, 0, 0, 1, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1707,7 +1707,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 10, 1, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 10, 1, 0, 1, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1730,7 +1730,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 10, 2, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 10, 2, 0, 2, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1753,7 +1753,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 10, 3, 0, 4, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 10, 3, 0, 4, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1776,7 +1776,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 10, 4, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 10, 4, 0, 1, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1799,7 +1799,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 10, 5, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 10, 5, 0, 2, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1822,7 +1822,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 10, 203, 0, 200, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 10, 203, 0, 200, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1845,7 +1845,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 14, 200, 5, 1, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 14, 200, 5, 1, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1868,7 +1868,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 15, 200, 3, 4, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 15, 200, 3, 4, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1891,7 +1891,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 16, 0, 0, 202, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 16, 0, 0, 202, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1915,7 +1915,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 17, 200, 3, 204, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 17, 200, 3, 204, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1938,7 +1938,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 222, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 222, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1961,7 +1961,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 100, 200, 2, 3, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 100, 200, 2, 3, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -1984,7 +1984,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 84, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 84, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -2007,7 +2007,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 220, 203, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        expected = [2, 220, 203, 0, 1, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
@@ -2031,7 +2031,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 3, 0, 40, 5, 6]
+        expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 3, 0, 40, 5, 6, 0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
@@ -2062,7 +2062,7 @@ class TestAICompiler:
              35, 12, 0,
              2, 220, 200, 0, 0, 0, 4, 0,
              8,
-             35, 0, 0]
+             35, 0, 0, 0, 0, 0, 0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
@@ -2090,7 +2090,7 @@ class TestAICompiler:
 
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 15, 0, 2, 220, 200, 0, 0, 0, 4, 0, 8, 35, 3, 0, 40, 5, 6]
+        expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 15, 0, 2, 220, 200, 0, 0, 0, 4, 0, 8, 35, 3, 0, 40, 5, 6, 0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
@@ -2103,7 +2103,8 @@ class TestAICompiler:
             else { statChange(5,6); } 
             """
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 26, 0, 2, 220, 200, 0, 0, 0, 15, 0, 2, 220, 200, 3, 3, 0, 4, 0, 8, 35, 0, 0, 35, 3, 0, 40, 5, 6]
+        expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 26, 0, 2, 220, 200, 0, 0, 0, 15, 0,
+                    2, 220, 200, 3, 3, 0, 4, 0, 8, 35, 0, 0, 35, 3, 0, 40, 5, 6, 0, 0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
     def test_if_elseif2_else(self, compiler: AICompiler):
@@ -2154,7 +2155,7 @@ class TestAICompiler:
             2, 220, 200, 0, 1, 0, 4, 0,
             0,
             35, 3, 0,
-            40, 5, 6]
+            40, 5, 6, 0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
@@ -2238,9 +2239,13 @@ class TestAICompiler:
             """
 
         code_type_compiled = compiler.compile(source_code_type)
-        expected = [2, 100, 200, 3, 99, 0, 20, 0, 2, 101, 200, 5, 4, 0, 9, 0, 15, 100, 99, 15, 101, 0, 35, 0, 0, 35, 100, 0, 14, 227, 0, 18, 227, 203, 2, 227, 200, 1, 64, 0, 86, 0,
-                    2, 6, 200, 2, 1, 0, 75, 0, 1, 0, 2, 6, 200, 0, 3, 0, 34, 0, 2, 2, 3, 0, 0, 0, 6, 0, 15, 100, 0, 35, 17, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 1, 35, 3, 0, 15,
-                    100, 2, 35, 28, 0, 2, 6, 200, 0, 2, 0, 20, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 0, 35, 3, 0, 15, 100, 1, 35, 0, 0, 35, 0, 0, 35, 0, 0]
+        expected = [2, 100, 200, 3, 99, 0, 20, 0, 2, 101, 200, 5, 4, 0, 9, 0, 15, 100, 99, 15,
+                    101, 0, 35, 0, 0, 35, 100, 0, 14, 227, 0, 18, 227, 203, 2, 227, 200, 1, 64, 0,
+                    86, 0, 2, 6, 200, 2, 1, 0, 75, 0, 1, 0, 2, 6, 200, 0, 3, 0, 34, 0,
+                    2, 2, 3, 0, 0, 0, 6, 0, 15, 100, 0, 35, 17, 0, 2, 2, 2, 0, 0, 0,
+                    6, 0, 15, 100, 1, 35, 3, 0, 15,100, 2, 35, 28, 0, 2, 6, 200, 0, 2, 0,
+                    20, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 0, 35, 3, 0, 15, 100, 1, 35,
+                    0, 0, 35, 0, 0, 35, 0, 0, 0, 0, 0, 0]
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
 
@@ -2282,7 +2287,11 @@ class TestAICompiler:
             }
             """
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [2, 100, 200, 3, 99, 0, 17, 0, 2, 101, 200, 5, 4, 0, 6, 0, 15, 100, 99, 35, 0, 0, 35, 70, 0, 14, 227, 0, 2, 227, 200, 1, 64, 0, 59, 0, 2, 6, 200, 2, 1, 0, 48, 0, 14, 220, 0, 2, 6, 200, 0, 3, 0, 34, 0, 2, 2, 3, 0, 0, 0, 6, 0, 15, 100, 0, 35, 17, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 1, 35, 3, 0, 15, 100, 2, 35, 0, 0, 35, 0, 0, 35, 0, 0]
+        expected = [2, 100, 200, 3, 99, 0, 17, 0, 2, 101, 200, 5, 4, 0, 6, 0, 15, 100, 99, 35,
+                    0, 0, 35, 70, 0, 14, 227, 0, 2, 227, 200, 1, 64, 0, 59, 0, 2, 6, 200, 2,
+                    1, 0, 48, 0, 14, 220, 0, 2, 6, 200, 0, 3, 0, 34, 0, 2, 2, 3, 0, 0,
+                    0, 6, 0, 15, 100, 0, 35, 17, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 1,
+                    35, 3, 0, 15, 100, 2, 35, 0, 0, 35, 0, 0, 35, 0, 0, 0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
 
@@ -2555,7 +2564,8 @@ class TestAICompiler:
             35, 0, 0,
             35, 0, 0,
             35, 0, 0,
-            35, 0, 0]
+            35, 0, 0,
+            0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         #assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 if __name__ == "__main__":
