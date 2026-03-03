@@ -94,13 +94,12 @@ class CodeWidget(QWidget):
         self.code_area_widget.setText(self.decompiler.decompile_from_command_list(command_list))
 
     def _compile_ifrit_ai_code_to_command(self):
-        print("_compile_ifrit_ai_code_to_command")
         try:
-            compiled_code = self.compiler.compile(self.code_area_widget.toPlainText())
-            print(compiled_code)
-            decompiled_code = self.decompiler.decompile_bytecode_to_command_list(compiled_code)
-            self._command_list = self.ennemy_data.set_ai_section_from_command_list(decompiled_code, self._current_section_ai_index, self.game_data)
-            print(self._command_list)
+            code = self.code_area_widget.toPlainText()
+            bytecode = self.compiler.compile(code)
+            self._command_list = self.decompiler.decompile_bytecode_to_command_list(bytecode)
+            ai_section = {"bytecode": bytecode, "code": code, "command": self._command_list}
+            self.ennemy_data.set_ai_section(ai_section, self._current_section_ai_index)
             if AICodeError.has_errors():
                 self.show_ai_errors()
             else:

@@ -411,7 +411,7 @@ class IfritAIWidget(QWidget):
 
     def __load_file(self, file_to_load: str = ""):
         print("__load_file")
-        file_to_load = os.path.join("c0m001.dat")  # For developing faster
+        file_to_load = os.path.join("c0m028.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
@@ -419,7 +419,10 @@ class IfritAIWidget(QWidget):
             self._import_md_button.setEnabled(True)
             self._export_md_button.setEnabled(True)
             self.__clear_lines(delete_data=True)
+            print("totototo")
             self.ifrit_manager.init_from_file(file_to_load)
+            print("Turlututu")
+            print(self.ifrit_manager.enemy.battle_script_data['battle_text'])
             self.monster_name_label.setText(
                 "Monster : {}, file: {}".format(self.ifrit_manager.enemy.info_stat_data['monster_name'].get_str(),
                                                 pathlib.Path(file_to_load).name))

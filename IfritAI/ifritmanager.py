@@ -11,6 +11,7 @@ class IfritManager:
 
     def init_from_file(self, file_path):
         self.enemy.load_file_data(file_path, self.game_data)
+        print("tutututu")
         self.enemy.analyse_loaded_data(self.game_data)
 
 

@@ -13,7 +13,7 @@ from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
 
-class AITypeResolver:
+class AICompilerTypeResolver:
     def __init__(self, game_data: GameData, battle_text=(), info_stat_data={}):
         self.game_data = game_data
         self._battle_text = battle_text
@@ -329,12 +329,10 @@ class AITypeResolver:
         return node
 
     def _resolve_if_command(self, node):
-        print("_resolve_if_command")
         """Special handling for IF command based on if_subject structure"""
 
         # Parameters: [subject_id, left_condition, comparator, right_condition]
         params = node.params.params
-        print(f"params: {params}")
         # 1. Resolve subject_id (first parameter)
         ## Managing the subject 10 case not mandatory
         subject_id = -1
@@ -371,8 +369,6 @@ class AITypeResolver:
         resolved_params.append(Value(str(subject_id)))
 
         # Left condition
-        print(f"TUTU: {params}")
-
         if left_type and len(params) == 4:
             resolved_left = self._resolve_value(params[1], left_type, param_left_list).value
             resolved_params.append(Value(str(resolved_left)))
@@ -393,8 +389,6 @@ class AITypeResolver:
 
         # Right condition
         if left_type == "subject10":
-            print("Subject10 left type")
-            print(params[1])
             try:
                 if params[1].value.isdigit():
                     right_type = [x['right_type'] for x in self.game_data.ai_data_json['subject_left_10'] if int(params[1].value) == x['param_id']][0]

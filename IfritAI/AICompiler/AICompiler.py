@@ -6,7 +6,7 @@ from lark import Lark
 from IfritAI.AICompiler.AIAST import Block, Command, IfStatement, Value, ParamList
 from IfritAI.AICompiler.AIASTTransformer import AIASTTransformer
 from IfritAI.AICompiler.AICodeGenerator import AICodeGenerator
-from IfritAI.AICompiler.AITypeResolver import AITypeResolver
+from IfritAI.AICompiler.AICompilerTypeResolver import AICompilerTypeResolver
 
 class AICompiler:
     grammar = r"""
@@ -39,7 +39,7 @@ class AICompiler:
         self.game_data = game_data
         self.parser = Lark(self.grammar, start='start', parser='lalr')
         self.transformer = AIASTTransformer()
-        self.type_resolver = AITypeResolver(game_data,  battle_text, info_stat_data)
+        self.type_resolver = AICompilerTypeResolver(game_data, battle_text, info_stat_data)
         self.generator = AICodeGenerator(game_data)
 
     def compile(self, source_code):

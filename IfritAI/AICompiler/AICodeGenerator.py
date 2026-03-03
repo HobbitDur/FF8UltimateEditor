@@ -53,8 +53,6 @@ class AICodeGenerator:
 
     def visit_IfStatement(self, node):
         """Generate code for an if-statement with optional elseif/else"""
-        print("visit_IfStatement")
-        print(node)
         # For a simple if/else:
         # IF condition jump_over_then
         # then_block
@@ -94,9 +92,7 @@ class AICodeGenerator:
         # Handle else block
         if node.else_block:
             # Calculate size of else block
-            print("else block in if")
             else_block_size = self._calculate_block_size(node.else_block)
-            print(f"elsesize: {else_block_size}")
             # Emit jump to skip else block if we executed then-block or elseif
             self.emit_byte(0x23)  # JUMP opcode
             self.emit_int16_le(else_block_size)
@@ -110,15 +106,6 @@ class AICodeGenerator:
         # If no else block and no elseif, nothing more to do
 
     def _calculate_remaining_size(self, current_elif, remaining_elifs, else_block):
-        if else_block:
-            print("some else block")
-        print("_calculate_remaining_size")
-        print("current_elif")
-        print(current_elif)
-        print("remaining_elifs")
-        print(remaining_elifs)
-        print("else_block")
-        print(else_block)
         current_elif_index = 0
 
         for i in range(len(remaining_elifs)):
@@ -143,7 +130,6 @@ class AICodeGenerator:
             total_size += self._calculate_block_size(else_block)
         else:
             total_size += 3
-        print(f"total_size : {total_size}")
         return total_size
 
     def _emit_condition(self, condition, jump_offset):
@@ -174,8 +160,6 @@ class AICodeGenerator:
                 self.emit_byte(0x00)
 
     def _calculate_block_size(self, block):
-        print("_calculate_block_size")
-        print(block)
         """Calculate the size of a block without emitting bytes"""
         # We need to temporarily capture output to calculate size
         original_output = self.output_bytes
@@ -199,7 +183,6 @@ class AICodeGenerator:
         return block_size
 
     def visit_Command(self, node):
-        print("visit_Command")
         """Generate code for a command"""
         if node.name in self.opcode_map:
             op_info = self.opcode_map[node.name]

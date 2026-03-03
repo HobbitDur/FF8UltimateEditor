@@ -7,7 +7,7 @@ import pytest
 
 from FF8GameData.dat.daterrors import ParamMagicIdError, ParamCountError
 from IfritAI.AICompiler.AIAST import *
-from IfritAI.AICompiler.AITypeResolver import AITypeResolver
+from IfritAI.AICompiler.AITypeResolver import AICompilerTypeResolver
 
 
 class TestAITypeResolution:

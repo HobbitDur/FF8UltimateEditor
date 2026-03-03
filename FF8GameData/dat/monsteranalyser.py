@@ -89,59 +89,6 @@ class MonsterAnalyser:
             print(f"Garbage file {self.origin_file_name}")
             raise GarbageFileError
 
-    def update_stop(self, game_data: GameData, section_index_to_modify=None):
-        print("update_stop")
-        """To remove all too much 0 and add new one till %4 for rainbow fix"""
-        new_end = CommandAnalyser(0, [], game_data, line_index=0)
-
-        for index_section, section in enumerate(self.battle_script_data['ai_data']):
-            if section_index_to_modify is not None and index_section != section_index_to_modify:
-                continue
-            if index_section != len(self.battle_script_data['ai_data']) - 1:  # Last section is actually a fake one for internal purpose
-                # Must always have a stop at the end, so adding one:
-                print("beforepedning")
-                print(self.battle_script_data['ai_data'][1])
-                if not self.battle_script_data['ai_data'][index_section]:
-                    new_end.line_index = 0
-                else:
-                    new_end.line_index = self.battle_script_data['ai_data'][index_section][-1].line_index + 1
-                self.append_command(index_section, copy.deepcopy(new_end))
-                print("afterpending")
-                print(self.battle_script_data['ai_data'][1])
-
-
-                # First do it by removing exceeding of stop
-                while len(section) >= 2 and section[-1].get_id() == 0 and section[-2].get_id() == 0:
-                    self.remove_command(index_section, -1)
-                    section = self.battle_script_data['ai_data'][index_section]
-                # Now compute the size of all command
-                section_size = 0
-                # Last jump position is to manage the case where you jump in the middle of lots of stop so that you don't remove useful ones.
-                last_jump_position = 0
-                for command in section:
-                    section_size += command.get_size()
-                    if section_size + command.get_jump_value() > last_jump_position and command.get_jump_value() > 0:
-                        last_jump_position = section_size + command.get_jump_value()
-
-
-                if last_jump_position > 0:
-                    while section_size <= last_jump_position + 1:
-                        if not self.battle_script_data['ai_data'][index_section]:
-                            new_end.line_index = 0
-                        else:
-                            new_end.line_index = self.battle_script_data['ai_data'][index_section][-1].line_index + 1
-                        self.append_command(index_section, copy.deepcopy(new_end))
-                        section_size += 1
-                while section_size % 4 != 0 or section_size == 0:
-                    if not self.battle_script_data['ai_data'][index_section]:
-                        new_end.line_index = 0
-                    else:
-                        new_end.line_index = self.battle_script_data['ai_data'][index_section][-1].line_index + 1
-                    self.append_command(index_section, copy.deepcopy(new_end))
-                    section_size += 1
-
-
-
     def write_data_to_file(self, game_data: GameData, dat_path):
         raw_data_to_write = bytearray()
 
@@ -258,21 +205,20 @@ class MonsterAnalyser:
         # 3 subsection in section 8: The offset subsection (header), the AI and the texts
 
         self.section_raw_data[8] = bytearray()
-
+        print("Starting section 8 raw data")
         # First computing raw section (offset will be computed after)
         raw_ai_section = bytearray()
         raw_ai_offset = bytearray()
         raw_ai_subsection = []
 
-        # To fix rainbow, remove excess stop then add to fill % 4
-        #self.update_stop(game_data)
+        print(f"battle script data: {self.battle_script_data['ai_data']}")
         # first computing ai subsection
         for index, section in enumerate(self.battle_script_data['ai_data']):
             if section:  # Ignoring the last section that is empty
                 print(f"Section: {section}")
 
                 raw_ai_subsection.append(bytearray())
-                for command in section:
+                for command in section['command']:
                     raw_ai_subsection[-1].append(command.get_id())
                     raw_ai_subsection[-1].extend(command.get_op_code())
 
@@ -604,6 +550,9 @@ class MonsterAnalyser:
             else:
                 self.battle_script_data['battle_text'] = []
 
+        print(f" self.battle_script_data['battle_text']: { self.battle_script_data['battle_text']}")
+        self.decompiler.set_battle_text(self.battle_script_data['battle_text'])
+
         # Reading AI subsection
 
         ## Reading offset
@@ -642,23 +591,21 @@ class MonsterAnalyser:
 
 
 
-    def set_ai_section_from_command_list(self, command_list:List[CommandAnalyser], section_index:int, game_data: GameData):
+    def set_ai_section(self, ai_section:dict, section_index:int):
         print("set_ai_section_from_bytes")
-        print(self.battle_script_data['ai_data'][section_index])
-        self.battle_script_data['ai_data'][section_index] = command_list
-        #self.update_stop(game_data, section_index)
-        print(self.battle_script_data['ai_data'][section_index])
-        return self.battle_script_data['ai_data'][section_index]
+        print(f"tutu 1 : {self.battle_script_data['ai_data'][section_index]}")
+        self.battle_script_data['ai_data'][section_index] = ai_section
+        print(f"tutu 2 : {self.battle_script_data['ai_data'][section_index]}")
 
 
     def insert_command(self, code_section_id: int, command: CommandAnalyser, index_insertion: int = 0):
         # command.line_index = self.battle_script_data['ai_data'][code_section_id][index_insertion].line_index
         # for i in range(index_insertion, len(self.battle_script_data['ai_data'][code_section_id])):
         #    self.battle_script_data['ai_data'][code_section_id][i].line_index += 1
-        self.battle_script_data['ai_data'][code_section_id].insert(index_insertion, command)
+        self.battle_script_data['ai_data'][code_section_id]["command"].insert(index_insertion, command)
 
     def append_command(self, code_section_id: int, command: CommandAnalyser):
-        self.battle_script_data['ai_data'][code_section_id].append(command)
+        self.battle_script_data['ai_data'][code_section_id]["command"].append(command)
 
     def remove_command(self, code_section_id: int, index_removal: int = 0):
-        del self.battle_script_data['ai_data'][code_section_id][index_removal]
+        del self.battle_script_data['ai_data'][code_section_id]["command"][index_removal]

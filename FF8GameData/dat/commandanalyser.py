@@ -43,8 +43,7 @@ class CommandAnalyser:
         if text_param:
             self.__analyse_op_data_with_text_param()
         else:
-            pass
-            #self.__analyse_op_data()
+            self.__analyse_op_data()
 
     def __str__(self):
         return f"Command(id: {self.__op_id}, param: {self.__op_code}, param_type: {self.param_typed}, text: {self.get_text()}, line_index: {self.line_index})"
@@ -861,6 +860,8 @@ class CommandAnalyser:
             self.__raw_text = op_info['text']
             self.__raw_parameters = param_value
         elif op_info["complexity"] == "complex":
+            print("Complex")
+            print(op_info)
             call_function = getattr(self, "_CommandAnalyser__op_" + "{:02}".format(op_info["op_code"]) + "_analysis")
             call_result = call_function(self.__op_code)
             self.__raw_text = call_result[0]
@@ -996,6 +997,8 @@ class CommandAnalyser:
         return [op_info['text'], [element, element_val]]
 
     def __op_02_analysis(self, op_code):
+        print("__op_02_analysis")
+        print(f"op_code: {op_code}")
         # op_02 = ['subject_id', 'left condition (target)', 'comparator', 'right condition 1', 'right condition 2', 'jump1', 'jump2']
         op_info = [x for x in self.game_data.ai_data_json['op_code_info'] if x['op_code'] == 2][0]
         subject_id = op_code[0]
@@ -1049,8 +1052,11 @@ class CommandAnalyser:
                     shift = if_current_subject['param_list'][0]
                     param_left = int(op_code_right_condition_param) + shift
                 elif if_current_subject['param_left_type'] == "const":
+                    print("const")
+                    print(if_current_subject['left_text'])
                     param_left = if_current_subject['left_text']
-                    list_param_possible_left.extend([{"id": if_current_subject['param_list'][0], "data": if_current_subject['left_text']}])
+                    list_param_possible_left.extend([{"id": if_current_subject['param_left_list'][0], "data": if_current_subject['left_text']}])
+                    print(list_param_possible_left)
                 elif if_current_subject['param_left_type'] == "local_var":
                     specific_left_text = if_current_subject["left_text"]
                     subject_id_var = [x['var_name'] for x in self.game_data.ai_data_json['list_var'] if x['op_code'] == subject_id]
@@ -1147,14 +1153,14 @@ class CommandAnalyser:
                     right_subject = {'text': 'ALIVE', 'param': ''}
                 elif right_param_type == "const":
                     right_subject = {'text': if_current_subject['right_text'], 'param': ''}
-                    list_param_possible_right = [{"id": if_current_subject['param_list'][1], "data": if_current_subject['right_text']}]
+                    list_param_possible_right = [{"id": if_current_subject['param_right_list'][1], "data": if_current_subject['right_text']}]
                 elif right_param_type == 'gender':
                     param = [x['type'] for x in self.game_data.ai_data_json["gender_type"] if x['id'] == op_code_right_condition_param]
                     if not param:
                         print(f"Gender {op_code_right_condition_param} not found")
                     right_subject = {'text': '{}', 'param': param[0]}
                     list_param_possible_right = self.__get_possible_gender()
-                elif right_param_type == 'int':
+                elif right_param_type in ('int', "int16"):
                     right_subject = {'text': '{}', 'param': op_code_right_condition_param}
                 elif right_param_type == "special_byte_check":
                     param = [x['data'] for x in self.game_data.ai_data_json['special_byte_check'] if x['id'] == op_code_right_condition_param]

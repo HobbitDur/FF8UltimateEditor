@@ -3,6 +3,7 @@ from math import floor
 
 from openpyxl.styles.builtins import normal
 
+from FF8GameData.GenericSection.ff8text import FF8Text
 from FF8GameData.dat.commandanalyser import CommandAnalyser
 from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, \
     ParamSpecialActionError, \
@@ -17,7 +18,7 @@ from IfritAI.AICompiler.AIAST import *
 
 
 class AIDecompilerTypeResolver:
-    def __init__(self, game_data: GameData, battle_text=(), info_stat_data={}):
+    def __init__(self, game_data: GameData, battle_text:FF8Text = (), info_stat_data={}):
         self.game_data = game_data
         self._battle_text = battle_text
         self._info_stat_data = info_stat_data
@@ -34,6 +35,11 @@ class AIDecompilerTypeResolver:
             ai_data = self.game_data.ai_data_json
             for subject in ai_data.get('if_subject', []):
                 self.if_subject_map[subject['subject_id']] = subject
+
+    def set_battle_text(self, battle_text):
+        self._battle_text = battle_text
+        self.type_mappings = self._build_type_mappings()
+
 
     def _get_lookup_type_categories(self):
         """Define which types require dictionary lookup"""
@@ -117,9 +123,11 @@ class AIDecompilerTypeResolver:
             # Populate known mappings
 
             # battle_text
+            print("battle_text study")
+            print(f"self._battle_text: {self._battle_text}")
             for i, battle_text in enumerate(self._battle_text):
-                normalized = self._normalize_string(battle_text)
-                mappings['type_values']['battle_text'][i] = battle_text
+                #normalized = self._normalize_string(battle_text)
+                mappings['type_values']['battle_text'][i] = battle_text.get_str()
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])
@@ -236,11 +244,8 @@ class AIDecompilerTypeResolver:
 
     def resolve(self, command_list:List[CommandAnalyser]):
         """Resolve command parameters based on command signature"""
-        print("resolve_decompiler")
         for command_index, command in enumerate(command_list):
             cmd_id = command.get_id()
-            print(f"cmd_id: {cmd_id}")
-
             # Handle IF command specially
             if cmd_id == 0x02:
                 self._resolve_if_command(command)
@@ -249,23 +254,16 @@ class AIDecompilerTypeResolver:
                 type_param = []
                 if cmd_id in self.type_mappings['command_signatures']:
                     expected_types = self.type_mappings['command_signatures'][cmd_id]
-                    print(f"expected_types: {expected_types}")
                     ignore_iter = False
 
                     param_list = command.get_op_code()
-                    print(f"param_list: {param_list}")
-                    print(f"self.type_mappings['command_param_index']: {self.type_mappings['command_param_index']}")
                     param_index = self.type_mappings['command_param_index'][cmd_id]
                     param_ordered = [param_list[i] for i in param_index]
-
-                    print(f"param_ordered: {param_list}")
                     for i, op_code in enumerate(param_ordered):
                         if ignore_iter:
                             ignore_iter = False
                             continue
                         if expected_types[i] in ("int16", ):# 2 params
-                            print("int16 expected type")
-                            print(param_list)
                             type_param.append(self._resolve_value(int.from_bytes([op_code,param_list[i+1]], signed=True, byteorder='little') , expected_types[i]))
                             ignore_iter = True
                         else:
@@ -278,7 +276,6 @@ class AIDecompilerTypeResolver:
         print("_resolve_value")
         print(f"expected_type: {expected_type}")
         print(f"value: {value}")
-
         if expected_type in self.lookup_types:
             print(f"self.type_mappings['type_values'][expected_type]: {self.type_mappings['type_values'][expected_type]}")
             return self.type_mappings['type_values'][expected_type][value]
@@ -301,8 +298,6 @@ class AIDecompilerTypeResolver:
 
         # 1. Resolve subject_id (first parameter)
         subject_id = params[0]
-        print(f"subject_id: {subject_id}")
-
         subject_str = self._resolve_value(subject_id, "subject_id")
 
         # 2. Get subject info
@@ -380,8 +375,6 @@ class AIDecompilerTypeResolver:
 
     def _resolve_param_list(self, params, expected_types):
         """Resolve a list of parameters based on expected types"""
-        print("_resolve_param_list")
-        print(params)
         resolved = []
         for i, (param, expected_type) in enumerate(zip(params, expected_types)):
             resolved_val = self._resolve_value(param, expected_type)
