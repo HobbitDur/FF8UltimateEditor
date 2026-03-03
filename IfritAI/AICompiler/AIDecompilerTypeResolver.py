@@ -127,7 +127,10 @@ class AIDecompilerTypeResolver:
             print(f"self._battle_text: {self._battle_text}")
             for i, battle_text in enumerate(self._battle_text):
                 #normalized = self._normalize_string(battle_text)
-                mappings['type_values']['battle_text'][i] = battle_text.get_str()
+                if type(battle_text) == "FF8Text":
+                    mappings['type_values']['battle_text'][i] = battle_text.get_str()
+                if type(battle_text) == "str":
+                    mappings['type_values']['battle_text'][i] = battle_text
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])

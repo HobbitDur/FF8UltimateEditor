@@ -20,7 +20,8 @@ class TestAIDecompiler:
         # Use the actual grammar from AICompiler
         battle_text = ["First battle text", "Second battle text", "Third battle text"]
         info_stat_data = {}  # TODO
-        game_data = GameData(os.path.join("..", "..", "..", "FF8GameData"))
+        #game_data = GameData(os.path.join("..", "..", "..", "FF8GameData"))
+        game_data = GameData(os.path.join("FF8GameData"))
         game_data.load_all()
         decompiler = AIDecompiler(game_data, battle_text, info_stat_data)
         return decompiler
@@ -1141,7 +1142,9 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_if_enc_id(self, decompiler):
+
+
+    def test_if_combat_scene(self, decompiler):
         """Test decompiling if statement"""
         bytecode = [2, 3, 0, 0, 0, 4, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1161,8 +1164,48 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
+    def test_if_status_specific_target(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 4, 203, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
 
-    def test_if_difficulty(self, decompiler):
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(STATUS_OF_SPECIFIC_TARGET, LAST_ATTACKER, ==, PETRIFY)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_status_generic_target(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 4, 201, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(STATUS_OF_SPECIFIC_TARGET, ALLY_TEAM, ==, PETRIFY)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+
+    def test_if_group_level(self, decompiler):
         """Test decompiling if statement"""
         bytecode = [2, 14, 200, 5, 1, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
