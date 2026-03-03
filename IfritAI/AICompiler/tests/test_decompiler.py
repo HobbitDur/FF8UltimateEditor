@@ -1186,7 +1186,7 @@ class TestAIDecompiler:
 
     def test_if_status_generic_target(self, decompiler):
         """Test decompiling if statement"""
-        bytecode = [2, 4, 201, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+        bytecode = [2, 5, 201, 0, 2, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
 
         print(f"\n=== Decompiled ===")
