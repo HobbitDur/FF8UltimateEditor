@@ -85,6 +85,8 @@ class MonsterAnalyser:
             # No need to analyze Section 9 : Sounds
             # No need to analyze Section 10 : Sounds/Unknown
             # No need to analyze Section 11 : Textures
+            print("TOTO")
+            print(self.info_stat_data)
         except IndexError as e:
             print(f"Garbage file {self.origin_file_name}")
             raise GarbageFileError

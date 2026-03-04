@@ -43,7 +43,7 @@ class AICompilerTypeResolver:
             "activate", "aptitude", "magic_type", "gforce",
             "scene_out_slot_id", "slot_id_enable", "assign_slot_id", "slot_id",
             "card", "item", "gender", "special_byte_check", "subject_id", "hp_percent",
-            "subject10", "attack_type", "command_type"
+            "subject10", "attack_type", "command_type",  "subject10_right"
         ]
 
     def _get_formula_type_handlers(self):
@@ -292,6 +292,9 @@ class AICompilerTypeResolver:
             for subject10 in self.game_data.ai_data_json.get('subject_left_10', []):
                 normalized = self._normalize_string(subject10['text'])
                 mappings['type_values']['subject10'][normalized] = subject10['param_id']
+            # subject10_right
+            for subject10_right in self.game_data.ai_data_json.get('subject_left_10', []):
+                mappings['type_values']['subject10'][subject10_right["param_id"]] = subject10_right['right_type']
             # attack_type
             for attack_type in self.game_data.ai_data_json.get('attack_type', []):
                 normalized = self._normalize_string(attack_type['type'])

@@ -108,8 +108,8 @@
    {"subject_id": 15, "short_text": "ALIVE IN SLOT",              "left_text": "ALLY IN SLOT {}",                           "complexity": "complex", "right_text":"ALIVE",          "param_left_type": "const"               , "param_right_type":"slot_id","param_left_list":  [200] },
    {"subject_id": 16, "short_text": "GENDER CHECK",               "left_text": "AT LEAST ONE ENEMY ALIVE HAS GENDER",       "complexity": "simple",  "right_text":"",               "param_left_type": ""                        , "param_right_type":"gender"},
    {"subject_id": 17, "short_text": "GFORCE OBTAINED",            "left_text": "Gforce to be stolen",                       "complexity": "simple",  "right_text":"Not yet stolen", "param_left_type": "const"                   , "param_right_type":"const", "param_left_list":  [200],  "param_right_list":  [204] },
-   {"subject_id": 18, "short_text": "SPECIAL BYTE CHECK",         "left_text": "SPECIAL BYTE CHECK",                        "complexity": "simple",  "right_text":"",               "param_left_type": "int" ,                        "param_right_type":"special_byte_check"},
-   {"subject_id": 19, "short_text": "COUNTDOWN",                  "left_text": "COUNTDOWN",                                 "complexity": "simple",  "right_text":"",               "param_left_type": "int"                        , "param_right_type":"int16"},
+   {"subject_id": 18, "short_text": "SPECIAL BYTE CHECK",         "left_text": "SPECIAL BYTE CHECK",                        "complexity": "simple",  "right_text":"",               "param_left_type": "" ,                        "param_right_type":"special_byte_check"},
+   {"subject_id": 19, "short_text": "COUNTDOWN",                  "left_text": "COUNTDOWN",                                 "complexity": "simple",  "right_text":"",               "param_left_type": ""                        , "param_right_type":""},
    {"subject_id": 20, "short_text": "STATUS OF ALL IN TEAM",      "left_text": "STATUS OF ALL IN {}",                       "complexity": "simple",  "right_text":"",               "param_left_type": "target_advanced_specific" , "param_right_type":"status_ai"},
    {"subject_id": 80, "short_text": "TonberryCount80",            "left_text": "GLOBAL VAR {}",                             "complexity": "simple",  "right_text":"",               "param_left_type": "const"              , "param_right_type":"int16", "param_left_list":  [200]},
    {"subject_id": 81, "short_text": "TonberryCount81",            "left_text": "GLOBAL VAR {}",                             "complexity": "simple",  "right_text":"",               "param_left_type": "const"              , "param_right_type":"int16", "param_left_list":  [200]},
@@ -143,7 +143,7 @@
    {"param_id": 3, "text": "LAST ATTACKER USED COMMAND TYPE", "right_type":"command_type"},
    {"param_id": 4, "text": "LAST ACTION LAUNCH WAS"         , "right_type":"int"},
    {"param_id": 5, "text": "LAST ATTACK WAS OF ELEMENT"     , "right_type":"magic_type"},
-   {"param_id": 203, "text": "LAST ATTACKER c0m ID"         , "right_type":"target_advanced_specific"}
+   {"param_id": 203, "text": "LAST ATTACKER cOm ID"         , "right_type":"target_advanced_specific"}
   ],
   "target_basic": [
     {"param_id": 200, "text": "SELF", "param_type": "", "comment":  ""},

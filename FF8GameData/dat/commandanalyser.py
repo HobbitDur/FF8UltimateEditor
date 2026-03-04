@@ -1153,14 +1153,14 @@ class CommandAnalyser:
                     right_subject = {'text': 'ALIVE', 'param': ''}
                 elif right_param_type == "const":
                     right_subject = {'text': if_current_subject['right_text'], 'param': ''}
-                    list_param_possible_right = [{"id": if_current_subject['param_right_list'][1], "data": if_current_subject['right_text']}]
+                    list_param_possible_right = [{"id": if_current_subject['param_right_list'][0], "data": if_current_subject['right_text']}]
                 elif right_param_type == 'gender':
                     param = [x['type'] for x in self.game_data.ai_data_json["gender_type"] if x['id'] == op_code_right_condition_param]
                     if not param:
                         print(f"Gender {op_code_right_condition_param} not found")
                     right_subject = {'text': '{}', 'param': param[0]}
                     list_param_possible_right = self.__get_possible_gender()
-                elif right_param_type in ('int', "int16"):
+                elif right_param_type in ('int', "int16", "slot_id"):
                     right_subject = {'text': '{}', 'param': op_code_right_condition_param}
                 elif right_param_type == "special_byte_check":
                     param = [x['data'] for x in self.game_data.ai_data_json['special_byte_check'] if x['id'] == op_code_right_condition_param]

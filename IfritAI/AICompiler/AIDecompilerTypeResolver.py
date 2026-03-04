@@ -51,7 +51,8 @@ class AIDecompilerTypeResolver:
             "target_advanced_specific", "comparator", "status_ai",
             "activate", "aptitude", "magic_type", "gforce",
             "scene_out_slot_id", "slot_id_enable", "assign_slot_id", "slot_id",
-            "card", "item", "gender", "special_byte_check", "subject_id", "hp_percent"
+            "card", "item", "gender", "special_byte_check", "subject_id", "hp_percent",
+            "subject10", "attack_type", "command_type", "subject10_right"
         ]
 
     def _get_formula_type_handlers(self):
@@ -127,10 +128,7 @@ class AIDecompilerTypeResolver:
             print(f"self._battle_text: {self._battle_text}")
             for i, battle_text in enumerate(self._battle_text):
                 #normalized = self._normalize_string(battle_text)
-                if type(battle_text) == "FF8Text":
-                    mappings['type_values']['battle_text'][i] = battle_text.get_str()
-                if type(battle_text) == "str":
-                    mappings['type_values']['battle_text'][i] = battle_text
+                mappings['type_values']['battle_text'][i] = battle_text.get_str()
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])
@@ -237,6 +235,21 @@ class AIDecompilerTypeResolver:
             for hp_percent in self.game_data.ai_data_json.get('hp_percent', []):
                 normalized = self._normalize_string(hp_percent['data'])
                 mappings['type_values']['hp_percent'][hp_percent['id']] = normalized
+            # subject10
+            for subject10 in self.game_data.ai_data_json.get('subject_left_10', []):
+                normalized = self._normalize_string(subject10['text'])
+                mappings['type_values']['subject10'][subject10['param_id']] = normalized
+            # subject10_right
+            for subject10_right in self.game_data.ai_data_json.get('subject_left_10', []):
+                mappings['type_values']['subject10_right'][subject10_right['param_id']] = subject10_right['right_type']
+            # attack_type
+            for attack_type in self.game_data.ai_data_json.get('attack_type', []):
+                normalized = self._normalize_string(attack_type['type'])
+                mappings['type_values']['attack_type'][attack_type['id']] = normalized
+            # command_type
+            for command_type in self.game_data.ai_data_json.get('command_type', []):
+                normalized = self._normalize_string(command_type['data'])
+                mappings['type_values']['command_type'][command_type['id']] = normalized
         return mappings
 
     def _normalize_string(self, text):
@@ -291,8 +304,6 @@ class AIDecompilerTypeResolver:
 
     def _resolve_if_command(self, command:CommandAnalyser):
         # Handle other commands
-        type_param = []
-
         if not command.get_op_code() or len(command.get_op_code()) < 7:
             raise ParamCountError(f"IF command expects 7 parameters, got {len(command.get_op_code()) if command.get_op_code() else 0}")
 
@@ -311,6 +322,10 @@ class AIDecompilerTypeResolver:
         # 3. Get parameter types for this subject
         left_type = subject_info.get('param_left_type', '')
         right_type = subject_info.get('param_right_type', '')
+        if subject_id == 10:
+            right_type = self.type_mappings['type_values']['subject10_right'][params[1]]
+
+
 
         # 4. Handle special cases with param_list
         if 'param_list' in subject_info and subject_info['param_list']:

@@ -5,6 +5,8 @@ Tests for AI Decompiler static methods.
 import os
 
 import pytest
+
+from FF8GameData.GenericSection.ff8text import FF8Text
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
@@ -16,13 +18,22 @@ class TestAIDecompiler:
     @pytest.fixture
     def decompiler(self):
         """Create a Lark parser using the grammar from AICompiler"""
-
-        # Use the actual grammar from AICompiler
-        battle_text = ["First battle text", "Second battle text", "Third battle text"]
-        info_stat_data = {}  # TODO
-        #game_data = GameData(os.path.join("..", "..", "..", "FF8GameData"))
-        game_data = GameData(os.path.join("FF8GameData"))
+        game_data = GameData(os.path.join("..", "..", "..", "FF8GameData"))
+        #game_data = GameData(os.path.join("FF8GameData"))
         game_data.load_all()
+        # Use the actual grammar from AICompiler
+        first_battle_text = FF8Text(game_data, 0, bytearray(), 0)
+        first_battle_text.set_str("First battle text")
+        second_battle_text = FF8Text(game_data, 0, bytearray(), 1)
+        second_battle_text.set_str("Second battle text")
+        third_battle_text = FF8Text(game_data, 0, bytearray(), 2)
+        third_battle_text.set_str("Third battle text")
+        bite_bug_text = FF8Text(game_data, 0, bytearray(), 0)
+        bite_bug_text.set_str("Bite Bug")
+        battle_text = [first_battle_text, second_battle_text, third_battle_text]
+        info_stat_data = {'monster_name': bite_bug_text, 'hp': [4, 11, 0, 0], 'str': [30, 5, 6, 130], 'vit': [1, 50, 4, 1], 'mag': [24, 5, 2, 100], 'spr': [1, 6, 2, 1], 'spd': [0, 10, 4, 20], 'eva': [0, 10, 2, 30], 'abilities_low': [{'type': 8, 'animation': 12, 'id': 2}, {'type': 8, 'animation': 12, 'id': 2}, {'type': 8, 'animation': 12, 'id': 2}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}], 'abilities_med': [{'type': 8, 'animation': 12, 'id': 2}, {'type': 8, 'animation': 13, 'id': 110}, {'type': 8, 'animation': 14, 'id': 111}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}], 'abilities_high': [{'type': 8, 'animation': 12, 'id': 2}, {'type': 8, 'animation': 13, 'id': 110}, {'type': 8, 'animation': 14, 'id': 111}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}], 'med_lvl': 20, 'high_lvl': 30, 'byte_flag_0': {'byte0_zz1': 1, 'byte0_zz2': 1, 'byte0_zz3': 0, 'byte0_unused4': 0, 'byte0_unused5': 0, 'byte0_unused6': 0, 'byte0_unused7': 0, 'byte0_unused8': 0}, 'byte_flag_1': {'Zombie': 0, 'Fly': 1, 'byte1_zz1': 0, 'Immune NVPlus_Moins': 0, 'Hidden HP': 0, 'Auto-Reflect': 0, 'Auto-Shell': 0, 'Auto-Protect': 0}, 'card': [2, 2, 56], 'devour': [0, 0, 0], 'byte_flag_2': {'IncreaseSurpriseRNG': 0, 'DecreaseSurpriseRNG': 0, 'SurpriseAttackImmunity': 0, 'IncreaseChanceEscape': 1, 'DecreaseChanceEscape': 0, 'byte2_unused_6': 0, 'Diablos-missed': 0, 'Always obtains card': 0}, 'byte_flag_3': {'byte3_zz1': 0, 'byte3_zz2': 1, 'byte3_zz3': 1, 'byte3_zz4': 0, 'byte3_unused_5': 0, 'byte3_unused_6': 0, 'byte3_unused_7': 0, 'byte3_unused_8': 0}, 'extra_xp': 5, 'xp': 15, 'low_lvl_mag': [{'ID': 1, 'value': 0}, {'ID': 50, 'value': 0}, {'ID': 0, 'value': 0}, {'ID': 0, 'value': 0}], 'med_lvl_mag': [{'ID': 2, 'value': 0}, {'ID': 50, 'value': 0}, {'ID': 0, 'value': 0}, {'ID': 0, 'value': 0}], 'high_lvl_mag': [{'ID': 2, 'value': 0}, {'ID': 50, 'value': 0}, {'ID': 0, 'value': 0}, {'ID': 0, 'value': 0}], 'low_lvl_mug': [{'ID': 109, 'value': 2}, {'ID': 109, 'value': 2}, {'ID': 109, 'value': 2}, {'ID': 109, 'value': 2}], 'med_lvl_mug': [{'ID': 110, 'value': 2}, {'ID': 110, 'value': 2}, {'ID': 110, 'value': 2}, {'ID': 110, 'value': 2}], 'high_lvl_mug': [{'ID': 111, 'value': 2}, {'ID': 111, 'value': 2}, {'ID': 111, 'value': 2}, {'ID': 111, 'value': 2}], 'low_lvl_drop': [{'ID': 109, 'value': 1}, {'ID': 109, 'value': 1}, {'ID': 109, 'value': 2}, {'ID': 109, 'value': 2}], 'med_lvl_drop': [{'ID': 109, 'value': 4}, {'ID': 110, 'value': 1}, {'ID': 110, 'value': 2}, {'ID': 110, 'value': 2}], 'high_lvl_drop': [{'ID': 111, 'value': 1}, {'ID': 111, 'value': 1}, {'ID': 111, 'value': 2}, {'ID': 111, 'value': 2}], 'mug_rate': 50.19607843137255, 'drop_rate': 50.19607843137255, 'padding': 0, 'ap': 1, 'renzokuken': [160, 160, 160, 141, 259, 332, 333, 259], 'elem_def': [100, 200, 100, 100, 100, 200, 100, 100], 'status_def': [30, 20, 30, 20, 20, 40, 30, 20, 0, 10, 50, 0, 0, 20, 30, 0, 40, 0, 20, 0]}
+
+
         decompiler = AIDecompiler(game_data, battle_text, info_stat_data)
         return decompiler
 
@@ -1186,7 +1197,7 @@ class TestAIDecompiler:
 
     def test_if_status_generic_target(self, decompiler):
         """Test decompiling if statement"""
-        bytecode = [2, 5, 201, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+        bytecode = [2, 5, 200, 0, 2, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
 
         print(f"\n=== Decompiled ===")
@@ -1196,7 +1207,230 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(STATUS_OF_SPECIFIC_TARGET, ALLY_TEAM, ==, PETRIFY)
+            if(STATUS_OF_GENERIC_TARGET, ENEMY_TEAM, ==, PETRIFY)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_number_member(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 6, 200, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(NUMBER_OF_MEMBER, ENEMY_TEAM, ==, 2)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+
+    def test_if_level_check(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 7, 220, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(LEVEL_CHECK, SLOT_ID_FROM_VARA, ==, 2)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_dead(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 8, 0, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(DEAD, ==, ZELL)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+
+    def test_if_alive(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 9, 0, 0, 0, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(ALIVE, ==, SQUALL)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_attacker_last_attack_damage_type(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 10, 0, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(ATTACKER, LAST_ATTACK_DAMAGE_TYPE_IS, ==, MAGICAL)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_attacker_last_attacker(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 10, 1, 0, 222, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(ATTACKER, LAST_ATTACKER_IS, ==, SLOT_ID_FROM_VARC)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_attacker_turn_counter(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 10, 2, 0, 5, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(ATTACKER, SELF_TURN_COUNTER_IS, ==, 5)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_attacker_last_attacker_command_type(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 10, 3, 0, 17, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(ATTACKER, LAST_ATTACKER_USED_COMMAND_TYPE, ==, NO_MERCY)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_attacker_last_action_launch(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 10, 4, 0, 17, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(ATTACKER, LAST_ACTION_LAUNCH_WAS, ==, 17)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_attacker_last_attack_element(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 10, 5, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(ATTACKER, LAST_ATTACK_WAS_OF_ELEMENT, ==, THUNDER)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+
+    def test_if_attacker_last_attacker_com_id(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 10, 203, 0, 200, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(ATTACKER, LAST_ATTACKER_COM_ID, ==, SELF)
             {
                 stop();
             }
@@ -1218,6 +1452,129 @@ class TestAIDecompiler:
         expected = self.normalize_code(
             """
             if(GROUP_LEVEL, >=, 1)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+
+    def test_if_alive_in_slot(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 15, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(ALIVE_IN_SLOT, ==, 1)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+
+    def test_if_gender_check(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 16, 0, 0, 202, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(GENDER_CHECK, ==, MALE)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+
+    def test_if_gforce_obtained(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 17, 200, 0, 204, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(GFORCE_OBTAINED, ==)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_special_byte_check(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 18, 2, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(SPECIAL_BYTE_CHECK, ==, ODIN_POSSESS)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_countdown(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 19, 2, 0, 1, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(COUNTDOWN, ==)
+            {
+                stop();
+            }
+            """
+        )
+        assert expected == normalized
+
+    def test_if_status_all_in_team(self, decompiler):
+        """Test decompiling if statement"""
+        bytecode = [2, 20, 221, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("===============================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(STATUS_OF_ALL_IN_TEAM, SLOT_ID_FROM_VARB, ==, PETRIFY)
             {
                 stop();
             }
