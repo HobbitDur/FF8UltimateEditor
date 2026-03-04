@@ -1781,7 +1781,7 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
-    def test_if_last_action_id(self, compiler: AICompiler):
+    def test_if_last_attack_was_of_element(self, compiler: AICompiler):
         source_code_raw = \
             """
             if(10, 5, 0, 2)
@@ -1814,7 +1814,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(LAST_ATTACKER_c0m_ID, ==, Self)
+            if(LAST_ATTACKER_cOm_ID, ==, Self)
             {
                 stop;
             }
