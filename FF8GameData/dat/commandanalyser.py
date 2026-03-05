@@ -722,7 +722,11 @@ class CommandAnalyser:
                         last_line_ability_low = 0
                     nb_abilities = max(nb_ability_high, nb_ability_med, nb_ability_low)
                     last_line_ability_index = max(last_line_ability_high, last_line_ability_med, last_line_ability_low)
+                    print("TOTOTOTOTOTOTOOT")
+                    print(self.info_stat_data['abilities_high'])
+                    print(self.game_data.magic_data_json["magic"])
                     for i in range(last_line_ability_index + 1):
+                        print(f"hey: {i}")
                         if self.info_stat_data['abilities_high'][i] != 0:
                             if self.info_stat_data['abilities_high'][i]['type'] == 2:  # Magic
                                 high_text = self.game_data.magic_data_json["magic"][self.info_stat_data['abilities_high'][i]['id']]['name']
@@ -736,6 +740,7 @@ class CommandAnalyser:
                                 high_text = "Unexpected type ability"
                         else:
                             high_text = "None"
+                        print(f"high_text: {high_text}")
                         if self.info_stat_data['abilities_med'][i] != 0:
                             if self.info_stat_data['abilities_med'][i]['type'] == 2:  # Magic
                                 med_text = self.game_data.magic_data_json["magic"][self.info_stat_data['abilities_med'][i]['id']]['name']
