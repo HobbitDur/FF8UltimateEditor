@@ -32,6 +32,14 @@ class AICompilerTypeResolver:
             for subject in ai_data.get('if_subject', []):
                 self.if_subject_map[subject['subject_id']] = subject
 
+    def set_battle_text_info_stat(self, battle_text, info_stat):
+        if self._battle_text is not None:
+            self._battle_text = battle_text
+        if self._info_stat_data is not None:
+            self._info_stat_data = info_stat
+        self.type_mappings = self._build_type_mappings()
+
+
     def _get_lookup_type_categories(self):
         """Define which types require dictionary lookup"""
         return [

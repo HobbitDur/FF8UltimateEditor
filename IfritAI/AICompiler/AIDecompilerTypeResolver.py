@@ -36,8 +36,12 @@ class AIDecompilerTypeResolver:
             for subject in ai_data.get('if_subject', []):
                 self.if_subject_map[subject['subject_id']] = subject
 
-    def set_battle_text(self, battle_text):
-        self._battle_text = battle_text
+
+    def set_battle_text_info_stat(self, battle_text, info_stat):
+        if self._battle_text is not None:
+            self._battle_text = battle_text
+        if self._info_stat_data is not None:
+            self._info_stat_data = info_stat
         self.type_mappings = self._build_type_mappings()
 
 
@@ -173,7 +177,7 @@ class AIDecompilerTypeResolver:
             for target_dict in self.__get_target_list(advanced=True, specific=True):
                 mappings['type_values']['target_advanced_specific'][target_dict['id']] = self._normalize_string(target_dict['data'])
             # comparator
-            for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator_ifritAI', [])):
+            for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator', [])):
                 mappings['type_values']['comparator'][i] = comp
             # subject_id
             for subject in ai_data.get('if_subject', []):

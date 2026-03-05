@@ -66,6 +66,12 @@ class CommandAnalyser:
         self.__raw_parameters = []
         self.__raw_text_added = []
 
+    def get_comment(self):
+        if self.__comment:
+            return "// " + self.__comment
+        else:
+            return ""
+
     def get_current_if_type(self):
         return self.__current_if_type
 
@@ -125,7 +131,7 @@ class CommandAnalyser:
         print(text)
         return text
 
-    def get_text(self, with_size=True, raw=False, for_code=False, html=False, comment=True, for_decompiled=False):
+    def get_text(self, with_size=True, raw=False, for_code=False, html=False, comment=False, for_decompiled=False):
         print("get_text")
         print(f"self.__raw_text: {self.__raw_text}")
         text = self.__raw_text
@@ -690,6 +696,8 @@ class CommandAnalyser:
                     else:
                         param_value.append("UNKNOWN SPECIAL_ACTION")
                 elif type == "monster_line_ability":
+                    print("monster_line_ability2")
+                    print(self.info_stat_data)
                     possible_ability_values = []
                     nb_ability_high = len([x for x in self.info_stat_data['abilities_high'] if x['id'] != 0])
                     last_line_ability_high = [i for i, x in enumerate(self.info_stat_data['abilities_high']) if x['id'] != 0]
@@ -755,10 +763,12 @@ class CommandAnalyser:
                         else:
                             low_text = "None"
                         text = f"Low - {low_text} | Med - {med_text} | High - {high_text}"
+                        self.__comment = " (" + text + " )<br/>"
                         possible_ability_values.append({'id': i, 'data': text})
                         if self.__op_code[op_index] == i:
                             param_value.append(f"{i}")
                             self.__raw_text_added.append({"id": len(param_value) - 1, "text": " (" + text + " )", "text_html": " (" + text + " )<br/>"})
+
                     if self.__op_code[op_index] == 253:
                         param_value.append(f"{253}")
                         self.__raw_text_added.append({"id": len(param_value) - 1, "text": " (None) ", "text_html": " (None) "})

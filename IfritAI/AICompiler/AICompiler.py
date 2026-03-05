@@ -3,10 +3,12 @@ import os
 import sys
 from lark import Lark
 
+from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import Block, Command, IfStatement, Value, ParamList
 from IfritAI.AICompiler.AIASTTransformer import AIASTTransformer
 from IfritAI.AICompiler.AICodeGenerator import AICodeGenerator
 from IfritAI.AICompiler.AICompilerTypeResolver import AICompilerTypeResolver
+
 
 class AICompiler:
     grammar = r"""
@@ -35,62 +37,80 @@ class AICompiler:
     %ignore C_COMMENT
     """
 
-    def __init__(self, game_data, battle_text=(), info_stat_data={}):
+    def __init__(self, game_data: GameData, battle_text=(), info_stat_data={}):
         self.game_data = game_data
         self.parser = Lark(self.grammar, start='start', parser='lalr')
         self.transformer = AIASTTransformer()
         self.type_resolver = AICompilerTypeResolver(game_data, battle_text, info_stat_data)
         self.generator = AICodeGenerator(game_data)
 
-    def compile(self, source_code):
-        #print("compile")
-        tree = self.parser.parse(source_code)
-        #print("tree")
-        #print(tree)
+    def compile(self, source_code: str):
+        print("Compile")
+        print("Source_code")
+        print(source_code)
+        source_code_cleaned = self.clean_comparator(source_code)
+        print("source_code_cleaned")
+        print(source_code_cleaned)
+        # print("compile")
+        tree = self.parser.parse(source_code_cleaned)
+        # print("tree")
+        # print(tree)
         ast = self.transformer.transform(tree)
-        #print("ast")
-        #print(ast)
+        # print("ast")
+        # print(ast)
 
         resolved_ast = self.type_resolver.resolve(ast)
-        #print("resolved_ast")
-        #print(resolved_ast)
+        # print("resolved_ast")
+        # print(resolved_ast)
 
         ast_rainbow_fixed = self.update_stop(resolved_ast)
         ff8_assembly = self.generator.generate(ast_rainbow_fixed)
-        #print("ff8_assembly")
-        #print(ff8_assembly)
+        # print("ff8_assembly")
+        # print(ff8_assembly)
         return ff8_assembly
+
+    def clean_comparator(self, source_code: str):
+        comparator_single = self.game_data.ai_data_json["list_comparator"]
+        comparator_code_expected = self.game_data.ai_data_json["list_comparator_ifritAI"]
+
+        source_code_cleaned = str(source_code)
+        for index in range(len(comparator_single)):
+            source_code_cleaned = source_code_cleaned.replace(comparator_single[index], comparator_code_expected[index])
+        return source_code_cleaned
+
+    def set_battle_text_info_stat(self, battle_text=None, info_stat=None):
+        self.type_resolver.set_battle_text_info_stat(battle_text, info_stat)
 
     def update_stop(self, ast):
         """Ensure exactly one stop at the end and size is multiple of 4"""
-        #print("\n=== UPDATE STOP ===")
-        #print(f"Initial AST: {self._ast_to_string(ast)}")
+        # print("\n=== UPDATE STOP ===")
+        # print(f"Initial AST: {self._ast_to_string(ast)}")
 
         # Ensure we have a Block at the top level
         if not isinstance(ast, Block):
-            #print(f"Root is not a Block, wrapping in Block")
+            # print(f"Root is not a Block, wrapping in Block")
             ast = Block(statements=[ast])
 
         # Ensure the top-level block ends with exactly one stop
         ast = self._ensure_top_level_stop(ast)
-        #print(f"After _ensure_top_level_stop: {self._ast_to_string(ast)}")
+        # print(f"After _ensure_top_level_stop: {self._ast_to_string(ast)}")
 
         # Calculate the current size
         current_size = self._calculate_tree_size(ast)
-        #print(f"Current size: {current_size}")
+        # print(f"Current size: {current_size}")
 
         # Add padding to make it a multiple of 4
         padding_needed = (4 - (current_size % 4)) % 4
-        #print(f"Padding needed: {padding_needed}")
+        # print(f"Padding needed: {padding_needed}")
 
         if padding_needed > 0:
             ast = self._add_top_level_padding(ast, padding_needed)
-            #print(f"After _add_top_level_padding: {self._ast_to_string(ast)}")
+            # print(f"After _add_top_level_padding: {self._ast_to_string(ast)}")
 
         # Verify final size
         final_size = self._calculate_tree_size(ast)
-        #print(f"Final size: {final_size} (multiple of 4: {final_size % 4 == 0})")
-        #print("=== END UPDATE STOP ===\n")
+        # print(f"Final size: {final_size} (multiple of 4: {final_size % 4 == 0})")
+        # print("=== END UPDATE STOP ===\n")
 
         return ast
 
@@ -102,35 +122,35 @@ class AICompiler:
         # Remove all trailing stops from the top level
         while block.statements and self._is_stop_command(block.statements[-1]):
             removed = block.statements.pop()
-            #print(f"    Removed top-level stop: {self._ast_to_string(removed)}")
+            # print(f"    Removed top-level stop: {self._ast_to_string(removed)}")
 
         # Add exactly one stop at the end
         block.statements.append(Command('stop'))
-        #print(f"    Added final top-level stop")
+        # print(f"    Added final top-level stop")
 
         return block
 
     def _add_top_level_padding(self, block, padding_needed):
         """Add padding stops to the top-level block only"""
-        #print(f"  _add_top_level_padding: need {padding_needed} padding stops")
+        # print(f"  _add_top_level_padding: need {padding_needed} padding stops")
 
         # Create padding commands
         padding_stops = [Command('stop') for _ in range(padding_needed)]
-        #print(f"    Created {len(padding_stops)} padding stops")
+        # print(f"    Created {len(padding_stops)} padding stops")
 
         if not isinstance(block, Block):
-            #print(f"    WARNING: Expected Block, got {type(block)}")
+            # print(f"    WARNING: Expected Block, got {type(block)}")
             return block
 
         # Insert padding stops right before the last statement (which should be the final stop)
         if block.statements and len(block.statements) >= 1:
-            #print(f"    Inserting {padding_needed} padding stops before last statement")
+            # print(f"    Inserting {padding_needed} padding stops before last statement")
             block.statements[-1:-1] = padding_stops
         else:
-            #print(f"    Block is empty, setting statements to padding + stop")
+            # print(f"    Block is empty, setting statements to padding + stop")
             block.statements = padding_stops + [Command('stop')]
 
-        #print(f"    Block now has {len(block.statements)} statements")
+        # print(f"    Block now has {len(block.statements)} statements")
         return block
 
     def _calculate_tree_size(self, node):
@@ -155,10 +175,10 @@ class AICompiler:
             # Add size of else block if present
             if node.else_block:
                 size += self._calculate_tree_size(node.else_block)
-                size +=3 # The jump for the else
+                size += 3  # The jump for the else
 
-            if not  node.else_block:
-                size += 3 # Need a endif in this case.
+            if not node.else_block:
+                size += 3  # Need a endif in this case.
             return size
 
         elif isinstance(node, Command):
@@ -227,7 +247,6 @@ class AICompiler:
 
         else:
             return f"{spaces}{str(node)}\n"
-
 
     def _is_stop_command(self, node):
         """Check if a node is a Command('stop')"""

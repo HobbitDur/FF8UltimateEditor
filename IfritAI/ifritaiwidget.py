@@ -5,9 +5,9 @@ from email.policy import default
 from typing import List
 
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QIcon, QFont
+from PyQt6.QtGui import QIcon, QFont, QShortcut, QKeySequence, QKeyEvent
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QLabel, \
-    QColorDialog, QCheckBox, QMessageBox
+    QColorDialog, QCheckBox, QMessageBox, QApplication
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.dat.daterrors import AICodeError
@@ -166,7 +166,7 @@ class IfritAIWidget(QWidget):
         self.layout_top.addWidget(self.monster_name_label)
         self.layout_top.addStretch(1)
 
-        self.code_widget = CodeWidget(self.ifrit_manager.game_data, current_ai_section=self.script_section.currentIndex(), ennemy_data=self.ifrit_manager.enemy, expert_level=self.expert_selector.currentIndex(),
+        self.code_widget = CodeWidget(self.ifrit_manager.game_data, current_ai_section=self.script_section.currentIndex(), enemy_data=self.ifrit_manager.enemy, expert_level=self.expert_selector.currentIndex(),
                                       code_changed_hook=self.code_expert_changed_hook)
         self.code_widget.hide()
 
@@ -190,6 +190,30 @@ class IfritAIWidget(QWidget):
         self.layout_main.addLayout(self.main_horizontal_layout)
 
         # self.show()
+
+    def keyPressEvent(self, event: QKeyEvent):
+        print("keyPressEvent")
+        # 1. Check if the key combination is exactly Ctrl + C
+        # Note: PyQt6 requires full Enum paths
+        is_ctrl_c = (event.modifiers() == Qt.KeyboardModifier.ControlModifier and
+                     event.key() == Qt.Key.Key_C)
+
+        # 2. Check your specific business logic condition (Index 1)
+        if is_ctrl_c and self.expert_selector.currentIndex() == 1 and self.file_loaded:
+            self._copy_hex()
+            # Mark the event as handled so it doesn't trigger default behavior
+            event.accept()
+            return
+
+            # 3. Fallback: If conditions aren't met, pass the event to the parent class
+        # This ensures Ctrl+C still works normally for other widgets/cases
+        super().keyPressEvent(event)
+
+    def _copy_hex(self):
+        clipboard = QApplication.clipboard()
+
+        hex_data = self.ifrit_manager.enemy.battle_script_data['ai_data'][self.expert_selector.currentIndex()]['bytecode']
+        clipboard.setText(str(hex_data))
 
     def __show_info(self):
         message_box = QMessageBox()
@@ -411,7 +435,7 @@ class IfritAIWidget(QWidget):
 
     def __load_file(self, file_to_load: str = ""):
         print("__load_file")
-        #file_to_load = os.path.join("c0m028.dat")  # For developing faster
+        file_to_load = os.path.join("battle/c0m010.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
@@ -421,6 +445,7 @@ class IfritAIWidget(QWidget):
             self.__clear_lines(delete_data=True)
             print("totototo")
             self.ifrit_manager.init_from_file(file_to_load)
+            self.code_widget.update_after_enemy_data_updated()
             print("Turlututu")
             print(self.ifrit_manager.enemy.battle_script_data['battle_text'])
             self.monster_name_label.setText(

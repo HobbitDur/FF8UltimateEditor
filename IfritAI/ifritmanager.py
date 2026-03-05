@@ -10,9 +10,12 @@ class IfritManager:
         self.enemy = MonsterAnalyser(self.game_data)
 
     def init_from_file(self, file_path):
+        print("init_from_file")
         self.enemy.load_file_data(file_path, self.game_data)
         print("tutututu")
         self.enemy.analyse_loaded_data(self.game_data)
+        print("loaded over")
+        print(self.enemy.info_stat_data)
 
 
     def save_file(self, file_path):

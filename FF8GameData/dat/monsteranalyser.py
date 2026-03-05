@@ -553,7 +553,7 @@ class MonsterAnalyser:
                 self.battle_script_data['battle_text'] = []
 
         print(f" self.battle_script_data['battle_text']: { self.battle_script_data['battle_text']}")
-        self.decompiler.set_battle_text(self.battle_script_data['battle_text'])
+        self.decompiler.set_battle_text_info_stat(self.battle_script_data['battle_text'])
 
         # Reading AI subsection
 
@@ -582,8 +582,8 @@ class MonsterAnalyser:
         list_code = [init_code, ennemy_turn_code, counterattack_code, death_code, before_dying_or_hit_code]
         self.battle_script_data['ai_data'] = []
         for index, code in enumerate(list_code):
-            self.decompiler.battle_text= self.battle_script_data['battle_text']
-            self.decompiler.info_stat= self.info_stat_data
+            self.decompiler._battle_text= self.battle_script_data['battle_text']
+            self.decompiler._info_stat= self.info_stat_data
             print("code before decompiled:")
             print(code)
             command_list_decompiled = self.decompiler.decompile_bytecode_to_command_list(code)

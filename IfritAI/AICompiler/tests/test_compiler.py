@@ -32,9 +32,6 @@ class TestAICompiler:
         compiler = AICompiler(game_data, battle_text, info_stat_data)
         return compiler
 
-
-
-
     def test_stop(self, compiler: AICompiler):
         source_code_raw = \
             """
@@ -266,7 +263,7 @@ class TestAICompiler:
             useRandom(tutu, tata, toto);
             """
         # The expected output
-        expected = [11, 1, 2, 3,0,0,0,0]
+        expected = [11, 1, 2, 3, 0, 0, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -595,7 +592,7 @@ class TestAICompiler:
             setEscape(lux_is_op);
             """
         # The expected output
-        expected = [23, 1, 23, 0,0,0,0,0]
+        expected = [23, 1, 23, 0, 0, 0, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1033,7 +1030,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [42,0,0,0]
+        expected = [42, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1055,7 +1052,7 @@ class TestAICompiler:
             targetAllySlot(8);
             """
         # The expected output
-        expected = [43, 1,0,0]
+        expected = [43, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1074,7 +1071,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [44,0,0,0]
+        expected = [44, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1115,7 +1112,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [46,0,0,0]
+        expected = [46, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1126,7 +1123,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [47,0,0,0]
+        expected = [47, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1137,7 +1134,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [48,0,0,0]
+        expected = [48, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1159,7 +1156,7 @@ class TestAICompiler:
             giveGF(50);
             """
         # The expected output
-        expected = [49, 1,0,0]
+        expected = [49, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1178,7 +1175,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [50,0,0,0]
+        expected = [50, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1189,7 +1186,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [51,0,0,0]
+        expected = [51, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1211,7 +1208,7 @@ class TestAICompiler:
             enable(8);
             """
         # The expected output
-        expected = [52, 1,0,0]
+        expected = [52, 1, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1241,7 +1238,7 @@ class TestAICompiler:
             loadAndTargetable(8);
             """
         # The expected output
-        expected = [53, 209,0,0]
+        expected = [53, 209, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1260,7 +1257,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [54,0,0,0]
+        expected = [54, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1282,7 +1279,7 @@ class TestAICompiler:
             giveCard(120);
             """
         # The expected output
-        expected = [55, 2,0,0]
+        expected = [55, 2, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1312,7 +1309,7 @@ class TestAICompiler:
             giveItem(220);
             """
         # The expected output
-        expected = [56, 2,0,0]
+        expected = [56, 2, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1331,7 +1328,7 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [57,0,0,0]
+        expected = [57, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
@@ -1353,7 +1350,7 @@ class TestAICompiler:
             targetableSlot(8);
             """
         # The expected output
-        expected = [58, 2,0,0]
+        expected = [58, 2, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1383,7 +1380,7 @@ class TestAICompiler:
             assignSlot(8, "FIRST SLOT AVAILABLE");
             """
         # The expected output
-        expected = [59, 2, 0,0]
+        expected = [59, 2, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1413,7 +1410,7 @@ class TestAICompiler:
             addMaxHP(-10);
             """
         # The expected output
-        expected = [60, 10,0,0]
+        expected = [60, 10, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1432,9 +1429,101 @@ class TestAICompiler:
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        expected = [61,0,0,0]
+        expected = [61, 0, 0, 0]
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+
+    def test_html_comparator_equal(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(2, 3, 0, 0)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(RANDOM_VALUE, 3, ⩵, 0)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 2, 3, 0, 0, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_html_comparator_different(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(2, 3, 3, 0)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(RANDOM_VALUE, 3, ≠, 0)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 2, 3, 3, 0, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_html_comparator_inferior_equal(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(2, 3, 4, 0)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(RANDOM_VALUE, 3, ≤, 0)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 2, 3, 4, 0, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+    def test_html_comparator_superior_equal(self, compiler: AICompiler):
+        source_code_raw = \
+            """
+            if(2, 3, 5, 0)
+            {
+                stop;
+            }
+            """
+        source_code_type = \
+            """
+            if(RANDOM_VALUE, 3, ≥, 0)
+            {
+                stop;
+            }
+            """
+
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+        expected = [2, 2, 3, 5, 0, 0, 4, 0, 0, 35, 0, 0, 0, 0, 0, 0]
+
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
     def test_if_hp_specific_target(self, compiler: AICompiler):
         source_code_raw = \
@@ -2035,8 +2124,6 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
-
-
     def test_if_elseif(self, compiler: AICompiler):
         source_code_raw = \
             """
@@ -2066,7 +2153,6 @@ class TestAICompiler:
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
-
     def test_if_elseif_else(self, compiler: AICompiler):
         source_code_raw = \
             """
@@ -2093,7 +2179,6 @@ class TestAICompiler:
         expected = [2, 1, 200, 3, 4, 0, 4, 0, 8, 35, 15, 0, 2, 220, 200, 0, 0, 0, 4, 0, 8, 35, 3, 0, 40, 5, 6, 0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-
 
     def test_if_elseif_else2(self, compiler: AICompiler):
         source_code_raw = \
@@ -2243,11 +2328,10 @@ class TestAICompiler:
                     101, 0, 35, 0, 0, 35, 100, 0, 14, 227, 0, 18, 227, 203, 2, 227, 200, 1, 64, 0,
                     86, 0, 2, 6, 200, 2, 1, 0, 75, 0, 1, 0, 2, 6, 200, 0, 3, 0, 34, 0,
                     2, 2, 3, 0, 0, 0, 6, 0, 15, 100, 0, 35, 17, 0, 2, 2, 2, 0, 0, 0,
-                    6, 0, 15, 100, 1, 35, 3, 0, 15,100, 2, 35, 28, 0, 2, 6, 200, 0, 2, 0,
+                    6, 0, 15, 100, 1, 35, 3, 0, 15, 100, 2, 35, 28, 0, 2, 6, 200, 0, 2, 0,
                     20, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 0, 35, 3, 0, 15, 100, 1, 35,
                     0, 0, 35, 0, 0, 35, 0, 0, 0, 0, 0, 0]
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-
 
     def test_if_else_complexe_case_2(self, compiler: AICompiler):
         source_code_raw = \
@@ -2293,7 +2377,6 @@ class TestAICompiler:
                     0, 6, 0, 15, 100, 0, 35, 17, 0, 2, 2, 2, 0, 0, 0, 6, 0, 15, 100, 1,
                     35, 3, 0, 15, 100, 2, 35, 0, 0, 35, 0, 0, 35, 0, 0, 0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-
 
     def test_if_else_complexe_case_3(self, compiler: AICompiler):
         source_code_raw = """
@@ -2496,38 +2579,38 @@ class TestAICompiler:
                                 """
 
         code_raw_compiled = compiler.compile(source_code_raw)
-        #code_type_compiled = compiler.compile(source_code_type)
+        # code_type_compiled = compiler.compile(source_code_type)
         expected = [
-2, 100, 200, 3, 99, 0, 122, 0,
-	2, 100, 200, 4, 2, 0, 15, 0,
-		2, 101, 200, 5, 4, 0, 4, 0,
-			8,
-		35, 0, 0,
-	35, 96, 0,
-	2, 100, 200, 0, 10, 0, 16, 0,
-		8,
-		2, 101, 200, 5, 2, 0, 4, 0,
-			8,
-		35, 0, 0,
-	35, 72, 0,
-	2, 100, 200, 0, 20, 0, 28, 0,
-		8,
-		2, 101, 200, 4, 5, 0, 4, 0,
-			8,
-		35, 12, 0,
-		2, 101, 200, 5, 6, 0, 4, 0,
-			8,
-		35, 0, 0,
-	35, 36, 0,
-	2, 100, 200, 0, 30, 0, 28, 0,
-		8,
-		2, 101, 200, 4, 3, 0, 4, 0,
-			8,
-		35, 12, 0,
-		2, 101, 200, 5, 6, 0, 4, 0,
-			8,
-		35, 0, 0,
-	35, 0, 0,
+            2, 100, 200, 3, 99, 0, 122, 0,
+            2, 100, 200, 4, 2, 0, 15, 0,
+            2, 101, 200, 5, 4, 0, 4, 0,
+            8,
+            35, 0, 0,
+            35, 96, 0,
+            2, 100, 200, 0, 10, 0, 16, 0,
+            8,
+            2, 101, 200, 5, 2, 0, 4, 0,
+            8,
+            35, 0, 0,
+            35, 72, 0,
+            2, 100, 200, 0, 20, 0, 28, 0,
+            8,
+            2, 101, 200, 4, 5, 0, 4, 0,
+            8,
+            35, 12, 0,
+            2, 101, 200, 5, 6, 0, 4, 0,
+            8,
+            35, 0, 0,
+            35, 36, 0,
+            2, 100, 200, 0, 30, 0, 28, 0,
+            8,
+            2, 101, 200, 4, 3, 0, 4, 0,
+            8,
+            35, 12, 0,
+            2, 101, 200, 5, 6, 0, 4, 0,
+            8,
+            35, 0, 0,
+            35, 0, 0,
             35, 153, 0,  # else
             8,  # die
             2, 2, 3, 0, 0, 0, 144, 0,  # if(2, 3, 0, 0)
@@ -2567,7 +2650,9 @@ class TestAICompiler:
             35, 0, 0,
             0]
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        #assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+        # assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-vv", "-x", "--tb=short"])  # Capture all print
     # pytest.main([__file__, "-v", "-x", "--tb=short", "-s"])

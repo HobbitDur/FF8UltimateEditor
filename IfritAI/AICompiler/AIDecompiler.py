@@ -9,12 +9,17 @@ from IfritAI.AICompiler.AIDecompilerTypeResolver import AIDecompilerTypeResolver
 class AIDecompiler:
     def __init__(self, game_data: GameData, battle_text=(), info_stat={}):
         self.game_data = game_data
-        self.battle_text = battle_text
-        self.info_stat = info_stat
+        self._battle_text = battle_text
+        self._info_stat = info_stat
         self.type_resolver = AIDecompilerTypeResolver(game_data, battle_text, info_stat)
 
-    def set_battle_text(self, battle_text):
-        self.type_resolver.set_battle_text(battle_text)
+    def set_battle_text_info_stat(self, battle_text=None, info_stat=None):
+        if battle_text is not None:
+            self._battle_text = battle_text
+        if info_stat is not None:
+            self._info_stat = info_stat
+        self._battle_text = battle_text
+        self.type_resolver.set_battle_text_info_stat(battle_text, info_stat)
 
     def decompile(self, bytecode: List[int]):
         command_list = self.decompile_bytecode_to_command_list(bytecode)
@@ -37,8 +42,8 @@ class AIDecompiler:
                 end_param = index_read + 1 + op_code_ref['size']
                 param_list = code[start_param:end_param]
                 command = CommandAnalyser(code[index_read], param_list, game_data=self.game_data,
-                                          battle_text=self.battle_text,
-                                          info_stat_data=self.info_stat, color=self.game_data.AIData.COLOR, current_if_type=current_if_type, line_index=len(list_result))
+                                          battle_text=self._battle_text,
+                                          info_stat_data=self._info_stat, color=self.game_data.AIData.COLOR, current_if_type=current_if_type, line_index=len(list_result))
                 current_if_type = command.get_current_if_type()
                 list_result.append(command)
                 index_read += 1 + op_code_ref['size']
@@ -98,6 +103,8 @@ class AIDecompiler:
                     if_list_count.append(jump_value)
                     func_line_text = "if"
                     func_line_text += command.get_param_text()
+                    print("Param text")
+                    print(f"command.get_param_text(): {command.get_param_text()}")
                     func_list.append(func_line_text)
                     func_list.append('{')
 
@@ -133,6 +140,7 @@ class AIDecompiler:
             else:
                 func_line_text = op_info['func_name']
                 func_line_text += command.get_param_text()
+                func_line_text += command.get_comment()
                 func_list.append(func_line_text)
 
             # Update else counters (skip the newly added else)
