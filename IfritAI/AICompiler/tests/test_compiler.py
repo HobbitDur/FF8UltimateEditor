@@ -1535,7 +1535,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(HP_OF_SPECIFIC_TARGET,Self, !=, 50%)
+            if(HP,Self, !=, 50%)
             {
                 stop;
             }
@@ -1558,7 +1558,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(HP_OF_GENERIC_TARGET,enemy_team, <, 50%)
+            if(HP_IN,enemy_team, <, 50%)
             {
                 stop;
             }
@@ -1627,7 +1627,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(STATUS_OF_SPECIFIC_TARGET, Self, ==, Poison)
+            if(STATUS, Self, ==, Poison)
             {
                 stop;
             }
@@ -1650,7 +1650,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(STATUS_OF_GENERIC_TARGET, ally_team, ==, Blind)
+            if(STATUS_IN, ally_team, ==, Blind)
             {
                 stop;
             }
@@ -1673,7 +1673,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(NUMBER_OF_MEMBER, ally_team, ==, 1)
+            if(NUM_ALIVE_IN, ally_team, ==, 1)
             {
                 stop;
             }
@@ -1696,7 +1696,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(LEVEL_CHECK, Self, <, 10)
+            if(LEVEL, Self, <, 10)
             {
                 stop;
             }
@@ -1765,7 +1765,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(LAST_ATTACK_DAMAGE_TYPE_IS, ==, Magical)
+            if(LAST_ACTION_DAMAGE_TYPE, ==, Magical)
             {
                 stop;
             }
@@ -1788,7 +1788,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(LAST_ATTACKER_IS, ==, Zell)
+            if(LAST_ATTACKER, ==, Zell)
             {
                 stop;
             }
@@ -1811,7 +1811,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(SELF_TURN_COUNTER_IS, ==, 2)
+            if(SELF_TURN_COUNTER, ==, 2)
             {
                 stop;
             }
@@ -1834,7 +1834,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(LAST_ATTACKER_USED_COMMAND_TYPE, ==, Item)
+            if(LAST_ACTION_COMMAND, ==, Item)
             {
                 stop;
             }
@@ -1857,7 +1857,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(LAST_ACTION_LAUNCH_WAS, ==, 1)
+            if(LAST_ACTION_ID, ==, 1)
             {
                 stop;
             }
@@ -1880,7 +1880,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(LAST_ATTACK_WAS_OF_ELEMENT, ==, Thunder)
+            if(LAST_ACTION_ELEMENT, ==, Thunder)
             {
                 stop;
             }
@@ -1926,7 +1926,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if("GROUP LEVEL", >=, 1)
+            if("DIFFICULTY", >=, 1)
             {
                 stop;
             }
@@ -1972,7 +1972,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(GENDER_CHECK, ==, Male)
+            if(ALIVE_OF_GENDER, ==, Male)
             {
                 stop;
             }
@@ -1996,7 +1996,7 @@ class TestAICompiler:
         # 204 here should be true
         source_code_type = \
             """
-            if(GFORCE_OBTAINED, !=)
+            if(GFORCE_DRAWABLE, !=)
             {
                 stop;
             }
@@ -2088,7 +2088,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(VARA, LAST_ATTACKER, ==, 1)
+            if(varA, LAST_ATTACKER, ==, 1)
             {
                 stop;
             }
@@ -2108,7 +2108,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
+            if(HP_IN,ENEMY_TEAM, !=, 40%)
             {
                 die;
             }
@@ -2131,7 +2131,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
+            if(HP_IN,ENEMY_TEAM, !=, 40%)
             {
                 die;
             }
@@ -2160,7 +2160,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
+            if(HP_IN,ENEMY_TEAM, !=, 40%)
             {
                 die;
             }
@@ -2210,7 +2210,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
+            if(HP_IN,ENEMY_TEAM, !=, 40%)
             {
                 die;
             }
@@ -2524,35 +2524,35 @@ class TestAICompiler:
                                 else
                                 {
                                     die;
-                                    if(RANDOM_VALUE, 3, ==, 0)
+                                    if(RANDOM, 3, ==, 0)
                                     {
-                                        if(ALIVE_IN_TEAM, ALLY_TEAM, !=, 1)
+                                        if(NUM_ALIVE_IN, ALLY_TEAM, !=, 1)
                                         {
-                                            if(HP_IN_TEAM, "G-Soldier", >,  0%)
+                                            if(HP_IN, "G-Soldier", >,  0%)
                                             {
-                                                if(IS_ALIVE, !=, "Elite Soldier")
+                                                if(ALIVE, !=, "Elite Soldier")
                                                 {
                                                     if(varH, Self, <, 64)
                                                     {
-                                                        if(ALIVE_IN_TEAM, ENEMY_TEAM, >, 1)
+                                                        if(NUM_ALIVE_IN, ENEMY_TEAM, >, 1)
                                                         {
                                                             die;
-                                                            if(ALIVE_IN_TEAM, ENEMY_TEAM, ==, 3)
+                                                            if(NUM_ALIVE_IN, ENEMY_TEAM, ==, 3)
                                                             {
                                                                 die;
-                                                                if(RANDOM_VALUE, 3, ==, 0)
+                                                                if(RANDOM, 3, ==, 0)
                                                                 {
                                                                     die;
                                                                 }
-                                                                elseif(RANDOM_VALUE, 2, ==, 0)
+                                                                elseif(RANDOM, 2, ==, 0)
                                                                 {
                                                                     die;
                                                                 }
                                                             }
-                                                            elseif(ALIVE_IN_TEAM, ENEMY_TEAM, ==, 2)
+                                                            elseif(NUM_ALIVE_IN, ENEMY_TEAM, ==, 2)
                                                             {
                                                                 die;
-                                                                if(RANDOM_VALUE, 2, ==, 0)
+                                                                if(RANDOM, 2, ==, 0)
                                                                 {
                                                                     die;
                                                                 }
