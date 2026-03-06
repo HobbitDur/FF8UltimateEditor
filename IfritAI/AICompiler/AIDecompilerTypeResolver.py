@@ -177,7 +177,7 @@ class AIDecompilerTypeResolver:
             for target_dict in self.__get_target_list(advanced=True, specific=True):
                 mappings['type_values']['target_advanced_specific'][target_dict['id']] = self._normalize_string(target_dict['data'])
             # comparator
-            for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator', [])):
+            for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator_ifritAI_html', [])):
                 mappings['type_values']['comparator'][i] = comp
             # subject_id
             for subject in ai_data.get('if_subject', []):
