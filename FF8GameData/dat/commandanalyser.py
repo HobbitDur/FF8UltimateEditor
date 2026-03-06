@@ -1040,7 +1040,7 @@ class CommandAnalyser:
             left_subject = {'text': 'UNKNOWN SUBJECT', 'param': None}
             right_subject = {'text': '{}', 'param': [op_code_right_condition_param]}
             print(f"Unexpected subject id: {subject_id}")
-
+        param_left = None
         # Analysing left subject
         if if_current_subject:
             specific_left_text = ""
@@ -1068,7 +1068,6 @@ class CommandAnalyser:
                 elif if_current_subject['param_left_type'] == "const":
                     print("const")
                     print(if_current_subject['left_text'])
-                    param_left = ""# if_current_subject['left_text']
                     list_param_possible_left.extend([{"id": if_current_subject['param_left_list'][0], "data": if_current_subject['left_text']}])
                     print(list_param_possible_left)
                 elif if_current_subject['param_left_type'] == "local_var":
@@ -1138,6 +1137,8 @@ class CommandAnalyser:
                     sum_text = ""
                     list_param_possible_left.extend(
                         [{'id': x['param_id'], 'data': [sum_text + y for y in x['text']][-1]} for x in self.game_data.ai_data_json['subject_left_10']])
+                elif if_current_subject['param_left_type'] == "unused":
+                    pass
                 elif if_current_subject['param_left_type'] == "":
                     param_left = "UNKNOWN {}".format(op_code_left_condition_param)
                 else:
@@ -1153,7 +1154,10 @@ class CommandAnalyser:
             else:
                 print(f"Unexpected complexity: {if_current_subject["complexity"]}")
                 param_left = op_code_left_condition_param
-            if not specific_left_text:
+            if not specific_left_text and not param_left:
+                specific_left_text = "{}"
+                param_left = if_current_subject["left_text"]
+            elif not specific_left_text and param_left:
                 specific_left_text = if_current_subject["left_text"]
             left_subject = {'text': specific_left_text, 'param': param_left}
             print("GHGHGH")

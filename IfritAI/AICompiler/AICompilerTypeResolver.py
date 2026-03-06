@@ -389,6 +389,9 @@ class AICompilerTypeResolver:
         elif left_type == "const" :  # Left param is not used
             params.insert(1, Value(str(param_left_list[0])))
             resolved_params.append(params[1])
+        elif left_type == "unused" :  # Left param is not used
+            params.insert(1, Value(str(0)))
+            resolved_params.append(params[1])
         elif not left_type:
             resolved_left = self._resolve_value(params[1], "int").value
             resolved_params.append(Value(str(resolved_left)))
