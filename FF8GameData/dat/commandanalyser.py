@@ -66,11 +66,6 @@ class CommandAnalyser:
         self.__raw_parameters = []
         self.__raw_text_added = []
 
-    def get_comment(self):
-        if self.__comment:
-            return "// " + self.__comment
-        else:
-            return ""
 
     def get_current_if_type(self):
         return self.__current_if_type
@@ -131,37 +126,28 @@ class CommandAnalyser:
         print(text)
         return text
 
-    def get_text(self, with_size=True, raw=False, for_code=False, html=False, comment=False, for_decompiled=False):
+    def get_text(self, with_size=True, raw=False, for_legacy_code=False, html=False, comment=False, for_code=False, for_code_full=False):
         print("get_text")
         print(f"self.__raw_text: {self.__raw_text}")
         text = self.__raw_text
         parameters = self.__raw_parameters.copy()
 
-        if for_decompiled:
-            print("for_decompiled")
-            if self.__op_id == 2:
-                print(parameters)
-                del parameters[-1]
-            text = "("
-            for i, param in enumerate(parameters):
-                if i < len(parameters)-1:
-                    text += f"{self._normalize_string(param)}, "
-                else:
-                    text += f"{self._normalize_string(param)}"
-            text+=")"
-            if self.__op_id != 2:
-                text += ";"
-            list_comparator_destination = self.game_data.ai_data_json['list_comparator_ifritAI_html']
-            for i in range(len(list_comparator_destination)):
-                text = text.replace(self.game_data.ai_data_json['list_comparator'][i], list_comparator_destination[i])
-            if not self.__comment:
-                text += " // " + self.get_text(for_code=True, html=True)
-            return text
+        # If there is already a comment existing, just return it for the code without much process.
+        if for_code and self.__comment:
+            return "//" + self.__comment
+        # For ifrit AI code, we only text the added text, not the line description itself.
+        if for_code and not for_code_full:
+            text = ""
+
+        if for_legacy_code:
+            parameters = []
+            for parameter in self.__raw_parameters:
+                parameters.append(self.PARAM_CHAR_LEFT + str(parameter) + self.PARAM_CHAR_RIGHT)
 
         if for_code:
             parameters = []
             for parameter in self.__raw_parameters:
-                parameters.append(self.PARAM_CHAR_LEFT + str(parameter) + self.PARAM_CHAR_RIGHT)
+                parameters.append(str(parameter))
 
         if html:
             #print("HTML")
@@ -177,21 +163,30 @@ class CommandAnalyser:
             for i in range(len(parameters)):
                 parameters[i] = '<span style="color:' + self.__color_param + ';">' + parameters[i] + '</span>'
 
+
         for i in range(len(parameters)):  # Adding special text computation
+            print("turlutututu")
+            print(f"parameters: {parameters}")
+            print(f"self.__raw_text_added: {self.__raw_text_added}")
             for text_added in self.__raw_text_added:
                 if text_added['id'] == i:
                     if html:
                         parameters[i] = str(parameters[i]) + text_added['text_html']
                     else:
                         parameters[i] = str(parameters[i]) + text_added['text']
+                    if for_code:
+                        text += text_added['text']
+
         if not raw:
             text = text.format(*parameters)
+        if for_code and text:
+            text =  " // " + text
         if with_size:
             text += " (size:{}bytes)".format(self.__size)
         if comment and self.__comment:
             text += "//" + self.__comment
         # Removing return line as we compute line by line
-        if for_code:
+        if for_legacy_code:
             text = text.replace('<br/>', '')
             text = text.replace('<br>', '')
 
@@ -768,8 +763,10 @@ class CommandAnalyser:
                         else:
                             low_text = "None"
                         text = f"Low - {low_text} | Med - {med_text} | High - {high_text}"
-                        self.__comment = " (" + text + " )<br/>"
                         possible_ability_values.append({'id': i, 'data': text})
+                        print('monster line comment possible')
+                        print(f"self.param_typed: {self.param_typed}")
+                        print(f"self.__raw_text_added: {self.__raw_text_added}")
                         if self.__op_code[op_index] == i:
                             param_value.append(f"{i}")
                             self.__raw_text_added.append({"id": len(param_value) - 1, "text": " (" + text + " )", "text_html": " (" + text + " )<br/>"})
@@ -879,6 +876,8 @@ class CommandAnalyser:
             print(op_info)
             call_function = getattr(self, "_CommandAnalyser__op_" + "{:02}".format(op_info["op_code"]) + "_analysis")
             call_result = call_function(self.__op_code)
+            print("call_result")
+            print(call_result)
             self.__raw_text = call_result[0]
             self.__raw_parameters = [str(x) for x in call_result[1]]
         self.__size = op_info['size'] + 1
@@ -1069,7 +1068,7 @@ class CommandAnalyser:
                 elif if_current_subject['param_left_type'] == "const":
                     print("const")
                     print(if_current_subject['left_text'])
-                    param_left = if_current_subject['left_text']
+                    param_left = ""# if_current_subject['left_text']
                     list_param_possible_left.extend([{"id": if_current_subject['param_left_list'][0], "data": if_current_subject['left_text']}])
                     print(list_param_possible_left)
                 elif if_current_subject['param_left_type'] == "local_var":
@@ -1157,6 +1156,8 @@ class CommandAnalyser:
             if not specific_left_text:
                 specific_left_text = if_current_subject["left_text"]
             left_subject = {'text': specific_left_text, 'param': param_left}
+            print("GHGHGH")
+            print(left_subject)
 
         # Analysing right subject
         if if_current_subject:
@@ -1264,6 +1265,9 @@ class CommandAnalyser:
                 print(f"Unexpected right_param_type: {right_param_type}")
                 right_subject = {'text': '{}', 'param': op_code_right_condition_param}
 
+        print("jkjkjkj")
+        print(f"left_subject['text']: {left_subject['text']}")
+        print(f"right_subject['text']: {right_subject['text']}")
         if_text = if_text.format('{}', left_subject['text'], '{}', right_subject['text'], '{}')
 
         # right_subject_text = right_subject['text'].format(*right_subject['param'])

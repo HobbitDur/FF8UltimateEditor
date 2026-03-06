@@ -140,7 +140,8 @@ class AIDecompiler:
             else:
                 func_line_text = op_info['func_name']
                 func_line_text += command.get_param_text()
-                func_line_text += command.get_comment()
+                print("Getting comment before")
+                func_line_text += command.get_text(with_size=False, for_code=True)
                 func_list.append(func_line_text)
 
             # Update else counters (skip the newly added else)
