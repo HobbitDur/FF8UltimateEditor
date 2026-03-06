@@ -12,10 +12,10 @@ class FF8Text(Section):
         self.type = SectionType.FF8_TEXT
 
     def __str__(self):
-        return f"FF8Text({self._text_str})"  # - Hex: {self._data_hex.hex(sep=" ")}"
+        return self.get_str()
 
     def __repr__(self):
-        return self.__str__()
+        return f"FF8Text({self._text_str})"  # - Hex: {self._data_hex.hex(sep=" ")}"
 
     def __add__(self, other):
         if self.own_offset <= other.own_offset:

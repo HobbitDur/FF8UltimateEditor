@@ -99,16 +99,22 @@ class CodeWidget(QWidget):
         self._command_list = command_list
         self.code_area_widget.setText(self.decompiler.decompile_from_command_list(command_list))
 
+    def get_ifrit_ai_code_from_command(self, command_list: List[CommandAnalyser]):
+        return self.decompiler.decompile_from_command_list(command_list)
+
+    @staticmethod
+    def get_ai_section_from_code(code, enemy_data: MonsterAnalyser, compiler, decompiler, current_section_ai_index):
+        bytecode = compiler.compile(code)
+        command_list = decompiler.decompile_bytecode_to_command_list(bytecode)
+        ai_section = {"bytecode": bytecode, "code": code, "command": command_list}
+        enemy_data.set_ai_section(ai_section, current_section_ai_index)
+        return ai_section
+
     def _compile_ifrit_ai_code_to_command(self):
         print("_compile_ifrit_ai_code_to_command")
-        print(self.enemy_data.info_stat_data)
-        print(self.decompiler._info_stat)
         try:
             code = self.code_area_widget.toPlainText()
-            bytecode = self.compiler.compile(code)
-            self._command_list = self.decompiler.decompile_bytecode_to_command_list(bytecode)
-            ai_section = {"bytecode": bytecode, "code": code, "command": self._command_list}
-            self.enemy_data.set_ai_section(ai_section, self._current_section_ai_index)
+            self._command_list = self.get_ai_section_from_code(code, self.enemy_data, self.compiler, self.decompiler,  self._current_section_ai_index)["command"]
             if AICodeError.has_errors():
                 self.show_ai_errors()
             else:

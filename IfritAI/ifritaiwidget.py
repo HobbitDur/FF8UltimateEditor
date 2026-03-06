@@ -349,6 +349,8 @@ class IfritAIWidget(QWidget):
         remove_button.setFixedSize(40, 40)
         remove_button.clicked.connect(lambda: self.__remove_line(command, delete_data=True))
         # Creating new element to list
+        print("BNBNBNBN")
+        print(command)
         self.add_button_widget.insert(command.line_index, add_button)
         self.remove_button_widget.insert(command.line_index, remove_button)
         command_widget = CommandWidget(command, self.expert_selector.currentIndex(), self.hex_selector.isChecked())
@@ -516,8 +518,7 @@ class IfritAIWidget(QWidget):
             self.ifrit_manager.enemy.ai = self.ifrit_manager.enemy.battle_script_data['ai_data']
             self.__setup_section_data()
 
-    @staticmethod
-    def create_ai_data_from_md(md_file: str, game_data:GameData, enemy: MonsterAnalyser, ai_data):
+    def create_ai_data_from_md(self, md_file: str, game_data:GameData, enemy: MonsterAnalyser, ai_data):
         if md_file:
             with open(md_file, 'r', encoding='utf-8') as file:
                 content = file.read()
@@ -525,7 +526,11 @@ class IfritAIWidget(QWidget):
             code_blocks = re.findall(r'```.*?\n(.*?)\n```', content, re.DOTALL)
             # Analyse code
             for index_code, code in enumerate(code_blocks):
-                ai_data[index_code] = CodeAnalyser.compute_ifrit_ai_code_to_command(game_data, enemy, code)
+                if self.expert_selector.currentIndex() == 3:  # For legacy we create md with legacy code, but for other we create md for the new one.
+                    ai_data[index_code] = CodeAnalyser.compute_ifrit_ai_legacy_code_to_command(game_data, enemy, code)
+                else:
+                    ai_data[index_code] = self.code_widget.get_ai_section_from_code(code, enemy, self.code_widget.compiler, self.code_widget.decompiler, index_code)
+
 
 
     def _export_md_file(self):
@@ -535,8 +540,7 @@ class IfritAIWidget(QWidget):
         if md_file_to_export:
             self.create_md_from_ai_data(md_file_to_export, self.ifrit_manager.game_data, self.ifrit_manager.enemy.battle_script_data['ai_data'])
 
-    @staticmethod
-    def create_md_from_ai_data(md_file: str, game_data: GameData, ai_data):
+    def create_md_from_ai_data(self, md_file: str, game_data: GameData, ai_data):
         section_text = ["# Init code", "# Enemy turn", "# Counter-attack", "# Death", "# Before dying or taking a hit"]
         code_text = ""
         for index_section, section in enumerate(ai_data):
@@ -544,7 +548,12 @@ class IfritAIWidget(QWidget):
                     ai_data) - 1:  # Ignore last section that is just an empty one to know when it's the end
                 break
             code_text += section_text[index_section] + "\n```\n"
-            code_text += CodeAnalyser.set_ifrit_ai_code_from_command(game_data, section)
+            if self.expert_selector.currentIndex() == 3: # For legacy we create md with legacy code, but for other we create md for the new one.
+                code_text += CodeAnalyser.set_ifrit_ai_legacy_code_from_command(game_data, section['command'])
+            else:
+                print("qsqsqsqs")
+                print(f"section: {section}")
+                code_text += self.code_widget.get_ifrit_ai_code_from_command(section['command'])
             code_text += "```\n\n"
         soup = BeautifulSoup(code_text, "html.parser")
         for br in soup.find_all("br"):
