@@ -132,7 +132,7 @@ class TestAIDecompiler:
 
                             for param in params:
                                 is_number = param.isdigit() or param.replace('.', '', 1).isdigit()
-                                is_operator = param in ['!=', '==', '>=', '<=', '>', '<', '=', '+', '-', '*', '/', '&&', '||']
+                                is_operator = param in ['≠', '==', '≥', '≤', '>', '<', '=', '+', '-', '*', '/', '&&', '||']
 
                                 if not is_number and not is_operator:
                                     normalized_params.append(self._normalize_string(param))
@@ -727,7 +727,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            targetStatus(ENEMY_TEAM, !=, Poison, False);
+            targetStatus(ENEMY_TEAM, ≠, Poison, False);
             """
         )
         assert expected == normalized
@@ -1104,7 +1104,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(HP_OF_SPECIFIC_TARGET,SELF, !=, 50%)
+            if(HP,SELF, ≠, 50%)
             {
                 stop();
             }
@@ -1124,7 +1124,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(HP_OF_GENERIC_TARGET,enemy_team, <, 50%)
+            if(HP_IN,enemy_team, <, 50%)
             {
                 stop();
             }
@@ -1144,7 +1144,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(RANDOM_VALUE, 3, ==, 0)
+            if(RANDOM, 3, ⩵, 0)
             {
                 stop();
             }
@@ -1167,7 +1167,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(COMBAT_SCENE, ==, 1024)
+            if(ENCOUNTER_ID, ⩵, 1024)
             {
                 stop();
             }
@@ -1187,7 +1187,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(STATUS_OF_SPECIFIC_TARGET, LAST_ATTACKER, ==, PETRIFY)
+            if(STATUS, LAST_ATTACKER, ⩵, PETRIFY)
             {
                 stop();
             }
@@ -1207,7 +1207,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(STATUS_OF_GENERIC_TARGET, ENEMY_TEAM, ==, PETRIFY)
+            if(STATUS_IN, ENEMY_TEAM, ⩵, PETRIFY)
             {
                 stop();
             }
@@ -1227,7 +1227,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(NUMBER_OF_MEMBER, ENEMY_TEAM, ==, 2)
+            if(NB_ALIVE_IN, ENEMY_TEAM, ⩵, 2)
             {
                 stop();
             }
@@ -1248,7 +1248,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(LEVEL_CHECK, SLOT_ID_FROM_VARA, ==, 2)
+            if(LEVEL, VARA_SLOT_ID, ⩵, 2)
             {
                 stop();
             }
@@ -1268,7 +1268,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(DEAD, ==, ZELL)
+            if(DEAD, ⩵, ZELL)
             {
                 stop();
             }
@@ -1289,7 +1289,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(ALIVE, ==, SQUALL)
+            if(ALIVE, ⩵, SQUALL)
             {
                 stop();
             }
@@ -1309,7 +1309,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(ATTACKER, LAST_ATTACK_DAMAGE_TYPE_IS, ==, MAGICAL)
+            if(ATTACKER, LAST_ACTION_DAMAGE_TYPE, ⩵, MAGICAL)
             {
                 stop();
             }
@@ -1329,7 +1329,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(ATTACKER, LAST_ATTACKER_IS, ==, SLOT_ID_FROM_VARC)
+            if(ATTACKER, LAST_ATTACKER, ⩵, VARC_SLOT_ID)
             {
                 stop();
             }
@@ -1349,7 +1349,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(ATTACKER, SELF_TURN_COUNTER_IS, ==, 5)
+            if(ATTACKER, SELF_TURN_COUNTER, ⩵, 5)
             {
                 stop();
             }
@@ -1369,7 +1369,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(ATTACKER, LAST_ATTACKER_USED_COMMAND_TYPE, ==, NO_MERCY)
+            if(ATTACKER, LAST_ACTION_COMMAND, ⩵, NO_MERCY)
             {
                 stop();
             }
@@ -1389,7 +1389,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(ATTACKER, LAST_ACTION_LAUNCH_WAS, ==, 17)
+            if(ATTACKER, LAST_ACTION_ID, ⩵, 17)
             {
                 stop();
             }
@@ -1409,7 +1409,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(ATTACKER, LAST_ATTACK_WAS_OF_ELEMENT, ==, THUNDER)
+            if(ATTACKER, LAST_ACTION_ELEMENT, ⩵, THUNDER)
             {
                 stop();
             }
@@ -1430,7 +1430,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(ATTACKER, LAST_ATTACKER_COM_ID, ==, SELF)
+            if(ATTACKER, LAST_ATTACKER_COM_ID, ⩵, SELF)
             {
                 stop();
             }
@@ -1451,7 +1451,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(GROUP_LEVEL, >=, 1)
+            if(DIFFICULTY, ≥, 1)
             {
                 stop();
             }
@@ -1472,7 +1472,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(ALIVE_IN_SLOT, ==, 1)
+            if(ALIVE_IN_SLOT, ⩵, 1)
             {
                 stop();
             }
@@ -1493,7 +1493,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(GENDER_CHECK, ==, MALE)
+            if(GENDER_IN_TEAM, ⩵, MALE)
             {
                 stop();
             }
@@ -1514,7 +1514,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(GFORCE_OBTAINED, ==)
+            if(GFORCE_DRAWABLE, ⩵)
             {
                 stop();
             }
@@ -1534,7 +1534,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(SPECIAL_BYTE_CHECK, ==, ODIN_POSSESS)
+            if(SPECIAL_BYTE_CHECK, ⩵, ODIN_POSSESS)
             {
                 stop();
             }
@@ -1554,7 +1554,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(COUNTDOWN, ==)
+            if(COUNTDOWN, ⩵)
             {
                 stop();
             }
@@ -1574,7 +1574,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(STATUS_OF_ALL_IN_TEAM, SLOT_ID_FROM_VARB, ==, PETRIFY)
+            if(STATUS_OF_ALL_IN, VARB_SLOT_ID, ⩵, PETRIFY)
             {
                 stop();
             }
@@ -1594,9 +1594,20 @@ class TestAIDecompiler:
         print(f"\n=== Decompiled if-else statement ===")
         print(self.pretty_code(code))
         print("==================================")
-
         normalized = self.normalize_code(code)
-        assert "if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%){die();}else{statChange(SPEED,50%);}" == normalized
+        expected = self.normalize_code(
+            """
+            if(HP_IN, IRVINE, ≠, 20%)
+            {
+                die();
+            }
+            else
+            {
+                statChange(SPEED,50%);
+            }
+            """
+        )
+        assert expected == normalized
 
     def test_decompile_if_else_nested_statement(self, decompiler):
         """Test decompiling if-else statement"""
@@ -1609,14 +1620,14 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%)
+            if(HP_IN,IRVINE,≠,20%)
             {
                 die();
             }
             else
             {
                 stop();
-                if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%)
+                if(HP_IN,IRVINE,≠,20%)
                 {
                     statChange(SPEED,50%);
                 }
@@ -1636,11 +1647,11 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(HP_OF_GENERIC_TARGET,IRVINE,!=,20%)
+            if(HP_IN,IRVINE,≠,20%)
             {
                 die();
             }
-            elseif(HP_OF_GENERIC_TARGET,IRVINE,!=,10%)
+            elseif(HP_IN,IRVINE,≠,10%)
             {
                 statChange(SPIRIT,20%);
             }
@@ -1674,15 +1685,15 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(HP_OF_GENERIC_TARGET,ENEMY_TEAM, !=, 40%)
+            if(HP_IN,ENEMY_TEAM, ≠, 40%)
             {
                 die();
             }
-            elseif(VARA,SELF, ==, 0)
+            elseif(VARA,SELF, ⩵, 0)
             {
                 die();
             }
-            elseif(VARA,SELF, ==, 1)
+            elseif(VARA,SELF, ⩵, 1)
             {
                 stop();
             }
@@ -1712,7 +1723,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(STATUS_OF_SPECIFIC_TARGET,SELF,==,AURA)
+            if(STATUS,SELF,⩵,AURA)
             {
                 statChange(STRENGTH,200%);
                 statChange(MAGIC,200%);
@@ -1748,13 +1759,13 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(RANDOM_VALUE,2,==,0)
+            if(RANDOM,2,⩵,0)
             {
-                if(STATUS_OF_GENERIC_TARGET,ENEMY_TEAM,==,DEFEND)
+                if(STATUS_IN,ENEMY_TEAM,⩵,DEFEND)
                 {
-                    if(RANDOM_VALUE,10, <=, 4)
+                    if(RANDOM,10, ≤, 4)
                     {
-                        targetStatus(ENEMY_TEAM,==,DEFEND,False);
+                        targetStatus(ENEMY_TEAM,⩵,DEFEND,False);
                     }
                 }
                 var(varA,1);
@@ -1776,36 +1787,36 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(GROUP_LEVEL,==,0)
+            if(DIFFICULTY,⩵,0)
             {
                 statChange(MAGIC,50%);
             }
-            if(RANDOM_VALUE,4,==,0)
+            if(RANDOM,4,⩵,0)
             {
                 stop();
             }
-            if(STATUS_OF_SPECIFIC_TARGET,SELF,==,CONFUSE)
+            if(STATUS,SELF,⩵,CONFUSE)
             {
                 target(RANDOM_NONSELF_ALLY);
                 use(0);
                 stop();
             }
-            if(VARB,SELF,>=,4)
+            if(VARB,SELF,≥,4)
             {
-                target(TARGET_MASK_FROM_VARC);
+                target(VARC_MASK);
                 statChange(MAGIC,100%);
                 use(4);
                 var(varB,0);
                 stop();
             }
             target(RANDOM_ENEMY);
-            if(RANDOM_VALUE,2,==,0)
+            if(RANDOM,2,⩵,0)
             {
-                if(STATUS_OF_GENERIC_TARGET,ENEMY_TEAM,==,DEFEND)
+                if(STATUS_IN,ENEMY_TEAM,⩵,DEFEND)
                 {
-                    if(RANDOM_VALUE,10, <=, 4)
+                    if(RANDOM,10, ≤, 4)
                     {
-                        targetStatus(ENEMY_TEAM,==,DEFEND,False);
+                        targetStatus(ENEMY_TEAM,⩵,DEFEND,False);
                     }
                 }
                 var(varA,1);
@@ -1813,7 +1824,7 @@ class TestAIDecompiler:
                 stop();
             }
             var(varA,2);
-            if(RANDOM_VALUE,2,==,0)
+            if(RANDOM,2,⩵,0)
             {
                 use(1);
                 stop();

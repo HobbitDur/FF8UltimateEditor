@@ -1443,7 +1443,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(RANDOM_VALUE, 3, ⩵, 0)
+            if(RANDOM, 3, ⩵, 0)
             {
                 stop;
             }
@@ -1466,7 +1466,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(RANDOM_VALUE, 3, ≠, 0)
+            if(RANDOM, 3, ≠, 0)
             {
                 stop;
             }
@@ -1489,7 +1489,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(RANDOM_VALUE, 3, ≤, 0)
+            if(RANDOM, 3, ≤, 0)
             {
                 stop;
             }
@@ -1512,7 +1512,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(RANDOM_VALUE, 3, ≥, 0)
+            if(RANDOM, 3, ≥, 0)
             {
                 stop;
             }
@@ -1581,7 +1581,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(RANDOM_VALUE, 3, ==, 0)
+            if(RANDOM, 3, ==, 0)
             {
                 stop;
             }
@@ -1604,7 +1604,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(COMBAT_SCENE, ==, 1024)
+            if(ENCOUNTER_ID, ==, 1024)
             {
                 stop;
             }
@@ -1673,7 +1673,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(NUM_ALIVE_IN, ally_team, ==, 1)
+            if(NB_ALIVE_IN, ally_team, ==, 1)
             {
                 stop;
             }
@@ -1972,7 +1972,7 @@ class TestAICompiler:
             """
         source_code_type = \
             """
-            if(ALIVE_OF_GENDER, ==, Male)
+            if(GENDER_IN_TEAM, ==, Male)
             {
                 stop;
             }
