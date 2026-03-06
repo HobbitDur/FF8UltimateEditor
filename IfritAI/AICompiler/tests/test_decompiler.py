@@ -1776,6 +1776,35 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
+    def test_com15_init(self, decompiler):
+        """Test decompiling if-else statement"""
+        bytecode = [14, 220, 0, 14, 221, 0, 2, 3, 0, 5, 58, 0, 28, 0, 2, 3, 0, 4, 60, 0, 17, 0, 2, 7, 200, 1, 10, 0, 6, 0, 14, 222, 1, 35, 0, 0, 35, 0, 0, 35, 0, 0, 0, 0]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled if com15 init ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            var(varA,0);
+            var(varB,0);
+            if(ENCOUNTER_ID,≥,58)
+            {
+                if(ENCOUNTER_ID,≤,60)
+                {
+                    if(LEVEL,SELF, <, 10)
+                    {
+                        var(varC,1);
+                    }
+                }
+            }
+            stop();
+            stop();
+            """
+        )
+        assert expected == normalized
+
     def test_com10_full(self, decompiler):
         """Test decompiling if-else statement"""
         bytecode = [2, 14, 200, 0, 0, 0, 6, 0, 40, 2, 5, 35, 0, 0, 2, 2, 4, 0, 0, 0, 4, 0, 0, 35, 0, 0, 2, 4, 200, 0, 30, 0, 8, 0, 4, 207, 12, 0, 0, 35, 0, 0, 2, 221, 200, 5, 4, 0, 14, 0, 4, 222, 40, 2, 10, 12, 4, 14, 221, 0, 0, 35, 0, 0, 4, 201, 2, 2, 2, 0, 0, 0, 36, 0, 2, 5, 200, 0, 35, 0, 19, 0, 2, 2, 10, 4, 4, 0, 8, 0, 38, 0, 200, 0, 35, 35, 0, 0, 35, 0, 0, 14, 220, 1, 12, 0, 0, 35, 0, 0, 14, 220, 2, 2, 2, 2, 0, 0, 0, 6, 0, 12, 1, 0, 35, 0, 0, 12, 2, 0, 0, 0]

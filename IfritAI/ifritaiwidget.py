@@ -212,7 +212,7 @@ class IfritAIWidget(QWidget):
     def _copy_hex(self):
         clipboard = QApplication.clipboard()
 
-        hex_data = self.ifrit_manager.enemy.battle_script_data['ai_data'][self.expert_selector.currentIndex()]['bytecode']
+        hex_data = self.ifrit_manager.enemy.battle_script_data['ai_data'][self.script_section.currentIndex()]['bytecode']
         clipboard.setText(str(hex_data))
 
     def __show_info(self):
@@ -437,7 +437,7 @@ class IfritAIWidget(QWidget):
 
     def __load_file(self, file_to_load: str = ""):
         print("__load_file")
-        file_to_load = os.path.join("battle/c0m010.dat")  # For developing faster
+        file_to_load = os.path.join("battle/c0m015.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
