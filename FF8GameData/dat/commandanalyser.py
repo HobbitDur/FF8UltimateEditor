@@ -1136,6 +1136,12 @@ class CommandAnalyser:
                     param = [x['type'] for x in self.game_data.ai_data_json["gender_type"] if x['id'] == op_code_right_condition_param]
                     if not param:
                         print(f"Gender {op_code_right_condition_param} not found")
+                    right_subject = {'text': '{}', 'param': param[0]}
+                elif right_param_type == 'attack_type':
+                    param = [x['type'] for x in self.game_data.ai_data_json["attack_type"] if x['id'] == op_code_right_condition_param]
+                    if not param:
+                        print(f"attack_type {op_code_right_condition_param} not found")
+                    right_subject = {'text': '{}', 'param': param[0]}
                 elif right_param_type == 'command_type':
                     param = [x['data'] for x in self.game_data.ai_data_json["command_type"] if x['id'] == op_code_right_condition_param]
                     if not param:
