@@ -28,7 +28,7 @@
 "list_target_char": ["Squall", "Zell", "Irvine", "Quistis", "Rinoa", "Selphie", "Seifer", "Edea", "Laguna", "Kiros", "Ward"],
 "list_comparator_html": ["==", "&lt;", "&gt;", "≠", "≤", "≥"],
 "list_comparator_ifritAI": ["==", "<", ">", "!=", "<=", ">="],
-"list_comparator_ifritAI_html": ["&#x2A75;", "&lt;", "&gt;", "&ne;", "&lt;=", "&gt;="],
+"list_comparator_ifritAI_html": ["&#x2A75;", "&#x003C;", "&#x003E;", "&#x2260;", "&#x2264;", "&#x2265;"],
 "list_comparator": ["⩵", "<", ">", "≠", "≤", "≥"],
 "op_code_info":[
     {"op_code": 0,   "size": 0, "func_name":"stop",             "short_text":"0:Stop" ,"text": "Stop", "param_index": [], "complexity": "simple", "param_type":  [], "param_list":  [], "comment":  "Stop"},

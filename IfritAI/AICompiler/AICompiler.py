@@ -71,7 +71,7 @@ class AICompiler:
 
     def clean_all(self, source_code: str):
         source_code_cleaned = self._clean_comparator(source_code)
-        source_code_cleaned = self._clean_quote(source_code)
+        #source_code_cleaned = self._clean_quote(source_code_cleaned)
         return source_code_cleaned
 
     def _clean_comparator(self, source_code: str):

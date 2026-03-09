@@ -437,7 +437,7 @@ class IfritAIWidget(QWidget):
 
     def __load_file(self, file_to_load: str = ""):
         print("__load_file")
-        file_to_load = os.path.join("battle/c0m015.dat")  # For developing faster
+        #file_to_load = os.path.join("battle/c0m015.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
