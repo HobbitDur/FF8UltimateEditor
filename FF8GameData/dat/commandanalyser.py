@@ -180,7 +180,7 @@ class CommandAnalyser:
         if not raw:
             text = text.format(*parameters)
         if for_code and text:
-            text =  " // " + text
+            text =  " //" + text
         if with_size:
             text += " (size:{}bytes)".format(self.__size)
         if comment and self.__comment:

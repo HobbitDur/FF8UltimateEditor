@@ -555,10 +555,14 @@ class IfritAIWidget(QWidget):
                 print(f"section: {section}")
                 code_text += self.code_widget.get_ifrit_ai_code_from_command(section['command'])
             code_text += "```\n\n"
+            print("code_text")
+            print(code_text)
         soup = BeautifulSoup(code_text, "html.parser")
         for br in soup.find_all("br"):
             br.replace_with("\n")
         # Extract text content
+        print("Soupe !")
+        print(soup.get_text())
         text_content = soup.get_text().replace("\xa0", " ")
         with open(md_file, 'w', encoding='utf-8') as file:
             file.write(text_content)

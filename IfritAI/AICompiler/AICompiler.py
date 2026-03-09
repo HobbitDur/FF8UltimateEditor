@@ -48,7 +48,7 @@ class AICompiler:
         print("Compile")
         print("Source_code")
         print(source_code)
-        source_code_cleaned = self.clean_comparator(source_code)
+        source_code_cleaned = self.clean_all(source_code)
         print("source_code_cleaned")
         print(source_code_cleaned)
         # print("compile")
@@ -69,7 +69,12 @@ class AICompiler:
         # print(ff8_assembly)
         return ff8_assembly
 
-    def clean_comparator(self, source_code: str):
+    def clean_all(self, source_code: str):
+        source_code_cleaned = self._clean_comparator(source_code)
+        source_code_cleaned = self._clean_quote(source_code)
+        return source_code_cleaned
+
+    def _clean_comparator(self, source_code: str):
         comparator_single = self.game_data.ai_data_json["list_comparator"]
         comparator_code_expected = self.game_data.ai_data_json["list_comparator_ifritAI"]
 
@@ -77,6 +82,23 @@ class AICompiler:
         for index in range(len(comparator_single)):
             source_code_cleaned = source_code_cleaned.replace(comparator_single[index], comparator_code_expected[index])
         return source_code_cleaned
+
+    def _clean_quote(self, source_code: str):
+        quote_to_be_changed = [
+            "“", "”",  # U+201C, U+201D | English double quotes (curly/smart quotes)
+            "«", "»",  # U+00AB, U+00BB | French/European guillemets (double angle)
+            "„", "‟",  # U+201E, U+201F | Double low-9 and high-reversed-9 quotes
+            "＂",      # U+FF02         | Fullwidth double quote (CJK/Asian)
+            "‘", "’",  # U+2018, U+2019 | Single curly quotes / Typographic apostrophes
+            "‚", "‛",  # U+201A, U+201B | Single low-9 and high-reversed-9 quotes
+            "′", "″"   # U+2032, U+2033 | Prime and double prime symbols
+        ]
+        quote_expected = "\""
+        source_code_cleaned = str(source_code)
+        for index in range(len(quote_to_be_changed)):
+            source_code_cleaned = source_code_cleaned.replace(quote_to_be_changed[index], quote_expected)
+        return source_code_cleaned
+
 
     def set_battle_text_info_stat(self, battle_text=None, info_stat=None):
         self.type_resolver.set_battle_text_info_stat(battle_text, info_stat)
