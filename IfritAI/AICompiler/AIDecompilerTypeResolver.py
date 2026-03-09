@@ -18,7 +18,7 @@ from IfritAI.AICompiler.AIAST import *
 
 
 class AIDecompilerTypeResolver:
-    def __init__(self, game_data: GameData, battle_text:FF8Text = (), info_stat_data={}):
+    def __init__(self, game_data: GameData, battle_text:List[FF8Text] = (), info_stat_data={}):
         self.game_data = game_data
         self._battle_text = battle_text
         self._info_stat_data = info_stat_data
@@ -130,9 +130,16 @@ class AIDecompilerTypeResolver:
             # battle_text
             print("battle_text study")
             print(f"self._battle_text: {self._battle_text}")
+            if self._battle_text:
+
+                print("NVNVNVNV")
+                print(self._battle_text)
+                print([x.get_str() for x in self._battle_text])
             for i, battle_text in enumerate(self._battle_text):
                 #normalized = self._normalize_string(battle_text)
                 mappings['type_values']['battle_text'][i] = battle_text.get_str()
+            print("DFDFDFDFFGD")
+            print(mappings['type_values']['battle_text'])
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])
@@ -177,7 +184,7 @@ class AIDecompilerTypeResolver:
             for target_dict in self.__get_target_list(advanced=True, specific=True):
                 mappings['type_values']['target_advanced_specific'][target_dict['id']] = self._normalize_string(target_dict['data'])
             # comparator
-            for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator_ifritAI_html', [])):
+            for i, comp in enumerate(self.game_data.ai_data_json.get('list_comparator', [])):
                 mappings['type_values']['comparator'][i] = comp
             # subject_id
             for subject in ai_data.get('if_subject', []):
@@ -297,7 +304,10 @@ class AIDecompilerTypeResolver:
         print(f"expected_type: {expected_type}")
         print(f"value: {value}")
         if expected_type in self.lookup_types:
-            print(f"self.type_mappings['type_values'][expected_type]: {self.type_mappings['type_values'][expected_type]}")
+            if expected_type == "battle_text":
+                print("QAQQAQAQAAQA")
+                print(f"self.type_mappings['type_values'][expected_type]: {self.type_mappings['type_values'][expected_type]}")
+                print(f" self.type_mappings['type_values'][expected_type][value]: { self.type_mappings['type_values'][expected_type][value]}")
             return self.type_mappings['type_values'][expected_type][value]
         elif expected_type in self.formula_types:
             if value and expected_type in ("int_shift",):

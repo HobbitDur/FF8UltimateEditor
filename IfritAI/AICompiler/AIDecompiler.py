@@ -24,6 +24,8 @@ class AIDecompiler:
     def decompile(self, bytecode: List[int]):
         command_list = self.decompile_bytecode_to_command_list(bytecode)
         code = self.decompile_from_command_list(command_list)
+        print("code decompiled")
+        print(code)
         return code
 
     def decompile_bytecode_to_command_list(self, code: List[int]):
@@ -141,7 +143,9 @@ class AIDecompiler:
                 func_line_text = op_info['func_name']
                 func_line_text += command.get_param_text()
                 print("Getting comment before")
+                print(f"func_line_text: {func_line_text}")
                 func_line_text += command.get_text(with_size=False, for_code=True)
+                print(f"func_line_text2: {func_line_text}")
                 func_list.append(func_line_text)
 
             # Update else counters (skip the newly added else)
@@ -160,14 +164,17 @@ class AIDecompiler:
         code_text = ""
         for func_name in func_list:
             code_text += func_name
-            code_text += '<br/>'
+            code_text += '\n'
         return code_text
 
     @staticmethod
-    def compute_indent_bracket(func_list: List):
+    def compute_indent_bracket(func_list: List, html=False):
         indent = 0
         new_text = ""
-        indent_text = "&nbsp;" * 4
+        if html:
+            indent_text = "&nbsp;" * 4
+        else:
+            indent_text = " " * 4
         for i in range(len(func_list)):
             command_without_space = func_list[i].replace(' ', '')
             if command_without_space == '}':
@@ -175,7 +182,10 @@ class AIDecompiler:
             func_list[i] = indent_text * indent + func_list[i]
             if command_without_space == '{':
                 indent += 1
-            new_text += func_list[i] + "<br/>"
+            if html:
+                new_text += func_list[i] + "<br/>"
+            else:
+                new_text += func_list[i] + "\n"
         return func_list
 
     @staticmethod

@@ -28,9 +28,11 @@ class TestAIDecompiler:
         second_battle_text.set_str("Second battle text")
         third_battle_text = FF8Text(game_data, 0, bytearray(), 2)
         third_battle_text.set_str("Third battle text")
+        double_space = FF8Text(game_data, 0, bytearray(), 3)
+        double_space.set_str("“I'm  done for…”")
         bite_bug_text = FF8Text(game_data, 0, bytearray(), 0)
         bite_bug_text.set_str("Bite Bug")
-        battle_text = [first_battle_text, second_battle_text, third_battle_text]
+        battle_text = [first_battle_text, second_battle_text, third_battle_text, double_space]
         info_stat_data = {'monster_name': bite_bug_text, 'hp': [4, 11, 0, 0], 'str': [30, 5, 6, 130], 'vit': [1, 50, 4, 1], 'mag': [24, 5, 2, 100], 'spr': [1, 6, 2, 1], 'spd': [0, 10, 4, 20], 'eva': [0, 10, 2, 30], 'abilities_low': [{'type': 8, 'animation': 12, 'id': 2}, {'type': 8, 'animation': 12, 'id': 2}, {'type': 8, 'animation': 12, 'id': 2}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}], 'abilities_med': [{'type': 8, 'animation': 12, 'id': 2}, {'type': 8, 'animation': 13, 'id': 110}, {'type': 8, 'animation': 14, 'id': 111}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}], 'abilities_high': [{'type': 8, 'animation': 12, 'id': 2}, {'type': 8, 'animation': 13, 'id': 110}, {'type': 8, 'animation': 14, 'id': 111}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}], 'med_lvl': 20, 'high_lvl': 30, 'byte_flag_0': {'byte0_zz1': 1, 'byte0_zz2': 1, 'byte0_zz3': 0, 'byte0_unused4': 0, 'byte0_unused5': 0, 'byte0_unused6': 0, 'byte0_unused7': 0, 'byte0_unused8': 0}, 'byte_flag_1': {'Zombie': 0, 'Fly': 1, 'byte1_zz1': 0, 'Immune NVPlus_Moins': 0, 'Hidden HP': 0, 'Auto-Reflect': 0, 'Auto-Shell': 0, 'Auto-Protect': 0}, 'card': [2, 2, 56], 'devour': [0, 0, 0], 'byte_flag_2': {'IncreaseSurpriseRNG': 0, 'DecreaseSurpriseRNG': 0, 'SurpriseAttackImmunity': 0, 'IncreaseChanceEscape': 1, 'DecreaseChanceEscape': 0, 'byte2_unused_6': 0, 'Diablos-missed': 0, 'Always obtains card': 0}, 'byte_flag_3': {'byte3_zz1': 0, 'byte3_zz2': 1, 'byte3_zz3': 1, 'byte3_zz4': 0, 'byte3_unused_5': 0, 'byte3_unused_6': 0, 'byte3_unused_7': 0, 'byte3_unused_8': 0}, 'extra_xp': 5, 'xp': 15, 'low_lvl_mag': [{'ID': 1, 'value': 0}, {'ID': 50, 'value': 0}, {'ID': 0, 'value': 0}, {'ID': 0, 'value': 0}], 'med_lvl_mag': [{'ID': 2, 'value': 0}, {'ID': 50, 'value': 0}, {'ID': 0, 'value': 0}, {'ID': 0, 'value': 0}], 'high_lvl_mag': [{'ID': 2, 'value': 0}, {'ID': 50, 'value': 0}, {'ID': 0, 'value': 0}, {'ID': 0, 'value': 0}], 'low_lvl_mug': [{'ID': 109, 'value': 2}, {'ID': 109, 'value': 2}, {'ID': 109, 'value': 2}, {'ID': 109, 'value': 2}], 'med_lvl_mug': [{'ID': 110, 'value': 2}, {'ID': 110, 'value': 2}, {'ID': 110, 'value': 2}, {'ID': 110, 'value': 2}], 'high_lvl_mug': [{'ID': 111, 'value': 2}, {'ID': 111, 'value': 2}, {'ID': 111, 'value': 2}, {'ID': 111, 'value': 2}], 'low_lvl_drop': [{'ID': 109, 'value': 1}, {'ID': 109, 'value': 1}, {'ID': 109, 'value': 2}, {'ID': 109, 'value': 2}], 'med_lvl_drop': [{'ID': 109, 'value': 4}, {'ID': 110, 'value': 1}, {'ID': 110, 'value': 2}, {'ID': 110, 'value': 2}], 'high_lvl_drop': [{'ID': 111, 'value': 1}, {'ID': 111, 'value': 1}, {'ID': 111, 'value': 2}, {'ID': 111, 'value': 2}], 'mug_rate': 50.19607843137255, 'drop_rate': 50.19607843137255, 'padding': 0, 'ap': 1, 'renzokuken': [160, 160, 160, 141, 259, 332, 333, 259], 'elem_def': [100, 200, 100, 100, 100, 200, 100, 100], 'status_def': [30, 20, 30, 20, 20, 40, 30, 20, 0, 10, 50, 0, 0, 20, 30, 0, 40, 0, 20, 0]}
 
 
@@ -190,6 +192,21 @@ class TestAIDecompiler:
         expected = self.normalize_code(
             """
             print("Second battle text");
+            """
+        )
+        assert expected == normalized
+
+    def test_print_double_space(self, decompiler):
+        bytecode = [0x01, 0x03]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            print("“I'm  done for…”");
             """
         )
         assert expected == normalized

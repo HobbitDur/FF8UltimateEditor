@@ -320,6 +320,9 @@ class AICompilerTypeResolver:
         """Normalize string for case-insensitive lookup"""
         if text is None:
             return ""
+        print("_normalize_string")
+        print(text)
+        print(str(text).upper().replace(' ', '_').replace('-', '_'))
         return str(text).upper().replace(' ', '_').replace('-', '_')
 
     def resolve(self, ast):

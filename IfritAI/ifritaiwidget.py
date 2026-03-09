@@ -166,7 +166,7 @@ class IfritAIWidget(QWidget):
         self.layout_top.addWidget(self.monster_name_label)
         self.layout_top.addStretch(1)
 
-        self.code_widget = CodeWidget(self.ifrit_manager.game_data, current_ai_section=self.script_section.currentIndex(), enemy_data=self.ifrit_manager.enemy, expert_level=self.expert_selector.currentIndex(),
+        self.code_widget = CodeWidget(self.ifrit_manager.game_data, current_ai_section=self.script_section.currentIndex(), enemy_data=self.ifrit_manager.enemy, ifrit_manager=self.ifrit_manager, expert_level=self.expert_selector.currentIndex(),
                                       code_changed_hook=self.code_expert_changed_hook)
         self.code_widget.hide()
 
@@ -279,7 +279,7 @@ class IfritAIWidget(QWidget):
         elif expert_chosen == 3:  # IfritAI legacy language
             self.code_widget.set_ifrit_ai_legacy_code_from_command(command_list)
         elif expert_chosen == 4:  # IfritAI language
-            self.code_widget.set_ifrit_ai_code_from_command(command_list)
+            self.code_widget.set_ifrit_ai_code_from_command(command_list, self.ifrit_manager.decompiler)
         if expert_chosen in (2, 3, 4):
             self.code_widget.change_expert_level(expert_chosen, self.script_section.currentIndex())
 
@@ -307,6 +307,8 @@ class IfritAIWidget(QWidget):
         self.__setup_section_data()
 
     def __append_line(self, new_command: CommandAnalyser = None, create_data=True):
+        print("__append_line")
+        print(f"new_command: {new_command}")
         if not new_command:
             new_command = CommandAnalyser(0, [], self.ifrit_manager.game_data, info_stat_data=self.ifrit_manager.enemy.info_stat_data,
                                           battle_text=self.ifrit_manager.enemy.battle_script_data['battle_text'], line_index=len(self.command_line_widget),
@@ -339,6 +341,8 @@ class IfritAIWidget(QWidget):
         self.__compute_if()
 
     def __add_line(self, command: CommandAnalyser):
+        print("__add_line")
+        print(f"command add: {command}")
         # Add the + button
         add_button = QPushButton()
         add_button.setText("+")
@@ -437,7 +441,7 @@ class IfritAIWidget(QWidget):
 
     def __load_file(self, file_to_load: str = ""):
         print("__load_file")
-        #file_to_load = os.path.join("battle/c0m015.dat")  # For developing faster
+        #file_to_load = os.path.join("battle/c0m071.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
@@ -447,7 +451,6 @@ class IfritAIWidget(QWidget):
             self.__clear_lines(delete_data=True)
             print("totototo")
             self.ifrit_manager.init_from_file(file_to_load)
-            self.code_widget.update_after_enemy_data_updated()
             print("Turlututu")
             print(self.ifrit_manager.enemy.battle_script_data['battle_text'])
             self.monster_name_label.setText(
@@ -529,7 +532,7 @@ class IfritAIWidget(QWidget):
                 if self.expert_selector.currentIndex() == 3:  # For legacy we create md with legacy code, but for other we create md for the new one.
                     ai_data[index_code] = CodeAnalyser.compute_ifrit_ai_legacy_code_to_command(game_data, enemy, code)
                 else:
-                    ai_data[index_code] = self.code_widget.get_ai_section_from_code(code, enemy, self.code_widget.compiler, self.code_widget.decompiler, index_code)
+                    ai_data[index_code] = self.code_widget.get_ai_section_from_code(code, enemy, self.ifrit_manager.compiler, self.ifrit_manager.decompiler, index_code)
 
 
 
@@ -553,7 +556,9 @@ class IfritAIWidget(QWidget):
             else:
                 print("qsqsqsqs")
                 print(f"section: {section}")
-                code_text += self.code_widget.get_ifrit_ai_code_from_command(section['command'])
+                code_text += self.ifrit_manager.decompiler.decompile_from_command_list(section['command'])
+                print("code_text line")
+                print(code_text)
             code_text += "```\n\n"
             print("code_text")
             print(code_text)

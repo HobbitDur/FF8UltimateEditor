@@ -25,7 +25,7 @@ class TestAICompiler:
         import os
 
         # Use the actual grammar from AICompiler
-        battle_text = ["First battle text", "Second battle text", "Third battle text"]
+        battle_text = ["First battle text", "Second battle text", "Third battle text", "“I'm  done for…”"]
         info_stat_data = {}  # TODO
         game_data = GameData(os.path.join("..", "..", "..", "FF8GameData"))
         game_data.load_all()
@@ -67,11 +67,28 @@ class TestAICompiler:
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
 
+    def test_print_double_space(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+            """
+            print(3);
+            """
+        ## Type data
+        source_code_type = \
+            """
+            print("“I'm  done for…”");
+            """
+        # The expected output
+        expected = [0x01, 0x03, 0, 0]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-        with pytest.raises(ParamBattleTextError):
-            compiler.compile(source_code_error)
 
     def test_prepareMagic(self, compiler: AICompiler):
         # First declare different source code case

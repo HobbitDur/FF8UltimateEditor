@@ -109,12 +109,14 @@ class CommandAnalyser:
     def get_param_text(self):
         print("get_param_text")
         print(f"param_type: {self.param_typed}")
+        print(f"type_data: {self.type_data}")
         text = "("
         value_to_check = [' ', '+', '\t', '\r', '\n']
         for i, param in enumerate(self.param_typed):
             if param is None:
                 continue
-            if any (value in param for value in value_to_check):
+            # self.type_data is empty for if, so we check if it exist before. Should maybe manage better the if.
+            if any (value in param for value in value_to_check) or (self.type_data and self.type_data[i] in ("battle_text",)):
                 text += "\"" + param + "\""
             else:
                 text += param
@@ -1115,6 +1117,7 @@ class CommandAnalyser:
                         print(f"Unexpected global var with code {subject_id}")
                     list_param_possible_left.extend(self.__get_possible_option_global_var())
                 elif if_current_subject['param_left_type'] == "subject10":
+                    print("Subject 10 analyzing")
                     specific_left_text = "{}"
                     subject_left_data = [x['text'] for x in self.game_data.ai_data_json['subject_left_10'] if x['param_id'] == op_code_left_condition_param]
                     if not subject_left_data:

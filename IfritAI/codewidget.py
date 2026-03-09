@@ -11,24 +11,26 @@ from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AICompiler import AICompiler
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritAI.codeanalyser import CodeAnalyser
+from IfritAI.ifritmanager import IfritManager
 
 
 class CodeWidget(QWidget):
     IF_INDENT_SIZE = 3
 
-    def __init__(self, game_data: GameData, enemy_data: MonsterAnalyser, current_ai_section, expert_level=2, command_list: List[CommandAnalyser] = (), code_changed_hook=None,
+    def __init__(self, game_data: GameData, enemy_data: MonsterAnalyser, current_ai_section, ifrit_manager:IfritManager, expert_level=2, command_list: List[CommandAnalyser] = (), code_changed_hook=None,
                  hex_chosen: bool = False):
         QWidget.__init__(self)
         print("CodeWidget init")
         print(repr(enemy_data))
         self.game_data = game_data
         self.enemy_data = enemy_data
+        self.ifrit_manager = ifrit_manager
         print(repr(self.enemy_data))
         self.code_changed_hook = code_changed_hook
         self._hex_chosen = hex_chosen
         self._expert_level = expert_level
         self.code_area_widget = QTextEdit()
-        self.code_area_widget.setFontPointSize(15)
+        self.code_area_widget.setFontPointSize(10)
         self._current_section_ai_index = current_ai_section
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
@@ -41,13 +43,6 @@ class CodeWidget(QWidget):
 
         self._command_list = command_list
         self.set_text_from_command(self._command_list)
-
-        self.compiler = AICompiler(game_data, self.enemy_data.battle_script_data['battle_text'], self.enemy_data.info_stat_data)
-        self.decompiler = AIDecompiler(game_data, self.enemy_data.battle_script_data['battle_text'], self.enemy_data.info_stat_data)
-
-    def update_after_enemy_data_updated(self):
-        self.compiler.set_battle_text_info_stat(self.enemy_data.battle_script_data['battle_text'], self.enemy_data.info_stat_data)
-        self.decompiler.set_battle_text_info_stat(self.enemy_data.battle_script_data['battle_text'], self.enemy_data.info_stat_data)
 
     def change_expert_level(self, expert_level, ai_section):
         self._expert_level = expert_level
@@ -95,15 +90,16 @@ class CodeWidget(QWidget):
         self._command_list = command_list
         self.code_area_widget.setText(CodeAnalyser.set_ifrit_ai_legacy_code_from_command(self.game_data, command_list))
 
-    def set_ifrit_ai_code_from_command(self, command_list: List[CommandAnalyser]):
+    def set_ifrit_ai_code_from_command(self, command_list: List[CommandAnalyser], decompiler: AIDecompiler):
         self._command_list = command_list
-        self.code_area_widget.setText(self.decompiler.decompile_from_command_list(command_list))
-
-    def get_ifrit_ai_code_from_command(self, command_list: List[CommandAnalyser]):
-        return self.decompiler.decompile_from_command_list(command_list)
+        print("set_ifrit_ai_code_from_command")
+        tutu = decompiler.decompile_from_command_list(command_list)
+        print("decompiled over after tutu")
+        print(tutu)
+        self.code_area_widget.setPlainText(decompiler.decompile_from_command_list(command_list))
 
     @staticmethod
-    def get_ai_section_from_code(code, enemy_data: MonsterAnalyser, compiler, decompiler, current_section_ai_index):
+    def get_ai_section_from_code(code, enemy_data: MonsterAnalyser, compiler: AICompiler, decompiler:AIDecompiler, current_section_ai_index):
         bytecode = compiler.compile(code)
         command_list = decompiler.decompile_bytecode_to_command_list(bytecode)
         ai_section = {"bytecode": bytecode, "code": code, "command": command_list}
@@ -112,9 +108,11 @@ class CodeWidget(QWidget):
 
     def _compile_ifrit_ai_code_to_command(self):
         print("_compile_ifrit_ai_code_to_command")
+        compiler = self.ifrit_manager.compiler
+        decompiler = self.ifrit_manager.decompiler
         try:
             code = self.code_area_widget.toPlainText()
-            self._command_list = self.get_ai_section_from_code(code, self.enemy_data, self.compiler, self.decompiler,  self._current_section_ai_index)["command"]
+            self._command_list = self.get_ai_section_from_code(code, self.enemy_data, compiler, decompiler,  self._current_section_ai_index)["command"]
             if AICodeError.has_errors():
                 self.show_ai_errors()
             else:
@@ -128,13 +126,12 @@ class CodeWidget(QWidget):
             if AICodeError.has_errors():
                 self.show_ai_errors()
             else:
-                self._command_list = self.enemy_data.update_stop_on_list(self.game_data, self._command_list)
                 self.code_changed_hook(self._command_list)
         except AICodeError:
             self.show_ai_errors()
 
-
-    def show_ai_errors(self):
+    @staticmethod
+    def show_ai_errors():
         if AICodeError.has_errors():
             msg = QMessageBox()
             msg.setTextFormat(Qt.TextFormat.RichText)
@@ -144,6 +141,7 @@ class CodeWidget(QWidget):
             # msg.setDetailedText()
             msg.exec()
             AICodeError.clear_errors()
+
     def set_text_from_command(self, command_list: List[CommandAnalyser]):
         self._command_list = command_list
         func_list = []

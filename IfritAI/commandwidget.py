@@ -54,6 +54,7 @@ class CommandWidget(QWidget):
 
         # Now the text
         self.layout_text = QHBoxLayout()
+
         self.widget_text = QLabel(command.get_text(html=True))
         self.widget_text.setTextFormat(Qt.TextFormat.RichText)
         self.layout_text_spacing = QHBoxLayout()

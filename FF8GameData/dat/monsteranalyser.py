@@ -37,7 +37,6 @@ class MonsterAnalyser:
         self.sound_data = bytes()  # Section 9
         self.sound_unknown_data = bytes()  # Section 10
         self.sound_texture_data = bytes()  # Section 11
-        self.decompiler = AIDecompiler(game_data)
         self._ai_command_list = []
 
     def __str__(self):
@@ -61,7 +60,7 @@ class MonsterAnalyser:
 
 
 
-    def analyse_loaded_data(self, game_data: GameData):
+    def analyse_loaded_data(self, game_data: GameData, decompiler: AIDecompiler):
         try:
             for i in range(0, self.NUMBER_SECTION - 1):
                 self.section_raw_data[i] = self.file_raw_data[self.header_data['section_pos'][i]: self.header_data['section_pos'][i + 1]]
@@ -81,11 +80,12 @@ class MonsterAnalyser:
             # Analyzing Section 7 : Informations & stats
             self.__analyze_info_stat(game_data)
             # Analyzing Section 8 : Battle scripts/AI
-            self.analyze_battle_script_section(game_data)
+            self.analyze_battle_script_section(game_data, decompiler)
             # No need to analyze Section 9 : Sounds
             # No need to analyze Section 10 : Sounds/Unknown
             # No need to analyze Section 11 : Textures
-            print("TOTO")
+            print("after analyze before code script")
+            print(self.battle_script_data['ai_data'][2]['code'])
             print(self.info_stat_data)
         except IndexError as e:
             print(f"Garbage file {self.origin_file_name}")
@@ -510,7 +510,7 @@ class MonsterAnalyser:
 
             self.info_stat_data[el['name']] = value
 
-    def analyze_battle_script_section(self, game_data: GameData):
+    def analyze_battle_script_section(self, game_data: GameData, decompiler:AIDecompiler):
         SECTION_NUMBER = 8
         if len(self.header_data['section_pos']) <= SECTION_NUMBER:
             return
@@ -553,7 +553,7 @@ class MonsterAnalyser:
                 self.battle_script_data['battle_text'] = []
 
         print(f" self.battle_script_data['battle_text']: { self.battle_script_data['battle_text']}")
-        self.decompiler.set_battle_text_info_stat(self.battle_script_data['battle_text'])
+        decompiler.set_battle_text_info_stat(self.battle_script_data['battle_text'])
 
         # Reading AI subsection
 
@@ -582,12 +582,12 @@ class MonsterAnalyser:
         list_code = [init_code, ennemy_turn_code, counterattack_code, death_code, before_dying_or_hit_code]
         self.battle_script_data['ai_data'] = []
         for index, code in enumerate(list_code):
-            self.decompiler._battle_text= self.battle_script_data['battle_text']
-            self.decompiler._info_stat= self.info_stat_data
+            decompiler._battle_text= self.battle_script_data['battle_text']
+            decompiler._info_stat= self.info_stat_data
             print("code before decompiled:")
             print(code)
-            command_list_decompiled = self.decompiler.decompile_bytecode_to_command_list(code)
-            code_decompiled = self.decompiler.decompile(code)
+            command_list_decompiled = decompiler.decompile_bytecode_to_command_list(code)
+            code_decompiled = decompiler.decompile(code)
             self.battle_script_data['ai_data'].append({"bytecode": code, "code": code_decompiled, "command": command_list_decompiled})
         self.battle_script_data['ai_data'].append({})  # Adding a end section that is empty to mark the end of the all IA section
 
