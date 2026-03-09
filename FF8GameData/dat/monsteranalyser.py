@@ -84,9 +84,6 @@ class MonsterAnalyser:
             # No need to analyze Section 9 : Sounds
             # No need to analyze Section 10 : Sounds/Unknown
             # No need to analyze Section 11 : Textures
-            print("after analyze before code script")
-            print(self.battle_script_data['ai_data'][2]['code'])
-            print(self.info_stat_data)
         except IndexError as e:
             print(f"Garbage file {self.origin_file_name}")
             raise GarbageFileError
@@ -207,18 +204,14 @@ class MonsterAnalyser:
         # 3 subsection in section 8: The offset subsection (header), the AI and the texts
 
         self.section_raw_data[8] = bytearray()
-        print("Starting section 8 raw data")
         # First computing raw section (offset will be computed after)
         raw_ai_section = bytearray()
         raw_ai_offset = bytearray()
         raw_ai_subsection = []
 
-        print(f"battle script data: {self.battle_script_data['ai_data']}")
         # first computing ai subsection
         for index, section in enumerate(self.battle_script_data['ai_data']):
             if section:  # Ignoring the last section that is empty
-                print(f"Section: {section}")
-
                 raw_ai_subsection.append(bytearray())
                 for command in section['command']:
                     raw_ai_subsection[-1].append(command.get_id())
@@ -552,7 +545,6 @@ class MonsterAnalyser:
             else:
                 self.battle_script_data['battle_text'] = []
 
-        print(f" self.battle_script_data['battle_text']: { self.battle_script_data['battle_text']}")
         decompiler.set_battle_text_info_stat(self.battle_script_data['battle_text'])
 
         # Reading AI subsection
@@ -584,26 +576,12 @@ class MonsterAnalyser:
         for index, code in enumerate(list_code):
             decompiler._battle_text= self.battle_script_data['battle_text']
             decompiler._info_stat= self.info_stat_data
-            print("code before decompiled:")
-            print(code)
             command_list_decompiled = decompiler.decompile_bytecode_to_command_list(code)
             code_decompiled = decompiler.decompile(code)
             self.battle_script_data['ai_data'].append({"bytecode": code, "code": code_decompiled, "command": command_list_decompiled})
         self.battle_script_data['ai_data'].append({})  # Adding a end section that is empty to mark the end of the all IA section
 
-
-
-    def set_ai_section(self, ai_section:dict, section_index:int):
-        print("set_ai_section_from_bytes")
-        print(f"tutu 1 : {self.battle_script_data['ai_data'][section_index]}")
-        self.battle_script_data['ai_data'][section_index] = ai_section
-        print(f"tutu 2 : {self.battle_script_data['ai_data'][section_index]}")
-
-
     def insert_command(self, code_section_id: int, command: CommandAnalyser, index_insertion: int = 0):
-        # command.line_index = self.battle_script_data['ai_data'][code_section_id][index_insertion].line_index
-        # for i in range(index_insertion, len(self.battle_script_data['ai_data'][code_section_id])):
-        #    self.battle_script_data['ai_data'][code_section_id][i].line_index += 1
         self.battle_script_data['ai_data'][code_section_id]["command"].insert(index_insertion, command)
 
     def append_command(self, code_section_id: int, command: CommandAnalyser):

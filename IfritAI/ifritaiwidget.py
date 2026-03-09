@@ -192,7 +192,6 @@ class IfritAIWidget(QWidget):
         # self.show()
 
     def keyPressEvent(self, event: QKeyEvent):
-        print("keyPressEvent")
         # 1. Check if the key combination is exactly Ctrl + C
         # Note: PyQt6 requires full Enum paths
         is_ctrl_c = (event.modifiers() == Qt.KeyboardModifier.ControlModifier and
@@ -300,15 +299,12 @@ class IfritAIWidget(QWidget):
     def __save_file(self):
         self.ifrit_manager.save_file(self.file_loaded)
         self.__section_change()
-        print("File saved")
 
     def __section_change(self):
         self.__clear_lines(delete_data=False)
         self.__setup_section_data()
 
     def __append_line(self, new_command: CommandAnalyser = None, create_data=True):
-        print("__append_line")
-        print(f"new_command: {new_command}")
         if not new_command:
             new_command = CommandAnalyser(0, [], self.ifrit_manager.game_data, info_stat_data=self.ifrit_manager.enemy.info_stat_data,
                                           battle_text=self.ifrit_manager.enemy.battle_script_data['battle_text'], line_index=len(self.command_line_widget),
@@ -341,8 +337,6 @@ class IfritAIWidget(QWidget):
         self.__compute_if()
 
     def __add_line(self, command: CommandAnalyser):
-        print("__add_line")
-        print(f"command add: {command}")
         # Add the + button
         add_button = QPushButton()
         add_button.setText("+")
@@ -353,8 +347,6 @@ class IfritAIWidget(QWidget):
         remove_button.setFixedSize(40, 40)
         remove_button.clicked.connect(lambda: self.__remove_line(command, delete_data=True))
         # Creating new element to list
-        print("BNBNBNBN")
-        print(command)
         self.add_button_widget.insert(command.line_index, add_button)
         self.remove_button_widget.insert(command.line_index, remove_button)
         command_widget = CommandWidget(command, self.expert_selector.currentIndex(), self.hex_selector.isChecked())
@@ -440,7 +432,6 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        print("__load_file")
         #file_to_load = os.path.join("battle/c0m071.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
@@ -449,10 +440,7 @@ class IfritAIWidget(QWidget):
             self._import_md_button.setEnabled(True)
             self._export_md_button.setEnabled(True)
             self.__clear_lines(delete_data=True)
-            print("totototo")
             self.ifrit_manager.init_from_file(file_to_load)
-            print("Turlututu")
-            print(self.ifrit_manager.enemy.battle_script_data['battle_text'])
             self.monster_name_label.setText(
                 "Monster : {}, file: {}".format(self.ifrit_manager.enemy.info_stat_data['monster_name'].get_str(),
                                                 pathlib.Path(file_to_load).name))
@@ -480,19 +468,6 @@ class IfritAIWidget(QWidget):
         self._set_text_expert()
         self.__hide_show_expert()
         self.__compute_if()
-
-    def __set_title(self):
-        font = QFont()
-        font.setBold(True)
-        label = QLabel("Command ID")
-        label.setFont(font)
-        self.layout_title.addWidget(label)
-        label = QLabel("Op code")
-        label.setFont(font)
-        self.layout_title.addWidget(label)
-        label = QLabel("Text")
-        label.setFont(font)
-        self.layout_title.addWidget(label)
 
     def _load_xlsx_file(self):
         # Read the xlsx
@@ -554,20 +529,12 @@ class IfritAIWidget(QWidget):
             if self.expert_selector.currentIndex() == 3: # For legacy we create md with legacy code, but for other we create md for the new one.
                 code_text += CodeAnalyser.set_ifrit_ai_legacy_code_from_command(game_data, section['command'])
             else:
-                print("qsqsqsqs")
-                print(f"section: {section}")
                 code_text += self.ifrit_manager.decompiler.decompile_from_command_list(section['command'])
-                print("code_text line")
-                print(code_text)
             code_text += "```\n\n"
-            print("code_text")
-            print(code_text)
         soup = BeautifulSoup(code_text, "html.parser")
         for br in soup.find_all("br"):
             br.replace_with("\n")
         # Extract text content
-        print("Soupe !")
-        print(soup.get_text())
         text_content = soup.get_text().replace("\xa0", " ")
         with open(md_file, 'w', encoding='utf-8') as file:
             file.write(text_content)

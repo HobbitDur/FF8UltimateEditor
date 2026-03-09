@@ -24,8 +24,6 @@ class AIDecompiler:
     def decompile(self, bytecode: List[int]):
         command_list = self.decompile_bytecode_to_command_list(bytecode)
         code = self.decompile_from_command_list(command_list)
-        print("code decompiled")
-        print(code)
         return code
 
     def decompile_bytecode_to_command_list(self, code: List[int]):
@@ -105,8 +103,6 @@ class AIDecompiler:
                     if_list_count.append(jump_value)
                     func_line_text = "if"
                     func_line_text += command.get_param_text()
-                    print("Param text")
-                    print(f"command.get_param_text(): {command.get_param_text()}")
                     func_list.append(func_line_text)
                     func_list.append('{')
 
@@ -142,10 +138,7 @@ class AIDecompiler:
             else:
                 func_line_text = op_info['func_name']
                 func_line_text += command.get_param_text()
-                print("Getting comment before")
-                print(f"func_line_text: {func_line_text}")
                 func_line_text += command.get_text(with_size=False, for_code=True)
-                print(f"func_line_text2: {func_line_text}")
                 func_list.append(func_line_text)
 
             # Update else counters (skip the newly added else)

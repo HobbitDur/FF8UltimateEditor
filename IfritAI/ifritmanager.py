@@ -13,12 +13,8 @@ class IfritManager:
         self.decompiler = AIDecompiler(self.game_data, self.enemy.battle_script_data['battle_text'], self.enemy.info_stat_data)
 
     def init_from_file(self, file_path):
-        print("init_from_file")
         self.enemy.load_file_data(file_path, self.game_data)
-        print("tutututu")
         self.enemy.analyse_loaded_data(self.game_data, self.decompiler)
-        print("loaded over")
-        print(self.enemy.info_stat_data)
         self.compiler.set_battle_text_info_stat(self.enemy.battle_script_data['battle_text'],self.enemy.info_stat_data )
         #self.decompiler.set_battle_text_info_stat(self.enemy.battle_script_data['battle_text'],self.enemy.info_stat_data )
 

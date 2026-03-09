@@ -20,12 +20,9 @@ class CodeWidget(QWidget):
     def __init__(self, game_data: GameData, enemy_data: MonsterAnalyser, current_ai_section, ifrit_manager:IfritManager, expert_level=2, command_list: List[CommandAnalyser] = (), code_changed_hook=None,
                  hex_chosen: bool = False):
         QWidget.__init__(self)
-        print("CodeWidget init")
-        print(repr(enemy_data))
         self.game_data = game_data
         self.enemy_data = enemy_data
         self.ifrit_manager = ifrit_manager
-        print(repr(self.enemy_data))
         self.code_changed_hook = code_changed_hook
         self._hex_chosen = hex_chosen
         self._expert_level = expert_level
@@ -59,7 +56,6 @@ class CodeWidget(QWidget):
             self.compute_button.clicked.connect(self._compile_ifrit_ai_code_to_command)
         else:
             self.compute_button.clicked.connect(lambda: None)
-            # print(f"Unexpected expert level in codewidget: {expert_level}")
 
     def change_hex(self, hex_chosen):
         self._hex_chosen = hex_chosen
@@ -92,10 +88,6 @@ class CodeWidget(QWidget):
 
     def set_ifrit_ai_code_from_command(self, command_list: List[CommandAnalyser], decompiler: AIDecompiler):
         self._command_list = command_list
-        print("set_ifrit_ai_code_from_command")
-        tutu = decompiler.decompile_from_command_list(command_list)
-        print("decompiled over after tutu")
-        print(tutu)
         self.code_area_widget.setPlainText(decompiler.decompile_from_command_list(command_list))
 
     @staticmethod
@@ -103,11 +95,10 @@ class CodeWidget(QWidget):
         bytecode = compiler.compile(code)
         command_list = decompiler.decompile_bytecode_to_command_list(bytecode)
         ai_section = {"bytecode": bytecode, "code": code, "command": command_list}
-        enemy_data.set_ai_section(ai_section, current_section_ai_index)
+        enemy_data.battle_script_data['ai_data'][current_section_ai_index] = ai_section
         return ai_section
 
     def _compile_ifrit_ai_code_to_command(self):
-        print("_compile_ifrit_ai_code_to_command")
         compiler = self.ifrit_manager.compiler
         decompiler = self.ifrit_manager.decompiler
         try:

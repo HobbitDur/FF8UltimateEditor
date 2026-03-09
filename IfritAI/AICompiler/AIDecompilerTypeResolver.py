@@ -128,18 +128,9 @@ class AIDecompilerTypeResolver:
             # Populate known mappings
 
             # battle_text
-            print("battle_text study")
-            print(f"self._battle_text: {self._battle_text}")
-            if self._battle_text:
-
-                print("NVNVNVNV")
-                print(self._battle_text)
-                print([x.get_str() for x in self._battle_text])
             for i, battle_text in enumerate(self._battle_text):
                 #normalized = self._normalize_string(battle_text)
                 mappings['type_values']['battle_text'][i] = battle_text.get_str()
-            print("DFDFDFDFFGD")
-            print(mappings['type_values']['battle_text'])
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])
@@ -300,14 +291,7 @@ class AIDecompilerTypeResolver:
 
 
     def _resolve_value(self, value, expected_type, special_param=None):
-        print("_resolve_value")
-        print(f"expected_type: {expected_type}")
-        print(f"value: {value}")
         if expected_type in self.lookup_types:
-            if expected_type == "battle_text":
-                print("QAQQAQAQAAQA")
-                print(f"self.type_mappings['type_values'][expected_type]: {self.type_mappings['type_values'][expected_type]}")
-                print(f" self.type_mappings['type_values'][expected_type][value]: { self.type_mappings['type_values'][expected_type][value]}")
             return self.type_mappings['type_values'][expected_type][value]
         elif expected_type in self.formula_types:
             if value and expected_type in ("int_shift",):

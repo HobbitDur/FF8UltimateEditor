@@ -188,10 +188,8 @@ class AICompilerTypeResolver:
             # Populate known mappings
 
             # battle_text
-            print("mapping battle text")
             for i, battle_text in enumerate(self._battle_text):
                 normalized = self._normalize_string(battle_text)
-                print(f"normalized battle text: {normalized}")
                 mappings['type_values']['battle_text'][normalized] = i
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
@@ -320,9 +318,6 @@ class AICompilerTypeResolver:
         """Normalize string for case-insensitive lookup"""
         if text is None:
             return ""
-        print("_normalize_string")
-        print(text)
-        print(str(text).upper().replace(' ', '_').replace('-', '_'))
         return str(text).upper().replace(' ', '_').replace('-', '_')
 
     def resolve(self, ast):
@@ -476,7 +471,6 @@ class AICompilerTypeResolver:
 
     def _resolve_value(self, value_node: Value, expected_type: str, param=None, value_forced_size:int = 1):
         """Resolve a single value based on type. Returns int if resolved, raises error otherwise."""
-        print("_resolve_value")
         value_resolved = copy.deepcopy(value_node)
         # Removing the "" for string
         if value_node.value[0] == "\"" and value_node.value[-1] == "\"":
@@ -501,19 +495,14 @@ class AICompilerTypeResolver:
 
         # Check if it's a lookup type
         elif expected_type in self.lookup_types and expected_type in self.type_mappings['type_values']:
-            print("lookup type")
             # Look up in type mappings
             normalized = self._normalize_string(value_resolved.value)
-            print(f"normalized: {normalized}")
             mapping = self.type_mappings['type_values'][expected_type]
-            print(f"mapping: {mapping}")
             # If it's already an integer, check that the ID is a possible value
             if value_resolved.value.isdigit():
-                print("is digit")
                 if int(value_resolved.value) in mapping.values():
                     return value_resolved
             if normalized in mapping:
-                print("normalized in mapping")
                 value_resolved.value = str(mapping[normalized])  # Returns int
                 return value_resolved
             # NOT FOUND - raise error with valid values
