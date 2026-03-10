@@ -12,6 +12,8 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.dat.daterrors import AICodeError
 from FF8GameData.gamedata import GameData
+from IfritAI.AICompiler.AICompiler import AICompiler
+from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritAI.codeanalyser import CodeAnalyser
 from IfritAI.codewidget import CodeWidget
 
@@ -21,9 +23,6 @@ from IfritXlsx.ifritxlsxmanager import IfritXlsxManager
 from bs4 import BeautifulSoup
 
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
-
-from FF8UltimateEditor.IfritAI.AICompiler.AICompiler import AICompiler
-from FF8UltimateEditor.IfritAI.AICompiler.AIDecompiler import AIDecompiler
 
 
 class IfritAIWidget(QWidget):

@@ -734,6 +734,21 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
+    def test_setScanText_255(self, decompiler):
+        bytecode = [37, 255]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            setScanText(255);
+            """
+        )
+        assert expected == normalized
+
     def test_targetStatus(self, decompiler):
         bytecode = [38, 0, 200, 3, 1]
         code = decompiler.decompile(bytecode)

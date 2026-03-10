@@ -577,6 +577,7 @@ class CommandAnalyser:
     def __analyse_op_data(self):
         self.reset_data()
         op_info = self.__get_op_code_line_info()
+        op_text_index = 0
         # Searching for errors in json file
         if len(op_info["param_type"]) != op_info["size"] and op_info['complexity'] == 'simple':
             print(f"Error on JSON for op_code_id: {self.__op_id}")
@@ -768,6 +769,19 @@ class CommandAnalyser:
                             {"id": len(param_value) - 1, "text": " (" + battle_text_str + " )", "text_html": " (" + battle_text_str + " )"})
                     else:
                         param_value.append("UNKNOWN BATTLE TEXT")
+                elif type == "scan_text":
+                    self.param_possible_list.append(self.__get_possible_scan_text())
+                    if self.__op_code[op_index] < len(self.__battle_text):
+                        battle_text_str = self.__battle_text[self.__op_code[op_index]].get_str()
+                        param_value.append(self.__op_code[op_index])
+                        self.__raw_text_added.append(
+                            {"id": len(param_value) - 1, "text": " (" + battle_text_str + " )", "text_html": " (" + battle_text_str + " )"})
+                    elif self.__op_code[op_index] == 255:
+                        self.__raw_text_added.append(
+                            {"id": 255, "text": " (" + "255" + " )", "text_html": " (" + "255" + " )"})
+                        op_text_index = 1
+                    else:
+                        param_value.append("UNKNOWN BATTLE TEXT")
                 elif type == "ability":
                     if self.__op_code[op_index] < len(self.game_data.enemy_abilities_data_json["abilities"]):
                         param_value.append(self.game_data.enemy_abilities_data_json["abilities"][self.__op_code[op_index]]['name'])
@@ -846,7 +860,10 @@ class CommandAnalyser:
             else:
                 for i, param_index in enumerate(op_info['param_index']):
                     self.param_possible_list[param_index] = original_param_possible[i]
-            self.__raw_text = op_info['text']
+            if isinstance(op_info['text'], list):
+                self.__raw_text = op_info['text'][op_text_index]
+            else:
+                self.__raw_text = op_info['text']
             self.__raw_parameters = param_value
         elif op_info["complexity"] == "complex":
             call_function = getattr(self, "_CommandAnalyser__op_" + "{:02}".format(op_info["op_code"]) + "_analysis")
@@ -915,6 +932,11 @@ class CommandAnalyser:
 
     def __get_possible_battle_text(self):
         return [{'id': i, 'data': data.get_str()} for i, data in enumerate(self.__battle_text)]
+
+    def __get_possible_scan_text(self):
+        scan_text_list = [{'id': i, 'data': data.get_str()} for i, data in enumerate(self.__battle_text)]
+        scan_text_list.append({'id': 255, 'data': 'Reset buffer'})
+        return scan_text_list
 
     def __get_possible_activate(self):
         return [{'id': val_dict['id'], 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.ai_data_json["activate_type"])]

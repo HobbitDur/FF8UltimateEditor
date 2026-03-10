@@ -939,6 +939,30 @@ class TestAICompiler:
         with pytest.raises(ParamBattleTextError):
             compiler.compile(source_code_error)
 
+    def test_setScanText_255(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+            """
+            setScanText(255);
+            """
+        ## Type data
+        source_code_type = \
+            """
+            setScanText(255);
+            """
+
+        # The expected output
+        expected = [37, 255, 0, 0]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
+
     def test_targetStatus(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)

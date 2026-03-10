@@ -56,7 +56,7 @@ class AIDecompilerTypeResolver:
             "activate", "aptitude", "magic_type", "gforce",
             "scene_out_slot_id", "slot_id_enable", "assign_slot_id", "slot_id",
             "card", "item", "gender", "special_byte_check", "subject_id", "hp_percent",
-            "subject10", "attack_type", "command_type", "subject10_right"
+            "subject10", "attack_type", "command_type", "subject10_right", "scan_text"
         ]
 
     def _get_formula_type_handlers(self):
@@ -131,6 +131,11 @@ class AIDecompilerTypeResolver:
             for i, battle_text in enumerate(self._battle_text):
                 #normalized = self._normalize_string(battle_text)
                 mappings['type_values']['battle_text'][i] = battle_text.get_str()
+            # scan_text
+            for i, scan_text in enumerate(self._battle_text):
+                #normalized = self._normalize_string(battle_text)
+                mappings['type_values']['scan_text'][i] = scan_text.get_str()
+                mappings['type_values']['scan_text'][255] = "255"
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])
