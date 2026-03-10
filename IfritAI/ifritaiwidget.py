@@ -22,6 +22,9 @@ from bs4 import BeautifulSoup
 
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 
+from FF8UltimateEditor.IfritAI.AICompiler.AICompiler import AICompiler
+from FF8UltimateEditor.IfritAI.AICompiler.AIDecompiler import AIDecompiler
+
 
 class IfritAIWidget(QWidget):
     ADD_LINE_SELECTOR_ITEMS = ["Condition", "Command"]
@@ -499,11 +502,12 @@ class IfritAIWidget(QWidget):
         if md_file_to_load:
             self._import_md_folder = os.path.dirname(md_file_to_load)
             self.__clear_lines(delete_data=False)
-            self.create_ai_data_from_md(md_file_to_load, self.ifrit_manager.game_data, self.ifrit_manager.enemy, self.ifrit_manager.enemy.battle_script_data['ai_data'])
+            self.create_ai_data_from_md(md_file_to_load, self.ifrit_manager.game_data, self.ifrit_manager.enemy, self.ifrit_manager.enemy.battle_script_data['ai_data'], self.expert_selector.currentIndex(),self.ifrit_manager.compiler, self.ifrit_manager.decompiler)
             self.ifrit_manager.enemy.ai = self.ifrit_manager.enemy.battle_script_data['ai_data']
             self.__setup_section_data()
 
-    def create_ai_data_from_md(self, md_file: str, game_data:GameData, enemy: MonsterAnalyser, ai_data):
+    @staticmethod
+    def create_ai_data_from_md(md_file: str, game_data:GameData, enemy: MonsterAnalyser, ai_data, current_index, compiler:AICompiler, decompiler:AIDecompiler):
         if md_file:
             with open(md_file, 'r', encoding='utf-8') as file:
                 content = file.read()
@@ -511,10 +515,10 @@ class IfritAIWidget(QWidget):
             code_blocks = re.findall(r'```.*?\n(.*?)\n```', content, re.DOTALL)
             # Analyse code
             for index_code, code in enumerate(code_blocks):
-                if self.expert_selector.currentIndex() == 3:  # For legacy we create md with legacy code, but for other we create md for the new one.
+                if  current_index == 3:  # For legacy we create md with legacy code, but for other we create md for the new one.
                     ai_data[index_code] = CodeAnalyser.compute_ifrit_ai_legacy_code_to_command(game_data, enemy, code)
                 else:
-                    ai_data[index_code] = self.code_widget.get_ai_section_from_code(code, enemy, self.ifrit_manager.compiler, self.ifrit_manager.decompiler, index_code)
+                    ai_data[index_code] = CodeWidget.get_ai_section_from_code(code, enemy, compiler, decompiler, index_code)
 
 
 
@@ -523,9 +527,11 @@ class IfritAIWidget(QWidget):
         md_file_to_export = self.file_dialog.getSaveFileName(parent=self, caption="Md file to save", directory=os.path.join(self._export_md_folder, default_name))[0]
         # md_file_to_export = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if md_file_to_export:
-            self.create_md_from_ai_data(md_file_to_export, self.ifrit_manager.game_data, self.ifrit_manager.enemy.battle_script_data['ai_data'])
+            self.create_md_from_ai_data(md_file_to_export, self.ifrit_manager.game_data, self.ifrit_manager.enemy.battle_script_data['ai_data'], self.expert_selector.currentIndex(), self.ifrit_manager.decompiler)
             self._export_md_folder = os.path.dirname(md_file_to_export)
-    def create_md_from_ai_data(self, md_file: str, game_data: GameData, ai_data):
+
+    @staticmethod
+    def create_md_from_ai_data(md_file: str, game_data: GameData, ai_data, current_expert_index: int, decompiler: AIDecompiler):
         section_text = ["# Init code", "# Enemy turn", "# Counter-attack", "# Death", "# Before dying or taking a hit"]
         code_text = ""
         for index_section, section in enumerate(ai_data):
@@ -533,10 +539,10 @@ class IfritAIWidget(QWidget):
                     ai_data) - 1:  # Ignore last section that is just an empty one to know when it's the end
                 break
             code_text += section_text[index_section] + "\n```\n"
-            if self.expert_selector.currentIndex() == 3: # For legacy we create md with legacy code, but for other we create md for the new one.
+            if current_expert_index == 3: # For legacy we create md with legacy code, but for other we create md for the new one.
                 code_text += CodeAnalyser.set_ifrit_ai_legacy_code_from_command(game_data, section['command'])
             else:
-                code_text += self.ifrit_manager.decompiler.decompile_from_command_list(section['command'])
+                code_text += decompiler.decompile_from_command_list(section['command'])
             code_text += "```\n\n"
         soup = BeautifulSoup(code_text, "html.parser")
         for br in soup.find_all("br"):

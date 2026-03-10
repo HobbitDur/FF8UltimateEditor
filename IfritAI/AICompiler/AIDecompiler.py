@@ -21,6 +21,11 @@ class AIDecompiler:
         self._battle_text = battle_text
         self.type_resolver.set_battle_text_info_stat(battle_text, info_stat)
 
+    def get_battle_text(self):
+        return self._battle_text
+    def get_info_stat(self):
+        return self._info_stat
+
     def decompile(self, bytecode: List[int]):
         command_list = self.decompile_bytecode_to_command_list(bytecode)
         code = self.decompile_from_command_list(command_list)
