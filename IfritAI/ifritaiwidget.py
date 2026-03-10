@@ -412,7 +412,7 @@ class IfritAIWidget(QWidget):
             if command_widget.get_command().get_id() == 35:
                 if command_widget.get_command().get_op_code()[0] == 0 or command_widget.get_command().get_op_code()[0] == 3:
                     if_index -= 1
-            command_widget.set_if_index(if_index)
+            #command_widget.set_if_index(if_index)
             if command_widget.get_command().get_id() == 2:
                 if_index += 1
 
@@ -432,7 +432,7 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        #file_to_load = os.path.join("battle/c0m071.dat")  # For developing faster
+        #file_to_load = os.path.join("battle/c0m092.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
