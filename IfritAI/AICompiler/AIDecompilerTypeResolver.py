@@ -292,7 +292,10 @@ class AIDecompilerTypeResolver:
 
     def _resolve_value(self, value, expected_type, special_param=None):
         if expected_type in self.lookup_types:
-            return self.type_mappings['type_values'][expected_type][value]
+            try:
+                return self.type_mappings['type_values'][expected_type][value]
+            except KeyError:
+                return str(value)
         elif expected_type in self.formula_types:
             if value and expected_type in ("int_shift",):
                 return self.formula_types[expected_type](value, special_param)
