@@ -65,6 +65,7 @@ class IfritAIWidget(QWidget):
         self.file_dialog_button.setFixedSize(40, 40)
         self.file_dialog_button.clicked.connect(self.__load_file)
         self.file_dialog_button.setToolTip("Open a .dat file")
+        self._file_dialog_folder = ""
 
         self.file_dialog_export = QFileDialog()
 
@@ -105,6 +106,7 @@ class IfritAIWidget(QWidget):
         self._import_xlsx_button.setToolTip("This allow to import XLSX file to update abilities")
         self._import_xlsx_button.clicked.connect(self._load_xlsx_file)
         self._import_xlsx_button.setEnabled(False)
+        self._import_xlsx_folder = ""
 
         self._import_md_button = QPushButton()
         self._import_md_button.setIcon(QIcon(os.path.join(icon_path, 'md_upload.png')))
@@ -113,6 +115,7 @@ class IfritAIWidget(QWidget):
         self._import_md_button.setToolTip("This allow to import AI from md files")
         self._import_md_button.clicked.connect(self._load_md_file)
         self._import_md_button.setEnabled(False)
+        self._import_md_folder = ""
 
         self._export_md_button = QPushButton()
         self._export_md_button.setIcon(QIcon(os.path.join(icon_path, 'md_save.png')))
@@ -121,6 +124,7 @@ class IfritAIWidget(QWidget):
         self._export_md_button.setToolTip("This allow to export AI to md files")
         self._export_md_button.clicked.connect(self._export_md_file)
         self._export_md_button.setEnabled(False)
+        self._export_md_folder = ""
 
         expert_tooltip_text = "IfritAI offer 4 different mod of editing:<br/>" + \
                               self.EXPERT_SELECTOR_ITEMS[0] + ": For modifying having a set of expected value<br/>" + \
@@ -434,8 +438,9 @@ class IfritAIWidget(QWidget):
     def __load_file(self, file_to_load: str = ""):
         #file_to_load = os.path.join("battle/c0m092.dat")  # For developing faster
         if not file_to_load:
-            file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
+            file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat", directory=self._file_dialog_folder)[0]
         if file_to_load:
+            self._file_dialog_folder = os.path.dirname(self._file_dialog_folder)
             self._import_xlsx_button.setEnabled(True)
             self._import_md_button.setEnabled(True)
             self._export_md_button.setEnabled(True)
@@ -472,9 +477,10 @@ class IfritAIWidget(QWidget):
     def _load_xlsx_file(self):
         # Read the xlsx
         xlsx_manager = IfritXlsxManager()
-        xlsx_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Xlsx file", filter="*.xlsx")[0]
+        xlsx_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Xlsx file", filter="*.xlsx", directory=self._import_xlsx_folder)[0]
         # xlsx_file_to_load = os.path.join("../IfritXlsx/OutputFiles", "ifrit.xlsx")  # For developing faster
         if xlsx_file_to_load:
+            self._import_xlsx_folder = os.path.dirname(self._import_xlsx_folder)
             xlsx_manager.load_file(xlsx_file_to_load)
             current_monster_id = int(re.search(r'\d{3}', self.ifrit_manager.enemy.origin_file_name).group())
             monster_data = xlsx_manager.get_monster_data_from_xlsx(load_all_data=True, load_only_first=False, load_monster_id=current_monster_id)
@@ -488,9 +494,10 @@ class IfritAIWidget(QWidget):
             self.__setup_section_data()
 
     def _load_md_file(self):
-        md_file_to_load = self.file_dialog_export.getOpenFileName(parent=self, caption="Md file to import", filter="*.md")[0]
+        md_file_to_load = self.file_dialog_export.getOpenFileName(parent=self, caption="Md file to import", filter="*.md", directory=self._import_md_folder)[0]
         # md_file_to_load = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if md_file_to_load:
+            self._import_md_folder = os.path.dirname(md_file_to_load)
             self.__clear_lines(delete_data=False)
             self.create_ai_data_from_md(md_file_to_load, self.ifrit_manager.game_data, self.ifrit_manager.enemy, self.ifrit_manager.enemy.battle_script_data['ai_data'])
             self.ifrit_manager.enemy.ai = self.ifrit_manager.enemy.battle_script_data['ai_data']
@@ -513,11 +520,11 @@ class IfritAIWidget(QWidget):
 
     def _export_md_file(self):
         default_name = self.ifrit_manager.enemy.origin_file_name.replace('.dat', '.md')
-        md_file_to_export = self.file_dialog.getSaveFileName(parent=self, caption="Md file to save", directory=default_name)[0]
+        md_file_to_export = self.file_dialog.getSaveFileName(parent=self, caption="Md file to save", directory=os.path.join(self._export_md_folder, default_name))[0]
         # md_file_to_export = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if md_file_to_export:
             self.create_md_from_ai_data(md_file_to_export, self.ifrit_manager.game_data, self.ifrit_manager.enemy.battle_script_data['ai_data'])
-
+            self._export_md_folder = os.path.dirname(md_file_to_export)
     def create_md_from_ai_data(self, md_file: str, game_data: GameData, ai_data):
         section_text = ["# Init code", "# Enemy turn", "# Counter-attack", "# Death", "# Before dying or taking a hit"]
         code_text = ""
