@@ -4,7 +4,7 @@ import sys
 from lark import Lark
 
 from FF8GameData.gamedata import GameData
-from IfritAI.AICompiler.AIAST import Block, Command, IfStatement, Value, ParamList
+from IfritAI.AICompiler.AIAST import Block, Command, IfStatement, Value, ParamList, Comment
 from IfritAI.AICompiler.AIASTTransformer import AIASTTransformer
 from IfritAI.AICompiler.AICodeGenerator import AICodeGenerator
 from IfritAI.AICompiler.AICompilerTypeResolver import AICompilerTypeResolver
@@ -12,30 +12,33 @@ from IfritAI.AICompiler.AICompilerTypeResolver import AICompilerTypeResolver
 
 class AICompiler:
     grammar = r"""
-    start: stmt*
+        start: (stmt | COMMENT)*
 
-    stmt: if_stmt | command
+        stmt: if_stmt | command
 
-    if_stmt: "if" condition block ("elseif" condition block)* ("else" block)?
-    condition: "(" param_list ")"
-    block: "{" stmt* "}"
-    command: ID ("(" param_list? ")")? ";"
+        if_stmt: "if" condition block ("elseif" condition block)* ("else" block)?
+        condition: "(" param_list ")"
 
-    param_list: value ("," value)*
-    value: ID | NUMBER | OPERATOR | STRING 
+        block: "{" (stmt | COMMENT)* "}"
 
-    ID: /[a-zA-Z_][a-zA-Z_0-9%]*|[0-9]+%/
-    NUMBER: /-?[0-9]+/
-    OPERATOR: /[><!]=?|==/
-    STRING: /"(?:[^"\\]|\\.)*"/
+        command: ID ("(" param_list? ")")? ";"
 
-    %import common.WS
-    %import common.CPP_COMMENT    // For // comments
-    %import common.C_COMMENT      // For /* ... */ comments
-    %ignore WS
-    %ignore CPP_COMMENT
-    %ignore C_COMMENT
-    """
+        param_list: value ("," value)*
+        value: ID | NUMBER | OPERATOR | STRING 
+
+        ID: /[a-zA-Z_][a-zA-Z_0-9%]*|[0-9]+%/
+        NUMBER: /-?[0-9]+/
+        OPERATOR: /[><!]=?|==/
+        STRING: /"(?:[^"\\]|\\.)*"/
+
+        // Capture both types into one token
+        COMMENT: CPP_COMMENT | C_COMMENT
+
+        %import common.WS
+        %import common.CPP_COMMENT
+        %import common.C_COMMENT
+        %ignore WS
+        """
 
     def __init__(self, game_data: GameData, battle_text=(), info_stat_data={}):
         self.game_data = game_data
@@ -172,6 +175,9 @@ class AICompiler:
                 for param in node.params:
                     size += self._calculate_tree_size(param)
             return size
+
+        elif isinstance(node, Comment):
+            return 0  # Comments don't exist in the compiled binary
 
         return 0
 

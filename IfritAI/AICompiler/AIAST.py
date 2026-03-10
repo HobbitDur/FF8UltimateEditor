@@ -122,7 +122,15 @@ class ElifBranch(ASTNode):
         result.append(f"{spaces}  Block:")
         result.append(self.block._to_str(indent + 2))
         return "\n".join(result)
+@dataclass
+class Comment(ASTNode):
+    text: str
 
+    def _to_str(self, indent=0):
+        spaces = "  " * indent
+        # Clean up newlines if it's a multi-line C-style comment
+        display_text = self.text.replace('\n', ' ')
+        return f"{spaces}Comment({display_text})"
 
 # Union type for all statement types
-Statement = Union[Command, IfStatement]
+Statement = Union[Command, IfStatement, Comment]

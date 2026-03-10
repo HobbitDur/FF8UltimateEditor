@@ -51,6 +51,13 @@ class AICodeGenerator:
         for stmt in node.statements:
             self.visit(stmt)
 
+    def visit_Comment(self, node):
+        """
+        Comments do not produce bytecode.
+        We simply pass so they are ignored during generation.
+        """
+        pass
+
     def visit_IfStatement(self, node):
         """Generate code for an if-statement with optional elseif/else"""
         # For a simple if/else:

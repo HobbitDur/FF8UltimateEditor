@@ -20,6 +20,10 @@ class AIASTTransformer(Transformer):
     def STRING(self, token):
         return Value(str(token.value))
 
+    def COMMENT(self, token):
+        # Simply return our new Comment node
+        return Comment(text=str(token))
+
     def value(self, items):
         return items[0]
 
@@ -80,6 +84,8 @@ class AIASTTransformer(Transformer):
     def start(self, items):
         # If there's only one statement, return it directly
         # If there are multiple statements, wrap them in a Block
+        # Filter out None if any empty items sneak in
+        items = [item for item in items if item is not None]
         if len(items) == 1:
             return items[0]
         else:
