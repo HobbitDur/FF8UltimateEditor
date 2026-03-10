@@ -4,6 +4,7 @@ import re
 
 from FF8GameData.gamedata import GameData
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritXlsx import xlsxmanager
 from IfritXlsx.xlsxmanager import XlsxToDat, DatToXlsx
 
@@ -14,6 +15,7 @@ class IfritXlsxManager:
         self.game_data.load_all()
         self._dat_xlsx_manager = DatToXlsx()
         self._xlsx_to_dat_manager = XlsxToDat()
+        self.decompiler = AIDecompiler(self.game_data)
 
     def create_file(self, xlsx_file):
         self._dat_xlsx_manager.create_file(xlsx_file)
@@ -33,7 +35,7 @@ class IfritXlsxManager:
             print("Reading file {}".format(file_name))
             monster = MonsterAnalyser(self.game_data)
             monster.load_file_data(monster_file, self.game_data)
-            monster.analyse_loaded_data(self.game_data)
+            monster.analyse_loaded_data(self.game_data, self.decompiler)
             if callback_func:
                 callback_func(monster)
 
@@ -56,7 +58,7 @@ class IfritXlsxManager:
                     else:
                         print(f"Monster dat file not found for index: {monster_index}")
                         continue
-                ennemy = self._xlsx_to_dat_manager.import_from_xlsx(sheet, self.game_data, pathlib.Path(current_dat_file).resolve().parent, local_limit)
+                ennemy = self._xlsx_to_dat_manager.import_from_xlsx(sheet, self.game_data, pathlib.Path(current_dat_file).resolve().parent, self.decompiler, local_limit)
                 if ennemy:
                     ennemy.write_data_to_file(self.game_data, current_dat_file)
         self._xlsx_to_dat_manager.close_file()

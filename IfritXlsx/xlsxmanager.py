@@ -10,6 +10,7 @@ from openpyxl.reader.excel import load_workbook
 from FF8GameData.GenericSection.ff8text import FF8Text
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData, AIData
+from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 
 COL_MONSTER_INFO = 0
 COL_STAT = 3
@@ -700,7 +701,7 @@ class XlsxToDat():
         for key, ennemy in ennemy_list.items():
             ennemy.write_data_to_file(game_data, path, write_ai)
 
-    def import_from_xlsx(self, sheet, game_data: GameData, output_path, limit_file_index=-1):
+    def import_from_xlsx(self, sheet, game_data: GameData, output_path, decompiler:AIDecompiler, limit_file_index=-1):
         """
         As the module to write is different from the reading one, the one writing start at 0 for column and row, when this one, the reading, start at 1
         """
@@ -713,7 +714,7 @@ class XlsxToDat():
         print("Reading sheet: {}".format(sheet.title))
         current_ennemy = MonsterAnalyser(game_data)
         current_ennemy.load_file_data(os.path.join(output_path, ennemy_origin_file), game_data)  # Loading the file to have all offset correct
-        current_ennemy.analyse_loaded_data(game_data)
+        current_ennemy.analyse_loaded_data(game_data, decompiler)
         self.read_monster_name(game_data, sheet, current_ennemy)
         current_ennemy.origin_file_name = ennemy_origin_file
 
