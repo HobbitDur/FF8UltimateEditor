@@ -108,7 +108,7 @@ class CommandAnalyser:
 
     def get_param_text(self):
         text = "("
-        value_to_check = [' ', '+', '\t', '\r', '\n']
+        value_to_check = [' ', '+', '\t', '\r', '\n', '-', '*']
         comparator_to_check = []
         comparator_to_check.extend(self.game_data.ai_data_json["list_comparator"])
         comparator_to_check.extend(self.game_data.ai_data_json["list_comparator_ifritAI"])
