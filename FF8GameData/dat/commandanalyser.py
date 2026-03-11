@@ -109,20 +109,20 @@ class CommandAnalyser:
     def get_param_text(self):
         text = "("
         value_to_check = [' ', '+', '\t', '\r', '\n']
-        #value_to_check.extend(self.game_data.ai_data_json["list_comparator"])
-        #value_to_check.extend(self.game_data.ai_data_json["list_comparator_ifritAI"])
-        #print(f"self.param_typed: {self.param_typed}")
-        #print(f"self.type_data: {self.type_data}")
+        comparator_to_check = []
+        comparator_to_check.extend(self.game_data.ai_data_json["list_comparator"])
+        comparator_to_check.extend(self.game_data.ai_data_json["list_comparator_ifritAI"])
         for i, param in enumerate(self.param_typed):
             if param is None:
                 continue
+            if i  < len(self.param_typed) and i != 0 and self.param_typed[i] is not None:
+                text+=", "
             # self.type_data is empty for if, so we check if it exist before. Should maybe manage better the if.
-            if any (value in param for value in value_to_check) or (self.type_data and self.type_data[i] in ("battle_text", "scan_text")):
+            if any (value in param for value in value_to_check) or (self.type_data and self.type_data[i] in ("battle_text", "scan_text")) or  any (value in param for value in comparator_to_check if self.type_data[i]!="comparator"):
                 text += "\"" + param + "\""
             else:
                 text += param
-            if i  < len(self.param_typed) - 1:
-                text+=","
+
         text += ")"
         if self.__op_id != 0x02:
             text += ";"
@@ -1040,11 +1040,13 @@ class CommandAnalyser:
             left_subject = {'text': 'UNKNOWN SUBJECT', 'param': None}
             right_subject = {'text': '{}', 'param': [op_code_right_condition_param]}
             print(f"Unexpected subject id: {subject_id}")
+        self.type_data.append("subject10")
         param_left = None
         # Analysing left subject
         if if_current_subject:
             specific_left_text = ""
             if if_current_subject["complexity"] == "simple":
+                self.type_data.append(if_current_subject['param_left_type'])
                 if if_current_subject['param_left_type'] == "target_basic":
                     param_left = self.__get_target(op_code_left_condition_param, advanced=False)
                     list_param_possible_left.extend(self.__get_target_list(advanced=False))
@@ -1134,6 +1136,7 @@ class CommandAnalyser:
                     list_param_possible_left.append({"id": op_code_left_condition_param, "data": "Unused"})
             elif if_current_subject["complexity"] == "complex":
                 if if_current_subject["subject_id"] == 15:  # ALLY SLOT X IS ALIVE
+                    self.type_data.append(if_current_subject['param_left_type'])
                     param_left = op_code_right_condition_param - 3  # Special case where we take the right condition
                 else:
                     print(f"Unexpected subject_id: {if_current_subject["subject_id"]}")
@@ -1148,9 +1151,11 @@ class CommandAnalyser:
                 specific_left_text = if_current_subject["left_text"]
             left_subject = {'text': specific_left_text, 'param': param_left}
 
+        self.type_data.append("comparator")
         # Analysing right subject
         if if_current_subject:
             right_param_type = if_current_subject['param_right_type']
+            self.type_data.append(right_param_type)
             if right_param_type:
                 if right_param_type == 'hp_percent':
                     right_subject = {'text': '{}%', 'param': op_code_right_condition_param * 10}
