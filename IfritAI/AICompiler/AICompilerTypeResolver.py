@@ -416,8 +416,11 @@ class AICompilerTypeResolver:
                     right_type = [x['right_type'] for x in self.game_data.ai_data_json['subject_left_10'] if self._normalize_string(params[1].value) == self._normalize_string(x['text'])][0]
             except IndexError:
                 raise SubjectIdTenError(str(params[1]))
-        if right_type == "const" :  # Left param is not used
+        if right_type == "const" :  # Right param is not used
             params.insert(3, Value(str(param_right_list[0]), size=2))
+            resolved_params.append(params[3])
+        elif right_type == "unused" :  # Right param is not used
+            params.insert(3, Value(str(0), size=2))
             resolved_params.append(params[3])
         elif right_type:
             resolved_right = self._resolve_value(params[3], right_type, param_right_list, value_forced_size=2)

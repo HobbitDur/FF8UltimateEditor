@@ -109,6 +109,10 @@ class CommandAnalyser:
     def get_param_text(self):
         text = "("
         value_to_check = [' ', '+', '\t', '\r', '\n']
+        #value_to_check.extend(self.game_data.ai_data_json["list_comparator"])
+        #value_to_check.extend(self.game_data.ai_data_json["list_comparator_ifritAI"])
+        #print(f"self.param_typed: {self.param_typed}")
+        #print(f"self.type_data: {self.type_data}")
         for i, param in enumerate(self.param_typed):
             if param is None:
                 continue
@@ -1211,6 +1215,8 @@ class CommandAnalyser:
                 elif right_param_type == 'target_advanced_generic':
                     right_subject = {'text': '{}', 'param': self.__get_target(op_code[3], advanced=True, specific=False)}
                     list_param_possible_right = self.__get_possible_target_advanced_generic()
+                elif right_param_type == 'unused':
+                    right_subject = {'text': "", 'param':None}
                 else:
                     print(f"Right subject {right_param_type} unknown")
                     right_subject = {'text': '{}', 'param': op_code_right_condition_param}
