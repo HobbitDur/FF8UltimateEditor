@@ -995,6 +995,7 @@ class CommandAnalyser:
         if jump & 0x8000 != 0:
             jump = self.twos_complement(jump, 16)
         self.__jump_value = jump
+        self.type_data.append("int16")
         if jump == 0:
             return [op_info['text'][0], []]
         else:
@@ -1010,6 +1011,7 @@ class CommandAnalyser:
         self.param_possible_list.append(self.__get_possible_magic_type())
         self.param_possible_list.append([])
         op_info = [x for x in self.game_data.ai_data_json['op_code_info'] if x['op_code'] == 45][0]
+        self.type_data.extend(op_info['param_type'])
         return [op_info['text'], [element, element_val]]
 
     def __op_02_analysis(self, op_code):

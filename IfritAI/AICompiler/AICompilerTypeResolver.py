@@ -120,11 +120,15 @@ class AICompilerTypeResolver:
 
     def _parse_percent_elem(self, value_str):
         """Parse elemental percentage value (formula type)"""
-        try:
-            return 900 - int(value_str) * 10
-        except ValueError:
-            raise ParamPercentElemError(value_str)
-
+        if '%' in value_str:
+            value_str = value_str.replace('%', '')
+            value_str = value_str.replace(' ', '')
+            try:
+                return 900 - int(value_str) * 10
+            except ValueError:
+                raise ParamPercentElemError(value_str)
+        else:
+            return int(value_str)
     def _parse_int_shift(self, value_str, param):
         """Parse int_shift value (formula type) - shift by -1"""
         try:

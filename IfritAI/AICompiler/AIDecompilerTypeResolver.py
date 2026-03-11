@@ -88,7 +88,7 @@ class AIDecompilerTypeResolver:
 
     def _parse_percent_elem(self, value:int):
         """Parse elemental percentage value (formula type)"""
-        return str(floor((900 - value) / 10))
+        return str(floor((900 - value) / 10)) + '%'
 
     def _parse_int_shift(self, value: int, param: List):
         """Parse int_shift value (formula type)"""
