@@ -113,7 +113,7 @@ class CommandAnalyser:
             if param is None:
                 continue
             # self.type_data is empty for if, so we check if it exist before. Should maybe manage better the if.
-            if any (value in param for value in value_to_check) or (self.type_data and self.type_data[i] in ("battle_text",)):
+            if any (value in param for value in value_to_check) or (self.type_data and self.type_data[i] in ("battle_text", "scan_text")):
                 text += "\"" + param + "\""
             else:
                 text += param
