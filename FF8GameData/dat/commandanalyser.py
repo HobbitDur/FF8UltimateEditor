@@ -108,7 +108,7 @@ class CommandAnalyser:
 
     def get_param_text(self):
         text = "("
-        value_to_check = [' ',  '\t', '\r', '\n', '*']
+        value_to_check = [' ', '\t', '\r', '\n', '*']
         operator_to_check = ['+', '-']
         comparator_to_check = []
         comparator_to_check.extend(self.game_data.ai_data_json["list_comparator"])
@@ -117,10 +117,26 @@ class CommandAnalyser:
         for i, param in enumerate(self.param_typed):
             if param is None:
                 continue
-            if i  < len(self.param_typed) and i != 0 and self.param_typed[i] is not None:
-                text+=", "
-            if isinstance(param, str) and (any (value in param for value in value_to_check) or (self.type_data and self.type_data[i] in ("battle_text", "scan_text")) or  any (value in param for value in comparator_to_check if self.type_data[i]!="comparator") or  any (value in param for value in operator_to_check if self.type_data[i] not in ("int", "int16"))):
-                text += "\"" + param + "\""
+            if i < len(self.param_typed) and i != 0:
+                text += ", "
+
+            if isinstance(param, str):
+                # New Logic: Starts with number but is not ONLY a number
+                mixed_alpha_numeric = param and param[0].isdigit() and not param.isdigit() and  param[-1] != '%'
+
+                # Combined Condition
+                should_quote = (
+                        mixed_alpha_numeric or
+                        any(val in param for val in value_to_check) or
+                        (self.type_data and self.type_data[i] in ("battle_text", "scan_text")) or
+                        any(val in param for val in comparator_to_check if self.type_data[i] != "comparator") or
+                        any(val in param for val in operator_to_check if self.type_data[i] not in ("int", "int16"))
+                )
+
+                if should_quote:
+                    text += f'"{param}"'
+                else:
+                    text += param
             else:
                 text += str(param)
 
@@ -172,7 +188,6 @@ class CommandAnalyser:
                         text += text_added['text']
                     else:
                         parameters[i] = str(parameters[i]) + text_added['text']
-
         if not raw and not for_code:
             text = text.format(*parameters)
         if for_code and text:
@@ -626,6 +641,15 @@ class CommandAnalyser:
                         # param_value.append(self.game_data.ai_data_json['slot_id_enable'][0]['text'])
                         param_value.append("UNKNOWN ASSIGN SLOT ID")
                         self.param_possible_list[-1].append({'id': self.__op_code[op_index], 'data': "UNKNOWN ASSIGN SLOT ID"})
+                elif type == "slot_id":
+                    self.param_possible_list.append(self.__get_possible_slot_id())
+                    try:
+                        param_value.append(
+                            str([x['text'] for x in self.game_data.ai_data_json['slot_id'] if x['param_id'] == self.__op_code[op_index]][0]))
+                    except IndexError:
+                        # param_value.append(self.game_data.ai_data_json['slot_id_enable'][0]['text'])
+                        param_value.append("UNKNOWN ASSIGN SLOT ID")
+                        self.param_possible_list[-1].append({'id': self.__op_code[op_index], 'data': "UNKNOWN ASSIGN SLOT ID"})
                 elif type == "magic":
                     self.param_possible_list.append(self.__get_possible_magic())
                     try:
@@ -892,6 +916,9 @@ class CommandAnalyser:
 
     def __get_possible_assign_slot_id(self):
         return [{"id": x['param_id'], "data": x['text']} for x in self.game_data.ai_data_json["assign_slot_id"]]
+
+    def __get_possible_slot_id(self):
+        return [{"id": x['param_id'], "data": x['text']} for x in self.game_data.ai_data_json["slot_id"]]
 
     def __get_possible_magic(self):
         return [{'id': val_dict['id'], 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.magic_data_json["magic"])]
