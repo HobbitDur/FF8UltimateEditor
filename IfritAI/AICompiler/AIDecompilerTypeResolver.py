@@ -417,7 +417,7 @@ class AIDecompilerTypeResolver:
             for i in range(len(self.game_data.ai_data_json['list_target_char'])):
                 list_target.append({"id": i, "data": self.game_data.ai_data_json['list_target_char'][i]})
             for i in range(0, len(self.game_data.monster_data_json["monster"])):
-                list_target.append({"id": i + 16, "data": self.game_data.monster_data_json["monster"][i]["name"]})
+                list_target.append({"id":self.game_data.monster_data_json["monster"][i]["entity_id"], "data": self.game_data.monster_data_json["monster"][i]["name"]})
         if slot:
             list_target_data = self.game_data.ai_data_json['target_slot']
         elif advanced:
