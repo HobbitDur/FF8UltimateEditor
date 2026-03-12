@@ -221,6 +221,11 @@ class ParamBattleTextError(AICodeError):
         super().__init__(f"Unexpected battle_text: {battle_text}")
 
 
+class ParamScanTextError(AICodeError):
+    def __init__(self, scan_text: str):
+        super().__init__(f"Unexpected scan_text: {scan_text}")
+
+
 class ParamTargetSpecificError(AICodeError):
     def __init__(self, target_specific: str):
         super().__init__(f"Unexpected target_specific: {target_specific}")

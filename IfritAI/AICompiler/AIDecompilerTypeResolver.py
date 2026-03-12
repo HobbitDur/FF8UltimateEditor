@@ -135,7 +135,7 @@ class AIDecompilerTypeResolver:
             for i, scan_text in enumerate(self._battle_text):
                 #normalized = self._normalize_string(battle_text)
                 mappings['type_values']['scan_text'][i] = scan_text.get_str()
-                mappings['type_values']['scan_text'][255] = "255"
+                mappings['type_values']['scan_text'][255] = 255
             # magic
             for magic in self.game_data.magic_data_json.get('magic', []):
                 normalized = self._normalize_string(magic['name'])
@@ -263,7 +263,7 @@ class AIDecompilerTypeResolver:
         """Normalize string for case-insensitive lookup"""
         if text is None:
             return ""
-        return str(text).upper().replace(' ', '_').replace('-', '_')
+        return str(text).upper().replace(' ', '_')
 
     def resolve(self, command_list:List[CommandAnalyser]):
         """Resolve command parameters based on command signature"""

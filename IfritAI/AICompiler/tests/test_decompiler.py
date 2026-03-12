@@ -43,7 +43,7 @@ class TestAIDecompiler:
         """Normalize string for case-insensitive lookup"""
         if text is None:
             return ""
-        return str(text).upper().replace(' ', '_').replace('-', '_')
+        return str(text).upper().replace(' ', '_')
 
     def pretty_code(self, code):
         """Normalize code for comparison - keeps basic formatting"""
@@ -864,7 +864,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            elemDmgMod(Thunder, 80);
+            elemDmgMod(Thunder, 80%);
             """
         )
         assert expected == normalized
@@ -1922,11 +1922,11 @@ class TestAIDecompiler:
         # Check indentation
         assert indented[0] == "if (1,2,3,4)"  # No indent
         assert indented[1] == "{"
-        assert indented[2] == "&nbsp;&nbsp;&nbsp;&nbsp;die();"  # 4 spaces indent
+        assert indented[2] == "    die();"  # 4 spaces indent
         assert indented[3] == "}"  # Back to no indent
         assert indented[4] == "else"  # No indent
         assert indented[5] == "{"
-        assert indented[6] == "&nbsp;&nbsp;&nbsp;&nbsp;stop();"  # 4 spaces indent
+        assert indented[6] == "    stop();"  # 4 spaces indent
         assert indented[7] == "}"  # Back to no indent
 
     def test_empty_command_list(self, decompiler):

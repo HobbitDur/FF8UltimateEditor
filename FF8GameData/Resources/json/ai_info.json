@@ -16,6 +16,7 @@
   {"op_code": 101, "var_type":"battle",  "var_name": "BattleVar101",  "used_in":  ""},
   {"op_code": 102, "var_type":"battle",  "var_name": "BattleVar102",  "used_in":  "FirstBugSeen"},
   {"op_code": 103, "var_type":"battle",  "var_name": "BattleVar103",  "used_in":  ""},
+  {"op_code": 96,  "var_type":"local" ,  "var_name": "soldier useless"},
   {"op_code": 220, "var_type":"local" ,  "var_name": "varA"},
   {"op_code": 221, "var_type":"local" ,  "var_name": "varB"},
   {"op_code": 222, "var_type":"local" ,  "var_name": "varC"},

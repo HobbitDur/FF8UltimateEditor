@@ -8,7 +8,7 @@ from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, Pa
     ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
     ParamIntError, \
     ParamPercentError, ParamPercentElemError, ParamBoolError, ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, \
-    ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError, SubjectIdTenError
+    ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError, SubjectIdTenError, ParamScanTextError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
@@ -327,7 +327,7 @@ class AICompilerTypeResolver:
         """Normalize string for case-insensitive lookup"""
         if text is None:
             return ""
-        return str(text).upper().replace(' ', '_').replace('-', '_')
+        return str(text).upper().replace(' ', '_')
 
     def resolve(self, ast):
         """Resolve all symbolic names to their numeric values"""
@@ -443,6 +443,7 @@ class AICompilerTypeResolver:
         """Raise specific error based on parameter type"""
         error_classes = {
             'battle_text': ParamBattleTextError,
+            'scan_text': ParamScanTextError,
             'magic': ParamMagicIdError,
             'magic_type': ParamMagicTypeError,
             'status_ai': ParamStatusAIError,

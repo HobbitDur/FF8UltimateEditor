@@ -104,24 +104,25 @@ class CommandAnalyser:
 
     def _normalize_string(self, text):
         """Normalize string for case-insensitive lookup"""
-        return text.upper().replace(' ', '_').replace('-', '_')
+        return text.upper().replace(' ', '_')
 
     def get_param_text(self):
         text = "("
-        value_to_check = [' ', '+', '\t', '\r', '\n', '-', '*']
+        value_to_check = [' ',  '\t', '\r', '\n', '*']
+        operator_to_check = ['+', '-']
         comparator_to_check = []
         comparator_to_check.extend(self.game_data.ai_data_json["list_comparator"])
         comparator_to_check.extend(self.game_data.ai_data_json["list_comparator_ifritAI"])
+
         for i, param in enumerate(self.param_typed):
             if param is None:
                 continue
             if i  < len(self.param_typed) and i != 0 and self.param_typed[i] is not None:
                 text+=", "
-            # self.type_data is empty for if, so we check if it exist before. Should maybe manage better the if.
-            if any (value in param for value in value_to_check) or (self.type_data and self.type_data[i] in ("battle_text", "scan_text")) or  any (value in param for value in comparator_to_check if self.type_data[i]!="comparator"):
+            if isinstance(param, str) and (any (value in param for value in value_to_check) or (self.type_data and self.type_data[i] in ("battle_text", "scan_text")) or  any (value in param for value in comparator_to_check if self.type_data[i]!="comparator") or  any (value in param for value in operator_to_check if self.type_data[i] not in ("int", "int16"))):
                 text += "\"" + param + "\""
             else:
-                text += param
+                text += str(param)
 
         text += ")"
         if self.__op_id != 0x02:

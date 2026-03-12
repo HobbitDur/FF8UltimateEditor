@@ -9,7 +9,7 @@ from FF8GameData.dat.daterrors import ParamBattleTextError, ParamAptitudeError, 
     ParamMonsterAbilityError, ParamMonsterLineAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, ParamTargetSlotError, ParamBoolError, \
     ParamSpecialActionError, ParamInt16Error, ParamTargetGenericError, ParamActivateError, ParamSceneOutSlotIdError, ParamMagicTypeError, ParamGfError, \
     ParamSlotIdEnableError, \
-    ParamCardError, ParamAssignSlotIdError, ParamItemError, ParamSlotIdError
+    ParamCardError, ParamAssignSlotIdError, ParamItemError, ParamSlotIdError, ParamScanTextError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 from IfritAI.AICompiler.AICompiler import AICompiler
@@ -936,7 +936,7 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-        with pytest.raises(ParamBattleTextError):
+        with pytest.raises(ParamScanTextError):
             compiler.compile(source_code_error)
 
     def test_setScanText_255(self, compiler: AICompiler):
@@ -1121,12 +1121,12 @@ class TestAICompiler:
         ## Raw data (already int)
         source_code_raw = \
             """
-            elemDmgMod(2, 80);
+            elemDmgMod(2, 100);
             """
         ## Type data
         source_code_type = \
             """
-            elemDmgMod(Thunder, 80);
+            elemDmgMod(Thunder, 80%);
             """
         ## Error data
         source_code_error = \
