@@ -44,6 +44,8 @@ class AICompiler:
         self.game_data = game_data
         self.parser = Lark(self.grammar, start='start', parser='lalr')
         self.transformer = AIASTTransformer()
+        self._battle_text = battle_text
+        self._info_stat = info_stat_data
         self.type_resolver = AICompilerTypeResolver(game_data, battle_text, info_stat_data)
         self.generator = AICodeGenerator(game_data)
 
@@ -88,7 +90,18 @@ class AICompiler:
 
 
     def set_battle_text_info_stat(self, battle_text=None, info_stat=None):
+        if battle_text is not None:
+            self._battle_text = battle_text
+        if info_stat is not None:
+            self._info_stat = info_stat
         self.type_resolver.set_battle_text_info_stat(battle_text, info_stat)
+
+    def get_battle_text(self):
+        return self._battle_text
+
+    def get_info_stat(self):
+        return self._info_stat
+
 
     def update_stop(self, ast):
         """Ensure exactly one stop at the end and size is multiple of 4"""
