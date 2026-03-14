@@ -10,6 +10,9 @@ class AICodeGenerator:
         self.labels = {}  # For tracking jump targets
         self.current_position = 0
 
+    def reset_opcode_map(self):
+        self.opcode_map = self._build_opcode_map()
+
     def _build_opcode_map(self):
         """Build a mapping from command names to opcode info"""
         opcode_map = {}
@@ -44,6 +47,20 @@ class AICodeGenerator:
             signed=False
         int16 = value.to_bytes(signed=signed,  length=2, byteorder='little')
         for i, param in enumerate(list(int16)):
+            self.emit_byte(int(param))
+
+    def emit_int32_le(self, value):
+        """Emit a 32-bit integer in little-endian format"""
+        # Check the 31st bit to determine if the number is signed/negative
+        if value & 0x80000000 != 0:
+            signed = True
+        else:
+            signed = False
+
+        # Convert to 4 bytes
+        int32 = value.to_bytes(length=4, byteorder='little', signed=signed)
+
+        for param in list(int32):
             self.emit_byte(int(param))
 
     def visit_Block(self, node):
@@ -211,6 +228,8 @@ class AICodeGenerator:
                 for i, param in enumerate(result):
                     if param.size == 2:
                         self.emit_int16_le(int(param.value))
+                    elif param.size == 4:
+                        self.emit_int32_le(int(param.value))
                     else:
                         self.emit_byte(int(param.value))
 

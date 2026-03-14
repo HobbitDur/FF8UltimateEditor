@@ -12,32 +12,44 @@ from IfritAI.AICompiler.AICompilerTypeResolver import AICompilerTypeResolver
 
 class AICompiler:
     grammar = r"""
-        start: (stmt | COMMENT)*
+            start: (stmt | COMMENT)*
 
-        stmt: if_stmt | command
+            # Put if_stmt first
+            ?stmt: if_stmt | command
 
-        if_stmt: "if" condition block ("elseif" condition block)* ("else" block)?
-        condition: "(" param_list ")"
+            # Use uppercase terminals for keywords
+            if_stmt: IF condition block (ELSEIF condition block)* (ELSE block)?
+            condition: "(" param_list ")"
 
-        block: "{" (stmt | COMMENT)* "}"
+            block: "{" (stmt | COMMENT)* "}"
 
-        command: ID ("(" param_list? ")")? ";"
+            command: ID ("(" param_list? ")")? ";"
 
-        param_list: value ("," value)*
-        value: ID | NUMBER | OPERATOR | STRING 
+            param_list: value ("," value)*
+            value: ID | NUMBER | OPERATOR | STRING 
 
-        ID: /[a-zA-Z_][a-zA-Z_0-9%]*|[0-9]+%/
-        NUMBER: /-?[0-9]+/
-        OPERATOR: /[><!]=?|==/
-        STRING: /"(?:[^"\\]|\\.)*"/
+            # Terminals with fixed priorities
+            IF.3: "if"
+            ELSEIF.3: "elseif"
+            ELSE.3: "else"
 
-        // Capture both types into one token
-        COMMENT: CPP_COMMENT | C_COMMENT
+            # ID is priority 2, lower than keywords but higher than number for % cases
+            ID.2: /[a-zA-Z_][a-zA-Z_0-9%]*|[0-9]+%/
 
-        %import common.WS
-        %import common.CPP_COMMENT
-        %import common.C_COMMENT
-        %ignore WS
+            # Standard numbers
+            NUMBER: /0x[0-9a-fA-F]+/ | /0b[01]+/ | /-?[0-9]+/
+
+            # Added your special equal sign just in case
+            OPERATOR: /[><!]=?|==|⩵/
+
+            STRING: /"(?:[^"\\]|\\.)*"/
+
+            COMMENT: CPP_COMMENT | C_COMMENT
+
+            %import common.WS
+            %import common.CPP_COMMENT
+            %import common.C_COMMENT
+            %ignore WS
         """
 
     def __init__(self, game_data: GameData, battle_text=(), info_stat_data={}):
@@ -48,6 +60,10 @@ class AICompiler:
         self._info_stat = info_stat_data
         self.type_resolver = AICompilerTypeResolver(game_data, battle_text, info_stat_data)
         self.generator = AICodeGenerator(game_data)
+
+    def reset_ai_data(self):
+        self.type_resolver.reset_type_mapping()
+        self.generator.reset_opcode_map()
 
     def compile(self, source_code: str):
         source_code_cleaned = self.clean_all(source_code)

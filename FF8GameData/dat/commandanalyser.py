@@ -122,17 +122,21 @@ class CommandAnalyser:
 
             if isinstance(param, str):
                 # New Logic: Starts with number but is not ONLY a number
-                mixed_alpha_numeric = param and param[0].isdigit() and not param.isdigit() and  param[-1] != '%'
-
+                mixed_alpha_numeric = (
+                        param and
+                        param[0].isdigit() and
+                        not param.isdigit() and
+                        param[-1] != '%' and
+                        not param.startswith(('0x', '0b'))  # Excludes Hex and Binary
+                )
                 # Combined Condition
                 should_quote = (
                         mixed_alpha_numeric or
                         any(val in param for val in value_to_check) or
                         (self.type_data and self.type_data[i] in ("battle_text", "scan_text")) or
                         any(val in param for val in comparator_to_check if self.type_data[i] != "comparator") or
-                        any(val in param for val in operator_to_check if self.type_data[i] not in ("int", "int16"))
+                        any(val in param for val in operator_to_check if self.type_data[i] not in ("int", "int16", "int32"))
                 )
-
                 if should_quote:
                     text += f'"{param}"'
                 else:
@@ -603,12 +607,21 @@ class CommandAnalyser:
             print(f"Error on JSON for op_code_id: {self.__op_id}")
         if op_info["complexity"] == "simple":
             param_value = []
+            op_index_shift = 0
             for index, type in enumerate(op_info["param_type"]):
-                op_index = op_info["param_index"][index]
+                op_index = op_info["param_index"][index] + op_index_shift
                 self.type_data.append(type)
                 if type == "int":
                     param_value.append(str(self.__op_code[op_index]))
                     self.param_possible_list.append([])
+                elif type == "int16":
+                    param_value.append(str(int.from_bytes(bytearray(self.__op_code[op_index: op_index+2]), byteorder='little')))
+                    self.param_possible_list.append([])
+                    op_index_shift += 1
+                elif type == "int32":
+                    param_value.append(str(int.from_bytes(bytearray(self.__op_code[op_index: op_index+4]), byteorder='little')))
+                    self.param_possible_list.append([])
+                    op_index_shift += 3
                 elif type == "int_shift":
                     shift = op_info['param_list'][0]
                     param_value.append(str(self.__op_code[op_index] + shift))

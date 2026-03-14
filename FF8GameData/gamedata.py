@@ -185,7 +185,7 @@ class AIData:
     STATUS_DEF_MAX_VAL = 155
     STAT_MIN_VAL = 0
     STAT_MAX_VAL = 255
-    AI_DATA_PATH = os.path.join("Resources", "ai_info.json")
+    AI_DATA_PATH = os.path.join("Resources", "ai_vanilla.json")
     AI_SECTION_LIST = ['Init code', 'Enemy turn', 'Counter-attack', 'Death', 'Before dying or taking a hit']
     COLOR = "#0055ff"
 
@@ -193,7 +193,7 @@ class AIData:
 class GameData:
     AIData = AIData()
 
-    def __init__(self, game_data_submodule_path="FF8GameData"):
+    def __init__(self, game_data_submodule_path="FF8GameData", ai_file:str="ai_vanilla.json"):
         self.resource_folder_json = os.path.join(game_data_submodule_path, "Resources", "json")
         self.resource_folder_image = os.path.join(game_data_submodule_path, "Resources", "image")
         self.resource_folder = os.path.join(game_data_submodule_path, "Resources")
@@ -215,6 +215,7 @@ class GameData:
         self.exe_data_json = {}
         self.ai_data_json = {}
         self.anim_sequence_data_json = {}
+        self.ai_json_file_name = ai_file
         self.__init_hex_to_str_table()
 
     def __init_hex_to_str_table(self):
@@ -245,8 +246,10 @@ class GameData:
             delimiter = ","
         return delimiter
 
-    def load_ai_data(self):
-        file_path = os.path.join(self.resource_folder_json, "ai_info.json")
+    def load_ai_data(self, ai_json_name=None):
+        if ai_json_name:
+            self.ai_json_file_name = ai_json_name
+        file_path = os.path.join(self.resource_folder_json,  self.ai_json_file_name)
         with open(file_path, encoding="utf8") as f:
             self.ai_data_json = json.load(f)
 

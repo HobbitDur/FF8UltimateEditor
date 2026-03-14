@@ -26,16 +26,18 @@ class AIDecompilerTypeResolver:
         # Define which types are lookup types vs formula types
         self.lookup_types = self._get_lookup_type_categories()
         self.formula_types = self._get_formula_type_handlers()
-
-        self.type_mappings = self._build_type_mappings()
-
-        # Build if_subject lookup
+        self.type_mappings = None
         self.if_subject_map = {}
+        self.reset_type_mapping()
+
+
+    def reset_type_mapping(self):
+        self.type_mappings = self._build_type_mappings()
+        # Build if_subject lookup
         if hasattr(self.game_data, 'ai_data_json'):
             ai_data = self.game_data.ai_data_json
             for subject in ai_data.get('if_subject', []):
                 self.if_subject_map[subject['subject_id']] = subject
-
 
     def set_battle_text_info_stat(self, battle_text, info_stat):
         if self._battle_text is not None:
@@ -64,6 +66,7 @@ class AIDecompilerTypeResolver:
         return {
             'int': lambda x: self._parse_int(x),
             'int16': lambda x: self._parse_int(x),
+            'int32': lambda x: self._parse_int32(x),
             'monster_line_ability': lambda x: self._parse_int(x),
             'percent': lambda x: self._parse_percent(x),
             'percent_elem': lambda x: self._parse_percent_elem(x),
@@ -77,6 +80,10 @@ class AIDecompilerTypeResolver:
     def _parse_int(self, value: int):
         """Parse integer value (formula type)"""
         return str(value)
+
+    def _parse_int32(self, value: int):
+        """Parse integer value (formula type)"""
+        return str(f"0x{value & 0xFFFFFFFF:08X}")
 
     def _parse_int16(self, value:List[int]):
         """Parse integer value (formula type)"""
@@ -277,26 +284,28 @@ class AIDecompilerTypeResolver:
                 type_param = []
                 if cmd_id in self.type_mappings['command_signatures']:
                     expected_types = self.type_mappings['command_signatures'][cmd_id]
-                    ignore_iter = False
-
                     param_list = command.get_op_code()
                     param_index = self.type_mappings['command_param_index'][cmd_id]
-                    param_ordered = [param_list[i] for i in param_index]
-                    for i, op_code in enumerate(param_ordered):
-                        if ignore_iter:
-                            ignore_iter = False
-                            continue
-                        if expected_types[i] in ("int16", "percent_elem", "hp_percent"):# 2 params
-                            type_param.append(self._resolve_value(int.from_bytes([op_code,param_list[i+1]], signed=True, byteorder='little') , expected_types[i]))
-                            ignore_iter = True
+                    current_index_param = 0
+                    param_ordered = []
+                    for current_type in expected_types:
+                        if current_type in ("int32",):
+                            param_ordered.append(int.from_bytes(param_list[current_index_param: current_index_param+4], signed=True, byteorder='little'))
+                            current_index_param += 4
+                        elif current_type in ("int16", "percent_elem", "hp_percent"):
+                            param_ordered.append(int.from_bytes(param_list[current_index_param: current_index_param+2], signed=True, byteorder='little'))
+                            current_index_param += 2
                         else:
-                         type_param.append( self._resolve_value(op_code, expected_types[i]))
+                            param_ordered.append(param_list[current_index_param])
+                            current_index_param += 1
+                    param_ordered = [param_ordered[i] for i in param_index]
+                    for i, op_code in enumerate(param_ordered):
+                        type_param.append( self._resolve_value(op_code, expected_types[i]))
                 if type_param:
                     command_list[command_index].param_typed = type_param
 
 
     def _resolve_value(self, value, expected_type, special_param=None):
-
         if expected_type in self.lookup_types:
             try:
                 return self.type_mappings['type_values'][expected_type][value]

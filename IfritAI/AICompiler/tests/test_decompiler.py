@@ -164,8 +164,7 @@ class TestAIDecompiler:
             comment=""
         )
 
-
-    def test_stop(self, decompiler):
+    def test_stop(self, decompiler:AIDecompiler):
         bytecode = [0x00]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -181,7 +180,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_print(self, decompiler):
+    def test_print(self, decompiler:AIDecompiler):
         bytecode = [0x01, 0x01]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -196,7 +195,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_print_double_space(self, decompiler):
+    def test_print_double_space(self, decompiler:AIDecompiler):
         bytecode = [0x01, 0x03]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -212,7 +211,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_prepareMagic(self, decompiler):
+    def test_prepareMagic(self, decompiler:AIDecompiler):
         """Test decompiling a simple command"""
         # Create prepareMagic(2) command
         bytecode = [3, 2]
@@ -230,7 +229,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code_decompiled)
         assert "prepareMagic(FIRA);" in normalized
 
-    def test_target(self, decompiler):
+    def test_target(self, decompiler:AIDecompiler):
         bytecode = [4, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -245,7 +244,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_prepareAnim(self, decompiler):
+    def test_prepareAnim(self, decompiler:AIDecompiler):
         bytecode = [5, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -260,7 +259,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_usePrepared(self, decompiler):
+    def test_usePrepared(self, decompiler:AIDecompiler):
         bytecode = [6]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -275,7 +274,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_prepareMonsterAbility(self, decompiler):
+    def test_prepareMonsterAbility(self, decompiler:AIDecompiler):
         bytecode = [7, 3]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -290,7 +289,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_die(self, decompiler):
+    def test_die(self, decompiler:AIDecompiler):
         bytecode = [8]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -306,7 +305,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_anim(self, decompiler):
+    def test_anim(self, decompiler:AIDecompiler):
         bytecode = [9, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -321,7 +320,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_useRandom(self, decompiler):
+    def test_useRandom(self, decompiler:AIDecompiler):
         bytecode = [11, 1, 2, 3]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -336,7 +335,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_use(self, decompiler):
+    def test_use(self, decompiler:AIDecompiler):
         bytecode = [12, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -351,7 +350,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_unknown13(self, decompiler):
+    def test_unknown13(self, decompiler:AIDecompiler):
         bytecode = [13, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -367,7 +366,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_var(self, decompiler):
+    def test_var(self, decompiler:AIDecompiler):
         bytecode = [14, 221, 10]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -383,7 +382,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_var_specialCases(self, decompiler):
+    def test_var_specialCases(self, decompiler:AIDecompiler):
         bytecode = [14, 221, 203]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -398,7 +397,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_bvar(self, decompiler):
+    def test_bvar(self, decompiler:AIDecompiler):
         bytecode = [15, 96, 10]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -413,7 +412,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_gvar(self, decompiler):
+    def test_gvar(self, decompiler:AIDecompiler):
         bytecode = [17, 80, 10]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -429,7 +428,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_add(self, decompiler):
+    def test_add(self, decompiler:AIDecompiler):
         bytecode = [18, 221, 10]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -444,7 +443,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_add_specialCases(self, decompiler):
+    def test_add_specialCases(self, decompiler:AIDecompiler):
         bytecode = [18, 221, 203]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -459,7 +458,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_badd(self, decompiler):
+    def test_badd(self, decompiler:AIDecompiler):
         bytecode = [19, 96, 10]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -474,7 +473,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_gadd(self, decompiler):
+    def test_gadd(self, decompiler:AIDecompiler):
         bytecode = [21, 80, 10]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -489,7 +488,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_recover(self, decompiler):
+    def test_recover(self, decompiler:AIDecompiler):
         bytecode = [0x16]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -504,7 +503,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_setEscape(self, decompiler):
+    def test_setEscape(self, decompiler:AIDecompiler):
         # Test both true and false cases
         bytecode_true = [23, 1]
         bytecode_false = [23, 0]
@@ -529,7 +528,7 @@ class TestAIDecompiler:
         )
         assert expected_false in normalized_false
 
-    def test_printSpeed(self, decompiler):
+    def test_printSpeed(self, decompiler:AIDecompiler):
         bytecode = [24, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -544,7 +543,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_doNothing(self, decompiler):
+    def test_doNothing(self, decompiler:AIDecompiler):
         bytecode = [25, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -560,7 +559,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_printAndLock(self, decompiler):
+    def test_printAndLock(self, decompiler:AIDecompiler):
         bytecode = [26, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -575,7 +574,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_enterAlt(self, decompiler):
+    def test_enterAlt(self, decompiler:AIDecompiler):
         bytecode = [27, 1, 0]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -590,7 +589,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_waitText(self, decompiler):
+    def test_waitText(self, decompiler:AIDecompiler):
         bytecode = [28, 2]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -605,7 +604,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_leave(self, decompiler):
+    def test_leave(self, decompiler:AIDecompiler):
         bytecode = [29, 200]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -620,7 +619,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_specialAction(self, decompiler):
+    def test_specialAction(self, decompiler:AIDecompiler):
         bytecode = [30, 17]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -635,7 +634,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_enter(self, decompiler):
+    def test_enter(self, decompiler:AIDecompiler):
         bytecode = [31, 3]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -650,7 +649,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_waitTextFast(self, decompiler):
+    def test_waitTextFast(self, decompiler:AIDecompiler):
         bytecode = [32, 2]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -665,7 +664,28 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_printAlt(self, decompiler):
+
+    def test_setAddr(self, decompiler:AIDecompiler):
+        bytecode = [32, 0x3C, 0xE9, 0xCF, 0x01, 2, 0, 0, 0]
+        decompiler.game_data.load_ai_data("ai_cronos.json")
+        decompiler.reset_ai_data()
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            setAddr(0x01CFE93C, 0x00000002);
+            """
+        )
+        assert expected == normalized
+        decompiler.game_data.load_ai_data("ai_vanilla.json")
+        decompiler.reset_ai_data()
+
+
+    def test_printAlt(self, decompiler:AIDecompiler):
         bytecode = [34, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -680,7 +700,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    # def test_jump(self, decompiler):
+    # def test_jump(self, decompiler:AIDecompiler):
     #     # Test positive jump
     #     bytecode_positive = [35, 10, 0]
     #     code_positive = decompiler.decompile(bytecode_positive)
@@ -692,7 +712,7 @@ class TestAIDecompiler:
     #     )
     #     assert expected_positive in normalized_positive
 
-    def test_jump_negative(self, decompiler):
+    def test_jump_negative(self, decompiler:AIDecompiler):
         # Test negative jump (note: 246, 255 is -10 in signed 16-bit)
         bytecode_negative = [35, 246, 255]
         code_negative = decompiler.decompile(bytecode_negative)
@@ -704,7 +724,7 @@ class TestAIDecompiler:
         )
         assert expected_negative in normalized_negative
 
-    def test_fillAtb(self, decompiler):
+    def test_fillAtb(self, decompiler:AIDecompiler):
         bytecode = [36]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -719,7 +739,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_setScanText(self, decompiler):
+    def test_setScanText(self, decompiler:AIDecompiler):
         bytecode = [37, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -734,7 +754,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_setScanText_255(self, decompiler):
+    def test_setScanText_255(self, decompiler:AIDecompiler):
         bytecode = [37, 255]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -749,7 +769,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_targetStatus(self, decompiler):
+    def test_targetStatus(self, decompiler:AIDecompiler):
         bytecode = [38, 0, 200, 3, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -764,7 +784,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_autoStatus(self, decompiler):
+    def test_autoStatus(self, decompiler:AIDecompiler):
         bytecode = [39, 2, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -779,7 +799,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_statChange(self, decompiler):
+    def test_statChange(self, decompiler:AIDecompiler):
         bytecode = [40, 5, 6]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -794,7 +814,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_draw(self, decompiler):
+    def test_draw(self, decompiler:AIDecompiler):
         bytecode = [41]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -809,7 +829,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_cast(self, decompiler):
+    def test_cast(self, decompiler:AIDecompiler):
         bytecode = [42]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -824,7 +844,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_targetAllySlot(self, decompiler):
+    def test_targetAllySlot(self, decompiler:AIDecompiler):
         bytecode = [43, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -839,7 +859,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_remain(self, decompiler):
+    def test_remain(self, decompiler:AIDecompiler):
         bytecode = [44]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -854,7 +874,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_elemDmgMod(self, decompiler):
+    def test_elemDmgMod(self, decompiler:AIDecompiler):
         bytecode = [45, 2, 100, 0]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -869,7 +889,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_elemDmgMod2Bytes(self, decompiler):
+    def test_elemDmgMod2Bytes(self, decompiler:AIDecompiler):
         bytecode = [45, 3, 132, 3]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -884,7 +904,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_blowAway(self, decompiler):
+    def test_blowAway(self, decompiler:AIDecompiler):
         bytecode = [46]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -899,7 +919,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_targetable(self, decompiler):
+    def test_targetable(self, decompiler:AIDecompiler):
         bytecode = [47]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -914,7 +934,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_untargetable(self, decompiler):
+    def test_untargetable(self, decompiler:AIDecompiler):
         bytecode = [48]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -929,7 +949,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_giveGF(self, decompiler):
+    def test_giveGF(self, decompiler:AIDecompiler):
         bytecode = [49, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -944,7 +964,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_prepareSummon(self, decompiler):
+    def test_prepareSummon(self, decompiler:AIDecompiler):
         bytecode = [50]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -959,7 +979,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_activate(self, decompiler):
+    def test_activate(self, decompiler:AIDecompiler):
         bytecode = [51]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -974,7 +994,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_enable(self, decompiler):
+    def test_enable(self, decompiler:AIDecompiler):
         bytecode = [52, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -989,7 +1009,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_loadAndTargetable(self, decompiler):
+    def test_loadAndTargetable(self, decompiler:AIDecompiler):
         bytecode = [53, 209]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -1004,7 +1024,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_gilgamesh(self, decompiler):
+    def test_gilgamesh(self, decompiler:AIDecompiler):
         bytecode = [54]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -1019,7 +1039,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_giveCard(self, decompiler):
+    def test_giveCard(self, decompiler:AIDecompiler):
         bytecode = [55, 2]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -1034,7 +1054,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_giveItem(self, decompiler):
+    def test_giveItem(self, decompiler:AIDecompiler):
         bytecode = [56, 2]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -1049,7 +1069,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_gameOver(self, decompiler):
+    def test_gameOver(self, decompiler:AIDecompiler):
         bytecode = [57]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -1064,7 +1084,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_targetableSlot(self, decompiler):
+    def test_targetableSlot(self, decompiler:AIDecompiler):
         bytecode = [58, 2]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -1079,7 +1099,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_assignSlot(self, decompiler):
+    def test_assignSlot(self, decompiler:AIDecompiler):
         bytecode = [59, 2, 0]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -1094,7 +1114,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_addMaxHP(self, decompiler):
+    def test_addMaxHP(self, decompiler:AIDecompiler):
         bytecode = [60, 10]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -1109,7 +1129,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_proofOfOmega(self, decompiler):
+    def test_proofOfOmega(self, decompiler:AIDecompiler):
         bytecode = [61]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -1124,7 +1144,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_decompile_multiple_commands(self, decompiler):
+    def test_decompile_multiple_commands(self, decompiler:AIDecompiler):
         """Test decompiling multiple commands"""
         # Create commands: prepareMagic(1); attack(); die();
         bytecode = [3, 1, 0, 8]
@@ -1139,7 +1159,7 @@ class TestAIDecompiler:
         assert "stop" in normalized
         assert "die" in normalized
 
-    def test_if_hp_specific_target(self, decompiler):
+    def test_if_hp_specific_target(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 0, 200, 3, 5, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1159,7 +1179,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_hp_generic_target(self, decompiler):
+    def test_if_hp_generic_target(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 1, 200, 1, 5, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1179,7 +1199,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_rand(self, decompiler):
+    def test_if_rand(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 2, 3, 0, 0, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1202,7 +1222,7 @@ class TestAIDecompiler:
 
 
 
-    def test_if_combat_scene(self, decompiler):
+    def test_if_combat_scene(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 3, 0, 0, 0, 4, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1222,7 +1242,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_status_specific_target(self, decompiler):
+    def test_if_status_specific_target(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 4, 203, 0, 2, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1242,7 +1262,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_status_generic_target(self, decompiler):
+    def test_if_status_generic_target(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 5, 200, 0, 2, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1262,7 +1282,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_number_member(self, decompiler):
+    def test_if_number_member(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 6, 200, 0, 2, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1283,7 +1303,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_if_level_check(self, decompiler):
+    def test_if_level_check(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 7, 220, 0, 2, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1303,7 +1323,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_dead(self, decompiler):
+    def test_if_dead(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 8, 0, 0, 1, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1324,7 +1344,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_if_alive(self, decompiler):
+    def test_if_alive(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 9, 0, 0, 0, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1344,7 +1364,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_attacker_last_attack_damage_type(self, decompiler):
+    def test_if_attacker_last_attack_damage_type(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 10, 0, 0, 1, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1364,7 +1384,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_attacker_last_attacker(self, decompiler):
+    def test_if_attacker_last_attacker(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 10, 1, 0, 222, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1384,7 +1404,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_attacker_turn_counter(self, decompiler):
+    def test_if_attacker_turn_counter(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 10, 2, 0, 5, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1404,7 +1424,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_attacker_last_attacker_command_type(self, decompiler):
+    def test_if_attacker_last_attacker_command_type(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 10, 3, 0, 17, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1424,7 +1444,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_attacker_last_action_launch(self, decompiler):
+    def test_if_attacker_last_action_launch(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 10, 4, 0, 17, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1444,7 +1464,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_attacker_last_attack_element(self, decompiler):
+    def test_if_attacker_last_attack_element(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 10, 5, 0, 2, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1465,7 +1485,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_if_attacker_last_attacker_com_id(self, decompiler):
+    def test_if_attacker_last_attacker_com_id(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 10, 203, 0, 200, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1486,7 +1506,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_if_group_level(self, decompiler):
+    def test_if_group_level(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 14, 200, 5, 1, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1507,7 +1527,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_if_alive_in_slot(self, decompiler):
+    def test_if_alive_in_slot(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 15, 200, 0, 1, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1528,7 +1548,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_if_gender_check(self, decompiler):
+    def test_if_gender_check(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 16, 0, 0, 202, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1549,7 +1569,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_if_gforce_obtained(self, decompiler):
+    def test_if_gforce_obtained(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 17, 200, 0, 204, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1569,7 +1589,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_special_byte_check(self, decompiler):
+    def test_if_special_byte_check(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 18, 2, 0, 1, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1589,7 +1609,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_countdown(self, decompiler):
+    def test_if_countdown(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 19, 2, 0, 1, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1609,7 +1629,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_if_status_all_in_team(self, decompiler):
+    def test_if_status_all_in_team(self, decompiler:AIDecompiler):
         """Test decompiling if statement"""
         bytecode = [2, 20, 200, 0, 2, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1630,7 +1650,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_decompile_if_else_statement(self, decompiler):
+    def test_decompile_if_else_statement(self, decompiler:AIDecompiler):
         """Test decompiling if-else statement"""
         # Create commands for: if (1,2,3,4) { die(); } else { statChange(5,6); }
         # Note: This test might fail due to CommandAnalyser issues with statChange
@@ -1656,7 +1676,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_decompile_if_else_nested_statement(self, decompiler):
+    def test_decompile_if_else_nested_statement(self, decompiler:AIDecompiler):
         """Test decompiling if-else statement"""
         bytecode = [2, 1, 2, 3, 2, 0, 4, 0, 8, 35, 12, 0, 0, 2, 1, 2, 3, 2, 0, 4, 0, 40, 4, 5]
         code = decompiler.decompile(bytecode)
@@ -1683,7 +1703,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_decompile_if_elseif_else_statement(self, decompiler):
+    def test_decompile_if_elseif_else_statement(self, decompiler:AIDecompiler):
         """Test decompiling if-else statement"""
         bytecode = [2, 1, 2, 3, 2, 0, 4, 0, 8, 35, 17, 0, 2, 1, 2, 3, 1, 0, 6, 0, 40, 3, 2, 35, 3, 0, 40, 4, 5]
         code = decompiler.decompile(bytecode)
@@ -1711,7 +1731,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
 
-    def test_if_elseif2_else(self, decompiler):
+    def test_if_elseif2_else(self, decompiler:AIDecompiler):
         """Test decompiling if-else statement"""
         bytecode =  [
             2, 1, 200, 3, 4, 0, 4, 0,
@@ -1752,7 +1772,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_com1(self, decompiler):
+    def test_com1(self, decompiler:AIDecompiler):
         """Test decompiling if-else statement"""
         bytecode =  [
             2, 4, 200, 0, 24, 0, 9, 0,
@@ -1785,7 +1805,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_com10_little(self, decompiler):
+    def test_com10_little(self, decompiler:AIDecompiler):
         """Test decompiling if-else statement"""
         bytecode = \
                 [2, 2, 2, 0, 0, 0, 36, 0,
@@ -1823,7 +1843,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_com15_init(self, decompiler):
+    def test_com15_init(self, decompiler:AIDecompiler):
         """Test decompiling if-else statement"""
         bytecode = [14, 220, 0, 14, 221, 0, 2, 3, 0, 5, 58, 0, 28, 0, 2, 3, 0, 4, 60, 0, 17, 0, 2, 7, 200, 1, 10, 0, 6, 0, 14, 222, 1, 35, 0, 0, 35, 0, 0, 35, 0, 0, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1852,7 +1872,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_com10_full(self, decompiler):
+    def test_com10_full(self, decompiler:AIDecompiler):
         """Test decompiling if-else statement"""
         bytecode = [2, 14, 200, 0, 0, 0, 6, 0, 40, 2, 5, 35, 0, 0, 2, 2, 4, 0, 0, 0, 4, 0, 0, 35, 0, 0, 2, 4, 200, 0, 30, 0, 8, 0, 4, 207, 12, 0, 0, 35, 0, 0, 2, 221, 200, 5, 4, 0, 14, 0, 4, 222, 40, 2, 10, 12, 4, 14, 221, 0, 0, 35, 0, 0, 4, 201, 2, 2, 2, 0, 0, 0, 36, 0, 2, 5, 200, 0, 35, 0, 19, 0, 2, 2, 10, 4, 4, 0, 8, 0, 38, 0, 200, 0, 35, 35, 0, 0, 35, 0, 0, 14, 220, 1, 12, 0, 0, 35, 0, 0, 14, 220, 2, 2, 2, 2, 0, 0, 0, 6, 0, 12, 1, 0, 35, 0, 0, 12, 2, 0, 0, 0]
         code = decompiler.decompile(bytecode)
@@ -1914,7 +1934,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_compute_indent_bracket(self, decompiler):
+    def test_compute_indent_bracket(self, decompiler:AIDecompiler):
         """Test the compute_indent_bracket static method"""
         func_list = [
             "if (1,2,3,4)",
@@ -1944,14 +1964,14 @@ class TestAIDecompiler:
         assert indented[6] == "    stop();"  # 4 spaces indent
         assert indented[7] == "}"  # Back to no indent
 
-    def test_empty_command_list(self, decompiler):
+    def test_empty_command_list(self, decompiler:AIDecompiler):
         """Test decompiling empty command list"""
         command_list = []
         code = decompiler.decompile_from_command_list(command_list)
 
         assert code == "" or code is None or code == "\n"
 
-    def test_single_command_no_params(self, decompiler):
+    def test_single_command_no_params(self, decompiler:AIDecompiler):
         """Test decompiling single command without parameters"""
         cmd = self.create_test_command(decompiler.game_data, 0, 0x00, [])  # stop()
 

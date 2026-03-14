@@ -1,5 +1,5 @@
 # AIASTTransformer.py
-from lark import Transformer
+from lark import Transformer, Token
 from IfritAI.AICompiler.AIAST import *
 
 
@@ -12,7 +12,7 @@ class AIASTTransformer(Transformer):
         return Value(token.value)
 
     def NUMBER(self, token):
-        return Value(token.value)
+        return Value(str(int(token.value, 0)))
 
     def OPERATOR(self, token):
         return Value(token.value)
@@ -46,29 +46,30 @@ class AIASTTransformer(Transformer):
         return Block(statements=items)
 
     def if_stmt(self, items):
-        # The structure is: [if_condition, if_block, *elif_conditions, *elif_blocks, else_block?]
-        if_condition = items[0]
-        if_block = items[1]
+        # Filter out the Lark Tokens (IF, ELSEIF, ELSE)
+        # We only want the AST nodes (Condition, Block)
+        nodes = [item for item in items if not isinstance(item, Token)]
+
+        # Now nodes[0] is the if_condition, nodes[1] is the if_block
+        if_condition = nodes[0]
+        if_block = nodes[1]
 
         elif_branches = []
         else_block = None
 
-        # Process remaining items
         i = 2
-        while i < len(items):
-            if isinstance(items[i], Condition):
-                # This is an elseif condition, next should be its block
-                if i + 1 < len(items):
+        while i < len(nodes):
+            if isinstance(nodes[i], Condition):
+                if i + 1 < len(nodes):
                     elif_branches.append(ElifBranch(
-                        condition=items[i],
-                        block=items[i + 1]
+                        condition=nodes[i],
+                        block=nodes[i + 1]
                     ))
                     i += 2
                 else:
                     i += 1
             else:
-                # This must be the else block
-                else_block = items[i]
+                else_block = nodes[i]
                 i += 1
 
         return IfStatement(
@@ -77,7 +78,6 @@ class AIASTTransformer(Transformer):
             elif_branches=elif_branches,
             else_block=else_block
         )
-
     def stmt(self, items):
         return items[0]
 

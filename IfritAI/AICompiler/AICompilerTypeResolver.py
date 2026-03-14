@@ -8,7 +8,7 @@ from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, Pa
     ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
     ParamIntError, \
     ParamPercentError, ParamPercentElemError, ParamBoolError, ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, \
-    ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError, SubjectIdTenError, ParamScanTextError
+    ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError, SubjectIdTenError, ParamScanTextError, ParamInt32Error
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
@@ -22,23 +22,27 @@ class AICompilerTypeResolver:
         # Define which types are lookup types vs formula types
         self.lookup_types = self._get_lookup_type_categories()
         self.formula_types = self._get_formula_type_handlers()
-
-        self.type_mappings = self._build_type_mappings()
-
-        # Build if_subject lookup
+        self.type_mappings = None
         self.if_subject_map = {}
-        if hasattr(self.game_data, 'ai_data_json'):
-            ai_data = self.game_data.ai_data_json
-            for subject in ai_data.get('if_subject', []):
-                self.if_subject_map[subject['subject_id']] = subject
+        self.reset_type_mapping()
+
+
 
     def set_battle_text_info_stat(self, battle_text, info_stat):
         if self._battle_text is not None:
             self._battle_text = battle_text
         if self._info_stat_data is not None:
             self._info_stat_data = info_stat
+        self.reset_type_mapping()
+
+    def reset_type_mapping(self):
         self.type_mappings = self._build_type_mappings()
 
+        # Build if_subject lookup
+        if hasattr(self.game_data, 'ai_data_json'):
+            ai_data = self.game_data.ai_data_json
+            for subject in ai_data.get('if_subject', []):
+                self.if_subject_map[subject['subject_id']] = subject
 
     def _get_lookup_type_categories(self):
         """Define which types require dictionary lookup"""
@@ -60,6 +64,7 @@ class AICompilerTypeResolver:
             'int': lambda x: self._parse_int(x),
             'unused': lambda x: 0,
             'int16': lambda x: self._parse_int16(x),
+            'int32': lambda x: self._parse_int32(x),
             'monster_line_ability': lambda x: self._parse_int(x),
             'percent': lambda x: self._parse_percent(x),
             'percent_elem': lambda x: self._parse_percent_elem(x),
@@ -105,6 +110,23 @@ class AICompilerTypeResolver:
                 return value_return
         except ValueError:
             raise ParamInt16Error(value_str)
+
+    def _parse_int32(self, value_str):
+        """Parse integer value (formula type)"""
+        try:
+            # Handle hex, binary, decimal
+            if value_str.startswith('0x'):
+                value_return = int(value_str, 16)
+            elif value_str.startswith('0b'):
+                value_return = int(value_str, 2)
+            else:
+                value_return = int(value_str)
+            if value_return > 0x7FFFFFFF:
+                raise ParamInt32Error(value_str)
+            else:
+                return value_return
+        except ValueError:
+            raise ParamInt32Error(value_str)
 
     def _parse_percent(self, value_str):
         """Parse percentage value (formula type)"""
@@ -336,7 +358,6 @@ class AICompilerTypeResolver:
     def visit_Command(self, node):
         """Resolve command parameters based on command signature"""
         cmd_name = node.name.upper()
-
         # Handle IF command specially
         if cmd_name == 'IF':
             return self._resolve_if_command(node)
@@ -492,8 +513,11 @@ class AICompilerTypeResolver:
         if "0x" in value_node.value:
             value_resolved.value = str(int(value_node.value, 16))
         # Check if it's a formula type first
+
         if expected_type in ("int16", "percent_elem", "hp_percent"):
             value_resolved.size = 2
+        elif expected_type in ("int32",):
+            value_resolved.size = 4
         elif value_forced_size > 0:
             value_resolved.size = value_forced_size
         else:

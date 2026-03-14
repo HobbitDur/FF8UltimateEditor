@@ -13,6 +13,9 @@ class AIDecompiler:
         self._info_stat = info_stat
         self.type_resolver = AIDecompilerTypeResolver(game_data, battle_text, info_stat)
 
+    def reset_ai_data(self):
+        self.type_resolver.reset_type_mapping()
+
     def set_battle_text_info_stat(self, battle_text=None, info_stat=None):
         if battle_text is not None:
             self._battle_text = battle_text
