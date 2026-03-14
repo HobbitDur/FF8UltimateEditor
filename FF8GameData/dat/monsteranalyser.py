@@ -60,7 +60,7 @@ class MonsterAnalyser:
 
 
 
-    def analyse_loaded_data(self, game_data: GameData, decompiler: AIDecompiler):
+    def analyse_loaded_data(self, game_data: GameData, decompiler: AIDecompiler=None):
         try:
             for i in range(0, self.NUMBER_SECTION - 1):
                 self.section_raw_data[i] = self.file_raw_data[self.header_data['section_pos'][i]: self.header_data['section_pos'][i + 1]]
@@ -503,7 +503,9 @@ class MonsterAnalyser:
 
             self.info_stat_data[el['name']] = value
 
-    def analyze_battle_script_section(self, game_data: GameData, decompiler:AIDecompiler):
+    def analyze_battle_script_section(self, game_data: GameData, decompiler:AIDecompiler=None):
+        if not decompiler:
+            decompiler = AIDecompiler(game_data)
         SECTION_NUMBER = 8
         if len(self.header_data['section_pos']) <= SECTION_NUMBER:
             return
