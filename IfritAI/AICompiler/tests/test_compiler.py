@@ -28,6 +28,7 @@ class TestAICompiler:
         battle_text = ["First battle text", "Second battle text", "Third battle text", "“I'm  done for…”"]
         info_stat_data = {}  # TODO
         game_data = GameData(os.path.join("..", "..", "..", "FF8GameData"))
+        #game_data = GameData(os.path.join("FF8GameData"))
         game_data.load_all()
         compiler = AICompiler(game_data, battle_text, info_stat_data)
         return compiler
@@ -1126,7 +1127,7 @@ class TestAICompiler:
         ## Type data
         source_code_type = \
             """
-            elemDmgMod(Thunder, 80%);
+            elemDmgMod(Thunder, 800%);
             """
         ## Error data
         source_code_error = \
@@ -1145,6 +1146,29 @@ class TestAICompiler:
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
         with pytest.raises(ParamMagicTypeError):
             compiler.compile(source_code_error)
+
+    def test_elemDmgMod2Bytes(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        source_code_raw = \
+            """
+            elemDmgMod(3, 900);
+            """
+        ## Type data
+        source_code_type = \
+            """
+            elemDmgMod(Earth, 0%);
+            """
+        # The expected output
+        expected = [45, 3, 132, 3, 0, 0, 0, 0]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+        code_type_compiled = compiler.compile(source_code_type)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
 
     def test_blowAway(self, compiler: AICompiler):
         source_code_raw = \

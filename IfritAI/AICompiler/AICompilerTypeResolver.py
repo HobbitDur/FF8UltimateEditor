@@ -124,7 +124,7 @@ class AICompilerTypeResolver:
             value_str = value_str.replace('%', '')
             value_str = value_str.replace(' ', '')
             try:
-                return 900 - int(value_str) * 10
+                return 900 - int(value_str)
             except ValueError:
                 raise ParamPercentElemError(value_str)
         else:

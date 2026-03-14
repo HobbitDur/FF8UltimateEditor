@@ -88,7 +88,7 @@ class AIDecompilerTypeResolver:
 
     def _parse_percent_elem(self, value:int):
         """Parse elemental percentage value (formula type)"""
-        return str(floor((900 - value) / 10)) + '%'
+        return str(floor(900 - value)) + '%'
 
     def _parse_int_shift(self, value: int, param: List):
         """Parse int_shift value (formula type)"""
@@ -286,7 +286,7 @@ class AIDecompilerTypeResolver:
                         if ignore_iter:
                             ignore_iter = False
                             continue
-                        if expected_types[i] in ("int16", ):# 2 params
+                        if expected_types[i] in ("int16", "percent_elem", "hp_percent"):# 2 params
                             type_param.append(self._resolve_value(int.from_bytes([op_code,param_list[i+1]], signed=True, byteorder='little') , expected_types[i]))
                             ignore_iter = True
                         else:
@@ -296,6 +296,7 @@ class AIDecompilerTypeResolver:
 
 
     def _resolve_value(self, value, expected_type, special_param=None):
+
         if expected_type in self.lookup_types:
             try:
                 return self.type_mappings['type_values'][expected_type][value]

@@ -209,7 +209,7 @@ class AICodeGenerator:
                     inverse[new] = orig
                 result =  [params[i] for i in inverse]
                 for i, param in enumerate(result):
-                    if param_type[i] in ("int16", "percent_elem"):
+                    if param.size == 2:
                         self.emit_int16_le(int(param.value))
                     else:
                         self.emit_byte(int(param.value))

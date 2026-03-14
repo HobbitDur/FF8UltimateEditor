@@ -864,7 +864,22 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            elemDmgMod(Thunder, 80%);
+            elemDmgMod(Thunder, 800%);
+            """
+        )
+        assert expected == normalized
+
+    def test_elemDmgMod2Bytes(self, decompiler):
+        bytecode = [45, 3, 132, 3]
+        code = decompiler.decompile(bytecode)
+        print(f"\n=== Decompiled ===")
+        print(self.pretty_code(code))
+        print("==================================")
+
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            elemDmgMod(EARTH, 0%);
             """
         )
         assert expected == normalized
@@ -1596,7 +1611,7 @@ class TestAIDecompiler:
 
     def test_if_status_all_in_team(self, decompiler):
         """Test decompiling if statement"""
-        bytecode = [2, 20, 221, 0, 2, 0, 4, 0, 0, 35, 0, 0]
+        bytecode = [2, 20, 200, 0, 2, 0, 4, 0, 0, 35, 0, 0]
         code = decompiler.decompile(bytecode)
 
         print(f"\n=== Decompiled ===")
@@ -1606,7 +1621,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            if(STATUS_OF_ALL_IN, VARB_SLOT_ID, ⩵, PETRIFY)
+            if(STATUS_OF_ALL_IN, ENEMY_TEAM, ⩵, PETRIFY)
             {
                 stop();
             }
@@ -1948,4 +1963,5 @@ class TestAIDecompiler:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "-x", "--tb=short"])  # Capture all print
+    pytest.main([__file__, "-v", "-x", "--tb=short"])
+    # pytest.main(["-v", "-x", "-s", "--tb=short", __file__]) # Capture all print
