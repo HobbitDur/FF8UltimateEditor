@@ -128,6 +128,7 @@ class CommandWidget(QWidget):
         self.op_id_changed_signal_emitter.op_id_signal.emit()
 
     def __op_code_change(self):
+        print("op_code_change")
         op_code = []
 
         for i in range(0, len(self._command.get_op_code())):

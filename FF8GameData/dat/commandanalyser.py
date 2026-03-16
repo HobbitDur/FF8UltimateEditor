@@ -85,12 +85,14 @@ class CommandAnalyser:
         self.__op_id = op_id
         op_info = self.__get_op_code_line_info()
         self.__op_code = [0] * op_info["size"]
+        self.param_typed = [0] * op_info["size"]
 
         self.id_possible_list = [{'id': x['op_code'], 'data': x['short_text']} for x in self.game_data.ai_data_json['op_code_info']]
         self.__analyse_op_data()
 
     def set_op_code(self, op_code):
         self.__op_code = op_code
+        self.param_typed = op_code
         self.__analyse_op_data()
 
     def get_id(self):
@@ -155,7 +157,7 @@ class CommandAnalyser:
 
         # If there is already a comment existing, just return it for the code without much process.
         if for_code and self.__comment:
-            return "//" + self.__comment
+            return " //" + self.__comment
         # For ifrit AI code, we only text the added text, not the line description itself.
         if for_code and not for_code_full:
             text = ""
@@ -676,9 +678,9 @@ class CommandAnalyser:
                     self.param_possible_list.append(self.__get_possible_monster_abilities())
                     try:
                         monster_ability_data = [x for x in self.game_data.enemy_abilities_data_json['abilities'] if x['id'] == self.__op_code[op_index]][0]
-                        param_value.append(str(monster_ability_data['name']))
-                        self.__raw_text_added.append({"id": len(param_value) - 1, "text": " (" + monster_ability_data['name'] + " )",
-                                                      "text_html": " (" + monster_ability_data['name'] + " )"})
+                        param_value.append(str(monster_ability_data['id']))
+                        self.__raw_text_added.append({"id": len(param_value) - 1, "text": " (" + monster_ability_data['name'] + ")",
+                                                      "text_html": " (" + monster_ability_data['name'] + ")"})
                     except IndexError:
                         # param_value.append(self.game_data.enemy_abilities_data_json['abilities'][0]['name'])
                         param_value.append("UNKNOWN ABILITIES")
@@ -794,7 +796,7 @@ class CommandAnalyser:
                         possible_ability_values.append({'id': i, 'data': text})
                         if self.__op_code[op_index] == i:
                             param_value.append(f"{i}")
-                            self.__raw_text_added.append({"id": len(param_value) - 1, "text": " (" + text + " )", "text_html": " (" + text + " )<br/>"})
+                            self.__raw_text_added.append({"id": len(param_value) - 1, "text": " (" + text + ")", "text_html": " (" + text + " )<br/>"})
 
                     if self.__op_code[op_index] == 253:
                         param_value.append(f"{253}")
@@ -811,7 +813,7 @@ class CommandAnalyser:
                         param_value.append(self.__op_code[op_index])
                         self.param_possible_list.append(self.__get_possible_battle_text())
                         self.__raw_text_added.append(
-                            {"id": len(param_value) - 1, "text": " (" + battle_text_str + " )", "text_html": " (" + battle_text_str + " )"})
+                            {"id": len(param_value) - 1, "text": " (" + battle_text_str + ")", "text_html": " (" + battle_text_str + ")"})
                     else:
                         param_value.append("UNKNOWN BATTLE TEXT")
                 elif type == "scan_text":
@@ -820,10 +822,10 @@ class CommandAnalyser:
                         battle_text_str = self.__battle_text[self.__op_code[op_index]].get_str()
                         param_value.append(self.__op_code[op_index])
                         self.__raw_text_added.append(
-                            {"id": len(param_value) - 1, "text": " (" + battle_text_str + " )", "text_html": " (" + battle_text_str + " )"})
+                            {"id": len(param_value) - 1, "text": " (" + battle_text_str + ")", "text_html": " (" + battle_text_str + ")"})
                     elif self.__op_code[op_index] == 255:
                         self.__raw_text_added.append(
-                            {"id": 255, "text": " (" + "255" + " )", "text_html": " (" + "255" + " )"})
+                            {"id": 255, "text": " (" + "255" + ")", "text_html": " (" + "255" + ")"})
                         op_text_index = 1
                     else:
                         param_value.append("UNKNOWN BATTLE TEXT")
