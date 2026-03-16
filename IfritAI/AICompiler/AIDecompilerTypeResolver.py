@@ -152,8 +152,10 @@ class AIDecompilerTypeResolver:
                 mappings['type_values']['target_basic'][ target_dict['id']] =self._normalize_string(target_dict['data'])
             # monster_ability
             for monster_ability in self.game_data.enemy_abilities_data_json.get('abilities', []):
-                normalized = self._normalize_string(monster_ability['name'])
-                mappings['type_values']['monster_ability'][monster_ability['id']] = monster_ability['name']
+                #normalized = self._normalize_string(monster_ability['name'])
+                #mappings['type_values']['monster_ability'][monster_ability['id']] = monster_ability['name']
+                mappings['type_values']['monster_ability'][monster_ability['id']] = monster_ability['id']
+
             # local_var
             for local_var in ai_data.get('list_var', []):
                 if local_var.get('var_type') == "local":

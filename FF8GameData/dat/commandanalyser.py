@@ -399,7 +399,8 @@ class CommandAnalyser:
                         else:
                             raise ParamMagicIdError(op_code_list[i])
                 elif param_type == "monster_ability":
-                    op_code_list[i] = [x['id'] for x in self.game_data.enemy_abilities_data_json['abilities'] if x['name'] == op_code_list[i]][0]
+                    monster_ability_data = [x['id'] for x in self.game_data.enemy_abilities_data_json['abilities'] if x['name'] == op_code_list[i]][0]
+                    op_code_list[i] = monster_ability_data
                 elif param_type == "aptitude":
                     op_code_list[i] = [x['aptitude_id'] for x in self.game_data.ai_data_json['aptitude_list'] if x['text'] == op_code_list[i]][0]
                 elif param_type == "battle_text":
@@ -674,8 +675,10 @@ class CommandAnalyser:
                 elif type == "monster_ability":
                     self.param_possible_list.append(self.__get_possible_monster_abilities())
                     try:
-                        param_value.append(
-                            str([x['name'] for x in self.game_data.enemy_abilities_data_json['abilities'] if x['id'] == self.__op_code[op_index]][0]))
+                        monster_ability_data = [x for x in self.game_data.enemy_abilities_data_json['abilities'] if x['id'] == self.__op_code[op_index]][0]
+                        param_value.append(str(monster_ability_data['name']))
+                        self.__raw_text_added.append({"id": len(param_value) - 1, "text": " (" + monster_ability_data['name'] + " )",
+                                                      "text_html": " (" + monster_ability_data['name'] + " )"})
                     except IndexError:
                         # param_value.append(self.game_data.enemy_abilities_data_json['abilities'][0]['name'])
                         param_value.append("UNKNOWN ABILITIES")
