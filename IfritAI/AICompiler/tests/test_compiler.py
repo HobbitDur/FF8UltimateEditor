@@ -823,14 +823,14 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-    def test_setAddr(self, compiler: AICompiler):
+    def test_setAddr1(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         compiler.game_data.load_ai_data("ai_cronos.json")
         compiler.reset_ai_data()
         source_code_raw = \
             """
-            setAddr(0x01CFE93C, 2);
+            setAddr1(0x01CFE93C, 2);
             """
         # The expected output
         expected = [32, 0x3C, 0xE9, 0xCF, 0x01, 2, 0, 0, 0, 0, 0, 0]
@@ -840,6 +840,25 @@ class TestAICompiler:
 
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+
+    def test_setAddr(self, compiler: AICompiler):
+        # First declare different source code case
+        ## Raw data (already int)
+        compiler.game_data.load_ai_data("ai_cronos.json")
+        compiler.reset_ai_data()
+        source_code_raw = \
+            """
+            setAddr(0x40, 0x01CFE93C, 2);
+            """
+        # The expected output
+        expected = [32, 0x40, 0x3C, 0xE9, 0xCF, 0x01, 0x02, 0x00, 0x00, 0x00]
+
+        # The work
+        code_raw_compiled = compiler.compile(source_code_raw)
+
+        # Assert the expected result
+        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
+
 
     def test_printAlt(self, compiler: AICompiler):
         # First declare different source code case
