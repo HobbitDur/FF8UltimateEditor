@@ -19,6 +19,7 @@ from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from ExeLauncher.sirenlauncher import SirenLauncher
 from IfritAI.ifritaiwidget import IfritAIWidget
 from IfritSeq.ifritseqwidget import IfritSeqWidget
+from IfritTexture.ifrittexturewidget import IfritTextureWidget
 from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from ShumiTranslator.shumitranslator import ShumiTranslator
 from SmallWidget.externaltoolwidget import ExternalToolWidget
@@ -40,7 +41,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.setLayout(self._main_layout)
 
         self.HOBBIT_OPTION_ITEMS = ["IfritAI (AI editor)", "IfritXlsx (Stat editor)", "ShumiTranslator(All text editor)", "TonberryShop (Shop editor)",
-                                    "CCGroup (Card value editor)", "IfritSeq (Anim seq editor)", "Draw editor"]
+                                    "CCGroup (Card value editor)", "IfritSeq (Anim seq editor)", "Draw editor", "IfritTexture (Monster texture editor)"]
 
         # Top widget to select what option we want
         self._program_option_title = QLabel("Hobbit tools:")
@@ -98,6 +99,7 @@ class FF8UltimateEditorWidget(QWidget):
         # Man made widget
         self._ifritAI_widget = IfritAIWidget(icon_path=resources_path, game_data_folder=os.path.join(game_data_path))
         self._ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._ifrittexture_widget = IfritTextureWidget(game_data_folder=os.path.join(game_data_path))
         self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path))
         self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path))
@@ -105,6 +107,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._draw_editor_widget = DrawEditorWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
 
         self._ifritxlsx_widget.hide()
+        self._ifrittexture_widget.hide()
         self._shumi_translator_widget.hide()
         self._tonberry_shop_widget.hide()
         self._ccgroup_widget.hide()
@@ -126,6 +129,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._main_layout.addWidget(self._enhance_end_separator_line)
         self._main_layout.addWidget(self._ifritAI_widget)
         self._main_layout.addWidget(self._ifritxlsx_widget)
+        self._main_layout.addWidget(self._ifrittexture_widget)
         self._main_layout.addWidget(self._shumi_translator_widget)
         self._main_layout.addWidget(self._tonberry_shop_widget)
         self._main_layout.addWidget(self._ccgroup_widget)
@@ -140,6 +144,7 @@ class FF8UltimateEditorWidget(QWidget):
 
         self._ifritAI_widget.adjustSize()
         self._ifritxlsx_widget.adjustSize()
+        self._ifrittexture_widget.adjustSize()
         self._shumi_translator_widget.adjustSize()
         self._ccgroup_widget.adjustSize()
         self._tonberry_shop_widget.adjustSize()
@@ -179,6 +184,7 @@ class FF8UltimateEditorWidget(QWidget):
         if self._program_option.currentIndex() == 0:
             self._ifritAI_widget.show()
             self._ifritxlsx_widget.hide()
+            self._ifrittexture_widget.hide()
             self._shumi_translator_widget.hide()
             self._tonberry_shop_widget.hide()
             self._ccgroup_widget.hide()
@@ -187,6 +193,7 @@ class FF8UltimateEditorWidget(QWidget):
         elif self._program_option.currentIndex() == 1:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.show()
+            self._ifrittexture_widget.hide()
             self._shumi_translator_widget.hide()
             self._tonberry_shop_widget.hide()
             self._ccgroup_widget.hide()
@@ -195,6 +202,7 @@ class FF8UltimateEditorWidget(QWidget):
         elif self._program_option.currentIndex() == 2:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.hide()
+            self._ifrittexture_widget.hide()
             self._shumi_translator_widget.show()
             self._tonberry_shop_widget.hide()
             self._ccgroup_widget.hide()
@@ -203,6 +211,7 @@ class FF8UltimateEditorWidget(QWidget):
         elif self._program_option.currentIndex() == 3:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.hide()
+            self._ifrittexture_widget.hide()
             self._shumi_translator_widget.hide()
             self._tonberry_shop_widget.show()
             self._ccgroup_widget.hide()
@@ -211,6 +220,7 @@ class FF8UltimateEditorWidget(QWidget):
         elif self._program_option.currentIndex() == 4:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.hide()
+            self._ifrittexture_widget.hide()
             self._shumi_translator_widget.hide()
             self._tonberry_shop_widget.hide()
             self._ccgroup_widget.show()
@@ -219,6 +229,7 @@ class FF8UltimateEditorWidget(QWidget):
         elif self._program_option.currentIndex() == 5:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.hide()
+            self._ifrittexture_widget.hide()
             self._shumi_translator_widget.hide()
             self._tonberry_shop_widget.hide()
             self._ccgroup_widget.hide()
@@ -227,16 +238,27 @@ class FF8UltimateEditorWidget(QWidget):
         elif self._program_option.currentIndex() == 6:
             self._ifritAI_widget.hide()
             self._ifritxlsx_widget.hide()
+            self._ifrittexture_widget.hide()
             self._shumi_translator_widget.hide()
             self._tonberry_shop_widget.hide()
             self._ccgroup_widget.hide()
             self._ifritseq_widget.hide()
             self._draw_editor_widget.show()
+        elif self._program_option.currentIndex() == 7:
+            self._ifritAI_widget.hide()
+            self._ifritxlsx_widget.hide()
+            self._ifrittexture_widget.show()
+            self._shumi_translator_widget.hide()
+            self._tonberry_shop_widget.hide()
+            self._ccgroup_widget.hide()
+            self._ifritseq_widget.hide()
+            self._draw_editor_widget.hide()
         else:
             print(f"Unexpected program option index:{self._program_option.currentIndex()} and name {self._program_option.currentText()}")
 
         self._ifritAI_widget.adjustSize()
         self._ifritxlsx_widget.adjustSize()
+        self._ifrittexture_widget.adjustSize()
         self.adjustSize()
 
     def tools_to_update(self):
@@ -260,6 +282,7 @@ class FF8UltimateEditorWidget(QWidget):
         if self._deling_button.update_selected:
             tool_list.append("Deling")
             tool_list.append("DelingCli")
+        tool_list.append("VincentTim")
         return tool_list
 
     @staticmethod

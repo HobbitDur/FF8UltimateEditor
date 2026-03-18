@@ -1,61 +1,65 @@
 {
-  "ExternalTools": {
-    "JumboCactuar": {
-      "link": "https://github.com/Nihil-1/JumboCactuar",
-      "install_path": "ExternalTools/JumboCactuar"
-    },
-    "Junkshop": {
-      "link": "https://github.com/HobbitDur/junkshop-enhanced",
-      "install_path": "ExternalTools/Junkshop"
-    },
-    "Quezacotl": {
-      "link": "https://github.com/HobbitDur/quezacotl-enhanced",
-      "install_path": "ExternalTools/Quezacotl"
-    },
-    "Siren": {
-      "link": "https://github.com/HobbitDur/Siren-enhanced",
-      "install_path": "ExternalTools/Siren"
-    },
-    "Doomtrain": {
-      "link": "https://github.com/DarkShinryu/doomtrain",
-      "install_path": "ExternalTools/Doomtrain"
-    },
-    "IfritGui": {
-      "link": "https://github.com/HobbitDur/IfritGui",
-      "install_path": "ExternalTools/IfritGui"
-    },
-    "Hyne": {
-      "link": "https://github.com/myst6re/hyne",
-      "install_path": "ExternalTools/Hyne",
-      "asset_name": [
-        "hyne-continuous-win_x64.zip",
-        "hyne-1.11.4-win32.zip"
-      ],
-      "ignore_first_folder": "True"
-    },
-    "DelingCli": {
-      "link": "https://github.com/myst6re/deling",
-      "install_path": "FF8GameData/fs/DelingCli",
-      "asset_name": [
-        "deling-continuous-cli-win_x64.zip",
-        "deling-cli-win64.zip"
-      ],
-      "ignore_first_folder": "True"
-    },
-    "Deling": {
-      "link": "https://github.com/myst6re/deling",
-      "install_path": "ExternalTools/Deling",
-      "asset_name": [
-        "deling-continuous-gui-win_x64.zip",
-        "deling-gui-win64.zip"
-      ],
-      "ignore_first_folder": "True"
-    }
+  "ExternalTools":{
+	"JumboCactuar":{
+	  "link":        "https://github.com/Nihil-1/JumboCactuar",
+	  "install_path":"ExternalTools/JumboCactuar"
+	},
+	"Junkshop":    {
+	  "link":        "https://github.com/HobbitDur/junkshop-enhanced",
+	  "install_path":"ExternalTools/Junkshop"
+	},
+	"Quezacotl":   {
+	  "link":        "https://github.com/HobbitDur/quezacotl-enhanced",
+	  "install_path":"ExternalTools/Quezacotl"
+	},
+	"Siren":       {
+	  "link":        "https://github.com/HobbitDur/Siren-enhanced",
+	  "install_path":"ExternalTools/Siren"
+	},
+	"Doomtrain":   {
+	  "link":        "https://github.com/DarkShinryu/doomtrain",
+	  "install_path":"ExternalTools/Doomtrain"
+	},
+	"IfritGui":    {
+	  "link":        "https://github.com/HobbitDur/IfritGui",
+	  "install_path":"ExternalTools/IfritGui"
+	},
+	"Hyne":        {
+	  "link":               "https://github.com/myst6re/hyne",
+	  "install_path":       "ExternalTools/Hyne",
+	  "asset_name":         [
+		"hyne-continuous-win_x64.zip",
+		"hyne-1.11.4-win32.zip"
+	  ],
+	  "ignore_first_folder":"True"
+	},
+	"DelingCli":   {
+	  "link":               "https://github.com/myst6re/deling",
+	  "install_path":       "FF8GameData/fs/DelingCli",
+	  "asset_name":         [
+		"deling-continuous-cli-win_x64.zip",
+		"deling-cli-win64.zip"
+	  ],
+	  "ignore_first_folder":"True"
+	},
+	"Deling":      {
+	  "link":               "https://github.com/myst6re/deling",
+	  "install_path":       "ExternalTools/Deling",
+	  "asset_name":         [
+		"deling-continuous-gui-win_x64.zip",
+		"deling-gui-win64.zip"
+	  ],
+	  "ignore_first_folder":"True"
+	},
+	"VincentTim":  {
+	  "link":        "https://github.com/myst6re/vincent-tim",
+	  "install_path":"ExternalTools/VincentTim"
+	}
   },
-  "7zip": {
-    "link": "https://www.7-zip.org/a/7z2500-x64.exe"
+  "7zip":         {
+	"link":"https://www.7-zip.org/a/7z2500-x64.exe"
   },
-  "SelfUpdate": {
-    "link": "https://github.com/HobbitDur/FF8UltimateEditor"
+  "SelfUpdate":   {
+	"link":"https://github.com/HobbitDur/FF8UltimateEditor"
   }
 }
