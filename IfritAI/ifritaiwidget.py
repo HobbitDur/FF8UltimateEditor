@@ -216,6 +216,8 @@ class IfritAIWidget(QWidget):
             print("Loading cronos file")
             self.ifrit_manager.game_data.load_ai_data("ai_cronos.json")
             self.ifrit_manager.compiler.reset_ai_data()
+            self.ifrit_manager.decompiler.reset_ai_data()
+            #self.__section_change()
 
             # 3. Fallback: If conditions aren't met, pass the event to the parent class
         # This ensures Ctrl+C still works normally for other widgets/cases
@@ -445,7 +447,7 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        #file_to_load = os.path.join("battle/c0m002.dat")  # For developing faster
+        #file_to_load = os.path.join("battle/c0m003.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat", directory=self._file_dialog_folder)[0]
         if file_to_load:

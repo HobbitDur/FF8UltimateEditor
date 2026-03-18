@@ -164,6 +164,8 @@ class TestAIDecompiler:
             comment=""
         )
 
+
+
     def test_stop(self, decompiler:AIDecompiler):
         bytecode = [0x00]
         code = decompiler.decompile(bytecode)
@@ -284,7 +286,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            prepareMonsterAbility("Attack (Cronos)");
+            prepareMonsterAbility(3);
             """
         )
         assert expected == normalized
@@ -665,7 +667,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
     def test_setAddr1(self, decompiler: AIDecompiler):
-        bytecode = [32, 0x3C, 0xE9, 0xCF, 0x01, 2, 0, 0, 0]
+        bytecode = [32, 0x3C, 0xE9, 0xCF, 0x01, 2]
         decompiler.game_data.load_ai_data("ai_cronos.json")
         decompiler.reset_ai_data()
         code = decompiler.decompile(bytecode)
@@ -676,15 +678,16 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            setAddr1(0x01CFE93C, 0x00000002);
+            setAddr1(0x01CFE93C, 2);
             """
         )
         assert expected == normalized
         decompiler.game_data.load_ai_data("ai_vanilla.json")
         decompiler.reset_ai_data()
+
 
     def test_setAddr(self, decompiler:AIDecompiler):
-        bytecode = [32, 0x40, 0x3C, 0xE9, 0xCF, 0x01, 0x02, 0x00, 0x00, 0x00]
+        bytecode = [34, 0x40, 0x3C, 0xE9, 0xCF, 0x01, 0x02, 0x00, 0x00, 0x00]
         decompiler.game_data.load_ai_data("ai_cronos.json")
         decompiler.reset_ai_data()
         code = decompiler.decompile(bytecode)
@@ -695,13 +698,12 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            setAddr(0x40, 0x01CFE93C, 0x00000002);
+            setAddr(64, 0x01CFE93C, 0x00000002);
             """
         )
         assert expected == normalized
         decompiler.game_data.load_ai_data("ai_vanilla.json")
         decompiler.reset_ai_data()
-
 
     def test_printAlt(self, decompiler:AIDecompiler):
         bytecode = [34, 1]

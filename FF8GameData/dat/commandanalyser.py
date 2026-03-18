@@ -20,6 +20,9 @@ class CommandAnalyser:
 
     def __init__(self, op_id: int, op_code: list, game_data: GameData, battle_text=(), info_stat_data={},
                  line_index=0, color="#0055ff", text_param=False, current_if_type=CurrentIfType.NONE, comment: str = ""):
+        print("command_analyser")
+        print(f"op_id: {op_id}")
+        print(f"op_code: {op_code}")
         self.__op_id = op_id
         self.__op_code = op_code
         self.__battle_text = battle_text
@@ -606,15 +609,16 @@ class CommandAnalyser:
         op_info = self.__get_op_code_line_info()
         op_text_index = 0
         # Searching for errors in json file
-        if len(op_info["param_type"]) != op_info["size"] and op_info['complexity'] == 'simple':
-            print(f"Error on JSON for op_code_id: {self.__op_id}")
+        print(f"op_info: {op_info}")
         if op_info["complexity"] == "simple":
             param_value = []
             op_index_shift = 0
             for index, type in enumerate(op_info["param_type"]):
                 op_index = op_info["param_index"][index] + op_index_shift
+                print(f"op_index: {op_index}")
                 self.type_data.append(type)
                 if type == "int":
+                    print("it's a int")
                     param_value.append(str(self.__op_code[op_index]))
                     self.param_possible_list.append([])
                 elif type == "int16":
@@ -622,6 +626,8 @@ class CommandAnalyser:
                     self.param_possible_list.append([])
                     op_index_shift += 1
                 elif type == "int32":
+                    print("it's a int32")
+                    print(f"data: {self.__op_code[op_index: op_index+4]}")
                     param_value.append(str(int.from_bytes(bytearray(self.__op_code[op_index: op_index+4]), byteorder='little')))
                     self.param_possible_list.append([])
                     op_index_shift += 3
@@ -918,6 +924,8 @@ class CommandAnalyser:
             self.__raw_text = call_result[0]
             self.__raw_parameters = [str(x) for x in call_result[1]]
         self.__size = op_info['size'] + 1
+
+        print(f"self.__raw_parameters: {self.__raw_parameters}")
         return self.__current_if_type
 
     def __get_possible_target_advanced_specific(self):
