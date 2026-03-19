@@ -2,13 +2,16 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QSpinBox, QGroupBox, QLabel, QHBoxLayout, QVBoxLayout, QComboBox
 
+from IfritTexture.editabletexturewidget import EditableTextureWidget
 from IfritTexture.ifrittexturemanager import MetaData, TextureData
 
 
 class TextureWidget(QGroupBox):
     DEPTH_POSSIBLE = [4, 8, 16]
-    def __init__(self, texture_data:TextureData, title:str = ""):
+    def __init__(self, texture_data:TextureData, icon_path = "Resources", title:str = ""):
         super().__init__()
+
+        self.icon_path = icon_path
 
         self._depth = QComboBox()
         self._depth.addItems([str(x) for x in self.DEPTH_POSSIBLE])
@@ -60,11 +63,9 @@ class TextureWidget(QGroupBox):
         self._paletteY_layout.addWidget(self._paletteY_title)
         self._paletteY_layout.addWidget(self._paletteY)
 
-
-        self._texture_image = QPixmap(str(texture_data.texture_path))
-        self._texture_image_widget = QLabel()
-        self._texture_image_widget.setMaximumSize(256, 256)
-        self._texture_image_widget.setPixmap(self._texture_image)
+        self._texture_image_widget = EditableTextureWidget(texture_data.texture_path, max_size=256, icon_path=self.icon_path)
+        # Load the initial image and mark it as the 'Original' for the refresh button
+        self._texture_image_widget.imageChanged.connect(self._handle_new_texture)
 
         self._palette_image = QPixmap(str(texture_data.palette_path))
         self._palette_image = self._palette_image.scaled(
@@ -103,9 +104,6 @@ class TextureWidget(QGroupBox):
         else:
             self._palette_image_widget.show()
 
-    def set_meta_data(self, meta_data:MetaData):
-        self._depth.setValue(meta_data.depth)
-        self._imageX.setValue(meta_data.imageX)
-        self._imageY.setValue(meta_data.imageY)
-        self._paletteX.setValue(meta_data.paletteX)
-        self._paletteY.setValue(meta_data.paletteY)
+    def _handle_new_texture(self):
+        pass
+
