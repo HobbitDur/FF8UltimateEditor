@@ -591,24 +591,24 @@ class TestAICompiler:
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-    def test_setEscape(self, compiler: AICompiler):
+    def test_cannotEscape(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
             """
-            setEscape(1);
-            setEscape(0);
+            cannotEscape(1);
+            cannotEscape(0);
             """
         ## Type data
         source_code_type = \
             """
-            setEscape(true);
-            setEscape(false);
+            cannotEscape(true);
+            cannotEscape(false);
             """
         ## Error data
         source_code_error = \
             """
-            setEscape(lux_is_op);
+            cannotEscape(lux_is_op);
             """
         # The expected output
         expected = [23, 1, 23, 0, 0, 0, 0, 0]
