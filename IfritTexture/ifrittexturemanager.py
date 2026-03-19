@@ -3,31 +3,61 @@ import pathlib
 import re
 import subprocess
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TypedDict
+
+from PIL.Image import Palette
+from PyQt6.QtWidgets import QWidget
 
 from FF8GameData.gamedata import GameData
 
 
-@dataclass
-class TextureType:
-    palette_id: int = 0
-    texture: str = ""
 
-@dataclass
+
 class MetaData:
-    depth: int
-    imageX: int
-    imageY: int
-    paletteX: int
-    paletteY: int
+    def __init__(self, meta_file_path: pathlib.Path = None):
+        self.meta_file_path = meta_file_path
+        self.meta_data_str = ""
+        self.depth=8
+        self.imageX=0
+        self.imageY=0
+        self.paletteX=0
+        self.paletteY=0
+        if meta_file_path:
+            self.extract_data_from_str(meta_file_path.read_text(encoding="utf-8"))
+        print(f"meta_file_path: {meta_file_path}")
+
+
+    def __str__(self):
+        return f"MetaData(Depth:{self.depth}, imageX:{self.imageX}, imageY:{self.imageY}, paletteX:{self.paletteX}, paletteY:{self.paletteY})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def extract_data_from_str(self, str_data: str):
+        self.meta_data_str = str_data
+        values = str_data.split("\n")
+        self.depth = int(values[0].split("=")[1])
+        self.imageX = int(values[1].split("=")[1])
+        self.imageY = int(values[2].split("=")[1])
+        self.paletteX = int(values[3].split("=")[1])
+        self.paletteY = int(values[4].split("=")[1])
+
+
+class TextureData:
+    def __init__(self, meta:MetaData, texture_path: pathlib.Path, palette_path:pathlib.Path):
+        self.meta = meta
+        self.texture_path = texture_path
+        self.palette_path = palette_path
+
+
+
 
 class IfritTextureManager:
     def __init__(self, game_data_folder="FF8GameData", vincent_tim_path=None):
         self.game_data = GameData(game_data_folder)
         self.game_data.load_all()
-        self._meta = ""
-        self._palette = []
-        self._texture = TextureType()
+        self.texture_data = []
 
         # --- PATH RESOLUTION LOGIC ---
         # 1. Get the absolute path of the directory where THIS script lives
@@ -66,25 +96,19 @@ class IfritTextureManager:
 
             # 3. Count .png files that DO NOT contain "palette" in the name
             # We filter the list of all PNGs manually for precision
-            all_pngs = temp_path.glob("*.png")
-            texture_png_count = len([f for f in all_pngs if "palette" not in f.name.lower()])
+            # This creates a list of Path objects that don't have "palette" in the name
+            texture_files = [f for f in temp_path.glob("*.png") if "palette" not in f.name.lower()]
+            # Now you can get the count easily
+            texture_png_count = len(texture_files)
 
             # 3. Read each file and store in an array (list)
             # This stores the literal text of every .meta file found
-            meta_contents = []
-            for meta_file in meta_files:
-                content = meta_file.read_text(encoding="utf-8")
-                meta_contents.append(content)
 
-            # Debug: Print how many files were read
-            print(f"Stored {len(meta_contents)} meta files in the array.")
+            if meta_count == palette_count == texture_png_count:
+                for i in range(meta_count):
+                    self.texture_data.append(TextureData(meta=MetaData(meta_files[i]), texture_path=texture_files[i], palette_path=palette_files[i]))
 
-            # Example: Access the first file's data
-            if meta_contents:
-                print(f"First meta file starts with: {meta_contents[0][:50]}...")
 
-            print(meta_contents)
-            return meta_contents
 
 
 

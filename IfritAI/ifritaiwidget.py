@@ -47,8 +47,6 @@ class IfritAIWidget(QWidget):
         self.current_if_type = CurrentIfType.NONE
         # Main window
         self.setWindowTitle("IfritAI")
-        # self.setMinimumSize(1280, 600)
-        self.setMinimumHeight(600)
         self.__ifrit_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
         self.setWindowIcon(self.__ifrit_icon)
 

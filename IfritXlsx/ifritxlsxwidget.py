@@ -5,7 +5,7 @@ import pathlib
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QHBoxLayout, QSpinBox, QFileDialog, \
-    QMessageBox
+    QMessageBox, QFrame
 
 from IfritXlsx.ifritxlsxmanager import IfritXlsxManager
 
@@ -17,15 +17,9 @@ class IfritXlsxWidget(QWidget):
         QWidget.__init__(self)
         self.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.ifrit_manager = IfritXlsxManager(game_data_folder)
-        self.setWindowTitle("Ifrit-XLSX")
-        self.__ifrit_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
-        self.setWindowIcon(self.__ifrit_icon)
         self.dat_file_selected = []
         self.xlsx_file_selected = ""
         self.logger = logging.getLogger(__name__)
-        #logging.basicConfig(filename='ifritXlsx.log', level=logging.INFO)
-        self.__ifrit_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
-        # self.setMinimumSize(300,200)
 
         self.general_info_label_widget = QLabel(
             "This tool process is pretty simple<br/>"
@@ -42,7 +36,6 @@ class IfritXlsxWidget(QWidget):
         self.process_selector = QComboBox()
         self.process_selector.addItems(self.WORK_OPTION)
         self.process_selector.setCurrentIndex(0)
-        #self.process_selector.setFixedSize(100, 30)
         self.process_selector.activated.connect(self.__process_change)
 
         self.process_layout = QHBoxLayout()
@@ -137,23 +130,43 @@ class IfritXlsxWidget(QWidget):
         self.launch_button.clicked.connect(self.__launch)
         self.launch_button.setFixedHeight(60)
 
+        self.separator = QFrame()
+        self.separator.setFrameShape(QFrame.Shape.VLine)
+        self.separator.setFrameShadow(QFrame.Shadow.Sunken)
+
+        # 2. Make it "Big"
+        self.separator.setLineWidth(3)  # Adjust this number for thickness
+
         self.main_layout = QVBoxLayout()
+        self.step_layout = QHBoxLayout()
         self.setLayout(self.main_layout)
 
-        self.main_layout.addWidget(self.general_info_label_widget)
-        self.main_layout.addWidget(self.process_info_label_widget)
-        self.main_layout.addLayout(self.process_layout)
-        self.main_layout.addWidget(self.load_dat_label_widget)
-        self.main_layout.addLayout(self.open_dat_file_layout)
-        self.main_layout.addWidget(self.load_csv_label_widget)
-        self.main_layout.addLayout(self.load_csv_layout)
-        self.main_layout.addWidget(self.limit_info_label_widget)
-        self.main_layout.addLayout(self.limit_layout)
-        self.main_layout.addWidget(self.autoopen_info_label_widget)
-        self.main_layout.addLayout(self.autoopen_layout)
-        self.main_layout.addWidget(self.analyse_ai_info_label_widget)
-        self.main_layout.addLayout(self.analyse_ai_layout)
-        self.main_layout.addWidget(self.launch_info_label_widget)
+        self.left_layout = QVBoxLayout()
+        self.right_layout = QVBoxLayout()
+
+        self.main_layout.addWidget(self.general_info_label_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.left_layout.addWidget(self.process_info_label_widget)
+        self.left_layout.addLayout(self.process_layout)
+        self.left_layout.addWidget(self.load_dat_label_widget)
+        self.left_layout.addLayout(self.open_dat_file_layout)
+        self.left_layout.addWidget(self.load_csv_label_widget)
+        self.left_layout.addLayout(self.load_csv_layout)
+        self.left_layout.addStretch(1)
+        self.right_layout.addWidget(self.limit_info_label_widget)
+        self.right_layout.addLayout(self.limit_layout)
+        self.right_layout.addWidget(self.autoopen_info_label_widget)
+        self.right_layout.addLayout(self.autoopen_layout)
+        self.right_layout.addWidget(self.analyse_ai_info_label_widget)
+        self.right_layout.addLayout(self.analyse_ai_layout)
+        self.right_layout.addWidget(self.launch_info_label_widget)
+        self.right_layout.addStretch(1)
+
+        self.step_layout.addLayout(self.left_layout)
+        self.step_layout.addWidget(self.separator)
+        self.step_layout.addLayout(self.right_layout)
+
+        self.main_layout.addLayout(self.step_layout)
         self.main_layout.addWidget(self.launch_button)
 
         #self.show()

@@ -34,11 +34,6 @@ class IfritSeqWidget(QWidget):
         self.ifrit_manager = IfritManager(game_data_folder)
         self.current_if_type = CurrentIfType.NONE
         # Main window
-        self.setWindowTitle("IfritAI")
-        #self.setMinimumSize(1280, 600)
-        self.setMinimumHeight(600)
-        self.__ifrit_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
-        self.setWindowIcon(self.__ifrit_icon)
         self.save_button = QPushButton()
         self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
         self.save_button.setIconSize(QSize(30, 30))

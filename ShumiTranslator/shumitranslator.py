@@ -63,11 +63,6 @@ class ShumiTranslator(QWidget):
         self.layout_main = QVBoxLayout()
         self.scroll_widget.setLayout(self.layout_main)
 
-        self.setWindowTitle("ShumiTranslator")
-        self.setMinimumHeight(600)
-        self.__shumi_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
-        self.setWindowIcon(self.__shumi_icon)
-
         # Top management
         self.file_dialog = QFileDialog()
         self.file_dialog_button = QPushButton()
