@@ -97,6 +97,8 @@ class IfritTextureManager:
             if meta_count == palette_count == texture_png_count:
                 for i in range(meta_count):
                     self.texture_data.append(TextureData(meta=MetaData(meta_files[i]), texture_path=texture_files[i], palette_path=palette_files[i]))
+            else:
+                print("Not save number of each file")
 
 
 

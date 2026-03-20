@@ -18,6 +18,7 @@ ExternalTools/Hyne/*
 ExternalTools/JumboCactuar/*
 ExternalTools/Junkshop/*
 ExternalTools/Deling/*
+ExternalTools/VincentTim/*
 *.exe
 **.xml
 SelfUpdate
@@ -25,3 +26,4 @@ SelfUpdate
 *.csv
 **/*.bin
 *.xlsx
+FF8GameData/fs/DelingCli

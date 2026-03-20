@@ -79,7 +79,7 @@ class IfritTextureWidget(QWidget):
         return QSize(400, total_height)  # Width can be whatever default you want
 
     def _analyze(self):
-        file_to_load = QFileDialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat", directory=self._current_folder_dialog)[0]
+        file_to_load = QFileDialog.getOpenFileName(parent=self, caption="Search file containing tim", directory=self._current_folder_dialog)[0]
         if file_to_load:
             self.ifrit_manager.texture_data.clear()
 
@@ -105,8 +105,8 @@ class IfritTextureWidget(QWidget):
             self._texture_layout.setRowStretch(last_row, 1)
 
             self.window().adjustSize()
-            if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
-                shutil.rmtree(self.ifrit_manager.temp_path)
+            #if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
+            #    shutil.rmtree(self.ifrit_manager.temp_path)
 
 
     def _inject(self):
