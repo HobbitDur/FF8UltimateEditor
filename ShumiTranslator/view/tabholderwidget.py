@@ -25,7 +25,7 @@ class TabHolderWidget(QTabWidget):
 
     def add_section(self, section_widget:SectionWidget):
         for i in range(len(self._page_list)):
-            if self._page_list[i].get_type() == section_widget.section.type:
+            if self._page_list[i].get_plus_type() == section_widget.section.type:
                 self._page_list[i].add_section_widget(section_widget)
                 return
         print(f"Type section not found: {section_widget.section.type}")

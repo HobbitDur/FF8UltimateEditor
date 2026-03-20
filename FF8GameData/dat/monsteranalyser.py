@@ -248,8 +248,11 @@ class MonsterAnalyser:
 
         # Now computing offset
         # Number of subsection doesn't change, neither the offset to AI-sub-section
-        self.__add_section_raw_data_from_game_data(8, game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB)
-        self.__add_section_raw_data_from_game_data(8, game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_AI_SUB)
+        self.section_raw_data[8].extend(int(3).to_bytes(game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB['size'],game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB['byteorder']))
+        self.section_raw_data[8].extend(int(16).to_bytes(game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB['size'],game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB['byteorder']))
+
+        #self.__add_section_raw_data_from_game_data(8, game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB)
+        #self.__add_section_raw_data_from_game_data(8, game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_AI_SUB)
 
         # Now adding others offset
         current_offset_section_compute = 0
@@ -290,7 +293,9 @@ class MonsterAnalyser:
         current_offset = AIData.SECTION_TEXTURE_NB['size'] + nb_texture * AIData.SECTION_TEXTURE_OFFSET['size'] +  AIData.SECTION_TEXTURE_END_OF_FILE['size']
         for index in range(len(self.texture_data['texture_data'])):
             tim_offset.append(current_offset)
-            current_offset+=len(self.texture_data['texture_data'][index])
+            current_offset+=len(self.texture_data['texture_data'][index]['data'])
+            print(f"self.texture_data['texture_data'][index]: {self.texture_data['texture_data'][index]}")
+        print(f"tim_offset: {tim_offset}")
         eof_texture = current_offset
         ## Now construction the raw data:
         self.section_raw_data[section_position].extend(
@@ -301,7 +306,7 @@ class MonsterAnalyser:
         self.section_raw_data[section_position].extend(
             int.to_bytes(eof_texture, byteorder=AIData.SECTION_TEXTURE_END_OF_FILE['byteorder'], length=AIData.SECTION_TEXTURE_END_OF_FILE['size']))
         for tex in self.texture_data['texture_data']:
-            self.section_raw_data[section_position].extend(tex)
+            self.section_raw_data[section_position].extend(tex['data'])
 
         raw_data_to_write.extend(self.section_raw_data[section_position])
 
@@ -477,6 +482,50 @@ class MonsterAnalyser:
         return lst
     def __analyze_info_stat(self, game_data: GameData):
         SECTION_NUMBER = 7
+        section_offset = self.header_data['section_pos'][SECTION_NUMBER]
+        if section_offset == self.header_data['section_pos'][SECTION_NUMBER + 1]:
+            print("Empty info stat, create a default one")
+            default_name = FF8Text(game_data, 0, bytearray(), 0)
+            default_name.set_str("DefaultMonsterName")
+            self.info_stat_data = \
+            {'monster_name': default_name, 'hp': [13, 1, 0, 0], 'str': [1, 1, 1, 255], 'vit': [2, 13, 1, 2], 'mag': [1, 5, 1, 250], 'spr': [2, 14, 2, 2],
+             'spd': [0, 7, 17, 14], 'eva': [0, 6, 0, 12],
+             'abilities_low': [{'type': 8, 'animation': 12, 'id': 2}, {'type': 2, 'animation': 11, 'id': 1}, {'type': 4, 'animation': 11, 'id': 1},
+                               {'type': 4, 'animation': 11, 'id': 18}, {'type': 2, 'animation': 11, 'id': 4}, {'type': 2, 'animation': 11, 'id': 7},
+                               {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
+                               {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
+                               {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
+                               {'type': 0, 'animation': 0, 'id': 0}],
+             'abilities_med': [{'type': 8, 'animation': 12, 'id': 2}, {'type': 2, 'animation': 11, 'id': 2}, {'type': 4, 'animation': 11, 'id': 2},
+                               {'type': 4, 'animation': 11, 'id': 18}, {'type': 2, 'animation': 11, 'id': 5}, {'type': 2, 'animation': 11, 'id': 8},
+                               {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
+                               {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
+                               {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
+                               {'type': 0, 'animation': 0, 'id': 0}],
+             'abilities_high': [{'type': 8, 'animation': 12, 'id': 2}, {'type': 2, 'animation': 11, 'id': 3}, {'type': 4, 'animation': 11, 'id': 3},
+                                {'type': 4, 'animation': 11, 'id': 18}, {'type': 2, 'animation': 11, 'id': 6}, {'type': 2, 'animation': 11, 'id': 9},
+                                {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
+                                {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
+                                {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
+                                {'type': 0, 'animation': 0, 'id': 0}], 'med_lvl': 25, 'high_lvl': 45,
+             'byte_flag_0': {'byte0_zz1': 1, 'byte0_zz2': 1, 'byte0_zz3': 0, 'byte0_unused4': 0, 'byte0_unused5': 0, 'byte0_unused6': 0, 'byte0_unused7': 0, 'byte0_unused8': 0},
+             'byte_flag_1': {'Zombie': 0, 'Fly': 0, 'byte1_zz1': 0, 'Immune NVPlus_Moins': 0, 'Hidden HP': 0, 'Auto-Reflect': 0, 'Auto-Shell': 0, 'Auto-Protect': 0},
+             'card': [255, 255, 255], 'devour': [255, 255, 255],
+             'byte_flag_2': {'IncreaseSurpriseRNG': 0, 'DecreaseSurpriseRNG': 0, 'SurpriseAttackImmunity': 0, 'IncreaseChanceEscape': 1, 'DecreaseChanceEscape': 0,
+                             'byte2_unused_6': 0, 'Diablos-missed': 0, 'Always obtains card': 0},
+             'byte_flag_3': {'byte3_zz1': 0, 'byte3_zz2': 0, 'byte3_zz3': 0, 'byte3_zz4': 1, 'byte3_unused_5': 0, 'byte3_unused_6': 0, 'byte3_unused_7': 0, 'byte3_unused_8': 0},
+             'extra_xp': 3, 'xp': 20, 'low_lvl_mag': [{'ID': 1, 'value': 0}, {'ID': 7, 'value': 0}, {'ID': 4, 'value': 0}, {'ID': 21, 'value': 0}],
+             'med_lvl_mag': [{'ID': 2, 'value': 0}, {'ID': 8, 'value': 0}, {'ID': 5, 'value': 0}, {'ID': 22, 'value': 0}],
+             'high_lvl_mag': [{'ID': 3, 'value': 0}, {'ID': 9, 'value': 0}, {'ID': 6, 'value': 0}, {'ID': 23, 'value': 0}],
+             'low_lvl_mug': [{'ID': 1, 'value': 1}, {'ID': 1, 'value': 1}, {'ID': 7, 'value': 1}, {'ID': 7, 'value': 1}],
+             'med_lvl_mug': [{'ID': 1, 'value': 1}, {'ID': 7, 'value': 1}, {'ID': 3, 'value': 1}, {'ID': 3, 'value': 1}],
+             'high_lvl_mug': [{'ID': 3, 'value': 1}, {'ID': 7, 'value': 2}, {'ID': 7, 'value': 2}, {'ID': 7, 'value': 2}],
+             'low_lvl_drop': [{'ID': 1, 'value': 1}, {'ID': 1, 'value': 1}, {'ID': 101, 'value': 8}, {'ID': 7, 'value': 1}],
+             'med_lvl_drop': [{'ID': 1, 'value': 1}, {'ID': 1, 'value': 1}, {'ID': 7, 'value': 1}, {'ID': 7, 'value': 1}],
+             'high_lvl_drop': [{'ID': 1, 'value': 2}, {'ID': 1, 'value': 2}, {'ID': 7, 'value': 2}, {'ID': 7, 'value': 2}], 'mug_rate': 50.19607843137255,
+             'drop_rate': 50.19607843137255, 'padding': 0, 'ap': 1, 'renzokuken': [160, 160, 160, 141, 259, 332, 333, 259], 'elem_def': [100, 100, 100, 100, 200, 100, 100, 100],
+             'status_def': [30, 20, 30, 20, 20, 40, 30, 20, 0, 10, 50, 0, 0, 20, 30, 0, 40, 0, 20, 0]}
+
         for el in game_data.AIData.SECTION_INFO_STAT_LIST_DATA:
             raw_data_selected = self.__get_raw_value_from_info(el, SECTION_NUMBER)
             data_size = len(raw_data_selected)
@@ -540,6 +589,11 @@ class MonsterAnalyser:
         if len(self.header_data['section_pos']) <= SECTION_NUMBER:
             return
         section_offset = self.header_data['section_pos'][SECTION_NUMBER]
+
+        # If the size is actually 0, we need to construct manually the minimum data
+        if section_offset == self.header_data['section_pos'][SECTION_NUMBER+1]:
+            print("Empty AI data, creating a basic one")
+            self.battle_script_data = {'battle_nb_sub': 3, 'offset_ai_sub': 16, 'offset_text_offset': 56, 'offset_text_sub': 56, 'text_offset': [], 'battle_text': [], 'ai_data': [{'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1),CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {}], 'offset_init_code': 20, 'offset_ennemy_turn': 24, 'offset_counterattack': 28, 'offset_death': 32, 'offset_before_dying_or_hit': 36}
 
         # Reading header
         self.battle_script_data['battle_nb_sub'] = self.__get_int_value_from_info(game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB, SECTION_NUMBER)
@@ -612,7 +666,6 @@ class MonsterAnalyser:
             code_decompiled = decompiler.decompile(code)
             self.battle_script_data['ai_data'].append({"bytecode": code, "code": code_decompiled, "command": command_list_decompiled})
         self.battle_script_data['ai_data'].append({})  # Adding a end section that is empty to mark the end of the all IA section
-
     def insert_command(self, code_section_id: int, command: CommandAnalyser, index_insertion: int = 0):
         self.battle_script_data['ai_data'][code_section_id]["command"].insert(index_insertion, command)
 

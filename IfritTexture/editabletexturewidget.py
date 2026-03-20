@@ -10,7 +10,7 @@ class EditableTextureWidget(QLabel):
     imageRefreshed = pyqtSignal()  # Notification of a reset
 
     # Type 1 is for palette, don't want to lose time to create a type.
-    def __init__(self, image_path, max_size=256,  icon_path="Resources", parent=None, type = 0):
+    def __init__(self, image: QPixmap, max_size=256,  icon_path="Resources", parent=None, type = 0):
         super().__init__(parent)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.type = type
@@ -22,7 +22,7 @@ class EditableTextureWidget(QLabel):
         self.setToolTip("Double-click to change image, Right-click to reset")
 
         self.icon_path = icon_path
-        self._original_pixmap =  QPixmap(str(image_path))
+        self._original_pixmap = image
         current_size = 0
         if type == 1:
             scaled_pix = self._original_pixmap.scaled(

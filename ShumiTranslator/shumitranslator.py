@@ -43,7 +43,7 @@ class ShumiTranslator(QWidget):
         self.game_data.load_special_action_data()
         self.game_data.load_enemy_abilities_data()
         #self.game_data.load_all()
-
+        self.__shumi_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
         self.translation_list = []
         self.file_loaded = ""
         self.file_mngrphd_loaded = ""
