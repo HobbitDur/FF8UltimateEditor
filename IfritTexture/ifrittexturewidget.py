@@ -105,8 +105,8 @@ class IfritTextureWidget(QWidget):
             self._texture_layout.setRowStretch(last_row, 1)
 
             self.window().adjustSize()
-            #if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
-            #    shutil.rmtree(self.ifrit_manager.temp_path)
+            if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
+                shutil.rmtree(self.ifrit_manager.temp_path)
 
 
     def _inject(self):
