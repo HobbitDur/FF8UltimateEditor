@@ -36,20 +36,21 @@ class MonsterAnalyser:
         self.battle_script_data = copy.deepcopy(game_data.AIData.SECTION_BATTLE_SCRIPT_DICT)
         self.sound_data = bytes()  # Section 9
         self.sound_unknown_data = bytes()  # Section 10
-        self.sound_texture_data = bytes()  # Section 11
+        self.texture_data = copy.deepcopy(game_data.AIData.SECTION_TEXTURE_DICT)
         self._ai_command_list = []
 
     def __str__(self):
         return "Name: {} \nData:{}".format(self.info_stat_data['monster_name'],
                                            [self.header_data, self.model_animation_data, self.info_stat_data, self.battle_script_data])
 
-    def load_file_data(self, file, game_data):
+    def load_file_data(self, file:str, game_data:GameData):
         self.subsection_ai_offset = {'init_code': 0, 'ennemy_turn': 0, 'counter_attack': 0, 'death': 0, 'unknown': 0}
         self.section_raw_data = [bytearray()] * self.NUMBER_SECTION
         self.header_data = copy.deepcopy(game_data.AIData.SECTION_HEADER_DICT)
         self.model_animation_data = copy.deepcopy(game_data.AIData.SECTION_MODEL_ANIM_DICT)
         self.info_stat_data = copy.deepcopy(game_data.AIData.SECTION_INFO_STAT_DICT)
         self.battle_script_data = copy.deepcopy(game_data.AIData.SECTION_BATTLE_SCRIPT_DICT)
+        self.texture_data = copy.deepcopy(game_data.AIData.SECTION_TEXTURE_DICT)
         self.file_raw_data = bytearray()
         with open(file, "rb") as f:
             while el := f.read(1):
@@ -81,9 +82,11 @@ class MonsterAnalyser:
             self.__analyze_info_stat(game_data)
             # Analyzing Section 8 : Battle scripts/AI
             self.analyze_battle_script_section(game_data, decompiler)
+
             # No need to analyze Section 9 : Sounds
             # No need to analyze Section 10 : Sounds/Unknown
-            # No need to analyze Section 11 : Textures
+            # Section 11 : Textures
+            self._analyze_texture_section(game_data)
         except IndexError as e:
             print(f"Garbage file {self.origin_file_name}")
             raise GarbageFileError
@@ -273,8 +276,35 @@ class MonsterAnalyser:
         raw_data_to_write.extend(self.section_raw_data[8])
 
         # Now writing others section
-        for i in range(9, self.NUMBER_SECTION):
+        for i in range(9, self.NUMBER_SECTION-1):
             raw_data_to_write.extend(self.section_raw_data[i])
+
+        # Texture
+        section_position = 11
+        # raw_data_to_write.extend(self.section_raw_data[section_position])
+        self.section_raw_data[section_position] = bytearray()
+        nb_texture = len(self.texture_data['texture_data'])
+
+        ## Now compute offset
+        tim_offset = []
+        current_offset = AIData.SECTION_TEXTURE_NB['size'] + nb_texture * AIData.SECTION_TEXTURE_OFFSET['size'] +  AIData.SECTION_TEXTURE_END_OF_FILE['size']
+        for index in range(len(self.texture_data['texture_data'])):
+            tim_offset.append(current_offset)
+            current_offset+=len(self.texture_data['texture_data'][index])
+        eof_texture = current_offset
+        ## Now construction the raw data:
+        self.section_raw_data[section_position].extend(
+            int.to_bytes(nb_texture, byteorder=AIData.SECTION_TEXTURE_NB['byteorder'], length=AIData.SECTION_TEXTURE_NB['size']))
+        for offset in tim_offset:
+            self.section_raw_data[section_position].extend(
+                int.to_bytes(offset, byteorder=AIData.SECTION_TEXTURE_OFFSET['byteorder'], length=AIData.SECTION_TEXTURE_OFFSET['size']))
+        self.section_raw_data[section_position].extend(
+            int.to_bytes(eof_texture, byteorder=AIData.SECTION_TEXTURE_END_OF_FILE['byteorder'], length=AIData.SECTION_TEXTURE_END_OF_FILE['size']))
+        for tex in self.texture_data['texture_data']:
+            self.section_raw_data[section_position].extend(tex)
+
+        raw_data_to_write.extend(self.section_raw_data[section_position])
+
 
         # Modifying the header section now that all sized are known
         # Modifying the section position
@@ -591,3 +621,42 @@ class MonsterAnalyser:
 
     def remove_command(self, code_section_id: int, index_removal: int = 0):
         del self.battle_script_data['ai_data'][code_section_id]["command"][index_removal]
+
+    def _analyze_texture_section(self, game_data: GameData):
+        SECTION_NUMBER = 11
+
+        self.texture_data['nb_texture'] = self.__get_int_value_from_info(game_data.AIData.SECTION_TEXTURE_NB, SECTION_NUMBER)
+        list_texture_offset = []
+        offset_size = game_data.AIData.SECTION_TEXTURE_OFFSET['size']
+        start_offset = game_data.AIData.SECTION_TEXTURE_NB['size']
+        for index_offset in range(self.texture_data['nb_texture']):
+            list_texture_offset.append(
+                int.from_bytes(self.section_raw_data[SECTION_NUMBER][start_offset + index_offset * offset_size:start_offset + (index_offset + 1) * offset_size],
+                               byteorder="little"))
+        self.texture_data['tim_offset'] = list_texture_offset
+
+
+        self.texture_data['eof_texture'] = int.from_bytes(self.section_raw_data[SECTION_NUMBER][start_offset + len(list_texture_offset) * offset_size:start_offset + len(list_texture_offset) * offset_size+game_data.AIData.SECTION_TEXTURE_END_OF_FILE['size']], game_data.AIData.SECTION_TEXTURE_END_OF_FILE['byteorder'])
+        tim_data_list = []
+        offset_list_done = []
+        for index, texture_offset in enumerate(list_texture_offset):
+            start_tim = list_texture_offset[index]
+            if texture_offset == 0:
+                end_tim = start_tim
+            else:
+                next_offset = [x for x in list_texture_offset if x > texture_offset]
+                if next_offset:
+                    end_tim = min(next_offset)
+                else:
+                    end_tim = len(self.section_raw_data[SECTION_NUMBER])
+            # Insert the data to have a continuous byte structure
+
+            self.insert_sorted_with_zeros(offset_list_done, texture_offset)
+            if texture_offset == 0:
+                tim_data_list.append({"id": index, "data": self.section_raw_data[SECTION_NUMBER][start_tim: end_tim]})
+            else:
+                tim_data_list.insert(offset_list_done.index(texture_offset),
+                                          {"id": index, "data": self.section_raw_data[SECTION_NUMBER][start_tim: end_tim]})
+
+        self.texture_data['texture_data'] = tim_data_list
+

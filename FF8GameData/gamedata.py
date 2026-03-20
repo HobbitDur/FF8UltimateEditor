@@ -168,6 +168,13 @@ class AIData:
                                        SECTION_BATTLE_SCRIPT_AI_OFFSET_ENNEMY_TURN, SECTION_BATTLE_SCRIPT_AI_OFFSET_COUNTERATTACK,
                                        SECTION_BATTLE_SCRIPT_AI_OFFSET_DEATH, SECTION_BATTLE_SCRIPT_AI_OFFSET_BEFORE_DYING_OR_HIT]
 
+    SECTION_TEXTURE_NB = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'nb_texture', 'pretty_name': 'Number texture'}
+    SECTION_TEXTURE_OFFSET = {'offset': 0x04, 'size': 4, 'byteorder': 'little', 'name': 'tim_offset', 'pretty_name': 'TIM offset'}
+    SECTION_TEXTURE_END_OF_FILE = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'eof_texture', 'pretty_name': 'End  of file texture'}
+    SECTION_TEXTURE_DATA = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'texture_data', 'pretty_name': 'Texture data'}
+    SECTION_TEXTURE_LIST_DATA = [SECTION_TEXTURE_NB, SECTION_TEXTURE_OFFSET, SECTION_TEXTURE_END_OF_FILE, SECTION_TEXTURE_DATA]
+    SECTION_TEXTURE_DICT = {'nb_texture': 0, 'tim_offset': [], 'eof_texture': 0, 'texture_data': []}
+
     BYTE_FLAG_LIST = ['byte_flag_0', 'byte_flag_1', 'byte_flag_2', 'byte_flag_3']
     CARD_OBTAIN_ORDER = ['DROP', 'MOD', 'RARE_MOD']
     MISC_ORDER = ['med_lvl', 'high_lvl', 'extra_xp', 'xp', 'mug_rate', 'drop_rate', 'ap']

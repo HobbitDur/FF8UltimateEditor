@@ -1,17 +1,8 @@
-import os
 import pathlib
-import re
 import subprocess
-from dataclasses import dataclass
-from pathlib import Path
-from typing import TypedDict
 
-from PIL.Image import Palette
-from PyQt6.QtWidgets import QWidget
-
+from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
-
-
 
 
 class MetaData:
@@ -25,7 +16,6 @@ class MetaData:
         self.paletteY=0
         if meta_file_path:
             self.extract_data_from_str(meta_file_path.read_text(encoding="utf-8"))
-        print(f"meta_file_path: {meta_file_path}")
 
 
     def __str__(self):
@@ -58,6 +48,7 @@ class IfritTextureManager:
         self.game_data = GameData(game_data_folder)
         self.game_data.load_all()
         self.texture_data = []
+        self.temp_path = pathlib.Path(__file__).parent.resolve() / "temp_vincent_tim"
 
         # --- PATH RESOLUTION LOGIC ---
         # 1. Get the absolute path of the directory where THIS script lives
@@ -74,30 +65,29 @@ class IfritTextureManager:
         # Ensure the executable actually exists before trying to run it
         if not self.vincent_tim_path.exists():
             raise FileNotFoundError(f"Critical Error: 'tim.exe' not found at {self.vincent_tim_path}")
-        temp_path = pathlib.Path(__file__).parent.resolve() / "temp_vincent_tim"
-        temp_path.mkdir(parents=True, exist_ok=True)
+        self.temp_path.mkdir(parents=True, exist_ok=True)
         try:
             subprocess.run([
                 str(self.vincent_tim_path),
                 "--export-all",
                 "--analysis",
                 str(file_path_to_analyze),
-                str(temp_path)
+                str( self.temp_path)
             ], check=True)
 
             # --- COUNTING LOGIC ---
             # 1. Count all .meta files
-            meta_files = list(temp_path.glob("*.meta"))
+            meta_files = list( self.temp_path.glob("*.meta"))
             meta_count = len(meta_files)
 
             # 2. Count files ending exactly in palette.png
-            palette_files = list(temp_path.glob("*palette.png"))
+            palette_files = list( self.temp_path.glob("*palette.png"))
             palette_count = len(palette_files)
 
             # 3. Count .png files that DO NOT contain "palette" in the name
             # We filter the list of all PNGs manually for precision
             # This creates a list of Path objects that don't have "palette" in the name
-            texture_files = [f for f in temp_path.glob("*.png") if "palette" not in f.name.lower()]
+            texture_files = [f for f in  self.temp_path.glob("*.png") if "palette" not in f.name.lower()]
             # Now you can get the count easily
             texture_png_count = len(texture_files)
 
@@ -112,7 +102,69 @@ class IfritTextureManager:
 
 
 
+
         except subprocess.CalledProcessError as e:
             print(f"Error: tim.exe failed with exit code {e.returncode}")
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
+
+    def _create_tim_from_texture_data(self, folder_path_to_analyze:str):
+        if not self.vincent_tim_path.exists():
+            raise FileNotFoundError(f"Critical Error: 'tim.exe' not found at {self.vincent_tim_path}")
+        self.temp_path.mkdir(parents=True, exist_ok=True)
+
+        # --- COUNTING LOGIC ---
+        # 1. Count all .meta files
+        meta_files = list(self.temp_path.glob("*.meta"))
+        meta_count = len(meta_files)
+
+        # 2. Count files ending exactly in palette.png
+        palette_files = list(self.temp_path.glob("*palette.png"))
+        palette_count = len(palette_files)
+
+        # 3. Count .png files that DO NOT contain "palette" in the name
+        # We filter the list of all PNGs manually for precision
+        # This creates a list of Path objects that don't have "palette" in the name
+        texture_files = [f for f in self.temp_path.glob("*.png") if "palette" not in f.name.lower()]
+        # Now you can get the count easily
+        texture_png_count = len(texture_files)
+
+        if meta_count == palette_count == texture_png_count:
+            for i in range(meta_count):
+                subprocess.run([
+                    str(self.vincent_tim_path),
+                    "--input-format", "png",
+                    "--output-format", "tim",
+                    "--palette", "0",
+                    "--input-path-palette",palette_files[i],
+                    "--input-path-meta", meta_files[i],
+                    texture_files[i],
+                    str(self.temp_path)
+                ], check=True)
+
+    def _inject_in_com(self, com_file_str:str):
+        game_data = GameData()
+        game_data.load_all()
+        monster_analyser = MonsterAnalyser(game_data)
+        monster_analyser.load_file_data(com_file_str, game_data)
+        monster_analyser.analyse_loaded_data(game_data)
+        tim_list = list(self.temp_path.glob("*.tim"))
+        monster_analyser.texture_data["nb_texture"] = len(tim_list)
+        monster_analyser.texture_data["tim_offset"] = []
+        monster_analyser.texture_data["texture_data"] = []
+        base_offset = 4+ len(tim_list*4)+ 4
+        monster_analyser.texture_data["tim_offset"].append(base_offset)
+        for i in range(len(tim_list)-1):
+            base_offset = base_offset  + tim_list[i].stat().st_size
+            monster_analyser.texture_data["tim_offset"].append(base_offset)
+        monster_analyser.texture_data["eof_texture"] =  monster_analyser.texture_data["tim_offset"][-1] + tim_list[-1].stat().st_size
+        for tim in tim_list:
+            monster_analyser.texture_data["texture_data"].append(tim.read_bytes())
+        monster_analyser.write_data_to_file(game_data, com_file_str)
+
+    def inject(self, folder_path_to_analyze:str, com_file_str:str):
+        self._create_tim_from_texture_data(folder_path_to_analyze)
+
+        self._inject_in_com(com_file_str)
+
+

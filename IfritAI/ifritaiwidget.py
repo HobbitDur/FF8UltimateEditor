@@ -5,12 +5,11 @@ from email.policy import default
 from typing import List
 
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QIcon, QFont, QShortcut, QKeySequence, QKeyEvent
+from PyQt6.QtGui import QIcon, QKeyEvent
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QLabel, \
     QColorDialog, QCheckBox, QMessageBox, QApplication
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
-from FF8GameData.dat.daterrors import AICodeError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AICompiler import AICompiler
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
