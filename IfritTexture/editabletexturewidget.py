@@ -23,21 +23,7 @@ class EditableTextureWidget(QLabel):
 
         self.icon_path = icon_path
         self._original_pixmap = image
-        current_size = 0
-        if type == 1:
-            scaled_pix = self._original_pixmap.scaled(
-                QSize(self._original_pixmap.size().width(), 10),
-                Qt.AspectRatioMode.IgnoreAspectRatio,
-                Qt.TransformationMode.SmoothTransformation
-            )
-            self.setPixmap(scaled_pix)
-            self.setFixedSize(scaled_pix.size())
-            current_size = scaled_pix.size()
-        else:
-            self.setPixmap( self._original_pixmap)
-            self.setFixedSize(self._original_pixmap.size())
-            current_size = self._original_pixmap.size()
-        self._current_pixmap = self._original_pixmap
+        self._current_pixmap = image
 
         # --- Overlay Buttons ---
         btn_size = 30
@@ -81,16 +67,16 @@ class EditableTextureWidget(QLabel):
         self._refresh_btn.move(5, self._original_pixmap.size().height() - btn_size - 5)
         self._refresh_btn.clicked.connect(self._on_refresh)
 
+        self.set_image(image, True)
 
-        if current_size.height() < 50 or current_size.width() < 50:
-            self._edit_btn.hide()
-            self._refresh_btn.hide()
 
-    def set_image(self, path, is_original=False):
+
+    def set_image(self, pix:QPixmap, is_original=False):
         """Loads and displays an image from path."""
-        pix = QPixmap(str(path))
         scaled_pix = None
         if not pix.isNull():
+            if is_original:
+                self._original_pixmap = pix
             if self.type == 1 and pix.size().height() == 1:
                 scaled_pix = pix.scaled(
                     QSize(pix.size().width(),10),
@@ -111,46 +97,35 @@ class EditableTextureWidget(QLabel):
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation
                 )
-            if is_original:
-                self._original_pixmap = pix
-            self._current_pixmap = pix
             if scaled_pix:
                 self.setPixmap(scaled_pix)
                 self.setFixedSize(scaled_pix.size())
+                self._current_pixmap = pix #We don't want to keep the upscale one, upscale is just to show in UI
+                current_size = scaled_pix.size()
             else:
                 self.setPixmap(pix)
                 self.setFixedSize(pix.size())
+                self._current_pixmap = pix
+                current_size = pix.size()
+
+            if current_size.height() < 50 or current_size.width() < 50:
+                self._edit_btn.hide()
+                self._refresh_btn.hide()
 
             self._reposition_buttons()
+
 
     def _on_edit(self):
         path, _ = QFileDialog.getOpenFileName(
             self, "Select Texture", "", "Images (*.png *.jpg *.bmp *.tif)"
         )
         if path:
-            self.set_image(path)
+            self.set_image(QPixmap(str(path)))
             self.imageChanged.emit(path)
 
     def _on_refresh(self):
-        if self._original_pixmap:
-            if self._original_pixmap.size().height() > 256 or self._original_pixmap.size().width() > 256:
-                pix = self._original_pixmap.scaled(
-                    QSize(self.max_size, self.max_size),
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation
-                )
-            elif self.type == 1:
-                pix = self._original_pixmap.scaled(
-                    QSize(self.max_size , 10),
-                    Qt.AspectRatioMode.IgnoreAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation
-                )
-            else:
-                pix = self._original_pixmap
-            self.setPixmap(pix)
-            self.setFixedSize(pix.size())
-            self._reposition_buttons()
-            self.imageRefreshed.emit()
+        self.set_image(self._original_pixmap, False)
+        self.imageRefreshed.emit()
 
     def _reposition_buttons(self):
         btn_size = self._edit_btn.width()

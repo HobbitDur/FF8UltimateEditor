@@ -96,7 +96,6 @@ class IfritTextureManager:
         if not self.vincent_tim_path.exists():
             raise FileNotFoundError(f"Critical Error: 'tim.exe' not found")
 
-        # This creates: temp/mag290_h.00/ and temp/mag290_h.01/
         specific_temp = self.temp_path / pathlib.Path(file_path_to_analyze).name
         specific_temp.mkdir(parents=True, exist_ok=True)
 
@@ -113,10 +112,8 @@ class IfritTextureManager:
 
             # 1. Count all .meta files in this specific subfolder
             meta_files = list(specific_temp.glob("*.meta"))
-
             # 2. Count palette files in this specific subfolder
             palette_files = list(specific_temp.glob("*palette.png"))
-
             # 3. Count texture files in this specific subfolder
             texture_files = [f for f in specific_temp.glob("*.png") if "palette" not in f.name.lower()]
             texture_png_count = len(texture_files)
@@ -160,7 +157,6 @@ class IfritTextureManager:
             final_metas = sorted(list(specific_temp.glob("*.meta")))
             final_textures = sorted([f for f in specific_temp.glob("*.png") if "palette" not in f.name.lower()])
             final_palettes = sorted(list(specific_temp.glob("*palette.png")))
-
             if len(final_metas) == len(final_textures) == len(final_palettes):
                 for i in range(len(final_metas)):
                     self.texture_data.append(TextureData(
@@ -255,6 +251,7 @@ class IfritTextureManager:
                 ], check=True, capture_output=True)
 
     def _inject_in_com(self, com_file_str:str):
+
         game_data = GameData()
         game_data.load_all()
         monster_analyser = MonsterAnalyser(game_data)
@@ -269,11 +266,13 @@ class IfritTextureManager:
         for i in range(len(tim_list)-1):
             base_offset = base_offset  + tim_list[i].stat().st_size
             monster_analyser.texture_data["tim_offset"].append(base_offset)
-        monster_analyser.texture_data["eof_texture"] =  monster_analyser.texture_data["tim_offset"][-1] + tim_list[-1].stat().st_size
+        if monster_analyser.texture_data["tim_offset"]:
+            monster_analyser.texture_data["eof_texture"] =  monster_analyser.texture_data["tim_offset"][-1] + tim_list[-1].stat().st_size
+        else: # Should not happen, but better safe than sorry
+            monster_analyser.texture_data["eof_texture"] = monster_analyser.header_data['section_pos'][11]
         for i, tim in enumerate(tim_list):
             monster_analyser.texture_data["texture_data"].append({'id':i, 'data': bytearray(tim.read_bytes())})
         monster_analyser.write_data_to_file(game_data, com_file_str)
-
     def inject(self, folder_path_to_analyze:str, com_file_str:str):
         self._create_tim_from_texture_data(folder_path_to_analyze)
         self._inject_in_com(com_file_str)

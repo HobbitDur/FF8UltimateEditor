@@ -5,7 +5,7 @@ from typing import List
 
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout,
-                             QScrollArea, QGridLayout, QSizePolicy, QFileDialog)
+                             QScrollArea, QGridLayout, QSizePolicy, QFileDialog, QMessageBox)
 
 from IfritTexture.ifrittexturemanager import IfritTextureManager, TextureData, MetaData
 from IfritTexture.texturewidget import TextureWidget
@@ -85,9 +85,9 @@ class IfritTextureWidget(QWidget):
 
     def add_plus_widget(self, next_index):
         self.ifrit_manager.texture_data.append(TextureData(None, None, None))
-        plus_widget = TextureWidget(texture_data=self.ifrit_manager.texture_data[-1], icon_path=self.icon_path, title="Add New", plus_type=True)
-        plus_widget.request_new_texture.connect(self._handle_add_new)
-        self._texture_layout.addWidget(plus_widget, next_index // 2, next_index % 2)
+        self._texture_widgets.append(TextureWidget(texture_data=self.ifrit_manager.texture_data[-1], icon_path=self.icon_path, title="Add New", plus_type=True))
+        self._texture_widgets[-1].request_new_texture.connect(self._handle_add_new)
+        self._texture_layout.addWidget(self._texture_widgets[-1], next_index // 2, next_index % 2)
 
 
     def _handle_add_new(self):
@@ -113,17 +113,25 @@ class IfritTextureWidget(QWidget):
                 shutil.rmtree(self.ifrit_manager.temp_path)
 
     def _inject(self):
-        self._export(export_dir=self.ifrit_manager.temp_path)
-        file_to_load = QFileDialog.getOpenFileName(
-            parent=self,
-            caption="Search dat file",
-            filter="*.dat",
-            directory=self._current_folder_dialog
-        )[0]
-        if file_to_load:
-            self.ifrit_manager.inject(self.ifrit_manager.temp_path, file_to_load)
-            if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
-                shutil.rmtree(self.ifrit_manager.temp_path)
+        if len([x for x in self._texture_widgets if not x.get_plus_type()]) > 0:
+            self._export(export_dir=self.ifrit_manager.temp_path)
+            file_to_load = QFileDialog.getOpenFileName(
+                parent=self,
+                caption="Search dat file",
+                filter="*.dat",
+                directory=self._current_folder_dialog
+            )[0]
+            if file_to_load:
+                self.ifrit_manager.inject(self.ifrit_manager.temp_path, file_to_load)
+                if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
+                    shutil.rmtree(self.ifrit_manager.temp_path)
+        else:
+            message_box = QMessageBox()
+            message_box.setText(f"Please create any image with plus button or import before injecting")
+            message_box.setIcon(QMessageBox.Icon.Warning)
+            message_box.setWindowTitle("IfritTexture - Warning")
+            message_box.exec()
+            return
 
     def _export(self, export_dir=None):
         if not export_dir:

@@ -69,8 +69,6 @@ class Card:
         self.__set_elemental_str()
 
     def change_card_mod(self, mod=0, size=64):
-        print(mod)
-        print(self._name)
         if mod == 1:
             self._image = self.card_info["img_remaster"]
             self._name = self.card_info["name"]
@@ -80,6 +78,5 @@ class Card:
         else:
             self._image = self.card_info["img"]
             self._name = self.card_info["name"]
-        print(self._name)
         self._image = self._image.resize((size, size), Image.BILINEAR)
         self._image = QPixmap.fromImage(ImageQt(self._image))

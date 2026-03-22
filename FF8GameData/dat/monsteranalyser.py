@@ -287,16 +287,16 @@ class MonsterAnalyser:
         # raw_data_to_write.extend(self.section_raw_data[section_position])
         self.section_raw_data[section_position] = bytearray()
         nb_texture = len(self.texture_data['texture_data'])
-
+        print(f"nb_texture: {nb_texture}")
         ## Now compute offset
         tim_offset = []
         current_offset = AIData.SECTION_TEXTURE_NB['size'] + nb_texture * AIData.SECTION_TEXTURE_OFFSET['size'] +  AIData.SECTION_TEXTURE_END_OF_FILE['size']
         for index in range(len(self.texture_data['texture_data'])):
             tim_offset.append(current_offset)
             current_offset+=len(self.texture_data['texture_data'][index]['data'])
-            print(f"self.texture_data['texture_data'][index]: {self.texture_data['texture_data'][index]}")
-        print(f"tim_offset: {tim_offset}")
         eof_texture = current_offset
+        print(f"tim_offset: {tim_offset}")
+        print(f"eof_texture: {eof_texture}")
         ## Now construction the raw data:
         self.section_raw_data[section_position].extend(
             int.to_bytes(nb_texture, byteorder=AIData.SECTION_TEXTURE_NB['byteorder'], length=AIData.SECTION_TEXTURE_NB['size']))
@@ -308,6 +308,7 @@ class MonsterAnalyser:
         for tex in self.texture_data['texture_data']:
             self.section_raw_data[section_position].extend(tex['data'])
 
+        print(f"self.section_raw_data[section_position]: {self.section_raw_data[section_position][0:20].hex()}")
         raw_data_to_write.extend(self.section_raw_data[section_position])
 
 
@@ -525,6 +526,7 @@ class MonsterAnalyser:
              'high_lvl_drop': [{'ID': 1, 'value': 2}, {'ID': 1, 'value': 2}, {'ID': 7, 'value': 2}, {'ID': 7, 'value': 2}], 'mug_rate': 50.19607843137255,
              'drop_rate': 50.19607843137255, 'padding': 0, 'ap': 1, 'renzokuken': [160, 160, 160, 141, 259, 332, 333, 259], 'elem_def': [100, 100, 100, 100, 200, 100, 100, 100],
              'status_def': [30, 20, 30, 20, 20, 40, 30, 20, 0, 10, 50, 0, 0, 20, 30, 0, 40, 0, 20, 0]}
+            return
 
         for el in game_data.AIData.SECTION_INFO_STAT_LIST_DATA:
             raw_data_selected = self.__get_raw_value_from_info(el, SECTION_NUMBER)
@@ -594,7 +596,7 @@ class MonsterAnalyser:
         if section_offset == self.header_data['section_pos'][SECTION_NUMBER+1]:
             print("Empty AI data, creating a basic one")
             self.battle_script_data = {'battle_nb_sub': 3, 'offset_ai_sub': 16, 'offset_text_offset': 56, 'offset_text_sub': 56, 'text_offset': [], 'battle_text': [], 'ai_data': [{'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1),CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {}], 'offset_init_code': 20, 'offset_ennemy_turn': 24, 'offset_counterattack': 28, 'offset_death': 32, 'offset_before_dying_or_hit': 36}
-
+            return
         # Reading header
         self.battle_script_data['battle_nb_sub'] = self.__get_int_value_from_info(game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB, SECTION_NUMBER)
         self.battle_script_data['offset_ai_sub'] = self.__get_int_value_from_info(game_data.AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_AI_SUB, SECTION_NUMBER)
@@ -660,8 +662,7 @@ class MonsterAnalyser:
         list_code = [init_code, ennemy_turn_code, counterattack_code, death_code, before_dying_or_hit_code]
         self.battle_script_data['ai_data'] = []
         for index, code in enumerate(list_code):
-            decompiler._battle_text= self.battle_script_data['battle_text']
-            decompiler._info_stat= self.info_stat_data
+            decompiler.set_battle_text_info_stat(self.battle_script_data['battle_text'], self.info_stat_data)
             command_list_decompiled = decompiler.decompile_bytecode_to_command_list(code)
             code_decompiled = decompiler.decompile(code)
             self.battle_script_data['ai_data'].append({"bytecode": code, "code": code_decompiled, "command": command_list_decompiled})
