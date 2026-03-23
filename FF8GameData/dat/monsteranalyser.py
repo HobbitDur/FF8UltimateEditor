@@ -69,6 +69,7 @@ class MonsterAnalyser:
             self.section_raw_data[self.NUMBER_SECTION - 1] = self.file_raw_data[
                                                              self.header_data['section_pos'][self.NUMBER_SECTION - 1]:self.header_data['file_size']]
             # No need to analyze Section 1 : Skeleton
+            self.__analyze_bone_section(game_data)
             # No need to analyze Section 2 : Model geometry
             # No need to analyze Section 3 : Model animation
             # self.__analyze_model_animation(game_data)
@@ -373,6 +374,20 @@ class MonsterAnalyser:
         self.header_data['file_size'] = int.from_bytes(
             self.file_raw_data[file_size_section_offset:file_size_section_offset + game_data.AIData.SECTION_HEADER_FILE_SIZE['size']],
             game_data.AIData.SECTION_HEADER_FILE_SIZE['byteorder'])
+
+    def __analyze_bone_section(self, game_data: GameData):
+        SECTION_NUMBER = 4
+        if self.section_raw_data[SECTION_NUMBER]:
+            print("__analyze_bone_section")
+            print(self.section_raw_data[SECTION_NUMBER].hex(sep=" "))
+            print(f"Nb bones: {self.section_raw_data[SECTION_NUMBER][0:2]}")
+            print(f"Unk: {self.section_raw_data[SECTION_NUMBER][2:8]}")
+            print(f"ScaleX: {self.section_raw_data[SECTION_NUMBER][8:10]}")
+            print(f"ScaleZ: {self.section_raw_data[SECTION_NUMBER][10:12]}")
+            print(f"ScaleY: {self.section_raw_data[SECTION_NUMBER][12:14]}")
+            print(f"unk: {self.section_raw_data[SECTION_NUMBER][14:14]}")
+
+
 
     def __analyze_section_4(self, game_data: GameData):
         SECTION_NUMBER = 4
