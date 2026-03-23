@@ -1,6 +1,8 @@
 import json
 import os
+from dataclasses import dataclass
 from enum import Enum
+from typing import List, Literal
 
 from PIL import Image
 
@@ -51,6 +53,58 @@ class SectionType(Enum):
     OFFSET_AND_TEXT = 10
     SIZE_AND_OFFSET_AND_TEXT = 11
 
+# This was an attempt to improve the logic to avoid having dictionary. An attempt.
+class SectionData:
+    def __init__(self, offset:int, size:int, name:str, pretty_name:str, byteorder:Literal['little','big']='little'):
+        self.offset = offset
+        self.size = size
+        self.name = name
+        self.pretty_name = pretty_name
+        self.byteorder = byteorder
+    def get_int(self, data:int):
+        return data.to_bytes(length=self.size, byteorder=self.byteorder, signed=False)
+
+
+class Section:
+    def __init__(self):
+        self.section_header: List[SectionData] = []
+        self.section_data: List[SectionData] = []
+    def add_header_value(self, section_data:SectionData):
+        self.section_header.append(section_data)
+    def add_data_value(self, section_data:SectionData):
+        self.section_data.append(section_data)
+
+
+
+
+class Vertex:
+    def __init__(self):
+        self.section_data_x = SectionData(offset=0, size=2, name='x', pretty_name='Vertex X')
+        self.section_data_z = SectionData(offset=2, size=2, name='x', pretty_name='Vertex Z')
+        self.section_data_y = SectionData(offset=4, size=2, name='x', pretty_name='Vertex Y')
+
+
+
+class SectionGeometryVertice:
+    def __init__(self):
+        self._section = Section()
+
+        self._section_data_bone_id = SectionData(offset=0, size=2, name='bone_id', pretty_name='Bone ID')
+        self._section_data_nb_vertex = SectionData(offset=2, size=2, name='nb_vertices', pretty_name='Nb Vertices')
+        self._section_data_vertex = SectionData(offset=4, size=2, name='vertex', pretty_name='Vertex')
+        self._section.add_data_value(self._section_data_bone_id)
+        self._section.add_data_value(self._section_data_nb_vertex)
+        self._section.add_data_value(self._section_data_vertex)
+        self.bone_id:int = 0
+        self._nb_vertices:int = 0
+        self.vertices:List[Vertex] = []
+    def set_bone_id(self, bone_id:int):
+        self.bone_id = bone_id
+    def add_vertex(self, vertex:Vertex):
+        self.vertices.append(vertex)
+
+
+
 
 class AIData:
     SECTION_HEADER_NB_SECTION = {'offset': 0, 'size': 4, 'byteorder': 'little', 'name': 'nb_section', 'pretty_name': 'Number section'}
@@ -60,17 +114,82 @@ class AIData:
     SECTION_HEADER_DICT = {'nb_section': 0, 'section_pos': [], 'file_size': 0}
 
     # Section 1: Bone section
-    SECTION_BONE_NB = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_bone', 'pretty_name': 'Number bones'}
+    SECTION_BONE_HEADER_NB = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_bone', 'pretty_name': 'Number bones', 'default_value': 0}
+    SECTION_BONE_HEADER_UNKNOWN00 = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'unknown00', 'pretty_name': 'Unknown00', 'default_value': 0}
+    SECTION_BONE_HEADER_UNKNOWN01 = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'unknown01', 'pretty_name': 'Unknown01', 'default_value': 0}
+    SECTION_BONE_HEADER_UNKNOWN02 = {'offset': 0x06, 'size': 2, 'byteorder': 'little', 'name': 'unknown02', 'pretty_name': 'Unknown01', 'default_value': 0}
+    SECTION_BONE_HEADER_SCALE_X = {'offset': 0x08, 'size': 2, 'byteorder': 'little', 'name': 'scaleX', 'pretty_name': 'Scale X', 'default_value': 0}
+    SECTION_BONE_HEADER_SCALE_Z = {'offset': 0x0A, 'size': 2, 'byteorder': 'little', 'name': 'scaleZ', 'pretty_name': 'Scale Z', 'default_value': 0}
+    SECTION_BONE_HEADER_SCALE_Y = {'offset': 0x0C, 'size': 2, 'byteorder': 'little', 'name': 'scaleY', 'pretty_name': 'Scale Y', 'default_value': 0}
+    SECTION_BONE_HEADER_UNKNOWN2 = {'offset': 0x0E, 'size': 2, 'byteorder': 'little', 'name': 'unknown2', 'pretty_name': 'Unknown2', 'default_value': 0}
+
+    SECTION_BONE_HEADER_LIST_DATA = [SECTION_BONE_HEADER_NB, SECTION_BONE_HEADER_UNKNOWN00, SECTION_BONE_HEADER_UNKNOWN01, SECTION_BONE_HEADER_UNKNOWN02, SECTION_BONE_HEADER_SCALE_X, SECTION_BONE_HEADER_SCALE_Z, SECTION_BONE_HEADER_SCALE_Y,
+                                     SECTION_BONE_HEADER_UNKNOWN2]
+    SECTION_BONE_HEADER_DICT = {item['name']: item['default_value'] for item in SECTION_BONE_HEADER_LIST_DATA}
+
+    SECTION_BONE_DATA_PARENT = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'parent', 'pretty_name': 'Parent ID', 'default_value':0}
+    SECTION_BONE_DATA_SIZE = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'size', 'pretty_name': 'Size', 'default_value':0}
+    SECTION_BONE_DATA_ROTX = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'rotX', 'pretty_name': 'Rotation X', 'default_value':0}
+    SECTION_BONE_DATA_ROTZ = {'offset': 0x06, 'size': 2, 'byteorder': 'little', 'name': 'rotZ', 'pretty_name': 'Rotation Z', 'default_value':0}
+    SECTION_BONE_DATA_ROTY = {'offset': 0x08, 'size': 2, 'byteorder': 'little', 'name': 'rotY', 'pretty_name': 'Rotation Y', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN3 = {'offset': 0x0A, 'size': 2, 'byteorder': 'little', 'name': 'unknown3', 'pretty_name': 'Unknown 3', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN4 = {'offset': 0x0C, 'size': 2, 'byteorder': 'little', 'name': 'unknown4', 'pretty_name': 'Unknown 4', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN5 = {'offset': 0x0E, 'size': 2, 'byteorder': 'little', 'name': 'unknown5', 'pretty_name': 'Unknown 5', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN6 = {'offset': 0x10, 'size': 2, 'byteorder': 'little', 'name': 'unknown6', 'pretty_name': 'Unknown 6', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN7 = {'offset': 0x12, 'size': 2, 'byteorder': 'little', 'name': 'unknown7', 'pretty_name': 'Unknown 7', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN8 = {'offset': 0x14, 'size': 2, 'byteorder': 'little', 'name': 'unknown8', 'pretty_name': 'Unknown 8', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN9 = {'offset': 0x16, 'size': 2, 'byteorder': 'little', 'name': 'unknown9', 'pretty_name': 'Unknown 9', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN10 = {'offset': 0x18, 'size': 2, 'byteorder': 'little', 'name': 'unknown10', 'pretty_name': 'Unknown 10', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN11 = {'offset': 0x1A, 'size': 2, 'byteorder': 'little', 'name': 'unknown11', 'pretty_name': 'Unknown 11', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN12 = {'offset': 0x1C, 'size': 2, 'byteorder': 'little', 'name': 'unknown12', 'pretty_name': 'Unknown 12', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN13 = {'offset': 0x1E, 'size': 2, 'byteorder': 'little', 'name': 'unknown13', 'pretty_name': 'Unknown 13', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN14 = {'offset': 0x20, 'size': 2, 'byteorder': 'little', 'name': 'unknown14', 'pretty_name': 'Unknown 14', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN15 = {'offset': 0x22, 'size': 2, 'byteorder': 'little', 'name': 'unknown15', 'pretty_name': 'Unknown 15', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN16 = {'offset': 0x24, 'size': 2, 'byteorder': 'little', 'name': 'unknown16', 'pretty_name': 'Unknown 16', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN17 = {'offset': 0x26, 'size': 2, 'byteorder': 'little', 'name': 'unknown17', 'pretty_name': 'Unknown 17', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN18 = {'offset': 0x28, 'size': 2, 'byteorder': 'little', 'name': 'unknown18', 'pretty_name': 'Unknown 18', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN19 = {'offset': 0x2A, 'size': 2, 'byteorder': 'little', 'name': 'unknown19', 'pretty_name': 'Unknown 19', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN20 = {'offset': 0x2C, 'size': 2, 'byteorder': 'little', 'name': 'unknown20', 'pretty_name': 'Unknown 20', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN21 = {'offset': 0x2E, 'size': 2, 'byteorder': 'little', 'name': 'unknown21', 'pretty_name': 'Unknown 21', 'default_value':0}
+
+    SECTION_BONE_DATA_LIST_DATA = [SECTION_BONE_DATA_PARENT, SECTION_BONE_DATA_SIZE, SECTION_BONE_DATA_ROTX, SECTION_BONE_DATA_ROTZ, SECTION_BONE_DATA_ROTY,
+                                   SECTION_BONE_DATA_UNKNOWN3, SECTION_BONE_DATA_UNKNOWN4, SECTION_BONE_DATA_UNKNOWN5, SECTION_BONE_DATA_UNKNOWN6, SECTION_BONE_DATA_UNKNOWN7,
+                                   SECTION_BONE_DATA_UNKNOWN8, SECTION_BONE_DATA_UNKNOWN9, SECTION_BONE_DATA_UNKNOWN10, SECTION_BONE_DATA_UNKNOWN11, SECTION_BONE_DATA_UNKNOWN12,
+                                   SECTION_BONE_DATA_UNKNOWN13, SECTION_BONE_DATA_UNKNOWN14, SECTION_BONE_DATA_UNKNOWN15, SECTION_BONE_DATA_UNKNOWN16, SECTION_BONE_DATA_UNKNOWN17,
+                                   SECTION_BONE_DATA_UNKNOWN18, SECTION_BONE_DATA_UNKNOWN19, SECTION_BONE_DATA_UNKNOWN20, SECTION_BONE_DATA_UNKNOWN21]
+
+    SECTION_BONE_DATA_DICT = {item['name']: item['default_value'] for item in SECTION_BONE_DATA_LIST_DATA}
+
+    SECTION_BONE_DICT = {'header': SECTION_BONE_HEADER_DICT, 'data': []}
+
+    # Section 2: Geometry section
+    SECTION_GEOMETRY_HEADER_NB_MESH = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'nb_mesh', 'pretty_name': 'Nb mesh'}
+    SECTION_GEOMETRY_HEADER_MESH_POSITION = {'offset': 0x02, 'size': 4, 'byteorder': 'little', 'name': 'mesh_position', 'pretty_name': 'Mesh position'}
+
+
+    SECTION_GEOMETRY_VERTICES_DATA_BONE_ID = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'vertices_bone_id', 'pretty_name': 'Vertices bone ID'}
+    SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertex', 'pretty_name': 'Number vertex'}
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX = {'offset': 0x04, 'size': 6, 'byteorder': 'little', 'name': 'vertex', 'pretty_name': 'Vertex'}
+
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'vertexX', 'pretty_name': 'Vertex X'}
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'vertexZ', 'pretty_name': 'Vertex Z'}
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'vertexY', 'pretty_name': 'Vertex Y'}
+
+
+    SECTION_GEOMETRY_MESH_DATA_NB_VERTICES = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices', 'pretty_name': 'Nb vertices'}
+
+    SECTION_GEOMETRY_END = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'vertices_count', 'pretty_name': 'Total count of vertices'}
+
 
     # Section 3: Animation section
     SECTION_MODEL_ANIM_NB_MODEL = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'nb_anim', 'pretty_name': 'Number model animation'}
     SECTION_MODEL_ANIM_OFFSET = {'offset': 0x04, 'size': 4, 'byteorder': 'little', 'name': 'anim_offset', 'pretty_name': 'Animation offset'}
-    SECTION_MODEL_ANIM_DICT = {'nb_animation': 0, 'animation_offset':[]}
+    SECTION_MODEL_ANIM_DICT = {'nb_animation': 0, 'animation_offset': []}
     SECTION_MODEL_ANIM_LIST_DATA = [SECTION_MODEL_ANIM_NB_MODEL, SECTION_MODEL_ANIM_OFFSET]
     # Section 5: Sequence Animation section
     SECTION_MODEL_SEQ_ANIM_NB_SEQ = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_anim_seq', 'pretty_name': 'Number model animation'}
     SECTION_MODEL_SEQ_ANIM_OFFSET = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'seq_anim_offset', 'pretty_name': 'Sequence animation offset'}
-    SECTION_MODEL_SEQ_ANIM_DICT = {'nb_anim_seq': 0, 'seq_anim_offset':[],  'seq_animation_data': []}
+    SECTION_MODEL_SEQ_ANIM_DICT = {'nb_anim_seq': 0, 'seq_anim_offset': [], 'seq_animation_data': []}
     SECTION_MODEL_SEQ_ANIM_LIST_DATA = [SECTION_MODEL_SEQ_ANIM_NB_SEQ, SECTION_MODEL_SEQ_ANIM_OFFSET]
     # Section 7: Info & stat section
     SECTION_INFO_STAT_NAME_DATA = {'offset': 0x00, 'size': 24, 'byteorder': 'big', 'name': 'monster_name', 'pretty_name': 'Monster name'}
@@ -112,7 +231,8 @@ class AIData:
     CARD_DATA = {'offset': 0xF8, 'size': 3, 'byteorder': 'big', 'name': 'card', 'pretty_name': 'Card data'}
     DEVOUR_DATA = {'offset': 0xFB, 'size': 3, 'byteorder': 'big', 'name': 'devour', 'pretty_name': 'Devour'}
     SECTION_INFO_STAT_BYTE_FLAG_2 = {'offset': 0xFE, 'size': 1, 'byteorder': 'little', 'name': 'byte_flag_2', 'pretty_name': 'Byte Flag 2'}
-    SECTION_INFO_STAT_BYTE_FLAG_2_LIST_VALUE = ['IncreaseSurpriseRNG', 'DecreaseSurpriseRNG', 'SurpriseAttackImmunity', 'IncreaseChanceEscape', 'DecreaseChanceEscape', 'byte2_unused_6',
+    SECTION_INFO_STAT_BYTE_FLAG_2_LIST_VALUE = ['IncreaseSurpriseRNG', 'DecreaseSurpriseRNG', 'SurpriseAttackImmunity', 'IncreaseChanceEscape', 'DecreaseChanceEscape',
+                                                'byte2_unused_6',
                                                 'Diablos-missed', 'Always obtains card']
     SECTION_INFO_STAT_BYTE_FLAG_3 = {'offset': 0xFF, 'size': 1, 'byteorder': 'little', 'name': 'byte_flag_3', 'pretty_name': 'Byte Flag 3'}
     SECTION_INFO_STAT_BYTE_FLAG_3_LIST_VALUE = ['byte3_zz1', 'byte3_zz2', 'byte3_zz3', 'byte3_zz4', 'byte3_unused_5', 'byte3_unused_6', 'byte3_unused_7',
@@ -203,7 +323,7 @@ class AIData:
 class GameData:
     AIData = AIData()
 
-    def __init__(self, game_data_submodule_path="FF8GameData", ai_file:str="ai_vanilla.json"):
+    def __init__(self, game_data_submodule_path="FF8GameData", ai_file: str = "ai_vanilla.json"):
         self.resource_folder_json = os.path.join(game_data_submodule_path, "Resources", "json")
         self.resource_folder_image = os.path.join(game_data_submodule_path, "Resources", "image")
         self.resource_folder = os.path.join(game_data_submodule_path, "Resources")
@@ -227,6 +347,8 @@ class GameData:
         self.anim_sequence_data_json = {}
         self.ai_json_file_name = ai_file
         self.__init_hex_to_str_table()
+
+
 
     def __init_hex_to_str_table(self):
         self.load_sysfnt_data()
@@ -259,7 +381,7 @@ class GameData:
     def load_ai_data(self, ai_json_name=None):
         if ai_json_name:
             self.ai_json_file_name = ai_json_name
-        file_path = os.path.join(self.resource_folder_json,  self.ai_json_file_name)
+        file_path = os.path.join(self.resource_folder_json, self.ai_json_file_name)
         with open(file_path, encoding="utf8") as f:
             self.ai_data_json = json.load(f)
 
@@ -349,7 +471,8 @@ class GameData:
                 self.anim_sequence_data_json["op_code_info"][i]["op_code"] = int(self.anim_sequence_data_json["op_code_info"][i]["op_code"], 16)
         for i, el in enumerate(self.anim_sequence_data_json["special_change_current_value_params"]):
             if el["param_id"]:
-                self.anim_sequence_data_json["special_change_current_value_params"][i]["param_id"] = int(self.anim_sequence_data_json["special_change_current_value_params"][i]["param_id"], 16)
+                self.anim_sequence_data_json["special_change_current_value_params"][i]["param_id"] = int(
+                    self.anim_sequence_data_json["special_change_current_value_params"][i]["param_id"], 16)
         for i, el in enumerate(self.anim_sequence_data_json["e5_special_params"]):
             if el["param_id"]:
                 self.anim_sequence_data_json["e5_special_params"][i]["param_id"] = int(self.anim_sequence_data_json["e5_special_params"][i]["param_id"], 16)

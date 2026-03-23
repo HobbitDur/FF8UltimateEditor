@@ -610,7 +610,6 @@ class CommandAnalyser:
             param_value = []
             op_index_shift = 0
             for index, type in enumerate(op_info["param_type"]):
-                print(f"loop index: {index}")
                 op_index = op_info["param_index"][index] + op_index_shift
                 self.type_data.append(type)
                 if type == "int":

@@ -444,7 +444,7 @@ class IfritAIWidget(QWidget):
             return lesser + [pivot] + greater
 
     def __load_file(self, file_to_load: str = ""):
-        #file_to_load = os.path.join("battle/c0m003.dat")  # For developing faster
+        #file_to_load = os.path.join("c0m001.dat")  # For developing faster
         if not file_to_load:
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat", directory=self._file_dialog_folder)[0]
         if file_to_load:
@@ -486,7 +486,7 @@ class IfritAIWidget(QWidget):
         # Read the xlsx
         xlsx_manager = IfritXlsxManager()
         xlsx_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Xlsx file", filter="*.xlsx", directory=self._import_xlsx_folder)[0]
-        # xlsx_file_to_load = os.path.join("../IfritXlsx/OutputFiles", "ifrit.xlsx")  # For developing faster
+        #xlsx_file_to_load = os.path.join("../IfritXlsx/OutputFiles", "ifrit.xlsx")  # For developing faster
         if xlsx_file_to_load:
             self._import_xlsx_folder = os.path.dirname(self._import_xlsx_folder)
             xlsx_manager.load_file(xlsx_file_to_load)

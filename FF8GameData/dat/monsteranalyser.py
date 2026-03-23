@@ -1,4 +1,6 @@
 import copy
+import io
+import math
 import os
 from math import floor
 from typing import List
@@ -16,6 +18,38 @@ class GarbageFileError(IndexError):
     pass
 
 
+class BitReader:
+    """Simple bit reader for animation data"""
+
+    def __init__(self, data):
+        self.data = data
+        self.pos = 0  # bit position
+        self.total_bits = len(data) * 8
+
+    def read_bits(self, num_bits):
+        """Read num_bits from the stream"""
+        result = 0
+        for _ in range(num_bits):
+            if self.pos >= self.total_bits:
+                raise EOFError(f"End of data at bit {self.pos}")
+
+            byte_idx = self.pos // 8
+            bit_idx = 7 - (self.pos % 8)  # MSB first
+
+            bit = (self.data[byte_idx] >> bit_idx) & 1
+            result = (result << 1) | bit
+            self.pos += 1
+
+        return result
+
+    def read_signed(self, num_bits):
+        """Read signed value (2's complement)"""
+        val = self.read_bits(num_bits)
+        if val & (1 << (num_bits - 1)):
+            # Negative
+            val = -((~val) & ((1 << num_bits) - 1))
+        return val
+
 class MonsterAnalyser:
     DAT_FILE_SECTION_LIST = ['header', 'skeleton', 'model_geometry', 'model_animation', 'unknown_section4', 'unknown_section5', 'unknown_section6', 'info_stat',
                              'battle_script', 'sound', 'unknown_section10', 'texture']
@@ -30,6 +64,7 @@ class MonsterAnalyser:
         self.subsection_ai_offset = {'init_code': 0, 'ennemy_turn': 0, 'counter_attack': 0, 'death': 0, 'unknown': 0}
         self.section_raw_data = [bytearray()] * self.NUMBER_SECTION
         self.header_data = copy.deepcopy(game_data.AIData.SECTION_HEADER_DICT)
+        self.bone_data = copy.deepcopy(game_data.AIData.SECTION_BONE_DICT)
         self.model_animation_data = copy.deepcopy(game_data.AIData.SECTION_MODEL_ANIM_DICT)
         self.seq_animation_data = copy.deepcopy(game_data.AIData.SECTION_MODEL_SEQ_ANIM_DICT)
         self.info_stat_data = copy.deepcopy(game_data.AIData.SECTION_INFO_STAT_DICT)
@@ -69,10 +104,12 @@ class MonsterAnalyser:
             self.section_raw_data[self.NUMBER_SECTION - 1] = self.file_raw_data[
                                                              self.header_data['section_pos'][self.NUMBER_SECTION - 1]:self.header_data['file_size']]
             # No need to analyze Section 1 : Skeleton
-            self.__analyze_bone_section(game_data)
+            #self.__analyze_bone_section(game_data)
             # No need to analyze Section 2 : Model geometry
+            #self.__analyze_geometry_section()
             # No need to analyze Section 3 : Model animation
-            # self.__analyze_model_animation(game_data)
+            #self.__analyze_animation_section()
+            #self.__analyze_model_animation(game_data)
             # No need to analyze Section 4 : Unknown
             # self.__analyze_section_4(game_data)
             # No need to analyze Section 5 : Sequence Animation
@@ -347,17 +384,17 @@ class MonsterAnalyser:
             data = self.__get_raw_data_from_game_data(sect_nb, sect_data)
         self.section_raw_data[sect_nb].extend(data)
 
-    def __get_int_value_from_info(self, data_info, section_number=0):
-        return int.from_bytes(self.__get_raw_value_from_info(data_info, section_number), data_info['byteorder'])
+    def __get_int_value_from_info(self, data_info, section_number=0, offset=0):
+        return int.from_bytes(self.__get_raw_value_from_info(data_info, section_number, offset), data_info['byteorder'])
 
-    def __get_raw_value_from_info(self, data_info, section_number=0):
+    def __get_raw_value_from_info(self, data_info, section_number=0, offset=0):
         if section_number == 0:
             section_offset = 0
         else:
             if section_number >= len(self.header_data['section_pos']):
                 return bytearray(b'')
             section_offset = self.header_data['section_pos'][section_number]
-        return self.file_raw_data[section_offset + data_info['offset']:section_offset + data_info['offset'] + data_info['size']]
+        return self.file_raw_data[section_offset + data_info['offset'] + offset:section_offset + data_info['offset'] + data_info['size']+ offset]
 
     def __analyze_header_section(self, game_data: GameData):
         self.header_data['nb_section'] = self.__get_int_value_from_info(game_data.AIData.SECTION_HEADER_NB_SECTION)
@@ -376,17 +413,23 @@ class MonsterAnalyser:
             game_data.AIData.SECTION_HEADER_FILE_SIZE['byteorder'])
 
     def __analyze_bone_section(self, game_data: GameData):
-        SECTION_NUMBER = 4
+        SECTION_NUMBER = 1
         if self.section_raw_data[SECTION_NUMBER]:
-            print("__analyze_bone_section")
-            print(self.section_raw_data[SECTION_NUMBER].hex(sep=" "))
-            print(f"Nb bones: {self.section_raw_data[SECTION_NUMBER][0:2]}")
-            print(f"Unk: {self.section_raw_data[SECTION_NUMBER][2:8]}")
-            print(f"ScaleX: {self.section_raw_data[SECTION_NUMBER][8:10]}")
-            print(f"ScaleZ: {self.section_raw_data[SECTION_NUMBER][10:12]}")
-            print(f"ScaleY: {self.section_raw_data[SECTION_NUMBER][12:14]}")
-            print(f"unk: {self.section_raw_data[SECTION_NUMBER][14:14]}")
+            for el in game_data.AIData.SECTION_BONE_HEADER_LIST_DATA:
+                in_data_selected = self.__get_int_value_from_info(el, SECTION_NUMBER)
+                self.bone_data['header'][el['name']] = in_data_selected
+            print(self.bone_data['header'])
+            self.bone_data['data'] = [
+                {item['name']: 0 for item in game_data.AIData.SECTION_BONE_DATA_LIST_DATA}
+                for _ in range(self.bone_data['header']['nb_bone'])
+            ]
+            for i in range(self.bone_data['header']['nb_bone']):
+                for el in game_data.AIData.SECTION_BONE_DATA_LIST_DATA:
+                    in_data_selected = self.__get_int_value_from_info(el, SECTION_NUMBER, 16 + 48*i)# Offset need to be computed dynamically
+                    self.bone_data['data'][i][el['name']] = in_data_selected
 
+            for i, data in enumerate(self.bone_data['data']):
+                print(f"Bone{i}: {data}")
 
 
     def __analyze_section_4(self, game_data: GameData):
@@ -405,8 +448,9 @@ class MonsterAnalyser:
         test.append(self.section_raw_data[SECTION_NUMBER].hex(sep=" "))
 
     def __analyze_model_animation(self, game_data: GameData):
-        # print("__analyze_model_animation")
+        print("__analyze_model_animation")
         SECTION_NUMBER = 3
+        print(self.section_raw_data[SECTION_NUMBER].hex(sep=" "))
 
         self.model_animation_data['nb_animation'] = self.__get_int_value_from_info(game_data.AIData.SECTION_MODEL_ANIM_NB_MODEL, SECTION_NUMBER)
         list_anim_offset = []
