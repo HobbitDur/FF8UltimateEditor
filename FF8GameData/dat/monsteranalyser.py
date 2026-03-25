@@ -8,7 +8,7 @@ from typing import List
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from .sequenceanalyser import SequenceAnalyser
 from ..GenericSection.ff8text import FF8Text
-from ..gamedata import GameData, AIData
+from ..gamedata import GameData, AIData, GeometrySection
 from .commandanalyser import CommandAnalyser, CurrentIfType
 
 test = []
@@ -65,6 +65,7 @@ class MonsterAnalyser:
         self.section_raw_data = [bytearray()] * self.NUMBER_SECTION
         self.header_data = copy.deepcopy(game_data.AIData.SECTION_HEADER_DICT)
         self.bone_data = copy.deepcopy(game_data.AIData.SECTION_BONE_DICT)
+        self.geometry_data = GeometrySection()
         self.model_animation_data = copy.deepcopy(game_data.AIData.SECTION_MODEL_ANIM_DICT)
         self.seq_animation_data = copy.deepcopy(game_data.AIData.SECTION_MODEL_SEQ_ANIM_DICT)
         self.info_stat_data = copy.deepcopy(game_data.AIData.SECTION_INFO_STAT_DICT)
@@ -104,9 +105,9 @@ class MonsterAnalyser:
             self.section_raw_data[self.NUMBER_SECTION - 1] = self.file_raw_data[
                                                              self.header_data['section_pos'][self.NUMBER_SECTION - 1]:self.header_data['file_size']]
             # No need to analyze Section 1 : Skeleton
-            #self.__analyze_bone_section(game_data)
+            self.__analyze_bone_section(game_data)
             # No need to analyze Section 2 : Model geometry
-            #self.__analyze_geometry_section()
+            self.__analyze_geometry_section(game_data)
             # No need to analyze Section 3 : Model animation
             #self.__analyze_animation_section()
             #self.__analyze_model_animation(game_data)
@@ -431,6 +432,13 @@ class MonsterAnalyser:
             for i, data in enumerate(self.bone_data['data']):
                 print(f"Bone{i}: {data}")
 
+
+    def __analyze_geometry_section(self, game_data: GameData):
+        print("__analyze_geometry_section")
+        SECTION_NUMBER = 2
+        if self.section_raw_data[SECTION_NUMBER]:
+            self.geometry_data.analyze(self.section_raw_data[SECTION_NUMBER])
+            print(self.geometry_data)
 
     def __analyze_section_4(self, game_data: GameData):
         SECTION_NUMBER = 4

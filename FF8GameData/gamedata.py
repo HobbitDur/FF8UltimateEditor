@@ -53,57 +53,188 @@ class SectionType(Enum):
     OFFSET_AND_TEXT = 10
     SIZE_AND_OFFSET_AND_TEXT = 11
 
-# This was an attempt to improve the logic to avoid having dictionary. An attempt.
-class SectionData:
-    def __init__(self, offset:int, size:int, name:str, pretty_name:str, byteorder:Literal['little','big']='little'):
-        self.offset = offset
-        self.size = size
-        self.name = name
-        self.pretty_name = pretty_name
-        self.byteorder = byteorder
-    def get_int(self, data:int):
-        return data.to_bytes(length=self.size, byteorder=self.byteorder, signed=False)
-
-
-class Section:
+class GeometryTriangle:
     def __init__(self):
-        self.section_header: List[SectionData] = []
-        self.section_data: List[SectionData] = []
-    def add_header_value(self, section_data:SectionData):
-        self.section_header.append(section_data)
-    def add_data_value(self, section_data:SectionData):
-        self.section_data.append(section_data)
+        self.triangle = []*16
+    def get_byte(self):
+        value_return = bytearray()
+        for triangle_value in self.triangle:
+            value_return.extend(triangle_value.to_bytes(byteorder='little', size='1'))
+        return value_return
 
+class GeometryQuad:
+    def __init__(self):
+        self.quad = []*20
+    def get_byte(self):
+        value_return = bytearray()
+        for quad_value in self.quad:
+            value_return.extend(quad_value.to_bytes(byteorder='little', size='1'))
+        return value_return
+
+
+class ObjectData:
+    SECTION_GEOMETRY_OBJECT_DATA_NB_VERTICES_DATA = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_PADDING = {'offset': 0x00, 'size': 0, 'byteorder': 'little', 'name': 'object_data_padding', 'pretty_name': 'Mesh position', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_NB_TRIANGLE = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_triangle', 'pretty_name': 'Mesh position', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'nb_quad', 'pretty_name': 'Mesh position', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_UNKNOWN = {'offset': 0x04, 'size': 8, 'byteorder': 'little', 'name': 'object_unknown', 'pretty_name': 'Mesh position', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_TRIANGLE = {'offset': 0x0, 'size': 16, 'byteorder': 'little', 'name': 'triangle', 'pretty_name': 'Mesh position', 'default_value':[]}
+    SECTION_GEOMETRY_OBJECT_DATA_QUAD = {'offset': 0x0, 'size': 20, 'byteorder': 'little', 'name': 'quad', 'pretty_name': 'Mesh position', 'default_value':[]}
+
+    def __init__(self):
+        self.nb_vertices_data = 0
+        self.vertices_data:List[VerticesData]= []
+        self._nb_padding = 0
+        self.nb_triangle = 0
+        self.nb_quad = 0
+        self.unknown = 0
+        self.triangle:List[GeometryTriangle] = []
+        self.quad:List[GeometryQuad] = []
+
+
+    def get_byte(self):
+        nb_vertices_data_byte = self.nb_vertices_data.to_bytes(length=self.SECTION_GEOMETRY_OBJECT_DATA_NB_VERTICES_DATA['size'], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_VERTICES_DATA['byteorder'])
+        vertices_data_byte = bytearray()
+        for vertices_data in self.vertices_data:
+            vertices_data_byte.extend(vertices_data.get_byte())
+        size_section_till_now = len(nb_vertices_data_byte) + len(vertices_data_byte)
+        self._nb_padding = (4 - (size_section_till_now % 4)) % 4
+        nb_padding_byte = bytearray()
+        for i in range(self._nb_padding):
+            nb_padding_byte.extend([0])
+        nb_triangle_byte = self.nb_triangle.to_bytes(length=self.SECTION_GEOMETRY_OBJECT_DATA_NB_TRIANGLE['size'], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_TRIANGLE['byteorder'])
+        nb_quad_byte = self.nb_quad.to_bytes(length=self.SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD['size'], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD['byteorder'])
+        unknown_byte = bytearray([0]*self.SECTION_GEOMETRY_OBJECT_DATA_UNKNOWN['size'])
+        triangle_byte = bytearray()
+        for triangle in self.triangle:
+            triangle_byte.extend(triangle.get_byte())
+        quad_byte = bytearray()
+        for quad in self.quad:
+            quad_byte.extend(quad.get_byte())
+
+        return bytearray(nb_vertices_data_byte + vertices_data_byte + nb_padding_byte + nb_triangle_byte+nb_quad_byte+unknown_byte+triangle_byte+quad_byte)
+    def analyze(self, data:bytes):
+        self.nb_vertices_data = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_VERTICES_DATA['byteorder'])
+        current_index = 2
+        next_index = current_index + VerticesData.get_size(data[2:6])
+        for i in range(self.nb_vertices_data):
+            self.vertices_data.append(VerticesData())
+            self.vertices_data[-1].analyze(data[current_index:next_index])
+            current_index = next_index
+            next_index = next_index + VerticesData.get_size(data[current_index:current_index+4])
+        self._nb_padding = (4 - (next_index % 4)) % 4
+        next_index +=   self._nb_padding
+        self.nb_triangle = int.from_bytes(data[next_index:next_index+2], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_TRIANGLE['byteorder'])
+        self.nb_quad = int.from_bytes(data[next_index+2:next_index+4], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD['byteorder'])
+        self.unknown = int.from_bytes(data[next_index+4:next_index+12], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_UNKNOWN['byteorder'])
+
+    def __str__(self):
+        return f"ObjectData(NbVerticesData:{self.nb_vertices_data}, vertices:{self.vertices_data}, padding:{self._nb_padding}, NbTriangle:{self.nb_triangle}, NbQuad:{self.nb_quad})"
+    def __repr__(self):
+        return self.__str__()
+
+class VerticesData:
+    SECTION_GEOMETRY_VERTICES_DATA_BONE_ID = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'vertices_bone_id', 'pretty_name': 'Vertices bone ID', 'default_value': 0}
+    SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertex', 'pretty_name': 'Number vertex', 'default_value': []}
+
+    def __init__(self):
+        self.bone_id = 0
+        self.nb_vertices = 0
+        self.vertices:List[Vertex]= []
+    def get_byte(self):
+        bone_id_byte = self.bone_id.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_BONE_ID['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_BONE_ID['byteorder'])
+        nb_vertices_byte = self.nb_vertices.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX['byteorder'])
+        value_return = bytearray(bone_id_byte+nb_vertices_byte)
+        for vertex in self.vertices:
+            value_return.extend(vertex.get_byte())
+        return value_return
+    def analyze(self, data:bytes):
+        self.bone_id = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_BONE_ID['byteorder'])
+        self.nb_vertices = int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX['byteorder'])
+        current_index = 4
+        next_index = current_index + 6
+        for i in range(self.nb_vertices):
+            self.vertices.append(Vertex())
+            self.vertices[-1].analyze(data[current_index:next_index])
+            current_index = next_index
+            next_index = next_index + 6
+    def __str__(self):
+        return f"BoneID:{self.bone_id}, NbVertices:{self.nb_vertices}, {str(self.vertices)}"
+    def __repr__(self):
+        return self.__str__()
+    @staticmethod
+    def get_size(data:bytes):
+        return int.from_bytes(data[2:4], byteorder=VerticesData.SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX['byteorder'])*6+4
 
 
 
 class Vertex:
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'vertexX', 'pretty_name': 'Vertex X', 'default_value':0}
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'vertexZ', 'pretty_name': 'Vertex Z', 'default_value':0}
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'vertexY', 'pretty_name': 'Vertex Y', 'default_value':0}
     def __init__(self):
-        self.section_data_x = SectionData(offset=0, size=2, name='x', pretty_name='Vertex X')
-        self.section_data_z = SectionData(offset=2, size=2, name='x', pretty_name='Vertex Z')
-        self.section_data_y = SectionData(offset=4, size=2, name='x', pretty_name='Vertex Y')
+        self.x = 0
+        self.z = 0
+        self.y = 0
+    def get_byte(self):
+        x_byte = self.x.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X['byteorder'])
+        z_byte = self.z.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['byteorder'])
+        y_byte = self.y.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y['byteorder'])
+        return bytearray(x_byte + z_byte + y_byte)
+    def analyze(self, data:bytes):
+        self.x = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X['byteorder'])
+        self.z = int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['byteorder'])
+        self.y = int.from_bytes(data[4:6], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y['byteorder'])
+    def __str__(self):
+        return f"Vertex({self.x},{self.z},{self.y})"
+    def __repr__(self):
+        return self.__str__()
 
 
-
-class SectionGeometryVertice:
+class GeometrySection:
+    SECTION_GEOMETRY_HEADER_NB_OBJECT = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'nb_object', 'pretty_name': 'Nb object', 'default_value':0}
+    SECTION_GEOMETRY_HEADER_OBJECT_OFFSET = {'offset': 0x02, 'size': 4, 'byteorder': 'little', 'name': 'offset', 'pretty_name': 'Mesh position', 'default_value':[]}
+    SECTION_GEOMETRY_END = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'vertices_count', 'pretty_name': 'Total count of vertices', 'default_value':0}
     def __init__(self):
-        self._section = Section()
+        self.nb_object = 0
+        self.offset:List[int] = []
+        self.object_data:List[ObjectData] = []
+        self.end = 0
+    def get_byte(self):
+        nb_object_byte = self.nb_object.to_bytes(length=self.SECTION_GEOMETRY_HEADER_NB_OBJECT['size'], byteorder=self.SECTION_GEOMETRY_HEADER_NB_OBJECT['byteorder'])
+        nb_offset_byte = bytearray()
+        for offset in self.offset:
+            nb_offset_byte.extend(offset.to_bytes(length=self.SECTION_GEOMETRY_HEADER_OBJECT_OFFSET['size'], byteorder=self.SECTION_GEOMETRY_HEADER_OBJECT_OFFSET['byteorder']))
+        object_data_byte = bytearray()
+        for object_data in self.object_data:
+            nb_offset_byte.extend(object_data.get_byte())
+        end_byte = self.end.to_bytes(length=self.SECTION_GEOMETRY_END['size'], byteorder=self.SECTION_GEOMETRY_END['byteorder'])
 
-        self._section_data_bone_id = SectionData(offset=0, size=2, name='bone_id', pretty_name='Bone ID')
-        self._section_data_nb_vertex = SectionData(offset=2, size=2, name='nb_vertices', pretty_name='Nb Vertices')
-        self._section_data_vertex = SectionData(offset=4, size=2, name='vertex', pretty_name='Vertex')
-        self._section.add_data_value(self._section_data_bone_id)
-        self._section.add_data_value(self._section_data_nb_vertex)
-        self._section.add_data_value(self._section_data_vertex)
-        self.bone_id:int = 0
-        self._nb_vertices:int = 0
-        self.vertices:List[Vertex] = []
-    def set_bone_id(self, bone_id:int):
-        self.bone_id = bone_id
-    def add_vertex(self, vertex:Vertex):
-        self.vertices.append(vertex)
+        return bytearray(nb_object_byte+nb_offset_byte+object_data_byte+end_byte)
+    def analyze(self, data:bytes):
+        current_index = 0
+        next_index = self.SECTION_GEOMETRY_HEADER_NB_OBJECT['size']
+        self.nb_object = int.from_bytes(data[current_index:next_index], byteorder=self.SECTION_GEOMETRY_HEADER_NB_OBJECT['byteorder'])
+        current_index = next_index
+        next_index = current_index + self.SECTION_GEOMETRY_HEADER_OBJECT_OFFSET['size']
+        for i in range(self.nb_object):
+            self.offset.append(int.from_bytes(data[current_index:next_index], byteorder=self.SECTION_GEOMETRY_HEADER_OBJECT_OFFSET['byteorder']))
+            current_index = next_index
+            next_index = current_index + self.SECTION_GEOMETRY_HEADER_OBJECT_OFFSET['size']
+        for i in range(self.nb_object):
+            current_index = self.offset[i]
+            if i == self.nb_object - 1:
+                next_index = len(data)-4
+            else:
+                next_index = self.offset[i+1]
+            self.object_data.append(ObjectData())
+            self.object_data[-1].analyze(data[current_index: next_index])
+        self.end = int.from_bytes(data[-4:-1], byteorder=self.SECTION_GEOMETRY_END['byteorder'])
 
-
+    def __str__(self):
+        return f"Nb object:{self.nb_object}, offset:{self.offset}, [{self.object_data}], end: {self.end}"
+    def __repr__(self):
+        return self.__str__()
 
 
 class AIData:
@@ -163,24 +294,36 @@ class AIData:
     SECTION_BONE_DICT = {'header': SECTION_BONE_HEADER_DICT, 'data': []}
 
     # Section 2: Geometry section
-    SECTION_GEOMETRY_HEADER_NB_MESH = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'nb_mesh', 'pretty_name': 'Nb mesh'}
-    SECTION_GEOMETRY_HEADER_MESH_POSITION = {'offset': 0x02, 'size': 4, 'byteorder': 'little', 'name': 'mesh_position', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_HEADER_NB_OBJECT = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'nb_object', 'pretty_name': 'Nb object', 'default_value':0}
+    SECTION_GEOMETRY_HEADER_OBJECT_OFFSET = {'offset': 0x02, 'size': 4, 'byteorder': 'little', 'name': 'offset', 'pretty_name': 'Mesh position', 'default_value':[]}
+
+    SECTION_GEOMETRY_OBJECT_DATA_NB_VERTICES = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'object_nb_vertices', 'pretty_name': 'Mesh position', 'default_value':0}
+
+    SECTION_GEOMETRY_VERTICES_DATA_BONE_ID = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'vertices_bone_id', 'pretty_name': 'Vertices bone ID', 'default_value':0}
+    SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertex', 'pretty_name': 'Number vertex', 'default_value':[]}
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX = {'offset': 0x04, 'size': 6, 'byteorder': 'little', 'name': 'vertex', 'pretty_name': 'Vertex', 'default_value':0}
+
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'vertexX', 'pretty_name': 'Vertex X', 'default_value':0}
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'vertexZ', 'pretty_name': 'Vertex Z', 'default_value':0}
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'vertexY', 'pretty_name': 'Vertex Y', 'default_value':0}
+
+    SECTION_GEOMETRY_VERTEX_DATA_LIST_DATA = [SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X, SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z, SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y]
 
 
-    SECTION_GEOMETRY_VERTICES_DATA_BONE_ID = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'vertices_bone_id', 'pretty_name': 'Vertices bone ID'}
-    SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertex', 'pretty_name': 'Number vertex'}
-    SECTION_GEOMETRY_VERTICES_DATA_VERTEX = {'offset': 0x04, 'size': 6, 'byteorder': 'little', 'name': 'vertex', 'pretty_name': 'Vertex'}
+    SECTION_GEOMETRY_OBJECT_DATA_PADDING = {'offset': 0x00, 'size': 0, 'byteorder': 'little', 'name': 'object_data_padding', 'pretty_name': 'Mesh position', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_NB_TRIANGLE = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_triangle', 'pretty_name': 'Mesh position', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'nb_quad', 'pretty_name': 'Mesh position', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_UNKNOWN = {'offset': 0x04, 'size': 8, 'byteorder': 'little', 'name': 'object_unknown', 'pretty_name': 'Mesh position', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_TRIANGLE = {'offset': 0x0, 'size': 16, 'byteorder': 'little', 'name': 'triangle', 'pretty_name': 'Mesh position', 'default_value':[]}
+    SECTION_GEOMETRY_OBJECT_DATA_QUAD = {'offset': 0x0, 'size': 20, 'byteorder': 'little', 'name': 'quad', 'pretty_name': 'Mesh position', 'default_value':[]}
 
-    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'vertexX', 'pretty_name': 'Vertex X'}
-    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'vertexZ', 'pretty_name': 'Vertex Z'}
-    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'vertexY', 'pretty_name': 'Vertex Y'}
+    SECTION_GEOMETRY_END = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'vertices_count', 'pretty_name': 'Total count of vertices', 'default_value':0}
 
+    SECTION_GEOMETRY_LIST_DATA = [SECTION_GEOMETRY_HEADER_NB_OBJECT, SECTION_GEOMETRY_HEADER_OBJECT_OFFSET]
 
-    SECTION_GEOMETRY_MESH_DATA_NB_VERTICES = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices', 'pretty_name': 'Nb vertices'}
-
-    SECTION_GEOMETRY_END = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'vertices_count', 'pretty_name': 'Total count of vertices'}
-
-
+    SECTION_GEOMETRY_VERTEX_DICT = {'vertices_bone_id': 0, 'nb_vertex':0, 'vertex_data':[]}
+    SECTION_GEOMETRY_OBJECT_DICT = {'object_nb_vertices':0, 'vertices_section':SECTION_GEOMETRY_VERTEX_DICT, 'padding':[], 'nb_triangle':0, 'nb_quad':0, 'object_unknown':0, 'triangle':[], 'quad':[]}
+    SECTION_GEOMETRY_DICT = {'nb_object': 0, 'offset':[], 'object':[]}
     # Section 3: Animation section
     SECTION_MODEL_ANIM_NB_MODEL = {'offset': 0x00, 'size': 4, 'byteorder': 'little', 'name': 'nb_anim', 'pretty_name': 'Number model animation'}
     SECTION_MODEL_ANIM_OFFSET = {'offset': 0x04, 'size': 4, 'byteorder': 'little', 'name': 'anim_offset', 'pretty_name': 'Animation offset'}
