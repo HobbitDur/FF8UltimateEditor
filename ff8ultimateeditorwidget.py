@@ -25,6 +25,7 @@ from ShumiTranslator.shumitranslator import ShumiTranslator
 from SmallWidget.externaltoolwidget import ExternalToolWidget
 from TonberryShop.tonberryshop import TonberryShop
 from ToolUpdate.toolupdatewidget import ToolUpdateWidget
+from solomonring.solomonringwidget import SolomonRingWidget
 
 
 class FF8UltimateEditorWidget(QWidget):
@@ -51,7 +52,8 @@ class FF8UltimateEditorWidget(QWidget):
             "CCGroup (Card value editor)",
             "IfritSeq (Anim seq editor)",
             "Draw editor",
-            "IfritTexture (Monster texture editor)"
+            "IfritTexture (Monster texture editor)",
+            "SolomonRing (kernel.bin editor)"
         ]
 
         # 3. Header: Program Selection (ComboBox)
@@ -122,6 +124,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._ifritseq_widget = IfritSeqWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._draw_editor_widget = DrawEditorWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._ifrittexture_widget = IfritTextureWidget(game_data_folder=os.path.join(game_data_path))
+        self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path))
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
         self.tool_stack.addWidget(self._ifritAI_widget)  # Index 0
@@ -132,6 +135,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._ifritseq_widget)  # Index 5
         self.tool_stack.addWidget(self._draw_editor_widget)  # Index 6
         self.tool_stack.addWidget(self._ifrittexture_widget)  # Index 7
+        self.tool_stack.addWidget(self._solomonring_widget) # Index 8
 
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)
@@ -237,6 +241,7 @@ class FF8UltimateEditorWidget(QWidget):
             ("IfritAI", self._ifritAI_widget),
             ("IfritXlsx", self._ifritxlsx_widget),
             ("IfritTexture", self._ifrittexture_widget),
+            ("SolomonRing", self._solomonring_widget),
             # Add any others you suspect here
         ]
 
