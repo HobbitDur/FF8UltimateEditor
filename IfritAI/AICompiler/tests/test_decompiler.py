@@ -505,7 +505,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_setEscape(self, decompiler:AIDecompiler):
+    def test_cannotEscape(self, decompiler:AIDecompiler):
         # Test both true and false cases
         bytecode_true = [23, 1]
         bytecode_false = [23, 0]
@@ -515,7 +515,7 @@ class TestAIDecompiler:
         normalized_true = self.normalize_code(code_true)
         expected_true = self.normalize_code(
             """
-            setEscape(true);
+            cannotEscape(true);
             """
         )
         assert expected_true in normalized_true
@@ -525,7 +525,7 @@ class TestAIDecompiler:
         normalized_false = self.normalize_code(code_false)
         expected_false = self.normalize_code(
             """
-            setEscape(false);
+            cannotEscape(false);
             """
         )
         assert expected_false in normalized_false
