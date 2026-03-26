@@ -17,6 +17,7 @@ from ExeLauncher.ifritguilauncher import IfritGuiLauncher
 from ExeLauncher.junkshop import JunkshopLauncher
 from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from ExeLauncher.sirenlauncher import SirenLauncher
+from Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from IfritAI.ifritaiwidget import IfritAIWidget
 from IfritSeq.ifritseqwidget import IfritSeqWidget
 from IfritTexture.ifrittexturewidget import IfritTextureWidget
@@ -51,7 +52,8 @@ class FF8UltimateEditorWidget(QWidget):
             "CCGroup (Card value editor)",
             "IfritSeq (Anim seq editor)",
             "Draw editor",
-            "IfritTexture (Monster texture editor)"
+            "IfritTexture (Monster texture editor)",
+            "Ifrit3D"
         ]
 
         # 3. Header: Program Selection (ComboBox)
@@ -122,6 +124,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._ifritseq_widget = IfritSeqWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._draw_editor_widget = DrawEditorWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._ifrittexture_widget = IfritTextureWidget(game_data_folder=os.path.join(game_data_path))
+        self._ifrit3d_widget = Ifrit3DWidget(show_controls=True)
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
         self.tool_stack.addWidget(self._ifritAI_widget)  # Index 0
@@ -132,6 +135,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._ifritseq_widget)  # Index 5
         self.tool_stack.addWidget(self._draw_editor_widget)  # Index 6
         self.tool_stack.addWidget(self._ifrittexture_widget)  # Index 7
+        self.tool_stack.addWidget(self._ifrit3d_widget)  # Index 8
 
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)
@@ -237,6 +241,7 @@ class FF8UltimateEditorWidget(QWidget):
             ("IfritAI", self._ifritAI_widget),
             ("IfritXlsx", self._ifritxlsx_widget),
             ("IfritTexture", self._ifrittexture_widget),
+            ("Ifrit3D", self._ifrit3d_widget),
             # Add any others you suspect here
         ]
 

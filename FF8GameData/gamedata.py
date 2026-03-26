@@ -53,24 +53,78 @@ class SectionType(Enum):
     OFFSET_AND_TEXT = 10
     SIZE_AND_OFFSET_AND_TEXT = 11
 
+
+# Section 2 data
 class GeometryTriangle:
+    SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES = {'offset': 0x00, 'size': 6, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_TRIANGLE_TEX_COORD_1 = {'offset': 0x06, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_TRIANGLE_TEX_COORD_2 = {'offset': 0x8, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_TRIANGLE_TEX_ID_1 = {'offset': 0x0A, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_TRIANGLE_TEX_COORD_3 = {'offset': 0x0C, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_TRIANGLE_TEX_ID_2 = {'offset': 0x0E, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+
     def __init__(self):
-        self.triangle = []*16
-    def get_byte(self):
-        value_return = bytearray()
-        for triangle_value in self.triangle:
-            value_return.extend(triangle_value.to_bytes(byteorder='little', size='1'))
-        return value_return
+        self.vertex_indexes = [0]*3
+        self.tex_coord_1 = [0]*2
+        self.tex_coord_2 = [0]*2
+        self.tex_id_1 = 0
+        self.tex_coord_3 = [0]*2
+        self.tex_id_2 = 0
+
+    def analyze(self, data:bytes):
+        self.vertex_indexes[0] = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES['byteorder'])& 0xFFF
+        self.vertex_indexes[1] = int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES['byteorder'])& 0xFFF
+        self.vertex_indexes[2] = int.from_bytes(data[4:6], byteorder=self.SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES['byteorder'])& 0xFFF
+        self.tex_coord_1[0] = int.from_bytes(data[6:7], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_1['byteorder'])
+        self.tex_coord_1[1] = int.from_bytes(data[7:8], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_1['byteorder'])
+        self.tex_coord_2[0] = int.from_bytes(data[8:9], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_2['byteorder'])
+        self.tex_coord_2[1] = int.from_bytes(data[9:10], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_2['byteorder'])
+        self.tex_id_1 = int.from_bytes(data[10:12], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_ID_1['byteorder'])
+        self.tex_coord_3[0] = int.from_bytes(data[12:13], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_3['byteorder'])
+        self.tex_coord_3[1] = int.from_bytes(data[13:14], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_3['byteorder'])
+        self.tex_id_2 = int.from_bytes(data[14:16], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_ID_2['byteorder'])
+
+    def __str__(self):
+        return f"Triangle(VertexIndex{self.vertex_indexes}, TexCoord{self.tex_coord_1}{self.tex_coord_2}{self.tex_coord_3}, TexId({self.tex_id_1, self.tex_id_2}))"
+    def __repr__(self):
+        return self.__str__()
 
 class GeometryQuad:
+    SECTION_GEOMETRY_QUAD_VERTEX_INDEXES = {'offset': 0x00, 'size': 8, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_QUAD_TEX_COORD_1 = {'offset': 0x08, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_QUAD_TEX_ID_1 = {'offset': 0x0A, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_QUAD_TEX_COORD_2 = {'offset': 0xC, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_QUAD_TEX_ID_2 = {'offset': 0x0E, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_QUAD_TEX_COORD_3 = {'offset': 0x10, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
+    SECTION_GEOMETRY_QUAD_TEX_COORD_4 = {'offset': 0x12, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
     def __init__(self):
-        self.quad = []*20
-    def get_byte(self):
-        value_return = bytearray()
-        for quad_value in self.quad:
-            value_return.extend(quad_value.to_bytes(byteorder='little', size='1'))
-        return value_return
+        self.vertex_indexes = [0]*4
+        self.tex_coord_1 = [0]*2
+        self.tex_id_1 = 0
+        self.tex_coord_2 = [0]*2
+        self.tex_id_2 = 0
+        self.tex_coord_3 = [0]*2
+        self.tex_coord_4 = [0]*2
 
+    def analyze(self, data:bytes):
+        self.vertex_indexes[0] = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder']) & 0xFFF
+        self.vertex_indexes[1] = int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder'])& 0xFFF
+        self.vertex_indexes[2] = int.from_bytes(data[4:6], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder'])& 0xFFF
+        self.vertex_indexes[3] = int.from_bytes(data[6:8], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder'])& 0xFFF
+        self.tex_coord_1[0] = int.from_bytes(data[8:9], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_1['byteorder'])
+        self.tex_coord_1[1] = int.from_bytes(data[9:10], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_1['byteorder'])
+        self.tex_id_1 = int.from_bytes(data[10:12], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_ID_1['byteorder'])
+        self.tex_coord_2[0] = int.from_bytes(data[12:13], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_2['byteorder'])
+        self.tex_coord_2[1] = int.from_bytes(data[13:14], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_2['byteorder'])
+        self.tex_id_2 = int.from_bytes(data[14:16], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_ID_2['byteorder'])
+        self.tex_coord_3[0] = int.from_bytes(data[16:17], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_3['byteorder'])
+        self.tex_coord_3[1] = int.from_bytes(data[17:18], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_3['byteorder'])
+        self.tex_coord_4[0] = int.from_bytes(data[18:19], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_4['byteorder'])
+        self.tex_coord_4[1] = int.from_bytes(data[19:20], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_4['byteorder'])
+    def __str__(self):
+        return f"Quad(VertexIndex{self.vertex_indexes}, TexCoord{self.tex_coord_1}{self.tex_coord_2}{self.tex_coord_3}, TexId({self.tex_id_1, self.tex_id_2}))"
+    def __repr__(self):
+        return self.__str__()
 
 class ObjectData:
     SECTION_GEOMETRY_OBJECT_DATA_NB_VERTICES_DATA = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position', 'default_value':0}
@@ -88,8 +142,8 @@ class ObjectData:
         self.nb_triangle = 0
         self.nb_quad = 0
         self.unknown = 0
-        self.triangle:List[GeometryTriangle] = []
-        self.quad:List[GeometryQuad] = []
+        self.triangles:List[GeometryTriangle] = []
+        self.quads:List[GeometryQuad] = []
 
 
     def get_byte(self):
@@ -106,10 +160,10 @@ class ObjectData:
         nb_quad_byte = self.nb_quad.to_bytes(length=self.SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD['size'], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD['byteorder'])
         unknown_byte = bytearray([0]*self.SECTION_GEOMETRY_OBJECT_DATA_UNKNOWN['size'])
         triangle_byte = bytearray()
-        for triangle in self.triangle:
+        for triangle in self.triangles:
             triangle_byte.extend(triangle.get_byte())
         quad_byte = bytearray()
-        for quad in self.quad:
+        for quad in self.quads:
             quad_byte.extend(quad.get_byte())
 
         return bytearray(nb_vertices_data_byte + vertices_data_byte + nb_padding_byte + nb_triangle_byte+nb_quad_byte+unknown_byte+triangle_byte+quad_byte)
@@ -120,18 +174,49 @@ class ObjectData:
         for i in range(self.nb_vertices_data):
             self.vertices_data.append(VerticesData())
             self.vertices_data[-1].analyze(data[current_index:next_index])
-            current_index = next_index
-            next_index = next_index + VerticesData.get_size(data[current_index:current_index+4])
+            if i < self.nb_vertices_data - 1:
+                current_index = next_index
+                next_index = next_index + VerticesData.get_size(data[current_index:current_index+4])
         self._nb_padding = (4 - (next_index % 4)) % 4
         next_index +=   self._nb_padding
         self.nb_triangle = int.from_bytes(data[next_index:next_index+2], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_TRIANGLE['byteorder'])
         self.nb_quad = int.from_bytes(data[next_index+2:next_index+4], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD['byteorder'])
         self.unknown = int.from_bytes(data[next_index+4:next_index+12], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_UNKNOWN['byteorder'])
+        current_index = next_index+12
+        next_index = current_index+ 16
+        for i in range(self.nb_triangle):
+            self.triangles.append(GeometryTriangle())
+            self.triangles[-1].analyze(data[current_index: next_index])
+            current_index = next_index
+            next_index = next_index + 16
+        next_index +=4
+        for i in range(self.nb_quad):
+            self.quads.append(GeometryQuad())
+            self.quads[-1].analyze(data[current_index: next_index])
+            current_index = next_index
+            next_index = next_index + 20
 
     def __str__(self):
-        return f"ObjectData(NbVerticesData:{self.nb_vertices_data}, vertices:{self.vertices_data}, padding:{self._nb_padding}, NbTriangle:{self.nb_triangle}, NbQuad:{self.nb_quad})"
+        return f"ObjectData(NbVerticesData:{self.nb_vertices_data}, padding:{self._nb_padding}, NbTriangle:{self.nb_triangle}, NbQuad:{self.nb_quad}, {self.vertices_data}, {self.triangles}, {self.quads})"
     def __repr__(self):
         return self.__str__()
+
+    def get_triangles(self):
+        triangle_list = []
+        for triangle in self.triangles:
+            triangle_list.append(triangle.vertex_indexes)
+        return triangle_list
+    def get_quads(self):
+        quad_list = []
+        for quad in self.quads:
+            quad_list.append(quad.vertex_indexes)
+        return quad_list
+    def get_vertices(self):
+        vertices =  []
+        for verticesData in self.vertices_data:
+            for vertex in verticesData.vertices:
+                vertices.append(vertex.get_list())
+        return vertices
 
 class VerticesData:
     SECTION_GEOMETRY_VERTICES_DATA_BONE_ID = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'vertices_bone_id', 'pretty_name': 'Vertices bone ID', 'default_value': 0}
@@ -142,8 +227,8 @@ class VerticesData:
         self.nb_vertices = 0
         self.vertices:List[Vertex]= []
     def get_byte(self):
-        bone_id_byte = self.bone_id.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_BONE_ID['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_BONE_ID['byteorder'])
-        nb_vertices_byte = self.nb_vertices.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX['byteorder'])
+        bone_id_byte = self.bone_id.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_BONE_ID['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_BONE_ID['byteorder'], signed=True)
+        nb_vertices_byte = self.nb_vertices.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_NUMBER_VERTEX['byteorder'], signed=True)
         value_return = bytearray(bone_id_byte+nb_vertices_byte)
         for vertex in self.vertices:
             value_return.extend(vertex.get_byte())
@@ -159,7 +244,7 @@ class VerticesData:
             current_index = next_index
             next_index = next_index + 6
     def __str__(self):
-        return f"BoneID:{self.bone_id}, NbVertices:{self.nb_vertices}, {str(self.vertices)}"
+        return f"VerticesData(BoneID:{self.bone_id}, NbVertices:{self.nb_vertices}, {self.vertices})"
     def __repr__(self):
         return self.__str__()
     @staticmethod
@@ -172,6 +257,7 @@ class Vertex:
     SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'vertexX', 'pretty_name': 'Vertex X', 'default_value':0}
     SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'vertexZ', 'pretty_name': 'Vertex Z', 'default_value':0}
     SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'vertexY', 'pretty_name': 'Vertex Y', 'default_value':0}
+    SCALE = 1.0 / 2048.0
     def __init__(self):
         self.x = 0
         self.z = 0
@@ -182,9 +268,11 @@ class Vertex:
         y_byte = self.y.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y['byteorder'])
         return bytearray(x_byte + z_byte + y_byte)
     def analyze(self, data:bytes):
-        self.x = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X['byteorder'])
-        self.z = int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['byteorder'])
-        self.y = int.from_bytes(data[4:6], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y['byteorder'])
+        self.x = -int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X['byteorder'], signed=True)*self.SCALE
+        self.z = -int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['byteorder'], signed=True)*self.SCALE
+        self.y = -int.from_bytes(data[4:6], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y['byteorder'], signed=True)*self.SCALE
+    def get_list(self):
+        return self.x, self.z, self.y
     def __str__(self):
         return f"Vertex({self.x},{self.z},{self.y})"
     def __repr__(self):
@@ -207,7 +295,7 @@ class GeometrySection:
             nb_offset_byte.extend(offset.to_bytes(length=self.SECTION_GEOMETRY_HEADER_OBJECT_OFFSET['size'], byteorder=self.SECTION_GEOMETRY_HEADER_OBJECT_OFFSET['byteorder']))
         object_data_byte = bytearray()
         for object_data in self.object_data:
-            nb_offset_byte.extend(object_data.get_byte())
+            object_data_byte.extend(object_data.get_byte())
         end_byte = self.end.to_bytes(length=self.SECTION_GEOMETRY_END['size'], byteorder=self.SECTION_GEOMETRY_END['byteorder'])
 
         return bytearray(nb_object_byte+nb_offset_byte+object_data_byte+end_byte)
@@ -229,13 +317,297 @@ class GeometrySection:
                 next_index = self.offset[i+1]
             self.object_data.append(ObjectData())
             self.object_data[-1].analyze(data[current_index: next_index])
-        self.end = int.from_bytes(data[-4:-1], byteorder=self.SECTION_GEOMETRY_END['byteorder'])
+        self.end = int.from_bytes(data[-4:], byteorder=self.SECTION_GEOMETRY_END['byteorder'])
 
     def __str__(self):
-        return f"Nb object:{self.nb_object}, offset:{self.offset}, [{self.object_data}], end: {self.end}"
+        return f"Nb object:{self.nb_object}, offset:{self.offset}, {self.object_data}, end: {self.end}"
+    def __repr__(self):
+        return self.__str__()
+    def get_vertices(self):
+        vertices_list = []
+        for object in self.object_data:
+            vertices_list.extend(object.get_vertices())
+        return vertices_list
+
+    def get_triangles(self):
+        triangle_list = []
+        for object in self.object_data:
+            triangle_list.extend(object.get_triangles())
+        return triangle_list
+    def get_quads(self):
+        quad_list = []
+        for object in self.object_data:
+            quad_list.extend(object.get_quads())
+        return quad_list
+
+# Section 3 data:
+
+
+# ─────────────────────────────────────────────
+#  Bit-level reader helper
+# ─────────────────────────────────────────────
+
+class BitReader:
+    """Read individual bits from a bytes-like buffer, LSB first within each byte."""
+
+    def __init__(self, data: bytes, bit_offset: int = 0):
+        self._data = data
+        self._bit_pos = bit_offset  # absolute bit position
+
+    @property
+    def bit_pos(self) -> int:
+        return self._bit_pos
+
+    def read_bits(self, count: int) -> int:
+        """Read `count` bits and return them as an unsigned integer (LSB first)."""
+        value = 0
+        for i in range(count):
+            byte_index = self._bit_pos >> 3        # self._bit_pos // 8
+            bit_index  = self._bit_pos & 0x7       # self._bit_pos % 8
+            bit = (self._data[byte_index] >> bit_index) & 1
+            value |= (bit << i)
+            self._bit_pos += 1
+        return value
+
+    def read_signed_bits(self, count: int) -> int:
+        """Read `count` bits as a signed (two's-complement) integer."""
+        value = self.read_bits(count)
+        if count > 0 and (value >> (count - 1)) & 1:   # sign bit set
+            value -= (1 << count)
+        return value
+
+    # ── Position type ──────────────────────────────────────────────────────────
+    # First 2 bits select how many data-bits follow:
+    #   0b00 → 3 bits,  0b01 → 6 bits,  0b10 → 9 bits,  0b11 → 16 bits
+    POSITION_TYPE_BITS = {0b00: 3, 0b01: 6, 0b10: 9, 0b11: 16}
+
+    def read_position_type(self) -> int:
+        type_bits = self.read_bits(2)
+        data_bits = self.POSITION_TYPE_BITS[type_bits]
+        return self.read_signed_bits(data_bits)
+
+    # ── Rotation type ──────────────────────────────────────────────────────────
+    # First 1 bit: IsAvailable.  If 0 → value is 0 (no rotation delta).
+    # If 1 → next 2 bits select how many data-bits follow:
+    #   0b00 → 3 bits,  0b01 → 6 bits,  0b10 → 8 bits,  0b11 → 12 bits
+    ROTATION_TYPE_BITS = {0b00: 3, 0b01: 6, 0b10: 8, 0b11: 12}
+
+    def read_rotation_type(self) -> int:
+        is_available = self.read_bits(1)
+        if not is_available:
+            return 0
+        type_bits = self.read_bits(2)
+        data_bits = self.ROTATION_TYPE_BITS[type_bits]
+        return self.read_signed_bits(data_bits)
+
+
+# ─────────────────────────────────────────────
+#  Data classes
+# ─────────────────────────────────────────────
+
+class AnimationBoneRotation:
+    """
+    Per-bone rotation delta for one frame.
+    Stored as raw fixed-point shorts (divide by 4096 * 360 for degrees).
+    """
+    def __init__(self):
+        self.rx: int = 0   # rotation X delta (raw)
+        self.ry: int = 0   # rotation Y delta (raw)
+        self.rz: int = 0   # rotation Z delta (raw)
+
+    @property
+    def rx_deg(self) -> float:
+        return self.rx * 360.0 / 4096.0
+
+    @property
+    def ry_deg(self) -> float:
+        return self.ry * 360.0 / 4096.0
+
+    @property
+    def rz_deg(self) -> float:
+        return self.rz * 360.0 / 4096.0
+
+    def __str__(self):
+        return (f"BoneRot(rx={self.rx}({self.rx_deg:.2f}°), "
+                f"ry={self.ry}({self.ry_deg:.2f}°), "
+                f"rz={self.rz}({self.rz_deg:.2f}°))")
+
     def __repr__(self):
         return self.__str__()
 
+
+class AnimationFrame:
+    """
+    One frame of animation.
+
+    - location_x/y/z : world-space position delta (accumulative across frames)
+    - bone_rotations : list of BoneRotation, one per bone (also accumulative)
+
+    NOTE: frames are *accumulative* — to get the absolute rotation at frame N
+    you must sum all deltas from frame 0 through N.
+    """
+    def __init__(self):
+        self.location_x: float = 0
+        self.location_y: float = 0
+        self.location_z: float = 0
+        self.bone_rotations: List[AnimationBoneRotation] = []
+        # unknowns – 3 optional 16-bit values per bone (bUnk1/2/3 flags)
+        self.bone_unks: List[List[int]] = []   # bone_unks[bone_idx] = [unk1, unk2, unk3]
+
+    def __str__(self):
+        return (f"AnimationFrame("
+                f"loc=({self.location_x},{self.location_y},{self.location_z}), "
+                f"bones={self.bone_rotations})")
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class Animation:
+    """One animation clip: a sequence of frames."""
+
+    def __init__(self):
+        self.nb_frames: int = 0
+        self.frames: List[AnimationFrame] = []
+
+    def analyze(self, data: bytes, nb_bones: int, bit_offset: int = 0) -> int:
+        """
+        Parse the animation from `data` starting at absolute bit position
+        `bit_offset`.  Returns the bit position after the last bit consumed.
+
+        `nb_bones` must come from the skeleton (Section 1).
+        """
+        reader = BitReader(data, bit_offset)
+
+        # nb_frames is a plain byte at the *byte* boundary that starts this animation
+        # (the pointer from the header already points here, byte-aligned)
+        byte_start = bit_offset >> 3
+        self.nb_frames = data[byte_start]
+        reader._bit_pos = (byte_start + 1) * 8   # advance past the nb_frames byte
+
+        prev_loc_x = prev_loc_y = prev_loc_z = 0
+        prev_rot: List[AnimationBoneRotation] = []
+
+        for frame_idx in range(self.nb_frames):
+            frame = AnimationFrame()
+
+            # ── Location (world-space position delta, accumulative) ──
+            dx = -reader.read_position_type()*0.10
+            dy = -reader.read_position_type()*0.10
+            dz = -reader.read_position_type()*0.10
+
+            if frame_idx == 0:
+                frame.location_x = dx
+                frame.location_y = dy
+                frame.location_z = dz
+            else:
+                frame.location_x = prev_loc_x + dx
+                frame.location_y = prev_loc_y + dy
+                frame.location_z = prev_loc_z + dz
+
+            prev_loc_x = frame.location_x
+            prev_loc_y = frame.location_y
+            prev_loc_z = frame.location_z
+
+            # ── Mode bit (1 bit, purpose unknown — must be consumed) ──
+            _mode_bit = reader.read_bits(1)
+
+            # ── Per-bone rotation data ──
+            frame.bone_rotations = []
+            frame.bone_unks      = []
+            cur_prev = prev_rot if frame_idx > 0 else None
+
+            for bone_idx in range(nb_bones):
+                rot = AnimationBoneRotation()
+                drx = reader.read_rotation_type()
+                dry = reader.read_rotation_type()
+                drz = reader.read_rotation_type()
+
+                if frame_idx == 0:
+                    rot.rx = drx
+                    rot.ry = dry
+                    rot.rz = drz
+                else:
+                    rot.rx = prev_rot[bone_idx].rx + drx
+                    rot.ry = prev_rot[bone_idx].ry + dry
+                    rot.rz = prev_rot[bone_idx].rz + drz
+
+                frame.bone_rotations.append(rot)
+
+                # ── 3 optional unknown 16-bit values (bUnk1 / bUnk2 / bUnk3) ──
+                unks = []
+                for _ in range(3):
+                    b_flag = reader.read_bits(1)
+                    if b_flag:
+                        unks.append(reader.read_bits(16))
+                    else:
+                        unks.append(0)
+                frame.bone_unks.append(unks)
+
+            prev_rot = frame.bone_rotations
+            self.frames.append(frame)
+
+        return reader.bit_pos
+
+    def __str__(self):
+        return f"Animation(nb_frames={self.nb_frames}, frames={self.frames})"
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class AnimationSection:
+    """
+    Section 3 of the DAT file: Model animation.
+
+    Header layout:
+      0x00  4 bytes   Number of animations
+      0x04  nb_animations * 4 bytes   Animation pointers (relative to section start)
+      [pointer]  Animation data (bit-packed, see Animation.analyze)
+    """
+
+    SECTION_ANIMATION_NB_ANIMATIONS  = {'offset': 0x00, 'size': 4, 'byteorder': 'little',
+                                         'name': 'nb_animations', 'pretty_name': 'Number of animations'}
+    SECTION_ANIMATION_POINTER        = {'offset': 0x04, 'size': 4, 'byteorder': 'little',
+                                         'name': 'animation_pointer', 'pretty_name': 'Animation pointer'}
+
+    def __init__(self):
+        self.nb_animations: int = 0
+        self.pointers: List[int] = []
+        self.animations: List[Animation] = []
+
+    def analyze(self, data: bytes, nb_bones: int):
+        """
+        Parse the full animation section.
+
+        `nb_bones` must be supplied from the already-parsed skeleton (Section 1).
+        """
+        # ── Header ──────────────────────────────────────────────────
+        self.nb_animations = int.from_bytes(
+            data[0:4],
+            byteorder=self.SECTION_ANIMATION_NB_ANIMATIONS['byteorder']
+        )
+        current_index = 4
+        for i in range(self.nb_animations):
+            ptr = int.from_bytes(
+                data[current_index: current_index + 4],
+                byteorder=self.SECTION_ANIMATION_POINTER['byteorder']
+            )
+            self.pointers.append(ptr)
+            current_index += 4
+
+        # ── Per-animation data (bit-packed) ──────────────────────────
+        for i in range(self.nb_animations):
+            anim = Animation()
+            bit_start = self.pointers[i] * 8   # pointer is byte offset → convert to bits
+            anim.analyze(data, nb_bones, bit_offset=bit_start)
+            self.animations.append(anim)
+
+    def __str__(self):
+        return f"AnimationSection(nb_animations={self.nb_animations}, {self.animations})"
+
+    def __repr__(self):
+        return self.__str__()
 
 class AIData:
     SECTION_HEADER_NB_SECTION = {'offset': 0, 'size': 4, 'byteorder': 'little', 'name': 'nb_section', 'pretty_name': 'Number section'}
@@ -249,9 +621,9 @@ class AIData:
     SECTION_BONE_HEADER_UNKNOWN00 = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'unknown00', 'pretty_name': 'Unknown00', 'default_value': 0}
     SECTION_BONE_HEADER_UNKNOWN01 = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'unknown01', 'pretty_name': 'Unknown01', 'default_value': 0}
     SECTION_BONE_HEADER_UNKNOWN02 = {'offset': 0x06, 'size': 2, 'byteorder': 'little', 'name': 'unknown02', 'pretty_name': 'Unknown01', 'default_value': 0}
-    SECTION_BONE_HEADER_SCALE_X = {'offset': 0x08, 'size': 2, 'byteorder': 'little', 'name': 'scaleX', 'pretty_name': 'Scale X', 'default_value': 0}
-    SECTION_BONE_HEADER_SCALE_Z = {'offset': 0x0A, 'size': 2, 'byteorder': 'little', 'name': 'scaleZ', 'pretty_name': 'Scale Z', 'default_value': 0}
-    SECTION_BONE_HEADER_SCALE_Y = {'offset': 0x0C, 'size': 2, 'byteorder': 'little', 'name': 'scaleY', 'pretty_name': 'Scale Y', 'default_value': 0}
+    SECTION_BONE_HEADER_SCALE_X = {'offset': 0x08, 'size': 2, 'byteorder': 'little', 'name': 'scaleX', 'pretty_name': 'Scale X', 'default_value': 0, 'signed':True}
+    SECTION_BONE_HEADER_SCALE_Z = {'offset': 0x0A, 'size': 2, 'byteorder': 'little', 'name': 'scaleZ', 'pretty_name': 'Scale Z', 'default_value': 0, 'signed':True}
+    SECTION_BONE_HEADER_SCALE_Y = {'offset': 0x0C, 'size': 2, 'byteorder': 'little', 'name': 'scaleY', 'pretty_name': 'Scale Y', 'default_value': 0, 'signed':True}
     SECTION_BONE_HEADER_UNKNOWN2 = {'offset': 0x0E, 'size': 2, 'byteorder': 'little', 'name': 'unknown2', 'pretty_name': 'Unknown2', 'default_value': 0}
 
     SECTION_BONE_HEADER_LIST_DATA = [SECTION_BONE_HEADER_NB, SECTION_BONE_HEADER_UNKNOWN00, SECTION_BONE_HEADER_UNKNOWN01, SECTION_BONE_HEADER_UNKNOWN02, SECTION_BONE_HEADER_SCALE_X, SECTION_BONE_HEADER_SCALE_Z, SECTION_BONE_HEADER_SCALE_Y,

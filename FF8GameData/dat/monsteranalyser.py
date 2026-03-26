@@ -8,7 +8,7 @@ from typing import List
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from .sequenceanalyser import SequenceAnalyser
 from ..GenericSection.ff8text import FF8Text
-from ..gamedata import GameData, AIData, GeometrySection
+from ..gamedata import GameData, AIData, GeometrySection, AnimationSection
 from .commandanalyser import CommandAnalyser, CurrentIfType
 
 test = []
@@ -66,6 +66,7 @@ class MonsterAnalyser:
         self.header_data = copy.deepcopy(game_data.AIData.SECTION_HEADER_DICT)
         self.bone_data = copy.deepcopy(game_data.AIData.SECTION_BONE_DICT)
         self.geometry_data = GeometrySection()
+        self.animation_data = AnimationSection()
         self.model_animation_data = copy.deepcopy(game_data.AIData.SECTION_MODEL_ANIM_DICT)
         self.seq_animation_data = copy.deepcopy(game_data.AIData.SECTION_MODEL_SEQ_ANIM_DICT)
         self.info_stat_data = copy.deepcopy(game_data.AIData.SECTION_INFO_STAT_DICT)
@@ -109,7 +110,7 @@ class MonsterAnalyser:
             # No need to analyze Section 2 : Model geometry
             self.__analyze_geometry_section(game_data)
             # No need to analyze Section 3 : Model animation
-            #self.__analyze_animation_section()
+            self.__analyze_animation_section(game_data)
             #self.__analyze_model_animation(game_data)
             # No need to analyze Section 4 : Unknown
             # self.__analyze_section_4(game_data)
@@ -385,8 +386,8 @@ class MonsterAnalyser:
             data = self.__get_raw_data_from_game_data(sect_nb, sect_data)
         self.section_raw_data[sect_nb].extend(data)
 
-    def __get_int_value_from_info(self, data_info, section_number=0, offset=0):
-        return int.from_bytes(self.__get_raw_value_from_info(data_info, section_number, offset), data_info['byteorder'])
+    def __get_int_value_from_info(self, data_info, section_number=0, offset=0, signed=False):
+        return int.from_bytes(self.__get_raw_value_from_info(data_info, section_number, offset), byteorder=data_info['byteorder'], signed=signed)
 
     def __get_raw_value_from_info(self, data_info, section_number=0, offset=0):
         if section_number == 0:
@@ -417,7 +418,13 @@ class MonsterAnalyser:
         SECTION_NUMBER = 1
         if self.section_raw_data[SECTION_NUMBER]:
             for el in game_data.AIData.SECTION_BONE_HEADER_LIST_DATA:
-                in_data_selected = self.__get_int_value_from_info(el, SECTION_NUMBER)
+                signed = False
+                if 'signed' in el.keys():
+                    signed = el['signed']
+
+                in_data_selected = self.__get_int_value_from_info(el, SECTION_NUMBER, signed)
+                if 'scale'.upper() in el['name'].upper():
+                    in_data_selected = in_data_selected / 4096
                 self.bone_data['header'][el['name']] = in_data_selected
             print(self.bone_data['header'])
             self.bone_data['data'] = [
@@ -439,6 +446,13 @@ class MonsterAnalyser:
         if self.section_raw_data[SECTION_NUMBER]:
             self.geometry_data.analyze(self.section_raw_data[SECTION_NUMBER])
             print(self.geometry_data)
+
+    def __analyze_animation_section(self, game_data: GameData):
+        print("__analyze_animation_section")
+        SECTION_NUMBER = 3
+        if self.section_raw_data[SECTION_NUMBER]:
+            self.animation_data.analyze(self.section_raw_data[SECTION_NUMBER], 2)
+            print(self.animation_data)
 
     def __analyze_section_4(self, game_data: GameData):
         SECTION_NUMBER = 4
