@@ -2,10 +2,9 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QComboBox, QSpinBox
 )
-from pathlib import Path
 import json
 
-from solomonring.gfdata import GFData
+from Solomonring.gfdata import GFData
 
 
 class GFGeneralTab(QWidget):

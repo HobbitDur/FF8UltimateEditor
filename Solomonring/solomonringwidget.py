@@ -6,8 +6,8 @@ from PyQt6.QtWidgets import QTabWidget, QWidget, QListWidget, QHBoxLayout, QPush
 
 from FF8GameData.gamedata import GameData
 from ShumiTranslator.model.kernel.kernelmanager import KernelManager
-from solomonring.gfdata import GFData
-from solomonring.junctionablegftabs.gfgeneraltab import GFGeneralTab
+from Solomonring.gfdata import GFData
+from Solomonring.junctionablegftabs.gfgeneraltab import GFGeneralTab
 
 
 class SolomonRingWidget(QWidget):
@@ -17,16 +17,12 @@ class SolomonRingWidget(QWidget):
 
         self.game_data_folder = game_data_folder
         self.game_data = GameData(game_data_folder)
-        self.game_data.load_kernel_data()
+        self.game_data.load_all()
 
         self.kernel_manager = KernelManager(self.game_data)
 
         self.gf_data_list = []
         self.current_gf_index = -1
-
-        #base_dir = os.path.dirname(os.path.abspath(__file__))
-        #self.kernel_path = os.path.join(base_dir, "kernel.bin")
-        #self.kernel_manager.load_file(self.kernel_path)
 
         # Main layout
         main_layout = QVBoxLayout()
@@ -62,11 +58,8 @@ class SolomonRingWidget(QWidget):
         self.list_widget = QListWidget()
         self.list_widget.setFixedWidth(140)
         self.list_widget.setStyleSheet("font-size: 12pt;")
-        self.list_widget.addItems([
-            "Quezacotl", "Shiva", "Ifrit", "Siren", "Brothers", "Diablos",
-            "Carbuncle", "Leviathan", "Pandemona", "Cerberus", "Alexander",
-            "Doomtrain", "Bahamut", "Cactuar", "Tonberry", "Eden"
-        ])
+
+        self.list_widget.addItems([x['name'] for x in self.game_data.gforce_data_json['gforce']])
         self.list_widget.currentRowChanged.connect(self._gf_selection_change)
         editor_layout.addWidget(self.list_widget)
 
@@ -99,9 +92,8 @@ class SolomonRingWidget(QWidget):
         if filename_to_load:
             self.loaded_filename = filename_to_load
             self.kernel_manager.load_file(self.loaded_filename)
-            json_path = self.game_data_folder + "/Resources/json/kernel_junctionable_gf_data.json"
             self.gf_data_list = [
-                GFData(subsection, json_path)
+                GFData(subsection, self.game_data)
                 for subsection in self.kernel_manager.section_list[3].get_subsection_list()
             ]
             self.current_gf_index = -1

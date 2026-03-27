@@ -1,16 +1,17 @@
 import json
 
+from FF8GameData.gamedata import GameData
 from ShumiTranslator.model.kernel.kernelsubsectiondata import SubSectionData
 
 
 class GFData:
-    def __init__(self, subsection, json_path: str):
+    def __init__(self, subsection:SubSectionData, game_data:GameData):
+        self.game_data = game_data
         self._subsection = subsection
-        self._target_data = subsection.get_data_list()[-1]._data_hex
-        self._target_data_start = subsection._nb_text_offset * SubSectionData.OFFSET_SIZE
-        with open(json_path, "r") as f:
-            all_fields = json.load(f)
-        self._fields = {f["name"]: f for f in all_fields[2:]}
+        self._target_data = subsection.get_data_list()[-1].get_data_hex()
+        self._target_data_start = subsection.nb_data_with_offset() * SubSectionData.OFFSET_SIZE
+        self._fields = {f["name"]: f for f in game_data.kernel_data_json["junctionable_gf_data"][2:]}
+
 
     def get(self, field_name: str) -> int:
         field = self._fields[field_name]

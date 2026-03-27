@@ -1,3 +1,5 @@
+from typing import List
+
 from FF8GameData.GenericSection.ff8data import FF8Data
 from FF8GameData.GenericSection.section import Section
 from FF8GameData.gamedata import GameData
@@ -64,7 +66,7 @@ class SubSectionData(Section):
 
         return current_subsection_offset
 
-    def get_data_list(self):
+    def get_data_list(self) -> List[FF8Data]:
         return self._data_list
 
     def set_offset_from_id(self, data_id, value: int):
