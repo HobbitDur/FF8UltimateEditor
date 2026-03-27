@@ -1,8 +1,9 @@
 import json
+import math
 import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Literal
+from typing import List, Literal, Tuple, Optional
 
 from PIL import Image
 
@@ -54,6 +55,98 @@ class SectionType(Enum):
     SIZE_AND_OFFSET_AND_TEXT = 11
 
 
+# Section 1
+class BoneSection:
+    SECTION_BONE_HEADER_NB = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_bone', 'pretty_name': 'Number bones', 'default_value': 0}
+    SECTION_BONE_HEADER_UNKNOWN00 = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'unknown00', 'pretty_name': 'Unknown00', 'default_value': 0}
+    SECTION_BONE_HEADER_UNKNOWN01 = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'unknown01', 'pretty_name': 'Unknown01', 'default_value': 0}
+    SECTION_BONE_HEADER_UNKNOWN02 = {'offset': 0x06, 'size': 2, 'byteorder': 'little', 'name': 'unknown02', 'pretty_name': 'Unknown01', 'default_value': 0}
+    SECTION_BONE_HEADER_SCALE_X = {'offset': 0x08, 'size': 2, 'byteorder': 'little', 'name': 'scaleX', 'pretty_name': 'Scale X', 'default_value': 0, 'signed':True}
+    SECTION_BONE_HEADER_SCALE_Y = {'offset': 0x0A, 'size': 2, 'byteorder': 'little', 'name': 'scaleY', 'pretty_name': 'Scale Z', 'default_value': 0, 'signed':True}
+    SECTION_BONE_HEADER_SCALE_Z = {'offset': 0x0C, 'size': 2, 'byteorder': 'little', 'name': 'scaleZ', 'pretty_name': 'Scale Y', 'default_value': 0, 'signed':True}
+    SECTION_BONE_HEADER_UNKNOWN2 = {'offset': 0x0E, 'size': 2, 'byteorder': 'little', 'name': 'unknown2', 'pretty_name': 'Unknown2', 'default_value': 0}
+    def __init__(self):
+        self.nb_bone = 0
+        self._scale_x = 0
+        self._scale_y = 0
+        self._scale_z = 0
+        self.bones:List[Bone]= []
+    def __str__(self):
+        return f"Bones(count:{self.nb_bone}, scaleX:{self.get_scale_list()[0]}, scaleY:{self.get_scale_list()[1]}, scaleZ:{self.get_scale_list()[2]}, {self.bones}"
+    def __repr__(self):
+        return self.__str__()
+    def analyze(self, data:bytes):
+        self.nb_bone = int.from_bytes(data[self.SECTION_BONE_HEADER_NB['offset']:self.SECTION_BONE_HEADER_NB['offset'] + self.SECTION_BONE_HEADER_NB['size']],
+                                        byteorder=self.SECTION_BONE_HEADER_NB['byteorder'])
+        self._scale_x = int.from_bytes(data[self.SECTION_BONE_HEADER_SCALE_X['offset']:self.SECTION_BONE_HEADER_SCALE_X['offset'] + self.SECTION_BONE_HEADER_SCALE_X['size']],
+                                        byteorder=self.SECTION_BONE_HEADER_SCALE_X['byteorder'], signed=True)
+        self._scale_y = int.from_bytes(data[self.SECTION_BONE_HEADER_SCALE_Y['offset']:self.SECTION_BONE_HEADER_SCALE_Y['offset'] + self.SECTION_BONE_HEADER_SCALE_Y['size']],
+                                        byteorder=self.SECTION_BONE_HEADER_SCALE_Y['byteorder'], signed=True)
+        self._scale_z = int.from_bytes(data[self.SECTION_BONE_HEADER_SCALE_Z['offset']:self.SECTION_BONE_HEADER_SCALE_Z['offset'] + self.SECTION_BONE_HEADER_SCALE_Z['size']],
+                                        byteorder=self.SECTION_BONE_HEADER_SCALE_Z['byteorder'], signed=True)
+        current_index = self.SECTION_BONE_HEADER_UNKNOWN2['offset'] + self.SECTION_BONE_HEADER_UNKNOWN2['size']
+        next_index = current_index + 48
+        for i in range(self.nb_bone):
+            self.bones.append(Bone())
+            self.bones[-1].analyze(data[current_index:next_index])
+            current_index = next_index
+            next_index = next_index + 48
+    def get_scale_list(self):
+        return self._scale_x, self._scale_y, self._scale_z
+
+class Bone:
+    SECTION_BONE_DATA_PARENT = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'parent', 'pretty_name': 'Parent ID', 'default_value':0}
+    SECTION_BONE_DATA_SIZE = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'size', 'pretty_name': 'Size', 'default_value':0}
+    SECTION_BONE_DATA_ROTX = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'rotX', 'pretty_name': 'Rotation X', 'default_value':0}
+    SECTION_BONE_DATA_ROTY = {'offset': 0x06, 'size': 2, 'byteorder': 'little', 'name': 'rotY', 'pretty_name': 'Rotation Z', 'default_value':0}
+    SECTION_BONE_DATA_ROTZ = {'offset': 0x08, 'size': 2, 'byteorder': 'little', 'name': 'rotZ', 'pretty_name': 'Rotation Y', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN3 = {'offset': 0x0A, 'size': 2, 'byteorder': 'little', 'name': 'unknown3', 'pretty_name': 'Unknown 3', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN4 = {'offset': 0x0C, 'size': 2, 'byteorder': 'little', 'name': 'unknown4', 'pretty_name': 'Unknown 4', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN5 = {'offset': 0x0E, 'size': 2, 'byteorder': 'little', 'name': 'unknown5', 'pretty_name': 'Unknown 5', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN6 = {'offset': 0x10, 'size': 2, 'byteorder': 'little', 'name': 'unknown6', 'pretty_name': 'Unknown 6', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN7 = {'offset': 0x12, 'size': 2, 'byteorder': 'little', 'name': 'unknown7', 'pretty_name': 'Unknown 7', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN8 = {'offset': 0x14, 'size': 2, 'byteorder': 'little', 'name': 'unknown8', 'pretty_name': 'Unknown 8', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN9 = {'offset': 0x16, 'size': 2, 'byteorder': 'little', 'name': 'unknown9', 'pretty_name': 'Unknown 9', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN10 = {'offset': 0x18, 'size': 2, 'byteorder': 'little', 'name': 'unknown10', 'pretty_name': 'Unknown 10', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN11 = {'offset': 0x1A, 'size': 2, 'byteorder': 'little', 'name': 'unknown11', 'pretty_name': 'Unknown 11', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN12 = {'offset': 0x1C, 'size': 2, 'byteorder': 'little', 'name': 'unknown12', 'pretty_name': 'Unknown 12', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN13 = {'offset': 0x1E, 'size': 2, 'byteorder': 'little', 'name': 'unknown13', 'pretty_name': 'Unknown 13', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN14 = {'offset': 0x20, 'size': 2, 'byteorder': 'little', 'name': 'unknown14', 'pretty_name': 'Unknown 14', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN15 = {'offset': 0x22, 'size': 2, 'byteorder': 'little', 'name': 'unknown15', 'pretty_name': 'Unknown 15', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN16 = {'offset': 0x24, 'size': 2, 'byteorder': 'little', 'name': 'unknown16', 'pretty_name': 'Unknown 16', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN17 = {'offset': 0x26, 'size': 2, 'byteorder': 'little', 'name': 'unknown17', 'pretty_name': 'Unknown 17', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN18 = {'offset': 0x28, 'size': 2, 'byteorder': 'little', 'name': 'unknown18', 'pretty_name': 'Unknown 18', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN19 = {'offset': 0x2A, 'size': 2, 'byteorder': 'little', 'name': 'unknown19', 'pretty_name': 'Unknown 19', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN20 = {'offset': 0x2C, 'size': 2, 'byteorder': 'little', 'name': 'unknown20', 'pretty_name': 'Unknown 20', 'default_value':0}
+    SECTION_BONE_DATA_UNKNOWN21 = {'offset': 0x2E, 'size': 2, 'byteorder': 'little', 'name': 'unknown21', 'pretty_name': 'Unknown 21', 'default_value':0}
+    def __init__(self):
+        self.parent_id = 0
+        self.size = 0
+        self._rotX = 0
+        self._rotY = 0
+        self._rotZ = 0
+        self._local_rotation = (0, 0, 0)  # Will be filled from animation
+        self._world_matrix = None
+        self._world_position = (0, 0, 0)
+        self._world_end = (0, 0, 0)
+    def __str__(self):
+        return f"Bone(Parent:{self.parent_id}, length:{self.size})"
+    def __repr__(self):
+        return self.__str__()
+    def analyze(self, data:bytes):
+        self.parent_id = int.from_bytes(data[self.SECTION_BONE_DATA_PARENT['offset']:self.SECTION_BONE_DATA_PARENT['offset']+self.SECTION_BONE_DATA_PARENT['size']], byteorder=self.SECTION_BONE_DATA_PARENT['byteorder'])
+        self.size = int.from_bytes(data[self.SECTION_BONE_DATA_SIZE['offset']:self.SECTION_BONE_DATA_SIZE['offset']+self.SECTION_BONE_DATA_SIZE['size']], byteorder=self.SECTION_BONE_DATA_SIZE['byteorder'], signed=True)
+        self._rotX = int.from_bytes(data[self.SECTION_BONE_DATA_ROTX['offset']:self.SECTION_BONE_DATA_ROTX['offset']+self.SECTION_BONE_DATA_ROTX['size']], byteorder=self.SECTION_BONE_DATA_ROTX['byteorder'], signed=True)
+        self._rotY = int.from_bytes(data[self.SECTION_BONE_DATA_ROTY['offset']:self.SECTION_BONE_DATA_ROTY['offset']+self.SECTION_BONE_DATA_ROTY['size']], byteorder=self.SECTION_BONE_DATA_ROTY['byteorder'], signed=True)
+        self._rotZ = int.from_bytes(data[self.SECTION_BONE_DATA_ROTZ['offset']:self.SECTION_BONE_DATA_ROTZ['offset']+self.SECTION_BONE_DATA_ROTZ['size']], byteorder=self.SECTION_BONE_DATA_ROTZ['byteorder'], signed=True)
+    def get_rotation_deg(self):
+        """Get rotation in degrees for animation (matches C# order)"""
+        return (
+            self._rotX * 360.0 / 4096.0,
+            self._rotY * 360.0 / 4096.0,
+            self._rotZ * 360.0 / 4096.0
+        )
+
 # Section 2 data
 class GeometryTriangle:
     SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES = {'offset': 0x00, 'size': 6, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
@@ -65,27 +158,24 @@ class GeometryTriangle:
 
     def __init__(self):
         self.vertex_indexes = [0]*3
-        self.tex_coord_1 = [0]*2
-        self.tex_coord_2 = [0]*2
+        self.vta: UV = UV()
+        self.vtb: UV = UV()
         self.tex_id_1 = 0
-        self.tex_coord_3 = [0]*2
+        self.vtc: UV = UV()
         self.tex_id_2 = 0
 
     def analyze(self, data:bytes):
         self.vertex_indexes[0] = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES['byteorder'])& 0xFFF
         self.vertex_indexes[1] = int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES['byteorder'])& 0xFFF
         self.vertex_indexes[2] = int.from_bytes(data[4:6], byteorder=self.SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES['byteorder'])& 0xFFF
-        self.tex_coord_1[0] = int.from_bytes(data[6:7], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_1['byteorder'])
-        self.tex_coord_1[1] = int.from_bytes(data[7:8], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_1['byteorder'])
-        self.tex_coord_2[0] = int.from_bytes(data[8:9], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_2['byteorder'])
-        self.tex_coord_2[1] = int.from_bytes(data[9:10], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_2['byteorder'])
+        self.vta.analyze(data[6:8])
+        self.vtb.analyze(data[8:10])
         self.tex_id_1 = int.from_bytes(data[10:12], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_ID_1['byteorder'])
-        self.tex_coord_3[0] = int.from_bytes(data[12:13], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_3['byteorder'])
-        self.tex_coord_3[1] = int.from_bytes(data[13:14], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_COORD_3['byteorder'])
+        self.vtc.analyze(data[12:14])
         self.tex_id_2 = int.from_bytes(data[14:16], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_ID_2['byteorder'])
 
     def __str__(self):
-        return f"Triangle(VertexIndex{self.vertex_indexes}, TexCoord{self.tex_coord_1}{self.tex_coord_2}{self.tex_coord_3}, TexId({self.tex_id_1, self.tex_id_2}))"
+        return f"Triangle(VertexIndex{self.vertex_indexes}, UVData:{self.vta}{self.vtb}{self.vtc}, TexId({self.tex_id_1, self.tex_id_2}))"
     def __repr__(self):
         return self.__str__()
 
@@ -99,30 +189,39 @@ class GeometryQuad:
     SECTION_GEOMETRY_QUAD_TEX_COORD_4 = {'offset': 0x12, 'size': 2, 'byteorder': 'little', 'name': 'nb_vertices_data', 'pretty_name': 'Mesh position'}
     def __init__(self):
         self.vertex_indexes = [0]*4
-        self.tex_coord_1 = [0]*2
+        self.vta: UV = UV()
         self.tex_id_1 = 0
-        self.tex_coord_2 = [0]*2
+        self.vtb: UV = UV()
         self.tex_id_2 = 0
-        self.tex_coord_3 = [0]*2
-        self.tex_coord_4 = [0]*2
+        self.vtc: UV = UV()
+        self.vtd: UV = UV()
 
     def analyze(self, data:bytes):
         self.vertex_indexes[0] = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder']) & 0xFFF
         self.vertex_indexes[1] = int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder'])& 0xFFF
         self.vertex_indexes[2] = int.from_bytes(data[4:6], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder'])& 0xFFF
         self.vertex_indexes[3] = int.from_bytes(data[6:8], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder'])& 0xFFF
-        self.tex_coord_1[0] = int.from_bytes(data[8:9], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_1['byteorder'])
-        self.tex_coord_1[1] = int.from_bytes(data[9:10], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_1['byteorder'])
+        self.vta.analyze(data[8:10])
         self.tex_id_1 = int.from_bytes(data[10:12], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_ID_1['byteorder'])
-        self.tex_coord_2[0] = int.from_bytes(data[12:13], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_2['byteorder'])
-        self.tex_coord_2[1] = int.from_bytes(data[13:14], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_2['byteorder'])
+        self.vtb.analyze(data[12:14])
         self.tex_id_2 = int.from_bytes(data[14:16], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_ID_2['byteorder'])
-        self.tex_coord_3[0] = int.from_bytes(data[16:17], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_3['byteorder'])
-        self.tex_coord_3[1] = int.from_bytes(data[17:18], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_3['byteorder'])
-        self.tex_coord_4[0] = int.from_bytes(data[18:19], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_4['byteorder'])
-        self.tex_coord_4[1] = int.from_bytes(data[19:20], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_COORD_4['byteorder'])
+        self.vtc.analyze(data[16:18])
+        self.vtd.analyze(data[18:20])
     def __str__(self):
-        return f"Quad(VertexIndex{self.vertex_indexes}, TexCoord{self.tex_coord_1}{self.tex_coord_2}{self.tex_coord_3}, TexId({self.tex_id_1, self.tex_id_2}))"
+        return f"Quad(VertexIndex{self.vertex_indexes}, UVData{self.vta}{self.vtb}{self.vtc}{self.vtd}, TexId({self.tex_id_1, self.tex_id_2}))"
+    def __repr__(self):
+        return self.__str__()
+
+
+class UV:
+    def __init__(self):
+        self.u: float=0
+        self.v: float=0
+    def analyze(self, data:bytes):
+        self.u = int.from_bytes(data[0:1], byteorder='little')/128.0
+        self.v = int.from_bytes(data[1:2], byteorder='little')/128.0
+    def __str__(self):
+        return f"UV({self.u},{self.v})"
     def __repr__(self):
         return self.__str__()
 
@@ -255,26 +354,27 @@ class VerticesData:
 
 class Vertex:
     SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'vertexX', 'pretty_name': 'Vertex X', 'default_value':0}
-    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'vertexZ', 'pretty_name': 'Vertex Z', 'default_value':0}
-    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'vertexY', 'pretty_name': 'Vertex Y', 'default_value':0}
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'vertexY', 'pretty_name': 'Vertex Z', 'default_value':0}
+    SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'vertexZ', 'pretty_name': 'Vertex Y', 'default_value':0}
     SCALE = 1.0 / 2048.0
     def __init__(self):
-        self.x = 0
-        self.z = 0
-        self.y = 0
+        self._x = 0
+        self._y = 0
+        self._z = 0
     def get_byte(self):
         x_byte = self.x.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X['byteorder'])
-        z_byte = self.z.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['byteorder'])
         y_byte = self.y.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y['byteorder'])
+        z_byte = self.z.to_bytes(length=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['size'], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['byteorder'])
         return bytearray(x_byte + z_byte + y_byte)
     def analyze(self, data:bytes):
-        self.x = -int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X['byteorder'], signed=True)*self.SCALE
-        self.z = -int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['byteorder'], signed=True)*self.SCALE
-        self.y = -int.from_bytes(data[4:6], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y['byteorder'], signed=True)*self.SCALE
+        self._x = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_X['byteorder'], signed=True)
+        self._y  = int.from_bytes(data[4:6], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Y['byteorder'], signed=True)
+        self._z  = int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['byteorder'], signed=True)
+
     def get_list(self):
-        return self.x, self.z, self.y
+        return -self._x*self.SCALE, -self._z*self.SCALE, -self._y*self.SCALE
     def __str__(self):
-        return f"Vertex({self.x},{self.z},{self.y})"
+        return f"Vertex{self.get_list()}"
     def __repr__(self):
         return self.__str__()
 
@@ -342,269 +442,417 @@ class GeometrySection:
 
 # Section 3 data:
 
-
-# ─────────────────────────────────────────────
-#  Bit-level reader helper
-# ─────────────────────────────────────────────
-
 class BitReader:
-    """Read individual bits from a bytes-like buffer, LSB first within each byte."""
+    """
+    Port of ExtapathyExtended.BitReader.
+    Reads from a bytes buffer with a sub-byte bit cursor.
+    ReadBits(n) reads n bits, sign-extends to short (16-bit signed).
+    """
+    POSITION_READ_HELPER = [3, 6, 9, 16]
+    ROTATION_READ_HELPER = [3, 6, 8, 12]
 
-    def __init__(self, data: bytes, bit_offset: int = 0):
+    def __init__(self, data: bytes, start_byte: int = 0):
         self._data = data
-        self._bit_pos = bit_offset  # absolute bit position
-
-    @property
-    def bit_pos(self) -> int:
-        return self._bit_pos
+        self._byte_pos = start_byte
+        self._bit_pos = 0  # sub-byte bit offset (0–7)
 
     def read_bits(self, count: int) -> int:
-        """Read `count` bits and return them as an unsigned integer (LSB first)."""
-        value = 0
-        for i in range(count):
-            byte_index = self._bit_pos >> 3        # self._bit_pos // 8
-            bit_index  = self._bit_pos & 0x7       # self._bit_pos % 8
-            bit = (self._data[byte_index] >> bit_index) & 1
-            value |= (bit << i)
-            self._bit_pos += 1
-        return value
+        """
+        Read `count` bits, sign-extended to a 16-bit signed integer.
+        Mirrors C# ReadBits exactly:
+          - reads 3 bytes from current position
+          - shifts right by _bitPosition
+          - masks to `count` bits (unsigned)
+          - sign-extends from `count` bits
+          - advances stream by (count + _bitPosition) // 8 bytes
+          - updates _bitPosition = (count + _bitPosition) % 8
+        """
+        if count > 16:
+            raise ValueError("count must be <= 16")
 
-    def read_signed_bits(self, count: int) -> int:
-        """Read `count` bits as a signed (two's-complement) integer."""
-        value = self.read_bits(count)
-        if count > 0 and (value >> (count - 1)) & 1:   # sign bit set
-            value -= (1 << count)
-        return value
+        pos = self._byte_pos
+        # Read 3 bytes (with bounds protection)
+        b0 = self._data[pos]     if pos     < len(self._data) else 0
+        b1 = self._data[pos + 1] if pos + 1 < len(self._data) else 0
+        b2 = self._data[pos + 2] if pos + 2 < len(self._data) else 0
 
-    # ── Position type ──────────────────────────────────────────────────────────
-    # First 2 bits select how many data-bits follow:
-    #   0b00 → 3 bits,  0b01 → 6 bits,  0b10 → 9 bits,  0b11 → 16 bits
-    POSITION_TYPE_BITS = {0b00: 3, 0b01: 6, 0b10: 9, 0b11: 16}
+        temp = b0 | (b1 << 8) | (b2 << 16)
+
+        # Shift right by current bit position, mask to `count` bits (unsigned)
+        temp = (temp >> self._bit_pos) & ~(0xFFFFFFFF << count)
+
+        # Sign-extend from `count` bits (mirrors C# (short)((temp << (32-count)) >> (32-count)))
+        temp = (temp << (32 - count)) & 0xFFFFFFFF  # shift left within 32 bits
+        temp = temp >> (32 - count)                  # arithmetic shift right
+        if temp & 0x80000000:                        # if sign bit set, extend negative
+            temp -= 0x100000000
+        value = int(temp)  # now a signed integer
+
+        # Advance stream position
+        self._byte_pos = pos + (count + self._bit_pos) // 8
+        self._bit_pos  = (count + self._bit_pos) % 8
+
+        return value
 
     def read_position_type(self) -> int:
-        type_bits = self.read_bits(2)
-        data_bits = self.POSITION_TYPE_BITS[type_bits]
-        return self.read_signed_bits(data_bits)
-
-    # ── Rotation type ──────────────────────────────────────────────────────────
-    # First 1 bit: IsAvailable.  If 0 → value is 0 (no rotation delta).
-    # If 1 → next 2 bits select how many data-bits follow:
-    #   0b00 → 3 bits,  0b01 → 6 bits,  0b10 → 8 bits,  0b11 → 12 bits
-    ROTATION_TYPE_BITS = {0b00: 3, 0b01: 6, 0b10: 8, 0b11: 12}
+        """2-bit index → lookup in [3,6,9,16] → read that many bits signed."""
+        count_index = self.read_bits(2) & 3
+        return self.read_bits(self.POSITION_READ_HELPER[count_index])
 
     def read_rotation_type(self) -> int:
-        is_available = self.read_bits(1)
-        if not is_available:
+        """
+        1-bit flag: if 0 → return 0 (no rotation).
+        If 1 → 2-bit index → lookup in [3,6,8,12] → read that many bits signed.
+        """
+        should_read = (self.read_bits(1) & 1) != 0
+        if not should_read:
             return 0
-        type_bits = self.read_bits(2)
-        data_bits = self.ROTATION_TYPE_BITS[type_bits]
-        return self.read_signed_bits(data_bits)
+        count_index = self.read_bits(2) & 3
+        return self.read_bits(self.ROTATION_READ_HELPER[count_index])
 
 
-# ─────────────────────────────────────────────
-#  Data classes
-# ─────────────────────────────────────────────
+class Matrix4x4:
+    """Direct port of XNA Matrix (4x4 row-major, translation in row 3)"""
 
-class AnimationBoneRotation:
-    """
-    Per-bone rotation delta for one frame.
-    Stored as raw fixed-point shorts (divide by 4096 * 360 for degrees).
-    """
     def __init__(self):
-        self.rx: int = 0   # rotation X delta (raw)
-        self.ry: int = 0   # rotation Y delta (raw)
-        self.rz: int = 0   # rotation Z delta (raw)
+        # Identity matrix
+        self.M11 = 1.0
+        self.M12 = 0.0
+        self.M13 = 0.0
+        self.M14 = 0.0
+        self.M21 = 0.0
+        self.M22 = 1.0
+        self.M23 = 0.0
+        self.M24 = 0.0
+        self.M31 = 0.0
+        self.M32 = 0.0
+        self.M33 = 1.0
+        self.M34 = 0.0
+        self.M41 = 0.0
+        self.M42 = 0.0
+        self.M43 = 0.0
+        self.M44 = 1.0
 
-    @property
-    def rx_deg(self) -> float:
-        return self.rx * 360.0 / 4096.0
+    @staticmethod
+    def CreateRotationX(angle_deg):
+        """Matches MakiExtended.GetRotationMatrixX"""
+        r = math.radians(angle_deg)
+        c = math.cos(r)
+        s = math.sin(r)
+        mat = Matrix4x4()
+        mat.M22 = c
+        mat.M23 = -s
+        mat.M32 = s
+        mat.M33 = c
+        return mat
 
-    @property
-    def ry_deg(self) -> float:
-        return self.ry * 360.0 / 4096.0
+    @staticmethod
+    def CreateRotationY(angle_deg):
+        """Matches MakiExtended.GetRotationMatrixY"""
+        r = math.radians(angle_deg)
+        c = math.cos(r)
+        s = math.sin(r)
+        mat = Matrix4x4()
+        mat.M11 = c
+        mat.M13 = s
+        mat.M31 = -s
+        mat.M33 = c
+        return mat
 
-    @property
-    def rz_deg(self) -> float:
-        return self.rz * 360.0 / 4096.0
+    @staticmethod
+    def CreateRotationZ(angle_deg):
+        """Matches MakiExtended.GetRotationMatrixZ"""
+        r = math.radians(angle_deg)
+        c = math.cos(r)
+        s = math.sin(r)
+        mat = Matrix4x4()
+        mat.M11 = c
+        mat.M12 = -s
+        mat.M21 = s
+        mat.M22 = c
+        return mat
 
-    def __str__(self):
-        return (f"BoneRot(rx={self.rx}({self.rx_deg:.2f}°), "
-                f"ry={self.ry}({self.ry_deg:.2f}°), "
-                f"rz={self.rz}({self.rz_deg:.2f}°))")
+    @staticmethod
+    def Multiply(a, b):
+        """Matrix multiplication: a * b (matches XNA's Matrix.Multiply)"""
+        result = Matrix4x4()
 
-    def __repr__(self):
-        return self.__str__()
+        result.M11 = a.M11 * b.M11 + a.M12 * b.M21 + a.M13 * b.M31 + a.M14 * b.M41
+        result.M12 = a.M11 * b.M12 + a.M12 * b.M22 + a.M13 * b.M32 + a.M14 * b.M42
+        result.M13 = a.M11 * b.M13 + a.M12 * b.M23 + a.M13 * b.M33 + a.M14 * b.M43
+        result.M14 = a.M11 * b.M14 + a.M12 * b.M24 + a.M13 * b.M34 + a.M14 * b.M44
+
+        result.M21 = a.M21 * b.M11 + a.M22 * b.M21 + a.M23 * b.M31 + a.M24 * b.M41
+        result.M22 = a.M21 * b.M12 + a.M22 * b.M22 + a.M23 * b.M32 + a.M24 * b.M42
+        result.M23 = a.M21 * b.M13 + a.M22 * b.M23 + a.M23 * b.M33 + a.M24 * b.M43
+        result.M24 = a.M21 * b.M14 + a.M22 * b.M24 + a.M23 * b.M34 + a.M24 * b.M44
+
+        result.M31 = a.M31 * b.M11 + a.M32 * b.M21 + a.M33 * b.M31 + a.M34 * b.M41
+        result.M32 = a.M31 * b.M12 + a.M32 * b.M22 + a.M33 * b.M32 + a.M34 * b.M42
+        result.M33 = a.M31 * b.M13 + a.M32 * b.M23 + a.M33 * b.M33 + a.M34 * b.M43
+        result.M34 = a.M31 * b.M14 + a.M32 * b.M24 + a.M33 * b.M34 + a.M34 * b.M44
+
+        result.M41 = a.M41 * b.M11 + a.M42 * b.M21 + a.M43 * b.M31 + a.M44 * b.M41
+        result.M42 = a.M41 * b.M12 + a.M42 * b.M22 + a.M43 * b.M32 + a.M44 * b.M42
+        result.M43 = a.M41 * b.M13 + a.M42 * b.M23 + a.M43 * b.M33 + a.M44 * b.M43
+        result.M44 = a.M41 * b.M14 + a.M42 * b.M24 + a.M43 * b.M34 + a.M44 * b.M44
+
+        return result
+
+
+class ShortVector:
+    def __init__(self, x: int = 0, y: int = 0, z: int = 0):
+        self.x = x
+        self.y = y
+        self.z = z
 
 
 class AnimationFrame:
-    """
-    One frame of animation.
-
-    - location_x/y/z : world-space position delta (accumulative across frames)
-    - bone_rotations : list of BoneRotation, one per bone (also accumulative)
-
-    NOTE: frames are *accumulative* — to get the absolute rotation at frame N
-    you must sum all deltas from frame 0 through N.
-    """
-    def __init__(self):
-        self.location_x: float = 0
-        self.location_y: float = 0
-        self.location_z: float = 0
-        self.bone_rotations: List[AnimationBoneRotation] = []
-        # unknowns – 3 optional 16-bit values per bone (bUnk1/2/3 flags)
-        self.bone_unks: List[List[int]] = []   # bone_unks[bone_idx] = [unk1, unk2, unk3]
+    def __init__(self, nb_bones: int):
+        self.position: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+        self.bone_rot_raw: List[ShortVector] = [ShortVector() for _ in range(nb_bones)]
+        self.bone_rot_deg: List[Tuple[float, float, float]] = [(0.0, 0.0, 0.0) for _ in range(nb_bones)]
+        self.bone_matrices: List[Matrix4x4] = [Matrix4x4() for _ in range(nb_bones)]  # Initialize with identity matrices
 
     def __str__(self):
-        return (f"AnimationFrame("
-                f"loc=({self.location_x},{self.location_y},{self.location_z}), "
-                f"bones={self.bone_rotations})")
+        return f"AnimationFrame(pos:{self.position}, bones:{len(self.bone_rot_deg)})"
 
     def __repr__(self):
         return self.__str__()
 
 
 class Animation:
-    """One animation clip: a sequence of frames."""
-
     def __init__(self):
         self.nb_frames: int = 0
         self.frames: List[AnimationFrame] = []
 
-    def analyze(self, data: bytes, nb_bones: int, bit_offset: int = 0) -> int:
-        """
-        Parse the animation from `data` starting at absolute bit position
-        `bit_offset`.  Returns the bit position after the last bit consumed.
-
-        `nb_bones` must come from the skeleton (Section 1).
-        """
-        reader = BitReader(data, bit_offset)
-
-        # nb_frames is a plain byte at the *byte* boundary that starts this animation
-        # (the pointer from the header already points here, byte-aligned)
-        byte_start = bit_offset >> 3
-        self.nb_frames = data[byte_start]
-        reader._bit_pos = (byte_start + 1) * 8   # advance past the nb_frames byte
-
-        prev_loc_x = prev_loc_y = prev_loc_z = 0
-        prev_rot: List[AnimationBoneRotation] = []
-
-        for frame_idx in range(self.nb_frames):
-            frame = AnimationFrame()
-
-            # ── Location (world-space position delta, accumulative) ──
-            dx = -reader.read_position_type()*0.10
-            dy = -reader.read_position_type()*0.10
-            dz = -reader.read_position_type()*0.10
-
-            if frame_idx == 0:
-                frame.location_x = dx
-                frame.location_y = dy
-                frame.location_z = dz
-            else:
-                frame.location_x = prev_loc_x + dx
-                frame.location_y = prev_loc_y + dy
-                frame.location_z = prev_loc_z + dz
-
-            prev_loc_x = frame.location_x
-            prev_loc_y = frame.location_y
-            prev_loc_z = frame.location_z
-
-            # ── Mode bit (1 bit, purpose unknown — must be consumed) ──
-            _mode_bit = reader.read_bits(1)
-
-            # ── Per-bone rotation data ──
-            frame.bone_rotations = []
-            frame.bone_unks      = []
-            cur_prev = prev_rot if frame_idx > 0 else None
-
-            for bone_idx in range(nb_bones):
-                rot = AnimationBoneRotation()
-                drx = reader.read_rotation_type()
-                dry = reader.read_rotation_type()
-                drz = reader.read_rotation_type()
-
-                if frame_idx == 0:
-                    rot.rx = drx
-                    rot.ry = dry
-                    rot.rz = drz
-                else:
-                    rot.rx = prev_rot[bone_idx].rx + drx
-                    rot.ry = prev_rot[bone_idx].ry + dry
-                    rot.rz = prev_rot[bone_idx].rz + drz
-
-                frame.bone_rotations.append(rot)
-
-                # ── 3 optional unknown 16-bit values (bUnk1 / bUnk2 / bUnk3) ──
-                unks = []
-                for _ in range(3):
-                    b_flag = reader.read_bits(1)
-                    if b_flag:
-                        unks.append(reader.read_bits(16))
-                    else:
-                        unks.append(0)
-                frame.bone_unks.append(unks)
-
-            prev_rot = frame.bone_rotations
-            self.frames.append(frame)
-
-        return reader.bit_pos
-
     def __str__(self):
-        return f"Animation(nb_frames={self.nb_frames}, frames={self.frames})"
+        return f"Animation(nb_frames:{self.nb_frames})"
 
     def __repr__(self):
         return self.__str__()
 
 
 class AnimationSection:
-    """
-    Section 3 of the DAT file: Model animation.
-
-    Header layout:
-      0x00  4 bytes   Number of animations
-      0x04  nb_animations * 4 bytes   Animation pointers (relative to section start)
-      [pointer]  Animation data (bit-packed, see Animation.analyze)
-    """
-
-    SECTION_ANIMATION_NB_ANIMATIONS  = {'offset': 0x00, 'size': 4, 'byteorder': 'little',
-                                         'name': 'nb_animations', 'pretty_name': 'Number of animations'}
-    SECTION_ANIMATION_POINTER        = {'offset': 0x04, 'size': 4, 'byteorder': 'little',
-                                         'name': 'animation_pointer', 'pretty_name': 'Animation pointer'}
-
     def __init__(self):
         self.nb_animations: int = 0
-        self.pointers: List[int] = []
+        self.offsets: List[int] = []
         self.animations: List[Animation] = []
 
-    def analyze(self, data: bytes, nb_bones: int):
-        """
-        Parse the full animation section.
+    def analyze(self, data: bytes, bone_section: 'BoneSection'):
+        nb_bones = bone_section.nb_bone
+        bones = bone_section.bones
 
-        `nb_bones` must be supplied from the already-parsed skeleton (Section 1).
-        """
-        # ── Header ──────────────────────────────────────────────────
-        self.nb_animations = int.from_bytes(
-            data[0:4],
-            byteorder=self.SECTION_ANIMATION_NB_ANIMATIONS['byteorder']
-        )
-        current_index = 4
-        for i in range(self.nb_animations):
-            ptr = int.from_bytes(
-                data[current_index: current_index + 4],
-                byteorder=self.SECTION_ANIMATION_POINTER['byteorder']
-            )
-            self.pointers.append(ptr)
-            current_index += 4
+        print("\n" + "=" * 80)
+        print("STARTING ANIMATION ANALYSIS")
+        print("=" * 80)
 
-        # ── Per-animation data (bit-packed) ──────────────────────────
+        # Read animation section header
+        self.nb_animations = int.from_bytes(data[0:4], byteorder='little')
+        print(f"\n[HEADER] Number of animations: {self.nb_animations}")
+
         for i in range(self.nb_animations):
+            off = int.from_bytes(data[4 + i * 4: 8 + i * 4], byteorder='little')
+            self.offsets.append(off)
+            print(f"[HEADER] Animation {i} offset: 0x{off:04X}")
+
+        for anim_idx in range(self.nb_animations):
+            print(f"\n{'=' * 60}")
+            print(f"PROCESSING ANIMATION {anim_idx}")
+            print(f"{'=' * 60}")
+
+            anim_start = self.offsets[anim_idx]
             anim = Animation()
-            bit_start = self.pointers[i] * 8   # pointer is byte offset → convert to bits
-            anim.analyze(data, nb_bones, bit_offset=bit_start)
+            anim.nb_frames = data[anim_start]
+            print(f"[ANIM {anim_idx}] Number of frames: {anim.nb_frames}")
+            print(f"[ANIM {anim_idx}] Data start offset: 0x{anim_start:04X}")
+
+            anim.frames = []
+            br = BitReader(data, start_byte=anim_start + 1)
+
+            for n in range(anim.nb_frames):
+                print(f"\n--- Frame {n} ---")
+
+                frame = AnimationFrame(nb_bones)
+
+                # Read root position
+                px_raw = br.read_position_type()
+                py_raw = br.read_position_type()
+                pz_raw = br.read_position_type()
+                px = -px_raw * 0.10
+                py = -py_raw * 0.10
+                pz = -pz_raw * 0.10
+
+                print(f"  Root position raw: ({px_raw}, {py_raw}, {pz_raw})")
+                print(f"  Root position scaled: ({px:.4f}, {py:.4f}, {pz:.4f})")
+
+                if n == 0:
+                    frame.position = (px, py, pz)
+                    print(f"  Frame 0 absolute position: ({px:.4f}, {py:.4f}, {pz:.4f})")
+                else:
+                    prev_pos = anim.frames[n - 1].position
+                    frame.position = (
+                        prev_pos[0] + px,
+                        prev_pos[1] + py,
+                        prev_pos[2] + pz,
+                    )
+                    print(f"  Frame {n} cumulative position: ({frame.position[0]:.4f}, {frame.position[1]:.4f}, {frame.position[2]:.4f})")
+                    print(f"    Delta from previous: ({px:.4f}, {py:.4f}, {pz:.4f})")
+
+                # Skip padding bit
+                br.read_bits(1)
+
+                # Read bone rotations
+                print(f"\n  Reading bone rotations:")
+                for k in range(min(5, nb_bones)):  # Show first 5 only
+                    rx = br.read_rotation_type()
+                    ry = br.read_rotation_type()
+                    rz = br.read_rotation_type()
+                    raw = ShortVector(rx, ry, rz)
+
+                    if n != 0:
+                        prev_raw = anim.frames[n - 1].bone_rot_raw[k]
+                        raw = ShortVector(
+                            prev_raw.x + raw.x,
+                            prev_raw.y + raw.y,
+                            prev_raw.z + raw.z,
+                        )
+
+                    frame.bone_rot_raw[k] = raw
+                    frame.bone_rot_deg[k] = (
+                        raw.x * 360.0 / 4096.0,
+                        raw.y * 360.0 / 4096.0,
+                        raw.z * 360.0 / 4096.0,
+                    )
+
+                    if k < 5:  # Print first 5 bones
+                        print(
+                            f"    Bone {k}: raw=({rx:4d}, {ry:4d}, {rz:4d}) -> cumul=({raw.x:4d}, {raw.y:4d}, {raw.z:4d}) -> deg=({frame.bone_rot_deg[k][0]:6.2f}, {frame.bone_rot_deg[k][1]:6.2f}, {frame.bone_rot_deg[k][2]:6.2f})")
+
+                # Skip remaining bones for printing (but still read them)
+                for k in range(5, nb_bones):
+                    rx = br.read_rotation_type()
+                    ry = br.read_rotation_type()
+                    rz = br.read_rotation_type()
+                    raw = ShortVector(rx, ry, rz)
+                    if n != 0:
+                        prev_raw = anim.frames[n - 1].bone_rot_raw[k]
+                        raw = ShortVector(prev_raw.x + raw.x, prev_raw.y + raw.y, prev_raw.z + raw.z)
+                    frame.bone_rot_raw[k] = raw
+                    frame.bone_rot_deg[k] = (raw.x * 360.0 / 4096.0, raw.y * 360.0 / 4096.0, raw.z * 360.0 / 4096.0)
+
+                # Build bone matrices
+                print(f"\n  Building bone matrices:")
+
+                for k in range(nb_bones):
+                    deg = frame.bone_rot_deg[k]
+
+                    # Create rotation matrices
+                    xRot = Matrix4x4.CreateRotationX(-deg[0])
+                    yRot = Matrix4x4.CreateRotationY(-deg[1])
+                    zRot = Matrix4x4.CreateRotationZ(-deg[2])
+
+                    # Combine rotations: yRot * xRot
+                    MatrixZ = Matrix4x4.Multiply(yRot, xRot)
+                    # Then: zRot * (yRot * xRot)
+                    MatrixZ = Matrix4x4.Multiply(zRot, MatrixZ)
+
+                    parent_id = bones[k].parent_id
+
+                    if k < 5:  # Print first 5 bones
+                        print(f"\n    Bone {k}: parent={parent_id}, size={bones[k].size:.4f}")
+                        print(f"      Rotation angles: X={deg[0]:6.2f}°, Y={deg[1]:6.2f}°, Z={deg[2]:6.2f}°")
+
+                    if parent_id != 0xFFFF:
+                        prevBone = frame.bone_matrices[parent_id]
+
+                        # Multiply by parent
+                        MatrixZ = Matrix4x4.Multiply(prevBone, MatrixZ)
+
+                        if k < 5:
+                            print(f"      After parent multiplication: translation=({MatrixZ.M41:.4f}, {MatrixZ.M42:.4f}, {MatrixZ.M43:.4f})")
+
+                        # Set translation to parent's bone length
+                        bone_length = bones[parent_id].size
+                        MatrixZ.M41 = 0
+                        MatrixZ.M42 = 0
+                        MatrixZ.M43 = bone_length
+                        MatrixZ.M44 = 1
+
+                        if k < 5:
+                            print(f"      After setting bone length: translation=({MatrixZ.M41:.4f}, {MatrixZ.M42:.4f}, {MatrixZ.M43:.4f}) (bone_length={bone_length:.4f})")
+
+                        # Store current translation
+                        temp_m41 = MatrixZ.M41
+                        temp_m42 = MatrixZ.M42
+                        temp_m43 = MatrixZ.M43
+
+                        # Transform translation through parent
+                        MatrixZ.M41 = (prevBone.M11 * temp_m41 + prevBone.M12 * temp_m42 +
+                                       prevBone.M13 * temp_m43 + prevBone.M41)
+                        MatrixZ.M42 = (prevBone.M21 * temp_m41 + prevBone.M22 * temp_m42 +
+                                       prevBone.M23 * temp_m43 + prevBone.M42)
+                        MatrixZ.M43 = (prevBone.M31 * temp_m41 + prevBone.M32 * temp_m42 +
+                                       prevBone.M33 * temp_m43 + prevBone.M43)
+
+                        if k < 5:
+                            print(f"      After parent transform: translation=({MatrixZ.M41:.4f}, {MatrixZ.M42:.4f}, {MatrixZ.M43:.4f})")
+                            print(f"        Parent pos: ({prevBone.M41:.4f}, {prevBone.M42:.4f}, {prevBone.M43:.4f})")
+                            print(f"        Parent rotation row 2 (Z-axis): ({prevBone.M13:.4f}, {prevBone.M23:.4f}, {prevBone.M33:.4f})")
+                    else:
+                        # Root bone - set translation to 0 for now
+                        MatrixZ.M41 = 0
+                        MatrixZ.M42 = 0
+                        MatrixZ.M43 = 0
+                        if k < 5:
+                            print(f"      Root bone: translation set to (0,0,0)")
+
+                    frame.bone_matrices[k] = MatrixZ
+
+
+                # Final debug for first frame
+                if anim_idx == 0 and n == 0:
+                    print("\n" + "=" * 60)
+                    print("FINAL BONE POSITIONS (After adding root position)")
+                    print("=" * 60)
+                    for k in range(min(10, nb_bones)):
+                        mat = frame.bone_matrices[k]
+                        bone = bones[k]
+                        print(f"\nBone {k}: parent={bone.parent_id}, size={bone.size:.4f}")
+                        print(f"  FINAL POSITION: ({mat.M41:.4f}, {mat.M42:.4f}, {mat.M43:.4f})")
+
+                        # Calculate direction vectors
+                        print(f"  X-axis: ({mat.M11:.4f}, {mat.M21:.4f}, {mat.M31:.4f})")
+                        print(f"  Y-axis: ({mat.M12:.4f}, {mat.M22:.4f}, {mat.M32:.4f})")
+                        print(f"  Z-axis: ({mat.M13:.4f}, {mat.M23:.4f}, {mat.M33:.4f})")
+
+                        # Check if this matches Noesis
+                        if k == 1:  # Bone 1 (second bone)
+                            print(f"\n  *** COMPARE WITH NOESIS ***")
+                            print(f"  Noesis position: (-120.0, -14445.0, 2100.0)")
+                            print(f"  Our position:     ({mat.M41:.4f}, {mat.M42:.4f}, {mat.M43:.4f})")
+                            print(f"  Difference:       ({mat.M41 + 120:.4f}, {mat.M42 + 14445:.4f}, {mat.M43 - 2100:.4f})")
+
+                            print(f"\n  Noesis X-axis: (-0.571979, -0.815908, -0.084466)")
+                            print(f"  Our X-axis:     ({mat.M11:.4f}, {mat.M21:.4f}, {mat.M31:.4f})")
+
+                            print(f"\n  Noesis Y-axis: (-0.060854, -0.060481, -0.084466)")
+                            print(f"  Our Y-axis:     ({mat.M12:.4f}, {mat.M22:.4f}, {mat.M32:.4f})")
+
+                            print(f"\n  Noesis Z-axis: (-0.818008, 0.575009, -0.015057)")
+                            print(f"  Our Z-axis:     ({mat.M13:.4f}, {mat.M23:.4f}, {mat.M33:.4f})")
+
+                anim.frames.append(frame)
+
             self.animations.append(anim)
+            print(f"\n[ANIM {anim_idx}] Finished processing")
+
+        print("\n" + "=" * 80)
+        print("ANIMATION ANALYSIS COMPLETE")
+        print("=" * 80)
 
     def __str__(self):
-        return f"AnimationSection(nb_animations={self.nb_animations}, {self.animations})"
+        return f"AnimationSection(nb:{self.nb_animations}, {self.animations})"
 
     def __repr__(self):
         return self.__str__()

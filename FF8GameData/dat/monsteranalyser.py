@@ -8,7 +8,7 @@ from typing import List
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from .sequenceanalyser import SequenceAnalyser
 from ..GenericSection.ff8text import FF8Text
-from ..gamedata import GameData, AIData, GeometrySection, AnimationSection
+from ..gamedata import GameData, AIData, GeometrySection, AnimationSection, BoneSection
 from .commandanalyser import CommandAnalyser, CurrentIfType
 
 test = []
@@ -64,7 +64,7 @@ class MonsterAnalyser:
         self.subsection_ai_offset = {'init_code': 0, 'ennemy_turn': 0, 'counter_attack': 0, 'death': 0, 'unknown': 0}
         self.section_raw_data = [bytearray()] * self.NUMBER_SECTION
         self.header_data = copy.deepcopy(game_data.AIData.SECTION_HEADER_DICT)
-        self.bone_data = copy.deepcopy(game_data.AIData.SECTION_BONE_DICT)
+        self.bone_data = BoneSection()
         self.geometry_data = GeometrySection()
         self.animation_data = AnimationSection()
         self.model_animation_data = copy.deepcopy(game_data.AIData.SECTION_MODEL_ANIM_DICT)
@@ -417,27 +417,9 @@ class MonsterAnalyser:
     def __analyze_bone_section(self, game_data: GameData):
         SECTION_NUMBER = 1
         if self.section_raw_data[SECTION_NUMBER]:
-            for el in game_data.AIData.SECTION_BONE_HEADER_LIST_DATA:
-                signed = False
-                if 'signed' in el.keys():
-                    signed = el['signed']
+            self.bone_data.analyze(self.section_raw_data[SECTION_NUMBER])
+            print(self.bone_data)
 
-                in_data_selected = self.__get_int_value_from_info(el, SECTION_NUMBER, signed)
-                if 'scale'.upper() in el['name'].upper():
-                    in_data_selected = in_data_selected / 4096
-                self.bone_data['header'][el['name']] = in_data_selected
-            print(self.bone_data['header'])
-            self.bone_data['data'] = [
-                {item['name']: 0 for item in game_data.AIData.SECTION_BONE_DATA_LIST_DATA}
-                for _ in range(self.bone_data['header']['nb_bone'])
-            ]
-            for i in range(self.bone_data['header']['nb_bone']):
-                for el in game_data.AIData.SECTION_BONE_DATA_LIST_DATA:
-                    in_data_selected = self.__get_int_value_from_info(el, SECTION_NUMBER, 16 + 48*i)# Offset need to be computed dynamically
-                    self.bone_data['data'][i][el['name']] = in_data_selected
-
-            for i, data in enumerate(self.bone_data['data']):
-                print(f"Bone{i}: {data}")
 
 
     def __analyze_geometry_section(self, game_data: GameData):
@@ -445,13 +427,14 @@ class MonsterAnalyser:
         SECTION_NUMBER = 2
         if self.section_raw_data[SECTION_NUMBER]:
             self.geometry_data.analyze(self.section_raw_data[SECTION_NUMBER])
-            print(self.geometry_data)
+            #print(self.geometry_data)
 
     def __analyze_animation_section(self, game_data: GameData):
         print("__analyze_animation_section")
         SECTION_NUMBER = 3
         if self.section_raw_data[SECTION_NUMBER]:
-            self.animation_data.analyze(self.section_raw_data[SECTION_NUMBER], 2)
+
+            self.animation_data.analyze(self.section_raw_data[SECTION_NUMBER], self.bone_data)
             print(self.animation_data)
 
     def __analyze_section_4(self, game_data: GameData):
