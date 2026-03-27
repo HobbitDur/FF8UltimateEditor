@@ -26,6 +26,7 @@ from ShumiTranslator.shumitranslator import ShumiTranslator
 from SmallWidget.externaltoolwidget import ExternalToolWidget
 from TonberryShop.tonberryshop import TonberryShop
 from ToolUpdate.toolupdatewidget import ToolUpdateWidget
+from solomonring.solomonringwidget import SolomonRingWidget
 
 
 class FF8UltimateEditorWidget(QWidget):
@@ -53,7 +54,9 @@ class FF8UltimateEditorWidget(QWidget):
             "IfritSeq (Anim seq editor)",
             "Draw editor",
             "IfritTexture (Monster texture editor)",
-            "Ifrit3D"
+            "Ifrit3D",
+            "SolomonRing (kernel.bin editor)"
+
         ]
 
         # 3. Header: Program Selection (ComboBox)
@@ -125,6 +128,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._draw_editor_widget = DrawEditorWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._ifrittexture_widget = IfritTextureWidget(game_data_folder=os.path.join(game_data_path))
         self._ifrit3d_widget = Ifrit3DWidget(show_controls=True)
+        self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path))
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
         self.tool_stack.addWidget(self._ifritAI_widget)  # Index 0
@@ -136,6 +140,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._draw_editor_widget)  # Index 6
         self.tool_stack.addWidget(self._ifrittexture_widget)  # Index 7
         self.tool_stack.addWidget(self._ifrit3d_widget)  # Index 8
+        self.tool_stack.addWidget(self._solomonring_widget) # Index 9
 
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)
@@ -242,6 +247,7 @@ class FF8UltimateEditorWidget(QWidget):
             ("IfritXlsx", self._ifritxlsx_widget),
             ("IfritTexture", self._ifrittexture_widget),
             ("Ifrit3D", self._ifrit3d_widget),
+            ("SolomonRing", self._solomonring_widget),
             # Add any others you suspect here
         ]
 
