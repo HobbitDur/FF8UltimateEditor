@@ -130,12 +130,12 @@ class Bone:
         self._world_position = (0, 0, 0)
         self._world_end = (0, 0, 0)
     def __str__(self):
-        return f"Bone(Parent:{self.parent_id}, length:{self.size})"
+        return f"Bone(Parent:{self.parent_id}, length:{self.size}, rot:{self._rotX},{self._rotY},{self._rotZ})"
     def __repr__(self):
         return self.__str__()
     def analyze(self, data:bytes):
         self.parent_id = int.from_bytes(data[self.SECTION_BONE_DATA_PARENT['offset']:self.SECTION_BONE_DATA_PARENT['offset']+self.SECTION_BONE_DATA_PARENT['size']], byteorder=self.SECTION_BONE_DATA_PARENT['byteorder'])
-        self.size = int.from_bytes(data[self.SECTION_BONE_DATA_SIZE['offset']:self.SECTION_BONE_DATA_SIZE['offset']+self.SECTION_BONE_DATA_SIZE['size']], byteorder=self.SECTION_BONE_DATA_SIZE['byteorder'], signed=True)
+        self.size = int.from_bytes(data[self.SECTION_BONE_DATA_SIZE['offset']:self.SECTION_BONE_DATA_SIZE['offset']+self.SECTION_BONE_DATA_SIZE['size']], byteorder=self.SECTION_BONE_DATA_SIZE['byteorder'], signed=True) / 2048
         self._rotX = int.from_bytes(data[self.SECTION_BONE_DATA_ROTX['offset']:self.SECTION_BONE_DATA_ROTX['offset']+self.SECTION_BONE_DATA_ROTX['size']], byteorder=self.SECTION_BONE_DATA_ROTX['byteorder'], signed=True)
         self._rotY = int.from_bytes(data[self.SECTION_BONE_DATA_ROTY['offset']:self.SECTION_BONE_DATA_ROTY['offset']+self.SECTION_BONE_DATA_ROTY['size']], byteorder=self.SECTION_BONE_DATA_ROTY['byteorder'], signed=True)
         self._rotZ = int.from_bytes(data[self.SECTION_BONE_DATA_ROTZ['offset']:self.SECTION_BONE_DATA_ROTZ['offset']+self.SECTION_BONE_DATA_ROTZ['size']], byteorder=self.SECTION_BONE_DATA_ROTZ['byteorder'], signed=True)
@@ -457,42 +457,28 @@ class BitReader:
         self._bit_pos = 0  # sub-byte bit offset (0–7)
 
     def read_bits(self, count: int) -> int:
-        """
-        Read `count` bits, sign-extended to a 16-bit signed integer.
-        Mirrors C# ReadBits exactly:
-          - reads 3 bytes from current position
-          - shifts right by _bitPosition
-          - masks to `count` bits (unsigned)
-          - sign-extends from `count` bits
-          - advances stream by (count + _bitPosition) // 8 bytes
-          - updates _bitPosition = (count + _bitPosition) % 8
-        """
         if count > 16:
             raise ValueError("count must be <= 16")
 
         pos = self._byte_pos
-        # Read 3 bytes (with bounds protection)
-        b0 = self._data[pos]     if pos     < len(self._data) else 0
+        b0 = self._data[pos] if pos < len(self._data) else 0
         b1 = self._data[pos + 1] if pos + 1 < len(self._data) else 0
         b2 = self._data[pos + 2] if pos + 2 < len(self._data) else 0
 
         temp = b0 | (b1 << 8) | (b2 << 16)
 
-        # Shift right by current bit position, mask to `count` bits (unsigned)
-        temp = (temp >> self._bit_pos) & ~(0xFFFFFFFF << count)
+        # Shift to align the bits
+        temp = (temp >> self._bit_pos) & ((1 << count) - 1)
 
-        # Sign-extend from `count` bits (mirrors C# (short)((temp << (32-count)) >> (32-count)))
-        temp = (temp << (32 - count)) & 0xFFFFFFFF  # shift left within 32 bits
-        temp = temp >> (32 - count)                  # arithmetic shift right
-        if temp & 0x80000000:                        # if sign bit set, extend negative
-            temp -= 0x100000000
-        value = int(temp)  # now a signed integer
+        # Sign-extend if count < 16 and the highest bit is set
+        if count < 16 and (temp & (1 << (count - 1))):
+            temp -= (1 << count)
 
-        # Advance stream position
+        # Advance stream
         self._byte_pos = pos + (count + self._bit_pos) // 8
-        self._bit_pos  = (count + self._bit_pos) % 8
+        self._bit_pos = (count + self._bit_pos) % 8
 
-        return value
+        return temp
 
     def read_position_type(self) -> int:
         """2-bit index → lookup in [3,6,9,16] → read that many bits signed."""
@@ -574,31 +560,86 @@ class Matrix4x4:
 
     @staticmethod
     def Multiply(a, b):
-        """Matrix multiplication: a * b (matches XNA's Matrix.Multiply)"""
+        """Column-major matrix multiplication matching C# MakiExtended.MatrixMultiply"""
         result = Matrix4x4()
 
-        result.M11 = a.M11 * b.M11 + a.M12 * b.M21 + a.M13 * b.M31 + a.M14 * b.M41
-        result.M12 = a.M11 * b.M12 + a.M12 * b.M22 + a.M13 * b.M32 + a.M14 * b.M42
-        result.M13 = a.M11 * b.M13 + a.M12 * b.M23 + a.M13 * b.M33 + a.M14 * b.M43
-        result.M14 = a.M11 * b.M14 + a.M12 * b.M24 + a.M13 * b.M34 + a.M14 * b.M44
+        # Note: This is column-major multiplication
+        result.M11 = b.M11 * a.M11 + b.M21 * a.M12 + b.M31 * a.M13
+        result.M12 = b.M11 * a.M21 + b.M21 * a.M22 + b.M31 * a.M23
+        result.M13 = b.M11 * a.M31 + b.M21 * a.M32 + b.M31 * a.M33
+        result.M14 = 0
 
-        result.M21 = a.M21 * b.M11 + a.M22 * b.M21 + a.M23 * b.M31 + a.M24 * b.M41
-        result.M22 = a.M21 * b.M12 + a.M22 * b.M22 + a.M23 * b.M32 + a.M24 * b.M42
-        result.M23 = a.M21 * b.M13 + a.M22 * b.M23 + a.M23 * b.M33 + a.M24 * b.M43
-        result.M24 = a.M21 * b.M14 + a.M22 * b.M24 + a.M23 * b.M34 + a.M24 * b.M44
+        result.M21 = b.M12 * a.M11 + b.M22 * a.M12 + b.M32 * a.M13
+        result.M22 = b.M12 * a.M21 + b.M22 * a.M22 + b.M32 * a.M23
+        result.M23 = b.M12 * a.M31 + b.M22 * a.M32 + b.M32 * a.M33
+        result.M24 = 0
 
-        result.M31 = a.M31 * b.M11 + a.M32 * b.M21 + a.M33 * b.M31 + a.M34 * b.M41
-        result.M32 = a.M31 * b.M12 + a.M32 * b.M22 + a.M33 * b.M32 + a.M34 * b.M42
-        result.M33 = a.M31 * b.M13 + a.M32 * b.M23 + a.M33 * b.M33 + a.M34 * b.M43
-        result.M34 = a.M31 * b.M14 + a.M32 * b.M24 + a.M33 * b.M34 + a.M34 * b.M44
+        result.M31 = b.M13 * a.M11 + b.M23 * a.M12 + b.M33 * a.M13
+        result.M32 = b.M13 * a.M21 + b.M23 * a.M22 + b.M33 * a.M23
+        result.M33 = b.M13 * a.M31 + b.M23 * a.M32 + b.M33 * a.M33
+        result.M34 = 0
 
-        result.M41 = a.M41 * b.M11 + a.M42 * b.M21 + a.M43 * b.M31 + a.M44 * b.M41
-        result.M42 = a.M41 * b.M12 + a.M42 * b.M22 + a.M43 * b.M32 + a.M44 * b.M42
-        result.M43 = a.M41 * b.M13 + a.M42 * b.M23 + a.M43 * b.M33 + a.M44 * b.M43
-        result.M44 = a.M41 * b.M14 + a.M42 * b.M24 + a.M43 * b.M34 + a.M44 * b.M44
+        result.M41 = 0
+        result.M42 = 0
+        result.M43 = 0
+        result.M44 = 0
 
         return result
+    @staticmethod
+    def MultiplyColumnMajor(a, b):
+        """
+        Column-major multiplication: result = b * a.
+        Mimics MakiExtended.MatrixMultiply in C#.
+        """
+        result = Matrix4x4()
+        result.M11 = b.M11 * a.M11 + b.M21 * a.M12 + b.M31 * a.M13
+        result.M12 = b.M11 * a.M21 + b.M21 * a.M22 + b.M31 * a.M23
+        result.M13 = b.M11 * a.M31 + b.M21 * a.M32 + b.M31 * a.M33
+        result.M14 = 0
 
+        result.M21 = b.M12 * a.M11 + b.M22 * a.M12 + b.M32 * a.M13
+        result.M22 = b.M12 * a.M21 + b.M22 * a.M22 + b.M32 * a.M23
+        result.M23 = b.M12 * a.M31 + b.M22 * a.M32 + b.M32 * a.M33
+        result.M24 = 0
+
+        result.M31 = b.M13 * a.M11 + b.M23 * a.M12 + b.M33 * a.M13
+        result.M32 = b.M13 * a.M21 + b.M23 * a.M22 + b.M33 * a.M23
+        result.M33 = b.M13 * a.M31 + b.M23 * a.M32 + b.M33 * a.M33
+        result.M34 = 0
+
+        result.M41 = 0
+        result.M42 = 0
+        result.M43 = 0
+        result.M44 = 0
+        return result
+
+    @staticmethod
+    def MultiplyRowMajor(a, b):
+        """
+        Row-major multiplication: result = a * b.
+        Mimics XNA Matrix.Multiply.
+        """
+        result = Matrix4x4()
+        result.M11 = a.M11*b.M11 + a.M12*b.M21 + a.M13*b.M31 + a.M14*b.M41
+        result.M12 = a.M11*b.M12 + a.M12*b.M22 + a.M13*b.M32 + a.M14*b.M42
+        result.M13 = a.M11*b.M13 + a.M12*b.M23 + a.M13*b.M33 + a.M14*b.M43
+        result.M14 = a.M11*b.M14 + a.M12*b.M24 + a.M13*b.M34 + a.M14*b.M44
+
+        result.M21 = a.M21*b.M11 + a.M22*b.M21 + a.M23*b.M31 + a.M24*b.M41
+        result.M22 = a.M21*b.M12 + a.M22*b.M22 + a.M23*b.M32 + a.M24*b.M42
+        result.M23 = a.M21*b.M13 + a.M22*b.M23 + a.M23*b.M33 + a.M24*b.M43
+        result.M24 = a.M21*b.M14 + a.M22*b.M24 + a.M23*b.M34 + a.M24*b.M44
+
+        result.M31 = a.M31*b.M11 + a.M32*b.M21 + a.M33*b.M31 + a.M34*b.M41
+        result.M32 = a.M31*b.M12 + a.M32*b.M22 + a.M33*b.M32 + a.M34*b.M42
+        result.M33 = a.M31*b.M13 + a.M32*b.M23 + a.M33*b.M33 + a.M34*b.M43
+        result.M34 = a.M31*b.M14 + a.M32*b.M24 + a.M33*b.M34 + a.M34*b.M44
+
+        result.M41 = a.M41*b.M11 + a.M42*b.M21 + a.M43*b.M31 + a.M44*b.M41
+        result.M42 = a.M41*b.M12 + a.M42*b.M22 + a.M43*b.M32 + a.M44*b.M42
+        result.M43 = a.M41*b.M13 + a.M42*b.M23 + a.M43*b.M33 + a.M44*b.M43
+        result.M44 = a.M41*b.M14 + a.M42*b.M24 + a.M43*b.M34 + a.M44*b.M44
+        return result
 
 class ShortVector:
     def __init__(self, x: int = 0, y: int = 0, z: int = 0):
@@ -632,7 +673,6 @@ class Animation:
     def __repr__(self):
         return self.__str__()
 
-
 class AnimationSection:
     def __init__(self):
         self.nb_animations: int = 0
@@ -643,52 +683,38 @@ class AnimationSection:
         nb_bones = bone_section.nb_bone
         bones = bone_section.bones
 
-        print("\n" + "=" * 80)
-        print("STARTING ANIMATION ANALYSIS")
-        print("=" * 80)
-
         # Read animation section header
         self.nb_animations = int.from_bytes(data[0:4], byteorder='little')
-        print(f"\n[HEADER] Number of animations: {self.nb_animations}")
 
         for i in range(self.nb_animations):
             off = int.from_bytes(data[4 + i * 4: 8 + i * 4], byteorder='little')
             self.offsets.append(off)
-            print(f"[HEADER] Animation {i} offset: 0x{off:04X}")
 
         for anim_idx in range(self.nb_animations):
-            print(f"\n{'=' * 60}")
-            print(f"PROCESSING ANIMATION {anim_idx}")
-            print(f"{'=' * 60}")
-
             anim_start = self.offsets[anim_idx]
             anim = Animation()
             anim.nb_frames = data[anim_start]
-            print(f"[ANIM {anim_idx}] Number of frames: {anim.nb_frames}")
-            print(f"[ANIM {anim_idx}] Data start offset: 0x{anim_start:04X}")
-
             anim.frames = []
+
+            # BitReader starts at byte AFTER the frame count byte
             br = BitReader(data, start_byte=anim_start + 1)
 
             for n in range(anim.nb_frames):
-                print(f"\n--- Frame {n} ---")
-
                 frame = AnimationFrame(nb_bones)
 
-                # Read root position
+                # --- Root position ---
+                # C#: float x = -bitReader.ReadPositionType() * 0.10f  (delta)
+                # Frame 0 is absolute, subsequent frames accumulate
                 px_raw = br.read_position_type()
                 py_raw = br.read_position_type()
                 pz_raw = br.read_position_type()
+
                 px = -px_raw * 0.10
                 py = -py_raw * 0.10
                 pz = -pz_raw * 0.10
 
-                print(f"  Root position raw: ({px_raw}, {py_raw}, {pz_raw})")
-                print(f"  Root position scaled: ({px:.4f}, {py:.4f}, {pz:.4f})")
-
                 if n == 0:
                     frame.position = (px, py, pz)
-                    print(f"  Frame 0 absolute position: ({px:.4f}, {py:.4f}, {pz:.4f})")
                 else:
                     prev_pos = anim.frames[n - 1].position
                     frame.position = (
@@ -696,160 +722,77 @@ class AnimationSection:
                         prev_pos[1] + py,
                         prev_pos[2] + pz,
                     )
-                    print(f"  Frame {n} cumulative position: ({frame.position[0]:.4f}, {frame.position[1]:.4f}, {frame.position[2]:.4f})")
-                    print(f"    Delta from previous: ({px:.4f}, {py:.4f}, {pz:.4f})")
 
-                # Skip padding bit
+                # --- Padding bit (C#: var singleBit = bitReader.ReadBits(1)) ---
                 br.read_bits(1)
 
-                # Read bone rotations
-                print(f"\n  Reading bone rotations:")
-                for k in range(min(5, nb_bones)):  # Show first 5 only
+                # --- Bone rotations ---
+                # C#: for each bone, read rx/ry/rz via ReadRotationType()
+                # Frame 0 is absolute, subsequent frames accumulate
+                for k in range(nb_bones):
                     rx = br.read_rotation_type()
                     ry = br.read_rotation_type()
                     rz = br.read_rotation_type()
-                    raw = ShortVector(rx, ry, rz)
 
-                    if n != 0:
+                    if n == 0:
+                        raw = ShortVector(rx, ry, rz)
+                    else:
                         prev_raw = anim.frames[n - 1].bone_rot_raw[k]
                         raw = ShortVector(
-                            prev_raw.x + raw.x,
-                            prev_raw.y + raw.y,
-                            prev_raw.z + raw.z,
+                            prev_raw.x + rx,
+                            prev_raw.y + ry,
+                            prev_raw.z + rz,
                         )
 
                     frame.bone_rot_raw[k] = raw
+                    # C#: deg = raw * 360.0 / 4096.0
                     frame.bone_rot_deg[k] = (
                         raw.x * 360.0 / 4096.0,
                         raw.y * 360.0 / 4096.0,
                         raw.z * 360.0 / 4096.0,
                     )
 
-                    if k < 5:  # Print first 5 bones
-                        print(
-                            f"    Bone {k}: raw=({rx:4d}, {ry:4d}, {rz:4d}) -> cumul=({raw.x:4d}, {raw.y:4d}, {raw.z:4d}) -> deg=({frame.bone_rot_deg[k][0]:6.2f}, {frame.bone_rot_deg[k][1]:6.2f}, {frame.bone_rot_deg[k][2]:6.2f})")
-
-                # Skip remaining bones for printing (but still read them)
-                for k in range(5, nb_bones):
-                    rx = br.read_rotation_type()
-                    ry = br.read_rotation_type()
-                    rz = br.read_rotation_type()
-                    raw = ShortVector(rx, ry, rz)
-                    if n != 0:
-                        prev_raw = anim.frames[n - 1].bone_rot_raw[k]
-                        raw = ShortVector(prev_raw.x + raw.x, prev_raw.y + raw.y, prev_raw.z + raw.z)
-                    frame.bone_rot_raw[k] = raw
-                    frame.bone_rot_deg[k] = (raw.x * 360.0 / 4096.0, raw.y * 360.0 / 4096.0, raw.z * 360.0 / 4096.0)
-
-                # Build bone matrices
-                print(f"\n  Building bone matrices:")
-
+                # --- Build bone matrices ---
+                # Direct port of C# ReadSection3 matrix loop
                 for k in range(nb_bones):
                     deg = frame.bone_rot_deg[k]
 
-                    # Create rotation matrices
+                    # C#: xRot = GetRotationMatrixX(-rad.X)
+                    #     yRot = GetRotationMatrixY(-rad.Y)
+                    #     zRot = GetRotationMatrixZ(-rad.Z)
+                    #     MatrixZ = MatrixMultiply(yRot, xRot)
+                    #     MatrixZ = MatrixMultiply(zRot, MatrixZ)
                     xRot = Matrix4x4.CreateRotationX(-deg[0])
                     yRot = Matrix4x4.CreateRotationY(-deg[1])
                     zRot = Matrix4x4.CreateRotationZ(-deg[2])
 
-                    # Combine rotations: yRot * xRot
-                    MatrixZ = Matrix4x4.Multiply(yRot, xRot)
-                    # Then: zRot * (yRot * xRot)
-                    MatrixZ = Matrix4x4.Multiply(zRot, MatrixZ)
+                    # Combine in the same order as C#: Y*X then Z*(Y*X)
+                    local = Matrix4x4.MultiplyColumnMajor(yRot, xRot)
+                    local = Matrix4x4.MultiplyColumnMajor(zRot, local)
 
                     parent_id = bones[k].parent_id
-
-                    if k < 5:  # Print first 5 bones
-                        print(f"\n    Bone {k}: parent={parent_id}, size={bones[k].size:.4f}")
-                        print(f"      Rotation angles: X={deg[0]:6.2f}°, Y={deg[1]:6.2f}°, Z={deg[2]:6.2f}°")
-
                     if parent_id != 0xFFFF:
-                        prevBone = frame.bone_matrices[parent_id]
+                        parent_mat = frame.bone_matrices[parent_id]
+                        # World rotation = parent * local (row-major)
+                        world = Matrix4x4.MultiplyRowMajor(parent_mat, local)
 
-                        # Multiply by parent
-                        MatrixZ = Matrix4x4.Multiply(prevBone, MatrixZ)
+                        # Now manually set translation: parent_pos + parent_rot * (0,0,parent_length)
+                        parent_length = bones[parent_id].size
+                        world.M41 = parent_mat.M13 * parent_length + parent_mat.M41
+                        world.M42 = parent_mat.M23 * parent_length + parent_mat.M42
+                        world.M43 = parent_mat.M33 * parent_length + parent_mat.M43
 
-                        if k < 5:
-                            print(f"      After parent multiplication: translation=({MatrixZ.M41:.4f}, {MatrixZ.M42:.4f}, {MatrixZ.M43:.4f})")
-
-                        # Set translation to parent's bone length
-                        bone_length = bones[parent_id].size
-                        MatrixZ.M41 = 0
-                        MatrixZ.M42 = 0
-                        MatrixZ.M43 = bone_length
-                        MatrixZ.M44 = 1
-
-                        if k < 5:
-                            print(f"      After setting bone length: translation=({MatrixZ.M41:.4f}, {MatrixZ.M42:.4f}, {MatrixZ.M43:.4f}) (bone_length={bone_length:.4f})")
-
-                        # Store current translation
-                        temp_m41 = MatrixZ.M41
-                        temp_m42 = MatrixZ.M42
-                        temp_m43 = MatrixZ.M43
-
-                        # Transform translation through parent
-                        MatrixZ.M41 = (prevBone.M11 * temp_m41 + prevBone.M12 * temp_m42 +
-                                       prevBone.M13 * temp_m43 + prevBone.M41)
-                        MatrixZ.M42 = (prevBone.M21 * temp_m41 + prevBone.M22 * temp_m42 +
-                                       prevBone.M23 * temp_m43 + prevBone.M42)
-                        MatrixZ.M43 = (prevBone.M31 * temp_m41 + prevBone.M32 * temp_m42 +
-                                       prevBone.M33 * temp_m43 + prevBone.M43)
-
-                        if k < 5:
-                            print(f"      After parent transform: translation=({MatrixZ.M41:.4f}, {MatrixZ.M42:.4f}, {MatrixZ.M43:.4f})")
-                            print(f"        Parent pos: ({prevBone.M41:.4f}, {prevBone.M42:.4f}, {prevBone.M43:.4f})")
-                            print(f"        Parent rotation row 2 (Z-axis): ({prevBone.M13:.4f}, {prevBone.M23:.4f}, {prevBone.M33:.4f})")
+                        frame.bone_matrices[k] = world
                     else:
-                        # Root bone - set translation to 0 for now
-                        MatrixZ.M41 = 0
-                        MatrixZ.M42 = 0
-                        MatrixZ.M43 = 0
-                        if k < 5:
-                            print(f"      Root bone: translation set to (0,0,0)")
-
-                    frame.bone_matrices[k] = MatrixZ
-
-
-                # Final debug for first frame
-                if anim_idx == 0 and n == 0:
-                    print("\n" + "=" * 60)
-                    print("FINAL BONE POSITIONS (After adding root position)")
-                    print("=" * 60)
-                    for k in range(min(10, nb_bones)):
-                        mat = frame.bone_matrices[k]
-                        bone = bones[k]
-                        print(f"\nBone {k}: parent={bone.parent_id}, size={bone.size:.4f}")
-                        print(f"  FINAL POSITION: ({mat.M41:.4f}, {mat.M42:.4f}, {mat.M43:.4f})")
-
-                        # Calculate direction vectors
-                        print(f"  X-axis: ({mat.M11:.4f}, {mat.M21:.4f}, {mat.M31:.4f})")
-                        print(f"  Y-axis: ({mat.M12:.4f}, {mat.M22:.4f}, {mat.M32:.4f})")
-                        print(f"  Z-axis: ({mat.M13:.4f}, {mat.M23:.4f}, {mat.M33:.4f})")
-
-                        # Check if this matches Noesis
-                        if k == 1:  # Bone 1 (second bone)
-                            print(f"\n  *** COMPARE WITH NOESIS ***")
-                            print(f"  Noesis position: (-120.0, -14445.0, 2100.0)")
-                            print(f"  Our position:     ({mat.M41:.4f}, {mat.M42:.4f}, {mat.M43:.4f})")
-                            print(f"  Difference:       ({mat.M41 + 120:.4f}, {mat.M42 + 14445:.4f}, {mat.M43 - 2100:.4f})")
-
-                            print(f"\n  Noesis X-axis: (-0.571979, -0.815908, -0.084466)")
-                            print(f"  Our X-axis:     ({mat.M11:.4f}, {mat.M21:.4f}, {mat.M31:.4f})")
-
-                            print(f"\n  Noesis Y-axis: (-0.060854, -0.060481, -0.084466)")
-                            print(f"  Our Y-axis:     ({mat.M12:.4f}, {mat.M22:.4f}, {mat.M32:.4f})")
-
-                            print(f"\n  Noesis Z-axis: (-0.818008, 0.575009, -0.015057)")
-                            print(f"  Our Z-axis:     ({mat.M13:.4f}, {mat.M23:.4f}, {mat.M33:.4f})")
+                        # Root bone: rotation only, translation zero
+                        local.M41 = 0.0
+                        local.M42 = 0.0
+                        local.M43 = 0.0
+                        frame.bone_matrices[k] = local
 
                 anim.frames.append(frame)
 
             self.animations.append(anim)
-            print(f"\n[ANIM {anim_idx}] Finished processing")
-
-        print("\n" + "=" * 80)
-        print("ANIMATION ANALYSIS COMPLETE")
-        print("=" * 80)
 
     def __str__(self):
         return f"AnimationSection(nb:{self.nb_animations}, {self.animations})"

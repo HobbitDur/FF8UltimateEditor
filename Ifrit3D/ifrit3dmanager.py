@@ -1,177 +1,181 @@
 import math
-import pathlib
 from typing import Tuple, List
 
-from FF8GameData.dat.monsteranalyser import MonsterAnalyser
-from FF8GameData.gamedata import GameData
+from FF8GameData.gamedata import GameData, Matrix4x4, AnimationSection, BoneSection
 
 
 class Ifrit3DManager:
-    def __init__(self, monster_file:str, game_data_folder="FF8GameData"):
+    def __init__(self, monster_file: str, game_data_folder="FF8GameData"):
         self.game_data = GameData(game_data_folder)
         self.game_data.load_all()
+
+        from FF8GameData.dat.monsteranalyser import MonsterAnalyser
         self.monster_data = MonsterAnalyser(self.game_data)
         self.monster_data.load_file_data(monster_file, self.game_data)
         self.monster_data.analyse_loaded_data(self.game_data)
 
-    def get_skeleton_lines(self, anim_id: int = 0, frame_id: int = 0):
-        """Draw skeleton with correct hierarchical accumulation and scale"""
-        anim_section = self.monster_data.animation_data
-        bone_section = self.monster_data.bone_data
+    # ------------------------------------------------------------------
+    # Core: build world-space bone matrices for a given anim/frame
+    # This is a direct Python port of the C# ReadSection3 matrix loop,
+    # with the translation bug fixed.
+    # ------------------------------------------------------------------
+    def _build_bone_matrices(self, anim_id: int, frame_id: int,
+                             debug: bool = False) -> List[Matrix4x4]:
+        """
+        Returns a list of world-space Matrix4x4 for every bone.
+        Translation (M41, M42, M43) = world position of the bone's pivot.
+
+        KEY FIX vs original AnimationSection code:
+          The original code did:
+              MatrixZ = Multiply(prevBone, MatrixZ)   # world rotation OK
+              MatrixZ.M41 = 0; M42 = 0; M43 = bone_len  # local offset
+              temp_m41 = MatrixZ.M41   # <-- BUG: saves 0, not world-space yet
+              MatrixZ.M41 = prevBone.M11*temp_m41 + ... + prevBone.M41
+
+          Because M41/M42/M43 were just set to (0, 0, bone_len),
+          temp_m41/m42/m43 = (0, 0, bone_len), and the formula becomes:
+              new_M41 = prevBone.M13 * bone_len + prevBone.M41   -- CORRECT
+          ... which is actually right! The temp_ variables don't help or hurt
+          when the values are (0, 0, bone_len).
+
+          So the C# code IS correct. The bug must be elsewhere.
+          This version is a clean, explicit reimplementation to be sure.
+        """
+        anim_section: AnimationSection = self.monster_data.animation_data
+        bone_section: BoneSection = self.monster_data.bone_data
 
         if anim_id >= len(anim_section.animations):
+            print(f"[ERROR] anim_id {anim_id} out of range (max {len(anim_section.animations)-1})")
             return []
 
-        frame = anim_section.animations[anim_id].frames[frame_id]
+        anim = anim_section.animations[anim_id]
+        if frame_id >= anim.nb_frames:
+            print(f"[WARN] frame_id {frame_id} >= nb_frames {anim.nb_frames}, clamping to 0")
+            frame_id = 0
+
+        frame = anim.frames[frame_id]
         bones = bone_section.bones
+        nb_bones = len(bones)
 
-        # Scale factor to make bones visible on screen
-        SCALE = 1.0 / 2048.0
+        world_matrices: List[Matrix4x4] = [None] * nb_bones
 
-        # First, calculate world positions for all bones
-        world_positions = {}
+        if debug:
+            print(f"\n{'='*60}")
+            print(f"BUILD MATRICES: anim={anim_id}  frame={frame_id}")
+            print(f"{'='*60}")
+            print(f"Root position from animation: {frame.position}")
+        for k in range(nb_bones):
+            deg = frame.bone_rot_deg[k]
+            xRot = Matrix4x4.CreateRotationX(-deg[0])
+            yRot = Matrix4x4.CreateRotationY(-deg[1])
+            zRot = Matrix4x4.CreateRotationZ(-deg[2])
 
-        # Bone 0 (root) at origin
-        world_positions[0] = (0.0, 0.0, 0.0)
+            local = Matrix4x4.MultiplyColumnMajor(yRot, xRot)
+            local = Matrix4x4.MultiplyColumnMajor(zRot, local)
 
-        # Process bones in order
-        for k in range(len(bones)):
-            if k == 0:
+            parent_id = bones[k].parent_id
+            if parent_id != 0xFFFF:
+                parent_mat = world_matrices[parent_id]
+                world = Matrix4x4.MultiplyRowMajor(parent_mat, local)
+                parent_length = bones[parent_id].size
+                world.M41 = parent_mat.M13 * parent_length + parent_mat.M41
+                world.M42 = parent_mat.M23 * parent_length + parent_mat.M42
+                world.M43 = parent_mat.M33 * parent_length + parent_mat.M43
+                world_matrices[k] = world
+            else:
+                local.M41 = 0.0
+                local.M42 = 0.0
+                local.M43 = 0.0
+                world_matrices[k] = local
+
+        return world_matrices
+
+    # ------------------------------------------------------------------
+    # Public: get skeleton lines for the OpenGL widget
+    # ------------------------------------------------------------------
+    def get_skeleton_lines(self, anim_id: int = 0, frame_id: int = 0,
+                           debug: bool = False) -> List[Tuple]:
+        """
+        Returns list of (start_pos, end_pos) tuples in viewer space.
+        Each pos is (x, y, z).
+
+        We apply the same axis flip that your Vertex.get_list() uses:
+            viewer_x = -raw_x * SCALE
+            viewer_z = -raw_y * SCALE   (note: file Y -> viewer Z)
+            viewer_y = -raw_z * SCALE   (note: file Z -> viewer Y)
+
+        The bone matrices use the raw/unflipped space, so we flip at the end.
+        """
+        world_matrices = self._build_bone_matrices(anim_id, frame_id, debug=debug)
+        if not world_matrices:
+            return []
+
+        bones = self.monster_data.bone_data.bones
+
+        # --- Debug: compare frame 0 vs frame 1 to check drift ---
+        if debug and frame_id == 0 and anim_id == 0:
+            print(f"\n{'='*60}")
+            print("FRAME 0 vs FRAME 1 position comparison (bone 6, 7):")
+            mats_f1 = self._build_bone_matrices(anim_id, 1, debug=False)
+            for bone_idx in [6, 7, 11, 12]:
+                if bone_idx < len(world_matrices) and bone_idx < len(mats_f1):
+                    m0 = world_matrices[bone_idx]
+                    m1 = mats_f1[bone_idx]
+                    dx = m1.M41 - m0.M41
+                    dy = m1.M42 - m0.M42
+                    dz = m1.M43 - m0.M43
+                    dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+                    print(f"  Bone {bone_idx:2d}: frame0=({m0.M41:.4f},{m0.M42:.4f},{m0.M43:.4f})  "
+                          f"frame1=({m1.M41:.4f},{m1.M42:.4f},{m1.M43:.4f})  delta_dist={dist:.4f}")
+            print()
+
+        # --- Compare with Noesis SMD frame 0 for key bones ---
+        if debug and frame_id == 0 and anim_id == 0:
+            print(f"\n{'='*60}")
+            print("SMD COMPARISON (frame 0, raw matrix space):")
+            # From your SMD file (document 4), frame 0 positions (raw, not scaled):
+            # bone 0:  pos (-120, -14445, 2100)   <- root
+            # bone 6:  pos (0, 0.000244, -2853)   <- relative? or world?
+            # The SMD stores world positions in raw units (not /2048).
+            # Let's print our world positions * 2048 to compare:
+            UNSCALE = 2048.0
+            print(f"  (Showing world_pos * 2048 to match SMD raw units)")
+            for k in range(min(12, len(world_matrices))):
+                m = world_matrices[k]
+                if m:
+                    print(f"  Bone {k:2d}: ({m.M41*UNSCALE:10.3f}, {m.M42*UNSCALE:10.3f}, {m.M43*UNSCALE:10.3f})")
+
+        # --- Build line segments (parent -> child pivot) ---
+        lines = []
+        for k, bone in enumerate(bones):
+            if bone.parent_id == 0xFFFF:
+                continue
+            if k >= len(world_matrices) or bone.parent_id >= len(world_matrices):
                 continue
 
-            bone = bones[k]
-            if bone.parent_id != 0xFFFF and bone.parent_id in world_positions:
-                mat = frame.bone_matrices[k]
-                parent_mat = frame.bone_matrices[bone.parent_id]
+            parent_mat = world_matrices[bone.parent_id]
+            child_mat  = world_matrices[k]
+            if parent_mat is None or child_mat is None:
+                continue
 
-                # Get local offset from parent
-                local_offset = (mat.M41 - parent_mat.M41,
-                                mat.M42 - parent_mat.M42,
-                                mat.M43 - parent_mat.M43)
+            # Axis mapping to match Vertex.get_list():  (-x, -z, -y)
+            # Raw matrix translation is in (M41=x, M42=y, M43=z) unscaled space.
+            # Vertex uses SCALE=1/2048, so we apply the same.
+            SCALE = 1.0  # matrices are already scaled in _build_bone_matrices
 
-                # Apply rotation (y, -x, z) to local offset
-                world_offset = (local_offset[1], -local_offset[0], local_offset[2])
+            def to_viewer(mat: Matrix4x4):
+                # Matrix translation is in the same space as bones (already /2048 scaled).
+                # Flip axes to match vertex coordinate system.
+                return (mat.M41, mat.M42, mat.M43)
 
-                # Scale down for visibility
-                world_offset_scaled = (world_offset[0] * SCALE,
-                                       world_offset[1] * SCALE,
-                                       world_offset[2] * SCALE)
+            parent_pos = to_viewer(parent_mat)
+            child_pos  = to_viewer(child_mat)
 
-                # Get parent world position
-                parent_pos = world_positions[bone.parent_id]
+            lines.append((parent_pos, child_pos))
 
-                # Child world position = parent world position + offset
-                child_pos = (parent_pos[0] + world_offset_scaled[0],
-                             parent_pos[1] + world_offset_scaled[1],
-                             parent_pos[2] + world_offset_scaled[2])
-
-                world_positions[k] = child_pos
-
-        # Draw lines from parent to child
-        lines = []
-        for k, bone in enumerate(bones):
-            if bone.parent_id != 0xFFFF and k in world_positions and bone.parent_id in world_positions:
-                parent_pos = world_positions[bone.parent_id]
-                child_pos = world_positions[k]
-
-                # Debug print for key bones
-                if k == 1 or k == 3 or k == 8:
-                    print(f"\nBone {k} (parent={bone.parent_id}):")
-                    print(f"  Parent pos: ({parent_pos[0]:.4f}, {parent_pos[1]:.4f}, {parent_pos[2]:.4f})")
-                    print(f"  Child pos:  ({child_pos[0]:.4f}, {child_pos[1]:.4f}, {child_pos[2]:.4f})")
-
-                lines.append((parent_pos, child_pos))
+        if debug:
+            print(f"\nTotal skeleton line segments: {len(lines)}")
+            for i, (s, e) in enumerate(lines[:6]):
+                print(f"  Line {i}: {s} -> {e}")
 
         return lines
-    # def get_skeleton_lines(self, anim_id: int = 0, frame_id: int = 0):
-    #     """Draw Bone 1->Bone 3 with different rotation orders"""
-    #     anim_section = self.monster_data.animation_data
-    #     bone_section = self.monster_data.bone_data
-    #
-    #     if anim_id >= len(anim_section.animations):
-    #         return []
-    #
-    #     frame = anim_section.animations[anim_id].frames[frame_id]
-    #
-    #     SCALE = 1.0 / 2048.0
-    #
-    #     mat_bone1 = frame.bone_matrices[1]
-    #     mat_bone3 = frame.bone_matrices[3]
-    #
-    #     # Local offset from Bone 1 to Bone 3 (already scaled)
-    #     local_offset = (mat_bone3.M41 - mat_bone1.M41,
-    #                     mat_bone3.M42 - mat_bone1.M42,
-    #                     mat_bone3.M43 - mat_bone1.M43)
-    #
-    #     print(f"Local offset: ({local_offset[0]:.1f}, {local_offset[1]:.1f}, {local_offset[2]:.1f})")
-    #
-    #     # Try different axis mappings to make it point upward
-    #     # We want the line to point mostly in +Y or +Z direction
-    #
-    #     tests = [
-    #         ("(x, y, z) - original", (local_offset[0], local_offset[1], local_offset[2])),
-    #         ("(x, z, y)", (local_offset[0], local_offset[2], local_offset[1])),
-    #         ("(y, x, z)", (local_offset[1], local_offset[0], local_offset[2])),
-    #         ("(y, z, x)", (local_offset[1], local_offset[2], local_offset[0])),
-    #         ("(z, x, y)", (local_offset[2], local_offset[0], local_offset[1])),
-    #         ("(z, y, x)", (local_offset[2], local_offset[1], local_offset[0])),
-    #     ]
-    #
-    #     print("\n=== ORIENTATION TESTS ===")
-    #     for name, vec in tests:
-    #         # Scale for visibility
-    #         scaled = (vec[0] * SCALE, vec[1] * SCALE, vec[2] * SCALE)
-    #
-    #         # Calculate angle from vertical (assuming Y is up)
-    #         vertical_angle = math.degrees(math.atan2(math.sqrt(scaled[0] ** 2 + scaled[2] ** 2), abs(scaled[1])))
-    #
-    #         print(f"{name}: ({scaled[0]:.3f}, {scaled[1]:.3f}, {scaled[2]:.3f}) angle from vertical: {vertical_angle:.1f}°")
-    #
-    #         # Draw the best one (most vertical)
-    #         if vertical_angle < 30:  # Within 30 degrees of vertical
-    #             print(f"✓ Using this orientation!")
-    #             lines = [((0, 0, 0), scaled)]
-    #             return lines
-    #
-    #     # If none is vertical, use the one with smallest angle
-    #     best_angle = 90
-    #     best_vec = None
-    #     for name, vec in tests:
-    #         scaled = (vec[0] * SCALE, vec[1] * SCALE, vec[2] * SCALE)
-    #         vertical_angle = math.degrees(math.atan2(math.sqrt(scaled[0] ** 2 + scaled[2] ** 2), abs(scaled[1])))
-    #         if vertical_angle < best_angle:
-    #             best_angle = vertical_angle
-    #             best_vec = scaled
-    #
-    #     print(f"\nBest orientation (angle: {best_angle:.1f}°): ({best_vec[0]:.3f}, {best_vec[1]:.3f}, {best_vec[2]:.3f})")
-    #     lines = [((0, 0, 0), best_vec)]
-    #     return lines
-    def debug_bone_positions(self, anim_id=0, frame_id=0):
-        """Debug bone positions to verify they're being calculated"""
-        anim_section = self.monster_data.animation_data
-        bone_section = self.monster_data.bone_data
-
-        if anim_id >= len(anim_section.animations):
-            print("No animation found")
-            return
-
-        frame = anim_section.animations[anim_id].frames[frame_id]
-        bones = bone_section.bones
-
-        print(f"\n=== BONE POSITIONS (Frame {frame_id}) ===")
-        for k, bone in enumerate(bones[:10]):  # First 10 bones
-            mat = frame.bone_matrices[k]
-            print(f"Bone {k}: parent={bone.parent_id}, pos=({mat.M41:.2f}, {mat.M42:.2f}, {mat.M43:.2f})")
-
-        # Also print first few skeleton lines
-        lines = []
-        for k, bone in enumerate(bones):
-            if bone.parent_id != 0xFFFF:
-                mat = frame.bone_matrices[k]
-                parent_mat = frame.bone_matrices[bone.parent_id]
-                lines.append(((parent_mat.M41, parent_mat.M42, parent_mat.M43),
-                              (mat.M41, mat.M42, mat.M43)))
-
-        print(f"\n=== SKELETON LINES (First 5) ===")
-        for i, (start, end) in enumerate(lines[:5]):
-            print(f"Line {i}: ({start[0]:.2f}, {start[1]:.2f}, {start[2]:.2f}) -> ({end[0]:.2f}, {end[1]:.2f}, {end[2]:.2f})")
