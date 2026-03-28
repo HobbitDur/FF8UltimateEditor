@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
 )
 import json
 
-from Solomonring.gfdata import GFData
+from SolomonRing.gfdata import GFData
 
 
 class GFGeneralTab(QWidget):

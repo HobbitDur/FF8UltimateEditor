@@ -6,8 +6,8 @@ from PyQt6.QtWidgets import QTabWidget, QWidget, QListWidget, QHBoxLayout, QPush
 
 from FF8GameData.gamedata import GameData
 from ShumiTranslator.model.kernel.kernelmanager import KernelManager
-from Solomonring.gfdata import GFData
-from Solomonring.junctionablegftabs.gfgeneraltab import GFGeneralTab
+from SolomonRing.gfdata import GFData
+from SolomonRing.junctionablegftabs.gfgeneraltab import GFGeneralTab
 
 
 class SolomonRingWidget(QWidget):
