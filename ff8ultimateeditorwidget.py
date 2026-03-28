@@ -26,7 +26,7 @@ from ShumiTranslator.shumitranslator import ShumiTranslator
 from SmallWidget.externaltoolwidget import ExternalToolWidget
 from TonberryShop.tonberryshop import TonberryShop
 from ToolUpdate.toolupdatewidget import ToolUpdateWidget
-from Solomonring.solomonringwidget import SolomonRingWidget
+from SolomonRing.solomonringwidget import SolomonRingWidget
 
 
 class FF8UltimateEditorWidget(QWidget):
