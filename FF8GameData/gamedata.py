@@ -288,7 +288,7 @@ class ObjectData:
             self.triangles[-1].analyze(data[current_index: next_index])
             current_index = next_index
             next_index = next_index + 16
-        next_index +=4
+        next_index = current_index + 20
         for i in range(self.nb_quad):
             self.quads.append(GeometryQuad())
             self.quads[-1].analyze(data[current_index: next_index])
@@ -430,15 +430,32 @@ class GeometrySection:
         return vertices_list
 
     def get_triangles(self):
-        triangle_list = []
-        for object in self.object_data:
-            triangle_list.extend(object.get_triangles())
-        return triangle_list
+        all_tri = []
+        offset = 0
+        for obj in self.object_data:
+            obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
+            for tri in obj.triangles:
+                all_tri.append((
+                    tri.vertex_indexes[0] + offset,
+                    tri.vertex_indexes[1] + offset,
+                    tri.vertex_indexes[2] + offset
+                ))
+            offset += obj_vert_count
+        return all_tri
     def get_quads(self):
-        quad_list = []
-        for object in self.object_data:
-            quad_list.extend(object.get_quads())
-        return quad_list
+        all_quads = []
+        offset = 0
+        for obj in self.object_data:
+            obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
+            for quad in obj.quads:
+                all_quads.append((
+                    quad.vertex_indexes[0] + offset,
+                    quad.vertex_indexes[1] + offset,
+                    quad.vertex_indexes[2] + offset,
+                    quad.vertex_indexes[3] + offset
+                ))
+            offset += obj_vert_count
+        return all_quads
 
 # Section 3 data:
 
@@ -557,34 +574,6 @@ class Matrix4x4:
         mat.M21 = s
         mat.M22 = c
         return mat
-
-    @staticmethod
-    def Multiply(a, b):
-        """Column-major matrix multiplication matching C# MakiExtended.MatrixMultiply"""
-        result = Matrix4x4()
-
-        # Note: This is column-major multiplication
-        result.M11 = b.M11 * a.M11 + b.M21 * a.M12 + b.M31 * a.M13
-        result.M12 = b.M11 * a.M21 + b.M21 * a.M22 + b.M31 * a.M23
-        result.M13 = b.M11 * a.M31 + b.M21 * a.M32 + b.M31 * a.M33
-        result.M14 = 0
-
-        result.M21 = b.M12 * a.M11 + b.M22 * a.M12 + b.M32 * a.M13
-        result.M22 = b.M12 * a.M21 + b.M22 * a.M22 + b.M32 * a.M23
-        result.M23 = b.M12 * a.M31 + b.M22 * a.M32 + b.M32 * a.M33
-        result.M24 = 0
-
-        result.M31 = b.M13 * a.M11 + b.M23 * a.M12 + b.M33 * a.M13
-        result.M32 = b.M13 * a.M21 + b.M23 * a.M22 + b.M33 * a.M23
-        result.M33 = b.M13 * a.M31 + b.M23 * a.M32 + b.M33 * a.M33
-        result.M34 = 0
-
-        result.M41 = 0
-        result.M42 = 0
-        result.M43 = 0
-        result.M44 = 0
-
-        return result
     @staticmethod
     def MultiplyColumnMajor(a, b):
         """

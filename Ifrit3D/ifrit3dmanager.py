@@ -20,7 +20,7 @@ class Ifrit3DManager:
     # with the translation bug fixed.
     # ------------------------------------------------------------------
     def _build_bone_matrices(self, anim_id: int, frame_id: int,
-                             debug: bool = False) -> List[Matrix4x4]:
+                             debug: bool = True) -> List[Matrix4x4]:
         """
         Returns a list of world-space Matrix4x4 for every bone.
         Translation (M41, M42, M43) = world position of the bone's pivot.
@@ -88,13 +88,22 @@ class Ifrit3DManager:
                 local.M43 = 0.0
                 world_matrices[k] = local
 
+            if debug and k == 16:  # adjust bone index as needed
+                print(f"\n=== Bone {k} (ID {k}) World Matrix ===")
+                # Row-major axes (X, Y, Z as rows)
+                print(f"X axis: ({world.M11:.6f}, {world.M12:.6f}, {world.M13:.6f})")
+                print(f"Y axis: ({world.M21:.6f}, {world.M22:.6f}, {world.M23:.6f})")
+                print(f"Z axis: ({world.M31:.6f}, {world.M32:.6f}, {world.M33:.6f})")
+                print(f"Position: ({world.M41:.6f}, {world.M42:.6f}, {world.M43:.6f})")
+
+
         return world_matrices
 
     # ------------------------------------------------------------------
     # Public: get skeleton lines for the OpenGL widget
     # ------------------------------------------------------------------
     def get_skeleton_lines(self, anim_id: int = 0, frame_id: int = 0,
-                           debug: bool = False) -> List[Tuple]:
+                           debug: bool = True) -> List[Tuple]:
         """
         Returns list of (start_pos, end_pos) tuples in viewer space.
         Each pos is (x, y, z).
@@ -116,7 +125,7 @@ class Ifrit3DManager:
         if debug and frame_id == 0 and anim_id == 0:
             print(f"\n{'='*60}")
             print("FRAME 0 vs FRAME 1 position comparison (bone 6, 7):")
-            mats_f1 = self._build_bone_matrices(anim_id, 1, debug=False)
+            mats_f1 = self._build_bone_matrices(anim_id, 1)
             for bone_idx in [6, 7, 11, 12]:
                 if bone_idx < len(world_matrices) and bone_idx < len(mats_f1):
                     m0 = world_matrices[bone_idx]
@@ -158,15 +167,9 @@ class Ifrit3DManager:
             if parent_mat is None or child_mat is None:
                 continue
 
-            # Axis mapping to match Vertex.get_list():  (-x, -z, -y)
-            # Raw matrix translation is in (M41=x, M42=y, M43=z) unscaled space.
-            # Vertex uses SCALE=1/2048, so we apply the same.
-            SCALE = 1.0  # matrices are already scaled in _build_bone_matrices
 
             def to_viewer(mat: Matrix4x4):
-                # Matrix translation is in the same space as bones (already /2048 scaled).
-                # Flip axes to match vertex coordinate system.
-                return (mat.M41, mat.M42, mat.M43)
+                return mat.M41, mat.M42, mat.M43
 
             parent_pos = to_viewer(parent_mat)
             child_pos  = to_viewer(child_mat)
@@ -179,3 +182,85 @@ class Ifrit3DManager:
                 print(f"  Line {i}: {s} -> {e}")
 
         return lines
+
+    def get_animated_vertices(self, anim_id: int, frame_id: int, next_frame_id: int = None, step: float = 0.0) -> List[Tuple[float, float, float]]:
+        """
+        Get animated vertices for current frame.
+        If next_frame_id is provided, interpolate between frames using step (0.0-1.0).
+        """
+        anim = self.monster_data.animation_data.animations[anim_id]
+        frame = anim.frames[frame_id]
+        matrices = frame.bone_matrices  # already built!
+
+        if next_frame_id is not None:
+            next_frame = anim.frames[next_frame_id]
+            next_matrices = next_frame.bone_matrices
+        else:
+            next_matrices = None
+
+        # Get static vertices with bone assignments
+        geometry = self.monster_data.geometry_data
+        all_vertices = []
+
+        # Process each object
+        for obj_idx, obj in enumerate(geometry.object_data):
+            # Collect all vertices from this object with their bone IDs
+            verts_with_bones = []
+            for vert_data in obj.vertices_data:
+                bone_id = vert_data.bone_id
+                for vertex in vert_data.vertices:
+                    verts_with_bones.append((vertex.get_list(), bone_id))
+
+            # Transform each vertex
+            for vert_pos, bone_id in verts_with_bones:
+                # Get matrix for this bone
+                mat = matrices[bone_id]
+
+                # Apply transformation (same as C# CalculateFrame)
+                transformed = self._transform_vertex(vert_pos, mat)
+
+                if next_matrices is not None:
+                    # Interpolate with next frame
+                    next_mat = next_matrices[bone_id]
+                    next_transformed = self._transform_vertex(vert_pos, next_mat)
+
+                    # Linear interpolation
+                    transformed = (
+                        transformed[0] * (1 - step) + next_transformed[0] * step,
+                        transformed[1] * (1 - step) + next_transformed[1] * step,
+                        transformed[2] * (1 - step) + next_transformed[2] * step
+                    )
+
+                all_vertices.append(transformed)
+
+        return all_vertices
+
+    def _transform_vertex(self, vertex: Tuple[float, float, float], matrix: Matrix4x4) -> Tuple[float, float, float]:
+        """
+        Transform a vertex by a bone matrix.
+        Matches C# CalculateFrame logic:
+        rootFramePos = new Vector3(
+            matrix.M11 * tuple.Item1.X + matrix.M41 + matrix.M12 * -tuple.Item1.Z + matrix.M13 * -tuple.Item1.Y,
+            matrix.M21 * tuple.Item1.X + matrix.M42 + matrix.M22 * -tuple.Item1.Z + matrix.M23 * -tuple.Item1.Y,
+            matrix.M31 * tuple.Item1.X + matrix.M43 + matrix.M32 * -tuple.Item1.Z + matrix.M33 * -tuple.Item1.Y)
+        """
+        x, y, z = vertex
+
+        # The vertex is already in viewer space (x, y, z)
+        # Apply bone transformation
+        result_x = (matrix.M11 * x +
+                    matrix.M12 * -z +  # Note: file Y -> viewer Z, so we use -z
+                    matrix.M13 * -y +  # file Z -> viewer Y, so we use -y
+                    matrix.M41)
+
+        result_y = (matrix.M21 * x +
+                    matrix.M22 * -z +
+                    matrix.M23 * -y +
+                    matrix.M42)
+
+        result_z = (matrix.M31 * x +
+                    matrix.M32 * -z +
+                    matrix.M33 * -y +
+                    matrix.M43)
+
+        return (result_x, result_y, result_z)

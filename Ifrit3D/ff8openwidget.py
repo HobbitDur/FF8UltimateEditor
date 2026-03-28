@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 from PyQt6.QtCore import Qt
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
@@ -35,12 +37,11 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # Display options
         self.show_triangles = True
         self.show_quads = True
-        self.show_wireframe = False
+        self.show_wireframe = True
         self.show_axis = True
         self.show_mesh = False
 
     def set_vertices(self, vertices:list):
-        # self.VERTICES = [transform_vertex(v) for v in self.RAW_VERTICES_ORIGINAL]
         self.vertices = vertices
         self.vertices_array = np.array(self.vertices, dtype=np.float32)
 

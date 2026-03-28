@@ -2,9 +2,7 @@ from PyQt6.QtCore import QTimer, Qt
 
 from Ifrit3D.ff8openwidget import FF8OpenGLWidget
 from Ifrit3D.ifrit3dmanager import Ifrit3DManager
-import sys
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QPushButton, QSlider
-from PyQt6.QtGui import QSurfaceFormat
 
 
 class Ifrit3DWidget(QWidget):
@@ -16,13 +14,17 @@ class Ifrit3DWidget(QWidget):
         self.current_frame = 0
         self.animating = False
         self.fps = 30  # Frames per second
+        # Add interpolation step for smooth animation
+        self.interp_step = 0.0
+        self.next_frame_index = 1
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         self.gl_widget = FF8OpenGLWidget(self)
-        self.gl_widget.set_vertices(self.ifrit3d_manager.monster_data.geometry_data.get_vertices())
+        initial_verts = self.ifrit3d_manager.get_animated_vertices(self.current_anim_id, self.current_frame)
+        self.gl_widget.set_vertices(initial_verts)
         self.gl_widget.set_triangles(self.ifrit3d_manager.monster_data.geometry_data.get_triangles())
         self.gl_widget.set_quads(self.ifrit3d_manager.monster_data.geometry_data.get_quads())
 
@@ -141,15 +143,6 @@ class Ifrit3DWidget(QWidget):
             self.frame_slider.setValue(self.current_frame)
             self.frame_slider.blockSignals(False)
 
-    def next_frame(self):
-        """Advance to next frame"""
-        max_frames = self.get_max_frames()
-
-        if max_frames > 0:
-            old_frame = self.current_frame
-            self.current_frame = (self.current_frame + 1) % max_frames
-            self.update_skeleton()
-
     def toggle_animation(self):
         """Start/stop animation"""
 
@@ -162,9 +155,75 @@ class Ifrit3DWidget(QWidget):
             self.play_btn.setText("Pause")
             self.animating = True
 
+    def update_animated_mesh(self):
+        """Update mesh vertices based on current frame"""
+        # Get current and next frame for interpolation
+        max_frames = self.get_max_frames()
+        if max_frames == 0:
+            return
+
+        next_frame = (self.current_frame + 1) % max_frames
+
+        # Get animated vertices with interpolation
+        animated_verts = self.ifrit3d_manager.get_animated_vertices(
+            anim_id=self.current_anim_id,
+            frame_id=self.current_frame,
+            next_frame_id=next_frame,
+            step=self.interp_step
+        )
+
+        self.current_animated_vertices = animated_verts
+
+        # Update the OpenGL widget with new vertices
+        self.gl_widget.set_vertices(animated_verts)
+
+        # Triangles and quads indices remain the same (only vertex positions change)
+        self.gl_widget.set_triangles(self.ifrit3d_manager.monster_data.geometry_data.get_triangles())
+        self.gl_widget.set_quads(self.ifrit3d_manager.monster_data.geometry_data.get_quads())
+
+        self.gl_widget.update()
+
+    def next_frame(self):
+        """Advance to next frame with interpolation"""
+        max_frames = self.get_max_frames()
+
+        if max_frames > 0:
+            # Update interpolation step
+            if self.animating:
+                self.interp_step += 1.0 / (self.fps / 30.0)  # Assuming 30 fps base
+                if self.interp_step >= 1.0:
+                    self.interp_step = 0.0
+                    self.current_frame = (self.current_frame + 1) % max_frames
+                    self.next_frame_index = (self.current_frame + 1) % max_frames
+            else:
+                # When not animating, just update to current frame
+                self.update_animated_mesh()
+                self.update_skeleton()
+                return
+
+            # Update both mesh and skeleton
+            self.update_animated_mesh()
+            self.update_skeleton()
+
+    def set_frame(self, value):
+        """Jump to specific frame"""
+        if not self.animating:
+            self.current_frame = value
+            self.next_frame_index = (self.current_frame + 1) % self.get_max_frames()
+            self.interp_step = 0.0
+            self.update_animated_mesh()
+            self.update_skeleton()
+            if hasattr(self, 'frame_slider'):
+                self.frame_slider.blockSignals(True)
+                self.frame_slider.setValue(self.current_frame)
+                self.frame_slider.blockSignals(False)
+
     def reset_animation(self):
         """Reset to first frame"""
         self.current_frame = 0
+        self.next_frame_index = 1
+        self.interp_step = 0.0
+        self.update_animated_mesh()
         self.update_skeleton()
         if self.animating:
             self.timer.stop()

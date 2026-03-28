@@ -427,7 +427,7 @@ class MonsterAnalyser:
         SECTION_NUMBER = 2
         if self.section_raw_data[SECTION_NUMBER]:
             self.geometry_data.analyze(self.section_raw_data[SECTION_NUMBER])
-            #print(self.geometry_data)
+            print(self.geometry_data)
 
     def __analyze_animation_section(self, game_data: GameData):
         print("__analyze_animation_section")
