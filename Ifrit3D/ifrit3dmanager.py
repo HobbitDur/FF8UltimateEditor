@@ -190,19 +190,8 @@ class Ifrit3DManager:
 
         # The vertex is already in viewer space (x, y, z)
         # Apply bone transformation
-        result_x = (matrix.M11 * x +
-                    matrix.M12 * -z +  # Note: file Y -> viewer Z, so we use -z
-                    matrix.M13 * -y +  # file Z -> viewer Y, so we use -y
-                    matrix.M41)
-
-        result_y = (matrix.M21 * x +
-                    matrix.M22 * -z +
-                    matrix.M23 * -y +
-                    matrix.M42)
-
-        result_z = (matrix.M31 * x +
-                    matrix.M32 * -z +
-                    matrix.M33 * -y +
-                    matrix.M43)
+        result_x = matrix.M11 * x + matrix.M12 * -y + matrix.M13 * -z + matrix.M41
+        result_y = matrix.M21 * x + matrix.M22 * -y + matrix.M23 * -z + matrix.M42
+        result_z = matrix.M31 * x + matrix.M32 * -y + matrix.M33 * -z + matrix.M43
 
         return (result_x, result_y, result_z)
