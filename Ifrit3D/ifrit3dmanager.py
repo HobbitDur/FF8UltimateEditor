@@ -14,91 +14,33 @@ class Ifrit3DManager:
         self.monster_data.load_file_data(monster_file, self.game_data)
         self.monster_data.analyse_loaded_data(self.game_data)
 
-    # ------------------------------------------------------------------
-    # Core: build world-space bone matrices for a given anim/frame
-    # This is a direct Python port of the C# ReadSection3 matrix loop,
-    # with the translation bug fixed.
-    # ------------------------------------------------------------------
-    def _build_bone_matrices(self, anim_id: int, frame_id: int,
-                             debug: bool = True) -> List[Matrix4x4]:
+    def _get_bone_matrices(self, anim_id: int, frame_id: int) -> List[Matrix4x4]:
         """
-        Returns a list of world-space Matrix4x4 for every bone.
-        Translation (M41, M42, M43) = world position of the bone's pivot.
-
-        KEY FIX vs original AnimationSection code:
-          The original code did:
-              MatrixZ = Multiply(prevBone, MatrixZ)   # world rotation OK
-              MatrixZ.M41 = 0; M42 = 0; M43 = bone_len  # local offset
-              temp_m41 = MatrixZ.M41   # <-- BUG: saves 0, not world-space yet
-              MatrixZ.M41 = prevBone.M11*temp_m41 + ... + prevBone.M41
-
-          Because M41/M42/M43 were just set to (0, 0, bone_len),
-          temp_m41/m42/m43 = (0, 0, bone_len), and the formula becomes:
-              new_M41 = prevBone.M13 * bone_len + prevBone.M41   -- CORRECT
-          ... which is actually right! The temp_ variables don't help or hurt
-          when the values are (0, 0, bone_len).
-
-          So the C# code IS correct. The bug must be elsewhere.
-          This version is a clean, explicit reimplementation to be sure.
+        Returns world-space bone matrices for a given animation and frame.
+        Now uses pre‑computed matrices from AnimationSection.
         """
-        anim_section: AnimationSection = self.monster_data.animation_data
-        bone_section: BoneSection = self.monster_data.bone_data
+        anim_section = self.monster_data.animation_data
 
+        # Validate animation ID
         if anim_id >= len(anim_section.animations):
-            print(f"[ERROR] anim_id {anim_id} out of range (max {len(anim_section.animations)-1})")
+            print(f"[ERROR] anim_id {anim_id} out of range (max {len(anim_section.animations) - 1})")
             return []
 
         anim = anim_section.animations[anim_id]
+
+        # Validate frame ID
         if frame_id >= anim.nb_frames:
             print(f"[WARN] frame_id {frame_id} >= nb_frames {anim.nb_frames}, clamping to 0")
             frame_id = 0
 
         frame = anim.frames[frame_id]
-        bones = bone_section.bones
-        nb_bones = len(bones)
 
-        world_matrices: List[Matrix4x4] = [None] * nb_bones
+        # Check if matrices exist
+        if not hasattr(frame, 'bone_matrices') or frame.bone_matrices is None:
+            print("[ERROR] No pre‑computed bone_matrices found in frame!")
 
-        if debug:
-            print(f"\n{'='*60}")
-            print(f"BUILD MATRICES: anim={anim_id}  frame={frame_id}")
-            print(f"{'='*60}")
-            print(f"Root position from animation: {frame.position}")
-        for k in range(nb_bones):
-            deg = frame.bone_rot_deg[k]
-            xRot = Matrix4x4.CreateRotationX(-deg[0])
-            yRot = Matrix4x4.CreateRotationY(-deg[1])
-            zRot = Matrix4x4.CreateRotationZ(-deg[2])
-
-            local = Matrix4x4.MultiplyColumnMajor(yRot, xRot)
-            local = Matrix4x4.MultiplyColumnMajor(zRot, local)
-
-            parent_id = bones[k].parent_id
-            if parent_id != 0xFFFF:
-                parent_mat = world_matrices[parent_id]
-                world = Matrix4x4.MultiplyRowMajor(parent_mat, local)
-                parent_length = bones[parent_id].size
-                world.M41 = parent_mat.M13 * parent_length + parent_mat.M41
-                world.M42 = parent_mat.M23 * parent_length + parent_mat.M42
-                world.M43 = parent_mat.M33 * parent_length + parent_mat.M43
-                world_matrices[k] = world
-            else:
-                local.M41 = 0.0
-                local.M42 = 0.0
-                local.M43 = 0.0
-                world_matrices[k] = local
-
-            if debug and k == 16:  # adjust bone index as needed
-                print(f"\n=== Bone {k} (ID {k}) World Matrix ===")
-                # Row-major axes (X, Y, Z as rows)
-                print(f"X axis: ({world.M11:.6f}, {world.M12:.6f}, {world.M13:.6f})")
-                print(f"Y axis: ({world.M21:.6f}, {world.M22:.6f}, {world.M23:.6f})")
-                print(f"Z axis: ({world.M31:.6f}, {world.M32:.6f}, {world.M33:.6f})")
-                print(f"Position: ({world.M41:.6f}, {world.M42:.6f}, {world.M43:.6f})")
-
-
-        return world_matrices
-
+        matrices = frame.bone_matrices
+        return matrices
     # ------------------------------------------------------------------
     # Public: get skeleton lines for the OpenGL widget
     # ------------------------------------------------------------------
@@ -115,7 +57,7 @@ class Ifrit3DManager:
 
         The bone matrices use the raw/unflipped space, so we flip at the end.
         """
-        world_matrices = self._build_bone_matrices(anim_id, frame_id, debug=debug)
+        world_matrices = self._get_bone_matrices(anim_id, frame_id)
         if not world_matrices:
             return []
 
@@ -125,7 +67,7 @@ class Ifrit3DManager:
         if debug and frame_id == 0 and anim_id == 0:
             print(f"\n{'='*60}")
             print("FRAME 0 vs FRAME 1 position comparison (bone 6, 7):")
-            mats_f1 = self._build_bone_matrices(anim_id, 1)
+            mats_f1 = self._get_bone_matrices(anim_id, 1)
             for bone_idx in [6, 7, 11, 12]:
                 if bone_idx < len(world_matrices) and bone_idx < len(mats_f1):
                     m0 = world_matrices[bone_idx]
