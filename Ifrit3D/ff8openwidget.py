@@ -18,13 +18,13 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.triangles = [(0, 0, 0), (0, 0, 0), (0, 0, 0)]
         self.quads = [(0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0)]
         self.skeleton_lines = []
-        self.show_skeleton = True
+
         super().__init__(parent)
 
         # Camera controls
         self.rot_x = 20.0
         self.rot_y = 30.0
-        self.zoom = self.MODEL_SIZE * 1.5
+        self.zoom = 0
         self.pan_x = 0.0
         self.pan_y = 0.0
 
@@ -38,8 +38,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.show_triangles = True
         self.show_quads = True
         self.show_wireframe = True
-        self.show_axis = True
-        self.show_mesh = False
+        self.show_axis = False
+        self.show_mesh = True
+        self.show_skeleton = False
 
     def set_vertices(self, vertices:list):
         self.vertices = vertices

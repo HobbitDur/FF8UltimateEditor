@@ -2,7 +2,7 @@ from PyQt6.QtCore import QTimer, Qt
 
 from Ifrit3D.ff8openwidget import FF8OpenGLWidget
 from Ifrit3D.ifrit3dmanager import Ifrit3DManager
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QPushButton, QSlider
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QPushButton, QSlider, QSpinBox
 
 
 class Ifrit3DWidget(QWidget):
@@ -25,6 +25,7 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget = FF8OpenGLWidget(self)
         initial_verts = self.ifrit3d_manager.get_animated_vertices(self.current_anim_id, self.current_frame)
         self.gl_widget.set_vertices(initial_verts)
+        self.gl_widget.reset_view()
         self.gl_widget.set_triangles(self.ifrit3d_manager.monster_data.geometry_data.get_triangles())
         self.gl_widget.set_quads(self.ifrit3d_manager.monster_data.geometry_data.get_quads())
 
@@ -57,14 +58,14 @@ class Ifrit3DWidget(QWidget):
 
             # Toggle for axis
             self.cb_axis = QCheckBox("Axis")
-            self.cb_axis.setChecked(True)
+            self.cb_axis.setChecked(False)
             self.cb_axis.setStyleSheet("color:white;")
             self.cb_axis.toggled.connect(self._on_axis_toggle)
             toolbar_layout.addWidget(self.cb_axis)
 
             # Toggle for skeleton
             self.cb_skeleton = QCheckBox("Skeleton")
-            self.cb_skeleton.setChecked(True)
+            self.cb_skeleton.setChecked(False)
             self.cb_skeleton.setStyleSheet("color:white;")
             self.cb_skeleton.toggled.connect(self._on_skeleton_toggle)
             toolbar_layout.addWidget(self.cb_skeleton)
@@ -90,6 +91,17 @@ class Ifrit3DWidget(QWidget):
             self.frame_slider.setStyleSheet("color:white;")
             self.frame_slider.valueChanged.connect(self.set_frame)
             toolbar_layout.addWidget(self.frame_slider)
+
+            self.anim_label = QLabel("Anim:")
+            self.anim_label.setStyleSheet("color:white; padding:4px 4px;")
+            toolbar_layout.addWidget(self.anim_label)
+
+            self.anim_selector = QSpinBox()
+            self.anim_selector.setRange(0, len(self.ifrit3d_manager.monster_data.animation_data.animations) - 1)
+            self.anim_selector.setValue(0)
+            self.anim_selector.setStyleSheet("color:white; background:#333; padding:2px;")
+            self.anim_selector.valueChanged.connect(self.set_animation)
+            toolbar_layout.addWidget(self.anim_selector)
 
             # Spacer to push right-side controls to the right
             toolbar_layout.addStretch()
@@ -121,6 +133,27 @@ class Ifrit3DWidget(QWidget):
         if anim_section and self.current_anim_id < len(anim_section.animations):
             return anim_section.animations[self.current_anim_id].nb_frames
         return 0
+
+    def set_animation(self, anim_id: int):
+        """Switch to a different animation, reset to frame 0."""
+        # Stop playback first
+        if self.animating:
+            self.timer.stop()
+            self.play_btn.setText("Play")
+            self.animating = False
+
+        self.current_anim_id = anim_id
+        self.current_frame = 0
+        self.next_frame_index = 1
+        self.interp_step = 0.0
+
+        # Update slider range for new animation
+        max_frames = self.get_max_frames()
+        if hasattr(self, 'frame_slider'):
+            self.frame_slider.setRange(0, max_frames - 1)
+
+        self.update_animated_mesh()
+        self.update_skeleton()
 
     def update_skeleton(self):
         """Update skeleton for current frame"""
