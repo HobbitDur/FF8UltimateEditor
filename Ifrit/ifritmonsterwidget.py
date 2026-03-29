@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 from IfritAI.ifritaiwidget import IfritAIWidget
 from IfritSeq.ifritseqwidget import IfritSeqWidget
 from Ifrit3D.ifrit3dwidget import Ifrit3DWidget
+from IfritTexture.ifrittexturewidget import IfritTextureWidget
 
 
 class IfritMonsterWidget(QWidget):
@@ -54,13 +55,16 @@ class IfritMonsterWidget(QWidget):
         self._seq_widget.hide_file_controls()
 
         # 3D: keeps its own sub-toolbar (mesh/wire/play/frame…)
-        self._d3_widget = Ifrit3DWidget(show_controls=True)
+        self._3d_widget = Ifrit3DWidget(show_controls=True)
+
+        #self._texture_widget = IfritTextureWidget()
 
         # ── Tabs ─────────────────────────────────────────────────────
         self._tabs = QTabWidget()
         self._tabs.addTab(self._ai_widget,  "AI Editor")
         self._tabs.addTab(self._seq_widget, "Seq Editor")
-        self._tabs.addTab(self._d3_widget,  "3D Viewer")
+        self._tabs.addTab(self._3d_widget, "3D Viewer")
+        #self._tabs.addTab(self._3d_widget, "Texture Editor")
         self._tabs.currentChanged.connect(self._on_tab_changed)
 
         root.addWidget(toolbar)
@@ -84,7 +88,7 @@ class IfritMonsterWidget(QWidget):
 
     def _on_tab_changed(self, index: int):
         # Save not applicable for the 3D viewer
-        self._save_btn.setEnabled(bool(self.file_loaded) and index != 2)
+        self._save_btn.setEnabled(bool(self.file_loaded) and index not in  [2, 3])
 
     # ── File operations ───────────────────────────────────────────────
 
@@ -100,7 +104,7 @@ class IfritMonsterWidget(QWidget):
         self.file_loaded = path
         self._ai_widget.load_file(path)
         self._seq_widget.load_file(path)
-        self._d3_widget.load_file(path)
+        self._3d_widget.load_file(path)
 
         try:
             name = self._ai_widget.ifrit_manager.enemy.info_stat_data['monster_name'].get_str().strip('\x00')

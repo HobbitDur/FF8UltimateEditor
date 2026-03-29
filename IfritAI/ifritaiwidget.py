@@ -45,7 +45,6 @@ class IfritAIWidget(QWidget):
         self.ifrit_manager = IfritManager(game_data_folder)
         self.current_if_type = CurrentIfType.NONE
         # Main window
-        self.setWindowTitle("IfritAI")
         self.__ifrit_icon = QIcon(os.path.join(icon_path, 'ifrit.ico'))
 
         self.save_button = QPushButton()
