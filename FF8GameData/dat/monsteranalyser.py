@@ -327,7 +327,6 @@ class MonsterAnalyser:
         # raw_data_to_write.extend(self.section_raw_data[section_position])
         self.section_raw_data[section_position] = bytearray()
         nb_texture = len(self.texture_data['texture_data'])
-        print(f"nb_texture: {nb_texture}")
         ## Now compute offset
         tim_offset = []
         current_offset = AIData.SECTION_TEXTURE_NB['size'] + nb_texture * AIData.SECTION_TEXTURE_OFFSET['size'] +  AIData.SECTION_TEXTURE_END_OF_FILE['size']
@@ -335,8 +334,6 @@ class MonsterAnalyser:
             tim_offset.append(current_offset)
             current_offset+=len(self.texture_data['texture_data'][index]['data'])
         eof_texture = current_offset
-        print(f"tim_offset: {tim_offset}")
-        print(f"eof_texture: {eof_texture}")
         ## Now construction the raw data:
         self.section_raw_data[section_position].extend(
             int.to_bytes(nb_texture, byteorder=AIData.SECTION_TEXTURE_NB['byteorder'], length=AIData.SECTION_TEXTURE_NB['size']))
@@ -348,7 +345,6 @@ class MonsterAnalyser:
         for tex in self.texture_data['texture_data']:
             self.section_raw_data[section_position].extend(tex['data'])
 
-        print(f"self.section_raw_data[section_position]: {self.section_raw_data[section_position][0:20].hex()}")
         raw_data_to_write.extend(self.section_raw_data[section_position])
 
 
@@ -418,29 +414,26 @@ class MonsterAnalyser:
         SECTION_NUMBER = 1
         if self.section_raw_data[SECTION_NUMBER]:
             self.bone_data.analyze(self.section_raw_data[SECTION_NUMBER])
-            print(self.bone_data)
 
 
 
     def __analyze_geometry_section(self, game_data: GameData):
-        print("__analyze_geometry_section")
+        #print("__analyze_geometry_section")
         SECTION_NUMBER = 2
         if self.section_raw_data[SECTION_NUMBER]:
             self.geometry_data.analyze(self.section_raw_data[SECTION_NUMBER])
-            print(self.geometry_data)
 
     def __analyze_animation_section(self, game_data: GameData):
-        print("__analyze_animation_section")
+        #print("__analyze_animation_section")
         SECTION_NUMBER = 3
         if self.section_raw_data[SECTION_NUMBER]:
 
             self.animation_data.analyze(self.section_raw_data[SECTION_NUMBER], self.bone_data)
-            print(self.animation_data)
 
     def __analyze_section_4(self, game_data: GameData):
         SECTION_NUMBER = 4
         if self.section_raw_data[SECTION_NUMBER]:
-            print("__analyze_section_4")
+            #print("__analyze_section_4")
             print(self.section_raw_data[SECTION_NUMBER].hex(sep=" "))
             print(game_data.translate_hex_to_str(self.section_raw_data[SECTION_NUMBER]))
 
@@ -453,7 +446,7 @@ class MonsterAnalyser:
         test.append(self.section_raw_data[SECTION_NUMBER].hex(sep=" "))
 
     def __analyze_model_animation(self, game_data: GameData):
-        print("__analyze_model_animation")
+        #print("__analyze_model_animation")
         SECTION_NUMBER = 3
         print(self.section_raw_data[SECTION_NUMBER].hex(sep=" "))
 

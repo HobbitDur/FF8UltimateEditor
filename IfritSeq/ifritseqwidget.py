@@ -33,6 +33,7 @@ class IfritSeqWidget(QWidget):
         self.scroll_area.setWidget(self.scroll_widget)
         self.ifrit_manager = IfritManager(game_data_folder)
         self.current_if_type = CurrentIfType.NONE
+        self.__ifrit_icon = QIcon(os.path.join(icon_path, 'ifrit.ico'))
         # Main window
         self.save_button = QPushButton()
         self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
@@ -126,7 +127,17 @@ class IfritSeqWidget(QWidget):
         message_box.setWindowTitle("IfritAI - Info")
         message_box.exec()
 
+    def hide_file_controls(self):
+        self.file_dialog_button.hide()
+        self.save_button.hide()
+        self.reset_button.hide()
+        self.monster_name_label.hide()
 
+    def load_file(self, path: str):
+        self.__load_file(path)
+
+    def save_file(self):
+        self.__save_file()
     def __save_file(self):
         self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'] = []
         for index, seq_widget in enumerate(self.seq_data_widget):

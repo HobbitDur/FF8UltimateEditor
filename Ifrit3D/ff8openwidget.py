@@ -15,8 +15,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.raw_vertices = []
         self.set_vertices([(0,0,0)])
 
-        self.triangles = [(0, 0, 0), (0, 0, 0), (0, 0, 0)]
-        self.quads = [(0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0)]
+        self.triangles = []
+        self.quads =[]
         self.skeleton_lines = []
 
         super().__init__(parent)

@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtCore import QTimer, Qt, pyqtSignal
 
 from Ifrit3D.ff8openwidget import FF8OpenGLWidget
 from Ifrit3D.ifrit3dmanager import Ifrit3DManager
@@ -6,9 +6,10 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox
 
 
 class Ifrit3DWidget(QWidget):
+    frame_changed = pyqtSignal(int)
     def __init__(self, parent=None, show_controls=True):
         super().__init__(parent)
-        self.ifrit3d_manager = Ifrit3DManager("c0m071.dat")
+        self.ifrit3d_manager = None
         # Animation variables
         self.current_anim_id = 0
         self.current_frame = 0
@@ -23,11 +24,12 @@ class Ifrit3DWidget(QWidget):
         layout.setSpacing(0)
 
         self.gl_widget = FF8OpenGLWidget(self)
-        initial_verts = self.ifrit3d_manager.get_animated_vertices(self.current_anim_id, self.current_frame)
-        self.gl_widget.set_vertices(initial_verts)
-        self.gl_widget.reset_view()
-        self.gl_widget.set_triangles(self.ifrit3d_manager.monster_data.geometry_data.get_triangles())
-        self.gl_widget.set_quads(self.ifrit3d_manager.monster_data.geometry_data.get_quads())
+        if self.ifrit3d_manager:
+            initial_verts = self.ifrit3d_manager.get_animated_vertices(self.current_anim_id, self.current_frame)
+            self.gl_widget.set_vertices(initial_verts)
+            self.gl_widget.reset_view()
+            self.gl_widget.set_triangles(self.ifrit3d_manager.monster_data.geometry_data.get_triangles())
+            self.gl_widget.set_quads(self.ifrit3d_manager.monster_data.geometry_data.get_quads())
 
         # Set initial skeleton
         self.update_skeleton()
@@ -97,7 +99,8 @@ class Ifrit3DWidget(QWidget):
             toolbar_layout.addWidget(self.anim_label)
 
             self.anim_selector = QSpinBox()
-            self.anim_selector.setRange(0, len(self.ifrit3d_manager.monster_data.animation_data.animations) - 1)
+            if self.ifrit3d_manager:
+                self.anim_selector.setRange(0, len(self.ifrit3d_manager.monster_data.animation_data.animations) - 1)
             self.anim_selector.setValue(0)
             self.anim_selector.setStyleSheet("color:white; background:#333; padding:2px;")
             self.anim_selector.valueChanged.connect(self.set_animation)
@@ -113,35 +116,67 @@ class Ifrit3DWidget(QWidget):
             toolbar_layout.addWidget(reset_btn)
 
             # Info label at the bottom
-            info = QLabel(
-                f"Tri: {len(self.gl_widget.triangles)} | "
-                f"Quads: {len(self.gl_widget.quads)} | "
-                f"Bones: {len(self.gl_widget.skeleton_lines)} | "
+            self.info = QLabel(
                 f"LMB: Rotate | RMB: Pan | Scroll: Zoom"
             )
-            info.setStyleSheet("background:#1a1a1f; color:#aaa; padding:4px 8px; font-size:10px;")
+            self.info.setStyleSheet("background:#1a1a1f; color:#aaa; padding:4px 8px; font-size:10px;")
 
             layout.addWidget(toolbar)
             layout.addWidget(self.gl_widget, 1)
-            layout.addWidget(info)
+            layout.addWidget(self.info)
         else:
             layout.addWidget(self.gl_widget, 1)
+    def load_file(self, path: str):
+        if self.animating:
+            self.timer.stop()
+            if hasattr(self, 'play_btn'):
+                self.play_btn.setText("Play")
+            self.animating = False
 
+        self.current_anim_id = 0
+        self.current_frame = 0
+        self.interp_step = 0.0
+        self.next_frame_index = 1
+
+        self.ifrit3d_manager = Ifrit3DManager(path)
+
+        verts = self.ifrit3d_manager.get_animated_vertices(self.current_anim_id, self.current_frame)
+        self.gl_widget.set_vertices(verts)
+        self.gl_widget.reset_view()
+        self.gl_widget.set_triangles(self.ifrit3d_manager.monster_data.geometry_data.get_triangles())
+        self.gl_widget.set_quads(self.ifrit3d_manager.monster_data.geometry_data.get_quads())
+        self.update_skeleton()
+
+        if hasattr(self, 'frame_slider'):
+            self.frame_slider.setRange(0, self.get_max_frames() - 1)
+        if hasattr(self, 'anim_selector'):
+            nb = len(self.ifrit3d_manager.monster_data.animation_data.animations)
+            self.anim_selector.setRange(0, nb - 1)
+            self.anim_selector.setValue(0)
+        self.info.setText(f"Tri: {len(self.gl_widget.triangles)} | "
+                f"Quads: {len(self.gl_widget.quads)} | "
+                f"Bones: {len(self.gl_widget.skeleton_lines)} | "
+                f"LMB: Rotate | RMB: Pan | Scroll: Zoom")
     def get_max_frames(self):
-        """Get maximum frames for current animation"""
+        if not self.ifrit3d_manager:
+            return 0
         anim_section = self.ifrit3d_manager.monster_data.animation_data
         if anim_section and self.current_anim_id < len(anim_section.animations):
             return anim_section.animations[self.current_anim_id].nb_frames
         return 0
 
     def set_animation(self, anim_id: int):
-        """Switch to a different animation, reset to frame 0."""
-        # Stop playback first
-        if self.animating:
+        """Switch to a different animation while preserving playback state."""
+        # Store the current animation state
+        was_animating = self.animating
+
+        # Stop playback temporarily if it was running
+        if was_animating:
             self.timer.stop()
             self.play_btn.setText("Play")
             self.animating = False
 
+        # Switch animation and reset to frame 0
         self.current_anim_id = anim_id
         self.current_frame = 0
         self.next_frame_index = 1
@@ -152,29 +187,30 @@ class Ifrit3DWidget(QWidget):
         if hasattr(self, 'frame_slider'):
             self.frame_slider.setRange(0, max_frames - 1)
 
+        # Update the mesh and skeleton to the new animation's first frame
         self.update_animated_mesh()
         self.update_skeleton()
 
-    def update_skeleton(self):
-        """Update skeleton for current frame"""
-        skeleton_lines = self.ifrit3d_manager.get_skeleton_lines(
-            anim_id=self.current_anim_id,
-            frame_id=self.current_frame
-        )
+        # Restart animation if it was previously playing
+        if was_animating:
+            self.timer.start(1000 // self.fps)
+            self.play_btn.setText("Pause")
+            self.animating = True
 
+    def update_skeleton(self):
+        if not self.ifrit3d_manager:
+            return
+        skeleton_lines = self.ifrit3d_manager.get_skeleton_lines(
+            anim_id=self.current_anim_id, frame_id=self.current_frame)
         self.gl_widget.set_skeleton_lines(skeleton_lines)
         self.gl_widget.update()
-
-        # Update UI - only if controls exist
         if hasattr(self, 'frame_label'):
             self.frame_label.setText(f"Frame: {self.current_frame}")
-
-        # Update slider without triggering its signal
         if hasattr(self, 'frame_slider'):
-            # Block signals to prevent recursive call
             self.frame_slider.blockSignals(True)
             self.frame_slider.setValue(self.current_frame)
             self.frame_slider.blockSignals(False)
+        self.frame_changed.emit(self.current_frame)  # ← add this line
 
     def toggle_animation(self):
         """Start/stop animation"""

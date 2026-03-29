@@ -17,6 +17,7 @@ from ExeLauncher.ifritguilauncher import IfritGuiLauncher
 from ExeLauncher.junkshop import JunkshopLauncher
 from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from ExeLauncher.sirenlauncher import SirenLauncher
+from Ifrit.ifritmonsterwidget import IfritMonsterWidget
 from Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from IfritAI.ifritaiwidget import IfritAIWidget
 from IfritSeq.ifritseqwidget import IfritSeqWidget
@@ -46,15 +47,13 @@ class FF8UltimateEditorWidget(QWidget):
 
         # 2. Define the Tool Options
         self.HOBBIT_OPTION_ITEMS = [
-            "IfritAI (AI editor)",
+            "Ifrit (AI + Anim + 3D)",
             "IfritXlsx (Stat editor)",
             "ShumiTranslator(All text editor)",
             "TonberryShop (Shop editor)",
             "CCGroup (Card value editor)",
-            "IfritSeq (Anim seq editor)",
             "Draw editor",
             "IfritTexture (Monster texture editor)",
-            "Ifrit3D",
             "SolomonRing (kernel.bin editor)"
 
         ]
@@ -129,17 +128,20 @@ class FF8UltimateEditorWidget(QWidget):
         self._ifrittexture_widget = IfritTextureWidget(game_data_folder=os.path.join(game_data_path))
         self._ifrit3d_widget = Ifrit3DWidget(show_controls=True)
         self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path))
+        self._ifrit_widget = IfritMonsterWidget(icon_path=resources_path, game_data_folder=game_data_path)
+
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
-        self.tool_stack.addWidget(self._ifritAI_widget)  # Index 0
+        self.tool_stack.addWidget(self._ifrit_widget)
+        #self.tool_stack.addWidget(self._ifritAI_widget)  # Index 0
         self.tool_stack.addWidget(self._ifritxlsx_widget)  # Index 1
         self.tool_stack.addWidget(self._shumi_translator_widget)  # Index 2
         self.tool_stack.addWidget(self._tonberry_shop_widget)  # Index 3
         self.tool_stack.addWidget(self._ccgroup_widget)  # Index 4
-        self.tool_stack.addWidget(self._ifritseq_widget)  # Index 5
+        #self.tool_stack.addWidget(self._ifritseq_widget)  # Index 5
         self.tool_stack.addWidget(self._draw_editor_widget)  # Index 6
         self.tool_stack.addWidget(self._ifrittexture_widget)  # Index 7
-        self.tool_stack.addWidget(self._ifrit3d_widget)  # Index 8
+        #self.tool_stack.addWidget(self._ifrit3d_widget)  # Index 8
         self.tool_stack.addWidget(self._solomonring_widget) # Index 9
 
         # 6. Final UI Assembly

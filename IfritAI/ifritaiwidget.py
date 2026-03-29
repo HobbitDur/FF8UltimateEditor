@@ -46,8 +46,7 @@ class IfritAIWidget(QWidget):
         self.current_if_type = CurrentIfType.NONE
         # Main window
         self.setWindowTitle("IfritAI")
-        self.__ifrit_icon = QIcon(os.path.join(icon_path, 'icon.ico'))
-        self.setWindowIcon(self.__ifrit_icon)
+        self.__ifrit_icon = QIcon(os.path.join(icon_path, 'ifrit.ico'))
 
         self.save_button = QPushButton()
         self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
@@ -431,6 +430,19 @@ class IfritAIWidget(QWidget):
     def __reset_if(self):
         for command_widget in self.command_line_widget:
             command_widget.set_if_index(0)
+
+    def hide_file_controls(self):
+        """Call this when embedded in a combined widget."""
+        self.file_dialog_button.hide()
+        self.save_button.hide()
+        self.reset_button.hide()
+        self.monster_name_label.hide()
+
+    def load_file(self, path: str):
+        self.__load_file(path)
+
+    def save_file(self):
+        self.__save_file()
 
     def qsort_command_widget(self, inlist: [CommandWidget]):
         if inlist == []:

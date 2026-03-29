@@ -44,8 +44,7 @@ class Ifrit3DManager:
     # ------------------------------------------------------------------
     # Public: get skeleton lines for the OpenGL widget
     # ------------------------------------------------------------------
-    def get_skeleton_lines(self, anim_id: int = 0, frame_id: int = 0,
-                           debug: bool = True) -> List[Tuple]:
+    def get_skeleton_lines(self, anim_id: int = 0, frame_id: int = 0) -> List[Tuple]:
         """
         Returns list of (start_pos, end_pos) tuples in viewer space.
         Each pos is (x, y, z).
@@ -62,39 +61,6 @@ class Ifrit3DManager:
             return []
 
         bones = self.monster_data.bone_data.bones
-
-        # --- Debug: compare frame 0 vs frame 1 to check drift ---
-        if debug and frame_id == 0 and anim_id == 0:
-            print(f"\n{'='*60}")
-            print("FRAME 0 vs FRAME 1 position comparison (bone 6, 7):")
-            mats_f1 = self._get_bone_matrices(anim_id, 1)
-            for bone_idx in [6, 7, 11, 12]:
-                if bone_idx < len(world_matrices) and bone_idx < len(mats_f1):
-                    m0 = world_matrices[bone_idx]
-                    m1 = mats_f1[bone_idx]
-                    dx = m1.M41 - m0.M41
-                    dy = m1.M42 - m0.M42
-                    dz = m1.M43 - m0.M43
-                    dist = math.sqrt(dx*dx + dy*dy + dz*dz)
-                    print(f"  Bone {bone_idx:2d}: frame0=({m0.M41:.4f},{m0.M42:.4f},{m0.M43:.4f})  "
-                          f"frame1=({m1.M41:.4f},{m1.M42:.4f},{m1.M43:.4f})  delta_dist={dist:.4f}")
-            print()
-
-        # --- Compare with Noesis SMD frame 0 for key bones ---
-        if debug and frame_id == 0 and anim_id == 0:
-            print(f"\n{'='*60}")
-            print("SMD COMPARISON (frame 0, raw matrix space):")
-            # From your SMD file (document 4), frame 0 positions (raw, not scaled):
-            # bone 0:  pos (-120, -14445, 2100)   <- root
-            # bone 6:  pos (0, 0.000244, -2853)   <- relative? or world?
-            # The SMD stores world positions in raw units (not /2048).
-            # Let's print our world positions * 2048 to compare:
-            UNSCALE = 2048.0
-            print(f"  (Showing world_pos * 2048 to match SMD raw units)")
-            for k in range(min(12, len(world_matrices))):
-                m = world_matrices[k]
-                if m:
-                    print(f"  Bone {k:2d}: ({m.M41*UNSCALE:10.3f}, {m.M42*UNSCALE:10.3f}, {m.M43*UNSCALE:10.3f})")
 
         # --- Build line segments (parent -> child pivot) ---
         lines = []
@@ -117,11 +83,6 @@ class Ifrit3DManager:
             child_pos  = to_viewer(child_mat)
 
             lines.append((parent_pos, child_pos))
-
-        if debug:
-            print(f"\nTotal skeleton line segments: {len(lines)}")
-            for i, (s, e) in enumerate(lines[:6]):
-                print(f"  Line {i}: {s} -> {e}")
 
         return lines
 
