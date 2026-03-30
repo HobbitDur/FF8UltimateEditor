@@ -118,15 +118,12 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack = QStackedWidget()
 
         # Initialize internal tools
-        self._ifritAI_widget = IfritAIWidget(icon_path=resources_path, game_data_folder=os.path.join(game_data_path))
         self._ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path))
         self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path))
-        self._ifritseq_widget = IfritSeqWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._draw_editor_widget = DrawEditorWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._ifrittexture_widget = IfritTextureWidget(game_data_folder=os.path.join(game_data_path))
-        self._ifrit3d_widget = Ifrit3DWidget(show_controls=True)
         self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path))
         self._ifrit_widget = IfritMonsterWidget(icon_path=resources_path, game_data_folder=game_data_path)
 

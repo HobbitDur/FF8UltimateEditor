@@ -83,6 +83,9 @@ class MonsterAnalyser:
     def load_file_data(self, file:str, game_data:GameData):
         self.subsection_ai_offset = {'init_code': 0, 'ennemy_turn': 0, 'counter_attack': 0, 'death': 0, 'unknown': 0}
         self.section_raw_data = [bytearray()] * self.NUMBER_SECTION
+        self.bone_data = BoneSection()
+        self.geometry_data = GeometrySection()
+        self.animation_data = AnimationSection()
         self.header_data = copy.deepcopy(game_data.AIData.SECTION_HEADER_DICT)
         self.model_animation_data = copy.deepcopy(game_data.AIData.SECTION_MODEL_ANIM_DICT)
         self.info_stat_data = copy.deepcopy(game_data.AIData.SECTION_INFO_STAT_DICT)
@@ -427,7 +430,6 @@ class MonsterAnalyser:
         #print("__analyze_animation_section")
         SECTION_NUMBER = 3
         if self.section_raw_data[SECTION_NUMBER]:
-
             self.animation_data.analyze(self.section_raw_data[SECTION_NUMBER], self.bone_data)
 
     def __analyze_section_4(self, game_data: GameData):
@@ -735,7 +737,6 @@ class MonsterAnalyser:
 
     def _analyze_texture_section(self, game_data: GameData):
         SECTION_NUMBER = 11
-
         self.texture_data['nb_texture'] = self.__get_int_value_from_info(game_data.AIData.SECTION_TEXTURE_NB, SECTION_NUMBER)
         list_texture_offset = []
         offset_size = game_data.AIData.SECTION_TEXTURE_OFFSET['size']

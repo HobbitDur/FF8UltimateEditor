@@ -32,7 +32,7 @@ class IfritAIWidget(QWidget):
     MAX_OP_CODE_VALUE = 255
     MIN_OP_CODE_VALUE = 0
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self,  ifrit_manager:IfritManager, icon_path="Resources", game_data_folder="FF8GameData"):
         QWidget.__init__(self)
         self.current_if_index = 0
         self.file_loaded = ""
@@ -42,7 +42,7 @@ class IfritAIWidget(QWidget):
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.scroll_widget)
-        self.ifrit_manager = IfritManager(game_data_folder)
+        self.ifrit_manager = ifrit_manager
         self.current_if_type = CurrentIfType.NONE
         # Main window
         self.__ifrit_icon = QIcon(os.path.join(icon_path, 'ifrit.ico'))
@@ -464,7 +464,6 @@ class IfritAIWidget(QWidget):
             self._import_md_button.setEnabled(True)
             self._export_md_button.setEnabled(True)
             self.__clear_lines(delete_data=True)
-            self.ifrit_manager.init_from_file(file_to_load)
             self.monster_name_label.setText(
                 "Monster : {}, file: {}".format(self.ifrit_manager.enemy.info_stat_data['monster_name'].get_str(),
                                                 pathlib.Path(file_to_load).name))

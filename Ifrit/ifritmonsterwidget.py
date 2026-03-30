@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
     QFileDialog, QTabWidget, QSpinBox, QSlider, QFrame, QMessageBox
 )
 from IfritAI.ifritaiwidget import IfritAIWidget
+from IfritAI.ifritmanager import IfritManager
 from IfritSeq.ifritseqwidget import IfritSeqWidget
 from Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from IfritTexture.ifrittexturewidget import IfritTextureWidget
@@ -45,17 +46,18 @@ class IfritMonsterWidget(QWidget):
             tl.addWidget(w)
         tl.addStretch()
 
+        self.ifrit_manager = IfritManager(game_data_folder)
         # ── Sub-widgets ──────────────────────────────────────────────
         # AI: keeps its own sub-toolbar (expert, section, color…) minus file buttons
-        self._ai_widget = IfritAIWidget(icon_path=icon_path, game_data_folder=game_data_folder)
+        self._ai_widget = IfritAIWidget(self.ifrit_manager, icon_path=icon_path)
         self._ai_widget.hide_file_controls()
 
         # Seq: keeps xml import/export sub-toolbar minus file buttons
-        self._seq_widget = IfritSeqWidget(icon_path=icon_path, game_data_folder=game_data_folder)
+        self._seq_widget = IfritSeqWidget(self.ifrit_manager, icon_path=icon_path)
         self._seq_widget.hide_file_controls()
 
         # 3D: keeps its own sub-toolbar (mesh/wire/play/frame…)
-        self._3d_widget = Ifrit3DWidget(show_controls=True)
+        self._3d_widget = Ifrit3DWidget(self.ifrit_manager, show_controls=True)
 
         #self._texture_widget = IfritTextureWidget()
 
@@ -102,6 +104,7 @@ class IfritMonsterWidget(QWidget):
 
     def _load_all(self, path: str):
         self.file_loaded = path
+        self.ifrit_manager.init_from_file(path)
         self._ai_widget.load_file(path)
         self._seq_widget.load_file(path)
         self._3d_widget.load_file(path)

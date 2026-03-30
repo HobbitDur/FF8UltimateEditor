@@ -1,15 +1,15 @@
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal
 
 from Ifrit3D.ff8openwidget import FF8OpenGLWidget
-from Ifrit3D.ifrit3dmanager import Ifrit3DManager
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QPushButton, QSlider, QSpinBox
+from IfritAI.ifritmanager import IfritManager
 
 
 class Ifrit3DWidget(QWidget):
     frame_changed = pyqtSignal(int)
-    def __init__(self, parent=None, show_controls=True):
-        super().__init__(parent)
-        self.ifrit3d_manager = None
+    def __init__(self, ifrit_manager:IfritManager,  show_controls=True):
+        super().__init__()
+        self.ifrit_manager = ifrit_manager
         # Animation variables
         self.current_anim_id = 0
         self.current_frame = 0
@@ -24,15 +24,7 @@ class Ifrit3DWidget(QWidget):
         layout.setSpacing(0)
 
         self.gl_widget = FF8OpenGLWidget(self)
-        if self.ifrit3d_manager:
-            initial_verts = self.ifrit3d_manager.get_animated_vertices(self.current_anim_id, self.current_frame)
-            self.gl_widget.set_vertices(initial_verts)
-            self.gl_widget.reset_view()
-            self.gl_widget.set_triangles(self.ifrit3d_manager.monster_data.geometry_data.get_triangles())
-            self.gl_widget.set_quads(self.ifrit3d_manager.monster_data.geometry_data.get_quads())
 
-        # Set initial skeleton
-        self.update_skeleton()
         # Setup animation timer
         self.timer = QTimer()
         self.timer.timeout.connect(self.next_frame)
@@ -99,8 +91,6 @@ class Ifrit3DWidget(QWidget):
             toolbar_layout.addWidget(self.anim_label)
 
             self.anim_selector = QSpinBox()
-            if self.ifrit3d_manager:
-                self.anim_selector.setRange(0, len(self.ifrit3d_manager.monster_data.animation_data.animations) - 1)
             self.anim_selector.setValue(0)
             self.anim_selector.setStyleSheet("color:white; background:#333; padding:2px;")
             self.anim_selector.valueChanged.connect(self.set_animation)
@@ -137,30 +127,28 @@ class Ifrit3DWidget(QWidget):
         self.current_frame = 0
         self.interp_step = 0.0
         self.next_frame_index = 1
-
-        self.ifrit3d_manager = Ifrit3DManager(path)
-
-        verts = self.ifrit3d_manager.get_animated_vertices(self.current_anim_id, self.current_frame)
+        verts = self.ifrit_manager.get_animated_vertices(self.current_anim_id, self.current_frame)
         self.gl_widget.set_vertices(verts)
         self.gl_widget.reset_view()
-        self.gl_widget.set_triangles(self.ifrit3d_manager.monster_data.geometry_data.get_triangles())
-        self.gl_widget.set_quads(self.ifrit3d_manager.monster_data.geometry_data.get_quads())
+        self.gl_widget.set_triangles(self.ifrit_manager.enemy.geometry_data.get_triangles())
+        self.gl_widget.set_quads(self.ifrit_manager.enemy.geometry_data.get_quads())
         self.update_skeleton()
 
         if hasattr(self, 'frame_slider'):
             self.frame_slider.setRange(0, self.get_max_frames() - 1)
         if hasattr(self, 'anim_selector'):
-            nb = len(self.ifrit3d_manager.monster_data.animation_data.animations)
+            nb = len(self.ifrit_manager.enemy.animation_data.animations)
             self.anim_selector.setRange(0, nb - 1)
             self.anim_selector.setValue(0)
+            self.anim_selector.setToolTip(f"Nb animation: {nb}")
         self.info.setText(f"Tri: {len(self.gl_widget.triangles)} | "
                 f"Quads: {len(self.gl_widget.quads)} | "
                 f"Bones: {len(self.gl_widget.skeleton_lines)} | "
                 f"LMB: Rotate | RMB: Pan | Scroll: Zoom")
     def get_max_frames(self):
-        if not self.ifrit3d_manager:
+        if not self.ifrit_manager:
             return 0
-        anim_section = self.ifrit3d_manager.monster_data.animation_data
+        anim_section = self.ifrit_manager.enemy.animation_data
         if anim_section and self.current_anim_id < len(anim_section.animations):
             return anim_section.animations[self.current_anim_id].nb_frames
         return 0
@@ -198,9 +186,9 @@ class Ifrit3DWidget(QWidget):
             self.animating = True
 
     def update_skeleton(self):
-        if not self.ifrit3d_manager:
+        if not self.ifrit_manager:
             return
-        skeleton_lines = self.ifrit3d_manager.get_skeleton_lines(
+        skeleton_lines = self.ifrit_manager.get_skeleton_lines(
             anim_id=self.current_anim_id, frame_id=self.current_frame)
         self.gl_widget.set_skeleton_lines(skeleton_lines)
         self.gl_widget.update()
@@ -234,7 +222,7 @@ class Ifrit3DWidget(QWidget):
         next_frame = (self.current_frame + 1) % max_frames
 
         # Get animated vertices with interpolation
-        animated_verts = self.ifrit3d_manager.get_animated_vertices(
+        animated_verts = self.ifrit_manager.get_animated_vertices(
             anim_id=self.current_anim_id,
             frame_id=self.current_frame,
             next_frame_id=next_frame,
@@ -247,8 +235,8 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget.set_vertices(animated_verts)
 
         # Triangles and quads indices remain the same (only vertex positions change)
-        self.gl_widget.set_triangles(self.ifrit3d_manager.monster_data.geometry_data.get_triangles())
-        self.gl_widget.set_quads(self.ifrit3d_manager.monster_data.geometry_data.get_quads())
+        self.gl_widget.set_triangles(self.ifrit_manager.enemy.geometry_data.get_triangles())
+        self.gl_widget.set_quads(self.ifrit_manager.enemy.geometry_data.get_quads())
 
         self.gl_widget.update()
 
@@ -299,16 +287,6 @@ class Ifrit3DWidget(QWidget):
             self.play_btn.setText("Play")
             self.animating = False
 
-    def set_frame(self, value):
-        """Jump to specific frame"""
-        # Only respond if this was triggered by user (not during animation)
-        if not self.animating:
-            self.current_frame = value
-            self.update_skeleton()
-            if self.animating:
-                self.timer.stop()
-                self.play_btn.setText("Play")
-                self.animating = False
     def _on_mesh_toggle(self, checked):
         """Toggle 3D mesh visibility"""
         self.gl_widget.set_show_mesh(checked)
