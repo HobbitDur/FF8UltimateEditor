@@ -60,6 +60,7 @@ class MonsterAnalyser:
     def __init__(self, game_data):
         self.file_raw_data = bytearray()
         self.origin_file_name = ""
+        self.origin_path = ""
         self.origin_file_checksum = ""
         self.subsection_ai_offset = {'init_code': 0, 'ennemy_turn': 0, 'counter_attack': 0, 'death': 0, 'unknown': 0}
         self.section_raw_data = [bytearray()] * self.NUMBER_SECTION
@@ -97,6 +98,7 @@ class MonsterAnalyser:
                 self.file_raw_data.extend(el)
         self.__analyze_header_section(game_data)
         self.origin_file_name = os.path.basename(file)
+        self.origin_path = file
         # self.origin_file_checksum = get_checksum(file, algorithm='SHA256')
 
 

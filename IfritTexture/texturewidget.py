@@ -6,8 +6,8 @@ from PyQt6.QtWidgets import (QSpinBox, QGroupBox, QLabel, QHBoxLayout,
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QPixmap, QPainter, QColor
 
+from Ifrit.ifritmanager import TextureData
 from IfritTexture.editabletexturewidget import EditableTextureWidget
-from IfritTexture.ifrittexturemanager import TextureData
 
 
 class TextureWidget(QGroupBox):

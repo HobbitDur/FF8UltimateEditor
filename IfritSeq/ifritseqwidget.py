@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
 
 from FF8GameData.dat.commandanalyser import CurrentIfType
 from FF8GameData.dat.sequenceanalyser import SequenceAnalyser
-from IfritAI.ifritmanager import IfritManager
+from Ifrit.ifritmanager import IfritManager
 from IfritSeq.seqwidget import SeqWidget
 
 

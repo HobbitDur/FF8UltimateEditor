@@ -47,15 +47,13 @@ class FF8UltimateEditorWidget(QWidget):
 
         # 2. Define the Tool Options
         self.HOBBIT_OPTION_ITEMS = [
-            "Ifrit (AI + Anim + 3D)",
+            "Ifrit (AI + Anim + 3D + Texture)",
             "IfritXlsx (Stat editor)",
             "ShumiTranslator(All text editor)",
             "TonberryShop (Shop editor)",
             "CCGroup (Card value editor)",
             "Draw editor",
-            "IfritTexture (Monster texture editor)",
             "SolomonRing (kernel.bin editor)"
-
         ]
 
         # 3. Header: Program Selection (ComboBox)
@@ -123,7 +121,6 @@ class FF8UltimateEditorWidget(QWidget):
         self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path))
         self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path))
         self._draw_editor_widget = DrawEditorWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._ifrittexture_widget = IfritTextureWidget(game_data_folder=os.path.join(game_data_path))
         self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path))
         self._ifrit_widget = IfritMonsterWidget(icon_path=resources_path, game_data_folder=game_data_path)
 
@@ -135,10 +132,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._shumi_translator_widget)  # Index 2
         self.tool_stack.addWidget(self._tonberry_shop_widget)  # Index 3
         self.tool_stack.addWidget(self._ccgroup_widget)  # Index 4
-        #self.tool_stack.addWidget(self._ifritseq_widget)  # Index 5
         self.tool_stack.addWidget(self._draw_editor_widget)  # Index 6
-        self.tool_stack.addWidget(self._ifrittexture_widget)  # Index 7
-        #self.tool_stack.addWidget(self._ifrit3d_widget)  # Index 8
         self.tool_stack.addWidget(self._solomonring_widget) # Index 9
 
         # 6. Final UI Assembly

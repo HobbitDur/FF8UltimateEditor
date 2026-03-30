@@ -1,4 +1,3 @@
-from os.path import split
 from typing import List
 
 from PyQt6.QtCore import Qt
@@ -11,7 +10,7 @@ from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AICompiler import AICompiler
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritAI.codeanalyser import CodeAnalyser
-from IfritAI.ifritmanager import IfritManager
+from Ifrit.ifritmanager import IfritManager
 
 
 class CodeWidget(QWidget):

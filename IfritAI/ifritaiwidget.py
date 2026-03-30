@@ -1,7 +1,6 @@
 import os
 import pathlib
 import re
-from email.policy import default
 from typing import List
 
 from PyQt6.QtCore import Qt, QSize
@@ -17,7 +16,7 @@ from IfritAI.codeanalyser import CodeAnalyser
 from IfritAI.codewidget import CodeWidget
 
 from IfritAI.commandwidget import CommandWidget
-from IfritAI.ifritmanager import IfritManager
+from Ifrit.ifritmanager import IfritManager
 from IfritXlsx.ifritxlsxmanager import IfritXlsxManager
 from bs4 import BeautifulSoup
 

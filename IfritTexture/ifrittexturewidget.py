@@ -7,14 +7,14 @@ from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout,
                              QScrollArea, QGridLayout, QSizePolicy, QFileDialog, QMessageBox)
 
-from IfritTexture.ifrittexturemanager import IfritTextureManager, TextureData, MetaData
+from Ifrit.ifritmanager import IfritManager, TextureData
 from IfritTexture.texturewidget import TextureWidget
 
 
 class IfritTextureWidget(QWidget):
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, ifrit_manager:IfritManager, icon_path="Resources"):
         QWidget.__init__(self)
-        self.ifrit_manager = IfritTextureManager()
+        self.ifrit_manager = ifrit_manager
         self.icon_path = icon_path
 
         # 1. Main Root Layout
@@ -23,16 +23,13 @@ class IfritTextureWidget(QWidget):
         # 2. Top Button Bar
         self._button_layout = QHBoxLayout()
 
-        self._analyse_button = QPushButton("Analyse")
-        self._analyse_button.clicked.connect(self._analyze)
-        self._inject_button = QPushButton("Inject")
-        self._inject_button.clicked.connect(self._inject)
+        self._import_button = QPushButton("Import")
+        self._import_button.clicked.connect(self._import)
         self._export_button = QPushButton("Export")
         self._export_button.clicked.connect(self._export)
 
-        self._button_layout.addWidget(self._analyse_button)
+        self._button_layout.addWidget(self._import_button)
         self._button_layout.addWidget(self._export_button)
-        self._button_layout.addWidget(self._inject_button)
 
         self.main_layout.addLayout(self._button_layout)
 
@@ -95,12 +92,18 @@ class IfritTextureWidget(QWidget):
         self.ifrit_manager.texture_data[-1].create_dummy_images()
         self._refresh_texture_grid()
 
-    def _analyze(self):
-        files_to_load, _ = QFileDialog.getOpenFileNames(
-            parent=self,
-            caption="Search files containing tim",
-            directory=self._current_folder_dialog
-        )
+    def load_file(self, file_to_load: str):
+        self._import(file_to_load)
+
+    def _import(self, file_to_load: str, delete_temp=True):
+        if not file_to_load:
+            files_to_load, _ = QFileDialog.getOpenFileNames(
+                parent=self,
+                caption="Search files containing tim",
+                directory=self._current_folder_dialog
+            )
+        else:
+            files_to_load = [file_to_load]
         if files_to_load:
             self.ifrit_manager.texture_data.clear()
             for file_path in files_to_load:
@@ -108,30 +111,19 @@ class IfritTextureWidget(QWidget):
 
             self._refresh_texture_grid()
             self.window().adjustSize()
-
+        if delete_temp:
             if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
                 shutil.rmtree(self.ifrit_manager.temp_path)
 
-    def _inject(self):
-        if len([x for x in self._texture_widgets if not x.get_plus_type()]) > 0:
-            self._export(export_dir=self.ifrit_manager.temp_path)
-            file_to_load = QFileDialog.getOpenFileName(
-                parent=self,
-                caption="Search dat file",
-                filter="*.dat",
-                directory=self._current_folder_dialog
-            )[0]
-            if file_to_load:
-                self.ifrit_manager.inject(self.ifrit_manager.temp_path, file_to_load)
-                if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
-                    shutil.rmtree(self.ifrit_manager.temp_path)
-        else:
-            message_box = QMessageBox()
-            message_box.setText(f"Please create any image with plus button or import before injecting")
-            message_box.setIcon(QMessageBox.Icon.Warning)
-            message_box.setWindowTitle("IfritTexture - Warning")
-            message_box.exec()
-            return
+    def save_file(self):
+        self._export(self.ifrit_manager.temp_path)
+        self._save()
+
+    def _save(self, delete_temp=True):
+        self.ifrit_manager.inject()
+        if delete_temp:
+            if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
+                shutil.rmtree(self.ifrit_manager.temp_path)
 
     def _export(self, export_dir=None):
         if not export_dir:

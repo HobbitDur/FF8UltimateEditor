@@ -1,13 +1,13 @@
 import os
 import pathlib
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFileDialog, QTabWidget, QSpinBox, QSlider, QFrame, QMessageBox
+    QFileDialog, QTabWidget, QMessageBox
 )
 from IfritAI.ifritaiwidget import IfritAIWidget
-from IfritAI.ifritmanager import IfritManager
+from Ifrit.ifritmanager import IfritManager
 from IfritSeq.ifritseqwidget import IfritSeqWidget
 from Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from IfritTexture.ifrittexturewidget import IfritTextureWidget
@@ -59,14 +59,15 @@ class IfritMonsterWidget(QWidget):
         # 3D: keeps its own sub-toolbar (mesh/wire/play/frame…)
         self._3d_widget = Ifrit3DWidget(self.ifrit_manager, show_controls=True)
 
-        #self._texture_widget = IfritTextureWidget()
+        self._texture_widget = IfritTextureWidget(self.ifrit_manager)
+
 
         # ── Tabs ─────────────────────────────────────────────────────
         self._tabs = QTabWidget()
         self._tabs.addTab(self._ai_widget,  "AI Editor")
         self._tabs.addTab(self._seq_widget, "Seq Editor")
         self._tabs.addTab(self._3d_widget, "3D Viewer")
-        #self._tabs.addTab(self._3d_widget, "Texture Editor")
+        self._tabs.addTab(self._texture_widget, "Texture")
         self._tabs.currentChanged.connect(self._on_tab_changed)
 
         root.addWidget(toolbar)
@@ -90,7 +91,7 @@ class IfritMonsterWidget(QWidget):
 
     def _on_tab_changed(self, index: int):
         # Save not applicable for the 3D viewer
-        self._save_btn.setEnabled(bool(self.file_loaded) and index not in  [2, 3])
+        self._save_btn.setEnabled(bool(self.file_loaded) and index not in  (2,))
 
     # ── File operations ───────────────────────────────────────────────
 
@@ -108,6 +109,7 @@ class IfritMonsterWidget(QWidget):
         self._ai_widget.load_file(path)
         self._seq_widget.load_file(path)
         self._3d_widget.load_file(path)
+        self._texture_widget.load_file(path)
 
         try:
             name = self._ai_widget.ifrit_manager.enemy.info_stat_data['monster_name'].get_str().strip('\x00')
@@ -124,6 +126,8 @@ class IfritMonsterWidget(QWidget):
             self._ai_widget.save_file()
         elif idx == 1:
             self._seq_widget.save_file()
+        elif idx == 3:
+            self._texture_widget.save_file()
 
     def _reload_file(self):
         if self.file_loaded:

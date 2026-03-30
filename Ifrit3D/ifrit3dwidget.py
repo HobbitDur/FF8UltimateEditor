@@ -2,7 +2,7 @@ from PyQt6.QtCore import QTimer, Qt, pyqtSignal
 
 from Ifrit3D.ff8openwidget import FF8OpenGLWidget
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QPushButton, QSlider, QSpinBox
-from IfritAI.ifritmanager import IfritManager
+from Ifrit.ifritmanager import IfritManager
 
 
 class Ifrit3DWidget(QWidget):
