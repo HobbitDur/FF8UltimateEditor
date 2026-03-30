@@ -263,8 +263,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
     def reset_view(self):
         """Reset camera to default position"""
-        self.rot_x = 20.0
-        self.rot_y = 30.0
+        self.rot_x = 0.0
+        self.rot_y = 270.0
         self.zoom = self.MODEL_SIZE * 1.5
         self.pan_x = 0.0
         self.pan_y = 0.0
