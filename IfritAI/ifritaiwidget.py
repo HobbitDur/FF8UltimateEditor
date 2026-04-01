@@ -384,6 +384,8 @@ class IfritAIWidget(QWidget):
             elif command_widget.get_command().line_index > command.line_index:
                 command_widget.get_command().line_index -= 1
         if delete_data:
+            print("delete_data")
+            print(self.ifrit_manager.enemy.battle_script_data['ai_data'][self.script_section.currentIndex()]["command"])
             self.ifrit_manager.enemy.remove_command(self.script_section.currentIndex(), index_to_remove)
 
         self.add_button_widget[index_to_remove].deleteLater()

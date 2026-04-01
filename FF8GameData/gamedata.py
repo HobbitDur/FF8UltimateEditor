@@ -372,7 +372,7 @@ class Vertex:
         self._z  = int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_VERTICES_DATA_VERTEX_Z['byteorder'], signed=True)
 
     def get_list(self):
-        return -self._x*self.SCALE, -self._z*self.SCALE, -self._y*self.SCALE
+        return -self._x*self.SCALE, self._z*self.SCALE, -self._y*self.SCALE
     def __str__(self):
         return f"Vertex{self.get_list()}"
     def __repr__(self):

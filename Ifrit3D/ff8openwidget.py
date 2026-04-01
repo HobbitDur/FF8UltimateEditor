@@ -83,18 +83,15 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
 
-        import math
-        rad_x = math.radians(self.rot_x)
-        rad_y = math.radians(self.rot_y)
-        cam_x = self.zoom * math.cos(rad_y) * math.cos(rad_x)
-        cam_y = self.zoom * math.sin(rad_x)
-        cam_z = self.zoom * math.sin(rad_y) * math.cos(rad_x)
-        target_x = self.MODEL_CENTER[0] + self.pan_x
-        target_y = self.MODEL_CENTER[1] + self.pan_y
-        target_z = self.MODEL_CENTER[2]
-        gluLookAt(cam_x, cam_y, cam_z,
-                  target_x, target_y, target_z,
-                  0.0, 1.0, 0.0)
+        # Pull camera back
+        glTranslatef(self.pan_x, self.pan_y, -self.zoom)
+
+        # Orbit rotations — no up-vector flip issue
+        glRotatef(self.rot_x, 1.0, 0.0, 0.0)
+        glRotatef(self.rot_y, 0.0, 1.0, 0.0)
+
+        # Center on model
+        glTranslatef(-self.MODEL_CENTER[0], -self.MODEL_CENTER[1], -self.MODEL_CENTER[2])
 
         if self.show_axis:
             self.draw_axis()
@@ -236,7 +233,6 @@ class FF8OpenGLWidget(QOpenGLWidget):
         if self.left_button_down:
             self.rot_y += dx * 0.5
             self.rot_x += dy * 0.5
-            self.rot_x = max(-89.0, min(89.0, self.rot_x))
 
         elif self.right_button_down:
             pan_speed = self.zoom * 0.002 * self.MODEL_SIZE
@@ -263,8 +259,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
     def reset_view(self):
         """Reset camera to default position"""
-        self.rot_x = 0.0
-        self.rot_y = 270.0
+        self.rot_x = 0
+        self.rot_y = 180
         self.zoom = self.MODEL_SIZE * 1.5
         self.pan_x = 0.0
         self.pan_y = 0.0

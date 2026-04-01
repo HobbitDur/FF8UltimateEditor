@@ -93,6 +93,7 @@ class IfritManager:
             self.vincent_tim_path = pathlib.Path(vincent_tim_path).resolve()
 
     def init_from_file(self, file_path):
+        self.enemy = MonsterAnalyser(self.game_data)
         self.enemy.load_file_data(file_path, self.game_data)
         self.enemy.analyse_loaded_data(self.game_data, self.decompiler)
         self.compiler.set_battle_text_info_stat(self.enemy.battle_script_data['battle_text'],self.enemy.info_stat_data )
