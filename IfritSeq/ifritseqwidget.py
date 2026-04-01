@@ -82,8 +82,6 @@ class IfritSeqWidget(QWidget):
         self.info_button.clicked.connect(self.__show_info)
 
         self.seq_data_widget= []
-        self.monster_name_label = QLabel()
-        self.monster_name_label.hide()
 
         self.seq_analyze_textarea = QPlainTextEdit()
         self.seq_analyze_button = QPushButton("Analyze")
@@ -95,7 +93,6 @@ class IfritSeqWidget(QWidget):
         self.layout_top.addWidget(self._import_xml_button)
         self.layout_top.addWidget(self._export_xml_button)
         self.layout_top.addWidget(self.info_button)
-        self.layout_top.addWidget(self.monster_name_label)
         self.layout_top.addStretch(1)
 
 
@@ -131,7 +128,6 @@ class IfritSeqWidget(QWidget):
         self.file_dialog_button.hide()
         self.save_button.hide()
         self.reset_button.hide()
-        self.monster_name_label.hide()
 
     def load_file(self, path: str):
         self.__load_file(path)
@@ -151,10 +147,6 @@ class IfritSeqWidget(QWidget):
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
             #self.__clear_lines(delete_data=True)
-            self.monster_name_label.setText(
-                "Monster : {}, file: {}".format(self.ifrit_manager.enemy.info_stat_data['monster_name'].get_str(),
-                                                pathlib.Path(file_to_load).name))
-            self.monster_name_label.show()
             self.file_loaded = file_to_load
             self.clear_lines()
             self.__setup_section_data()

@@ -148,9 +148,6 @@ class IfritAIWidget(QWidget):
         self.hex_selector.setToolTip("Change all int value to hex value. Doesn't work on IfritAI code")
         self.hex_selector.setEnabled(0)
 
-        self.monster_name_label = QLabel()
-        self.monster_name_label.hide()
-
         self.layout_top = QHBoxLayout()
         self.layout_top.addWidget(self.file_dialog_button)
         self.layout_top.addWidget(self.save_button)
@@ -163,7 +160,6 @@ class IfritAIWidget(QWidget):
         self.layout_top.addLayout(self.expert_layout)
         self.layout_top.addWidget(self.hex_selector)
         self.layout_top.addWidget(self.script_section)
-        self.layout_top.addWidget(self.monster_name_label)
         self.layout_top.addStretch(1)
 
         self.code_widget = CodeWidget(self.ifrit_manager.game_data, current_ai_section=self.script_section.currentIndex(), enemy_data=self.ifrit_manager.enemy, ifrit_manager=self.ifrit_manager, expert_level=self.expert_selector.currentIndex(),
@@ -434,7 +430,6 @@ class IfritAIWidget(QWidget):
         self.file_dialog_button.hide()
         self.save_button.hide()
         self.reset_button.hide()
-        self.monster_name_label.hide()
 
     def load_file(self, path: str):
         self.__load_file(path)
@@ -463,10 +458,6 @@ class IfritAIWidget(QWidget):
             self._import_md_button.setEnabled(True)
             self._export_md_button.setEnabled(True)
             self.__clear_lines(delete_data=False)
-            self.monster_name_label.setText(
-                "Monster : {}, file: {}".format(self.ifrit_manager.enemy.info_stat_data['monster_name'].get_str(),
-                                                pathlib.Path(file_to_load).name))
-            self.monster_name_label.show()
             self.file_loaded = file_to_load
             self.__setup_section_data()
 
