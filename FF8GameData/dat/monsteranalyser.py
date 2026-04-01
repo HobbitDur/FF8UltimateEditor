@@ -735,6 +735,7 @@ class MonsterAnalyser:
         self.battle_script_data['ai_data'][code_section_id]["command"].append(command)
 
     def remove_command(self, code_section_id: int, index_removal: int = 0):
+        #if self.battle_script_data['ai_data'][code_section_id]["command"]:
         del self.battle_script_data['ai_data'][code_section_id]["command"][index_removal]
 
     def _analyze_texture_section(self, game_data: GameData):

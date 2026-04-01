@@ -384,8 +384,6 @@ class IfritAIWidget(QWidget):
             elif command_widget.get_command().line_index > command.line_index:
                 command_widget.get_command().line_index -= 1
         if delete_data:
-            print("delete_data")
-            print(self.ifrit_manager.enemy.battle_script_data['ai_data'][self.script_section.currentIndex()]["command"])
             self.ifrit_manager.enemy.remove_command(self.script_section.currentIndex(), index_to_remove)
 
         self.add_button_widget[index_to_remove].deleteLater()
@@ -464,7 +462,7 @@ class IfritAIWidget(QWidget):
             self._import_xlsx_button.setEnabled(True)
             self._import_md_button.setEnabled(True)
             self._export_md_button.setEnabled(True)
-            self.__clear_lines(delete_data=True)
+            self.__clear_lines(delete_data=False)
             self.monster_name_label.setText(
                 "Monster : {}, file: {}".format(self.ifrit_manager.enemy.info_stat_data['monster_name'].get_str(),
                                                 pathlib.Path(file_to_load).name))
@@ -477,8 +475,10 @@ class IfritAIWidget(QWidget):
 
     def __clear_lines(self, delete_data=False):
         command_list = [x.get_command() for x in self.command_line_widget]
+        i=0
         for command in command_list:
             self.__remove_line(command, delete_data)
+            i+=1
 
     def __setup_section_data(self):
         line_index = 0
