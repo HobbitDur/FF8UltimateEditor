@@ -4,13 +4,14 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QListWidgetItem, QGroupBox,
                              QInputDialog, QMessageBox, QFrame)
 
+from Ifrit3D.boneeditorwidget import BoneEditor
 from Ifrit3D.ff8openwidget import FF8OpenGLWidget
 
 
 class Ifrit3DWidget(QWidget):
     frame_changed = pyqtSignal(int)
     animation_finished = pyqtSignal(int)  # Emitted when an animation in playlist finishes
-
+    animation_changed = pyqtSignal()
     def __init__(self, ifrit_manager, show_controls=True):
         super().__init__()
         self.ifrit_manager = ifrit_manager
@@ -124,6 +125,23 @@ class Ifrit3DWidget(QWidget):
             # Collapsible Playlist Section
             self.playlist_container = QWidget()
             self.playlist_container.setStyleSheet("background:#2a2a2f; border-top: 1px solid #3a3a3f;")
+
+            # Create bone editor (independent widget)
+            self.bone_editor = BoneEditor()
+
+            # Connect bone editor signals to handlers
+            self.bone_editor.bone_selected.connect(self._on_bone_selected)
+            self.bone_editor.bone_length_changed.connect(self._on_bone_length_changed)
+            self.bone_editor.bone_parent_changed.connect(self._on_bone_parent_changed)
+            self.bone_editor.animation_rotation_changed.connect(self._on_animation_rotation_changed)
+
+            # Connect signals to update bone editor
+            self.frame_changed.connect(self._update_bone_editor_frame)
+            self.animation_changed.connect(self._update_bone_editor_animation)
+
+            # Add bone editor to layout
+            layout.addWidget(self.bone_editor)
+
             playlist_main_layout = QVBoxLayout(self.playlist_container)
             playlist_main_layout.setContentsMargins(0, 0, 0, 0)
             playlist_main_layout.setSpacing(0)
@@ -338,6 +356,7 @@ class Ifrit3DWidget(QWidget):
         # Set the animation
         anim_id = self.playlist[self.current_playlist_index]
         self.set_animation(anim_id)
+        self.animation_changed.emit()
 
         # Reset frame
         self.current_frame = 0
@@ -394,6 +413,7 @@ class Ifrit3DWidget(QWidget):
                         # Current animation finished, move to next in playlist
                         self.current_playlist_index += 1
                         self._play_playlist_item()
+                        self.animation_changed.emit()
                         return
             else:
                 # When not animating, just update to current frame
@@ -435,6 +455,12 @@ class Ifrit3DWidget(QWidget):
                           f"Quads: {len(self.gl_widget.quads)} | "
                           f"Bones: {len(self.gl_widget.skeleton_lines)} | "
                           f"LMB: Rotate | RMB: Pan | Scroll: Zoom")
+        if hasattr(self, 'bone_editor'):
+            bone_count = len(self.ifrit_manager.enemy.bone_data.bones) - 1
+            self.bone_editor.set_bone_range(bone_count)
+            # Set the initial bone ID to 0 and update
+            self.bone_editor.bone_spin.setValue(0)
+            self._update_bone_editor_selection()
 
     def get_max_frames(self):
         if not self.ifrit_manager:
@@ -470,6 +496,8 @@ class Ifrit3DWidget(QWidget):
         self.update_animated_mesh()
         self.update_skeleton()
 
+        self.animation_changed.emit()
+
         # Restart animation if it was previously playing
         if was_animating:
             self.timer.start(1000 // self.fps)
@@ -479,9 +507,11 @@ class Ifrit3DWidget(QWidget):
     def update_skeleton(self):
         if not self.ifrit_manager:
             return
-        skeleton_lines = self.ifrit_manager.get_skeleton_lines(
+        skeleton_lines, bone_parents = self.ifrit_manager.get_skeleton_lines(
             anim_id=self.current_anim_id, frame_id=self.current_frame)
-        self.gl_widget.set_skeleton_lines(skeleton_lines)
+
+        # Set both lines and parents
+        self.gl_widget.set_skeleton_data(skeleton_lines, bone_parents)
         self.gl_widget.update()
         if hasattr(self, 'frame_label'):
             self.frame_label.setText(f"Frame: {self.current_frame}")
@@ -591,3 +621,60 @@ class Ifrit3DWidget(QWidget):
     def get_gl_widget(self):
         """Return the underlying OpenGL widget for advanced control"""
         return self.gl_widget
+
+    def _update_bone_editor_frame(self, frame):
+        """Update bone editor when frame changes"""
+        if hasattr(self, 'bone_editor'):
+            self.bone_editor.set_animation_info(self.current_anim_id, frame)
+            self._update_bone_editor_selection()
+
+    def _update_bone_editor_animation(self):
+        """Update bone editor when animation changes"""
+        if hasattr(self, 'bone_editor'):
+            self.bone_editor.set_animation_info(self.current_anim_id, self.current_frame)
+            self._update_bone_editor_selection()
+
+    def _update_bone_editor_selection(self):
+        """Update the bone editor with current bone data"""
+        bone_id = self.bone_editor.bone_spin.value()
+        if bone_id < 0 or bone_id >= len(self.ifrit_manager.enemy.bone_data.bones):
+            return
+
+        bone = self.ifrit_manager.enemy.bone_data.bones[bone_id]
+
+        # Get animation rotation if available
+        rot_x, rot_y, rot_z = 0, 0, 0
+        if (self.current_anim_id < len(self.ifrit_manager.enemy.animation_data.animations) and
+                self.current_frame < len(self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames)):
+            frame = self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames[self.current_frame]
+            if bone_id < len(frame.bone_rot_deg):
+                rot_x, rot_y, rot_z = frame.bone_rot_deg[bone_id]
+
+        self.bone_editor.set_bone_data(
+            bone_id, bone.size, bone.parent_id, rot_x, rot_y, rot_z
+        )
+
+    def _on_bone_selected(self, bone_id: int):
+        """Handle bone selection from editor"""
+        self._update_bone_editor_selection()
+        self.gl_widget.set_selected_bone(bone_id)
+        self.gl_widget.update()
+
+    def _on_bone_length_changed(self, bone_id: int, length: float):
+        """Handle bone length change from editor"""
+        self.ifrit_manager.set_bone_length(bone_id, length)
+        self.update_skeleton()
+        self.update_animated_mesh()
+
+    def _on_bone_parent_changed(self, bone_id: int, parent_id: int):
+        """Handle bone parent change from editor"""
+        self.ifrit_manager.set_bone_parent(bone_id, parent_id)
+        self.update_skeleton()
+        self.update_animated_mesh()
+
+    def _on_animation_rotation_changed(self, anim_id: int, frame_id: int,
+                                       bone_id: int, rx: float, ry: float, rz: float):
+        """Handle animation rotation change from editor"""
+        self.ifrit_manager.set_animation_frame_bone_rotation(anim_id, frame_id, bone_id, rx, ry, rz)
+        self.update_animated_mesh()
+        self.update_skeleton()

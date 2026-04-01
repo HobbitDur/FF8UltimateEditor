@@ -14,6 +14,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.face_color = (0.45, 0.65, 0.95)
         self.raw_vertices = []
         self.set_vertices([(0,0,0)])
+        self.skeleton_lines = []  # List of (start, end) or None
+        self.bone_parents = []  # List of parent IDs for each bone
+        self.selected_bone = -1
 
         self.triangles = []
         self.quads =[]
@@ -41,6 +44,20 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.show_axis = False
         self.show_mesh = True
         self.show_skeleton = False
+
+    def set_skeleton_data(self, lines: list, parents: list):
+        """Set both skeleton lines and parent relationships"""
+        self.skeleton_lines = lines
+        self.bone_parents = parents
+        self.update()
+
+    def set_skeleton_lines(self, lines: list):
+        """Legacy method for backward compatibility"""
+        self.skeleton_lines = lines
+        self.update()
+    def set_selected_bone(self, bone_index: int):
+        self.selected_bone = bone_index
+        self.update()
 
     def set_vertices(self, vertices:list):
         self.vertices = vertices
@@ -115,26 +132,121 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.update()
 
     def draw_skeleton(self):
-        """Draw bones as yellow lines with orange joint dots."""
-        glDisable(GL_DEPTH_TEST)  # draw on top of geometry
-        glLineWidth(3.0)
+        """Draw bones with selected bone highlighted."""
+        glDisable(GL_DEPTH_TEST)
 
-        # Bone lines in yellow
+        # First, draw ALL bones in yellow
+        glLineWidth(3.0)
         glColor3f(1.0, 0.9, 0.1)
         glBegin(GL_LINES)
-        for start, end in self.skeleton_lines:
-            glVertex3f(start[0], start[1], start[2])
-            glVertex3f(end[0], end[1], end[2])
+        for line in self.skeleton_lines:
+            if line is not None:
+                start, end = line
+                glVertex3f(start[0], start[1], start[2])
+                glVertex3f(end[0], end[1], end[2])
         glEnd()
 
-        # Joint dots in orange (drawn as small GL_POINTS)
+        # Draw all regular joint dots (small, orange)
         glPointSize(6.0)
         glColor3f(1.0, 0.45, 0.1)
         glBegin(GL_POINTS)
-        for start, end in self.skeleton_lines:
-            glVertex3f(start[0], start[1], start[2])
-            glVertex3f(end[0], end[1], end[2])
+        for line in self.skeleton_lines:
+            if line is not None:
+                start, end = line
+                glVertex3f(start[0], start[1], start[2])
+                glVertex3f(end[0], end[1], end[2])
         glEnd()
+
+        # Highlight the root bone joint (parent = 0xFFFF) in bright green
+        if hasattr(self, 'bone_parents'):
+            # Find the root bone(s) - bones with parent_id = 0xFFFF
+            root_bones = []
+            for bone_idx, parent_id in enumerate(self.bone_parents):
+                if parent_id == 0xFFFF:
+                    root_bones.append(bone_idx)
+
+            # For each root bone, find its position
+            for root_idx in root_bones:
+                # Check if this root bone has a line (it shouldn't, but let's be safe)
+                if root_idx < len(self.skeleton_lines) and self.skeleton_lines[root_idx] is not None:
+                    start, end = self.skeleton_lines[root_idx]
+                    # Draw green dot at the start (parent position) of the first child
+                    glPointSize(14.0)
+                    glColor3f(0.2, 0.8, 0.2)  # Bright green
+                    glBegin(GL_POINTS)
+                    glVertex3f(start[0], start[1], start[2])
+                    glEnd()
+
+                    # Add a glow effect
+                    glEnable(GL_BLEND)
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+                    glPointSize(20.0)
+                    glColor4f(0.2, 0.9, 0.2, 0.5)  # Semi-transparent green
+                    glBegin(GL_POINTS)
+                    glVertex3f(start[0], start[1], start[2])
+                    glEnd()
+                    glDisable(GL_BLEND)
+                else:
+                    # Root bone has no line, find its position from its children
+                    for bone_idx, line in enumerate(self.skeleton_lines):
+                        if line is not None and bone_idx < len(self.bone_parents):
+                            if self.bone_parents[bone_idx] == root_idx:
+                                start, end = line
+                                # Draw green dot at the start (parent position)
+                                glPointSize(14.0)
+                                glColor3f(0.2, 0.8, 0.2)
+                                glBegin(GL_POINTS)
+                                glVertex3f(start[0], start[1], start[2])
+                                glEnd()
+
+                                # Add glow effect
+                                glEnable(GL_BLEND)
+                                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+                                glPointSize(20.0)
+                                glColor4f(0.2, 0.9, 0.2, 0.5)
+                                glBegin(GL_POINTS)
+                                glVertex3f(start[0], start[1], start[2])
+                                glEnd()
+                                glDisable(GL_BLEND)
+                                break
+
+        # Highlight the selected bone's end joint in bright red
+        if 0 <= self.selected_bone < len(self.skeleton_lines):
+            selected_line = self.skeleton_lines[self.selected_bone]
+            if selected_line is not None:
+                start, end = selected_line
+
+                # Draw larger red dot at the end point (child joint)
+                glPointSize(12.0)
+                glColor3f(1.0, 0.2, 0.2)
+                glBegin(GL_POINTS)
+                glVertex3f(end[0], end[1], end[2])
+                glEnd()
+
+                # Add glow effect for selected bone
+                glEnable(GL_BLEND)
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+                glPointSize(18.0)
+                glColor4f(1.0, 0.2, 0.2, 0.5)
+                glBegin(GL_POINTS)
+                glVertex3f(end[0], end[1], end[2])
+                glEnd()
+                glDisable(GL_BLEND)
+
+        # Also highlight the line(s) where selected bone is the parent
+        if hasattr(self, 'bone_parents') and 0 <= self.selected_bone < len(self.bone_parents):
+            for bone_idx, line in enumerate(self.skeleton_lines):
+                if line is not None:
+                    # Check if this bone's parent is the selected bone
+                    if bone_idx < len(self.bone_parents) and self.bone_parents[bone_idx] == self.selected_bone:
+                        start, end = line
+                        # Draw thick red line
+                        glLineWidth(8.0)
+                        glColor3f(1.0, 0.0, 0.0)
+                        glBegin(GL_LINES)
+                        glVertex3f(start[0], start[1], start[2])
+                        glVertex3f(end[0], end[1], end[2])
+                        glEnd()
 
         glEnable(GL_DEPTH_TEST)
 

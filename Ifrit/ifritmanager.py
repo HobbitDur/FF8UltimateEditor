@@ -136,51 +136,42 @@ class IfritManager:
 
         matrices = frame.bone_matrices
         return matrices
-    # ------------------------------------------------------------------
-    # Public: get skeleton lines for the OpenGL widget
-    # ------------------------------------------------------------------
-    def get_skeleton_lines(self, anim_id: int = 0, frame_id: int = 0) -> List[Tuple]:
+
+    def get_skeleton_lines(self, anim_id: int = 0, frame_id: int = 0) -> tuple:
         """
-        Returns list of (start_pos, end_pos) tuples in viewer space.
-        Each pos is (x, y, z).
-
-        We apply the same axis flip that your Vertex.get_list() uses:
-            viewer_x = -raw_x * SCALE
-            viewer_z = -raw_y * SCALE   (note: file Y -> viewer Z)
-            viewer_y = -raw_z * SCALE   (note: file Z -> viewer Y)
-
-        The bone matrices use the raw/unflipped space, so we flip at the end.
+        Returns (lines_list, parents_list)
+        lines_list: list of (start_pos, end_pos) or None
+        parents_list: list of parent IDs for each bone
         """
         world_matrices = self._get_bone_matrices(anim_id, frame_id)
         if not world_matrices:
-            return []
+            return [None] * len(self.enemy.bone_data.bones), []
 
         bones = self.enemy.bone_data.bones
+        lines = [None] * len(bones)
+        parents = [bone.parent_id for bone in bones]
 
-        # --- Build line segments (parent -> child pivot) ---
-        lines = []
         for k, bone in enumerate(bones):
             if bone.parent_id == 0xFFFF:
+                lines[k] = None
                 continue
+
             if k >= len(world_matrices) or bone.parent_id >= len(world_matrices):
                 continue
 
             parent_mat = world_matrices[bone.parent_id]
-            child_mat  = world_matrices[k]
+            child_mat = world_matrices[k]
             if parent_mat is None or child_mat is None:
                 continue
 
-
             def to_viewer(mat: Matrix4x4):
-                return mat.M41, mat.M42, mat.M43
+                return (mat.M41, mat.M42, mat.M43)
 
             parent_pos = to_viewer(parent_mat)
-            child_pos  = to_viewer(child_mat)
+            child_pos = to_viewer(child_mat)
+            lines[k] = (parent_pos, child_pos)
 
-            lines.append((parent_pos, child_pos))
-
-        return lines
-
+        return lines, parents
     def get_animated_vertices(self, anim_id: int, frame_id: int, next_frame_id: int = None, step: float = 0.0) -> List[Tuple[float, float, float]]:
         """
         Get animated vertices for current frame.
@@ -432,4 +423,97 @@ class IfritManager:
         self._create_tim_from_texture_data()
         self._inject_in_com()
 
+    def set_bone_length(self, bone_idx: int, length: float):
+        """Modify static bone length and recompute all animation matrices."""
+        bone = self.enemy.bone_data.bones[bone_idx]
+        bone.size = length
+        self._recompute_all_animation_matrices()
+
+    def set_bone_static_rotation(self, bone_idx: int, rot_x_deg: float, rot_y_deg: float, rot_z_deg: float):
+        """Modify static bone rotation (the base pose)."""
+        bone = self.enemy.bone_data.bones[bone_idx]
+        # Convert degrees to raw ints (4096 = 360°)
+        bone._rotX = int(rot_x_deg * 4096 / 360)
+        bone._rotY = int(rot_y_deg * 4096 / 360)
+        bone._rotZ = int(rot_z_deg * 4096 / 360)
+        self._recompute_all_animation_matrices()
+
+    def set_bone_parent(self, bone_idx: int, parent_idx: int):
+        """Change parent of a bone."""
+        bone = self.enemy.bone_data.bones[bone_idx]
+        bone.parent_id = parent_idx
+        self._recompute_all_animation_matrices()
+
+    def set_animation_frame_bone_rotation(self, anim_id: int, frame_id: int, bone_idx: int,
+                                          rot_x_deg: float, rot_y_deg: float, rot_z_deg: float):
+        """Modify the rotation of a bone in a specific animation frame."""
+        anim = self.enemy.animation_data.animations[anim_id]
+        if frame_id >= len(anim.frames):
+            return
+        frame = anim.frames[frame_id]
+
+        # Update raw rotation
+        frame.bone_rot_raw[bone_idx].x = int(rot_x_deg * 4096 / 360)
+        frame.bone_rot_raw[bone_idx].y = int(rot_y_deg * 4096 / 360)
+        frame.bone_rot_raw[bone_idx].z = int(rot_z_deg * 4096 / 360)
+        frame.bone_rot_deg[bone_idx] = (rot_x_deg, rot_y_deg, rot_z_deg)
+
+        # Recompute matrices for this frame, only updating the changed bone and its children
+        self._recompute_frame_matrices(anim, frame_id, bone_idx)
+
+    def _recompute_all_animation_matrices(self):
+        """Rebuild bone matrices for every frame of every animation."""
+        for anim in self.enemy.animation_data.animations:
+            for frame_id in range(anim.nb_frames):
+                self._recompute_frame_matrices(anim, frame_id, None)
+
+    def _recompute_frame_matrices(self, anim, frame_id, changed_bone_idx=None):
+        """
+        Recompute bone matrices for a single frame.
+        If changed_bone_idx is provided, only recompute that bone and its children.
+        """
+        frame = anim.frames[frame_id]
+        bones = self.enemy.bone_data.bones
+        nb_bones = len(bones)
+
+        # Determine which bones need recomputation
+        bones_to_update = []
+        if changed_bone_idx is not None:
+            # Start with the changed bone
+            bones_to_update.append(changed_bone_idx)
+            # Add all children recursively
+            for i in range(changed_bone_idx + 1, nb_bones):
+                if bones[i].parent_id == changed_bone_idx:
+                    bones_to_update.append(i)
+        else:
+            # Update all bones
+            bones_to_update = list(range(nb_bones))
+
+        # Sort by index to ensure parents are processed before children
+        bones_to_update.sort()
+
+        for k in bones_to_update:
+            # Build local matrix from frame rotations (already in degrees)
+            deg = frame.bone_rot_deg[k]
+            xRot = Matrix4x4.CreateRotationX(-deg[0])
+            yRot = Matrix4x4.CreateRotationY(-deg[1])
+            zRot = Matrix4x4.CreateRotationZ(-deg[2])
+            local = Matrix4x4.MultiplyColumnMajor(yRot, xRot)
+            local = Matrix4x4.MultiplyColumnMajor(zRot, local)
+
+            parent_id = bones[k].parent_id
+            if parent_id != 0xFFFF:
+                parent_mat = frame.bone_matrices[parent_id]
+                world = Matrix4x4.MultiplyRowMajor(parent_mat, local)
+                # Apply parent length translation
+                parent_length = bones[parent_id].size
+                world.M41 = parent_mat.M13 * parent_length + parent_mat.M41
+                world.M42 = parent_mat.M23 * parent_length + parent_mat.M42
+                world.M43 = parent_mat.M33 * parent_length + parent_mat.M43
+                frame.bone_matrices[k] = world
+            else:
+                local.M41 = 0.0
+                local.M42 = 0.0
+                local.M43 = 0.0
+                frame.bone_matrices[k] = local
 
