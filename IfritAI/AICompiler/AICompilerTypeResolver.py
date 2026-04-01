@@ -8,7 +8,7 @@ from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, Pa
     ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
     ParamIntError, \
     ParamPercentError, ParamPercentElemError, ParamBoolError, ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, \
-    ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError, SubjectIdTenError, ParamScanTextError, ParamInt32Error
+    ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError, SubjectIdTenError, ParamScanTextError, ParamInt32Error, ParamTargetAdvanceGenericError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
@@ -473,7 +473,7 @@ class AICompilerTypeResolver:
             'card': ParamCardError,
             'special_action': ParamSpecialActionError,
             'target_basic': ParamTargetBasicError,
-            'target_advanced_generic': ParamTargetGenericError,
+            'target_advanced_generic': ParamTargetAdvanceGenericError,
             'target_advanced_specific': ParamTargetSpecificError,
             'target_slot': ParamTargetSlotError,
             'aptitude': ParamAptitudeError,

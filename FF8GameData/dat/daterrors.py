@@ -226,6 +226,10 @@ class ParamScanTextError(AICodeError):
         super().__init__(f"Unexpected scan_text: {scan_text}")
 
 
+class ParamTargetAdvanceGenericError(AICodeError):
+    def __init__(self, target_advanced_generic: str):
+        super().__init__(f"Unexpected target_advanced_generic: {target_advanced_generic}")
+
 class ParamTargetSpecificError(AICodeError):
     def __init__(self, target_specific: str):
         super().__init__(f"Unexpected target_specific: {target_specific}")
