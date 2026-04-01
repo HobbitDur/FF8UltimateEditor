@@ -20,7 +20,6 @@ class CodeWidget(QWidget):
                  hex_chosen: bool = False):
         QWidget.__init__(self)
         self.game_data = game_data
-        self.enemy_data = enemy_data
         self.ifrit_manager = ifrit_manager
         self.code_changed_hook = code_changed_hook
         self._hex_chosen = hex_chosen
@@ -102,7 +101,7 @@ class CodeWidget(QWidget):
         decompiler = self.ifrit_manager.decompiler
         try:
             code = self.code_area_widget.toPlainText()
-            self._command_list = self.get_ai_section_from_code(code, self.enemy_data, compiler, decompiler,  self._current_section_ai_index)["command"]
+            self._command_list = self.get_ai_section_from_code(code, self.ifrit_manager.enemy, compiler, decompiler,  self._current_section_ai_index)["command"]
             if AICodeError.has_errors():
                 self.show_ai_errors()
             else:
@@ -112,7 +111,7 @@ class CodeWidget(QWidget):
 
     def _compute_ifrit_ai_legacy_code_to_command(self):
         try:
-            self._command_list = CodeAnalyser.compute_ifrit_ai_legacy_code_to_command(self.game_data, self.enemy_data, self.code_area_widget.toPlainText())
+            self._command_list = CodeAnalyser.compute_ifrit_ai_legacy_code_to_command(self.game_data, self.ifrit_manager.enemy, self.code_area_widget.toPlainText())
             if AICodeError.has_errors():
                 self.show_ai_errors()
             else:
@@ -178,8 +177,8 @@ class CodeWidget(QWidget):
             else:
                 print("Unknown function name, using stop by default")
                 command_id = 0
-            new_command = CommandAnalyser(command_id, op_code_int, self.game_data, info_stat_data=self.enemy_data.info_stat_data,
-                                          battle_text=self.enemy_data.battle_script_data['battle_text'], line_index=index, current_if_type=current_if_type)
+            new_command = CommandAnalyser(command_id, op_code_int, self.game_data, info_stat_data=self.ifrit_manager.enemy.info_stat_data,
+                                          battle_text=self.ifrit_manager.enemy.battle_script_data['battle_text'], line_index=index, current_if_type=current_if_type)
             current_if_type = new_command.get_current_if_type()
             self._command_list.append(new_command)
         self.code_changed_hook(self._command_list)
