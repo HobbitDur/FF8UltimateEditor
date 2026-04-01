@@ -137,7 +137,7 @@ class AIDecompilerTypeResolver:
             # battle_text
             for i, battle_text in enumerate(self._battle_text):
                 #normalized = self._normalize_string(battle_text)
-                mappings['type_values']['battle_text'][i] = battle_text.get_str()
+                mappings['type_values']['battle_text'][i] = i
             # scan_text
             for i, scan_text in enumerate(self._battle_text):
                 #normalized = self._normalize_string(battle_text)
