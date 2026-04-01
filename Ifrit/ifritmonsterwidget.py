@@ -96,9 +96,12 @@ class IfritMonsterWidget(QWidget):
     # ── File operations ───────────────────────────────────────────────
 
     def _open_file(self):
-        path = self._file_dialog.getOpenFileName(
-            parent=self, caption="Open .dat file",
-            filter="*.dat", directory=self._file_dialog_folder)[0]
+        path = ""
+        #path = "c0m092.dat" # For developing faster
+        if not path:
+            path = self._file_dialog.getOpenFileName(
+                parent=self, caption="Open .dat file",
+                filter="*.dat", directory=self._file_dialog_folder)[0]
         if path:
             self._file_dialog_folder = os.path.dirname(path)
             self._load_all(path)

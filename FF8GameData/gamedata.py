@@ -67,23 +67,36 @@ class BoneSection:
     SECTION_BONE_HEADER_UNKNOWN2 = {'offset': 0x0E, 'size': 2, 'byteorder': 'little', 'name': 'unknown2', 'pretty_name': 'Unknown2', 'default_value': 0}
     def __init__(self):
         self.nb_bone = 0
+        self.unknown00 = 0
+        self.unknown01 = 0
+        self.unknown02 = 0
         self._scale_x = 0
         self._scale_y = 0
         self._scale_z = 0
+        self.unknown2 = 0
         self.bones:List[Bone]= []
     def __str__(self):
-        return f"Bones(count:{self.nb_bone}, scaleX:{self.get_scale_list()[0]}, scaleY:{self.get_scale_list()[1]}, scaleZ:{self.get_scale_list()[2]}, {self.bones}"
+        return f"Bones(count:{self.nb_bone}, unknown00:{self.unknown00}, unknown01:{self.unknown01}, unknown02:{self.unknown02}, scaleX:{self.get_scale_list()[0]}, scaleY:{self.get_scale_list()[1]}, scaleZ:{self.get_scale_list()[2]}, unknown2:{self.unknown2}, {self.bones})"
     def __repr__(self):
         return self.__str__()
     def analyze(self, data:bytes):
         self.nb_bone = int.from_bytes(data[self.SECTION_BONE_HEADER_NB['offset']:self.SECTION_BONE_HEADER_NB['offset'] + self.SECTION_BONE_HEADER_NB['size']],
                                         byteorder=self.SECTION_BONE_HEADER_NB['byteorder'])
+        self.unknown00 = int.from_bytes(data[self.SECTION_BONE_HEADER_UNKNOWN00['offset']:self.SECTION_BONE_HEADER_UNKNOWN00['offset'] + self.SECTION_BONE_HEADER_UNKNOWN00['size']],
+                                        byteorder=self.SECTION_BONE_HEADER_UNKNOWN00['byteorder'])
+        self.unknown01 = int.from_bytes(data[self.SECTION_BONE_HEADER_UNKNOWN00['offset']:self.SECTION_BONE_HEADER_UNKNOWN01['offset'] + self.SECTION_BONE_HEADER_UNKNOWN01['size']],
+                                        byteorder=self.SECTION_BONE_HEADER_UNKNOWN01['byteorder'])
+        self.unknown02 = int.from_bytes(data[self.SECTION_BONE_HEADER_UNKNOWN00['offset']:self.SECTION_BONE_HEADER_UNKNOWN02['offset'] + self.SECTION_BONE_HEADER_UNKNOWN02['size']],
+                                        byteorder=self.SECTION_BONE_HEADER_UNKNOWN02['byteorder'])
         self._scale_x = int.from_bytes(data[self.SECTION_BONE_HEADER_SCALE_X['offset']:self.SECTION_BONE_HEADER_SCALE_X['offset'] + self.SECTION_BONE_HEADER_SCALE_X['size']],
                                         byteorder=self.SECTION_BONE_HEADER_SCALE_X['byteorder'], signed=True)
         self._scale_y = int.from_bytes(data[self.SECTION_BONE_HEADER_SCALE_Y['offset']:self.SECTION_BONE_HEADER_SCALE_Y['offset'] + self.SECTION_BONE_HEADER_SCALE_Y['size']],
                                         byteorder=self.SECTION_BONE_HEADER_SCALE_Y['byteorder'], signed=True)
         self._scale_z = int.from_bytes(data[self.SECTION_BONE_HEADER_SCALE_Z['offset']:self.SECTION_BONE_HEADER_SCALE_Z['offset'] + self.SECTION_BONE_HEADER_SCALE_Z['size']],
                                         byteorder=self.SECTION_BONE_HEADER_SCALE_Z['byteorder'], signed=True)
+        self.unknown2 = int.from_bytes(
+            data[self.SECTION_BONE_HEADER_UNKNOWN2['offset']:self.SECTION_BONE_HEADER_UNKNOWN2['offset'] + self.SECTION_BONE_HEADER_UNKNOWN2['size']],
+            byteorder=self.SECTION_BONE_HEADER_UNKNOWN2['byteorder'])
         current_index = self.SECTION_BONE_HEADER_UNKNOWN2['offset'] + self.SECTION_BONE_HEADER_UNKNOWN2['size']
         next_index = current_index + 48
         for i in range(self.nb_bone):
@@ -473,6 +486,9 @@ class BitReader:
         self._byte_pos = start_byte
         self._bit_pos = 0  # sub-byte bit offset (0–7)
 
+    def read_bit(self):
+        return (self.read_bits(1) & 1) != 0
+
     def read_bits(self, count: int) -> int:
         if count > 16:
             raise ValueError("count must be <= 16")
@@ -645,7 +661,7 @@ class AnimationFrame:
         self.bone_matrices: List[Matrix4x4] = [Matrix4x4() for _ in range(nb_bones)]  # Initialize with identity matrices
 
     def __str__(self):
-        return f"AnimationFrame(pos:{self.position}, bones:{len(self.bone_rot_deg)})"
+        return f"AnimationFrame(pos:{self.position}, bones_rot:{self.bone_rot_deg})"
 
     def __repr__(self):
         return self.__str__()
@@ -657,7 +673,7 @@ class Animation:
         self.frames: List[AnimationFrame] = []
 
     def __str__(self):
-        return f"Animation(nb_frames:{self.nb_frames})"
+        return f"Animation(nb_frames:{self.nb_frames}, {self.frames})"
 
     def __repr__(self):
         return self.__str__()
@@ -713,7 +729,7 @@ class AnimationSection:
                     )
 
                 # --- Padding bit (C#: var singleBit = bitReader.ReadBits(1)) ---
-                br.read_bits(1)
+                mode_bit = br.read_bit()
 
                 # --- Bone rotations ---
                 # C#: for each bone, read rx/ry/rz via ReadRotationType()
@@ -722,6 +738,17 @@ class AnimationSection:
                     rx = br.read_rotation_type()
                     ry = br.read_rotation_type()
                     rz = br.read_rotation_type()
+
+                    if mode_bit == 1:
+                        unk1_flag = br.read_bit()
+                        if unk1_flag:
+                            unk1 = br.read_bits(16)
+                        unk2_flag = br.read_bit()
+                        if unk2_flag:
+                            unk2 = br.read_bits(16)
+                        unk3_flag = br.read_bit()
+                        if unk3_flag:
+                            unk3 = br.read_bits(16)
 
                     if n == 0:
                         raw = ShortVector(rx, ry, rz)
