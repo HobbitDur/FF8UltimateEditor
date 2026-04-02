@@ -678,3 +678,19 @@ class Ifrit3DWidget(QWidget):
         self.ifrit_manager.set_animation_frame_bone_rotation(anim_id, frame_id, bone_id, rx, ry, rz)
         self.update_animated_mesh()
         self.update_skeleton()
+
+    # Add to Ifrit3DWidget class
+
+    def export_to_fbx(self, filepath: str):
+        """Export current monster to FBX"""
+        exporter = FF8ToFBXExporter(self.ifrit_manager)
+        exporter.export(filepath)
+        QMessageBox.information(self, "Export Complete", f"Exported to {filepath}")
+
+    def import_from_fbx(self, filepath: str):
+        """Import FBX and update model"""
+        importer = FBXImporter(self.ifrit_manager)
+        importer.import_file(filepath)
+        # Refresh the display
+        self.load_file(filepath)  # Or refresh current view
+        QMessageBox.information(self, "Import Complete", f"Imported from {filepath}")
