@@ -97,6 +97,10 @@ class IfritManager:
         self._dat_xlsx_manager = DatToXlsx()
         self._xlsx_to_dat_manager = XlsxToDat()
 
+    def close_xlsx_file(self):
+        self._xlsx_to_dat_manager.close_file()
+        self._dat_xlsx_manager.close_file()
+
     def create_xlsx_file(self, xlsx_file):
         self._dat_xlsx_manager.create_file(xlsx_file)
 
@@ -559,7 +563,16 @@ class IfritManager:
                 enemy = self._xlsx_to_dat_manager.import_from_xlsx(sheet, self.game_data, pathlib.Path(current_dat_file).resolve().parent, self.decompiler)
                 if enemy:
                     enemy.write_data_to_file(self.game_data, current_dat_file)
-        self._xlsx_to_dat_manager.close_file()
+
+    def set_enemy_info_from_xlsx(self):
+        for sheet in self._xlsx_to_dat_manager.workbook:
+            if sheet.title != xlsxmanager.REF_DATA_SHEET_TITLE:
+                monster_index = int(re.search(r'\d+', sheet.title).group())
+                if monster_index != self.enemy.id:  # Only doing the monster asked
+                    continue
+                else:
+                    self.enemy.info_stat_data = self._xlsx_to_dat_manager.get_stat_info(sheet, self.game_data)
+                    self.enemy.battle_script_data['battle_text'] = self._xlsx_to_dat_manager.get_battle_text(sheet, self.game_data)
 
     def get_monster_data_from_xlsx(self, load_all_data=False, load_only_first=False, load_monster_id=-1) -> dict:
         monster_list = {}

@@ -164,6 +164,7 @@ class IfritXlsxWidget(QWidget):
             elif self.process_selector.currentIndex() == 1:  # Xlsx to dat
                 self.ifrit_manager.load_xlsx_file(self.xlsx_file_selected)
                 self.ifrit_manager.xlsx_to_dat(dat_file_current_list, dat_id_current_list)
+            self.ifrit_manager.close_xlsx_file()
             if self.open_xlsx.isChecked():
                 os.startfile(self.xlsx_file_selected)
         print("Xlsx work done !")

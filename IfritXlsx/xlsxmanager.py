@@ -78,7 +78,8 @@ class DatToXlsx:
         self.__init_style()
 
     def close_file(self):
-        self.workbook.close()
+        if self.workbook:
+            self.workbook.close()
         self.__file_name_list = []
 
     def __init_style(self):
@@ -695,7 +696,8 @@ class XlsxToDat:
         self.workbook = load_workbook(xlsx_file, read_only=True, data_only=True, keep_links=False)
 
     def close_file(self):
-        self.workbook.close()
+        if self.workbook:
+            self.workbook.close()
 
     def import_from_xlsx(self, sheet, game_data: GameData, output_path, decompiler:AIDecompiler):
         """
@@ -727,6 +729,25 @@ class XlsxToDat:
         self.read_renzokuken(game_data, sheet, current_enemy)
 
         return current_enemy
+
+    def get_stat_info(self, sheet, game_data:GameData):
+        current_enemy = MonsterAnalyser(game_data)
+        self.read_monster_name(game_data, sheet, current_enemy)
+        self.read_stat(game_data, sheet, current_enemy)
+        self.read_def(game_data, sheet, current_enemy)
+        self.read_item(game_data, sheet, current_enemy)
+        self.read_misc(game_data, sheet, current_enemy)
+        self.read_ability(game_data, sheet, current_enemy)
+        self.read_card(game_data, sheet, current_enemy)
+        self.read_devour(game_data, sheet, current_enemy)
+        self.read_byte_flag(game_data, sheet, current_enemy)
+        self.read_renzokuken(game_data, sheet, current_enemy)
+        return current_enemy.info_stat_data
+
+    def get_battle_text(self, sheet, game_data:GameData):
+        current_enemy = MonsterAnalyser(game_data)
+        self.read_text(game_data, sheet, current_enemy)
+        return current_enemy.battle_script_data['battle_text']
 
     @staticmethod
     def read_misc(game_data: GameData, sheet, enemy: MonsterAnalyser):
