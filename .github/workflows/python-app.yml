@@ -32,7 +32,7 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
           pip freeze
-      - uses: Cyberbeni/setup-7zip@v3
+      - uses: milliewalky/setup-7-zip@v2
       - name: Create patcher
         shell: bash
         run: |
