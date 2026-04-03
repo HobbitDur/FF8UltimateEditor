@@ -701,38 +701,35 @@ class XlsxToDat():
         for key, ennemy in ennemy_list.items():
             ennemy.write_data_to_file(game_data, path, write_ai)
 
-    def import_from_xlsx(self, sheet, game_data: GameData, output_path, decompiler:AIDecompiler, limit_file_index=-1):
+    def import_from_xlsx(self, sheet, game_data: GameData, output_path, decompiler:AIDecompiler):
         """
         As the module to write is different from the reading one, the one writing start at 0 for column and row, when this one, the reading, start at 1
         """
 
-        ennemy_origin_file = sheet.cell(ROW_FILE_DATA + 1 + 1, COL_FILE_DATA + 1 + 1).value
+        enemy_origin_file = sheet.cell(ROW_FILE_DATA + 1 + 1, COL_FILE_DATA + 1 + 1).value
 
-        file_index = int(re.search(r'\d{3}', ennemy_origin_file).group())
-        if limit_file_index >= 0 and limit_file_index != file_index:
-            return
         print("Reading sheet: {}".format(sheet.title))
-        current_ennemy = MonsterAnalyser(game_data)
-        current_ennemy.load_file_data(os.path.join(output_path, ennemy_origin_file), game_data)  # Loading the file to have all offset correct
-        current_ennemy.analyse_loaded_data(game_data, decompiler)
-        self.read_monster_name(game_data, sheet, current_ennemy)
-        current_ennemy.origin_file_name = ennemy_origin_file
+        current_enemy = MonsterAnalyser(game_data)
+        current_enemy.load_file_data(os.path.join(output_path, enemy_origin_file), game_data)  # Loading the file to have all offset correct
+        current_enemy.analyse_loaded_data(game_data, decompiler)
+        self.read_monster_name(game_data, sheet, current_enemy)
+        current_enemy.origin_file_name = enemy_origin_file
 
         # Animation info on monster for the time beeing
-        current_ennemy.model_animation_data['nb_animation'] = sheet.cell(ROW_MONSTER_NB_ANIMATION + 1, COL_MONSTER_INFO + 1 + 1).value
+        current_enemy.model_animation_data['nb_animation'] = sheet.cell(ROW_MONSTER_NB_ANIMATION + 1, COL_MONSTER_INFO + 1 + 1).value
 
-        self.read_stat(game_data, sheet, current_ennemy)
-        self.read_def(game_data, sheet, current_ennemy)
-        self.read_item(game_data, sheet, current_ennemy)
-        self.read_misc(game_data, sheet, current_ennemy)
-        self.read_ability(game_data, sheet, current_ennemy)
-        self.read_text(game_data, sheet, current_ennemy)
-        self.read_card(game_data, sheet, current_ennemy)
-        self.read_devour(game_data, sheet, current_ennemy)
-        self.read_byte_flag(game_data, sheet, current_ennemy)
-        self.read_renzokuken(game_data, sheet, current_ennemy)
+        self.read_stat(game_data, sheet, current_enemy)
+        self.read_def(game_data, sheet, current_enemy)
+        self.read_item(game_data, sheet, current_enemy)
+        self.read_misc(game_data, sheet, current_enemy)
+        self.read_ability(game_data, sheet, current_enemy)
+        self.read_text(game_data, sheet, current_enemy)
+        self.read_card(game_data, sheet, current_enemy)
+        self.read_devour(game_data, sheet, current_enemy)
+        self.read_byte_flag(game_data, sheet, current_enemy)
+        self.read_renzokuken(game_data, sheet, current_enemy)
 
-        return current_ennemy
+        return current_enemy
 
     @staticmethod
     def read_misc(game_data: GameData, sheet, enemy: MonsterAnalyser):

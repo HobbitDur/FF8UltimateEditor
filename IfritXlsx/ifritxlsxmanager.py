@@ -1,6 +1,7 @@
 import os
 import pathlib
 import re
+from typing import List
 
 from FF8GameData.gamedata import GameData
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
@@ -45,11 +46,11 @@ class IfritXlsxManager:
         self._dat_xlsx_manager.create_ref_data(self.game_data)
         self._dat_xlsx_manager.close_file()
 
-    def xlsx_to_dat(self, file_list, local_limit):
+    def xlsx_to_dat(self, file_list, monster_id_list:List[int]):
         for sheet in self._xlsx_to_dat_manager.workbook:
             if sheet.title != xlsxmanager.REF_DATA_SHEET_TITLE:
                 monster_index = int(re.search(r'\d+', sheet.title).group())
-                if local_limit > 0 and local_limit != monster_index:  # Only doing the monster asked
+                if monster_index not in monster_id_list:  # Only doing the monster asked
                     continue
                 else:
                     current_dat_file = [text for text in file_list if int(pathlib.Path(text).name.replace('c0m','').replace('.dat', '')) == monster_index]
@@ -58,9 +59,9 @@ class IfritXlsxManager:
                     else:
                         print(f"Monster dat file not found for index: {monster_index}")
                         continue
-                ennemy = self._xlsx_to_dat_manager.import_from_xlsx(sheet, self.game_data, pathlib.Path(current_dat_file).resolve().parent, self.decompiler, local_limit)
-                if ennemy:
-                    ennemy.write_data_to_file(self.game_data, current_dat_file)
+                enemy = self._xlsx_to_dat_manager.import_from_xlsx(sheet, self.game_data, pathlib.Path(current_dat_file).resolve().parent, self.decompiler)
+                if enemy:
+                    enemy.write_data_to_file(self.game_data, current_dat_file)
         self._xlsx_to_dat_manager.close_file()
 
     def get_monster_data_from_xlsx(self, load_all_data=False, load_only_first=False, load_monster_id=-1) -> dict:
