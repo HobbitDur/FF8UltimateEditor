@@ -704,7 +704,8 @@ class XlsxToDat:
 
         enemy_origin_file = sheet.cell(ROW_FILE_DATA + 1 + 1, COL_FILE_DATA + 1 + 1).value
 
-        print("Reading sheet: {}".format(sheet.title))
+
+        print(f"Reading dat file: {enemy_origin_file}")
         current_enemy = MonsterAnalyser(game_data)
         current_enemy.load_file_data(os.path.join(output_path, enemy_origin_file), game_data)  # Loading the file to have all offset correct
         current_enemy.analyse_loaded_data(game_data, decompiler)
@@ -712,8 +713,8 @@ class XlsxToDat:
         current_enemy.origin_file_name = enemy_origin_file
 
         # Animation info on monster for the time beeing
-        current_enemy.model_animation_data['nb_animation'] = sheet.cell(ROW_MONSTER_NB_ANIMATION + 1, COL_MONSTER_INFO + 1 + 1).value
-
+        #current_enemy.model_animation_data['nb_animation'] = sheet.cell(ROW_MONSTER_NB_ANIMATION + 1, COL_MONSTER_INFO + 1 + 1).value
+        print(f"Reading sheet data : {sheet.title}")
         self.read_stat(game_data, sheet, current_enemy)
         self.read_def(game_data, sheet, current_enemy)
         self.read_item(game_data, sheet, current_enemy)
