@@ -217,6 +217,9 @@
   "local_var_param": [
     {"param_id": 203, "text": "LAST ATTACKER SLOT ID", "param_type": "", "comment":  ""}
   ],
+  "local_var_add_param": [
+    {"param_id": 203, "text": "LAST ATTACKER SLOT ID", "param_type": "", "comment":  ""}
+  ],
   "target_advanced_generic": [
     {"param_id": 200, "text": "ENEMY TEAM", "param_type": "", "comment":  ""},
     {"param_id": 201, "text": "ALLY TEAM", "param_type": "", "comment":  ""}

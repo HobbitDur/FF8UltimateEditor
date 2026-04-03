@@ -710,6 +710,9 @@ class CommandAnalyser:
                 elif type == "local_var_param":
                     self.param_possible_list.append(self.__get_possible_local_var_param())
                     param_value.append([x['data'] for x in self.__get_possible_local_var_param() if x['id'] == self.__op_code[op_index]][0])
+                elif type == "local_var_add_param":
+                    self.param_possible_list.append(self.__get_possible_local_var_add_param())
+                    param_value.append([x['data'] for x in self.__get_possible_local_var_add_param() if x['id'] == self.__op_code[op_index]][0])
                 elif type == "local_var":
                     param_value.append(self.__get_var_name(self.__op_code[op_index]))
                     self.param_possible_list.append(self.__get_possible_local_var())
@@ -1011,6 +1014,17 @@ class CommandAnalyser:
             if i in special_param_id:
                 param_possible.append([{'id': val_dict['param_id'], 'data': val_dict['text']}
                                        for val_dict in self.game_data.ai_data_json["local_var_param"] if val_dict['param_id'] == i][0])
+            else:
+                param_possible.append({'id': i, 'data': str(i)})
+        return param_possible
+
+    def __get_possible_local_var_add_param(self):
+        param_possible = []
+        special_param_id = [val_dict["param_id"] for val_dict in self.game_data.ai_data_json["local_var_add_param"]]
+        for i in range(0, 256):
+            if i in special_param_id:
+                param_possible.append([{'id': val_dict['param_id'], 'data': val_dict['text']}
+                                       for val_dict in self.game_data.ai_data_json["local_var_add_param"] if val_dict['param_id'] == i][0])
             else:
                 param_possible.append({'id': i, 'data': str(i)})
         return param_possible

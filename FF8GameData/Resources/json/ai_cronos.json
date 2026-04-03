@@ -48,7 +48,7 @@
     {"op_code": 14,  "size": 2, "func_name":"var",                   "short_text":"14:Set var", "text": "Set {} to {} (scope:monster)", "param_index": [0, 1], "complexity": "simple", "param_type":  ["local_var", "local_var_param"], "param_list":  [], "comment":  "Set var"},
     {"op_code": 15,  "size": 2, "func_name":"bvar",                  "short_text":"15:Set battle var", "text": "Set {} to {} (scope:battle)", "param_index": [0, 1], "complexity": "simple", "param_type":  ["battle_var", "int"], "param_list":  [], "comment":  "Set var globally"},
     {"op_code": 17,  "size": 2, "func_name":"gvar",                  "short_text":"17:Set global var", "text": "Set {} to {} (scope:global)", "param_index": [0,1], "complexity": "simple", "param_type":  ["global_var", "int"], "param_list":  [], "comment":  "Set var map"},
-    {"op_code": 18,  "size": 2, "func_name":"add",                   "short_text":"18:Add to var", "text": "Add to {} value {} (scope:monster)", "param_index": [0,1], "complexity": "simple", "param_type":  ["local_var", "local_var_param"], "param_list":  [], "comment":  "Add var"},
+    {"op_code": 18,  "size": 2, "func_name":"add",                   "short_text":"18:Add to var", "text": "Add to {} value {} (scope:monster)", "param_index": [0,1], "complexity": "simple", "param_type":  ["local_var", "local_var_add_param"], "param_list":  [], "comment":  "Add var"},
     {"op_code": 19,  "size": 2, "func_name":"badd",                  "short_text":"19:Add to battle var", "text": "Add to {} value {} (scope:battle)", "param_index": [0,1], "complexity": "simple", "param_type":  ["battle_var", "int"], "param_list":  [], "comment":  "Add var global"},
     {"op_code": 21,  "size": 2, "func_name":"gadd",                  "short_text":"21:Add to global var"  , "text": "Add to {} value {} (scope:global)", "param_index": [0,1], "complexity": "simple", "param_type":  ["global_var", "int"], "param_list":  [], "comment":  "ADD var savemap"},
     {"op_code": 22,  "size": 0, "func_name":"recover",               "short_text":"22:Recover"            , "text": "Heal all HP", "param_index": [], "complexity": "simple", "param_type":  [], "param_list":  [], "comment":  "FUll hp"},
@@ -215,6 +215,9 @@
     {"param_id": 227, "text": "varH SLOT ID", "param_type": ""}
   ],
   "local_var_param": [
+    {"param_id": 203, "text": "LAST ATTACKER SLOT ID", "param_type": "", "comment":  ""}
+  ],
+    "local_var_add_param": [
     {"param_id": 203, "text": "RANDOM VALUE", "param_type": "", "comment":  ""}
   ],
   "target_advanced_generic": [
