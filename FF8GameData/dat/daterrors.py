@@ -138,6 +138,10 @@ class ParamLocalVarParamError(AICodeError):
     def __init__(self, local_var_param: str):
         super().__init__(f"Unexpected local var param: {local_var_param}")
 
+class ParamLocalVarAddParamError(AICodeError):
+    def __init__(self, local_var_add_param: str):
+        super().__init__(f"Unexpected local var add param: {local_var_add_param}")
+
 class ParamLocalVarError(AICodeError):
     def __init__(self, local_var: str):
         super().__init__(f"Unexpected local_var : {local_var}")

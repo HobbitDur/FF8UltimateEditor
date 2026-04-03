@@ -12,7 +12,7 @@ from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, Pa
     ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
     ParamIntError, \
     ParamPercentError, ParamPercentElemError, ParamBoolError, ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, \
-    ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError
+    ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError, ParamLocalVarAddParamError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 
@@ -402,7 +402,7 @@ class AIDecompilerTypeResolver:
             'battle_var': ParamBattleVarError,
             'global_var': ParamGlobalVarError,
             'local_var_param': ParamLocalVarParamError,
-            'local_var_add_param': ParamLocalVarParamError,
+            'local_var_add_param': ParamLocalVarAddParamError,
             'comparator': ComparatorError,
             'subject_id': SubjectIdError,
             'monster_ability': ParamMonsterAbilityError,
