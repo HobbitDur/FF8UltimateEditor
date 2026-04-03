@@ -31,6 +31,7 @@ ROW_MONSTER_COMBAT_TEXT = 4
 
 ROW_BYTE_FLAG = 8
 ROW_RENZOKUKEN = 41
+NB_RENZOKUKEN = 8
 ROW_ORIGINAl_FILE_NAME = 44
 ROW_LEGEND = 39
 COL_LEGEND = 0
@@ -51,6 +52,8 @@ ROW_DROP_CARD = 15
 COL_DROP_CARD = 17
 ROW_DEVOUR = 19
 COL_DEVOUR = 17
+NB_CARD = 3
+NB_DEVOUR = 3
 
 REF_DATA_COL_ABILITIES_TYPE = 0
 REF_DATA_COL_ABILITIES = 1
@@ -318,6 +321,7 @@ class DatToXlsx:
                     pretty_name = data_el['pretty_name']
                     break
             try:
+
                 # Stat menu
                 column_index['stat'] = COL_STAT
                 impact = []
@@ -749,62 +753,122 @@ class XlsxToDat:
         self.read_text(game_data, sheet, current_enemy)
         return current_enemy.battle_script_data['battle_text']
 
-
     @staticmethod
     def read_misc(game_data: GameData, sheet, enemy: MonsterAnalyser):
-        row_index = 2
-        for misc in AIData.MISC_ORDER:
-            value = sheet.cell(row_index, COL_MISC + 1 + 1).value
-            if misc == "mug_rate" or misc == "drop_rate":
-                value = value * 100
+        misc_col = COL_MISC + 2
+        misc_range = sheet.iter_rows(min_row=2,
+                                     max_row=2 + len(AIData.MISC_ORDER) - 1,
+                                     min_col=misc_col, max_col=misc_col,
+                                     values_only=True)
+
+        for misc, row in zip(AIData.MISC_ORDER, misc_range):
+            value = row[0]
+            if misc in ["mug_rate", "drop_rate"]:
+                value = value * 100 if value is not None else 0
             enemy.info_stat_data[misc] = value
-            row_index += 1
 
     @staticmethod
     def read_text(game_data: GameData, sheet, enemy: MonsterAnalyser):
         combat_text_list = []
-        for i in range(MAX_COMBAT_TXT):
-            txt_value = sheet.cell(ROW_MONSTER_COMBAT_TEXT + 1 + i, 2).value
+        text_col = COL_MONSTER_INFO + 2
+
+        text_range = sheet.iter_rows(min_row=ROW_MONSTER_COMBAT_TEXT + 1,
+                                     max_row=ROW_MONSTER_COMBAT_TEXT + MAX_COMBAT_TXT,
+                                     min_col=text_col, max_col=text_col,
+                                     values_only=True)
+
+        for row in text_range:
+            txt_value = row[0]
             if txt_value:
                 added_value = FF8Text(game_data=game_data, own_offset=0, data_hex=bytearray(), id=0)
                 added_value.set_str(txt_value)
                 combat_text_list.append(added_value)
             else:
                 break
+
         enemy.battle_script_data['battle_text'] = combat_text_list
 
     @staticmethod
     def read_card(game_data: GameData, sheet, enemy: MonsterAnalyser):
+        col = COL_DROP_CARD + 2
+        start_row = ROW_DROP_CARD + 2
+        card_count = NB_CARD
+
+        card_range = sheet.iter_rows(min_row=start_row,
+                                     max_row=start_row + card_count - 1,
+                                     min_col=col, max_col=col,
+                                     values_only=True)
+
         card_list = []
-        for i in range(ROW_DROP_CARD + 1 + 1, ROW_DROP_CARD + 1 + 1 + len(enemy.info_stat_data['card'])):
-            cell_value = sheet.cell(i, COL_DROP_CARD + 1 + 1).value
-            card_list.append(int(cell_value.split(':')[0]))
+        for row in card_range:
+            cell_value = row[0]
+            if cell_value and isinstance(cell_value, str) and ':' in cell_value:
+                card_list.append(int(cell_value.split(':')[0]))
+            else:
+                card_list.append(0)
+
         enemy.info_stat_data['card'] = card_list
 
     @staticmethod
     def read_devour(game_data: GameData, sheet, enemy: MonsterAnalyser):
+        col = COL_DEVOUR + 2
+        start_row = ROW_DEVOUR + 2
+        devour_count = NB_DEVOUR
+
+        devour_range = sheet.iter_rows(min_row=start_row,
+                                       max_row=start_row + devour_count - 1,
+                                       min_col=col, max_col=col,
+                                       values_only=True)
+
         devour_list = []
-        for i in range(ROW_DEVOUR + 1 + 1, ROW_DEVOUR + 1 + 1 + len(enemy.info_stat_data['devour'])):
-            cell_value = sheet.cell(i, COL_DEVOUR + 1 + 1).value
-            devour_list.append(int(cell_value.split(':')[0]))
+        for row in devour_range:
+            cell_value = row[0]
+            if cell_value and isinstance(cell_value, str) and ':' in cell_value:
+                devour_list.append(int(cell_value.split(':')[0]))
+            else:
+                devour_list.append(0)
+
         enemy.info_stat_data['devour'] = devour_list
 
     @staticmethod
     def read_byte_flag(game_data: GameData, sheet, enemy: MonsterAnalyser):
+        total_flags = len(AIData.BYTE_FLAG_LIST) * 8
+        flag_range = sheet.iter_rows(min_row=ROW_BYTE_FLAG + 1,
+                                     max_row=ROW_BYTE_FLAG + total_flags,
+                                     min_col=COL_MISC + 1, max_col=COL_MISC + 2,
+                                     values_only=True)
+
+        flag_data = list(flag_range)
         row_flag_index = 0
+
         for byte_flag_name in AIData.BYTE_FLAG_LIST:
             bit_list = {}
             for i in range(8):
-                bit_list[sheet.cell(ROW_BYTE_FLAG + row_flag_index + 1, COL_MISC + 1).value] = sheet.cell(ROW_BYTE_FLAG + row_flag_index + 1, COL_MISC + 1 + 1).value
-                row_flag_index += 1
+                if row_flag_index < len(flag_data):
+                    bit_name = flag_data[row_flag_index][0]
+                    bit_value = flag_data[row_flag_index][1]
+                    bit_list[bit_name] = bit_value
+                    row_flag_index += 1
             enemy.info_stat_data[byte_flag_name] = bit_list
 
     @staticmethod
     def read_renzokuken(game_data: GameData, sheet, enemy: MonsterAnalyser):
+        col = COL_MISC + 2
+        start_row = ROW_RENZOKUKEN + 2
+        renzo_count = NB_RENZOKUKEN
+
+        renzo_range = sheet.iter_rows(min_row=start_row,
+                                      max_row=start_row + renzo_count - 1,
+                                      min_col=col, max_col=col,
+                                      values_only=True)
+
         renzokuken_list = []
-        for i in range(ROW_RENZOKUKEN + 1 + 1, ROW_RENZOKUKEN + 1 + 1 + len(enemy.info_stat_data['renzokuken'])):
-            cell_value = sheet.cell(i, COL_MISC + 1 + 1).value
-            renzokuken_list.append(int(cell_value.split(':')[0]))
+        for row in renzo_range:
+            cell_value = row[0]
+            if cell_value and isinstance(cell_value, str) and ':' in cell_value:
+                renzokuken_list.append(int(cell_value.split(':')[0]))
+            else:
+                renzokuken_list.append(0)
 
         enemy.info_stat_data['renzokuken'] = renzokuken_list
 
@@ -813,62 +877,97 @@ class XlsxToDat:
         col_index = COL_ABILITIES + 1
         for abilities in AIData.ABILITIES_HIGHNESS_ORDER:
             ability_set = []
-            for i in range(3, NB_MAX_ABILITIES + 3):
-                ability_type = int(sheet.cell(i, col_index).value.split(':')[0])
-                ability_id = int(sheet.cell(i, col_index + 1).value.split(':')[0])
-                animation = int(sheet.cell(i, col_index + 2).value)
-                ability_set.append({'type': ability_type, 'animation': animation, 'id': ability_id})
+
+            # Read this ability block's 3 columns at once
+            block_range = sheet.iter_rows(min_row=3, max_row=NB_MAX_ABILITIES + 2,
+                                          min_col=col_index, max_col=col_index + 2,
+                                          values_only=True)
+
+            for row in block_range:
+                type_str, id_str, animation = row
+                ability_type = int(type_str.split(':')[0]) if type_str and ':' in type_str else 0
+                ability_id = int(id_str.split(':')[0]) if id_str and ':' in id_str else 0
+                animation_value = int(animation) if animation is not None else 0
+                ability_set.append({'type': ability_type, 'animation': animation_value, 'id': ability_id})
+
             enemy.info_stat_data[abilities] = ability_set
             col_index += 3
 
     @staticmethod
     def read_stat(game_data: GameData, sheet, enemy: MonsterAnalyser):
-        # Stat reading
-        row_index = 2
-        for stat in [x['name'] for x in game_data.stat_data_json['stat']]:
-            list_value = []
-            for col_index in range(COL_STAT + 2, COL_STAT + 2 + 4):
-                list_value.append(sheet.cell(row_index, col_index).value)
-            enemy.info_stat_data[stat] = list_value
-            row_index += 1
+        # Read entire 8x4 block in one operation
+        stat_range = sheet.iter_rows(min_row=2, max_row=9,
+                                     min_col=COL_STAT + 2, max_col=COL_STAT + 5,
+                                     values_only=True)
+
+        stat_names = [x['name'] for x in game_data.stat_data_json['stat']]
+        for row_idx, row in enumerate(stat_range):
+            if row_idx < len(stat_names):
+                enemy.info_stat_data[stat_names[row_idx]] = list(row)
 
     @staticmethod
     def read_def(game_data: GameData, sheet, enemy: MonsterAnalyser):
-        list_value = []
-        for i in range(2, len(game_data.magic_data_json['magic_type']) + 2):
-            list_value.append(sheet.cell(i, COL_DEF + 1 + 1).value)
-        enemy.info_stat_data['elem_def'] = list_value
-        list_value = []
-        for i in range(len(game_data.magic_data_json['magic_type']) + 2,
-                       len(game_data.magic_data_json['magic_type']) + 2 + len(game_data.status_data_json['status'])):
-            list_value.append(sheet.cell(i, COL_DEF + 1 + 1).value)
-        enemy.info_stat_data['status_def'] = list_value
+        elem_count = len(game_data.magic_data_json['magic_type'])
+        status_count = len(game_data.status_data_json['status'])
+
+        # Read all defense values in one batch
+        def_range = sheet.iter_rows(min_row=2,
+                                    max_row=2 + elem_count + status_count - 1,
+                                    min_col=COL_DEF + 2, max_col=COL_DEF + 2,
+                                    values_only=True)
+
+        all_values = [row[0] for row in def_range]
+        enemy.info_stat_data['elem_def'] = all_values[:elem_count]
+        enemy.info_stat_data['status_def'] = all_values[elem_count:elem_count + status_count]
 
     @staticmethod
     def read_item(game_data: GameData, sheet, enemy: MonsterAnalyser):
-        item = ['mag', 'mug', 'drop']
-        sub_item = ['low_lvl', 'med_lvl', 'high_lvl']
-        row_index = 2
-        col_index = COL_ITEM + 1 + 1
-        list_value = []
-        for el in item:
-            for sub in sub_item:
-                name = sub + "_" + el
-                for i in range(4):
-                    id_value = int(sheet.cell(row_index + i, col_index).value.split(':')[0])
-                    value = sheet.cell(row_index + i, col_index + 1).value
-                    list_value.append({'ID': id_value, 'value': value})
-                enemy.info_stat_data[name] = list_value
+        # Read entire item block at once (rows 2-13, columns COL_ITEM+2 to COL_ITEM+7)
+        item_range = sheet.iter_rows(min_row=2, max_row=13,
+                                     min_col=COL_ITEM + 2, max_col=COL_ITEM + 7,
+                                     values_only=True)
+
+        item_data = [list(row) for row in item_range]
+
+        item_types = ['mag', 'mug', 'drop']
+        level_types = ['low_lvl', 'med_lvl', 'high_lvl']
+
+        row_offset = 0
+        for item_idx, item_type in enumerate(item_types):
+            for level_idx, level_type in enumerate(level_types):
+                name = f"{level_type}_{item_type}"
                 list_value = []
 
-                col_index += 2
-            row_index += 4
-            col_index = COL_ITEM + 1 + 1
+                # Each item has 4 rows
+                for i in range(4):
+                    row = row_offset + i
+                    col = level_idx * 2
+
+                    if row < len(item_data) and col + 1 < len(item_data[row]):
+                        id_value = item_data[row][col]
+                        value = item_data[row][col + 1]
+
+                        # Extract ID from "ID:Name" format
+                        if id_value and isinstance(id_value, str) and ':' in id_value:
+                            id_value = int(id_value.split(':')[0])
+                        else:
+                            id_value = 0
+
+                        list_value.append({'ID': id_value, 'value': value})
+
+                enemy.info_stat_data[name] = list_value
+
+            row_offset += 4
+
     @staticmethod
     def read_monster_name(game_data: GameData, sheet, enemy: MonsterAnalyser):
+        name_col = COL_MONSTER_INFO + 2
+        name_cell = sheet.cell(ROW_MONSTER_NAME + 1, name_col).value
+
         enemy.info_stat_data['monster_name'] = FF8Text(game_data=game_data, own_offset=0, data_hex=bytearray(), id=0)
-        enemy.info_stat_data['monster_name'].set_str(sheet.cell(ROW_MONSTER_NAME + 1, COL_MONSTER_INFO + 1 + 1).value)
+        enemy.info_stat_data['monster_name'].set_str(name_cell)
 
     @staticmethod
     def read_original_file(sheet):
-       return sheet.cell(ROW_ORIGINAl_FILE_NAME, COL_MONSTER_INFO + 1 + 1).value
+        name_col = COL_MONSTER_INFO + 2
+        return sheet.cell(ROW_ORIGINAl_FILE_NAME, name_col).value
