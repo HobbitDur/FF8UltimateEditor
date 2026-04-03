@@ -152,20 +152,14 @@ class IfritXlsxWidget(QWidget):
             return
         else:
 
-            dat_file_current_list = (self.ifrit_manager.enemy.id,)
+            dat_file_current_list = (self.ifrit_manager.enemy.origin_path,)
+            dat_id_current_list = (self.ifrit_manager.enemy.id,)
             if self.process_selector.currentIndex() == 0:  # Dat to xlsx
                 self.ifrit_manager.create_xlsx_file(self.xlsx_file_selected)
                 self.ifrit_manager.dat_to_xlsx(dat_file_current_list, False)
-
             elif self.process_selector.currentIndex() == 1:  # Xlsx to dat
                 self.ifrit_manager.load_xlsx_file(self.xlsx_file_selected)
-                self.ifrit_manager.xlsx_to_dat(dat_file_current_list, dat_file_current_list)
+                self.ifrit_manager.xlsx_to_dat(dat_file_current_list, dat_id_current_list)
             if self.open_xlsx.isChecked():
                 os.startfile(self.xlsx_file_selected)
-        message_box = QMessageBox()
-        message_box.setText("Successful !")
-        message_box.setIcon(QMessageBox.Icon.Information)
-        message_box.setWindowIcon(self.__ifrit_icon)
-        message_box.setWindowTitle("IfritXlsx - Success")
-        message_box.exec()
-        print("Launch over !")
+        print("Xlsx work done !")

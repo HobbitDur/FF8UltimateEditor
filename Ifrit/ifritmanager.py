@@ -429,7 +429,6 @@ class IfritManager:
             self.enemy.texture_data["eof_texture"] =  self.enemy.header_data['section_pos'][11]
         for i, tim in enumerate(tim_list):
             self.enemy.texture_data["texture_data"].append({'id':i, 'data': bytearray(tim.read_bytes())})
-        self.enemy.write_data_to_file(self.game_data, self.enemy.origin_path)
     def inject(self):
         self._create_tim_from_texture_data()
         self._inject_in_com()

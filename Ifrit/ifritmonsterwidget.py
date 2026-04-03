@@ -4,7 +4,7 @@ from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFileDialog, QTabWidget, QMessageBox
+    QFileDialog, QTabWidget, QMessageBox, QCheckBox
 )
 from IfritAI.ifritaiwidget import IfritAIWidget
 from Ifrit.ifritmanager import IfritManager
@@ -35,15 +35,20 @@ class IfritMonsterWidget(QWidget):
 
         self._file_dialog = QFileDialog()
 
-        self._open_btn   = self._icon_btn('folder.png', "Open .dat file", self._open_file)
-        self._save_btn   = self._icon_btn('save.svg',   "Save",           self._save_file)
-        self._reload_btn = self._icon_btn('reset.png',  "Reload file",    self._reload_file)
+        self._open_btn = self._icon_btn('folder.png', "Open .dat file", self._open_file)
+        self._save_btn = self._icon_btn('save.svg', "Save", self._save_file)
+        self._reload_btn = self._icon_btn('reset.png', "Reload file", self._reload_file)
         self._save_btn.setEnabled(False)
         self._reload_btn.setEnabled(False)
 
+        # Add Cronos checkbox
+        self._cronos_checkbox = QCheckBox("Cronos")
+        self._cronos_checkbox.setToolTip("Load AI data with cronos configuration")
+        self._cronos_checkbox.stateChanged.connect(self._on_cronos_toggled)
+
         self._monster_label = QLabel("No file loaded")
 
-        for w in [self._open_btn, self._save_btn, self._reload_btn, self._monster_label]:
+        for w in [self._open_btn, self._save_btn, self._reload_btn, self._cronos_checkbox, self._monster_label]:
             tl.addWidget(w)
         tl.addStretch()
 
@@ -63,12 +68,11 @@ class IfritMonsterWidget(QWidget):
         self._texture_widget = IfritTextureWidget(self.ifrit_manager)
         self._xlsx_widget = IfritXlsxWidget(self.ifrit_manager)
 
-
         # ── Tabs ─────────────────────────────────────────────────────
         self._tabs = QTabWidget()
         self._tabs.addTab(self._3d_widget, "3D")
         self._tabs.addTab(self._xlsx_widget, "Stat")
-        self._tabs.addTab(self._ai_widget,  "AI")
+        self._tabs.addTab(self._ai_widget, "AI")
         self._tabs.addTab(self._texture_widget, "Texture")
         self._tabs.addTab(self._seq_widget, "Sequence")
         self._tabs.currentChanged.connect(self._on_tab_changed)
@@ -94,13 +98,26 @@ class IfritMonsterWidget(QWidget):
 
     def _on_tab_changed(self, index: int):
         # Save not applicable for the 3D viewer
-        self._save_btn.setEnabled(bool(self.file_loaded) and index not in  (0,))
+        self._save_btn.setEnabled(bool(self.file_loaded) and index not in (0,))
+
+    # ── Cronos checkbox handler ───────────────────────────────────────
+
+    def _on_cronos_toggled(self, state):
+        """Handle Cronos checkbox state changes"""
+        if state:  # Checked
+            self.ifrit_manager.game_data.load_ai_data("ai_cronos.json")
+        else:  # Unchecked
+            self.ifrit_manager.game_data.load_ai_data("ai_vanilla.json")
+
+        # Call reload function to refresh the display
+        self._reload_file()
+
 
     # ── File operations ───────────────────────────────────────────────
 
     def _open_file(self):
         path = ""
-        #path = "c0m092.dat" # For developing faster
+        # path = "c0m092.dat" # For developing faster
         if not path:
             path = self._file_dialog.getOpenFileName(
                 parent=self, caption="Open .dat file",
@@ -116,24 +133,20 @@ class IfritMonsterWidget(QWidget):
         self._seq_widget.load_file(path)
         self._3d_widget.load_file(path)
         self._texture_widget.load_file(path)
-
         try:
             name = self._ai_widget.ifrit_manager.enemy.info_stat_data['monster_name'].get_str().strip('\x00')
             self._monster_label.setText(f"{name}  [{pathlib.Path(path).name}]")
         except Exception:
             self._monster_label.setText(pathlib.Path(path).name)
 
-        self._save_btn.setEnabled(self._tabs.currentIndex() != 2)
+        self._save_btn.setEnabled(self._tabs.currentIndex() != 0)
         self._reload_btn.setEnabled(True)
 
     def _save_file(self):
-        idx = self._tabs.currentIndex()
-        if idx == 0:
-            self._ai_widget.save_file()
-        elif idx == 1:
-            self._seq_widget.save_file()
-        elif idx == 3:
-            self._texture_widget.save_file()
+        self._ai_widget.save_file()
+        self._seq_widget.save_file()
+        self._texture_widget.save_file()
+        self.ifrit_manager.save_file(self.file_loaded)
 
     def _reload_file(self):
         if self.file_loaded:

@@ -77,7 +77,7 @@ class MonsterAnalyser:
         self.sound_unknown_data = bytes()  # Section 10
         self.texture_data = copy.deepcopy(game_data.AIData.SECTION_TEXTURE_DICT)
         self._ai_command_list = []
-        self.id = 0
+        self.id:int = 0
 
     def __str__(self):
         return "Name: {} \nData:{}".format(self.info_stat_data['monster_name'],

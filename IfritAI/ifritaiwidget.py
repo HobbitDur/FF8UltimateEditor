@@ -299,7 +299,6 @@ class IfritAIWidget(QWidget):
                 command_widget.set_text()
 
     def __save_file(self):
-        self.ifrit_manager.save_file(self.file_loaded)
         self.__section_change()
 
     def __section_change(self):
