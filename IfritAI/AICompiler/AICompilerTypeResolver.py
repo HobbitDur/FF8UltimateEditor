@@ -49,7 +49,7 @@ class AICompilerTypeResolver:
         return [
             "battle_text", "magic", "target_basic",
             "monster_ability", "local_var",
-            "local_var_param", "battle_var", "global_var",
+            "local_var_param", "local_var_add_param", "battle_var", "global_var",
             "target_slot", "special_action", "target_advanced_generic",
             "target_advanced_specific", "comparator", "status_ai",
             "activate", "aptitude", "magic_type", "gforce",
@@ -241,6 +241,9 @@ class AICompilerTypeResolver:
             # local_var_param
             for local_var_param in self.__get_possible_local_var_param():
                 mappings['type_values']['local_var_param'][self._normalize_string(local_var_param['data'])] = local_var_param['id']
+            # local_var_param
+            for local_var_add_param in self.__get_possible_local_var_add_param():
+                mappings['type_values']['local_var_add_param'][self._normalize_string(local_var_add_param['data'])] = local_var_add_param['id']
             # battle_var
             for battle_var in ai_data.get('list_var', []):
                 if battle_var.get('var_type') == "battle":
@@ -485,6 +488,7 @@ class AICompilerTypeResolver:
             'battle_var': ParamBattleVarError,
             'global_var': ParamGlobalVarError,
             'local_var_param': ParamLocalVarParamError,
+            'local_var_add_param': ParamLocalVarParamError,
             'comparator': ComparatorError,
             'subject_id': SubjectIdError,
             'monster_ability': ParamMonsterAbilityError,
@@ -653,6 +657,17 @@ class AICompilerTypeResolver:
             if i in special_param_id:
                 param_possible.append([{'id': val_dict['param_id'], 'data': val_dict['text']}
                                        for val_dict in self.game_data.ai_data_json["local_var_param"] if val_dict['param_id'] == i][0])
+            else:
+                param_possible.append({'id': i, 'data': str(i)})
+        return param_possible
+
+    def __get_possible_local_var_add_param(self):
+        param_possible = []
+        special_param_id = [val_dict["param_id"] for val_dict in self.game_data.ai_data_json["local_var_add_param"]]
+        for i in range(0, 256):
+            if i in special_param_id:
+                param_possible.append([{'id': val_dict['param_id'], 'data': val_dict['text']}
+                                       for val_dict in self.game_data.ai_data_json["local_var_add_param"] if val_dict['param_id'] == i][0])
             else:
                 param_possible.append({'id': i, 'data': str(i)})
         return param_possible
