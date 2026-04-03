@@ -91,16 +91,6 @@ class IfritAIWidget(QWidget):
         self.button_color_picker.clicked.connect(self.__select_color)
         self.button_color_picker.setToolTip("To choose which color to highlight the variable")
 
-        # Ifrit xlsx/md import/export
-        self._import_xlsx_button = QPushButton()
-        self._import_xlsx_button.setIcon(QIcon(os.path.join(icon_path, 'csv_upload.png')))
-        self._import_xlsx_button.setIconSize(QSize(30, 30))
-        self._import_xlsx_button.setFixedSize(40, 40)
-        self._import_xlsx_button.setToolTip("This allow to import XLSX file to update abilities")
-        self._import_xlsx_button.clicked.connect(self._load_xlsx_file)
-        self._import_xlsx_button.setEnabled(False)
-        self._import_xlsx_folder = ""
-
         self._import_md_button = QPushButton()
         self._import_md_button.setIcon(QIcon(os.path.join(icon_path, 'md_upload.png')))
         self._import_md_button.setIconSize(QSize(30, 30))
@@ -151,7 +141,6 @@ class IfritAIWidget(QWidget):
         self.layout_top.addWidget(self.reset_button)
         self.layout_top.addWidget(self.info_button)
         self.layout_top.addWidget(self.button_color_picker)
-        self.layout_top.addWidget(self._import_xlsx_button)
         self.layout_top.addWidget(self._import_md_button)
         self.layout_top.addWidget(self._export_md_button)
         self.layout_top.addLayout(self.expert_layout)
@@ -450,7 +439,6 @@ class IfritAIWidget(QWidget):
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat", directory=self._file_dialog_folder)[0]
         if file_to_load:
             self._file_dialog_folder = os.path.dirname(self._file_dialog_folder)
-            self._import_xlsx_button.setEnabled(True)
             self._import_md_button.setEnabled(True)
             self._export_md_button.setEnabled(True)
             self.__clear_lines(delete_data=False)
@@ -479,25 +467,6 @@ class IfritAIWidget(QWidget):
         self._set_text_expert()
         self.__hide_show_expert()
         self.__compute_if()
-
-    def _load_xlsx_file(self):
-        # Read the xlsx
-        xlsx_manager = IfritXlsxManager()
-        xlsx_file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Xlsx file", filter="*.xlsx", directory=self._import_xlsx_folder)[0]
-        #xlsx_file_to_load = os.path.join("../IfritXlsx/OutputFiles", "ifrit.xlsx")  # For developing faster
-        if xlsx_file_to_load:
-            self._import_xlsx_folder = os.path.dirname(self._import_xlsx_folder)
-            xlsx_manager.load_file(xlsx_file_to_load)
-            current_monster_id = int(re.search(r'\d{3}', self.ifrit_manager.enemy.origin_file_name).group())
-            monster_data = xlsx_manager.get_monster_data_from_xlsx(load_all_data=True, load_only_first=False, load_monster_id=current_monster_id)
-            if not monster_data:
-                print("Monster not found in xlsx file")
-                return
-
-            self.ifrit_manager.enemy.info_stat_data = monster_data[self.ifrit_manager.enemy.origin_file_name].info_stat_data
-            self.ifrit_manager.update_from_xlsx()
-            self.__clear_lines(delete_data=False)
-            self.__setup_section_data()
 
     def _load_md_file(self):
         md_file_to_load = self.file_dialog_export.getOpenFileName(parent=self, caption="Md file to import", filter="*.md", directory=self._import_md_folder)[0]

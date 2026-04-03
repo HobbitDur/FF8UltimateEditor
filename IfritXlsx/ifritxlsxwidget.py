@@ -141,8 +141,12 @@ class IfritXlsxWidget(QWidget):
             self.csv_loaded_label.show()
 
     def __launch(self):
+        text_error = ""
         if not self.xlsx_file_selected:
             text_error = "Please first select xlsx file"
+        elif not self.ifrit_manager.enemy.origin_path:
+            text_error = "Please first select dat file"
+        if text_error:
             message_box = QMessageBox()
             message_box.setText(text_error)
             message_box.setIcon(QMessageBox.Icon.Critical)

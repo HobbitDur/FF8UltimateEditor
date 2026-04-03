@@ -528,22 +528,16 @@ class IfritManager:
                 frame.bone_matrices[k] = local
 
     def dat_to_xlsx(self, file_list, analyse_ai=False, callback_func=None):
-        print("Getting game data")
-
-        print("Reading ennemy files")
         for monster_file in file_list:
             file_name = os.path.basename(monster_file)
             file_index = int(re.search(r'\d{3}', file_name).group())
             if file_index == 0 or file_index == 127 or file_index > 143:  # Avoid working on garbage file
                 continue
-            print("Reading file {}".format(file_name))
             monster = MonsterAnalyser(self.game_data)
             monster.load_file_data(monster_file, self.game_data)
             monster.analyse_loaded_data(self.game_data, self.decompiler)
             if callback_func:
                 callback_func(monster)
-
-            print("Writing to xlsx file")
             self._dat_xlsx_manager.export_to_xlsx(monster, file_name, self.game_data, analyse_ai)
 
         self._dat_xlsx_manager.create_ref_data(self.game_data)
