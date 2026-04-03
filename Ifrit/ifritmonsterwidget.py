@@ -11,6 +11,7 @@ from Ifrit.ifritmanager import IfritManager
 from IfritSeq.ifritseqwidget import IfritSeqWidget
 from Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from IfritTexture.ifrittexturewidget import IfritTextureWidget
+from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 
 
 class IfritMonsterWidget(QWidget):
@@ -60,14 +61,16 @@ class IfritMonsterWidget(QWidget):
         self._3d_widget = Ifrit3DWidget(self.ifrit_manager, show_controls=True)
 
         self._texture_widget = IfritTextureWidget(self.ifrit_manager)
+        self._xlsx_widget = IfritXlsxWidget(self.ifrit_manager)
 
 
         # ── Tabs ─────────────────────────────────────────────────────
         self._tabs = QTabWidget()
-        self._tabs.addTab(self._ai_widget,  "AI Editor")
-        self._tabs.addTab(self._seq_widget, "Seq Editor")
-        self._tabs.addTab(self._3d_widget, "3D Viewer")
+        self._tabs.addTab(self._3d_widget, "3D")
+        self._tabs.addTab(self._xlsx_widget, "Stat")
+        self._tabs.addTab(self._ai_widget,  "AI")
         self._tabs.addTab(self._texture_widget, "Texture")
+        self._tabs.addTab(self._seq_widget, "Sequence")
         self._tabs.currentChanged.connect(self._on_tab_changed)
 
         root.addWidget(toolbar)
@@ -91,7 +94,7 @@ class IfritMonsterWidget(QWidget):
 
     def _on_tab_changed(self, index: int):
         # Save not applicable for the 3D viewer
-        self._save_btn.setEnabled(bool(self.file_loaded) and index not in  (2,))
+        self._save_btn.setEnabled(bool(self.file_loaded) and index not in  (0,))
 
     # ── File operations ───────────────────────────────────────────────
 
@@ -139,5 +142,5 @@ class IfritMonsterWidget(QWidget):
     def _show_info(self):
         msg = QMessageBox(self)
         msg.setWindowTitle("Ifrit Monster Tools")
-        msg.setText("Combined AI / Seq / 3D monster editor.\nDone by Hobbitdur.")
+        msg.setText("Combined 3D / Stat / AI / Seq / Texture monster editor.\nDone by Hobbitdur.")
         msg.exec()

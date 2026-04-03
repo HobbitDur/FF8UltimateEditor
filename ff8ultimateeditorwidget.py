@@ -47,8 +47,7 @@ class FF8UltimateEditorWidget(QWidget):
 
         # 2. Define the Tool Options
         self.HOBBIT_OPTION_ITEMS = [
-            "Ifrit (AI + Anim + 3D + Texture)",
-            "IfritXlsx (Stat editor)",
+            "Ifrit (3D/Stat/AI/Seq/Texture)",
             "ShumiTranslator(All text editor)",
             "TonberryShop (Shop editor)",
             "CCGroup (Card value editor)",
@@ -116,7 +115,6 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack = QStackedWidget()
 
         # Initialize internal tools
-        self._ifritxlsx_widget = IfritXlsxWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path))
         self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path))
@@ -128,7 +126,6 @@ class FF8UltimateEditorWidget(QWidget):
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
         self.tool_stack.addWidget(self._ifrit_widget)
         #self.tool_stack.addWidget(self._ifritAI_widget)  # Index 0
-        self.tool_stack.addWidget(self._ifritxlsx_widget)  # Index 1
         self.tool_stack.addWidget(self._shumi_translator_widget)  # Index 2
         self.tool_stack.addWidget(self._tonberry_shop_widget)  # Index 3
         self.tool_stack.addWidget(self._ccgroup_widget)  # Index 4

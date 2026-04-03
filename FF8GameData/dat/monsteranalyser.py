@@ -2,6 +2,7 @@ import copy
 import io
 import math
 import os
+import re
 from math import floor
 from typing import List
 
@@ -76,6 +77,7 @@ class MonsterAnalyser:
         self.sound_unknown_data = bytes()  # Section 10
         self.texture_data = copy.deepcopy(game_data.AIData.SECTION_TEXTURE_DICT)
         self._ai_command_list = []
+        self.id = 0
 
     def __str__(self):
         return "Name: {} \nData:{}".format(self.info_stat_data['monster_name'],
@@ -99,6 +101,7 @@ class MonsterAnalyser:
         self.__analyze_header_section(game_data)
         self.origin_file_name = os.path.basename(file)
         self.origin_path = file
+        self.id = int(re.search(r'\d{3}', self.origin_file_name).group())
         # self.origin_file_checksum = get_checksum(file, algorithm='SHA256')
 
 

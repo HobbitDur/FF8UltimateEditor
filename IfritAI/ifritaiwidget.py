@@ -17,7 +17,6 @@ from IfritAI.codewidget import CodeWidget
 
 from IfritAI.commandwidget import CommandWidget
 from Ifrit.ifritmanager import IfritManager
-from IfritXlsx.ifritxlsxmanager import IfritXlsxManager
 from bs4 import BeautifulSoup
 
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
@@ -91,8 +90,6 @@ class IfritAIWidget(QWidget):
         self.button_color_picker.setFixedSize(40, 40)
         self.button_color_picker.clicked.connect(self.__select_color)
         self.button_color_picker.setToolTip("To choose which color to highlight the variable")
-
-        self._xlsx_manager = IfritXlsxManager(game_data_folder)
 
         # Ifrit xlsx/md import/export
         self._import_xlsx_button = QPushButton()
