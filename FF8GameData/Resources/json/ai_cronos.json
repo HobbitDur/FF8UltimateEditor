@@ -215,7 +215,7 @@
     {"param_id": 227, "text": "varH SLOT ID", "param_type": ""}
   ],
   "local_var_param": [
-    {"param_id": 203, "text": "LAST ATTACKER SLOT ID", "param_type": "", "comment":  ""}
+    {"param_id": 203, "text": "RANDOM VALUE", "param_type": "", "comment":  ""}
   ],
   "target_advanced_generic": [
     {"param_id": 200, "text": "ENEMY TEAM", "param_type": "", "comment":  ""},
