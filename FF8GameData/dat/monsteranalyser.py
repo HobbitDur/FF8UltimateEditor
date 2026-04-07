@@ -142,18 +142,28 @@ class MonsterAnalyser:
     def write_data_to_file(self, game_data: GameData, dat_path):
         raw_data_to_write = bytearray()
 
-        # Write the 5 (0 to 4) first section as raw data
-        for i, section_data in enumerate(self.section_raw_data):
-            if i < 5:
-                raw_data_to_write.extend(section_data)
-            else:
-                break
-        # For the 3rnd, just changing nb animation after
-        # section_offset = self.header_data['section_pos'][3]
-        # start_animation = section_offset + AIData.SECTION_MODEL_ANIM_NB_MODEL['offset']
-        # end_animation = section_offset + AIData.SECTION_MODEL_ANIM_NB_MODEL['offset'] + AIData.SECTION_MODEL_ANIM_NB_MODEL['size']
-        # raw_data_to_write[start_animation:end_animation] = self.model_animation_data['nb_animation'].to_bytes(
-        #    byteorder=AIData.SECTION_MODEL_ANIM_NB_MODEL['byteorder'], length=AIData.SECTION_MODEL_ANIM_NB_MODEL['size'])
+        # First writing header (fix size, will be modified later)
+        section_position = 0
+        raw_data_to_write.extend(self.section_raw_data[section_position])
+
+        # Writing bone section
+        section_position = 1
+        bone_data = self.bone_data.to_binary()
+        raw_data_to_write.extend(bone_data)
+
+        # Writing geometry (untouched for the moment)
+        section_position = 2
+        raw_data_to_write.extend(self.section_raw_data[section_position])
+
+        # Writing animation
+        section_position = 3
+        animation_data = self.animation_data.to_binary()
+        #raw_data_to_write.extend(animation_data)
+        raw_data_to_write.extend(self.section_raw_data[section_position])
+        # Writing Texture animation data (no change atm)
+        section_position = 4
+        animation_data = self.animation_data.to_binary()
+        raw_data_to_write.extend(self.section_raw_data[section_position])
 
         # Monster seq animation
         section_position = 5

@@ -139,11 +139,11 @@ class IfritManager:
         anim = anim_section.animations[anim_id]
 
         # Validate frame ID
-        if frame_id >= anim.nb_frames:
-            print(f"[WARN] frame_id {frame_id} >= nb_frames {anim.nb_frames}, clamping to 0")
+        if frame_id >= anim._nb_frames:
+            print(f"[WARN] frame_id {frame_id} >= nb_frames {anim._nb_frames}, clamping to 0")
             frame_id = 0
 
-        frame = anim.frames[frame_id]
+        frame = anim._frames[frame_id]
 
         # Check if matrices exist
         if not hasattr(frame, 'bone_matrices') or frame.bone_matrices is None:
@@ -187,17 +187,18 @@ class IfritManager:
             lines[k] = (parent_pos, child_pos)
 
         return lines, parents
+
     def get_animated_vertices(self, anim_id: int, frame_id: int, next_frame_id: int = None, step: float = 0.0) -> List[Tuple[float, float, float]]:
         """
         Get animated vertices for current frame.
         If next_frame_id is provided, interpolate between frames using step (0.0-1.0).
         """
         anim = self.enemy.animation_data.animations[anim_id]
-        frame = anim.frames[frame_id]
+        frame = anim._frames[frame_id]
         matrices = frame.bone_matrices  # already built!
 
         if next_frame_id is not None:
-            next_frame = anim.frames[next_frame_id]
+            next_frame = anim._frames[next_frame_id]
             next_matrices = next_frame.bone_matrices
         else:
             next_matrices = None
@@ -462,9 +463,9 @@ class IfritManager:
                                           rot_x_deg: float, rot_y_deg: float, rot_z_deg: float):
         """Modify the rotation of a bone in a specific animation frame."""
         anim = self.enemy.animation_data.animations[anim_id]
-        if frame_id >= len(anim.frames):
+        if frame_id >= len(anim._frames):
             return
-        frame = anim.frames[frame_id]
+        frame = anim._frames[frame_id]
 
         # Update raw rotation
         frame.bone_rot_raw[bone_idx].x = int(rot_x_deg * 4096 / 360)
@@ -478,7 +479,7 @@ class IfritManager:
     def _recompute_all_animation_matrices(self):
         """Rebuild bone matrices for every frame of every animation."""
         for anim in self.enemy.animation_data.animations:
-            for frame_id in range(anim.nb_frames):
+            for frame_id in range(anim._nb_frames):
                 self._recompute_frame_matrices(anim, frame_id, None)
 
     def _recompute_frame_matrices(self, anim, frame_id, changed_bone_idx=None):
@@ -486,7 +487,7 @@ class IfritManager:
         Recompute bone matrices for a single frame.
         If changed_bone_idx is provided, only recompute that bone and its children.
         """
-        frame = anim.frames[frame_id]
+        frame = anim._frames[frame_id]
         bones = self.enemy.bone_data.bones
         nb_bones = len(bones)
 

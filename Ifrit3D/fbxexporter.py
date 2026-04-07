@@ -155,7 +155,7 @@ Definitions: {
         Version: 0
         Properties70:  {{
             P: "LocalStart", "KTime", "Time", "", 0
-            P: "LocalStop", "KTime", "Time", "", {animation.nb_frames * 46186158000}
+            P: "LocalStop", "KTime", "Time", "", {animation._nb_frames * 46186158000}
         }}
         AnimationLayer::AnimLayer{anim_id} {{
             Version: 0
@@ -183,7 +183,7 @@ Definitions: {
                 AnimationCurve::AnimCurve_Rot{axis} {{
                     Default: 0
                     KeyVer: 4008
-                    KeyCount: {animation.nb_frames}
+                    KeyCount: {animation._nb_frames}
                     Key: {self._format_animation_keys(animation, bone_id, axis_idx)}
                 }}
 """)
@@ -260,7 +260,7 @@ Connections: {
     def _format_animation_keys(self, animation, bone_id, axis_idx):
         """Format rotation keys for an animation"""
         keys = []
-        for frame_id, frame in enumerate(animation.frames):
+        for frame_id, frame in enumerate(animation._frames):
             if bone_id < len(frame.bone_rot_deg):
                 rotation = frame.bone_rot_deg[bone_id][axis_idx]
                 time = frame_id * 46186158000  # FBX time unit (ticks)

@@ -84,9 +84,9 @@ class BoneSection:
                                         byteorder=self.SECTION_BONE_HEADER_NB['byteorder'])
         self.unknown00 = int.from_bytes(data[self.SECTION_BONE_HEADER_UNKNOWN00['offset']:self.SECTION_BONE_HEADER_UNKNOWN00['offset'] + self.SECTION_BONE_HEADER_UNKNOWN00['size']],
                                         byteorder=self.SECTION_BONE_HEADER_UNKNOWN00['byteorder'])
-        self.unknown01 = int.from_bytes(data[self.SECTION_BONE_HEADER_UNKNOWN00['offset']:self.SECTION_BONE_HEADER_UNKNOWN01['offset'] + self.SECTION_BONE_HEADER_UNKNOWN01['size']],
+        self.unknown01 = int.from_bytes(data[self.SECTION_BONE_HEADER_UNKNOWN01['offset']:self.SECTION_BONE_HEADER_UNKNOWN01['offset'] + self.SECTION_BONE_HEADER_UNKNOWN01['size']],
                                         byteorder=self.SECTION_BONE_HEADER_UNKNOWN01['byteorder'])
-        self.unknown02 = int.from_bytes(data[self.SECTION_BONE_HEADER_UNKNOWN00['offset']:self.SECTION_BONE_HEADER_UNKNOWN02['offset'] + self.SECTION_BONE_HEADER_UNKNOWN02['size']],
+        self.unknown02 = int.from_bytes(data[self.SECTION_BONE_HEADER_UNKNOWN02['offset']:self.SECTION_BONE_HEADER_UNKNOWN02['offset'] + self.SECTION_BONE_HEADER_UNKNOWN02['size']],
                                         byteorder=self.SECTION_BONE_HEADER_UNKNOWN02['byteorder'])
         self._scale_x = int.from_bytes(data[self.SECTION_BONE_HEADER_SCALE_X['offset']:self.SECTION_BONE_HEADER_SCALE_X['offset'] + self.SECTION_BONE_HEADER_SCALE_X['size']],
                                         byteorder=self.SECTION_BONE_HEADER_SCALE_X['byteorder'], signed=True)
@@ -107,6 +107,25 @@ class BoneSection:
     def get_scale_list(self):
         return self._scale_x, self._scale_y, self._scale_z
 
+
+    def to_binary(self) -> bytearray:
+        """Convert entire bone section back to binary"""
+        data = bytearray()
+        # Write header
+        data.extend(self.nb_bone.to_bytes(2, byteorder='little'))
+        data.extend(self.unknown00.to_bytes(2, byteorder='little'))
+        data.extend(self.unknown01.to_bytes(2, byteorder='little'))
+        data.extend(self.unknown02.to_bytes(2, byteorder='little'))
+        data.extend(self._scale_x.to_bytes(2, byteorder='little', signed=True))
+        data.extend(self._scale_y.to_bytes(2, byteorder='little', signed=True))
+        data.extend(self._scale_z.to_bytes(2, byteorder='little', signed=True))
+        data.extend(self.unknown2.to_bytes(2, byteorder='little'))
+
+        # Write all bones
+        for bone in self.bones:
+            data.extend(bone.get_byte())
+
+        return data
 class Bone:
     SECTION_BONE_DATA_PARENT = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'parent', 'pretty_name': 'Parent ID', 'default_value':0}
     SECTION_BONE_DATA_SIZE = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'size', 'pretty_name': 'Size', 'default_value':0}
@@ -159,6 +178,24 @@ class Bone:
             self._rotY * 360.0 / 4096.0,
             self._rotZ * 360.0 / 4096.0
         )
+    def set_rotation_deg(self, rx: float, ry: float, rz: float):
+        """Set rotation in degrees and update raw values"""
+        self._rotX = int(rx * 4096.0 / 360.0)
+        self._rotY = int(ry * 4096.0 / 360.0)
+        self._rotZ = int(rz * 4096.0 / 360.0)
+    def get_byte(self) -> bytearray:
+        """Convert bone back to binary format"""
+        data = bytearray()
+        data.extend(self.parent_id.to_bytes(2, byteorder='little', signed=False))
+        data.extend(int(self.size * 2048).to_bytes(2, byteorder='little', signed=True))
+        data.extend(self._rotX.to_bytes(2, byteorder='little', signed=True))
+        data.extend(self._rotY.to_bytes(2, byteorder='little', signed=True))
+        data.extend(self._rotZ.to_bytes(2, byteorder='little', signed=True))
+
+        # Add all the unknown fields (currently just zeros)
+        # The bone data is 48 bytes total, we've written 10 bytes so far
+        data.extend(bytearray(38))  # Fill remaining with zeros
+        return data
 
 # Section 2 data
 class GeometryTriangle:
@@ -646,19 +683,32 @@ class Matrix4x4:
         result.M44 = a.M41*b.M14 + a.M42*b.M24 + a.M43*b.M34 + a.M44*b.M44
         return result
 
-class ShortVector:
-    def __init__(self, x: int = 0, y: int = 0, z: int = 0):
+class Vector3D:
+    def __init__(self, x: float = 0, y: float = 0, z: float = 0):
         self.x = x
         self.y = y
         self.z = z
 
+class RotationType:
+    def __init__(self):
+        pass
 
+class RotationVectorData:
+    def __init__(self):
+        self.unk1: int = 0
+        self.unk2: int = 0
+        self.unk3: int = 0
+        self.unk_flag1: bool = False
+        self.unk_flag2: bool = False
+        self.unk_flag3: bool = False
 class AnimationFrame:
     def __init__(self, nb_bones: int):
         self.position: Tuple[float, float, float] = (0.0, 0.0, 0.0)
-        self.bone_rot_raw: List[ShortVector] = [ShortVector() for _ in range(nb_bones)]
+        self.bone_rot_raw: List[Vector3D] = [Vector3D() for _ in range(nb_bones)]
         self.bone_rot_deg: List[Tuple[float, float, float]] = [(0.0, 0.0, 0.0) for _ in range(nb_bones)]
         self.bone_matrices: List[Matrix4x4] = [Matrix4x4() for _ in range(nb_bones)]  # Initialize with identity matrices
+        self.mode_bit:int = 0
+
 
     def __str__(self):
         return f"AnimationFrame(pos:{self.position}, bones_rot:{self.bone_rot_deg})"
@@ -666,17 +716,259 @@ class AnimationFrame:
     def __repr__(self):
         return self.__str__()
 
+    def rotate_bone_deg(self, deg:Vector3D, bone_id:int):
+        if bone_id > len(self.bone_rot_deg):
+            print(f"Bone id for rotation too high. BoneID:{bone_id}, max:{len(self.bone_rot_deg)}")
+        self.bone_rot_deg[bone_id] = deg
+        self.bone_rot_raw[bone_id] = (
+            deg.x * 4096.0 / 360.0,
+            deg.y * 4096.0 / 360.0,
+            deg.z * 4096.0 / 360.0)
+
+    def rotate_bone_raw(self, raw:Vector3D, bone_id:int):
+        if bone_id > len(self.bone_rot_raw):
+            print(f"Bone id for rotation too high. BoneID:{bone_id}, max:{len(self.bone_rot_raw)}")
+        self.bone_rot_raw[bone_id] = raw
+        self.bone_rot_deg[bone_id] = (
+            raw.x * 360.0 / 4096.0,
+            raw.y * 360.0 / 4096.0,
+            raw.z * 360.0 / 4096.0)
+
+    def set_bone_matrix(self, parent_id:int, parent_bone_size: int, bone_id:int):
+        deg = self.bone_rot_deg[bone_id]
+        xRot = Matrix4x4.CreateRotationX(-deg[0])
+        yRot = Matrix4x4.CreateRotationY(-deg[1])
+        zRot = Matrix4x4.CreateRotationZ(-deg[2])
+
+        # Combine in the same order as C#: Y*X then Z*(Y*X)
+        local = Matrix4x4.MultiplyColumnMajor(yRot, xRot)
+        local = Matrix4x4.MultiplyColumnMajor(zRot, local)
+        if parent_id != 0xFFFF:
+            parent_mat = self.bone_matrices[parent_id]
+            # World rotation = parent * local (row-major)
+            world = Matrix4x4.MultiplyRowMajor(parent_mat, local)
+
+            # Now manually set translation: parent_pos + parent_rot * (0,0,parent_length)
+
+            world.M41 = parent_mat.M13 * parent_bone_size + parent_mat.M41
+            world.M42 = parent_mat.M23 * parent_bone_size + parent_mat.M42
+            world.M43 = parent_mat.M33 * parent_bone_size + parent_mat.M43
+            self.bone_matrices[bone_id] = world
+        else:
+            local.M41 = 0.0
+            local.M42 = 0.0
+            local.M43 = 0.0
+            self.bone_matrices[bone_id] = local
+
+    def to_binary(self, prev_frame: AnimationFrame = None) -> bytearray:
+        """
+        Convert frame back to binary delta-encoded format.
+        This is complex because we need to re-encode the deltas.
+        """
+        data = bytearray()
+
+        # Encode position deltas
+        if prev_frame is None:
+            px, py, pz = self.position
+            px_raw = int(-px / 0.10)
+            py_raw = int(-py / 0.10)
+            pz_raw = int(-pz / 0.10)
+        else:
+            prev_px, prev_py, prev_pz = prev_frame.position
+            px_raw = int(-(self.position[0] - prev_px) / 0.10)
+            py_raw = int(-(self.position[1] - prev_py) / 0.10)
+            pz_raw = int(-(self.position[2] - prev_pz) / 0.10)
+
+        # Write position (simplified - you may need more sophisticated encoding)
+        data.extend(self._encode_position_type(px_raw))
+        data.extend(self._encode_position_type(py_raw))
+        data.extend(self._encode_position_type(pz_raw))
+
+        # Write mode bit (simplified - assume mode 0)
+        data.extend(self._encode_bits(0, 1))
+
+        # Encode bone rotations
+        for bone_idx in range(len(self.bone_rot_raw)):
+            raw = self.bone_rot_raw[bone_idx]
+            prev_raw = prev_frame.bone_rot_raw[bone_idx] if prev_frame else Vector3D(0, 0, 0)
+
+            rx_delta = int(raw.x - prev_raw.x)
+            ry_delta = int(raw.y - prev_raw.y)
+            rz_delta = int(raw.z - prev_raw.z)
+
+            data.extend(self._encode_rotation_type(rx_delta))
+            data.extend(self._encode_rotation_type(ry_delta))
+            data.extend(self._encode_rotation_type(rz_delta))
+
+        return data
+
+    def _encode_position_type(self, value: int) -> bytearray:
+        """Encode a position delta value"""
+        # Simplified - you'd need to implement proper encoding based on the bit reader logic
+        abs_val = abs(value)
+        if abs_val < (1 << 3):
+            bits_needed = 3
+            type_idx = 0
+        elif abs_val < (1 << 6):
+            bits_needed = 6
+            type_idx = 1
+        elif abs_val < (1 << 9):
+            bits_needed = 9
+            type_idx = 2
+        else:
+            bits_needed = 16
+            type_idx = 3
+
+        # Write 2-bit type and then the value
+        result = type_idx & 0x3
+        result = (result << bits_needed) | (value & ((1 << bits_needed) - 1))
+
+        # Convert to bytes (simplified)
+        total_bits = 2 + bits_needed
+        byte_count = (total_bits + 7) // 8
+        return result.to_bytes(byte_count, byteorder='little')
+
+    def _encode_rotation_type(self, value: int) -> bytearray:
+        """Encode a rotation delta value"""
+        if value == 0:
+            return self._encode_bits(0, 1)
+
+        abs_val = abs(value)
+        if abs_val < (1 << 3):
+            bits_needed = 3
+            type_idx = 0
+        elif abs_val < (1 << 6):
+            bits_needed = 6
+            type_idx = 1
+        elif abs_val < (1 << 8):
+            bits_needed = 8
+            type_idx = 2
+        else:
+            bits_needed = 12
+            type_idx = 3
+
+        # Write 1-bit flag (1), 2-bit type, and the value
+        result = 1  # Flag indicating there is rotation
+        result = (result << 2) | type_idx
+        result = (result << bits_needed) | (value & ((1 << bits_needed) - 1))
+
+        total_bits = 3 + bits_needed
+        byte_count = (total_bits + 7) // 8
+        return result.to_bytes(byte_count, byteorder='little')
+
+    def _encode_bits(self, value: int, num_bits: int) -> bytearray:
+        """Encode a value with specific number of bits"""
+        byte_count = (num_bits + 7) // 8
+        return value.to_bytes(byte_count, byteorder='little')
+
+    def set_all_bones_matrix(self, bones:List[Bone]):
+        # --- Build bone matrices ---
+        # Direct port of C# ReadSection3 matrix loop
+        for bone_index in range(len(self.bone_matrices)):
+            parent_id = bones[bone_index].parent_id
+            if parent_id != 0xFFFF:
+                bone_parent_size = bones[parent_id].size
+            else:
+                bone_parent_size = None
+            self.set_bone_matrix(parent_id, bone_parent_size, bone_index)
+
+    def move(self, br:BitReader, prev_frame:AnimationFrame):
+        # --- Root position ---
+        # C#: float x = -bitReader.ReadPositionType() * 0.10f  (delta)
+        # Frame 0 is absolute, subsequent frames accumulate
+        px_raw = br.read_position_type()
+        py_raw = br.read_position_type()
+        pz_raw = br.read_position_type()
+
+        px = -px_raw * 0.10
+        py = -py_raw * 0.10
+        pz = -pz_raw * 0.10
+
+        if not prev_frame:
+            self.position = (px, py, pz)
+        else:
+            prev_pos = prev_frame.position
+            self.position = (
+                prev_pos[0] + px,
+                prev_pos[1] + py,
+                prev_pos[2] + pz,
+            )
+
+    def rotate_all_bones(self, br:BitReader,prev_frame:AnimationFrame):
+        self.mode_bit = br.read_bit()
+
+        for bone_index in range(len(self.bone_rot_deg)):
+            if prev_frame:
+                prev_frame_raw = prev_frame.bone_rot_raw[bone_index]
+            else:
+                prev_frame_raw = None
+
+            rx = br.read_rotation_type()
+            ry = br.read_rotation_type()
+            rz = br.read_rotation_type()
+
+            if self.mode_bit == 1:
+                self.unk_flag1 = br.read_bit()
+                if self.unk_flag1:
+                    self.unk1 = br.read_bits(16)
+                self.unk_flag2 = br.read_bit()
+                if self.unk_flag2:
+                    self.unk2 = br.read_bits(16)
+                self.unk_flag3 = br.read_bit()
+                if self.unk_flag2:
+                    self.unk3 = br.read_bits(16)
+
+            if not prev_frame_raw:
+                raw = Vector3D(rx, ry, rz)
+            else:
+                raw = Vector3D(
+                    prev_frame_raw.x + rx,
+                    prev_frame_raw.y + ry,
+                    prev_frame_raw.z + rz,
+                )
+            self.rotate_bone_raw(raw, bone_index)
+
 
 class Animation:
     def __init__(self):
-        self.nb_frames: int = 0
-        self.frames: List[AnimationFrame] = []
+        self._frames: List[AnimationFrame] = []
 
     def __str__(self):
-        return f"Animation(nb_frames:{self.nb_frames}, {self.frames})"
+        return f"Animation(nb_frames:{len(self._frames)}, {self._frames})"
 
     def __repr__(self):
         return self.__str__()
+
+    def add_frame(self, br:BitReader, bones:List[Bone]):
+        frame = AnimationFrame(len(bones))
+        if len(self._frames) != 0:
+            prev_frame = self._frames[-1]
+        else:
+            prev_frame = None
+
+        frame.move(br, prev_frame)
+        frame.rotate_all_bones(br, prev_frame)
+        frame.set_all_bones_matrix(bones)
+
+        self._frames.append(frame)
+
+    def get_nb_frame(self):
+        return len(self._frames)
+
+
+    def to_binary(self) -> bytearray:
+        """Convert entire animation back to binary format"""
+        data = bytearray()
+
+        # Write frame count
+        data.append(len(self._frames))
+
+        # Write each frame with delta encoding
+        for i, frame in enumerate(self._frames):
+            prev_frame = self._frames[i - 1] if i > 0 else None
+            data.extend(frame.to_binary(prev_frame))
+
+        return data
 
 class AnimationSection:
     def __init__(self):
@@ -684,8 +976,7 @@ class AnimationSection:
         self.offsets: List[int] = []
         self.animations: List[Animation] = []
 
-    def analyze(self, data: bytes, bone_section: 'BoneSection'):
-        nb_bones = bone_section.nb_bone
+    def analyze(self, data: bytes, bone_section: BoneSection):
         bones = bone_section.bones
 
         # Read animation section header
@@ -698,115 +989,14 @@ class AnimationSection:
         for anim_idx in range(self.nb_animations):
             anim_start = self.offsets[anim_idx]
             anim = Animation()
-            anim.nb_frames = data[anim_start]
-            anim.frames = []
+            anim._nb_frames = data[anim_start]
+            anim._frames = []
 
             # BitReader starts at byte AFTER the frame count byte
             br = BitReader(data, start_byte=anim_start + 1)
 
-            for n in range(anim.nb_frames):
-                frame = AnimationFrame(nb_bones)
-
-                # --- Root position ---
-                # C#: float x = -bitReader.ReadPositionType() * 0.10f  (delta)
-                # Frame 0 is absolute, subsequent frames accumulate
-                px_raw = br.read_position_type()
-                py_raw = br.read_position_type()
-                pz_raw = br.read_position_type()
-
-                px = -px_raw * 0.10
-                py = -py_raw * 0.10
-                pz = -pz_raw * 0.10
-
-                if n == 0:
-                    frame.position = (px, py, pz)
-                else:
-                    prev_pos = anim.frames[n - 1].position
-                    frame.position = (
-                        prev_pos[0] + px,
-                        prev_pos[1] + py,
-                        prev_pos[2] + pz,
-                    )
-
-                # --- Padding bit (C#: var singleBit = bitReader.ReadBits(1)) ---
-                mode_bit = br.read_bit()
-
-                # --- Bone rotations ---
-                # C#: for each bone, read rx/ry/rz via ReadRotationType()
-                # Frame 0 is absolute, subsequent frames accumulate
-                for k in range(nb_bones):
-                    rx = br.read_rotation_type()
-                    ry = br.read_rotation_type()
-                    rz = br.read_rotation_type()
-
-                    if mode_bit == 1:
-                        unk1_flag = br.read_bit()
-                        if unk1_flag:
-                            unk1 = br.read_bits(16)
-                        unk2_flag = br.read_bit()
-                        if unk2_flag:
-                            unk2 = br.read_bits(16)
-                        unk3_flag = br.read_bit()
-                        if unk3_flag:
-                            unk3 = br.read_bits(16)
-
-                    if n == 0:
-                        raw = ShortVector(rx, ry, rz)
-                    else:
-                        prev_raw = anim.frames[n - 1].bone_rot_raw[k]
-                        raw = ShortVector(
-                            prev_raw.x + rx,
-                            prev_raw.y + ry,
-                            prev_raw.z + rz,
-                        )
-
-                    frame.bone_rot_raw[k] = raw
-                    # C#: deg = raw * 360.0 / 4096.0
-                    frame.bone_rot_deg[k] = (
-                        raw.x * 360.0 / 4096.0,
-                        raw.y * 360.0 / 4096.0,
-                        raw.z * 360.0 / 4096.0,
-                    )
-
-                # --- Build bone matrices ---
-                # Direct port of C# ReadSection3 matrix loop
-                for k in range(nb_bones):
-                    deg = frame.bone_rot_deg[k]
-
-                    # C#: xRot = GetRotationMatrixX(-rad.X)
-                    #     yRot = GetRotationMatrixY(-rad.Y)
-                    #     zRot = GetRotationMatrixZ(-rad.Z)
-                    #     MatrixZ = MatrixMultiply(yRot, xRot)
-                    #     MatrixZ = MatrixMultiply(zRot, MatrixZ)
-                    xRot = Matrix4x4.CreateRotationX(-deg[0])
-                    yRot = Matrix4x4.CreateRotationY(-deg[1])
-                    zRot = Matrix4x4.CreateRotationZ(-deg[2])
-
-                    # Combine in the same order as C#: Y*X then Z*(Y*X)
-                    local = Matrix4x4.MultiplyColumnMajor(yRot, xRot)
-                    local = Matrix4x4.MultiplyColumnMajor(zRot, local)
-
-                    parent_id = bones[k].parent_id
-                    if parent_id != 0xFFFF:
-                        parent_mat = frame.bone_matrices[parent_id]
-                        # World rotation = parent * local (row-major)
-                        world = Matrix4x4.MultiplyRowMajor(parent_mat, local)
-
-                        # Now manually set translation: parent_pos + parent_rot * (0,0,parent_length)
-                        parent_length = bones[parent_id].size
-                        world.M41 = parent_mat.M13 * parent_length + parent_mat.M41
-                        world.M42 = parent_mat.M23 * parent_length + parent_mat.M42
-                        world.M43 = parent_mat.M33 * parent_length + parent_mat.M43
-
-                        frame.bone_matrices[k] = world
-                    else:
-                        # Root bone: rotation only, translation zero
-                        local.M41 = 0.0
-                        local.M42 = 0.0
-                        local.M43 = 0.0
-                        frame.bone_matrices[k] = local
-
-                anim.frames.append(frame)
+            for frame_index in range(anim._nb_frames):
+                anim.add_frame(br, bones)
 
             self.animations.append(anim)
 
@@ -816,6 +1006,33 @@ class AnimationSection:
     def __repr__(self):
         return self.__str__()
 
+
+    def to_binary(self) -> bytearray:
+        """Convert entire animation section back to binary"""
+        data = bytearray()
+
+        # Write header
+        data.extend(self.nb_animations.to_bytes(4, byteorder='little'))
+
+        # Calculate and write offsets
+        offset_pos = 4 + self.nb_animations * 4
+        offsets = []
+        anim_data = bytearray()
+
+        for anim in self.animations:
+            offsets.append(offset_pos)
+            anim_binary = anim.to_binary()
+            anim_data.extend(anim_binary)
+            offset_pos += len(anim_binary)
+
+        # Write offsets
+        for offset in offsets:
+            data.extend(offset.to_bytes(4, byteorder='little'))
+
+        # Write animation data
+        data.extend(anim_data)
+
+        return data
 class AIData:
     SECTION_HEADER_NB_SECTION = {'offset': 0, 'size': 4, 'byteorder': 'little', 'name': 'nb_section', 'pretty_name': 'Number section'}
     SECTION_HEADER_SECTION_POSITION = {'offset': 0x04, 'size': 4, 'byteorder': 'little', 'name': 'section_pos',
