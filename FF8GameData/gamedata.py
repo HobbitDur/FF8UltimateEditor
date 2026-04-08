@@ -523,7 +523,7 @@ class BitReader:
         self._byte_pos = start_byte
         self._bit_pos = 0  # sub-byte bit offset (0–7)
 
-    def read_bit(self):
+    def read_bit(self) -> bool:
         return (self.read_bits(1) & 1) != 0
 
     def read_bits(self, count: int) -> int:
@@ -550,21 +550,24 @@ class BitReader:
 
         return temp
 
-    def read_position_type(self) -> int:
+    def read_position_type(self) -> Tuple[int, int]:
         """2-bit index → lookup in [3,6,9,16] → read that many bits signed."""
         count_index = self.read_bits(2) & 3
-        return self.read_bits(self.POSITION_READ_HELPER[count_index])
+        return count_index, self.read_bits(self.POSITION_READ_HELPER[count_index])
 
-    def read_rotation_type(self) -> int:
+    def read_rotation_type(self) -> Tuple[bool, int, int]:
         """
         1-bit flag: if 0 → return 0 (no rotation).
         If 1 → 2-bit index → lookup in [3,6,8,12] → read that many bits signed.
         """
         should_read = (self.read_bits(1) & 1) != 0
+        count_index = 0
         if not should_read:
-            return 0
+            vector_axis = 0
+        else:
+            vector_axis = self.read_bits(self.ROTATION_READ_HELPER[count_index])
         count_index = self.read_bits(2) & 3
-        return self.read_bits(self.ROTATION_READ_HELPER[count_index])
+        return should_read, count_index, vector_axis
 
 
 class Matrix4x4:
@@ -690,10 +693,24 @@ class Vector3D:
         self.z = z
 
 class RotationType:
-    def __init__(self):
-        pass
+    def __init__(self, is_rotation_type_available:bool = False, rotation_type_bits:int = 0, vector_axis: int = 0):
+        self.is_rotation_type_available:bool = is_rotation_type_available
+        self.rotation_type_bits:int = rotation_type_bits
+        self._vector_axis: int = vector_axis
+        self._vector_axis_deg: float = 0
+    def rotate_deg(self, deg):
+        self._vector_axis_deg = deg
+        self._vector_axis = deg * 4096.0 / 360.0
+    def rotate_raw(self, raw):
+        self._vector_axis = raw
+        self._vector_axis_deg = raw * 360.0 / 4096.0
 
-class RotationVectorData:
+    def __str__(self):
+        return f"RotType(Available:{self.is_rotation_type_available}, Bits:{self.rotation_type_bits}, Value:{self._vector_axis})"
+    def __repr__(self):
+        return self.__str__()
+
+class RotationVectorDataSupp:
     def __init__(self):
         self.unk1: int = 0
         self.unk2: int = 0
@@ -701,44 +718,48 @@ class RotationVectorData:
         self.unk_flag1: bool = False
         self.unk_flag2: bool = False
         self.unk_flag3: bool = False
+
+class PositionType:
+    def __init__(self, position_type_bits:int = 0, vector_axis: float = 0):
+        self.position_type_bits:int = position_type_bits
+        self.vector_axis: float = vector_axis
+
 class AnimationFrame:
     def __init__(self, nb_bones: int):
-        self.position: Tuple[float, float, float] = (0.0, 0.0, 0.0)
-        self.bone_rot_raw: List[Vector3D] = [Vector3D() for _ in range(nb_bones)]
-        self.bone_rot_deg: List[Tuple[float, float, float]] = [(0.0, 0.0, 0.0) for _ in range(nb_bones)]
+        self.position: List[PositionType] = []
+
+        self.rotation_vector_data: List[List[RotationType]] = []
+        #self.bone_rot_raw: List[Vector3D] = [Vector3D() for _ in range(nb_bones)]
+        #self.bone_rot_deg: List[Tuple[float, float, float]] = [(0.0, 0.0, 0.0) for _ in range(nb_bones)]
         self.bone_matrices: List[Matrix4x4] = [Matrix4x4() for _ in range(nb_bones)]  # Initialize with identity matrices
+        self.rotation_vector_data_supp: List[RotationVectorDataSupp] = [RotationVectorDataSupp() for _ in range(nb_bones)]
         self.mode_bit:int = 0
 
 
     def __str__(self):
-        return f"AnimationFrame(pos:{self.position}, bones_rot:{self.bone_rot_deg})"
+        return f"AnimationFrame(pos:{self.position}, bones_rot:{self.rotation_vector_data})"
 
     def __repr__(self):
         return self.__str__()
 
     def rotate_bone_deg(self, deg:Vector3D, bone_id:int):
-        if bone_id > len(self.bone_rot_deg):
-            print(f"Bone id for rotation too high. BoneID:{bone_id}, max:{len(self.bone_rot_deg)}")
-        self.bone_rot_deg[bone_id] = deg
-        self.bone_rot_raw[bone_id] = (
-            deg.x * 4096.0 / 360.0,
-            deg.y * 4096.0 / 360.0,
-            deg.z * 4096.0 / 360.0)
+        if bone_id > len(self.rotation_vector_data):
+            print(f"Bone id for rotation too high. BoneID:{bone_id}, max:{len(self.rotation_vector_data)}")
+        self.rotation_vector_data[bone_id][0].rotate_deg(deg.x)
+        self.rotation_vector_data[bone_id][1].rotate_deg(deg.y)
+        self.rotation_vector_data[bone_id][2].rotate_deg(deg.z)
 
     def rotate_bone_raw(self, raw:Vector3D, bone_id:int):
-        if bone_id > len(self.bone_rot_raw):
-            print(f"Bone id for rotation too high. BoneID:{bone_id}, max:{len(self.bone_rot_raw)}")
-        self.bone_rot_raw[bone_id] = raw
-        self.bone_rot_deg[bone_id] = (
-            raw.x * 360.0 / 4096.0,
-            raw.y * 360.0 / 4096.0,
-            raw.z * 360.0 / 4096.0)
+        if bone_id > len(self.rotation_vector_data):
+            print(f"Bone id for rotation too high. BoneID:{bone_id}, max:{len(self.rotation_vector_data)}")
+        self.rotation_vector_data[bone_id][0].rotate_deg(raw.x)
+        self.rotation_vector_data[bone_id][1].rotate_deg(raw.y)
+        self.rotation_vector_data[bone_id][2].rotate_deg(raw.z)
 
     def set_bone_matrix(self, parent_id:int, parent_bone_size: int, bone_id:int):
-        deg = self.bone_rot_deg[bone_id]
-        xRot = Matrix4x4.CreateRotationX(-deg[0])
-        yRot = Matrix4x4.CreateRotationY(-deg[1])
-        zRot = Matrix4x4.CreateRotationZ(-deg[2])
+        xRot = Matrix4x4.CreateRotationX(-self.rotation_vector_data[bone_id][0])
+        yRot = Matrix4x4.CreateRotationY(-self.rotation_vector_data[bone_id][1])
+        zRot = Matrix4x4.CreateRotationZ(-self.rotation_vector_data[bone_id][2])
 
         # Combine in the same order as C#: Y*X then Z*(Y*X)
         local = Matrix4x4.MultiplyColumnMajor(yRot, xRot)
@@ -760,7 +781,7 @@ class AnimationFrame:
             local.M43 = 0.0
             self.bone_matrices[bone_id] = local
 
-    def to_binary(self, prev_frame: AnimationFrame = None) -> bytearray:
+    def to_binary(self, prev_frame: 'AnimationFrame' = None) -> bytearray:
         """
         Convert frame back to binary delta-encoded format.
         This is complex because we need to re-encode the deltas.
@@ -872,55 +893,53 @@ class AnimationFrame:
                 bone_parent_size = None
             self.set_bone_matrix(parent_id, bone_parent_size, bone_index)
 
-    def move(self, br:BitReader, prev_frame:AnimationFrame):
+    def move(self, br:BitReader, prev_frame:'AnimationFrame'):
         # --- Root position ---
         # C#: float x = -bitReader.ReadPositionType() * 0.10f  (delta)
         # Frame 0 is absolute, subsequent frames accumulate
+        self.position = []
         px_raw = br.read_position_type()
         py_raw = br.read_position_type()
         pz_raw = br.read_position_type()
+        self.position.append(PositionType(position_type_bits=px_raw[0], vector_axis=-px_raw[1]*0.10))
+        self.position.append(PositionType(position_type_bits=py_raw[0], vector_axis=-py_raw[1]*0.10))
+        self.position.append(PositionType(position_type_bits=pz_raw[0], vector_axis=-pz_raw[1]*0.10))
 
-        px = -px_raw * 0.10
-        py = -py_raw * 0.10
-        pz = -pz_raw * 0.10
-
-        if not prev_frame:
-            self.position = (px, py, pz)
-        else:
+        if prev_frame:
             prev_pos = prev_frame.position
-            self.position = (
-                prev_pos[0] + px,
-                prev_pos[1] + py,
-                prev_pos[2] + pz,
-            )
+            self.position[0].vector_axis = self.position[0].vector_axis + prev_pos[0].vector_axis
+            self.position[1].vector_axis = self.position[1].vector_axis + prev_pos[1].vector_axis
+            self.position[2].vector_axis = self.position[2].vector_axis + prev_pos[2].vector_axis
 
-    def rotate_all_bones(self, br:BitReader,prev_frame:AnimationFrame):
+    def rotate_all_bones(self, br:BitReader,prev_frame:'AnimationFrame'):
         self.mode_bit = br.read_bit()
 
-        for bone_index in range(len(self.bone_rot_deg)):
+        for bone_index in range(len(self.rotation_vector_data)):
             if prev_frame:
-                prev_frame_raw = prev_frame.bone_rot_raw[bone_index]
+                prev_frame_raw = prev_frame.rotation_vector_data[bone_index],
             else:
-                prev_frame_raw = None
+                prev_frame_raw = [0, 0, 0]
 
             rx = br.read_rotation_type()
             ry = br.read_rotation_type()
             rz = br.read_rotation_type()
+            self.rotation_vector_data[bone_index].append(RotationType(is_rotation_type_available=rx[0], rotation_type_bits=rx[1], vector_axis=rx[2]+prev_frame_raw[0]))
+            self.rotation_vector_data[bone_index].append(RotationType(is_rotation_type_available=rx[0], rotation_type_bits=rx[1], vector_axis=rx[2]+prev_frame_raw[1]))
+            self.rotation_vector_data[bone_index].append(RotationType(is_rotation_type_available=rx[0], rotation_type_bits=rx[1], vector_axis=rx[2]+prev_frame_raw[2]))
 
             if self.mode_bit == 1:
-                self.unk_flag1 = br.read_bit()
-                if self.unk_flag1:
-                    self.unk1 = br.read_bits(16)
-                self.unk_flag2 = br.read_bit()
-                if self.unk_flag2:
-                    self.unk2 = br.read_bits(16)
-                self.unk_flag3 = br.read_bit()
-                if self.unk_flag2:
-                    self.unk3 = br.read_bits(16)
+                self.rotation_vector_data_supp.unk_flag1 = br.read_bit()
+                if self.rotation_vector_data_supp.unk_flag1:
+                    self.rotation_vector_data_supp.unk1 = br.read_bits(16)
+                self.rotation_vector_data_supp.unk_flag2 = br.read_bit()
+                if self.rotation_vector_data_supp.unk_flag2:
+                    self.rotation_vector_data_supp.unk2 = br.read_bits(16)
+                self.rotation_vector_data_supp.unk_flag3 = br.read_bit()
+                if self.rotation_vector_data_supp.unk_flag2:
+                    self.rotation_vector_data_supp.unk3 = br.read_bits(16)
 
-            if not prev_frame_raw:
-                raw = Vector3D(rx, ry, rz)
-            else:
+            if prev_frame_raw:
+                self.rotation_vector_data[bone_index]
                 raw = Vector3D(
                     prev_frame_raw.x + rx,
                     prev_frame_raw.y + ry,
