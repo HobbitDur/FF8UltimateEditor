@@ -98,7 +98,7 @@ class IfritMonsterWidget(QWidget):
 
     def _on_tab_changed(self, index: int):
         # Save not applicable for the 3D viewer
-        self._save_btn.setEnabled(bool(self.file_loaded) and index not in (0,))
+        self._save_btn.setEnabled(bool(self.file_loaded))
 
     # ── Cronos checkbox handler ───────────────────────────────────────
 
@@ -117,7 +117,7 @@ class IfritMonsterWidget(QWidget):
 
     def _open_file(self):
         path = ""
-        #path = "c0m001.dat" # For developing faster
+        path = "c0m001 - Copie.dat" # For developing faster
         if not path:
             path = self._file_dialog.getOpenFileName(
                 parent=self, caption="Open .dat file",
@@ -139,7 +139,7 @@ class IfritMonsterWidget(QWidget):
         except Exception:
             self._monster_label.setText(pathlib.Path(path).name)
 
-        self._save_btn.setEnabled(self._tabs.currentIndex() != 0)
+        self._save_btn.setEnabled(True)
         self._reload_btn.setEnabled(True)
 
     def _save_file(self):

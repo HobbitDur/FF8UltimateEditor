@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QListWidgetItem, QGroupBox,
                              QInputDialog, QMessageBox, QFrame)
 
+from FF8GameData.gamedata import AnimationFrame
 from Ifrit3D.boneeditorwidget import BoneEditor
 from Ifrit3D.ff8openwidget import FF8OpenGLWidget
 
@@ -467,7 +468,7 @@ class Ifrit3DWidget(QWidget):
             return 0
         anim_section = self.ifrit_manager.enemy.animation_data
         if anim_section and self.current_anim_id < len(anim_section.animations):
-            return anim_section.animations[self.current_anim_id]._nb_frames
+            return anim_section.animations[self.current_anim_id].get_nb_frame()
         return 0
 
     def set_animation(self, anim_id: int):
@@ -645,10 +646,10 @@ class Ifrit3DWidget(QWidget):
         # Get animation rotation if available
         rot_x, rot_y, rot_z = 0, 0, 0
         if (self.current_anim_id < len(self.ifrit_manager.enemy.animation_data.animations) and
-                self.current_frame < len(self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id]._frames)):
-            frame = self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id]._frames[self.current_frame]
-            if bone_id < len(frame.bone_rot_deg):
-                rot_x, rot_y, rot_z = frame.bone_rot_deg[bone_id]
+                self.current_frame < len(self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames)):
+            frame: AnimationFrame = self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames[self.current_frame]
+            if bone_id < len(frame.rotation_vector_data):
+                rot_x, rot_y, rot_z = frame.rotation_vector_data[bone_id][0].get_rotate_deg(), frame.rotation_vector_data[bone_id][1].get_rotate_deg(),frame.rotation_vector_data[bone_id][2].get_rotate_deg()
 
         self.bone_editor.set_bone_data(
             bone_id, bone.size, bone.parent_id, rot_x, rot_y, rot_z

@@ -260,7 +260,7 @@ Connections: {
     def _format_animation_keys(self, animation, bone_id, axis_idx):
         """Format rotation keys for an animation"""
         keys = []
-        for frame_id, frame in enumerate(animation._frames):
+        for frame_id, frame in enumerate(animation.frames):
             if bone_id < len(frame.bone_rot_deg):
                 rotation = frame.bone_rot_deg[bone_id][axis_idx]
                 time = frame_id * 46186158000  # FBX time unit (ticks)

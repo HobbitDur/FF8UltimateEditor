@@ -443,11 +443,11 @@ class MonsterAnalyser:
             self.geometry_data.analyze(self.section_raw_data[SECTION_NUMBER])
 
     def __analyze_animation_section(self, game_data: GameData):
-        #print("__analyze_animation_section")
+        print("__analyze_animation_section")
         SECTION_NUMBER = 3
         if self.section_raw_data[SECTION_NUMBER]:
             self.animation_data.analyze(self.section_raw_data[SECTION_NUMBER], self.bone_data)
-            #print(self.animation_data)
+            print(self.animation_data)
 
     def __analyze_section_4(self, game_data: GameData):
         SECTION_NUMBER = 4

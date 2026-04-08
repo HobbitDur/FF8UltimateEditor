@@ -9,7 +9,7 @@ from PIL import Image
 from PIL.ImageQt import QPixmap
 from PyQt6.QtGui import QColor
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
-from FF8GameData.gamedata import GameData, Matrix4x4
+from FF8GameData.gamedata import GameData, Matrix4x4, Animation
 from IfritAI.AICompiler.AICompiler import AICompiler
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritXlsx import xlsxmanager
@@ -139,11 +139,11 @@ class IfritManager:
         anim = anim_section.animations[anim_id]
 
         # Validate frame ID
-        if frame_id >= anim._nb_frames:
-            print(f"[WARN] frame_id {frame_id} >= nb_frames {anim._nb_frames}, clamping to 0")
+        if frame_id >= anim.get_nb_frame():
+            print(f"[WARN] frame_id {frame_id} >= nb_frames {anim.get_nb_frame()}, clamping to 0")
             frame_id = 0
 
-        frame = anim._frames[frame_id]
+        frame = anim.frames[frame_id]
 
         # Check if matrices exist
         if not hasattr(frame, 'bone_matrices') or frame.bone_matrices is None:
@@ -194,11 +194,11 @@ class IfritManager:
         If next_frame_id is provided, interpolate between frames using step (0.0-1.0).
         """
         anim = self.enemy.animation_data.animations[anim_id]
-        frame = anim._frames[frame_id]
+        frame = anim.frames[frame_id]
         matrices = frame.bone_matrices  # already built!
 
         if next_frame_id is not None:
-            next_frame = anim._frames[next_frame_id]
+            next_frame = anim.frames[next_frame_id]
             next_matrices = next_frame.bone_matrices
         else:
             next_matrices = None
@@ -461,11 +461,12 @@ class IfritManager:
 
     def set_animation_frame_bone_rotation(self, anim_id: int, frame_id: int, bone_idx: int,
                                           rot_x_deg: float, rot_y_deg: float, rot_z_deg: float):
+        print("set_animation_frame_bone_rotation")
         """Modify the rotation of a bone in a specific animation frame."""
-        anim = self.enemy.animation_data.animations[anim_id]
-        if frame_id >= len(anim._frames):
+        anim:Animation = self.enemy.animation_data.animations[anim_id]
+        if frame_id >= len(anim.frames):
             return
-        frame = anim._frames[frame_id]
+        frame = anim.frames[frame_id]
 
         # Update raw rotation
         frame.bone_rot_raw[bone_idx].x = int(rot_x_deg * 4096 / 360)
@@ -487,7 +488,7 @@ class IfritManager:
         Recompute bone matrices for a single frame.
         If changed_bone_idx is provided, only recompute that bone and its children.
         """
-        frame = anim._frames[frame_id]
+        frame = anim.frames[frame_id]
         bones = self.enemy.bone_data.bones
         nb_bones = len(bones)
 
