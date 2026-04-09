@@ -158,8 +158,8 @@ class MonsterAnalyser:
         # Writing animation
         section_position = 3
         animation_data = self.animation_data.to_binary()
-        #raw_data_to_write.extend(animation_data)
-        raw_data_to_write.extend(self.section_raw_data[section_position])
+        raw_data_to_write.extend(animation_data)
+        #raw_data_to_write.extend(self.section_raw_data[section_position])
         # Writing Texture animation data (no change atm)
         section_position = 4
         animation_data = self.animation_data.to_binary()

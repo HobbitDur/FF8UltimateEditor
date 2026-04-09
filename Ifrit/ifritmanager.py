@@ -180,7 +180,7 @@ class IfritManager:
                 continue
 
             def to_viewer(mat: Matrix4x4):
-                return (mat.M41, mat.M42, mat.M43)
+                return mat.M41, mat.M42, mat.M43
 
             parent_pos = to_viewer(parent_mat)
             child_pos = to_viewer(child_mat)
@@ -448,9 +448,9 @@ class IfritManager:
         """Modify static bone rotation (the base pose)."""
         bone = self.enemy.bone_data.bones[bone_idx]
         # Convert degrees to raw ints (4096 = 360°)
-        bone._rotX = int(rot_x_deg * 4096 / 360)
-        bone._rotY = int(rot_y_deg * 4096 / 360)
-        bone._rotZ = int(rot_z_deg * 4096 / 360)
+        bone.set_rotation_deg(rot_x_deg)
+        bone.set_rotation_deg(rot_y_deg)
+        bone.set_rotation_deg(rot_z_deg)
         self._recompute_all_animation_matrices()
 
     def set_bone_parent(self, bone_idx: int, parent_idx: int):
@@ -469,10 +469,10 @@ class IfritManager:
         frame = anim.frames[frame_id]
 
         # Update raw rotation
-        frame.bone_rot_raw[bone_idx].x = int(rot_x_deg * 4096 / 360)
-        frame.bone_rot_raw[bone_idx].y = int(rot_y_deg * 4096 / 360)
-        frame.bone_rot_raw[bone_idx].z = int(rot_z_deg * 4096 / 360)
-        frame.bone_rot_deg[bone_idx] = (rot_x_deg, rot_y_deg, rot_z_deg)
+        frame.rotation_vector_data[bone_idx][0].rotate_deg(rot_x_deg)
+        frame.rotation_vector_data[bone_idx][1].rotate_deg(rot_y_deg)
+        frame.rotation_vector_data[bone_idx][2].rotate_deg(rot_z_deg)
+
 
         # Recompute matrices for this frame, only updating the changed bone and its children
         self._recompute_frame_matrices(anim, frame_id, bone_idx)
@@ -480,7 +480,7 @@ class IfritManager:
     def _recompute_all_animation_matrices(self):
         """Rebuild bone matrices for every frame of every animation."""
         for anim in self.enemy.animation_data.animations:
-            for frame_id in range(anim._nb_frames):
+            for frame_id in range(anim.get_nb_frame()):
                 self._recompute_frame_matrices(anim, frame_id, None)
 
     def _recompute_frame_matrices(self, anim, frame_id, changed_bone_idx=None):
@@ -508,30 +508,14 @@ class IfritManager:
         # Sort by index to ensure parents are processed before children
         bones_to_update.sort()
 
-        for k in bones_to_update:
-            # Build local matrix from frame rotations (already in degrees)
-            deg = frame.bone_rot_deg[k]
-            xRot = Matrix4x4.CreateRotationX(-deg[0])
-            yRot = Matrix4x4.CreateRotationY(-deg[1])
-            zRot = Matrix4x4.CreateRotationZ(-deg[2])
-            local = Matrix4x4.MultiplyColumnMajor(yRot, xRot)
-            local = Matrix4x4.MultiplyColumnMajor(zRot, local)
-
-            parent_id = bones[k].parent_id
-            if parent_id != 0xFFFF:
-                parent_mat = frame.bone_matrices[parent_id]
-                world = Matrix4x4.MultiplyRowMajor(parent_mat, local)
-                # Apply parent length translation
+        for bone_id in bones_to_update:
+            parent_id = bones[bone_id].parent_id
+            if parent_id:
                 parent_length = bones[parent_id].size
-                world.M41 = parent_mat.M13 * parent_length + parent_mat.M41
-                world.M42 = parent_mat.M23 * parent_length + parent_mat.M42
-                world.M43 = parent_mat.M33 * parent_length + parent_mat.M43
-                frame.bone_matrices[k] = world
             else:
-                local.M41 = 0.0
-                local.M42 = 0.0
-                local.M43 = 0.0
-                frame.bone_matrices[k] = local
+                parent_length=0
+            frame.set_bone_matrix(parent_id, parent_length, bone_id)
+
 
     def dat_to_xlsx(self, file_list, analyse_ai=False, callback_func=None):
         for monster_file in file_list:

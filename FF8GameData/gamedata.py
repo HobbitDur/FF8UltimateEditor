@@ -769,7 +769,7 @@ class RotationType:
         self.rotate_raw(self._vector_axis)
     def rotate_deg(self, deg):
         self._vector_axis_deg = deg
-        self._vector_axis = deg * 4096.0 / 360.0
+        self._vector_axis = round(deg * 4096.0 / 360.0)
     def rotate_raw(self, raw):
         self._vector_axis = raw
         self._vector_axis_deg = raw * 360.0 / 4096.0
@@ -793,11 +793,27 @@ class RotationVectorDataSupp:
         self.unk_flag3: bool = False
 
 class PositionType:
-    def __init__(self, position_type_bits:int = 0, vector_axis: float = 0):
+    def __init__(self, position_type_bits:int = 0, vector_axis: int = 0):
         self.position_type_bits:int = position_type_bits
-        self.vector_axis: float = vector_axis
+        self._vector_axis: int = 0
+        self._vector_axis_world: float = 0
+        self.move_raw(vector_axis)
+
+    def get_pos_raw(self):
+        return self._vector_axis
+    def get_pos_world(self):
+        return self._vector_axis_world
+
+    def move_world(self, move_value: float):
+        self._vector_axis_world += move_value
+        self._vector_axis+= -move_value/10
+
+    def move_raw(self, move_value: int):
+        self._vector_axis+= move_value
+        self._vector_axis_world += -move_value * 0.10
+
     def __str__(self):
-        return f"typeBit: {self.position_type_bits}, Val:{self.vector_axis}"
+        return f"typeBit: {self.position_type_bits}, Val:{self._vector_axis_world}"
     def __repr__(self):
         return f"PositionType({self.__str__()})"
 
@@ -874,21 +890,16 @@ class AnimationFrame:
         py_bits, py_val = br.read_position_type()
         pz_bits, pz_val = br.read_position_type()
 
-        # Convert to world units
-        px = -px_val * 0.10
-        py = -py_val * 0.10
-        pz = -pz_val * 0.10
-
         # Accumulate if there's a previous frame
         if prev_frame and prev_frame.position:
-            px += prev_frame.position[0].vector_axis
-            py += prev_frame.position[1].vector_axis
-            pz += prev_frame.position[2].vector_axis
+            px_val += prev_frame.position[0].get_pos_raw()
+            py_val += prev_frame.position[1].get_pos_raw()
+            pz_val += prev_frame.position[2].get_pos_raw()
 
         self.position = [
-            PositionType(px_bits, px),
-            PositionType(py_bits, py),
-            PositionType(pz_bits, pz)
+            PositionType(px_bits, px_val),
+            PositionType(py_bits, py_val),
+            PositionType(pz_bits, pz_val)
         ]
 
     def rotate_all_bones(self, br: BitReader, prev_frame: 'AnimationFrame', bones: List[Bone]):
@@ -936,114 +947,63 @@ class AnimationFrame:
                 if self.rotation_vector_data_supp[bone_index].unk_flag3:
                     self.rotation_vector_data_supp[bone_index].unk3 = br.read_bits(16)
 
+
     def to_binary(self, prev_frame: 'AnimationFrame' = None) -> bytearray:
-        """Convert frame back to binary delta-encoded format"""
         writer = BitWriter()
 
-        # Write position deltas (X, Y, Z)
+        # Positions — use the stored position_type_bits
         for axis in range(3):
             if prev_frame is None:
-                # First frame: use absolute position
-                raw_value = round(-self.position[axis].vector_axis / 0.10)
+                raw_value = int(-self.position[axis].vector_axis / 0.10)
             else:
-                # Subsequent frames: use delta from previous
                 delta = self.position[axis].vector_axis - prev_frame.position[axis].vector_axis
                 raw_value = round(-delta / 0.10)
-
-            # Clamp to valid range for 16-bit signed
             raw_value = raw_value & 0xFFFF
-            self._write_position_type(writer, raw_value)
 
-        # Write mode bit (1 if there is additional data in RotationVectorData)
+            # Use the stored type bits, not a recomputed one
+            ti = self.position[axis].position_type_bits
+            n = BitReader.POSITION_READ_HELPER[ti]
+            writer.write_bits(ti, 2)
+            writer.write_bits(raw_value & ((1 << n) - 1), n)
+
         writer.write_bit(self.mode_bit == 1)
 
-        # Write bone rotations
+        # Rotations — use stored avail flag and type bits
         for bone_idx in range(len(self.rotation_vector_data)):
-            # Write rotation for X, Y, Z axes
             for axis in range(3):
-                if prev_frame and prev_frame.rotation_vector_data:
-                    if bone_idx < len(prev_frame.rotation_vector_data):
-                        prev_raw = prev_frame.rotation_vector_data[bone_idx][axis].get_rotate_raw()
-                    else:
-                        prev_raw = 0
+                rot = self.rotation_vector_data[bone_idx][axis]
+
+                if prev_frame and bone_idx < len(prev_frame.rotation_vector_data):
+                    prev_raw = int(prev_frame.rotation_vector_data[bone_idx][axis].get_rotate_raw())
                 else:
                     prev_raw = 0
 
-                current_raw = self.rotation_vector_data[bone_idx][axis].get_rotate_raw()
+                current_raw = int(rot.get_rotate_raw())
                 delta = current_raw - prev_raw
 
-                # Clamp rotation delta to 12-bit signed range (-2048 to 2047)
-                delta = max(-2048, min(2047, delta))
-                self._write_rotation_type(writer, delta)
+                avail = rot.is_rotation_type_available
+                writer.write_bit(avail)
+                if avail:
+                    ti = rot.rotation_type_bits
+                    n = BitReader.ROTATION_READ_HELPER[ti]
+                    writer.write_bits(ti, 2)
+                    v = delta if delta >= 0 else (1 << n) + delta
+                    writer.write_bits(v & ((1 << n) - 1), n)
 
-            # Write supplementary data if mode_bit is 1
+            # Supplementary data
             if self.mode_bit == 1 and bone_idx < len(self.rotation_vector_data_supp):
                 supp = self.rotation_vector_data_supp[bone_idx]
                 writer.write_bit(supp.unk_flag1)
                 if supp.unk_flag1:
                     writer.write_bits(supp.unk1 & 0xFFFF, 16)
-
                 writer.write_bit(supp.unk_flag2)
                 if supp.unk_flag2:
                     writer.write_bits(supp.unk2 & 0xFFFF, 16)
-
                 writer.write_bit(supp.unk_flag3)
                 if supp.unk_flag3:
                     writer.write_bits(supp.unk3 & 0xFFFF, 16)
 
         return writer.get_data()
-
-    def _write_position_type(self, writer: BitWriter, value: int):
-        """Write a position delta value with bit packing"""
-        abs_val = abs(value)
-
-        # _write_position_type — bits: 3, 6, 9, 16
-        if abs_val < 4:  # was < 8
-            bits_needed, type_idx = 3, 0
-        elif abs_val < 32:  # was < 64
-            bits_needed, type_idx = 6, 1
-        elif abs_val < 256:  # was < 512
-            bits_needed, type_idx = 9, 2
-        else:
-            bits_needed, type_idx = 16, 3
-
-        # Write 2-bit type
-        writer.write_bits(type_idx, 2)
-
-        # Write the actual value (handle negative using 2's complement)
-        if value < 0:
-            value = (1 << bits_needed) + value
-
-        writer.write_bits(value, bits_needed)
-
-    def _write_rotation_type(self, writer: BitWriter, value: int):
-        """Write a rotation delta value with bit packing"""
-        if value == 0:
-            writer.write_bit(False)  # No rotation data
-            return
-
-        writer.write_bit(True)  # Has rotation data
-
-        abs_val = abs(value)
-
-        # _write_rotation_type — bits: 3, 6, 8, 12
-        if abs_val < 4:  # was < 8
-            bits_needed, type_idx = 3, 0
-        elif abs_val < 32:  # was < 64
-            bits_needed, type_idx = 6, 1
-        elif abs_val < 128:  # was < 256
-            bits_needed, type_idx = 8, 2
-        else:
-            bits_needed, type_idx = 12, 3
-
-        # Write 2-bit type
-        writer.write_bits(type_idx, 2)
-
-        # Write the actual value (handle negative using 2's complement)
-        if value < 0:
-            value = (1 << bits_needed) + value
-
-        writer.write_bits(value, bits_needed)
 class Animation:
     def __init__(self):
         self.frames: List[AnimationFrame] = []
