@@ -418,952 +418,140 @@ class MonsterAnalyser:
             self.animation_data.analyze(self.section_raw_data[SECTION_NUMBER], self.bone_data)
             #print(self.animation_data)
 
-        # Run the comprehensive tests
-        # self.debug_last_frame_detailed()
-        # self.debug_animation_frame_counts()
-        # self.test_full_animation_section_roundtrip(game_data)
-        # self.test_large_binary_roundtrip()
-        # self.debug_animation_binary()
-        # self.debug_animation_section_offsets()
-        # self.debug_animation_boundary(0)
-        # self.debug_animation_1_difference()
-        # self.debug_animation_19_end_bytes()
-        # self.debug_bit_pattern_at_end()
-        self.debug_all_animations_last_bytes()
-
-    def debug_all_animations_last_bytes(self):
-        """Compare last 10 bytes of each animation between original and rebuilt"""
-        print("\n" + "=" * 80)
-        print("COMPARING LAST 10 BYTES OF EACH ANIMATION")
-        print("=" * 80)
-
-        original_section = self.section_raw_data[3]
-
-        print(f"\n{'Anim':<6} {'Orig Size':<10} {'Rebuilt Size':<12} {'Match':<8} {'Last 10 bytes (original)':<35} {'Last 10 bytes (rebuilt)'}")
-        print("-" * 120)
-
-        for anim_idx in range(len(self.animation_data.animations)):
-            # Get original animation data
-            anim_start = self.animation_data.offsets[anim_idx]
-            if anim_idx + 1 < len(self.animation_data.offsets):
-                anim_end = self.animation_data.offsets[anim_idx + 1]
-            else:
-                anim_end = len(original_section)
-
-            original_data = original_section[anim_start:anim_end]
-            original_size = len(original_data)
-
-            # Get rebuilt animation data
-            anim = self.animation_data.animations[anim_idx]
-            rebuilt_data = anim.to_binary()
-            rebuilt_size = len(rebuilt_data)
-
-            # Get last 10 bytes (or fewer if animation is smaller)
-            orig_last_10 = original_data[-10:] if original_size >= 10 else original_data
-            rebuilt_last_10 = rebuilt_data[-10:] if rebuilt_size >= 10 else rebuilt_data
-
-            # Check if sizes match
-            size_match = "✅" if original_size == rebuilt_size else "❌"
-
-            # Check if last 10 bytes match
-            bytes_match = "✅" if orig_last_10 == rebuilt_last_10 else "⚠️"
-
-            # Format hex strings
-            orig_hex = orig_last_10.hex()
-            rebuilt_hex = rebuilt_last_10.hex()
-
-            print(f"{anim_idx:<6} {original_size:<10} {rebuilt_size:<12} {size_match}{bytes_match:<7} {orig_hex:<35} {rebuilt_hex}")
-
-            # If sizes don't match, show the difference
-            if original_size != rebuilt_size:
-                diff = original_size - rebuilt_size
-                print(f"      → Size difference: {diff:+d} bytes ({'missing' if diff > 0 else 'extra'} {abs(diff)} byte{'s' if abs(diff) != 1 else ''})")
-
-            # If last 10 bytes don't match, show where they differ
-            if orig_last_10 != rebuilt_last_10:
-                # Find first difference from the end
-                min_len = min(len(orig_last_10), len(rebuilt_last_10))
-                for i in range(min_len):
-                    if orig_last_10[i] != rebuilt_last_10[i]:
-                        offset_from_end = len(orig_last_10) - i
-                        print(f"      → First difference at {offset_from_end} bytes from end: orig=0x{orig_last_10[i]:02x}, rebuilt=0x{rebuilt_last_10[i]:02x}")
-                        break
-
-        print("\n" + "=" * 80)
-
-        # Summary
-        print("\n📊 SUMMARY:")
-        size_matches = 0
-        for i in range(len(self.animation_data.animations)):
-            anim_start = self.animation_data.offsets[i]
-            if i + 1 < len(self.animation_data.offsets):
-                anim_end = self.animation_data.offsets[i + 1]
-            else:
-                anim_end = len(original_section)
-            original_size = anim_end - anim_start
-            rebuilt_size = len(self.animation_data.animations[i].to_binary())
-            if original_size == rebuilt_size:
-                size_matches += 1
-
-        total_anims = len(self.animation_data.animations)
-        print(f"  Size matches: {size_matches}/{total_anims} animations")
-
-        # Check which animations have perfect last bytes
-        perfect_matches = 0
-        for anim_idx in range(len(self.animation_data.animations)):
-            anim_start = self.animation_data.offsets[anim_idx]
-            if anim_idx + 1 < len(self.animation_data.offsets):
-                anim_end = self.animation_data.offsets[anim_idx + 1]
-            else:
-                anim_end = len(original_section)
-            original_data = original_section[anim_start:anim_end]
-            rebuilt_data = self.animation_data.animations[anim_idx].to_binary()
-
-            if len(original_data) == len(rebuilt_data) and original_data[-10:] == rebuilt_data[-10:]:
-                perfect_matches += 1
-
-        print(f"  Perfect last 10 bytes matches: {perfect_matches}/{total_anims} animations")
-
-        # List animations with issues
-        print(f"\n⚠️ ANIMATIONS WITH ISSUES:")
-        issues_found = False
-        for anim_idx in range(len(self.animation_data.animations)):
-            anim_start = self.animation_data.offsets[anim_idx]
-            if anim_idx + 1 < len(self.animation_data.offsets):
-                anim_end = self.animation_data.offsets[anim_idx + 1]
-            else:
-                anim_end = len(original_section)
-            original_data = original_section[anim_start:anim_end]
-            rebuilt_data = self.animation_data.animations[anim_idx].to_binary()
-
-            if len(original_data) != len(rebuilt_data) or original_data[-10:] != rebuilt_data[-10:]:
-                issues_found = True
-                print(f"  Animation {anim_idx}: size={len(original_data)} vs {len(rebuilt_data)}, last_bytes_match={original_data[-10:] == rebuilt_data[-10:]}")
-
-        if not issues_found:
-            print("  None! All animations match perfectly!")
-    def debug_bit_pattern_at_end(self):
-        """Debug the exact bit patterns at the end of animation 19"""
-        print("\n" + "=" * 60)
-        print("DEBUG BIT PATTERNS AT END OF ANIMATION 19")
-        print("=" * 60)
-
-        original_section = self.section_raw_data[3]
-        anim_start = self.animation_data.offsets[19]
-        anim_end = self.animation_data.offsets[20] if 20 < len(self.animation_data.offsets) else len(original_section)
-        original_data = original_section[anim_start:anim_end]
-
-        # Get the last 4 bytes
-        print(f"\n--- Last 4 bytes of original animation 19 ---")
-        last_4_orig = original_data[-4:]
-        print(f"Bytes: {last_4_orig.hex()}")
-        print(f"Binary: {' '.join(f'{b:08b}' for b in last_4_orig)}")
-
-        # Get the rebuilt data
-        anim = self.animation_data.animations[19]
-        rebuilt_data = anim.to_binary()
-
-        print(f"\n--- Last 4 bytes of rebuilt animation 19 ---")
-        last_4_rebuilt = rebuilt_data[-4:]
-        print(f"Bytes: {last_4_rebuilt.hex()}")
-        print(f"Binary: {' '.join(f'{b:08b}' for b in last_4_rebuilt)}")
-
-        # Simulate writing with a BitWriter to see the buffer state
-        print(f"\n--- Simulating BitWriter for animation 19 ---")
-        writer = BitWriter()
-
-        # Write frame count (8 bits)
-        print(f"Before frame count: buffer={writer._buffer:08b} ({writer._bits_in_buffer} bits)")
-        writer.write_bits(len(anim.frames), 8)
-        print(f"After frame count: buffer={writer._buffer:08b} ({writer._bits_in_buffer} bits)")
-
-        # Write all frames
-        prev_frame = None
-        for i, frame in enumerate(anim.frames):
-            before_bytes = len(writer._data)
-            before_bits = writer._bits_in_buffer
-            frame.write_to_writer(writer, prev_frame)
-            after_bytes = len(writer._data)
-            after_bits = writer._bits_in_buffer
-            prev_frame = frame
-            if i == len(anim.frames) - 1:  # Last frame
-                print(f"\nAfter last frame:")
-                print(f"  Bytes written: {after_bytes}")
-                print(f"  Bits in buffer: {after_bits}")
-                print(f"  Buffer value: 0x{writer._buffer:02x} ({writer._buffer:08b})")
-
-                # Show what gets flushed
-                if after_bits > 0:
-                    flushed_byte = writer._buffer & 0xFF
-                    print(f"  Would flush: 0x{flushed_byte:02x} ({flushed_byte:08b})")
-
-        # Now flush and see what we get
-        writer.flush()
-        print(f"\nAfter flush:")
-        print(f"  Total bytes: {len(writer._data)}")
-        print(f"  Last byte: 0x{writer._data[-1]:02x} ({writer._data[-1]:08b})")
-
-        # Compare with original's last byte
-        print(f"\n--- Comparison ---")
-        orig_last_byte = original_data[-1]
-        rebuilt_last_byte = writer._data[-1] if writer._data else 0
-        print(f"Original last byte: 0x{orig_last_byte:02x} ({orig_last_byte:08b})")
-        print(f"Rebuilt last byte:  0x{rebuilt_last_byte:02x} ({rebuilt_last_byte:08b})")
-
-        # Check if the rebuilt's last byte matches the original's second-to-last byte
-        if len(original_data) >= 2:
-            orig_second_last = original_data[-2]
-            print(f"Original second-to-last: 0x{orig_second_last:02x} ({orig_second_last:08b})")
-
-            if rebuilt_last_byte == orig_second_last:
-                print("\n✅ Rebuilt's last byte matches original's second-to-last byte!")
-                print("   This means the bits are shifted by one byte - we have an extra byte at the end")
-            elif rebuilt_last_byte == (orig_last_byte >> 4) or rebuilt_last_byte == (orig_last_byte & 0x0F):
-                print("\n⚠️ Rebuilt's last byte matches part of original's last byte - bit shift issue!")
-
-        # Check the actual data difference
-        print(f"\n--- The 0x51 vs 0x01 difference ---")
-        print(f"Original byte at offset -2: 0x{original_data[-2]:02x} (binary: {original_data[-2]:08b})")
-        print(f"Rebuilt byte at offset -1:  0x{rebuilt_data[-1]:02x} (binary: {rebuilt_data[-1]:08b})")
-
-        # Show what the original's last byte contains
-        if len(original_data) >= 1:
-            last_byte_bits = original_data[-1]
-            print(f"\nOriginal's last byte 0x{last_byte_bits:02x} contains {last_byte_bits:08b}")
-            print(f"If we shift right by 4 bits: 0x{last_byte_bits >> 4:02x} ({last_byte_bits >> 4:08b})")
-            print(f"If we mask lower 4 bits: 0x{last_byte_bits & 0x0F:02x} ({last_byte_bits & 0x0F:08b})")
-    def debug_animation_19_end_bytes(self):
-        """Debug the last bytes of animation 19 to see exact differences"""
-        print("\n" + "=" * 60)
-        print("DEBUG ANIMATION 19 - LAST BYTES COMPARISON")
-        print("=" * 60)
-
-        original_section = self.section_raw_data[3]
-        anim_index = 19
-
-        # Get original animation data
-        anim_start = self.animation_data.offsets[anim_index]
-        if anim_index + 1 < len(self.animation_data.offsets):
-            anim_end = self.animation_data.offsets[anim_index + 1]
-        else:
-            anim_end = len(original_section)
-
-        original_anim_data = original_section[anim_start:anim_end]
-
-        # Get rebuilt animation data
-        anim = self.animation_data.animations[anim_index]
-        rebuilt_anim_data = anim.to_binary()
-
-        print(f"\n--- Size Comparison ---")
-        print(f"Original animation size: {len(original_anim_data)} bytes")
-        print(f"Rebuilt animation size:  {len(rebuilt_anim_data)} bytes")
-        print(f"Difference: {len(original_anim_data) - len(rebuilt_anim_data)} bytes")
-
-        # Compare last 20 bytes
-        print(f"\n--- Last 20 bytes (hex) ---")
-        orig_last_20 = original_anim_data[-20:] if len(original_anim_data) >= 20 else original_anim_data
-        rebuilt_last_20 = rebuilt_anim_data[-20:] if len(rebuilt_anim_data) >= 20 else rebuilt_anim_data
-
-        print(f"Original: {orig_last_20.hex()}")
-        print(f"Rebuilt:  {rebuilt_last_20.hex()}")
-
-        # Compare byte by byte from the end
-        print(f"\n--- Byte-by-byte comparison from the end ---")
-        min_len = min(len(original_anim_data), len(rebuilt_anim_data))
-        diff_count = 0
-
-        for i in range(1, min_len + 1):
-            orig_byte = original_anim_data[-i]
-            rebuilt_byte = rebuilt_anim_data[-i]
-            if orig_byte != rebuilt_byte:
-                diff_count += 1
-                if diff_count <= 10:  # Show first 10 differences
-                    print(f"  Offset from end -{i:3d} (absolute {len(original_anim_data) - i:4d}): orig=0x{orig_byte:02x}, rebuilt=0x{rebuilt_byte:02x}")
-
-        if diff_count == 0:
-            print("  ✅ No differences in overlapping bytes!")
-
-        # Show the extra bytes if one is longer
-        if len(original_anim_data) > len(rebuilt_anim_data):
-            extra_bytes = original_anim_data[len(rebuilt_anim_data):]
-            print(f"\n--- Extra bytes in original (not in rebuilt) ---")
-            print(f"  {len(extra_bytes)} extra bytes at the end: {extra_bytes.hex()}")
-
-            # Show the bytes that would be before these extra bytes
-            if len(rebuilt_anim_data) >= 10:
-                print(f"  Last 10 bytes of rebuilt: {rebuilt_anim_data[-10:].hex()}")
-                print(f"  Expected continuation: {original_anim_data[len(rebuilt_anim_data) - 10:len(rebuilt_anim_data) + 10].hex()}")
-
-        elif len(rebuilt_anim_data) > len(original_anim_data):
-            extra_bytes = rebuilt_anim_data[len(original_anim_data):]
-            print(f"\n--- Extra bytes in rebuilt (not in original) ---")
-            print(f"  {len(extra_bytes)} extra bytes at the end: {extra_bytes.hex()}")
-
-        # Check the frame count byte
-        print(f"\n--- Frame count byte ---")
-        print(f"Original first byte: 0x{original_anim_data[0]:02x} ({original_anim_data[0]})")
-        print(f"Rebuilt first byte:  0x{rebuilt_anim_data[0]:02x} ({rebuilt_anim_data[0]})")
-
-        # Check the last few bytes of the previous animation to see if there's overlap
-        if anim_index > 0:
-            print(f"\n--- Previous animation (18) end ---")
-            prev_anim_start = self.animation_data.offsets[anim_index - 1]
-            prev_anim_end = anim_start
-            prev_anim_data = original_section[prev_anim_start:prev_anim_end]
-            print(f"Animation 18 last 16 bytes: {prev_anim_data[-16:].hex()}")
-
-            # Rebuild animation 18 to see its end
-            prev_anim = self.animation_data.animations[anim_index - 1]
-            prev_rebuilt = prev_anim.to_binary()
-            print(f"Rebuilt animation 18 last 16 bytes: {prev_rebuilt[-16:].hex()}")
-
-        # Show the actual bytes around the boundary
-        print(f"\n--- Boundary between animations 18 and 19 ---")
-        boundary_start = max(0, anim_start - 8)
-        boundary_end = min(len(original_section), anim_start + 8)
-        print(f"Original bytes around offset 0x{anim_start:04x}:")
-        print(f"  {original_section[boundary_start:boundary_end].hex()}")
-
-        # Show what the rebuilt data would be if we wrote sequentially
-        print(f"\n--- Sequential write simulation ---")
-        test_writer = BitWriter()
-        for i in range(anim_index + 1):
-            self.animation_data.animations[i].write_to_writer(test_writer)
-
-        all_data = test_writer.get_data(flush=False)
-        print(f"Total bytes written for animations 0-{anim_index}: {len(all_data)}")
-
-        # Get just animation 19 from the sequential write
-        # First, write animations 0-18 to get their size
-        temp_writer = BitWriter()
-        for i in range(anim_index):
-            self.animation_data.animations[i].write_to_writer(temp_writer)
-        anims_0_to_18_size = len(temp_writer.get_data(flush=False))
-
-        # Now get animation 19 data from the sequential write
-        anim_19_from_seq = all_data[anims_0_to_18_size:]
-        print(f"Animation 19 from sequential write: {len(anim_19_from_seq)} bytes")
-        print(f"Last 16 bytes from sequential: {anim_19_from_seq[-16:].hex() if len(anim_19_from_seq) >= 16 else anim_19_from_seq.hex()}")
-
-        # Compare with standalone rebuilt
-        if len(anim_19_from_seq) == len(rebuilt_anim_data):
-            print("✅ Sequential and standalone match in size")
-            if anim_19_from_seq == rebuilt_anim_data:
-                print("✅ Sequential and standalone match exactly")
-            else:
-                print("❌ Sequential and standalone differ")
-                # Find first difference
-                for i in range(len(anim_19_from_seq)):
-                    if anim_19_from_seq[i] != rebuilt_anim_data[i]:
-                        print(f"  First difference at byte {i}: seq=0x{anim_19_from_seq[i]:02x}, standalone=0x{rebuilt_anim_data[i]:02x}")
-                        break
-        else:
-            print(f"❌ Size mismatch: sequential={len(anim_19_from_seq)}, standalone={len(rebuilt_anim_data)}")
-    def debug_animation_1_difference(self):
-        """Debug the specific byte difference in Animation 1"""
-        print("\n=== Debug Animation 1 Difference ===")
-
-        original_section = self.section_raw_data[3]
-        anim_index = 1
-
-        anim_start = self.animation_data.offsets[anim_index]
-        anim_end = self.animation_data.offsets[anim_index + 1]
-        original_anim_data = original_section[anim_start:anim_end]
-
-        anim = self.animation_data.animations[anim_index]
-        rebuilt_anim_data = anim.to_binary()
-
-        # The difference was at offset 1610 within animation 1
-        diff_offset = 1610
-
-        print(f"Animation 1 original size: {len(original_anim_data)}")
-        print(f"Animation 1 rebuilt size: {len(rebuilt_anim_data)}")
-
-        if diff_offset < len(original_anim_data) and diff_offset < len(rebuilt_anim_data):
-            print(f"\nAt offset {diff_offset}:")
-            print(f"  Original: 0x{original_anim_data[diff_offset]:02x}")
-            print(f"  Rebuilt:  0x{rebuilt_anim_data[diff_offset]:02x}")
-
-            # Show context around the difference
-            start = max(0, diff_offset - 8)
-            end = min(len(original_anim_data), diff_offset + 8)
-            print(f"\nContext around offset {diff_offset}:")
-            print(f"  Original: {original_anim_data[start:end].hex()}")
-            print(f"  Rebuilt:  {rebuilt_anim_data[start:end].hex()}")
-
-            # Check if this byte is part of a frame count or frame data
-            # Find which frame contains this offset
-            br = BitReader(original_anim_data, start_byte=1)
-            frame_offsets = []
-            for frame_idx in range(original_anim_data[0]):
-                start_pos = br._byte_pos
-                frame_offsets.append(start_pos)
-                # Skip to next frame
-                temp_frame = AnimationFrame(len(self.bone_data.bones))
-                if frame_idx == 0:
-                    temp_frame.move(br, None)
-                    temp_frame.rotate_all_bones(br, None, self.bone_data.bones)
-                else:
-                    # Need prev_frame, but for offset calculation we just need to advance
-                    temp_frame.move(br, None)
-                    temp_frame.rotate_all_bones(br, None, self.bone_data.bones)
-
-            # Find which frame contains diff_offset
-            for i, offset in enumerate(frame_offsets):
-                next_offset = frame_offsets[i + 1] if i + 1 < len(frame_offsets) else len(original_anim_data)
-                if offset <= diff_offset < next_offset:
-                    print(f"\nDifference is inside Frame {i} of Animation 1")
-                    print(f"  Frame {i} spans bytes {offset}-{next_offset}")
-                    print(f"  Offset within frame: {diff_offset - offset}")
-                    break
-
-
-    def debug_animation_boundary(self, anim_index=0):
-        """Debug the boundary between two animations"""
-        print(f"\n=== Debug Boundary After Animation {anim_index} ===")
-
-        original_section = self.section_raw_data[3]
-
-        # Get original animation data
-        anim_start = self.animation_data.offsets[anim_index]
-        anim_end = self.animation_data.offsets[anim_index + 1]
-        original_anim_data = original_section[anim_start:anim_end]
-
-        # Get rebuilt animation data
-        anim = self.animation_data.animations[anim_index]
-        rebuilt_anim_data = anim.to_binary()
-
-        print(f"Animation {anim_index}:")
-        print(f"  Original size: {len(original_anim_data)} bytes")
-        print(f"  Rebuilt size:  {len(rebuilt_anim_data)} bytes")
-        print(f"  Original last 8 bytes: {original_anim_data[-8:].hex()}")
-        print(f"  Rebuilt last 8 bytes:  {rebuilt_anim_data[-8:].hex()}")
-
-        # Get the next animation's start in original
-        next_anim_start = self.animation_data.offsets[anim_index + 1]
-        next_anim_original = original_section[next_anim_start:next_anim_start + 16]
-
-        # Calculate where the next animation would start in rebuilt
-        # The next animation's offset is the current offset + size of current animation
-        rebuilt_next_start = len(rebuilt_anim_data)
-
-        # Get the actual next animation's data from rebuilt (if we had it)
-        next_anim = self.animation_data.animations[anim_index + 1]
-        next_anim_rebuilt = next_anim.to_binary()
-
-        print(f"\nNext animation ({anim_index + 1}):")
-        print(f"  Original start offset: 0x{next_anim_start:04x}")
-        print(f"  Original first 16 bytes: {next_anim_original[:16].hex()}")
-        print(f"  Rebuilt first 16 bytes:  {next_anim_rebuilt[:16].hex()}")
-
-        # Check if the rebuilt next animation would align with original if we shift by the bit residue
-        print(f"\n--- Bit Residue Analysis ---")
-
-        # Simulate writing animations sequentially to see bit residue
-        writer = BitWriter()
-
-        # Write all animations up to and including this one
-        for i in range(anim_index + 1):
-            self.animation_data.animations[i].write_to_writer(writer)
-
-        # Get the data without final flush
-        data_no_flush = writer.get_data(flush=False)
-        bits_in_buffer = writer._bits_in_buffer
-        buffer_value = writer._buffer
-
-        print(f"After writing animations 0-{anim_index}:")
-        print(f"  Total bytes (no flush): {len(data_no_flush)}")
-        print(f"  Bits in buffer: {bits_in_buffer}")
-        print(f"  Buffer value: 0x{buffer_value:02x}")
-
-        # The next animation's frame count should start at a byte boundary
-        # If there are bits in buffer, they belong to the previous animation's last frame
-
-        # Check if the original has the same bit residue pattern
-        # We can check by looking at the original data around the boundary
-
-        # Get the last few bytes of original animation and first of next
-        boundary_bytes = original_section[anim_end - 4:anim_end + 8]
-        print(f"\nOriginal boundary bytes (last 4 of anim {anim_index}, first 8 of anim {anim_index + 1}):")
-        print(f"  {boundary_bytes.hex()}")
-
-        # Try to see if the bit residue matches
-        if bits_in_buffer > 0:
-            # The last byte of data_no_flush contains the bits from the buffer partially
-            last_byte = data_no_flush[-1] if data_no_flush else 0
-            print(f"\nLast byte of rebuilt data (no flush): 0x{last_byte:02x}")
-            print(f"Buffer value: 0x{buffer_value:02x} ({bits_in_buffer} bits)")
-
-            # The original might have these bits distributed differently
-            # Let's check if the original's next animation frame count is affected
-            original_next_frame_count = next_anim_original[0]
-            print(f"Original next animation frame count: {original_next_frame_count}")
-
-            # Simulate what would happen if we wrote the next animation with the current buffer
-            test_writer = BitWriter()
-            test_writer._data = bytearray(data_no_flush)
-            test_writer._buffer = buffer_value
-            test_writer._bits_in_buffer = bits_in_buffer
-
-            # Write the next animation's frame count
-            test_writer.write_byte(original_next_frame_count)
-            print(f"After writing frame count with current buffer:")
-            print(f"  Bytes now: {len(test_writer.get_data(flush=False))}")
-            print(f"  First byte of frame count in stream: 0x{test_writer._data[-1] if test_writer._data else 0:02x}")
-    def debug_animation_section_offsets(self):
-        """Debug offset calculations"""
-        print("\n=== Animation Section Offset Debug ===")
-
-        data = bytearray()
-        data.extend(self.animation_data.nb_animations.to_bytes(4, byteorder='little'))
-
-        animations_data = []
-        offsets = []
-        current_offset = 4 + self.animation_data.nb_animations * 4
-
-        for i, anim in enumerate(self.animation_data.animations):
-            offsets.append(current_offset)
-            anim_data = anim.to_binary()
-            animations_data.append(anim_data)
-            print(f"Animation {i:2d}: offset={current_offset:4d} (0x{current_offset:04x}), size={len(anim_data):4d}")
-            current_offset += len(anim_data)
-
-        # Compare with original offsets
-        print(f"\nOriginal offsets from file:")
-        for i in range(self.animation_data.nb_animations):
-            orig_offset = self.animation_data.offsets[i]
-            print(f"Animation {i:2d}: orig_offset=0x{orig_offset:04x} ({orig_offset})")
-            if i < len(offsets):
-                if offsets[i] != orig_offset:
-                    diff = offsets[i] - orig_offset
-                    print(f"  ❌ MISMATCH! Rebuilt={offsets[i]}, diff={diff:+d}")
-    def debug_animation_binary(self):
-        """Debug the full animation binary for animation 19"""
-        print("\n=== Animation 19 Full Binary Debug ===")
-
-        anim = self.animation_data.animations[19]
-
-        # Get the animation binary
-        anim_binary = anim.to_binary()
-
-        print(f"Animation binary size: {len(anim_binary)} bytes")
-        print(f"First byte (frame count): 0x{anim_binary[0]:02x} ({anim_binary[0]})")
-        print(f"Expected frame count: {len(anim.frames)}")
-
-        # Check if the frame count matches
-        if anim_binary[0] != len(anim.frames):
-            print(f"❌ MISMATCH! Frame count byte is {anim_binary[0]}, but should be {len(anim.frames)}")
-
-            # Let's see what's happening in to_binary
-            print("\n--- Simulating to_binary ---")
-            test_data = bytearray()
-            test_data.extend(len(anim.frames).to_bytes(1, 'little'))
-            print(f"Frame count byte added: 0x{test_data[0]:02x}")
-
-            writer = BitWriter()
-            prev_frame = None
-            for i, frame in enumerate(anim.frames):
-                before = len(writer.get_data(False))
-                frame.write_to_writer(writer, prev_frame)
-                after = len(writer.get_data(False))
-                print(f"Frame {i}: added {after - before} bytes, total bits in buffer: {writer._bits_in_buffer}")
-                prev_frame = frame
-
-            frame_data = writer.get_data()
-            print(f"Frame data size: {len(frame_data)} bytes")
-            print(f"Total size would be: {len(test_data) + len(frame_data)}")
-
-            test_data.extend(frame_data)
-
-            # Compare with anim_binary
-            if test_data == anim_binary:
-                print("✅ Simulated binary matches anim_binary")
-            else:
-                print("❌ Simulated binary differs from anim_binary")
-                for i in range(min(len(test_data), len(anim_binary))):
-                    if test_data[i] != anim_binary[i]:
-                        print(f"  First difference at byte {i}: sim=0x{test_data[i]:02x}, actual=0x{anim_binary[i]:02x}")
-                        break
-        print(f"len(anim.frames) = {len(anim.frames)}")
-        print(f"anim.frames[0] type: {type(anim.frames[0])}")
-        print(f"Number of frames in list: {len(anim.frames)}")
-    def debug_last_frame_detailed(self):
-        """Deep debug for the last frame of the last animation"""
-        print("\n" + "=" * 60)
-        print("DEEP DEBUG FOR LAST FRAME OF ANIMATION 19")
-        print("=" * 60)
-
-        original_section = self.section_raw_data[3]
-        anim_index = 19
-
-        # Get original animation data
-        anim_start = self.animation_data.offsets[anim_index]
-        if anim_index + 1 < len(self.animation_data.offsets):
-            anim_end = self.animation_data.offsets[anim_index + 1]
-        else:
-            anim_end = len(original_section)
-
-        original_anim_data = original_section[anim_start:anim_end]
-        anim = self.animation_data.animations[anim_index]
-
-        print(f"\n--- Animation Info ---")
-        print(f"Original animation size: {len(original_anim_data)} bytes")
-        print(f"Number of frames: {len(anim.frames)}")
-
-        # Get the last frame
-        last_frame = anim.frames[-1]
-        prev_frame = anim.frames[-2] if len(anim.frames) > 1 else None
-
-        print(f"\n--- Last Frame Info ---")
-        print(f"Mode bit: {last_frame.mode_bit}")
-        print(f"Number of bones: {len(last_frame.rotation_vector_data)}")
-
-        # Check position data
-        print(f"\n--- Position Data (last frame) ---")
-        for axis, pos in enumerate(last_frame.position):
-            print(f"  Axis {axis}: type_bits={pos.position_type_bits}, raw={pos.get_pos_raw()}, world={pos.get_pos_world():.2f}")
-
-        # Check rotation data for first few bones
-        print(f"\n--- Rotation Data (last frame, first 5 bones) ---")
-        for bone_idx in range(min(5, len(last_frame.rotation_vector_data))):
-            print(f"  Bone {bone_idx}:")
-            for axis, rot in enumerate(last_frame.rotation_vector_data[bone_idx]):
-                print(
-                    f"    Axis {axis}: avail={rot.is_rotation_type_available}, type_bits={rot.rotation_type_bits}, raw={rot.get_rotate_raw()}, deg={rot.get_rotate_deg():.2f}")
-
-        # Check supplementary data if mode_bit is 1
-        if last_frame.mode_bit == 1:
-            print(f"\n--- Supplementary Data (last frame) ---")
-            has_supp = False
-            for bone_idx, supp in enumerate(last_frame.rotation_vector_data_supp):
-                if supp.unk_flag1 or supp.unk_flag2 or supp.unk_flag3:
-                    has_supp = True
-                    print(f"  Bone {bone_idx}: flags=({supp.unk_flag1},{supp.unk_flag2},{supp.unk_flag3}), values=({supp.unk1},{supp.unk2},{supp.unk3})")
-            if not has_supp:
-                print("  No supplementary data present")
-
-        # Write just the last frame and compare with original
-        print(f"\n--- Last Frame Binary Comparison ---")
-        last_frame_binary = last_frame.to_binary(prev_frame)
-        print(f"Last frame binary size: {len(last_frame_binary)} bytes")
-        print(f"Last frame binary (first 64 bytes): {last_frame_binary[:64].hex()}")
-
-        # Find where the last frame starts in the original animation
-        # We need to parse the original animation to find frame boundaries
-        print(f"\n--- Finding Last Frame in Original ---")
-        br = BitReader(original_anim_data, start_byte=1)  # Skip frame count
-        frame_offsets = []
-        frame_boundaries = []
-
-        temp_anim = Animation()
-        temp_anim.frames = []
-
-        for frame_idx in range(original_anim_data[0]):
-            start_pos = br._byte_pos
-            start_bit = br._bit_pos
-            frame_offsets.append((start_pos, start_bit))
-
-            # Create a temporary frame to advance the reader
-            temp_frame = AnimationFrame(len(self.bone_data.bones))
-            if frame_idx == 0:
-                temp_frame.move(br, None)
-                temp_frame.rotate_all_bones(br, None, self.bone_data.bones)
-            else:
-                temp_frame.move(br, temp_anim.frames[-1])
-                temp_frame.rotate_all_bones(br, temp_anim.frames[-1], self.bone_data.bones)
-
-            temp_anim.frames.append(temp_frame)
-
-            # Record where this frame ends
-            end_pos = br._byte_pos
-            end_bit = br._bit_pos
-            frame_boundaries.append((end_pos, end_bit))
-
-            print(f"  Frame {frame_idx:2d}: start=({start_pos}, bit{start_bit}), end=({end_pos}, bit{end_bit})")
-
-        # Get the last frame's original data
-        last_frame_start = frame_offsets[-1][0]
-        last_frame_end = frame_boundaries[-1][0]
-        if frame_boundaries[-1][1] > 0:
-            last_frame_end += 1  # Include the partial byte
-
-        original_last_frame_data = original_anim_data[last_frame_start:last_frame_end]
-        print(f"\nOriginal last frame data: {len(original_last_frame_data)} bytes")
-        print(f"Original last frame (first 64 bytes): {original_last_frame_data[:64].hex()}")
-
-        # Compare original last frame with rebuilt last frame
-        print(f"\n--- Comparing Last Frame Data ---")
-        min_len = min(len(original_last_frame_data), len(last_frame_binary))
-        differences = []
-
-        for i in range(min_len):
-            if original_last_frame_data[i] != last_frame_binary[i]:
-                differences.append(i)
-                if len(differences) <= 10:
-                    print(f"Byte {i:3d}: orig=0x{original_last_frame_data[i]:02x}, rebuilt=0x{last_frame_binary[i]:02x}")
-
-        if differences:
-            print(f"\nTotal differences in last frame: {len(differences)} bytes")
-
-            # Show context around first difference
-            first_diff = differences[0]
-            start = max(0, first_diff - 8)
-            end = min(len(original_last_frame_data), first_diff + 16)
-            print(f"\nContext around first difference (offset {first_diff}):")
-            print(f"Original: {original_last_frame_data[start:end].hex()}")
-            print(f"Rebuilt:  {last_frame_binary[start:end].hex()}")
-        else:
-            print("✅ Last frame matches perfectly!")
-
-        # Check BitWriter state when writing the last frame
-        print(f"\n--- BitWriter Analysis ---")
-        writer = BitWriter()
-
-        # Write all previous frames
-        prev = None
-        for i in range(len(anim.frames) - 1):
-            anim.frames[i].write_to_writer(writer, prev)
-            prev = anim.frames[i]
-
-        print(f"Before writing last frame:")
-        print(f"  Bytes written: {len(writer.get_data(flush=False))}")
-        print(f"  Bits in buffer: {writer._bits_in_buffer}")
-        print(f"  Buffer value: 0x{writer._buffer:02x}")
-
-        # Write the last frame
-        before_bytes = len(writer.get_data(flush=False))
-        before_bits = writer._bits_in_buffer
-
-        last_frame.write_to_writer(writer, prev)
-
-        after_bytes = len(writer.get_data(flush=False))
-        after_bits = writer._bits_in_buffer
-
-        print(f"\nAfter writing last frame (before flush):")
-        print(f"  Bytes written: {after_bytes}")
-        print(f"  Bits in buffer: {after_bits}")
-        print(f"  Buffer value: 0x{writer._buffer:02x}")
-        print(f"  Bytes added: {after_bytes - before_bytes}")
-        print(f"  Bits added: {(after_bytes - before_bytes) * 8 + after_bits - before_bits}")
-
-        # Get data with and without flush
-        data_no_flush = writer.get_data(flush=False)
-        data_flush = writer.get_data(flush=True)
-
-        print(f"\nFinal data:")
-        print(f"  Without flush: {len(data_no_flush)} bytes, last byte: 0x{data_no_flush[-1]:02x}" if data_no_flush else "  No data")
-        print(f"  With flush: {len(data_flush)} bytes, last byte: 0x{data_flush[-1]:02x}" if data_flush else "  No data")
-
-        # Compare with original last frame's end
-        print(f"\n--- End of Animation Comparison ---")
-        print(f"Original animation last 16 bytes: {original_anim_data[-16:].hex()}")
-
-        # Rebuild the entire animation using the shared writer approach and compare
-        print(f"\n--- Shared Writer Test ---")
-        test_writer = BitWriter()
-        for f in anim.frames:
-            f.write_to_writer(test_writer, None)  # No prev_frame for this test
-
-        test_data = test_writer.get_data()
-        print(f"Shared writer result: {len(test_data)} bytes")
-        print(f"Shared writer last 16 bytes: {test_data[-16:].hex() if len(test_data) >= 16 else test_data.hex()}")
-
-        # Check if the issue is with the frame count byte
-        print(f"\n--- Frame Count Byte ---")
-        print(f"Original frame count byte: 0x{original_anim_data[0]:02x} ({original_anim_data[0]})")
-        print(f"Rebuilt frame count byte: 0x{last_frame_binary[0]:02x}" if last_frame_binary else "N/A")
-
-        return differences
-    def debug_animation_frame_counts(self):
-        """Debug the frame counts for each animation"""
-        print("\n=== Animation Frame Count Debug ===")
-
-        original_section = self.section_raw_data[3]
-
-        for anim_idx in range(len(self.animation_data.animations)):
-            anim_start = self.animation_data.offsets[anim_idx]
-
-            # Read original frame count
-            orig_frame_count = original_section[anim_start] if anim_start < len(original_section) else 0
-
-            # Get rebuilt frame count
-            rebuilt_frame_count = len(self.animation_data.animations[anim_idx].frames)
-
-            print(f"Animation {anim_idx:2d}: offset=0x{anim_start:04x}, orig_frames={orig_frame_count:3d}, rebuilt_frames={rebuilt_frame_count:3d}")
-
-            if orig_frame_count != rebuilt_frame_count:
-                print(f"  ❌ MISMATCH! Difference of {orig_frame_count - rebuilt_frame_count} frames")
-
-                # Show the raw bytes around this offset
-                start = max(0, anim_start - 4)
-                end = min(len(original_section), anim_start + 20)
-                print(f"  Raw bytes around offset: {original_section[start:end].hex()}")
+        #self.test_full_animation_section_roundtrip(game_data)
 
     def test_full_animation_section_roundtrip(self, game_data: GameData):
-        """Test if the entire animation section can be rebuilt identically"""
+        """Test with detailed BitWriter operation logging"""
 
         print("\n=== Full Animation Section Round-Trip Test ===")
 
         SECTION_NUMBER = 3
         original_section = self.section_raw_data[SECTION_NUMBER]
-
-        # Rebuild the entire animation section from parsed data
         rebuilt_section = self.animation_data.to_binary()
 
         print(f"Original section size: {len(original_section)} bytes")
-        print(f"Rebuilt section size:  {len(rebuilt_section)} bytes")
+        print(f"Rebuilt section size:  {len(rebuilt_section)} bytes\n")
 
-        if len(original_section) != len(rebuilt_section):
-            print(f"❌ SIZE MISMATCH: {len(original_section)} vs {len(rebuilt_section)}")
-            print(f"Difference: {abs(len(original_section) - len(rebuilt_section))} bytes")
+        nb_animations = int.from_bytes(original_section[0:4], 'little')
+        header_size = 4 + nb_animations * 4
+        offsets = [int.from_bytes(original_section[4 + i * 4:8 + i * 4], 'little')
+                   for i in range(nb_animations)]
 
-        # Compare byte by byte up to the smaller size
-        compare_length = min(len(original_section), len(rebuilt_section))
+        print(f"Header: {nb_animations} animations, header size {header_size} bytes\n")
 
-        differences = []
-        for i in range(compare_length):
-            if original_section[i] != rebuilt_section[i]:
-                differences.append(i)
-                if len(differences) <= 20:  # Show first 20 differences
-                    print(f"Byte {i:4d}: orig=0x{original_section[i]:02x}, rebuilt=0x{rebuilt_section[i]:02x}")
+        all_matched = True
 
-        if differences:
-            print(f"\nTotal differences: {len(differences)} bytes")
+        for anim_idx in range(nb_animations):
+            # Original animation data bounds
+            start_orig = offsets[anim_idx] if anim_idx < len(offsets) else header_size
+            end_orig = (offsets[anim_idx + 1] if anim_idx + 1 < len(offsets)
+                        else len(original_section) - 4)
+            orig_anim_data = original_section[start_orig:end_orig]
 
-            # Show context around first difference
-            first_diff = differences[0]
-            start = max(0, first_diff - 16)
-            end = min(compare_length, first_diff + 16)
-            print(f"\nContext around first difference (offset {first_diff}):")
-            print(f"Original: {original_section[start:end].hex()}")
-            print(f"Rebuilt:  {rebuilt_section[start:end].hex()}")
+            if anim_idx >= len(self.animation_data.animations):
+                print(f"Animation {anim_idx}: Missing in parsed data")
+                all_matched = False
+                continue
 
-            # Determine if difference is in header or animation data
-            nb_animations = int.from_bytes(original_section[0:4], 'little')
-            header_size = 4 + nb_animations * 4
+            # Create debug writer that logs operations
+            class DebugBitWriter(BitWriter):
+                def __init__(self):
+                    super().__init__()
+                    self.operations = []
+                    self.op_count = 0
 
-            if first_diff < header_size:
-                print(f"\n⚠️ Difference is in the ANIMATION SECTION HEADER (offsets or count)")
-                # Show header comparison
-                print(f"\nHeader comparison:")
-                print(f"Original header (first {header_size} bytes): {original_section[:header_size].hex()}")
-                print(f"Rebuilt header (first {header_size} bytes):  {rebuilt_section[:header_size].hex()}")
+                def write_bits(self, value, count):
+                    self.op_count += 1
+                    self.operations.append({
+                        'op': self.op_count,
+                        'value': value,
+                        'count': count,
+                        'buffer_before': self._buffer,
+                        'bits_before': self._bits_in_buffer,
+                        'buffer_after': (self._buffer | (value << self._bits_in_buffer)) & 0xFFFF,
+                        'bits_after': self._bits_in_buffer + count
+                    })
+                    super().write_bits(value, count)
+
+                def write_bit(self, value):
+                    self.write_bits(1 if value else 0, 1)
+
+                def get_last_operations(self, n=20):
+                    return self.operations[-n:] if self.operations else []
+
+            writer = DebugBitWriter()
+            anim = self.animation_data.animations[anim_idx]
+
+            # Write animation
+            writer.write_bits(len(anim.frames), 8)
+
+            prev_frame = None
+            for frame_idx, frame in enumerate(anim.frames):
+                frame.write_to_writer(writer, prev_frame)
+                prev_frame = frame
+
+            # Get state before flush
+            pre_flush_state = {
+                'buffer': writer._buffer,
+                'bits': writer._bits_in_buffer,
+                'data_len': len(writer._data)
+            }
+
+            # Get last 10 operations before flush
+            last_ops = writer.get_last_operations(10)
+
+            # Flush
+            writer.flush()
+            rebuilt_anim_data = writer.get_data()
+
+            print(f"Animation {anim_idx}:")
+            print(f"  Size: {len(orig_anim_data)} bytes original, {len(rebuilt_anim_data)} bytes rebuilt")
+
+            # Show last operations
+            if last_ops:
+                print(f"  Last {len(last_ops)} write operations before flush:")
+                for op in last_ops:
+                    bits_str = f"{op['value']:0{op['count']}b}" if op['count'] <= 8 else f"0x{op['value']:x}"
+                    print(f"    Op{op['op']:3d}: write {bits_str} ({op['count']} bits) "
+                          f"[buffer:0x{op['buffer_before']:04x}({op['bits_before']} bits) -> 0x{op['buffer_after']:04x}({op['bits_after']} bits)]")
+
+            print(f"  Pre-flush state: buffer=0x{pre_flush_state['buffer']:04x} ({pre_flush_state['bits']} bits), "
+                  f"data_len={pre_flush_state['data_len']}")
+
+            # Last bytes comparison
+            last_n = 16
+            orig_last = orig_anim_data[-last_n:] if len(orig_anim_data) >= last_n else orig_anim_data
+            rebuilt_last = rebuilt_anim_data[-last_n:] if len(rebuilt_anim_data) >= last_n else rebuilt_anim_data
+
+            print(f"  Original last {len(orig_last)} bytes: {orig_last.hex()}")
+            print(f"  Rebuilt last  {len(rebuilt_last)} bytes: {rebuilt_last.hex()}")
+
+            if len(orig_anim_data) != len(rebuilt_anim_data):
+                print(f"  ❌ Size mismatch (diff: {len(rebuilt_anim_data) - len(orig_anim_data)} bytes)")
+                all_matched = False
+            elif orig_anim_data != rebuilt_anim_data:
+                # Find first diff
+                for i in range(min(len(orig_anim_data), len(rebuilt_anim_data))):
+                    if orig_anim_data[i] != rebuilt_anim_data[i]:
+                        # Show context around diff
+                        start = max(0, i - 8)
+                        end = min(len(orig_anim_data), i + 8)
+                        print(f"  ❌ First diff at offset {i}:")
+                        print(f"     Original: {orig_anim_data[start:end].hex()}")
+                        print(f"     Rebuilt:  {rebuilt_anim_data[start:end].hex()}")
+                        break
+                all_matched = False
             else:
-                print(f"\n⚠️ Difference is inside animation data (after header)")
+                print(f"  ✅ Perfect match")
 
-                # Find which animation contains this difference
-                current_offset = header_size
-                for anim_idx in range(nb_animations):
-                    if anim_idx < len(self.animation_data.animations):
-                        anim = self.animation_data.animations[anim_idx]
-                        # Get the rebuilt animation data
-                        anim_data = anim.to_binary()
-                        anim_start = current_offset
-                        anim_end = anim_start + len(anim_data)
+            print()
 
-                        if anim_start <= first_diff < anim_end:
-                            offset_in_anim = first_diff - anim_start
-                            print(f"  Difference is in Animation {anim_idx} at offset {offset_in_anim} within that animation")
+        # Check end marker
+        orig_end = original_section[-4:]
+        rebuilt_end = rebuilt_section[-4:] if len(rebuilt_section) >= 4 else b''
+        print(f"End marker: original={orig_end.hex()}, rebuilt={rebuilt_end.hex()}")
 
-                            # Compare this animation's data specifically
-                            orig_anim_data = original_section[anim_start:anim_end]
-                            if len(orig_anim_data) == len(anim_data):
-                                print(f"  Animation {anim_idx} size matches ({len(anim_data)} bytes)")
-                                # Find diff within this animation
-                                for j in range(len(anim_data)):
-                                    if orig_anim_data[j] != anim_data[j]:
-                                        print(f"    Byte {j} in anim: orig=0x{orig_anim_data[j]:02x}, rebuilt=0x{anim_data[j]:02x}")
-                                        break
-                            else:
-                                print(f"  Animation {anim_idx} size mismatch: orig={len(orig_anim_data)}, rebuilt={len(anim_data)}")
-                            break
-
-                        current_offset += len(anim_data)
-        else:
-            print("✅ Animation section matches perfectly!")
-
-        return differences
-
-    def test_large_binary_roundtrip(self, start_offset=0, num_bytes=500):
-        """Test a raw binary round-trip on a chunk of the animation section"""
-
-        print(f"\n=== Large Binary Round-Trip Test ({num_bytes} bytes from offset {start_offset}) ===")
-
-        SECTION_NUMBER = 3
-        original_section = self.section_raw_data[SECTION_NUMBER]
-
-        # Take a chunk of the original section
-        end_offset = min(start_offset + num_bytes, len(original_section))
-        original_chunk = original_section[start_offset:end_offset]
-
-        print(f"Original chunk size: {len(original_chunk)} bytes")
-        print(f"Original chunk (first 64 bytes): {original_chunk[:64].hex()}")
-
-        # Now we need to extract JUST the animation frames that correspond to this chunk
-        # This is more complex - we need to find which frames cover this byte range
-
-        # Alternative: Test round-trip on each animation individually
-        print("\n--- Testing each animation individually ---")
-
-        nb_animations = len(self.animation_data.animations)
-        print(f"Total animations: {nb_animations}")
-
-        for anim_idx, anim in enumerate(self.animation_data.animations):
-            # Get original animation data from the section
-            anim_start_offset = self.animation_data.offsets[anim_idx]
-
-            if anim_idx + 1 < nb_animations:
-                anim_end_offset = self.animation_data.offsets[anim_idx + 1]
-            else:
-                anim_end_offset = len(original_section)
-
-            original_anim_data = original_section[anim_start_offset:anim_end_offset]
-            rebuilt_anim_data = anim.to_binary()
-
-            print(f"\nAnimation {anim_idx}:")
-            print(f"  Original size: {len(original_anim_data)} bytes")
-            print(f"  Rebuilt size:  {len(rebuilt_anim_data)} bytes")
-            print(f"  Original offset in file: 0x{anim_start_offset:04x}")
-
-            if len(original_anim_data) == len(rebuilt_anim_data):
-                # Compare first 100 bytes of this animation
-                compare_len = min(100, len(original_anim_data))
-                match_count = 0
-                first_diff = None
-
-                for i in range(compare_len):
-                    if original_anim_data[i] == rebuilt_anim_data[i]:
-                        match_count += 1
-                    else:
-                        if first_diff is None:
-                            first_diff = i
-                            print(f"  First difference at byte {i} of animation data")
-                            print(f"    Original: 0x{original_anim_data[i]:02x}")
-                            print(f"    Rebuilt:  0x{rebuilt_anim_data[i]:02x}")
-                            # Show surrounding bytes
-                            start = max(0, i - 8)
-                            end = min(len(original_anim_data), i + 8)
-                            print(f"    Context (offset {start}-{end}):")
-                            print(f"      Original: {original_anim_data[start:end].hex()}")
-                            print(f"      Rebuilt:  {rebuilt_anim_data[start:end].hex()}")
-                            break
-
-                if first_diff is None:
-                    print(f"  ✅ First {compare_len} bytes match!")
-                    # Check if the frame count byte (first byte) matches
-                    frame_count_orig = original_anim_data[0] if len(original_anim_data) > 0 else 0
-                    frame_count_rebuilt = rebuilt_anim_data[0] if len(rebuilt_anim_data) > 0 else 0
-                    print(f"  Frame count: original={frame_count_orig}, rebuilt={frame_count_rebuilt}")
-
-                    # Check a few frame headers if possible
-                    if len(original_anim_data) > 1:
-                        print(f"  Second byte: orig=0x{original_anim_data[1]:02x}, rebuilt=0x{rebuilt_anim_data[1]:02x}")
-            else:
-                print(f"  ❌ Size mismatch: {len(original_anim_data)} vs {len(rebuilt_anim_data)}")
-
-                # Show first few bytes of each
-                print(f"  Original first 16 bytes: {original_anim_data[:16].hex()}")
-
+        return all_matched
 
     def __analyze_section_4(self, game_data: GameData):
         SECTION_NUMBER = 4
