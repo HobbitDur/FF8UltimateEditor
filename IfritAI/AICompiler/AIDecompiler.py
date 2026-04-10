@@ -3,6 +3,7 @@ from typing import List
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.gamedata import GameData
+from FF8GameData.monsterdata import AIData
 from IfritAI.AICompiler.AIDecompilerTypeResolver import AIDecompilerTypeResolver
 
 
@@ -51,7 +52,7 @@ class AIDecompiler:
                 param_list = code[start_param:end_param]
                 command = CommandAnalyser(code[index_read], param_list, game_data=self.game_data,
                                           battle_text=self._battle_text,
-                                          info_stat_data=self._info_stat, color=self.game_data.AIData.COLOR, current_if_type=current_if_type, line_index=len(list_result))
+                                          info_stat_data=self._info_stat, color=AIData.COLOR, current_if_type=current_if_type, line_index=len(list_result))
                 current_if_type = command.get_current_if_type()
                 list_result.append(command)
                 index_read += 1 + op_code_ref['size']

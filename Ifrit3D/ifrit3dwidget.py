@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QListWidgetItem, QGroupBox,
                              QInputDialog, QMessageBox, QFrame)
 
-from FF8GameData.gamedata import AnimationFrame
+from FF8GameData.monsterdata import AnimationFrame
 from Ifrit3D.boneeditorwidget import BoneEditor
 from Ifrit3D.ff8openwidget import FF8OpenGLWidget
 

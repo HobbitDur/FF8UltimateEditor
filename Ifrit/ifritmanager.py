@@ -9,7 +9,8 @@ from PIL import Image
 from PIL.ImageQt import QPixmap
 from PyQt6.QtGui import QColor
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
-from FF8GameData.gamedata import GameData, Matrix4x4, Animation
+from FF8GameData.gamedata import GameData
+from FF8GameData.monsterdata import Matrix4x4, Animation
 from IfritAI.AICompiler.AICompiler import AICompiler
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritXlsx import xlsxmanager

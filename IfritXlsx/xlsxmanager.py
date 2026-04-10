@@ -9,7 +9,8 @@ from openpyxl.reader.excel import load_workbook
 
 from FF8GameData.GenericSection.ff8text import FF8Text
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
-from FF8GameData.gamedata import GameData, AIData
+from FF8GameData.gamedata import GameData
+from FF8GameData.monsterdata import AIData
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 
 COL_MONSTER_INFO = 0

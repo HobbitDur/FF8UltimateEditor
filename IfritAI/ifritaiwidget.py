@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.gamedata import GameData
+from FF8GameData.monsterdata import AIData
 from IfritAI.AICompiler.AICompiler import AICompiler
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritAI.codeanalyser import CodeAnalyser
@@ -80,7 +81,7 @@ class IfritAIWidget(QWidget):
         self.info_button.clicked.connect(self.__show_info)
 
         self.script_section = QComboBox()
-        self.script_section.addItems(self.ifrit_manager.game_data.AIData.AI_SECTION_LIST)
+        self.script_section.addItems(AIData.AI_SECTION_LIST)
         self.script_section.setCurrentIndex(1)
         self.script_section.activated.connect(self.__section_change)
         self.script_section.setToolTip("Enemy AI as 5 section, you can choose which one you want to edit there")
@@ -457,11 +458,11 @@ class IfritAIWidget(QWidget):
 
     def __setup_section_data(self):
         line_index = 0
-        index_section = self.ifrit_manager.game_data.AIData.AI_SECTION_LIST.index(self.script_section.currentText())
+        index_section = AIData.AI_SECTION_LIST.index(self.script_section.currentText())
         if self.ifrit_manager.enemy.battle_script_data['ai_data']:
             for command in self.ifrit_manager.enemy.battle_script_data['ai_data'][index_section]["command"]:
                 command.line_index = line_index
-                command.set_color(self.ifrit_manager.game_data.AIData.COLOR)
+                command.set_color(AIData.COLOR)
                 self.__append_line(command, create_data=False)
                 line_index += 1
         self._set_text_expert()
