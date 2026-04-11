@@ -482,6 +482,7 @@ class Ifrit3DWidget(QWidget):
         textures = self.ifrit_manager.texture_data
         if not textures:
             return
+
         pixmaps = [td.texture_image for td in textures if td.texture_image is not None]
         if not pixmaps:
             return

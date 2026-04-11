@@ -56,39 +56,42 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.show_skeleton = False
 
     def set_texture_pixmaps(self, qpixmaps: list, tex_ids_used: list):
-        """
-        Call this from outside with a list of QPixmaps (one per TIM) and the
-        list of raw tex_id values that appear in the geometry so we can build
-        the mapping.  Actual GL upload happens lazily on next paintGL.
-        """
+        """Call this from outside with a list of QPixmaps..."""
         self._free_gl_textures()
         self._pending_qpixmaps = list(qpixmaps)
         self._tex_id_to_index = {}
-        # Build raw_tex_id → pixmap index mapping.
-        # FF8 encodes texture page in bits 6-7 of tex_id_1.
-        # We collect all distinct raw ids and sort them so index 0 = first page.
+
         unique_ids = sorted(set(tex_ids_used))
         n = len(qpixmaps)
+        print(f"=== Texture Mapping ===")
+        print(f"Number of PNGs: {n}")
+        print(f"Unique raw_ids used: {unique_ids}")
+
         for rank, raw_id in enumerate(unique_ids):
-            # Clamp to available textures
-            self._tex_id_to_index[raw_id] = min(rank, n - 1)
+            idx = min(rank, n - 1)
+            self._tex_id_to_index[raw_id] = idx
+            print(f"  raw_id {raw_id} (0x{raw_id:04X}) -> PNG index {idx}")
+
+        print(f"======================")
         self._textures_dirty = True
         self.update()
 
     def _upload_pending_textures(self):
-        """Upload QPixmaps to GL textures.  Must be called inside GL context."""
+        """Upload QPixmaps to GL textures."""
         self._free_gl_textures()
         for pix in self._pending_qpixmaps:
             img = pix.toImage().convertToFormat(QImage.Format.Format_RGBA8888)
             w, h = img.width(), img.height()
-            # bits() returns a memoryview / sip wrapper; convert via bytes
             raw = bytes(img.bits().asarray(w * h * 4))
             tex = glGenTextures(1)
             glBindTexture(GL_TEXTURE_2D, tex)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            # Change to CLAMP_TO_EDGE instead of REPEAT
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
                          GL_RGBA, GL_UNSIGNED_BYTE, raw)
             self._gl_textures.append(tex)
@@ -224,23 +227,27 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
     def _draw_textured_triangles(self):
         glEnable(GL_TEXTURE_2D)
-        glColor3f(1.0, 1.0, 1.0)   # white = no tint on texture
+        glColor3f(1.0, 1.0, 1.0)
         current_raw_id = None
-        for (indices, uvs, raw_id) in self.triangles_uv:
-            if raw_id != current_raw_id:
-                self._bind_texture_for_raw_id(raw_id)
-                current_raw_id = raw_id
+        current_texture_idx = -1
 
-            # Debug: print UV ranges
-            if not hasattr(self, '_uv_logged'):
-                u_values = [uv[0] for uv in uvs]
-                v_values = [uv[1] for uv in uvs]
-                print(f"UV range - U: min={min(u_values):.3f}, max={max(u_values):.3f}")
-                print(f"UV range - V: min={min(v_values):.3f}, max={max(v_values):.3f}")
-                self._uv_logged = True
+        for (indices, uvs, raw_id) in self.triangles_uv:
+            texture_idx = self._tex_id_to_index.get(raw_id, 0)
+
+            if texture_idx != current_texture_idx:
+                if texture_idx < len(self._gl_textures):
+                    glBindTexture(GL_TEXTURE_2D, self._gl_textures[texture_idx])
+                    current_texture_idx = texture_idx
+
             glBegin(GL_TRIANGLES)
             for i, idx in enumerate(indices):
                 u, v = uvs[i]
+
+                # Normalize UVs to 0-1 range by taking fractional part
+                # This is how PS1 handles UV wrapping
+                u = u - int(u)
+                v = v - int(v)
+
                 glTexCoord2f(u, v)
                 vx = self.vertices_array[idx]
                 glVertex3f(vx[0], vx[1], vx[2])
