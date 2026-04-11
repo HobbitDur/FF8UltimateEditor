@@ -773,7 +773,6 @@ class PositionType:
         self.position_type_bits: int = position_type_bits
         self._vector_axis: int = vector_axis
         self.scale:float = self.SCALE
-        print(f"scale: {self.scale}")
 
     def get_pos_raw(self):
         return self._vector_axis
