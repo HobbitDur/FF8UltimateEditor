@@ -37,11 +37,11 @@ class BoneSection:
         self.unknown02 = int.from_bytes(data[self.SECTION_BONE_HEADER_UNKNOWN02['offset']:self.SECTION_BONE_HEADER_UNKNOWN02['offset'] + self.SECTION_BONE_HEADER_UNKNOWN02['size']],
                                         byteorder=self.SECTION_BONE_HEADER_UNKNOWN02['byteorder'])
         self._scale_x = int.from_bytes(data[self.SECTION_BONE_HEADER_SCALE_X['offset']:self.SECTION_BONE_HEADER_SCALE_X['offset'] + self.SECTION_BONE_HEADER_SCALE_X['size']],
-                                        byteorder=self.SECTION_BONE_HEADER_SCALE_X['byteorder'])
+                                        byteorder=self.SECTION_BONE_HEADER_SCALE_X['byteorder'], signed=True)
         self._scale_y = int.from_bytes(data[self.SECTION_BONE_HEADER_SCALE_Y['offset']:self.SECTION_BONE_HEADER_SCALE_Y['offset'] + self.SECTION_BONE_HEADER_SCALE_Y['size']],
-                                        byteorder=self.SECTION_BONE_HEADER_SCALE_Y['byteorder'])
+                                        byteorder=self.SECTION_BONE_HEADER_SCALE_Y['byteorder'], signed=True)
         self._scale_z = int.from_bytes(data[self.SECTION_BONE_HEADER_SCALE_Z['offset']:self.SECTION_BONE_HEADER_SCALE_Z['offset'] + self.SECTION_BONE_HEADER_SCALE_Z['size']],
-                                        byteorder=self.SECTION_BONE_HEADER_SCALE_Z['byteorder'])
+                                        byteorder=self.SECTION_BONE_HEADER_SCALE_Z['byteorder'], signed=True)
         self.unknown2 = int.from_bytes(
             data[self.SECTION_BONE_HEADER_UNKNOWN2['offset']:self.SECTION_BONE_HEADER_UNKNOWN2['offset'] + self.SECTION_BONE_HEADER_UNKNOWN2['size']],
             byteorder=self.SECTION_BONE_HEADER_UNKNOWN2['byteorder'])
@@ -64,9 +64,9 @@ class BoneSection:
         data.extend(self.unknown00.to_bytes(2, byteorder='little'))
         data.extend(self.unknown01.to_bytes(2, byteorder='little'))
         data.extend(self.unknown02.to_bytes(2, byteorder='little'))
-        data.extend(self._scale_x.to_bytes(2, byteorder='little'))
-        data.extend(self._scale_y.to_bytes(2, byteorder='little'))
-        data.extend(self._scale_z.to_bytes(2, byteorder='little'))
+        data.extend(self._scale_x.to_bytes(2, byteorder='little', signed=True))
+        data.extend(self._scale_y.to_bytes(2, byteorder='little', signed=True))
+        data.extend(self._scale_z.to_bytes(2, byteorder='little', signed=True))
         data.extend(self.unknown2.to_bytes(2, byteorder='little'))
 
         # Write all bones
