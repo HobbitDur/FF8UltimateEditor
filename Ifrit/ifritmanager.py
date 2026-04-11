@@ -114,7 +114,11 @@ class IfritManager:
         self.enemy.analyse_loaded_data(self.game_data, self.decompiler)
         self.compiler.set_battle_text_info_stat(self.enemy.battle_script_data['battle_text'],self.enemy.info_stat_data )
         #self.decompiler.set_battle_text_info_stat(self.enemy.battle_script_data['battle_text'],self.enemy.info_stat_data )
-
+        self.texture_data = []          # reset from previous file
+        try:
+            self.analyze(file_path)     # populates self.texture_data via VincentTim
+        except Exception as e:
+            print(f"[texture] Could not extract textures: {e}")
 
     def save_file(self, file_path):
         self.enemy.write_data_to_file(self.game_data, file_path)

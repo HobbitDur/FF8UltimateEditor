@@ -2,6 +2,7 @@ from typing import List
 
 import numpy as np
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QImage
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -23,6 +24,14 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.quads =[]
         self.skeleton_lines = []
 
+        # --- NEW: UV / texture state ---
+        self.triangles_uv = []   # list of (indices_tuple, uvs_tuple, raw_tex_id)
+        self.quads_uv = []       # list of (indices_tuple, uvs_tuple, raw_tex_id)
+        self._pending_qpixmaps = []   # QPixmaps waiting to be uploaded
+        self._gl_textures = []        # list of GL texture IDs (after upload)
+        self._tex_id_to_index = {}    # raw tex_id → _gl_textures index
+        self.show_texture = False
+        self._textures_dirty = False
         super().__init__(parent)
 
         # Camera controls
@@ -41,10 +50,67 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # Display options
         self.show_triangles = True
         self.show_quads = True
-        self.show_wireframe = True
+        self.show_wireframe = False
         self.show_axis = False
-        self.show_mesh = True
+        self.show_texture = True
         self.show_skeleton = False
+
+    def set_texture_pixmaps(self, qpixmaps: list, tex_ids_used: list):
+        """
+        Call this from outside with a list of QPixmaps (one per TIM) and the
+        list of raw tex_id values that appear in the geometry so we can build
+        the mapping.  Actual GL upload happens lazily on next paintGL.
+        """
+        self._free_gl_textures()
+        self._pending_qpixmaps = list(qpixmaps)
+        self._tex_id_to_index = {}
+        # Build raw_tex_id → pixmap index mapping.
+        # FF8 encodes texture page in bits 6-7 of tex_id_1.
+        # We collect all distinct raw ids and sort them so index 0 = first page.
+        unique_ids = sorted(set(tex_ids_used))
+        n = len(qpixmaps)
+        for rank, raw_id in enumerate(unique_ids):
+            # Clamp to available textures
+            self._tex_id_to_index[raw_id] = min(rank, n - 1)
+        self._textures_dirty = True
+        self.update()
+
+    def _upload_pending_textures(self):
+        """Upload QPixmaps to GL textures.  Must be called inside GL context."""
+        self._free_gl_textures()
+        for pix in self._pending_qpixmaps:
+            img = pix.toImage().convertToFormat(QImage.Format.Format_RGBA8888)
+            w, h = img.width(), img.height()
+            # bits() returns a memoryview / sip wrapper; convert via bytes
+            raw = bytes(img.bits().asarray(w * h * 4))
+            tex = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D, tex)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
+                         GL_RGBA, GL_UNSIGNED_BYTE, raw)
+            self._gl_textures.append(tex)
+        self._pending_qpixmaps = []
+        self._textures_dirty = False
+
+    def _free_gl_textures(self):
+        if self._gl_textures:
+            glDeleteTextures(len(self._gl_textures), self._gl_textures)
+            self._gl_textures = []
+
+    def set_triangles_with_uv(self, data: list):
+        """data: list of (indices_tuple, uvs_tuple, raw_tex_id)"""
+        self.triangles_uv = data
+
+    def set_quads_with_uv(self, data: list):
+        """data: list of (indices_tuple, uvs_tuple, raw_tex_id)"""
+        self.quads_uv = data
+
+    def set_show_texture(self, show: bool):
+        self.show_texture = show
+        self.update()
 
     def set_model_translation(self, x: float, y: float, z: float):
         """Set the model translation (frame position)"""
@@ -57,9 +123,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.update()
 
     def set_skeleton_lines(self, lines: list):
-        """Legacy method for backward compatibility"""
         self.skeleton_lines = lines
         self.update()
+
     def set_selected_bone(self, bone_index: int):
         self.selected_bone = bone_index
         self.update()
@@ -73,15 +139,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.MODEL_CENTER = (MIN_BOUNDS + MAX_BOUNDS) / 2
         self.MODEL_SIZE = np.linalg.norm(MAX_BOUNDS - MIN_BOUNDS)
 
-    def set_skeleton_lines(self, lines: list):
-        self.skeleton_lines = lines
-
     def set_show_skeleton(self, show: bool):
         self.show_skeleton = show
-        self.update()
-
-    def set_show_mesh(self, show):
-        self.show_mesh = show
         self.update()
 
     def set_triangles(self, triangles:List):
@@ -107,6 +166,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.update()
 
     def paintGL(self):
+        if self._textures_dirty and self._pending_qpixmaps:
+            self._upload_pending_textures()
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
 
@@ -125,7 +187,11 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         if self.show_axis:
             self.draw_axis()
-        if self.show_mesh:
+        if self.show_texture and self._gl_textures and self.triangles_uv:
+            self._draw_textured_triangles()
+            self._draw_textured_quads()
+        else:
+            # Flat-color fallback (original code)
             glColor3f(*self.face_color)
             for tri in self.triangles:
                 glBegin(GL_TRIANGLES)
@@ -133,7 +199,6 @@ class FF8OpenGLWidget(QOpenGLWidget):
                     v = self.vertices_array[idx]
                     glVertex3f(v[0], v[1], v[2])
                 glEnd()
-
             self.draw_quads()
 
         if self.show_wireframe:
@@ -143,6 +208,82 @@ class FF8OpenGLWidget(QOpenGLWidget):
             self.draw_skeleton()
 
         self.update()
+
+    def _bind_texture_for_raw_id(self, raw_id: int) -> bool:
+        """Bind the GL texture that corresponds to a raw tex_id. Returns True on success."""
+        idx = self._tex_id_to_index.get(raw_id, 0)
+        if idx < len(self._gl_textures):
+            glBindTexture(GL_TEXTURE_2D, self._gl_textures[idx])
+            return True
+        else:
+            # Debug: print missing texture IDs once
+            if not hasattr(self, '_missing_tex_logged'):
+                print(f"Warning: No texture for raw_id {raw_id}, idx={idx}, available textures={len(self._gl_textures)}")
+                self._missing_tex_logged = True
+            return False
+
+    def _draw_textured_triangles(self):
+        glEnable(GL_TEXTURE_2D)
+        glColor3f(1.0, 1.0, 1.0)   # white = no tint on texture
+        current_raw_id = None
+        for (indices, uvs, raw_id) in self.triangles_uv:
+            if raw_id != current_raw_id:
+                self._bind_texture_for_raw_id(raw_id)
+                current_raw_id = raw_id
+
+            # Debug: print UV ranges
+            if not hasattr(self, '_uv_logged'):
+                u_values = [uv[0] for uv in uvs]
+                v_values = [uv[1] for uv in uvs]
+                print(f"UV range - U: min={min(u_values):.3f}, max={max(u_values):.3f}")
+                print(f"UV range - V: min={min(v_values):.3f}, max={max(v_values):.3f}")
+                self._uv_logged = True
+            glBegin(GL_TRIANGLES)
+            for i, idx in enumerate(indices):
+                u, v = uvs[i]
+                glTexCoord2f(u, v)
+                vx = self.vertices_array[idx]
+                glVertex3f(vx[0], vx[1], vx[2])
+            glEnd()
+        glDisable(GL_TEXTURE_2D)
+
+    def _draw_textured_quads(self):
+        glEnable(GL_TEXTURE_2D)
+        glColor3f(1.0, 1.0, 1.0)
+        current_raw_id = None
+
+        for (indices, uvs, raw_id) in self.quads_uv:
+            if raw_id != current_raw_id:
+                self._bind_texture_for_raw_id(raw_id)
+                current_raw_id = raw_id
+
+            # Gather the 4 corners
+            verts = [self.vertices_array[idx] for idx in indices]
+
+            # Center position and UV — average of all 4 corners
+            cx = sum(v[0] for v in verts) / 4.0
+            cy = sum(v[1] for v in verts) / 4.0
+            cz = sum(v[2] for v in verts) / 4.0
+            cu = sum(uv[0] for uv in uvs) / 4.0
+            cv = sum(uv[1] for uv in uvs) / 4.0
+
+            # Fan: 4 triangles, each sharing the center vertex
+            for i in range(4):
+                j = (i + 1) % 4
+                glBegin(GL_TRIANGLES)
+
+                glTexCoord2f(cu, cv)
+                glVertex3f(cx, cy, cz)
+
+                glTexCoord2f(uvs[i][0], uvs[i][1])
+                glVertex3f(verts[i][0], verts[i][1], verts[i][2])
+
+                glTexCoord2f(uvs[j][0], uvs[j][1])
+                glVertex3f(verts[j][0], verts[j][1], verts[j][2])
+
+                glEnd()
+
+        glDisable(GL_TEXTURE_2D)
 
     def draw_skeleton(self):
         """Draw bones with selected bone highlighted."""

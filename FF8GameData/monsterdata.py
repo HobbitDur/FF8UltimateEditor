@@ -53,7 +53,7 @@ class BoneSection:
             current_index = next_index
             next_index = next_index + 48
     def get_scale_list(self):
-        return -self._scale_y/204.8, -self._scale_x/204.8, -self._scale_z/204.8
+        return -self._scale_x/2048, -self._scale_y/2048, -self._scale_z/2048
 
 
     def to_binary(self) -> bytearray:
@@ -181,7 +181,7 @@ class GeometryTriangle:
         self.tex_id_1 = int.from_bytes(data[10:12], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_ID_1['byteorder'])
         self.vtc.analyze(data[12:14])
         self.tex_id_2 = int.from_bytes(data[14:16], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_ID_2['byteorder'])
-
+        print(f"Triangle - tex_id_1: {self.tex_id_1} (0x{self.tex_id_1:04X}), tex_id_2: {self.tex_id_2} (0x{self.tex_id_2:04X})")
     def get_byte(self) -> bytearray:
         data = bytearray()
         data.extend(self.vertex_indexes[0].to_bytes(2, 'little'))
@@ -226,6 +226,7 @@ class GeometryQuad:
         self.tex_id_2 = int.from_bytes(data[14:16], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_ID_2['byteorder'])
         self.vtc.analyze(data[16:18])
         self.vtd.analyze(data[18:20])
+        print(f"Quad - tex_id_1: {self.tex_id_1} (0x{self.tex_id_1:04X}), tex_id_2: {self.tex_id_2} (0x{self.tex_id_2:04X})")
 
     def get_byte(self) -> bytearray:
         data = bytearray()
@@ -493,6 +494,53 @@ class GeometrySection:
             offset += obj_vert_count
         return all_quads
 
+    def get_triangles_with_uv(self):
+        """Returns list of (vertex_indices_tuple, uvs_tuple, tex_id) for every triangle."""
+        result = []
+        offset = 0
+        for obj in self.object_data:
+            obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
+            for tri in obj.triangles:
+                indices = (
+                    tri.vertex_indexes[0] + offset,
+                    tri.vertex_indexes[1] + offset,
+                    tri.vertex_indexes[2] + offset,
+                )
+                uvs = (
+                    (tri.vta.u, tri.vta.v),
+                    (tri.vtb.u, tri.vtb.v),
+                    (tri.vtc.u, tri.vtc.v),
+                )
+                # tex_id_1 upper 6 bits encode CLUT/page info; low bits = texture index
+                tex_id = tri.tex_id_1
+                result.append((indices, uvs, tex_id))
+            offset += obj_vert_count
+        return result
+
+    def get_quads_with_uv(self):
+        """Returns list of (vertex_indices_tuple, uvs_tuple, tex_id) for every quad."""
+        result = []
+        offset = 0
+        for obj in self.object_data:
+            obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
+            for quad in obj.quads:
+                indices = (
+                    quad.vertex_indexes[0] + offset,
+                    quad.vertex_indexes[1] + offset,
+                    quad.vertex_indexes[2] + offset,
+                    quad.vertex_indexes[3] + offset,
+                )
+                uvs = (
+                    (quad.vta.u, quad.vta.v),
+                    (quad.vtb.u, quad.vtb.v),
+                    (quad.vtc.u, quad.vtc.v),
+                    (quad.vtd.u, quad.vtd.v),
+                )
+                tex_id = quad.tex_id_1
+                result.append((indices, uvs, tex_id))
+            offset += obj_vert_count
+        return result
+
 # Section 3 data:
 class BitWriter:
     """Helper class to write bit-packed data - LSB first order"""
@@ -580,9 +628,11 @@ class  BitReader:
         # Shift to align the bits
         temp = (temp >> self._bit_pos) & ((1 << count) - 1)
 
-        # Sign-extend if count < 16 and the highest bit is set
-        if count < 16 and (temp & (1 << (count - 1))):
-            temp -= (1 << count)
+        # Sign-extend for signed values (always treat as signed 16-bit)
+        if count <= 16:
+            # Check if the highest bit is set
+            if temp & (1 << (count - 1)):
+                temp -= (1 << count)
 
         # Advance stream
         self._byte_pos = pos + (count + self._bit_pos) // 8
@@ -773,6 +823,7 @@ class PositionType:
         self.position_type_bits: int = position_type_bits
         self._vector_axis: int = vector_axis
         self.scale:float = self.SCALE
+        #self.scale:float = bone_scale
 
     def get_pos_raw(self):
         return self._vector_axis

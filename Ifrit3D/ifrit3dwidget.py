@@ -52,14 +52,14 @@ class Ifrit3DWidget(QWidget):
             toolbar_layout.setContentsMargins(8, 4, 8, 4)
 
             # Left side controls
-            self.cb_mesh = QCheckBox("3D Mesh")
-            self.cb_mesh.setChecked(True)
-            self.cb_mesh.setStyleSheet("color:white;")
-            self.cb_mesh.toggled.connect(self._on_mesh_toggle)
-            toolbar_layout.addWidget(self.cb_mesh)
+            self.cb_texture = QCheckBox("Texture")
+            self.cb_texture.setChecked(True)
+            self.cb_texture.setStyleSheet("color:white;")
+            self.cb_texture.toggled.connect(self._on_texture_toggle)
+            toolbar_layout.addWidget(self.cb_texture)
 
             self.cb_wire = QCheckBox("Wireframe")
-            self.cb_wire.setChecked(True)
+            self.cb_wire.setChecked(False)
             self.cb_wire.setStyleSheet("color:white;")
             self.cb_wire.toggled.connect(self._on_wire_toggle)
             toolbar_layout.addWidget(self.cb_wire)
@@ -443,6 +443,15 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget.reset_view()
         self.gl_widget.set_triangles(self.ifrit_manager.enemy.geometry_data.get_triangles())
         self.gl_widget.set_quads(self.ifrit_manager.enemy.geometry_data.get_quads())
+
+        tri_uv = self.ifrit_manager.enemy.geometry_data.get_triangles_with_uv()
+        quad_uv = self.ifrit_manager.enemy.geometry_data.get_quads_with_uv()
+        self.gl_widget.set_triangles_with_uv(tri_uv)
+        self.gl_widget.set_quads_with_uv(quad_uv)
+
+        # Push textures if they have already been extracted
+        self._push_textures_to_gl()
+
         self._update_model_translation()
         self.update_skeleton()
 
@@ -468,6 +477,20 @@ class Ifrit3DWidget(QWidget):
         self._set_reference_position()
         self.gl_widget.reset_view()
 
+    def _push_textures_to_gl(self):
+        """Send extracted texture PNGs to the GL widget."""
+        textures = self.ifrit_manager.texture_data
+        if not textures:
+            return
+        pixmaps = [td.texture_image for td in textures if td.texture_image is not None]
+        if not pixmaps:
+            return
+        # Collect all raw tex_ids from the geometry so the widget can build its mapping
+        all_tex_ids = (
+                [raw_id for (_, _, raw_id) in self.gl_widget.triangles_uv] +
+                [raw_id for (_, _, raw_id) in self.gl_widget.quads_uv]
+        )
+        self.gl_widget.set_texture_pixmaps(pixmaps, all_tex_ids)
     def get_max_frames(self):
         if not self.ifrit_manager:
             return 0
@@ -620,9 +643,9 @@ class Ifrit3DWidget(QWidget):
             self.play_btn.setText("Play")
             self.animating = False
 
-    def _on_mesh_toggle(self, checked):
+    def _on_texture_toggle(self, checked):
         """Toggle 3D mesh visibility"""
-        self.gl_widget.set_show_mesh(checked)
+        self.gl_widget.set_show_texture(checked)
 
     def _on_wire_toggle(self, checked):
         self.gl_widget.set_show_wireframe(checked)
