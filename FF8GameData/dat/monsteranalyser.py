@@ -127,8 +127,8 @@ class MonsterAnalyser:
         # Writing animation
         section_position = 3
         animation_data = self.animation_data.to_binary()
-        raw_data_to_write.extend(animation_data)
-        #raw_data_to_write.extend(self.section_raw_data[section_position])
+        #raw_data_to_write.extend(animation_data)
+        raw_data_to_write.extend(self.section_raw_data[section_position])
 
         # Writing Texture animation data (no change atm)
         section_position = 4
@@ -401,7 +401,7 @@ class MonsterAnalyser:
         SECTION_NUMBER = 1
         if self.section_raw_data[SECTION_NUMBER]:
             self.bone_data.analyze(self.section_raw_data[SECTION_NUMBER])
-            #print(self.bone_data)
+            print(self.bone_data)
 
 
 
@@ -416,7 +416,7 @@ class MonsterAnalyser:
         SECTION_NUMBER = 3
         if self.section_raw_data[SECTION_NUMBER]:
             self.animation_data.analyze(self.section_raw_data[SECTION_NUMBER], self.bone_data)
-            #print(self.animation_data)
+            print(self.animation_data)
 
         #self.test_full_animation_section_roundtrip(game_data)
 

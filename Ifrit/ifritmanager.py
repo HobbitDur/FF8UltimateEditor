@@ -511,8 +511,8 @@ class IfritManager:
 
         for bone_id in bones_to_update:
             parent_id = bones[bone_id].parent_id
-            if parent_id:
-                parent_length = bones[parent_id].size
+            if parent_id != 0xFFFF:
+                parent_length = bones[parent_id].get_size()
             else:
                 parent_length=0
             frame.set_bone_matrix(parent_id, parent_length, bone_id)

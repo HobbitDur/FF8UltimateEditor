@@ -4,8 +4,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QListWidgetItem, QGroupBox,
                              QInputDialog, QMessageBox, QFrame)
 
-from FF8GameData.monsterdata import AnimationFrame
-from Ifrit3D.boneeditorwidget import BoneEditor
+from FF8GameData.monsterdata import AnimationFrame, AnimationSection, Animation
+from Ifrit3D.boneeditorwidget import AnimEditor
 from Ifrit3D.ff8openwidget import FF8OpenGLWidget
 
 
@@ -128,13 +128,14 @@ class Ifrit3DWidget(QWidget):
             self.playlist_container.setStyleSheet("background:#2a2a2f; border-top: 1px solid #3a3a3f;")
 
             # Create bone editor (independent widget)
-            self.bone_editor = BoneEditor()
+            self.bone_editor = AnimEditor()
 
             # Connect bone editor signals to handlers
             self.bone_editor.bone_selected.connect(self._on_bone_selected)
             self.bone_editor.bone_length_changed.connect(self._on_bone_length_changed)
             self.bone_editor.bone_parent_changed.connect(self._on_bone_parent_changed)
             self.bone_editor.animation_rotation_changed.connect(self._on_animation_rotation_changed)
+            self.bone_editor.animation_position_changed.connect(self.on_frame_position_changed)
 
             # Connect signals to update bone editor
             self.frame_changed.connect(self._update_bone_editor_frame)
@@ -408,7 +409,7 @@ class Ifrit3DWidget(QWidget):
                     self.interp_step = 0.0
                     self.current_frame = (self.current_frame + 1) % max_frames
                     self.next_frame_index = (self.current_frame + 1) % max_frames
-
+                    self._update_frame_position_selection()
                     # Check if animation finished (when we wrap around to frame 0)
                     if self.current_frame == 0 and self.playlist_mode:
                         # Current animation finished, move to next in playlist
@@ -426,8 +427,7 @@ class Ifrit3DWidget(QWidget):
             self.update_animated_mesh()
             self.update_skeleton()
 
-    # Keep all your existing methods from the original code
-    def load_file(self, path: str):
+    def load_file(self, path:str):
         if self.animating:
             self.timer.stop()
             if hasattr(self, 'play_btn'):
@@ -443,6 +443,7 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget.reset_view()
         self.gl_widget.set_triangles(self.ifrit_manager.enemy.geometry_data.get_triangles())
         self.gl_widget.set_quads(self.ifrit_manager.enemy.geometry_data.get_quads())
+        self._update_model_translation()
         self.update_skeleton()
 
         if hasattr(self, 'frame_slider'):
@@ -462,6 +463,10 @@ class Ifrit3DWidget(QWidget):
             # Set the initial bone ID to 0 and update
             self.bone_editor.bone_spin.setValue(0)
             self._update_bone_editor_selection()
+            self._update_frame_position_selection()
+
+        self._set_reference_position()
+        self.gl_widget.reset_view()
 
     def get_max_frames(self):
         if not self.ifrit_manager:
@@ -470,6 +475,18 @@ class Ifrit3DWidget(QWidget):
         if anim_section and self.current_anim_id < len(anim_section.animations):
             return anim_section.animations[self.current_anim_id].get_nb_frame()
         return 0
+
+    def _set_reference_position(self):
+        """Set the reference position from frame 0 of current animation"""
+        pos_x, pos_y, pos_z = 0, 0, 0
+        if self.current_anim_id < len(self.ifrit_manager.enemy.animation_data.animations):
+            anim = self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id]
+            if len(anim.frames) > 0 and len(anim.frames[0].position) >= 3:
+                pos_x = anim.frames[0].position[0].get_pos_world()
+                pos_y = anim.frames[0].position[1].get_pos_world()
+                pos_z = anim.frames[0].position[2].get_pos_world()
+
+        self.gl_widget.set_reference_position(pos_x, pos_y, pos_z)
 
     def set_animation(self, anim_id: int):
         """Switch to a different animation while preserving playback state."""
@@ -493,10 +510,11 @@ class Ifrit3DWidget(QWidget):
         if hasattr(self, 'frame_slider'):
             self.frame_slider.setRange(0, max_frames - 1)
 
+        self._set_reference_position()
         # Update the mesh and skeleton to the new animation's first frame
         self.update_animated_mesh()
         self.update_skeleton()
-
+        self._update_model_translation()
         self.animation_changed.emit()
 
         # Restart animation if it was previously playing
@@ -504,6 +522,20 @@ class Ifrit3DWidget(QWidget):
             self.timer.start(1000 // self.fps)
             self.play_btn.setText("Pause")
             self.animating = True
+
+    def _update_model_translation(self):
+        """Update the model translation based on current frame position"""
+        pos_x, pos_y, pos_z = 0, 0, 0
+        if (self.current_anim_id < len(self.ifrit_manager.enemy.animation_data.animations) and
+                self.current_frame < len(self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames)):
+            frame = self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames[self.current_frame]
+            if len(frame.position) >= 3:
+                pos_x = frame.position[0].get_pos_world()
+                pos_y = frame.position[1].get_pos_world()
+                pos_z = frame.position[2].get_pos_world()
+
+
+        self.gl_widget.set_model_translation(pos_x, pos_y, pos_z)
 
     def update_skeleton(self):
         if not self.ifrit_manager:
@@ -513,6 +545,8 @@ class Ifrit3DWidget(QWidget):
 
         # Set both lines and parents
         self.gl_widget.set_skeleton_data(skeleton_lines, bone_parents)
+        self._update_model_translation()
+        self._update_frame_position_selection()
         self.gl_widget.update()
         if hasattr(self, 'frame_label'):
             self.frame_label.setText(f"Frame: {self.current_frame}")
@@ -628,12 +662,14 @@ class Ifrit3DWidget(QWidget):
         if hasattr(self, 'bone_editor'):
             self.bone_editor.set_animation_info(self.current_anim_id, frame)
             self._update_bone_editor_selection()
+            self._update_frame_position_selection()
 
     def _update_bone_editor_animation(self):
         """Update bone editor when animation changes"""
         if hasattr(self, 'bone_editor'):
             self.bone_editor.set_animation_info(self.current_anim_id, self.current_frame)
             self._update_bone_editor_selection()
+            self._update_frame_position_selection()
 
     def _update_bone_editor_selection(self):
         """Update the bone editor with current bone data"""
@@ -645,15 +681,28 @@ class Ifrit3DWidget(QWidget):
 
         # Get animation rotation if available
         rot_x, rot_y, rot_z = 0, 0, 0
+        rot_raw_x, rot_raw_y, rot_raw_z = 0, 0, 0
         if (self.current_anim_id < len(self.ifrit_manager.enemy.animation_data.animations) and
                 self.current_frame < len(self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames)):
             frame: AnimationFrame = self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames[self.current_frame]
             if bone_id < len(frame.rotation_vector_data):
                 rot_x, rot_y, rot_z = frame.rotation_vector_data[bone_id][0].get_rotate_deg(), frame.rotation_vector_data[bone_id][1].get_rotate_deg(),frame.rotation_vector_data[bone_id][2].get_rotate_deg()
+                rot_raw_x, rot_raw_y, rot_raw_z = frame.rotation_vector_data[bone_id][0].get_rotate_raw(), frame.rotation_vector_data[bone_id][1].get_rotate_raw(),frame.rotation_vector_data[bone_id][2].get_rotate_raw()
 
-        self.bone_editor.set_bone_data(
-            bone_id, bone.size, bone.parent_id, rot_x, rot_y, rot_z
-        )
+        self.bone_editor.set_bone_data(bone_id, bone.get_size(),bone.get_size_raw(),  bone.parent_id, rot_x, rot_y, rot_z, rot_raw_x, rot_raw_y, rot_raw_z)
+
+    def _update_frame_position_selection(self):
+        pos_x, pos_y, pos_z = 0, 0, 0
+        pos_raw_x, pos_raw_y, pos_raw_z = 0, 0, 0
+        if (self.current_anim_id < len(self.ifrit_manager.enemy.animation_data.animations) and
+                self.current_frame < len(self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames)):
+            frame: AnimationFrame = self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames[self.current_frame]
+            pos_x, pos_y, pos_z = frame.position[0].get_pos_world(), frame.position[1].get_pos_world(), frame.position[2].get_pos_world()
+
+            pos_raw_x, pos_raw_y, pos_raw_z = frame.position[0].get_pos_raw(), frame.position[1].get_pos_raw(), frame.position[2].get_pos_raw()
+
+        self.bone_editor.set_frame_position(pos_x, pos_y, pos_z, pos_raw_x, pos_raw_y, pos_raw_z)
+
 
     def _on_bone_selected(self, bone_id: int):
         """Handle bone selection from editor"""
@@ -669,9 +718,52 @@ class Ifrit3DWidget(QWidget):
 
     def _on_bone_parent_changed(self, bone_id: int, parent_id: int):
         """Handle bone parent change from editor"""
+        if parent_id == -1:
+            parent_id = 0xFFFF
         self.ifrit_manager.set_bone_parent(bone_id, parent_id)
         self.update_skeleton()
         self.update_animated_mesh()
+
+    def on_frame_position_changed(self, anim_id: int, frame_id: int, pos_x: float, pos_y: float, pos_z: float):
+        """
+        Handle frame position changes from the bone editor.
+        """
+        # Get the animation section
+        anim_section: AnimationSection = self.ifrit_manager.enemy.animation_data
+
+        # Validate animation exists
+        if anim_id >= len(anim_section.animations):
+            print(f"Animation {anim_id} not found")
+            return
+
+        anim: Animation = anim_section.animations[anim_id]
+
+        # Validate frame exists
+        if frame_id >= len(anim.frames):
+            print(f"Frame {frame_id} not found in animation {anim_id}")
+            return
+
+        frame: AnimationFrame = anim.frames[frame_id]
+
+        # Update the frame's position (global position of the entire skeleton)
+        # Make sure position list has at least 3 elements
+        if len(frame.position) < 3:
+            # This shouldn't happen if properly initialized
+            print(f"Frame {frame_id} doesn't have position data")
+            return
+
+        # Update position values
+        # Using move_world or setting directly depending on your PositionType implementation
+        frame.position[0].set_pos_world(pos_x)
+        frame.position[1].set_pos_world(pos_y)
+        frame.position[2].set_pos_world(pos_z)
+
+        self._update_frame_position_selection()
+
+        # Update the 3D view to show the new position
+        if anim_id == self.current_anim_id and frame_id == self.current_frame:
+            self.gl_widget.set_model_translation(pos_x, pos_y, pos_z)
+            self.gl_widget.update()
 
     def _on_animation_rotation_changed(self, anim_id: int, frame_id: int,
                                        bone_id: int, rx: float, ry: float, rz: float):

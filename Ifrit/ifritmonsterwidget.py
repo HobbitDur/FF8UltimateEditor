@@ -117,7 +117,7 @@ class IfritMonsterWidget(QWidget):
 
     def _open_file(self):
         path = ""
-        #path = "c0m001.dat" # For developing faster
+        #path = "c0m028.dat" # For developing faster
         if not path:
             path = self._file_dialog.getOpenFileName(
                 parent=self, caption="Open .dat file",

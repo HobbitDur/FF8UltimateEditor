@@ -17,7 +17,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.skeleton_lines = []  # List of (start, end) or None
         self.bone_parents = []  # List of parent IDs for each bone
         self.selected_bone = -1
-
+        self.model_translation = [0.0, 0.0, 0.0]
+        self.reference_position  = [0.0, 0.0, 0.0]
         self.triangles = []
         self.quads =[]
         self.skeleton_lines = []
@@ -45,6 +46,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.show_mesh = True
         self.show_skeleton = False
 
+    def set_model_translation(self, x: float, y: float, z: float):
+        """Set the model translation (frame position)"""
+        self.model_translation = [x, y, z]
+        self.update()
     def set_skeleton_data(self, lines: list, parents: list):
         """Set both skeleton lines and parent relationships"""
         self.skeleton_lines = lines
@@ -96,6 +101,11 @@ class FF8OpenGLWidget(QOpenGLWidget):
         gluPerspective(45.0, w / h, 0.1, 100.0)
         glMatrixMode(GL_MODELVIEW)
 
+    def set_reference_position(self, x: float, y: float, z: float):
+        """Set the reference position (frame 0 position) that camera centers on"""
+        self.reference_position = [x, y, z]
+        self.update()
+
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
@@ -108,7 +118,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glRotatef(self.rot_y, 0.0, 1.0, 0.0)
 
         # Center on model
-        glTranslatef(-self.MODEL_CENTER[0], -self.MODEL_CENTER[1], -self.MODEL_CENTER[2])
+        glTranslatef(-self.reference_position[0], -self.reference_position[1], -self.reference_position[2])
+
+        # Apply frame position translation
+        glTranslatef(self.model_translation[0], self.model_translation[1], self.model_translation[2])
 
         if self.show_axis:
             self.draw_axis()
