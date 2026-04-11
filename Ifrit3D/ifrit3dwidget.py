@@ -21,7 +21,7 @@ class Ifrit3DWidget(QWidget):
         self.current_anim_id = 0
         self.current_frame = 0
         self.animating = False
-        self.fps = 30  # Frames per second
+        self.fps = 15
         self.interp_step = 0.0
         self.next_frame_index = 1
 

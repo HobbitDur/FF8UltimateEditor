@@ -64,9 +64,9 @@ class BoneSection:
         data.extend(self.unknown00.to_bytes(2, byteorder='little'))
         data.extend(self.unknown01.to_bytes(2, byteorder='little'))
         data.extend(self.unknown02.to_bytes(2, byteorder='little'))
-        data.extend(self._scale_x.to_bytes(2, byteorder='little', signed=True))
-        data.extend(self._scale_y.to_bytes(2, byteorder='little', signed=True))
-        data.extend(self._scale_z.to_bytes(2, byteorder='little', signed=True))
+        data.extend(self._scale_x.to_bytes(2, byteorder='little'))
+        data.extend(self._scale_y.to_bytes(2, byteorder='little'))
+        data.extend(self._scale_z.to_bytes(2, byteorder='little'))
         data.extend(self.unknown2.to_bytes(2, byteorder='little'))
 
         # Write all bones
