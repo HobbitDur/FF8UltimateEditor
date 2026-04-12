@@ -95,6 +95,10 @@ jobs:
         echo "current_minor=$MINOR" >> $GITHUB_OUTPUT
         echo "current_patch=$PATCH" >> $GITHUB_OUTPUT
         
+        # Get tag message/annotation
+        TAG_MESSAGE=$(git tag -l -n99 $CURRENT_TAG | sed "s/$CURRENT_TAG[[:space:]]*//" | head -1 || echo "")
+        echo "tag_message=$TAG_MESSAGE" >> $GITHUB_OUTPUT
+        
         # Find previous relevant tag based on version increment type
         ALL_TAGS=$(git tag -l | grep -v "continuous" | sort -V)
         
@@ -138,6 +142,7 @@ jobs:
         CURRENT_TAG="${{ github.ref_name }}"
         RELEASE_TYPE="${{ steps.version_info.outputs.release_type }}"
         PREVIOUS_TAG="${{ steps.version_info.outputs.previous_tag }}"
+        TAG_MESSAGE="${{ steps.version_info.outputs.tag_message }}"
         
         case "$RELEASE_TYPE" in
           patch)
@@ -146,6 +151,12 @@ jobs:
             AUTHORS=$(git log --pretty=format:"%an" $PREVIOUS_TAG..$CURRENT_TAG | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
             
             NOTES="## 🐛 Bugfix Release: $CURRENT_TAG\n\n"
+            
+            if [ -n "$TAG_MESSAGE" ]; then
+              NOTES+="### 🎯 Main Features\n\n"
+              NOTES+="$TAG_MESSAGE\n\n"
+            fi
+            
             NOTES+="**Changes since:** \`$PREVIOUS_TAG\`\n\n"
             NOTES+="### 🐞 Bug Fixes & Improvements\n\n"
             NOTES+="$COMMITS\n\n"
@@ -162,6 +173,12 @@ jobs:
             BUG_COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG | grep -i "^fix\|^bug\|^hotfix" || echo "")
             
             NOTES="## ✨ Feature Release: $CURRENT_TAG\n\n"
+            
+            if [ -n "$TAG_MESSAGE" ]; then
+              NOTES+="### 🎯 Main Features\n\n"
+              NOTES+="$TAG_MESSAGE\n\n"
+            fi
+            
             NOTES+="**Changes since:** \`$PREVIOUS_TAG\`\n\n"
             
             if [ -n "$FEAT_COMMITS" ]; then
@@ -186,6 +203,12 @@ jobs:
             
             NOTES="## 🚀 Major Release: $CURRENT_TAG\n\n"
             NOTES+="⚠️ **This release contains breaking changes!** ⚠️\n\n"
+            
+            if [ -n "$TAG_MESSAGE" ]; then
+              NOTES+="### 🎯 Main Features\n\n"
+              NOTES+="$TAG_MESSAGE\n\n"
+            fi
+            
             NOTES+="**Changes since:** \`$PREVIOUS_TAG\`\n\n"
             NOTES+="### 🔥 Breaking Changes & All Updates\n\n"
             NOTES+="$COMMITS\n\n"
@@ -198,6 +221,12 @@ jobs:
             AUTHORS=$(git log --pretty=format:"%an" -n 100 HEAD | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
             
             NOTES="## 🎉 Initial Release: $CURRENT_TAG 🎉\n\n"
+            
+            if [ -n "$TAG_MESSAGE" ]; then
+              NOTES+="### 🎯 Main Features\n\n"
+              NOTES+="$TAG_MESSAGE\n\n"
+            fi
+            
             NOTES+="### 📝 All Commits (showing up to 100)\n\n"
             NOTES+="$COMMITS\n\n"
             NOTES+="### 👥 Contributors\n\n"
@@ -215,6 +244,10 @@ jobs:
       id: continuous_notes
       run: |
         LAST_TAG=$(git tag -l | grep -v "continuous" | sort -V | tail -n1 || echo "")
+        
+        # Get short commit hash (first 7 characters)
+        SHORT_SHA="${{ github.sha }}"
+        SHORT_SHA=${SHORT_SHA:0:7}
         
         if [ -z "$LAST_TAG" ]; then
           COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" -n 100 HEAD)
@@ -242,13 +275,14 @@ jobs:
         echo "release_notes<<EOF" >> $GITHUB_OUTPUT
         echo -e "$NOTES" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
+        echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
 
     - name: zip name continuous
       shell: bash
       if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
       run: |
         cd release
-        7z a -tzip "FF8UltimateEditor-continuous-${{ github.sha }}.zip" .
+        7z a -tzip "FF8UltimateEditor-continuous-${{ steps.continuous_notes.outputs.short_sha }}.zip" .
         cd ..
 
     - name: zip name tag
