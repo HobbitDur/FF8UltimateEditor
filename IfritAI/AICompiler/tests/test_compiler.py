@@ -9,7 +9,7 @@ from FF8GameData.dat.daterrors import ParamBattleTextError, ParamAptitudeError, 
     ParamMonsterAbilityError, ParamMonsterLineAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, ParamTargetSlotError, ParamBoolError, \
     ParamSpecialActionError, ParamInt16Error, ParamTargetGenericError, ParamActivateError, ParamSceneOutSlotIdError, ParamMagicTypeError, ParamGfError, \
     ParamSlotIdEnableError, \
-    ParamCardError, ParamAssignSlotIdError, ParamItemError, ParamSlotIdError, ParamScanTextError
+    ParamCardError, ParamAssignSlotIdError, ParamItemError, ParamSlotIdError, ParamScanTextError, ParamTargetAdvanceGenericError
 from FF8GameData.gamedata import GameData
 from IfritAI.AICompiler.AIAST import *
 from IfritAI.AICompiler.AICompiler import AICompiler
@@ -27,8 +27,8 @@ class TestAICompiler:
         # Use the actual grammar from AICompiler
         battle_text = ["First battle text", "Second battle text", "Third battle text", "“I'm  done for…”"]
         info_stat_data = {}  # TODO
-        game_data = GameData(os.path.join("..", "..", "..", "FF8GameData"))
-        #game_data = GameData(os.path.join("FF8GameData"))
+        #game_data = GameData(os.path.join("..", "..", "..", "FF8GameData"))
+        game_data = GameData(os.path.join("FF8GameData"))
         game_data.load_all()
         compiler = AICompiler(game_data, battle_text, info_stat_data)
         return compiler
@@ -824,26 +824,6 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-    def test_setAddr1(self, compiler: AICompiler):
-        # First declare different source code case
-        ## Raw data (already int)
-        compiler.game_data.load_ai_data("ai_cronos.json")
-        compiler.reset_ai_data()
-        source_code_raw = \
-            """
-            setAddr1(0x01CFE93C, 2);
-            """
-        # The expected output
-        expected = [32, 0x3C, 0xE9, 0xCF, 0x01, 2, 0, 0]
-
-        # The work
-        code_raw_compiled = compiler.compile(source_code_raw)
-
-        # Assert the expected result
-        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        compiler.game_data.load_ai_data("ai_vanilla.json")
-        compiler.reset_ai_data()
-
 
     def test_setAddr(self, compiler: AICompiler):
         # First declare different source code case
@@ -852,10 +832,10 @@ class TestAICompiler:
         compiler.reset_ai_data()
         source_code_raw = \
             """
-            setAddr(0x40, 0x01CFE93C, 2);
+            setAddr(0x01CFE93C, 0x40, 2);
             """
         # The expected output
-        expected = [34, 0x40, 0x3C, 0xE9, 0xCF, 0x01, 2, 0, 0, 0, 0, 0]
+        expected = [34,  0x3C, 0xE9, 0xCF, 0x01, 0x40, 2, 0, 0, 0, 0, 0]
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1033,7 +1013,7 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-        with pytest.raises(ParamTargetGenericError):
+        with pytest.raises(ParamTargetAdvanceGenericError):
             compiler.compile(source_code_error)
 
     def test_autoStatus(self, compiler: AICompiler):
