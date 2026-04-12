@@ -31,7 +31,8 @@ jobs:
           # This FAILS the step but runs all tests
           pytest . -v --tb=short --disable-warnings || echo "tests_failed=true" >> $GITHUB_OUTPUT
         continue-on-error: false  # ← CHANGE: Now fails properly
-
+        env:
+          PYTHONPATH: ${{ github.workspace }}
       - name: 📊 Upload results
         if: always()
         uses: actions/upload-artifact@v4
