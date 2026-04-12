@@ -79,58 +79,56 @@ jobs:
         ls -al
         cd ..
 
-    - name: Get last official tag
-      id: last_tag
+    - name: Parse version and find previous relevant tag
+      id: version_info
+      if: startsWith(github.ref, 'refs/tags/')
       shell: bash
       run: |
-        LAST_OFFICIAL_TAG=$(git tag -l | grep -v "continuous" | sort -V | tail -n1 || echo "")
-        echo "last_official_tag=$LAST_OFFICIAL_TAG" >> $GITHUB_OUTPUT
-
-    - name: Generate release notes for continuous build
-      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
-      shell: bash
-      id: continuous_notes
-      run: |
-        LAST_TAG="${{ steps.last_tag.outputs.last_official_tag }}"
+        CURRENT_TAG="${{ github.ref_name }}"
         
-        if [ -z "$LAST_TAG" ]; then
-          COMMITS=$(git log --pretty=format:"- **%s** (%h) - %an" -n 100 HEAD)
-          AUTHORS=$(git log --pretty=format:"%an" -n 100 HEAD | sort | uniq -c | sort -rn | sed 's/^[[:space:]]*//' | sed 's/ /: /' | sed 's/^/- /')
-          
-          NOTES="## 🔄 Unstable Continuous Build\n\n"
-          NOTES+="⚠️ **This is an automated pre-release build** ⚠️\n\n"
-          NOTES+="Built from commit: \`${{ github.sha }}\`\n\n"
-          NOTES+="---\n\n"
-          NOTES+="### 📝 Latest Commits (showing up to 100)\n\n"
-          NOTES+="$COMMITS\n\n"
-          NOTES+="---\n\n"
-          NOTES+="### 👥 Contributors (last 100 commits)\n\n"
-          NOTES+="$AUTHORS"
+        # Parse version numbers (X.Y.Z)
+        MAJOR=$(echo $CURRENT_TAG | cut -d. -f1)
+        MINOR=$(echo $CURRENT_TAG | cut -d. -f2)
+        PATCH=$(echo $CURRENT_TAG | cut -d. -f3)
+        
+        echo "current_major=$MAJOR" >> $GITHUB_OUTPUT
+        echo "current_minor=$MINOR" >> $GITHUB_OUTPUT
+        echo "current_patch=$PATCH" >> $GITHUB_OUTPUT
+        
+        # Find previous relevant tag based on version increment type
+        ALL_TAGS=$(git tag -l | grep -v "continuous" | sort -V)
+        
+        PREVIOUS_TAG=""
+        
+        # Check if this is a patch release (only Z increased)
+        PREVIOUS_PATCH=$(echo "$ALL_TAGS" | grep "^$MAJOR\.$MINOR\." | sort -V | tail -n2 | head -n1 || echo "")
+        
+        if [ -n "$PREVIOUS_PATCH" ] && [ "$PREVIOUS_PATCH" != "$CURRENT_TAG" ]; then
+          PREVIOUS_TAG="$PREVIOUS_PATCH"
+          echo "release_type=patch" >> $GITHUB_OUTPUT
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
         else
-          COMMITS=$(git log --pretty=format:"- **%s** (%h) - %an" $LAST_TAG..HEAD)
-          COMMIT_COUNT=$(git rev-list --count $LAST_TAG..HEAD)
-          AUTHORS=$(git log --pretty=format:"%an" $LAST_TAG..HEAD | sort | uniq -c | sort -rn | sed 's/^[[:space:]]*//' | sed 's/ /: /' | sed 's/^/- /')
-          FILES_CHANGED=$(git diff --shortstat $LAST_TAG..HEAD)
+          # Check if this is a minor release (Y increased)
+          PREVIOUS_MINOR=$(echo "$ALL_TAGS" | grep "^$MAJOR\." | grep -v "^$MAJOR\.$MINOR\." | sort -V | tail -n1 || echo "")
           
-          NOTES="## 🔄 Unstable Continuous Build\n\n"
-          NOTES+="⚠️ **This is an automated pre-release build** ⚠️\n\n"
-          NOTES+="Built from commit: \`${{ github.sha }}\`\n\n"
-          NOTES+="**Changes since last official release:** \`$LAST_TAG\`\n\n"
-          NOTES+="---\n\n"
-          NOTES+="### 📊 Summary\n\n"
-          NOTES+="- **Commits:** $COMMIT_COUNT\n"
-          NOTES+="- **Changes:** $FILES_CHANGED\n\n"
-          NOTES+="---\n\n"
-          NOTES+="### 📝 Commit History\n\n"
-          NOTES+="$COMMITS\n\n"
-          NOTES+="---\n\n"
-          NOTES+="### 👥 Contributors\n\n"
-          NOTES+="$AUTHORS"
+          if [ -n "$PREVIOUS_MINOR" ]; then
+            PREVIOUS_TAG="$PREVIOUS_MINOR"
+            echo "release_type=minor" >> $GITHUB_OUTPUT
+            echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          else
+            # This is a major release (X increased) or first release
+            PREVIOUS_MAJOR=$(echo "$ALL_TAGS" | grep -v "^$MAJOR\." | sort -V | tail -n1 || echo "")
+            
+            if [ -n "$PREVIOUS_MAJOR" ]; then
+              PREVIOUS_TAG="$PREVIOUS_MAJOR"
+              echo "release_type=major" >> $GITHUB_OUTPUT
+              echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+            else
+              echo "release_type=first" >> $GITHUB_OUTPUT
+              echo "previous_tag=" >> $GITHUB_OUTPUT
+            fi
+          fi
         fi
-        
-        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
-        echo -e "$NOTES" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Generate release notes for official release
       if: startsWith(github.ref, 'refs/tags/')
@@ -138,37 +136,105 @@ jobs:
       id: official_notes
       run: |
         CURRENT_TAG="${{ github.ref_name }}"
-        PREVIOUS_TAG=$(git tag -l | grep -v "continuous" | sort -V | tail -n2 | head -n1 || echo "")
+        RELEASE_TYPE="${{ steps.version_info.outputs.release_type }}"
+        PREVIOUS_TAG="${{ steps.version_info.outputs.previous_tag }}"
         
-        if [ -z "$PREVIOUS_TAG" ]; then
-          COMMITS=$(git log --pretty=format:"- **%s** (%h) - %an" -n 100 HEAD)
-          AUTHORS=$(git log --pretty=format:"%an" -n 100 HEAD | sort | uniq -c | sort -rn | sed 's/^[[:space:]]*//' | sed 's/ /: /' | sed 's/^/- /')
+        case "$RELEASE_TYPE" in
+          patch)
+            # Bugfix release: show commits since previous patch
+            COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG)
+            AUTHORS=$(git log --pretty=format:"%an" $PREVIOUS_TAG..$CURRENT_TAG | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
+            
+            NOTES="## 🐛 Bugfix Release: $CURRENT_TAG\n\n"
+            NOTES+="**Changes since:** \`$PREVIOUS_TAG\`\n\n"
+            NOTES+="### 🐞 Bug Fixes & Improvements\n\n"
+            NOTES+="$COMMITS\n\n"
+            NOTES+="### 👥 Contributors\n\n"
+            NOTES+="$AUTHORS"
+            ;;
+          minor)
+            # Feature release: show all commits since last minor release
+            COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG)
+            AUTHORS=$(git log --pretty=format:"%an" $PREVIOUS_TAG..$CURRENT_TAG | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
+            
+            # Try to categorize commits
+            FEAT_COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG | grep -i "^feat\|^feature\|^add" || echo "")
+            BUG_COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG | grep -i "^fix\|^bug\|^hotfix" || echo "")
+            
+            NOTES="## ✨ Feature Release: $CURRENT_TAG\n\n"
+            NOTES+="**Changes since:** \`$PREVIOUS_TAG\`\n\n"
+            
+            if [ -n "$FEAT_COMMITS" ]; then
+              NOTES+="### ✨ New Features\n\n"
+              NOTES+="$FEAT_COMMITS\n\n"
+            fi
+            
+            if [ -n "$BUG_COMMITS" ]; then
+              NOTES+="### 🐞 Bug Fixes\n\n"
+              NOTES+="$BUG_COMMITS\n\n"
+            fi
+            
+            NOTES+="### 📝 All Changes\n\n"
+            NOTES+="$COMMITS\n\n"
+            NOTES+="### 👥 Contributors\n\n"
+            NOTES+="$AUTHORS"
+            ;;
+          major)
+            # Major release: show all commits since last major release
+            COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG)
+            AUTHORS=$(git log --pretty=format:"%an" $PREVIOUS_TAG..$CURRENT_TAG | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
+            
+            NOTES="## 🚀 Major Release: $CURRENT_TAG\n\n"
+            NOTES+="⚠️ **This release contains breaking changes!** ⚠️\n\n"
+            NOTES+="**Changes since:** \`$PREVIOUS_TAG\`\n\n"
+            NOTES+="### 🔥 Breaking Changes & All Updates\n\n"
+            NOTES+="$COMMITS\n\n"
+            NOTES+="### 👥 Contributors\n\n"
+            NOTES+="$AUTHORS"
+            ;;
+          first)
+            # First release ever
+            COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" -n 100 HEAD)
+            AUTHORS=$(git log --pretty=format:"%an" -n 100 HEAD | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
+            
+            NOTES="## 🎉 Initial Release: $CURRENT_TAG 🎉\n\n"
+            NOTES+="### 📝 All Commits (showing up to 100)\n\n"
+            NOTES+="$COMMITS\n\n"
+            NOTES+="### 👥 Contributors\n\n"
+            NOTES+="$AUTHORS"
+            ;;
+        esac
+        
+        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+        echo -e "$NOTES" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Generate release notes for continuous build
+      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
+      shell: bash
+      id: continuous_notes
+      run: |
+        LAST_TAG=$(git tag -l | grep -v "continuous" | sort -V | tail -n1 || echo "")
+        
+        if [ -z "$LAST_TAG" ]; then
+          COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" -n 100 HEAD)
+          AUTHORS=$(git log --pretty=format:"%an" -n 100 HEAD | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
           
-          NOTES="## 🎉 Official Release: $CURRENT_TAG 🎉\n\n"
-          NOTES+="### 📦 First Stable Release!\n\n"
-          NOTES+="---\n\n"
-          NOTES+="### 📝 All Commits (showing up to 100)\n\n"
+          NOTES="## 🔄 Unstable Continuous Build\n\n"
+          NOTES+="⚠️ **This is an automated pre-release build** ⚠️\n\n"
+          NOTES+="### 📝 Latest Commits (showing up to 100)\n\n"
           NOTES+="$COMMITS\n\n"
-          NOTES+="---\n\n"
-          NOTES+="### 👥 Contributors\n\n"
+          NOTES+="### 👥 Contributors (last 100 commits)\n\n"
           NOTES+="$AUTHORS"
         else
-          COMMITS=$(git log --pretty=format:"- **%s** (%h) - %an" $PREVIOUS_TAG..$CURRENT_TAG)
-          COMMIT_COUNT=$(git rev-list --count $PREVIOUS_TAG..$CURRENT_TAG)
-          AUTHORS=$(git log --pretty=format:"%an" $PREVIOUS_TAG..$CURRENT_TAG | sort | uniq -c | sort -rn | sed 's/^[[:space:]]*//' | sed 's/ /: /' | sed 's/^/- /')
-          FILES_CHANGED=$(git diff --shortstat $PREVIOUS_TAG..$CURRENT_TAG)
+          COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $LAST_TAG..HEAD)
+          AUTHORS=$(git log --pretty=format:"%an" $LAST_TAG..HEAD | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
           
-          NOTES="## 🎉 Official Release: $CURRENT_TAG 🎉\n\n"
-          NOTES+="### 📦 Stable Release\n\n"
-          NOTES+="**Changes since:** \`$PREVIOUS_TAG\`\n\n"
-          NOTES+="---\n\n"
-          NOTES+="### 📊 Summary\n\n"
-          NOTES+="- **Commits:** $COMMIT_COUNT\n"
-          NOTES+="- **Changes:** $FILES_CHANGED\n\n"
-          NOTES+="---\n\n"
+          NOTES="## 🔄 Unstable Continuous Build\n\n"
+          NOTES+="⚠️ **This is an automated pre-release build** ⚠️\n\n"
+          NOTES+="**Changes since last official release:** \`$LAST_TAG\`\n\n"
           NOTES+="### 📝 Commit History\n\n"
           NOTES+="$COMMITS\n\n"
-          NOTES+="---\n\n"
           NOTES+="### 👥 Contributors\n\n"
           NOTES+="$AUTHORS"
         fi
@@ -219,46 +285,19 @@ jobs:
             console.log('No existing continuous release or no assets found');
           }
 
-    - name: Update continuous release date to now
-      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const { data: releases } = await github.rest.repos.listReleases({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-          });
-          
-          const continuousRelease = releases.find(release => release.tag_name === 'continuous');
-          
-          if (continuousRelease) {
-            // Update the release to make it appear recent but not override the latest official release
-            // We'll update its published date to now, but mark it as prerelease
-            // GitHub always shows latest release first, then other releases by date
-            // Since this is a prerelease, it will appear after the latest official release
-            await github.rest.repos.updateRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: continuousRelease.id,
-              prerelease: true,  // Ensure it's marked as prerelease
-              // Don't change the tag or name, just ensure it's a prerelease
-            });
-            console.log('Updated continuous release to ensure it stays as prerelease');
-          }
-
     - name: Deploy Package (Continuous)
       if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
       uses: softprops/action-gh-release@v1
       with:
         token: "${{ secrets.GITHUB_TOKEN }}"
         tag_name: "continuous"
-        name: "🔄 Unstable Build - Continuous (Latest Dev)"
+        name: "🔄 Unstable Build - Continuous"
         body: ${{ steps.continuous_notes.outputs.release_notes }}
         prerelease: true
         files: |
           release/FF8UltimateEditor-continuous-*.zip
         generate_release_notes: false
-        make_latest: false  # This prevents it from being marked as the "Latest" release
+        make_latest: false
 
     - name: Deploy tag Package (Official)
       if: startsWith(github.ref, 'refs/tags/')
@@ -266,7 +305,7 @@ jobs:
       with:
         token: "${{ secrets.GITHUB_TOKEN }}"
         tag_name: ${{ github.ref_name }}
-        name: "🎉 FF8UltimateEditor-${{ github.ref_name }}"
+        name: "${{ steps.version_info.outputs.release_type == 'patch' && '🐛' || steps.version_info.outputs.release_type == 'minor' && '✨' || steps.version_info.outputs.release_type == 'major' && '🚀' || '🎉' }} FF8UltimateEditor-${{ github.ref_name }}"
         body: ${{ steps.official_notes.outputs.release_notes }}
         prerelease: false
         files: |
