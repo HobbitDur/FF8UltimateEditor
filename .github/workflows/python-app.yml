@@ -23,8 +23,6 @@ jobs:
       shell: bash
       run: |
         git fetch origin "refs/tags/${{ github.ref_name }}:refs/tags/${{ github.ref_name }}" --force
-        # Debug: should print "tag", not "commit"
-        git cat-file -t "refs/tags/${{ github.ref_name }}"
     - name: Set up Python 3.14
       uses: actions/setup-python@v5
       with:
@@ -103,7 +101,6 @@ jobs:
         
         # Get tag message/annotation
         TAG_MESSAGE=$(git cat-file -p "refs/tags/$CURRENT_TAG" | awk 'f; /^$/{f=1}')
-        echo "DEBUG tag message: $TAG_MESSAGE"
         echo "tag_message<<EOF" >> $GITHUB_OUTPUT
         echo "$TAG_MESSAGE" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
