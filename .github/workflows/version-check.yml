@@ -18,32 +18,40 @@ jobs:
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.14'
+          python-version: '3.13'
 
       - name: 📦 Install dependencies
         run: |
           pip install pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: 🧪 Run all tests (continue to collect all failures)
+      - name: 🧪 Run all tests
         id: pytest
         run: |
           pytest . -v --tb=short --disable-warnings --junit-xml=test-results.xml || echo "tests_failed=true" >> $GITHUB_OUTPUT
-        continue-on-error: true  # ← CHANGE THIS to true
+        continue-on-error: true
         env:
           PYTHONPATH: ${{ github.workspace }}
 
-      - name: 📊 Upload results
+      - name: 📊 Publish Test Report
+        uses: dorny/test-reporter@v1
+        if: always()  # Always run, even if tests failed
+        with:
+          name: Python Tests Results
+          path: test-results.xml
+          reporter: java-junit
+          fail-on-error: false  # Don't fail the workflow if report fails
+
+      - name: 📤 Upload raw results (optional backup)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: |
-            **/test-*.xml
-            .pytest_cache/
+          name: test-results-xml
+          path: test-results.xml
+          retention-days: 7
 
       - name: ❌ Fail workflow if tests failed
         if: steps.pytest.outputs.tests_failed == 'true'
         run: |
-          echo "❌ Some tests failed! Check the artifacts."
+          echo "❌ Some tests failed! Check the test report above."
           exit 1
