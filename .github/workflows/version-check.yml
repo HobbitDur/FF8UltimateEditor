@@ -25,14 +25,14 @@ jobs:
           pip install pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: 🧪 Run all tests
+      - name: 🧪 Run all tests (continue to collect all failures)
         id: pytest
         run: |
-          # This FAILS the step but runs all tests
-          pytest . -v --tb=short --disable-warnings || echo "tests_failed=true" >> $GITHUB_OUTPUT
-        continue-on-error: false
+          pytest . -v --tb=short --disable-warnings --junit-xml=test-results.xml || echo "tests_failed=true" >> $GITHUB_OUTPUT
+        continue-on-error: true  # ← CHANGE THIS to true
         env:
           PYTHONPATH: ${{ github.workspace }}
+
       - name: 📊 Upload results
         if: always()
         uses: actions/upload-artifact@v4
@@ -46,4 +46,4 @@ jobs:
         if: steps.pytest.outputs.tests_failed == 'true'
         run: |
           echo "❌ Some tests failed! Check the artifacts."
-          exit 1  # This makes the whole workflow show RED ❌
+          exit 1
