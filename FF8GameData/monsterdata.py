@@ -181,7 +181,6 @@ class GeometryTriangle:
         self.tex_id_1 = int.from_bytes(data[10:12], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_ID_1['byteorder'])
         self.vtc.analyze(data[12:14])
         self.tex_id_2 = int.from_bytes(data[14:16], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_ID_2['byteorder'])
-        print(f"Triangle - tex_id_1: {self.tex_id_1} (0x{self.tex_id_1:04X}), tex_id_2: {self.tex_id_2} (0x{self.tex_id_2:04X})")
     def get_byte(self) -> bytearray:
         data = bytearray()
         data.extend(self.vertex_indexes[0].to_bytes(2, 'little'))
@@ -226,7 +225,6 @@ class GeometryQuad:
         self.tex_id_2 = int.from_bytes(data[14:16], byteorder=self.SECTION_GEOMETRY_QUAD_TEX_ID_2['byteorder'])
         self.vtc.analyze(data[16:18])
         self.vtd.analyze(data[18:20])
-        print(f"Quad - tex_id_1: {self.tex_id_1} (0x{self.tex_id_1:04X}), tex_id_2: {self.tex_id_2} (0x{self.tex_id_2:04X})")
 
     def get_byte(self) -> bytearray:
         data = bytearray()
@@ -502,14 +500,14 @@ class GeometrySection:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
             for tri in obj.triangles:
                 indices = (
-                    tri.vertex_indexes[0] + offset,
-                    tri.vertex_indexes[1] + offset,
-                    tri.vertex_indexes[2] + offset,
+                    tri.vertex_indexes[2] + offset,  # C
+                    tri.vertex_indexes[0] + offset,  # A
+                    tri.vertex_indexes[1] + offset,  # B
                 )
                 uvs = (
-                    (tri.vta.u, tri.vta.v),
-                    (tri.vtb.u, tri.vtb.v),
-                    (tri.vtc.u, tri.vtc.v),
+                    (tri.vta.u, tri.vta.v),  # for C
+                    (tri.vtb.u, tri.vtb.v),  # for A
+                    (tri.vtc.u, tri.vtc.v),  # for B
                 )
                 # tex_id_1 upper 6 bits encode CLUT/page info; low bits = texture index
                 tex_id = tri.tex_id_1
@@ -525,10 +523,10 @@ class GeometrySection:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
             for quad in obj.quads:
                 indices = (
-                    quad.vertex_indexes[0] + offset,
-                    quad.vertex_indexes[1] + offset,
-                    quad.vertex_indexes[2] + offset,
-                    quad.vertex_indexes[3] + offset,
+                    quad.vertex_indexes[0] + offset,  # A
+                    quad.vertex_indexes[1] + offset,  # B
+                    quad.vertex_indexes[2] + offset,  # C
+                    quad.vertex_indexes[3] + offset,  # D
                 )
                 uvs = (
                     (quad.vta.u, quad.vta.v),

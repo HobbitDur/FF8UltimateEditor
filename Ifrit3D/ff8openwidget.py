@@ -63,16 +63,11 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         unique_ids = sorted(set(tex_ids_used))
         n = len(qpixmaps)
-        print(f"=== Texture Mapping ===")
-        print(f"Number of PNGs: {n}")
-        print(f"Unique raw_ids used: {unique_ids}")
 
         for rank, raw_id in enumerate(unique_ids):
             idx = min(rank, n - 1)
             self._tex_id_to_index[raw_id] = idx
-            print(f"  raw_id {raw_id} (0x{raw_id:04X}) -> PNG index {idx}")
 
-        print(f"======================")
         self._textures_dirty = True
         self.update()
 
@@ -259,36 +254,32 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glColor3f(1.0, 1.0, 1.0)
         current_raw_id = None
 
-        for (indices, uvs, raw_id) in self.quads_uv:
+        for poly_idx, (indices, uvs, raw_id) in enumerate(self.quads_uv):
             if raw_id != current_raw_id:
                 self._bind_texture_for_raw_id(raw_id)
                 current_raw_id = raw_id
 
-            # Gather the 4 corners
             verts = [self.vertices_array[idx] for idx in indices]
+            # A=0, B=1, C=2, D=3
+            # C# triangle 1: A(vta), B(vtb), D(vtd)
+            # C# triangle 2: A(vta), C(vtc), D(vtd)
 
-            # Center position and UV — average of all 4 corners
-            cx = sum(v[0] for v in verts) / 4.0
-            cy = sum(v[1] for v in verts) / 4.0
-            cz = sum(v[2] for v in verts) / 4.0
-            cu = sum(uv[0] for uv in uvs) / 4.0
-            cv = sum(uv[1] for uv in uvs) / 4.0
-
-            # Fan: 4 triangles, each sharing the center vertex
-            for i in range(4):
-                j = (i + 1) % 4
-                glBegin(GL_TRIANGLES)
-
-                glTexCoord2f(cu, cv)
-                glVertex3f(cx, cy, cz)
-
-                glTexCoord2f(uvs[i][0], uvs[i][1])
-                glVertex3f(verts[i][0], verts[i][1], verts[i][2])
-
-                glTexCoord2f(uvs[j][0], uvs[j][1])
-                glVertex3f(verts[j][0], verts[j][1], verts[j][2])
-
-                glEnd()
+            glBegin(GL_TRIANGLES)
+            # Triangle 1: A, B, D
+            glTexCoord2f(uvs[0][0], uvs[0][1])
+            glVertex3f(verts[0][0], verts[0][1], verts[0][2])
+            glTexCoord2f(uvs[1][0], uvs[1][1])
+            glVertex3f(verts[1][0], verts[1][1], verts[1][2])
+            glTexCoord2f(uvs[3][0], uvs[3][1])
+            glVertex3f(verts[3][0], verts[3][1], verts[3][2])
+            # Triangle 2: A, C, D
+            glTexCoord2f(uvs[0][0], uvs[0][1])
+            glVertex3f(verts[0][0], verts[0][1], verts[0][2])
+            glTexCoord2f(uvs[2][0], uvs[2][1])
+            glVertex3f(verts[2][0], verts[2][1], verts[2][2])
+            glTexCoord2f(uvs[3][0], uvs[3][1])
+            glVertex3f(verts[3][0], verts[3][1], verts[3][2])
+            glEnd()
 
         glDisable(GL_TEXTURE_2D)
 
