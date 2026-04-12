@@ -18,6 +18,7 @@ jobs:
       with:
         submodules: 'true'
         fetch-depth: 0
+        fetch-tags: true
 
     - name: Set up Python 3.14
       uses: actions/setup-python@v5
@@ -97,7 +98,10 @@ jobs:
         
         # Get tag message/annotation
         TAG_MESSAGE=$(git for-each-ref --format='%(contents)' "refs/tags/$CURRENT_TAG")
-        echo "tag_message=$TAG_MESSAGE" >> $GITHUB_OUTPUT
+        echo "DEBUG tag message: $TAG_MESSAGE"
+        echo "tag_message<<EOF" >> $GITHUB_OUTPUT
+        echo "$TAG_MESSAGE" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
         
         # Find previous relevant tag based on version increment type
         ALL_TAGS=$(git tag -l | grep -v "continuous" | sort -V)
