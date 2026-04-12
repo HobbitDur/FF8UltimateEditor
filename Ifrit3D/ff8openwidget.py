@@ -83,11 +83,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
                 for x in range(w):
                     color = img.pixelColor(x, y)
                     # If pixel is black or very dark, make it transparent
-                    if color.red() < 16 and color.green() < 16 and color.blue() < 16:
+                    # If pixel is pure black, make it transparent
+                    if color.red() == 0 and color.green() == 0 and color.blue() == 0:
                         color.setAlpha(0)
-                    else:
-                        # Keep original alpha or set to fully opaque
-                        color.setAlpha(255)
                     img.setPixelColor(x, y, color)
 
             raw = bytes(img.bits().asarray(w * h * 4))
