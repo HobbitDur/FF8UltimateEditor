@@ -26,4 +26,5 @@ SelfUpdate
 *.csv
 **/*.bin
 *.xlsx
+*.png
 FF8GameData/fs/DelingCli
