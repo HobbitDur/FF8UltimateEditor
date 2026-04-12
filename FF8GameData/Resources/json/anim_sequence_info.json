@@ -222,7 +222,8 @@
     {"param_id": "0x02", "text": "Fade in"},
     {"param_id": "0x03", "text": "Fade out"},
     {"param_id": "0x06", "text": "Fade out and leave combat (no EXP given)"},
-    {"param_id": "0x0C", "text": "Fade in"}
+    {"param_id": "0x0C", "text": "Fade in"},
+    {"param_id": "0x0D", "text": "On propagator"}
   ],
   "sound_channel_flag": [
     {"param_id": "0x01", "text": "volume = linked to target position"},
