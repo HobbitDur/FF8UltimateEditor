@@ -698,7 +698,7 @@ class TestAIDecompiler:
         assert expected == normalized
 
     def test_setAddr(self, decompiler: AIDecompiler):
-        bytecode = [34, 0x3C, 0xE9, 0xCF, 0x01, 0x40, 2, 0, 0, 0, 0, 0]
+        bytecode = [34, 0x3C, 0xE9, 0xCF, 0x01, 0x40, 2, 0, 0, 0]
         decompiler.game_data.load_ai_data("ai_cronos.json")
         decompiler.reset_ai_data()
         code = decompiler.decompile(bytecode)
@@ -709,7 +709,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            setAddr(0x01CFE93C, 0x40, 2);
+            setAddr(0x01CFE93C, 64, 0x00000002);
             """
         )
         assert expected == normalized
