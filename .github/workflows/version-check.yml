@@ -1,4 +1,4 @@
-name: 🧪 Test Suite Complete
+name: Autotest
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   tests:
-    name: Run all Python tests
+    name: run-all-test
     runs-on: ubuntu-latest
 
     steps:
@@ -18,14 +18,14 @@ jobs:
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.14'
 
       - name: 📦 Install dependencies
         run: |
           pip install pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: 🧪 Run all tests
+      - name:  Run all tests
         id: pytest
         run: |
           pytest . -v --tb=short --disable-warnings --junit-xml=test-results.xml || echo "tests_failed=true" >> $GITHUB_OUTPUT
@@ -38,7 +38,7 @@ jobs:
         if: always()
         with:
           files: test-results.xml
-
+          check_name: "Autotest Results"
       - name: 📤 Upload raw results (optional backup)
         if: always()
         uses: actions/upload-artifact@v4
