@@ -146,11 +146,9 @@ jobs:
         
         case "$RELEASE_TYPE" in
           patch)
-            # Bugfix release: show commits since previous patch
             COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG)
-            AUTHORS=$(git log --pretty=format:"%an" $PREVIOUS_TAG..$CURRENT_TAG | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
             
-            NOTES="## 🐛 Bugfix Release: $CURRENT_TAG\n\n"
+            NOTES=""
             
             if [ -n "$TAG_MESSAGE" ]; then
               NOTES+="### 🎯 Main Features\n\n"
@@ -159,20 +157,14 @@ jobs:
             
             NOTES+="**Changes since:** \`$PREVIOUS_TAG\`\n\n"
             NOTES+="### 🐞 Bug Fixes & Improvements\n\n"
-            NOTES+="$COMMITS\n\n"
-            NOTES+="### 👥 Contributors\n\n"
-            NOTES+="$AUTHORS"
+            NOTES+="$COMMITS"
             ;;
           minor)
-            # Feature release: show all commits since last minor release
             COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG)
-            AUTHORS=$(git log --pretty=format:"%an" $PREVIOUS_TAG..$CURRENT_TAG | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
-            
-            # Try to categorize commits
             FEAT_COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG | grep -i "^feat\|^feature\|^add" || echo "")
             BUG_COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG | grep -i "^fix\|^bug\|^hotfix" || echo "")
             
-            NOTES="## ✨ Feature Release: $CURRENT_TAG\n\n"
+            NOTES=""
             
             if [ -n "$TAG_MESSAGE" ]; then
               NOTES+="### 🎯 Main Features\n\n"
@@ -192,17 +184,12 @@ jobs:
             fi
             
             NOTES+="### 📝 All Changes\n\n"
-            NOTES+="$COMMITS\n\n"
-            NOTES+="### 👥 Contributors\n\n"
-            NOTES+="$AUTHORS"
+            NOTES+="$COMMITS"
             ;;
           major)
-            # Major release: show all commits since last major release
             COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG)
-            AUTHORS=$(git log --pretty=format:"%an" $PREVIOUS_TAG..$CURRENT_TAG | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
             
-            NOTES="## 🚀 Major Release: $CURRENT_TAG\n\n"
-            NOTES+="⚠️ **This release contains breaking changes!** ⚠️\n\n"
+            NOTES="⚠️ **This release contains breaking changes!** ⚠️\n\n"
             
             if [ -n "$TAG_MESSAGE" ]; then
               NOTES+="### 🎯 Main Features\n\n"
@@ -211,16 +198,12 @@ jobs:
             
             NOTES+="**Changes since:** \`$PREVIOUS_TAG\`\n\n"
             NOTES+="### 🔥 Breaking Changes & All Updates\n\n"
-            NOTES+="$COMMITS\n\n"
-            NOTES+="### 👥 Contributors\n\n"
-            NOTES+="$AUTHORS"
+            NOTES+="$COMMITS"
             ;;
           first)
-            # First release ever
             COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" -n 100 HEAD)
-            AUTHORS=$(git log --pretty=format:"%an" -n 100 HEAD | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
             
-            NOTES="## 🎉 Initial Release: $CURRENT_TAG 🎉\n\n"
+            NOTES=""
             
             if [ -n "$TAG_MESSAGE" ]; then
               NOTES+="### 🎯 Main Features\n\n"
@@ -228,9 +211,7 @@ jobs:
             fi
             
             NOTES+="### 📝 All Commits (showing up to 100)\n\n"
-            NOTES+="$COMMITS\n\n"
-            NOTES+="### 👥 Contributors\n\n"
-            NOTES+="$AUTHORS"
+            NOTES+="$COMMITS"
             ;;
         esac
         
@@ -245,31 +226,22 @@ jobs:
       run: |
         LAST_TAG=$(git tag -l | grep -v "continuous" | sort -V | tail -n1 || echo "")
         
-        # Get short commit hash (first 7 characters)
         SHORT_SHA="${{ github.sha }}"
         SHORT_SHA=${SHORT_SHA:0:7}
         
         if [ -z "$LAST_TAG" ]; then
           COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" -n 100 HEAD)
-          AUTHORS=$(git log --pretty=format:"%an" -n 100 HEAD | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
           
-          NOTES="## 🔄 Unstable Continuous Build\n\n"
-          NOTES+="⚠️ **This is an automated pre-release build** ⚠️\n\n"
+          NOTES="⚠️ **This is an automated pre-release build** ⚠️\n\n"
           NOTES+="### 📝 Latest Commits (showing up to 100)\n\n"
-          NOTES+="$COMMITS\n\n"
-          NOTES+="### 👥 Contributors (last 100 commits)\n\n"
-          NOTES+="$AUTHORS"
+          NOTES+="$COMMITS"
         else
           COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $LAST_TAG..HEAD)
-          AUTHORS=$(git log --pretty=format:"%an" $LAST_TAG..HEAD | sort | uniq -c | sort -rn | awk '{print "- [" $2 "](https://github.com/" $2 ")"}')
           
-          NOTES="## 🔄 Unstable Continuous Build\n\n"
-          NOTES+="⚠️ **This is an automated pre-release build** ⚠️\n\n"
+          NOTES="⚠️ **This is an automated pre-release build** ⚠️\n\n"
           NOTES+="**Changes since last official release:** \`$LAST_TAG\`\n\n"
           NOTES+="### 📝 Commit History\n\n"
-          NOTES+="$COMMITS\n\n"
-          NOTES+="### 👥 Contributors\n\n"
-          NOTES+="$AUTHORS"
+          NOTES+="$COMMITS"
         fi
         
         echo "release_notes<<EOF" >> $GITHUB_OUTPUT
@@ -325,7 +297,7 @@ jobs:
       with:
         token: "${{ secrets.GITHUB_TOKEN }}"
         tag_name: "continuous"
-        name: "🔄 Unstable Build - Continuous"
+        name: "FF8UltimateEditor-continuous"
         body: ${{ steps.continuous_notes.outputs.release_notes }}
         prerelease: true
         files: |
@@ -339,7 +311,7 @@ jobs:
       with:
         token: "${{ secrets.GITHUB_TOKEN }}"
         tag_name: ${{ github.ref_name }}
-        name: "${{ steps.version_info.outputs.release_type == 'patch' && '🐛' || steps.version_info.outputs.release_type == 'minor' && '✨' || steps.version_info.outputs.release_type == 'major' && '🚀' || '🎉' }} FF8UltimateEditor-${{ github.ref_name }}"
+        name: "FF8UltimateEditor-${{ github.ref_name }}"
         body: ${{ steps.official_notes.outputs.release_notes }}
         prerelease: false
         files: |
