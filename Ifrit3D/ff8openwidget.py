@@ -72,16 +72,28 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.update()
 
     def _upload_pending_textures(self):
-        """Upload QPixmaps to GL textures."""
+        """Upload QPixmaps to GL textures with black->alpha conversion"""
         self._free_gl_textures()
         for pix in self._pending_qpixmaps:
             img = pix.toImage().convertToFormat(QImage.Format.Format_RGBA8888)
             w, h = img.width(), img.height()
+
+            # Convert black pixels to transparent
+            for y in range(h):
+                for x in range(w):
+                    color = img.pixelColor(x, y)
+                    # If pixel is black or very dark, make it transparent
+                    if color.red() < 16 and color.green() < 16 and color.blue() < 16:
+                        color.setAlpha(0)
+                    else:
+                        # Keep original alpha or set to fully opaque
+                        color.setAlpha(255)
+                    img.setPixelColor(x, y, color)
+
             raw = bytes(img.bits().asarray(w * h * 4))
             tex = glGenTextures(1)
             glBindTexture(GL_TEXTURE_2D, tex)
 
-            # Change to CLAMP_TO_EDGE instead of REPEAT
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
