@@ -96,7 +96,7 @@ jobs:
         echo "current_patch=$PATCH" >> $GITHUB_OUTPUT
         
         # Get tag message/annotation
-        TAG_MESSAGE=$(git tag -l -n99 $CURRENT_TAG | sed "s/$CURRENT_TAG[[:space:]]*//" | head -1 || echo "")
+        TAG_MESSAGE=$(git for-each-ref --format='%(contents)' "refs/tags/$CURRENT_TAG")
         echo "tag_message=$TAG_MESSAGE" >> $GITHUB_OUTPUT
         
         # Find previous relevant tag based on version increment type
