@@ -11,99 +11,177 @@ on:
 
 jobs:
   release-version:
-      runs-on: windows-latest
-      steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: 'true'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: recursive submodule
-        shell: bash
-        run: |
-          git submodule update --init --recursive
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r FF8GameData/requirements.txt
-          pip install -r requirements.txt
-          pip install pyinstaller
-          pip freeze
-      - uses: milliewalky/setup-7-zip@v2
-      - name: Create patcher
-        shell: bash
-        run: |
-          mkdir -p Patcher
-          pyinstaller -n Patcher -F --specpath release/build --distpath release/Patcher --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico Patcher/main.py
-          rm -R release/build
-          cd release
-          ls -al
-          cd ..
-      - name: Create release
-        shell: bash
-        run: |
-          pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
-          mkdir -p release/Resources
-          mkdir -p release/ExternalTools/Junkshop
-          mkdir -p release/ExternalTools/Quezacotl
-          mkdir -p release/ExternalTools/Doomtrain
-          mkdir -p release/ExternalTools/JumboCactuar
-          mkdir -p release/ExternalTools/IfritGui
-          mkdir -p release/ExternalTools/Siren
-          mkdir -p release/ExternalTools/Hyne
-          mkdir -p release/ExternalTools/Deling
-          mkdir -p release/logs
-          mkdir -p release/FF8GameData
-          mkdir -p release/FF8GameData/Resources
-          mkdir -p release/FF8GameData/fs
-          mkdir -p release/FF8GameData/fs/DelingCli
-          mkdir -p release/ToolUpdate
-          mkdir -p release/ShumiTranslator
-          mkdir -p release/ShumiTranslator/csv
-          cp -R ShumiTranslator/csv/. release/ShumiTranslator/csv
-          cp ToolUpdate/list.json release/ToolUpdate/
-          cp -R FF8GameData/Resources/. release/FF8GameData/Resources/
-          cp -R Resources/. release/Resources/
-          rm -R release/build
-          cd release
-          ls -al
-          cd ..
-      - name: zip name continuous
-        shell: bash
-        if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
-        run: |
-          cd release
-          7z  a -tzip "FF8UltimateEditor-continuous-${{ github.sha}}.zip" .
-          pwd
-          cd ..
-          ls -al
-      - name: zip name tag
-        shell: bash
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          cd release
-          7z  a -tzip "FF8UltimateEditor-${{  github.ref_name }}.zip" .
-          cd ..
-      - name: Deploy Package
-        if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
-        uses: crowbarmaster/GH-Automatic-Releases@latest
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "continuous"
-          prerelease: true
-          title: "Unstable Build"
-          files: |
-            release/FF8UltimateEditor-*.zip
-      - name: Deploy tag Package
-        if:  startsWith(github.ref, 'refs/tags/')
-        uses: crowbarmaster/GH-Automatic-Releases@latest
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          prerelease: false
-          automatic_release_tag: ${{ github.ref_name }}
-          title: "FF8UltimateEditor-${{ github.ref_name }}"
-          files: |
-            release/FF8UltimateEditor-*.zip
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+        fetch-depth: 0  # Important: fetch all history to get all commits
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: recursive submodule
+      shell: bash
+      run: |
+        git submodule update --init --recursive
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r FF8GameData/requirements.txt
+        pip install -r requirements.txt
+        pip install pyinstaller
+        pip freeze
+
+    - uses: milliewalky/setup-7-zip@v2
+
+    - name: Create patcher
+      shell: bash
+      run: |
+        mkdir -p Patcher
+        pyinstaller -n Patcher -F --specpath release/build --distpath release/Patcher --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico Patcher/main.py
+        rm -R release/build
+        cd release
+        ls -al
+        cd ..
+
+    - name: Create release
+      shell: bash
+      run: |
+        pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
+        mkdir -p release/Resources
+        mkdir -p release/ExternalTools/Junkshop
+        mkdir -p release/ExternalTools/Quezacotl
+        mkdir -p release/ExternalTools/Doomtrain
+        mkdir -p release/ExternalTools/JumboCactuar
+        mkdir -p release/ExternalTools/IfritGui
+        mkdir -p release/ExternalTools/Siren
+        mkdir -p release/ExternalTools/Hyne
+        mkdir -p release/ExternalTools/Deling
+        mkdir -p release/logs
+        mkdir -p release/FF8GameData
+        mkdir -p release/FF8GameData/Resources
+        mkdir -p release/FF8GameData/fs
+        mkdir -p release/FF8GameData/fs/DelingCli
+        mkdir -p release/ToolUpdate
+        mkdir -p release/ShumiTranslator
+        mkdir -p release/ShumiTranslator/csv
+        cp -R ShumiTranslator/csv/. release/ShumiTranslator/csv
+        cp ToolUpdate/list.json release/ToolUpdate/
+        cp -R FF8GameData/Resources/. release/FF8GameData/Resources/
+        cp -R Resources/. release/Resources/
+        rm -R release/build
+        cd release
+        ls -al
+        cd ..
+
+    - name: Generate release notes for continuous build
+      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
+      shell: bash
+      id: continuous_notes
+      run: |
+        # Get the last continuous release tag
+        LAST_CONTINUOUS=$(git tag -l "continuous" | sort -V | tail -n1 || echo "")
+        
+        if [ -z "$LAST_CONTINUOUS" ]; then
+          # If no previous continuous tag, get commits from last official release or beginning
+          LAST_OFFICIAL=$(git tag -l | grep -v "continuous" | sort -V | tail -n1 || echo "")
+          if [ -z "$LAST_OFFICIAL" ]; then
+            COMMITS=$(git log --oneline --pretty=format:"- %s (%h)" | head -50)
+            TOTAL_COMMITS=$(git rev-list --count HEAD)
+            NOTES="## Unstable Build - Continuous\n\n"
+            NOTES+="⚠️ **This is an unstable pre-release build** ⚠️\n\n"
+            NOTES+="### All commits (first $TOTAL_COMMITS commits):\n\n$COMMITS\n\n"
+            NOTES+="*If there are more than 50 commits, only the latest 50 are shown.*"
+          else
+            COMMITS=$(git log --oneline --pretty=format:"- %s (%h)" $LAST_OFFICIAL..HEAD)
+            NOTES="## Unstable Build - Continuous\n\n"
+            NOTES+="⚠️ **This is an unstable pre-release build** ⚠️\n\n"
+            NOTES+="### Commits since last official release ($LAST_OFFICIAL):\n\n$COMMITS"
+          fi
+        else
+          COMMITS=$(git log --oneline --pretty=format:"- %s (%h)" $LAST_CONTINUOUS..HEAD)
+          NOTES="## Unstable Build - Continuous\n\n"
+          NOTES+="⚠️ **This is an unstable pre-release build** ⚠️\n\n"
+          NOTES+="### Commits since last continuous build ($LAST_CONTINUOUS):\n\n$COMMITS"
+        fi
+        
+        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+        echo -e "$NOTES" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Generate release notes for official release
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      id: official_notes
+      run: |
+        # Get the previous tag (last official release)
+        PREVIOUS_TAG=$(git tag -l | grep -v "continuous" | sort -V | tail -n2 | head -n1 || echo "")
+        
+        if [ -z "$PREVIOUS_TAG" ]; then
+          # First release, get all commits
+          COMMITS=$(git log --oneline --pretty=format:"- %s (%h)" | head -50)
+          NOTES="## FF8UltimateEditor ${{ github.ref_name }}\n\n"
+          NOTES+="### 🎉 First Official Release! 🎉\n\n"
+          NOTES+="#### All commits (first 50):\n\n$COMMITS\n\n"
+          NOTES+="*If there are more than 50 commits, only the latest 50 are shown.*"
+        else
+          # Get commits between previous tag and this tag
+          COMMITS=$(git log --oneline --pretty=format:"- %s (%h)" $PREVIOUS_TAG..${{ github.ref_name }})
+          NOTES="## FF8UltimateEditor ${{ github.ref_name }}\n\n"
+          NOTES+="### 📦 Official Release\n\n"
+          NOTES+="#### Changes since $PREVIOUS_TAG:\n\n$COMMITS"
+        fi
+        
+        echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+        echo -e "$NOTES" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: zip name continuous
+      shell: bash
+      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
+      run: |
+        cd release
+        7z a -tzip "FF8UltimateEditor-continuous-${{ github.sha }}.zip" .
+        pwd
+        cd ..
+        ls -al
+
+    - name: zip name tag
+      shell: bash
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        cd release
+        7z a -tzip "FF8UltimateEditor-${{ github.ref_name }}.zip" .
+        cd ..
+
+    - name: Deploy Package (Continuous)
+      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
+      uses: softprops/action-gh-release@v1
+      with:
+        token: "${{ secrets.GITHUB_TOKEN }}"
+        tag_name: "continuous"
+        name: "Unstable Build - Continuous"
+        body: ${{ steps.continuous_notes.outputs.release_notes }}
+        prerelease: true
+        files: |
+          release/FF8UltimateEditor-*.zip
+        generate_release_notes: false  # We're providing custom notes
+        make_latest: false  # Don't mark continuous builds as latest
+
+    - name: Deploy tag Package (Official)
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        token: "${{ secrets.GITHUB_TOKEN }}"
+        tag_name: ${{ github.ref_name }}
+        name: "FF8UltimateEditor-${{ github.ref_name }}"
+        body: ${{ steps.official_notes.outputs.release_notes }}
+        prerelease: false
+        files: |
+          release/FF8UltimateEditor-*.zip
+        generate_release_notes: false  # We're providing custom notes
