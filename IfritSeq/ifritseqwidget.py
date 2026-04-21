@@ -35,29 +35,6 @@ class IfritSeqWidget(QWidget):
         self.current_if_type = CurrentIfType.NONE
         self.__ifrit_icon = QIcon(os.path.join(icon_path, 'ifrit.ico'))
         # Main window
-        self.save_button = QPushButton()
-        self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.save_button.setIconSize(QSize(30, 30))
-        self.save_button.setFixedSize(40, 40)
-        self.save_button.clicked.connect(self.__save_file)
-        self.layout_main = QVBoxLayout()
-        self.save_button.setToolTip("Save all modification in the .dat (irreversible)")
-
-        self.file_dialog = QFileDialog()
-        self.file_dialog_button = QPushButton()
-        self.file_dialog_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.file_dialog_button.setIconSize(QSize(30, 30))
-        self.file_dialog_button.setFixedSize(40, 40)
-        self.file_dialog_button.clicked.connect(self.__load_file)
-        self.file_dialog_button.setToolTip("Open a .dat file")
-
-        self.reset_button = QPushButton()
-        self.reset_button.setIcon(QIcon(os.path.join(icon_path, 'reset.png')))
-        self.reset_button.setIconSize(QSize(30, 30))
-        self.reset_button.setFixedSize(40, 40)
-        self.reset_button.clicked.connect(self.__reload_file)
-        self.reset_button.setToolTip("Reload the file. /!\\ This will delete any local unsaved change made")
-
         self._import_xml_button = QPushButton()
         self._import_xml_button.setIcon(QIcon(os.path.join(icon_path, 'xml_upload.png')))
         self._import_xml_button.setIconSize(QSize(30, 30))
@@ -87,9 +64,6 @@ class IfritSeqWidget(QWidget):
         self.seq_analyze_button = QPushButton("Analyze")
         self.seq_analyze_button.clicked.connect(self.__analyze_sequence)
         self.layout_top = QHBoxLayout()
-        self.layout_top.addWidget(self.file_dialog_button)
-        self.layout_top.addWidget(self.save_button)
-        self.layout_top.addWidget(self.reset_button)
         self.layout_top.addWidget(self._import_xml_button)
         self.layout_top.addWidget(self._export_xml_button)
         self.layout_top.addWidget(self.info_button)
@@ -103,6 +77,8 @@ class IfritSeqWidget(QWidget):
         self.main_horizontal_layout.addLayout(self.main_vertical_layout)
         self.main_horizontal_layout.addWidget(self.seq_analyze_textarea)
         self.window_layout.addLayout(self.layout_top)
+
+        self.layout_main = QVBoxLayout()
 
         self.window_layout.addWidget(self.seq_analyze_button)
         self.window_layout.addWidget(self.scroll_area)
@@ -124,10 +100,6 @@ class IfritSeqWidget(QWidget):
         message_box.setWindowTitle("IfritAI - Info")
         message_box.exec()
 
-    def hide_file_controls(self):
-        self.file_dialog_button.hide()
-        self.save_button.hide()
-        self.reset_button.hide()
 
     def load_file(self, path: str):
         self.__load_file(path)

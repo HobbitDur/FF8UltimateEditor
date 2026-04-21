@@ -1,6 +1,6 @@
 import os
 import pathlib
-from PyQt6.QtCore import QSize
+from PyQt6.QtCore import QSize, QSettings
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -17,8 +17,9 @@ from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 class IfritMonsterWidget(QWidget):
     """IfritAI + IfritSeq + Ifrit3D with a single shared file toolbar."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, settings:QSettings, icon_path="Resources", game_data_folder="FF8GameData"):
         super().__init__()
+        self.settings = settings
         self.icon_path = icon_path
         self.file_loaded = ""
         self._file_dialog_folder = ""
@@ -36,16 +37,22 @@ class IfritMonsterWidget(QWidget):
         self._file_dialog = QFileDialog()
 
         self._open_btn = self._icon_btn('folder.png', "Open .dat file", self._open_file)
+        self._open_btn.setIconSize(QSize(30, 30))
+        self._open_btn.setFixedSize(40, 40)
         self._save_btn = self._icon_btn('save.svg', "Save", self._save_file)
+        self._save_btn.setIconSize(QSize(30, 30))
+        self._save_btn.setFixedSize(40, 40)
         self._reload_btn = self._icon_btn('reset.png', "Reload file", self._reload_file)
+        self._reload_btn.setIconSize(QSize(30, 30))
+        self._reload_btn.setFixedSize(40, 40)
         self._save_btn.setEnabled(False)
         self._reload_btn.setEnabled(False)
 
         # Add Cronos checkbox
         self._cronos_checkbox = QCheckBox("Cronos")
         self._cronos_checkbox.setToolTip("Load AI data with cronos configuration")
+        self._cronos_checkbox.setChecked(self.settings.value("ifrit/cronos_checkbox", defaultValue=False, type=bool))
         self._cronos_checkbox.stateChanged.connect(self._on_cronos_toggled)
-
         self._monster_label = QLabel("No file loaded")
 
         for w in [self._open_btn, self._save_btn, self._reload_btn, self._cronos_checkbox, self._monster_label]:
@@ -55,12 +62,10 @@ class IfritMonsterWidget(QWidget):
         self.ifrit_manager = IfritManager(game_data_folder)
         # ── Sub-widgets ──────────────────────────────────────────────
         # AI: keeps its own sub-toolbar (expert, section, color…) minus file buttons
-        self._ai_widget = IfritAIWidget(self.ifrit_manager, icon_path=icon_path)
-        self._ai_widget.hide_file_controls()
+        self._ai_widget = IfritAIWidget(settings, self.ifrit_manager, icon_path=icon_path)
 
         # Seq: keeps xml import/export sub-toolbar minus file buttons
         self._seq_widget = IfritSeqWidget(self.ifrit_manager, icon_path=icon_path)
-        self._seq_widget.hide_file_controls()
 
         # 3D: keeps its own sub-toolbar (mesh/wire/play/frame…)
         self._3d_widget = Ifrit3DWidget(self.ifrit_manager, show_controls=True)
@@ -76,6 +81,7 @@ class IfritMonsterWidget(QWidget):
         self._tabs.addTab(self._texture_widget, "Texture")
         self._tabs.addTab(self._seq_widget, "Sequence")
         self._tabs.currentChanged.connect(self._on_tab_changed)
+        self._tabs.setCurrentIndex(self.settings.value("ifrit/current_tab", defaultValue=0, type=int))
 
         root.addWidget(toolbar)
         root.addWidget(self._tabs, 1)
@@ -97,8 +103,8 @@ class IfritMonsterWidget(QWidget):
     # ── Tab switching ─────────────────────────────────────────────────
 
     def _on_tab_changed(self, index: int):
-        # Save not applicable for the 3D viewer
         self._save_btn.setEnabled(bool(self.file_loaded))
+        self.settings.setValue("ifrit/current_tab", self._tabs.currentIndex())
 
     # ── Cronos checkbox handler ───────────────────────────────────────
 
@@ -108,7 +114,7 @@ class IfritMonsterWidget(QWidget):
             self.ifrit_manager.game_data.load_ai_data("ai_cronos.json")
         else:  # Unchecked
             self.ifrit_manager.game_data.load_ai_data("ai_vanilla.json")
-
+        self.settings.setValue("ifrit/cronos_checkbox", state)
         # Call reload function to refresh the display
         self._reload_file()
 

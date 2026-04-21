@@ -3,10 +3,11 @@ import pathlib
 import re
 from typing import List
 
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, QSettings
 from PyQt6.QtGui import QIcon, QKeyEvent
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QLabel, \
     QColorDialog, QCheckBox, QMessageBox, QApplication
+from numpy.ma.core import default_fill_value
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.gamedata import GameData
@@ -25,14 +26,15 @@ from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 
 class IfritAIWidget(QWidget):
     ADD_LINE_SELECTOR_ITEMS = ["Condition", "Command"]
-    EXPERT_SELECTOR_ITEMS = ["User-friendly", "Hex-editor", "Raw-code", "IfritAI-code-legacy", "IfritAI-code"]
+    EXPERT_SELECTOR_ITEMS = ["User-friendly", "Hex-editor", "Raw-code", "IfritAI-code"]
     MAX_COMMAND_PARAM = 7
     MAX_OP_ID = 61
     MAX_OP_CODE_VALUE = 255
     MIN_OP_CODE_VALUE = 0
 
-    def __init__(self,  ifrit_manager:IfritManager, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self,  settings:QSettings, ifrit_manager:IfritManager, icon_path="Resources", game_data_folder="FF8GameData"):
         QWidget.__init__(self)
+        self.settings = settings
         self.current_if_index = 0
         self.file_loaded = ""
         self.window_layout = QVBoxLayout()
@@ -46,31 +48,11 @@ class IfritAIWidget(QWidget):
         # Main window
         self.__ifrit_icon = QIcon(os.path.join(icon_path, 'ifrit.ico'))
 
-        self.save_button = QPushButton()
-        self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.save_button.setIconSize(QSize(30, 30))
-        self.save_button.setFixedSize(40, 40)
-        self.save_button.clicked.connect(self.__save_file)
         self.layout_main = QVBoxLayout()
-        self.save_button.setToolTip("Save all modification in the .dat (irreversible)")
 
-        self.file_dialog = QFileDialog()
-        self.file_dialog_button = QPushButton()
-        self.file_dialog_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.file_dialog_button.setIconSize(QSize(30, 30))
-        self.file_dialog_button.setFixedSize(40, 40)
-        self.file_dialog_button.clicked.connect(self.__load_file)
-        self.file_dialog_button.setToolTip("Open a .dat file")
         self._file_dialog_folder = ""
 
         self.file_dialog_export = QFileDialog()
-
-        self.reset_button = QPushButton()
-        self.reset_button.setIcon(QIcon(os.path.join(icon_path, 'reset.png')))
-        self.reset_button.setIconSize(QSize(30, 30))
-        self.reset_button.setFixedSize(40, 40)
-        self.reset_button.clicked.connect(self.__reload_file)
-        self.reset_button.setToolTip("Reload the file. /!\\ This will delete any local unsaved change made")
 
         self.info_button = QPushButton()
         self.info_button.setIcon(QIcon(os.path.join(icon_path, 'info.png')))
@@ -111,16 +93,15 @@ class IfritAIWidget(QWidget):
         self._export_md_folder = ""
 
         expert_tooltip_text = "IfritAI offer 4 different mod of editing:<br/>" + \
-                              self.EXPERT_SELECTOR_ITEMS[0] + ": For modifying having a set of expected value<br/>" + \
-                              self.EXPERT_SELECTOR_ITEMS[1] + ": For modifying directly the hex<br/>" + \
-                              self.EXPERT_SELECTOR_ITEMS[2] + ": For getting raw function with list of value<br/>" + \
-                              self.EXPERT_SELECTOR_ITEMS[3] + ": AI editor with IfritAI-legacy language. Don't use it for new stuff" + \
-                              self.EXPERT_SELECTOR_ITEMS[4] + ": AI editor with IfritAI language."
+                              "<b><u>" + self.EXPERT_SELECTOR_ITEMS[0] + ":</u></b> For modifying having a set of expected value<br/>" + \
+                              "<b><u>" + self.EXPERT_SELECTOR_ITEMS[1] + ":</u></b> For modifying directly the hex<br/>" + \
+                              "<b><u>" + self.EXPERT_SELECTOR_ITEMS[2] + ":</u></b> For getting raw function with list of value<br/>" + \
+                              "<b><u>" + self.EXPERT_SELECTOR_ITEMS[3] + ":</u></b> AI editor with IfritAI language."
         self.expert_selector_title = QLabel("Expert mode: ")
         self.expert_selector_title.setToolTip(expert_tooltip_text)
         self.expert_selector = QComboBox()
         self.expert_selector.addItems(self.EXPERT_SELECTOR_ITEMS)
-        self.expert_selector.setCurrentIndex(4)
+        self.expert_selector.setCurrentIndex(self.settings.value("ifrit/AI/expert_selector", defaultValue=4, type=int))
         self.expert_selector.activated.connect(self.__change_expert)
 
         self.expert_layout = QHBoxLayout()
@@ -129,17 +110,14 @@ class IfritAIWidget(QWidget):
         self.expert_selector.setToolTip(expert_tooltip_text)
 
         self.hex_selector = QCheckBox()
-        self.hex_selector.setChecked(False)
+        self.hex_selector.setChecked(self.settings.value("ifrit/AI/hex_selector", defaultValue=False, type=bool))
         self.hex_selector.setText("Hex value")
         self.hex_selector.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.hex_selector.toggled.connect(self.__change_hex)
         self.hex_selector.setToolTip("Change all int value to hex value. Doesn't work on IfritAI code")
-        self.hex_selector.setEnabled(0)
+
 
         self.layout_top = QHBoxLayout()
-        self.layout_top.addWidget(self.file_dialog_button)
-        self.layout_top.addWidget(self.save_button)
-        self.layout_top.addWidget(self.reset_button)
         self.layout_top.addWidget(self.info_button)
         self.layout_top.addWidget(self.button_color_picker)
         self.layout_top.addWidget(self._import_md_button)
@@ -149,7 +127,7 @@ class IfritAIWidget(QWidget):
         self.layout_top.addWidget(self.script_section)
         self.layout_top.addStretch(1)
 
-        self.code_widget = CodeWidget(self.ifrit_manager.game_data, current_ai_section=self.script_section.currentIndex(), enemy_data=self.ifrit_manager.enemy, ifrit_manager=self.ifrit_manager, expert_level=self.expert_selector.currentIndex(),
+        self.code_widget = CodeWidget(self.ifrit_manager.game_data, current_ai_section=self.script_section.currentIndex(), ifrit_manager=self.ifrit_manager, expert_level=self.expert_selector.currentIndex(),
                                       code_changed_hook=self.code_expert_changed_hook)
         self.code_widget.hide()
 
@@ -172,6 +150,7 @@ class IfritAIWidget(QWidget):
         self.scroll_widget.setLayout(self.layout_main)
         self.layout_main.addLayout(self.main_horizontal_layout)
 
+        self.__hide_show_expert()
         # self.show()
 
     def keyPressEvent(self, event: QKeyEvent):
@@ -234,7 +213,7 @@ class IfritAIWidget(QWidget):
 
     def __hide_show_expert(self):
         expert_chosen = self.expert_selector.currentIndex()
-        if expert_chosen in (2, 3, 4):  # Expert mode
+        if expert_chosen in (2, 3):  # Expert mode
             self.code_widget.show()
             for i in range(len(self.add_button_widget)):
                 self.add_button_widget[i].hide()
@@ -246,12 +225,12 @@ class IfritAIWidget(QWidget):
                 self.add_button_widget[i].show()
             for i in range(len(self.remove_button_widget)):
                 self.remove_button_widget[i].show()
-        if expert_chosen in (3, 4):
-            self.hex_selector.setEnabled(0)
+        if expert_chosen in (2, 3):
+            self.hex_selector.setEnabled(False)
             for i in range(len(self.command_line_widget)):
                 self.command_line_widget[i].hide()
         else:
-            self.hex_selector.setEnabled(1)
+            self.hex_selector.setEnabled(True)
             for i in range(len(self.command_line_widget)):
                 self.command_line_widget[i].show()
 
@@ -261,17 +240,18 @@ class IfritAIWidget(QWidget):
             line.change_expert(expert_chosen)
         self.__hide_show_expert()
         self._set_text_expert()
+        self.settings.setValue("ifrit/AI/expert_selector", expert_chosen)
 
     def _set_text_expert(self):
         expert_chosen = self.expert_selector.currentIndex()
         command_list = [command_widget.get_command() for command_widget in self.command_line_widget]
         if expert_chosen == 2:  # Raw data
             self.code_widget.set_text_from_command(command_list)
-        elif expert_chosen == 3:  # IfritAI legacy language
-            self.code_widget.set_ifrit_ai_legacy_code_from_command(command_list)
-        elif expert_chosen == 4:  # IfritAI language
+        #elif expert_chosen == 3:  # IfritAI legacy language
+        #    self.code_widget.set_ifrit_ai_legacy_code_from_command(command_list)
+        elif expert_chosen == 3:  # IfritAI language
             self.code_widget.set_ifrit_ai_code_from_command(command_list, self.ifrit_manager.decompiler)
-        if expert_chosen in (2, 3, 4):
+        if expert_chosen in (2, 3):
             self.code_widget.change_expert_level(expert_chosen, self.script_section.currentIndex())
 
     def __change_hex(self):
@@ -279,6 +259,7 @@ class IfritAIWidget(QWidget):
         self.code_widget.change_hex(hex_chosen)
         for line in self.command_line_widget:
             line.change_print_hex(hex_chosen)
+        self.settings.setValue("ifrit/AI/hex_selector", self.hex_selector.isChecked())
 
     def __select_color(self):
         color = QColorDialog.getColor()
@@ -410,12 +391,6 @@ class IfritAIWidget(QWidget):
     def __reset_if(self):
         for command_widget in self.command_line_widget:
             command_widget.set_if_index(0)
-
-    def hide_file_controls(self):
-        """Call this when embedded in a combined widget."""
-        self.file_dialog_button.hide()
-        self.save_button.hide()
-        self.reset_button.hide()
 
     def load_file(self, path: str):
         self.__load_file(path)

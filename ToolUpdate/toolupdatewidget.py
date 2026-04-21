@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 from typing import Callable
 
-from PyQt6.QtCore import QObject, pyqtSignal, QThread, Qt, pyqtSlot
+from PyQt6.QtCore import QObject, pyqtSignal, QThread, Qt, pyqtSlot, QSettings
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QComboBox, QPushButton, QProgressBar, QVBoxLayout, QMessageBox, QApplication, QCheckBox, QGroupBox
 
@@ -36,8 +36,9 @@ class Installer(QObject):
 class ToolUpdateWidget(QWidget):
     install_requested = pyqtSignal(ToolDownloader, bool, list)
 
-    def __init__(self,tool_list_callback:Callable, resource_path: str = "Resources" ):
+    def __init__(self,settings:QSettings,tool_list_callback:Callable, resource_path: str = "Resources" ):
         QWidget.__init__(self)
+        self.settings = settings
         self._tool_list_callback = tool_list_callback
         self.resource_path = resource_path
         self.self_update_request = False
@@ -74,11 +75,11 @@ class ToolUpdateWidget(QWidget):
 
         self.canal_widget = QComboBox()
         self.canal_widget.addItems(["Stable", "Canary"])
-        self.canal_widget.setCurrentIndex(0)
+        self.canal_widget.setCurrentIndex(self.settings.value("main/ToolUpdate/canal", defaultValue=0, type=int))
         # self.canal_widget.activated.connect(self.__section_change)
         self.canal_widget.setToolTip("Stable: Last official release\n"
                                      "Canary: Last version build, latest development but contains bug")
-
+        self.canal_widget.activated.connect(self.__canal_changed)
         self.download_button_widget = QPushButton()
         self.download_button_widget.setFixedSize(40, 40)
         self.download_button_widget.setIcon(QIcon(os.path.join(resource_path, 'download.ico')))
@@ -173,6 +174,8 @@ class ToolUpdateWidget(QWidget):
 
         self.setLayout(self.main_layout)
 
+    def __canal_changed(self):
+        self.settings.setValue("main/ToolUpdate/canal", self.canal_widget.currentIndex())
 
     def install_progress(self, nb_install_done):
         self.progress.setValue(nb_install_done)

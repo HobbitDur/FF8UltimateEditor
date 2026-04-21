@@ -16,7 +16,7 @@ from Ifrit.ifritmanager import IfritManager
 class CodeWidget(QWidget):
     IF_INDENT_SIZE = 3
 
-    def __init__(self, game_data: GameData, enemy_data: MonsterAnalyser, current_ai_section, ifrit_manager:IfritManager, expert_level=2, command_list: List[CommandAnalyser] = (), code_changed_hook=None,
+    def __init__(self, game_data: GameData, current_ai_section, ifrit_manager:IfritManager, expert_level=2, command_list: List[CommandAnalyser] = (), code_changed_hook=None,
                  hex_chosen: bool = False):
         QWidget.__init__(self)
         self.game_data = game_data
@@ -48,18 +48,16 @@ class CodeWidget(QWidget):
             pass
         if expert_level == 2:
             self.compute_button.clicked.connect(self._compute_text_to_command)
+        #elif expert_level == 3:
+        #    self.compute_button.clicked.connect(self._compute_ifrit_ai_legacy_code_to_command)
         elif expert_level == 3:
-            self.compute_button.clicked.connect(self._compute_ifrit_ai_legacy_code_to_command)
-        elif expert_level == 4:
             self.compute_button.clicked.connect(self._compile_ifrit_ai_code_to_command)
         else:
             self.compute_button.clicked.connect(lambda: None)
 
     def change_hex(self, hex_chosen):
         self._hex_chosen = hex_chosen
-        if self._expert_level == 3:
-            return
-        elif self._expert_level == 2:
+        if self._expert_level == 2:
             new_code_text = ""
             for line in self.code_area_widget.toPlainText().splitlines():
                 command_id_text, op_code_text = self._get_data_from_line(line)

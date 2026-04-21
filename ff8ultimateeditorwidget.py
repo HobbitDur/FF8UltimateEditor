@@ -2,7 +2,7 @@ import os
 import sys
 from datetime import datetime
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel, QFrame, QStackedWidget
 
@@ -42,6 +42,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.setWindowTitle("FF8 ultimate editor")
         self.setWindowIcon(QIcon(os.path.join(resources_path, 'hobbitdur.ico')))
 
+        self.settings = QSettings("HobbitDur", "FF8UltimateEditor")
         self._main_layout = QVBoxLayout(self)
         self.setLayout(self._main_layout)
 
@@ -59,7 +60,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._program_option_title = QLabel("Hobbit tools:")
         self._program_option = QComboBox()
         self._program_option.addItems(self.HOBBIT_OPTION_ITEMS)
-        self._program_option.setCurrentIndex(0)
+        self._program_option.setCurrentIndex(self.settings.value("main/program_option", defaultValue=0, type=int))
         self._program_option.activated.connect(self._program_option_change)
         self._program_option.setToolTip("Choose which program to edit your c0m file")
 
@@ -69,7 +70,7 @@ class FF8UltimateEditorWidget(QWidget):
 
         # 4. Header: External Tool Buttons
         self._external_program_title = QLabel("External program:")
-        self._tool_update_widget = ToolUpdateWidget(self.tools_to_update)
+        self._tool_update_widget = ToolUpdateWidget(self.settings, self.tools_to_update)
 
         # Initialize External Tool Buttons
         self._self_button = ExternalToolWidget(os.path.join(resources_path, 'hobbitdur.ico'), self._launch_FF8Ultimate, "Launch FF8UltimateEditor")
@@ -120,18 +121,17 @@ class FF8UltimateEditorWidget(QWidget):
         self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path))
         self._draw_editor_widget = DrawEditorWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path))
-        self._ifrit_widget = IfritMonsterWidget(icon_path=resources_path, game_data_folder=game_data_path)
+        self._ifrit_widget = IfritMonsterWidget( settings=self.settings, icon_path=resources_path, game_data_folder=game_data_path)
 
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
-        self.tool_stack.addWidget(self._ifrit_widget)
-        #self.tool_stack.addWidget(self._ifritAI_widget)  # Index 0
-        self.tool_stack.addWidget(self._shumi_translator_widget)  # Index 2
-        self.tool_stack.addWidget(self._tonberry_shop_widget)  # Index 3
-        self.tool_stack.addWidget(self._ccgroup_widget)  # Index 4
-        self.tool_stack.addWidget(self._draw_editor_widget)  # Index 6
-        self.tool_stack.addWidget(self._solomonring_widget) # Index 9
-
+        self.tool_stack.addWidget(self._ifrit_widget) # Index 0
+        self.tool_stack.addWidget(self._shumi_translator_widget)  # Index 1
+        self.tool_stack.addWidget(self._tonberry_shop_widget)  # Index 2
+        self.tool_stack.addWidget(self._ccgroup_widget)  # Index 3
+        self.tool_stack.addWidget(self._draw_editor_widget)  # Index 4
+        self.tool_stack.addWidget(self._solomonring_widget) # Index 5
+        self._program_option_change()
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)
         self._main_layout.addWidget(self._enhance_end_separator_line)
@@ -188,6 +188,7 @@ class FF8UltimateEditorWidget(QWidget):
         """Simple logic to switch between tools"""
         index = self._program_option.currentIndex()
         self.tool_stack.setCurrentIndex(index)
+        self.settings.setValue("main/program_option", index)
 
     def tools_to_update(self):
         tool_list = []
