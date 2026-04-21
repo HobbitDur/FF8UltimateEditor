@@ -78,17 +78,16 @@ class FF8OpenGLWidget(QOpenGLWidget):
             img = pix.toImage().convertToFormat(QImage.Format.Format_RGBA8888)
             w, h = img.width(), img.height()
 
-            # Convert black pixels to transparent
-            for y in range(h):
-                for x in range(w):
-                    color = img.pixelColor(x, y)
-                    # If pixel is black or very dark, make it transparent
-                    # If pixel is pure black, make it transparent
-                    if color.red() == 0 and color.green() == 0 and color.blue() == 0:
-                        color.setAlpha(0)
-                    img.setPixelColor(x, y, color)
+            # Get raw bytes as bytearray for modification
+            ptr = img.bits()
+            ptr.setsize(img.sizeInBytes())
+            data = bytearray(ptr)
 
-            raw = bytes(img.bits().asarray(w * h * 4))
+            # Process RGBA data: for each pixel, if RGB is 0, set alpha to 0
+            for i in range(0, len(data), 4):
+                if data[i] == 0 and data[i + 1] == 0 and data[i + 2] == 0:
+                    data[i + 3] = 0  # Set alpha to 0
+
             tex = glGenTextures(1)
             glBindTexture(GL_TEXTURE_2D, tex)
 
@@ -98,7 +97,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
-                         GL_RGBA, GL_UNSIGNED_BYTE, raw)
+                         GL_RGBA, GL_UNSIGNED_BYTE, bytes(data))
             self._gl_textures.append(tex)
         self._pending_qpixmaps = []
         self._textures_dirty = False
@@ -232,6 +231,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
     def _draw_textured_triangles(self):
         glEnable(GL_TEXTURE_2D)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glColor3f(1.0, 1.0, 1.0)
         current_raw_id = None
         current_texture_idx = -1
@@ -257,10 +258,13 @@ class FF8OpenGLWidget(QOpenGLWidget):
                 vx = self.vertices_array[idx]
                 glVertex3f(vx[0], vx[1], vx[2])
             glEnd()
+        glDisable(GL_BLEND)
         glDisable(GL_TEXTURE_2D)
 
     def _draw_textured_quads(self):
         glEnable(GL_TEXTURE_2D)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glColor3f(1.0, 1.0, 1.0)
         current_raw_id = None
 
@@ -290,7 +294,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
             glTexCoord2f(uvs[3][0], uvs[3][1])
             glVertex3f(verts[3][0], verts[3][1], verts[3][2])
             glEnd()
-
+        glDisable(GL_BLEND)
         glDisable(GL_TEXTURE_2D)
 
     def draw_skeleton(self):
