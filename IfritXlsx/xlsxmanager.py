@@ -84,6 +84,7 @@ class DatToXlsx:
     def close_file(self):
         if self.workbook:
             self.workbook.close()
+            self.workbook = None
         self.__file_name_list = []
 
     def __init_style(self):
@@ -703,6 +704,7 @@ class XlsxToDat:
     def close_file(self):
         if self.workbook:
             self.workbook.close()
+            self.workbook = None
 
     def import_from_xlsx(self, sheet, game_data: GameData, output_path, decompiler:AIDecompiler):
         """

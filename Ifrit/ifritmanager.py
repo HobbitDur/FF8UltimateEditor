@@ -538,7 +538,7 @@ class IfritManager:
         self._dat_xlsx_manager.create_ref_data(self.game_data)
         self._dat_xlsx_manager.close_file()
 
-    def xlsx_to_dat(self, file_list, monster_id_list:List[int]):
+    def xlsx_to_dat(self, file_list, monster_id_list:Tuple[int]):
         for sheet in self._xlsx_to_dat_manager.workbook:
             if sheet.title != xlsxmanager.REF_DATA_SHEET_TITLE:
                 monster_index = int(re.search(r'\d+', sheet.title).group())

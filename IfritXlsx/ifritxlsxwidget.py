@@ -157,13 +157,14 @@ class IfritXlsxWidget(QWidget):
         else:
 
             dat_file_current_list = (self.ifrit_manager.enemy.origin_path,)
-            dat_id_current_list = (self.ifrit_manager.enemy.id,)
+            #dat_id_current_list = (self.ifrit_manager.enemy.id,)
             if self.process_selector.currentIndex() == 0:  # Dat to xlsx
                 self.ifrit_manager.create_xlsx_file(self.xlsx_file_selected)
                 self.ifrit_manager.dat_to_xlsx(dat_file_current_list, False)
             elif self.process_selector.currentIndex() == 1:  # Xlsx to dat
                 self.ifrit_manager.load_xlsx_file(self.xlsx_file_selected)
-                self.ifrit_manager.xlsx_to_dat(dat_file_current_list, dat_id_current_list)
+                self.ifrit_manager.set_enemy_info_from_xlsx()
+                #self.ifrit_manager.xlsx_to_dat(dat_file_current_list, dat_id_current_list)
             self.ifrit_manager.close_xlsx_file()
             if self.open_xlsx.isChecked():
                 os.startfile(self.xlsx_file_selected)
