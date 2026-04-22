@@ -200,10 +200,7 @@ class IfritAIWidget(QWidget):
 
     def code_expert_changed_hook(self, command_list: List[CommandAnalyser]):
         command_list_from_widget = [command_widget.get_command() for command_widget in self.command_line_widget]
-        if self.expert_selector.currentIndex() == 3:
-            delete_data = True
-        else:
-            delete_data = False
+        delete_data = False
         for command in command_list_from_widget:
             self.__remove_line(command, delete_data=delete_data)
         for command in command_list:

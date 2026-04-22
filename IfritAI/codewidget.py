@@ -47,10 +47,12 @@ class CodeWidget(QWidget):
         except TypeError:
             pass
         if expert_level == 2:
+            self.compute_button.hide()
             self.compute_button.clicked.connect(self._compute_text_to_command)
         #elif expert_level == 3:
         #    self.compute_button.clicked.connect(self._compute_ifrit_ai_legacy_code_to_command)
         elif expert_level == 3:
+            self.compute_button.show()
             self.compute_button.clicked.connect(self._compile_ifrit_ai_code_to_command)
         else:
             self.compute_button.clicked.connect(lambda: None)
