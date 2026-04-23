@@ -106,7 +106,7 @@ class SequenceAnalyser:
                         description_param.append("Unknown type parameter")
                 text_analyze += current_op_code_data['text'].format(*description_param)
             elif current_op_code_data['complexity'] == "complex":
-                if current_op_code_data['op_code'] in (0xB8, 0xB5, 0xB6, 0x97, 0x98): # Sound
+                if current_op_code_data['op_code'] in (0xB8, 0xB5, 0xB6, 0x97, 0x98):  # Sound
                     sound_id = param_list[0]
                     sound_flag = param_list[1]
                     if sound_flag & 0x04:
@@ -171,7 +171,8 @@ class SequenceAnalyser:
                         else:
                             print(f"No param_id in special_change_current_value_params for >=0x80 values")
                         text_analyze += current_op_code_data['text'].format(special_read.format(param_list[0]))
-
+                if current_op_code_data['op_code'] in (0xB4, 0xB0):
+                    index_data, text_analyze = self._parse_b4_b0(index_data, text_analyze)
             text_analyze += "\n"
         self.__raw_text = text_analyze
 
@@ -189,3 +190,60 @@ class SequenceAnalyser:
 
     def get_text(self):
         return self.__raw_text
+
+    def _parse_b4_b0(self, index_data, text_analyze):
+        """
+        Parse B4 opcode (conditional post‑attack movement/rotation).
+        Does NOT consume the conditional byte (for bit3) – that byte is the next opcode.
+        """
+        # Mandatory bytes
+        attacker_action = self._sequence[index_data]
+        extra_flags = self._sequence[index_data + 1]
+        index_data += 2
+        param_list = [attacker_action, extra_flags]
+        text_analyze += f" {attacker_action:02X} {extra_flags:02X}"
+
+        # Optional extra bytes (bits 0-2) – always consumed
+        extra_params = []
+        if extra_flags & 0x01:
+            val = self._sequence[index_data]
+            extra_params.append(val)
+            text_analyze += f" {val:02X}"
+            index_data += 1
+        if extra_flags & 0x02:
+            val = self._sequence[index_data]
+            extra_params.append(val)
+            text_analyze += f" {val:02X}"
+            index_data += 1
+        if extra_flags & 0x04:
+            val = self._sequence[index_data]
+            extra_params.append(val)
+            text_analyze += f" {val:02X}"
+            index_data += 1
+
+        # Branch description (do NOT consume extra bytes for bit3)
+        branch_desc = ""
+        if extra_flags & 0x08:
+            branch_desc = f"Do something or nothing"
+        elif extra_flags & 0x10:
+            branch_desc = f"Do something or nothing"
+        elif extra_flags & 0x40:
+            # Custom vector branch: always reads 6 bytes
+            vec_x = int.from_bytes(self._sequence[index_data:index_data + 2], 'little', signed=True)
+            vec_y = int.from_bytes(self._sequence[index_data + 2:index_data + 4], 'little', signed=True)
+            vec_z = int.from_bytes(self._sequence[index_data + 4:index_data + 6], 'little', signed=True)
+            param_list.extend([vec_x, vec_y, vec_z])
+            text_analyze += f" {vec_x:04X} {vec_y:04X} {vec_z:04X}"
+            index_data += 6
+            branch_desc = f"custom vector ({vec_x}, {vec_y}, {vec_z})"
+        else:
+            branch_desc = "default branch"
+
+        self.__op_code.append(0xB4)
+        self.__raw_parameters.append(param_list)
+
+        text_analyze += f": Conditional post‑attack action (B4) – attackerAction={attacker_action}, extraFlags=0x{extra_flags:02X}, {branch_desc}"
+        if extra_params:
+            text_analyze += f", extraParams={extra_params}"
+
+        return index_data, text_analyze

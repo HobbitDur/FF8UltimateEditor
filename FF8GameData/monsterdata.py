@@ -5,7 +5,8 @@ from typing import List, Tuple
 
 # Section 1
 class BoneSection:
-    SECTION_BONE_HEADER_NB = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_bone', 'pretty_name': 'Number bones', 'default_value': 0}
+    SECTION_BONE_HEADER_NB = {'offset': 0x00, 'size': 1, 'byteorder': 'little', 'name': 'nb_bone', 'pretty_name': 'Number bones', 'default_value': 0}
+    SECTION_BONE_HEADER_EXTRA_DATA = {'offset': 0x01, 'size': 1, 'byteorder': 'little', 'name': 'bone_extra_data', 'pretty_name': 'Bone extra data', 'default_value': 0}
     SECTION_BONE_HEADER_UNKNOWN00 = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'unknown00', 'pretty_name': 'Unknown00', 'default_value': 0}
     SECTION_BONE_HEADER_UNKNOWN01 = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'unknown01', 'pretty_name': 'Unknown01', 'default_value': 0}
     SECTION_BONE_HEADER_UNKNOWN02 = {'offset': 0x06, 'size': 2, 'byteorder': 'little', 'name': 'unknown02', 'pretty_name': 'Unknown01', 'default_value': 0}
@@ -15,6 +16,7 @@ class BoneSection:
     SECTION_BONE_HEADER_UNKNOWN2 = {'offset': 0x0E, 'size': 2, 'byteorder': 'little', 'name': 'unknown2', 'pretty_name': 'Unknown2', 'default_value': 0}
     def __init__(self):
         self.nb_bone = 0
+        self.extra_data:bool = False
         self.unknown00 = 0
         self.unknown01 = 0
         self.unknown02 = 0
@@ -30,6 +32,8 @@ class BoneSection:
     def analyze(self, data:bytes):
         self.nb_bone = int.from_bytes(data[self.SECTION_BONE_HEADER_NB['offset']:self.SECTION_BONE_HEADER_NB['offset'] + self.SECTION_BONE_HEADER_NB['size']],
                                         byteorder=self.SECTION_BONE_HEADER_NB['byteorder'])
+        self.extra_data = bool(int.from_bytes(data[self.SECTION_BONE_HEADER_EXTRA_DATA['offset']:self.SECTION_BONE_HEADER_EXTRA_DATA['offset'] + self.SECTION_BONE_HEADER_EXTRA_DATA['size']],
+                                        byteorder=self.SECTION_BONE_HEADER_EXTRA_DATA['byteorder']))
         self.unknown00 = int.from_bytes(data[self.SECTION_BONE_HEADER_UNKNOWN00['offset']:self.SECTION_BONE_HEADER_UNKNOWN00['offset'] + self.SECTION_BONE_HEADER_UNKNOWN00['size']],
                                         byteorder=self.SECTION_BONE_HEADER_UNKNOWN00['byteorder'])
         self.unknown01 = int.from_bytes(data[self.SECTION_BONE_HEADER_UNKNOWN01['offset']:self.SECTION_BONE_HEADER_UNKNOWN01['offset'] + self.SECTION_BONE_HEADER_UNKNOWN01['size']],
