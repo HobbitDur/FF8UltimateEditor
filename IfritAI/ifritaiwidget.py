@@ -406,20 +406,13 @@ class IfritAIWidget(QWidget):
                 [x for x in inlist[1:] if x.get_command().line_index >= pivot.get_command().line_index])
             return lesser + [pivot] + greater
 
-    def __load_file(self, file_to_load: str = ""):
-        # file_to_load = os.path.join("c0m080.dat")  # For developing faster
-        if not file_to_load:
-            file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat", directory=self._file_dialog_folder)[0]
+    def __load_file(self, file_to_load: str):
         if file_to_load:
-            self._file_dialog_folder = os.path.dirname(self._file_dialog_folder)
             self._import_md_button.setEnabled(True)
             self._export_md_button.setEnabled(True)
             self.__clear_lines(delete_data=False)
-            self.file_loaded = file_to_load
             self.__setup_section_data()
 
-    def __reload_file(self):
-        self.__load_file(self.file_loaded)
 
     def __clear_lines(self, delete_data=False):
         command_list = [x.get_command() for x in self.command_line_widget]
@@ -460,16 +453,15 @@ class IfritAIWidget(QWidget):
             code_blocks = re.findall(r'```.*?\n(.*?)\n```', content, re.DOTALL)
             # Analyse code
             for index_code, code in enumerate(code_blocks):
-                if  current_index == 3:  # For legacy we create md with legacy code, but for other we create md for the new one.
-                    ai_data[index_code] = CodeAnalyser.compute_ifrit_ai_legacy_code_to_command(game_data, enemy, code)
-                else:
-                    ai_data[index_code] = CodeWidget.get_ai_section_from_code(code, enemy, compiler, decompiler, index_code)
+                # if  current_index == 3:  # For legacy we create md with legacy code, but for other we create md for the new one.
+                #     ai_data[index_code] = CodeAnalyser.compute_ifrit_ai_legacy_code_to_command(game_data, enemy, code)
+                ai_data[index_code] = CodeWidget.get_ai_section_from_code(code, enemy, compiler, decompiler, index_code)
 
 
 
     def _export_md_file(self):
         default_name = self.ifrit_manager.enemy.origin_file_name.replace('.dat', '.md')
-        md_file_to_export = self.file_dialog.getSaveFileName(parent=self, caption="Md file to save", directory=os.path.join(self._export_md_folder, default_name))[0]
+        md_file_to_export = self.file_dialog_export.getSaveFileName(parent=self, caption="Md file to save", directory=os.path.join(self._export_md_folder, default_name))[0]
         # md_file_to_export = os.path.join("../Cronos/md_file", "c0m001.md")  # For developing faster
         if md_file_to_export:
             self.create_md_from_ai_data(md_file_to_export, self.ifrit_manager.game_data, self.ifrit_manager.enemy.battle_script_data['ai_data'], self.expert_selector.currentIndex(), self.ifrit_manager.decompiler)
@@ -484,10 +476,9 @@ class IfritAIWidget(QWidget):
                     ai_data) - 1:  # Ignore last section that is just an empty one to know when it's the end
                 break
             code_text += section_text[index_section] + "\n```\n"
-            if current_expert_index == 3: # For legacy we create md with legacy code, but for other we create md for the new one.
-                code_text += CodeAnalyser.set_ifrit_ai_legacy_code_from_command(game_data, section['command'])
-            else:
-                code_text += decompiler.decompile_from_command_list(section['command'])
+            # if current_expert_index == 3: # For legacy we create md with legacy code, but for other we create md for the new one.
+            #     code_text += CodeAnalyser.set_ifrit_ai_legacy_code_from_command(game_data, section['command'])
+            code_text += decompiler.decompile_from_command_list(section['command'])
             code_text += "```\n\n"
         soup = BeautifulSoup(code_text, "html.parser")
         for br in soup.find_all("br"):
