@@ -1,8 +1,13 @@
 
 import math
 import os
+from enum import Enum
 from typing import List, Tuple
 
+class EntityType(Enum):
+    MONSTER = 1
+    WEAPON = 2
+    CHARACTER = 3
 # Section 1
 class BoneSection:
     SECTION_BONE_HEADER_NB = {'offset': 0x00, 'size': 1, 'byteorder': 'little', 'name': 'nb_bone', 'pretty_name': 'Number bones', 'default_value': 0}

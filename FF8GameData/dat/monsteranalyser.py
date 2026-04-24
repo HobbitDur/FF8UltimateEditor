@@ -12,7 +12,7 @@ from .sequenceanalyser import SequenceAnalyser
 from ..GenericSection.ff8text import FF8Text
 from ..gamedata import GameData
 from .commandanalyser import CommandAnalyser, CurrentIfType
-from ..monsterdata import BoneSection, GeometrySection, AnimationSection, AIData, AnimationFrame, BitReader, BitWriter, Animation
+from ..monsterdata import BoneSection, GeometrySection, AnimationSection, AIData, AnimationFrame, BitReader, BitWriter, Animation, EntityType
 
 test = []
 
@@ -20,10 +20,6 @@ test = []
 class GarbageFileError(IndexError):
     pass
 
-class EntityType(Enum):
-    MONSTER = 1
-    WEAPON = 2
-    CHARACTER = 3
 
 class MonsterAnalyser:
     DAT_FILE_SECTION_LIST = ['header', 'skeleton', 'model_geometry', 'model_animation', 'unknown_section4', 'unknown_section5', 'unknown_section6', 'info_stat',

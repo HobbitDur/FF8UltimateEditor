@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
 
 from FF8GameData.dat.commandanalyser import CurrentIfType
 from FF8GameData.dat.sequenceanalyser import SequenceAnalyser
+from FF8GameData.monsterdata import EntityType
 from Ifrit.ifritmanager import IfritManager
 from IfritSeq.seqwidget import SeqWidget
 
@@ -140,14 +141,17 @@ class IfritSeqWidget(QWidget):
 
     def __setup_section_data(self):
         for index, seq_data in enumerate(self.ifrit_manager.enemy.seq_animation_data['seq_animation_data']):
-            self.seq_data_widget.append(SeqWidget(seq_data["data"], seq_data['id']))
+            self.seq_data_widget.append(SeqWidget(seq_data["data"], seq_data['id'], self.ifrit_manager.enemy.entity_type), )
         for index, seq_widget in enumerate( self.seq_data_widget):
             self.main_vertical_layout.addWidget(seq_widget)
 
     def __analyze_sequence(self):
         text_analyze = ""
         for seq_widget in self.seq_data_widget:
-            text_analyze += f"--- seq {seq_widget.getId()} ---\n"
+            if self.ifrit_manager.enemy.entity_type == EntityType.WEAPON:
+                text_analyze += f"--- seq {seq_widget.getId()} | {SeqWidget.SEQ_DESCRIPTION_CHARA[seq_widget.getId()]} ---\n"
+            else:
+                text_analyze += f"--- seq {seq_widget.getId()} ---\n"
             text_analyze +=  SequenceAnalyser(game_data=self.ifrit_manager.game_data, model_anim_data=self.ifrit_manager.enemy.model_animation_data, sequence=seq_widget.getByteData()).get_text()
             text_analyze += "\n"
         self.seq_analyze_textarea.setPlainText(text_analyze)

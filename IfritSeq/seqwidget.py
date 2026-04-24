@@ -4,6 +4,7 @@ from PyQt6.QtCore import QObject, pyqtSignal, Qt
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QSpinBox, QFrame, QSizePolicy, QLabel, QComboBox, QPlainTextEdit
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser
+from FF8GameData.monsterdata import EntityType
 from IfritAI.qspinhex import QSpinHex
 
 
@@ -17,12 +18,45 @@ class SeqWidget(QWidget):
     MIN_OP_ID = 0
     MAX_OP_CODE_VALUE = 255
     MIN_OP_CODE_VALUE = 0
-
-    def __init__(self, seq: bytearray, id: int ):
+    SEQ_DESCRIPTION_CHARA = [
+        "None",
+        "Basic Standing Animation loop",
+        "Exhausted - low hp animation loop",
+        "Death loop",
+        "Damage Taken into a low hp phase",
+        "Damage Taken Normal",
+        "Damage Taken Crit",
+        "Nothing happens",
+        "Appearance (like at the start of the battle)",
+        "Staying in 'rdy to attack standing'",
+        "Draw command fail animation",
+        "Magic animation",
+        "Basic Standing Animation",
+        "Attack - normal",
+        "Guardian Force Summoning (Disappear)",
+        "Item Use",
+        "Runaway 1",
+        "Runaway 2 - Escaped disappear",
+        "Victory Animation",
+        "Changing into 'rdy to attack standing'",
+        "Guardian Force Summoning (Re-appear)",
+        "Limit break 1 (Normal)",
+        "Draw/Defend Phase again?",
+        "Changing into Defend/Draw Phase",
+        "Kamikaze Command - Running to the enemy",
+        "Attack - Darkside",
+        "Runaway 2? (same as 1) - maybe used at Edea Disc 1 fight? (Rinoa / Irvine appearance)",
+        "Defend/Draw stock",
+        "Limit break 2 (Special, e.g. Squall/Zell Blue aura)",
+        "Defend command standing again",
+        "Draw Stock Magic"
+    ]
+    def __init__(self, seq: bytearray, id: int, entity_type:EntityType=EntityType.MONSTER ):
         QWidget.__init__(self)
         # Parameters
         self._sequence = seq
         self._id = id
+        self.entity_type = entity_type
 
         # signal
         self.op_id_changed_signal_emitter = OpIdChangedEmitter()
@@ -31,7 +65,10 @@ class SeqWidget(QWidget):
         self.setLayout(self.main_layout)
 
         # op_id widget
-        self.sequence_title = QLabel(f"Seq ID {id}:")
+        if entity_type.WEAPON:
+            self.sequence_title = QLabel(f"Seq ID {id}")
+        else:
+            self.sequence_title = QLabel(f"Seq ID {id}")
         self.sequence_text_widget = QPlainTextEdit()
         self.sequence_text_widget.setPlainText(self._sequence.hex(" "))
 
