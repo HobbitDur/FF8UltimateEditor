@@ -33,6 +33,7 @@ class IfritSeqWidget(QWidget):
         self.scroll_area.setWidget(self.scroll_widget)
         self.ifrit_manager = ifrit_manager
         self.current_if_type = CurrentIfType.NONE
+        self.file_dialog = QFileDialog()
         self.__ifrit_icon = QIcon(os.path.join(icon_path, 'ifrit.ico'))
         # Main window
         self._import_xml_button = QPushButton()

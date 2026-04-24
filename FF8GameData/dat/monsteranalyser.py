@@ -155,7 +155,7 @@ class MonsterAnalyser:
         current_id = 0
         while current_id < nb_seq:
             for index, seq in enumerate(self.seq_animation_data['seq_animation_data']):
-                if seq["id"] != current_id:
+                if seq["id"]-1 != current_id:
                     continue
                 offset_list.append(seq['offset'])
                 current_id +=1
@@ -628,9 +628,9 @@ class MonsterAnalyser:
 
             self.insert_sorted_with_zeros(offset_list_done, anim_offset)
             if anim_offset == 0:
-                animation_seq_list.append({"id": index, "data":self.section_raw_data[SECTION_NUMBER][start_anim: end_anim]})
+                animation_seq_list.append({"id": index+1, "data":self.section_raw_data[SECTION_NUMBER][start_anim: end_anim]})
             else:
-                animation_seq_list.insert(offset_list_done.index(anim_offset), {"id": index, "data":self.section_raw_data[SECTION_NUMBER][start_anim: end_anim]})
+                animation_seq_list.insert(offset_list_done.index(anim_offset), {"id": index+1, "data":self.section_raw_data[SECTION_NUMBER][start_anim: end_anim]})
 
         self.seq_animation_data['seq_animation_data'] = animation_seq_list
 
