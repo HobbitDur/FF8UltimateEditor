@@ -128,10 +128,10 @@ class MonsterAnalyser:
                 self.seq_animation_data['seq_animation_data'][index]['offset'] = current_offset
             current_offset += len(seq['data'])
 
-        current_id = 0
+        current_id = 1
         while current_id < nb_seq:
             for index, seq in enumerate(self.seq_animation_data['seq_animation_data']):
-                if seq["id"] - 1 != current_id:
+                if seq["id"] != current_id:
                     continue
                 offset_list.append(seq['offset'])
                 current_id += 1
