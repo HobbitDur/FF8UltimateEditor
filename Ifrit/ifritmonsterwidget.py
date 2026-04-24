@@ -131,6 +131,20 @@ class IfritMonsterWidget(QWidget):
         if path:
             self._file_dialog_folder = os.path.dirname(path)
             self._load_all(path)
+            if pathlib.Path(path).name[0] == 'd':
+                self._tabs.setTabEnabled(1, False)
+                self._tabs.setTabEnabled(2, False)
+                self._tabs.setTabEnabled(3, False)
+                if pathlib.Path(path).name[2] == 'c':
+                    self._tabs.setTabEnabled(4, False)
+                else:
+                    self._tabs.setTabEnabled(4, True)
+                self._tabs.setCurrentIndex(0)
+            else:
+                self._tabs.setTabEnabled(1, True)
+                self._tabs.setTabEnabled(2, True)
+                self._tabs.setTabEnabled(3, True)
+                self._tabs.setTabEnabled(4, True)
 
     def _load_all(self, path: str):
         self.file_loaded = path

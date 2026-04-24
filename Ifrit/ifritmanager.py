@@ -466,7 +466,6 @@ class IfritManager:
 
     def set_animation_frame_bone_rotation(self, anim_id: int, frame_id: int, bone_idx: int,
                                           rot_x_deg: float, rot_y_deg: float, rot_z_deg: float):
-        print("set_animation_frame_bone_rotation")
         """Modify the rotation of a bone in a specific animation frame."""
         anim:Animation = self.enemy.animation_data.animations[anim_id]
         if frame_id >= len(anim.frames):
@@ -574,7 +573,6 @@ class IfritManager:
                 monster_id = int(re.search(r'\d{3}', original_file_name).group())
                 if load_monster_id != -1 and load_monster_id != monster_id:
                     continue
-                print(sheet.title)
                 current_monster = MonsterAnalyser(self.game_data)
                 self._xlsx_to_dat_manager.read_monster_name(self.game_data, sheet, current_monster)
                 self._xlsx_to_dat_manager.read_stat(self.game_data, sheet, current_monster)

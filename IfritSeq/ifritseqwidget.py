@@ -111,7 +111,6 @@ class IfritSeqWidget(QWidget):
         self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'] = []
         for index, seq_widget in enumerate(self.seq_data_widget):
             self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'].append({"id": seq_widget.getId(), "data":seq_widget.getByteData()})
-        self.ifrit_manager.save_file(self.file_loaded)
         print("File saved")
 
     def __load_file(self, file_to_load: str = ""):
