@@ -10,7 +10,7 @@ from PIL.ImageQt import QPixmap
 from PyQt6.QtGui import QColor
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
-from FF8GameData.monsterdata import Matrix4x4, Animation
+from FF8GameData.monsterdata import Matrix4x4, Animation, EntityType
 from IfritAI.AICompiler.AICompiler import AICompiler
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from IfritXlsx import xlsxmanager
@@ -311,7 +311,7 @@ class IfritManager:
 
                 target_index = int(match.group(1))
                 with Image.open(texture_path) as img:
-                    if img.width != img.height:
+                    if img.width != img.height and self.enemy.entity_type != EntityType.WEAPON:
                         self._cut_texture_file(img, target_index, texture_path)
 
             # --- DUPLICATE METAS ---
