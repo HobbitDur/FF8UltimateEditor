@@ -112,7 +112,6 @@ class IfritSeqWidget(QWidget):
         self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'] = []
         for index, seq_widget in enumerate(self.seq_data_widget):
             self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'].append({"id": seq_widget.getId(), "data":seq_widget.getByteData()})
-        print("File saved")
 
     def __load_file(self, file_to_load: str = ""):
         #file_to_load = os.path.join("c0m028.dat")  # For developing faster
@@ -126,11 +125,6 @@ class IfritSeqWidget(QWidget):
             self.__analyze_sequence()
         self._export_xml_button.setEnabled(True)
         self._import_xml_button.setEnabled(True)
-
-    def __reload_file(self):
-        self.clear_lines()
-
-        self.__load_file(self.file_loaded)
 
     def clear_lines(self):
         for index_to_remove in range(len(self.seq_data_widget)):

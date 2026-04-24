@@ -8,7 +8,6 @@ from math import floor
 from typing import List
 
 from IfritAI.AICompiler.AIDecompiler import AIDecompiler
-from .sequenceanalyser import SequenceAnalyser
 from ..GenericSection.ff8text import FF8Text
 from ..gamedata import GameData
 from .commandanalyser import CommandAnalyser, CurrentIfType
@@ -117,7 +116,6 @@ class MonsterAnalyser:
         # raw_data_to_write.extend(self.section_raw_data[section_position])
         self.section_raw_data[section_position] = bytearray()
         nb_seq = len(self.seq_animation_data['seq_animation_data'])
-
         ## Now compute offset
         offset_list = []
         current_offset = AIData.SECTION_MODEL_SEQ_ANIM_NB_SEQ['size'] + nb_seq * AIData.SECTION_MODEL_SEQ_ANIM_OFFSET['size']
@@ -128,10 +126,10 @@ class MonsterAnalyser:
                 self.seq_animation_data['seq_animation_data'][index]['offset'] = current_offset
             current_offset += len(seq['data'])
 
-        current_id = 1
+        current_id = 0
         while current_id < nb_seq:
             for index, seq in enumerate(self.seq_animation_data['seq_animation_data']):
-                if seq["id"] != current_id:
+                if seq["id"]!= current_id + 1:
                     continue
                 offset_list.append(seq['offset'])
                 current_id += 1
@@ -143,6 +141,7 @@ class MonsterAnalyser:
                 int.to_bytes(offset, byteorder=AIData.SECTION_MODEL_SEQ_ANIM_OFFSET['byteorder'], length=AIData.SECTION_MODEL_SEQ_ANIM_OFFSET['size']))
         for seq in self.seq_animation_data['seq_animation_data']:
             self.section_raw_data[section_position].extend(seq['data'])
+        print(self.section_raw_data[section_position])
         raw_data_to_write.extend(self.section_raw_data[section_position])
 
     def prepare_info(self, raw_data_to_write: bytearray, section_position:int, game_data:GameData):
@@ -312,13 +311,15 @@ class MonsterAnalyser:
         section_position = 1
         bone_data = self.bone_data.to_binary()
         raw_data_to_write.extend(bone_data)
+        self.section_raw_data[section_position] = bone_data
         # Section 2: Geometry (untouched for the moment)
         section_position = 2
         raw_data_to_write.extend(self.section_raw_data[section_position])
         # Section 3: Animation
+        section_position = 3
         animation_data = self.animation_data.to_binary()
         raw_data_to_write.extend(animation_data)
-        # section_position = 3
+        self.section_raw_data[section_position] = animation_data
         #raw_data_to_write.extend(self.section_raw_data[section_position])
 
         # Now changing depending on which file is loaded
@@ -388,7 +389,7 @@ class MonsterAnalyser:
             self.section_raw_data[0][start:end] = self.__get_byte_from_int_from_game_data(file_size, header_pos_data)
 
         header_file_data = AIData.SECTION_HEADER_FILE_SIZE
-        self.section_raw_data[0][header_file_data['offset']:header_file_data['offset'] + header_file_data['size']] = file_size.to_bytes(
+        self.section_raw_data[0][self.header_data['nb_section']*header_file_data['size'] :self.header_data['nb_section']*header_file_data['size']+ header_file_data['size']] = file_size.to_bytes(
             header_pos_data['size'], header_file_data['byteorder'])
         raw_data_to_write[0:len(self.section_raw_data[0])] = self.section_raw_data[0]
     
