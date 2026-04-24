@@ -141,7 +141,6 @@ class MonsterAnalyser:
                 int.to_bytes(offset, byteorder=AIData.SECTION_MODEL_SEQ_ANIM_OFFSET['byteorder'], length=AIData.SECTION_MODEL_SEQ_ANIM_OFFSET['size']))
         for seq in self.seq_animation_data['seq_animation_data']:
             self.section_raw_data[section_position].extend(seq['data'])
-        print(self.section_raw_data[section_position])
         raw_data_to_write.extend(self.section_raw_data[section_position])
 
     def prepare_info(self, raw_data_to_write: bytearray, section_position:int, game_data:GameData):
