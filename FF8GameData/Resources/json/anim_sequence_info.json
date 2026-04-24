@@ -120,6 +120,7 @@
     {"param_id": "0x08", "text": "BATTLE_STATE_CONTROLER->some_flag"},
     {"param_id": "0x09", "text": "ACTIVE_ANIM_CMD->current_frame"},
     {"param_id": "0x0A", "text": "ACTIVE_ANIM_CMD->total_frames"},
+    {"param_id": "0x0B", "text": "ACTIVE_BATTLE_STATE_ENTITY->basedAnimSeq"},
     {"param_id": "0x0C", "text": "Randomly generated value [0..32767]"},
     {"param_id": "0x0D", "text": "Position Z"},
     {"param_id": "0x0E", "text": "Position Y"},
