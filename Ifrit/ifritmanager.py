@@ -3,6 +3,7 @@ import pathlib
 import re
 import shutil
 import subprocess
+import time
 from typing import List, Tuple
 
 from PIL import Image
@@ -76,6 +77,10 @@ class TextureData:
         pix = QPixmap(width, height)
         pix.fill(color)
         return pix
+    def __str__(self):
+        return f"Texture(Meta:{self.meta}, Texture:{self.texture_image.size()}, Palette:{self.palette_image.size()})"
+    def __repr__(self):
+        return self.__str__()
 
 
 
@@ -311,8 +316,11 @@ class IfritManager:
 
                 target_index = int(match.group(1))
                 with Image.open(texture_path) as img:
-                    if img.width != img.height and self.enemy.entity_type != EntityType.WEAPON:
-                        self._cut_texture_file(img, target_index, texture_path)
+                    if self.enemy.entity_type == EntityType.WEAPON:
+                        meta_data = MetaData(meta_files[0])
+                        self._create_bigger_image_with_placement(img, meta_data.imageX % 128, meta_data.imageY % 128, texture_path)
+                    elif self.enemy.entity_type != EntityType.WEAPON and img.width != img.height:
+                            self._cut_texture_file(img, target_index, texture_path)
 
             # --- DUPLICATE METAS ---
             for template_meta in meta_files:
@@ -374,6 +382,42 @@ class IfritManager:
         # (or a new one, but here we replace the original tall/wide one)
         tile.save(original_path)
 
+    def _create_bigger_image_with_placement(self, img: Image.Image, x: int, y: int, texture_path:pathlib.Path, target_size: int = 128) -> Image.Image:
+        """
+        Creates a target_size x target_size empty image and places the source image at (x, y).
+
+        Args:
+            img: Source image to place
+            x: X coordinate of top-left corner for placement
+            y: Y coordinate of top-left corner for placement
+            target_size: Size of the output square image (default: 128)
+
+        Returns:
+            New Image with the source image placed inside
+
+        Raises:
+            ValueError: If the image doesn't fit within the bounds
+        """
+        # Create a transparent/black background
+        result = Image.new('RGBA', (target_size, target_size), (0, 0, 0, 0))  # Transparent background
+
+        img_width, img_height = img.size
+
+        # Bound checking
+        if x < 0 or y < 0:
+            raise ValueError(f"Position ({x}, {y}) cannot be negative")
+
+        if x + img_width > target_size:
+            raise ValueError(f"Image width {img_width} at position {x} would exceed target size {target_size} (max X: {target_size - img_width})")
+
+        if y + img_height > target_size:
+            raise ValueError(f"Image height {img_height} at position {y} would exceed target size {target_size} (max Y: {target_size - img_height})")
+
+        result.paste(img, (x, y))
+        # Paste the image
+        result.save(texture_path)
+
+        return result
     def _cut_palette_file(self, img: Image.Image, temp_path:pathlib.Path) -> None:
         """
         Slices a tall palette image into multiple 1px height images.

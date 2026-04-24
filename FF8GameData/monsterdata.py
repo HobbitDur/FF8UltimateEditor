@@ -519,7 +519,7 @@ class GeometrySection:
                     (tri.vtc.u, tri.vtc.v),  # for B
                 )
                 # tex_id_1 upper 6 bits encode CLUT/page info; low bits = texture index
-                tex_id = tri.tex_id_1
+                tex_id = tri.tex_id_1 & 0xFF
                 result.append((indices, uvs, tex_id))
             offset += obj_vert_count
         return result
@@ -543,7 +543,7 @@ class GeometrySection:
                     (quad.vtc.u, quad.vtc.v),
                     (quad.vtd.u, quad.vtd.v),
                 )
-                tex_id = quad.tex_id_1
+                tex_id = quad.tex_id_1 & 0xFF
                 result.append((indices, uvs, tex_id))
             offset += obj_vert_count
         return result

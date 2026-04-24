@@ -194,7 +194,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         if self.show_axis:
             self.draw_axis()
-        if self.show_texture and self._gl_textures and self.triangles_uv:
+        if self.show_texture and self._gl_textures and (self.triangles_uv or self.quads_uv):
             self._draw_textured_triangles()
             self._draw_textured_quads()
         else:
