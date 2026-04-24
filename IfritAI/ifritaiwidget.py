@@ -158,22 +158,12 @@ class IfritAIWidget(QWidget):
         # Note: PyQt6 requires full Enum paths
         is_ctrl_c = (event.modifiers() == Qt.KeyboardModifier.ControlModifier and
                      event.key() == Qt.Key.Key_C)
-        is_ctrl_k = (event.modifiers() == Qt.KeyboardModifier.ControlModifier and
-                     event.key() == Qt.Key.Key_K)
-
         # 2. Check your specific business logic condition (Index 1)
         if is_ctrl_c and self.expert_selector.currentIndex() == 1 and self.file_loaded:
             self._copy_hex()
             # Mark the event as handled so it doesn't trigger default behavior
             event.accept()
             return
-
-        if is_ctrl_k:
-            print("Loading cronos file")
-            self.ifrit_manager.game_data.load_ai_data("ai_cronos.json")
-            self.ifrit_manager.compiler.reset_ai_data()
-            self.ifrit_manager.decompiler.reset_ai_data()
-            #self.__section_change()
 
             # 3. Fallback: If conditions aren't met, pass the event to the parent class
         # This ensures Ctrl+C still works normally for other widgets/cases

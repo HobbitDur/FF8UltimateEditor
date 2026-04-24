@@ -31,12 +31,13 @@ class CodeWidget(QWidget):
         self.setLayout(self.main_layout)
         self.compute_button = QPushButton()
         self.compute_button.setText("Compile")
-        self.change_expert_level(expert_level, current_ai_section)
+
 
         self.main_layout.addWidget(self.compute_button)
         self.main_layout.addWidget(self.code_area_widget)
 
         self._command_list = command_list
+        self.change_expert_level(expert_level, current_ai_section)
         self.set_text_from_command(self._command_list)
 
     def change_expert_level(self, expert_level, ai_section):
