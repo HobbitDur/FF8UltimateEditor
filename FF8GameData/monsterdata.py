@@ -8,6 +8,7 @@ class EntityType(Enum):
     MONSTER = 1
     WEAPON = 2
     CHARACTER = 3
+    WEAPON_NO_ANIM = 4
 # Section 1
 class BoneSection:
     SECTION_BONE_HEADER_NB = {'offset': 0x00, 'size': 1, 'byteorder': 'little', 'name': 'nb_bone', 'pretty_name': 'Number bones', 'default_value': 0}
@@ -1102,11 +1103,11 @@ class AnimationSection:
     def analyze(self, data: bytes, bone_section: BoneSection):
         # Read animation section header
         self.nb_animations = int.from_bytes(data[0:4], byteorder='little')
-
+        print(f"nb_animation: {self.nb_animations}")
         for i in range(self.nb_animations):
             off = int.from_bytes(data[4 + i * 4: 8 + i * 4], byteorder='little')
             self.offsets.append(off)
-
+        print(f"offsets: {self.offsets}")
         for anim_idx in range(self.nb_animations):
             anim_start = self.offsets[anim_idx]
             anim: Animation = Animation()
@@ -1117,8 +1118,9 @@ class AnimationSection:
 
             for frame_index in range(data[anim_start]):
                 anim.add_frame(br, bone_section)
-
+            print(f"anim: {anim}")
             self.animations.append(anim)
+
 
     def __str__(self):
         return f"AnimationSection(nb:{self.nb_animations}, {self.animations})"

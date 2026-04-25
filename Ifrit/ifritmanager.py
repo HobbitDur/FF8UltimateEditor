@@ -141,6 +141,12 @@ class IfritManager:
         """
         anim_section = self.enemy.animation_data
 
+        if not anim_section or not anim_section.nb_animations:
+            # Return identity matrices for static pose if we have bones
+            if self.enemy.bone_data:
+                return [Matrix4x4() for _ in range(len(self.enemy.bone_data.bones))]
+            return []
+
         # Validate animation ID
         if anim_id >= len(anim_section.animations):
             print(f"[ERROR] anim_id {anim_id} out of range (max {len(anim_section.animations) - 1})")
@@ -316,7 +322,7 @@ class IfritManager:
 
                 target_index = int(match.group(1))
                 with Image.open(texture_path) as img:
-                    if self.enemy.entity_type == EntityType.WEAPON:
+                    if self.enemy.entity_type in (EntityType.WEAPON, EntityType.WEAPON_NO_ANIM):
                         meta_data = MetaData(meta_files[0])
                         self._create_bigger_image_with_placement(img, meta_data.imageX % 128, meta_data.imageY % 128, texture_path)
                     elif self.enemy.entity_type != EntityType.WEAPON and img.width != img.height:

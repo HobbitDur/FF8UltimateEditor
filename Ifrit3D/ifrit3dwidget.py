@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QInputDialog, QMessageBox, QFrame)
 
 from FF8GameData.monsterdata import AnimationFrame, AnimationSection, Animation
+from Ifrit.ifritmanager import IfritManager
 from Ifrit3D.boneeditorwidget import AnimEditor
 from Ifrit3D.ff8openwidget import FF8OpenGLWidget
 
@@ -13,7 +14,7 @@ class Ifrit3DWidget(QWidget):
     frame_changed = pyqtSignal(int)
     animation_finished = pyqtSignal(int)  # Emitted when an animation in playlist finishes
     animation_changed = pyqtSignal()
-    def __init__(self, ifrit_manager, show_controls=True):
+    def __init__(self, ifrit_manager:IfritManager, show_controls=True):
         super().__init__()
         self.ifrit_manager = ifrit_manager
 
@@ -427,7 +428,7 @@ class Ifrit3DWidget(QWidget):
             self.update_animated_mesh()
             self.update_skeleton()
 
-    def load_file(self, path:str):
+    def load_file(self):
         if self.animating:
             self.timer.stop()
             if hasattr(self, 'play_btn'):
@@ -438,7 +439,11 @@ class Ifrit3DWidget(QWidget):
         self.current_frame = 0
         self.interp_step = 0.0
         self.next_frame_index = 1
-        verts = self.ifrit_manager.get_animated_vertices(self.current_anim_id, self.current_frame)
+        if self.ifrit_manager.enemy.animation_data.nb_animations:
+            verts = self.ifrit_manager.get_animated_vertices(self.current_anim_id, self.current_frame)
+        else:
+            # Use static vertices if no animation
+            verts = self.ifrit_manager.enemy.geometry_data.get_vertices()
         self.gl_widget.set_vertices(verts)
         self.gl_widget.reset_view()
         self.gl_widget.set_triangles(self.ifrit_manager.enemy.geometry_data.get_triangles())
@@ -458,21 +463,31 @@ class Ifrit3DWidget(QWidget):
         if hasattr(self, 'frame_slider'):
             self.frame_slider.setRange(0, self.get_max_frames() - 1)
         if hasattr(self, 'anim_selector'):
-            nb = len(self.ifrit_manager.enemy.animation_data.animations)
-            self.anim_selector.setRange(0, nb - 1)
-            self.anim_selector.setValue(0)
-            self.anim_selector.setToolTip(f"Nb animation: {nb}")
+            if self.ifrit_manager.enemy.animation_data.nb_animations:
+                nb = len(self.ifrit_manager.enemy.animation_data.animations)
+                self.anim_selector.setRange(0, nb - 1)
+                self.anim_selector.setValue(0)
+                self.anim_selector.setToolTip(f"Nb animation: {nb}")
+            else:
+                self.anim_selector.setRange(0, 0)
+                self.anim_selector.setEnabled(False)
+                self.anim_selector.setToolTip("No animation data")
+
         self.info.setText(f"Tri: {len(self.gl_widget.triangles)} | "
                           f"Quads: {len(self.gl_widget.quads)} | "
                           f"Bones: {len(self.gl_widget.skeleton_lines)} | "
                           f"LMB: Rotate | RMB: Pan | Scroll: Zoom")
         if hasattr(self, 'bone_editor'):
-            bone_count = len(self.ifrit_manager.enemy.bone_data.bones) - 1
-            self.bone_editor.set_bone_range(bone_count)
-            # Set the initial bone ID to 0 and update
-            self.bone_editor.bone_spin.setValue(0)
-            self._update_bone_editor_selection()
-            self._update_frame_position_selection()
+            if self.ifrit_manager.enemy.bone_data:
+                bone_count = len(self.ifrit_manager.enemy.bone_data.bones) - 1
+                self.bone_editor.set_bone_range(bone_count)
+                # Set the initial bone ID to 0 and update
+                self.bone_editor.bone_spin.setValue(0)
+                self._update_bone_editor_selection()
+                self._update_frame_position_selection()
+            else:
+                self.bone_editor.setEnabled(False)
+                self.bone_editor.setVisible(False)
 
         self._set_reference_position()
         self.gl_widget.reset_view()
@@ -493,7 +508,7 @@ class Ifrit3DWidget(QWidget):
         )
         self.gl_widget.set_texture_pixmaps(pixmaps, all_tex_ids)
     def get_max_frames(self):
-        if not self.ifrit_manager:
+        if not self.ifrit_manager.enemy.animation_data.nb_animations:
             return 0
         anim_section = self.ifrit_manager.enemy.animation_data
         if anim_section and self.current_anim_id < len(anim_section.animations):
@@ -564,6 +579,15 @@ class Ifrit3DWidget(QWidget):
     def update_skeleton(self):
         if not self.ifrit_manager:
             return
+        if not self.ifrit_manager.enemy.bone_data:
+            self.gl_widget.set_skeleton_data([], [])
+            self.gl_widget.set_show_skeleton(False)
+            if hasattr(self, 'cb_skeleton'):
+                self.cb_skeleton.setEnabled(False)
+            return
+        if hasattr(self, 'cb_skeleton'):
+            self.cb_skeleton.setEnabled(True)
+
         skeleton_lines, bone_parents = self.ifrit_manager.get_skeleton_lines(
             anim_id=self.current_anim_id, frame_id=self.current_frame)
 
@@ -594,6 +618,15 @@ class Ifrit3DWidget(QWidget):
     def update_animated_mesh(self):
         """Update mesh vertices based on current frame"""
         # Get current and next frame for interpolation
+
+        if not self.ifrit_manager.enemy.animation_data.nb_animations:
+            static_verts = self.ifrit_manager.enemy.geometry_data.get_vertices()
+            self.gl_widget.set_vertices(static_verts)
+            self.gl_widget.set_triangles(self.ifrit_manager.enemy.geometry_data.get_triangles())
+            self.gl_widget.set_quads(self.ifrit_manager.enemy.geometry_data.get_quads())
+            self.gl_widget.update()
+            return
+
         max_frames = self.get_max_frames()
         if max_frames == 0:
             return
@@ -634,6 +667,8 @@ class Ifrit3DWidget(QWidget):
 
     def reset_animation(self):
         """Reset to first frame"""
+        if not self.ifrit_manager.enemy.animation_data.nb_animations:
+            return
         self.current_frame = 0
         self.next_frame_index = 1
         self.interp_step = 0.0
@@ -697,6 +732,9 @@ class Ifrit3DWidget(QWidget):
 
     def _update_bone_editor_selection(self):
         """Update the bone editor with current bone data"""
+        if not hasattr(self, 'bone_editor') or not self.ifrit_manager.enemy.bone_data:
+            return
+
         bone_id = self.bone_editor.bone_spin.value()
         if bone_id < 0 or bone_id >= len(self.ifrit_manager.enemy.bone_data.bones):
             return
@@ -795,19 +833,3 @@ class Ifrit3DWidget(QWidget):
         self.ifrit_manager.set_animation_frame_bone_rotation(anim_id, frame_id, bone_id, rx, ry, rz)
         self.update_animated_mesh()
         self.update_skeleton()
-
-    # Add to Ifrit3DWidget class
-
-    def export_to_fbx(self, filepath: str):
-        """Export current monster to FBX"""
-        exporter = FF8ToFBXExporter(self.ifrit_manager)
-        exporter.export(filepath)
-        QMessageBox.information(self, "Export Complete", f"Exported to {filepath}")
-
-    def import_from_fbx(self, filepath: str):
-        """Import FBX and update model"""
-        importer = FBXImporter(self.ifrit_manager)
-        importer.import_file(filepath)
-        # Refresh the display
-        self.load_file(filepath)  # Or refresh current view
-        QMessageBox.information(self, "Import Complete", f"Imported from {filepath}")

@@ -67,7 +67,7 @@ class MonsterAnalyser:
         with open(file, "rb") as f:
             while el := f.read(1):
                 self.file_raw_data.extend(el)
-        self.__analyze_header_section(game_data)
+        self.__analyze_header_section()
         self.section_raw_data = [bytearray()] * self.header_data['nb_section']
         self.origin_file_name = os.path.basename(file)
         self.origin_path = file
@@ -83,31 +83,28 @@ class MonsterAnalyser:
 
             self.section_raw_data[self.header_data['nb_section'] - 1] = self.file_raw_data[
                                                              self.header_data['section_pos'][self.header_data['nb_section'] - 1]:self.header_data['file_size']]
-
-            # No need to analyze Section 1 : Skeleton
-            self.__analyze_bone_section(game_data)
-            # No need to analyze Section 2 : Model geometry
-            self.__analyze_geometry_section(game_data)
-            # No need to analyze Section 3 : Model animation
-            self.__analyze_animation_section(game_data)
-            #self.__analyze_model_animation(game_data)
-
-            # No need to analyze Section 4 : Unknown
-            # self.__analyze_section_4(game_data)
-            # No need to analyze Section 5 : Sequence Animation
-            self.__analyze_sequence_animation(game_data)
-            if self.header_data['nb_section'] > 9:
-                # No need to analyze Section 6 : Unknown
-                # self.__analyze_section_6(game_data)
-                # Analyzing Section 7 : Informations & stats
-                self.__analyze_info_stat(game_data)
-                # Analyzing Section 8 : Battle scripts/AI
-                self.analyze_battle_script_section(game_data, decompiler)
-
-                # No need to analyze Section 9 : Sounds
-                # No need to analyze Section 10 : Sounds/Unknown
-                # Section 11 : Textures
-                self._analyze_texture_section(game_data)
+            if self.entity_type == EntityType.WEAPON_NO_ANIM:
+                self.__analyze_geometry_section(1)
+                self.__analyze_sequence_animation(2)
+            elif self.entity_type == EntityType.WEAPON:
+                self.__analyze_bone_section(1)
+                self.__analyze_geometry_section(2)
+                self.__analyze_animation_section(3)
+                self.__analyze_sequence_animation(4)
+            elif self.entity_type == EntityType.CHARACTER:
+                self.__analyze_bone_section(1)
+                self.__analyze_geometry_section(2)
+                self.__analyze_animation_section(3)
+            elif self.entity_type == EntityType.MONSTER:
+                self.__analyze_bone_section(1)
+                self.__analyze_geometry_section(2)
+                self.__analyze_animation_section(3)
+                self.__analyze_sequence_animation(5)
+                self.__analyze_info_stat(game_data, 7)
+                self.analyze_battle_script_section(game_data, decompiler, 8)
+                self._analyze_texture_section(11)
+            else:
+                print(f"Unexpected entity type: {self.entity_type}")
         except IndexError as e:
             print(f"Garbage file {self.origin_file_name}")
             raise GarbageFileError
@@ -423,24 +420,21 @@ class MonsterAnalyser:
             section_offset = self.header_data['section_pos'][section_number]
         return self.file_raw_data[section_offset + data_info['offset'] + offset:section_offset + data_info['offset'] + data_info['size']+ offset]
 
-    def __analyze_header_section(self, game_data: GameData):
+    def __analyze_header_section(self):
         self.header_data['nb_section'] = self.__get_int_value_from_info(AIData.SECTION_HEADER_NB_SECTION) + 1
         sect_position = [0]  # Adding to the list the header as a section 0
         if self.header_data['nb_section'] == 8:
             self.entity_type = EntityType.CHARACTER
-            self.seq_animation_data['section_index'] = None
-            self.texture_data['section_index'] = None
-            self.battle_script_data['section_index'] = None
         elif self.header_data['nb_section'] == 9:
             self.entity_type = EntityType.WEAPON
-            self.seq_animation_data['section_index'] = 4
-            self.texture_data['section_index'] = None
-            self.battle_script_data['section_index'] = None
-        else:
+        elif self.header_data['nb_section'] == 12:
             self.entity_type = EntityType.MONSTER
-            self.seq_animation_data['section_index'] = 5
-            self.texture_data['section_index'] = 11
-            self.battle_script_data['section_index'] = 8
+        elif self.header_data['nb_section'] == 6:
+            self.entity_type = EntityType.WEAPON_NO_ANIM
+        else:
+            print(f"Unexpected nb section: {self.header_data['nb_section']}")
+            self.entity_type = EntityType.MONSTER
+
         for i in range(self.header_data['nb_section']):
             sect_position.append(
                 int.from_bytes(self.file_raw_data[
@@ -454,25 +448,22 @@ class MonsterAnalyser:
             self.file_raw_data[file_size_section_offset:file_size_section_offset + AIData.SECTION_HEADER_FILE_SIZE['size']],
             AIData.SECTION_HEADER_FILE_SIZE['byteorder'])
 
-    def __analyze_bone_section(self, game_data: GameData):
-        SECTION_NUMBER = 1
-        if self.section_raw_data[SECTION_NUMBER]:
-            self.bone_data.analyze(self.section_raw_data[SECTION_NUMBER])
+    def __analyze_bone_section(self, section_number:int=1):
+        if self.section_raw_data[section_number]:
+            self.bone_data.analyze(self.section_raw_data[section_number])
             #print(self.bone_data)
 
 
 
-    def __analyze_geometry_section(self, game_data: GameData):
+    def __analyze_geometry_section(self, section_number:int=2):
         #print("__analyze_geometry_section")
-        SECTION_NUMBER = 2
-        if self.section_raw_data[SECTION_NUMBER]:
-            self.geometry_data.analyze(self.section_raw_data[SECTION_NUMBER])
+        if self.section_raw_data[section_number]:
+            self.geometry_data.analyze(self.section_raw_data[section_number])
 
-    def __analyze_animation_section(self, game_data: GameData):
+    def __analyze_animation_section(self, section_number = 3):
         #print("__analyze_animation_section")
-        SECTION_NUMBER = 3
-        if self.section_raw_data[SECTION_NUMBER]:
-            self.animation_data.analyze(self.section_raw_data[SECTION_NUMBER], self.bone_data)
+        if self.section_raw_data[section_number]:
+            self.animation_data.analyze(self.section_raw_data[section_number], self.bone_data)
             #print(self.animation_data)
 
         #self.test_full_animation_section_roundtrip(game_data)
@@ -658,8 +649,7 @@ class MonsterAnalyser:
         # for i, el in enumerate(animation_list):
         #    print(f"Index animation: {i}, Nb frame: {el['nb_frame']}, len_animation: {len(el['unk'])}")
 
-    def __analyze_sequence_animation(self, game_data: GameData):
-        section_number = self.seq_animation_data['section_index']
+    def __analyze_sequence_animation(self, section_number:int=5):
         if not section_number:
             return
         self.seq_animation_data['nb_anim_seq'] = self.__get_int_value_from_info(AIData.SECTION_MODEL_SEQ_ANIM_NB_SEQ, section_number)
@@ -720,10 +710,9 @@ class MonsterAnalyser:
         # If we got here, insert at the end before the zeros
         lst.append(value)
         return lst
-    def __analyze_info_stat(self, game_data: GameData):
-        SECTION_NUMBER = 7
-        section_offset = self.header_data['section_pos'][SECTION_NUMBER]
-        if section_offset == self.header_data['section_pos'][SECTION_NUMBER + 1]:
+    def __analyze_info_stat(self, game_data: GameData, section_number:int=7):
+        section_offset = self.header_data['section_pos'][section_number]
+        if section_offset == self.header_data['section_pos'][section_number + 1]:
             print("Empty info stat, create a default one")
             default_name = FF8Text(game_data, 0, bytearray(), 0)
             default_name.set_str("DefaultMonsterName")
@@ -768,7 +757,7 @@ class MonsterAnalyser:
             return
 
         for el in AIData.SECTION_INFO_STAT_LIST_DATA:
-            raw_data_selected = self.__get_raw_value_from_info(el, SECTION_NUMBER)
+            raw_data_selected = self.__get_raw_value_from_info(el, section_number)
             data_size = len(raw_data_selected)
             if el['name'] in ['monster_name']:
                 value = FF8Text(game_data=game_data, own_offset=0, data_hex=raw_data_selected, id=0)
@@ -823,26 +812,25 @@ class MonsterAnalyser:
 
             self.info_stat_data[el['name']] = value
 
-    def analyze_battle_script_section(self, game_data: GameData, decompiler:AIDecompiler=None):
+    def analyze_battle_script_section(self, game_data: GameData, decompiler:AIDecompiler=None, section_number:int=8):
         if not decompiler:
             decompiler = AIDecompiler(game_data)
-        SECTION_NUMBER = 8
-        if len(self.header_data['section_pos']) <= SECTION_NUMBER:
+        if len(self.header_data['section_pos']) <= section_number:
             return
-        section_offset = self.header_data['section_pos'][SECTION_NUMBER]
+        section_offset = self.header_data['section_pos'][section_number]
 
         # If the size is actually 0, we need to construct manually the minimum data
-        if section_offset == self.header_data['section_pos'][SECTION_NUMBER+1]:
+        if section_offset == self.header_data['section_pos'][section_number+1]:
             print("Empty AI data, creating a basic one")
             self.battle_script_data = {'battle_nb_sub': 3, 'offset_ai_sub': 16, 'offset_text_offset': 56, 'offset_text_sub': 56, 'text_offset': [], 'battle_text': [], 'ai_data': [{'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1),CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {'bytecode': [0, 0, 0, 0], 'code': 'stop();\nstop();\nstop();\nstop();\n', 'command': [CommandAnalyser(0, [], game_data,  line_index= 0), CommandAnalyser(0, [], game_data,  line_index= 1), CommandAnalyser(0, [], game_data,  line_index= 2), CommandAnalyser(0, [], game_data,  line_index= 3)]}, {}], 'offset_init_code': 20, 'offset_ennemy_turn': 24, 'offset_counterattack': 28, 'offset_death': 32, 'offset_before_dying_or_hit': 36}
             return
         # Reading header
-        self.battle_script_data['battle_nb_sub'] = self.__get_int_value_from_info(AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB, SECTION_NUMBER)
-        self.battle_script_data['offset_ai_sub'] = self.__get_int_value_from_info(AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_AI_SUB, SECTION_NUMBER)
+        self.battle_script_data['battle_nb_sub'] = self.__get_int_value_from_info(AIData.SECTION_BATTLE_SCRIPT_HEADER_NB_SUB, section_number)
+        self.battle_script_data['offset_ai_sub'] = self.__get_int_value_from_info(AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_AI_SUB, section_number)
         self.battle_script_data['offset_text_offset'] = self.__get_int_value_from_info(AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_OFFSET_SUB,
-                                                                                       SECTION_NUMBER)
+                                                                                       section_number)
         self.battle_script_data['offset_text_sub'] = self.__get_int_value_from_info(AIData.SECTION_BATTLE_SCRIPT_HEADER_OFFSET_TEXT_SUB,
-                                                                                    SECTION_NUMBER)
+                                                                                    section_number)
 
         # Reading text offset subsection
         nb_text = self.battle_script_data['offset_text_sub'] - self.battle_script_data['offset_text_offset']
@@ -916,20 +904,19 @@ class MonsterAnalyser:
         #if self.battle_script_data['ai_data'][code_section_id]["command"]:
         del self.battle_script_data['ai_data'][code_section_id]["command"][index_removal]
 
-    def _analyze_texture_section(self, game_data: GameData):
-        SECTION_NUMBER = 11
-        self.texture_data['nb_texture'] = self.__get_int_value_from_info(AIData.SECTION_TEXTURE_NB, SECTION_NUMBER)
+    def _analyze_texture_section(self, section_number:int=11):
+        self.texture_data['nb_texture'] = self.__get_int_value_from_info(AIData.SECTION_TEXTURE_NB, section_number)
         list_texture_offset = []
         offset_size = AIData.SECTION_TEXTURE_OFFSET['size']
         start_offset = AIData.SECTION_TEXTURE_NB['size']
         for index_offset in range(self.texture_data['nb_texture']):
             list_texture_offset.append(
-                int.from_bytes(self.section_raw_data[SECTION_NUMBER][start_offset + index_offset * offset_size:start_offset + (index_offset + 1) * offset_size],
+                int.from_bytes(self.section_raw_data[section_number][start_offset + index_offset * offset_size:start_offset + (index_offset + 1) * offset_size],
                                byteorder="little"))
         self.texture_data['tim_offset'] = list_texture_offset
 
 
-        self.texture_data['eof_texture'] = int.from_bytes(self.section_raw_data[SECTION_NUMBER][start_offset + len(list_texture_offset) * offset_size:start_offset + len(list_texture_offset) * offset_size+AIData.SECTION_TEXTURE_END_OF_FILE['size']], AIData.SECTION_TEXTURE_END_OF_FILE['byteorder'])
+        self.texture_data['eof_texture'] = int.from_bytes(self.section_raw_data[section_number][start_offset + len(list_texture_offset) * offset_size:start_offset + len(list_texture_offset) * offset_size+AIData.SECTION_TEXTURE_END_OF_FILE['size']], AIData.SECTION_TEXTURE_END_OF_FILE['byteorder'])
         tim_data_list = []
         offset_list_done = []
         for index, texture_offset in enumerate(list_texture_offset):
@@ -941,15 +928,15 @@ class MonsterAnalyser:
                 if next_offset:
                     end_tim = min(next_offset)
                 else:
-                    end_tim = len(self.section_raw_data[SECTION_NUMBER])
+                    end_tim = len(self.section_raw_data[section_number])
             # Insert the data to have a continuous byte structure
 
             self.insert_sorted_with_zeros(offset_list_done, texture_offset)
             if texture_offset == 0:
-                tim_data_list.append({"id": index, "data": self.section_raw_data[SECTION_NUMBER][start_tim: end_tim]})
+                tim_data_list.append({"id": index, "data": self.section_raw_data[section_number][start_tim: end_tim]})
             else:
                 tim_data_list.insert(offset_list_done.index(texture_offset),
-                                          {"id": index, "data": self.section_raw_data[SECTION_NUMBER][start_tim: end_tim]})
+                                          {"id": index, "data": self.section_raw_data[section_number][start_tim: end_tim]})
 
         self.texture_data['texture_data'] = tim_data_list
 

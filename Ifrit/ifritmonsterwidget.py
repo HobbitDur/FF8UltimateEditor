@@ -151,7 +151,7 @@ class IfritMonsterWidget(QWidget):
         self.ifrit_manager.init_from_file(path)
         self._ai_widget.load_file(path)
         self._seq_widget.load_file(path)
-        self._3d_widget.load_file(path)
+        self._3d_widget.load_file()
         self._texture_widget.load_file(path)
         try:
             name = self._ai_widget.ifrit_manager.enemy.info_stat_data['monster_name'].get_str().strip('\x00')
