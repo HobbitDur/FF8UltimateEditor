@@ -291,7 +291,6 @@ class IfritManager:
                 str(file_path_to_analyze),
                 str(specific_temp)
             ], check=True, capture_output=True)
-
             # --- CRITICAL: Use specific_temp for EVERYTHING below ---
 
             # 1. Count all .meta files in this specific subfolder
@@ -322,7 +321,7 @@ class IfritManager:
 
                 target_index = int(match.group(1))
                 with Image.open(texture_path) as img:
-                    if self.enemy.entity_type in (EntityType.WEAPON, EntityType.WEAPON_NO_ANIM):
+                    if self.enemy.entity_type in (EntityType.WEAPON, EntityType.WEAPON_NO_ANIM, EntityType.CHARACTER):
                         meta_data = MetaData(meta_files[0])
                         self._create_bigger_image_with_placement(img, meta_data.imageX % 128, meta_data.imageY % 128, texture_path)
                     elif self.enemy.entity_type != EntityType.WEAPON and img.width != img.height:

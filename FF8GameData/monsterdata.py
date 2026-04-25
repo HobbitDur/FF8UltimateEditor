@@ -191,6 +191,9 @@ class GeometryTriangle:
         self.tex_id_1 = int.from_bytes(data[10:12], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_ID_1['byteorder'])
         self.vtc.analyze(data[12:14])
         self.tex_id_2 = int.from_bytes(data[14:16], byteorder=self.SECTION_GEOMETRY_TRIANGLE_TEX_ID_2['byteorder'])
+    def get_uv_str(self):
+        return f"{self.vta}{self.vtb}{self.vtc}"
+
     def get_byte(self) -> bytearray:
         data = bytearray()
         data.extend(self.vertex_indexes[0].to_bytes(2, 'little'))
@@ -236,6 +239,9 @@ class GeometryQuad:
         self.vtc.analyze(data[16:18])
         self.vtd.analyze(data[18:20])
 
+    def get_uv_str(self):
+        return f"{self.vta}{self.vtb}{self.vtc}{self.vtd}"
+
     def get_byte(self) -> bytearray:
         data = bytearray()
         data.extend(self.vertex_indexes[0].to_bytes(2, 'little'))
@@ -264,9 +270,9 @@ class UV:
         self.v = int.from_bytes(data[1:2], byteorder='little')/128.0
 
     def get_byte(self) -> bytearray:
-        return bytearray([int(self.u * 128) & 0xFF, int(self.v * 128) & 0xFF])
+        return bytearray([int(self.u * 128.0) & 0xFF, int(self.v * 128.0) & 0xFF])
     def __str__(self):
-        return f"UV({self.u},{self.v})"
+        return f"UV({int(self.u*128.0)},{int(self.v*128.0)})"
     def __repr__(self):
         return self.__str__()
 
@@ -289,6 +295,14 @@ class ObjectData:
         self.triangles:List[GeometryTriangle] = []
         self.quads:List[GeometryQuad] = []
 
+    def get_uv_str(self):
+        uv_str = "Triangle:\n"
+        for triangle in self.triangles:
+            uv_str+= triangle.get_uv_str()
+        uv_str += "\nQuad:\n"
+        for quad in self.quads:
+            uv_str+= quad.get_uv_str()
+        return uv_str
 
     def get_byte(self):
         nb_vertices_data_byte = self.nb_vertices_data.to_bytes(length=self.SECTION_GEOMETRY_OBJECT_DATA_NB_VERTICES_DATA['size'], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_VERTICES_DATA['byteorder'])
@@ -433,6 +447,13 @@ class GeometrySection:
         self.offset:List[int] = []
         self.object_data:List[ObjectData] = []
         self.end = 0
+
+    def get_uv_str(self):
+        uv_str = "ObjectData:\n"
+        for object_data in self.object_data:
+            uv_str += object_data.get_uv_str()
+        return uv_str
+
     def get_byte(self):
         nb_object_byte = self.nb_object.to_bytes(length=self.SECTION_GEOMETRY_HEADER_NB_OBJECT['size'], byteorder=self.SECTION_GEOMETRY_HEADER_NB_OBJECT['byteorder'])
         nb_offset_byte = bytearray()
@@ -444,6 +465,7 @@ class GeometrySection:
         end_byte = self.end.to_bytes(length=self.SECTION_GEOMETRY_END['size'], byteorder=self.SECTION_GEOMETRY_END['byteorder'])
 
         return bytearray(nb_object_byte+nb_offset_byte+object_data_byte+end_byte)
+
     def analyze(self, data:bytes):
         current_index = 0
         next_index = self.SECTION_GEOMETRY_HEADER_NB_OBJECT['size']
@@ -1103,11 +1125,9 @@ class AnimationSection:
     def analyze(self, data: bytes, bone_section: BoneSection):
         # Read animation section header
         self.nb_animations = int.from_bytes(data[0:4], byteorder='little')
-        print(f"nb_animation: {self.nb_animations}")
         for i in range(self.nb_animations):
             off = int.from_bytes(data[4 + i * 4: 8 + i * 4], byteorder='little')
             self.offsets.append(off)
-        print(f"offsets: {self.offsets}")
         for anim_idx in range(self.nb_animations):
             anim_start = self.offsets[anim_idx]
             anim: Animation = Animation()
@@ -1118,7 +1138,6 @@ class AnimationSection:
 
             for frame_index in range(data[anim_start]):
                 anim.add_frame(br, bone_section)
-            print(f"anim: {anim}")
             self.animations.append(anim)
 
 

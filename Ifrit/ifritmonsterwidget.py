@@ -139,7 +139,6 @@ class IfritMonsterWidget(QWidget):
                     self._tabs.setTabEnabled(4, False)
                 else:
                     self._tabs.setTabEnabled(4, True)
-                self._tabs.setCurrentIndex(0)
             else:
                 self._tabs.setTabEnabled(1, True)
                 self._tabs.setTabEnabled(2, True)
