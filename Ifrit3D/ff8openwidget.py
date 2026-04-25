@@ -55,6 +55,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.show_texture = True
         self.show_skeleton = False
 
+        self.back_face_offset = -0.003  # Smaller offset for triangles
+        self.triangle_cache = {}  # Cache for back face offsets per fra
+
     def set_texture_pixmaps(self, qpixmaps: list, tex_ids_used: list):
         """Call this from outside with a list of QPixmaps..."""
         self._free_gl_textures()
@@ -230,72 +233,191 @@ class FF8OpenGLWidget(QOpenGLWidget):
             return False
 
     def _draw_textured_triangles(self):
+        """Draw triangles - offset only when there's a matching front face"""
+        if not self.triangles_uv:
+            return
+
         glEnable(GL_TEXTURE_2D)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glColor3f(1.0, 1.0, 1.0)
+        glDisable(GL_CULL_FACE)
+        glEnable(GL_DEPTH_TEST)
+        glColor4f(1.0, 1.0, 1.0, 1.0)
+
+        # First pass: count occurrences of each face
+        face_count = {}
+        for indices, _, _ in self.triangles_uv:
+            face_key = frozenset(indices)
+            face_count[face_key] = face_count.get(face_key, 0) + 1
+
+        # Second pass: draw with offset only for duplicates
         current_raw_id = None
-        current_texture_idx = -1
+        drawn_faces = {}  # Track how many times we've drawn each face
 
-        for (indices, uvs, raw_id) in self.triangles_uv:
-            texture_idx = self._tex_id_to_index.get(raw_id, 0)
-
-            if texture_idx != current_texture_idx:
-                if texture_idx < len(self._gl_textures):
-                    glBindTexture(GL_TEXTURE_2D, self._gl_textures[texture_idx])
-                    current_texture_idx = texture_idx
-
-            glBegin(GL_TRIANGLES)
-            for i, idx in enumerate(indices):
-                u, v = uvs[i]
-
-                # Normalize UVs to 0-1 range by taking fractional part
-                # This is how PS1 handles UV wrapping
-                u = u - int(u)
-                v = v - int(v)
-
-                glTexCoord2f(u, v)
-                vx = self.vertices_array[idx]
-                glVertex3f(vx[0], vx[1], vx[2])
-            glEnd()
-        glDisable(GL_BLEND)
-        glDisable(GL_TEXTURE_2D)
-
-    def _draw_textured_quads(self):
-        glEnable(GL_TEXTURE_2D)
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glColor3f(1.0, 1.0, 1.0)
-        current_raw_id = None
-
-        for poly_idx, (indices, uvs, raw_id) in enumerate(self.quads_uv):
+        for indices, uvs, raw_id in self.triangles_uv:
             if raw_id != current_raw_id:
                 self._bind_texture_for_raw_id(raw_id)
                 current_raw_id = raw_id
 
-            verts = [self.vertices_array[idx] for idx in indices]
-            # A=0, B=1, C=2, D=3
-            # C# triangle 1: A(vta), B(vtb), D(vtd)
-            # C# triangle 2: A(vta), C(vtc), D(vtd)
+            face_key = frozenset(indices)
+            drawn_faces[face_key] = drawn_faces.get(face_key, 0) + 1
+            is_duplicate = (face_count[face_key] > 1)  # Has both front and back
+            is_first_occurrence = (drawn_faces[face_key] == 1)
 
+            verts = [self.vertices_array[idx] for idx in indices]
+
+            glBegin(GL_TRIANGLES)
+            # Only offset if:
+            # 1. It's a duplicate face (has both front and back)
+            # 2. It's the first occurrence (the back face)
+            if is_duplicate and is_first_occurrence:
+                # This is the back face that has a matching front face
+                normal = self._calculate_triangle_normal_fast(verts)
+                offset = self.back_face_offset
+                for i in range(3):
+                    u, v = uvs[i]
+                    u = u - int(u)
+                    v = v - int(v)
+                    glTexCoord2f(u, v)
+                    glVertex3f(
+                        verts[i][0] + normal[0] * offset,
+                        verts[i][1] + normal[1] * offset,
+                        verts[i][2] + normal[2] * offset
+                    )
+            else:
+                # Normal rendering:
+                # - Unique faces (only one side)
+                # - Front faces of duplicates (second occurrence)
+                for i in range(3):
+                    u, v = uvs[i]
+                    u = u - int(u)
+                    v = v - int(v)
+                    glTexCoord2f(u, v)
+                    glVertex3f(verts[i][0], verts[i][1], verts[i][2])
+            glEnd()
+
+        glDisable(GL_BLEND)
+        glDisable(GL_TEXTURE_2D)
+
+    def _calculate_triangle_normal(self, verts):
+        """Calculate normal vector for a triangle"""
+        # Get two edges of the triangle
+        v1 = np.array(verts[1]) - np.array(verts[0])
+        v2 = np.array(verts[2]) - np.array(verts[0])
+
+        # Cross product gives perpendicular vector
+        normal = np.cross(v1, v2)
+
+        # Normalize to unit length
+        norm = np.linalg.norm(normal)
+        if norm > 0:
+            normal = normal / norm
+
+        return normal
+
+    def _calculate_triangle_normal_fast(self, verts):
+        """Fast normal calculation without numpy for triangles"""
+        # Get two edges of the triangle
+        # Edge 1: from vertex 0 to vertex 1
+        ax = verts[1][0] - verts[0][0]
+        ay = verts[1][1] - verts[0][1]
+        az = verts[1][2] - verts[0][2]
+
+        # Edge 2: from vertex 0 to vertex 2
+        bx = verts[2][0] - verts[0][0]
+        by = verts[2][1] - verts[0][1]
+        bz = verts[2][2] - verts[0][2]
+
+        # Cross product to get normal
+        nx = ay * bz - az * by
+        ny = az * bx - ax * bz
+        nz = ax * by - ay * bx
+
+        # Normalize to unit length
+        length = (nx * nx + ny * ny + nz * nz) ** 0.5
+        if length > 0:
+            nx /= length
+            ny /= length
+            nz /= length
+
+        return np.array([nx, ny, nz])
+
+    def _draw_textured_quads(self):
+        """Draw quads - offset only when there's a matching front face"""
+        if not self.quads_uv:
+            return
+
+        glEnable(GL_TEXTURE_2D)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glDisable(GL_CULL_FACE)
+        glEnable(GL_DEPTH_TEST)
+        glColor4f(1.0, 1.0, 1.0, 1.0)
+
+        # First pass: count occurrences of each face
+        face_count = {}
+        for indices, _, _ in self.quads_uv:
+            face_key = frozenset(indices)
+            face_count[face_key] = face_count.get(face_key, 0) + 1
+
+        # Second pass: draw with offset only for duplicates
+        current_raw_id = None
+        drawn_faces = {}
+
+        for indices, uvs, raw_id in self.quads_uv:
+            if raw_id != current_raw_id:
+                self._bind_texture_for_raw_id(raw_id)
+                current_raw_id = raw_id
+
+            face_key = frozenset(indices)
+            drawn_faces[face_key] = drawn_faces.get(face_key, 0) + 1
+            is_duplicate = (face_count[face_key] > 1)
+            is_first_occurrence = (drawn_faces[face_key] == 1)
+
+            verts = [self.vertices_array[idx] for idx in indices]
+
+            # Get vertices with potential offset
+            if is_duplicate and is_first_occurrence:
+                # Back face of a duplicate - apply offset
+                normal = self._calculate_quad_normal(verts)
+                offset = -0.01
+                draw_verts = [v + normal * offset for v in verts]
+            else:
+                # Normal case - no offset
+                draw_verts = verts
+
+            # Draw quad as two triangles
             glBegin(GL_TRIANGLES)
             # Triangle 1: A, B, D
             glTexCoord2f(uvs[0][0], uvs[0][1])
-            glVertex3f(verts[0][0], verts[0][1], verts[0][2])
+            glVertex3f(draw_verts[0][0], draw_verts[0][1], draw_verts[0][2])
             glTexCoord2f(uvs[1][0], uvs[1][1])
-            glVertex3f(verts[1][0], verts[1][1], verts[1][2])
+            glVertex3f(draw_verts[1][0], draw_verts[1][1], draw_verts[1][2])
             glTexCoord2f(uvs[3][0], uvs[3][1])
-            glVertex3f(verts[3][0], verts[3][1], verts[3][2])
+            glVertex3f(draw_verts[3][0], draw_verts[3][1], draw_verts[3][2])
+
             # Triangle 2: A, C, D
             glTexCoord2f(uvs[0][0], uvs[0][1])
-            glVertex3f(verts[0][0], verts[0][1], verts[0][2])
+            glVertex3f(draw_verts[0][0], draw_verts[0][1], draw_verts[0][2])
             glTexCoord2f(uvs[2][0], uvs[2][1])
-            glVertex3f(verts[2][0], verts[2][1], verts[2][2])
+            glVertex3f(draw_verts[2][0], draw_verts[2][1], draw_verts[2][2])
             glTexCoord2f(uvs[3][0], uvs[3][1])
-            glVertex3f(verts[3][0], verts[3][1], verts[3][2])
+            glVertex3f(draw_verts[3][0], draw_verts[3][1], draw_verts[3][2])
             glEnd()
+
         glDisable(GL_BLEND)
         glDisable(GL_TEXTURE_2D)
+
+    def _calculate_quad_normal(self, verts):
+        """Calculate normal for a quad"""
+        # Use first triangle to determine normal
+        v1 = np.array(verts[1]) - np.array(verts[0])
+        v2 = np.array(verts[2]) - np.array(verts[0])
+        normal = np.cross(v1, v2)
+        norm = np.linalg.norm(normal)
+        if norm > 0:
+            normal = normal / norm
+        return normal
 
     def draw_skeleton(self):
         """Draw bones with selected bone highlighted."""
