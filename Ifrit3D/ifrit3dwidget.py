@@ -1,4 +1,3 @@
-import numpy as np
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QCheckBox, QPushButton, QSlider, QSpinBox,
@@ -429,35 +428,6 @@ class Ifrit3DWidget(QWidget):
             self.update_animated_mesh()
             self.update_skeleton()
 
-    @staticmethod
-    def deduplicate_polys(poly_list):
-        """
-        Keep the LAST occurrence of each duplicate face pair.
-        PS1 stores back face first, front face last (painter's algorithm order).
-        The last = the front face that was drawn on top on real hardware.
-        """
-        seen = {}  # frozenset(indices) -> index in result
-        result = []
-        for item in poly_list:
-            indices, uvs, raw_id = item
-            key = frozenset(indices)
-            if key not in seen:
-                seen[key] = len(result)
-                result.append(item)
-            else:
-                result[seen[key]] = item  # always replace with the later one
-        return result
-    @staticmethod
-    def deduplicate_index_polys(poly_list):
-        seen = set()
-        result = []
-        for indices in poly_list:
-            key = frozenset(indices)
-            if key not in seen:
-                seen.add(key)
-                result.append(indices)
-        return result
-
     def load_file(self):
         if self.animating:
             self.timer.stop()
@@ -476,22 +446,11 @@ class Ifrit3DWidget(QWidget):
             verts = self.ifrit_manager.enemy.geometry_data.get_vertices()
         self.gl_widget.set_vertices(verts)
         self.gl_widget.reset_view()
+        self.gl_widget.set_triangles(self.ifrit_manager.enemy.geometry_data.get_triangles())
+        self.gl_widget.set_quads(self.ifrit_manager.enemy.geometry_data.get_quads())
 
-        triangles = self.deduplicate_index_polys(self.ifrit_manager.enemy.geometry_data.get_triangles())
-        quads = self.deduplicate_index_polys(self.ifrit_manager.enemy.geometry_data.get_quads())
-
-        self.gl_widget.set_triangles(triangles)
-        self.gl_widget.set_quads(quads)
-        static_verts = self.ifrit_manager.enemy.geometry_data.get_vertices()
-
-        verts_array = np.array(static_verts, dtype=np.float32)
-        model_center = (verts_array.min(axis=0) + verts_array.max(axis=0)) / 2
         tri_uv = self.ifrit_manager.enemy.geometry_data.get_triangles_with_uv()
         quad_uv = self.ifrit_manager.enemy.geometry_data.get_quads_with_uv()
-
-        tri_uv = Ifrit3DWidget.deduplicate_polys(tri_uv)
-        quad_uv = Ifrit3DWidget.deduplicate_polys(quad_uv)
-
         self.gl_widget.set_triangles_with_uv(tri_uv)
         self.gl_widget.set_quads_with_uv(quad_uv)
 
