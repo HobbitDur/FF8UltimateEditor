@@ -233,7 +233,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
             return False
 
     def _draw_textured_triangles(self):
-        """Draw triangles - offset only when there's a matching front face"""
+        """Draw triangles - offset back faces based on camera direction"""
         if not self.triangles_uv:
             return
 
@@ -244,15 +244,18 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glEnable(GL_DEPTH_TEST)
         glColor4f(1.0, 1.0, 1.0, 1.0)
 
-        # First pass: count occurrences of each face
+        # Get camera direction (assuming camera looking along -Z in view space)
+        # You may need to adjust this based on your camera setup
+        camera_dir = np.array([0, 0, 1])  # Looking along positive Z
+
+        # Count exact duplicates first
         face_count = {}
         for indices, _, _ in self.triangles_uv:
             face_key = frozenset(indices)
             face_count[face_key] = face_count.get(face_key, 0) + 1
 
-        # Second pass: draw with offset only for duplicates
         current_raw_id = None
-        drawn_faces = {}  # Track how many times we've drawn each face
+        drawn_faces = {}
 
         for indices, uvs, raw_id in self.triangles_uv:
             if raw_id != current_raw_id:
@@ -261,38 +264,44 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
             face_key = frozenset(indices)
             drawn_faces[face_key] = drawn_faces.get(face_key, 0) + 1
-            is_duplicate = (face_count[face_key] > 1)  # Has both front and back
+            is_exact_duplicate = (face_count[face_key] > 1)
             is_first_occurrence = (drawn_faces[face_key] == 1)
 
             verts = [self.vertices_array[idx] for idx in indices]
+            normal = self._calculate_triangle_normal_fast(verts)
+
+            # Check if this is likely a back face (normal points away from camera)
+            # For animated monsters, this helps detect which face should be offset
+            #is_back_face_by_normal = np.dot(normal, camera_dir) < 0
+            is_back_face_by_normal = False
 
             glBegin(GL_TRIANGLES)
-            # Only offset if:
-            # 1. It's a duplicate face (has both front and back)
-            # 2. It's the first occurrence (the back face)
-            if is_duplicate and is_first_occurrence:
-                # This is the back face that has a matching front face
-                normal = self._calculate_triangle_normal_fast(verts)
-                offset = self.back_face_offset
-                for i in range(3):
-                    u, v = uvs[i]
-                    u = u - int(u)
-                    v = v - int(v)
-                    glTexCoord2f(u, v)
+
+            # Decide offset strategy
+            if is_exact_duplicate and is_first_occurrence:
+                # Exact duplicate - larger offset
+                offset = -0.003
+                apply_offset = True
+            elif is_back_face_by_normal:
+                # Detected back face - medium offset
+                offset = -0.001
+                apply_offset = False #False as I don't want to modify it (for mouth for example) but the code is interesting so I keep it
+            else:
+                apply_offset = False  # Enable to prevent Z-fighting
+
+            for i in range(3):
+                u, v = uvs[i]
+                u = u - int(u)
+                v = v - int(v)
+                glTexCoord2f(u, v)
+
+                if apply_offset:
                     glVertex3f(
                         verts[i][0] + normal[0] * offset,
                         verts[i][1] + normal[1] * offset,
                         verts[i][2] + normal[2] * offset
                     )
-            else:
-                # Normal rendering:
-                # - Unique faces (only one side)
-                # - Front faces of duplicates (second occurrence)
-                for i in range(3):
-                    u, v = uvs[i]
-                    u = u - int(u)
-                    v = v - int(v)
-                    glTexCoord2f(u, v)
+                else:
                     glVertex3f(verts[i][0], verts[i][1], verts[i][2])
             glEnd()
 
