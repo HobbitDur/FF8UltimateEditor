@@ -146,7 +146,23 @@ class SequenceAnalyser:
                         text_analyze += current_op_code_data['text'].format(channel_mask, volume_text)
 
                 if current_op_code_data['op_code'] in (0x99, 0xb1):
-                    pass
+                    if current_op_code_data['op_code'] == 0x99:
+                        sound_id_text = "3"
+                    elif current_op_code_data['op_code'] == 0xb1:
+                        sound_id_text = "2"
+                    else:
+                        sound_id_text = ""
+                    text_analyze += f"Queue walk effect and sound (sound walk ID, {sound_id_text})"
+                    bone_selection = param_list[0]
+                    text_analyze += f" applied on bone {bone_selection} and do:\n"
+                    for param in param_list[1:]:
+                        if param == 0xFF:  # End of list
+                            break
+                        frame_to_wait = param & 0x3F
+                        effect_on = not bool(param&0x40)
+                        sound_on = not bool(param&0x80)
+                        text_analyze += f"Wait {frame_to_wait} frames, apply effect:{effect_on}, play sound: {sound_on}\n"
+
                 if current_op_code_data['op_code'] in (0xC3, 0xC7, 0xCB, 0xCF, 0xD3, 0xD7, 0xDB, 0xDF, 0xE3, 0xE5):
                     if param_list[0] < 0x80:
                         if current_op_code_data['op_code'] == 0xE5:
