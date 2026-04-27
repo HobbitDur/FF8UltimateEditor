@@ -330,7 +330,7 @@ class TexturePreviewWidget(QLabel):
         if self.original_pixmap is None or self.original_pixmap.isNull():
             self.setText("No texture loaded")
             return
-        self.scale_factor = 1.0
+        #self.scale_factor = 1.0 # To force no scale
         widget_size = self.size()
         if widget_size.width() <= 1 or widget_size.height() <= 1:
             widget_size = self.minimumSize()
