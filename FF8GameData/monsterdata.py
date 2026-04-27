@@ -280,12 +280,12 @@ class UV:
         return int(self.u*128.0) & 0xFF
     def get_v_raw(self):
         return int(self.v*128.0) & 0xFF
-    def set_u_raw(self, value:int):
+    def set_u_pixel_raw(self, value:int):
         if not self.vram_size:
             self.u = value / 128.0
         else:  # In VRAM, you have for X 2 bytes data per texel
-            self.u = value * 2 / 128.0
-    def set_v_raw(self, value:int):
+            self.u = value / 128.0
+    def set_v_pixel_raw(self, value:int):
         self.v = value / 128.0
     def __str__(self):
         return f"UV({self.get_u_raw()},{self.get_v_raw()})"

@@ -280,7 +280,7 @@ class TexturePreviewWidget(QLabel):
 
     def set_texture(self, pixmap: QPixmap):
         """Set the texture image to display"""
-        self.original_pixmap = pixmap
+        self.original_pixmap = pixmap.scaled(128, 128, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         self.update_display()
 
     def add_rectangle(self, x: int, y: int, width: int, height: int, color: QColor,
@@ -330,7 +330,7 @@ class TexturePreviewWidget(QLabel):
         if self.original_pixmap is None or self.original_pixmap.isNull():
             self.setText("No texture loaded")
             return
-
+        self.scale_factor = 1.0
         widget_size = self.size()
         if widget_size.width() <= 1 or widget_size.height() <= 1:
             widget_size = self.minimumSize()
@@ -691,8 +691,8 @@ class DynamicTextureSectionWidget(QWidget):
         data = entry_widget.get_data()
 
         # Update entry data
-        entry.source_uv.set_u_raw(data['src_x'])
-        entry.source_uv.set_v_raw(data['src_y'])
+        entry.source_uv.set_u_pixel_raw(data['src_x'])
+        entry.source_uv.set_v_pixel_raw(data['src_y'])
         entry.sprite_width = data['src_width']
         entry.sprite_height = data['src_height']
         entry.texture_num = self.current_texture_index  # Ensure texture_num is set
@@ -702,8 +702,8 @@ class DynamicTextureSectionWidget(QWidget):
         for dest in data['destinations']:
             from FF8GameData.monsterdata import UV
             uv = UV()
-            uv.set_u_raw(dest['x'])
-            uv.set_v_raw(dest['y'])
+            uv.set_u_pixel_raw(dest['x'])
+            uv.set_v_pixel_raw(dest['y'])
             entry.dest_uv.append(uv)
 
         # Select all destinations by default
@@ -732,13 +732,13 @@ class DynamicTextureSectionWidget(QWidget):
 
         new_entry = DynamicTextureData()
         new_entry.source_uv = UV()
-        new_entry.source_uv.set_u_raw(0)
-        new_entry.source_uv.set_v_raw(0)
+        new_entry.source_uv.set_u_pixel_raw(0)
+        new_entry.source_uv.set_v_pixel_raw(0)
         new_entry.sprite_width = 32
         new_entry.sprite_height = 32
         new_entry.dest_uv = [UV()]
-        new_entry.dest_uv[0].set_u_raw(0)
-        new_entry.dest_uv[0].set_v_raw(0)
+        new_entry.dest_uv[0].set_u_pixel_raw(0)
+        new_entry.dest_uv[0].set_v_pixel_raw(0)
         new_entry.texture_num = self.current_texture_index  # Link to current texture
 
         dynamic_texture.dynamic_texture_data.append(new_entry)
