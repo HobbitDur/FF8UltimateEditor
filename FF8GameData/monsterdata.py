@@ -1234,7 +1234,7 @@ class DynamicTextureSection:
         self.null_sentinel = int.from_bytes(data[0: 2], byteorder='little')
         for i in range(0, len(data)):
             offset = int.from_bytes(data[2+2*i: 2+2*(i+1)], byteorder='little')
-            if i == 0 or offset > self.offset[-1]:
+            if (i == 0 or offset > self.offset[-1]) and offset < len(data)-1:
                 self.offset.append(offset)
             else:
                 break

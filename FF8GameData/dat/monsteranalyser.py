@@ -607,6 +607,7 @@ class MonsterAnalyser:
         if self.section_raw_data[section_number]:
             self.dynamic_texture_data.analyze(self.section_raw_data[section_number])
             print(self.dynamic_texture_data)
+            print(len(self.section_raw_data[section_number]))
 
     def __analyze_section_6(self, game_data: GameData):
         SECTION_NUMBER = 6

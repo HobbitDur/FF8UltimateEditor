@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
     QSpinBox, QComboBox, QPushButton, QScrollArea, QGridLayout,
     QFrame, QSplitter, QListWidget, QListWidgetItem, QCheckBox, QTabWidget
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QRect
 from PyQt6.QtGui import QPixmap, QPainter, QPen, QColor, QBrush
 
 from FF8GameData.monsterdata import DynamicTextureSection
@@ -54,6 +54,12 @@ class DestinationSelectorWidget(QGroupBox):
             cb.stateChanged.connect(self._on_selection_changed)
             self.checkboxes.append(cb)
             self.dest_layout.addWidget(cb)
+
+        # Manually update select all state after creating checkboxes
+        self.select_all_cb.blockSignals(True)
+        all_checked = all(cb.isChecked() for cb in self.checkboxes) if self.checkboxes else False
+        self.select_all_cb.setChecked(all_checked)
+        self.select_all_cb.blockSignals(False)
 
     def _on_select_all(self, state):
         """Handle select all checkbox"""
@@ -354,11 +360,9 @@ class TexturePreviewWidget(QLabel):
                 painter.setPen(pen)
                 painter.setBrush(QBrush(Qt.GlobalColor.transparent))
                 painter.drawRect(scaled_x, scaled_y, scaled_w, scaled_h)
-
                 if label:
-                    painter.setPen(QPen(Qt.GlobalColor.white, 1))
-                    painter.setBrush(QBrush(color))
-                    painter.drawText(scaled_x + 2, scaled_y + 15, label)
+                    text_rect = QRect(scaled_x + 2, scaled_y + 2, scaled_w - 4, 20)
+                    self._draw_text_with_background(painter, label, text_rect)
             else:
                 # Multiple rectangles at same position - mix colors
                 # Calculate mixed color (average of RGB)
@@ -387,12 +391,23 @@ class TexturePreviewWidget(QLabel):
                 labels = [label for _, _, label, _, _ in rects if label]
                 if labels:
                     combined_label = "/".join(labels)
-                    painter.setPen(QPen(Qt.GlobalColor.white, 1))
-                    painter.setBrush(QBrush(mixed_color))
-                    painter.drawText(scaled_x + 2, scaled_y + 15, combined_label)
-
+                    text_rect = QRect(scaled_x + 2, scaled_y + 2, scaled_w - 4, 20)
+                    self._draw_text_with_background(painter, combined_label, text_rect)
         painter.end()
         self.setPixmap(result)
+
+    def _draw_text_with_background(self, painter: QPainter, text: str, rect: QRect):
+        """Draw text with a dark semi-transparent background for better visibility"""
+        # Draw dark background with some transparency
+        painter.setBrush(QBrush(QColor(0, 0, 0, 180)))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawRoundedRect(rect, 3, 3)
+
+        # Draw white text with black outline
+        painter.setPen(QPen(Qt.GlobalColor.black, 2))
+        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, text)
+        painter.setPen(QPen(Qt.GlobalColor.white, 1))
+        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, text)
 
     def resizeEvent(self, event):
         self.update_display()
@@ -520,6 +535,15 @@ class DynamicTextureSectionWidget(QWidget):
 
         entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
 
+        # Blue rectangle for source - THICKER LINE (width 4) - only for current entry
+        self.texture_preview.add_rectangle(
+            entry.source_uv.get_u_raw(), entry.source_uv.get_v_raw(),
+            entry.sprite_width, entry.sprite_height,
+            QColor(0, 0, 255, 255),
+            3,  # Thicker line for blue source rectangle
+            f"Source",
+            self.current_entry_index, -1
+        )
 
         # Red rectangles only for selected destinations of current entry
         for dest_idx, dest_uv in enumerate(entry.dest_uv):
@@ -528,20 +552,11 @@ class DynamicTextureSectionWidget(QWidget):
                     dest_uv.get_u_raw(), dest_uv.get_v_raw(),
                     entry.sprite_width, entry.sprite_height,
                     QColor(255, 0, 0, 255),
-                    2,  # Normal line width for red rectangles
+                    3,  # Normal line width for red rectangles
                     f"Dest {dest_idx}",
                     self.current_entry_index, dest_idx
                 )
 
-        # Blue rectangle for source - THICKER LINE (width 4) - only for current entry
-        self.texture_preview.add_rectangle(
-            entry.source_uv.get_u_raw(), entry.source_uv.get_v_raw(),
-            entry.sprite_width, entry.sprite_height,
-            QColor(0, 0, 255, 255),
-            2,  # Thicker line for blue source rectangle
-            f"Source",
-            self.current_entry_index, -1
-        )
 
     def _load_animation_entries(self):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
@@ -590,17 +605,16 @@ class DynamicTextureSectionWidget(QWidget):
         self.current_entry_index = index
         self.selected_destinations = set()  # Reset selections when changing entry
 
-        # Initialize with first destination selected by default if exists
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
         if dynamic_texture and dynamic_texture.dynamic_texture_data:
             if self.current_entry_index < len(dynamic_texture.dynamic_texture_data):
                 entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
                 if len(entry.dest_uv) > 0:
-                    self.selected_destinations = {0}  # Select first destination by default
+                    self.selected_destinations = set(range(len(entry.dest_uv)))  # Select ALL destinations
 
-            self._load_current_entry_editor()
-            self._update_destination_selector()
-            self._update_rectangles()
+        self._load_current_entry_editor()
+        self._update_destination_selector()
+        self._update_rectangles()
 
     def _load_current_entry_editor(self):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
@@ -663,11 +677,7 @@ class DynamicTextureSectionWidget(QWidget):
         # Update selected destinations based on new count
         new_dest_count = len(entry.dest_uv)
         if new_dest_count > 0:
-            # Keep previously selected if they still exist
-            self.selected_destinations = {i for i in self.selected_destinations if i < new_dest_count}
-            # If no selections and we have destinations, select first
-            if not self.selected_destinations:
-                self.selected_destinations = {0}
+            self.selected_destinations = set(range(new_dest_count))
         else:
             self.selected_destinations = set()
 
@@ -703,6 +713,10 @@ class DynamicTextureSectionWidget(QWidget):
 
         self._load_animation_entries()
         self.entry_combo.setCurrentIndex(len(dynamic_texture.dynamic_texture_data) - 1)
+
+        self.selected_destinations = {0}  # Since there's 1 destination by default
+        self._update_destination_selector()
+        self._update_rectangles()
 
     def _remove_current_entry(self):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
