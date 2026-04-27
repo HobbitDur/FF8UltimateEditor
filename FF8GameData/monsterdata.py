@@ -268,13 +268,11 @@ class UV:
         self.member_size = member_size
         self.vram_size:bool = vram_size
     def analyze(self, data:bytes):
-        print(f"data uv:{data.hex(sep=" ")}")
         if not self.vram_size:
             self.u = int.from_bytes(data[0:self.member_size], byteorder='little')/128.0
         else: # In VRAM, you have for X 2 bytes data per texel
             self.u = (int.from_bytes(data[0:self.member_size], byteorder='little') * 2) / 128.0
         self.v = int.from_bytes(data[self.member_size:self.member_size*2], byteorder='little')/128.0
-        print(f"u, v: {self.u}, {self.v}")
 
     def get_byte(self) -> bytearray:
         return bytearray([self.get_u_raw(), self.get_v_raw()])
