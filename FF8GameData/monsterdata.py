@@ -1208,7 +1208,7 @@ class DynamicTextureData:
         if data:
             self.analyze(data)
     def analyze(self, data:bytes):
-        self.texture_num = int.from_bytes(data[0: 2], byteorder='little')
+        self.texture_num = int.from_bytes(data[0: 2], byteorder='little') & 0x3F
         self.unk1 = int.from_bytes(data[2: 3], byteorder='little')
         self.sprite_width = int.from_bytes(data[3: 4], byteorder='little')*2 # The size is in VRAM-X ref, and a texel is on 2 bytes.
         self.sprite_height = int.from_bytes(data[4: 5], byteorder='little')
