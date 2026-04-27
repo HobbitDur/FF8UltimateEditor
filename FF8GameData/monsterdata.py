@@ -1196,7 +1196,7 @@ class AnimationSection:
 # Section 4: Texture animation
 
 class DynamicTextureData:
-    def __init__(self, data:bytes):
+    def __init__(self, data:bytes=bytes()):
         self.texture_num:int = 0
         self.source_uv = UV(member_size=1, vram_size=True)
         self.sprite_width = 0
@@ -1205,7 +1205,8 @@ class DynamicTextureData:
         self.unk1=0
         self.unk2=0
         self.dest_uv: List[UV] = []
-        self.analyze(data)
+        if data:
+            self.analyze(data)
     def analyze(self, data:bytes):
         self.texture_num = int.from_bytes(data[0: 2], byteorder='little')
         self.unk1 = int.from_bytes(data[2: 3], byteorder='little')
@@ -1228,7 +1229,7 @@ class DynamicTextureSection:
     def __init__(self):
         self.null_sentinel:int=0
         self.offset:List[int] = []
-        self.anim_data: List[DynamicTextureData] = []
+        self.dynamic_texture_data: List[DynamicTextureData] = []
     def analyze(self, data:bytes):
         self.null_sentinel = int.from_bytes(data[0: 2], byteorder='little')
         for i in range(0, len(data)):
@@ -1239,11 +1240,11 @@ class DynamicTextureSection:
                 break
         for i in range(len(self.offset)):
             if i == len(self.offset)-1:
-                self.anim_data.append(DynamicTextureData(data[self.offset[i]:]))
+                self.dynamic_texture_data.append(DynamicTextureData(data[self.offset[i]:]))
             else:
-                self.anim_data.append(DynamicTextureData(data[self.offset[i]:self.offset[i + 1]]))
+                self.dynamic_texture_data.append(DynamicTextureData(data[self.offset[i]:self.offset[i + 1]]))
     def __str__(self):
-        return f"TextureAnimSection(offset:{self.offset}, data:{self.anim_data})"
+        return f"TextureAnimSection(offset:{self.offset}, data:{self.dynamic_texture_data})"
     def __repr__(self):
         return self.__str__()
 

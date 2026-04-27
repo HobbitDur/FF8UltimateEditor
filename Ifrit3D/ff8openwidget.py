@@ -140,14 +140,20 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.selected_bone = bone_index
         self.update()
 
-    def set_vertices(self, vertices:list):
+    def set_vertices(self, vertices: list):
         self.vertices = vertices
         self.vertices_array = np.array(self.vertices, dtype=np.float32)
 
         MIN_BOUNDS = self.vertices_array.min(axis=0)
         MAX_BOUNDS = self.vertices_array.max(axis=0)
         self.MODEL_CENTER = (MIN_BOUNDS + MAX_BOUNDS) / 2
-        self.MODEL_SIZE = np.linalg.norm(MAX_BOUNDS - MIN_BOUNDS)
+
+        # Store the actual extents for better zoom calculation
+        self.model_min = MIN_BOUNDS
+        self.model_max = MAX_BOUNDS
+        self.model_extents = MAX_BOUNDS - MIN_BOUNDS
+        self.MODEL_SIZE = max(self.model_extents)  # Use max extent, not diagonal
+
 
     def set_show_skeleton(self, show: bool):
         self.show_skeleton = show
@@ -663,14 +669,43 @@ class FF8OpenGLWidget(QOpenGLWidget):
     def wheelEvent(self, event):
         delta = event.angleDelta().y() / 120
         self.zoom -= delta * self.zoom * 0.1
-        self.zoom = max(self.MODEL_SIZE * 0.5, min(self.MODEL_SIZE * 3.0, self.zoom))
+        # Allow zooming out much further (up to 10x model size)
+        min_zoom = self.MODEL_SIZE * 0.3  # Can zoom in closer
+        max_zoom = self.MODEL_SIZE * 10.0  # Can zoom out much further
+        self.zoom = max(min_zoom, min(max_zoom, self.zoom))
         self.update()
 
     def reset_view(self):
-        """Reset camera to default position"""
+        """Reset camera to default position - adaptive zoom based on shape"""
         self.rot_x = 0
         self.rot_y = 180
-        self.zoom = self.MODEL_SIZE * 1.5
+
+        # Calculate bounding box dimensions
+        bbox_min = self.vertices_array.min(axis=0)
+        bbox_max = self.vertices_array.max(axis=0)
+        bbox_size = bbox_max - bbox_min
+
+        # Find the largest and smallest dimensions
+        max_dim = max(bbox_size)
+        min_dim = min(bbox_size)
+
+        # Calculate aspect ratio (how elongated the shape is)
+        # If min_dim is very small, aspect_ratio will be large (cone shape)
+        aspect_ratio = max_dim / max(min_dim, 0.001)  # Avoid division by zero
+
+        # Adjust zoom factor based on aspect ratio
+        # Normal shapes (aspect_ratio ~1-2): use 1.5x zoom
+        # Elongated shapes (aspect_ratio >3): use up to 3.5x zoom
+        if aspect_ratio > 3:
+            zoom_factor = 3.5  # Cone shape - zoom out more
+        elif aspect_ratio > 2:
+            zoom_factor = 2.5  # Moderately elongated
+        else:
+            zoom_factor = 1.5  # Normal compact shape
+
+        # Use the maximum dimension for the base distance
+        self.zoom = max_dim * zoom_factor
+
         self.pan_x = 0.0
         self.pan_y = 0.0
         self.update()

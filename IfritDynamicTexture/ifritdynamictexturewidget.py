@@ -57,15 +57,23 @@ class DestinationSelectorWidget(QGroupBox):
 
     def _on_select_all(self, state):
         """Handle select all checkbox"""
+        # Block signals while setting all checkboxes
         for cb in self.checkboxes:
+            cb.blockSignals(True)
             cb.setChecked(state == Qt.CheckState.Checked.value)
+            cb.blockSignals(False)
         self.selectionChanged.emit()
 
     def _on_selection_changed(self):
         """Handle individual checkbox changes"""
+        # Temporarily block signals to avoid recursion
+        self.select_all_cb.blockSignals(True)
+
         # Update select all state
         all_checked = all(cb.isChecked() for cb in self.checkboxes) if self.checkboxes else False
         self.select_all_cb.setChecked(all_checked)
+
+        self.select_all_cb.blockSignals(False)
         self.selectionChanged.emit()
 
     def get_selected_indices(self) -> set:
@@ -473,16 +481,6 @@ class DynamicTextureSectionWidget(QWidget):
         self.dest_selector.selectionChanged.connect(self._on_destination_selection_changed)
         dest_selector_layout.addWidget(self.dest_selector)
 
-        # Show/Hide all buttons
-        btn_layout = QHBoxLayout()
-        self.show_all_btn = QPushButton("Show All Destinations")
-        self.show_all_btn.clicked.connect(self._show_all_destinations)
-        self.hide_all_btn = QPushButton("Hide All Destinations")
-        self.hide_all_btn.clicked.connect(self._hide_all_destinations)
-        btn_layout.addWidget(self.show_all_btn)
-        btn_layout.addWidget(self.hide_all_btn)
-        dest_selector_layout.addLayout(btn_layout)
-
         right_panel.addTab(dest_selector_group, "Destination Selector")
 
         splitter.addWidget(right_panel)
@@ -492,11 +490,12 @@ class DynamicTextureSectionWidget(QWidget):
 
     def _load_data(self):
         self.texture_combo.clear()
-        for i in range(len(self.ifrit_manager.texture_data) - 1):
-            self.texture_combo.addItem(f"Texture {i}")
+        if self.ifrit_manager.texture_data:
+            for i in range(len(self.ifrit_manager.texture_data) - 1):
+                self.texture_combo.addItem(f"Texture {i}")
 
-        if self.texture_combo.count() > 0:
-            self.texture_combo.setCurrentIndex(0)
+            if self.texture_combo.count() > 0:
+                self.texture_combo.setCurrentIndex(0)
 
     def _on_texture_changed(self, index):
         self.current_texture_index = index
@@ -516,10 +515,10 @@ class DynamicTextureSectionWidget(QWidget):
 
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
 
-        if self.current_entry_index >= len(dynamic_texture.anim_data):
+        if self.current_entry_index >= len(dynamic_texture.dynamic_texture_data):
             return
 
-        entry = dynamic_texture.anim_data[self.current_entry_index]
+        entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
 
 
         # Red rectangles only for selected destinations of current entry
@@ -548,7 +547,7 @@ class DynamicTextureSectionWidget(QWidget):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
 
         self.entry_combo.clear()
-        for i in range(len(dynamic_texture.anim_data)):
+        for i in range(len(dynamic_texture.dynamic_texture_data)):
             self.entry_combo.addItem(f"Entry {i}")
 
         if self.entry_combo.count() > 0:
@@ -556,15 +555,16 @@ class DynamicTextureSectionWidget(QWidget):
         else:
             self.current_entry_index = 0
             self._show_empty_editor()
+        self._update_destination_selector()
 
     def _update_destination_selector(self):
         """Update the destination selector for current entry"""
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
 
-        if self.current_entry_index >= len(dynamic_texture.anim_data):
+        if self.current_entry_index >= len(dynamic_texture.dynamic_texture_data):
             return
 
-        entry = dynamic_texture.anim_data[self.current_entry_index]
+        entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
         dest_count = len(entry.dest_uv)
 
         self.dest_selector.update_destinations(dest_count, self.selected_destinations)
@@ -574,25 +574,6 @@ class DynamicTextureSectionWidget(QWidget):
         self.selected_destinations = self.dest_selector.get_selected_indices()
         self._update_rectangles()
 
-    def _show_all_destinations(self):
-        """Show all destinations for current entry"""
-        dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
-
-        if self.current_entry_index < len(dynamic_texture.anim_data):
-            entry = dynamic_texture.anim_data[self.current_entry_index]
-            self.selected_destinations = set(range(len(entry.dest_uv)))
-            self.dest_selector.update_destinations(len(entry.dest_uv), self.selected_destinations)
-            self._update_rectangles()
-
-    def _hide_all_destinations(self):
-        """Hide all destinations for current entry"""
-        self.selected_destinations = set()
-
-        dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
-        if self.current_entry_index < len(dynamic_texture.anim_data):
-            entry = dynamic_texture.anim_data[self.current_entry_index]
-            self.dest_selector.update_destinations(len(entry.dest_uv), self.selected_destinations)
-            self._update_rectangles()
 
     def _show_empty_editor(self):
         for i in reversed(range(self.entry_editor_layout.count())):
@@ -603,6 +584,7 @@ class DynamicTextureSectionWidget(QWidget):
         label = QLabel("No animation entries. Click '+ Add Entry' to create one.")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.entry_editor_layout.addWidget(label)
+        self.dest_selector.update_destinations(0, set())
 
     def _on_entry_changed(self, index):
         self.current_entry_index = index
@@ -610,19 +592,20 @@ class DynamicTextureSectionWidget(QWidget):
 
         # Initialize with first destination selected by default if exists
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
-        if self.current_entry_index < len(dynamic_texture.anim_data):
-            entry = dynamic_texture.anim_data[self.current_entry_index]
-            if len(entry.dest_uv) > 0:
-                self.selected_destinations = {0}  # Select first destination by default
+        if dynamic_texture and dynamic_texture.dynamic_texture_data:
+            if self.current_entry_index < len(dynamic_texture.dynamic_texture_data):
+                entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
+                if len(entry.dest_uv) > 0:
+                    self.selected_destinations = {0}  # Select first destination by default
 
-        self._load_current_entry_editor()
-        self._update_destination_selector()
-        self._update_rectangles()
+            self._load_current_entry_editor()
+            self._update_destination_selector()
+            self._update_rectangles()
 
     def _load_current_entry_editor(self):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
 
-        if self.current_entry_index >= len(dynamic_texture.anim_data):
+        if self.current_entry_index >= len(dynamic_texture.dynamic_texture_data):
             self._show_empty_editor()
             return
 
@@ -631,7 +614,7 @@ class DynamicTextureSectionWidget(QWidget):
             if widget:
                 widget.deleteLater()
 
-        entry = dynamic_texture.anim_data[self.current_entry_index]
+        entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
         entry_widget = DynamicTextureEntryWidget(self.current_entry_index)
 
         # Build destinations list
@@ -655,10 +638,10 @@ class DynamicTextureSectionWidget(QWidget):
     def _on_entry_data_changed(self, entry_widget: DynamicTextureEntryWidget):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
 
-        if self.current_entry_index >= len(dynamic_texture.anim_data):
+        if self.current_entry_index >= len(dynamic_texture.dynamic_texture_data):
             return
 
-        entry = dynamic_texture.anim_data[self.current_entry_index]
+        entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
         data = entry_widget.get_data()
 
         # Update entry data
@@ -716,21 +699,21 @@ class DynamicTextureSectionWidget(QWidget):
         new_entry.dest_uv[0].set_u_raw(0)
         new_entry.dest_uv[0].set_v_raw(0)
 
-        dynamic_texture.anim_data.append(new_entry)
+        dynamic_texture.dynamic_texture_data.append(new_entry)
 
         self._load_animation_entries()
-        self.entry_combo.setCurrentIndex(len(dynamic_texture.anim_data) - 1)
+        self.entry_combo.setCurrentIndex(len(dynamic_texture.dynamic_texture_data) - 1)
 
     def _remove_current_entry(self):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
 
-        if 0 <= self.current_entry_index < len(dynamic_texture.anim_data):
-            del dynamic_texture.anim_data[self.current_entry_index]
+        if 0 <= self.current_entry_index < len(dynamic_texture.dynamic_texture_data):
+            del dynamic_texture.dynamic_texture_data[self.current_entry_index]
 
             self._load_animation_entries()
 
-            if self.current_entry_index >= len(dynamic_texture.anim_data):
-                self.current_entry_index = max(0, len(dynamic_texture.anim_data) - 1)
+            if self.current_entry_index >= len(dynamic_texture.dynamic_texture_data):
+                self.current_entry_index = max(0, len(dynamic_texture.dynamic_texture_data) - 1)
 
             if self.entry_combo.count() > 0:
                 self.entry_combo.setCurrentIndex(self.current_entry_index)

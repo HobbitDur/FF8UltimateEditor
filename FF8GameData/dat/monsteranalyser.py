@@ -604,7 +604,6 @@ class MonsterAnalyser:
         return all_matched
 
     def __analyze_section_texture_anim(self, section_number:int = 4):
-        print("__analyze_section_4")
         if self.section_raw_data[section_number]:
             self.dynamic_texture_data.analyze(self.section_raw_data[section_number])
             print(self.dynamic_texture_data)
