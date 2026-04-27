@@ -295,7 +295,7 @@ class DynamicTextureSectionWidget(QWidget):
         entry  = dynamic_texture.anim_data[0]
         # Blue rectangle for source (sub-texture that will be modified)
         self.texture_preview.add_rectangle(
-            entry.source_uv.u,  entry.source_uv.v,
+            entry.source_uv.get_u_raw(),  entry.source_uv.get_v_raw(),
             entry.sprite_width, entry.sprite_height,
             QColor(0, 0, 255, 255),  # Blue
             f""
@@ -303,7 +303,7 @@ class DynamicTextureSectionWidget(QWidget):
 
         # Red rectangle for target (where it will be used)
         self.texture_preview.add_rectangle(
-            entry.dest_uv[0].u, entry.dest_uv[0].v,
+            entry.dest_uv[0].get_u_raw(), entry.dest_uv[0].get_v_raw(),
             entry.sprite_width, entry.sprite_height,
             QColor(255, 0, 0, 255),  # Red
             f""
@@ -327,8 +327,8 @@ class DynamicTextureSectionWidget(QWidget):
 
 
             # Set data from TextureAnimData object
-            entry_widget.src_x.setValue(int(entry.source_uv.u))
-            entry_widget.src_y.setValue(int(entry.source_uv.v))
+            entry_widget.src_x.setValue(int(entry.source_uv.get_u_raw()))
+            entry_widget.src_y.setValue(int(entry.source_uv.get_v_raw()))
             entry_widget.src_width.setValue(entry.sprite_width)
             entry_widget.src_height.setValue(entry.sprite_height)
             entry_widget.dst_x.setValue(int(entry.dest_uv[0].u))
@@ -355,8 +355,8 @@ class DynamicTextureSectionWidget(QWidget):
         dynamic_texture:DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
         if dynamic_texture and entry_index < len(dynamic_texture.anim_data):
             entry = dynamic_texture.anim_data[entry_index]
-            entry.source_uv.u = entry_widget.src_x.value()
-            entry.source_uv.v = entry_widget.src_y.value()
+            entry.source_uv.set_u_raw( entry_widget.src_x.value())
+            entry.source_uv.set_u_raw( entry_widget.src_y.value())
             entry.sprite_width = entry_widget.src_width.value()
             entry.sprite_height = entry_widget.src_height.value()
             entry.dest_uv[0].u = entry_widget.dst_x.value()

@@ -262,42 +262,35 @@ class GeometryQuad:
 
 
 class UV:
-    def __init__(self, member_size:int=2, vram_size:bool=False):
-        self._u: float=0
-        self._v: float=0
+    def __init__(self, member_size:int=1, vram_size:bool=False):
+        self.u: float=0
+        self.v: float=0
         self.member_size = member_size
         self.vram_size:bool = vram_size
     def analyze(self, data:bytes):
+        print(f"data uv:{data.hex(sep=" ")}")
         if not self.vram_size:
-            self._u = int.from_bytes(data[0:self.member_size], byteorder='little')/128.0
+            self.u = int.from_bytes(data[0:self.member_size], byteorder='little')/128.0
         else: # In VRAM, you have for X 2 bytes data per texel
-            self._u = (int.from_bytes(data[0:self.member_size], byteorder='little') * 2) / 128.0
-        self._v = int.from_bytes(data[self.member_size:self.member_size*2], byteorder='little')/128.0
-
-    @property
-    def u(self):
-        """Getter - accessed as obj.my_var"""
-        return int(self._u * 128.0) & 0xFF
-
-    @u.setter
-    def u(self, value):
-        """Setter - accessed as obj.my_var = value"""
-        self._u = value / 128.0
-    @property
-    def v(self):
-        """Getter - accessed as obj.my_var"""
-        return int(self._v * 128.0) & 0xFF
-
-    @v.setter
-    def v(self, value):
-        """Setter - accessed as obj.my_var = value"""
-        self._v = value / 128.0
+            self.u = (int.from_bytes(data[0:self.member_size], byteorder='little') * 2) / 128.0
+        self.v = int.from_bytes(data[self.member_size:self.member_size*2], byteorder='little')/128.0
+        print(f"u, v: {self.u}, {self.v}")
 
     def get_byte(self) -> bytearray:
-        return bytearray([self.u, self.v])
-
+        return bytearray([self.get_u_raw(), self.get_v_raw()])
+    def get_u_raw(self):
+        return int(self.u*128.0) & 0xFF
+    def get_v_raw(self):
+        return int(self.v*128.0) & 0xFF
+    def set_u_raw(self, value:int):
+        if not self.vram_size:
+            self.u = value / 128.0
+        else:  # In VRAM, you have for X 2 bytes data per texel
+            self.u = value * 2 / 128.0
+    def set_v_raw(self, value:int):
+        self.v = value / 128.0
     def __str__(self):
-        return f"UV({self.u},{self.v})"
+        return f"UV({self.get_u_raw()},{self.get_v_raw()})"
     def __repr__(self):
         return self.__str__()
 
@@ -1225,7 +1218,7 @@ class DynamicTextureData:
         self.source_uv.analyze(data[8: 10])
         for i in range(self.number_destination):
             uv = UV(member_size=1, vram_size=True)
-            uv.analyze(data[10+i*2: 10+i*2+1])
+            uv.analyze(data[10+i*2: 10+(i+1)*2])
             self.dest_uv.append(uv)
 
     def __str__(self):
