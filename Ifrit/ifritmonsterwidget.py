@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
 )
 from IfritAI.ifritaiwidget import IfritAIWidget
 from Ifrit.ifritmanager import IfritManager
+from IfritDynamicTexture.ifritdynamictexturewidget import IfritDynamicTextureWidget
 from IfritSeq.ifritseqwidget import IfritSeqWidget
 from Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from IfritTexture.ifrittexturewidget import IfritTextureWidget
@@ -73,13 +74,17 @@ class IfritMonsterWidget(QWidget):
         self._texture_widget = IfritTextureWidget(self.ifrit_manager)
         self._xlsx_widget = IfritXlsxWidget(self.ifrit_manager)
 
+        # This need to be loaded after the texture widget
+        self._dynamic_texture_widget = IfritDynamicTextureWidget(self.ifrit_manager)
+
         # ── Tabs ─────────────────────────────────────────────────────
         self._tabs = QTabWidget()
         self._tabs.addTab(self._3d_widget, "3D")
         self._tabs.addTab(self._xlsx_widget, "Stat")
         self._tabs.addTab(self._ai_widget, "AI")
-        self._tabs.addTab(self._texture_widget, "Texture")
+        self._tabs.addTab(self._texture_widget, "Static Texture")
         self._tabs.addTab(self._seq_widget, "Sequence")
+        self._tabs.addTab(self._dynamic_texture_widget, "Dynamic Texture")
         self._tabs.currentChanged.connect(self._on_tab_changed)
         self._tabs.setCurrentIndex(self.settings.value("ifrit/current_tab", defaultValue=0, type=int))
 
@@ -123,7 +128,7 @@ class IfritMonsterWidget(QWidget):
 
     def _open_file(self):
         path = ""
-        #path = "c0m001.dat" # For developing faster
+        path = "c0m080.dat" # For developing faster
         if not path:
             path = self._file_dialog.getOpenFileName(
                 parent=self, caption="Open .dat file",
@@ -152,6 +157,7 @@ class IfritMonsterWidget(QWidget):
         self._seq_widget.load_file(path)
         self._3d_widget.load_file()
         self._texture_widget.load_file(path)
+        self._dynamic_texture_widget.load_file(path) # need to be after texture
         try:
             name = self._ai_widget.ifrit_manager.enemy.info_stat_data['monster_name'].get_str().strip('\x00')
             self._monster_label.setText(f"{name}  [{pathlib.Path(path).name}]")

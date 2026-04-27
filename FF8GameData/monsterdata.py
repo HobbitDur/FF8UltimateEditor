@@ -263,21 +263,41 @@ class GeometryQuad:
 
 class UV:
     def __init__(self, member_size:int=2, vram_size:bool=False):
-        self.u: float=0
-        self.v: float=0
+        self._u: float=0
+        self._v: float=0
         self.member_size = member_size
         self.vram_size:bool = vram_size
     def analyze(self, data:bytes):
         if not self.vram_size:
-            self.u = int.from_bytes(data[0:self.member_size], byteorder='little')/128.0
+            self._u = int.from_bytes(data[0:self.member_size], byteorder='little')/128.0
         else: # In VRAM, you have for X 2 bytes data per texel
-            self.u = (int.from_bytes(data[0:self.member_size], byteorder='little') * 2) / 128.0
-        self.v = int.from_bytes(data[self.member_size:self.member_size*2], byteorder='little')/128.0
+            self._u = (int.from_bytes(data[0:self.member_size], byteorder='little') * 2) / 128.0
+        self._v = int.from_bytes(data[self.member_size:self.member_size*2], byteorder='little')/128.0
+
+    @property
+    def u(self):
+        """Getter - accessed as obj.my_var"""
+        return int(self._u * 128.0) & 0xFF
+
+    @u.setter
+    def u(self, value):
+        """Setter - accessed as obj.my_var = value"""
+        self._u = value / 128.0
+    @property
+    def v(self):
+        """Getter - accessed as obj.my_var"""
+        return int(self._v * 128.0) & 0xFF
+
+    @v.setter
+    def v(self, value):
+        """Setter - accessed as obj.my_var = value"""
+        self._v = value / 128.0
 
     def get_byte(self) -> bytearray:
-        return bytearray([int(self.u * 128.0) & 0xFF, int(self.v * 128.0) & 0xFF])
+        return bytearray([self.u, self.v])
+
     def __str__(self):
-        return f"UV({int(self.u*128.0)},{int(self.v*128.0)})"
+        return f"UV({self.u},{self.v})"
     def __repr__(self):
         return self.__str__()
 
@@ -1184,7 +1204,7 @@ class AnimationSection:
 
 # Section 4: Texture animation
 
-class TextureAnimData:
+class DynamicTextureData:
     def __init__(self, data:bytes):
         self.texture_num:int = 0
         self.source_uv = UV(member_size=1, vram_size=True)
@@ -1213,11 +1233,11 @@ class TextureAnimData:
     def __repr__(self):
         return self.__str__()
 
-class TextureAnimSection:
+class DynamicTextureSection:
     def __init__(self):
         self.null_sentinel:int=0
         self.offset:List[int] = []
-        self.anim_data: List[TextureAnimData] = []
+        self.anim_data: List[DynamicTextureData] = []
     def analyze(self, data:bytes):
         self.null_sentinel = int.from_bytes(data[0: 2], byteorder='little')
         for i in range(0, len(data)):
@@ -1228,9 +1248,9 @@ class TextureAnimSection:
                 break
         for i in range(len(self.offset)):
             if i == len(self.offset)-1:
-                self.anim_data.append(TextureAnimData(data[self.offset[i]:]))
+                self.anim_data.append(DynamicTextureData(data[self.offset[i]:]))
             else:
-                self.anim_data.append(TextureAnimData(data[self.offset[i]:self.offset[i+1]]))
+                self.anim_data.append(DynamicTextureData(data[self.offset[i]:self.offset[i + 1]]))
     def __str__(self):
         return f"TextureAnimSection(offset:{self.offset}, data:{self.anim_data})"
     def __repr__(self):
