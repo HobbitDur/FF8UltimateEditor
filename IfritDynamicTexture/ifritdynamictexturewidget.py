@@ -312,6 +312,19 @@ class TexturePreviewWidget(QLabel):
 
         super().mousePressEvent(event)
 
+    def _draw_text_with_background(self, painter: QPainter, text: str, rect: QRect):
+        """Draw text with a dark semi-transparent background for better visibility"""
+        # Draw dark background with some transparency
+        painter.setBrush(QBrush(QColor(0, 0, 0, 180)))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawRoundedRect(rect, 3, 3)
+
+        # Draw white text with black outline
+        painter.setPen(QPen(Qt.GlobalColor.black, 2))
+        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, text)
+        painter.setPen(QPen(Qt.GlobalColor.white, 1))
+        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, text)
+
     def update_display(self):
         """Update the displayed image with rectangles"""
         if self.original_pixmap is None or self.original_pixmap.isNull():
@@ -335,79 +348,70 @@ class TexturePreviewWidget(QLabel):
         result = self.scaled_pixmap.copy()
         painter = QPainter(result)
 
-        # Group rectangles by their scaled position for overlap detection
-        rect_map = {}
-
+        # First pass: Draw ALL destination rectangles (red)
+        dest_rects = []
         for x, y, w, h, color, line_width, label, entry_idx, dest_idx in self.rectangles:
-            scaled_x = int(x * self.scale_factor)
-            scaled_y = int(y * self.scale_factor)
-            scaled_w = max(1, int(w * self.scale_factor))
-            scaled_h = max(1, int(h * self.scale_factor))
+            if color == QColor(255, 0, 0, 255):  # Red destination
+                scaled_x = int(x * self.scale_factor)
+                scaled_y = int(y * self.scale_factor)
+                scaled_w = max(1, int(w * self.scale_factor))
+                scaled_h = max(1, int(h * self.scale_factor))
+                dest_rects.append((scaled_x, scaled_y, scaled_w, scaled_h, color, line_width, label, entry_idx, dest_idx))
 
-            key = (scaled_x, scaled_y, scaled_w, scaled_h)
-            if key not in rect_map:
-                rect_map[key] = []
-            rect_map[key].append((color, line_width, label, entry_idx, dest_idx))
-
-        # Draw rectangles with overlap mixing
-        for (scaled_x, scaled_y, scaled_w, scaled_h), rects in rect_map.items():
-            if len(rects) == 1:
-                # Single rectangle - draw normally
-                color, line_width, label, entry_idx, dest_idx = rects[0]
                 pen = QPen(color, line_width)
-                if color == QColor(255, 0, 0, 255):
-                    pen.setStyle(Qt.PenStyle.DashLine)
+                pen.setStyle(Qt.PenStyle.DashLine)
                 painter.setPen(pen)
                 painter.setBrush(QBrush(Qt.GlobalColor.transparent))
                 painter.drawRect(scaled_x, scaled_y, scaled_w, scaled_h)
                 if label:
                     text_rect = QRect(scaled_x + 2, scaled_y + 2, scaled_w - 4, 20)
                     self._draw_text_with_background(painter, label, text_rect)
-            else:
-                # Multiple rectangles at same position - mix colors
-                # Calculate mixed color (average of RGB)
-                total_r = 0
-                total_g = 0
-                total_b = 0
-                max_line_width = 0
 
-                for color, line_width, label, entry_idx, dest_idx in rects:
-                    total_r += color.red()
-                    total_g += color.green()
-                    total_b += color.blue()
-                    max_line_width = max(max_line_width, line_width)
+        # Second pass: Draw ALL source rectangles (blue) - on top of destinations
+        for x, y, w, h, color, line_width, label, entry_idx, dest_idx in self.rectangles:
+            if color == QColor(0, 0, 255, 255):  # Blue source
+                scaled_x = int(x * self.scale_factor)
+                scaled_y = int(y * self.scale_factor)
+                scaled_w = max(1, int(w * self.scale_factor))
+                scaled_h = max(1, int(h * self.scale_factor))
 
-                count = len(rects)
-                mixed_color = QColor(total_r // count, total_g // count, total_b // count, 255)
+                # Check if this source overlaps with any destination at the same position
+                overlapping = False
+                for dx, dy, dw, dh, dcolor, dline_width, dlabel, dentry_idx, ddest_idx in dest_rects:
+                    if (scaled_x == dx and scaled_y == dy and scaled_w == dw and scaled_h == dh):
+                        overlapping = True
+                        break
 
-                # Draw mixed color rectangle
-                pen = QPen(mixed_color, max_line_width)
-                pen.setStyle(Qt.PenStyle.SolidLine)  # Solid line for mixed
-                painter.setPen(pen)
-                painter.setBrush(QBrush(Qt.GlobalColor.transparent))
-                painter.drawRect(scaled_x, scaled_y, scaled_w, scaled_h)
+                if overlapping:
+                    # Draw mixed purple color for the rectangle
+                    pen = QPen(QColor(0, 255, 0, 255), line_width)
+                    pen.setStyle(Qt.PenStyle.SolidLine)
+                    painter.setPen(pen)
+                    painter.setBrush(QBrush(Qt.GlobalColor.transparent))
+                    painter.drawRect(scaled_x, scaled_y, scaled_w, scaled_h)
+                    if label:
+                        # Get the destination label too
+                        dest_label = ""
+                        for dx, dy, dw, dh, dcolor, dline_width, dlabel, dentry_idx, ddest_idx in dest_rects:
+                            if (scaled_x == dx and scaled_y == dy and scaled_w == dw and scaled_h == dh):
+                                dest_label = dlabel
+                                break
+                        combined_label = f"{label}/{dest_label}" if dest_label else label
+                        text_rect = QRect(scaled_x + 2, scaled_y + 2, scaled_w - 4, 20)
+                        self._draw_text_with_background(painter, combined_label, text_rect)
+                else:
+                    # Draw normal blue solid line
+                    pen = QPen(color, line_width)
+                    pen.setStyle(Qt.PenStyle.SolidLine)
+                    painter.setPen(pen)
+                    painter.setBrush(QBrush(Qt.GlobalColor.transparent))
+                    painter.drawRect(scaled_x, scaled_y, scaled_w, scaled_h)
+                    if label:
+                        text_rect = QRect(scaled_x + 2, scaled_y + 2, scaled_w - 4, 20)
+                        self._draw_text_with_background(painter, label, text_rect)
 
-                # Create combined label
-                labels = [label for _, _, label, _, _ in rects if label]
-                if labels:
-                    combined_label = "/".join(labels)
-                    text_rect = QRect(scaled_x + 2, scaled_y + 2, scaled_w - 4, 20)
-                    self._draw_text_with_background(painter, combined_label, text_rect)
         painter.end()
         self.setPixmap(result)
-
-    def _draw_text_with_background(self, painter: QPainter, text: str, rect: QRect):
-        """Draw text with a dark semi-transparent background for better visibility"""
-        # Draw dark background with some transparency
-        painter.setBrush(QBrush(QColor(0, 0, 0, 180)))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawRoundedRect(rect, 3, 3)
-
-        # Draw white text with black outline
-        painter.setPen(QPen(Qt.GlobalColor.black, 2))
-        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, text)
-        painter.setPen(QPen(Qt.GlobalColor.white, 1))
-        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, text)
 
     def resizeEvent(self, event):
         self.update_display()
@@ -422,7 +426,8 @@ class DynamicTextureSectionWidget(QWidget):
         self.ifrit_manager = ifrit_manager
         self.current_texture_index = 0
         self.current_entry_index = 0
-        self.selected_destinations = set()  # Selected destination indices for current entry
+        self.selected_destinations = set()
+        self.entry_indices = []  # Maps combo box index to actual entry index in dynamic_texture_data
 
         self._init_ui()
 
@@ -461,7 +466,7 @@ class DynamicTextureSectionWidget(QWidget):
         preview_group = QGroupBox("Texture Preview")
         preview_layout = QVBoxLayout(preview_group)
 
-        info_label = QLabel("Blue (thick) = Source | Red = Destinations (use checkboxes to show/hide)")
+        info_label = QLabel("Blue = Source | Red = Destinations (use checkboxes to show/hide)")
         info_label.setStyleSheet("color: #888; font-size: 12px;")
         preview_layout.addWidget(info_label)
 
@@ -503,6 +508,15 @@ class DynamicTextureSectionWidget(QWidget):
 
         layout.addWidget(splitter)
 
+    def _get_entries_for_current_texture(self) -> list:
+        """Get all animation entries that belong to the current texture"""
+        dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
+        if not dynamic_texture or not dynamic_texture.dynamic_texture_data:
+            return []
+
+        return [entry for entry in dynamic_texture.dynamic_texture_data
+                if entry.texture_num == self.current_texture_index]
+
     def _load_data(self):
         self.texture_combo.clear()
         if self.ifrit_manager.texture_data:
@@ -510,7 +524,12 @@ class DynamicTextureSectionWidget(QWidget):
                 self.texture_combo.addItem(f"Texture {i}")
 
             if self.texture_combo.count() > 0:
+                # Block signals to prevent _on_texture_changed from being called
+                self.texture_combo.blockSignals(True)
                 self.texture_combo.setCurrentIndex(0)
+                self.texture_combo.blockSignals(False)
+                # Manually call after ensuring data is ready
+                self._on_texture_changed(0)
 
     def _on_texture_changed(self, index):
         self.current_texture_index = index
@@ -528,19 +547,19 @@ class DynamicTextureSectionWidget(QWidget):
         """Update the rectangle overlays on the texture preview - only for current entry"""
         self.texture_preview.clear_rectangles()
 
-        dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
+        entries = self._get_entries_for_current_texture()
 
-        if self.current_entry_index >= len(dynamic_texture.dynamic_texture_data):
+        if self.current_entry_index >= len(entries):
             return
 
-        entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
+        entry = entries[self.current_entry_index]
 
-        # Blue rectangle for source - THICKER LINE (width 4) - only for current entry
+        # Blue rectangle for source
         self.texture_preview.add_rectangle(
             entry.source_uv.get_u_raw(), entry.source_uv.get_v_raw(),
             entry.sprite_width, entry.sprite_height,
             QColor(0, 0, 255, 255),
-            3,  # Thicker line for blue source rectangle
+            3,
             f"Source",
             self.current_entry_index, -1
         )
@@ -552,36 +571,51 @@ class DynamicTextureSectionWidget(QWidget):
                     dest_uv.get_u_raw(), dest_uv.get_v_raw(),
                     entry.sprite_width, entry.sprite_height,
                     QColor(255, 0, 0, 255),
-                    3,  # Normal line width for red rectangles
+                    3,
                     f"Dest {dest_idx}",
                     self.current_entry_index, dest_idx
                 )
 
-
     def _load_animation_entries(self):
-        dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
+        """Load only entries that belong to the current texture"""
+        entries = self._get_entries_for_current_texture()
 
+        self.entry_combo.blockSignals(True)  # ← add this
         self.entry_combo.clear()
-        for i in range(len(dynamic_texture.dynamic_texture_data)):
+        self.entry_combo.blockSignals(False)  # ← and this
+        self.entry_indices.clear()
+
+        for i, entry in enumerate(entries):
             self.entry_combo.addItem(f"Entry {i}")
+            self.entry_indices.append(i)
 
         if self.entry_combo.count() > 0:
-            self.entry_combo.setCurrentIndex(min(self.current_entry_index, self.entry_combo.count() - 1))
+            # Always reset to 0 when loading new entries, don't use existing current_entry_index
+            self.current_entry_index = 0
+            self.entry_combo.setCurrentIndex(0)
+
+            # Initialize with all destinations selected
+            entry = entries[0]
+            if len(entry.dest_uv) > 0:
+                self.selected_destinations = set(range(len(entry.dest_uv)))
         else:
             self.current_entry_index = 0
+            self.selected_destinations = set()
             self._show_empty_editor()
+
         self._update_destination_selector()
+        self._update_rectangles()
+        self._load_current_entry_editor()
 
     def _update_destination_selector(self):
         """Update the destination selector for current entry"""
-        dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
+        entries = self._get_entries_for_current_texture()
 
-        if self.current_entry_index >= len(dynamic_texture.dynamic_texture_data):
+        if self.current_entry_index >= len(entries):
             return
 
-        entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
+        entry = entries[self.current_entry_index]
         dest_count = len(entry.dest_uv)
-
         self.dest_selector.update_destinations(dest_count, self.selected_destinations)
 
     def _on_destination_selection_changed(self):
@@ -589,37 +623,35 @@ class DynamicTextureSectionWidget(QWidget):
         self.selected_destinations = self.dest_selector.get_selected_indices()
         self._update_rectangles()
 
-
     def _show_empty_editor(self):
         for i in reversed(range(self.entry_editor_layout.count())):
             widget = self.entry_editor_layout.itemAt(i).widget()
             if widget:
                 widget.deleteLater()
 
-        label = QLabel("No animation entries. Click '+ Add Entry' to create one.")
+        label = QLabel("No animation entries for this texture. Click '+ Add Entry' to create one.")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.entry_editor_layout.addWidget(label)
         self.dest_selector.update_destinations(0, set())
 
     def _on_entry_changed(self, index):
         self.current_entry_index = index
-        self.selected_destinations = set()  # Reset selections when changing entry
+        entries = self._get_entries_for_current_texture()
 
-        dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
-        if dynamic_texture and dynamic_texture.dynamic_texture_data:
-            if self.current_entry_index < len(dynamic_texture.dynamic_texture_data):
-                entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
-                if len(entry.dest_uv) > 0:
-                    self.selected_destinations = set(range(len(entry.dest_uv)))  # Select ALL destinations
+        if entries and self.current_entry_index < len(entries):
+            # Select all destinations by default
+            entry = entries[self.current_entry_index]
+            if len(entry.dest_uv) > 0:
+                self.selected_destinations = set(range(len(entry.dest_uv)))
 
         self._load_current_entry_editor()
         self._update_destination_selector()
         self._update_rectangles()
 
     def _load_current_entry_editor(self):
-        dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
+        entries = self._get_entries_for_current_texture()
 
-        if self.current_entry_index >= len(dynamic_texture.dynamic_texture_data):
+        if self.current_entry_index >= len(entries):
             self._show_empty_editor()
             return
 
@@ -628,7 +660,7 @@ class DynamicTextureSectionWidget(QWidget):
             if widget:
                 widget.deleteLater()
 
-        entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
+        entry = entries[self.current_entry_index]
         entry_widget = DynamicTextureEntryWidget(self.current_entry_index)
 
         # Build destinations list
@@ -650,12 +682,12 @@ class DynamicTextureSectionWidget(QWidget):
         self.entry_editor_layout.addWidget(entry_widget)
 
     def _on_entry_data_changed(self, entry_widget: DynamicTextureEntryWidget):
-        dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
+        entries = self._get_entries_for_current_texture()
 
-        if self.current_entry_index >= len(dynamic_texture.dynamic_texture_data):
+        if self.current_entry_index >= len(entries):
             return
 
-        entry = dynamic_texture.dynamic_texture_data[self.current_entry_index]
+        entry = entries[self.current_entry_index]
         data = entry_widget.get_data()
 
         # Update entry data
@@ -663,9 +695,9 @@ class DynamicTextureSectionWidget(QWidget):
         entry.source_uv.set_v_raw(data['src_y'])
         entry.sprite_width = data['src_width']
         entry.sprite_height = data['src_height']
+        entry.texture_num = self.current_texture_index  # Ensure texture_num is set
 
         # Update destinations
-        old_dest_count = len(entry.dest_uv)
         entry.dest_uv.clear()
         for dest in data['destinations']:
             from FF8GameData.monsterdata import UV
@@ -674,7 +706,7 @@ class DynamicTextureSectionWidget(QWidget):
             uv.set_v_raw(dest['y'])
             entry.dest_uv.append(uv)
 
-        # Update selected destinations based on new count
+        # Select all destinations by default
         new_dest_count = len(entry.dest_uv)
         if new_dest_count > 0:
             self.selected_destinations = set(range(new_dest_count))
@@ -686,7 +718,6 @@ class DynamicTextureSectionWidget(QWidget):
 
     def _on_rectangle_clicked(self, entry_idx: int, dest_idx: int):
         if entry_idx >= 0 and dest_idx >= 0:
-            # Toggle destination selection when clicking on red rectangle
             if dest_idx in self.selected_destinations:
                 self.selected_destinations.discard(dest_idx)
             else:
@@ -708,37 +739,58 @@ class DynamicTextureSectionWidget(QWidget):
         new_entry.dest_uv = [UV()]
         new_entry.dest_uv[0].set_u_raw(0)
         new_entry.dest_uv[0].set_v_raw(0)
+        new_entry.texture_num = self.current_texture_index  # Link to current texture
 
         dynamic_texture.dynamic_texture_data.append(new_entry)
 
         self._load_animation_entries()
-        self.entry_combo.setCurrentIndex(len(dynamic_texture.dynamic_texture_data) - 1)
 
-        self.selected_destinations = {0}  # Since there's 1 destination by default
-        self._update_destination_selector()
-        self._update_rectangles()
+        # Select the newly added entry
+        entries = self._get_entries_for_current_texture()
+        self.entry_combo.setCurrentIndex(len(entries) - 1)
 
     def _remove_current_entry(self):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
+        entries = self._get_entries_for_current_texture()
 
-        if 0 <= self.current_entry_index < len(dynamic_texture.dynamic_texture_data):
-            del dynamic_texture.dynamic_texture_data[self.current_entry_index]
+        if self.current_entry_index < len(entries):
+            # Find and remove the actual entry
+            entry_to_remove = entries[self.current_entry_index]
+            dynamic_texture.dynamic_texture_data.remove(entry_to_remove)
 
             self._load_animation_entries()
 
-            if self.current_entry_index >= len(dynamic_texture.dynamic_texture_data):
-                self.current_entry_index = max(0, len(dynamic_texture.dynamic_texture_data) - 1)
+            entries = self._get_entries_for_current_texture()
+            if self.current_entry_index >= len(entries):
+                self.current_entry_index = max(0, len(entries) - 1)
 
             if self.entry_combo.count() > 0:
                 self.entry_combo.setCurrentIndex(self.current_entry_index)
             else:
                 self._show_empty_editor()
 
-            self.selected_destinations = set()
             self._update_destination_selector()
             self._update_rectangles()
 
     def load_file(self, file_path: str):
+        # Reset state
+        self.current_texture_index = 0
+        self.current_entry_index = 0
+        self.selected_destinations = set()
+        self.entry_indices = []
+
+        # Clear UI
+        self.texture_preview.clear_rectangles()
+        self.texture_preview.set_texture(QPixmap())
+        self._show_empty_editor()
+        self.dest_selector.update_destinations(0, set())
+        self.texture_preview.rectangles.clear()
+
+        # Clear the combo boxes
+        self.texture_combo.clear()
+        self.entry_combo.clear()
+
+        # Reload data (this will repopulate the texture combo)
         self._load_data()
 
     def save_file(self):
