@@ -11,7 +11,7 @@ from IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from ..GenericSection.ff8text import FF8Text
 from ..gamedata import GameData
 from .commandanalyser import CommandAnalyser, CurrentIfType
-from ..monsterdata import BoneSection, GeometrySection, AnimationSection, AIData, AnimationFrame, BitReader, BitWriter, Animation, EntityType
+from ..monsterdata import BoneSection, GeometrySection, AnimationSection, AIData, AnimationFrame, BitReader, BitWriter, Animation, EntityType, TextureAnimSection
 
 test = []
 
@@ -38,6 +38,7 @@ class MonsterAnalyser:
         self.bone_data = BoneSection()
         self.geometry_data = GeometrySection()
         self.animation_data = AnimationSection()
+        self.texture_anim_data = TextureAnimSection()
         self.model_animation_data = copy.deepcopy(AIData.SECTION_MODEL_ANIM_DICT)
         self.seq_animation_data = copy.deepcopy(AIData.SECTION_MODEL_SEQ_ANIM_DICT)
         self.info_stat_data = copy.deepcopy(AIData.SECTION_INFO_STAT_DICT)
@@ -99,6 +100,7 @@ class MonsterAnalyser:
                 self.__analyze_bone_section(1)
                 self.__analyze_geometry_section(2)
                 self.__analyze_animation_section(3)
+                self.__analyze_section_texture_anim(4)
                 self.__analyze_sequence_animation(5)
                 self.__analyze_info_stat(game_data, 7)
                 self.analyze_battle_script_section(game_data, decompiler, 8)
@@ -601,12 +603,11 @@ class MonsterAnalyser:
 
         return all_matched
 
-    def __analyze_section_4(self, game_data: GameData):
-        SECTION_NUMBER = 4
-        if self.section_raw_data[SECTION_NUMBER]:
-            #print("__analyze_section_4")
-            print(self.section_raw_data[SECTION_NUMBER].hex(sep=" "))
-            print(game_data.translate_hex_to_str(self.section_raw_data[SECTION_NUMBER]))
+    def __analyze_section_texture_anim(self, section_number:int = 4):
+        print("__analyze_section_4")
+        if self.section_raw_data[section_number]:
+            self.texture_anim_data.analyze(self.section_raw_data[section_number])
+            print(self.texture_anim_data)
 
     def __analyze_section_6(self, game_data: GameData):
         SECTION_NUMBER = 6

@@ -262,12 +262,17 @@ class GeometryQuad:
 
 
 class UV:
-    def __init__(self):
+    def __init__(self, member_size:int=2, vram_size:bool=False):
         self.u: float=0
         self.v: float=0
+        self.member_size = member_size
+        self.vram_size:bool = vram_size
     def analyze(self, data:bytes):
-        self.u = int.from_bytes(data[0:1], byteorder='little')/128.0
-        self.v = int.from_bytes(data[1:2], byteorder='little')/128.0
+        if not self.vram_size:
+            self.u = int.from_bytes(data[0:self.member_size], byteorder='little')/128.0
+        else: # In VRAM, you have for X 2 bytes data per texel
+            self.u = (int.from_bytes(data[0:self.member_size], byteorder='little') * 2) / 128.0
+        self.v = int.from_bytes(data[self.member_size:self.member_size*2], byteorder='little')/128.0
 
     def get_byte(self) -> bytearray:
         return bytearray([int(self.u * 128.0) & 0xFF, int(self.v * 128.0) & 0xFF])
@@ -1175,6 +1180,63 @@ class AnimationSection:
             data.extend(b'\x00' * padding_needed)
 
         return data
+
+
+# Section 4: Texture animation
+
+class TextureAnimData:
+    def __init__(self, data:bytes):
+        self.texture_num:int = 0
+        self.source_uv = UV(member_size=1, vram_size=True)
+        self.sprite_width = 0
+        self.sprite_height=0
+        self.number_destination = 0
+        self.unk1=0
+        self.unk2=0
+        self.dest_uv: List[UV] = []
+        self.analyze(data)
+    def analyze(self, data:bytes):
+        self.texture_num = int.from_bytes(data[0: 2], byteorder='little')
+        self.unk1 = int.from_bytes(data[2: 3], byteorder='little')
+        self.sprite_width = int.from_bytes(data[3: 4], byteorder='little')*2 # The size is in VRAM-X ref, and a texel is on 2 bytes.
+        self.sprite_height = int.from_bytes(data[4: 5], byteorder='little')
+        self.number_destination = int.from_bytes(data[5: 6], byteorder='little')
+        self.unk2 = int.from_bytes(data[6: 8], byteorder='little')
+        self.source_uv.analyze(data[8: 10])
+        for i in range(self.number_destination):
+            uv = UV(member_size=1, vram_size=True)
+            uv.analyze(data[10+i*2: 10+i*2+1])
+            self.dest_uv.append(uv)
+
+    def __str__(self):
+       return f"TextureAnimData(ID:{self.texture_num}, sourceUV:{self.source_uv}, SpriteSize:({ self.sprite_width},{ self.sprite_height}), NbDestination:{self.number_destination}), unk1:{self.unk1}, unk2:{self.unk2}, destUVList:{self.dest_uv}"
+    def __repr__(self):
+        return self.__str__()
+
+class TextureAnimSection:
+    def __init__(self):
+        self.null_sentinel:int=0
+        self.offset:List[int] = []
+        self.anim_data: List[TextureAnimData] = []
+    def analyze(self, data:bytes):
+        self.null_sentinel = int.from_bytes(data[0: 2], byteorder='little')
+        for i in range(0, len(data)):
+            offset = int.from_bytes(data[2+2*i: 2+2*(i+1)], byteorder='little')
+            if i == 0 or offset > self.offset[-1]:
+                self.offset.append(offset)
+            else:
+                break
+        for i in range(len(self.offset)):
+            if i == len(self.offset)-1:
+                self.anim_data.append(TextureAnimData(data[self.offset[i]:]))
+            else:
+                self.anim_data.append(TextureAnimData(data[self.offset[i]:self.offset[i+1]]))
+    def __str__(self):
+        return f"TextureAnimSection(offset:{self.offset}, data:{self.anim_data})"
+    def __repr__(self):
+        return self.__str__()
+
+
 class AIData:
     SECTION_HEADER_NB_SECTION = {'offset': 0, 'size': 4, 'byteorder': 'little', 'name': 'nb_section', 'pretty_name': 'Number section'}
     SECTION_HEADER_SECTION_POSITION = {'offset': 0x04, 'size': 4, 'byteorder': 'little', 'name': 'section_pos',
