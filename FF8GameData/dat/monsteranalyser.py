@@ -352,6 +352,9 @@ class MonsterAnalyser:
             # Section 4:Texture animation (unchanged atm)
             section_position = 4
             raw_data_to_write.extend(self.section_raw_data[section_position])
+            #dynamic_texture = self.dynamic_texture_data.to_binary()
+            #raw_data_to_write.extend(dynamic_texture)
+            #self.section_raw_data[section_position] = dynamic_texture
             # Section 5: Seq anim
             section_position = 5
             self.prepare_seq_animation(raw_data_to_write, section_position)
