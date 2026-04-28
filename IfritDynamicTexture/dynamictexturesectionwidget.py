@@ -98,6 +98,7 @@ class DynamicTextureSectionWidget(QWidget):
                 self._on_texture_changed(0)
 
     def _on_texture_changed(self, index):
+        self.texture_preview.stop_animation()
         self.current_texture_index = index
         self._update_texture_preview()
         self._load_animation_entries()
@@ -189,6 +190,7 @@ class DynamicTextureSectionWidget(QWidget):
         self.entry_editor_layout.addWidget(label)
 
     def _on_entry_changed(self, index):
+        self.texture_preview.stop_animation()
         self.current_entry_index = index
         entries = self._get_entries_for_current_texture()
         if entries and 0 <= self.current_entry_index < len(entries):

@@ -1,6 +1,6 @@
-from PyQt6.QtCore import Qt, QRect, QSize, pyqtSignal, QEvent
-from PyQt6.QtGui import QPen, QColor, QBrush, QPainter, QPixmap
-from PyQt6.QtWidgets import QFrame, QLabel, QToolTip
+from PyQt6.QtCore import Qt, QRect, QSize, pyqtSignal, QEvent, QTimer
+from PyQt6.QtGui import QPen, QColor, QBrush, QPainter, QPixmap, QHelpEvent
+from PyQt6.QtWidgets import QFrame, QLabel, QToolTip, QPushButton, QSlider
 
 DEST_PALETTE = [
     QColor(255, 80, 80),
@@ -52,6 +52,121 @@ class TexturePreviewWidget(QLabel):
         # Legend hit areas: list of (y_top, y_bottom, is_source, dest_idx)
         self._legend_rows: list = []
         self._legend_x = 0
+        # Animation state
+        self._anim_timer = QTimer(self)
+        self._anim_timer.timeout.connect(self._animation_step)
+        self._anim_steps: list = []  # list of (is_source, dest_idx or None)
+        self._anim_current = 0
+        self._anim_saved_dests: set = set()
+        self._anim_saved_source: bool = True
+
+        # Play button overlaid on legend panel
+        self._play_btn = QPushButton("▶ Play", self)
+        self._play_btn.setFixedHeight(28)
+        self._play_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #2a5a2a;
+                color: white;
+                border: 1px solid #4a8a4a;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #3a7a3a; }
+            QPushButton:checked {
+                background-color: #8a2a2a;
+                border: 1px solid #cc4a4a;
+            }
+            QPushButton:checked:hover { background-color: #aa3a3a; }
+        """)
+        self._play_btn.setCheckable(True)
+        self._play_btn.toggled.connect(self._on_play_toggled)
+
+        # Speed slider
+        self._speed_slider = QSlider(Qt.Orientation.Horizontal, self)
+        self._speed_slider.setMinimum(100)
+        self._speed_slider.setMaximum(2000)
+        self._speed_slider.setValue(500)
+        self._speed_slider.setToolTip("Animation speed (ms per frame)")
+        self._speed_slider.setStyleSheet("QSlider { background: transparent; }")
+
+    def _on_play_toggled(self, checked: bool):
+        if checked:
+            self._start_animation()
+        else:
+            self.stop_animation()
+
+    def _start_animation(self):
+        """Save current selection and build step list from current rectangles."""
+        self._anim_saved_dests = set(self.selected_dest_indices)
+        self._anim_saved_source = self.source_selected
+
+        # Build steps: source first, then each destination in order
+        self._anim_steps = []
+        has_source = any(color == QColor(0, 0, 255, 255)
+                         for _, _, _, _, color, _, _, _, _ in self.rectangles)
+        if has_source:
+            self._anim_steps.append(('source', -1))
+        for rect in self.rectangles:
+            x, y, w, h, color, line_width, label, entry_idx, dest_idx = rect
+            if color != QColor(0, 0, 255, 255):
+                self._anim_steps.append(('dest', dest_idx))
+
+        if not self._anim_steps:
+            self._play_btn.setChecked(False)
+            return
+
+        self._anim_current = 0
+        self._apply_animation_step(self._anim_current)
+        self._anim_timer.start(self._speed_slider.value())
+        self._play_btn.setText("■ Stop")
+
+    def stop_animation(self):
+        """Stop and restore saved selection."""
+        self._anim_timer.stop()
+        self.selected_dest_indices = set(self._anim_saved_dests)
+        self.source_selected = self._anim_saved_source
+        self.legendSelectionChanged.emit(
+            set(self.selected_dest_indices), self.source_selected)
+        self.update_display()
+        self._play_btn.setText("▶ Play")
+        self._play_btn.setChecked(False)
+
+    def _animation_step(self):
+        """Advance to next step."""
+        self._anim_current = (self._anim_current + 1) % len(self._anim_steps)
+        self._apply_animation_step(self._anim_current)
+        # Update timer interval in case slider changed
+        self._anim_timer.setInterval(self._speed_slider.value())
+
+    def _apply_animation_step(self, step_idx: int):
+        """Show only the rect for this step."""
+        kind, dest_idx = self._anim_steps[step_idx]
+        if kind == 'source':
+            self.source_selected = True
+            self.selected_dest_indices = set()
+        else:
+            self.source_selected = False
+            self.selected_dest_indices = {dest_idx}
+        self.legendSelectionChanged.emit(
+            set(self.selected_dest_indices), self.source_selected)
+        self.update_display()
+
+    def resizeEvent(self, event):
+        # Position play button and slider inside the legend panel at the bottom
+        legend_x = self.width() - LEGEND_WIDTH
+        btn_w = LEGEND_WIDTH - LEGEND_PADDING * 2
+        self._play_btn.setGeometry(
+            legend_x + LEGEND_PADDING,
+            self.height() - 60,
+            btn_w, 28
+        )
+        self._speed_slider.setGeometry(
+            legend_x + LEGEND_PADDING,
+            self.height() - 28,
+            btn_w, 22
+        )
+        self.update_display()
+        super().resizeEvent(event)
 
     def _dest_color(self, dest_idx: int) -> QColor:
         return DEST_PALETTE[dest_idx % len(DEST_PALETTE)]
@@ -75,16 +190,16 @@ class TexturePreviewWidget(QLabel):
         self.rectangles.clear()
         self.update_display()
 
-    def event(self, e):
-        """Handle tooltip display for legend rows with overlaps."""
+    def event(self, e:QHelpEvent):
         if e.type() == QEvent.Type.ToolTip:
-            pos = e.pos()
+            help_event: QHelpEvent = e  # already a QHelpEvent, just type-hint it
+            pos = help_event.pos()
             if pos.x() >= self._legend_x:
                 for idx, (y_top, y_bottom, is_source, dest_idx) in enumerate(self._legend_rows):
                     if y_top <= pos.y() <= y_bottom:
                         tip = self._legend_tooltips[idx] if idx < len(self._legend_tooltips) else ""
                         if tip:
-                            QToolTip.showText(e.globalPos(), tip, self)
+                            QToolTip.showText(help_event.globalPos(), tip, self)
                             return True
             QToolTip.hideText()
             return True
@@ -303,18 +418,15 @@ class TexturePreviewWidget(QLabel):
             self._legend_tooltips.append(tooltip)
             row_y += LEGEND_ROW_H
 
-        hint_rect = QRect(self._legend_x + LEGEND_PADDING,
-                          widget_size.height() - 20,
-                          LEGEND_WIDTH - LEGEND_PADDING, 18)
+        # Reserve bottom space for play button — just draw the speed label
+        speed_label_rect = QRect(self._legend_x + LEGEND_PADDING,
+                                 widget_size.height() - 90,
+                                 LEGEND_WIDTH - LEGEND_PADDING, 16)
         small_font = painter.font()
         small_font.setPointSize(max(7, small_font.pointSize() - 1))
         painter.setFont(small_font)
         painter.setPen(QPen(QColor(100, 100, 100), 1))
-        painter.drawText(hint_rect, Qt.AlignmentFlag.AlignLeft, "Click to toggle")
+        painter.drawText(speed_label_rect, Qt.AlignmentFlag.AlignLeft, "Speed ↓  Click to toggle")
 
         painter.end()
         self.setPixmap(canvas)
-
-    def resizeEvent(self, event):
-        self.update_display()
-        super().resizeEvent(event)
