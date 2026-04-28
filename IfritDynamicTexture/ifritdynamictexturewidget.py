@@ -12,11 +12,11 @@ class IfritDynamicTextureWidget(QWidget):
         self.ifrit_manager = ifrit_manager
 
         layout = QVBoxLayout(self)
-        self.anim_section = DynamicTextureSectionWidget(ifrit_manager)
-        layout.addWidget(self.anim_section)
+        self.dynamic_texture_widget = DynamicTextureSectionWidget(ifrit_manager)
+        layout.addWidget(self.dynamic_texture_widget)
 
     def load_file(self, file_path: str):
-        self.anim_section.load_file(file_path)
+        self.dynamic_texture_widget.load_file(file_path)
 
     def save_file(self):
-        self.anim_section.save_file()
+        self.dynamic_texture_widget.save_file()

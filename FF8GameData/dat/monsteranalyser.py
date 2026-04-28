@@ -75,8 +75,6 @@ class MonsterAnalyser:
         self.id = int(re.search(r'\d{3}', self.origin_file_name).group())
         # self.origin_file_checksum = get_checksum(file, algorithm='SHA256')
 
-
-
     def analyse_loaded_data(self, game_data: GameData, decompiler: AIDecompiler=None):
         try:
             for i in range(0, self.header_data['nb_section'] - 1):

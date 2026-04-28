@@ -345,5 +345,6 @@ class DynamicTextureSectionWidget(QWidget):
         self._load_data()
 
     def save_file(self):
-        pass
+        pass # Nothing to do, all is already updated automatically
+
 

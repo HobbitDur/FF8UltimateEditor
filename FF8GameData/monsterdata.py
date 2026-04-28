@@ -1198,6 +1198,7 @@ class AnimationSection:
 class DynamicTextureData:
     def __init__(self, data:bytes=bytes()):
         self.texture_num:int = 0
+        self.clut_info:int= 0
         self.source_uv = UV(member_size=1, vram_size=True)
         self.sprite_width = 0
         self.sprite_height=0
@@ -1209,6 +1210,7 @@ class DynamicTextureData:
             self.analyze(data)
     def analyze(self, data:bytes):
         self.texture_num = int.from_bytes(data[0: 2], byteorder='little') & 0x3F
+        self.clut_info = int.from_bytes(data[0: 2], byteorder='little') & 0xFFC0
         self.unk1 = int.from_bytes(data[2: 3], byteorder='little')
         self.sprite_width = int.from_bytes(data[3: 4], byteorder='little')*2 # The size is in VRAM-X ref, and a texel is on 2 bytes.
         self.sprite_height = int.from_bytes(data[4: 5], byteorder='little')
@@ -1219,6 +1221,19 @@ class DynamicTextureData:
             uv = UV(member_size=1, vram_size=True)
             uv.analyze(data[10+i*2: 10+(i+1)*2])
             self.dest_uv.append(uv)
+    def to_binary(self):
+        data = bytearray()
+        data.extend(((self.clut_info & 0xFFC0) | (self.texture_num & 0x3F)).to_bytes(2, byteorder='little'))
+        data.extend(self.unk1.to_bytes(1, byteorder='little'))
+        data.extend(int(self.sprite_width/2).to_bytes(1, byteorder='little'))
+        data.extend(self.sprite_height.to_bytes(1, byteorder='little'))
+        data.extend(self.number_destination.to_bytes(1, byteorder='little'))
+        data.extend(self.unk2.to_bytes(2, byteorder='little'))
+        data.extend(self.source_uv.get_byte())
+        for i in range(self.number_destination):
+            data.extend(self.dest_uv[i].get_byte())
+        return data
+
 
     def __str__(self):
        return f"TextureAnimData(ID:{self.texture_num}, sourceUV:{self.source_uv}, SpriteSize:({ self.sprite_width},{ self.sprite_height}), NbDestination:{self.number_destination}), unk1:{self.unk1}, unk2:{self.unk2}, destUVList:{self.dest_uv}"
@@ -1227,22 +1242,45 @@ class DynamicTextureData:
 
 class DynamicTextureSection:
     def __init__(self):
-        self.null_sentinel:int=0
         self.offset:List[int] = []
         self.dynamic_texture_data: List[DynamicTextureData] = []
     def analyze(self, data:bytes):
-        self.null_sentinel = int.from_bytes(data[0: 2], byteorder='little')
         for i in range(0, len(data)):
-            offset = int.from_bytes(data[2+2*i: 2+2*(i+1)], byteorder='little')
-            if (i == 0 or offset > self.offset[-1]) and offset < len(data)-1:
-                self.offset.append(offset)
+            offset = int.from_bytes(data[2*i: 2*(i+1)], byteorder='little')
+            if offset < len(data) - 1:
+                if not self.offset or self.offset[-1] < offset:
+                    self.offset.append(offset)
             else:
                 break
         for i in range(len(self.offset)):
+            if self.offset[i] == 0:
+                continue
             if i == len(self.offset)-1:
                 self.dynamic_texture_data.append(DynamicTextureData(data[self.offset[i]:]))
             else:
                 self.dynamic_texture_data.append(DynamicTextureData(data[self.offset[i]:self.offset[i + 1]]))
+    def to_binary(self):
+        data = bytearray()
+        # Write header
+        offset_computed = []
+        data_computed = []
+        current_offset = len(self.dynamic_texture_data)*2
+        for i in range(0, len(self.dynamic_texture_data)):
+            current_data = self.dynamic_texture_data[i].to_binary()
+            data_computed.append(current_data)
+            offset_computed.append(current_offset)
+            current_offset += len(current_data)
+        print(offset_computed)
+        print(data_computed)
+        for offset in offset_computed:
+            data.extend(offset.to_bytes(2, byteorder='little'))
+        for data_el in data_computed:
+            data.extend(data_el)
+        # Rainbow bug
+        padding = (4 - len(data) % 4) % 4  # Calculate how many zeros needed
+        data.extend([0] * padding)
+        return data
+
     def __str__(self):
         return f"TextureAnimSection(offset:{self.offset}, data:{self.dynamic_texture_data})"
     def __repr__(self):

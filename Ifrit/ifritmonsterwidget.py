@@ -171,6 +171,7 @@ class IfritMonsterWidget(QWidget):
         self._ai_widget.save_file()
         self._seq_widget.save_file()
         self._texture_widget.save_file()
+        self._dynamic_texture_widget.save_file()
         self.ifrit_manager.save_file(self.file_loaded)
 
     def _reload_file(self):
