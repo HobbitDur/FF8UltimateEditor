@@ -18,86 +18,61 @@ class DynamicTextureSectionWidget(QWidget):
         self.current_texture_index = 0
         self.current_entry_index = 0
         self.selected_destinations = set()
+        self.source_selected = True
         self.entry_indices = []  # Maps combo box index to actual entry index in dynamic_texture_data
 
         self._init_ui()
 
     def _init_ui(self):
         layout = QVBoxLayout(self)
-
-        # Top controls
         controls_layout = QHBoxLayout()
 
         controls_layout.addWidget(QLabel("Texture:"))
-
         self.texture_combo = QComboBox()
         self.texture_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.texture_combo.currentIndexChanged.connect(self._on_texture_changed)
         controls_layout.addWidget(self.texture_combo)
 
         controls_layout.addWidget(QLabel("Animation Entry:"))
-
         self.entry_combo = QComboBox()
         self.entry_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.entry_combo.currentIndexChanged.connect(self._on_entry_changed)
         controls_layout.addWidget(self.entry_combo)
 
         controls_layout.addStretch()
-
         self.add_entry_btn = QPushButton("+ Add Entry")
         self.add_entry_btn.clicked.connect(self._add_entry)
         controls_layout.addWidget(self.add_entry_btn)
-
         layout.addLayout(controls_layout)
 
-        # Main splitter
+        # Main splitter — no more tabs, just preview + editor side by side
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # Left: Texture preview with rectangles
         preview_group = QGroupBox("Texture Preview")
         preview_layout = QVBoxLayout(preview_group)
-
-        info_label = QLabel("Blue = Source | Red = Destinations (use checkboxes to show/hide)")
-        info_label.setStyleSheet("color: #888; font-size: 12px;")
-        preview_layout.addWidget(info_label)
-
         self.texture_preview = TexturePreviewWidget()
         self.texture_preview.rectangleClicked.connect(self._on_rectangle_clicked)
+        self.texture_preview.legendSelectionChanged.connect(self._on_legend_selection_changed)
         preview_layout.addWidget(self.texture_preview)
-
         splitter.addWidget(preview_group)
 
-        # Right panel with tabs
-        right_panel = QTabWidget()
-
-        # Tab 1: Current entry editor
-        editor_group = QWidget()
+        editor_group = QGroupBox("Entry Editor")
         editor_layout = QVBoxLayout(editor_group)
-
         self.entry_editor = QWidget()
         self.entry_editor_layout = QVBoxLayout(self.entry_editor)
-
         editor_scroll = QScrollArea()
         editor_scroll.setWidgetResizable(True)
         editor_scroll.setWidget(self.entry_editor)
-
         editor_layout.addWidget(editor_scroll)
-        right_panel.addTab(editor_group, "Editor")
+        splitter.addWidget(editor_group)
 
-        # Tab 2: Destination selector for current entry
-        dest_selector_group = QWidget()
-        dest_selector_layout = QVBoxLayout(dest_selector_group)
-
-        self.dest_selector = DestinationSelectorWidget()
-        self.dest_selector.selectionChanged.connect(self._on_destination_selection_changed)
-        dest_selector_layout.addWidget(self.dest_selector)
-
-        right_panel.addTab(dest_selector_group, "Destination Selector")
-
-        splitter.addWidget(right_panel)
         splitter.setSizes([500, 400])
-
         layout.addWidget(splitter)
+
+    def _on_legend_selection_changed(self, selected_dest_indices: set, source_selected: bool):
+        self.selected_destinations = selected_dest_indices
+        self.source_selected = source_selected  # ← store it
+        self._update_rectangles()
 
     def _get_entries_for_current_texture(self) -> list:
         """Get all animation entries that belong to the current texture"""
@@ -135,37 +110,28 @@ class DynamicTextureSectionWidget(QWidget):
                 self._update_rectangles()
 
     def _update_rectangles(self):
-        """Update the rectangle overlays on the texture preview - only for current entry"""
         self.texture_preview.clear_rectangles()
-
         entries = self._get_entries_for_current_texture()
-
-        if self.current_entry_index >= len(entries):
+        if not (0 <= self.current_entry_index < len(entries)):
             return
 
         entry = entries[self.current_entry_index]
-
-        # Blue rectangle for source
         self.texture_preview.add_rectangle(
             entry.source_uv.get_u_raw(), entry.source_uv.get_v_raw(),
             entry.sprite_width, entry.sprite_height,
-            QColor(0, 0, 255, 255),
-            3,
-            f"Source",
+            QColor(0, 0, 255, 255), 3, "Source",
             self.current_entry_index, -1
         )
-
-        # Red rectangles only for selected destinations of current entry
         for dest_idx, dest_uv in enumerate(entry.dest_uv):
-            if dest_idx in self.selected_destinations:
-                self.texture_preview.add_rectangle(
-                    dest_uv.get_u_raw(), dest_uv.get_v_raw(),
-                    entry.sprite_width, entry.sprite_height,
-                    QColor(255, 0, 0, 255),
-                    3,
-                    f"Dest {dest_idx}",
-                    self.current_entry_index, dest_idx
-                )
+            self.texture_preview.add_rectangle(
+                dest_uv.get_u_raw(), dest_uv.get_v_raw(),
+                entry.sprite_width, entry.sprite_height,
+                QColor(255, 0, 0, 255), 3, f"Dest {dest_idx}",
+                self.current_entry_index, dest_idx
+            )
+
+        # Pass actual source_selected, not hardcoded True
+        self.texture_preview.set_selection(self.selected_destinations, self.source_selected)
 
     def _load_animation_entries(self):
         """Load only entries that belong to the current texture"""
@@ -207,11 +173,9 @@ class DynamicTextureSectionWidget(QWidget):
 
         entry = entries[self.current_entry_index]
         dest_count = len(entry.dest_uv)
-        self.dest_selector.update_destinations(dest_count, self.selected_destinations)
 
     def _on_destination_selection_changed(self):
         """Handle destination selection changes"""
-        self.selected_destinations = self.dest_selector.get_selected_indices()
         self._update_rectangles()
 
     def _show_empty_editor(self):
@@ -223,20 +187,15 @@ class DynamicTextureSectionWidget(QWidget):
         label = QLabel("No animation entries for this texture. Click '+ Add Entry' to create one.")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.entry_editor_layout.addWidget(label)
-        self.dest_selector.update_destinations(0, set())
 
     def _on_entry_changed(self, index):
         self.current_entry_index = index
         entries = self._get_entries_for_current_texture()
-
-        if entries and self.current_entry_index < len(entries):
-            # Select all destinations by default
+        if entries and 0 <= self.current_entry_index < len(entries):
             entry = entries[self.current_entry_index]
-            if len(entry.dest_uv) > 0:
-                self.selected_destinations = set(range(len(entry.dest_uv)))
-
+            self.selected_destinations = set(range(len(entry.dest_uv)))
+        self.source_selected = True  # ← reset on entry change
         self._load_current_entry_editor()
-        self._update_destination_selector()
         self._update_rectangles()
 
     def _load_current_entry_editor(self):
@@ -374,7 +333,6 @@ class DynamicTextureSectionWidget(QWidget):
         self.texture_preview.clear_rectangles()
         self.texture_preview.set_texture(QPixmap())
         self._show_empty_editor()
-        self.dest_selector.update_destinations(0, set())
         self.texture_preview.rectangles.clear()
 
         # Clear the combo boxes
