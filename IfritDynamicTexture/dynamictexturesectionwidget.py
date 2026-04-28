@@ -4,7 +4,6 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QTabWidget, QLabe
 
 from FF8GameData.monsterdata import DynamicTextureSection
 from Ifrit.ifritmanager import IfritManager
-from IfritDynamicTexture.destinationselectorwidget import DestinationSelectorWidget
 from IfritDynamicTexture.dynamictextureentrywidget import DynamicTextureEntryWidget
 from IfritDynamicTexture.texturepreviewwidget import TexturePreviewWidget
 
@@ -118,14 +117,14 @@ class DynamicTextureSectionWidget(QWidget):
 
         entry = entries[self.current_entry_index]
         self.texture_preview.add_rectangle(
-            entry.source_uv.get_u_raw(), entry.source_uv.get_v_raw(),
+            entry.source_uv.get_u_pixel(), entry.source_uv.get_v_pixel(),
             entry.sprite_width, entry.sprite_height,
             QColor(0, 0, 255, 255), 3, "Source",
             self.current_entry_index, -1
         )
         for dest_idx, dest_uv in enumerate(entry.dest_uv):
             self.texture_preview.add_rectangle(
-                dest_uv.get_u_raw(), dest_uv.get_v_raw(),
+                dest_uv.get_u_pixel(), dest_uv.get_v_pixel(),
                 entry.sprite_width, entry.sprite_height,
                 QColor(255, 0, 0, 255), 3, f"Dest {dest_idx}",
                 self.current_entry_index, dest_idx
@@ -218,11 +217,11 @@ class DynamicTextureSectionWidget(QWidget):
         # Build destinations list
         destinations = []
         for dest_uv in entry.dest_uv:
-            destinations.append({'x': dest_uv.get_u_raw(), 'y': dest_uv.get_v_raw()})
+            destinations.append({'x': dest_uv.get_u_pixel(), 'y': dest_uv.get_v_pixel()})
 
         entry_widget.set_data(
-            entry.source_uv.get_u_raw(),
-            entry.source_uv.get_v_raw(),
+            entry.source_uv.get_u_pixel(),
+            entry.source_uv.get_v_pixel(),
             entry.sprite_width,
             entry.sprite_height,
             destinations
@@ -243,8 +242,8 @@ class DynamicTextureSectionWidget(QWidget):
         data = entry_widget.get_data()
 
         # Update entry data
-        entry.source_uv.set_u_pixel_raw(data['src_x'])
-        entry.source_uv.set_v_pixel_raw(data['src_y'])
+        entry.source_uv.set_u_pixel(data['src_x'])
+        entry.source_uv.set_v_pixel(data['src_y'])
         entry.sprite_width = data['src_width']
         entry.sprite_height = data['src_height']
         entry.texture_num = self.current_texture_index  # Ensure texture_num is set
@@ -254,8 +253,8 @@ class DynamicTextureSectionWidget(QWidget):
         for dest in data['destinations']:
             from FF8GameData.monsterdata import UV
             uv = UV()
-            uv.set_u_pixel_raw(dest['x'])
-            uv.set_v_pixel_raw(dest['y'])
+            uv.set_u_pixel(dest['x'])
+            uv.set_v_pixel(dest['y'])
             entry.dest_uv.append(uv)
 
         # Select all destinations by default
@@ -284,13 +283,13 @@ class DynamicTextureSectionWidget(QWidget):
 
         new_entry = DynamicTextureData()
         new_entry.source_uv = UV()
-        new_entry.source_uv.set_u_pixel_raw(0)
-        new_entry.source_uv.set_v_pixel_raw(0)
+        new_entry.source_uv.set_u_pixel(0)
+        new_entry.source_uv.set_v_pixel(0)
         new_entry.sprite_width = 32
         new_entry.sprite_height = 32
         new_entry.dest_uv = [UV()]
-        new_entry.dest_uv[0].set_u_pixel_raw(0)
-        new_entry.dest_uv[0].set_v_pixel_raw(0)
+        new_entry.dest_uv[0].set_u_pixel(0)
+        new_entry.dest_uv[0].set_v_pixel(0)
         new_entry.texture_num = self.current_texture_index  # Link to current texture
 
         dynamic_texture.dynamic_texture_data.append(new_entry)

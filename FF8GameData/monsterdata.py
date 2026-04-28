@@ -3,6 +3,8 @@ import math
 import os
 from enum import Enum
 from typing import List, Tuple
+from urllib.parse import to_bytes
+
 
 class EntityType(Enum):
     MONSTER = 1
@@ -263,30 +265,42 @@ class GeometryQuad:
 
 class UV:
     def __init__(self, member_size:int=1, vram_size:bool=False):
-        self.u: float=0
-        self.v: float=0
+        self._u: int=0
+        self._v: int=0
         self.member_size = member_size
         self.vram_size:bool = vram_size
     def analyze(self, data:bytes):
-        if not self.vram_size:
-            self.u = int.from_bytes(data[0:self.member_size], byteorder='little')/128.0
-        else: # In VRAM, you have for X 2 bytes data per texel
-            self.u = (int.from_bytes(data[0:self.member_size], byteorder='little') * 2) / 128.0
-        self.v = int.from_bytes(data[self.member_size:self.member_size*2], byteorder='little')/128.0
+        self._u = int.from_bytes(data[0:self.member_size], byteorder='little')
+        self._v = int.from_bytes(data[self.member_size:self.member_size*2], byteorder='little')
 
-    def get_byte(self) -> bytearray:
-        return bytearray([self.get_u_raw(), self.get_v_raw()])
+    def get_u_norm(self):
+        return (self._u & 0xFF) / 128.0
+    def get_v_norm(self):
+        return (self._v & 0xFF) / 128.0
     def get_u_raw(self):
-        return int(self.u*128.0) & 0xFF
+        return self._u
     def get_v_raw(self):
-        return int(self.v*128.0) & 0xFF
-    def set_u_pixel_raw(self, value:int):
-        if not self.vram_size:
-            self.u = value / 128.0
+        return self._v
+    def get_u_pixel(self):
+        if self.vram_size:
+            return self._u * 2
+        else:
+            return self._u
+    def get_v_pixel(self):
+        return self._v
+
+    def set_u_pixel(self, value:int):
+        if self.vram_size:
+            self._u = math.floor(value / 2)
         else:  # In VRAM, you have for X 2 bytes data per texel
-            self.u = value / 128.0
-    def set_v_pixel_raw(self, value:int):
-        self.v = value / 128.0
+            self._u = value
+    def set_v_pixel(self, value:int):
+        self._v = value
+    def to_binary(self):
+        data = bytearray()
+        data.extend(self._u.to_bytes(length=self.member_size, byteorder="little"))
+        data.extend(self._v.to_bytes(length=self.member_size, byteorder="little"))
+        return data
     def __str__(self):
         return f"UV({self.get_u_raw()},{self.get_v_raw()})"
     def __repr__(self):
@@ -553,9 +567,9 @@ class GeometrySection:
                     tri.vertex_indexes[1] + offset,  # B
                 )
                 uvs = (
-                    (tri.vta.u, tri.vta.v),  # for C
-                    (tri.vtb.u, tri.vtb.v),  # for A
-                    (tri.vtc.u, tri.vtc.v),  # for B
+                    (tri.vta.get_u_norm(), tri.vta.get_v_norm()),  # for C
+                    (tri.vtb.get_u_norm(), tri.vtb.get_v_norm()),  # for A
+                    (tri.vtc.get_u_norm(), tri.vtc.get_v_norm()),  # for B
                 )
                 # tex_id_1 upper 6 bits encode CLUT/page info; low bits = texture index
                 tex_id = tri.tex_id_1 & 0xFF
@@ -577,10 +591,10 @@ class GeometrySection:
                     quad.vertex_indexes[3] + offset,  # D
                 )
                 uvs = (
-                    (quad.vta.u, quad.vta.v),
-                    (quad.vtb.u, quad.vtb.v),
-                    (quad.vtc.u, quad.vtc.v),
-                    (quad.vtd.u, quad.vtd.v),
+                    (quad.vta.get_u_norm(), quad.vta.get_v_norm()),
+                    (quad.vtb.get_u_norm(), quad.vtb.get_v_norm()),
+                    (quad.vtc.get_u_norm(), quad.vtc.get_v_norm()),
+                    (quad.vtd.get_u_norm(), quad.vtd.get_v_norm()),
                 )
                 tex_id = quad.tex_id_1 & 0xFF
                 result.append((indices, uvs, tex_id))
@@ -1229,9 +1243,9 @@ class DynamicTextureData:
         data.extend(self.sprite_height.to_bytes(1, byteorder='little'))
         data.extend(self.number_destination.to_bytes(1, byteorder='little'))
         data.extend(self.unk2.to_bytes(2, byteorder='little'))
-        data.extend(self.source_uv.get_byte())
+        data.extend(self.source_uv.to_binary())
         for i in range(self.number_destination):
-            data.extend(self.dest_uv[i].get_byte())
+            data.extend(self.dest_uv[i].to_binary())
         return data
 
 
@@ -1270,8 +1284,6 @@ class DynamicTextureSection:
             data_computed.append(current_data)
             offset_computed.append(current_offset)
             current_offset += len(current_data)
-        print(offset_computed)
-        print(data_computed)
         for offset in offset_computed:
             data.extend(offset.to_bytes(2, byteorder='little'))
         for data_el in data_computed:
