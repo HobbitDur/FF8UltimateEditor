@@ -152,19 +152,7 @@ class TexturePreviewWidget(QLabel):
         self.update_display()
 
     def resizeEvent(self, event):
-        # Position play button and slider inside the legend panel at the bottom
-        legend_x = self.width() - LEGEND_WIDTH
-        btn_w = LEGEND_WIDTH - LEGEND_PADDING * 2
-        self._play_btn.setGeometry(
-            legend_x + LEGEND_PADDING,
-            self.height() - 60,
-            btn_w, 28
-        )
-        self._speed_slider.setGeometry(
-            legend_x + LEGEND_PADDING,
-            self.height() - 28,
-            btn_w, 22
-        )
+        # No geometry management here anymore — update_display handles it
         self.update_display()
         super().resizeEvent(event)
 
@@ -263,6 +251,8 @@ class TexturePreviewWidget(QLabel):
     def update_display(self):
         if self.original_pixmap is None or self.original_pixmap.isNull():
             self.setText("No texture loaded")
+            self._play_btn.hide()
+            self._speed_slider.hide()
             return
 
         widget_size = self.size()
@@ -294,7 +284,6 @@ class TexturePreviewWidget(QLabel):
         painter.drawPixmap(self._texture_offset_x, self._texture_offset_y, self.scaled_pixmap)
 
         # --- Build coord maps ---
-        # Map (x,y,w,h) → list of (label, is_source) for tooltip generation
         coord_labels: dict = {}
         for rect in self.rectangles:
             x, y, w, h, color, line_width, label, entry_idx, dest_idx = rect
@@ -302,7 +291,6 @@ class TexturePreviewWidget(QLabel):
             text = label if label else ("Source" if is_source else f"Dest {dest_idx}")
             coord_labels.setdefault((x, y, w, h), []).append(text)
 
-        # Scaled coord groups for overlap color blending
         coord_groups: dict = {}
         for rect in self.rectangles:
             x, y, w, h, color, line_width, label, entry_idx, dest_idx = rect
@@ -418,15 +406,28 @@ class TexturePreviewWidget(QLabel):
             self._legend_tooltips.append(tooltip)
             row_y += LEGEND_ROW_H
 
-        # Reserve bottom space for play button — just draw the speed label
-        speed_label_rect = QRect(self._legend_x + LEGEND_PADDING,
-                                 widget_size.height() - 90,
-                                 LEGEND_WIDTH - LEGEND_PADDING, 16)
+        # "Click to toggle" hint — placed right after last legend row
+        hint_y = row_y + 4
         small_font = painter.font()
         small_font.setPointSize(max(7, small_font.pointSize() - 1))
         painter.setFont(small_font)
         painter.setPen(QPen(QColor(100, 100, 100), 1))
-        painter.drawText(speed_label_rect, Qt.AlignmentFlag.AlignLeft, "Speed ↓  Click to toggle")
+        painter.drawText(QRect(self._legend_x + LEGEND_PADDING, hint_y,
+                               LEGEND_WIDTH - LEGEND_PADDING, 16),
+                         Qt.AlignmentFlag.AlignLeft, "Play anim + speed")
 
         painter.end()
         self.setPixmap(canvas)
+
+        # --- Position play button and slider as real widgets below legend rows ---
+        btn_w = LEGEND_WIDTH - LEGEND_PADDING * 2
+        btn_x = self._legend_x + LEGEND_PADDING
+        play_y = hint_y + 20  # just below the hint text
+
+        # If the play button would go off the bottom, clamp it
+        play_y = min(play_y, widget_size.height() - 58)
+
+        self._play_btn.setGeometry(btn_x, play_y, btn_w, 28)
+        self._speed_slider.setGeometry(btn_x, play_y + 32, btn_w, 22)
+        self._play_btn.show()
+        self._speed_slider.show()
