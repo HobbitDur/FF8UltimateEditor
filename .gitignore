@@ -23,8 +23,9 @@ ExternalTools/VincentTim/*
 **.xml
 SelfUpdate
 *.hext
-*.csv
 **/*.bin
 *.xlsx
 *.png
 FF8GameData/fs/DelingCli
+Temp
+.junie/

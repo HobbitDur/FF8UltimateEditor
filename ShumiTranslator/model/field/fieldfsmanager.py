@@ -5,10 +5,10 @@ from FF8GameData.gamedata import GameData
 
 
 class FieldFsManager:
-    def __init__(self, game_data: GameData):
+    def __init__(self, game_data: GameData, game_data_folder="FF8GameData"):
         self.game_data = game_data
         self._file_path = ""
-        self._deling_manager = DelingCliManager(os.path.join("FF8GameData", "fs", "DelingCli"))
+        self._deling_manager = DelingCliManager(os.path.join(game_data_folder, "fs", "DelingCli"))
 
     def save_file(self, dest_folder_path):
         self._deling_manager.unpack(self._file_path, os.path.join(dest_folder_path, "temp"))
