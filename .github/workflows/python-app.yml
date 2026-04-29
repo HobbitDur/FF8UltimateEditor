@@ -109,7 +109,7 @@ jobs:
         7z x deling-cli-win64.zip -y
         # Find the extracted folder (it should contain deling-cli.exe)
         DELING_FOLDER=$(find . -name "deling-cli*" -type d | head -n1)
-        echo "DELING_FOLDER=$DELING_FOLDER" >> $GITHUB_EN
+        echo "DELING_FOLDER=$DELING_FOLDER" >> $GITHUB_ENV
 
     - name: Create CLI release
       shell: bash
