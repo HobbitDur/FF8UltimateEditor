@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QColor
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QTabWidget, QLabel, QGroupBox, QSplitter, QComboBox, QHBoxLayout, QPushButton
 
-from FF8GameData.monsterdata import DynamicTextureSection
+from FF8GameData.monsterdata import DynamicTextureSection, UV, DynamicTextureData
 from Ifrit.ifritmanager import IfritManager
 from IfritDynamicTexture.dynamictextureentrywidget import DynamicTextureEntryWidget
 from IfritDynamicTexture.texturepreviewwidget import TexturePreviewWidget
@@ -252,10 +252,11 @@ class DynamicTextureSectionWidget(QWidget):
         entry.dest_uv.clear()
         for dest in data['destinations']:
             from FF8GameData.monsterdata import UV
-            uv = UV()
+            uv = UV(member_size=1, vram_size=True)
             uv.set_u_pixel(dest['x'])
             uv.set_v_pixel(dest['y'])
             entry.dest_uv.append(uv)
+        entry.number_destination = len(entry.dest_uv)  # ← THIS LINE is what's still missing
 
         # Select all destinations by default
         new_dest_count = len(entry.dest_uv)
@@ -278,19 +279,18 @@ class DynamicTextureSectionWidget(QWidget):
 
     def _add_entry(self):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
-
-        from FF8GameData.monsterdata import DynamicTextureData, UV
-
         new_entry = DynamicTextureData()
-        new_entry.source_uv = UV()
+        new_entry.source_uv = UV(member_size=1, vram_size=True)
         new_entry.source_uv.set_u_pixel(0)
         new_entry.source_uv.set_v_pixel(0)
         new_entry.sprite_width = 32
         new_entry.sprite_height = 32
-        new_entry.dest_uv = [UV()]
-        new_entry.dest_uv[0].set_u_pixel(0)
-        new_entry.dest_uv[0].set_v_pixel(0)
-        new_entry.texture_num = self.current_texture_index  # Link to current texture
+        dest = UV(member_size=1, vram_size=True)
+        dest.set_u_pixel(0)
+        dest.set_v_pixel(0)
+        new_entry.dest_uv = [dest]
+        new_entry.number_destination = 1
+        new_entry.texture_num = self.current_texture_index
 
         dynamic_texture.dynamic_texture_data.append(new_entry)
 

@@ -3,6 +3,8 @@
 Tests for AI Code Generator.
 Tests that AST nodes are correctly converted to FF8 bytecode.
 """
+import pathlib
+
 import pytest
 from lark import Lark
 
@@ -14,7 +16,8 @@ from IfritAI.AICompiler.AICompiler import AICompiler
 @pytest.fixture
 def ai_compiler():
     """Create an AICompiler instance for testing"""
-    game_data = GameData("FF8GameData")
+    project_root = pathlib.Path(__file__).parent.parent.parent
+    game_data = GameData(str(project_root / "FF8GameData"))
     game_data.load_all()
     return AICompiler(game_data)
 

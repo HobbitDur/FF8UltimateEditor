@@ -3,6 +3,7 @@
 Tests for AI Decompiler static methods.
 """
 import os
+import pathlib
 
 import pytest
 
@@ -19,7 +20,8 @@ class TestAIDecompiler:
     def decompiler(self):
         """Create a Lark parser using the grammar from AICompiler"""
         # game_data = GameData(os.path.join("..", "..", "..", "FF8GameData"))
-        game_data = GameData(os.path.join("FF8GameData"))
+        project_root = pathlib.Path(__file__).parent.parent.parent
+        game_data = GameData(str(project_root / "FF8GameData"))
         game_data.load_all()
         # Use the actual grammar from AICompiler
         first_battle_text = FF8Text(game_data, 0, bytearray(), 0)

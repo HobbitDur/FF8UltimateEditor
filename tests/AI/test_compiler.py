@@ -3,6 +3,8 @@
 Tests for AI Code Generator.
 Tests that AST nodes are correctly converted to FF8 bytecode.
 """
+import pathlib
+
 import pytest
 
 from FF8GameData.dat.daterrors import ParamBattleTextError, ParamAptitudeError, ParamMagicIdError, ParamTargetBasicError, ParamIntError, \
@@ -28,7 +30,8 @@ class TestAICompiler:
         battle_text = ["First battle text", "Second battle text", "Third battle text", "“I'm  done for…”"]
         info_stat_data = {}  # TODO
         #game_data = GameData(os.path.join("..", "..", "..", "FF8GameData"))
-        game_data = GameData(os.path.join("FF8GameData"))
+        project_root = pathlib.Path(__file__).parent.parent.parent
+        game_data = GameData(str(project_root / "FF8GameData"))
         game_data.load_all()
         compiler = AICompiler(game_data, battle_text, info_stat_data)
         return compiler
