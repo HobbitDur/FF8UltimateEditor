@@ -41,6 +41,18 @@ jobs:
         pip install pyinstaller
         pip freeze
 
+    - name: Install jq
+      shell: bash
+      run: |
+        # Install jq for JSON parsing
+        choco install jq
+
+    - name: Install curl
+      shell: bash
+      run: |
+        # Install curl for downloading deling-cli
+        choco install curl
+
     - uses: milliewalky/setup-7-zip@v2
 
     - name: Create patcher
@@ -83,16 +95,30 @@ jobs:
         ls -al
         cd ..
 
+    - name: Download deling-cli
+      shell: bash
+      run: |
+        # Download latest deling-cli-win64.zip from myst6re/deling releases
+        curl -s https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[] | select(.name == "deling-cli-win64.zip") | .browser_download_url' | xargs curl -L -o deling-cli-win64.zip
+        7z x deling-cli-win64.zip
+        # Find the extracted folder (it should contain deling-cli.exe)
+        DELING_FOLDER=$(find . -name "deling-cli*" -type d | head -n1)
+        echo "DELING_FOLDER=$DELING_FOLDER" >> $GITHUB_ENV
+
     - name: Create CLI release
       shell: bash
       run: |
-        mkdir -p release-cli
-        mkdir -p release-cli/Cli
+        # Create CLI executable
+        pyinstaller -n ff8-cli -F --specpath release-cli/build --distpath release-cli --noconsole --workpath release-cli/build --onefile --icon=../../Resources/hobbitdur.ico cli.py
+        rm -R release-cli/build
+        
+        # Copy deling-cli.exe to the correct location (FF8GameData/fs/DelingCli)
+        mkdir -p release-cli/FF8GameData/fs/DelingCli
+        cp -R "${{ env.DELING_FOLDER }}"/* release-cli/FF8GameData/fs/DelingCli/ || true
+        
+        # Copy necessary data files
         mkdir -p release-cli/FF8GameData
         mkdir -p release-cli/FF8GameData/Resources
-        cp cli.py release-cli/
-        cp -R Cli/. release-cli/Cli/
-        cp requirements.txt release-cli/
         cp -R FF8GameData/Resources/. release-cli/FF8GameData/Resources/
         cp -R FF8GameData/*.py release-cli/FF8GameData/ || true
         cp -R FF8GameData/dat release-cli/FF8GameData/ || true
