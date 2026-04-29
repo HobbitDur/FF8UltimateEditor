@@ -53,66 +53,66 @@ jobs:
         ls -al
         cd ..
 
-     - name: Create release
-       shell: bash
-       run: |
-         pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
-         mkdir -p release/Resources
-         mkdir -p release/ExternalTools/Junkshop
-         mkdir -p release/ExternalTools/Quezacotl
-         mkdir -p release/ExternalTools/Doomtrain
-         mkdir -p release/ExternalTools/JumboCactuar
-         mkdir -p release/ExternalTools/IfritGui
-         mkdir -p release/ExternalTools/Siren
-         mkdir -p release/ExternalTools/Hyne
-         mkdir -p release/ExternalTools/Deling
-         mkdir -p release/logs
-         mkdir -p release/FF8GameData
-         mkdir -p release/FF8GameData/Resources
-         mkdir -p release/FF8GameData/fs
-         mkdir -p release/FF8GameData/fs/DelingCli
-         mkdir -p release/ToolUpdate
-         mkdir -p release/ShumiTranslator
-         mkdir -p release/ShumiTranslator/csv
-         cp -R ShumiTranslator/csv/. release/ShumiTranslator/csv
-         cp ToolUpdate/list.json release/ToolUpdate/
-         cp -R FF8GameData/Resources/. release/FF8GameData/Resources/
-         cp -R Resources/. release/Resources/
-         rm -R release/build
-         cd release
-         ls -al
-         cd ..
+    - name: Create release
+      shell: bash
+      run: |
+        pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
+        mkdir -p release/Resources
+        mkdir -p release/ExternalTools/Junkshop
+        mkdir -p release/ExternalTools/Quezacotl
+        mkdir -p release/ExternalTools/Doomtrain
+        mkdir -p release/ExternalTools/JumboCactuar
+        mkdir -p release/ExternalTools/IfritGui
+        mkdir -p release/ExternalTools/Siren
+        mkdir -p release/ExternalTools/Hyne
+        mkdir -p release/ExternalTools/Deling
+        mkdir -p release/logs
+        mkdir -p release/FF8GameData
+        mkdir -p release/FF8GameData/Resources
+        mkdir -p release/FF8GameData/fs
+        mkdir -p release/FF8GameData/fs/DelingCli
+        mkdir -p release/ToolUpdate
+        mkdir -p release/ShumiTranslator
+        mkdir -p release/ShumiTranslator/csv
+        cp -R ShumiTranslator/csv/. release/ShumiTranslator/csv
+        cp ToolUpdate/list.json release/ToolUpdate/
+        cp -R FF8GameData/Resources/. release/FF8GameData/Resources/
+        cp -R Resources/. release/Resources/
+        rm -R release/build
+        cd release
+        ls -al
+        cd ..
 
-     - name: Create CLI release
-       shell: bash
-       run: |
-         mkdir -p release-cli
-         mkdir -p release-cli/Cli
-         mkdir -p release-cli/FF8GameData
-         mkdir -p release-cli/FF8GameData/Resources
-         cp cli.py release-cli/
-         cp -R Cli/. release-cli/Cli/
-         cp requirements.txt release-cli/
-         cp -R FF8GameData/Resources/. release-cli/FF8GameData/Resources/
-         cp -R FF8GameData/*.py release-cli/FF8GameData/ || true
-         cp -R FF8GameData/dat release-cli/FF8GameData/ || true
-         cp -R FF8GameData/ExeSection release-cli/FF8GameData/ || true
-         cp -R FF8GameData/FF8HexReader release-cli/FF8GameData/ || true
-         cp -R FF8GameData/fs release-cli/FF8GameData/ || true
-         cp -R FF8GameData/GenericSection release-cli/FF8GameData/ || true
-         cp -R FF8GameData/m00x release-cli/FF8GameData/ || true
-         cp -R FF8GameData/Resources release-cli/FF8GameData/ || true
-         cp CLI_ARCHITECTURE.md release-cli/ || true
-         cp CLI_QUICK_START.md release-cli/ || true
-         cp IMPLEMENTATION_SUMMARY.md release-cli/ || true
-         cp README.md release-cli/ || true
-         mkdir -p release-cli/ShumiTranslator
-         cp -R ShumiTranslator/model release-cli/ShumiTranslator/ || true
-         cp -R ShumiTranslator/csv release-cli/ShumiTranslator/ || true
-         cp -R ShumiTranslator/*.py release-cli/ShumiTranslator/ || true
-         cd release-cli
-         ls -al
-         cd ..
+    - name: Create CLI release
+      shell: bash
+      run: |
+        mkdir -p release-cli
+        mkdir -p release-cli/Cli
+        mkdir -p release-cli/FF8GameData
+        mkdir -p release-cli/FF8GameData/Resources
+        cp cli.py release-cli/
+        cp -R Cli/. release-cli/Cli/
+        cp requirements.txt release-cli/
+        cp -R FF8GameData/Resources/. release-cli/FF8GameData/Resources/
+        cp -R FF8GameData/*.py release-cli/FF8GameData/ || true
+        cp -R FF8GameData/dat release-cli/FF8GameData/ || true
+        cp -R FF8GameData/ExeSection release-cli/FF8GameData/ || true
+        cp -R FF8GameData/FF8HexReader release-cli/FF8GameData/ || true
+        cp -R FF8GameData/fs release-cli/FF8GameData/ || true
+        cp -R FF8GameData/GenericSection release-cli/FF8GameData/ || true
+        cp -R FF8GameData/m00x release-cli/FF8GameData/ || true
+        cp -R FF8GameData/Resources release-cli/FF8GameData/ || true
+        cp CLI_ARCHITECTURE.md release-cli/ || true
+        cp CLI_QUICK_START.md release-cli/ || true
+        cp IMPLEMENTATION_SUMMARY.md release-cli/ || true
+        cp README.md release-cli/ || true
+        mkdir -p release-cli/ShumiTranslator
+        cp -R ShumiTranslator/model release-cli/ShumiTranslator/ || true
+        cp -R ShumiTranslator/csv release-cli/ShumiTranslator/ || true
+        cp -R ShumiTranslator/*.py release-cli/ShumiTranslator/ || true
+        cd release-cli
+        ls -al
+        cd ..
 
     - name: Parse version and find previous relevant tag
       id: version_info
@@ -286,39 +286,39 @@ jobs:
         echo "EOF" >> $GITHUB_OUTPUT
         echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
 
-     - name: zip name continuous
-       shell: bash
-       if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
-       run: |
-         cd release
-         7z a -tzip "FF8UltimateEditor-continuous-${{ steps.continuous_notes.outputs.short_sha }}.zip" .
-         cd ..
+    - name: zip name continuous
+      shell: bash
+      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
+      run: |
+        cd release
+        7z a -tzip "FF8UltimateEditor-continuous-${{ steps.continuous_notes.outputs.short_sha }}.zip" .
+        cd ..
 
-     - name: zip CLI name continuous
-       shell: bash
-       if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
-       run: |
-         cd release-cli
-         7z a -tzip "FF8UltimateEditor-cli-continuous-${{ steps.continuous_notes.outputs.short_sha }}.zip" .
-         cd ..
-         mv release-cli/*.zip release/
+    - name: zip CLI name continuous
+      shell: bash
+      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
+      run: |
+        cd release-cli
+        7z a -tzip "FF8UltimateEditor-cli-continuous-${{ steps.continuous_notes.outputs.short_sha }}.zip" .
+        cd ..
+        mv release-cli/*.zip release/
 
-     - name: zip name tag
-       shell: bash
-       if: startsWith(github.ref, 'refs/tags/')
-       run: |
-         cd release
-         7z a -tzip "FF8UltimateEditor-${{ github.ref_name }}.zip" .
-         cd ..
+    - name: zip name tag
+      shell: bash
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        cd release
+        7z a -tzip "FF8UltimateEditor-${{ github.ref_name }}.zip" .
+        cd ..
 
-     - name: zip CLI name tag
-       shell: bash
-       if: startsWith(github.ref, 'refs/tags/')
-       run: |
-         cd release-cli
-         7z a -tzip "FF8UltimateEditor-cli-${{ github.ref_name }}.zip" .
-         cd ..
-         mv release-cli/*.zip release/
+    - name: zip CLI name tag
+      shell: bash
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        cd release-cli
+        7z a -tzip "FF8UltimateEditor-cli-${{ github.ref_name }}.zip" .
+        cd ..
+        mv release-cli/*.zip release/
 
     - name: Delete old continuous release assets
       if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
@@ -343,34 +343,34 @@ jobs:
             }
             console.log(`Deleted ${continuousRelease.assets.length} old asset(s)`);
           } else {
-            console.log('No existing continuous release or no assets found');
-          }
+             console.log('No existing continuous release or no assets found');
+           }
 
-     - name: Deploy Package (Continuous)
-       if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
-       uses: softprops/action-gh-release@v1
-       with:
-         token: "${{ secrets.GITHUB_TOKEN }}"
-         tag_name: "continuous"
-         name: "FF8UltimateEditor-continuous"
-         body: ${{ steps.continuous_notes.outputs.release_notes }}
-         prerelease: true
-         files: |
-           release/FF8UltimateEditor-continuous-*.zip
-           release/FF8UltimateEditor-cli-continuous-*.zip
-         generate_release_notes: false
-         make_latest: false
+    - name: Deploy Package (Continuous)
+      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
+      uses: softprops/action-gh-release@v1
+      with:
+        token: "${{ secrets.GITHUB_TOKEN }}"
+        tag_name: "continuous"
+        name: "FF8UltimateEditor-continuous"
+        body: ${{ steps.continuous_notes.outputs.release_notes }}
+        prerelease: true
+        files: |
+          release/FF8UltimateEditor-continuous-*.zip
+          release/FF8UltimateEditor-cli-continuous-*.zip
+        generate_release_notes: false
+        make_latest: false
 
-     - name: Deploy tag Package (Official)
-       if: startsWith(github.ref, 'refs/tags/')
-       uses: softprops/action-gh-release@v1
-       with:
-         token: "${{ secrets.GITHUB_TOKEN }}"
-         tag_name: ${{ github.ref_name }}
-         name: "FF8UltimateEditor-${{ github.ref_name }}"
-         body: ${{ steps.official_notes.outputs.release_notes }}
-         prerelease: false
-         files: |
-           release/FF8UltimateEditor-*.zip
-           release/FF8UltimateEditor-cli-*.zip
-         generate_release_notes: false
+    - name: Deploy tag Package (Official)
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        token: "${{ secrets.GITHUB_TOKEN }}"
+        tag_name: ${{ github.ref_name }}
+        name: "FF8UltimateEditor-${{ github.ref_name }}"
+        body: ${{ steps.official_notes.outputs.release_notes }}
+        prerelease: false
+        files: |
+          release/FF8UltimateEditor-*.zip
+          release/FF8UltimateEditor-cli-*.zip
+        generate_release_notes: false
