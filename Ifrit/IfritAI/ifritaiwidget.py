@@ -1,5 +1,4 @@
 import os
-import pathlib
 import re
 from typing import List
 
@@ -7,17 +6,15 @@ from PyQt6.QtCore import Qt, QSize, QSettings
 from PyQt6.QtGui import QIcon, QKeyEvent
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QLabel, \
     QColorDialog, QCheckBox, QMessageBox, QApplication
-from numpy.ma.core import default_fill_value
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.gamedata import GameData
 from FF8GameData.monsterdata import AIData
-from IfritAI.AICompiler.AICompiler import AICompiler
-from IfritAI.AICompiler.AIDecompiler import AIDecompiler
-from IfritAI.codeanalyser import CodeAnalyser
-from IfritAI.codewidget import CodeWidget
+from Ifrit.IfritAI.AICompiler.AICompiler import AICompiler
+from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
+from Ifrit.IfritAI.codewidget import CodeWidget
 
-from IfritAI.commandwidget import CommandWidget
+from Ifrit.IfritAI.commandwidget import CommandWidget
 from Ifrit.ifritmanager import IfritManager
 from bs4 import BeautifulSoup
 

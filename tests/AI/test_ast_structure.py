@@ -1,8 +1,8 @@
 # test_ast_structure.py
 import pytest
 from lark import Lark
-from IfritAI.AICompiler.AIASTTransformer import AIASTTransformer
-from IfritAI.AICompiler.AIAST import *
+from Ifrit.IfritAI.AICompiler.AIASTTransformer import AIASTTransformer
+from Ifrit.IfritAI.AICompiler.AIAST import *
 
 
 class TestAIASTTransformer:
@@ -11,7 +11,7 @@ class TestAIASTTransformer:
     @pytest.fixture
     def parser(self):
         """Create a Lark parser using the grammar from AICompiler"""
-        from IfritAI.AICompiler.AICompiler import AICompiler
+        from Ifrit.IfritAI.AICompiler.AICompiler import AICompiler
 
         # Use the actual grammar from AICompiler
         grammar = AICompiler.grammar

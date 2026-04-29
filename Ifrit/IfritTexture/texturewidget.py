@@ -1,13 +1,9 @@
-import os
-import pathlib
-from typing import List
 from PyQt6.QtWidgets import (QSpinBox, QGroupBox, QLabel, QHBoxLayout,
-                             QVBoxLayout, QComboBox, QPushButton, QWidget)
+                             QVBoxLayout, QComboBox, QPushButton)
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtGui import QPixmap, QPainter, QColor
 
 from Ifrit.ifritmanager import TextureData
-from IfritTexture.editabletexturewidget import EditableTextureWidget
+from Ifrit.IfritTexture.editabletexturewidget import EditableTextureWidget
 
 
 class TextureWidget(QGroupBox):

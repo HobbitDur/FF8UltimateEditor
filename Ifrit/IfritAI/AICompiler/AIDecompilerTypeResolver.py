@@ -1,20 +1,17 @@
 # AITypeResolver.py - Complete implementation with error handling
 from math import floor
 
-from openpyxl.styles.builtins import normal
-
 from FF8GameData.GenericSection.ff8text import FF8Text
 from FF8GameData.dat.commandanalyser import CommandAnalyser
 from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, \
     ParamSpecialActionError, \
     ParamTargetBasicError, ParamTargetGenericError, ParamTargetSpecificError, ParamTargetSlotError, ParamAptitudeError, ParamSceneOutSlotIdError, \
     ParamSlotIdEnableError, \
-    ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
-    ParamIntError, \
-    ParamPercentError, ParamPercentElemError, ParamBoolError, ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, \
-    ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError, ParamLocalVarAddParamError
+    ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamBattleTextError, \
+    ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, \
+    ParamActivateError, ParamSlotIdError, ParamHpPercentError, ParamLocalVarAddParamError
 from FF8GameData.gamedata import GameData
-from IfritAI.AICompiler.AIAST import *
+from Ifrit.IfritAI.AICompiler.AIAST import *
 
 
 class AIDecompilerTypeResolver:

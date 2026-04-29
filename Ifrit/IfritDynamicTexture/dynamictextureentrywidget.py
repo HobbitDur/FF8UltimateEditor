@@ -1,7 +1,7 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget, QGroupBox, QHBoxLayout, QLabel, QScrollArea, QSpinBox, QGridLayout
 
-from IfritDynamicTexture.destinationwidget import DestinationWidget
+from Ifrit.IfritDynamicTexture.destinationwidget import DestinationWidget
 
 
 class DynamicTextureEntryWidget(QGroupBox):

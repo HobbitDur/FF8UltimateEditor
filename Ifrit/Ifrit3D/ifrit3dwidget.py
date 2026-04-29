@@ -1,13 +1,12 @@
-from PyQt6.QtCore import QTimer, Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
+from PyQt6.QtCore import QTimer, Qt, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QCheckBox, QPushButton, QSlider, QSpinBox,
-                             QListWidget, QListWidgetItem, QGroupBox,
-                             QInputDialog, QMessageBox, QFrame)
+                             QListWidget, QListWidgetItem, QInputDialog, QMessageBox)
 
 from FF8GameData.monsterdata import AnimationFrame, AnimationSection, Animation
 from Ifrit.ifritmanager import IfritManager
-from Ifrit3D.boneeditorwidget import AnimEditor
-from Ifrit3D.ff8openwidget import FF8OpenGLWidget
+from Ifrit.Ifrit3D.boneeditorwidget import AnimEditor
+from Ifrit.Ifrit3D.ff8openwidget import FF8OpenGLWidget
 
 
 class Ifrit3DWidget(QWidget):

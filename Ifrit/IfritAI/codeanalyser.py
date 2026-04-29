@@ -1,4 +1,3 @@
-import copy
 from typing import List
 import re
 
@@ -7,10 +6,8 @@ from FF8GameData.dat.daterrors import FuncNameNotFound, AICodeError, BracketErro
     LineUnexpectedCharaError
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
-from IfritAI.AICompiler.AICompiler import AICompiler
-from IfritAI.AICompiler.AIDecompiler import AIDecompiler
-from IfritAI.codepostprocessing import CodePostprocessing
-from IfritAI.codepreprocessing import CodePreprocessing
+from Ifrit.IfritAI.codepostprocessing import CodePostprocessing
+from Ifrit.IfritAI.codepreprocessing import CodePreprocessing
 
 
 class CodeAnalyseTool:

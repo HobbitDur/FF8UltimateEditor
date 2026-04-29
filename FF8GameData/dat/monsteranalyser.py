@@ -1,17 +1,13 @@
 import copy
-import io
-import math
 import os
 import re
-from enum import Enum
 from math import floor
-from typing import List
 
-from IfritAI.AICompiler.AIDecompiler import AIDecompiler
+from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from ..GenericSection.ff8text import FF8Text
 from ..gamedata import GameData
-from .commandanalyser import CommandAnalyser, CurrentIfType
-from ..monsterdata import BoneSection, GeometrySection, AnimationSection, AIData, AnimationFrame, BitReader, BitWriter, Animation, EntityType, DynamicTextureSection
+from .commandanalyser import CommandAnalyser
+from ..monsterdata import BoneSection, GeometrySection, AnimationSection, AIData, BitWriter, EntityType, DynamicTextureSection
 
 test = []
 
@@ -351,10 +347,10 @@ class MonsterAnalyser:
         elif self.entity_type == EntityType.MONSTER:          
             # Section 4:Texture animation (unchanged atm)
             section_position = 4
-            raw_data_to_write.extend(self.section_raw_data[section_position])
-            #dynamic_texture = self.dynamic_texture_data.to_binary()
-            #raw_data_to_write.extend(dynamic_texture)
-            #self.section_raw_data[section_position] = dynamic_texture
+            #raw_data_to_write.extend(self.section_raw_data[section_position])
+            dynamic_texture = self.dynamic_texture_data.to_binary()
+            raw_data_to_write.extend(dynamic_texture)
+            self.section_raw_data[section_position] = dynamic_texture
             # Section 5: Seq anim
             section_position = 5
             self.prepare_seq_animation(raw_data_to_write, section_position)
@@ -607,8 +603,7 @@ class MonsterAnalyser:
     def __analyze_section_texture_anim(self, section_number:int = 4):
         if self.section_raw_data[section_number]:
             self.dynamic_texture_data.analyze(self.section_raw_data[section_number])
-            print(self.dynamic_texture_data)
-            print(len(self.section_raw_data[section_number]))
+            #print(self.dynamic_texture_data)
 
     def __analyze_section_6(self, game_data: GameData):
         SECTION_NUMBER = 6

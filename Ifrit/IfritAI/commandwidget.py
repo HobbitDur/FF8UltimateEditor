@@ -2,7 +2,7 @@ from PyQt6.QtCore import QObject, pyqtSignal, Qt
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QSpinBox, QFrame, QSizePolicy, QLabel, QComboBox
 
 from FF8GameData.dat.commandanalyser import CommandAnalyser
-from IfritAI.qspinhex import QSpinHex
+from Ifrit.IfritAI.qspinhex import QSpinHex
 
 
 class OpIdChangedEmitter(QObject):

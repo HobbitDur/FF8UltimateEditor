@@ -4,8 +4,8 @@
 **/release
 **/decompressed_battle
 *.sh
-IfritXlsx/OriginalFiles
-IfritXlsx/OutputFiles
+Ifrit/IfritXlsx/OriginalFiles
+Ifrit/IfritXlsx/OutputFiles
 *.log
 test
 *.dat

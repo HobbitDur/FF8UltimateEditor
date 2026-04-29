@@ -5,10 +5,10 @@ import pytest
 from PyQt6.QtWidgets import QApplication
 
 from FF8GameData.monsterdata import DynamicTextureSection, DynamicTextureData, UV
-from IfritDynamicTexture.destinationwidget import DestinationWidget
-from IfritDynamicTexture.dynamictextureentrywidget import DynamicTextureEntryWidget
-from IfritDynamicTexture.dynamictexturesectionwidget import DynamicTextureSectionWidget
-from IfritDynamicTexture.ifritdynamictexturewidget import IfritDynamicTextureWidget
+from Ifrit.IfritDynamicTexture.destinationwidget import DestinationWidget
+from Ifrit.IfritDynamicTexture.dynamictextureentrywidget import DynamicTextureEntryWidget
+from Ifrit.IfritDynamicTexture.dynamictexturesectionwidget import DynamicTextureSectionWidget
+from Ifrit.IfritDynamicTexture.ifritdynamictexturewidget import IfritDynamicTextureWidget
 
 # ---------------------------------------------------------------------------
 # Shared test data

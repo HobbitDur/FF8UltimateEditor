@@ -7,9 +7,9 @@ from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.dat.daterrors import AICodeError
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
-from IfritAI.AICompiler.AICompiler import AICompiler
-from IfritAI.AICompiler.AIDecompiler import AIDecompiler
-from IfritAI.codeanalyser import CodeAnalyser
+from Ifrit.IfritAI.AICompiler.AICompiler import AICompiler
+from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
+from Ifrit.IfritAI.codeanalyser import CodeAnalyser
 from Ifrit.ifritmanager import IfritManager
 
 

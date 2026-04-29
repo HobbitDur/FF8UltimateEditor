@@ -3,7 +3,6 @@ import pathlib
 import re
 import shutil
 import subprocess
-import time
 from typing import List, Tuple
 
 from PIL import Image
@@ -12,10 +11,10 @@ from PyQt6.QtGui import QColor
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
 from FF8GameData.monsterdata import Matrix4x4, Animation, EntityType
-from IfritAI.AICompiler.AICompiler import AICompiler
-from IfritAI.AICompiler.AIDecompiler import AIDecompiler
-from IfritXlsx import xlsxmanager
-from IfritXlsx.xlsxmanager import DatToXlsx, XlsxToDat
+from Ifrit.IfritAI.AICompiler.AICompiler import AICompiler
+from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
+from Ifrit.IfritXlsx import xlsxmanager
+from Ifrit.IfritXlsx.xlsxmanager import DatToXlsx, XlsxToDat
 
 
 class MetaData:

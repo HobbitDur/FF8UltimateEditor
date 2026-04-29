@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
 
 from Ifrit.ifritmanager import IfritManager
-from IfritDynamicTexture.dynamictexturesectionwidget import DynamicTextureSectionWidget
+from Ifrit.IfritDynamicTexture.dynamictexturesectionwidget import DynamicTextureSectionWidget
 
 
 class IfritDynamicTextureWidget(QWidget):

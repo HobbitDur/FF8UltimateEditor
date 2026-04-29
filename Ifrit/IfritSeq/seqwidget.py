@@ -1,11 +1,7 @@
-from typing import List
+from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPlainTextEdit
 
-from PyQt6.QtCore import QObject, pyqtSignal, Qt
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QSpinBox, QFrame, QSizePolicy, QLabel, QComboBox, QPlainTextEdit
-
-from FF8GameData.dat.commandanalyser import CommandAnalyser
 from FF8GameData.monsterdata import EntityType
-from IfritAI.qspinhex import QSpinHex
 
 
 class OpIdChangedEmitter(QObject):

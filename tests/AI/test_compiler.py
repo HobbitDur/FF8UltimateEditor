@@ -8,13 +8,12 @@ import pathlib
 import pytest
 
 from FF8GameData.dat.daterrors import ParamBattleTextError, ParamAptitudeError, ParamMagicIdError, ParamTargetBasicError, ParamIntError, \
-    ParamMonsterAbilityError, ParamMonsterLineAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, ParamTargetSlotError, ParamBoolError, \
-    ParamSpecialActionError, ParamInt16Error, ParamTargetGenericError, ParamActivateError, ParamSceneOutSlotIdError, ParamMagicTypeError, ParamGfError, \
+    ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, ParamTargetSlotError, ParamBoolError, \
+    ParamSpecialActionError, ParamInt16Error, ParamActivateError, ParamSceneOutSlotIdError, ParamMagicTypeError, ParamGfError, \
     ParamSlotIdEnableError, \
-    ParamCardError, ParamAssignSlotIdError, ParamItemError, ParamSlotIdError, ParamScanTextError, ParamTargetAdvanceGenericError
+    ParamCardError, ParamItemError, ParamSlotIdError, ParamScanTextError, ParamTargetAdvanceGenericError
 from FF8GameData.gamedata import GameData
-from IfritAI.AICompiler.AIAST import *
-from IfritAI.AICompiler.AICompiler import AICompiler
+from Ifrit.IfritAI.AICompiler.AICompiler import AICompiler
 
 
 class TestAICompiler:
@@ -23,8 +22,7 @@ class TestAICompiler:
     @pytest.fixture
     def compiler(self):
         """Create a Lark parser using the grammar from AICompiler"""
-        from IfritAI.AICompiler.AICompiler import AICompiler
-        import os
+        from Ifrit.IfritAI.AICompiler.AICompiler import AICompiler
 
         # Use the actual grammar from AICompiler
         battle_text = ["First battle text", "Second battle text", "Third battle text", "“I'm  done for…”"]

@@ -18,11 +18,6 @@ from ExeLauncher.junkshop import JunkshopLauncher
 from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from ExeLauncher.sirenlauncher import SirenLauncher
 from Ifrit.ifritmonsterwidget import IfritMonsterWidget
-from Ifrit3D.ifrit3dwidget import Ifrit3DWidget
-from IfritAI.ifritaiwidget import IfritAIWidget
-from IfritSeq.ifritseqwidget import IfritSeqWidget
-from IfritTexture.ifrittexturewidget import IfritTextureWidget
-from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from ShumiTranslator.shumitranslator import ShumiTranslator
 from SmallWidget.externaltoolwidget import ExternalToolWidget
 from TonberryShop.tonberryshop import TonberryShop

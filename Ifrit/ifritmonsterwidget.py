@@ -6,13 +6,13 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFileDialog, QTabWidget, QMessageBox, QCheckBox
 )
-from IfritAI.ifritaiwidget import IfritAIWidget
+from Ifrit.IfritAI.ifritaiwidget import IfritAIWidget
 from Ifrit.ifritmanager import IfritManager
-from IfritDynamicTexture.ifritdynamictexturewidget import IfritDynamicTextureWidget
-from IfritSeq.ifritseqwidget import IfritSeqWidget
-from Ifrit3D.ifrit3dwidget import Ifrit3DWidget
-from IfritTexture.ifrittexturewidget import IfritTextureWidget
-from IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
+from Ifrit.IfritDynamicTexture.ifritdynamictexturewidget import IfritDynamicTextureWidget
+from Ifrit.IfritSeq.ifritseqwidget import IfritSeqWidget
+from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
+from Ifrit.IfritTexture.ifrittexturewidget import IfritTextureWidget
+from Ifrit.IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 
 
 class IfritMonsterWidget(QWidget):

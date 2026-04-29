@@ -3,15 +3,15 @@ import copy
 
 from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, \
     ParamSpecialActionError, \
-    ParamTargetBasicError, ParamTargetGenericError, ParamTargetSpecificError, ParamTargetSlotError, ParamAptitudeError, ParamSceneOutSlotIdError, \
+    ParamTargetBasicError, ParamTargetSpecificError, ParamTargetSlotError, ParamAptitudeError, ParamSceneOutSlotIdError, \
     ParamSlotIdEnableError, \
-    ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
+    ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
     ParamIntError, \
     ParamPercentError, ParamPercentElemError, ParamBoolError, ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, \
     ParamInt16Error, ParamActivateError, ParamSlotIdError, ParamHpPercentError, SubjectIdTenError, ParamScanTextError, ParamInt32Error, \
     ParamTargetAdvanceGenericError, ParamLocalVarAddParamError
 from FF8GameData.gamedata import GameData
-from IfritAI.AICompiler.AIAST import *
+from Ifrit.IfritAI.AICompiler.AIAST import *
 
 
 class AICompilerTypeResolver:

@@ -4,7 +4,7 @@ from typing import List
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.gamedata import GameData
 from FF8GameData.monsterdata import AIData
-from IfritAI.AICompiler.AIDecompilerTypeResolver import AIDecompilerTypeResolver
+from Ifrit.IfritAI.AICompiler.AIDecompilerTypeResolver import AIDecompilerTypeResolver
 
 
 class AIDecompiler:

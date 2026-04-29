@@ -1,11 +1,11 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QColor
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QTabWidget, QLabel, QGroupBox, QSplitter, QComboBox, QHBoxLayout, QPushButton
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QLabel, QGroupBox, QSplitter, QComboBox, QHBoxLayout, QPushButton
 
 from FF8GameData.monsterdata import DynamicTextureSection, UV, DynamicTextureData
 from Ifrit.ifritmanager import IfritManager
-from IfritDynamicTexture.dynamictextureentrywidget import DynamicTextureEntryWidget
-from IfritDynamicTexture.texturepreviewwidget import TexturePreviewWidget
+from Ifrit.IfritDynamicTexture.dynamictextureentrywidget import DynamicTextureEntryWidget
+from Ifrit.IfritDynamicTexture.texturepreviewwidget import TexturePreviewWidget
 
 
 class DynamicTextureSectionWidget(QWidget):

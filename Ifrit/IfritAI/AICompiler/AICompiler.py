@@ -1,13 +1,10 @@
-import copy
-import os
-import sys
 from lark import Lark
 
 from FF8GameData.gamedata import GameData
-from IfritAI.AICompiler.AIAST import Block, Command, IfStatement, Value, ParamList, Comment
-from IfritAI.AICompiler.AIASTTransformer import AIASTTransformer
-from IfritAI.AICompiler.AICodeGenerator import AICodeGenerator
-from IfritAI.AICompiler.AICompilerTypeResolver import AICompilerTypeResolver
+from Ifrit.IfritAI.AICompiler.AIAST import Block, Command, IfStatement, Value, ParamList, Comment
+from Ifrit.IfritAI.AICompiler.AIASTTransformer import AIASTTransformer
+from Ifrit.IfritAI.AICompiler.AICodeGenerator import AICodeGenerator
+from Ifrit.IfritAI.AICompiler.AICompilerTypeResolver import AICompilerTypeResolver
 
 
 class AICompiler:

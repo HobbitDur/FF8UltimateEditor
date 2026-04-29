@@ -9,8 +9,8 @@ import pytest
 from lark import Lark
 
 from FF8GameData.gamedata import GameData
-from IfritAI.AICompiler.AIAST import *
-from IfritAI.AICompiler.AICompiler import AICompiler
+from Ifrit.IfritAI.AICompiler.AIAST import *
+from Ifrit.IfritAI.AICompiler.AICompiler import AICompiler
 
 
 @pytest.fixture

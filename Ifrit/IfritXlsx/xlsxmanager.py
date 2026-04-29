@@ -1,7 +1,5 @@
-import copy
 import os
 import re
-import time
 from math import floor
 
 import xlsxwriter
@@ -11,7 +9,7 @@ from FF8GameData.GenericSection.ff8text import FF8Text
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.gamedata import GameData
 from FF8GameData.monsterdata import AIData
-from IfritAI.AICompiler.AIDecompiler import AIDecompiler
+from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
 
 COL_MONSTER_INFO = 0
 COL_STAT = 3

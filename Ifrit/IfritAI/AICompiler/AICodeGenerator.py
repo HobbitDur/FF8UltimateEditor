@@ -1,5 +1,4 @@
 # AICodeByteGenerator.py
-from IfritAI.AICompiler.AIAST import *
 
 
 class AICodeGenerator:

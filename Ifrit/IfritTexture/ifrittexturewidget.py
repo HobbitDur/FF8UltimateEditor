@@ -1,14 +1,13 @@
 import os
-import pathlib
 import shutil
 from typing import List
 
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout,
-                             QScrollArea, QGridLayout, QSizePolicy, QFileDialog, QMessageBox)
+                             QScrollArea, QGridLayout, QFileDialog)
 
 from Ifrit.ifritmanager import IfritManager, TextureData
-from IfritTexture.texturewidget import TextureWidget
+from Ifrit.IfritTexture.texturewidget import TextureWidget
 
 
 class IfritTextureWidget(QWidget):

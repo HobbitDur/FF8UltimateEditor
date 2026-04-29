@@ -1,17 +1,15 @@
 import os
-import pathlib
 import xml.etree.ElementTree as ET
 
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QHBoxLayout, QLabel, \
-    QMessageBox, QPlainTextEdit
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QHBoxLayout, QMessageBox, QPlainTextEdit
 
 from FF8GameData.dat.commandanalyser import CurrentIfType
 from FF8GameData.dat.sequenceanalyser import SequenceAnalyser
 from FF8GameData.monsterdata import EntityType
 from Ifrit.ifritmanager import IfritManager
-from IfritSeq.seqwidget import SeqWidget
+from Ifrit.IfritSeq.seqwidget import SeqWidget
 
 
 class IfritSeqWidget(QWidget):

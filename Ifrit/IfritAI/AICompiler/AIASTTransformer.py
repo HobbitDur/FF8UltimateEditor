@@ -1,6 +1,6 @@
 # AIASTTransformer.py
 from lark import Transformer, Token
-from IfritAI.AICompiler.AIAST import *
+from Ifrit.IfritAI.AICompiler.AIAST import *
 
 
 class AIASTTransformer(Transformer):

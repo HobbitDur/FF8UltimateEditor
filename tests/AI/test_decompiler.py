@@ -2,7 +2,6 @@
 """
 Tests for AI Decompiler static methods.
 """
-import os
 import pathlib
 
 import pytest
@@ -10,7 +9,7 @@ import pytest
 from FF8GameData.GenericSection.ff8text import FF8Text
 from FF8GameData.dat.commandanalyser import CommandAnalyser, CurrentIfType
 from FF8GameData.gamedata import GameData
-from IfritAI.AICompiler.AIDecompiler import AIDecompiler
+from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
 
 
 class TestAIDecompiler:
