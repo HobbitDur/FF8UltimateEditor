@@ -95,30 +95,6 @@ jobs:
         ls -al
         cd ..
 
-    - name: Download deling-cli
-      shell: bash
-      run: |
-        # Download latest deling-cli-win64.zip from myst6re/deling releases
-        DOWNLOAD_URL=$(curl -s https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[] | select(.name == "deling-cli-win64.zip") | .browser_download_url')
-        if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" = "null" ]; then
-          echo "Error: Could not find deling-cli-win64.zip in latest release"
-          exit 1
-        fi
-        echo "Downloading from: $DOWNLOAD_URL"
-        curl -L -o deling-cli-win64.zip "$DOWNLOAD_URL"
-        7z x deling-cli-win64.zip -y
-
-        # Find the extracted folder (any folder that was extracted from the zip)
-        # The -mindepth 1 -maxdepth 1 ensures we find the top-level folder created by unzipping
-        EXTRACTED_DIR=$(find . -mindepth 1 -maxdepth 1 -type d ! -name "." | head -n1)
-        echo "Found extracted folder: $EXTRACTED_DIR"
-        echo "EXTRACTED_DIR=$EXTRACTED_DIR" >> $GITHUB_ENV
-
-        # List contents to verify
-        if [ -n "$EXTRACTED_DIR" ]; then
-          echo "Contents of extracted folder:"
-          ls -la "$EXTRACTED_DIR"
-        fi
 
     - name: Create CLI release
       shell: bash
@@ -131,46 +107,53 @@ jobs:
         mkdir -p release-cli/FF8GameData/fs/DelingCli
         mkdir -p release-cli/ShumiTranslator/csv
 
-        # Find the extracted folder (any folder that was created by unzipping)
-        # Look for folders that aren't release or release-cli
-        EXTRACTED_DIR=$(find . -mindepth 1 -maxdepth 1 -type d ! -name "." ! -name "release*" ! -name ".git" ! -name ".github" | head -n1)
-
-        if [ -n "$EXTRACTED_DIR" ]; then
-          echo "Found extracted folder at: $EXTRACTED_DIR"
-          echo "Copying ALL contents to DelingCli..."
-          # Copy everything from the extracted folder (including subdirectories)
-          cp -R "$EXTRACTED_DIR"/* release-cli/FF8GameData/fs/DelingCli/ 2>/dev/null || true
-          # Also copy any hidden files if they exist
-          cp -R "$EXTRACTED_DIR"/.[!.]* release-cli/FF8GameData/fs/DelingCli/ 2>/dev/null || true
-        elif [ -n "${{ env.EXTRACTED_DIR }}" ]; then
-          echo "Using EXTRACTED_DIR from env: ${{ env.EXTRACTED_DIR }}"
-          cp -R "${{ env.EXTRACTED_DIR }}"/* release-cli/FF8GameData/fs/DelingCli/ 2>/dev/null || true
-          cp -R "${{ env.EXTRACTED_DIR }}"/.[!.]* release-cli/FF8GameData/fs/DelingCli/ 2>/dev/null || true
-        else
-          echo "ERROR: Could not find extracted folder anywhere!"
-          echo "Current directory contents:"
-          ls -la
+        # Download and setup deling-cli directly
+        DOWNLOAD_URL=$(curl -s https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[] | select(.name == "deling-cli-win64.zip") | .browser_download_url')
+        if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" = "null" ]; then
+          echo "Error: Could not find deling-cli-win64.zip in latest release"
           exit 1
         fi
 
-        # Verify copy worked
-        echo "Contents of DelingCli after copy:"
-        if [ -d "release-cli/FF8GameData/fs/DelingCli" ]; then
+        echo "Downloading from: $DOWNLOAD_URL"
+        curl -L -o deling-cli-win64.zip "$DOWNLOAD_URL"
+
+        # Extract to a temporary directory and move contents to target
+        mkdir deling_temp
+        cd deling_temp
+        7z x ../deling-cli-win64.zip -y
+
+        # Find the extracted folder (should be the only one)
+        EXTRACTED_FOLDER=$(find . -maxdepth 1 -type d ! -name "." | head -n1)
+
+        if [ -n "$EXTRACTED_FOLDER" ]; then
+          echo "Moving contents from $EXTRACTED_FOLDER to DelingCli"
+          mv "$EXTRACTED_FOLDER"/* ../release-cli/FF8GameData/fs/DelingCli/ 2>/dev/null || true
+          mv "$EXTRACTED_FOLDER"/.[!.]* ../release-cli/FF8GameData/fs/DelingCli/ 2>/dev/null || true
+        else
+          echo "Moving all files to DelingCli"
+          mv * ../release-cli/FF8GameData/fs/DelingCli/ 2>/dev/null || true
+        fi
+
+        cd ..
+
+        # Verify deling-cli.exe exists
+        echo "Verifying deling-cli installation:"
+        if [ -f "release-cli/FF8GameData/fs/DelingCli/deling-cli.exe" ]; then
+          echo "SUCCESS: deling-cli.exe found!"
           ls -la release-cli/FF8GameData/fs/DelingCli/
-          # Check if deling-cli.exe exists (case insensitive)
-          if find release-cli/FF8GameData/fs/DelingCli -iname "deling-cli.exe" -type f | grep -q .; then
-            echo "SUCCESS: deling-cli.exe found!"
-          else
-            echo "WARNING: deling-cli.exe not found, but the following files were copied:"
-            find release-cli/FF8GameData/fs/DelingCli -type f | head -20
-          fi
         else
-          echo "ERROR: DelingCli directory not created!"
+          echo "ERROR: deling-cli.exe not found!"
+          echo "Contents of release-cli/FF8GameData/fs/DelingCli/:"
+          ls -la release-cli/FF8GameData/fs/DelingCli/
           exit 1
         fi
 
-        # Copy only essential CSV files (not .py files)
+        # Copy CSV files
         cp -R ShumiTranslator/csv/*.csv release-cli/ShumiTranslator/csv/ 2>/dev/null || true
+
+        # Clean up
+        rm -rf deling_temp
+        rm -f deling-cli-win64.zip
 
         # Clean up any .py files that might have been copied
         find release-cli -name "*.py" -type f -delete 2>/dev/null || true
@@ -182,17 +165,8 @@ jobs:
         cd release-cli
         ls -la
         echo "--- Checking deling-cli ---"
-        if find FF8GameData/fs/DelingCli -iname "deling-cli.exe" -type f | grep -q .; then
-          echo "SUCCESS: deling-cli.exe is present!"
-          ls -la FF8GameData/fs/DelingCli/
-        else
-          echo "ERROR: deling-cli.exe not found in expected location!"
-          echo "Full contents of DelingCli:"
-          find FF8GameData/fs/DelingCli -type f
-          exit 1
-        fi
+        ls -la FF8GameData/fs/DelingCli/
         cd ..
-
     - name: Parse version and find previous relevant tag
       id: version_info
       if: startsWith(github.ref, 'refs/tags/')

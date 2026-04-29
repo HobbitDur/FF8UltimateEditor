@@ -87,7 +87,7 @@ def _filter_dat_files(paths: List[str]) -> List[str]:
         except (IndexError, ValueError):
             result.append(p)
             continue
-        if index != 0 and index != 127 and index <= 143:
+        if index != 127 and index <= 143:
             result.append(p)
     return result
 
