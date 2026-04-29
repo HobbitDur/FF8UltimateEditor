@@ -99,11 +99,17 @@ jobs:
       shell: bash
       run: |
         # Download latest deling-cli-win64.zip from myst6re/deling releases
-        curl -s https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[] | select(.name == "deling-cli-win64.zip") | .browser_download_url' | xargs curl -L -o deling-cli-win64.zip
-        7z x deling-cli-win64.zip
+        DOWNLOAD_URL=$(curl -s https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[] | select(.name == "deling-cli-win64.zip") | .browser_download_url')
+        if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" = "null" ]; then
+          echo "Error: Could not find deling-cli-win64.zip in latest release"
+          exit 1
+        fi
+        echo "Downloading from: $DOWNLOAD_URL"
+        curl -L -o deling-cli-win64.zip "$DOWNLOAD_URL"
+        7z x deling-cli-win64.zip -y
         # Find the extracted folder (it should contain deling-cli.exe)
         DELING_FOLDER=$(find . -name "deling-cli*" -type d | head -n1)
-        echo "DELING_FOLDER=$DELING_FOLDER" >> $GITHUB_ENV
+        echo "DELING_FOLDER=$DELING_FOLDER" >> $GITHUB_EN
 
     - name: Create CLI release
       shell: bash
