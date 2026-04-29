@@ -114,36 +114,54 @@ jobs:
     - name: Create CLI release
       shell: bash
       run: |
-        # Create CLI executable
-        pyinstaller -n ff8-cli -F --specpath release-cli/build --distpath release-cli --noconsole --workpath release-cli/build --onefile --icon=../../Resources/hobbitdur.ico cli.py
+        # Create CLI executable with desired name
+        pyinstaller -n FF8UltimateEditorCli -F --specpath release-cli/build --distpath release-cli --noconsole --workpath release-cli/build --onefile --icon=../../Resources/hobbitdur.ico cli.py
         rm -R release-cli/build
         
-        # Copy deling-cli.exe to the correct location (FF8GameData/fs/DelingCli)
+        # Create the clean directory structure
         mkdir -p release-cli/FF8GameData/fs/DelingCli
-        cp -R "${{ env.DELING_FOLDER }}"/* release-cli/FF8GameData/fs/DelingCli/ || true
+        mkdir -p release-cli/ShumiTranslator/csv
         
-        # Copy necessary data files
-        mkdir -p release-cli/FF8GameData
-        mkdir -p release-cli/FF8GameData/Resources
-        cp -R FF8GameData/Resources/. release-cli/FF8GameData/Resources/
-        cp -R FF8GameData/*.py release-cli/FF8GameData/ || true
-        cp -R FF8GameData/dat release-cli/FF8GameData/ || true
-        cp -R FF8GameData/ExeSection release-cli/FF8GameData/ || true
-        cp -R FF8GameData/FF8HexReader release-cli/FF8GameData/ || true
-        cp -R FF8GameData/fs release-cli/FF8GameData/ || true
-        cp -R FF8GameData/GenericSection release-cli/FF8GameData/ || true
-        cp -R FF8GameData/m00x release-cli/FF8GameData/ || true
-        cp -R FF8GameData/Resources release-cli/FF8GameData/ || true
-        cp CLI_ARCHITECTURE.md release-cli/ || true
-        cp CLI_QUICK_START.md release-cli/ || true
-        cp IMPLEMENTATION_SUMMARY.md release-cli/ || true
-        cp README.md release-cli/ || true
-        mkdir -p release-cli/ShumiTranslator
-        cp -R ShumiTranslator/model release-cli/ShumiTranslator/ || true
-        cp -R ShumiTranslator/csv release-cli/ShumiTranslator/ || true
-        cp -R ShumiTranslator/*.py release-cli/ShumiTranslator/ || true
+        # Copy deling-cli.exe and its files
+        if [ -d "${{ env.DELING_FOLDER }}" ]; then
+          cp -R "${{ env.DELING_FOLDER }}"/* release-cli/FF8GameData/fs/DelingCli/
+          echo "Copied deling-cli files from ${{ env.DELING_FOLDER }}"
+        else
+          echo "Warning: DELING_FOLDER not found at ${{ env.DELING_FOLDER }}"
+          # Try to find it manually
+          DELING_DIR=$(find . -maxdepth 2 -name "deling-cli*" -type d | head -n1)
+          if [ -n "$DELING_DIR" ]; then
+            cp -R "$DELING_DIR"/* release-cli/FF8GameData/fs/DelingCli/
+            echo "Found and copied deling-cli from $DELING_DIR"
+          fi
+        fi
+        
+        # Copy only essential CSV files (not .py files)
+        cp -R ShumiTranslator/csv/*.csv release-cli/ShumiTranslator/csv/ 2>/dev/null || true
+        
+        # Copy any required resource files (if needed)
+        # Only copy Resources if they contain non-Python files needed for runtime
+        if [ -d "FF8GameData/Resources" ]; then
+          mkdir -p release-cli/FF8GameData/Resources
+          # Copy only non-Python files (images, configs, etc.)
+          find FF8GameData/Resources -type f ! -name "*.py" -exec cp --parents {} release-cli/ \; 2>/dev/null || true
+        fi
+        
+        # Verify deling-cli.exe is in place
+        echo "Verifying deling-cli.exe location:"
+        ls -la release-cli/FF8GameData/fs/DelingCli/ || echo "Warning: deling-cli directory might be empty"
+        
+        # Clean up any .py files that might have been copied
+        find release-cli -name "*.py" -type f -delete
+        find release-cli -name "*.pyc" -type f -delete
+        find release-cli -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+        
+        # Final structure verification
+        echo "Final CLI release structure:"
         cd release-cli
-        ls -al
+        ls -la
+        echo "--- Checking deling-cli ---"
+        ls -la FF8GameData/fs/DelingCli/ || echo "ERROR: deling-cli not found!"
         cd ..
 
     - name: Parse version and find previous relevant tag
