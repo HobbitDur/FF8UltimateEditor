@@ -107,9 +107,17 @@ jobs:
         echo "Downloading from: $DOWNLOAD_URL"
         curl -L -o deling-cli-win64.zip "$DOWNLOAD_URL"
         7z x deling-cli-win64.zip -y
-        # Find the extracted folder (it should contain deling-cli.exe)
-        DELING_FOLDER=$(find . -name "deling-cli*" -type d | head -n1)
+        
+        # Find the extracted folder (it should contain deling-cli.exe) - using current directory
+        DELING_FOLDER=$(find . -maxdepth 2 -name "deling-cli*" -type d | head -n1)
+        echo "Found deling folder: $DELING_FOLDER"
         echo "DELING_FOLDER=$DELING_FOLDER" >> $GITHUB_ENV
+        
+        # Also set an output for debugging
+        echo "deling_folder=$DELING_FOLDER" >> $GITHUB_OUTPUT
+        
+        # List contents to verify
+        ls -la "$DELING_FOLDER" || echo "Folder not found"
 
     - name: Create CLI release
       shell: bash
@@ -117,51 +125,54 @@ jobs:
         # Create CLI executable with desired name
         pyinstaller -n FF8UltimateEditorCli -F --specpath release-cli/build --distpath release-cli --noconsole --workpath release-cli/build --onefile --icon=../../Resources/hobbitdur.ico cli.py
         rm -R release-cli/build
-        
+
         # Create the clean directory structure
         mkdir -p release-cli/FF8GameData/fs/DelingCli
         mkdir -p release-cli/ShumiTranslator/csv
-        
-        # Copy deling-cli.exe and its files
-        if [ -d "${{ env.DELING_FOLDER }}" ]; then
+
+        # FIRST: Try to locate deling-cli folder manually (more reliable)
+        echo "Searching for deling-cli folder..."
+        DELING_FOLDER_LOCAL=$(find . -maxdepth 2 -name "deling-cli*" -type d | head -n1)
+
+        if [ -n "$DELING_FOLDER_LOCAL" ]; then
+          echo "Found deling-cli at: $DELING_FOLDER_LOCAL"
+          cp -R "$DELING_FOLDER_LOCAL"/* release-cli/FF8GameData/fs/DelingCli/
+        elif [ -n "${{ env.DELING_FOLDER }}" ]; then
+          echo "Using DELING_FOLDER from env: ${{ env.DELING_FOLDER }}"
           cp -R "${{ env.DELING_FOLDER }}"/* release-cli/FF8GameData/fs/DelingCli/
-          echo "Copied deling-cli files from ${{ env.DELING_FOLDER }}"
         else
-          echo "Warning: DELING_FOLDER not found at ${{ env.DELING_FOLDER }}"
-          # Try to find it manually
-          DELING_DIR=$(find . -maxdepth 2 -name "deling-cli*" -type d | head -n1)
-          if [ -n "$DELING_DIR" ]; then
-            cp -R "$DELING_DIR"/* release-cli/FF8GameData/fs/DelingCli/
-            echo "Found and copied deling-cli from $DELING_DIR"
-          fi
+          echo "ERROR: Could not find deling-cli folder anywhere!"
+          echo "Current directory contents:"
+          ls -la
+          echo "Looking for zip files:"
+          ls -la *.zip 2>/dev/null || echo "No zip files"
+          exit 1
         fi
-        
+
+        # Verify copy worked
+        echo "Contents of DelingCli after copy:"
+        ls -la release-cli/FF8GameData/fs/DelingCli/ || echo "Directory is empty!"
+
         # Copy only essential CSV files (not .py files)
         cp -R ShumiTranslator/csv/*.csv release-cli/ShumiTranslator/csv/ 2>/dev/null || true
-        
-        # Copy any required resource files (if needed)
-        # Only copy Resources if they contain non-Python files needed for runtime
-        if [ -d "FF8GameData/Resources" ]; then
-          mkdir -p release-cli/FF8GameData/Resources
-          # Copy only non-Python files (images, configs, etc.)
-          find FF8GameData/Resources -type f ! -name "*.py" -exec cp --parents {} release-cli/ \; 2>/dev/null || true
-        fi
-        
-        # Verify deling-cli.exe is in place
-        echo "Verifying deling-cli.exe location:"
-        ls -la release-cli/FF8GameData/fs/DelingCli/ || echo "Warning: deling-cli directory might be empty"
-        
+
         # Clean up any .py files that might have been copied
-        find release-cli -name "*.py" -type f -delete
-        find release-cli -name "*.pyc" -type f -delete
+        find release-cli -name "*.py" -type f -delete 2>/dev/null || true
+        find release-cli -name "*.pyc" -type f -delete 2>/dev/null || true
         find release-cli -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
-        
-        # Final structure verification
+
+        # Final verification
         echo "Final CLI release structure:"
         cd release-cli
         ls -la
         echo "--- Checking deling-cli ---"
-        ls -la FF8GameData/fs/DelingCli/ || echo "ERROR: deling-cli not found!"
+        if [ -d "FF8GameData/fs/DelingCli" ] && [ "$(ls -A FF8GameData/fs/DelingCli)" ]; then
+          echo "SUCCESS: deling-cli files found!"
+          ls -la FF8GameData/fs/DelingCli/
+        else
+          echo "ERROR: deling-cli directory is empty or missing!"
+          exit 1
+        fi
         cd ..
 
     - name: Parse version and find previous relevant tag
