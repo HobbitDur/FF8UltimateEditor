@@ -1,4 +1,5 @@
 
+import copy
 import math
 import os
 from enum import Enum
@@ -1129,6 +1130,98 @@ class Animation:
 
     def get_nb_frame(self):
         return len(self.frames)
+
+    def create_interpolated_frames(self, bones: List[Bone], factor: int = 4, smooth_loop: bool = False):
+        """
+        Insert (factor - 1) interpolated frames between each pair of consecutive frames.
+        With factor = 4, an animation made for 15 fps becomes a 60 fps animation.
+        If smooth_loop is True, frames are also inserted between the last and the first
+        frame (nice for looping animations like the idle stance, wrong for one-shot
+        animations like a death animation).
+        """
+        if len(self.frames) < 2:
+            return
+
+        new_frames = []
+        for frame_index, frame in enumerate(self.frames):
+            new_frames.append(frame)
+
+            is_last_frame = (frame_index == len(self.frames) - 1)
+            if is_last_frame and not smooth_loop:
+                continue
+
+            next_frame = self.frames[(frame_index + 1) % len(self.frames)]
+            for step_index in range(1, factor):
+                step = step_index / factor
+                new_frames.append(self._create_frame_between(frame, next_frame, step, bones))
+
+        self.frames = new_frames
+        self._recompute_frame_storage_types()
+
+    @staticmethod
+    def _create_frame_between(frame_a: 'AnimationFrame', frame_b: 'AnimationFrame', step: float,
+                              bones: List[Bone]) -> 'AnimationFrame':
+        """Create a new frame interpolated between frame_a (step=0.0) and frame_b (step=1.0)."""
+        nb_bones = len(bones)
+        new_frame = AnimationFrame(nb_bones)
+        new_frame.mode_bit = frame_a.mode_bit
+        new_frame.rotation_vector_data_supp = copy.deepcopy(frame_a.rotation_vector_data_supp)
+
+        # Skeleton position: simple linear interpolation of the raw values
+        for axis in range(3):
+            raw_a = frame_a.position[axis].get_pos_raw()
+            raw_b = frame_b.position[axis].get_pos_raw()
+            raw_value = round(raw_a + (raw_b - raw_a) * step)
+            new_frame.position.append(PositionType(0, raw_value))
+
+        # Bone rotations: interpolate each axis taking the shortest way around
+        # the circle (a full circle is 4096 in raw units)
+        for bone_index in range(nb_bones):
+            new_rotations = []
+            for axis in range(3):
+                raw_a = int(frame_a.rotation_vector_data[bone_index][axis].get_rotate_raw())
+                raw_b = int(frame_b.rotation_vector_data[bone_index][axis].get_rotate_raw())
+                shortest_delta = ((raw_b - raw_a + 2048) % 4096) - 2048
+                raw_value = round(raw_a + shortest_delta * step)
+                new_rotations.append(RotationType(True, 0, raw_value))
+            new_frame.rotation_vector_data[bone_index] = new_rotations
+
+        new_frame.set_all_bones_matrix(bones)
+        return new_frame
+
+    def _recompute_frame_storage_types(self):
+        """
+        The file format stores each frame as a delta from the previous frame, with a
+        per-value storage size (the "type bits"). After inserting new frames all the
+        deltas changed, so recompute the smallest storage size able to hold each delta.
+        """
+        prev_frame = None
+        for frame in self.frames:
+            for axis in range(3):
+                prev_raw = prev_frame.position[axis].get_pos_raw() if prev_frame else 0
+                delta = frame.position[axis].get_pos_raw() - prev_raw
+                frame.position[axis].position_type_bits = self._smallest_type_index(delta, BitReader.POSITION_READ_HELPER)
+
+            for bone_index in range(len(frame.rotation_vector_data)):
+                for axis in range(3):
+                    rotation = frame.rotation_vector_data[bone_index][axis]
+                    if prev_frame:
+                        prev_raw = int(prev_frame.rotation_vector_data[bone_index][axis].get_rotate_raw())
+                    else:
+                        prev_raw = 0
+                    delta = int(rotation.get_rotate_raw()) - prev_raw
+                    rotation.is_rotation_type_available = (delta != 0)
+                    rotation.rotation_type_bits = self._smallest_type_index(delta, BitReader.ROTATION_READ_HELPER)
+            prev_frame = frame
+
+    @staticmethod
+    def _smallest_type_index(delta: int, bit_sizes: List[int]) -> int:
+        """Return the index of the smallest bit size able to hold delta as a signed value."""
+        for type_index, nb_bits in enumerate(bit_sizes):
+            if -(1 << (nb_bits - 1)) <= delta < (1 << (nb_bits - 1)):
+                return type_index
+        return len(bit_sizes) - 1
+
     def to_binary(self) -> bytearray:
         data = bytearray()
         data.extend(len(self.frames).to_bytes(1, byteorder='little'))

@@ -89,6 +89,19 @@ class Ifrit3DWidget(QWidget):
             self.reset_anim_btn.clicked.connect(self.reset_animation)
             toolbar_layout.addWidget(self.reset_anim_btn)
 
+            self.fps_label = QLabel(f"FPS: {self.fps}")
+            self.fps_label.setStyleSheet("color:white; padding:4px 4px;")
+            toolbar_layout.addWidget(self.fps_label)
+
+            self.fps_slider = QSlider(Qt.Orientation.Horizontal)
+            self.fps_slider.setRange(15, 60)
+            self.fps_slider.setValue(self.fps)
+            self.fps_slider.setMaximumWidth(80)
+            self.fps_slider.setToolTip("Playback speed of the viewer (frames per second).\n"
+                                       "15 fps for original animations, 60 fps for converted ones.")
+            self.fps_slider.valueChanged.connect(self.set_fps)
+            toolbar_layout.addWidget(self.fps_slider)
+
             self.frame_label = QLabel("Frame: 0")
             self.frame_label.setStyleSheet("color:white; padding:4px 8px;")
             toolbar_layout.addWidget(self.frame_label)
@@ -116,6 +129,14 @@ class Ifrit3DWidget(QWidget):
                                             "to a .glb file, importable in Blender (File > Import > glTF 2.0)")
             self.export_gltf_btn.clicked.connect(self.export_gltf)
             toolbar_layout.addWidget(self.export_gltf_btn)
+
+            self.fps60_btn = QPushButton("To 60 FPS")
+            self.fps60_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
+            self.fps60_btn.setToolTip("Insert 3 interpolated frames between each frame of the current animation,\n"
+                                      "so the 15 fps animation becomes a 60 fps one.\n"
+                                      "Save the file afterwards to write the new frames in the .dat file.")
+            self.fps60_btn.clicked.connect(self.convert_current_anim_to_60fps)
+            toolbar_layout.addWidget(self.fps60_btn)
 
             # Spacer
             toolbar_layout.addStretch()
@@ -413,7 +434,7 @@ class Ifrit3DWidget(QWidget):
         if max_frames > 0:
             # Update interpolation step
             if self.animating:
-                self.interp_step += 1.0 / (self.fps / 30.0)  # Assuming 30 fps base
+                self.interp_step += 1.0  # One animation frame per timer tick
                 if self.interp_step >= 1.0:
                     self.interp_step = 0.0
                     self.current_frame = (self.current_frame + 1) % max_frames
@@ -612,6 +633,19 @@ class Ifrit3DWidget(QWidget):
             self.frame_slider.blockSignals(False)
         self.frame_changed.emit(self.current_frame)
 
+    def set_fps(self, fps: int):
+        """Change the playback speed of the viewer."""
+        self.fps = fps
+        if hasattr(self, 'fps_label'):
+            self.fps_label.setText(f"FPS: {fps}")
+        if hasattr(self, 'fps_slider') and self.fps_slider.value() != fps:
+            self.fps_slider.blockSignals(True)
+            self.fps_slider.setValue(fps)
+            self.fps_slider.blockSignals(False)
+        # Apply the new speed immediately if an animation is playing
+        if self.animating:
+            self.timer.start(1000 // fps)
+
     def toggle_animation(self):
         """Start/stop animation"""
         if self.animating:
@@ -743,6 +777,62 @@ class Ifrit3DWidget(QWidget):
             QMessageBox.critical(self, "Export glTF", f"Export failed: {e}")
             return
         QMessageBox.information(self, "Export glTF", f"Model exported to:\n{file_path}")
+
+    def convert_current_anim_to_60fps(self):
+        """Insert interpolated frames in the current animation so it plays at 60 fps instead of 15 fps."""
+        anim_section = self.ifrit_manager.enemy.animation_data
+        if not anim_section.nb_animations or self.current_anim_id >= len(anim_section.animations):
+            QMessageBox.warning(self, "To 60 FPS", "No animation loaded.")
+            return
+        if not self.ifrit_manager.enemy.bone_data:
+            QMessageBox.warning(self, "To 60 FPS", "No bone data loaded.")
+            return
+
+        anim = anim_section.animations[self.current_anim_id]
+        nb_frames_before = len(anim.frames)
+        if nb_frames_before < 2:
+            QMessageBox.information(self, "To 60 FPS", "The animation needs at least 2 frames to interpolate.")
+            return
+
+        answer = QMessageBox.question(
+            self, "To 60 FPS",
+            "Also smooth the transition from the last frame back to the first one?\n\n"
+            "Yes: for looping animations (like the idle stance).\n"
+            "No: for one-shot animations (like a death animation).",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
+        if answer == QMessageBox.StandardButton.Cancel:
+            return
+        smooth_loop = (answer == QMessageBox.StandardButton.Yes)
+
+        factor = 4  # 15 fps x 4 = 60 fps
+        if smooth_loop:
+            nb_frames_after = nb_frames_before * factor
+        else:
+            nb_frames_after = (nb_frames_before - 1) * factor + 1
+        if nb_frames_after > 255:
+            QMessageBox.warning(self, "To 60 FPS",
+                                f"The result would have {nb_frames_after} frames, but the file format "
+                                "is limited to 255 frames per animation.")
+            return
+
+        anim.create_interpolated_frames(self.ifrit_manager.enemy.bone_data.bones, factor, smooth_loop)
+
+        # Refresh the viewer with the new frame count
+        self.current_frame = 0
+        self.next_frame_index = 1
+        self.interp_step = 0.0
+        if hasattr(self, 'frame_slider'):
+            self.frame_slider.setRange(0, self.get_max_frames() - 1)
+        self.update_animated_mesh()
+        self.update_skeleton()
+        self.animation_changed.emit()
+        self.set_fps(60)
+
+        QMessageBox.information(self, "To 60 FPS",
+                                f"Animation {self.current_anim_id} now has {len(anim.frames)} frames "
+                                f"(was {nb_frames_before}).\n"
+                                "The viewer playback speed has been set to 60 fps.\n"
+                                "Save the file to keep the new frames.")
 
     def _update_bone_editor_frame(self, frame):
         """Update bone editor when frame changes"""
