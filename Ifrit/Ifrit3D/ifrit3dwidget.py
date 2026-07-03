@@ -1,12 +1,14 @@
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QCheckBox, QPushButton, QSlider, QSpinBox,
-                             QListWidget, QListWidgetItem, QInputDialog, QMessageBox)
+                             QListWidget, QListWidgetItem, QInputDialog, QMessageBox,
+                             QFileDialog)
 
 from FF8GameData.monsterdata import AnimationFrame, AnimationSection, Animation
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.Ifrit3D.boneeditorwidget import AnimEditor
 from Ifrit.Ifrit3D.ff8openwidget import FF8OpenGLWidget
+from Ifrit.Ifrit3D.gltfexporter import GltfExporter
 
 
 class Ifrit3DWidget(QWidget):
@@ -107,6 +109,13 @@ class Ifrit3DWidget(QWidget):
             self.anim_selector.setStyleSheet("color:white; background:#333; padding:2px;")
             self.anim_selector.valueChanged.connect(self.set_animation)
             toolbar_layout.addWidget(self.anim_selector)
+
+            self.export_gltf_btn = QPushButton("Export glTF")
+            self.export_gltf_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
+            self.export_gltf_btn.setToolTip("Export the loaded model (mesh, skeleton, textures and all animations)\n"
+                                            "to a .glb file, importable in Blender (File > Import > glTF 2.0)")
+            self.export_gltf_btn.clicked.connect(self.export_gltf)
+            toolbar_layout.addWidget(self.export_gltf_btn)
 
             # Spacer
             toolbar_layout.addStretch()
@@ -714,6 +723,24 @@ class Ifrit3DWidget(QWidget):
     def get_gl_widget(self):
         """Return the underlying OpenGL widget for advanced control"""
         return self.gl_widget
+
+    def export_gltf(self):
+        """Export the loaded model to a glTF binary file (.glb), importable in Blender."""
+        if not self.ifrit_manager.enemy.geometry_data.object_data:
+            QMessageBox.warning(self, "Export glTF", "No model loaded in the 3D viewer.")
+            return
+        exporter = GltfExporter(self.ifrit_manager)
+        default_name = exporter.model_name() + ".glb"
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export to glTF", default_name,
+                                                   "glTF binary (*.glb)")
+        if not file_path:
+            return
+        try:
+            exporter.export(file_path)
+        except Exception as e:
+            QMessageBox.critical(self, "Export glTF", f"Export failed: {e}")
+            return
+        QMessageBox.information(self, "Export glTF", f"Model exported to:\n{file_path}")
 
     def _update_bone_editor_frame(self, frame):
         """Update bone editor when frame changes"""

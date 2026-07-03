@@ -29,3 +29,5 @@ SelfUpdate
 FF8GameData/fs/DelingCli
 Temp
 .junie/
+.vs/
+temp_export/
