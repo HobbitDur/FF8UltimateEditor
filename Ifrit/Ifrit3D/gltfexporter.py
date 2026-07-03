@@ -40,6 +40,7 @@ import math
 import struct
 
 from PyQt6.QtCore import QBuffer, QIODevice
+from PyQt6.QtGui import QImage
 
 # glTF constants (see the glTF 2.0 specification)
 COMPONENT_FLOAT = 5126
@@ -59,8 +60,13 @@ class GltfExporter:
     def __init__(self, ifrit_manager):
         self.ifrit_manager = ifrit_manager
 
-    def export(self, filepath: str):
-        """Export the currently loaded model to a .glb file."""
+    def export(self, filepath: str, first_animation_id: int = None):
+        """
+        Export the currently loaded model to a .glb file.
+        first_animation_id: animation to write first in the file. Most glTF players
+        auto-play the first animation, so passing the animation currently selected
+        in the viewer makes the exported file play the same thing.
+        """
         enemy = self.ifrit_manager.enemy
         bones = enemy.bone_data.bones
         all_animations = enemy.animation_data.animations
@@ -128,7 +134,7 @@ class GltfExporter:
             mesh_node["skin"] = 0
 
             gltf["animations"] = self._build_animations(builder, bones, all_animations,
-                                                        first_joint_node)
+                                                        first_joint_node, first_animation_id)
 
         gltf["nodes"] = nodes
         gltf["scenes"] = [{"nodes": scene_root_nodes}]
@@ -278,6 +284,9 @@ class GltfExporter:
                     "metallicFactor": 0.0,
                     "roughnessFactor": 1.0,
                 },
+                # Cut out the transparent (originally black) texels, like the viewer
+                "alphaMode": "MASK",
+                "alphaCutoff": 0.5,
                 "doubleSided": True,
             })
             material_of_tex_id[tex_id] = rank
@@ -328,13 +337,22 @@ class GltfExporter:
             local_transforms.append((translation, rotation))
         return local_transforms
 
-    def _build_animations(self, builder, bones, all_animations, first_joint_node):
+    def _build_animations(self, builder, bones, all_animations, first_joint_node,
+                          first_animation_id=None):
         """
         One glTF animation per FF8 animation, with a keyframe on every frame for the
         translation and rotation of every joint.
+        Animations are named "anim_<FF8 id>_<frame count>f" (e.g. "anim_3_45f"), and
+        the one selected in the viewer is written first so that glTF players auto-play it.
         """
+        anim_ids = list(range(len(all_animations)))
+        if first_animation_id is not None and first_animation_id in anim_ids:
+            anim_ids.remove(first_animation_id)
+            anim_ids.insert(0, first_animation_id)
+
         gltf_animations = []
-        for anim_id, anim in enumerate(all_animations):
+        for anim_id in anim_ids:
+            anim = all_animations[anim_id]
             if not anim.frames:
                 continue
 
@@ -385,7 +403,7 @@ class GltfExporter:
                 })
 
             gltf_animations.append({
-                "name": f"anim_{anim_id}",
+                "name": f"anim_{anim_id}_{len(anim.frames)}f",
                 "samplers": samplers,
                 "channels": channels,
             })
@@ -522,10 +540,24 @@ class _GlbBuilder:
 
 
 def _pixmap_to_png_bytes(pixmap):
-    """Encode a QPixmap as PNG bytes (in memory)."""
+    """
+    Encode a QPixmap as PNG bytes (in memory), making pure black pixels transparent.
+    FF8 textures use black as the transparency color; the viewer does the same
+    conversion before uploading to OpenGL (FF8OpenGLWidget._upload_pending_textures).
+    """
+    image = pixmap.toImage().convertToFormat(QImage.Format.Format_RGBA8888)
+    ptr = image.bits()
+    ptr.setsize(image.sizeInBytes())
+    pixels = bytearray(ptr)
+    for i in range(0, len(pixels), 4):
+        if pixels[i] == 0 and pixels[i + 1] == 0 and pixels[i + 2] == 0:
+            pixels[i + 3] = 0  # black -> fully transparent
+    transparent_image = QImage(bytes(pixels), image.width(), image.height(),
+                               image.bytesPerLine(), QImage.Format.Format_RGBA8888)
+
     buffer = QBuffer()
     buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-    pixmap.save(buffer, "PNG")
+    transparent_image.save(buffer, "PNG")
     buffer.close()
     return bytes(buffer.data())
 

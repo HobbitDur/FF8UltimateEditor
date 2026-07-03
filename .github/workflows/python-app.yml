@@ -108,19 +108,19 @@ jobs:
         mkdir -p release-cli/ShumiTranslator/csv
 
         # Download and setup deling-cli directly
-        DOWNLOAD_URL=$(curl -s https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[] | select(.name == "deling-cli-win64.zip") | .browser_download_url')
+        DOWNLOAD_URL=$(curl -s https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[] | select(.name == "deling-cli-win_x64.zip") | .browser_download_url')
         if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" = "null" ]; then
-          echo "Error: Could not find deling-cli-win64.zip in latest release"
+          echo "Error: Could not find deling-cli-win_x64.zip in latest release"
           exit 1
         fi
 
         echo "Downloading from: $DOWNLOAD_URL"
-        curl -L -o deling-cli-win64.zip "$DOWNLOAD_URL"
+        curl -L -o deling-cli-win_x64.zip "$DOWNLOAD_URL"
 
         # Extract to a temporary directory and move contents to target
         mkdir deling_temp
         cd deling_temp
-        7z x ../deling-cli-win64.zip -y
+        7z x ../deling-cli-win_x64.zip -y
 
         # Find the extracted folder (should be the only one)
         EXTRACTED_FOLDER=$(find . -maxdepth 1 -type d ! -name "." | head -n1)
@@ -153,7 +153,7 @@ jobs:
 
         # Clean up
         rm -rf deling_temp
-        rm -f deling-cli-win64.zip
+        rm -f deling-cli-win_x64.zip
 
         # Clean up any .py files that might have been copied
         find release-cli -name "*.py" -type f -delete 2>/dev/null || true

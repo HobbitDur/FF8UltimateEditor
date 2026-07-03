@@ -736,7 +736,9 @@ class Ifrit3DWidget(QWidget):
         if not file_path:
             return
         try:
-            exporter.export(file_path)
+            # Put the animation currently shown in the viewer first in the file,
+            # so glTF players that auto-play show the same animation.
+            exporter.export(file_path, first_animation_id=self.current_anim_id)
         except Exception as e:
             QMessageBox.critical(self, "Export glTF", f"Export failed: {e}")
             return
