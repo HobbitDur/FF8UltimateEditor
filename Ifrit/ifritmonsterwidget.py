@@ -54,6 +54,7 @@ class IfritMonsterWidget(QWidget):
         self._cronos_checkbox.setToolTip("Load AI data with cronos configuration")
         self._cronos_checkbox.setChecked(self.settings.value("ifrit/cronos_checkbox", defaultValue=False, type=bool))
         self._cronos_checkbox.stateChanged.connect(self._on_cronos_toggled)
+
         self._monster_label = QLabel("No file loaded")
 
         for w in [self._open_btn, self._save_btn, self._reload_btn, self._cronos_checkbox, self._monster_label]:
@@ -92,6 +93,7 @@ class IfritMonsterWidget(QWidget):
         root.addWidget(self._tabs, 1)
 
         self._on_tab_changed(0)
+        self._on_cronos_toggled( self._cronos_checkbox.isChecked())
 
     # ── Utilities ─────────────────────────────────────────────────────
 
