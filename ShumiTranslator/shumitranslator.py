@@ -18,12 +18,14 @@ from .model.mngrp.string.sectionstring import SectionString
 from .model.world.worldfsmanager import WorldFsManager
 from .view.sectionwidget import SectionWidget
 from .view.tabholderwidget import TabHolderWidget
+from .view.translatorwidget import TranslatorWidget
 
 
 class ShumiTranslator(QWidget):
     CSV_FOLDER = "csv"
-    FILE_MANAGED = ['kernel.bin', 'namedic.bin', 'mngrp.bin', 'FF8.exe/remaster.dat', 'c0mxx.dat', 'field.fs', 'world.fs']
-    FILE_MANAGED_REGEX = ['*kernel*.bin', '*namedic*.bin', '*mngrp*.bin', 'FF8*.exe;off_cards_names_*.dat', "c0m*.dat", 'field*.fs', 'world*.fs']
+    TRANSLATOR_ENTRY = "Translator"
+    FILE_MANAGED = ['kernel.bin', 'namedic.bin', 'mngrp.bin', 'FF8.exe/remaster.dat', 'c0mxx.dat', 'field.fs', 'world.fs', TRANSLATOR_ENTRY]
+    FILE_MANAGED_REGEX = ['*kernel*.bin', '*namedic*.bin', '*mngrp*.bin', 'FF8*.exe;off_cards_names_*.dat', "c0m*.dat", 'field*.fs', 'world*.fs', '']
 
     def __init__(self, icon_path='Resources',game_data_folder="FF8GameData"):
         QWidget.__init__(self)
@@ -118,6 +120,7 @@ class ShumiTranslator(QWidget):
         self.file_type_selection_widget.addItems(self.FILE_MANAGED)
         self.file_type_selection_widget.setToolTip("Allow you to choose which file to load")
         self.file_type_selection_widget.setCurrentIndex(0)  # Change this for faster test
+        self.file_type_selection_widget.currentIndexChanged.connect(self.__file_type_changed)
 
         self.file_type_layout = QHBoxLayout()
         self.file_type_layout.addWidget(self.file_type_selection_label)
@@ -194,6 +197,10 @@ class ShumiTranslator(QWidget):
         self._tab_layout.addWidget(self._tab_widget)
         self._tab_layout.addStretch(1)
 
+        # Copy/paste translator (no file to load)
+        self.translator_widget = TranslatorWidget(self.game_data)
+        self.translator_widget.hide()
+
         # Translation management
         self.section_list = []
 
@@ -208,6 +215,7 @@ class ShumiTranslator(QWidget):
         self.layout_main.addWidget(self.warning_exe_label_widget)
         self.layout_main.addWidget(self.warning_field_label_widget)
         self.layout_main.addWidget(self.warning_world_label_widget)
+        self.layout_main.addWidget(self.translator_widget)
         self.layout_main.addLayout(self._tab_layout)
         self.layout_main.addLayout(self.layout_translation_lines)
         self.layout_main.addStretch(1)
@@ -417,6 +425,49 @@ class ShumiTranslator(QWidget):
             self.scroll_area.setEnabled(True)
             self.csv_upload_button.setEnabled(True)
             self.csv_save_button.setEnabled(True)
+
+    def __file_type_changed(self):
+        if self.file_type_selection_widget.currentText() == self.TRANSLATOR_ENTRY:
+            self.file_dialog_button.setEnabled(False)
+            self.save_button.setEnabled(False)
+            self.csv_save_button.setEnabled(False)
+            self.csv_upload_button.setEnabled(False)
+            self.compress_button.setEnabled(False)
+            self.uncompress_button.setEnabled(False)
+            self._tab_widget.hide()
+            self.warning_kernel_label_widget.hide()
+            self.warning_comx_label_widget.hide()
+            self.warning_mngrp_label_widget.hide()
+            self.warning_exe_label_widget.hide()
+            self.warning_field_label_widget.hide()
+            self.warning_world_label_widget.hide()
+            for section_widget in self.section_widget_list:
+                section_widget.hide()
+            self.translator_widget.show()
+        else:
+            self.translator_widget.hide()
+            self.file_dialog_button.setEnabled(True)
+            for section_widget in self.section_widget_list:
+                section_widget.show()
+            if self.file_loaded:
+                self.save_button.setEnabled(True)
+                self.csv_save_button.setEnabled(True)
+                self.csv_upload_button.setEnabled(True)
+                if self.file_loaded_type == FileType.KERNEL:
+                    self.compress_button.setEnabled(True)
+                    self.uncompress_button.setEnabled(True)
+                    self.warning_kernel_label_widget.show()
+                elif self.file_loaded_type == FileType.MNGRP:
+                    self._tab_widget.show()
+                    self.warning_mngrp_label_widget.show()
+                elif self.file_loaded_type == FileType.EXE:
+                    self.warning_exe_label_widget.show()
+                elif self.file_loaded_type == FileType.DAT:
+                    self.warning_comx_label_widget.show()
+                elif self.file_loaded_type == FileType.FIELD_FS:
+                    self.warning_field_label_widget.show()
+                elif self.file_loaded_type == FileType.WORLD_FS:
+                    self.warning_world_label_widget.show()
 
     def __load_file(self, file_to_load: str = ""):
         print("Loading file")
