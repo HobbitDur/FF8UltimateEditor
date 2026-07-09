@@ -191,7 +191,6 @@ class ShumiTranslator(QWidget):
         self.layout_full_top.addLayout(self.layout_top)
 
         self._tab_widget = TabHolderWidget(FileType.MNGRP)
-        self._tab_widget.currentChanged.connect(self.adjustSize)
         self._tab_widget.hide()
         self._tab_layout = QVBoxLayout()
         self._tab_layout.addWidget(self._tab_widget)
