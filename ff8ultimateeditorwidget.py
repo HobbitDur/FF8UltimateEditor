@@ -18,6 +18,7 @@ from ExeLauncher.junkshop import JunkshopLauncher
 from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from ExeLauncher.sirenlauncher import SirenLauncher
 from Ifrit.ifritmonsterwidget import IfritMonsterWidget
+from PuPuCargo.pupucargowidget import PuPuCargoWidget
 from ShumiTranslator.shumitranslator import ShumiTranslator
 from SmallWidget.externaltoolwidget import ExternalToolWidget
 from TonberryShop.tonberryshop import TonberryShop
@@ -48,7 +49,8 @@ class FF8UltimateEditorWidget(QWidget):
             "TonberryShop (Shop editor)",
             "CCGroup (Card value editor)",
             "Draw editor",
-            "SolomonRing (kernel.bin editor)"
+            "SolomonRing (kernel.bin editor)",
+            "PuPuCargo (Item menu editor)"
         ]
 
         # 3. Header: Program Selection (ComboBox)
@@ -117,6 +119,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._draw_editor_widget = DrawEditorWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path))
         self._ifrit_widget = IfritMonsterWidget( settings=self.settings, icon_path=resources_path, game_data_folder=game_data_path)
+        self._pupucargo_widget = PuPuCargoWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
 
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
@@ -126,6 +129,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._ccgroup_widget)  # Index 3
         self.tool_stack.addWidget(self._draw_editor_widget)  # Index 4
         self.tool_stack.addWidget(self._solomonring_widget) # Index 5
+        self.tool_stack.addWidget(self._pupucargo_widget) # Index 6
         self._program_option_change()
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)

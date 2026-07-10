@@ -1,0 +1,69 @@
+{
+"item_type": [
+    {"id": 0,  "name": "Heal character",       "description": "Restore HP and cure statuses of a character. HP restored = param1 x 50 (clamped to max HP).", "param1": "heal_amount", "param2": "status_mask"},
+    {"id": 1,  "name": "Revive character",     "description": "Revive a KO character with 1/8 of max HP and cure statuses.", "param1": "unused", "param2": "status_mask"},
+    {"id": 2,  "name": "Full revive character","description": "Revive a KO character with full HP (Mega Phoenix like).", "param1": "unused", "param2": "unused"},
+    {"id": 3,  "name": "Heal GF",              "description": "Restore HP of a Guardian Force. HP restored = param1 x 50.", "param1": "heal_amount", "param2": "unused"},
+    {"id": 4,  "name": "Revive GF",            "description": "Revive a KO Guardian Force with 1/8 of max HP.", "param1": "unused", "param2": "unused"},
+    {"id": 5,  "name": "Full revive GF",       "description": "Revive a KO Guardian Force with full HP.", "param1": "unused", "param2": "unused"},
+    {"id": 6,  "name": "Full restore",         "description": "Fully restore HP and cure statuses (Elixir/Megalixir like). Param2 is usually 0x7F (all curable statuses).", "param1": "unused", "param2": "status_mask"},
+    {"id": 7,  "name": "Battle only",          "description": "Item only usable in battle (stones, Hero, Holy War...). The menu only checks the type, the battle effect is defined elsewhere.", "param1": "unused", "param2": "unused"},
+    {"id": 8,  "name": "Ammo",                 "description": "Ammunition for Irvine's Shot limit break.", "param1": "unused", "param2": "unused"},
+    {"id": 9,  "name": "Magazine",             "description": "Readable magazine. Warning: the flags of magazines do not follow the standard targeting logic, values run sequentially from 0x01 to 0x04.", "param1": "magazine_first_page", "param2": "magazine_last_page"},
+    {"id": 10, "name": "Refine only",          "description": "Item only used as refine material, it cannot be used from the menu.", "param1": "unused", "param2": "unused"},
+    {"id": 11, "name": "Rename card",          "description": "Open the Guardian Force renaming screen.", "param1": "unused", "param2": "unused"},
+    {"id": 12, "name": "Pet nametag",          "description": "Open the pet (Angelo) renaming screen.", "param1": "unused", "param2": "unused"},
+    {"id": 13, "name": "Chocobo tag",          "description": "Open the chocobo (Boko) renaming screen.", "param1": "unused", "param2": "unused"},
+    {"id": 14, "name": "Magical lamp",         "description": "Start the Diablos fight to obtain the Guardian Force.", "param1": "unused", "param2": "unused"},
+    {"id": 15, "name": "Solomon ring",         "description": "Grant the Doomtrain Guardian Force (if the required items are owned).", "param1": "unused", "param2": "unused"},
+    {"id": 16, "name": "GF compatibility",     "description": "Modify the compatibility between a character and Guardian Force(s). Internal value is clamped to [1000, 6000], lower is better. Displayed value = param2 / 5.", "param1": "gf_target", "param2": "compatibility_amount"},
+    {"id": 17, "name": "Teach GF ability",     "description": "Teach an ability to a Guardian Force.", "param1": "gf_ability", "param2": "unused"},
+    {"id": 18, "name": "Forget ability",       "description": "Open the menu to make a Guardian Force forget an ability (Amnesia Greens).", "param1": "unused", "param2": "unused"},
+    {"id": 19, "name": "Quistis limit",        "description": "Teach a Blue Magic limit break to Quistis.", "param1": "quistis_limit", "param2": "unused"},
+    {"id": 20, "name": "Stat up",              "description": "Permanently increase stat(s) of a character. Param1 is the amount added, param2 selects which stats.", "param1": "stat_up_amount", "param2": "stat_mask"},
+    {"id": 21, "name": "Cure status",          "description": "Cure specific statuses of a character without healing HP (Remedy like).", "param1": "unused", "param2": "status_mask"}
+],
+"flag": [
+    {"bit": 0, "name": "Usable in menu",  "description": "The item can be used from the field menu (outside of battle)."},
+    {"bit": 1, "name": "Target chara",    "description": "The item can target party characters."},
+    {"bit": 2, "name": "Target GF",       "description": "The item can target Guardian Forces."},
+    {"bit": 3, "name": "Target all",      "description": "The item automatically hits all valid targets."},
+    {"bit": 4, "name": "Target all both", "description": "The item hits characters and Guardian Forces together."},
+    {"bit": 5, "name": "Target dead",     "description": "The item can be used on KO targets."},
+    {"bit": 6, "name": "Quistis only",    "description": "Force the target to party slot 3, used by Quistis limit items."},
+    {"bit": 7, "name": "GF compat others","description": "Also penalize the compatibility of the other Guardian Forces (GF compatibility type only)."}
+],
+"param_type": [
+    {"name": "unused",              "widget": "none",  "description": "This parameter is not used by this item type."},
+    {"name": "heal_amount",         "widget": "int",   "description": "HP restored = value x 50 (clamped to max HP)."},
+    {"name": "status_mask",         "widget": "flags", "description": "Statuses cured by the item.", "values": [
+        {"bit": 0, "name": "Death",    "description": "Cure Death, so revive the target (Phoenix Down like)."},
+        {"bit": 1, "name": "Poison",   "description": "Cure Poison (Antidote like)."},
+        {"bit": 2, "name": "Petrify",  "description": "Cure Petrify (Soft like)."},
+        {"bit": 3, "name": "Darkness", "description": "Cure Darkness (Eye Drops like)."},
+        {"bit": 4, "name": "Silence",  "description": "Cure Silence (Echo Screen like)."},
+        {"bit": 5, "name": "Berserk",  "description": "Cure Berserk (Elixir like)."},
+        {"bit": 6, "name": "Zombie",   "description": "Cure Zombie (Holy Water like)."},
+        {"bit": 7, "name": "Reserved", "description": "Never curable, always kept unchecked in vanilla."}
+    ]},
+    {"name": "stat_mask",           "widget": "flags", "description": "Permanent stat(s) increased by the item.", "values": [
+        {"bit": 0, "name": "HP",   "description": "Increase max HP."},
+        {"bit": 1, "name": "Str",  "description": "Increase Strength."},
+        {"bit": 2, "name": "Vit",  "description": "Increase Vitality."},
+        {"bit": 3, "name": "Mag",  "description": "Increase Magic."},
+        {"bit": 4, "name": "Spr",  "description": "Increase Spirit."},
+        {"bit": 5, "name": "Spd",  "description": "Increase Speed."},
+        {"bit": 6, "name": "Luck", "description": "Increase Luck."},
+        {"bit": 7, "name": "Unused", "description": "Unused bit, always kept unchecked in vanilla."}
+    ]},
+    {"name": "gf_target",           "widget": "list",  "description": "Guardian Force whose compatibility is modified.", "source": "gforce", "extra_values": [
+        {"id": 255, "name": "All GFs"}
+    ]},
+    {"name": "compatibility_amount","widget": "int",   "description": "Compatibility change amount. Displayed value in game = value / 5."},
+    {"name": "magazine_first_page", "widget": "int",   "description": "First page of the magazine."},
+    {"name": "magazine_last_page",  "widget": "int",   "description": "Last page of the magazine."},
+    {"name": "gf_ability",          "widget": "int",   "description": "ID of the ability taught to the Guardian Force (kernel.bin ability ID)."},
+    {"name": "quistis_limit",       "widget": "int",   "description": "ID of the Blue Magic limit break learned by Quistis."},
+    {"name": "stat_up_amount",      "widget": "int",   "description": "Amount added to the selected stat(s)."}
+]
+}

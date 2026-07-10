@@ -64,6 +64,7 @@ class GameData:
         self.enemy_abilities_data_json = {}
         self.gforce_data_json = {}
         self.item_data_json = {}
+        self.mitem_data_json = {}
         self.draw_data_json = {}
         self.special_action_data_json = {}
         self.field_data_json = {}
@@ -171,6 +172,11 @@ class GameData:
         file_path = os.path.join(self.resource_folder_json, "item.json")
         with open(file_path, encoding="utf8") as f:
             self.item_data_json = json.load(f)
+
+    def load_mitem_data(self):
+        file_path = os.path.join(self.resource_folder_json, "mitem.json")
+        with open(file_path, encoding="utf8") as f:
+            self.mitem_data_json = json.load(f)
 
     def load_draw_data(self):
         file_path = os.path.join(self.resource_folder_json, "draw.json")
@@ -559,6 +565,7 @@ class GameData:
         self.load_monster_data()
         self.load_sysfnt_data()
         self.load_item_data()
+        self.load_mitem_data()
         self.load_devour_data()
         self.load_gforce_data()
         self.load_stat_data()
