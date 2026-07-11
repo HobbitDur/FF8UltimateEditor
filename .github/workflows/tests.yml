@@ -1,4 +1,4 @@
-name: Autotest
+name: Tests
 
 on:
   push:
@@ -9,18 +9,30 @@ on:
 
 jobs:
   tests:
-    name: run-all-test
-    runs-on: ubuntu-latest
+    name: tests-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python-version: "3.13"   # 3.14 wheels for PyQt6 not reliable on Linux yet
+          - os: windows-latest
+            python-version: "3.14"   # same Python as the release build
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
 
-      - name: 🐍 Set up Python
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'       # 3.14 is pre-release; 3.13 is safer for PyQt6
+          python-version: ${{ matrix.python-version }}
 
-      - name: 🖥️ Install Qt system dependencies
+      - name: 🖥️ Install Qt system dependencies (Linux only)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
@@ -40,12 +52,16 @@ jobs:
             libxkbcommon-x11-0
 
       - name: 📦 Install dependencies
+        shell: bash
         run: |
+          python -m pip install --upgrade pip
           pip install pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f FF8GameData/requirements.txt ]; then pip install -r FF8GameData/requirements.txt; fi
 
       - name: 🧪 Run all tests
         id: pytest
+        shell: bash
         run: |
           pytest . -v --tb=short --disable-warnings --junit-xml=test-results.xml || echo "tests_failed=true" >> $GITHUB_OUTPUT
         continue-on-error: true
@@ -55,17 +71,17 @@ jobs:
           DISPLAY: ""
 
       - name: 📊 Publish test results
+        if: always() && runner.os == 'Linux'
         uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
         with:
           files: test-results.xml
-          check_name: "Autotest Results"
+          check_name: "Test Results"
 
       - name: 📤 Upload raw results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-xml
+          name: test-results-xml-${{ matrix.os }}
           path: test-results.xml
           retention-days: 7
 

@@ -57,6 +57,14 @@ class ToolDownloader:
         asset_link = ""
         if len(json_file) == 1:
             asset_link = json_file[0]['browser_download_url']
+        else:  # Releases contain both the GUI and the CLI zip, we want the GUI one
+            for json_asset in json_file:
+                asset_name = json_asset['name']
+                if asset_name.startswith("FF8UltimateEditor") and "cli" not in asset_name.lower():
+                    asset_link = json_asset['browser_download_url']
+                    break
+        if asset_link == "" and len(json_file) > 0:
+            asset_link = json_file[0]['browser_download_url']
         dd_file_name = self.__download_file(asset_link, download_update_func, write_file=True)[1]
         self._unzip_tool(dd_file_name, "SelfUpdate")
         shutil.rmtree(self.FOLDER_DOWNLOAD)
@@ -75,7 +83,7 @@ class ToolDownloader:
 
         if not file_name:
             if "Content-Disposition" in request_return.headers.keys():
-                file_name = re.findall("filename\*?=['\"]?(?:UTF-\d['\"]*)?([^;\r\n\"']*)['\"]?;?",
+                file_name = re.findall(r"filename\*?=['\"]?(?:UTF-\d['\"]*)?([^;\r\n\"']*)['\"]?;?",
                                        request_return.headers["Content-Disposition"])[0]
             elif "download" in request_return.headers.keys():
                 file_name = request_return.headers["download"]
