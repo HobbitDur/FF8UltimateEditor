@@ -1,11 +1,13 @@
 import os
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, QSettings
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QFileDialog, QPushButton, QHBoxLayout, QLabel, QComboBox, QCheckBox, QSlider, QSpinBox
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QFileDialog, QPushButton, QHBoxLayout, QLabel, QComboBox, QCheckBox, QSlider, QSpinBox, \
+    QTabWidget
 
 from CCGroup.card import Card
 from CCGroup.cardwidget import CardWidget
+from CCGroup.npccardgamewidget import NpcCardGameWidget
 from FF8GameData.gamedata import GameData
 
 
@@ -15,15 +17,25 @@ class CCGroupWidget(QWidget):
     LANG_LIST = ["en", "fr"]
     MOD_LIST = ["Original", "Tripod (Mcindus)", "Xylomod (ducladoncladon)"]
 
-    def __init__(self, icon_path='Resources', game_data_path="FF8GameData"):
+    def __init__(self, icon_path='Resources', game_data_path="FF8GameData", settings: QSettings = None):
         QWidget.__init__(self)
+
+        if settings is None:
+            settings = QSettings("HobbitDur", "FF8UltimateEditor")
+        self.settings = settings
 
         # Window management
         self.window_layout = QVBoxLayout()
         self.setLayout(self.window_layout)
+        self.tab_widget = QTabWidget()
+        self.window_layout.addWidget(self.tab_widget)
         self.scroll_widget = QWidget()
         self.scroll_area = QScrollArea()
-        self.window_layout.addWidget(self.scroll_area)
+        self.tab_widget.addTab(self.scroll_area, "Card values")
+        self.npc_card_game_widget = NpcCardGameWidget(icon_path=icon_path, settings=settings)
+        self.tab_widget.addTab(self.npc_card_game_widget, "NPC card players")
+        self.tab_widget.currentChanged.connect(self.__tab_changed)
+        self.tab_widget.setCurrentIndex(self.settings.value("ccgroup/current_tab", defaultValue=0, type=int))
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.scroll_widget)
         self.__layout_main = QVBoxLayout()
@@ -98,6 +110,9 @@ class CCGroupWidget(QWidget):
         self.__layout_main.addStretch(1)
         self.__card_widget_list = []
         self.__nb_card = len(self.game_data.card_data_json["card_info"]) - 1 # -1 for the immune
+
+    def __tab_changed(self, index: int):
+        self.settings.setValue("ccgroup/current_tab", index)
 
     def __change_card_image(self):
         for card_widget in self.__card_widget_list:
