@@ -502,10 +502,11 @@ class Ifrit3DWidget(QWidget):
                 self.anim_selector.setEnabled(False)
                 self.anim_selector.setToolTip("No animation data")
 
-        self.info.setText(f"Tri: {len(self.gl_widget.triangles)} | "
-                          f"Quads: {len(self.gl_widget.quads)} | "
-                          f"Bones: {len(self.gl_widget.skeleton_lines)} | "
-                          f"LMB: Rotate | RMB: Pan | Scroll: Zoom")
+        if hasattr(self, 'info'):
+            self.info.setText(f"Tri: {len(self.gl_widget.triangles)} | "
+                              f"Quads: {len(self.gl_widget.quads)} | "
+                              f"Bones: {len(self.gl_widget.skeleton_lines)} | "
+                              f"LMB: Rotate | RMB: Pan | Scroll: Zoom")
         if hasattr(self, 'bone_editor'):
             if self.ifrit_manager.enemy.bone_data:
                 bone_count = len(self.ifrit_manager.enemy.bone_data.bones) - 1
@@ -564,7 +565,8 @@ class Ifrit3DWidget(QWidget):
         # Stop playback temporarily if it was running
         if was_animating:
             self.timer.stop()
-            self.play_btn.setText("Play")
+            if hasattr(self, 'play_btn'):
+                self.play_btn.setText("Play")
             self.animating = False
 
         # Switch animation and reset to frame 0
@@ -588,7 +590,8 @@ class Ifrit3DWidget(QWidget):
         # Restart animation if it was previously playing
         if was_animating:
             self.timer.start(1000 // self.fps)
-            self.play_btn.setText("Pause")
+            if hasattr(self, 'play_btn'):
+                self.play_btn.setText("Pause")
             self.animating = True
 
     def _update_model_translation(self):
@@ -872,6 +875,8 @@ class Ifrit3DWidget(QWidget):
         self.bone_editor.set_bone_data(bone_id, bone.get_size(),bone.get_size_raw(),  bone.parent_id, rot_x, rot_y, rot_z, rot_raw_x, rot_raw_y, rot_raw_z)
 
     def _update_frame_position_selection(self):
+        if not hasattr(self, 'bone_editor'):
+            return
         pos_x, pos_y, pos_z = 0, 0, 0
         pos_raw_x, pos_raw_y, pos_raw_z = 0, 0, 0
         if (self.current_anim_id < len(self.ifrit_manager.enemy.animation_data.animations) and

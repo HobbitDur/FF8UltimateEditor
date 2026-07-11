@@ -68,7 +68,8 @@ class MonsterAnalyser:
         self.section_raw_data = [bytearray()] * self.header_data['nb_section']
         self.origin_file_name = os.path.basename(file)
         self.origin_path = file
-        self.id = int(re.search(r'\d{3}', self.origin_file_name).group())
+        id_match = re.search(r'\d{3}', self.origin_file_name)
+        self.id = int(id_match.group()) if id_match else 0
         # self.origin_file_checksum = get_checksum(file, algorithm='SHA256')
 
     def analyse_loaded_data(self, game_data: GameData, decompiler: AIDecompiler=None):
@@ -649,6 +650,12 @@ class MonsterAnalyser:
     def __analyze_sequence_animation(self, section_number:int=5):
         if not section_number:
             return
+        # An empty/missing section still has a position in the header, but it points at the
+        # start of the following section. Reading the count from there would fabricate phantom
+        # sequences (from the neighbouring section's data), so keep the default empty state.
+        if not self.section_raw_data[section_number]:
+            self.seq_animation_data = copy.deepcopy(AIData.SECTION_MODEL_SEQ_ANIM_DICT)
+            return
         self.seq_animation_data['nb_anim_seq'] = self.__get_int_value_from_info(AIData.SECTION_MODEL_SEQ_ANIM_NB_SEQ, section_number)
         list_seq_anim_offset = []
         offset_size = AIData.SECTION_MODEL_SEQ_ANIM_OFFSET['size']
@@ -902,6 +909,9 @@ class MonsterAnalyser:
         del self.battle_script_data['ai_data'][code_section_id]["command"][index_removal]
 
     def _analyze_texture_section(self, section_number:int=11):
+        if not self.section_raw_data[section_number]:
+            self.texture_data = copy.deepcopy(AIData.SECTION_TEXTURE_DICT)
+            return
         self.texture_data['nb_texture'] = self.__get_int_value_from_info(AIData.SECTION_TEXTURE_NB, section_number)
         list_texture_offset = []
         offset_size = AIData.SECTION_TEXTURE_OFFSET['size']
