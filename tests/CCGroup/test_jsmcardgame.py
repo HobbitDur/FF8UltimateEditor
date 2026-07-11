@@ -15,6 +15,9 @@ from CCGroup.jsmcardgame import (JsmCardGameFile, CardGameFolderManager, OPCODE_
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 
+# These tests need the original bghall_1 field files, which are not committed (copyright)
+pytestmark = pytest.mark.ff8data("bghall_1.jsm", "bghall_1.sym")
+
 
 @pytest.fixture
 def bghall_folder(tmp_path):

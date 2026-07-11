@@ -59,11 +59,11 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f FF8GameData/requirements.txt ]; then pip install -r FF8GameData/requirements.txt; fi
 
-      - name: 🧪 Run all tests
+      - name: 🧪 Run all tests (except tests needing FF8 game files, run those locally with 'pytest -m ff8data')
         id: pytest
         shell: bash
         run: |
-          pytest . -v --tb=short --disable-warnings --junit-xml=test-results.xml || echo "tests_failed=true" >> $GITHUB_OUTPUT
+          pytest . -m "not ff8data" -v --tb=short --disable-warnings --junit-xml=test-results.xml || echo "tests_failed=true" >> $GITHUB_OUTPUT
         continue-on-error: true
         env:
           PYTHONPATH: ${{ github.workspace }}
