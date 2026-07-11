@@ -491,6 +491,30 @@ class IfritManager:
         self._create_tim_from_texture_data()
         self._inject_in_com()
 
+    def import_summon_texture(self, summon_tim_path):
+        """Convert a summon texture file (e.g. mag184_d.dat for Shiva) for the loaded monster.
+
+        Extracts the texture blocks/palettes the geometry references, rebuilds them as
+        monster-convention TIMs in section 11 and remaps the geometry tex ids, then
+        refreshes self.texture_data so the widgets show the result.
+        """
+        from FF8GameData.dat.summontexture import import_summon_tim
+        tim_bytes = pathlib.Path(summon_tim_path).read_bytes()
+        nb_tim = import_summon_tim(self.enemy, tim_bytes)
+
+        # Refresh the widget-facing previews through the usual VincentTim pipeline:
+        # dump the new TIMs to a blob and let analyze() extract png/palette/meta from it.
+        src_dir = self.temp_path / "summon_src"
+        src_dir.mkdir(parents=True, exist_ok=True)
+        blob_path = src_dir / "summon_import.dat"
+        blob = bytearray()
+        for tex in self.enemy.texture_data["texture_data"]:
+            blob.extend(tex["data"])
+        blob_path.write_bytes(bytes(blob))
+        self.texture_data = []
+        self.analyze(str(blob_path))
+        return nb_tim
+
     def set_bone_length(self, bone_idx: int, length: float):
         """Modify static bone length and recompute all animation matrices."""
         bone = self.enemy.bone_data.bones[bone_idx]

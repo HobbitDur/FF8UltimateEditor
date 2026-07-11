@@ -4,8 +4,9 @@ from typing import List
 
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout,
-                             QScrollArea, QGridLayout, QFileDialog)
+                             QScrollArea, QGridLayout, QFileDialog, QMessageBox)
 
+from FF8GameData.dat.summontexture import SummonTextureError
 from Ifrit.ifritmanager import IfritManager, TextureData
 from Ifrit.IfritTexture.texturewidget import TextureWidget
 
@@ -24,10 +25,17 @@ class IfritTextureWidget(QWidget):
 
         self._import_button = QPushButton("Import")
         self._import_button.clicked.connect(self._import)
+        self._import_summon_button = QPushButton("Import summon TIM")
+        self._import_summon_button.setToolTip(
+            "Convert a summon texture file (e.g. mag184_d.dat for Shiva) for the loaded monster:\n"
+            "extracts the texture blocks and palettes the model actually uses, rebuilds them as\n"
+            "monster TIMs and remaps the geometry texture ids. Save the file to persist.")
+        self._import_summon_button.clicked.connect(self._import_summon)
         self._export_button = QPushButton("Export")
         self._export_button.clicked.connect(self._export)
 
         self._button_layout.addWidget(self._import_button)
+        self._button_layout.addWidget(self._import_summon_button)
         self._button_layout.addWidget(self._export_button)
 
         self.main_layout.addLayout(self._button_layout)
@@ -113,6 +121,26 @@ class IfritTextureWidget(QWidget):
         if delete_temp:
             if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
                 shutil.rmtree(self.ifrit_manager.temp_path)
+
+    def _import_summon(self):
+        file_to_load, _ = QFileDialog.getOpenFileName(
+            parent=self,
+            caption="Select the summon texture TIM (e.g. mag184_d.dat)",
+            directory=self._current_folder_dialog,
+            filter="Summon texture (*.dat *.tim);;All files (*)")
+        if not file_to_load:
+            return
+        self._current_folder_dialog = os.path.dirname(file_to_load)
+        try:
+            nb_tim = self.ifrit_manager.import_summon_texture(file_to_load)
+        except SummonTextureError as e:
+            QMessageBox.warning(self, "Summon texture import", str(e))
+            return
+        self._refresh_texture_grid()
+        QMessageBox.information(
+            self, "Summon texture import",
+            f"{nb_tim} texture(s) converted and geometry remapped.\n"
+            f"Save the file to persist the changes.")
 
     def save_file(self):
         self._export(self.ifrit_manager.temp_path)
