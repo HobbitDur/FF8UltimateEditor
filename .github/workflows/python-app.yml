@@ -399,6 +399,15 @@ jobs:
              console.log('No existing continuous release or no assets found');
            }
 
+    - name: Move continuous tag to current commit
+      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
+      shell: bash
+      run: |
+        # The releases page sorts by the commit date of the tag, so move the tag
+        # to the latest commit to keep the continuous pre-release near the top
+        git tag -f continuous ${{ github.sha }}
+        git push -f origin continuous
+
     - name: Deploy Package (Continuous)
       if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
       uses: softprops/action-gh-release@v1
