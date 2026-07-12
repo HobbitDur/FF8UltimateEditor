@@ -209,17 +209,30 @@ class SequenceAnalyser:
 
     def _parse_b4_b0(self, index_data, text_analyze):
         """
-        Parse B4 opcode (conditional post‑attack movement/rotation).
-        Does NOT consume the conditional byte (for bit3) – that byte is the next opcode.
+        Parse B0/B4 opcodes (spawn hit particle effect on attacker (B0) / target (B4)).
+
+        Byte layout (from FF8_EN.exe ProcessAttackerPostHitSequence @ 0x505900):
+        - byte 0: effect id (stored in the effect workspace)
+        - byte 1: flag byte:
+            - bit0 (0x01): one extra byte (effect param 1)
+            - bit1 (0x02): one extra byte (effect param 2, bit7 forced by camera angle)
+            - bit2 (0x04): one extra byte (effect param 3)
+            - bit3 (0x08): spawn effect at a specific bone -> one extra byte (bone id).
+              WARNING: the game only consumes this byte when the attack HITS (B4 on a
+              miss leaves it in the stream) - vanilla data avoids that situation.
+            - bit4 (0x10): spawn effect at a random bone (no extra byte)
+            - bit5 (0x20): flip effect direction (used with bit3/bit4)
+            - bit6 (0x40): custom position vector -> three extra int16 LE (x, y, z)
+            - none of bit3/bit4/bit6: spawn default effect at the entity
         """
         # Mandatory bytes
-        attacker_action = self._sequence[index_data]
+        effect_id = self._sequence[index_data]
         extra_flags = self._sequence[index_data + 1]
         index_data += 2
-        param_list = [attacker_action, extra_flags]
-        text_analyze += f" {attacker_action:02X} {extra_flags:02X}"
+        param_list = [effect_id, extra_flags]
+        text_analyze += f" {effect_id:02X} {extra_flags:02X}"
 
-        # Optional extra bytes (bits 0-2) – always consumed
+        # Optional extra bytes (bits 0-2) - always consumed
         extra_params = []
         if extra_flags & 0x01:
             val = self._sequence[index_data]
@@ -237,28 +250,35 @@ class SequenceAnalyser:
             text_analyze += f" {val:02X}"
             index_data += 1
 
-        # Branch description (do NOT consume extra bytes for bit3)
         branch_desc = ""
         if extra_flags & 0x08:
-            branch_desc = f"Do something or nothing"
+            bone_id = self._sequence[index_data]
+            param_list.append(bone_id)
+            text_analyze += f" {bone_id:02X}"
+            index_data += 1
+            branch_desc = f"spawn at bone {bone_id}"
+            if extra_flags & 0x20:
+                branch_desc += " (flipped direction)"
         elif extra_flags & 0x10:
-            branch_desc = f"Do something or nothing"
+            branch_desc = "spawn at a random bone"
+            if extra_flags & 0x20:
+                branch_desc += " (flipped direction)"
         elif extra_flags & 0x40:
-            # Custom vector branch: always reads 6 bytes
+            # Custom vector branch: always reads 6 bytes (3 int16 LE)
             vec_x = int.from_bytes(self._sequence[index_data:index_data + 2], 'little', signed=True)
             vec_y = int.from_bytes(self._sequence[index_data + 2:index_data + 4], 'little', signed=True)
             vec_z = int.from_bytes(self._sequence[index_data + 4:index_data + 6], 'little', signed=True)
             param_list.extend([vec_x, vec_y, vec_z])
             text_analyze += f" {vec_x:04X} {vec_y:04X} {vec_z:04X}"
             index_data += 6
-            branch_desc = f"custom vector ({vec_x}, {vec_y}, {vec_z})"
+            branch_desc = f"spawn at custom position ({vec_x}, {vec_y}, {vec_z})"
         else:
-            branch_desc = "default branch"
+            branch_desc = "spawn default effect"
 
         self.__op_code.append(0xB4)
         self.__raw_parameters.append(param_list)
 
-        text_analyze += f": Conditional post‑attack action (B4) – attackerAction={attacker_action}, extraFlags=0x{extra_flags:02X}, {branch_desc}"
+        text_analyze += f": Spawn hit particle effect - effectId={effect_id}, flags=0x{extra_flags:02X}, {branch_desc}"
         if extra_params:
             text_analyze += f", extraParams={extra_params}"
 
