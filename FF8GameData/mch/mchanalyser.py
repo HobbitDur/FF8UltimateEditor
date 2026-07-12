@@ -92,6 +92,7 @@ def decode_tim(data, offset: int) -> Optional[TimImage]:
             red = (color & 0x1F) << 3
             green = ((color >> 5) & 0x1F) << 3
             blue = ((color >> 10) & 0x1F) << 3
+            # color 0x0000 = transparent; 0x8000 = opaque black (STP bit)
             alpha = 0 if color == 0 else 255
             palette.append((red, green, blue, alpha))
         pos += clut_size
@@ -275,10 +276,11 @@ def _make_vertices_data(bone_id: int, vertices: List[Vertex]) -> VerticesData:
 
 def _make_position(raw_group) -> List[PositionType]:
     """Map a file (x, y, z) root translation (field axes, z vertical) to
-    viewer axes with the RotX(-90) view conversion: (x, z, -y)."""
+    viewer axes: RotX(-90) view conversion then the RotY(-90) facing turn,
+    (x, y, z) -> (y, z, x)."""
     file_x, file_y, file_z = raw_group
     position = []
-    for raw, sign in ((file_x, 1.0), (file_z, 1.0), (file_y, -1.0)):
+    for raw, sign in ((file_y, 1.0), (file_z, 1.0), (file_x, 1.0)):
         position_type = PositionType(0, raw)
         position_type.scale = sign * POSITION_VIEWER_SCALE
         position.append(position_type)
@@ -459,15 +461,18 @@ def parse_uncompressed_animation_section(data, offset: int, nb_model_bones: int,
 # The field world is z-vertical (entity yaw is a Z rotation, sub_472B30);
 # models are authored y-vertical and the engine pre-root RotY(+90) stands
 # them up into that world. VIEW_CONVERT maps the z-vertical field world to
-# the viewer's y-up world: a proper +/-90 degree rotation around X.
+# the viewer's y-up world (RotX(-90)); VIEWER_FACING_DEG turns the model
+# to face the default camera (purely cosmetic).
 VIEW_CONVERT_X_SIGN = -1.0
+VIEWER_FACING_DEG = -90.0
 
 
 def _pre_root_matrix() -> Matrix4x4:
-    """View conversion (RotX(+/-90)) times the engine pre-root RotY(+90)."""
+    """Facing turn * view conversion (RotX(-90)) * engine pre-root RotY(+90)."""
+    facing = Matrix4x4.CreateRotationY(VIEWER_FACING_DEG)
     view = Matrix4x4.CreateRotationX(VIEW_CONVERT_X_SIGN * 90.0)
     pre = Matrix4x4.CreateRotationY(90.0)
-    return Matrix4x4.MultiplyRowMajor(view, pre)
+    return Matrix4x4.MultiplyRowMajor(facing, Matrix4x4.MultiplyRowMajor(view, pre))
 
 
 def compute_frame_matrices(frame: AnimationFrame, bones: List[Bone]):
@@ -524,6 +529,9 @@ class MchFile:
         model.tim_images = [tim for tim in
                             (decode_tim(self.data, offset) for offset in self.tim_offsets)
                             if tim is not None]
+        # The game never reads the mch-internal rest animation (the loader
+        # patches the anim offset to the chara.one block before converting);
+        # it is dev-tool leftover data in an uncompressed 6-byte format.
         model.animation_data = parse_uncompressed_animation_section(
             self.data, self.model_address + model.anim_offset, model.bone_data.nb_bone)
         compute_animation_matrices(model.animation_data, model.bone_data)

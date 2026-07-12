@@ -27,6 +27,11 @@ class SeedManager:
     # chara.one stores animation frame counts as uint16 (battle .dat files
     # only have one byte, hence the viewer's default limit of 255).
     max_animation_frames = 65535
+    # Field animations play at 30 fps in game (battle .dat animations: 15).
+    anim_native_fps = 30
+    # TIM decoding provides real alpha (0x0000 transparent, 0x8000 opaque
+    # black): the viewer must not key pure black to transparent.
+    texture_black_is_transparent = False
 
     def __init__(self):
         self.enemy = FieldModel()

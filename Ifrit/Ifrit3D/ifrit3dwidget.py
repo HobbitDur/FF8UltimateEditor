@@ -41,6 +41,8 @@ class Ifrit3DWidget(QWidget):
 
         # Create OpenGL widget
         self.gl_widget = FF8OpenGLWidget(self)
+        # Managers providing real texture alpha (Seed) disable black keying
+        self.gl_widget.black_is_transparent = getattr(ifrit_manager, 'texture_black_is_transparent', True)
 
         # Setup animation timer
         self.timer = QTimer()
@@ -815,7 +817,8 @@ class Ifrit3DWidget(QWidget):
             return
         smooth_loop = (answer == QMessageBox.StandardButton.Yes)
 
-        factor = 4  # 15 fps x 4 = 60 fps
+        # native fps x factor = 60 fps (battle .dat: 15 fps, field chara.one: 30 fps)
+        factor = max(1, 60 // getattr(self.ifrit_manager, 'anim_native_fps', 15))
         if smooth_loop:
             nb_frames_after = nb_frames_before * factor
         else:
@@ -871,7 +874,8 @@ class Ifrit3DWidget(QWidget):
             return
         smooth_loop = (answer == QMessageBox.StandardButton.Yes)
 
-        factor = 4  # 15 fps x 4 = 60 fps
+        # native fps x factor = 60 fps (battle .dat: 15 fps, field chara.one: 30 fps)
+        factor = max(1, 60 // getattr(self.ifrit_manager, 'anim_native_fps', 15))
         bones = self.ifrit_manager.enemy.bone_data.bones
         converted, skipped_short, skipped_too_long = 0, [], []
         max_frames = getattr(self.ifrit_manager, 'max_animation_frames', 255)

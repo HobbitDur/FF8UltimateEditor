@@ -83,6 +83,7 @@ class SeedWidget(QWidget):
         left_layout.addWidget(self.model_list)
 
         self.viewer_3d = Ifrit3DWidget(self.seed_manager, show_controls=True)
+        self.viewer_3d.set_fps(self.seed_manager.anim_native_fps)  # field animations run at 30 fps
 
         splitter.addWidget(left_panel)
         splitter.addWidget(self.viewer_3d)

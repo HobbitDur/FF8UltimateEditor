@@ -57,6 +57,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         self.back_face_offset = -0.003  # Smaller offset for triangles
         self.triangle_cache = {}  # Cache for back face offsets per fra
+        # Battle .dat textures go through PNG files that lose alpha, so pure
+        # black is keyed to transparent. Tools that provide real alpha
+        # (e.g. Seed's TIM decoding) set this to False to keep opaque black.
+        self.black_is_transparent = True
 
     def set_texture_pixmaps(self, qpixmaps: list, tex_ids_used: list):
         """Call this from outside with a list of QPixmaps..."""
@@ -86,10 +90,11 @@ class FF8OpenGLWidget(QOpenGLWidget):
             ptr.setsize(img.sizeInBytes())
             data = bytearray(ptr)
 
-            # Process RGBA data: for each pixel, if RGB is 0, set alpha to 0
-            for i in range(0, len(data), 4):
-                if data[i] == 0 and data[i + 1] == 0 and data[i + 2] == 0:
-                    data[i + 3] = 0  # Set alpha to 0
+            if self.black_is_transparent:
+                # Process RGBA data: for each pixel, if RGB is 0, set alpha to 0
+                for i in range(0, len(data), 4):
+                    if data[i] == 0 and data[i + 1] == 0 and data[i + 2] == 0:
+                        data[i + 3] = 0  # Set alpha to 0
 
             tex = glGenTextures(1)
             glBindTexture(GL_TEXTURE_2D, tex)
