@@ -35,12 +35,18 @@ class SeedManager:
         self.chara_one_path: pathlib.Path = None
         self.main_chr_folder: pathlib.Path = None
         self.current_entry_index = None  # entry of the loaded model (None: standalone mch)
+        # Models already built for the open chara.one, by entry index. Kept
+        # so edits (60 fps conversions, bone tweaks) survive switching models
+        # and are all written together on save.
+        self.models = {}
 
     # ------------------------------------------------------------------ loading
 
     def load_chara_one(self, path) -> List[CharaOneEntry]:
         self.chara_one_path = pathlib.Path(path)
         self.chara_one = CharaOne(self.chara_one_path.read_bytes())
+        self.models = {}
+        self.current_entry_index = None
         if self.main_chr_folder is None:
             self.main_chr_folder = self._find_main_chr_folder()
         return self.chara_one.entries
@@ -54,6 +60,10 @@ class SeedManager:
         return None
 
     def load_entry(self, index: int):
+        if index in self.models:  # keep edits made on a previously viewed model
+            self._set_model(self.models[index])
+            self.current_entry_index = index
+            return
         entry = self.chara_one.entries[index]
         if entry.is_main:
             if self.main_chr_folder is None:
@@ -70,18 +80,26 @@ class SeedManager:
         else:
             model = self.chara_one.build_npc_model(entry)
         self._set_model(model)
+        self.models[index] = model
         self.current_entry_index = index
 
-    def save_chara_one(self, dest_path):
-        """Write the chara.one back with the current model's animations
-        (edited frames, 60 fps conversions...). Other entries are copied
-        verbatim from the original file."""
+    def modified_entry_names(self) -> List[str]:
+        """Names of the viewed models whose animations differ from the file."""
+        if self.chara_one is None or self.chara_one.headerless:
+            return []
+        return [self.chara_one.entries[index].name
+                for index in self.chara_one.changed_entries(self.models)]
+
+    def save_chara_one(self, dest_path) -> List[str]:
+        """Write the chara.one back with the animations of every model
+        modified in this session (60 fps conversions, bone edits...). Other
+        entries are copied verbatim. Returns the modified model names."""
         if self.chara_one is None:
             raise ValueError("No chara.one loaded")
-        if self.current_entry_index is None:
-            raise ValueError("The current model was not loaded from this chara.one")
-        data = self.chara_one.rebuild_with_animations(self.current_entry_index, self.enemy)
+        modified = self.modified_entry_names()
+        data = self.chara_one.rebuild_with_models(self.models)
         pathlib.Path(dest_path).write_bytes(data)
+        return modified
 
     def load_mch(self, path):
         """Load a standalone d0xx.mch (only its internal rest pose is available)."""

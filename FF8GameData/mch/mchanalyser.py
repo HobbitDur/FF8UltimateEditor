@@ -693,21 +693,45 @@ class CharaOne:
 
     # ------------------------------------------------------------------ saving
 
-    def rebuild_with_animations(self, entry_index: int, model: FieldModel) -> bytes:
-        """Return the full chara.one bytes with `model`'s animations written
-        into entry `entry_index` (all other entries are copied verbatim)."""
-        if self.headerless:
-            raise ValueError("Saving is not supported for headerless (PS-layout) chara.one files")
-        entry = self.entries[entry_index]
+    def _build_entry_block(self, entry: CharaOneEntry, model: FieldModel) -> bytes:
+        """Data block for an entry with `model`'s animations serialized in."""
         animation_bytes = write_packed_animation_section(model.animation_data)
         if entry.is_main:
-            new_block = animation_bytes
-        else:
-            # The animation section is the last section of the model data:
-            # keep everything up to it (TIMs + geometry) and append.
-            cut = (entry.model_offset + model.anim_offset) - entry.data_offset
-            new_block = bytes(self.data[entry.data_offset:entry.data_offset + cut]) + animation_bytes
-        return self._rebuild({entry_index: new_block})
+            return animation_bytes
+        # The animation section is the last section of the model data:
+        # keep everything up to it (TIMs + geometry) and append.
+        cut = (entry.model_offset + model.anim_offset) - entry.data_offset
+        return bytes(self.data[entry.data_offset:entry.data_offset + cut]) + animation_bytes
+
+    def _entry_changed(self, entry: CharaOneEntry, block: bytes) -> bool:
+        """True when the block differs from the entry's original content."""
+        if len(block) > entry.size:
+            return True
+        return block != bytes(self.data[entry.data_offset:entry.data_offset + len(block)])
+
+    def changed_entries(self, models) -> List[int]:
+        """Entry indices whose model (entry index -> FieldModel) carries
+        animations differing from the file."""
+        return [index for index, model in models.items()
+                if self._entry_changed(self.entries[index], self._build_entry_block(self.entries[index], model))]
+
+    def rebuild_with_models(self, models) -> bytes:
+        """Return the full chara.one bytes with every modified model's
+        animations written in (models: entry index -> FieldModel). Unmodified
+        models and all other entries are kept byte-identical."""
+        if self.headerless:
+            raise ValueError("Saving is not supported for headerless (PS-layout) chara.one files")
+        replaced_blocks = {}
+        for index, model in models.items():
+            entry = self.entries[index]
+            block = self._build_entry_block(entry, model)
+            if self._entry_changed(entry, block):
+                replaced_blocks[index] = block
+        return self._rebuild(replaced_blocks)
+
+    def rebuild_with_animations(self, entry_index: int, model: FieldModel) -> bytes:
+        """Single-model variant of rebuild_with_models."""
+        return self.rebuild_with_models({entry_index: model})
 
     def _rebuild(self, replaced_blocks) -> bytes:
         """Patch the container: replaced_blocks maps entry index -> new data
