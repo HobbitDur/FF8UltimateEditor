@@ -4,7 +4,7 @@ from typing import List, Tuple
 from PIL.ImageQt import ImageQt
 from PyQt6.QtGui import QPixmap
 
-from FF8GameData.mch.mchanalyser import CharaOne, CharaOneEntry, MchFile, FieldModel, set_field_bone_matrix
+from FF8GameData.mch.mchanalyser import CharaOne, CharaOneEntry, MchFile, FieldModel, compute_frame_matrices
 from FF8GameData.monsterdata import Matrix4x4, Animation
 
 
@@ -143,11 +143,13 @@ class SeedManager:
 
     @staticmethod
     def _transform_vertex(vertex: Tuple[float, float, float], matrix: Matrix4x4) -> Tuple[float, float, float]:
+        # Field matrices are plain rotation+translation (unlike the battle
+        # .dat pipeline, which flips y/z here): v' = R * v + t.
         x, y, z = vertex
         return (
-            matrix.M11 * x + matrix.M12 * -y + matrix.M13 * -z + matrix.M41,
-            matrix.M21 * x + matrix.M22 * -y + matrix.M23 * -z + matrix.M42,
-            matrix.M31 * x + matrix.M32 * -y + matrix.M33 * -z + matrix.M43,
+            matrix.M11 * x + matrix.M12 * y + matrix.M13 * z + matrix.M41,
+            matrix.M21 * x + matrix.M22 * y + matrix.M23 * z + matrix.M42,
+            matrix.M31 * x + matrix.M32 * y + matrix.M33 * z + matrix.M43,
         )
 
     # ---------------------------------------------------- bone editor support
@@ -177,16 +179,6 @@ class SeedManager:
                 self._recompute_frame_matrices(anim, frame_id, None)
 
     def _recompute_frame_matrices(self, anim, frame_id, changed_bone_idx=None):
-        frame = anim.frames[frame_id]
-        bones = self.enemy.bone_data.bones
-        nb_bones = len(bones)
-        if changed_bone_idx is not None:
-            bones_to_update = [changed_bone_idx]
-            for i in range(changed_bone_idx + 1, nb_bones):
-                if bones[i].parent_id == changed_bone_idx:
-                    bones_to_update.append(i)
-        else:
-            bones_to_update = list(range(nb_bones))
-        bones_to_update.sort()
-        for bone_id in bones_to_update:
-            set_field_bone_matrix(frame, bones, bone_id)
+        # Field bone matrices are cheap to build; recompute the whole frame so
+        # every descendant of an edited bone stays consistent.
+        compute_frame_matrices(anim.frames[frame_id], self.enemy.bone_data.bones)

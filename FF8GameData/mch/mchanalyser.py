@@ -17,6 +17,7 @@ Layout summary:
   header-less MCH model data; main characters are stored as a name reference
   plus their animations for that field.
 """
+import math
 from typing import List, Optional
 
 from PIL import Image
@@ -193,10 +194,11 @@ def parse_model_data(data, base: int, vertex_scale_factor: float = 1.0) -> Field
     for i in range(nb_vertices):
         vertex_pos = base + vertex_offset + i * MCH_VERTEX_SIZE
         vertex = Vertex()
-        # Same slot convention as the .dat analyser: _x=file x, _z=file y, _y=file z
-        vertex._x = round(_s16(data, vertex_pos) * vertex_scale_factor)
+        # Slots chosen so get_list() == (-_x, _z, -_y) yields the plain PSX
+        # file coordinates; the frame matrices handle all axis conversion.
+        vertex._x = -round(_s16(data, vertex_pos) * vertex_scale_factor)
         vertex._z = round(_s16(data, vertex_pos + 2) * vertex_scale_factor)
-        vertex._y = round(_s16(data, vertex_pos + 4) * vertex_scale_factor)
+        vertex._y = -round(_s16(data, vertex_pos + 4) * vertex_scale_factor)
         vertices.append(vertex)
 
     # --- Skin objects (8 bytes: first vertex u16, count u16, bone u16 1-based) ---
@@ -272,18 +274,33 @@ def _make_vertices_data(bone_id: int, vertices: List[Vertex]) -> VerticesData:
 
 
 def _make_position(raw_group) -> List[PositionType]:
-    """Map a file (a, b, c) translation to viewer axes.
-
-    File order is (depth, x, up) — like the vertex axes but with the first two
-    swapped. Viewer mapping mirrors Vertex.get_list(): (-x, up, -depth).
-    """
-    file_a, file_b, file_c = raw_group
+    """Map a file (x, y, z) root translation (field axes, z vertical) to
+    viewer axes with the RotX(-90) view conversion: (x, z, -y)."""
+    file_x, file_y, file_z = raw_group
     position = []
-    for raw, sign in ((file_b, -1.0), (file_c, 1.0), (file_a, -1.0)):
+    for raw, sign in ((file_x, 1.0), (file_z, 1.0), (file_y, -1.0)):
         position_type = PositionType(0, raw)
         position_type.scale = sign * POSITION_VIEWER_SCALE
         position.append(position_type)
     return position
+
+
+class FieldAnimation(Animation):
+    """Animation whose frames use the field skeleton math.
+
+    create_interpolated_frames (the viewer's "To 60 FPS" feature) builds the
+    in-between frames through _create_frame_between, which computes battle
+    .dat-style matrices and .dat-scaled positions; rebuild both field-style.
+    """
+
+    @staticmethod
+    def _create_frame_between(frame_a: AnimationFrame, frame_b: AnimationFrame, step: float,
+                              bones: List[Bone]) -> AnimationFrame:
+        new_frame = Animation._create_frame_between(frame_a, frame_b, step, bones)
+        for axis in range(3):
+            new_frame.position[axis].scale = frame_a.position[axis].scale
+        compute_frame_matrices(new_frame, bones)
+        return new_frame
 
 
 def parse_packed_animation_section(data, offset: int, nb_model_bones: int,
@@ -308,7 +325,7 @@ def parse_packed_animation_section(data, offset: int, nb_model_bones: int,
         frame_size = 6 + 4 * nb_anim_bones
         if nb_frames > 1000 or nb_anim_bones > 512 or pos + nb_frames * frame_size > end:
             break
-        animation = Animation()
+        animation = FieldAnimation()
         for _ in range(nb_frames):
             frame = AnimationFrame(nb_model_bones)
             frame.position = _make_position((_s16(data, pos), _s16(data, pos + 2), _s16(data, pos + 4)))
@@ -316,9 +333,13 @@ def parse_packed_animation_section(data, offset: int, nb_model_bones: int,
             for bone_index in range(nb_anim_bones):
                 byte_1, byte_2, byte_3, byte_4 = data[pos:pos + 4]
                 pos += 4
-                rot_z = _signed12((byte_1 | ((byte_4 & 0x03) << 8)) << 2)
-                rot_x = _signed12((byte_2 | ((byte_4 & 0x0C) << 6)) << 2)
-                rot_y = _signed12((byte_3 | ((byte_4 & 0x30) << 4)) << 2)
+                # Axis mapping from the engine pose decode (sub_533CD0):
+                # byte 1 -> X, byte 2 -> Y, byte 3 -> Z (byte 4 = high bits).
+                # Values are shifted left twice (the engine stores them <<2 and
+                # its sine tables index with & 0xFFF): full circle = 1024 raw.
+                rot_x = _signed12(((byte_1 | ((byte_4 & 0x03) << 8)) << 2) & 0xFFF)
+                rot_y = _signed12(((byte_2 | ((byte_4 & 0x0C) << 6)) << 2) & 0xFFF)
+                rot_z = _signed12(((byte_3 | ((byte_4 & 0x30) << 4)) << 2) & 0xFFF)
                 if bone_index < nb_model_bones:
                     frame.rotation_vector_data[bone_index] = [
                         RotationType(True, 0, rot_x),
@@ -360,7 +381,7 @@ def parse_uncompressed_animation_section(data, offset: int, nb_model_bones: int,
         frame_size = 6 + 6 * nb_anim_bones
         if nb_frames > 1000 or nb_anim_bones > 512 or pos + nb_frames * frame_size > end:
             break
-        animation = Animation()
+        animation = FieldAnimation()
         for _ in range(nb_frames):
             frame = AnimationFrame(nb_model_bones)
             frame.position = _make_position((_s16(data, pos), _s16(data, pos + 2), _s16(data, pos + 4)))
@@ -388,48 +409,56 @@ def parse_uncompressed_animation_section(data, offset: int, nb_model_bones: int,
     return section
 
 
-def flip_root_matrix(matrix):
-    """180-degree rotation around X: field models are stored upside down
-    compared to the battle .dat convention the viewer uses. Negating the
-    matrix rows for Y and Z flips the root; children inherit it since they
-    are composed from their parent's world matrix."""
-    matrix.M21, matrix.M22, matrix.M23, matrix.M42 = -matrix.M21, -matrix.M22, -matrix.M23, -matrix.M42
-    matrix.M31, matrix.M32, matrix.M33, matrix.M43 = -matrix.M31, -matrix.M32, -matrix.M33, -matrix.M43
+# --- Field skeleton math, engine-exact (FF8_EN.exe field model runtime:
+# --- Field_CharaAnimateAndBuildSkeletons 0x533CD0,
+# --- Field_CharaBuildBoneRotationMatrix 0x533F90).
+# Pose bytes 1, 2, 3 hold three 10-bit angles a, b, c (high bits in byte 4),
+# stored <<2 by the engine: full circle = 1024 raw / 4096 shifted. In the
+# GTE word layout (as applied to vectors: out_i = row_i . v), each bone's
+# local rotation is the classic composition
+#   local = RotX(a) * RotY(b) * RotZ(c)      (positive angles)
+# in PSX coordinates (x right, y down, z forward). Hierarchy:
+#   world = parent_world * local
+#   position = parent_world * (0, 0, parent_length) + parent_position
+# The engine parents every model under a pre-root record with a constant
+# RotY(+90 deg) (angles (0,1024,0), Field_CharaCreateModelInstance 0x531980).
+# The viewer is y-up: a 180-degree X flip is baked into the pre-root.
 
 
-def _field_local_matrix(rotations) -> Matrix4x4:
-    """Field skeletons compose bone rotations as Y * (Z * X) (verified against
-    in-game poses), while battle .dat models use Z * (Y * X)."""
-    x_rot = Matrix4x4.CreateRotationX(-rotations[0].get_rotate_deg())
-    y_rot = Matrix4x4.CreateRotationY(-rotations[1].get_rotate_deg())
-    z_rot = Matrix4x4.CreateRotationZ(-rotations[2].get_rotate_deg())
-    local = Matrix4x4.MultiplyColumnMajor(z_rot, x_rot)
-    return Matrix4x4.MultiplyColumnMajor(y_rot, local)
+# The field world is z-vertical (entity yaw is a Z rotation, sub_472B30);
+# models are authored y-vertical and the engine pre-root RotY(+90) stands
+# them up into that world. VIEW_CONVERT maps the z-vertical field world to
+# the viewer's y-up world: a proper +/-90 degree rotation around X.
+VIEW_CONVERT_X_SIGN = -1.0
 
 
-def set_field_bone_matrix(frame: AnimationFrame, bones: List[Bone], bone_id: int):
-    """Field-model version of AnimationFrame.set_bone_matrix (different euler
-    order plus the root flip). Parents must be computed before children."""
-    local = _field_local_matrix(frame.rotation_vector_data[bone_id])
-    parent_id = bones[bone_id].parent_id
-    if parent_id != 0xFFFF:
-        parent_mat = frame.bone_matrices[parent_id]
-        world = Matrix4x4.MultiplyRowMajor(parent_mat, local)
-        parent_size = bones[parent_id].get_size()
-        world.M41 = parent_mat.M13 * parent_size + parent_mat.M41
-        world.M42 = parent_mat.M23 * parent_size + parent_mat.M42
-        world.M43 = parent_mat.M33 * parent_size + parent_mat.M43
-        frame.bone_matrices[bone_id] = world
-    else:
-        local.M41 = local.M42 = local.M43 = 0.0
-        frame.bone_matrices[bone_id] = local
-        flip_root_matrix(frame.bone_matrices[bone_id])
+def _pre_root_matrix() -> Matrix4x4:
+    """View conversion (RotX(+/-90)) times the engine pre-root RotY(+90)."""
+    view = Matrix4x4.CreateRotationX(VIEW_CONVERT_X_SIGN * 90.0)
+    pre = Matrix4x4.CreateRotationY(90.0)
+    return Matrix4x4.MultiplyRowMajor(view, pre)
 
 
 def compute_frame_matrices(frame: AnimationFrame, bones: List[Bone]):
     """Build world-space bone matrices for one frame."""
-    for bone_id in range(len(bones)):
-        set_field_bone_matrix(frame, bones, bone_id)
+    for bone_id, bone in enumerate(bones):
+        rots = frame.rotation_vector_data[bone_id]
+        x_rot = Matrix4x4.CreateRotationX(rots[0].get_rotate_deg())
+        y_rot = Matrix4x4.CreateRotationY(rots[1].get_rotate_deg())
+        z_rot = Matrix4x4.CreateRotationZ(rots[2].get_rotate_deg())
+        local = Matrix4x4.MultiplyRowMajor(x_rot, Matrix4x4.MultiplyRowMajor(y_rot, z_rot))
+        parent_id = bone.parent_id
+        if parent_id != 0xFFFF:
+            parent_mat = frame.bone_matrices[parent_id]
+            parent_size = bones[parent_id].get_size()
+        else:
+            parent_mat = _pre_root_matrix()
+            parent_size = 0.0
+        world = Matrix4x4.MultiplyRowMajor(parent_mat, local)
+        world.M41 = parent_mat.M13 * parent_size + parent_mat.M41
+        world.M42 = parent_mat.M23 * parent_size + parent_mat.M42
+        world.M43 = parent_mat.M33 * parent_size + parent_mat.M43
+        frame.bone_matrices[bone_id] = world
 
 
 def compute_animation_matrices(animation_section: AnimationSection, bone_section: BoneSection):
