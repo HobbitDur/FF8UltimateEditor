@@ -138,6 +138,14 @@ class Ifrit3DWidget(QWidget):
             self.fps60_btn.clicked.connect(self.convert_current_anim_to_60fps)
             toolbar_layout.addWidget(self.fps60_btn)
 
+            self.fps60_all_btn = QPushButton("All to 60 FPS")
+            self.fps60_all_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
+            self.fps60_all_btn.setToolTip("Insert interpolated frames in every animation of the current file,\n"
+                                          "so all 15 fps animations become 60 fps ones.\n"
+                                          "Save the file afterwards to write the new frames in the .dat file.")
+            self.fps60_all_btn.clicked.connect(self.convert_all_anims_to_60fps)
+            toolbar_layout.addWidget(self.fps60_all_btn)
+
             # Spacer
             toolbar_layout.addStretch()
 
@@ -836,6 +844,69 @@ class Ifrit3DWidget(QWidget):
                                 f"(was {nb_frames_before}).\n"
                                 "The viewer playback speed has been set to 60 fps.\n"
                                 "Save the file to keep the new frames.")
+
+    def convert_all_anims_to_60fps(self):
+        """Insert interpolated frames in every animation of the current file so they all play at 60 fps."""
+        anim_section = self.ifrit_manager.enemy.animation_data
+        if not anim_section.nb_animations or not anim_section.animations:
+            QMessageBox.warning(self, "All to 60 FPS", "No animation loaded.")
+            return
+        if not self.ifrit_manager.enemy.bone_data:
+            QMessageBox.warning(self, "All to 60 FPS", "No bone data loaded.")
+            return
+
+        answer = QMessageBox.question(
+            self, "All to 60 FPS",
+            f"Convert all {len(anim_section.animations)} animations of this file to 60 fps?\n\n"
+            "Smooth the transition from the last frame back to the first one (loop smoothing)?\n\n"
+            "Yes: for files whose animations mostly loop (like idle stances).\n"
+            "No: for one-shot animations (recommended when in doubt).\n\n"
+            "Note: only run this once per file — running it again would interpolate the "
+            "already-interpolated frames.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
+        if answer == QMessageBox.StandardButton.Cancel:
+            return
+        smooth_loop = (answer == QMessageBox.StandardButton.Yes)
+
+        factor = 4  # 15 fps x 4 = 60 fps
+        bones = self.ifrit_manager.enemy.bone_data.bones
+        converted, skipped_short, skipped_too_long = 0, [], []
+
+        for anim_id, anim in enumerate(anim_section.animations):
+            nb_frames_before = len(anim.frames)
+            if nb_frames_before < 2:
+                skipped_short.append(anim_id)
+                continue
+            if smooth_loop:
+                nb_frames_after = nb_frames_before * factor
+            else:
+                nb_frames_after = (nb_frames_before - 1) * factor + 1
+            if nb_frames_after > 255:
+                skipped_too_long.append((anim_id, nb_frames_before, nb_frames_after))
+                continue
+            anim.create_interpolated_frames(bones, factor, smooth_loop)
+            converted += 1
+
+        # Refresh the viewer with the new frame count of the current animation
+        self.current_frame = 0
+        self.next_frame_index = 1
+        self.interp_step = 0.0
+        if hasattr(self, 'frame_slider'):
+            self.frame_slider.setRange(0, self.get_max_frames() - 1)
+        self.update_animated_mesh()
+        self.update_skeleton()
+        self.animation_changed.emit()
+        self.set_fps(60)
+
+        report = [f"{converted} animation(s) converted to 60 fps."]
+        if skipped_short:
+            report.append(f"\nSkipped (fewer than 2 frames): {', '.join(map(str, skipped_short))}.")
+        if skipped_too_long:
+            details = ', '.join(f"{aid} ({before}->{after} frames)" for aid, before, after in skipped_too_long)
+            report.append("\nSkipped (would exceed the 255-frame limit): " + details + ".")
+        report.append("\nThe viewer playback speed has been set to 60 fps.\n"
+                      "Save the file to keep the new frames.")
+        QMessageBox.information(self, "All to 60 FPS", "\n".join(report))
 
     def _update_bone_editor_frame(self, frame):
         """Update bone editor when frame changes"""

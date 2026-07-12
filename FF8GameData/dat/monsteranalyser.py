@@ -135,6 +135,10 @@ class MonsterAnalyser:
                 int.to_bytes(offset, byteorder=AIData.SECTION_MODEL_SEQ_ANIM_OFFSET['byteorder'], length=AIData.SECTION_MODEL_SEQ_ANIM_OFFSET['size']))
         for seq in self.seq_animation_data['seq_animation_data']:
             self.section_raw_data[section_position].extend(seq['data'])
+        # Every vanilla .dat keeps all section positions 4-byte aligned; an unpadded
+        # sequence section shifts every following section and crashes the game in battle.
+        while len(self.section_raw_data[section_position]) % 4 != 0:
+            self.section_raw_data[section_position].extend([0x00])
         raw_data_to_write.extend(self.section_raw_data[section_position])
 
     def prepare_info(self, raw_data_to_write: bytearray, section_position:int, game_data:GameData):
