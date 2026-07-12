@@ -45,6 +45,14 @@ class SeedWidget(QWidget):
         self.open_mch_btn.clicked.connect(self._open_mch)
         toolbar_layout.addWidget(self.open_mch_btn)
 
+        self.save_one_btn = QPushButton("Save chara.one")
+        self.save_one_btn.setStyleSheet("background:#6a8a4e; color:white; padding:4px 12px; border-radius:3px;")
+        self.save_one_btn.setToolTip("Write the chara.one back with the current model's animations\n"
+                                     "(bone edits, 60 FPS conversions...). Other models in the file\n"
+                                     "are copied unchanged from the original.")
+        self.save_one_btn.clicked.connect(self._save_chara_one)
+        toolbar_layout.addWidget(self.save_one_btn)
+
         self.main_chr_btn = QPushButton("Set main_chr folder")
         self.main_chr_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
         self.main_chr_btn.setToolTip("Folder containing the d0xx.mch main character models\n"
@@ -140,6 +148,29 @@ class SeedWidget(QWidget):
         self.model_list.clear()
         self.model_list.blockSignals(False)
         self.viewer_3d.load_file()
+
+    def _save_chara_one(self):
+        if not self.seed_manager.chara_one:
+            QMessageBox.warning(self, "Seed", "Open a chara.one and select a model first.")
+            return
+        if self.seed_manager.current_entry_index is None:
+            QMessageBox.warning(self, "Seed", "The current model was opened as a standalone .mch:\n"
+                                              "only chara.one files can be saved.")
+            return
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save chara.one",
+                                                   str(self.seed_manager.chara_one_path or self._last_dir()),
+                                                   "Field model container (*.one);;All files (*)")
+        if not file_path:
+            return
+        try:
+            self.seed_manager.save_chara_one(file_path)
+        except Exception as e:
+            QMessageBox.critical(self, "Seed", f"Could not save {file_path}:\n{e}")
+            return
+        entry = self.seed_manager.chara_one.entries[self.seed_manager.current_entry_index]
+        QMessageBox.information(self, "Seed",
+                                f"Saved.\nThe animations of {entry.name} were written; the other "
+                                f"models were copied unchanged from the original file.")
 
     def _choose_main_chr_folder(self):
         start = str(self.seed_manager.main_chr_folder or self._last_dir())

@@ -24,12 +24,17 @@ class SeedManager:
     Ifrit3DWidget viewer works on chara.one / .mch models unchanged.
     """
 
+    # chara.one stores animation frame counts as uint16 (battle .dat files
+    # only have one byte, hence the viewer's default limit of 255).
+    max_animation_frames = 65535
+
     def __init__(self):
         self.enemy = FieldModel()
         self.texture_data: List[SeedTextureData] = []
         self.chara_one: CharaOne = None
         self.chara_one_path: pathlib.Path = None
         self.main_chr_folder: pathlib.Path = None
+        self.current_entry_index = None  # entry of the loaded model (None: standalone mch)
 
     # ------------------------------------------------------------------ loading
 
@@ -65,6 +70,18 @@ class SeedManager:
         else:
             model = self.chara_one.build_npc_model(entry)
         self._set_model(model)
+        self.current_entry_index = index
+
+    def save_chara_one(self, dest_path):
+        """Write the chara.one back with the current model's animations
+        (edited frames, 60 fps conversions...). Other entries are copied
+        verbatim from the original file."""
+        if self.chara_one is None:
+            raise ValueError("No chara.one loaded")
+        if self.current_entry_index is None:
+            raise ValueError("The current model was not loaded from this chara.one")
+        data = self.chara_one.rebuild_with_animations(self.current_entry_index, self.enemy)
+        pathlib.Path(dest_path).write_bytes(data)
 
     def load_mch(self, path):
         """Load a standalone d0xx.mch (only its internal rest pose is available)."""
@@ -75,6 +92,7 @@ class SeedManager:
         model = MchFile(data).build_model()
         model.name = path.stem
         self._set_model(model)
+        self.current_entry_index = None
 
     def _set_model(self, model: FieldModel):
         self.enemy = model

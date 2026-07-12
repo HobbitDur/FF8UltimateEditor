@@ -358,6 +358,37 @@ def parse_packed_animation_section(data, offset: int, nb_model_bones: int,
     return section
 
 
+def write_packed_animation_section(animation_data: AnimationSection) -> bytes:
+    """Serialize an animation section back to the packed chara.one format
+    (exact inverse of parse_packed_animation_section).
+
+    Angles are quantized to the format's 10-bit resolution (a no-op for
+    unmodified frames, whose two low bits are always zero); root offsets and
+    rotations wrap into their 16/12-bit ranges.
+    """
+    out = bytearray()
+    out += len(animation_data.animations).to_bytes(2, 'little')
+    for animation in animation_data.animations:
+        frames = animation.frames
+        nb_bones = len(frames[0].rotation_vector_data) if frames else 0
+        out += len(frames).to_bytes(2, 'little')
+        out += nb_bones.to_bytes(2, 'little')
+        for frame in frames:
+            # position slots hold the raw file values as (x, z, y) - see _make_position
+            for position_type in (frame.position[0], frame.position[2], frame.position[1]):
+                out += (int(round(position_type.get_pos_raw())) & 0xFFFF).to_bytes(2, 'little')
+            for rotations in frame.rotation_vector_data:
+                packed = [(int(round(rotations[axis].get_rotate_raw())) & 0xFFF) >> 2
+                          for axis in range(3)]
+                out.append(packed[0] & 0xFF)
+                out.append(packed[1] & 0xFF)
+                out.append(packed[2] & 0xFF)
+                out.append(((packed[0] >> 8) & 0x3)
+                           | (((packed[1] >> 8) & 0x3) << 2)
+                           | (((packed[2] >> 8) & 0x3) << 4))
+    return bytes(out)
+
+
 def parse_uncompressed_animation_section(data, offset: int, nb_model_bones: int,
                                          end: Optional[int] = None) -> AnimationSection:
     """Parse the animation section embedded in main_chr .mch files:
@@ -509,6 +540,9 @@ class CharaOneEntry:
         self.scale_raw = 0  # raw scale (main characters only); world scale = raw / 16
         self.tim_offsets: List[int] = []  # absolute offsets
         self.model_offset = 0  # absolute offset of the model data (NPC only)
+        # Header layout info, kept so saving can patch the entry in place.
+        self.header_pos = 0  # file position of this entry's header (offset field)
+        self.has_size_bis = False
 
     def get_scale(self) -> float:
         if self.is_main and self.scale_raw:
@@ -539,8 +573,10 @@ class CharaOne:
     def __init__(self, data):
         self.data = data
         self.entries: List[CharaOneEntry] = []
+        self.headerless = False
         first_dword = _u32(data, 0)
         if first_dword == len(data):
+            self.headerless = True
             self._parse_headerless()
         elif first_dword <= 64:
             self._parse_headered(first_dword)
@@ -553,11 +589,13 @@ class CharaOne:
         for i in range(nb_models):
             entry = CharaOneEntry()
             entry.index = i
+            entry.header_pos = pos
             # PC version: data offsets are relative to just after the model count
             entry.data_offset = _u32(data, pos) + 4
             entry.size = _u32(data, pos + 4)
             pos += 8
             if _u32(data, pos) == entry.size:  # optional duplicated size field
+                entry.has_size_bis = True
                 pos += 4
             flag = _u32(data, pos)
             if flag >> 24 == 0xd0:
@@ -652,3 +690,46 @@ class CharaOne:
             self.data, entry.data_offset, model.bone_data.nb_bone, end)
         compute_animation_matrices(model.animation_data, model.bone_data)
         return model
+
+    # ------------------------------------------------------------------ saving
+
+    def rebuild_with_animations(self, entry_index: int, model: FieldModel) -> bytes:
+        """Return the full chara.one bytes with `model`'s animations written
+        into entry `entry_index` (all other entries are copied verbatim)."""
+        if self.headerless:
+            raise ValueError("Saving is not supported for headerless (PS-layout) chara.one files")
+        entry = self.entries[entry_index]
+        animation_bytes = write_packed_animation_section(model.animation_data)
+        if entry.is_main:
+            new_block = animation_bytes
+        else:
+            # The animation section is the last section of the model data:
+            # keep everything up to it (TIMs + geometry) and append.
+            cut = (entry.model_offset + model.anim_offset) - entry.data_offset
+            new_block = bytes(self.data[entry.data_offset:entry.data_offset + cut]) + animation_bytes
+        return self._rebuild({entry_index: new_block})
+
+    def _rebuild(self, replaced_blocks) -> bytes:
+        """Patch the container: replaced_blocks maps entry index -> new data
+        block bytes. If a new block fits in the entry's original space it is
+        written in place; otherwise it is appended at the end of the file and
+        the entry header is patched to point there (the original block stays
+        as dead space — the game only reads through the header offsets). Some
+        files have several entries sharing one data block, which in-place
+        writing and appending both handle safely."""
+        out = bytearray(self.data)
+        for index in sorted(replaced_blocks):
+            entry = self.entries[index]
+            block = replaced_blocks[index]
+            if len(block) <= entry.size:
+                out[entry.data_offset:entry.data_offset + entry.size] = block.ljust(entry.size, b'\x00')
+            else:
+                new_offset = (len(out) + 0x7FF) & ~0x7FF
+                padded_size = (len(block) + 0x7FF) & ~0x7FF  # sector-align like vanilla
+                out.extend(b'\x00' * (new_offset - len(out)))
+                out.extend(block.ljust(padded_size, b'\x00'))
+                out[entry.header_pos:entry.header_pos + 4] = (new_offset - 4).to_bytes(4, 'little')
+                out[entry.header_pos + 4:entry.header_pos + 8] = padded_size.to_bytes(4, 'little')
+                if entry.has_size_bis:
+                    out[entry.header_pos + 8:entry.header_pos + 12] = padded_size.to_bytes(4, 'little')
+        return bytes(out)

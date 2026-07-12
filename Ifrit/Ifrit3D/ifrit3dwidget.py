@@ -820,10 +820,13 @@ class Ifrit3DWidget(QWidget):
             nb_frames_after = nb_frames_before * factor
         else:
             nb_frames_after = (nb_frames_before - 1) * factor + 1
-        if nb_frames_after > 255:
+        # Battle .dat files store the frame count on one byte; other formats
+        # (e.g. field chara.one, uint16) can expose a higher limit.
+        max_frames = getattr(self.ifrit_manager, 'max_animation_frames', 255)
+        if nb_frames_after > max_frames:
             QMessageBox.warning(self, "To 60 FPS",
                                 f"The result would have {nb_frames_after} frames, but the file format "
-                                "is limited to 255 frames per animation.")
+                                f"is limited to {max_frames} frames per animation.")
             return
 
         anim.create_interpolated_frames(self.ifrit_manager.enemy.bone_data.bones, factor, smooth_loop)
@@ -871,6 +874,7 @@ class Ifrit3DWidget(QWidget):
         factor = 4  # 15 fps x 4 = 60 fps
         bones = self.ifrit_manager.enemy.bone_data.bones
         converted, skipped_short, skipped_too_long = 0, [], []
+        max_frames = getattr(self.ifrit_manager, 'max_animation_frames', 255)
 
         for anim_id, anim in enumerate(anim_section.animations):
             nb_frames_before = len(anim.frames)
@@ -881,7 +885,7 @@ class Ifrit3DWidget(QWidget):
                 nb_frames_after = nb_frames_before * factor
             else:
                 nb_frames_after = (nb_frames_before - 1) * factor + 1
-            if nb_frames_after > 255:
+            if nb_frames_after > max_frames:
                 skipped_too_long.append((anim_id, nb_frames_before, nb_frames_after))
                 continue
             anim.create_interpolated_frames(bones, factor, smooth_loop)
