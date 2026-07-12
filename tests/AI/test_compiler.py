@@ -235,22 +235,22 @@ class TestAICompiler:
 
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
 
-    def test_anim(self, compiler: AICompiler):
+    def test_setHitAnim(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
             """
-            anim(1);
+            setHitAnim(1);
             """
         ## Type data
         source_code_type = \
             """
-            anim(1);
+            setHitAnim(1);
             """
         ## Error data
         source_code_error = \
             """
-            anim(-10);
+            setHitAnim(-10);
             """
         # The expected output
         expected = [9, 1, 0, 0]
@@ -330,17 +330,17 @@ class TestAICompiler:
         ## Raw data (already int)
         source_code_raw = \
             """
-            unknown13(1);
+            noOp13(1);
             """
         ## Type data
         source_code_type = \
             """
-            unknown13(1);
+            noOp13(1);
             """
         ## Error data
         source_code_error = \
             """
-            unknown13(tutu);
+            noOp13(tutu);
             """
         # The expected output
         expected = [13, 1, 0, 0]
@@ -706,7 +706,7 @@ class TestAICompiler:
         ## Raw data (already int)
         source_code_raw = \
             """
-            enterAlt(1, 0);
+            enterWithAnim(1, 0);
             """
 
         # The expected output
@@ -1104,17 +1104,17 @@ class TestAICompiler:
         ## Raw data (already int)
         source_code_raw = \
             """
-            targetAllySlot(1);
+            targetBattleSlot(1);
             """
         ## Type data
         source_code_type = \
             """
-            targetAllySlot(1);
+            targetBattleSlot(1);
             """
         ## Error data
         source_code_error = \
             """
-            targetAllySlot(8);
+            targetBattleSlot(8);
             """
         # The expected output
         expected = [43, 1, 0, 0]
@@ -1126,13 +1126,13 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-        with pytest.raises(ParamSceneOutSlotIdError):
+        with pytest.raises(ParamSlotIdError):
             compiler.compile(source_code_error)
 
-    def test_remain(self, compiler: AICompiler):
+    def test_vanish(self, compiler: AICompiler):
         source_code_raw = \
             """
-            remain;
+            vanish;
             """
 
         code_raw_compiled = compiler.compile(source_code_raw)
@@ -1480,22 +1480,22 @@ class TestAICompiler:
         with pytest.raises(ParamSceneOutSlotIdError):
             compiler.compile(source_code_error)
 
-    def test_addMaxHP(self, compiler: AICompiler):
+    def test_addCurrentHP(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
             """
-            addMaxHP(10);
+            addCurrentHP(10);
             """
         ## Type data
         source_code_type = \
             """
-            addMaxHP(10);
+            addCurrentHP(10);
             """
         ## Error data
         source_code_error = \
             """
-            addMaxHP(-10);
+            addCurrentHP(-10);
             """
         # The expected output
         expected = [60, 10, 0, 0]

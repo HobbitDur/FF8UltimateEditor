@@ -342,7 +342,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_anim(self, decompiler: AIDecompiler):
+    def test_setHitAnim(self, decompiler: AIDecompiler):
         bytecode = [9, 1]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -352,7 +352,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            anim(1);
+            setHitAnim(1);
             """
         )
         assert expected == normalized
@@ -397,7 +397,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-             unknown13(1);
+             noOp13(1);
             """
         )
         assert expected == normalized
@@ -618,7 +618,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            enterAlt(1, 0);
+            enterWithAnim(1, 0);
             """
         )
         assert expected == normalized
@@ -886,12 +886,12 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            targetAllySlot(1);
+            targetBattleSlot(1);
             """
         )
         assert expected == normalized
 
-    def test_remain(self, decompiler: AIDecompiler):
+    def test_vanish(self, decompiler: AIDecompiler):
         bytecode = [44]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -901,7 +901,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            remain();
+            vanish();
             """
         )
         assert expected == normalized
@@ -1146,7 +1146,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_addMaxHP(self, decompiler: AIDecompiler):
+    def test_addCurrentHP(self, decompiler: AIDecompiler):
         bytecode = [60, 10]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -1156,7 +1156,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            addMaxHP(10);
+            addCurrentHP(10);
             """
         )
         assert expected == normalized
