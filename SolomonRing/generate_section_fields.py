@@ -618,6 +618,11 @@ _MEANING = {
 }
 FINDINGS.update(_MEANING)
 
+# Fields that IDA proved unused/padding are marked read-only in the editor.
+_READONLY = set(_PADDING) | {
+    (2, "unknown_0x0f"), (2, "unknown_0x3a"), (5, "unknown_0x03"), (2, "unknown_0x09"),
+}
+
 for sid_s, cfg in sections.items():
     sid = int(sid_s)
     for f in cfg["fields"]:
@@ -629,6 +634,31 @@ for sid_s, cfg in sections.items():
             if new_label:
                 f["label"] = new_label
             f["help"] = help_text
+        if key in _READONLY:
+            f["readonly"] = True
+
+# Zell "Duel" limit-break help (decompiled: linkedToZellDuel / sub_4852B0 / K_DUEL_PARAM).
+for _f in sections["30"]["fields"]:
+    _n = _f["name"]
+    if _n.startswith("duel_start_seq_cl"):
+        _cl = _n[-1]
+        _f["help"] = (f"Zell 'Duel' limit break - starting index into the Duel move table "
+                      f"(section 24 'Duel Params') at crisis level {_cl}. `linkedToZellDuel` reads "
+                      f"this to seed the move sequence; the per-tick driver `sub_4852B0` then plays "
+                      f"`duelMoves[seq].StartMove` and the player's button input branches via that "
+                      f"entry's Next Sequence bytes. Higher crisis level -> different opening chain.")
+    elif _n.startswith("duel_timer_cl"):
+        _cl = _n[-1]
+        _f["help"] = (f"Zell 'Duel' limit break - duration of the Duel input window at crisis "
+                      f"level {_cl} (higher crisis = longer). Paired with 'Duel start seq CL{_cl}'.")
+for _f in sections["24"]["fields"]:
+    if _f["name"].startswith("start_move_"):
+        _f["help"] = ("Zell Duel move table: the Duel move performed when this sequence is the "
+                      "current one (values >= 6 end the Duel with a finisher). Section 24 = the "
+                      "move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level.")
+    elif _f["name"].startswith("next_seq_"):
+        _f["help"] = ("Zell Duel move table: which sequence index to jump to for the next move, "
+                      "selected by the player's button input from this move.")
 
 # IDA-driven normalization: every kernel "Magic ID" effect field is typed
 # SpecialActionID (value 2 = Fire, 102 = Thundara) and indexes the special_action

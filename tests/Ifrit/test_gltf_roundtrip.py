@@ -1,0 +1,103 @@
+"""
+End-to-end glTF round-trip for the Ifrit3D export/import subtool:
+    load monster .dat  ->  export .glb  ->  import the .glb back  ->  check the
+    rebuilt mesh is valid and stable across a second export.
+
+This needs a real monster .dat (copyright, gitignored under extracted_files/),
+so the whole module skips when that file is not present — matching the project's
+"no committed game data" convention (see the top-level conftest.py).
+"""
+import pathlib
+import sys
+
+import pytest
+from PyQt6.QtWidgets import QApplication
+
+from FF8GameData.gamedata import GameData
+from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
+from Ifrit.Ifrit3D.gltfexporter import GltfExporter
+from Ifrit.Ifrit3D.gltfimporter import GltfImporter
+
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
+DAT_FILE = PROJECT_ROOT / "extracted_files" / "battle" / "c0m003.dat"
+
+pytestmark = pytest.mark.skipif(
+    not DAT_FILE.exists(),
+    reason="monster .dat not available (copyright, not committed): "
+           "extracted_files/battle/c0m003.dat")
+
+
+class _Holder:
+    """Minimal stand-in for IfritManager so GltfExporter can read the model
+    (mirrors roundtrip_gltf.py); an empty texture list makes the exporter fall
+    back to a flat material, so no QImage/texture handling is needed."""
+
+    def __init__(self, enemy):
+        self.enemy = enemy
+        self.texture_data = []
+
+
+@pytest.fixture(scope="module")
+def qapp():
+    return QApplication.instance() or QApplication(sys.argv)
+
+
+@pytest.fixture(scope="module")
+def game_data():
+    gd = GameData(str(PROJECT_ROOT / "FF8GameData"))
+    gd.load_all()
+    return gd
+
+
+@pytest.fixture(scope="module")
+def enemy(game_data):
+    decompiler = AIDecompiler(game_data, [], None)
+    monster = MonsterAnalyser(game_data)
+    monster.load_file_data(str(DAT_FILE), game_data)
+    monster.analyse_loaded_data(game_data, decompiler)
+    return monster
+
+
+def test_export_creates_glb(qapp, enemy, tmp_path):
+    glb = tmp_path / "model.glb"
+    GltfExporter(_Holder(enemy)).export(str(glb))
+    assert glb.exists()
+    assert glb.read_bytes()[:4] == b"glTF"
+
+
+def test_import_rebuilds_nonempty_geometry(qapp, enemy, tmp_path):
+    glb = tmp_path / "model.glb"
+    GltfExporter(_Holder(enemy)).export(str(glb))
+
+    importer = GltfImporter()
+    geometry = importer.import_geometry(str(glb), original_end=enemy.geometry_data.end)
+
+    assert geometry.nb_object == 1
+    assert importer.stats["vertices"] > 0
+    assert importer.stats["triangles"] > 0
+    # geometry must re-serialize to bytes without error
+    assert isinstance(geometry.get_byte(), (bytes, bytearray))
+
+
+def test_roundtrip_is_stable_on_second_pass(qapp, enemy, tmp_path):
+    """Export -> import -> re-export -> import should converge to the same
+    vertex/triangle counts (the lossy quad->tri split happens only once)."""
+    exporter = GltfExporter(_Holder(enemy))
+    glb1 = tmp_path / "pass1.glb"
+    exporter.export(str(glb1))
+    first = GltfImporter()
+    geo1 = first.import_geometry(str(glb1), original_end=enemy.geometry_data.end)
+
+    # Feed the rebuilt geometry back into the model and export again.
+    enemy.geometry_data = geo1
+    if len(enemy.section_raw_data) > 2:
+        enemy.section_raw_data[2] = geo1.get_byte()
+
+    glb2 = tmp_path / "pass2.glb"
+    GltfExporter(_Holder(enemy)).export(str(glb2))
+    second = GltfImporter()
+    second.import_geometry(str(glb2), original_end=geo1.end)
+
+    assert second.stats["vertices"] == first.stats["vertices"]
+    assert second.stats["triangles"] == first.stats["triangles"]

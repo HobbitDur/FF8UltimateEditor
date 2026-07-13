@@ -13,6 +13,7 @@ Usage:
     python pipeline/ff8input.py seq "down down ok"      # sequence (default 0.35s between)
     python pipeline/ff8input.py seq "up:1.0 ok" --delay 0.5   # hold 'up' 1s, then ok
     python pipeline/ff8input.py shot [out.png]          # screenshot of the FF8 window
+    python pipeline/ff8input.py hotkey ctrl+s           # OS/engine hotkey (real VKs, not scancodes)
 """
 
 import argparse
@@ -180,6 +181,40 @@ def press(button: str, hold: float = 0.08):
     _send_scan(code, keyup=True)
 
 
+# Modifier + plain-key VKs for OS/engine hotkeys (e.g. Ctrl+S), sent as real
+# VK codes rather than the DirectInput scancodes used for FF8_BUTTONS —
+# these are keyboard shortcuts, not mapped game-pad buttons.
+MODIFIER_VKS = {"ctrl": 0x11, "alt": 0x12, "shift": 0x10, "win": 0x5B}
+
+
+def _key_vk(key: str) -> int:
+    key = key.lower()
+    if len(key) == 1 and (key.isalnum()):
+        return ord(key.upper())
+    if key.startswith("f") and key[1:].isdigit():  # f1..f24
+        return 0x70 + int(key[1:]) - 1
+    named = {"enter": 0x0D, "esc": 0x1B, "escape": 0x1B, "tab": 0x09, "space": 0x20,
+              "up": 0x26, "down": 0x28, "left": 0x25, "right": 0x27}
+    if key in named:
+        return named[key]
+    raise ValueError(f"Unknown key: {key}")
+
+
+def press_combo(combo: str, hold: float = 0.08):
+    """Send a modifier+key hotkey, e.g. 'ctrl+s' or 'alt+enter', as real VKs."""
+    parts = combo.lower().split("+")
+    *mods, key = parts
+    mod_vks = [MODIFIER_VKS[m] for m in mods]
+    key_vk = _key_vk(key)
+    for vk in mod_vks:
+        _send_vk(vk, keyup=False)
+    _send_vk(key_vk, keyup=False)
+    time.sleep(hold)
+    _send_vk(key_vk, keyup=True)
+    for vk in reversed(mod_vks):
+        _send_vk(vk, keyup=True)
+
+
 def run_sequence(seq: str, delay: float = 0.35):
     """seq: space-separated buttons, each optionally 'button:holdSeconds'."""
     if not focus_ff8():
@@ -256,13 +291,82 @@ def record(name: str, stop_button: str = "rotrt", timeout: float = 600.0) -> int
     return 0
 
 
-def replay(name: str, speed: float = 1.0) -> int:
-    """Replay a recorded timeline into the focused FF8 window."""
+DEFAULT_TAP = 0.08
+
+
+def _lowlevel_for_entry(name: str, hold: float, t: float):
+    """Turn one authored entry ("b": button or "ctrl+s"-style combo) into
+    normalized low-level {"kind": "scan"|"vk", "code", "d", "t"} events.
+
+    Plain game buttons use scancodes (kind="scan"), matching FF8_BUTTONS.
+    Combos (name contains "+") use real VKs (kind="vk") like press_combo,
+    modifiers pressed first / released last around the main key.
+    """
+    if "+" in name:
+        parts = name.lower().split("+")
+        *mods, key = parts
+        mod_vks = [MODIFIER_VKS[m] for m in mods]
+        key_vk = _key_vk(key)
+        events = [{"kind": "vk", "code": vk, "d": 1, "t": t} for vk in mod_vks]
+        events.append({"kind": "vk", "code": key_vk, "d": 1, "t": t})
+        events.append({"kind": "vk", "code": key_vk, "d": 0, "t": t + hold})
+        events.extend({"kind": "vk", "code": vk, "d": 0, "t": t + hold} for vk in reversed(mod_vks))
+        return events
+    code = FF8_BUTTONS[name.lower()]
+    return [{"kind": "scan", "code": code, "d": 1, "t": t},
+            {"kind": "scan", "code": code, "d": 0, "t": t + hold}]
+
+
+def _expand_authored_events(entries):
+    """Expand the hand-authoring schema (tap/hold, plain buttons or combos)
+    into a normalized low-level timeline.
+
+    Authoring entry: {"b": button_or_combo, "t": gap_after_previous, "hold": duration?}
+    - "t"        -> delay AFTER the previous entry's hold ends (not an
+                    absolute timestamp) — 0.0 means "right after the last
+                    one finishes". The very first entry's "t" is measured
+                    from replay start.
+    - "hold" omitted   -> a quick tap (DEFAULT_TAP seconds).
+    - "hold": N        -> button/combo held for N seconds.
+    - "b": "ctrl+s"    -> modifier+key combo, sent as real VKs.
+    """
+    events = []
+    cursor = 0.0  # absolute time the previous entry's hold ended
+    for entry in entries:
+        hold = entry.get("hold", DEFAULT_TAP)
+        start = cursor + entry["t"]
+        events.extend(_lowlevel_for_entry(entry["b"], hold, start))
+        cursor = start + hold
+    events.sort(key=lambda e: e["t"])
+    return events
+
+
+def _normalize_raw_events(entries):
+    """Normalize the raw recorder schema ({"b","d","t"}, plain buttons only,
+    as produced by record()) into the same low-level format as authored events."""
+    return [{"kind": "scan", "code": FF8_BUTTONS[e["b"].lower()], "d": e["d"], "t": e["t"]} for e in entries]
+
+
+def load_events(name: str):
+    """Load a recording, transparently handling both the raw recorder
+    schema ({"b","d","t"}) and the hand-authored tap/hold schema
+    ({"b","t","hold"?}, "b" may be a combo like "ctrl+s") — whichever one
+    the file uses. Returns a normalized low-level timeline."""
     path = RECORDINGS_DIR / f"{name}.json"
     if not path.exists():
-        print(f"[error] No recording: {path}", file=sys.stderr)
+        return None
+    entries = json.loads(path.read_text(encoding="utf-8"))["events"]
+    if entries and "d" not in entries[0]:
+        return _expand_authored_events(entries)
+    return _normalize_raw_events(entries)
+
+
+def replay(name: str, speed: float = 1.0) -> int:
+    """Replay a recorded or hand-authored timeline into the focused FF8 window."""
+    events = load_events(name)
+    if events is None:
+        print(f"[error] No recording: {RECORDINGS_DIR / f'{name}.json'}", file=sys.stderr)
         return 1
-    events = json.loads(path.read_text(encoding="utf-8"))["events"]
     if not focus_ff8():
         return 1
     print(f"[play] Replaying {len(events)} events from {name} (speed x{speed})...")
@@ -271,7 +375,10 @@ def replay(name: str, speed: float = 1.0) -> int:
         target = t0 + ev["t"] / speed
         while (d := target - time.perf_counter()) > 0:
             time.sleep(min(d, 0.01))
-        _send_scan(FF8_BUTTONS[ev["b"]], keyup=(ev["d"] == 0))
+        if ev["kind"] == "scan":
+            _send_scan(ev["code"], keyup=(ev["d"] == 0))
+        else:
+            _send_vk(ev["code"], keyup=(ev["d"] == 0))
     print("[play] Done.")
     return 0
 
@@ -282,6 +389,8 @@ def main() -> int:
     sub.add_parser("buttons")
     p_press = sub.add_parser("press")
     p_press.add_argument("button", choices=sorted(FF8_BUTTONS))
+    p_hotkey = sub.add_parser("hotkey")
+    p_hotkey.add_argument("combo", help="e.g. ctrl+s, alt+enter")
     p_seq = sub.add_parser("seq")
     p_seq.add_argument("sequence")
     p_seq.add_argument("--delay", type=float, default=0.35)
@@ -304,6 +413,11 @@ def main() -> int:
         if not focus_ff8():
             return 1
         press(args.button)
+        return 0
+    if args.command == "hotkey":
+        if not focus_ff8():
+            return 1
+        press_combo(args.combo)
         return 0
     if args.command == "seq":
         return run_sequence(args.sequence, args.delay)

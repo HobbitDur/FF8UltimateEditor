@@ -441,19 +441,19 @@
       },
       {
         "mask": 67108864,
-        "name": "Unknown (26)"
+        "name": "Unused (bit 26)"
       },
       {
         "mask": 134217728,
-        "name": "Unknown (27)"
+        "name": "Unused (bit 27)"
       },
       {
         "mask": 268435456,
-        "name": "Unknown (28)"
+        "name": "Unused (bit 28)"
       },
       {
         "mask": 536870912,
-        "name": "Unknown (29)"
+        "name": "Unused (bit 29)"
       },
       {
         "mask": 1073741824,
@@ -461,7 +461,7 @@
       },
       {
         "mask": 2147483648,
-        "name": "Invocation pending"
+        "name": "Summon GF in progress (invocation pending)"
       }
     ]
   },

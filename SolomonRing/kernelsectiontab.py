@@ -104,37 +104,66 @@ class KernelSectionTab(QWidget):
 
         for gname in groups:
             box = QGroupBox(gname)
-            grid = QGridLayout(box)
-            # Layout: | label | editor | gap | label | editor | stretch |
-            # Label+editor pairs stay packed together; the last column absorbs the
-            # remaining width so nothing is stretched apart.
-            grid.setColumnStretch(5, 1)
-            grid.setHorizontalSpacing(8)
-            grid.setColumnMinimumWidth(2, 24)  # gap between the two pairs of a row
-            row = col = 0
+            vbox = QVBoxLayout(box)
+            vbox.setSpacing(4)
+            pending = []  # (label, widget) pairs waiting to be placed on a row
+
+            # Label column width = this group's longest title, so every value/editor in
+            # the group lines up in a column (left-aligned labels keep them flush-left).
+            metrics = self.fontMetrics()
+            label_width = 0
+            for field in group_map[gname]:
+                if self._is_flags(field):
+                    continue
+                text = field.get("label", _prettify(field["name"]))
+                label_width = max(label_width, metrics.horizontalAdvance(text))
+            label_width += 6
+
+            def flush_row():
+                if not pending:
+                    return
+                row = QHBoxLayout()
+                row.setSpacing(6)
+                for lbl, wdg in pending:
+                    lbl.setFixedWidth(label_width)
+                    lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                    row.addWidget(lbl)
+                    row.addWidget(wdg)
+                    row.addSpacing(24)
+                row.addStretch(1)
+                vbox.addLayout(row)
+                pending.clear()
+
             for field in group_map[gname]:
                 tooltip = self._field_tooltip(field)
                 widget = self._make_field_widget(field)
                 widget.setToolTip(tooltip)
-                if isinstance(widget, QGroupBox):  # flags span full width on their own row
-                    if col != 0:
-                        row += 1
-                        col = 0
-                    grid.addWidget(widget, row, 0, 1, 6)
-                    row += 1
+                if isinstance(widget, QGroupBox):  # flags: own full-width row, left-hugged
+                    flush_row()
+                    row = QHBoxLayout()
+                    row.setSpacing(6)
+                    row.addWidget(widget)
+                    row.addStretch(1)
+                    vbox.addLayout(row)
                     continue
                 label = QLabel(field.get("label", _prettify(field["name"])))
                 label.setToolTip(tooltip)
-                grid.addWidget(label, row, col * 3, Qt.AlignmentFlag.AlignRight)
-                grid.addWidget(widget, row, col * 3 + 1, Qt.AlignmentFlag.AlignLeft)
-                col += 1
-                if col == 2:
-                    col = 0
-                    row += 1
+                pending.append((label, widget))
+                if len(pending) == 2:
+                    flush_row()
+            flush_row()
             self._form_layout.addWidget(box)
+
+    def _is_flags(self, field):
+        lookup_name = field.get("lookup")
+        if not lookup_name:
+            return False
+        lookup = self.registry.resolve(lookup_name)
+        return bool(lookup) and lookup["type"] == "flags"
 
     def _make_field_widget(self, field):
         name = field["name"]
+        readonly = field.get("readonly", False)
         lookup_name = field.get("lookup")
         lookup = self.registry.resolve(lookup_name) if lookup_name else None
 
@@ -144,6 +173,9 @@ class KernelSectionTab(QWidget):
             checks = []
             for i, entry in enumerate(lookup["entries"]):
                 cb = QCheckBox(entry["name"])
+                # Individual bits proven unused are shown but not editable.
+                if readonly or entry["name"].lower().startswith(("unused", "padding")):
+                    cb.setEnabled(False)
                 grid.addWidget(cb, i // 4, i % 4)
                 checks.append((entry["mask"], cb))
             self._field_widgets[name] = ("flags", field, checks)
@@ -161,6 +193,8 @@ class KernelSectionTab(QWidget):
                          default=60)
             combo.setFixedWidth(min(widest + 40, 320))
             combo.view().setMinimumWidth(widest + 40)
+            if readonly:
+                combo.setEnabled(False)
             self._field_widgets[name] = ("enum", field, combo)
             return combo
 
@@ -171,11 +205,18 @@ class KernelSectionTab(QWidget):
             spin.setRange(0, max_value)
             # Size the spinbox to its biggest possible value (plus buttons/frame).
             spin.setFixedWidth(spin.fontMetrics().horizontalAdvance(str(max_value)) + 36)
+            if readonly:
+                spin.setReadOnly(True)
+                spin.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
+                spin.setEnabled(False)
             self._field_widgets[name] = ("int", field, spin)
             return spin
         # 32-bit values overflow QSpinBox -> hex line edit
         edit = QLineEdit()
         edit.setFixedWidth(edit.fontMetrics().horizontalAdvance("0x" + "F" * 2 * field["size"]) + 16)
+        if readonly:
+            edit.setReadOnly(True)
+            edit.setEnabled(False)
         self._field_widgets[name] = ("hex", field, edit)
         return edit
 
