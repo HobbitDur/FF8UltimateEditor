@@ -35,22 +35,18 @@ How the FF8 data is mapped to glTF:
   with glTranslate) is baked into the world matrices, so it ends up in the root joint.
 """
 
-import json
 import math
 import struct
 
 from PyQt6.QtCore import QBuffer, QIODevice
 from PyQt6.QtGui import QImage
 
-# glTF constants (see the glTF 2.0 specification)
-COMPONENT_FLOAT = 5126
-COMPONENT_UNSIGNED_SHORT = 5123
-TARGET_ARRAY_BUFFER = 34962
-FILTER_NEAREST = 9728
-WRAP_REPEAT = 10497
-
-_COMPONENT_PACK_FORMAT = {COMPONENT_FLOAT: "f", COMPONENT_UNSIGNED_SHORT: "H"}
-_NB_COMPONENTS = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT4": 16}
+# Shared, Qt-free glTF binary core (also used by the Alexander battle-stage tool).
+from FF8GameData.gltf.glbbuilder import (
+    GlbBuilder as _GlbBuilder, write_glb as _write_glb,
+    COMPONENT_FLOAT, COMPONENT_UNSIGNED_SHORT,
+    TARGET_ARRAY_BUFFER, FILTER_NEAREST, WRAP_REPEAT,
+)
 
 
 class GltfExporter:
@@ -495,48 +491,8 @@ def _quat_from_matrix(matrix):
 # ----------------------------------------------------------------------
 # glTF binary (.glb) writing helpers
 # ----------------------------------------------------------------------
-
-class _GlbBuilder:
-    """Accumulates the binary buffer of the .glb file and the matching
-    bufferViews/accessors JSON entries."""
-
-    def __init__(self):
-        self.binary_data = bytearray()
-        self.buffer_views = []
-        self.accessors = []
-
-    def add_buffer_view(self, raw_bytes, target=None):
-        """Append raw bytes to the buffer and return the new bufferView index."""
-        while len(self.binary_data) % 4:  # glTF requires 4-byte alignment
-            self.binary_data.append(0)
-        buffer_view = {
-            "buffer": 0,
-            "byteOffset": len(self.binary_data),
-            "byteLength": len(raw_bytes),
-        }
-        if target is not None:
-            buffer_view["target"] = target
-        self.binary_data.extend(raw_bytes)
-        self.buffer_views.append(buffer_view)
-        return len(self.buffer_views) - 1
-
-    def add_accessor(self, flat_values, component_type, accessor_type, target=None,
-                     with_min_max=False):
-        """Pack a flat list of values into the buffer and return the new accessor index."""
-        nb_components = _NB_COMPONENTS[accessor_type]
-        pack_format = _COMPONENT_PACK_FORMAT[component_type]
-        raw_bytes = struct.pack(f"<{len(flat_values)}{pack_format}", *flat_values)
-        accessor = {
-            "bufferView": self.add_buffer_view(raw_bytes, target),
-            "componentType": component_type,
-            "count": len(flat_values) // nb_components,
-            "type": accessor_type,
-        }
-        if with_min_max:  # required by the spec for POSITION and animation inputs
-            accessor["min"] = [min(flat_values[i::nb_components]) for i in range(nb_components)]
-            accessor["max"] = [max(flat_values[i::nb_components]) for i in range(nb_components)]
-        self.accessors.append(accessor)
-        return len(self.accessors) - 1
+# _GlbBuilder and _write_glb now live in FF8GameData.gltf.glbbuilder (imported
+# at the top of this module) so the Alexander battle-stage tool can share them.
 
 
 def _pixmap_to_png_bytes(pixmap):
@@ -560,19 +516,3 @@ def _pixmap_to_png_bytes(pixmap):
     transparent_image.save(buffer, "PNG")
     buffer.close()
     return bytes(buffer.data())
-
-
-def _write_glb(filepath, gltf, binary_data):
-    """Write a .glb file: a 12-byte header, a JSON chunk and a binary chunk."""
-    json_bytes = json.dumps(gltf, separators=(",", ":")).encode("utf-8")
-    json_bytes += b" " * ((4 - len(json_bytes) % 4) % 4)  # JSON chunk padded with spaces
-    binary_bytes = bytes(binary_data)
-    binary_bytes += b"\x00" * ((4 - len(binary_bytes) % 4) % 4)
-
-    total_length = 12 + 8 + len(json_bytes) + 8 + len(binary_bytes)
-    with open(filepath, "wb") as f:
-        f.write(struct.pack("<III", 0x46546C67, 2, total_length))  # magic "glTF", version 2
-        f.write(struct.pack("<II", len(json_bytes), 0x4E4F534A))   # chunk type "JSON"
-        f.write(json_bytes)
-        f.write(struct.pack("<II", len(binary_bytes), 0x004E4942))  # chunk type "BIN"
-        f.write(binary_bytes)

@@ -7,8 +7,9 @@ from typing import List, Tuple
 
 from PIL import Image
 from PIL.ImageQt import QPixmap
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QImage
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+from FF8GameData.tim.timfile import decode_tim, force_opaque
 from FF8GameData.gamedata import GameData
 from FF8GameData.monsterdata import Matrix4x4, Animation, EntityType
 from Ifrit.IfritAI.AICompiler.AICompiler import AICompiler
@@ -92,6 +93,11 @@ class IfritManager:
         self.decompiler = AIDecompiler(self.game_data, self.enemy.battle_script_data['battle_text'], self.enemy.info_stat_data)
 
         self.texture_data = []
+        # True while textures only carry RGB (VincentTim PNGs): the GL widget
+        # then keys pure black to transparent as an approximation. Set to
+        # False when _apply_clut_alpha succeeds and real per-texel alpha from
+        # the TIM CLUT words is available.
+        self.texture_black_is_transparent = True
         self.temp_path = pathlib.Path(__file__).parent.resolve() / "temp_vincent_tim"
 
         current_script_dir = pathlib.Path(__file__).parent.resolve()
@@ -119,6 +125,7 @@ class IfritManager:
         self.compiler.set_battle_text_info_stat(self.enemy.battle_script_data['battle_text'],self.enemy.info_stat_data )
         #self.decompiler.set_battle_text_info_stat(self.enemy.battle_script_data['battle_text'],self.enemy.info_stat_data )
         self.texture_data = []          # reset from previous file
+        self.texture_black_is_transparent = True
         try:
             self.analyze(file_path)     # populates self.texture_data via VincentTim
         except Exception as e:
@@ -349,6 +356,9 @@ class IfritManager:
                         texture_path=final_textures[i],
                         palette_path=final_palettes[i]
                     ))
+                # Real per-texel alpha from the TIM CLUT words (PSX rule);
+                # keeps black keying as fallback when it cannot apply
+                self._apply_clut_alpha()
             else:
                 print(f"Mismatch in {specific_temp.name}: M:{len(final_metas)} T:{len(final_textures)} P:{len(final_palettes)}")
 
@@ -357,6 +367,68 @@ class IfritManager:
         except subprocess.CalledProcessError as e:
             print(f"Error: tim.exe failed with exit code {e.returncode}")
 
+
+    def _apply_clut_alpha(self):
+        """Rebuild each texture_image from the raw section-11 TIM using the
+        internal decoder (FF8GameData.tim.timfile), so the alpha channel comes
+        from the 16-bit CLUT word: a texel is transparent iff its word is
+        0x0000, exactly like the PSX. This distinguishes transparent black
+        (0x0000) from opaque black (0x8000), which the VincentTim PNG + RGB
+        black-keying path cannot.
+
+        The VincentTim files on disk are left untouched (the texture save
+        path still uses them). Each rebuilt image is verified against the
+        VincentTim one (RGB must match) and the whole pass is abandoned on
+        any mismatch, keeping the black-keying fallback."""
+        import numpy as np
+
+        tims = (self.enemy.texture_data or {}).get('texture_data') or []
+        if not self.texture_data or len(tims) != len(self.texture_data):
+            return
+        new_pixmaps = []
+        for index, (texture, tim_entry) in enumerate(zip(self.texture_data, tims)):
+            decoded = decode_tim(bytes(tim_entry['data']), 0, palette_index=0)
+            if decoded is None:
+                return
+            # Monster faces do not enable ABE by default, so STP texels
+            # (alpha 128 in the decoder) render opaque
+            img = force_opaque(decoded.image)
+            target = texture.texture_image
+            if target is None or target.isNull():
+                return
+            target_w, target_h = target.width(), target.height()
+            if (img.width, img.height) != (target_w, target_h):
+                if self.enemy.entity_type in (EntityType.WEAPON, EntityType.WEAPON_NO_ANIM, EntityType.CHARACTER):
+                    # same placement as _create_bigger_image_with_placement
+                    canvas = Image.new('RGBA', (target_w, target_h), (0, 0, 0, 0))
+                    canvas.paste(img, (texture.meta.imageX % 128, texture.meta.imageY % 128))
+                    img = canvas
+                else:
+                    # same tile crop as _cut_texture_file
+                    w, h = img.width, img.height
+                    if h > w:
+                        img = img.crop((0, index * w, w, index * w + w))
+                    else:
+                        img = img.crop((index * h, 0, index * h + h, h))
+                if (img.width, img.height) != (target_w, target_h):
+                    return
+            # verify the RGB content matches the VincentTim image (tolerate
+            # 5->8 bit rounding differences), else the mapping is wrong
+            target_img = target.toImage().convertToFormat(QImage.Format.Format_RGBA8888)
+            ptr = target_img.bits()
+            ptr.setsize(target_img.sizeInBytes())
+            stride = target_img.bytesPerLine()
+            rows = np.frombuffer(bytes(ptr), dtype=np.uint8).reshape(target_h, stride)
+            target_rgb = rows[:, :target_w * 4].reshape(target_h, target_w, 4)[:, :, :3].astype(np.int16)
+            new_rgba = np.frombuffer(img.tobytes('raw', 'RGBA'), dtype=np.uint8).reshape(target_h, target_w, 4)
+            if np.abs(new_rgba[:, :, :3].astype(np.int16) - target_rgb).max() > 8:
+                return
+            qimg = QImage(img.tobytes('raw', 'RGBA'), img.width, img.height,
+                          4 * img.width, QImage.Format.Format_RGBA8888).copy()
+            new_pixmaps.append(QPixmap.fromImage(qimg))
+        for texture, pixmap in zip(self.texture_data, new_pixmaps):
+            texture.texture_image = pixmap
+        self.texture_black_is_transparent = False
 
     def _cut_texture_file(self, img: Image.Image, index: int, original_path: pathlib.Path) -> None:
         width, height = img.size

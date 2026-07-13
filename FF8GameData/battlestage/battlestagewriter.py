@@ -123,13 +123,21 @@ def _clamp_u8(v):
     return 0 if v < 0 else 255 if v > 255 else int(round(v))
 
 
-def encode_object(obj, tex_layout, default_color=0x00808080) -> bytes:
+def group_bone0_size(group_skeleton: bytes) -> int:
+    """boneSize of a group's first (root) bone - its world offset along the
+    vertical axis. Vertices collapsed onto bone 0 must have this subtracted so
+    the engine's re-application of the bone matrix cancels out on reload."""
+    return struct.unpack_from("<h", group_skeleton, 18)[0] if len(group_skeleton) >= 20 else 0
+
+
+def encode_object(obj, tex_layout, default_color=0x00808080, y_bias=0) -> bytes:
     """Encode an (edited/imported) ObjectData into stage object bytes: all faces
     become 20-byte textured "colour" triangles. Quads are split A,B,C / A,C,D.
 
     tex_layout maps a face's tex_key (rank) to (texpage, clut, width, height) so
     page-local UVs and the CLUT/page ids of the source stage are restored.
-    """
+    y_bias (raw file units) is subtracted from the vertical coordinate to cancel
+    the target group's bone-0 offset (see group_bone0_size)."""
     out = bytearray()
     out += struct.pack("<H", len(obj.vertices_data))
     for vd in obj.vertices_data:
@@ -137,8 +145,8 @@ def encode_object(obj, tex_layout, default_color=0x00808080) -> bytes:
         for v in vd.vertices:
             vx, vy, vz = v.get_list()
             fx = int(round(-vx / VERTEX_SCALE))
-            fy = int(round(vy / VERTEX_SCALE))     # vertical
-            fz = int(round(-vz / VERTEX_SCALE))    # ground
+            fy = int(round(vy / VERTEX_SCALE)) - y_bias   # vertical, bone-0 corrected
+            fz = int(round(-vz / VERTEX_SCALE))           # ground
             out += struct.pack("<hhh", _clamp_s16(fx), _clamp_s16(fy), _clamp_s16(fz))
     while len(out) % 4:
         out += b"\x00"

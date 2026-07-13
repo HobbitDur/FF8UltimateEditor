@@ -1,40 +1,40 @@
-"""Load a .glb (glTF binary) back into the battle-stage viewer.
+"""Load a .glb (glTF binary) back into the battle-stage viewer / for saving.
 
-View-only: parses geometry + embedded textures into the same
-monsterdata/BattleStageModel structures the Ifrit3D viewer renders, so a stage
-exported with the "Export glTF" button (and optionally edited in Blender) can be
-previewed again in Alexander. It does not write anything back to the .x file.
+Parses geometry + embedded textures into the same monsterdata/BattleStageModel
+structures the Ifrit3D viewer renders, so a stage exported with Alexander's
+"Export .glb" (and optionally edited in Blender) can be previewed and saved.
 
-Only what the viewer needs is read: POSITION, TEXCOORD_0, indices and the
-base-colour texture of each primitive. Skinning/animation is ignored - the glb
-stores the mesh already in its posed (bind) position, which is displayed static.
+Two glb layouts are understood:
+- Alexander's own export (stageexport): one node/mesh per group, named
+  group0/group1/group2/sky_group3, materials named ff8tex_<tex_key>, no
+  skinning. Group membership and the stable texture index are recovered, so the
+  sky (group 3) and the CLUT mapping survive an edit -> save round-trip.
+- The shared Ifrit exporter's skinned glb (a single flattened mesh): handled as
+  a fallback - the exact viewer position is recovered from the skin's inverse
+  bind matrices, and every object is treated as group 0.
 """
 
 import io
-import json
-import struct
+import re
 from typing import List, Optional
 
 from PIL import Image
 
 from FF8GameData.monsterdata import (
-    BoneSection, Bone, GeometrySection, ObjectData, VerticesData,
-    GeometryTriangle, AnimationSection, Animation, AnimationFrame,
+    Bone, ObjectData, VerticesData, GeometryTriangle,
+    AnimationSection, Animation, AnimationFrame,
     PositionType, RotationType, Matrix4x4, UV,
 )
 from FF8GameData.battlestage.battlestageanalyser import BattleStageModel
+from FF8GameData.gltf.glbbuilder import read_glb, bufferview_bytes, read_accessor
 
-_COMPONENT = {
-    5120: ("b", 1), 5121: ("B", 1), 5122: ("h", 2),
-    5123: ("H", 2), 5125: ("I", 4), 5126: ("f", 4),
-}
-_NCOMP = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT4": 16}
+_GROUP_NAME_RE = re.compile(r"group\s*([0-3])|sky_group\s*([0-3])", re.IGNORECASE)
+_MATERIAL_KEY_RE = re.compile(r"ff8tex_(\d+)")
+FLIP = (1.0, -1.0, -1.0)
 
 
 class ImportedVertex:
-    """Vertex whose viewer coordinates are already known (get_list() is what the
-    viewer draws). Duck-types monsterdata.Vertex for the render path."""
-
+    """Vertex whose viewer coordinates are already known (get_list() is drawn)."""
     __slots__ = ("_p",)
 
     def __init__(self, p):
@@ -59,145 +59,115 @@ class ImportedUV(UV):
         return self._vf
 
 
-# --------------------------------------------------------------------- glb read
-
-def _read_glb(path: str):
-    with open(path, "rb") as f:
-        data = f.read()
-    if data[:4] != b"glTF":
-        raise ValueError("Not a .glb file (bad magic)")
-    length = struct.unpack_from("<I", data, 8)[0]
-    pos = 12
-    json_chunk = None
-    bin_chunk = b""
-    while pos < length:
-        clen, ctype = struct.unpack_from("<II", data, pos)
-        pos += 8
-        chunk = data[pos:pos + clen]
-        pos += clen
-        if ctype == 0x4E4F534A:      # 'JSON'
-            json_chunk = json.loads(chunk.decode("utf-8"))
-        elif ctype == 0x004E4942:    # 'BIN\0'
-            bin_chunk = chunk
-    if json_chunk is None:
-        raise ValueError("glb has no JSON chunk")
-    return json_chunk, bin_chunk
-
-
-def _bufferview_bytes(gltf, binary, view_index):
-    view = gltf["bufferViews"][view_index]
-    start = view.get("byteOffset", 0)
-    return binary[start:start + view["byteLength"]]
-
-
-def _read_accessor(gltf, binary, accessor_index):
-    acc = gltf["accessors"][accessor_index]
-    fmt_char, comp_size = _COMPONENT[acc["componentType"]]
-    ncomp = _NCOMP[acc["type"]]
-    count = acc["count"]
-    view = gltf["bufferViews"][acc["bufferView"]]
-    base = view.get("byteOffset", 0) + acc.get("byteOffset", 0)
-    stride = view.get("byteStride", comp_size * ncomp)
-    out = []
-    for i in range(count):
-        off = base + i * stride
-        out.append(struct.unpack_from("<" + fmt_char * ncomp, binary, off))
-    return out
-
-
 def _load_images(gltf, binary) -> List[Optional[Image.Image]]:
     images = []
     for img in gltf.get("images", []):
         if "bufferView" in img:
-            png = _bufferview_bytes(gltf, binary, img["bufferView"])
+            png = bufferview_bytes(gltf, binary, img["bufferView"])
             images.append(Image.open(io.BytesIO(png)).convert("RGBA"))
         else:
-            images.append(None)  # external uri not supported
+            images.append(None)
     return images
 
 
-def _material_image_index(gltf, material_index) -> Optional[int]:
+def _material_info(gltf, material_index):
+    """Return (image_source_index, tex_key_from_name) for a material."""
     if material_index is None:
-        return None
+        return None, None
     mat = gltf["materials"][material_index]
+    src = None
     tex = mat.get("pbrMetallicRoughness", {}).get("baseColorTexture")
-    if not tex:
-        return None
-    texture = gltf["textures"][tex["index"]]
-    return texture.get("source")
+    if tex:
+        src = gltf["textures"][tex["index"]].get("source")
+    key = None
+    m = _MATERIAL_KEY_RE.search(mat.get("name", ""))
+    if m:
+        key = int(m.group(1))
+    return src, key
 
 
-# --------------------------------------------------------------- model building
+def _node_group(name: str) -> int:
+    m = _GROUP_NAME_RE.search(name or "")
+    if m:
+        return int(m.group(1) if m.group(1) is not None else m.group(2))
+    return 0
+
 
 def _joint_translations(gltf, binary):
-    """Per-joint bind-pose world translation, from the skin's inverse-bind
-    matrices (IBM = [R | -R.T] column-major; for the rigid, unrotated stage
-    bones T = -IBM[12:15]). Returns None when the glb is not skinned."""
+    """Per-joint bind-pose world translation from the skin's inverse-bind
+    matrices (T = -IBM[12:15] for the rigid, unrotated stage bones)."""
     skins = gltf.get("skins")
     if not skins or "inverseBindMatrices" not in skins[0]:
         return None
-    ibms = _read_accessor(gltf, binary, skins[0]["inverseBindMatrices"])
+    ibms = read_accessor(gltf, binary, skins[0]["inverseBindMatrices"])
     return [(-m[12], -m[13], -m[14]) for m in ibms]
 
 
-def build_model_from_glb(path: str, flip=(1.0, -1.0, -1.0)) -> BattleStageModel:
-    """Build a viewer-ready model from a .glb.
-
-    The exporter stored world = bind * (x, -y, -z); with per-vertex bone
-    translation T recovered from the skin, the exact viewer position is
-    (glb.x, 2*T.y - glb.y, 2*T.z - glb.z). Un-skinned glb (e.g. some Blender
-    re-exports) fall back to the plain `flip` handedness inverse."""
-    gltf, binary = _read_glb(path)
+def build_model_from_glb(path: str) -> BattleStageModel:
+    gltf, binary = read_glb(path)
     images = _load_images(gltf, binary)
     joint_t = _joint_translations(gltf, binary)
+    fx, fy, fz = FLIP
 
     model = BattleStageModel()
     model.name = "imported.glb"
-
-    # one bone (identity) so the viewer's skeleton/animation paths are happy
     root = Bone()
     root.parent_id = 0xFFFF
     root.set_size_raw(0)
     model.bone_data.bones = [root]
     model.bone_data.nb_bone = 1
-
-    fx, fy, fz = flip
-    used_images = {}        # source image index -> tex_key
     model.textures = []
+    src_to_key = {}       # glb image source index -> our tex_key
     object_data_all = []
+    group_of_object = []
 
-    for mesh in gltf.get("meshes", []):
+    # mesh index -> group index, from the node that references the mesh
+    mesh_group = {}
+    for node in gltf.get("nodes", []):
+        if "mesh" in node:
+            mesh_group[node["mesh"]] = _node_group(node.get("name", ""))
+
+    for mesh_index, mesh in enumerate(gltf.get("meshes", [])):
+        group = mesh_group.get(mesh_index, 0)
         for prim in mesh.get("primitives", []):
             attrs = prim.get("attributes", {})
             if "POSITION" not in attrs:
                 continue
-            positions = _read_accessor(gltf, binary, attrs["POSITION"])
-            uvs = (_read_accessor(gltf, binary, attrs["TEXCOORD_0"])
+            positions = read_accessor(gltf, binary, attrs["POSITION"])
+            uvs = (read_accessor(gltf, binary, attrs["TEXCOORD_0"])
                    if "TEXCOORD_0" in attrs else [(0.0, 0.0)] * len(positions))
-            joints = (_read_accessor(gltf, binary, attrs["JOINTS_0"])
+            joints = (read_accessor(gltf, binary, attrs["JOINTS_0"])
                       if joint_t is not None and "JOINTS_0" in attrs else None)
-            if "indices" in prim:
-                indices = [t[0] for t in _read_accessor(gltf, binary, prim["indices"])]
-            else:
-                indices = list(range(len(positions)))
+            indices = ([t[0] for t in read_accessor(gltf, binary, prim["indices"])]
+                       if "indices" in prim else list(range(len(positions))))
 
-            src = _material_image_index(gltf, prim.get("material"))
-            if src is not None and src not in used_images:
-                img = images[src] if src < len(images) else None
-                if img is not None:
-                    used_images[src] = len(model.textures)
-                    model.textures.append(img)
-            tex_key = used_images.get(src, 0)
+            src, name_key = _material_info(gltf, prim.get("material"))
+            # tex_key: prefer the stable index encoded in the material name
+            # (Alexander export); otherwise assign sequentially by image.
+            if name_key is not None:
+                tex_key = name_key
+                if src is not None and name_key not in {v for v in src_to_key.values()} \
+                        and name_key >= len(model.textures):
+                    # grow textures list so index name_key holds this image
+                    while len(model.textures) <= name_key:
+                        model.textures.append(None)
+                    if src < len(images):
+                        model.textures[name_key] = images[src]
+            elif src is not None:
+                if src not in src_to_key:
+                    src_to_key[src] = len(model.textures)
+                    model.textures.append(images[src] if src < len(images) else None)
+                tex_key = src_to_key[src]
+            else:
+                tex_key = 0
 
             obj = ObjectData()
             vd = VerticesData()
             vd.bone_id = 0
-            # glb positions are already in the viewer's world units (the exporter
-            # applied VERTEX_SCALE); recover the exact viewer position per vertex.
             for vi, (x, y, z) in enumerate(positions):
                 if joints is not None:
                     j = joints[vi][0]
-                    tx, ty, tz = (joint_t[j] if j < len(joint_t) else (0.0, 0.0, 0.0))
+                    tx, ty, tz = joint_t[j] if j < len(joint_t) else (0.0, 0.0, 0.0)
                     vd.vertices.append(ImportedVertex((x, 2.0 * ty - y, 2.0 * tz - z)))
                 else:
                     vd.vertices.append(ImportedVertex((x * fx, y * fy, z * fz)))
@@ -208,23 +178,25 @@ def build_model_from_glb(path: str, flip=(1.0, -1.0, -1.0)) -> BattleStageModel:
             for i in range(0, len(indices) - 2, 3):
                 a, b, c = indices[i], indices[i + 1], indices[i + 2]
                 tri = GeometryTriangle()
-                tri.vertex_indexes = [b, c, a]   # get_triangles_with_uv reads (C,A,B) = idx[2],[0],[1]
-                tri.vta = ImportedUV(*uvs[a])
-                tri.vtb = ImportedUV(*uvs[b])
-                tri.vtc = ImportedUV(*uvs[c])
-                tri.tex_id_1 = tex_key
-                tri.tex_id_2 = tex_key
-                tri.tex_key = tex_key
+                tri.vertex_indexes = [b, c, a]   # get_triangles_with_uv -> (C,A,B)=idx[2,0,1]
+                tri.vta = ImportedUV(*uvs[a][:2])
+                tri.vtb = ImportedUV(*uvs[b][:2])
+                tri.vtc = ImportedUV(*uvs[c][:2])
+                tri.tex_id_1 = tri.tex_id_2 = tri.tex_key = tex_key
                 obj.triangles.append(tri)
             obj.nb_triangle = len(obj.triangles)
             obj.nb_quad = 0
             object_data_all.append(obj)
+            group_of_object.append(group)
+
+    # any texture slots left None (unused index gaps) -> transparent 1x1
+    model.textures = [img if img is not None else Image.new("RGBA", (1, 1), (0, 0, 0, 0))
+                      for img in model.textures]
 
     model.geometry_data.object_data = object_data_all
     model.geometry_data.nb_object = len(object_data_all)
-    model.group_of_object = [0] * len(object_data_all)   # no sky group
+    model.group_of_object = group_of_object
 
-    # single static identity frame so get_animated_vertices works
     frame = AnimationFrame(1)
     frame.position = [PositionType(), PositionType(), PositionType()]
     frame.rotation_vector_data = [[RotationType(True, 0, 0) for _ in range(3)]]

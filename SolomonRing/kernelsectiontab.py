@@ -57,13 +57,34 @@ class KernelSectionTab(QWidget):
         self.setEnabled(False)
 
     # --------------------------------------------------------------------- build
+    def _field_tooltip(self, field):
+        parts = []
+        if field.get("help"):
+            parts.append(field["help"])
+        size = field["size"]
+        offset = field["offset"]
+        max_value = (1 << (8 * size)) - 1
+        meta = (f"Offset 0x{offset:02X} · {size} byte{'s' if size > 1 else ''} · "
+                f"range 0–{max_value} (0x{max_value:X})")
+        lookup_name = field.get("lookup")
+        if lookup_name:
+            lookup = self.registry.resolve(lookup_name)
+            if lookup:
+                kind = "flags" if lookup["type"] == "flags" else "options"
+                meta += f" · {len(lookup['entries'])} {kind}"
+        parts.append(meta)
+        return "\n".join(parts)
+
     def _build_form(self):
         # Text (name / description) editors
         if self.text_labels:
             box = QGroupBox("Text")
+            box.setToolTip("Name / description strings. Text offsets are recomputed automatically "
+                           "on save; use the toolbar to (un)compress all kernel text.")
             form = QFormLayout(box)
             for label in self.text_labels:
                 edit = QLineEdit()
+                edit.setToolTip(f"{label} string for this entry.")
                 self._text_widgets.append(edit)
                 form.addRow(QLabel(label), edit)
             self._form_layout.addWidget(box)
@@ -85,7 +106,9 @@ class KernelSectionTab(QWidget):
             grid.setColumnStretch(3, 1)
             row = col = 0
             for field in group_map[gname]:
+                tooltip = self._field_tooltip(field)
                 widget = self._make_field_widget(field)
+                widget.setToolTip(tooltip)
                 if isinstance(widget, QGroupBox):  # flags span full width on their own row
                     if col != 0:
                         row += 1
@@ -94,6 +117,7 @@ class KernelSectionTab(QWidget):
                     row += 1
                     continue
                 label = QLabel(field.get("label", _prettify(field["name"])))
+                label.setToolTip(tooltip)
                 grid.addWidget(label, row, col * 2)
                 grid.addWidget(widget, row, col * 2 + 1)
                 col += 1

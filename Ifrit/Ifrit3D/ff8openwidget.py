@@ -326,6 +326,12 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glEnable(GL_TEXTURE_2D)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        # Discard fully transparent texels like the PSX does (a texel whose
+        # CLUT word is 0x0000 is not rasterized at all). Without this, keyed
+        # texels still write the depth buffer and punch "black" holes that
+        # occlude the geometry behind the cutout.
+        glEnable(GL_ALPHA_TEST)
+        glAlphaFunc(GL_GREATER, 0.5)
         glDisable(GL_CULL_FACE)  # we cull in software (winding-independent)
         glEnable(GL_DEPTH_TEST)
         glColor4f(1.0, 1.0, 1.0, 1.0)
@@ -361,6 +367,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
                 glVertex3f(verts[i][0], verts[i][1], verts[i][2])
             glEnd()
 
+        glDisable(GL_ALPHA_TEST)
         glDisable(GL_BLEND)
         glDisable(GL_TEXTURE_2D)
 
@@ -415,6 +422,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glEnable(GL_TEXTURE_2D)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        # Discard fully transparent texels (see _draw_textured_triangles)
+        glEnable(GL_ALPHA_TEST)
+        glAlphaFunc(GL_GREATER, 0.5)
         glDisable(GL_CULL_FACE)  # we cull in software (winding-independent)
         glEnable(GL_DEPTH_TEST)
         glColor4f(1.0, 1.0, 1.0, 1.0)
@@ -443,6 +453,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
                 glVertex3f(verts[i][0], verts[i][1], verts[i][2])
             glEnd()
 
+        glDisable(GL_ALPHA_TEST)
         glDisable(GL_BLEND)
         glDisable(GL_TEXTURE_2D)
 

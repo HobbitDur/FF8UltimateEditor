@@ -61,8 +61,7 @@ class AlexanderManager:
         self._set_model(model)
         # snapshot this stage as the write-back template (survives a later glb import)
         self._template_raw = model.raw
-        self._template_tex_layout = [model.tex_layout.get(k, (0, 0, 256, 256))
-                                     for k in self._visible_tex_keys]
+        self._template_tex_layout = dict(model.tex_layout)   # tex_key -> (page, clut, w, h)
 
     def load_glb(self, path: str):
         """Load a .glb (previously exported, optionally edited) for viewing."""
@@ -70,6 +69,24 @@ class AlexanderManager:
         model = build_model_from_glb(path)
         model.name = os.path.basename(path)
         self._set_model(model)
+
+    def export_glb(self, path: str):
+        """Export the whole stage (all 4 groups, group-tagged) to a .glb."""
+        from FF8GameData.battlestage.stageexport import export_stage_glb
+        m = self._full_model
+        # _apply_sky_visibility left object_data as the visible subset; export the
+        # full set (all groups incl. the sky) so group membership survives.
+        saved_objs, saved_nb = m.geometry_data.object_data, m.geometry_data.nb_object
+        saved_groups = m.group_of_object
+        try:
+            m.geometry_data.object_data = self._all_objects
+            m.geometry_data.nb_object = len(self._all_objects)
+            m.group_of_object = self._group_of_object
+            export_stage_glb(m, path)
+        finally:
+            m.geometry_data.object_data = saved_objs
+            m.geometry_data.nb_object = saved_nb
+            m.group_of_object = saved_groups
 
     def _set_model(self, model: BattleStageModel):
         self._full_model = model
@@ -159,15 +176,24 @@ class AlexanderManager:
         model = self.enemy
         if getattr(model, "raw", None) is not None:
             data = serialize(model.raw)
-            note = "saved (faithful copy of the loaded stage)"
+            note = "saved (byte-exact copy of the loaded stage)"
         elif self._template_raw is not None:
-            layout = {i: lay for i, lay in enumerate(self._template_tex_layout)}
-            blobs = [encode_object(o, layout)
-                     for o in model.geometry_data.object_data]
-            data = serialize(self._template_raw,
-                             group_objects={0: blobs, 1: [], 2: [], 3: []})
-            note = ("saved (edited mesh written into the last loaded stage's "
-                    "camera/texture template; all geometry is placed in group 0)")
+            from FF8GameData.battlestage.battlestagewriter import group_bone0_size
+            layout = self._template_tex_layout            # tex_key -> (page, clut, w, h)
+            # per-group bone-0 vertical offset, subtracted so the reload's bone
+            # matrix cancels out (all objects are collapsed onto bone 0).
+            y_bias = [group_bone0_size(g.skeleton) if g else 0
+                      for g in self._template_raw.groups]
+            # distribute the (full) objects back into their groups; the sky stays
+            # in group 3 so the engine keeps rotating it.
+            group_objects = {0: [], 1: [], 2: [], 3: []}
+            for obj, gi in zip(self._all_objects, self._group_of_object):
+                gi = gi if 0 <= gi <= 3 else 0
+                group_objects[gi].append(encode_object(obj, layout, y_bias=y_bias[gi]))
+            data = serialize(self._template_raw, group_objects=group_objects)
+            groups_used = sorted(g for g, b in group_objects.items() if b)
+            note = ("saved (edited mesh written back into the loaded stage's "
+                    f"template; groups {groups_used} filled, sky group 3 kept)")
         else:
             raise ValueError("Load a battle stage first: it provides the camera, "
                              "texture and skeleton the saved file needs.")

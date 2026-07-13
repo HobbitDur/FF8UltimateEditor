@@ -66,7 +66,10 @@ STAGE_ZOOM_FACTOR = 1.6
 # stages are static, so they are hidden.
 _ANIM_WIDGETS = ("play_btn", "reset_anim_btn", "fps_label", "fps_slider",
                  "frame_label", "frame_slider", "anim_label", "anim_selector",
-                 "fps60_btn", "fps60_all_btn", "bone_editor", "playlist_container")
+                 "fps60_btn", "fps60_all_btn", "bone_editor", "playlist_container",
+                 # the viewer's generic glTF export is replaced by Alexander's own
+                 # group-aware "Export .glb" (keeps the 4-group / sky structure).
+                 "export_gltf_btn")
 
 
 class AlexanderWidget(QWidget):
@@ -95,13 +98,32 @@ class AlexanderWidget(QWidget):
         self.open_x_btn.clicked.connect(self._open_files)
         tl.addWidget(self.open_x_btn)
 
+        self.export_glb_btn = QPushButton("Export .glb")
+        self.export_glb_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
+        self.export_glb_btn.setToolTip("Export the whole stage to a .glb (all 4 groups kept as\n"
+                                       "separate meshes named group0..sky_group3), editable in\n"
+                                       "Blender and re-importable with the group structure intact.")
+        self.export_glb_btn.clicked.connect(self._export_glb)
+        self.export_glb_btn.setEnabled(False)
+        tl.addWidget(self.export_glb_btn)
+
         self.import_glb_btn = QPushButton("Import .glb")
         self.import_glb_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
-        self.import_glb_btn.setToolTip("Load a .glb file (e.g. one exported with Export glTF and\n"
-                                       "edited in Blender) back into the viewer. View only - it is\n"
-                                       "not written back to a battle stage file.")
+        self.import_glb_btn.setToolTip("Load a .glb file (e.g. one exported here and edited in\n"
+                                       "Blender) back into the viewer. Its group tags are read\n"
+                                       "back so Save can restore the group structure.")
         self.import_glb_btn.clicked.connect(self._import_glb)
         tl.addWidget(self.import_glb_btn)
+
+        self.save_btn = QPushButton("Save .x")
+        self.save_btn.setStyleSheet("background:#8a6a4e; color:white; padding:4px 12px; border-radius:3px;")
+        self.save_btn.setToolTip("Write the current stage to an a0stgXXX.x file.\n"
+                                 "An unedited loaded stage is written byte-for-byte; an\n"
+                                 "imported/edited mesh is re-encoded into the last loaded\n"
+                                 "stage's camera and texture template.")
+        self.save_btn.clicked.connect(self._save_x)
+        self.save_btn.setEnabled(False)
+        tl.addWidget(self.save_btn)
 
         self.cb_sky = QCheckBox("Show sky dome")
         self.cb_sky.setChecked(False)
@@ -221,6 +243,41 @@ class AlexanderWidget(QWidget):
             f"{len(names)} stage{'s' if len(names) != 1 else ''} loaded")
         self.stage_list.setCurrentRow(0)
 
+    def _export_glb(self):
+        if not self.manager.is_loaded:
+            return
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Export stage to glTF", self._last_dir(),
+            "glTF binary (*.glb);;All files (*)")
+        if not file_path:
+            return
+        self._save_last_dir(file_path)
+        try:
+            self.manager.export_glb(file_path)
+        except Exception as e:
+            QMessageBox.critical(self, "Alexander", f"Could not export {file_path}:\n{e}")
+            return
+        QMessageBox.information(self, "Alexander",
+                               f"Exported to {os.path.basename(file_path)}")
+
+    def _save_x(self):
+        if not self.manager.can_save:
+            QMessageBox.warning(self, "Alexander", "Nothing to save yet.")
+            return
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save battle stage", self._last_dir(),
+            "Battle stage (*.x);;All files (*)")
+        if not file_path:
+            return
+        self._save_last_dir(file_path)
+        try:
+            note = self.manager.save(file_path)
+        except Exception as e:
+            QMessageBox.critical(self, "Alexander", f"Could not save {file_path}:\n{e}")
+            return
+        QMessageBox.information(self, "Alexander",
+                               f"{os.path.basename(file_path)}\n\n{note}")
+
     def _import_glb(self):
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Import a glTF binary", self._last_dir(),
@@ -248,6 +305,8 @@ class AlexanderWidget(QWidget):
 
     def _update_sky_button(self):
         """Enable the sky toggle only when the stage actually has a sky dome."""
+        self.save_btn.setEnabled(self.manager.can_save)
+        self.export_glb_btn.setEnabled(self.manager.is_loaded)
         has_sky = self.manager.has_sky()
         self.cb_sky.setEnabled(has_sky)
         if not has_sky:

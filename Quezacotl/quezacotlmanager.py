@@ -2,45 +2,21 @@ import struct
 
 from FF8GameData.gamedata import GameData
 
-# Universal GF learned-ability list: a single 128-bit (16 byte) bitfield, identical layout
-# for every GF. Bit N (1-indexed) lives in byte (N-1)//8 of the LearnedAbility block, at
-# bit (N-1)%8. Names ported from the original Quezacotl C# tool (Form1.Designer.cs
-# checkBoxGfAb001..120 labels); "???" entries were never identified by the original author.
-GF_ABILITY_NAMES = {
-    1: "Dummy?", 2: "HP-J", 3: "Str-J", 4: "Vit-J", 5: "Mag-J", 6: "Spr-J", 7: "Spd-J",
-    8: "Eva-J", 9: "Hit-J", 10: "Luck-J", 11: "ElemAtk-J", 12: "ST-Atk-J", 13: "Elem-Def-J",
-    14: "ST-Def-J", 15: "Elem-Defx2", 16: "Elem-Defx4", 17: "ST-Def-Jx2", 18: "ST-Def-Jx4",
-    19: "Ability x3", 20: "Ability x4", 21: "Magic", 22: "GF", 23: "Draw", 24: "Item",
-    25: "Empty", 26: "Card", 27: "Doom", 28: "Mad Rush", 29: "Treatment", 30: "Defend",
-    31: "DarkSide", 32: "Recover", 33: "Absorb", 34: "Revive", 35: "LV Down", 36: "LV Up",
-    37: "Kamikaze", 38: "Devour", 39: "MiniMog", 40: "HP +20%", 41: "HP +40%", 42: "HP +80%",
-    43: "Str +20%", 44: "Str +40%", 45: "Str +60%", 46: "Vit +20%", 47: "Vit +40%",
-    48: "Vit +60%", 49: "Mag +20%", 50: "Mag +40%", 51: "Mag +60%", 52: "Spr +20%",
-    53: "Spr +40%", 54: "Spr +60%", 55: "Spd +20%", 56: "Spd +40%", 57: "Eva +30%",
-    58: "Luck +50%", 59: "Mug", 60: "Med Data", 61: "Counter", 62: "Return Damage",
-    63: "Cover", 64: "Initiative", 65: "Move HP-Up", 66: "HPBonus", 67: "StrBonus",
-    68: "VitBonus", 69: "MagBonus", 70: "SprBonus", 71: "Auto-Protect", 72: "Auto-Shell",
-    73: "Auto-Reflect", 74: "Auto-Haste", 75: "Auto-Potion", 76: "Expendx2-1",
-    77: "Expendx3-1", 78: "Ribbon", 79: "Alert", 80: "Move-Find", 81: "Enc-Half",
-    82: "Enc-None", 83: "RareItem", 84: "SumMag+10%", 85: "SumMag+20%", 86: "SumMag+30%",
-    87: "SumMag+40%", 88: "GFHP+10%", 89: "GFHP+20%", 90: "GFHP+30%", 91: "GFHP+40%",
-    92: "Boost", 93: "Haggle", 94: "Sell-High", 95: "Familiar", 96: "CallShop",
-    97: "JunkShop", 98: "T Mag-RF", 99: "I Mag-RF", 100: "F Mag-RF", 101: "L Mag-RF",
-    102: "TimeMag-RF", 103: "STMag-RF", 104: "SuptMag-RF", 105: "ForbidMag-RF",
-    106: "RecovMed-RF", 107: "STMed-RF", 108: "Ammo-RF", 109: "Tool-RF", 110: "ForbidMed-RF",
-    111: "GFRecovMed-RF", 112: "GFAblMed-RF", 113: "Mid Mag-RF", 114: "HighMag-RF",
-    115: "MedLVUp", 116: "Card Mod", 117: "???", 118: "???", 119: "???", 120: "???",
-}
-
+# Character/party ids (IDA: FF8ComId). 0-7 are the playable characters in menu order;
+# 8-10 are the Laguna-flashback trio; 0xFF is an empty slot.
 CHARACTER_NAMES = ["Squall", "Zell", "Irvine", "Quistis", "Rinoa", "Selphie", "Seifer", "Edea"]
 
-# CurrentStatus is a 16-bit mask (IDA: Status1Flag); only the low byte's meaning was
-# identified by the original tool, the high byte is unnamed but still editable.
-CHARACTER_STATUS_NAMES = [
-    "KO", "Poison", "Petrify", "Darkness", "Silence", "Berserk", "Zombie", "???",
-    "Unknown 9", "Unknown 10", "Unknown 11", "Unknown 12",
-    "Unknown 13", "Unknown 14", "Unknown 15", "Unknown 16",
-]
+# Ability id space is the shared FF8Abilities / junctionable_ability enum (kernel_lookups
+# json). The game validates the two character ability blocks to these sub-ranges (IDA
+# sub_4DA600): "active" (command) abilities 0x14-0x26, "passive" (junction) abilities
+# 0x27-0x39. 0 = None/empty in both.
+ACTIVE_ABILITY_RANGE = range(0x14, 0x27)   # 20..38 command abilities (Magic, GF, Draw...)
+PASSIVE_ABILITY_RANGE = range(0x27, 0x3A)  # 39..57 passive abilities (HP+20%, Str+40%...)
+
+# GF compatibility per GF (u16). Game clamps to [1000, 6000] (IDA
+# itemAction_ModifyGfCompatibility); 1000 = minimum / neutral, 6000 = maximum.
+GF_COMPATIBILITY_MIN = 1000
+GF_COMPATIBILITY_MAX = 6000
 
 NB_GF = 16
 GF_ENTRY_SIZE = 68
@@ -136,12 +112,15 @@ class GfEntry:
         _set_u16(self._buffer, self._offset + 18, value)
 
     def has_ability(self, ability_id):
-        """ability_id is 1-120, matching GF_ABILITY_NAMES."""
-        byte_index, bit = divmod(ability_id - 1, 8)
+        """ability_id is the 0-based ability index (== junctionable_ability value).
+
+        The 16-byte block at offset 0x14 is a 128-bit "learned" bitfield; bit i means the
+        GF has learned ability id i."""
+        byte_index, bit = divmod(ability_id, 8)
         return bool(self._buffer[self._offset + 20 + byte_index] & (1 << bit))
 
     def set_ability(self, ability_id, learned):
-        byte_index, bit = divmod(ability_id - 1, 8)
+        byte_index, bit = divmod(ability_id, 8)
         pos = self._offset + 20 + byte_index
         if learned:
             self._buffer[pos] |= (1 << bit)
@@ -314,69 +293,22 @@ class CharacterEntry:
 
     # Magic1..32 / Magic1Quantity..32Quantity occupy offset 16..79, exposed via self.magics
 
-    @property
-    def command1(self):
-        return self._byte(80)
+    # offset 80-83 = activeAbilities[4] (equipped command abilities: Magic/GF/Draw/Item...)
+    # offset 84-87 = passifAbilities[4] (equipped passive/junction abilities: HP+20%...)
+    # (IDA: CharacterData.activeAbilities / passifAbilities, each an FF8Abilities byte.)
+    def get_active_ability(self, slot):
+        """slot is 0-3."""
+        return self._byte(80 + slot)
 
-    @command1.setter
-    def command1(self, value):
-        self._set_byte(80, value)
+    def set_active_ability(self, slot, value):
+        self._set_byte(80 + slot, value)
 
-    @property
-    def command2(self):
-        return self._byte(81)
+    def get_passive_ability(self, slot):
+        """slot is 0-3."""
+        return self._byte(84 + slot)
 
-    @command2.setter
-    def command2(self, value):
-        self._set_byte(81, value)
-
-    @property
-    def command3(self):
-        return self._byte(82)
-
-    @command3.setter
-    def command3(self, value):
-        self._set_byte(82, value)
-
-    @property
-    def unknown1(self):
-        return self._byte(83)
-
-    @unknown1.setter
-    def unknown1(self, value):
-        self._set_byte(83, value)
-
-    @property
-    def ability1(self):
-        return self._byte(84)
-
-    @ability1.setter
-    def ability1(self, value):
-        self._set_byte(84, value)
-
-    @property
-    def ability2(self):
-        return self._byte(85)
-
-    @ability2.setter
-    def ability2(self, value):
-        self._set_byte(85, value)
-
-    @property
-    def ability3(self):
-        return self._byte(86)
-
-    @ability3.setter
-    def ability3(self, value):
-        self._set_byte(86, value)
-
-    @property
-    def ability4(self):
-        return self._byte(87)
-
-    @ability4.setter
-    def ability4(self, value):
-        self._set_byte(87, value)
+    def set_passive_ability(self, slot, value):
+        self._set_byte(84 + slot, value)
 
     @property
     def jun_gf1(self):
@@ -466,11 +398,13 @@ class CharacterEntry:
     def unknown4(self, value):
         self._set_byte(149, value)
 
-    # CurrentStatus is a 16-bit bitmask spanning offset 150-151 (confirmed against IDA's
-    # `Status1Flag status_1` struct field), not an 8-bit byte + a separate unknown byte as
-    # the original C# tool's struct declaration implied.
+    # CurrentStatus is a 16-bit bitmask spanning offset 150-151 (IDA: `Status1Flag status_1`),
+    # not an 8-bit byte + a separate unknown byte as the original C# tool's struct implied.
+    # Only bits 0-6 are real persistent statuses (Death/Poison/Petrify/Darkness/Silence/
+    # Berserk/Zombie); bit 7 is padding, bits 8-9 are HP-derived synthetic flags the game
+    # recomputes, and 10-15 are unused.
     def has_status(self, status_index):
-        """status_index is 0-15, see CHARACTER_STATUS_NAMES."""
+        """status_index is a 0-based bit index into the status_1 word."""
         return bool(_u16(self._buffer, self._offset + 150) & (1 << status_index))
 
     def set_status(self, status_index, active):
@@ -499,12 +433,30 @@ for _name, _add in CharacterEntry._JUNCTION_FIELDS:
 
 
 class ConfigEntry:
-    """The single 20-byte config record (InitWorker.cs ConfigData)."""
+    """The single 20-byte config record (IDA: SAVEMAP_CONFIG).
+
+    Field names/order follow the EXE struct: offset 7 is the map-seal bitfield, and the last
+    12 bytes are the button-remap table (physical slots L2..Start)."""
 
     _FIELDS = [
-        "battle_speed", "battle_message", "field_message", "volume", "flag", "scan", "camera",
-        "key_unk1", "key_escape", "key_pov", "key_window", "key_trigger", "key_cancel",
-        "key_menu", "key_talk", "key_triple_triad", "key_select", "key_unk2", "key_unk3", "key_start",
+        "battle_speed", "battle_message_speed", "field_message_speed", "volume", "flag", "scan", "camera",
+        "map_seal", "key_l2", "key_r2", "key_l1", "key_r1", "key_triangle", "key_circle",
+        "key_cross", "key_square", "key_select", "key_unk1", "key_unk2", "key_start",
+    ]
+
+    # map_seal (offset 7) bit meanings (IDA: MapSeal enum).
+    MAP_SEAL_BITS = [
+        (0x01, "Item locked"), (0x02, "Magic locked"), (0x04, "GF locked"), (0x08, "Draw locked"),
+        (0x10, "Command ability locked"), (0x20, "Limit break locked"),
+        (0x40, "Resurrection locked"), (0x80, "Save locked"),
+    ]
+
+    # The 12 remap bytes are physical button slots, in this order.
+    KEY_FIELDS = [
+        ("key_l2", "L2"), ("key_r2", "R2"), ("key_l1", "L1"), ("key_r1", "R1"),
+        ("key_triangle", "Triangle"), ("key_circle", "Circle"), ("key_cross", "Cross"),
+        ("key_square", "Square"), ("key_select", "Select"), ("key_unk1", "Unknown 1"),
+        ("key_unk2", "Unknown 2"), ("key_start", "Start"),
     ]
 
     def __init__(self, buffer, offset):

@@ -547,6 +547,11 @@ class Ifrit3DWidget(QWidget):
         if not textures:
             return
 
+        # Refresh per loaded file: False when the manager rebuilt the images
+        # with real CLUT-word alpha (see IfritManager._apply_clut_alpha)
+        self.gl_widget.black_is_transparent = getattr(
+            self.ifrit_manager, 'texture_black_is_transparent', True)
+
         pixmaps = [td.texture_image for td in textures if td.texture_image is not None]
         if not pixmaps:
             return

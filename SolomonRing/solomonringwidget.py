@@ -80,6 +80,27 @@ class SolomonRingWidget(QWidget):
         self.save_button.setToolTip("Save all modifications to the kernel.bin (irreversible)")
         file_layout.addWidget(self.save_button)
 
+        self.compress_button = QPushButton()
+        self.compress_button.setIcon(QIcon(os.path.join(icon_path, "compress.png")))
+        self.compress_button.setIconSize(QSize(30, 30))
+        self.compress_button.setFixedSize(40, 40)
+        self.compress_button.clicked.connect(self._compress_all_text)
+        self.compress_button.setToolTip(
+            "Compress all kernel text: replaces common letter pairs with the game's built-in\n"
+            "compression tokens (shown as {..}), shrinking every name/description. Mirrors\n"
+            "ShumiTranslator; respects each section's compressibility.")
+        file_layout.addWidget(self.compress_button)
+
+        self.uncompress_button = QPushButton()
+        self.uncompress_button.setIcon(QIcon(os.path.join(icon_path, "uncompress.png")))
+        self.uncompress_button.setIconSize(QSize(30, 30))
+        self.uncompress_button.setFixedSize(40, 40)
+        self.uncompress_button.clicked.connect(self._uncompress_all_text)
+        self.uncompress_button.setToolTip(
+            "Uncompress all kernel text: expands the {..} compression tokens back to plain\n"
+            "letters in every name/description (makes text readable / editable).")
+        file_layout.addWidget(self.uncompress_button)
+
         self.file_label = QLabel("No file loaded")
         self.file_label.setStyleSheet("color: gray; font-style: italic;")
         file_layout.addWidget(self.file_label)
@@ -122,15 +143,46 @@ class SolomonRingWidget(QWidget):
     def load_file(self, filename):
         self.loaded_filename = filename
         self.kernel_manager.load_file(filename)
+        self._populate_tabs()
+        self.tabs.setEnabled(True)
+        self.file_label.setText(filename)
+        self.file_label.setStyleSheet("color: black;")
+
+    def _populate_tabs(self):
         by_id = {s.id: s for s in self.kernel_manager.section_list if s}
         for section_id, tab in self._section_tabs.items():
             section = by_id.get(section_id)
             text_id = self._text_link.get(section_id, 0)
             text_section = by_id.get(text_id) if text_id else None
             tab.load_section(section, text_section)
-        self.tabs.setEnabled(True)
-        self.file_label.setText(filename)
-        self.file_label.setStyleSheet("color: black;")
+
+    def _compress_all_text(self):
+        if not self.loaded_filename:
+            return
+        by_id = {s.id: s for s in self.kernel_manager.section_list if s}
+        for data_id, text_id in self._text_link.items():
+            text_section = by_id.get(text_id) if text_id else None
+            config = self._section_configs.get(str(data_id))
+            labels = config.get("text_labels", []) if config else []
+            if not text_section or not labels:
+                continue
+            # Compress every string except plain "Name" fields (which ship uncompressed).
+            for index, text in enumerate(text_section.get_text_list()):
+                if labels[index % len(labels)] != "Name":
+                    text.compress_str(3)
+        self._populate_tabs()
+
+    def _uncompress_all_text(self):
+        if not self.loaded_filename:
+            return
+        for text_section in self._all_text_sections():
+            for text in text_section.get_text_list():
+                text.uncompress_str()
+        self._populate_tabs()
+
+    def _all_text_sections(self):
+        linked_ids = {tid for tid in self._text_link.values() if tid}
+        return [s for s in self.kernel_manager.section_list if s and s.id in linked_ids]
 
     def _save_kernel(self):
         if not self.loaded_filename:

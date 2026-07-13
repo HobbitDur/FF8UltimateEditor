@@ -21,7 +21,8 @@
     "offset": 6,
     "size": 1,
     "lookup": "target_info",
-    "group": "Data"
+    "group": "Data",
+    "help": "Default targeting behavior. Bitfield: combine flags."
    },
    {
     "name": "unknown_0x07",
@@ -45,7 +46,8 @@
     "size": 2,
     "lookup": "special_action",
     "label": "Special Action / Effect",
-    "group": "General"
+    "group": "General",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "animation",
@@ -59,63 +61,72 @@
     "offset": 7,
     "size": 1,
     "lookup": "attack_type",
-    "group": "General"
+    "group": "General",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "spell_power",
     "offset": 8,
     "size": 1,
     "label": "Spell power",
-    "group": "General"
+    "group": "General",
+    "help": "Base power fed into the damage formula."
    },
    {
     "name": "unknown_0x09",
     "offset": 9,
     "size": 1,
-    "label": "Unknown 0x09",
-    "group": "General"
+    "label": "Unknown (menu magic flag)",
+    "group": "General",
+    "help": "Per-spell byte copied into the field character data during menu magic setup (setMenuFlagMagicOnCharaData / linkedStockFieldCharData). Exact gameplay meaning not yet identified."
    },
    {
     "name": "target_info",
     "offset": 10,
     "size": 1,
     "lookup": "target_info",
-    "group": "General"
+    "group": "General",
+    "help": "Default targeting behavior. Bitfield: combine flags."
    },
    {
     "name": "attack_flags",
     "offset": 11,
     "size": 1,
     "lookup": "attack_flags",
-    "group": "General"
+    "group": "General",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
     "name": "draw_resist",
     "offset": 12,
     "size": 1,
     "label": "Draw resist",
-    "group": "General"
+    "group": "General",
+    "help": "How hard the spell is to draw (higher = harder)."
    },
    {
     "name": "hit_count",
     "offset": 13,
     "size": 1,
     "label": "Hit count",
-    "group": "General"
+    "group": "General",
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
     "offset": 14,
     "size": 1,
     "lookup": "element",
-    "group": "General"
+    "group": "General",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    },
    {
     "name": "unknown_0x0f",
     "offset": 15,
     "size": 1,
-    "label": "Unknown 0x0F",
-    "group": "General"
+    "label": "Unused (padding)",
+    "group": "General",
+    "help": "No code references this byte (IDA: 0 xrefs)."
    },
    {
     "name": "status_2",
@@ -123,7 +134,8 @@
     "size": 4,
     "lookup": "status_2",
     "label": "Status 2 (attack)",
-    "group": "General"
+    "group": "General",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "status_1",
@@ -131,14 +143,16 @@
     "size": 2,
     "lookup": "status_1",
     "label": "Status 1 (attack)",
-    "group": "General"
+    "group": "General",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "status_accuracy",
     "offset": 22,
     "size": 1,
     "label": "Status attack accuracy",
-    "group": "General"
+    "group": "General",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "j_hp",
@@ -379,8 +393,9 @@
     "name": "unknown_0x3a",
     "offset": 58,
     "size": 2,
-    "label": "Unknown 0x3A",
-    "group": "Misc"
+    "label": "Unused (padding)",
+    "group": "Misc",
+    "help": "No code references these 2 bytes (IDA: 0 xrefs)."
    }
   ],
   "text_labels": [
@@ -401,35 +416,40 @@
     "size": 2,
     "group": "General",
     "lookup": "special_action",
-    "label": "Special Action / Animation"
+    "label": "Special Action / Animation",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "attack_type",
     "offset": 6,
     "size": 1,
     "group": "General",
-    "lookup": "attack_type"
+    "lookup": "attack_type",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "gf_power",
     "offset": 7,
     "size": 1,
     "group": "General",
-    "label": "GF power"
+    "label": "GF power",
+    "help": "GF base power fed into the damage formula."
    },
    {
     "name": "unknown_0x08",
     "offset": 8,
     "size": 2,
     "group": "General",
-    "label": "Unknown 0x08"
+    "label": "Unknown (char parse)",
+    "help": "Read in ResetAndParseBattleAndFieldCharacter; purpose TBD."
    },
    {
     "name": "attack_flags",
     "offset": 10,
     "size": 1,
     "group": "General",
-    "lookup": "attack_flags"
+    "lookup": "attack_flags",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
     "name": "target_animation",
@@ -443,14 +463,16 @@
     "offset": 12,
     "size": 1,
     "group": "General",
-    "label": "Hit count"
+    "label": "Hit count",
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
     "offset": 13,
     "size": 1,
     "group": "General",
-    "lookup": "element"
+    "lookup": "element",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    },
    {
     "name": "status_1",
@@ -458,7 +480,8 @@
     "size": 2,
     "group": "General",
     "lookup": "status_1",
-    "label": "Status 1 (0-15)"
+    "label": "Status 1 (0-15)",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "status_2",
@@ -466,7 +489,8 @@
     "size": 4,
     "group": "General",
     "lookup": "status_2",
-    "label": "Status 2 (16-47)"
+    "label": "Status 2 (16-47)",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "gf_hp_modifier_1",
@@ -508,21 +532,24 @@
     "offset": 26,
     "size": 1,
     "group": "General",
-    "label": "Status attack enabler"
+    "label": "Status attack enabler",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "power_mod",
     "offset": 130,
     "size": 1,
     "group": "General",
-    "label": "Power mod"
+    "label": "Power mod",
+    "help": "Power modifier used in the damage formula."
    },
    {
     "name": "level_mod",
     "offset": 131,
     "size": 1,
     "group": "General",
-    "label": "Level mod"
+    "label": "Level mod",
+    "help": "Level modifier used in the damage formula."
    },
    {
     "name": "ability1",
@@ -962,7 +989,8 @@
     "size": 2,
     "lookup": "special_action",
     "label": "Special Action / Effect",
-    "group": "Data"
+    "group": "Data",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "camera_change",
@@ -983,49 +1011,56 @@
     "offset": 6,
     "size": 1,
     "lookup": "attack_type",
-    "group": "Data"
+    "group": "Data",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "attack_power",
     "offset": 7,
     "size": 1,
     "label": "Attack power",
-    "group": "Data"
+    "group": "Data",
+    "help": "Base power fed into the damage formula."
    },
    {
     "name": "attack_flags",
     "offset": 8,
     "size": 1,
     "lookup": "attack_flags",
-    "group": "Data"
+    "group": "Data",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
     "name": "unknown_0x09",
     "offset": 9,
     "size": 1,
-    "label": "Unknown 0x09",
-    "group": "Data"
+    "label": "Unknown (command calc)",
+    "group": "Data",
+    "help": "Read in computeCommandAction; purpose TBD."
    },
    {
     "name": "element",
     "offset": 10,
     "size": 1,
     "lookup": "element",
-    "group": "Data"
+    "group": "Data",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    },
    {
     "name": "crit_bonus",
     "offset": 11,
     "size": 1,
     "label": "Attack crit bonus",
-    "group": "Data"
+    "group": "Data",
+    "help": "Bonus to the critical-hit rate."
    },
    {
     "name": "status_attack_enabler",
     "offset": 12,
     "size": 1,
     "label": "Status attack enabler",
-    "group": "Data"
+    "group": "Data",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "attack_param",
@@ -1040,7 +1075,8 @@
     "size": 2,
     "lookup": "status_1",
     "label": "Status 1 (0-15)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "status_2",
@@ -1048,11 +1084,398 @@
     "size": 4,
     "lookup": "status_2",
     "label": "Status 2 (16-47)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    }
   ],
   "text_labels": [
    "Name"
+  ],
+  "entry_names": [
+   "Not defined",
+   "Unnamed (1)",
+   "Physical attack",
+   "Attack (Cronos)",
+   "Attack (Ultimecia)",
+   "Blade Slice",
+   "Hind Kick",
+   "Blade Shot",
+   "Ray Bomb",
+   "Storm Breath",
+   "Dark Mist",
+   "Squeeze",
+   "Clash",
+   "Arm Crush",
+   "Unused X-ATM092 Attack",
+   "Tail Needle",
+   "Arm Slash",
+   "Bad Breath",
+   "Geezard Bites",
+   "Petrify Stare",
+   "Vampire",
+   "Poison Mist",
+   "Counter Slice",
+   "Counter Laser Eye",
+   "Belhelmel Stance Change",
+   "1000 Needles",
+   "Heartbreak",
+   "Upward Kick",
+   "Electric Discharge",
+   "Petrify Stare",
+   "Cockatrice Pecks",
+   "Bite",
+   "Poison Gas 32",
+   "Poison Gas 33",
+   "Poison Gas 34",
+   "Acid",
+   "Melt-Eye",
+   "Breath",
+   "Ice Breath",
+   "Sand Storm",
+   "Fastitocalon Reveal",
+   "Fastitocalon-F Reveal",
+   "Fastitocalon Bite",
+   "Fastitocalon-F Bite",
+   "Biggs 1 before curing Wedge",
+   "Wedge Enter Battle",
+   "Attack medium (Satyrux)",
+   "Attack strong (Satyrux)",
+   "Draw",
+   "Earthquake",
+   "Attack (Scavenger)",
+   "Unnamed (51)",
+   "Unnamed (52)",
+   "Morph",
+   "Arm Hug",
+   "Power Bomb",
+   "Dribble",
+   "Shoot",
+   "Ultrasonic Waves",
+   "Ifrit Strong Punch",
+   "BiteBite",
+   "Shotgun",
+   "Suicide",
+   "Ultrasonic Waves",
+   "Breath of Death",
+   "Disease Breath",
+   "Sticky Icky",
+   "Shoulder Charge",
+   "Gatling Gun",
+   "Cannon Blow",
+   "Wild Cannon Blow",
+   "Store",
+   "Degenerator",
+   "Telekinesis",
+   "Do Nothing?",
+   "Attack (Aphide)",
+   "Hypnotize",
+   "Gastric Juice",
+   "Adamantoise Slap",
+   "Ifrit Weak Punch",
+   "Sand Storm",
+   "Righty Shake Attack",
+   "Bomb Expand 1",
+   "Bomb Expand 2",
+   "Stare",
+   "Sigh",
+   "Curse",
+   "Vysage Squeeze",
+   "Ifrit HP below 50%",
+   "Ifrit Shiva Summoned 1st time",
+   "Ifrit Death",
+   "Ifrit Defeated by Shiva",
+   "Attack (Moloch)",
+   "Grab Punch",
+   "Breath",
+   "Double Sword",
+   "Thrust",
+   "Iai Blow",
+   "Ultra Waves",
+   "Caterchipillar Bite",
+   "Sticky Web",
+   "Grendel Double Claw Strike",
+   "Breath",
+   "Tail Blade",
+   "Forbidden Iai Blow Lower Stance",
+   "Forbidden Iai Blow Stand Up",
+   "Mega Spark",
+   "Onrush",
+   "T-Rexaur Tail Attack",
+   "T-Rexaur Magic Counter",
+   "Fart",
+   "Needle",
+   "Gastric Juice",
+   "Sleeping Gas",
+   "Breath",
+   "Funguar Laser",
+   "Unmissable attack (Biggs 2)",
+   "Attack (BGH251F2)",
+   "Beam Cannon",
+   "BGH251F2 second fight destruction",
+   "Magma Breath",
+   "Resonance",
+   "Blaster",
+   "Blaster",
+   "LV5 Death",
+   "Death Claw",
+   "Bear Hug",
+   "Gas",
+   "Explosion",
+   "Explosion",
+   "Explosion",
+   "\"Brrawghh!\"",
+   "Unnamed (132)",
+   "Wind Blast",
+   "Thrustaevis Attack",
+   "Scan",
+   "Cerberus Counter 1",
+   "Cerberus Counter 2",
+   "BGH251F2 Gatling Gun",
+   "Beam Cannon",
+   "BGH251F2 1st Turret Exploding",
+   "BGH251F2 2nd Turret Exploding",
+   "BGH251F2 3rd Turret Exploding",
+   "BGH251F2 4th Turret Exploding",
+   "BGH251F2 Death",
+   "X-ATM092 Death",
+   "Aqua Breath",
+   "BGH251F2 1st Turret Exploding",
+   "BGH251F2 2nd Turret Exploding",
+   "BGH251F2 3rd Turret Exploding",
+   "BGH251F2 4th Turret Exploding",
+   "Fake President Death",
+   "Evil-Eye",
+   "Counter Twist",
+   "Chaingun",
+   "Snipe Laser",
+   "Unmissable attack",
+   "Melting Bubble",
+   "Super Arm",
+   "Boomerang Sword",
+   "Unnamed (160)",
+   "Base Leader Message 1",
+   "Base Leader Message 2",
+   "Base Leader Message 3",
+   "Base Leader Message 4",
+   "Punch (Esthar Soldier)",
+   "Grand Sword",
+   "Attack (Attila, Ekarissor)",
+   "Psycho Blast",
+   "Sticky Web",
+   "Unnamed (170)",
+   "Unnamed (171)",
+   "Abyss Worm Crawl Out",
+   "Abyss Work Crawl In",
+   "Sand Shake",
+   "Saliva",
+   "Beam Laser",
+   "Reflect Beam",
+   "Unnamed (178)",
+   "Unnamed (179)",
+   "Oil Shot",
+   "Oil Blast",
+   "Sonic Wave",
+   "Dissolving Acid",
+   "Bad Breath",
+   "Eerie Sound Wave",
+   "Unnamed (186)",
+   "Unnamed (187)",
+   "Unnamed (188)",
+   "Plague attack (Hornet)",
+   "Attack (Hornet)",
+   "Unnamed (191)",
+   "Ochu Dance",
+   "Earthquake",
+   "Drink Magic",
+   "Ochu Poison Attack",
+   "Unnamed (196)",
+   "Unnamed (197)",
+   "Unnamed (198)",
+   "Assault Horn",
+   "Ray Bomb",
+   "Micro Missiles",
+   "Strong attack (Attila)",
+   "Unnamed (203)",
+   "Astral Punch",
+   "Unnamed (205)",
+   "Unnamed (206)",
+   "Unnamed (207)",
+   "Unnamed (208)",
+   "Unnamed (209)",
+   "Raijin Special",
+   "Minotaur Earth Regen",
+   "Sacred Earth Regen",
+   "Mad Cow Special",
+   "Zan",
+   "Metsu",
+   "Sai",
+   "Unnamed (217)",
+   "Unnamed (218)",
+   "Unnamed (219)",
+   "Mower",
+   "Unnamed (221)",
+   "Chef's Knife",
+   "Everyone's Grudge",
+   "Unnamed (224)",
+   "Tonberry King Death",
+   "Junk",
+   "It's sharp!",
+   "Unnamed (228)",
+   "Unnamed (229)",
+   "10.000 Needles",
+   "Ker Plunk",
+   "Unnamed (232)",
+   "Storm Breath",
+   "Mega Flare",
+   "Barrier Change",
+   "Minotaur Death v1",
+   "Minotaur Death v2",
+   "Sacred Death (1st Battle)",
+   "Sacred Death v1 (2nd battle)",
+   "Sacred Death v2 (2nd battle)",
+   "Unnamed (241)",
+   "Thunder Summon",
+   "Deadly Horn",
+   "Raldo Ball",
+   "Raldo Ball",
+   "Raldo Ball",
+   "Raldo Throw",
+   "Raldo Throw",
+   "Raldo Throw",
+   "Bahamut Dialog",
+   "Bahamut Dialog",
+   "Bahamut Dialog",
+   "Bahamut Dialog",
+   "Bahamut Dialog",
+   "Bahamut Dialog",
+   "Bahamut Death",
+   "Gravija",
+   "Remove mask (Brahman)",
+   "Unnamed (259)",
+   "Unnamed (260)",
+   "Magic Summon",
+   "Mighty Guard",
+   "Doom",
+   "Unnamed (264)",
+   "Unnamed (265)",
+   "Unnamed (266)",
+   "Unnamed (267)",
+   "Unnamed (268)",
+   "Unnamed (269)",
+   "Thunder attack (Tikal)",
+   "Thunder",
+   "Thundara",
+   "Thundaga",
+   "Zantetsuken",
+   "Unnamed (275)",
+   "White Wind",
+   "Unnamed (277)",
+   "Strong counter-attack (Krystal)",
+   "Counter-attack (Krystal)",
+   "Charge",
+   "Homing Laser 281",
+   "Homing Laser 282",
+   "Twin Homing Laser",
+   "Corona",
+   "Megiddo Flame",
+   "Unnamed (286)",
+   "NORG Pod Opening",
+   "NORG Tutorial?",
+   "NORG Death",
+   "Unnamed (290)",
+   "Unnamed (291)",
+   "Mega Pulse Cannon",
+   "Mini Pulse Cannon",
+   "Unmissable attack (Raijin 3)",
+   "Mighty Guard",
+   "Unnamed (296)",
+   "Unnamed (297)",
+   "Unnamed (298)",
+   "Unnamed (299)",
+   "Unnamed (300)",
+   "Unnamed (301)",
+   "Unnamed (302)",
+   "Unnamed (303)",
+   "Unnamed (304)",
+   "Dark Flare",
+   "Unnamed (306)",
+   "Soul Crush",
+   "Light Pillar",
+   "Gravija",
+   "Megiddo Flame",
+   "Terra Break",
+   "Ultima Weapon Death",
+   "Unnamed (313)",
+   "Demon Slice",
+   "Bloodfest",
+   "Engery Bomber",
+   "Adel Death",
+   "Adel's Drain",
+   "\"Sorceress\" Spawn",
+   "Unnamed (320)",
+   "Unnamed (321)",
+   "Unnamed (322)",
+   "Unnamed (323)",
+   "Unnamed (324)",
+   "Unnamed (325)",
+   "Unnamed (326)",
+   "\"Sorceress\" Spawn",
+   "Final \"Sorceress\" Death",
+   "Zantetsuken",
+   "Gilgamesh kill Seifer",
+   "Unnamed (331)",
+   "Unnamed (332)",
+   "Unnamed (333)",
+   "Unnamed (334)",
+   "G-Force ejection (Cronos/Ultimecia)",
+   "Absorbed into time...",
+   "Ultimecia Blow Away Magic",
+   "Maelstrom",
+   "Ultimecia First Death",
+   "Seifer counter Zantetsuken",
+   "Seifer death without Gilgamesh",
+   "Unnamed (342)",
+   "Unnamed (343)",
+   "Unnamed (344)",
+   "Unnamed (345)",
+   "Unnamed (346)",
+   "Unnamed (347)",
+   "Unnamed (348)",
+   "Unnamed (349)",
+   "Griever Summon",
+   "Griever Death",
+   "Ultimecia Junctioning to Griever",
+   "Griever Tail Falling Off",
+   "Griever + Ultimecia Death",
+   "Ultimecia Final Form Spawn",
+   "Ultimecia Final Form Death",
+   "Draw Apocalypse",
+   "Hell's Judgement",
+   "Drain",
+   "Great Attractor",
+   "Unmissable attack (Helix)",
+   "Shockwave Pulsar",
+   "Unnamed (363)",
+   "Esuna",
+   "Maelstrom",
+   "Unmissable attack (Necro 1)",
+   "Unmissable attack (Necro 2)",
+   "Unnamed (368)",
+   "Vacuum Wave",
+   "Unnamed (370)",
+   "Unnamed (371)",
+   "Something Elite Soldier does in the BGH251F2 boss fight",
+   "Apocalypse",
+   "Unnamed (374)",
+   "Gigantic Sword",
+   "Unnamed (376)",
+   "Seifer Physical Attack",
+   "Ultima",
+   "Holy",
+   "Quake",
+   "Tornado",
+   "Unnamed (382)",
+   "Unnamed (383)"
   ]
  },
  "5": {
@@ -1064,14 +1487,16 @@
     "size": 1,
     "lookup": "renzokuken_finisher",
     "label": "Renzokuken finishers",
-    "group": "Data"
+    "group": "Data",
+    "help": "Which Renzokuken finishers this weapon can trigger. Bitfield."
    },
    {
     "name": "unknown_0x03",
     "offset": 3,
     "size": 1,
-    "label": "Unknown 0x03",
-    "group": "Data"
+    "label": "Unused (padding)",
+    "group": "Data",
+    "help": "No code references this byte (IDA: 0 xrefs)."
    },
    {
     "name": "character_id",
@@ -1079,21 +1504,24 @@
     "size": 1,
     "lookup": "weapon_character",
     "label": "Character",
-    "group": "Data"
+    "group": "Data",
+    "help": "Which playable character wields this weapon."
    },
    {
     "name": "attack_type",
     "offset": 5,
     "size": 1,
     "lookup": "attack_type",
-    "group": "Data"
+    "group": "Data",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "attack_power",
     "offset": 6,
     "size": 1,
     "label": "Attack power",
-    "group": "Data"
+    "group": "Data",
+    "help": "Base power fed into the damage formula."
    },
    {
     "name": "attack_param",
@@ -1107,21 +1535,24 @@
     "offset": 8,
     "size": 1,
     "label": "STR bonus",
-    "group": "Data"
+    "group": "Data",
+    "help": "Flat STR bonus granted by the weapon."
    },
    {
     "name": "weapon_tier",
     "offset": 9,
     "size": 1,
     "label": "Weapon tier",
-    "group": "Data"
+    "group": "Data",
+    "help": "Weapon tier (affects some formulas / upgrade order)."
    },
    {
     "name": "crit_bonus",
     "offset": 10,
     "size": 1,
     "label": "Crit bonus",
-    "group": "Data"
+    "group": "Data",
+    "help": "Bonus to the critical-hit rate."
    },
    {
     "name": "melee",
@@ -1144,14 +1575,16 @@
     "size": 2,
     "lookup": "special_action",
     "label": "Special Action / Effect",
-    "group": "Data"
+    "group": "Data",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "attack_type",
     "offset": 6,
     "size": 1,
     "lookup": "attack_type",
-    "group": "Data"
+    "group": "Data",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "unknown_0x07",
@@ -1165,7 +1598,8 @@
     "offset": 8,
     "size": 1,
     "label": "Attack power",
-    "group": "Data"
+    "group": "Data",
+    "help": "Base power fed into the damage formula."
    },
    {
     "name": "unknown_0x09",
@@ -1179,21 +1613,24 @@
     "offset": 10,
     "size": 1,
     "lookup": "target_info",
-    "group": "Data"
+    "group": "Data",
+    "help": "Default targeting behavior. Bitfield: combine flags."
    },
    {
     "name": "attack_flags",
     "offset": 11,
     "size": 1,
     "lookup": "attack_flags",
-    "group": "Data"
+    "group": "Data",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
     "name": "hit_count",
     "offset": 12,
     "size": 1,
     "label": "Hit count",
-    "group": "Data"
+    "group": "Data",
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
@@ -1201,21 +1638,24 @@
     "size": 1,
     "lookup": "element",
     "label": "Element attack",
-    "group": "Data"
+    "group": "Data",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    },
    {
     "name": "element_percent",
     "offset": 14,
     "size": 1,
     "label": "Element attack %",
-    "group": "Data"
+    "group": "Data",
+    "help": "Percentage of the attack that is elemental (0-100)."
    },
    {
     "name": "status_attack_enabler",
     "offset": 15,
     "size": 1,
     "label": "Status attack enabler",
-    "group": "Data"
+    "group": "Data",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "unknown_0x10",
@@ -1230,7 +1670,8 @@
     "size": 2,
     "lookup": "status_1",
     "label": "Status 1 (0-15)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "status_2",
@@ -1238,7 +1679,8 @@
     "size": 4,
     "lookup": "status_2",
     "label": "Status 2 (16-47)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    }
   ],
   "text_labels": [
@@ -1254,28 +1696,32 @@
     "offset": 2,
     "size": 1,
     "label": "Crisis level HP multiplier",
-    "group": "General"
+    "group": "General",
+    "help": "Multiplier turning missing HP into the limit / crisis gauge."
    },
    {
     "name": "gender",
     "offset": 3,
     "size": 1,
     "lookup": "gender",
-    "group": "General"
+    "group": "General",
+    "help": "Character gender (used by some status targeting)."
    },
    {
     "name": "limit_break_id",
     "offset": 4,
     "size": 1,
     "label": "Limit break ID",
-    "group": "General"
+    "group": "General",
+    "help": "Which limit-break routine this character uses."
    },
    {
     "name": "limit_break_param",
     "offset": 5,
     "size": 1,
     "label": "Limit break param",
-    "group": "General"
+    "group": "General",
+    "help": "Per-hit power used before the Renzokuken finisher."
    },
    {
     "name": "exp_modifier",
@@ -1507,21 +1953,24 @@
     "size": 2,
     "lookup": "special_action",
     "label": "Special Action / Effect",
-    "group": "Data"
+    "group": "Data",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "attack_type",
     "offset": 6,
     "size": 1,
     "lookup": "attack_type",
-    "group": "Data"
+    "group": "Data",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "attack_power",
     "offset": 7,
     "size": 1,
     "label": "Attack power",
-    "group": "Data"
+    "group": "Data",
+    "help": "Base power fed into the damage formula."
    },
    {
     "name": "battle_flag",
@@ -1535,21 +1984,24 @@
     "offset": 9,
     "size": 1,
     "lookup": "target_info",
-    "group": "Data"
+    "group": "Data",
+    "help": "Default targeting behavior. Bitfield: combine flags."
    },
    {
     "name": "unknown_0x0a",
     "offset": 10,
     "size": 1,
-    "label": "Unknown 0x0A",
-    "group": "Data"
+    "label": "Linked to selectability",
+    "group": "Data",
+    "help": "IDA linkedToSelectability - used by updateBattleItemData and Battle_applyDamage to gate item selectability."
    },
    {
     "name": "attack_flags",
     "offset": 11,
     "size": 1,
     "lookup": "attack_flags",
-    "group": "Data"
+    "group": "Data",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
     "name": "unknown_0x0c",
@@ -1563,7 +2015,8 @@
     "offset": 13,
     "size": 1,
     "label": "Status attack enabler",
-    "group": "Data"
+    "group": "Data",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "status_1",
@@ -1571,7 +2024,8 @@
     "size": 2,
     "lookup": "status_1",
     "label": "Status 1 (0-15)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "status_2",
@@ -1579,7 +2033,8 @@
     "size": 4,
     "lookup": "status_2",
     "label": "Status 2 (16-47)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "attack_param",
@@ -1600,14 +2055,16 @@
     "offset": 22,
     "size": 1,
     "label": "Hit count",
-    "group": "Data"
+    "group": "Data",
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
     "offset": 23,
     "size": 1,
     "lookup": "element",
-    "group": "Data"
+    "group": "Data",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    }
   ],
   "text_labels": [
@@ -1632,28 +2089,32 @@
     "size": 2,
     "lookup": "special_action",
     "label": "Special Action ID",
-    "group": "Data"
+    "group": "Data",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "attack_type",
     "offset": 4,
     "size": 1,
     "lookup": "attack_type",
-    "group": "Data"
+    "group": "Data",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "gf_power",
     "offset": 5,
     "size": 1,
     "label": "GF power",
-    "group": "Data"
+    "group": "Data",
+    "help": "GF base power fed into the damage formula."
    },
    {
     "name": "status_attack_enabler",
     "offset": 6,
     "size": 1,
     "label": "Status attack enabler",
-    "group": "Data"
+    "group": "Data",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "unknown_0x07",
@@ -1681,14 +2142,16 @@
     "offset": 10,
     "size": 1,
     "label": "Hit count",
-    "group": "Data"
+    "group": "Data",
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
     "offset": 11,
     "size": 1,
     "lookup": "element",
-    "group": "Data"
+    "group": "Data",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    },
    {
     "name": "status_group_1",
@@ -1737,14 +2200,16 @@
     "offset": 18,
     "size": 1,
     "label": "Power mod",
-    "group": "Data"
+    "group": "Data",
+    "help": "Power modifier used in the damage formula."
    },
    {
     "name": "level_mod",
     "offset": 19,
     "size": 1,
     "label": "Level mod",
-    "group": "Data"
+    "group": "Data",
+    "help": "Level modifier used in the damage formula."
    }
   ],
   "text_labels": [
@@ -1760,7 +2225,8 @@
     "size": 2,
     "lookup": "special_action",
     "label": "Special Action / Effect",
-    "group": "Data"
+    "group": "Data",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "unknown_0x02",
@@ -1781,42 +2247,48 @@
     "offset": 4,
     "size": 1,
     "lookup": "attack_type",
-    "group": "Data"
+    "group": "Data",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "attack_power",
     "offset": 5,
     "size": 1,
     "label": "Attack power",
-    "group": "Data"
+    "group": "Data",
+    "help": "Base power fed into the damage formula."
    },
    {
     "name": "attack_flags",
     "offset": 6,
     "size": 1,
     "lookup": "attack_flags",
-    "group": "Data"
+    "group": "Data",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
     "name": "hit_count",
     "offset": 7,
     "size": 1,
     "label": "Hit count",
-    "group": "Data"
+    "group": "Data",
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
     "offset": 8,
     "size": 1,
     "lookup": "element",
-    "group": "Data"
+    "group": "Data",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    },
    {
     "name": "status_attack_enabler",
     "offset": 9,
     "size": 1,
     "label": "Status attack enabler",
-    "group": "Data"
+    "group": "Data",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "status_1",
@@ -1824,7 +2296,8 @@
     "size": 2,
     "lookup": "status_1",
     "label": "Status 1 (0-15)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "status_2",
@@ -1832,7 +2305,8 @@
     "size": 4,
     "lookup": "status_2",
     "label": "Status 2 (16-47)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    }
   ],
   "entry_names": [
@@ -1858,7 +2332,8 @@
     "offset": 4,
     "size": 1,
     "label": "AP to learn",
-    "group": "Data"
+    "group": "Data",
+    "help": "Ability Points required to learn this ability."
    },
    {
     "name": "junction_flag",
@@ -1881,7 +2356,8 @@
     "offset": 4,
     "size": 1,
     "label": "AP to learn",
-    "group": "Data"
+    "group": "Data",
+    "help": "Ability Points required to learn this ability."
    },
    {
     "name": "battle_command_index",
@@ -1889,7 +2365,8 @@
     "size": 1,
     "lookup": "battle_command",
     "label": "Battle command",
-    "group": "Data"
+    "group": "Data",
+    "help": "Battle command granted when this ability is learned."
    },
    {
     "name": "unknown_0x06",
@@ -1912,14 +2389,16 @@
     "offset": 4,
     "size": 1,
     "label": "AP to learn",
-    "group": "Data"
+    "group": "Data",
+    "help": "Ability Points required to learn this ability."
    },
    {
     "name": "stat_to_increase",
     "offset": 5,
     "size": 1,
     "label": "Stat to increase",
-    "group": "Data"
+    "group": "Data",
+    "help": "Which stat this GF/junction ability raises."
    },
    {
     "name": "increase_value",
@@ -1949,7 +2428,8 @@
     "offset": 4,
     "size": 1,
     "label": "AP to learn",
-    "group": "Data"
+    "group": "Data",
+    "help": "Ability Points required to learn this ability."
    },
    {
     "name": "chara_flag",
@@ -1972,7 +2452,8 @@
     "offset": 4,
     "size": 1,
     "label": "AP to learn",
-    "group": "Data"
+    "group": "Data",
+    "help": "Ability Points required to learn this ability."
    },
    {
     "name": "party_flag",
@@ -2002,7 +2483,8 @@
     "offset": 4,
     "size": 1,
     "label": "AP to learn",
-    "group": "Data"
+    "group": "Data",
+    "help": "Ability Points required to learn this ability."
    },
    {
     "name": "enable_boost",
@@ -2017,7 +2499,8 @@
     "size": 1,
     "lookup": "stat_to_increase",
     "label": "Stat to increase",
-    "group": "Data"
+    "group": "Data",
+    "help": "Which stat this GF/junction ability raises."
    },
    {
     "name": "increase_value",
@@ -2040,7 +2523,8 @@
     "offset": 4,
     "size": 1,
     "label": "AP to learn",
-    "group": "Data"
+    "group": "Data",
+    "help": "Ability Points required to learn this ability."
    },
    {
     "name": "menu_index",
@@ -2078,21 +2562,24 @@
     "size": 2,
     "lookup": "special_action",
     "label": "Special Action / Effect",
-    "group": "Data"
+    "group": "Data",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "attack_type",
     "offset": 6,
     "size": 1,
     "lookup": "attack_type",
-    "group": "Data"
+    "group": "Data",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "attack_power",
     "offset": 7,
     "size": 1,
     "label": "Attack power",
-    "group": "Data"
+    "group": "Data",
+    "help": "Base power fed into the damage formula."
    },
    {
     "name": "unknown_0x08",
@@ -2106,21 +2593,24 @@
     "offset": 10,
     "size": 1,
     "lookup": "target_info",
-    "group": "Data"
+    "group": "Data",
+    "help": "Default targeting behavior. Bitfield: combine flags."
    },
    {
     "name": "attack_flags",
     "offset": 11,
     "size": 1,
     "lookup": "attack_flags",
-    "group": "Data"
+    "group": "Data",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
     "name": "hit_count",
     "offset": 12,
     "size": 1,
     "label": "Hit count",
-    "group": "Data"
+    "group": "Data",
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
@@ -2128,21 +2618,24 @@
     "size": 1,
     "lookup": "element",
     "label": "Element attack",
-    "group": "Data"
+    "group": "Data",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    },
    {
     "name": "element_percent",
     "offset": 14,
     "size": 1,
     "label": "Element attack %",
-    "group": "Data"
+    "group": "Data",
+    "help": "Percentage of the attack that is elemental (0-100)."
    },
    {
     "name": "status_attack_enabler",
     "offset": 15,
     "size": 1,
     "label": "Status attack enabler",
-    "group": "Data"
+    "group": "Data",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "status_1",
@@ -2150,7 +2643,8 @@
     "size": 2,
     "lookup": "status_1",
     "label": "Status 1 (0-15)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "unknown_0x12",
@@ -2165,7 +2659,8 @@
     "size": 4,
     "lookup": "status_2",
     "label": "Status 2 (16-47)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    }
   ],
   "text_labels": [
@@ -2182,7 +2677,8 @@
     "size": 2,
     "lookup": "special_action",
     "label": "Special Action ID",
-    "group": "Data"
+    "group": "Data",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "unknown_0x06",
@@ -2196,7 +2692,8 @@
     "offset": 7,
     "size": 1,
     "lookup": "attack_type",
-    "group": "Data"
+    "group": "Data",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "unknown_0x08",
@@ -2210,35 +2707,40 @@
     "offset": 10,
     "size": 1,
     "lookup": "attack_flags",
-    "group": "Data"
+    "group": "Data",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
     "name": "hit_count",
     "offset": 11,
     "size": 1,
     "label": "Hit count",
-    "group": "Data"
+    "group": "Data",
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
     "offset": 12,
     "size": 1,
     "lookup": "element",
-    "group": "Data"
+    "group": "Data",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    },
    {
     "name": "status_attack",
     "offset": 13,
     "size": 1,
     "label": "Status attack",
-    "group": "Data"
+    "group": "Data",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "crit_bonus",
     "offset": 14,
     "size": 1,
     "label": "Crit bonus",
-    "group": "Data"
+    "group": "Data",
+    "help": "Bonus to the critical-hit rate."
    },
    {
     "name": "unknown_0x0f",
@@ -2262,7 +2764,8 @@
     "size": 4,
     "lookup": "status_2",
     "label": "Status 2 (16-47)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "status_1",
@@ -2270,14 +2773,16 @@
     "size": 2,
     "lookup": "status_1",
     "label": "Status 1 (0-15)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "attack_power",
     "offset": 6,
     "size": 1,
     "label": "Attack power",
-    "group": "Data"
+    "group": "Data",
+    "help": "Base power fed into the damage formula."
    },
    {
     "name": "attack_param",
@@ -2297,21 +2802,24 @@
     "size": 2,
     "lookup": "special_action",
     "label": "Special Action / Effect",
-    "group": "Data"
+    "group": "Data",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "attack_type",
     "offset": 6,
     "size": 1,
     "lookup": "attack_type",
-    "group": "Data"
+    "group": "Data",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "attack_power",
     "offset": 7,
     "size": 1,
     "label": "Attack power",
-    "group": "Data"
+    "group": "Data",
+    "help": "Base power fed into the damage formula."
    },
    {
     "name": "unknown_0x08",
@@ -2325,21 +2833,24 @@
     "offset": 10,
     "size": 1,
     "lookup": "target_info",
-    "group": "Data"
+    "group": "Data",
+    "help": "Default targeting behavior. Bitfield: combine flags."
    },
    {
     "name": "attack_flags",
     "offset": 11,
     "size": 1,
     "lookup": "attack_flags",
-    "group": "Data"
+    "group": "Data",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
     "name": "hit_count",
     "offset": 12,
     "size": 1,
     "label": "Hit count",
-    "group": "Data"
+    "group": "Data",
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
@@ -2347,21 +2858,24 @@
     "size": 1,
     "lookup": "element",
     "label": "Element attack",
-    "group": "Data"
+    "group": "Data",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    },
    {
     "name": "element_percent",
     "offset": 14,
     "size": 1,
     "label": "Element attack %",
-    "group": "Data"
+    "group": "Data",
+    "help": "Percentage of the attack that is elemental (0-100)."
    },
    {
     "name": "status_attack_enabler",
     "offset": 15,
     "size": 1,
     "label": "Status attack enabler",
-    "group": "Data"
+    "group": "Data",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "status_1",
@@ -2369,7 +2883,8 @@
     "size": 2,
     "lookup": "status_1",
     "label": "Status 1 (0-15)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "used_item_index",
@@ -2377,14 +2892,16 @@
     "size": 1,
     "lookup": "item",
     "label": "Used item",
-    "group": "Data"
+    "group": "Data",
+    "help": "Ammo item consumed by this Shot attack."
    },
    {
     "name": "crit_increase",
     "offset": 19,
     "size": 1,
     "label": "Crit increase",
-    "group": "Data"
+    "group": "Data",
+    "help": "Bonus to the critical-hit rate."
    },
    {
     "name": "status_2",
@@ -2392,7 +2909,8 @@
     "size": 4,
     "lookup": "status_2",
     "label": "Status 2 (16-47)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    }
   ],
   "text_labels": [
@@ -2409,28 +2927,32 @@
     "size": 2,
     "lookup": "special_action",
     "label": "Special Action / Effect",
-    "group": "Data"
+    "group": "Data",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "attack_type",
     "offset": 6,
     "size": 1,
     "lookup": "attack_type",
-    "group": "Data"
+    "group": "Data",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "attack_power",
     "offset": 7,
     "size": 1,
     "label": "Attack power",
-    "group": "Data"
+    "group": "Data",
+    "help": "Base power fed into the damage formula."
    },
    {
     "name": "attack_flags",
     "offset": 8,
     "size": 1,
     "lookup": "attack_flags",
-    "group": "Data"
+    "group": "Data",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
     "name": "unknown_0x09",
@@ -2444,7 +2966,8 @@
     "offset": 10,
     "size": 1,
     "lookup": "target_info",
-    "group": "Data"
+    "group": "Data",
+    "help": "Default targeting behavior. Bitfield: combine flags."
    },
    {
     "name": "unknown_0x0b",
@@ -2458,7 +2981,8 @@
     "offset": 12,
     "size": 1,
     "label": "Hit count",
-    "group": "Data"
+    "group": "Data",
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
@@ -2466,21 +2990,24 @@
     "size": 1,
     "lookup": "element",
     "label": "Element attack",
-    "group": "Data"
+    "group": "Data",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    },
    {
     "name": "element_percent",
     "offset": 14,
     "size": 1,
     "label": "Element attack %",
-    "group": "Data"
+    "group": "Data",
+    "help": "Percentage of the attack that is elemental (0-100)."
    },
    {
     "name": "status_attack_enabler",
     "offset": 15,
     "size": 1,
     "label": "Status attack enabler",
-    "group": "Data"
+    "group": "Data",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "button_1",
@@ -2528,7 +3055,8 @@
     "size": 2,
     "lookup": "status_1",
     "label": "Status 1 (0-15)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "status_2",
@@ -2536,7 +3064,8 @@
     "size": 4,
     "lookup": "status_2",
     "label": "Status 2 (16-47)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    }
   ],
   "text_labels": [
@@ -3299,28 +3828,32 @@
     "size": 2,
     "lookup": "special_action",
     "label": "Special Action / Effect",
-    "group": "Data"
+    "group": "Data",
+    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
    },
    {
     "name": "attack_type",
     "offset": 4,
     "size": 1,
     "lookup": "attack_type",
-    "group": "Data"
+    "group": "Data",
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "attack_power",
     "offset": 5,
     "size": 1,
     "label": "Attack power",
-    "group": "Data"
+    "group": "Data",
+    "help": "Base power fed into the damage formula."
    },
    {
     "name": "attack_flags",
     "offset": 6,
     "size": 1,
     "lookup": "attack_flags",
-    "group": "Data"
+    "group": "Data",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
     "name": "unknown_0x07",
@@ -3334,7 +3867,8 @@
     "offset": 8,
     "size": 1,
     "lookup": "target_info",
-    "group": "Data"
+    "group": "Data",
+    "help": "Default targeting behavior. Bitfield: combine flags."
    },
    {
     "name": "unknown_0x09",
@@ -3348,7 +3882,8 @@
     "offset": 10,
     "size": 1,
     "label": "Hit count",
-    "group": "Data"
+    "group": "Data",
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
@@ -3356,21 +3891,24 @@
     "size": 1,
     "lookup": "element",
     "label": "Element attack",
-    "group": "Data"
+    "group": "Data",
+    "help": "Elemental type(s) of the attack. Bitfield: combine flags."
    },
    {
     "name": "element_percent",
     "offset": 12,
     "size": 1,
     "label": "Element attack %",
-    "group": "Data"
+    "group": "Data",
+    "help": "Percentage of the attack that is elemental (0-100)."
    },
    {
     "name": "status_attack_enabler",
     "offset": 13,
     "size": 1,
     "label": "Status attack enabler",
-    "group": "Data"
+    "group": "Data",
+    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
     "name": "status_1",
@@ -3378,7 +3916,8 @@
     "size": 2,
     "lookup": "status_1",
     "label": "Status 1 (0-15)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "status_2",
@@ -3386,7 +3925,8 @@
     "size": 4,
     "lookup": "status_2",
     "label": "Status 2 (16-47)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    }
   ],
   "text_labels": [
@@ -3555,7 +4095,8 @@
     "size": 4,
     "lookup": "status_2",
     "label": "Status 2 (16-47)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "status_1",
@@ -3563,7 +4104,8 @@
     "size": 2,
     "lookup": "status_1",
     "label": "Status 1 (0-15)",
-    "group": "Data"
+    "group": "Data",
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
    },
    {
     "name": "raised_stat",
