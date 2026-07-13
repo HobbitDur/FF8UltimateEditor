@@ -1,7 +1,10 @@
 import json
 import os
+import pathlib
 
 from FF8GameData.gamedata import GameData
+
+_DEFAULT_RESOURCE_FOLDER = str(pathlib.Path(__file__).parent / "Resources")
 
 
 class WeaponUpgrade:
@@ -68,7 +71,7 @@ class JunkshopManager:
 
     NB_BYTE_PER_WEAPON = 12
 
-    def __init__(self, game_data: GameData, resource_folder=os.path.join("Junkshop", "Resources")):
+    def __init__(self, game_data: GameData, resource_folder=_DEFAULT_RESOURCE_FOLDER):
         self.game_data = game_data
         self.resource_folder = resource_folder
         self.file_path = ""

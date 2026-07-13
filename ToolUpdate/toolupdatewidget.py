@@ -54,6 +54,7 @@ class ToolUpdateWidget(QWidget):
         self.installer_thread.start()
 
         self.progress_install_index = 0
+        self._current_tool_list = []
 
         self.install_over = QMessageBox(parent=self)
         self.install_over.setWindowTitle("Installing over! Now patching the tool")
@@ -80,16 +81,22 @@ class ToolUpdateWidget(QWidget):
         self.canal_widget.setToolTip("Stable: Last official release\n"
                                      "Canary: Last version build, latest development but contains bug")
         self.canal_widget.activated.connect(self.__canal_changed)
-        self.download_button_widget = QPushButton()
-        self.download_button_widget.setFixedSize(40, 40)
-        self.download_button_widget.setIcon(QIcon(os.path.join(resource_path, 'download.ico')))
+        self.download_button_widget = QPushButton("Tool update")
         self.download_button_widget.clicked.connect(self.install_click)
-        self.download_button_widget.setToolTip("Download all tools")
+        self.download_button_widget.setToolTip("Select the checkbox of the tools you want to update")
+
+        self.self_download_button_widget = QPushButton("Self update")
+        self.self_download_button_widget.clicked.connect(self.self_install_click)
+        self.self_download_button_widget.setToolTip("Update FF8UltimateEditor itself")
 
         self.canal_layout = QHBoxLayout()
         self.canal_layout.addWidget(self.canal_label)
         self.canal_layout.addWidget(self.canal_widget)
-        self.canal_layout.addWidget(self.download_button_widget)
+
+        self.download_buttons_layout = QVBoxLayout()
+        self.download_buttons_layout.addWidget(self.download_button_widget)
+        self.download_buttons_layout.addWidget(self.self_download_button_widget)
+        self.canal_layout.addLayout(self.download_buttons_layout)
 
         self.tools_group = QGroupBox("Tools update")
         checkbox_layout = QVBoxLayout()
@@ -194,12 +201,13 @@ class ToolUpdateWidget(QWidget):
         self.progress_install_index = 0
         self.progress_current_download.hide()
         self.download_button_widget.setEnabled(True)
+        self.self_download_button_widget.setEnabled(True)
         if self.self_update_request:
             self.start_self_update_process()
         self.self_update_request = False
 
     def update_download(self, advancement: int, max_size: int):
-        tool_list = self._tool_list_callback()
+        tool_list = self._current_tool_list
         if "Self" in tool_list:
             self.self_update_request = True
         if advancement >= 0 and max_size >= 0:
@@ -215,12 +223,20 @@ class ToolUpdateWidget(QWidget):
 
 
     def install_click(self):
-        tool_list = self._tool_list_callback()
+        tool_list = [tool for tool in self._tool_list_callback() if tool != "Self"]
         if not tool_list:
             QMessageBox.information(self, "No program selected",
                                  "Please select the program you want to update")
             return
+        self._start_install(tool_list)
+
+    def self_install_click(self):
+        self._start_install(["Self"])
+
+    def _start_install(self, tool_list: list):
+        self._current_tool_list = tool_list
         self.download_button_widget.setEnabled(False)
+        self.self_download_button_widget.setEnabled(False)
         self.progress.show()
         self.progress_current_download.show()
 

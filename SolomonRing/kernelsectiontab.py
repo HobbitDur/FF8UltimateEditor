@@ -82,9 +82,12 @@ class KernelSectionTab(QWidget):
             box.setToolTip("Name / description strings. Text offsets are recomputed automatically "
                            "on save; use the toolbar to (un)compress all kernel text.")
             form = QFormLayout(box)
+            form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
             for label in self.text_labels:
                 edit = QLineEdit()
                 edit.setToolTip(f"{label} string for this entry.")
+                # Names are short; descriptions a bit longer, but neither needs full width.
+                edit.setFixedWidth(200 if label == "Name" else 380)
                 self._text_widgets.append(edit)
                 form.addRow(QLabel(label), edit)
             self._form_layout.addWidget(box)
@@ -102,8 +105,12 @@ class KernelSectionTab(QWidget):
         for gname in groups:
             box = QGroupBox(gname)
             grid = QGridLayout(box)
-            grid.setColumnStretch(1, 1)
-            grid.setColumnStretch(3, 1)
+            # Layout: | label | editor | gap | label | editor | stretch |
+            # Label+editor pairs stay packed together; the last column absorbs the
+            # remaining width so nothing is stretched apart.
+            grid.setColumnStretch(5, 1)
+            grid.setHorizontalSpacing(8)
+            grid.setColumnMinimumWidth(2, 24)  # gap between the two pairs of a row
             row = col = 0
             for field in group_map[gname]:
                 tooltip = self._field_tooltip(field)
@@ -113,13 +120,13 @@ class KernelSectionTab(QWidget):
                     if col != 0:
                         row += 1
                         col = 0
-                    grid.addWidget(widget, row, 0, 1, 4)
+                    grid.addWidget(widget, row, 0, 1, 6)
                     row += 1
                     continue
                 label = QLabel(field.get("label", _prettify(field["name"])))
                 label.setToolTip(tooltip)
-                grid.addWidget(label, row, col * 2)
-                grid.addWidget(widget, row, col * 2 + 1)
+                grid.addWidget(label, row, col * 3, Qt.AlignmentFlag.AlignRight)
+                grid.addWidget(widget, row, col * 3 + 1, Qt.AlignmentFlag.AlignLeft)
                 col += 1
                 if col == 2:
                     col = 0
@@ -144,9 +151,16 @@ class KernelSectionTab(QWidget):
 
         if lookup and lookup["type"] == "enum":
             combo = QComboBox()
-            combo.setMinimumWidth(220)
             for entry in lookup["entries"]:
                 combo.addItem(entry["name"], entry["value"])
+            # Size the closed combo to its longest entry (plus arrow/frame), capped so a
+            # few very long names don't blow up the row; the dropdown list always gets
+            # the full width of the longest entry.
+            metrics = combo.fontMetrics()
+            widest = max((metrics.horizontalAdvance(e["name"]) for e in lookup["entries"]),
+                         default=60)
+            combo.setFixedWidth(min(widest + 40, 320))
+            combo.view().setMinimumWidth(widest + 40)
             self._field_widgets[name] = ("enum", field, combo)
             return combo
 
@@ -155,12 +169,13 @@ class KernelSectionTab(QWidget):
         if max_value <= 0x7FFFFFFF:
             spin = QSpinBox()
             spin.setRange(0, max_value)
-            spin.setFixedWidth(120)
+            # Size the spinbox to its biggest possible value (plus buttons/frame).
+            spin.setFixedWidth(spin.fontMetrics().horizontalAdvance(str(max_value)) + 36)
             self._field_widgets[name] = ("int", field, spin)
             return spin
         # 32-bit values overflow QSpinBox -> hex line edit
         edit = QLineEdit()
-        edit.setFixedWidth(120)
+        edit.setFixedWidth(edit.fontMetrics().horizontalAdvance("0x" + "F" * 2 * field["size"]) + 16)
         self._field_widgets[name] = ("hex", field, edit)
         return edit
 

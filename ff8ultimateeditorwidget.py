@@ -89,7 +89,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._tool_update_widget = ToolUpdateWidget(self.settings, self.tools_to_update)
 
         # Initialize External Tool Buttons
-        self._self_button = ExternalToolWidget(os.path.join(resources_path, 'hobbitdur.ico'), self._launch_FF8Ultimate, "Launch FF8UltimateEditor")
+        self._self_button = ExternalToolWidget(os.path.join(resources_path, 'hobbitdur.ico'), self._launch_FF8Ultimate, "Launch FF8UltimateEditor", show_checkbox=False)
         self._ifrit_gui_button = ExternalToolWidget(os.path.join(resources_path, 'ifritGui.ico'), self._launch_ifritGui, "Launch original ifrit soft")
         self._Quezacotl_button = ExternalToolWidget(os.path.join(resources_path, 'Quezacotl.ico'), self._launch_Quezacotl, "Launch Quezacotl (init.out editor)")
         self._siren_button = ExternalToolWidget(os.path.join(resources_path, 'siren.ico'), self._launch_siren, "Launch siren (price.bin editor)")
@@ -98,6 +98,12 @@ class FF8UltimateEditorWidget(QWidget):
         self._cactilio_button = ExternalToolWidget(os.path.join(resources_path, 'jumbo_cactuar.ico'), self._launch_cactilio, "Launch Jumbo cactuar (Scene.out editor)")
         self._deling_button = ExternalToolWidget(os.path.join(resources_path, 'deling.ico'), self._launch_deling, "Launch deling (Archive editor)")
         self._hyne_button = ExternalToolWidget(os.path.join(resources_path, 'hyne.ico'), self._launch_hyne, "Launch hyne (Save editor)")
+
+        # Temporarily hidden (kept in case they get re-enabled later)
+        self._Quezacotl_button.hide()
+        self._siren_button.hide()
+        self._junkshop_button.hide()
+        self._doomtrain_button.hide()
 
         # External Program Layout Assembly
         self._external_program_layout = QHBoxLayout()
@@ -224,8 +230,6 @@ class FF8UltimateEditorWidget(QWidget):
 
     def tools_to_update(self):
         tool_list = []
-        if self._self_button.update_selected:
-            tool_list.append("Self")
         if self._ifrit_gui_button.update_selected:
             tool_list.append("IfritGui")
         if self._Quezacotl_button.update_selected:

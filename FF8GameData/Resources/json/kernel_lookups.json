@@ -194,15 +194,15 @@
     "entries": [
       {
         "mask": 1,
-        "name": "Dead"
+        "name": "Dead (revive targeting)"
       },
       {
         "mask": 2,
-        "name": "??? (0x02)"
+        "name": "Multi-target spread"
       },
       {
         "mask": 4,
-        "name": "??? (0x04)"
+        "name": "Unused (0x04)"
       },
       {
         "mask": 8,
@@ -222,7 +222,7 @@
       },
       {
         "mask": 128,
-        "name": "??? (0x80)"
+        "name": "Unused (0x80)"
       }
     ]
   },
@@ -231,15 +231,15 @@
     "entries": [
       {
         "mask": 1,
-        "name": "Shelled"
+        "name": "Magical (Shell applies)"
       },
       {
         "mask": 2,
-        "name": "? (0x02)"
+        "name": "Item/Medicine (MedData)"
       },
       {
         "mask": 4,
-        "name": "? (0x04)"
+        "name": "Unused (0x04)"
       },
       {
         "mask": 8,
@@ -247,19 +247,19 @@
       },
       {
         "mask": 16,
-        "name": "Reflected"
+        "name": "Reflectable"
       },
       {
         "mask": 32,
-        "name": "? (0x20)"
+        "name": "Unused (0x20)"
       },
       {
         "mask": 64,
-        "name": "? (0x40)"
+        "name": "Unused (0x40)"
       },
       {
         "mask": 128,
-        "name": "Revive?"
+        "name": "Revive"
       }
     ]
   },

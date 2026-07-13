@@ -79,9 +79,9 @@
     "name": "unknown_0x09",
     "offset": 9,
     "size": 1,
-    "label": "Unknown (menu magic flag)",
+    "label": "Unused menu copy",
     "group": "General",
-    "help": "Per-spell byte copied into the field character data during menu magic setup (setMenuFlagMagicOnCharaData / linkedStockFieldCharData). Exact gameplay meaning not yet identified."
+    "help": "Copied into the field character data during menu magic setup (setMenuFlagMagicOnCharaData), but that slot is never read back (IDA: 0 readers) - effectively vestigial."
    },
    {
     "name": "target_info",
@@ -441,10 +441,18 @@
    {
     "name": "unknown_0x08",
     "offset": 8,
-    "size": 2,
+    "size": 1,
     "group": "General",
-    "label": "Unknown (char parse)",
-    "help": "Read in ResetAndParseBattleAndFieldCharacter; purpose TBD."
+    "label": "Unknown 0x08",
+    "help": "Copied per junctioned GF into the battle character data (ResetAndParseBattleAndFieldCharacter); consumer not yet identified."
+   },
+   {
+    "name": "target_info",
+    "offset": 9,
+    "size": 1,
+    "group": "General",
+    "lookup": "target_info",
+    "help": "Default targeting behavior. Bitfield: combine flags."
    },
    {
     "name": "attack_flags",
@@ -570,6 +578,14 @@
     "group": "Abilities"
    },
    {
+    "name": "ability1_learn",
+    "offset": 30,
+    "size": 1,
+    "label": "Ability 1 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
     "name": "ability2",
     "offset": 33,
     "size": 1,
@@ -583,6 +599,14 @@
     "size": 1,
     "label": "Ability 2 unlocker",
     "group": "Abilities"
+   },
+   {
+    "name": "ability2_learn",
+    "offset": 34,
+    "size": 1,
+    "label": "Ability 2 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
    },
    {
     "name": "ability3",
@@ -600,6 +624,14 @@
     "group": "Abilities"
    },
    {
+    "name": "ability3_learn",
+    "offset": 38,
+    "size": 1,
+    "label": "Ability 3 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
     "name": "ability4",
     "offset": 41,
     "size": 1,
@@ -613,6 +645,14 @@
     "size": 1,
     "label": "Ability 4 unlocker",
     "group": "Abilities"
+   },
+   {
+    "name": "ability4_learn",
+    "offset": 42,
+    "size": 1,
+    "label": "Ability 4 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
    },
    {
     "name": "ability5",
@@ -630,6 +670,14 @@
     "group": "Abilities"
    },
    {
+    "name": "ability5_learn",
+    "offset": 46,
+    "size": 1,
+    "label": "Ability 5 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
     "name": "ability6",
     "offset": 49,
     "size": 1,
@@ -643,6 +691,14 @@
     "size": 1,
     "label": "Ability 6 unlocker",
     "group": "Abilities"
+   },
+   {
+    "name": "ability6_learn",
+    "offset": 50,
+    "size": 1,
+    "label": "Ability 6 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
    },
    {
     "name": "ability7",
@@ -660,6 +716,14 @@
     "group": "Abilities"
    },
    {
+    "name": "ability7_learn",
+    "offset": 54,
+    "size": 1,
+    "label": "Ability 7 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
     "name": "ability8",
     "offset": 57,
     "size": 1,
@@ -673,6 +737,14 @@
     "size": 1,
     "label": "Ability 8 unlocker",
     "group": "Abilities"
+   },
+   {
+    "name": "ability8_learn",
+    "offset": 58,
+    "size": 1,
+    "label": "Ability 8 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
    },
    {
     "name": "ability9",
@@ -690,6 +762,14 @@
     "group": "Abilities"
    },
    {
+    "name": "ability9_learn",
+    "offset": 62,
+    "size": 1,
+    "label": "Ability 9 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
     "name": "ability10",
     "offset": 65,
     "size": 1,
@@ -703,6 +783,14 @@
     "size": 1,
     "label": "Ability 10 unlocker",
     "group": "Abilities"
+   },
+   {
+    "name": "ability10_learn",
+    "offset": 66,
+    "size": 1,
+    "label": "Ability 10 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
    },
    {
     "name": "ability11",
@@ -720,6 +808,14 @@
     "group": "Abilities"
    },
    {
+    "name": "ability11_learn",
+    "offset": 70,
+    "size": 1,
+    "label": "Ability 11 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
     "name": "ability12",
     "offset": 73,
     "size": 1,
@@ -733,6 +829,14 @@
     "size": 1,
     "label": "Ability 12 unlocker",
     "group": "Abilities"
+   },
+   {
+    "name": "ability12_learn",
+    "offset": 74,
+    "size": 1,
+    "label": "Ability 12 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
    },
    {
     "name": "ability13",
@@ -750,6 +854,14 @@
     "group": "Abilities"
    },
    {
+    "name": "ability13_learn",
+    "offset": 78,
+    "size": 1,
+    "label": "Ability 13 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
     "name": "ability14",
     "offset": 81,
     "size": 1,
@@ -763,6 +875,14 @@
     "size": 1,
     "label": "Ability 14 unlocker",
     "group": "Abilities"
+   },
+   {
+    "name": "ability14_learn",
+    "offset": 82,
+    "size": 1,
+    "label": "Ability 14 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
    },
    {
     "name": "ability15",
@@ -780,6 +900,14 @@
     "group": "Abilities"
    },
    {
+    "name": "ability15_learn",
+    "offset": 86,
+    "size": 1,
+    "label": "Ability 15 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
     "name": "ability16",
     "offset": 89,
     "size": 1,
@@ -793,6 +921,14 @@
     "size": 1,
     "label": "Ability 16 unlocker",
     "group": "Abilities"
+   },
+   {
+    "name": "ability16_learn",
+    "offset": 90,
+    "size": 1,
+    "label": "Ability 16 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
    },
    {
     "name": "ability17",
@@ -810,6 +946,14 @@
     "group": "Abilities"
    },
    {
+    "name": "ability17_learn",
+    "offset": 94,
+    "size": 1,
+    "label": "Ability 17 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
     "name": "ability18",
     "offset": 97,
     "size": 1,
@@ -823,6 +967,14 @@
     "size": 1,
     "label": "Ability 18 unlocker",
     "group": "Abilities"
+   },
+   {
+    "name": "ability18_learn",
+    "offset": 98,
+    "size": 1,
+    "label": "Ability 18 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
    },
    {
     "name": "ability19",
@@ -840,6 +992,14 @@
     "group": "Abilities"
    },
    {
+    "name": "ability19_learn",
+    "offset": 102,
+    "size": 1,
+    "label": "Ability 19 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
     "name": "ability20",
     "offset": 105,
     "size": 1,
@@ -855,6 +1015,14 @@
     "group": "Abilities"
    },
    {
+    "name": "ability20_learn",
+    "offset": 106,
+    "size": 1,
+    "label": "Ability 20 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
     "name": "ability21",
     "offset": 109,
     "size": 1,
@@ -868,6 +1036,30 @@
     "size": 1,
     "label": "Ability 21 unlocker",
     "group": "Abilities"
+   },
+   {
+    "name": "ability21_learn",
+    "offset": 110,
+    "size": 1,
+    "label": "Ability 21 learn order",
+    "group": "Abilities",
+    "help": "GF ability-learning order byte - read by battleComputeEndBattle to pick the GF's next LearningAbility after this one completes."
+   },
+   {
+    "name": "boost_param_1",
+    "offset": 128,
+    "size": 1,
+    "group": "General",
+    "label": "Boost param 1 (x15)",
+    "help": "GF Boost parameter - multiplied by 15 by pre_computeGFBoost."
+   },
+   {
+    "name": "boost_param_2",
+    "offset": 129,
+    "size": 1,
+    "group": "General",
+    "label": "Boost param 2 (x15)",
+    "help": "GF Boost parameter - multiplied by 15 by pre_computeGFBoost."
    },
    {
     "name": "compat_quezacotl",
@@ -1037,9 +1229,9 @@
     "name": "unknown_0x09",
     "offset": 9,
     "size": 1,
-    "label": "Unknown (command calc)",
+    "label": "Hit count / name flag",
     "group": "Data",
-    "help": "Read in computeCommandAction; purpose TBD."
+    "help": "Bits 0-6 = hit count; bit 7 = show attack name (if clear, the attack-name text is suppressed). Read in computeCommandAction."
    },
    {
     "name": "element",
@@ -2125,27 +2317,28 @@
     "help": "Accuracy for inflicting the statuses below (0 = never lands)."
    },
    {
-    "name": "unknown_0x07",
+    "name": "target_info",
     "offset": 7,
     "size": 1,
-    "label": "Unknown 0x07",
+    "lookup": "target_info",
     "group": "Data",
-    "help": "Unknown but used - read by `MonsterAI_DispatchSection` (purpose not yet identified)."
+    "help": "Default targeting behavior. Bitfield: combine flags."
    },
    {
-    "name": "status_flags",
+    "name": "attack_flags",
     "offset": 8,
     "size": 1,
-    "label": "Status flags",
-    "group": "Data"
+    "lookup": "attack_flags",
+    "group": "Data",
+    "help": "Attack behavior flags. Bitfield: combine flags."
    },
    {
-    "name": "unknown_0x09",
+    "name": "target_hit_animation",
     "offset": 9,
     "size": 1,
-    "label": "Unknown 0x09",
+    "label": "Target hit animation",
     "group": "Data",
-    "help": "Unknown but used - read by `Battle_applyDamage` (purpose not yet identified)."
+    "help": "Target hit/reaction animation ID (HIT_TYPE_TARGET_ANIMATION_TO_PLAY) played on the target when the ability lands - the per-command-type equivalent of the GF 'target hit animation' field. (Battle_applyDamage)"
    },
    {
     "name": "hit_count",

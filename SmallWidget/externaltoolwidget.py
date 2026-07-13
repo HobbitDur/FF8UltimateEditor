@@ -6,16 +6,18 @@ from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QCheckBox
 
 
 class ExternalToolWidget(QWidget):
-    def __init__(self, icon_path: str, func_callback: Callable, tooltip_text: str = ""):
+    def __init__(self, icon_path: str, func_callback: Callable, tooltip_text: str = "", show_checkbox: bool = True):
         QWidget.__init__(self)
         self.update_selected = False
 
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
 
-        self._check_update = QCheckBox()
-        self._check_update.stateChanged.connect(self._on_checkbox_changed)
-        self._check_update.setToolTip("Select if you want to update this program when updating all tools")
+        if show_checkbox:
+            self._check_update = QCheckBox()
+            self._check_update.stateChanged.connect(self._on_checkbox_changed)
+            self._check_update.setToolTip("Select if you want to update this program when updating all tools")
+            self.main_layout.addWidget(self._check_update, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self._tool_button = QPushButton()
         self._tool_button.setIcon(QIcon(icon_path))
@@ -25,7 +27,6 @@ class ExternalToolWidget(QWidget):
         if tooltip_text:
             self._tool_button.setToolTip(tooltip_text)
 
-        self.main_layout.addWidget(self._check_update, alignment=Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self._tool_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def _on_checkbox_changed(self):
