@@ -20,6 +20,7 @@ import argparse
 import ctypes
 import json
 import pathlib
+import random
 import sys
 import time
 from ctypes import wintypes
@@ -317,7 +318,7 @@ def _lowlevel_for_entry(name: str, hold: float, t: float):
             {"kind": "scan", "code": code, "d": 0, "t": t + hold}]
 
 
-def _expand_authored_events(entries):
+def _expand_authored_events(entries, default_speed=1.0):
     """Expand the hand-authoring schema (tap/hold, plain buttons or combos)
     into a normalized low-level timeline.
 
@@ -329,50 +330,83 @@ def _expand_authored_events(entries):
     - "hold" omitted   -> a quick tap (DEFAULT_TAP seconds).
     - "hold": N        -> button/combo held for N seconds.
     - "b": "ctrl+s"    -> modifier+key combo, sent as real VKs.
+
+    Speed marker entry: {"speed": X} (no "b") — changes the playback speed
+    multiplier for every event from this point on (does not consume time,
+    does not affect "t" of the entry after it — that "t" still measures the
+    gap since the last real button). Use this to slow down only a risky
+    stretch (e.g. the field-load right after loading a save) and run the
+    rest at full speed. Applied by replay(), not baked into "t" here.
     """
     events = []
     cursor = 0.0  # absolute time the previous entry's hold ended
+    current_speed = default_speed
     for entry in entries:
+        if "b" not in entry:  # speed marker
+            current_speed = entry["speed"]
+            continue
         hold = entry.get("hold", DEFAULT_TAP)
         start = cursor + entry["t"]
-        events.extend(_lowlevel_for_entry(entry["b"], hold, start))
+        for ev in _lowlevel_for_entry(entry["b"], hold, start):
+            ev["speed"] = current_speed
+            events.append(ev)
         cursor = start + hold
     events.sort(key=lambda e: e["t"])
     return events
 
 
-def _normalize_raw_events(entries):
+def _normalize_raw_events(entries, default_speed=1.0):
     """Normalize the raw recorder schema ({"b","d","t"}, plain buttons only,
     as produced by record()) into the same low-level format as authored events."""
-    return [{"kind": "scan", "code": FF8_BUTTONS[e["b"].lower()], "d": e["d"], "t": e["t"]} for e in entries]
+    return [{"kind": "scan", "code": FF8_BUTTONS[e["b"].lower()], "d": e["d"], "t": e["t"], "speed": default_speed}
+            for e in entries]
 
 
-def load_events(name: str):
+def load_events(name: str, default_speed=1.0):
     """Load a recording, transparently handling both the raw recorder
     schema ({"b","d","t"}) and the hand-authored tap/hold schema
-    ({"b","t","hold"?}, "b" may be a combo like "ctrl+s") — whichever one
-    the file uses. Returns a normalized low-level timeline."""
+    ({"b","t","hold"?}, "b" may be a combo like "ctrl+s", or {"speed":X}
+    markers) — whichever one the file uses. Returns a normalized low-level
+    timeline, each event tagged with the speed active at that point."""
     path = RECORDINGS_DIR / f"{name}.json"
     if not path.exists():
         return None
     entries = json.loads(path.read_text(encoding="utf-8"))["events"]
     if entries and "d" not in entries[0]:
-        return _expand_authored_events(entries)
-    return _normalize_raw_events(entries)
+        return _expand_authored_events(entries, default_speed)
+    return _normalize_raw_events(entries, default_speed)
 
 
-def replay(name: str, speed: float = 1.0) -> int:
-    """Replay a recorded or hand-authored timeline into the focused FF8 window."""
-    events = load_events(name)
+def replay(name: str, speed: float = 1.0, jitter: float = 0.02) -> int:
+    """Replay a recorded or hand-authored timeline into the focused FF8 window.
+
+    `speed` is the baseline multiplier (applies until/unless a {"speed":X}
+    marker in the file overrides it). Each event's own speed governs how the
+    nominal gap since the previous event is stretched into wall-clock time,
+    so different stretches of the same replay can run at different paces
+    (e.g. slow through a field-load, full speed for plain movement after).
+
+    `jitter`: +/- seconds of random noise added to every event's delivery
+    time. SendInput delivers key transitions with far more precise, uniform
+    timing than a human ever produces (no interrupt/muscle jitter) — that
+    precision can reliably land on the same per-frame race window in FFNx's
+    texture streaming that natural keypress timing almost never hits twice
+    the same way. Jitter de-syncs replay from that window. Set 0 to disable.
+    """
+    events = load_events(name, default_speed=speed)
     if events is None:
         print(f"[error] No recording: {RECORDINGS_DIR / f'{name}.json'}", file=sys.stderr)
         return 1
     if not focus_ff8():
         return 1
-    print(f"[play] Replaying {len(events)} events from {name} (speed x{speed})...")
+    print(f"[play] Replaying {len(events)} events from {name} (base speed x{speed}, jitter +/-{jitter}s)...")
     t0 = time.perf_counter()
+    wall = 0.0
+    last_nominal = 0.0
     for ev in events:
-        target = t0 + ev["t"] / speed
+        wall += (ev["t"] - last_nominal) / ev["speed"]
+        last_nominal = ev["t"]
+        target = t0 + wall + (random.uniform(-jitter, jitter) if jitter else 0.0)
         while (d := target - time.perf_counter()) > 0:
             time.sleep(min(d, 0.01))
         if ev["kind"] == "scan":
@@ -403,6 +437,7 @@ def main() -> int:
     p_play = sub.add_parser("replay")
     p_play.add_argument("name")
     p_play.add_argument("--speed", type=float, default=1.0)
+    p_play.add_argument("--jitter", type=float, default=0.02, help="+/- seconds of random timing noise (0 disables)")
 
     args = parser.parse_args()
     if args.command == "buttons":
@@ -426,7 +461,7 @@ def main() -> int:
     if args.command == "record":
         return record(args.name, timeout=args.timeout)
     if args.command == "replay":
-        return replay(args.name, speed=args.speed)
+        return replay(args.name, speed=args.speed, jitter=args.jitter)
     return 1
 
 
