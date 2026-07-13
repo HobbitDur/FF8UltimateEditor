@@ -6,8 +6,13 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QListWidget,
     QSpinBox, QLineEdit, QGroupBox, QFormLayout, QTabWidget, QCheckBox, QGridLayout,
-    QScrollArea, QComboBox, QTableWidget, QHeaderView,
+    QScrollArea, QComboBox, QTableWidget, QHeaderView, QAbstractSpinBox, QSizePolicy,
 )
+
+# Tooltip shown on the read-only (greyed) padding fields.
+RESERVED_TOOLTIP = ("Read-only: this byte has no meaning in the game (confirmed unused / padding — "
+                    "no code reads it). It is shown for completeness and preserved on save, but "
+                    "editing it would have no effect.")
 
 from FF8GameData.gamedata import GameData
 from SolomonRing.kernellookups import LookupRegistry
@@ -140,10 +145,21 @@ class QuezacotlWidget(QWidget):
         btn.clicked.connect(slot)
         return btn
 
+    @staticmethod
+    def _compact_spin(spin):
+        """Cap a spinbox width to just fit its largest value, so it doesn't stretch."""
+        digits = max(len(str(spin.maximum())), 2)
+        spin.setMaximumWidth(spin.fontMetrics().horizontalAdvance("9" * digits) + 36)
+
+    @staticmethod
+    def _compact_line(line_edit, chars=14):
+        line_edit.setMaximumWidth(line_edit.fontMetrics().horizontalAdvance("W" * chars))
+
     def _spinbox(self, minimum, maximum, slot=None, tooltip="", step=1):
         spin = QSpinBox()
         spin.setRange(minimum, maximum)
         spin.setSingleStep(step)
+        self._compact_spin(spin)
         if tooltip:
             spin.setToolTip(tooltip)
         if slot:
@@ -154,8 +170,9 @@ class QuezacotlWidget(QWidget):
         combo = QComboBox()
         for entry in entries:
             combo.addItem(f"{entry['value']}: {entry['name']}", entry["value"])
-        if adjust_size:  # size to the widest entry instead of filling the cell
-            combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        # Size to the widest entry and don't stretch to fill the row/cell.
+        combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        combo.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         if tooltip:
             combo.setToolTip(tooltip)
         if slot:
@@ -178,6 +195,39 @@ class QuezacotlWidget(QWidget):
             combo.addItem(f"{value}: (unknown)", value)
             index = combo.findData(value)
         combo.setCurrentIndex(index)
+
+    def _readonly_spin(self, tooltip, maximum=0xFF):
+        """A greyed, non-editable spinbox for showing a byte the tool won't let you change.
+        Kept enabled (read-only) so the hover tooltip still works."""
+        spin = QSpinBox()
+        spin.setRange(0, maximum)
+        spin.setReadOnly(True)
+        spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
+        self._compact_spin(spin)
+        spin.setToolTip(tooltip)
+        spin.setStyleSheet("color: gray;")
+        return spin
+
+    @staticmethod
+    def _grey_label(text, tooltip):
+        label = QLabel(text)
+        label.setToolTip(tooltip)
+        label.setStyleSheet("color: gray;")
+        return label
+
+    def _reserved_group(self, rows):
+        """Build a 'Reserved (read-only)' group from rows of (label, offset_tooltip). Returns
+        (group, [(spin, ...)]) so the caller can populate values on reload."""
+        form = QFormLayout()
+        spins = []
+        for label_text in rows:
+            spin = self._readonly_spin(RESERVED_TOOLTIP)
+            form.addRow(self._grey_label(label_text, RESERVED_TOOLTIP), spin)
+            spins.append(spin)
+        group = QGroupBox("Reserved (read-only)")
+        group.setToolTip("Bytes with no game meaning — shown for completeness, not editable")
+        group.setLayout(form)
+        return group, spins
 
     def _bitfield_group(self, title, tooltip, entries, changed_slot, columns=2):
         """Build a QGroupBox of checkboxes over a bitfield. Returns (group, [(bit, checkbox)])."""
@@ -234,6 +284,7 @@ class QuezacotlWidget(QWidget):
 
         self.gf_name_edit = QLineEdit()
         self.gf_name_edit.setToolTip("GF name shown in menus (FF8 text, max 12 bytes)")
+        self._compact_line(self.gf_name_edit)
         self.gf_name_edit.editingFinished.connect(self._on_gf_name_changed)
 
         self.gf_exp_spin = self._spinbox(0, 2147483647, self._on_gf_data_changed, "Total experience earned by this GF")
@@ -259,6 +310,16 @@ class QuezacotlWidget(QWidget):
         status_group = QGroupBox("Status")
         status_group.setToolTip("Core stats and state of the selected GF")
         status_group.setLayout(status_form)
+
+        gf_reserved_group, gf_reserved_spins = self._reserved_group(["Unused (0x10):"])
+        self.gf_unused_spin = gf_reserved_spins[0]
+        status_tab_container = QWidget()
+        status_tab_layout = QVBoxLayout()
+        status_tab_layout.setContentsMargins(0, 0, 0, 0)
+        status_tab_layout.addWidget(status_group)
+        status_tab_layout.addWidget(gf_reserved_group)
+        status_tab_layout.addStretch(1)
+        status_tab_container.setLayout(status_tab_layout)
 
         # Learned abilities: one checkbox per junctionable_ability id (bit id in the GF's
         # 128-bit "complete abilities" field). Value 0 (None) is skipped.
@@ -300,7 +361,7 @@ class QuezacotlWidget(QWidget):
         ap_scroll.setWidget(ap_container)
 
         sub_tabs = QTabWidget()
-        sub_tabs.addTab(status_group, "Status")
+        sub_tabs.addTab(status_tab_container, "Status")
         sub_tabs.addTab(ability_scroll, "Learned Abilities")
         sub_tabs.addTab(ap_scroll, "AP")
         sub_tabs.setTabToolTip(0, "Name, EXP, HP, kills and availability of the GF")
@@ -334,6 +395,7 @@ class QuezacotlWidget(QWidget):
                 spin.setValue(value)
         with QSignalBlocker(self.gf_learning_ability_combo):
             self._select_combo(self.gf_learning_ability_combo, gf.learning_ability)
+        self.gf_unused_spin.setValue(gf.unknown1)
         with QSignalBlocker(self.gf_available_check):
             self.gf_available_check.setChecked(gf.available)
         for ability_id, check in self.gf_ability_checks.items():
@@ -444,9 +506,14 @@ class QuezacotlWidget(QWidget):
                                        "HP-derived and are recomputed by the game.")
         status_checks_group.setLayout(status_checks_form)
 
+        char_reserved_group, char_reserved_spins = self._reserved_group(
+            ["Unused (0x5A):", "Unused (0x6F):", "Unused (0x95):"])
+        self.char_unused_spins = char_reserved_spins
+
         status_tab_layout = QVBoxLayout()
         status_tab_layout.addWidget(status_group)
         status_tab_layout.addWidget(status_checks_group)
+        status_tab_layout.addWidget(char_reserved_group)
         status_tab_layout.addStretch(1)
         status_tab = QWidget()
         status_tab.setLayout(status_tab_layout)
@@ -581,6 +648,8 @@ class QuezacotlWidget(QWidget):
             self.char_alt_model_check.setChecked(char.alt_model)
         with QSignalBlocker(self.char_exist_check):
             self.char_exist_check.setChecked(char.exist)
+        for spin, value in zip(self.char_unused_spins, [char.unknown2, char.unknown3, char.unknown4]):
+            spin.setValue(value)
         for bit, check in self.char_status_checks.items():
             with QSignalBlocker(check):
                 check.setChecked(char.has_status(bit))
@@ -729,13 +798,23 @@ class QuezacotlWidget(QWidget):
         seal_group.setLayout(seal_grid)
 
         # Button remap table (offsets 8-19): each physical button picks a logical action.
+        # unk1/unk2 (0x11/0x12) are phantom slots: a PSX pad has only 10 configurable buttons,
+        # so nothing maps to or consumes them — shown read-only.
+        phantom_tip = ("Read-only: phantom config slot. A PSX controller exposes only 10 configurable "
+                       "buttons, so no physical button maps here and no game code reads it. Preserved on save.")
         self.config_key_combos = {}
         key_form = QFormLayout()
         for field, label in ConfigEntry.KEY_FIELDS:
-            combo = self._enum_combo(self._button_action_entries, self._on_config_changed,
-                                     f"Logical action triggered by the {label} button")
+            phantom = field in ("key_unk1", "key_unk2")
+            combo = self._enum_combo(self._button_action_entries,
+                                     None if phantom else self._on_config_changed,
+                                     phantom_tip if phantom else f"Logical action triggered by the {label} button")
             self.config_key_combos[field] = combo
-            key_form.addRow(f"{label} button:", combo)
+            if phantom:
+                combo.setEnabled(False)
+                key_form.addRow(self._grey_label(f"{label} button:", phantom_tip), combo)
+            else:
+                key_form.addRow(f"{label} button:", combo)
         key_group = QGroupBox("Button config (physical button → action)")
         key_group.setToolTip("FF8's remap swaps roles between the 12 physical buttons; each button here is "
                              "assigned the logical action it performs (default = its own role). Known roles: "
@@ -796,11 +875,25 @@ class QuezacotlWidget(QWidget):
     # ── Misc tab ─────────────────────────────────────────────────────────
 
     def _build_misc_tab(self):
-        self.misc_party_combos = [
-            self._enum_combo(self._party_entries, self._on_misc_changed, f"Party slot {i} character (None = empty)")
-            for i in range(1, 5)]
+        # Party slots 1-3 are the real party; slot 4 (party[3]) is unused padding (the top byte
+        # of the 32-bit party word) — FF8's party is fixed at 3, so it is shown read-only.
+        party4_tip = ("Read-only: party slot 4 is unused padding (the high byte of the 32-bit party word). "
+                      "FF8's party is fixed at 3 members; the game never stores a character here.")
+        self.misc_party_combos = []
+        self._party_rows = []
+        for i in range(4):
+            phantom = i == 3
+            combo = self._enum_combo(self._party_entries, None if phantom else self._on_misc_changed,
+                                     party4_tip if phantom else f"Party slot {i + 1} character (None = empty)")
+            self.misc_party_combos.append(combo)
+            if phantom:
+                combo.setEnabled(False)
+                self._party_rows.append((self._grey_label("Party member 4:", party4_tip), combo))
+            else:
+                self._party_rows.append((f"Party member {i + 1}:", combo))
         self.misc_griever_name_edit = QLineEdit()
         self.misc_griever_name_edit.setToolTip("Griever GF name (FF8 text, max 12 bytes)")
+        self._compact_line(self.misc_griever_name_edit)
         self.misc_griever_name_edit.editingFinished.connect(self._on_misc_griever_name_changed)
         self.misc_gil_spin = self._spinbox(0, 2147483647, self._on_misc_changed, "Party gil")
         self.misc_gil_laguna_spin = self._spinbox(0, 2147483647, self._on_misc_changed, "Laguna-squad gil")
@@ -809,8 +902,8 @@ class QuezacotlWidget(QWidget):
         self.misc_weapon_ward_spin = self._spinbox(0, 0xFF, self._on_misc_changed, "Ward's weapon id")
 
         general_form = QFormLayout()
-        for i, combo in enumerate(self.misc_party_combos, start=1):
-            general_form.addRow(f"Party member {i}:", combo)
+        for label, combo in self._party_rows:
+            general_form.addRow(label, combo)
         general_form.addRow("Griever name:", self.misc_griever_name_edit)
         general_form.addRow("Gil:", self.misc_gil_spin)
         general_form.addRow("Gil (Laguna squad):", self.misc_gil_laguna_spin)

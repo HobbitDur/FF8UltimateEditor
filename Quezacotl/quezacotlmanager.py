@@ -30,6 +30,11 @@ ITEM_ENTRY_SIZE = 2
 GF_DATA_OFFSET = 0
 CHARACTER_DATA_OFFSET = GF_DATA_OFFSET + NB_GF * GF_ENTRY_SIZE       # 1088
 SHOPS_DATA_OFFSET = CHARACTER_DATA_OFFSET + NB_CHARACTERS * CHARACTER_ENTRY_SIZE  # 2304
+# Shops block = 20 shop records x 20 bytes (IDA: SG_SHOP): per record, 16 per-slot availability
+# bytes + a 2-byte visited flag + 2 pad. The 16 bytes are a *recomputed cache*: the game
+# overwrites them from shop.bin + story flags on every shop entry, so editing them has no
+# lasting effect (shop.bin is authoritative). New game zeroes the block. The tool therefore
+# preserves it untouched rather than exposing a no-op editor.
 CONFIG_DATA_OFFSET = 2704
 MISC_DATA_OFFSET = CONFIG_DATA_OFFSET + CONFIG_ENTRY_SIZE            # 2724
 ITEMS_DATA_OFFSET = MISC_DATA_OFFSET + MISC_ENTRY_SIZE               # 2804
@@ -492,10 +497,12 @@ for _add, _name in enumerate(ConfigEntry._FIELDS):
 
 
 class MiscEntry:
-    """The single 80-byte misc record (InitWorker.cs MiscData / ReadMisc).
+    """The single 80-byte misc record (IDA: SG_PARTY_BATTLE + the limit-break globals).
 
-    Only the first 48 bytes were ever decoded by the original tool; the remaining tail is
-    kept untouched (round-tripped as raw bytes) since its meaning is unknown.
+    The first 48 bytes (party, unlocked weapons, Griever name, weapon ids, gil, limit-break
+    unlocks) are edited here. The 32-byte tail (offset 0x30) is the items-battle-order array
+    (index = battle-usable item id - 1, value = its slot in the in-battle item menu); it is
+    runtime ordering state, so the tool round-trips it untouched rather than exposing it.
     """
 
     def __init__(self, buffer, offset, game_data: GameData):
@@ -535,8 +542,9 @@ class MiscEntry:
 
     @property
     def party_mem4(self):
-        """4th party slot (IDA: `party[4]`); unused by the original C# tool, which treated
-        offset 3 as padding, but it is real game data (e.g. 0xFF = empty)."""
+        """Offset 3 is unused padding — the high byte of the 32-bit party word. FF8's party is
+        fixed at 3 members (every party reader/writer bounds at index 3); the game never stores
+        a character here. Preserved but never edited."""
         return self._byte(3)
 
     @party_mem4.setter
@@ -625,12 +633,15 @@ class MiscEntry:
     def weapon_id_ward(self, value):
         self._set_byte(22, value)
 
+    # Offset 0x17 is not padding (the IDB's misleading `align` name): it is a persisted
+    # status/limit menu cursor-selection byte, read by the status-menu init code. Kept as a
+    # raw byte; the tool preserves it rather than exposing a cursor position.
     @property
-    def align(self):
+    def status_menu_selection(self):
         return self._byte(23)
 
-    @align.setter
-    def align(self, value):
+    @status_menu_selection.setter
+    def status_menu_selection(self, value):
         self._set_byte(23, value)
 
     @property

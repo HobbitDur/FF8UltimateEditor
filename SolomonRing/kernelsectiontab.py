@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
 )
 
 from SolomonRing.kernelentry import KernelEntry
+from SmallWidget.nowheel import NoWheelComboBox, NoWheelSpinBox
 
 
 def _prettify(name: str) -> str:
@@ -182,7 +183,7 @@ class KernelSectionTab(QWidget):
             return box
 
         if lookup and lookup["type"] == "enum":
-            combo = QComboBox()
+            combo = NoWheelComboBox()
             for entry in lookup["entries"]:
                 combo.addItem(entry["name"], entry["value"])
             # Size the closed combo to its longest entry (plus arrow/frame), capped so a
@@ -201,7 +202,7 @@ class KernelSectionTab(QWidget):
         # Plain integer
         max_value = (1 << (8 * field["size"])) - 1
         if max_value <= 0x7FFFFFFF:
-            spin = QSpinBox()
+            spin = NoWheelSpinBox()
             spin.setRange(0, max_value)
             # Size the spinbox to its biggest possible value (plus buttons/frame).
             spin.setFixedWidth(spin.fontMetrics().horizontalAdvance(str(max_value)) + 36)

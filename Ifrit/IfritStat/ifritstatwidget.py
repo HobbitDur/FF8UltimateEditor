@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 
 from FF8GameData.monsterdata import AIData
 from FF8GameData.dat.sequenceanalyser import SequenceAnalyser
+from SmallWidget.nowheel import NoWheelComboBox, NoWheelSpinBox
 
 
 # Tooltips describing the four raw stat bytes and how the engine turns them into
@@ -207,7 +208,7 @@ class IfritStatWidget(QWidget):
 
     @staticmethod
     def _spin(minimum, maximum, step=1, tooltip="", compact=False) -> QSpinBox:
-        spin = QSpinBox()
+        spin = NoWheelSpinBox()
         spin.setRange(minimum, maximum)
         spin.setSingleStep(step)
         if compact:  # don't let the layout stretch it past what its digits need
@@ -220,7 +221,7 @@ class IfritStatWidget(QWidget):
         """Empty combo. max_chars caps the box width to N chars regardless of the
         longest item (long text just elides — full text is always in the hover);
         compact stops the layout from stretching it wider than that."""
-        combo = QComboBox()
+        combo = NoWheelComboBox()
         if max_chars is not None:
             combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             combo.setMinimumContentsLength(max_chars)
