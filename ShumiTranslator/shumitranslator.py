@@ -5,7 +5,7 @@ import pathlib
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QHBoxLayout, QLabel, \
-    QMessageBox, QComboBox
+    QMessageBox, QComboBox, QCheckBox
 
 from FF8GameData.gamedata import GameData, FileType, SectionType, RemasterCardType
 from .model.battle.battlemanager import BattleManager
@@ -126,6 +126,13 @@ class ShumiTranslator(QWidget):
         self.file_type_layout.addWidget(self.file_type_selection_label)
         self.file_type_layout.addWidget(self.file_type_selection_widget)
 
+        # Japanese encoding toggle: flips the shared GameData codec to the 4-table JP font
+        # (2-byte lead bytes 0x19/0x1a/0x1b). Disabled if sysfnt_jp.txt is missing.
+        self.jp_checkbox = QCheckBox("日本語 (JP)")
+        self.jp_checkbox.setToolTip("Encode/decode text with the Japanese 4-table font (JP version).")
+        self.jp_checkbox.setEnabled(bool(self.game_data.jp_tables))
+        self.jp_checkbox.toggled.connect(self.__jp_encoding_toggled)
+
         self.info_button = QPushButton()
         self.info_button.setIcon(QIcon(os.path.join(icon_path, 'info.png')))
         self.info_button.setIconSize(QSize(30, 30))
@@ -144,6 +151,7 @@ class ShumiTranslator(QWidget):
         self.layout_top.addWidget(self.uncompress_button)
         self.layout_top.addWidget(self.info_button)
         self.layout_top.addLayout(self.file_type_layout)
+        self.layout_top.addWidget(self.jp_checkbox)
         self.layout_top.addSpacing(20)
         self.layout_top.addWidget(self.text_file_loaded)
         self.layout_top.addStretch(1)
@@ -424,6 +432,13 @@ class ShumiTranslator(QWidget):
             self.scroll_area.setEnabled(True)
             self.csv_upload_button.setEnabled(True)
             self.csv_save_button.setEnabled(True)
+
+    def __jp_encoding_toggled(self, checked):
+        self.game_data.jp_encoding = checked
+        # Re-decode the currently loaded file with the new encoding (single-file types only;
+        # multi-file DAT is a list, it just applies on next load/save).
+        if self.file_loaded and isinstance(self.file_loaded, str):
+            self.__load_file(self.file_loaded)
 
     def __file_type_changed(self):
         if self.file_type_selection_widget.currentText() == self.TRANSLATOR_ENTRY:

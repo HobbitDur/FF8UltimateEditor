@@ -20,6 +20,7 @@ from Cli.base import BaseCliTool
 from Cli.registry import get_registry, register_tool
 from Cli.shumi_translator import ShumiTranslatorCliTool
 from Cli.ifrit_ai import IfritAiCliTool
+from Cli.jp_font_builder import JpFontBuilderCliTool
 
 
 def _register_all_tools():
@@ -27,6 +28,7 @@ def _register_all_tools():
     registry = get_registry()
     registry.register(ShumiTranslatorCliTool)
     registry.register(IfritAiCliTool)
+    registry.register(JpFontBuilderCliTool)
 
 
 def build_main_parser() -> argparse.ArgumentParser:

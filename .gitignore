@@ -39,3 +39,4 @@ Shiva*
 pipeline/config.local.json
 pipeline/ai_md/
 pipeline/recordings/
+*.TEX

@@ -479,10 +479,10 @@ sec(29, 1, ["Description"], [("Data", [
 TIMERS = ["Sleep", "Haste", "Slow", "Stop", "Regen", "Protect", "Shell", "Reflect",
           "Aura", "Curse", "Doom", "Invincible", "Petrifying", "Float"]
 LIMIT_EFFECTS = ["Death", "Poison", "Petrify", "Darkness", "Silence", "Berserk", "Zombie",
-                 "Unknown status", "Sleep", "Haste", "Slow", "Stop", "Regen", "Protect",
+                 "Unused (Status-1 bit 7)", "Sleep", "Haste", "Slow", "Stop", "Regen", "Protect",
                  "Shell", "Reflect", "Aura", "Curse", "Doom", "Invincible", "Petrifying",
                  "Float", "Confusion", "Drain", "Eject", "Double", "Triple", "Defend",
-                 "Unknown status 2", "Unknown status 3", "Charged", "Back Attack"]
+                 "Immune Physical attack", "Immune Magic attack", "Charged", "Back Attack"]
 misc_timers = [(f"timer_{t.lower()}", 1, None, f"{t} timer") for t in TIMERS]
 misc_timers += [("atb_speed_multiplier", 1, None, "ATB speed multiplier"),
                 ("dead_timer", 1, None, "Dead timer")]

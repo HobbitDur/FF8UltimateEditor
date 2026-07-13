@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Literal, Tuple, Optional
@@ -81,6 +82,10 @@ class GameData:
         self.ai_data_json = {}
         self.anim_sequence_data_json = {}
         self.ai_json_file_name = ai_file
+        # Japanese support: 4-table font (Deling sysfnt_jp.txt). Table 0 = single-byte glyphs (0x20-0xFF);
+        # tables 1/2/3 reached via 2-byte lead bytes 0x19/0x1a/0x1b. Set jp_encoding=True to author/read JP text.
+        self.jp_encoding = False
+        self.jp_tables = []
         self.__init_hex_to_str_table()
 
 
@@ -97,6 +102,47 @@ class GameData:
                 self.translate_hex_to_str_table[i] = self.translate_hex_to_str_table[i].replace(';;;', ',')
                 if self.translate_hex_to_str_table[i].count('"') == 2:
                     self.translate_hex_to_str_table[i] = self.translate_hex_to_str_table[i].replace('"', '')
+        self.__init_jp_tables()
+
+    def __init_jp_tables(self):
+        # Loads the Japanese 4-table font map (Resources/sysfnt_jp.txt). The file holds 4 blocks
+        # separated by a blank line; each block is a comma-separated list of quoted glyphs indexed
+        # from byte 0x20 (same quoting convention as sysfnt.txt). Missing file => JP support disabled.
+        self.jp_tables = []
+        jp_path = os.path.join(self.resource_folder, "sysfnt_jp.txt")
+        if not os.path.exists(jp_path):
+            return
+        with open(jp_path, "r", encoding="utf-8") as jp_file:
+            raw = jp_file.read()
+        for block in re.split(r'\r?\n\s*\r?\n', raw.strip('\r\n')):
+            block = block.replace(',",",', ',";;;",')  # protect a literal ',' glyph (also the separator)
+            block = block.replace('\r', '').replace('\n', '')
+            table = []
+            for entry in block.split(','):
+                entry = entry.replace(';;;', ',')
+                if entry.count('"') == 2:
+                    entry = entry.replace('"', '')
+                table.append(entry)
+            self.jp_tables.append(table)
+
+    def caract_jp(self, ord_val, table=0):
+        # Returns the glyph for a byte >= 0x20 in the given JP font table (0..3), or None if out of range.
+        if 0 <= table < len(self.jp_tables):
+            idx = ord_val - 0x20
+            if 0 <= idx < len(self.jp_tables[table]):
+                return self.jp_tables[table][idx]
+        return None
+
+    def encode_jp_char(self, char):
+        # Reverse of caract_jp: find a character in the JP tables. Table 0 => single byte [0x20+idx];
+        # tables 1/2/3 => 2-byte lead sequence [0x18+table, 0x20+idx]. Returns None if not found.
+        for table_idx, table in enumerate(self.jp_tables):
+            if char in table:
+                idx = table.index(char)
+                if table_idx == 0:
+                    return [0x20 + idx]
+                return [0x18 + table_idx, 0x20 + idx]
+        return None
 
     @staticmethod
     def find_delimiter_from_csv_file(csv_file):
@@ -421,9 +467,14 @@ class GameData:
                         encode_list.append(int(substring[1:3], 16))
                     c += len(substring) + 2  # +2 for the {}
                     continue
+            if self.jp_encoding:
+                jp_encoded = self.encode_jp_char(char)
+                if jp_encoded is not None:
+                    encode_list.extend(jp_encoded)
+                    c += 1
+                    continue
             encode_list.append(self.translate_hex_to_str_table.index(char))
             c += 1
-            # Jp ?
         return encode_list
 
     def translate_hex_to_str(self, hex_list, zero_as_slash_n=False, first_hex_literal=False, cursor_location_size=2):
@@ -534,15 +585,14 @@ class GameData:
                         build_str += "{{x0e{:02x}}}".format(hex_val)
                 else:
                     build_str += "{x0e}"
-            elif hex_val >= 0x19 and hex_val <= 0x1b:  # jp19, jp1a, jp1b
+            elif hex_val >= 0x19 and hex_val <= 0x1b:  # jp19, jp1a, jp1b: 2-byte, lead byte selects JP font table 1/2/3
                 i += 1
                 if i < hex_size:
                     old_hex_val = hex_val
                     hex_val = hex_list[i]
-                    if hex_val >= 0x20:
-                        character = None  # To be changed, caract(index, oldIndex-0x18);
-                    else:
-                        character = None
+                    character = None
+                    if self.jp_encoding and hex_val >= 0x20:
+                        character = self.caract_jp(hex_val, old_hex_val - 0x18)
                     if not character:
                         character = "{{x{:02x}{:02x}}}".format(old_hex_val, hex_val)
                     build_str += character
@@ -565,7 +615,11 @@ class GameData:
                 else:
                     build_str += "{{x{:02x}}}".format(hex_val)
             else:
-                character = self.translate_hex_to_str_table[hex_val]
+                character = None
+                if self.jp_encoding:  # printable byte 0x20-0xFF => JP font table 0
+                    character = self.caract_jp(hex_val, 0)
+                if character is None:
+                    character = self.translate_hex_to_str_table[hex_val]
                 if not character:
                     character = "{{x{:02x}}}".format(hex_val)
                 build_str += character

@@ -4628,10 +4628,10 @@
     "group": "Status limit effects"
    },
    {
-    "name": "limit_unknown_status_7",
+    "name": "limit_unused_(status-1_bit_7)_7",
     "offset": 23,
     "size": 1,
-    "label": "Unknown status limit effect",
+    "label": "Unused (Status-1 bit 7) limit effect",
     "group": "Status limit effects"
    },
    {
@@ -4775,17 +4775,17 @@
     "group": "Status limit effects"
    },
    {
-    "name": "limit_unknown_status_2_28",
+    "name": "limit_immune_physical_attack_28",
     "offset": 44,
     "size": 1,
-    "label": "Unknown status 2 limit effect",
+    "label": "Immune Physical attack limit effect",
     "group": "Status limit effects"
    },
    {
-    "name": "limit_unknown_status_3_29",
+    "name": "limit_immune_magic_attack_29",
     "offset": 45,
     "size": 1,
-    "label": "Unknown status 3 limit effect",
+    "label": "Immune Magic attack limit effect",
     "group": "Status limit effects"
    },
    {
