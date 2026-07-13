@@ -1,3 +1,4 @@
+import json
 import os
 
 from PyQt6.QtCore import QSize, QSignalBlocker
@@ -59,6 +60,42 @@ class QuezacotlWidget(QWidget):
         self._passive_ability_entries = none_ability + [
             e for e in self._ability_entries if e["value"] in PASSIVE_ABILITY_RANGE]
 
+        json_dir = os.path.join(game_data_folder, "Resources", "json")
+
+        def _load_json(name):
+            with open(os.path.join(json_dir, name), encoding="utf-8") as json_file:
+                return json.load(json_file)
+
+        # Button-remap action list (dedicated json — the config bytes store a logical action id).
+        button_config = _load_json("button_config.json")
+        self._button_action_entries = [{"value": a["id"], "name": a["name"]} for a in button_config["action"]]
+        self._button_action_notes = {a["id"]: a.get("note", "") for a in button_config["action"]}
+
+        # Weapon names for the "unlocked weapons" bitmask: bit i = kernel weapon id i (1:1).
+        # Only bits 0-27 (the 28 junk-shop-upgradeable party weapons) are used by the game.
+        weapon_data = _load_json("kernel_bin_data.json")["weapon_data"]
+        self._weapon_bits = [(w["id"], f"{w['weapon_name']} ({w['character']})")
+                             for w in weapon_data if w["id"] < 28]
+
+        # Limit-break unlock bitfields. Irvine's shot names come from item.json (ids 101-108).
+        limit_data = _load_json("limit_break.json")
+        item_name = {e["value"]: e["name"] for e in self._item_entries}
+        irvine_shot = [{"bit": i, "name": item_name.get(101 + i, f"Ammo {101 + i}")} for i in range(8)]
+        self._limit_bitfield_defs = [
+            ("limit_quistis", "Quistis — Blue Magic", limit_data["quistis_blue_magic"],
+             "Learned Blue Magic (Quistis limit break) — 16-bit mask"),
+            ("limit_zell", "Zell — Duel", limit_data["zell_duel"],
+             "Known Duel moves (Zell limit break)"),
+            ("limit_irvine", "Irvine — Shot", irvine_shot,
+             "Unlocked Shot ammo types (Irvine limit break); each also usable if you carry that ammo"),
+            ("limit_selphie", "Selphie — Slot", limit_data["selphie_slot"],
+             "Unlocked Slot special spells (Selphie limit break)"),
+            ("limit_angelo_known", "Angelo — Known", limit_data["angelo_command"],
+             "Angelo commands known / in learning"),
+            ("limit_angelo_completed", "Angelo — Completed", limit_data["angelo_command"],
+             "Angelo commands fully learned"),
+        ]
+
         self.setWindowTitle("Quezacotl")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'Quezacotl.ico')))
 
@@ -80,6 +117,11 @@ class QuezacotlWidget(QWidget):
         self.tabs.addTab(self._build_config_tab(), "Config")
         self.tabs.addTab(self._build_misc_tab(), "Misc")
         self.tabs.addTab(self._build_items_tab(), "Items")
+        self.tabs.setTabToolTip(0, "The 16 Guardian Forces: stats, learned abilities and AP")
+        self.tabs.setTabToolTip(1, "The 8 playable characters: stats, magic, junctions and abilities")
+        self.tabs.setTabToolTip(2, "Default game configuration (speeds, volume, controls, map seal)")
+        self.tabs.setTabToolTip(3, "Party, gil, weapons, Griever name and limit-break unlocks")
+        self.tabs.setTabToolTip(4, "Starting inventory (item id + quantity per slot)")
         self.tabs.setEnabled(False)
 
         main_layout = QVBoxLayout()
@@ -108,15 +150,26 @@ class QuezacotlWidget(QWidget):
             spin.valueChanged.connect(slot)
         return spin
 
-    def _enum_combo(self, entries, slot=None, tooltip=""):
+    def _enum_combo(self, entries, slot=None, tooltip="", adjust_size=False):
         combo = QComboBox()
         for entry in entries:
             combo.addItem(f"{entry['value']}: {entry['name']}", entry["value"])
+        if adjust_size:  # size to the widest entry instead of filling the cell
+            combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         if tooltip:
             combo.setToolTip(tooltip)
         if slot:
             combo.currentIndexChanged.connect(slot)
         return combo
+
+    @staticmethod
+    def _configure_list_table(table):
+        """Size an (item/magic, quantity) table to its content so the quantity column sits
+        right next to the name column instead of the name stretching across the pane."""
+        header = table.horizontalHeader()
+        header.setStretchLastSection(False)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
 
     @staticmethod
     def _select_combo(combo, value):
@@ -125,6 +178,22 @@ class QuezacotlWidget(QWidget):
             combo.addItem(f"{value}: (unknown)", value)
             index = combo.findData(value)
         combo.setCurrentIndex(index)
+
+    def _bitfield_group(self, title, tooltip, entries, changed_slot, columns=2):
+        """Build a QGroupBox of checkboxes over a bitfield. Returns (group, [(bit, checkbox)])."""
+        group = QGroupBox(title)
+        group.setToolTip(tooltip)
+        grid = QGridLayout()
+        checks = []
+        for i, entry in enumerate(entries):
+            bit = entry["bit"]
+            check = QCheckBox(entry["name"])
+            check.setToolTip(f"Bit {bit}")
+            check.stateChanged.connect(changed_slot)
+            checks.append((bit, check))
+            grid.addWidget(check, i // columns, i % columns)
+        group.setLayout(grid)
+        return group, checks
 
     # ── File operations ────────────────────────────────────────────────
 
@@ -171,9 +240,10 @@ class QuezacotlWidget(QWidget):
         self.gf_hp_spin = self._spinbox(0, 0xFFFF, self._on_gf_data_changed, "Current HP")
         self.gf_kills_spin = self._spinbox(0, 0xFFFF, self._on_gf_data_changed, "Number of enemies this GF has killed")
         self.gf_kos_spin = self._spinbox(0, 0xFFFF, self._on_gf_data_changed, "Number of times this GF was KO'd")
-        self.gf_learning_ability_spin = self._spinbox(0, 0xFF, self._on_gf_data_changed,
-                                                      "Ability id this GF is currently learning (0-based, junctionable_ability)")
-        self.gf_unknown1_spin = self._spinbox(0, 0xFF, self._on_gf_data_changed, "Unknown byte (offset 0x10)")
+        self.gf_learning_ability_combo = self._enum_combo(
+            self._ability_entries, self._on_gf_data_changed,
+            "Ability the GF is currently set to learn — earned AP is applied to it. This is an "
+            "ability id, not an AP amount; the AP invested per ability is on the AP tab.")
         self.gf_available_check = QCheckBox("Available")
         self.gf_available_check.setToolTip("GF has been obtained — set once the GF is junctioned/acquired at least once")
         self.gf_available_check.stateChanged.connect(self._on_gf_data_changed)
@@ -184,10 +254,10 @@ class QuezacotlWidget(QWidget):
         status_form.addRow("Current HP:", self.gf_hp_spin)
         status_form.addRow("Kills:", self.gf_kills_spin)
         status_form.addRow("KOs:", self.gf_kos_spin)
-        status_form.addRow("Learning ability:", self.gf_learning_ability_spin)
-        status_form.addRow("Unknown:", self.gf_unknown1_spin)
+        status_form.addRow("Learning:", self.gf_learning_ability_combo)
         status_form.addRow(self.gf_available_check)
         status_group = QGroupBox("Status")
+        status_group.setToolTip("Core stats and state of the selected GF")
         status_group.setLayout(status_form)
 
         # Learned abilities: one checkbox per junctionable_ability id (bit id in the GF's
@@ -208,13 +278,21 @@ class QuezacotlWidget(QWidget):
         ability_scroll.setWidgetResizable(True)
         ability_scroll.setWidget(ability_container)
 
-        # AP invested per ability slot (22 slots, in the GF's own learnable-ability order).
+        # AP invested per ability slot. The slots are NOT global ability ids: slot N is the
+        # N-th entry in *this GF's* learnable-ability list, whose id/AP-cost order is defined
+        # in kernel.bin (Junctionable GFs section) and is not part of init.out, so the slots
+        # can only be numbered here, not named.
         self.gf_ap_spins = []
         ap_form = QFormLayout()
+        ap_note = QLabel("Slot N = AP invested in this GF's N-th learnable ability (order set by kernel.bin).")
+        ap_note.setWordWrap(True)
+        ap_form.addRow(ap_note)
         for slot in range(1, 23):
-            spin = self._spinbox(0, 0xFF, self._on_gf_ap_changed, f"AP invested in learnable-ability slot {slot}")
+            spin = self._spinbox(0, 0xFF, self._on_gf_ap_changed,
+                                "AP invested in this GF's learnable-ability slot "
+                                f"{slot} (its ability is defined by the GF's kernel.bin ability list)")
             self.gf_ap_spins.append(spin)
-            ap_form.addRow(f"Ability {slot}:", spin)
+            ap_form.addRow(f"Slot {slot}:", spin)
         ap_container = QWidget()
         ap_container.setLayout(ap_form)
         ap_scroll = QScrollArea()
@@ -225,6 +303,9 @@ class QuezacotlWidget(QWidget):
         sub_tabs.addTab(status_group, "Status")
         sub_tabs.addTab(ability_scroll, "Learned Abilities")
         sub_tabs.addTab(ap_scroll, "AP")
+        sub_tabs.setTabToolTip(0, "Name, EXP, HP, kills and availability of the GF")
+        sub_tabs.setTabToolTip(1, "Abilities this GF has finished learning (128-bit ability bitfield)")
+        sub_tabs.setTabToolTip(2, "AP invested toward each of the GF's learnable abilities")
 
         layout = QHBoxLayout()
         layout.addWidget(self.gf_list)
@@ -248,10 +329,11 @@ class QuezacotlWidget(QWidget):
         for spin, value in [
             (self.gf_exp_spin, gf.exp), (self.gf_hp_spin, gf.current_hp),
             (self.gf_kills_spin, gf.kills), (self.gf_kos_spin, gf.kos),
-            (self.gf_learning_ability_spin, gf.learning_ability), (self.gf_unknown1_spin, gf.unknown1),
         ]:
             with QSignalBlocker(spin):
                 spin.setValue(value)
+        with QSignalBlocker(self.gf_learning_ability_combo):
+            self._select_combo(self.gf_learning_ability_combo, gf.learning_ability)
         with QSignalBlocker(self.gf_available_check):
             self.gf_available_check.setChecked(gf.available)
         for ability_id, check in self.gf_ability_checks.items():
@@ -274,8 +356,7 @@ class QuezacotlWidget(QWidget):
         gf.current_hp = self.gf_hp_spin.value()
         gf.kills = self.gf_kills_spin.value()
         gf.kos = self.gf_kos_spin.value()
-        gf.learning_ability = self.gf_learning_ability_spin.value()
-        gf.unknown1 = self.gf_unknown1_spin.value()
+        gf.learning_ability = self.gf_learning_ability_combo.currentData()
         gf.available = self.gf_available_check.isChecked()
 
     def _on_gf_ability_changed(self):
@@ -340,6 +421,7 @@ class QuezacotlWidget(QWidget):
         stats_form.addRow("Spd:", self.char_spd_spin)
         stats_form.addRow("Luck:", self.char_luck_spin)
         status_group = QGroupBox("Status")
+        status_group.setToolTip("HP, EXP, model/weapon and base stats of the selected character")
         status_layout = QHBoxLayout()
         status_layout.addLayout(status_form)
         status_layout.addLayout(stats_form)
@@ -372,11 +454,11 @@ class QuezacotlWidget(QWidget):
         # Magic
         self.char_magic_table = QTableWidget(32, 2)
         self.char_magic_table.setHorizontalHeaderLabels(["Magic", "Quantity"])
-        self.char_magic_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self._configure_list_table(self.char_magic_table)
         self.char_magic_combos = []
         self.char_magic_qty_spins = []
         for row in range(32):
-            combo = self._enum_combo(self._magic_entries, self._on_character_magic_changed)
+            combo = self._enum_combo(self._magic_entries, self._on_character_magic_changed, adjust_size=True)
             self.char_magic_table.setCellWidget(row, 0, combo)
             self.char_magic_combos.append(combo)
             qty = self._spinbox(0, 0xFF, self._on_character_magic_changed, "Amount of this spell stocked")
@@ -398,6 +480,7 @@ class QuezacotlWidget(QWidget):
         for i, combo in enumerate(self.char_passive_combos, start=1):
             abilities_form.addRow(f"Ability {i}:", combo)
         abilities_group = QGroupBox("Equipped abilities")
+        abilities_group.setToolTip("The 4 equipped command abilities and 4 equipped passive abilities")
         abilities_group.setLayout(abilities_form)
         abilities_layout = QVBoxLayout()
         abilities_layout.addWidget(abilities_group)
@@ -431,6 +514,7 @@ class QuezacotlWidget(QWidget):
         gf_layout = QVBoxLayout()
         gf_layout.addLayout(junction_form)
         compat_group = QGroupBox("Compatibility")
+        compat_group.setToolTip(f"Per-GF compatibility ({GF_COMPATIBILITY_MIN}-{GF_COMPATIBILITY_MAX}); higher summons faster")
         compat_group_layout = QVBoxLayout()
         compat_group_layout.addWidget(compat_scroll)
         compat_group.setLayout(compat_group_layout)
@@ -459,6 +543,11 @@ class QuezacotlWidget(QWidget):
         sub_tabs.addTab(abilities_tab, "Abilities")
         sub_tabs.addTab(gf_tab, "G-Forces")
         sub_tabs.addTab(junction_stats_scroll, "Junction")
+        sub_tabs.setTabToolTip(0, "HP, stats and current status")
+        sub_tabs.setTabToolTip(1, "Stocked magic (spell + quantity, 32 slots)")
+        sub_tabs.setTabToolTip(2, "Equipped command and passive abilities")
+        sub_tabs.setTabToolTip(3, "Junctioned GFs and per-GF compatibility")
+        sub_tabs.setTabToolTip(4, "Which magic is junctioned to each stat")
 
         layout = QHBoxLayout()
         layout.addWidget(self.character_list)
@@ -584,6 +673,7 @@ class QuezacotlWidget(QWidget):
     # ── Config tab ───────────────────────────────────────────────────────
 
     def _build_config_tab(self):
+        from Quezacotl.quezacotlmanager import ConfigEntry
         self.config_spins = {}
         speed_tip = "0 = slowest, 4 = fastest"
         sliders = [
@@ -591,7 +681,7 @@ class QuezacotlWidget(QWidget):
             ("battle_message_speed", "Battle message speed", 4, f"Battle message scroll speed. {speed_tip}"),
             ("field_message_speed", "Field message speed", 4, f"Field/menu message scroll speed. {speed_tip}"),
             ("volume", "Sound volume", 100, "Sound volume (0-100)"),
-            ("camera", "Battle camera", 4, f"Battle camera movement style. {speed_tip}"),
+            ("camera", "Battle camera speed", 4, f"Battle camera movement speed. {speed_tip}"),
         ]
         form = QFormLayout()
         for field, label, maximum, tip in sliders:
@@ -599,24 +689,33 @@ class QuezacotlWidget(QWidget):
             self.config_spins[field] = spin
             form.addRow(f"{label}:", spin)
 
-        self.config_flag_spin = self._spinbox(
-            0, 0xFF, self._on_config_changed,
-            "Controller/config bitfield.\n"
-            "bit0 = battle vibration trigger\n"
-            "bit4 = vibration hardware present (auto-set)\n"
-            "bit5 = use custom button config\n"
-            "bit6 = no controller detected (auto-set)\n"
-            "bit7 = controls modified from default")
-        form.addRow("Config flags (bitfield):", self.config_flag_spin)
-        self.config_scan_spin = self._spinbox(0, 0xFF, self._on_config_changed,
-                                             "Unused / vestigial in the PC build (no code reads it)")
-        form.addRow("Scan (unused):", self.config_scan_spin)
+        self.config_scan_check = QCheckBox("Always show full Scan detail")
+        self.config_scan_check.setToolTip("Scan detail mode (offset 0x05 bit 0). Off = repeat Scans on an already-"
+                                          "scanned enemy show an abbreviated result; on = always show the full "
+                                          "Scan info window.")
+        self.config_scan_check.stateChanged.connect(self._on_config_changed)
+        form.addRow("Scan:", self.config_scan_check)
 
         settings_group = QGroupBox("Settings")
+        settings_group.setToolTip("In-game options: speeds, volume, camera, scan detail")
         settings_group.setLayout(form)
 
+        # Config flag (offset 4): editable as a bitfield of named checkboxes.
+        self.config_flag_checks = []
+        flag_grid = QGridLayout()
+        for i, (mask, name) in enumerate(ConfigEntry.FLAG_BITS):
+            check = QCheckBox(name)
+            check.setToolTip(f"Mask 0x{mask:02X}" + (" — normally managed by the game, not the player"
+                                                     if "auto" in name else ""))
+            check.stateChanged.connect(self._on_config_changed)
+            self.config_flag_checks.append((mask, check))
+            flag_grid.addWidget(check, i // 2, i % 2)
+        flag_group = QGroupBox("Config flags")
+        flag_group.setToolTip("Controller / config bitfield (offset 0x04). Some bits are set automatically "
+                              "by the game from the detected hardware.")
+        flag_group.setLayout(flag_grid)
+
         # Map seal (offset 7): 8 named lock bits.
-        from Quezacotl.quezacotlmanager import ConfigEntry
         self.config_map_seal_checks = []
         seal_grid = QGridLayout()
         for i, (mask, name) in enumerate(ConfigEntry.MAP_SEAL_BITS):
@@ -626,22 +725,26 @@ class QuezacotlWidget(QWidget):
             self.config_map_seal_checks.append((mask, check))
             seal_grid.addWidget(check, i // 2, i % 2)
         seal_group = QGroupBox("Map seal (locked menu actions)")
+        seal_group.setToolTip("Which menu actions are currently sealed by the map/story (offset 0x07)")
         seal_group.setLayout(seal_grid)
 
-        # Button remap table (offsets 8-19).
-        self.config_key_spins = {}
+        # Button remap table (offsets 8-19): each physical button picks a logical action.
+        self.config_key_combos = {}
         key_form = QFormLayout()
         for field, label in ConfigEntry.KEY_FIELDS:
-            spin = self._spinbox(0, 0xFF, self._on_config_changed,
-                                "Button remap slot: 1-based index of the logical button assigned to this "
-                                "physical position (default = its own slot number)")
-            self.config_key_spins[field] = spin
-            key_form.addRow(f"{label}:", spin)
-        key_group = QGroupBox("Button config (remap table)")
+            combo = self._enum_combo(self._button_action_entries, self._on_config_changed,
+                                     f"Logical action triggered by the {label} button")
+            self.config_key_combos[field] = combo
+            key_form.addRow(f"{label} button:", combo)
+        key_group = QGroupBox("Button config (physical button → action)")
+        key_group.setToolTip("FF8's remap swaps roles between the 12 physical buttons; each button here is "
+                             "assigned the logical action it performs (default = its own role). Known roles: "
+                             "L2+R2 held = flee battle, R1 = Renzokuken critical timing.")
         key_group.setLayout(key_form)
 
         layout = QVBoxLayout()
         layout.addWidget(settings_group)
+        layout.addWidget(flag_group)
         layout.addWidget(seal_group)
         layout.addWidget(key_group)
         layout.addStretch(1)
@@ -657,16 +760,17 @@ class QuezacotlWidget(QWidget):
         for field, spin in self.config_spins.items():
             with QSignalBlocker(spin):
                 spin.setValue(getattr(config, field))
-        with QSignalBlocker(self.config_flag_spin):
-            self.config_flag_spin.setValue(config.flag)
-        with QSignalBlocker(self.config_scan_spin):
-            self.config_scan_spin.setValue(config.scan)
+        with QSignalBlocker(self.config_scan_check):
+            self.config_scan_check.setChecked(bool(config.scan & 0x01))
+        for mask, check in self.config_flag_checks:
+            with QSignalBlocker(check):
+                check.setChecked(bool(config.flag & mask))
         for mask, check in self.config_map_seal_checks:
             with QSignalBlocker(check):
                 check.setChecked(bool(config.map_seal & mask))
-        for field, spin in self.config_key_spins.items():
-            with QSignalBlocker(spin):
-                spin.setValue(getattr(config, field))
+        for field, combo in self.config_key_combos.items():
+            with QSignalBlocker(combo):
+                self._select_combo(combo, getattr(config, field))
 
     def _on_config_changed(self):
         config = self.manager.config
@@ -674,24 +778,26 @@ class QuezacotlWidget(QWidget):
             return
         for field, spin in self.config_spins.items():
             setattr(config, field, spin.value())
-        config.flag = self.config_flag_spin.value()
-        config.scan = self.config_scan_spin.value()
+        # Only bit 0 of scan is meaningful; preserve any other bits.
+        config.scan = (config.scan & ~0x01) | (0x01 if self.config_scan_check.isChecked() else 0)
+        flag = 0
+        for mask, check in self.config_flag_checks:
+            if check.isChecked():
+                flag |= mask
+        config.flag = flag
         seal = 0
         for mask, check in self.config_map_seal_checks:
             if check.isChecked():
                 seal |= mask
         config.map_seal = seal
-        for field, spin in self.config_key_spins.items():
-            setattr(config, field, spin.value())
+        for field, combo in self.config_key_combos.items():
+            setattr(config, field, combo.currentData())
 
     # ── Misc tab ─────────────────────────────────────────────────────────
 
     def _build_misc_tab(self):
         self.misc_party_combos = [
             self._enum_combo(self._party_entries, self._on_misc_changed, f"Party slot {i} character (None = empty)")
-            for i in range(1, 5)]
-        self.misc_known_weapons_spins = [
-            self._spinbox(0, 0xFF, self._on_misc_changed, f"Unlocked-weapon bitmask byte {i}")
             for i in range(1, 5)]
         self.misc_griever_name_edit = QLineEdit()
         self.misc_griever_name_edit.setToolTip("Griever GF name (FF8 text, max 12 bytes)")
@@ -705,8 +811,6 @@ class QuezacotlWidget(QWidget):
         general_form = QFormLayout()
         for i, combo in enumerate(self.misc_party_combos, start=1):
             general_form.addRow(f"Party member {i}:", combo)
-        for i, spin in enumerate(self.misc_known_weapons_spins, start=1):
-            general_form.addRow(f"Known weapons {i}:", spin)
         general_form.addRow("Griever name:", self.misc_griever_name_edit)
         general_form.addRow("Gil:", self.misc_gil_spin)
         general_form.addRow("Gil (Laguna squad):", self.misc_gil_laguna_spin)
@@ -714,35 +818,43 @@ class QuezacotlWidget(QWidget):
         general_form.addRow("Kiros weapon:", self.misc_weapon_kiros_spin)
         general_form.addRow("Ward weapon:", self.misc_weapon_ward_spin)
         general_group = QGroupBox("General")
+        general_group.setToolTip("Party, Griever name, gil and Laguna-squad weapons")
         general_group.setLayout(general_form)
 
-        self.misc_limit_spins = {}
-        limit_fields = [
-            ("limit_quistis1", "Quistis limit 1", "Quistis Blue Magic unlock flags (low byte)"),
-            ("limit_quistis2", "Quistis limit 2", "Quistis Blue Magic unlock flags (high byte)"),
-            ("limit_zell1", "Zell limit 1", "Zell Duel unlock flags (low byte)"),
-            ("limit_zell2", "Zell limit 2", "Zell Duel unlock flags (high byte)"),
-            ("limit_irvine", "Irvine limit", "Irvine Shot unlock flags"),
-            ("limit_selphie", "Selphie limit", "Selphie Slot unlock flags"),
-            ("limit_angelo_completed", "Angelo Search completed", "Angelo Search learned/completed flag"),
-            ("limit_angelo_known", "Angelo Search known", "Angelo commands known flags"),
-        ]
-        limit_form = QFormLayout()
-        for field, label, tip in limit_fields:
-            spin = self._spinbox(0, 0xFF, self._on_misc_changed, tip)
-            self.misc_limit_spins[field] = spin
-            limit_form.addRow(f"{label}:", spin)
+        # Unlocked weapons: bit i = kernel weapon id i (28 upgradeable party weapons).
+        weapon_entries = [{"bit": wid, "name": name} for wid, name in self._weapon_bits]
+        weapons_group, self.misc_weapon_checks = self._bitfield_group(
+            "Unlocked weapons",
+            "Weapon-upgrade recipes already built/owned (Junk Shop). Bit i = kernel weapon id i.",
+            weapon_entries, self._on_misc_changed, columns=3)
+
+        # Limit-break unlocks: each is a bitfield → a checkbox group.
+        self.misc_limit_bitfields = []  # (manager field, [(bit, checkbox)])
+        limit_groups = []
+        for field, title, entries, tip in self._limit_bitfield_defs:
+            group, checks = self._bitfield_group(title, tip, entries, self._on_misc_changed)
+            self.misc_limit_bitfields.append((field, checks))
+            limit_groups.append(group)
+
+        # Angelo Search points are per-command learning counters (not a bitfield).
         self.misc_angelo_point_spins = [
-            self._spinbox(0, 0xFF, self._on_misc_changed, f"Angelo Search learning progress byte {i}")
-            for i in range(1, 9)]
-        for i, spin in enumerate(self.misc_angelo_point_spins, start=1):
-            limit_form.addRow(f"Angelo Search point {i}:", spin)
-        limit_group = QGroupBox("Limit Breaks")
-        limit_group.setLayout(limit_form)
+            self._spinbox(0, 0xFF, self._on_misc_changed,
+                         "Remaining points to learn this Angelo command (counts down to 0)")
+            for _ in range(8)]
+        points_form = QFormLayout()
+        for i, spin in enumerate(self.misc_angelo_point_spins):
+            angelo_name = self._limit_bitfield_defs[-1][2][i]["name"]
+            points_form.addRow(f"{angelo_name}:", spin)
+        points_group = QGroupBox("Angelo Search — learning points")
+        points_group.setToolTip("Per-command AP-like learning progress; 0 = learned")
+        points_group.setLayout(points_form)
 
         layout = QVBoxLayout()
         layout.addWidget(general_group)
-        layout.addWidget(limit_group)
+        layout.addWidget(weapons_group)
+        for group in limit_groups:
+            layout.addWidget(group)
+        layout.addWidget(points_group)
         layout.addStretch(1)
         container = QWidget()
         container.setLayout(layout)
@@ -757,10 +869,6 @@ class QuezacotlWidget(QWidget):
                                 [misc.party_mem1, misc.party_mem2, misc.party_mem3, misc.party_mem4]):
             with QSignalBlocker(combo):
                 self._select_combo(combo, value)
-        for spin, value in zip(self.misc_known_weapons_spins,
-                               [misc.known_weapons1, misc.known_weapons2, misc.known_weapons3, misc.known_weapons4]):
-            with QSignalBlocker(spin):
-                spin.setValue(value)
         with QSignalBlocker(self.misc_griever_name_edit):
             self.misc_griever_name_edit.setText(misc.griever_name)
         for spin, value in [
@@ -771,9 +879,15 @@ class QuezacotlWidget(QWidget):
         ]:
             with QSignalBlocker(spin):
                 spin.setValue(value)
-        for field, spin in self.misc_limit_spins.items():
-            with QSignalBlocker(spin):
-                spin.setValue(getattr(misc, field))
+        unlocked = misc.unlocked_weapons
+        for bit, check in self.misc_weapon_checks:
+            with QSignalBlocker(check):
+                check.setChecked(bool(unlocked & (1 << bit)))
+        for field, checks in self.misc_limit_bitfields:
+            value = getattr(misc, field)
+            for bit, check in checks:
+                with QSignalBlocker(check):
+                    check.setChecked(bool(value & (1 << bit)))
         for i, spin in enumerate(self.misc_angelo_point_spins):
             with QSignalBlocker(spin):
                 spin.setValue(misc.get_angelo_point(i))
@@ -787,15 +901,21 @@ class QuezacotlWidget(QWidget):
             return
         (misc.party_mem1, misc.party_mem2,
          misc.party_mem3, misc.party_mem4) = (c.currentData() for c in self.misc_party_combos)
-        (misc.known_weapons1, misc.known_weapons2,
-         misc.known_weapons3, misc.known_weapons4) = (s.value() for s in self.misc_known_weapons_spins)
         misc.gil = self.misc_gil_spin.value()
         misc.gil_laguna = self.misc_gil_laguna_spin.value()
         misc.weapon_id_laguna = self.misc_weapon_laguna_spin.value()
         misc.weapon_id_kiros = self.misc_weapon_kiros_spin.value()
         misc.weapon_id_ward = self.misc_weapon_ward_spin.value()
-        for field, spin in self.misc_limit_spins.items():
-            setattr(misc, field, spin.value())
+        # unlocked_weapons keeps any high bits (28-31) the game doesn't use but we shouldn't drop.
+        unlocked = misc.unlocked_weapons
+        for bit, check in self.misc_weapon_checks:
+            unlocked = (unlocked | (1 << bit)) if check.isChecked() else (unlocked & ~(1 << bit))
+        misc.unlocked_weapons = unlocked
+        for field, checks in self.misc_limit_bitfields:
+            value = getattr(misc, field)  # preserve any bits not shown as a checkbox
+            for bit, check in checks:
+                value = (value | (1 << bit)) if check.isChecked() else (value & ~(1 << bit))
+            setattr(misc, field, value)
         for i, spin in enumerate(self.misc_angelo_point_spins):
             misc.set_angelo_point(i, spin.value())
 
@@ -804,14 +924,14 @@ class QuezacotlWidget(QWidget):
     def _build_items_tab(self):
         self.items_table = QTableWidget(0, 2)
         self.items_table.setHorizontalHeaderLabels(["Item", "Quantity"])
-        self.items_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self._configure_list_table(self.items_table)
         return self.items_table
 
     def _reload_items(self):
         self.items_table.setRowCount(0)
         self.items_table.setRowCount(len(self.manager.item_entries))
         for row, entry in enumerate(self.manager.item_entries):
-            combo = self._enum_combo(self._item_entries)
+            combo = self._enum_combo(self._item_entries, adjust_size=True)
             self._select_combo(combo, entry.item_id)
             combo.currentIndexChanged.connect(self._make_item_id_handler(entry, combo))
             self.items_table.setCellWidget(row, 0, combo)

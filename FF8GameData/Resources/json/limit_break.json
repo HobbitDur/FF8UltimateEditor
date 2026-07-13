@@ -1,0 +1,51 @@
+{
+  "_comment": "Per-character limit-break unlock bitfields in init.out/save Misc. Field structures (bitfield vs counter, bit count, which kernel table each bit indexes) are confirmed from IDA. The per-bit display names live in the game message files, not the exe, so they follow the canonical FF8 kernel-table order; entries marked with '?' are unverified. Irvine's shot names are pulled live from item.json (item ids 101-108).",
+  "quistis_blue_magic": [
+    {"bit": 0, "name": "Laser Eye"},
+    {"bit": 1, "name": "Ultra Waves"},
+    {"bit": 2, "name": "Electrocute"},
+    {"bit": 3, "name": "LV? Death (?)"},
+    {"bit": 4, "name": "Degenerator"},
+    {"bit": 5, "name": "Aqua Breath"},
+    {"bit": 6, "name": "Micro Missiles"},
+    {"bit": 7, "name": "Acid"},
+    {"bit": 8, "name": "Gatling Gun"},
+    {"bit": 9, "name": "Fire Breath"},
+    {"bit": 10, "name": "Bad Breath"},
+    {"bit": 11, "name": "White Wind"},
+    {"bit": 12, "name": "Homing Laser"},
+    {"bit": 13, "name": "Mighty Guard"},
+    {"bit": 14, "name": "Ray-Bomb"},
+    {"bit": 15, "name": "Shockwave Pulse"}
+  ],
+  "zell_duel": [
+    {"bit": 0, "name": "Punch Rush"},
+    {"bit": 1, "name": "Booya"},
+    {"bit": 2, "name": "Heel Drop"},
+    {"bit": 3, "name": "Mach Kick"},
+    {"bit": 4, "name": "Dolphin Blow"},
+    {"bit": 5, "name": "Meteor Strike"},
+    {"bit": 6, "name": "Burning Rave"},
+    {"bit": 7, "name": "Meteor Barret"},
+    {"bit": 8, "name": "Different Beat"},
+    {"bit": 9, "name": "My Final Heaven"}
+  ],
+  "selphie_slot": [
+    {"bit": 0, "name": "Slot special 1 (magic 51)"},
+    {"bit": 1, "name": "Slot special 2 (magic 52)"},
+    {"bit": 2, "name": "Slot special 3 (magic 53)"},
+    {"bit": 3, "name": "Slot special 4 (magic 54)"},
+    {"bit": 4, "name": "Slot special 5 (magic 55)"},
+    {"bit": 5, "name": "Slot special 6 (magic 56)"}
+  ],
+  "angelo_command": [
+    {"bit": 0, "name": "Angelo Rush"},
+    {"bit": 1, "name": "Angelo Recover"},
+    {"bit": 2, "name": "Angelo Reverse"},
+    {"bit": 3, "name": "Angelo Search"},
+    {"bit": 4, "name": "Invincible Moon"},
+    {"bit": 5, "name": "Angelo Cannon"},
+    {"bit": 6, "name": "Angelo Strike"},
+    {"bit": 7, "name": "Wishing Star"}
+  ]
+}

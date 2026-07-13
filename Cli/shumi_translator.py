@@ -49,7 +49,7 @@ def _load_game_data():
     gd.load_monster_data()
     gd.load_status_data()
     gd.load_gforce_data()
-    gd.load_special_action_data()
+    gd.load_attack_animation_data()
     gd.load_enemy_abilities_data()
     return gd
 

@@ -60,10 +60,12 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         self.back_face_offset = -0.003  # Smaller offset for triangles
         self.triangle_cache = {}  # Cache for back face offsets per fra
-        # Backface culling mode (see _should_cull_backface): 'duplicates'
-        # resolves two-sided pairs only (safe default), 'all' culls every
-        # back-facing face like the game, 'off' disables culling.
-        self.backface_cull = 'duplicates'
+        # Backface culling mode (see _should_cull_backface): 'all' culls every
+        # back-facing face exactly like the game — required to see through
+        # single-sided fringe/lace fins (e.g. Blobra) instead of their dark
+        # backsides. 'duplicates' resolves two-sided pairs only, 'off'
+        # disables culling.
+        self.backface_cull = 'all'
         # Battle .dat textures go through PNG files that lose alpha, so pure
         # black is keyed to transparent. Tools that provide real alpha
         # (e.g. Seed's TIM decoding) set this to False to keep opaque black.

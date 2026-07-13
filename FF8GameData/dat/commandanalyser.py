@@ -1,7 +1,7 @@
 from enum import Enum
 
 from .daterrors import ParamSlotIdEnableError, ParamLocalVarParamError, ParamSceneOutSlotIdError, ParamAssignSlotIdError, ParamMagicIdError, \
-    ParamMagicTypeError, ParamStatusAIError, ComparatorError, ParamItemError, ParamGfError, ParamCardError, ParamSpecialActionError, ParamTargetBasicError, \
+    ParamMagicTypeError, ParamStatusAIError, ComparatorError, ParamItemError, ParamGfError, ParamCardError, ParamAttackAnimationError, ParamTargetBasicError, \
     ParamTargetSpecificError, ParamTargetGenericError, ParamTargetSlotError, ParamAptitudeError
 from ..gamedata import GameData
 
@@ -10,7 +10,7 @@ class CurrentIfType(Enum):
     MAGIC = 0
     ITEM = 1
     GFORCE = 2
-    SPECIAL_ACTION = 3
+    ATTACK_ANIMATION = 3
     NONE = 4
 
 
@@ -257,15 +257,15 @@ class CommandAnalyser:
                     op_code_list[i] = [x['op_code'] for x in self.game_data.ai_data_json['list_var'] if x['var_name'] == op_code_list[i]][0]
                 elif param_type == "activate":
                     op_code_list[i] = [x['id'] for x in self.game_data.ai_data_json['activate_type'] if x['name'] == op_code_list[i]][0]
-                elif param_type == "special_action":
+                elif param_type == "attack_animation":
                     try:
-                        op_code_list[i] = [x['id'] for x in self.game_data.special_action_data_json['special_action'] if x['name'] == op_code_list[i]][0]
+                        op_code_list[i] = [x['id'] for x in self.game_data.attack_animation_data_json['attack_animation'] if x['name'] == op_code_list[i]][0]
                     except IndexError:
-                        special_param_id = [val_dict["id"] for val_dict in self.game_data.special_action_data_json["special_action"]]
+                        special_param_id = [val_dict["id"] for val_dict in self.game_data.attack_animation_data_json["attack_animation"]]
                         if int(op_code_list[i]) in special_param_id:
                             op_code_list[i] = int(op_code_list[i])
                         else:
-                            raise ParamSpecialActionError(op_code_list[i])
+                            raise ParamAttackAnimationError(op_code_list[i])
                 elif param_type == "local_var_param":
                     # Managing special case for 203 instead of last attacker
                     try:
@@ -550,10 +550,10 @@ class CommandAnalyser:
                                 if search_item:
                                     r_cond_result = search_item[0]
                                 else:
-                                    search_special_action = [x['id'] for x in self.game_data.special_action_data_json['special_action'] if
+                                    search_attack_animation = [x['id'] for x in self.game_data.attack_animation_data_json['attack_animation'] if
                                                              x['name'] == r_cond]
-                                    if search_special_action:
-                                        r_cond_result = search_special_action[0]
+                                    if search_attack_animation:
+                                        r_cond_result = search_attack_animation[0]
                                     else:
                                         print(f"Unexpected param {r_cond} when searching for subject 10.4")
                                         r_cond_result = int(r_cond)
@@ -722,12 +722,12 @@ class CommandAnalyser:
                 elif type == "global_var":
                     param_value.append(self.__get_var_name(self.__op_code[op_index]))
                     self.param_possible_list.append(self.__get_possible_global_var())
-                elif type == "special_action":
-                    if self.__op_code[op_index] < len(self.game_data.special_action_data_json["special_action"]):
-                        param_value.append(self.game_data.special_action_data_json["special_action"][self.__op_code[op_index]]['name'])
-                        self.param_possible_list.append(self.__get_possible_special_action())
+                elif type == "attack_animation":
+                    if self.__op_code[op_index] < len(self.game_data.attack_animation_data_json["attack_animation"]):
+                        param_value.append(self.game_data.attack_animation_data_json["attack_animation"][self.__op_code[op_index]]['name'])
+                        self.param_possible_list.append(self.__get_possible_attack_animation())
                     else:
-                        param_value.append("UNKNOWN SPECIAL_ACTION")
+                        param_value.append("UNKNOWN ATTACK_ANIMATION")
                 elif type == "monster_line_ability":
                     possible_ability_values = []
                     nb_ability_high = len([x for x in self.info_stat_data['abilities_high'] if x['id'] != 0])
@@ -976,8 +976,8 @@ class CommandAnalyser:
     def __get_possible_gender(self):
         return [{'id': val_dict['id'], 'data': val_dict['type']} for id, val_dict in enumerate(self.game_data.ai_data_json["gender_type"])]
 
-    def __get_possible_special_action(self):
-        return [{'id': val_dict['id'], 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.special_action_data_json["special_action"])]
+    def __get_possible_attack_animation(self):
+        return [{'id': val_dict['id'], 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.attack_animation_data_json["attack_animation"])]
 
     def __get_possible_ability(self):
         return [{'id': val_dict['id'], 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.enemy_abilities_data_json["abilities"])]

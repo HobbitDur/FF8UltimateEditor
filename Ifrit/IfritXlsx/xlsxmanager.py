@@ -60,9 +60,9 @@ REF_DATA_COL_MAGIC = 2
 REF_DATA_COL_ITEM = 3
 REF_DATA_COL_CARD = 4
 REF_DATA_COL_DEVOUR = 5
-REF_DATA_COL_SPECIAL_ACTION = 6
+REF_DATA_COL_ATTACK_ANIMATION = 6
 REF_DATA_COL_LIST = [REF_DATA_COL_ABILITIES_TYPE, REF_DATA_COL_ABILITIES, REF_DATA_COL_MAGIC, REF_DATA_COL_ITEM, REF_DATA_COL_CARD, REF_DATA_COL_DEVOUR,
-                     REF_DATA_COL_SPECIAL_ACTION]
+                     REF_DATA_COL_ATTACK_ANIMATION]
 REF_DATA_SHEET_TITLE = 'ref_data'
 
 MAX_COMBAT_TXT = 34
@@ -200,8 +200,8 @@ class DatToXlsx:
                                   {'validate': 'list', 'source': source_str})
 
     def __validate_renzokuken(self, worksheet, game_data: GameData):
-        col_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_SPECIAL_ACTION)
-        source_str = '=' + REF_DATA_SHEET_TITLE + '!$' + col_str + '2:$' + col_str + '$' + str(len(game_data.special_action_data_json['special_action']) + 1)
+        col_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_ATTACK_ANIMATION)
+        source_str = '=' + REF_DATA_SHEET_TITLE + '!$' + col_str + '2:$' + col_str + '$' + str(len(game_data.attack_animation_data_json['attack_animation']) + 1)
         worksheet.data_validation(ROW_RENZOKUKEN + 1, COL_MISC + 1, ROW_RENZOKUKEN + 1 + 2, COL_MISC + 1,
                                   {'validate': 'list', 'source': source_str})
 
@@ -548,7 +548,7 @@ class DatToXlsx:
                         worksheet.write(ROW_RENZOKUKEN + row_index['renzokuken'] + 1, COL_MISC, 'Renzo value {}'.format(row_index['renzokuken'] + 1),
                                         self.row_title_style)
                         worksheet.write(ROW_RENZOKUKEN + row_index['renzokuken'] + 1, COL_MISC + 1,
-                                        [f"{x['id']}:{x['name']}" for x in game_data.special_action_data_json['special_action'] if x['id'] == el][0],
+                                        [f"{x['id']}:{x['name']}" for x in game_data.attack_animation_data_json['attack_animation'] if x['id'] == el][0],
                                         self.border_style)
                         row_index['renzokuken'] += 1
 
@@ -672,7 +672,7 @@ class DatToXlsx:
         # Creating reference data on last tab
         worksheet = self.workbook.add_worksheet(REF_DATA_SHEET_TITLE)
         worksheet.write_row(0, REF_DATA_COL_ABILITIES_TYPE,
-                            ['Monster type abilities', 'Monster abilities', 'Magic', 'Items', 'Card', 'Devour', 'Special action'],
+                            ['Monster type abilities', 'Monster abilities', 'Magic', 'Items', 'Card', 'Devour', 'Attack animation'],
                             cell_format=self.column_title_style)
         for index, el in enumerate(game_data.enemy_abilities_data_json['abilities_type']):
             worksheet.write(index + 1, REF_DATA_COL_ABILITIES_TYPE, f"{el['id']}:{el['name']}", self.border_style)
@@ -686,8 +686,8 @@ class DatToXlsx:
             worksheet.write(index + 1, REF_DATA_COL_DEVOUR, f"{el['id']}:{el['name']}", self.border_style)
         for index, el in enumerate(game_data.card_data_json['card_info']):
             worksheet.write(index + 1, REF_DATA_COL_CARD, f"{el['id']}:{el['name']}", self.border_style)
-        for index, el in enumerate(game_data.special_action_data_json['special_action']):
-            worksheet.write(index + 1, REF_DATA_COL_SPECIAL_ACTION, f"{el['id']}:{el['name']}", self.border_style)
+        for index, el in enumerate(game_data.attack_animation_data_json['attack_animation']):
+            worksheet.write(index + 1, REF_DATA_COL_ATTACK_ANIMATION, f"{el['id']}:{el['name']}", self.border_style)
 
         worksheet.autofit()
 

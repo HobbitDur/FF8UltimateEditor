@@ -60,13 +60,15 @@ class GameData:
         self.resource_folder_image = os.path.join(game_data_submodule_path, "Resources", "image")
         self.resource_folder = os.path.join(game_data_submodule_path, "Resources")
         self.devour_data_json = {}
+        self.camera_category_data_json = {}
+        self.devour_category_data_json = {}
         self.magic_data_json = {}
         self.enemy_abilities_data_json = {}
         self.gforce_data_json = {}
         self.item_data_json = {}
         self.mitem_data_json = {}
         self.draw_data_json = {}
-        self.special_action_data_json = {}
+        self.attack_animation_data_json = {}
         self.field_data_json = {}
         self.stat_data_json = {}
         self.monster_data_json = {}
@@ -138,6 +140,16 @@ class GameData:
         with open(file_path, encoding="utf8") as f:
             self.devour_data_json = json.load(f)
 
+    def load_camera_category_data(self):
+        file_path = os.path.join(self.resource_folder_json, "camera_category.json")
+        with open(file_path, encoding="utf8") as f:
+            self.camera_category_data_json = json.load(f)
+
+    def load_devour_category_data(self):
+        file_path = os.path.join(self.resource_folder_json, "devour_category.json")
+        with open(file_path, encoding="utf8") as f:
+            self.devour_category_data_json = json.load(f)
+
     def load_field_data(self):
         file_path = os.path.join(self.resource_folder_json, "field.json")
         with open(file_path, encoding="utf8") as f:
@@ -153,10 +165,10 @@ class GameData:
         with open(file_path, encoding="utf8") as f:
             self.magic_data_json = json.load(f)
 
-    def load_special_action_data(self):
-        file_path = os.path.join(self.resource_folder_json, "special_action.json")
+    def load_attack_animation_data(self):
+        file_path = os.path.join(self.resource_folder_json, "attack_animation.json")
         with open(file_path, encoding="utf8") as f:
-            self.special_action_data_json = json.load(f)
+            self.attack_animation_data_json = json.load(f)
 
     def load_monster_data(self):
         file_path = os.path.join(self.resource_folder_json, "monster.json")
@@ -567,6 +579,8 @@ class GameData:
         self.load_item_data()
         self.load_mitem_data()
         self.load_devour_data()
+        self.load_camera_category_data()
+        self.load_devour_category_data()
         self.load_gforce_data()
         self.load_stat_data()
         self.load_status_data()
@@ -577,7 +591,7 @@ class GameData:
         self.load_ai_data()
         self.load_magic_data()
         self.load_enemy_abilities_data()
-        self.load_special_action_data()
+        self.load_attack_animation_data()
         self.load_anim_sequence_data()
         self.load_field_data()
         self.load_draw_data()

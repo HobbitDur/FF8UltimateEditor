@@ -451,6 +451,19 @@ class ConfigEntry:
         (0x40, "Resurrection locked"), (0x80, "Save locked"),
     ]
 
+    # flag (offset 4) bit meanings (IDA). Bits 1-3 have no identified use; some bits are
+    # hardware-managed and normally set by the game, not the player (marked "auto").
+    FLAG_BITS = [
+        (0x01, "Battle vibration trigger"),
+        (0x02, "Bit 1 (unknown)"),
+        (0x04, "Bit 2 (unknown)"),
+        (0x08, "Bit 3 (unknown)"),
+        (0x10, "Vibration hardware present (auto)"),
+        (0x20, "Use custom button config"),
+        (0x40, "No controller detected (auto)"),
+        (0x80, "Controls modified from default"),
+    ]
+
     # The 12 remap bytes are physical button slots, in this order.
     KEY_FIELDS = [
         ("key_l2", "L2"), ("key_r2", "R2"), ("key_l1", "L1"), ("key_r1", "R1"),
@@ -530,7 +543,18 @@ class MiscEntry:
     def party_mem4(self, value):
         self._set_byte(3, value)
 
-    # KnownWeapons1..4 live at offset 4..7.
+    # Offset 4-7 is a single u32 bitmask (IDA: SAVEMAP_MISC1.unlocked_weapons): bit i =
+    # weapon-upgrade recipe i has been built/owned (read/written by the Junk Shop). The
+    # original C# tool exposed it as 4 separate "KnownWeapons" bytes; the u32 view is the
+    # real field.
+    @property
+    def unlocked_weapons(self):
+        return _u32(self._buffer, self._offset + 4)
+
+    @unlocked_weapons.setter
+    def unlocked_weapons(self, value):
+        _set_u32(self._buffer, self._offset + 4, value)
+
     @property
     def known_weapons1(self):
         return self._byte(4)
@@ -624,6 +648,25 @@ class MiscEntry:
     @gil_laguna.setter
     def gil_laguna(self, value):
         _set_u32(self._buffer, self._offset + 28, value)
+
+    # Quistis (0x20) and Zell (0x22) limit-break unlocks are each a 16-bit bitfield spanning
+    # two bytes (Blue Magic / Duel moves). Exposed as u16 for the checkbox editors; the
+    # per-byte views below remain for completeness.
+    @property
+    def limit_quistis(self):
+        return _u16(self._buffer, self._offset + 32)
+
+    @limit_quistis.setter
+    def limit_quistis(self, value):
+        _set_u16(self._buffer, self._offset + 32, value)
+
+    @property
+    def limit_zell(self):
+        return _u16(self._buffer, self._offset + 34)
+
+    @limit_zell.setter
+    def limit_zell(self, value):
+        _set_u16(self._buffer, self._offset + 34, value)
 
     @property
     def limit_quistis1(self):

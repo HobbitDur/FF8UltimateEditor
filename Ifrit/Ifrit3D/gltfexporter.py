@@ -102,12 +102,17 @@ class GltfExporter:
         if skinned:
             first_joint_node = len(nodes)
             bind_locals = self._local_bone_transforms(bind_globals, bones)
-            for bone_id, (translation, rotation) in enumerate(bind_locals):
-                nodes.append({
+            for bone_id, (translation, rotation, scale) in enumerate(bind_locals):
+                node = {
                     "name": f"bone_{bone_id:02d}",
                     "translation": list(translation),
                     "rotation": list(rotation),
-                })
+                }
+                # Only emit scale when it actually departs from unity, so the
+                # common (unscaled) bones keep the smallest possible file.
+                if any(abs(s - 1.0) > 1e-6 for s in scale):
+                    node["scale"] = list(scale)
+                nodes.append(node)
             for bone_id, bone in enumerate(bones):
                 if bone.parent_id != 0xFFFF:
                     parent_node = nodes[first_joint_node + bone.parent_id]
@@ -119,7 +124,7 @@ class GltfExporter:
             # The inverse bind matrices bring a mesh vertex back into bone space.
             ibm_flat = []
             for bone_global in bind_globals:
-                inverse = _rigid_inverse(bone_global)
+                inverse = _mat4_inverse(bone_global)
                 # glTF matrices are stored column by column
                 ibm_flat.extend(inverse[row][col] for col in range(4) for row in range(4))
             gltf["skins"] = [{
@@ -319,7 +324,8 @@ class GltfExporter:
     def _local_bone_transforms(global_matrices, bones):
         """
         Local transform of every bone relative to its parent, as
-        (translation, rotation quaternion) tuples. Root bones are relative to the scene.
+        (translation, rotation quaternion, scale) tuples. Root bones are relative
+        to the scene. Scale is (1, 1, 1) for the usual unscaled bones.
         """
         local_transforms = []
         for bone_id, bone in enumerate(bones):
@@ -327,10 +333,10 @@ class GltfExporter:
             if bone.parent_id == 0xFFFF:
                 local = bone_global
             else:
-                local = _mat_mul(_rigid_inverse(global_matrices[bone.parent_id]), bone_global)
+                local = _mat_mul(_mat4_inverse(global_matrices[bone.parent_id]), bone_global)
             translation = (local[0][3], local[1][3], local[2][3])
-            rotation = _quat_from_matrix(local)
-            local_transforms.append((translation, rotation))
+            rotation, scale = _decompose_rotation_scale(local)
+            local_transforms.append((translation, rotation, scale))
         return local_transforms
 
     def _build_animations(self, builder, bones, all_animations, first_joint_node,
@@ -352,13 +358,15 @@ class GltfExporter:
             if not anim.frames:
                 continue
 
-            # translations[bone_id][frame] = (x, y, z) ; rotations[bone_id][frame] = (x, y, z, w)
+            # translations[bone_id][frame] = (x, y, z) ; rotations[...] = (x, y, z, w)
+            # scales[bone_id][frame] = (sx, sy, sz)
             translations = [[] for _ in bones]
             rotations = [[] for _ in bones]
+            scales = [[] for _ in bones]
             for frame in anim.frames:
                 frame_globals = self._global_bone_matrices(frame)
                 frame_locals = self._local_bone_transforms(frame_globals, bones)
-                for bone_id, (translation, rotation) in enumerate(frame_locals):
+                for bone_id, (translation, rotation, scale) in enumerate(frame_locals):
                     # Keep quaternions on the same hemisphere as the previous frame,
                     # otherwise the interpolation takes the "long way around".
                     if rotations[bone_id]:
@@ -367,6 +375,7 @@ class GltfExporter:
                             rotation = tuple(-component for component in rotation)
                     translations[bone_id].append(translation)
                     rotations[bone_id].append(rotation)
+                    scales[bone_id].append(scale)
 
             times = [frame_id / self.FPS for frame_id in range(len(anim.frames))]
             input_accessor = builder.add_accessor(times, COMPONENT_FLOAT, "SCALAR",
@@ -397,6 +406,21 @@ class GltfExporter:
                     "sampler": len(samplers) - 1,
                     "target": {"node": first_joint_node + bone_id, "path": "rotation"},
                 })
+                # Emit a scale track only if this bone is ever scaled in the
+                # animation; most bones stay (1, 1, 1) and need no channel.
+                if any(any(abs(s - 1.0) > 1e-6 for s in frame_scale)
+                       for frame_scale in scales[bone_id]):
+                    samplers.append({
+                        "input": input_accessor,
+                        "interpolation": "LINEAR",
+                        "output": builder.add_accessor(
+                            [coord for scale in scales[bone_id] for coord in scale],
+                            COMPONENT_FLOAT, "VEC3"),
+                    })
+                    channels.append({
+                        "sampler": len(samplers) - 1,
+                        "target": {"node": first_joint_node + bone_id, "path": "scale"},
+                    })
 
             gltf_animations.append({
                 "name": f"anim_{anim_id}_{len(anim.frames)}f",
@@ -430,6 +454,55 @@ def _mat_mul(a, b):
     """Multiply two 4x4 matrices: result = a * b."""
     return [[sum(a[row][k] * b[k][col] for k in range(4)) for col in range(4)]
             for row in range(4)]
+
+
+def _mat4_inverse(matrix):
+    """True inverse of a 4x4 matrix (Gauss-Jordan with partial pivoting).
+
+    FF8 bone matrices are NOT always pure rotation+translation: the animation
+    build can leave a small scale in them, so the transpose-based
+    _rigid_inverse would be wrong (it silently mis-skins scaled bones). This
+    full inverse is exact for those, which the .glb re-importer relies on to
+    recover vertex positions. Falls back to _rigid_inverse if singular.
+    """
+    aug = [list(matrix[r]) + [1.0 if c == r else 0.0 for c in range(4)]
+           for r in range(4)]
+    for col in range(4):
+        pivot = max(range(col, 4), key=lambda r: abs(aug[r][col]))
+        if abs(aug[pivot][col]) < 1e-12:
+            return _rigid_inverse(matrix)
+        aug[col], aug[pivot] = aug[pivot], aug[col]
+        inv_pivot = 1.0 / aug[col][col]
+        aug[col] = [value * inv_pivot for value in aug[col]]
+        for r in range(4):
+            if r != col and aug[r][col] != 0.0:
+                factor = aug[r][col]
+                aug[r] = [aug[r][k] - factor * aug[col][k] for k in range(8)]
+    return [row[4:] for row in aug]
+
+
+def _decompose_rotation_scale(matrix):
+    """Split the 3x3 part of a 4x4 into (rotation_quaternion, (sx, sy, sz)).
+
+    Scale is the length of each basis column; the columns are normalised to get
+    a pure rotation. A reflection (negative determinant) is folded into a
+    negative X scale so the quaternion stays a proper rotation.
+    """
+    cols = [[matrix[0][i], matrix[1][i], matrix[2][i]] for i in range(3)]
+    scale = [math.sqrt(sum(c * c for c in col)) or 1.0 for col in cols]
+    rot = [[cols[c][r] / scale[c] for c in range(3)] for r in range(3)]  # rot[row][col]
+    det = (rot[0][0] * (rot[1][1] * rot[2][2] - rot[1][2] * rot[2][1])
+           - rot[0][1] * (rot[1][0] * rot[2][2] - rot[1][2] * rot[2][0])
+           + rot[0][2] * (rot[1][0] * rot[2][1] - rot[1][1] * rot[2][0]))
+    if det < 0:
+        scale[0] = -scale[0]
+        for r in range(3):
+            rot[r][0] = -rot[r][0]
+    rotation = _quat_from_matrix([[rot[0][0], rot[0][1], rot[0][2], 0.0],
+                                  [rot[1][0], rot[1][1], rot[1][2], 0.0],
+                                  [rot[2][0], rot[2][1], rot[2][2], 0.0],
+                                  [0.0, 0.0, 0.0, 1.0]])
+    return rotation, tuple(scale)
 
 
 def _rigid_inverse(matrix):

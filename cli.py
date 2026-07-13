@@ -19,12 +19,14 @@ from typing import Dict, Type
 from Cli.base import BaseCliTool
 from Cli.registry import get_registry, register_tool
 from Cli.shumi_translator import ShumiTranslatorCliTool
+from Cli.ifrit_ai import IfritAiCliTool
 
 
 def _register_all_tools():
     """Register all available CLI tools."""
     registry = get_registry()
     registry.register(ShumiTranslatorCliTool)
+    registry.register(IfritAiCliTool)
 
 
 def build_main_parser() -> argparse.ArgumentParser:

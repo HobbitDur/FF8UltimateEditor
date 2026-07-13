@@ -147,7 +147,7 @@ class SeedManager:
         texture_data = []
         for tex_id in sorted(used_ids):
             group = mch_texture_group(tex_id)
-            if group >= len(model.tim_images):
+            if group >= len(model.tim_images) or model.tim_images[group] is None:
                 texture_data.append(SeedTextureData(Image.new('RGBA', (2, 2), (0, 255, 0, 255))))
                 continue
             image = model.tim_images[group].image

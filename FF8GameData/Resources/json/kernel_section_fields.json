@@ -14,7 +14,8 @@
     "offset": 5,
     "size": 1,
     "label": "Unknown flags",
-    "group": "Data"
+    "group": "Data",
+    "help": "Unknown but used - read by `ResetAndParseBattleAndFieldCharacter (character setup)` (purpose not yet identified)."
    },
    {
     "name": "target_info",
@@ -28,8 +29,9 @@
     "name": "unknown_0x07",
     "offset": 7,
     "size": 1,
-    "label": "Unknown 0x07",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    }
   ],
   "text_labels": [
@@ -44,17 +46,18 @@
     "name": "magic_id",
     "offset": 4,
     "size": 2,
-    "lookup": "special_action",
-    "label": "Special Action / Effect",
+    "lookup": "attack_animation",
+    "label": "Attack animation",
     "group": "General",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "animation",
     "offset": 6,
     "size": 1,
-    "label": "Animation category",
-    "group": "General"
+    "label": "Target hit animation",
+    "group": "General",
+    "help": "Target hit/reaction animation ID (HIT_TYPE_TARGET_ANIMATION_TO_PLAY) played on the target when the ability lands - the per-command-type equivalent of the GF 'target hit animation' field. (Battle_applyDamage)"
    },
    {
     "name": "attack_type",
@@ -411,13 +414,13 @@
   ],
   "fields": [
    {
-    "name": "special_action",
+    "name": "attack_animation",
     "offset": 4,
     "size": 2,
     "group": "General",
-    "lookup": "special_action",
-    "label": "Special Action / Animation",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "lookup": "attack_animation",
+    "label": "Attack animation",
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "attack_type",
@@ -987,10 +990,10 @@
     "name": "magic_id",
     "offset": 2,
     "size": 2,
-    "lookup": "special_action",
-    "label": "Special Action / Effect",
+    "lookup": "attack_animation",
+    "label": "Attack animation",
     "group": "Data",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "camera_change",
@@ -1573,10 +1576,10 @@
     "name": "magic_id",
     "offset": 4,
     "size": 2,
-    "lookup": "special_action",
-    "label": "Special Action / Effect",
+    "lookup": "attack_animation",
+    "label": "Attack animation",
     "group": "Data",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "attack_type",
@@ -1590,8 +1593,9 @@
     "name": "unknown_0x07",
     "offset": 7,
     "size": 1,
-    "label": "Unknown 0x07",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    },
    {
     "name": "attack_power",
@@ -1605,8 +1609,9 @@
     "name": "unknown_0x09",
     "offset": 9,
     "size": 1,
-    "label": "Unknown 0x09",
-    "group": "Data"
+    "label": "Target hit animation",
+    "group": "Data",
+    "help": "Target hit/reaction animation ID (HIT_TYPE_TARGET_ANIMATION_TO_PLAY) played on the target when the ability lands - the per-command-type equivalent of the GF 'target hit animation' field. (Battle_applyDamage)"
    },
    {
     "name": "target_info",
@@ -1661,8 +1666,9 @@
     "name": "unknown_0x10",
     "offset": 16,
     "size": 2,
-    "label": "Unknown 0x10",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    },
    {
     "name": "status_1",
@@ -1951,10 +1957,10 @@
     "name": "magic_id",
     "offset": 4,
     "size": 2,
-    "lookup": "special_action",
-    "label": "Special Action / Effect",
+    "lookup": "attack_animation",
+    "label": "Attack animation",
     "group": "Data",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "attack_type",
@@ -2008,7 +2014,8 @@
     "offset": 12,
     "size": 1,
     "label": "Unknown 0x0C",
-    "group": "Data"
+    "group": "Data",
+    "help": "Appears only in getTextBattleItem array indexing - not a semantic field read."
    },
    {
     "name": "status_attack_enabler",
@@ -2047,8 +2054,9 @@
     "name": "unknown_0x15",
     "offset": 21,
     "size": 1,
-    "label": "Unknown 0x15",
-    "group": "Data"
+    "label": "Random-select flag",
+    "group": "Data",
+    "help": "Bit 0 marks the item eligible for random battle-item selection (sub_483CA0 picks a random inventory item with this bit set)."
    },
    {
     "name": "hit_count",
@@ -2084,13 +2092,13 @@
   "section_id": 10,
   "fields": [
    {
-    "name": "special_action",
+    "name": "attack_animation",
     "offset": 2,
     "size": 2,
-    "lookup": "special_action",
-    "label": "Special Action ID",
+    "lookup": "attack_animation",
+    "label": "Attack animation",
     "group": "Data",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "attack_type",
@@ -2121,7 +2129,8 @@
     "offset": 7,
     "size": 1,
     "label": "Unknown 0x07",
-    "group": "Data"
+    "group": "Data",
+    "help": "Unknown but used - read by `MonsterAI_DispatchSection` (purpose not yet identified)."
    },
    {
     "name": "status_flags",
@@ -2135,7 +2144,8 @@
     "offset": 9,
     "size": 1,
     "label": "Unknown 0x09",
-    "group": "Data"
+    "group": "Data",
+    "help": "Unknown but used - read by `Battle_applyDamage` (purpose not yet identified)."
    },
    {
     "name": "hit_count",
@@ -2192,8 +2202,9 @@
     "name": "unknown_0x11",
     "offset": 17,
     "size": 1,
-    "label": "Unknown 0x11",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    },
    {
     "name": "power_mod",
@@ -2223,17 +2234,18 @@
     "name": "magic_id",
     "offset": 0,
     "size": 2,
-    "lookup": "special_action",
-    "label": "Special Action / Effect",
+    "lookup": "attack_animation",
+    "label": "Attack animation",
     "group": "Data",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "unknown_0x02",
     "offset": 2,
     "size": 1,
-    "label": "Unknown 0x02",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    },
    {
     "name": "animation",
@@ -2372,8 +2384,9 @@
     "name": "unknown_0x06",
     "offset": 6,
     "size": 2,
-    "label": "Unknown / Unused",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    }
   ],
   "text_labels": [
@@ -2411,8 +2424,9 @@
     "name": "unknown_0x07",
     "offset": 7,
     "size": 1,
-    "label": "Unknown / Unused",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    }
   ],
   "text_labels": [
@@ -2466,8 +2480,9 @@
     "name": "unused_0x06",
     "offset": 6,
     "size": 2,
-    "label": "Unused",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    }
   ],
   "text_labels": [
@@ -2560,10 +2575,10 @@
     "name": "magic_id",
     "offset": 4,
     "size": 2,
-    "lookup": "special_action",
-    "label": "Special Action / Effect",
+    "lookup": "attack_animation",
+    "label": "Attack animation",
     "group": "Data",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "attack_type",
@@ -2585,8 +2600,9 @@
     "name": "unknown_0x08",
     "offset": 8,
     "size": 2,
-    "label": "Unknown 0x08",
-    "group": "Data"
+    "label": "Target hit animation",
+    "group": "Data",
+    "help": "Target hit/reaction animation ID (HIT_TYPE_TARGET_ANIMATION_TO_PLAY) played on the target when the ability lands - the per-command-type equivalent of the GF 'target hit animation' field. (Battle_applyDamage)"
    },
    {
     "name": "target_info",
@@ -2650,8 +2666,9 @@
     "name": "unknown_0x12",
     "offset": 18,
     "size": 2,
-    "label": "Unknown 0x12",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    },
    {
     "name": "status_2",
@@ -2672,20 +2689,21 @@
   "section_id": 20,
   "fields": [
    {
-    "name": "special_action",
+    "name": "attack_animation",
     "offset": 4,
     "size": 2,
-    "lookup": "special_action",
-    "label": "Special Action ID",
+    "lookup": "attack_animation",
+    "label": "Attack animation",
     "group": "Data",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "unknown_0x06",
     "offset": 6,
     "size": 1,
-    "label": "Unknown 0x06",
-    "group": "Data"
+    "label": "Target hit animation",
+    "group": "Data",
+    "help": "Target hit/reaction animation ID (HIT_TYPE_TARGET_ANIMATION_TO_PLAY) played on the target when the ability lands - the per-command-type equivalent of the GF 'target hit animation' field. (Battle_applyDamage)"
    },
    {
     "name": "attack_type",
@@ -2746,8 +2764,9 @@
     "name": "unknown_0x0f",
     "offset": 15,
     "size": 1,
-    "label": "Unknown 0x0F",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    }
   ],
   "text_labels": [
@@ -2800,10 +2819,10 @@
     "name": "magic_id",
     "offset": 4,
     "size": 2,
-    "lookup": "special_action",
-    "label": "Special Action / Effect",
+    "lookup": "attack_animation",
+    "label": "Attack animation",
     "group": "Data",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "attack_type",
@@ -2825,8 +2844,9 @@
     "name": "unknown_0x08",
     "offset": 8,
     "size": 2,
-    "label": "Unknown 0x08",
-    "group": "Data"
+    "label": "Target hit animation",
+    "group": "Data",
+    "help": "Target hit/reaction animation ID (HIT_TYPE_TARGET_ANIMATION_TO_PLAY) played on the target when the ability lands - the per-command-type equivalent of the GF 'target hit animation' field. (Battle_applyDamage)"
    },
    {
     "name": "target_info",
@@ -2925,10 +2945,10 @@
     "name": "magic_id",
     "offset": 4,
     "size": 2,
-    "lookup": "special_action",
-    "label": "Special Action / Effect",
+    "lookup": "attack_animation",
+    "label": "Attack animation",
     "group": "Data",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "attack_type",
@@ -2958,8 +2978,9 @@
     "name": "unknown_0x09",
     "offset": 9,
     "size": 1,
-    "label": "Unknown 0x09",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    },
    {
     "name": "target_info",
@@ -2973,8 +2994,9 @@
     "name": "unknown_0x0b",
     "offset": 11,
     "size": 1,
-    "label": "Unknown 0x0B",
-    "group": "Data"
+    "label": "Attack flags (swapped)",
+    "group": "Data",
+    "help": "Attack flags - low 2 bits become the last-attacker flag (ATTACK_FLAG). In this command type the flags/animation byte order is swapped vs other attacks. (Battle_applyDamage)"
    },
    {
     "name": "hit_count",
@@ -3789,7 +3811,8 @@
     "offset": 4,
     "size": 1,
     "label": "Unknown flags",
-    "group": "Data"
+    "group": "Data",
+    "help": "Unknown but used - read by `sub_48CFB0` (purpose not yet identified)."
    },
    {
     "name": "target",
@@ -3810,8 +3833,9 @@
     "name": "unknown_0x07",
     "offset": 7,
     "size": 1,
-    "label": "Unknown / Unused",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    }
   ],
   "text_labels": [
@@ -3826,10 +3850,10 @@
     "name": "magic_id",
     "offset": 2,
     "size": 2,
-    "lookup": "special_action",
-    "label": "Special Action / Effect",
+    "lookup": "attack_animation",
+    "label": "Attack animation",
     "group": "Data",
-    "help": "Battle effect / animation dispatched at runtime (SpecialAction id)."
+    "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
     "name": "attack_type",
@@ -3859,8 +3883,9 @@
     "name": "unknown_0x07",
     "offset": 7,
     "size": 1,
-    "label": "Unknown 0x07",
-    "group": "Data"
+    "label": "Padding",
+    "group": "Data",
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs)."
    },
    {
     "name": "target_info",
@@ -3874,8 +3899,9 @@
     "name": "unknown_0x09",
     "offset": 9,
     "size": 1,
-    "label": "Unknown 0x09",
-    "group": "Data"
+    "label": "Attack flags (swapped)",
+    "group": "Data",
+    "help": "Attack flags - low 2 bits become the last-attacker flag (ATTACK_FLAG). In this command type the flags/animation byte order is swapped vs other attacks. (Battle_applyDamage)"
    },
    {
     "name": "hit_count",
@@ -3952,7 +3978,7 @@
     "name": "magic_1",
     "offset": 0,
     "size": 1,
-    "lookup": "special_action",
+    "lookup": "attack_animation",
     "label": "Magic 1",
     "group": "Data"
    },
@@ -3967,7 +3993,7 @@
     "name": "magic_2",
     "offset": 2,
     "size": 1,
-    "lookup": "special_action",
+    "lookup": "attack_animation",
     "label": "Magic 2",
     "group": "Data"
    },
@@ -3982,7 +4008,7 @@
     "name": "magic_3",
     "offset": 4,
     "size": 1,
-    "lookup": "special_action",
+    "lookup": "attack_animation",
     "label": "Magic 3",
     "group": "Data"
    },
@@ -3997,7 +4023,7 @@
     "name": "magic_4",
     "offset": 6,
     "size": 1,
-    "lookup": "special_action",
+    "lookup": "attack_animation",
     "label": "Magic 4",
     "group": "Data"
    },
@@ -4012,7 +4038,7 @@
     "name": "magic_5",
     "offset": 8,
     "size": 1,
-    "lookup": "special_action",
+    "lookup": "attack_animation",
     "label": "Magic 5",
     "group": "Data"
    },
@@ -4027,7 +4053,7 @@
     "name": "magic_6",
     "offset": 10,
     "size": 1,
-    "lookup": "special_action",
+    "lookup": "attack_animation",
     "label": "Magic 6",
     "group": "Data"
    },
@@ -4042,7 +4068,7 @@
     "name": "magic_7",
     "offset": 12,
     "size": 1,
-    "lookup": "special_action",
+    "lookup": "attack_animation",
     "label": "Magic 7",
     "group": "Data"
    },
@@ -4057,7 +4083,7 @@
     "name": "magic_8",
     "offset": 14,
     "size": 1,
-    "lookup": "special_action",
+    "lookup": "attack_animation",
     "label": "Magic 8",
     "group": "Data"
    },

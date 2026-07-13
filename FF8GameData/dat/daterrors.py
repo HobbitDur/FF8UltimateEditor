@@ -205,9 +205,9 @@ class ParamCardError(AICodeError):
         super().__init__(f"Unexpected card: {card}")
 
 
-class ParamSpecialActionError(AICodeError):
-    def __init__(self, special_action: str):
-        super().__init__(f"Unexpected special_action: {special_action}")
+class ParamAttackAnimationError(AICodeError):
+    def __init__(self, attack_animation: str):
+        super().__init__(f"Unexpected attack_animation: {attack_animation}")
 class ParamActivateError(AICodeError):
     def __init__(self, activate: str):
         super().__init__(f"Unexpected activate: {activate}")

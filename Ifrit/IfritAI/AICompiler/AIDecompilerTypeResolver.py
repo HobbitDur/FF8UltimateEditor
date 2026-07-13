@@ -4,7 +4,7 @@ from math import floor
 from FF8GameData.GenericSection.ff8text import FF8Text
 from FF8GameData.dat.commandanalyser import CommandAnalyser
 from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, \
-    ParamSpecialActionError, \
+    ParamAttackAnimationError, \
     ParamTargetBasicError, ParamTargetGenericError, ParamTargetSpecificError, ParamTargetSlotError, ParamAptitudeError, ParamSceneOutSlotIdError, \
     ParamSlotIdEnableError, \
     ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, ParamCountError, AICodeError, SubjectIdError, ParamBattleTextError, \
@@ -50,7 +50,7 @@ class AIDecompilerTypeResolver:
             "battle_text", "magic", "target_basic",
             "monster_ability", "local_var",
             "local_var_param","local_var_add_param", "battle_var", "global_var",
-            "target_slot", "special_action", "target_advanced_generic",
+            "target_slot", "attack_animation", "target_advanced_generic",
             "target_advanced_specific", "comparator", "status_ai",
             "activate", "aptitude", "magic_type", "gforce",
             "scene_out_slot_id", "slot_id_enable", "assign_slot_id", "slot_id",
@@ -178,10 +178,10 @@ class AIDecompilerTypeResolver:
             for target_slot in self.game_data.ai_data_json.get('target_slot', []):
                 normalized = self._normalize_string(target_slot['text'])
                 mappings['type_values']['target_slot'][target_slot['param_id']] = normalized
-            # special_action
-            for special_action in self.game_data.special_action_data_json.get('special_action', []):
-                normalized = self._normalize_string(special_action['name'])
-                mappings['type_values']['special_action'][ special_action['id']] =special_action['name']
+            # attack_animation
+            for attack_animation in self.game_data.attack_animation_data_json.get('attack_animation', []):
+                normalized = self._normalize_string(attack_animation['name'])
+                mappings['type_values']['attack_animation'][ attack_animation['id']] =attack_animation['name']
             # target_advanced_generic
             for target_dict in self.__get_target_list(advanced=True, specific=False):
                 mappings['type_values']['target_advanced_generic'][target_dict['id']] = self._normalize_string(target_dict['data'])
@@ -385,7 +385,7 @@ class AIDecompilerTypeResolver:
             'item': ParamItemError,
             'gforce': ParamGfError,
             'card': ParamCardError,
-            'special_action': ParamSpecialActionError,
+            'attack_animation': ParamAttackAnimationError,
             'target_basic': ParamTargetBasicError,
             'target_advanced_generic': ParamTargetGenericError,
             'target_advanced_specific': ParamTargetSpecificError,

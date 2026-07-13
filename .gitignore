@@ -36,3 +36,6 @@ temp_vincent_tim
 shiva*
 Shiva*
 *.bak
+pipeline/config.local.json
+pipeline/ai_md/
+pipeline/recordings/

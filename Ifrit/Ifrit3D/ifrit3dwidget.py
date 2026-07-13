@@ -9,6 +9,7 @@ from Ifrit.ifritmanager import IfritManager
 from Ifrit.Ifrit3D.boneeditorwidget import AnimEditor
 from Ifrit.Ifrit3D.ff8openwidget import FF8OpenGLWidget
 from Ifrit.Ifrit3D.gltfexporter import GltfExporter
+from Ifrit.Ifrit3D.gltfimporter import GltfImporter
 
 
 class Ifrit3DWidget(QWidget):
@@ -43,8 +44,8 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget = FF8OpenGLWidget(self)
         # Managers providing real texture alpha (Seed) disable black keying
         self.gl_widget.black_is_transparent = getattr(ifrit_manager, 'texture_black_is_transparent', True)
-        # Backface culling: 'duplicates' (default), 'all' = game-exact, 'off'
-        self.gl_widget.backface_cull = getattr(ifrit_manager, 'backface_cull_mode', 'duplicates')
+        # Backface culling: 'all' = game-exact (default), 'duplicates', 'off'
+        self.gl_widget.backface_cull = getattr(ifrit_manager, 'backface_cull_mode', 'all')
 
         # Setup animation timer
         self.timer = QTimer()
@@ -133,6 +134,15 @@ class Ifrit3DWidget(QWidget):
                                             "to a .glb file, importable in Blender (File > Import > glTF 2.0)")
             self.export_gltf_btn.clicked.connect(self.export_gltf)
             toolbar_layout.addWidget(self.export_gltf_btn)
+
+            self.import_gltf_btn = QPushButton("Import glTF")
+            self.import_gltf_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
+            self.import_gltf_btn.setToolTip("Replace the mesh of the loaded model with the one from a .glb file\n"
+                                            "(e.g. edited in Blender, then File > Export > glTF 2.0).\n"
+                                            "Skeleton, animations and every other section are kept from the\n"
+                                            "current file. Save afterwards to write the new mesh into the .dat.")
+            self.import_gltf_btn.clicked.connect(self.import_gltf)
+            toolbar_layout.addWidget(self.import_gltf_btn)
 
             self.fps60_btn = QPushButton("To 60 FPS")
             self.fps60_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
@@ -804,6 +814,35 @@ class Ifrit3DWidget(QWidget):
             QMessageBox.critical(self, "Export glTF", f"Export failed: {e}")
             return
         QMessageBox.information(self, "Export glTF", f"Model exported to:\n{file_path}")
+
+    def import_gltf(self):
+        """Replace the mesh of the loaded model with the one from a .glb file.
+
+        Only the geometry (section 2) is rebuilt; the skeleton, animations and
+        every other section of the current file are preserved. The saved .dat is
+        therefore a valid, animating monster whose only change is the mesh.
+        """
+        if not self.ifrit_manager.enemy.geometry_data.object_data:
+            QMessageBox.warning(self, "Import glTF", "Load a .dat model first.")
+            return
+        file_path, _ = QFileDialog.getOpenFileName(self, "Import mesh from glTF", "",
+                                                   "glTF binary (*.glb)")
+        if not file_path:
+            return
+        try:
+            stats = GltfImporter().import_into_enemy(file_path, self.ifrit_manager.enemy)
+        except Exception as e:
+            QMessageBox.critical(self, "Import glTF", f"Import failed: {e}")
+            return
+        # Refresh the viewer from the (now rebuilt) model.
+        self.load_file()
+        QMessageBox.information(
+            self, "Import glTF",
+            f"Mesh replaced from:\n{file_path}\n\n"
+            f"Vertices: {stats['vertices']}   Triangles: {stats['triangles']}   "
+            f"Bones used: {stats['bones_used']}\n\n"
+            "Skeleton and animations were kept from the current file. "
+            "Save the file to write the new mesh into the .dat.")
 
     def convert_current_anim_to_60fps(self):
         """Insert interpolated frames in the current animation so it plays at 60 fps instead of 15 fps."""

@@ -31,6 +31,12 @@ from FF8GameData.tim.timfile import TimImage, decode_tim
 
 MCH_TRIANGLE_OPCODE = 0x25010607
 MCH_QUAD_OPCODE = 0x2d010709
+# TIM offset lists (mch header and chara.one NPC headers) store flags in the
+# high nibble of each dword: the engine reads offsets as `value & 0x0FFFFFFF`
+# and stops on any negative dword (Field_CharaOne 0x532A40). Multi-texture
+# files carry a countdown in the high byte (0x20..., 0x10..., 0x00...);
+# 0xA0000000 marks a shared-texture reference instead of an offset.
+MCH_OFFSET_MASK = 0x0FFFFFFF
 MCH_BONE_SIZE = 64
 MCH_FACE_SIZE = 64
 MCH_VERTEX_SIZE = 8
@@ -83,7 +89,9 @@ class FieldModel:
         self.bone_data = BoneSection()
         self.geometry_data = GeometrySection()
         self.animation_data = AnimationSection()
-        self.tim_images: List[TimImage] = []
+        # One slot per header TIM entry, None when undecodable (keeps face
+        # texture ids aligned with their group rank).
+        self.tim_images: List[Optional[TimImage]] = []
         self.nb_unknown_faces = 0
         # Model data header offsets (relative to model data start)
         self.anim_offset = 0
@@ -265,18 +273,22 @@ def parse_packed_animation_section(data, offset: int, nb_model_bones: int,
             break
         nb_frames = _u16(data, pos)
         nb_anim_bones = _u16(data, pos + 2)
-        pos += 4
         frame_size = 6 + 4 * nb_anim_bones
-        if nb_frames > 1000 or nb_anim_bones > 512 or pos + nb_frames * frame_size > end:
+        if nb_frames > 1000 or nb_anim_bones > 512 or pos + 4 + nb_frames * frame_size > end:
             break
+        pos += 4
         animation = FieldAnimation()
         for _ in range(nb_frames):
             frame = AnimationFrame(nb_model_bones)
             frame.position = _make_position((_s16(data, pos), _s16(data, pos + 2), _s16(data, pos + 4)))
+            # Bits 6-7 of each pose's 4th byte are unused by the engine decode
+            # but set in a few vanilla files; kept for byte-exact saving.
+            frame.pose_high_bits = []
             pos += 6
             for bone_index in range(nb_anim_bones):
                 byte_1, byte_2, byte_3, byte_4 = data[pos:pos + 4]
                 pos += 4
+                frame.pose_high_bits.append(byte_4 & 0xC0)
                 # Axis mapping from the engine pose decode (sub_533CD0):
                 # byte 1 -> X, byte 2 -> Y, byte 3 -> Z (byte 4 = high bits).
                 # Values are shifted left twice (the engine stores them <<2 and
@@ -299,6 +311,12 @@ def parse_packed_animation_section(data, offset: int, nb_model_bones: int,
             animation.frames.append(frame)
         section.animations.append(animation)
     section.nb_animations = len(section.animations)
+    if section.nb_animations < nb_animations:
+        # A few vanilla entries declare animations whose headers are garbage
+        # (e.g. bgroom_2): keep the declared count and the raw remainder so
+        # saving reproduces the file byte-exactly.
+        section.declared_nb_animations = nb_animations
+        section.raw_tail = bytes(data[pos:end])
     return section
 
 
@@ -311,17 +329,19 @@ def write_packed_animation_section(animation_data: AnimationSection) -> bytes:
     rotations wrap into their 16/12-bit ranges.
     """
     out = bytearray()
-    out += len(animation_data.animations).to_bytes(2, 'little')
+    declared = getattr(animation_data, 'declared_nb_animations', len(animation_data.animations))
+    out += declared.to_bytes(2, 'little')
     for animation in animation_data.animations:
         frames = animation.frames
         nb_bones = len(frames[0].rotation_vector_data) if frames else 0
         out += len(frames).to_bytes(2, 'little')
         out += nb_bones.to_bytes(2, 'little')
         for frame in frames:
-            # position slots hold the raw file values as (x, z, y) - see _make_position
-            for position_type in (frame.position[0], frame.position[2], frame.position[1]):
+            # position slots hold the raw file values as (y, z, x) - see _make_position
+            for position_type in (frame.position[2], frame.position[0], frame.position[1]):
                 out += (int(round(position_type.get_pos_raw())) & 0xFFFF).to_bytes(2, 'little')
-            for rotations in frame.rotation_vector_data:
+            high_bits = getattr(frame, 'pose_high_bits', ())
+            for bone_index, rotations in enumerate(frame.rotation_vector_data):
                 packed = [(int(round(rotations[axis].get_rotate_raw())) & 0xFFF) >> 2
                           for axis in range(3)]
                 out.append(packed[0] & 0xFF)
@@ -329,7 +349,9 @@ def write_packed_animation_section(animation_data: AnimationSection) -> bytes:
                 out.append(packed[2] & 0xFF)
                 out.append(((packed[0] >> 8) & 0x3)
                            | (((packed[1] >> 8) & 0x3) << 2)
-                           | (((packed[2] >> 8) & 0x3) << 4))
+                           | (((packed[2] >> 8) & 0x3) << 4)
+                           | (high_bits[bone_index] if bone_index < len(high_bits) else 0))
+    out += getattr(animation_data, 'raw_tail', b'')
     return bytes(out)
 
 
@@ -456,21 +478,19 @@ class MchFile:
         while pos + 4 <= len(data):
             value = _u32(data, pos)
             pos += 4
-            if value == 0xFFFFFFFF:
+            if value & 0x80000000:  # terminator (0xFFFFFFFF)
                 break
-            self.tim_offsets.append(value)
+            self.tim_offsets.append(value & MCH_OFFSET_MASK)
         else:
             raise ValueError("Not a valid MCH file (no TIM offset terminator)")
-        self.model_address = _u32(data, pos)
+        self.model_address = _u32(data, pos) & MCH_OFFSET_MASK
         if self.model_address + 0x40 > len(data):
             raise ValueError("Not a valid MCH file (model data offset out of range)")
 
     def build_model(self, character_scale: float = DEFAULT_MODEL_SCALE) -> FieldModel:
         factor = DEFAULT_MODEL_SCALE / character_scale if character_scale else 1.0
         model = parse_model_data(self.data, self.model_address, factor)
-        model.tim_images = [tim for tim in
-                            (decode_tim(self.data, offset) for offset in self.tim_offsets)
-                            if tim is not None]
+        model.tim_images = [decode_tim(self.data, offset) for offset in self.tim_offsets]
         # The game never reads the mch-internal rest animation (the loader
         # patches the anim offset to the chara.one block before converting);
         # it is dev-tool leftover data in an uncompressed 6-byte format.
@@ -489,6 +509,9 @@ class CharaOneEntry:
         self.is_main = False  # main character: model comes from main_chr d0xx.mch
         self.scale_raw = 0  # raw scale (main characters only); world scale = raw / 16
         self.tim_offsets: List[int] = []  # absolute offsets
+        # NPC variant with no own texture: index of the entry whose texture is
+        # reused (0xA0 dword in place of the TIM list, bits 20-27 = entry index).
+        self.shared_tex_entry: Optional[int] = None
         self.model_offset = 0  # absolute offset of the model data (NPC only)
         # Header layout info, kept so saving can patch the entry in place.
         self.header_pos = 0  # file position of this entry's header (offset field)
@@ -553,14 +576,22 @@ class CharaOne:
                 entry.scale_raw = (flag >> 8) & 0xFFFF
                 pos += 4
                 pos += 4  # model data offset field (always 0 for main models)
+            elif flag >> 28 == 0xA:
+                # Shared-texture variant: single 0xA0 dword instead of a TIM
+                # list, then terminator and model data offset as usual.
+                entry.shared_tex_entry = (flag >> 20) & 0xFF
+                pos += 4
+                pos += 4  # 0xFFFFFFFF terminator
+                entry.model_offset = (_u32(data, pos) & MCH_OFFSET_MASK) + entry.data_offset
+                pos += 4
             else:
-                while _u32(data, pos) != 0xFFFFFFFF:
-                    entry.tim_offsets.append(_u32(data, pos) + entry.data_offset)
+                while _u32(data, pos) & 0x80000000 == 0:  # terminator: any negative dword
+                    entry.tim_offsets.append((_u32(data, pos) & MCH_OFFSET_MASK) + entry.data_offset)
                     pos += 4
                     if pos + 4 > len(data):
                         raise ValueError("Not a valid chara.one file (unterminated TIM list)")
                 pos += 4
-                entry.model_offset = _u32(data, pos) + entry.data_offset
+                entry.model_offset = (_u32(data, pos) & MCH_OFFSET_MASK) + entry.data_offset
                 pos += 4
             # Optional: 4-char model name + 4 unknown bytes
             if _is_model_name(bytes(data[pos:pos + 4])):
@@ -568,6 +599,9 @@ class CharaOne:
                 pos += 8
             else:
                 entry.name = f"model{i}"
+            if entry.shared_tex_entry is not None \
+                    and _u32(data, pos) == entry.shared_tex_entry:
+                pos += 4  # shared-texture entries repeat the referenced index here
             if _u32(data, pos) == 0xEEEEEEEE:  # optional end marker
                 pos += 4
             self.entries.append(entry)
@@ -617,9 +651,11 @@ class CharaOne:
             raise ValueError(f"{entry.name} is a main character reference, use build_main_model")
         model = parse_model_data(self.data, entry.model_offset, 1.0)
         model.name = entry.name
-        model.tim_images = [tim for tim in
-                            (decode_tim(self.data, offset) for offset in entry.tim_offsets)
-                            if tim is not None]
+        tim_offsets = entry.tim_offsets
+        if entry.shared_tex_entry is not None \
+                and entry.shared_tex_entry < len(self.entries):
+            tim_offsets = self.entries[entry.shared_tex_entry].tim_offsets
+        model.tim_images = [decode_tim(self.data, offset) for offset in tim_offsets]
         end = entry.data_offset + entry.size
         model.animation_data = parse_packed_animation_section(
             self.data, entry.model_offset + model.anim_offset, model.bone_data.nb_bone, end)
@@ -632,9 +668,7 @@ class CharaOne:
         model = parse_model_data(mch_file.data, mch_file.model_address,
                                  DEFAULT_MODEL_SCALE / entry.get_scale())
         model.name = entry.name
-        model.tim_images = [tim for tim in
-                            (decode_tim(mch_file.data, offset) for offset in mch_file.tim_offsets)
-                            if tim is not None]
+        model.tim_images = [decode_tim(mch_file.data, offset) for offset in mch_file.tim_offsets]
         end = entry.data_offset + entry.size
         model.animation_data = parse_packed_animation_section(
             self.data, entry.data_offset, model.bone_data.nb_bone, end)

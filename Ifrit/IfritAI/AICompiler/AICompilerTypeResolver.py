@@ -2,7 +2,7 @@
 import copy
 
 from FF8GameData.dat.daterrors import ParamMagicIdError, ParamMagicTypeError, ParamStatusAIError, ParamItemError, ParamGfError, ParamCardError, \
-    ParamSpecialActionError, \
+    ParamAttackAnimationError, \
     ParamTargetBasicError, ParamTargetSpecificError, ParamTargetSlotError, ParamAptitudeError, ParamSceneOutSlotIdError, \
     ParamSlotIdEnableError, \
     ParamAssignSlotIdError, ParamLocalVarParamError, ComparatorError, AICodeError, SubjectIdError, ParamIntShiftError, ParamBattleTextError, \
@@ -51,7 +51,7 @@ class AICompilerTypeResolver:
             "battle_text", "magic", "target_basic",
             "monster_ability", "local_var",
             "local_var_param", "local_var_add_param", "battle_var", "global_var",
-            "target_slot", "special_action", "target_advanced_generic",
+            "target_slot", "attack_animation", "target_advanced_generic",
             "target_advanced_specific", "comparator", "status_ai",
             "activate", "aptitude", "magic_type", "gforce",
             "scene_out_slot_id", "slot_id_enable", "assign_slot_id", "slot_id",
@@ -259,10 +259,10 @@ class AICompilerTypeResolver:
             for target_slot in self.game_data.ai_data_json.get('target_slot', []):
                 normalized = self._normalize_string(target_slot['text'])
                 mappings['type_values']['target_slot'][normalized] = target_slot['param_id']
-            # special_action
-            for special_action in self.game_data.special_action_data_json.get('special_action', []):
-                normalized = self._normalize_string(special_action['name'])
-                mappings['type_values']['special_action'][normalized] = special_action['id']
+            # attack_animation
+            for attack_animation in self.game_data.attack_animation_data_json.get('attack_animation', []):
+                normalized = self._normalize_string(attack_animation['name'])
+                mappings['type_values']['attack_animation'][normalized] = attack_animation['id']
             # target_advanced_generic
             for target_dict in self.__get_target_list(advanced=True, specific=False):
                 mappings['type_values']['target_advanced_generic'][self._normalize_string(target_dict['data'])] = target_dict['id']
@@ -475,7 +475,7 @@ class AICompilerTypeResolver:
             'item': ParamItemError,
             'gforce': ParamGfError,
             'card': ParamCardError,
-            'special_action': ParamSpecialActionError,
+            'attack_animation': ParamAttackAnimationError,
             'target_basic': ParamTargetBasicError,
             'target_advanced_generic': ParamTargetAdvanceGenericError,
             'target_advanced_specific': ParamTargetSpecificError,

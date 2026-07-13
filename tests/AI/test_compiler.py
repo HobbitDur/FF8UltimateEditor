@@ -9,7 +9,7 @@ import pytest
 
 from FF8GameData.dat.daterrors import ParamBattleTextError, ParamAptitudeError, ParamMagicIdError, ParamTargetBasicError, ParamIntError, \
     ParamMonsterAbilityError, ParamLocalVarError, ParamBattleVarError, ParamGlobalVarError, ParamTargetSlotError, ParamBoolError, \
-    ParamSpecialActionError, ParamInt16Error, ParamActivateError, ParamSceneOutSlotIdError, ParamMagicTypeError, ParamGfError, \
+    ParamAttackAnimationError, ParamInt16Error, ParamActivateError, ParamSceneOutSlotIdError, ParamMagicTypeError, ParamGfError, \
     ParamSlotIdEnableError, \
     ParamCardError, ParamItemError, ParamSlotIdError, ParamScanTextError, ParamTargetAdvanceGenericError
 from FF8GameData.gamedata import GameData
@@ -764,21 +764,21 @@ class TestAICompiler:
         with pytest.raises(ParamTargetSlotError):
             compiler.compile(source_code_error)
 
-    def test_specialAction(self, compiler: AICompiler):
+    def test_attackAnimation(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
             """
-            specialAction(17);
+            attackAnimation(17);
             """
         ## Type data
         source_code_type = \
             """
-            specialAction("Elvoret Entrance");
+            attackAnimation("Elvoret Entrance");
             """
         source_code_error = \
             """
-            specialAction("nerf lux op champ");
+            attackAnimation("nerf lux op champ");
             """
         # The expected output
         expected = [30, 17, 0, 0]
@@ -790,7 +790,7 @@ class TestAICompiler:
         # Assert the expected result
         assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
         assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-        with pytest.raises(ParamSpecialActionError):
+        with pytest.raises(ParamAttackAnimationError):
             compiler.compile(source_code_error)
 
     def test_enter(self, compiler: AICompiler):

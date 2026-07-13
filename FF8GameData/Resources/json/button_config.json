@@ -1,0 +1,32 @@
+{
+  "_comment": "SAVEMAP_CONFIG button-remap table (init.out/save offsets 0x08-0x13). Each physical button slot stores the id of the logical action it triggers (config value = action bit + 1; default = its own slot + 1; 0 = unassigned). Action names/behaviours identified from IDA (sub_4A2D60 remap core and its consumers). Bits 2, 9, 10 could not be resolved from static analysis.",
+  "physical_button": [
+    {"id": 0, "name": "L2"},
+    {"id": 1, "name": "R2"},
+    {"id": 2, "name": "L1"},
+    {"id": 3, "name": "R1"},
+    {"id": 4, "name": "Triangle"},
+    {"id": 5, "name": "Circle"},
+    {"id": 6, "name": "Cross"},
+    {"id": 7, "name": "Square"},
+    {"id": 8, "name": "Select"},
+    {"id": 9, "name": "Unknown 1"},
+    {"id": 10, "name": "Unknown 2"},
+    {"id": 11, "name": "Start"}
+  ],
+  "action": [
+    {"id": 0, "name": "Unassigned", "note": "Physical button triggers no logical action"},
+    {"id": 1, "name": "Flee (hold)", "note": "Held together with the other Flee action = attempt to flee battle"},
+    {"id": 2, "name": "Flee (hold)", "note": "Held together with the other Flee action = attempt to flee battle"},
+    {"id": 3, "name": "Menu page / prev character", "note": "Page-left / previous character in menus (default L1)"},
+    {"id": 4, "name": "Renzokuken / next character", "note": "Renzokuken critical-timing press in battle; next character in menus (default R1)"},
+    {"id": 5, "name": "Cancel / Back"},
+    {"id": 6, "name": "Menu", "note": "Opens the field/main menu"},
+    {"id": 7, "name": "Confirm / Talk", "note": "Confirm in menus; talk/examine (primary) in the field"},
+    {"id": 8, "name": "Examine", "note": "Secondary field interact/examine"},
+    {"id": 9, "name": "Reset controls", "note": "Resets the button config to default (Controls submenu only)"},
+    {"id": 10, "name": "Unused (phantom slot)", "note": "Filler config slot — no physical button maps here and no code consumes it"},
+    {"id": 11, "name": "Unused (phantom slot)", "note": "Filler config slot — no physical button maps here and no code consumes it"},
+    {"id": 12, "name": "Pause / Start", "note": "Pause / system menu (Start is read from the physical button, bypassing remap)"}
+  ]
+}

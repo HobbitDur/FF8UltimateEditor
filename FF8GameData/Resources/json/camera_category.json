@@ -1,0 +1,13 @@
+{
+  "camera_category": [
+    {"id": 0, "name": "Default / closest (cam 3)", "desc": "Default value. Converts to camera value 3 (closest framing). Used by most monsters."},
+    {"id": 1, "name": "Small (cam 2)", "desc": "Converts to camera value 2."},
+    {"id": 2, "name": "Medium (cam 1)", "desc": "Converts to camera value 1."},
+    {"id": 3, "name": "Large (cam 0)", "desc": "Converts to camera value 0 (farthest of the low range)."},
+    {"id": 4, "name": "Very large / pull back (cam 4)", "desc": "Bit 0x4 set -> camera value 4. Makes the camera pull back further (large enemies)."},
+    {"id": 5, "name": "Very large / pull back (cam 4)", "desc": "Same result as value 4 (bit 0x4 set, bit 0x8 clear — the engine ignores the other bits). Not used by vanilla monsters."},
+    {"id": 6, "name": "Very large / pull back (cam 4)", "desc": "Same result as value 4 (bit 0x4 set, bit 0x8 clear — the engine ignores the other bits). Not used by vanilla monsters."},
+    {"id": 7, "name": "Very large / pull back (cam 4)", "desc": "Same result as value 4 (bit 0x4 set, bit 0x8 clear — the engine ignores the other bits). Not used by vanilla monsters."},
+    {"id": 8, "name": "Unused (cam 5)", "desc": "Bit 0x8 set -> camera value 5, a distinct class from 4-7. Branch exists but is never triggered by shipped data."}
+  ]
+}

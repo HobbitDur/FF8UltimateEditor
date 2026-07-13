@@ -1,5 +1,5 @@
 {
-  "special_action":[
+  "attack_animation":[
 	{"id":0, "name":"None"},
 	{"id":1, "name":"Cure"},
 	{"id":2, "name":"Fire"},

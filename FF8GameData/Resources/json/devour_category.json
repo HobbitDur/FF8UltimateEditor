@@ -1,0 +1,13 @@
+{
+  "devour_category": [
+    {"id": 0, "name": "Prime beast", "desc": "Large beasts (Blue Dragon, Behemoth, T-Rexaur, Ruby Dragon, Adamantoise, Chimera, Cactuar, Tonberry...)."},
+    {"id": 1, "name": "Standard", "desc": "Standard enemies (Snow Lion, Fastitocalon, Hexadragon, Armadodo, Wendigo, Death Claw, Grand Mantis...)."},
+    {"id": 2, "name": "Small critter", "desc": "Small/flying/venomous critters (Glacial Eye, Buel, Red Bat, Fastitocalon-F, Imp, Cockatrice, Bomb, Abyss Worm...)."},
+    {"id": 3, "name": "Plant", "desc": "Plants (Grat, Ochu, Malboro, Funguar)."},
+    {"id": 4, "name": "Amorphous", "desc": "Amorphous (Blobra, Gesper, Blood Soul)."},
+    {"id": 5, "name": "Undead", "desc": "Undead (Forbidden)."},
+    {"id": 6, "name": "Pest", "desc": "Pests (Geezard, Bite Bug)."},
+    {"id": 7, "name": "Machine", "desc": "Machines (GIM52A, GIM47N, Elastoid, Iron Giant, Belhelmel)."},
+    {"id": 8, "name": "Inedible", "desc": "Non-devourable: every boss/story monster. Also the failure code the engine itself writes on a missed devour."}
+  ]
+}

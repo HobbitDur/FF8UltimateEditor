@@ -653,7 +653,7 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
-    def test_specialAction(self, decompiler: AIDecompiler):
+    def test_attackAnimation(self, decompiler: AIDecompiler):
         bytecode = [30, 17]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
@@ -663,7 +663,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            specialAction("Elvoret Entrance");
+            attackAnimation("Elvoret Entrance");
             """
         )
         assert expected == normalized

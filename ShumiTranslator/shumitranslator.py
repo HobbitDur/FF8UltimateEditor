@@ -42,7 +42,7 @@ class ShumiTranslator(QWidget):
         self.game_data.load_monster_data()
         self.game_data.load_status_data()
         self.game_data.load_gforce_data()
-        self.game_data.load_special_action_data()
+        self.game_data.load_attack_animation_data()
         self.game_data.load_enemy_abilities_data()
         #self.game_data.load_all()
         self.__shumi_icon = QIcon(os.path.join(icon_path, 'icon.ico'))

@@ -40,8 +40,8 @@ class LookupRegistry:
             result = self._enum(gd.gforce_data_json["battle_command"], "id", "Ability")
         elif name == "command_ability_data":
             result = self._enum(gd.gforce_data_json["command_abilities_data"], "id", "Ability")
-        elif name == "special_action":
-            result = self._enum(gd.special_action_data_json["special_action"], "id", "name")
+        elif name == "attack_animation":
+            result = self._enum(gd.attack_animation_data_json["attack_animation"], "id", "name")
         elif name == "stat":
             result = self._enum(gd.stat_data_json["stat"], "id", "name")
         self._cache[name] = result
