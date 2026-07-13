@@ -1,10 +1,7 @@
 import json
 import os
-import pathlib
 
 from FF8GameData.gamedata import GameData
-
-_DEFAULT_RESOURCE_FOLDER = str(pathlib.Path(__file__).parent / "Resources")
 
 
 class WeaponUpgrade:
@@ -71,15 +68,16 @@ class JunkshopManager:
 
     NB_BYTE_PER_WEAPON = 12
 
-    def __init__(self, game_data: GameData, resource_folder=_DEFAULT_RESOURCE_FOLDER):
+    def __init__(self, game_data: GameData):
         self.game_data = game_data
-        self.resource_folder = resource_folder
         self.file_path = ""
         self.weapon_upgrades = []
         self.weapon_name_list = self._load_weapon_names()
 
     def _load_weapon_names(self):
-        file_path = os.path.join(self.resource_folder, "weapon.json")
+        # weapon.json ships with the rest of the game-data json (like item.json), so it travels
+        # next to the exe via FF8GameData and needs no per-tool bundling.
+        file_path = os.path.join(self.game_data.resource_folder_json, "weapon.json")
         with open(file_path, encoding="utf8") as f:
             weapon_data = json.load(f)
         return [weapon["name"] for weapon in weapon_data["weapons"]]

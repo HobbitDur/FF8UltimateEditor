@@ -18,7 +18,6 @@ from FF8GameData.gamedata import GameData
 from Junkshop.junkshopmanager import JunkshopManager, WeaponUpgrade
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
-RESOURCE_FOLDER = str(PROJECT_ROOT / "Junkshop" / "Resources")
 
 
 @pytest.fixture(scope="module")
@@ -30,7 +29,7 @@ def game_data():
 
 @pytest.fixture
 def manager(game_data):
-    return JunkshopManager(game_data, resource_folder=RESOURCE_FOLDER)
+    return JunkshopManager(game_data)
 
 
 def _weapon_bytes(name_offset, padding, price_div10, items):
@@ -152,7 +151,7 @@ class TestJunkshopManager:
         manager.weapon_upgrades[0].items[3] = [11, 22]
         manager.save_file()
 
-        reloaded = JunkshopManager(game_data, resource_folder=RESOURCE_FOLDER)
+        reloaded = JunkshopManager(game_data)
         reloaded.load_file(str(file_path))
         assert reloaded.weapon_upgrades[0].price == 2500
         assert reloaded.weapon_upgrades[0].items[3] == [11, 22]
