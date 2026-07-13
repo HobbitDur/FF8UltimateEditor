@@ -68,7 +68,7 @@ jobs:
     - name: Create release
       shell: bash
       run: |
-        pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
+        pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico --add-data "../../Junkshop/Resources;Junkshop/Resources" main.py
         mkdir -p release/Resources
         mkdir -p release/ExternalTools/Junkshop
         mkdir -p release/ExternalTools/Quezacotl
