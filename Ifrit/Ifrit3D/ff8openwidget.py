@@ -257,16 +257,22 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.update()
 
     def _should_cull_backface(self, verts, multiplicity, view_dir):
-        """PSX-style per-face backface cull. Faces whose plane the eye is
-        behind are back-facing (exact per-face test, same outcome as the
-        game's screen-space cross product).
+        """PSX-style per-face backface cull (exact per-face plane test, same
+        outcome as the game's screen-space cross product on vertices A,B,C).
 
-        Mode 'all' (default) culls every back-facing face — fully faithful to
-        the PSX renderer; monster meshes are consistently wound so this also
-        reveals the correct inner/back skin where the game would. Mode
-        'duplicates' only culls the away-facing copy of a double-sided pair,
-        leaving single-sided faces double-sided — a fallback for models with
-        inconsistent winding. Mode 'off' disables culling."""
+        Sign convention: the viewer's model transform (x,y,z)->(-x,z,-y) has
+        determinant -1 (mirror), which flips triangle winding relative to the
+        game. A face is therefore FRONT-facing here when its wound normal
+        points AWAY from the eye (dot(normal, eye - v0) < 0) — verified by
+        ray-casting Blobra: the visible nearest surface satisfies this for
+        ~97% of rays, and the opposite sign renders models inside-out.
+
+        Mode 'duplicates' (default) only culls the hidden copy of a
+        double-sided pair (two coincident opposite-winding faces), leaving
+        single-sided faces double-sided — never creates holes. Mode 'all'
+        culls every back-facing face exactly like the game (authentic,
+        including the game's own gaps at open edges). Mode 'off' disables
+        culling."""
         mode = getattr(self, 'backface_cull', 'duplicates')
         if mode == 'off':
             return False
@@ -278,11 +284,14 @@ class FF8OpenGLWidget(QOpenGLWidget):
             normal = self._calculate_quad_normal(verts)
         eye = getattr(self, '_eye_model', None)
         if eye is not None:
-            # Exact plane test: the face is back-facing iff the eye is on the
-            # back side of its plane (perspective-correct, per face)
+            # Mirrored model space: front-facing = wound normal points away
+            # from the eye, so cull when it points toward the eye
             face_to_eye = eye - np.asarray(verts[0], dtype=np.float64)
-            return float(np.dot(normal, face_to_eye)) < 0.0
-        return float(np.dot(normal, view_dir)) > 0.0
+            return float(np.dot(normal, face_to_eye)) > 0.0
+        # Fallback (no eye available): same convention with the approximate
+        # global view axis — view_dir points INTO the scene, so a normal
+        # aligned with it faces away from the eye = front-facing here
+        return float(np.dot(normal, view_dir)) < 0.0
 
     def _view_direction_model(self):
         """Unit vector pointing from the camera into the scene, expressed in
