@@ -229,6 +229,29 @@ class QuezacotlWidget(QWidget):
         group.setLayout(form)
         return group, spins
 
+    def _left_column_scroll(self, group_widgets):
+        """Stack groups vertically, hugged to the left with a stretch filling the right, inside
+        a scroll area — so the content stays at its natural width instead of spreading."""
+        column = QVBoxLayout()
+        for widget in group_widgets:
+            column.addWidget(widget)
+        column.addStretch(1)
+        column_widget = QWidget()
+        column_widget.setLayout(column)
+        column_widget.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
+
+        outer = QHBoxLayout()
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addWidget(column_widget)
+        outer.addStretch(1)
+        container = QWidget()
+        container.setLayout(outer)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(container)
+        return scroll
+
     def _bitfield_group(self, title, tooltip, entries, changed_slot, columns=2):
         """Build a QGroupBox of checkboxes over a bitfield. Returns (group, [(bit, checkbox)])."""
         group = QGroupBox(title)
@@ -821,18 +844,7 @@ class QuezacotlWidget(QWidget):
                              "L2+R2 held = flee battle, R1 = Renzokuken critical timing.")
         key_group.setLayout(key_form)
 
-        layout = QVBoxLayout()
-        layout.addWidget(settings_group)
-        layout.addWidget(flag_group)
-        layout.addWidget(seal_group)
-        layout.addWidget(key_group)
-        layout.addStretch(1)
-        container = QWidget()
-        container.setLayout(layout)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(container)
-        return scroll
+        return self._left_column_scroll([settings_group, flag_group, seal_group, key_group])
 
     def _reload_config(self):
         config = self.manager.config
@@ -942,19 +954,7 @@ class QuezacotlWidget(QWidget):
         points_group.setToolTip("Per-command AP-like learning progress; 0 = learned")
         points_group.setLayout(points_form)
 
-        layout = QVBoxLayout()
-        layout.addWidget(general_group)
-        layout.addWidget(weapons_group)
-        for group in limit_groups:
-            layout.addWidget(group)
-        layout.addWidget(points_group)
-        layout.addStretch(1)
-        container = QWidget()
-        container.setLayout(layout)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(container)
-        return scroll
+        return self._left_column_scroll([general_group, weapons_group, *limit_groups, points_group])
 
     def _reload_misc(self):
         misc = self.manager.misc
