@@ -1,10 +1,13 @@
 import pathlib
 from typing import List, Tuple
 
+from PIL import Image
 from PIL.ImageQt import ImageQt
 from PyQt6.QtGui import QPixmap
 
-from FF8GameData.mch.mchanalyser import CharaOne, CharaOneEntry, MchFile, FieldModel, compute_frame_matrices
+from FF8GameData.mch.mchanalyser import (CharaOne, CharaOneEntry, MchFile, FieldModel,
+                                         compute_frame_matrices, mch_texture_group,
+                                         mch_texture_is_semi)
 from FF8GameData.monsterdata import Matrix4x4, Animation
 
 
@@ -119,7 +122,41 @@ class SeedManager:
 
     def _set_model(self, model: FieldModel):
         self.enemy = model
-        self.texture_data = [SeedTextureData(tim.image) for tim in model.tim_images]
+        self.texture_data = self._build_texture_data(model)
+
+    @staticmethod
+    def _force_opaque(image: Image.Image) -> Image.Image:
+        """STP texels decode to 50% alpha; on non-ABE faces they are opaque."""
+        red, green, blue, alpha = image.split()
+        alpha = alpha.point(lambda v: 255 if v > 0 else 0)
+        return Image.merge('RGBA', (red, green, blue, alpha))
+
+    def _build_texture_data(self, model: FieldModel) -> List[SeedTextureData]:
+        """One texture per distinct face tex id, ordered to match the sorted
+        unique ids (the viewer maps ids to this list by rank). Even ids keep
+        the semi-transparent TIM, odd ids get an opaque copy — see
+        mchanalyser.mch_texture_id()."""
+        used_ids = set()
+        for obj in model.geometry_data.object_data:
+            for triangle in obj.triangles:
+                used_ids.add(triangle.tex_id_1 & 0xFF)
+            for quad in obj.quads:
+                used_ids.add(quad.tex_id_1 & 0xFF)
+
+        opaque_cache = {}
+        texture_data = []
+        for tex_id in sorted(used_ids):
+            group = mch_texture_group(tex_id)
+            if group >= len(model.tim_images):
+                texture_data.append(SeedTextureData(Image.new('RGBA', (2, 2), (0, 255, 0, 255))))
+                continue
+            image = model.tim_images[group].image
+            if not mch_texture_is_semi(tex_id):
+                if group not in opaque_cache:
+                    opaque_cache[group] = self._force_opaque(image)
+                image = opaque_cache[group]
+            texture_data.append(SeedTextureData(image))
+        return texture_data
 
     # ---------------------------------------------------- viewer support
     # Same math as IfritManager: transforms bone-local vertices with the

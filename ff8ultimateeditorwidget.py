@@ -18,11 +18,17 @@ from ExeLauncher.junkshop import JunkshopLauncher
 from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from ExeLauncher.sirenlauncher import SirenLauncher
 from Ifrit.ifritmonsterwidget import IfritMonsterWidget
+from Julia.juliawidget import JuliaWidget
 from Pandemona.pandemonawidget import PandemonaWidget
 from PuPuCargo.pupucargowidget import PuPuCargoWidget
 from Seed.seedwidget import SeedWidget
+from Siren.sirenwidget import SirenWidget
+from Junkshop.junkshopwidget import JunkshopWidget
+from Alexander.alexanderwidget import AlexanderWidget
+from Quezacotl.quezacotlwidget import QuezacotlWidget
 from ShumiTranslator.shumitranslator import ShumiTranslator
 from SmallWidget.externaltoolwidget import ExternalToolWidget
+from SmallWidget.fsextractwidget import FsExtractWidget
 from TonberryShop.tonberryshop import TonberryShop
 from ToolUpdate.toolupdatewidget import ToolUpdateWidget
 from SolomonRing.solomonringwidget import SolomonRingWidget
@@ -54,7 +60,12 @@ class FF8UltimateEditorWidget(QWidget):
             "SolomonRing (kernel.bin editor)",
             "PuPuCargo (Item menu editor)",
             "Seed (Field model viewer)",
-            "Pandemona (Refine editor)"
+            "Pandemona (Refine editor)",
+            "Alexander (Battle stage viewer)",
+            "Julia (Sound editor)",
+            "Siren (price.bin editor)",
+            "Junkshop (mwepon.bin editor)",
+            "Quezacotl (init.out editor)"
         ]
 
         # 3. Header: Program Selection (ComboBox)
@@ -65,9 +76,13 @@ class FF8UltimateEditorWidget(QWidget):
         self._program_option.activated.connect(self._program_option_change)
         self._program_option.setToolTip("Choose which program to edit your c0m file")
 
+        # Shared action available to every tool: extract a .fs archive recursively
+        self._fs_extract_button = FsExtractWidget(resources_path, game_data_path)
+
         self._program_option_layout = QHBoxLayout()
         self._program_option_layout.addWidget(self._program_option_title)
         self._program_option_layout.addWidget(self._program_option)
+        self._program_option_layout.addWidget(self._fs_extract_button)
 
         # 4. Header: External Tool Buttons
         self._external_program_title = QLabel("External program:")
@@ -126,6 +141,11 @@ class FF8UltimateEditorWidget(QWidget):
         self._pupucargo_widget = PuPuCargoWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._seed_widget = SeedWidget(icon_path=os.path.join(resources_path), settings=self.settings)
         self._pandemona_widget = PandemonaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._alexander_widget = AlexanderWidget(icon_path=os.path.join(resources_path), settings=self.settings)
+        self._julia_widget = JuliaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._siren_widget = SirenWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._junkshop_widget = JunkshopWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._quezacotl_widget = QuezacotlWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
 
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
@@ -138,6 +158,11 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._pupucargo_widget) # Index 6
         self.tool_stack.addWidget(self._seed_widget) # Index 7
         self.tool_stack.addWidget(self._pandemona_widget) # Index 8
+        self.tool_stack.addWidget(self._alexander_widget) # Index 9
+        self.tool_stack.addWidget(self._julia_widget) # Index 10
+        self.tool_stack.addWidget(self._siren_widget) # Index 11
+        self.tool_stack.addWidget(self._junkshop_widget) # Index 12
+        self.tool_stack.addWidget(self._quezacotl_widget) # Index 13
         self._program_option_change()
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)

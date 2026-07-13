@@ -13,11 +13,11 @@ class DelingCliManager:
 
     def unpack(self, fs_path, folder_dest_path, recursive=True):
         os.makedirs(folder_dest_path, exist_ok=True)
+        command = [os.path.join(self.__deling_path, "deling-cli.exe"), "unpack"]
         if recursive:
-            recursive_str = "-r"
-        else:
-            recursive_str = ""
-        subprocess.run([os.path.join(self.__deling_path, "deling-cli.exe"), "unpack", recursive_str, fs_path, folder_dest_path])
+            command.append("-r")
+        command += [fs_path, folder_dest_path]
+        return subprocess.run(command)
 
     def pack(self, fs_path, folder_dest_path):
         os.makedirs(folder_dest_path, exist_ok=True)

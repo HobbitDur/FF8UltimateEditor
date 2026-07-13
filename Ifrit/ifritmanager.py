@@ -553,6 +553,40 @@ class IfritManager:
         # Recompute matrices for this frame, only updating the changed bone and its children
         self._recompute_frame_matrices(anim, frame_id, bone_idx)
 
+    def set_animation_frame_bone_scale(self, anim_id: int, frame_id: int, bone_idx: int,
+                                       scale_x: float, scale_y: float, scale_z: float):
+        """Set the squash-and-stretch scale of a bone in a specific animation frame (1.0 = neutral)."""
+        anim: Animation = self.enemy.animation_data.animations[anim_id]
+        if frame_id >= len(anim.frames):
+            return
+        frame = anim.frames[frame_id]
+
+        if bone_idx >= len(frame.rotation_vector_data_supp):
+            from FF8GameData.monsterdata import RotationVectorDataSupp
+            frame.rotation_vector_data_supp.extend(
+                RotationVectorDataSupp() for _ in range(bone_idx - len(frame.rotation_vector_data_supp) + 1))
+
+        supp = frame.rotation_vector_data_supp[bone_idx]
+        supp.set_scale_factor(0, scale_x)
+        supp.set_scale_factor(1, scale_y)
+        supp.set_scale_factor(2, scale_z)
+
+        # Scale data is only consumed on frames whose mode bit is set
+        if not supp.is_neutral():
+            frame.mode_bit = 1
+
+        # Scale is hierarchical through the whole subtree: recompute the full frame
+        self._recompute_frame_matrices(anim, frame_id, None)
+
+    def set_animation_frame_scale_mode(self, anim_id: int, frame_id: int, enabled: bool):
+        """Enable/disable the frame's mode bit (whether its per-bone scale data is applied and stored)."""
+        anim: Animation = self.enemy.animation_data.animations[anim_id]
+        if frame_id >= len(anim.frames):
+            return
+        frame = anim.frames[frame_id]
+        frame.mode_bit = 1 if enabled else 0
+        self._recompute_frame_matrices(anim, frame_id, None)
+
     def _recompute_all_animation_matrices(self):
         """Rebuild bone matrices for every frame of every animation."""
         for anim in self.enemy.animation_data.animations:

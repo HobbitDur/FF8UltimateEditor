@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (QFormLayout, QSpinBox, QDoubleSpinBox,
                              QPushButton, QVBoxLayout, QHBoxLayout,
-                             QLabel, QWidget, QTabWidget)
+                             QLabel, QWidget, QTabWidget, QCheckBox)
 from PyQt6.QtCore import Qt, pyqtSignal
 
 
@@ -13,6 +13,8 @@ class AnimEditor(QWidget):
     bone_parent_changed = pyqtSignal(int, int)
     animation_rotation_changed = pyqtSignal(int, int, int, float, float, float)
     animation_position_changed = pyqtSignal(int, int, float, float, float)
+    animation_scale_changed = pyqtSignal(int, int, int, float, float, float)
+    frame_scale_mode_changed = pyqtSignal(int, int, bool)
 
     def __init__(self):
         super().__init__()
@@ -229,6 +231,41 @@ class AnimEditor(QWidget):
 
         self.tabs.addTab(self.anim_tab, "Bones rotation per frame")
 
+        # Bone Scale Tab (squash-and-stretch)
+        self.scale_tab = QWidget()
+        scale_layout = QFormLayout(self.scale_tab)
+
+        self.scale_mode_cb = QCheckBox("Frame carries scale data (mode bit)")
+        self.scale_mode_cb.toggled.connect(self._on_scale_mode_toggled)
+        scale_layout.addRow("", self.scale_mode_cb)
+
+        self.scale_spins = []
+        self.scale_raws = []
+        for axis_name in ("X", "Y", "Z"):
+            axis_layout = QHBoxLayout()
+            spin = QDoubleSpinBox()
+            spin.setRange(0.01, 32.0)
+            spin.setSingleStep(0.05)
+            spin.setDecimals(3)
+            spin.setValue(1.0)
+            spin.valueChanged.connect(self._on_scale_changed)
+            raw_label = QLabel("raw: 1024")
+            raw_label.setStyleSheet("color:#888; font-size:9px;")
+            raw_label.setFixedWidth(70)
+            axis_layout.addWidget(spin)
+            axis_layout.addWidget(raw_label)
+            axis_layout.addStretch(1)
+            scale_layout.addRow(f"Scale {axis_name}:", axis_layout)
+            self.scale_spins.append(spin)
+            self.scale_raws.append(raw_label)
+
+        self.scale_info = QLabel("Squash-and-stretch: per bone and frame, 1.0 = neutral.\n"
+                                 "Hierarchical: children inherit their parent's scale.\n"
+                                 "Only applied on frames with the mode bit set.")
+        scale_layout.addRow("", self.scale_info)
+
+        self.tabs.addTab(self.scale_tab, "Bones scale per frame")
+
         content_layout.addWidget(self.tabs)
 
         layout.addWidget(self.content)
@@ -322,6 +359,25 @@ class AnimEditor(QWidget):
         self.frame_pos_y.blockSignals(False)
         self.frame_pos_z.blockSignals(False)
 
+    def set_bone_scale(self, scale_x: float, scale_y: float, scale_z: float,
+                       raw_x: int, raw_y: int, raw_z: int, mode_bit_enabled: bool):
+        """Update the scale tab with the selected bone/frame data"""
+        self._updating = True
+        try:
+            self.scale_mode_cb.blockSignals(True)
+            self.scale_mode_cb.setChecked(mode_bit_enabled)
+            self.scale_mode_cb.blockSignals(False)
+
+            for spin, raw_label, value, raw in zip(self.scale_spins, self.scale_raws,
+                                                   (scale_x, scale_y, scale_z),
+                                                   (raw_x, raw_y, raw_z)):
+                spin.blockSignals(True)
+                spin.setValue(value)
+                spin.blockSignals(False)
+                raw_label.setText(f"raw: {raw:d}")
+        finally:
+            self._updating = False
+
     def set_animation_info(self, anim_id: int, frame_id: int):
         """Update animation info display"""
         self.current_anim_id = anim_id
@@ -341,6 +397,7 @@ class AnimEditor(QWidget):
         has_animation = (hasattr(self, 'current_anim_id') and self.current_anim_id >= 0)
         self.tabs.setTabEnabled(1, has_animation)  # Position tab
         self.tabs.setTabEnabled(2, has_animation)  # Rotation tab
+        self.tabs.setTabEnabled(3, has_animation)  # Scale tab
 
     def _on_bone_selected(self, bone_id: int):
         """Handle bone selection"""
@@ -380,3 +437,29 @@ class AnimEditor(QWidget):
             self.animation_rotation_changed.emit(
                 self.current_anim_id, self.current_frame, bone_id, rx, ry, rz
             )
+
+    def _on_scale_changed(self):
+        """Handle bone scale change"""
+        if self._updating:
+            return
+        # A non-neutral scale is only visible when the frame's mode bit is set:
+        # enable it automatically so the edit takes effect immediately
+        if not self.scale_mode_cb.isChecked():
+            self.scale_mode_cb.blockSignals(True)
+            self.scale_mode_cb.setChecked(True)
+            self.scale_mode_cb.blockSignals(False)
+            self.frame_scale_mode_changed.emit(self.current_anim_id, self.current_frame, True)
+        bone_id = self.bone_spin.value()
+        sx = self.scale_spins[0].value()
+        sy = self.scale_spins[1].value()
+        sz = self.scale_spins[2].value()
+        for raw_label, value in zip(self.scale_raws, (sx, sy, sz)):
+            raw_label.setText(f"raw: {round(value * 1024):d}")
+        self.animation_scale_changed.emit(
+            self.current_anim_id, self.current_frame, bone_id, sx, sy, sz
+        )
+
+    def _on_scale_mode_toggled(self, checked: bool):
+        """Handle the frame mode-bit checkbox"""
+        if not self._updating:
+            self.frame_scale_mode_changed.emit(self.current_anim_id, self.current_frame, checked)

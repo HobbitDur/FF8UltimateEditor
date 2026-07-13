@@ -1,0 +1,1222 @@
+{
+  "attack_type": {
+    "type": "enum",
+    "entries": [
+      {
+        "value": 0,
+        "name": "None"
+      },
+      {
+        "value": 1,
+        "name": "Physical Attack"
+      },
+      {
+        "value": 2,
+        "name": "Magic Attack"
+      },
+      {
+        "value": 3,
+        "name": "Curative Magic"
+      },
+      {
+        "value": 4,
+        "name": "Curative Item"
+      },
+      {
+        "value": 5,
+        "name": "Revive"
+      },
+      {
+        "value": 6,
+        "name": "Revive At Full HP"
+      },
+      {
+        "value": 7,
+        "name": "% Physical Damage"
+      },
+      {
+        "value": 8,
+        "name": "% Magic Damage"
+      },
+      {
+        "value": 9,
+        "name": "Renzokuken Finisher"
+      },
+      {
+        "value": 10,
+        "name": "Squall Gunblade Attack"
+      },
+      {
+        "value": 11,
+        "name": "GF"
+      },
+      {
+        "value": 12,
+        "name": "Scan"
+      },
+      {
+        "value": 13,
+        "name": "LV Down"
+      },
+      {
+        "value": 14,
+        "name": "Summon Item?"
+      },
+      {
+        "value": 15,
+        "name": "GF (Ignore Target SPR)"
+      },
+      {
+        "value": 16,
+        "name": "LV Up"
+      },
+      {
+        "value": 17,
+        "name": "Card"
+      },
+      {
+        "value": 18,
+        "name": "Kamikaze"
+      },
+      {
+        "value": 19,
+        "name": "Devour"
+      },
+      {
+        "value": 20,
+        "name": "% GF Damage"
+      },
+      {
+        "value": 21,
+        "name": "Unknown 1"
+      },
+      {
+        "value": 22,
+        "name": "Magic Attack (Ignore Target SPR)"
+      },
+      {
+        "value": 23,
+        "name": "Angelo Search"
+      },
+      {
+        "value": 24,
+        "name": "Moogle Dance"
+      },
+      {
+        "value": 25,
+        "name": "White Wind (Quistis)"
+      },
+      {
+        "value": 26,
+        "name": "LV? Attack"
+      },
+      {
+        "value": 27,
+        "name": "Fixed Damage"
+      },
+      {
+        "value": 28,
+        "name": "Target Current HP - 1"
+      },
+      {
+        "value": 29,
+        "name": "Fixed Magic Damage Based on GF Level"
+      },
+      {
+        "value": 30,
+        "name": "Unknown 2"
+      },
+      {
+        "value": 31,
+        "name": "Unknown 3"
+      },
+      {
+        "value": 32,
+        "name": "Give Percentage HP"
+      },
+      {
+        "value": 33,
+        "name": "Unknown 4"
+      },
+      {
+        "value": 34,
+        "name": "Everyone's Grudge"
+      },
+      {
+        "value": 35,
+        "name": "1 HP Damage"
+      },
+      {
+        "value": 36,
+        "name": "Physical Attack (Ignore Target VIT)"
+      }
+    ]
+  },
+  "element": {
+    "type": "flags",
+    "entries": [
+      {
+        "mask": 1,
+        "name": "Fire"
+      },
+      {
+        "mask": 2,
+        "name": "Ice"
+      },
+      {
+        "mask": 4,
+        "name": "Thunder"
+      },
+      {
+        "mask": 8,
+        "name": "Earth"
+      },
+      {
+        "mask": 16,
+        "name": "Poison"
+      },
+      {
+        "mask": 32,
+        "name": "Wind"
+      },
+      {
+        "mask": 64,
+        "name": "Water"
+      },
+      {
+        "mask": 128,
+        "name": "Holy"
+      }
+    ]
+  },
+  "target_info": {
+    "type": "flags",
+    "entries": [
+      {
+        "mask": 1,
+        "name": "Dead"
+      },
+      {
+        "mask": 2,
+        "name": "??? (0x02)"
+      },
+      {
+        "mask": 4,
+        "name": "??? (0x04)"
+      },
+      {
+        "mask": 8,
+        "name": "Single Side"
+      },
+      {
+        "mask": 16,
+        "name": "Single"
+      },
+      {
+        "mask": 32,
+        "name": "Everyone on one side"
+      },
+      {
+        "mask": 64,
+        "name": "Enemy"
+      },
+      {
+        "mask": 128,
+        "name": "??? (0x80)"
+      }
+    ]
+  },
+  "attack_flags": {
+    "type": "flags",
+    "entries": [
+      {
+        "mask": 1,
+        "name": "Shelled"
+      },
+      {
+        "mask": 2,
+        "name": "? (0x02)"
+      },
+      {
+        "mask": 4,
+        "name": "? (0x04)"
+      },
+      {
+        "mask": 8,
+        "name": "Break Damage Limit"
+      },
+      {
+        "mask": 16,
+        "name": "Reflected"
+      },
+      {
+        "mask": 32,
+        "name": "? (0x20)"
+      },
+      {
+        "mask": 64,
+        "name": "? (0x40)"
+      },
+      {
+        "mask": 128,
+        "name": "Revive?"
+      }
+    ]
+  },
+  "status_1": {
+    "type": "flags",
+    "entries": [
+      {
+        "mask": 1,
+        "name": "Death"
+      },
+      {
+        "mask": 2,
+        "name": "Poison"
+      },
+      {
+        "mask": 4,
+        "name": "Petrify"
+      },
+      {
+        "mask": 8,
+        "name": "Darkness"
+      },
+      {
+        "mask": 16,
+        "name": "Silence"
+      },
+      {
+        "mask": 32,
+        "name": "Berserk"
+      },
+      {
+        "mask": 64,
+        "name": "Zombie"
+      },
+      {
+        "mask": 128,
+        "name": "Unused (0x80)"
+      },
+      {
+        "mask": 256,
+        "name": "HP < 25%"
+      },
+      {
+        "mask": 512,
+        "name": "HP < 50%"
+      },
+      {
+        "mask": 1024,
+        "name": "Unused (0x400)"
+      },
+      {
+        "mask": 2048,
+        "name": "Unused (0x800)"
+      },
+      {
+        "mask": 4096,
+        "name": "Unused (0x1000)"
+      },
+      {
+        "mask": 8192,
+        "name": "Unused (0x2000)"
+      },
+      {
+        "mask": 16384,
+        "name": "Unused (0x4000)"
+      },
+      {
+        "mask": 32768,
+        "name": "Unused (0x8000)"
+      }
+    ]
+  },
+  "status_2": {
+    "type": "flags",
+    "entries": [
+      {
+        "mask": 1,
+        "name": "Sleep"
+      },
+      {
+        "mask": 2,
+        "name": "Haste"
+      },
+      {
+        "mask": 4,
+        "name": "Slow"
+      },
+      {
+        "mask": 8,
+        "name": "Stop"
+      },
+      {
+        "mask": 16,
+        "name": "Regen"
+      },
+      {
+        "mask": 32,
+        "name": "Protect"
+      },
+      {
+        "mask": 64,
+        "name": "Shell"
+      },
+      {
+        "mask": 128,
+        "name": "Reflect"
+      },
+      {
+        "mask": 256,
+        "name": "Aura"
+      },
+      {
+        "mask": 512,
+        "name": "Curse"
+      },
+      {
+        "mask": 1024,
+        "name": "Doom"
+      },
+      {
+        "mask": 2048,
+        "name": "Invincible"
+      },
+      {
+        "mask": 4096,
+        "name": "Gradual petrify"
+      },
+      {
+        "mask": 8192,
+        "name": "Float"
+      },
+      {
+        "mask": 16384,
+        "name": "Confusion"
+      },
+      {
+        "mask": 32768,
+        "name": "Drain"
+      },
+      {
+        "mask": 65536,
+        "name": "Eject"
+      },
+      {
+        "mask": 131072,
+        "name": "Double"
+      },
+      {
+        "mask": 262144,
+        "name": "Triple"
+      },
+      {
+        "mask": 524288,
+        "name": "Defend"
+      },
+      {
+        "mask": 1048576,
+        "name": "Immune Physical attack"
+      },
+      {
+        "mask": 2097152,
+        "name": "Immune Magic attack"
+      },
+      {
+        "mask": 4194304,
+        "name": "Charged"
+      },
+      {
+        "mask": 8388608,
+        "name": "Back attack"
+      },
+      {
+        "mask": 16777216,
+        "name": "Vit0"
+      },
+      {
+        "mask": 33554432,
+        "name": "Angel Wing"
+      },
+      {
+        "mask": 67108864,
+        "name": "Unknown (26)"
+      },
+      {
+        "mask": 134217728,
+        "name": "Unknown (27)"
+      },
+      {
+        "mask": 268435456,
+        "name": "Unknown (28)"
+      },
+      {
+        "mask": 536870912,
+        "name": "Unknown (29)"
+      },
+      {
+        "mask": 1073741824,
+        "name": "Has Magic"
+      },
+      {
+        "mask": 2147483648,
+        "name": "Invocation pending"
+      }
+    ]
+  },
+  "j_status": {
+    "type": "flags",
+    "entries": [
+      {
+        "mask": 1,
+        "name": "Death"
+      },
+      {
+        "mask": 2,
+        "name": "Poison"
+      },
+      {
+        "mask": 4,
+        "name": "Petrify"
+      },
+      {
+        "mask": 8,
+        "name": "Darkness"
+      },
+      {
+        "mask": 16,
+        "name": "Silence"
+      },
+      {
+        "mask": 32,
+        "name": "Berserk"
+      },
+      {
+        "mask": 64,
+        "name": "Zombie"
+      },
+      {
+        "mask": 128,
+        "name": "Sleep"
+      },
+      {
+        "mask": 256,
+        "name": "Slow"
+      },
+      {
+        "mask": 512,
+        "name": "Stop"
+      },
+      {
+        "mask": 1024,
+        "name": "Curse (unused for attack)"
+      },
+      {
+        "mask": 2048,
+        "name": "Confusion"
+      },
+      {
+        "mask": 4096,
+        "name": "Drain"
+      }
+    ]
+  },
+  "duel_button": {
+    "type": "enum",
+    "entries": [
+      {
+        "value": 65535,
+        "name": "None"
+      },
+      {
+        "value": 1,
+        "name": "Escape Battle (D)"
+      },
+      {
+        "value": 2,
+        "name": "Escape Battle (F)"
+      },
+      {
+        "value": 4,
+        "name": "Rotation Left (H)"
+      },
+      {
+        "value": 8,
+        "name": "Rotation Right (G)"
+      },
+      {
+        "value": 16,
+        "name": "Cancel (C)"
+      },
+      {
+        "value": 32,
+        "name": "Menu (V)"
+      },
+      {
+        "value": 64,
+        "name": "Select (X)"
+      },
+      {
+        "value": 128,
+        "name": "Card Game (S)"
+      },
+      {
+        "value": 4096,
+        "name": "Up"
+      },
+      {
+        "value": 8192,
+        "name": "Right"
+      },
+      {
+        "value": 16384,
+        "name": "Down"
+      },
+      {
+        "value": 32768,
+        "name": "Left"
+      }
+    ]
+  },
+  "heal_dmg": {
+    "type": "enum",
+    "entries": [
+      {
+        "value": 30,
+        "name": "Heal"
+      },
+      {
+        "value": 31,
+        "name": "Damage"
+      }
+    ]
+  },
+  "stat_to_increase": {
+    "type": "enum",
+    "entries": [
+      {
+        "value": 0,
+        "name": "SumMag"
+      },
+      {
+        "value": 1,
+        "name": "HP"
+      },
+      {
+        "value": 255,
+        "name": "Boost"
+      }
+    ]
+  },
+  "gender": {
+    "type": "enum",
+    "entries": [
+      {
+        "value": 0,
+        "name": "Male"
+      },
+      {
+        "value": 1,
+        "name": "Female"
+      }
+    ]
+  },
+  "junctionable_ability": {
+    "type": "enum",
+    "entries": [
+      {
+        "value": 0,
+        "name": "None"
+      },
+      {
+        "value": 1,
+        "name": "HP-J"
+      },
+      {
+        "value": 2,
+        "name": "STR-J"
+      },
+      {
+        "value": 3,
+        "name": "VIT-J"
+      },
+      {
+        "value": 4,
+        "name": "MAG-J"
+      },
+      {
+        "value": 5,
+        "name": "SPR-J"
+      },
+      {
+        "value": 6,
+        "name": "SPD-J"
+      },
+      {
+        "value": 7,
+        "name": "EVA-J"
+      },
+      {
+        "value": 8,
+        "name": "HIT-J"
+      },
+      {
+        "value": 9,
+        "name": "LUCK-J"
+      },
+      {
+        "value": 10,
+        "name": "Elem-Atk-J"
+      },
+      {
+        "value": 11,
+        "name": "ST-Atk-J"
+      },
+      {
+        "value": 12,
+        "name": "Elem-Def-J"
+      },
+      {
+        "value": 13,
+        "name": "ST-Def-J"
+      },
+      {
+        "value": 14,
+        "name": "Elem-Defx2"
+      },
+      {
+        "value": 15,
+        "name": "Elem-Defx4"
+      },
+      {
+        "value": 16,
+        "name": "ST-Def-Jx2"
+      },
+      {
+        "value": 17,
+        "name": "ST-Def-Jx4"
+      },
+      {
+        "value": 18,
+        "name": "Abilityx3"
+      },
+      {
+        "value": 19,
+        "name": "Abilityx4"
+      },
+      {
+        "value": 20,
+        "name": "Magic"
+      },
+      {
+        "value": 21,
+        "name": "GF"
+      },
+      {
+        "value": 22,
+        "name": "Draw"
+      },
+      {
+        "value": 23,
+        "name": "Item"
+      },
+      {
+        "value": 24,
+        "name": "Empty*"
+      },
+      {
+        "value": 25,
+        "name": "Card"
+      },
+      {
+        "value": 26,
+        "name": "Doom"
+      },
+      {
+        "value": 27,
+        "name": "MadRush"
+      },
+      {
+        "value": 28,
+        "name": "Treatment"
+      },
+      {
+        "value": 29,
+        "name": "Defend"
+      },
+      {
+        "value": 30,
+        "name": "Darkside"
+      },
+      {
+        "value": 31,
+        "name": "Recover"
+      },
+      {
+        "value": 32,
+        "name": "Absorb"
+      },
+      {
+        "value": 33,
+        "name": "Revive"
+      },
+      {
+        "value": 34,
+        "name": "LVDown"
+      },
+      {
+        "value": 35,
+        "name": "LVUp"
+      },
+      {
+        "value": 36,
+        "name": "Kamikaze"
+      },
+      {
+        "value": 37,
+        "name": "Devour"
+      },
+      {
+        "value": 38,
+        "name": "MiniMog"
+      },
+      {
+        "value": 39,
+        "name": "HP+20%"
+      },
+      {
+        "value": 40,
+        "name": "HP+40%"
+      },
+      {
+        "value": 41,
+        "name": "HP+80%"
+      },
+      {
+        "value": 42,
+        "name": "Str+20%"
+      },
+      {
+        "value": 43,
+        "name": "Str+40%"
+      },
+      {
+        "value": 44,
+        "name": "Str+60%"
+      },
+      {
+        "value": 45,
+        "name": "Vit+20%"
+      },
+      {
+        "value": 46,
+        "name": "Vit+40%"
+      },
+      {
+        "value": 47,
+        "name": "Vit+60%"
+      },
+      {
+        "value": 48,
+        "name": "Mag+20%"
+      },
+      {
+        "value": 49,
+        "name": "Mag+40%"
+      },
+      {
+        "value": 50,
+        "name": "Mag+60%"
+      },
+      {
+        "value": 51,
+        "name": "Spr+20%"
+      },
+      {
+        "value": 52,
+        "name": "Spr+40%"
+      },
+      {
+        "value": 53,
+        "name": "Spr+60%"
+      },
+      {
+        "value": 54,
+        "name": "Spd+20%"
+      },
+      {
+        "value": 55,
+        "name": "Spd+40%"
+      },
+      {
+        "value": 56,
+        "name": "Eva+30%"
+      },
+      {
+        "value": 57,
+        "name": "Luck+50%"
+      },
+      {
+        "value": 58,
+        "name": "Mug"
+      },
+      {
+        "value": 59,
+        "name": "MedData"
+      },
+      {
+        "value": 60,
+        "name": "Counter"
+      },
+      {
+        "value": 61,
+        "name": "Return Damage"
+      },
+      {
+        "value": 62,
+        "name": "Cover"
+      },
+      {
+        "value": 63,
+        "name": "Initiative"
+      },
+      {
+        "value": 64,
+        "name": "Move-HPUp"
+      },
+      {
+        "value": 65,
+        "name": "HPBonus"
+      },
+      {
+        "value": 66,
+        "name": "StrBonus"
+      },
+      {
+        "value": 67,
+        "name": "VitBonus"
+      },
+      {
+        "value": 68,
+        "name": "MagBonus"
+      },
+      {
+        "value": 69,
+        "name": "SprBonus"
+      },
+      {
+        "value": 70,
+        "name": "Auto-Protect"
+      },
+      {
+        "value": 71,
+        "name": "Auto-Shell"
+      },
+      {
+        "value": 72,
+        "name": "Auto-Reflect"
+      },
+      {
+        "value": 73,
+        "name": "Auto-Haste"
+      },
+      {
+        "value": 74,
+        "name": "Auto Potion"
+      },
+      {
+        "value": 75,
+        "name": "Expendx2-1"
+      },
+      {
+        "value": 76,
+        "name": "Expendx3-1"
+      },
+      {
+        "value": 77,
+        "name": "Ribbon"
+      },
+      {
+        "value": 78,
+        "name": "Alert"
+      },
+      {
+        "value": 79,
+        "name": "Move-Find"
+      },
+      {
+        "value": 80,
+        "name": "Enc-Half"
+      },
+      {
+        "value": 81,
+        "name": "Enc-None"
+      },
+      {
+        "value": 82,
+        "name": "RareItem"
+      },
+      {
+        "value": 83,
+        "name": "SumMag+10%"
+      },
+      {
+        "value": 84,
+        "name": "SumMag+20%"
+      },
+      {
+        "value": 85,
+        "name": "SumMag+30%"
+      },
+      {
+        "value": 86,
+        "name": "SumMag+40%"
+      },
+      {
+        "value": 87,
+        "name": "GFHP+10%"
+      },
+      {
+        "value": 88,
+        "name": "GFHP+20%"
+      },
+      {
+        "value": 89,
+        "name": "GFHP+30%"
+      },
+      {
+        "value": 90,
+        "name": "GFHP+40%"
+      },
+      {
+        "value": 91,
+        "name": "Boost"
+      },
+      {
+        "value": 92,
+        "name": "Haggle"
+      },
+      {
+        "value": 93,
+        "name": "Sell-High"
+      },
+      {
+        "value": 94,
+        "name": "Familiar"
+      },
+      {
+        "value": 95,
+        "name": "CallShop"
+      },
+      {
+        "value": 96,
+        "name": "JunkShop"
+      },
+      {
+        "value": 97,
+        "name": "T Mag-RF"
+      },
+      {
+        "value": 98,
+        "name": "IMag-RF"
+      },
+      {
+        "value": 99,
+        "name": "FMag-RF"
+      },
+      {
+        "value": 100,
+        "name": "LMag-RF"
+      },
+      {
+        "value": 101,
+        "name": "TimeMag-RF"
+      },
+      {
+        "value": 102,
+        "name": "STMag-RF"
+      },
+      {
+        "value": 103,
+        "name": "SuptMag-RF"
+      },
+      {
+        "value": 104,
+        "name": "ForbidMag-RF"
+      },
+      {
+        "value": 105,
+        "name": "RecovMed-RF"
+      },
+      {
+        "value": 106,
+        "name": "STMed-RF"
+      },
+      {
+        "value": 107,
+        "name": "Ammo-RF"
+      },
+      {
+        "value": 108,
+        "name": "Tool-RF"
+      },
+      {
+        "value": 109,
+        "name": "ForbidMed-RF"
+      },
+      {
+        "value": 110,
+        "name": "GFRecovMed-RF"
+      },
+      {
+        "value": 111,
+        "name": "GFAblMed-RF"
+      },
+      {
+        "value": 112,
+        "name": "Mid Mag-RF"
+      },
+      {
+        "value": 113,
+        "name": "HighMag-RF"
+      },
+      {
+        "value": 114,
+        "name": "MedLVUp"
+      }
+    ]
+  },
+  "weapon_character": {
+    "type": "enum",
+    "entries": [
+      {
+        "value": 0,
+        "name": "Squall"
+      },
+      {
+        "value": 1,
+        "name": "Zell"
+      },
+      {
+        "value": 2,
+        "name": "Irvine"
+      },
+      {
+        "value": 3,
+        "name": "Quistis"
+      },
+      {
+        "value": 4,
+        "name": "Rinoa"
+      },
+      {
+        "value": 5,
+        "name": "Selphie"
+      },
+      {
+        "value": 6,
+        "name": "Seifer"
+      },
+      {
+        "value": 7,
+        "name": "Edea"
+      },
+      {
+        "value": 8,
+        "name": "Laguna"
+      },
+      {
+        "value": 9,
+        "name": "Kiros"
+      },
+      {
+        "value": 10,
+        "name": "Ward"
+      }
+    ]
+  },
+  "renzokuken_finisher": {
+    "type": "flags",
+    "entries": [
+      {
+        "mask": 1,
+        "name": "Rough Divide"
+      },
+      {
+        "mask": 2,
+        "name": "Fated Circle"
+      },
+      {
+        "mask": 4,
+        "name": "Blasting Zone"
+      },
+      {
+        "mask": 8,
+        "name": "Lion Heart"
+      }
+    ]
+  },
+  "devour_hp_quantity": {
+    "type": "enum",
+    "entries": [
+      {
+        "value": 0,
+        "name": "0%"
+      },
+      {
+        "value": 1,
+        "name": "6.25%"
+      },
+      {
+        "value": 2,
+        "name": "12.5%"
+      },
+      {
+        "value": 4,
+        "name": "25%"
+      },
+      {
+        "value": 8,
+        "name": "50%"
+      },
+      {
+        "value": 16,
+        "name": "100%"
+      }
+    ]
+  },
+  "devour_raised_stat": {
+    "type": "enum",
+    "entries": [
+      {
+        "value": 0,
+        "name": "None"
+      },
+      {
+        "value": 1,
+        "name": "STR"
+      },
+      {
+        "value": 2,
+        "name": "VIT"
+      },
+      {
+        "value": 4,
+        "name": "MAG"
+      },
+      {
+        "value": 8,
+        "name": "SPR"
+      },
+      {
+        "value": 16,
+        "name": "SPD"
+      },
+      {
+        "value": 32,
+        "name": "LUCK"
+      }
+    ]
+  }
+}

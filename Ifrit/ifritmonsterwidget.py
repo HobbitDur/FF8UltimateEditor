@@ -13,6 +13,7 @@ from Ifrit.IfritSeq.ifritseqwidget import IfritSeqWidget
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Ifrit.IfritTexture.ifrittexturewidget import IfritTextureWidget
 from Ifrit.IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
+from Ifrit.IfritStat.ifritstatwidget import IfritStatWidget
 
 
 class IfritMonsterWidget(QWidget):
@@ -74,6 +75,7 @@ class IfritMonsterWidget(QWidget):
 
         self._texture_widget = IfritTextureWidget(self.ifrit_manager)
         self._xlsx_widget = IfritXlsxWidget(self.ifrit_manager)
+        self._stat_widget = IfritStatWidget(self.ifrit_manager, icon_path=icon_path)
 
         # This need to be loaded after the texture widget
         self._dynamic_texture_widget = IfritDynamicTextureWidget(self.ifrit_manager)
@@ -81,7 +83,8 @@ class IfritMonsterWidget(QWidget):
         # ── Tabs ─────────────────────────────────────────────────────
         self._tabs = QTabWidget()
         self._tabs.addTab(self._3d_widget, "3D")
-        self._tabs.addTab(self._xlsx_widget, "Stat")
+        self._tabs.addTab(self._stat_widget, "Stat")
+        self._tabs.addTab(self._xlsx_widget, "StatExcel")
         self._tabs.addTab(self._ai_widget, "AI")
         self._tabs.addTab(self._texture_widget, "Static Texture")
         self._tabs.addTab(self._seq_widget, "Sequence")
@@ -138,19 +141,18 @@ class IfritMonsterWidget(QWidget):
         if path:
             self._file_dialog_folder = os.path.dirname(path)
             self._load_all(path)
+            # Stat/StatExcel/AI/Static Texture need section 7-8-11, absent from
+            # 'd' model files (weapons/characters). Sequence is only present on
+            # non-'dc' 'd' files.
+            stat_like = [self._stat_widget, self._xlsx_widget, self._ai_widget, self._texture_widget]
             if pathlib.Path(path).name[0] == 'd':
-                self._tabs.setTabEnabled(1, False)
-                self._tabs.setTabEnabled(2, False)
-                self._tabs.setTabEnabled(3, False)
-                if pathlib.Path(path).name[2] == 'c':
-                    self._tabs.setTabEnabled(4, False)
-                else:
-                    self._tabs.setTabEnabled(4, True)
+                for widget in stat_like:
+                    self._tabs.setTabEnabled(self._tabs.indexOf(widget), False)
+                seq_enabled = pathlib.Path(path).name[2] != 'c'
+                self._tabs.setTabEnabled(self._tabs.indexOf(self._seq_widget), seq_enabled)
             else:
-                self._tabs.setTabEnabled(1, True)
-                self._tabs.setTabEnabled(2, True)
-                self._tabs.setTabEnabled(3, True)
-                self._tabs.setTabEnabled(4, True)
+                for widget in stat_like + [self._seq_widget]:
+                    self._tabs.setTabEnabled(self._tabs.indexOf(widget), True)
 
     def _load_all(self, path: str):
         self.file_loaded = path
@@ -159,6 +161,7 @@ class IfritMonsterWidget(QWidget):
         self._seq_widget.load_file(path)
         self._3d_widget.load_file()
         self._texture_widget.load_file(path)
+        self._stat_widget.load_data()
         self._dynamic_texture_widget.load_file(path) # need to be after texture
         try:
             name = self._ai_widget.ifrit_manager.enemy.info_stat_data['monster_name'].get_str().strip('\x00')

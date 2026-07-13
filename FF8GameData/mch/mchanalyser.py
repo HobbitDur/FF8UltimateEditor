@@ -27,6 +27,7 @@ from FF8GameData.monsterdata import (
     GeometryTriangle, GeometryQuad, UV, AnimationSection, Animation,
     AnimationFrame, RotationType, PositionType, Matrix4x4,
 )
+from FF8GameData.tim.timfile import TimImage, decode_tim
 
 MCH_TRIANGLE_OPCODE = 0x25010607
 MCH_QUAD_OPCODE = 0x2d010709
@@ -59,85 +60,19 @@ def _signed12(value: int) -> int:
     return value - 0x1000 if value >= 0x800 else value
 
 
-class TimImage:
-    """A decoded TIM texture (PIL RGBA image plus VRAM placement info)."""
-
-    def __init__(self, image: Image.Image, bpp: int, image_x: int, image_y: int):
-        self.image = image
-        self.bpp = bpp
-        self.image_x = image_x
-        self.image_y = image_y
-
-    def __repr__(self):
-        return f"TimImage({self.image.width}x{self.image.height}, bpp:{self.bpp}, vram:({self.image_x},{self.image_y}))"
+def mch_texture_id(tex_group: int, abe: bool) -> int:
+    """Face texture id encoding the TIM group plus the PSX ABE bit: even ids
+    use the semi-transparent texture (STP texels blend), odd ids the opaque
+    one. Decoded back with mch_texture_group() / mch_texture_is_semi()."""
+    return 2 * tex_group + (0 if abe else 1)
 
 
-def decode_tim(data, offset: int) -> Optional[TimImage]:
-    """Decode a TIM texture into a PIL RGBA image (first palette row)."""
-    if offset + 8 > len(data) or _u32(data, offset) != 0x10:
-        return None
-    flags = _u32(data, offset + 4)
-    bpp = flags & 0x3  # 0: 4bpp, 1: 8bpp, 2: 16bpp
-    has_clut = bool(flags & 0x8)
-    pos = offset + 8
+def mch_texture_group(tex_id: int) -> int:
+    return (tex_id & 0xFF) // 2
 
-    palette = None
-    if has_clut:
-        clut_size = _u32(data, pos)
-        nb_colors = _u16(data, pos + 8)
-        palette = []
-        color_pos = pos + 12
-        for i in range(nb_colors):
-            color = _u16(data, color_pos + i * 2)
-            red = (color & 0x1F) << 3
-            green = ((color >> 5) & 0x1F) << 3
-            blue = ((color >> 10) & 0x1F) << 3
-            # color 0x0000 = transparent; 0x8000 = opaque black (STP bit)
-            alpha = 0 if color == 0 else 255
-            palette.append((red, green, blue, alpha))
-        pos += clut_size
 
-    image_x = _u16(data, pos + 4)
-    image_y = _u16(data, pos + 6)
-    width_16bit = _u16(data, pos + 8)
-    height = _u16(data, pos + 10)
-    pixel_pos = pos + 12
-
-    if bpp == 0:
-        width = width_16bit * 4
-    elif bpp == 1:
-        width = width_16bit * 2
-    else:
-        width = width_16bit
-    if width <= 0 or height <= 0 or width > 1024 or height > 1024:
-        return None
-
-    rgba = bytearray(width * height * 4)
-    if bpp == 0 and palette:
-        for i in range(width * height // 2):
-            byte = data[pixel_pos + i]
-            for half, index in enumerate((byte & 0x0F, byte >> 4)):
-                red, green, blue, alpha = palette[index]
-                out = (i * 2 + half) * 4
-                rgba[out:out + 4] = bytes((red, green, blue, alpha))
-    elif bpp == 1 and palette:
-        for i in range(width * height):
-            red, green, blue, alpha = palette[data[pixel_pos + i] % len(palette)]
-            out = i * 4
-            rgba[out:out + 4] = bytes((red, green, blue, alpha))
-    elif bpp == 2:
-        for i in range(width * height):
-            color = _u16(data, pixel_pos + i * 2)
-            out = i * 4
-            rgba[out] = (color & 0x1F) << 3
-            rgba[out + 1] = ((color >> 5) & 0x1F) << 3
-            rgba[out + 2] = ((color >> 10) & 0x1F) << 3
-            rgba[out + 3] = 0 if color == 0 else 255
-    else:
-        return None
-
-    image = Image.frombytes('RGBA', (width, height), bytes(rgba))
-    return TimImage(image, bpp, image_x, image_y)
+def mch_texture_is_semi(tex_id: int) -> bool:
+    return (tex_id & 0xFF) % 2 == 0
 
 
 class FieldModel:
@@ -237,6 +172,13 @@ def parse_model_data(data, base: int, vertex_scale_factor: float = 1.0) -> Field
             uv._v = data[face_pos + 0x2C + 2 * j + 1]
             uvs.append(uv)
         tex_group = _u16(data, face_pos + 0x36)
+        # Byte 0x1D is the render-primitive command byte (Field_Chara-
+        # CreateModelInstance / sub_531310); bit 0x02 = ABE (PSX semi-
+        # transparency enable). STP-flagged texels only blend on ABE faces,
+        # so route ABE faces to the "semi" texture (even tex id) and the rest
+        # to the "opaque" texture (odd tex id). See mch_texture_id_group().
+        abe = bool(data[face_pos + 0x1D] & 0x02)
+        tex_id = mch_texture_id(tex_group, abe)
 
         if opcode == MCH_TRIANGLE_OPCODE:
             triangle = GeometryTriangle()
@@ -245,15 +187,15 @@ def parse_model_data(data, base: int, vertex_scale_factor: float = 1.0) -> Field
             triangle.vta = uvs[2]
             triangle.vtb = uvs[0]
             triangle.vtc = uvs[1]
-            triangle.tex_id_1 = tex_group
-            triangle.tex_id_2 = tex_group
+            triangle.tex_id_1 = tex_id
+            triangle.tex_id_2 = tex_id
             object_data.triangles.append(triangle)
         elif opcode == MCH_QUAD_OPCODE:
             quad = GeometryQuad()
             quad.vertex_indexes = indexes
             quad.vta, quad.vtb, quad.vtc, quad.vtd = uvs
-            quad.tex_id_1 = tex_group
-            quad.tex_id_2 = tex_group
+            quad.tex_id_1 = tex_id
+            quad.tex_id_2 = tex_id
             object_data.quads.append(quad)
         else:
             model.nb_unknown_faces += 1

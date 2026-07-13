@@ -1,0 +1,4023 @@
+{
+ "1": {
+  "section_id": 1,
+  "fields": [
+   {
+    "name": "ability_data_id",
+    "offset": 4,
+    "size": 1,
+    "label": "Ability data ID",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_flags",
+    "offset": 5,
+    "size": 1,
+    "label": "Unknown flags",
+    "group": "Data"
+   },
+   {
+    "name": "target_info",
+    "offset": 6,
+    "size": 1,
+    "lookup": "target_info",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x07",
+    "offset": 7,
+    "size": 1,
+    "label": "Unknown 0x07",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "2": {
+  "section_id": 2,
+  "fields": [
+   {
+    "name": "magic_id",
+    "offset": 4,
+    "size": 2,
+    "lookup": "special_action",
+    "label": "Special Action / Effect",
+    "group": "General"
+   },
+   {
+    "name": "animation",
+    "offset": 6,
+    "size": 1,
+    "label": "Animation category",
+    "group": "General"
+   },
+   {
+    "name": "attack_type",
+    "offset": 7,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "General"
+   },
+   {
+    "name": "spell_power",
+    "offset": 8,
+    "size": 1,
+    "label": "Spell power",
+    "group": "General"
+   },
+   {
+    "name": "unknown_0x09",
+    "offset": 9,
+    "size": 1,
+    "label": "Unknown 0x09",
+    "group": "General"
+   },
+   {
+    "name": "target_info",
+    "offset": 10,
+    "size": 1,
+    "lookup": "target_info",
+    "group": "General"
+   },
+   {
+    "name": "attack_flags",
+    "offset": 11,
+    "size": 1,
+    "lookup": "attack_flags",
+    "group": "General"
+   },
+   {
+    "name": "draw_resist",
+    "offset": 12,
+    "size": 1,
+    "label": "Draw resist",
+    "group": "General"
+   },
+   {
+    "name": "hit_count",
+    "offset": 13,
+    "size": 1,
+    "label": "Hit count",
+    "group": "General"
+   },
+   {
+    "name": "element",
+    "offset": 14,
+    "size": 1,
+    "lookup": "element",
+    "group": "General"
+   },
+   {
+    "name": "unknown_0x0f",
+    "offset": 15,
+    "size": 1,
+    "label": "Unknown 0x0F",
+    "group": "General"
+   },
+   {
+    "name": "status_2",
+    "offset": 16,
+    "size": 4,
+    "lookup": "status_2",
+    "label": "Status 2 (attack)",
+    "group": "General"
+   },
+   {
+    "name": "status_1",
+    "offset": 20,
+    "size": 2,
+    "lookup": "status_1",
+    "label": "Status 1 (attack)",
+    "group": "General"
+   },
+   {
+    "name": "status_accuracy",
+    "offset": 22,
+    "size": 1,
+    "label": "Status attack accuracy",
+    "group": "General"
+   },
+   {
+    "name": "j_hp",
+    "offset": 23,
+    "size": 1,
+    "label": "J-HP",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_str",
+    "offset": 24,
+    "size": 1,
+    "label": "J-STR",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_vit",
+    "offset": 25,
+    "size": 1,
+    "label": "J-VIT",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_mag",
+    "offset": 26,
+    "size": 1,
+    "label": "J-MAG",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_spr",
+    "offset": 27,
+    "size": 1,
+    "label": "J-SPR",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_spd",
+    "offset": 28,
+    "size": 1,
+    "label": "J-SPD",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_eva",
+    "offset": 29,
+    "size": 1,
+    "label": "J-EVA",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_hit",
+    "offset": 30,
+    "size": 1,
+    "label": "J-HIT",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_luck",
+    "offset": 31,
+    "size": 1,
+    "label": "J-LUCK",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_elem_attack",
+    "offset": 32,
+    "size": 1,
+    "lookup": "element",
+    "label": "J-Elem attack",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_elem_attack_value",
+    "offset": 33,
+    "size": 1,
+    "label": "J-Elem attack value",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_elem_defense",
+    "offset": 34,
+    "size": 1,
+    "lookup": "element",
+    "label": "J-Elem defense",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_elem_defense_value",
+    "offset": 35,
+    "size": 1,
+    "label": "J-Elem defense value",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_status_attack_value",
+    "offset": 36,
+    "size": 1,
+    "label": "J-Status attack value",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_status_defense_value",
+    "offset": 37,
+    "size": 1,
+    "label": "J-Status defense value",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_status_attack",
+    "offset": 38,
+    "size": 2,
+    "lookup": "j_status",
+    "label": "J-Status attack",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "j_status_defend",
+    "offset": 40,
+    "size": 2,
+    "lookup": "j_status",
+    "label": "J-Status defend",
+    "group": "Junction (stats)"
+   },
+   {
+    "name": "compat_quezacotl",
+    "offset": 42,
+    "size": 1,
+    "label": "Quezacotl",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_shiva",
+    "offset": 43,
+    "size": 1,
+    "label": "Shiva",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_ifrit",
+    "offset": 44,
+    "size": 1,
+    "label": "Ifrit",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_siren",
+    "offset": 45,
+    "size": 1,
+    "label": "Siren",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_brothers",
+    "offset": 46,
+    "size": 1,
+    "label": "Brothers",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_diablos",
+    "offset": 47,
+    "size": 1,
+    "label": "Diablos",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_carbuncle",
+    "offset": 48,
+    "size": 1,
+    "label": "Carbuncle",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_leviathan",
+    "offset": 49,
+    "size": 1,
+    "label": "Leviathan",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_pandemona",
+    "offset": 50,
+    "size": 1,
+    "label": "Pandemona",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_cerberus",
+    "offset": 51,
+    "size": 1,
+    "label": "Cerberus",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_alexander",
+    "offset": 52,
+    "size": 1,
+    "label": "Alexander",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_doomtrain",
+    "offset": 53,
+    "size": 1,
+    "label": "Doomtrain",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_bahamut",
+    "offset": 54,
+    "size": 1,
+    "label": "Bahamut",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_cactuar",
+    "offset": 55,
+    "size": 1,
+    "label": "Cactuar",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_tonberry",
+    "offset": 56,
+    "size": 1,
+    "label": "Tonberry",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_eden",
+    "offset": 57,
+    "size": 1,
+    "label": "Eden",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "unknown_0x3a",
+    "offset": 58,
+    "size": 2,
+    "label": "Unknown 0x3A",
+    "group": "Misc"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "3": {
+  "section_id": 3,
+  "text_labels": [
+   "Name",
+   "Description"
+  ],
+  "fields": [
+   {
+    "name": "special_action",
+    "offset": 4,
+    "size": 2,
+    "group": "General",
+    "lookup": "special_action",
+    "label": "Special Action / Animation"
+   },
+   {
+    "name": "attack_type",
+    "offset": 6,
+    "size": 1,
+    "group": "General",
+    "lookup": "attack_type"
+   },
+   {
+    "name": "gf_power",
+    "offset": 7,
+    "size": 1,
+    "group": "General",
+    "label": "GF power"
+   },
+   {
+    "name": "unknown_0x08",
+    "offset": 8,
+    "size": 2,
+    "group": "General",
+    "label": "Unknown 0x08"
+   },
+   {
+    "name": "attack_flags",
+    "offset": 10,
+    "size": 1,
+    "group": "General",
+    "lookup": "attack_flags"
+   },
+   {
+    "name": "target_animation",
+    "offset": 11,
+    "size": 1,
+    "group": "General",
+    "label": "Target hit animation"
+   },
+   {
+    "name": "hit_count",
+    "offset": 12,
+    "size": 1,
+    "group": "General",
+    "label": "Hit count"
+   },
+   {
+    "name": "element",
+    "offset": 13,
+    "size": 1,
+    "group": "General",
+    "lookup": "element"
+   },
+   {
+    "name": "status_1",
+    "offset": 14,
+    "size": 2,
+    "group": "General",
+    "lookup": "status_1",
+    "label": "Status 1 (0-15)"
+   },
+   {
+    "name": "status_2",
+    "offset": 16,
+    "size": 4,
+    "group": "General",
+    "lookup": "status_2",
+    "label": "Status 2 (16-47)"
+   },
+   {
+    "name": "gf_hp_modifier_1",
+    "offset": 20,
+    "size": 1,
+    "group": "General",
+    "label": "GF HP modifier 1"
+   },
+   {
+    "name": "gf_hp_modifier_2",
+    "offset": 21,
+    "size": 1,
+    "group": "General",
+    "label": "GF HP modifier 2"
+   },
+   {
+    "name": "gf_hp_modifier_3",
+    "offset": 22,
+    "size": 1,
+    "group": "General",
+    "label": "GF HP modifier 3"
+   },
+   {
+    "name": "gf_level_modifier_1",
+    "offset": 24,
+    "size": 1,
+    "group": "General",
+    "label": "GF level modifier 1"
+   },
+   {
+    "name": "gf_level_modifier_2",
+    "offset": 25,
+    "size": 1,
+    "group": "General",
+    "label": "GF level modifier 2"
+   },
+   {
+    "name": "status_attack_enabler",
+    "offset": 26,
+    "size": 1,
+    "group": "General",
+    "label": "Status attack enabler"
+   },
+   {
+    "name": "power_mod",
+    "offset": 130,
+    "size": 1,
+    "group": "General",
+    "label": "Power mod"
+   },
+   {
+    "name": "level_mod",
+    "offset": 131,
+    "size": 1,
+    "group": "General",
+    "label": "Level mod"
+   },
+   {
+    "name": "ability1",
+    "offset": 29,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 1",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability1_unlocker",
+    "offset": 27,
+    "size": 1,
+    "label": "Ability 1 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability2",
+    "offset": 33,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 2",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability2_unlocker",
+    "offset": 31,
+    "size": 1,
+    "label": "Ability 2 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability3",
+    "offset": 37,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 3",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability3_unlocker",
+    "offset": 35,
+    "size": 1,
+    "label": "Ability 3 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability4",
+    "offset": 41,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 4",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability4_unlocker",
+    "offset": 39,
+    "size": 1,
+    "label": "Ability 4 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability5",
+    "offset": 45,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 5",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability5_unlocker",
+    "offset": 43,
+    "size": 1,
+    "label": "Ability 5 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability6",
+    "offset": 49,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 6",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability6_unlocker",
+    "offset": 47,
+    "size": 1,
+    "label": "Ability 6 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability7",
+    "offset": 53,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 7",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability7_unlocker",
+    "offset": 51,
+    "size": 1,
+    "label": "Ability 7 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability8",
+    "offset": 57,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 8",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability8_unlocker",
+    "offset": 55,
+    "size": 1,
+    "label": "Ability 8 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability9",
+    "offset": 61,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 9",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability9_unlocker",
+    "offset": 59,
+    "size": 1,
+    "label": "Ability 9 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability10",
+    "offset": 65,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 10",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability10_unlocker",
+    "offset": 63,
+    "size": 1,
+    "label": "Ability 10 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability11",
+    "offset": 69,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 11",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability11_unlocker",
+    "offset": 67,
+    "size": 1,
+    "label": "Ability 11 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability12",
+    "offset": 73,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 12",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability12_unlocker",
+    "offset": 71,
+    "size": 1,
+    "label": "Ability 12 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability13",
+    "offset": 77,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 13",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability13_unlocker",
+    "offset": 75,
+    "size": 1,
+    "label": "Ability 13 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability14",
+    "offset": 81,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 14",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability14_unlocker",
+    "offset": 79,
+    "size": 1,
+    "label": "Ability 14 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability15",
+    "offset": 85,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 15",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability15_unlocker",
+    "offset": 83,
+    "size": 1,
+    "label": "Ability 15 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability16",
+    "offset": 89,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 16",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability16_unlocker",
+    "offset": 87,
+    "size": 1,
+    "label": "Ability 16 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability17",
+    "offset": 93,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 17",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability17_unlocker",
+    "offset": 91,
+    "size": 1,
+    "label": "Ability 17 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability18",
+    "offset": 97,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 18",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability18_unlocker",
+    "offset": 95,
+    "size": 1,
+    "label": "Ability 18 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability19",
+    "offset": 101,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 19",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability19_unlocker",
+    "offset": 99,
+    "size": 1,
+    "label": "Ability 19 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability20",
+    "offset": 105,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 20",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability20_unlocker",
+    "offset": 103,
+    "size": 1,
+    "label": "Ability 20 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability21",
+    "offset": 109,
+    "size": 1,
+    "lookup": "junctionable_ability",
+    "label": "Ability 21",
+    "group": "Abilities"
+   },
+   {
+    "name": "ability21_unlocker",
+    "offset": 107,
+    "size": 1,
+    "label": "Ability 21 unlocker",
+    "group": "Abilities"
+   },
+   {
+    "name": "compat_quezacotl",
+    "offset": 112,
+    "size": 1,
+    "label": "Quezacotl",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_shiva",
+    "offset": 113,
+    "size": 1,
+    "label": "Shiva",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_ifrit",
+    "offset": 114,
+    "size": 1,
+    "label": "Ifrit",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_siren",
+    "offset": 115,
+    "size": 1,
+    "label": "Siren",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_brothers",
+    "offset": 116,
+    "size": 1,
+    "label": "Brothers",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_diablos",
+    "offset": 117,
+    "size": 1,
+    "label": "Diablos",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_carbuncle",
+    "offset": 118,
+    "size": 1,
+    "label": "Carbuncle",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_leviathan",
+    "offset": 119,
+    "size": 1,
+    "label": "Leviathan",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_pandemona",
+    "offset": 120,
+    "size": 1,
+    "label": "Pandemona",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_cerberus",
+    "offset": 121,
+    "size": 1,
+    "label": "Cerberus",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_alexander",
+    "offset": 122,
+    "size": 1,
+    "label": "Alexander",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_doomtrain",
+    "offset": 123,
+    "size": 1,
+    "label": "Doomtrain",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_bahamut",
+    "offset": 124,
+    "size": 1,
+    "label": "Bahamut",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_cactuar",
+    "offset": 125,
+    "size": 1,
+    "label": "Cactuar",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_tonberry",
+    "offset": 126,
+    "size": 1,
+    "label": "Tonberry",
+    "group": "GF Compatibility"
+   },
+   {
+    "name": "compat_eden",
+    "offset": 127,
+    "size": 1,
+    "label": "Eden",
+    "group": "GF Compatibility"
+   }
+  ]
+ },
+ "4": {
+  "section_id": 4,
+  "fields": [
+   {
+    "name": "magic_id",
+    "offset": 2,
+    "size": 2,
+    "lookup": "special_action",
+    "label": "Special Action / Effect",
+    "group": "Data"
+   },
+   {
+    "name": "camera_change",
+    "offset": 4,
+    "size": 1,
+    "label": "Camera change",
+    "group": "Data"
+   },
+   {
+    "name": "animation",
+    "offset": 5,
+    "size": 1,
+    "label": "Animation triggered",
+    "group": "Data"
+   },
+   {
+    "name": "attack_type",
+    "offset": 6,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "Data"
+   },
+   {
+    "name": "attack_power",
+    "offset": 7,
+    "size": 1,
+    "label": "Attack power",
+    "group": "Data"
+   },
+   {
+    "name": "attack_flags",
+    "offset": 8,
+    "size": 1,
+    "lookup": "attack_flags",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x09",
+    "offset": 9,
+    "size": 1,
+    "label": "Unknown 0x09",
+    "group": "Data"
+   },
+   {
+    "name": "element",
+    "offset": 10,
+    "size": 1,
+    "lookup": "element",
+    "group": "Data"
+   },
+   {
+    "name": "crit_bonus",
+    "offset": 11,
+    "size": 1,
+    "label": "Attack crit bonus",
+    "group": "Data"
+   },
+   {
+    "name": "status_attack_enabler",
+    "offset": 12,
+    "size": 1,
+    "label": "Status attack enabler",
+    "group": "Data"
+   },
+   {
+    "name": "attack_param",
+    "offset": 13,
+    "size": 1,
+    "label": "Attack parameter",
+    "group": "Data"
+   },
+   {
+    "name": "status_1",
+    "offset": 14,
+    "size": 2,
+    "lookup": "status_1",
+    "label": "Status 1 (0-15)",
+    "group": "Data"
+   },
+   {
+    "name": "status_2",
+    "offset": 16,
+    "size": 4,
+    "lookup": "status_2",
+    "label": "Status 2 (16-47)",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name"
+  ]
+ },
+ "5": {
+  "section_id": 5,
+  "fields": [
+   {
+    "name": "renzokuken_finishers",
+    "offset": 2,
+    "size": 1,
+    "lookup": "renzokuken_finisher",
+    "label": "Renzokuken finishers",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x03",
+    "offset": 3,
+    "size": 1,
+    "label": "Unknown 0x03",
+    "group": "Data"
+   },
+   {
+    "name": "character_id",
+    "offset": 4,
+    "size": 1,
+    "lookup": "weapon_character",
+    "label": "Character",
+    "group": "Data"
+   },
+   {
+    "name": "attack_type",
+    "offset": 5,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "Data"
+   },
+   {
+    "name": "attack_power",
+    "offset": 6,
+    "size": 1,
+    "label": "Attack power",
+    "group": "Data"
+   },
+   {
+    "name": "attack_param",
+    "offset": 7,
+    "size": 1,
+    "label": "Attack parameter",
+    "group": "Data"
+   },
+   {
+    "name": "str_bonus",
+    "offset": 8,
+    "size": 1,
+    "label": "STR bonus",
+    "group": "Data"
+   },
+   {
+    "name": "weapon_tier",
+    "offset": 9,
+    "size": 1,
+    "label": "Weapon tier",
+    "group": "Data"
+   },
+   {
+    "name": "crit_bonus",
+    "offset": 10,
+    "size": 1,
+    "label": "Crit bonus",
+    "group": "Data"
+   },
+   {
+    "name": "melee",
+    "offset": 11,
+    "size": 1,
+    "label": "Melee weapon?",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name"
+  ]
+ },
+ "6": {
+  "section_id": 6,
+  "fields": [
+   {
+    "name": "magic_id",
+    "offset": 4,
+    "size": 2,
+    "lookup": "special_action",
+    "label": "Special Action / Effect",
+    "group": "Data"
+   },
+   {
+    "name": "attack_type",
+    "offset": 6,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x07",
+    "offset": 7,
+    "size": 1,
+    "label": "Unknown 0x07",
+    "group": "Data"
+   },
+   {
+    "name": "attack_power",
+    "offset": 8,
+    "size": 1,
+    "label": "Attack power",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x09",
+    "offset": 9,
+    "size": 1,
+    "label": "Unknown 0x09",
+    "group": "Data"
+   },
+   {
+    "name": "target_info",
+    "offset": 10,
+    "size": 1,
+    "lookup": "target_info",
+    "group": "Data"
+   },
+   {
+    "name": "attack_flags",
+    "offset": 11,
+    "size": 1,
+    "lookup": "attack_flags",
+    "group": "Data"
+   },
+   {
+    "name": "hit_count",
+    "offset": 12,
+    "size": 1,
+    "label": "Hit count",
+    "group": "Data"
+   },
+   {
+    "name": "element",
+    "offset": 13,
+    "size": 1,
+    "lookup": "element",
+    "label": "Element attack",
+    "group": "Data"
+   },
+   {
+    "name": "element_percent",
+    "offset": 14,
+    "size": 1,
+    "label": "Element attack %",
+    "group": "Data"
+   },
+   {
+    "name": "status_attack_enabler",
+    "offset": 15,
+    "size": 1,
+    "label": "Status attack enabler",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x10",
+    "offset": 16,
+    "size": 2,
+    "label": "Unknown 0x10",
+    "group": "Data"
+   },
+   {
+    "name": "status_1",
+    "offset": 18,
+    "size": 2,
+    "lookup": "status_1",
+    "label": "Status 1 (0-15)",
+    "group": "Data"
+   },
+   {
+    "name": "status_2",
+    "offset": 20,
+    "size": 4,
+    "lookup": "status_2",
+    "label": "Status 2 (16-47)",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "7": {
+  "section_id": 7,
+  "fields": [
+   {
+    "name": "crisis_level_hp_mult",
+    "offset": 2,
+    "size": 1,
+    "label": "Crisis level HP multiplier",
+    "group": "General"
+   },
+   {
+    "name": "gender",
+    "offset": 3,
+    "size": 1,
+    "lookup": "gender",
+    "group": "General"
+   },
+   {
+    "name": "limit_break_id",
+    "offset": 4,
+    "size": 1,
+    "label": "Limit break ID",
+    "group": "General"
+   },
+   {
+    "name": "limit_break_param",
+    "offset": 5,
+    "size": 1,
+    "label": "Limit break param",
+    "group": "General"
+   },
+   {
+    "name": "exp_modifier",
+    "offset": 6,
+    "size": 2,
+    "label": "EXP modifier",
+    "group": "General"
+   },
+   {
+    "name": "hp_1",
+    "offset": 8,
+    "size": 1,
+    "label": "HP coef 1",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "hp_2",
+    "offset": 9,
+    "size": 1,
+    "label": "HP coef 2",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "hp_3",
+    "offset": 10,
+    "size": 1,
+    "label": "HP coef 3",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "hp_4",
+    "offset": 11,
+    "size": 1,
+    "label": "HP coef 4",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "str_1",
+    "offset": 12,
+    "size": 1,
+    "label": "STR coef 1",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "str_2",
+    "offset": 13,
+    "size": 1,
+    "label": "STR coef 2",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "str_3",
+    "offset": 14,
+    "size": 1,
+    "label": "STR coef 3",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "str_4",
+    "offset": 15,
+    "size": 1,
+    "label": "STR coef 4",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "vit_1",
+    "offset": 16,
+    "size": 1,
+    "label": "VIT coef 1",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "vit_2",
+    "offset": 17,
+    "size": 1,
+    "label": "VIT coef 2",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "vit_3",
+    "offset": 18,
+    "size": 1,
+    "label": "VIT coef 3",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "vit_4",
+    "offset": 19,
+    "size": 1,
+    "label": "VIT coef 4",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "mag_1",
+    "offset": 20,
+    "size": 1,
+    "label": "MAG coef 1",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "mag_2",
+    "offset": 21,
+    "size": 1,
+    "label": "MAG coef 2",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "mag_3",
+    "offset": 22,
+    "size": 1,
+    "label": "MAG coef 3",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "mag_4",
+    "offset": 23,
+    "size": 1,
+    "label": "MAG coef 4",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "spr_1",
+    "offset": 24,
+    "size": 1,
+    "label": "SPR coef 1",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "spr_2",
+    "offset": 25,
+    "size": 1,
+    "label": "SPR coef 2",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "spr_3",
+    "offset": 26,
+    "size": 1,
+    "label": "SPR coef 3",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "spr_4",
+    "offset": 27,
+    "size": 1,
+    "label": "SPR coef 4",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "spd_1",
+    "offset": 28,
+    "size": 1,
+    "label": "SPD coef 1",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "spd_2",
+    "offset": 29,
+    "size": 1,
+    "label": "SPD coef 2",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "spd_3",
+    "offset": 30,
+    "size": 1,
+    "label": "SPD coef 3",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "spd_4",
+    "offset": 31,
+    "size": 1,
+    "label": "SPD coef 4",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "luck_1",
+    "offset": 32,
+    "size": 1,
+    "label": "LUCK coef 1",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "luck_2",
+    "offset": 33,
+    "size": 1,
+    "label": "LUCK coef 2",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "luck_3",
+    "offset": 34,
+    "size": 1,
+    "label": "LUCK coef 3",
+    "group": "Stat coefficients"
+   },
+   {
+    "name": "luck_4",
+    "offset": 35,
+    "size": 1,
+    "label": "LUCK coef 4",
+    "group": "Stat coefficients"
+   }
+  ],
+  "text_labels": [
+   "Name"
+  ],
+  "entry_names": [
+   "Squall",
+   "Zell",
+   "Irvine",
+   "Quistis",
+   "Rinoa",
+   "Selphie",
+   "Seifer",
+   "Edea",
+   "Laguna",
+   "Kiros",
+   "Ward"
+  ]
+ },
+ "8": {
+  "section_id": 8,
+  "fields": [
+   {
+    "name": "magic_id",
+    "offset": 4,
+    "size": 2,
+    "lookup": "special_action",
+    "label": "Special Action / Effect",
+    "group": "Data"
+   },
+   {
+    "name": "attack_type",
+    "offset": 6,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "Data"
+   },
+   {
+    "name": "attack_power",
+    "offset": 7,
+    "size": 1,
+    "label": "Attack power",
+    "group": "Data"
+   },
+   {
+    "name": "battle_flag",
+    "offset": 8,
+    "size": 1,
+    "label": "Battle flag",
+    "group": "Data"
+   },
+   {
+    "name": "target_info",
+    "offset": 9,
+    "size": 1,
+    "lookup": "target_info",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x0a",
+    "offset": 10,
+    "size": 1,
+    "label": "Unknown 0x0A",
+    "group": "Data"
+   },
+   {
+    "name": "attack_flags",
+    "offset": 11,
+    "size": 1,
+    "lookup": "attack_flags",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x0c",
+    "offset": 12,
+    "size": 1,
+    "label": "Unknown 0x0C",
+    "group": "Data"
+   },
+   {
+    "name": "status_attack_enabler",
+    "offset": 13,
+    "size": 1,
+    "label": "Status attack enabler",
+    "group": "Data"
+   },
+   {
+    "name": "status_1",
+    "offset": 14,
+    "size": 2,
+    "lookup": "status_1",
+    "label": "Status 1 (0-15)",
+    "group": "Data"
+   },
+   {
+    "name": "status_2",
+    "offset": 16,
+    "size": 4,
+    "lookup": "status_2",
+    "label": "Status 2 (16-47)",
+    "group": "Data"
+   },
+   {
+    "name": "attack_param",
+    "offset": 20,
+    "size": 1,
+    "label": "Attack parameter",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x15",
+    "offset": 21,
+    "size": 1,
+    "label": "Unknown 0x15",
+    "group": "Data"
+   },
+   {
+    "name": "hit_count",
+    "offset": 22,
+    "size": 1,
+    "label": "Hit count",
+    "group": "Data"
+   },
+   {
+    "name": "element",
+    "offset": 23,
+    "size": 1,
+    "lookup": "element",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "9": {
+  "section_id": 9,
+  "fields": [],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "10": {
+  "section_id": 10,
+  "fields": [
+   {
+    "name": "special_action",
+    "offset": 2,
+    "size": 2,
+    "lookup": "special_action",
+    "label": "Special Action ID",
+    "group": "Data"
+   },
+   {
+    "name": "attack_type",
+    "offset": 4,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "Data"
+   },
+   {
+    "name": "gf_power",
+    "offset": 5,
+    "size": 1,
+    "label": "GF power",
+    "group": "Data"
+   },
+   {
+    "name": "status_attack_enabler",
+    "offset": 6,
+    "size": 1,
+    "label": "Status attack enabler",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x07",
+    "offset": 7,
+    "size": 1,
+    "label": "Unknown 0x07",
+    "group": "Data"
+   },
+   {
+    "name": "status_flags",
+    "offset": 8,
+    "size": 1,
+    "label": "Status flags",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x09",
+    "offset": 9,
+    "size": 1,
+    "label": "Unknown 0x09",
+    "group": "Data"
+   },
+   {
+    "name": "hit_count",
+    "offset": 10,
+    "size": 1,
+    "label": "Hit count",
+    "group": "Data"
+   },
+   {
+    "name": "element",
+    "offset": 11,
+    "size": 1,
+    "lookup": "element",
+    "group": "Data"
+   },
+   {
+    "name": "status_group_1",
+    "offset": 12,
+    "size": 1,
+    "label": "Status 1 (Sleep/Haste/...)",
+    "group": "Data"
+   },
+   {
+    "name": "status_group_2",
+    "offset": 13,
+    "size": 1,
+    "label": "Status 2 (Aura/Curse/...)",
+    "group": "Data"
+   },
+   {
+    "name": "status_group_3",
+    "offset": 14,
+    "size": 1,
+    "label": "Status 3 (Eject/Double/...)",
+    "group": "Data"
+   },
+   {
+    "name": "status_group_4",
+    "offset": 15,
+    "size": 1,
+    "label": "Status 4 (Vit0/...)",
+    "group": "Data"
+   },
+   {
+    "name": "status_group_5",
+    "offset": 16,
+    "size": 1,
+    "label": "Status 5 (Death/Poison/...)",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x11",
+    "offset": 17,
+    "size": 1,
+    "label": "Unknown 0x11",
+    "group": "Data"
+   },
+   {
+    "name": "power_mod",
+    "offset": 18,
+    "size": 1,
+    "label": "Power mod",
+    "group": "Data"
+   },
+   {
+    "name": "level_mod",
+    "offset": 19,
+    "size": 1,
+    "label": "Level mod",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name"
+  ]
+ },
+ "11": {
+  "section_id": 11,
+  "fields": [
+   {
+    "name": "magic_id",
+    "offset": 0,
+    "size": 2,
+    "lookup": "special_action",
+    "label": "Special Action / Effect",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x02",
+    "offset": 2,
+    "size": 1,
+    "label": "Unknown 0x02",
+    "group": "Data"
+   },
+   {
+    "name": "animation",
+    "offset": 3,
+    "size": 1,
+    "label": "Animation triggered",
+    "group": "Data"
+   },
+   {
+    "name": "attack_type",
+    "offset": 4,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "Data"
+   },
+   {
+    "name": "attack_power",
+    "offset": 5,
+    "size": 1,
+    "label": "Attack power",
+    "group": "Data"
+   },
+   {
+    "name": "attack_flags",
+    "offset": 6,
+    "size": 1,
+    "lookup": "attack_flags",
+    "group": "Data"
+   },
+   {
+    "name": "hit_count",
+    "offset": 7,
+    "size": 1,
+    "label": "Hit count",
+    "group": "Data"
+   },
+   {
+    "name": "element",
+    "offset": 8,
+    "size": 1,
+    "lookup": "element",
+    "group": "Data"
+   },
+   {
+    "name": "status_attack_enabler",
+    "offset": 9,
+    "size": 1,
+    "label": "Status attack enabler",
+    "group": "Data"
+   },
+   {
+    "name": "status_1",
+    "offset": 10,
+    "size": 2,
+    "lookup": "status_1",
+    "label": "Status 1 (0-15)",
+    "group": "Data"
+   },
+   {
+    "name": "status_2",
+    "offset": 12,
+    "size": 4,
+    "lookup": "status_2",
+    "label": "Status 2 (16-47)",
+    "group": "Data"
+   }
+  ],
+  "entry_names": [
+   "Recover",
+   "Revive",
+   "Treatment",
+   "Mad Rush",
+   "Doom",
+   "Absorb",
+   "LV Down",
+   "LV Up",
+   "Kamikaze",
+   "Devour",
+   "Card",
+   "Defend"
+  ]
+ },
+ "12": {
+  "section_id": 12,
+  "fields": [
+   {
+    "name": "ap",
+    "offset": 4,
+    "size": 1,
+    "label": "AP to learn",
+    "group": "Data"
+   },
+   {
+    "name": "junction_flag",
+    "offset": 5,
+    "size": 3,
+    "label": "Junction ability flag",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "13": {
+  "section_id": 13,
+  "fields": [
+   {
+    "name": "ap",
+    "offset": 4,
+    "size": 1,
+    "label": "AP to learn",
+    "group": "Data"
+   },
+   {
+    "name": "battle_command_index",
+    "offset": 5,
+    "size": 1,
+    "lookup": "battle_command",
+    "label": "Battle command",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x06",
+    "offset": 6,
+    "size": 2,
+    "label": "Unknown / Unused",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "14": {
+  "section_id": 14,
+  "fields": [
+   {
+    "name": "ap",
+    "offset": 4,
+    "size": 1,
+    "label": "AP to learn",
+    "group": "Data"
+   },
+   {
+    "name": "stat_to_increase",
+    "offset": 5,
+    "size": 1,
+    "label": "Stat to increase",
+    "group": "Data"
+   },
+   {
+    "name": "increase_value",
+    "offset": 6,
+    "size": 1,
+    "label": "Increase value",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x07",
+    "offset": 7,
+    "size": 1,
+    "label": "Unknown / Unused",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "15": {
+  "section_id": 15,
+  "fields": [
+   {
+    "name": "ap",
+    "offset": 4,
+    "size": 1,
+    "label": "AP to learn",
+    "group": "Data"
+   },
+   {
+    "name": "chara_flag",
+    "offset": 5,
+    "size": 3,
+    "label": "Character ability flag",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "16": {
+  "section_id": 16,
+  "fields": [
+   {
+    "name": "ap",
+    "offset": 4,
+    "size": 1,
+    "label": "AP to learn",
+    "group": "Data"
+   },
+   {
+    "name": "party_flag",
+    "offset": 5,
+    "size": 1,
+    "label": "Party ability flag",
+    "group": "Data"
+   },
+   {
+    "name": "unused_0x06",
+    "offset": 6,
+    "size": 2,
+    "label": "Unused",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "17": {
+  "section_id": 17,
+  "fields": [
+   {
+    "name": "ap",
+    "offset": 4,
+    "size": 1,
+    "label": "AP to learn",
+    "group": "Data"
+   },
+   {
+    "name": "enable_boost",
+    "offset": 5,
+    "size": 1,
+    "label": "Enable boost",
+    "group": "Data"
+   },
+   {
+    "name": "stat_to_increase",
+    "offset": 6,
+    "size": 1,
+    "lookup": "stat_to_increase",
+    "label": "Stat to increase",
+    "group": "Data"
+   },
+   {
+    "name": "increase_value",
+    "offset": 7,
+    "size": 1,
+    "label": "Increase value",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "18": {
+  "section_id": 18,
+  "fields": [
+   {
+    "name": "ap",
+    "offset": 4,
+    "size": 1,
+    "label": "AP to learn",
+    "group": "Data"
+   },
+   {
+    "name": "menu_index",
+    "offset": 5,
+    "size": 1,
+    "label": "Index to m00X files",
+    "group": "Data"
+   },
+   {
+    "name": "start_offset",
+    "offset": 6,
+    "size": 1,
+    "label": "Start offset",
+    "group": "Data"
+   },
+   {
+    "name": "end_offset",
+    "offset": 7,
+    "size": 1,
+    "label": "End offset",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "19": {
+  "section_id": 19,
+  "fields": [
+   {
+    "name": "magic_id",
+    "offset": 4,
+    "size": 2,
+    "lookup": "special_action",
+    "label": "Special Action / Effect",
+    "group": "Data"
+   },
+   {
+    "name": "attack_type",
+    "offset": 6,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "Data"
+   },
+   {
+    "name": "attack_power",
+    "offset": 7,
+    "size": 1,
+    "label": "Attack power",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x08",
+    "offset": 8,
+    "size": 2,
+    "label": "Unknown 0x08",
+    "group": "Data"
+   },
+   {
+    "name": "target_info",
+    "offset": 10,
+    "size": 1,
+    "lookup": "target_info",
+    "group": "Data"
+   },
+   {
+    "name": "attack_flags",
+    "offset": 11,
+    "size": 1,
+    "lookup": "attack_flags",
+    "group": "Data"
+   },
+   {
+    "name": "hit_count",
+    "offset": 12,
+    "size": 1,
+    "label": "Hit count",
+    "group": "Data"
+   },
+   {
+    "name": "element",
+    "offset": 13,
+    "size": 1,
+    "lookup": "element",
+    "label": "Element attack",
+    "group": "Data"
+   },
+   {
+    "name": "element_percent",
+    "offset": 14,
+    "size": 1,
+    "label": "Element attack %",
+    "group": "Data"
+   },
+   {
+    "name": "status_attack_enabler",
+    "offset": 15,
+    "size": 1,
+    "label": "Status attack enabler",
+    "group": "Data"
+   },
+   {
+    "name": "status_1",
+    "offset": 16,
+    "size": 2,
+    "lookup": "status_1",
+    "label": "Status 1 (0-15)",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x12",
+    "offset": 18,
+    "size": 2,
+    "label": "Unknown 0x12",
+    "group": "Data"
+   },
+   {
+    "name": "status_2",
+    "offset": 20,
+    "size": 4,
+    "lookup": "status_2",
+    "label": "Status 2 (16-47)",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "20": {
+  "section_id": 20,
+  "fields": [
+   {
+    "name": "special_action",
+    "offset": 4,
+    "size": 2,
+    "lookup": "special_action",
+    "label": "Special Action ID",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x06",
+    "offset": 6,
+    "size": 1,
+    "label": "Unknown 0x06",
+    "group": "Data"
+   },
+   {
+    "name": "attack_type",
+    "offset": 7,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x08",
+    "offset": 8,
+    "size": 2,
+    "label": "Unknown 0x08",
+    "group": "Data"
+   },
+   {
+    "name": "attack_flags",
+    "offset": 10,
+    "size": 1,
+    "lookup": "attack_flags",
+    "group": "Data"
+   },
+   {
+    "name": "hit_count",
+    "offset": 11,
+    "size": 1,
+    "label": "Hit count",
+    "group": "Data"
+   },
+   {
+    "name": "element",
+    "offset": 12,
+    "size": 1,
+    "lookup": "element",
+    "group": "Data"
+   },
+   {
+    "name": "status_attack",
+    "offset": 13,
+    "size": 1,
+    "label": "Status attack",
+    "group": "Data"
+   },
+   {
+    "name": "crit_bonus",
+    "offset": 14,
+    "size": 1,
+    "label": "Crit bonus",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x0f",
+    "offset": 15,
+    "size": 1,
+    "label": "Unknown 0x0F",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "21": {
+  "section_id": 21,
+  "fields": [
+   {
+    "name": "status_2",
+    "offset": 0,
+    "size": 4,
+    "lookup": "status_2",
+    "label": "Status 2 (16-47)",
+    "group": "Data"
+   },
+   {
+    "name": "status_1",
+    "offset": 4,
+    "size": 2,
+    "lookup": "status_1",
+    "label": "Status 1 (0-15)",
+    "group": "Data"
+   },
+   {
+    "name": "attack_power",
+    "offset": 6,
+    "size": 1,
+    "label": "Attack power",
+    "group": "Data"
+   },
+   {
+    "name": "attack_param",
+    "offset": 7,
+    "size": 1,
+    "label": "Attack parameter",
+    "group": "Data"
+   }
+  ]
+ },
+ "22": {
+  "section_id": 22,
+  "fields": [
+   {
+    "name": "magic_id",
+    "offset": 4,
+    "size": 2,
+    "lookup": "special_action",
+    "label": "Special Action / Effect",
+    "group": "Data"
+   },
+   {
+    "name": "attack_type",
+    "offset": 6,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "Data"
+   },
+   {
+    "name": "attack_power",
+    "offset": 7,
+    "size": 1,
+    "label": "Attack power",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x08",
+    "offset": 8,
+    "size": 2,
+    "label": "Unknown 0x08",
+    "group": "Data"
+   },
+   {
+    "name": "target_info",
+    "offset": 10,
+    "size": 1,
+    "lookup": "target_info",
+    "group": "Data"
+   },
+   {
+    "name": "attack_flags",
+    "offset": 11,
+    "size": 1,
+    "lookup": "attack_flags",
+    "group": "Data"
+   },
+   {
+    "name": "hit_count",
+    "offset": 12,
+    "size": 1,
+    "label": "Hit count",
+    "group": "Data"
+   },
+   {
+    "name": "element",
+    "offset": 13,
+    "size": 1,
+    "lookup": "element",
+    "label": "Element attack",
+    "group": "Data"
+   },
+   {
+    "name": "element_percent",
+    "offset": 14,
+    "size": 1,
+    "label": "Element attack %",
+    "group": "Data"
+   },
+   {
+    "name": "status_attack_enabler",
+    "offset": 15,
+    "size": 1,
+    "label": "Status attack enabler",
+    "group": "Data"
+   },
+   {
+    "name": "status_1",
+    "offset": 16,
+    "size": 2,
+    "lookup": "status_1",
+    "label": "Status 1 (0-15)",
+    "group": "Data"
+   },
+   {
+    "name": "used_item_index",
+    "offset": 18,
+    "size": 1,
+    "lookup": "item",
+    "label": "Used item",
+    "group": "Data"
+   },
+   {
+    "name": "crit_increase",
+    "offset": 19,
+    "size": 1,
+    "label": "Crit increase",
+    "group": "Data"
+   },
+   {
+    "name": "status_2",
+    "offset": 20,
+    "size": 4,
+    "lookup": "status_2",
+    "label": "Status 2 (16-47)",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "23": {
+  "section_id": 23,
+  "fields": [
+   {
+    "name": "magic_id",
+    "offset": 4,
+    "size": 2,
+    "lookup": "special_action",
+    "label": "Special Action / Effect",
+    "group": "Data"
+   },
+   {
+    "name": "attack_type",
+    "offset": 6,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "Data"
+   },
+   {
+    "name": "attack_power",
+    "offset": 7,
+    "size": 1,
+    "label": "Attack power",
+    "group": "Data"
+   },
+   {
+    "name": "attack_flags",
+    "offset": 8,
+    "size": 1,
+    "lookup": "attack_flags",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x09",
+    "offset": 9,
+    "size": 1,
+    "label": "Unknown 0x09",
+    "group": "Data"
+   },
+   {
+    "name": "target_info",
+    "offset": 10,
+    "size": 1,
+    "lookup": "target_info",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x0b",
+    "offset": 11,
+    "size": 1,
+    "label": "Unknown 0x0B",
+    "group": "Data"
+   },
+   {
+    "name": "hit_count",
+    "offset": 12,
+    "size": 1,
+    "label": "Hit count",
+    "group": "Data"
+   },
+   {
+    "name": "element",
+    "offset": 13,
+    "size": 1,
+    "lookup": "element",
+    "label": "Element attack",
+    "group": "Data"
+   },
+   {
+    "name": "element_percent",
+    "offset": 14,
+    "size": 1,
+    "label": "Element attack %",
+    "group": "Data"
+   },
+   {
+    "name": "status_attack_enabler",
+    "offset": 15,
+    "size": 1,
+    "label": "Status attack enabler",
+    "group": "Data"
+   },
+   {
+    "name": "button_1",
+    "offset": 16,
+    "size": 2,
+    "lookup": "duel_button",
+    "label": "Sequence button 1",
+    "group": "Data"
+   },
+   {
+    "name": "button_2",
+    "offset": 18,
+    "size": 2,
+    "lookup": "duel_button",
+    "label": "Sequence button 2",
+    "group": "Data"
+   },
+   {
+    "name": "button_3",
+    "offset": 20,
+    "size": 2,
+    "lookup": "duel_button",
+    "label": "Sequence button 3",
+    "group": "Data"
+   },
+   {
+    "name": "button_4",
+    "offset": 22,
+    "size": 2,
+    "lookup": "duel_button",
+    "label": "Sequence button 4",
+    "group": "Data"
+   },
+   {
+    "name": "button_5",
+    "offset": 24,
+    "size": 2,
+    "lookup": "duel_button",
+    "label": "Sequence button 5",
+    "group": "Data"
+   },
+   {
+    "name": "status_1",
+    "offset": 26,
+    "size": 2,
+    "lookup": "status_1",
+    "label": "Status 1 (0-15)",
+    "group": "Data"
+   },
+   {
+    "name": "status_2",
+    "offset": 28,
+    "size": 4,
+    "lookup": "status_2",
+    "label": "Status 2 (16-47)",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "24": {
+  "section_id": 24,
+  "fields": [
+   {
+    "name": "start_move_0",
+    "offset": 0,
+    "size": 1,
+    "label": "Start move 0",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_0_1",
+    "offset": 1,
+    "size": 1,
+    "label": "Next seq 0.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_0_2",
+    "offset": 2,
+    "size": 1,
+    "label": "Next seq 0.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_0_3",
+    "offset": 3,
+    "size": 1,
+    "label": "Next seq 0.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_1",
+    "offset": 4,
+    "size": 1,
+    "label": "Start move 1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_1_1",
+    "offset": 5,
+    "size": 1,
+    "label": "Next seq 1.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_1_2",
+    "offset": 6,
+    "size": 1,
+    "label": "Next seq 1.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_1_3",
+    "offset": 7,
+    "size": 1,
+    "label": "Next seq 1.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_2",
+    "offset": 8,
+    "size": 1,
+    "label": "Start move 2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_2_1",
+    "offset": 9,
+    "size": 1,
+    "label": "Next seq 2.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_2_2",
+    "offset": 10,
+    "size": 1,
+    "label": "Next seq 2.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_2_3",
+    "offset": 11,
+    "size": 1,
+    "label": "Next seq 2.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_3",
+    "offset": 12,
+    "size": 1,
+    "label": "Start move 3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_3_1",
+    "offset": 13,
+    "size": 1,
+    "label": "Next seq 3.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_3_2",
+    "offset": 14,
+    "size": 1,
+    "label": "Next seq 3.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_3_3",
+    "offset": 15,
+    "size": 1,
+    "label": "Next seq 3.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_4",
+    "offset": 16,
+    "size": 1,
+    "label": "Start move 4",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_4_1",
+    "offset": 17,
+    "size": 1,
+    "label": "Next seq 4.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_4_2",
+    "offset": 18,
+    "size": 1,
+    "label": "Next seq 4.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_4_3",
+    "offset": 19,
+    "size": 1,
+    "label": "Next seq 4.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_5",
+    "offset": 20,
+    "size": 1,
+    "label": "Start move 5",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_5_1",
+    "offset": 21,
+    "size": 1,
+    "label": "Next seq 5.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_5_2",
+    "offset": 22,
+    "size": 1,
+    "label": "Next seq 5.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_5_3",
+    "offset": 23,
+    "size": 1,
+    "label": "Next seq 5.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_6",
+    "offset": 24,
+    "size": 1,
+    "label": "Start move 6",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_6_1",
+    "offset": 25,
+    "size": 1,
+    "label": "Next seq 6.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_6_2",
+    "offset": 26,
+    "size": 1,
+    "label": "Next seq 6.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_6_3",
+    "offset": 27,
+    "size": 1,
+    "label": "Next seq 6.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_7",
+    "offset": 28,
+    "size": 1,
+    "label": "Start move 7",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_7_1",
+    "offset": 29,
+    "size": 1,
+    "label": "Next seq 7.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_7_2",
+    "offset": 30,
+    "size": 1,
+    "label": "Next seq 7.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_7_3",
+    "offset": 31,
+    "size": 1,
+    "label": "Next seq 7.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_8",
+    "offset": 32,
+    "size": 1,
+    "label": "Start move 8",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_8_1",
+    "offset": 33,
+    "size": 1,
+    "label": "Next seq 8.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_8_2",
+    "offset": 34,
+    "size": 1,
+    "label": "Next seq 8.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_8_3",
+    "offset": 35,
+    "size": 1,
+    "label": "Next seq 8.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_9",
+    "offset": 36,
+    "size": 1,
+    "label": "Start move 9",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_9_1",
+    "offset": 37,
+    "size": 1,
+    "label": "Next seq 9.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_9_2",
+    "offset": 38,
+    "size": 1,
+    "label": "Next seq 9.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_9_3",
+    "offset": 39,
+    "size": 1,
+    "label": "Next seq 9.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_10",
+    "offset": 40,
+    "size": 1,
+    "label": "Start move 10",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_10_1",
+    "offset": 41,
+    "size": 1,
+    "label": "Next seq 10.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_10_2",
+    "offset": 42,
+    "size": 1,
+    "label": "Next seq 10.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_10_3",
+    "offset": 43,
+    "size": 1,
+    "label": "Next seq 10.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_11",
+    "offset": 44,
+    "size": 1,
+    "label": "Start move 11",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_11_1",
+    "offset": 45,
+    "size": 1,
+    "label": "Next seq 11.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_11_2",
+    "offset": 46,
+    "size": 1,
+    "label": "Next seq 11.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_11_3",
+    "offset": 47,
+    "size": 1,
+    "label": "Next seq 11.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_12",
+    "offset": 48,
+    "size": 1,
+    "label": "Start move 12",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_12_1",
+    "offset": 49,
+    "size": 1,
+    "label": "Next seq 12.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_12_2",
+    "offset": 50,
+    "size": 1,
+    "label": "Next seq 12.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_12_3",
+    "offset": 51,
+    "size": 1,
+    "label": "Next seq 12.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_13",
+    "offset": 52,
+    "size": 1,
+    "label": "Start move 13",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_13_1",
+    "offset": 53,
+    "size": 1,
+    "label": "Next seq 13.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_13_2",
+    "offset": 54,
+    "size": 1,
+    "label": "Next seq 13.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_13_3",
+    "offset": 55,
+    "size": 1,
+    "label": "Next seq 13.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_14",
+    "offset": 56,
+    "size": 1,
+    "label": "Start move 14",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_14_1",
+    "offset": 57,
+    "size": 1,
+    "label": "Next seq 14.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_14_2",
+    "offset": 58,
+    "size": 1,
+    "label": "Next seq 14.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_14_3",
+    "offset": 59,
+    "size": 1,
+    "label": "Next seq 14.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_15",
+    "offset": 60,
+    "size": 1,
+    "label": "Start move 15",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_15_1",
+    "offset": 61,
+    "size": 1,
+    "label": "Next seq 15.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_15_2",
+    "offset": 62,
+    "size": 1,
+    "label": "Next seq 15.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_15_3",
+    "offset": 63,
+    "size": 1,
+    "label": "Next seq 15.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_16",
+    "offset": 64,
+    "size": 1,
+    "label": "Start move 16",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_16_1",
+    "offset": 65,
+    "size": 1,
+    "label": "Next seq 16.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_16_2",
+    "offset": 66,
+    "size": 1,
+    "label": "Next seq 16.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_16_3",
+    "offset": 67,
+    "size": 1,
+    "label": "Next seq 16.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_17",
+    "offset": 68,
+    "size": 1,
+    "label": "Start move 17",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_17_1",
+    "offset": 69,
+    "size": 1,
+    "label": "Next seq 17.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_17_2",
+    "offset": 70,
+    "size": 1,
+    "label": "Next seq 17.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_17_3",
+    "offset": 71,
+    "size": 1,
+    "label": "Next seq 17.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_18",
+    "offset": 72,
+    "size": 1,
+    "label": "Start move 18",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_18_1",
+    "offset": 73,
+    "size": 1,
+    "label": "Next seq 18.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_18_2",
+    "offset": 74,
+    "size": 1,
+    "label": "Next seq 18.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_18_3",
+    "offset": 75,
+    "size": 1,
+    "label": "Next seq 18.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_19",
+    "offset": 76,
+    "size": 1,
+    "label": "Start move 19",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_19_1",
+    "offset": 77,
+    "size": 1,
+    "label": "Next seq 19.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_19_2",
+    "offset": 78,
+    "size": 1,
+    "label": "Next seq 19.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_19_3",
+    "offset": 79,
+    "size": 1,
+    "label": "Next seq 19.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_20",
+    "offset": 80,
+    "size": 1,
+    "label": "Start move 20",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_20_1",
+    "offset": 81,
+    "size": 1,
+    "label": "Next seq 20.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_20_2",
+    "offset": 82,
+    "size": 1,
+    "label": "Next seq 20.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_20_3",
+    "offset": 83,
+    "size": 1,
+    "label": "Next seq 20.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_21",
+    "offset": 84,
+    "size": 1,
+    "label": "Start move 21",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_21_1",
+    "offset": 85,
+    "size": 1,
+    "label": "Next seq 21.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_21_2",
+    "offset": 86,
+    "size": 1,
+    "label": "Next seq 21.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_21_3",
+    "offset": 87,
+    "size": 1,
+    "label": "Next seq 21.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_22",
+    "offset": 88,
+    "size": 1,
+    "label": "Start move 22",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_22_1",
+    "offset": 89,
+    "size": 1,
+    "label": "Next seq 22.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_22_2",
+    "offset": 90,
+    "size": 1,
+    "label": "Next seq 22.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_22_3",
+    "offset": 91,
+    "size": 1,
+    "label": "Next seq 22.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_23",
+    "offset": 92,
+    "size": 1,
+    "label": "Start move 23",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_23_1",
+    "offset": 93,
+    "size": 1,
+    "label": "Next seq 23.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_23_2",
+    "offset": 94,
+    "size": 1,
+    "label": "Next seq 23.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_23_3",
+    "offset": 95,
+    "size": 1,
+    "label": "Next seq 23.3",
+    "group": "Duel move table"
+   },
+   {
+    "name": "start_move_24",
+    "offset": 96,
+    "size": 1,
+    "label": "Start move 24",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_24_1",
+    "offset": 97,
+    "size": 1,
+    "label": "Next seq 24.1",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_24_2",
+    "offset": 98,
+    "size": 1,
+    "label": "Next seq 24.2",
+    "group": "Duel move table"
+   },
+   {
+    "name": "next_seq_24_3",
+    "offset": 99,
+    "size": 1,
+    "label": "Next seq 24.3",
+    "group": "Duel move table"
+   }
+  ],
+  "entry_names": [
+   "Duel move table"
+  ]
+ },
+ "25": {
+  "section_id": 25,
+  "fields": [
+   {
+    "name": "unknown_flags",
+    "offset": 4,
+    "size": 1,
+    "label": "Unknown flags",
+    "group": "Data"
+   },
+   {
+    "name": "target",
+    "offset": 5,
+    "size": 1,
+    "lookup": "target_info",
+    "label": "Target",
+    "group": "Data"
+   },
+   {
+    "name": "ability_data_id",
+    "offset": 6,
+    "size": 1,
+    "label": "Ability data ID",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x07",
+    "offset": 7,
+    "size": 1,
+    "label": "Unknown / Unused",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name",
+   "Description"
+  ]
+ },
+ "26": {
+  "section_id": 26,
+  "fields": [
+   {
+    "name": "magic_id",
+    "offset": 2,
+    "size": 2,
+    "lookup": "special_action",
+    "label": "Special Action / Effect",
+    "group": "Data"
+   },
+   {
+    "name": "attack_type",
+    "offset": 4,
+    "size": 1,
+    "lookup": "attack_type",
+    "group": "Data"
+   },
+   {
+    "name": "attack_power",
+    "offset": 5,
+    "size": 1,
+    "label": "Attack power",
+    "group": "Data"
+   },
+   {
+    "name": "attack_flags",
+    "offset": 6,
+    "size": 1,
+    "lookup": "attack_flags",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x07",
+    "offset": 7,
+    "size": 1,
+    "label": "Unknown 0x07",
+    "group": "Data"
+   },
+   {
+    "name": "target_info",
+    "offset": 8,
+    "size": 1,
+    "lookup": "target_info",
+    "group": "Data"
+   },
+   {
+    "name": "unknown_0x09",
+    "offset": 9,
+    "size": 1,
+    "label": "Unknown 0x09",
+    "group": "Data"
+   },
+   {
+    "name": "hit_count",
+    "offset": 10,
+    "size": 1,
+    "label": "Hit count",
+    "group": "Data"
+   },
+   {
+    "name": "element",
+    "offset": 11,
+    "size": 1,
+    "lookup": "element",
+    "label": "Element attack",
+    "group": "Data"
+   },
+   {
+    "name": "element_percent",
+    "offset": 12,
+    "size": 1,
+    "label": "Element attack %",
+    "group": "Data"
+   },
+   {
+    "name": "status_attack_enabler",
+    "offset": 13,
+    "size": 1,
+    "label": "Status attack enabler",
+    "group": "Data"
+   },
+   {
+    "name": "status_1",
+    "offset": 14,
+    "size": 2,
+    "lookup": "status_1",
+    "label": "Status 1 (0-15)",
+    "group": "Data"
+   },
+   {
+    "name": "status_2",
+    "offset": 16,
+    "size": 4,
+    "lookup": "status_2",
+    "label": "Status 2 (16-47)",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Name"
+  ]
+ },
+ "27": {
+  "section_id": 27,
+  "fields": [
+   {
+    "name": "slot_set_id",
+    "offset": 0,
+    "size": 1,
+    "label": "Slot set ID",
+    "group": "Data"
+   }
+  ]
+ },
+ "28": {
+  "section_id": 28,
+  "fields": [
+   {
+    "name": "magic_1",
+    "offset": 0,
+    "size": 1,
+    "lookup": "special_action",
+    "label": "Magic 1",
+    "group": "Data"
+   },
+   {
+    "name": "magic_1_count",
+    "offset": 1,
+    "size": 1,
+    "label": "Magic 1 count",
+    "group": "Data"
+   },
+   {
+    "name": "magic_2",
+    "offset": 2,
+    "size": 1,
+    "lookup": "special_action",
+    "label": "Magic 2",
+    "group": "Data"
+   },
+   {
+    "name": "magic_2_count",
+    "offset": 3,
+    "size": 1,
+    "label": "Magic 2 count",
+    "group": "Data"
+   },
+   {
+    "name": "magic_3",
+    "offset": 4,
+    "size": 1,
+    "lookup": "special_action",
+    "label": "Magic 3",
+    "group": "Data"
+   },
+   {
+    "name": "magic_3_count",
+    "offset": 5,
+    "size": 1,
+    "label": "Magic 3 count",
+    "group": "Data"
+   },
+   {
+    "name": "magic_4",
+    "offset": 6,
+    "size": 1,
+    "lookup": "special_action",
+    "label": "Magic 4",
+    "group": "Data"
+   },
+   {
+    "name": "magic_4_count",
+    "offset": 7,
+    "size": 1,
+    "label": "Magic 4 count",
+    "group": "Data"
+   },
+   {
+    "name": "magic_5",
+    "offset": 8,
+    "size": 1,
+    "lookup": "special_action",
+    "label": "Magic 5",
+    "group": "Data"
+   },
+   {
+    "name": "magic_5_count",
+    "offset": 9,
+    "size": 1,
+    "label": "Magic 5 count",
+    "group": "Data"
+   },
+   {
+    "name": "magic_6",
+    "offset": 10,
+    "size": 1,
+    "lookup": "special_action",
+    "label": "Magic 6",
+    "group": "Data"
+   },
+   {
+    "name": "magic_6_count",
+    "offset": 11,
+    "size": 1,
+    "label": "Magic 6 count",
+    "group": "Data"
+   },
+   {
+    "name": "magic_7",
+    "offset": 12,
+    "size": 1,
+    "lookup": "special_action",
+    "label": "Magic 7",
+    "group": "Data"
+   },
+   {
+    "name": "magic_7_count",
+    "offset": 13,
+    "size": 1,
+    "label": "Magic 7 count",
+    "group": "Data"
+   },
+   {
+    "name": "magic_8",
+    "offset": 14,
+    "size": 1,
+    "lookup": "special_action",
+    "label": "Magic 8",
+    "group": "Data"
+   },
+   {
+    "name": "magic_8_count",
+    "offset": 15,
+    "size": 1,
+    "label": "Magic 8 count",
+    "group": "Data"
+   }
+  ]
+ },
+ "29": {
+  "section_id": 29,
+  "fields": [
+   {
+    "name": "heal_dmg",
+    "offset": 2,
+    "size": 1,
+    "lookup": "heal_dmg",
+    "label": "Damage or heal",
+    "group": "Data"
+   },
+   {
+    "name": "hp_quantity",
+    "offset": 3,
+    "size": 1,
+    "lookup": "devour_hp_quantity",
+    "label": "HP heal/dmg quantity",
+    "group": "Data"
+   },
+   {
+    "name": "status_2",
+    "offset": 4,
+    "size": 4,
+    "lookup": "status_2",
+    "label": "Status 2 (16-47)",
+    "group": "Data"
+   },
+   {
+    "name": "status_1",
+    "offset": 8,
+    "size": 2,
+    "lookup": "status_1",
+    "label": "Status 1 (0-15)",
+    "group": "Data"
+   },
+   {
+    "name": "raised_stat",
+    "offset": 10,
+    "size": 1,
+    "lookup": "devour_raised_stat",
+    "label": "Raised stat",
+    "group": "Data"
+   },
+   {
+    "name": "raised_stat_hp",
+    "offset": 11,
+    "size": 1,
+    "label": "Raised stat HP quantity",
+    "group": "Data"
+   }
+  ],
+  "text_labels": [
+   "Description"
+  ]
+ },
+ "30": {
+  "section_id": 30,
+  "fields": [
+   {
+    "name": "timer_sleep",
+    "offset": 0,
+    "size": 1,
+    "label": "Sleep timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_haste",
+    "offset": 1,
+    "size": 1,
+    "label": "Haste timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_slow",
+    "offset": 2,
+    "size": 1,
+    "label": "Slow timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_stop",
+    "offset": 3,
+    "size": 1,
+    "label": "Stop timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_regen",
+    "offset": 4,
+    "size": 1,
+    "label": "Regen timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_protect",
+    "offset": 5,
+    "size": 1,
+    "label": "Protect timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_shell",
+    "offset": 6,
+    "size": 1,
+    "label": "Shell timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_reflect",
+    "offset": 7,
+    "size": 1,
+    "label": "Reflect timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_aura",
+    "offset": 8,
+    "size": 1,
+    "label": "Aura timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_curse",
+    "offset": 9,
+    "size": 1,
+    "label": "Curse timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_doom",
+    "offset": 10,
+    "size": 1,
+    "label": "Doom timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_invincible",
+    "offset": 11,
+    "size": 1,
+    "label": "Invincible timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_petrifying",
+    "offset": 12,
+    "size": 1,
+    "label": "Petrifying timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "timer_float",
+    "offset": 13,
+    "size": 1,
+    "label": "Float timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "atb_speed_multiplier",
+    "offset": 14,
+    "size": 1,
+    "label": "ATB speed multiplier",
+    "group": "Status timers"
+   },
+   {
+    "name": "dead_timer",
+    "offset": 15,
+    "size": 1,
+    "label": "Dead timer",
+    "group": "Status timers"
+   },
+   {
+    "name": "limit_death_0",
+    "offset": 16,
+    "size": 1,
+    "label": "Death limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_poison_1",
+    "offset": 17,
+    "size": 1,
+    "label": "Poison limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_petrify_2",
+    "offset": 18,
+    "size": 1,
+    "label": "Petrify limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_darkness_3",
+    "offset": 19,
+    "size": 1,
+    "label": "Darkness limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_silence_4",
+    "offset": 20,
+    "size": 1,
+    "label": "Silence limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_berserk_5",
+    "offset": 21,
+    "size": 1,
+    "label": "Berserk limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_zombie_6",
+    "offset": 22,
+    "size": 1,
+    "label": "Zombie limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_unknown_status_7",
+    "offset": 23,
+    "size": 1,
+    "label": "Unknown status limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_sleep_8",
+    "offset": 24,
+    "size": 1,
+    "label": "Sleep limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_haste_9",
+    "offset": 25,
+    "size": 1,
+    "label": "Haste limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_slow_10",
+    "offset": 26,
+    "size": 1,
+    "label": "Slow limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_stop_11",
+    "offset": 27,
+    "size": 1,
+    "label": "Stop limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_regen_12",
+    "offset": 28,
+    "size": 1,
+    "label": "Regen limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_protect_13",
+    "offset": 29,
+    "size": 1,
+    "label": "Protect limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_shell_14",
+    "offset": 30,
+    "size": 1,
+    "label": "Shell limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_reflect_15",
+    "offset": 31,
+    "size": 1,
+    "label": "Reflect limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_aura_16",
+    "offset": 32,
+    "size": 1,
+    "label": "Aura limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_curse_17",
+    "offset": 33,
+    "size": 1,
+    "label": "Curse limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_doom_18",
+    "offset": 34,
+    "size": 1,
+    "label": "Doom limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_invincible_19",
+    "offset": 35,
+    "size": 1,
+    "label": "Invincible limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_petrifying_20",
+    "offset": 36,
+    "size": 1,
+    "label": "Petrifying limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_float_21",
+    "offset": 37,
+    "size": 1,
+    "label": "Float limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_confusion_22",
+    "offset": 38,
+    "size": 1,
+    "label": "Confusion limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_drain_23",
+    "offset": 39,
+    "size": 1,
+    "label": "Drain limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_eject_24",
+    "offset": 40,
+    "size": 1,
+    "label": "Eject limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_double_25",
+    "offset": 41,
+    "size": 1,
+    "label": "Double limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_triple_26",
+    "offset": 42,
+    "size": 1,
+    "label": "Triple limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_defend_27",
+    "offset": 43,
+    "size": 1,
+    "label": "Defend limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_unknown_status_2_28",
+    "offset": 44,
+    "size": 1,
+    "label": "Unknown status 2 limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_unknown_status_3_29",
+    "offset": 45,
+    "size": 1,
+    "label": "Unknown status 3 limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_charged_30",
+    "offset": 46,
+    "size": 1,
+    "label": "Charged limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "limit_back_attack_31",
+    "offset": 47,
+    "size": 1,
+    "label": "Back Attack limit effect",
+    "group": "Status limit effects"
+   },
+   {
+    "name": "duel_start_seq_cl1",
+    "offset": 48,
+    "size": 1,
+    "label": "Duel start seq CL1",
+    "group": "Duel timers"
+   },
+   {
+    "name": "duel_timer_cl1",
+    "offset": 49,
+    "size": 1,
+    "label": "Duel timer CL1",
+    "group": "Duel timers"
+   },
+   {
+    "name": "duel_start_seq_cl2",
+    "offset": 50,
+    "size": 1,
+    "label": "Duel start seq CL2",
+    "group": "Duel timers"
+   },
+   {
+    "name": "duel_timer_cl2",
+    "offset": 51,
+    "size": 1,
+    "label": "Duel timer CL2",
+    "group": "Duel timers"
+   },
+   {
+    "name": "duel_start_seq_cl3",
+    "offset": 52,
+    "size": 1,
+    "label": "Duel start seq CL3",
+    "group": "Duel timers"
+   },
+   {
+    "name": "duel_timer_cl3",
+    "offset": 53,
+    "size": 1,
+    "label": "Duel timer CL3",
+    "group": "Duel timers"
+   },
+   {
+    "name": "duel_start_seq_cl4",
+    "offset": 54,
+    "size": 1,
+    "label": "Duel start seq CL4",
+    "group": "Duel timers"
+   },
+   {
+    "name": "duel_timer_cl4",
+    "offset": 55,
+    "size": 1,
+    "label": "Duel timer CL4",
+    "group": "Duel timers"
+   },
+   {
+    "name": "shot_timer_cl1",
+    "offset": 56,
+    "size": 1,
+    "label": "Shot timer CL1",
+    "group": "Shot timers"
+   },
+   {
+    "name": "shot_timer_cl2",
+    "offset": 57,
+    "size": 1,
+    "label": "Shot timer CL2",
+    "group": "Shot timers"
+   },
+   {
+    "name": "shot_timer_cl3",
+    "offset": 58,
+    "size": 1,
+    "label": "Shot timer CL3",
+    "group": "Shot timers"
+   },
+   {
+    "name": "shot_timer_cl4",
+    "offset": 59,
+    "size": 1,
+    "label": "Shot timer CL4",
+    "group": "Shot timers"
+   }
+  ],
+  "entry_names": [
+   "Misc"
+  ]
+ },
+ "31": {
+  "section_id": 31,
+  "fields": [],
+  "text_labels": [
+   "Text"
+  ]
+ }
+}

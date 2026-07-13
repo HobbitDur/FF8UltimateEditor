@@ -31,6 +31,23 @@ class SectionData(Section):
 
 
 
+    def update_data_hex(self):
+        """Rebuild the section raw bytes from its subsections.
+
+        This flushes in-place edits done on subsection payloads back into the
+        section ``_data_hex`` for every data section (``set_all_offset`` only does
+        this for sections that own a linked text section). As a safety guard, the
+        rebuild is skipped when the subsections do not fully cover the section
+        (which would otherwise drop trailing bytes)."""
+        rebuilt = bytearray()
+        for subsection in self._subsection_list:
+            subsection.update_data_hex()
+            rebuilt.extend(subsection.get_data_hex())
+        if len(rebuilt) == len(self._data_hex):
+            self._data_hex = rebuilt
+        self._size = len(self._data_hex)
+        return self._data_hex
+
     def get_all_offset(self):
         offset_list = []
 

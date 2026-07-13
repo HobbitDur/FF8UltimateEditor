@@ -27,6 +27,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # --- NEW: UV / texture state ---
         self.triangles_uv = []   # list of (indices_tuple, uvs_tuple, raw_tex_id)
         self.quads_uv = []       # list of (indices_tuple, uvs_tuple, raw_tex_id)
+        # Colored (untextured) primitives — battle stages and magic models
+        self.colored_triangles = []  # list of (indices_tuple, rgb_tuple)
+        self.colored_quads = []      # list of (indices_tuple, rgb_tuple)
         self._pending_qpixmaps = []   # QPixmaps waiting to be uploaded
         self._gl_textures = []        # list of GL texture IDs (after upload)
         self._tex_id_to_index = {}    # raw tex_id → _gl_textures index
@@ -57,6 +60,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         self.back_face_offset = -0.003  # Smaller offset for triangles
         self.triangle_cache = {}  # Cache for back face offsets per fra
+        # Backface culling mode (see _should_cull_backface): 'duplicates'
+        # resolves two-sided pairs only (safe default), 'all' culls every
+        # back-facing face like the game, 'off' disables culling.
+        self.backface_cull = 'duplicates'
         # Battle .dat textures go through PNG files that lose alpha, so pure
         # black is keyed to transparent. Tools that provide real alpha
         # (e.g. Seed's TIM decoding) set this to False to keep opaque black.
@@ -122,6 +129,14 @@ class FF8OpenGLWidget(QOpenGLWidget):
     def set_quads_with_uv(self, data: list):
         """data: list of (indices_tuple, uvs_tuple, raw_tex_id)"""
         self.quads_uv = data
+
+    def set_colored_triangles(self, data: list):
+        """data: list of (indices_tuple, rgb_tuple) — flat-colored faces"""
+        self.colored_triangles = data
+
+    def set_colored_quads(self, data: list):
+        """data: list of (indices_tuple, rgb_tuple) — flat-colored faces"""
+        self.colored_quads = data
 
     def set_show_texture(self, show: bool):
         self.show_texture = show
@@ -206,11 +221,22 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # Apply frame position translation
         glTranslatef(self.model_translation[0], self.model_translation[1], self.model_translation[2])
 
+        # Camera position in model space, for exact per-face backface culling
+        # (the PSX culls per face after projection; a single global view axis
+        # mis-culls faces near edge-on and shows the wrong side of two-sided
+        # dual-textured faces, e.g. Blobra's fins)
+        try:
+            mv = np.array(glGetFloatv(GL_MODELVIEW_MATRIX), dtype=np.float64).T
+            self._eye_model = (np.linalg.inv(mv) @ np.array([0.0, 0.0, 0.0, 1.0]))[:3]
+        except Exception:
+            self._eye_model = None
+
         if self.show_axis:
             self.draw_axis()
         if self.show_texture and self._gl_textures and (self.triangles_uv or self.quads_uv):
             self._draw_textured_triangles()
             self._draw_textured_quads()
+            self._draw_colored_faces()
         else:
             # Flat-color fallback (original code)
             glColor3f(*self.face_color)
@@ -230,6 +256,46 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         self.update()
 
+    def _should_cull_backface(self, verts, multiplicity, view_dir):
+        """PSX-style per-face backface cull. Faces whose plane the eye is
+        behind are back-facing (exact per-face test, same outcome as the
+        game's screen-space cross product).
+
+        Mode 'all' (default) culls every back-facing face — fully faithful to
+        the PSX renderer; monster meshes are consistently wound so this also
+        reveals the correct inner/back skin where the game would. Mode
+        'duplicates' only culls the away-facing copy of a double-sided pair,
+        leaving single-sided faces double-sided — a fallback for models with
+        inconsistent winding. Mode 'off' disables culling."""
+        mode = getattr(self, 'backface_cull', 'duplicates')
+        if mode == 'off':
+            return False
+        if mode == 'duplicates' and multiplicity <= 1:
+            return False
+        if len(verts) == 3:
+            normal = self._calculate_triangle_normal_fast(verts)
+        else:
+            normal = self._calculate_quad_normal(verts)
+        eye = getattr(self, '_eye_model', None)
+        if eye is not None:
+            # Exact plane test: the face is back-facing iff the eye is on the
+            # back side of its plane (perspective-correct, per face)
+            face_to_eye = eye - np.asarray(verts[0], dtype=np.float64)
+            return float(np.dot(normal, face_to_eye)) < 0.0
+        return float(np.dot(normal, view_dir)) > 0.0
+
+    def _view_direction_model(self):
+        """Unit vector pointing from the camera into the scene, expressed in
+        model space (inverse of the paintGL orbit rotations)."""
+        rx = np.radians(self.rot_x)
+        ry = np.radians(self.rot_y)
+        # view = Rx(rot_x) * Ry(rot_y); camera looks along -z in view space:
+        # dir_model = Ry(-ry) * Rx(-rx) * (0, 0, -1)
+        v = np.array([0.0, -np.sin(rx), -np.cos(rx)])
+        return np.array([np.cos(ry) * v[0] - np.sin(ry) * v[2],
+                         v[1],
+                         np.sin(ry) * v[0] + np.cos(ry) * v[2]])
+
     def _bind_texture_for_raw_id(self, raw_id: int) -> bool:
         """Bind the GL texture that corresponds to a raw tex_id. Returns True on success."""
         idx = self._tex_id_to_index.get(raw_id, 0)
@@ -244,76 +310,46 @@ class FF8OpenGLWidget(QOpenGLWidget):
             return False
 
     def _draw_textured_triangles(self):
-        """Draw triangles - offset back faces based on camera direction"""
+        """Draw triangles with PSX-style per-face backface culling."""
         if not self.triangles_uv:
             return
 
         glEnable(GL_TEXTURE_2D)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glDisable(GL_CULL_FACE)
+        glDisable(GL_CULL_FACE)  # we cull in software (winding-independent)
         glEnable(GL_DEPTH_TEST)
         glColor4f(1.0, 1.0, 1.0, 1.0)
 
-        # Get camera direction (assuming camera looking along -Z in view space)
-        # You may need to adjust this based on your camera setup
-        camera_dir = np.array([0, 0, 1])  # Looking along positive Z
+        view_dir = self._view_direction_model()
 
-        # Count exact duplicates first
+        # Count exact duplicates: double-sided parts are two opposite-winding
+        # faces, only one culled per frame (see _should_cull_backface).
         face_count = {}
         for indices, _, _ in self.triangles_uv:
             face_key = frozenset(indices)
             face_count[face_key] = face_count.get(face_key, 0) + 1
 
         current_raw_id = None
-        drawn_faces = {}
-
         for indices, uvs, raw_id in self.triangles_uv:
             if raw_id != current_raw_id:
                 self._bind_texture_for_raw_id(raw_id)
                 current_raw_id = raw_id
 
-            face_key = frozenset(indices)
-            drawn_faces[face_key] = drawn_faces.get(face_key, 0) + 1
-            is_exact_duplicate = (face_count[face_key] > 1)
-            is_first_occurrence = (drawn_faces[face_key] == 1)
-
             verts = [self.vertices_array[idx] for idx in indices]
-            normal = self._calculate_triangle_normal_fast(verts)
-
-            # Check if this is likely a back face (normal points away from camera)
-            # For animated monsters, this helps detect which face should be offset
-            #is_back_face_by_normal = np.dot(normal, camera_dir) < 0
-            is_back_face_by_normal = False
+            if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
+                continue
 
             glBegin(GL_TRIANGLES)
-
-            # Decide offset strategy
-            if is_exact_duplicate and is_first_occurrence:
-                # Exact duplicate - larger offset
-                offset = -0.003
-                apply_offset = True
-            elif is_back_face_by_normal:
-                # Detected back face - medium offset
-                offset = -0.001
-                apply_offset = False #False as I don't want to modify it (for mouth for example) but the code is interesting so I keep it
-            else:
-                apply_offset = False  # Enable to prevent Z-fighting
-
             for i in range(3):
                 u, v = uvs[i]
-                u = u - int(u)
-                v = v - int(v)
+                # wrap only above 1.0: exactly 1.0 is a texture border, not 0
+                if u > 1.0:
+                    u = u - int(u)
+                if v > 1.0:
+                    v = v - int(v)
                 glTexCoord2f(u, v)
-
-                if apply_offset:
-                    glVertex3f(
-                        verts[i][0] + normal[0] * offset,
-                        verts[i][1] + normal[1] * offset,
-                        verts[i][2] + normal[2] * offset
-                    )
-                else:
-                    glVertex3f(verts[i][0], verts[i][1], verts[i][2])
+                glVertex3f(verts[i][0], verts[i][1], verts[i][2])
             glEnd()
 
         glDisable(GL_BLEND)
@@ -363,70 +399,80 @@ class FF8OpenGLWidget(QOpenGLWidget):
         return np.array([nx, ny, nz])
 
     def _draw_textured_quads(self):
-        """Draw quads - offset only when there's a matching front face"""
+        """Draw quads with PSX-style per-face backface culling."""
         if not self.quads_uv:
             return
 
         glEnable(GL_TEXTURE_2D)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glDisable(GL_CULL_FACE)
+        glDisable(GL_CULL_FACE)  # we cull in software (winding-independent)
         glEnable(GL_DEPTH_TEST)
         glColor4f(1.0, 1.0, 1.0, 1.0)
 
-        # First pass: count occurrences of each face
+        view_dir = self._view_direction_model()
+
         face_count = {}
         for indices, _, _ in self.quads_uv:
             face_key = frozenset(indices)
             face_count[face_key] = face_count.get(face_key, 0) + 1
 
-        # Second pass: draw with offset only for duplicates
         current_raw_id = None
-        drawn_faces = {}
-
         for indices, uvs, raw_id in self.quads_uv:
             if raw_id != current_raw_id:
                 self._bind_texture_for_raw_id(raw_id)
                 current_raw_id = raw_id
 
-            face_key = frozenset(indices)
-            drawn_faces[face_key] = drawn_faces.get(face_key, 0) + 1
-            is_duplicate = (face_count[face_key] > 1)
-            is_first_occurrence = (drawn_faces[face_key] == 1)
-
             verts = [self.vertices_array[idx] for idx in indices]
+            if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
+                continue
 
-            # Get vertices with potential offset
-            if is_duplicate and is_first_occurrence:
-                # Back face of a duplicate - apply offset
-                normal = self._calculate_quad_normal(verts)
-                offset = -0.01
-                draw_verts = [v + normal * offset for v in verts]
-            else:
-                # Normal case - no offset
-                draw_verts = verts
-
-            # Draw quad as two triangles
+            # Draw quad as two triangles (perimeter order A, B, D / A, C, D)
             glBegin(GL_TRIANGLES)
-            # Triangle 1: A, B, D
-            glTexCoord2f(uvs[0][0], uvs[0][1])
-            glVertex3f(draw_verts[0][0], draw_verts[0][1], draw_verts[0][2])
-            glTexCoord2f(uvs[1][0], uvs[1][1])
-            glVertex3f(draw_verts[1][0], draw_verts[1][1], draw_verts[1][2])
-            glTexCoord2f(uvs[3][0], uvs[3][1])
-            glVertex3f(draw_verts[3][0], draw_verts[3][1], draw_verts[3][2])
-
-            # Triangle 2: A, C, D
-            glTexCoord2f(uvs[0][0], uvs[0][1])
-            glVertex3f(draw_verts[0][0], draw_verts[0][1], draw_verts[0][2])
-            glTexCoord2f(uvs[2][0], uvs[2][1])
-            glVertex3f(draw_verts[2][0], draw_verts[2][1], draw_verts[2][2])
-            glTexCoord2f(uvs[3][0], uvs[3][1])
-            glVertex3f(draw_verts[3][0], draw_verts[3][1], draw_verts[3][2])
+            for i in (0, 1, 3, 0, 2, 3):
+                glTexCoord2f(uvs[i][0], uvs[i][1])
+                glVertex3f(verts[i][0], verts[i][1], verts[i][2])
             glEnd()
 
         glDisable(GL_BLEND)
         glDisable(GL_TEXTURE_2D)
+
+    def _draw_colored_faces(self):
+        """Draw the colored (untextured) primitive lists with their flat RGB color."""
+        if not self.colored_triangles and not self.colored_quads:
+            return
+
+        glDisable(GL_TEXTURE_2D)
+        glEnable(GL_DEPTH_TEST)
+
+        view_dir = self._view_direction_model()
+        face_count = {}
+        for indices, _ in self.colored_triangles + self.colored_quads:
+            face_key = frozenset(indices)
+            face_count[face_key] = face_count.get(face_key, 0) + 1
+
+        for indices, rgb in self.colored_triangles:
+            verts = [self.vertices_array[idx] for idx in indices]
+            if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
+                continue
+            glColor3f(*rgb)
+            glBegin(GL_TRIANGLES)
+            for v in verts:
+                glVertex3f(v[0], v[1], v[2])
+            glEnd()
+
+        for indices, rgb in self.colored_quads:
+            verts = [self.vertices_array[idx] for idx in indices]
+            if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
+                continue
+            glColor3f(*rgb)
+            # Same perimeter order as textured quads (A, B, D / A, C, D)
+            glBegin(GL_TRIANGLES)
+            for i in (0, 1, 3, 0, 2, 3):
+                glVertex3f(verts[i][0], verts[i][1], verts[i][2])
+            glEnd()
+
+        glColor4f(1.0, 1.0, 1.0, 1.0)
 
     def _calculate_quad_normal(self, verts):
         """Calculate normal for a quad"""

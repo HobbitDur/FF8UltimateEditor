@@ -66,6 +66,18 @@ class SubSectionData(Section):
 
         return current_subsection_offset
 
+    def update_data_hex(self):
+        """Rebuild the subsection raw bytes from its data list (offsets + payload).
+
+        Needed so edits made in place on the payload FF8Data are flushed back into
+        ``_data_hex`` even for sections that have no linked text (where
+        ``set_offset_values`` is never called during save)."""
+        self._data_hex = bytearray()
+        for data in self._data_list:
+            self._data_hex.extend(data.get_data_hex())
+        self._size = len(self._data_hex)
+        return self._data_hex
+
     def get_data_list(self) -> List[FF8Data]:
         return self._data_list
 

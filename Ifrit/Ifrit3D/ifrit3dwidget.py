@@ -43,6 +43,8 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget = FF8OpenGLWidget(self)
         # Managers providing real texture alpha (Seed) disable black keying
         self.gl_widget.black_is_transparent = getattr(ifrit_manager, 'texture_black_is_transparent', True)
+        # Backface culling: 'duplicates' (default), 'all' = game-exact, 'off'
+        self.gl_widget.backface_cull = getattr(ifrit_manager, 'backface_cull_mode', 'duplicates')
 
         # Setup animation timer
         self.timer = QTimer()
@@ -176,6 +178,8 @@ class Ifrit3DWidget(QWidget):
             self.bone_editor.bone_parent_changed.connect(self._on_bone_parent_changed)
             self.bone_editor.animation_rotation_changed.connect(self._on_animation_rotation_changed)
             self.bone_editor.animation_position_changed.connect(self.on_frame_position_changed)
+            self.bone_editor.animation_scale_changed.connect(self._on_animation_scale_changed)
+            self.bone_editor.frame_scale_mode_changed.connect(self._on_frame_scale_mode_changed)
 
             # Connect signals to update bone editor
             self.frame_changed.connect(self._update_bone_editor_frame)
@@ -492,6 +496,11 @@ class Ifrit3DWidget(QWidget):
         quad_uv = self.ifrit_manager.enemy.geometry_data.get_quads_with_uv()
         self.gl_widget.set_triangles_with_uv(tri_uv)
         self.gl_widget.set_quads_with_uv(quad_uv)
+
+        # Colored (untextured) primitives: unused by monsters, present in
+        # battle-stage groups and magic-effect models
+        self.gl_widget.set_colored_triangles(self.ifrit_manager.enemy.geometry_data.get_colored_triangles_with_color())
+        self.gl_widget.set_colored_quads(self.ifrit_manager.enemy.geometry_data.get_colored_quads_with_color())
 
         # Push textures if they have already been extracted
         self._push_textures_to_gl()
@@ -944,14 +953,25 @@ class Ifrit3DWidget(QWidget):
         # Get animation rotation if available
         rot_x, rot_y, rot_z = 0, 0, 0
         rot_raw_x, rot_raw_y, rot_raw_z = 0, 0, 0
+        scale_x, scale_y, scale_z = 1.0, 1.0, 1.0
+        scale_raw_x = scale_raw_y = scale_raw_z = 1024
+        mode_bit_enabled = False
         if (self.current_anim_id < len(self.ifrit_manager.enemy.animation_data.animations) and
                 self.current_frame < len(self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames)):
             frame: AnimationFrame = self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames[self.current_frame]
             if bone_id < len(frame.rotation_vector_data):
                 rot_x, rot_y, rot_z = frame.rotation_vector_data[bone_id][0].get_rotate_deg(), frame.rotation_vector_data[bone_id][1].get_rotate_deg(),frame.rotation_vector_data[bone_id][2].get_rotate_deg()
                 rot_raw_x, rot_raw_y, rot_raw_z = frame.rotation_vector_data[bone_id][0].get_rotate_raw(), frame.rotation_vector_data[bone_id][1].get_rotate_raw(),frame.rotation_vector_data[bone_id][2].get_rotate_raw()
+            mode_bit_enabled = (frame.mode_bit == 1)
+            if bone_id < len(frame.rotation_vector_data_supp):
+                supp = frame.rotation_vector_data_supp[bone_id]
+                scale_x, scale_y, scale_z = supp.get_scale_factors()
+                scale_raw_x, scale_raw_y, scale_raw_z = (supp.get_scale_raw(0), supp.get_scale_raw(1),
+                                                         supp.get_scale_raw(2))
 
         self.bone_editor.set_bone_data(bone_id, bone.get_size(),bone.get_size_raw(),  bone.parent_id, rot_x, rot_y, rot_z, rot_raw_x, rot_raw_y, rot_raw_z)
+        self.bone_editor.set_bone_scale(scale_x, scale_y, scale_z,
+                                        scale_raw_x, scale_raw_y, scale_raw_z, mode_bit_enabled)
 
     def _update_frame_position_selection(self):
         if not hasattr(self, 'bone_editor'):
@@ -1034,4 +1054,17 @@ class Ifrit3DWidget(QWidget):
         """Handle animation rotation change from editor"""
         self.ifrit_manager.set_animation_frame_bone_rotation(anim_id, frame_id, bone_id, rx, ry, rz)
         self.update_animated_mesh()
+
+    def _on_animation_scale_changed(self, anim_id: int, frame_id: int,
+                                    bone_id: int, sx: float, sy: float, sz: float):
+        """Handle bone scale (squash-and-stretch) change from editor"""
+        self.ifrit_manager.set_animation_frame_bone_scale(anim_id, frame_id, bone_id, sx, sy, sz)
+        self.update_animated_mesh()
+        self.update_skeleton()
+
+    def _on_frame_scale_mode_changed(self, anim_id: int, frame_id: int, enabled: bool):
+        """Handle the frame's scale mode-bit toggle from editor"""
+        self.ifrit_manager.set_animation_frame_scale_mode(anim_id, frame_id, enabled)
+        self.update_animated_mesh()
+        self.update_skeleton()
         self.update_skeleton()

@@ -184,9 +184,12 @@ class GeometryTriangle:
         self.tex_id_1 = 0
         self.vtc: UV = UV()
         self.tex_id_2 = 0
+        self.depth_bias = 0  # top nibble of first index: (nibble - 8), 0 = neutral
 
     def analyze(self, data:bytes):
-        self.vertex_indexes[0] = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES['byteorder'])& 0xFFF
+        first_index = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES['byteorder'])
+        self.depth_bias = (first_index >> 12) - 8
+        self.vertex_indexes[0] = first_index & 0xFFF
         self.vertex_indexes[1] = int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES['byteorder'])& 0xFFF
         self.vertex_indexes[2] = int.from_bytes(data[4:6], byteorder=self.SECTION_GEOMETRY_TRIANGLE_VERTEX_INDEXES['byteorder'])& 0xFFF
         self.vta.analyze(data[6:8])
@@ -197,19 +200,24 @@ class GeometryTriangle:
     def get_uv_str(self):
         return f"{self.vta}{self.vtb}{self.vtc}"
 
+    def is_hidden(self):
+        """Faces whose TPage word has any 0xFE00 bits set are skipped by the renderer."""
+        return (self.tex_id_2 & 0xFE00) != 0
+
     def get_byte(self) -> bytearray:
         data = bytearray()
-        data.extend(self.vertex_indexes[0].to_bytes(2, 'little'))
+        first_index = (((self.depth_bias + 8) & 0xF) << 12) | (self.vertex_indexes[0] & 0xFFF)
+        data.extend(first_index.to_bytes(2, 'little'))
         data.extend(self.vertex_indexes[1].to_bytes(2, 'little'))
         data.extend(self.vertex_indexes[2].to_bytes(2, 'little'))
-        data.extend(self.vta.get_byte())
-        data.extend(self.vtb.get_byte())
+        data.extend(self.vta.to_binary())
+        data.extend(self.vtb.to_binary())
         data.extend(self.tex_id_1.to_bytes(2, 'little'))
-        data.extend(self.vtc.get_byte())
+        data.extend(self.vtc.to_binary())
         data.extend(self.tex_id_2.to_bytes(2, 'little'))
         return data  # 16 bytes
     def __str__(self):
-        return f"Triangle(VertexIndex{self.vertex_indexes}, UVData:{self.vta}{self.vtb}{self.vtc}, TexId({self.tex_id_1, self.tex_id_2}))"
+        return f"Triangle(VertexIndex{self.vertex_indexes}, DepthBias:{self.depth_bias}, UVData:{self.vta}{self.vtb}{self.vtc}, TexId({self.tex_id_1, self.tex_id_2}))"
     def __repr__(self):
         return self.__str__()
 
@@ -229,9 +237,12 @@ class GeometryQuad:
         self.tex_id_2 = 0
         self.vtc: UV = UV()
         self.vtd: UV = UV()
+        self.depth_bias = 0  # top nibble of first index: (nibble - 8), 0 = neutral
 
     def analyze(self, data:bytes):
-        self.vertex_indexes[0] = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder']) & 0xFFF
+        first_index = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder'])
+        self.depth_bias = (first_index >> 12) - 8
+        self.vertex_indexes[0] = first_index & 0xFFF
         self.vertex_indexes[1] = int.from_bytes(data[2:4], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder'])& 0xFFF
         self.vertex_indexes[2] = int.from_bytes(data[4:6], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder'])& 0xFFF
         self.vertex_indexes[3] = int.from_bytes(data[6:8], byteorder=self.SECTION_GEOMETRY_QUAD_VERTEX_INDEXES['byteorder'])& 0xFFF
@@ -245,23 +256,78 @@ class GeometryQuad:
     def get_uv_str(self):
         return f"{self.vta}{self.vtb}{self.vtc}{self.vtd}"
 
+    def is_hidden(self):
+        """Faces whose TPage word has any 0xFE00 bits set are skipped by the renderer."""
+        return (self.tex_id_2 & 0xFE00) != 0
+
     def get_byte(self) -> bytearray:
         data = bytearray()
-        data.extend(self.vertex_indexes[0].to_bytes(2, 'little'))
+        first_index = (((self.depth_bias + 8) & 0xF) << 12) | (self.vertex_indexes[0] & 0xFFF)
+        data.extend(first_index.to_bytes(2, 'little'))
         data.extend(self.vertex_indexes[1].to_bytes(2, 'little'))
         data.extend(self.vertex_indexes[2].to_bytes(2, 'little'))
         data.extend(self.vertex_indexes[3].to_bytes(2, 'little'))
-        data.extend(self.vta.get_byte())
+        data.extend(self.vta.to_binary())
         data.extend(self.tex_id_1.to_bytes(2, 'little'))
-        data.extend(self.vtb.get_byte())
+        data.extend(self.vtb.to_binary())
         data.extend(self.tex_id_2.to_bytes(2, 'little'))
-        data.extend(self.vtc.get_byte())
-        data.extend(self.vtd.get_byte())
+        data.extend(self.vtc.to_binary())
+        data.extend(self.vtd.to_binary())
         return data  # 20 bytes
     def __str__(self):
-        return f"Quad(VertexIndex{self.vertex_indexes}, UVData{self.vta}{self.vtb}{self.vtc}{self.vtd}, TexId({self.tex_id_1, self.tex_id_2}))"
+        return f"Quad(VertexIndex{self.vertex_indexes}, DepthBias:{self.depth_bias}, UVData{self.vta}{self.vtb}{self.vtc}{self.vtd}, TexId({self.tex_id_1, self.tex_id_2}))"
     def __repr__(self):
         return self.__str__()
+
+
+class GeometryColoredTriangle(GeometryTriangle):
+    """Colored triangle (20 bytes): textured triangle + raw GPU color command dword
+    {red, green, blue, code}. Unused by vanilla monsters; used by battle stages and
+    magic-effect models."""
+    def __init__(self):
+        super().__init__()
+        self.color_command = 0
+
+    def analyze(self, data:bytes):
+        super().analyze(data[0:16])
+        self.color_command = int.from_bytes(data[16:20], byteorder='little')
+
+    def get_rgb_norm(self):
+        return ((self.color_command & 0xFF) / 255.0,
+                ((self.color_command >> 8) & 0xFF) / 255.0,
+                ((self.color_command >> 16) & 0xFF) / 255.0)
+
+    def get_byte(self) -> bytearray:
+        data = super().get_byte()
+        data.extend(self.color_command.to_bytes(4, 'little'))
+        return data  # 20 bytes
+    def __str__(self):
+        return f"Colored{super().__str__()[:-1]}, Color:{self.color_command:08X})"
+
+
+class GeometryColoredQuad(GeometryQuad):
+    """Colored quad (24 bytes): textured quad + raw GPU color command dword
+    {red, green, blue, code}. Unused by vanilla monsters; used by battle stages and
+    magic-effect models."""
+    def __init__(self):
+        super().__init__()
+        self.color_command = 0
+
+    def analyze(self, data:bytes):
+        super().analyze(data[0:20])
+        self.color_command = int.from_bytes(data[20:24], byteorder='little')
+
+    def get_rgb_norm(self):
+        return ((self.color_command & 0xFF) / 255.0,
+                ((self.color_command >> 8) & 0xFF) / 255.0,
+                ((self.color_command >> 16) & 0xFF) / 255.0)
+
+    def get_byte(self) -> bytearray:
+        data = super().get_byte()
+        data.extend(self.color_command.to_bytes(4, 'little'))
+        return data  # 24 bytes
+    def __str__(self):
+        return f"Colored{super().__str__()[:-1]}, Color:{self.color_command:08X})"
 
 
 class UV:
@@ -312,9 +378,13 @@ class ObjectData:
     SECTION_GEOMETRY_OBJECT_DATA_PADDING = {'offset': 0x00, 'size': 0, 'byteorder': 'little', 'name': 'object_data_padding', 'pretty_name': 'Mesh position', 'default_value':0}
     SECTION_GEOMETRY_OBJECT_DATA_NB_TRIANGLE = {'offset': 0x00, 'size': 2, 'byteorder': 'little', 'name': 'nb_triangle', 'pretty_name': 'Mesh position', 'default_value':0}
     SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD = {'offset': 0x02, 'size': 2, 'byteorder': 'little', 'name': 'nb_quad', 'pretty_name': 'Mesh position', 'default_value':0}
-    SECTION_GEOMETRY_OBJECT_DATA_UNKNOWN = {'offset': 0x04, 'size': 8, 'byteorder': 'little', 'name': 'object_unknown', 'pretty_name': 'Mesh position', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_NB_COLORED_TRIANGLE = {'offset': 0x04, 'size': 2, 'byteorder': 'little', 'name': 'nb_colored_triangle', 'pretty_name': 'Nb colored triangles', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_NB_COLORED_QUAD = {'offset': 0x06, 'size': 2, 'byteorder': 'little', 'name': 'nb_colored_quad', 'pretty_name': 'Nb colored quads', 'default_value':0}
+    SECTION_GEOMETRY_OBJECT_DATA_UNUSED = {'offset': 0x08, 'size': 4, 'byteorder': 'little', 'name': 'object_unused', 'pretty_name': 'Unused (skipped by the renderer)', 'default_value':0}
     SECTION_GEOMETRY_OBJECT_DATA_TRIANGLE = {'offset': 0x0, 'size': 16, 'byteorder': 'little', 'name': 'triangle', 'pretty_name': 'Mesh position', 'default_value':[]}
     SECTION_GEOMETRY_OBJECT_DATA_QUAD = {'offset': 0x0, 'size': 20, 'byteorder': 'little', 'name': 'quad', 'pretty_name': 'Mesh position', 'default_value':[]}
+    SECTION_GEOMETRY_OBJECT_DATA_COLORED_TRIANGLE = {'offset': 0x0, 'size': 20, 'byteorder': 'little', 'name': 'colored_triangle', 'pretty_name': 'Colored triangle', 'default_value':[]}
+    SECTION_GEOMETRY_OBJECT_DATA_COLORED_QUAD = {'offset': 0x0, 'size': 24, 'byteorder': 'little', 'name': 'colored_quad', 'pretty_name': 'Colored quad', 'default_value':[]}
 
     def __init__(self):
         self.nb_vertices_data = 0
@@ -322,9 +392,13 @@ class ObjectData:
         self._nb_padding = 0
         self.nb_triangle = 0
         self.nb_quad = 0
-        self.unknown = 0
+        self.nb_colored_triangle = 0
+        self.nb_colored_quad = 0
+        self.unused = 0
         self.triangles:List[GeometryTriangle] = []
         self.quads:List[GeometryQuad] = []
+        self.colored_triangles:List[GeometryColoredTriangle] = []
+        self.colored_quads:List[GeometryColoredQuad] = []
 
     def get_uv_str(self):
         uv_str = "Triangle:\n"
@@ -347,15 +421,25 @@ class ObjectData:
             nb_padding_byte.extend([0])
         nb_triangle_byte = self.nb_triangle.to_bytes(length=self.SECTION_GEOMETRY_OBJECT_DATA_NB_TRIANGLE['size'], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_TRIANGLE['byteorder'])
         nb_quad_byte = self.nb_quad.to_bytes(length=self.SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD['size'], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD['byteorder'])
-        unknown_byte = bytearray([0]*self.SECTION_GEOMETRY_OBJECT_DATA_UNKNOWN['size'])
+        nb_colored_triangle_byte = self.nb_colored_triangle.to_bytes(length=self.SECTION_GEOMETRY_OBJECT_DATA_NB_COLORED_TRIANGLE['size'], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_COLORED_TRIANGLE['byteorder'])
+        nb_colored_quad_byte = self.nb_colored_quad.to_bytes(length=self.SECTION_GEOMETRY_OBJECT_DATA_NB_COLORED_QUAD['size'], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_COLORED_QUAD['byteorder'])
+        unused_byte = self.unused.to_bytes(length=self.SECTION_GEOMETRY_OBJECT_DATA_UNUSED['size'], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_UNUSED['byteorder'])
         triangle_byte = bytearray()
         for triangle in self.triangles:
             triangle_byte.extend(triangle.get_byte())
         quad_byte = bytearray()
         for quad in self.quads:
             quad_byte.extend(quad.get_byte())
+        colored_triangle_byte = bytearray()
+        for colored_triangle in self.colored_triangles:
+            colored_triangle_byte.extend(colored_triangle.get_byte())
+        colored_quad_byte = bytearray()
+        for colored_quad in self.colored_quads:
+            colored_quad_byte.extend(colored_quad.get_byte())
 
-        return bytearray(nb_vertices_data_byte + vertices_data_byte + nb_padding_byte + nb_triangle_byte+nb_quad_byte+unknown_byte+triangle_byte+quad_byte)
+        return bytearray(nb_vertices_data_byte + vertices_data_byte + nb_padding_byte + nb_triangle_byte + nb_quad_byte
+                         + nb_colored_triangle_byte + nb_colored_quad_byte + unused_byte
+                         + triangle_byte + quad_byte + colored_triangle_byte + colored_quad_byte)
     def analyze(self, data:bytes):
         self.nb_vertices_data = int.from_bytes(data[0:2], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_VERTICES_DATA['byteorder'])
         current_index = 2
@@ -370,34 +454,42 @@ class ObjectData:
         next_index +=   self._nb_padding
         self.nb_triangle = int.from_bytes(data[next_index:next_index+2], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_TRIANGLE['byteorder'])
         self.nb_quad = int.from_bytes(data[next_index+2:next_index+4], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_QUAD['byteorder'])
-        self.unknown = int.from_bytes(data[next_index+4:next_index+12], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_UNKNOWN['byteorder'])
+        self.nb_colored_triangle = int.from_bytes(data[next_index+4:next_index+6], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_COLORED_TRIANGLE['byteorder'])
+        self.nb_colored_quad = int.from_bytes(data[next_index+6:next_index+8], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_NB_COLORED_QUAD['byteorder'])
+        self.unused = int.from_bytes(data[next_index+8:next_index+12], byteorder=self.SECTION_GEOMETRY_OBJECT_DATA_UNUSED['byteorder'])
         current_index = next_index+12
-        next_index = current_index+ 16
         for i in range(self.nb_triangle):
             self.triangles.append(GeometryTriangle())
-            self.triangles[-1].analyze(data[current_index: next_index])
-            current_index = next_index
-            next_index = next_index + 16
-        next_index = current_index + 20
+            self.triangles[-1].analyze(data[current_index: current_index + 16])
+            current_index += 16
         for i in range(self.nb_quad):
             self.quads.append(GeometryQuad())
-            self.quads[-1].analyze(data[current_index: next_index])
-            current_index = next_index
-            next_index = next_index + 20
+            self.quads[-1].analyze(data[current_index: current_index + 20])
+            current_index += 20
+        for i in range(self.nb_colored_triangle):
+            self.colored_triangles.append(GeometryColoredTriangle())
+            self.colored_triangles[-1].analyze(data[current_index: current_index + 20])
+            current_index += 20
+        for i in range(self.nb_colored_quad):
+            self.colored_quads.append(GeometryColoredQuad())
+            self.colored_quads[-1].analyze(data[current_index: current_index + 24])
+            current_index += 24
 
     def __str__(self):
-        return f"ObjectData(NbVerticesData:{self.nb_vertices_data}, padding:{self._nb_padding}, NbTriangle:{self.nb_triangle}, NbQuad:{self.nb_quad}, {self.vertices_data}, {self.triangles}, {self.quads})"
+        return (f"ObjectData(NbVerticesData:{self.nb_vertices_data}, padding:{self._nb_padding}, NbTriangle:{self.nb_triangle}, NbQuad:{self.nb_quad}, "
+                f"NbColoredTriangle:{self.nb_colored_triangle}, NbColoredQuad:{self.nb_colored_quad}, "
+                f"{self.vertices_data}, {self.triangles}, {self.quads}, {self.colored_triangles}, {self.colored_quads})")
     def __repr__(self):
         return self.__str__()
 
     def get_triangles(self):
         triangle_list = []
-        for triangle in self.triangles:
+        for triangle in self.triangles + self.colored_triangles:
             triangle_list.append(triangle.vertex_indexes)
         return triangle_list
     def get_quads(self):
         quad_list = []
-        for quad in self.quads:
+        for quad in self.quads + self.colored_quads:
             quad_list.append(quad.vertex_indexes)
         return quad_list
     def get_vertices(self):
@@ -532,7 +624,9 @@ class GeometrySection:
         offset = 0
         for obj in self.object_data:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
-            for tri in obj.triangles:
+            for tri in obj.triangles + obj.colored_triangles:
+                if tri.is_hidden():
+                    continue
                 all_tri.append((
                     tri.vertex_indexes[0] + offset,
                     tri.vertex_indexes[1] + offset,
@@ -545,7 +639,9 @@ class GeometrySection:
         offset = 0
         for obj in self.object_data:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
-            for quad in obj.quads:
+            for quad in obj.quads + obj.colored_quads:
+                if quad.is_hidden():
+                    continue
                 all_quads.append((
                     quad.vertex_indexes[0] + offset,
                     quad.vertex_indexes[1] + offset,
@@ -562,6 +658,8 @@ class GeometrySection:
         for obj in self.object_data:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
             for tri in obj.triangles:
+                if tri.is_hidden():
+                    continue
                 indices = (
                     tri.vertex_indexes[2] + offset,  # C
                     tri.vertex_indexes[0] + offset,  # A
@@ -585,6 +683,8 @@ class GeometrySection:
         for obj in self.object_data:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
             for quad in obj.quads:
+                if quad.is_hidden():
+                    continue
                 indices = (
                     quad.vertex_indexes[0] + offset,  # A
                     quad.vertex_indexes[1] + offset,  # B
@@ -599,6 +699,43 @@ class GeometrySection:
                 )
                 tex_id = quad.tex_id_1 & 0xFF
                 result.append((indices, uvs, tex_id))
+            offset += obj_vert_count
+        return result
+
+    def get_colored_triangles_with_color(self):
+        """Returns list of (vertex_indices_tuple, rgb_norm_tuple) for every colored triangle."""
+        result = []
+        offset = 0
+        for obj in self.object_data:
+            obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
+            for tri in obj.colored_triangles:
+                if tri.is_hidden():
+                    continue
+                indices = (
+                    tri.vertex_indexes[0] + offset,
+                    tri.vertex_indexes[1] + offset,
+                    tri.vertex_indexes[2] + offset,
+                )
+                result.append((indices, tri.get_rgb_norm()))
+            offset += obj_vert_count
+        return result
+
+    def get_colored_quads_with_color(self):
+        """Returns list of (vertex_indices_tuple, rgb_norm_tuple) for every colored quad."""
+        result = []
+        offset = 0
+        for obj in self.object_data:
+            obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
+            for quad in obj.colored_quads:
+                if quad.is_hidden():
+                    continue
+                indices = (
+                    quad.vertex_indexes[0] + offset,
+                    quad.vertex_indexes[1] + offset,
+                    quad.vertex_indexes[2] + offset,
+                    quad.vertex_indexes[3] + offset,
+                )
+                result.append((indices, quad.get_rgb_norm()))
             offset += obj_vert_count
         return result
 
@@ -867,6 +1004,18 @@ class RotationType:
         return self.__str__()
 
 class RotationVectorDataSupp:
+    """Per-bone scale channels (squash-and-stretch), one per axis (X, Y, Z).
+
+    Engine semantics (FF8_EN.exe Battle__ReadBoneScale): each channel is 1 flag bit;
+    when the flag is clear the scale is exactly 1024 raw (= 1.0, neutral), when set a
+    16-bit signed payload follows and the raw scale is payload + 1024.
+    Scales are ABSOLUTE per frame (not accumulated like rotations) and hierarchical
+    at transform time (child effective scale = parent scale * value / 1024).
+    Only consumed on frames whose mode bit is 1.
+    unk1/unk2/unk3 keep the historical names for the bitstream writer: they store the
+    raw 16-bit payloads for the X, Y and Z channels respectively."""
+    SCALE_NEUTRAL_RAW = 1024
+
     def __init__(self):
         self.unk1: int = 0
         self.unk2: int = 0
@@ -874,6 +1023,42 @@ class RotationVectorDataSupp:
         self.unk_flag1: bool = False
         self.unk_flag2: bool = False
         self.unk_flag3: bool = False
+
+    def get_scale_raw(self, axis: int) -> int:
+        """Raw scale of axis 0/1/2 (X/Y/Z); 1024 = 1.0 neutral."""
+        flag = (self.unk_flag1, self.unk_flag2, self.unk_flag3)[axis]
+        if not flag:
+            return self.SCALE_NEUTRAL_RAW
+        payload = (self.unk1, self.unk2, self.unk3)[axis]
+        return payload + self.SCALE_NEUTRAL_RAW
+
+    def get_scale_factor(self, axis: int) -> float:
+        """Scale of axis 0/1/2 (X/Y/Z) as a float factor, 1.0 = neutral."""
+        return self.get_scale_raw(axis) / self.SCALE_NEUTRAL_RAW
+
+    def get_scale_factors(self):
+        return (self.get_scale_factor(0), self.get_scale_factor(1), self.get_scale_factor(2))
+
+    def set_scale_raw(self, axis: int, raw: int):
+        payload = raw - self.SCALE_NEUTRAL_RAW
+        if payload == 0:
+            # Neutral scale is stored as "no payload" (single 0 bit), like vanilla data
+            payload = 0
+            flag = False
+        else:
+            flag = True
+        if axis == 0:
+            self.unk1, self.unk_flag1 = payload, flag
+        elif axis == 1:
+            self.unk2, self.unk_flag2 = payload, flag
+        else:
+            self.unk3, self.unk_flag3 = payload, flag
+
+    def set_scale_factor(self, axis: int, factor: float):
+        self.set_scale_raw(axis, round(factor * self.SCALE_NEUTRAL_RAW))
+
+    def is_neutral(self) -> bool:
+        return not (self.unk_flag1 or self.unk_flag2 or self.unk_flag3)
 
 
 class PositionType:
@@ -917,9 +1102,22 @@ class AnimationFrame:
         self.rotation_vector_data: List[List[RotationType]] =  [[] for _ in range(nb_bones)]
         #self.bone_rot_raw: List[Vector3D] = [Vector3D() for _ in range(nb_bones)]
         #self.bone_rot_deg: List[Tuple[float, float, float]] = [(0.0, 0.0, 0.0) for _ in range(nb_bones)]
-        self.bone_matrices: List[Matrix4x4] = [Matrix4x4() for _ in range(nb_bones)]  # Initialize with identity matrices
+        self.bone_matrices: List[Matrix4x4] = [Matrix4x4() for _ in range(nb_bones)]  # Initialize with identity matrices (scaled, used for skinning)
+        # Unscaled rotation chain (parent * local), kept separate so a parent's
+        # non-uniform scale doesn't contaminate the children's rotations —
+        # mirrors the engine, which chains rotations and applies the
+        # accumulated scale only on the stored per-bone matrix.
+        self.bone_chain_matrices: List[Matrix4x4] = [Matrix4x4() for _ in range(nb_bones)]
+        # Accumulated per-axis scale down the hierarchy (1.0 = neutral)
+        self.bone_acc_scale: List[Tuple[float, float, float]] = [(1.0, 1.0, 1.0) for _ in range(nb_bones)]
         self.rotation_vector_data_supp: List[RotationVectorDataSupp] = [RotationVectorDataSupp() for _ in range(nb_bones)]
         self.mode_bit:int = 0
+
+    def get_bone_scale_factors(self, bone_id: int) -> Tuple[float, float, float]:
+        """Per-bone scale of this frame (1.0 neutral). Only meaningful when mode_bit is 1."""
+        if self.mode_bit == 1 and bone_id < len(self.rotation_vector_data_supp):
+            return self.rotation_vector_data_supp[bone_id].get_scale_factors()
+        return (1.0, 1.0, 1.0)
 
 
     def __str__(self):
@@ -1002,22 +1200,44 @@ class AnimationFrame:
         # Combine in the same order as C#: Y*X then Z*(Y*X)
         local = Matrix4x4.MultiplyColumnMajor(yRot, xRot)
         local = Matrix4x4.MultiplyColumnMajor(zRot, local)
+
+        # Per-bone squash-and-stretch scale (mode-bit frames only), hierarchical:
+        # accumulated scale = parent accumulated scale * this bone's scale
+        bone_scale = self.get_bone_scale_factors(bone_id)
+
         if parent_id != 0xFFFF:
+            # Rotation chain stays unscaled (like the engine's chained matrices)
+            chain = Matrix4x4.MultiplyRowMajor(self.bone_chain_matrices[parent_id], local)
+
+            parent_acc = self.bone_acc_scale[parent_id]
+            acc = (parent_acc[0] * bone_scale[0],
+                   parent_acc[1] * bone_scale[1],
+                   parent_acc[2] * bone_scale[2])
+
+            # Translation: parent_pos + parent SCALED matrix * (0,0,parent_length)
+            # (using the scaled parent shortens/stretches the limb with the parent's scale,
+            #  exactly like the engine)
             parent_mat = self.bone_matrices[parent_id]
-            # World rotation = parent * local (row-major)
-            world = Matrix4x4.MultiplyRowMajor(parent_mat, local)
-
-            # Now manually set translation: parent_pos + parent_rot * (0,0,parent_length)
-
-            world.M41 = parent_mat.M13 * parent_bone_size + parent_mat.M41
-            world.M42 = parent_mat.M23 * parent_bone_size + parent_mat.M42
-            world.M43 = parent_mat.M33 * parent_bone_size + parent_mat.M43
-            self.bone_matrices[bone_id] = world
+            trans_x = parent_mat.M13 * parent_bone_size + parent_mat.M41
+            trans_y = parent_mat.M23 * parent_bone_size + parent_mat.M42
+            trans_z = parent_mat.M33 * parent_bone_size + parent_mat.M43
         else:
-            local.M41 = 0.0
-            local.M42 = 0.0
-            local.M43 = 0.0
-            self.bone_matrices[bone_id] = local
+            chain = local
+            acc = bone_scale
+            trans_x = trans_y = trans_z = 0.0
+
+        self.bone_chain_matrices[bone_id] = chain
+        self.bone_acc_scale[bone_id] = acc
+
+        # Stored (skinning) matrix = chain with each local axis column scaled
+        world = Matrix4x4()
+        world.M11, world.M21, world.M31 = chain.M11 * acc[0], chain.M21 * acc[0], chain.M31 * acc[0]
+        world.M12, world.M22, world.M32 = chain.M12 * acc[1], chain.M22 * acc[1], chain.M32 * acc[1]
+        world.M13, world.M23, world.M33 = chain.M13 * acc[2], chain.M23 * acc[2], chain.M33 * acc[2]
+        world.M41 = trans_x
+        world.M42 = trans_y
+        world.M43 = trans_z
+        self.bone_matrices[bone_id] = world
 
     def set_all_bones_matrix(self, bones:List[Bone]):
         for bone_index in range(len(self.bone_matrices)):
@@ -1185,6 +1405,25 @@ class Animation:
                 raw_value = round(raw_a + shortest_delta * step)
                 new_rotations.append(RotationType(True, 0, raw_value))
             new_frame.rotation_vector_data[bone_index] = new_rotations
+
+        # Bone scales (squash-and-stretch): interpolate the raw values linearly.
+        # A frame without the mode bit is entirely neutral (1024 raw).
+        if frame_a.mode_bit == 1 or frame_b.mode_bit == 1:
+            new_frame.mode_bit = 1
+            for bone_index in range(nb_bones):
+                if bone_index >= len(new_frame.rotation_vector_data_supp):
+                    new_frame.rotation_vector_data_supp.append(RotationVectorDataSupp())
+                supp = new_frame.rotation_vector_data_supp[bone_index]
+                for axis in range(3):
+                    if frame_a.mode_bit == 1 and bone_index < len(frame_a.rotation_vector_data_supp):
+                        raw_a = frame_a.rotation_vector_data_supp[bone_index].get_scale_raw(axis)
+                    else:
+                        raw_a = RotationVectorDataSupp.SCALE_NEUTRAL_RAW
+                    if frame_b.mode_bit == 1 and bone_index < len(frame_b.rotation_vector_data_supp):
+                        raw_b = frame_b.rotation_vector_data_supp[bone_index].get_scale_raw(axis)
+                    else:
+                        raw_b = RotationVectorDataSupp.SCALE_NEUTRAL_RAW
+                    supp.set_scale_raw(axis, round(raw_a + (raw_b - raw_a) * step))
 
         new_frame.set_all_bones_matrix(bones)
         return new_frame
