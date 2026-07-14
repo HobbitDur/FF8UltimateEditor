@@ -11,6 +11,34 @@ from . import formula_specs as fs
 from . import formula_latex as flx
 
 
+class _LiveEntry:
+    """``entry.get(name)`` that reflects the CURRENT widget values. Widget edits are only
+    written back to the KernelEntry on row-change, so multi-input formulas that read sibling
+    fields must read the live widgets; this falls back to the stored entry for any field that
+    has no simple widget (flags, hex, ...)."""
+
+    def __init__(self, tab, entry):
+        self._tab = tab
+        self._entry = entry
+
+    def get(self, name):
+        rec = self._tab._field_widgets.get(name)
+        if rec is not None:
+            widget = rec[2]
+            if hasattr(widget, "value"):
+                return widget.value()
+            if hasattr(widget, "currentData"):
+                data = widget.currentData()
+                if data is not None:
+                    return data
+        if self._entry is not None:
+            try:
+                return self._entry.get(name)
+            except Exception:
+                pass
+        return 0
+
+
 class FormulaPopup(QDialog):
     """Non-modal tool window: formula + editable assumptions + live result. One per tab
     (opening a new one for another field re-targets this same window)."""
@@ -24,7 +52,7 @@ class FormulaPopup(QDialog):
         self._field = None
         self._formula_key = None
         self._param_spins = {}
-        self._field_conn = None
+        self._conns = []
 
         root = QVBoxLayout(self)
         root.setSpacing(6)
@@ -92,11 +120,10 @@ class FormulaPopup(QDialog):
         # Rebuild param editors for exactly the params this formula uses.
         out = fs.compute(self._formula_key, self._current_value(), self._current_entry())
         self._build_param_editors(out["params"] if out else ())
-        # Recompute live when the field's own value changes, or the selected entry changes.
-        spin = self._field_spin()
-        if spin is not None and hasattr(spin, "valueChanged"):
-            spin.valueChanged.connect(self._recompute)
-            self._field_conn = spin
+        # Recompute live when ANY editor on the tab changes: a formula may read sibling fields
+        # (stat coefficients, the two EXP bytes, attack type, ...), so listening only to this
+        # field's own widget would leave the preview stale after editing a sibling.
+        self._connect_widgets()
         self._recompute()
         self.show()
         # Grow to fit the (variable) content height so the assumptions box is never clipped.
@@ -163,7 +190,8 @@ class FormulaPopup(QDialog):
         return 0
 
     def _recompute(self, *_):
-        out = fs.compute(self._formula_key, self._current_value(), self._current_entry())
+        live = _LiveEntry(self._tab, self._current_entry())
+        out = fs.compute(self._formula_key, self._current_value(), live)
         if not out:
             return
         self._title.setText(out["title"])
@@ -190,13 +218,30 @@ class FormulaPopup(QDialog):
             label.setToolTip("")
 
     # -------------------------------------------------- cleanup
+    def _connect_widgets(self):
+        """Wire _recompute to every spinbox/combo editor on the tab so the preview stays live."""
+        self._disconnect_field()
+        for rec in self._tab._field_widgets.values():
+            widget = rec[2]
+            sig = None
+            if hasattr(widget, "valueChanged"):
+                sig = widget.valueChanged
+            elif hasattr(widget, "currentIndexChanged"):
+                sig = widget.currentIndexChanged
+            if sig is not None:
+                try:
+                    sig.connect(self._recompute)
+                    self._conns.append(sig)
+                except (TypeError, RuntimeError):
+                    pass
+
     def _disconnect_field(self):
-        if self._field_conn is not None:
+        for sig in self._conns:
             try:
-                self._field_conn.valueChanged.disconnect(self._recompute)
+                sig.disconnect(self._recompute)
             except (TypeError, RuntimeError):
                 pass
-            self._field_conn = None
+        self._conns = []
 
     def closeEvent(self, event):
         self._disconnect_field()

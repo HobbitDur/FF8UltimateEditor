@@ -1067,6 +1067,10 @@
    {
     "value": 114,
     "name": "MedLVUp"
+   },
+   {
+    "value": 115,
+    "name": "Card Mod"
    }
   ]
  },
@@ -1802,7 +1806,8 @@
    },
    {
     "mask": 32,
-    "name": "Inert here / item-selectable (items only)"
+    "name": "Inert here (item-selectable only)",
+    "disabled": true
    },
    {
     "mask": 64,

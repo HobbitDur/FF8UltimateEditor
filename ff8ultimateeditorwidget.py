@@ -19,6 +19,7 @@ from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from ExeLauncher.sirenlauncher import SirenLauncher
 from Ifrit.ifritmonsterwidget import IfritMonsterWidget
 from Julia.juliawidget import JuliaWidget
+from Odine.odinewidget import OdineWidget
 from Pandemona.pandemonawidget import PandemonaWidget
 from PuPuCargo.pupucargowidget import PuPuCargoWidget
 from Seed.seedwidget import SeedWidget
@@ -67,7 +68,8 @@ class FF8UltimateEditorWidget(QWidget):
             "Siren (price.bin editor)",
             "Junkshop (mwepon.bin editor)",
             "Quezacotl (init.out editor)",
-            "Moomba (JP font builder)"
+            "Moomba (JP font builder)",
+            "Odine (magsort.bin editor)"
         ]
 
         # 3. Header: Program Selection (ComboBox)
@@ -155,6 +157,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._junkshop_widget = JunkshopWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._quezacotl_widget = QuezacotlWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._moomba_widget = MoombaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._odine_widget = OdineWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
 
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
@@ -173,6 +176,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._junkshop_widget) # Index 12
         self.tool_stack.addWidget(self._quezacotl_widget) # Index 13
         self.tool_stack.addWidget(self._moomba_widget) # Index 14
+        self.tool_stack.addWidget(self._odine_widget) # Index 15
         self._program_option_change()
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)

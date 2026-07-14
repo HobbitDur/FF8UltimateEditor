@@ -34,6 +34,7 @@ from Cli.julia import JuliaCliTool
 from Cli.solomon_ring import SolomonRingCliTool
 from Cli.alexander import AlexanderCliTool
 from Cli.seed import SeedCliTool
+from Cli.odine import OdineCliTool
 
 
 def _register_all_tools():
@@ -55,6 +56,7 @@ def _register_all_tools():
     registry.register(SolomonRingCliTool)
     registry.register(AlexanderCliTool)
     registry.register(SeedCliTool)
+    registry.register(OdineCliTool)
 
 
 def build_main_parser() -> argparse.ArgumentParser:

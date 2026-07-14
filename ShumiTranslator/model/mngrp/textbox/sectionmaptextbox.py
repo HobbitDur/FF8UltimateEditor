@@ -59,6 +59,7 @@ class SectionMapTextBox(Section):
         for i in range(0, len(text_list), 2):
             new_seek_location = SeekLocationInfo(seek_location=location, section_number=p_section_number)
             location +=len(text_list[i]) + len(text_list[i+1]) + shift
+            location = (location + 3) & ~3  # entries start on a 4-byte boundary
             cleared_list.append(new_seek_location)
 
         self._seek_location_info_list = cleared_list

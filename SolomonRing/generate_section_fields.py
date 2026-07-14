@@ -268,14 +268,15 @@ sec(6, 2, NAMEDESC, [("Data", [
 char_stats = []
 for st in ["hp", "str", "vit", "mag", "spr", "spd", "luck"]:
     for k in range(1, 5):
-        char_stats.append((f"{st}_{k}", 1, None, f"{st.upper()} coef {k}"))
+        char_stats.append((f"{st}_{k}", 1, None, f"c{k}"))
 sec(7, 1, ["Name"], [
     ("General", [
         ("crisis_level_hp_mult", 1, None, "Crisis level HP multiplier"),
         ("gender", 1, "gender"),
         ("limit_break_id", 1, None, "Limit break ID"),
         ("limit_break_param", 1, None, "Limit break param"),
-        ("exp_modifier", 2, None, "EXP modifier"),
+        ("exp_linear", 1, None, "c1"),
+        ("exp_quadratic", 1, None, "c2"),
     ]),
     ("Stat coefficients", char_stats),
 ], sub_size=36,
@@ -567,7 +568,7 @@ LIMIT_EFFECTS = ["Death", "Poison", "Petrify", "Darkness", "Silence", "Berserk",
                  "Immune Physical attack", "Immune Magic attack", "Charged", "Back Attack"]
 misc_timers = [(f"timer_{t.lower()}", 1, None, f"{t} timer") for t in TIMERS]
 misc_timers += [("atb_speed_multiplier", 1, None, "ATB speed multiplier"),
-                ("dead_timer", 1, None, "Gilgamesh/Angelo summon interval")]
+                ("dead_timer", 1, None, "Gilgamesh/Angelo\nsummon interval")]
 _LIMIT_EFFECT_HELP = (
     "How much having this status active contributes to a character's crisis/Limit-Break "
     "gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's "
@@ -900,6 +901,41 @@ for sid_s, cfg in sections.items():
         # rest of the Data fields.
         if sid == 23 and f["name"].startswith("button_"):
             f["subgroup"] = "Sequence buttons"
+        # Characters: each stat's 4 curve coefficients belong together on one line, in
+        # their own labelled sub-box, with an f(x) button (on the last coef) that shows
+        # the level-to-stat curve those 4 numbers define.
+        # The former 2-byte "EXP modifier" is really two independent parameters (verified in
+        # Stat_ComputeLevelFromExp @0x4961d0): c1 (low byte) drives a linear EXP/level term, c2
+        # (high byte) a quadratic acceleration term. Presented like the stat curves - their own
+        # "EXP" sub-box with c1/c2 on one row and the f(x) curve preview on c2.
+        if sid == 7 and f["name"] in ("exp_linear", "exp_quadratic"):
+            f["row"] = "exp_curve"
+            f["subgroup"] = "EXP"
+        if sid == 7 and f["name"] == "exp_quadratic":
+            f["formula"] = "char_exp"  # one f(x) button for the EXP curve, on the last byte
+        if sid == 7 and f["name"] == "exp_linear":
+            f["help"] = ("Low byte of the EXP curve: the linear EXP-per-level factor (×10). "
+                         "Cumulative EXP to reach level L = 10×(L−1)×this + the quadratic term. "
+                         "Retail 100 → a flat 1000 EXP/level. (Stat_ComputeLevelFromExp @0x4961d0.)")
+        if sid == 7 and f["name"] == "exp_quadratic":
+            f["help"] = ("High byte of the EXP curve: a quadratic acceleration factor (÷256), "
+                         "adding floor((L−1)²×this/256) to the cumulative EXP for level L. Retail 0 "
+                         "= a flat (non-accelerating) curve. Click ƒ(x) for the full level→EXP curve.")
+        if sid == 7:
+            _st = f["name"].rsplit("_", 1)[0]
+            if _st in ("hp", "str", "vit", "mag", "spr", "spd", "luck"):
+                f["subgroup"] = _st.upper()
+                f["row"] = f"charstat_{_st}"
+                # One f(x) button per stat, on the last USED coefficient. HP uses only
+                # c1..c3 (c4 confirmed unused - Stat_ComputeCharaMaxHP @0x496310 reads
+                # struct offsets 0x08/0x09/0x0A only, never 0x0B; triple-checked incl. the
+                # DWORD/HIBYTE trap, and c4 is 0 for all 11 retail chars), so HP's button
+                # sits on c3 and c4 stays greyed; the other stats' button sits on c4.
+                if _st == "hp" and f["name"] == "hp_4":
+                    f["readonly"] = True
+                    f["label"] = "c4 (unused)"
+                elif f["name"] == ("hp_3" if _st == "hp" else f"{_st}_4"):
+                    f["formula"] = f"char_{_st}"
         # Menu abilities: the Refine reference load button sits at the top of the main Data
         # group (it loads menu.fs data shared by EVERY menu ability, so it's tab-wide, not
         # per-entry); the table selector + slice offsets + the per-entry decoded panel go in
@@ -931,9 +967,11 @@ for sid_s, cfg in sections.items():
         # rate (~15/s) and the default battle speed, seconds ~= value * 16/15. The editor
         # shows a live "~ N s" hint below the spinbox using this factor.
         if sid == 30 and f["name"].startswith("timer_") and f["name"] != "timer_atb":
-            f["seconds_factor"] = 16.0 / 15.0
-            f["seconds_note"] = ("Battle countdown = 4 x (battleSpeed+1) x value ticks "
-                                 "(setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.")
+            f["seconds_factor"] = 8.0 / 15.0
+            f["seconds_note"] = ("Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then "
+                                 "consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. "
+                                 "~ shown at default battle speed (3); Haste ticks faster, Slow/Stop "
+                                 "slower. Click ƒ(x) for detail.")
             f["formula"] = "status_timer"
         # "Dead timer" is really the interval between the random Gilgamesh/Angelo/Phoenix
         # auto-summon checks. summonGilgaAngelStartFight (called once per battle tick from
@@ -964,7 +1002,8 @@ for sid_s, cfg in sections.items():
         # f(x) preview button.
         if sid in (2, 3) and f["name"].startswith("compat_"):
             f["formula"] = "gf_compat"
-        if sid == 2 and f["name"] == "spell_power":
+        # Magic damage reads spell power, attack type and hit count - all three get the button.
+        if sid == 2 and f["name"] in ("spell_power", "attack_type", "hit_count"):
             f["formula"] = "magic_damage"
         if sid == 30 and f["name"].startswith("limit_"):
             f["formula"] = "crisis"

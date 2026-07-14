@@ -12,9 +12,11 @@ class TextBoxEntry(Section):
         self._text_box_origin_id = int.from_bytes(self._data_hex[0:self.TEXT_BOX_ID_SIZE], byteorder='little')
         self._text_box_left_id = int.from_bytes(self._data_hex[self.TEXT_BOX_ID_SIZE:self.TEXT_BOX_ID_SIZE * 2], byteorder='little')
         self._text_box_right_id = int.from_bytes(self._data_hex[self.TEXT_BOX_ID_SIZE * 2:self.TEXT_BOX_ID_SIZE * 3], byteorder='little')
+        # The stored length is the exact entry size in bytes (header + title + body,
+        # terminators included). The next entry starts at the next 4-byte boundary.
         self._length = int.from_bytes(self._data_hex[self.TEXT_BOX_ID_SIZE * 3:self.TEXT_BOX_ID_SIZE * 3 + self.ENTRY_LENGTH],
-                                      byteorder='little') + 1
-        text_data_hex = self._data_hex[self.TEXT_BOX_ID_SIZE * 3 + self.ENTRY_LENGTH:]
+                                      byteorder='little')
+        text_data_hex = self._data_hex[self.TEXT_BOX_ID_SIZE * 3 + self.ENTRY_LENGTH:self._length]
         offset_end_title = text_data_hex.index(b'\x00')
         self._text_section = ListFF8Text(game_data=game_data, data_hex=text_data_hex, id=0, own_offset=0, name="", cursor_location_size=3)
         self._text_section.init_text([0, offset_end_title])
@@ -38,7 +40,7 @@ class TextBoxEntry(Section):
         self._data_hex.extend(self._text_box_left_id.to_bytes(length=self.TEXT_BOX_ID_SIZE, byteorder='little'))
         self._data_hex.extend(self._text_box_right_id.to_bytes(length=self.TEXT_BOX_ID_SIZE, byteorder='little'))
         self._text_section.update_data_hex()
-        self._length = len(self._text_section) + self.ENTRY_LENGTH + self.TEXT_BOX_ID_SIZE*3 - 1
+        self._length = len(self._text_section) + self.ENTRY_LENGTH + self.TEXT_BOX_ID_SIZE*3
         title =  self._text_section.get_text_list()[0].get_data_hex()
         text =  self._text_section.get_text_list()[1].get_data_hex()
         self._data_hex.extend(self._length.to_bytes(length=self.ENTRY_LENGTH, byteorder='little'))

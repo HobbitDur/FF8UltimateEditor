@@ -112,8 +112,8 @@ class MngrpManager:
                 self.m00_manager.add_msg(new_section)
                 for section in self.mngrp.get_section_list():
                     if section.type == SectionType.MNGRP_M00BIN and section.m00_id == m00msg_counter:
-                        section.section_data_linked = section
-                        section.section_data_linked.section_text_linked = new_section
+                        new_section.section_data_linked = section
+                        new_section.section_data_linked.section_text_linked = new_section
                         new_section.init_text(section.get_all_offset())
                         break
                 m00msg_counter += 1

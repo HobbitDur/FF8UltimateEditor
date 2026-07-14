@@ -48,6 +48,8 @@ class SectionTextBoxEntry(Section):
         for string in self.string_entry_list:
             string.update_data_hex()
             self._data_hex.extend(string.get_data_hex())
+            while len(self._data_hex) % 4:  # entries start on a 4-byte boundary
+                self._data_hex.append(0)
         self._size = len(self._data_hex)
 
 

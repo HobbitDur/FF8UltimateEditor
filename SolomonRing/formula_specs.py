@@ -40,6 +40,9 @@ PARAM_DEFS = {
     "crisis_hp_mult": ("Crisis HP mult", 250, 0, 255,
                        "Per-character crisisLevelHPMultiplier (kernel Characters section). Retail: "
                        "250 for everyone except Seifer (100). Weights the missing-HP term."),
+    "char_level":     ("Character level", 100, 1, 100,
+                       "The level (1-100) at which to evaluate the stat curve. The 4 coefficients "
+                       "define the whole curve; this just picks which level's value to show."),
 }
 
 # Live, user-editable values (start at defaults). Edited in the formula popups.
@@ -66,15 +69,23 @@ def _idiv(a, b):
 def _status_timer(value, P, entry):
     bs = P["battle_speed"]
     ticks = 4 * (bs + 1) * value
+    # computeTimerStatus (0x483470) subtracts timer_speed_multiplier from the timer every
+    # battle frame: 2 by default, 3 under Haste, 1 under Slow, 0 under Stop. The battle loop
+    # runs ~15 fps, so ~30 ticks are consumed per second at the default rate.
+    secs = ticks / 30.0
     return {
         "params": ("battle_speed",),
-        "symbolic": "duration = 4 x (battleSpeed + 1) x value   ticks   (~15 ticks/s)",
-        "substituted": f"4 x ({bs} + 1) x {value} = {ticks} ticks",
-        "result": f"{ticks} ticks  ≈  {ticks / 15:.1f} s",
-        "note": "Battle countdown loaded by setupStatus2Timer. Real speed varies with the "
-                "in-game Battle Speed config.",
-        "latex": r"ticks = 4\,(battleSpeed + 1)\,value",
-        "latex_sub": rf"4\cdot({bs}+1)\cdot{value}={ticks}\ \text{{ticks}}",
+        "symbolic": "ticks = 4 × (battleSpeed+1) × value ;  −2 per frame (default) at ~15 fps → ÷30",
+        "substituted": f"4 × ({bs}+1) × {value} = {ticks} ticks   →   {ticks} / 30",
+        "result": f"≈ {secs:.1f} s  ({ticks} ticks)   default rate — Haste ≈1.5× faster, "
+                  f"Slow 2× slower, Stop freezes it",
+        "note": "setupStatus2Timer loads 4×(battleSpeed+1)×value ticks; computeTimerStatus "
+                "subtracts timer_speed_multiplier each battle frame (~15 fps) — 2 normally, 3 under "
+                "Haste, 1 under Slow, 0 under Stop. So real seconds ≈ 4×(battleSpeed+1)×value / (2×15). "
+                "The earlier ÷15 (assuming 1 tick/frame) made durations look ~2× too long. Timers only "
+                "tick during idle ATB time, not during actions.",
+        "latex": r"t \approx \frac{4\,(battleSpeed+1)\,value}{2 \times 15}\ \text{s}",
+        "latex_sub": rf"\frac{{4\cdot({bs}+1)\cdot{value}}}{{30}}\approx{secs:.1f}\ \text{{s}}",
     }
 
 
@@ -115,17 +126,22 @@ def _gf_compat(value, P, entry):
     elif delta < 0:
         change = f"falls by {-delta}"
     else:
-        change = "is unchanged"
+        change = "does not change"
+    zero_hint = (" — NOTE: 100 is the neutral value, so 0 here is a real −100, not 'no change'."
+                 if value == 0 else "")
     return {
         "params": (),
         "symbolic": "on each cast/summon:  storedCompatibility += (value − 100)   "
-                    "[clamped 1000..6000]",
+                    "[clamped 1000..6000;  100 = no change]",
         "substituted": f"delta = {value} − 100 = {delta:+d}",
-        "result": f"Compatibility with this GF {change} each time it's used  (100 = no change).",
-        "note": "The stored compatibility (1000-6000, starts 1000) sets how fast this GF's summon "
-                "gauge fills — higher = the GF arrives sooner. This kernel byte is only the "
-                "per-cast adjustment applied in BattleAction_ExecuteCommand; it is NOT itself a "
-                "gauge-fill rate.",
+        "result": f"Compatibility with this GF {change} each time it's used.{zero_hint}",
+        "note": "100 = no change; >100 raises, <100 lowers. Verified in BattleAction_ExecuteCommand "
+                "(0x485a2b): the change is applied to EVERY owned GF, the acting one included — there "
+                "is no self-exclusion. That's why every GF's own column is 0 in retail (Eden 90): "
+                "summoning a GF deliberately LOWERS your compatibility with that same GF by 100, "
+                "while nudging the others up (108=+8, 'friendly' GF pairs 150=+50). Compatibility is "
+                "raised mainly by casting magic the GF likes, not by summoning it. The stored value "
+                "(1000-6000) then sets summon-gauge speed — higher = the GF arrives sooner.",
         "latex": r"\Delta\,compat = value - 100 \quad [1000..6000]",
         "latex_sub": rf"\Delta\,compat = {value} - 100 = {delta:+d}",
     }
@@ -151,7 +167,11 @@ ATTACK_TYPE_NAMES = {
 # (0x493280). Includes the 240..272/256 random spread + elemental term that doomtrain drops. Every
 # attack type resolves to a clean message (never a dead-end) even when it deals no HP damage.
 def _magic_damage(value, P, entry):
-    p = value                       # spell power
+    # Read every input from the (live) entry so the f(x) button works from ANY of them
+    # (spell power, attack type, hit count), not just the field the button sits on.
+    p = (entry.get("spell_power") if entry else None)
+    if p is None:
+        p = value                   # fallback when opened without an entry
     att = entry.get("attack_type") if entry else 2
     hit = (entry.get("hit_count") if entry else 1) or 1
     name = ATTACK_TYPE_NAMES.get(att, f"type {att}")
@@ -301,6 +321,110 @@ def _crisis(value, P, entry):
     }
 
 
+# --- character base-stat curves (kernel section 7) --------------------------
+# Each stat stores 4 coefficients (c1..c4) defining the character's BASE value of that
+# stat at a given level (before junctions/bonuses). Three distinct curve shapes, all
+# verified against the engine:
+#   HP            (Stat_ComputeCharaMaxHP  0x496310): L*c1 - 10*L^2/c2 + c3   (c4 UNUSED)
+#   STR/VIT/MAG/SPR (Stat_ComputeCharaStat 0x496440): (L*c1/10 + L/c2 - L^2/(2*c4) + c3)/4
+#   SPD/LUCK      (same fn, separate branch 0x496440): L*c1 + L/c2 - L/c4 + c3  (linear!)
+# All divisions truncate. HP has no base cap (final maxHP capped 9999 after junction);
+# the other stats are capped at 255 by CapTo255 (0x495930). doomtrain's charts get HP and
+# the STR family right but apply the STR-family formula to SPD/LUCK, which is wrong - they
+# use the simpler linear shape above.
+_CHAR_STAT_LABELS = {"hp": "HP", "str": "STR", "vit": "VIT", "mag": "MAG",
+                     "spr": "SPR", "spd": "SPD", "luck": "LUCK"}
+_CHAR_STAT_KIND = {"hp": "hp", "str": "std", "vit": "std", "mag": "std", "spr": "std",
+                   "spd": "lin", "luck": "lin"}
+
+
+def _make_char_stat(stat):
+    kind = _CHAR_STAT_KIND[stat]
+    ST = _CHAR_STAT_LABELS[stat]
+
+    def fn(value, P, entry):
+        L = P["char_level"]
+        c1 = entry.get(f"{stat}_1") if entry else 0
+        c2 = entry.get(f"{stat}_2") if entry else 0
+        c3 = entry.get(f"{stat}_3") if entry else 0
+        c4 = entry.get(f"{stat}_4") if entry else 0
+        if kind == "hp":
+            base = L * c1 - _idiv(10 * L * L, c2) + c3
+            capped = max(base, 0)
+            sym = "HP = level x c1  -  10 x level² / c2  +  c3"
+            sub = f"{L} x {c1} - 10 x {L}² / {c2} + {c3} = {base}"
+            res = f"Base HP at level {L}: {capped}"
+            note = ("Character base HP (Stat_ComputeCharaMaxHP @0x496310), before HP-J and "
+                    "bonuses. c4 is unused for HP. Final battle maxHP = junctionMult% x this, "
+                    "capped at 9999.")
+            latex = r"HP = level\cdot c_1 - \frac{10\,level^2}{c_2} + c_3"
+            latex_sub = rf"{L}\cdot{c1} - \frac{{10\cdot{L}^2}}{{{c2}}} + {c3} = {base}"
+        elif kind == "std":
+            base = _idiv(_idiv(L * c1, 10) + _idiv(L, c2) - _idiv(L * L, c4 * 2) + c3, 4)
+            capped = max(0, min(255, base))
+            sym = f"{ST} = ( level x c1 / 10  +  level / c2  -  level² / (2 x c4)  +  c3 ) / 4"
+            sub = f"({L}x{c1}/10 + {L}/{c2} - {L}²/(2x{c4}) + {c3}) / 4 = {base}"
+            res = f"Base {ST} at level {L}: {capped}" + ("  (capped at 255)" if base > 255 else "")
+            note = ("Character base stat (Stat_ComputeCharaStat @0x496440), before junctions/"
+                    "bonuses. All divisions truncate; result capped at 255.")
+            latex = (rf"{ST} = \frac{{\dfrac{{level\cdot c_1}}{{10}} + \dfrac{{level}}{{c_2}} "
+                     rf"- \dfrac{{level^2}}{{2c_4}} + c_3}}{{4}}")
+            latex_sub = (rf"\frac{{\frac{{{L}\cdot{c1}}}{{10}} + \frac{{{L}}}{{{c2}}} "
+                         rf"- \frac{{{L}^2}}{{2\cdot{c4}}} + {c3}}}{{4}} = {base}")
+        else:  # lin (SPD, LUCK)
+            base = L * c1 + _idiv(L, c2) - _idiv(L, c4) + c3
+            capped = max(0, min(255, base))
+            sym = f"{ST} = level x c1  +  level / c2  -  level / c4  +  c3"
+            sub = f"{L}x{c1} + {L}/{c2} - {L}/{c4} + {c3} = {base}"
+            res = f"Base {ST} at level {L}: {capped}" + ("  (capped at 255)" if base > 255 else "")
+            note = (f"Character base {ST} (Stat_ComputeCharaStat @0x496440, SPD/LUCK branch). "
+                    "A plain LINEAR curve — no quadratic term and no /4, unlike STR/VIT/MAG/SPR. "
+                    "Divisions truncate; result capped at 255. (doomtrain charts this stat with "
+                    "the STR-family formula, which is incorrect.)")
+            latex = rf"{ST} = level\cdot c_1 + \frac{{level}}{{c_2}} - \frac{{level}}{{c_4}} + c_3"
+            latex_sub = rf"{L}\cdot{c1} + \frac{{{L}}}{{{c2}}} - \frac{{{L}}}{{{c4}}} + {c3} = {base}"
+        return {
+            "params": ("char_level",),
+            "symbolic": sym,
+            "substituted": sub,
+            "result": res,
+            "note": note,
+            "latex": latex,
+            "latex_sub": latex_sub,
+        }
+
+    return fn
+
+
+def _char_exp(value, P, entry):
+    # Verified in Stat_ComputeLevelFromExp @0x4961d0: the EXP curve has two sub-parameters, now
+    # exposed as two separate bytes. LOW (exp_linear) scales a linear term (x10 EXP/level); HIGH
+    # (exp_quadratic) scales a quadratic term (/256). Cumulative EXP to reach level L =
+    # 10*(L-1)*lo + (L-1)^2*hi/256.
+    lo = (entry.get("exp_linear") if entry else 0) or 0
+    hi = (entry.get("exp_quadratic") if entry else 0) or 0
+    L = P["char_level"]
+    n = L - 1
+    total = 10 * n * lo + _idiv(n * n * hi, 256)
+    per = (10 * L * lo + _idiv(L * L * hi, 256)) - total  # L -> L+1 increment
+    curve = "flat (linear)" if hi == 0 else "accelerating (quadratic)"
+    return {
+        "params": ("char_level",),
+        "symbolic": "totalExp(L) = 10 x (L−1) x expLow  +  (L−1)² x expHigh / 256   "
+                    "[expLow = low byte, expHigh = high byte]",
+        "substituted": f"expLow={lo}, expHigh={hi}   →   10x{n}x{lo} + {n}²x{hi}/256 = {total}",
+        "result": f"Total EXP to reach level {L}: {total}   (+{per} for the next level)",
+        "note": (f"The 'EXP modifier' WORD packs two values: low byte {lo} (linear, x10/level) and "
+                 f"high byte {hi} (quadratic, /256). Here the curve is {curve}. Retail value 100 "
+                 "(low=100, high=0) → a flat 1000 EXP per level. Verified in "
+                 "Stat_ComputeLevelFromExp @0x4961d0."),
+        "latex": (r"totalExp(L) = 10\,(L-1)\,expLow + \left\lfloor\frac{(L-1)^2\,expHigh}{256}"
+                  r"\right\rfloor"),
+        "latex_sub": (rf"10\cdot{n}\cdot{lo} + \left\lfloor\frac{{{n}^2\cdot{hi}}}{{256}}"
+                      rf"\right\rfloor = {total}"),
+    }
+
+
 FORMULAS = {
     "status_timer": ("Status duration", _status_timer),
     "dead_timer": ("Summon-check interval", _dead_timer),
@@ -308,7 +432,10 @@ FORMULAS = {
     "gf_compat": ("GF compatibility change", _gf_compat),
     "magic_damage": ("Magic damage / healing", _magic_damage),
     "crisis": ("Crisis level contribution", _crisis),
+    "char_exp": ("Character EXP curve", _char_exp),
 }
+for _st in _CHAR_STAT_LABELS:
+    FORMULAS[f"char_{_st}"] = (f"{_CHAR_STAT_LABELS[_st]} stat curve", _make_char_stat(_st))
 
 
 def compute(formula_key, value, entry):

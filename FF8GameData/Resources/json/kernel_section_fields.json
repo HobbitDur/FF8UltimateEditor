@@ -84,7 +84,8 @@
     "size": 1,
     "lookup": "attack_type",
     "group": "General",
-    "help": "How the damage / effect is calculated (see Attack Type list)."
+    "help": "How the damage / effect is calculated (see Attack Type list).",
+    "formula": "magic_damage"
    },
    {
     "name": "spell_power",
@@ -147,7 +148,8 @@
     "size": 1,
     "label": "Hit count",
     "group": "General",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "Number of hits (interacts with certain animations).",
+    "formula": "magic_damage"
    },
    {
     "name": "element",
@@ -2322,207 +2324,285 @@
     "help": "Per-hit power used before the Renzokuken finisher."
    },
    {
-    "name": "exp_modifier",
+    "name": "exp_linear",
     "offset": 6,
-    "size": 2,
-    "label": "EXP modifier",
-    "group": "General"
+    "size": 1,
+    "label": "c1",
+    "group": "General",
+    "row": "exp_curve",
+    "subgroup": "EXP",
+    "help": "Low byte of the EXP curve: the linear EXP-per-level factor (×10). Cumulative EXP to reach level L = 10×(L−1)×this + the quadratic term. Retail 100 → a flat 1000 EXP/level. (Stat_ComputeLevelFromExp @0x4961d0.)"
+   },
+   {
+    "name": "exp_quadratic",
+    "offset": 7,
+    "size": 1,
+    "label": "c2",
+    "group": "General",
+    "row": "exp_curve",
+    "subgroup": "EXP",
+    "formula": "char_exp",
+    "help": "High byte of the EXP curve: a quadratic acceleration factor (÷256), adding floor((L−1)²×this/256) to the cumulative EXP for level L. Retail 0 = a flat (non-accelerating) curve. Click ƒ(x) for the full level→EXP curve."
    },
    {
     "name": "hp_1",
     "offset": 8,
     "size": 1,
-    "label": "HP coef 1",
-    "group": "Stat coefficients"
+    "label": "c1",
+    "group": "Stat coefficients",
+    "subgroup": "HP",
+    "row": "charstat_hp"
    },
    {
     "name": "hp_2",
     "offset": 9,
     "size": 1,
-    "label": "HP coef 2",
-    "group": "Stat coefficients"
+    "label": "c2",
+    "group": "Stat coefficients",
+    "subgroup": "HP",
+    "row": "charstat_hp"
    },
    {
     "name": "hp_3",
     "offset": 10,
     "size": 1,
-    "label": "HP coef 3",
-    "group": "Stat coefficients"
+    "label": "c3",
+    "group": "Stat coefficients",
+    "subgroup": "HP",
+    "row": "charstat_hp",
+    "formula": "char_hp"
    },
    {
     "name": "hp_4",
     "offset": 11,
     "size": 1,
-    "label": "HP coef 4",
-    "group": "Stat coefficients"
+    "label": "c4 (unused)",
+    "group": "Stat coefficients",
+    "subgroup": "HP",
+    "row": "charstat_hp",
+    "readonly": true
    },
    {
     "name": "str_1",
     "offset": 12,
     "size": 1,
-    "label": "STR coef 1",
-    "group": "Stat coefficients"
+    "label": "c1",
+    "group": "Stat coefficients",
+    "subgroup": "STR",
+    "row": "charstat_str"
    },
    {
     "name": "str_2",
     "offset": 13,
     "size": 1,
-    "label": "STR coef 2",
-    "group": "Stat coefficients"
+    "label": "c2",
+    "group": "Stat coefficients",
+    "subgroup": "STR",
+    "row": "charstat_str"
    },
    {
     "name": "str_3",
     "offset": 14,
     "size": 1,
-    "label": "STR coef 3",
-    "group": "Stat coefficients"
+    "label": "c3",
+    "group": "Stat coefficients",
+    "subgroup": "STR",
+    "row": "charstat_str"
    },
    {
     "name": "str_4",
     "offset": 15,
     "size": 1,
-    "label": "STR coef 4",
-    "group": "Stat coefficients"
+    "label": "c4",
+    "group": "Stat coefficients",
+    "subgroup": "STR",
+    "row": "charstat_str",
+    "formula": "char_str"
    },
    {
     "name": "vit_1",
     "offset": 16,
     "size": 1,
-    "label": "VIT coef 1",
-    "group": "Stat coefficients"
+    "label": "c1",
+    "group": "Stat coefficients",
+    "subgroup": "VIT",
+    "row": "charstat_vit"
    },
    {
     "name": "vit_2",
     "offset": 17,
     "size": 1,
-    "label": "VIT coef 2",
-    "group": "Stat coefficients"
+    "label": "c2",
+    "group": "Stat coefficients",
+    "subgroup": "VIT",
+    "row": "charstat_vit"
    },
    {
     "name": "vit_3",
     "offset": 18,
     "size": 1,
-    "label": "VIT coef 3",
-    "group": "Stat coefficients"
+    "label": "c3",
+    "group": "Stat coefficients",
+    "subgroup": "VIT",
+    "row": "charstat_vit"
    },
    {
     "name": "vit_4",
     "offset": 19,
     "size": 1,
-    "label": "VIT coef 4",
-    "group": "Stat coefficients"
+    "label": "c4",
+    "group": "Stat coefficients",
+    "subgroup": "VIT",
+    "row": "charstat_vit",
+    "formula": "char_vit"
    },
    {
     "name": "mag_1",
     "offset": 20,
     "size": 1,
-    "label": "MAG coef 1",
-    "group": "Stat coefficients"
+    "label": "c1",
+    "group": "Stat coefficients",
+    "subgroup": "MAG",
+    "row": "charstat_mag"
    },
    {
     "name": "mag_2",
     "offset": 21,
     "size": 1,
-    "label": "MAG coef 2",
-    "group": "Stat coefficients"
+    "label": "c2",
+    "group": "Stat coefficients",
+    "subgroup": "MAG",
+    "row": "charstat_mag"
    },
    {
     "name": "mag_3",
     "offset": 22,
     "size": 1,
-    "label": "MAG coef 3",
-    "group": "Stat coefficients"
+    "label": "c3",
+    "group": "Stat coefficients",
+    "subgroup": "MAG",
+    "row": "charstat_mag"
    },
    {
     "name": "mag_4",
     "offset": 23,
     "size": 1,
-    "label": "MAG coef 4",
-    "group": "Stat coefficients"
+    "label": "c4",
+    "group": "Stat coefficients",
+    "subgroup": "MAG",
+    "row": "charstat_mag",
+    "formula": "char_mag"
    },
    {
     "name": "spr_1",
     "offset": 24,
     "size": 1,
-    "label": "SPR coef 1",
-    "group": "Stat coefficients"
+    "label": "c1",
+    "group": "Stat coefficients",
+    "subgroup": "SPR",
+    "row": "charstat_spr"
    },
    {
     "name": "spr_2",
     "offset": 25,
     "size": 1,
-    "label": "SPR coef 2",
-    "group": "Stat coefficients"
+    "label": "c2",
+    "group": "Stat coefficients",
+    "subgroup": "SPR",
+    "row": "charstat_spr"
    },
    {
     "name": "spr_3",
     "offset": 26,
     "size": 1,
-    "label": "SPR coef 3",
-    "group": "Stat coefficients"
+    "label": "c3",
+    "group": "Stat coefficients",
+    "subgroup": "SPR",
+    "row": "charstat_spr"
    },
    {
     "name": "spr_4",
     "offset": 27,
     "size": 1,
-    "label": "SPR coef 4",
-    "group": "Stat coefficients"
+    "label": "c4",
+    "group": "Stat coefficients",
+    "subgroup": "SPR",
+    "row": "charstat_spr",
+    "formula": "char_spr"
    },
    {
     "name": "spd_1",
     "offset": 28,
     "size": 1,
-    "label": "SPD coef 1",
-    "group": "Stat coefficients"
+    "label": "c1",
+    "group": "Stat coefficients",
+    "subgroup": "SPD",
+    "row": "charstat_spd"
    },
    {
     "name": "spd_2",
     "offset": 29,
     "size": 1,
-    "label": "SPD coef 2",
-    "group": "Stat coefficients"
+    "label": "c2",
+    "group": "Stat coefficients",
+    "subgroup": "SPD",
+    "row": "charstat_spd"
    },
    {
     "name": "spd_3",
     "offset": 30,
     "size": 1,
-    "label": "SPD coef 3",
-    "group": "Stat coefficients"
+    "label": "c3",
+    "group": "Stat coefficients",
+    "subgroup": "SPD",
+    "row": "charstat_spd"
    },
    {
     "name": "spd_4",
     "offset": 31,
     "size": 1,
-    "label": "SPD coef 4",
-    "group": "Stat coefficients"
+    "label": "c4",
+    "group": "Stat coefficients",
+    "subgroup": "SPD",
+    "row": "charstat_spd",
+    "formula": "char_spd"
    },
    {
     "name": "luck_1",
     "offset": 32,
     "size": 1,
-    "label": "LUCK coef 1",
-    "group": "Stat coefficients"
+    "label": "c1",
+    "group": "Stat coefficients",
+    "subgroup": "LUCK",
+    "row": "charstat_luck"
    },
    {
     "name": "luck_2",
     "offset": 33,
     "size": 1,
-    "label": "LUCK coef 2",
-    "group": "Stat coefficients"
+    "label": "c2",
+    "group": "Stat coefficients",
+    "subgroup": "LUCK",
+    "row": "charstat_luck"
    },
    {
     "name": "luck_3",
     "offset": 34,
     "size": 1,
-    "label": "LUCK coef 3",
-    "group": "Stat coefficients"
+    "label": "c3",
+    "group": "Stat coefficients",
+    "subgroup": "LUCK",
+    "row": "charstat_luck"
    },
    {
     "name": "luck_4",
     "offset": 35,
     "size": 1,
-    "label": "LUCK coef 4",
-    "group": "Stat coefficients"
+    "label": "c4",
+    "group": "Stat coefficients",
+    "subgroup": "LUCK",
+    "row": "charstat_luck",
+    "formula": "char_luck"
    }
   ],
   "text_labels": [
@@ -5888,8 +5968,8 @@
     "size": 1,
     "label": "Sleep timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -5898,8 +5978,8 @@
     "size": 1,
     "label": "Haste timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -5908,8 +5988,8 @@
     "size": 1,
     "label": "Slow timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -5918,8 +5998,8 @@
     "size": 1,
     "label": "Stop timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -5928,8 +6008,8 @@
     "size": 1,
     "label": "Regen timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -5938,8 +6018,8 @@
     "size": 1,
     "label": "Protect timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -5948,8 +6028,8 @@
     "size": 1,
     "label": "Shell timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -5958,8 +6038,8 @@
     "size": 1,
     "label": "Reflect timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -5968,8 +6048,8 @@
     "size": 1,
     "label": "Aura timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -5978,8 +6058,8 @@
     "size": 1,
     "label": "Curse timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -5988,8 +6068,8 @@
     "size": 1,
     "label": "Doom timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -5998,8 +6078,8 @@
     "size": 1,
     "label": "Invincible timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -6008,8 +6088,8 @@
     "size": 1,
     "label": "Petrifying timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -6018,8 +6098,8 @@
     "size": 1,
     "label": "Float timer",
     "group": "Status timers",
-    "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "seconds_factor": 0.5333333333333333,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
     "formula": "status_timer"
    },
    {
@@ -6033,7 +6113,7 @@
     "name": "dead_timer",
     "offset": 15,
     "size": 1,
-    "label": "Gilgamesh/Angelo summon interval",
+    "label": "Gilgamesh/Angelo\nsummon interval",
     "group": "Status timers",
     "seconds_factor": 0.06666666666666667,
     "formula": "dead_timer",

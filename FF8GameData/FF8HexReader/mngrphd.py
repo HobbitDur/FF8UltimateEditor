@@ -26,9 +26,11 @@ class Mngrphd(Section):
             size = int.from_bytes(
                 self._data_hex[i + MngrphdEntry.SEEK_LENGTH: i + MngrphdEntry.SEEK_LENGTH + MngrphdEntry.SIZE_LENGTH],
                 byteorder='little')
-            if seek == 0xFFFFFF or size == 0:
+            if seek in (0, 0xFFFFFFFF) or size == 0:
                 invalid_value = True
             else:
+                # Bit 0 of the seek is a "stored uncompressed" flag (clear would mean
+                # LZS-compressed, a PSX leftover never used on PC), hence the -1.
                 invalid_value = False
                 seek = seek - 1
             new_entry = MngrphdEntry(seek=seek, size=size, invalid_value=invalid_value)
@@ -47,9 +49,11 @@ class Mngrphd(Section):
         self._mngprhd_entry_list = []
         self._mngprhd_entry_valid_list = []
         for section in section_list:
+            # Here seek is a real offset (0 is valid for the first section);
+            # invalid placeholder sections are the empty ones.
             seek = section.own_offset
             size = len(section)
-            if seek == 0xFFFFFF or size == 0:
+            if size == 0:
                 invalid = True
             else:
                 invalid = False

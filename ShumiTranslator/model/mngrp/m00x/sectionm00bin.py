@@ -11,6 +11,7 @@ class Sectionm00Bin(Section):
                  section_text_linked: ListFF8Text = None):
         Section.__init__(self, game_data=game_data, data_hex=data_hex, id=id, own_offset=own_offset, name=name)
         self.m00_id = m00_id
+        self.section_text_linked = section_text_linked
         self.type = SectionType.MNGRP_M00BIN
         if m00_id == 0:
             self.m00bin = m000bin()

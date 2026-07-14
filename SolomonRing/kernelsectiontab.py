@@ -294,9 +294,15 @@ class KernelSectionTab(QWidget):
         metrics = self.fontMetrics()
         ncol = max(len(r) for r in rows)
         col_w = [0] * ncol
+
+        def _label_width(text):
+            # A label may be multi-line ("\n"); size the column to its widest LINE, not the
+            # whole string, so a two-line label stays narrow.
+            return max(metrics.horizontalAdvance(line) for line in text.split("\n"))
+
         for r in rows:
             for i, f in enumerate(r):
-                col_w[i] = max(col_w[i], metrics.horizontalAdvance(f.get("label", _prettify(f["name"]))))
+                col_w[i] = max(col_w[i], _label_width(f.get("label", _prettify(f["name"]))))
         for r in rows:
             row = QHBoxLayout()
             row.setSpacing(6)
@@ -412,8 +418,12 @@ class KernelSectionTab(QWidget):
             grid_i = 0
             for entry in lookup["entries"]:
                 cb = QCheckBox(entry["name"])
-                # Individual bits proven unused are shown but not editable.
-                if readonly or entry["name"].lower().startswith(("unused", "padding")):
+                # Individual bits proven unused/inert here are shown (so the current value is
+                # visible) but not editable: "unused"/"padding" names, or an explicit
+                # "disabled" flag on the lookup entry (e.g. the attack-flags 0x20 bit, which
+                # does nothing outside the Battle Items tab).
+                if readonly or entry.get("disabled") or \
+                        entry["name"].lower().startswith(("unused", "padding")):
                     cb.setEnabled(False)
                 checks.append((entry["mask"], cb))
                 if entry["mask"] in coupling_masks:
@@ -462,6 +472,8 @@ class KernelSectionTab(QWidget):
             if readonly:
                 combo.setEnabled(False)
             self._field_widgets[name] = ("enum", field, combo)
+            if field.get("formula") and not readonly:
+                return self._with_formula_button(field, combo)
             return combo
 
         if field.get("bool"):
