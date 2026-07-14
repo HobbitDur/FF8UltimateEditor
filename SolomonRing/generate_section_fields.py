@@ -624,21 +624,52 @@ HELP = {
     "attack_type": "How the damage / effect is calculated (see Attack Type list).",
     "spell_power": "Base power fed into the damage formula.",
     "attack_power": "Base power fed into the damage formula.",
-    "gf_power": "GF base power fed into the damage formula.",
-    "power_mod": "Power modifier used in the damage formula.",
-    "level_mod": "Level modifier used in the damage formula.",
+    "gf_power": "GF base power (the `Power` term of the GF damage formula, appearing 3× in it). "
+                "Click f(x) for the full GF damage.",
+    "power_mod": "Flat power modifier added inside the GF damage formula "
+                 "(levelMod×GFLvl/10 + Power + powerMod). Click f(x) on Level mod for the full "
+                 "formula.",
+    "level_mod": "Scales the GF-level term of the GF damage formula "
+                 "(levelMod×GFLvl/10 + Power + powerMod). Click f(x) for the full GF damage.",
+    "gf_hp_modifier_1": "Linear (per-level) term of the GF HP curve: "
+                        "HP = HPMod3 + level×HPMod1 + 10×level²/HPMod2 (getGFhpForLvl). Click f(x).",
+    "gf_hp_modifier_2": "Quadratic divisor of the GF HP curve (10×level²/HPMod2) - larger = flatter "
+                        "growth; must be non-zero. Click f(x) on GF HP modifier 3 for the curve.",
+    "gf_hp_modifier_3": "Flat base of the GF HP curve. Click f(x) for the whole level→HP curve.",
+    "gf_level_modifier_1": "Linear term of the GF EXP curve: total EXP for level L = "
+                           "10×mod1×L + mod2×L²/256 (GetGFLevelFromExperience). Click f(x) on "
+                           "GF level modifier 2.",
+    "gf_level_modifier_2": "Quadratic (÷256) acceleration of the GF EXP curve. Click f(x) for the "
+                           "level→EXP curve.",
     "hit_count": "Number of hits (interacts with certain animations).",
     "draw_resist": "How hard the spell is to draw (higher = harder).",
     "element": "Elemental type(s) of the attack. Bitfield: combine flags.",
     "target_info": "Default targeting behavior. Bitfield: combine flags.",
-    "status_attack_enabler": "Accuracy for inflicting the statuses below (0 = never lands).",
-    "status_accuracy": "Accuracy for inflicting the statuses below (0 = never lands).",
-    "status_attack": "Accuracy for inflicting the statuses below (0 = never lands).",
+    "status_attack_enabler": "Accuracy for inflicting/curing the statuses below - what it actually "
+                             "does depends on this entry's Attack Type: an STR/VIT or MAG/SPR "
+                             "inflict roll for physical/magic attacks, a flat % cure chance for "
+                             "Curative Item family, unconditional (byte unused) for Curative "
+                             "Magic/Revive, an action-success gate for LV Up/Down, or unused "
+                             "entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "status_accuracy": "Accuracy for inflicting/curing the statuses below - what it actually "
+                       "does depends on this entry's Attack Type: an STR/VIT or MAG/SPR "
+                       "inflict roll for physical/magic attacks, a flat % cure chance for "
+                       "Curative Item family, unconditional (byte unused) for Curative "
+                       "Magic/Revive, an action-success gate for LV Up/Down, or unused "
+                       "entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "status_attack": "Accuracy for inflicting/curing the statuses below - what it actually "
+                     "does depends on this entry's Attack Type: an STR/VIT or MAG/SPR "
+                     "inflict roll for physical/magic attacks, a flat % cure chance for "
+                     "Curative Item family, unconditional (byte unused) for Curative "
+                     "Magic/Revive, an action-success gate for LV Up/Down, or unused "
+                     "entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
     "status_1": "Statuses 0-15 inflicted / affected. Bitfield: tick each status.",
     "status_2": "Statuses 16-47 inflicted / affected. Bitfield: tick each status.",
     "ap": "Ability Points required to learn this ability.",
-    "crit_bonus": "Bonus to the critical-hit rate.",
-    "crit_increase": "Bonus to the critical-hit rate.",
+    "crit_bonus": "Bonus to the critical-hit rate. Damage_RollCrit: crit if rand(0-255) <= this "
+                  "+ attacker LUCK; a crit doubles physical damage. Click f(x) for detail.",
+    "crit_increase": "Bonus to the critical-hit rate. Damage_RollCrit: crit if rand(0-255) <= "
+                     "this + attacker LUCK; a crit doubles physical damage. Click f(x) for detail.",
     "element_percent": "Elemental percentage of the attack. 100 = fully elemental, but the "
                        "byte can exceed 100 (e.g. 200 = double elemental weight); full range 0-255.",
     "character_id": "Which playable character wields this weapon.",
@@ -967,12 +998,21 @@ for sid_s, cfg in sections.items():
         # rate (~15/s) and the default battle speed, seconds ~= value * 16/15. The editor
         # shows a live "~ N s" hint below the spinbox using this factor.
         if sid == 30 and f["name"].startswith("timer_") and f["name"] != "timer_atb":
-            f["seconds_factor"] = 8.0 / 15.0
+            f["seconds_factor"] = 12.0 / 30.0  # 4×(battleSpeed+1)/30 at battleSpeed 2 (config midpoint)
             f["seconds_note"] = ("Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then "
-                                 "consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. "
-                                 "~ shown at default battle speed (3); Haste ticks faster, Slow/Stop "
-                                 "slower. Click ƒ(x) for detail.")
+                                 "consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. "
+                                 "battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint "
+                                 "(2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. "
+                                 "Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).")
             f["formula"] = "status_timer"
+        # ATB speed multiplier: a genuine, IDA-verified formula input (Battle_TickAtbGaugesAndGf
+        # Countdown @0x4842b0), NOT a percent - retail value is 10.
+        if sid == 30 and f["name"] == "atb_speed_multiplier":
+            f["formula"] = "atb_speed"
+            f["help"] = ("Multiplies how fast ALL battlers' ATB gauges fill: "
+                         "cur_atb += 10 x this x (SPD+30) / 100, applied 3x per rendered frame "
+                         "(Battle_TickAtbGaugesAndGfCountdown). Retail value is 10, not a %-of-normal "
+                         "multiplier despite the name - click f(x) for the full picture.")
         # "Dead timer" is really the interval between the random Gilgamesh/Angelo/Phoenix
         # auto-summon checks. summonGilgaAngelStartFight (called once per battle tick from
         # FFBattleDirector_battleLoop) decrements it; at 0 it rolls to summon Gilgamesh
@@ -1000,18 +1040,99 @@ for sid_s, cfg in sections.items():
         # GF compatibility feeds the summon-gauge fill; spell power feeds the magic damage
         # formula; the crisis/limit-effect bytes feed the crisis-level formula. Each gets an
         # f(x) preview button.
-        # Weapons (section 5): attack power + STR bonus feed the physical damage formula;
-        # crit bonus feeds the crit-chance roll; hit rate feeds the accuracy roll.
+        # Weapons (section 5): attack power + STR bonus BOTH feed the physical damage formula,
+        # so they share one "Physical damage" sub-box on a single row with ONE f(x) button
+        # (on attack_power). Crit bonus feeds the crit-chance roll; hit rate feeds accuracy.
         if sid == 5 and f["name"] in ("attack_power", "str_bonus"):
+            f["subgroup"] = "Physical damage"
+            f["row"] = "phys_dmg"
+        if sid == 5 and f["name"] == "attack_power":
             f["formula"] = "physical_damage"
         if sid == 5 and f["name"] == "crit_bonus":
             f["formula"] = "weapon_crit"
         if sid == 5 and f["name"] == "hit_rate":
             f["formula"] = "weapon_hit"
+        # Crit chance: the SAME roll (Damage_RollCrit) also reads Enemy attacks' crit_bonus,
+        # Blue Magic's crit_bonus and Shot's crit_increase - confirmed via their
+        # RELATED_TO_CRIT_BONUS write sites in Battle_applyDamage.
+        if (sid, f["name"]) in ((4, "crit_bonus"), (20, "crit_bonus"), (22, "crit_increase")):
+            f["formula"] = "weapon_crit"
+        # Status inflict chance: every "status attack accuracy" byte across the kernel feeds
+        # Battle_ApplyStatusWithResistRoll: STR/VIT for physical-dispatch Attack Types, MAG/SPR
+        # for the magic/GF-dispatch ones (picked live from this entry's own Attack Type field).
+        if f["name"] in ("status_attack_enabler", "status_accuracy", "status_attack"):
+            f["formula"] = "status_accuracy"
         if sid in (2, 3) and f["name"].startswith("compat_"):
             f["formula"] = "gf_compat"
-        # Magic damage reads spell power, attack type and hit count - all three get the button.
-        if sid == 2 and f["name"] in ("spell_power", "attack_type", "hit_count"):
+        # G-Forces (section 3): three coupled groups, each rendered as a nested sub-box with one
+        # shared f(x) button (like a character HP stat curve), plus a standalone GF power button.
+        if sid == 3:
+            # HP curve (getGFhpForLvl): the 3 HP modifiers on one row, one button on the last.
+            if f["name"] in ("gf_hp_modifier_1", "gf_hp_modifier_2", "gf_hp_modifier_3"):
+                f["subgroup"] = "GF HP curve"
+                f["row"] = "gf_hp"
+            if f["name"] == "gf_hp_modifier_3":
+                f["formula"] = "gf_hp"
+            # Next-level EXP curve (GetGFLevelFromExperience): the 2 level modifiers, one button.
+            if f["name"] in ("gf_level_modifier_1", "gf_level_modifier_2"):
+                f["subgroup"] = "Next-level EXP"
+                f["row"] = "gf_next_exp"
+            if f["name"] == "gf_level_modifier_2":
+                f["formula"] = "gf_next_exp"
+            # GF damage tail bytes (ComputeMagicAndGFDamage): Level mod + Power mod, one button.
+            if f["name"] in ("power_mod", "level_mod"):
+                f["subgroup"] = "GF damage mods"
+                f["row"] = "gf_dmg_mods"
+            if f["name"] == "level_mod":
+                f["formula"] = "gf_damage"
+            # GF power feeds the same GF-damage formula (it's in the General block, away from the
+            # Level/Power mod pair, so it carries its own button).
+            if f["name"] == "gf_power":
+                f["formula"] = "gf_damage"
+            # The "Status attack accuracy" byte at 0x1A (struct statusAttackAccuracy) is DEAD:
+            # get_xrefs_to_field returns 0. The GF summon's real status-attack accuracy is at
+            # 0x1B - abilityData[0].abilityUnlocker (Battle_applyDamage GF case @0x490043:
+            # HIT_ATTACK_ACCURACY = abilityData[0].abilityUnlocker). So move the status formula
+            # off 0x1A and onto ability1_unlocker, and mark 0x1A unused.
+            if f["name"] == "status_attack_enabler":
+                f.pop("formula", None)
+                f["label"] = "Status attack acc. (unused)"
+                f["readonly"] = True
+                f["help"] = ("Struct byte 0x1A ('statusAttackAccuracy') - genuinely DEAD, read by "
+                             "nothing. Deep-audited: 0 field xrefs, 0 direct-address xrefs, AND all "
+                             "register-relative accesses checked (the case that hid the attack-flag "
+                             "0x20 bug) - the 3 functions that hold a GF-entry pointer (incl. the GF/"
+                             "junction menu and ability-learn code) touch only offset 0 or 0x1B, "
+                             "never 0x1A; no aliases or bulk copies read it. The GF summon's real "
+                             "status-attack accuracy lives at 0x1B ('Ability 1' row's first byte).")
+            # The per-ability "unlocker" (byte+0 of each 4-byte slot) is NOT what unlocks the
+            # ability - BuildGFAbilityList never reads it (the real condition is the next byte,
+            # Level/prereq). It is 0 in every retail GF. The ONE exception is the first slot's
+            # byte (ability1_unlocker, 0x1B), which the engine reuses as the GF summon's status
+            # accuracy.
+            if f["name"] == "ability1_unlocker":
+                f["label"] = "GF summon status acc."
+                f["formula"] = "status_accuracy"
+                f["help"] = ("Despite sitting where 'Ability 1's unlocker byte' would be (0x1B), "
+                             "this byte is the GF SUMMON's status-attack accuracy - "
+                             "Battle_applyDamage's GF case reads it as HIT_ATTACK_ACCURACY "
+                             "(the dedicated 0x1A 'Status attack accuracy' field is dead). "
+                             "0 = the summon inflicts no status (e.g. Ifrit); it only matters "
+                             "for GFs whose summon carries a Status 1/2. The ability-learning "
+                             "code (BuildGFAbilityList) never reads this byte. Click f(x).")
+            elif f["name"].endswith("_unlocker"):
+                f["label"] = "Unused (byte+0)"
+                f["readonly"] = True
+                f["help"] = ("Byte+0 of this ability slot. The ability-learning code "
+                             "(BuildGFAbilityList) never reads it - the REAL unlock condition is "
+                             "the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST "
+                             "slot's byte+0 is used, and for something unrelated: the GF summon's "
+                             "status-attack accuracy.)")
+        # Magic damage reads spell power, attack type and hit count, but they're not a tightly-
+        # coupled pair like Weapon's STR bonus (each is independently meaningful elsewhere -
+        # attack_type also drives status accuracy's stat pair, hit_count is just hit count) - one
+        # shared button on spell_power avoids 3 redundant buttons opening the identical popup.
+        if sid == 2 and f["name"] == "spell_power":
             f["formula"] = "magic_damage"
         if sid == 30 and f["name"].startswith("limit_"):
             f["formula"] = "crisis"

@@ -287,7 +287,11 @@ class KernelSectionTab(QWidget):
     def _emit_aligned_rows(self, vbox, rows):
         """Render a set of rows (each a list of fields). Labels are aligned *per column*
         so a long label in one column never pushes a short label's editor away in another
-        (fixes both the 'value far from title' gaps and the Ability 9→10 shift)."""
+        (fixes both the 'value far from title' gaps and the Ability 9→10 shift). Editor
+        widgets are aligned per column too - a field with an extra 'f(x)' button or a
+        seconds/percent hint is wider than a bare spinbox, and without this a column would
+        drift left/right depending on which row it landed in (e.g. a lone field lacking a
+        formula button next to siblings that all have one)."""
         rows = [r for r in rows if r]
         if not rows:
             return
@@ -303,13 +307,26 @@ class KernelSectionTab(QWidget):
         for r in rows:
             for i, f in enumerate(r):
                 col_w[i] = max(col_w[i], _label_width(f.get("label", _prettify(f["name"]))))
+
+        # Build every editor widget once (building twice would leave duplicate registered
+        # widgets), measuring its natural width so the layout pass can equalize per column.
+        built = []
+        editor_w = [0] * ncol
         for r in rows:
-            row = QHBoxLayout()
-            row.setSpacing(6)
+            built_row = []
             for i, f in enumerate(r):
                 lbl, wdg = self._labeled_widget(f)
+                editor_w[i] = max(editor_w[i], wdg.sizeHint().width())
+                built_row.append((lbl, wdg))
+            built.append(built_row)
+
+        for r in built:
+            row = QHBoxLayout()
+            row.setSpacing(6)
+            for i, (lbl, wdg) in enumerate(r):
                 lbl.setFixedWidth(col_w[i] + 6)
                 lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                wdg.setMinimumWidth(editor_w[i])
                 row.addWidget(lbl)
                 row.addWidget(wdg)
                 row.addSpacing(18)

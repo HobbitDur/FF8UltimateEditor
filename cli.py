@@ -21,7 +21,6 @@ from Cli.registry import get_registry, register_tool
 from Cli.shumi_translator import ShumiTranslatorCliTool
 from Cli.ifrit_ai import IfritAiCliTool
 from Cli.ifrit_model import IfritModelCliTool
-from Cli.jp_font_builder import JpFontBuilderCliTool
 from Cli.tonberry_shop import TonberryShopCliTool
 from Cli.siren import SirenCliTool
 from Cli.junkshop import JunkshopCliTool
@@ -43,7 +42,6 @@ def _register_all_tools():
     registry.register(ShumiTranslatorCliTool)
     registry.register(IfritAiCliTool)
     registry.register(IfritModelCliTool)
-    registry.register(JpFontBuilderCliTool)
     registry.register(TonberryShopCliTool)
     registry.register(SirenCliTool)
     registry.register(JunkshopCliTool)

@@ -27,10 +27,11 @@ PARAM_DEFS = {
                        "Target's current HP - used by Demi / %-HP attacks. Doomtrain default 1000."),
     "target_maxhp":   ("Target max HP", 1000, 1, 99999999,
                        "Target's max HP - used by Devour and Angelo Recover (value/16 x maxHP)."),
-    "battle_speed":   ("Battle speed", 3, 0, 255,
-                       "FF8 config Battle Speed (SG_SETTING.battleSpeed). Higher = slower ATB and "
-                       "longer status timers. Timer ticks = 4 x (battleSpeed+1) x value "
-                       "(setupStatus2Timer). Default 3 matches the tool's ~16/15 s hint."),
+    "battle_speed":   ("Battle speed", 2, 0, 4,
+                       "FF8 config Battle Speed (SG_SETTING.battleSpeed), 0 (fast) … 4 (slow) — five "
+                       "settings, not 0-255 (Battle_SetMaxAtbFromBattleSpeed @0x484490: "
+                       "max_atb = 4000×(battleSpeed+1)). Higher = slower ATB AND longer status timers, "
+                       "since timer ticks = 4×(battleSpeed+1)×value. 2 is the config midpoint."),
     "dead_allies":    ("KO'd allies", 0, 0, 2,
                        "Number of KO'd party members - raises the crisis level (Limit Break "
                        "availability) faster."),
@@ -55,6 +56,30 @@ PARAM_DEFS = {
                        "The target's Evade stat — subtracted from the attacker's hit%."),
     "target_luck":    ("Target LUCK", 20, 0, 255,
                        "The target's LUCK — also subtracted from the attacker's hit%."),
+    "attacker_spd":   ("Attacker SPD", 30, 0, 255,
+                       "The battler's SPD stat — drives how fast their own ATB gauge fills. A "
+                       "mid-game value is ~20-40."),
+    "render_fps":     ("Assumed render FPS", 30, 15, 240,
+                       "ATB is ticked 3x per RENDERED frame (Battle_TickAtbGaugesAndGfCountdown, "
+                       "called from isBattle_HUDdisplay, called 3x per frame by "
+                       "battle_cardgame_main_loop) — NOT on a fixed logic clock like the status "
+                       "timers. This is the PC port's well-known 'ATB speeds up with framerate' "
+                       "quirk: an uncapped/high-FPS setup fills ATB faster in real time. This value "
+                       "is only a what-if assumption to turn ticks into seconds."),
+    "target_resistance": ("Target status resistance", 0, 0, 100,
+                       "The target's per-status mental resistance (a savemap/character stat, not "
+                       "in kernel.bin) - subtracted from the hit chance. 100 = fully immune to that "
+                       "specific status regardless of accuracy (Battle_ApplyStatusWithResistRoll "
+                       "@0x48f9f0). Default 0 = no resistance."),
+    "gf_level":       ("GF level", 100, 1, 100,
+                       "The GF's level (1-100), at which to evaluate its HP / next-level EXP / "
+                       "damage. GFs level from experience like characters."),
+    "gf_boost":       ("GF Boost %", 100, 100, 250,
+                       "The GF Boost minigame result: 100 = no boost (default), up to 250 for a "
+                       "perfect boost. Multiplies GF damage."),
+    "gf_summon_mag":  ("Summon MAG bonus", 0, 0, 255,
+                       "The SumMag% bonus from magic junctioned to the GF's SumMag slots (raises GF "
+                       "damage by (this+100)/100). 0 = no SumMag magic junctioned."),
 }
 
 # Live, user-editable values (start at defaults). Edited in the formula popups.
@@ -91,11 +116,12 @@ def _status_timer(value, P, entry):
         "substituted": f"4 × ({bs}+1) × {value} = {ticks} ticks   →   {ticks} / 30",
         "result": f"≈ {secs:.1f} s  ({ticks} ticks)   default rate — Haste ≈1.5× faster, "
                   f"Slow 2× slower, Stop freezes it",
-        "note": "setupStatus2Timer loads 4×(battleSpeed+1)×value ticks; computeTimerStatus "
-                "subtracts timer_speed_multiplier each battle frame (~15 fps) — 2 normally, 3 under "
-                "Haste, 1 under Slow, 0 under Stop. So real seconds ≈ 4×(battleSpeed+1)×value / (2×15). "
-                "The earlier ÷15 (assuming 1 tick/frame) made durations look ~2× too long. Timers only "
-                "tick during idle ATB time, not during actions.",
+        "note": "setupStatus2Timer @0x4832f0 loads 4×(battleSpeed+1)×value ticks; computeTimerStatus "
+                "@0x483470 subtracts 2 each idle battle frame (3 under Haste, 1 Slow, 0 Stop) at ~15 fps "
+                "(pinned by the Regen tick: it heals every 30 frames ≈ 2 s). battleSpeed is the config "
+                "0 (fast) … 4 (slow), midpoint 2 — NOT 0-255 (Battle_SetMaxAtbFromBattleSpeed: "
+                "max_atb = 4000×(battleSpeed+1), the same tick unit). Timers only tick during idle ATB "
+                "time, not during action animations, so real fights feel longer than this estimate.",
         "latex": r"t \approx \frac{4\,(battleSpeed+1)\,value}{2 \times 15}\ \text{s}",
         "latex_sub": rf"\frac{{4\cdot({bs}+1)\cdot{value}}}{{30}}\approx{secs:.1f}\ \text{{s}}",
     }
@@ -111,6 +137,47 @@ def _dead_timer(value, P, entry):
                 "(summonGilgaAngelStartFight), not a death countdown.",
         "latex": r"interval \approx \frac{value}{15}\ \text{s}",
         "latex_sub": rf"\frac{{{value}}}{{15}}",
+    }
+
+
+def _atb_speed(value, P, entry):
+    # Battle_TickAtbGaugesAndGfCountdown @0x4842b0: cur_atb += rate * K_MISC.atb_speed_multiplier *
+    # (SPD+30) / 100 each tick; rate = 10 normal / 15 Haste / 5 Slow. Ticked 3x per RENDERED frame
+    # (isBattle_HUDdisplay, called 3x/frame by battle_cardgame_main_loop) - not the fixed ~15fps
+    # logic clock the status timers use. max_atb = 4000*(battleSpeed+1) (Battle_SetMaxAtbFromBattle
+    # Speed @0x484490).
+    spd = P["attacker_spd"]
+    bs = P["battle_speed"]
+    fps = P["render_fps"]
+    per_tick = _idiv(10 * value * (spd + 30), 100)
+    per_frame = 3 * per_tick
+    max_atb = 4000 * (bs + 1)
+    if per_frame <= 0:
+        return {
+            "params": ("attacker_spd", "battle_speed", "render_fps"),
+            "symbolic": "cur_atb += 10 × multiplier × (SPD+30) / 100, 3×/rendered frame",
+            "substituted": f"multiplier {value} → 0 gain per tick",
+            "result": "ATB never fills (multiplier or SPD too low)",
+            "note": "See below.",
+            "latex": r"\Delta atb = \frac{10\cdot mult\cdot(SPD+30)}{100}",
+            "latex_sub": "0",
+        }
+    frames = max_atb / per_frame
+    secs = frames / fps
+    return {
+        "params": ("attacker_spd", "battle_speed", "render_fps"),
+        "symbolic": "cur_atb += 10 × multiplier × (SPD+30) / 100, applied 3×/rendered frame  "
+                    "(max_atb = 4000×(battleSpeed+1))",
+        "substituted": f"10 × {value} × ({spd}+30)/100 = {per_tick}/tick × 3 = {per_frame}/frame;  "
+                       f"max_atb {max_atb} / {per_frame} = {frames:.0f} frames",
+        "result": f"≈ {frames:.0f} frames to fill the ATB gauge  (≈ {secs:.1f} s at {fps} fps)",
+        "note": "Battle_TickAtbGaugesAndGfCountdown @0x4842b0. ATB is ticked on the RENDER loop, not "
+                "a fixed logic clock - this is the PC port's well-known framerate-coupled-ATB quirk, "
+                "so the seconds figure is only as good as the FPS assumption above, not a fixed "
+                "constant like the status timers. Retail value is 10 (not 100 - not a %-of-normal "
+                "multiplier despite the name).",
+        "latex": r"frames = \frac{4000(battleSpeed{+}1)}{3\left\lfloor\frac{10\cdot mult\cdot(SPD+30)}{100}\right\rfloor}",
+        "latex_sub": rf"\frac{{{max_atb}}}{{{per_frame}}}\approx{frames:.0f}\ \text{{frames}}",
     }
 
 
@@ -178,6 +245,88 @@ ATTACK_TYPE_NAMES = {
 # The offensive-magic core is Damage_ComputeMagicAndGF (0x491ad0); curative is computeCurativeMagic
 # (0x493280). Includes the 240..272/256 random spread + elemental term that doomtrain drops. Every
 # attack type resolves to a clean message (never a dead-end) even when it deals no HP damage.
+def _gf_hp(value, P, entry):
+    # getGFhpForLvl @0x496120: HP = HPMod3 + level*HPMod1 + 10*level^2/HPMod2.
+    m1 = (entry.get("gf_hp_modifier_1") if entry else 0) or 0
+    m2 = (entry.get("gf_hp_modifier_2") if entry else 0) or 0
+    m3 = (entry.get("gf_hp_modifier_3") if entry else 0) or 0
+    lvl = P["gf_level"]
+    if m2 == 0:
+        result = "HPMod2 = 0 → division by zero (invalid; retail HPMod2 is never 0)"
+        hp = None
+    else:
+        hp = m3 + lvl * m1 + _idiv(10 * lvl * lvl, m2)
+        result = f"{hp} HP at GF level {lvl}"
+    return {
+        "params": ("gf_level",),
+        "symbolic": "GF HP = HPMod3 + level × HPMod1 + 10 × level² / HPMod2",
+        "substituted": (f"{m3} + {lvl}×{m1} + 10×{lvl}²/{m2}" if m2 else f"{m3} + {lvl}×{m1} + 10×{lvl}²/0"),
+        "result": result,
+        "note": "getGFhpForLvl @0x496120. The three HP modifiers define the GF's whole HP curve; "
+                "level is where it's sampled. HPMod1 = linear/level, HPMod2 = quadratic divisor, "
+                "HPMod3 = flat base.",
+        "latex": r"HP = HPMod_3 + level\cdot HPMod_1 + \left\lfloor\frac{10\,level^2}{HPMod_2}\right\rfloor",
+        "latex_sub": (rf"{m3} + {lvl}\cdot{m1} + \lfloor 10\cdot{lvl}^2/{m2}\rfloor = {hp}"
+                      if m2 else r"\text{div by 0}"),
+    }
+
+
+def _gf_next_exp(value, P, entry):
+    # GetGFLevelFromExperience @0x4960c0: cumulative EXP threshold for level L is
+    # 10*mod1*L + mod2*L^2/256 (the loop accumulates 10*mod1 and mod2 per level).
+    m1 = (entry.get("gf_level_modifier_1") if entry else 0) or 0
+    m2 = (entry.get("gf_level_modifier_2") if entry else 0) or 0
+    lvl = P["gf_level"]
+    exp = 10 * m1 * lvl + _idiv(m2 * lvl * lvl, 256)
+    return {
+        "params": ("gf_level",),
+        "symbolic": "total EXP to reach level L = 10 × mod1 × L + mod2 × L² / 256",
+        "substituted": f"10×{m1}×{lvl} + {m2}×{lvl}²/256 = {exp}",
+        "result": f"≈ {exp} total EXP to reach GF level {lvl}",
+        "note": "GetGFLevelFromExperience @0x4960c0 walks levels while "
+                "experience ≥ 10×mod1×L + mod2×L²/256, so this is the cumulative EXP threshold "
+                "for level L. mod1 = linear term, mod2 = quadratic (÷256) acceleration.",
+        "latex": r"Exp(L) = 10\,mod_1\,L + \left\lfloor\frac{mod_2\,L^2}{256}\right\rfloor",
+        "latex_sub": rf"10\cdot{m1}\cdot{lvl} + \lfloor {m2}\cdot{lvl}^2/256\rfloor = {exp}",
+    }
+
+
+def _gf_damage(value, P, entry):
+    # ComputeMagicAndGFDamage @0x491ad0 (GF_DAMAGE case): dmg = (rand%33+240) *
+    # ((SumMag+100) * (Boost * (P * ((265-spr)*(levelMod*GFLvl/10 + P + powerMod)/8)/256)/100)/100)/256
+    p = (entry.get("gf_power") if entry else 0) or 0
+    lmod = (entry.get("level_mod") if entry else 0) or 0
+    pmod = (entry.get("power_mod") if entry else 0) or 0
+    lvl = P["gf_level"]
+    spr = P["target_spr"]
+    boost = P["gf_boost"]
+    smag = P["gf_summon_mag"]
+    inner = _idiv((265 - spr) * (_idiv(lmod * lvl, 10) + p + pmod), 8)
+    a = _idiv(p * inner, 256)
+    b = _idiv(boost * a, 100)
+    c = _idiv((smag + 100) * b, 100)
+
+    def roll(r):
+        return _idiv(r * c, 256)
+
+    avg, lo, hi = roll(256), roll(240), roll(272)
+    return {
+        "params": ("gf_level", "target_spr", "gf_boost", "gf_summon_mag"),
+        "symbolic": "dmg = P × (265−SPR) × (levelMod×GFLvl/10 + P + powerMod)/8 /256 × Boost/100 × "
+                    "(SumMag+100)/100 × rand[240..272]/256",
+        "substituted": f"P={p}, levelMod={lmod}, powerMod={pmod}, GFLvl={lvl}, SPR={spr}, "
+                       f"Boost={boost}, SumMag={smag}",
+        "result": f"≈ {avg} damage  (random {lo}–{hi})",
+        "note": "ComputeMagicAndGFDamage @0x491ad0 (GF damage case). P = GF power, levelMod & "
+                "powerMod are the GF-damage tail bytes. Then Shell/Defend halve, and the elemental "
+                "term applies (not shown). Monster casters halve the result.",
+        "latex": (r"dmg = \frac{SumMag{+}100}{100}\cdot\frac{Boost}{100}\cdot\left\lfloor\frac{P\,"
+                  r"\lfloor(265{-}SPR)\lfloor levelMod\cdot GFLvl/10 + P + powerMod\rfloor/8\rfloor}"
+                  r"{256}\right\rfloor\cdot\frac{rand}{256}"),
+        "latex_sub": rf"\approx {avg}\ \text{{damage}}",
+    }
+
+
 def _magic_damage(value, P, entry):
     # Read every input from the (live) entry so the f(x) button works from ANY of them
     # (spell power, attack type, hit count), not just the field the button sits on.
@@ -456,42 +605,284 @@ def _physical_damage(value, P, entry):
         return _idiv(r * mid, 256)
 
     avg, lo, hi = roll(256), roll(240), roll(272)
-    sbtxt = f"  (STR {base_str} + {sbonus} weapon = {eff_str})" if sbonus else ""
+    strp = f"STR₊ = {base_str} + {sbonus} = {eff_str}" if sbonus else f"STR₊ = {eff_str}"
     return {
         "params": ("attacker_str", "target_vit"),
-        "symbolic": "dmg = power × (265−VIT) × (STR + STR²/16) / 256 / 16 × rand[240..272]/256"
+        "symbolic": "STR₊ = STR + weaponStrBonus;  "
+                    "dmg = power × (265−VIT) × (STR₊ + STR₊²/16) / 256 / 16 × rand[240..272]/256"
                     "   (×2 on crit)",
-        "substituted": f"{p} × (265−{vit}) × ({eff_str} + {eff_str}²/16)/256 / 16 × ~1{sbtxt}",
+        "substituted": f"{strp};   {p} × (265−{vit}) × ({eff_str} + {eff_str}²/16)/256 / 16 × ~1",
         "result": f"≈ {avg} damage per hit  (random {lo}–{hi}; a crit doubles it → ≈{2 * avg})",
-        "note": "Physical damage core (ComputeWithDamageSTRFormula @0x492c40). STR is the attacker's "
-                "STR stat with this weapon's STR bonus added; VIT is the target's (0 under "
-                "Vit0/Meltdown). Crit ×2, Back Attack ×2, Protect ÷2. Elemental and drain modifiers "
-                "not shown.",
-        "latex": (r"dmg = \left\lfloor\frac{power\,(265{-}VIT)\,(STR + \lfloor STR^2/16\rfloor)}"
-                  r"{256\cdot 16}\right\rfloor\cdot\frac{rand}{256}"),
-        "latex_sub": (rf"\frac{{{p}\,(265{{-}}{vit})\,({eff_str}+\lfloor {eff_str}^2/16\rfloor)}}"
+        "note": "Physical damage core (ComputeWithDamageSTRFormula @0x492c40). The STR bonus IS "
+                "accounted for — this weapon's STR bonus is added into the STR stat (GetCharacterStat "
+                "@0x496440, STR only) and that boosted STR₊ is what feeds this formula. So set "
+                "'Attacker STR' to your STR before this weapon; the bonus is added on top. VIT is the "
+                "target's (0 under Vit0/Meltdown). Crit ×2, Back Attack ×2, Protect ÷2. Elemental and "
+                "drain modifiers not shown.",
+        "latex": (r"dmg = \left\lfloor\frac{power\,(265{-}VIT)\,(STR_{+} + \lfloor STR_{+}^2/16\rfloor)}"
+                  r"{256\cdot 16}\right\rfloor\cdot\frac{rand}{256},\quad STR_{+}=STR+bonus"),
+        "latex_sub": (rf"STR_{{+}}={eff_str};\ \frac{{{p}\,(265{{-}}{vit})\,({eff_str}+\lfloor {eff_str}^2/16\rfloor)}}"
                       rf"{{4096}}\approx {avg}"),
     }
 
 
-def _weapon_crit(value, P, entry):
-    # Damage_RollCrit @0x492b60: crit if random byte 0..255 <= critBonus + LUCK.
-    cb = entry.get("crit_bonus") if entry else None
-    if cb is None:
-        cb = value
+def _crit_chance(value, P, entry):
+    # Damage_RollCrit @0x492b60: crit if random byte 0..255 <= critBonus + LUCK. The kernel byte
+    # feeding this is named crit_bonus on Weapons/Enemy attacks/Blue Magic and crit_increase on
+    # Shot - confirmed the SAME roll for all 4 via their RELATED_TO_CRIT_BONUS write sites in
+    # Battle_applyDamage (0x4901e9 Blue Magic, 0x49041e default/weapon+enemy-attack+Shot dispatch).
+    # `value` is always this specific field's own current value, so no need to know its name.
     luck = P["attacker_luck"]
-    thr = min(255, cb + luck)
+    thr = min(255, value + luck)
     pct = (thr + 1) / 256 * 100 if thr > 0 else 0.0
     return {
         "params": ("attacker_luck",),
-        "symbolic": "crit if  rand(0..255) ≤ critBonus + LUCK",
-        "substituted": f"{cb} + {luck} = {thr}   (threshold out of 256)",
+        "symbolic": "crit if  rand(0..255) ≤ thisValue + LUCK",
+        "substituted": f"{value} + {luck} = {thr}   (threshold out of 256)",
         "result": f"≈ {pct:.1f}% critical-hit chance",
-        "note": "Damage_RollCrit @0x492b60: the weapon's crit bonus plus the attacker's LUCK is the "
-                "threshold; a random byte (0-255) ≤ it crits, doubling physical damage. (The wiki's "
-                "255×(critBonus+LUCK)/255 is the same value — the ×255/255 is a no-op.)",
-        "latex": r"P(crit) = \frac{critBonus + LUCK}{256}",
-        "latex_sub": rf"\frac{{{cb} + {luck}}}{{256}}\approx {pct:.1f}\%",
+        "note": "Damage_RollCrit @0x492b60: this value plus the attacker's LUCK is the threshold; "
+                "a random byte (0-255) ≤ it crits, doubling physical damage. (The wiki's old "
+                "255×(critBonus+LUCK)/255 is the same value — the ×255/255 is a no-op.) Verified "
+                "for Weapons, Enemy attacks, Blue Magic and Shot - all four feed the identical roll.",
+        "latex": r"P(crit) = \frac{value + LUCK}{256}",
+        "latex_sub": rf"\frac{{{value} + {luck}}}{{256}}\approx {pct:.1f}\%",
+    }
+
+
+# ALL 37 Attack Types (0-36) are now individually decompiled and categorized off the dispatcher
+# Battle_DamageGettingRelated @0x4922b0 - nothing below is inferred from a field name. Two sets
+# route the status-accuracy byte through the real STR/VIT vs MAG/SPR Battle_ApplyStatusWithResist
+# Roll; the remaining sets each use a DIFFERENT mechanism (or ignore the byte entirely) - see the
+# per-set decompile notes just below.
+#   STR/VIT physical: Damage_ComputePhysicalCore / Damage_ComputePhysicalWithHitCritRoll ->
+#     HpModifierComputationForPhysical's STR/VIT status roll.
+#   MAG/SPR magic/GF: Damage_ComputeMagicAndGF -> applyHitStatusEffect(STATUS_DEF_CATEGORY_MAGICAL).
+_PHYSICAL_ATTACK_TYPES = {1, 7, 9, 10, 18, 34, 36}
+_MAGICAL_ATTACK_TYPES = {2, 8, 11, 15, 20, 22, 26, 33}
+# Every other Attack Type's downstream function was individually decompiled and read (not
+# inferred) - each routes status_attack_enabler through a DIFFERENT, non-Battle_ApplyStatus
+# WithResistRoll mechanism, or doesn't read it at all:
+#   Curative Item / White Wind / Angelo Recover (Damage_ComputeCurativeItemSpecial @0x493450):
+#     `if (HIT_ATTACK_ACCURACY > rand(1..100)) checkDoubleStatusApply(...)` - a flat %, no stat
+#     terms at all, and it CURES the listed statuses (removeStatus), not inflicts them.
+#   Curative Magic / the Demi-type Unknown_1 (Damage_ComputeCurativeMagic @0x493280): calls
+#     checkDoubleStatusApply UNCONDITIONALLY - HIT_ATTACK_ACCURACY is never read. Byte is dead.
+#   Revive / Revive At Full HP (GetReviveHP @0x491940): clears Death unconditionally (if present,
+#     not sealed) - HIT_ATTACK_ACCURACY never read. Byte is dead, EXCEPT reviving a Zombie-status
+#     target instead deals unmissable magic damage via the Magic-dispatch path.
+#   LV Down / LV Up (computeLvlUpDown @0x493650): `if (accuracy <= rand(0..255)) fail` gates the
+#     WHOLE level-change action (a plain byte-range roll, no STR/VIT or MAG/SPR term) - this is a
+#     success chance, not a "status inflicted" roll, but reuses the same kernel byte position.
+#   Fixed Damage / Target-Current-HP-1 / Fixed-Magic-Based-on-GF-Level / 1 HP Damage
+#     (Damage_ComputeFixedSpecial @0x4931c0): no HIT_ATTACK_ACCURACY reference anywhere. Dead.
+#   Card (Battle_DamageGettingRelated case @0x492796 -> the actual capture roll is
+#     Battle_RollCardCommand @0x48fba0): capture = (256 - 255*curHP/maxHP)/256 vs rand byte, rare
+#     card 6.25%. This byte is NOT read.
+#   Devour (dispatcher case @0x4926cf): success needs attacker_HP >= target_HP, chance =
+#     (attackerHP - targetHP)/attackerHP; the byte is NOT read (Devour's status/stat effect comes
+#     from the Devour kernel section, applied on success).
+#   Scan (case @0x4925a6): reveals monster info, no roll, byte not read.
+#   Angelo Search (case @0x49284b): finds a random item, no roll, byte not read.
+#   Moogle Dance (case @0x4928d3): flags the target's junctioned GFs for HP recovery, no roll,
+#     byte not read.
+_CURE_FLAT_TYPES = {4, 25, 32}
+_CURE_ALWAYS_TYPES = {3, 21}
+_REVIVE_ALWAYS_TYPES = {5, 6}
+_LV_UPDOWN_TYPES = {13, 16}
+_CARD_TYPES = {17}
+_DEVOUR_TYPES = {19}
+_UTILITY_TYPES = {12, 23, 24}  # Scan, Angelo Search, Moogle Dance
+# None (0) hits the dispatcher's LABEL_46 (sets the success flag, no damage/roll); 14 (Summon
+# Item?), 30/31 (Unknown 2/3) have no dispatcher case at all -> default -> no effect. None read
+# HIT_ATTACK_ACCURACY.
+_NO_EFFECT_TYPES = {0, 14, 30, 31}
+_NO_ROLL_TYPES = {27, 28, 29, 35}
+
+
+def _status_accuracy(value, P, entry):
+    atk_type = entry.get("attack_type") if entry and entry.has_field("attack_type") else None
+    res = P["target_resistance"]
+
+    if atk_type in _PHYSICAL_ATTACK_TYPES or atk_type in _MAGICAL_ATTACK_TYPES:
+        # Battle_ApplyStatusWithResistRoll @0x48f9f0: fails outright if the target already has
+        # the status, or its per-status mental resistance is >=100. Otherwise:
+        #   chance = accuracy + attackerStat/4 - targetStat/4 - targetResistance
+        #   accuracy 255      -> guaranteed (stat/resistance check skipped entirely)
+        #   chance <= 0       -> fails
+        #   accuracy 250..254 -> guaranteed if chance > 0
+        #   else              -> roll floor(chance*255/100) against rand(0..255)
+        if atk_type in _PHYSICAL_ATTACK_TYPES:
+            atk_stat, tgt_stat, stat_label = P["attacker_str"], P["target_vit"], "STR/VIT"
+            params = ("attacker_str", "target_vit", "target_resistance")
+        else:
+            atk_stat, tgt_stat, stat_label = P["caster_mag"], P["target_spr"], "MAG/SPR"
+            params = ("caster_mag", "target_spr", "target_resistance")
+        note = ("Battle_ApplyStatusWithResistRoll @0x48f9f0. This entry's Attack Type routes "
+                f"through the {'physical' if atk_type in _PHYSICAL_ATTACK_TYPES else 'magic/GF'} "
+                f"damage core, so the stat pair is {stat_label}.")
+        if value == 255:
+            return {"params": params, "note": note, "latex": r"accuracy=255\Rightarrow 100\%",
+                    "latex_sub": r"255 \Rightarrow \text{always}",
+                    "symbolic": f"accuracy 255 → guaranteed ({stat_label}/resistance ignored)",
+                    "substituted": "accuracy = 255",
+                    "result": "Always inflicts (100%) - unless the target already has it, or "
+                              "it's immune"}
+        chance = value + _idiv(atk_stat, 4) - _idiv(tgt_stat, 4) - res
+        if chance <= 0:
+            pct = 0.0
+        elif 250 <= value <= 254:
+            pct = 100.0
+        else:
+            thr = _idiv(chance * 255, 100)
+            pct = min(100.0, (thr + 1) / 256 * 100) if thr > 0 else 0.0
+        return {
+            "params": params, "note": note,
+            "symbolic": f"chance = accuracy + {stat_label.split('/')[0]}/4 − "
+                        f"{stat_label.split('/')[1]}/4 − resistance  (255 = guaranteed, "
+                        "250-254 = guaranteed-if-positive, else rolled)",
+            "substituted": f"{value} + {atk_stat}/4 − {tgt_stat}/4 − {res} = {chance}%",
+            "result": f"≈ {pct:.1f}% chance to inflict  (before target-already-has-it / "
+                      "immunity checks)",
+            "latex": r"chance = accuracy + \tfrac{atkStat}{4} - \tfrac{tgtStat}{4} - resistance",
+            "latex_sub": rf"{value} + \tfrac{{{atk_stat}}}{{4}} - \tfrac{{{tgt_stat}}}{{4}} "
+                         rf"- {res} = {chance}\%",
+        }
+
+    if atk_type in _CURE_FLAT_TYPES:
+        # Damage_ComputeCurativeItemSpecial @0x493450: cures if accuracy > rand(1..100) - a flat
+        # percentage, no STR/VIT or MAG/SPR term. This CURES the listed statuses, not inflicts.
+        successes = max(0, min(value - 1, 100))
+        pct = successes
+        return {
+            "params": (), "symbolic": "cures if  accuracy > rand(1..100)  (flat %, no stat terms)",
+            "substituted": f"accuracy {value} > rand(1..100)", "result": f"≈ {pct}% chance to CURE"
+            " the listed statuses (Curative Item / White Wind / Angelo Recover)",
+            "note": "Damage_ComputeCurativeItemSpecial @0x493450. This byte gates whether the "
+                    "cure happens at all - it removes the Status 1/2 listed on this entry, it "
+                    "does not inflict them.",
+            "latex": r"P(cure) = \frac{accuracy}{100}", "latex_sub": rf"\approx {pct}\%",
+        }
+    if atk_type in _CURE_ALWAYS_TYPES:
+        return {
+            "params": (), "symbolic": "unconditional - this byte is never read",
+            "substituted": f"accuracy = {value}  (ignored)",
+            "result": "Always cures the listed statuses (100%) - this byte is dead for Curative "
+                     "Magic / the Demi-type effect",
+            "note": "Damage_ComputeCurativeMagic @0x493280 calls checkDoubleStatusApply "
+                    "unconditionally - HIT_ATTACK_ACCURACY (this byte) is never read in this "
+                    "function. Confirmed dead for this Attack Type.",
+            "latex": r"\text{always cures}", "latex_sub": r"\text{byte unused}",
+        }
+    if atk_type in _REVIVE_ALWAYS_TYPES:
+        return {
+            "params": (), "symbolic": "unconditional - this byte is never read",
+            "substituted": f"accuracy = {value}  (ignored)",
+            "result": "Always revives (100%) if the target has Death and it isn't sealed - this "
+                     "byte is dead for Revive / Revive At Full HP",
+            "note": "GetReviveHP @0x491940 clears Death unconditionally - HIT_ATTACK_ACCURACY "
+                    "(this byte) is never read. EXCEPTION: reviving a Zombie-status target "
+                    "instead deals unmissable magic damage via the Magic-dispatch path (MAG/SPR, "
+                    "always hits) - not modelled here.",
+            "latex": r"\text{always revives}", "latex_sub": r"\text{byte unused}",
+        }
+    if atk_type in _LV_UPDOWN_TYPES:
+        # computeLvlUpDown @0x493650: fails if accuracy <= rand(0..255) - a plain byte-range
+        # roll gating the WHOLE level-change action, no stat terms.
+        pct = min(100.0, value / 256 * 100)
+        return {
+            "params": (), "symbolic": "succeeds if  accuracy > rand(0..255)  (action gate, no "
+                        "stat terms)",
+            "substituted": f"accuracy {value} > rand(0..255)",
+            "result": f"≈ {pct:.1f}% chance the level change happens at all",
+            "note": "computeLvlUpDown @0x493650. This isn't a 'status inflicted' roll - it gates "
+                    "whether the LV Up/Down action succeeds at all (also fails outright if the "
+                    "target is level-change-immune).",
+            "latex": r"P(succeed) = \frac{accuracy}{256}", "latex_sub": rf"\approx {pct:.1f}\%",
+        }
+    if atk_type in _NO_ROLL_TYPES:
+        return {
+            "params": (), "symbolic": "not read - no status/action roll happens for this "
+                        "Attack Type",
+            "substituted": f"accuracy = {value}  (unused)",
+            "result": "This byte has no effect for Fixed Damage-family Attack Types",
+            "note": "Damage_ComputeFixedSpecial @0x4931c0 has no reference to HIT_ATTACK_ACCURACY "
+                    "anywhere in the function - confirmed dead, not just unconfirmed.",
+            "latex": r"\text{unused for this Attack Type}", "latex_sub": "",
+        }
+    if atk_type in _CARD_TYPES:
+        # Battle_RollCardCommand @0x48fba0: capture uses the TARGET monster's HP ratio, not this
+        # byte. card_percent (byte scale) = 256 - 255*curHP/maxHP; crit if >= rand byte.
+        hpr = P["hp_ratio"]
+        card_thr = 256 - _idiv(255 * hpr, 100)
+        pct = min(100.0, max(0.0, card_thr / 256 * 100))
+        return {
+            "params": ("hp_ratio",),
+            "symbolic": "capture chance = (256 − 255 × curHP/maxHP) / 256   (this status byte is "
+                        "NOT read)",
+            "substituted": f"(256 − 255 × {hpr}/100) / 256 = {card_thr}/256",
+            "result": f"≈ {pct:.1f}% capture chance at {hpr}% target HP  —  this status-accuracy "
+                      "byte is DEAD for Card",
+            "note": "Battle_RollCardCommand @0x48fba0: whether the monster is carded depends on its "
+                    "HP ratio (~0.4% at full HP → 100% near 0 HP), not this kernel byte. On success "
+                    "a second rand byte < 16 (6.25%) yields the rare (mod) card, else the common "
+                    "card; fails outright if the monster has no card. Carded → ejected, AP but no "
+                    "EXP. (Here 'HP %' is the TARGET monster's, not the caster's.)",
+            "latex": r"P(card) = \frac{256 - \lfloor 255\,curHP/maxHP\rfloor}{256}",
+            "latex_sub": rf"\frac{{{card_thr}}}{{256}}\approx {pct:.1f}\%",
+        }
+    if atk_type in _DEVOUR_TYPES:
+        return {
+            "params": (),
+            "symbolic": "success if  attackerHP ≥ targetHP  and  rand < (attackerHP − targetHP)/"
+                        "attackerHP   (this status byte is NOT read)",
+            "substituted": "uses both combatants' current HP, not this byte",
+            "result": "This status-accuracy byte is DEAD for Devour — success is an HP-ratio roll",
+            "note": "Battle_DamageGettingRelated Devour case @0x4926cf: needs the attacker's "
+                    "current HP ≥ the target's, then succeeds with chance (attackerHP − targetHP)/"
+                    "attackerHP. On success the Devour effect (heal + temporary stat boost + status) "
+                    "is read from the Devour kernel section, not from this byte.",
+            "latex": r"P(devour) = \frac{HP_{atk} - HP_{tgt}}{HP_{atk}}\ (HP_{atk}\ge HP_{tgt})",
+            "latex_sub": r"\text{HP-ratio roll}",
+        }
+    if atk_type in _UTILITY_TYPES:
+        names = {12: ("Scan", "reveals the monster's info", "@0x4925a6"),
+                 23: ("Angelo Search", "finds a random battle item", "@0x49284b"),
+                 24: ("Moogle Dance", "flags the target's junctioned GFs for HP recovery",
+                      "@0x4928d3")}
+        nm, what, addr = names[atk_type]
+        return {
+            "params": (),
+            "symbolic": f"{nm} {what} — no accuracy roll, this byte is NOT read",
+            "substituted": f"accuracy = {value}  (unused)",
+            "result": f"This status-accuracy byte is DEAD for {nm} (a utility action, no roll)",
+            "note": f"Battle_DamageGettingRelated {nm} case {addr}: {what}; it never reads "
+                    "HIT_ATTACK_ACCURACY. Confirmed dead.",
+            "latex": rf"\text{{{nm}: no roll}}", "latex_sub": "",
+        }
+    if atk_type in _NO_EFFECT_TYPES:
+        which = ("None" if atk_type == 0 else
+                 "Summon Item?" if atk_type == 14 else "an Unknown/unused")
+        return {
+            "params": (),
+            "symbolic": f"{which} Attack Type — the dispatcher does no damage or status roll",
+            "substituted": f"accuracy = {value}  (unused)",
+            "result": f"This status-accuracy byte is DEAD ({which} Attack Type does nothing "
+                      "with it)",
+            "note": "Battle_DamageGettingRelated @0x4922b0: None (0) hits LABEL_46 (sets the "
+                    "success flag, no damage/roll); Attack Types 14/30/31 have no case at all and "
+                    "fall to the no-op default. HIT_ATTACK_ACCURACY is never read for any of them.",
+            "latex": r"\text{no effect}", "latex_sub": "",
+        }
+    # Genuinely out-of-range values only (attack_type is a byte; 37-255 are undefined).
+    return {
+        "params": (),
+        "symbolic": f"Attack Type {atk_type} is out of range (defined values are 0-36)",
+        "substituted": f"attack_type = {atk_type}",
+        "result": "Out-of-range Attack Type — no dispatcher case, no status mechanism",
+        "note": "This entry's Attack Type byte is above the 37 defined values (0-36); the damage "
+                "dispatcher (Battle_DamageGettingRelated @0x4922b0) has no case for it and treats "
+                "it as the no-op default.",
+        "latex": r"\text{out-of-range Attack Type}", "latex_sub": "",
     }
 
 
@@ -532,14 +923,19 @@ def _weapon_hit(value, P, entry):
 FORMULAS = {
     "status_timer": ("Status duration", _status_timer),
     "dead_timer": ("Summon-check interval", _dead_timer),
+    "atb_speed": ("ATB fill time", _atb_speed),
     "devour_hp": ("Devour HP amount", _devour_hp),
     "gf_compat": ("GF compatibility change", _gf_compat),
+    "gf_hp": ("GF HP curve", _gf_hp),
+    "gf_next_exp": ("GF next-level EXP", _gf_next_exp),
+    "gf_damage": ("GF damage", _gf_damage),
     "magic_damage": ("Magic damage / healing", _magic_damage),
     "crisis": ("Crisis level contribution", _crisis),
     "char_exp": ("Character EXP curve", _char_exp),
     "physical_damage": ("Physical damage", _physical_damage),
-    "weapon_crit": ("Critical-hit chance", _weapon_crit),
+    "weapon_crit": ("Critical-hit chance", _crit_chance),
     "weapon_hit": ("Hit rate", _weapon_hit),
+    "status_accuracy": ("Status inflict chance", _status_accuracy),
 }
 for _st in _CHAR_STAT_LABELS:
     FORMULAS[f"char_{_st}"] = (f"{_CHAR_STAT_LABELS[_st]} stat curve", _make_char_stat(_st))

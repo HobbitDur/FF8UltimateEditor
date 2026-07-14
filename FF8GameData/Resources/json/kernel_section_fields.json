@@ -84,8 +84,7 @@
     "size": 1,
     "lookup": "attack_type",
     "group": "General",
-    "help": "How the damage / effect is calculated (see Attack Type list).",
-    "formula": "magic_damage"
+    "help": "How the damage / effect is calculated (see Attack Type list)."
    },
    {
     "name": "spell_power",
@@ -148,8 +147,7 @@
     "size": 1,
     "label": "Hit count",
     "group": "General",
-    "help": "Number of hits (interacts with certain animations).",
-    "formula": "magic_damage"
+    "help": "Number of hits (interacts with certain animations)."
    },
    {
     "name": "element",
@@ -192,7 +190,8 @@
     "size": 1,
     "label": "Status attack accuracy",
     "group": "General",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "help": "Accuracy for inflicting/curing the statuses below - what it actually does depends on this entry's Attack Type: an STR/VIT or MAG/SPR inflict roll for physical/magic attacks, a flat % cure chance for Curative Item family, unconditional (byte unused) for Curative Magic/Revive, an action-success gate for LV Up/Down, or unused entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "formula": "status_accuracy"
    },
    {
     "name": "j_hp",
@@ -490,7 +489,8 @@
     "size": 1,
     "group": "General",
     "label": "GF power",
-    "help": "GF base power fed into the damage formula."
+    "help": "GF base power (the `Power` term of the GF damage formula, appearing 3× in it). Click f(x) for the full GF damage.",
+    "formula": "gf_damage"
    },
    {
     "name": "status_window_flags",
@@ -576,43 +576,61 @@
     "offset": 20,
     "size": 1,
     "group": "General",
-    "label": "GF HP modifier 1"
+    "label": "GF HP modifier 1",
+    "help": "Linear (per-level) term of the GF HP curve: HP = HPMod3 + level×HPMod1 + 10×level²/HPMod2 (getGFhpForLvl). Click f(x).",
+    "subgroup": "GF HP curve",
+    "row": "gf_hp"
    },
    {
     "name": "gf_hp_modifier_2",
     "offset": 21,
     "size": 1,
     "group": "General",
-    "label": "GF HP modifier 2"
+    "label": "GF HP modifier 2",
+    "help": "Quadratic divisor of the GF HP curve (10×level²/HPMod2) - larger = flatter growth; must be non-zero. Click f(x) on GF HP modifier 3 for the curve.",
+    "subgroup": "GF HP curve",
+    "row": "gf_hp"
    },
    {
     "name": "gf_hp_modifier_3",
     "offset": 22,
     "size": 1,
     "group": "General",
-    "label": "GF HP modifier 3"
+    "label": "GF HP modifier 3",
+    "help": "Flat base of the GF HP curve. Click f(x) for the whole level→HP curve.",
+    "subgroup": "GF HP curve",
+    "row": "gf_hp",
+    "formula": "gf_hp"
    },
    {
     "name": "gf_level_modifier_1",
     "offset": 24,
     "size": 1,
     "group": "General",
-    "label": "GF level modifier 1"
+    "label": "GF level modifier 1",
+    "help": "Linear term of the GF EXP curve: total EXP for level L = 10×mod1×L + mod2×L²/256 (GetGFLevelFromExperience). Click f(x) on GF level modifier 2.",
+    "subgroup": "Next-level EXP",
+    "row": "gf_next_exp"
    },
    {
     "name": "gf_level_modifier_2",
     "offset": 25,
     "size": 1,
     "group": "General",
-    "label": "GF level modifier 2"
+    "label": "GF level modifier 2",
+    "help": "Quadratic (÷256) acceleration of the GF EXP curve. Click f(x) for the level→EXP curve.",
+    "subgroup": "Next-level EXP",
+    "row": "gf_next_exp",
+    "formula": "gf_next_exp"
    },
    {
     "name": "status_attack_enabler",
     "offset": 26,
     "size": 1,
     "group": "General",
-    "label": "Status attack accuracy",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "label": "Status attack acc. (unused)",
+    "help": "Struct byte 0x1A ('statusAttackAccuracy') - genuinely DEAD, read by nothing. Deep-audited: 0 field xrefs, 0 direct-address xrefs, AND all register-relative accesses checked (the case that hid the attack-flag 0x20 bug) - the 3 functions that hold a GF-entry pointer (incl. the GF/junction menu and ability-learn code) touch only offset 0 or 0x1B, never 0x1A; no aliases or bulk copies read it. The GF summon's real status-attack accuracy lives at 0x1B ('Ability 1' row's first byte).",
+    "readonly": true
    },
    {
     "name": "power_mod",
@@ -620,7 +638,9 @@
     "size": 1,
     "group": "General",
     "label": "Power mod",
-    "help": "Power modifier used in the damage formula."
+    "help": "Flat power modifier added inside the GF damage formula (levelMod×GFLvl/10 + Power + powerMod). Click f(x) on Level mod for the full formula.",
+    "subgroup": "GF damage mods",
+    "row": "gf_dmg_mods"
    },
    {
     "name": "level_mod",
@@ -628,7 +648,10 @@
     "size": 1,
     "group": "General",
     "label": "Level mod",
-    "help": "Level modifier used in the damage formula."
+    "help": "Scales the GF-level term of the GF damage formula (levelMod×GFLvl/10 + Power + powerMod). Click f(x) for the full GF damage.",
+    "subgroup": "GF damage mods",
+    "row": "gf_dmg_mods",
+    "formula": "gf_damage"
    },
    {
     "name": "ability1",
@@ -643,9 +666,11 @@
     "name": "ability1_unlocker",
     "offset": 27,
     "size": 1,
-    "label": "Unlocker",
+    "label": "GF summon status acc.",
     "group": "Abilities",
-    "row": "ability1"
+    "row": "ability1",
+    "formula": "status_accuracy",
+    "help": "Despite sitting where 'Ability 1's unlocker byte' would be (0x1B), this byte is the GF SUMMON's status-attack accuracy - Battle_applyDamage's GF case reads it as HIT_ATTACK_ACCURACY (the dedicated 0x1A 'Status attack accuracy' field is dead). 0 = the summon inflicts no status (e.g. Ifrit); it only matters for GFs whose summon carries a Status 1/2. The ability-learning code (BuildGFAbilityList) never reads this byte. Click f(x)."
    },
    {
     "name": "ability1_level_or_prereq",
@@ -678,9 +703,11 @@
     "name": "ability2_unlocker",
     "offset": 31,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability2"
+    "row": "ability2",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability2_level_or_prereq",
@@ -713,9 +740,11 @@
     "name": "ability3_unlocker",
     "offset": 35,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability3"
+    "row": "ability3",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability3_level_or_prereq",
@@ -748,9 +777,11 @@
     "name": "ability4_unlocker",
     "offset": 39,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability4"
+    "row": "ability4",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability4_level_or_prereq",
@@ -783,9 +814,11 @@
     "name": "ability5_unlocker",
     "offset": 43,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability5"
+    "row": "ability5",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability5_level_or_prereq",
@@ -818,9 +851,11 @@
     "name": "ability6_unlocker",
     "offset": 47,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability6"
+    "row": "ability6",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability6_level_or_prereq",
@@ -853,9 +888,11 @@
     "name": "ability7_unlocker",
     "offset": 51,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability7"
+    "row": "ability7",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability7_level_or_prereq",
@@ -888,9 +925,11 @@
     "name": "ability8_unlocker",
     "offset": 55,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability8"
+    "row": "ability8",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability8_level_or_prereq",
@@ -923,9 +962,11 @@
     "name": "ability9_unlocker",
     "offset": 59,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability9"
+    "row": "ability9",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability9_level_or_prereq",
@@ -958,9 +999,11 @@
     "name": "ability10_unlocker",
     "offset": 63,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability10"
+    "row": "ability10",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability10_level_or_prereq",
@@ -993,9 +1036,11 @@
     "name": "ability11_unlocker",
     "offset": 67,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability11"
+    "row": "ability11",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability11_level_or_prereq",
@@ -1028,9 +1073,11 @@
     "name": "ability12_unlocker",
     "offset": 71,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability12"
+    "row": "ability12",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability12_level_or_prereq",
@@ -1063,9 +1110,11 @@
     "name": "ability13_unlocker",
     "offset": 75,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability13"
+    "row": "ability13",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability13_level_or_prereq",
@@ -1098,9 +1147,11 @@
     "name": "ability14_unlocker",
     "offset": 79,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability14"
+    "row": "ability14",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability14_level_or_prereq",
@@ -1133,9 +1184,11 @@
     "name": "ability15_unlocker",
     "offset": 83,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability15"
+    "row": "ability15",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability15_level_or_prereq",
@@ -1168,9 +1221,11 @@
     "name": "ability16_unlocker",
     "offset": 87,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability16"
+    "row": "ability16",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability16_level_or_prereq",
@@ -1203,9 +1258,11 @@
     "name": "ability17_unlocker",
     "offset": 91,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability17"
+    "row": "ability17",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability17_level_or_prereq",
@@ -1238,9 +1295,11 @@
     "name": "ability18_unlocker",
     "offset": 95,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability18"
+    "row": "ability18",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability18_level_or_prereq",
@@ -1273,9 +1332,11 @@
     "name": "ability19_unlocker",
     "offset": 99,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability19"
+    "row": "ability19",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability19_level_or_prereq",
@@ -1308,9 +1369,11 @@
     "name": "ability20_unlocker",
     "offset": 103,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability20"
+    "row": "ability20",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability20_level_or_prereq",
@@ -1343,9 +1406,11 @@
     "name": "ability21_unlocker",
     "offset": 107,
     "size": 1,
-    "label": "Unlocker",
+    "label": "Unused (byte+0)",
     "group": "Abilities",
-    "row": "ability21"
+    "row": "ability21",
+    "readonly": true,
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability21_level_or_prereq",
@@ -1630,7 +1695,8 @@
     "size": 1,
     "label": "Attack crit bonus",
     "group": "Data",
-    "help": "Bonus to the critical-hit rate."
+    "help": "Bonus to the critical-hit rate. Damage_RollCrit: crit if rand(0-255) <= this + attacker LUCK; a crit doubles physical damage. Click f(x) for detail.",
+    "formula": "weapon_crit"
    },
    {
     "name": "status_attack_enabler",
@@ -1638,7 +1704,8 @@
     "size": 1,
     "label": "Status attack accuracy",
     "group": "Data",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "help": "Accuracy for inflicting/curing the statuses below - what it actually does depends on this entry's Attack Type: an STR/VIT or MAG/SPR inflict roll for physical/magic attacks, a flat % cure chance for Curative Item family, unconditional (byte unused) for Curative Magic/Revive, an action-success gate for LV Up/Down, or unused entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "formula": "status_accuracy"
    },
    {
     "name": "hit_rate",
@@ -2102,6 +2169,8 @@
     "label": "Attack power",
     "group": "Data",
     "help": "Base power fed into the damage formula.",
+    "subgroup": "Physical damage",
+    "row": "phys_dmg",
     "formula": "physical_damage"
    },
    {
@@ -2120,7 +2189,8 @@
     "label": "STR bonus",
     "group": "Data",
     "help": "Flat STR bonus granted by the weapon.",
-    "formula": "physical_damage"
+    "subgroup": "Physical damage",
+    "row": "phys_dmg"
    },
    {
     "name": "weapon_tier",
@@ -2136,7 +2206,7 @@
     "size": 1,
     "label": "Crit bonus",
     "group": "Data",
-    "help": "Bonus to the critical-hit rate.",
+    "help": "Bonus to the critical-hit rate. Damage_RollCrit: crit if rand(0-255) <= this + attacker LUCK; a crit doubles physical damage. Click f(x) for detail.",
     "formula": "weapon_crit"
    },
    {
@@ -2257,7 +2327,8 @@
     "size": 1,
     "label": "Status attack accuracy",
     "group": "Data",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "help": "Accuracy for inflicting/curing the statuses below - what it actually does depends on this entry's Attack Type: an STR/VIT or MAG/SPR inflict roll for physical/magic attacks, a flat % cure chance for Curative Item family, unconditional (byte unused) for Curative Magic/Revive, an action-success gate for LV Up/Down, or unused entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "formula": "status_accuracy"
    },
    {
     "name": "unknown_0x10",
@@ -2714,7 +2785,8 @@
     "size": 1,
     "label": "Status attack accuracy",
     "group": "Data",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "help": "Accuracy for inflicting/curing the statuses below - what it actually does depends on this entry's Attack Type: an STR/VIT or MAG/SPR inflict roll for physical/magic attacks, a flat % cure chance for Curative Item family, unconditional (byte unused) for Curative Magic/Revive, an action-success gate for LV Up/Down, or unused entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "formula": "status_accuracy"
    },
    {
     "name": "status_1",
@@ -2807,7 +2879,7 @@
     "size": 1,
     "label": "GF power",
     "group": "Data",
-    "help": "GF base power fed into the damage formula."
+    "help": "GF base power (the `Power` term of the GF damage formula, appearing 3× in it). Click f(x) for the full GF damage."
    },
    {
     "name": "status_attack_enabler",
@@ -2815,7 +2887,8 @@
     "size": 1,
     "label": "Status attack accuracy",
     "group": "Data",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "help": "Accuracy for inflicting/curing the statuses below - what it actually does depends on this entry's Attack Type: an STR/VIT or MAG/SPR inflict roll for physical/magic attacks, a flat % cure chance for Curative Item family, unconditional (byte unused) for Curative Magic/Revive, an action-success gate for LV Up/Down, or unused entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "formula": "status_accuracy"
    },
    {
     "name": "target_info",
@@ -2924,7 +2997,7 @@
     "size": 1,
     "label": "Power mod",
     "group": "Data",
-    "help": "Power modifier used in the damage formula."
+    "help": "Flat power modifier added inside the GF damage formula (levelMod×GFLvl/10 + Power + powerMod). Click f(x) on Level mod for the full formula."
    },
    {
     "name": "level_mod",
@@ -2932,7 +3005,7 @@
     "size": 1,
     "label": "Level mod",
     "group": "Data",
-    "help": "Level modifier used in the damage formula."
+    "help": "Scales the GF-level term of the GF damage formula (levelMod×GFLvl/10 + Power + powerMod). Click f(x) for the full GF damage."
    }
   ],
   "text_labels": [
@@ -3025,7 +3098,8 @@
     "size": 1,
     "label": "Status attack accuracy",
     "group": "Data",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "help": "Accuracy for inflicting/curing the statuses below - what it actually does depends on this entry's Attack Type: an STR/VIT or MAG/SPR inflict roll for physical/magic attacks, a flat % cure chance for Curative Item family, unconditional (byte unused) for Curative Magic/Revive, an action-success gate for LV Up/Down, or unused entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "formula": "status_accuracy"
    },
    {
     "name": "status_1",
@@ -3439,7 +3513,8 @@
     "size": 1,
     "label": "Status attack accuracy",
     "group": "Data",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "help": "Accuracy for inflicting/curing the statuses below - what it actually does depends on this entry's Attack Type: an STR/VIT or MAG/SPR inflict roll for physical/magic attacks, a flat % cure chance for Curative Item family, unconditional (byte unused) for Curative Magic/Revive, an action-success gate for LV Up/Down, or unused entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "formula": "status_accuracy"
    },
    {
     "name": "status_1",
@@ -3562,7 +3637,8 @@
     "size": 1,
     "label": "Status attack accuracy",
     "group": "Data",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "help": "Accuracy for inflicting/curing the statuses below - what it actually does depends on this entry's Attack Type: an STR/VIT or MAG/SPR inflict roll for physical/magic attacks, a flat % cure chance for Curative Item family, unconditional (byte unused) for Curative Magic/Revive, an action-success gate for LV Up/Down, or unused entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "formula": "status_accuracy"
    },
    {
     "name": "crit_bonus",
@@ -3570,7 +3646,8 @@
     "size": 1,
     "label": "Crit bonus",
     "group": "Data",
-    "help": "Bonus to the critical-hit rate."
+    "help": "Bonus to the critical-hit rate. Damage_RollCrit: crit if rand(0-255) <= this + attacker LUCK; a crit doubles physical damage. Click f(x) for detail.",
+    "formula": "weapon_crit"
    },
    {
     "name": "unknown_0x0f",
@@ -3797,7 +3874,8 @@
     "size": 1,
     "label": "Status attack accuracy",
     "group": "Data",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "help": "Accuracy for inflicting/curing the statuses below - what it actually does depends on this entry's Attack Type: an STR/VIT or MAG/SPR inflict roll for physical/magic attacks, a flat % cure chance for Curative Item family, unconditional (byte unused) for Curative Magic/Revive, an action-success gate for LV Up/Down, or unused entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "formula": "status_accuracy"
    },
    {
     "name": "status_1",
@@ -3823,7 +3901,8 @@
     "size": 1,
     "label": "Crit increase",
     "group": "Data",
-    "help": "Bonus to the critical-hit rate."
+    "help": "Bonus to the critical-hit rate. Damage_RollCrit: crit if rand(0-255) <= this + attacker LUCK; a crit doubles physical damage. Click f(x) for detail.",
+    "formula": "weapon_crit"
    },
    {
     "name": "status_2",
@@ -3944,7 +4023,8 @@
     "size": 1,
     "label": "Status attack accuracy",
     "group": "Data",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "help": "Accuracy for inflicting/curing the statuses below - what it actually does depends on this entry's Attack Type: an STR/VIT or MAG/SPR inflict roll for physical/magic attacks, a flat % cure chance for Curative Item family, unconditional (byte unused) for Curative Magic/Revive, an action-success gate for LV Up/Down, or unused entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "formula": "status_accuracy"
    },
    {
     "name": "button_1",
@@ -5069,7 +5149,8 @@
     "size": 1,
     "label": "Status attack accuracy",
     "group": "Data",
-    "help": "Accuracy for inflicting the statuses below (0 = never lands)."
+    "help": "Accuracy for inflicting/curing the statuses below - what it actually does depends on this entry's Attack Type: an STR/VIT or MAG/SPR inflict roll for physical/magic attacks, a flat % cure chance for Curative Item family, unconditional (byte unused) for Curative Magic/Revive, an action-success gate for LV Up/Down, or unused entirely for Fixed Damage types. Click f(x) for the exact mechanic.",
+    "formula": "status_accuracy"
    },
    {
     "name": "status_1",
@@ -5972,8 +6053,8 @@
     "size": 1,
     "label": "Sleep timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -5982,8 +6063,8 @@
     "size": 1,
     "label": "Haste timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -5992,8 +6073,8 @@
     "size": 1,
     "label": "Slow timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6002,8 +6083,8 @@
     "size": 1,
     "label": "Stop timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6012,8 +6093,8 @@
     "size": 1,
     "label": "Regen timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6022,8 +6103,8 @@
     "size": 1,
     "label": "Protect timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6032,8 +6113,8 @@
     "size": 1,
     "label": "Shell timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6042,8 +6123,8 @@
     "size": 1,
     "label": "Reflect timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6052,8 +6133,8 @@
     "size": 1,
     "label": "Aura timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6062,8 +6143,8 @@
     "size": 1,
     "label": "Curse timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6072,8 +6153,8 @@
     "size": 1,
     "label": "Doom timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6082,8 +6163,8 @@
     "size": 1,
     "label": "Invincible timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6092,8 +6173,8 @@
     "size": 1,
     "label": "Petrifying timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6102,8 +6183,8 @@
     "size": 1,
     "label": "Float timer",
     "group": "Status timers",
-    "seconds_factor": 0.5333333333333333,
-    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per battle frame (computeTimerStatus) at ~15 fps. ~ shown at default battle speed (3); Haste ticks faster, Slow/Stop slower. Click ƒ(x) for detail.",
+    "seconds_factor": 0.4,
+    "seconds_note": "Loaded as 4×(battleSpeed+1)×value ticks (setupStatus2Timer), then consumed 2 ticks per idle battle frame (computeTimerStatus) at ~15 fps. battleSpeed is the config 0 (fast) … 4 (slow); ~ shown at the midpoint (2), so it scales ×0.4 (fast 0) … ×1.0 (slow 4) of the value in seconds. Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).",
     "formula": "status_timer"
    },
    {
@@ -6111,7 +6192,9 @@
     "offset": 14,
     "size": 1,
     "label": "ATB speed multiplier",
-    "group": "Status timers"
+    "group": "Status timers",
+    "formula": "atb_speed",
+    "help": "Multiplies how fast ALL battlers' ATB gauges fill: cur_atb += 10 x this x (SPD+30) / 100, applied 3x per rendered frame (Battle_TickAtbGaugesAndGfCountdown). Retail value is 10, not a %-of-normal multiplier despite the name - click f(x) for the full picture."
    },
    {
     "name": "dead_timer",

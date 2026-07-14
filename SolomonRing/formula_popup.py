@@ -38,6 +38,16 @@ class _LiveEntry:
                 pass
         return 0
 
+    def has_field(self, name):
+        if name in self._tab._field_widgets:
+            return True
+        if self._entry is not None:
+            try:
+                return self._entry.has_field(name)
+            except Exception:
+                return False
+        return False
+
 
 class FormulaPopup(QDialog):
     """Non-modal tool window: formula + editable assumptions + live result. One per tab

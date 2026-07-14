@@ -25,7 +25,6 @@ from PuPuCargo.pupucargowidget import PuPuCargoWidget
 from Seed.seedwidget import SeedWidget
 from Siren.sirenwidget import SirenWidget
 from Junkshop.junkshopwidget import JunkshopWidget
-from Moomba.moombawidget import MoombaWidget
 from Alexander.alexanderwidget import AlexanderWidget
 from Quezacotl.quezacotlwidget import QuezacotlWidget
 from ShumiTranslator.shumitranslator import ShumiTranslator
@@ -68,7 +67,6 @@ class FF8UltimateEditorWidget(QWidget):
             "Siren (price.bin editor)",
             "Junkshop (mwepon.bin editor)",
             "Quezacotl (init.out editor)",
-            "Moomba (JP font builder)",
             "Odine (magsort.bin editor)"
         ]
 
@@ -156,7 +154,6 @@ class FF8UltimateEditorWidget(QWidget):
         self._siren_widget = SirenWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._junkshop_widget = JunkshopWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._quezacotl_widget = QuezacotlWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._moomba_widget = MoombaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._odine_widget = OdineWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
 
 
@@ -175,8 +172,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._siren_widget) # Index 11
         self.tool_stack.addWidget(self._junkshop_widget) # Index 12
         self.tool_stack.addWidget(self._quezacotl_widget) # Index 13
-        self.tool_stack.addWidget(self._moomba_widget) # Index 14
-        self.tool_stack.addWidget(self._odine_widget) # Index 15
+        self.tool_stack.addWidget(self._odine_widget) # Index 14
         self._program_option_change()
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)
