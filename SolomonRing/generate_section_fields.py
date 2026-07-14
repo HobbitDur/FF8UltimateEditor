@@ -1000,6 +1000,14 @@ for sid_s, cfg in sections.items():
         # GF compatibility feeds the summon-gauge fill; spell power feeds the magic damage
         # formula; the crisis/limit-effect bytes feed the crisis-level formula. Each gets an
         # f(x) preview button.
+        # Weapons (section 5): attack power + STR bonus feed the physical damage formula;
+        # crit bonus feeds the crit-chance roll; hit rate feeds the accuracy roll.
+        if sid == 5 and f["name"] in ("attack_power", "str_bonus"):
+            f["formula"] = "physical_damage"
+        if sid == 5 and f["name"] == "crit_bonus":
+            f["formula"] = "weapon_crit"
+        if sid == 5 and f["name"] == "hit_rate":
+            f["formula"] = "weapon_hit"
         if sid in (2, 3) and f["name"].startswith("compat_"):
             f["formula"] = "gf_compat"
         # Magic damage reads spell power, attack type and hit count - all three get the button.

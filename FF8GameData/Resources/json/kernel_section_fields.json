@@ -2101,7 +2101,8 @@
     "size": 1,
     "label": "Attack power",
     "group": "Data",
-    "help": "Base power fed into the damage formula."
+    "help": "Base power fed into the damage formula.",
+    "formula": "physical_damage"
    },
    {
     "name": "hit_rate",
@@ -2109,7 +2110,8 @@
     "size": 1,
     "label": "Hit rate",
     "group": "Data",
-    "help": "The character's base Hit% stat while this weapon is equipped. GetCharacterHit reads it directly: HIT% = weapon.hitRate + (junctioned HIT magic bonus), capped at 255 - there is no character-level term, so this byte alone sets a character's baseline accuracy."
+    "help": "The character's base Hit% stat while this weapon is equipped. GetCharacterHit reads it directly: HIT% = weapon.hitRate + (junctioned HIT magic bonus), capped at 255 - there is no character-level term, so this byte alone sets a character's baseline accuracy.",
+    "formula": "weapon_hit"
    },
    {
     "name": "str_bonus",
@@ -2117,7 +2119,8 @@
     "size": 1,
     "label": "STR bonus",
     "group": "Data",
-    "help": "Flat STR bonus granted by the weapon."
+    "help": "Flat STR bonus granted by the weapon.",
+    "formula": "physical_damage"
    },
    {
     "name": "weapon_tier",
@@ -2133,7 +2136,8 @@
     "size": 1,
     "label": "Crit bonus",
     "group": "Data",
-    "help": "Bonus to the critical-hit rate."
+    "help": "Bonus to the critical-hit rate.",
+    "formula": "weapon_crit"
    },
    {
     "name": "melee",

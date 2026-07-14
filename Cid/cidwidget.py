@@ -55,20 +55,23 @@ class CidWidget(QWidget):
         self.wmset_file_path = ""
         self._section = WorldDrawSection()
         self._selected_row = -1
+        # Unsaved-change flags: which of the two backing files has edits to write.
+        self._exe_dirty = False
+        self._wmset_dirty = False
 
         # Buttons
         self._exe_dialog = QFileDialog()
         self._exe_button = self._make_button(icon_path, 'folder.png', "Load FF8 exe (magic / refill / high-yield)",
                                              self._load_exe)
-        self._save_hext_dialog = QFileDialog()
-        self._save_hext_button = self._make_button(icon_path, 'save.svg', "Save magic data to .hext (EXE)",
-                                                   self._save_hext)
         self._wmset_dialog = QFileDialog()
         self._wmset_button = self._make_button(icon_path, 'folder.png', "Load wmsetxx.obj (world positions)",
                                                self._load_wmset)
+        # Single save button: writes the .hext and/or the wmset, depending on what was edited.
+        self._save_hext_dialog = QFileDialog()
         self._save_wmset_dialog = QFileDialog()
-        self._save_wmset_button = self._make_button(icon_path, 'save.svg', "Save world positions to wmsetxx.obj",
-                                                    self._save_wmset)
+        self._save_button = self._make_button(icon_path, 'save.svg',
+                                              "Save edited files (EXE .hext and/or wmset positions)",
+                                              self._save)
 
         self.csv_dialog = QFileDialog()
         self._csv_upload_button = self._make_button(icon_path, 'csv_upload.png', "Upload csv", self._open_csv)
@@ -87,10 +90,9 @@ class CidWidget(QWidget):
         self._layout_top = QHBoxLayout()
         self._layout_top.addWidget(QLabel("EXE:"))
         self._layout_top.addWidget(self._exe_button)
-        self._layout_top.addWidget(self._save_hext_button)
         self._layout_top.addWidget(QLabel("wmset:"))
         self._layout_top.addWidget(self._wmset_button)
-        self._layout_top.addWidget(self._save_wmset_button)
+        self._layout_top.addWidget(self._save_button)
         self._layout_top.addWidget(self._csv_upload_button)
         self._layout_top.addWidget(self._csv_save_button)
         self._layout_top.addWidget(self._fullscreen_button)
@@ -110,6 +112,10 @@ class CidWidget(QWidget):
         self._draw_widget.selection_changed.connect(self._on_selection_changed)
         self._draw_widget.position_changed.connect(self._illustration.refresh)
         self._illustration.position_picked.connect(self._on_map_position_picked)
+
+        # Wiring: edits mark the corresponding backing file dirty.
+        self._draw_widget.exe_changed.connect(self._on_exe_edited)
+        self._draw_widget.world_changed.connect(self._on_world_edited)
 
         self._splitter = QSplitter(Qt.Orientation.Vertical)
         self._splitter.addWidget(self._draw_widget)
@@ -134,8 +140,14 @@ class CidWidget(QWidget):
         return button
 
     def _update_save_buttons(self):
-        self._save_hext_button.setEnabled(self.exe_loaded)
-        self._save_wmset_button.setEnabled(self._section.is_loaded())
+        # Enabled as soon as anything is loaded; the click decides which file(s) to write.
+        self._save_button.setEnabled(self.exe_loaded or self._section.is_loaded())
+
+    def _on_exe_edited(self):
+        self._exe_dirty = True
+
+    def _on_world_edited(self):
+        self._wmset_dirty = True
 
     # ---- table <-> illustration wiring ------------------------------------
     def _on_selection_changed(self, row):
@@ -191,15 +203,30 @@ class CidWidget(QWidget):
         self._update_save_buttons()
 
     # ---- saving ------------------------------------------------------------
+    def _save(self):
+        """Save the EXE .hext and/or the wmset, writing only files that were edited.
+
+        Falls back to writing every loaded file when nothing is flagged dirty, so a
+        manual re-save (e.g. to a different path) still works.
+        """
+        save_exe = self.exe_loaded and (self._exe_dirty or not self._wmset_dirty)
+        save_wmset = self._section.is_loaded() and (self._wmset_dirty or not self._exe_dirty)
+        # When neither is dirty, both of the above are True for whatever is loaded (re-save all).
+
+        if save_exe and self._save_hext():
+            self._exe_dirty = False
+        if save_wmset and self._save_wmset():
+            self._wmset_dirty = False
+
     def _save_hext(self):
         if not self.exe_loaded:
             self._show_error("Draw Editor - No EXE loaded", "Load the FF8 exe before saving magic data.")
-            return
+            return False
         default_file_name = os.path.join(os.getcwd(), "draw_data_injection.hext")
         file_to_save = self._save_hext_dialog.getSaveFileName(parent=self, caption="Save hext file", filter="*.hext",
                                                               directory=default_file_name)[0]
         if not file_to_save:
-            return
+            return False
         draw_offset = self.game_data.exe_data_json["draw_data_offset"]["og_eng_start"]
         hext_str = "#Offset to dynamic data\n"
         hext_str += "+{:X}\n\n".format(self.GENERAL_OFFSET)
@@ -211,16 +238,17 @@ class CidWidget(QWidget):
             hext_str += " {:X} = {:02X}\n\n".format(address, draw.get_exe_byte())
         with open(file_to_save, "w") as hext_file:
             hext_file.write(hext_str)
+        return True
 
     def _save_wmset(self):
         if not self._section.is_loaded():
             self._show_error("Draw Editor - No wmset loaded", "Load a wmsetxx.obj before saving world positions.")
-            return
+            return False
         default_file_name = self.wmset_file_path or os.path.join(os.getcwd(), "wmsetus.obj")
         file_to_save = self._save_wmset_dialog.getSaveFileName(parent=self, caption="Save wmsetxx.obj", filter="*.obj",
                                                                directory=default_file_name)[0]
         if not file_to_save:
-            return
+            return False
         nb = min(self._section.get_nb_record(), self.NB_DRAW - self.WORLD_EXE_START_INDEX)
         for i in range(nb):
             draw = self._draw_list[self.WORLD_EXE_START_INDEX + i]
@@ -229,6 +257,8 @@ class CidWidget(QWidget):
             self._section.save(file_to_save)
         except Exception as error:
             self._show_error("Draw Editor - Failed to save wmset", str(error))
+            return False
+        return True
 
     # ---- CSV ---------------------------------------------------------------
     def _save_csv(self):
@@ -249,6 +279,7 @@ class CidWidget(QWidget):
                                                       filter="*.csv")[0]
         if not csv_to_load:
             return
+        has_positions = False
         try:
             with open(csv_to_load, newline='', encoding="utf-8") as csv_file:
                 csv_data = csv.reader(csv_file, delimiter=GameData.find_delimiter_from_csv_file(csv_to_load),
@@ -262,11 +293,16 @@ class CidWidget(QWidget):
                     draw.refill = bool(int(row[3]))
                     if len(row) >= 7:  # position columns are optional (backward compatible)
                         draw.x, draw.y, draw.sub_id = int(row[4]), int(row[5]), int(row[6])
+                        has_positions = True
         except UnicodeDecodeError:
             self._show_error("Draw Editor - Wrong CSV encoding",
                              "Wrong <b>encoding</b>, please use <b>UTF8</b> formating only.<br>"
                              "In excel, you can go to the \"Data tab\", \"Import text file\" and choose UTF8 encoding")
             return
+        # A CSV import edits the model directly, so flag the affected file(s) as unsaved.
+        self._exe_dirty = True
+        if has_positions:
+            self._wmset_dirty = True
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
 

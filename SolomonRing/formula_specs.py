@@ -43,6 +43,18 @@ PARAM_DEFS = {
     "char_level":     ("Character level", 100, 1, 100,
                        "The level (1-100) at which to evaluate the stat curve. The 4 coefficients "
                        "define the whole curve; this just picks which level's value to show."),
+    "attacker_str":   ("Attacker STR", 128, 0, 255,
+                       "The attacker's STR stat (the weapon's STR bonus is added on top). Drives "
+                       "physical damage. A mid/late-game value is ~120-255."),
+    "attacker_luck":  ("Attacker LUCK", 20, 0, 255,
+                       "The attacker's LUCK stat — feeds critical-hit chance and half of it feeds "
+                       "hit%."),
+    "target_vit":     ("Target VIT", 64, 0, 255,
+                       "The target's VIT stat — physical defence. Vit0/Meltdown force it to 0."),
+    "target_eva":     ("Target EVA", 10, 0, 255,
+                       "The target's Evade stat — subtracted from the attacker's hit%."),
+    "target_luck":    ("Target LUCK", 20, 0, 255,
+                       "The target's LUCK — also subtracted from the attacker's hit%."),
 }
 
 # Live, user-editable values (start at defaults). Edited in the formula popups.
@@ -425,6 +437,98 @@ def _char_exp(value, P, entry):
     }
 
 
+# --- weapon / physical-combat formulas (kernel section 5) -------------------
+def _physical_damage(value, P, entry):
+    # Physical damage core, verified in ComputeWithDamageSTRFormula @0x492c40 /
+    # computeAttackPhysical @0x492e10: dmg = P*(265-VIT)*(STR + STR^2/16)/256/16 * rand/256.
+    # The weapon's STR bonus is added to the attacker's STR first; a crit doubles the result.
+    p = entry.get("attack_power") if entry else None
+    if p is None:
+        p = value
+    sbonus = (entry.get("str_bonus") if entry else 0) or 0
+    base_str = P["attacker_str"]
+    eff_str = min(255, base_str + sbonus)
+    vit = P["target_vit"]
+    inner = _idiv((265 - vit) * (eff_str + _idiv(eff_str * eff_str, 16)), 256)
+    mid = _idiv(p * inner, 16)
+
+    def roll(r):
+        return _idiv(r * mid, 256)
+
+    avg, lo, hi = roll(256), roll(240), roll(272)
+    sbtxt = f"  (STR {base_str} + {sbonus} weapon = {eff_str})" if sbonus else ""
+    return {
+        "params": ("attacker_str", "target_vit"),
+        "symbolic": "dmg = power × (265−VIT) × (STR + STR²/16) / 256 / 16 × rand[240..272]/256"
+                    "   (×2 on crit)",
+        "substituted": f"{p} × (265−{vit}) × ({eff_str} + {eff_str}²/16)/256 / 16 × ~1{sbtxt}",
+        "result": f"≈ {avg} damage per hit  (random {lo}–{hi}; a crit doubles it → ≈{2 * avg})",
+        "note": "Physical damage core (ComputeWithDamageSTRFormula @0x492c40). STR is the attacker's "
+                "STR stat with this weapon's STR bonus added; VIT is the target's (0 under "
+                "Vit0/Meltdown). Crit ×2, Back Attack ×2, Protect ÷2. Elemental and drain modifiers "
+                "not shown.",
+        "latex": (r"dmg = \left\lfloor\frac{power\,(265{-}VIT)\,(STR + \lfloor STR^2/16\rfloor)}"
+                  r"{256\cdot 16}\right\rfloor\cdot\frac{rand}{256}"),
+        "latex_sub": (rf"\frac{{{p}\,(265{{-}}{vit})\,({eff_str}+\lfloor {eff_str}^2/16\rfloor)}}"
+                      rf"{{4096}}\approx {avg}"),
+    }
+
+
+def _weapon_crit(value, P, entry):
+    # Damage_RollCrit @0x492b60: crit if random byte 0..255 <= critBonus + LUCK.
+    cb = entry.get("crit_bonus") if entry else None
+    if cb is None:
+        cb = value
+    luck = P["attacker_luck"]
+    thr = min(255, cb + luck)
+    pct = (thr + 1) / 256 * 100 if thr > 0 else 0.0
+    return {
+        "params": ("attacker_luck",),
+        "symbolic": "crit if  rand(0..255) ≤ critBonus + LUCK",
+        "substituted": f"{cb} + {luck} = {thr}   (threshold out of 256)",
+        "result": f"≈ {pct:.1f}% critical-hit chance",
+        "note": "Damage_RollCrit @0x492b60: the weapon's crit bonus plus the attacker's LUCK is the "
+                "threshold; a random byte (0-255) ≤ it crits, doubling physical damage. (The wiki's "
+                "255×(critBonus+LUCK)/255 is the same value — the ×255/255 is a no-op.)",
+        "latex": r"P(crit) = \frac{critBonus + LUCK}{256}",
+        "latex_sub": rf"\frac{{{cb} + {luck}}}{{256}}\approx {pct:.1f}\%",
+    }
+
+
+def _weapon_hit(value, P, entry):
+    # computeAttackPhysical @0x492e10: hit = hitRate + atkLUCK/2 - tgtEVA - tgtLUCK, clamped >=0;
+    # then hit if 255*hit/100 >= rand(0..255). hitRate 255 = always hits (roll skipped).
+    hr = entry.get("hit_rate") if entry else None
+    if hr is None:
+        hr = value
+    aluck = P["attacker_luck"]
+    eva = P["target_eva"]
+    tluck = P["target_luck"]
+    if hr == 255:
+        return {
+            "params": ("attacker_luck", "target_eva", "target_luck"),
+            "symbolic": "hitRate = 255 → always hits (accuracy roll skipped)",
+            "substituted": "hitRate = 255",
+            "result": "Always hits (100%) — unless the target is untargetable",
+            "note": "computeAttackPhysical @0x492e10 skips the accuracy roll when hitRate is 255.",
+            "latex": r"hitRate = 255 \Rightarrow 100\%",
+            "latex_sub": r"255 \Rightarrow \text{always hits}",
+        }
+    hit = max(0, hr + aluck // 2 - eva - tluck)
+    thr = _idiv(255 * hit, 100)
+    pct = min(100.0, (thr + 1) / 256 * 100) if thr > 0 else 0.0
+    return {
+        "params": ("attacker_luck", "target_eva", "target_luck"),
+        "symbolic": "hit% = hitRate + LUCK/2 − targetEVA − targetLUCK ;  hit if 255×hit%/100 ≥ rand",
+        "substituted": f"{hr} + {aluck}/2 − {eva} − {tluck} = {hit}%",
+        "result": f"≈ {pct:.1f}% chance to land  (effective hit {hit}%)",
+        "note": "computeAttackPhysical @0x492e10. Darkness quarters the base hit% first; hitRate 255 "
+                "always hits. The final hit is a roll of 255×hit%/100 against a random byte.",
+        "latex": r"hit\% = hitRate + \tfrac{LUCK}{2} - EVA_{tgt} - LUCK_{tgt}",
+        "latex_sub": rf"{hr} + \tfrac{{{aluck}}}{{2}} - {eva} - {tluck} = {hit}\%",
+    }
+
+
 FORMULAS = {
     "status_timer": ("Status duration", _status_timer),
     "dead_timer": ("Summon-check interval", _dead_timer),
@@ -433,6 +537,9 @@ FORMULAS = {
     "magic_damage": ("Magic damage / healing", _magic_damage),
     "crisis": ("Crisis level contribution", _crisis),
     "char_exp": ("Character EXP curve", _char_exp),
+    "physical_damage": ("Physical damage", _physical_damage),
+    "weapon_crit": ("Critical-hit chance", _weapon_crit),
+    "weapon_hit": ("Hit rate", _weapon_hit),
 }
 for _st in _CHAR_STAT_LABELS:
     FORMULAS[f"char_{_st}"] = (f"{_CHAR_STAT_LABELS[_st]} stat curve", _make_char_stat(_st))

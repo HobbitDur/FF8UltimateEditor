@@ -30,6 +30,10 @@ class DrawWidget(QTableWidget):
     selection_changed = pyqtSignal(int)
     # Emitted whenever an X/Y position changes (so the map can refresh).
     position_changed = pyqtSignal()
+    # Emitted when EXE-byte data (magic / high-yield / refill) is edited.
+    exe_changed = pyqtSignal()
+    # Emitted when world-position data (X / Y / Sub ID) is edited.
+    world_changed = pyqtSignal()
 
     def __init__(self, game_data: GameData, draw_list: [Draw] = (), parent=None):
         super().__init__(0, len(self.COLUMNS), parent)
@@ -115,6 +119,7 @@ class DrawWidget(QTableWidget):
             spin.setValue(value)
             spin.blockSignals(False)
         self.position_changed.emit()
+        self.world_changed.emit()
 
     def _on_current_cell_changed(self, current_row, *_):
         if current_row < 0 or current_row >= len(self._draw):
@@ -124,22 +129,32 @@ class DrawWidget(QTableWidget):
 
     def _magic_changed(self, index, row):
         self._draw[row].magic_index = index
+        if not self._loading:
+            self.exe_changed.emit()
 
     def _high_yield_changed(self, state, row):
         self._draw[row].high_yield = (state == Qt.CheckState.Checked.value)
+        if not self._loading:
+            self.exe_changed.emit()
 
     def _refill_changed(self, state, row):
         self._draw[row].refill = (state == Qt.CheckState.Checked.value)
+        if not self._loading:
+            self.exe_changed.emit()
 
     def _x_changed(self, value, row):
         self._draw[row].x = value
         if not self._loading:
             self.position_changed.emit()
+            self.world_changed.emit()
 
     def _y_changed(self, value, row):
         self._draw[row].y = value
         if not self._loading:
             self.position_changed.emit()
+            self.world_changed.emit()
 
     def _sub_id_changed(self, value, row):
         self._draw[row].sub_id = value
+        if not self._loading:
+            self.world_changed.emit()
