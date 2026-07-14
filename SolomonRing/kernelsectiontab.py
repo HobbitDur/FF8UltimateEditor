@@ -6,11 +6,12 @@ from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QLabel,
     QComboBox, QSpinBox, QLineEdit, QListWidget, QGroupBox, QScrollArea, QCheckBox,
-    QPushButton, QFileDialog, QMessageBox
+    QPushButton, QToolButton, QFileDialog, QMessageBox
 )
 
 from SolomonRing.kernelentry import KernelEntry
 from SolomonRing.menu_refine_reference import MenuRefineReference
+from SolomonRing.formula_popup import FormulaPopup
 from SmallWidget.nowheel import NoWheelComboBox, NoWheelSpinBox
 
 
@@ -60,6 +61,7 @@ class KernelSectionTab(QWidget):
         self._menu_refine_ref = None
         self._menu_refine_label = None
         self._menu_refine_button = None
+        self._formula_popup = None       # single live formula preview window for this tab
 
         self._entries = []
         self._current_index = -1
@@ -362,6 +364,30 @@ class KernelSectionTab(QWidget):
         lookup = self.registry.resolve(lookup_name)
         return bool(lookup) and lookup["type"] == "flags"
 
+    def _with_formula_button(self, field, inner):
+        """Wrap ``inner`` (the editor) with a small trailing 'f(x)' button that opens the
+        live formula preview for ``field``."""
+        container = QWidget()
+        row = QHBoxLayout(container)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(2)
+        row.addWidget(inner)
+        btn = QToolButton()
+        btn.setText("ƒ(x)")            # ƒ(x)
+        btn.setAutoRaise(True)
+        btn.setToolTip("Show this value plugged into its formula (with editable "
+                       "battle assumptions).")
+        btn.setStyleSheet("QToolButton { color: palette(highlight); font-style: italic; }")
+        btn.clicked.connect(lambda _=False, f=field: self._open_formula_popup(f))
+        row.addWidget(btn)
+        row.addStretch(1)
+        return container
+
+    def _open_formula_popup(self, field):
+        if self._formula_popup is None:
+            self._formula_popup = FormulaPopup(self, self)
+        self._formula_popup.show_for(field)
+
     def _make_field_widget(self, field):
         name = field["name"]
         readonly = field.get("readonly", False)
@@ -467,6 +493,7 @@ class KernelSectionTab(QWidget):
                 unit = (field["seconds_factor"], "s", 1, field.get("seconds_note"))
             elif field.get("percent_factor"):
                 unit = (field["percent_factor"], "%", 2, field.get("percent_note"))
+            inner = spin
             if unit:
                 factor, suffix, decimals, note = unit
                 container = QWidget()
@@ -486,8 +513,12 @@ class KernelSectionTab(QWidget):
                 spin.valueChanged.connect(_update_hint)
                 _update_hint(spin.value())
                 vbox.addWidget(hint_label)
-                return container
-            return spin
+                inner = container
+            # A field that feeds a runtime formula gets a small "f(x)" button that opens
+            # a live formula preview (formula + this value + assumptions -> result).
+            if field.get("formula") and not readonly:
+                return self._with_formula_button(field, inner)
+            return inner
         # 32-bit values overflow QSpinBox -> hex line edit
         edit = QLineEdit()
         edit.setFixedWidth(edit.fontMetrics().horizontalAdvance("0x" + "F" * 2 * field["size"]) + 16)

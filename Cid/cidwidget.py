@@ -7,14 +7,14 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QFileDialog, QPushButton, QHBoxLayout, QLabel, QComboBox,
                              QMessageBox, QSplitter)
 
-from DrawEditor.draw import Draw
-from DrawEditor.drawwidget import DrawWidget
-from DrawEditor.drawillustrationwidget import DrawIllustrationWidget
-from DrawEditor.worlddrawsection import WorldDrawSection
+from Cid.draw import Draw
+from Cid.drawwidget import DrawWidget
+from Cid.drawillustrationwidget import DrawIllustrationWidget
+from Cid.worlddrawsection import WorldDrawSection
 from FF8GameData.gamedata import GameData
 
 
-class DrawEditorWidget(QWidget):
+class CidWidget(QWidget):
     """Unified draw-point editor.
 
     Field and world draw points (Draw ID 1..256) share the EXE ``DrawPointData``

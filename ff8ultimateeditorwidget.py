@@ -7,7 +7,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel, QFrame, QStackedWidget
 
 from CCGroup.ccgroup import CCGroupWidget
-from DrawEditor.draweditorwidget import DrawEditorWidget
+from Cid.cidwidget import CidWidget
 from ExeLauncher.cactiliolauncher import CactilioLauncher
 from ExeLauncher.delinglauncher import DelingLauncher
 from ExeLauncher.doomtrainlauncher import DoomtrainLauncher
@@ -57,7 +57,7 @@ class FF8UltimateEditorWidget(QWidget):
             "ShumiTranslator(All text editor)",
             "TonberryShop (Shop editor)",
             "CCGroup (Card value editor)",
-            "Draw editor",
+            "Cid (Draw editor)",
             "SolomonRing (kernel.bin editor)",
             "PuPuCargo (Item menu editor)",
             "Seed (Field model viewer)",
@@ -143,7 +143,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path))
         self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path), settings=self.settings)
-        self._draw_editor_widget = DrawEditorWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._cid_widget = CidWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path))
         self._ifrit_widget = IfritMonsterWidget( settings=self.settings, icon_path=resources_path, game_data_folder=game_data_path)
         self._pupucargo_widget = PuPuCargoWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
@@ -162,7 +162,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._shumi_translator_widget)  # Index 1
         self.tool_stack.addWidget(self._tonberry_shop_widget)  # Index 2
         self.tool_stack.addWidget(self._ccgroup_widget)  # Index 3
-        self.tool_stack.addWidget(self._draw_editor_widget)  # Index 4
+        self.tool_stack.addWidget(self._cid_widget)  # Index 4
         self.tool_stack.addWidget(self._solomonring_widget) # Index 5
         self.tool_stack.addWidget(self._pupucargo_widget) # Index 6
         self.tool_stack.addWidget(self._seed_widget) # Index 7

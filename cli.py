@@ -20,7 +20,20 @@ from Cli.base import BaseCliTool
 from Cli.registry import get_registry, register_tool
 from Cli.shumi_translator import ShumiTranslatorCliTool
 from Cli.ifrit_ai import IfritAiCliTool
+from Cli.ifrit_model import IfritModelCliTool
 from Cli.jp_font_builder import JpFontBuilderCliTool
+from Cli.tonberry_shop import TonberryShopCliTool
+from Cli.siren import SirenCliTool
+from Cli.junkshop import JunkshopCliTool
+from Cli.quezacotl import QuezacotlCliTool
+from Cli.pupu_cargo import PuPuCargoCliTool
+from Cli.pandemona import PandemonaCliTool
+from Cli.ccgroup import CCGroupCliTool
+from Cli.cid import CidCliTool
+from Cli.julia import JuliaCliTool
+from Cli.solomon_ring import SolomonRingCliTool
+from Cli.alexander import AlexanderCliTool
+from Cli.seed import SeedCliTool
 
 
 def _register_all_tools():
@@ -28,7 +41,20 @@ def _register_all_tools():
     registry = get_registry()
     registry.register(ShumiTranslatorCliTool)
     registry.register(IfritAiCliTool)
+    registry.register(IfritModelCliTool)
     registry.register(JpFontBuilderCliTool)
+    registry.register(TonberryShopCliTool)
+    registry.register(SirenCliTool)
+    registry.register(JunkshopCliTool)
+    registry.register(QuezacotlCliTool)
+    registry.register(PuPuCargoCliTool)
+    registry.register(PandemonaCliTool)
+    registry.register(CCGroupCliTool)
+    registry.register(CidCliTool)
+    registry.register(JuliaCliTool)
+    registry.register(SolomonRingCliTool)
+    registry.register(AlexanderCliTool)
+    registry.register(SeedCliTool)
 
 
 def build_main_parser() -> argparse.ArgumentParser:
@@ -47,8 +73,11 @@ Available tools:
 
 Examples:
   ff8-cli shumi-translator export-csv --input kernel.bin --output kernel.csv
-  ff8-cli shumi-translator import-csv --input kernel.bin --csv kernel.csv
-  ff8-cli shumi-translator compress --input kernel.bin --output kernel_compressed.bin
+  ff8-cli solomon-ring set --input kernel.bin --section 2 --entry 1 --field atk_power --value 30
+  ff8-cli siren set-price --input price.bin --item-id 24 --buy-price 3000
+  ff8-cli ifrit export-gltf --input c0m071.dat --output c0m071.glb
+  ff8-cli alexander export-glb --input a0stg001.x --output stage.glb
+  ff8-cli ccgroup list --folder extracted_files/field/mapdata
         """,
     )
 

@@ -26,6 +26,7 @@ SelfUpdate
 **/*.bin
 *.xlsx
 *.png
+!Resources/screenshots/*.png
 FF8GameData/fs/DelingCli
 Temp
 .junie/

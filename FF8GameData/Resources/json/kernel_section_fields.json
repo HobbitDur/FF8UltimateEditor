@@ -92,7 +92,8 @@
     "size": 1,
     "label": "Spell power",
     "group": "General",
-    "help": "Base power fed into the damage formula."
+    "help": "Base power fed into the damage formula.",
+    "formula": "magic_damage"
    },
    {
     "name": "status_window_flags",
@@ -319,112 +320,128 @@
     "offset": 42,
     "size": 1,
     "label": "Quezacotl",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_shiva",
     "offset": 43,
     "size": 1,
     "label": "Shiva",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_ifrit",
     "offset": 44,
     "size": 1,
     "label": "Ifrit",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_siren",
     "offset": 45,
     "size": 1,
     "label": "Siren",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_brothers",
     "offset": 46,
     "size": 1,
     "label": "Brothers",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_diablos",
     "offset": 47,
     "size": 1,
     "label": "Diablos",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_carbuncle",
     "offset": 48,
     "size": 1,
     "label": "Carbuncle",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_leviathan",
     "offset": 49,
     "size": 1,
     "label": "Leviathan",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_pandemona",
     "offset": 50,
     "size": 1,
     "label": "Pandemona",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_cerberus",
     "offset": 51,
     "size": 1,
     "label": "Cerberus",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_alexander",
     "offset": 52,
     "size": 1,
     "label": "Alexander",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_doomtrain",
     "offset": 53,
     "size": 1,
     "label": "Doomtrain",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_bahamut",
     "offset": 54,
     "size": 1,
     "label": "Bahamut",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_cactuar",
     "offset": 55,
     "size": 1,
     "label": "Cactuar",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_tonberry",
     "offset": 56,
     "size": 1,
     "label": "Tonberry",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_eden",
     "offset": 57,
     "size": 1,
     "label": "Eden",
-    "group": "GF Compatibility"
+    "group": "GF Compatibility",
+    "formula": "gf_compat"
    },
    {
     "name": "unknown_0x3a",
@@ -1368,7 +1385,8 @@
     "size": 1,
     "label": "Quezacotl",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Quezacotl changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Quezacotl changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_shiva",
@@ -1376,7 +1394,8 @@
     "size": 1,
     "label": "Shiva",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Shiva changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Shiva changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_ifrit",
@@ -1384,7 +1403,8 @@
     "size": 1,
     "label": "Ifrit",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Ifrit changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Ifrit changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_siren",
@@ -1392,7 +1412,8 @@
     "size": 1,
     "label": "Siren",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Siren changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Siren changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_brothers",
@@ -1400,7 +1421,8 @@
     "size": 1,
     "label": "Brothers",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Brothers changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Brothers changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_diablos",
@@ -1408,7 +1430,8 @@
     "size": 1,
     "label": "Diablos",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Diablos changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Diablos changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_carbuncle",
@@ -1416,7 +1439,8 @@
     "size": 1,
     "label": "Carbuncle",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Carbuncle changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Carbuncle changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_leviathan",
@@ -1424,7 +1448,8 @@
     "size": 1,
     "label": "Leviathan",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Leviathan changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Leviathan changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_pandemona",
@@ -1432,7 +1457,8 @@
     "size": 1,
     "label": "Pandemona",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Pandemona changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Pandemona changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_cerberus",
@@ -1440,7 +1466,8 @@
     "size": 1,
     "label": "Cerberus",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Cerberus changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Cerberus changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_alexander",
@@ -1448,7 +1475,8 @@
     "size": 1,
     "label": "Alexander",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Alexander changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Alexander changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_doomtrain",
@@ -1456,7 +1484,8 @@
     "size": 1,
     "label": "Doomtrain",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Doomtrain changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Doomtrain changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_bahamut",
@@ -1464,7 +1493,8 @@
     "size": 1,
     "label": "Bahamut",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Bahamut changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Bahamut changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_cactuar",
@@ -1472,7 +1502,8 @@
     "size": 1,
     "label": "Cactuar",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Cactuar changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Cactuar changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_tonberry",
@@ -1480,7 +1511,8 @@
     "size": 1,
     "label": "Tonberry",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Tonberry changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Tonberry changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    },
    {
     "name": "compat_eden",
@@ -1488,7 +1520,8 @@
     "size": 1,
     "label": "Eden",
     "group": "GF Compatibility",
-    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Eden changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)"
+    "help": "When THIS GF is summoned in battle, how much the casting character's compatibility with Eden changes.\n100 = no change; >100 raises it, <100 lowers it (delta = value - 100).\nThe stored total is clamped to 1000-6000; higher compatibility fills that GF's summon (Boost) gauge faster, so it appears sooner.\nPlayer characters only. (BattleAction_ExecuteCommand)",
+    "formula": "gf_compat"
    }
   ],
   "entry_names": [
@@ -5805,6 +5838,7 @@
     "label": "HP heal/dmg quantity (sixteenths of max HP)",
     "group": "Data",
     "percent_factor": 6.25,
+    "formula": "devour_hp",
     "percent_note": "Value is in sixteenths of max HP (value/16 * 100%); linear, not an enum."
    },
    {
@@ -5855,7 +5889,8 @@
     "label": "Sleep timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_haste",
@@ -5864,7 +5899,8 @@
     "label": "Haste timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_slow",
@@ -5873,7 +5909,8 @@
     "label": "Slow timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_stop",
@@ -5882,7 +5919,8 @@
     "label": "Stop timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_regen",
@@ -5891,7 +5929,8 @@
     "label": "Regen timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_protect",
@@ -5900,7 +5939,8 @@
     "label": "Protect timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_shell",
@@ -5909,7 +5949,8 @@
     "label": "Shell timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_reflect",
@@ -5918,7 +5959,8 @@
     "label": "Reflect timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_aura",
@@ -5927,7 +5969,8 @@
     "label": "Aura timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_curse",
@@ -5936,7 +5979,8 @@
     "label": "Curse timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_doom",
@@ -5945,7 +5989,8 @@
     "label": "Doom timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_invincible",
@@ -5954,7 +5999,8 @@
     "label": "Invincible timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_petrifying",
@@ -5963,7 +6009,8 @@
     "label": "Petrifying timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "timer_float",
@@ -5972,7 +6019,8 @@
     "label": "Float timer",
     "group": "Status timers",
     "seconds_factor": 1.0666666666666667,
-    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s."
+    "seconds_note": "Battle countdown = 4 x (battleSpeed+1) x value ticks (setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.",
+    "formula": "status_timer"
    },
    {
     "name": "atb_speed_multiplier",
@@ -5988,6 +6036,7 @@
     "label": "Gilgamesh/Angelo summon interval",
     "group": "Status timers",
     "seconds_factor": 0.06666666666666667,
+    "formula": "dead_timer",
     "seconds_note": "Decremented once per battle tick (~15 ticks/s), so ~ value/15 s between summon-checks.",
     "help": "Interval between the random Gilgamesh / Angelo / Phoenix auto-summon checks during battle (NOT a character-death countdown). summonGilgaAngelStartFight decrements it once per battle tick; when it reaches 0 the game rolls to summon Gilgamesh (12/255 chance, if you own him and he hasn't come this fight) or fire an Angelo/Phoenix auto-action, then reloads this value. Loaded into DEAD_TIMER_TO_SUMMON_GILGA. Lower = checks happen more often."
    },
@@ -5997,7 +6046,8 @@
     "size": 1,
     "label": "Death limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_poison_1",
@@ -6005,7 +6055,8 @@
     "size": 1,
     "label": "Poison limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_petrify_2",
@@ -6013,7 +6064,8 @@
     "size": 1,
     "label": "Petrify limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_darkness_3",
@@ -6021,7 +6073,8 @@
     "size": 1,
     "label": "Darkness limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_silence_4",
@@ -6029,7 +6082,8 @@
     "size": 1,
     "label": "Silence limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_berserk_5",
@@ -6037,7 +6091,8 @@
     "size": 1,
     "label": "Berserk limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_zombie_6",
@@ -6045,7 +6100,8 @@
     "size": 1,
     "label": "Zombie limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_unused_(status-1_bit_7)_7",
@@ -6054,7 +6110,8 @@
     "label": "Unused (Status-1 bit 7) limit effect",
     "group": "Status limit effects",
     "readonly": true,
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_sleep_8",
@@ -6062,7 +6119,8 @@
     "size": 1,
     "label": "Sleep limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_haste_9",
@@ -6070,7 +6128,8 @@
     "size": 1,
     "label": "Haste limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_slow_10",
@@ -6078,7 +6137,8 @@
     "size": 1,
     "label": "Slow limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_stop_11",
@@ -6086,7 +6146,8 @@
     "size": 1,
     "label": "Stop limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_regen_12",
@@ -6094,7 +6155,8 @@
     "size": 1,
     "label": "Regen limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_protect_13",
@@ -6102,7 +6164,8 @@
     "size": 1,
     "label": "Protect limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_shell_14",
@@ -6110,7 +6173,8 @@
     "size": 1,
     "label": "Shell limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_reflect_15",
@@ -6118,7 +6182,8 @@
     "size": 1,
     "label": "Reflect limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_aura_16",
@@ -6126,7 +6191,8 @@
     "size": 1,
     "label": "Aura limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_curse_17",
@@ -6134,7 +6200,8 @@
     "size": 1,
     "label": "Curse limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_doom_18",
@@ -6142,7 +6209,8 @@
     "size": 1,
     "label": "Doom limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_invincible_19",
@@ -6150,7 +6218,8 @@
     "size": 1,
     "label": "Invincible limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_petrifying_20",
@@ -6158,7 +6227,8 @@
     "size": 1,
     "label": "Petrifying limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_float_21",
@@ -6166,7 +6236,8 @@
     "size": 1,
     "label": "Float limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_confusion_22",
@@ -6174,7 +6245,8 @@
     "size": 1,
     "label": "Confusion limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_drain_23",
@@ -6182,7 +6254,8 @@
     "size": 1,
     "label": "Drain limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_eject_24",
@@ -6190,7 +6263,8 @@
     "size": 1,
     "label": "Eject limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_double_25",
@@ -6198,7 +6272,8 @@
     "size": 1,
     "label": "Double limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_triple_26",
@@ -6206,7 +6281,8 @@
     "size": 1,
     "label": "Triple limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_defend_27",
@@ -6214,7 +6290,8 @@
     "size": 1,
     "label": "Defend limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_immune_physical_attack_28",
@@ -6222,7 +6299,8 @@
     "size": 1,
     "label": "Immune Physical attack limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_immune_magic_attack_29",
@@ -6230,7 +6308,8 @@
     "size": 1,
     "label": "Immune Magic attack limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_charged_30",
@@ -6238,7 +6317,8 @@
     "size": 1,
     "label": "Charged limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "limit_back_attack_31",
@@ -6246,7 +6326,8 @@
     "size": 1,
     "label": "Back Attack limit effect",
     "group": "Status limit effects",
-    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it."
+    "help": "How much having this status active contributes to a character's crisis/Limit-Break gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's active statuses (from both Status 1 and Status 2) adds its byte here into one running total each frame:\ncrisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\nHigher values push the crisis level (and so Limit Break availability) up faster; 0 means that status doesn't affect it at all. Death/Poison/etc. push it up because you're worse off; there's no term that lowers it.",
+    "formula": "crisis"
    },
    {
     "name": "duel_start_seq_cl1",

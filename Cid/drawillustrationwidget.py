@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QSizePolicy
 
-from DrawEditor.drawmapwidget import DrawMapWidget
+from Cid.drawmapwidget import DrawMapWidget
 
 
 class AspectImageLabel(QLabel):

@@ -934,12 +934,14 @@ for sid_s, cfg in sections.items():
             f["seconds_factor"] = 16.0 / 15.0
             f["seconds_note"] = ("Battle countdown = 4 x (battleSpeed+1) x value ticks "
                                  "(setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.")
+            f["formula"] = "status_timer"
         # "Dead timer" is really the interval between the random Gilgamesh/Angelo/Phoenix
         # auto-summon checks. summonGilgaAngelStartFight (called once per battle tick from
         # FFBattleDirector_battleLoop) decrements it; at 0 it rolls to summon Gilgamesh
         # (12/255) or trigger an Angelo/Phoenix auto-action, then reloads this value.
         if sid == 30 and f["name"] == "dead_timer":
             f["seconds_factor"] = 1.0 / 15.0
+            f["formula"] = "dead_timer"
             f["seconds_note"] = ("Decremented once per battle tick (~15 ticks/s), so ~ value/15 s "
                                  "between summon-checks.")
             f["help"] = ("Interval between the random Gilgamesh / Angelo / Phoenix auto-summon "
@@ -955,7 +957,17 @@ for sid_s, cfg in sections.items():
         # which showed later, perfectly-valid values (e.g. 12 = 75%) as unresolved "raw".
         if sid == 29 and f["name"] == "hp_quantity":
             f["percent_factor"] = 100.0 / 16.0
+            f["formula"] = "devour_hp"
             f["percent_note"] = "Value is in sixteenths of max HP (value/16 * 100%); linear, not an enum."
+        # GF compatibility feeds the summon-gauge fill; spell power feeds the magic damage
+        # formula; the crisis/limit-effect bytes feed the crisis-level formula. Each gets an
+        # f(x) preview button.
+        if sid in (2, 3) and f["name"].startswith("compat_"):
+            f["formula"] = "gf_compat"
+        if sid == 2 and f["name"] == "spell_power":
+            f["formula"] = "magic_damage"
+        if sid == 30 and f["name"].startswith("limit_"):
+            f["formula"] = "crisis"
 
 # Zell "Duel" limit-break help (decompiled: linkedToZellDuel / sub_4852B0 / K_DUEL_PARAM).
 for _f in sections["30"]["fields"]:

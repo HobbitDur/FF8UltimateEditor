@@ -1,7 +1,7 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QTableWidget, QHeaderView, QTableWidgetItem, QCheckBox, QWidget, QHBoxLayout, QSpinBox
 
-from DrawEditor.draw import Draw
+from Cid.draw import Draw
 from FF8GameData.gamedata import GameData
 
 

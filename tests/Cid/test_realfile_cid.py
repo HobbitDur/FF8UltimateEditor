@@ -1,10 +1,10 @@
-"""Real-file round-trip test for the DrawEditor tool (world-map draw points).
+"""Real-file round-trip test for the Cid tool (world-map draw points).
 
-The DrawEditor stores world draw-point *positions* in Section 34 of the world-map
-``wmsetxx.obj`` file (see ``DrawEditor/worlddrawsection.py``). ``WorldDrawSection.load``
+The Cid stores world draw-point *positions* in Section 34 of the world-map
+``wmsetxx.obj`` file (see ``Cid/worlddrawsection.py``). ``WorldDrawSection.load``
 consumes the *whole* wmset.obj: it reads the 48-entry section-offset table at the start
 of the file, slices out Section 34, then splits it into a 0x2C header + N 4-byte records
-``(x, y, sub_id, pad)``. This mirrors exactly what ``DrawEditorWidget._load_wmset`` feeds
+``(x, y, sub_id, pad)``. This mirrors exactly what ``CidWidget._load_wmset`` feeds
 into it (the file the user picks with the "Load wmsetxx.obj" button), which is why the test
 passes the wmset.obj path directly rather than a pre-sliced section.
 
@@ -18,7 +18,7 @@ import pathlib
 
 import pytest
 
-from DrawEditor.worlddrawsection import WorldDrawSection
+from Cid.worlddrawsection import WorldDrawSection
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 WMSET_REL = "extracted_files/world/dat/wmset.obj"
