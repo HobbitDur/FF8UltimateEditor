@@ -102,10 +102,10 @@ class FF8UltimateEditorWidget(QWidget):
         self._hyne_button = ExternalToolWidget(os.path.join(resources_path, 'hyne.ico'), self._launch_hyne, "Launch hyne (Save editor)")
 
         # Temporarily hidden (kept in case they get re-enabled later)
-        self._Quezacotl_button.hide()
-        self._siren_button.hide()
-        self._junkshop_button.hide()
-        self._doomtrain_button.hide()
+        #self._Quezacotl_button.hide()
+        #self._siren_button.hide()
+        #self._junkshop_button.hide()
+        #self._doomtrain_button.hide()
 
         # External Program Layout Assembly
         self._external_program_layout = QHBoxLayout()

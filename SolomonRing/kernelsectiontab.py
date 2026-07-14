@@ -1,16 +1,35 @@
+import os
+import textwrap
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QLabel,
-    QComboBox, QSpinBox, QLineEdit, QListWidget, QGroupBox, QScrollArea, QCheckBox
+    QComboBox, QSpinBox, QLineEdit, QListWidget, QGroupBox, QScrollArea, QCheckBox,
+    QPushButton, QFileDialog, QMessageBox
 )
 
 from SolomonRing.kernelentry import KernelEntry
+from SolomonRing.menu_refine_reference import MenuRefineReference
 from SmallWidget.nowheel import NoWheelComboBox, NoWheelSpinBox
 
 
 def _prettify(name: str) -> str:
     return name.replace("_", " ").strip().title()
+
+
+def _wrap_tooltip(text: str, width: int = 62) -> str:
+    """Word-wrap a tooltip so it grows in height, not width (Qt does not wrap
+    plain-text tooltips itself). Existing line breaks are preserved; each logical
+    line is wrapped to ``width`` columns."""
+    lines = []
+    for line in text.split("\n"):
+        if len(line) <= width:
+            lines.append(line)
+        else:
+            lines.append(textwrap.fill(line, width=width,
+                                       break_long_words=False, break_on_hyphens=False))
+    return "\n".join(lines)
 
 
 class KernelSectionTab(QWidget):
@@ -23,7 +42,7 @@ class KernelSectionTab(QWidget):
       * ``fields``       : list of field defs (see ``kernel_bin_data.json`` -> ``section_fields``)
     """
 
-    def __init__(self, game_data, registry, config, game_data_folder="FF8GameData"):
+    def __init__(self, game_data, registry, config, game_data_folder="FF8GameData", jump_callback=None):
         super().__init__()
         self.game_data = game_data
         self.registry = registry
@@ -32,11 +51,21 @@ class KernelSectionTab(QWidget):
         self.text_labels = config.get("text_labels", [])
         self.entry_names = config.get("entry_names")
         self.fields = config.get("fields", [])
+        # Optional callable(section_id, label) -> switch the app to another section's tab,
+        # used by fields whose value only makes sense alongside another section's data
+        # (e.g. the Slot array's set-id references the Selphie limit-break sets tab).
+        self._jump_callback = jump_callback
+        # Menu abilities' Refine data lives entirely outside kernel.bin (menu.fs's mngrp
+        # files) - loaded on demand via a button, not part of the normal file-load flow.
+        self._menu_refine_ref = None
+        self._menu_refine_label = None
+        self._menu_refine_button = None
 
         self._entries = []
         self._current_index = -1
         self._text_widgets = []          # list of QLineEdit, one per text offset
         self._field_widgets = {}         # field name -> widget descriptor
+        self._embed_map = {}             # flags-field name -> [dependent field defs to nest inside it]
 
         layout = QHBoxLayout(self)
 
@@ -51,6 +80,7 @@ class KernelSectionTab(QWidget):
         self._form_host = QWidget()
         self._form_layout = QVBoxLayout(self._form_host)
         self._build_form()
+        self._wire_enable_when()
         self._form_layout.addStretch()
         scroll.setWidget(self._form_host)
         layout.addWidget(scroll, 1)
@@ -64,9 +94,15 @@ class KernelSectionTab(QWidget):
             parts.append(field["help"])
         size = field["size"]
         offset = field["offset"]
-        max_value = (1 << (8 * size)) - 1
-        meta = (f"Offset 0x{offset:02X} · {size} byte{'s' if size > 1 else ''} · "
-                f"range 0–{max_value} (0x{max_value:X})")
+        mask = field.get("mask")
+        meta = f"Offset 0x{offset:02X} · {size} byte{'s' if size > 1 else ''}"
+        if field.get("bool"):
+            meta += " · boolean (0/1 - the engine only ever checks this byte for zero/nonzero)"
+        else:
+            max_value = mask if mask is not None else (1 << (8 * size)) - 1
+            meta += f" · range 0–{max_value}"
+            if mask is not None:
+                meta += f" (mask 0x{mask:02X})"
         lookup_name = field.get("lookup")
         if lookup_name:
             lookup = self.registry.resolve(lookup_name)
@@ -74,14 +110,15 @@ class KernelSectionTab(QWidget):
                 kind = "flags" if lookup["type"] == "flags" else "options"
                 meta += f" · {len(lookup['entries'])} {kind}"
         parts.append(meta)
-        return "\n".join(parts)
+        return _wrap_tooltip("\n".join(parts))
 
     def _build_form(self):
         # Text (name / description) editors
         if self.text_labels:
             box = QGroupBox("Text")
-            box.setToolTip("Name / description strings. Text offsets are recomputed automatically "
-                           "on save; use the toolbar to (un)compress all kernel text.")
+            box.setToolTip(_wrap_tooltip(
+                "Name / description strings. Text offsets are recomputed automatically "
+                "on save; use the toolbar to (un)compress all kernel text."))
             form = QFormLayout(box)
             form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
             for label in self.text_labels:
@@ -107,53 +144,216 @@ class KernelSectionTab(QWidget):
             box = QGroupBox(gname)
             vbox = QVBoxLayout(box)
             vbox.setSpacing(4)
-            pending = []  # (label, widget) pairs waiting to be placed on a row
 
-            # Label column width = this group's longest title, so every value/editor in
-            # the group lines up in a column (left-aligned labels keep them flush-left).
-            metrics = self.fontMetrics()
-            label_width = 0
+            # A field can opt into a named nested sub-box via "subgroup"; those fields (and
+            # any button/panel their fields trigger) render inside that inner QGroupBox
+            # instead of the main group flow. Order of first appearance is preserved.
+            sub_order = []
+            sub_map = {}
+            main_fields = []
             for field in group_map[gname]:
-                if self._is_flags(field):
-                    continue
-                text = field.get("label", _prettify(field["name"]))
-                label_width = max(label_width, metrics.horizontalAdvance(text))
-            label_width += 6
+                sg = field.get("subgroup")
+                if sg:
+                    if sg not in sub_map:
+                        sub_map[sg] = []
+                        sub_order.append(sg)
+                    sub_map[sg].append(field)
+                else:
+                    main_fields.append(field)
 
-            def flush_row():
-                if not pending:
-                    return
-                row = QHBoxLayout()
-                row.setSpacing(6)
-                for lbl, wdg in pending:
-                    lbl.setFixedWidth(label_width)
-                    lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-                    row.addWidget(lbl)
-                    row.addWidget(wdg)
-                    row.addSpacing(24)
-                row.addStretch(1)
-                vbox.addLayout(row)
-                pending.clear()
+            self._render_field_block(vbox, main_fields)
+            for sg in sub_order:
+                sub_box = QGroupBox(sg)
+                sub_vbox = QVBoxLayout(sub_box)
+                sub_vbox.setSpacing(4)
+                # Inside a subgroup, lead with the combos (e.g. a "Refine table" selector
+                # reads better above the offset spinboxes that pick rows within it).
+                self._render_field_block(sub_vbox, sub_map[sg], combos_first=True)
+                vbox.addWidget(sub_box)
 
-            for field in group_map[gname]:
+            self._form_layout.addWidget(box)
+
+    def _render_field_block(self, vbox, fields, combos_first=False):
+        """Render a set of fields into ``vbox``: any reference button/panel their fields
+        trigger, then the fields themselves grouped by editor kind (spinboxes, then combos,
+        then bitfields; explicit ``row`` groups stay on one line). ``combos_first`` swaps the
+        spinbox/combo order for the block."""
+        if not fields:
+            return
+
+        # A field can name another section whose data it references but can't itself
+        # display; a button jumps the app to that section's tab.
+        jump_target = next((f["jump_to_section"] for f in fields if f.get("jump_to_section")), None)
+        if jump_target is not None and self._jump_callback:
+            jump_btn = QPushButton(f"Open {jump_target[1]} →")
+            jump_btn.setToolTip(f"Switch to the {jump_target[1]} tab to see/edit what these "
+                                f"values reference.")
+            jump_btn.clicked.connect(lambda _, sid=jump_target[0]: self._jump_callback(sid))
+            jump_row = QHBoxLayout()
+            jump_row.addWidget(jump_btn)
+            jump_row.addStretch(1)
+            vbox.addLayout(jump_row)
+
+        # The Refine reference button loads menu.fs's mngrp data for the WHOLE tab (all menu
+        # abilities share it), so it sits at the top of the main group as a one-time action,
+        # separate from the per-entry decoded panel (which lives in the Refine sub-box below).
+        if any(f.get("menu_refine_button") for f in fields):
+            load_btn = QPushButton("Load Refine reference (mngrp.bin)...")
+            load_btn.setToolTip(
+                "The item/magic/card conversions each Refine ability performs live in menu.fs, "
+                "not kernel.bin. Pick mngrphd.bin (mngrp.bin must be alongside it) once to decode "
+                "them for every Refine ability in this tab. Reference only - nothing here is saved.")
+            load_btn.clicked.connect(self._load_menu_refine_reference)
+            self._menu_refine_button = load_btn
+            load_row = QHBoxLayout()
+            load_row.addWidget(load_btn)
+            load_row.addStretch(1)
+            vbox.addLayout(load_row)
+
+        # Fields with "enabled_unless_bit" are nested inside their referenced flags field's
+        # box (e.g. a battle command's Submenu picker) instead of a separate block.
+        embed_map = {}
+        embedded_names = set()
+        for field in fields:
+            dep = field.get("enabled_unless_bit")
+            if dep:
+                embed_map.setdefault(dep["field"], []).append(field)
+                embedded_names.add(field["name"])
+        self._embed_map = embed_map
+
+        # Group fields by editor kind so like-widgets line up: spinboxes, then combos, then
+        # bitfields; fields sharing a "row" stay on one line together.
+        row_order = []
+        row_groups = {}
+        spins, combos, flag_fields = [], [], []
+        for field in fields:
+            if field["name"] in embedded_names:
+                continue
+            rid = field.get("row")
+            if rid is not None:
+                if rid not in row_groups:
+                    row_groups[rid] = []
+                    row_order.append(rid)
+                row_groups[rid].append(field)
+            elif self._is_flags(field):
+                flag_fields.append(field)
+            elif field.get("lookup"):
+                combos.append(field)
+            else:
+                spins.append(field)
+
+        # Convention: Status 1 is always displayed before Status 2, regardless of their
+        # physical byte order (some sections store Status 2 first).
+        names = [f["name"] for f in flag_fields]
+        if "status_1" in names and "status_2" in names and \
+                names.index("status_2") < names.index("status_1"):
+            s1 = flag_fields.pop(names.index("status_1"))
+            flag_fields.insert([f["name"] for f in flag_fields].index("status_2"), s1)
+
+        if combos_first:
+            self._emit_aligned_rows(vbox, self._chunk(combos, 2))
+            self._emit_aligned_rows(vbox, self._chunk(spins, 2))
+        else:
+            self._emit_aligned_rows(vbox, self._chunk(spins, 2))
+            self._emit_aligned_rows(vbox, self._chunk(combos, 2))
+        if row_order:
+            self._emit_aligned_rows(vbox, [row_groups[rid] for rid in row_order])
+        for field in flag_fields:
+            self._emit_single_row(vbox, [field], flags=True)
+
+        # Per-entry decoded Refine table for the current ability (the load button that fills
+        # it lives at the top of the main group - it's shared by every menu ability).
+        if any(f.get("menu_refine_reference") for f in fields):
+            self._menu_refine_label = QLabel("(load the Refine reference above to see what this "
+                                             "ability refines)")
+            self._menu_refine_label.setStyleSheet("color: gray; font-size: 9pt;")
+            self._menu_refine_label.setWordWrap(True)
+            vbox.addWidget(self._menu_refine_label)
+
+    @staticmethod
+    def _chunk(items, n):
+        return [items[i:i + n] for i in range(0, len(items), n)]
+
+    def _labeled_widget(self, field):
+        tooltip = self._field_tooltip(field)
+        widget = self._make_field_widget(field)
+        widget.setToolTip(tooltip)
+        label = QLabel(field.get("label", _prettify(field["name"])))
+        label.setToolTip(tooltip)
+        return label, widget
+
+    def _emit_aligned_rows(self, vbox, rows):
+        """Render a set of rows (each a list of fields). Labels are aligned *per column*
+        so a long label in one column never pushes a short label's editor away in another
+        (fixes both the 'value far from title' gaps and the Ability 9→10 shift)."""
+        rows = [r for r in rows if r]
+        if not rows:
+            return
+        metrics = self.fontMetrics()
+        ncol = max(len(r) for r in rows)
+        col_w = [0] * ncol
+        for r in rows:
+            for i, f in enumerate(r):
+                col_w[i] = max(col_w[i], metrics.horizontalAdvance(f.get("label", _prettify(f["name"]))))
+        for r in rows:
+            row = QHBoxLayout()
+            row.setSpacing(6)
+            for i, f in enumerate(r):
+                lbl, wdg = self._labeled_widget(f)
+                lbl.setFixedWidth(col_w[i] + 6)
+                lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                row.addWidget(lbl)
+                row.addWidget(wdg)
+                row.addSpacing(18)
+            row.addStretch(1)
+            vbox.addLayout(row)
+
+    def _wire_enable_when(self):
+        """Grey out a field's widget unless another (enum) field's current value is in a
+        set, driven by ``enabled_when``: ``{"field": <enum name>, "values": [...]}``. Live -
+        re-evaluates whenever the source combo changes (incl. each entry load). A field that
+        also owns the per-entry Refine panel greys it too (so Start/End offset + the decoded
+        panel dim together for a non-Refine ability); the load button stays enabled since it
+        loads data for the whole tab, not the current entry."""
+        for field in self.fields:
+            dep = field.get("enabled_when")
+            if not dep:
+                continue
+            target = self._field_widgets.get(field["name"])
+            source = self._field_widgets.get(dep["field"])
+            if not target or not source or source[0] != "enum":
+                continue
+            src_widget = source[2]
+            values = set(dep["values"])
+            targets = [target[2]]
+            if field.get("menu_refine_reference") and self._menu_refine_label is not None:
+                targets.append(self._menu_refine_label)
+
+            def _sync(_=None, sw=src_widget, vals=values, tgts=targets):
+                on = sw.currentData() in vals
+                for t in tgts:
+                    t.setEnabled(on)
+
+            src_widget.currentIndexChanged.connect(_sync)
+            _sync()
+
+    def _emit_single_row(self, vbox, fields, flags=False):
+        """One line holding all given fields (natural widths), left-hugged."""
+        row = QHBoxLayout()
+        row.setSpacing(6)
+        for field in fields:
+            if flags:
                 tooltip = self._field_tooltip(field)
                 widget = self._make_field_widget(field)
                 widget.setToolTip(tooltip)
-                if isinstance(widget, QGroupBox):  # flags: own full-width row, left-hugged
-                    flush_row()
-                    row = QHBoxLayout()
-                    row.setSpacing(6)
-                    row.addWidget(widget)
-                    row.addStretch(1)
-                    vbox.addLayout(row)
-                    continue
-                label = QLabel(field.get("label", _prettify(field["name"])))
-                label.setToolTip(tooltip)
-                pending.append((label, widget))
-                if len(pending) == 2:
-                    flush_row()
-            flush_row()
-            self._form_layout.addWidget(box)
+                row.addWidget(widget)
+            else:
+                lbl, wdg = self._labeled_widget(field)
+                row.addWidget(lbl)
+                row.addWidget(wdg)
+                row.addSpacing(18)
+        row.addStretch(1)
+        vbox.addLayout(row)
 
     def _is_flags(self, field):
         lookup_name = field.get("lookup")
@@ -170,16 +370,55 @@ class KernelSectionTab(QWidget):
 
         if lookup and lookup["type"] == "flags":
             box = QGroupBox(field.get("label", _prettify(name)))
-            grid = QGridLayout(box)
+            outer = QVBoxLayout(box)
+            outer.setSpacing(4)
+
+            # Checkboxes that gate an embedded field (e.g. "Instant" gates the Submenu
+            # picker) are pulled out of the main grid into their own nested sub-box
+            # together with what they gate, so the coupling reads as one unit rather
+            # than being lost among the other independent flags.
+            embedded = self._embed_map.get(name, [])
+            coupling_masks = {dep_field["enabled_unless_bit"]["mask"] for dep_field in embedded}
+
+            grid = QGridLayout()
             checks = []
-            for i, entry in enumerate(lookup["entries"]):
+            coupled_checks = {}
+            grid_i = 0
+            for entry in lookup["entries"]:
                 cb = QCheckBox(entry["name"])
                 # Individual bits proven unused are shown but not editable.
                 if readonly or entry["name"].lower().startswith(("unused", "padding")):
                     cb.setEnabled(False)
-                grid.addWidget(cb, i // 4, i % 4)
                 checks.append((entry["mask"], cb))
+                if entry["mask"] in coupling_masks:
+                    coupled_checks[entry["mask"]] = cb
+                else:
+                    grid.addWidget(cb, grid_i // 4, grid_i % 4)
+                    grid_i += 1
+            outer.addLayout(grid)
             self._field_widgets[name] = ("flags", field, checks)
+
+            for dep_field in embedded:
+                dep = dep_field["enabled_unless_bit"]
+                cb = coupled_checks.get(dep["mask"])
+                sub_box = QGroupBox()
+                sub_vbox = QVBoxLayout(sub_box)
+                sub_vbox.setSpacing(4)
+                if cb:
+                    sub_vbox.addWidget(cb)
+                lbl, wdg = self._labeled_widget(dep_field)
+                row = QHBoxLayout()
+                row.setSpacing(6)
+                row.addWidget(lbl)
+                row.addWidget(wdg)
+                row.addStretch(1)
+                sub_vbox.addLayout(row)
+                outer.addWidget(sub_box)
+                if cb:
+                    def _sync(checked, widget=wdg):
+                        widget.setEnabled(not checked)
+                    cb.toggled.connect(_sync)
+                    _sync(cb.isChecked())
             return box
 
         if lookup and lookup["type"] == "enum":
@@ -199,8 +438,18 @@ class KernelSectionTab(QWidget):
             self._field_widgets[name] = ("enum", field, combo)
             return combo
 
-        # Plain integer
-        max_value = (1 << (8 * field["size"])) - 1
+        if field.get("bool"):
+            cb = QCheckBox()
+            if readonly:
+                cb.setEnabled(False)
+            self._field_widgets[name] = ("bool", field, cb)
+            return cb
+
+        # Plain integer. A mask (a sub-byte/sub-word field sharing its offset with a
+        # sibling, or - as here - the meaningful low bits of a WORD whose high bits are
+        # proven inert) caps the editable range to just those bits.
+        mask = field.get("mask")
+        max_value = mask if mask is not None else (1 << (8 * field["size"])) - 1
         if max_value <= 0x7FFFFFFF:
             spin = NoWheelSpinBox()
             spin.setRange(0, max_value)
@@ -211,6 +460,33 @@ class KernelSectionTab(QWidget):
                 spin.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
                 spin.setEnabled(False)
             self._field_widgets[name] = ("int", field, spin)
+            # Optional live "≈ N <unit>" hint under the spinbox for a raw byte that's
+            # actually value*factor in some other unit (seconds, percent, ...).
+            unit = None
+            if field.get("seconds_factor"):
+                unit = (field["seconds_factor"], "s", 1, field.get("seconds_note"))
+            elif field.get("percent_factor"):
+                unit = (field["percent_factor"], "%", 2, field.get("percent_note"))
+            if unit:
+                factor, suffix, decimals, note = unit
+                container = QWidget()
+                vbox = QVBoxLayout(container)
+                vbox.setContentsMargins(0, 0, 0, 0)
+                vbox.setSpacing(0)
+                vbox.addWidget(spin)
+                hint_label = QLabel()
+                hint_label.setStyleSheet("color: gray; font-size: 8pt;")
+                if note:
+                    hint_label.setToolTip(_wrap_tooltip(note))
+                hint_label.setFixedWidth(spin.width())
+
+                def _update_hint(value, lbl=hint_label, fac=factor, sfx=suffix, dec=decimals):
+                    lbl.setText(f"≈ {value * fac:.{dec}f}{sfx}")
+
+                spin.valueChanged.connect(_update_hint)
+                _update_hint(spin.value())
+                vbox.addWidget(hint_label)
+                return container
             return spin
         # 32-bit values overflow QSpinBox -> hex line edit
         edit = QLineEdit()
@@ -245,12 +521,16 @@ class KernelSectionTab(QWidget):
             self._current_index = 0
 
     def _entry_label(self, index, entry):
-        if self.text_labels and entry.has_text(0):
-            name = entry.get_text(0).strip()
-            if name:
-                return f"{index}: {name}"
-        if self.entry_names and index < len(self.entry_names):
-            return f"{index}: {self.entry_names[index]}"
+        text_name = entry.get_text(0).strip() if (self.text_labels and entry.has_text(0)) else ""
+        static = self.entry_names[index] if (self.entry_names and index < len(self.entry_names)) else ""
+        # entry_name_primary: the static name (e.g. the GF name) is the identity; the
+        # editable text (its attack name) is shown in parentheses.
+        if self.config.get("entry_name_primary") and static:
+            return f"{index}: {static}" + (f" ({text_name})" if text_name else "")
+        if text_name:
+            return f"{index}: {text_name}"
+        if static:
+            return f"{index}: {static}"
         return f"#{index}"
 
     def _on_row_changed(self, index):
@@ -283,6 +563,40 @@ class KernelSectionTab(QWidget):
             elif kind == "flags":
                 for mask, cb in widget:
                     cb.setChecked(bool(value & mask))
+            elif kind == "bool":
+                widget.setChecked(bool(value))
+        self._refresh_menu_refine_display(entry)
+
+    def _load_menu_refine_reference(self):
+        mngrphd_path, _ = QFileDialog.getOpenFileName(
+            self, "Open mngrphd.bin (mngrp.bin must be alongside it)", "", "mngrphd.bin (mngrphd.bin)")
+        if not mngrphd_path:
+            return
+        mngrp_path = os.path.join(os.path.dirname(mngrphd_path), "mngrp.bin")
+        if not os.path.isfile(mngrp_path):
+            QMessageBox.warning(self, "Refine reference",
+                                f"Couldn't find mngrp.bin next to that file:\n{mngrp_path}")
+            return
+        try:
+            self._menu_refine_ref = MenuRefineReference(mngrphd_path, mngrp_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "Refine reference", f"Failed to read those files:\n{exc}")
+            return
+        if self._current_index >= 0:
+            self._refresh_menu_refine_display(self._entries[self._current_index])
+
+    def _refresh_menu_refine_display(self, entry):
+        if self._menu_refine_label is None:
+            return
+        if self._menu_refine_ref is None or not entry.has_field("menu_index"):
+            return
+        def _names(lookup_name):
+            lk = self.registry.resolve(lookup_name)
+            return {e["value"]: e["name"] for e in lk["entries"]} if lk else {}
+        lines = self._menu_refine_ref.describe(
+            entry.get("menu_index"), entry.get("start_offset"), entry.get("end_offset"),
+            _names("item"), _names("magic"), _names("card"))
+        self._menu_refine_label.setText("\n".join(lines))
 
     def _save_entry(self, index):
         entry = self._entries[index]
@@ -307,6 +621,8 @@ class KernelSectionTab(QWidget):
                     if cb.isChecked():
                         value |= mask
                 entry.set(name, value)
+            elif kind == "bool":
+                entry.set(name, 1 if widget.isChecked() else 0)
         # Refresh the list label in case the name changed.
         self.list_widget.item(index).setText(self._entry_label(index, entry))
 
@@ -314,3 +630,33 @@ class KernelSectionTab(QWidget):
         """Flush the currently selected entry back to the underlying data."""
         if self._current_index >= 0:
             self._save_entry(self._current_index)
+
+    def refresh_dynamic_combos(self):
+        """Re-populate every combo built from a "dynamic_lookup" field (content computed
+        from another section's just-loaded data, e.g. Slot array's per-set summaries) with
+        the registry's current entries for that lookup, preserving the selected value."""
+        for name, (kind, field, widget) in self._field_widgets.items():
+            if kind != "enum" or not field.get("dynamic_lookup"):
+                continue
+            lookup = self.registry.resolve(field["lookup"])
+            if not lookup:
+                continue
+            current = widget.currentData()
+            widget.blockSignals(True)
+            widget.clear()
+            for entry in lookup["entries"]:
+                widget.addItem(entry["name"], entry["value"])
+            # Real content can be much longer than the placeholder it was first sized for
+            # (e.g. "Set 0" -> "0: Cure x10, Curaga x5, ..."); resize to fit.
+            metrics = widget.fontMetrics()
+            widest = max((metrics.horizontalAdvance(e["name"]) for e in lookup["entries"]),
+                        default=60)
+            widget.setFixedWidth(min(widest + 40, 480))
+            widget.view().setMinimumWidth(widest + 40)
+            pos = widget.findData(current)
+            if pos < 0 and current is not None:
+                widget.addItem(f"0x{current:X} (raw)", current)
+                pos = widget.findData(current)
+            if pos >= 0:
+                widget.setCurrentIndex(pos)
+            widget.blockSignals(False)

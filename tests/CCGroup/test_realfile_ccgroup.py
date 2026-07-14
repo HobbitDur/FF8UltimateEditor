@@ -1,6 +1,8 @@
-"""
-Tests for the CCGroup NPC card game model (CARDGAME calls in .jsm field scripts).
-Uses bghall_1.jsm/.sym (Balamb Garden hall, 4 card players) as reference data.
+"""Real-file tests for CCGroup (Triple Triad card-player editor in field .jsm scripts).
+
+Drives the card-game model and folder manager against the real field files shipped
+under extracted_files/ (bghall_1, Balamb Garden hall, 4 card players). Skipped in CI
+(copyright) via the ff8data marker.
 """
 import pathlib
 import shutil
@@ -14,18 +16,20 @@ from CCGroup.jsmcardgame import (JsmCardGameFile, CardGameFolderManager, OPCODE_
                                  PARAM_AI_STRATEGY, PARAM_LEVEL_MASK)
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
+BGHALL_DIR = PROJECT_ROOT / "extracted_files" / "field" / "mapdata" / "bg" / "bghall_1"
 
-# These tests need the original bghall_1 field files, which are not committed (copyright)
-pytestmark = pytest.mark.ff8data("bghall_1.jsm", "bghall_1.sym")
+pytestmark = pytest.mark.ff8data("extracted_files/field/mapdata/bg/bghall_1/bghall_1.jsm",
+                                 "extracted_files/field/mapdata/bg/bghall_1/bghall_1.sym")
 
 
 @pytest.fixture
 def bghall_folder(tmp_path):
-    """Copy the reference bghall_1 files into a folder with a subfolder to test recursion."""
+    """Copy the real bghall_1 field script into a subfolder of tmp_path (tests recursion
+    and keeps saves out of extracted_files)."""
     sub_folder = tmp_path / "field" / "bg"
     sub_folder.mkdir(parents=True)
-    shutil.copy(PROJECT_ROOT / "bghall_1.jsm", sub_folder / "bghall_1.jsm")
-    shutil.copy(PROJECT_ROOT / "bghall_1.sym", sub_folder / "bghall_1.sym")
+    shutil.copy(BGHALL_DIR / "bghall_1.jsm", sub_folder / "bghall_1.jsm")
+    shutil.copy(BGHALL_DIR / "bghall_1.sym", sub_folder / "bghall_1.sym")
     return tmp_path
 
 
@@ -84,6 +88,13 @@ class TestFolderManager:
 
 
 class TestPatching:
+
+    def test_roundtrip_no_edit_is_lossless(self, bghall_jsm):
+        """Saving the real .jsm without edits must not change a single byte."""
+        original = pathlib.Path(bghall_jsm.jsm_path).read_bytes()
+        assert bghall_jsm.players, "no card players parsed from the real file"
+        bghall_jsm.save()
+        assert pathlib.Path(bghall_jsm.jsm_path).read_bytes() == original
 
     def test_roundtrip_edit_literal(self, bghall_jsm):
         player = bghall_jsm.players[0]

@@ -37,13 +37,26 @@ class KernelEntry:
     def get(self, field_name: str) -> int:
         field = self._fields[field_name]
         offset = field["offset"] - self._payload_start
-        return int.from_bytes(self._payload[offset: offset + field["size"]], "little")
+        raw = int.from_bytes(self._payload[offset: offset + field["size"]], "little")
+        mask = field.get("mask")
+        return (raw & mask) if mask is not None else raw
 
     def set(self, field_name: str, value: int):
+        """Write ``value`` into this field. When the field def carries a ``mask``
+        (a sub-byte bitfield sharing its offset with sibling fields, e.g. the
+        battle-command menu-flags byte split into a 3-bit flag group and a 5-bit
+        submenu id), only the masked bits are touched - the other fields sharing
+        that byte are read-modify-write preserved."""
         field = self._fields[field_name]
         offset = field["offset"] - self._payload_start
-        value = int(value) & ((1 << (8 * field["size"])) - 1)
-        self._payload[offset: offset + field["size"]] = value.to_bytes(length=field["size"], byteorder="little")
+        size = field["size"]
+        mask = field.get("mask")
+        value = int(value)
+        if mask is not None:
+            raw = int.from_bytes(self._payload[offset: offset + size], "little")
+            value = (raw & ~mask) | (value & mask)
+        value &= (1 << (8 * size)) - 1
+        self._payload[offset: offset + size] = value.to_bytes(length=size, byteorder="little")
 
     # ------------------------------------------------------------------ text fields
     def has_text(self, text_index: int) -> bool:

@@ -13,25 +13,41 @@ from SolomonRing.kernellookups import LookupRegistry
 from SolomonRing.kernelsectiontab import KernelSectionTab
 
 
-# Top-level layout: (tab title, [(section_id, sub-tab label), ...]).
-# A single-section group is shown directly; multi-section groups get a nested tab bar.
+# One top-level tab per kernel section (a kernel section == a tab). Order follows the
+# section ids. Format kept as (tab title, [(section_id, sub-tab label)]) so multi-section
+# groups are still possible if ever needed; here every group is a single section.
 TAB_LAYOUT = [
+    ("Battle Commands", [(1, "Battle Commands")]),
     ("Magic", [(2, "Magic")]),
     ("G-Forces", [(3, "G-Forces")]),
-    ("GF Attacks", [(10, "Non-Junction GF")]),
     ("Enemy Attacks", [(4, "Enemy Attacks")]),
     ("Weapons", [(5, "Weapons")]),
+    ("Renzokuken", [(6, "Renzokuken")]),
     ("Characters", [(7, "Characters")]),
-    ("Items", [(8, "Battle Items"), (9, "Item Names")]),
-    ("Commands", [(1, "Battle Commands"), (11, "Command Ability Data")]),
-    ("Abilities", [(13, "Command"), (12, "Junction"), (15, "Character"), (16, "Party"),
-                   (17, "GF"), (18, "Menu"), (14, "Stat %")]),
-    ("Limit Breaks", [(6, "Renzokuken"), (19, "T. Characters"), (20, "Blue Magic"),
-                      (21, "Blue Magic Params"), (22, "Shot"), (23, "Duel"),
-                      (24, "Duel Params"), (25, "Rinoa 1"), (26, "Rinoa 2"),
-                      (27, "Slot Array"), (28, "Slot Sets")]),
+    ("Battle Items", [(8, "Battle Items")]),
+    ("Item Names", [(9, "Item Names")]),
+    ("Non-junctionable GF", [(10, "Non-junctionable GF")]),
+    ("Command Ability Data", [(11, "Command Ability Data")]),
+    ("Junction Abilities", [(12, "Junction Abilities")]),
+    ("Command Abilities", [(13, "Command Abilities")]),
+    ("Stat % Abilities", [(14, "Stat % Abilities")]),
+    ("Character Abilities", [(15, "Character Abilities")]),
+    ("Party Abilities", [(16, "Party Abilities")]),
+    ("GF Abilities", [(17, "GF Abilities")]),
+    ("Menu Abilities", [(18, "Menu Abilities")]),
+    ("T. Character Limits", [(19, "T. Character Limits")]),
+    ("Blue Magic", [(20, "Blue Magic")]),
+    ("Blue Magic Params", [(21, "Blue Magic Params")]),
+    ("Shot", [(22, "Shot")]),
+    ("Duel", [(23, "Duel")]),
+    ("Duel Params", [(24, "Duel Params")]),
+    ("Rinoa 1", [(25, "Rinoa 1")]),
+    ("Rinoa 2", [(26, "Rinoa 2")]),
+    ("Slot Array", [(27, "Slot Array")]),
+    ("Slot Sets", [(28, "Slot Sets")]),
     ("Devour", [(29, "Devour")]),
-    ("Misc", [(30, "Misc"), (31, "Misc Text")]),
+    ("Misc", [(30, "Misc")]),
+    ("Misc Text", [(31, "Misc Text")]),
 ]
 
 
@@ -59,6 +75,7 @@ class SolomonRingWidget(QWidget):
                            if s["type"] == "data"}
 
         self._section_tabs = {}  # section_id -> KernelSectionTab
+        self._tab_index_by_section = {}  # section_id -> top-level QTabWidget index
 
         main_layout = QVBoxLayout()
 
@@ -109,8 +126,10 @@ class SolomonRingWidget(QWidget):
 
         # --- Section tabs -----------------------------------------------------
         self.tabs = QTabWidget()
-        for title, entries in TAB_LAYOUT:
+        for index, (title, entries) in enumerate(TAB_LAYOUT):
             self.tabs.addTab(self._build_group(entries), title)
+            for section_id, _ in entries:
+                self._tab_index_by_section[section_id] = index
         main_layout.addWidget(self.tabs)
 
         self.setLayout(main_layout)
@@ -128,9 +147,17 @@ class SolomonRingWidget(QWidget):
 
     def _make_section_tab(self, section_id):
         config = self._section_configs[str(section_id)]
-        tab = KernelSectionTab(self.game_data, self.registry, config)
+        tab = KernelSectionTab(self.game_data, self.registry, config,
+                               jump_callback=self._jump_to_section)
         self._section_tabs[section_id] = tab
         return tab
+
+    def _jump_to_section(self, section_id):
+        # TAB_LAYOUT groups are all single-section today, so a top-level tab index is
+        # enough; a future multi-section group would also need to pick the right inner tab.
+        index = self._tab_index_by_section.get(section_id)
+        if index is not None:
+            self.tabs.setCurrentIndex(index)
 
     # ------------------------------------------------------------------ file IO
     def _load_kernel(self):
@@ -155,6 +182,28 @@ class SolomonRingWidget(QWidget):
             text_id = self._text_link.get(section_id, 0)
             text_section = by_id.get(text_id) if text_id else None
             tab.load_section(section, text_section)
+        self._refresh_slot_set_summaries()
+
+    def _refresh_slot_set_summaries(self):
+        """Slot array's set-id fields reference Slot Sets (section 28), whose content is
+        per-file - not something a static lookup table could describe. Build each set's
+        actual spell list from what Slot Sets just loaded and push it into the Slot array
+        tab's dropdowns, so you see e.g. "3: Cure x10, Curaga x5" instead of a bare index."""
+        if 27 not in self._section_tabs or 28 not in self._section_tabs:
+            return
+        magic_lookup = self.registry.resolve("magic")
+        magic_names = {e["value"]: e["name"] for e in magic_lookup["entries"]} if magic_lookup else {}
+        entries = []
+        for i, set_entry in enumerate(self._section_tabs[28]._entries):
+            parts = []
+            for slot in range(1, 9):
+                magic_id = set_entry.get(f"magic_{slot}")
+                count = set_entry.get(f"magic_{slot}_count")
+                if count:
+                    parts.append(f"{magic_names.get(magic_id, f'0x{magic_id:X}')} x{count}")
+            entries.append({"value": i, "name": f"{i}: " + (", ".join(parts) if parts else "(empty)")})
+        self.registry.set_dynamic("slot_set_summary", entries)
+        self._section_tabs[27].refresh_dynamic_combos()
 
     def _compress_all_text(self):
         if not self.loaded_filename:

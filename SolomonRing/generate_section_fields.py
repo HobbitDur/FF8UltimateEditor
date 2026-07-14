@@ -56,17 +56,26 @@ COMPAT_LABELS = ["Quezacotl", "Shiva", "Ifrit", "Siren", "Brothers", "Diablos", 
 
 
 def status_pair_1_then_2():
-    return [("status_1", 2, "status_1", "Status 1 (0-15)"),
-            ("status_2", 4, "status_2", "Status 2 (16-47)")]
+    return [("status_1", 2, "status_1", "Status 1"),
+            ("status_2", 4, "status_2", "Status 2")]
 
 
 # 1: Battle commands ---------------------------------------------------------
-sec(1, 2, NAMEDESC, [("Data", [
-    ("ability_data_id", 1, None, "Ability data ID"),
-    ("unknown_flags", 1, None, "Unknown flags"),
-    ("target_info", 1, "target_info"),
-    ("unknown_0x07", 1, None, "Unknown 0x07"),
-])], sub_size=8)
+# Menu flags (0x05) is a bitfield: bits 7-5 are 3 independent flags, bits 4-0 are
+# the submenu id - both share the same byte, so they're two field defs at the
+# same offset distinguished by "mask" (KernelEntry does read-modify-write so
+# neither field clobbers the other on save).
+sections["1"] = {"section_id": 1, "text_labels": NAMEDESC, "fields": [
+    {"name": "ability_data_id", "offset": 4, "size": 1, "group": "Data",
+     "lookup": "command_ability_ref", "label": "Ability data ID"},
+    {"name": "menu_bits", "offset": 5, "size": 1, "group": "Data", "mask": 0xE0,
+     "lookup": "command_menu_bits", "label": "Menu flags"},
+    {"name": "menu_submenu", "offset": 5, "size": 1, "group": "Data", "mask": 0x1F,
+     "lookup": "command_menu_submenu", "label": "Submenu",
+     "enabled_unless_bit": {"field": "menu_bits", "mask": 0x20}},
+    {"name": "target_info", "offset": 6, "size": 1, "group": "Data", "lookup": "target_info"},
+    {"name": "unknown_0x07", "offset": 7, "size": 1, "group": "Data", "label": "Unknown 0x07"},
+]}
 
 # 2: Magic (built earlier - keep identical) ----------------------------------
 JSTATS = ["hp", "str", "vit", "mag", "spr", "spd", "eva", "hit", "luck"]
@@ -76,15 +85,15 @@ sec(2, 2, NAMEDESC, [
         ("animation", 1, None, "Animation category"),
         ("attack_type", 1, "attack_type"),
         ("spell_power", 1, None, "Spell power"),
-        ("unknown_0x09", 1, None, "Unknown 0x09"),
+        ("status_window_flags", 1, "status_window_flags", "Status window"),
         ("target_info", 1, "target_info"),
         ("attack_flags", 1, "attack_flags"),
         ("draw_resist", 1, None, "Draw resist"),
         ("hit_count", 1, None, "Hit count"),
         ("element", 1, "element"),
         ("unknown_0x0f", 1, None, "Unknown 0x0F"),
-        ("status_2", 4, "status_2", "Status 2 (attack)"),
-        ("status_1", 2, "status_1", "Status 1 (attack)"),
+        ("status_2", 4, "status_2", "Status 2"),
+        ("status_1", 2, "status_1", "Status 1"),
         ("status_accuracy", 1, None, "Status attack accuracy"),
     ]),
     ("Junction (stats)", [(f"j_{s}", 1, None, f"J-{s.upper()}") for s in JSTATS] + [
@@ -106,26 +115,26 @@ gf_general = [
     ("attack_animation", 2, "attack_animation", "Attack animation"),
     ("attack_type", 1, "attack_type"),
     ("gf_power", 1, None, "GF power"),
-    ("unknown_0x08", 1, None, "Unknown 0x08"),
+    ("status_window_flags", 1, "status_window_flags", "Status window"),
     ("target_info", 1, "target_info"),
     ("attack_flags", 1, "attack_flags"),
     ("target_animation", 1, None, "Target hit animation"),
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element"),
-    ("status_1", 2, "status_1", "Status 1 (0-15)"),
-    ("status_2", 4, "status_2", "Status 2 (16-47)"),
+    ("status_1", 2, "status_1", "Status 1"),
+    ("status_2", 4, "status_2", "Status 2"),
     ("gf_hp_modifier_1", 1, None, "GF HP modifier 1"),
     ("gf_hp_modifier_2", 1, None, "GF HP modifier 2"),
     ("gf_hp_modifier_3", 1, None, "GF HP modifier 3"),
     ("gf_level_modifier_1", 1, None, "GF level modifier 1"),
     ("gf_level_modifier_2", 1, None, "GF level modifier 2"),
-    ("status_attack_enabler", 1, None, "Status attack enabler"),
+    ("status_attack_enabler", 1, None, "Status attack accuracy"),
     ("power_mod", 1, None, "Power mod"),
     ("level_mod", 1, None, "Level mod"),
 ]
 # explicit offsets for the general block (non-contiguous: modifiers/tail)
 gf_offsets = {
-    "attack_animation": 0x04, "attack_type": 0x06, "gf_power": 0x07, "unknown_0x08": 0x08,
+    "attack_animation": 0x04, "attack_type": 0x06, "gf_power": 0x07, "status_window_flags": 0x08,
     "target_info": 0x09,
     "attack_flags": 0x0A, "target_animation": 0x0B, "hit_count": 0x0C, "element": 0x0D,
     "status_1": 0x0E, "status_2": 0x10, "gf_hp_modifier_1": 0x14, "gf_hp_modifier_2": 0x15,
@@ -144,27 +153,66 @@ for it in gf_general:
     gf_fields.append(f)
 for i in range(1, 22):
     base = 0x1B + 4 * (i - 1)
-    gf_fields.append({"name": f"ability{i}", "offset": base + 2, "size": 1,
-                      "lookup": "junctionable_ability", "label": f"Ability {i}", "group": "Abilities"})
+    row = f"ability{i}"
+    # BuildGFAbilityList (0x4ACB70) is the decisive reader: it walks these 21 slots
+    # to build the Junction menu's "learnable abilities" list. Byte+3 is used
+    # directly as the ability id (indexed into a 128-slot seen-flags buffer sized
+    # for the ability list) - that is the REAL ability, not byte+2 (which is always
+    # 0xFF in retail and reads as raw garbage in a plain "ability" picker).
+    gf_fields.append({"name": f"ability{i}", "offset": base + 3, "size": 1,
+                      "lookup": "junctionable_ability", "label": f"Ability {i}",
+                      "group": "Abilities", "row": row})
     gf_fields.append({"name": f"ability{i}_unlocker", "offset": base, "size": 1,
-                      "label": f"Ability {i} unlocker", "group": "Abilities"})
-    gf_fields.append({"name": f"ability{i}_learn", "offset": base + 3, "size": 1,
-                      "label": f"Ability {i} learn order", "group": "Abilities",
-                      "help": "GF ability-learning order byte - read by battleComputeEndBattle "
-                              "to pick the GF's next LearningAbility after this one completes."})
+                      "label": "Unlocker", "group": "Abilities", "row": row})
+    gf_fields.append({"name": f"ability{i}_level_or_prereq", "offset": base + 1, "size": 1,
+                      "label": "Level/prereq", "group": "Abilities", "row": row,
+                      "help": "What this ability needs to unlock (read by BuildGFAbilityList, "
+                              "the Junction-menu ability list builder):\n"
+                              "1-100 = the GF must be at least this level.\n"
+                              "101-121 = instead of a level, ability slot (value-101) on this "
+                              "same GF must already be fully learned first - i.e. \"finish "
+                              "that ability before this one becomes available\" (a same-GF "
+                              "unlock chain, e.g. SumMag+20% requires SumMag+10% first)."})
+    gf_fields.append({"name": f"ability{i}_alt_prereq", "offset": base + 2, "size": 1,
+                      "label": "Alt prereq slot", "group": "Abilities", "row": row,
+                      "help": "Points at another ability slot (0-20) on this same GF and makes "
+                              "the two mutually exclusive until one is done: this ability keeps "
+                              "being offered only while the OTHER slot's ability is still "
+                              "unfinished, and gets cut off the moment that other ability is "
+                              "completed. 0xFF = no such restriction (the normal case).\n"
+                              "Always 0xFF in the retail kernel - a working feature the engine "
+                              "supports (BuildGFAbilityList) but the shipped data never turns "
+                              "on. (This is the byte that used to display as raw 0xFF for "
+                              "every ability before the fields were remapped - it was never "
+                              "the ability id.)"})
 # GF Boost parameters @0x80-0x81 (IDA gfBoostParams: each byte x15 -> Boost min/max,
 # pre_computeGFBoost)
 gf_fields.append({"name": "boost_param_1", "offset": 0x80, "size": 1, "group": "General",
-                  "label": "Boost param 1 (x15)",
-                  "help": "GF Boost parameter - multiplied by 15 by pre_computeGFBoost."})
+                  "label": "Boost phase 1 length (x15)",
+                  "help": "Initial length (x15 = ticks) of the FIRST 'safe' Boost phase\n"
+                          "where pressing Square raises Boost.\n"
+                          "NOT a min/max value - the Boost figure itself runs 75..250\n"
+                          "(100 if untouched).\n"
+                          "Later phases are re-rolled to 15*(1..3 + 1..3).\n"
+                          "(pre_computeGFBoost / computeGFBoost)"})
 gf_fields.append({"name": "boost_param_2", "offset": 0x81, "size": 1, "group": "General",
-                  "label": "Boost param 2 (x15)",
-                  "help": "GF Boost parameter - multiplied by 15 by pre_computeGFBoost."})
+                  "label": "Boost total window (x15)",
+                  "help": "Initial length (x15 = ticks) of the overall Boost input window\n"
+                          "(word_209CEF4), counted down while you mash.\n"
+                          "NOT a min/max value.\n"
+                          "(pre_computeGFBoost / computeGFBoost)"})
 # IDA FF8KernelJunctionableGF: padding at 0x6F, compatibility block starts at 0x70
 # (the old junctionable_gf_data json was off by one, leaving 0x7F unmapped).
 for i, c in enumerate(COMPAT):
     gf_fields.append({"name": f"compat_{c}", "offset": 0x70 + i, "size": 1,
-                      "label": COMPAT_LABELS[i], "group": "GF Compatibility"})
+                      "label": COMPAT_LABELS[i], "group": "GF Compatibility",
+                      "help": (f"When THIS GF is summoned in battle, how much the casting "
+                               f"character's compatibility with {COMPAT_LABELS[i]} changes.\n"
+                               f"100 = no change; >100 raises it, <100 lowers it "
+                               f"(delta = value - 100).\n"
+                               f"The stored total is clamped to 1000-6000; higher compatibility "
+                               f"fills that GF's summon (Boost) gauge faster, so it appears sooner.\n"
+                               f"Player characters only. (BattleAction_ExecuteCommand)")})
 sections["3"] = {"section_id": 3, "text_labels": NAMEDESC, "fields": gf_fields}
 
 # 4: Enemy attacks -----------------------------------------------------------
@@ -178,10 +226,10 @@ sec(4, 1, ["Name"], [("Data", [
     ("unknown_0x09", 1, None, "Unknown 0x09"),
     ("element", 1, "element"),
     ("crit_bonus", 1, None, "Attack crit bonus"),
-    ("status_attack_enabler", 1, None, "Status attack enabler"),
-    ("attack_param", 1, None, "Attack parameter"),
-    ("status_1", 2, "status_1", "Status 1 (0-15)"),
-    ("status_2", 4, "status_2", "Status 2 (16-47)"),
+    ("status_attack_enabler", 1, None, "Status attack accuracy"),
+    ("hit_rate", 1, None, "Hit rate"),
+    ("status_1", 2, "status_1", "Status 1"),
+    ("status_2", 4, "status_2", "Status 2"),
 ])], sub_size=20)
 
 # 5: Weapons -----------------------------------------------------------------
@@ -191,11 +239,11 @@ sec(5, 1, ["Name"], [("Data", [
     ("character_id", 1, "weapon_character", "Character"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
-    ("attack_param", 1, None, "Attack parameter"),
+    ("hit_rate", 1, None, "Hit rate"),
     ("str_bonus", 1, None, "STR bonus"),
     ("weapon_tier", 1, None, "Weapon tier"),
     ("crit_bonus", 1, None, "Crit bonus"),
-    ("melee", 1, None, "Melee weapon?"),
+    ("melee", 1, None, "Melee weapon"),
 ])], sub_size=12)
 
 # 6: Renzokuken finishers ----------------------------------------------------
@@ -210,10 +258,10 @@ sec(6, 2, NAMEDESC, [("Data", [
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element", "Element attack"),
     ("element_percent", 1, None, "Element attack %"),
-    ("status_attack_enabler", 1, None, "Status attack enabler"),
+    ("status_attack_enabler", 1, None, "Status attack accuracy"),
     ("unknown_0x10", 2, None, "Unknown 0x10"),
-    ("status_1", 2, "status_1", "Status 1 (0-15)"),
-    ("status_2", 4, "status_2", "Status 2 (16-47)"),
+    ("status_1", 2, "status_1", "Status 1"),
+    ("status_2", 4, "status_2", "Status 2"),
 ])], sub_size=24)
 
 # 7: Characters --------------------------------------------------------------
@@ -239,15 +287,15 @@ sec(8, 2, NAMEDESC, [("Data", [
     ("magic_id", 2, "magic", "Magic ID"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
-    ("battle_flag", 1, None, "Battle flag"),
+    ("battle_flag", 1, "battle_item_category", "Category (unused)"),
     ("target_info", 1, "target_info"),
-    ("unknown_0x0a", 1, None, "Unknown 0x0A"),
     ("attack_flags", 1, "attack_flags"),
-    ("unknown_0x0c", 1, None, "Unknown 0x0C"),
-    ("status_attack_enabler", 1, None, "Status attack enabler"),
-    ("status_1", 2, "status_1", "Status 1 (0-15)"),
-    ("status_2", 4, "status_2", "Status 2 (16-47)"),
-    ("attack_param", 1, None, "Attack parameter"),
+    ("target_animation", 1, None, "Target hit animation"),
+    ("padding_0x0c", 1, None, "Padding"),
+    ("status_attack_enabler", 1, None, "Status attack accuracy"),
+    ("status_1", 2, "status_1", "Status 1"),
+    ("status_2", 4, "status_2", "Status 2"),
+    ("hit_rate", 1, None, "Hit rate"),
     ("unknown_0x15", 1, None, "Unknown 0x15"),
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element"),
@@ -261,17 +309,17 @@ sec(10, 1, ["Name"], [("Data", [
     ("attack_animation", 2, "attack_animation", "Attack animation"),
     ("attack_type", 1, "attack_type"),
     ("gf_power", 1, None, "GF power"),
-    ("status_attack_enabler", 1, None, "Status attack enabler"),
+    ("status_attack_enabler", 1, None, "Status attack accuracy"),
     ("target_info", 1, "target_info"),
     ("attack_flags", 1, "attack_flags"),
     ("target_hit_animation", 1, None, "Target hit animation"),
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element"),
-    ("status_group_1", 1, None, "Status 1 (Sleep/Haste/...)"),
-    ("status_group_2", 1, None, "Status 2 (Aura/Curse/...)"),
-    ("status_group_3", 1, None, "Status 3 (Eject/Double/...)"),
-    ("status_group_4", 1, None, "Status 4 (Vit0/...)"),
-    ("status_group_5", 1, None, "Status 5 (Death/Poison/...)"),
+    ("status_group_1", 1, "nonjgf_status_1", "Status (Sleep..Reflect)"),
+    ("status_group_2", 1, "nonjgf_status_2", "Status (Aura..Drain)"),
+    ("status_group_3", 1, "nonjgf_status_3", "Status (Eject..Back attack)"),
+    ("status_group_4", 1, "nonjgf_status_4", "Status (Vit0..Summon GF)"),
+    ("status_group_5", 1, "nonjgf_status_5", "Status (Death..Zombie)"),
     ("unknown_0x11", 1, None, "Unknown 0x11"),
     ("power_mod", 1, None, "Power mod"),
     ("level_mod", 1, None, "Level mod"),
@@ -287,15 +335,15 @@ sec(11, 0, [], [("Data", [
     ("attack_flags", 1, "attack_flags"),
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element"),
-    ("status_attack_enabler", 1, None, "Status attack enabler"),
-    ("status_1", 2, "status_1", "Status 1 (0-15)"),
-    ("status_2", 4, "status_2", "Status 2 (16-47)"),
+    ("status_attack_enabler", 1, None, "Status attack accuracy"),
+    ("status_1", 2, "status_1", "Status 1"),
+    ("status_2", 4, "status_2", "Status 2"),
 ])], sub_size=16)
 
 # 12: Junction abilities -----------------------------------------------------
 sec(12, 2, NAMEDESC, [("Data", [
     ("ap", 1, None, "AP to learn"),
-    ("junction_flag", 3, None, "Junction ability flag"),
+    ("junction_flag", 3, "junction_ability_flags", "Junction ability flag"),
 ])], sub_size=8)
 
 # 13: Command abilities (GF) -------------------------------------------------
@@ -308,7 +356,7 @@ sec(13, 2, NAMEDESC, [("Data", [
 # 14: Stat percentage increasing abilities -----------------------------------
 sec(14, 2, NAMEDESC, [("Data", [
     ("ap", 1, None, "AP to learn"),
-    ("stat_to_increase", 1, None, "Stat to increase"),
+    ("chara_stat_to_increase", 1, "chara_stat_index", "Stat to increase"),
     ("increase_value", 1, None, "Increase value"),
     ("unknown_0x07", 1, None, "Unknown / Unused"),
 ])], sub_size=8)
@@ -316,13 +364,13 @@ sec(14, 2, NAMEDESC, [("Data", [
 # 15: Character abilities -----------------------------------------------------
 sec(15, 2, NAMEDESC, [("Data", [
     ("ap", 1, None, "AP to learn"),
-    ("chara_flag", 3, None, "Character ability flag"),
+    ("chara_flag", 3, "character_ability_flags", "Character ability flag"),
 ])], sub_size=8)
 
 # 16: Party abilities ---------------------------------------------------------
 sec(16, 2, NAMEDESC, [("Data", [
     ("ap", 1, None, "AP to learn"),
-    ("party_flag", 1, None, "Party ability flag"),
+    ("party_flag", 1, "party_ability_flags", "Party ability flag"),
     ("unused_0x06", 2, None, "Unused"),
 ])], sub_size=8)
 
@@ -330,14 +378,14 @@ sec(16, 2, NAMEDESC, [("Data", [
 sec(17, 2, NAMEDESC, [("Data", [
     ("ap", 1, None, "AP to learn"),
     ("enable_boost", 1, None, "Enable boost"),
-    ("stat_to_increase", 1, "stat_to_increase", "Stat to increase"),
+    ("stat_to_increase", 1, "gf_ability_stat", "Stat to increase"),
     ("increase_value", 1, None, "Increase value"),
 ])], sub_size=8)
 
 # 18: Menu abilities ----------------------------------------------------------
 sec(18, 2, NAMEDESC, [("Data", [
     ("ap", 1, None, "AP to learn"),
-    ("menu_index", 1, None, "Index to m00X files"),
+    ("menu_index", 1, "refine_table", "Refine table"),
     ("start_offset", 1, None, "Start offset"),
     ("end_offset", 1, None, "End offset"),
 ])], sub_size=8)
@@ -347,16 +395,17 @@ sec(19, 2, NAMEDESC, [("Data", [
     ("magic_id", 2, "magic", "Magic ID"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
-    ("unknown_0x08", 2, None, "Unknown 0x08"),
+    ("target_animation", 1, None, "Target hit animation"),
+    ("status_window_flags", 1, "status_window_flags", "Status window"),
     ("target_info", 1, "target_info"),
     ("attack_flags", 1, "attack_flags"),
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element", "Element attack"),
     ("element_percent", 1, None, "Element attack %"),
-    ("status_attack_enabler", 1, None, "Status attack enabler"),
-    ("status_1", 2, "status_1", "Status 1 (0-15)"),
+    ("status_attack_enabler", 1, None, "Status attack accuracy"),
+    ("status_1", 2, "status_1", "Status 1"),
     ("unknown_0x12", 2, None, "Unknown 0x12"),
-    ("status_2", 4, "status_2", "Status 2 (16-47)"),
+    ("status_2", 4, "status_2", "Status 2"),
 ])], sub_size=24)
 
 # 20: Blue magic (Quistis) ----------------------------------------------------
@@ -364,39 +413,46 @@ sec(20, 2, NAMEDESC, [("Data", [
     ("attack_animation", 2, "attack_animation", "Attack animation"),
     ("unknown_0x06", 1, None, "Unknown 0x06"),
     ("attack_type", 1, "attack_type"),
-    ("unknown_0x08", 2, None, "Unknown 0x08"),
+    ("status_window_flags", 1, "status_window_flags", "Status window"),
+    ("target_info", 1, "target_info"),
     ("attack_flags", 1, "attack_flags"),
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element"),
-    ("status_attack", 1, None, "Status attack"),
+    ("status_attack", 1, None, "Status attack accuracy"),
     ("crit_bonus", 1, None, "Crit bonus"),
     ("unknown_0x0f", 1, None, "Unknown 0x0F"),
 ])], sub_size=16)
 
-# 21: Blue magic params (4 crisis levels x 16) -------------------------------
+# 21: Blue magic params (16 moves x 4 crisis levels) -------------------------
+BLUE_MAGIC_MOVES = ["Laser Eye", "Ultra Waves", "Electrocute", "LV?Death", "Degenerator",
+                    "Aqua Breath", "Micro Missiles", "Acid", "Gatling Gun", "Fire Breath",
+                    "Bad Breath", "White Wind", "Homing Laser", "Mighty Guard", "Ray-Bomb",
+                    "Shockwave Pulsar"]
+BLUE_MAGIC_ENTRY_NAMES = [f"{m} CL{cl}" for m in BLUE_MAGIC_MOVES for cl in range(1, 5)]
 sec(21, 0, [], [("Data", [
-    ("status_2", 4, "status_2", "Status 2 (16-47)"),
-    ("status_1", 2, "status_1", "Status 1 (0-15)"),
+    ("status_2", 4, "status_2", "Status 2"),
+    ("status_1", 2, "status_1", "Status 1"),
     ("attack_power", 1, None, "Attack power"),
-    ("attack_param", 1, None, "Attack parameter"),
-])], sub_size=8)
+    ("hit_rate", 1, None, "Hit rate"),
+])], sub_size=8, entry_names=BLUE_MAGIC_ENTRY_NAMES)
 
 # 22: Shot (Irvine) ----------------------------------------------------------
 sec(22, 2, NAMEDESC, [("Data", [
     ("magic_id", 2, "magic", "Magic ID"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
-    ("unknown_0x08", 2, None, "Unknown 0x08"),
+    ("target_animation", 1, None, "Target hit animation"),
+    ("status_window_flags", 1, "status_window_flags", "Status window"),
     ("target_info", 1, "target_info"),
     ("attack_flags", 1, "attack_flags"),
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element", "Element attack"),
     ("element_percent", 1, None, "Element attack %"),
-    ("status_attack_enabler", 1, None, "Status attack enabler"),
-    ("status_1", 2, "status_1", "Status 1 (0-15)"),
+    ("status_attack_enabler", 1, None, "Status attack accuracy"),
+    ("status_1", 2, "status_1", "Status 1"),
     ("used_item_index", 1, "item", "Used item"),
     ("crit_increase", 1, None, "Crit increase"),
-    ("status_2", 4, "status_2", "Status 2 (16-47)"),
+    ("status_2", 4, "status_2", "Status 2"),
 ])], sub_size=24)
 
 # 23: Duel (Zell) ------------------------------------------------------------
@@ -404,31 +460,35 @@ sec(23, 2, NAMEDESC, [("Data", [
     ("magic_id", 2, "magic", "Magic ID"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
-    ("attack_flags", 1, "attack_flags"),
+    ("target_animation", 1, None, "Target hit animation"),
     ("unknown_0x09", 1, None, "Unknown 0x09"),
     ("target_info", 1, "target_info"),
-    ("unknown_0x0b", 1, None, "Unknown 0x0B"),
+    ("attack_flags", 1, "attack_flags"),
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element", "Element attack"),
     ("element_percent", 1, None, "Element attack %"),
-    ("status_attack_enabler", 1, None, "Status attack enabler"),
+    ("status_attack_enabler", 1, None, "Status attack accuracy"),
     ("button_1", 2, "duel_button", "Sequence button 1"),
     ("button_2", 2, "duel_button", "Sequence button 2"),
     ("button_3", 2, "duel_button", "Sequence button 3"),
     ("button_4", 2, "duel_button", "Sequence button 4"),
     ("button_5", 2, "duel_button", "Sequence button 5"),
-    ("status_1", 2, "status_1", "Status 1 (0-15)"),
-    ("status_2", 4, "status_2", "Status 2 (16-47)"),
+    ("status_1", 2, "status_1", "Status 1"),
+    ("status_2", 4, "status_2", "Status 2"),
 ])], sub_size=32)
 
-# 24: Duel params (25 moves x [start, next1, next2, next3]) -------------------
-duel_items = []
+# 24: Duel params (25 sequence entries x [start, next1, next2, next3]) --------
+# Built with explicit "row" so each sequence entry is one line of 4 spinboxes.
+duel_fields = []
 for g in range(25):
-    duel_items.append((f"start_move_{g}", 1, None, f"Start move {g}"))
-    duel_items.append((f"next_seq_{g}_1", 1, None, f"Next seq {g}.1"))
-    duel_items.append((f"next_seq_{g}_2", 1, None, f"Next seq {g}.2"))
-    duel_items.append((f"next_seq_{g}_3", 1, None, f"Next seq {g}.3"))
-sec(24, 0, [], [("Duel move table", duel_items)], sub_size=100, entry_names=["Duel move table"])
+    base = g * 4
+    row = f"duel_seq_{g}"
+    duel_fields.append({"name": f"start_move_{g}", "offset": base, "size": 1,
+                        "label": f"Seq {g}: start", "group": "Duel move graph", "row": row})
+    for j in (1, 2, 3):
+        duel_fields.append({"name": f"next_seq_{g}_{j}", "offset": base + j, "size": 1,
+                            "label": f"→ next {j}", "group": "Duel move graph", "row": row})
+sections["24"] = {"section_id": 24, "fields": duel_fields, "entry_names": ["Duel move graph"]}
 
 # 25: Rinoa limit breaks part 1 ----------------------------------------------
 sec(25, 2, NAMEDESC, [("Data", [
@@ -443,34 +503,56 @@ sec(26, 1, ["Name"], [("Data", [
     ("magic_id", 2, "magic", "Magic ID"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
-    ("attack_flags", 1, "attack_flags"),
+    ("target_animation", 1, None, "Target hit animation"),
     ("unknown_0x07", 1, None, "Unknown 0x07"),
     ("target_info", 1, "target_info"),
-    ("unknown_0x09", 1, None, "Unknown 0x09"),
+    ("attack_flags", 1, "attack_flags"),
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element", "Element attack"),
     ("element_percent", 1, None, "Element attack %"),
-    ("status_attack_enabler", 1, None, "Status attack enabler"),
-    ("status_1", 2, "status_1", "Status 1 (0-15)"),
-    ("status_2", 4, "status_2", "Status 2 (16-47)"),
+    ("status_attack_enabler", 1, None, "Status attack accuracy"),
+    ("status_1", 2, "status_1", "Status 1"),
+    ("status_2", 4, "status_2", "Status 2"),
 ])], sub_size=20)
 
 # 27: Slot array -------------------------------------------------------------
-sec(27, 0, [], [("Data", [("slot_set_id", 1, None, "Slot set ID")])], sub_size=1)
+# One 60-byte table (was 60 x 1-byte subsections). Each byte is the slot-set id
+# used for that roll position; presented as a 10-wide grid instead of 60 pages.
+slot_fields = []
+for i in range(60):
+    f = {"name": f"slot_{i}", "offset": i, "size": 1,
+         "label": str(i), "group": "Slot roll table (set id per position)",
+         "row": f"slot_row_{i // 10}",
+         "lookup": "slot_set_summary", "dynamic_lookup": True,
+         "help": "Slot-set id (0-15) - index into the Selphie limit-break sets (section 28) "
+                 "selected for this roll position. The dropdown is built live from whatever "
+                 "kernel.bin is currently loaded, listing each set's actual 8 spells (a static "
+                 "list can't work here - a different file could have different spells in each "
+                 "set). Use the button above to jump to Slot Sets and edit a set's contents."}
+    if i == 0:
+        f["jump_to_section"] = (28, "Slot Sets")
+    slot_fields.append(f)
+sections["27"] = {"section_id": 27, "fields": slot_fields}
 
 # 28: Selphie limit break sets (8 magic/count pairs) -------------------------
+# Exception to the usual spins-then-combos layout: each magic's Id/Count belong
+# together, so they share a "row" and render as one line (magic combo + count spin).
 slot_set_items = []
 for i in range(1, 9):
     slot_set_items.append((f"magic_{i}", 1, "magic", f"Magic {i}"))
     slot_set_items.append((f"magic_{i}_count", 1, None, f"Magic {i} count"))
 sec(28, 0, [], [("Data", slot_set_items)], sub_size=16)
+for f in sections["28"]["fields"]:
+    if f["name"].startswith("magic_"):
+        idx = f["name"].split("_")[1]
+        f["row"] = f"slot_{idx}"
 
 # 29: Devour (description only) ----------------------------------------------
 sec(29, 1, ["Description"], [("Data", [
     ("heal_dmg", 1, "heal_dmg", "Damage or heal"),
-    ("hp_quantity", 1, "devour_hp_quantity", "HP heal/dmg quantity"),
-    ("status_2", 4, "status_2", "Status 2 (16-47)"),
-    ("status_1", 2, "status_1", "Status 1 (0-15)"),
+    ("hp_quantity", 1, None, "HP heal/dmg quantity (sixteenths of max HP)"),
+    ("status_2", 4, "status_2", "Status 2"),
+    ("status_1", 2, "status_1", "Status 1"),
     ("raised_stat", 1, "devour_raised_stat", "Raised stat"),
     ("raised_stat_hp", 1, None, "Raised stat HP quantity"),
 ])], sub_size=12)
@@ -485,7 +567,17 @@ LIMIT_EFFECTS = ["Death", "Poison", "Petrify", "Darkness", "Silence", "Berserk",
                  "Immune Physical attack", "Immune Magic attack", "Charged", "Back Attack"]
 misc_timers = [(f"timer_{t.lower()}", 1, None, f"{t} timer") for t in TIMERS]
 misc_timers += [("atb_speed_multiplier", 1, None, "ATB speed multiplier"),
-                ("dead_timer", 1, None, "Dead timer")]
+                ("dead_timer", 1, None, "Gilgamesh/Angelo summon interval")]
+_LIMIT_EFFECT_HELP = (
+    "How much having this status active contributes to a character's crisis/Limit-Break "
+    "gauge, read by Battle_ComputeCrisisLevelAndLimitFlag. Every one of a character's "
+    "active statuses (from both Status 1 and Status 2) adds its byte here into one running "
+    "total each frame:\n"
+    "crisis = (10*(statusSum + 4*(5*deadAllies + 40)) - 10*crisisLevelHPMultiplier*curHP/"
+    "maxHP) / (rand(0..255)+160) - 4, clamped 0-4.\n"
+    "Higher values push the crisis level (and so Limit Break availability) up faster; 0 "
+    "means that status doesn't affect it at all. Death/Poison/etc. push it up because "
+    "you're worse off; there's no term that lowers it.")
 misc_limits = [(f"limit_{n.lower().replace(' ', '_')}_{i}", 1, None, f"{n} limit effect")
                for i, n in enumerate(LIMIT_EFFECTS)]
 misc_duel = []
@@ -507,10 +599,13 @@ sec(31, 1, ["Text"], [], sub_size=2)
 # ---- entry_names pulled from existing json ---------------------------------
 kd = json.load(open(KERNEL, encoding="utf-8"))
 JSON_DIR = os.path.dirname(KERNEL)
-# command ability data (section 11) names
+# command ability data (section 11) names + GF names for the G-Forces list
 try:
     gforce = json.load(open(os.path.join(JSON_DIR, "gforce.json"), encoding="utf-8"))
     sections["11"]["entry_names"] = [c["Ability"] for c in gforce["command_abilities_data"]]
+    # Section 3's text is the GF *attack* name; show the GF name in the list instead.
+    sections["3"]["entry_names"] = [g["name"] for g in gforce["gforce"]]
+    sections["3"]["entry_name_primary"] = True
 except Exception as e:
     print("warn:", e)
 # enemy attacks (section 4): the 384 entries are the enemy abilities; use their
@@ -535,7 +630,6 @@ HELP = {
     "draw_resist": "How hard the spell is to draw (higher = harder).",
     "element": "Elemental type(s) of the attack. Bitfield: combine flags.",
     "target_info": "Default targeting behavior. Bitfield: combine flags.",
-    "attack_flags": "Attack behavior flags. Bitfield: combine flags.",
     "status_attack_enabler": "Accuracy for inflicting the statuses below (0 = never lands).",
     "status_accuracy": "Accuracy for inflicting the statuses below (0 = never lands).",
     "status_attack": "Accuracy for inflicting the statuses below (0 = never lands).",
@@ -544,39 +638,76 @@ HELP = {
     "ap": "Ability Points required to learn this ability.",
     "crit_bonus": "Bonus to the critical-hit rate.",
     "crit_increase": "Bonus to the critical-hit rate.",
-    "element_percent": "Percentage of the attack that is elemental (0-100).",
+    "element_percent": "Elemental percentage of the attack. 100 = fully elemental, but the "
+                       "byte can exceed 100 (e.g. 200 = double elemental weight); full range 0-255.",
     "character_id": "Which playable character wields this weapon.",
     "renzokuken_finishers": "Which Renzokuken finishers this weapon can trigger. Bitfield.",
     "str_bonus": "Flat STR bonus granted by the weapon.",
     "weapon_tier": "Weapon tier (affects some formulas / upgrade order).",
+    "melee": "Melee-weapon flag: bit 0 set marks the character a melee attacker "
+             "(sets BATTLE_FLAG_MELEE_CHARA in initializeBattleSlotData).",
+    "hit_rate": "Physical hit rate — accuracy rolled against the target's Evade to decide "
+                "hit vs. miss. 0xFF (255) = always hits. Battle_applyDamage loads it into "
+                "HIT_ATTACK_HITPERCENT, the same slot a character's Hit% stat fills; separate "
+                "from status attack accuracy (which governs status infliction).",
+    "attack_param": "Secondary value read by Battle_applyDamage; its exact role depends on "
+                    "the attack type.",
     "crisis_level_hp_mult": "Multiplier turning missing HP into the limit / crisis gauge.",
     "limit_break_id": "Which limit-break routine this character uses.",
     "limit_break_param": "Per-hit power used before the Renzokuken finisher.",
     "gender": "Character gender (used by some status targeting).",
     "battle_command_index": "Battle command granted when this ability is learned.",
-    "stat_to_increase": "Which stat this GF/junction ability raises.",
+    "stat_to_increase": "Which GF stat this ability raises (SumMag/GFHP - the GF-specific counterpart "
+                        "of a character stat).",
     "used_item_index": "Ammo item consumed by this Shot attack.",
 }
 
 # ---- IDA field-xref findings for previously-unknown bytes -------------------
 # (section_id, field_name) -> (new_label or None, help)
+_STATUS_WIN = (None,
+    "Status-window flags for battle target selection (same bits as the top of a battle "
+    "command's Menu flags). 'Hide ally status panel' CLEAR = while the target cursor is up, "
+    "the party HP/status panel opens (heal spells use 0x00); 'shows ailments' switches that "
+    "panel to list status ailments instead of HP (Esuna/Dispel/support use 0x40). Offensive "
+    "entries use 0x80 (panel hidden).\n"
+    "(Confirm path: list entry -> target cursor +36 -> sub_4B1E70 -> "
+    "BattleHUD_StatusWinOpenRequest/DetailMode.)")
 FINDINGS = {
-    (2, "unknown_0x09"): ("Unused menu copy",
-                          "Copied into the field character data during menu magic setup "
-                          "(setMenuFlagMagicOnCharaData), but that slot is never read back "
-                          "(IDA: 0 readers) - effectively vestigial."),
     (2, "unknown_0x0f"): ("Unused (padding)", "No code references this byte (IDA: 0 xrefs)."),
     (2, "unknown_0x3a"): ("Unused (padding)", "No code references these 2 bytes (IDA: 0 xrefs)."),
     (5, "unknown_0x03"): ("Unused (padding)", "No code references this byte (IDA: 0 xrefs)."),
     (4, "unknown_0x09"): ("Hit count / name flag",
                           "Bits 0-6 = hit count; bit 7 = show attack name (if clear, the "
                           "attack-name text is suppressed). Read in computeCommandAction."),
-    (3, "unknown_0x08"): (None,
-                          "Copied per junctioned GF into the battle character data "
-                          "(ResetAndParseBattleAndFieldCharacter); consumer not yet identified."),
-    (8, "unknown_0x0a"): ("Linked to selectability",
-                          "IDA linkedToSelectability - used by updateBattleItemData and "
-                          "Battle_applyDamage to gate item selectability."),
+    (2, "status_window_flags"): _STATUS_WIN,
+    (3, "status_window_flags"): _STATUS_WIN,
+    (19, "status_window_flags"): _STATUS_WIN,
+    (20, "status_window_flags"): _STATUS_WIN,
+    (22, "status_window_flags"): _STATUS_WIN,
+    (8, "attack_flags"): (None,
+        "Dual-purpose byte (IDA attackFlagsAndSelectability). In battle it is the item's "
+        "ATTACK FLAGS: Battle_applyDamage loads it into ATTACK_FLAG (low 2 bits = damage-type "
+        "pair - retail curatives use 2 = Item/Medicine so MedData doubles their healing, "
+        "offensive stones use 1 = Magical so Shell halves them; 0x80 also gates the revive "
+        "path for Phoenix Down-likes).\n"
+        "In the MENU the same byte feeds updateBattleItemData: bit 0x80 set = item selectable/"
+        "usable in battle, bit 0x20 clear = marks the entry dimmed (all retail items have 0x20 "
+        "set)."),
+    (8, "padding_0x0c"): ("Padding",
+        "Unused - 0x00 for all 33 items; its only xref is pointer arithmetic in "
+        "getTextBattleItem's non-battle-item branch, not a semantic read."),
+    (8, "battle_flag"): (None,
+        "NOT a bitfield - the retail values (0x00/0x40/0x80) never combine, they're 3 mutually "
+        "exclusive category codes that line up cleanly with item type: 0x00 = pure curatives "
+        "(Potion..Megalixir), 0x40 = status-cure/support items (Antidote, Remedy, Hero, Holy "
+        "War, Shell/Protect/Aura Stone), 0x80 = offensive/special items (the 6 elemental stones, "
+        "Gysahl Greens, Phoenix Pinion, Friendship).\n"
+        "It IS copied into the runtime battle-item inventory by updateBattleItemData - but "
+        "nothing then reads that copy, and nothing reads this kernel byte directly either "
+        "(exhaustive xref sweep: item-use AI keys on item id, the item-menu draw path only uses "
+        "the selectability byte, and the item-effect dispatcher (computeCommandAction) resolves "
+        "everything from attackType/specialActionID). The category grouping is real, deliberate "
+        "design data - it's just inert in the shipped PC engine."),
 }
 
 # Verified via IDA get_xrefs_to_field (round 2). Padding = 0 xrefs (renamed to
@@ -584,14 +715,12 @@ FINDINGS = {
 _PADDING = [(6, "unknown_0x07"), (6, "unknown_0x10"), (10, "unknown_0x11"),
             (11, "unknown_0x02"), (13, "unknown_0x06"), (14, "unknown_0x07"),
             (16, "unused_0x06"), (19, "unknown_0x12"), (20, "unknown_0x0f"),
-            (23, "unknown_0x09"), (25, "unknown_0x07"), (26, "unknown_0x07"),
-            (1, "unknown_0x07")]
+            (23, "unknown_0x09"), (25, "unknown_0x07"),
+            (26, "unknown_0x07"), (1, "unknown_0x07")]
 _USED = {
-    (6, "unknown_0x09"): "Battle_applyDamage", (8, "unknown_0x0c"): "getTextBattleItem",
-    (8, "unknown_0x15"): "sub_483CA0", (19, "unknown_0x08"): "linkedToLimitBreak / Battle_applyDamage",
-    (20, "unknown_0x06"): "Battle_applyDamage", (22, "unknown_0x08"): "Battle_applyDamage",
-    (23, "unknown_0x0b"): "Battle_applyDamage", (26, "unknown_0x09"): "Battle_applyDamage",
-    (1, "unknown_flags"): "ResetAndParseBattleAndFieldCharacter (character setup)",
+    (6, "unknown_0x09"): "Battle_applyDamage",
+    (8, "unknown_0x15"): "sub_483CA0",
+    (20, "unknown_0x06"): "Battle_applyDamage",
     (25, "unknown_flags"): "sub_48CFB0",
 }
 for _k in _PADDING:
@@ -599,28 +728,151 @@ for _k in _PADDING:
 for _k, _fn in _USED.items():
     FINDINGS[_k] = (None, f"Unknown but used - read by `{_fn}` (purpose not yet identified).")
 
+# Round 30: these 5 padding bytes hold the SAME constant across every entry of their
+# section (not 0, not random garbage) - suspicious enough, after the attack_flags 0x20
+# precedent, to re-check beyond the original 0-xref pass. A deeper sweep cross-referenced
+# every sibling field's reader function per struct (11 functions total, incl.
+# BuildLimitCommandMenu's shifted-pointer/HIBYTE path that caught the earlier attack_flags
+# miss) - every other field of each struct has a confirmed reader; these offsets alone
+# have none. Confirmed genuinely unused; the constant values are most likely a leftover
+# stamp from the original kernel-authoring tool, not engine-consumed data.
+_PADDING_RECHECKED = {
+    (6, "unknown_0x07"): "Renzokuken finishers: retail value 100 (0x64) in all 4 entries.",
+    (19, "unknown_0x12"): "Temp-character limits: retail value 200 (0xC8, as a WORD) in all 5 entries.",
+    (20, "unknown_0x0f"): "Blue Magic: retail value 200 (0xC8) in only 1/16 entries (Laser Eye) - "
+                          "likely stray authoring noise rather than even a constant stamp.",
+    (23, "unknown_0x09"): "Duel (Zell): retail value 128 (0x80) in all 10 entries.",
+    (26, "unknown_0x07"): "Rinoa limit breaks part 2: retail value 128 (0x80) in all 5 entries.",
+}
+for _k, _note in _PADDING_RECHECKED.items():
+    FINDINGS[_k] = ("Padding", "Unused padding - re-checked beyond the original 0-xref pass "
+                    "(every sibling field of this struct has a confirmed reader; this offset has "
+                    "none in any of them, including the menu-building code). " + _note)
+
 # Resolved in IDA (round 3): concrete meanings from decompiling the accessing code.
 _ANIM = ("Target hit animation",
-         "Target hit/reaction animation ID (HIT_TYPE_TARGET_ANIMATION_TO_PLAY) played on the "
-         "target when the ability lands - the per-command-type equivalent of the GF "
-         "'target hit animation' field. (Battle_applyDamage)")
+         "Index of the reaction/impact animation the TARGET plays when the ability lands "
+         "(HIT_TYPE_TARGET_ANIMATION_TO_PLAY) - a flinch, knock-back, blown-away pose, etc. "
+         "A plain animation index, not a bitfield.\n"
+         "(What used to look like a 2-byte value in Shot/T.Char limits was really this byte "
+         "plus the separate Status window byte next to it.)\n"
+         "Runtime can override the stored value: e.g. a crit forces 6, a miss forces 0/9, a "
+         "monster death forces 3 (Battle_applyDamage / computeTargetData).")
 _FLAGS = ("Attack flags (swapped)",
           "Attack flags - low 2 bits become the last-attacker flag (ATTACK_FLAG). In this "
           "command type the flags/animation byte order is swapped vs other attacks. (Battle_applyDamage)")
 _MEANING = {
-    (2, "animation"): _ANIM, (6, "unknown_0x09"): _ANIM, (22, "unknown_0x08"): _ANIM,
-    (20, "unknown_0x06"): _ANIM, (19, "unknown_0x08"): _ANIM, (10, "target_hit_animation"): _ANIM,
-    (23, "unknown_0x0b"): _FLAGS, (26, "unknown_0x09"): _FLAGS,
+    (2, "animation"): _ANIM, (6, "unknown_0x09"): _ANIM, (22, "target_animation"): _ANIM,
+    (20, "unknown_0x06"): _ANIM, (19, "target_animation"): _ANIM, (10, "target_hit_animation"): _ANIM,
+    (23, "target_animation"): _ANIM, (26, "target_animation"): _ANIM,
+    (8, "target_animation"): _ANIM,
     (8, "unknown_0x15"): ("Random-select flag",
                           "Bit 0 marks the item eligible for random battle-item selection "
                           "(sub_483CA0 picks a random inventory item with this bit set)."),
-    (8, "unknown_0x0c"): (None, "Appears only in getTextBattleItem array indexing - not a semantic field read."),
+    (5, "hit_rate"): (None,
+        "The character's base Hit% stat while this weapon is equipped. GetCharacterHit reads it "
+        "directly: HIT% = weapon.hitRate + (junctioned HIT magic bonus), capped at 255 - there is "
+        "no character-level term, so this byte alone sets a character's baseline accuracy."),
+    (1, "ability_data_id"): (None,
+        "Index into kernel section 11 (Command ability data in battle) giving this command's "
+        "fixed built-in effect - magic/effect id, attack type, power, hit count, element, status "
+        "and animation all come from that section-11 entry (computeCommandAction).\n"
+        "0xFF (255) = no fixed effect: the command's action is chosen at runtime from the player's "
+        "selection. Attack, Magic, Draw, GF and Item all use 0xFF (they resolve to the spell/GF/item "
+        "you pick). Fixed-effect commands (Card, Devour, Defend, Mad Rush, Treatment, Recover, Revive, "
+        "Doom, Absorb, LV Up/Down) carry a real index. Also checked at setup: if the linked entry's "
+        "attack flags have the Revive bit, the command is flagged as a revive."),
+    (17, "enable_boost"): (None,
+        "Whether learning this ability enables the GF Boost minigame. In the retail kernel only "
+        "the 'Boost' entry itself sets this (the 8 stat-percentage abilities - SumMag/GFHP+10-"
+        "40% - all leave it clear); Stat to increase is the 0xFF sentinel on that same entry, "
+        "since Boost isn't a stat-increase ability."),
+    (12, "junction_flag"): (None,
+        "A genuine 24-bit bitfield - each of the 20 junction abilities is assigned its own "
+        "dedicated bit (retail data: every entry sets exactly one bit, matching its position in "
+        "the list - HP-J is bit 0, Abilityx4 is bit 19).\n"
+        "ResetAndParseBattleAndFieldCharacter ORs this value into the character's "
+        "FF8CharaAbilities bitmask for every junction ability the character has equipped, so "
+        "these bits are what other systems actually test at runtime (e.g. the Double/Triple-cast "
+        "check in BattleAction_ExecuteCommand reads the Abilityx3/Abilityx4 bits directly).\n"
+        "Because it's a real bitfield you can combine bits on a custom ability to grant several "
+        "effects from one learned ability."),
+    (14, "chara_stat_to_increase"): (None,
+        "NOT a bitfield, despite sharing a kernel array slot with the (real bitfield) Junction "
+        "ability flag - this is a plain index picking ONE of the 9 standard stats (retail: one "
+        "ability per stat, values never combine). sub_4962C0 tests it with a straight equality "
+        "compare (not bitwise) against the stat being computed, one comparison per owned Stat% "
+        "ability; matching abilities' Increase Value bytes just sum onto a 100 base (e.g. owning "
+        "both HP+20% and HP+40% gives a combined 100+20+40=160% multiplier). Applied in "
+        "Stat_RefreshCharaBattleStats: stat = multiplier * baseStat / 100."),
+    (15, "chara_flag"): (None,
+        "A genuine 24-bit bitfield, same JFlag mechanism as Junction ability flag - each ability "
+        "is assigned its own dedicated bit (retail data: every entry sets exactly one bit). "
+        "ResetAndParseBattleAndFieldCharacter ORs it into the character's FF8CharaAbilities "
+        "bitmask for every character ability equipped; other systems test individual bits at "
+        "runtime (e.g. the Expendx2-1/Expendx3-1 bits gate not consuming a spell charge on "
+        "Double/Triple)."),
+    (16, "party_flag"): (None,
+        "A genuine 8-bit bitfield, same JFlag mechanism as Junction/Character ability flags "
+        "(only the low byte is used here). ResetAndParseBattleAndFieldCharacter ORs it into "
+        "PASSIF_ABILITIES_ACTIVE for every party ability any active character has equipped."),
+    (18, "menu_index"): (None,
+        "Which Refine data table this ability's item list is drawn from. The Refine screen "
+        "handler (Menu_Prog19_RefineMenu_Init) switches on this byte to load a pair of mngrp "
+        "resource files holding that table's item/magic records: 0=Magic Refine, 1=Tool/Medicine "
+        "Refine, 2=Mid/High Magic Refine, 3=LV Up Refine. 4 (Card Mod) is special-cased - instead "
+        "of loading a fixed file it dynamically lists every card type the player owns. "
+        "255/128/129 (Haggle, Sell-High, Familiar, Call Shop, Junk Shop) aren't Refine abilities "
+        "at all and ignore Start/End offset."),
+    (18, "start_offset"): (None,
+        "Start of this ability's INCLUSIVE slice of its Refine table's records - "
+        "Menu_Prog19_RefineMenu_Init computes `count = End offset - Start offset + 1` and offsets "
+        "the table pointer by `8 * Start offset` (each record is 8 bytes). Abilities sharing the "
+        "same Refine table use non-overlapping slices, e.g. T Mag-RF (table 0, 0-6) and I Mag-RF "
+        "(table 0, 7-13) split the same loaded item list by element."),
+    (18, "end_offset"): (None,
+        "End of this ability's INCLUSIVE slice of its Refine table's records - see Start offset. "
+        "Must be >= Start offset."),
+    (1, "menu_bits"): (None,
+        "Battle-menu descriptor bits - purely UI, never read by battle logic. Shares its byte "
+        "with Submenu (the low 5 bits); each is saved independently, the other's bits are "
+        "preserved.\n"
+        "'Hide ally status panel' clear (only Recover/Revive/Treatment) makes targeting an ally "
+        "open the party HP/status panel; 'Status panel shows ailments' switches that panel to "
+        "list ailments instead of HP (Treatment); 'Instant' skips the Submenu entirely and goes "
+        "straight to target selection.\n"
+        "(BattleMenu_ExecuteSelectedCommand; copied per-slot by "
+        "ResetAndParseBattleAndFieldCharacter)"),
+    (1, "menu_submenu"): (None,
+        "Which submenu opens on this command - only takes effect when Menu flags' 'Instant' bit "
+        "is CLEAR (greyed out here otherwise, since the game never reads it in that case).\n"
+        "Shares its byte with Menu flags (the top 3 bits); each is saved independently, the "
+        "other's bits are preserved.\n"
+        "(BattleMenu_ExecuteSelectedCommand)"),
+    (25, "ability_data_id"): (None,
+        "Rinoa 'Combine' (Angelo) entry field. NOT the same as the battle-command Ability data ID: "
+        "it does NOT index section 11 - no code reads this byte (only UnknownFlags and Target of "
+        "this section are consumed, by sub_48CFB0), so any linkage is positional/unused. Left as a "
+        "raw value rather than a section-11 picker."),
 }
 FINDINGS.update(_MEANING)
 
 # Fields that IDA proved unused/padding are marked read-only in the editor.
+# (Magic 0x09 was here as "vestigial menu copy" - wrong: it is the status-window
+# flag byte, read through the battle-menu list-confirm template path.)
 _READONLY = set(_PADDING) | {
-    (2, "unknown_0x0f"), (2, "unknown_0x3a"), (5, "unknown_0x03"), (2, "unknown_0x09"),
+    (2, "unknown_0x0f"), (2, "unknown_0x3a"), (5, "unknown_0x03"), (8, "padding_0x0c"),
+    (30, "limit_unused_(status-1_bit_7)_7"),  # Status 1 bit 7 has no real status - dead slot
+}
+
+# Fields confirmed to only ever be 0/1 across every entry of a genuinely multi-entry
+# section (not a single-entry table where "one value observed" is meaningless), with
+# an established single-bit/truthy semantic - not just a magnitude/id/count byte that
+# happens to be 0 or 1 in this particular kernel.bin. Rendered as a plain checkbox.
+_BOOL_FIELDS = {
+    (5, "melee"),          # Weapon melee flag (33 weapons, real 0/1 split)
+    (8, "unknown_0x15"),   # Battle item random-select flag (33 items, real 0/1 split)
+    (17, "enable_boost"),  # GF ability "enables Boost" (9 abilities: 1 only on "Boost" itself)
 }
 
 for sid_s, cfg in sections.items():
@@ -636,6 +888,74 @@ for sid_s, cfg in sections.items():
             f["help"] = help_text
         if key in _READONLY:
             f["readonly"] = True
+        if key in _BOOL_FIELDS:
+            f["bool"] = True
+        # Only bits 7-6 of the status-window byte are live; mask them so saving the
+        # flags widget never clobbers the (always-zero, dead) low 6 bits.
+        if f["name"] == "status_window_flags":
+            f["mask"] = 0xC0
+        if sid == 30 and f["name"].startswith("limit_"):
+            f["help"] = _LIMIT_EFFECT_HELP
+        # Duel: the 5 sequence-button pickers belong together, not scattered among the
+        # rest of the Data fields.
+        if sid == 23 and f["name"].startswith("button_"):
+            f["subgroup"] = "Sequence buttons"
+        # Menu abilities: the Refine reference load button sits at the top of the main Data
+        # group (it loads menu.fs data shared by EVERY menu ability, so it's tab-wide, not
+        # per-entry); the table selector + slice offsets + the per-entry decoded panel go in
+        # a nested "Refine" sub-box.
+        if sid == 18 and f["name"] == "ap":
+            f["menu_refine_button"] = True
+        if sid == 18 and f["name"] in ("menu_index", "start_offset", "end_offset"):
+            f["subgroup"] = "Refine"
+        # Start/End offset (and the Refine button/panel, owned by start_offset) only apply
+        # to the Refine tables 0-4; grey them out for shop/plain-menu abilities (128/129/255).
+        if sid == 18 and f["name"] in ("start_offset", "end_offset"):
+            f["enabled_when"] = {"field": "menu_index", "values": [0, 1, 2, 3, 4]}
+        if sid == 18 and f["name"] == "start_offset":
+            f["menu_refine_reference"] = True
+        if sid == 18 and f["name"] == "menu_index":
+            f["help"] = (
+                "Which Refine data table this ability draws its item list from - this value "
+                "picks the table, the Start/End offset (below) pick the slice of rows within it "
+                "(each row is one 'N source -> M output' recipe).\n"
+                "0 = Magic Refine, 1 = Tool/Medicine Refine, 2 = Mid/High Magic Refine, "
+                "3 = LV Up Refine, 4 = Card Mod (card -> item; the menu only lists cards you "
+                "own, but the recipe table is still sliced by Start/End). 128/129 = Call/Junk "
+                "Shop and 255 = plain menu abilities (Haggle/Sell-High/Familiar) are not Refine "
+                "abilities and ignore Start/End offset.\n"
+                "The recipes themselves live in menu.fs, not kernel.bin - use the button below "
+                "to view them.")
+        # The 14 status timers (Misc 0x00-0x0D) are loaded as a battle countdown of
+        # 4 * (battleSpeed + 1) * value ticks (setupStatus2Timer). At the PC battle tick
+        # rate (~15/s) and the default battle speed, seconds ~= value * 16/15. The editor
+        # shows a live "~ N s" hint below the spinbox using this factor.
+        if sid == 30 and f["name"].startswith("timer_") and f["name"] != "timer_atb":
+            f["seconds_factor"] = 16.0 / 15.0
+            f["seconds_note"] = ("Battle countdown = 4 x (battleSpeed+1) x value ticks "
+                                 "(setupStatus2Timer); ~ shown at default battle speed, ~15 ticks/s.")
+        # "Dead timer" is really the interval between the random Gilgamesh/Angelo/Phoenix
+        # auto-summon checks. summonGilgaAngelStartFight (called once per battle tick from
+        # FFBattleDirector_battleLoop) decrements it; at 0 it rolls to summon Gilgamesh
+        # (12/255) or trigger an Angelo/Phoenix auto-action, then reloads this value.
+        if sid == 30 and f["name"] == "dead_timer":
+            f["seconds_factor"] = 1.0 / 15.0
+            f["seconds_note"] = ("Decremented once per battle tick (~15 ticks/s), so ~ value/15 s "
+                                 "between summon-checks.")
+            f["help"] = ("Interval between the random Gilgamesh / Angelo / Phoenix auto-summon "
+                         "checks during battle (NOT a character-death countdown). "
+                         "summonGilgaAngelStartFight decrements it once per battle tick; when it "
+                         "reaches 0 the game rolls to summon Gilgamesh (12/255 chance, if you own "
+                         "him and he hasn't come this fight) or fire an Angelo/Phoenix auto-action, "
+                         "then reloads this value. Loaded into DEAD_TIMER_TO_SUMMON_GILGA. Lower = "
+                         "checks happen more often.")
+        # Devour's HP heal/dmg quantity is sixteenths of max HP, confirmed linear across
+        # every retail entry (0->0%, 1->6.25%, 2->12.5%, 8->50%, 12->75%, 16->100%). Not
+        # an enum - earlier tool builds wrongly snapped it to power-of-2 percentages only,
+        # which showed later, perfectly-valid values (e.g. 12 = 75%) as unresolved "raw".
+        if sid == 29 and f["name"] == "hp_quantity":
+            f["percent_factor"] = 100.0 / 16.0
+            f["percent_note"] = "Value is in sixteenths of max HP (value/16 * 100%); linear, not an enum."
 
 # Zell "Duel" limit-break help (decompiled: linkedToZellDuel / sub_4852B0 / K_DUEL_PARAM).
 for _f in sections["30"]["fields"]:
@@ -650,7 +970,8 @@ for _f in sections["30"]["fields"]:
     elif _n.startswith("duel_timer_cl"):
         _cl = _n[-1]
         _f["help"] = (f"Zell 'Duel' limit break - duration of the Duel input window at crisis "
-                      f"level {_cl} (higher crisis = longer). Paired with 'Duel start seq CL{_cl}'.")
+                      f"level {_cl} (higher crisis = longer).\n"
+                      f"Paired with 'Duel start seq CL{_cl}'.")
 for _f in sections["24"]["fields"]:
     if _f["name"].startswith("start_move_"):
         _f["help"] = ("Zell Duel move table: the Duel move performed when this sequence is the "
@@ -669,6 +990,62 @@ for cfg in sections.values():
             f["lookup"] = "attack_animation"
             if f.get("label", "").startswith("Magic ID"):
                 f["label"] = "Attack animation"
+
+# The low 2 bits of every attack_flags byte are ONE 2-bit damage-type value (ATTACK_FLAG & 3:
+# 0 Physical / 1 Magical / 2 Item-Medicine / 3 special), NOT two independent flags. Rendering
+# them as separate "Magical" and "Item/Medicine" checkboxes wrongly implied both could be ticked
+# (value 3 lit both, e.g. every Blue Magic reads 0x23 - looked like "Magical + Item/Medicine" but
+# is really "special"). Split each attack_flags field into a masked damage-type dropdown + the
+# masked remaining behaviour-flag checkboxes (KernelEntry's read-modify-write keeps them in sync).
+_ATTACK_DT_HELP = ("The attack's damage TYPE (low 2 bits of the attack-flags byte, ATTACK_FLAG & 3) "
+                   "- one value, not a set of flags:\n"
+                   "Physical (0): the only type that can trigger the target's Counter, wake "
+                   "Sleep/Confusion, or remove Back Attack.\n"
+                   "Magical (1): the target's Shell status halves the damage/heal.\n"
+                   "Item/Medicine (2): battle items; enables the Med Data ability's healing doubling "
+                   "and (being non-Magical) dodges Shell.\n"
+                   "Special (3): none of the above - forced by Renzokuken/Gunblade, and what every "
+                   "Blue Magic uses. Not Physical, not Magical, not Item, so it gets no Counter, no "
+                   "Shell halving and no Med Data.")
+_ATTACK_BITS_HELP = ("Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type "
+                     "field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are "
+                     "actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is "
+                     "set on curative magic/items in retail data but nothing consumes it). 0x20 is "
+                     "set on virtually every player ability as an authoring convention, but is only "
+                     "READ for battle items (see the Battle items tab) - here it is inert.")
+_ATTACK_BITS_HELP_ITEM = ("Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage "
+                          "type field). 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive "
+                          "behave as elsewhere. 0x04 and 0x40 have NO reader anywhere. 0x20 IS read "
+                          "here - `updateBattleItemData` tests it directly to decide whether the "
+                          "item is selectable in the battle Item menu (this is the ONE section where "
+                          "this bit does anything; on magic/GF/limits it's inert).")
+for cfg in sections.values():
+    new_fields = []
+    for f in cfg["fields"]:
+        if f.get("lookup") == "attack_flags":
+            dt = {"name": f["name"] + "_type", "offset": f["offset"], "size": f["size"],
+                  "mask": 0x03, "lookup": "attack_damage_type", "label": "Damage type",
+                  "help": _ATTACK_DT_HELP}
+            # Battle items (section 8) are the ONE place 0x20 is actually read
+            # (updateBattleItemData -> Item-menu selectability) - every other section's
+            # copy of this byte is inert there, so the checkbox label must say so
+            # per-section rather than sharing one generic (and, on Items, self-
+            # contradictory) "inert" label.
+            is_item = cfg["section_id"] == 8
+            bits_lookup = "attack_flags_bits_item" if is_item else "attack_flags_bits"
+            bits = {"name": f["name"], "offset": f["offset"], "size": f["size"],
+                    "mask": 0xFC, "lookup": bits_lookup,
+                    "label": f.get("label", "Attack flags"),
+                    "help": _ATTACK_BITS_HELP_ITEM if is_item else _ATTACK_BITS_HELP}
+            for key in ("group", "row", "subgroup"):
+                if key in f:
+                    dt[key] = f[key]
+                    bits[key] = f[key]
+            new_fields.append(dt)
+            new_fields.append(bits)
+        else:
+            new_fields.append(f)
+    cfg["fields"] = new_fields
 
 with open(DEST, "w", encoding="utf-8") as f:
     json.dump(sections, f, indent=1, ensure_ascii=False)

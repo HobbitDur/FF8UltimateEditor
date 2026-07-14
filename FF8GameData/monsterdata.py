@@ -3,7 +3,7 @@ import copy
 import math
 import os
 from enum import Enum
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from urllib.parse import to_bytes
 
 
@@ -1316,6 +1316,16 @@ class AnimationFrame:
 class Animation:
     def __init__(self):
         self.frames: List[AnimationFrame] = []
+        # Byte-alignment slack of the original bit-stream. The game
+        # (Battle_ReadAnimation) reads exactly the frames' bits, so the leftover
+        # high bits of the final byte are never read; Square's encoder left
+        # garbage there. Stored as (bit_pos, value) with
+        # value = original_final_byte >> bit_pos, and re-emitted on save so an
+        # unmodified animation round-trips byte-exact.
+        self.original_slack_bits: Optional[Tuple[int, int]] = None
+        # Original bytes between the end of the bit-stream and the next
+        # animation offset (or the section end for the last animation).
+        self.original_tail: bytes = b""
 
     def __str__(self):
         return f"Animation(nb_frames:{len(self.frames)}, {self.frames})"
@@ -1377,6 +1387,10 @@ class Animation:
 
         self.frames = new_frames
         self._recompute_frame_storage_types()
+        # The bit-stream is fully re-encoded: the recorded original padding no
+        # longer applies (zero-fill is fine, the game never reads it).
+        self.original_slack_bits = None
+        self.original_tail = b""
 
     @staticmethod
     def _create_frame_between(frame_a: 'AnimationFrame', frame_b: 'AnimationFrame', step: float,
@@ -1472,9 +1486,17 @@ class Animation:
             frame.write_to_writer(writer, prev_frame)
             prev_frame = frame
 
+        # Re-emit the original slack bits into the flush byte so an unmodified
+        # animation round-trips byte-exact. Only valid when the bit-stream still
+        # ends at the same sub-byte position; a re-encoded animation (different
+        # frames) falls back to zero-fill, which the game never reads anyway.
+        if self.original_slack_bits is not None and writer._bits_in_buffer == self.original_slack_bits[0]:
+            writer.write_bits(self.original_slack_bits[1], 8 - writer._bits_in_buffer)
+
         # FLUSH at the end of each animation - this makes the buffer bits
         # part of this animation's data
         data.extend(writer.get_data(flush=True))
+        data.extend(self.original_tail)
 
         return data
 
@@ -1500,6 +1522,19 @@ class AnimationSection:
 
             for frame_index in range(data[anim_start]):
                 anim.add_frame(br, bone_section)
+
+            # The bit-stream rarely ends on a byte boundary: keep the original
+            # slack bits of the final byte (garbage to the game, but needed for
+            # a byte-exact round-trip).
+            if br._bit_pos > 0:
+                anim.original_slack_bits = (br._bit_pos, data[br._byte_pos] >> br._bit_pos)
+                anim_end = br._byte_pos + 1
+            else:
+                anim_end = br._byte_pos
+            next_start = self.offsets[anim_idx + 1] if anim_idx + 1 < self.nb_animations else len(data)
+            if anim_end < next_start:
+                anim.original_tail = bytes(data[anim_end:next_start])
+
             self.animations.append(anim)
 
 
