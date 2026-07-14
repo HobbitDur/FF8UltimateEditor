@@ -19,11 +19,16 @@ from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from ExeLauncher.sirenlauncher import SirenLauncher
 from Ifrit.ifritmonsterwidget import IfritMonsterWidget
 from Julia.juliawidget import JuliaWidget
+from Moomba.moombawidget import MoombaWidget
+from Nida.nidawidget import NidaWidget
 from Odine.odinewidget import OdineWidget
+from Piet.pietwidget import PietWidget
 from Pandemona.pandemonawidget import PandemonaWidget
-from PuPuCargo.pupucargowidget import PuPuCargoWidget
+from Minimog.minimogwidget import MinimogWidget
+from Kadowaki.kadowakiwidget import KadowakiWidget
 from Seed.seedwidget import SeedWidget
 from Siren.sirenwidget import SirenWidget
+from Joker.jokerwidget import JokerWidget
 from Junkshop.junkshopwidget import JunkshopWidget
 from Alexander.alexanderwidget import AlexanderWidget
 from Quezacotl.quezacotlwidget import QuezacotlWidget
@@ -32,7 +37,9 @@ from SmallWidget.externaltoolwidget import ExternalToolWidget
 from SmallWidget.fsextractwidget import FsExtractWidget
 from TonberryShop.tonberryshop import TonberryShop
 from ToolUpdate.toolupdatewidget import ToolUpdateWidget
+from Zone.zonewidget import ZoneWidget
 from SolomonRing.solomonringwidget import SolomonRingWidget
+from Trepies.trepieswidget import TrepiesWidget
 
 
 class FF8UltimateEditorWidget(QWidget):
@@ -59,7 +66,8 @@ class FF8UltimateEditorWidget(QWidget):
             "CCGroup (Card value editor)",
             "Cid (Draw editor)",
             "SolomonRing (kernel.bin editor)",
-            "PuPuCargo (Item menu editor)",
+            "Kadowaki (Item menu editor)",
+            "Minimog (icon.sp1 editor)",
             "Seed (Field model viewer)",
             "Pandemona (Refine editor)",
             "Alexander (Battle stage viewer)",
@@ -67,7 +75,13 @@ class FF8UltimateEditorWidget(QWidget):
             "Siren (price.bin editor)",
             "Junkshop (mwepon.bin editor)",
             "Quezacotl (init.out editor)",
-            "Odine (magsort.bin editor)"
+            "Odine (magsort.bin editor)",
+            "Moomba (mmag2.bin editor)",
+            "Joker (sp2 sprite editor)",
+            "Piet (mtmag.bin editor)",
+            "Nida (SeeD test editor)",
+            "Zone (mmag.bin editor)",
+            "Trepies (Tutorial demo editor)"
         ]
 
         # 3. Header: Program Selection (ComboBox)
@@ -146,7 +160,8 @@ class FF8UltimateEditorWidget(QWidget):
         self._cid_widget = CidWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path))
         self._ifrit_widget = IfritMonsterWidget( settings=self.settings, icon_path=resources_path, game_data_folder=game_data_path)
-        self._pupucargo_widget = PuPuCargoWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._kadowaki_widget = KadowakiWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._minimog_widget = MinimogWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._seed_widget = SeedWidget(icon_path=os.path.join(resources_path), settings=self.settings)
         self._pandemona_widget = PandemonaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._alexander_widget = AlexanderWidget(icon_path=os.path.join(resources_path), settings=self.settings)
@@ -155,6 +170,12 @@ class FF8UltimateEditorWidget(QWidget):
         self._junkshop_widget = JunkshopWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._quezacotl_widget = QuezacotlWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._odine_widget = OdineWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._moomba_widget = MoombaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._joker_widget = JokerWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._piet_widget = PietWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._trepies_widget = TrepiesWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._nida_widget = NidaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._zone_widget = ZoneWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
 
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
@@ -164,7 +185,8 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._ccgroup_widget)  # Index 3
         self.tool_stack.addWidget(self._cid_widget)  # Index 4
         self.tool_stack.addWidget(self._solomonring_widget) # Index 5
-        self.tool_stack.addWidget(self._pupucargo_widget) # Index 6
+        self.tool_stack.addWidget(self._kadowaki_widget) # Index 6
+        self.tool_stack.addWidget(self._minimog_widget) # Minimog (icon.sp1), keep right after Kadowaki in HOBBIT_OPTION_ITEMS
         self.tool_stack.addWidget(self._seed_widget) # Index 7
         self.tool_stack.addWidget(self._pandemona_widget) # Index 8
         self.tool_stack.addWidget(self._alexander_widget) # Index 9
@@ -173,6 +195,12 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._junkshop_widget) # Index 12
         self.tool_stack.addWidget(self._quezacotl_widget) # Index 13
         self.tool_stack.addWidget(self._odine_widget) # Index 14
+        self.tool_stack.addWidget(self._moomba_widget) # Index 15
+        self.tool_stack.addWidget(self._joker_widget) # Index 16
+        self.tool_stack.addWidget(self._piet_widget) # Index 17
+        self.tool_stack.addWidget(self._nida_widget) # Index 18
+        self.tool_stack.addWidget(self._zone_widget) # Index 19
+        self.tool_stack.addWidget(self._trepies_widget) # Index 20
         self._program_option_change()
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)

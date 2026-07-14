@@ -1,5 +1,5 @@
 """
-Tests for PuPuCargo (mitem.bin item menu editor).
+Tests for Kadowaki (mitem.bin item menu editor).
 Tests the file manager (read/modify/write) and the consistency of the mitem.json game data.
 """
 import pathlib
@@ -7,7 +7,7 @@ import pathlib
 import pytest
 
 from FF8GameData.gamedata import GameData
-from PuPuCargo.pupucargomanager import PuPuCargoManager
+from Kadowaki.kadowakimanager import KadowakiManager
 
 NB_MITEM_ENTRIES = 199  # mitem.bin contains one 4-byte entry per item ID (0x00 to 0xC6)
 
@@ -24,7 +24,7 @@ def game_data():
 
 @pytest.fixture
 def manager(game_data):
-    return PuPuCargoManager(game_data)
+    return KadowakiManager(game_data)
 
 
 @pytest.fixture
@@ -95,8 +95,28 @@ class TestMitemJson:
         assert "All GFs" in names
         assert list_values[-1]["id"] == 255
 
+    def test_gf_ability_resolves_kernel_ability_names(self, manager):
+        """gf_ability values come from the shared kernel ability enum (kernel_lookups.json)."""
+        gf_ability = manager.get_param_type_info("gf_ability")
+        assert gf_ability["widget"] == "list"
+        names = {value["id"]: value["name"] for value in manager.get_param_list_values(gf_ability)}
+        # Vanilla item-taught abilities: HP-J Scroll (1), Ribbon (77), Steel Pipe (83)
+        assert names[1] == "HP-J"
+        assert names[77] == "Ribbon"
+        assert names[83] == "SumMag+10%"
 
-class TestPuPuCargoManager:
+    def test_quistis_limit_resolves_blue_magic_names(self, manager):
+        """quistis_limit values come from the Blue Magic list in kernel order (limit_break.json)."""
+        quistis_limit = manager.get_param_type_info("quistis_limit")
+        assert quistis_limit["widget"] == "list"
+        names = {value["id"]: value["name"] for value in manager.get_param_list_values(quistis_limit)}
+        assert len(names) == 16
+        # Vanilla teaching items: Spider Web (1), Dark Matter (15)
+        assert names[1] == "Ultra Waves"
+        assert names[15] == "Shockwave Pulsar"
+
+
+class TestKadowakiManager:
     """Read/modify/write of the mitem.bin file"""
 
     def test_load_file(self, manager, mitem_file):

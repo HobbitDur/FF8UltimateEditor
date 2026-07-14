@@ -1,7 +1,7 @@
 """
-PuPuCargo CLI Tool.
+Kadowaki CLI Tool.
 
-Headless mitem.bin editing (same data as the PuPuCargo GUI):
+Headless mitem.bin editing (same data as the Kadowaki GUI):
   • export-csv  (mitem.bin → CSV: one row per item, menu type/flags/params)
   • import-csv  (base mitem.bin + CSV → new mitem.bin)
 """
@@ -16,8 +16,8 @@ CSV_HEADER = ["Item ID", "Item name", "Type ID", "Flags", "Param1", "Param2"]
 
 
 def _load_manager(mitem_bin_path: str):
-    from PuPuCargo.pupucargomanager import PuPuCargoManager
-    manager = PuPuCargoManager(load_game_data())
+    from Kadowaki.kadowakimanager import KadowakiManager
+    manager = KadowakiManager(load_game_data())
     manager.load_file(mitem_bin_path)
     return manager
 
@@ -48,12 +48,12 @@ def _cmd_import_csv(args) -> int:
     return 0
 
 
-class PuPuCargoCliTool(BaseCliTool):
+class KadowakiCliTool(BaseCliTool):
     """CLI tool for mitem.bin (item menu behaviour) editing."""
 
     @property
     def name(self) -> str:
-        return "pupu-cargo"
+        return "kadowaki"
 
     @property
     def description(self) -> str:
@@ -61,8 +61,8 @@ class PuPuCargoCliTool(BaseCliTool):
 
     def build_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
-            prog="ff8-cli pupu-cargo",
-            description="Headless mitem.bin editor (same data as the PuPuCargo GUI)",
+            prog="ff8-cli kadowaki",
+            description="Headless mitem.bin editor (same data as the Kadowaki GUI)",
         )
         sub = parser.add_subparsers(dest="command", required=True)
 

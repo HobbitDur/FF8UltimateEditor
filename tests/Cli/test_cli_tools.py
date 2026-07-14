@@ -62,10 +62,43 @@ def test_junkshop_roundtrip(tmp_path):
 
 
 @pytest.mark.ff8data("extracted_files/menu/mitem.bin")
-def test_pupu_cargo_roundtrip(tmp_path):
-    from Cli.pupu_cargo import PuPuCargoCliTool
-    original, rebuilt = _roundtrip_csv(PuPuCargoCliTool, EXTRACTED / "menu" / "mitem.bin", tmp_path)
+def test_kadowaki_roundtrip(tmp_path):
+    from Cli.kadowaki import KadowakiCliTool
+    original, rebuilt = _roundtrip_csv(KadowakiCliTool, EXTRACTED / "menu" / "mitem.bin", tmp_path)
     assert original == rebuilt
+
+
+@pytest.mark.ff8data("extracted_files/menu/icon.sp1", "extracted_files/menu/icon.TEX")
+def test_minimog_list_set_add_and_png(capsys, tmp_path):
+    from Cli.minimog import MinimogCliTool
+    source = EXTRACTED / "menu" / "icon.sp1"
+
+    assert _run(MinimogCliTool, ["list", "--input", str(source), "--icon-id", "1"]) == 0
+    assert "Icon 1" in capsys.readouterr().out
+
+    edited = tmp_path / "edited.sp1"
+    assert _run(MinimogCliTool, ["set-quad", "--input", str(source), "--icon-id", "1",
+                                 "--quad", "0", "--u", "42", "--output", str(edited)]) == 0
+    # only icon 1's quad changed: restoring its U byte gives back the original file
+    original = bytearray(source.read_bytes())
+    rebuilt = bytearray(edited.read_bytes())
+    assert rebuilt != original
+    quad_offset = int.from_bytes(rebuilt[4 + 4 * 1:4 + 4 * 1 + 2], "little")
+    assert rebuilt[quad_offset] == 42
+    rebuilt[quad_offset] = original[quad_offset]
+    assert rebuilt == original
+
+    added = tmp_path / "added.sp1"
+    assert _run(MinimogCliTool, ["add-quad", "--input", str(source), "--icon-id", "0",
+                                 "--width", "16", "--height", "16", "--clut", "32",
+                                 "--output", str(added)]) == 0
+    assert len(added.read_bytes()) == len(original) + 8
+
+    png = tmp_path / "icon1.png"
+    assert _run(MinimogCliTool, ["export-png", "--input", str(source),
+                                 "--tex", str(EXTRACTED / "menu" / "icon.TEX"),
+                                 "--icon-id", "1", "--output", str(png)]) == 0
+    assert png.stat().st_size > 0
 
 
 @pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin")
@@ -83,6 +116,36 @@ def test_pandemona_roundtrip(tmp_path):
                                    "--output", str(out), "--output-mngrphd", str(out_hd)]) == 0
     assert out.read_bytes() == mngrp.read_bytes()
     assert out_hd.read_bytes() == mngrphd.read_bytes()
+
+
+@pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin")
+def test_nida_roundtrip_and_set_answer(tmp_path):
+    from Cli.nida import NidaCliTool
+    mngrp = tmp_path / "mngrp.bin"
+    mngrphd = tmp_path / "mngrphd.bin"
+    shutil.copy(EXTRACTED / "menu" / "mngrp.bin", mngrp)
+    shutil.copy(EXTRACTED / "menu" / "mngrphd.bin", mngrphd)
+    csv_path = tmp_path / "seed.csv"
+    out = tmp_path / "mngrp_out.bin"
+    out_hd = tmp_path / "mngrphd_out.bin"
+    assert _run(NidaCliTool, ["export-csv", "--input", str(mngrp), "--output", str(csv_path)]) == 0
+    assert _run(NidaCliTool, ["import-csv", "--input", str(mngrp), "--csv", str(csv_path),
+                              "--output", str(out), "--output-mngrphd", str(out_hd)]) == 0
+    assert out.read_bytes() == mngrp.read_bytes()
+    assert out_hd.read_bytes() == mngrphd.read_bytes()
+
+    assert _run(NidaCliTool, ["set-answer", "--input", str(mngrp), "--test", "5", "--question", "3",
+                              "--answer", "1", "--output", str(out), "--output-mngrphd", str(out_hd)]) == 0
+    from FF8GameData.gamedata import GameData
+    from Nida.nidamanager import NidaManager
+    game_data = GameData(str(PROJECT_ROOT / "FF8GameData"))
+    game_data.load_all()
+    manager = NidaManager(game_data)
+    manager.load_file(str(out), str(out_hd))
+    assert manager.test_list[4].strings[2].answer == 1
+    # An out-of-range answer must be refused
+    assert _run(NidaCliTool, ["set-answer", "--input", str(mngrp), "--test", "5", "--question", "3",
+                              "--answer", "9", "--output", str(out), "--output-mngrphd", str(out_hd)]) == 1
 
 
 @pytest.mark.ff8data("extracted_files/main/init.out")
@@ -216,6 +279,57 @@ def test_seed_list_models(capsys):
     assert "models in" in capsys.readouterr().out
 
 
+@pytest.mark.ff8data("extracted_files/menu/mtmag.bin")
+def test_piet_show_and_set_range(capsys, tmp_path):
+    from Cli.piet import PietCliTool
+    source = EXTRACTED / "menu" / "mtmag.bin"
+    assert _run(PietCliTool, ["show", "--input", str(source)]) == 0
+    assert "Battle tutorial" in capsys.readouterr().out
+
+    edited = tmp_path / "mtmag.bin"
+    assert _run(PietCliTool, ["set-range", "--input", str(source), "--book", "1",
+                              "--first", "51", "--last", "60", "--output", str(edited)]) == 0
+    rebuilt = bytearray(source.read_bytes())
+    rebuilt[4:6] = bytes([51, 60])
+    assert edited.read_bytes() == bytes(rebuilt), "only book 1's range bytes may change"
+
+    # Invalid ranges must be refused (first > last)
+    assert _run(PietCliTool, ["set-range", "--input", str(source), "--book", "0",
+                              "--first", "50", "--last", "43", "--output", str(tmp_path / "bad.bin")]) == 1
+
+
+@pytest.mark.ff8data("extracted_files/menu/mmag2.bin")
+def test_moomba_roundtrip_and_list(capsys, tmp_path):
+    from Cli.moomba import MoombaCliTool
+    source = EXTRACTED / "menu" / "mmag2.bin"
+    json_path = tmp_path / "mmag2.json"
+    out = tmp_path / "mmag2_out.bin"
+    assert _run(MoombaCliTool, ["export-json", "--input", str(source), "--output", str(json_path)]) == 0
+    assert _run(MoombaCliTool, ["import-json", "--input", str(source), "--json", str(json_path),
+                                "--output", str(out)]) == 0
+    assert out.read_bytes() == source.read_bytes()
+
+    capsys.readouterr()
+    assert _run(MoombaCliTool, ["list", "--input", str(source)]) == 0
+    assert "Story slide" in capsys.readouterr().out
+
+
+@pytest.mark.ff8data("extracted_files/menu/mmag.bin", "extracted_files/menu/mngrp.bin",
+                     "extracted_files/menu/mngrphd.bin")
+def test_zone_roundtrip_and_show(capsys, tmp_path):
+    from Cli.zone import ZoneCliTool
+    source = EXTRACTED / "menu" / "mmag.bin"
+    original, rebuilt = _roundtrip_csv(ZoneCliTool, source, tmp_path)
+    assert original == rebuilt
+
+    capsys.readouterr()
+    assert _run(ZoneCliTool, ["show", "--input", str(source), "--entry", "0",
+                              "--mngrp", str(EXTRACTED / "menu" / "mngrp.bin")]) == 0
+    out = capsys.readouterr().out
+    assert "Weapons Monthly 1st Issue" in out  # magazine map + resolved text overlay
+    assert "Lion Heart" in out  # weapon unlock resolved by name
+
+
 def test_all_tools_registered():
     """cli.py must expose every Cli tool module."""
     import cli
@@ -225,5 +339,6 @@ def test_all_tools_registered():
         cli._register_all_tools()
     names = set(registry.list_tools())
     assert {"shumi-translator", "ifrit-ai", "ifrit", "jp-font-builder", "tonberry-shop", "siren",
-            "junkshop", "quezacotl", "pupu-cargo", "pandemona", "ccgroup", "cid",
-            "julia", "solomon-ring", "alexander", "seed"} <= names
+            "junkshop", "quezacotl", "kadowaki", "minimog", "pandemona", "ccgroup", "cid",
+            "julia", "solomon-ring", "alexander", "seed", "piet", "moomba", "nida",
+            "zone", "trepies"} <= names

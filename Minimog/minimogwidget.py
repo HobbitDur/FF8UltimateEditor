@@ -1,0 +1,325 @@
+import os
+
+from PyQt6.QtCore import QSize, QSignalBlocker, Qt
+from PyQt6.QtGui import QIcon, QImage, QPixmap
+from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
+                             QListWidget, QSpinBox, QComboBox, QCheckBox, QGroupBox, QFormLayout)
+
+from Minimog.minimogmanager import MinimogManager, Sp1Quad
+
+PREVIEW_SCALE = 6
+
+
+class MinimogWidget(QWidget):
+    """icon.sp1 editor (menu icon UV table).
+
+    Each icon the text engine can draw (control code 0x05+n) is a list of quads
+    cropped from icon.TEX. Quads can be edited (UV, size, draw offsets, CLUT,
+    flags), added or removed; the offset directory is rebuilt on save. Icon ids
+    128-139 are the key-config button icons the engine redirects elsewhere, so
+    they are shown read-only."""
+
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+        QWidget.__init__(self)
+
+        self.manager = MinimogManager()
+        self.tex_file = None  # decoded icon.TEX for the preview, when available
+
+        self.setWindowTitle("Minimog")
+        self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
+
+        # File section
+        self.file_dialog = QFileDialog()
+        self.load_button = QPushButton()
+        self.load_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
+        self.load_button.setIconSize(QSize(30, 30))
+        self.load_button.setFixedSize(40, 40)
+        self.load_button.setToolTip("Open an icon.sp1 file")
+        self.load_button.clicked.connect(self.load_file)
+
+        self.save_button = QPushButton()
+        self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
+        self.save_button.setIconSize(QSize(30, 30))
+        self.save_button.setFixedSize(40, 40)
+        self.save_button.setToolTip("Save all modifications in the opened icon.sp1 (irreversible)")
+        self.save_button.clicked.connect(self.save_file)
+
+        self.tex_button = QPushButton("Load icon.TEX")
+        self.tex_button.setToolTip("Load the icon texture for the preview "
+                                   "(auto-loaded when icon.TEX sits next to the .sp1)")
+        self.tex_button.clicked.connect(self.load_tex_dialog)
+
+        self.file_label = QLabel("No file loaded")
+
+        file_section_layout = QHBoxLayout()
+        file_section_layout.addWidget(self.load_button)
+        file_section_layout.addWidget(self.save_button)
+        file_section_layout.addWidget(self.tex_button)
+        file_section_layout.addWidget(self.file_label)
+        file_section_layout.addStretch(1)
+
+        # Icon list (left side)
+        self.icon_list = QListWidget()
+        self.icon_list.setFixedWidth(220)
+        self.icon_list.currentRowChanged.connect(self.reload_selected_icon)
+
+        # Quad list + add/remove (middle)
+        self.quad_list = QListWidget()
+        self.quad_list.setFixedWidth(120)
+        self.quad_list.currentRowChanged.connect(self.reload_selected_quad)
+
+        self.add_quad_button = QPushButton("Add quad")
+        self.add_quad_button.setToolTip("Append a quad to this icon (the offset directory is rebuilt on save)")
+        self.add_quad_button.clicked.connect(self.add_quad)
+        self.remove_quad_button = QPushButton("Remove quad")
+        self.remove_quad_button.clicked.connect(self.remove_quad)
+
+        quad_side_layout = QVBoxLayout()
+        quad_side_layout.addWidget(QLabel("Quads:"))
+        quad_side_layout.addWidget(self.quad_list)
+        quad_side_layout.addWidget(self.add_quad_button)
+        quad_side_layout.addWidget(self.remove_quad_button)
+
+        # Quad editor (right side)
+        self.icon_name_label = QLabel("")
+        self.icon_name_label.setStyleSheet("font-size: 14pt; font-weight: bold;")
+        self.button_icon_label = QLabel(
+            "Key-config button icon: the engine never draws these quads,\n"
+            "it redirects ids 128-139 through the controller configuration.")
+        self.button_icon_label.setStyleSheet("color: #b06000;")
+        self.button_icon_label.hide()
+
+        self.u_spinbox = QSpinBox()
+        self.u_spinbox.setRange(0, 255)
+        self.u_spinbox.setToolTip("Texture U (X pixel in icon.TEX)")
+        self.v_spinbox = QSpinBox()
+        self.v_spinbox.setRange(0, 255)
+        self.v_spinbox.setToolTip("Texture V (Y pixel in icon.TEX)")
+        self.width_spinbox = QSpinBox()
+        self.width_spinbox.setRange(0, 255)
+        self.height_spinbox = QSpinBox()
+        self.height_spinbox.setRange(0, 255)
+        self.dx_spinbox = QSpinBox()
+        self.dx_spinbox.setRange(-128, 127)
+        self.dx_spinbox.setToolTip("Signed X offset from the icon draw position")
+        self.dy_spinbox = QSpinBox()
+        self.dy_spinbox.setRange(-128, 127)
+        self.dy_spinbox.setToolTip("Signed Y offset from the icon draw position")
+        self.clut_spinbox = QSpinBox()
+        self.clut_spinbox.setRange(0, 2047)
+        self.clut_spinbox.setToolTip("CLUT selector (11 bits): the primitive CLUT is 0x3810 + this value.\n"
+                                     "The TEX palette index is the selector / 64 (vanilla values are\n"
+                                     "palette * 64 + 32).")
+        self.palette_label = QLabel("palette 0")
+        self.semi_transparent_checkbox = QCheckBox("Semi-transparency (ABE, bit 27)")
+        self.tpage_combobox = QComboBox()
+        self.tpage_combobox.addItems([f"{i}" for i in range(4)])
+        self.tpage_combobox.setToolTip("Texture page bits 30-31 (E1 bits 5-6)")
+
+        for spinbox in (self.u_spinbox, self.v_spinbox, self.width_spinbox, self.height_spinbox,
+                        self.dx_spinbox, self.dy_spinbox, self.clut_spinbox):
+            spinbox.valueChanged.connect(self._on_data_changed)
+        self.semi_transparent_checkbox.stateChanged.connect(self._on_data_changed)
+        self.tpage_combobox.currentIndexChanged.connect(self._on_data_changed)
+
+        edit_group = QGroupBox("Quad")
+        edit_form = QFormLayout()
+        edit_form.addRow("Texture U:", self.u_spinbox)
+        edit_form.addRow("Texture V:", self.v_spinbox)
+        edit_form.addRow("Width:", self.width_spinbox)
+        edit_form.addRow("Height:", self.height_spinbox)
+        edit_form.addRow("X offset:", self.dx_spinbox)
+        edit_form.addRow("Y offset:", self.dy_spinbox)
+        edit_form.addRow("CLUT selector:", self.clut_spinbox)
+        edit_form.addRow("TEX palette:", self.palette_label)
+        edit_form.addRow(self.semi_transparent_checkbox)
+        edit_form.addRow("Texture page:", self.tpage_combobox)
+        edit_group.setLayout(edit_form)
+
+        # Preview
+        self.preview_label = QLabel("No texture loaded")
+        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.preview_label.setMinimumSize(200, 120)
+        preview_group = QGroupBox(f"Preview (x{PREVIEW_SCALE})")
+        preview_layout = QVBoxLayout()
+        preview_layout.addWidget(self.preview_label)
+        preview_group.setLayout(preview_layout)
+
+        self.editor_container = QWidget()
+        editor_layout = QVBoxLayout()
+        editor_layout.addWidget(self.icon_name_label)
+        editor_layout.addWidget(self.button_icon_label)
+        editor_layout.addWidget(edit_group)
+        editor_layout.addWidget(preview_group)
+        editor_layout.addStretch(1)
+        self.editor_container.setLayout(editor_layout)
+        self.editor_container.setEnabled(False)
+
+        main_editor_layout = QHBoxLayout()
+        main_editor_layout.addWidget(self.icon_list)
+        main_editor_layout.addLayout(quad_side_layout)
+        main_editor_layout.addWidget(self.editor_container)
+        main_editor_layout.addStretch(1)
+
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(file_section_layout)
+        main_layout.addLayout(main_editor_layout)
+        self.setLayout(main_layout)
+
+    # ------------------------------------------------------------------ file
+    def load_file(self):
+        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search icon.sp1 file",
+                                                     filter="*.sp1", directory=os.getcwd())[0]
+        if file_name:
+            self.manager.load_file(file_name)
+            self.file_label.setText(os.path.basename(file_name))
+            self.editor_container.setEnabled(True)
+            self._auto_load_tex(os.path.dirname(file_name))
+            with QSignalBlocker(self.icon_list):
+                self.icon_list.clear()
+                self.icon_list.addItems(
+                    [f"{icon.name} ({len(icon.quads)} quad{'s' if len(icon.quads) != 1 else ''})"
+                     for icon in self.manager.icons])
+            self.icon_list.setCurrentRow(0)
+
+    def save_file(self):
+        if self.manager.file_path:
+            self.manager.save_file()
+
+    def load_tex_dialog(self):
+        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search icon.TEX file",
+                                                     filter="*.TEX *.tex", directory=os.getcwd())[0]
+        if file_name:
+            self._load_tex(file_name)
+            self.reload_preview()
+
+    def _auto_load_tex(self, folder):
+        if self.tex_file is not None:
+            return
+        for name in ("icon.TEX", "icon.tex"):
+            tex_path = os.path.join(folder, name)
+            if os.path.isfile(tex_path):
+                self._load_tex(tex_path)
+                return
+
+    def _load_tex(self, tex_path):
+        from FF8GameData.tex.texfile import TexFile
+        self.tex_file = TexFile.read(tex_path)
+        self.tex_button.setText(os.path.basename(tex_path))
+
+    # ------------------------------------------------------------------- ui
+    def _selected_icon(self):
+        index = self.icon_list.currentRow()
+        if 0 <= index < len(self.manager.icons):
+            return self.manager.icons[index]
+        return None
+
+    def _selected_quad(self):
+        icon = self._selected_icon()
+        if not icon:
+            return None
+        index = self.quad_list.currentRow()
+        if 0 <= index < len(icon.quads):
+            return icon.quads[index]
+        return None
+
+    def reload_selected_icon(self):
+        icon = self._selected_icon()
+        if not icon:
+            return
+        self.icon_name_label.setText(icon.name)
+        self.button_icon_label.setVisible(icon.is_button_icon)
+        # Button icons 128-139 are informational only: the engine ignores their quads.
+        for editor in (self.u_spinbox, self.v_spinbox, self.width_spinbox, self.height_spinbox,
+                       self.dx_spinbox, self.dy_spinbox, self.clut_spinbox,
+                       self.semi_transparent_checkbox, self.tpage_combobox,
+                       self.add_quad_button, self.remove_quad_button):
+            editor.setEnabled(not icon.is_button_icon)
+        with QSignalBlocker(self.quad_list):
+            self.quad_list.clear()
+            self.quad_list.addItems([f"Quad {k}" for k in range(len(icon.quads))])
+        if icon.quads:
+            self.quad_list.setCurrentRow(0)
+        else:
+            self.reload_selected_quad()
+        self.reload_preview()
+
+    def reload_selected_quad(self):
+        quad = self._selected_quad()
+        editors = (self.u_spinbox, self.v_spinbox, self.width_spinbox, self.height_spinbox,
+                   self.dx_spinbox, self.dy_spinbox, self.clut_spinbox,
+                   self.semi_transparent_checkbox, self.tpage_combobox)
+        if not quad:
+            return
+        values = (quad.u, quad.v, quad.width, quad.height, quad.dx, quad.dy, quad.clut)
+        for editor, value in zip(editors[:7], values):
+            with QSignalBlocker(editor):
+                editor.setValue(value)
+        with QSignalBlocker(self.semi_transparent_checkbox):
+            self.semi_transparent_checkbox.setChecked(quad.semi_transparent)
+        with QSignalBlocker(self.tpage_combobox):
+            self.tpage_combobox.setCurrentIndex(quad.texture_page)
+        self.palette_label.setText(f"palette {quad.palette_index}")
+
+    def add_quad(self):
+        icon = self._selected_icon()
+        if not icon or icon.is_button_icon:
+            return
+        self.manager.add_quad(icon.icon_id)
+        self._refresh_icon_row(icon)
+        self.quad_list.addItem(f"Quad {len(icon.quads) - 1}")
+        self.quad_list.setCurrentRow(len(icon.quads) - 1)
+
+    def remove_quad(self):
+        icon = self._selected_icon()
+        quad_index = self.quad_list.currentRow()
+        if not icon or icon.is_button_icon or not (0 <= quad_index < len(icon.quads)):
+            return
+        self.manager.remove_quad(icon.icon_id, quad_index)
+        self._refresh_icon_row(icon)
+        with QSignalBlocker(self.quad_list):
+            self.quad_list.clear()
+            self.quad_list.addItems([f"Quad {k}" for k in range(len(icon.quads))])
+        self.quad_list.setCurrentRow(min(quad_index, len(icon.quads) - 1))
+        self.reload_selected_quad()
+        self.reload_preview()
+
+    def _refresh_icon_row(self, icon):
+        item = self.icon_list.item(icon.icon_id)
+        if item:
+            item.setText(f"{icon.name} ({len(icon.quads)} quad{'s' if len(icon.quads) != 1 else ''})")
+
+    def _on_data_changed(self):
+        quad = self._selected_quad()
+        icon = self._selected_icon()
+        if not quad or (icon and icon.is_button_icon):
+            return
+        quad.u = self.u_spinbox.value()
+        quad.v = self.v_spinbox.value()
+        quad.width = self.width_spinbox.value()
+        quad.height = self.height_spinbox.value()
+        quad.dx = self.dx_spinbox.value()
+        quad.dy = self.dy_spinbox.value()
+        quad.clut = self.clut_spinbox.value()
+        quad.semi_transparent = self.semi_transparent_checkbox.isChecked()
+        quad.texture_page = self.tpage_combobox.currentIndex()
+        self.palette_label.setText(f"palette {quad.palette_index}")
+        self.reload_preview()
+
+    def reload_preview(self):
+        icon = self._selected_icon()
+        if not icon:
+            return
+        if self.tex_file is None:
+            self.preview_label.setText("No texture loaded\n(use the Load icon.TEX button)")
+            self.preview_label.setPixmap(QPixmap())
+            return
+        image = self.manager.render_icon(icon.icon_id, self.tex_file, scale=PREVIEW_SCALE)
+        if image is None:
+            self.preview_label.setText("Empty icon")
+            self.preview_label.setPixmap(QPixmap())
+            return
+        qimage = QImage(image.tobytes(), image.width, image.height,
+                        image.width * 4, QImage.Format.Format_RGBA8888)
+        self.preview_label.setText("")
+        self.preview_label.setPixmap(QPixmap.fromImage(qimage))

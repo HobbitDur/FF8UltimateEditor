@@ -16,7 +16,7 @@
     {"bit": 12, "name": "Homing Laser"},
     {"bit": 13, "name": "Mighty Guard"},
     {"bit": 14, "name": "Ray-Bomb"},
-    {"bit": 15, "name": "Shockwave Pulse"}
+    {"bit": 15, "name": "Shockwave Pulsar"}
   ],
   "zell_duel": [
     {"bit": 0, "name": "Punch Rush"},

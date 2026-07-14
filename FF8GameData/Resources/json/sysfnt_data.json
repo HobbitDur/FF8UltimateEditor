@@ -91,7 +91,13 @@
     "Cactuar",
     "Tonberry",
     "Eden"
-  ]
+  ],
+  "SpecialValues": {
+    "0x0a20": "CurrentSeedTestLevel",
+    "0x0a22": "NextSeedTestLevel",
+    "0x0a23": "CardReceived",
+    "0x0a26": "SeedRank"
+  }
 }
 
 

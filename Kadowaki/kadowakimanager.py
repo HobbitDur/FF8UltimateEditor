@@ -1,3 +1,6 @@
+import json
+import os
+
 from FF8GameData.gamedata import GameData
 
 
@@ -20,13 +23,14 @@ class MenuItem:
                 f"param1 {self.param1}, param2 {self.param2}")
 
 
-class PuPuCargoManager:
+class KadowakiManager:
     NB_BYTE_PER_ITEM = 4
 
     def __init__(self, game_data: GameData):
         self.game_data = game_data
         self.file_path = ""
         self.menu_items = []
+        self._lookup_json_cache = {}
 
     def load_file(self, file_path):
         self.file_path = file_path
@@ -71,8 +75,23 @@ class PuPuCargoManager:
     def get_param_list_values(self, param_type_info):
         """Return the [{id, name}] choices of a "list" param type, resolving the optional source json."""
         list_values = []
-        if param_type_info.get("source") == "gforce":
+        source = param_type_info.get("source")
+        if source == "gforce":
             list_values.extend(self.game_data.gforce_data_json["gforce"])
+        elif source == "junctionable_ability":  # Shared kernel ability enum (kernel_lookups.json)
+            for entry in self._load_lookup_json("kernel_lookups.json")["junctionable_ability"]["entries"]:
+                list_values.append({"id": entry["value"], "name": entry["name"]})
+        elif source == "quistis_blue_magic":  # Blue Magic limits in kernel order (limit_break.json)
+            for entry in self._load_lookup_json("limit_break.json")["quistis_blue_magic"]:
+                list_values.append({"id": entry["bit"], "name": entry["name"]})
         list_values.extend(param_type_info.get("values", []))
         list_values.extend(param_type_info.get("extra_values", []))
         return list_values
+
+    def _load_lookup_json(self, json_name):
+        """Load (once) a json of the shared FF8GameData resources that has no GameData loader."""
+        if json_name not in self._lookup_json_cache:
+            file_path = os.path.join(self.game_data.resource_folder_json, json_name)
+            with open(file_path, encoding="utf8") as json_file:
+                self._lookup_json_cache[json_name] = json.load(json_file)
+        return self._lookup_json_cache[json_name]

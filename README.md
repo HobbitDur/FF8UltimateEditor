@@ -83,6 +83,13 @@ Edits the battle sound archive (`audio.fmt` / `audio.dat`).
 Edits each item's buy price and sell price multiplier (the sell price the shop pays back is
 `round((buy price / 10 / 2) * sell multiplier)`). Ported from the original Siren tool.
 
+### Nida — SeeD written test editor (`mngrp.bin`)
+Edits the 30 SeeD written tests (tutorial menu): the question texts, the expected answer of each
+question, and the selectable choices (cursor stops) — the engine counts the stops at display time,
+so a question can offer more than the standard YES/NO. Also edits the shared exam UI text. A live
+in-game preview (using the real FF8 font widths from `sysfnt.tdw`) shows how each question lays out
+and flags text that would overflow the vanilla window. Excel/CSV export/import for bulk editing.
+
 ## Other tools made by other modders (launched from the toolbar)
 
 These are external, standalone programs. The launcher can check for and download updates for them
@@ -155,6 +162,7 @@ reference data load it automatically from `FF8GameData/`.
 | `junkshop` | weapon-upgrade recipes (`mwepon.bin`) | `export-csv`, `import-csv` |
 | `pupu-cargo` | item menu behaviour (`mitem.bin`) | `export-csv`, `import-csv` |
 | `pandemona` | GF refine formulas (`mngrp.bin`) | `export-csv`, `import-csv` |
+| `nida` | SeeD written tests (`mngrp.bin`) | `show`, `export-csv`, `import-csv`, `set-answer` |
 | `quezacotl` | new-game starting data (`init.out`) | `export-json`, `import-json` |
 | `ccgroup` | Triple Triad NPC card players (field `.jsm`) | `list`, `export-csv`, `import-csv`, `set-param` |
 | `cid` | draw points (exe `.hext` + world positions in `wmset`) | `export-csv`, `import-csv` |
@@ -183,6 +191,8 @@ python cli.py siren         set-price  --input price.bin  --item-id 24 --buy-pri
 python cli.py junkshop      export-csv --input mwepon.bin --output weapons.csv
 python cli.py pupu-cargo    export-csv --input mitem.bin  --output items.csv
 python cli.py pandemona     export-csv --input mngrp.bin  --output refine.csv
+python cli.py nida          show       --input mngrp.bin  --test 1
+python cli.py nida          set-answer --input mngrp.bin  --test 5 --question 3 --answer 1
 ```
 
 kernel.bin field editing (addressed by section → entry → field):

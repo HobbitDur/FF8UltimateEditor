@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLa
                              QComboBox, QCheckBox, QGroupBox, QSpinBox, QGridLayout)
 
 from FF8GameData.gamedata import GameData
-from PuPuCargo.pupucargomanager import PuPuCargoManager
+from Kadowaki.kadowakimanager import KadowakiManager
 
 
 class ParamWidget(QGroupBox):
@@ -17,7 +17,7 @@ class ParamWidget(QGroupBox):
     - "flags": 8 checkboxes, one per bit
     - "list": a choice between named values (from an inline list or another json like gforce.json)"""
 
-    def __init__(self, title, manager: PuPuCargoManager, value_changed_callback):
+    def __init__(self, title, manager: KadowakiManager, value_changed_callback):
         QGroupBox.__init__(self, title)
         self.manager = manager
         self._value_changed_callback = value_changed_callback
@@ -119,7 +119,7 @@ class ParamWidget(QGroupBox):
         self._value_changed_callback()
 
 
-class PuPuCargoWidget(QWidget):
+class KadowakiWidget(QWidget):
     """Item menu editor (mitem.bin editor)."""
 
     def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
@@ -129,9 +129,9 @@ class PuPuCargoWidget(QWidget):
         self.game_data.load_item_data()
         self.game_data.load_mitem_data()
         self.game_data.load_gforce_data()
-        self.manager = PuPuCargoManager(self.game_data)
+        self.manager = KadowakiManager(self.game_data)
 
-        self.setWindowTitle("PuPuCargo")
+        self.setWindowTitle("Kadowaki")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
         # File section

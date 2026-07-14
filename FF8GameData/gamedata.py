@@ -441,6 +441,13 @@ class GameData:
                     elif substring in self.sysfnt_data_json['Locations']:  # {Location}
                         index_list = self.sysfnt_data_json['Locations'].index(substring)
                         encode_list.extend([0x0e, 0x20 + index_list])
+                    elif substring in self.sysfnt_data_json.get('SpecialValues', {}).values():  # {SpecialValue} 0x0a
+                        # Reverse-lookup the code from the name; keys are "0x0aXX".
+                        # Note: the raw form {x0aXX} still encodes via the generic 'x' branch below (backward compatible).
+                        for code_str, name in self.sysfnt_data_json['SpecialValues'].items():
+                            if name == substring:
+                                encode_list.extend([0x0a, int(code_str[-2:], 16)])
+                                break
                     elif 'Cursor_location_id:0x' in substring:
                         len_curs = len('Cursor_location_id:0x')
                         if len(substring) == len_curs + 4:
@@ -552,6 +559,18 @@ class GameData:
                         build_str += "{{x09{:02x}}}".format(hex_val)
                 else:
                     build_str += "{x06}"
+            elif hex_val == 0x0a:  # {SpecialValue} - context-specific value insert (see FF8Char wiki)
+                i += 1
+                if i < hex_size:
+                    hex_val = hex_list[i]
+                    special_values = self.sysfnt_data_json.get('SpecialValues', {})
+                    key = "0x0a{:02x}".format(hex_val)
+                    if key in special_values:
+                        build_str += '{' + special_values[key] + '}'
+                    else:
+                        build_str += "{{x0a{:02x}}}".format(hex_val)
+                else:
+                    build_str += "{x0a}"
             elif hex_val == 0x0b:  # {cursor_location}
                 i += 1
                 if i < hex_size:

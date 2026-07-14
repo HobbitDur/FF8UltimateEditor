@@ -1,0 +1,128 @@
+import os
+
+from PyQt6.QtCore import QSize, QSignalBlocker
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
+                             QSpinBox, QGroupBox, QFormLayout)
+
+from Piet.pietmanager import PietManager
+
+
+class PietWidget(QWidget):
+    """mtmag.bin editor: the three books of the tutorial menu (battle tutorial, card rules,
+    card icon explanation), each defined as a range of mmag.bin page entries.
+
+    Named after Piet, the Esthar technician of the Lunar Base."""
+
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+        QWidget.__init__(self)
+
+        self.manager = PietManager()
+
+        self.setWindowTitle("Piet")
+        self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
+
+        # File section
+        self.file_dialog = QFileDialog()
+        self.load_button = QPushButton()
+        self.load_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
+        self.load_button.setIconSize(QSize(30, 30))
+        self.load_button.setFixedSize(40, 40)
+        self.load_button.setToolTip("Open a mtmag.bin file")
+        self.load_button.clicked.connect(self.load_file)
+
+        self.save_button = QPushButton()
+        self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
+        self.save_button.setIconSize(QSize(30, 30))
+        self.save_button.setFixedSize(40, 40)
+        self.save_button.setToolTip("Save all modifications in the opened mtmag.bin (irreversible)")
+        self.save_button.clicked.connect(self.save_file)
+
+        self.file_label = QLabel("No file loaded")
+
+        file_section_layout = QHBoxLayout()
+        file_section_layout.addWidget(self.load_button)
+        file_section_layout.addWidget(self.save_button)
+        file_section_layout.addWidget(self.file_label)
+        file_section_layout.addStretch(1)
+
+        # One group box per book, each with a first/last mmag entry spinbox pair
+        self.first_spinboxes = []
+        self.last_spinboxes = []
+        self.page_labels = []
+        self.editor_container = QWidget()
+        editor_layout = QVBoxLayout()
+        for book_id in range(PietManager.NB_BOOK):
+            first_spinbox = QSpinBox()
+            first_spinbox.setRange(0, PietManager.MAX_MMAG_ENTRY)
+            first_spinbox.setToolTip("First mmag.bin entry of the book")
+            first_spinbox.valueChanged.connect(self._on_data_changed)
+
+            last_spinbox = QSpinBox()
+            last_spinbox.setRange(0, PietManager.MAX_MMAG_ENTRY)
+            last_spinbox.setToolTip("Last mmag.bin entry of the book (inclusive)")
+            last_spinbox.valueChanged.connect(self._on_data_changed)
+
+            page_label = QLabel("0 pages")
+
+            book_group = QGroupBox(PietManager.BOOK_NAME_LIST[book_id])
+            book_form = QFormLayout()
+            book_form.addRow("First mmag entry:", first_spinbox)
+            book_form.addRow("Last mmag entry:", last_spinbox)
+            book_form.addRow("Pages:", page_label)
+            book_group.setLayout(book_form)
+
+            self.first_spinboxes.append(first_spinbox)
+            self.last_spinboxes.append(last_spinbox)
+            self.page_labels.append(page_label)
+            editor_layout.addWidget(book_group)
+        editor_layout.addStretch(1)
+        self.editor_container.setLayout(editor_layout)
+        self.editor_container.setEnabled(False)
+
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(file_section_layout)
+        main_layout.addWidget(self.editor_container)
+        main_layout.addStretch(1)
+        self.setLayout(main_layout)
+
+    def load_file(self):
+        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search mtmag.bin file",
+                                                     filter="*.bin", directory=os.getcwd())[0]
+        if file_name:
+            self.manager.load_file(file_name)
+            self.file_label.setText(os.path.basename(file_name))
+            self.editor_container.setEnabled(True)
+            self.reload_books()
+
+    def save_file(self):
+        if self.manager.file_path:
+            self.manager.save_file()
+
+    def reload_books(self):
+        for book_id, book in enumerate(self.manager.books):
+            with QSignalBlocker(self.first_spinboxes[book_id]):
+                self.first_spinboxes[book_id].setValue(book.first_entry)
+            with QSignalBlocker(self.last_spinboxes[book_id]):
+                self.last_spinboxes[book_id].setValue(book.last_entry)
+            self._update_bounds(book_id)
+            self._update_page_label(book_id)
+
+    def _on_data_changed(self):
+        if not self.manager.books:
+            return
+        for book_id, book in enumerate(self.manager.books):
+            book.first_entry = self.first_spinboxes[book_id].value()
+            book.last_entry = self.last_spinboxes[book_id].value()
+            self._update_bounds(book_id)
+            self._update_page_label(book_id)
+
+    def _update_bounds(self, book_id):
+        # Keep first <= last: the first spinbox can't pass the last one and vice versa
+        with QSignalBlocker(self.first_spinboxes[book_id]):
+            self.first_spinboxes[book_id].setMaximum(self.last_spinboxes[book_id].value())
+        with QSignalBlocker(self.last_spinboxes[book_id]):
+            self.last_spinboxes[book_id].setMinimum(self.first_spinboxes[book_id].value())
+
+    def _update_page_label(self, book_id):
+        self.page_labels[book_id].setText(f"{self.manager.books[book_id].nb_page} pages")
