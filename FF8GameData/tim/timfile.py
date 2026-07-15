@@ -86,9 +86,9 @@ def decode_tim(data, offset: int = 0, palette_index: int = 0) -> Optional[TimIma
         color_pos = pos + 12 + row * clut_width * 2
         for i in range(clut_width):
             color = _u16(data, color_pos + i * 2)
-            red = (color & 0x1F) << 3
-            green = ((color >> 5) & 0x1F) << 3
-            blue = ((color >> 10) & 0x1F) << 3
+            red = round((color & 0x1F) * 255 / 31)
+            green = round(((color >> 5) & 0x1F) * 255 / 31)
+            blue = round(((color >> 10) & 0x1F) * 255 / 31)
             palette.append((red, green, blue, texel_alpha(color)))
         pos += clut_size
 
@@ -122,9 +122,9 @@ def decode_tim(data, offset: int = 0, palette_index: int = 0) -> Optional[TimIma
         for i in range(width * height):
             color = _u16(data, pixel_pos + i * 2)
             out = i * 4
-            rgba[out] = (color & 0x1F) << 3
-            rgba[out + 1] = ((color >> 5) & 0x1F) << 3
-            rgba[out + 2] = ((color >> 10) & 0x1F) << 3
+            rgba[out] = round((color & 0x1F) * 255 / 31)
+            rgba[out + 1] = round(((color >> 5) & 0x1F) * 255 / 31)
+            rgba[out + 2] = round(((color >> 10) & 0x1F) * 255 / 31)
             rgba[out + 3] = texel_alpha(color)
     else:
         return None

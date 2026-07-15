@@ -14,7 +14,7 @@ from PyQt6.QtGui import QPainter, QPen, QColor, QFont, QPolygonF
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QLabel,
     QLineEdit, QSpinBox, QComboBox, QCheckBox, QGroupBox,
-    QTabWidget, QScrollArea, QPlainTextEdit, QSizePolicy,
+    QTabWidget, QScrollArea, QPlainTextEdit, QSizePolicy, QToolButton,
 )
 
 from FF8GameData.monsterdata import AIData
@@ -33,14 +33,6 @@ STAT_TOOLTIPS = {
     'spd': "SPD curve, 4 raw bytes (0-255).\nSPD = L*b0 + floor(L/b1) + b2 - floor(L/b3)",
     'eva': "EVA curve, 4 raw bytes (0-255).\nEVA = L*b0 + floor(L/b1) + b2 - floor(L/b3)",
 }
-
-# The three per-level formulas (shown under the stat grid).
-STAT_FORMULA_TEXT = (
-    "HP  =  floor(b0·(L²/20 + L)) + 10·b1 + b2·100·L + 1000·b3\n"
-    "STR / MAG  =  floor(L·b0/40) + floor(L/(4·b1)) + floor(b2/4) + floor(L²/(8·b3))\n"
-    "VIT / SPR / SPD / EVA  =  L·b0 + floor(L/b1) + b2 − floor(L/b3)\n"
-    "(L = monster level, 1–100)"
-)
 
 # Per-stat curve colours used by the live plot / legend.
 STAT_COLORS = {
@@ -166,6 +158,7 @@ class IfritStatWidget(QWidget):
         self._name_edit = None
         self._stat_spins = {}        # stat_name -> [4 QSpinBox]
         self._stat_plot = None       # StatCurvePlot
+        self._formula_popup = None   # IfritFormulaPopup, created lazily, reused per stat
         self._elem_spins = []        # [8 QSpinBox]
         self._status_spins = []      # [20 QSpinBox]
         self._flag_checks = {}       # byte_flag_name -> {bit_name: QCheckBox}
@@ -293,8 +286,8 @@ class IfritStatWidget(QWidget):
         grid.addWidget(QLabel("Stat"), 0, 0, Qt.AlignmentFlag.AlignRight)
         for i in range(4):
             grid.addWidget(QLabel(f"Byte {i}"), 0, i + 1)
-        # Keep the stat name + 4 byte columns tight together; push slack to col 5.
-        grid.setColumnStretch(5, 1)
+        # Keep the stat name + 4 byte columns + f(x) button tight together; push slack to col 6.
+        grid.setColumnStretch(6, 1)
         for row, stat in enumerate(self.game_data.stat_data_json['stat']):
             name = stat['name']
             tooltip = STAT_TOOLTIPS.get(name, f"{name.upper()} curve, 4 raw bytes (0-255).")
@@ -307,13 +300,13 @@ class IfritStatWidget(QWidget):
                 spin.valueChanged.connect(partial(self._on_stat_changed, name, i))
                 grid.addWidget(spin, row + 1, i + 1)
                 self._stat_spins[name].append(spin)
+            formula_btn = QToolButton()
+            formula_btn.setText("ƒ(x)")
+            formula_btn.setAutoRaise(True)
+            formula_btn.setToolTip(f"View the {name.upper()} formula and evaluate it at any level.")
+            formula_btn.clicked.connect(partial(self._open_formula_popup, name))
+            grid.addWidget(formula_btn, row + 1, 5)
         stat_group_layout.addLayout(grid)
-
-        formula_label = QLabel(STAT_FORMULA_TEXT)
-        formula_label.setStyleSheet("font-family: monospace; color: gray;")
-        formula_label.setWordWrap(True)
-        formula_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        stat_group_layout.addWidget(formula_label)
 
         self._stat_plot = StatCurvePlot([s['name'] for s in self.game_data.stat_data_json['stat']])
         stat_group_layout.addWidget(self._stat_plot)
@@ -372,6 +365,12 @@ class IfritStatWidget(QWidget):
         layout.addWidget(misc_group)
         layout.addStretch(1)
         return self._scrollable(container)
+
+    def _open_formula_popup(self, stat_name):
+        if self._formula_popup is None:
+            from .ifritformulapopup import IfritFormulaPopup
+            self._formula_popup = IfritFormulaPopup(self, self)
+        self._formula_popup.show_for(stat_name)
 
     @staticmethod
     def _info_label(text, tooltip) -> QLabel:

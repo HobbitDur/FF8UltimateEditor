@@ -287,6 +287,13 @@ class IfritManager:
             raise FileNotFoundError(f"Critical Error: 'tim.exe' not found")
 
         specific_temp = self.temp_path / pathlib.Path(file_path_to_analyze).name
+        # specific_temp is keyed only by filename and is never cleaned up on
+        # its own -- a stale leftover from a previous/crashed run (or another
+        # analyze() call using the same basename) would otherwise be picked
+        # up alongside this call's freshly-exported files below and inflate
+        # the texture count. Start from a clean slate every time.
+        if specific_temp.exists():
+            shutil.rmtree(specific_temp)
         specific_temp.mkdir(parents=True, exist_ok=True)
 
         try:
@@ -362,10 +369,17 @@ class IfritManager:
             else:
                 print(f"Mismatch in {specific_temp.name}: M:{len(final_metas)} T:{len(final_textures)} P:{len(final_palettes)}")
 
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
         except subprocess.CalledProcessError as e:
             print(f"Error: tim.exe failed with exit code {e.returncode}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+        finally:
+            # TextureData already copied the PNG/palette pixels into QPixmaps
+            # in memory above; the on-disk export is scratch space only, and
+            # leaving it around is exactly what causes the stale-leftover
+            # problem this function guards against on entry.
+            if specific_temp.exists():
+                shutil.rmtree(specific_temp)
 
 
     def _apply_clut_alpha(self):

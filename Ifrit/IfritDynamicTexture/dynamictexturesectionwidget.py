@@ -16,8 +16,8 @@ class DynamicTextureSectionWidget(QWidget):
         self.ifrit_manager = ifrit_manager
         self.current_texture_index = 0
         self.current_entry_index = 0
-        self.selected_destinations = set()
-        self.source_selected = True
+        self.selected_frames = set()
+        self.anchor_selected = True
         self.entry_indices = []  # Maps combo box index to actual entry index in dynamic_texture_data
 
         self._init_ui()
@@ -68,9 +68,9 @@ class DynamicTextureSectionWidget(QWidget):
         splitter.setSizes([500, 400])
         layout.addWidget(splitter)
 
-    def _on_legend_selection_changed(self, selected_dest_indices: set, source_selected: bool):
-        self.selected_destinations = selected_dest_indices
-        self.source_selected = source_selected  # ← store it
+    def _on_legend_selection_changed(self, selected_frame_indices: set, anchor_selected: bool):
+        self.selected_frames = selected_frame_indices
+        self.anchor_selected = anchor_selected  # ← store it
         self._update_rectangles()
 
     def _get_entries_for_current_texture(self) -> list:
@@ -117,21 +117,21 @@ class DynamicTextureSectionWidget(QWidget):
 
         entry = entries[self.current_entry_index]
         self.texture_preview.add_rectangle(
-            entry.source_uv.get_u_pixel(), entry.source_uv.get_v_pixel(),
+            entry.anchor_uv.get_u_pixel(), entry.anchor_uv.get_v_pixel(),
             entry.sprite_width, entry.sprite_height,
-            QColor(0, 0, 255, 255), 3, "Source",
+            QColor(0, 0, 255, 255), 3, "Anchor",
             self.current_entry_index, -1
         )
-        for dest_idx, dest_uv in enumerate(entry.dest_uv):
+        for frame_idx, frame_uv in enumerate(entry.frames):
             self.texture_preview.add_rectangle(
-                dest_uv.get_u_pixel(), dest_uv.get_v_pixel(),
+                frame_uv.get_u_pixel(), frame_uv.get_v_pixel(),
                 entry.sprite_width, entry.sprite_height,
-                QColor(255, 0, 0, 255), 3, f"Dest {dest_idx}",
-                self.current_entry_index, dest_idx
+                QColor(255, 0, 0, 255), 3, f"Frame {frame_idx}",
+                self.current_entry_index, frame_idx
             )
 
-        # Pass actual source_selected, not hardcoded True
-        self.texture_preview.set_selection(self.selected_destinations, self.source_selected)
+        # Pass actual anchor_selected, not hardcoded True
+        self.texture_preview.set_selection(self.selected_frames, self.anchor_selected)
 
     def _load_animation_entries(self):
         """Load only entries that belong to the current texture"""
@@ -151,31 +151,31 @@ class DynamicTextureSectionWidget(QWidget):
             self.current_entry_index = 0
             self.entry_combo.setCurrentIndex(0)
 
-            # Initialize with all destinations selected
+            # Initialize with all frames selected
             entry = entries[0]
-            if len(entry.dest_uv) > 0:
-                self.selected_destinations = set(range(len(entry.dest_uv)))
+            if len(entry.frames) > 0:
+                self.selected_frames = set(range(len(entry.frames)))
         else:
             self.current_entry_index = 0
-            self.selected_destinations = set()
+            self.selected_frames = set()
             self._show_empty_editor()
 
-        self._update_destination_selector()
+        self._update_frame_selector()
         self._update_rectangles()
         self._load_current_entry_editor()
 
-    def _update_destination_selector(self):
-        """Update the destination selector for current entry"""
+    def _update_frame_selector(self):
+        """Update the frame selector for current entry"""
         entries = self._get_entries_for_current_texture()
 
         if self.current_entry_index >= len(entries):
             return
 
         entry = entries[self.current_entry_index]
-        dest_count = len(entry.dest_uv)
+        frame_count = len(entry.frames)
 
-    def _on_destination_selection_changed(self):
-        """Handle destination selection changes"""
+    def _on_frame_selection_changed(self):
+        """Handle frame selection changes"""
         self._update_rectangles()
 
     def _show_empty_editor(self):
@@ -194,8 +194,8 @@ class DynamicTextureSectionWidget(QWidget):
         entries = self._get_entries_for_current_texture()
         if entries and 0 <= self.current_entry_index < len(entries):
             entry = entries[self.current_entry_index]
-            self.selected_destinations = set(range(len(entry.dest_uv)))
-        self.source_selected = True  # ← reset on entry change
+            self.selected_frames = set(range(len(entry.frames)))
+        self.anchor_selected = True  # ← reset on entry change
         self._load_current_entry_editor()
         self._update_rectangles()
 
@@ -214,17 +214,17 @@ class DynamicTextureSectionWidget(QWidget):
         entry = entries[self.current_entry_index]
         entry_widget = DynamicTextureEntryWidget(self.current_entry_index)
 
-        # Build destinations list
-        destinations = []
-        for dest_uv in entry.dest_uv:
-            destinations.append({'x': dest_uv.get_u_pixel(), 'y': dest_uv.get_v_pixel()})
+        # Build frame list
+        frames = []
+        for frame_uv in entry.frames:
+            frames.append({'x': frame_uv.get_u_pixel(), 'y': frame_uv.get_v_pixel()})
 
         entry_widget.set_data(
-            entry.source_uv.get_u_pixel(),
-            entry.source_uv.get_v_pixel(),
+            entry.anchor_uv.get_u_pixel(),
+            entry.anchor_uv.get_v_pixel(),
             entry.sprite_width,
             entry.sprite_height,
-            destinations
+            frames
         )
 
         entry_widget.dataChanged.connect(lambda: self._on_entry_data_changed(entry_widget))
@@ -242,54 +242,54 @@ class DynamicTextureSectionWidget(QWidget):
         data = entry_widget.get_data()
 
         # Update entry data
-        entry.source_uv.set_u_pixel(data['src_x'])
-        entry.source_uv.set_v_pixel(data['src_y'])
-        entry.sprite_width = data['src_width']
-        entry.sprite_height = data['src_height']
+        entry.anchor_uv.set_u_pixel(data['anchor_x'])
+        entry.anchor_uv.set_v_pixel(data['anchor_y'])
+        entry.sprite_width = data['anchor_width']
+        entry.sprite_height = data['anchor_height']
         entry.texture_num = self.current_texture_index  # Ensure texture_num is set
 
-        # Update destinations
-        entry.dest_uv.clear()
-        for dest in data['destinations']:
+        # Update frames
+        entry.frames.clear()
+        for frame in data['frames']:
             from FF8GameData.monsterdata import UV
             uv = UV(member_size=1, vram_size=True)
-            uv.set_u_pixel(dest['x'])
-            uv.set_v_pixel(dest['y'])
-            entry.dest_uv.append(uv)
-        entry.number_destination = len(entry.dest_uv)  # ← THIS LINE is what's still missing
+            uv.set_u_pixel(frame['x'])
+            uv.set_v_pixel(frame['y'])
+            entry.frames.append(uv)
+        entry.number_frames = len(entry.frames)  # ← THIS LINE is what's still missing
 
-        # Select all destinations by default
-        new_dest_count = len(entry.dest_uv)
-        if new_dest_count > 0:
-            self.selected_destinations = set(range(new_dest_count))
+        # Select all frames by default
+        new_frame_count = len(entry.frames)
+        if new_frame_count > 0:
+            self.selected_frames = set(range(new_frame_count))
         else:
-            self.selected_destinations = set()
+            self.selected_frames = set()
 
-        self._update_destination_selector()
+        self._update_frame_selector()
         self._update_rectangles()
 
-    def _on_rectangle_clicked(self, entry_idx: int, dest_idx: int):
-        if entry_idx >= 0 and dest_idx >= 0:
-            if dest_idx in self.selected_destinations:
-                self.selected_destinations.discard(dest_idx)
+    def _on_rectangle_clicked(self, entry_idx: int, frame_idx: int):
+        if entry_idx >= 0 and frame_idx >= 0:
+            if frame_idx in self.selected_frames:
+                self.selected_frames.discard(frame_idx)
             else:
-                self.selected_destinations.add(dest_idx)
-            self._update_destination_selector()
+                self.selected_frames.add(frame_idx)
+            self._update_frame_selector()
             self._update_rectangles()
 
     def _add_entry(self):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
         new_entry = DynamicTextureData()
-        new_entry.source_uv = UV(member_size=1, vram_size=True)
-        new_entry.source_uv.set_u_pixel(0)
-        new_entry.source_uv.set_v_pixel(0)
+        new_entry.anchor_uv = UV(member_size=1, vram_size=True)
+        new_entry.anchor_uv.set_u_pixel(0)
+        new_entry.anchor_uv.set_v_pixel(0)
         new_entry.sprite_width = 32
         new_entry.sprite_height = 32
-        dest = UV(member_size=1, vram_size=True)
-        dest.set_u_pixel(0)
-        dest.set_v_pixel(0)
-        new_entry.dest_uv = [dest]
-        new_entry.number_destination = 1
+        frame = UV(member_size=1, vram_size=True)
+        frame.set_u_pixel(0)
+        frame.set_v_pixel(0)
+        new_entry.frames = [frame]
+        new_entry.number_frames = 1
         new_entry.texture_num = self.current_texture_index
 
         dynamic_texture.dynamic_texture_data.append(new_entry)
@@ -320,14 +320,14 @@ class DynamicTextureSectionWidget(QWidget):
             else:
                 self._show_empty_editor()
 
-            self._update_destination_selector()
+            self._update_frame_selector()
             self._update_rectangles()
 
     def load_file(self, file_path: str):
         # Reset state
         self.current_texture_index = 0
         self.current_entry_index = 0
-        self.selected_destinations = set()
+        self.selected_frames = set()
         self.entry_indices = []
 
         # Clear UI

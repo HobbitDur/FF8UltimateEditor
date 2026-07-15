@@ -8,7 +8,11 @@
 	"YellowBlink", "RedBlink", "GreenBlink", "BlueBlink", "PurpleBlink", "WhiteBlink"
   ],
   "Locations": [
-	"Galbadia", "Esthar", "Balamb", "Dollet", "Timber", "Trabia", "Centra", "Horizon"
+	"Galbadia", "Esthar", "Balamb", "Dollet", "Timber", "Trabia", "Centra", "Horizon",
+	"East Academy", "Desert Prison", "Trabia Garden", "Lunar Base", "Shumi Village", "Deling City",
+	"Balamb Garden", "East Academy Station", "Dolet Station", "Desert Prison Station", "Lunar Gate",
+	"Restores", "status", "learns", "ability", "Magic", "Refine", "Junctions", "Raises", "command",
+	"Magazine", "Ultimecia Castle"
   ],
   "Icons":     [
 	"L2",

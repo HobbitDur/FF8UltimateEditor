@@ -122,6 +122,15 @@ class Bone:
         self._world_matrix = None
         self._world_position = (0, 0, 0)
         self._world_end = (0, 0, 0)
+        # Bytes 0x0A-0x2F of the 48-byte bone entry: not yet reverse-engineered
+        # (a guessed scaleX/scaleY/scaleZ/matrix/unk7 layout exists in the IDA
+        # database but has zero confirmed xrefs from real bone-parsing code),
+        # and real game files do have non-zero data here for some monsters. Kept
+        # verbatim and re-emitted on save instead of zero-filling, since there is
+        # no editor for these fields and no reason to believe the game ignores
+        # them (that guess previously silently corrupted monster skeletons with
+        # non-zero data in this range on any load->save round trip).
+        self._original_unknown_tail: bytes = bytes(38)
     def __str__(self):
         return f"Bone(Parent:{self.parent_id}, length:{self.get_size()}, rot:{self._rotX},{self._rotY},{self._rotZ})"
     def __repr__(self):
@@ -132,6 +141,7 @@ class Bone:
         self._rotX = int.from_bytes(data[self.SECTION_BONE_DATA_ROTX['offset']:self.SECTION_BONE_DATA_ROTX['offset']+self.SECTION_BONE_DATA_ROTX['size']], byteorder=self.SECTION_BONE_DATA_ROTX['byteorder'], signed=True)
         self._rotY = int.from_bytes(data[self.SECTION_BONE_DATA_ROTY['offset']:self.SECTION_BONE_DATA_ROTY['offset']+self.SECTION_BONE_DATA_ROTY['size']], byteorder=self.SECTION_BONE_DATA_ROTY['byteorder'], signed=True)
         self._rotZ = int.from_bytes(data[self.SECTION_BONE_DATA_ROTZ['offset']:self.SECTION_BONE_DATA_ROTZ['offset']+self.SECTION_BONE_DATA_ROTZ['size']], byteorder=self.SECTION_BONE_DATA_ROTZ['byteorder'], signed=True)
+        self._original_unknown_tail = bytes(data[0x0A:0x30])
 
     def get_size_raw(self) -> int:
         return self._size
@@ -163,9 +173,8 @@ class Bone:
         data.extend(self._rotY.to_bytes(2, byteorder='little', signed=True))
         data.extend(self._rotZ.to_bytes(2, byteorder='little', signed=True))
 
-        # Add all the unknown fields (currently just zeros)
-        # The bone data is 48 bytes total, we've written 10 bytes so far
-        data.extend(bytearray(38))  # Fill remaining with zeros
+        # Bytes 0x0A-0x2F: unparsed, preserved verbatim (see __init__).
+        data.extend(self._original_unknown_tail)
         return data
 
 # Section 2 data
@@ -1316,13 +1325,6 @@ class AnimationFrame:
 class Animation:
     def __init__(self):
         self.frames: List[AnimationFrame] = []
-        # Byte-alignment slack of the original bit-stream. The game
-        # (Battle_ReadAnimation) reads exactly the frames' bits, so the leftover
-        # high bits of the final byte are never read; Square's encoder left
-        # garbage there. Stored as (bit_pos, value) with
-        # value = original_final_byte >> bit_pos, and re-emitted on save so an
-        # unmodified animation round-trips byte-exact.
-        self.original_slack_bits: Optional[Tuple[int, int]] = None
         # Original bytes between the end of the bit-stream and the next
         # animation offset (or the section end for the last animation).
         self.original_tail: bytes = b""
@@ -1387,9 +1389,8 @@ class Animation:
 
         self.frames = new_frames
         self._recompute_frame_storage_types()
-        # The bit-stream is fully re-encoded: the recorded original padding no
-        # longer applies (zero-fill is fine, the game never reads it).
-        self.original_slack_bits = None
+        # The bit-stream is fully re-encoded: the original tail no longer
+        # applies (zero-fill for byte-alignment is fine, the game never reads it).
         self.original_tail = b""
 
     @staticmethod
@@ -1486,13 +1487,6 @@ class Animation:
             frame.write_to_writer(writer, prev_frame)
             prev_frame = frame
 
-        # Re-emit the original slack bits into the flush byte so an unmodified
-        # animation round-trips byte-exact. Only valid when the bit-stream still
-        # ends at the same sub-byte position; a re-encoded animation (different
-        # frames) falls back to zero-fill, which the game never reads anyway.
-        if self.original_slack_bits is not None and writer._bits_in_buffer == self.original_slack_bits[0]:
-            writer.write_bits(self.original_slack_bits[1], 8 - writer._bits_in_buffer)
-
         # FLUSH at the end of each animation - this makes the buffer bits
         # part of this animation's data
         data.extend(writer.get_data(flush=True))
@@ -1523,11 +1517,12 @@ class AnimationSection:
             for frame_index in range(data[anim_start]):
                 anim.add_frame(br, bone_section)
 
-            # The bit-stream rarely ends on a byte boundary: keep the original
-            # slack bits of the final byte (garbage to the game, but needed for
-            # a byte-exact round-trip).
+            # The bit-stream rarely ends on a byte boundary: the leftover high
+            # bits of the final byte are never read by the game
+            # (Battle_ReadAnimation reads exactly the frames' bits) and are
+            # zero-filled on save instead of preserving Square's original
+            # garbage there.
             if br._bit_pos > 0:
-                anim.original_slack_bits = (br._bit_pos, data[br._byte_pos] >> br._bit_pos)
                 anim_end = br._byte_pos + 1
             else:
                 anim_end = br._byte_pos
@@ -1577,16 +1572,31 @@ class AnimationSection:
 # Section 4: Texture animation
 
 class DynamicTextureData:
+    """One VRAM texture-animation entry: a fixed on-model `anchor_uv` position
+    (what the monster's polygons actually sample) whose content is replaced by
+    each `frames` entry in turn, cycling over time. Confirmed by inspecting
+    real monster data (e.g. PuPu, com_id 60): the frame-position sequences show
+    smooth sweeping paths with consecutive *duplicate* positions used to hold a
+    frame for longer (no separate speed/counter field exists, unlike the
+    structurally similar but unrelated stage texture-animator
+    BS_Effect_DeformCompression @0x50cb20), and the sequence frequently starts
+    or ends back at `anchor_uv`. This entire feature is vestigial in the
+    retail PC build though (see DynamicTextureSection docstring) -- section 4's
+    pointer is computed at load time but sits outside the address range of the
+    struct any renderer actually receives, so nothing here is ever displayed
+    in-game; this naming is the best-supported reading of the file format, not
+    an observed runtime behavior.
+    """
     def __init__(self, data:bytes=bytes()):
         self.texture_num:int = 0
         self.clut_info:int= 0
-        self.source_uv = UV(member_size=1, vram_size=True)
+        self.anchor_uv = UV(member_size=1, vram_size=True)
         self.sprite_width = 0
         self.sprite_height=0
-        self.number_destination = 0
+        self.number_frames = 0
         self.unk1=0
         self.unk2=0
-        self.dest_uv: List[UV] = []
+        self.frames: List[UV] = []
         if data:
             self.analyze(data)
     def analyze(self, data:bytes):
@@ -1595,29 +1605,29 @@ class DynamicTextureData:
         self.unk1 = int.from_bytes(data[2: 3], byteorder='little')
         self.sprite_width = int.from_bytes(data[3: 4], byteorder='little')*2 # The size is in VRAM-X ref, and a texel is on 2 bytes.
         self.sprite_height = int.from_bytes(data[4: 5], byteorder='little')
-        self.number_destination = int.from_bytes(data[5: 6], byteorder='little')
+        self.number_frames = int.from_bytes(data[5: 6], byteorder='little')
         self.unk2 = int.from_bytes(data[6: 8], byteorder='little')
-        self.source_uv.analyze(data[8: 10])
-        for i in range(self.number_destination):
+        self.anchor_uv.analyze(data[8: 10])
+        for i in range(self.number_frames):
             uv = UV(member_size=1, vram_size=True)
             uv.analyze(data[10+i*2: 10+(i+1)*2])
-            self.dest_uv.append(uv)
+            self.frames.append(uv)
     def to_binary(self):
         data = bytearray()
         data.extend(((self.clut_info & 0xFFC0) | (self.texture_num & 0x3F)).to_bytes(2, byteorder='little'))
         data.extend(self.unk1.to_bytes(1, byteorder='little'))
         data.extend(int(self.sprite_width/2).to_bytes(1, byteorder='little'))
         data.extend(self.sprite_height.to_bytes(1, byteorder='little'))
-        data.extend(self.number_destination.to_bytes(1, byteorder='little'))
+        data.extend(self.number_frames.to_bytes(1, byteorder='little'))
         data.extend(self.unk2.to_bytes(2, byteorder='little'))
-        data.extend(self.source_uv.to_binary())
-        for i in range(self.number_destination):
-            data.extend(self.dest_uv[i].to_binary())
+        data.extend(self.anchor_uv.to_binary())
+        for i in range(self.number_frames):
+            data.extend(self.frames[i].to_binary())
         return data
 
 
     def __str__(self):
-       return f"TextureAnimData(ID:{self.texture_num}, sourceUV:{self.source_uv}, SpriteSize:({ self.sprite_width},{ self.sprite_height}), NbDestination:{self.number_destination}), unk1:{self.unk1}, unk2:{self.unk2}, destUVList:{self.dest_uv}"
+       return f"TextureAnimData(ID:{self.texture_num}, anchorUV:{self.anchor_uv}, SpriteSize:({ self.sprite_width},{ self.sprite_height}), NbFrames:{self.number_frames}), unk1:{self.unk1}, unk2:{self.unk2}, frames:{self.frames}"
     def __repr__(self):
         return self.__str__()
 
@@ -1625,6 +1635,23 @@ class DynamicTextureSection:
     def __init__(self):
         self.offset:List[int] = []
         self.dynamic_texture_data: List[DynamicTextureData] = []
+        # Exact original section bytes, and a to_binary() snapshot of each
+        # parsed entry, captured right after analyze(). A header slot whose
+        # offset is 0 is a legitimate, position-significant "no animation for
+        # this slot" marker rather than end-of-table padding -- confirmed
+        # against the game's identical stage texture-animation reader
+        # (BS_Effect_DeformCompression @0x50cb20), which indexes its own
+        # u16 entryOffset[n] table positionally and treats 0 that way -- but no
+        # monster-file consumer of this vestigial section exists to confirm
+        # how many header slots there are meant to be, so reconstructing the
+        # header from scratch can't reliably tell a real zero slot apart from
+        # a coincidental zero word inside entry data. Rather than guess, an
+        # unedited section (no entry's fields changed, none added/removed) is
+        # written back byte-for-byte; only an actual edit falls back to a
+        # freshly generated (dense, no zero slots) header.
+        self._original_bytes: bytes = b""
+        self._original_entry_snapshot: List[bytes] = []
+
     def analyze(self, data:bytes):
         for i in range(0, len(data)):
             offset = int.from_bytes(data[2*i: 2*(i+1)], byteorder='little')
@@ -1640,7 +1667,14 @@ class DynamicTextureSection:
                 self.dynamic_texture_data.append(DynamicTextureData(data[self.offset[i]:]))
             else:
                 self.dynamic_texture_data.append(DynamicTextureData(data[self.offset[i]:self.offset[i + 1]]))
+        self._original_bytes = bytes(data)
+        self._original_entry_snapshot = [bytes(entry.to_binary()) for entry in self.dynamic_texture_data]
+
     def to_binary(self):
+        current_snapshot = [bytes(entry.to_binary()) for entry in self.dynamic_texture_data]
+        if self._original_bytes and current_snapshot == self._original_entry_snapshot:
+            return bytearray(self._original_bytes)
+
         data = bytearray()
         # Write header
         offset_computed = []

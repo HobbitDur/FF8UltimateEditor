@@ -598,7 +598,7 @@ class GameData:
                 i += 1
                 if i < hex_size:
                     hex_val = hex_list[i]
-                    if hex_val >= 0x20 and hex_val <= 0x27:
+                    if 0x20 <= hex_val < 0x20 + len(self.sysfnt_data_json['Locations']):
                         build_str += '{' + self.sysfnt_data_json['Locations'][hex_val - 0x20] + '}'
                     else:
                         build_str += "{{x0e{:02x}}}".format(hex_val)

@@ -330,6 +330,61 @@ def test_zone_roundtrip_and_show(capsys, tmp_path):
     assert "Lion Heart" in out  # weapon unlock resolved by name
 
 
+def _shumi_csv_stable(argv_export_extra, source_files, tmp_path, import_extra=()):
+    """export-csv -> import-csv -> export-csv again through the CLI; the two CSVs must
+    match, proving the import path actually pushes the text back (regression guard for the
+    set_text_from_id bug where import silently applied nothing / crashed)."""
+    from Cli.shumi_translator import ShumiTranslatorCliTool
+    primary = source_files[0]
+    csv1 = tmp_path / "first.csv"
+    csv2 = tmp_path / "second.csv"
+    assert _run(ShumiTranslatorCliTool,
+                ["export-csv", "-i", str(primary), "-o", str(csv1), *argv_export_extra]) == 0
+    assert _run(ShumiTranslatorCliTool,
+                ["import-csv", "-i", str(primary), "-c", str(csv1), "-o", str(primary),
+                 *argv_export_extra, *import_extra]) == 0
+    assert _run(ShumiTranslatorCliTool,
+                ["export-csv", "-i", str(primary), "-o", str(csv2), *argv_export_extra]) == 0
+    assert csv1.read_text(encoding="utf-8") == csv2.read_text(encoding="utf-8")
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_shumi_kernel_csv_roundtrip(tmp_path):
+    work = tmp_path / "kernel.bin"
+    shutil.copy(EXTRACTED / "main" / "kernel.bin", work)
+    _shumi_csv_stable([], [work], tmp_path)
+
+
+@pytest.mark.ff8data("extracted_files/main/namedic.bin")
+def test_shumi_namedic_csv_roundtrip(tmp_path):
+    work = tmp_path / "namedic.bin"
+    shutil.copy(EXTRACTED / "main" / "namedic.bin", work)
+    _shumi_csv_stable([], [work], tmp_path)
+
+
+@pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin")
+def test_shumi_mngrp_csv_roundtrip(tmp_path):
+    work = tmp_path / "mngrp.bin"
+    work_hd = tmp_path / "mngrphd.bin"
+    shutil.copy(EXTRACTED / "menu" / "mngrp.bin", work)
+    shutil.copy(EXTRACTED / "menu" / "mngrphd.bin", work_hd)
+    _shumi_csv_stable(["--mngrphd", str(work_hd)], [work, work_hd], tmp_path)
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_shumi_exe_import_runs(tmp_path):
+    """The EXE importer writes .msd side files; assert export+import both succeed (the import
+    exercises the same _apply_csv_to_sections path as the other types)."""
+    from Cli.shumi_translator import ShumiTranslatorCliTool
+    exe = EXTRACTED / "FF8_EN.exe"
+    csv_path = tmp_path / "exe.csv"
+    out_dir = tmp_path / "msd"
+    assert _run(ShumiTranslatorCliTool, ["export-csv", "-i", str(exe), "-o", str(csv_path)]) == 0
+    assert _run(ShumiTranslatorCliTool,
+                ["import-csv", "-i", str(exe), "-c", str(csv_path), "--output-dir", str(out_dir)]) == 0
+    assert list(out_dir.glob("*.msd")), "exe import produced no .msd files"
+
+
 def test_all_tools_registered():
     """cli.py must expose every Cli tool module."""
     import cli

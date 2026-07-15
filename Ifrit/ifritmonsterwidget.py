@@ -14,6 +14,7 @@ from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Ifrit.IfritTexture.ifrittexturewidget import IfritTextureWidget
 from Ifrit.IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from Ifrit.IfritStat.ifritstatwidget import IfritStatWidget
+from Ifrit.IfritBattleText.ifritbattletextwidget import IfritBattleTextWidget
 
 
 class IfritMonsterWidget(QWidget):
@@ -76,6 +77,7 @@ class IfritMonsterWidget(QWidget):
         self._texture_widget = IfritTextureWidget(self.ifrit_manager)
         self._xlsx_widget = IfritXlsxWidget(self.ifrit_manager)
         self._stat_widget = IfritStatWidget(self.ifrit_manager, icon_path=icon_path)
+        self._battle_text_widget = IfritBattleTextWidget(self.ifrit_manager)
 
         # This need to be loaded after the texture widget
         self._dynamic_texture_widget = IfritDynamicTextureWidget(self.ifrit_manager)
@@ -84,6 +86,7 @@ class IfritMonsterWidget(QWidget):
         self._tabs = QTabWidget()
         self._tabs.addTab(self._3d_widget, "3D")
         self._tabs.addTab(self._stat_widget, "Stat")
+        self._tabs.addTab(self._battle_text_widget, "Battle text")
         self._tabs.addTab(self._xlsx_widget, "StatExcel")
         self._tabs.addTab(self._ai_widget, "AI")
         self._tabs.addTab(self._texture_widget, "Static Texture")
@@ -144,7 +147,7 @@ class IfritMonsterWidget(QWidget):
             # Stat/StatExcel/AI/Static Texture need section 7-8-11, absent from
             # 'd' model files (weapons/characters). Sequence is only present on
             # non-'dc' 'd' files.
-            stat_like = [self._stat_widget, self._xlsx_widget, self._ai_widget, self._texture_widget]
+            stat_like = [self._stat_widget, self._battle_text_widget, self._xlsx_widget, self._ai_widget, self._texture_widget]
             if pathlib.Path(path).name[0] == 'd':
                 for widget in stat_like:
                     self._tabs.setTabEnabled(self._tabs.indexOf(widget), False)
@@ -162,6 +165,7 @@ class IfritMonsterWidget(QWidget):
         self._3d_widget.load_file()
         self._texture_widget.load_file(path)
         self._stat_widget.load_data()
+        self._battle_text_widget.load_data()
         self._dynamic_texture_widget.load_file(path) # need to be after texture
         try:
             name = self._ai_widget.ifrit_manager.enemy.info_stat_data['monster_name'].get_str().strip('\x00')

@@ -251,7 +251,12 @@ def _apply_csv_to_sections(csv_path: str, delimiter: str, sections: List[Tuple])
             if not text:
                 continue
             _, section = sections[widget_id]
-            section.set_text_from_id(text_sub_id, text)
+            # Same logic the GUI uses (SectionWidget.set_text_from_id ->
+            # TranslationWidget.change_custom_text -> FF8Text.set_str): the CLI
+            # yields model sections, which expose the text objects via get_text_list().
+            text_list = section.get_text_list()
+            if text_sub_id < len(text_list):
+                text_list[text_sub_id].set_str(text)
 
 
 def _import_kernel_csv(gd, input_file: str, csv_file: str, output_file: str = None):
@@ -302,6 +307,7 @@ def _import_exe_csv(gd, input_file: str, csv_file: str, output_dir: str):
     delimiter = _get_csv_delimiter(csv_file)
     _apply_csv_to_sections(csv_file, delimiter, sections)
     out_dir = output_dir or str(pathlib.Path(input_file).parent)
+    pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)  # consistent with field/world import
     mgr.save_file(out_dir)
     return out_dir
 

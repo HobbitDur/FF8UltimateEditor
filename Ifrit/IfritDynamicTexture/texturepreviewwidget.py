@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt, QRect, QSize, pyqtSignal, QEvent, QTimer
 from PyQt6.QtGui import QPen, QColor, QBrush, QPainter, QPixmap, QHelpEvent
 from PyQt6.QtWidgets import QFrame, QLabel, QToolTip, QPushButton, QSlider
 
-DEST_PALETTE = [
+FRAME_PALETTE = [
     QColor(255, 80, 80),
     QColor(255, 165, 0),
     QColor(255, 255, 0),
@@ -12,7 +12,7 @@ DEST_PALETTE = [
     QColor(255, 100, 200),
     QColor(180, 255, 100),
 ]
-SOURCE_COLOR = QColor(80, 140, 255)
+ANCHOR_COLOR = QColor(80, 140, 255)
 LEGEND_WIDTH = 140
 LEGEND_PADDING = 8
 LEGEND_ROW_H = 24
@@ -28,7 +28,7 @@ def _blend_colors(colors: list[QColor]) -> QColor:
 
 class TexturePreviewWidget(QLabel):
     rectangleClicked = pyqtSignal(int, int)
-    # Emits (selected_dest_indices: set, source_selected: bool)
+    # Emits (selected_frame_indices: set, anchor_selected: bool)
     legendSelectionChanged = pyqtSignal(object, bool)
 
     def __init__(self, parent=None):
@@ -46,19 +46,19 @@ class TexturePreviewWidget(QLabel):
         self._texture_offset_y = 0
 
         # Selection state
-        self.selected_dest_indices: set = set()
-        self.source_selected: bool = True
+        self.selected_frame_indices: set = set()
+        self.anchor_selected: bool = True
 
-        # Legend hit areas: list of (y_top, y_bottom, is_source, dest_idx)
+        # Legend hit areas: list of (y_top, y_bottom, is_anchor, frame_idx)
         self._legend_rows: list = []
         self._legend_x = 0
         # Animation state
         self._anim_timer = QTimer(self)
         self._anim_timer.timeout.connect(self._animation_step)
-        self._anim_steps: list = []  # list of (is_source, dest_idx or None)
+        self._anim_steps: list = []  # list of (is_anchor, frame_idx or None)
         self._anim_current = 0
-        self._anim_saved_dests: set = set()
-        self._anim_saved_source: bool = True
+        self._anim_saved_frames: set = set()
+        self._anim_saved_anchor: bool = True
 
         # Play button overlaid on legend panel
         self._play_btn = QPushButton("▶ Play", self)
@@ -97,19 +97,19 @@ class TexturePreviewWidget(QLabel):
 
     def _start_animation(self):
         """Save current selection and build step list from current rectangles."""
-        self._anim_saved_dests = set(self.selected_dest_indices)
-        self._anim_saved_source = self.source_selected
+        self._anim_saved_frames = set(self.selected_frame_indices)
+        self._anim_saved_anchor = self.anchor_selected
 
-        # Build steps: source first, then each destination in order
+        # Build steps: anchor first, then each frame in order
         self._anim_steps = []
-        has_source = any(color == QColor(0, 0, 255, 255)
+        has_anchor = any(color == QColor(0, 0, 255, 255)
                          for _, _, _, _, color, _, _, _, _ in self.rectangles)
-        if has_source:
-            self._anim_steps.append(('source', -1))
+        if has_anchor:
+            self._anim_steps.append(('anchor', -1))
         for rect in self.rectangles:
-            x, y, w, h, color, line_width, label, entry_idx, dest_idx = rect
+            x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
             if color != QColor(0, 0, 255, 255):
-                self._anim_steps.append(('dest', dest_idx))
+                self._anim_steps.append(('frame', frame_idx))
 
         if not self._anim_steps:
             self._play_btn.setChecked(False)
@@ -123,10 +123,10 @@ class TexturePreviewWidget(QLabel):
     def stop_animation(self):
         """Stop and restore saved selection."""
         self._anim_timer.stop()
-        self.selected_dest_indices = set(self._anim_saved_dests)
-        self.source_selected = self._anim_saved_source
+        self.selected_frame_indices = set(self._anim_saved_frames)
+        self.anchor_selected = self._anim_saved_anchor
         self.legendSelectionChanged.emit(
-            set(self.selected_dest_indices), self.source_selected)
+            set(self.selected_frame_indices), self.anchor_selected)
         self.update_display()
         self._play_btn.setText("▶ Play")
         self._play_btn.setChecked(False)
@@ -140,15 +140,15 @@ class TexturePreviewWidget(QLabel):
 
     def _apply_animation_step(self, step_idx: int):
         """Show only the rect for this step."""
-        kind, dest_idx = self._anim_steps[step_idx]
-        if kind == 'source':
-            self.source_selected = True
-            self.selected_dest_indices = set()
+        kind, frame_idx = self._anim_steps[step_idx]
+        if kind == 'anchor':
+            self.anchor_selected = True
+            self.selected_frame_indices = set()
         else:
-            self.source_selected = False
-            self.selected_dest_indices = {dest_idx}
+            self.anchor_selected = False
+            self.selected_frame_indices = {frame_idx}
         self.legendSelectionChanged.emit(
-            set(self.selected_dest_indices), self.source_selected)
+            set(self.selected_frame_indices), self.anchor_selected)
         self.update_display()
 
     def resizeEvent(self, event):
@@ -156,13 +156,13 @@ class TexturePreviewWidget(QLabel):
         self.update_display()
         super().resizeEvent(event)
 
-    def _dest_color(self, dest_idx: int) -> QColor:
-        return DEST_PALETTE[dest_idx % len(DEST_PALETTE)]
+    def _frame_color(self, frame_idx: int) -> QColor:
+        return FRAME_PALETTE[frame_idx % len(FRAME_PALETTE)]
 
-    def set_selection(self, selected_dest_indices: set, source_selected: bool):
+    def set_selection(self, selected_frame_indices: set, anchor_selected: bool):
         """Set selection state from outside without emitting signal"""
-        self.selected_dest_indices = set(selected_dest_indices)
-        self.source_selected = source_selected
+        self.selected_frame_indices = set(selected_frame_indices)
+        self.anchor_selected = anchor_selected
         self.update_display()
 
     def set_texture(self, pixmap: QPixmap):
@@ -170,8 +170,8 @@ class TexturePreviewWidget(QLabel):
         self.update_display()
 
     def add_rectangle(self, x, y, width, height, color: QColor,
-                      line_width=2, label="", entry_idx=-1, dest_idx=-1):
-        self.rectangles.append((x, y, width, height, color, line_width, label, entry_idx, dest_idx))
+                      line_width=2, label="", entry_idx=-1, frame_idx=-1):
+        self.rectangles.append((x, y, width, height, color, line_width, label, entry_idx, frame_idx))
         self.update_display()
 
     def clear_rectangles(self):
@@ -183,7 +183,7 @@ class TexturePreviewWidget(QLabel):
             help_event: QHelpEvent = e  # already a QHelpEvent, just type-hint it
             pos = help_event.pos()
             if pos.x() >= self._legend_x:
-                for idx, (y_top, y_bottom, is_source, dest_idx) in enumerate(self._legend_rows):
+                for idx, (y_top, y_bottom, is_anchor, frame_idx) in enumerate(self._legend_rows):
                     if y_top <= pos.y() <= y_bottom:
                         tip = self._legend_tooltips[idx] if idx < len(self._legend_tooltips) else ""
                         if tip:
@@ -198,17 +198,17 @@ class TexturePreviewWidget(QLabel):
 
         # --- Legend click: toggle as before ---
         if pos.x() >= self._legend_x:
-            for (y_top, y_bottom, is_source, dest_idx) in self._legend_rows:
+            for (y_top, y_bottom, is_anchor, frame_idx) in self._legend_rows:
                 if y_top <= pos.y() <= y_bottom:
-                    if is_source:
-                        self.source_selected = not self.source_selected
+                    if is_anchor:
+                        self.anchor_selected = not self.anchor_selected
                     else:
-                        if dest_idx in self.selected_dest_indices:
-                            self.selected_dest_indices.discard(dest_idx)
+                        if frame_idx in self.selected_frame_indices:
+                            self.selected_frame_indices.discard(frame_idx)
                         else:
-                            self.selected_dest_indices.add(dest_idx)
+                            self.selected_frame_indices.add(frame_idx)
                     self.legendSelectionChanged.emit(
-                        set(self.selected_dest_indices), self.source_selected)
+                        set(self.selected_frame_indices), self.anchor_selected)
                     self.update_display()
                     return
 
@@ -222,28 +222,28 @@ class TexturePreviewWidget(QLabel):
         # Collect all rects under the click that are currently selected
         selected_here = []
         for rect in self.rectangles:
-            x, y, w, h, color, line_width, label, entry_idx, dest_idx = rect
-            is_source = color == QColor(0, 0, 255, 255)
+            x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
+            is_anchor = color == QColor(0, 0, 255, 255)
             sx = int(x * self.scale_factor)
             sy = int(y * self.scale_factor)
             sw = max(1, int(w * self.scale_factor))
             sh = max(1, int(h * self.scale_factor))
             if not (sx <= tx <= sx + sw and sy <= ty <= sy + sh):
                 continue
-            if is_source and self.source_selected:
-                selected_here.append((True, dest_idx))
-            elif not is_source and dest_idx in self.selected_dest_indices:
-                selected_here.append((False, dest_idx))
+            if is_anchor and self.anchor_selected:
+                selected_here.append((True, frame_idx))
+            elif not is_anchor and frame_idx in self.selected_frame_indices:
+                selected_here.append((False, frame_idx))
 
-        # Deselect only the first selected rect found (source before destinations)
+        # Deselect only the first selected rect found (anchor before frames)
         if selected_here:
-            is_source, dest_idx = selected_here[0]
-            if is_source:
-                self.source_selected = False
+            is_anchor, frame_idx = selected_here[0]
+            if is_anchor:
+                self.anchor_selected = False
             else:
-                self.selected_dest_indices.discard(dest_idx)
+                self.selected_frame_indices.discard(frame_idx)
             self.legendSelectionChanged.emit(
-                set(self.selected_dest_indices), self.source_selected)
+                set(self.selected_frame_indices), self.anchor_selected)
             self.update_display()
 
         super().mousePressEvent(event)
@@ -286,34 +286,34 @@ class TexturePreviewWidget(QLabel):
         # --- Build coord maps ---
         coord_labels: dict = {}
         for rect in self.rectangles:
-            x, y, w, h, color, line_width, label, entry_idx, dest_idx = rect
-            is_source = color == QColor(0, 0, 255, 255)
-            text = label if label else ("Source" if is_source else f"Dest {dest_idx}")
+            x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
+            is_anchor = color == QColor(0, 0, 255, 255)
+            text = label if label else ("Anchor" if is_anchor else f"Frame {frame_idx}")
             coord_labels.setdefault((x, y, w, h), []).append(text)
 
         coord_groups: dict = {}
         for rect in self.rectangles:
-            x, y, w, h, color, line_width, label, entry_idx, dest_idx = rect
-            is_source = color == QColor(0, 0, 255, 255)
+            x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
+            is_anchor = color == QColor(0, 0, 255, 255)
             sx = self._texture_offset_x + int(x * self.scale_factor)
             sy = self._texture_offset_y + int(y * self.scale_factor)
             sw = max(1, int(w * self.scale_factor))
             sh = max(1, int(h * self.scale_factor))
-            coord_groups.setdefault((sx, sy, sw, sh), []).append((rect, is_source))
+            coord_groups.setdefault((sx, sy, sw, sh), []).append((rect, is_anchor))
 
         # --- Draw rectangles ---
-        for pass_name in ["dest", "source"]:
+        for pass_name in ["frame", "anchor"]:
             for rect in self.rectangles:
-                x, y, w, h, color, line_width, label, entry_idx, dest_idx = rect
-                is_source = color == QColor(0, 0, 255, 255)
+                x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
+                is_anchor = color == QColor(0, 0, 255, 255)
 
-                if pass_name == "source" and not is_source:
+                if pass_name == "anchor" and not is_anchor:
                     continue
-                if pass_name == "dest" and is_source:
+                if pass_name == "frame" and is_anchor:
                     continue
-                if is_source and not self.source_selected:
+                if is_anchor and not self.anchor_selected:
                     continue
-                if not is_source and dest_idx not in self.selected_dest_indices:
+                if not is_anchor and frame_idx not in self.selected_frame_indices:
                     continue
 
                 sx = self._texture_offset_x + int(x * self.scale_factor)
@@ -322,22 +322,22 @@ class TexturePreviewWidget(QLabel):
                 sh = max(1, int(h * self.scale_factor))
 
                 visible_colors = []
-                for (grect, gis_source) in coord_groups[(sx, sy, sw, sh)]:
-                    gx, gy, gw, gh, gcolor, gline_width, glabel, gentry_idx, gdest_idx = grect
-                    if gis_source and self.source_selected:
-                        visible_colors.append(SOURCE_COLOR)
-                    elif not gis_source and gdest_idx in self.selected_dest_indices:
-                        visible_colors.append(self._dest_color(gdest_idx))
+                for (grect, gis_anchor) in coord_groups[(sx, sy, sw, sh)]:
+                    gx, gy, gw, gh, gcolor, gline_width, glabel, gentry_idx, gframe_idx = grect
+                    if gis_anchor and self.anchor_selected:
+                        visible_colors.append(ANCHOR_COLOR)
+                    elif not gis_anchor and gframe_idx in self.selected_frame_indices:
+                        visible_colors.append(self._frame_color(gframe_idx))
 
                 if not visible_colors:
                     continue
 
                 draw_color = (_blend_colors(visible_colors)
                               if len(visible_colors) > 1
-                              else (SOURCE_COLOR if is_source else self._dest_color(dest_idx)))
+                              else (ANCHOR_COLOR if is_anchor else self._frame_color(frame_idx)))
 
-                pen = QPen(draw_color, line_width + (1 if is_source else 0))
-                pen.setStyle(Qt.PenStyle.SolidLine if is_source else Qt.PenStyle.DashLine)
+                pen = QPen(draw_color, line_width + (1 if is_anchor else 0))
+                pen.setStyle(Qt.PenStyle.SolidLine if is_anchor else Qt.PenStyle.DashLine)
                 painter.setPen(pen)
                 painter.setBrush(QBrush(Qt.GlobalColor.transparent))
                 painter.drawRect(sx, sy, sw, sh)
@@ -345,17 +345,17 @@ class TexturePreviewWidget(QLabel):
         # --- Build legend entries ---
         legend_entries = []
         for rect in self.rectangles:
-            x, y, w, h, color, line_width, label, entry_idx, dest_idx = rect
-            is_source = color == QColor(0, 0, 255, 255)
-            draw_color = SOURCE_COLOR if is_source else self._dest_color(dest_idx)
-            text = label if label else ("Source" if is_source else f"Dest {dest_idx}")
+            x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
+            is_anchor = color == QColor(0, 0, 255, 255)
+            draw_color = ANCHOR_COLOR if is_anchor else self._frame_color(frame_idx)
+            text = label if label else ("Anchor" if is_anchor else f"Frame {frame_idx}")
             overlapping = coord_labels[(x, y, w, h)]
             tooltip = ""
             if len(overlapping) > 1:
                 text = f"{text} ⚠"
                 tooltip = "Overlapping rectangles at same position:\n" + "\n".join(
                     f"  • {t}" for t in overlapping)
-            legend_entries.append((draw_color, text, is_source, dest_idx, tooltip))
+            legend_entries.append((draw_color, text, is_anchor, frame_idx, tooltip))
 
         # --- Draw legend panel ---
         self._legend_rows.clear()
@@ -376,8 +376,8 @@ class TexturePreviewWidget(QLabel):
         painter.setFont(font)
 
         row_y = 34
-        for (draw_color, text, is_source, dest_idx, tooltip) in legend_entries:
-            is_selected = self.source_selected if is_source else (dest_idx in self.selected_dest_indices)
+        for (draw_color, text, is_anchor, frame_idx, tooltip) in legend_entries:
+            is_selected = self.anchor_selected if is_anchor else (frame_idx in self.selected_frame_indices)
 
             row_rect = QRect(self._legend_x, row_y, LEGEND_WIDTH, LEGEND_ROW_H)
             if is_selected:
@@ -402,7 +402,7 @@ class TexturePreviewWidget(QLabel):
                              Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
                              text)
 
-            self._legend_rows.append((row_y, row_y + LEGEND_ROW_H, is_source, dest_idx))
+            self._legend_rows.append((row_y, row_y + LEGEND_ROW_H, is_anchor, frame_idx))
             self._legend_tooltips.append(tooltip)
             row_y += LEGEND_ROW_H
 
