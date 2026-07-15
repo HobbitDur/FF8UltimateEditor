@@ -40,6 +40,7 @@ from ToolUpdate.toolupdatewidget import ToolUpdateWidget
 from Zone.zonewidget import ZoneWidget
 from SolomonRing.solomonringwidget import SolomonRingWidget
 from Trepies.trepieswidget import TrepiesWidget
+from Fujin.fujinwidget import FujinWidget
 
 
 class FF8UltimateEditorWidget(QWidget):
@@ -81,7 +82,8 @@ class FF8UltimateEditorWidget(QWidget):
             "Piet (mtmag.bin editor)",
             "Nida (SeeD test editor)",
             "Zone (mmag.bin editor)",
-            "Trepies (Tutorial demo editor)"
+            "Trepies (Tutorial demo editor)",
+            "Fujin (Magic animation explorer)"
         ]
 
         # 3. Header: Program Selection (ComboBox)
@@ -176,6 +178,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._trepies_widget = TrepiesWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._nida_widget = NidaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._zone_widget = ZoneWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._fujin_widget = FujinWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
 
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
@@ -201,6 +204,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._nida_widget) # Index 18
         self.tool_stack.addWidget(self._zone_widget) # Index 19
         self.tool_stack.addWidget(self._trepies_widget) # Index 20
+        self.tool_stack.addWidget(self._fujin_widget) # Index 21
         self._program_option_change()
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)

@@ -1,0 +1,224 @@
+effect_id;name
+1;Cure
+2;Fire
+3;Thunder
+4;Double
+5;Shared status effect (MagicEffect05, mag004-034.tim)
+6;Leviathan summon (Tsunami)
+7;Mega Phoenix
+8;Doom
+9;Doom activation
+10;Ray-Bomb
+11;Storm Breath
+12;Blade Shot
+13;Dark Mist / Poison Mist
+14;Death / Death Stone
+15;Draw
+16;Recover
+17;Elvoret entrance
+18;Elvoret death
+19;Unknown 0
+20;NORG pod opening
+21;Triple
+22;Bio
+23;Psycho Blast
+24;Esuna
+25;Cura
+26;Clash
+27;Full-Life
+28;Curaga
+29;Wind Blast
+30;Counter Laser Eye
+31;Heartbreak
+32;Protect
+33;Shell
+34;Pain
+35;Life
+36;Confuse
+37;Drink magic
+38;Quake
+39;Drain
+40;Scan
+41;Dribble
+42;Shoot
+43;Melting Bubble
+44;Junk (unused)
+45;Stare
+46;Sigh
+47;Curse
+48;Magma Breath
+49;Resonance
+50;Potion
+51;Hi-Potion
+52;X-Potion
+53;Mega-Potion
+54;Everyone's Grudge
+55;Aqua Breath
+56;Absorb
+57;Treatment
+58;Elixir
+59;Megalixir
+60;Unknown 1
+61;Revive
+62;Devour
+63;Unknown 2
+64;Griever tail falling off
+65;Great Attractor
+66;Griever / Ultimecia death
+67;Remedy
+68;Unknown 3 (Scan variant)
+69;Griever summon
+70;Shockwave Pulsar
+71;Laser Eye (Quistis)
+72;Aqua Breath (Quistis)
+73;Mighty Guard (Quistis)
+74;LV? Death (Quistis)
+75;Hell's Judgement
+76;Ultimecia final form spawn
+77;Ultimecia final form death
+78;Mighty Guard
+79;Griever death
+80;Ultimecia junctioning to Griever
+81;Unknown 4
+82;Ultimecia blow away magic
+83;Absorbed into time
+84;Angel Wing
+85;The End
+86;Angelo Cannon
+87;Angelo Strike
+88;Invincible Moon
+89;Wishing Star
+90;Tonberry summon (Chef's Knife)
+91;Angelo Rush
+92;Angelo Search
+93;Angelo Recover
+94;Angelo Reverse
+95;Siren summon (Silent Voice)
+96;Moogle Dance
+97;ChocoFire
+98;ChocoFlare
+99;ChocoMeteor
+100;ChocoBocle
+101;Unknown 5
+102;Thundara
+103;Blizzara
+104;Blizzaga
+105;Thundaga
+106;Reflect
+107;Demi
+108;Berserk
+109;Dispel
+110;Biggs & Wedge 1st death
+111;Aura
+112;Unknown 6
+113;Bad Breath
+114;Zombie
+115;Float
+116;Quezacotl summon (Thunder Storm)
+117;Break
+118;Aero
+119;Stop
+120;Petrify stare
+121;Blind
+122;Silence
+123;Slow
+124;Flare
+125;Haste
+126;Electric discharge
+127;Petrify stare (variant)
+128;Gastric Juice
+129;Breath
+130;Eerie Sound Wave
+131;Bad Breath (variant)
+132;Dissolving Acid
+133;Hypnotize
+134;Beam Laser
+135;Reflect beam
+136;Oil Shot
+137;Oil Blast
+138;Saliva
+139;Sonic Wave
+140;Phoenix Pinion (Rebirth Flame)
+141;Renzokuken (5 hits)
+142;Fira
+143;Firaga
+144;Blizzard
+145;Sleep
+146;Tornado
+147;Regen
+148;Meltdown
+149;Ultima
+150;Gatling Gun
+151;Cannon Blow
+152;Ultrasonic Waves
+153;Sticky Web
+154;Ultra Waves
+155;Sand Storm
+156;Wild Cannon Blow
+157;Breath (variant)
+158;Melt Eye
+159;Renzokuken vs X-ATM092
+160;Renzokuken (4 hits)
+161;Renzokuken vs Elnoyle/Elvoret
+162;Fated Circle
+163;Rough Divide
+164;Blasting Zone
+165;Lion Heart
+166;Megido Flame
+167;Zantetsuken
+168;Sleeping Gas
+169;Gastric Juice (variant)
+170;Acid
+171;Poison Gas
+172;Morph
+173;Ice Breath
+174;Degenerator
+175;Holy
+176;Sand Storm (variant)
+177;1000 Needles
+178;10000 Needles
+179;Unknown 7
+180;Suicide
+181;Kamikaze
+182;Card
+183;Defend
+184;Ultra Waves (Quistis)
+185;Shiva summon (Diamond Dust)
+186;Blaster
+187;Odin summon (Zantetsuken)
+188;Shot: Normal Shot
+189;Wall
+190;Chain Gun
+191;Doomtrain summon (Runaway Train)
+192;Shot: Scatter Shot
+193;Shot: Dark Shot
+194;Shot: Flame Shot
+195;Shot: Canister Shot
+196;Shot: Quick Shot
+197;Shot: Armor Shot
+198;Shot: Hyper Shot
+199;Cactuar summon (1000 Needles)
+200;No Mercy
+201;Ifrit summon (Hell Fire)
+202;Bahamut summon (Mega Flare)
+203;Cerberus summon (Counter Rockets)
+204;Alexander summon (Holy Judgment)
+205;Brothers summon (Brotherly Love)
+206;Eden summon (Eternal Breath)
+207;Maelstrom
+208;Final sorceress death
+209;Sorceress spawn
+210;Bloodfest
+211;Adel death
+212;Unknown 8
+213;Storm Breath (variant)
+214;Gravija
+215;Unknown 9
+216;Unknown 10
+217;Energy Bomber
+218;Unknown 11
+219;Terra Break
+220;Light Pillar
+221;Apocalypse
+222;Water
+223;Meteor
