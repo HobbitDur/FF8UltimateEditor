@@ -1,26 +1,26 @@
 """Julia - FF8 battle sound editor widget.
 
 Browse the FF8 sound archive (audio.fmt / audio.dat), play sounds, export them to
-WAV, and replace them from WAV for modding. The "Used by" column shows which battle
-actors (characters / monsters) reference each sound, resolved through the
+WAV, and replace them from WAV for modding. Playback goes through QMediaPlayer,
+streaming the rebuilt WAV straight from memory. The "Used by" column shows which
+battle actors (characters / monsters) reference each sound, resolved through the
 stru_B8A418 table extracted from FF8_EN.exe.
 """
 import os
 import sys
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QBuffer, QByteArray, QLoggingCategory, QSize, Qt, QUrl
 from PyQt6.QtGui import QIcon
+from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
                              QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QAbstractItemView)
 
 from FF8GameData.gamedata import GameData
 from Julia.juliamanager import JuliaManager
 
-try:
-    import winsound  # stdlib, Windows only; decodes ADPCM via the system ACM codec
-    HAS_WINSOUND = True
-except ImportError:
-    HAS_WINSOUND = False
+# Qt's FFmpeg backend dumps the stream layout to the console on every play.
+# QT_LOGGING_RULES still overrides this, so it can be turned back on to debug.
+QLoggingCategory.setFilterRules("qt.multimedia.ffmpeg*=false")
 
 
 class JuliaWidget(QWidget):
@@ -42,6 +42,13 @@ class JuliaWidget(QWidget):
         self.game_data = GameData(game_data_folder)
         self.game_data.load_monster_data()
         self.manager = JuliaManager(self.game_data)
+
+        # The buffer must outlive the play() call: the player streams from it.
+        self._play_buffer = None
+        self.audio_output = QAudioOutput()
+        self.player = QMediaPlayer()
+        self.player.setAudioOutput(self.audio_output)
+        self.player.errorOccurred.connect(self._on_player_error)
 
         self.setWindowTitle("Julia")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
@@ -86,8 +93,7 @@ class JuliaWidget(QWidget):
 
         # --- Action buttons ---
         self.play_button = QPushButton("Play")
-        self.play_button.setToolTip("Play the selected sound" if HAS_WINSOUND
-                                    else "Playback is only available on Windows")
+        self.play_button.setToolTip("Play the selected sound")
         self.play_button.clicked.connect(self.play_selected)
 
         self.export_button = QPushButton("Export WAV...")
@@ -131,7 +137,7 @@ class JuliaWidget(QWidget):
 
     def _update_action_buttons(self):
         has_selection = self._selected_index() is not None
-        self.play_button.setEnabled(has_selection and HAS_WINSOUND)
+        self.play_button.setEnabled(has_selection)
         self.export_button.setEnabled(has_selection)
         self.replace_button.setEnabled(has_selection)
 
@@ -177,13 +183,34 @@ class JuliaWidget(QWidget):
 
     def play_selected(self):
         index = self._selected_index()
-        if index is None or not HAS_WINSOUND:
+        if index is None:
             return
         try:
             wav = self.manager.get_wav(index)
-            winsound.PlaySound(wav, winsound.SND_MEMORY | winsound.SND_ASYNC)
-        except Exception as error:  # noqa: BLE001 - ACM decode can fail on exotic formats
-            QMessageBox.warning(self, "Julia", f"Could not play this sound:\n{error}")
+        except Exception as error:  # noqa: BLE001 - decoding can fail on exotic formats
+            QMessageBox.warning(self, "Julia", f"Could not read this sound:\n{error}")
+            return
+        self.player.stop()
+        buffer = QBuffer(self)
+        buffer.setData(QByteArray(wav))
+        buffer.open(QBuffer.OpenModeFlag.ReadOnly)
+        # Hand the player the new buffer before dropping the old one, so it is
+        # never left streaming from a buffer we just closed.
+        previous, self._play_buffer = self._play_buffer, buffer
+        self.player.setSourceDevice(buffer, QUrl("julia.wav"))
+        if previous is not None:
+            previous.close()
+            previous.deleteLater()
+        self.player.play()
+
+    def _on_player_error(self, _error, error_string):
+        # Playback is asynchronous, so failures arrive here rather than as an
+        # exception out of play().
+        QMessageBox.warning(self, "Julia", f"Could not play this sound:\n{error_string}")
+
+    def closeEvent(self, event):
+        self.player.stop()
+        QWidget.closeEvent(self, event)
 
     def export_selected(self):
         index = self._selected_index()

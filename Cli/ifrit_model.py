@@ -21,7 +21,7 @@ from .common import PROJECT_ROOT
 
 class _Holder:
     """Minimal stand-in for IfritManager so GltfExporter can read the model
-    without Qt textures (same trick as roundtrip_gltf.py)."""
+    without Qt textures."""
 
     def __init__(self, enemy):
         self.enemy = enemy

@@ -1,8 +1,10 @@
+import atexit
 import os
 import pathlib
 import re
 import shutil
 import subprocess
+import uuid
 from typing import List, Tuple
 
 import numpy as np
@@ -50,17 +52,33 @@ class MetaData:
 
 
 class TextureData:
+    @staticmethod
+    def _load_pixmap(path: pathlib.Path) -> QPixmap:
+        """Load a PNG into a QPixmap, bypassing Qt's pixmap file cache.
+
+        QPixmap(fileName) caches on absolute path + file size + last-modified
+        time TRUNCATED TO WHOLE SECONDS. Every texture export lands on the same
+        scratch path (temp_vincent_tim/<file>/<file>.<n>.palette.png), palettes
+        of different monsters routinely have identical sizes, and loading two
+        monsters less than a second apart is normal -- so all three key parts
+        collide and Qt hands back the PREVIOUS monster's pixels. That silently
+        exported the wrong palette (one monster's texture rebuilt against
+        another's colours). Going through QImage, which has no such cache,
+        always reads what is actually on disk.
+        """
+        return QPixmap.fromImage(QImage(str(path)))
+
     def __init__(self, meta:MetaData=None, texture_path: pathlib.Path=None, palette_path:pathlib.Path=None):
         if meta:
             self.meta = meta
         else:
             self.meta = self._create_dummy_meta()
         if texture_path:
-            self.texture_image = QPixmap(str(texture_path))
+            self.texture_image = self._load_pixmap(texture_path)
         else:
             self.texture_image = None
         if palette_path:
-            self.palette_image = QPixmap(str(palette_path))
+            self.palette_image = self._load_pixmap(palette_path)
         else:
             self.palette_image = None
     @staticmethod
@@ -101,7 +119,19 @@ class IfritManager:
         # False when _apply_clut_alpha succeeds and real per-texel alpha from
         # the TIM CLUT words is available.
         self.texture_black_is_transparent = True
-        self.temp_path = pathlib.Path(__file__).parent.resolve() / "temp_vincent_tim"
+        # VincentTim scratch space. This MUST be private to this manager: the
+        # texture export/inject pipeline writes loose files here and picks them
+        # back up with a directory glob, and _save()/_import() delete the whole
+        # tree when they are done. A directory shared between managers is
+        # therefore silently destructive -- two of them working at the same
+        # time (the GUI plus a CLI run, two test sessions, two editors on the
+        # same checkout) would glob each other's half-written files and rmtree
+        # them mid-operation, producing corrupted textures rather than an
+        # error. Keyed by pid + a random suffix so it is unique per process AND
+        # per instance.
+        self.temp_path = (pathlib.Path(__file__).parent.resolve() / "temp_vincent_tim"
+                          / f"{os.getpid()}_{uuid.uuid4().hex[:8]}")
+        atexit.register(self._cleanup_temp_path)
 
         current_script_dir = pathlib.Path(__file__).parent.resolve()
         if vincent_tim_path is None:
@@ -110,6 +140,18 @@ class IfritManager:
             self.vincent_tim_path = pathlib.Path(vincent_tim_path).resolve()
         self._dat_xlsx_manager = DatToXlsx()
         self._xlsx_to_dat_manager = XlsxToDat()
+
+    def _cleanup_temp_path(self):
+        """Remove this manager's private scratch dir (and the shared parent
+        once the last one is gone). Best-effort: never break a run over it."""
+        try:
+            if self.temp_path.exists():
+                shutil.rmtree(self.temp_path, ignore_errors=True)
+            parent = self.temp_path.parent
+            if parent.exists() and not any(parent.iterdir()):
+                parent.rmdir()
+        except OSError:
+            pass
 
     def close_xlsx_file(self):
         self._xlsx_to_dat_manager.close_file()

@@ -1,6 +1,6 @@
 import os
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QPixmap, QIcon
+from PyQt6.QtGui import QPixmap, QIcon, QImage
 from PyQt6.QtWidgets import QLabel, QPushButton, QFileDialog, QFrame, QMessageBox
 
 
@@ -120,7 +120,10 @@ class EditableTextureWidget(QLabel):
             self, "Select Texture", "", "Images (*.png *.jpg *.bmp *.tif)"
         )
         if path:
-            self.set_image(QPixmap(str(path)))
+            # via QImage: QPixmap(fileName) caches on path + size + mtime-in-
+            # seconds, so re-importing the same file after editing it would
+            # show the previous version (see IfritManager.TextureData)
+            self.set_image(QPixmap.fromImage(QImage(str(path))))
             self.imageChanged.emit(path)
 
     def _on_refresh(self):
