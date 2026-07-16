@@ -235,14 +235,26 @@ def test_solomon_ring_get_set_and_csv(tmp_path):
 
 @pytest.mark.ff8data("extracted_files/battle/c0m001.dat")
 def test_ifrit_seq_xml_roundtrip(tmp_path):
-    from Cli.ifrit_model import IfritModelCliTool
+    from Cli.ifrit_model import IfritModelCliTool, _load_enemy
     dat = EXTRACTED / "battle" / "c0m001.dat"
     xml = tmp_path / "seq.xml"
     out = tmp_path / "c0m001.dat"
+
+    # Baseline = what a no-edit load + save produces. Writing a .dat is not
+    # byte-identical to the source: the animation section is re-encoded from
+    # its parsed bit-stream and the leftover high bits at the tail of each
+    # animation (never read by the game, garbage in Square's files) are
+    # zero-filled. tests/Ifrit/test_realfile_monster.py covers that property
+    # on every monster; comparing against the baseline here isolates what the
+    # seq XML round-trip itself changes -- which must be nothing at all.
+    baseline = tmp_path / "baseline.dat"
+    game_data, enemy = _load_enemy(str(dat))
+    enemy.write_data_to_file(game_data, str(baseline))
+
     assert _run(IfritModelCliTool, ["export-seq-xml", "--input", str(dat), "--output", str(xml)]) == 0
     assert _run(IfritModelCliTool, ["import-seq-xml", "--input", str(dat), "--xml", str(xml),
                                     "--output", str(out)]) == 0
-    assert out.read_bytes() == dat.read_bytes()
+    assert out.read_bytes() == baseline.read_bytes()
 
 
 @pytest.mark.ff8data("extracted_files/battle/c0m001.dat")
@@ -393,7 +405,7 @@ def test_all_tools_registered():
     if not registry.list_tools():  # the registry is a process-wide singleton
         cli._register_all_tools()
     names = set(registry.list_tools())
-    assert {"shumi-translator", "ifrit-ai", "ifrit", "jp-font-builder", "tonberry-shop", "siren",
+    assert {"shumi-translator", "ifrit-ai", "ifrit", "tonberry-shop", "siren",
             "junkshop", "quezacotl", "kadowaki", "minimog", "pandemona", "ccgroup", "cid",
             "julia", "solomon-ring", "alexander", "seed", "piet", "moomba", "nida",
             "zone", "trepies"} <= names

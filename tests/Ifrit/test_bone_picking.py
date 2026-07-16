@@ -349,14 +349,15 @@ def test_incremental_rotation_recompute_covers_grandchildren(manager, tmp_path):
 
 @pytestmark_realfile
 def test_rotation_drag_handler_applies_to_current_frame(manager, tmp_path, qapp):
-    """Drive the widget's ring-drag handler like the gizmo does and check the
-    rotation lands on the selected bone of the current frame only."""
+    """With 'Apply to all following frames' OFF, a ring drag poses only the
+    current frame and leaves the following ones alone."""
     from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 
     _load_work_copy(manager, tmp_path)
     widget = Ifrit3DWidget(manager)
     widget.load_file()
     widget.bone_editor.bone_spin.setValue(1)
+    widget.bone_editor.propagate_rotation_cb.setChecked(False)
 
     frame = manager.enemy.animation_data.animations[0].frames[0]
     start_x = frame.rotation_vector_data[1][0].get_rotate_deg()
@@ -372,6 +373,151 @@ def test_rotation_drag_handler_applies_to_current_frame(manager, tmp_path, qapp)
     other_frame_after = [int(r.get_rotate_raw())
                          for r in manager.enemy.animation_data.animations[0].frames[1].rotation_vector_data[1]]
     assert other_frame_after == other_frame_before
+
+
+@pytestmark_realfile
+def test_rotation_propagates_to_following_frames(manager, tmp_path):
+    """propagate_to_next_frames shifts every following frame by the same
+    turn, so the rest of the animation keeps its shape and moves along."""
+    work = _load_work_copy(manager, tmp_path)
+    anim_id, frame_id, bone_id = 0, 1, 1
+    anim = manager.enemy.animation_data.animations[anim_id]
+
+    before = [[int(axis.get_rotate_raw()) for axis in f.rotation_vector_data[bone_id]]
+              for f in anim.frames]
+    rot = anim.frames[frame_id].rotation_vector_data[bone_id]
+    manager.set_animation_frame_bone_rotation(
+        anim_id, frame_id, bone_id,
+        rot[0].get_rotate_deg() + 90.0, rot[1].get_rotate_deg(), rot[2].get_rotate_deg(),
+        propagate_to_next_frames=True)
+    after = [[int(axis.get_rotate_raw()) for axis in f.rotation_vector_data[bone_id]]
+             for f in anim.frames]
+
+    # Frames before the edit: untouched
+    for f in range(frame_id):
+        assert after[f] == before[f]
+    # The edited frame and every following one: +90 deg (raw 1024) on X only
+    for f in range(frame_id, len(anim.frames)):
+        assert (after[f][0] - before[f][0]) % 4096 == 1024, f"frame {f} X"
+        assert (after[f][1] - before[f][1]) % 4096 == 0, f"frame {f} Y"
+        assert (after[f][2] - before[f][2]) % 4096 == 0, f"frame {f} Z"
+    # Propagated values stay inside the editor's spinbox range
+    for f in range(frame_id + 1, len(anim.frames)):
+        for axis in range(3):
+            assert -2048 <= after[f][axis] < 2048
+
+    # The whole shifted animation survives the delta re-encoding
+    manager.save_file(str(work))
+    manager.init_from_file(str(work))
+    reloaded = [[int(axis.get_rotate_raw()) for axis in f.rotation_vector_data[bone_id]]
+                for f in manager.enemy.animation_data.animations[anim_id].frames]
+    for f, (expected, got) in enumerate(zip(after, reloaded)):
+        for axis in range(3):
+            assert (got[axis] - expected[axis]) % 4096 == 0, f"frame {f} axis {axis}"
+
+
+@pytestmark_realfile
+def test_propagated_rotation_keeps_relative_motion(manager, tmp_path):
+    """A propagated edit must not distort the animation: the frame-to-frame
+    motion of every following frame is unchanged, the whole tail is offset."""
+    _load_work_copy(manager, tmp_path)
+    anim_id, frame_id, bone_id = 0, 1, 1
+    anim = manager.enemy.animation_data.animations[anim_id]
+
+    def steps():
+        raws = [int(f.rotation_vector_data[bone_id][0].get_rotate_raw()) for f in anim.frames]
+        return [(raws[i] - raws[i - 1]) % 4096 for i in range(frame_id + 2, len(raws))]
+
+    before = steps()
+    rot = anim.frames[frame_id].rotation_vector_data[bone_id]
+    manager.set_animation_frame_bone_rotation(
+        anim_id, frame_id, bone_id,
+        rot[0].get_rotate_deg() + 90.0, rot[1].get_rotate_deg(), rot[2].get_rotate_deg(),
+        propagate_to_next_frames=True)
+    assert steps() == before
+
+
+@pytestmark_realfile
+def test_rotation_drag_defers_propagation_to_release(manager, tmp_path, qapp):
+    """While the mouse moves, only the displayed frame is recomputed: the
+    following frames must not move until the drag is released (and then they
+    must land on the drag's total)."""
+    from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
+
+    _load_work_copy(manager, tmp_path)
+    widget = Ifrit3DWidget(manager)
+    widget.load_file()
+    widget.bone_editor.bone_spin.setValue(1)
+
+    frames = manager.enemy.animation_data.animations[0].frames
+    last_before = int(frames[-1].rotation_vector_data[1][0].get_rotate_raw())
+
+    for total in (10.0, 20.0, 30.0):
+        widget._on_bone_rotation_dragged(0, total)
+        # mid-drag: the tail is untouched, no work wasted on it
+        assert int(frames[-1].rotation_vector_data[1][0].get_rotate_raw()) == last_before
+
+    widget._on_bone_rotation_drag_finished()
+    # released: the tail moved by the drag total (30 deg), once
+    last_after = int(frames[-1].rotation_vector_data[1][0].get_rotate_raw())
+    assert (last_after - last_before) % 4096 == pytest.approx(round(30.0 * 4096 / 360.0), abs=2)
+
+
+@pytestmark_realfile
+def test_drag_result_matches_a_direct_edit(manager, tmp_path, qapp):
+    """A dragged rotation and the same rotation typed in one go must produce
+    exactly the same animation — the preview/release split must not drift."""
+    from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
+
+    def raws():
+        return [[int(a.get_rotate_raw()) for a in f.rotation_vector_data[1]]
+                for f in manager.enemy.animation_data.animations[0].frames]
+
+    # via the ring drag (many mouse-moves, then release)
+    _load_work_copy(manager, tmp_path)
+    widget = Ifrit3DWidget(manager)
+    widget.load_file()
+    widget.bone_editor.bone_spin.setValue(1)
+    for total in (3.0, 11.0, 24.0, 40.0, 45.0):
+        widget._on_bone_rotation_dragged(1, total)   # Y ring
+    widget._on_bone_rotation_drag_finished()
+    dragged = raws()
+
+    # via one direct edit of the same 45 degrees
+    _load_work_copy(manager, tmp_path)
+    rot = manager.enemy.animation_data.animations[0].frames[0].rotation_vector_data[1]
+    start_y = rot[1].get_rotate_deg()
+    manager.set_animation_frame_bone_rotation(
+        0, 0, 1, rot[0].get_rotate_deg(),
+        ((start_y + 45.0 + 180.0) % 360.0) - 180.0, rot[2].get_rotate_deg(),
+        propagate_to_next_frames=True)
+    typed = raws()
+
+    assert dragged == typed
+
+
+@pytestmark_realfile
+def test_propagated_drag_shifts_tail_by_drag_total(manager, tmp_path, qapp):
+    """A ring drag with the checkbox ON (its default) shifts the following
+    frames by the drag's TOTAL, not by the sum of each mouse step."""
+    from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
+
+    _load_work_copy(manager, tmp_path)
+    widget = Ifrit3DWidget(manager)
+    widget.load_file()
+    widget.bone_editor.bone_spin.setValue(1)
+    assert widget.bone_editor.propagate_rotation_cb.isChecked(), "must default to ON"
+
+    frames = manager.enemy.animation_data.animations[0].frames
+    last_before = int(frames[-1].rotation_vector_data[1][0].get_rotate_raw())
+
+    for total in (10.0, 20.0, 25.0, 30.0):   # one call per mouse-move
+        widget._on_bone_rotation_dragged(0, total)
+    widget._on_bone_rotation_drag_finished()
+
+    last_after = int(frames[-1].rotation_vector_data[1][0].get_rotate_raw())
+    # 30 degrees total = 341 raw, NOT 10+20+25+30
+    assert (last_after - last_before) % 4096 == pytest.approx(round(30.0 * 4096 / 360.0), abs=2)
 
 
 @pytestmark_realfile

@@ -240,6 +240,15 @@ class AnimEditor(QWidget):
         rot_z_layout.addStretch(1)
         anim_layout.addRow("Rot Z:", rot_z_layout)
 
+        self.propagate_rotation_cb = QCheckBox("Apply to all following frames")
+        self.propagate_rotation_cb.setChecked(True)
+        self.propagate_rotation_cb.setToolTip(
+            "Checked: the rotation change is also added to every following frame,\n"
+            "so the rest of the animation moves along with this edit.\n"
+            "Unchecked: only this frame is posed, the following frames keep\n"
+            "their own rotations.")
+        anim_layout.addRow("", self.propagate_rotation_cb)
+
         # Animation info
         self.anim_info = QLabel("Rotation is linked to a bone and a frame")
         #self.anim_info.setStyleSheet("color:#aaa; font-size:10px;")

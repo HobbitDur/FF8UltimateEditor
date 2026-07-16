@@ -39,6 +39,12 @@ temp_vincent_tim
 shiva*
 Shiva*
 *.bak
+# VincentTim (tim.exe) scratch output: "<input>.<n>.meta/.png/.palette.png"
+# left next to the working directory by an interrupted export. The normal
+# pipeline keeps these under temp_vincent_tim/ and cleans up after itself;
+# these patterns just make sure a stray one can never be committed.
+*.dat.*.meta
+*.dat.*.png
 pipeline/config.local.json
 pipeline/ai_md/
 pipeline/recordings/

@@ -365,8 +365,11 @@ def _magic_damage(value, P, entry):
             (f"This entry's attack type is None (unused/empty slot); showing the standard Magic "
              f"Attack formula for reference. " if att == 0 else f"Attack type '{name}'. ")
             + "Real formula (Damage_ComputeMagicAndGF), incl. the random roll and elemental "
-            "(900−elemDef)/100. Not modelled: monster casters halve, Shell halves, Defend halves, "
-            "weakness caps ×2." + (" LV? Attack also only hits on matching level." if att == 26 else ""),
+            "(900−elemDef)/100. Not modelled: monster casters halve, Shell halves (and shows the "
+            "Shell shimmer, effect 40), Defend halves (magic only — Defend fully nullifies "
+            "PHYSICAL), weakness caps ×2. elemDef > 900 = absorb: the negative result heals and "
+            "displays as a GREEN number (HIT_TYPE_RESTORATIVE)."
+            + (" LV? Attack also only hits on matching level." if att == 26 else ""),
             ("caster_mag", "target_spr", "elem_defense"),
             latex=(r"dmg=\left\lfloor\frac{rand}{256}\cdot\frac{P\,(265-SPR)(P+MAG)}{4\cdot256}"
                    r"\right\rfloor\cdot\frac{900-elemDef}{100}"),
@@ -617,8 +620,12 @@ def _physical_damage(value, P, entry):
                 "accounted for — this weapon's STR bonus is added into the STR stat (GetCharacterStat "
                 "@0x496440, STR only) and that boosted STR₊ is what feeds this formula. So set "
                 "'Attacker STR' to your STR before this weapon; the bonus is added on top. VIT is the "
-                "target's (0 under Vit0/Meltdown). Crit ×2, Back Attack ×2, Protect ÷2. Elemental and "
-                "drain modifiers not shown.",
+                "target's (0 under Vit0/Meltdown). Crit ×2 (+ white screen flash), Back Attack ×2, "
+                "Protect ÷2 (and shows the Protect shimmer, effect 39), Zombie target ÷2 "
+                "(Damage_ApplyPhysicalModifiers @0x48f600). Defend/Invincible/Petrify fully NULLIFY "
+                "physical (unlike magic, which Defend only halves). Elemental and drain modifiers "
+                "not shown; a negative final result (elemental absorb) displays as a GREEN heal "
+                "number (HIT_TYPE_RESTORATIVE).",
         "latex": (r"dmg = \left\lfloor\frac{power\,(265{-}VIT)\,(STR_{+} + \lfloor STR_{+}^2/16\rfloor)}"
                   r"{256\cdot 16}\right\rfloor\cdot\frac{rand}{256},\quad STR_{+}=STR+bonus"),
         "latex_sub": (rf"STR_{{+}}={eff_str};\ \frac{{{p}\,(265{{-}}{vit})\,({eff_str}+\lfloor {eff_str}^2/16\rfloor)}}"

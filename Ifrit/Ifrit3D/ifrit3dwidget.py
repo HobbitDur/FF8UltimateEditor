@@ -52,6 +52,7 @@ class Ifrit3DWidget(QWidget):
         self._length_drag_start_size = None
         self._length_drag_sign = -1.0
         self._rot_drag_start_deg = None
+        self._rot_drag_start_raw = None
 
         # Setup animation timer
         self.timer = QTimer()
@@ -1134,30 +1135,46 @@ class Ifrit3DWidget(QWidget):
         self.update_skeleton()
         self.update_animated_mesh()
 
-    def _on_bone_rotation_dragged(self, axis: int, total_deg: float):
-        """A gizmo ring is being dragged: rotate the selected bone on that
-        axis for the current frame."""
+    def _rotation_drag_target(self):
+        """(anim, frame, bone_id) currently being posed, or None."""
         if self.animating or not hasattr(self, 'bone_editor'):
-            return
+            return None
         if not self.ifrit_manager.enemy.bone_data or not self.ifrit_manager.enemy.animation_data.nb_animations:
-            return
+            return None
         anims = self.ifrit_manager.enemy.animation_data.animations
         if self.current_anim_id >= len(anims) or self.current_frame >= len(anims[self.current_anim_id].frames):
-            return
+            return None
         bone_id = self.bone_editor.bone_spin.value()
         frame = anims[self.current_anim_id].frames[self.current_frame]
         if bone_id >= len(frame.rotation_vector_data) or len(frame.rotation_vector_data[bone_id]) < 3:
+            return None
+        return anims[self.current_anim_id], frame, bone_id
+
+    def _on_bone_rotation_dragged(self, axis: int, total_deg: float):
+        """A gizmo ring is being dragged: rotate the selected bone on that
+        axis for the current frame.
+
+        Only the displayed frame is recomputed here — propagation to the
+        following frames and the delta storage types are done once, when the
+        drag ends (none of it is visible during the drag anyway).
+        """
+        target = self._rotation_drag_target()
+        if target is None:
             return
+        _, frame, bone_id = target
 
         if self._rot_drag_start_deg is None:
             rot = frame.rotation_vector_data[bone_id]
             self._rot_drag_start_deg = [rot[0].get_rotate_deg(),
                                         rot[1].get_rotate_deg(),
                                         rot[2].get_rotate_deg()]
+            self._rot_drag_start_raw = [int(rot[0].get_rotate_raw()),
+                                        int(rot[1].get_rotate_raw()),
+                                        int(rot[2].get_rotate_raw())]
         new_deg = list(self._rot_drag_start_deg)
         new_deg[axis] = ((new_deg[axis] + total_deg + 180.0) % 360.0) - 180.0
 
-        self.ifrit_manager.set_animation_frame_bone_rotation(
+        self.ifrit_manager.set_animation_frame_bone_rotation_preview(
             self.current_anim_id, self.current_frame, bone_id,
             new_deg[0], new_deg[1], new_deg[2])
         self.update_animated_mesh()
@@ -1165,7 +1182,32 @@ class Ifrit3DWidget(QWidget):
         self._update_bone_editor_selection()  # rotation spinboxes follow live
 
     def _on_bone_rotation_drag_finished(self):
+        """Release after a ring drag: apply the drag's final pose for real —
+        storage types, and the propagation to the following frames."""
+        start_raw = self._rot_drag_start_raw
         self._rot_drag_start_deg = None
+        self._rot_drag_start_raw = None
+        target = self._rotation_drag_target()
+        if start_raw is None or target is None:
+            self._update_gizmo()
+            return
+        _, frame, bone_id = target
+
+        rot = frame.rotation_vector_data[bone_id]
+        final_deg = [rot[0].get_rotate_deg(), rot[1].get_rotate_deg(), rot[2].get_rotate_deg()]
+        # Rewind to the pre-drag pose so the real setter sees the whole drag
+        # as one edit (its propagation offsets the following frames by the
+        # drag's total, and previews left the deltas untouched)
+        for axis in range(3):
+            rot[axis].rotate_raw(start_raw[axis])
+        self.ifrit_manager.set_animation_frame_bone_rotation(
+            self.current_anim_id, self.current_frame, bone_id,
+            final_deg[0], final_deg[1], final_deg[2],
+            propagate_to_next_frames=self._propagate_rotation_enabled())
+
+        self.update_animated_mesh()
+        self.update_skeleton()
+        self._update_bone_editor_selection()
         self._update_gizmo()
 
     def _update_gizmo(self):
@@ -1291,10 +1333,17 @@ class Ifrit3DWidget(QWidget):
             self.gl_widget.set_model_translation(pos_x, pos_y, pos_z)
             self.gl_widget.update()
 
+    def _propagate_rotation_enabled(self) -> bool:
+        """The 'Apply to all following frames' checkbox of the rotation tab"""
+        return (hasattr(self, 'bone_editor')
+                and self.bone_editor.propagate_rotation_cb.isChecked())
+
     def _on_animation_rotation_changed(self, anim_id: int, frame_id: int,
                                        bone_id: int, rx: float, ry: float, rz: float):
         """Handle animation rotation change from editor"""
-        self.ifrit_manager.set_animation_frame_bone_rotation(anim_id, frame_id, bone_id, rx, ry, rz)
+        self.ifrit_manager.set_animation_frame_bone_rotation(
+            anim_id, frame_id, bone_id, rx, ry, rz,
+            propagate_to_next_frames=self._propagate_rotation_enabled())
         self.update_animated_mesh()
 
     def _on_animation_scale_changed(self, anim_id: int, frame_id: int,

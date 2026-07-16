@@ -696,18 +696,78 @@ class IfritManager:
 
         self._recompute_all_animation_matrices()
 
+    ROTATION_FULL_TURN_RAW = 4096  # raw units per 360 degrees
+
+    @classmethod
+    def _wrap_rotation_raw(cls, raw: int) -> int:
+        """Bring a raw rotation into [-2048, 2048) = [-180, 180) degrees.
+        Lossless: rotations are modulo 4096 raw, so this is the same angle."""
+        half = cls.ROTATION_FULL_TURN_RAW // 2
+        return ((int(raw) + half) % cls.ROTATION_FULL_TURN_RAW) - half
+
+    def set_animation_frame_bone_rotation_preview(self, anim_id: int, frame_id: int, bone_idx: int,
+                                                  rot_x_deg: float, rot_y_deg: float, rot_z_deg: float):
+        """Rotate a bone on the displayed frame only, recomputing just that
+        frame's matrices — cheap enough for every mouse-move of a ring drag.
+
+        Skips the storage types (only needed to save) and any propagation to
+        the following frames (only visible once you leave this frame): the
+        drag's end calls set_animation_frame_bone_rotation with the final
+        value, which does both for the whole drag at once.
+        """
+        anim: Animation = self.enemy.animation_data.animations[anim_id]
+        if frame_id >= len(anim.frames):
+            return
+        frame = anim.frames[frame_id]
+        frame.rotation_vector_data[bone_idx][0].rotate_deg(rot_x_deg)
+        frame.rotation_vector_data[bone_idx][1].rotate_deg(rot_y_deg)
+        frame.rotation_vector_data[bone_idx][2].rotate_deg(rot_z_deg)
+        self._recompute_frame_matrices(anim, frame_id, bone_idx)
+
     def set_animation_frame_bone_rotation(self, anim_id: int, frame_id: int, bone_idx: int,
-                                          rot_x_deg: float, rot_y_deg: float, rot_z_deg: float):
-        """Modify the rotation of a bone in a specific animation frame."""
+                                          rot_x_deg: float, rot_y_deg: float, rot_z_deg: float,
+                                          propagate_to_next_frames: bool = False):
+        """Modify the rotation of a bone in a specific animation frame.
+
+        Frames hold ABSOLUTE rotations, so by default only this frame moves
+        (the following frames keep their own poses). With
+        propagate_to_next_frames, the same rotation change is also added to
+        every following frame of the animation, which shifts the rest of the
+        animation along with the edit instead of leaving it behind.
+        """
         anim:Animation = self.enemy.animation_data.animations[anim_id]
         if frame_id >= len(anim.frames):
             return
         frame = anim.frames[frame_id]
 
+        old_raw = [int(frame.rotation_vector_data[bone_idx][axis].get_rotate_raw())
+                   for axis in range(3)]
+
         # Update raw rotation
         frame.rotation_vector_data[bone_idx][0].rotate_deg(rot_x_deg)
         frame.rotation_vector_data[bone_idx][1].rotate_deg(rot_y_deg)
         frame.rotation_vector_data[bone_idx][2].rotate_deg(rot_z_deg)
+
+        if propagate_to_next_frames:
+            # How much this edit turned each axis, as the shortest equivalent
+            # turn (so wrapping around +/-180 does not send the rest of the
+            # animation the long way round)
+            deltas = [self._wrap_rotation_raw(
+                          int(frame.rotation_vector_data[bone_idx][axis].get_rotate_raw()) - old_raw[axis])
+                      for axis in range(3)]
+            if any(deltas):
+                for next_frame_id in range(frame_id + 1, len(anim.frames)):
+                    next_frame = anim.frames[next_frame_id]
+                    if bone_idx >= len(next_frame.rotation_vector_data):
+                        continue
+                    for axis in range(3):
+                        rotation = next_frame.rotation_vector_data[bone_idx][axis]
+                        # Kept wrapped: propagated offsets accumulate, and a
+                        # value beyond +/-360 would no longer fit the editor's
+                        # rotation spinboxes
+                        rotation.rotate_raw(self._wrap_rotation_raw(
+                            int(rotation.get_rotate_raw()) + deltas[axis]))
+                    self._recompute_frame_matrices(anim, next_frame_id, bone_idx)
 
         # The file stores each frame as a delta from the previous one, with a
         # per-value bit width and an "axis present" flag. The edit changed the
