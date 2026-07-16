@@ -220,7 +220,8 @@ class FF8UltimateEditorWidget(QWidget):
         self.cactilio_launcher = CactilioLauncher(os.path.join("ExternalTools", "JumboCactuar", "Jumbo Cactuar.exe"), callback=None)
         self.deling_launcher = DelingLauncher(os.path.join("ExternalTools", "Deling", "Deling.exe"), callback=None)
         self.hyne_launcher = HyneLauncher(os.path.join("ExternalTools", "Hyne", "Hyne.exe"), callback=None)
-        self.ff8ultimate_launcher = FF8UltimateLauncher(os.path.join("", "FF8UltimateEditor.exe"), callback=None)
+        ff8ultimate_exe_name = "FF8UltimateEditor.exe" if sys.platform == "win32" else "FF8UltimateEditor"
+        self.ff8ultimate_launcher = FF8UltimateLauncher(os.path.join("", ff8ultimate_exe_name), callback=None)
 
         # Final setup for header height and initial state
         self._tool_update_widget.progress.show()

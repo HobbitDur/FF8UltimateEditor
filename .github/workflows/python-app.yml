@@ -10,7 +10,159 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+        fetch-depth: 0
+
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"   # 3.14 wheels for PyQt6 not reliable on Linux yet (see tests.yml)
+
+    - name: recursive submodule
+      shell: bash
+      run: |
+        git submodule update --init --recursive
+
+    - name: Install Qt/OpenGL runtime dependencies
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends \
+          libegl1 libgl1 libopengl0 libglib2.0-0 libdbus-1-3 \
+          libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+          libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 \
+          libxkbcommon0 libxkbcommon-x11-0 \
+          libfontconfig1 libxcomposite1 libxdamage1 libxrandr2 libxi6
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r FF8GameData/requirements.txt
+        pip install -r requirements.txt
+        pip install pyinstaller
+        pip freeze
+
+    - name: Create patcher
+      shell: bash
+      run: |
+        mkdir -p Patcher
+        pyinstaller -n Patcher -F --specpath release/build --distpath release/Patcher --workpath release/build --onefile Patcher/main.py
+        rm -R release/build
+
+    - name: Create release
+      shell: bash
+      run: |
+        pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --workpath release/build --onefile main.py
+        mkdir -p release/Resources
+        mkdir -p release/ExternalTools/Junkshop
+        mkdir -p release/ExternalTools/Quezacotl
+        mkdir -p release/ExternalTools/Doomtrain
+        mkdir -p release/ExternalTools/JumboCactuar
+        mkdir -p release/ExternalTools/IfritGui
+        mkdir -p release/ExternalTools/Siren
+        mkdir -p release/ExternalTools/Hyne
+        mkdir -p release/ExternalTools/Deling
+        mkdir -p release/logs
+        mkdir -p release/FF8GameData
+        mkdir -p release/FF8GameData/Resources
+        mkdir -p release/FF8GameData/fs
+        mkdir -p release/FF8GameData/fs/DelingCli
+        mkdir -p release/ToolUpdate
+        mkdir -p release/ShumiTranslator
+        mkdir -p release/ShumiTranslator/csv
+        cp -R ShumiTranslator/csv/. release/ShumiTranslator/csv
+        cp ToolUpdate/list.json release/ToolUpdate/
+        cp -R FF8GameData/Resources/. release/FF8GameData/Resources/
+        cp -R Resources/. release/Resources/
+        chmod +x release/FF8UltimateEditor release/Patcher/Patcher
+        rm -R release/build
+        ls -al release
+
+    - name: Create CLI release
+      shell: bash
+      run: |
+        pyinstaller -n FF8UltimateEditorCli -F --specpath release-cli/build --distpath release-cli --workpath release-cli/build --onefile cli.py
+        rm -R release-cli/build
+
+        mkdir -p release-cli/FF8GameData/fs/DelingCli
+        mkdir -p release-cli/ShumiTranslator/csv
+
+        # Download and setup deling-cli (Linux x64) directly
+        DOWNLOAD_URL=$(curl -s https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[] | select(.name == "deling-cli-linux_x64.tar.xz") | .browser_download_url')
+        if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" = "null" ]; then
+          echo "Error: Could not find deling-cli-linux_x64.tar.xz in latest release"
+          exit 1
+        fi
+
+        echo "Downloading from: $DOWNLOAD_URL"
+        curl -L -o deling-cli-linux_x64.tar.xz "$DOWNLOAD_URL"
+
+        mkdir deling_temp
+        tar -xJf deling-cli-linux_x64.tar.xz -C deling_temp
+
+        # The Linux archive nests the binary as <pkg>/bin/deling-cli (unlike the flat Windows zip)
+        DELING_BIN=$(find deling_temp -type f -name "deling-cli" | head -n1)
+        if [ -z "$DELING_BIN" ]; then
+          echo "ERROR: deling-cli binary not found in archive"
+          find deling_temp
+          exit 1
+        fi
+        cp "$DELING_BIN" release-cli/FF8GameData/fs/DelingCli/deling-cli
+
+        chmod +x release-cli/FF8GameData/fs/DelingCli/deling-cli
+
+        echo "Verifying deling-cli installation:"
+        if [ -f "release-cli/FF8GameData/fs/DelingCli/deling-cli" ]; then
+          echo "SUCCESS: deling-cli found!"
+        else
+          echo "ERROR: deling-cli not found!"
+          ls -la release-cli/FF8GameData/fs/DelingCli/
+          exit 1
+        fi
+
+        cp -R ShumiTranslator/csv/*.csv release-cli/ShumiTranslator/csv/ 2>/dev/null || true
+
+        rm -rf deling_temp
+        rm -f deling-cli-linux_x64.tar.xz
+
+        find release-cli -name "*.py" -type f -delete 2>/dev/null || true
+        find release-cli -name "*.pyc" -type f -delete 2>/dev/null || true
+        find release-cli -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+
+        chmod +x release-cli/FF8UltimateEditorCli
+        ls -la release-cli
+
+    - name: Package Linux archives
+      shell: bash
+      run: |
+        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+        if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          MAIN_NAME="FF8UltimateEditor-linux_x64-${{ github.ref_name }}.tar.gz"
+          CLI_NAME="FF8UltimateEditor-cli-linux_x64-${{ github.ref_name }}.tar.gz"
+        else
+          MAIN_NAME="FF8UltimateEditor-linux_x64-continuous-${SHORT_SHA}.tar.gz"
+          CLI_NAME="FF8UltimateEditor-cli-linux_x64-continuous-${SHORT_SHA}.tar.gz"
+        fi
+        mkdir -p linux-artifacts
+        tar -czf "linux-artifacts/${MAIN_NAME}" -C release .
+        tar -czf "linux-artifacts/${CLI_NAME}" -C release-cli .
+        ls -al linux-artifacts
+
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-artifacts
+        path: linux-artifacts/*.tar.gz
+        retention-days: 1
+
   release-version:
+    needs: build-linux
     runs-on: windows-latest
     steps:
     - name: Checkout repository
@@ -23,6 +175,13 @@ jobs:
       shell: bash
       run: |
         git fetch origin "refs/tags/${{ github.ref_name }}:refs/tags/${{ github.ref_name }}" --force
+
+    - name: Download Linux artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-artifacts
+        path: release-linux
+
     - name: Set up Python 3.14
       uses: actions/setup-python@v5
       with:
@@ -420,6 +579,8 @@ jobs:
         files: |
           release/FF8UltimateEditor-continuous-*.zip
           release/FF8UltimateEditor-cli-continuous-*.zip
+          release-linux/FF8UltimateEditor-linux_x64-continuous-*.tar.gz
+          release-linux/FF8UltimateEditor-cli-linux_x64-continuous-*.tar.gz
         generate_release_notes: false
         make_latest: false
 
@@ -435,4 +596,6 @@ jobs:
         files: |
           release/FF8UltimateEditor-*.zip
           release/FF8UltimateEditor-cli-*.zip
+          release-linux/FF8UltimateEditor-linux_x64-*.tar.gz
+          release-linux/FF8UltimateEditor-cli-linux_x64-*.tar.gz
         generate_release_notes: false

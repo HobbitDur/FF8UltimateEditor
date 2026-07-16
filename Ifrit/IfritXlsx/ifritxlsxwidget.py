@@ -1,6 +1,8 @@
 import logging
 import os
 import pathlib
+import subprocess
+import sys
 
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon
@@ -167,5 +169,10 @@ class IfritXlsxWidget(QWidget):
                 #self.ifrit_manager.xlsx_to_dat(dat_file_current_list, dat_id_current_list)
             self.ifrit_manager.close_xlsx_file()
             if self.open_xlsx.isChecked():
-                os.startfile(self.xlsx_file_selected)
+                if sys.platform == "win32":
+                    os.startfile(self.xlsx_file_selected)
+                elif sys.platform == "darwin":
+                    subprocess.run(["open", self.xlsx_file_selected])
+                else:
+                    subprocess.run(["xdg-open", self.xlsx_file_selected])
         print("Xlsx work done !")

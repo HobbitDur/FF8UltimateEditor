@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Callable
 
@@ -251,7 +252,8 @@ class ToolUpdateWidget(QWidget):
 
     def start_self_update_process(self):
         # Path to the updater executable
-        updater_path = Path("Patcher/Patcher.exe")
+        patcher_name = "Patcher.exe" if sys.platform == "win32" else "Patcher"
+        updater_path = Path("Patcher") / patcher_name
 
         # Launch updater and close this app
         if updater_path.exists():
