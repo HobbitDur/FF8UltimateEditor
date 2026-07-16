@@ -1,7 +1,7 @@
 import os
 import pathlib
-from PyQt6.QtCore import QSize, QSettings
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import QSize, QSettings, Qt
+from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFileDialog, QTabWidget, QMessageBox, QCheckBox
@@ -98,6 +98,11 @@ class IfritMonsterWidget(QWidget):
         root.addWidget(toolbar)
         root.addWidget(self._tabs, 1)
 
+        # Ctrl+S = the Save toolbar button, from anywhere inside this tool
+        self._save_shortcut = QShortcut(QKeySequence.StandardKey.Save, self)
+        self._save_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._save_shortcut.activated.connect(self._on_save_shortcut)
+
         self._on_tab_changed(0)
         self._on_cronos_toggled( self._cronos_checkbox.isChecked())
 
@@ -175,6 +180,10 @@ class IfritMonsterWidget(QWidget):
 
         self._save_btn.setEnabled(True)
         self._reload_btn.setEnabled(True)
+
+    def _on_save_shortcut(self):
+        if self._save_btn.isEnabled() and self.file_loaded:
+            self._save_file()
 
     def _save_file(self):
         self._ai_widget.save_file()

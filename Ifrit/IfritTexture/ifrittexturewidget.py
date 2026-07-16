@@ -116,8 +116,9 @@ class IfritTextureWidget(QWidget):
             for file_path in files_to_load:
                 self.ifrit_manager.analyze(file_path)
 
+            # Note: no window().adjustSize() here — it would shrink and move
+            # the whole tool window (and un-maximize it) on every file load
             self._refresh_texture_grid()
-            self.window().adjustSize()
         if delete_temp:
             if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
                 shutil.rmtree(self.ifrit_manager.temp_path)

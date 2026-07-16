@@ -1,9 +1,11 @@
+import math
 from typing import List
 
 import numpy as np
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QImage
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
+from PyQt6.QtWidgets import QLabel
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
@@ -11,6 +13,21 @@ class FF8OpenGLWidget(QOpenGLWidget):
     """
     FF8 Monster Viewer Widget - Reusable PyQt Widget
     """
+    # Direct manipulation of the skeleton in the view
+    bone_picked = pyqtSignal(int)              # a joint was clicked: bone id
+    bone_length_dragged = pyqtSignal(float)    # Ctrl+drag: total world-unit delta since drag start
+    bone_length_drag_finished = pyqtSignal()
+    bone_rotation_dragged = pyqtSignal(int, float)  # ring drag: (axis 0/1/2, total degrees)
+    bone_rotation_drag_finished = pyqtSignal()
+
+    PICK_RADIUS_PX = 14   # click-to-joint tolerance, in logical pixels
+    CLICK_SLOP_PX = 4     # press/release within this distance = click, beyond = orbit drag
+
+    GIZMO_SCREEN_RADIUS_PX = 55   # ring radius, constant on screen whatever the zoom
+    GIZMO_PICK_TOLERANCE_PX = 8
+    GIZMO_SEGMENTS = 48
+    GIZMO_COLORS = ((1.0, 0.35, 0.35), (0.35, 1.0, 0.35), (0.45, 0.6, 1.0))  # X, Y, Z
+
     def __init__(self, parent=None):
         self.face_color = (0.45, 0.65, 0.95)
         self.raw_vertices = []
@@ -37,6 +54,19 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self._textures_dirty = False
         super().__init__(parent)
 
+        # Skeleton edit cheat-sheet, shown in the view corner while the
+        # skeleton is displayed (a plain child widget floats over the GL view)
+        self._skeleton_help = QLabel(
+            "Click joint: select bone\n"
+            "Drag ring: rotate bone (X/Y/Z)\n"
+            "Ctrl+Drag: bone length\n"
+            "B: add child bone", self)
+        self._skeleton_help.setStyleSheet(
+            "background: rgba(20, 20, 30, 170); color: #ddd;"
+            "padding: 4px 8px; border-radius: 4px; font-size: 10px;")
+        self._skeleton_help.adjustSize()
+        self._skeleton_help.hide()
+
         # Camera controls
         self.rot_x = 20.0
         self.rot_y = 30.0
@@ -49,6 +79,25 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.last_mouse_y = None
         self.left_button_down = False
         self.right_button_down = False
+
+        # Picking / direct-edit state. is_edit_allowed is replaced by the
+        # owner (Ifrit3DWidget) to block grabbing while an animation plays.
+        self.is_edit_allowed = lambda: True
+        self._pick_modelview = None
+        self._pick_projection = None
+        self._pick_viewport = None
+        self._press_pos = None
+        self._length_drag = False
+        self._length_drag_dir = (0.0, -1.0)
+        self._length_drag_total = 0.0
+
+        # Rotation gizmo (three rings around the selected joint)
+        self.gizmo_center = None       # model-space pivot, or None = hidden
+        self.gizmo_axes = None         # 3 unit vectors (model space)
+        self._gizmo_active_axis = -1   # axis being dragged, -1 = none
+        self._gizmo_use_plane = True   # angle method chosen at grab time
+        self._gizmo_last_angle = 0.0
+        self._gizmo_total_deg = 0.0
 
         # Display options
         self.show_triangles = True
@@ -179,7 +228,18 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
     def set_show_skeleton(self, show: bool):
         self.show_skeleton = show
+        self._skeleton_help.setVisible(show)
+        self._position_help_label()
         self.update()
+
+    def _position_help_label(self):
+        margin = 8
+        self._skeleton_help.adjustSize()
+        self._skeleton_help.move(self.width() - self._skeleton_help.width() - margin, margin)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._position_help_label()
 
     def set_triangles(self, triangles:List):
         self.triangles = triangles
@@ -233,6 +293,16 @@ class FF8OpenGLWidget(QOpenGLWidget):
         except Exception:
             self._eye_model = None
 
+        # Snapshot the full transform for mouse picking (joints are drawn in
+        # this same model space, so gluProject with these gives their screen
+        # position)
+        try:
+            self._pick_modelview = glGetDoublev(GL_MODELVIEW_MATRIX)
+            self._pick_projection = glGetDoublev(GL_PROJECTION_MATRIX)
+            self._pick_viewport = glGetIntegerv(GL_VIEWPORT)
+        except Exception:
+            self._pick_modelview = None
+
         if self.show_axis:
             self.draw_axis()
         if self.show_texture and self._gl_textures and (self.triangles_uv or self.quads_uv):
@@ -255,8 +325,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         if self.show_skeleton:
             self.draw_skeleton()
-
-        self.update()
+            self.draw_rotation_gizmo()
 
     def _should_cull_backface(self, verts, multiplicity, view_dir):
         """PSX-style per-face backface cull (exact per-face plane test, same
@@ -701,15 +770,274 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glVertex3f(c[0], c[1], c[2] + length)
         glEnd()
 
+    # ------------------------------------------------------------------
+    # Mouse picking of skeleton joints
+    # ------------------------------------------------------------------
+    def _project_joint(self, point):
+        """Project a model-space point to logical widget coordinates.
+        Returns (x, y, depth) or None if no transform snapshot exists yet."""
+        if self._pick_modelview is None:
+            return None
+        try:
+            win = gluProject(point[0], point[1], point[2],
+                             self._pick_modelview, self._pick_projection, self._pick_viewport)
+        except Exception:
+            return None
+        if win is None:
+            return None
+        dpr = self.devicePixelRatioF()
+        # GL windows coords are in physical pixels with the origin bottom-left;
+        # Qt events are in logical pixels with the origin top-left
+        x = win[0] / dpr
+        y = (self._pick_viewport[3] - win[1]) / dpr
+        return x, y, win[2]
+
+    def _joint_candidates(self):
+        """bone_id -> model-space joint position. A bone's joint is the end of
+        its line; a root bone (no line) uses the start of any child's line."""
+        joints = {}
+        for bone_id, line in enumerate(self.skeleton_lines):
+            if line is None:
+                continue
+            joints[bone_id] = line[1]
+            if bone_id < len(self.bone_parents):
+                parent_id = self.bone_parents[bone_id]
+                if (0 <= parent_id < len(self.skeleton_lines)
+                        and self.skeleton_lines[parent_id] is None
+                        and parent_id not in joints):
+                    joints[parent_id] = line[0]
+        return joints
+
+    def _pick_joint(self, x, y):
+        """Return the bone id whose joint is nearest to the widget position
+        (x, y) within PICK_RADIUS_PX, or -1. Overlapping joints resolve to the
+        one closest to the camera."""
+        candidates = []
+        for bone_id, pos in self._joint_candidates().items():
+            proj = self._project_joint(pos)
+            if proj is None or not (0.0 <= proj[2] <= 1.0):
+                continue
+            dist = ((proj[0] - x) ** 2 + (proj[1] - y) ** 2) ** 0.5
+            if dist <= self.PICK_RADIUS_PX:
+                candidates.append((dist, proj[2], bone_id))
+        if not candidates:
+            return -1
+        # Bucket screen distances so joints drawn on top of each other are
+        # decided by depth rather than a sub-pixel 2D difference
+        return min(candidates, key=lambda c: (round(c[0] / 6), c[1]))[2]
+
+    def _world_units_per_pixel(self):
+        """Approximate model-space size of one logical pixel at the model's
+        distance (45 deg vertical fov, see resizeGL)."""
+        h = max(1, self.height())
+        return (2.0 * max(self.zoom, 1e-3) * math.tan(math.radians(22.5))) / h
+
+    # ------------------------------------------------------------------
+    # Rotation gizmo
+    # ------------------------------------------------------------------
+    def set_rotation_gizmo(self, center, axes):
+        """Show the rotation rings at `center` with the given 3 axis vectors,
+        or hide them (center=None)."""
+        self.gizmo_center = center
+        self.gizmo_axes = axes
+        self.update()
+
+    @staticmethod
+    def _axis_basis(axis):
+        """Right-handed orthonormal basis (u, v, a) with u x v = a: the ring
+        lies in the (u, v) plane and increasing atan2(w.v, w.u) is a positive
+        rotation around the axis."""
+        a = np.array(axis, dtype=np.float64)
+        a /= max(np.linalg.norm(a), 1e-9)
+        helper = np.array([0.0, 0.0, 1.0]) if abs(a[2]) < 0.9 else np.array([1.0, 0.0, 0.0])
+        u = np.cross(helper, a)
+        u /= max(np.linalg.norm(u), 1e-9)
+        v = np.cross(a, u)
+        return a, u, v
+
+    def _gizmo_ring_points(self, axis):
+        radius = self.GIZMO_SCREEN_RADIUS_PX * self._world_units_per_pixel()
+        center = np.array(self.gizmo_center, dtype=np.float64)
+        _, u, v = self._axis_basis(axis)
+        points = []
+        for s in range(self.GIZMO_SEGMENTS):
+            t = 2.0 * math.pi * s / self.GIZMO_SEGMENTS
+            points.append(center + radius * (math.cos(t) * u + math.sin(t) * v))
+        return points
+
+    def draw_rotation_gizmo(self):
+        if self.gizmo_center is None or not self.gizmo_axes:
+            return
+        glDisable(GL_DEPTH_TEST)
+        for i, axis in enumerate(self.gizmo_axes):
+            if i == self._gizmo_active_axis:
+                glLineWidth(5.0)
+                glColor3f(1.0, 1.0, 0.4)
+            else:
+                glLineWidth(2.5)
+                glColor3f(*self.GIZMO_COLORS[i])
+            glBegin(GL_LINE_LOOP)
+            for p in self._gizmo_ring_points(axis):
+                glVertex3f(p[0], p[1], p[2])
+            glEnd()
+        glLineWidth(1.0)
+        glEnable(GL_DEPTH_TEST)
+
+    def _pick_gizmo_axis(self, x, y):
+        """Ring under the widget position (x, y), or -1."""
+        if self.gizmo_center is None or not self.gizmo_axes:
+            return -1
+        best_axis, best_dist = -1, None
+        for i, axis in enumerate(self.gizmo_axes):
+            for p in self._gizmo_ring_points(axis):
+                proj = self._project_joint(tuple(p))
+                if proj is None:
+                    return -1
+                dist = ((proj[0] - x) ** 2 + (proj[1] - y) ** 2) ** 0.5
+                if best_dist is None or dist < best_dist:
+                    best_axis, best_dist = i, dist
+        if best_dist is not None and best_dist <= self.GIZMO_PICK_TOLERANCE_PX:
+            return best_axis
+        return -1
+
+    def _mouse_ray(self, x, y):
+        """Model-space ray under the widget position: (origin, unit direction)."""
+        if self._pick_modelview is None:
+            return None
+        dpr = self.devicePixelRatioF()
+        win_x = x * dpr
+        win_y = self._pick_viewport[3] - y * dpr
+        try:
+            p0 = np.array(gluUnProject(win_x, win_y, 0.0, self._pick_modelview,
+                                       self._pick_projection, self._pick_viewport))
+            p1 = np.array(gluUnProject(win_x, win_y, 1.0, self._pick_modelview,
+                                       self._pick_projection, self._pick_viewport))
+        except Exception:
+            return None
+        direction = p1 - p0
+        norm = np.linalg.norm(direction)
+        if norm < 1e-9:
+            return None
+        return p0, direction / norm
+
+    def _gizmo_angle(self, x, y):
+        """Angle (degrees) of the mouse around the active gizmo axis. Positive
+        = positive rotation around the axis (right-hand rule)."""
+        axis = self.gizmo_axes[self._gizmo_active_axis]
+        a, u, v = self._axis_basis(axis)
+        center = np.array(self.gizmo_center, dtype=np.float64)
+
+        if self._gizmo_use_plane:
+            ray = self._mouse_ray(x, y)
+            if ray is not None:
+                origin, direction = ray
+                denom = float(np.dot(direction, a))
+                if abs(denom) > 1e-6:
+                    t = float(np.dot(center - origin, a)) / denom
+                    w = (origin + t * direction) - center
+                    return math.degrees(math.atan2(float(np.dot(w, v)), float(np.dot(w, u))))
+
+        # Edge-on ring (or unproject failure): angle around the projected
+        # center in screen space. Qt's y axis points down, which mirrors the
+        # apparent rotation; the axis facing decides the final sign.
+        projected = self._project_joint(tuple(center))
+        if projected is None:
+            return None
+        theta = math.degrees(math.atan2(y - projected[1], x - projected[0]))
+        facing = 1.0
+        eye = getattr(self, '_eye_model', None)
+        if eye is not None:
+            facing = 1.0 if float(np.dot(np.asarray(eye) - center, a)) > 0.0 else -1.0
+        return -theta * facing
+
+    def _start_rotation_drag(self, axis_index, x, y):
+        self._gizmo_active_axis = axis_index
+        # Choose the angle method once per drag so it cannot jump mid-drag:
+        # ray-plane when the ring faces the camera enough, else screen angle
+        a, _, _ = self._axis_basis(self.gizmo_axes[axis_index])
+        center = np.array(self.gizmo_center, dtype=np.float64)
+        eye = getattr(self, '_eye_model', None)
+        if eye is not None:
+            view = center - np.asarray(eye)
+            norm = np.linalg.norm(view)
+            self._gizmo_use_plane = norm > 1e-9 and abs(float(np.dot(view / norm, a))) > 0.3
+        else:
+            self._gizmo_use_plane = True
+        angle = self._gizmo_angle(x, y)
+        self._gizmo_last_angle = angle if angle is not None else 0.0
+        self._gizmo_total_deg = 0.0
+        self.last_mouse_x = x
+        self.last_mouse_y = y
+        self.update()
+
+    def _selected_bone_axis_screen_dir(self):
+        """Screen direction in which the selected bone extends when it gets
+        longer: towards its children's joints (a bone's length positions its
+        CHILDREN along its own axis — the line ending at the selected joint
+        belongs to the parent's axis and does not move with this length)."""
+        sel = self.selected_bone
+        dirs = []
+        for bone_id, line in enumerate(self.skeleton_lines):
+            if line is None or bone_id >= len(self.bone_parents):
+                continue
+            if self.bone_parents[bone_id] != sel:
+                continue
+            p0 = self._project_joint(line[0])
+            p1 = self._project_joint(line[1])
+            if p0 is not None and p1 is not None:
+                dirs.append((p1[0] - p0[0], p1[1] - p0[1]))
+        if not dirs and 0 <= sel < len(self.skeleton_lines) and self.skeleton_lines[sel] is not None:
+            # Leaf bone (length has no visible effect): follow the parent's
+            # axis so the drag still behaves consistently
+            p0 = self._project_joint(self.skeleton_lines[sel][0])
+            p1 = self._project_joint(self.skeleton_lines[sel][1])
+            if p0 is not None and p1 is not None:
+                dirs.append((p1[0] - p0[0], p1[1] - p0[1]))
+        if dirs:
+            dx = sum(d[0] for d in dirs)
+            dy = sum(d[1] for d in dirs)
+            norm = (dx * dx + dy * dy) ** 0.5
+            if norm > 5.0:
+                return dx / norm, dy / norm
+        return None
+
+    def _start_length_drag(self, x, y):
+        """Begin a Ctrl+drag that changes the selected bone's length. Movement
+        along the bone's screen direction = longer, against it = shorter."""
+        direction = self._selected_bone_axis_screen_dir()
+        if direction is None:
+            # Bone points at the camera: fall back to "drag up = longer"
+            direction = (0.0, -1.0)
+        self._length_drag = True
+        self._length_drag_dir = direction
+        self._length_drag_total = 0.0
+        self.last_mouse_x = x
+        self.last_mouse_y = y
+
     def mousePressEvent(self, event):
+        pos = event.position()
         if event.button() == Qt.MouseButton.LeftButton:
+            self._press_pos = (pos.x(), pos.y())
+            # Root bones have no line of their own but do have a length (it
+            # places their children), so any valid selection can be dragged
+            if (event.modifiers() & Qt.KeyboardModifier.ControlModifier
+                    and self.show_skeleton and self.is_edit_allowed()
+                    and 0 <= self.selected_bone < len(self.skeleton_lines)):
+                self._start_length_drag(pos.x(), pos.y())
+                return
+            # Grab a rotation ring of the gizmo
+            if self.show_skeleton and self.is_edit_allowed():
+                axis_index = self._pick_gizmo_axis(pos.x(), pos.y())
+                if axis_index >= 0:
+                    self._start_rotation_drag(axis_index, pos.x(), pos.y())
+                    return
             self.left_button_down = True
-            self.last_mouse_x = event.position().x()
-            self.last_mouse_y = event.position().y()
+            self.last_mouse_x = pos.x()
+            self.last_mouse_y = pos.y()
         elif event.button() == Qt.MouseButton.RightButton:
             self.right_button_down = True
-            self.last_mouse_x = event.position().x()
-            self.last_mouse_y = event.position().y()
+            self.last_mouse_x = pos.x()
+            self.last_mouse_y = pos.y()
 
     def mouseMoveEvent(self, event):
         if self.last_mouse_x is None:
@@ -718,14 +1046,29 @@ class FF8OpenGLWidget(QOpenGLWidget):
         dx = event.position().x() - self.last_mouse_x
         dy = event.position().y() - self.last_mouse_y
 
-        if self.left_button_down:
+        if self._length_drag:
+            step = dx * self._length_drag_dir[0] + dy * self._length_drag_dir[1]
+            self._length_drag_total += step * self._world_units_per_pixel()
+            self.bone_length_dragged.emit(self._length_drag_total)
+
+        elif self._gizmo_active_axis >= 0:
+            angle = self._gizmo_angle(event.position().x(), event.position().y())
+            if angle is not None:
+                delta = angle - self._gizmo_last_angle
+                delta = (delta + 180.0) % 360.0 - 180.0  # shortest way round
+                self._gizmo_total_deg += delta
+                self._gizmo_last_angle = angle
+                self.bone_rotation_dragged.emit(self._gizmo_active_axis, self._gizmo_total_deg)
+
+        elif self.left_button_down:
             self.rot_y += dx * 0.5
             self.rot_x += dy * 0.5
 
         elif self.right_button_down:
-            pan_speed = self.zoom * 0.002 * self.MODEL_SIZE
-            self.pan_x -= dx * pan_speed
-            self.pan_y += dy * pan_speed
+            # One pixel of mouse motion = one pixel of on-screen model motion
+            pan_speed = self._world_units_per_pixel()
+            self.pan_x += dx * pan_speed
+            self.pan_y -= dy * pan_speed
 
         self.last_mouse_x = event.position().x()
         self.last_mouse_y = event.position().y()
@@ -733,6 +1076,21 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
+            if self._length_drag:
+                self._length_drag = False
+                self.bone_length_drag_finished.emit()
+            elif self._gizmo_active_axis >= 0:
+                self._gizmo_active_axis = -1
+                self.bone_rotation_drag_finished.emit()
+                self.update()
+            elif self._press_pos is not None and self.show_skeleton:
+                dx = event.position().x() - self._press_pos[0]
+                dy = event.position().y() - self._press_pos[1]
+                if dx * dx + dy * dy <= self.CLICK_SLOP_PX ** 2:
+                    bone_id = self._pick_joint(event.position().x(), event.position().y())
+                    if bone_id >= 0:
+                        self.bone_picked.emit(bone_id)
+            self._press_pos = None
             self.left_button_down = False
         elif event.button() == Qt.MouseButton.RightButton:
             self.right_button_down = False

@@ -11,6 +11,8 @@ class AnimEditor(QWidget):
     bone_selected = pyqtSignal(int)
     bone_length_changed = pyqtSignal(int, float)
     bone_parent_changed = pyqtSignal(int, int)
+    add_bone_requested = pyqtSignal(int)       # parent bone id
+    reset_skeleton_requested = pyqtSignal()
     animation_rotation_changed = pyqtSignal(int, int, int, float, float, float)
     animation_position_changed = pyqtSignal(int, int, float, float, float)
     animation_scale_changed = pyqtSignal(int, int, int, float, float, float)
@@ -120,6 +122,20 @@ class AnimEditor(QWidget):
         self.parent_spin_layout.addWidget( self.parent_spin)
         self.parent_spin_layout.addStretch(1)
         static_layout.addRow("Parent ID:", self.parent_spin_layout)
+
+        skeleton_btn_layout = QHBoxLayout()
+        self.add_bone_btn = QPushButton("Add child bone")
+        self.add_bone_btn.setToolTip("Create a new bone attached to the selected joint (shortcut: B).\n"
+                                     "It starts with zero rotation on every frame of every animation.")
+        self.add_bone_btn.clicked.connect(self._on_add_bone_clicked)
+        skeleton_btn_layout.addWidget(self.add_bone_btn)
+        self.reset_skeleton_btn = QPushButton("New skeleton")
+        self.reset_skeleton_btn.setToolTip("Start a skeleton from scratch: delete every bone except\n"
+                                           "the root joint. The whole mesh gets attached to the root.")
+        self.reset_skeleton_btn.clicked.connect(self.reset_skeleton_requested.emit)
+        skeleton_btn_layout.addWidget(self.reset_skeleton_btn)
+        skeleton_btn_layout.addStretch(1)
+        static_layout.addRow("Skeleton:", skeleton_btn_layout)
 
         static_layout.addRow("", QLabel("(Bones properties affect all animations)"))
 
@@ -403,6 +419,9 @@ class AnimEditor(QWidget):
         """Handle bone selection"""
         if not self._updating:
             self.bone_selected.emit(bone_id)
+
+    def _on_add_bone_clicked(self):
+        self.add_bone_requested.emit(self.bone_spin.value())
 
     def _on_length_changed(self, value: float):
         """Handle length change"""

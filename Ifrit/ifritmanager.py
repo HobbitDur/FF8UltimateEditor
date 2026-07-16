@@ -5,13 +5,16 @@ import shutil
 import subprocess
 from typing import List, Tuple
 
+import numpy as np
+
 from PIL import Image
 from PIL.ImageQt import QPixmap
 from PyQt6.QtGui import QColor, QImage
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.tim.timfile import decode_tim, force_opaque
 from FF8GameData.gamedata import GameData
-from FF8GameData.monsterdata import Matrix4x4, Animation, EntityType
+from FF8GameData.monsterdata import (Matrix4x4, Animation, EntityType, Bone,
+                                     RotationType, RotationVectorDataSupp)
 from Ifrit.IfritAI.AICompiler.AICompiler import AICompiler
 from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from Ifrit.IfritXlsx import xlsxmanager
@@ -604,22 +607,93 @@ class IfritManager:
     def set_bone_length(self, bone_idx: int, length: float):
         """Modify static bone length and recompute all animation matrices."""
         bone = self.enemy.bone_data.bones[bone_idx]
-        bone.size = length
+        bone.set_size(length)
         self._recompute_all_animation_matrices()
+
+    def set_bone_length_preview(self, bone_idx: int, length: float, anim_id: int, frame_id: int):
+        """Set bone length recomputing only the displayed frame — cheap enough
+        to run on every mouse-move of a length drag. Call set_bone_length with
+        the final value when the drag ends to rebuild every animation."""
+        bone = self.enemy.bone_data.bones[bone_idx]
+        bone.set_size(length)
+        anims = self.enemy.animation_data.animations
+        if anim_id < len(anims) and frame_id < len(anims[anim_id].frames):
+            self._recompute_frame_matrices(anims[anim_id], frame_id)
 
     def set_bone_static_rotation(self, bone_idx: int, rot_x_deg: float, rot_y_deg: float, rot_z_deg: float):
         """Modify static bone rotation (the base pose)."""
         bone = self.enemy.bone_data.bones[bone_idx]
         # Convert degrees to raw ints (4096 = 360°)
-        bone.set_rotation_deg(rot_x_deg)
-        bone.set_rotation_deg(rot_y_deg)
-        bone.set_rotation_deg(rot_z_deg)
+        bone.set_rotation_deg(rot_x_deg, rot_y_deg, rot_z_deg)
         self._recompute_all_animation_matrices()
 
     def set_bone_parent(self, bone_idx: int, parent_idx: int):
         """Change parent of a bone."""
         bone = self.enemy.bone_data.bones[bone_idx]
         bone.parent_id = parent_idx
+        self._recompute_all_animation_matrices()
+
+    def add_bone(self, parent_id: int, length: float = -0.5) -> int:
+        """Append a new bone as a child of `parent_id` and return its id.
+
+        The new bone starts with zero rotation on every frame of every
+        animation (the file stores per-bone data in each frame, so they all
+        must grow by one bone). Default length follows the FF8 convention of
+        negative sizes (child joint at parent + Z * size, size < 0).
+        """
+        bone_section = self.enemy.bone_data
+        new_id = len(bone_section.bones)
+        bone = Bone()
+        bone.parent_id = parent_id
+        bone.set_size(length)
+        bone_section.bones.append(bone)
+        bone_section.nb_bone = len(bone_section.bones)
+
+        for anim in self.enemy.animation_data.animations:
+            for frame in anim.frames:
+                frame.rotation_vector_data.append(
+                    [RotationType(True, 0, 0) for _ in range(3)])
+                frame.rotation_vector_data_supp.append(RotationVectorDataSupp())
+                frame.bone_matrices.append(Matrix4x4())
+                frame.bone_chain_matrices.append(Matrix4x4())
+                frame.bone_acc_scale.append((1.0, 1.0, 1.0))
+            anim._recompute_frame_storage_types()
+
+        self._recompute_all_animation_matrices()
+        return new_id
+
+    def reset_skeleton(self):
+        """Delete every bone except the root: a clean base to build a new
+        skeleton on with add_bone.
+
+        Every mesh vertex group is re-skinned to the root so the geometry
+        stays valid (and rigid) — section 2 is saved from its raw bytes, so
+        they are rebuilt here too. Animations keep their frames and positions
+        but only the root's rotation channel remains.
+        """
+        bone_section = self.enemy.bone_data
+        if not bone_section.bones:
+            return
+        root = bone_section.bones[0]
+        root.parent_id = 0xFFFF
+        bone_section.bones = [root]
+        bone_section.nb_bone = 1
+
+        for anim in self.enemy.animation_data.animations:
+            for frame in anim.frames:
+                frame.rotation_vector_data = frame.rotation_vector_data[:1]
+                frame.rotation_vector_data_supp = frame.rotation_vector_data_supp[:1]
+                frame.bone_matrices = frame.bone_matrices[:1]
+                frame.bone_chain_matrices = frame.bone_chain_matrices[:1]
+                frame.bone_acc_scale = frame.bone_acc_scale[:1]
+            anim._recompute_frame_storage_types()
+
+        for obj in self.enemy.geometry_data.object_data:
+            for vert_data in obj.vertices_data:
+                vert_data.bone_id = 0
+        if len(self.enemy.section_raw_data) > 2:
+            self.enemy.section_raw_data[2] = self.enemy.geometry_data.get_byte()
+
         self._recompute_all_animation_matrices()
 
     def set_animation_frame_bone_rotation(self, anim_id: int, frame_id: int, bone_idx: int,
@@ -635,9 +709,74 @@ class IfritManager:
         frame.rotation_vector_data[bone_idx][1].rotate_deg(rot_y_deg)
         frame.rotation_vector_data[bone_idx][2].rotate_deg(rot_z_deg)
 
+        # The file stores each frame as a delta from the previous one, with a
+        # per-value bit width and an "axis present" flag. The edit changed the
+        # deltas of this frame AND of the next one: refresh the storage types,
+        # otherwise the save silently drops the edit (stale absent flag) or
+        # truncates it (stale bit width), corrupting every following frame.
+        anim._recompute_frame_storage_types()
 
         # Recompute matrices for this frame, only updating the changed bone and its children
         self._recompute_frame_matrices(anim, frame_id, bone_idx)
+
+    def get_bone_rotation_gizmo(self, anim_id: int, frame_id: int, bone_id: int):
+        """Geometry for the viewer's rotation gizmo: (center, axes).
+
+        center = the bone's joint position (its rotation pivot) in model space.
+        axes = 3 unit vectors: the model-space axis around which the frame's
+        X/Y/Z rotation value turns the bone at its CURRENT pose, sign matching
+        +degrees. They are measured by finite differences on the bone's chain
+        matrix (nudge one Euler value, rebuild this bone's matrix, extract the
+        rotation axis from the relative rotation), which stays correct
+        whatever the Euler composition order — including gimbal poses, where
+        two rings simply align.
+        """
+        if not self.enemy.bone_data or not self.enemy.animation_data.nb_animations:
+            return None
+        anims = self.enemy.animation_data.animations
+        if anim_id >= len(anims) or frame_id >= len(anims[anim_id].frames):
+            return None
+        frame = anims[anim_id].frames[frame_id]
+        bones = self.enemy.bone_data.bones
+        if bone_id >= len(bones) or bone_id >= len(frame.rotation_vector_data):
+            return None
+        if len(frame.rotation_vector_data[bone_id]) < 3:
+            return None
+
+        bone = bones[bone_id]
+        parent_id = bone.parent_id
+        parent_size = bones[parent_id].get_size() if parent_id != 0xFFFF else None
+
+        world = frame.bone_matrices[bone_id]
+        center = (world.M41, world.M42, world.M43)
+
+        def chain3x3():
+            c = frame.bone_chain_matrices[bone_id]
+            return np.array([[c.M11, c.M12, c.M13],
+                             [c.M21, c.M22, c.M23],
+                             [c.M31, c.M32, c.M33]], dtype=np.float64)
+
+        delta_raw = 64  # ~5.6 deg: clean finite difference, well above rounding
+        m0 = chain3x3()
+        axes = []
+        for axis in range(3):
+            rot = frame.rotation_vector_data[bone_id][axis]
+            saved = int(rot.get_rotate_raw())
+            rot.rotate_raw(saved + delta_raw)
+            frame.set_bone_matrix(parent_id, parent_size, bone_id)
+            m1 = chain3x3()
+            rot.rotate_raw(saved)
+            frame.set_bone_matrix(parent_id, parent_size, bone_id)
+
+            rel = m1 @ m0.T
+            # For a rotation R about unit axis a: R - R^T = 2 sin(angle) [a]x
+            v = np.array([rel[2, 1] - rel[1, 2],
+                          rel[0, 2] - rel[2, 0],
+                          rel[1, 0] - rel[0, 1]])
+            norm = np.linalg.norm(v)
+            axes.append(tuple(v / norm) if norm > 1e-9 else (1.0, 0.0, 0.0))
+
+        return center, axes
 
     def set_animation_frame_bone_scale(self, anim_id: int, frame_id: int, bone_idx: int,
                                        scale_x: float, scale_y: float, scale_z: float):
@@ -689,14 +828,15 @@ class IfritManager:
         nb_bones = len(bones)
 
         # Determine which bones need recomputation
-        bones_to_update = []
         if changed_bone_idx is not None:
-            # Start with the changed bone
-            bones_to_update.append(changed_bone_idx)
-            # Add all children recursively
+            # The whole subtree, not just direct children: grandchildren
+            # chain from their parent's matrices too. FF8 skeletons store
+            # children after their parent, so one forward pass collects it.
+            in_subtree = {changed_bone_idx}
             for i in range(changed_bone_idx + 1, nb_bones):
-                if bones[i].parent_id == changed_bone_idx:
-                    bones_to_update.append(i)
+                if bones[i].parent_id in in_subtree:
+                    in_subtree.add(i)
+            bones_to_update = sorted(in_subtree)
         else:
             # Update all bones
             bones_to_update = list(range(nb_bones))

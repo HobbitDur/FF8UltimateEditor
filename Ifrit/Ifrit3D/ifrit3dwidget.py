@@ -1,4 +1,5 @@
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal
+from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QCheckBox, QPushButton, QSlider, QSpinBox,
                              QListWidget, QListWidgetItem, QInputDialog, QMessageBox,
@@ -46,6 +47,11 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget.black_is_transparent = getattr(ifrit_manager, 'texture_black_is_transparent', True)
         # Backface culling: 'all' = game-exact (default), 'duplicates', 'off'
         self.gl_widget.backface_cull = getattr(ifrit_manager, 'backface_cull_mode', 'all')
+        # Direct skeleton edits in the view are blocked during playback
+        self.gl_widget.is_edit_allowed = lambda: not self.animating
+        self._length_drag_start_size = None
+        self._length_drag_sign = -1.0
+        self._rot_drag_start_deg = None
 
         # Setup animation timer
         self.timer = QTimer()
@@ -186,6 +192,8 @@ class Ifrit3DWidget(QWidget):
             self.bone_editor.bone_selected.connect(self._on_bone_selected)
             self.bone_editor.bone_length_changed.connect(self._on_bone_length_changed)
             self.bone_editor.bone_parent_changed.connect(self._on_bone_parent_changed)
+            self.bone_editor.add_bone_requested.connect(self._on_add_bone_requested)
+            self.bone_editor.reset_skeleton_requested.connect(self._on_reset_skeleton_requested)
             self.bone_editor.animation_rotation_changed.connect(self._on_animation_rotation_changed)
             self.bone_editor.animation_position_changed.connect(self.on_frame_position_changed)
             self.bone_editor.animation_scale_changed.connect(self._on_animation_scale_changed)
@@ -194,6 +202,19 @@ class Ifrit3DWidget(QWidget):
             # Connect signals to update bone editor
             self.frame_changed.connect(self._update_bone_editor_frame)
             self.animation_changed.connect(self._update_bone_editor_animation)
+
+            # Direct manipulation in the 3D view
+            self.gl_widget.bone_picked.connect(self._on_bone_picked_in_view)
+            self.gl_widget.bone_length_dragged.connect(self._on_bone_length_dragged)
+            self.gl_widget.bone_length_drag_finished.connect(self._on_bone_length_drag_finished)
+            self.gl_widget.bone_rotation_dragged.connect(self._on_bone_rotation_dragged)
+            self.gl_widget.bone_rotation_drag_finished.connect(self._on_bone_rotation_drag_finished)
+
+            # B = add a child bone to the selected joint (works with focus
+            # anywhere in the 3D tab, only while the skeleton is displayed)
+            self._add_bone_shortcut = QShortcut(QKeySequence("B"), self)
+            self._add_bone_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+            self._add_bone_shortcut.activated.connect(self._on_add_bone_shortcut)
 
             # Add bone editor to layout
             layout.addWidget(self.bone_editor)
@@ -310,7 +331,8 @@ class Ifrit3DWidget(QWidget):
 
             # Info label
             self.info = QLabel(
-                f"LMB: Rotate | RMB: Pan | Scroll: Zoom"
+                f"LMB: Rotate | RMB: Pan | Scroll: Zoom | Click joint: Select bone | "
+                f"Drag ring: Rotate bone | Ctrl+Drag: Bone length"
             )
             self.info.setStyleSheet("background:#1a1a1f; color:#aaa; padding:4px 8px; font-size:10px;")
             layout.addWidget(self.info)
@@ -441,6 +463,8 @@ class Ifrit3DWidget(QWidget):
             self.animating = False
 
         self._update_playlist_display()
+        if hasattr(self, 'bone_editor'):
+            self._update_gizmo()
 
     def set_loop_playlist(self, checked):
         """Set whether playlist should loop"""
@@ -535,9 +559,14 @@ class Ifrit3DWidget(QWidget):
             self.info.setText(f"Tri: {len(self.gl_widget.triangles)} | "
                               f"Quads: {len(self.gl_widget.quads)} | "
                               f"Bones: {len(self.gl_widget.skeleton_lines)} | "
-                              f"LMB: Rotate | RMB: Pan | Scroll: Zoom")
+                              f"LMB: Rotate | RMB: Pan | Scroll: Zoom | "
+                              f"Click joint: Select bone | Drag ring: Rotate bone | "
+                              f"Ctrl+Drag: Bone length")
         if hasattr(self, 'bone_editor'):
             if self.ifrit_manager.enemy.bone_data:
+                # Re-enable in case the previous file had no bone data
+                self.bone_editor.setEnabled(True)
+                self.bone_editor.setVisible(True)
                 bone_count = len(self.ifrit_manager.enemy.bone_data.bones) - 1
                 self.bone_editor.set_bone_range(bone_count)
                 # Set the initial bone ID to 0 and update
@@ -659,6 +688,7 @@ class Ifrit3DWidget(QWidget):
 
         # Set both lines and parents
         self.gl_widget.set_skeleton_data(skeleton_lines, bone_parents)
+        self._update_gizmo()
         self._update_model_translation()
         self._update_frame_position_selection()
         self.gl_widget.update()
@@ -693,6 +723,9 @@ class Ifrit3DWidget(QWidget):
             self.timer.start(1000 // self.fps)
             self.play_btn.setText("Pause")
             self.animating = True
+        # The gizmo hides during playback and comes back on pause
+        if hasattr(self, 'bone_editor'):
+            self._update_gizmo()
 
     def update_animated_mesh(self):
         """Update mesh vertices based on current frame"""
@@ -757,6 +790,9 @@ class Ifrit3DWidget(QWidget):
             self.timer.stop()
             self.play_btn.setText("Play")
             self.animating = False
+            # update_skeleton ran while still animating: bring the gizmo back
+            if hasattr(self, 'bone_editor'):
+                self._update_gizmo()
 
     def _on_texture_toggle(self, checked):
         """Toggle 3D mesh visibility"""
@@ -1036,7 +1072,115 @@ class Ifrit3DWidget(QWidget):
         """Handle bone selection from editor"""
         self._update_bone_editor_selection()
         self.gl_widget.set_selected_bone(bone_id)
+        self._update_gizmo()
         self.gl_widget.update()
+
+    def _on_bone_picked_in_view(self, bone_id: int):
+        """A joint was clicked in the 3D view: select that bone in the editor"""
+        if not hasattr(self, 'bone_editor') or not self.bone_editor.isEnabled():
+            return
+        if self.bone_editor.bone_spin.value() != bone_id:
+            # Triggers the whole selection chain (editor refresh + highlight)
+            self.bone_editor.bone_spin.setValue(bone_id)
+        else:
+            self.gl_widget.set_selected_bone(bone_id)
+
+    def _on_bone_length_dragged(self, total_delta: float):
+        """Ctrl+drag in the 3D view: change the selected bone's length.
+        During the drag only the displayed frame is recomputed (cheap); the
+        full rebuild of every animation happens once, on release."""
+        if self.animating or not hasattr(self, 'bone_editor'):
+            return
+        if not self.ifrit_manager.enemy.bone_data:
+            return
+        bone_id = self.bone_editor.bone_spin.value()
+        bones = self.ifrit_manager.enemy.bone_data.bones
+        if not (0 <= bone_id < len(bones)):
+            return
+        if self._length_drag_start_size is None:
+            self._length_drag_start_size = bones[bone_id].get_size()
+            # FF8 bone sizes are (nearly always) negative: a child joint sits
+            # at parent + Z*size, so the visible bone points along -Z and
+            # extending it means pushing the size AWAY from zero. Dragging
+            # outward (along the drawn bone) must therefore follow the sign
+            # of the current size, not always add.
+            self._length_drag_sign = 1.0 if self._length_drag_start_size > 0 else -1.0
+        # Bone size is a signed 16-bit raw value (world = raw / 2048)
+        new_length = max(-15.99, min(15.99,
+                                     self._length_drag_start_size + self._length_drag_sign * total_delta))
+
+        # Show the value live in the panel without triggering the spinbox's
+        # full-recompute chain
+        self.bone_editor.length_spin.blockSignals(True)
+        self.bone_editor.length_spin.setValue(new_length)
+        self.bone_editor.length_spin.blockSignals(False)
+        self.bone_editor.length_raw.setText(f"raw: {round(new_length * 2048):d}")
+
+        self.ifrit_manager.set_bone_length_preview(bone_id, new_length,
+                                                   self.current_anim_id, self.current_frame)
+        self.update_skeleton()
+        self.update_animated_mesh()
+
+    def _on_bone_length_drag_finished(self):
+        """Release after a length drag: apply the final value to every frame
+        of every animation (the drag only refreshed the displayed one)."""
+        if self._length_drag_start_size is None:
+            return
+        self._length_drag_start_size = None
+        if not hasattr(self, 'bone_editor') or not self.ifrit_manager.enemy.bone_data:
+            return
+        bone_id = self.bone_editor.bone_spin.value()
+        self.ifrit_manager.set_bone_length(bone_id, self.bone_editor.length_spin.value())
+        self.update_skeleton()
+        self.update_animated_mesh()
+
+    def _on_bone_rotation_dragged(self, axis: int, total_deg: float):
+        """A gizmo ring is being dragged: rotate the selected bone on that
+        axis for the current frame."""
+        if self.animating or not hasattr(self, 'bone_editor'):
+            return
+        if not self.ifrit_manager.enemy.bone_data or not self.ifrit_manager.enemy.animation_data.nb_animations:
+            return
+        anims = self.ifrit_manager.enemy.animation_data.animations
+        if self.current_anim_id >= len(anims) or self.current_frame >= len(anims[self.current_anim_id].frames):
+            return
+        bone_id = self.bone_editor.bone_spin.value()
+        frame = anims[self.current_anim_id].frames[self.current_frame]
+        if bone_id >= len(frame.rotation_vector_data) or len(frame.rotation_vector_data[bone_id]) < 3:
+            return
+
+        if self._rot_drag_start_deg is None:
+            rot = frame.rotation_vector_data[bone_id]
+            self._rot_drag_start_deg = [rot[0].get_rotate_deg(),
+                                        rot[1].get_rotate_deg(),
+                                        rot[2].get_rotate_deg()]
+        new_deg = list(self._rot_drag_start_deg)
+        new_deg[axis] = ((new_deg[axis] + total_deg + 180.0) % 360.0) - 180.0
+
+        self.ifrit_manager.set_animation_frame_bone_rotation(
+            self.current_anim_id, self.current_frame, bone_id,
+            new_deg[0], new_deg[1], new_deg[2])
+        self.update_animated_mesh()
+        self.update_skeleton()
+        self._update_bone_editor_selection()  # rotation spinboxes follow live
+
+    def _on_bone_rotation_drag_finished(self):
+        self._rot_drag_start_deg = None
+        self._update_gizmo()
+
+    def _update_gizmo(self):
+        """Recompute the rotation-gizmo rings for the selected bone at the
+        current frame (hidden during playback and when there is no bone data)."""
+        if (not hasattr(self, 'bone_editor') or not self.bone_editor.isEnabled()
+                or self.animating or not self.ifrit_manager.enemy.bone_data):
+            self.gl_widget.set_rotation_gizmo(None, None)
+            return
+        gizmo = self.ifrit_manager.get_bone_rotation_gizmo(
+            self.current_anim_id, self.current_frame, self.bone_editor.bone_spin.value())
+        if gizmo is None:
+            self.gl_widget.set_rotation_gizmo(None, None)
+        else:
+            self.gl_widget.set_rotation_gizmo(gizmo[0], gizmo[1])
 
     def _on_bone_length_changed(self, bone_id: int, length: float):
         """Handle bone length change from editor"""
@@ -1049,6 +1193,56 @@ class Ifrit3DWidget(QWidget):
         if parent_id == -1:
             parent_id = 0xFFFF
         self.ifrit_manager.set_bone_parent(bone_id, parent_id)
+        self.update_skeleton()
+        self.update_animated_mesh()
+
+    def _pause_playback(self):
+        """Stop animation playback before a structural skeleton edit."""
+        if self.animating:
+            self.toggle_animation()
+
+    def _on_add_bone_shortcut(self):
+        """B key: add a child bone to the selected joint."""
+        if not hasattr(self, 'bone_editor') or not self.bone_editor.isEnabled():
+            return
+        if not self.gl_widget.show_skeleton:
+            return  # only while actually working on the skeleton
+        self._on_add_bone_requested(self.bone_editor.bone_spin.value())
+
+    def _on_add_bone_requested(self, parent_id: int):
+        """Create a new bone attached to the given joint and select it."""
+        if not self.ifrit_manager.enemy.bone_data:
+            return
+        bones = self.ifrit_manager.enemy.bone_data.bones
+        if not (0 <= parent_id < len(bones)):
+            return
+        self._pause_playback()
+        new_id = self.ifrit_manager.add_bone(parent_id)
+        self.bone_editor.set_bone_range(len(bones) - 1)
+        self.bone_editor.bone_spin.setValue(new_id)  # select it (refresh chain)
+        self.update_skeleton()
+        self.update_animated_mesh()
+
+    def _on_reset_skeleton_requested(self):
+        """Start a skeleton from scratch: keep only the root joint."""
+        if not self.ifrit_manager.enemy.bone_data:
+            return
+        nb_bones = len(self.ifrit_manager.enemy.bone_data.bones)
+        answer = QMessageBox.question(
+            self, "New skeleton",
+            f"Delete all {nb_bones - 1} bones except the root joint?\n\n"
+            "The whole mesh will be attached to the root (rigid), and the\n"
+            "animations will keep only their positions and root rotation.\n"
+            "Use 'Add child bone' to build the new skeleton.\n\n"
+            "This cannot be undone (reload the file to go back).",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        self._pause_playback()
+        self.ifrit_manager.reset_skeleton()
+        self.bone_editor.set_bone_range(0)
+        self.bone_editor.bone_spin.setValue(0)
+        self._update_bone_editor_selection()
         self.update_skeleton()
         self.update_animated_mesh()
 
@@ -1085,6 +1279,10 @@ class Ifrit3DWidget(QWidget):
         frame.position[0].set_pos_world(pos_x)
         frame.position[1].set_pos_world(pos_y)
         frame.position[2].set_pos_world(pos_z)
+
+        # Positions are delta-encoded on disk with per-value bit widths: refresh
+        # them or the save truncates the new delta (see write_to_writer)
+        anim._recompute_frame_storage_types()
 
         self._update_frame_position_selection()
 
