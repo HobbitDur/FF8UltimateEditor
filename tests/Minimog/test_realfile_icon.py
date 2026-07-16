@@ -108,8 +108,7 @@ def test_render_icon_anchored_makes_single_quad_offset_visible():
     assert anchored.size != (quad.width, quad.height), \
         "anchored render must differ in size from the tight crop to prove the offset is visible"
 
-    # the crosshair sits at the default (margin_left, margin_top) origin
-    origin_x, origin_y = 32, 24
+    origin_x, origin_y = 4, 4  # default pad; icon 20's dx/dy stay >= 0 so left/top pin at -pad
     assert anchored.getpixel((origin_x, origin_y))[:3] == (255, 48, 48)
 
     # the quad itself starts dx pixels right of the crosshair
@@ -119,18 +118,19 @@ def test_render_icon_anchored_makes_single_quad_offset_visible():
 
 @pytest.mark.ff8data("extracted_files/menu/icon.sp1", "extracted_files/menu/icon.TEX")
 def test_render_icon_anchored_crosshair_is_stable_across_offset_edits():
-    """The whole point of anchored_bounding_box()'s fixed margin: nudging a
-    quad's dx (within the margin) must not move the crosshair pixel or shift
-    the icon's own position within the frame - only the canvas should grow
-    on the right to fit the new content, matching how the real engine cursor
-    doesn't move just because a glyph's offset changed."""
+    """As long as dx stays >= 0 (as it does here, 4 then 20), the frame's
+    near edge is already pinned at -pad because it already covered the
+    origin - so nudging dx must not move the crosshair pixel or shift
+    anything already drawn, only grow the canvas on the right to fit the
+    quad further away, matching how the real engine cursor doesn't move
+    just because a glyph's offset changed."""
     from FF8GameData.tex.texfile import TexFile
 
     manager = MinimogManager()
     manager.load_file(str(ICON_SP1))
     tex_file = TexFile.read(str(ICON_TEX))
     quad = manager.icons[20].quads[0]
-    origin_x, origin_y = 32, 24
+    origin_x, origin_y = 4, 4  # default pad; icon 20's dx/dy stay >= 0 so left/top pin at -pad
     crosshair_color = (255, 48, 48)
 
     quad.dx = 4

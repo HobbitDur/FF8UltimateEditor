@@ -100,18 +100,27 @@ class MinimogWidget(QWidget):
         dy_tooltip = ("Signed Y offset (dword1 byte 3): same as X offset but vertical -\n"
                       "used to baseline-align glyphs of different heights, or to stack\n"
                       "multiple quads into one composite icon (e.g. the D-pad icons).")
-        clut_tooltip = ("CLUT selector (11 bits): the primitive CLUT is 0x3810 + this value.\n"
-                        "The TEX palette index is the selector / 64 (vanilla values are\n"
-                        "palette * 64 + 32).")
-        palette_tooltip = "TEX palette actually used to render this quad (CLUT selector / 64)."
+        clut_tooltip = ("Raw CLUT selector (11 bits): the primitive CLUT is 0x3810 + this value.\n"
+                        "Only multiples of 64 land on a real TEX palette row (selector / 64 =\n"
+                        "palette index) - the low 6 bits are a fixed positional constant from\n"
+                        "how the palette is packed in VRAM (every vanilla quad uses +32) rather\n"
+                        "than a freely choosable value. Prefer editing TEX palette below; this\n"
+                        "field is for exact/advanced control and stays in sync with it.")
+        palette_tooltip = ("TEX palette used to render this quad. Editing this is the normal way\n"
+                           "to recolor an icon: it sets the CLUT selector to palette * 64 + 32,\n"
+                           "matching the offset every vanilla quad uses.")
         abe_tooltip = ("Semi-transparency / ABE (dword0 bit 27): tells the PSX GPU to alpha-\n"
                        "blend this quad with what's already drawn instead of overwriting it.\n"
                        "No vanilla icon.sp1 quad has it set. The preview approximates it at\n"
                        "~50% opacity since the actual blend equation (average/add/subtract)\n"
                        "is GPU state, not stored in the quad.")
         tpage_tooltip = ("Texture page (dword0 bits 30-31, PSX GPU E1 bits 5-6): which VRAM\n"
-                         "page the primitive samples from. icon.TEX packs the whole atlas into\n"
-                         "one page, so this rarely changes what's actually drawn for icon.sp1.")
+                         "page the primitive samples from - the engine does write this into the\n"
+                         "real GPU draw command, it isn't ignored like the button-icon quads are.\n"
+                         "Read-only here because all 329 vanilla icons render correctly while this\n"
+                         "tool ignores the field entirely (icon.TEX's 256x256 atlas already fits\n"
+                         "one 4bpp texpage), so editing it hasn't been verified to do anything\n"
+                         "useful and could just point at unrelated VRAM content.")
 
         self.u_spinbox = QSpinBox()
         self.u_spinbox.setRange(0, 255)
@@ -134,19 +143,21 @@ class MinimogWidget(QWidget):
         self.clut_spinbox = QSpinBox()
         self.clut_spinbox.setRange(0, 2047)
         self.clut_spinbox.setToolTip(clut_tooltip)
-        self.palette_label = QLabel("palette 0")
-        self.palette_label.setToolTip(palette_tooltip)
+        self.palette_spinbox = QSpinBox()
+        self.palette_spinbox.setRange(0, 31)  # widened to num_palettes-1 once icon.TEX loads
+        self.palette_spinbox.setToolTip(palette_tooltip)
         self.semi_transparent_checkbox = QCheckBox("Semi-transparency (ABE, bit 27)")
         self.semi_transparent_checkbox.setToolTip(abe_tooltip)
         self.tpage_combobox = QComboBox()
         self.tpage_combobox.addItems([f"{i}" for i in range(4)])
         self.tpage_combobox.setToolTip(tpage_tooltip)
+        self.tpage_combobox.setEnabled(False)  # read-only, see tpage_tooltip
 
         for spinbox in (self.u_spinbox, self.v_spinbox, self.width_spinbox, self.height_spinbox,
                         self.dx_spinbox, self.dy_spinbox, self.clut_spinbox):
             spinbox.valueChanged.connect(self._on_data_changed)
+        self.palette_spinbox.valueChanged.connect(self._on_palette_changed)
         self.semi_transparent_checkbox.stateChanged.connect(self._on_data_changed)
-        self.tpage_combobox.currentIndexChanged.connect(self._on_data_changed)
 
         def labeled(text, tooltip):
             label = QLabel(text)
@@ -161,8 +172,8 @@ class MinimogWidget(QWidget):
         edit_form.addRow(labeled("Height:", height_tooltip), self.height_spinbox)
         edit_form.addRow(labeled("X offset:", dx_tooltip), self.dx_spinbox)
         edit_form.addRow(labeled("Y offset:", dy_tooltip), self.dy_spinbox)
+        edit_form.addRow(labeled("TEX palette:", palette_tooltip), self.palette_spinbox)
         edit_form.addRow(labeled("CLUT selector:", clut_tooltip), self.clut_spinbox)
-        edit_form.addRow(labeled("TEX palette:", palette_tooltip), self.palette_label)
         edit_form.addRow(self.semi_transparent_checkbox)
         edit_form.addRow(labeled("Texture page:", tpage_tooltip), self.tpage_combobox)
         edit_group.setLayout(edit_form)
@@ -256,6 +267,7 @@ class MinimogWidget(QWidget):
         from FF8GameData.tex.texfile import TexFile
         self.tex_file = TexFile.read(tex_path)
         self.tex_button.setText(os.path.basename(tex_path))
+        self.palette_spinbox.setRange(0, self.tex_file.num_palettes - 1)
 
     # ------------------------------------------------------------------- ui
     def _selected_icon(self):
@@ -280,9 +292,10 @@ class MinimogWidget(QWidget):
         self.icon_name_label.setText(icon.name)
         self.button_icon_label.setVisible(icon.is_button_icon)
         # Button icons 128-139 are informational only: the engine ignores their quads.
+        # tpage_combobox is excluded here - it stays disabled regardless (see tpage_tooltip).
         for editor in (self.u_spinbox, self.v_spinbox, self.width_spinbox, self.height_spinbox,
-                       self.dx_spinbox, self.dy_spinbox, self.clut_spinbox,
-                       self.semi_transparent_checkbox, self.tpage_combobox,
+                       self.dx_spinbox, self.dy_spinbox, self.clut_spinbox, self.palette_spinbox,
+                       self.semi_transparent_checkbox,
                        self.add_quad_button, self.remove_quad_button):
             editor.setEnabled(not icon.is_button_icon)
         with QSignalBlocker(self.quad_list):
@@ -296,20 +309,21 @@ class MinimogWidget(QWidget):
 
     def reload_selected_quad(self):
         quad = self._selected_quad()
-        editors = (self.u_spinbox, self.v_spinbox, self.width_spinbox, self.height_spinbox,
-                   self.dx_spinbox, self.dy_spinbox, self.clut_spinbox,
-                   self.semi_transparent_checkbox, self.tpage_combobox)
         if not quad:
             return
-        values = (quad.u, quad.v, quad.width, quad.height, quad.dx, quad.dy, quad.clut)
-        for editor, value in zip(editors[:7], values):
+        editors_and_values = (
+            (self.u_spinbox, quad.u), (self.v_spinbox, quad.v),
+            (self.width_spinbox, quad.width), (self.height_spinbox, quad.height),
+            (self.dx_spinbox, quad.dx), (self.dy_spinbox, quad.dy),
+            (self.clut_spinbox, quad.clut), (self.palette_spinbox, quad.palette_index),
+        )
+        for editor, value in editors_and_values:
             with QSignalBlocker(editor):
                 editor.setValue(value)
         with QSignalBlocker(self.semi_transparent_checkbox):
             self.semi_transparent_checkbox.setChecked(quad.semi_transparent)
         with QSignalBlocker(self.tpage_combobox):
             self.tpage_combobox.setCurrentIndex(quad.texture_page)
-        self.palette_label.setText(f"palette {quad.palette_index}")
 
     def add_quad(self):
         icon = self._selected_icon()
@@ -352,8 +366,22 @@ class MinimogWidget(QWidget):
         quad.dy = self.dy_spinbox.value()
         quad.clut = self.clut_spinbox.value()
         quad.semi_transparent = self.semi_transparent_checkbox.isChecked()
-        quad.texture_page = self.tpage_combobox.currentIndex()
-        self.palette_label.setText(f"palette {quad.palette_index}")
+        # texture_page is read-only here (tpage_combobox is disabled), left untouched
+        with QSignalBlocker(self.palette_spinbox):
+            self.palette_spinbox.setValue(quad.palette_index)
+        self.reload_preview()
+
+    def _on_palette_changed(self):
+        """TEX palette is the friendly editor for CLUT; it writes the raw
+        selector as palette * 64 + 32, matching every vanilla quad's low bits
+        (see clut_tooltip) - use the CLUT selector field directly to deviate."""
+        quad = self._selected_quad()
+        icon = self._selected_icon()
+        if not quad or (icon and icon.is_button_icon):
+            return
+        quad.clut = self.palette_spinbox.value() * 64 + 32
+        with QSignalBlocker(self.clut_spinbox):
+            self.clut_spinbox.setValue(quad.clut)
         self.reload_preview()
 
     def reload_preview(self):

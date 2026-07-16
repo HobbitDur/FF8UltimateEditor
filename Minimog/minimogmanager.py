@@ -130,23 +130,19 @@ class Sp1Icon:
         max_y = max(q.dy + q.height for q in self.quads)
         return min_x, min_y, max_x, max_y
 
-    def anchored_bounding_box(self, margin_left=32, margin_top=24, pad_right=4, pad_bottom=4):
-        """A frame around the icon that always includes (0, 0) - the engine's
-        draw cursor before dx/dy is applied - like bounding_box() would if
-        widened to cover the origin, but stable: the left/top edge sits at a
-        FIXED (-margin_left, -margin_top) as long as no quad's offset needs
-        more headroom than that, so nudging dx/dy only grows the frame to the
-        right/bottom (where the actual content moved to) instead of also
-        shifting where the origin lands in the frame. Only a quad whose
-        offset exceeds the margin pushes the left/top edge out too - still
-        never clips, just gives up the "origin stays put" guarantee for that
-        outlier (e.g. icon 164's HP-bar quad, dx=-52)."""
+    def anchored_bounding_box(self, pad=4):
+        """bounding_box() widened to always include (0, 0) - the engine's draw
+        cursor before dx/dy is applied - plus a small pad on every side so
+        the crosshair marker (a few pixels wide) isn't drawn flush against
+        the edge. Starts exactly the size of the icon: an icon with no
+        offset gets no extra room. Nudging dx/dy past zero on either axis
+        only pushes that one edge outward to keep the moving quad in frame -
+        the opposite edge, sitting at -pad since it was already covering the
+        origin, doesn't move. (Crossing from a positive offset to a negative
+        one, or vice versa, does need to grow the near edge too - there's no
+        way around that without pre-reserving unused space up front.)"""
         min_x, min_y, max_x, max_y = self.bounding_box()
-        left = min_x if min_x < -margin_left else -margin_left
-        top = min_y if min_y < -margin_top else -margin_top
-        right = max(max_x, 0) + pad_right
-        bottom = max(max_y, 0) + pad_bottom
-        return left, top, right, bottom
+        return min(min_x, 0) - pad, min(min_y, 0) - pad, max(max_x, 0) + pad, max(max_y, 0) + pad
 
 
 class MinimogManager:
@@ -270,10 +266,9 @@ class MinimogManager:
         single-quad icon: the quad moves relative to a fixed reference point
         instead of the crop always re-centering on the quad.
 
-        The frame comes from anchored_bounding_box(), whose left/top edge is
-        pinned unless a quad's offset genuinely needs more room - so nudging
-        dx/dy typically only grows the canvas to the right/bottom and the
-        crosshair pixel doesn't move. Returns None for an icon without
+        The frame comes from anchored_bounding_box(), so it starts exactly
+        icon-sized (no offset means no extra room) and only grows toward
+        whichever side dx/dy is pushed. Returns None for an icon without
         visible quads."""
         from PIL import Image, ImageDraw
 
