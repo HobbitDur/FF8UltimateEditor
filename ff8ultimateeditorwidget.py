@@ -205,6 +205,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._zone_widget) # Index 19
         self.tool_stack.addWidget(self._trepies_widget) # Index 20
         self.tool_stack.addWidget(self._fujin_widget) # Index 21
+        self._piet_widget.view_in_zone_requested.connect(self._view_mmag_entry_in_zone)
         self._program_option_change()
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)
@@ -264,6 +265,13 @@ class FF8UltimateEditorWidget(QWidget):
         index = self._program_option.currentIndex()
         self.tool_stack.setCurrentIndex(index)
         self.settings.setValue("main/program_option", index)
+
+    def _view_mmag_entry_in_zone(self, entry_index):
+        """Switch to the Zone tool and select an mmag.bin entry, requested from the Piet tool."""
+        zone_index = self.HOBBIT_OPTION_ITEMS.index("Zone (mmag.bin editor)")
+        self._program_option.setCurrentIndex(zone_index)
+        self._program_option_change()
+        self._zone_widget.select_entry(entry_index)
 
     def tools_to_update(self):
         tool_list = []

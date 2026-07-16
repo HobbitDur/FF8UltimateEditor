@@ -128,27 +128,28 @@ class MoombaWidget(QWidget):
         self.picture_y = self._int16_spinbox("Page picture Y")
         self.picture_width = self._int16_spinbox("Page picture width (0 = no picture)")
         self.picture_height = self._int16_spinbox("Page picture height")
-        self.picture_scale_x = self._byte_spinbox("Picture X scale (multiplied by the zoom factor, /128)")
-        self.picture_scale_y = self._byte_spinbox("Picture Y scale")
-        self.picture_scale_z = self._byte_spinbox("Picture Z scale")
+        self.picture_tint_r = self._byte_spinbox("Red of the paper mat rectangle drawn behind the page art "
+                                                 "(multiplied by the zoom factor, /128)")
+        self.picture_tint_g = self._byte_spinbox("Green of the paper mat rectangle")
+        self.picture_tint_b = self._byte_spinbox("Blue of the paper mat rectangle")
         self.texture_category = self._byte_spinbox("Page texture category. The Chocobo World screen uses "
                                                    "category 6 = mngrp raw file 180 + page")
         self.texture_page = self._byte_spinbox("Page texture page number: with category 6, page 0 = raw 180 "
                                                "(story pictures), page 1 = raw 181 (manual pictures)")
-        self.paper_param_a = self._byte_spinbox("Paper background parameter A (PS1 GPU E1 texture page bits)")
-        self.paper_param_b = self._byte_spinbox("Paper background parameter B (PS1 GPU E2 texture window bits)")
-        self.paper_param_a.setDisplayIntegerBase(16)
-        self.paper_param_a.setPrefix("0x")
-        self.paper_param_b.setDisplayIntegerBase(16)
-        self.paper_param_b.setPrefix("0x")
+        self.paper_e1 = self._byte_spinbox("Paper background parameter A (PS1 GPU E1 texture page bits)")
+        self.paper_e2 = self._byte_spinbox("Paper background parameter B (PS1 GPU E2 texture window bits)")
+        self.paper_e1.setDisplayIntegerBase(16)
+        self.paper_e1.setPrefix("0x")
+        self.paper_e2.setDisplayIntegerBase(16)
+        self.paper_e2.setPrefix("0x")
         group = QGroupBox("Page picture (texture: category 6 → raw file 180 + page)")
         form = QFormLayout()
         form.addRow("X / Y:", self._pair(self.picture_x, self.picture_y))
         form.addRow("Width / Height:", self._pair(self.picture_width, self.picture_height))
-        form.addRow("Scale X / Y / Z:", self._pair(self.picture_scale_x, self.picture_scale_y,
-                                                   self.picture_scale_z))
+        form.addRow("Mat tint R / G / B:", self._pair(self.picture_tint_r, self.picture_tint_g,
+                                                   self.picture_tint_b))
         form.addRow("Texture category / page:", self._pair(self.texture_category, self.texture_page))
-        form.addRow("Paper params A / B:", self._pair(self.paper_param_a, self.paper_param_b))
+        form.addRow("Paper params A / B:", self._pair(self.paper_e1, self.paper_e2))
         group.setLayout(form)
         return group
 
@@ -302,9 +303,9 @@ class MoombaWidget(QWidget):
             (self.window_width, entry.window_width), (self.window_height, entry.window_height),
             (self.picture_x, entry.picture_x), (self.picture_y, entry.picture_y),
             (self.picture_width, entry.picture_width), (self.picture_height, entry.picture_height),
-            (self.picture_scale_x, entry.picture_scale_x), (self.picture_scale_y, entry.picture_scale_y),
-            (self.picture_scale_z, entry.picture_scale_z),
-            (self.paper_param_a, entry.paper_param_a), (self.paper_param_b, entry.paper_param_b),
+            (self.picture_tint_r, entry.picture_tint_r), (self.picture_tint_g, entry.picture_tint_g),
+            (self.picture_tint_b, entry.picture_tint_b),
+            (self.paper_e1, entry.paper_e1), (self.paper_e2, entry.paper_e2),
             (self.text_file_index, entry.text_file_index),
             (self.texture_category, entry.texture_category), (self.texture_page, entry.texture_page),
             (self.weapon_index, entry.weapon_index), (self.weapon_line_spacing, entry.weapon_line_spacing),
@@ -364,11 +365,11 @@ class MoombaWidget(QWidget):
         entry.picture_y = self.picture_y.value()
         entry.picture_width = self.picture_width.value()
         entry.picture_height = self.picture_height.value()
-        entry.picture_scale_x = self.picture_scale_x.value()
-        entry.picture_scale_y = self.picture_scale_y.value()
-        entry.picture_scale_z = self.picture_scale_z.value()
-        entry.paper_param_a = self.paper_param_a.value()
-        entry.paper_param_b = self.paper_param_b.value()
+        entry.picture_tint_r = self.picture_tint_r.value()
+        entry.picture_tint_g = self.picture_tint_g.value()
+        entry.picture_tint_b = self.picture_tint_b.value()
+        entry.paper_e1 = self.paper_e1.value()
+        entry.paper_e2 = self.paper_e2.value()
         entry.text_file_index = self.text_file_index.value()
         entry.texture_category = self.texture_category.value()
         entry.texture_page = self.texture_page.value()

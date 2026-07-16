@@ -130,6 +130,24 @@ class Sp1Icon:
         max_y = max(q.dy + q.height for q in self.quads)
         return min_x, min_y, max_x, max_y
 
+    def anchored_bounding_box(self, margin_left=32, margin_top=24, pad_right=4, pad_bottom=4):
+        """A frame around the icon that always includes (0, 0) - the engine's
+        draw cursor before dx/dy is applied - like bounding_box() would if
+        widened to cover the origin, but stable: the left/top edge sits at a
+        FIXED (-margin_left, -margin_top) as long as no quad's offset needs
+        more headroom than that, so nudging dx/dy only grows the frame to the
+        right/bottom (where the actual content moved to) instead of also
+        shifting where the origin lands in the frame. Only a quad whose
+        offset exceeds the margin pushes the left/top edge out too - still
+        never clips, just gives up the "origin stays put" guarantee for that
+        outlier (e.g. icon 164's HP-bar quad, dx=-52)."""
+        min_x, min_y, max_x, max_y = self.bounding_box()
+        left = min_x if min_x < -margin_left else -margin_left
+        top = min_y if min_y < -margin_top else -margin_top
+        right = max(max_x, 0) + pad_right
+        bottom = max(max_y, 0) + pad_bottom
+        return left, top, right, bottom
+
 
 class MinimogManager:
     """icon.sp1 editor logic: parse, edit and rebuild the quad table."""
@@ -196,20 +214,16 @@ class MinimogManager:
         return self.icons[icon_id].quads.pop(quad_index)
 
     # --------------------------------------------------------------- preview
-    def render_icon(self, icon_id, tex_file, scale=1):
-        """Composite an icon's quads from a decoded icon.TEX into a PIL image.
+    SEMI_TRANSPARENT_PREVIEW_ALPHA = 128  # ~50%, an approximation (see render_icon)
 
-        Each quad is cropped at (u, v, width, height) with the palette its CLUT
-        selector points to, then pasted at its (dx, dy) draw offset. Returns
-        None for an icon without visible quads."""
+    def _composite_quads(self, quads, tex_file, canvas_size, origin_x, origin_y):
+        """Paste each quad's icon.TEX crop onto a fresh canvas at (origin + dx,
+        origin + dy). Shared by render_icon and render_icon_anchored, which
+        only differ in how the canvas size and origin are chosen."""
         from PIL import Image
 
-        icon = self.icons[icon_id]
-        min_x, min_y, max_x, max_y = icon.bounding_box()
-        if max_x <= min_x or max_y <= min_y:
-            return None
-        image = Image.new("RGBA", (max_x - min_x, max_y - min_y), (0, 0, 0, 0))
-        for quad in icon.quads:
+        image = Image.new("RGBA", canvas_size, (0, 0, 0, 0))
+        for quad in quads:
             if quad.width == 0 or quad.height == 0:
                 continue
             palette = min(quad.palette_index, tex_file.num_palettes - 1)
@@ -217,7 +231,66 @@ class MinimogManager:
                 (quad.u, quad.v,
                  min(quad.u + quad.width, tex_file.width),
                  min(quad.v + quad.height, tex_file.height)))
-            image.alpha_composite(crop, (quad.dx - min_x, quad.dy - min_y))
+            if quad.semi_transparent:
+                max_alpha = self.SEMI_TRANSPARENT_PREVIEW_ALPHA
+                crop.putalpha(crop.getchannel("A").point(lambda a, m=max_alpha: min(a, m)))
+            image.alpha_composite(crop, (origin_x + quad.dx, origin_y + quad.dy))
+        return image
+
+    def render_icon(self, icon_id, tex_file, scale=1):
+        """Composite an icon's quads from a decoded icon.TEX into a PIL image,
+        tightly cropped to the quads' own draw rectangles. Returns None for an
+        icon without visible quads. This is what the engine actually draws
+        (the glyph's pixel bounds), used for exports and thumbnails.
+
+        Because the crop is centered on the quads themselves, shifting a
+        single quad's dx/dy re-centers the crop right along with it and the
+        offset has no visible effect here - use render_icon_anchored to see it.
+
+        Quads with the semi-transparency (ABE) flag are drawn at ~50% opacity
+        as a visual approximation: the quad only stores that blending is on,
+        not which PSX blend equation (average / add / subtract / quarter-add)
+        the GPU would use, and that equation isn't recoverable from the file."""
+        icon = self.icons[icon_id]
+        min_x, min_y, max_x, max_y = icon.bounding_box()
+        if max_x <= min_x or max_y <= min_y:
+            return None
+        image = self._composite_quads(icon.quads, tex_file, (max_x - min_x, max_y - min_y),
+                                      -min_x, -min_y)
+        if scale > 1:
+            from PIL import Image
+            image = image.resize((image.width * scale, image.height * scale),
+                                 Image.NEAREST)
+        return image
+
+    def render_icon_anchored(self, icon_id, tex_file, scale=1, draw_marker=True):
+        """Like render_icon, but the canvas always keeps (0, 0) - the engine's
+        draw cursor, before dx/dy is applied - in frame, with a small
+        crosshair marking it. This makes the X/Y offset visible even for a
+        single-quad icon: the quad moves relative to a fixed reference point
+        instead of the crop always re-centering on the quad.
+
+        The frame comes from anchored_bounding_box(), whose left/top edge is
+        pinned unless a quad's offset genuinely needs more room - so nudging
+        dx/dy typically only grows the canvas to the right/bottom and the
+        crosshair pixel doesn't move. Returns None for an icon without
+        visible quads."""
+        from PIL import Image, ImageDraw
+
+        icon = self.icons[icon_id]
+        if not icon.quads:
+            return None
+        min_x, min_y, max_x, max_y = icon.anchored_bounding_box()
+        if max_x <= min_x or max_y <= min_y:
+            return None
+        origin_x, origin_y = -min_x, -min_y
+        image = self._composite_quads(icon.quads, tex_file, (max_x - min_x, max_y - min_y),
+                                      origin_x, origin_y)
+        if draw_marker:
+            draw = ImageDraw.Draw(image)
+            marker_color = (255, 48, 48, 230)
+            draw.line((origin_x - 3, origin_y, origin_x + 3, origin_y), fill=marker_color)
+            draw.line((origin_x, origin_y - 3, origin_x, origin_y + 3), fill=marker_color)
         if scale > 1:
             image = image.resize((image.width * scale, image.height * scale),
                                  Image.NEAREST)

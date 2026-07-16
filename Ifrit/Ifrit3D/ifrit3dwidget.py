@@ -1,3 +1,5 @@
+import pathlib
+
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
@@ -6,11 +8,21 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QFileDialog)
 
 from FF8GameData.monsterdata import AnimationFrame, AnimationSection, Animation
+from FF8GameData.dat.animloopdetector import (get_animation_kind_dict, is_looping,
+                                              find_character_weapon_file_list,
+                                              get_animation_kind_dict_from_weapon_file,
+                                              ANIM_LOOP, ANIM_ONE_SHOT, ANIM_BOTH, ANIM_UNUSED)
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.Ifrit3D.boneeditorwidget import AnimEditor
 from Ifrit.Ifrit3D.ff8openwidget import FF8OpenGLWidget
 from Ifrit.Ifrit3D.gltfexporter import GltfExporter
 from Ifrit.Ifrit3D.gltfimporter import GltfImporter
+
+
+ANIM_KIND_TEXT = {ANIM_LOOP: "a looping animation",
+                  ANIM_ONE_SHOT: "a one-shot animation",
+                  ANIM_BOTH: "looping and played once depending on the sequence",
+                  ANIM_UNUSED: "never played by any sequence of this file"}
 
 
 class Ifrit3DWidget(QWidget):
@@ -28,6 +40,12 @@ class Ifrit3DWidget(QWidget):
         self.fps = 15
         self.interp_step = 0.0
         self.next_frame_index = 1
+
+        # Loop detection of a character body needs its weapon file, keep what was read
+        # so the file is not searched again on every conversion.
+        self._weapon_kind_dict_cache = {}
+        self._weapon_file_used_cache = {}
+        self.weapon_file_used = ""
 
         # Playlist variables
         self.playlist = []  # List of animation IDs in order
@@ -110,7 +128,7 @@ class Ifrit3DWidget(QWidget):
             self.fps_slider.setValue(self.fps)
             self.fps_slider.setMaximumWidth(80)
             self.fps_slider.setToolTip("Playback speed of the viewer (frames per second).\n"
-                                       "15 fps for original animations, 60 fps for converted ones.")
+                                       "15 fps for original animations, 30 or 60 fps for converted ones.")
             self.fps_slider.valueChanged.connect(self.set_fps)
             toolbar_layout.addWidget(self.fps_slider)
 
@@ -151,18 +169,18 @@ class Ifrit3DWidget(QWidget):
             self.import_gltf_btn.clicked.connect(self.import_gltf)
             toolbar_layout.addWidget(self.import_gltf_btn)
 
-            self.fps60_btn = QPushButton("To 60 FPS")
+            self.fps60_btn = QPushButton("To 30/60 FPS")
             self.fps60_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
-            self.fps60_btn.setToolTip("Insert 3 interpolated frames between each frame of the current animation,\n"
-                                      "so the 15 fps animation becomes a 60 fps one.\n"
+            self.fps60_btn.setToolTip("Insert interpolated frames between each frame of the current animation,\n"
+                                      "so the 15 fps animation becomes a 30 or a 60 fps one (asked on click).\n"
                                       "Save the file afterwards to write the new frames in the .dat file.")
             self.fps60_btn.clicked.connect(self.convert_current_anim_to_60fps)
             toolbar_layout.addWidget(self.fps60_btn)
 
-            self.fps60_all_btn = QPushButton("All to 60 FPS")
+            self.fps60_all_btn = QPushButton("All to 30/60 FPS")
             self.fps60_all_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
             self.fps60_all_btn.setToolTip("Insert interpolated frames in every animation of the current file,\n"
-                                          "so all 15 fps animations become 60 fps ones.\n"
+                                          "so all 15 fps animations become 30 or 60 fps ones (asked on click).\n"
                                           "Save the file afterwards to write the new frames in the .dat file.")
             self.fps60_all_btn.clicked.connect(self.convert_all_anims_to_60fps)
             toolbar_layout.addWidget(self.fps60_all_btn)
@@ -881,45 +899,162 @@ class Ifrit3DWidget(QWidget):
             "Skeleton and animations were kept from the current file. "
             "Save the file to write the new mesh into the .dat.")
 
+    @staticmethod
+    def _nb_frames_after_conversion(nb_frames: int, factor: int, smooth_loop: bool) -> int:
+        """Frame count once (factor - 1) frames are inserted between each pair of frames.
+
+        A smoothed loop also gets frames inserted between the last and the first one.
+        """
+        if smooth_loop:
+            return nb_frames * factor
+        return (nb_frames - 1) * factor + 1
+
+    def _ask_target_fps(self, title: str):
+        """Ask the frame rate to convert to. Returns None if the user cancels."""
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle(title)
+        dialog.setText("Convert to which frame rate?\n\n"
+                       "60 fps: smoothest, but an animation gets 4x its frames and long ones\n"
+                       "can go over the limit of the file format.\n"
+                       "30 fps: 2x the frames only, so it stays under the limit more often.")
+        button_60 = dialog.addButton("60 FPS", QMessageBox.ButtonRole.AcceptRole)
+        button_30 = dialog.addButton("30 FPS", QMessageBox.ButtonRole.AcceptRole)
+        dialog.addButton(QMessageBox.StandardButton.Cancel)
+        dialog.exec()
+        if dialog.clickedButton() == button_60:
+            return 60
+        if dialog.clickedButton() == button_30:
+            return 30
+        return None
+
+    def _get_animation_kind_dict(self):
+        """Which animations of the loaded file loop, read from the sequence section.
+
+        A character body has no sequence section: its animations are driven by the
+        program in its weapon file, so the weapon is read instead. Empty when nothing
+        can be read, the caller then has to ask the user.
+        """
+        enemy = self.ifrit_manager.enemy
+        nb_animation = enemy.animation_data.nb_animations
+        kind_dict = get_animation_kind_dict(self.ifrit_manager.game_data,
+                                            getattr(enemy, 'seq_animation_data', None),
+                                            nb_animation)
+        if kind_dict:
+            self.weapon_file_used = ""
+            return kind_dict
+        return self._get_animation_kind_dict_from_weapon(nb_animation)
+
+    def _get_animation_kind_dict_from_weapon(self, nb_animation: int):
+        """Read the loops of a character from one of its weapon files.
+
+        Every weapon of a character carries the same sequence section (identical bytes in
+        the vanilla files), so the first readable one next to the body is taken. The user
+        is asked for a file only when there is none.
+        """
+        origin_path = getattr(self.ifrit_manager.enemy, 'origin_path', "")
+        if not origin_path:
+            return {}
+        if origin_path in self._weapon_kind_dict_cache:
+            self.weapon_file_used = self._weapon_file_used_cache.get(origin_path, "")
+            return self._weapon_kind_dict_cache[origin_path]
+
+        weapon_file_list = find_character_weapon_file_list(origin_path)
+        if not weapon_file_list:
+            answer = QMessageBox.question(
+                self, "Weapon file needed",
+                "This is a character model: the animations are driven by the program stored "
+                "in its weapon file (dXwYYY.dat), which is not next to it.\n\n"
+                "Select the weapon file of this character to detect the looping animations?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if answer == QMessageBox.StandardButton.Yes:
+                weapon_path, _ = QFileDialog.getOpenFileName(self, "Select the weapon file",
+                                                             str(pathlib.Path(origin_path).parent),
+                                                             "Weapon file (*.dat);;All files (*)")
+                if weapon_path:
+                    weapon_file_list = [pathlib.Path(weapon_path)]
+
+        for weapon_file in weapon_file_list:
+            try:
+                kind_dict = get_animation_kind_dict_from_weapon_file(
+                    self.ifrit_manager.game_data, weapon_file, nb_animation)
+            except Exception:  # garbage file (d0w007) or not a weapon at all: try the next one
+                continue
+            if kind_dict:
+                self._weapon_kind_dict_cache[origin_path] = kind_dict
+                self._weapon_file_used_cache[origin_path] = weapon_file.name
+                self.weapon_file_used = weapon_file.name
+                return kind_dict
+        return {}
+
+    def _ask_smooth_loop(self, title: str):
+        """Fallback when the file has no sequence section to detect the loops from."""
+        answer = QMessageBox.question(
+            self, title,
+            "The loops of this file cannot be detected (no animation sequence section).\n\n"
+            "Smooth the transition from the last frame back to the first one?\n\n"
+            "Yes: for looping animations (like the idle stance).\n"
+            "No: for one-shot animations (like a death animation).",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
+        if answer == QMessageBox.StandardButton.Cancel:
+            return None
+        return answer == QMessageBox.StandardButton.Yes
+
     def convert_current_anim_to_60fps(self):
-        """Insert interpolated frames in the current animation so it plays at 60 fps instead of 15 fps."""
+        """Insert interpolated frames in the current animation so it plays at 30 or 60 fps."""
+        title = "To 30/60 FPS"
         anim_section = self.ifrit_manager.enemy.animation_data
         if not anim_section.nb_animations or self.current_anim_id >= len(anim_section.animations):
-            QMessageBox.warning(self, "To 60 FPS", "No animation loaded.")
+            QMessageBox.warning(self, title, "No animation loaded.")
             return
         if not self.ifrit_manager.enemy.bone_data:
-            QMessageBox.warning(self, "To 60 FPS", "No bone data loaded.")
+            QMessageBox.warning(self, title, "No bone data loaded.")
             return
 
         anim = anim_section.animations[self.current_anim_id]
         nb_frames_before = len(anim.frames)
         if nb_frames_before < 2:
-            QMessageBox.information(self, "To 60 FPS", "The animation needs at least 2 frames to interpolate.")
+            QMessageBox.information(self, title, "The animation needs at least 2 frames to interpolate.")
             return
 
-        answer = QMessageBox.question(
-            self, "To 60 FPS",
-            "Also smooth the transition from the last frame back to the first one?\n\n"
-            "Yes: for looping animations (like the idle stance).\n"
-            "No: for one-shot animations (like a death animation).",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
-        if answer == QMessageBox.StandardButton.Cancel:
+        target_fps = self._ask_target_fps(title)
+        if target_fps is None:
             return
-        smooth_loop = (answer == QMessageBox.StandardButton.Yes)
 
-        # native fps x factor = 60 fps (battle .dat: 15 fps, field chara.one: 30 fps)
-        factor = max(1, 60 // getattr(self.ifrit_manager, 'anim_native_fps', 15))
-        if smooth_loop:
-            nb_frames_after = nb_frames_before * factor
+        # The sequence section says whether the game loops this animation, so the wrap
+        # from the last frame back to the first one is only smoothed when it is played
+        # in a loop. Files without that section still have to ask.
+        kind_dict = self._get_animation_kind_dict()
+        if kind_dict:
+            kind = kind_dict.get(self.current_anim_id, ANIM_UNUSED)
+            smooth_loop = is_looping(kind)
+            detected_text = f"Detected as {ANIM_KIND_TEXT.get(kind, kind)} by the animation sequences"
+            detected_text += f" of {self.weapon_file_used}.\n" if self.weapon_file_used else ".\n"
         else:
-            nb_frames_after = (nb_frames_before - 1) * factor + 1
+            smooth_loop = self._ask_smooth_loop(title)
+            if smooth_loop is None:
+                return
+            detected_text = ""
+
+        # native fps x factor = target fps (battle .dat: 15 fps, field chara.one: 30 fps)
+        native_fps = getattr(self.ifrit_manager, 'anim_native_fps', 15)
+        factor = max(1, target_fps // native_fps)
+        if factor == 1:
+            QMessageBox.information(self, title,
+                                    f"The animations of this file already play at {native_fps} fps, "
+                                    f"there is nothing to interpolate for {target_fps} fps.")
+            return
+        nb_frames_after = self._nb_frames_after_conversion(nb_frames_before, factor, smooth_loop)
         # Battle .dat files store the frame count on one byte; other formats
         # (e.g. field chara.one, uint16) can expose a higher limit.
         max_frames = getattr(self.ifrit_manager, 'max_animation_frames', 255)
         if nb_frames_after > max_frames:
-            QMessageBox.warning(self, "To 60 FPS",
-                                f"The result would have {nb_frames_after} frames, but the file format "
-                                f"is limited to {max_frames} frames per animation.")
+            message = (f"The result would have {nb_frames_after} frames, but the file format "
+                       f"is limited to {max_frames} frames per animation.")
+            if target_fps == 60 and native_fps < 30:
+                nb_frames_30 = self._nb_frames_after_conversion(nb_frames_before, 30 // native_fps, smooth_loop)
+                if nb_frames_30 <= max_frames:
+                    message += f"\n\nConverting it to 30 fps instead would give {nb_frames_30} frames, which fits."
+            QMessageBox.warning(self, title, message)
             return
 
         anim.create_interpolated_frames(self.ifrit_manager.enemy.bone_data.bones, factor, smooth_loop)
@@ -933,41 +1068,63 @@ class Ifrit3DWidget(QWidget):
         self.update_animated_mesh()
         self.update_skeleton()
         self.animation_changed.emit()
-        self.set_fps(60)
+        self.set_fps(target_fps)
 
-        QMessageBox.information(self, "To 60 FPS",
+        QMessageBox.information(self, title,
                                 f"Animation {self.current_anim_id} now has {len(anim.frames)} frames "
                                 f"(was {nb_frames_before}).\n"
-                                "The viewer playback speed has been set to 60 fps.\n"
+                                + detected_text +
+                                ("The transition back to the first frame was smoothed.\n" if smooth_loop
+                                 else "The transition back to the first frame was left as-is.\n") +
+                                f"The viewer playback speed has been set to {target_fps} fps.\n"
                                 "Save the file to keep the new frames.")
 
     def convert_all_anims_to_60fps(self):
-        """Insert interpolated frames in every animation of the current file so they all play at 60 fps."""
+        """Insert interpolated frames in every animation of the current file (30 or 60 fps)."""
+        title = "All to 30/60 FPS"
         anim_section = self.ifrit_manager.enemy.animation_data
         if not anim_section.nb_animations or not anim_section.animations:
-            QMessageBox.warning(self, "All to 60 FPS", "No animation loaded.")
+            QMessageBox.warning(self, title, "No animation loaded.")
             return
         if not self.ifrit_manager.enemy.bone_data:
-            QMessageBox.warning(self, "All to 60 FPS", "No bone data loaded.")
+            QMessageBox.warning(self, title, "No bone data loaded.")
             return
 
         answer = QMessageBox.question(
-            self, "All to 60 FPS",
-            f"Convert all {len(anim_section.animations)} animations of this file to 60 fps?\n\n"
-            "Smooth the transition from the last frame back to the first one (loop smoothing)?\n\n"
-            "Yes: for files whose animations mostly loop (like idle stances).\n"
-            "No: for one-shot animations (recommended when in doubt).\n\n"
+            self, title,
+            f"Convert all {len(anim_section.animations)} animations of this file?\n\n"
+            "The animation sequences of the file tell which animations are looping, so the\n"
+            "transition back to the first frame is smoothed only on those.\n\n"
             "Note: only run this once per file — running it again would interpolate the "
             "already-interpolated frames.",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
         if answer == QMessageBox.StandardButton.Cancel:
             return
-        smooth_loop = (answer == QMessageBox.StandardButton.Yes)
 
-        # native fps x factor = 60 fps (battle .dat: 15 fps, field chara.one: 30 fps)
-        factor = max(1, 60 // getattr(self.ifrit_manager, 'anim_native_fps', 15))
+        target_fps = self._ask_target_fps(title)
+        if target_fps is None:
+            return
+
+        # A looping animation gets its last frame interpolated back to the first one, a
+        # one-shot one does not. Without a sequence section, fall back on one answer for
+        # the whole file.
+        kind_dict = self._get_animation_kind_dict()
+        default_smooth_loop = None
+        if not kind_dict:
+            default_smooth_loop = self._ask_smooth_loop(title)
+            if default_smooth_loop is None:
+                return
+
+        # native fps x factor = target fps (battle .dat: 15 fps, field chara.one: 30 fps)
+        native_fps = getattr(self.ifrit_manager, 'anim_native_fps', 15)
+        factor = max(1, target_fps // native_fps)
+        if factor == 1:
+            QMessageBox.information(self, title,
+                                    f"The animations of this file already play at {native_fps} fps, "
+                                    f"there is nothing to interpolate for {target_fps} fps.")
+            return
         bones = self.ifrit_manager.enemy.bone_data.bones
-        converted, skipped_short, skipped_too_long = 0, [], []
+        converted, nb_smoothed, skipped_short, skipped_too_long = 0, 0, [], []
         max_frames = getattr(self.ifrit_manager, 'max_animation_frames', 255)
 
         for anim_id, anim in enumerate(anim_section.animations):
@@ -975,15 +1132,17 @@ class Ifrit3DWidget(QWidget):
             if nb_frames_before < 2:
                 skipped_short.append(anim_id)
                 continue
-            if smooth_loop:
-                nb_frames_after = nb_frames_before * factor
+            if default_smooth_loop is None:
+                smooth_loop = is_looping(kind_dict.get(anim_id, ANIM_UNUSED))
             else:
-                nb_frames_after = (nb_frames_before - 1) * factor + 1
+                smooth_loop = default_smooth_loop
+            nb_frames_after = self._nb_frames_after_conversion(nb_frames_before, factor, smooth_loop)
             if nb_frames_after > max_frames:
                 skipped_too_long.append((anim_id, nb_frames_before, nb_frames_after))
                 continue
             anim.create_interpolated_frames(bones, factor, smooth_loop)
             converted += 1
+            nb_smoothed += smooth_loop
 
         # Refresh the viewer with the new frame count of the current animation
         self.current_frame = 0
@@ -994,17 +1153,24 @@ class Ifrit3DWidget(QWidget):
         self.update_animated_mesh()
         self.update_skeleton()
         self.animation_changed.emit()
-        self.set_fps(60)
+        self.set_fps(target_fps)
 
-        report = [f"{converted} animation(s) converted to 60 fps."]
+        report = [f"{converted} animation(s) converted to {target_fps} fps."]
+        if kind_dict:
+            source_text = (f" (read from the weapon file {self.weapon_file_used})"
+                           if self.weapon_file_used else "")
+            report.append(f"\n{nb_smoothed} of them are looping{source_text} (last frame interpolated "
+                          f"back to the first one), {converted - nb_smoothed} are played once.")
         if skipped_short:
             report.append(f"\nSkipped (fewer than 2 frames): {', '.join(map(str, skipped_short))}.")
         if skipped_too_long:
             details = ', '.join(f"{aid} ({before}->{after} frames)" for aid, before, after in skipped_too_long)
-            report.append("\nSkipped (would exceed the 255-frame limit): " + details + ".")
-        report.append("\nThe viewer playback speed has been set to 60 fps.\n"
+            report.append(f"\nSkipped (would exceed the {max_frames}-frame limit): " + details + ".")
+            if target_fps == 60 and native_fps < 30:
+                report.append("Converting this file to 30 fps instead would keep them under the limit.")
+        report.append(f"\nThe viewer playback speed has been set to {target_fps} fps.\n"
                       "Save the file to keep the new frames.")
-        QMessageBox.information(self, "All to 60 FPS", "\n".join(report))
+        QMessageBox.information(self, title, "\n".join(report))
 
     def _update_bone_editor_frame(self, frame):
         """Update bone editor when frame changes"""

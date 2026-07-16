@@ -397,6 +397,43 @@ def test_shumi_exe_import_runs(tmp_path):
     assert list(out_dir.glob("*.msd")), "exe import produced no .msd files"
 
 
+@pytest.mark.ff8data("extracted_files/menu/mmag.bin", "extracted_files/menu/mngrp.bin",
+                     "extracted_files/menu/mngrphd.bin", "extracted_files/menu/sysfnt.TEX",
+                     "extracted_files/menu/mwepon.bin", "extracted_files/main/kernel.bin")
+def test_zone_export_png(tmp_path):
+    from Cli.zone import ZoneCliTool
+    source = EXTRACTED / "menu" / "mmag.bin"
+    mngrp = EXTRACTED / "menu" / "mngrp.bin"
+    extra = ["--kernel", str(EXTRACTED / "main" / "kernel.bin"),
+             "--mwepon", str(EXTRACTED / "menu" / "mwepon.bin")]
+
+    single = tmp_path / "page0.png"
+    assert _run(ZoneCliTool, ["export-png", "--input", str(source), "--mngrp", str(mngrp),
+                              "--entry", "0", "--output", str(single), "--scale", "2",
+                              *extra]) == 0
+    from PIL import Image
+    with Image.open(single) as image:
+        assert image.size == (768, 480)  # 384x240 canvas at --scale 2
+
+    folder = tmp_path / "pages"
+    assert _run(ZoneCliTool, ["export-png", "--input", str(source), "--mngrp", str(mngrp),
+                              "--output", str(folder), *extra]) == 0
+    assert len(list(folder.glob("mmag_*.png"))) == 69  # every entry rendered
+
+
+@pytest.mark.ff8data("extracted_files/menu/mmag.bin", "extracted_files/menu/mngrp.bin",
+                     "extracted_files/menu/mngrphd.bin")
+def test_zone_export_png_warns_without_the_unlock_sources(capsys, tmp_path):
+    """kernel.bin/mwepon.bin are optional, but their absence is said out loud."""
+    from Cli.zone import ZoneCliTool
+    capsys.readouterr()
+    assert _run(ZoneCliTool, ["export-png", "--input", str(EXTRACTED / "menu" / "mmag.bin"),
+                              "--mngrp", str(EXTRACTED / "menu" / "mngrp.bin"),
+                              "--entry", "28", "--output", str(tmp_path / "ck.png")]) == 0
+    out = capsys.readouterr().out
+    assert "no --kernel" in out and "no --mwepon" in out
+
+
 def test_all_tools_registered():
     """cli.py must expose every Cli tool module."""
     import cli

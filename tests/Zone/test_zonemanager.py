@@ -20,6 +20,8 @@ from Zone.zonemanager import ZoneManager, TEXTURE_CATEGORIES, BOOK_TEXT_FIRST_RA
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 MMAG_PATH = PROJECT_ROOT / "extracted_files" / "menu" / "mmag.bin"
 MNGRP_PATH = PROJECT_ROOT / "extracted_files" / "menu" / "mngrp.bin"
+KERNEL_PATH = PROJECT_ROOT / "extracted_files" / "main" / "kernel.bin"
+MWEPON_PATH = PROJECT_ROOT / "extracted_files" / "menu" / "mwepon.bin"
 
 
 @pytest.fixture(scope="module")
@@ -96,22 +98,22 @@ class TestZoneManagerSynthetic:
         assert (entry.window_width, entry.window_height) == (336, 184)
         assert (entry.picture_x, entry.picture_y) == (13, 84)
         assert (entry.picture_width, entry.picture_height) == (152, 96)
-        assert (entry.picture_scale_x, entry.picture_scale_y, entry.picture_scale_z) == (115, 35, 7)
+        assert (entry.picture_tint_r, entry.picture_tint_g, entry.picture_tint_b) == (115, 35, 7)
         assert (entry.paper_e1, entry.paper_e2) == (0x12, 0xC0)
         assert entry.text_file_index == 2
         assert (entry.texture_category, entry.texture_page) == (5, 3)
-        assert entry.weapon_id == 6
+        assert entry.weapon_index == 6
         assert entry.weapon_line_spacing == 16
         assert entry.duel_move_id == 4
         assert entry.angelo_move_id == 5
         assert (entry.weapon_list_x, entry.weapon_list_y) == (169, 102)
-        assert entry.weapon_quantity_x_offset == 160
+        assert entry.weapon_quantity_column_x == 160
         assert (entry.duel_combo_x, entry.duel_combo_y) == (150, 126)
         assert entry.footer_flag == 1
-        assert entry.picture_overlays[0].used
+        assert not entry.picture_overlays[0].unused
         assert (entry.picture_overlays[0].x, entry.picture_overlays[0].y,
                 entry.picture_overlays[0].id) == (25, 84, 9)
-        assert all(not slot.used for slot in entry.picture_overlays[1:])
+        assert all(slot.unused for slot in entry.picture_overlays[1:])
         assert [slot.id for slot in entry.text_overlays] == [1, 2, 0xFF, 0xFF]
 
     def test_save_without_modification_is_identical(self, manager, mmag_file, tmp_path):
@@ -122,7 +124,7 @@ class TestZoneManagerSynthetic:
 
     def test_modify_and_reload(self, manager, game_data, mmag_file):
         manager.load_file(str(mmag_file))
-        manager.entries[0].weapon_id = 23  # Shooting Star
+        manager.entries[0].weapon_index = 23  # Shooting Star
         manager.entries[0].text_overlays[2].x = 100
         manager.entries[0].text_overlays[2].y = 50
         manager.entries[0].text_overlays[2].id = 7
@@ -130,7 +132,7 @@ class TestZoneManagerSynthetic:
 
         reloaded = ZoneManager(game_data)
         reloaded.load_file(str(mmag_file))
-        assert reloaded.entries[0].weapon_id == 23
+        assert reloaded.entries[0].weapon_index == 23
         overlay = reloaded.entries[0].text_overlays[2]
         assert (overlay.x, overlay.y, overlay.id) == (100, 50, 7)
 
@@ -138,12 +140,12 @@ class TestZoneManagerSynthetic:
         manager.load_file(str(mmag_file))
         entry = manager.entries[0]
         # text file 2 -> raw 89, texture category 5 (base 71) page 3 -> raw 74
-        assert entry.book_text_raw_file == BOOK_TEXT_FIRST_RAW_FILE + 2
-        assert entry.texture_raw_file == TEXTURE_CATEGORIES[5][1] + 3
+        assert manager.book_text_raw_file(entry) == BOOK_TEXT_FIRST_RAW_FILE + 2
+        assert manager.texture_raw_file(entry) == TEXTURE_CATEGORIES[5][1] + 3
         # A category outside the table uses the page directly
         entry.texture_category = 200
         entry.texture_page = 42
-        assert entry.texture_raw_file == 42
+        assert manager.texture_raw_file(entry) == 42
 
     def test_name_lookups(self, manager):
         assert manager.get_weapon_name(6) == "Lion Heart"
@@ -177,7 +179,7 @@ class TestZoneManagerRealFile:
     def test_retail_content_matches_magazine_map(self, manager):
         manager.load_file(str(MMAG_PATH))
         # Weapons Monthly 1st Issue: the four ultimate weapons, one per page
-        ultimate_pages = [manager.get_weapon_name(manager.entries[i].weapon_id)
+        ultimate_pages = [manager.get_weapon_name(manager.entries[i].weapon_index)
                           for i in range(4)]
         assert ultimate_pages == ["Lion Heart", "Shooting Star", "Exeter", "Strange Vision"]
         # Combat King 001-005 teach the five learnable Duel moves
@@ -190,11 +192,60 @@ class TestZoneManagerRealFile:
         # The tutorial books never use the unlock block
         for index in range(43, 68):
             entry = manager.entries[index]
-            assert (entry.weapon_id, entry.duel_move_id, entry.angelo_move_id) == \
+            assert (entry.weapon_index, entry.duel_move_id, entry.angelo_move_id) == \
                 (0xFF, 0xFF, 0xFF)
         # Battle tutorial pages read text file 1 (raw 88), card rules file 2 (raw 89)
-        assert manager.entries[43].book_text_raw_file == 88
-        assert manager.entries[51].book_text_raw_file == 89
+        assert manager.book_text_raw_file(manager.entries[43]) == 88
+        assert manager.book_text_raw_file(manager.entries[51]) == 89
+
+
+@pytest.mark.ff8data("extracted_files/menu/mmag.bin", "extracted_files/main/kernel.bin",
+                     "extracted_files/menu/mwepon.bin")
+class TestZoneManagerUnlockSources:
+    """The unlock block draws from kernel.bin (Duel combos) and mwepon.bin (remodel lists)."""
+
+    def test_unloaded_sources_are_empty_not_an_error(self, manager):
+        manager.load_file(str(MMAG_PATH))
+        assert manager.kernel_loaded is False and manager.mwepon_loaded is False
+        assert manager.duel_sequence(4) == []
+        assert manager.weapon_items(6) == []
+
+    def test_duel_sequences_match_the_retail_combos(self, manager):
+        manager.load_file(str(MMAG_PATH))
+        manager.load_kernel(str(KERNEL_PATH))
+        assert manager.kernel_loaded is True
+        # 10 moves, each a 0xFFFF-terminated run of at most 5 buttons
+        assert all(0 < len(manager.duel_sequence(move)) <= 5 for move in range(10))
+        assert 0xFFFF not in manager.duel_sequence(9)
+        # Punch Rush is the 2-button starter, My Final Heaven the 5-button finisher
+        assert len(manager.duel_sequence(0)) == 2
+        assert len(manager.duel_sequence(9)) == 5
+        # Combat King 001 teaches Dolphin Blow, a 4-button combo
+        assert len(manager.duel_sequence(manager.entries[28].duel_move_id)) == 4
+
+    def test_load_kernel_rejects_a_non_kernel_file(self, manager, tmp_path):
+        bad = tmp_path / "bad.bin"
+        bad.write_bytes(bytes(256))
+        with pytest.raises(ValueError):
+            manager.load_kernel(str(bad))
+
+    def test_weapon_items_are_the_real_remodel_recipes(self, manager):
+        manager.load_file(str(MMAG_PATH))
+        manager.load_mwepon(str(MWEPON_PATH))
+        assert manager.mwepon_loaded is True
+        # Weapons Monthly 1st issue page 1 is the Lion Heart page
+        items = manager.weapon_items(manager.entries[0].weapon_index)
+        assert [(manager.get_item_name(i), q) for i, q in items] == \
+            [("Adamantine", 1), ("Dragon Fang", 4), ("Pulse Ammo", 12)]
+        # Empty slots are dropped, so every row drawn has an item
+        assert all(item_id for item_id, _ in manager.weapon_items(1))
+
+    def test_item_names_are_ff8_encodable(self, manager):
+        """item.json spells these with a backtick, which has no FF8 character code."""
+        manager.load_file(str(MMAG_PATH))
+        name = manager.get_item_name(159)
+        assert name == "Chef's Knife"
+        manager.game_data.translate_str_to_hex(name)  # must not raise
 
 
 @pytest.mark.ff8data("extracted_files/menu/mmag.bin", "extracted_files/menu/mngrp.bin",
@@ -207,7 +258,7 @@ class TestZoneManagerMngrpPreview:
         assert manager.mngrp_loaded
         entry = manager.entries[0]
         titles = [manager.get_overlay_text(entry, overlay)
-                  for overlay in entry.text_overlays if overlay.used]
+                  for overlay in entry.text_overlays if not overlay.unused]
         assert any("Weapons Monthly" in title for title in titles)
         # Unused slots resolve to an empty string
         assert manager.get_overlay_text(entry, entry.text_overlays[3]) == ""

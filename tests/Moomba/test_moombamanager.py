@@ -8,6 +8,7 @@ import pathlib
 import pytest
 
 from FF8GameData.gamedata import GameData
+from FF8GameData.menu.menutext import decode_string_section
 from Moomba.moombamanager import MoombaManager, MagPageEntry, OverlaySlot
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
@@ -63,8 +64,8 @@ def test_fields_are_parsed_at_the_documented_offsets(game_data, tmp_path):
     entry = manager.entries[0]
     assert entry.window_x == 24
     assert entry.window_height == 158
-    assert entry.picture_scale_x == 115
-    assert entry.paper_param_b == 0xC0
+    assert entry.picture_tint_r == 115
+    assert entry.paper_e2 == 0xC0
     assert entry.texture_category == 6
     assert entry.texture_page == 1
     assert entry.footer_flag == 1
@@ -127,7 +128,7 @@ def test_string_section_decoding_is_positional(game_data):
     section.extend(hex_c)
     section.append(0)
 
-    texts = manager._decode_string_section(bytes(section))
+    texts = decode_string_section(game_data, bytes(section))
     assert texts == ["AB", "", "C"]
     manager.mngrp_text_list = texts
     assert manager.get_overlay_text(0) == "AB"

@@ -180,3 +180,35 @@ class TestMinimogManager:
         icon = Sp1Icon(0, [Sp1Quad(width=16, height=8, dx=-4, dy=2),
                            Sp1Quad(width=16, height=8, dx=12, dy=2)])
         assert icon.bounding_box() == (-4, 2, 28, 10)
+
+    def test_anchored_bounding_box_includes_origin_with_zero_margin(self):
+        # margin=0 collapses to "just widen bounding_box() to cover (0, 0)"
+        icon = Sp1Icon(0, [Sp1Quad(width=8, height=8, dx=10, dy=10)])
+        assert icon.bounding_box() == (10, 10, 18, 18)
+        assert icon.anchored_bounding_box(margin_left=0, margin_top=0, pad_right=0, pad_bottom=0) \
+            == (0, 0, 18, 18)
+
+    def test_anchored_bounding_box_left_edge_is_stable_within_margin(self):
+        # the whole point: as long as dx stays within margin_left, the left
+        # edge (and so the crosshair's pixel position) must not move, only
+        # the right edge grows to fit the quad further from the origin
+        small_offset = Sp1Icon(0, [Sp1Quad(width=8, height=8, dx=4, dy=0)])
+        large_offset = Sp1Icon(0, [Sp1Quad(width=8, height=8, dx=20, dy=0)])
+        left_a, top_a, right_a, bottom_a = small_offset.anchored_bounding_box()
+        left_b, top_b, right_b, bottom_b = large_offset.anchored_bounding_box()
+        assert left_a == left_b == -32  # default margin_left, unchanged by dx
+        assert top_a == top_b == -24    # default margin_top, unaffected by X at all
+        assert right_b > right_a        # only the right edge grows with dx
+
+    def test_anchored_bounding_box_extends_past_margin_when_needed(self):
+        # a quad offset further than the default margin still isn't clipped -
+        # the frame just gives up the "origin stays put" guarantee for it
+        icon = Sp1Icon(0, [Sp1Quad(width=8, height=8, dx=-52, dy=0)])
+        left, top, right, bottom = icon.anchored_bounding_box()
+        assert left == -52  # extended beyond the default -32 margin
+        assert left <= icon.bounding_box()[0]
+
+    def test_anchored_bounding_box_noop_when_already_covers_origin(self):
+        icon = Sp1Icon(0, [Sp1Quad(width=8, height=8, dx=-2, dy=-2)])
+        assert icon.anchored_bounding_box(margin_left=0, margin_top=0, pad_right=0, pad_bottom=0) \
+            == icon.bounding_box() == (-2, -2, 6, 6)

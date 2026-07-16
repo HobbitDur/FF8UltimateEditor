@@ -8,7 +8,8 @@ from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLa
 
 from FF8GameData.gamedata import GameData
 from Nida.nidamanager import NidaManager, SeedString
-from Nida.seedfont import (SeedFontMetrics, layout_text, LINE_HEIGHT, VANILLA_MAX_WIDTH, VANILLA_MAX_LINES)
+from Nida.seedfont import (SeedFontMetrics, layout_text, overflows, LINE_HEIGHT,
+                           VANILLA_MAX_WIDTH, VANILLA_MAX_LINES)
 
 
 class NidaQuestionWidget(QGroupBox):
@@ -141,7 +142,7 @@ class SeedPreviewWidget(QWidget):
             return
 
         layout = layout_text(self._seed_string.get_text(), self.game_data, self.metrics)
-        overflow = layout.overflows()
+        overflow = overflows(layout)
         scale = self.SCALE
         origin_x = self.MARGIN
         origin_y = self.MARGIN

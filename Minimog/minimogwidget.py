@@ -89,32 +89,58 @@ class MinimogWidget(QWidget):
         self.button_icon_label.setStyleSheet("color: #b06000;")
         self.button_icon_label.hide()
 
+        u_tooltip = "Texture U: X pixel in icon.TEX where the quad's crop starts."
+        v_tooltip = "Texture V: Y pixel in icon.TEX where the quad's crop starts."
+        width_tooltip = "Width in pixels of the crop taken from icon.TEX."
+        height_tooltip = "Height in pixels of the crop taken from icon.TEX."
+        dx_tooltip = ("Signed X offset (dword1 byte 1): shifts this quad from the icon's\n"
+                      "draw cursor. Even a single-quad icon commonly uses this to align its\n"
+                      "glyph on the text baseline (icons vary in height/width but share one\n"
+                      "cursor position) - it is not just for multi-quad composites.")
+        dy_tooltip = ("Signed Y offset (dword1 byte 3): same as X offset but vertical -\n"
+                      "used to baseline-align glyphs of different heights, or to stack\n"
+                      "multiple quads into one composite icon (e.g. the D-pad icons).")
+        clut_tooltip = ("CLUT selector (11 bits): the primitive CLUT is 0x3810 + this value.\n"
+                        "The TEX palette index is the selector / 64 (vanilla values are\n"
+                        "palette * 64 + 32).")
+        palette_tooltip = "TEX palette actually used to render this quad (CLUT selector / 64)."
+        abe_tooltip = ("Semi-transparency / ABE (dword0 bit 27): tells the PSX GPU to alpha-\n"
+                       "blend this quad with what's already drawn instead of overwriting it.\n"
+                       "No vanilla icon.sp1 quad has it set. The preview approximates it at\n"
+                       "~50% opacity since the actual blend equation (average/add/subtract)\n"
+                       "is GPU state, not stored in the quad.")
+        tpage_tooltip = ("Texture page (dword0 bits 30-31, PSX GPU E1 bits 5-6): which VRAM\n"
+                         "page the primitive samples from. icon.TEX packs the whole atlas into\n"
+                         "one page, so this rarely changes what's actually drawn for icon.sp1.")
+
         self.u_spinbox = QSpinBox()
         self.u_spinbox.setRange(0, 255)
-        self.u_spinbox.setToolTip("Texture U (X pixel in icon.TEX)")
+        self.u_spinbox.setToolTip(u_tooltip)
         self.v_spinbox = QSpinBox()
         self.v_spinbox.setRange(0, 255)
-        self.v_spinbox.setToolTip("Texture V (Y pixel in icon.TEX)")
+        self.v_spinbox.setToolTip(v_tooltip)
         self.width_spinbox = QSpinBox()
         self.width_spinbox.setRange(0, 255)
+        self.width_spinbox.setToolTip(width_tooltip)
         self.height_spinbox = QSpinBox()
         self.height_spinbox.setRange(0, 255)
+        self.height_spinbox.setToolTip(height_tooltip)
         self.dx_spinbox = QSpinBox()
         self.dx_spinbox.setRange(-128, 127)
-        self.dx_spinbox.setToolTip("Signed X offset from the icon draw position")
+        self.dx_spinbox.setToolTip(dx_tooltip)
         self.dy_spinbox = QSpinBox()
         self.dy_spinbox.setRange(-128, 127)
-        self.dy_spinbox.setToolTip("Signed Y offset from the icon draw position")
+        self.dy_spinbox.setToolTip(dy_tooltip)
         self.clut_spinbox = QSpinBox()
         self.clut_spinbox.setRange(0, 2047)
-        self.clut_spinbox.setToolTip("CLUT selector (11 bits): the primitive CLUT is 0x3810 + this value.\n"
-                                     "The TEX palette index is the selector / 64 (vanilla values are\n"
-                                     "palette * 64 + 32).")
+        self.clut_spinbox.setToolTip(clut_tooltip)
         self.palette_label = QLabel("palette 0")
+        self.palette_label.setToolTip(palette_tooltip)
         self.semi_transparent_checkbox = QCheckBox("Semi-transparency (ABE, bit 27)")
+        self.semi_transparent_checkbox.setToolTip(abe_tooltip)
         self.tpage_combobox = QComboBox()
         self.tpage_combobox.addItems([f"{i}" for i in range(4)])
-        self.tpage_combobox.setToolTip("Texture page bits 30-31 (E1 bits 5-6)")
+        self.tpage_combobox.setToolTip(tpage_tooltip)
 
         for spinbox in (self.u_spinbox, self.v_spinbox, self.width_spinbox, self.height_spinbox,
                         self.dx_spinbox, self.dy_spinbox, self.clut_spinbox):
@@ -122,35 +148,59 @@ class MinimogWidget(QWidget):
         self.semi_transparent_checkbox.stateChanged.connect(self._on_data_changed)
         self.tpage_combobox.currentIndexChanged.connect(self._on_data_changed)
 
+        def labeled(text, tooltip):
+            label = QLabel(text)
+            label.setToolTip(tooltip)
+            return label
+
         edit_group = QGroupBox("Quad")
         edit_form = QFormLayout()
-        edit_form.addRow("Texture U:", self.u_spinbox)
-        edit_form.addRow("Texture V:", self.v_spinbox)
-        edit_form.addRow("Width:", self.width_spinbox)
-        edit_form.addRow("Height:", self.height_spinbox)
-        edit_form.addRow("X offset:", self.dx_spinbox)
-        edit_form.addRow("Y offset:", self.dy_spinbox)
-        edit_form.addRow("CLUT selector:", self.clut_spinbox)
-        edit_form.addRow("TEX palette:", self.palette_label)
+        edit_form.addRow(labeled("Texture U:", u_tooltip), self.u_spinbox)
+        edit_form.addRow(labeled("Texture V:", v_tooltip), self.v_spinbox)
+        edit_form.addRow(labeled("Width:", width_tooltip), self.width_spinbox)
+        edit_form.addRow(labeled("Height:", height_tooltip), self.height_spinbox)
+        edit_form.addRow(labeled("X offset:", dx_tooltip), self.dx_spinbox)
+        edit_form.addRow(labeled("Y offset:", dy_tooltip), self.dy_spinbox)
+        edit_form.addRow(labeled("CLUT selector:", clut_tooltip), self.clut_spinbox)
+        edit_form.addRow(labeled("TEX palette:", palette_tooltip), self.palette_label)
         edit_form.addRow(self.semi_transparent_checkbox)
-        edit_form.addRow("Texture page:", self.tpage_combobox)
+        edit_form.addRow(labeled("Texture page:", tpage_tooltip), self.tpage_combobox)
         edit_group.setLayout(edit_form)
 
         # Preview
         self.preview_label = QLabel("No texture loaded")
-        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview_label.setMinimumSize(200, 120)
+        # Left/top-aligned (not centered): render_icon_anchored() already keeps the
+        # crosshair pixel stable within the image, but centering the label around a
+        # pixmap whose size still varies would re-introduce that same jitter one
+        # layer up. Anchoring the label the same way keeps the whole preview stable.
+        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.anchor_checkbox = QCheckBox("Show draw cursor")
+        self.anchor_checkbox.setChecked(True)
+        self.anchor_checkbox.setToolTip(
+            "When on, the preview keeps (0,0) - the engine's draw cursor before X/Y\n"
+            "offset is applied - in frame, marked with a red crosshair, so a single\n"
+            "quad's offset is visible as a shift away from the crosshair.\n"
+            "When off, the preview is tightly cropped to the quads themselves (what\n"
+            "the engine actually draws) - shifting dx/dy re-centers the crop with it,\n"
+            "so the offset has no visible effect in that mode.")
+        self.anchor_checkbox.stateChanged.connect(self.reload_preview)
         preview_group = QGroupBox(f"Preview (x{PREVIEW_SCALE})")
+        preview_group.setToolTip("Semi-transparent (ABE) quads are shown at ~50% opacity here "
+                                 "as an approximation of the GPU blend - see the Semi-transparency "
+                                 "tooltip for why the exact blend can't be reproduced.")
         preview_layout = QVBoxLayout()
         preview_layout.addWidget(self.preview_label)
+        preview_layout.addWidget(self.anchor_checkbox)
         preview_group.setLayout(preview_layout)
 
         self.editor_container = QWidget()
         editor_layout = QVBoxLayout()
         editor_layout.addWidget(self.icon_name_label)
         editor_layout.addWidget(self.button_icon_label)
-        editor_layout.addWidget(edit_group)
-        editor_layout.addWidget(preview_group)
+        # AlignLeft/AlignTop so this column doesn't stretch to preview_group's
+        # width when the preview grows - each keeps its own natural size.
+        editor_layout.addWidget(edit_group, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        editor_layout.addWidget(preview_group, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         editor_layout.addStretch(1)
         self.editor_container.setLayout(editor_layout)
         self.editor_container.setEnabled(False)
@@ -314,7 +364,10 @@ class MinimogWidget(QWidget):
             self.preview_label.setText("No texture loaded\n(use the Load icon.TEX button)")
             self.preview_label.setPixmap(QPixmap())
             return
-        image = self.manager.render_icon(icon.icon_id, self.tex_file, scale=PREVIEW_SCALE)
+        if self.anchor_checkbox.isChecked():
+            image = self.manager.render_icon_anchored(icon.icon_id, self.tex_file, scale=PREVIEW_SCALE)
+        else:
+            image = self.manager.render_icon(icon.icon_id, self.tex_file, scale=PREVIEW_SCALE)
         if image is None:
             self.preview_label.setText("Empty icon")
             self.preview_label.setPixmap(QPixmap())

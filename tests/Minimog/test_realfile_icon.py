@@ -68,3 +68,85 @@ def test_real_icon_render_from_tex():
     assert (image.width, image.height) == (24, 16)
     alpha_bytes = image.tobytes()[3::4]
     assert any(alpha_bytes), "icon should not be fully transparent"
+
+
+@pytest.mark.ff8data("extracted_files/menu/icon.sp1", "extracted_files/menu/icon.TEX")
+def test_render_icon_hides_single_quad_offset(tmp_path):
+    """render_icon() crops tightly to the quad, so a single-quad icon's dx/dy
+    offset has no visible effect: the crop just re-centers on the quad. Icon
+    20 (dx=4, dy=0) is a real vanilla example - same output size as if dx
+    were 0, since only width/height (not dx/dy) drive the crop size."""
+    from FF8GameData.tex.texfile import TexFile
+
+    manager = MinimogManager()
+    manager.load_file(str(ICON_SP1))
+    tex_file = TexFile.read(str(ICON_TEX))
+    quad = manager.icons[20].quads[0]
+    assert (quad.dx, quad.dy) == (4, 0)  # a real offset, not a degenerate 0,0 case
+
+    with_offset = manager.render_icon(20, tex_file)
+    quad.dx = 0
+    without_offset = manager.render_icon(20, tex_file)
+    assert with_offset.size == without_offset.size == (quad.width, quad.height)
+    assert with_offset.tobytes() == without_offset.tobytes()
+
+
+@pytest.mark.ff8data("extracted_files/menu/icon.sp1", "extracted_files/menu/icon.TEX")
+def test_render_icon_anchored_makes_single_quad_offset_visible():
+    """render_icon_anchored() keeps the draw cursor (0,0) in frame, so icon
+    20's real dx=4 offset now visibly shifts the sprite away from a fixed
+    crosshair, and the canvas grows (to the right) to keep both in frame."""
+    from FF8GameData.tex.texfile import TexFile
+
+    manager = MinimogManager()
+    manager.load_file(str(ICON_SP1))
+    tex_file = TexFile.read(str(ICON_TEX))
+    quad = manager.icons[20].quads[0]
+    assert (quad.dx, quad.dy) == (4, 0)
+
+    anchored = manager.render_icon_anchored(20, tex_file)
+    assert anchored.size != (quad.width, quad.height), \
+        "anchored render must differ in size from the tight crop to prove the offset is visible"
+
+    # the crosshair sits at the default (margin_left, margin_top) origin
+    origin_x, origin_y = 32, 24
+    assert anchored.getpixel((origin_x, origin_y))[:3] == (255, 48, 48)
+
+    # the quad itself starts dx pixels right of the crosshair
+    quad_pixel = anchored.getpixel((origin_x + quad.dx + 1, origin_y + quad.dy + 1))
+    assert quad_pixel[3] != 0, "quad content should be opaque just inside its own rectangle"
+
+
+@pytest.mark.ff8data("extracted_files/menu/icon.sp1", "extracted_files/menu/icon.TEX")
+def test_render_icon_anchored_crosshair_is_stable_across_offset_edits():
+    """The whole point of anchored_bounding_box()'s fixed margin: nudging a
+    quad's dx (within the margin) must not move the crosshair pixel or shift
+    the icon's own position within the frame - only the canvas should grow
+    on the right to fit the new content, matching how the real engine cursor
+    doesn't move just because a glyph's offset changed."""
+    from FF8GameData.tex.texfile import TexFile
+
+    manager = MinimogManager()
+    manager.load_file(str(ICON_SP1))
+    tex_file = TexFile.read(str(ICON_TEX))
+    quad = manager.icons[20].quads[0]
+    origin_x, origin_y = 32, 24
+    crosshair_color = (255, 48, 48)
+
+    quad.dx = 4
+    small = manager.render_icon_anchored(20, tex_file)
+    quad.dx = 20
+    large = manager.render_icon_anchored(20, tex_file)
+
+    assert small.getpixel((origin_x, origin_y))[:3] == crosshair_color
+    assert large.getpixel((origin_x, origin_y))[:3] == crosshair_color
+    assert small.height == large.height, "Y extent is untouched by an X-only edit"
+    assert large.width > small.width, "canvas only grows to the right to fit the larger offset"
+
+    # the icon actually moved: opaque at the small offset's landing spot only in `small`,
+    # opaque at the large offset's landing spot only in `large`
+    small_spot = (origin_x + 4 + 1, origin_y + 1)
+    large_spot = (origin_x + 20 + 1, origin_y + 1)
+    assert small.getpixel(small_spot)[3] != 0
+    assert large.getpixel(small_spot)[3] == 0, "icon left its old spot, it doesn't leave a trail"
+    assert large.getpixel(large_spot)[3] != 0

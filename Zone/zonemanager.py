@@ -1,13 +1,43 @@
 import json
 import os
-import struct
 
 from FF8GameData.gamedata import GameData
+# The 68-byte entry format is shared with mmag2.bin (the Moomba editor): it lives in FF8GameData.
+from FF8GameData.menu.magpage import MagPageEntry, OverlaySlot, UNUSED_ID
+from FF8GameData.menu.menutext import decode_string_section, menu_string
 
-ENTRY_SIZE = 68
-NB_OVERLAY_SLOTS = 4
-UNUSED_ID = 0xFF
 BOOK_TEXT_FIRST_RAW_FILE = 87  # text file index n loads mngrp.bin raw file 87 + n
+SP2_SPRITE_RAW_FILE = 7  # The SP2 quad-list table the picture overlays index (mngrp Pos 4)
+
+# kernel.bin Duel (Zell limit break) section: the header is a flat table of u32
+# section offsets, and the Duel one lives in the slot at 0x5C. Each of the 10
+# moves is a 32-byte FF8KernelZellLimitDuell whose button sequence is 5 u16 at
+# offset 16, terminated by 0xFFFF (Menu_ItemMagazine_DrawPage walks it that way).
+DUEL_SECTION_OFFSET_SLOT = 0x5C
+DUEL_ENTRY_SIZE = 32
+DUEL_NB_MOVE = 10
+DUEL_SEQUENCE_OFFSET = 16
+DUEL_SEQUENCE_MAX = 5
+DUEL_SEQUENCE_END = 0xFFFF
+
+# A Duel button code is a pad bitmask. The engine masks out bits 8-11 (Select,
+# L3, R3, Start - never part of a combo), takes the lowest bit still set, and
+# adds 128 to get the icon.sp1 id: 128-131 = L2/R2/L1/R1, 132-135 = the four face
+# buttons, 140-143 = the four d-pad directions.
+BUTTON_CODE_MASK = 0xF0FF
+BUTTON_ICON_FIRST = 128
+
+# The item's type icon: byte_B88024 in the exe maps the mitem.bin row's item type
+# to one of 7 icons, and the draw adds 223 to reach the icon.sp1 id.
+ITEM_TYPE_ICON_TABLE = (0, 0, 0, 1, 1, 1, 2, 3, 4, 5, 6, 1,
+                        3, 3, 3, 3, 6, 1, 1, 6, 6, 0, 0, 0)
+ITEM_TYPE_ICON_FIRST = 223
+
+# The footer line Menu_Magazine_Draw draws when the entry's footer flag is set:
+# getMenuString(1, 13, 28) resolves to tkmnmes3.bin, the scroll hint of the multi-page books.
+FOOTER_RAW_FILE = 2  # tkmnmes3.bin
+FOOTER_SECTION = 13
+FOOTER_INDEX = 28
 
 # Page texture category -> (name, base raw file inside mngrp.bin); the loaded
 # picture file is base + texture_page. Any other category uses the page number
@@ -33,158 +63,6 @@ ANGELO_MOVE_NAMES = ["Angelo Rush", "Angelo Recover", "Angelo Reverse", "Angelo 
                      "Angelo Cannon", "Angelo Strike", "Invincible Moon", "Wishing Star"]
 
 
-def decode_string_section(game_data: GameData, section_data):
-    """Decode a mngrp string section (offset table + FF8-encoded strings). The offsets are
-    positional (a text id is an offset slot, zero offsets = empty string), like the game
-    reads them."""
-    nb_offset = int.from_bytes(section_data[0:2], byteorder='little')
-    offset_list = [int.from_bytes(section_data[2 + i * 2:4 + i * 2], byteorder='little')
-                   for i in range(nb_offset)]
-    sorted_offsets = sorted(offset for offset in offset_list if offset != 0)
-    text_list = []
-    for offset in offset_list:
-        if offset == 0:
-            text_list.append("")
-            continue
-        next_index = sorted_offsets.index(offset) + 1
-        end = sorted_offsets[next_index] if next_index < len(sorted_offsets) else len(section_data)
-        text_list.append(game_data.translate_hex_to_str(section_data[offset:end]))
-    return text_list
-
-
-class ZoneOverlay:
-    """One 4-byte overlay slot: {uint16 x, uint8 y, uint8 id}, id 0xFF = unused.
-
-    Picture overlays index the SP2 quad-list sprite table at Pos 4 of mngrp.bin,
-    text overlays index the book-text string section (raw file 87 + text_file_index)."""
-
-    def __init__(self, x=0, y=0, id=UNUSED_ID):
-        self.x = x
-        self.y = y
-        self.id = id
-
-    @property
-    def used(self):
-        return self.id != UNUSED_ID
-
-    @classmethod
-    def from_bytes(cls, data):
-        x, y, slot_id = struct.unpack("<HBB", data)
-        return cls(x, y, slot_id)
-
-    def to_bytes(self):
-        return struct.pack("<HBB", self.x, self.y, self.id)
-
-    def __str__(self):
-        if not self.used:
-            return "unused"
-        return f"id {self.id} at ({self.x},{self.y})"
-
-
-class ZoneEntry:
-    """One 68-byte entry of mmag.bin: a single magazine page view. The format is
-    shared with mmag2.bin (the Chocobo World screens, see the Moomba tool).
-
-    The unlock fields (weapon_id/duel_move_id/angelo_move_id and their layout
-    coordinates) are only processed by the item-menu reader (entries 0-42):
-    displaying the page is what unlocks the weapon/move in the savemap. The
-    tutorial-book viewer (entries 43-67) ignores them."""
-
-    def __init__(self):
-        # Text window rect (24,8,336,184/208 in all retail entries)
-        self.window_x = 0
-        self.window_y = 0
-        self.window_width = 0
-        self.window_height = 0
-        # Page picture rect (width 0 = no picture) and /128 scale factors
-        self.picture_x = 0
-        self.picture_y = 0
-        self.picture_width = 0
-        self.picture_height = 0
-        self.picture_scale_x = 0
-        self.picture_scale_y = 0
-        self.picture_scale_z = 0
-        # Paper background PS1 GPU primitive parameters
-        self.paper_e1 = 0  # E1 texture page bits
-        self.paper_e2 = 0  # E2 texture window bits
-        # Book text: string section is mngrp raw file 87 + this
-        self.text_file_index = 0
-        # Page picture texture (see TEXTURE_CATEGORIES)
-        self.texture_category = 0
-        self.texture_page = 0
-        # Unlock block (0xFF = none)
-        self.weapon_id = UNUSED_ID  # unlocked-weapons bit + mwepon.bin remodel line
-        self.weapon_line_spacing = 0
-        self.duel_move_id = UNUSED_ID  # Zell Duel move (kernel Duel data)
-        self.angelo_move_id = UNUSED_ID  # Angelo move
-        self.weapon_list_x = 0
-        self.weapon_list_y = 0
-        self.weapon_quantity_x_offset = 0
-        self.duel_combo_x = 0
-        self.duel_combo_y = 0
-        # 1 = draw the "To be continued"-style footer line
-        self.footer_flag = 0
-        self.picture_overlays = [ZoneOverlay() for _ in range(NB_OVERLAY_SLOTS)]
-        self.text_overlays = [ZoneOverlay() for _ in range(NB_OVERLAY_SLOTS)]
-
-    @classmethod
-    def from_bytes(cls, data):
-        if len(data) != ENTRY_SIZE:
-            raise ValueError(f"mmag entry must be {ENTRY_SIZE} bytes, got {len(data)}")
-        entry = cls()
-        (entry.window_x, entry.window_y, entry.window_width, entry.window_height,
-         entry.picture_x, entry.picture_y, entry.picture_width, entry.picture_height) = \
-            struct.unpack_from("<8H", data, 0x00)
-        (entry.picture_scale_x, entry.picture_scale_y, entry.picture_scale_z,
-         entry.paper_e1, entry.paper_e2, entry.text_file_index,
-         entry.texture_category, entry.texture_page,
-         entry.weapon_id, entry.weapon_line_spacing,
-         entry.duel_move_id, entry.angelo_move_id) = struct.unpack_from("<12B", data, 0x10)
-        entry.weapon_list_x, entry.weapon_list_y, entry.weapon_quantity_x_offset = \
-            struct.unpack_from("<HBB", data, 0x1C)
-        entry.duel_combo_x, entry.duel_combo_y, entry.footer_flag = \
-            struct.unpack_from("<HBB", data, 0x20)
-        entry.picture_overlays = [ZoneOverlay.from_bytes(data[0x24 + i * 4:0x28 + i * 4])
-                                  for i in range(NB_OVERLAY_SLOTS)]
-        entry.text_overlays = [ZoneOverlay.from_bytes(data[0x34 + i * 4:0x38 + i * 4])
-                               for i in range(NB_OVERLAY_SLOTS)]
-        return entry
-
-    def to_bytes(self):
-        data = bytearray()
-        data.extend(struct.pack("<8H", self.window_x, self.window_y,
-                                self.window_width, self.window_height,
-                                self.picture_x, self.picture_y,
-                                self.picture_width, self.picture_height))
-        data.extend(struct.pack("<12B", self.picture_scale_x, self.picture_scale_y,
-                                self.picture_scale_z, self.paper_e1, self.paper_e2,
-                                self.text_file_index, self.texture_category,
-                                self.texture_page, self.weapon_id,
-                                self.weapon_line_spacing, self.duel_move_id,
-                                self.angelo_move_id))
-        data.extend(struct.pack("<HBB", self.weapon_list_x, self.weapon_list_y,
-                                self.weapon_quantity_x_offset))
-        data.extend(struct.pack("<HBB", self.duel_combo_x, self.duel_combo_y,
-                                self.footer_flag))
-        for overlay in self.picture_overlays:
-            data.extend(overlay.to_bytes())
-        for overlay in self.text_overlays:
-            data.extend(overlay.to_bytes())
-        return bytes(data)
-
-    @property
-    def book_text_raw_file(self):
-        """mngrp.bin raw file index of the book-text string section."""
-        return BOOK_TEXT_FIRST_RAW_FILE + self.text_file_index
-
-    @property
-    def texture_raw_file(self):
-        """mngrp.bin raw file index of the page picture TIM."""
-        if self.texture_category in TEXTURE_CATEGORIES:
-            return TEXTURE_CATEGORIES[self.texture_category][1] + self.texture_page
-        return self.texture_page
-
-
 class ZoneManager:
     """mmag.bin editor logic (in-menu magazine page definitions).
 
@@ -201,10 +79,21 @@ class ZoneManager:
         self.file_path = ""
         self.entries = []
         self.weapon_name_list = self._load_weapon_names()
-        # mngrp.bin (for the text overlay preview), decoded lazily per text file index
+        # mngrp.bin (for the text overlay preview and the page render), decoded lazily
         self._mngrp_data = None
         self._mngrp_header_entries = None
         self._book_text_cache = {}
+        self._sp2_sprites = None
+        # The unlock block only draws with these: kernel.bin gives Zell's Duel button
+        # sequences, mwepon.bin the weapon remodel item lists. Loaded on demand.
+        self._duel_sequences = None
+        self._weapon_upgrades = None
+        # icon.sp1 (+ icon.TEX) draws the unlock block's icons, mitem.bin says
+        # which type icon an item uses.
+        self._icons = None
+        self._icon_tex = None
+        self._icon_cache = {}
+        self._menu_items = None
 
     def _load_weapon_names(self):
         file_path = os.path.join(self.game_data.resource_folder_json, "weapon.json")
@@ -215,12 +104,15 @@ class ZoneManager:
     def load_file(self, file_path):
         with open(file_path, "rb") as in_file:
             file_data = in_file.read()
-        if len(file_data) % ENTRY_SIZE != 0:
-            raise ValueError(f"mmag file size must be a multiple of {ENTRY_SIZE} bytes, "
-                             f"got {len(file_data)}")
+        if len(file_data) % MagPageEntry.SIZE != 0:
+            raise ValueError(f"Not a mmag.bin file: size {len(file_data)} is not a multiple "
+                             f"of {MagPageEntry.SIZE} bytes")
         self.file_path = file_path
-        self.entries = [ZoneEntry.from_bytes(file_data[i:i + ENTRY_SIZE])
-                        for i in range(0, len(file_data), ENTRY_SIZE)]
+        self.entries = []
+        for entry_id in range(len(file_data) // MagPageEntry.SIZE):
+            offset = entry_id * MagPageEntry.SIZE
+            self.entries.append(MagPageEntry.from_bytes(
+                entry_id, file_data[offset:offset + MagPageEntry.SIZE]))
 
     def save_file(self, file_path=""):
         if not file_path:
@@ -228,6 +120,19 @@ class ZoneManager:
         with open(file_path, "wb") as out_file:
             for entry in self.entries:
                 out_file.write(entry.to_bytes())
+
+    @staticmethod
+    def book_text_raw_file(entry: MagPageEntry):
+        """mngrp.bin raw file index of the entry's book-text string section."""
+        return BOOK_TEXT_FIRST_RAW_FILE + entry.text_file_index
+
+    @staticmethod
+    def texture_raw_file(entry: MagPageEntry):
+        """mngrp.bin raw file index of the entry's page picture TIM (the loader,
+        Menu_Magazine_LoadPageTexture at 0x4C9920, maps the category to a base)."""
+        if entry.texture_category in TEXTURE_CATEGORIES:
+            return TEXTURE_CATEGORIES[entry.texture_category][1] + entry.texture_page
+        return entry.texture_page
 
     @staticmethod
     def entry_name(index):
@@ -251,12 +156,12 @@ class ZoneManager:
             return "Empty terminator"
         return f"Entry {index}"
 
-    def get_weapon_name(self, weapon_id):
-        if weapon_id == UNUSED_ID:
+    def get_weapon_name(self, weapon_index):
+        if weapon_index == UNUSED_ID:
             return "None"
-        if 0 <= weapon_id < len(self.weapon_name_list):
-            return self.weapon_name_list[weapon_id]
-        return f"Weapon {weapon_id}"
+        if 0 <= weapon_index < len(self.weapon_name_list):
+            return self.weapon_name_list[weapon_index]
+        return f"Weapon {weapon_index}"
 
     @staticmethod
     def get_duel_move_name(move_id):
@@ -295,10 +200,167 @@ class ZoneManager:
             self._mngrp_data = in_file.read()
         self._mngrp_header_entries = header.get_entry_list()
         self._book_text_cache = {}
+        self._sp2_sprites = None
 
     @property
     def mngrp_loaded(self):
         return self._mngrp_data is not None
+
+    def get_raw_file(self, raw_file):
+        """The bytes of one mngrp.bin raw file (empty when absent or not loaded)."""
+        if not self.mngrp_loaded or not 0 <= raw_file < len(self._mngrp_header_entries):
+            return b""
+        header_entry = self._mngrp_header_entries[raw_file]
+        if header_entry.invalid_value:
+            return b""
+        return self._mngrp_data[header_entry.seek:header_entry.seek + header_entry.size]
+
+    def get_sp2_sprites(self):
+        """The SP2 sprite table the picture overlays index (mngrp Pos 4), or None.
+
+        Parsed with Joker's Sp2File, which owns the quad-list format."""
+        if self._sp2_sprites is None and self.mngrp_loaded:
+            from Joker.jokermanager import Sp2File
+            data = self.get_raw_file(SP2_SPRITE_RAW_FILE)
+            if data:
+                self._sp2_sprites = Sp2File.from_bytes(bytes(data)).sprites
+        return self._sp2_sprites
+
+    def load_kernel(self, kernel_path):
+        """Read Zell's Duel button sequences out of kernel.bin.
+
+        Only the Duel section is parsed: the magazine draw needs nothing else from
+        the kernel, and SolomonRing is the editor for the rest of it."""
+        with open(kernel_path, "rb") as in_file:
+            data = in_file.read()
+        section_offset = int.from_bytes(
+            data[DUEL_SECTION_OFFSET_SLOT:DUEL_SECTION_OFFSET_SLOT + 4], byteorder='little')
+        end = section_offset + DUEL_ENTRY_SIZE * DUEL_NB_MOVE
+        if not 0 < section_offset < len(data) or end > len(data):
+            raise ValueError(f"Not a kernel.bin file: the Duel section offset "
+                             f"({section_offset}) does not fit in {len(data)} bytes")
+        sequences = []
+        for move_id in range(DUEL_NB_MOVE):
+            entry = data[section_offset + DUEL_ENTRY_SIZE * move_id:]
+            sequence = []
+            for i in range(DUEL_SEQUENCE_MAX):
+                offset = DUEL_SEQUENCE_OFFSET + i * 2
+                code = int.from_bytes(entry[offset:offset + 2], byteorder='little')
+                if code == DUEL_SEQUENCE_END:
+                    break
+                sequence.append(code)
+            sequences.append(sequence)
+        self._duel_sequences = sequences
+
+    @property
+    def kernel_loaded(self):
+        return self._duel_sequences is not None
+
+    def duel_sequence(self, move_id):
+        """The button codes of a Duel move (empty when kernel.bin is not loaded)."""
+        if not self.kernel_loaded or not 0 <= move_id < len(self._duel_sequences):
+            return []
+        return self._duel_sequences[move_id]
+
+    def load_mwepon(self, mwepon_path):
+        """Read the weapon remodel item lists out of mwepon.bin (Junkshop owns the format)."""
+        from Junkshop.junkshopmanager import JunkshopManager
+        junkshop = JunkshopManager(self.game_data)
+        junkshop.load_file(mwepon_path)
+        self._weapon_upgrades = junkshop.weapon_upgrades
+
+    @property
+    def mwepon_loaded(self):
+        return self._weapon_upgrades is not None
+
+    def weapon_items(self, weapon_index):
+        """The [item_id, quantity] pairs of a weapon's remodel line, empty ones dropped."""
+        if not self.mwepon_loaded or not 0 <= weapon_index < len(self._weapon_upgrades):
+            return []
+        return [(item_id, quantity)
+                for item_id, quantity in self._weapon_upgrades[weapon_index].items if item_id]
+
+    def load_icons(self, icon_sp1_path):
+        """Load the menu icon table (icon.sp1) and its texture (icon.TEX, read from
+        the same folder). Minimog owns both formats."""
+        from FF8GameData.tex.texfile import TexFile
+        from Minimog.minimogmanager import MinimogManager
+        tex_path = os.path.join(os.path.dirname(icon_sp1_path), "icon.TEX")
+        if not os.path.exists(tex_path):
+            raise FileNotFoundError(f"icon.TEX holds the pixels icon.sp1 points at, "
+                                    f"not found at: {tex_path}")
+        minimog = MinimogManager(self.game_data)
+        minimog.load_file(icon_sp1_path)
+        self._icons = minimog
+        self._icon_tex = TexFile.read(tex_path)
+        self._icon_cache = {}
+
+    @property
+    def icons_loaded(self):
+        return self._icons is not None
+
+    def icon_image(self, icon_id):
+        """(image, dx, dy) of a menu icon, the offsets being where its top-left
+        sits relative to the position the engine draws it at. None when there is
+        no such icon, or icon.sp1 is not loaded."""
+        if not self.icons_loaded or not 0 <= icon_id < len(self._icons.icons):
+            return None
+        if icon_id not in self._icon_cache:
+            image = self._icons.render_icon(icon_id, self._icon_tex)
+            box = self._icons.icons[icon_id].bounding_box()
+            self._icon_cache[icon_id] = None if image is None else (image, box[0], box[1])
+        return self._icon_cache[icon_id]
+
+    @staticmethod
+    def button_icon_id(button_code):
+        """The icon.sp1 id of a Duel button code, the way the engine picks it."""
+        masked = button_code & BUTTON_CODE_MASK
+        for bit in range(16):
+            if masked & (1 << bit):
+                return BUTTON_ICON_FIRST + bit
+        return None
+
+    def load_mitem(self, mitem_path):
+        """Load mitem.bin for the items' types (Kadowaki owns the format)."""
+        from Kadowaki.kadowakimanager import KadowakiManager
+        if not self.game_data.item_data_json:
+            self.game_data.load_item_data()  # KadowakiManager names its rows as it loads
+        kadowaki = KadowakiManager(self.game_data)
+        kadowaki.load_file(mitem_path)
+        self._menu_items = kadowaki.menu_items
+
+    @property
+    def mitem_loaded(self):
+        return self._menu_items is not None
+
+    def item_icon_id(self, item_id):
+        """The icon.sp1 id of an item's type icon (None without mitem.bin)."""
+        if not self.mitem_loaded or not 0 <= item_id < len(self._menu_items):
+            return None
+        type_id = self._menu_items[item_id].type_id
+        if not 0 <= type_id < len(ITEM_TYPE_ICON_TABLE):
+            return None
+        return ITEM_TYPE_ICON_FIRST + ITEM_TYPE_ICON_TABLE[type_id]
+
+    def get_item_name(self, item_id):
+        """The item's display name. It gets drawn as FF8 text, so it has to be
+        spelled with characters the game's font table has (the engine reads these
+        names out of kernel.bin itself, getTextBattleItem at 0x47EA30; item.json
+        is the tools' copy of them)."""
+        if not self.game_data.item_data_json:
+            self.game_data.load_item_data()
+        for item in self.game_data.item_data_json["items"]:
+            if item["id"] == item_id:
+                return item["name"]
+        return f"Item {item_id}"
+
+    def get_footer_text(self):
+        """The footer line of the multi-page books: menu string 1/13/28, the
+        "{CrossLeft} {CrossRight} to scroll" hint (empty when mngrp is not loaded)."""
+        data = self.get_raw_file(FOOTER_RAW_FILE)
+        if not data:
+            return ""
+        return menu_string(self.game_data, data, FOOTER_SECTION, FOOTER_INDEX)
 
     def get_book_texts(self, text_file_index):
         """Decoded strings of the book-text string section raw file 87 + text_file_index
@@ -317,11 +379,11 @@ class ZoneManager:
             self._book_text_cache[text_file_index] = texts
         return self._book_text_cache[text_file_index]
 
-    def get_overlay_text(self, entry: ZoneEntry, overlay: ZoneOverlay):
+    def get_overlay_text(self, entry: MagPageEntry, overlay: OverlaySlot):
         """Resolve a text overlay slot to its string (needs load_mngrp first)."""
-        if not overlay.used:
+        if overlay.unused:
             return ""
         texts = self.get_book_texts(entry.text_file_index)
         if 0 <= overlay.id < len(texts):
             return texts[overlay.id]
-        return f"<string {overlay.id} not found in mngrp raw file {entry.book_text_raw_file}>"
+        return f"(no string {overlay.id} in mngrp raw file {self.book_text_raw_file(entry)})"

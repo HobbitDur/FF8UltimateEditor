@@ -1,7 +1,7 @@
 import os
 
-from PyQt6.QtCore import QSize, QSignalBlocker
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import QSize, QSignalBlocker, pyqtSignal
+from PyQt6.QtGui import QIcon, QFontMetrics
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
                              QSpinBox, QGroupBox, QFormLayout)
 
@@ -13,6 +13,9 @@ class PietWidget(QWidget):
     card icon explanation), each defined as a range of mmag.bin page entries.
 
     Named after Piet, the Esthar technician of the Lunar Base."""
+
+    # Emitted with the mmag.bin entry index to jump to when "View in Zone" is clicked
+    view_in_zone_requested = pyqtSignal(int)
 
     def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
         QWidget.__init__(self)
@@ -53,23 +56,24 @@ class PietWidget(QWidget):
         self.editor_container = QWidget()
         editor_layout = QVBoxLayout()
         for book_id in range(PietManager.NB_BOOK):
-            first_spinbox = QSpinBox()
-            first_spinbox.setRange(0, PietManager.MAX_MMAG_ENTRY)
-            first_spinbox.setToolTip("First mmag.bin entry of the book")
+            first_spinbox = self._new_mmag_spinbox("First mmag.bin entry of the book")
             first_spinbox.valueChanged.connect(self._on_data_changed)
 
-            last_spinbox = QSpinBox()
-            last_spinbox.setRange(0, PietManager.MAX_MMAG_ENTRY)
-            last_spinbox.setToolTip("Last mmag.bin entry of the book (inclusive)")
+            last_spinbox = self._new_mmag_spinbox("Last mmag.bin entry of the book (inclusive)")
             last_spinbox.valueChanged.connect(self._on_data_changed)
 
             page_label = QLabel("0 pages")
+
+            view_in_zone_button = QPushButton("View in Zone")
+            view_in_zone_button.setToolTip("Jump to the Zone tool (mmag.bin editor) on this book's first page")
+            view_in_zone_button.clicked.connect(self._make_view_handler(book_id))
 
             book_group = QGroupBox(PietManager.BOOK_NAME_LIST[book_id])
             book_form = QFormLayout()
             book_form.addRow("First mmag entry:", first_spinbox)
             book_form.addRow("Last mmag entry:", last_spinbox)
             book_form.addRow("Pages:", page_label)
+            book_form.addRow("", view_in_zone_button)
             book_group.setLayout(book_form)
 
             self.first_spinboxes.append(first_spinbox)
@@ -85,6 +89,20 @@ class PietWidget(QWidget):
         main_layout.addWidget(self.editor_container)
         main_layout.addStretch(1)
         self.setLayout(main_layout)
+
+    @staticmethod
+    def _new_mmag_spinbox(tooltip):
+        spinbox = QSpinBox()
+        spinbox.setRange(0, PietManager.MAX_MMAG_ENTRY)
+        spinbox.setToolTip(tooltip)
+        # Size to fit PietManager.MAX_MMAG_ENTRY exactly, no wider
+        digits = len(str(PietManager.MAX_MMAG_ENTRY))
+        text_width = QFontMetrics(spinbox.font()).horizontalAdvance("0" * digits)
+        spinbox.setFixedWidth(text_width + 30)  # + spin arrows and frame margins
+        return spinbox
+
+    def _make_view_handler(self, book_id):
+        return lambda *_args: self.view_in_zone_requested.emit(self.first_spinboxes[book_id].value())
 
     def load_file(self):
         file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search mtmag.bin file",

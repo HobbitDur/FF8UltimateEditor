@@ -91,6 +91,14 @@ class MonsterAnalyser:
                 self.__analyze_bone_section(1)
                 self.__analyze_geometry_section(2)
                 self.__analyze_animation_section(3)
+            elif self.entity_type == EntityType.CHARACTER_NO_WEAPON:
+                self.__analyze_bone_section(1)
+                self.__analyze_geometry_section(2)
+                self.__analyze_animation_section(3)
+                # Section 4: dynamic texture, section 5: camera sequence (both kept raw,
+                # as for a character), section 6: the animation sequences a weapon would
+                # normally carry.
+                self.__analyze_sequence_animation(6)
             elif self.entity_type == EntityType.MONSTER:
                 self.__analyze_bone_section(1)
                 self.__analyze_geometry_section(2)
@@ -333,6 +341,17 @@ class MonsterAnalyser:
             ## Section 7 unknown
             section_position = 7
             raw_data_to_write.extend(self.section_raw_data[section_position])
+        elif self.entity_type == EntityType.CHARACTER_NO_WEAPON:
+            ## Section 4: Dynamic texture, Section 5: Camera sequence (unchanged atm)
+            for section_position in (4, 5):
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+            ## Section 6: Seq anim
+            section_position = 6
+            self.prepare_seq_animation(raw_data_to_write, section_position)
+            ## Section 7: Sounds, 8: Sound bank, 9: Textures, 10: Extra animation
+            ## (unchanged atm)
+            for section_position in (7, 8, 9, 10):
+                raw_data_to_write.extend(self.section_raw_data[section_position])
         elif self.entity_type == EntityType.WEAPON:
             ## Section 4 : Seq anim
             section_position = 4
@@ -435,6 +454,11 @@ class MonsterAnalyser:
             self.entity_type = EntityType.MONSTER
         elif self.header_data['nb_section'] == 6:
             self.entity_type = EntityType.WEAPON_NO_ANIM
+        elif self.header_data['nb_section'] == 11:
+            # Edea (d7c016) has no weapon file, so her body carries what a weapon usually
+            # holds for the pair. Same sections as a character, plus the animation
+            # sequences, the sounds and the sound bank inserted before the textures.
+            self.entity_type = EntityType.CHARACTER_NO_WEAPON
         else:
             print(f"Unexpected nb section: {self.header_data['nb_section']}")
             self.entity_type = EntityType.MONSTER

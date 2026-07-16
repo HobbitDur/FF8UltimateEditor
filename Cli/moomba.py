@@ -34,10 +34,10 @@ def _entry_to_dict(index, entry) -> dict:
                    "width": entry.window_width, "height": entry.window_height},
         "picture": {"x": entry.picture_x, "y": entry.picture_y,
                     "width": entry.picture_width, "height": entry.picture_height,
-                    "scale_x": entry.picture_scale_x, "scale_y": entry.picture_scale_y,
-                    "scale_z": entry.picture_scale_z},
-        "paper_param_a": entry.paper_param_a,
-        "paper_param_b": entry.paper_param_b,
+                    "tint_r": entry.picture_tint_r, "tint_g": entry.picture_tint_g,
+                    "tint_b": entry.picture_tint_b},
+        "paper_e1": entry.paper_e1,
+        "paper_e2": entry.paper_e2,
         "text_file_index": entry.text_file_index,
         "texture": {"category": entry.texture_category, "page": entry.texture_page},
         "unlock": {"weapon_index": entry.weapon_index,
@@ -66,11 +66,11 @@ def _dict_to_entry(entry, data: dict):
     entry.picture_y = data["picture"]["y"]
     entry.picture_width = data["picture"]["width"]
     entry.picture_height = data["picture"]["height"]
-    entry.picture_scale_x = data["picture"]["scale_x"]
-    entry.picture_scale_y = data["picture"]["scale_y"]
-    entry.picture_scale_z = data["picture"]["scale_z"]
-    entry.paper_param_a = data["paper_param_a"]
-    entry.paper_param_b = data["paper_param_b"]
+    entry.picture_tint_r = data["picture"]["tint_r"]
+    entry.picture_tint_g = data["picture"]["tint_g"]
+    entry.picture_tint_b = data["picture"]["tint_b"]
+    entry.paper_e1 = data["paper_e1"]
+    entry.paper_e2 = data["paper_e2"]
     entry.text_file_index = data["text_file_index"]
     entry.texture_category = data["texture"]["category"]
     entry.texture_page = data["texture"]["page"]

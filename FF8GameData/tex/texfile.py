@@ -12,8 +12,12 @@ by :mod:`FF8GameData.tim.timfile`). On-disk layout::
               0x3C width
               0x40 height
     0x0F0  palette block : num_palettes * palette_entries * 4 bytes.
-           Each colour is 4 bytes; for the fonts the observed order is R,G,B,A
-           with A in 0..254 (0 = transparent).
+           Each colour is 4 bytes stored B,G,R,A (the usual FF8 PC order) with
+           A in 0..254 (0 = transparent). The channel order is invisible on the
+           near-grey font palettes, but sysfnt.TEX's colour palettes settle it:
+           palette 3 is the {Red} of the text engine and reads (24, 24, 255) if
+           taken as R,G,B and (255, 24, 24) - the red it is named after - as
+           B,G,R. All 8 palettes agree (Blue, Yellow, ... likewise).
     ...    pixel block   : width * height bytes, one byte per pixel. Even though
            the header advertises 4bpp, the pixels are stored unpacked (one byte
            per pixel) and only the low nibble is a palette index.
@@ -121,7 +125,7 @@ class TexFile:
         base = index * self.palette_entries * 4
         out: List[Color] = []
         for i in range(self.palette_entries):
-            r, g, b, a = self.raw_palette[base + i * 4: base + i * 4 + 4]
+            b, g, r, a = self.raw_palette[base + i * 4: base + i * 4 + 4]
             out.append((r, g, b, a))
         return out
 
