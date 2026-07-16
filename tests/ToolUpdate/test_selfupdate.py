@@ -3,6 +3,7 @@ release zip into the SelfUpdate folder, then the Patcher copies it over the inst
 import io
 import json
 import subprocess
+import sys
 import zipfile
 from pathlib import Path
 
@@ -132,12 +133,15 @@ def test_download_self_cleans_temporary_folders(fake_github, tmp_path):
 
 def test_patcher_applies_selfupdate_and_restarts(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
+    # The patcher names the executables after the platform it runs on
+    tool_exe = "FF8UltimateEditor.exe" if sys.platform == "win32" else "FF8UltimateEditor"
+    patcher_exe = "Patcher.exe" if sys.platform == "win32" else "Patcher"
     # Simulate an installation with an old exe and a downloaded SelfUpdate folder
-    (tmp_path / "FF8UltimateEditor.exe").write_bytes(b"old exe")
+    (tmp_path / tool_exe).write_bytes(b"old exe")
     self_update = tmp_path / "SelfUpdate"
     (self_update / "Resources").mkdir(parents=True)
-    (self_update / "FF8UltimateEditor.exe").write_bytes(b"new exe")
-    (self_update / "Patcher.exe").write_bytes(b"patcher from release")
+    (self_update / tool_exe).write_bytes(b"new exe")
+    (self_update / patcher_exe).write_bytes(b"patcher from release")
     (self_update / "Resources" / "hobbitdur.ico").write_bytes(b"icon")
 
     monkeypatch.setattr(patcher, "wait_for_exit", lambda exe_name, timeout=30: True)
@@ -146,13 +150,13 @@ def test_patcher_applies_selfupdate_and_restarts(monkeypatch, tmp_path):
 
     patcher.main()
 
-    # New files applied, but the running Patcher.exe is never overwritten
-    assert (tmp_path / "FF8UltimateEditor.exe").read_bytes() == b"new exe"
+    # New files applied, but the running patcher is never overwritten
+    assert (tmp_path / tool_exe).read_bytes() == b"new exe"
     assert (tmp_path / "Resources" / "hobbitdur.ico").exists()
-    assert not (tmp_path / "Patcher.exe").exists()
+    assert not (tmp_path / patcher_exe).exists()
     # Temporary folder cleaned and tool restarted
     assert not self_update.exists()
-    assert launched and "FF8UltimateEditor.exe" in str(launched[0][0])
+    assert launched and tool_exe in str(launched[0][0])
 
 
 def test_patcher_aborts_if_tool_still_running(monkeypatch, tmp_path):

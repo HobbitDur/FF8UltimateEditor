@@ -773,16 +773,69 @@ class FF8OpenGLWidget(QOpenGLWidget):
     # ------------------------------------------------------------------
     # Mouse picking of skeleton joints
     # ------------------------------------------------------------------
+    def _pick_transform(self):
+        """Snapshot as (modelview, projection, viewport) numpy arrays, or None.
+
+        GL matrices come out column-major: element (row, col) sits at [col][row],
+        so a point is transformed as the row vector `v @ matrix`.
+        """
+        if self._pick_modelview is None or self._pick_projection is None \
+                or self._pick_viewport is None:
+            return None
+        try:
+            modelview = np.asarray(self._pick_modelview, dtype=np.float64).reshape(4, 4)
+            projection = np.asarray(self._pick_projection, dtype=np.float64).reshape(4, 4)
+            viewport = np.asarray(self._pick_viewport, dtype=np.float64).reshape(4)
+        except Exception:
+            return None
+        if viewport[2] == 0 or viewport[3] == 0:
+            return None
+        return modelview, projection, viewport
+
+    def _project(self, point):
+        """gluProject, in plain numpy: model space -> GL window coordinates.
+
+        Done by hand rather than through GLU because libGLU is missing on many
+        Linux setups (and on CI), where every glu* call raises and picking would
+        silently answer 'nothing here'.
+        """
+        transform = self._pick_transform()
+        if transform is None:
+            return None
+        modelview, projection, viewport = transform
+        clip = np.array([point[0], point[1], point[2], 1.0], dtype=np.float64) @ modelview @ projection
+        if abs(clip[3]) < 1e-12:
+            return None
+        ndc = clip[:3] / clip[3]
+        return (viewport[0] + viewport[2] * (ndc[0] + 1.0) / 2.0,
+                viewport[1] + viewport[3] * (ndc[1] + 1.0) / 2.0,
+                (ndc[2] + 1.0) / 2.0)
+
+    def _unproject(self, win_x, win_y, win_z):
+        """gluUnProject, in plain numpy: GL window coordinates -> model space."""
+        transform = self._pick_transform()
+        if transform is None:
+            return None
+        modelview, projection, viewport = transform
+        ndc = np.array([2.0 * (win_x - viewport[0]) / viewport[2] - 1.0,
+                        2.0 * (win_y - viewport[1]) / viewport[3] - 1.0,
+                        2.0 * win_z - 1.0,
+                        1.0], dtype=np.float64)
+        try:
+            inverse = np.linalg.inv(modelview @ projection)
+        except np.linalg.LinAlgError:
+            return None
+        obj = ndc @ inverse
+        if abs(obj[3]) < 1e-12:
+            return None
+        return obj[:3] / obj[3]
+
     def _project_joint(self, point):
         """Project a model-space point to logical widget coordinates.
         Returns (x, y, depth) or None if no transform snapshot exists yet."""
         if self._pick_modelview is None:
             return None
-        try:
-            win = gluProject(point[0], point[1], point[2],
-                             self._pick_modelview, self._pick_projection, self._pick_viewport)
-        except Exception:
-            return None
+        win = self._project(point)
         if win is None:
             return None
         dpr = self.devicePixelRatioF()
@@ -907,12 +960,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         dpr = self.devicePixelRatioF()
         win_x = x * dpr
         win_y = self._pick_viewport[3] - y * dpr
-        try:
-            p0 = np.array(gluUnProject(win_x, win_y, 0.0, self._pick_modelview,
-                                       self._pick_projection, self._pick_viewport))
-            p1 = np.array(gluUnProject(win_x, win_y, 1.0, self._pick_modelview,
-                                       self._pick_projection, self._pick_viewport))
-        except Exception:
+        p0 = self._unproject(win_x, win_y, 0.0)
+        p1 = self._unproject(win_x, win_y, 1.0)
+        if p0 is None or p1 is None:
             return None
         direction = p1 - p0
         norm = np.linalg.norm(direction)
