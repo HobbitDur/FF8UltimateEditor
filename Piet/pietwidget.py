@@ -1,9 +1,9 @@
 import os
 
-from PyQt6.QtCore import QSize, QSignalBlocker, pyqtSignal
+from PyQt6.QtCore import QSize, QSignalBlocker, pyqtSignal, Qt
 from PyQt6.QtGui import QIcon, QFontMetrics
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
-                             QSpinBox, QGroupBox, QFormLayout)
+                             QSpinBox, QGroupBox, QFormLayout, QSizePolicy)
 
 from Piet.pietmanager import PietManager
 
@@ -66,10 +66,13 @@ class PietWidget(QWidget):
 
             view_in_zone_button = QPushButton("View in Zone")
             view_in_zone_button.setToolTip("Jump to the Zone tool (mmag.bin editor) on this book's first page")
+            view_in_zone_button.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
             view_in_zone_button.clicked.connect(self._make_view_handler(book_id))
 
             book_group = QGroupBox(PietManager.BOOK_NAME_LIST[book_id])
+            book_group.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
             book_form = QFormLayout()
+            book_form.setSizeConstraint(QFormLayout.SizeConstraint.SetMinimumSize)
             book_form.addRow("First mmag entry:", first_spinbox)
             book_form.addRow("Last mmag entry:", last_spinbox)
             book_form.addRow("Pages:", page_label)
@@ -79,7 +82,7 @@ class PietWidget(QWidget):
             self.first_spinboxes.append(first_spinbox)
             self.last_spinboxes.append(last_spinbox)
             self.page_labels.append(page_label)
-            editor_layout.addWidget(book_group)
+            editor_layout.addWidget(book_group, alignment=Qt.AlignmentFlag.AlignLeft)
         editor_layout.addStretch(1)
         self.editor_container.setLayout(editor_layout)
         self.editor_container.setEnabled(False)
