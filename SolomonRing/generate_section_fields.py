@@ -218,7 +218,7 @@ sections["3"] = {"section_id": 3, "text_labels": NAMEDESC, "fields": gf_fields}
 # 4: Enemy attacks -----------------------------------------------------------
 sec(4, 1, ["Name"], [("Data", [
     ("magic_id", 2, "magic", "Magic ID"),
-    ("camera_change", 1, None, "Camera change"),
+    ("camera_change", 1, None, "Camera"),
     ("animation", 1, None, "Animation triggered"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
@@ -621,6 +621,16 @@ except Exception as e:
 HELP = {
     "attack_animation": "Battle effect / animation dispatched at runtime (attack-animation id).",
     "magic_id": "Battle effect / animation dispatched at runtime (attack-animation id).",
+    "camera_change": "Which battle-stage camera animation plays while the monster performs this "
+                     "attack. Read only for monster attacks (computeCommandAction, COMMAND_MONSTER"
+                     "_ATTACK) and consumed by cameraWhenDoingAction @0x506190:\n"
+                     "- low 7 bits (value & 0x7F) = the camera-animation INDEX picked from the "
+                     "battle stage's camera-animation collection (BS_GetCameraAnimationPointer).\n"
+                     "- bit 0x80 = force this camera even in the state that would otherwise skip it "
+                     "(sub_4A7120). ~70% of retail attacks set it.\n"
+                     "0xFF = default / no specific camera. Retail values are index 1-7 (e.g. 1-4, or "
+                     "0x81-0x87 with the force bit). For player commands this byte is unused - their "
+                     "camera is chosen randomly.",
     "attack_type": "How the damage / effect is calculated (see Attack Type list).",
     "spell_power": "Base power fed into the damage formula.",
     "attack_power": "Base power fed into the damage formula.",
@@ -1064,6 +1074,11 @@ for sid_s, cfg in sections.items():
             f["formula"] = "status_accuracy"
         if sid in (2, 3) and f["name"].startswith("compat_"):
             f["formula"] = "gf_compat"
+        # Enemy attack Camera byte -> composite editor (default/none checkbox + force bit +
+        # animation index). Verified: cameraWhenDoingAction @0x506190 uses value & 0x7F as the
+        # battle-stage camera-animation index, bit 0x80 = force; 0xFF = default/none.
+        if sid == 4 and f["name"] == "camera_change":
+            f["camera_selector"] = True
         # G-Forces (section 3): three coupled groups, each rendered as a nested sub-box with one
         # shared f(x) button (like a character HP stat curve), plus a standalone GF power button.
         if sid == 3:

@@ -240,12 +240,14 @@ class TestIfritSeqWidget:
         widget = IfritSeqWidget(manager)
         assert widget is not None
 
-    def test_ifrit_seq_widget_has_analyze_button(self, qapp):
-        """IfritSeqWidget should have an analyze button."""
+    def test_ifrit_seq_widget_has_the_three_views(self, qapp):
+        """User-friendly / Hex-editor / IfritSeq-code, like IfritAI's expert modes."""
         manager = _make_mock_ifrit_manager()
         widget = IfritSeqWidget(manager)
-        assert hasattr(widget, 'seq_analyze_button')
-        assert widget.seq_analyze_button is not None
+        assert widget.EXPERT_SELECTOR_ITEMS == ["User-friendly", "Hex-editor", "IfritSeq-code"]
+        items = [widget.expert_selector.itemText(i)
+                 for i in range(widget.expert_selector.count())]
+        assert items == widget.EXPERT_SELECTOR_ITEMS
 
     def test_ifrit_seq_widget_has_scroll_area(self, qapp):
         """IfritSeqWidget should have a scroll area for sequences."""
@@ -254,12 +256,13 @@ class TestIfritSeqWidget:
         assert hasattr(widget, 'scroll_area')
         assert widget.scroll_area is not None
 
-    def test_ifrit_seq_widget_has_analyze_textarea(self, qapp):
-        """IfritSeqWidget should have a textarea for analysis output."""
-        manager = _make_mock_ifrit_manager()
-        widget = IfritSeqWidget(manager)
-        assert hasattr(widget, 'seq_analyze_textarea')
-        assert widget.seq_analyze_textarea is not None
+    def test_the_translation_is_attached_to_each_sequence(self, qapp, game_data):
+        """No more one giant translation panel: each sequence carries its own."""
+        from FF8GameData.monsterdata import EntityType
+        widget = SeqWidget(seq=bytearray([0xA0, 0x05, 0xA2]), id=1,
+                           entity_type=EntityType.MONSTER, game_data=game_data)
+        translation = widget.translation_widget.toPlainText()
+        assert "A0 05" in translation and "A2" in translation
 
     def test_ifrit_seq_widget_export_button_exists(self, qapp):
         """IfritSeqWidget should have export XML button."""

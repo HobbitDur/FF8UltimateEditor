@@ -41,6 +41,7 @@ from ToolUpdate.toolupdatewidget import ToolUpdateWidget
 from Zone.zonewidget import ZoneWidget
 from SolomonRing.solomonringwidget import SolomonRingWidget
 from Fujin.fujinwidget import FujinWidget
+from Watts.wattswidget import WattsWidget
 
 
 class FF8UltimateEditorWidget(QWidget):
@@ -84,7 +85,8 @@ class FF8UltimateEditorWidget(QWidget):
             "Joker (sp2 sprite editor)",
             "Piet (mtmag.bin editor)",
             "Zone (mmag.bin editor)",
-            "Fujin (Magic animation explorer)"
+            "Fujin (Magic animation explorer)",
+            "Watts (r0win.dat victory editor)"
         ]
 
         # 3. Header: Program Selection (ComboBox)
@@ -180,6 +182,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._piet_widget = PietWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._zone_widget = ZoneWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._fujin_widget = FujinWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._watts_widget = WattsWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
 
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
@@ -204,6 +207,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._piet_widget) # Index 17
         self.tool_stack.addWidget(self._zone_widget) # Index 19
         self.tool_stack.addWidget(self._fujin_widget) # Index 21
+        self.tool_stack.addWidget(self._watts_widget) # Watts (r0win.dat), keep last in HOBBIT_OPTION_ITEMS
         self._piet_widget.view_in_zone_requested.connect(self._view_mmag_entry_in_zone)
         self._program_option_change()
         # 6. Final UI Assembly

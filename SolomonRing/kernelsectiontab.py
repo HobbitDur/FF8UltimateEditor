@@ -237,7 +237,7 @@ class KernelSectionTab(QWidget):
                     row_groups[rid] = []
                     row_order.append(rid)
                 row_groups[rid].append(field)
-            elif self._is_flags(field):
+            elif self._is_flags(field) or field.get("camera_selector"):
                 flag_fields.append(field)
             elif field.get("lookup"):
                 combos.append(field)
@@ -411,11 +411,49 @@ class KernelSectionTab(QWidget):
             self._formula_popup = FormulaPopup(self, self)
         self._formula_popup.show_for(field)
 
+    def _make_camera_widget(self, field):
+        """Composite editor for the enemy-attack Camera byte: a 'default (none)' checkbox
+        that greys the rest, a 'force' checkbox (bit 0x80) and the animation index (bits
+        0x7F). 0xFF = default/none. Registered as kind 'camera'; load/save (de)composes
+        the single byte."""
+        box = QGroupBox(field.get("label", "Camera"))
+        box.setToolTip(_wrap_tooltip(field.get("help", "")))
+        v = QVBoxLayout(box)
+        v.setSpacing(3)
+        unused = QCheckBox("No specific camera (default = 0xFF)")
+        force = QCheckBox("Force this camera (bit 0x80) — play it even in the state that "
+                          "would otherwise skip it")
+        idx_row = QHBoxLayout()
+        idx_lbl = QLabel("Camera animation index")
+        idx = NoWheelSpinBox()
+        idx.setRange(0, 0x7F)
+        idx.setFixedWidth(idx.fontMetrics().horizontalAdvance("127") + 36)
+        idx_row.addWidget(idx_lbl)
+        idx_row.addWidget(idx)
+        idx_row.addStretch(1)
+        v.addWidget(unused)
+        v.addWidget(force)
+        v.addLayout(idx_row)
+
+        def _sync(_=None):
+            on = not unused.isChecked()
+            force.setEnabled(on)
+            idx.setEnabled(on)
+            idx_lbl.setEnabled(on)
+        unused.toggled.connect(_sync)
+
+        box._cam_unused, box._cam_force, box._cam_index, box._cam_sync = unused, force, idx, _sync
+        self._field_widgets[field["name"]] = ("camera", field, box)
+        return box
+
     def _make_field_widget(self, field):
         name = field["name"]
         readonly = field.get("readonly", False)
         lookup_name = field.get("lookup")
         lookup = self.registry.resolve(lookup_name) if lookup_name else None
+
+        if field.get("camera_selector"):
+            return self._make_camera_widget(field)
 
         if lookup and lookup["type"] == "flags":
             box = QGroupBox(field.get("label", _prettify(name)))
@@ -625,6 +663,11 @@ class KernelSectionTab(QWidget):
                     cb.setChecked(bool(value & mask))
             elif kind == "bool":
                 widget.setChecked(bool(value))
+            elif kind == "camera":
+                widget._cam_unused.setChecked(value == 0xFF)
+                widget._cam_force.setChecked(bool(value & 0x80))
+                widget._cam_index.setValue(value & 0x7F)
+                widget._cam_sync()
         self._refresh_menu_refine_display(entry)
 
     def _load_menu_refine_reference(self):
@@ -683,6 +726,12 @@ class KernelSectionTab(QWidget):
                 entry.set(name, value)
             elif kind == "bool":
                 entry.set(name, 1 if widget.isChecked() else 0)
+            elif kind == "camera":
+                if widget._cam_unused.isChecked():
+                    entry.set(name, 0xFF)
+                else:
+                    entry.set(name, (0x80 if widget._cam_force.isChecked() else 0)
+                              | (widget._cam_index.value() & 0x7F))
         # Refresh the list label in case the name changed.
         self.list_widget.item(index).setText(self._entry_label(index, entry))
 

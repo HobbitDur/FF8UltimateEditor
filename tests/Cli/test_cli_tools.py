@@ -505,4 +505,4 @@ def test_all_tools_registered():
     assert {"shumi-translator", "ifrit-ai", "ifrit", "tonberry-shop", "siren",
             "junkshop", "quezacotl", "kadowaki", "minimog", "shiva", "ccgroup", "cid",
             "julia", "solomon-ring", "alexander", "seed", "piet", "moomba",
-            "zone"} <= names
+            "zone", "watts"} <= names

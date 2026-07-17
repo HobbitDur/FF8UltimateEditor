@@ -24,8 +24,8 @@ reads the frame count as a byte.)
 """
 import copy
 
-from .animloopdetector import (read_sequence_command_list, get_jump_target, is_jump,
-                               is_jump_int16)
+from .sequencecommand import (read_sequence_command_list, get_jump_target, is_jump,
+                              is_jump_int16)
 
 MAX_ANIMATION_FRAME = 255       # frame count is one byte
 # Under Slow status the engine plays every frame twice and computes the frame count as

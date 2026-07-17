@@ -9,6 +9,28 @@ from PyQt6.QtWidgets import QLabel
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+
+def _look_at_matrix(eye, target, up=(0.0, 1.0, 0.0)):
+    """A gluLookAt view matrix as a flat column-major 16-tuple for glMultMatrixf (no GLU
+    dependency, since libGLU is not reliably present)."""
+    eye = np.asarray(eye, dtype=np.float64)
+    target = np.asarray(target, dtype=np.float64)
+    up = np.asarray(up, dtype=np.float64)
+    forward = target - eye
+    norm = np.linalg.norm(forward)
+    forward = forward / norm if norm > 1e-9 else np.array([0.0, 0.0, -1.0])
+    side = np.cross(forward, up)
+    norm = np.linalg.norm(side)
+    side = side / norm if norm > 1e-9 else np.array([1.0, 0.0, 0.0])
+    true_up = np.cross(side, forward)
+    return np.array([
+        side[0], true_up[0], -forward[0], 0.0,
+        side[1], true_up[1], -forward[1], 0.0,
+        side[2], true_up[2], -forward[2], 0.0,
+        -np.dot(side, eye), -np.dot(true_up, eye), np.dot(forward, eye), 1.0,
+    ], dtype=np.float32)
+
+
 class FF8OpenGLWidget(QOpenGLWidget):
     """
     FF8 Monster Viewer Widget - Reusable PyQt Widget
@@ -263,6 +285,18 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.reference_position = [x, y, z]
         self.update()
 
+    def set_camera(self, eye, target, up=(0.0, 1.0, 0.0)):
+        """Place an explicit eye->target camera (used by the camera-animation preview),
+        replacing the orbit camera. Coordinates are in viewer space - the same space
+        set_vertices() uses. Call clear_explicit_camera() to restore the orbit controls."""
+        self._explicit_view = _look_at_matrix(eye, target, up)
+        self.update()
+
+    def clear_explicit_camera(self):
+        """Restore the normal orbit camera (rot/zoom/pan)."""
+        self._explicit_view = None
+        self.update()
+
     def paintGL(self):
         if self._textures_dirty and self._pending_qpixmaps:
             self._upload_pending_textures()
@@ -270,18 +304,24 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
 
-        # Pull camera back
-        glTranslatef(self.pan_x, self.pan_y, -self.zoom)
+        if getattr(self, "_explicit_view", None) is not None:
+            # Explicit eye->target camera (the camera-animation preview): apply the view
+            # matrix and draw the model at its raw vertex positions (the caller places the
+            # eye/target relative to the model's own bounds, so no orbit centering here).
+            glMultMatrixf(self._explicit_view)
+        else:
+            # Pull camera back
+            glTranslatef(self.pan_x, self.pan_y, -self.zoom)
 
-        # Orbit rotations — no up-vector flip issue
-        glRotatef(self.rot_x, 1.0, 0.0, 0.0)
-        glRotatef(self.rot_y, 0.0, 1.0, 0.0)
+            # Orbit rotations — no up-vector flip issue
+            glRotatef(self.rot_x, 1.0, 0.0, 0.0)
+            glRotatef(self.rot_y, 0.0, 1.0, 0.0)
 
-        # Center on model
-        glTranslatef(-self.reference_position[0], -self.reference_position[1], -self.reference_position[2])
+            # Center on model
+            glTranslatef(-self.reference_position[0], -self.reference_position[1], -self.reference_position[2])
 
-        # Apply frame position translation
-        glTranslatef(self.model_translation[0], self.model_translation[1], self.model_translation[2])
+            # Apply frame position translation
+            glTranslatef(self.model_translation[0], self.model_translation[1], self.model_translation[2])
 
         # Camera position in model space, for exact per-face backface culling
         # (the PSX culls per face after projection; a single global view axis

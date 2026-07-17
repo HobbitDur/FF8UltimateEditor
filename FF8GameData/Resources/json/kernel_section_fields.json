@@ -1627,8 +1627,10 @@
     "name": "camera_change",
     "offset": 4,
     "size": 1,
-    "label": "Camera change",
-    "group": "Data"
+    "label": "Camera",
+    "group": "Data",
+    "help": "Which battle-stage camera animation plays while the monster performs this attack. Read only for monster attacks (computeCommandAction, COMMAND_MONSTER_ATTACK) and consumed by cameraWhenDoingAction @0x506190:\n- low 7 bits (value & 0x7F) = the camera-animation INDEX picked from the battle stage's camera-animation collection (BS_GetCameraAnimationPointer).\n- bit 0x80 = force this camera even in the state that would otherwise skip it (sub_4A7120). ~70% of retail attacks set it.\n0xFF = default / no specific camera. Retail values are index 1-7 (e.g. 1-4, or 0x81-0x87 with the force bit). For player commands this byte is unused - their camera is chosen randomly.",
+    "camera_selector": true
    },
    {
     "name": "animation",

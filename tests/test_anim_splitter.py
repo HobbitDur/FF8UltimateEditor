@@ -13,8 +13,8 @@ import pytest
 from FF8GameData.gamedata import GameData
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.dat.animloopdetector import (get_animation_kind_dict, is_looping,
-                                              read_sequence_command_list, get_jump_target,
                                               get_slowable_animation_id_set)
+from FF8GameData.dat.sequencecommand import read_sequence_command_list, get_jump_target
 from FF8GameData.dat import animsplitter as splitter
 
 splitter_slowable = get_slowable_animation_id_set

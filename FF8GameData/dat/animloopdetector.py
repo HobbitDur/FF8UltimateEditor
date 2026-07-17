@@ -24,103 +24,16 @@ them gives the same answer.
 """
 import pathlib
 
+# The byte walk lives in sequencecommand: the ONE way to decode a sequence, shared with
+# IfritSeq's analyser and the splitter. Reading a sequence two slightly different ways is
+# exactly how a sequence ends up described one way and rewritten another (see that
+# module's docstring) - import from sequencecommand, never re-implement the walk.
+from .sequencecommand import iter_command as _read_sequence, get_jump_target
+
 ANIM_LOOP = "loop"
 ANIM_ONE_SHOT = "one_shot"
 ANIM_BOTH = "both"
 ANIM_UNUSED = "unused"
-
-_SOUND_OP_CODE = (0x97, 0x98, 0xB5, 0xB6, 0xB8)
-_FF_LIST_OP_CODE = (0x99, 0xB1, 0x9F)
-_JUMP_OP_CODE_INT8 = (0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC)
-_JUMP_OP_CODE_INT16 = (0xED, 0xEE, 0xEF, 0xF0, 0xF1, 0xF2, 0xF3)
-
-
-def _op_code_size(game_data, op_code: int):
-    for el in game_data.anim_sequence_data_json["op_code_info"]:
-        if el["op_code"] == op_code:
-            return el["size"]
-    return None
-
-
-def _read_sequence(game_data, sequence: bytes):
-    """Yield (address, op_code, parameters) for each command of the sequence.
-
-    The parameter length has to be computed exactly like the engine does, otherwise the
-    next op code is read from the middle of a parameter and everything after is garbage.
-    """
-    index = 0
-    size_sequence = len(sequence)
-    while index < size_sequence:
-        address = index
-        op_code = sequence[index]
-        index += 1
-        if op_code < 0x80:  # Play animation
-            yield address, op_code, b""
-        elif op_code in _FF_LIST_OP_CODE:  # Parameter list ended by FF
-            start = index
-            if op_code in (0x99, 0xB1):  # First parameter is the bone id
-                index += 1
-            while index < size_sequence and sequence[index] != 0xFF:
-                index += 1
-            index += 1
-            yield address, op_code, sequence[start:index]
-        elif op_code in _SOUND_OP_CODE:  # sound id, flag, and a channel mask if flag & 2
-            start = index
-            flag = sequence[index + 1] if index + 1 < size_sequence else 0
-            index += 2
-            if flag & 0x02:
-                index += 1
-            yield address, op_code, sequence[start:index]
-        elif op_code in (0xB0, 0xB4):  # Hit particle effect, see SequenceAnalyser._parse_b4_b0
-            start = index
-            flag = sequence[index + 1] if index + 1 < size_sequence else 0
-            index += 2
-            for bit in (0x01, 0x02, 0x04):
-                if flag & bit:
-                    index += 1
-            if flag & 0x08:
-                index += 1
-            elif not flag & 0x10 and flag & 0x40:
-                index += 6
-            yield address, op_code, sequence[start:index]
-        elif op_code == 0xAB:  # Renzokuken: 2 parameters, then plain op codes until A1
-            yield address, op_code, sequence[index:index + 2]
-            index += 2
-        else:
-            size = _op_code_size(game_data, op_code)
-            if size is None:  # Unknown op code: parameter size unknown, stop guessing
-                yield address, op_code, None
-                return
-            yield address, op_code, sequence[index:index + size]
-            index += size
-
-
-def read_sequence_command_list(game_data, sequence: bytes) -> list:
-    """[(address, op_code, parameters)] of a sequence, in byte order.
-
-    parameters is None on an unknown op code: the parameter size is what tells where the
-    next op code starts, so the rest of the sequence cannot be read.
-    """
-    return list(_read_sequence(game_data, sequence))
-
-
-def get_jump_target(address: int, op_code: int, parameters) -> int:
-    """Where a jump goes (op code address + signed offset). None when not a jump."""
-    if not parameters:
-        return None
-    if op_code in _JUMP_OP_CODE_INT8:
-        return address + int.from_bytes(parameters[:1], byteorder="little", signed=True)
-    if op_code in _JUMP_OP_CODE_INT16:
-        return address + int.from_bytes(parameters[:2], byteorder="little", signed=True)
-    return None
-
-
-def is_jump(op_code: int) -> bool:
-    return op_code in _JUMP_OP_CODE_INT8 or op_code in _JUMP_OP_CODE_INT16
-
-
-def is_jump_int16(op_code: int) -> bool:
-    return op_code in _JUMP_OP_CODE_INT16
 
 
 def _backward_jump_list(command_list):
