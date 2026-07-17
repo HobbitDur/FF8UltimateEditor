@@ -15,20 +15,25 @@ from Zone.zonerender import (PageRenderer, BUTTON_STYLE_BOXES, BUTTON_STYLE_ICON
 
 PREVIEW_SCALE = 2
 
-# Every file Zone reads: exact name -> (loader method, what it adds, needs mmag.bin first).
-# The open dialog filters on these names so they are all visible at once.
-LOADABLE_FILES = {
-    "mmag.bin": ("_load_mmag", "the magazine page entries this editor edits", False),
+# The file this editor edits. The open dialog filters on its exact name.
+MAIN_FILE = "mmag.bin"
+MAIN_FILTER = f"Magazine pages ({MAIN_FILE})"
+
+# The rest of the page is spread over other files. Exact name -> (loader, what it adds).
+# They are all offered in one multi-select dialog, filtered to these exact names, and it
+# can be reopened to add more later. Order does not matter between them: each only fills
+# in its own part of the manager, which the renderer reads as it draws.
+COMPLEMENTARY_FILES = {
     "mngrp.bin": ("_load_mngrp", "the page art, the overlay sprites and the book text "
-                                 "(needs mngrphd.bin beside it)", True),
-    "kernel.bin": ("_load_kernel", "Zell's Duel button combos, drawn on the Combat King pages", True),
+                                 "(needs mngrphd.bin beside it)"),
+    "kernel.bin": ("_load_kernel", "Zell's Duel button combos, drawn on the Combat King pages"),
     "mwepon.bin": ("_load_mwepon", "the weapon remodel item lists, drawn on the "
-                                   "Weapons Monthly pages", True),
+                                   "Weapons Monthly pages"),
     "icon.sp1": ("_load_icons", "the button and item icons of those two lists "
-                                "(needs icon.TEX beside it)", True),
-    "mitem.bin": ("_load_mitem", "which type icon each remodel item uses", True),
+                                "(needs icon.TEX beside it)"),
+    "mitem.bin": ("_load_mitem", "which type icon each remodel item uses"),
 }
-LOADABLE_FILTER = "FF8 magazine files (" + " ".join(LOADABLE_FILES) + ")"
+COMPLEMENTARY_FILTER = "Complementary FF8 files (" + " ".join(COMPLEMENTARY_FILES) + ")"
 
 
 class ZoneWidget(QWidget):
@@ -66,11 +71,19 @@ class ZoneWidget(QWidget):
         self.save_button.setToolTip("Save all modifications in the opened mmag.bin (irreversible)")
         self.save_button.clicked.connect(self.save_file)
 
+        # Greyed until mmag.bin is open: the complementary files only decorate its
+        # entries, so there is nothing for them to fill in before that. (Qt still
+        # shows a disabled widget's tooltip, so the reason stays readable on hover.)
+        self.complementary_button = QPushButton("Complementary files")
+        self.complementary_button.setEnabled(False)
+        self.complementary_button.clicked.connect(self.load_complementary_files)
+
         file_section_layout = QHBoxLayout()
         file_section_layout.addWidget(self.load_button)
         file_section_layout.addWidget(self.save_button)
+        file_section_layout.addWidget(self.complementary_button)
         file_section_layout.addStretch(1)
-        self._update_load_tooltip()
+        self._update_tooltips()
 
         # Entry list (left)
         self.entry_list = QListWidget()
@@ -354,39 +367,54 @@ class ZoneWidget(QWidget):
         return spins
 
     def load_file(self):
-        """One dialog for every file Zone reads, listed by its exact name.
-
-        Whichever one is picked is loaded into its own slot, so the files can be
-        opened in any order and the dialog doubles as the list of what Zone wants."""
+        """Open mmag.bin, the file this editor edits."""
         file_name = self.file_dialog.getOpenFileName(
-            parent=self, caption="Open an FF8 file used by the magazine pages",
-            filter=LOADABLE_FILTER, directory=os.getcwd())[0]
+            parent=self, caption=f"Open {MAIN_FILE}", filter=MAIN_FILTER,
+            directory=os.getcwd())[0]
         if not file_name:
             return
-        loader = LOADABLE_FILES.get(os.path.basename(file_name).lower())
-        if loader is None:
-            QMessageBox.warning(
-                self, "Unknown file",
-                f"{os.path.basename(file_name)} is not one of the files Zone reads.\n\n"
-                + "\n".join(f"• {name}: {what}" for name, (_, what, _) in LOADABLE_FILES.items()))
-            return
-        method, _what, needs_entries = loader
-        if needs_entries and not self.manager.entries:
-            QMessageBox.warning(self, "Load mmag.bin first",
-                                "mmag.bin holds the page entries everything else decorates, "
-                                "so load it before the others.")
-            return
         try:
-            getattr(self, method)(file_name)
+            self._load_mmag(file_name)
         except (OSError, ValueError) as e:
             QMessageBox.critical(self, "Error", f"Could not load {os.path.basename(file_name)}:\n{e}")
             return
-        self._update_load_tooltip()
+        self._update_tooltips()
         self._refresh_preview()
+
+    def load_complementary_files(self):
+        """Open any number of the complementary files at once.
+
+        The dialog is filtered to their exact names, so it doubles as the list of
+        what Zone can use, and it can be reopened to add the ones left out. They
+        are loaded in the order they were picked - it makes no difference."""
+        if not self.manager.entries:  # The button is disabled until then anyway
+            return
+        file_names = self.file_dialog.getOpenFileNames(
+            parent=self, caption="Open the complementary files (several at once is fine)",
+            filter=COMPLEMENTARY_FILTER, directory=os.getcwd())[0]
+        if not file_names:
+            return
+
+        problems = []
+        for file_name in file_names:
+            name = os.path.basename(file_name).lower()
+            if name not in COMPLEMENTARY_FILES:
+                problems.append(f"Not a file Zone uses: {os.path.basename(file_name)}")
+                continue
+            try:
+                getattr(self, COMPLEMENTARY_FILES[name][0])(file_name)
+            except (OSError, ValueError) as e:
+                problems.append(f"Could not load {name}: {e}")
+
+        self._update_tooltips()
+        self._refresh_preview()
+        if problems:
+            QMessageBox.warning(self, "Some files were not loaded", "\n\n".join(problems))
 
     def _load_mmag(self, file_name):
         self.manager.load_file(file_name)
         self.editor_container.setEnabled(True)
+        self.complementary_button.setEnabled(True)
         self.current_entry_index = -1
         self.entry_list.clear()
         for index in range(len(self.manager.entries)):
@@ -412,24 +440,43 @@ class ZoneWidget(QWidget):
     def _load_mitem(self, file_name):
         self.manager.load_mitem(file_name)
 
-    def _update_load_tooltip(self):
-        """Hovering the open button says what each file adds and what is loaded."""
-        loaded = {
-            "mmag.bin": bool(self.manager.entries),
+    def _complementary_loaded(self):
+        return {
             "mngrp.bin": self.manager.mngrp_loaded,
             "kernel.bin": self.manager.kernel_loaded,
             "mwepon.bin": self.manager.mwepon_loaded,
             "icon.sp1": self.manager.icons_loaded,
             "mitem.bin": self.manager.mitem_loaded,
         }
-        lines = ["<b>Open an FF8 file</b> (the dialog lists them all by name; "
-                 "load them one at a time, in any order):<br>"]
-        for name, (_method, what, _needs) in LOADABLE_FILES.items():
-            mark = "✔" if loaded.get(name) else "–"
+
+    def _update_tooltips(self):
+        """Hovering either button says what it opens and what is already loaded."""
+        opened = f"<br><br>Currently open: <b>{os.path.basename(self.manager.file_path)}</b>" \
+            if self.manager.file_path else "<br><br>Nothing open yet."
+        self.load_button.setToolTip(
+            f"<b>Open {MAIN_FILE}</b> — the magazine page entries this editor edits.<br><br>"
+            "One entry is one page view: its window, its paper mat, the art and text laid over "
+            "it, and what reading it unlocks. Everything else a page needs lives in other files "
+            "— see <b>Complementary files</b>." + opened)
+
+        loaded = self._complementary_loaded()
+        missing = [name for name, is_loaded in loaded.items() if not is_loaded]
+        lines = [f"<b>Open the complementary files</b> — the page art, text and icons "
+                 f"{MAIN_FILE} only points at.<br><br>"]
+        if not self.manager.entries:
+            lines.append(f"<i>Greyed out until {MAIN_FILE} is open</i>: these only decorate its "
+                         f"page entries, so there is nothing for them to fill in yet.<br><br>")
+        lines.append("<b>Pick as many as you like at once</b>, in any order, and come back to "
+                     "this button any time to add the rest: each one only fills in its own part "
+                     "of the preview.<br>")
+        for name, (_method, what) in COMPLEMENTARY_FILES.items():
+            mark = "✔" if loaded[name] else "–"
             lines.append(f"{mark} <b>{name}</b> — {what}<br>")
-        lines.append("<br>mngrphd.bin, sysfnt.TEX and sysfnt.tdw are read from "
-                     "the folder mngrp.bin is in.")
-        self.load_button.setToolTip("".join(lines))
+        lines.append("<br>mngrphd.bin, sysfnt.TEX and sysfnt.tdw are read from the folder "
+                     "mngrp.bin is in; icon.TEX from icon.sp1's.")
+        if missing:
+            lines.append(f"<br><br>Still missing: <b>{', '.join(missing)}</b>.")
+        self.complementary_button.setToolTip("".join(lines))
 
     def save_file(self):
         if not self.manager.file_path:
