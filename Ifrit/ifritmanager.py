@@ -13,6 +13,9 @@ from PIL import Image
 from PIL.ImageQt import QPixmap
 from PyQt6.QtGui import QColor, QImage
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+from FF8GameData.dat.animloopdetector import analyse_animation_usage, is_looping, ANIM_UNUSED
+from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
+                                          get_max_frame_for_animation)
 from FF8GameData.tim.timfile import decode_tim, force_opaque
 from FF8GameData.gamedata import GameData
 from FF8GameData.monsterdata import (Matrix4x4, Animation, EntityType, Bone,
@@ -178,6 +181,122 @@ class IfritManager:
 
     def save_file(self, file_path):
         self.enemy.write_data_to_file(self.game_data, file_path)
+
+    # ── Batch fps conversion ──────────────────────────────────────────
+
+    BATTLE_NATIVE_FPS = 15
+
+    @staticmethod
+    def is_character_family_file(file_path) -> bool:
+        """True for a character body or weapon file (dXcYYY / dXwYYY)."""
+        name = os.path.basename(str(file_path)).lower()
+        return len(name) > 2 and name.startswith('d') and name[2] in ('c', 'w')
+
+    @staticmethod
+    def get_file_family_list(file_path) -> list:
+        """The files that must be converted together with this one.
+
+        A character is a body + a weapon, both animated by the SAME animation id, each
+        reading its own file (Battle_QueueAnimation @0x509520 queues the id on both).
+        Their animations have matching frame counts in vanilla, so converting one without
+        the other makes the weapon finish early and freeze while the body keeps moving.
+        A monster file animates nothing but itself.
+        """
+        path = pathlib.Path(file_path)
+        name = path.name.lower()
+        if len(name) < 3 or not name.startswith('d') or name[2] not in ('c', 'w'):
+            return [path]
+        family = sorted(file for file in path.parent.iterdir()
+                        if file.is_file() and file.name.lower().startswith(name[:2])
+                        and len(file.name) > 2 and file.name.lower()[2] in ('c', 'w')
+                        and file.name.lower().endswith('.dat'))
+        return family or [path]
+
+    def convert_file_list_to_fps(self, file_list, target_fps: int, split_when_too_long: bool = True,
+                                 progress_callback=None) -> list:
+        """Convert every .dat of file_list to target_fps, in place.
+
+        Returns one report dict per file: file, name, nb_converted, split_list,
+        skipped_list [(anim id, reason)], error, source (weapon read for a character).
+        progress_callback(index, file_name) may return False to stop early.
+        """
+        factor = max(1, target_fps // self.BATTLE_NATIVE_FPS)
+        report_list = []
+        for index, file_path in enumerate(file_list):
+            if progress_callback and progress_callback(index, os.path.basename(file_path)) is False:
+                break
+            report_list.append(self._convert_one_file_to_fps(file_path, factor, split_when_too_long))
+        return report_list
+
+    def _convert_one_file_to_fps(self, file_path, factor: int, split_when_too_long: bool) -> dict:
+        report = {'file': os.path.basename(file_path), 'name': "", 'nb_converted': 0,
+                  'split_list': [], 'skipped_list': [], 'error': "", 'source': ""}
+        try:
+            monster = MonsterAnalyser(self.game_data)
+            monster.load_file_data(str(file_path), self.game_data)
+            monster.analyse_loaded_data(self.game_data)
+        except Exception as e:
+            report['error'] = f"the file cannot be read ({type(e).__name__})"
+            return report
+
+        report['name'] = str(monster.info_stat_data.get('monster_name', "") or "")
+        if not monster.animation_data.nb_animations or not monster.bone_data:
+            report['error'] = "no animation in this file"
+            return report
+
+        usage = analyse_animation_usage(self.game_data, monster)
+        report['source'] = usage['source']
+        if not usage['kind_dict']:
+            report['error'] = ("the looping animations cannot be detected: no animation "
+                               "sequence section, and no weapon file of this character next to it")
+            return report
+
+        # A character body and its weapons are animated by the SAME animation ids and must
+        # keep matching frame counts. Only the weapon carries the sequences, so only the
+        # weapon could be split — which would leave the body behind, and make the sequence
+        # ask both for a part id the body does not have. So no file of a character family
+        # is ever split: the animation is left alone in the body AND in the weapon, which
+        # take the same decision since they read the same sequences.
+        is_family = self.is_character_family_file(file_path)
+        allow_split = split_when_too_long and not is_family
+
+        bones = monster.bone_data.bones
+        nb_animation_before = monster.animation_data.nb_animations
+        for anim_id in range(nb_animation_before):
+            animation = monster.animation_data.animations[anim_id]
+            nb_frame = len(animation.frames)
+            if nb_frame < 2:
+                continue
+            smooth_loop = is_looping(usage['kind_dict'].get(anim_id, ANIM_UNUSED))
+            max_frame = get_max_frame_for_animation(anim_id in usage['slowable_set'])
+            if get_converted_frame_count(nb_frame, factor, smooth_loop) <= max_frame:
+                animation.create_interpolated_frames(bones, factor, smooth_loop)
+                report['nb_converted'] += 1
+                continue
+            if not allow_split:
+                reason = (f"{nb_frame} frames: too long once converted (limit {max_frame})")
+                if is_family:
+                    reason += (", and a character animation cannot be split: the body and its "
+                               "weapons share the animation ids, so both would have to be cut "
+                               "and only the weapon holds the sequences")
+                report['skipped_list'].append((anim_id, reason))
+                continue
+            try:
+                split_report = split_and_convert_animation(
+                    self.game_data, monster.animation_data, monster.seq_animation_data,
+                    bones, anim_id, factor, smooth_loop, max_frame)
+            except ValueError as e:
+                report['skipped_list'].append((anim_id, f"{nb_frame} frames, cannot be split: {e}"))
+                continue
+            report['split_list'].append((anim_id, nb_frame, split_report['nb_part'],
+                                         split_report['new_id_list']))
+            report['nb_converted'] += split_report['nb_part']
+
+        try:
+            monster.write_data_to_file(self.game_data, str(file_path))
+        except Exception as e:
+            report['error'] = f"the file cannot be saved ({type(e).__name__}: {e})"
+        return report
 
     def update_from_xlsx(self):
         #self.enemy.analyse_loaded_data(self.game_data)

@@ -8,10 +8,9 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QFileDialog)
 
 from FF8GameData.monsterdata import AnimationFrame, AnimationSection, Animation
-from FF8GameData.dat.animloopdetector import (get_animation_kind_dict, is_looping,
+from FF8GameData.dat.animloopdetector import (is_looping, analyse_animation_usage,
                                               find_character_weapon_file_list,
-                                              get_animation_kind_dict_from_weapon_file,
-                                              get_slowable_animation_id_set,
+                                              get_animation_usage_from_weapon_file,
                                               ANIM_LOOP, ANIM_ONE_SHOT, ANIM_BOTH, ANIM_UNUSED)
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_nb_part_needed,
                                           get_max_frame_for_animation,
@@ -47,8 +46,7 @@ class Ifrit3DWidget(QWidget):
 
         # Loop detection of a character body needs its weapon file, keep what was read
         # so the file is not searched again on every conversion.
-        self._weapon_kind_dict_cache = {}
-        self._weapon_file_used_cache = {}
+        self._animation_usage_cache = {}
         self.weapon_file_used = ""
 
         # Playlist variables
@@ -904,12 +902,23 @@ class Ifrit3DWidget(QWidget):
             "Save the file to write the new mesh into the .dat.")
 
     def _get_slowable_animation_id_set(self):
-        """Animations Slow status can reach: they have a lower frame limit."""
-        enemy = self.ifrit_manager.enemy
-        seq_animation_data = getattr(enemy, 'seq_animation_data', None)
-        if not seq_animation_data:
-            return set()
-        return get_slowable_animation_id_set(self.ifrit_manager.game_data, seq_animation_data)
+        """Animations Slow status can reach: they have a lower frame limit.
+
+        A character body has no sequence section, so this comes from its weapon file like
+        the loop detection does — reading it from the body alone would find nothing and
+        wrongly give its idle the full 255 frame limit.
+        """
+        return self._get_animation_usage()['slowable_set']
+
+    def _get_animation_usage(self):
+        """{'kind_dict', 'slowable_set', 'source'}, cached per loaded file."""
+        origin_path = getattr(self.ifrit_manager.enemy, 'origin_path', "")
+        if origin_path not in self._animation_usage_cache:
+            usage = analyse_animation_usage(self.ifrit_manager.game_data, self.ifrit_manager.enemy)
+            self._animation_usage_cache[origin_path] = usage
+        usage = self._animation_usage_cache[origin_path]
+        self.weapon_file_used = usage['source']
+        return usage
 
     def _get_max_animation_frames(self, anim_id: int) -> int:
         """How long animation anim_id may be in this file.
@@ -980,60 +989,44 @@ class Ifrit3DWidget(QWidget):
         """Which animations of the loaded file loop, read from the sequence section.
 
         A character body has no sequence section: its animations are driven by the
-        program in its weapon file, so the weapon is read instead. Empty when nothing
-        can be read, the caller then has to ask the user.
+        program in its weapon file, so the weapon sitting next to it is read instead.
+        Empty when nothing can be read, the caller then has to ask the user.
         """
-        enemy = self.ifrit_manager.enemy
-        nb_animation = enemy.animation_data.nb_animations
-        kind_dict = get_animation_kind_dict(self.ifrit_manager.game_data,
-                                            getattr(enemy, 'seq_animation_data', None),
-                                            nb_animation)
+        kind_dict = self._get_animation_usage()['kind_dict']
         if kind_dict:
-            self.weapon_file_used = ""
             return kind_dict
-        return self._get_animation_kind_dict_from_weapon(nb_animation)
+        return self._ask_weapon_file_kind_dict()
 
-    def _get_animation_kind_dict_from_weapon(self, nb_animation: int):
-        """Read the loops of a character from one of its weapon files.
-
-        Every weapon of a character carries the same sequence section (identical bytes in
-        the vanilla files), so the first readable one next to the body is taken. The user
-        is asked for a file only when there is none.
-        """
+    def _ask_weapon_file_kind_dict(self):
+        """Last resort for a character whose weapon file is not next to it."""
         origin_path = getattr(self.ifrit_manager.enemy, 'origin_path', "")
-        if not origin_path:
+        if not origin_path or find_character_weapon_file_list(origin_path):
+            return {}  # not a character, or the weapons were there and unreadable
+        answer = QMessageBox.question(
+            self, "Weapon file needed",
+            "This is a character model: the animations are driven by the program stored "
+            "in its weapon file (dXwYYY.dat), which is not next to it.\n\n"
+            "Select the weapon file of this character to detect the looping animations?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if answer != QMessageBox.StandardButton.Yes:
             return {}
-        if origin_path in self._weapon_kind_dict_cache:
-            self.weapon_file_used = self._weapon_file_used_cache.get(origin_path, "")
-            return self._weapon_kind_dict_cache[origin_path]
-
-        weapon_file_list = find_character_weapon_file_list(origin_path)
-        if not weapon_file_list:
-            answer = QMessageBox.question(
-                self, "Weapon file needed",
-                "This is a character model: the animations are driven by the program stored "
-                "in its weapon file (dXwYYY.dat), which is not next to it.\n\n"
-                "Select the weapon file of this character to detect the looping animations?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-            if answer == QMessageBox.StandardButton.Yes:
-                weapon_path, _ = QFileDialog.getOpenFileName(self, "Select the weapon file",
-                                                             str(pathlib.Path(origin_path).parent),
-                                                             "Weapon file (*.dat);;All files (*)")
-                if weapon_path:
-                    weapon_file_list = [pathlib.Path(weapon_path)]
-
-        for weapon_file in weapon_file_list:
-            try:
-                kind_dict = get_animation_kind_dict_from_weapon_file(
-                    self.ifrit_manager.game_data, weapon_file, nb_animation)
-            except Exception:  # garbage file (d0w007) or not a weapon at all: try the next one
-                continue
-            if kind_dict:
-                self._weapon_kind_dict_cache[origin_path] = kind_dict
-                self._weapon_file_used_cache[origin_path] = weapon_file.name
-                self.weapon_file_used = weapon_file.name
-                return kind_dict
-        return {}
+        weapon_path, _ = QFileDialog.getOpenFileName(self, "Select the weapon file",
+                                                     str(pathlib.Path(origin_path).parent),
+                                                     "Weapon file (*.dat);;All files (*)")
+        if not weapon_path:
+            return {}
+        try:
+            kind_dict, slowable_set = get_animation_usage_from_weapon_file(
+                self.ifrit_manager.game_data, weapon_path,
+                self.ifrit_manager.enemy.animation_data.nb_animations)
+        except Exception:
+            return {}
+        if kind_dict:
+            self.weapon_file_used = pathlib.Path(weapon_path).name
+            self._animation_usage_cache[origin_path] = {
+                'kind_dict': kind_dict, 'slowable_set': slowable_set,
+                'source': self.weapon_file_used}
+        return kind_dict
 
     def _ask_smooth_loop(self, title: str):
         """Fallback when the file has no sequence section to detect the loops from."""

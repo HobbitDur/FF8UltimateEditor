@@ -4,10 +4,11 @@ from PyQt6.QtCore import QSize, QSettings, Qt
 from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFileDialog, QTabWidget, QMessageBox, QCheckBox
+    QFileDialog, QTabWidget, QMessageBox, QCheckBox, QProgressDialog, QApplication
 )
 from Ifrit.IfritAI.ifritaiwidget import IfritAIWidget
 from Ifrit.ifritmanager import IfritManager
+from Ifrit.fpsbatchdialog import FpsBatchDialog, FpsBatchReportDialog
 from Ifrit.IfritDynamicTexture.ifritdynamictexturewidget import IfritDynamicTextureWidget
 from Ifrit.IfritSeq.ifritseqwidget import IfritSeqWidget
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
@@ -59,7 +60,13 @@ class IfritMonsterWidget(QWidget):
 
         self._monster_label = QLabel("No file loaded")
 
-        for w in [self._open_btn, self._save_btn, self._reload_btn, self._cronos_checkbox, self._monster_label]:
+        self._fps_batch_btn = QPushButton("Files to 30/60 FPS...")
+        self._fps_batch_btn.setToolTip("Convert the animations of several .dat files at once to\n"
+                                       "30 or 60 fps, without opening them one by one.")
+        self._fps_batch_btn.clicked.connect(self._convert_files_to_fps)
+
+        for w in [self._open_btn, self._save_btn, self._reload_btn, self._cronos_checkbox,
+                  self._fps_batch_btn, self._monster_label]:
             tl.addWidget(w)
         tl.addStretch()
 
@@ -161,6 +168,40 @@ class IfritMonsterWidget(QWidget):
             else:
                 for widget in stat_like + [self._seq_widget]:
                     self._tabs.setTabEnabled(self._tabs.indexOf(widget), True)
+
+    def _convert_files_to_fps(self):
+        """Convert the animations of several .dat files to 30 or 60 fps in one go."""
+        folder = self._file_dialog_folder or os.path.dirname(self.file_loaded)
+        dialog = FpsBatchDialog(self, folder, family_func=IfritManager.get_file_family_list)
+        if dialog.exec() != FpsBatchDialog.DialogCode.Accepted:
+            return
+        file_list = dialog.get_checked_file_list()
+        target_fps = dialog.get_target_fps()
+        split_when_too_long = dialog.get_split_when_too_long()
+
+        progress = QProgressDialog(f"Converting to {target_fps} fps...", "Cancel",
+                                   0, len(file_list), self)
+        progress.setWindowTitle(f"Convert files to {target_fps} FPS")
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(0)
+
+        def on_progress(index, file_name):
+            progress.setValue(index)
+            progress.setLabelText(f"{file_name}  ({index + 1}/{len(file_list)})")
+            QApplication.processEvents()
+            return not progress.wasCanceled()
+
+        try:
+            report_list = self.ifrit_manager.convert_file_list_to_fps(
+                file_list, target_fps, split_when_too_long, progress_callback=on_progress)
+        finally:
+            progress.setValue(len(file_list))
+
+        FpsBatchReportDialog(self, report_list, target_fps).exec()
+        # The loaded file may be one of the converted ones
+        if self.file_loaded and any(os.path.normcase(f) == os.path.normcase(self.file_loaded)
+                                    for f in file_list):
+            self._reload_file()
 
     def _load_all(self, path: str):
         self.file_loaded = path

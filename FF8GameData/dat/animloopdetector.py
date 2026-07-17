@@ -259,11 +259,47 @@ def get_animation_kind_dict_from_weapon_file(game_data, weapon_file_path, nb_ani
     index the body animations (and the weapon's own ones, the engine reads the same id in
     both, see Battle_QueueAnimation @0x509520). Returns {} if the file cannot be used.
     """
+    return get_animation_usage_from_weapon_file(game_data, weapon_file_path, nb_animation)[0]
+
+
+def get_animation_usage_from_weapon_file(game_data, weapon_file_path, nb_animation: int) -> tuple:
+    """(kind dict, slowable id set) of a character, read from one of its weapon files."""
     from .monsteranalyser import MonsterAnalyser  # imported late: heavy and only needed here
     weapon = MonsterAnalyser(game_data)
     weapon.load_file_data(str(weapon_file_path), game_data)
     weapon.analyse_loaded_data(game_data)
-    return get_animation_kind_dict(game_data, weapon.seq_animation_data, nb_animation)
+    return (get_animation_kind_dict(game_data, weapon.seq_animation_data, nb_animation),
+            get_slowable_animation_id_set(game_data, weapon.seq_animation_data))
+
+
+def analyse_animation_usage(game_data, monster) -> dict:
+    """How the sequences use the animations of a loaded entity.
+
+    {'kind_dict': {anim id: kind}, 'slowable_set': {anim id}, 'source': file read}
+
+    A character body has no sequence section: the program driving it — and telling which
+    of its animations the idle plays, hence which ones Slow can reach — is in its weapon
+    file, so the weapon sitting next to it is read instead. 'source' is empty when the
+    entity carries its own sequences, and 'kind_dict' is empty when nothing could be read.
+    """
+    nb_animation = monster.animation_data.nb_animations
+    seq_animation_data = getattr(monster, 'seq_animation_data', None)
+    kind_dict = get_animation_kind_dict(game_data, seq_animation_data, nb_animation)
+    if kind_dict:
+        return {'kind_dict': kind_dict,
+                'slowable_set': get_slowable_animation_id_set(game_data, seq_animation_data),
+                'source': ""}
+
+    for weapon_file in find_character_weapon_file_list(getattr(monster, 'origin_path', "")):
+        try:
+            kind_dict, slowable_set = get_animation_usage_from_weapon_file(
+                game_data, weapon_file, nb_animation)
+        except Exception:  # garbage weapon file (d0w007): try the next one
+            continue
+        if kind_dict:
+            return {'kind_dict': kind_dict, 'slowable_set': slowable_set,
+                    'source': weapon_file.name}
+    return {'kind_dict': {}, 'slowable_set': set(), 'source': ""}
 
 
 def is_looping(kind) -> bool:
