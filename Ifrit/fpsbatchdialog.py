@@ -66,11 +66,16 @@ class FpsBatchDialog(QDialog):
         self._split_check.setChecked(True)
         self._split_check.setToolTip("An animation too long once converted is cut in parts that "
                                      "the sequences play one after the other, which keeps the\n"
-                                     "motion identical. Without this they are left unconverted.")
+                                     "motion identical. Without this, a file needing it is left "
+                                     "untouched.")
         layout.addWidget(self._split_check)
 
-        warning = QLabel("The selected files are modified in place. Keep a backup of your "
-                         "files, and only run this once per file:\nconverting an already "
+        warning = QLabel("A file is converted whole or not at all: when one of its animations "
+                         "cannot make it, the file is left untouched and listed in the report "
+                         "(at 60 fps that happens on ~50 monsters, whose idle is too long — "
+                         "converting those files to 30 fps works).\n\n"
+                         "The selected files are modified in place. Keep a backup of your "
+                         "files, and only run this once per file: converting an already "
                          "converted file would interpolate the interpolated frames.")
         warning.setWordWrap(True)
         warning.setStyleSheet("color:#c8a24a;")
@@ -178,17 +183,22 @@ class FpsBatchReportDialog(QDialog):
         nb_file_done = sum(1 for r in report_list if not r['error'] and r['nb_converted'])
         nb_animation = sum(r['nb_converted'] for r in report_list)
         nb_split = sum(len(r['split_list']) for r in report_list)
-        nb_skipped = sum(len(r['skipped_list']) for r in report_list)
+        left_alone = [r for r in report_list if r['skipped_list']]
         error_list = [r for r in report_list if r['error']]
 
         summary = (f"{nb_animation} animation(s) converted to {target_fps} fps in "
                    f"{nb_file_done} file(s).")
         if nb_split:
             summary += f"\n{nb_split} animation(s) were too long and have been split in parts."
-        if nb_skipped:
-            summary += f"\n{nb_skipped} animation(s) could NOT be converted (see below)."
+        if left_alone:
+            summary += (f"\n{len(left_alone)} file(s) were left untouched: one of their "
+                        f"animations cannot be converted, and a file where only some "
+                        f"animations are converted plays those at the wrong speed.")
+            if target_fps == 60:
+                summary += ("\nRun the conversion again on those files with 30 FPS: "
+                            "they all fit at 30 fps.")
         if error_list:
-            summary += f"\n{len(error_list)} file(s) could not be done at all."
+            summary += f"\n{len(error_list)} file(s) could not be read at all."
         summary_label = QLabel(summary)
         summary_label.setWordWrap(True)
         layout.addWidget(summary_label)
@@ -214,22 +224,30 @@ class FpsBatchReportDialog(QDialog):
         line_list = []
         not_done = [r for r in report_list if r['error'] or r['skipped_list']]
         if not_done:
-            line_list.append("=== NOT converted ===")
+            line_list.append(f"=== NOT converted, left untouched at 15 fps ===")
+            if any(r['skipped_list'] for r in not_done):
+                line_list.append("(the whole file is left alone: the engine plays one frame per "
+                                 "tick, so an animation still at 15 fps in a converted file "
+                                 "would run too fast)")
+                if target_fps == 60:
+                    line_list.append("(converting these files to 30 FPS instead works: they all "
+                                     "fit at 30 fps)")
+                line_list.append("")
             for report in not_done:
                 title = f"{report['file']}" + (f" ({report['name']})" if report['name'] else "")
                 if report['error']:
                     line_list.append(f"{title}: {report['error']}")
                     continue
-                line_list.append(f"{title}: {len(report['skipped_list'])} animation(s) left "
-                                 f"at 15 fps, the rest of the file is converted")
+                line_list.append(f"{title}: {len(report['skipped_list'])} animation(s) cannot be "
+                                 f"converted")
                 for anim_id, reason in report['skipped_list']:
                     line_list.append(f"    animation {anim_id}: {reason}")
             line_list.append("")
 
         line_list.append("=== Converted ===")
         for report in report_list:
-            if report['error']:
-                continue
+            if report['error'] or report['skipped_list'] or not report['nb_converted']:
+                continue  # untouched files are listed above, not here
             title = f"{report['file']}" + (f" ({report['name']})" if report['name'] else "")
             detail = f"{report['nb_converted']} animation(s)"
             if report['source']:

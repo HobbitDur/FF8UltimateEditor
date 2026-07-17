@@ -15,7 +15,8 @@ from PyQt6.QtGui import QColor, QImage
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.dat.animloopdetector import analyse_animation_usage, is_looping, ANIM_UNUSED
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
-                                          get_max_frame_for_animation)
+                                          get_max_frame_for_animation, get_nb_part_needed,
+                                          can_split_animation)
 from FF8GameData.tim.timfile import decode_tim, force_opaque
 from FF8GameData.gamedata import GameData
 from FF8GameData.monsterdata import (Matrix4x4, Animation, EntityType, Bone,
@@ -229,6 +230,14 @@ class IfritManager:
         return report_list
 
     def _convert_one_file_to_fps(self, file_path, factor: int, split_when_too_long: bool) -> dict:
+        """Convert every animation of one file, or none of them.
+
+        The frame count of an animation IS its duration: the engine reads one frame per
+        tick. So an animation left at 15 fps inside a file converted to 60 fps would play
+        four times too fast — a half converted file is worse than an untouched one. When
+        one animation cannot make it, the file is reported and left alone, and the 30 fps
+        conversion is then the way to still gain something on it.
+        """
         report = {'file': os.path.basename(file_path), 'name': "", 'nb_converted': 0,
                   'split_list': [], 'skipped_list': [], 'error': "", 'source': ""}
         try:
@@ -262,32 +271,39 @@ class IfritManager:
 
         bones = monster.bone_data.bones
         nb_animation_before = monster.animation_data.nb_animations
+
+        # 1. decide for every animation, without touching anything
+        plan_list = []  # (anim_id, smooth_loop, max_frame, needs_split)
         for anim_id in range(nb_animation_before):
-            animation = monster.animation_data.animations[anim_id]
-            nb_frame = len(animation.frames)
+            nb_frame = len(monster.animation_data.animations[anim_id].frames)
             if nb_frame < 2:
-                continue
+                continue  # a single pose: nothing to interpolate
             smooth_loop = is_looping(usage['kind_dict'].get(anim_id, ANIM_UNUSED))
             max_frame = get_max_frame_for_animation(anim_id in usage['slowable_set'])
             if get_converted_frame_count(nb_frame, factor, smooth_loop) <= max_frame:
-                animation.create_interpolated_frames(bones, factor, smooth_loop)
+                plan_list.append((anim_id, smooth_loop, max_frame, False))
+                continue
+            reason = self._get_no_split_reason(monster, anim_id, nb_frame, factor, smooth_loop,
+                                               max_frame, allow_split, is_family)
+            if reason:
+                report['skipped_list'].append((anim_id, reason))
+            else:
+                plan_list.append((anim_id, smooth_loop, max_frame, True))
+
+        if report['skipped_list']:
+            return report  # one animation cannot make it: the whole file is left untouched
+
+        # 2. apply
+        for anim_id, smooth_loop, max_frame, needs_split in plan_list:
+            if not needs_split:
+                monster.animation_data.animations[anim_id].create_interpolated_frames(
+                    bones, factor, smooth_loop)
                 report['nb_converted'] += 1
                 continue
-            if not allow_split:
-                reason = (f"{nb_frame} frames: too long once converted (limit {max_frame})")
-                if is_family:
-                    reason += (", and a character animation cannot be split: the body and its "
-                               "weapons share the animation ids, so both would have to be cut "
-                               "and only the weapon holds the sequences")
-                report['skipped_list'].append((anim_id, reason))
-                continue
-            try:
-                split_report = split_and_convert_animation(
-                    self.game_data, monster.animation_data, monster.seq_animation_data,
-                    bones, anim_id, factor, smooth_loop, max_frame)
-            except ValueError as e:
-                report['skipped_list'].append((anim_id, f"{nb_frame} frames, cannot be split: {e}"))
-                continue
+            nb_frame = len(monster.animation_data.animations[anim_id].frames)
+            split_report = split_and_convert_animation(
+                self.game_data, monster.animation_data, monster.seq_animation_data,
+                bones, anim_id, factor, smooth_loop, max_frame)
             report['split_list'].append((anim_id, nb_frame, split_report['nb_part'],
                                          split_report['new_id_list']))
             report['nb_converted'] += split_report['nb_part']
@@ -297,6 +313,25 @@ class IfritManager:
         except Exception as e:
             report['error'] = f"the file cannot be saved ({type(e).__name__}: {e})"
         return report
+
+    def _get_no_split_reason(self, monster, anim_id, nb_frame, factor, smooth_loop, max_frame,
+                             allow_split, is_family) -> str:
+        """Why this too-long animation cannot be split. Empty when it can."""
+        if not allow_split:
+            reason = f"{nb_frame} frames: too long once converted (limit {max_frame})"
+            if is_family:
+                reason += (", and a character animation cannot be split: the body and its "
+                           "weapons share the animation ids, so both would have to be cut and "
+                           "only the weapon holds the sequences")
+            return reason
+        nb_part = get_nb_part_needed(nb_frame, factor, smooth_loop, max_frame)
+        if nb_part < 2:
+            return f"{nb_frame} frames: cannot be cut in parts small enough"
+        can_split, reason = can_split_animation(self.game_data, monster.seq_animation_data,
+                                                monster.animation_data, anim_id, nb_part)
+        if not can_split:
+            return f"{nb_frame} frames, cannot be split: {reason}"
+        return ""
 
     def update_from_xlsx(self):
         #self.enemy.analyse_loaded_data(self.game_data)

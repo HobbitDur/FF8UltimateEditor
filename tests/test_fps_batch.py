@@ -104,6 +104,32 @@ class TestBatchConversion:
         assert report['split_list'] == []
         assert any(anim_id == 27 for anim_id, _ in report['skipped_list'])
 
+    def test_a_file_is_converted_whole_or_not_at_all(self, manager, tmp_path):
+        """The frame count IS the duration: one animation still at 15 fps in a file
+        converted to 60 fps would play four times too fast. Geezard's animation 15 is
+        played with A0 and cannot be split, so the file must be left untouched."""
+        path = _copy(tmp_path, "c0m004.dat")[0]
+        before = pathlib.Path(path).read_bytes()
+        report = manager.convert_file_list_to_fps([path], 60)[0]
+        assert report['skipped_list'], "animation 15 cannot make it to 60 fps"
+        assert report['nb_converted'] == 0
+        assert pathlib.Path(path).read_bytes() == before, "the file must not be modified at all"
+
+    def test_what_60fps_refuses_converts_at_30fps(self, manager, game_data, tmp_path):
+        path = _copy(tmp_path, "c0m004.dat")[0]
+        assert manager.convert_file_list_to_fps([path], 60)[0]['skipped_list']
+        report = manager.convert_file_list_to_fps([path], 30)[0]
+        assert report['skipped_list'] == []
+        assert report['nb_converted'] > 0
+
+    def test_a_file_that_fully_fits_is_converted(self, manager, tmp_path):
+        path = _copy(tmp_path, "c0m034.dat")[0]  # Gerogero: everything splits fine at 60 fps
+        before = pathlib.Path(path).read_bytes()
+        report = manager.convert_file_list_to_fps([path], 60)[0]
+        assert report['skipped_list'] == []
+        assert report['split_list']
+        assert pathlib.Path(path).read_bytes() != before
+
     def test_the_progress_callback_can_cancel(self, manager, tmp_path):
         path_list = _copy(tmp_path, "c0m001.dat", "c0m002.dat", "c0m003.dat")
         report_list = manager.convert_file_list_to_fps(path_list, 30,
@@ -122,7 +148,8 @@ class TestCharacterFamily:
 
     def test_body_and_weapon_stay_in_lockstep_at_60fps(self, manager, game_data, tmp_path):
         """The weapon could be split (it has the sequences) but the body could not:
-        splitting only the weapon would desynchronise the pair."""
+        splitting only the weapon would desynchronise the pair. Squall's animation 14 is
+        played by the base sequence, so both files are left untouched instead."""
         body, weapon = _copy(tmp_path, "d0c000.dat", "d0w000.dat")
         report_list = manager.convert_file_list_to_fps([body, weapon], 60)
         assert _frame_count_list(game_data, body) == _frame_count_list(game_data, weapon)
@@ -141,18 +168,18 @@ class TestCharacterFamily:
         skipped = [sorted(anim_id for anim_id, _ in r['skipped_list']) for r in report_list]
         assert skipped[0] == skipped[1], "body and weapon must take the same decision"
 
-    def test_the_slow_limit_uses_the_weapon_sequences(self, manager, game_data, tmp_path):
+    def test_the_slow_limit_uses_the_weapon_sequences(self, manager, tmp_path):
         """The body has no sequence of its own: read from the body alone, nothing would be
-        slowable and its idle would wrongly get the 255 frame limit."""
+        slowable and its animation 14 would wrongly get the 255 frame limit (40*4 = 160
+        frames, accepted) while the weapon correctly refuses it at 128 — converting the
+        body but not its weapon.
+        """
         body, weapon = _copy(tmp_path, "d0c000.dat", "d0w000.dat")
-        manager.convert_file_list_to_fps([body, weapon], 60)
-        after = _frame_count_list(game_data, body)
-        for anim_id, nb_frame in enumerate(after):
-            assert nb_frame <= 255
-            # animation 14 is played by the base sequence: Slow can reach it, so it may
-            # not go over 128 frames
-            if anim_id == 14:
-                assert nb_frame <= 128
+        body_report, weapon_report = manager.convert_file_list_to_fps([body, weapon], 60)
+        assert 14 in [anim_id for anim_id, _ in body_report['skipped_list']], \
+            "the body must take the 128 frame limit of its weapon's base sequence"
+        assert 14 in [anim_id for anim_id, _ in weapon_report['skipped_list']]
+        assert body_report['source'] == "d0w000.dat"
 
 
 if __name__ == "__main__":
