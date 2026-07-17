@@ -184,7 +184,11 @@ def test_real_mngrp_pos4_edit_persists(game_data, tmp_path):
     assert reloaded.sp2.unused_ids() == [5]
     assert reloaded.sp2.sprites[79].quads[0].u == 42
     # the untouched neighbour sections must still parse: the refine data is a good canary
-    from Pandemona.pandemonamanager import PandemonaManager
-    pandemona = PandemonaManager(game_data)
-    pandemona.load_file(str(work_mngrp), str(work_mngrphd))
-    assert pandemona.refine_sections
+    from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
+    from Shiva.ShivaRefine.refineview import build_refine_views
+    game_data.load_item_data()  # the m00x sections name their entries from those
+    game_data.load_magic_data()
+    game_data.load_card_data()
+    shared = MngrpManager(game_data)
+    shared.load_file(str(work_mngrphd), str(work_mngrp))
+    assert build_refine_views(shared)

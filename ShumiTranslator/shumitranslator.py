@@ -8,13 +8,13 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFil
     QMessageBox, QComboBox, QCheckBox
 
 from FF8GameData.gamedata import GameData, FileType, SectionType, RemasterCardType
+from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
+from FF8GameData.menu.mngrp.string.sectionstring import SectionString
 from .model.battle.battlemanager import BattleManager
 from .model.exe.exemanager import ExeManager
 from .model.exe.remasterdatmanager import RemasterDatManager
 from .model.field.fieldfsmanager import FieldFsManager
 from .model.kernel.kernelmanager import KernelManager
-from .model.mngrp.mngrpmanager import MngrpManager
-from .model.mngrp.string.sectionstring import SectionString
 from .model.world.worldfsmanager import WorldFsManager
 from .view.sectionwidget import SectionWidget
 from .view.tabholderwidget import TabHolderWidget

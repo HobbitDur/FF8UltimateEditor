@@ -8,7 +8,7 @@ import pathlib
 import pytest
 
 from FF8GameData.gamedata import GameData
-from FF8GameData.menu.menutext import decode_string_section
+from FF8GameData.menu.mngrp.string.sectionstring import SectionString
 from Moomba.moombamanager import MoombaManager, MagPageEntry, OverlaySlot
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
@@ -128,8 +128,8 @@ def test_string_section_decoding_is_positional(game_data):
     section.extend(hex_c)
     section.append(0)
 
-    texts = decode_string_section(game_data, bytes(section))
-    assert texts == ["AB", "", "C"]
+    texts = SectionString(game_data=game_data, data_hex=bytearray(section)).get_text_by_slot()
+    assert texts == ["AB", "", "C"]  # The empty slot keeps its place, so text id 2 stays text id 2
     manager.mngrp_text_list = texts
     assert manager.get_overlay_text(0) == "AB"
     assert manager.get_overlay_text(2) == "C"

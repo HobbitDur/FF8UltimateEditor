@@ -3,7 +3,7 @@ import os
 from FF8GameData.gamedata import GameData
 # The 68-byte entry format is shared with mmag.bin (the Zone editor): it lives in FF8GameData.
 from FF8GameData.menu.magpage import MagPageEntry, OverlaySlot
-from FF8GameData.menu.menutext import decode_string_section
+from FF8GameData.menu.mngrp.string.sectionstring import SectionString
 
 
 class MoombaManager:
@@ -92,7 +92,8 @@ class MoombaManager:
         with open(mngrp_path, "rb") as in_file:
             in_file.seek(header_entry.seek)
             section_data = in_file.read(header_entry.size)
-        self.mngrp_text_list = decode_string_section(self.game_data, section_data)
+        self.mngrp_text_list = SectionString(game_data=self.game_data,
+                                             data_hex=bytearray(section_data)).get_text_by_slot()
         return len(self.mngrp_text_list)
 
     def get_overlay_text(self, text_id):

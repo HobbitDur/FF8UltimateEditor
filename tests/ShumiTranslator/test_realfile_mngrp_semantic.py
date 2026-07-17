@@ -1,6 +1,6 @@
 """Game-view semantic round-trip test for mngrp.bin / mngrphd.bin.
 
-The other mngrp tests (test_realfile_text.py, tests/Pandemona/test_realfile_mngrp.py)
+The other mngrp tests (test_realfile_text.py, tests/Shiva/test_shiva_roundtrip.py)
 prove that MngrpManager can reload its own output. That is necessary but not
 sufficient: a save bug that moves a string to a different offset SLOT, drops a
 zero offset, or shifts a tkmnmes padding would round-trip fine through the tool
@@ -37,7 +37,7 @@ import pytest
 
 from FF8GameData.gamedata import GameData
 from FF8GameData.GenericSection.ff8text import FF8Text
-from ShumiTranslator.model.mngrp.mngrpmanager import MngrpManager
+from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 MENU_DIR = PROJECT_ROOT / "extracted_files" / "menu"

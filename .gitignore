@@ -36,8 +36,6 @@ Temp
 temp_export/
 extracted_files
 temp_vincent_tim
-shiva*
-Shiva*
 *.bak
 # VincentTim (tim.exe) scratch output: "<input>.<n>.meta/.png/.palette.png"
 # left next to the working directory by an interrupted export. The normal

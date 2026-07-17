@@ -37,6 +37,10 @@ class SectionData(Section):
             self._offset_list.append(new_data)
         self._nb_offset = len(self._offset_list)  # As some offset are ignored, changing the nb of offset
 
+    def get_nb_offset_not_empty(self):
+        """The offsets actually holding something, the only ones a text/value list has an entry for."""
+        return sum(1 for ff8_data in self._offset_list if ff8_data.get_offset_value() != 0)
+
     def get_all_offset(self):
         offset_list = []
         for ff8_data in self._offset_list:
@@ -44,9 +48,11 @@ class SectionData(Section):
         return offset_list
 
     def set_all_offset_by_text_list(self, text_list, shift=0):
-        if len(text_list) != self._nb_offset:
-            print(
-                f"The size of the text list ({len(text_list)}) is different than the nb of offset ({self._nb_offset})")
+        # Only the offsets that are not empty get a text: an empty one keeps its place with no
+        # string, so the text list is shorter than the offset list when ignore_empty_offset is off.
+        if len(text_list) != self.get_nb_offset_not_empty():
+            print(f"The size of the text list ({len(text_list)}) is different than the nb of "
+                  f"offset holding a text ({self.get_nb_offset_not_empty()})")
 
         new_list = []
         index_value_list = 0
@@ -65,9 +71,9 @@ class SectionData(Section):
         self._offset_list = new_list
 
     def set_all_offset_by_value_list(self, value_list):
-        if len(value_list) != self._nb_offset:
-            print(
-                f"The size of the value list ({len(value_list)}) is different than the nb of offset ({self._nb_offset})")
+        if len(value_list) != self.get_nb_offset_not_empty():
+            print(f"The size of the value list ({len(value_list)}) is different than the nb of "
+                  f"offset holding a value ({self.get_nb_offset_not_empty()})")
         new_list = []
         index_value_list = 0
         for i in range(len(self._offset_list)):  # Assuming offset data is always at the beginning of the subsection

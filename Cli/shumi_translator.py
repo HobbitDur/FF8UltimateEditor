@@ -169,7 +169,7 @@ def _export_kernel_csv(gd, input_file: str, output_file: str):
 
 def _export_namedic_csv(gd, input_file: str, output_file: str):
     """Export namedic.bin to CSV."""
-    from ShumiTranslator.model.mngrp.string.sectionstring import SectionString
+    from FF8GameData.menu.mngrp.string.sectionstring import SectionString
     mgr = SectionString(game_data=gd)
     mgr.load_file(input_file)
     _write_csv(pathlib.Path(output_file), DEFAULT_DELIMITER, "namedic", gd, mgr)
@@ -177,7 +177,7 @@ def _export_namedic_csv(gd, input_file: str, output_file: str):
 
 def _export_mngrp_csv(gd, input_file: str, mngrphd_file: str, output_file: str):
     """Export mngrp.bin to CSV."""
-    from ShumiTranslator.model.mngrp.mngrpmanager import MngrpManager
+    from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
     mgr = MngrpManager(game_data=gd)
     mgr.load_file(mngrphd_file, input_file)
     _write_csv(pathlib.Path(output_file), DEFAULT_DELIMITER, "mngrp", gd, mgr)
@@ -274,7 +274,7 @@ def _import_kernel_csv(gd, input_file: str, csv_file: str, output_file: str = No
 
 def _import_namedic_csv(gd, input_file: str, csv_file: str, output_file: str = None):
     """Import CSV into namedic.bin."""
-    from ShumiTranslator.model.mngrp.string.sectionstring import SectionString
+    from FF8GameData.menu.mngrp.string.sectionstring import SectionString
     mgr = SectionString(game_data=gd)
     mgr.load_file(input_file)
     sections = list(_iter_sections(gd, "namedic", mgr))
@@ -287,7 +287,7 @@ def _import_namedic_csv(gd, input_file: str, csv_file: str, output_file: str = N
 
 def _import_mngrp_csv(gd, input_file: str, mngrphd_file: str, csv_file: str, output_file: str = None):
     """Import CSV into mngrp.bin."""
-    from ShumiTranslator.model.mngrp.mngrpmanager import MngrpManager
+    from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
     mgr = MngrpManager(game_data=gd)
     mgr.load_file(mngrphd_file, input_file)
     sections = list(_iter_sections(gd, "mngrp", mgr))

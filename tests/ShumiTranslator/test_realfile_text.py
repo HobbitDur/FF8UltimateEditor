@@ -12,7 +12,7 @@ Invariant: saving repacks every text section and recomputes all offsets, so the 
 is NOT byte-identical to the original. What must hold is:
   * every decoded string survives a save + reload unchanged (semantic losslessness), and
   * a second round-trip is byte-stable (idempotent).
-This mirrors the reasoning in tests/Pandemona/test_realfile_mngrp.py.
+This mirrors the reasoning in tests/Shiva/test_shiva_roundtrip.py.
 
 Needs the real files, skipped otherwise (ff8data marker). Note the load/save argument order:
 MngrpManager.load_file(mngrphd, mngrp) but save_file(mngrp, mngrphd).
@@ -23,7 +23,7 @@ import shutil
 import pytest
 
 from FF8GameData.gamedata import GameData, SectionType
-from ShumiTranslator.model.mngrp.mngrpmanager import MngrpManager
+from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 MENU_DIR = PROJECT_ROOT / "extracted_files" / "menu"

@@ -49,16 +49,23 @@ class Mngrp(Section):
         return self._section_list
 
     def get_section_by_id(self, section_id):
-        return self._section_list[section_id]
+        """The section with that id, whatever its place in the list.
+
+        The id is not the place in the list: built from the full header entry list, the invalid
+        entries take a place but get the id -1, so only a valid-entry-list Mngrp has place == id.
+        Searching by id (like set_section_by_id does) works for both."""
+        return self._section_list[self.__find_local_id_from_section_id(section_id)]
 
     def set_section_by_id_and_bytearray(self, section_id: int, data_section_hex: bytearray):
         local_index_section = self.__find_local_id_from_section_id(section_id)
 
-        own_offset_start = self._section_list[local_index_section].own_offset
-        len_old = len(self._section_list[local_index_section])
-        name = self._section_list[local_index_section].name
-        new_section = Section(game_data=self._game_data, data_hex=data_section_hex, id=local_index_section,
-                              own_offset=own_offset_start, name=name)
+        old_section = self._section_list[local_index_section]
+        len_old = len(old_section)
+        # Keep the section's real id, not its place in the list: the two are equal only when the
+        # Mngrp was built from the valid entries alone. Built from the full entry list, the invalid
+        # entries take a place but have the id -1, so the place is not the id.
+        new_section = Section(game_data=self._game_data, data_hex=data_section_hex, id=old_section.id,
+                              own_offset=old_section.own_offset, name=old_section.name)
         self._section_list[local_index_section] = new_section
         self.__shift_offset(len_old=len_old, section_id=local_index_section, new_section=new_section)
 

@@ -4,7 +4,8 @@ import os
 from FF8GameData.gamedata import GameData
 # The 68-byte entry format is shared with mmag2.bin (the Moomba editor): it lives in FF8GameData.
 from FF8GameData.menu.magpage import MagPageEntry, OverlaySlot, UNUSED_ID
-from FF8GameData.menu.menutext import decode_string_section, menu_string
+from FF8GameData.menu.mngrp.string.sectionstring import SectionString
+from FF8GameData.menu.mngrp.tkmnmes.sectiontkmnmes import SectionTkmnmes
 
 BOOK_TEXT_FIRST_RAW_FILE = 87  # text file index n loads mngrp.bin raw file 87 + n
 SP2_SPRITE_RAW_FILE = 7  # The SP2 quad-list table the picture overlays index (mngrp Pos 4)
@@ -356,11 +357,19 @@ class ZoneManager:
 
     def get_footer_text(self):
         """The footer line of the multi-page books: menu string 1/13/28, the
-        "{CrossLeft} {CrossRight} to scroll" hint (empty when mngrp is not loaded)."""
+        "{CrossLeft} {CrossRight} to scroll" hint (empty when mngrp is not loaded).
+
+        Menu_Magazine_Draw calls getMenuString(1, 13, 28, 0) at 0x4C9611."""
         data = self.get_raw_file(FOOTER_RAW_FILE)
         if not data:
             return ""
-        return menu_string(self.game_data, data, FOOTER_SECTION, FOOTER_INDEX)
+        subsection = SectionTkmnmes(game_data=self.game_data,
+                                    data_hex=bytearray(data)).get_text_section_by_slot(FOOTER_SECTION)
+        if not subsection:
+            return ""
+        texts = subsection.get_text_by_slot()
+        entry = 2 * FOOTER_INDEX  # variant 0
+        return texts[entry] if entry < len(texts) else ""
 
     def get_book_texts(self, text_file_index):
         """Decoded strings of the book-text string section raw file 87 + text_file_index
@@ -369,13 +378,11 @@ class ZoneManager:
             return []
         if text_file_index not in self._book_text_cache:
             raw_file = BOOK_TEXT_FIRST_RAW_FILE + text_file_index
+            section_data = self.get_raw_file(raw_file)
             texts = []
-            if 0 <= raw_file < len(self._mngrp_header_entries):
-                header_entry = self._mngrp_header_entries[raw_file]
-                if not header_entry.invalid_value:
-                    section_data = self._mngrp_data[header_entry.seek:
-                                                    header_entry.seek + header_entry.size]
-                    texts = decode_string_section(self.game_data, section_data)
+            if section_data:
+                texts = SectionString(game_data=self.game_data,
+                                      data_hex=bytearray(section_data)).get_text_by_slot()
             self._book_text_cache[text_file_index] = texts
         return self._book_text_cache[text_file_index]
 

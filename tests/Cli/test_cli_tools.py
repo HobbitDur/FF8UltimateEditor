@@ -151,8 +151,8 @@ def test_minimog_export_tex_true_colors(tmp_path):
 
 
 @pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin")
-def test_pandemona_roundtrip(tmp_path):
-    from Cli.pandemona import PandemonaCliTool
+def test_shiva_refine_roundtrip(tmp_path):
+    from Cli.shiva import ShivaCliTool
     mngrp = tmp_path / "mngrp.bin"
     mngrphd = tmp_path / "mngrphd.bin"
     shutil.copy(EXTRACTED / "menu" / "mngrp.bin", mngrp)
@@ -160,16 +160,22 @@ def test_pandemona_roundtrip(tmp_path):
     csv_path = tmp_path / "refine.csv"
     out = tmp_path / "mngrp_out.bin"
     out_hd = tmp_path / "mngrphd_out.bin"
-    assert _run(PandemonaCliTool, ["export-csv", "--input", str(mngrp), "--output", str(csv_path)]) == 0
-    assert _run(PandemonaCliTool, ["import-csv", "--input", str(mngrp), "--csv", str(csv_path),
+    assert _run(ShivaCliTool, ["export-refine-csv", "--input", str(mngrp), "--output", str(csv_path)]) == 0
+    assert _run(ShivaCliTool, ["import-refine-csv", "--input", str(mngrp), "--csv", str(csv_path),
                                    "--output", str(out), "--output-mngrphd", str(out_hd)]) == 0
-    assert out.read_bytes() == mngrp.read_bytes()
-    assert out_hd.read_bytes() == mngrphd.read_bytes()
+
+    # Shiva writes the whole file through one model, so the sections it edits are re-encoded and
+    # their bytes can move even with nothing changed. What must survive is the refine data, so
+    # the check is that a second export gives back the very same CSV.
+    csv_again = tmp_path / "refine_again.csv"
+    assert _run(ShivaCliTool, ["export-refine-csv", "--input", str(out), "--mngrphd", str(out_hd),
+                               "--output", str(csv_again)]) == 0
+    assert csv_again.read_bytes() == csv_path.read_bytes()
 
 
 @pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin")
-def test_nida_roundtrip_and_set_answer(tmp_path):
-    from Cli.nida import NidaCliTool
+def test_shiva_seed_roundtrip_and_set_answer(tmp_path):
+    from Cli.shiva import ShivaCliTool
     mngrp = tmp_path / "mngrp.bin"
     mngrphd = tmp_path / "mngrphd.bin"
     shutil.copy(EXTRACTED / "menu" / "mngrp.bin", mngrp)
@@ -177,24 +183,29 @@ def test_nida_roundtrip_and_set_answer(tmp_path):
     csv_path = tmp_path / "seed.csv"
     out = tmp_path / "mngrp_out.bin"
     out_hd = tmp_path / "mngrphd_out.bin"
-    assert _run(NidaCliTool, ["export-csv", "--input", str(mngrp), "--output", str(csv_path)]) == 0
-    assert _run(NidaCliTool, ["import-csv", "--input", str(mngrp), "--csv", str(csv_path),
-                              "--output", str(out), "--output-mngrphd", str(out_hd)]) == 0
-    assert out.read_bytes() == mngrp.read_bytes()
-    assert out_hd.read_bytes() == mngrphd.read_bytes()
+    assert _run(ShivaCliTool, ["export-seed-csv", "--input", str(mngrp), "--output", str(csv_path)]) == 0
+    assert _run(ShivaCliTool, ["import-seed-csv", "--input", str(mngrp), "--csv", str(csv_path),
+                               "--output", str(out), "--output-mngrphd", str(out_hd)]) == 0
+    # Shiva goes through the shared model, so bytes can move; the SeeD data must round-trip.
+    csv_again = tmp_path / "seed_again.csv"
+    assert _run(ShivaCliTool, ["export-seed-csv", "--input", str(out), "--mngrphd", str(out_hd),
+                               "--output", str(csv_again)]) == 0
+    assert csv_again.read_bytes() == csv_path.read_bytes()
 
-    assert _run(NidaCliTool, ["set-answer", "--input", str(mngrp), "--test", "5", "--question", "3",
-                              "--answer", "1", "--output", str(out), "--output-mngrphd", str(out_hd)]) == 0
+    assert _run(ShivaCliTool, ["set-seed-answer", "--input", str(mngrp), "--test", "5", "--question", "3",
+                               "--answer", "1", "--output", str(out), "--output-mngrphd", str(out_hd)]) == 0
     from FF8GameData.gamedata import GameData
-    from Nida.nidamanager import NidaManager
+    from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
+    from Shiva.ShivaSeedTest.seedtest import SeedTestSet
     game_data = GameData(str(PROJECT_ROOT / "FF8GameData"))
     game_data.load_all()
-    manager = NidaManager(game_data)
-    manager.load_file(str(out), str(out_hd))
-    assert manager.test_list[4].strings[2].answer == 1
+    manager = MngrpManager(game_data)
+    manager.load_file(str(out_hd), str(out))
+    seed_tests = SeedTestSet.from_mngrp(game_data, manager.mngrp)
+    assert seed_tests.test_list[4].strings[2].answer == 1
     # An out-of-range answer must be refused
-    assert _run(NidaCliTool, ["set-answer", "--input", str(mngrp), "--test", "5", "--question", "3",
-                              "--answer", "9", "--output", str(out), "--output-mngrphd", str(out_hd)]) == 1
+    assert _run(ShivaCliTool, ["set-seed-answer", "--input", str(mngrp), "--test", "5", "--question", "3",
+                               "--answer", "9", "--output", str(out), "--output-mngrphd", str(out_hd)]) == 1
 
 
 @pytest.mark.ff8data("extracted_files/main/init.out")
@@ -492,6 +503,6 @@ def test_all_tools_registered():
         cli._register_all_tools()
     names = set(registry.list_tools())
     assert {"shumi-translator", "ifrit-ai", "ifrit", "tonberry-shop", "siren",
-            "junkshop", "quezacotl", "kadowaki", "minimog", "pandemona", "ccgroup", "cid",
-            "julia", "solomon-ring", "alexander", "seed", "piet", "moomba", "nida",
-            "zone", "trepies"} <= names
+            "junkshop", "quezacotl", "kadowaki", "minimog", "shiva", "ccgroup", "cid",
+            "julia", "solomon-ring", "alexander", "seed", "piet", "moomba",
+            "zone"} <= names

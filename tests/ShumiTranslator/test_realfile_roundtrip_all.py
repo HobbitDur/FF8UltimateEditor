@@ -139,7 +139,7 @@ def test_roundtrip_kernel(game_data, tmp_path):
 
 @pytest.mark.ff8data(NAMEDIC)
 def test_roundtrip_namedic(game_data, tmp_path):
-    from ShumiTranslator.model.mngrp.string.sectionstring import SectionString
+    from FF8GameData.menu.mngrp.string.sectionstring import SectionString
     work = tmp_path / "namedic.bin"
     shutil.copy(EF / "main/namedic.bin", work)
 
@@ -156,7 +156,7 @@ def test_roundtrip_namedic(game_data, tmp_path):
 
 @pytest.mark.ff8data(MNGRP, MNGRPHD)
 def test_roundtrip_mngrp(game_data, tmp_path):
-    from ShumiTranslator.model.mngrp.mngrpmanager import MngrpManager
+    from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
     work = tmp_path / "mngrp.bin"
     work_hd = tmp_path / "mngrphd.bin"
     shutil.copy(EF / "menu/mngrp.bin", work)
@@ -229,8 +229,8 @@ def test_residual_raw_codes_are_consistent(game_data, capsys):
     leaks back out as raw, and prints the full residual histogram as a report.
     """
     from ShumiTranslator.model.kernel.kernelmanager import KernelManager
-    from ShumiTranslator.model.mngrp.string.sectionstring import SectionString
-    from ShumiTranslator.model.mngrp.mngrpmanager import MngrpManager
+    from FF8GameData.menu.mngrp.string.sectionstring import SectionString
+    from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
     from ShumiTranslator.model.exe.exemanager import ExeManager
     from ShumiTranslator.model.battle.battlemanager import BattleManager
     import collections

@@ -26,7 +26,7 @@ from Cli.siren import SirenCliTool
 from Cli.junkshop import JunkshopCliTool
 from Cli.quezacotl import QuezacotlCliTool
 from Cli.minimog import MinimogCliTool
-from Cli.pandemona import PandemonaCliTool
+from Cli.shiva import ShivaCliTool
 from Cli.ccgroup import CCGroupCliTool
 from Cli.cid import CidCliTool
 from Cli.julia import JuliaCliTool
@@ -35,12 +35,10 @@ from Cli.alexander import AlexanderCliTool
 from Cli.seed import SeedCliTool
 from Cli.odine import OdineCliTool
 from Cli.kadowaki import KadowakiCliTool
-from Cli.trepies import TrepiesCliTool
 from Cli.zone import ZoneCliTool
 from Cli.moomba import MoombaCliTool
 from Cli.joker import JokerCliTool
 from Cli.piet import PietCliTool
-from Cli.nida import NidaCliTool
 
 
 def _register_all_tools():
@@ -54,7 +52,7 @@ def _register_all_tools():
     registry.register(JunkshopCliTool)
     registry.register(QuezacotlCliTool)
     registry.register(MinimogCliTool)
-    registry.register(PandemonaCliTool)
+    registry.register(ShivaCliTool)
     registry.register(CCGroupCliTool)
     registry.register(CidCliTool)
     registry.register(JuliaCliTool)
@@ -63,12 +61,10 @@ def _register_all_tools():
     registry.register(SeedCliTool)
     registry.register(OdineCliTool)
     registry.register(KadowakiCliTool)
-    registry.register(TrepiesCliTool)
     registry.register(ZoneCliTool)
     registry.register(MoombaCliTool)
     registry.register(JokerCliTool)
     registry.register(PietCliTool)
-    registry.register(NidaCliTool)
 
 
 def build_main_parser() -> argparse.ArgumentParser:

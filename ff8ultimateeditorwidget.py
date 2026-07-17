@@ -8,6 +8,8 @@ from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel
 
 from CCGroup.ccgroup import CCGroupWidget
 from Cid.cidwidget import CidWidget
+from Common.fileregistry import FileRegistry
+from Common.openedfileswidget import OpenedFilesWidget
 from ExeLauncher.cactiliolauncher import CactilioLauncher
 from ExeLauncher.delinglauncher import DelingLauncher
 from ExeLauncher.doomtrainlauncher import DoomtrainLauncher
@@ -20,10 +22,9 @@ from ExeLauncher.sirenlauncher import SirenLauncher
 from Ifrit.ifritmonsterwidget import IfritMonsterWidget
 from Julia.juliawidget import JuliaWidget
 from Moomba.moombawidget import MoombaWidget
-from Nida.nidawidget import NidaWidget
 from Odine.odinewidget import OdineWidget
 from Piet.pietwidget import PietWidget
-from Pandemona.pandemonawidget import PandemonaWidget
+from Shiva.shivawidget import ShivaWidget
 from Minimog.minimogwidget import MinimogWidget
 from Kadowaki.kadowakiwidget import KadowakiWidget
 from Seed.seedwidget import SeedWidget
@@ -39,7 +40,6 @@ from TonberryShop.tonberryshop import TonberryShop
 from ToolUpdate.toolupdatewidget import ToolUpdateWidget
 from Zone.zonewidget import ZoneWidget
 from SolomonRing.solomonringwidget import SolomonRingWidget
-from Trepies.trepieswidget import TrepiesWidget
 from Fujin.fujinwidget import FujinWidget
 
 
@@ -56,6 +56,9 @@ class FF8UltimateEditorWidget(QWidget):
         self.setWindowIcon(QIcon(os.path.join(resources_path, 'hobbitdur.ico')))
 
         self.settings = QSettings("HobbitDur", "FF8UltimateEditor")
+        # The FF8 files are opened once and shared: a file opened in one tool is used by all
+        # the tools working on it, without searching for it again.
+        self.file_registry = FileRegistry()
         self._main_layout = QVBoxLayout(self)
         self.setLayout(self._main_layout)
 
@@ -70,7 +73,7 @@ class FF8UltimateEditorWidget(QWidget):
             "Kadowaki (Item menu editor)",
             "Minimog (icon.sp1 editor)",
             "Seed (Field model viewer)",
-            "Pandemona (Refine editor)",
+            "Shiva (mngrp.bin editor: refine, SeeD tests, sprites)",
             "Alexander (Battle stage viewer)",
             "Julia (Sound editor)",
             "Siren (price.bin editor)",
@@ -80,9 +83,7 @@ class FF8UltimateEditorWidget(QWidget):
             "Moomba (mmag2.bin editor)",
             "Joker (sp2 sprite editor)",
             "Piet (mtmag.bin editor)",
-            "Nida (SeeD test editor)",
             "Zone (mmag.bin editor)",
-            "Trepies (Tutorial demo editor)",
             "Fujin (Magic animation explorer)"
         ]
 
@@ -96,11 +97,13 @@ class FF8UltimateEditorWidget(QWidget):
 
         # Shared action available to every tool: extract a .fs archive recursively
         self._fs_extract_button = FsExtractWidget(resources_path, game_data_path)
+        self._opened_files_button = OpenedFilesWidget(self.file_registry)
 
         self._program_option_layout = QHBoxLayout()
         self._program_option_layout.addWidget(self._program_option_title)
         self._program_option_layout.addWidget(self._program_option)
         self._program_option_layout.addWidget(self._fs_extract_button)
+        self._program_option_layout.addWidget(self._opened_files_button)
 
         # 4. Header: External Tool Buttons
         self._external_program_title = QLabel("External program:")
@@ -162,21 +165,19 @@ class FF8UltimateEditorWidget(QWidget):
         self._cid_widget = CidWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path))
         self._ifrit_widget = IfritMonsterWidget( settings=self.settings, icon_path=resources_path, game_data_folder=game_data_path)
-        self._kadowaki_widget = KadowakiWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._kadowaki_widget = KadowakiWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._minimog_widget = MinimogWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._seed_widget = SeedWidget(icon_path=os.path.join(resources_path), settings=self.settings)
-        self._pandemona_widget = PandemonaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._shiva_widget = ShivaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._alexander_widget = AlexanderWidget(icon_path=os.path.join(resources_path), settings=self.settings)
         self._julia_widget = JuliaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._siren_widget = SirenWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._siren_widget = SirenWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._junkshop_widget = JunkshopWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._quezacotl_widget = QuezacotlWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._odine_widget = OdineWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._moomba_widget = MoombaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._joker_widget = JokerWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._piet_widget = PietWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._trepies_widget = TrepiesWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._nida_widget = NidaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._zone_widget = ZoneWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._fujin_widget = FujinWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
 
@@ -191,7 +192,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._kadowaki_widget) # Index 6
         self.tool_stack.addWidget(self._minimog_widget) # Minimog (icon.sp1), keep right after Kadowaki in HOBBIT_OPTION_ITEMS
         self.tool_stack.addWidget(self._seed_widget) # Index 7
-        self.tool_stack.addWidget(self._pandemona_widget) # Index 8
+        self.tool_stack.addWidget(self._shiva_widget) # Index 8, took the place of Pandemona: its refine editing is a tab of Shiva now
         self.tool_stack.addWidget(self._alexander_widget) # Index 9
         self.tool_stack.addWidget(self._julia_widget) # Index 10
         self.tool_stack.addWidget(self._siren_widget) # Index 11
@@ -201,9 +202,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._moomba_widget) # Index 15
         self.tool_stack.addWidget(self._joker_widget) # Index 16
         self.tool_stack.addWidget(self._piet_widget) # Index 17
-        self.tool_stack.addWidget(self._nida_widget) # Index 18
         self.tool_stack.addWidget(self._zone_widget) # Index 19
-        self.tool_stack.addWidget(self._trepies_widget) # Index 20
         self.tool_stack.addWidget(self._fujin_widget) # Index 21
         self._piet_widget.view_in_zone_requested.connect(self._view_mmag_entry_in_zone)
         self._program_option_change()

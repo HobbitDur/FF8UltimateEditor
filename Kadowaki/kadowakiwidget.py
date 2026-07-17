@@ -1,10 +1,12 @@
 import os
 
-from PyQt6.QtCore import QSize, QSignalBlocker, Qt
+from PyQt6.QtCore import QSignalBlocker, Qt
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QListWidget,
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
                              QComboBox, QCheckBox, QGroupBox, QSpinBox, QGridLayout)
 
+from Common.filebarwidget import FileBarWidget
+from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Kadowaki.kadowakimanager import KadowakiManager
 
@@ -122,8 +124,11 @@ class ParamWidget(QGroupBox):
 class KadowakiWidget(QWidget):
     """Item menu editor (mitem.bin editor)."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
+
+        if file_registry is None:  # The tool is used alone, it shares its files with nobody
+            file_registry = FileRegistry()
 
         self.game_data = GameData(game_data_folder)
         self.game_data.load_item_data()
@@ -135,28 +140,9 @@ class KadowakiWidget(QWidget):
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
         # File section
-        self.file_dialog = QFileDialog()
-        self.load_button = QPushButton()
-        self.load_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.load_button.setIconSize(QSize(30, 30))
-        self.load_button.setFixedSize(40, 40)
-        self.load_button.setToolTip("Open a mitem.bin file")
-        self.load_button.clicked.connect(self.load_file)
-
-        self.save_button = QPushButton()
-        self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.save_button.setIconSize(QSize(30, 30))
-        self.save_button.setFixedSize(40, 40)
-        self.save_button.setToolTip("Save all modifications in the opened mitem.bin (irreversible)")
-        self.save_button.clicked.connect(self.save_file)
-
-        self.file_label = QLabel("No file loaded")
-
-        file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.load_button)
-        file_section_layout.addWidget(self.save_button)
-        file_section_layout.addWidget(self.file_label)
-        file_section_layout.addStretch(1)
+        self.file_bar = FileBarWidget("mitem.bin", file_registry, icon_path, "*.bin")
+        self.file_bar.file_opened.connect(self.load_file)
+        self.file_bar.save_requested.connect(self.save_file)
 
         # Item list (left side)
         self.item_list = QListWidget()
@@ -212,21 +198,19 @@ class KadowakiWidget(QWidget):
         main_editor_layout.addWidget(self.editor_container)
 
         main_layout = QVBoxLayout()
-        main_layout.addLayout(file_section_layout)
+        main_layout.addWidget(self.file_bar)
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
 
-    def load_file(self):
-        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search mitem.bin file", filter="*.bin",
-                                                     directory=os.getcwd())[0]
-        if file_name:
-            self.manager.load_file(file_name)
-            self.file_label.setText(os.path.basename(file_name))
-            self.editor_container.setEnabled(True)
-            with QSignalBlocker(self.item_list):
-                self.item_list.clear()
-                self.item_list.addItems([menu_item.name for menu_item in self.manager.menu_items])
-            self.item_list.setCurrentRow(0)
+        self.file_bar.load_opened_file()  # Another tool may have opened mitem.bin already
+
+    def load_file(self, file_name):
+        self.manager.load_file(file_name)
+        self.editor_container.setEnabled(True)
+        with QSignalBlocker(self.item_list):
+            self.item_list.clear()
+            self.item_list.addItems([menu_item.name for menu_item in self.manager.menu_items])
+        self.item_list.setCurrentRow(0)
 
     def save_file(self):
         if self.manager.file_path:
