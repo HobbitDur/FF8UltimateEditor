@@ -4,46 +4,26 @@ import pathlib
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-                             QListWidget, QListWidgetItem, QRadioButton, QButtonGroup,
-                             QCheckBox, QFileDialog, QDialogButtonBox, QTextEdit,
-                             QProgressDialog, QMessageBox, QLineEdit)
+                             QRadioButton, QButtonGroup, QCheckBox, QFileDialog,
+                             QDialogButtonBox, QTextEdit, QMessageBox)
 
 
 class FpsBatchDialog(QDialog):
-    """Pick the .dat files to convert, and the frame rate to convert them to."""
+    """The frame rate to convert the chosen files to, and how."""
 
-    def __init__(self, parent, folder: str, family_func=None):
+    def __init__(self, parent, file_list: list):
         super().__init__(parent)
         self.setWindowTitle("Convert files to 30/60 FPS")
-        self.resize(560, 560)
-        self._family_func = family_func
-        self._folder = folder
+        self.resize(560, 340)
+        self._file_list = list(file_list)
 
         layout = QVBoxLayout(self)
 
-        layout.addWidget(QLabel("Folder containing the .dat files:"))
-        folder_layout = QHBoxLayout()
-        self._folder_edit = QLineEdit(folder)
-        self._folder_edit.setReadOnly(True)
-        folder_layout.addWidget(self._folder_edit)
-        browse_btn = QPushButton("Browse...")
-        browse_btn.clicked.connect(self._browse)
-        folder_layout.addWidget(browse_btn)
-        layout.addLayout(folder_layout)
-
-        self._file_list = QListWidget()
-        self._file_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
-        layout.addWidget(self._file_list)
-
-        select_layout = QHBoxLayout()
-        for text, checked in (("Select all", True), ("Select none", False)):
-            btn = QPushButton(text)
-            btn.clicked.connect(lambda _, c=checked: self._set_all_checked(c))
-            select_layout.addWidget(btn)
-        select_layout.addStretch()
-        self._count_label = QLabel("")
-        select_layout.addWidget(self._count_label)
-        layout.addLayout(select_layout)
+        file_label = QLabel(f"{len(self._file_list)} file(s) selected: " +
+                            ", ".join(os.path.basename(f) for f in self._file_list[:6]) +
+                            (", ..." if len(self._file_list) > 6 else ""))
+        file_label.setWordWrap(True)
+        layout.addWidget(file_label)
 
         layout.addWidget(QLabel("Convert the animations to:"))
         fps_layout = QHBoxLayout()
@@ -87,47 +67,10 @@ class FpsBatchDialog(QDialog):
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
 
-        self._fill_file_list(folder)
-
-    # ── File list ─────────────────────────────────────────────────────
-
-    def _browse(self):
-        folder = QFileDialog.getExistingDirectory(self, "Folder containing the .dat files",
-                                                  self._folder_edit.text())
-        if folder:
-            self._folder = folder
-            self._folder_edit.setText(folder)
-            self._fill_file_list(folder)
-
-    def _fill_file_list(self, folder: str):
-        self._file_list.clear()
-        if not folder or not os.path.isdir(folder):
-            self._count_label.setText("no folder")
-            return
-        for path in sorted(pathlib.Path(folder).glob("*.dat")):
-            item = QListWidgetItem(path.name)
-            item.setData(Qt.ItemDataRole.UserRole, str(path))
-            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            item.setCheckState(Qt.CheckState.Unchecked)
-            self._file_list.addItem(item)
-        self._file_list.itemChanged.connect(self._update_count)
-        self._update_count()
-
-    def _set_all_checked(self, checked: bool):
-        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
-        for index in range(self._file_list.count()):
-            self._file_list.item(index).setCheckState(state)
-        self._update_count()
-
-    def _update_count(self, *_):
-        self._count_label.setText(f"{len(self.get_checked_file_list())} file(s) selected")
-
-    def get_checked_file_list(self) -> list:
-        return [self._file_list.item(index).data(Qt.ItemDataRole.UserRole)
-                for index in range(self._file_list.count())
-                if self._file_list.item(index).checkState() == Qt.CheckState.Checked]
-
     # ── Result ────────────────────────────────────────────────────────
+
+    def get_file_list(self) -> list:
+        return list(self._file_list)
 
     def get_target_fps(self) -> int:
         return 30 if self._fps_30.isChecked() else 60
@@ -135,40 +78,61 @@ class FpsBatchDialog(QDialog):
     def get_split_when_too_long(self) -> bool:
         return self._split_check.isChecked()
 
-    def accept(self):
-        file_list = self.get_checked_file_list()
-        if not file_list:
-            QMessageBox.warning(self, "Convert files to 30/60 FPS", "No file selected.")
-            return
-        # A character is a body + a weapon animated by the same animation ids: converting
-        # one without the other desynchronises them.
-        if self._family_func:
-            missing = []
-            selected = {os.path.normcase(f) for f in file_list}
-            for file_path in list(file_list):
-                for family_file in self._family_func(file_path):
-                    if os.path.normcase(str(family_file)) not in selected:
-                        missing.append(str(family_file))
-                        selected.add(os.path.normcase(str(family_file)))
-            if missing:
-                answer = QMessageBox.question(
-                    self, "Convert files to 30/60 FPS",
-                    "A character is a body file plus its weapon files, and the game plays the "
-                    "same animation ids on both. Converting one without the other would leave "
-                    "the weapon behind while the body moves.\n\n"
-                    f"Add the {len(missing)} matching file(s)?\n" +
-                    "\n".join("  " + os.path.basename(f) for f in missing[:12]) +
-                    ("\n  ..." if len(missing) > 12 else ""),
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No |
-                    QMessageBox.StandardButton.Cancel)
-                if answer == QMessageBox.StandardButton.Cancel:
-                    return
-                if answer == QMessageBox.StandardButton.Yes:
-                    for index in range(self._file_list.count()):
-                        item = self._file_list.item(index)
-                        if item.data(Qt.ItemDataRole.UserRole) in missing:
-                            item.setCheckState(Qt.CheckState.Checked)
-        super().accept()
+
+def select_battle_model_file_list(parent, folder: str, file_filter: str, is_model_func,
+                                  family_func=None) -> list:
+    """Ask for the .dat files to convert, in the file explorer.
+
+    Files that are not a monster/character/weapon model are refused (battle.fs holds .dat
+    files that are not models at all), and the missing files of a character family are
+    offered, since a body and its weapons must be converted together.
+    Returns [] when the user cancels or nothing usable is left.
+    """
+    path_list, _ = QFileDialog.getOpenFileNames(
+        parent, "Select the .dat files to convert (Ctrl+A to select them all)", folder,
+        f"{file_filter};;All files (*)")
+    if not path_list:
+        return []
+
+    refused = [p for p in path_list if not is_model_func(p)]
+    file_list = [p for p in path_list if is_model_func(p)]
+    if refused:
+        QMessageBox.warning(
+            parent, "Convert files to 30/60 FPS",
+            f"{len(refused)} file(s) are not a monster (c0mXXX.dat), a character "
+            f"(dXcYYY.dat) or a weapon (dXwYYY.dat), and hold no model animation. They are "
+            f"ignored:\n" +
+            "\n".join("  " + os.path.basename(p) for p in refused[:12]) +
+            ("\n  ..." if len(refused) > 12 else ""))
+    if not file_list:
+        return []
+
+    # A character is a body + weapons animated by the same animation ids: converting one
+    # without the other desynchronises them.
+    if family_func:
+        selected = {os.path.normcase(f) for f in file_list}
+        missing = []
+        for file_path in list(file_list):
+            for family_file in family_func(file_path):
+                if os.path.normcase(str(family_file)) not in selected:
+                    missing.append(str(family_file))
+                    selected.add(os.path.normcase(str(family_file)))
+        if missing:
+            answer = QMessageBox.question(
+                parent, "Convert files to 30/60 FPS",
+                "A character is a body file plus its weapon files, and the game plays the "
+                "same animation ids on both. Converting one without the other would leave "
+                "the weapon behind while the body moves.\n\n"
+                f"Add the {len(missing)} matching file(s)?\n" +
+                "\n".join("  " + os.path.basename(f) for f in missing[:12]) +
+                ("\n  ..." if len(missing) > 12 else ""),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No |
+                QMessageBox.StandardButton.Cancel)
+            if answer == QMessageBox.StandardButton.Cancel:
+                return []
+            if answer == QMessageBox.StandardButton.Yes:
+                file_list.extend(missing)
+    return sorted(file_list)
 
 
 class FpsBatchReportDialog(QDialog):

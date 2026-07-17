@@ -46,6 +46,50 @@ def _frame_count_list(game_data, path):
     return [len(anim.frames) for anim in monster.animation_data.animations]
 
 
+class TestModelFileFilter:
+    """battle.fs holds .dat files that are not models: b0wave.dat is a texture + a font +
+    the AKAO victory music, r0win.dat holds the victory poses with its own layout. Reading
+    one as a model gives garbage, and r0win.dat even hangs the analyser (its data is taken
+    for an AI script), so the name is checked before anything is read.
+    """
+
+    def test_model_files_are_accepted(self):
+        for name in ("c0m000.dat", "c0m199.dat", "d0c000.dat", "d0w007.dat",
+                     "dac021.dat", "daw039.dat", "C0M001.DAT"):
+            assert IfritManager.is_battle_model_file(name), name
+
+    def test_the_other_battle_files_are_refused(self):
+        for name in ("b0wave.dat", "r0win.dat", "a0stg000.dat", "scene.out",
+                     "a9btlfnt.bft", "a0def.tim", "mag000_a.dat"):
+            assert not IfritManager.is_battle_model_file(name), name
+
+    def test_the_name_must_match_exactly(self):
+        for name in ("c0m1.dat", "c0mfoo.dat", "c0m0001.dat", "d0x000.dat", "c0m000.bak"):
+            assert not IfritManager.is_battle_model_file(name), name
+
+    def test_a_non_model_is_refused_without_being_read(self, manager, tmp_path):
+        """r0win.dat used to hang the batch: it must be refused on the name alone."""
+        path = _copy(tmp_path, "r0win.dat")[0]
+        before = pathlib.Path(path).read_bytes()
+        report = manager.convert_file_list_to_fps([path], 30)[0]
+        assert "not a monster" in report['error']
+        assert report['nb_converted'] == 0
+        assert pathlib.Path(path).read_bytes() == before
+
+    def test_b0wave_is_refused(self, manager, tmp_path):
+        path = _copy(tmp_path, "b0wave.dat")[0]
+        report = manager.convert_file_list_to_fps([path], 30)[0]
+        assert "not a monster" in report['error']
+
+    def test_the_family_never_picks_a_non_model_file(self, tmp_path):
+        """The family is found by prefix: it must not catch a neighbour like d0def.tim."""
+        shutil.copy(BATTLE_PATH / "d0c000.dat", tmp_path / "d0c000.dat")
+        shutil.copy(BATTLE_PATH / "d0w000.dat", tmp_path / "d0w000.dat")
+        (tmp_path / "d0wave.dat").write_bytes(b"not a model")
+        family = IfritManager.get_file_family_list(tmp_path / "d0c000.dat")
+        assert sorted(pathlib.Path(f).name for f in family) == ["d0c000.dat", "d0w000.dat"]
+
+
 class TestFileFamily:
 
     def test_a_monster_is_alone(self):

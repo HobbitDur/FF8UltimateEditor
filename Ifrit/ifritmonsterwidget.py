@@ -8,7 +8,8 @@ from PyQt6.QtWidgets import (
 )
 from Ifrit.IfritAI.ifritaiwidget import IfritAIWidget
 from Ifrit.ifritmanager import IfritManager
-from Ifrit.fpsbatchdialog import FpsBatchDialog, FpsBatchReportDialog
+from Ifrit.fpsbatchdialog import (FpsBatchDialog, FpsBatchReportDialog,
+                                  select_battle_model_file_list)
 from Ifrit.IfritDynamicTexture.ifritdynamictexturewidget import IfritDynamicTextureWidget
 from Ifrit.IfritSeq.ifritseqwidget import IfritSeqWidget
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
@@ -172,10 +173,15 @@ class IfritMonsterWidget(QWidget):
     def _convert_files_to_fps(self):
         """Convert the animations of several .dat files to 30 or 60 fps in one go."""
         folder = self._file_dialog_folder or os.path.dirname(self.file_loaded)
-        dialog = FpsBatchDialog(self, folder, family_func=IfritManager.get_file_family_list)
+        file_list = select_battle_model_file_list(
+            self, folder, IfritManager.BATTLE_MODEL_FILE_FILTER,
+            IfritManager.is_battle_model_file, IfritManager.get_file_family_list)
+        if not file_list:
+            return
+        dialog = FpsBatchDialog(self, file_list)
         if dialog.exec() != FpsBatchDialog.DialogCode.Accepted:
             return
-        file_list = dialog.get_checked_file_list()
+        file_list = dialog.get_file_list()
         target_fps = dialog.get_target_fps()
         split_when_too_long = dialog.get_split_when_too_long()
 

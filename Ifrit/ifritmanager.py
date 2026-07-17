@@ -186,6 +186,18 @@ class IfritManager:
     # ── Batch fps conversion ──────────────────────────────────────────
 
     BATTLE_NATIVE_FPS = 15
+    # Only these hold a skeleton + animations: c0mXXX monsters, dXcYYY character bodies
+    # and dXwYYY weapons. battle.fs holds other .dat files that are not models at all
+    # (b0wave.dat = texture + font + AKAO music, r0win.dat = victory poses with its own
+    # layout...): reading one as a model gives garbage at best, and r0win.dat makes the
+    # analyser hang on data it takes for an AI script.
+    BATTLE_MODEL_FILE_PATTERN = re.compile(r'^(c0m\d{3}|d[0-9a-f][cw]\d{3})\.dat$', re.IGNORECASE)
+    BATTLE_MODEL_FILE_FILTER = "Monster, character, weapon (c0m*.dat d?c*.dat d?w*.dat)"
+
+    @classmethod
+    def is_battle_model_file(cls, file_path) -> bool:
+        """True for a monster/character/weapon model file, on the name only."""
+        return bool(cls.BATTLE_MODEL_FILE_PATTERN.match(os.path.basename(str(file_path))))
 
     @staticmethod
     def is_character_family_file(file_path) -> bool:
@@ -205,12 +217,11 @@ class IfritManager:
         """
         path = pathlib.Path(file_path)
         name = path.name.lower()
-        if len(name) < 3 or not name.startswith('d') or name[2] not in ('c', 'w'):
+        if not IfritManager.is_character_family_file(name) or not path.parent.is_dir():
             return [path]
         family = sorted(file for file in path.parent.iterdir()
-                        if file.is_file() and file.name.lower().startswith(name[:2])
-                        and len(file.name) > 2 and file.name.lower()[2] in ('c', 'w')
-                        and file.name.lower().endswith('.dat'))
+                        if file.is_file() and IfritManager.is_battle_model_file(file.name)
+                        and file.name.lower().startswith(name[:2]))
         return family or [path]
 
     def convert_file_list_to_fps(self, file_list, target_fps: int, split_when_too_long: bool = True,
@@ -240,6 +251,13 @@ class IfritManager:
         """
         report = {'file': os.path.basename(file_path), 'name': "", 'nb_converted': 0,
                   'split_list': [], 'skipped_list': [], 'error': "", 'source': ""}
+        # Checked on the name BEFORE reading: a battle .dat that is not a model does not
+        # simply fail to parse, r0win.dat hangs the analyser on data it reads as an AI
+        # script.
+        if not self.is_battle_model_file(file_path):
+            report['error'] = ("not a monster (c0mXXX.dat), character (dXcYYY.dat) or weapon "
+                               "(dXwYYY.dat) file: it holds no model animation")
+            return report
         try:
             monster = MonsterAnalyser(self.game_data)
             monster.load_file_data(str(file_path), self.game_data)
