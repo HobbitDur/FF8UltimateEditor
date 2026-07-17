@@ -93,31 +93,30 @@ class TestPartCount:
     def test_every_part_fits_once_converted(self):
         for nb_frame in (65, 70, 88, 100, 116, 128, 140):
             for smooth_loop in (False, True):
-                nb_part = splitter.get_nb_part_needed(nb_frame, 4, smooth_loop)
-                assert nb_part >= 1
-                boundary_list = splitter.get_part_boundary_list(nb_frame, nb_part)
-                for index, (first, last) in enumerate(boundary_list):
-                    is_last = (index == len(boundary_list) - 1)
-                    converted = splitter.get_converted_frame_count(
-                        last - first + 1, 4, smooth_loop and is_last)
-                    assert converted <= splitter.MAX_ANIMATION_FRAME
+                nb_converted = splitter.get_converted_frame_count(nb_frame, 4, smooth_loop)
+                for nb_part_frame in splitter.get_part_frame_count_list(nb_converted):
+                    assert nb_part_frame <= splitter.MAX_ANIMATION_FRAME
 
 
 class TestPartBoundary:
+    """The animation is interpolated first and cut after, so the parts are contiguous
+    slices of the converted stream: nothing is repeated, nothing is inserted."""
 
-    def test_parts_share_their_boundary_frame(self):
-        """The cut frame belongs to both parts, so each part interpolates across the cut."""
-        boundary_list = splitter.get_part_boundary_list(11, 2)
-        assert boundary_list == [(0, 5), (5, 10)]
+    def test_the_parts_add_up_to_the_converted_animation(self):
+        for nb_converted in (256, 279, 280, 557, 1000):
+            assert sum(splitter.get_part_frame_count_list(nb_converted)) == nb_converted
 
-    def test_every_frame_of_the_original_is_kept(self):
-        nb_frame = 140
-        boundary_list = splitter.get_part_boundary_list(nb_frame, 3)
-        played = []
-        for index, (first, last) in enumerate(boundary_list):
-            frame_list = list(range(first, last + 1))
-            played.extend(frame_list if index == 0 else frame_list[1:])
-        assert played == list(range(nb_frame))
+    def test_an_animation_that_fits_is_one_part(self):
+        assert splitter.get_part_frame_count_list(255) == [255]
+
+    def test_elvoret_at_30fps_is_cut_in_two_without_a_repeated_frame(self):
+        """140 frames one-shot -> 279 converted -> 140 + 139, and 140 + 139 == 279."""
+        assert splitter.get_converted_frame_count(140, 2, False) == 279
+        assert splitter.get_part_frame_count_list(279) == [140, 139]
+
+    def test_the_parts_are_balanced(self):
+        assert splitter.get_part_frame_count_list(557) == [186, 186, 185]
+        assert splitter.get_part_frame_count_list(280, 128) == [94, 93, 93]
 
 
 class TestSequenceRewrite:
@@ -229,11 +228,17 @@ class TestRealFile:
                                     for r in frame.rotation_vector_data)))
         return pose_list
 
-    def test_split_keeps_the_motion_through_a_save(self, game_data, tmp_path):
-        """Playing the parts in a row must show the poses of the original animation."""
-        anim_id, factor = 17, 4  # Jelleye: 72 frames one-shot, 285 at 60 fps
-        original = self._load(game_data, "c0m029.dat")
-        reference = self._pose_list(original.animation_data.animations[anim_id])
+    def test_the_parts_are_exactly_the_unsplit_animation(self, game_data, tmp_path):
+        """Chaining the parts must play the converted animation frame for frame.
+
+        No frame repeated at the cut, no interpolated frame missing: the parts are slices
+        of the very stream an unsplit conversion would produce.
+        """
+        anim_id, factor = 17, 4  # Jelleye: 72 frames one-shot, 285 frames at 60 fps
+        ideal = self._load(game_data, "c0m029.dat")
+        ideal.animation_data.animations[anim_id].create_interpolated_frames(
+            ideal.bone_data.bones, factor, False)
+        reference = self._pose_list(ideal.animation_data.animations[anim_id])
 
         monster = self._load(game_data, "c0m029.dat")
         result = splitter.split_and_convert_animation(
@@ -246,13 +251,28 @@ class TestRealFile:
         reloaded.load_file_data(str(saved), game_data)
         reloaded.analyse_loaded_data(game_data)
 
-        part_id_list = [anim_id] + result['new_id_list']
         chained = []
-        for index, part_id in enumerate(part_id_list):
-            key_frame_list = self._pose_list(reloaded.animation_data.animations[part_id])[::factor]
-            if index > 0:
-                key_frame_list = key_frame_list[1:]  # boundary frame shown by the part before
-            chained.extend(key_frame_list)
+        for part_id in [anim_id] + result['new_id_list']:
+            chained.extend(self._pose_list(reloaded.animation_data.animations[part_id]))
+        assert len(chained) == len(reference)
+        assert chained == reference
+
+    def test_a_split_loop_is_exactly_the_unsplit_loop(self, game_data):
+        """Including the wrap frames back to the first part."""
+        anim_id, factor = 0, 4  # Gerogero idle: 70 frames, slow-limited to 128 per part
+        ideal = self._load(game_data, "c0m034.dat")
+        ideal.animation_data.animations[anim_id].create_interpolated_frames(
+            ideal.bone_data.bones, factor, True)
+        reference = self._pose_list(ideal.animation_data.animations[anim_id])
+
+        monster = self._load(game_data, "c0m034.dat")
+        result = splitter.split_and_convert_animation(
+            game_data, monster.animation_data, monster.seq_animation_data,
+            monster.bone_data.bones, anim_id, factor, True,
+            splitter.get_max_frame_for_animation(True))
+        chained = []
+        for part_id in [anim_id] + result['new_id_list']:
+            chained.extend(self._pose_list(monster.animation_data.animations[part_id]))
         assert chained == reference
 
     def test_every_part_fits_the_format(self, game_data, tmp_path):

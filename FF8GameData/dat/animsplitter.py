@@ -55,18 +55,6 @@ def get_max_frame_for_animation(can_be_slowed: bool, max_frame: int = MAX_ANIMAT
     return max_frame
 
 
-def get_part_boundary_list(nb_frame: int, nb_part: int) -> list:
-    """[(first frame, last frame)] of each part, boundaries included in both neighbours.
-
-    The frame at a cut belongs to the part before AND the part after it, so that each
-    part interpolates the motion up to the cut and the parts chain seamlessly.
-    """
-    if nb_part < 2 or nb_frame < nb_part + 1:
-        return [(0, nb_frame - 1)]
-    cut_list = [round(index * (nb_frame - 1) / nb_part) for index in range(nb_part + 1)]
-    return [(cut_list[index], cut_list[index + 1]) for index in range(nb_part)]
-
-
 def get_converted_frame_count(nb_frame: int, factor: int, smooth_loop: bool) -> int:
     """Frame count once (factor - 1) frames are inserted between each pair of frames."""
     if smooth_loop:
@@ -74,33 +62,33 @@ def get_converted_frame_count(nb_frame: int, factor: int, smooth_loop: bool) -> 
     return (nb_frame - 1) * factor + 1
 
 
+def get_part_frame_count_list(nb_converted_frame: int, max_frame: int = MAX_ANIMATION_FRAME) -> list:
+    """How many frames each part gets, cutting the CONVERTED animation in equal chunks.
+
+    The animation is interpolated first and cut afterwards, so the parts are contiguous
+    slices of the final frame stream: no frame is repeated and no interpolated frame is
+    missing. Chaining the parts then plays exactly the frames of the unsplit animation,
+    in the same number of ticks, because an animation of N frames occupies N ticks and
+    the next one's frame 0 lands on the tick right after (the completion tick does not
+    draw: FF8_EN.exe Battle_ReadAnimation @0x508F90 returns early, and the sequence
+    queues the next animation in that same tick).
+    """
+    if nb_converted_frame <= max_frame:
+        return [nb_converted_frame]
+    nb_part = -(-nb_converted_frame // max_frame)  # ceil
+    base = nb_converted_frame // nb_part
+    remainder = nb_converted_frame % nb_part
+    return [base + (1 if index < remainder else 0) for index in range(nb_part)]
+
+
 def get_nb_part_needed(nb_frame: int, factor: int, smooth_loop: bool,
                        max_frame: int = MAX_ANIMATION_FRAME) -> int:
-    """How many parts the animation must be cut into so every part fits once converted.
-
-    Only the last part of a looping animation wraps back to the first frame, the other
-    ones run into the next part.
-    """
-    if get_converted_frame_count(nb_frame, factor, smooth_loop) <= max_frame:
-        return 1
-    for nb_part in range(2, nb_frame):
-        boundary_list = get_part_boundary_list(nb_frame, nb_part)
-        if len(boundary_list) < nb_part:
-            break
-        too_long = False
-        for index, (first, last) in enumerate(boundary_list):
-            is_last_part = (index == len(boundary_list) - 1)
-            part_frame = last - first + 1
-            if part_frame < 2:
-                too_long = True
-                break
-            if get_converted_frame_count(part_frame, factor,
-                                         smooth_loop and is_last_part) > max_frame:
-                too_long = True
-                break
-        if not too_long:
-            return nb_part
-    return 0  # cannot be split small enough
+    """How many parts the animation must be cut into so every part fits once converted."""
+    nb_converted = get_converted_frame_count(nb_frame, factor, smooth_loop)
+    part_list = get_part_frame_count_list(nb_converted, max_frame)
+    if any(nb < 2 for nb in part_list):
+        return 0  # cannot be split small enough
+    return len(part_list)
 
 
 def can_split_animation(game_data, seq_animation_data: dict, animation_section,
@@ -139,20 +127,25 @@ def can_split_animation(game_data, seq_animation_data: dict, animation_section,
     return True, ""
 
 
-def split_animation(animation_section, bones, anim_id: int, nb_part: int) -> list:
-    """Cut animation anim_id into nb_part parts. Returns the ids of the new animations.
+def split_animation(animation_section, anim_id: int, max_frame: int = MAX_ANIMATION_FRAME) -> list:
+    """Cut animation anim_id in parts of at most max_frame frames. Returns the new ids.
 
-    The original animation keeps the first part, the other parts are appended at the end
-    of the section, so the existing animation ids (and every sequence naming them) stay
+    The animation is cut as-is: interpolate it BEFORE calling this, so that the parts are
+    contiguous slices of the final frame stream (see get_part_frame_count_list).
+    The original animation keeps the first part and the other parts are appended at the
+    end of the section, so existing animation ids — and every sequence naming them — stay
     valid.
     """
     animation = animation_section.animations[anim_id]
-    boundary_list = get_part_boundary_list(len(animation.frames), nb_part)
-    if len(boundary_list) < 2:
+    part_frame_count_list = get_part_frame_count_list(len(animation.frames), max_frame)
+    if len(part_frame_count_list) < 2:
         return []
 
-    frame_list = animation.frames
-    part_frame_list = [frame_list[first:last + 1] for first, last in boundary_list]
+    part_frame_list = []
+    first = 0
+    for nb_frame in part_frame_count_list:
+        part_frame_list.append(animation.frames[first:first + nb_frame])
+        first += nb_frame
 
     new_id_list = []
     for part_frames in part_frame_list[1:]:
@@ -164,7 +157,7 @@ def split_animation(animation_section, bones, anim_id: int, nb_part: int) -> lis
         new_id_list.append(animation_section.nb_animations)
         animation_section.nb_animations += 1
 
-    animation.frames = [copy.deepcopy(frame) for frame in part_frame_list[0]]
+    animation.frames = part_frame_list[0]
     animation.original_tail = b""
     animation._recompute_frame_storage_types()
     return new_id_list
@@ -214,19 +207,12 @@ def split_and_convert_animation(game_data, animation_section, seq_animation_data
     if not can_split:
         raise ValueError(reason)
 
-    # The first frame of the whole animation: a looping animation wraps back to it, and
-    # after the split it lives in the first part.
-    wrap_frame = copy.deepcopy(animation.frames[0]) if smooth_loop else None
-    new_id_list = split_animation(animation_section, bones, anim_id, nb_part)
+    # Interpolate the WHOLE animation first, then cut the result: the parts are then
+    # contiguous slices of the final frame stream, so chaining them plays exactly the
+    # frames of the unsplit animation — no frame repeated at the cut, none missing.
+    animation.create_interpolated_frames(bones, factor, smooth_loop)
+    new_id_list = split_animation(animation_section, anim_id, max_frame)
     part_id_list = [anim_id] + new_id_list
-
-    for index, part_id in enumerate(part_id_list):
-        is_last_part = (index == len(part_id_list) - 1)
-        part = animation_section.animations[part_id]
-        # Only the last part of a looping animation wraps back to the beginning: the
-        # other parts run into the next part, whose first frame they already end on.
-        part.create_interpolated_frames(bones, factor, smooth_loop and is_last_part,
-                                        wrap_frame=wrap_frame if is_last_part else None)
 
     nb_rewritten = rewrite_sequence_list_for_split(game_data, seq_animation_data, anim_id,
                                                    new_id_list)
