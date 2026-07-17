@@ -101,6 +101,55 @@ def test_minimog_list_set_add_and_png(capsys, tmp_path):
     assert png.stat().st_size > 0
 
 
+@pytest.mark.ff8data("extracted_files/menu/icon.TEX")
+def test_minimog_export_tex_png(tmp_path):
+    """export-tex-png needs no icon.sp1 - it's a raw TexFile -> PNG conversion,
+    and the same atlas must come out differently per chosen palette."""
+    from Cli.minimog import MinimogCliTool
+    from PIL import Image
+    tex = EXTRACTED / "menu" / "icon.TEX"
+
+    png0 = tmp_path / "tex_p0.png"
+    png2 = tmp_path / "tex_p2.png"
+    assert _run(MinimogCliTool, ["export-tex-png", "--tex", str(tex),
+                                 "--palette", "0", "--output", str(png0)]) == 0
+    assert _run(MinimogCliTool, ["export-tex-png", "--tex", str(tex),
+                                 "--palette", "2", "--output", str(png2)]) == 0
+    image0, image2 = Image.open(png0), Image.open(png2)
+    assert image0.size == image2.size == (256, 256)
+    assert image0.tobytes() != image2.tobytes(), \
+        "different palettes over the same pixel data must render differently"
+
+    assert _run(MinimogCliTool, ["export-tex-png", "--tex", str(tex),
+                                 "--palette", "99", "--output", str(tmp_path / "bad.png")]) == 1
+
+
+@pytest.mark.ff8data("extracted_files/menu/icon.sp1", "extracted_files/menu/icon.TEX")
+def test_minimog_export_tex_true_colors(tmp_path):
+    """export-tex-true-colors keeps icon.TEX's own layout/size (unlike export-png's
+    grid-by-id sheet) but resolves each region through its own icon's CLUT - no
+    palette to pick. Icon 15 ("Target") must come out red at its own UV rectangle."""
+    from Cli.minimog import MinimogCliTool
+    from PIL import Image
+    from Minimog.minimogmanager import MinimogManager
+
+    sp1 = EXTRACTED / "menu" / "icon.sp1"
+    tex = EXTRACTED / "menu" / "icon.TEX"
+    out = tmp_path / "true_colors.png"
+
+    assert _run(MinimogCliTool, ["export-tex-true-colors", "--input", str(sp1),
+                                 "--tex", str(tex), "--output", str(out)]) == 0
+
+    manager = MinimogManager()
+    manager.load_file(str(sp1))
+    image = Image.open(out).convert("RGBA")
+    assert image.size == (256, 256), "must match icon.TEX's native layout, not a grid of cells"
+
+    quad = manager.icons[15].quads[0]
+    r, g, b, a = image.getpixel((quad.u + 8, quad.v + 4))
+    assert a != 0 and r > 120 and r > g + 30, "Target's own UV rectangle should be red"
+
+
 @pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin")
 def test_pandemona_roundtrip(tmp_path):
     from Cli.pandemona import PandemonaCliTool

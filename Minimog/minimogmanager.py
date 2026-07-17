@@ -259,6 +259,79 @@ class MinimogManager:
                                  Image.NEAREST)
         return image
 
+    def render_sheet(self, tex_file, scale=1, columns=20, cell=40):
+        """A contact sheet of every icon in the file, tight-cropped render_icon()
+        laid out in a (icon_id % columns, icon_id // columns) grid - one cell
+        per id, cropped to `cell` native pixels so oversized icons don't spill
+        into their neighbours. Icons without visible quads leave their cell
+        blank. Returns a PIL image."""
+        from PIL import Image
+
+        cell *= scale
+        rows = (len(self.icons) + columns - 1) // columns
+        sheet = Image.new("RGBA", (columns * cell, rows * cell), (30, 30, 30, 255))
+        for icon in self.icons:
+            image = self.render_icon(icon.icon_id, tex_file, scale=scale)
+            if image is None:
+                continue
+            sheet.alpha_composite(image.crop((0, 0, min(image.width, cell), min(image.height, cell))),
+                                  ((icon.icon_id % columns) * cell, (icon.icon_id // columns) * cell))
+        return sheet
+
+    def render_texture_true_colors(self, tex_file):
+        """Reconstruct icon.TEX at its own native size and layout - same
+        dimensions, same pixel positions as tex_file.to_image() - but with
+        each region colored by whichever icon quad actually claims it,
+        instead of one palette applied to the whole atlas. This is what
+        directly answers "what does icon.TEX really look like in-game":
+        e.g. the 'Target' glyph comes out red here because icon 15 stores
+        CLUT 224 (palette 3) for that exact rectangle, with no palette to
+        choose - unlike to_image(), which needs one picked for everything.
+
+        Two real edge cases in vanilla icon.TEX:
+        - 12 rectangles are claimed by more than one icon with a DIFFERENT
+          palette (e.g. some stat-label glyphs double as a plain white set
+          and a gold Chocobo World / SeeD test set - same pixels, different
+          CLUT). There is no single correct color for those pixels; this
+          picks whichever icon has the LOWEST id and leaves the other
+          version unrepresented. render_sheet() has no such ambiguity since
+          it draws every icon in its own separate cell.
+        - ~9000 pixels aren't referenced by any current icon.sp1 quad at
+          all (leftover/unused atlas space). Nothing claims them, so they
+          are left fully transparent rather than guessing a palette.
+        """
+        from PIL import Image
+
+        width, height = tex_file.width, tex_file.height
+        # palette_by_row[y][x] = palette index of the lowest icon_id quad
+        # covering that pixel; icons are visited in id order and setdefault
+        # never overwrites, so the first (lowest id) claim wins ties (see
+        # the docstring above on why this is arbitrary-but-deterministic
+        # rather than "correct").
+        palette_by_row = {}
+        for icon in self.icons:
+            for quad in icon.quads:
+                if quad.width == 0 or quad.height == 0:
+                    continue
+                palette = min(quad.palette_index, tex_file.num_palettes - 1)
+                for y in range(quad.v, min(quad.v + quad.height, height)):
+                    row = palette_by_row.setdefault(y, {})
+                    for x in range(quad.u, min(quad.u + quad.width, width)):
+                        row.setdefault(x, palette)
+
+        rgba = bytearray(width * height * 4)
+        palette_cache = {}
+        for y, row in palette_by_row.items():
+            for x, palette in row.items():
+                if palette not in palette_cache:
+                    palette_cache[palette] = tex_file.palette(palette)
+                pal = palette_cache[palette]
+                idx = tex_file.pixels[y * width + x] & 0x0F
+                r, g, b, a = pal[idx] if idx < len(pal) else (0, 0, 0, 0)
+                o = (y * width + x) * 4
+                rgba[o:o + 4] = bytes((r, g, b, 255 if a else 0))
+        return Image.frombytes("RGBA", (width, height), bytes(rgba))
+
     def render_icon_anchored(self, icon_id, tex_file, scale=1, draw_marker=True):
         """Like render_icon, but the canvas always keeps (0, 0) - the engine's
         draw cursor, before dx/dy is applied - in frame, with a small

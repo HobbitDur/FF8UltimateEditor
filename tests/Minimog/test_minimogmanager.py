@@ -215,3 +215,103 @@ class TestMinimogManager:
     def test_anchored_bounding_box_noop_when_already_covers_origin(self):
         icon = Sp1Icon(0, [Sp1Quad(width=8, height=8, dx=-2, dy=-2)])
         assert icon.anchored_bounding_box(pad=0) == icon.bounding_box() == (-2, -2, 6, 6)
+
+
+def make_solid_tex(color=(200, 50, 50, 254), size=64):
+    """A synthetic TexFile: one palette, every pixel index 1 = `color` (r, g, b, a)."""
+    from FF8GameData.tex.texfile import TexFile
+
+    r, g, b, a = color
+    palette_entries = 16
+    raw_palette = bytearray(palette_entries * 4)
+    raw_palette[4:8] = bytes((b, g, r, a))  # on-disk order is B,G,R,A - index 1
+    pixels = bytearray([1]) * (size * size)
+    return TexFile(raw_header=bytes(240), raw_palette=bytes(raw_palette), pixels=pixels,
+                   num_palettes=1, palette_entries=palette_entries, bpp=4,
+                   width=size, height=size)
+
+
+class TestRenderSheet:
+    def test_places_icon_at_its_grid_cell(self):
+        manager = MinimogManager()
+        manager.icons = [Sp1Icon(0, []), Sp1Icon(1, [Sp1Quad(u=0, v=0, clut=64, width=8, height=8)])]
+        tex_file = make_solid_tex()
+
+        sheet = manager.render_sheet(tex_file, scale=1, columns=20, cell=40)
+        assert sheet.size == (20 * 40, 40)  # 2 icons still round up to a single row
+        assert sheet.getpixel((5, 5))[:3] == (30, 30, 30)  # icon 0's cell: empty
+        assert sheet.getpixel((45, 5))[:3] == (200, 50, 50)  # icon 1's cell (40..80): the quad
+
+    def test_oversized_quad_is_clipped_to_its_own_cell(self):
+        # a quad wider than `cell` must not bleed into the next icon's cell
+        manager = MinimogManager()
+        manager.icons = [Sp1Icon(0, [Sp1Quad(u=0, v=0, clut=64, width=50, height=10)])]
+        tex_file = make_solid_tex()
+
+        sheet = manager.render_sheet(tex_file, scale=1, columns=20, cell=40)
+        assert sheet.getpixel((35, 5))[:3] == (200, 50, 50)  # inside icon 0's cell
+        assert sheet.getpixel((45, 5))[:3] == (30, 30, 30), \
+            "the quad's extra 10px must be clipped, not spill into the next cell"
+
+
+def make_multi_palette_tex(colors=((200, 50, 50, 254), (50, 50, 200, 254)), size=64):
+    """A synthetic TexFile with one palette per given (r, g, b, a) color, every
+    pixel index 1 - lets a test point different UV rectangles at different
+    palettes to check render_texture_true_colors()'s per-region resolution."""
+    from FF8GameData.tex.texfile import TexFile
+
+    palette_entries = 16
+    raw_palette = bytearray(len(colors) * palette_entries * 4)
+    for p, (r, g, b, a) in enumerate(colors):
+        base = p * palette_entries * 4
+        raw_palette[base + 4:base + 8] = bytes((b, g, r, a))  # on-disk B,G,R,A, index 1
+    pixels = bytearray([1]) * (size * size)
+    return TexFile(raw_header=bytes(240), raw_palette=bytes(raw_palette), pixels=pixels,
+                   num_palettes=len(colors), palette_entries=palette_entries, bpp=4,
+                   width=size, height=size)
+
+
+class TestRenderTextureTrueColors:
+    def test_matches_the_tex_file_s_native_size(self):
+        manager = MinimogManager()
+        manager.icons = [Sp1Icon(0, [Sp1Quad(u=0, v=0, clut=0, width=8, height=8)])]
+        tex_file = make_multi_palette_tex()
+
+        image = manager.render_texture_true_colors(tex_file)
+
+        assert image.size == (tex_file.width, tex_file.height)
+
+    def test_each_region_uses_its_own_icon_s_palette(self):
+        manager = MinimogManager()
+        manager.icons = [
+            Sp1Icon(0, [Sp1Quad(u=0, v=0, clut=0, width=8, height=8)]),    # palette 0 = red
+            Sp1Icon(1, [Sp1Quad(u=16, v=0, clut=64, width=8, height=8)]),  # palette 1 = blue
+        ]
+        tex_file = make_multi_palette_tex()
+
+        image = manager.render_texture_true_colors(tex_file)
+
+        assert image.getpixel((4, 4))[:3] == (200, 50, 50)
+        assert image.getpixel((20, 4))[:3] == (50, 50, 200)
+
+    def test_pixels_no_icon_claims_are_left_transparent(self):
+        manager = MinimogManager()
+        manager.icons = [Sp1Icon(0, [Sp1Quad(u=0, v=0, clut=0, width=8, height=8)])]
+        tex_file = make_multi_palette_tex()
+
+        image = manager.render_texture_true_colors(tex_file)
+
+        assert image.getpixel((40, 40))[3] == 0, "far outside the only quad, nothing claims it"
+
+    def test_a_rectangle_shared_by_two_icons_resolves_to_the_lower_icon_id(self):
+        manager = MinimogManager()
+        manager.icons = [
+            Sp1Icon(0, [Sp1Quad(u=0, v=0, clut=0, width=8, height=8)]),   # red, claims (0,0)-(8,8) first
+            Sp1Icon(5, [Sp1Quad(u=0, v=0, clut=64, width=8, height=8)]),  # blue, same rectangle, higher id
+        ]
+        tex_file = make_multi_palette_tex()
+
+        image = manager.render_texture_true_colors(tex_file)
+
+        assert image.getpixel((4, 4))[:3] == (200, 50, 50), \
+            "the lower icon id must win a rectangle shared with a higher one"

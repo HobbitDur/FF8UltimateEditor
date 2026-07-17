@@ -150,3 +150,23 @@ def test_render_icon_anchored_crosshair_is_stable_across_offset_edits():
     assert small.getpixel(small_spot)[3] != 0
     assert large.getpixel(small_spot)[3] == 0, "icon left its old spot, it doesn't leave a trail"
     assert large.getpixel(large_spot)[3] != 0
+
+
+@pytest.mark.ff8data("extracted_files/menu/icon.sp1", "extracted_files/menu/icon.TEX")
+def test_render_sheet_places_known_icon_in_its_cell():
+    """The contact sheet lays out icon id N at grid cell (N % columns, N // columns)
+    and covers all 329 icons. Icon 20 ("BULLET") should land inside its own cell."""
+    from FF8GameData.tex.texfile import TexFile
+
+    manager = MinimogManager()
+    manager.load_file(str(ICON_SP1))
+    tex_file = TexFile.read(str(ICON_TEX))
+
+    sheet = manager.render_sheet(tex_file, scale=1, columns=20, cell=40)
+    assert sheet.size == (20 * 40, ((329 + 19) // 20) * 40)
+
+    cell_x, cell_y = (20 % 20) * 40, (20 // 20) * 40
+    cell = sheet.crop((cell_x, cell_y, cell_x + 40, cell_y + 40))
+    alpha_bytes = cell.tobytes()[3::4]
+    assert any(alpha_bytes), "icon 20's cell should contain visible pixels"
+

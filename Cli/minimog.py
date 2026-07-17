@@ -2,11 +2,13 @@
 Minimog CLI Tool.
 
 Headless icon.sp1 editing (same data as the Minimog GUI):
-  • list        (print icons with their quads and decoded fields)
-  • set-quad    (edit one quad's UV/size/offsets/CLUT/flags)
-  • add-quad    (append a quad to an icon, the directory is rebuilt)
-  • remove-quad (delete a quad from an icon)
-  • export-png  (render one icon or a contact sheet from icon.TEX)
+  • list                   (print icons with their quads and decoded fields)
+  • set-quad               (edit one quad's UV/size/offsets/CLUT/flags)
+  • add-quad               (append a quad to an icon, the directory is rebuilt)
+  • remove-quad            (delete a quad from an icon)
+  • export-png             (render one icon or a contact sheet from icon.TEX)
+  • export-tex-png         (convert the raw icon.TEX atlas to PNG using one chosen palette)
+  • export-tex-true-colors (same atlas layout, but each region uses its own icon's real CLUT)
 """
 
 import argparse
@@ -114,19 +116,39 @@ def _cmd_export_png(args) -> int:
         print(f"[ok] icon {args.icon_id} ({image.width}x{image.height}) saved to {args.output}")
         return 0
     # Contact sheet of every icon
-    from PIL import Image
-    cell = 40 * args.scale
-    columns = 20
-    rows = (len(manager.icons) + columns - 1) // columns
-    sheet = Image.new("RGBA", (columns * cell, rows * cell), (30, 30, 30, 255))
-    for icon in manager.icons:
-        image = manager.render_icon(icon.icon_id, tex_file, scale=args.scale)
-        if image is None:
-            continue
-        sheet.alpha_composite(image.crop((0, 0, min(image.width, cell), min(image.height, cell))),
-                              ((icon.icon_id % columns) * cell, (icon.icon_id // columns) * cell))
+    sheet = manager.render_sheet(tex_file, scale=args.scale)
     sheet.save(args.output)
     print(f"[ok] {len(manager.icons)} icons rendered to {args.output}")
+    return 0
+
+
+def _cmd_export_tex_png(args) -> int:
+    """Convert the raw icon.TEX atlas to PNG - no icon.sp1 needed. icon.TEX only
+    stores palette indices per pixel, so the same bytes render as completely
+    different colors depending which of its palettes is picked here."""
+    from FF8GameData.tex.texfile import TexFile
+    tex_file = TexFile.read(args.tex)
+    if not 0 <= args.palette < tex_file.num_palettes:
+        print(f"[error] palette {args.palette} out of range "
+              f"(0..{tex_file.num_palettes - 1})", file=sys.stderr)
+        return 1
+    image = tex_file.to_image(args.palette)
+    image.save(args.output)
+    print(f"[ok] icon.TEX palette {args.palette} ({image.width}x{image.height}) saved to {args.output}")
+    return 0
+
+
+def _cmd_export_tex_true_colors(args) -> int:
+    """Same layout/size as export-tex-png, but each region uses whichever
+    icon.sp1 quad actually claims it instead of one picked palette - the
+    true in-game coloring, e.g. why 'Target' always comes out red."""
+    from FF8GameData.tex.texfile import TexFile
+    manager = _load_manager(args.input)
+    tex_file = TexFile.read(args.tex)
+    image = manager.render_texture_true_colors(tex_file)
+    image.save(args.output)
+    print(f"[ok] icon.TEX ({image.width}x{image.height}) rendered with each icon's own "
+          f"palette, saved to {args.output}")
     return 0
 
 
@@ -182,6 +204,21 @@ class MinimogCliTool(BaseCliTool):
         p_png.add_argument("--scale", type=int, default=1, help="Integer zoom factor (default 1)")
         p_png.add_argument("--output", "-o", required=True, help="Output PNG path")
         p_png.set_defaults(func=_cmd_export_png)
+
+        p_tex_png = sub.add_parser("export-tex-png",
+                                   help="Convert the raw icon.TEX atlas to PNG using one palette")
+        p_tex_png.add_argument("--tex", "-t", required=True, help="Path to icon.TEX")
+        p_tex_png.add_argument("--palette", type=int, default=0,
+                               help="Palette index to render with (0-15 for icon.TEX, default 0)")
+        p_tex_png.add_argument("--output", "-o", required=True, help="Output PNG path")
+        p_tex_png.set_defaults(func=_cmd_export_tex_png)
+
+        p_tex_true = sub.add_parser("export-tex-true-colors",
+                                    help="Convert icon.TEX to PNG, each region using its own icon's real CLUT")
+        p_tex_true.add_argument("--input", "-i", required=True, help="Path to icon.sp1")
+        p_tex_true.add_argument("--tex", "-t", required=True, help="Path to icon.TEX")
+        p_tex_true.add_argument("--output", "-o", required=True, help="Output PNG path")
+        p_tex_true.set_defaults(func=_cmd_export_tex_true_colors)
 
         return parser
 

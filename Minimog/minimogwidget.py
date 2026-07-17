@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLa
                              QListWidget, QSpinBox, QComboBox, QCheckBox, QGroupBox, QFormLayout)
 
 from Minimog.minimogmanager import MinimogManager, Sp1Quad
+from Minimog.texpalettedialog import TexPalettePickerDialog
 
 PREVIEW_SCALE = 6
 
@@ -49,12 +50,34 @@ class MinimogWidget(QWidget):
                                    "(auto-loaded when icon.TEX sits next to the .sp1)")
         self.tex_button.clicked.connect(self.load_tex_dialog)
 
+        self.export_tex_button = QPushButton("Export by palette")
+        self.export_tex_button.setToolTip(
+            "Convert the raw icon.TEX atlas to a PNG using one palette you pick -\n"
+            "the file only stores palette indices, so the same pixels render as\n"
+            "completely different colors depending which of the 16 palettes is\n"
+            "chosen. Useful for inspecting/editing the raw texture. Needs icon.TEX loaded.")
+        self.export_tex_button.setEnabled(False)
+        self.export_tex_button.clicked.connect(self.export_tex_png)
+
+        self.export_true_colors_button = QPushButton("Export by real color")
+        self.export_true_colors_button.setToolTip(
+            "Same layout, size and pixel positions as 'Export by palette' - but\n"
+            "each region uses its OWN stored CLUT instead of one palette you pick,\n"
+            "e.g. why the 'Target' glyph always comes out red. A handful of\n"
+            "regions are reused by two icons with different colors (there is no\n"
+            "single correct answer for those); everything not claimed by any\n"
+            "current icon is left transparent. Needs icon.TEX loaded.")
+        self.export_true_colors_button.setEnabled(False)
+        self.export_true_colors_button.clicked.connect(self.export_true_colors)
+
         self.file_label = QLabel("No file loaded")
 
         file_section_layout = QHBoxLayout()
         file_section_layout.addWidget(self.load_button)
         file_section_layout.addWidget(self.save_button)
         file_section_layout.addWidget(self.tex_button)
+        file_section_layout.addWidget(self.export_tex_button)
+        file_section_layout.addWidget(self.export_true_colors_button)
         file_section_layout.addWidget(self.file_label)
         file_section_layout.addStretch(1)
 
@@ -268,6 +291,31 @@ class MinimogWidget(QWidget):
         self.tex_file = TexFile.read(tex_path)
         self.tex_button.setText(os.path.basename(tex_path))
         self.palette_spinbox.setRange(0, self.tex_file.num_palettes - 1)
+        self.export_tex_button.setEnabled(True)
+        self.export_true_colors_button.setEnabled(True)
+
+    def export_true_colors(self):
+        file_name = self.file_dialog.getSaveFileName(parent=self, caption="Export by real color",
+                                                     filter="*.png", directory=os.getcwd())[0]
+        if not file_name:
+            return
+        if not file_name.lower().endswith(".png"):
+            file_name += ".png"
+        self.manager.render_texture_true_colors(self.tex_file).save(file_name)
+
+    def export_tex_png(self):
+        quad = self._selected_quad()
+        default_palette = quad.palette_index if quad else 0
+        palette, chosen = TexPalettePickerDialog.get_palette(self, self.tex_file, default_palette)
+        if not chosen:
+            return
+        file_name = self.file_dialog.getSaveFileName(parent=self, caption="Export by palette",
+                                                     filter="*.png", directory=os.getcwd())[0]
+        if not file_name:
+            return
+        if not file_name.lower().endswith(".png"):
+            file_name += ".png"
+        self.tex_file.to_image(palette).save(file_name)
 
     # ------------------------------------------------------------------- ui
     def _selected_icon(self):
