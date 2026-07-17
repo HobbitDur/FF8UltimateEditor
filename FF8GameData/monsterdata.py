@@ -1366,13 +1366,17 @@ class Animation:
     def get_nb_frame(self):
         return len(self.frames)
 
-    def create_interpolated_frames(self, bones: List[Bone], factor: int = 4, smooth_loop: bool = False):
+    def create_interpolated_frames(self, bones: List[Bone], factor: int = 4, smooth_loop: bool = False,
+                                   wrap_frame: 'AnimationFrame' = None):
         """
         Insert (factor - 1) interpolated frames between each pair of consecutive frames.
         With factor = 4, an animation made for 15 fps becomes a 60 fps animation.
         If smooth_loop is True, frames are also inserted between the last and the first
         frame (nice for looping animations like the idle stance, wrong for one-shot
         animations like a death animation).
+        wrap_frame is the frame the loop goes back to, when it is not this animation's own
+        first frame: a looping animation split in several parts wraps back to the first
+        frame of its FIRST part (see FF8GameData/dat/animsplitter.py).
         """
         if len(self.frames) < 2:
             return
@@ -1385,7 +1389,10 @@ class Animation:
             if is_last_frame and not smooth_loop:
                 continue
 
-            next_frame = self.frames[(frame_index + 1) % len(self.frames)]
+            if is_last_frame:
+                next_frame = wrap_frame if wrap_frame is not None else self.frames[0]
+            else:
+                next_frame = self.frames[frame_index + 1]
             for step_index in range(1, factor):
                 step = step_index / factor
                 new_frames.append(self._create_frame_between(frame, next_frame, step, bones))

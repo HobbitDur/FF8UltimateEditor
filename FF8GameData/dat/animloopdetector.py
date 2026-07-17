@@ -95,19 +95,40 @@ def _read_sequence(game_data, sequence: bytes):
             index += size
 
 
+def read_sequence_command_list(game_data, sequence: bytes) -> list:
+    """[(address, op_code, parameters)] of a sequence, in byte order.
+
+    parameters is None on an unknown op code: the parameter size is what tells where the
+    next op code starts, so the rest of the sequence cannot be read.
+    """
+    return list(_read_sequence(game_data, sequence))
+
+
+def get_jump_target(address: int, op_code: int, parameters) -> int:
+    """Where a jump goes (op code address + signed offset). None when not a jump."""
+    if not parameters:
+        return None
+    if op_code in _JUMP_OP_CODE_INT8:
+        return address + int.from_bytes(parameters[:1], byteorder="little", signed=True)
+    if op_code in _JUMP_OP_CODE_INT16:
+        return address + int.from_bytes(parameters[:2], byteorder="little", signed=True)
+    return None
+
+
+def is_jump(op_code: int) -> bool:
+    return op_code in _JUMP_OP_CODE_INT8 or op_code in _JUMP_OP_CODE_INT16
+
+
+def is_jump_int16(op_code: int) -> bool:
+    return op_code in _JUMP_OP_CODE_INT16
+
+
 def _backward_jump_list(command_list):
     """[(target, jump_address)] of every jump going back, ie. the loop bodies."""
     jump_list = []
     for address, op_code, parameters in command_list:
-        if not parameters:
-            continue
-        if op_code in _JUMP_OP_CODE_INT8:
-            target = address + int.from_bytes(parameters[:1], byteorder="little", signed=True)
-        elif op_code in _JUMP_OP_CODE_INT16:
-            target = address + int.from_bytes(parameters[:2], byteorder="little", signed=True)
-        else:
-            continue
-        if target <= address:  # Jump target = op code address + offset
+        target = get_jump_target(address, op_code, parameters)
+        if target is not None and target <= address:
             jump_list.append((target, address))
     return jump_list
 
@@ -186,6 +207,31 @@ def _sequence_on_cycle_list(jump_seq: dict) -> set:
                     seen.add(next_seq)
                     to_visit.append(next_seq)
     return on_cycle
+
+
+def get_slowable_animation_id_set(game_data, seq_animation_data: dict) -> set:
+    """Animations the engine can play in slow motion (Slow status).
+
+    It matters because Slow makes the engine compute the frame count as 2 * nb_frame - 1
+    in a byte, so a slowable animation cannot go over 128 frames (see
+    FF8GameData/dat/animsplitter.py). Slow and Haste are only applied while the entity
+    runs its BASE sequence (FF8_EN.exe Battle_QueueAnimation @0x509520 checks
+    currentAnimSeqId == basedAnimSeq), and the A3 op code is what marks the sequence
+    currently running as the base one. So only what an A3 sequence plays can be slowed:
+    an idle stance normally, not a loop inside an attack sequence.
+    """
+    slowable = set()
+    for sequence in (seq_animation_data or {}).get('seq_animation_data', []):
+        command_list = _read_sequence(game_data, bytes(sequence['data']))
+        command_list = list(command_list)
+        if not any(op_code == 0xA3 for _, op_code, _ in command_list):
+            continue
+        for _, op_code, parameters in command_list:
+            if op_code < 0x80:
+                slowable.add(op_code)
+            elif op_code == 0xA0 and parameters:
+                slowable.add(parameters[0])
+    return slowable
 
 
 def find_character_weapon_file_list(character_file_path) -> list:

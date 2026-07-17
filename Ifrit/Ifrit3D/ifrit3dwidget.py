@@ -11,7 +11,11 @@ from FF8GameData.monsterdata import AnimationFrame, AnimationSection, Animation
 from FF8GameData.dat.animloopdetector import (get_animation_kind_dict, is_looping,
                                               find_character_weapon_file_list,
                                               get_animation_kind_dict_from_weapon_file,
+                                              get_slowable_animation_id_set,
                                               ANIM_LOOP, ANIM_ONE_SHOT, ANIM_BOTH, ANIM_UNUSED)
+from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_nb_part_needed,
+                                          get_max_frame_for_animation,
+                                          MAX_SLOW_SAFE_ANIMATION_FRAME)
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.Ifrit3D.boneeditorwidget import AnimEditor
 from Ifrit.Ifrit3D.ff8openwidget import FF8OpenGLWidget
@@ -899,6 +903,51 @@ class Ifrit3DWidget(QWidget):
             "Skeleton and animations were kept from the current file. "
             "Save the file to write the new mesh into the .dat.")
 
+    def _get_slowable_animation_id_set(self):
+        """Animations Slow status can reach: they have a lower frame limit."""
+        enemy = self.ifrit_manager.enemy
+        seq_animation_data = getattr(enemy, 'seq_animation_data', None)
+        if not seq_animation_data:
+            return set()
+        return get_slowable_animation_id_set(self.ifrit_manager.game_data, seq_animation_data)
+
+    def _get_max_animation_frames(self, anim_id: int) -> int:
+        """How long animation anim_id may be in this file.
+
+        Battle .dat files store the frame count on one byte; other formats (e.g. field
+        chara.one, uint16) can expose a higher limit. An animation the battle engine can
+        play in slow motion has a lower limit still, since Slow doubles its frame count
+        (see FF8GameData/dat/animsplitter.py).
+        """
+        max_frames = getattr(self.ifrit_manager, 'max_animation_frames', 255)
+        slow_doubles = getattr(self.ifrit_manager, 'anim_slow_doubles_frame_count', True)
+        can_be_slowed = anim_id in self._get_slowable_animation_id_set()
+        return get_max_frame_for_animation(can_be_slowed, max_frames, slow_doubles)
+
+    def _refresh_animation_count(self):
+        """Splitting adds animations at the end of the section: show them in the selector."""
+        if not hasattr(self, 'anim_selector'):
+            return
+        nb = len(self.ifrit_manager.enemy.animation_data.animations)
+        if nb:
+            self.anim_selector.setRange(0, nb - 1)
+            self.anim_selector.setToolTip(f"Nb animation: {nb}")
+
+    def _split_animation_to_fit(self, anim_id: int, factor: int, smooth_loop: bool, max_frames: int):
+        """Cut an animation too long for the format in parts and chain them in the sequences.
+
+        Returns the splitter report, or the reason it could not be done.
+        """
+        enemy = self.ifrit_manager.enemy
+        try:
+            return split_and_convert_animation(self.ifrit_manager.game_data,
+                                               enemy.animation_data,
+                                               getattr(enemy, 'seq_animation_data', None),
+                                               enemy.bone_data.bones,
+                                               anim_id, factor, smooth_loop, max_frames), ""
+        except ValueError as e:
+            return None, str(e)
+
     @staticmethod
     def _nb_frames_after_conversion(nb_frames: int, factor: int, smooth_loop: bool) -> int:
         """Frame count once (factor - 1) frames are inserted between each pair of frames.
@@ -1044,16 +1093,55 @@ class Ifrit3DWidget(QWidget):
                                     f"there is nothing to interpolate for {target_fps} fps.")
             return
         nb_frames_after = self._nb_frames_after_conversion(nb_frames_before, factor, smooth_loop)
-        # Battle .dat files store the frame count on one byte; other formats
-        # (e.g. field chara.one, uint16) can expose a higher limit.
-        max_frames = getattr(self.ifrit_manager, 'max_animation_frames', 255)
+        max_frames = self._get_max_animation_frames(self.current_anim_id)
         if nb_frames_after > max_frames:
-            message = (f"The result would have {nb_frames_after} frames, but the file format "
-                       f"is limited to {max_frames} frames per animation.")
-            if target_fps == 60 and native_fps < 30:
-                nb_frames_30 = self._nb_frames_after_conversion(nb_frames_before, 30 // native_fps, smooth_loop)
-                if nb_frames_30 <= max_frames:
-                    message += f"\n\nConverting it to 30 fps instead would give {nb_frames_30} frames, which fits."
+            nb_part = get_nb_part_needed(nb_frames_before, factor, smooth_loop, max_frames)
+            limit_text = (f"this animation is played by the base sequence (the idle stance), so Slow "
+                          f"status can reach it: over {max_frames} frames the battle engine plays it "
+                          f"wrong when the monster is slowed"
+                          if max_frames == MAX_SLOW_SAFE_ANIMATION_FRAME
+                          else f"the file format is limited to {max_frames} frames per animation")
+            message = (f"The result would have {nb_frames_after} frames, but {limit_text}.\n\n")
+            if nb_part > 1:
+                message += (f"Split the animation in {nb_part} parts and chain them in the "
+                            f"sequences?\n"
+                            f"The animation keeps the same motion: the sequences play the parts "
+                            f"one after the other, and the new parts are added at the end of the "
+                            f"animation list.")
+                answer = QMessageBox.question(self, title, message,
+                                              QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                if answer != QMessageBox.StandardButton.Yes:
+                    return
+                report, reason = self._split_animation_to_fit(self.current_anim_id, factor,
+                                                              smooth_loop, max_frames)
+                if report is None:
+                    QMessageBox.warning(self, title,
+                                        f"The animation cannot be split: {reason}.\n\n"
+                                        + (f"Converting the file to 30 fps instead would keep it "
+                                           f"under the limit." if target_fps == 60 and native_fps < 30 else ""))
+                    return
+                self._refresh_animation_count()
+                self.current_frame = 0
+                self.next_frame_index = 1
+                self.interp_step = 0.0
+                if hasattr(self, 'frame_slider'):
+                    self.frame_slider.setRange(0, self.get_max_frames() - 1)
+                self.update_animated_mesh()
+                self.update_skeleton()
+                self.animation_changed.emit()
+                self.set_fps(target_fps)
+                part_text = ', '.join(f"{part_id} ({nb}f)" for part_id, nb in
+                                      zip([self.current_anim_id] + report['new_id_list'],
+                                          report['frame_count_list']))
+                QMessageBox.information(self, title,
+                                        f"Animation {self.current_anim_id} ({nb_frames_before} frames) was "
+                                        f"split in {report['nb_part']} parts converted to {target_fps} fps:\n"
+                                        f"  {part_text}\n\n"
+                                        f"{report['nb_rewritten']} place(s) in the sequences now play the "
+                                        f"parts one after the other.\n"
+                                        "Save the file to keep them.")
+                return
+            message += "It cannot be split in parts small enough either."
             QMessageBox.warning(self, title, message)
             return
 
@@ -1125,19 +1213,67 @@ class Ifrit3DWidget(QWidget):
             return
         bones = self.ifrit_manager.enemy.bone_data.bones
         converted, nb_smoothed, skipped_short, skipped_too_long = 0, 0, [], []
-        max_frames = getattr(self.ifrit_manager, 'max_animation_frames', 255)
 
+        def smooth_loop_of(anim_id):
+            if default_smooth_loop is None:
+                return is_looping(kind_dict.get(anim_id, ANIM_UNUSED))
+            return default_smooth_loop
+
+        # Animations too long to fit once converted can be cut in parts chained by the
+        # sequences. Ask once, before touching anything.
+        too_long_list = []
         for anim_id, anim in enumerate(anim_section.animations):
+            if len(anim.frames) < 2:
+                continue
+            smooth_loop = smooth_loop_of(anim_id)
+            if (self._nb_frames_after_conversion(len(anim.frames), factor, smooth_loop)
+                    > self._get_max_animation_frames(anim_id)):
+                too_long_list.append(anim_id)
+        split_them = False
+        if too_long_list:
+            nb_slow_limited = sum(1 for anim_id in too_long_list
+                                  if self._get_max_animation_frames(anim_id) == MAX_SLOW_SAFE_ANIMATION_FRAME)
+            message = (f"{len(too_long_list)} animation(s) would be too long at {target_fps} fps: "
+                       f"{', '.join(map(str, too_long_list))}.\n\n")
+            if nb_slow_limited:
+                message += (f"{nb_slow_limited} of them are played by the base sequence (the idle "
+                            f"stance), so Slow status can reach them: those are limited to "
+                            f"{MAX_SLOW_SAFE_ANIMATION_FRAME} frames, because over that the battle "
+                            f"engine plays them wrong when the monster is slowed.\n\n")
+            message += ("Split them in parts and chain them in the sequences?\n"
+                        "The motion is kept: each animation is cut in parts played one after the "
+                        "other, and the parts are added at the end of the animation list.\n\n"
+                        "No: those animations are left untouched (not converted).")
+            answer = QMessageBox.question(self, title, message,
+                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            split_them = (answer == QMessageBox.StandardButton.Yes)
+
+        split_done, split_refused = [], []
+        if split_them:
+            for anim_id in too_long_list:
+                smooth_loop = smooth_loop_of(anim_id)
+                nb_frames_before = len(anim_section.animations[anim_id].frames)
+                report, reason = self._split_animation_to_fit(anim_id, factor, smooth_loop,
+                                                              self._get_max_animation_frames(anim_id))
+                if report is None:
+                    split_refused.append((anim_id, reason))
+                else:
+                    split_done.append((anim_id, nb_frames_before, report))
+                    converted += report['nb_part']
+                    nb_smoothed += smooth_loop
+
+        already_split = {anim_id for anim_id, _, report in split_done}
+        already_split |= {new_id for _, _, report in split_done for new_id in report['new_id_list']}
+        for anim_id, anim in enumerate(anim_section.animations):
+            if anim_id in already_split:
+                continue  # split + converted above
             nb_frames_before = len(anim.frames)
             if nb_frames_before < 2:
                 skipped_short.append(anim_id)
                 continue
-            if default_smooth_loop is None:
-                smooth_loop = is_looping(kind_dict.get(anim_id, ANIM_UNUSED))
-            else:
-                smooth_loop = default_smooth_loop
+            smooth_loop = smooth_loop_of(anim_id)
             nb_frames_after = self._nb_frames_after_conversion(nb_frames_before, factor, smooth_loop)
-            if nb_frames_after > max_frames:
+            if nb_frames_after > self._get_max_animation_frames(anim_id):
                 skipped_too_long.append((anim_id, nb_frames_before, nb_frames_after))
                 continue
             anim.create_interpolated_frames(bones, factor, smooth_loop)
@@ -1145,6 +1281,7 @@ class Ifrit3DWidget(QWidget):
             nb_smoothed += smooth_loop
 
         # Refresh the viewer with the new frame count of the current animation
+        self._refresh_animation_count()
         self.current_frame = 0
         self.next_frame_index = 1
         self.interp_step = 0.0
@@ -1160,12 +1297,24 @@ class Ifrit3DWidget(QWidget):
             source_text = (f" (read from the weapon file {self.weapon_file_used})"
                            if self.weapon_file_used else "")
             report.append(f"\n{nb_smoothed} of them are looping{source_text} (last frame interpolated "
-                          f"back to the first one), {converted - nb_smoothed} are played once.")
+                          f"back to the first one), the others are played once.")
+        if split_done:
+            report.append("\nSplit to fit the format limit (the sequences now play the parts one "
+                          "after the other):")
+            for anim_id, nb_before, split_report in split_done:
+                part_text = ', '.join(str(part_id) for part_id in
+                                      [anim_id] + split_report['new_id_list'])
+                report.append(f"  animation {anim_id} ({nb_before} frames) -> {split_report['nb_part']} "
+                              f"parts: {part_text} ({split_report['nb_rewritten']} place(s) rewritten)")
+        if split_refused:
+            report.append("\nCould not be split:")
+            for anim_id, reason in split_refused:
+                report.append(f"  animation {anim_id}: {reason}")
         if skipped_short:
             report.append(f"\nSkipped (fewer than 2 frames): {', '.join(map(str, skipped_short))}.")
         if skipped_too_long:
             details = ', '.join(f"{aid} ({before}->{after} frames)" for aid, before, after in skipped_too_long)
-            report.append(f"\nSkipped (would exceed the {max_frames}-frame limit): " + details + ".")
+            report.append("\nSkipped (too long once converted): " + details + ".")
             if target_fps == 60 and native_fps < 30:
                 report.append("Converting this file to 30 fps instead would keep them under the limit.")
         report.append(f"\nThe viewer playback speed has been set to {target_fps} fps.\n"
