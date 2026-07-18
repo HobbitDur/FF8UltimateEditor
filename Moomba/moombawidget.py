@@ -1,13 +1,18 @@
 import os
 
-from PyQt6.QtCore import QSize, QSignalBlocker, Qt
-from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
+from PyQt6.QtCore import QSignalBlocker, Qt, QTimer
+from PyQt6.QtGui import QIcon, QImage, QPixmap
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QSpinBox, QGroupBox, QFormLayout, QGridLayout, QScrollArea,
                              QMessageBox)
 
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
+from FF8GameData.menu.pagerender import PageRenderer, CANVAS_WIDTH, CANVAS_HEIGHT
 from Moomba.moombamanager import MoombaManager, MagPageEntry
+
+PREVIEW_SCALE = 2
 
 
 class MoombaWidget(QWidget):
@@ -17,46 +22,28 @@ class MoombaWidget(QWidget):
     If mngrp.bin (+ mngrphd.bin) is found next to the opened mmag2.bin (or loaded manually),
     the text overlay ids are previewed with their decoded strings from raw file 90."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
+
+        if file_registry is None:  # The tool is used alone, it shares its files with nobody
+            file_registry = FileRegistry()
+        self.file_registry = file_registry
 
         # GameData init already loads the sysfnt character table used for text decoding
         self.game_data = GameData(game_data_folder)
         self.manager = MoombaManager(self.game_data)
+        self.renderer = None  # Built once mngrp.bin is loaded (it carries the art, text and font)
 
         self.setWindowTitle("Moomba")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        # File section
-        self.file_dialog = QFileDialog()
-        self.load_button = QPushButton()
-        self.load_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.load_button.setIconSize(QSize(30, 30))
-        self.load_button.setFixedSize(40, 40)
-        self.load_button.setToolTip("Open a mmag2.bin file")
-        self.load_button.clicked.connect(self.load_file)
-
-        self.save_button = QPushButton()
-        self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.save_button.setIconSize(QSize(30, 30))
-        self.save_button.setFixedSize(40, 40)
-        self.save_button.setToolTip("Save all modifications in the opened mmag2.bin (irreversible)")
-        self.save_button.clicked.connect(self.save_file)
-
-        self.load_mngrp_button = QPushButton("Load mngrp")
-        self.load_mngrp_button.setToolTip("Load a mngrp.bin (with its mngrphd.bin next to it) to preview "
-                                          "the text overlay strings (raw file 90).\nSearched automatically "
-                                          "next to the opened mmag2.bin.")
-        self.load_mngrp_button.clicked.connect(self.load_mngrp)
-
-        self.file_label = QLabel("No file loaded")
-
-        file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.load_button)
-        file_section_layout.addWidget(self.save_button)
-        file_section_layout.addWidget(self.load_mngrp_button)
-        file_section_layout.addWidget(self.file_label)
-        file_section_layout.addStretch(1)
+        # Files, driven by the shared header toolbar. mmag2.bin is the edited file; mngrp.bin is
+        # read-only here (edited in Shiva) and shared with Zone: opened once anywhere, loaded
+        # everywhere. Both go through the registry.
+        self.mmag2_binding = FileBinding("mmag2.bin", file_registry,
+                                         load_callback=self.load_file, save_callback=self.save_file)
+        self.mngrp_binding = FileBinding("mngrp.bin", file_registry,
+                                         load_callback=self._apply_mngrp, read_only=True)
 
         # Page list (left side)
         self.page_list = QListWidget()
@@ -91,11 +78,59 @@ class MoombaWidget(QWidget):
         main_editor_layout = QHBoxLayout()
         main_editor_layout.addWidget(self.page_list)
         main_editor_layout.addWidget(editor_scroll)
+        main_editor_layout.addWidget(self._build_preview_group())
 
         main_layout = QVBoxLayout()
-        main_layout.addLayout(file_section_layout)
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
+
+        self.mmag2_binding.load_opened_file()  # Another tool may have opened mmag2.bin already
+        self.mngrp_binding.load_opened_file()  # ... or mngrp.bin (e.g. Shiva or the Zone tab)
+
+        # A render is a few ms, so this only coalesces bursts (holding a spin box arrow,
+        # typing a value); 40 ms is well under the threshold where a redraw feels laggy.
+        self._preview_timer = QTimer(self)
+        self._preview_timer.setSingleShot(True)
+        self._preview_timer.setInterval(40)
+        self._preview_timer.timeout.connect(self._refresh_preview)
+
+    def _build_preview_group(self):
+        self.preview_label = QLabel("Load mngrp.bin to render the page")
+        self.preview_label.setFixedSize(CANVAS_WIDTH * PREVIEW_SCALE, CANVAS_HEIGHT * PREVIEW_SCALE)
+        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.preview_label.setToolTip(
+            "The Chocobo World page as the game composites it, redrawn as you edit: the picture "
+            "overlays (art) and the text overlays (raw file 90) on the screen backdrop.\nThe "
+            "screen's own chrome (Mog, the chocobo, the frame) is not part of mmag2.bin, so it is "
+            "not drawn.")
+        group = QGroupBox("Page preview")
+        layout = QVBoxLayout()
+        layout.addWidget(self.preview_label)
+        layout.addStretch(1)
+        group.setLayout(layout)
+        return group
+
+    def _schedule_preview(self):
+        self._preview_timer.start()  # Restarts the countdown on every change
+
+    def _refresh_preview(self):
+        if self.renderer is None:
+            return
+        entry = self._selected_entry()
+        if entry is None:
+            return
+        image = self.renderer.render(entry)
+        qt_image = QImage(image.tobytes("raw", "RGBA"), image.width, image.height,
+                          QImage.Format.Format_RGBA8888)
+        pixmap = QPixmap.fromImage(qt_image).scaled(
+            image.width * PREVIEW_SCALE, image.height * PREVIEW_SCALE,
+            Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.FastTransformation)
+        self.preview_label.setPixmap(pixmap)
+
+    def _build_renderer(self, mngrp_path):
+        """Build the page renderer from a loaded mngrp.bin (sysfnt.* sit next to it)."""
+        self.renderer = PageRenderer(self.manager, menu_folder=os.path.dirname(mngrp_path))
+        self._refresh_preview()
 
     def _spinbox(self, minimum, maximum, tooltip=""):
         spinbox = QSpinBox()
@@ -252,41 +287,39 @@ class MoombaWidget(QWidget):
         container.setLayout(layout)
         return container
 
-    def load_file(self):
-        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search mmag2.bin file",
-                                                     filter="*.bin", directory=os.getcwd())[0]
-        if not file_name:
-            return
+    def load_file(self, file_name):
         try:
             self.manager.load_file(file_name)
         except ValueError as e:
             QMessageBox.warning(self, "Moomba", str(e))
             return
-        self.file_label.setText(os.path.basename(file_name))
         self.editor_container.setEnabled(True)
-        # The Chocobo World strings live in mngrp.bin, usually next to mmag2.bin
-        mngrp_path = os.path.join(os.path.dirname(file_name), "mngrp.bin")
-        if os.path.exists(mngrp_path):
-            try:
-                self.manager.load_mngrp(mngrp_path)
-            except (FileNotFoundError, ValueError):
-                pass
+        # The Chocobo World art/text/font live in mngrp.bin: pick up the one next to mmag2.bin
+        # automatically (shared through the registry), so a page renders straight away without
+        # opening it by hand. One another tool already shared is kept.
+        if not self.mngrp_binding.current_path:
+            mngrp_path = os.path.join(os.path.dirname(file_name), "mngrp.bin")
+            if os.path.exists(mngrp_path):
+                self.mngrp_binding.open_path(mngrp_path)  # -> _apply_mngrp, here and in Zone/Shiva
         with QSignalBlocker(self.page_list):
             self.page_list.clear()
             self.page_list.addItems([self.manager.get_entry_name(entry.entry_id)
                                      for entry in self.manager.entries])
         self.page_list.setCurrentRow(0)
 
-    def load_mngrp(self):
-        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search mngrp.bin file",
-                                                     filter="*.bin", directory=os.getcwd())[0]
-        if not file_name:
-            return
+    def file_bindings(self):
+        """The files the shared header toolbar drives for this tab: mmag2.bin (edited) and
+        the read-only mngrp.bin companion (the art/text/font, edited in Shiva)."""
+        return [self.mmag2_binding, self.mngrp_binding]
+
+    def _apply_mngrp(self, file_name):
+        """Load a shared mngrp.bin (the read-only binding's callback). sysfnt.* sit next to it."""
         try:
             self.manager.load_mngrp(file_name)
-        except (FileNotFoundError, ValueError) as e:
-            QMessageBox.warning(self, "Moomba", str(e))
+        except (OSError, ValueError) as e:
+            QMessageBox.warning(self, "Could not load mngrp.bin", str(e))
             return
+        self._build_renderer(file_name)
         self.reload_selected_entry()
 
     def save_file(self):
@@ -328,6 +361,7 @@ class MoombaWidget(QWidget):
             with QSignalBlocker(spinbox):
                 spinbox.setValue(value)
         self._refresh_text_previews(entry)
+        self._refresh_preview()
 
     def _refresh_text_previews(self, entry):
         for i in range(MagPageEntry.NB_OVERLAY_SLOTS):
@@ -336,7 +370,7 @@ class MoombaWidget(QWidget):
                 self.text_overlay_preview[i].setText("(unused)")
                 self.text_overlay_preview[i].setToolTip("")
                 continue
-            text = self.manager.get_overlay_text(slot.id)
+            text = self.manager.overlay_text_by_id(slot.id)
             if not text:
                 self.text_overlay_preview[i].setText("(load mngrp.bin for preview)")
                 self.text_overlay_preview[i].setToolTip("")
@@ -391,3 +425,4 @@ class MoombaWidget(QWidget):
             entry.text_overlays[i].y = self.text_overlay_y[i].value()
             entry.text_overlays[i].id = self.text_overlay_id[i].value()
         self._refresh_text_previews(entry)
+        self._schedule_preview()

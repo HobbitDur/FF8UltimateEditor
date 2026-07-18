@@ -2,13 +2,14 @@ import json
 import os
 
 from FF8GameData.gamedata import GameData
-# The 68-byte entry format is shared with mmag2.bin (the Moomba editor): it lives in FF8GameData.
+# The 68-byte entry format and the shared mngrp render source live in FF8GameData,
+# so both the Zone (mmag.bin) and Moomba (mmag2.bin) editors build on them.
 from FF8GameData.menu.magpage import MagPageEntry, OverlaySlot, UNUSED_ID
+from FF8GameData.menu.magpagemanager import TEXTURE_CATEGORIES, MagPageManager
 from FF8GameData.menu.mngrp.string.sectionstring import SectionString
 from FF8GameData.menu.mngrp.tkmnmes.sectiontkmnmes import SectionTkmnmes
 
 BOOK_TEXT_FIRST_RAW_FILE = 87  # text file index n loads mngrp.bin raw file 87 + n
-SP2_SPRITE_RAW_FILE = 7  # The SP2 quad-list table the picture overlays index (mngrp Pos 4)
 
 # kernel.bin Duel (Zell limit break) section: the header is a flat table of u32
 # section offsets, and the Duel one lives in the slot at 0x5C. Each of the 10
@@ -40,19 +41,6 @@ FOOTER_RAW_FILE = 2  # tkmnmes3.bin
 FOOTER_SECTION = 13
 FOOTER_INDEX = 28
 
-# Page texture category -> (name, base raw file inside mngrp.bin); the loaded
-# picture file is base + texture_page. Any other category uses the page number
-# directly as the raw file index.
-TEXTURE_CATEGORIES = {
-    0: ("Weapons Monthly", 28),
-    1: ("Combat King", 20),
-    2: ("Pet Pals", 24),
-    3: ("Occult Fan", 44),
-    4: ("Cards (unused)", 48),
-    5: ("Card rules / battle tutorial", 71),
-    6: ("Card icon explanation", 180),
-}
-
 WEAPONS_MONTHLY_ISSUES = ["1st", "March", "April", "May", "June", "July", "August"]
 OCCULT_FAN_ISSUES = ["I", "II", "III", "IV"]
 
@@ -64,7 +52,7 @@ ANGELO_MOVE_NAMES = ["Angelo Rush", "Angelo Recover", "Angelo Reverse", "Angelo 
                      "Angelo Cannon", "Angelo Strike", "Invincible Moon", "Wishing Star"]
 
 
-class ZoneManager:
+class ZoneManager(MagPageManager):
     """mmag.bin editor logic (in-menu magazine page definitions).
 
     Named after Zone, the Forest Owls member and devoted collector of "The Girl
@@ -73,18 +61,16 @@ class ZoneManager:
     mmag.bin is an array of 68-byte entries with no header (69 entries in the
     English PC release): each entry is one page view of the item-menu magazines
     (Weapons Monthly, Combat King, Pet Pals, Occult Fan) or the tutorial-menu
-    books (whose entry ranges come from mtmag.bin, see the Piet tool)."""
+    books (whose entry ranges come from mtmag.bin, see the Piet tool).
+
+    The full magazine page is drawn, so every DRAWS_* layer stays on (inherited)."""
+
+    FILE_LABEL = "mmag.bin"
 
     def __init__(self, game_data: GameData):
-        self.game_data = game_data
-        self.file_path = ""
-        self.entries = []
+        super().__init__(game_data)
         self.weapon_name_list = self._load_weapon_names()
-        # mngrp.bin (for the text overlay preview and the page render), decoded lazily
-        self._mngrp_data = None
-        self._mngrp_header_entries = None
         self._book_text_cache = {}
-        self._sp2_sprites = None
         # The unlock block only draws with these: kernel.bin gives Zell's Duel button
         # sequences, mwepon.bin the weapon remodel item lists. Loaded on demand.
         self._duel_sequences = None
@@ -102,38 +88,13 @@ class ZoneManager:
             weapon_data = json.load(f)
         return [weapon["name"] for weapon in weapon_data["weapons"]]
 
-    def load_file(self, file_path):
-        with open(file_path, "rb") as in_file:
-            file_data = in_file.read()
-        if len(file_data) % MagPageEntry.SIZE != 0:
-            raise ValueError(f"Not a mmag.bin file: size {len(file_data)} is not a multiple "
-                             f"of {MagPageEntry.SIZE} bytes")
-        self.file_path = file_path
-        self.entries = []
-        for entry_id in range(len(file_data) // MagPageEntry.SIZE):
-            offset = entry_id * MagPageEntry.SIZE
-            self.entries.append(MagPageEntry.from_bytes(
-                entry_id, file_data[offset:offset + MagPageEntry.SIZE]))
-
-    def save_file(self, file_path=""):
-        if not file_path:
-            file_path = self.file_path
-        with open(file_path, "wb") as out_file:
-            for entry in self.entries:
-                out_file.write(entry.to_bytes())
+    def _on_mngrp_loaded(self):
+        self._book_text_cache = {}
 
     @staticmethod
     def book_text_raw_file(entry: MagPageEntry):
         """mngrp.bin raw file index of the entry's book-text string section."""
         return BOOK_TEXT_FIRST_RAW_FILE + entry.text_file_index
-
-    @staticmethod
-    def texture_raw_file(entry: MagPageEntry):
-        """mngrp.bin raw file index of the entry's page picture TIM (the loader,
-        Menu_Magazine_LoadPageTexture at 0x4C9920, maps the category to a base)."""
-        if entry.texture_category in TEXTURE_CATEGORIES:
-            return TEXTURE_CATEGORIES[entry.texture_category][1] + entry.texture_page
-        return entry.texture_page
 
     @staticmethod
     def entry_name(index):
@@ -185,47 +146,6 @@ class ZoneManager:
         if category in TEXTURE_CATEGORIES:
             return TEXTURE_CATEGORIES[category][0]
         return f"Direct raw file (category {category})"
-
-    def load_mngrp(self, mngrp_path, mngrphd_path=""):
-        """Load mngrp.bin (+ its mngrphd.bin section table, auto-detected next to it
-        when not given) so text overlay ids can be resolved to the actual strings."""
-        from FF8GameData.FF8HexReader.mngrphd import Mngrphd
-        if not mngrphd_path:
-            mngrphd_path = os.path.join(os.path.dirname(mngrp_path), "mngrphd.bin")
-        if not os.path.exists(mngrphd_path):
-            raise FileNotFoundError(f"mngrphd.bin is needed to locate the sections of mngrp.bin, "
-                                    f"not found at: {mngrphd_path}")
-        with open(mngrphd_path, "rb") as in_file:
-            header = Mngrphd(game_data=self.game_data, data_hex=bytearray(in_file.read()))
-        with open(mngrp_path, "rb") as in_file:
-            self._mngrp_data = in_file.read()
-        self._mngrp_header_entries = header.get_entry_list()
-        self._book_text_cache = {}
-        self._sp2_sprites = None
-
-    @property
-    def mngrp_loaded(self):
-        return self._mngrp_data is not None
-
-    def get_raw_file(self, raw_file):
-        """The bytes of one mngrp.bin raw file (empty when absent or not loaded)."""
-        if not self.mngrp_loaded or not 0 <= raw_file < len(self._mngrp_header_entries):
-            return b""
-        header_entry = self._mngrp_header_entries[raw_file]
-        if header_entry.invalid_value:
-            return b""
-        return self._mngrp_data[header_entry.seek:header_entry.seek + header_entry.size]
-
-    def get_sp2_sprites(self):
-        """The SP2 sprite table the picture overlays index (mngrp Pos 4), or None.
-
-        Parsed with Joker's Sp2File, which owns the quad-list format."""
-        if self._sp2_sprites is None and self.mngrp_loaded:
-            from Joker.jokermanager import Sp2File
-            data = self.get_raw_file(SP2_SPRITE_RAW_FILE)
-            if data:
-                self._sp2_sprites = Sp2File.from_bytes(bytes(data)).sprites
-        return self._sp2_sprites
 
     def load_kernel(self, kernel_path):
         """Read Zell's Duel button sequences out of kernel.bin.

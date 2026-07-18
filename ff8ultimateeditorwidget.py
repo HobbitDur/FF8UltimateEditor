@@ -9,7 +9,8 @@ from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel
 from CCGroup.ccgroup import CCGroupWidget
 from Cid.cidwidget import CidWidget
 from Common.fileregistry import FileRegistry
-from Common.openedfileswidget import OpenedFilesWidget
+from Common.filetoolbarwidget import FileToolbarWidget
+from Common.openedfilespanel import OpenedFilesPanel
 from ExeLauncher.cactiliolauncher import CactilioLauncher
 from ExeLauncher.delinglauncher import DelingLauncher
 from ExeLauncher.doomtrainlauncher import DoomtrainLauncher
@@ -21,7 +22,6 @@ from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from ExeLauncher.sirenlauncher import SirenLauncher
 from Ifrit.ifritmonsterwidget import IfritMonsterWidget
 from Julia.juliawidget import JuliaWidget
-from Moomba.moombawidget import MoombaWidget
 from Odine.odinewidget import OdineWidget
 from Piet.pietwidget import PietWidget
 from Shiva.shivawidget import ShivaWidget
@@ -33,12 +33,13 @@ from Joker.jokerwidget import JokerWidget
 from Junkshop.junkshopwidget import JunkshopWidget
 from Alexander.alexanderwidget import AlexanderWidget
 from Quezacotl.quezacotlwidget import QuezacotlWidget
+from Hyne.hynewidget import HyneWidget
 from ShumiTranslator.shumitranslator import ShumiTranslator
 from SmallWidget.externaltoolwidget import ExternalToolWidget
 from SmallWidget.fsextractwidget import FsExtractWidget
 from TonberryShop.tonberryshop import TonberryShop
 from ToolUpdate.toolupdatewidget import ToolUpdateWidget
-from Zone.zonewidget import ZoneWidget
+from Zone.zonetabswidget import ZoneTabsWidget
 from SolomonRing.solomonringwidget import SolomonRingWidget
 from Fujin.fujinwidget import FujinWidget
 from Watts.wattswidget import WattsWidget
@@ -81,12 +82,12 @@ class FF8UltimateEditorWidget(QWidget):
             "Junkshop (mwepon.bin editor)",
             "Quezacotl (init.out editor)",
             "Odine (magsort.bin editor)",
-            "Moomba (mmag2.bin editor)",
             "Joker (sp2 sprite editor)",
             "Piet (mtmag.bin editor)",
-            "Zone (mmag.bin editor)",
+            "Zone (mmag.bin / mmag2.bin editor)",
             "Fujin (Magic animation explorer)",
-            "Watts (r0win.dat victory editor)"
+            "Watts (r0win.dat victory editor)",
+            "Hyne (.ff8 save editor)"
         ]
 
         # 3. Header: Program Selection (ComboBox)
@@ -97,15 +98,30 @@ class FF8UltimateEditorWidget(QWidget):
         self._program_option.activated.connect(self._program_option_change)
         self._program_option.setToolTip("Choose which program to edit your c0m file")
 
-        # Shared action available to every tool: extract a .fs archive recursively
+        # Shared action available to every tool: extract a .fs archive recursively. It is file
+        # management too, so it sits with the Import/Save buttons rather than the selector.
         self._fs_extract_button = FsExtractWidget(resources_path, game_data_path)
-        self._opened_files_button = OpenedFilesWidget(self.file_registry)
+        # The opened files are shown in a collapsible inline panel (not a pop-up any more).
+        self._opened_files_panel = OpenedFilesPanel(self.file_registry)
 
-        self._program_option_layout = QHBoxLayout()
-        self._program_option_layout.addWidget(self._program_option_title)
-        self._program_option_layout.addWidget(self._program_option)
-        self._program_option_layout.addWidget(self._fs_extract_button)
-        self._program_option_layout.addWidget(self._opened_files_button)
+        # Left column: the "Hobbit tools" selector on top; under it the shared file-management
+        # buttons (Import / Import complementary / Save + .fs extract); under those the
+        # collapsible list of everything currently open.
+        self._program_option_selector_row = QHBoxLayout()
+        self._program_option_selector_row.addWidget(self._program_option_title)
+        self._program_option_selector_row.addWidget(self._program_option)
+        self._program_option_selector_row.addStretch(1)
+
+        # The FileToolbarWidget is created below (it needs tool_stack); it is inserted at the
+        # front of this row then, before the .fs extract button.
+        self._file_buttons_row = QHBoxLayout()
+        self._file_buttons_row.addWidget(self._fs_extract_button)
+        self._file_buttons_row.addStretch(1)
+
+        self._program_option_layout = QVBoxLayout()
+        self._program_option_layout.addLayout(self._program_option_selector_row)
+        self._program_option_layout.addLayout(self._file_buttons_row)
+        self._program_option_layout.addWidget(self._opened_files_panel)
 
         # 4. Header: External Tool Buttons
         self._external_program_title = QLabel("External program:")
@@ -162,27 +178,28 @@ class FF8UltimateEditorWidget(QWidget):
 
         # Initialize internal tools
         self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path))
-        self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path), settings=self.settings)
+        self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path), file_registry=self.file_registry)
+        self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path), settings=self.settings, file_registry=self.file_registry)
         self._cid_widget = CidWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path))
-        self._ifrit_widget = IfritMonsterWidget( settings=self.settings, icon_path=resources_path, game_data_folder=game_data_path)
+        self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
+        self._ifrit_widget = IfritMonsterWidget( settings=self.settings, icon_path=resources_path, game_data_folder=game_data_path, file_registry=self.file_registry)
         self._kadowaki_widget = KadowakiWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
-        self._minimog_widget = MinimogWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._minimog_widget = MinimogWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._seed_widget = SeedWidget(icon_path=os.path.join(resources_path), settings=self.settings)
         self._shiva_widget = ShivaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._alexander_widget = AlexanderWidget(icon_path=os.path.join(resources_path), settings=self.settings)
         self._julia_widget = JuliaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._siren_widget = SirenWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
-        self._junkshop_widget = JunkshopWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._quezacotl_widget = QuezacotlWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._odine_widget = OdineWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._moomba_widget = MoombaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._junkshop_widget = JunkshopWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
+        self._quezacotl_widget = QuezacotlWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
+        self._odine_widget = OdineWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._joker_widget = JokerWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._piet_widget = PietWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._zone_widget = ZoneWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._piet_widget = PietWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
+        # Zone is now a two-tab tool: mmag.bin (magazines) + mmag2.bin (Chocobo World)
+        self._zone_widget = ZoneTabsWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._fujin_widget = FujinWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
-        self._watts_widget = WattsWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._watts_widget = WattsWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
+        self._hyne_widget = HyneWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
 
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)
@@ -202,14 +219,22 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._junkshop_widget) # Index 12
         self.tool_stack.addWidget(self._quezacotl_widget) # Index 13
         self.tool_stack.addWidget(self._odine_widget) # Index 14
-        self.tool_stack.addWidget(self._moomba_widget) # Index 15
         self.tool_stack.addWidget(self._joker_widget) # Index 16
         self.tool_stack.addWidget(self._piet_widget) # Index 17
         self.tool_stack.addWidget(self._zone_widget) # Index 19
         self.tool_stack.addWidget(self._fujin_widget) # Index 21
-        self.tool_stack.addWidget(self._watts_widget) # Watts (r0win.dat), keep last in HOBBIT_OPTION_ITEMS
+        self.tool_stack.addWidget(self._watts_widget) # Watts (r0win.dat)
+        self.tool_stack.addWidget(self._hyne_widget) # Hyne (.ff8 save editor), keep last in HOBBIT_OPTION_ITEMS
         self._piet_widget.view_in_zone_requested.connect(self._view_mmag_entry_in_zone)
         self._program_option_change()
+
+        # Shared file toolbar: Import / Import read-only / Save acting on the active tool's
+        # declared files (its file_bindings()), so which file is opened/saved follows the
+        # current tool and sub-tab from one common set of buttons. It sits under the tool
+        # selector, before the opened-files list.
+        self._file_toolbar = FileToolbarWidget(self.tool_stack, self.file_registry, resources_path)
+        self._file_buttons_row.insertWidget(0, self._file_toolbar)
+
         # 6. Final UI Assembly
         self._main_layout.addWidget(self._enhance_container)
         self._main_layout.addWidget(self._enhance_end_separator_line)
@@ -271,10 +296,12 @@ class FF8UltimateEditorWidget(QWidget):
 
     def _view_mmag_entry_in_zone(self, entry_index):
         """Switch to the Zone tool and select an mmag.bin entry, requested from the Piet tool."""
-        zone_index = self.HOBBIT_OPTION_ITEMS.index("Zone (mmag.bin editor)")
+        zone_index = self.HOBBIT_OPTION_ITEMS.index("Zone (mmag.bin / mmag2.bin editor)")
         self._program_option.setCurrentIndex(zone_index)
         self._program_option_change()
-        self._zone_widget.select_entry(entry_index)
+        # Zone is tabbed now: focus the mmag.bin tab before selecting the entry
+        self._zone_widget.tabs.setCurrentWidget(self._zone_widget.mmag_widget)
+        self._zone_widget.mmag_widget.select_entry(entry_index)
 
     def tools_to_update(self):
         tool_list = []

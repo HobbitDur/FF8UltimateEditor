@@ -1,18 +1,21 @@
-"""The Camera tab: an editor for monster battle .dat section 6 (the camera animation
-collection).
+"""The Camera tab: an editor for a battle .dat's camera animation collection - monster
+section 6, and character (dXc) section 5.
 
-Section 6 of a monster is NOT a byte-code program like the animation section IfritSeq edits;
-it is a set of key-framed camera motions (see FF8GameData/dat/cameracollection.py). This tab
-shows that structure - sets -> 8 animation slots -> blocks (FOV/roll) -> keyframes - and lets
-each value be edited. The model is a view over the raw section bytes: every edit patches a
+The camera section is NOT a byte-code program like the animation section IfritSeq edits; it is
+a set of key-framed camera motions (see FF8GameData/dat/cameracollection.py). This tab shows
+that structure - sets -> 8 animation slots -> blocks (FOV/roll) -> keyframes - and lets each
+value be edited. The model is a view over the raw section bytes: every edit patches a
 fixed-size field in place, so saving a file changes only the bytes the user actually touched
 (byte-for-byte identical otherwise), exactly like IfritSeq's hex box is its source of truth.
 
 The tab mirrors IfritSeq's shape (a scroll area of collapsible frames, a toolbar with an info
 button and a raw-hex toggle) and its two public entry points, load_file() and save_file(),
-called by IfritMonsterWidget. It is enabled only for monster files (com_id >= 0x10), whose
-section 6 is a bare collection; character/stage camera blobs carry an extra byte-code VM half
-and are out of scope here.
+called by IfritMonsterWidget. Both monster section 6 and character section 5 are the *same*
+bare camera-animation collection format (verified against FF8_EN.exe: the game plays the
+acting entity's own collection via cameraWhenDoingAction / command_queue->unk09). The only
+difference is the set count: monsters usually have 1 set (8 slots), characters have 2 sets
+(16 slots). The byte-code camera VM only exists in stage/R0WIN/spell blobs, not in these
+per-entity sections, so there is nothing extra to edit for characters.
 """
 import os
 import xml.etree.ElementTree as ET
@@ -29,10 +32,14 @@ from FF8GameData.dat.cameracollection import parse_camera_collection, CameraPars
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
 
-# Which raw section index holds the camera data, per entity type. Monsters keep it in section
-# 6 as a bare collection; that is the only case this tab edits. (Characters put a full camera
-# blob - header + byte-code + collection - in section 5; not handled here.)
-_CAMERA_SECTION_BY_ENTITY = {EntityType.MONSTER: 6}
+# Which raw section index holds the camera animation collection, per entity type. Both are the
+# same bare-collection format; monsters carry it in section 6 (usually 1 set), characters in
+# section 5 (2 sets). Weapons have no camera section.
+_CAMERA_SECTION_BY_ENTITY = {
+    EntityType.MONSTER: 6,
+    EntityType.CHARACTER: 5,
+    EntityType.CHARACTER_NO_WEAPON: 5,
+}
 
 
 # One-line explanation of every editable field, shown as hover text.
@@ -211,7 +218,7 @@ class IfritCameraSeqWidget(QWidget):
         self.info_button.clicked.connect(self.__show_info)
         self.summary_label = QLabel("No file loaded")
         self.hex_checkbox = QCheckBox("Show raw bytes")
-        self.hex_checkbox.setToolTip("Show the raw section 6 bytes (read-only), the source "
+        self.hex_checkbox.setToolTip("Show the raw camera-section bytes (read-only), the source "
                                      "of truth every edit patches in place")
         self.hex_checkbox.stateChanged.connect(self.__toggle_hex)
         toolbar.addWidget(self._import_xml_button)
@@ -425,12 +432,12 @@ class IfritCameraSeqWidget(QWidget):
         index = _CAMERA_SECTION_BY_ENTITY.get(enemy.entity_type)
         if index is None or index >= len(enemy.section_raw_data):
             self._editable = False
-            self.summary_label.setText("This file type has no monster camera section.")
+            self.summary_label.setText("This file type has no camera section.")
             return
         raw = bytes(enemy.section_raw_data[index])
         if len(raw) < 6:
             self._editable = False
-            self.summary_label.setText("This monster has no camera data (empty section 6).")
+            self.summary_label.setText(f"This file has no camera data (empty section {index}).")
             return
         try:
             self._collection = parse_camera_collection(raw)
@@ -565,7 +572,10 @@ class IfritCameraSeqWidget(QWidget):
 
     def __open_preview(self, animation):
         # One shared panel on the right plays whichever animation's Preview was clicked.
-        self._preview_panel.preview(animation)
+        # Bake it into per-frame poses first so playback matches the engine exactly (block
+        # chaining, hold, cubic spline, sine easing) instead of a plain linear interpolation.
+        from FF8GameData.dat.camerabake import BakedAnimation
+        self._preview_panel.preview(BakedAnimation(animation))
 
     def __build_block(self, block) -> QWidget:
         holder = QWidget()
@@ -651,10 +661,11 @@ class IfritCameraSeqWidget(QWidget):
     def __show_info(self):
         message = QMessageBox(self)
         message.setWindowIcon(self.__camera_icon)
-        message.setWindowTitle("Camera section (section 6)")
+        message.setWindowTitle("Camera section")
         message.setTextFormat(Qt.TextFormat.RichText)
         message.setText(
-            "<b>Camera animation collection</b> — monster section 6.<br/><br/>"
+            "<b>Camera animation collection</b> — monster section 6, character section 5 "
+            "(same format; monsters have 1 set, characters 2).<br/><br/>"
             "Each <b>set</b> holds 8 animation slots; each <b>animation</b> is a chain of "
             "<b>blocks</b> (FOV + roll) made of <b>keyframes</b>. A keyframe places the "
             "camera (Pos X/Y/Z) and its look-at target (Look X/Y/Z) for <i>Duration</i> "

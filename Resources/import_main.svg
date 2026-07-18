@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"
+     stroke="#0d3a66" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
+  <!-- the single main file: one page with a folded corner -->
+  <path d="M15 6 H29 L36 13 V40 a2 2 0 0 1 -2 2 H15 a2 2 0 0 1 -2 -2 V8 a2 2 0 0 1 2 -2 Z"
+        fill="#ffffff"/>
+  <path d="M29 6 L36 13 H29 Z" fill="#f6c078"/>
+  <g stroke-width="2">
+    <line x1="19" y1="22" x2="30" y2="22"/>
+    <line x1="19" y1="28" x2="30" y2="28"/>
+    <line x1="19" y1="34" x2="26" y2="34"/>
+  </g>
+</svg>

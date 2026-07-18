@@ -36,6 +36,14 @@ class KernelManager():
         with open(file, "wb") as in_file:
             in_file.write(current_file_data)
 
+    def get_section_config(self, section_id):
+        """The static ``kernel_bin_data.json`` entry for a data section id (offsets,
+        entry size, growable flag, ...) - not the loaded ``SectionData`` itself."""
+        for section_info in self.game_data.kernel_data_json["sections"]:
+            if section_info["id"] == section_id:
+                return section_info
+        return None
+
     def load_file(self, file):
         current_file_data = bytearray()
         with open(file, "rb") as in_file:
@@ -67,7 +75,16 @@ class KernelManager():
                                           data_hex=data_hex,
                                           subsection_nb_text_offset=section_info['sub_section_nb_text_offset'],
                                           name=section_info['section_name'])
-                new_section.init_subsection(nb_subsection=section_info['number_sub_section'],
+                # A "growable" section (currently only Magic) has no fixed entry count -
+                # a modded file may carry more than the vanilla number, so derive the real
+                # count from the actual byte range between this section and the next
+                # (already correctly read from the file's own header offsets above) instead
+                # of trusting the static vanilla count.
+                if section_info.get('growable'):
+                    nb_subsection = len(data_hex) // section_info['sub_section_size']
+                else:
+                    nb_subsection = section_info['number_sub_section']
+                new_section.init_subsection(nb_subsection=nb_subsection,
                                             subsection_sized=section_info['sub_section_size'])
             elif section_info["type"] == SectionType.FF8_TEXT:
                 section_data_linked = [self.section_list[i] for i in range(1, len(self.section_list)) if

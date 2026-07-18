@@ -7,10 +7,12 @@ save-point Chocobo World screen (Mog story slides + Solo RPG manual), sharing th
   • list         (print the entries, with the text overlay strings when mngrp.bin is given)
   • export-json  (mmag2.bin → JSON: every field of every entry)
   • import-json  (base mmag2.bin + JSON → new mmag2.bin)
+  • export-png   (render a page - or every page - the way the screen composites it)
 """
 
 import argparse
 import json
+import os
 import pathlib
 import sys
 
@@ -105,7 +107,7 @@ def _cmd_list(args) -> int:
                 print(f"     picture overlay: sprite {slot.id} at ({slot.x},{slot.y})")
         for slot in entry.text_overlays:
             if not slot.unused:
-                preview = manager.get_overlay_text(slot.id)
+                preview = manager.overlay_text_by_id(slot.id)
                 preview = " — " + preview.split("\n")[0][:60] if preview else ""
                 print(f"     text overlay: string {slot.id} at ({slot.x},{slot.y}){preview}")
     return 0
@@ -132,6 +134,36 @@ def _cmd_import_json(args) -> int:
         applied += 1
     manager.save_file(args.output or args.input)
     print(f"[ok] {applied} entries applied, written to {args.output or args.input}")
+    return 0
+
+
+def _cmd_export_png(args) -> int:
+    from FF8GameData.menu.pagerender import PageRenderer
+    manager = _load_manager(args.input, args.mngrp)
+    renderer = PageRenderer(manager, menu_folder=args.menu_folder or os.path.dirname(args.mngrp))
+    if not renderer.has_font:
+        print("[warn] sysfnt.TEX not found next to mngrp.bin: text is drawn as boxes")
+
+    if args.entry is None:
+        entries = list(range(len(manager.entries)))
+        os.makedirs(args.output, exist_ok=True)
+    else:
+        if not 0 <= args.entry < len(manager.entries):
+            raise ValueError(f"Entry must be 0-{len(manager.entries) - 1}, got {args.entry}")
+        entries = [args.entry]
+
+    for index in entries:
+        image = renderer.render(manager.entries[index])
+        if args.scale > 1:
+            from PIL import Image
+            image = image.resize((image.width * args.scale, image.height * args.scale),
+                                 resample=Image.Resampling.NEAREST)  # keep the pixels crisp
+        path = os.path.join(args.output, f"mmag2_{index:02d}.png") if args.entry is None else args.output
+        image.save(path)
+    if args.entry is None:
+        print(f"[ok] {len(entries)} pages rendered to {args.output}")
+    else:
+        print(f"[ok] entry {args.entry} ({manager.get_entry_name(args.entry)}) rendered to {args.output}")
     return 0
 
 
@@ -169,6 +201,20 @@ class MoombaCliTool(BaseCliTool):
         p_import.add_argument("--json", "-j", required=True, help="JSON produced by export-json")
         p_import.add_argument("--output", "-o", help="Output mmag2.bin (overwrites input if omitted)")
         p_import.set_defaults(func=_cmd_import_json)
+
+        p_png = sub.add_parser("export-png", help="Render a page the way the screen composites it")
+        p_png.add_argument("--input", "-i", required=True, help="Path to mmag2.bin")
+        p_png.add_argument("--mngrp", "-m", required=True,
+                           help="Path to mngrp.bin (mngrphd.bin next to it): the page art, the "
+                                "overlay sprites and the raw-90 text")
+        p_png.add_argument("--entry", "-e", type=int,
+                           help="Entry index to render (omit to render every page)")
+        p_png.add_argument("--output", "-o", required=True,
+                           help="Output PNG, or the output folder when --entry is omitted")
+        p_png.add_argument("--menu-folder", help="Folder holding sysfnt.TEX/sysfnt.tdw for the "
+                                                 "text (defaults to the mngrp.bin folder)")
+        p_png.add_argument("--scale", type=int, default=1, help="Integer upscale factor")
+        p_png.set_defaults(func=_cmd_export_png)
 
         return parser
 

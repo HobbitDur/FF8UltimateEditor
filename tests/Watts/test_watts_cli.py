@@ -40,6 +40,15 @@ def test_show_seq(capsys):
 
 
 @pytest.mark.ff8data(R0WIN_MARK)
+def test_camera(capsys):
+    assert _run(["camera", "-i", str(R0WIN)]) == 0
+    output = capsys.readouterr().out
+    assert "3 sets" in output and "keyframes" in output
+    assert _run(["camera", "-i", str(R0WIN), "-v"]) == 0
+    assert "pos (" in capsys.readouterr().out
+
+
+@pytest.mark.ff8data(R0WIN_MARK)
 def test_export_import_round_trip(tmp_path):
     working_copy = tmp_path / "r0win.dat"
     shutil.copy(R0WIN, working_copy)

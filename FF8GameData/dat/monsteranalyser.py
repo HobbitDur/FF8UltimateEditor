@@ -77,8 +77,19 @@ class MonsterAnalyser:
             for i in range(0, self.header_data['nb_section'] - 1):
                 self.section_raw_data[i] = self.file_raw_data[self.header_data['section_pos'][i]: self.header_data['section_pos'][i + 1]]
 
+            # The last section always runs to the physical end of the file. header_data['file_size']
+            # is NOT a reliable end boundary here: it's read from a fixed offset right after the
+            # section-position table on the assumption that a real trailing size field lives there,
+            # but for at least WEAPON_NO_ANIM (reduced weapon, 5 real sections) that offset actually
+            # falls inside section 1's own payload, so the "size" is just whatever those bytes
+            # happen to decode to as a little-endian uint32 - e.g. 1 for d1w008.dat, which slices
+            # to an empty last section instead of its real 4652 bytes. For other entity types this
+            # garbage value happened to exceed the real file size, so Python's slice clamping masked
+            # the same bug (seq[start:huge_number] silently clamps to len(seq)) - it was never a
+            # real size field, just coincidentally harmless there. len(self.file_raw_data) is the
+            # one boundary that is always correct, for every entity type.
             self.section_raw_data[self.header_data['nb_section'] - 1] = self.file_raw_data[
-                                                             self.header_data['section_pos'][self.header_data['nb_section'] - 1]:self.header_data['file_size']]
+                                                             self.header_data['section_pos'][self.header_data['nb_section'] - 1]:len(self.file_raw_data)]
             if self.entity_type == EntityType.WEAPON_NO_ANIM:
                 self.__analyze_geometry_section(1)
                 self.__analyze_sequence_animation(2)
@@ -108,6 +119,12 @@ class MonsterAnalyser:
                 self.__analyze_info_stat(game_data, 7)
                 self.analyze_battle_script_section(game_data, decompiler, 8)
                 self._analyze_texture_section(11)
+            elif self.entity_type == EntityType.MONSTER_NO_MODEL:
+                # No skeleton/geometry/animation/dynamic-texture/camera/seq_anim/sound/texture
+                # sections at all - just info_stat then AI, the same formats and byte sizes as
+                # a normal monster's sections 7 and 8.
+                self.__analyze_info_stat(game_data, 1)
+                self.analyze_battle_script_section(game_data, decompiler, 2)
             else:
                 print(f"Unexpected entity type: {self.entity_type}")
         except IndexError as e:
@@ -307,95 +324,119 @@ class MonsterAnalyser:
     def write_data_to_file(self, game_data: GameData, dat_path):
         raw_data_to_write = bytearray()
 
-        # First part is common:
-
-        # Section 0: Header (fix size, will be modified later)
+        # Section 0: Header (fix size, will be modified later) - the only part truly common
+        # to every entity type.
         section_position = 0
         raw_data_to_write.extend(self.section_raw_data[section_position])
-        # Section 1: Skeleton/Bones
-        section_position = 1
-        bone_data = self.bone_data.to_binary()
-        raw_data_to_write.extend(bone_data)
-        self.section_raw_data[section_position] = bone_data
-        # Section 2: Geometry (untouched for the moment)
-        section_position = 2
-        raw_data_to_write.extend(self.section_raw_data[section_position])
-        # Section 3: Animation
-        section_position = 3
-        animation_data = self.animation_data.to_binary()
-        raw_data_to_write.extend(animation_data)
-        self.section_raw_data[section_position] = animation_data
-        #raw_data_to_write.extend(self.section_raw_data[section_position])
 
-        # Now changing depending on which file is loaded
-        if self.entity_type == EntityType.CHARACTER:
-            ## Section 4 unknown
-            section_position = 4
+        if self.entity_type == EntityType.WEAPON_NO_ANIM:
+            # Reduced weapon (Zell/Kiros unarmed, 5 real sections): section 1 is geometry, not
+            # skeleton, and there is no separate animation section at all - the shared
+            # skeleton/geometry/animation preamble below (and its section 1/2/3 numbering)
+            # does not apply to this layout, so it gets its own complete branch instead of
+            # falling into the shared preamble + per-type elif chain.
+            # Section 1: Geometry (untouched for the moment, like every other entity type)
+            section_position = 1
             raw_data_to_write.extend(self.section_raw_data[section_position])
-            ## Section 5 unknown
-            section_position = 5
-            raw_data_to_write.extend(self.section_raw_data[section_position])
-            ## Section 6 unknown
-            section_position = 6
-            raw_data_to_write.extend(self.section_raw_data[section_position])
-            ## Section 7 unknown
-            section_position = 7
-            raw_data_to_write.extend(self.section_raw_data[section_position])
-        elif self.entity_type == EntityType.CHARACTER_NO_WEAPON:
-            ## Section 4: Dynamic texture, Section 5: Camera sequence (unchanged atm)
-            for section_position in (4, 5):
+            # Section 2: Seq anim
+            section_position = 2
+            self.prepare_seq_animation(raw_data_to_write, section_position)
+            # Section 3: Sounds, 4: Sound sample bank, 5: Textures (unchanged atm)
+            for section_position in (3, 4, 5):
                 raw_data_to_write.extend(self.section_raw_data[section_position])
-            ## Section 6: Seq anim
-            section_position = 6
-            self.prepare_seq_animation(raw_data_to_write, section_position)
-            ## Section 7: Sounds, 8: Sound bank, 9: Textures, 10: Extra animation
-            ## (unchanged atm)
-            for section_position in (7, 8, 9, 10):
-                raw_data_to_write.extend(self.section_raw_data[section_position])
-        elif self.entity_type == EntityType.WEAPON:
-            ## Section 4 : Seq anim
-            section_position = 4
-            self.prepare_seq_animation(raw_data_to_write, section_position)
-            ## Section 5 unknown
-            section_position = 5
-            raw_data_to_write.extend(self.section_raw_data[section_position])
-            ## Section 6 unknown
-            section_position = 6
-            raw_data_to_write.extend(self.section_raw_data[section_position])
-            ## Section 7 unknown
-            section_position = 7
-            raw_data_to_write.extend(self.section_raw_data[section_position])
-            ## Section 8 unknown
-            section_position = 8
-            raw_data_to_write.extend(self.section_raw_data[section_position])
-        elif self.entity_type == EntityType.MONSTER:          
-            # Section 4:Texture animation (unchanged atm)
-            section_position = 4
-            #raw_data_to_write.extend(self.section_raw_data[section_position])
-            dynamic_texture = self.dynamic_texture_data.to_binary()
-            raw_data_to_write.extend(dynamic_texture)
-            self.section_raw_data[section_position] = dynamic_texture
-            # Section 5: Seq anim
-            section_position = 5
-            self.prepare_seq_animation(raw_data_to_write, section_position)
-            # Section 6: Camera sequence (unchanged atm)
-            section_position = 6
-            raw_data_to_write.extend(self.section_raw_data[section_position])
-            # Section 7: Monster info
-            section_position = 7
+        elif self.entity_type == EntityType.MONSTER_NO_MODEL:
+            # No-model monster (c0m127.dat / Ultimecia-Apocalypse): no skeleton/geometry/
+            # animation at all - the shared preamble below does not apply. Just info_stat
+            # then AI, same layout monster section 7/8 use.
+            section_position = 1
             self.prepare_info(raw_data_to_write, section_position, game_data)
-            # Section 8: AI
-            section_position = 8
+            section_position = 2
             self.prepare_ai(raw_data_to_write, section_position)
-            # Section 9: Sound (unchanged atm)
-            section_position = 9
+        else:
+            # Section 1: Skeleton/Bones
+            section_position = 1
+            bone_data = self.bone_data.to_binary()
+            raw_data_to_write.extend(bone_data)
+            self.section_raw_data[section_position] = bone_data
+            # Section 2: Geometry (untouched for the moment)
+            section_position = 2
             raw_data_to_write.extend(self.section_raw_data[section_position])
-            # Section 10: Sound/Unk (unchanged atm)
-            section_position = 10
-            raw_data_to_write.extend(self.section_raw_data[section_position])
-            # Section 11: Texture
-            section_position = 11
-            self.prepare_texture(raw_data_to_write, section_position)
+            # Section 3: Animation
+            section_position = 3
+            animation_data = self.animation_data.to_binary()
+            raw_data_to_write.extend(animation_data)
+            self.section_raw_data[section_position] = animation_data
+            #raw_data_to_write.extend(self.section_raw_data[section_position])
+
+            # Now changing depending on which file is loaded
+            if self.entity_type == EntityType.CHARACTER:
+                ## Section 4 unknown
+                section_position = 4
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+                ## Section 5 unknown
+                section_position = 5
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+                ## Section 6 unknown
+                section_position = 6
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+                ## Section 7 unknown
+                section_position = 7
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+            elif self.entity_type == EntityType.CHARACTER_NO_WEAPON:
+                ## Section 4: Dynamic texture, Section 5: Camera sequence (unchanged atm)
+                for section_position in (4, 5):
+                    raw_data_to_write.extend(self.section_raw_data[section_position])
+                ## Section 6: Seq anim
+                section_position = 6
+                self.prepare_seq_animation(raw_data_to_write, section_position)
+                ## Section 7: Sounds, 8: Sound bank, 9: Textures, 10: Extra animation
+                ## (unchanged atm)
+                for section_position in (7, 8, 9, 10):
+                    raw_data_to_write.extend(self.section_raw_data[section_position])
+            elif self.entity_type == EntityType.WEAPON:
+                ## Section 4 : Seq anim
+                section_position = 4
+                self.prepare_seq_animation(raw_data_to_write, section_position)
+                ## Section 5 unknown
+                section_position = 5
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+                ## Section 6 unknown
+                section_position = 6
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+                ## Section 7 unknown
+                section_position = 7
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+                ## Section 8 unknown
+                section_position = 8
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+            elif self.entity_type == EntityType.MONSTER:
+                # Section 4:Texture animation (unchanged atm)
+                section_position = 4
+                #raw_data_to_write.extend(self.section_raw_data[section_position])
+                dynamic_texture = self.dynamic_texture_data.to_binary()
+                raw_data_to_write.extend(dynamic_texture)
+                self.section_raw_data[section_position] = dynamic_texture
+                # Section 5: Seq anim
+                section_position = 5
+                self.prepare_seq_animation(raw_data_to_write, section_position)
+                # Section 6: Camera sequence (unchanged atm)
+                section_position = 6
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+                # Section 7: Monster info
+                section_position = 7
+                self.prepare_info(raw_data_to_write, section_position, game_data)
+                # Section 8: AI
+                section_position = 8
+                self.prepare_ai(raw_data_to_write, section_position)
+                # Section 9: Sound (unchanged atm)
+                section_position = 9
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+                # Section 10: Sound/Unk (unchanged atm)
+                section_position = 10
+                raw_data_to_write.extend(self.section_raw_data[section_position])
+                # Section 11: Texture
+                section_position = 11
+                self.prepare_texture(raw_data_to_write, section_position)
 
         # Modifying the header section now that all sized are known
         # Modifying the section position
@@ -459,6 +500,10 @@ class MonsterAnalyser:
             # holds for the pair. Same sections as a character, plus the animation
             # sequences, the sounds and the sound bank inserted before the textures.
             self.entity_type = EntityType.CHARACTER_NO_WEAPON
+        elif self.header_data['nb_section'] == 3:
+            # No-model monster (only known case: c0m127.dat, Ultimecia/Apocalypse trigger).
+            # See EntityType.MONSTER_NO_MODEL for how this was identified.
+            self.entity_type = EntityType.MONSTER_NO_MODEL
         else:
             print(f"Unexpected nb section: {self.header_data['nb_section']}")
             self.entity_type = EntityType.MONSTER

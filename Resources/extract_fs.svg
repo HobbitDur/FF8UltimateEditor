@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"
+     stroke="#0d3a66" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
+  <!-- a file being unpacked out of the archive -->
+  <rect x="18" y="7" width="12" height="18" rx="1.5" fill="#ffffff"/>
+  <g stroke-width="1.7">
+    <line x1="21" y1="13" x2="27" y2="13"/>
+    <line x1="21" y1="16.5" x2="27" y2="16.5"/>
+  </g>
+  <!-- the .fs archive box, drawn last so the file rises out of it -->
+  <path d="M9 22 H39 a2 2 0 0 1 2 2 V40 a2 2 0 0 1 -2 2 H9 a2 2 0 0 1 -2 -2 V24 a2 2 0 0 1 2 -2 Z"
+        fill="#f6c078"/>
+  <!-- open lid flaps -->
+  <path d="M9 22 L14.5 16.5"/>
+  <path d="M39 22 L33.5 16.5"/>
+  <!-- box seam -->
+  <line x1="24" y1="30" x2="24" y2="42" stroke-width="2"/>
+</svg>

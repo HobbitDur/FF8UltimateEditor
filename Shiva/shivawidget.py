@@ -3,7 +3,7 @@ import os
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QMessageBox
 
-from Common.filebarwidget import FileBarWidget
+from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
@@ -46,9 +46,10 @@ class ShivaWidget(QWidget):
         self.setWindowTitle("Shiva")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        self.file_bar = FileBarWidget("mngrp.bin", file_registry, icon_path, "mngrp.bin;;*.bin")
-        self.file_bar.file_opened.connect(self.load_file)
-        self.file_bar.save_requested.connect(self.save_file)
+        # mngrp.bin is this tool's one editable file (its sub-tabs all edit the same file),
+        # driven by the shared header toolbar (Import / Save) through the registry.
+        self.mngrp_binding = FileBinding("mngrp.bin", file_registry,
+                                         load_callback=self.load_file, save_callback=self.save_file)
 
         # One tab per kind of section. Each one edits its own sections of self.manager and is
         # added here with add_section_tab, so saving asks all of them in turn.
@@ -62,11 +63,14 @@ class ShivaWidget(QWidget):
         self.add_section_tab(ShivaTutorialWidget(self.game_data), "Tutorial demos")
 
         main_layout = QVBoxLayout()
-        main_layout.addWidget(self.file_bar)
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
 
-        self.file_bar.load_opened_file()  # Another tool may have opened mngrp.bin already
+        self.mngrp_binding.load_opened_file()  # Another tool may have opened mngrp.bin already
+
+    def file_bindings(self):
+        """The files the shared header toolbar drives for this tool (just mngrp.bin)."""
+        return [self.mngrp_binding]
 
     def add_section_tab(self, tab, title):
         """Add a tab editing its own sections of the shared mngrp.

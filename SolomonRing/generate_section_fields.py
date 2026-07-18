@@ -109,6 +109,16 @@ sec(2, 2, NAMEDESC, [
     ("GF Compatibility", [(f"compat_{c}", 1, None, COMPAT_LABELS[i]) for i, c in enumerate(COMPAT)]),
     ("Misc", [("unknown_0x3a", 2, None, "Unknown 0x3A")]),
 ], sub_size=60)
+# Magic is the one section KernelManager treats as variable-length (kernel_bin_data.json
+# "growable": true) - the "Add Magic" button in the tab appends new entries. Flag it here
+# so KernelSectionTab knows to show that button.
+sections["2"]["growable"] = True
+# Ids 64-79 are hard-reserved for GFs by the exe's own classification logic (every magic-
+# id consumer does `cmp id, 0x40` and routes id>=64 to GF handling) - real magic data can
+# never live there, so the tab hides them from the entry list entirely rather than just
+# labelling them (matches kernel_bin_data.json's gf_reserved_start/gf_reserved_count).
+sections["2"]["hidden_id_start"] = 64
+sections["2"]["hidden_id_count"] = 16
 
 # 3: Junctionable GFs (reuse proven offsets from junctionable_gf_data) --------
 gf_general = [
@@ -547,6 +557,10 @@ for f in sections["28"]["fields"]:
     if f["name"].startswith("magic_"):
         idx = f["name"].split("_")[1]
         f["row"] = f"slot_{idx}"
+    # Real cross-reference to the Magic section's own (possibly modded, possibly grown)
+    # entries - not the static vanilla list - so a newly-added spell shows up here too.
+    if f.get("lookup") == "magic":
+        f["dynamic_lookup"] = True
 
 # 29: Devour (description only) ----------------------------------------------
 sec(29, 1, ["Description"], [("Data", [

@@ -1,10 +1,12 @@
 import os
 
-from PyQt6.QtCore import QSize, QSignalBlocker
+from PyQt6.QtCore import QSignalBlocker
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QSpinBox, QComboBox, QGroupBox, QFormLayout)
 
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Junkshop.junkshopmanager import JunkshopManager, WeaponUpgrade
 
@@ -16,8 +18,11 @@ class JunkshopWidget(QWidget):
     multiple of 10) and a recipe of up to four (item, quantity) pairs the game consumes when
     the upgrade is bought. An item id of 0 (Nothing) disables that recipe slot."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
+
+        if file_registry is None:  # The tool is used alone, it shares its files with nobody
+            file_registry = FileRegistry()
 
         self.game_data = GameData(game_data_folder)
         self.game_data.load_item_data()
@@ -30,27 +35,13 @@ class JunkshopWidget(QWidget):
         self.setWindowTitle("Junkshop")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'junkshop.ico')))
 
-        # File section
-        self.file_dialog = QFileDialog()
-        self.load_button = QPushButton()
-        self.load_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.load_button.setIconSize(QSize(30, 30))
-        self.load_button.setFixedSize(40, 40)
-        self.load_button.setToolTip("Open a mwepon.bin file")
-        self.load_button.clicked.connect(self.load_file)
-
-        self.save_button = QPushButton()
-        self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.save_button.setIconSize(QSize(30, 30))
-        self.save_button.setFixedSize(40, 40)
-        self.save_button.setToolTip("Save all modifications in the opened mwepon.bin (irreversible)")
-        self.save_button.clicked.connect(self.save_file)
+        # File section: mwepon.bin, driven by the shared header toolbar (Import / Save).
+        self.mwepon_binding = FileBinding("mwepon.bin", file_registry,
+                                          load_callback=self.load_file, save_callback=self.save_file)
 
         self.file_label = QLabel("No file loaded")
 
         file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.load_button)
-        file_section_layout.addWidget(self.save_button)
         file_section_layout.addWidget(self.file_label)
         file_section_layout.addStretch(1)
 
@@ -127,17 +118,20 @@ class JunkshopWidget(QWidget):
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
 
-    def load_file(self):
-        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search mwepon.bin file",
-                                                     filter="*.bin", directory=os.getcwd())[0]
-        if file_name:
-            self.manager.load_file(file_name)
-            self.file_label.setText(os.path.basename(file_name))
-            self.editor_container.setEnabled(True)
-            with QSignalBlocker(self.weapon_list):
-                self.weapon_list.clear()
-                self.weapon_list.addItems([weapon.name for weapon in self.manager.weapon_upgrades])
-            self.weapon_list.setCurrentRow(0)
+        self.mwepon_binding.load_opened_file()  # Another tool may have opened mwepon.bin already
+
+    def file_bindings(self):
+        """The files the shared header toolbar drives for this tool (just mwepon.bin)."""
+        return [self.mwepon_binding]
+
+    def load_file(self, file_name):
+        self.manager.load_file(file_name)
+        self.file_label.setText(os.path.basename(file_name))
+        self.editor_container.setEnabled(True)
+        with QSignalBlocker(self.weapon_list):
+            self.weapon_list.clear()
+            self.weapon_list.addItems([weapon.name for weapon in self.manager.weapon_upgrades])
+        self.weapon_list.setCurrentRow(0)
 
     def save_file(self):
         if self.manager.file_path:

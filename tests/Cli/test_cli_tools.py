@@ -386,6 +386,26 @@ def test_moomba_roundtrip_and_list(capsys, tmp_path):
     assert "Story slide" in capsys.readouterr().out
 
 
+@pytest.mark.ff8data("extracted_files/menu/mmag2.bin", "extracted_files/menu/mngrp.bin",
+                     "extracted_files/menu/mngrphd.bin", "extracted_files/menu/sysfnt.TEX")
+def test_moomba_export_png(tmp_path):
+    from Cli.moomba import MoombaCliTool
+    source = EXTRACTED / "menu" / "mmag2.bin"
+    mngrp = EXTRACTED / "menu" / "mngrp.bin"
+
+    single = tmp_path / "page0.png"
+    assert _run(MoombaCliTool, ["export-png", "--input", str(source), "--mngrp", str(mngrp),
+                                "--entry", "0", "--output", str(single), "--scale", "2"]) == 0
+    from PIL import Image
+    with Image.open(single) as image:
+        assert image.size == (768, 480)  # 384x240 canvas at --scale 2
+
+    folder = tmp_path / "pages"
+    assert _run(MoombaCliTool, ["export-png", "--input", str(source), "--mngrp", str(mngrp),
+                                "--output", str(folder)]) == 0
+    assert len(list(folder.glob("mmag2_*.png"))) == 12  # every Chocobo World page
+
+
 @pytest.mark.ff8data("extracted_files/menu/mmag.bin", "extracted_files/menu/mngrp.bin",
                      "extracted_files/menu/mngrphd.bin")
 def test_zone_roundtrip_and_show(capsys, tmp_path):

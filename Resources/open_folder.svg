@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"
+     stroke="#0d3a66" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
+  <!-- folder back with tab -->
+  <path d="M6 16 h9 l3 3 h20 a2.5 2.5 0 0 1 2.5 2.5 V25 H6 Z" fill="#f6c078"/>
+  <!-- open front pocket, a right-leaning parallelogram -->
+  <path d="M6 22 H41.5 a2 2 0 0 1 1.96 2.42 l-2.6 13 a2.5 2.5 0 0 1 -2.45 1.98 H9 a2.5 2.5 0 0 1 -2.5 -2.5 Z"
+        fill="#fbd79e"/>
+</svg>

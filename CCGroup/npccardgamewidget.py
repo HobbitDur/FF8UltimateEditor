@@ -15,7 +15,7 @@ import os
 from PyQt6.QtCore import QSize, Qt, QSettings
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea,
-                             QFileDialog, QPushButton, QLabel, QComboBox, QCheckBox,
+                             QPushButton, QLabel, QComboBox, QCheckBox,
                              QSpinBox, QGroupBox, QMessageBox, QSplitter, QLineEdit,
                              QTreeWidget, QTreeWidgetItem)
 
@@ -415,29 +415,13 @@ class NpcCardGameWidget(QWidget):
         self.__main_layout = QVBoxLayout()
         self.setLayout(self.__main_layout)
 
-        self.__folder_dialog = QFileDialog()
-        self.__folder_button = QPushButton()
-        self.__folder_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.__folder_button.setIconSize(QSize(30, 30))
-        self.__folder_button.setFixedSize(40, 40)
-        self.__folder_button.setToolTip("Open a folder: every .jsm field script inside it (subfolders"
-                                        " included) is scanned for NPCs that start a card game")
-        self.__folder_button.clicked.connect(self.__load_folder_clicked)
-
-        self.__save_button = QPushButton()
-        self.__save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.__save_button.setIconSize(QSize(30, 30))
-        self.__save_button.setFixedSize(40, 40)
-        self.__save_button.setToolTip("Save the modified .jsm files (patched in place)")
-        self.__save_button.clicked.connect(self.__save_clicked)
-        self.__save_button.setEnabled(False)
-
-        self.__info_label = QLabel("Open a folder containing .jsm/.sym field scripts"
-                                   " (e.g. extracted with Deling) to list the NPC card players.")
+        # Opening the folder and saving the patched .jsm files both run from the shared header
+        # toolbar (Open-folder -> load_folder, Save -> save_folder); this tab keeps only its list.
+        self.__info_label = QLabel("Use the header's Open-folder button on your 'field' folder"
+                                   " (.jsm/.sym scripts, e.g. extracted with Deling) to list the"
+                                   " NPC card players.")
 
         self.__layout_top = QHBoxLayout()
-        self.__layout_top.addWidget(self.__folder_button)
-        self.__layout_top.addWidget(self.__save_button)
         self.__layout_top.addWidget(self.__info_label)
         self.__layout_top.addStretch(1)
         self.__main_layout.addLayout(self.__layout_top)
@@ -470,15 +454,6 @@ class NpcCardGameWidget(QWidget):
         self.__splitter.setSizes([300, 800])
         self.__main_layout.addWidget(self.__splitter, 1)
 
-    def __load_folder_clicked(self):
-        start_folder = self.folder_loaded
-        if not start_folder and self.settings is not None:
-            start_folder = self.settings.value("ccgroup/npc_last_folder", defaultValue="", type=str)
-        folder = self.__folder_dialog.getExistingDirectory(parent=self, caption="Open field script folder",
-                                                           directory=start_folder or os.getcwd())
-        if folder:
-            self.load_folder(folder)
-
     def load_folder(self, folder_path: str):
         self.folder_loaded = folder_path
         if self.settings is not None:
@@ -491,7 +466,6 @@ class NpcCardGameWidget(QWidget):
         else:
             self.__info_label.setText(f"{nb_players} card player(s) found in {len(self.manager.jsm_files)}"
                                       f" file(s) - {folder_path}")
-        self.__save_button.setEnabled(nb_players > 0)
 
     def __rebuild_tree(self):
         self.__tree.clear()
@@ -539,9 +513,14 @@ class NpcCardGameWidget(QWidget):
             editor_widget.setLayout(editor_layout)
             self.__editor_scroll.setWidget(editor_widget)
 
-    def __save_clicked(self):
+    def save_folder(self):
+        """Save every patched .jsm file in place (the shared header Save button calls this)."""
         nb_saved = self.manager.save_all()
         if nb_saved == 0:
             QMessageBox.information(self, "CC Group", "No modification to save.")
         else:
             QMessageBox.information(self, "CC Group", f"{nb_saved} file(s) saved.")
+
+    def can_save_folder(self):
+        """Whether a folder of card players is loaded, so there is something the Save button can do."""
+        return self.manager.nb_players() > 0

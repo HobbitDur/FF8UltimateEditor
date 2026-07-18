@@ -5,7 +5,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
                              QComboBox, QCheckBox, QGroupBox, QSpinBox, QGridLayout)
 
-from Common.filebarwidget import FileBarWidget
+from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Kadowaki.kadowakimanager import KadowakiManager
@@ -139,10 +139,10 @@ class KadowakiWidget(QWidget):
         self.setWindowTitle("Kadowaki")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        # File section
-        self.file_bar = FileBarWidget("mitem.bin", file_registry, icon_path, "*.bin")
-        self.file_bar.file_opened.connect(self.load_file)
-        self.file_bar.save_requested.connect(self.save_file)
+        # File section: mitem.bin, this tool's one editable file, driven by the shared
+        # header toolbar (Import / Save) through the registry.
+        self.mitem_binding = FileBinding("mitem.bin", file_registry,
+                                         load_callback=self.load_file, save_callback=self.save_file)
 
         # Item list (left side)
         self.item_list = QListWidget()
@@ -198,11 +198,14 @@ class KadowakiWidget(QWidget):
         main_editor_layout.addWidget(self.editor_container)
 
         main_layout = QVBoxLayout()
-        main_layout.addWidget(self.file_bar)
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
 
-        self.file_bar.load_opened_file()  # Another tool may have opened mitem.bin already
+        self.mitem_binding.load_opened_file()  # Another tool may have opened mitem.bin already
+
+    def file_bindings(self):
+        """The files the shared header toolbar drives for this tool (just mitem.bin)."""
+        return [self.mitem_binding]
 
     def load_file(self, file_name):
         self.manager.load_file(file_name)

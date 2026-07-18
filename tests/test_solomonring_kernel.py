@@ -1,7 +1,8 @@
 """Tests for the SolomonRing kernel.bin editor (data-driven field editing).
 
-These need the original kernel.bin next to the project root and are skipped
-otherwise (see conftest.py / the ff8data marker).
+These use the extracted kernel.bin at ``extracted_files/main/kernel.bin`` (present
+locally, gitignored for copyright) and are skipped automatically when it is missing
+(e.g. in CI) via the ff8data marker (see conftest.py).
 """
 import json
 import pathlib
@@ -16,7 +17,7 @@ from SolomonRing.kernelsectiontab import KernelSectionTab
 from SolomonRing.solomonringwidget import SolomonRingWidget
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent
-KERNEL = PROJECT_ROOT / "kernel.bin"
+KERNEL = PROJECT_ROOT / "extracted_files" / "main" / "kernel.bin"
 GAME_DATA_FOLDER = str(PROJECT_ROOT / "FF8GameData")
 
 
@@ -42,7 +43,7 @@ def _snapshot(game_data, path):
     return data, text
 
 
-@pytest.mark.ff8data("kernel.bin")
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
 def test_roundtrip_no_edit_is_lossless(game_data, tmp_path):
     """Load and re-save unchanged: every data section and every string is preserved."""
     km = KernelManager(game_data)
@@ -56,7 +57,7 @@ def test_roundtrip_no_edit_is_lossless(game_data, tmp_path):
     assert t0 == t1, "text strings changed on a no-edit round-trip"
 
 
-@pytest.mark.ff8data("kernel.bin")
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
 def test_all_section_tabs_roundtrip(qapp, game_data, tmp_path):
     """Building every tab and touching every field of every entry must not corrupt the file."""
     registry = LookupRegistry(game_data, GAME_DATA_FOLDER)
@@ -87,7 +88,7 @@ def test_all_section_tabs_roundtrip(qapp, game_data, tmp_path):
     assert t0 == t1
 
 
-@pytest.mark.ff8data("kernel.bin")
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
 def test_edit_persists(qapp, tmp_path):
     """A numeric field edit and a name edit survive save + reload."""
     work = tmp_path / "kernel.bin"

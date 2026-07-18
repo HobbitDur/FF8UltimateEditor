@@ -1,25 +1,31 @@
 import os
 
-from PyQt6.QtCore import QSize, Qt, QSettings
+from PyQt6.QtCore import QSettings, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QFileDialog, QPushButton, QHBoxLayout, QLabel, QComboBox, QCheckBox, QSlider, QSpinBox, \
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QFileDialog, QHBoxLayout, QLabel, QComboBox, QSpinBox, \
     QTabWidget
 
 from CCGroup.card import Card
 from CCGroup.cardwidget import CardWidget
 from CCGroup.npccardgamewidget import NpcCardGameWidget
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 
 
 class CCGroupWidget(QWidget):
+    file_bindings_changed = pyqtSignal()  # the active tab changed
     CARD_DATA_SIZE = 8
     GENERAL_OFFSET = 0x400000
     LANG_LIST = ["en", "fr"]
     MOD_LIST = ["Original", "Tripod (Mcindus)", "Xylomod (ducladoncladon)"]
 
-    def __init__(self, icon_path='Resources', game_data_path="FF8GameData", settings: QSettings = None):
+    def __init__(self, icon_path='Resources', game_data_path="FF8GameData", settings: QSettings = None,
+                 file_registry=None):
         QWidget.__init__(self)
 
+        if file_registry is None:  # Used alone, it shares its files with nobody
+            file_registry = FileRegistry()
         if settings is None:
             settings = QSettings("HobbitDur", "FF8UltimateEditor")
         self.settings = settings
@@ -44,21 +50,11 @@ class CCGroupWidget(QWidget):
         #self.setMinimumSize(600, 600)
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'icon.ico')))
 
-        self.__file_dialog = QFileDialog()
-        self.__file_dialog_button = QPushButton()
-        self.__file_dialog_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.__file_dialog_button.setIconSize(QSize(30, 30))
-        self.__file_dialog_button.setFixedSize(40, 40)
-        self.__file_dialog_button.setToolTip("Open data file")
-        self.__file_dialog_button.clicked.connect(self.__load_file)
-
+        # The FF8 exe holds the card values; the .hext export is its "save". Both run from the
+        # shared header toolbar (Import / Save), which acts on this tab only (see file_bindings).
+        self.exe_binding = FileBinding("FF8 exe", file_registry, load_callback=self.load_file,
+                                       save_callback=self.__save_file, file_filter="*.exe")
         self.__save_dialog = QFileDialog()
-        self.__save_button = QPushButton()
-        self.__save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.__save_button.setIconSize(QSize(30, 30))
-        self.__save_button.setFixedSize(40, 40)
-        self.__save_button.setToolTip("Save to file")
-        self.__save_button.clicked.connect(self.__save_file)
 
         self.__language_label_widget = QLabel(parent=self, text="FF8 language: ")
         self.__language_label_widget.setToolTip("The language you play on. It will affect the file output and the .exe to read")
@@ -94,8 +90,6 @@ class CCGroupWidget(QWidget):
         self.__size_card_layout.addWidget(self.__size_slider_widget)
 
         self.__layout_top = QHBoxLayout()
-        self.__layout_top.addWidget(self.__file_dialog_button)
-        self.__layout_top.addWidget(self.__save_button)
         self.__layout_top.addLayout(self.__language_layout)
         self.__layout_top.addWidget(self.__mod_widget)
         self.__layout_top.addLayout(self.__size_card_layout)
@@ -111,27 +105,47 @@ class CCGroupWidget(QWidget):
         self.__card_widget_list = []
         self.__nb_card = len(self.game_data.card_data_json["card_info"]) - 1 # -1 for the immune
 
+        self.exe_binding.load_opened_file()  # another tool may have opened the exe already
+
+    def file_bindings(self):
+        """The Card values tab edits the FF8 exe through the shared toolbar; the NPC tab is
+        folder-based (see load_folder), so it offers no single-file binding here."""
+        if self.tab_widget.currentIndex() == 0:
+            return [self.exe_binding]
+        return []
+
+    def load_folder(self, folder_path):
+        """The header's Open-folder button: on the NPC tab, load every .jsm/.sym card player found
+        in the picked field folder. The Card values tab has nothing to load from a folder."""
+        active = self.tab_widget.currentWidget()
+        loader = getattr(active, "load_folder", None)
+        if callable(loader):
+            loader(folder_path)
+
+    def save_folder(self):
+        """The header's Save button, multi-file side: on the NPC tab, save the patched .jsm files."""
+        active = self.tab_widget.currentWidget()
+        saver = getattr(active, "save_folder", None)
+        if callable(saver):
+            saver()
+
+    def can_save_folder(self):
+        active = self.tab_widget.currentWidget()
+        predicate = getattr(active, "can_save_folder", None)
+        return bool(predicate()) if callable(predicate) else False
+
     def __tab_changed(self, index: int):
         self.settings.setValue("ccgroup/current_tab", index)
+        self.file_bindings_changed.emit()
 
     def __change_card_image(self):
         for card_widget in self.__card_widget_list:
             card_widget.change_card_mod(self.__mod_widget.currentIndex(), self.__size_slider_widget.value())
 
-    def __load_file(self, file_to_load: str = ""):
-        self.__file_dialog_button.setEnabled(False)
-        self.__save_button.setEnabled(False)
-        self.__language_widget.setEnabled(False)
-        self.__mod_widget.setEnabled(False)
-        self.__size_slider_widget.setEnabled(False)
-
-
-        #file_to_load = os.path.join("OriginalFiles", "FF8_EN.exe")  # For developing faster
-        if not file_to_load:
-            file_to_load = self.__file_dialog.getOpenFileName(parent=self, caption="Find FF8 exe", filter="*.exe",
-                                                              directory=os.getcwd())[0]
-        if file_to_load:
-            self.file_loaded = file_to_load
+    def load_file(self, path):
+        """Load the card values out of the FF8 exe (path from the shared header toolbar)."""
+        if path:
+            self.file_loaded = path
 
             self.current_file_data = bytearray()
             for card_widget in self.__card_widget_list:
@@ -156,12 +170,6 @@ class CCGroupWidget(QWidget):
             for card in list_card:
                 self.__card_widget_list.append(CardWidget(card))
                 self.__layout_main.addWidget(self.__card_widget_list[-1])
-
-        self.__file_dialog_button.setEnabled(True)
-        self.__save_button.setEnabled(True)
-        self.__language_widget.setEnabled(True)
-        self.__mod_widget.setEnabled(True)
-        self.__size_slider_widget.setEnabled(True)
 
     def __save_file(self):
         default_file_name = os.path.join(os.getcwd(), "monster_card_injection_" + self.__language_widget.currentText() + ".hext")

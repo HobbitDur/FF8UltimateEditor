@@ -5,7 +5,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QSpinBox, QGroupBox, QFormLayout)
 
-from Common.filebarwidget import FileBarWidget
+from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Siren.sirenmanager import SirenManager
@@ -30,10 +30,10 @@ class SirenWidget(QWidget):
         self.setWindowTitle("Siren")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'siren.ico')))
 
-        # File section
-        self.file_bar = FileBarWidget("price.bin", file_registry, icon_path, "*.bin")
-        self.file_bar.file_opened.connect(self.load_file)
-        self.file_bar.save_requested.connect(self.save_file)
+        # File section: price.bin is this tool's one editable file, driven by the shared
+        # header toolbar (Import / Save) through the registry.
+        self.price_binding = FileBinding("price.bin", file_registry,
+                                         load_callback=self.load_file, save_callback=self.save_file)
 
         # Item list (left side)
         self.item_list = QListWidget()
@@ -80,11 +80,14 @@ class SirenWidget(QWidget):
         main_editor_layout.addWidget(self.editor_container)
 
         main_layout = QVBoxLayout()
-        main_layout.addWidget(self.file_bar)
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
 
-        self.file_bar.load_opened_file()  # Another tool may have opened price.bin already
+        self.price_binding.load_opened_file()  # Another tool may have opened price.bin already
+
+    def file_bindings(self):
+        """The files the shared header toolbar drives for this tool (just price.bin)."""
+        return [self.price_binding]
 
     def load_file(self, file_name):
         self.manager.load_file(file_name)

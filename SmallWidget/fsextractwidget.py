@@ -35,7 +35,7 @@ class FsExtractWidget(QPushButton):
         self._deling_manager = DelingCliManager(os.path.join(game_data_folder, "fs", "DelingCli"))
         self._worker = None
 
-        self.setIcon(QIcon(os.path.join(icon_path, "uncompress.png")))
+        self.setIcon(QIcon(os.path.join(icon_path, "extract_fs.svg")))
         self.setIconSize(QSize(30, 30))
         self.setText("Extract .fs")
         self.setToolTip("Select a .fs archive and extract its content recursively (deling-cli)")

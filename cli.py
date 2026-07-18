@@ -25,6 +25,7 @@ from Cli.tonberry_shop import TonberryShopCliTool
 from Cli.siren import SirenCliTool
 from Cli.junkshop import JunkshopCliTool
 from Cli.quezacotl import QuezacotlCliTool
+from Cli.hyne import HyneCliTool
 from Cli.minimog import MinimogCliTool
 from Cli.shiva import ShivaCliTool
 from Cli.ccgroup import CCGroupCliTool
@@ -52,6 +53,7 @@ def _register_all_tools():
     registry.register(SirenCliTool)
     registry.register(JunkshopCliTool)
     registry.register(QuezacotlCliTool)
+    registry.register(HyneCliTool)
     registry.register(MinimogCliTool)
     registry.register(ShivaCliTool)
     registry.register(CCGroupCliTool)

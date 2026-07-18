@@ -3,6 +3,7 @@
 Commands:
     • info        - structure of the file: fanfare, camera, and the six win poses
     • show-seq    - disassemble a character's win-pose AnimSeq byte-code
+    • camera      - show the Section 2 camera structure (sets/slots/keyframes; -v dumps values)
     • export      - write one part (fanfare-bank, fanfare-seq, camera, <char>-body,
                     <char>-seq, <char>-weapon) to a binary file
     • import      - replace one part from a binary file (validated first)
@@ -43,9 +44,10 @@ def _cmd_info(args) -> int:
     print(f"  fanfare-seq : AKAO music sequence (the fanfare heard in game), "
           f"{summary['fanfare_seq_size']} bytes, AKAO id {summary['fanfare_akao_id']} "
           f"(PC song id {summary['fanfare_akao_id'] - 1})")
-    camera_sets = ", ".join(str(count) for count in summary["camera_sets"])
-    print(f"  camera      : {summary['camera_size']} bytes, "
-          f"{len(summary['camera_sets'])} animation sets ({camera_sets} animations)")
+    camera = summary["camera"]
+    print(f"  camera      : {summary['camera_size']} bytes = sequence byte-code "
+          f"{camera['setting_size']} bytes + animation collection "
+          f"{camera['collection_size']} bytes ({camera['nb_set']} sets) - see 'camera'")
     for pose in summary["poses"]:
         print(f"  {pose['name']} (com_id {pose['com_id']}, section {pose['section_id']}):")
         print(f"    {pose['name'].lower()}-body  : {pose['body_size']} bytes, "
@@ -61,6 +63,46 @@ def _cmd_show_seq(args) -> int:
     manager = _load_manager(args)
     print(manager.describe_seq(args.char), end="")
     return 0
+
+
+def _cmd_camera(args) -> int:
+    manager = _load_manager(args)
+    camera = manager.camera_summary()
+    print(f"Section 2 camera ({os.path.basename(args.input)}):")
+    print(f"  sequence byte-code (camera VM): {camera['setting_size']} bytes")
+    if not camera["collection_parsed"]:
+        print("  animation collection: not recognised, kept raw "
+              f"({camera['collection_size']} bytes)")
+        return 0
+    print(f"  animation collection: {camera['collection_size']} bytes, "
+          f"{camera['nb_set']} sets of 8 animation slots")
+    for cam_set in camera["sets"]:
+        print(f"  Set {cam_set['index']}:")
+        for slot in cam_set["slots"]:
+            if slot["empty"]:
+                print(f"    slot {slot['slot']}: empty")
+            else:
+                print(f"    slot {slot['slot']}: {slot['blocks']} blocks, "
+                      f"{slot['frames']} keyframes")
+    if args.verbose:
+        _dump_camera_keyframes(manager)
+    return 0
+
+
+def _dump_camera_keyframes(manager):
+    for cam_set in manager.camera_collection.sets:
+        for animation in cam_set.animations:
+            if animation.empty or not animation.blocks:
+                continue
+            print(f"  Set {cam_set.index} slot {animation.slot}:")
+            for block_index, block in enumerate(animation.blocks):
+                print(f"    block {block_index}: fov_mode {block.fov_mode}, "
+                      f"roll_mode {block.roll_mode}, layout {block.layout}")
+                for frame_index, frame in enumerate(block.frames):
+                    values = {label: field.get() for label, field in frame.fields()}
+                    print(f"      #{frame_index}: dur {values['Duration']} "
+                          f"pos ({values['Pos X']},{values['Pos Y']},{values['Pos Z']}) "
+                          f"look ({values['Look X']},{values['Look Y']},{values['Look Z']})")
 
 
 def _cmd_export(args) -> int:
@@ -151,6 +193,12 @@ class WattsCliTool(BaseCliTool):
         p_seq.add_argument("--char", "-c", required=True,
                            help="Rinoa, Quistis, Irvine, Edea, Selphie or Kiros")
         p_seq.set_defaults(func=_cmd_show_seq)
+
+        p_camera = sub.add_parser("camera", help="Show the Section 2 camera structure")
+        _add_input_argument(p_camera)
+        p_camera.add_argument("--verbose", "-v", action="store_true",
+                              help="Also dump every keyframe (duration, position, look-at)")
+        p_camera.set_defaults(func=_cmd_camera)
 
         p_export = sub.add_parser("export", help="Export one part to a binary file")
         _add_input_argument(p_export)

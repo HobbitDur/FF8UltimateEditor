@@ -456,17 +456,23 @@ class FF8OpenGLWidget(QOpenGLWidget):
             face_key = frozenset(indices)
             face_count[face_key] = face_count.get(face_key, 0) + 1
 
+        # Batch consecutive same-texture triangles into one glBegin/glEnd instead of one
+        # per triangle: glBegin(GL_TRIANGLES) with 3N vertices draws the same N triangles,
+        # so output is identical but the per-primitive call overhead (the immediate-mode
+        # bottleneck) is cut sharply - noticeable when many triangles share a texture.
         current_raw_id = None
+        batch_open = False
         for indices, uvs, raw_id in self.triangles_uv:
-            if raw_id != current_raw_id:
-                self._bind_texture_for_raw_id(raw_id)
-                current_raw_id = raw_id
-
             verts = [self.vertices_array[idx] for idx in indices]
             if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
                 continue
-
-            glBegin(GL_TRIANGLES)
+            if raw_id != current_raw_id:
+                if batch_open:
+                    glEnd()
+                self._bind_texture_for_raw_id(raw_id)  # only allowed outside glBegin/glEnd
+                current_raw_id = raw_id
+                glBegin(GL_TRIANGLES)
+                batch_open = True
             for i in range(3):
                 u, v = uvs[i]
                 # wrap only above 1.0: exactly 1.0 is a texture border, not 0
@@ -476,6 +482,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
                     v = v - int(v)
                 glTexCoord2f(u, v)
                 glVertex3f(verts[i][0], verts[i][1], verts[i][2])
+        if batch_open:
             glEnd()
 
         glDisable(GL_ALPHA_TEST)
@@ -547,21 +554,26 @@ class FF8OpenGLWidget(QOpenGLWidget):
             face_key = frozenset(indices)
             face_count[face_key] = face_count.get(face_key, 0) + 1
 
+        # Batch consecutive same-texture quads (each as two triangles) into one glBegin/
+        # glEnd, same as the triangle path above.
         current_raw_id = None
+        batch_open = False
         for indices, uvs, raw_id in self.quads_uv:
-            if raw_id != current_raw_id:
-                self._bind_texture_for_raw_id(raw_id)
-                current_raw_id = raw_id
-
             verts = [self.vertices_array[idx] for idx in indices]
             if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
                 continue
-
+            if raw_id != current_raw_id:
+                if batch_open:
+                    glEnd()
+                self._bind_texture_for_raw_id(raw_id)
+                current_raw_id = raw_id
+                glBegin(GL_TRIANGLES)
+                batch_open = True
             # Draw quad as two triangles (perimeter order A, B, D / A, C, D)
-            glBegin(GL_TRIANGLES)
             for i in (0, 1, 3, 0, 2, 3):
                 glTexCoord2f(uvs[i][0], uvs[i][1])
                 glVertex3f(verts[i][0], verts[i][1], verts[i][2])
+        if batch_open:
             glEnd()
 
         glDisable(GL_ALPHA_TEST)

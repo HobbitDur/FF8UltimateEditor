@@ -79,15 +79,17 @@ def test_real_mngrp_raw90_text_preview(game_data):
     nb_strings = manager.load_mngrp(str(MNGRP_BIN), str(MNGRPHD_BIN))
     assert nb_strings == 15
     # Story slide 1 text
-    assert "treasure hunting" in manager.get_overlay_text(0)
+    assert "treasure hunting" in manager.overlay_text_by_id(0)
     # Manual page 1/8 title
-    assert "What is Solo-RPG" in manager.get_overlay_text(5)
+    assert "What is Solo-RPG" in manager.overlay_text_by_id(5)
     # Every text overlay of the retail file resolves to a non-empty string
     for entry in manager.entries:
         for slot in entry.text_overlays:
             if not slot.unused:
-                text = manager.get_overlay_text(slot.id)
+                text = manager.overlay_text_by_id(slot.id)
                 assert text and "not found" not in text
+                # The renderer-facing signature agrees with the id lookup
+                assert manager.get_overlay_text(entry, slot) == text
 
 
 @pytest.mark.ff8data("extracted_files/menu/mmag2.bin")

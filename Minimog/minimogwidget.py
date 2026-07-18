@@ -5,6 +5,8 @@ from PyQt6.QtGui import QIcon, QImage, QPixmap
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
                              QListWidget, QSpinBox, QComboBox, QCheckBox, QGroupBox, QFormLayout)
 
+from Common.filebarwidget import FileBarWidget
+from Common.fileregistry import FileRegistry
 from Minimog.minimogmanager import MinimogManager, Sp1Quad
 from Minimog.texpalettedialog import TexPalettePickerDialog
 
@@ -20,8 +22,11 @@ class MinimogWidget(QWidget):
     128-139 are the key-config button icons the engine redirects elsewhere, so
     they are shown read-only."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
+
+        if file_registry is None:  # The tool is used alone, it shares its files with nobody
+            file_registry = FileRegistry()
 
         self.manager = MinimogManager()
         self.tex_file = None  # decoded icon.TEX for the preview, when available
@@ -29,21 +34,12 @@ class MinimogWidget(QWidget):
         self.setWindowTitle("Minimog")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        # File section
+        # File section. icon.sp1 is shared through the registry (Zone reads it too); the
+        # icon.TEX loaded below is only a preview companion, kept on its own button.
         self.file_dialog = QFileDialog()
-        self.load_button = QPushButton()
-        self.load_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.load_button.setIconSize(QSize(30, 30))
-        self.load_button.setFixedSize(40, 40)
-        self.load_button.setToolTip("Open an icon.sp1 file")
-        self.load_button.clicked.connect(self.load_file)
-
-        self.save_button = QPushButton()
-        self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.save_button.setIconSize(QSize(30, 30))
-        self.save_button.setFixedSize(40, 40)
-        self.save_button.setToolTip("Save all modifications in the opened icon.sp1 (irreversible)")
-        self.save_button.clicked.connect(self.save_file)
+        self.file_bar = FileBarWidget("icon.sp1", file_registry, icon_path, "icon.sp1")
+        self.file_bar.file_opened.connect(self.load_file)
+        self.file_bar.save_requested.connect(self.save_file)
 
         self.tex_button = QPushButton("Load icon.TEX")
         self.tex_button.setToolTip("Load the icon texture for the preview "
@@ -73,8 +69,7 @@ class MinimogWidget(QWidget):
         self.file_label = QLabel("No file loaded")
 
         file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.load_button)
-        file_section_layout.addWidget(self.save_button)
+        file_section_layout.addWidget(self.file_bar)
         file_section_layout.addWidget(self.tex_button)
         file_section_layout.addWidget(self.export_tex_button)
         file_section_layout.addWidget(self.export_true_colors_button)
@@ -250,21 +245,20 @@ class MinimogWidget(QWidget):
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
 
+        self.file_bar.load_opened_file()  # Another tool may have opened icon.sp1 already
+
     # ------------------------------------------------------------------ file
-    def load_file(self):
-        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search icon.sp1 file",
-                                                     filter="*.sp1", directory=os.getcwd())[0]
-        if file_name:
-            self.manager.load_file(file_name)
-            self.file_label.setText(os.path.basename(file_name))
-            self.editor_container.setEnabled(True)
-            self._auto_load_tex(os.path.dirname(file_name))
-            with QSignalBlocker(self.icon_list):
-                self.icon_list.clear()
-                self.icon_list.addItems(
-                    [f"{icon.name} ({len(icon.quads)} quad{'s' if len(icon.quads) != 1 else ''})"
-                     for icon in self.manager.icons])
-            self.icon_list.setCurrentRow(0)
+    def load_file(self, file_name):
+        self.manager.load_file(file_name)
+        self.file_label.setText(os.path.basename(file_name))
+        self.editor_container.setEnabled(True)
+        self._auto_load_tex(os.path.dirname(file_name))
+        with QSignalBlocker(self.icon_list):
+            self.icon_list.clear()
+            self.icon_list.addItems(
+                [f"{icon.name} ({len(icon.quads)} quad{'s' if len(icon.quads) != 1 else ''})"
+                 for icon in self.manager.icons])
+        self.icon_list.setCurrentRow(0)
 
     def save_file(self):
         if self.manager.file_path:

@@ -42,18 +42,17 @@ def qapp():
 def widget(qapp):
     """A ZoneWidget with every file loaded, showing entry 0.
 
-    Loaded through the same per-file methods the open dialog dispatches to.
+    Loaded through the same per-file apply callbacks the shared toolbar's bindings dispatch to.
     Function-scoped: the tests edit the loaded entries in place.
     """
     from Zone.zonewidget import ZoneWidget
     zone = ZoneWidget()
     zone._load_mmag(str(MENU_DIR / "mmag.bin"))
-    zone._load_mngrp(str(MENU_DIR / "mngrp.bin"))
-    zone._load_kernel(str(PROJECT_ROOT / "extracted_files" / "main" / "kernel.bin"))
-    zone._load_mwepon(str(MENU_DIR / "mwepon.bin"))
-    zone._load_icons(str(MENU_DIR / "icon.sp1"))
-    zone._load_mitem(str(MENU_DIR / "mitem.bin"))
-    zone._update_tooltips()
+    zone._apply_mngrp(str(MENU_DIR / "mngrp.bin"))
+    zone._apply_kernel(str(PROJECT_ROOT / "extracted_files" / "main" / "kernel.bin"))
+    zone._apply_mwepon(str(MENU_DIR / "mwepon.bin"))
+    zone._apply_icons(str(MENU_DIR / "icon.sp1"))
+    zone._apply_mitem(str(MENU_DIR / "mitem.bin"))
     zone._refresh_preview()
     return zone
 
@@ -116,128 +115,103 @@ def test_switching_entry_renders_once_not_once_per_field(widget):
     assert len(calls) == 1, f"repopulating the form must not redraw per field, got {len(calls)}"
 
 
-def test_preview_is_inert_until_mngrp_is_loaded(qapp):
-    """Without mngrp.bin there is no art to draw, so editing must not blow up."""
+def test_preview_is_inert_until_mngrp_is_loaded(qapp, tmp_path):
+    """Without mngrp.bin there is no art to draw, so editing must not blow up.
+
+    mmag.bin is copied to a folder with no mngrp.bin beside it, so the auto-load
+    finds nothing and the renderer stays absent."""
+    import shutil
     from Zone.zonewidget import ZoneWidget
+    lone_mmag = tmp_path / "mmag.bin"
+    shutil.copy(MENU_DIR / "mmag.bin", lone_mmag)
     zone = ZoneWidget()
-    zone._load_mmag(str(MENU_DIR / "mmag.bin"))
+    zone._load_mmag(str(lone_mmag))
     assert zone.renderer is None
     zone.pic_tint_r.setValue(200)
     QTest.qWait(DEBOUNCE_WAIT)
     assert zone.preview_label.pixmap() is None or zone.preview_label.pixmap().isNull()
 
 
-def test_the_two_dialogs_split_the_edited_file_from_the_rest():
-    """The open button is mmag.bin only; everything else is a complementary file."""
-    from Zone.zonewidget import (COMPLEMENTARY_FILES, COMPLEMENTARY_FILTER, MAIN_FILE,
-                                 MAIN_FILTER)
-    assert MAIN_FILE == "mmag.bin" and MAIN_FILE in MAIN_FILTER
-    assert set(COMPLEMENTARY_FILES) == {"mngrp.bin", "kernel.bin", "mwepon.bin",
-                                        "icon.sp1", "mitem.bin"}
-    assert MAIN_FILE not in COMPLEMENTARY_FILES
-    for name in COMPLEMENTARY_FILES:  # the dialog is filtered to the exact names
-        assert name in COMPLEMENTARY_FILTER
-
-
-def test_complementary_files_load_several_at_once(qapp, monkeypatch):
-    """One trip through the dialog can bring in any number of them."""
-    from Zone.zonewidget import ZoneWidget
+def test_the_bindings_split_the_edited_file_from_the_rest(qapp):
+    """The main binding is mmag.bin (writable); everything else is a read-only companion."""
+    from Zone.zonewidget import ZoneWidget, MAIN_FILE, COMPLEMENTARY_FILES
     zone = ZoneWidget()
-    zone._load_mmag(str(MENU_DIR / "mmag.bin"))
+    assert MAIN_FILE == "mmag.bin"
+    assert zone.mmag_binding.file_name == "mmag.bin" and not zone.mmag_binding.read_only
+    assert set(zone.companion_bindings) == set(COMPLEMENTARY_NAMES) == set(COMPLEMENTARY_FILES)
+    assert all(binding.read_only for binding in zone.companion_bindings.values())
+    bindings = zone.file_bindings()  # main first, then the five read-only companions
+    assert bindings[0] is zone.mmag_binding
+    assert {b.file_name for b in bindings if b.read_only} == set(COMPLEMENTARY_NAMES)
 
-    # Deliberately not the declared order: mngrp.bin, which builds the renderer,
-    # is picked in the middle.
-    picked = [str(MENU_DIR / "mitem.bin"), str(MENU_DIR / "icon.sp1"),
-              str(MENU_DIR / "mngrp.bin"), str(MENU_DIR / "mwepon.bin"),
-              str(PROJECT_ROOT / "extracted_files" / "main" / "kernel.bin")]
-    monkeypatch.setattr(zone.file_dialog, "getOpenFileNames",
-                        lambda *a, **k: (picked, ""))
-    zone.load_complementary_files()
+
+def test_complementary_files_load_through_their_bindings(qapp, tmp_path):
+    """Each companion is published through its own read-only binding, in any order."""
+    import shutil
+    from Zone.zonewidget import ZoneWidget
+    lone_mmag = tmp_path / "mmag.bin"
+    shutil.copy(MENU_DIR / "mmag.bin", lone_mmag)  # no companions beside it: load them by hand
+    zone = ZoneWidget()
+    zone._load_mmag(str(lone_mmag))
+
+    # Deliberately not the declared order: mngrp.bin, which builds the renderer, in the middle.
+    paths = {"mitem.bin": str(MENU_DIR / "mitem.bin"), "icon.sp1": str(MENU_DIR / "icon.sp1"),
+             "mngrp.bin": str(MENU_DIR / "mngrp.bin"), "mwepon.bin": str(MENU_DIR / "mwepon.bin"),
+             "kernel.bin": str(PROJECT_ROOT / "extracted_files" / "main" / "kernel.bin")}
+    for name, path in paths.items():
+        zone.companion_bindings[name].open_path(path)
 
     assert zone.manager.mngrp_loaded and zone.manager.kernel_loaded
-    assert zone.manager.mwepon_loaded and zone.manager.icons_loaded
-    assert zone.manager.mitem_loaded
+    assert zone.manager.mwepon_loaded and zone.manager.icons_loaded and zone.manager.mitem_loaded
     assert zone.renderer is not None
     QTest.qWait(DEBOUNCE_WAIT)
     assert zone.preview_label.pixmap() is not None
 
 
-def test_the_pick_order_of_complementary_files_does_not_matter(qapp, monkeypatch):
-    """Nothing here is sequenced: each file only fills in its own part of the
-    manager, which the renderer reads as it draws. So no batching is needed."""
+def test_the_load_order_of_complementary_files_does_not_matter(qapp, tmp_path):
+    """Each file only fills in its own part of the manager, which the renderer reads as it
+    draws, so no ordering matters."""
+    import shutil
     from Zone.zonewidget import ZoneWidget
     kernel = str(PROJECT_ROOT / "extracted_files" / "main" / "kernel.bin")
+    path_for = {"mngrp.bin": str(MENU_DIR / "mngrp.bin"), "kernel.bin": kernel,
+                "mwepon.bin": str(MENU_DIR / "mwepon.bin"), "icon.sp1": str(MENU_DIR / "icon.sp1"),
+                "mitem.bin": str(MENU_DIR / "mitem.bin")}
     orders = [
-        [str(MENU_DIR / "mngrp.bin"), kernel, str(MENU_DIR / "mwepon.bin"),
-         str(MENU_DIR / "icon.sp1"), str(MENU_DIR / "mitem.bin")],
+        ["mngrp.bin", "kernel.bin", "mwepon.bin", "icon.sp1", "mitem.bin"],
         # mngrp.bin dead last, everything else loaded before the renderer exists
-        [str(MENU_DIR / "mitem.bin"), str(MENU_DIR / "icon.sp1"),
-         str(MENU_DIR / "mwepon.bin"), kernel, str(MENU_DIR / "mngrp.bin")],
+        ["mitem.bin", "icon.sp1", "mwepon.bin", "kernel.bin", "mngrp.bin"],
     ]
     renders = []
-    for picked in orders:
+    for order in orders:
+        lone_mmag = tmp_path / f"mmag_{'_'.join(order)[:8]}.bin"
+        shutil.copy(MENU_DIR / "mmag.bin", lone_mmag)
         zone = ZoneWidget()
-        zone._load_mmag(str(MENU_DIR / "mmag.bin"))
-        monkeypatch.setattr(zone.file_dialog, "getOpenFileNames", lambda *a, **k: (picked, ""))
-        zone.load_complementary_files()
+        zone._load_mmag(str(lone_mmag))
+        for name in order:
+            zone.companion_bindings[name].open_path(path_for[name])
         zone.entry_list.setCurrentRow(28)  # Combat King: uses kernel + icons
         QTest.qWait(DEBOUNCE_WAIT)
         renders.append(zone.preview_label.pixmap().toImage())
     assert renders[0] == renders[1]
 
 
-def test_complementary_files_can_be_added_over_several_trips(qapp, monkeypatch):
+def test_complementary_files_can_be_added_over_several_trips(qapp, tmp_path):
+    import shutil
     from Zone.zonewidget import ZoneWidget
+    lone_mmag = tmp_path / "mmag.bin"
+    shutil.copy(MENU_DIR / "mmag.bin", lone_mmag)  # nothing beside it auto-loads
     zone = ZoneWidget()
-    zone._load_mmag(str(MENU_DIR / "mmag.bin"))
+    zone._load_mmag(str(lone_mmag))
+    assert not zone.manager.mngrp_loaded and not zone.manager.kernel_loaded
 
-    monkeypatch.setattr(zone.file_dialog, "getOpenFileNames",
-                        lambda *a, **k: ([str(MENU_DIR / "mngrp.bin")], ""))
-    zone.load_complementary_files()
+    zone.companion_bindings["mngrp.bin"].open_path(str(MENU_DIR / "mngrp.bin"))
     assert zone.manager.mngrp_loaded and not zone.manager.kernel_loaded
 
     # Coming back later must add to what is there, not replace it
-    monkeypatch.setattr(zone.file_dialog, "getOpenFileNames", lambda *a, **k: (
-        [str(PROJECT_ROOT / "extracted_files" / "main" / "kernel.bin")], ""))
-    zone.load_complementary_files()
+    zone.companion_bindings["kernel.bin"].open_path(
+        str(PROJECT_ROOT / "extracted_files" / "main" / "kernel.bin"))
     assert zone.manager.mngrp_loaded and zone.manager.kernel_loaded
-
-
-def test_complementary_button_is_greyed_until_mmag_is_open(qapp):
-    """The one order that is forced is shown, not enforced with a popup."""
-    from Zone.zonewidget import ZoneWidget
-    zone = ZoneWidget()
-    assert zone.complementary_button.isEnabled() is False
-    # Greyed, but Qt still shows its tooltip, so the reason stays readable
-    assert "Greyed out until mmag.bin is open" in zone.complementary_button.toolTip()
-
-    zone._load_mmag(str(MENU_DIR / "mmag.bin"))
-    zone._update_tooltips()
-    assert zone.complementary_button.isEnabled() is True
-    assert "Greyed out until" not in zone.complementary_button.toolTip()
-
-
-def test_hovering_the_buttons_explains_them(qapp):
-    from Zone.zonewidget import ZoneWidget
-    zone = ZoneWidget()
-    main_tip = zone.load_button.toolTip()
-    assert "mmag.bin" in main_tip and "Nothing open yet" in main_tip
-
-    tooltip = zone.complementary_button.toolTip()
-    assert "as many as you like at once" in tooltip, "multi-select must be explained"
-    assert "come back to this button" in tooltip, "reopening must be explained"
-    for name in COMPLEMENTARY_NAMES:
-        assert name in tooltip, f"{name} should be described on hover"
-    assert "✔" not in tooltip, "nothing is loaded yet"
-    assert "Still missing" in tooltip
-
-    zone._load_mmag(str(MENU_DIR / "mmag.bin"))
-    zone._load_kernel(str(PROJECT_ROOT / "extracted_files" / "main" / "kernel.bin"))
-    zone._update_tooltips()
-    assert "mmag.bin</b>" in zone.load_button.toolTip()
-    tooltip = zone.complementary_button.toolTip()
-    assert "✔ <b>kernel.bin</b>" in tooltip
-    assert "– <b>mngrp.bin</b>" in tooltip, "mngrp.bin is not loaded yet"
 
 
 def test_the_file_name_label_is_gone(widget):

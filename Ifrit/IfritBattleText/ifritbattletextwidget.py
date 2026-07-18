@@ -1,5 +1,5 @@
 """Local editor for a monster's battle dialogue (section 8, ``battle_script_data
-['battle_text']``) and its name (section 7, ``info_stat_data['monster_name']``).
+['battle_text']``).
 
 Edits are applied to the loaded monster immediately, like the Stat tab; there is
 no separate save_file() hook, the shared Save button writes them out via
@@ -8,9 +8,12 @@ no separate save_file() hook, the shared Save button writes them out via
 Each dialogue line reuses ShumiTranslator's ``TranslationWidget``, bound directly
 to the same ``FF8Text`` object read by ``MonsterAnalyser.analyze_battle_script_section``,
 so edits here are the same edits ShumiTranslator would make.
+
+The monster name (section 7) used to also be edited from here; it now has its own
+Stat sub-tab (IfritMonsterNameWidget) so a section-8 tool doesn't also own section-7 data.
 """
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QGroupBox,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QScrollArea,
 )
 
@@ -19,31 +22,21 @@ from ShumiTranslator.view.translationwidget import TranslationWidget
 
 
 class IfritBattleTextWidget(QWidget):
-    """Editor for a monster's name and in-battle dialogue lines."""
+    """Editor for a monster's in-battle dialogue lines."""
 
     def __init__(self, ifrit_manager):
         super().__init__()
         self.ifrit_manager = ifrit_manager
         self.game_data = ifrit_manager.game_data
-        self._loading = False
         self._text_rows = []  # [TranslationWidget]
 
         root = QVBoxLayout(self)
         info = QLabel(
-            "Local editor for the monster name and in-battle dialogue lines (section 8). "
+            "Local editor for the monster's in-battle dialogue lines (section 8). "
             "Edits are applied to the loaded monster immediately — press the "
             "<b>Save</b> button in the toolbar to write them to the .dat file.")
         info.setWordWrap(True)
         root.addWidget(info)
-
-        name_group = QGroupBox("Monster name")
-        name_layout = QHBoxLayout(name_group)
-        self._name_edit = QLineEdit()
-        self._name_edit.setMaxLength(24)
-        self._name_edit.setToolTip("Monster name, max 24 bytes in the FF8 text encoding.")
-        self._name_edit.textEdited.connect(self._on_name_edited)
-        name_layout.addWidget(self._name_edit)
-        root.addWidget(name_group)
 
         header_layout = QHBoxLayout()
         header_layout.addWidget(QLabel("<b>Battle text</b>"))
@@ -66,17 +59,10 @@ class IfritBattleTextWidget(QWidget):
     # ── Loading ──────────────────────────────────────────────────────────
 
     def load_data(self):
-        """Re-read the current enemy's name and battle text, rebuild every row."""
+        """Re-read the current enemy's battle text, rebuild every row."""
         enemy = getattr(self.ifrit_manager, "enemy", None)
-        if enemy is None or not enemy.info_stat_data:
+        if enemy is None:
             return
-
-        self._loading = True
-        try:
-            name = enemy.info_stat_data.get('monster_name')
-            self._name_edit.setText(name.get_str() if name is not None else "")
-        finally:
-            self._loading = False
 
         for row in self._text_rows:
             row.setParent(None)
@@ -91,14 +77,6 @@ class IfritBattleTextWidget(QWidget):
         self._text_rows.append(row)
 
     # ── Editing ──────────────────────────────────────────────────────────
-
-    def _on_name_edited(self, text):
-        if self._loading:
-            return
-        enemy = getattr(self.ifrit_manager, "enemy", None)
-        if enemy is None or not enemy.info_stat_data:
-            return
-        enemy.info_stat_data['monster_name'].set_str(text)
 
     def _on_add_line(self):
         enemy = getattr(self.ifrit_manager, "enemy", None)

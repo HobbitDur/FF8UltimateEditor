@@ -110,9 +110,14 @@ class TextureData:
 
 
 class IfritManager:
-    def __init__(self, game_data_folder="FF8GameData", vincent_tim_path=None):
-        self.game_data = GameData(game_data_folder)
-        self.game_data.load_all()
+    def __init__(self, game_data_folder="FF8GameData", vincent_tim_path=None, game_data=None):
+        # A caller loading several models (e.g. a party) can pass one already-load_all()ed
+        # GameData to share, instead of paying that cost per manager.
+        if game_data is not None:
+            self.game_data = game_data
+        else:
+            self.game_data = GameData(game_data_folder)
+            self.game_data.load_all()
         self.enemy = MonsterAnalyser(self.game_data)
         self.compiler = AICompiler(self.game_data, self.enemy.battle_script_data['battle_text'], self.enemy.info_stat_data)
         self.decompiler = AIDecompiler(self.game_data, self.enemy.battle_script_data['battle_text'], self.enemy.info_stat_data)

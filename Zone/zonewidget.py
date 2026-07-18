@@ -1,11 +1,13 @@
 import os
 
-from PyQt6.QtCore import QSize, Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon, QImage, QPixmap
-from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QGroupBox, QMessageBox, QSpinBox, QComboBox, QCheckBox,
                              QGridLayout, QScrollArea, QFormLayout)
 
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.magpage import MagPageEntry, UNUSED_ID
 from Zone.zonemanager import (ZoneManager, TEXTURE_CATEGORIES, DUEL_MOVE_NAMES,
@@ -17,23 +19,17 @@ PREVIEW_SCALE = 2
 
 # The file this editor edits. The open dialog filters on its exact name.
 MAIN_FILE = "mmag.bin"
-MAIN_FILTER = f"Magazine pages ({MAIN_FILE})"
 
-# The rest of the page is spread over other files. Exact name -> (loader, what it adds).
-# They are all offered in one multi-select dialog, filtered to these exact names, and it
-# can be reopened to add more later. Order does not matter between them: each only fills
-# in its own part of the manager, which the renderer reads as it draws.
+# The rest of the page is spread over other files, each edited in another tool and read
+# here read-only through the registry (shared in every direction). Exact name -> what it
+# adds. Each only fills in its own part of the manager, which the renderer reads as it draws.
 COMPLEMENTARY_FILES = {
-    "mngrp.bin": ("_load_mngrp", "the page art, the overlay sprites and the book text "
-                                 "(needs mngrphd.bin beside it)"),
-    "kernel.bin": ("_load_kernel", "Zell's Duel button combos, drawn on the Combat King pages"),
-    "mwepon.bin": ("_load_mwepon", "the weapon remodel item lists, drawn on the "
-                                   "Weapons Monthly pages"),
-    "icon.sp1": ("_load_icons", "the button and item icons of those two lists "
-                                "(needs icon.TEX beside it)"),
-    "mitem.bin": ("_load_mitem", "which type icon each remodel item uses"),
+    "mngrp.bin": "the page art, the overlay sprites and the book text (needs mngrphd.bin beside it)",
+    "kernel.bin": "Zell's Duel button combos, drawn on the Combat King pages",
+    "mwepon.bin": "the weapon remodel item lists, drawn on the Weapons Monthly pages",
+    "icon.sp1": "the button and item icons of those two lists (needs icon.TEX beside it)",
+    "mitem.bin": "which type icon each remodel item uses",
 }
-COMPLEMENTARY_FILTER = "Complementary FF8 files (" + " ".join(COMPLEMENTARY_FILES) + ")"
 
 
 class ZoneWidget(QWidget):
@@ -44,8 +40,12 @@ class ZoneWidget(QWidget):
 
     Named after Zone, the Forest Owls member and devoted magazine collector."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
+
+        if file_registry is None:  # The tool is used alone, it shares its files with nobody
+            file_registry = FileRegistry()
+        self.file_registry = file_registry
 
         self.game_data = GameData(game_data_folder)
         self.game_data.load_sysfnt_data()  # for the mngrp book-text preview
@@ -56,34 +56,24 @@ class ZoneWidget(QWidget):
         self.setWindowTitle("Zone")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        # File section
-        self.file_dialog = QFileDialog()
-        self.load_button = QPushButton()
-        self.load_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.load_button.setIconSize(QSize(30, 30))
-        self.load_button.setFixedSize(40, 40)
-        self.load_button.clicked.connect(self.load_file)
-
-        self.save_button = QPushButton()
-        self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.save_button.setIconSize(QSize(30, 30))
-        self.save_button.setFixedSize(40, 40)
-        self.save_button.setToolTip("Save all modifications in the opened mmag.bin (irreversible)")
-        self.save_button.clicked.connect(self.save_file)
-
-        # Greyed until mmag.bin is open: the complementary files only decorate its
-        # entries, so there is nothing for them to fill in before that. (Qt still
-        # shows a disabled widget's tooltip, so the reason stays readable on hover.)
-        self.complementary_button = QPushButton("Complementary files")
-        self.complementary_button.setEnabled(False)
-        self.complementary_button.clicked.connect(self.load_complementary_files)
-
-        file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.load_button)
-        file_section_layout.addWidget(self.save_button)
-        file_section_layout.addWidget(self.complementary_button)
-        file_section_layout.addStretch(1)
-        self._update_tooltips()
+        # Files, driven by the shared header toolbar. mmag.bin is the edited file; the five
+        # complementary files (mngrp/kernel/mwepon/icon.sp1/mitem) only decorate its entries and
+        # are read-only here - each is edited in another tool (Shiva/SolomonRing/Junkshop/Minimog/
+        # Kadowaki) and shared in every direction through the registry.
+        self.mmag_binding = FileBinding(MAIN_FILE, file_registry,
+                                        load_callback=self.load_file, save_callback=self.save_file)
+        self.companion_bindings = {
+            "mngrp.bin": FileBinding("mngrp.bin", file_registry, load_callback=self._apply_mngrp,
+                                     read_only=True),
+            "kernel.bin": FileBinding("kernel.bin", file_registry, load_callback=self._apply_kernel,
+                                      read_only=True),
+            "mwepon.bin": FileBinding("mwepon.bin", file_registry, load_callback=self._apply_mwepon,
+                                      read_only=True),
+            "icon.sp1": FileBinding("icon.sp1", file_registry, load_callback=self._apply_icons,
+                                    read_only=True),
+            "mitem.bin": FileBinding("mitem.bin", file_registry, load_callback=self._apply_mitem,
+                                     read_only=True),
+        }
 
         # Entry list (left)
         self.entry_list = QListWidget()
@@ -114,11 +104,20 @@ class ZoneWidget(QWidget):
         self.editor_container.setEnabled(False)
 
         main_layout = QVBoxLayout()
-        main_layout.addLayout(file_section_layout)
         main_layout.addWidget(self.editor_container)
         self.setLayout(main_layout)
 
         self._connect_live_preview()
+        # Pick up anything another tool already opened: mmag.bin, or any of the shared companions
+        # (e.g. mngrp.bin from Shiva, kernel.bin from SolomonRing).
+        self.mmag_binding.load_opened_file()
+        for binding in self.companion_bindings.values():
+            binding.load_opened_file()
+
+    def file_bindings(self):
+        """The files the shared header toolbar drives for this tab: mmag.bin (edited) and the
+        five read-only complementary files it renders from."""
+        return [self.mmag_binding, *self.companion_bindings.values()]
 
     def _build_preview_group(self):
         self.preview_label = QLabel()
@@ -366,117 +365,72 @@ class ZoneWidget(QWidget):
             spins.append((x_spin, y_spin, id_spin, preview))
         return spins
 
-    def load_file(self):
-        """Open mmag.bin, the file this editor edits."""
-        file_name = self.file_dialog.getOpenFileName(
-            parent=self, caption=f"Open {MAIN_FILE}", filter=MAIN_FILTER,
-            directory=os.getcwd())[0]
-        if not file_name:
-            return
+    def load_file(self, file_name):
+        """Load mmag.bin, the file this editor edits (path from the shared file toolbar)."""
         try:
             self._load_mmag(file_name)
         except (OSError, ValueError) as e:
             QMessageBox.critical(self, "Error", f"Could not load {os.path.basename(file_name)}:\n{e}")
             return
-        self._update_tooltips()
         self._refresh_preview()
-
-    def load_complementary_files(self):
-        """Open any number of the complementary files at once.
-
-        The dialog is filtered to their exact names, so it doubles as the list of
-        what Zone can use, and it can be reopened to add the ones left out. They
-        are loaded in the order they were picked - it makes no difference."""
-        if not self.manager.entries:  # The button is disabled until then anyway
-            return
-        file_names = self.file_dialog.getOpenFileNames(
-            parent=self, caption="Open the complementary files (several at once is fine)",
-            filter=COMPLEMENTARY_FILTER, directory=os.getcwd())[0]
-        if not file_names:
-            return
-
-        problems = []
-        for file_name in file_names:
-            name = os.path.basename(file_name).lower()
-            if name not in COMPLEMENTARY_FILES:
-                problems.append(f"Not a file Zone uses: {os.path.basename(file_name)}")
-                continue
-            try:
-                getattr(self, COMPLEMENTARY_FILES[name][0])(file_name)
-            except (OSError, ValueError) as e:
-                problems.append(f"Could not load {name}: {e}")
-
-        self._update_tooltips()
-        self._refresh_preview()
-        if problems:
-            QMessageBox.warning(self, "Some files were not loaded", "\n\n".join(problems))
 
     def _load_mmag(self, file_name):
         self.manager.load_file(file_name)
         self.editor_container.setEnabled(True)
-        self.complementary_button.setEnabled(True)
         self.current_entry_index = -1
         self.entry_list.clear()
         for index in range(len(self.manager.entries)):
             self.entry_list.addItem(f"{index}: {self.manager.entry_name(index)}")
         self.entry_list.setCurrentRow(0)
+        self._autoload_complementary(file_name)
 
-    def _load_mngrp(self, file_name):
-        self.manager.load_mngrp(file_name)
-        # sysfnt.TEX/sysfnt.tdw sit in the same menu folder as mngrp.bin
+    def _autoload_complementary(self, main_path):
+        """Share each complementary file that sits next to the opened mmag.bin, so a page renders
+        straight away and the tool that edits each one picks it up too. One another tool already
+        shared is kept (single source of truth)."""
+        folder = os.path.dirname(main_path)
+        for name, binding in self.companion_bindings.items():
+            if binding.current_path:  # keep whatever another tool already shared
+                continue
+            candidate = os.path.join(folder, name)
+            if os.path.exists(candidate):
+                binding.open_path(candidate)  # publish -> load here and in the tool that edits it
+
+    def _apply_mngrp(self, file_name):
+        """Load a shared mngrp.bin (the read-only binding's callback).
+
+        sysfnt.TEX/sysfnt.tdw sit in the same menu folder as mngrp.bin."""
+        try:
+            self.manager.load_mngrp(file_name)
+        except (OSError, ValueError) as e:
+            QMessageBox.warning(self, "Could not load mngrp.bin", str(e))
+            return
         self.renderer = PageRenderer(self.manager, menu_folder=os.path.dirname(file_name),
                                      button_icon_style=self.button_icon_combo.currentData())
         self._update_resolved_labels()
+        self._refresh_preview()
 
-    def _load_kernel(self, file_name):
-        self.manager.load_kernel(file_name)
+    def _apply_kernel(self, file_name):
+        self._apply_companion(self.manager.load_kernel, "kernel.bin", file_name)
 
-    def _load_mwepon(self, file_name):
-        self.manager.load_mwepon(file_name)
+    def _apply_mwepon(self, file_name):
+        self._apply_companion(self.manager.load_mwepon, "mwepon.bin", file_name)
 
-    def _load_icons(self, file_name):
-        self.manager.load_icons(file_name)
+    def _apply_icons(self, file_name):
+        self._apply_companion(self.manager.load_icons, "icon.sp1", file_name)
 
-    def _load_mitem(self, file_name):
-        self.manager.load_mitem(file_name)
+    def _apply_mitem(self, file_name):
+        self._apply_companion(self.manager.load_mitem, "mitem.bin", file_name)
 
-    def _complementary_loaded(self):
-        return {
-            "mngrp.bin": self.manager.mngrp_loaded,
-            "kernel.bin": self.manager.kernel_loaded,
-            "mwepon.bin": self.manager.mwepon_loaded,
-            "icon.sp1": self.manager.icons_loaded,
-            "mitem.bin": self.manager.mitem_loaded,
-        }
-
-    def _update_tooltips(self):
-        """Hovering either button says what it opens and what is already loaded."""
-        opened = f"<br><br>Currently open: <b>{os.path.basename(self.manager.file_path)}</b>" \
-            if self.manager.file_path else "<br><br>Nothing open yet."
-        self.load_button.setToolTip(
-            f"<b>Open {MAIN_FILE}</b> — the magazine page entries this editor edits.<br><br>"
-            "One entry is one page view: its window, its paper mat, the art and text laid over "
-            "it, and what reading it unlocks. Everything else a page needs lives in other files "
-            "— see <b>Complementary files</b>." + opened)
-
-        loaded = self._complementary_loaded()
-        missing = [name for name, is_loaded in loaded.items() if not is_loaded]
-        lines = [f"<b>Open the complementary files</b> — the page art, text and icons "
-                 f"{MAIN_FILE} only points at.<br><br>"]
-        if not self.manager.entries:
-            lines.append(f"<i>Greyed out until {MAIN_FILE} is open</i>: these only decorate its "
-                         f"page entries, so there is nothing for them to fill in yet.<br><br>")
-        lines.append("<b>Pick as many as you like at once</b>, in any order, and come back to "
-                     "this button any time to add the rest: each one only fills in its own part "
-                     "of the preview.<br>")
-        for name, (_method, what) in COMPLEMENTARY_FILES.items():
-            mark = "✔" if loaded[name] else "–"
-            lines.append(f"{mark} <b>{name}</b> — {what}<br>")
-        lines.append("<br>mngrphd.bin, sysfnt.TEX and sysfnt.tdw are read from the folder "
-                     "mngrp.bin is in; icon.TEX from icon.sp1's.")
-        if missing:
-            lines.append(f"<br><br>Still missing: <b>{', '.join(missing)}</b>.")
-        self.complementary_button.setToolTip("".join(lines))
+    def _apply_companion(self, loader, label, file_name):
+        """Load one non-mngrp complementary file and redraw (each read-only binding's callback)."""
+        try:
+            loader(file_name)
+        except (OSError, ValueError) as e:
+            QMessageBox.warning(self, f"Could not load {label}", str(e))
+            return
+        self._update_resolved_labels()
+        self._refresh_preview()
 
     def save_file(self):
         if not self.manager.file_path:

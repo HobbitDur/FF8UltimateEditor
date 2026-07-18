@@ -130,10 +130,10 @@ def test_string_section_decoding_is_positional(game_data):
 
     texts = SectionString(game_data=game_data, data_hex=bytearray(section)).get_text_by_slot()
     assert texts == ["AB", "", "C"]  # The empty slot keeps its place, so text id 2 stays text id 2
-    manager.mngrp_text_list = texts
-    assert manager.get_overlay_text(0) == "AB"
-    assert manager.get_overlay_text(2) == "C"
-    assert manager.get_overlay_text(OverlaySlot.UNUSED_ID) == ""
+    manager._raw90_texts = texts
+    assert manager.overlay_text_by_id(0) == "AB"
+    assert manager.overlay_text_by_id(2) == "C"
+    assert manager.overlay_text_by_id(OverlaySlot.UNUSED_ID) == ""
 
 
 def test_entry_names_only_apply_to_a_12_entry_file(game_data, tmp_path):

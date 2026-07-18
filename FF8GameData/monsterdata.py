@@ -15,6 +15,18 @@ class EntityType(Enum):
     # A character having no weapon file (Edea, d7c016): the sections a weapon usually
     # carries for the pair (animation sequences, sounds) are inside the body file.
     CHARACTER_NO_WEAPON = 5
+    # A "monster" with no visual model at all - just info_stat + AI, 3 header sections
+    # (header + 2 real sections). Only known instance: c0m127.dat, com_id 127 =
+    # "Ultimecia (No Model, has Apocalypse)" - an invisible, untargetable trigger entity
+    # used purely to cast the Apocalypse attack in the final battle. Confirmed by decoding
+    # section 1 as a normal info_stat block (monster_name = "Ultimecia", same 380-byte size
+    # as every other monster's section 7) and section 2 as a normal AI/battle_script block
+    # (decompiles to coherent code: untargetable() on init, untargetable();vanish() on
+    # death) - both via the existing, unmodified info_stat/AI parsers. The exact EXE loader
+    # for this specific case hasn't been pinned down in IDA (battle_monster_dat_loader
+    # handles the standard 11-section layout only); the section contents themselves are
+    # unambiguous regardless of which loader function reads them.
+    MONSTER_NO_MODEL = 6
 # Section 1
 class BoneSection:
     SECTION_BONE_HEADER_NB = {'offset': 0x00, 'size': 1, 'byteorder': 'little', 'name': 'nb_bone', 'pretty_name': 'Number bones', 'default_value': 0}

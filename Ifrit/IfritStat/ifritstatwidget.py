@@ -13,7 +13,7 @@ from PyQt6.QtCore import Qt, QEvent, QPointF
 from PyQt6.QtGui import QPainter, QPen, QColor, QFont, QPolygonF
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QLabel,
-    QLineEdit, QSpinBox, QComboBox, QCheckBox, QGroupBox,
+    QSpinBox, QComboBox, QCheckBox, QGroupBox,
     QTabWidget, QScrollArea, QPlainTextEdit, QSizePolicy, QToolButton,
 )
 
@@ -155,7 +155,6 @@ class IfritStatWidget(QWidget):
         self._loading = False        # guard so populating widgets doesn't write back
 
         # Widget references, filled while building
-        self._name_edit = None
         self._stat_spins = {}        # stat_name -> [4 QSpinBox]
         self._stat_plot = None       # StatCurvePlot
         self._formula_popup = None   # IfritFormulaPopup, created lazily, reused per stat
@@ -266,16 +265,6 @@ class IfritStatWidget(QWidget):
     def _build_stats_tab(self) -> QWidget:
         container = QWidget()
         layout = QVBoxLayout(container)
-
-        # Name
-        name_group = QGroupBox("Monster name")
-        name_layout = QHBoxLayout(name_group)
-        self._name_edit = QLineEdit()
-        self._name_edit.setMaxLength(24)
-        self._name_edit.setToolTip("Monster name, max 24 bytes in the FF8 text encoding.")
-        self._name_edit.textEdited.connect(self._on_name_edited)
-        name_layout.addWidget(self._name_edit)
-        layout.addWidget(name_group)
 
         # Base stats (each is 4 raw bytes) + live plot of the resulting values.
         stat_group = QGroupBox("Base stats (4 raw bytes each, feed the per-level formula)")
@@ -710,10 +699,6 @@ class IfritStatWidget(QWidget):
         data = self._data
         self._loading = True
         try:
-            # Name
-            name = data.get('monster_name')
-            self._name_edit.setText(name.get_str() if name is not None else "")
-
             # Stats
             for stat_name, spins in self._stat_spins.items():
                 values = data.get(stat_name, [])
@@ -816,11 +801,6 @@ class IfritStatWidget(QWidget):
         return raw * 100 / 255
 
     # ── Write-back handlers ──────────────────────────────────────────────
-
-    def _on_name_edited(self, text):
-        if self._loading or self._data is None:
-            return
-        self._data['monster_name'].set_str(text)
 
     def _on_stat_changed(self, stat_name, index, value):
         if self._loading or self._data is None:

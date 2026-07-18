@@ -1,10 +1,10 @@
 import json
 import os
 
-from PyQt6.QtCore import QSize, QSignalBlocker
+from PyQt6.QtCore import QSignalBlocker
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
-    QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QListWidget,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QSpinBox, QLineEdit, QGroupBox, QFormLayout, QTabWidget, QCheckBox, QGridLayout,
     QScrollArea, QComboBox, QTableWidget, QHeaderView, QAbstractSpinBox, QSizePolicy,
 )
@@ -14,10 +14,12 @@ RESERVED_TOOLTIP = ("Read-only: this byte has no meaning in the game (confirmed 
                     "no code reads it). It is shown for completeness and preserved on save, but "
                     "editing it would have no effect.")
 
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
-    QuezacotlManager, CHARACTER_NAMES, ACTIVE_ABILITY_RANGE, PASSIVE_ABILITY_RANGE,
+    QuezacotlManager, ACTIVE_ABILITY_RANGE, PASSIVE_ABILITY_RANGE,
     GF_COMPATIBILITY_MIN, GF_COMPATIBILITY_MAX,
 )
 
@@ -41,8 +43,11 @@ class QuezacotlWidget(QWidget):
     pulled from the shared FF8GameData json (magic, item, gforce, kernel_lookups) so they
     stay in sync with the rest of the suite."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
+
+        if file_registry is None:  # The tool is used alone, it shares its files with nobody
+            file_registry = FileRegistry()
 
         self.game_data = GameData(game_data_folder)
         self.manager = QuezacotlManager(self.game_data)
@@ -104,15 +109,12 @@ class QuezacotlWidget(QWidget):
         self.setWindowTitle("Quezacotl")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'Quezacotl.ico')))
 
-        self.file_dialog = QFileDialog()
-        self.load_button = self._icon_btn('folder.png', "Open an init.out file", self.load_file)
-        self.save_button = self._icon_btn('save.svg', "Save all modifications in the opened init.out (irreversible)", self.save_file)
-        self.save_button.setEnabled(False)
+        # init.out, this tool's one editable file, driven by the shared header toolbar.
+        self.init_binding = FileBinding("init.out", file_registry,
+                                        load_callback=self.load_file, save_callback=self.save_file)
         self.file_label = QLabel("No file loaded")
 
         file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.load_button)
-        file_section_layout.addWidget(self.save_button)
         file_section_layout.addWidget(self.file_label)
         file_section_layout.addStretch(1)
 
@@ -134,16 +136,13 @@ class QuezacotlWidget(QWidget):
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
 
-    # ── Small widget helpers ─────────────────────────────────────────────
+        self.init_binding.load_opened_file()  # Another tool may have opened init.out already
 
-    def _icon_btn(self, name, tip, slot):
-        btn = QPushButton()
-        btn.setIcon(QIcon(os.path.join(self.icon_path, name)))
-        btn.setIconSize(QSize(30, 30))
-        btn.setFixedSize(40, 40)
-        btn.setToolTip(tip)
-        btn.clicked.connect(slot)
-        return btn
+    def file_bindings(self):
+        """The files the shared header toolbar drives for this tool (just init.out)."""
+        return [self.init_binding]
+
+    # ── Small widget helpers ─────────────────────────────────────────────
 
     @staticmethod
     def _compact_spin(spin):
@@ -270,15 +269,10 @@ class QuezacotlWidget(QWidget):
 
     # ── File operations ────────────────────────────────────────────────
 
-    def load_file(self):
-        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Open init.out file",
-                                                     filter="*.out", directory=os.getcwd())[0]
-        if not file_name:
-            return
+    def load_file(self, file_name):
         self.manager.load_file(file_name)
         self.file_label.setText(os.path.basename(file_name))
         self.tabs.setEnabled(True)
-        self.save_button.setEnabled(True)
 
         with QSignalBlocker(self.gf_list):
             self.gf_list.clear()

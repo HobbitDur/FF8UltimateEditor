@@ -125,6 +125,41 @@ def test_seq_bytecode_round_trip(tmp_path):
     assert manager.poses[0].get_seq_bytecode() == bytes.fromhex("01a9e6ff")
 
 
+@pytest.mark.ff8data(R0WIN_MARK)
+def test_real_camera_parsed_and_byte_exact():
+    manager = WattsManager()
+    manager.load_file(str(R0WIN))
+    camera = manager.camera_summary()
+    assert camera["collection_parsed"] is True
+    assert camera["setting_size"] == 88
+    assert camera["nb_set"] == 3
+    assert all(len(cam_set["slots"]) == 8 for cam_set in camera["sets"])
+    # The split-and-rebuild of the camera blob is byte-identical
+    assert manager.camera_bytes() == R0WIN.read_bytes()[
+        _camera_section_bounds(R0WIN.read_bytes())]
+
+
+def _camera_section_bounds(data):
+    section2_start = struct.unpack_from("<I", data, 8)[0]
+    section3_start = struct.unpack_from("<I", data, 12)[0]
+    return slice(section2_start, section3_start)
+
+
+@pytest.mark.ff8data(R0WIN_MARK)
+def test_real_camera_keyframe_edit_single_field(tmp_path):
+    original = R0WIN.read_bytes()
+    manager = WattsManager()
+    manager.load_file(str(R0WIN))
+    frame = manager.camera_collection.sets[0].animations[0].blocks[0].frames[0]
+    duration = dict(frame.fields())["Duration"]
+    old_value = duration.get()
+    duration.set(old_value + 1)
+    changed = manager.to_bytes()
+    assert changed != original
+    duration.set(old_value)
+    assert manager.to_bytes() == original  # restoring the field is byte-exact
+
+
 # --------------------------------------------------------------------- real file
 @pytest.mark.ff8data(R0WIN_MARK)
 def test_real_byte_exact_round_trip(tmp_path):

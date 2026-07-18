@@ -13,11 +13,30 @@ class SectionData(Section):
         self._subsection_nb_text_offset = subsection_nb_text_offset
         self.section_text_linked = section_text_linked
         self._subsection_list = []
+        self._subsection_size = None
 
     def init_subsection(self, subsection_sized: int, nb_subsection: int):
+        self._subsection_size = subsection_sized
         for i in range(nb_subsection):
             self.add_subsection(self._data_hex[i * subsection_sized: (i + 1) * subsection_sized])
         self.update_data_hex()
+
+    def append_blank_subsection(self):
+        """Grow the section by one all-zero subsection (used by a "growable" section's
+        Add-entry UI). Returns the new SubSectionData.
+
+        Rebuilds ``_data_hex`` directly rather than via ``update_data_hex()`` - that
+        method's rebuild is guarded to skip any length mismatch (so a bad load never
+        silently drops trailing bytes), which would also block this deliberate growth."""
+        blank = bytearray(self._subsection_size)
+        self.add_subsection(blank)
+        rebuilt = bytearray()
+        for subsection in self._subsection_list:
+            subsection.update_data_hex()
+            rebuilt.extend(subsection.get_data_hex())
+        self._data_hex = rebuilt
+        self._size = len(self._data_hex)
+        return self._subsection_list[-1]
 
     def add_subsection(self, data_hex: bytearray):
         if self._subsection_list:

@@ -1,10 +1,11 @@
 import os
 
-from PyQt6.QtCore import Qt, QSignalBlocker, QSize
+from PyQt6.QtCore import Qt, QSignalBlocker
 from PyQt6.QtGui import QIcon, QPixmap
-from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QCheckBox, QLabel, QFrame, QComboBox, QHBoxLayout, \
-    QFileDialog, QLayout
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QCheckBox, QLabel, QFrame, QComboBox, QHBoxLayout
 
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from TonberryShop.tonberrymanager import TonberryManager, Shop
 
 
@@ -15,9 +16,11 @@ class TonberryShop(QWidget):
                   "shop-winhill-laguna.png", "", "", "shop-man-from-garden", "shops-esthar.png", "shops-esthar.png",
                   "shops-esthar.png"]
 
-    def __init__(self, resource_folder='Resources'):
+    def __init__(self, resource_folder='Resources', file_registry=None):
 
         QWidget.__init__(self)
+        if file_registry is None:  # The tool is used alone, it shares its files with nobody
+            file_registry = FileRegistry()
         self._resource_folder = resource_folder
         self.tonberry_manager = TonberryManager(resource_folder)
         self.file_path = ""
@@ -30,18 +33,9 @@ class TonberryShop(QWidget):
         self.layout_item = QHBoxLayout()
         self.layout_main = QVBoxLayout()
 
-        self.file_dialog = QFileDialog()
-        self.file_dialog_button = QPushButton()
-        self.file_dialog_button.setIcon(QIcon(os.path.join(resource_folder, 'folder.png')))
-        self.file_dialog_button.setIconSize(QSize(30, 30))
-        self.file_dialog_button.setFixedSize(40, 40)
-        self.file_dialog_button.clicked.connect(self.load_file)
-
-        self.save_button = QPushButton()
-        self.save_button.setIcon(QIcon(os.path.join(resource_folder, 'save.svg')))
-        self.save_button.setIconSize(QSize(30, 30))
-        self.save_button.setFixedSize(40, 40)
-        self.save_button.clicked.connect(self.save_file)
+        # shop.bin, this tool's one editable file, driven by the shared header toolbar.
+        self.shop_binding = FileBinding("shop.bin", file_registry,
+                                        load_callback=self.load_file, save_callback=self.save_file)
 
         self.shop_list = QComboBox()
         self.shop_list.addItems(self.tonberry_manager.SHOP_NAME_LIST)
@@ -81,8 +75,6 @@ class TonberryShop(QWidget):
         self.image_location_layout.addStretch(1)
 
 
-        self.layout_top.addWidget(self.file_dialog_button)
-        self.layout_top.addWidget(self.save_button)
         self.layout_top.addWidget(self.shop_list)
         self.layout_top.addStretch(1)
 
@@ -94,14 +86,17 @@ class TonberryShop(QWidget):
         self.setLayout(self.layout_main)
         #self.show()
 
-    def load_file(self):
-        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search shop.bin file", filter="*.bin",
-                                                     directory=os.getcwd())[0]
-        if file_name:
-            self.file_path = file_name
-            self.tonberry_manager.read_shop_file(file_name)
-            self.tonberry_manager.analyze_shop_file()
-            self.reload_item()
+        self.shop_binding.load_opened_file()  # Another tool may have opened shop.bin already
+
+    def file_bindings(self):
+        """The files the shared header toolbar drives for this tool (just shop.bin)."""
+        return [self.shop_binding]
+
+    def load_file(self, file_name):
+        self.file_path = file_name
+        self.tonberry_manager.read_shop_file(file_name)
+        self.tonberry_manager.analyze_shop_file()
+        self.reload_item()
 
     def save_file(self):
         if self.file_path:

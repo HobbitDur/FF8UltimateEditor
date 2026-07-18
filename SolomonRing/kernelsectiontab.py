@@ -43,7 +43,8 @@ class KernelSectionTab(QWidget):
       * ``fields``       : list of field defs (see ``kernel_bin_data.json`` -> ``section_fields``)
     """
 
-    def __init__(self, game_data, registry, config, game_data_folder="FF8GameData", jump_callback=None):
+    def __init__(self, game_data, registry, config, game_data_folder="FF8GameData", jump_callback=None,
+                 add_entry_callback=None):
         super().__init__()
         self.game_data = game_data
         self.registry = registry
@@ -56,6 +57,9 @@ class KernelSectionTab(QWidget):
         # used by fields whose value only makes sense alongside another section's data
         # (e.g. the Slot array's set-id references the Selphie limit-break sets tab).
         self._jump_callback = jump_callback
+        # Optional callable() -> append a new blank entry to a "growable" section (today,
+        # only Magic) and refresh this tab in place; shown as an "Add" button under the list.
+        self._add_entry_callback = add_entry_callback
         # Menu abilities' Refine data lives entirely outside kernel.bin (menu.fs's mngrp
         # files) - loaded on demand via a button, not part of the normal file-load flow.
         self._menu_refine_ref = None
@@ -64,6 +68,7 @@ class KernelSectionTab(QWidget):
         self._formula_popup = None       # single live formula preview window for this tab
 
         self._entries = []
+        self._visible_indices = []       # list_widget row -> self._entries index (hides reserved ids)
         self._current_index = -1
         self._text_widgets = []          # list of QLineEdit, one per text offset
         self._field_widgets = {}         # field name -> widget descriptor
@@ -75,7 +80,18 @@ class KernelSectionTab(QWidget):
         self.list_widget.setFixedWidth(180)
         self.list_widget.setStyleSheet("font-size: 11pt;")
         self.list_widget.currentRowChanged.connect(self._on_row_changed)
-        layout.addWidget(self.list_widget)
+        list_col = QVBoxLayout()
+        list_col.setContentsMargins(0, 0, 0, 0)
+        list_col.addWidget(self.list_widget)
+        if self.config.get("growable") and self._add_entry_callback:
+            add_btn = QPushButton("+ Add entry")
+            add_btn.setToolTip(
+                "Append a new blank entry at the end of this section (kernel.bin grows to fit - "
+                "not something the original game supports without a loader patch like FFNx's "
+                "kernel-relocation hook. Fill in the name/description/fields, then save as usual.")
+            add_btn.clicked.connect(self._add_entry_callback)
+            list_col.addWidget(add_btn)
+        layout.addLayout(list_col)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -597,7 +613,18 @@ class KernelSectionTab(QWidget):
 
     # ---------------------------------------------------------------- load/save
     def load_section(self, section, text_section):
-        """Bind this tab to a freshly loaded section + its linked text section."""
+        """Bind this tab to a freshly loaded section + its linked text section.
+
+        Preserves the current selection (by ENTRY index, not row - robust to the
+        visible list's shape changing around a hidden id range) and the list's scroll
+        position across a reload, so re-opening the same file - e.g. via the Reload
+        button after an external tool changed it - doesn't jump the user back to
+        entry 0. A genuinely different file (different entry count/order) just falls
+        back to entry 0 as before, since there's nothing meaningful to restore."""
+        prev_entry_index = (self._visible_indices[self._current_index]
+                            if 0 <= self._current_index < len(self._visible_indices) else None)
+        prev_scroll = self.list_widget.verticalScrollBar().value()
+
         self._current_index = -1
         self._entries = []
         nb_text = len(self.text_labels)
@@ -606,17 +633,39 @@ class KernelSectionTab(QWidget):
             self._entries.append(
                 KernelEntry(subsection, text_section, nb_text, i, self.fields, self.game_data))
 
+        # A "hidden" id range (today: Magic ids 64-79, permanently reserved for GFs by the
+        # exe's own id<64/id>=64 classification - real magic data can never live there, per
+        # kernel_bin_data.json's gf_reserved_start/count) is excluded from the visible list
+        # entirely rather than just labelled, since editing it would always be pointless.
+        # The hidden entries still exist in self._entries (needed for correct byte layout
+        # on save) - self._visible_indices maps "list_widget row" -> "self._entries index"
+        # for every entry that ISN'T in that block.
+        hidden_start = self.config.get("hidden_id_start")
+        hidden_count = self.config.get("hidden_id_count") or 0
+        hidden_end = hidden_start + hidden_count if hidden_start is not None else None
+        self._visible_indices = [
+            i for i in range(len(self._entries))
+            if hidden_start is None or not (hidden_start <= i < hidden_end)
+        ]
+
         self.list_widget.blockSignals(True)
         self.list_widget.clear()
-        for i, entry in enumerate(self._entries):
-            self.list_widget.addItem(self._entry_label(i, entry))
+        for entry_index in self._visible_indices:
+            self.list_widget.addItem(self._entry_label(entry_index, self._entries[entry_index]))
         self.list_widget.blockSignals(False)
 
         self.setEnabled(True)
-        if self._entries:
-            self.list_widget.setCurrentRow(0)
-            self._load_entry(0)
-            self._current_index = 0
+        if self._visible_indices:
+            if prev_entry_index in self._visible_indices:
+                target_row = self._visible_indices.index(prev_entry_index)
+            elif prev_entry_index is not None:
+                target_row = min(prev_entry_index, len(self._visible_indices) - 1)
+            else:
+                target_row = 0
+            self.list_widget.setCurrentRow(target_row)
+            self._load_entry(target_row)
+            self._current_index = target_row
+            self.list_widget.verticalScrollBar().setValue(prev_scroll)
 
     def _entry_label(self, index, entry):
         text_name = entry.get_text(0).strip() if (self.text_labels and entry.has_text(0)) else ""
@@ -631,16 +680,16 @@ class KernelSectionTab(QWidget):
             return f"{index}: {static}"
         return f"#{index}"
 
-    def _on_row_changed(self, index):
-        if index < 0 or index >= len(self._entries):
+    def _on_row_changed(self, row):
+        if row < 0 or row >= len(self._visible_indices):
             return
         if self._current_index >= 0:
             self._save_entry(self._current_index)
-        self._load_entry(index)
-        self._current_index = index
+        self._load_entry(row)
+        self._current_index = row
 
-    def _load_entry(self, index):
-        entry = self._entries[index]
+    def _load_entry(self, row):
+        entry = self._entries[self._visible_indices[row]]
         for i, edit in enumerate(self._text_widgets):
             edit.blockSignals(True)
             edit.setEnabled(entry.has_text(i))
@@ -686,7 +735,7 @@ class KernelSectionTab(QWidget):
             QMessageBox.warning(self, "Refine reference", f"Failed to read those files:\n{exc}")
             return
         if self._current_index >= 0:
-            self._refresh_menu_refine_display(self._entries[self._current_index])
+            self._refresh_menu_refine_display(self._entries[self._visible_indices[self._current_index]])
 
     def _refresh_menu_refine_display(self, entry):
         if self._menu_refine_label is None:
@@ -701,8 +750,9 @@ class KernelSectionTab(QWidget):
             _names("item"), _names("magic"), _names("card"))
         self._menu_refine_label.setText("\n".join(lines))
 
-    def _save_entry(self, index):
-        entry = self._entries[index]
+    def _save_entry(self, row):
+        entry_index = self._visible_indices[row]
+        entry = self._entries[entry_index]
         for i, edit in enumerate(self._text_widgets):
             if entry.has_text(i):
                 entry.set_text(i, edit.text())
@@ -733,7 +783,7 @@ class KernelSectionTab(QWidget):
                     entry.set(name, (0x80 if widget._cam_force.isChecked() else 0)
                               | (widget._cam_index.value() & 0x7F))
         # Refresh the list label in case the name changed.
-        self.list_widget.item(index).setText(self._entry_label(index, entry))
+        self.list_widget.item(row).setText(self._entry_label(entry_index, entry))
 
     def commit(self):
         """Flush the currently selected entry back to the underlying data."""

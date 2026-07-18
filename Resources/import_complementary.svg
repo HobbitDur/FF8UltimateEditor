@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"
+     stroke="#0d3a66" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
+  <!-- several complementary files: a stack. The back sheet is tinted so the "extra"
+       files read at a glance, offset up-left behind the front one. -->
+  <path d="M11 8 H23 L29 14 V37 a2 2 0 0 1 -2 2 H11 a2 2 0 0 1 -2 -2 V10 a2 2 0 0 1 2 -2 Z"
+        fill="#bcd7f2"/>
+  <!-- the front file: one page with a folded corner -->
+  <path d="M18 13 H31 L37 19 V42 a2 2 0 0 1 -2 2 H18 a2 2 0 0 1 -2 -2 V15 a2 2 0 0 1 2 -2 Z"
+        fill="#ffffff"/>
+  <path d="M31 13 L37 19 H31 Z" fill="#f6c078"/>
+  <g stroke-width="2">
+    <line x1="22" y1="28" x2="33" y2="28"/>
+    <line x1="22" y1="34" x2="33" y2="34"/>
+    <line x1="22" y1="40" x2="29" y2="40"/>
+  </g>
+</svg>

@@ -177,10 +177,15 @@ class FormulaPopup(QDialog):
         self._recompute()
 
     def _current_entry(self):
-        idx = getattr(self._tab, "_current_index", -1)
+        row = getattr(self._tab, "_current_index", -1)
+        visible = getattr(self._tab, "_visible_indices", None)
         entries = getattr(self._tab, "_entries", [])
-        if 0 <= idx < len(entries):
-            return entries[idx]
+        if visible is not None:
+            if 0 <= row < len(visible):
+                return entries[visible[row]]
+            return None
+        if 0 <= row < len(entries):
+            return entries[row]
         return None
 
     def _field_spin(self):

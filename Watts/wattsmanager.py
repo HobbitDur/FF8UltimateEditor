@@ -26,6 +26,7 @@ import os
 import struct
 
 from FF8GameData.monsterdata import AnimationSection, BoneSection
+from FF8GameData.dat.cameracollection import parse_camera_collection, CameraParseError
 
 _UINT = struct.Struct("<I")
 
@@ -163,7 +164,12 @@ class WattsManager:
         self.file_path = ""
         self.fanfare_bank = b""
         self.fanfare_sequence = b""
-        self.camera = b""
+        # Section 2 is a full battle camera blob: an 8-byte header, then the camera
+        # setting (the camera-VM byte-code, kept raw), then the camera animation
+        # collection (the keyframed motions, parsed into an editable model).
+        self.camera_setting = b""            # the camera-sequence byte-code (raw)
+        self.camera_collection = None        # CameraCollection over the collection half
+        self._camera_collection_raw = b""    # kept when the collection does not parse
         self.poses = []  # List[R0winPose], in section order 3..8
 
     # ------------------------------------------------------------------ loading
@@ -188,14 +194,55 @@ class WattsManager:
         if len(fanfare_blocks) != 2:
             raise ValueError(f"Fanfare section has {len(fanfare_blocks)} blocks, expected 2")
         self.fanfare_bank, self.fanfare_sequence = fanfare_blocks
-        self.camera = bytes(sections[1])
+        self._set_camera(bytes(sections[1]))
         self.poses = [R0winPose(character, _parse_offset_table(sections[character.section_id - 1]))
                       for character in R0WIN_CHARACTERS]
+
+    # ------------------------------------------------------------------- camera
+    def _set_camera(self, blob: bytes):
+        """Split a full battle camera blob into its setting (raw byte-code) and its
+        animation collection (parsed into an editable model, or kept raw if it does not
+        read as a collection)."""
+        if len(blob) < 8:
+            raise ValueError("Camera blob too short")
+        pointer_count, rel_setting, rel_collection, _size = struct.unpack_from("<4H", blob, 0)
+        if pointer_count != 2 or rel_setting != 8 or rel_collection > len(blob):
+            raise ValueError("Not a battle camera blob (bad header)")
+        self.camera_setting = bytes(blob[rel_setting:rel_collection])
+        collection_bytes = bytes(blob[rel_collection:])
+        try:
+            self.camera_collection = parse_camera_collection(collection_bytes)
+            self._camera_collection_raw = b""
+        except CameraParseError:
+            self.camera_collection = None
+            self._camera_collection_raw = collection_bytes
+
+    def _camera_collection_bytes(self) -> bytes:
+        if self.camera_collection is not None:
+            return bytes(self.camera_collection.get_bytes())
+        return self._camera_collection_raw
+
+    def camera_bytes(self) -> bytes:
+        """Rebuild the full camera blob from the setting + (possibly edited) collection.
+        Byte-identical to the original when nothing was changed."""
+        collection = self._camera_collection_bytes()
+        rel_collection = 8 + len(self.camera_setting)
+        total = rel_collection + len(collection)
+        header = struct.pack("<4H", 2, 8, rel_collection, total)
+        return header + self.camera_setting + collection
+
+    @property
+    def camera(self) -> bytes:
+        return self.camera_bytes()
+
+    @camera.setter
+    def camera(self, blob: bytes):
+        self._set_camera(bytes(blob))
 
     # ------------------------------------------------------------------- saving
     def to_bytes(self) -> bytes:
         sections = [_build_offset_table([self.fanfare_bank, self.fanfare_sequence]),
-                    _pad4(self.camera)]
+                    _pad4(self.camera_bytes())]
         sections.extend(_build_offset_table(pose.blocks()) for pose in self.poses)
         header_size = 4 + 8 * 4 + 4
         data = bytearray(_UINT.pack(8))
@@ -279,9 +326,12 @@ class WattsManager:
     def _validate_camera(data: bytes):
         if len(data) < 8:
             raise ValueError("Camera blob too short")
-        pointer_count, rel_setting, rel_collection, size = struct.unpack_from("<4H", data, 0)
+        pointer_count, rel_setting, rel_collection, _size = struct.unpack_from("<4H", data, 0)
         if pointer_count != 2 or rel_setting != 8 or rel_collection > len(data):
-            raise ValueError("Not a BattleStageCameraData blob (bad header)")
+            raise ValueError("Not a battle camera blob (bad header)")
+        # Return the blob unchanged so import uses it verbatim (padding it would corrupt
+        # the collection's trailing eof word).
+        return bytes(data)
 
     @staticmethod
     def _validate_seq_block(data: bytes):
@@ -378,19 +428,37 @@ class WattsManager:
         sequence[4] = akao_id
         self.fanfare_sequence = bytes(sequence)
 
+    # ------------------------------------------------------------------ camera info
+    def camera_summary(self) -> dict:
+        """Structure of the Section 2 camera: the setting (VM) size and, per set, the
+        keyframe count of each of its 8 animation slots."""
+        collection = self.camera_collection
+        sets = []
+        if collection is not None:
+            for camera_set in collection.sets:
+                slots = []
+                for animation in camera_set.animations:
+                    frame_count = sum(len(block.frames) for block in animation.blocks)
+                    slots.append({
+                        "slot": animation.slot,
+                        "empty": animation.empty,
+                        "blocks": len(animation.blocks),
+                        "frames": frame_count,
+                    })
+                sets.append({"index": camera_set.index, "slots": slots})
+        return {
+            "setting_size": len(self.camera_setting),
+            "collection_parsed": collection is not None,
+            "collection_size": len(self._camera_collection_bytes()),
+            "nb_set": len(collection.sets) if collection is not None else 0,
+            "sets": sets,
+        }
+
     # -------------------------------------------------------------------- info
     def get_summary(self) -> dict:
-        camera_sets = []
-        if len(self.camera) >= 8:
-            rel_collection = struct.unpack_from("<H", self.camera, 4)[0]
-            if rel_collection + 2 <= len(self.camera):
-                nb_set = struct.unpack_from("<H", self.camera, rel_collection)[0]
-                for i in range(min(nb_set, 16)):
-                    set_offset = struct.unpack_from("<H", self.camera,
-                                                    rel_collection + 2 + 2 * i)[0]
-                    position = rel_collection + set_offset
-                    if position + 2 <= len(self.camera):
-                        camera_sets.append(struct.unpack_from("<H", self.camera, position)[0])
+        camera = self.camera_summary()
+        camera_sets = [len([s for s in cam_set["slots"] if not s["empty"]] or cam_set["slots"])
+                       for cam_set in camera["sets"]]
         poses = []
         for pose in self.poses:
             poses.append({
@@ -412,8 +480,9 @@ class WattsManager:
             "fanfare_bank_size": len(self.fanfare_bank),
             "fanfare_akao_id": (self.fanfare_sequence[4]
                                 if len(self.fanfare_sequence) >= 5 else None),
-            "camera_size": len(self.camera),
+            "camera_size": len(self.camera_bytes()),
             "camera_sets": camera_sets,
+            "camera": camera,
             "poses": poses,
         }
 

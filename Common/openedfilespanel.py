@@ -1,0 +1,52 @@
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QListWidget
+
+from Common.fileregistry import FileRegistry
+
+
+class OpenedFilesPanel(QWidget):
+    """Inline, collapsible view of the files currently open in the shared registry.
+
+    Replaces the old pop-up: files show up in the list as they are opened by any tool (the
+    header keeps their count), and the list collapses to just its header to stay out of the way.
+    """
+
+    def __init__(self, registry: FileRegistry):
+        QWidget.__init__(self)
+        self.registry = registry
+
+        self.header_button = QPushButton()
+        self.header_button.setCheckable(True)
+        self.header_button.setChecked(False)  # start collapsed: just the count is shown
+        self.header_button.setToolTip("The FF8 files currently opened, shared by all the tools. "
+                                      "Click to expand or collapse the list.")
+        self.header_button.toggled.connect(self._set_expanded)
+
+        self.file_list = QListWidget()
+        self.file_list.setMaximumHeight(140)  # a few rows, then it scrolls
+        self.file_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+        self.file_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.file_list.hide()
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.header_button)
+        layout.addWidget(self.file_list)
+        self.setLayout(layout)
+
+        self.registry.file_changed.connect(self._refresh)
+        self._refresh()
+
+    def _set_expanded(self, expanded):
+        self.file_list.setVisible(expanded)
+        self._update_header()
+
+    def _update_header(self):
+        arrow = "▾" if self.header_button.isChecked() else "▸"  # ▾ expanded / ▸ collapsed
+        self.header_button.setText(f"{arrow} Opened files ({len(self.registry.paths)})")
+
+    def _refresh(self, _file_name=None):
+        self._update_header()
+        self.file_list.clear()
+        for file_name, file_path in sorted(self.registry.paths.items()):
+            self.file_list.addItem(f"{file_name}:  {file_path}")

@@ -4,9 +4,11 @@ import os
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
-    QTabWidget, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QFileDialog, QLabel
+    QTabWidget, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
 )
 
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from ShumiTranslator.model.kernel.kernelmanager import KernelManager
 from SolomonRing.kernellookups import LookupRegistry
@@ -54,8 +56,11 @@ TAB_LAYOUT = [
 class SolomonRingWidget(QWidget):
     """kernel.bin editor with full doomtrain field parity, driven by JSON field defs."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         super().__init__()
+
+        if file_registry is None:  # The tool is used alone, it shares its files with nobody
+            file_registry = FileRegistry()
 
         self.game_data_folder = game_data_folder
         self.game_data = GameData(game_data_folder)
@@ -80,22 +85,22 @@ class SolomonRingWidget(QWidget):
         main_layout = QVBoxLayout()
 
         # --- File toolbar -----------------------------------------------------
+        # kernel.bin's Import / Save live in the shared header toolbar (via this binding);
+        # the reload / compress / uncompress buttons below are kernel-specific, kept here.
+        self.kernel_binding = FileBinding("kernel.bin", file_registry,
+                                          load_callback=self.load_file, save_callback=self._save_kernel)
         file_layout = QHBoxLayout()
-        self.load_button = QPushButton()
-        self.load_button.setIcon(QIcon(os.path.join(icon_path, "folder.png")))
-        self.load_button.setIconSize(QSize(30, 30))
-        self.load_button.setFixedSize(40, 40)
-        self.load_button.clicked.connect(self._load_kernel)
-        self.load_button.setToolTip("Open a kernel.bin file")
-        file_layout.addWidget(self.load_button)
 
-        self.save_button = QPushButton()
-        self.save_button.setIcon(QIcon(os.path.join(icon_path, "save.svg")))
-        self.save_button.setIconSize(QSize(30, 30))
-        self.save_button.setFixedSize(40, 40)
-        self.save_button.clicked.connect(self._save_kernel)
-        self.save_button.setToolTip("Save all modifications to the kernel.bin (irreversible)")
-        file_layout.addWidget(self.save_button)
+        self.reload_button = QPushButton()
+        self.reload_button.setIcon(QIcon(os.path.join(icon_path, "reset.png")))
+        self.reload_button.setIconSize(QSize(30, 30))
+        self.reload_button.setFixedSize(40, 40)
+        self.reload_button.clicked.connect(self._reload_kernel)
+        self.reload_button.setToolTip(
+            "Reload the current file from disk (e.g. after another tool/agent changed it) - "
+            "keeps you on the same tab and entry instead of jumping back to the start.")
+        self.reload_button.setEnabled(False)
+        file_layout.addWidget(self.reload_button)
 
         self.compress_button = QPushButton()
         self.compress_button.setIcon(QIcon(os.path.join(icon_path, "compress.png")))
@@ -135,6 +140,12 @@ class SolomonRingWidget(QWidget):
         self.setLayout(main_layout)
         self.tabs.setEnabled(False)
 
+        self.kernel_binding.load_opened_file()  # Another tool may have opened kernel.bin already
+
+    def file_bindings(self):
+        """The files the shared header toolbar drives for this tool (just kernel.bin)."""
+        return [self.kernel_binding]
+
     def _build_group(self, entries):
         if len(entries) == 1:
             section_id, _ = entries[0]
@@ -147,8 +158,11 @@ class SolomonRingWidget(QWidget):
 
     def _make_section_tab(self, section_id):
         config = self._section_configs[str(section_id)]
+        add_entry_callback = (lambda sid=section_id: self._add_growable_entry(sid)) \
+            if config.get("growable") else None
         tab = KernelSectionTab(self.game_data, self.registry, config,
-                               jump_callback=self._jump_to_section)
+                               jump_callback=self._jump_to_section,
+                               add_entry_callback=add_entry_callback)
         self._section_tabs[section_id] = tab
         return tab
 
@@ -160,20 +174,23 @@ class SolomonRingWidget(QWidget):
             self.tabs.setCurrentIndex(index)
 
     # ------------------------------------------------------------------ file IO
-    def _load_kernel(self):
-        file_dialog = QFileDialog()
-        filename = file_dialog.getOpenFileName(parent=self, caption="Open kernel.bin",
-                                               filter="*kernel*.bin")[0]
-        if filename:
-            self.load_file(filename)
-
     def load_file(self, filename):
         self.loaded_filename = filename
         self.kernel_manager.load_file(filename)
         self._populate_tabs()
         self.tabs.setEnabled(True)
+        self.reload_button.setEnabled(True)
         self.file_label.setText(filename)
         self.file_label.setStyleSheet("color: black;")
+
+    def _reload_kernel(self):
+        """Re-read the currently open file from disk (e.g. after another tool/agent
+        wrote to it) without resetting which tab/entry you're looking at - the outer
+        QTabWidget's current index is never touched by load_file/_populate_tabs, and
+        each KernelSectionTab.load_section() now restores its own prior selection and
+        scroll position, so this is just load_file() again on the same path."""
+        if self.loaded_filename:
+            self.load_file(self.loaded_filename)
 
     def _populate_tabs(self):
         by_id = {s.id: s for s in self.kernel_manager.section_list if s}
@@ -182,6 +199,7 @@ class SolomonRingWidget(QWidget):
             text_id = self._text_link.get(section_id, 0)
             text_section = by_id.get(text_id) if text_id else None
             tab.load_section(section, text_section)
+        self._refresh_magic_names()
         self._refresh_slot_set_summaries()
 
     def _refresh_slot_set_summaries(self):
@@ -204,6 +222,66 @@ class SolomonRingWidget(QWidget):
             entries.append({"value": i, "name": f"{i}: " + (", ".join(parts) if parts else "(empty)")})
         self.registry.set_dynamic("slot_set_summary", entries)
         self._section_tabs[27].refresh_dynamic_combos()
+
+    def _refresh_magic_names(self):
+        """The "magic" lookup (Slot Sets' spell picker) reflects whatever is ACTUALLY
+        loaded right now - vanilla names you've renamed, and any spells added via
+        "+ Add entry" - not the static vanilla magic.json list. Skips the same hidden
+        id range the Magic tab itself hides (ids 64-79, GF-reserved) - picking one of
+        those as a Slot Sets spell would be just as broken as editing it directly."""
+        tab = self._section_tabs.get(2)
+        if not tab:
+            return
+        entries = [{"value": i, "name": (tab._entries[i].get_text(0).strip() or f"(unnamed {i})")}
+                  for i in tab._visible_indices]
+        self.registry.set_dynamic("magic", entries)
+        for other_tab in self._section_tabs.values():
+            other_tab.refresh_dynamic_combos()
+
+    def _add_growable_entry(self, section_id):
+        """Append one new blank entry to a "growable" data section (today, only Magic -
+        kernel_bin_data.json "growable": true) and its linked name/description text,
+        then reload that tab and select the new entry. If the section reserves an id
+        range for something else (Magic: ids 64-79 belong to GFs), crossing into it
+        auto-inserts the required placeholder rows first so id numbering stays correct -
+        the caller always ends up with exactly one new, real, editable entry. The tab
+        hides that id range from its list entirely (kernel_section_fields.json's
+        hidden_id_start/count), so the placeholder rows never actually appear - they're
+        only labelled here for anyone inspecting the raw file outside SolomonRing."""
+        section = next((s for s in self.kernel_manager.section_list if s and s.id == section_id), None)
+        tab = self._section_tabs.get(section_id)
+        if section is None or tab is None or not section.section_text_linked:
+            return
+        cfg = self.kernel_manager.get_section_config(section_id)
+        text_section = section.section_text_linked
+        nb_text = len(tab.text_labels) or 1
+
+        def _append_one():
+            section.append_blank_subsection()
+            for _ in range(nb_text):
+                text_section.add_text(bytearray([0x00]))
+
+        gf_start = cfg.get("gf_reserved_start")
+        gf_count = cfg.get("gf_reserved_count") or 0
+        n = len(section.get_subsection_list())
+        pad = gf_count if (gf_start is not None and n == gf_start) else 0
+        for _ in range(pad):
+            _append_one()
+        _append_one()
+
+        # Label the auto-inserted placeholder rows BEFORE load_section() builds the list
+        # widget's item text from them, so they show as reserved from the moment they
+        # appear rather than only after being clicked into once.
+        if pad:
+            text_list = text_section.get_text_list()
+            new_total = len(section.get_subsection_list())
+            for entry_index in range(new_total - pad - 1, new_total - 1):
+                text_list[entry_index * nb_text].set_str("(reserved for GF - do not use)")
+
+        tab.load_section(section, text_section)
+        tab.list_widget.setCurrentRow(len(tab._visible_indices) - 1)
+        if section_id == 2:
+            self._refresh_magic_names()
 
     def _compress_all_text(self):
         if not self.loaded_filename:
@@ -238,6 +316,9 @@ class SolomonRingWidget(QWidget):
             return
         for tab in self._section_tabs.values():
             tab.commit()
+        # Any magic name typed this session (including newly-added spells) needs to be
+        # in the "magic" lookup BEFORE save, since Slot Sets' picker reads names from it.
+        self._refresh_magic_names()
         self.kernel_manager.save_file(self.loaded_filename)
         print(f"Saved to {self.loaded_filename}")
         self.file_label.setText(f"{self.loaded_filename}  (saved)")

@@ -1,10 +1,12 @@
 import os
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
+from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QGroupBox, QMessageBox, QAbstractItemView)
 
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Odine.odinemanager import OdineManager
 
@@ -22,8 +24,11 @@ class OdineWidget(QWidget):
 
     Named after Dr. Odine, the Esthar scientist who invented para-magic and the junction system."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
+
+        if file_registry is None:  # The tool is used alone, it shares its files with nobody
+            file_registry = FileRegistry()
 
         self.game_data = GameData(game_data_folder)
         self.game_data.load_magic_data()
@@ -32,27 +37,13 @@ class OdineWidget(QWidget):
         self.setWindowTitle("Odine")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        # File section
-        self.file_dialog = QFileDialog()
-        self.load_button = QPushButton()
-        self.load_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.load_button.setIconSize(QSize(30, 30))
-        self.load_button.setFixedSize(40, 40)
-        self.load_button.setToolTip("Open a magsort.bin file")
-        self.load_button.clicked.connect(self.load_file)
-
-        self.save_button = QPushButton()
-        self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.save_button.setIconSize(QSize(30, 30))
-        self.save_button.setFixedSize(40, 40)
-        self.save_button.setToolTip("Save all modifications in the opened magsort.bin (irreversible)")
-        self.save_button.clicked.connect(self.save_file)
+        # File section: magsort.bin, driven by the shared header toolbar (Import / Save).
+        self.magsort_binding = FileBinding("magsort.bin", file_registry,
+                                           load_callback=self.load_file, save_callback=self.save_file)
 
         self.file_label = QLabel("No file loaded")
 
         file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.load_button)
-        file_section_layout.addWidget(self.save_button)
         file_section_layout.addWidget(self.file_label)
         file_section_layout.addStretch(1)
 
@@ -82,6 +73,12 @@ class OdineWidget(QWidget):
         main_layout.addLayout(file_section_layout)
         main_layout.addWidget(self.editor_container)
         self.setLayout(main_layout)
+
+        self.magsort_binding.load_opened_file()  # Another tool may have opened magsort.bin already
+
+    def file_bindings(self):
+        """The files the shared header toolbar drives for this tool (just magsort.bin)."""
+        return [self.magsort_binding]
 
     def _build_category_column(self, key, title):
         list_widget = QListWidget()
@@ -113,14 +110,11 @@ class OdineWidget(QWidget):
         group.setLayout(layout)
         return group
 
-    def load_file(self):
-        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search magsort.bin file",
-                                                     filter="*.bin", directory=os.getcwd())[0]
-        if file_name:
-            self.manager.load_file(file_name)
-            self.file_label.setText(os.path.basename(file_name))
-            self.editor_container.setEnabled(True)
-            self._refresh_lists()
+    def load_file(self, file_name):
+        self.manager.load_file(file_name)
+        self.file_label.setText(os.path.basename(file_name))
+        self.editor_container.setEnabled(True)
+        self._refresh_lists()
 
     def save_file(self):
         if not self.manager.file_path:
