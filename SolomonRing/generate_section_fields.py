@@ -118,7 +118,7 @@ sections["2"]["growable"] = True
 # never live there, so the tab hides them from the entry list entirely rather than just
 # labelling them (matches kernel_bin_data.json's gf_reserved_start/gf_reserved_count).
 sections["2"]["hidden_id_start"] = 64
-sections["2"]["hidden_id_count"] = 16
+sections["2"]["hidden_id_count"] = 32   # reserve ids 64-95 for GFs (16 used + 16 future); extended magic starts at 96
 
 # 3: Junctionable GFs (reuse proven offsets from junctionable_gf_data) --------
 gf_general = [

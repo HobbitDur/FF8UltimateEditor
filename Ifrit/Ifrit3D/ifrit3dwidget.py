@@ -5,7 +5,7 @@ from PyQt6.QtGui import QKeySequence, QShortcut, QFontMetrics
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QCheckBox, QPushButton, QSlider, QSpinBox,
                              QListWidget, QListWidgetItem, QInputDialog, QMessageBox,
-                             QFileDialog)
+                             QFileDialog, QComboBox)
 
 from FF8GameData.monsterdata import AnimationFrame, AnimationSection, Animation
 from FF8GameData.dat.animloopdetector import (is_looping, analyse_animation_usage,
@@ -48,6 +48,15 @@ class Ifrit3DWidget(QWidget):
         # so the file is not searched again on every conversion.
         self._animation_usage_cache = {}
         self.weapon_file_used = ""
+
+        # Composite character rendering: a character body can display its weapon in the SAME
+        # viewer (see the CompositeCharacterWeaponAnimation wiki). The weapon is a second model
+        # (its own IfritManager) merged into the one mesh pushed to the GL widget - offset its
+        # vertex indices past the body's and its texture ids above the body's, then reuse the
+        # single-model render path unchanged. Both play the same animation index in one space.
+        self._weapon_manager = None      # sibling IfritManager whose enemy is the weapon, or None
+        self._weapon_options = []        # [(label, manager_or_None)] shown in the Weapon selector
+        self._body_vertex_count = 0      # #verts in the body mesh; weapon indices start here
 
         # Playlist variables
         self.playlist = []  # List of animation IDs in order
@@ -161,6 +170,22 @@ class Ifrit3DWidget(QWidget):
             self.anim_selector.setStyleSheet("color:white; background:#333; padding:2px;")
             self.anim_selector.valueChanged.connect(self.set_animation)
             toolbar_layout.addWidget(self.anim_selector)
+
+            # Weapon overlay selector - populated (and shown) only for character bodies via
+            # set_weapon_options(); hidden for monsters/weapons. Lets the user pick which loaded
+            # weapon model to display in the character's hand, or none.
+            self.weapon_label = QLabel("Weapon:")
+            self.weapon_label.setStyleSheet("color:white; padding:4px 4px;")
+            self.weapon_label.setVisible(False)
+            toolbar_layout.addWidget(self.weapon_label)
+            self.weapon_selector = QComboBox()
+            self.weapon_selector.setStyleSheet("color:white; background:#333; padding:2px;")
+            self.weapon_selector.setToolTip("Show a weapon model in the character's hand, played on\n"
+                                            "the same animation. Lists the weapon files loaded in the\n"
+                                            "session; defaults to this character's first weapon.")
+            self.weapon_selector.setVisible(False)
+            self.weapon_selector.currentIndexChanged.connect(self._on_weapon_selected)
+            toolbar_layout.addWidget(self.weapon_selector)
 
             self.export_gltf_btn = QPushButton("Export glTF")
             self.export_gltf_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
@@ -544,28 +569,13 @@ class Ifrit3DWidget(QWidget):
         self.current_frame = 0
         self.interp_step = 0.0
         self.next_frame_index = 1
-        if self.ifrit_manager.enemy.animation_data.nb_animations:
-            verts = self.ifrit_manager.get_animated_vertices(self.current_anim_id, self.current_frame)
-        else:
-            # Use static vertices if no animation
-            verts = self.ifrit_manager.enemy.geometry_data.get_vertices()
-        self.gl_widget.set_vertices(verts)
+        # Constant index/UV/colored lists + textures (body, plus the weapon if one is overlaid);
+        # this also pushes the textures. Colored (untextured) primitives are unused by monsters
+        # but present in battle-stage groups and magic-effect models.
+        self._refresh_static_geometry()
+        # Then this frame's vertex positions (body + weapon).
+        self.update_animated_mesh()
         self.gl_widget.reset_view()
-        self.gl_widget.set_triangles(self.ifrit_manager.enemy.geometry_data.get_triangles())
-        self.gl_widget.set_quads(self.ifrit_manager.enemy.geometry_data.get_quads())
-
-        tri_uv = self.ifrit_manager.enemy.geometry_data.get_triangles_with_uv()
-        quad_uv = self.ifrit_manager.enemy.geometry_data.get_quads_with_uv()
-        self.gl_widget.set_triangles_with_uv(tri_uv)
-        self.gl_widget.set_quads_with_uv(quad_uv)
-
-        # Colored (untextured) primitives: unused by monsters, present in
-        # battle-stage groups and magic-effect models
-        self.gl_widget.set_colored_triangles(self.ifrit_manager.enemy.geometry_data.get_colored_triangles_with_color())
-        self.gl_widget.set_colored_quads(self.ifrit_manager.enemy.geometry_data.get_colored_quads_with_color())
-
-        # Push textures if they have already been extracted
-        self._push_textures_to_gl()
 
         self._update_model_translation()
         self.update_skeleton()
@@ -609,25 +619,159 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget.reset_view()
 
     def _push_textures_to_gl(self):
-        """Send extracted texture PNGs to the GL widget."""
-        textures = self.ifrit_manager.texture_data
-        if not textures:
-            return
+        """Send extracted texture PNGs to the GL widget.
 
+        When a weapon is overlaid the atlas is body pixmaps followed by weapon pixmaps, and the
+        face ids already carry _WEAPON_TEX_OFFSET on weapon faces (added in _refresh_static_
+        geometry), so the two never collide. An EXPLICIT id->index map is used rather than the
+        rank heuristic: it clamps when there are more distinct ids than pixmaps, which would cross
+        the two models' textures."""
         # Refresh per loaded file: False when the manager rebuilt the images
         # with real CLUT-word alpha (see IfritManager._apply_clut_alpha)
         self.gl_widget.black_is_transparent = getattr(
             self.ifrit_manager, 'texture_black_is_transparent', True)
 
-        pixmaps = [td.texture_image for td in textures if td.texture_image is not None]
-        if not pixmaps:
+        body_pix = [td.texture_image for td in self.ifrit_manager.texture_data
+                    if td.texture_image is not None]
+        all_ids = ([raw_id for (_, _, raw_id, _b) in self.gl_widget.triangles_uv] +
+                   [raw_id for (_, _, raw_id, _b) in self.gl_widget.quads_uv])
+        WT = FF8OpenGLWidget._WEAPON_TEX_OFFSET
+
+        if self._weapon_manager is None:
+            if not body_pix:
+                return
+            self.gl_widget.set_texture_pixmaps(body_pix, all_ids)
             return
-        # Collect all raw tex_ids from the geometry so the widget can build its mapping
-        all_tex_ids = (
-                [raw_id for (_, _, raw_id, _bias) in self.gl_widget.triangles_uv] +
-                [raw_id for (_, _, raw_id, _bias) in self.gl_widget.quads_uv]
-        )
-        self.gl_widget.set_texture_pixmaps(pixmaps, all_tex_ids)
+
+        weapon_pix = [td.texture_image for td in self._weapon_manager.texture_data
+                      if td.texture_image is not None]
+        # Split the merged face ids back into body (< offset) and weapon (>= offset), and map each
+        # model's ids onto its own slice of the combined pixmap list.
+        body_ids = [i for i in all_ids if i < WT]
+        weapon_ids = [i for i in all_ids if i >= WT]
+        tex_map = FF8OpenGLWidget._rank_texture_map(body_ids, len(body_pix), 0)
+        tex_map.update(FF8OpenGLWidget._rank_texture_map(weapon_ids, len(weapon_pix), len(body_pix)))
+        self.gl_widget.set_texture_pixmaps_explicit(body_pix + weapon_pix, tex_map)
+
+    # ── Composite (body + weapon) rendering ───────────────────────────
+    @staticmethod
+    def _offset_uv(entry, vertex_offset, tex_offset):
+        indices, uvs, tex_id, bias = entry
+        return (tuple(i + vertex_offset for i in indices), uvs, tex_id + tex_offset, bias)
+
+    @staticmethod
+    def _offset_colored(entry, vertex_offset):
+        indices, rgb, bias = entry
+        return (tuple(i + vertex_offset for i in indices), rgb, bias)
+
+    def _refresh_static_geometry(self):
+        """(Re)send the per-model-constant geometry (triangles/quads/UV/colored faces) + textures.
+        When a weapon is set, the body's lists are concatenated with the weapon's, with the
+        weapon's vertex indices shifted past the body's and its texture ids shifted up by
+        _WEAPON_TEX_OFFSET. Only the vertex POSITIONS change per animation frame (update_animated_
+        mesh); these index/uv lists stay put, so this runs on load and on weapon change, not per
+        frame."""
+        body = self.ifrit_manager.enemy.geometry_data
+        self._body_vertex_count = len(body.get_vertices())
+        tris = body.get_triangles()
+        quads = body.get_quads()
+        tri_uv = body.get_triangles_with_uv()
+        quad_uv = body.get_quads_with_uv()
+        col_tri = body.get_colored_triangles_with_color()
+        col_quad = body.get_colored_quads_with_color()
+
+        if self._weapon_manager is not None:
+            wgeo = self._weapon_manager.enemy.geometry_data
+            off = self._body_vertex_count
+            wt = FF8OpenGLWidget._WEAPON_TEX_OFFSET
+            tris = tris + [tuple(i + off for i in t) for t in wgeo.get_triangles()]
+            quads = quads + [tuple(i + off for i in q) for q in wgeo.get_quads()]
+            tri_uv = tri_uv + [self._offset_uv(e, off, wt) for e in wgeo.get_triangles_with_uv()]
+            quad_uv = quad_uv + [self._offset_uv(e, off, wt) for e in wgeo.get_quads_with_uv()]
+            col_tri = col_tri + [self._offset_colored(e, off)
+                                 for e in wgeo.get_colored_triangles_with_color()]
+            col_quad = col_quad + [self._offset_colored(e, off)
+                                   for e in wgeo.get_colored_quads_with_color()]
+
+        self.gl_widget.set_triangles(tris)
+        self.gl_widget.set_quads(quads)
+        self.gl_widget.set_triangles_with_uv(tri_uv)
+        self.gl_widget.set_quads_with_uv(quad_uv)
+        self.gl_widget.set_colored_triangles(col_tri)
+        self.gl_widget.set_colored_quads(col_quad)
+        self._push_textures_to_gl()
+
+    def _current_body_verts(self):
+        """The body's vertices for the current frame - animated if it has animations, else the
+        static mesh. Root translation is NOT baked in (paintGL applies it globally)."""
+        en = self.ifrit_manager.enemy
+        if not en.animation_data.nb_animations:
+            return en.geometry_data.get_vertices()
+        max_frames = self.get_max_frames()
+        if max_frames == 0:
+            return en.geometry_data.get_vertices()
+        next_frame = (self.current_frame + 1) % max_frames
+        return self.ifrit_manager.get_animated_vertices(
+            anim_id=self.current_anim_id, frame_id=self.current_frame,
+            next_frame_id=next_frame, step=self.interp_step)
+
+    def _current_weapon_verts(self):
+        """The weapon's vertices for the current frame, posed on the SAME animation index as the
+        body (each model by its own frame count - see the composite-animation wiki). The weapon
+        clip already encodes the in-hand offset, so the same shared world transform places it."""
+        wm = self._weapon_manager
+        wm._ensure_matrices()          # re-expand the weapon anim (freed on multi-file load)
+        en = wm.enemy
+        if not en.animation_data.nb_animations:
+            return en.geometry_data.get_vertices()
+        wanim = self.current_anim_id if self.current_anim_id < en.animation_data.nb_animations else 0
+        wmax = en.animation_data.animations[wanim].get_nb_frame()
+        if wmax == 0:
+            return en.geometry_data.get_vertices()
+        wframe = self.current_frame % wmax
+        wnext = (wframe + 1) % wmax
+        return wm.get_animated_vertices(anim_id=wanim, frame_id=wframe,
+                                        next_frame_id=wnext, step=self.interp_step)
+
+    def set_weapon_options(self, options, default_index=0):
+        """Populate (and show) the Weapon selector for a character body. `options` is a list of
+        (label, manager_or_None); a None manager is the 'body only' entry. default_index selects
+        the entry to show first (the character's first weapon, per the caller). No-op without the
+        controls (show_controls=False)."""
+        self._weapon_options = list(options)
+        if not hasattr(self, 'weapon_selector'):
+            # No toolbar: still apply the default so a headless/embedded viewer can show a weapon.
+            self._apply_weapon_option(default_index)
+            return
+        self.weapon_selector.blockSignals(True)
+        self.weapon_selector.clear()
+        for label, _ in self._weapon_options:
+            self.weapon_selector.addItem(label)
+        show = len(self._weapon_options) > 1
+        self.weapon_label.setVisible(show)
+        self.weapon_selector.setVisible(show)
+        idx = default_index if 0 <= default_index < len(self._weapon_options) else 0
+        self.weapon_selector.setCurrentIndex(idx)
+        self.weapon_selector.blockSignals(False)
+        self._apply_weapon_option(idx)
+
+    def _on_weapon_selected(self, index):
+        self._apply_weapon_option(index)
+
+    def _apply_weapon_option(self, index):
+        manager = (self._weapon_options[index][1]
+                   if 0 <= index < len(self._weapon_options) else None)
+        self._set_weapon_manager(manager)
+
+    def _set_weapon_manager(self, manager):
+        """Overlay `manager`'s weapon model (or clear it with None) and rebuild the merged mesh."""
+        self._weapon_manager = manager
+        if manager is not None:
+            manager._ensure_matrices()
+        self._refresh_static_geometry()
+        self.update_animated_mesh()
+        self.update_skeleton()
+        self.gl_widget.reset_view()
     def get_max_frames(self):
         if not self.ifrit_manager.enemy.animation_data.nb_animations:
             return 0
@@ -756,40 +900,17 @@ class Ifrit3DWidget(QWidget):
             self._update_gizmo()
 
     def update_animated_mesh(self):
-        """Update mesh vertices based on current frame"""
-        # Get current and next frame for interpolation
-
-        if not self.ifrit_manager.enemy.animation_data.nb_animations:
-            static_verts = self.ifrit_manager.enemy.geometry_data.get_vertices()
-            self.gl_widget.set_vertices(static_verts)
-            self.gl_widget.set_triangles(self.ifrit_manager.enemy.geometry_data.get_triangles())
-            self.gl_widget.set_quads(self.ifrit_manager.enemy.geometry_data.get_quads())
-            self.gl_widget.update()
-            return
-
-        max_frames = self.get_max_frames()
-        if max_frames == 0:
-            return
-
-        next_frame = (self.current_frame + 1) % max_frames
-
-        # Get animated vertices with interpolation
-        animated_verts = self.ifrit_manager.get_animated_vertices(
-            anim_id=self.current_anim_id,
-            frame_id=self.current_frame,
-            next_frame_id=next_frame,
-            step=self.interp_step
-        )
-
-        self.current_animated_vertices = animated_verts
-
-        # Update the OpenGL widget with new vertices
-        self.gl_widget.set_vertices(animated_verts)
-
-        # Triangles and quads indices remain the same (only vertex positions change)
-        self.gl_widget.set_triangles(self.ifrit_manager.enemy.geometry_data.get_triangles())
-        self.gl_widget.set_quads(self.ifrit_manager.enemy.geometry_data.get_quads())
-
+        """Push this frame's vertex positions to the GL widget. Only positions change per frame;
+        the triangle/quad/UV index lists are constant and set by _refresh_static_geometry (on
+        load and on weapon change). When a weapon is overlaid, its posed vertices are appended
+        after the body's (indices in those lists already point past the body's vertex count)."""
+        body_verts = self._current_body_verts()
+        self.current_animated_vertices = body_verts   # body only (used by gizmo/export)
+        if self._weapon_manager is not None:
+            verts = list(body_verts) + list(self._current_weapon_verts())
+        else:
+            verts = body_verts
+        self.gl_widget.set_vertices(verts)
         self.gl_widget.update()
 
     def set_frame(self, value):

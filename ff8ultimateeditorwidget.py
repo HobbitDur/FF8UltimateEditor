@@ -3,12 +3,13 @@ import sys
 from datetime import datetime
 
 from PyQt6.QtCore import Qt, QSettings
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QWidget, QMenuBar, QHBoxLayout, QVBoxLayout, QLabel, QFrame,
                              QStackedWidget, QSizePolicy)
 
 from CCGroup.ccgroup import CCGroupWidget
 from Cid.cidwidget import CidWidget
+from Common.dirtytracking import install_dirty_tracking
 from Common.fileregistry import FileRegistry
 from Common.filetoolbarwidget import FileToolbarWidget
 from Common.openedfilespanel import OpenedFilesPanel
@@ -55,7 +56,8 @@ class FF8UltimateEditorWidget(QWidget):
         if getattr(sys, 'frozen', False):  # Check if running as exe
             self.setup_logging()
 
-        self.setWindowTitle("FF8 ultimate editor")
+        self._base_title = "FF8 ultimate editor"
+        self.setWindowTitle(self._base_title)
         self.setWindowIcon(QIcon(os.path.join(resources_path, 'hobbitdur.ico')))
 
         self.settings = QSettings("HobbitDur", "FF8UltimateEditor")
@@ -280,6 +282,15 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._watts_widget) # Watts (r0win.dat)
         self.tool_stack.addWidget(self._hyne_widget) # Hyne (.ff8 save editor), keep last in HOBBIT_OPTION_ITEMS
         self._piet_widget.view_in_zone_requested.connect(self._view_mmag_entry_in_zone)
+
+        # Give every binding-based tool an unsaved-changes tracker (tool.dirty_state) so the window
+        # title's * reflects real edits. Tools that load through hooks (Ifrit/Alexander/...) already
+        # report changes via can_save_folder(), so they don't need one.
+        for index in range(self.tool_stack.count()):
+            tool = self.tool_stack.widget(index)
+            if callable(getattr(tool, "file_bindings", None)):
+                install_dirty_tracking(tool)
+
         saved_tool_index = self.settings.value("main/program_option", defaultValue=0, type=int)
         if not 0 <= saved_tool_index < len(self.HOBBIT_OPTION_ITEMS):
             saved_tool_index = 0
@@ -291,6 +302,16 @@ class FF8UltimateEditorWidget(QWidget):
         # selector, before the opened-files list.
         self._file_toolbar = FileToolbarWidget(self.tool_stack, self.file_registry, resources_path)
         self._file_buttons_row.insertWidget(0, self._file_toolbar)
+
+        # One global Ctrl+S for every tool: it "clicks" the shared Save button, which saves the
+        # active tool's file(s) and does nothing when there's nothing to save (the button is
+        # disabled). No tool needs its own Save shortcut anymore.
+        self._save_shortcut = QShortcut(QKeySequence.StandardKey.Save, self)
+        self._save_shortcut.activated.connect(self._file_toolbar.save_button.click)
+
+        # Show a "*" in the window title whenever the active tool has something to save.
+        self._file_toolbar.save_state_changed.connect(self._update_title_save_marker)
+        self._update_title_save_marker(self._file_toolbar.save_button.isEnabled())
 
         # 6. Final UI Assembly - the tool stack takes ALL the spare vertical space (stretch 1); the
         # header strip and separator stay at their natural height on top.
@@ -365,6 +386,10 @@ class FF8UltimateEditorWidget(QWidget):
         font = action.font()
         font.setBold(bold)
         action.setFont(font)
+
+    def _update_title_save_marker(self, has_unsaved):
+        """Prefix the window title with '*' while the active tool has something to save."""
+        self.setWindowTitle(f"*{self._base_title}" if has_unsaved else self._base_title)
 
     def _view_mmag_entry_in_zone(self, entry_index):
         """Switch to the Zone tool and select an mmag.bin entry, requested from the Piet tool."""

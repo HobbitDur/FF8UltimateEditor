@@ -67,6 +67,17 @@ class TestModelFileFilter:
         for name in ("c0m1.dat", "c0mfoo.dat", "c0m0001.dat", "d0x000.dat", "c0m000.bak"):
             assert not IfritManager.is_battle_model_file(name), name
 
+    def test_openable_is_permissive_for_custom_names(self):
+        # The user may open a real model saved under a non-stock name (e.g. a converted summon
+        # like shiva.dat). is_openable_model_file is a blocklist, not an allowlist: it lets any
+        # .dat through EXCEPT the known non-model battle files. The header decides the type when
+        # it's actually parsed. is_battle_model_file (canonical only) stays strict for the batch.
+        for name in ("shiva.dat", "Ifrit_boss.dat", "c0m000.dat", "d0w007.dat", "SHIVA.DAT"):
+            assert IfritManager.is_openable_model_file(name), name
+        # Known non-model families (and non-.dat) are still refused - these hang/garbage the parser.
+        for name in ("mag000_a.dat", "mag184_d.dat", "b0wave.dat", "r0win.dat", "notes.txt"):
+            assert not IfritManager.is_openable_model_file(name), name
+
     def test_a_non_model_is_refused_without_being_read(self, manager, tmp_path):
         """r0win.dat used to hang the batch: it must be refused on the name alone."""
         path = _copy(tmp_path, "r0win.dat")[0]

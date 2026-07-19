@@ -11,8 +11,6 @@ class OpenedFilesPanel(QWidget):
     header keeps their count), and the list collapses to just its header to stay out of the way.
     """
 
-    MAX_LIST_HEIGHT = 140  # a few rows, then the list scrolls instead of growing further
-
     def __init__(self, registry: FileRegistry):
         QWidget.__init__(self)
         self.registry = registry
@@ -27,6 +25,9 @@ class OpenedFilesPanel(QWidget):
         self.file_list = QListWidget()
         self.file_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
         self.file_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        # No scrollbars: expanded, the list grows to show every opened file at once (full view).
+        self.file_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.file_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.file_list.hide()
 
         layout = QVBoxLayout()
@@ -52,14 +53,14 @@ class OpenedFilesPanel(QWidget):
         self.header_button.setText(f"{arrow} Opened files ({len(self.registry.paths)})")
 
     def _fit_list_height(self):
-        """Size the list to exactly its rows (up to MAX_LIST_HEIGHT), so an expanded panel with only
-        a couple of files doesn't leave a big empty box - the rows stay packed at the top."""
+        """Grow the list to show EVERY row at once - no cap and no scrollbar, so all opened files
+        are visible; a panel with only a couple of files stays small (rows packed at the top)."""
         count = self.file_list.count()
         row_height = self.file_list.sizeHintForRow(0) if count else 0
         if row_height <= 0:
             row_height = 20  # nothing to measure yet (empty / not laid out): a sensible row height
         content = row_height * max(count, 1) + 2 * self.file_list.frameWidth() + 2
-        self.file_list.setFixedHeight(min(content, self.MAX_LIST_HEIGHT))
+        self.file_list.setFixedHeight(content)
 
     def _refresh(self, _file_name=None):
         self._update_header()

@@ -35,6 +35,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
     """
     FF8 Monster Viewer Widget - Reusable PyQt Widget
     """
+    # When a character body and its weapon are drawn in the same viewer, the weapon's raw texture
+    # ids (0-255) are shifted up by this so they never collide with the body's in the merged
+    # atlas. Larger than any real raw id (tex_id_1 & 0xFF).
+    _WEAPON_TEX_OFFSET = 1 << 16
     # Direct manipulation of the skeleton in the view
     bone_picked = pyqtSignal(int)              # a joint was clicked: bone id
     bone_length_dragged = pyqtSignal(float)    # Ctrl+drag: total world-unit delta since drag start
@@ -142,19 +146,28 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # (e.g. Seed's TIM decoding) set this to False to keep opaque black.
         self.black_is_transparent = True
 
+    @staticmethod
+    def _rank_texture_map(tex_ids_used: list, n: int, base_index: int = 0) -> dict:
+        """Map each raw tex-id to a pixmap index by rank: the k-th smallest distinct id -> the
+        k-th pixmap (clamped to the last one). `base_index` shifts every result, so a second
+        model's ids can point past the first model's pixmaps in a merged atlas."""
+        out = {}
+        for rank, raw_id in enumerate(sorted(set(tex_ids_used))):
+            out[raw_id] = base_index + min(rank, n - 1)
+        return out
+
     def set_texture_pixmaps(self, qpixmaps: list, tex_ids_used: list):
         """Call this from outside with a list of QPixmaps..."""
+        self.set_texture_pixmaps_explicit(
+            qpixmaps, self._rank_texture_map(tex_ids_used, len(qpixmaps)))
+
+    def set_texture_pixmaps_explicit(self, qpixmaps: list, tex_id_to_index: dict):
+        """Like set_texture_pixmaps but with a caller-built raw-id -> pixmap-index map, so a merged
+        body+weapon atlas can route each model's faces to its own pixmaps (the rank heuristic can't:
+        with more distinct ids than pixmaps it clamps, which would cross the two models' textures)."""
         self._free_gl_textures()
         self._pending_qpixmaps = list(qpixmaps)
-        self._tex_id_to_index = {}
-
-        unique_ids = sorted(set(tex_ids_used))
-        n = len(qpixmaps)
-
-        for rank, raw_id in enumerate(unique_ids):
-            idx = min(rank, n - 1)
-            self._tex_id_to_index[raw_id] = idx
-
+        self._tex_id_to_index = dict(tex_id_to_index)
         self._textures_dirty = True
         self.update()
 

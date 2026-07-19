@@ -338,14 +338,52 @@ class IfritManager:
 
     @classmethod
     def is_battle_model_file(cls, file_path) -> bool:
-        """True for a monster/character/weapon model file, on the name only."""
+        """True for a CANONICAL game model file, on the name only (c0mXXX/dXcYYY/dXwYYY). Used
+        where only stock files make sense (the fps-batch family grouping). To decide whether the
+        user may OPEN a file in the editor, use is_openable_model_file - it also accepts custom
+        names like shiva.dat."""
         return bool(cls.BATTLE_MODEL_FILE_PATTERN.match(os.path.basename(str(file_path))))
+
+    # The .dat inside battle.fs that are NOT models and must never be fed to the model parser:
+    # magic/summon effects (magNN_x.dat - a different format entirely), the wave/intro file
+    # (bXwave.dat) and the victory-pose file (rXwin.dat). These are excluded by NAME because
+    # content can't tell them apart - r0win.dat even presents a structurally valid 2-bone weapon
+    # header and then churns ~36s through garbage before failing. Anything else (a real model
+    # under a custom name, e.g. shiva.dat) is allowed through and classified by its header.
+    NON_MODEL_BATTLE_FILE_PATTERN = re.compile(r'^(mag\d+_[a-z]|b[0-9a-f]wave|r[0-9a-f]win)\.dat$',
+                                               re.IGNORECASE)
+
+    @classmethod
+    def is_openable_model_file(cls, file_path) -> bool:
+        """True if the user may open this file as a battle model: any .dat that isn't one of the
+        known non-model battle files. Deliberately permissive (a blocklist, not an allowlist) so
+        custom-named models open; the header still gets the final say when it's actually parsed."""
+        name = os.path.basename(str(file_path))
+        if not name.lower().endswith('.dat'):
+            return False
+        return not cls.NON_MODEL_BATTLE_FILE_PATTERN.match(name)
 
     @staticmethod
     def is_character_family_file(file_path) -> bool:
         """True for a character body or weapon file (dXcYYY / dXwYYY)."""
         name = os.path.basename(str(file_path)).lower()
         return len(name) > 2 and name.startswith('d') and name[2] in ('c', 'w')
+
+    @staticmethod
+    def character_slot_of(file_path):
+        """The character id a dXcYYY body / dXwYYY weapon belongs to: the 2nd filename character
+        X (hex 0-a), which is the character index (d0c/d0w = Squall, d1c/d1w = Zell...). A body
+        and a weapon correspond when their slot matches. Returns None for non-character files."""
+        name = os.path.basename(str(file_path)).lower()
+        if len(name) > 2 and name.startswith('d') and name[2] in ('c', 'w'):
+            return name[1]
+        return None
+
+    @staticmethod
+    def is_weapon_file(file_path) -> bool:
+        """True for a weapon file (dXwYYY) on the name."""
+        name = os.path.basename(str(file_path)).lower()
+        return len(name) > 2 and name.startswith('d') and name[2] == 'w'
 
     @staticmethod
     def get_file_family_list(file_path) -> list:

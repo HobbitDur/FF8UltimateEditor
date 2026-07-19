@@ -1,7 +1,6 @@
 import os
 import pathlib
 from PyQt6.QtCore import QSettings, Qt, pyqtSignal, QTimer
-from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTabWidget, QMessageBox, QCheckBox, QProgressDialog, QApplication,
@@ -80,12 +79,15 @@ class IfritFilePane(QWidget):
     dirty_changed = pyqtSignal()   # emitted when this file first becomes edited-but-unsaved
 
     def __init__(self, ifrit_manager: IfritManager, path: str, settings: QSettings,
-                 icon_path="Resources"):
+                 icon_path="Resources", weapon_provider=None):
         super().__init__()
         self.ifrit_manager = ifrit_manager   # its enemy + textures are already set for `path`
         self.path = path
         self.settings = settings
         self.icon_path = icon_path
+        # Callback(body_path) -> (options, default_index) or None, listing the weapon models loaded
+        # in the session so a character body can show one in its hand (see set_weapon_options).
+        self._weapon_provider = weapon_provider
         self.dirty = False
         self._edited = set()              # commit-needing sections the user changed (seq/camera/...)
         self._loading = False             # True while populating widgets: suppresses dirty flagging
@@ -199,6 +201,13 @@ class IfritFilePane(QWidget):
                 # moment it's shown (rather than on the first paint), keeping the tab switch clean.
                 self.ifrit_manager._ensure_matrices()
                 self._3d_widget.load_file()
+                # A character body can display one of the session's loaded weapons in its hand,
+                # played on the same animation (see CompositeCharacterWeaponAnimation).
+                if et == EntityType.CHARACTER and self._weapon_provider is not None:
+                    result = self._weapon_provider(path)
+                    if result is not None:
+                        options, default_index = result
+                        self._3d_widget.set_weapon_options(options, default_index)
         elif widget is self._texture_widget:
             if et == EntityType.MONSTER:
                 self._texture_widget.show_current()   # textures already in the manager
@@ -435,9 +444,9 @@ class IfritMonsterWidget(QWidget):
         root.addWidget(toolbar)
         root.addWidget(self._splitter, 1)
 
-        self._save_shortcut = QShortcut(QKeySequence.StandardKey.Save, self)
-        self._save_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
-        self._save_shortcut.activated.connect(self._on_save_shortcut)
+        # Ctrl+S is a single global shortcut on the main window (FF8UltimateEditorWidget) that saves
+        # the active tool through the shared toolbar - no per-tool shortcut, to avoid an ambiguous
+        # Ctrl+S when Ifrit has focus.
 
         # Load Cronos AI data once at startup (no file to reload yet).
         self._apply_cronos_ai_data(self._cronos_checkbox.isChecked())
@@ -456,13 +465,13 @@ class IfritMonsterWidget(QWidget):
         if not paths:
             return
         self.file_registry.remember_folder(key, os.path.dirname(paths[0]))
-        good = [p for p in paths if IfritManager.is_battle_model_file(p)]
-        skipped = [os.path.basename(p) for p in paths if not IfritManager.is_battle_model_file(p)]
+        good = [p for p in paths if IfritManager.is_openable_model_file(p)]
+        skipped = [os.path.basename(p) for p in paths if not IfritManager.is_openable_model_file(p)]
         if skipped:
             QMessageBox.information(
                 self, "Some files skipped",
-                "These are not monster/character/weapon models and were skipped:\n\n"
-                + "\n".join(skipped))
+                "These are known non-model battle files (magic effects, wave/victory) and were "
+                "skipped:\n\n" + "\n".join(skipped))
         if not good:
             return
         self._build_session(good)
@@ -652,11 +661,40 @@ class IfritMonsterWidget(QWidget):
         if f['pane'] is not None:
             return
         self._evict_if_needed(keep=index)
-        pane = IfritFilePane(f['manager'], f['path'], self.settings, self.icon_path)
+        pane = IfritFilePane(f['manager'], f['path'], self.settings, self.icon_path,
+                             weapon_provider=self._weapon_options_for)
         pane.dirty_changed.connect(lambda entry=f: self._on_pane_dirty(entry))
         f['pane'] = pane
         self._stack.addWidget(pane)
         self._pane_lru.append(index)               # newest at the end
+
+    def _weapon_options_for(self, body_path):
+        """Weapon-selector options for a character body pane: every WEAPON model loaded in the
+        session, the ones for THIS character (same dXc/dXw slot digit) listed first and the rest
+        marked '(other char)', plus a 'None' entry. Returns (options, default_index) with the
+        default on the character's first weapon, or None if no weapon is loaded (selector stays
+        hidden). options entries are (label, manager_or_None)."""
+        slot = IfritManager.character_slot_of(body_path)
+        if slot is None:
+            return None
+        weapons = []                                   # (name, manager, matches_this_character)
+        for f in self._files:
+            if not IfritManager.is_weapon_file(f['path']):
+                continue
+            if f['manager'].enemy.entity_type != EntityType.WEAPON:
+                continue                               # skip reduced/no-model weapon files
+            matches = (IfritManager.character_slot_of(f['path']) == slot)
+            weapons.append((os.path.basename(f['path']), f['manager'], matches))
+        if not weapons:
+            return None
+        weapons.sort(key=lambda w: (not w[2], w[0]))   # this character's weapons first, then a-z
+        options = [("None (body only)", None)]
+        default_index = 0
+        for i, (name, manager, matches) in enumerate(weapons):
+            options.append((name if matches else f"{name} (other char)", manager))
+            if matches and default_index == 0:
+                default_index = i + 1                  # +1 for the leading "None" entry
+        return options, default_index
 
     def _touch_lru(self, index: int):
         if index in self._pane_lru:
@@ -771,9 +809,6 @@ class IfritMonsterWidget(QWidget):
             self.file_bindings_changed.emit()
 
     # ── Saving ────────────────────────────────────────────────────────
-
-    def _on_save_shortcut(self):
-        self._save_file()
 
     def _save_file(self):
         """Write every changed file back to disk (unedited files are left untouched). Only files

@@ -49,22 +49,27 @@ def test_opened_files_panel_is_collapsible_and_live(main_window):
 
 
 def test_opened_files_panel_list_fits_its_content(qapp):
-    """Expanded, the list is sized to its rows (up to a cap), not a fixed tall box - so a couple of
-    files don't leave a big empty gap; many files cap the height and scroll."""
+    """Expanded, the list grows to show EVERY row at once - no height cap and no scrollbar - so a
+    couple of files stay small but many files all remain visible (full view)."""
+    from PyQt6.QtCore import Qt
     from Common.fileregistry import FileRegistry
     from Common.openedfilespanel import OpenedFilesPanel
     registry = FileRegistry()
     panel = OpenedFilesPanel(registry)
     panel.header_button.setChecked(True)  # expand
+    assert panel.file_list.verticalScrollBarPolicy() == Qt.ScrollBarPolicy.ScrollBarAlwaysOff
 
     registry.open_file("kernel.bin", "some/kernel.bin")
     registry.open_file("mngrp.bin", "some/mngrp.bin")
+    row = panel.file_list.sizeHintForRow(0)
     two_rows = panel.file_list.height()
-    assert 0 < two_rows < panel.MAX_LIST_HEIGHT           # small, packed - not the full box
+    assert two_rows >= 2 * row                            # both rows fit, no scroll
 
     for i in range(30):
         registry.open_file(f"f{i:02d}.bin", f"some/dir/f{i:02d}.bin")
-    assert panel.file_list.height() == panel.MAX_LIST_HEIGHT   # many files -> capped, then scrolls
+    many = panel.file_list.height()
+    assert many > two_rows                                # grew - no cap
+    assert many >= panel.file_list.count() * row         # every row is shown at once
 
 
 def test_complementary_button_present_but_disabled_without_companions(main_window):
@@ -729,3 +734,96 @@ def test_import_dialog_starts_in_and_updates_the_remembered_folder(main_window, 
 
     if reg.settings is not None:  # don't leave the test's key behind in real QSettings
         reg.settings.remove(f"last_folder/{key}")
+
+
+def test_ctrl_s_saves_the_active_tool_globally(main_window, monkeypatch):
+    """A single global Ctrl+S on the main window saves whichever tool is showing, by clicking the
+    shared Save button - and no tool keeps its own Save shortcut (which would be ambiguous)."""
+    from PyQt6.QtGui import QKeySequence
+    from PyQt6.QtWidgets import QMessageBox
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    monkeypatch.setattr(QMessageBox, "critical", lambda *a, **k: None)
+
+    assert not hasattr(main_window._ifrit_widget, "_save_shortcut")  # per-tool one removed
+    assert main_window._save_shortcut.key() == QKeySequence(QKeySequence.StandardKey.Save)
+
+    tb = main_window._file_toolbar
+    cid = main_window._cid_widget
+    main_window.tool_stack.setCurrentWidget(cid)
+    tb._on_tool_changed()
+    main_window.file_registry.open_file("FF8 exe", "extracted_files/FF8_EN.exe")  # Cid has data now
+    assert tb.save_button.isEnabled()
+
+    saved = []
+    monkeypatch.setattr(cid, "save_folder", lambda: saved.append(1))
+    main_window._save_shortcut.activated.emit()   # what pressing Ctrl+S does
+    assert saved == [1]                           # the active tool (Cid) was saved
+
+    # With nothing to save the shortcut is a no-op (the Save button is disabled): use a fresh light
+    # tool that has no loaded file.
+    saved.clear()
+    siren = main_window._siren_widget
+    main_window.tool_stack.setCurrentWidget(siren)
+    tb._on_tool_changed()
+    if not tb.save_button.isEnabled():            # Siren has nothing open in this run
+        main_window._save_shortcut.activated.emit()
+        assert saved == []                        # disabled Save -> Ctrl+S does nothing, no crash
+
+
+def test_window_title_marks_unsaved(main_window, monkeypatch, tmp_path):
+    """The title gets a leading '*' only on real unsaved EDITS (per-tool dirty_state), not merely
+    when a file is loaded, and drops it on save. The signal itself drives the title."""
+    import shutil
+    from PyQt6.QtWidgets import QMessageBox
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    monkeypatch.setattr(QMessageBox, "critical", lambda *a, **k: None)
+    base = main_window._base_title
+    tb = main_window._file_toolbar
+
+    tb.save_state_changed.emit(False)
+    assert main_window.windowTitle() == base            # clean -> plain title
+    tb.save_state_changed.emit(True)
+    assert main_window.windowTitle() == f"*{base}"       # unsaved edits -> starred
+
+    # End to end on a copy: loading is CLEAN, a real edit stars the title, saving clears it.
+    siren = main_window._siren_widget
+    main_window.tool_stack.setCurrentWidget(siren)
+    tb._on_tool_changed()
+    price = str(shutil.copy(PROJECT_ROOT / "extracted_files" / "menu" / "price.bin", tmp_path))
+    main_window.file_registry.open_file("price.bin", price)
+    assert siren.dirty_state.dirty is False
+    assert main_window.windowTitle() == base            # loaded but unedited -> no *
+
+    siren.buy_spinbox.setValue(siren.buy_spinbox.value() + 1)  # a real edit
+    assert siren.dirty_state.dirty is True
+    assert main_window.windowTitle() == f"*{base}"       # edited -> starred
+
+    tb.save_button.click()                               # Save clears the dirty state
+    assert siren.dirty_state.dirty is False
+    assert main_window.windowTitle() == base
+
+
+def test_dirty_state_marks_on_edit_and_clears():
+    """DirtyState: clean at first, marks on an editable widget's edit signal, clears on demand,
+    and emits changed(bool) only on a real flip."""
+    from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSpinBox
+    from Common.dirtytracking import DirtyState
+    root = QWidget()
+    lay = QVBoxLayout(root)
+    spin = QSpinBox()
+    lay.addWidget(spin)
+
+    state = DirtyState()
+    flips = []
+    state.changed.connect(flips.append)
+    state.track(root)
+    assert state.dirty is False
+
+    spin.setValue(5)                 # fires valueChanged -> mark
+    assert state.dirty is True and flips == [True]
+    spin.setValue(7)                 # already dirty -> no extra flip
+    assert flips == [True]
+    state.clear()
+    assert state.dirty is False and flips == [True, False]
+    state.clear()                    # already clean -> no emit
+    assert flips == [True, False]

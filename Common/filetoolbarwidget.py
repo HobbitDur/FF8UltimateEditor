@@ -1,6 +1,6 @@
 import os
 
-from PyQt6.QtCore import QSize
+from PyQt6.QtCore import QSize, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QMenu
 
@@ -25,6 +25,8 @@ class FileToolbarWidget(QWidget):
     - Save: writes the active tool's main file(s) back, and/or its ``save_folder()`` if it has one
       (also used by tools whose save always needs a destination picker, like Alexander's).
     """
+
+    save_state_changed = pyqtSignal(bool)  # True when the active tool has something to save
 
     def __init__(self, tool_stack, registry: FileRegistry, icon_path="Resources"):
         QWidget.__init__(self)
@@ -180,15 +182,31 @@ class FileToolbarWidget(QWidget):
                 self.registry.remember_folder(binding.file_name, os.path.dirname(path))
 
     def _save(self):
+        active = self.tool_stack.currentWidget()
         for binding in self._main_bindings():
             binding.save()          # the tool's single-file bindings
-        saver = getattr(self.tool_stack.currentWidget(), "save_folder", None)
+        saver = getattr(active, "save_folder", None)
         if callable(saver):
             saver()                 # ...and its multi-file / folder save, if it has one
+        dirty_state = getattr(active, "dirty_state", None)
+        if dirty_state is not None:
+            dirty_state.clear()     # just saved -> no more unsaved changes (drops the title's *)
 
     def _can_save_folder(self):
         """Whether the active tool has a multi-file (folder) save with something to write."""
         predicate = getattr(self.tool_stack.currentWidget(), "can_save_folder", None)
+        return bool(predicate()) if callable(predicate) else False
+
+    def _active_is_dirty(self):
+        """Whether the active tool has UNSAVED edits, for the window-title * marker. A tool with
+        per-widget dirty tracking answers exactly (dirty_state); a folder/multi-file tool answers
+        with its can_save_folder() (which for Ifrit/Cid/Seed already means 'has changes'); anything
+        else reports clean (no *), never blocking anything since Save stays enabled on 'loaded'."""
+        active = self.tool_stack.currentWidget()
+        dirty_state = getattr(active, "dirty_state", None)
+        if dirty_state is not None:
+            return dirty_state.dirty
+        predicate = getattr(active, "can_save_folder", None)
         return bool(predicate()) if callable(predicate) else False
 
     def _supports_text_compression(self):
@@ -276,15 +294,26 @@ class FileToolbarWidget(QWidget):
         self._refresh()
 
     def _reconnect_bindings_changed(self, old_tool, new_tool):
-        old_signal = getattr(old_tool, "file_bindings_changed", None)
-        if old_signal is not None:
-            try:
-                old_signal.disconnect(self._refresh)
-            except TypeError:
-                pass
-        new_signal = getattr(new_tool, "file_bindings_changed", None)
-        if new_signal is not None:
-            new_signal.connect(self._refresh)
+        """Follow the active tool's live signals: file_bindings_changed (its files / save-ability
+        changed) and dirty_state.changed (it gained or lost unsaved edits) both refresh this bar."""
+        self._hook_refresh(old_tool, connect=False)
+        self._hook_refresh(new_tool, connect=True)
+
+    def _hook_refresh(self, tool, connect):
+        signals = [getattr(tool, "file_bindings_changed", None)]
+        dirty_state = getattr(tool, "dirty_state", None)
+        if dirty_state is not None:
+            signals.append(dirty_state.changed)
+        for signal in signals:
+            if signal is None:
+                continue
+            if connect:
+                signal.connect(self._refresh)
+            else:
+                try:
+                    signal.disconnect(self._refresh)
+                except TypeError:
+                    pass
 
     def _on_registry_changed(self, _file_name):
         self._refresh()  # a file just loaded/opened somewhere: Save may now have something to do
@@ -294,9 +323,12 @@ class FileToolbarWidget(QWidget):
         complementary_bindings = self._complementary_bindings()
         self.import_button.setEnabled(bool(self._import_entries()))
         self.import_complementary_button.setEnabled(bool(complementary_bindings))
-        # Save covers the tool's single-file bindings AND any multi-file (folder) save it has.
-        self.save_button.setEnabled(
-            any(binding.is_loaded for binding in main_bindings) or self._can_save_folder())
+        # Save covers the tool's single-file bindings AND any multi-file (folder) save it has - it
+        # stays enabled whenever a file is loaded (so saving is never blocked).
+        can_save = any(binding.is_loaded for binding in main_bindings) or self._can_save_folder()
+        self.save_button.setEnabled(can_save)
+        # The window-title * marks genuine unsaved EDITS, which is a stricter thing than can_save.
+        self.save_state_changed.emit(self._active_is_dirty())
         # Reload acts on every opened file across all tools, not just the active one.
         self.reload_button.setEnabled(bool(self.registry.paths))
         # Compress / Uncompress show only for tools that carry compressible game text.
