@@ -4,7 +4,7 @@ from datetime import datetime
 
 from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QWidget, QComboBox, QHBoxLayout, QVBoxLayout, QLabel, QFrame, QStackedWidget
+from PyQt6.QtWidgets import QWidget, QMenuBar, QHBoxLayout, QVBoxLayout, QLabel, QFrame, QStackedWidget
 
 from CCGroup.ccgroup import CCGroupWidget
 from Cid.cidwidget import CidWidget
@@ -90,13 +90,59 @@ class FF8UltimateEditorWidget(QWidget):
             "Hyne (.ff8 save editor)"
         ]
 
-        # 3. Header: Program Selection (ComboBox)
-        self._program_option_title = QLabel("Hobbit tools:")
-        self._program_option = QComboBox()
-        self._program_option.addItems(self.HOBBIT_OPTION_ITEMS)
-        self._program_option.setCurrentIndex(self.settings.value("main/program_option", defaultValue=0, type=int))
-        self._program_option.activated.connect(self._program_option_change)
-        self._program_option.setToolTip("Choose which program to edit your c0m file")
+        # Category = the game folder a tool's main file lives in (Battle/Field/Menu/Main), or a
+        # catch-all for tools that don't map to exactly one folder: Multi (several folders - Cid's
+        # exe+wmset, ShumiTranslator's many file types) and Other (no raw game file at all - Hyne's
+        # save file lives outside the install, Fujin reads an IDA research dump). Every entry must
+        # be an exact HOBBIT_OPTION_ITEMS string (checked below) so a typo fails loudly, not silently.
+        # World is defined (its own folder, e.g. Cid's wmsetxx.obj) but has no tool of its own yet,
+        # so it is left out of HIDDEN_CATEGORIES' complement below - kept ready, not shown.
+        self.CATEGORY_DEFINITIONS = [
+            ("Battle", ["Ifrit (3D/Stat/AI/Seq/Texture)", "Alexander (Battle stage viewer)",
+                        "Watts (r0win.dat victory editor)"]),
+            ("Field", ["Seed (Field model viewer)", "CCGroup (Card value editor)"]),
+            ("Menu", ["Shiva (mngrp.bin editor: refine, SeeD tests, sprites)", "Siren (price.bin editor)",
+                      "Kadowaki (Item menu editor)", "Minimog (icon.sp1 editor)",
+                      "Junkshop (mwepon.bin editor)", "Odine (magsort.bin editor)",
+                      "Piet (mtmag.bin editor)", "Zone (mmag.bin / mmag2.bin editor)",
+                      "TonberryShop (Shop editor)", "Joker (sp2 sprite editor)"]),
+            ("World", []),  # reserved: no tool has World as its primary category yet
+            ("Main", ["SolomonRing (kernel.bin editor)", "Quezacotl (init.out editor)",
+                      "Julia (Sound editor)"]),
+            ("Multi", ["Cid (Draw editor)", "ShumiTranslator(All text editor)"]),
+            ("Other", ["Hyne (.ff8 save editor)", "Fujin (Magic animation explorer)"]),
+        ]
+        self.HIDDEN_CATEGORIES = {"World"}  # defined above, just not shown in the selector yet
+
+        # Completeness check: every tool must belong to exactly one category, and every category
+        # entry must be a real tool name (HOBBIT_OPTION_ITEMS.index below raises otherwise).
+        categorized_indices = {self.HOBBIT_OPTION_ITEMS.index(label)
+                               for _category_name, tool_labels in self.CATEGORY_DEFINITIONS
+                               for label in tool_labels}
+        uncategorized = [label for index, label in enumerate(self.HOBBIT_OPTION_ITEMS)
+                         if index not in categorized_indices]
+        if uncategorized:
+            raise RuntimeError(f"Tool(s) missing from CATEGORY_DEFINITIONS: {uncategorized}")
+
+        # 3. Header: one category menu bar (Battle / Field / Menu / ...) - hover a category to
+        # flyout its tools, click one to switch. The current tool is shown next to it (a menu bar
+        # has no persistent "selected" display of its own once a menu closes) and checkmarked in
+        # its own flyout.
+        self._tool_menu_bar = QMenuBar()
+        self._tool_menu_bar.setNativeMenuBar(False)  # stay embedded in the window, not the OS bar
+        self._current_tool_label = QLabel()
+        self._current_tool_label.setStyleSheet("font-weight: bold;")
+
+        self._tool_actions = {}  # absolute HOBBIT_OPTION_ITEMS index -> its QAction (bolded when active)
+        for category_name, tool_labels in self.CATEGORY_DEFINITIONS:
+            if category_name in self.HIDDEN_CATEGORIES:
+                continue
+            category_menu = self._tool_menu_bar.addMenu(category_name)
+            for label in tool_labels:
+                absolute_index = self.HOBBIT_OPTION_ITEMS.index(label)
+                action = category_menu.addAction(label)
+                action.triggered.connect(lambda _checked=False, i=absolute_index: self._activate_tool(i))
+                self._tool_actions[absolute_index] = action
 
         # Shared action available to every tool: extract a .fs archive recursively. It is file
         # management too, so it sits with the Import/Save buttons rather than the selector.
@@ -108,8 +154,8 @@ class FF8UltimateEditorWidget(QWidget):
         # buttons (Import / Import complementary / Save + .fs extract); under those the
         # collapsible list of everything currently open.
         self._program_option_selector_row = QHBoxLayout()
-        self._program_option_selector_row.addWidget(self._program_option_title)
-        self._program_option_selector_row.addWidget(self._program_option)
+        self._program_option_selector_row.addWidget(self._tool_menu_bar)
+        self._program_option_selector_row.addWidget(self._current_tool_label)
         self._program_option_selector_row.addStretch(1)
 
         # The FileToolbarWidget is created below (it needs tool_stack); it is inserted at the
@@ -177,23 +223,23 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack = QStackedWidget()
 
         # Initialize internal tools
-        self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path), file_registry=self.file_registry)
         self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path), settings=self.settings, file_registry=self.file_registry)
-        self._cid_widget = CidWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._cid_widget = CidWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._ifrit_widget = IfritMonsterWidget( settings=self.settings, icon_path=resources_path, game_data_folder=game_data_path, file_registry=self.file_registry)
         self._kadowaki_widget = KadowakiWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._minimog_widget = MinimogWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
-        self._seed_widget = SeedWidget(icon_path=os.path.join(resources_path), settings=self.settings)
+        self._seed_widget = SeedWidget(icon_path=os.path.join(resources_path), settings=self.settings, file_registry=self.file_registry)
         self._shiva_widget = ShivaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
-        self._alexander_widget = AlexanderWidget(icon_path=os.path.join(resources_path), settings=self.settings)
-        self._julia_widget = JuliaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._alexander_widget = AlexanderWidget(icon_path=os.path.join(resources_path), settings=self.settings, file_registry=self.file_registry)
+        self._julia_widget = JuliaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._siren_widget = SirenWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._junkshop_widget = JunkshopWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._quezacotl_widget = QuezacotlWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._odine_widget = OdineWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
-        self._joker_widget = JokerWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
+        self._joker_widget = JokerWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._piet_widget = PietWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         # Zone is now a two-tab tool: mmag.bin (magazines) + mmag2.bin (Chocobo World)
         self._zone_widget = ZoneTabsWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
@@ -226,7 +272,10 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._watts_widget) # Watts (r0win.dat)
         self.tool_stack.addWidget(self._hyne_widget) # Hyne (.ff8 save editor), keep last in HOBBIT_OPTION_ITEMS
         self._piet_widget.view_in_zone_requested.connect(self._view_mmag_entry_in_zone)
-        self._program_option_change()
+        saved_tool_index = self.settings.value("main/program_option", defaultValue=0, type=int)
+        if not 0 <= saved_tool_index < len(self.HOBBIT_OPTION_ITEMS):
+            saved_tool_index = 0
+        self._activate_tool(saved_tool_index)
 
         # Shared file toolbar: Import / Import read-only / Save acting on the active tool's
         # declared files (its file_bindings()), so which file is opened/saved follows the
@@ -288,17 +337,30 @@ class FF8UltimateEditorWidget(QWidget):
     def _launch_FF8Ultimate(self):
         self.ff8ultimate_launcher.launch()
 
-    def _program_option_change(self):
-        """Simple logic to switch between tools"""
-        index = self._program_option.currentIndex()
-        self.tool_stack.setCurrentIndex(index)
-        self.settings.setValue("main/program_option", index)
+    def _activate_tool(self, absolute_index):
+        """Switch to the tool at HOBBIT_OPTION_ITEMS[absolute_index]: a category flyout's menu
+        action, the startup restore of the last-used tool, or a cross-navigation request (Piet's
+        "View in Zone"). Bolds it in its category's flyout and updates the current-tool label
+        (a menu bar shows nothing once its menu closes, unlike a combo box)."""
+        previous_index = getattr(self, "_current_tool_index", None)
+        if previous_index in self._tool_actions:
+            self._set_action_bold(self._tool_actions[previous_index], False)
+        self._current_tool_index = absolute_index
+        self._set_action_bold(self._tool_actions[absolute_index], True)
+        self._current_tool_label.setText(self.HOBBIT_OPTION_ITEMS[absolute_index])
+        self.tool_stack.setCurrentIndex(absolute_index)
+        self.settings.setValue("main/program_option", absolute_index)
+
+    @staticmethod
+    def _set_action_bold(action, bold):
+        font = action.font()
+        font.setBold(bold)
+        action.setFont(font)
 
     def _view_mmag_entry_in_zone(self, entry_index):
         """Switch to the Zone tool and select an mmag.bin entry, requested from the Piet tool."""
         zone_index = self.HOBBIT_OPTION_ITEMS.index("Zone (mmag.bin / mmag2.bin editor)")
-        self._program_option.setCurrentIndex(zone_index)
-        self._program_option_change()
+        self._activate_tool(zone_index)
         # Zone is tabbed now: focus the mmag.bin tab before selecting the entry
         self._zone_widget.tabs.setCurrentWidget(self._zone_widget.mmag_widget)
         self._zone_widget.mmag_widget.select_entry(entry_index)

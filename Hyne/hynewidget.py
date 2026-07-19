@@ -115,12 +115,10 @@ class HyneWidget(QWidget):
             'save.svg', "Save all modifications back into the .ff8 file (a .bak backup of the "
                        "previous contents is written first)", self.save_file)
         self.save_button.setEnabled(False)
-        self.file_label = QLabel("No file loaded")
 
         file_section_layout = QHBoxLayout()
         file_section_layout.addWidget(self.load_button)
         file_section_layout.addWidget(self.save_button)
-        file_section_layout.addWidget(self.file_label)
         file_section_layout.addStretch(1)
 
         self.tabs = QTabWidget()
@@ -287,7 +285,6 @@ class HyneWidget(QWidget):
         except ValueError as error:
             QMessageBox.critical(self, "Hyne", f"Not a valid .ff8 save file:\n{error}")
             return
-        self.file_label.setText(os.path.basename(file_name))
         self.tabs.setEnabled(True)
         self.save_button.setEnabled(True)
 

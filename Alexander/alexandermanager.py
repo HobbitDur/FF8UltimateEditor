@@ -33,6 +33,10 @@ class AlexanderManager:
         # mesh can be written back into its camera / TIM / skeleton.
         self._template_raw = None
         self._template_tex_layout = []      # visible rank -> (texpage, clut, w, h)
+        # path of the currently selected, directly-loaded stage, so Save can write straight
+        # back to it (matching every other tool). None once a .glb is imported: an imported
+        # mesh has no original .x of its own, so Save must ask where to write it.
+        self.current_stage_path = None
 
     # ------------------------------------------------------------------ loading
 
@@ -62,6 +66,7 @@ class AlexanderManager:
         # snapshot this stage as the write-back template (survives a later glb import)
         self._template_raw = model.raw
         self._template_tex_layout = dict(model.tex_layout)   # tex_key -> (page, clut, w, h)
+        self.current_stage_path = path
 
     def load_glb(self, path: str):
         """Load a .glb (previously exported, optionally edited) for viewing."""
@@ -69,6 +74,8 @@ class AlexanderManager:
         model = build_model_from_glb(path)
         model.name = os.path.basename(path)
         self._set_model(model)
+        # An imported mesh has no original .x of its own to write back to.
+        self.current_stage_path = None
 
     def export_glb(self, path: str):
         """Export the whole stage (all 4 groups, group-tagged) to a .glb."""

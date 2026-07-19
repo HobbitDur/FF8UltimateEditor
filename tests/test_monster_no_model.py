@@ -86,37 +86,29 @@ def test_editing_a_stat_persists_through_save_reload(tmp_path):
 
 
 def test_gui_loads_without_crashing_and_shows_only_stat_and_ai():
-    """The concrete bug this used to hit: IfritMonsterWidget._load_all() called
-    Ifrit3DWidget.load_file() unconditionally, which raised ValueError on this file's
-    zero-vertex geometry (numpy .min() on an empty array) - the file couldn't be opened in
-    the real app at all. Confirms the fix and the resulting tab visibility."""
+    """The concrete bug this used to hit: opening the file built the 3D tab unconditionally,
+    whose Ifrit3DWidget.load_file() raised ValueError on this file's zero-vertex geometry
+    (numpy .min() on an empty array) - the file couldn't be opened in the real app at all.
+    Confirms it opens and shows only the Stat and AI tabs. The editor now lives in a per-file
+    IfritFilePane (IfritMonsterWidget is the multi-file shell)."""
     from PyQt6.QtCore import QSettings
-    from Ifrit.ifritmonsterwidget import (
-        IfritMonsterWidget, _SEQ_SECTION_BY_ENTITY, _CAMERA_SECTION_BY_ENTITY,
-        _DYNAMIC_TEXTURE_SECTION_BY_ENTITY, _3D_SECTIONS_BY_ENTITY, _STAT_AI_CAPABLE_ENTITY_TYPES)
+    from Ifrit.ifritmonsterwidget import IfritMonsterWidget
 
     widget = IfritMonsterWidget(settings=QSettings("test", "monster_no_model"),
                                  icon_path="Resources", game_data_folder="FF8GameData")
-    widget._load_all(NO_MODEL_FILE)  # must not raise
+    widget.load_file(NO_MODEL_FILE)  # builds this file's pane; must not raise
 
-    entity_type = widget.ifrit_manager.enemy.entity_type
-    visible = {
-        widget._3d_widget: entity_type in _3D_SECTIONS_BY_ENTITY,
-        widget._seq_widget: entity_type in _SEQ_SECTION_BY_ENTITY,
-        widget._camera_widget: entity_type in _CAMERA_SECTION_BY_ENTITY,
-        widget._dynamic_texture_widget: entity_type in _DYNAMIC_TEXTURE_SECTION_BY_ENTITY,
-        widget._texture_widget: entity_type == EntityType.MONSTER,
-        widget._stat_container: entity_type in _STAT_AI_CAPABLE_ENTITY_TYPES,
-        widget._ai_container: entity_type in _STAT_AI_CAPABLE_ENTITY_TYPES,
-    }
-    for w, expected in visible.items():
-        widget._tabs.setTabVisible(widget._tabs.indexOf(w), expected)
+    pane = widget._files[0]['pane']
+    tabs = pane._tabs
+    # Visibility is applied by the pane itself (IfritFilePane._apply_visibility) from the parsed
+    # entity type - MONSTER_NO_MODEL has only info_stat + AI.
+    assert tabs.isTabVisible(tabs.indexOf(pane._stat_container))
+    assert tabs.isTabVisible(tabs.indexOf(pane._ai_container))
+    assert not tabs.isTabVisible(tabs.indexOf(pane._3d_widget))
+    assert not tabs.isTabVisible(tabs.indexOf(pane._seq_widget))
+    assert not tabs.isTabVisible(tabs.indexOf(pane._camera_widget))
+    assert not tabs.isTabVisible(tabs.indexOf(pane._dynamic_texture_widget))
+    assert not tabs.isTabVisible(tabs.indexOf(pane._texture_widget))
 
-    assert widget._tabs.isTabVisible(widget._tabs.indexOf(widget._stat_container))
-    assert widget._tabs.isTabVisible(widget._tabs.indexOf(widget._ai_container))
-    assert not widget._tabs.isTabVisible(widget._tabs.indexOf(widget._3d_widget))
-    assert not widget._tabs.isTabVisible(widget._tabs.indexOf(widget._seq_widget))
-    assert not widget._tabs.isTabVisible(widget._tabs.indexOf(widget._camera_widget))
-    assert not widget._tabs.isTabVisible(widget._tabs.indexOf(widget._dynamic_texture_widget))
-    assert not widget._tabs.isTabVisible(widget._tabs.indexOf(widget._texture_widget))
-    assert widget._name_widget._name_edit.text() == 'Ultimecia'
+    pane._ensure_tab_loaded(pane._stat_container)   # load the Stat tab's data on demand
+    assert pane._name_widget._name_edit.text() == 'Ultimecia'

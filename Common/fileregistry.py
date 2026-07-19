@@ -1,3 +1,5 @@
+import os
+
 from PyQt6.QtCore import QObject, pyqtSignal
 
 
@@ -38,3 +40,22 @@ class FileRegistry(QObject):
         """Re-read every opened file from disk (e.g. after an external tool changed it), keeping
         the same paths. Each tool reloads its files through their FileBinding."""
         self.reload_requested.emit()
+
+    @staticmethod
+    def summarize_paths(paths, noun="file", max_listed=5):
+        """A short description of several files under one registry entry, for a tool whose open
+        files don't map to one fixed FF8 name (so they can't each get their own FileBinding) but
+        still deserve a line in the Opened files panel - e.g. Alexander's multi-select of
+        a0stgXXX.x. Lists each name when there are few; past max_listed, just the count and their
+        common folder, so opening dozens at once doesn't flood the panel."""
+        if not paths:
+            return "none"
+        if len(paths) == 1:
+            return os.path.basename(paths[0])
+        if len(paths) <= max_listed:
+            return f"{len(paths)} {noun}s: " + ", ".join(os.path.basename(p) for p in paths)
+        try:
+            folder = os.path.commonpath(paths)
+        except ValueError:  # e.g. paths on different drives - no common folder to show
+            return f"{len(paths)} {noun}s"
+        return f"{len(paths)} {noun}s in {folder}"

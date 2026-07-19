@@ -45,6 +45,12 @@ class MonsterAnalyser:
         self._ai_command_list = []
         self.id:int = 0
         self.entity_type = EntityType.MONSTER
+        # Animation memory management: the expanded animation (rotations + matrices) is ~90% of a
+        # parsed file's RAM. A file loaded but not shown in 3D can drop it (free_animation) and
+        # re-expand from its raw section bytes on demand (ensure_animation_expanded). Only valid
+        # before any edit - edits live in the expanded objects, the raw bytes are the original.
+        self._animation_section_index = None   # which section the animation came from (set on parse)
+        self._animation_expanded = True
 
     def __str__(self):
         return "Name: {} \nData:{}".format(self.info_stat_data['monster_name'],
@@ -322,6 +328,10 @@ class MonsterAnalyser:
         raw_data_to_write.extend(self.section_raw_data[section_position])
 
     def write_data_to_file(self, game_data: GameData, dat_path):
+        # Saving re-encodes the animation from the expanded objects (animation_data.to_binary),
+        # so a file whose animation was freed to save RAM must be re-expanded first. No-op unless
+        # it was freed.
+        self.ensure_animation_expanded()
         raw_data_to_write = bytearray()
 
         # Section 0: Header (fix size, will be modified later) - the only part truly common
@@ -535,9 +545,33 @@ class MonsterAnalyser:
 
     def __analyze_animation_section(self, section_number = 3):
         #print("__analyze_animation_section")
+        self._animation_section_index = section_number   # remembered for re-expansion after a free
         if self.section_raw_data[section_number]:
             self.animation_data.analyze(self.section_raw_data[section_number], self.bone_data)
             #print(self.animation_data)
+
+    def free_animation(self):
+        """Drop the expanded animation to keep a loaded-but-not-viewed file lean (~0.5 MB vs
+        ~30 MB). Re-expanded on demand from the raw section bytes. MUST NOT be called on a file
+        whose animation has unsaved edits (edits live in the expanded objects; the raw bytes are
+        the original) - only right after parsing, before any editing."""
+        if self._animation_section_index is None:
+            return
+        if self.animation_data and self.animation_data.animations:
+            self.animation_data.free_animations()
+            self._animation_expanded = False
+
+    def ensure_animation_expanded(self):
+        """Re-expand the animation from its raw section bytes if it was freed. No-op otherwise.
+        Re-expansion is byte-identical to the original parse (analyze -> to_binary round-trips),
+        and rebuilds the derived matrices too, so it also satisfies the matrices."""
+        if self._animation_expanded:
+            return
+        idx = self._animation_section_index
+        if idx is not None and idx < len(self.section_raw_data) and self.section_raw_data[idx]:
+            self.animation_data.analyze(self.section_raw_data[idx], self.bone_data)
+            self.animation_data.matrices_built = True   # analyze()'s add_frame builds them
+        self._animation_expanded = True
 
         #self.test_full_animation_section_roundtrip(game_data)
 

@@ -41,10 +41,8 @@ def widget(qapp):
 
 
 def _load_exe(widget, monkeypatch):
-    """Load the real exe through the widget's normal path, without the file dialog."""
-    monkeypatch.setattr(widget._exe_dialog, "getOpenFileName",
-                        lambda *args, **kwargs: (str(EXE), ""))
-    widget._load_exe()
+    """Load the real exe through the widget's loader (the shared toolbar passes it the path)."""
+    widget.load_exe(str(EXE))
 
 
 def _model_snapshot(widget):

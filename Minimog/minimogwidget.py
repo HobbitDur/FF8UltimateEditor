@@ -5,7 +5,7 @@ from PyQt6.QtGui import QIcon, QImage, QPixmap
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
                              QListWidget, QSpinBox, QComboBox, QCheckBox, QGroupBox, QFormLayout)
 
-from Common.filebarwidget import FileBarWidget
+from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Minimog.minimogmanager import MinimogManager, Sp1Quad
 from Minimog.texpalettedialog import TexPalettePickerDialog
@@ -34,17 +34,14 @@ class MinimogWidget(QWidget):
         self.setWindowTitle("Minimog")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        # File section. icon.sp1 is shared through the registry (Zone reads it too); the
-        # icon.TEX loaded below is only a preview companion, kept on its own button.
+        # Files, driven by the shared header toolbar. icon.sp1 is the edited file (shared with
+        # Zone, which reads it read-only); icon.TEX is a read-only preview companion, auto-loaded
+        # when it sits next to the .sp1 or opened from the Import complementary button.
         self.file_dialog = QFileDialog()
-        self.file_bar = FileBarWidget("icon.sp1", file_registry, icon_path, "icon.sp1")
-        self.file_bar.file_opened.connect(self.load_file)
-        self.file_bar.save_requested.connect(self.save_file)
-
-        self.tex_button = QPushButton("Load icon.TEX")
-        self.tex_button.setToolTip("Load the icon texture for the preview "
-                                   "(auto-loaded when icon.TEX sits next to the .sp1)")
-        self.tex_button.clicked.connect(self.load_tex_dialog)
+        self.sp1_binding = FileBinding("icon.sp1", file_registry,
+                                       load_callback=self.load_file, save_callback=self.save_file)
+        self.tex_binding = FileBinding("icon.TEX", file_registry, load_callback=self._apply_tex,
+                                       file_filter="*.TEX *.tex", read_only=True)
 
         self.export_tex_button = QPushButton("Export by palette")
         self.export_tex_button.setToolTip(
@@ -66,14 +63,14 @@ class MinimogWidget(QWidget):
         self.export_true_colors_button.setEnabled(False)
         self.export_true_colors_button.clicked.connect(self.export_true_colors)
 
-        self.file_label = QLabel("No file loaded")
+        self.tex_label = QLabel("No texture loaded")
+        self.tex_label.setToolTip("icon.TEX, imported via the header's Import complementary "
+                                  "button (auto-loaded when it sits next to the .sp1)")
 
         file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.file_bar)
-        file_section_layout.addWidget(self.tex_button)
         file_section_layout.addWidget(self.export_tex_button)
         file_section_layout.addWidget(self.export_true_colors_button)
-        file_section_layout.addWidget(self.file_label)
+        file_section_layout.addWidget(self.tex_label)
         file_section_layout.addStretch(1)
 
         # Icon list (left side)
@@ -245,14 +242,19 @@ class MinimogWidget(QWidget):
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
 
-        self.file_bar.load_opened_file()  # Another tool may have opened icon.sp1 already
+        self.sp1_binding.load_opened_file()  # Another tool may have opened icon.sp1 already
+        self.tex_binding.load_opened_file()  # ... or icon.TEX
+
+    def file_bindings(self):
+        """The files the shared header toolbar drives: icon.sp1 (edited) and the read-only
+        icon.TEX companion (the pixels its quads crop from)."""
+        return [self.sp1_binding, self.tex_binding]
 
     # ------------------------------------------------------------------ file
     def load_file(self, file_name):
         self.manager.load_file(file_name)
-        self.file_label.setText(os.path.basename(file_name))
         self.editor_container.setEnabled(True)
-        self._auto_load_tex(os.path.dirname(file_name))
+        self._autoload_tex(os.path.dirname(file_name))
         with QSignalBlocker(self.icon_list):
             self.icon_list.clear()
             self.icon_list.addItems(
@@ -264,29 +266,26 @@ class MinimogWidget(QWidget):
         if self.manager.file_path:
             self.manager.save_file()
 
-    def load_tex_dialog(self):
-        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Search icon.TEX file",
-                                                     filter="*.TEX *.tex", directory=os.getcwd())[0]
-        if file_name:
-            self._load_tex(file_name)
-            self.reload_preview()
-
-    def _auto_load_tex(self, folder):
-        if self.tex_file is not None:
+    def _autoload_tex(self, folder):
+        """Share the icon.TEX sitting next to the opened icon.sp1, so a preview renders
+        straight away. One another tool already shared is kept (single source of truth)."""
+        if self.tex_binding.current_path:
             return
         for name in ("icon.TEX", "icon.tex"):
             tex_path = os.path.join(folder, name)
             if os.path.isfile(tex_path):
-                self._load_tex(tex_path)
+                self.tex_binding.open_path(tex_path)  # -> _apply_tex, here and anywhere else sharing it
                 return
 
-    def _load_tex(self, tex_path):
+    def _apply_tex(self, tex_path):
+        """Load a shared icon.TEX (the read-only binding's callback)."""
         from FF8GameData.tex.texfile import TexFile
         self.tex_file = TexFile.read(tex_path)
-        self.tex_button.setText(os.path.basename(tex_path))
+        self.tex_label.setText(os.path.basename(tex_path))
         self.palette_spinbox.setRange(0, self.tex_file.num_palettes - 1)
         self.export_tex_button.setEnabled(True)
         self.export_true_colors_button.setEnabled(True)
+        self.reload_preview()
 
     def export_true_colors(self):
         file_name = self.file_dialog.getSaveFileName(parent=self, caption="Export by real color",

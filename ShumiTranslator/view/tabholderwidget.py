@@ -1,5 +1,6 @@
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtWidgets import QTabWidget, QSizePolicy, QStyleOptionTabWidgetFrame, QStackedLayout
+from PyQt6.QtWidgets import (QTabWidget, QSizePolicy, QStyleOptionTabWidgetFrame, QStackedLayout,
+                             QScrollArea)
 
 from FF8GameData.gamedata import FileType, SectionType
 from ShumiTranslator.view.sectiontypetabwidget import SectionTypeTabWidget
@@ -12,16 +13,28 @@ class TabHolderWidget(QTabWidget):
         self._file_type = file_type
         self._page_list = []
         if file_type == FileType.MNGRP:
-            self._page_list.append(SectionTypeTabWidget([], section_type=SectionType.MNGRP_STRING))
-            self.addTab( self._page_list[-1], "Tkmnmes")
-            self._page_list.append(SectionTypeTabWidget([], section_type=SectionType.MNGRP_M00MSG))
-            self.addTab(self._page_list[-1], "GF Refining")
-            self._page_list.append(SectionTypeTabWidget([], section_type=SectionType.MNGRP_TEXTBOX))
-            self.addTab(self._page_list[-1], "Tutorial TextBox")
-            self._page_list.append(SectionTypeTabWidget([], section_type=SectionType.FF8_TEXT))
-            self.addTab(self._page_list[-1], "Miscellaneous")
-        self.setSizePolicy(QSizePolicy.Policy.MinimumExpanding,QSizePolicy.Policy.Maximum)
+            self._add_page(SectionType.MNGRP_STRING, "Tkmnmes")
+            self._add_page(SectionType.MNGRP_M00MSG, "GF Refining")
+            self._add_page(SectionType.MNGRP_TEXTBOX, "Tutorial TextBox")
+            self._add_page(SectionType.FF8_TEXT, "Miscellaneous")
+        # Expanding on BOTH axes so the tab holder fills the pane. It used to be Maximum vertically,
+        # which was fine only because each sub-page's sizeHint was the full (huge) stacked height;
+        # now the pages live in their own scroll areas (small sizeHint), so Maximum would pin the
+        # whole thing to a few rows and let the top warning label eat the space instead.
+        self.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Expanding)
         self.currentChanged.connect(self.updateGeometry)
+
+    def _add_page(self, section_type, title):
+        """Each sub-tab's section list goes inside its OWN scroll area. Without one, showing the
+        tab lays out and paints every text box at once (mngrp.bin is thousands of them) and the app
+        locks after loading; a scroll area clips painting to the visible rows so it stays snappy.
+        _page_list keeps the inner SectionTypeTabWidget (what add_section fills), not the scroll."""
+        page = SectionTypeTabWidget([], section_type=section_type)
+        self._page_list.append(page)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(page)
+        self.addTab(scroll, title)
 
     def add_section(self, section_widget:SectionWidget):
         for i in range(len(self._page_list)):

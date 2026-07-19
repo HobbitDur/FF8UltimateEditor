@@ -34,7 +34,7 @@ def widget(qapp):
     from Minimog.minimogwidget import MinimogWidget
     w = MinimogWidget()
     w.manager.load_file(str(MENU_DIR / "icon.sp1"))
-    w._auto_load_tex(str(MENU_DIR))
+    w._autoload_tex(str(MENU_DIR))
     w.editor_container.setEnabled(True)
     w.icon_list.addItems([f"{icon.name} ({len(icon.quads)})" for icon in w.manager.icons])
     return w
@@ -48,7 +48,7 @@ def test_export_buttons_disabled_until_tex_is_loaded(qapp):
     w.manager.load_file(str(MENU_DIR / "icon.sp1"))
     assert not w.export_tex_button.isEnabled(), "loading the sp1 alone isn't enough, TEX is what's exported"
     assert not w.export_true_colors_button.isEnabled()
-    w._auto_load_tex(str(MENU_DIR))
+    w._autoload_tex(str(MENU_DIR))
     assert w.export_tex_button.isEnabled()
     assert w.export_true_colors_button.isEnabled()
 

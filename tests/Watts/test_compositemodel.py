@@ -107,9 +107,9 @@ class _UVManager:
 
 def test_texture_atlas_flattens_and_rebases_ids():
     # model 0 uses raw tex-ids {0, 64} with two textures; model 1 uses {0} with one
-    m0 = _UVManager([((0, 1, 2), (), 0), ((3, 4, 5), (), 64)], [],
+    m0 = _UVManager([((0, 1, 2), (), 0, 0), ((3, 4, 5), (), 64, 0)], [],
                     [_TexDesc("a"), _TexDesc("b")])
-    m1 = _UVManager([((0, 1, 2), (), 0)], [], [_TexDesc("c")])
+    m1 = _UVManager([((0, 1, 2), (), 0, 0)], [], [_TexDesc("c")])
     textures, remap = _build_texture_atlas([(m0, 0, (0, 0, 0)), (m1, 0, (0, 0, 0))])
     # each character's textures stacked in order; ids contiguous per (model, raw-id)
     assert [t.texture_image for t in textures] == ["a", "b", "c"]

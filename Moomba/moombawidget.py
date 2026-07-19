@@ -95,7 +95,7 @@ class MoombaWidget(QWidget):
         self._preview_timer.timeout.connect(self._refresh_preview)
 
     def _build_preview_group(self):
-        self.preview_label = QLabel("Load mngrp.bin to render the page")
+        self.preview_label = QLabel("Open mmag2.bin to render a page")
         self.preview_label.setFixedSize(CANVAS_WIDTH * PREVIEW_SCALE, CANVAS_HEIGHT * PREVIEW_SCALE)
         self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.preview_label.setToolTip(
@@ -114,10 +114,17 @@ class MoombaWidget(QWidget):
         self._preview_timer.start()  # Restarts the countdown on every change
 
     def _refresh_preview(self):
+        # The placeholder must say what is actually missing, not always blame mngrp: it is
+        # shared, so it is often already loaded (e.g. from the mmag.bin tab) and the tab just
+        # needs mmag2.bin opened.
         if self.renderer is None:
+            self.preview_label.setPixmap(QPixmap())
+            self.preview_label.setText("Open mngrp.bin (or the mmag.bin tab) to render the page")
             return
         entry = self._selected_entry()
         if entry is None:
+            self.preview_label.setPixmap(QPixmap())
+            self.preview_label.setText("mngrp.bin ready — open mmag2.bin to render a page")
             return
         image = self.renderer.render(entry)
         qt_image = QImage(image.tobytes("raw", "RGBA"), image.width, image.height,

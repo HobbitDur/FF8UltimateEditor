@@ -26,6 +26,7 @@ class CCGroupWidget(QWidget):
 
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
+        self.file_registry = file_registry
         if settings is None:
             settings = QSettings("HobbitDur", "FF8UltimateEditor")
         self.settings = settings
@@ -121,6 +122,12 @@ class CCGroupWidget(QWidget):
         loader = getattr(active, "load_folder", None)
         if callable(loader):
             loader(folder_path)
+            if active is self.npc_card_game_widget:
+                # Dozens of .jsm files can come out of one field folder - one summary entry in
+                # Opened files instead of one per script (see FileRegistry.summarize_paths).
+                jsm_paths = [f.jsm_path for f in self.npc_card_game_widget.manager.jsm_files]
+                self.file_registry.open_file(
+                    "CCGroup NPC scripts", FileRegistry.summarize_paths(jsm_paths, "script"))
 
     def save_folder(self):
         """The header's Save button, multi-file side: on the NPC tab, save the patched .jsm files."""

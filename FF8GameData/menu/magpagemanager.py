@@ -33,6 +33,13 @@ TEXTURE_CATEGORIES = {
 # The SP2 quad-list sprite table the picture overlays index (mngrp Pos 4).
 SP2_SPRITE_RAW_FILE = 7
 
+# The magazine paper (parchment) tile: a standalone 32x32 8bpp TIM whose header
+# places it at VRAM (896, 192) with CLUT (512, 219) - exactly what
+# Menu_Magazine_DrawPaperBackground samples through the entry's E1/E2 bytes.
+# Found by scanning every game file for a TIM declaring that placement: this is
+# the only one, so the "uploaded separately" tile is simply this raw file.
+PAPER_TILE_RAW_FILE = 12
+
 
 class MagPageManager:
     """Base for the mmag.bin / mmag2.bin editors (see the module docstring)."""

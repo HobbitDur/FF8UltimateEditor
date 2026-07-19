@@ -7,11 +7,12 @@ it to the Ifrit3D viewer (QPixmap textures) and provides the tool UI.
 import os
 
 from PIL.ImageQt import ImageQt
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
                              QListWidget, QFileDialog, QMessageBox, QSplitter, QCheckBox)
 
+from Common.fileregistry import FileRegistry
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Alexander.alexandermanager import AlexanderManager
 
@@ -49,6 +50,22 @@ class ViewerBridge:
     def texture_black_is_transparent(self):
         return self._manager.texture_black_is_transparent
 
+    @property
+    def backface_cull_mode(self):
+        """'all' (the Ifrit3DWidget default) does real per-face, eye-relative
+        culling - correct for monsters, built for the game's one fixed camera
+        direction. A battle stage is orbited freely, so the same geometry is
+        seen from every angle: 'all' made faces pop in/out as the camera moved.
+        'duplicates' still drops truly-coincident duplicate faces (kept to
+        avoid z-fighting) without hiding single-layer stage geometry."""
+        return "duplicates"
+
+    def get_bone_rotation_gizmo(self, *args, **kwargs):
+        """Battle stages have no posable skeleton; the bone_editor guard in
+        Ifrit3DWidget._update_gizmo should already skip this call, but this stub
+        keeps the bridge duck-type-complete in case that guard is ever bypassed."""
+        return None
+
     def get_animated_vertices(self, *args, **kwargs):
         return self._manager.get_animated_vertices(*args, **kwargs)
 
@@ -56,10 +73,12 @@ class ViewerBridge:
         return self._manager.get_skeleton_lines(*args, **kwargs)
 
 # Default framing for a battle stage: a tilted 3/4 aerial view (the stage floor
-# lies in the viewer's X-Y plane, so a large X tilt turns the flat "map" view
-# into a readable arena) plus a fitted zoom that isn't miles away.
+# lies in the viewer's X-Z plane with Y up, so the default rot_x=0 camera looks
+# along -Z - straight into the floor plane, i.e. edge-on - and a large X tilt is
+# what turns that flat "map" view into a readable arena) plus a fitted zoom that
+# isn't miles away.
 STAGE_ROT_X = 25.0
-STAGE_ROT_Y = 180.0
+STAGE_ROT_Y = 0.0
 STAGE_ZOOM_FACTOR = 1.6
 
 # Ifrit3DWidget child widgets that only make sense for animated models; battle
@@ -75,8 +94,18 @@ _ANIM_WIDGETS = ("play_btn", "reset_anim_btn", "fps_label", "fps_slider",
 class AlexanderWidget(QWidget):
     """Alexander: FF8 battle stage viewer (a0stgXXX.x)."""
 
-    def __init__(self, icon_path='Resources', settings=None):
+    # Import/Save readiness changed (opening/importing a stage, not routed through the shared
+    # toolbar's own Import handler) - tells the shared header toolbar to re-check can_save_folder.
+    # Alexander has no FileBinding of its own (a0stgXXX.x has no fixed name, and several are
+    # opened into an internal list at once), so it can't rely on the registry's file_changed signal
+    # the way every other converted tool does.
+    file_bindings_changed = pyqtSignal()
+
+    def __init__(self, icon_path='Resources', settings=None, file_registry=None):
         super().__init__()
+        if file_registry is None:  # Used alone, it shares its files with nobody
+            file_registry = FileRegistry()
+        self.file_registry = file_registry
         self.settings = settings
         self.manager = AlexanderManager()
         self.bridge = ViewerBridge(self.manager)
@@ -90,14 +119,11 @@ class AlexanderWidget(QWidget):
         tl = QHBoxLayout(toolbar)
         tl.setContentsMargins(8, 4, 8, 4)
 
-        self.open_x_btn = QPushButton("Open battle stage(s)...")
-        self.open_x_btn.setStyleSheet("background:#6a8a4e; color:white; padding:4px 12px; border-radius:3px;")
-        self.open_x_btn.setToolTip("Open one or more battle stage files directly (a0stgXXX.x),\n"
-                                   "e.g. extracted with Deling. Select several to switch\n"
-                                   "between them in the list on the left.")
-        self.open_x_btn.clicked.connect(self._open_files)
-        tl.addWidget(self.open_x_btn)
-
+        # Open (one or more battle stages at once) and Save (.x) both run from the shared header
+        # toolbar: Import calls open_files() below (no FileBinding fits a0stgXXX.x - it has no
+        # fixed name and several are opened into the list at once); Save calls save_folder() (it
+        # always needs a destination picker, even for an unedited stage, so it isn't a plain
+        # single-file overwrite either).
         self.export_glb_btn = QPushButton("Export .glb")
         self.export_glb_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
         self.export_glb_btn.setToolTip("Export the whole stage to a .glb (all 4 groups kept as\n"
@@ -114,16 +140,6 @@ class AlexanderWidget(QWidget):
                                        "back so Save can restore the group structure.")
         self.import_glb_btn.clicked.connect(self._import_glb)
         tl.addWidget(self.import_glb_btn)
-
-        self.save_btn = QPushButton("Save .x")
-        self.save_btn.setStyleSheet("background:#8a6a4e; color:white; padding:4px 12px; border-radius:3px;")
-        self.save_btn.setToolTip("Write the current stage to an a0stgXXX.x file.\n"
-                                 "An unedited loaded stage is written byte-for-byte; an\n"
-                                 "imported/edited mesh is re-encoded into the last loaded\n"
-                                 "stage's camera and texture template.")
-        self.save_btn.clicked.connect(self._save_x)
-        self.save_btn.setEnabled(False)
-        tl.addWidget(self.save_btn)
 
         self.cb_sky = QCheckBox("Show sky dome")
         self.cb_sky.setChecked(False)
@@ -172,11 +188,16 @@ class AlexanderWidget(QWidget):
     # ------------------------------------------------------------------ helpers
 
     def _hide_animation_controls(self):
-        """Battle stages are static: remove the animation UI from the viewer."""
+        """Battle stages are static: remove the animation UI from the viewer.
+        Disabling (not just hiding) bone_editor matters: Ifrit3DWidget._update_gizmo()
+        gates on bone_editor.isEnabled() to decide whether to ask the manager for a
+        rotation gizmo, and Alexander's ViewerBridge has no bones/animation frames to
+        answer that with."""
         for attr in _ANIM_WIDGETS:
             w = getattr(self.viewer_3d, attr, None)
             if w is not None:
                 w.hide()
+                w.setEnabled(False)
 
     def _frame_stage(self):
         """Apply Alexander's default camera after a load (the viewer's own
@@ -184,11 +205,8 @@ class AlexanderWidget(QWidget):
         gl = self.viewer_3d.gl_widget
         gl.rot_x = STAGE_ROT_X
         gl.rot_y = STAGE_ROT_Y
-        try:
-            gl.reference_position = [float(c) for c in gl.MODEL_CENTER]
-            gl.zoom = float(gl.MODEL_SIZE) * STAGE_ZOOM_FACTOR
-        except Exception:
-            pass
+        gl.reference_position = [float(c) for c in gl.MODEL_CENTER]
+        gl.zoom = float(gl.MODEL_SIZE) * STAGE_ZOOM_FACTOR
         gl.pan_x = gl.pan_y = 0.0
         gl.update()
 
@@ -226,7 +244,9 @@ class AlexanderWidget(QWidget):
 
     # ------------------------------------------------------------------ actions
 
-    def _open_files(self):
+    def open_files(self):
+        """Open one or more battle stage files at once (the shared header Import button calls
+        this - a0stgXXX.x has no fixed name, and several are loaded into the list together)."""
         file_paths, _ = QFileDialog.getOpenFileNames(
             self, "Open battle stage file(s)", self._last_dir(),
             "Battle stage (a0stg*.x);;All files (*)")
@@ -242,6 +262,11 @@ class AlexanderWidget(QWidget):
         self.file_label.setText(
             f"{len(names)} stage{'s' if len(names) != 1 else ''} loaded")
         self.stage_list.setCurrentRow(0)
+        # a0stgXXX.x has no fixed name, so it can't have its own FileBinding - list it under one
+        # summary entry in the Opened files panel instead (each name when there are few, otherwise
+        # just the count and folder, so opening dozens at once doesn't flood the panel).
+        self.file_registry.open_file(
+            "Alexander battle stage(s)", FileRegistry.summarize_paths(file_paths, "stage"))
 
     def _export_glb(self):
         if not self.manager.is_loaded:
@@ -260,16 +285,22 @@ class AlexanderWidget(QWidget):
         QMessageBox.information(self, "Alexander",
                                f"Exported to {os.path.basename(file_path)}")
 
-    def _save_x(self):
+    def save_folder(self):
+        """Write the current stage back to its a0stgXXX.x (the shared header Save button calls
+        this). Writes straight back to the loaded file, no dialog - unless there is none to write
+        back to (only a .glb was imported, with no original .x of its own), in which case it asks
+        where to save."""
         if not self.manager.can_save:
             QMessageBox.warning(self, "Alexander", "Nothing to save yet.")
             return
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save battle stage", self._last_dir(),
-            "Battle stage (*.x);;All files (*)")
+        file_path = self.manager.current_stage_path
         if not file_path:
-            return
-        self._save_last_dir(file_path)
+            file_path, _ = QFileDialog.getSaveFileName(
+                self, "Save battle stage", self._last_dir(),
+                "Battle stage (*.x);;All files (*)")
+            if not file_path:
+                return
+            self._save_last_dir(file_path)
         try:
             note = self.manager.save(file_path)
         except Exception as e:
@@ -305,7 +336,6 @@ class AlexanderWidget(QWidget):
 
     def _update_sky_button(self):
         """Enable the sky toggle only when the stage actually has a sky dome."""
-        self.save_btn.setEnabled(self.manager.can_save)
         self.export_glb_btn.setEnabled(self.manager.is_loaded)
         has_sky = self.manager.has_sky()
         self.cb_sky.setEnabled(has_sky)
@@ -317,6 +347,13 @@ class AlexanderWidget(QWidget):
             "The sky is a large dome that surrounds and hides the stage;\n"
             "off by default so the stage geometry is visible."
             if has_sky else "This stage has no separate sky dome.")
+        # can_save may have just flipped true (a stage/mesh is now loaded): let the shared header
+        # toolbar re-check can_save_folder (see the file_bindings_changed docstring above).
+        self.file_bindings_changed.emit()
+
+    def can_save_folder(self):
+        """Whether there is a loaded stage/mesh the shared header Save button can write."""
+        return self.manager.can_save
 
     def _on_stage_selected(self, row: int):
         if row < 0 or row >= len(self._stage_names):

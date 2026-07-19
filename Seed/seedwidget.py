@@ -1,12 +1,12 @@
-import os
 import pathlib
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-                             QListWidget, QListWidgetItem, QFileDialog, QMessageBox,
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel,
+                             QListWidget, QListWidgetItem, QMessageBox,
                              QSplitter)
 
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Seed.seedmanager import SeedManager
 
@@ -14,8 +14,11 @@ from Seed.seedmanager import SeedManager
 class SeedWidget(QWidget):
     """Seed: field character model viewer (chara.one / main_chr .mch)."""
 
-    def __init__(self, icon_path='Resources', settings=None):
+    def __init__(self, icon_path='Resources', settings=None, file_registry=None):
         super().__init__()
+        if file_registry is None:  # Used alone, it shares its files with nobody
+            file_registry = FileRegistry()
+        self.file_registry = file_registry
         self.settings = settings
         self.seed_manager = SeedManager()
 
@@ -23,49 +26,17 @@ class SeedWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # --- Toolbar ---
-        toolbar = QWidget()
-        toolbar.setStyleSheet("background:#2a2a2f; padding:5px;")
-        toolbar_layout = QHBoxLayout(toolbar)
-        toolbar_layout.setContentsMargins(8, 4, 8, 4)
-
-        self.open_one_btn = QPushButton("Open chara.one")
-        self.open_one_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
-        self.open_one_btn.setToolTip("Open a field chara.one file (field/mapdata/<zone>/<field>/chara.one).\n"
-                                     "It contains the NPC models of the field and the animations of the\n"
-                                     "main characters appearing in it.")
-        self.open_one_btn.clicked.connect(self._open_chara_one)
-        toolbar_layout.addWidget(self.open_one_btn)
-
-        self.open_mch_btn = QPushButton("Open .mch")
-        self.open_mch_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
-        self.open_mch_btn.setToolTip("Open a main character model (field/model/main_chr/d0xx.mch)\n"
-                                     "standalone. Only its rest pose is available: field animations\n"
-                                     "are stored per field in chara.one.")
-        self.open_mch_btn.clicked.connect(self._open_mch)
-        toolbar_layout.addWidget(self.open_mch_btn)
-
-        self.save_one_btn = QPushButton("Save chara.one")
-        self.save_one_btn.setStyleSheet("background:#6a8a4e; color:white; padding:4px 12px; border-radius:3px;")
-        self.save_one_btn.setToolTip("Write the chara.one back with the animations of every model\n"
-                                     "modified in this session (bone edits, 60 FPS conversions...).\n"
-                                     "Modifications survive switching between models of the file.")
-        self.save_one_btn.clicked.connect(self._save_chara_one)
-        toolbar_layout.addWidget(self.save_one_btn)
-
-        self.main_chr_btn = QPushButton("Set main_chr folder")
-        self.main_chr_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
-        self.main_chr_btn.setToolTip("Folder containing the d0xx.mch main character models\n"
-                                     "(field/model/main_chr). Auto-detected when possible.")
-        self.main_chr_btn.clicked.connect(self._choose_main_chr_folder)
-        toolbar_layout.addWidget(self.main_chr_btn)
-
-        self.file_label = QLabel("No file loaded")
-        self.file_label.setStyleSheet("color:#aaa; padding:4px 8px;")
-        toolbar_layout.addWidget(self.file_label)
-        toolbar_layout.addStretch()
-
-        main_layout.addWidget(toolbar)
+        # Files, driven by the shared header toolbar. chara.one is the edited/saved file; the
+        # standalone field character model is a second, view-only main file (no save - only
+        # chara.one is ever written back). The main_chr folder (the main characters' models,
+        # auto-detected from chara.one's path when possible) is set from the header's Open-folder
+        # button, the same load_folder() hook CCGroup's NPC tab uses.
+        self.chara_one_binding = FileBinding(
+            "chara.one", file_registry, load_callback=self.load_chara_one,
+            save_callback=self._save_chara_one, file_filter="chara.one;;*.one")
+        self.mch_binding = FileBinding(
+            "field character model (.mch)", file_registry, load_callback=self.load_mch,
+            file_filter="*.mch")
 
         # --- Model list + 3D viewer ---
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -97,16 +68,26 @@ class SeedWidget(QWidget):
             if saved_folder and pathlib.Path(saved_folder).is_dir():
                 self.seed_manager.main_chr_folder = pathlib.Path(saved_folder)
 
-    def _last_dir(self) -> str:
-        if self.settings:
-            return self.settings.value("seed/last_dir", defaultValue="", type=str)
-        return ""
+        self.chara_one_binding.load_opened_file()  # Another tool instance may have opened one
+        self.mch_binding.load_opened_file()
 
-    def _save_last_dir(self, file_path: str):
-        if self.settings:
-            self.settings.setValue("seed/last_dir", os.path.dirname(file_path))
+    def file_bindings(self):
+        """The files the shared header toolbar drives: chara.one (edited/saved) and a standalone
+        field character model (view-only - only chara.one is ever written back)."""
+        return [self.chara_one_binding, self.mch_binding]
 
-    def _open_chara_one(self):
+    def load_folder(self, folder_path):
+        """The header's Open-folder button: set the main_chr folder (the d0xx.mch main character
+        models chara.one's "main" entries load from). load_chara_one already auto-detects it from
+        the chara.one path when possible - this is for overriding or supplying it by hand."""
+        self.seed_manager.main_chr_folder = pathlib.Path(folder_path)
+        if self.settings:
+            self.settings.setValue("seed/main_chr_folder", folder_path)
+        # It's a folder setting, not a single FF8 file, but still worth a line in Opened files.
+        self.file_registry.open_file("Seed main_chr folder", folder_path)
+
+    def load_chara_one(self, file_path):
+        """Load a field chara.one (path from the shared header toolbar)."""
         modified = self.seed_manager.modified_entry_names()
         if modified:
             answer = QMessageBox.question(
@@ -116,20 +97,18 @@ class SeedWidget(QWidget):
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             if answer != QMessageBox.StandardButton.Yes:
                 return
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open chara.one", self._last_dir(),
-                                                   "Field model container (*.one);;All files (*)")
-        if not file_path:
-            return
-        self._save_last_dir(file_path)
         try:
             entries = self.seed_manager.load_chara_one(file_path)
         except Exception as e:
             QMessageBox.critical(self, "Seed", f"Could not read {file_path}:\n{e}")
             return
-        self.file_label.setText(f"{pathlib.Path(file_path).parent.name}/chara.one "
-                                f"({len(entries)} models)")
-        if self.settings and self.seed_manager.main_chr_folder:
-            self.settings.setValue("seed/main_chr_folder", str(self.seed_manager.main_chr_folder))
+        if self.seed_manager.main_chr_folder:
+            # Usually auto-detected here (not through the explicit Open-folder override below),
+            # so this is where it needs to be reflected in Opened files for the common case too.
+            folder = str(self.seed_manager.main_chr_folder)
+            if self.settings:
+                self.settings.setValue("seed/main_chr_folder", folder)
+            self.file_registry.open_file("Seed main_chr folder", folder)
         self.model_list.blockSignals(True)
         self.model_list.clear()
         for entry in entries:
@@ -142,24 +121,21 @@ class SeedWidget(QWidget):
         if entries:
             self.model_list.setCurrentRow(0)
 
-    def _open_mch(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open field character model", self._last_dir(),
-                                                   "Field character model (*.mch);;All files (*)")
-        if not file_path:
-            return
-        self._save_last_dir(file_path)
+    def load_mch(self, file_path):
+        """Load a standalone field character model (path from the shared header toolbar)."""
         try:
             self.seed_manager.load_mch(file_path)
         except Exception as e:
             QMessageBox.critical(self, "Seed", f"Could not read {file_path}:\n{e}")
             return
-        self.file_label.setText(pathlib.Path(file_path).name)
         self.model_list.blockSignals(True)
         self.model_list.clear()
         self.model_list.blockSignals(False)
         self.viewer_3d.load_file()
 
     def _save_chara_one(self):
+        """Write the chara.one back with every model's animations modified this session (the
+        shared header Save button calls this). Other entries are copied unchanged."""
         if not self.seed_manager.chara_one:
             QMessageBox.warning(self, "Seed", "Open a chara.one and select a model first.")
             return
@@ -168,28 +144,14 @@ class SeedWidget(QWidget):
             QMessageBox.information(self, "Seed", "No animation changes to save: the file "
                                                   "would be identical to the original.")
             return
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save chara.one",
-                                                   str(self.seed_manager.chara_one_path or self._last_dir()),
-                                                   "Field model container (*.one);;All files (*)")
-        if not file_path:
-            return
         try:
-            saved = self.seed_manager.save_chara_one(file_path)
+            saved = self.seed_manager.save_chara_one(self.seed_manager.chara_one_path)
         except Exception as e:
-            QMessageBox.critical(self, "Seed", f"Could not save {file_path}:\n{e}")
+            QMessageBox.critical(self, "Seed", f"Could not save {self.seed_manager.chara_one_path}:\n{e}")
             return
         QMessageBox.information(self, "Seed",
                                 f"Saved.\nAnimations written for: {', '.join(saved)}.\n"
                                 f"All other models were copied unchanged from the original file.")
-
-    def _choose_main_chr_folder(self):
-        start = str(self.seed_manager.main_chr_folder or self._last_dir())
-        folder = QFileDialog.getExistingDirectory(self, "Select main_chr folder", start)
-        if not folder:
-            return
-        self.seed_manager.main_chr_folder = pathlib.Path(folder)
-        if self.settings:
-            self.settings.setValue("seed/main_chr_folder", folder)
 
     def _on_model_selected(self, row: int):
         if row < 0 or not self.seed_manager.chara_one:

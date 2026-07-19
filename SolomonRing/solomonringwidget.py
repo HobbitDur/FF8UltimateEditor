@@ -1,10 +1,8 @@
 import json
 import os
 
-from PyQt6.QtCore import QSize
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
-    QTabWidget, QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
+    QTabWidget, QWidget, QVBoxLayout
 )
 
 from Common.filebinding import FileBinding
@@ -85,49 +83,11 @@ class SolomonRingWidget(QWidget):
         main_layout = QVBoxLayout()
 
         # --- File toolbar -----------------------------------------------------
-        # kernel.bin's Import / Save live in the shared header toolbar (via this binding);
-        # the reload / compress / uncompress buttons below are kernel-specific, kept here.
+        # kernel.bin's Import / Save / Reload live in the shared header toolbar (via this binding),
+        # and so do the Compress / Uncompress text buttons (via compress_text / uncompress_text,
+        # shown only for tools that have them). Nothing tool-specific left to show here.
         self.kernel_binding = FileBinding("kernel.bin", file_registry,
                                           load_callback=self.load_file, save_callback=self._save_kernel)
-        file_layout = QHBoxLayout()
-
-        self.reload_button = QPushButton()
-        self.reload_button.setIcon(QIcon(os.path.join(icon_path, "reset.png")))
-        self.reload_button.setIconSize(QSize(30, 30))
-        self.reload_button.setFixedSize(40, 40)
-        self.reload_button.clicked.connect(self._reload_kernel)
-        self.reload_button.setToolTip(
-            "Reload the current file from disk (e.g. after another tool/agent changed it) - "
-            "keeps you on the same tab and entry instead of jumping back to the start.")
-        self.reload_button.setEnabled(False)
-        file_layout.addWidget(self.reload_button)
-
-        self.compress_button = QPushButton()
-        self.compress_button.setIcon(QIcon(os.path.join(icon_path, "compress.png")))
-        self.compress_button.setIconSize(QSize(30, 30))
-        self.compress_button.setFixedSize(40, 40)
-        self.compress_button.clicked.connect(self._compress_all_text)
-        self.compress_button.setToolTip(
-            "Compress all kernel text: replaces common letter pairs with the game's built-in\n"
-            "compression tokens (shown as {..}), shrinking every name/description. Mirrors\n"
-            "ShumiTranslator; respects each section's compressibility.")
-        file_layout.addWidget(self.compress_button)
-
-        self.uncompress_button = QPushButton()
-        self.uncompress_button.setIcon(QIcon(os.path.join(icon_path, "uncompress.png")))
-        self.uncompress_button.setIconSize(QSize(30, 30))
-        self.uncompress_button.setFixedSize(40, 40)
-        self.uncompress_button.clicked.connect(self._uncompress_all_text)
-        self.uncompress_button.setToolTip(
-            "Uncompress all kernel text: expands the {..} compression tokens back to plain\n"
-            "letters in every name/description (makes text readable / editable).")
-        file_layout.addWidget(self.uncompress_button)
-
-        self.file_label = QLabel("No file loaded")
-        self.file_label.setStyleSheet("color: gray; font-style: italic;")
-        file_layout.addWidget(self.file_label)
-        file_layout.addStretch()
-        main_layout.addLayout(file_layout)
 
         # --- Section tabs -----------------------------------------------------
         self.tabs = QTabWidget()
@@ -179,18 +139,6 @@ class SolomonRingWidget(QWidget):
         self.kernel_manager.load_file(filename)
         self._populate_tabs()
         self.tabs.setEnabled(True)
-        self.reload_button.setEnabled(True)
-        self.file_label.setText(filename)
-        self.file_label.setStyleSheet("color: black;")
-
-    def _reload_kernel(self):
-        """Re-read the currently open file from disk (e.g. after another tool/agent
-        wrote to it) without resetting which tab/entry you're looking at - the outer
-        QTabWidget's current index is never touched by load_file/_populate_tabs, and
-        each KernelSectionTab.load_section() now restores its own prior selection and
-        scroll position, so this is just load_file() again on the same path."""
-        if self.loaded_filename:
-            self.load_file(self.loaded_filename)
 
     def _populate_tabs(self):
         by_id = {s.id: s for s in self.kernel_manager.section_list if s}
@@ -283,7 +231,8 @@ class SolomonRingWidget(QWidget):
         if section_id == 2:
             self._refresh_magic_names()
 
-    def _compress_all_text(self):
+    def compress_text(self):
+        """Compress all kernel text (the shared toolbar's Compress button calls this)."""
         if not self.loaded_filename:
             return
         by_id = {s.id: s for s in self.kernel_manager.section_list if s}
@@ -299,7 +248,8 @@ class SolomonRingWidget(QWidget):
                     text.compress_str(3)
         self._populate_tabs()
 
-    def _uncompress_all_text(self):
+    def uncompress_text(self):
+        """Uncompress all kernel text (the shared toolbar's Uncompress button calls this)."""
         if not self.loaded_filename:
             return
         for text_section in self._all_text_sections():
@@ -321,4 +271,3 @@ class SolomonRingWidget(QWidget):
         self._refresh_magic_names()
         self.kernel_manager.save_file(self.loaded_filename)
         print(f"Saved to {self.loaded_filename}")
-        self.file_label.setText(f"{self.loaded_filename}  (saved)")

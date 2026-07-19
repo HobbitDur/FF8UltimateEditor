@@ -75,7 +75,7 @@ class CameraPreviewPanel(QWidget):
 
     _FPS = 15
 
-    def __init__(self, ifrit_manager, parent=None):
+    def __init__(self, ifrit_manager, parent=None, show_model_animation=True):
         super().__init__(parent)
         self.ifrit_manager = ifrit_manager
         self.setMinimumWidth(320)
@@ -118,17 +118,25 @@ class CameraPreviewPanel(QWidget):
         controls.addWidget(self._play_button)
         controls.addWidget(self._slider, 1)
         controls.addWidget(self._tick_label)
-        model_row = QHBoxLayout()
+        # The model-animation picker only makes sense when previewing a single model that
+        # carries several animations (Ifrit's monster camera tab). Callers previewing a fixed
+        # scene - e.g. Watts' composite victory pose, always anim 0 - hide it via
+        # show_model_animation=False while the controls stay functional at their defaults.
+        self._model_row = QWidget()
+        model_row = QHBoxLayout(self._model_row)
+        model_row.setContentsMargins(0, 0, 0, 0)
         model_row.addWidget(self._animate_model)
         model_row.addWidget(QLabel("anim:"))
         model_row.addWidget(self._model_anim_spin)
         model_row.addStretch(1)
+        if not show_model_animation:
+            self._model_row.hide()
 
         self._layout = QVBoxLayout(self)
         self._layout.addWidget(QLabel("Camera preview"))
         self._layout.addWidget(self._placeholder, 1)
         self._layout.addLayout(controls)
-        self._layout.addLayout(model_row)
+        self._layout.addWidget(self._model_row)
         self._layout.addWidget(self._readout)
         self._set_controls_enabled(False)
 

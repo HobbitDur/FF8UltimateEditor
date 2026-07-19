@@ -10,7 +10,8 @@ animations and hundreds of keyframe fields, and building them all up front would
 """
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
-                             QPushButton, QSpinBox, QGroupBox, QSizePolicy)
+                             QPushButton, QSpinBox, QGroupBox, QSizePolicy,
+                             QGraphicsOpacityEffect)
 
 
 class _NoWheelSpinBox(QSpinBox):
@@ -30,6 +31,8 @@ class _CollapsibleBox(QWidget):
         self._toggle = QPushButton(f"▶ {title}")
         self._toggle.setStyleSheet("text-align: left;")
         self._toggle.setCheckable(True)
+        # Shrink each set header to its text width instead of stretching across the panel.
+        self._toggle.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         self._toggle.clicked.connect(self._on_toggle)
         self._title = title
         self._content = QWidget()
@@ -42,6 +45,11 @@ class _CollapsibleBox(QWidget):
         layout.addWidget(self._toggle)
         layout.addWidget(self._content)
         self.setLayout(layout)
+        # Whole-box fade used to grey the set out; theme-independent, unlike relying on the
+        # subtle default disabled look.
+        self._dim = QGraphicsOpacityEffect(self)
+        self._dim.setOpacity(1.0)
+        self.setGraphicsEffect(self._dim)
 
     def _on_toggle(self, checked):
         if checked and not self._built:
@@ -49,6 +57,20 @@ class _CollapsibleBox(QWidget):
             self._built = True
         self._content.setVisible(checked)
         self._toggle.setText(f"{'▼' if checked else '▶'} {self._title}")
+
+    def set_available(self, available: bool):
+        """Grey out and lock this box when it does not apply. Combines three cues so it reads
+        as unavailable on any Qt theme, not just the subtle default disabled look: it locks
+        interaction, fades the whole box, and appends the reason to the header text."""
+        self.setEnabled(available)
+        self._dim.setOpacity(1.0 if available else 0.35)
+        title = self._title if available else f"{self._title}  [unavailable]"
+        self._toggle.setStyleSheet("text-align: left;" if available
+                                   else "text-align: left; color: gray;")
+        if not available and self._toggle.isChecked():  # collapse it
+            self._toggle.setChecked(False)
+            self._content.hide()
+        self._toggle.setText(f"{'▼' if self._toggle.isChecked() else '▶'} {title}")
 
 
 class CameraCollectionWidget(QWidget):
@@ -65,6 +87,20 @@ class CameraCollectionWidget(QWidget):
         ("LookInt", "look_interp_mode"),
         ("LookX", "look_x"), ("LookY", "look_y"), ("LookZ", "look_z"),
     ]
+    # Hover help per keyframe column (shown on both the header and each field).
+    _COLUMN_TOOLTIPS = {
+        "duration": "How long this keyframe holds, in engine ticks (the camera advances "
+                    "16 units of animation time per frame).",
+        "pos_interp_mode": "Interpolation/easing mode for the camera position between this "
+                           "keyframe and the next.",
+        "pos_x": "Camera position X (where the camera is).",
+        "pos_y": "Camera position Y (where the camera is).",
+        "pos_z": "Camera position Z (where the camera is).",
+        "look_interp_mode": "Interpolation/easing mode for the look-at target.",
+        "look_x": "Look-at target X (what the camera aims at).",
+        "look_y": "Look-at target Y (what the camera aims at).",
+        "look_z": "Look-at target Z (what the camera aims at).",
+    }
 
     def __init__(self, collection, set_notes=None):
         QWidget.__init__(self)
@@ -92,7 +128,7 @@ class CameraCollectionWidget(QWidget):
         """Grey out the sets whose index is not in `indices` (None = all enabled), e.g. to
         show only the sets that match the number of imported party members."""
         for index, box in self._set_boxes.items():
-            box.setEnabled(indices is None or index in indices)
+            box.set_available(indices is None or index in indices)
 
     def _make_set_builder(self, camera_set):
         def build(target_layout):
@@ -125,14 +161,21 @@ class CameraCollectionWidget(QWidget):
 
         header = (f"Block {block_index}: FOV mode {block.fov_mode}, roll mode "
                   f"{block.roll_mode}, layout {block.layout}")
-        container_layout.addWidget(QLabel(header))
+        header_label = QLabel(header)
+        header_label.setToolTip("One chained camera move: FOV mode, roll (camera tilt) "
+                                "mode and keyframe layout, followed by its keyframes below.")
+        container_layout.addWidget(header_label)
 
         optional = block.optional_fields()
         if optional:
             optional_row = QHBoxLayout()
             for label, field in optional:
-                optional_row.addWidget(QLabel(label + ":"))
-                optional_row.addWidget(self._spin_for(field))
+                field_label = QLabel(label + ":")
+                field_label.setToolTip(f"Optional block parameter: {label}")
+                optional_row.addWidget(field_label)
+                spin = self._spin_for(field)
+                spin.setToolTip(f"Optional block parameter: {label}")
+                optional_row.addWidget(spin)
             optional_row.addStretch(1)
             container_layout.addLayout(optional_row)
 
@@ -140,12 +183,16 @@ class CameraCollectionWidget(QWidget):
         grid.setHorizontalSpacing(4)
         grid.setVerticalSpacing(2)
         for column, (label, _attribute) in enumerate(self._FRAME_COLUMNS):
-            grid.addWidget(QLabel(label), 0, column + 1)
+            header = QLabel(label)
+            header.setToolTip(self._COLUMN_TOOLTIPS.get(_attribute, ""))
+            grid.addWidget(header, 0, column + 1)
         for row, frame in enumerate(block.frames):
             grid.addWidget(QLabel(f"#{row}"), row + 1, 0)
             for column, (label, _attribute) in enumerate(self._FRAME_COLUMNS):
                 field = getattr(frame, _attribute)
-                grid.addWidget(self._spin_for(field), row + 1, column + 1)
+                spin = self._spin_for(field)
+                spin.setToolTip(self._COLUMN_TOOLTIPS.get(_attribute, ""))
+                grid.addWidget(spin, row + 1, column + 1)
         # Absorb all slack in a trailing empty column so the fields stay packed left
         grid.setColumnStretch(len(self._FRAME_COLUMNS) + 1, 1)
         grid_row = QHBoxLayout()

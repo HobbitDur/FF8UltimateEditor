@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"
+     stroke="#0d3a66" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+  <!-- two vertical bars: the text block being expanded -->
+  <line x1="21" y1="6" x2="21" y2="42"/>
+  <line x1="27" y1="6" x2="27" y2="42"/>
+  <!-- left arrow pointing outward -->
+  <line x1="18" y1="24" x2="7" y2="24"/>
+  <path d="M13 17 L4 24 L13 31 Z" fill="#f6c078"/>
+  <!-- right arrow pointing outward -->
+  <line x1="30" y1="24" x2="41" y2="24"/>
+  <path d="M35 17 L44 24 L35 31 Z" fill="#f6c078"/>
+</svg>

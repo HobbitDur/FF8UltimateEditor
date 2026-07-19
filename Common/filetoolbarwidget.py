@@ -2,7 +2,7 @@ import os
 
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox
+from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QMenu
 
 from Common.fileregistry import FileRegistry
 
@@ -16,11 +16,14 @@ class FileToolbarWidget(QWidget):
     a tool that does not is simply inert here (the buttons grey out for it). A tool whose files
     change with an inner tab exposes a ``file_bindings_changed`` signal, which refreshes this bar.
 
-    - Import: opens the file(s) the active tool edits (its writable "main" bindings).
+    - Import: opens the file(s) the active tool edits (its writable "main" bindings). A tool whose
+      open doesn't fit one-FF8-name-per-path (e.g. Alexander's multi-select of several a0stgXXX.x
+      at once) implements ``open_files(self)`` instead and pops its own dialog.
     - Import complementary: opens the read-only file(s) it only reads to feed its preview (shared,
       each edited in another tool). Several at once when the tool has several (e.g. Zone reads
       five); disabled when the active tool has none.
-    - Save: writes the active tool's main file(s) back.
+    - Save: writes the active tool's main file(s) back, and/or its ``save_folder()`` if it has one
+      (also used by tools whose save always needs a destination picker, like Alexander's).
     """
 
     def __init__(self, tool_stack, registry: FileRegistry, icon_path="Resources"):
@@ -56,6 +59,19 @@ class FileToolbarWidget(QWidget):
             "(pick the 'field' folder to load the .jsm/.sym card players)")
         self.open_folder_button.clicked.connect(self._open_folder)
 
+        # Text compress / uncompress: only for tools that carry compressible game text (kernel,
+        # ShumiTranslator...). Hidden for every other tool (see _refresh).
+        self.compress_button = self._icon_button(
+            icon_path, 'compress_text.svg',
+            "Compress all text: replace common letter pairs with the game's built-in compression "
+            "tokens ({..}), shrinking every name/description")
+        self.compress_button.clicked.connect(self._compress)
+
+        self.uncompress_button = self._icon_button(
+            icon_path, 'uncompress_text.svg',
+            "Uncompress all text: expand the {..} compression tokens back to plain, editable letters")
+        self.uncompress_button.clicked.connect(self._uncompress)
+
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.import_button)
@@ -63,6 +79,8 @@ class FileToolbarWidget(QWidget):
         layout.addWidget(self.save_button)
         layout.addWidget(self.reload_button)
         layout.addWidget(self.open_folder_button)
+        layout.addWidget(self.compress_button)
+        layout.addWidget(self.uncompress_button)
         self.setLayout(layout)
 
         self.tool_stack.currentChanged.connect(self._on_tool_changed)
@@ -91,19 +109,45 @@ class FileToolbarWidget(QWidget):
         return [binding for binding in self._bindings() if binding.read_only]
 
     # -- actions --------------------------------------------------------------------
+    def _import_entries(self):
+        """Every independent thing Import can open for the active tool: one (label, opener)
+        pair per main FileBinding, plus - if the tool defines one - its open_files() hook (a
+        multi-select of a wildcard name with no fixed FF8 name, e.g. Alexander's a0stgXXX.x or
+        ShumiTranslator's c0mxx.dat) as one more, equally independent entry. All of them can
+        coexist in the same menu: a tool with several fixed-name files and a wildcard multi-select
+        (ShumiTranslator) offers every one of them side by side, none more special than another."""
+        entries = [(binding.file_name, (lambda b=binding: b.open_dialog(self)))
+                  for binding in self._main_bindings()]
+        opener = getattr(self.tool_stack.currentWidget(), "open_files", None)
+        if callable(opener):
+            active = self.tool_stack.currentWidget()
+            label = getattr(active, "open_files_label", "Import files")
+            entries.append((label, opener))
+        return entries
+
     def _import_main(self):
-        bindings = self._main_bindings()
-        if len(bindings) == 1:
-            bindings[0].open_dialog(self)
-        elif bindings:
-            self._open_several(bindings, "Import the files this tool edits")
+        entries = self._import_entries()
+        if len(entries) == 1:
+            entries[0][1]()
+        elif entries:
+            self._pick_from_menu(entries, self.import_button)
 
     def _import_complementary(self):
+        # Complementary files share the "these exact names" pattern (e.g. Zone's five), so one
+        # multi-select dialog can bring in any number at once.
         bindings = self._complementary_bindings()
         if len(bindings) == 1:
             bindings[0].open_dialog(self)
         elif bindings:
             self._open_several(bindings, "Open the complementary files (several at once is fine)")
+
+    def _pick_from_menu(self, entries, source_button):
+        """Drop a menu under the button; each (label, callback) entry opens its own thing."""
+        menu = QMenu(self)
+        for label, callback in entries:
+            action = menu.addAction(label)
+            action.triggered.connect(lambda _checked=False, cb=callback: cb())
+        menu.exec(source_button.mapToGlobal(source_button.rect().bottomLeft()))
 
     def _open_several(self, bindings, caption):
         """One multi-select dialog for several files, routing each pick to its binding by name."""
@@ -128,6 +172,22 @@ class FileToolbarWidget(QWidget):
         """Whether the active tool has a multi-file (folder) save with something to write."""
         predicate = getattr(self.tool_stack.currentWidget(), "can_save_folder", None)
         return bool(predicate()) if callable(predicate) else False
+
+    def _supports_text_compression(self):
+        """Whether the active tool carries compressible game text (kernel, ShumiTranslator...)."""
+        active = self.tool_stack.currentWidget()
+        return callable(getattr(active, "compress_text", None)) and \
+            callable(getattr(active, "uncompress_text", None))
+
+    def _compress(self):
+        active = self.tool_stack.currentWidget()
+        if callable(getattr(active, "compress_text", None)):
+            active.compress_text()
+
+    def _uncompress(self):
+        active = self.tool_stack.currentWidget()
+        if callable(getattr(active, "uncompress_text", None)):
+            active.uncompress_text()
 
     def _open_folder(self):
         """Pick a folder and open every file a tool can read that is found in it or its subfolders.
@@ -211,10 +271,14 @@ class FileToolbarWidget(QWidget):
     def _refresh(self):
         main_bindings = self._main_bindings()
         complementary_bindings = self._complementary_bindings()
-        self.import_button.setEnabled(bool(main_bindings))
+        self.import_button.setEnabled(bool(self._import_entries()))
         self.import_complementary_button.setEnabled(bool(complementary_bindings))
         # Save covers the tool's single-file bindings AND any multi-file (folder) save it has.
         self.save_button.setEnabled(
             any(binding.is_loaded for binding in main_bindings) or self._can_save_folder())
         # Reload acts on every opened file across all tools, not just the active one.
         self.reload_button.setEnabled(bool(self.registry.paths))
+        # Compress / Uncompress show only for tools that carry compressible game text.
+        supports_compression = self._supports_text_compression()
+        self.compress_button.setVisible(supports_compression)
+        self.uncompress_button.setVisible(supports_compression)

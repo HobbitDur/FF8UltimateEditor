@@ -1,12 +1,14 @@
 import os
 import pathlib
-from PyQt6.QtCore import QSettings, Qt
+from PyQt6.QtCore import QSettings, Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTabWidget, QMessageBox, QCheckBox, QProgressDialog, QApplication
+    QTabWidget, QMessageBox, QCheckBox, QProgressDialog, QApplication,
+    QListWidget, QSplitter, QFileDialog, QComboBox, QLineEdit, QSpinBox,
+    QDoubleSpinBox, QAbstractButton, QPlainTextEdit, QTextEdit, QStackedWidget,
+    QDialog, QDialogButtonBox
 )
-from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Ifrit.IfritAI.ifritaiwidget import IfritAIWidget
 from Ifrit.ifritmanager import IfritManager
@@ -15,6 +17,8 @@ from Ifrit.fpsbatchdialog import (FpsBatchDialog, FpsBatchReportDialog,
 from Ifrit.IfritDynamicTexture.ifritdynamictexturewidget import IfritDynamicTextureWidget
 from Ifrit.IfritSeq.ifritseqwidget import IfritSeqWidget
 from Ifrit.IfritCameraSeq.ifritcameraseqwidget import IfritCameraSeqWidget, _CAMERA_SECTION_BY_ENTITY
+from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
+from Ifrit.IfritDynamicTexture.texturepreviewwidget import TexturePreviewWidget
 from FF8GameData.monsterdata import EntityType
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Ifrit.IfritTexture.ifrittexturewidget import IfritTextureWidget
@@ -62,37 +66,331 @@ _3D_SECTIONS_BY_ENTITY = {
 }
 
 
-class IfritMonsterWidget(QWidget):
-    """IfritAI + IfritSeq + Ifrit3D with a single shared file toolbar."""
+class IfritFilePane(QWidget):
+    """The whole tab editor (3D / Dynamic Texture / Sequence / Camera / Stat / AI / Static
+    Texture) for ONE loaded .dat file, backed by its own IfritManager.
 
-    def __init__(self, settings:QSettings, icon_path="Resources", game_data_folder="FF8GameData",
+    One of these exists per loaded file. Because each pane keeps its own widgets and its own
+    manager (enemy + textures) alive, switching files in the shell is a pure show/hide - no tab
+    is rebuilt and no data is reloaded once a pane exists. The tabs inside a pane are still built
+    lazily the first time each is opened (so a pane the user only glances at doesn't pay for the
+    3D GL build), and stay built afterwards."""
+
+    dirty_changed = pyqtSignal()   # emitted when this file first becomes edited-but-unsaved
+
+    def __init__(self, ifrit_manager: IfritManager, path: str, settings: QSettings,
+                 icon_path="Resources"):
+        super().__init__()
+        self.ifrit_manager = ifrit_manager   # its enemy + textures are already set for `path`
+        self.path = path
+        self.settings = settings
+        self.icon_path = icon_path
+        self.dirty = False
+        self._edited = set()              # commit-needing sections the user changed (seq/camera/...)
+        self._loading = False             # True while populating widgets: suppresses dirty flagging
+        self._dirty_connected = set()     # id()s of widgets already wired for edit detection
+        self._loaded_tabs = set()         # tabs already populated (built once, kept)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # ── Editor widgets (each bound to THIS pane's manager) ───────────
+        self._ai_widget = IfritAIWidget(settings, ifrit_manager, icon_path=icon_path)
+        self._seq_widget = IfritSeqWidget(ifrit_manager, icon_path=icon_path)
+        self._camera_widget = IfritCameraSeqWidget(ifrit_manager, icon_path=icon_path)
+        self._3d_widget = Ifrit3DWidget(ifrit_manager, show_controls=True)
+        self._texture_widget = IfritTextureWidget(ifrit_manager)
+        self._xlsx_widget = IfritXlsxWidget(ifrit_manager)
+        self._stat_widget = IfritStatWidget(ifrit_manager, icon_path=icon_path)
+        self._name_widget = IfritMonsterNameWidget(ifrit_manager)
+        self._battle_text_widget = IfritBattleTextWidget(ifrit_manager)
+        self._dynamic_texture_widget = IfritDynamicTextureWidget(ifrit_manager)
+
+        # Name/Stat/StatExcel all edit section 7 -> one "Stat" tab. Battle text edits section 8
+        # like AI -> lives under "AI".
+        self._stat_container = QTabWidget()
+        self._stat_container.addTab(self._name_widget, "Name")
+        self._stat_container.addTab(self._stat_widget, "Editor")
+        self._stat_container.addTab(self._xlsx_widget, "Excel (xlsx)")
+        self._ai_container = QTabWidget()
+        self._ai_container.addTab(self._ai_widget, "AI script")
+        self._ai_container.addTab(self._battle_text_widget, "Battle text")
+
+        self._tabs = QTabWidget()
+        self._tabs.addTab(self._3d_widget, "1/2/3 - 3D")
+        self._tabs.addTab(self._dynamic_texture_widget, "4 - Dynamic Texture")
+        self._tabs.addTab(self._seq_widget, "5 - Sequence")
+        self._tabs.addTab(self._camera_widget, "6 - Camera")
+        self._tabs.addTab(self._stat_container, "7 - Stat")
+        self._tabs.addTab(self._ai_container, "8 - AI")
+        self._tabs.addTab(self._texture_widget, "11 - Static Texture")
+        self._tabs.setCurrentIndex(settings.value("ifrit/current_tab", defaultValue=0, type=int))
+        self._tabs.currentChanged.connect(self._on_tab_changed)
+        layout.addWidget(self._tabs)
+
+        self._connect_3d_edit_signals()
+        self._loading = True
+        self._apply_visibility()
+        # Load EVERY tab now, not just the visible one, so moving between this monster's tabs is
+        # instant afterwards. The pane is built lazily on the file's first open and kept alive, so
+        # this cost is paid once per opened file - "load when opening, clean while using". Hidden
+        # tabs (sections this entity type doesn't have) load nothing (gated in _load_tab).
+        for index in range(self._tabs.count()):
+            self._ensure_tab_loaded(self._tabs.widget(index))
+        QTimer.singleShot(0, self._end_loading)
+
+    def _end_loading(self):
+        self._loading = False
+
+    def monster_name(self) -> str:
+        try:
+            return self.ifrit_manager.enemy.info_stat_data['monster_name'].get_str().strip('\x00')
+        except Exception:
+            return ""
+
+    def show_saved_tab(self):
+        """Select the tab the user last had open (shared preference across panes)."""
+        idx = self.settings.value("ifrit/current_tab", defaultValue=0, type=int)
+        if 0 <= idx < self._tabs.count() and self._tabs.isTabVisible(idx):
+            self._tabs.setCurrentIndex(idx)
+
+    # ── Tab visibility / labels ───────────────────────────────────────
+
+    def _apply_visibility(self):
+        """Hide the tabs whose section this entity type does not have (gated on the parsed type,
+        never a filename heuristic)."""
+        et = self.ifrit_manager.enemy.entity_type
+        stat_ai = et in _STAT_AI_CAPABLE_ENTITY_TYPES
+        for w in (self._stat_container, self._ai_container):
+            self._tabs.setTabVisible(self._tabs.indexOf(w), stat_ai)
+        self._tabs.setTabVisible(self._tabs.indexOf(self._texture_widget), et == EntityType.MONSTER)
+        self._tabs.setTabVisible(self._tabs.indexOf(self._3d_widget), et in _3D_SECTIONS_BY_ENTITY)
+        self._tabs.setTabVisible(self._tabs.indexOf(self._seq_widget), et in _SEQ_SECTION_BY_ENTITY)
+        self._tabs.setTabVisible(self._tabs.indexOf(self._camera_widget), et in _CAMERA_SECTION_BY_ENTITY)
+        self._tabs.setTabVisible(self._tabs.indexOf(self._dynamic_texture_widget),
+                                 et in _DYNAMIC_TEXTURE_SECTION_BY_ENTITY)
+        self._update_section_tab_labels()
+
+    def _update_section_tab_labels(self):
+        et = self.ifrit_manager.enemy.entity_type
+        self._tabs.setTabText(self._tabs.indexOf(self._3d_widget),
+                              f"{_3D_SECTIONS_BY_ENTITY.get(et, '1/2/3')} - 3D")
+        self._tabs.setTabText(self._tabs.indexOf(self._seq_widget),
+                              f"{_SEQ_SECTION_BY_ENTITY.get(et, 5)} - Sequence")
+        self._tabs.setTabText(self._tabs.indexOf(self._camera_widget),
+                              f"{_CAMERA_SECTION_BY_ENTITY.get(et, 6)} - Camera")
+        self._tabs.setTabText(self._tabs.indexOf(self._dynamic_texture_widget),
+                              f"{_DYNAMIC_TEXTURE_SECTION_BY_ENTITY.get(et, 4)} - Dynamic Texture")
+
+    # ── Lazy tab loading ──────────────────────────────────────────────
+
+    def _on_tab_changed(self, index: int):
+        self.settings.setValue("ifrit/current_tab", self._tabs.currentIndex())
+        self._ensure_tab_loaded(self._tabs.currentWidget())
+
+    def _load_tab(self, widget):
+        et = self.ifrit_manager.enemy.entity_type
+        path = self.path
+        if widget is self._3d_widget:
+            if et in _3D_SECTIONS_BY_ENTITY:
+                # Expand the animation + build matrices up front so the 3D tab is fully ready the
+                # moment it's shown (rather than on the first paint), keeping the tab switch clean.
+                self.ifrit_manager._ensure_matrices()
+                self._3d_widget.load_file()
+        elif widget is self._texture_widget:
+            if et == EntityType.MONSTER:
+                self._texture_widget.show_current()   # textures already in the manager
+        elif widget is self._seq_widget:
+            self._seq_widget.load_file(path)
+        elif widget is self._camera_widget:
+            self._camera_widget.load_file(path)
+        elif widget is self._dynamic_texture_widget:
+            if et in _DYNAMIC_TEXTURE_SECTION_BY_ENTITY:
+                self._dynamic_texture_widget.load_file(path)
+        elif widget is self._stat_container:
+            if et in _STAT_AI_CAPABLE_ENTITY_TYPES:
+                self._name_widget.load_data()
+                self._stat_widget.load_data()
+        elif widget is self._ai_container:
+            if et in _STAT_AI_CAPABLE_ENTITY_TYPES:
+                self._ai_widget.load_file(path)
+                self._battle_text_widget.load_data()
+
+    def _ensure_tab_loaded(self, widget):
+        if widget is None or widget in self._loaded_tabs:
+            return
+        self._loaded_tabs.add(widget)
+        nested = self._loading
+        self._loading = True
+        try:
+            self._load_tab(widget)
+            self._connect_dirty_signals()
+        except Exception as e:
+            # One tab failing to load (e.g. a file with no/broken textures) must not stop the
+            # monster from opening now that every tab loads on open. Log it and let a later click
+            # retry that one tab.
+            print(f"[pane] tab load failed for {type(widget).__name__}: {e}")
+            self._loaded_tabs.discard(widget)
+        finally:
+            if not nested:
+                QTimer.singleShot(0, self._end_loading)
+
+    # ── Dirty tracking ────────────────────────────────────────────────
+
+    def _connect_3d_edit_signals(self):
+        bone_editor = getattr(self._3d_widget, 'bone_editor', None)
+        if bone_editor is not None:
+            for sig_name in ('bone_length_changed', 'bone_parent_changed', 'add_bone_requested',
+                             'reset_skeleton_requested', 'animation_rotation_changed',
+                             'animation_position_changed', 'animation_scale_changed',
+                             'frame_scale_mode_changed'):
+                sig = getattr(bone_editor, sig_name, None)
+                if sig is not None:
+                    sig.connect(self._on_edit)
+        for btn_name in ('fps60_btn', 'fps60_all_btn', 'import_gltf_btn'):
+            btn = getattr(self._3d_widget, btn_name, None)
+            if btn is not None:
+                btn.clicked.connect(self._on_edit)
+
+    def _connect_dirty_signals(self):
+        """(Re)connect edit signals of the currently-built editable controls. Only user-interaction
+        signals are used; the 3D widget and camera/texture PREVIEW panels are excluded (their
+        controls move on a timer - 3D is wired separately, previews are read-only)."""
+        excluded_roots = [self._3d_widget]
+        excluded_roots += self._tabs.findChildren(CameraPreviewPanel)
+        excluded_roots += self._tabs.findChildren(TexturePreviewWidget)
+        for widget in self._tabs.findChildren(QWidget):
+            if id(widget) in self._dirty_connected:
+                continue
+            if any(self._is_descendant(widget, root) for root in excluded_roots):
+                continue
+            signal = None
+            if isinstance(widget, QLineEdit):
+                signal = widget.textEdited
+            elif isinstance(widget, QComboBox):
+                signal = widget.activated
+            elif isinstance(widget, (QSpinBox, QDoubleSpinBox)):
+                signal = widget.valueChanged               # guarded by _loading
+            elif isinstance(widget, QAbstractButton) and widget.isCheckable():
+                signal = widget.clicked
+            elif isinstance(widget, (QPlainTextEdit, QTextEdit)):
+                signal = widget.textChanged                # guarded by _loading
+            if signal is not None:
+                signal.connect(self._on_edit)
+                self._dirty_connected.add(id(widget))
+
+    @staticmethod
+    def _is_descendant(widget, root) -> bool:
+        node = widget
+        while node is not None:
+            if node is root:
+                return True
+            node = node.parent()
+        return False
+
+    def _edited_key_for(self, sender):
+        # AI / Stat / Name / 3D edit the enemy live, so they carry no commit key.
+        if sender is None:
+            return None
+        if self._is_descendant(sender, self._seq_widget):
+            return 'seq'
+        if self._is_descendant(sender, self._camera_widget):
+            return 'camera'
+        if self._is_descendant(sender, self._dynamic_texture_widget):
+            return 'dyntex'
+        if self._is_descendant(sender, self._texture_widget):
+            return 'texture'
+        return None
+
+    def _on_edit(self, *args):
+        if self._loading:
+            return
+        key = self._edited_key_for(self.sender())
+        if key is not None:
+            self._edited.add(key)
+        if not self.dirty:
+            self.dirty = True
+            self.dirty_changed.emit()
+
+    # ── Commit / save ─────────────────────────────────────────────────
+
+    def _commit(self):
+        """Fold the edited commit-needing widgets into this file's enemy bytes. Only the sections
+        actually changed are folded - the Static Texture inject (VincentTim) in particular runs
+        only when a texture was edited. Stat/Name/AI/3D edit the enemy live, so nothing to do."""
+        et = self.ifrit_manager.enemy.entity_type
+        if 'seq' in self._edited and et in _SEQ_SECTION_BY_ENTITY:
+            self._seq_widget.save_file()
+        if 'camera' in self._edited and et in _CAMERA_SECTION_BY_ENTITY:
+            self._camera_widget.save_file()
+        if 'dyntex' in self._edited and et in _DYNAMIC_TEXTURE_SECTION_BY_ENTITY:
+            self._dynamic_texture_widget.save_file()
+        if 'texture' in self._edited and et == EntityType.MONSTER:
+            self._texture_widget.save_file()
+
+    def save(self):
+        """Fold pending edits into the enemy and write this file to disk."""
+        self._commit()
+        self.ifrit_manager.save_file(self.path)
+        self.dirty = False
+        self._edited = set()
+
+
+class IfritMonsterWidget(QWidget):
+    """Multi-file battle-model editor: holds several .dat files, each in its own IfritFilePane
+    (a full editor with its own manager). Switching files is show/hide of pre-built panes.
+
+    Like Alexander (battle stages), a model .dat has no fixed FF8 name and many open at once, so
+    this tool has no per-file FileBinding: the shared header toolbar's Import routes to
+    open_files(), Save to save_folder()/can_save_folder(), file_bindings_changed refreshes those
+    buttons, and the loaded set is published to the Opened-files panel as one summary entry."""
+
+    file_bindings_changed = pyqtSignal()
+
+    def __init__(self, settings: QSettings, icon_path="Resources", game_data_folder="FF8GameData",
                  file_registry=None):
         super().__init__()
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
+        self.file_registry = file_registry
         self.settings = settings
         self.icon_path = icon_path
         self.file_loaded = ""
         self._file_dialog_folder = ""
 
+        # One manager owns the shared GameData (loaded once, ~0.5s) and the Cronos AI-data
+        # selection. Every file's own IfritManager reuses this GameData object, so opening N
+        # files pays that cost once, not N times.
+        self._shared_manager = IfritManager(game_data_folder)
+        self._game_data = self._shared_manager.game_data
+
+        # One dict per loaded file: {'path', 'manager', 'pane' (None until built), 'name'}.
+        self._files = []
+        self._active_index = -1
+
+        # Panes (full editors) are memory-heavy (~60 MB RAM + a live 3D GL viewer each), so only a
+        # bounded number are kept built at once - an LRU. After a multi-file load the rest are
+        # pre-built quietly in the background up to that cap, so clicking your working set is
+        # instant; going beyond the cap tears down the least-recently-used clean pane and rebuilds
+        # it on demand. The cap is derived from a user RAM budget (spinbox, GB).
+        self._ram_budget_gb = self.settings.value("ifrit/ram_budget_gb", defaultValue=8, type=int)
+        self._pane_lru = []                # file indices with a built pane, least-recent first
+        self._prebuild_queue = []          # indices still to pre-build in the background
+        self._prebuild_timer = QTimer(self)
+        self._prebuild_timer.setInterval(0)
+        self._prebuild_timer.timeout.connect(self._prebuild_step)
+
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── Shared toolbar ───────────────────────────────────────────
+        # ── Toolbar ──────────────────────────────────────────────────
         toolbar = QWidget()
         tl = QHBoxLayout(toolbar)
         tl.setContentsMargins(6, 4, 6, 4)
         tl.setSpacing(4)
 
-        # The .dat this tool edits, driven by the shared header toolbar (Import / Save / Reload).
-        # Its name varies (c0m*.dat, d?c???.dat...), so the binding keys it generically and the
-        # open dialog just filters on *.dat.
-        self.dat_binding = FileBinding("battle model (.dat)", file_registry,
-                                       load_callback=self.load_file, save_callback=self._save_file,
-                                       file_filter="*.dat")
-
-        # Add Cronos checkbox
         self._cronos_checkbox = QCheckBox("Cronos")
         self._cronos_checkbox.setToolTip("Load AI data with cronos configuration")
         self._cronos_checkbox.setChecked(self.settings.value("ifrit/cronos_checkbox", defaultValue=False, type=bool))
@@ -105,158 +403,411 @@ class IfritMonsterWidget(QWidget):
                                        "30 or 60 fps, without opening them one by one.")
         self._fps_batch_btn.clicked.connect(self._convert_files_to_fps)
 
+        # Import / Save both run from the shared header toolbar (open_files / save_folder /
+        # can_save_folder below), the same wiring Alexander uses. Ctrl+S also saves.
         for w in [self._cronos_checkbox, self._fps_batch_btn, self._monster_label]:
             tl.addWidget(w)
         tl.addStretch()
 
-        self.ifrit_manager = IfritManager(game_data_folder)
-        # ── Sub-widgets ──────────────────────────────────────────────
-        # AI: keeps its own sub-toolbar (expert, section, color…) minus file buttons
-        self._ai_widget = IfritAIWidget(settings, self.ifrit_manager, icon_path=icon_path)
+        # ── Stack of per-file panes + placeholder ────────────────────
+        self._stack = QStackedWidget()
+        self._placeholder = QLabel("No file loaded — use Import to open one or more battle model "
+                                   "(.dat) files.")
+        self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._placeholder.setStyleSheet("color:#888;")
+        self._stack.addWidget(self._placeholder)
 
-        # Seq: keeps xml import/export sub-toolbar minus file buttons
-        self._seq_widget = IfritSeqWidget(self.ifrit_manager, icon_path=icon_path)
+        # ── Loaded-files side list ───────────────────────────────────
+        self._file_list = QListWidget()
+        self._file_list.setToolTip("Files loaded in memory. Click one to edit it; a leading * "
+                                   "marks a file with unsaved changes.")
+        self._file_list.currentRowChanged.connect(self._on_file_list_changed)
+        left_panel = QWidget()
+        lp = QVBoxLayout(left_panel)
+        lp.setContentsMargins(4, 4, 0, 4)
+        lp.setSpacing(2)
+        lp.addWidget(QLabel("Loaded files"))
+        lp.addWidget(self._file_list, 1)
 
-        # Camera: monster section 6 (camera animation collection / keyframes)
-        self._camera_widget = IfritCameraSeqWidget(self.ifrit_manager, icon_path=icon_path)
-
-        # 3D: keeps its own sub-toolbar (mesh/wire/play/frame…)
-        self._3d_widget = Ifrit3DWidget(self.ifrit_manager, show_controls=True)
-
-        self._texture_widget = IfritTextureWidget(self.ifrit_manager)
-        self._xlsx_widget = IfritXlsxWidget(self.ifrit_manager)
-        self._stat_widget = IfritStatWidget(self.ifrit_manager, icon_path=icon_path)
-        self._name_widget = IfritMonsterNameWidget(self.ifrit_manager)
-        self._battle_text_widget = IfritBattleTextWidget(self.ifrit_manager)
-
-        # This need to be loaded after the texture widget
-        self._dynamic_texture_widget = IfritDynamicTextureWidget(self.ifrit_manager)
-
-        # Name, Stat and StatExcel all edit section 7 (name used to be duplicated into the
-        # AI tab's Battle text sub-tab too), so they live together under one "Stat" tab.
-        self._stat_container = QTabWidget()
-        self._stat_container.addTab(self._name_widget, "Name")
-        self._stat_container.addTab(self._stat_widget, "Editor")
-        self._stat_container.addTab(self._xlsx_widget, "Excel (xlsx)")
-
-        # Battle text edits section 8 (battle_script_data['battle_text']), the same section
-        # as AI - only the monster name it also shows is section 7. It lives under "AI" as a
-        # sub-tab rather than as its own top-level entry.
-        self._ai_container = QTabWidget()
-        self._ai_container.addTab(self._ai_widget, "AI script")
-        self._ai_container.addTab(self._battle_text_widget, "Battle text")
-
-        # ── Tabs ─────────────────────────────────────────────────────
-        # Ordered to match the .dat section layout, with each tab's section number in its
-        # label (monster numbering). Sequence and Camera sit at different sections depending
-        # on the file type, so their number is refreshed per loaded file (see
-        # _update_section_tab_labels); the rest are monster-only or section-stable.
-        self._tabs = QTabWidget()
-        self._tabs.addTab(self._3d_widget, "1/2/3 - 3D")
-        self._tabs.addTab(self._dynamic_texture_widget, "4 - Dynamic Texture")
-        self._tabs.addTab(self._seq_widget, "5 - Sequence")
-        self._tabs.addTab(self._camera_widget, "6 - Camera")
-        self._tabs.addTab(self._stat_container, "7 - Stat")
-        self._tabs.addTab(self._ai_container, "8 - AI")
-        self._tabs.addTab(self._texture_widget, "11 - Static Texture")
-        self._tabs.currentChanged.connect(self._on_tab_changed)
-        self._tabs.setCurrentIndex(self.settings.value("ifrit/current_tab", defaultValue=0, type=int))
+        self._splitter = QSplitter(Qt.Orientation.Horizontal)
+        self._splitter.addWidget(left_panel)
+        self._splitter.addWidget(self._stack)
+        self._splitter.setStretchFactor(0, 0)
+        self._splitter.setStretchFactor(1, 1)
+        self._splitter.setSizes([220, 900])
 
         root.addWidget(toolbar)
-        root.addWidget(self._tabs, 1)
+        root.addWidget(self._splitter, 1)
 
-        # Ctrl+S = the Save toolbar button, from anywhere inside this tool
         self._save_shortcut = QShortcut(QKeySequence.StandardKey.Save, self)
         self._save_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self._save_shortcut.activated.connect(self._on_save_shortcut)
 
-        self._on_tab_changed(0)
-        self._on_cronos_toggled( self._cronos_checkbox.isChecked())
-        self.dat_binding.load_opened_file()  # another tool instance may have opened one already
+        # Load Cronos AI data once at startup (no file to reload yet).
+        self._apply_cronos_ai_data(self._cronos_checkbox.isChecked())
 
-    def file_bindings(self):
-        """The file the shared header toolbar drives for this tool (the loaded .dat)."""
-        return [self.dat_binding]
+    # ── Shared header toolbar hooks (Alexander pattern) ───────────────
 
-    # ── Tab switching ─────────────────────────────────────────────────
+    def open_files(self):
+        """Open one or more model .dat files at once (shared header Import routes here). Non-model
+        files (b0wave.dat, r0win.dat...) are rejected on the name."""
+        folder = self._file_dialog_folder or (os.path.dirname(self.file_loaded)
+                                              if self.file_loaded else os.getcwd())
+        paths, _ = QFileDialog.getOpenFileNames(
+            self, "Open battle model files", folder,
+            f"{IfritManager.BATTLE_MODEL_FILE_FILTER};;All .dat (*.dat)")
+        if not paths:
+            return
+        good = [p for p in paths if IfritManager.is_battle_model_file(p)]
+        skipped = [os.path.basename(p) for p in paths if not IfritManager.is_battle_model_file(p)]
+        if skipped:
+            QMessageBox.information(
+                self, "Some files skipped",
+                "These are not monster/character/weapon models and were skipped:\n\n"
+                + "\n".join(skipped))
+        if not good:
+            return
+        self._build_session(good)
 
-    def _on_tab_changed(self, index: int):
-        self.settings.setValue("ifrit/current_tab", self._tabs.currentIndex())
+    def save_folder(self):
+        """Write every changed file back to disk - the shared header Save button routes here."""
+        self._save_file()
 
-    # ── Cronos checkbox handler ───────────────────────────────────────
+    def can_save_folder(self) -> bool:
+        return any(f['pane'] is not None and f['pane'].dirty for f in self._files)
 
-    def _on_cronos_toggled(self, state):
-        """Handle Cronos checkbox state changes"""
-        if state:  # Checked
-            self.ifrit_manager.game_data.load_ai_data("ai_cronos.json")
-        else:  # Unchecked
-            self.ifrit_manager.game_data.load_ai_data("ai_vanilla.json")
-        self.settings.setValue("ifrit/cronos_checkbox", state)
-        # Call reload function to refresh the display
-        self._reload_file()
-
-
-    # ── File operations ───────────────────────────────────────────────
+    # ── Loading ───────────────────────────────────────────────────────
 
     def load_file(self, path):
-        """Load a .dat file (path from the shared header toolbar), then show only the tabs the
-        loaded entity type actually has."""
+        """Load a single .dat (replaces the session with just it)."""
         if path:
             self._file_dialog_folder = os.path.dirname(path)
-            self._load_all(path)
-            entity_type = self.ifrit_manager.enemy.entity_type
-            # Stat/StatExcel/AI/Battle text only have real, parsed data for entity types in
-            # _STAT_AI_CAPABLE_ENTITY_TYPES (see MonsterAnalyser.analyse_loaded_data -
-            # character/weapon files never populate info_stat_data or battle_script_data).
-            # _stat_container wraps Stat + StatExcel (both section 7-equivalent); _ai_container
-            # wraps AI + Battle text (both section 8-equivalent). Gate the containers, not the
-            # inner widgets - they are no longer direct children of the top-level tabs.
-            # Tabs that don't apply to the loaded entity type are hidden outright (setTabVisible),
-            # not just disabled - a merely-greyed-out Stat tab on a weapon file still invites a
-            # click; hiding makes "this file has no such section" unambiguous.
-            stat_ai_visible = entity_type in _STAT_AI_CAPABLE_ENTITY_TYPES
-            for widget in (self._stat_container, self._ai_container):
-                self._tabs.setTabVisible(self._tabs.indexOf(widget), stat_ai_visible)
-            # Static Texture is MONSTER-only: MONSTER_NO_MODEL has no texture section either.
-            self._tabs.setTabVisible(self._tabs.indexOf(self._texture_widget),
-                                      entity_type == EntityType.MONSTER)
-            # 3D, Sequence, Camera and Dynamic Texture each sit at a different section (or are
-            # absent) per entity type - gate every one of them on the actually-loaded entity
-            # type rather than a filename heuristic. A filename heuristic misclassifies e.g.
-            # Edea (d7c016.dat, CHARACTER_NO_WEAPON): her third filename character is 'c' like
-            # an armed character, but her body carries a real, parsed Sequence section (S6).
-            self._tabs.setTabVisible(self._tabs.indexOf(self._3d_widget),
-                                      entity_type in _3D_SECTIONS_BY_ENTITY)
-            self._tabs.setTabVisible(self._tabs.indexOf(self._seq_widget),
-                                      entity_type in _SEQ_SECTION_BY_ENTITY)
-            self._tabs.setTabVisible(self._tabs.indexOf(self._camera_widget),
-                                      entity_type in _CAMERA_SECTION_BY_ENTITY)
-            self._tabs.setTabVisible(self._tabs.indexOf(self._dynamic_texture_widget),
-                                      entity_type in _DYNAMIC_TEXTURE_SECTION_BY_ENTITY)
-            self._update_section_tab_labels()
+            self._build_session([path])
 
-    def _update_section_tab_labels(self):
-        """Refresh the 3D/Sequence/Camera/Dynamic Texture tab numbers for the loaded file: each
-        sits at a different .dat section (or is absent) depending on the entity type - see
-        _3D_SECTIONS_BY_ENTITY / _SEQ_SECTION_BY_ENTITY / _CAMERA_SECTION_BY_ENTITY /
-        _DYNAMIC_TEXTURE_SECTION_BY_ENTITY. A tab that doesn't apply to this entity type keeps
-        the monster default so a disabled tab still reads sensibly. Stat/AI/Static Texture are
-        not included here: they are monster-exclusive concepts (info-stat, battle AI script,
-        static texture bank) with no equivalent section, by any number, on weapon/character
-        files, so their fixed S7/S8/S11 labels only apply when the tab is actually enabled."""
-        entity_type = self.ifrit_manager.enemy.entity_type
-        threeD_section = _3D_SECTIONS_BY_ENTITY.get(entity_type, "1/2/3")
-        seq_section = _SEQ_SECTION_BY_ENTITY.get(entity_type, 5)
-        camera_section = _CAMERA_SECTION_BY_ENTITY.get(entity_type, 6)
-        dyntex_section = _DYNAMIC_TEXTURE_SECTION_BY_ENTITY.get(entity_type, 4)
-        self._tabs.setTabText(self._tabs.indexOf(self._3d_widget), f"{threeD_section} - 3D")
-        self._tabs.setTabText(self._tabs.indexOf(self._seq_widget), f"{seq_section} - Sequence")
-        self._tabs.setTabText(self._tabs.indexOf(self._camera_widget), f"{camera_section} - Camera")
-        self._tabs.setTabText(self._tabs.indexOf(self._dynamic_texture_widget), f"{dyntex_section} - Dynamic Texture")
+    def _build_session(self, paths):
+        """Parse AND texture-extract every path up front (behind the progress bar), then show the
+        first one and pre-build the rest in the background up to the RAM cap. Each file gets its
+        OWN manager (sharing the one GameData). Replaces any previous session."""
+        # Opening several files: let the user set how much RAM to spend keeping editors loaded.
+        if len(paths) > 1 and not self._ask_ram_budget():
+            return
+        progress = QProgressDialog("Loading models and textures...", "Cancel", 0, len(paths), self)
+        progress.setWindowTitle("Load files")
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(0)        # show at once and stay up (a load is always >0.3s),
+        progress.setValue(0)                  # rather than flashing then vanishing before the
+        QApplication.processEvents()          # slow pane build that follows
+        files = []
+        for index, path in enumerate(paths):
+            progress.setValue(index)
+            progress.setLabelText(f"{os.path.basename(path)}  ({index + 1}/{len(paths)})")
+            QApplication.processEvents()
+            if progress.wasCanceled():
+                break
+            manager = IfritManager(game_data=self._game_data)
+            try:
+                # free_animation=True: keep loaded files lean (~0.5 MB anim vs ~30 MB); the file's
+                # animation re-expands on its first 3D view and stays expanded after.
+                enemy = manager.parse_file(path, free_animation=True)
+            except Exception as e:
+                print(f"[load] Could not parse {path}: {e}")
+                continue
+            textures = (None if enemy.entity_type == EntityType.MONSTER_NO_MODEL
+                        else manager.extract_textures(enemy, path))
+            manager.set_active_enemy(enemy, path, textures=textures)
+            name = ""
+            try:
+                name = enemy.info_stat_data['monster_name'].get_str().strip('\x00')
+            except Exception:
+                pass
+            files.append({'path': path, 'manager': manager, 'pane': None, 'name': name})
+        if not files:
+            progress.close()
+            return
+        self._discard_panes()
+        self._files = files
+        self._active_index = -1
+        self._file_dialog_folder = os.path.dirname(files[0]['path'])
+        self._populate_file_list()
+        # Building the first file's pane (all tabs + 3D model + animation re-expand) is the slow
+        # part - keep the popup up over it with an "Opening..." message instead of letting it
+        # vanish after the fast parse/texture step and leaving the UI frozen with no feedback.
+        first = files[0]
+        progress.setLabelText(f"Opening {first['name'] or os.path.basename(first['path'])}...")
+        QApplication.processEvents()          # paint the message before the blocking pane build
+        self._activate_index(0)
+        progress.setValue(len(paths))         # reaching max dismisses the dialog now that it's shown
+        self._start_prebuild()                # fill the pane cache in the background
+        self.file_registry.open_file(
+            "Ifrit battle model(s)",
+            FileRegistry.summarize_paths([f['path'] for f in files], "model"))
+        self.file_bindings_changed.emit()
+
+    def _discard_panes(self):
+        """Tear down every built pane (when replacing the session)."""
+        self._prebuild_timer.stop()
+        self._prebuild_queue = []
+        self._pane_lru = []
+        for f in self._files:
+            pane = f.get('pane')
+            if pane is not None:
+                self._stack.removeWidget(pane)
+                pane.deleteLater()
+        self._files = []
+
+    def _populate_file_list(self):
+        self._file_list.blockSignals(True)
+        self._file_list.clear()
+        for index in range(len(self._files)):
+            self._file_list.addItem(self._list_label(index))
+        self._file_list.blockSignals(False)
+
+    def _list_label(self, index) -> str:
+        f = self._files[index]
+        name = pathlib.Path(f['path']).name
+        if f['name']:
+            name = f"{name}  ({f['name']})"
+        dirty = f['pane'] is not None and f['pane'].dirty
+        return ("* " if dirty else "   ") + name
+
+    def _refresh_list_item(self, index):
+        item = self._file_list.item(index)
+        if item is not None:
+            item.setText(self._list_label(index))
+
+    # ── Switching ─────────────────────────────────────────────────────
+
+    def _on_file_list_changed(self, row: int):
+        if row < 0 or row >= len(self._files) or row == self._active_index:
+            return
+        self._activate_index(row, show_busy=True)   # show "Opening..." if this file isn't built yet
+
+    def _activate_index(self, index: int, show_busy: bool = False):
+        """Show file[index]. Builds its editor pane if needed (evicting the least-recently-used
+        one when at the RAM cap), then it's a pure show/hide. show_busy pops a brief "Opening..."
+        indicator while a build happens (a cache miss on a user click) - not for cache hits
+        (instant) or the load-time popup, which _build_session drives itself."""
+        if index < 0 or index >= len(self._files):
+            return
+        self._active_index = index                 # set before building so it's never evicted
+        if show_busy and self._files[index]['pane'] is None:
+            f = self._files[index]
+            name = f['name'] or os.path.basename(f['path'])
+            busy = QProgressDialog(f"Opening {name}...", None, 0, 0, self)   # 0..0 = busy spinner
+            busy.setWindowTitle("Opening")
+            busy.setWindowModality(Qt.WindowModality.WindowModal)
+            busy.setMinimumDuration(0)
+            busy.show()
+            QApplication.processEvents()
+            try:
+                self._ensure_pane(index)
+            finally:
+                busy.close()
+        else:
+            self._ensure_pane(index)
+        f = self._files[index]
+        f['pane'].show_saved_tab()
+        self._stack.setCurrentWidget(f['pane'])
+        self._touch_lru(index)
+        self.file_loaded = f['path']
+        label = f['name'] if f['name'] else pathlib.Path(f['path']).name
+        self._monster_label.setText(f"{label}  [{pathlib.Path(f['path']).name}]")
+        self._file_list.blockSignals(True)
+        self._file_list.setCurrentRow(index)
+        self._file_list.blockSignals(False)
+
+    # ── Pane cache (LRU, RAM-bounded) ─────────────────────────────────
+
+    _PANE_RAM_MB = 60                      # measured ~55 MB/full pane, rounded up for headroom
+
+    def _pane_cap(self) -> int:
+        """How many built panes to keep alive, from the RAM budget (roughly half of it goes to
+        panes, the rest to GameData + the parsed files + OS headroom)."""
+        return max(1, int(self._ram_budget_gb * 1024 * 0.5 / self._PANE_RAM_MB))
+
+    def _ensure_pane(self, index: int):
+        """Build file[index]'s editor pane if not built, first evicting the LRU pane if at cap."""
+        f = self._files[index]
+        if f['pane'] is not None:
+            return
+        self._evict_if_needed(keep=index)
+        pane = IfritFilePane(f['manager'], f['path'], self.settings, self.icon_path)
+        pane.dirty_changed.connect(lambda entry=f: self._on_pane_dirty(entry))
+        f['pane'] = pane
+        self._stack.addWidget(pane)
+        self._pane_lru.append(index)               # newest at the end
+
+    def _touch_lru(self, index: int):
+        if index in self._pane_lru:
+            self._pane_lru.remove(index)
+        self._pane_lru.append(index)               # most-recently-used at the end
+
+    def _evict_if_needed(self, keep: int):
+        """Tear down least-recently-used panes while at/over the cap, never the active/kept one or
+        a pane with unsaved edits."""
+        cap = self._pane_cap()
+        while len(self._pane_lru) >= cap:
+            victim = next((i for i in self._pane_lru
+                           if i != keep and i != self._active_index
+                           and self._files[i]['pane'] is not None
+                           and not self._files[i]['pane'].dirty), None)
+            if victim is None:
+                return                              # all remaining are active/dirty: allow over cap
+            self._evict_pane(victim)
+
+    def _evict_pane(self, index: int):
+        f = self._files[index]
+        pane = f['pane']
+        if pane is None:
+            return
+        self._stack.removeWidget(pane)
+        pane.deleteLater()
+        f['pane'] = None
+        if index in self._pane_lru:
+            self._pane_lru.remove(index)
+        # Reclaim the re-expanded animation (safe: an evicted pane is clean, and re-expansion from
+        # the raw bytes is byte-identical - see MonsterAnalyser.ensure_animation_expanded).
+        try:
+            f['manager'].enemy.free_animation()
+        except Exception:
+            pass
+
+    # ── Background pre-build ──────────────────────────────────────────
+
+    def _start_prebuild(self):
+        """Queue every not-yet-built file to be built quietly in the background (idle ticks), up
+        to the cap, so clicking your working set is instant."""
+        self._prebuild_queue = [i for i in range(len(self._files)) if self._files[i]['pane'] is None]
+        if self._prebuild_queue:
+            self._prebuild_timer.start()
+
+    def _prebuild_step(self):
+        if not self._prebuild_queue or len(self._pane_lru) >= self._pane_cap():
+            self._prebuild_timer.stop()
+            self._prebuild_queue = []
+            return
+        index = self._prebuild_queue.pop(0)
+        if 0 <= index < len(self._files) and self._files[index]['pane'] is None:
+            try:
+                self._ensure_pane(index)            # builds, kept out of view (not activated)
+            except Exception as e:
+                print(f"[prebuild] {index} failed: {e}")
+
+    def _ask_ram_budget(self) -> bool:
+        """Ask how much RAM to spend keeping editors loaded (shown when opening several files).
+        Returns False if the user cancels the whole load."""
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Load files")
+        lay = QVBoxLayout(dlg)
+        lay.addWidget(QLabel(
+            "Editors are pre-loaded in the background so switching between monsters is instant.\n"
+            "Each loaded editor uses roughly 60 MB of RAM (plus its 3D model in GPU memory), so\n"
+            "set how much RAM to allow for them. Monsters beyond that stay loadable and rebuild\n"
+            "instantly when you click them."))
+        row = QHBoxLayout()
+        row.addWidget(QLabel("RAM budget:"))
+        spin = QSpinBox()
+        spin.setRange(1, 256)
+        spin.setSuffix(" GB")
+        spin.setValue(self._ram_budget_gb)
+        row.addWidget(spin)
+        row.addStretch()
+        lay.addLayout(row)
+        cap_label = QLabel()
+        lay.addWidget(cap_label)
+        upd = lambda v: cap_label.setText(
+            f"→ up to ~{max(1, int(v * 1024 * 0.5 / self._PANE_RAM_MB))} monsters kept loaded at once.")
+        spin.valueChanged.connect(upd)
+        upd(spin.value())
+        bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        bb.accepted.connect(dlg.accept)
+        bb.rejected.connect(dlg.reject)
+        lay.addWidget(bb)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return False
+        self._ram_budget_gb = spin.value()
+        self.settings.setValue("ifrit/ram_budget_gb", self._ram_budget_gb)
+        return True
+
+    def _on_pane_dirty(self, entry):
+        if entry in self._files:
+            self._refresh_list_item(self._files.index(entry))
+            self.file_bindings_changed.emit()
+
+    # ── Saving ────────────────────────────────────────────────────────
+
+    def _on_save_shortcut(self):
+        self._save_file()
+
+    def _save_file(self):
+        """Write every changed file back to disk (unedited files are left untouched). Only files
+        with a built pane can be dirty - a file never opened was never edited."""
+        if not self._files:
+            return
+        saved = 0
+        for index, f in enumerate(self._files):
+            pane = f['pane']
+            if pane is None or not pane.dirty:
+                continue
+            try:
+                pane.save()
+            except Exception as e:
+                QMessageBox.warning(self, "Save failed",
+                                    f"Could not save {os.path.basename(f['path'])}:\n{e}")
+                continue
+            self._refresh_list_item(index)
+            saved += 1
+        if saved:
+            self.file_bindings_changed.emit()
+
+    # ── Cronos ────────────────────────────────────────────────────────
+
+    def _apply_cronos_ai_data(self, checked):
+        self._game_data.load_ai_data("ai_cronos.json" if checked else "ai_vanilla.json")
+
+    def _on_cronos_toggled(self, state):
+        """Cronos changes how AI is decompiled - reload the active file so it re-decompiles with
+        the new tables (other files re-decompile when next reloaded)."""
+        self._apply_cronos_ai_data(self._cronos_checkbox.isChecked())
+        self.settings.setValue("ifrit/cronos_checkbox", state)
+        self._reload_active()
+
+    # ── Reload (Cronos toggle, after fps batch) ───────────────────────
+
+    def _reload_active(self):
+        """Re-parse the active file from disk and rebuild its pane (drops uncommitted edits)."""
+        if self._active_index < 0:
+            return
+        f = self._files[self._active_index]
+        manager = f['manager']
+        try:
+            enemy = manager.parse_file(f['path'])
+        except Exception as e:
+            print(f"[reload] Could not reparse {f['path']}: {e}")
+            return
+        textures = (None if enemy.entity_type == EntityType.MONSTER_NO_MODEL
+                    else manager.extract_textures(enemy, f['path']))
+        manager.set_active_enemy(enemy, f['path'], textures=textures)
+        old = f['pane']
+        if old is not None:
+            self._stack.removeWidget(old)
+            old.deleteLater()
+        f['pane'] = None
+        try:
+            f['name'] = enemy.info_stat_data['monster_name'].get_str().strip('\x00')
+        except Exception:
+            pass
+        index = self._active_index
+        self._active_index = -1               # force _activate_index to rebuild + show
+        self._activate_index(index, show_busy=True)
+        self._refresh_list_item(index)
+
+    # ── FPS batch ─────────────────────────────────────────────────────
 
     def _convert_files_to_fps(self):
         """Convert the animations of several .dat files to 30 or 60 fps in one go."""
-        folder = self._file_dialog_folder or os.path.dirname(self.file_loaded)
+        folder = self._file_dialog_folder or (os.path.dirname(self.file_loaded)
+                                              if self.file_loaded else os.getcwd())
         file_list = select_battle_model_file_list(
             self, folder, IfritManager.BATTLE_MODEL_FILE_FILTER,
             IfritManager.is_battle_model_file, IfritManager.get_file_family_list)
@@ -282,64 +833,16 @@ class IfritMonsterWidget(QWidget):
             return not progress.wasCanceled()
 
         try:
-            report_list = self.ifrit_manager.convert_file_list_to_fps(
+            report_list = self._shared_manager.convert_file_list_to_fps(
                 file_list, target_fps, split_when_too_long, progress_callback=on_progress)
         finally:
             progress.setValue(len(file_list))
 
         FpsBatchReportDialog(self, report_list, target_fps).exec()
-        # The loaded file may be one of the converted ones
+        # The active file may be one of the converted ones - reload it from disk if so.
         if self.file_loaded and any(os.path.normcase(f) == os.path.normcase(self.file_loaded)
                                     for f in file_list):
-            self._reload_file()
-
-    def _load_all(self, path: str):
-        self.file_loaded = path
-        self.ifrit_manager.init_from_file(path)
-        entity_type = self.ifrit_manager.enemy.entity_type
-        self._ai_widget.load_file(path)
-        self._seq_widget.load_file(path)
-        self._camera_widget.load_file(path)
-        # 3D/Static Texture assume real geometry/texture data exists (e.g. numpy .min() on an
-        # empty vertex array raises ValueError) - only load them for entity types that actually
-        # have that data, matching the hidden-tab set in load_file. MONSTER_NO_MODEL (no model
-        # sections at all) is the case this guards against; every other type already has real
-        # geometry so this was never an issue for them.
-        if entity_type in _3D_SECTIONS_BY_ENTITY:
-            self._3d_widget.load_file()
-        if entity_type == EntityType.MONSTER:
-            self._texture_widget.load_file(path)
-        # Name/Stat/Battle-text read info_stat_data/battle_script_data, only populated for
-        # _STAT_AI_CAPABLE_ENTITY_TYPES (see MonsterAnalyser.analyse_loaded_data). On other
-        # types that data is absent and their load_data() would crash (it assumes a monster).
-        # Those tabs are hidden for such files anyway, so skip their data load.
-        if entity_type in _STAT_AI_CAPABLE_ENTITY_TYPES:
-            self._name_widget.load_data()
-            self._stat_widget.load_data()
-            self._battle_text_widget.load_data()
-        if entity_type in _DYNAMIC_TEXTURE_SECTION_BY_ENTITY:
-            self._dynamic_texture_widget.load_file(path) # need to be after texture
-        try:
-            name = self._ai_widget.ifrit_manager.enemy.info_stat_data['monster_name'].get_str().strip('\x00')
-            self._monster_label.setText(f"{name}  [{pathlib.Path(path).name}]")
-        except Exception:
-            self._monster_label.setText(pathlib.Path(path).name)
-
-    def _on_save_shortcut(self):
-        if self.file_loaded:
-            self._save_file()
-
-    def _save_file(self):
-        self._ai_widget.save_file()
-        self._seq_widget.save_file()
-        self._camera_widget.save_file()
-        self._texture_widget.save_file()
-        self._dynamic_texture_widget.save_file()
-        self.ifrit_manager.save_file(self.file_loaded)
-
-    def _reload_file(self):
-        if self.file_loaded:
-            self._load_all(self.file_loaded)
+            self._reload_active()
 
     def _show_info(self):
         msg = QMessageBox(self)

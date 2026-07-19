@@ -1,7 +1,7 @@
 import pathlib
 
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal
-from PyQt6.QtGui import QKeySequence, QShortcut
+from PyQt6.QtGui import QKeySequence, QShortcut, QFontMetrics
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QCheckBox, QPushButton, QSlider, QSpinBox,
                              QListWidget, QListWidgetItem, QInputDialog, QMessageBox,
@@ -136,6 +136,13 @@ class Ifrit3DWidget(QWidget):
 
             self.frame_label = QLabel("Frame: 0")
             self.frame_label.setStyleSheet("color:white; padding:4px 8px;")
+            # Reserve room for the widest value up front (left-aligned) so the number growing
+            # from 1 to 3-4 digits during playback doesn't widen the label and shove the rest of
+            # the toolbar sideways. 4 digits covers any frame count (255 max in a .dat, ~4x that
+            # once interpolated to 60 fps).
+            self.frame_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            self.frame_label.setFixedWidth(
+                QFontMetrics(self.frame_label.font()).horizontalAdvance("Frame: 8888") + 20)
             toolbar_layout.addWidget(self.frame_label)
 
             # Frame slider
@@ -584,7 +591,7 @@ class Ifrit3DWidget(QWidget):
                               f"Click joint: Select bone | Drag ring: Rotate bone | "
                               f"Ctrl+Drag: Bone length")
         if hasattr(self, 'bone_editor'):
-            if self.ifrit_manager.enemy.bone_data:
+            if self.ifrit_manager.enemy.bone_data and self.ifrit_manager.enemy.bone_data.bones:
                 # Re-enable in case the previous file had no bone data
                 self.bone_editor.setEnabled(True)
                 self.bone_editor.setVisible(True)
@@ -617,8 +624,8 @@ class Ifrit3DWidget(QWidget):
             return
         # Collect all raw tex_ids from the geometry so the widget can build its mapping
         all_tex_ids = (
-                [raw_id for (_, _, raw_id) in self.gl_widget.triangles_uv] +
-                [raw_id for (_, _, raw_id) in self.gl_widget.quads_uv]
+                [raw_id for (_, _, raw_id, _bias) in self.gl_widget.triangles_uv] +
+                [raw_id for (_, _, raw_id, _bias) in self.gl_widget.quads_uv]
         )
         self.gl_widget.set_texture_pixmaps(pixmaps, all_tex_ids)
     def get_max_frames(self):
@@ -857,6 +864,7 @@ class Ifrit3DWidget(QWidget):
         if not self.ifrit_manager.enemy.geometry_data.object_data:
             QMessageBox.warning(self, "Export glTF", "No model loaded in the 3D viewer.")
             return
+        self.ifrit_manager._ensure_matrices()   # exporter reads frame.bone_matrices directly
         exporter = GltfExporter(self.ifrit_manager)
         default_name = exporter.model_name() + ".glb"
         file_path, _ = QFileDialog.getSaveFileName(self, "Export to glTF", default_name,

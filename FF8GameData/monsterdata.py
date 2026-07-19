@@ -676,7 +676,7 @@ class GeometrySection:
         return all_quads
 
     def get_triangles_with_uv(self):
-        """Returns list of (vertex_indices_tuple, uvs_tuple, tex_id) for every triangle."""
+        """Returns list of (vertex_indices_tuple, uvs_tuple, tex_id, depth_bias) for every triangle."""
         result = []
         offset = 0
         for obj in self.object_data:
@@ -696,12 +696,12 @@ class GeometrySection:
                 )
                 # tex_id_1 upper 6 bits encode CLUT/page info; low bits = texture index
                 tex_id = tri.tex_id_1 & 0xFF
-                result.append((indices, uvs, tex_id))
+                result.append((indices, uvs, tex_id, tri.depth_bias))
             offset += obj_vert_count
         return result
 
     def get_quads_with_uv(self):
-        """Returns list of (vertex_indices_tuple, uvs_tuple, tex_id) for every quad."""
+        """Returns list of (vertex_indices_tuple, uvs_tuple, tex_id, depth_bias) for every quad."""
         result = []
         offset = 0
         for obj in self.object_data:
@@ -722,12 +722,12 @@ class GeometrySection:
                     (quad.vtd.get_u_norm(), quad.vtd.get_v_norm()),
                 )
                 tex_id = quad.tex_id_1 & 0xFF
-                result.append((indices, uvs, tex_id))
+                result.append((indices, uvs, tex_id, quad.depth_bias))
             offset += obj_vert_count
         return result
 
     def get_colored_triangles_with_color(self):
-        """Returns list of (vertex_indices_tuple, rgb_norm_tuple) for every colored triangle."""
+        """Returns list of (vertex_indices_tuple, rgb_norm_tuple, depth_bias) for every colored triangle."""
         result = []
         offset = 0
         for obj in self.object_data:
@@ -740,12 +740,12 @@ class GeometrySection:
                     tri.vertex_indexes[1] + offset,
                     tri.vertex_indexes[2] + offset,
                 )
-                result.append((indices, tri.get_rgb_norm()))
+                result.append((indices, tri.get_rgb_norm(), tri.depth_bias))
             offset += obj_vert_count
         return result
 
     def get_colored_quads_with_color(self):
-        """Returns list of (vertex_indices_tuple, rgb_norm_tuple) for every colored quad."""
+        """Returns list of (vertex_indices_tuple, rgb_norm_tuple, depth_bias) for every colored quad."""
         result = []
         offset = 0
         for obj in self.object_data:
@@ -759,7 +759,7 @@ class GeometrySection:
                     quad.vertex_indexes[2] + offset,
                     quad.vertex_indexes[3] + offset,
                 )
-                result.append((indices, quad.get_rgb_norm()))
+                result.append((indices, quad.get_rgb_norm(), quad.depth_bias))
             offset += obj_vert_count
         return result
 
@@ -1126,7 +1126,17 @@ class AnimationFrame:
         self.rotation_vector_data: List[List[RotationType]] =  [[] for _ in range(nb_bones)]
         #self.bone_rot_raw: List[Vector3D] = [Vector3D() for _ in range(nb_bones)]
         #self.bone_rot_deg: List[Tuple[float, float, float]] = [(0.0, 0.0, 0.0) for _ in range(nb_bones)]
-        self.bone_matrices: List[Matrix4x4] = [Matrix4x4() for _ in range(nb_bones)]  # Initialize with identity matrices (scaled, used for skinning)
+        # bone_matrices / bone_chain_matrices / bone_acc_scale are DERIVED render data
+        # (recomputable from the rotations via set_all_bones_matrix). They are ~60% of a
+        # monster's animation RAM, so a parsed file that isn't being shown in 3D drops them
+        # (AnimationSection.free_bone_matrices) and rebuilds on demand. _reset_matrix_lists
+        # re-allocates them; free_matrices() drops them to None.
+        self._reset_matrix_lists(nb_bones)
+        self.rotation_vector_data_supp: List[RotationVectorDataSupp] = [RotationVectorDataSupp() for _ in range(nb_bones)]
+        self.mode_bit:int = 0
+
+    def _reset_matrix_lists(self, nb_bones: int):
+        self.bone_matrices: List[Matrix4x4] = [Matrix4x4() for _ in range(nb_bones)]  # identity (scaled, used for skinning)
         # Unscaled rotation chain (parent * local), kept separate so a parent's
         # non-uniform scale doesn't contaminate the children's rotations —
         # mirrors the engine, which chains rotations and applies the
@@ -1134,8 +1144,12 @@ class AnimationFrame:
         self.bone_chain_matrices: List[Matrix4x4] = [Matrix4x4() for _ in range(nb_bones)]
         # Accumulated per-axis scale down the hierarchy (1.0 = neutral)
         self.bone_acc_scale: List[Tuple[float, float, float]] = [(1.0, 1.0, 1.0) for _ in range(nb_bones)]
-        self.rotation_vector_data_supp: List[RotationVectorDataSupp] = [RotationVectorDataSupp() for _ in range(nb_bones)]
-        self.mode_bit:int = 0
+
+    def free_matrices(self):
+        """Drop this frame's derived render matrices (recomputable from the rotations)."""
+        self.bone_matrices = None
+        self.bone_chain_matrices = None
+        self.bone_acc_scale = None
 
     def get_bone_scale_factors(self, bone_id: int) -> Tuple[float, float, float]:
         """Per-bone scale of this frame (1.0 neutral). Only meaningful when mode_bit is 1."""
@@ -1521,6 +1535,39 @@ class AnimationSection:
         self.nb_animations: int = 0
         self.offsets: List[int] = []
         self.animations: List[Animation] = []
+        # Whether every frame currently holds its derived render matrices. Parsing builds them;
+        # free_bone_matrices() drops them (huge RAM saving for files not shown in 3D) and sets
+        # this False; build_bone_matrices() recomputes them.
+        self.matrices_built: bool = True
+
+    def free_bone_matrices(self):
+        """Drop every frame's derived render matrices (bone_matrices / bone_chain_matrices /
+        bone_acc_scale) - ~60% of a monster's animation RAM. They are recomputable from the
+        rotations (build_bone_matrices) and are only needed to render the model in 3D, so a
+        parsed file that isn't being shown shouldn't carry them. Save/round-trip is unaffected:
+        it re-encodes each frame from its rotations, never the matrices."""
+        for anim in self.animations:
+            for frame in anim.frames:
+                frame.free_matrices()
+        self.matrices_built = False
+
+    def build_bone_matrices(self, bones):
+        """(Re)compute every frame's derived render matrices from its rotations."""
+        for anim in self.animations:
+            for frame in anim.frames:
+                if getattr(frame, 'bone_matrices', None) is None:
+                    frame._reset_matrix_lists(len(bones))
+                frame.set_all_bones_matrix(bones)
+        self.matrices_built = True
+
+    def free_animations(self):
+        """Drop the EXPANDED per-frame animation objects entirely (source rotations + derived
+        matrices). The section is re-expandable from its tiny raw bytes via analyze(), so a file
+        loaded but not shown in 3D doesn't carry the ~30 MB expansion. offsets is cleared too so
+        a later re-analyze() doesn't append duplicates; nb_animations is kept for reference."""
+        self.animations = []
+        self.offsets = []
+        self.matrices_built = False
 
     def analyze(self, data: bytes, bone_section: BoneSection):
         # Read animation section header

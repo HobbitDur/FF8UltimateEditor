@@ -2,7 +2,7 @@ import os
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel,
+from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout,
                              QListWidget, QGroupBox, QMessageBox, QAbstractItemView)
 
 from Common.filebinding import FileBinding
@@ -41,12 +41,6 @@ class OdineWidget(QWidget):
         self.magsort_binding = FileBinding("magsort.bin", file_registry,
                                            load_callback=self.load_file, save_callback=self.save_file)
 
-        self.file_label = QLabel("No file loaded")
-
-        file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.file_label)
-        file_section_layout.addStretch(1)
-
         # Available spells (left side): every spell not currently in a category
         self.available_list = QListWidget()
         self.available_list.setFixedWidth(220)
@@ -70,7 +64,6 @@ class OdineWidget(QWidget):
         self.editor_container.setEnabled(False)
 
         main_layout = QVBoxLayout()
-        main_layout.addLayout(file_section_layout)
         main_layout.addWidget(self.editor_container)
         self.setLayout(main_layout)
 
@@ -112,7 +105,6 @@ class OdineWidget(QWidget):
 
     def load_file(self, file_name):
         self.manager.load_file(file_name)
-        self.file_label.setText(os.path.basename(file_name))
         self.editor_container.setEnabled(True)
         self._refresh_lists()
 

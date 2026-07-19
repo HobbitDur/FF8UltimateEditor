@@ -39,12 +39,6 @@ class JunkshopWidget(QWidget):
         self.mwepon_binding = FileBinding("mwepon.bin", file_registry,
                                           load_callback=self.load_file, save_callback=self.save_file)
 
-        self.file_label = QLabel("No file loaded")
-
-        file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.file_label)
-        file_section_layout.addStretch(1)
-
         # Weapon list (left side)
         self.weapon_list = QListWidget()
         self.weapon_list.setFixedWidth(180)
@@ -114,7 +108,6 @@ class JunkshopWidget(QWidget):
         main_editor_layout.addWidget(self.editor_container)
 
         main_layout = QVBoxLayout()
-        main_layout.addLayout(file_section_layout)
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
 
@@ -126,7 +119,6 @@ class JunkshopWidget(QWidget):
 
     def load_file(self, file_name):
         self.manager.load_file(file_name)
-        self.file_label.setText(os.path.basename(file_name))
         self.editor_container.setEnabled(True)
         with QSignalBlocker(self.weapon_list):
             self.weapon_list.clear()

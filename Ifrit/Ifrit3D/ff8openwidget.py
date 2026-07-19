@@ -64,11 +64,11 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.skeleton_lines = []
 
         # --- NEW: UV / texture state ---
-        self.triangles_uv = []   # list of (indices_tuple, uvs_tuple, raw_tex_id)
-        self.quads_uv = []       # list of (indices_tuple, uvs_tuple, raw_tex_id)
+        self.triangles_uv = []   # list of (indices_tuple, uvs_tuple, raw_tex_id, depth_bias)
+        self.quads_uv = []       # list of (indices_tuple, uvs_tuple, raw_tex_id, depth_bias)
         # Colored (untextured) primitives — battle stages and magic models
-        self.colored_triangles = []  # list of (indices_tuple, rgb_tuple)
-        self.colored_quads = []      # list of (indices_tuple, rgb_tuple)
+        self.colored_triangles = []  # list of (indices_tuple, rgb_tuple, depth_bias)
+        self.colored_quads = []      # list of (indices_tuple, rgb_tuple, depth_bias)
         self._pending_qpixmaps = []   # QPixmaps waiting to be uploaded
         self._gl_textures = []        # list of GL texture IDs (after upload)
         self._tex_id_to_index = {}    # raw tex_id → _gl_textures index
@@ -181,6 +181,11 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+            # Point sampling, no mipmaps - what the PSX/PC engine does (flat FT3/FT4
+            # GPU primitives, nearest-texel lookup, no LOD). Keeps the authentic
+            # blocky look. Mipmapping/anisotropic were tried to reduce grazing-angle
+            # shimmer but made no acceptable difference (atlas bleed and/or blur), so
+            # this stays at plain nearest.
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
@@ -196,19 +201,19 @@ class FF8OpenGLWidget(QOpenGLWidget):
             self._gl_textures = []
 
     def set_triangles_with_uv(self, data: list):
-        """data: list of (indices_tuple, uvs_tuple, raw_tex_id)"""
+        """data: list of (indices_tuple, uvs_tuple, raw_tex_id, depth_bias)"""
         self.triangles_uv = data
 
     def set_quads_with_uv(self, data: list):
-        """data: list of (indices_tuple, uvs_tuple, raw_tex_id)"""
+        """data: list of (indices_tuple, uvs_tuple, raw_tex_id, depth_bias)"""
         self.quads_uv = data
 
     def set_colored_triangles(self, data: list):
-        """data: list of (indices_tuple, rgb_tuple) — flat-colored faces"""
+        """data: list of (indices_tuple, rgb_tuple, depth_bias) — flat-colored faces"""
         self.colored_triangles = data
 
     def set_colored_quads(self, data: list):
-        """data: list of (indices_tuple, rgb_tuple) — flat-colored faces"""
+        """data: list of (indices_tuple, rgb_tuple, depth_bias) — flat-colored faces"""
         self.colored_quads = data
 
     def set_show_texture(self, show: bool):
@@ -275,9 +280,26 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
     def resizeGL(self, w, h):
         glViewport(0, 0, w, h)
+        self._apply_projection(w, h)
+
+    def _apply_projection(self, w, h):
+        """(Re)build the projection matrix with clip planes sized to the current
+        model/zoom, not a fixed 0.1-100 range: monster models fit comfortably in
+        that range, but battle stages (much larger, and zoomable out to 10x their
+        size) were getting their far edges clipped by the fixed far=100 plane -
+        geometry popping in/out as the camera moved. Recomputed every frame (from
+        paintGL) rather than only on resize, since zoom/model size change without
+        a resize event."""
+        # near scales with the current camera distance (self.zoom), not the model's
+        # absolute size: tying it to model size instead gave a far/near ratio in the
+        # tens of thousands for large battle stages, which starves the depth buffer's
+        # precision at distance and shows up as z-fighting/flicker on coincident faces.
+        far_extent = max(getattr(self, 'MODEL_SIZE', 0.0), self.zoom, 1.0)
+        near = max(self.zoom * 0.05, 0.05)
+        far = far_extent * 3.0 + 100.0
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluPerspective(45.0, w / h, 0.1, 100.0)
+        gluPerspective(45.0, w / h if h else 1.0, near, far)
         glMatrixMode(GL_MODELVIEW)
 
     def set_reference_position(self, x: float, y: float, z: float):
@@ -300,6 +322,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
     def paintGL(self):
         if self._textures_dirty and self._pending_qpixmaps:
             self._upload_pending_textures()
+
+        self._apply_projection(self.width(), self.height())
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
@@ -445,6 +469,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glAlphaFunc(GL_GREATER, 0.5)
         glDisable(GL_CULL_FACE)  # we cull in software (winding-independent)
         glEnable(GL_DEPTH_TEST)
+        glEnable(GL_POLYGON_OFFSET_FILL)
         glColor4f(1.0, 1.0, 1.0, 1.0)
 
         view_dir = self._view_direction_model()
@@ -452,7 +477,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # Count exact duplicates: double-sided parts are two opposite-winding
         # faces, only one culled per frame (see _should_cull_backface).
         face_count = {}
-        for indices, _, _ in self.triangles_uv:
+        for indices, _, _, _ in self.triangles_uv:
             face_key = frozenset(indices)
             face_count[face_key] = face_count.get(face_key, 0) + 1
 
@@ -460,17 +485,21 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # per triangle: glBegin(GL_TRIANGLES) with 3N vertices draws the same N triangles,
         # so output is identical but the per-primitive call overhead (the immediate-mode
         # bottleneck) is cut sharply - noticeable when many triangles share a texture.
-        current_raw_id = None
+        # depth_bias joins the batch key alongside the texture: glPolygonOffset, like
+        # texture binding, only takes effect outside glBegin/glEnd.
+        current_batch_key = None
         batch_open = False
-        for indices, uvs, raw_id in self.triangles_uv:
+        for indices, uvs, raw_id, depth_bias in self.triangles_uv:
             verts = [self.vertices_array[idx] for idx in indices]
             if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
                 continue
-            if raw_id != current_raw_id:
+            batch_key = (raw_id, depth_bias)
+            if batch_key != current_batch_key:
                 if batch_open:
                     glEnd()
                 self._bind_texture_for_raw_id(raw_id)  # only allowed outside glBegin/glEnd
-                current_raw_id = raw_id
+                glPolygonOffset(0.0, self._depth_bias_offset_units(depth_bias))
+                current_batch_key = batch_key
                 glBegin(GL_TRIANGLES)
                 batch_open = True
             for i in range(3):
@@ -488,6 +517,23 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glDisable(GL_ALPHA_TEST)
         glDisable(GL_BLEND)
         glDisable(GL_TEXTURE_2D)
+        glDisable(GL_POLYGON_OFFSET_FILL)
+        glPolygonOffset(0.0, 0.0)
+
+    _DEPTH_BIAS_UNIT = 2.0  # glPolygonOffset units per depth_bias step (-8..7)
+
+    def _depth_bias_offset_units(self, depth_bias):
+        """Map a face's parsed depth_bias (top nibble of its first vertex index,
+        neutral=8 already subtracted so this is -8..7) to glPolygonOffset units.
+
+        The PSX renderer has no Z-buffer - it sorts whole polygons into priority
+        buckets (an ordering table) and this per-face bias nudges a polygon's
+        bucket, e.g. to force a decal to draw after (on top of) the surface
+        it sits on. This viewer uses a real depth buffer instead, so the same
+        intent is reproduced by nudging the written depth: positive bias (assumed
+        higher priority => drawn later/on top) moves the fragment closer to the
+        camera so it wins the depth test against the coincident base surface."""
+        return -float(depth_bias) * self._DEPTH_BIAS_UNIT
 
     def _calculate_triangle_normal(self, verts):
         """Calculate normal vector for a triangle"""
@@ -545,28 +591,32 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glAlphaFunc(GL_GREATER, 0.5)
         glDisable(GL_CULL_FACE)  # we cull in software (winding-independent)
         glEnable(GL_DEPTH_TEST)
+        glEnable(GL_POLYGON_OFFSET_FILL)
         glColor4f(1.0, 1.0, 1.0, 1.0)
 
         view_dir = self._view_direction_model()
 
         face_count = {}
-        for indices, _, _ in self.quads_uv:
+        for indices, _, _, _ in self.quads_uv:
             face_key = frozenset(indices)
             face_count[face_key] = face_count.get(face_key, 0) + 1
 
         # Batch consecutive same-texture quads (each as two triangles) into one glBegin/
-        # glEnd, same as the triangle path above.
-        current_raw_id = None
+        # glEnd, same as the triangle path above. depth_bias joins the batch key (see
+        # _draw_textured_triangles).
+        current_batch_key = None
         batch_open = False
-        for indices, uvs, raw_id in self.quads_uv:
+        for indices, uvs, raw_id, depth_bias in self.quads_uv:
             verts = [self.vertices_array[idx] for idx in indices]
             if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
                 continue
-            if raw_id != current_raw_id:
+            batch_key = (raw_id, depth_bias)
+            if batch_key != current_batch_key:
                 if batch_open:
                     glEnd()
                 self._bind_texture_for_raw_id(raw_id)
-                current_raw_id = raw_id
+                glPolygonOffset(0.0, self._depth_bias_offset_units(depth_bias))
+                current_batch_key = batch_key
                 glBegin(GL_TRIANGLES)
                 batch_open = True
             # Draw quad as two triangles (perimeter order A, B, D / A, C, D)
@@ -579,6 +629,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glDisable(GL_ALPHA_TEST)
         glDisable(GL_BLEND)
         glDisable(GL_TEXTURE_2D)
+        glDisable(GL_POLYGON_OFFSET_FILL)
+        glPolygonOffset(0.0, 0.0)
 
     def _draw_colored_faces(self):
         """Draw the colored (untextured) primitive lists with their flat RGB color."""
@@ -587,28 +639,31 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         glDisable(GL_TEXTURE_2D)
         glEnable(GL_DEPTH_TEST)
+        glEnable(GL_POLYGON_OFFSET_FILL)
 
         view_dir = self._view_direction_model()
         face_count = {}
-        for indices, _ in self.colored_triangles + self.colored_quads:
+        for indices, _, _ in self.colored_triangles + self.colored_quads:
             face_key = frozenset(indices)
             face_count[face_key] = face_count.get(face_key, 0) + 1
 
-        for indices, rgb in self.colored_triangles:
+        for indices, rgb, depth_bias in self.colored_triangles:
             verts = [self.vertices_array[idx] for idx in indices]
             if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
                 continue
             glColor3f(*rgb)
+            glPolygonOffset(0.0, self._depth_bias_offset_units(depth_bias))
             glBegin(GL_TRIANGLES)
             for v in verts:
                 glVertex3f(v[0], v[1], v[2])
             glEnd()
 
-        for indices, rgb in self.colored_quads:
+        for indices, rgb, depth_bias in self.colored_quads:
             verts = [self.vertices_array[idx] for idx in indices]
             if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
                 continue
             glColor3f(*rgb)
+            glPolygonOffset(0.0, self._depth_bias_offset_units(depth_bias))
             # Same perimeter order as textured quads (A, B, D / A, C, D)
             glBegin(GL_TRIANGLES)
             for i in (0, 1, 3, 0, 2, 3):
@@ -616,6 +671,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
             glEnd()
 
         glColor4f(1.0, 1.0, 1.0, 1.0)
+        glDisable(GL_POLYGON_OFFSET_FILL)
+        glPolygonOffset(0.0, 0.0)
 
     def _calculate_quad_normal(self, verts):
         """Calculate normal for a quad"""

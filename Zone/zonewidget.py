@@ -123,7 +123,7 @@ class ZoneWidget(QWidget):
         self.preview_label = QLabel()
         self.preview_label.setFixedSize(CANVAS_WIDTH * PREVIEW_SCALE, CANVAS_HEIGHT * PREVIEW_SCALE)
         self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview_label.setText("Load mngrp.bin to render the page")
+        self.preview_label.setText("Open mmag.bin to render a page")
         self.preview_label.setToolTip(
             "The page as the menu draws it, redrawn as you edit. The art, the paper mat and the "
             "text are the real thing; the window background is a flat stand-in "
@@ -440,7 +440,16 @@ class ZoneWidget(QWidget):
 
     def _refresh_preview(self):
         """Render the selected entry from the values currently in the form."""
-        if self.renderer is None or not 0 <= self.current_entry_index < len(self.manager.entries):
+        # The placeholder says what is actually missing: mngrp is shared, so it may already be
+        # loaded (from the mmag2.bin tab or Shiva) and the tab only needs mmag.bin opened.
+        if self.renderer is None:
+            self.preview_label.setPixmap(QPixmap())
+            self.preview_label.setText("Open mngrp.bin (or the mmag2.bin tab / Shiva) to render "
+                                       "the page")
+            return
+        if not 0 <= self.current_entry_index < len(self.manager.entries):
+            self.preview_label.setPixmap(QPixmap())
+            self.preview_label.setText("mngrp.bin ready — open mmag.bin to render a page")
             return
         self._apply_form_to_entry()
         image = self.renderer.render(self.manager.entries[self.current_entry_index])

@@ -170,9 +170,12 @@ class GltfExporter:
         Quads are split into two triangles exactly like the OpenGL viewer does
         (A,B,D then A,C,D).
         """
+        # depth_bias (the 4th element of get_*_with_uv) is a PSX rendering hint with no
+        # glTF equivalent, so it's dropped here rather than threaded through the exporter.
         geometry = self.ifrit_manager.enemy.geometry_data
-        faces = list(geometry.get_triangles_with_uv())
-        for (a, b, c, d), (uv_a, uv_b, uv_c, uv_d), tex_id in geometry.get_quads_with_uv():
+        faces = [(indices, uvs, tex_id)
+                 for indices, uvs, tex_id, _depth_bias in geometry.get_triangles_with_uv()]
+        for (a, b, c, d), (uv_a, uv_b, uv_c, uv_d), tex_id, _depth_bias in geometry.get_quads_with_uv():
             faces.append(((a, b, d), (uv_a, uv_b, uv_d), tex_id))
             faces.append(((a, c, d), (uv_a, uv_c, uv_d), tex_id))
         return faces

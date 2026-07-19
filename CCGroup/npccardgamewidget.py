@@ -10,12 +10,9 @@ a named checkbox switches between the two modes.
 
 All values and descriptions come from the FF8ModdingWiki page 13A_CARDGAME.
 """
-import os
-
-from PyQt6.QtCore import QSize, Qt, QSettings
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea,
-                             QPushButton, QLabel, QComboBox, QCheckBox,
+                             QLabel, QComboBox, QCheckBox,
                              QSpinBox, QGroupBox, QMessageBox, QSplitter, QLineEdit,
                              QTreeWidget, QTreeWidgetItem)
 

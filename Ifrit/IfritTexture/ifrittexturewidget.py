@@ -70,6 +70,14 @@ class IfritTextureWidget(QWidget):
 
         self._texture_widgets.clear()
 
+        # Drop any leftover "Add New" placeholder a previous refresh appended. Only the
+        # placeholder has a None image (a real texture always loads a pixmap from its PNG), so
+        # this reliably targets just the placeholder and keeps repeated refreshes idempotent.
+        # Without it, a second refresh builds a full, image-less widget for that placeholder and
+        # crashes ('NoneType' has no .size()) - which happens now that the widget is constructed
+        # with textures already loaded and then refreshed again via show_current().
+        td = self.ifrit_manager.texture_data
+        td[:] = [t for t in td if t.texture_image is not None]
 
         # 2. Add existing textures from the manager
         last_index = -1
@@ -101,6 +109,12 @@ class IfritTextureWidget(QWidget):
 
     def load_file(self, file_to_load: str):
         self._import(file_to_load)
+
+    def show_current(self):
+        """Rebuild the grid from the manager's already-loaded texture_data, WITHOUT re-running
+        the (slow) VincentTim extraction. Used when switching to a file whose textures are
+        already in memory (cached), so opening it stays instant."""
+        self._refresh_texture_grid()
 
     def _import(self, file_to_load: str, delete_temp=True):
         if not file_to_load:

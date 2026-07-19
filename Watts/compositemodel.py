@@ -27,8 +27,8 @@ def _build_texture_atlas(entries):
         images = [td for td in getattr(manager, "texture_data", [])
                   if getattr(td, "texture_image", None) is not None]
         geometry = manager.enemy.geometry_data
-        raw_ids = sorted({tex for _i, _uv, tex in geometry.get_triangles_with_uv()} |
-                         {tex for _i, _uv, tex in geometry.get_quads_with_uv()})
+        raw_ids = sorted({tex for _i, _uv, tex, _bias in geometry.get_triangles_with_uv()} |
+                         {tex for _i, _uv, tex, _bias in geometry.get_quads_with_uv()})
         for rank, raw in enumerate(raw_ids):
             remap[(model_index, raw)] = len(global_textures)
             global_textures.append(images[min(rank, len(images) - 1)] if images else None)
@@ -65,9 +65,9 @@ class _CompositeGeometry:
         base = 0
         for model_index, (manager, _win_pose, _offset) in enumerate(self._entries):
             geometry = manager.enemy.geometry_data
-            for indices, uvs, raw_tex in getattr(geometry, method)():
+            for indices, uvs, raw_tex, depth_bias in getattr(geometry, method)():
                 faces.append((tuple(index + base for index in indices), uvs,
-                              self._tex_remap.get((model_index, raw_tex), 0)))
+                              self._tex_remap.get((model_index, raw_tex), 0), depth_bias))
             base += len(geometry.get_vertices())
         return faces
 

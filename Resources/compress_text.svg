@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"
+     stroke="#0d3a66" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+  <!-- two vertical bars: the text block being squeezed -->
+  <line x1="21" y1="6" x2="21" y2="42"/>
+  <line x1="27" y1="6" x2="27" y2="42"/>
+  <!-- left arrow pointing inward -->
+  <line x1="4" y1="24" x2="15" y2="24"/>
+  <path d="M9 17 L18 24 L9 31 Z" fill="#f6c078"/>
+  <!-- right arrow pointing inward -->
+  <line x1="44" y1="24" x2="33" y2="24"/>
+  <path d="M39 17 L30 24 L39 31 Z" fill="#f6c078"/>
+</svg>

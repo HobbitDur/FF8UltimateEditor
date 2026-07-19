@@ -40,19 +40,23 @@ What is exact and what is not:
   depends on their bindings. icon.sp1 holds the PlayStation pad set, which is the
   default and what this draws - `button_icon_style` lets the caller ask for plain
   boxes instead rather than imply a certainty that is not there.
-* **The background is one flat rectangle at the window's real place and size.**
-  Two things stack up there in the magazine and neither is reconstructible from
-  mmag.bin: the menu window gradient (BattleUI_DrawWindowBackground, shared with
-  the rest of the menu) and, behind it, the paper tile - whose texture window
-  resolves to a 32x32 tile at VRAM (896, 192), below the 256x192 page TIM, so no
-  file the entry references carries it. They are drawn as one solid colour
-  rather than pretending to more fidelity than there is.
+* **The paper background is the real parchment.** The 32x32 tile the paper draw
+  samples at VRAM (896, 192) is mngrp raw file 12 - a standalone TIM whose
+  header declares exactly that placement - so it is decoded from the loaded
+  mngrp.bin and tiled across the window just like
+  Menu_Magazine_DrawPaperBackground does. On top of it the game draws the menu
+  window fill (BattleUI_DrawWindowBackground), whose colour is the *player's*
+  Config > Window Colour: there is no single correct value, so a translucent
+  stand-in tint approximating the default is blended over the parchment
+  (WINDOW_TINT). Without mngrp.bin the whole background falls back to a flat
+  colour.
 """
 from PIL import Image, ImageDraw
 
 from FF8GameData.font.atlas import FontAtlas
 from FF8GameData.font.textlayout import FontMetrics, MENU_TEXT_LINE_HEIGHT, layout_text
 from FF8GameData.menu.magpage import UNUSED_ID, MagPageEntry
+from FF8GameData.menu.magpagemanager import PAPER_TILE_RAW_FILE
 from FF8GameData.tim.timfile import decode_tim
 
 # The menu draws in a 384x240-ish space; the window sits at (24, 8) in every retail entry.
@@ -60,8 +64,13 @@ CANVAS_WIDTH = 384
 CANVAS_HEIGHT = 240
 
 BACKDROP_COLOR = (16, 16, 24, 255)
-# Stand-in for the menu window + paper tile (see the module docstring).
+# Flat fallback for the whole background when mngrp.bin (the parchment) is absent.
 BACKGROUND_COLOR = (24, 36, 88, 255)
+# The menu window fill drawn over the parchment. In game its colour is the
+# player's Config > Window Colour (a four-corner gradient), so any fixed value is
+# a stand-in: this approximates the default dark blue-grey at the window's
+# translucency, darkening the parchment the way the real fill does.
+WINDOW_TINT = (24, 36, 88, 110)
 
 FOOTER_Y = 200  # Menu_Magazine_Draw draws the footer line at y=200
 ZOOM_NEUTRAL = 128  # PSX colour blending is texel * colour / 128, so 128 = unchanged
@@ -116,6 +125,14 @@ class PageRenderer:
             self._tim_cache[raw_file] = decode_tim(data) if data else None
         return self._tim_cache[raw_file]
 
+    def paper_tile(self):
+        """The 32x32 parchment tile (mngrp raw file 12), or None without mngrp.bin."""
+        if PAPER_TILE_RAW_FILE not in self._tim_cache:
+            data = self.manager.get_raw_file(PAPER_TILE_RAW_FILE)
+            self._tim_cache[PAPER_TILE_RAW_FILE] = decode_tim(data) if data else None
+        tim = self._tim_cache[PAPER_TILE_RAW_FILE]
+        return tim.image if tim is not None else None
+
     def _flag(self, override, name):
         return getattr(self.manager, name) if override is None else override
 
@@ -145,10 +162,26 @@ class PageRenderer:
         canvas.alpha_composite(Image.new("RGBA", (width, height), color), (x, y))
 
     def _draw_background(self, canvas, entry):
-        # Menu_Magazine_DrawPaperBackground tiles 64px strips across the window width,
-        # under the menu window gradient; both cover exactly the window rect.
-        self._blend(canvas, (entry.window_x, entry.window_y,
-                             entry.window_width, entry.window_height), BACKGROUND_COLOR)
+        """The window rect: real parchment (mngrp raw 12) tiled like the paper draw,
+        darkened by the menu window fill; flat colour when mngrp.bin is absent."""
+        box = (entry.window_x, entry.window_y, entry.window_width, entry.window_height)
+        tile = self.paper_tile()
+        if tile is None:
+            self._blend(canvas, box, BACKGROUND_COLOR)
+            return
+        x, y, width, height = box
+        if width <= 0 or height <= 0:
+            return
+        # Rounded up to whole tiles so the compositing never overflows, then cropped
+        columns = -(-width // tile.width)
+        rows = -(-height // tile.height)
+        paper = Image.new("RGBA", (columns * tile.width, rows * tile.height))
+        for tile_y in range(rows):
+            for tile_x in range(columns):
+                paper.alpha_composite(tile, (tile_x * tile.width, tile_y * tile.height))
+        canvas.alpha_composite(paper.crop((0, 0, width, height)), (x, y))
+        # The translucent menu window fill sits on top of the paper in game
+        self._blend(canvas, box, WINDOW_TINT)
 
     def _draw_mat(self, canvas, entry):
         """The GP0(0x62) semi-transparent flat rect behind the page art."""

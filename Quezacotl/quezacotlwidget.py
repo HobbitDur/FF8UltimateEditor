@@ -112,11 +112,6 @@ class QuezacotlWidget(QWidget):
         # init.out, this tool's one editable file, driven by the shared header toolbar.
         self.init_binding = FileBinding("init.out", file_registry,
                                         load_callback=self.load_file, save_callback=self.save_file)
-        self.file_label = QLabel("No file loaded")
-
-        file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.file_label)
-        file_section_layout.addStretch(1)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_gf_tab(), "G-Forces")
@@ -132,7 +127,6 @@ class QuezacotlWidget(QWidget):
         self.tabs.setEnabled(False)
 
         main_layout = QVBoxLayout()
-        main_layout.addLayout(file_section_layout)
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
 
@@ -271,7 +265,6 @@ class QuezacotlWidget(QWidget):
 
     def load_file(self, file_name):
         self.manager.load_file(file_name)
-        self.file_label.setText(os.path.basename(file_name))
         self.tabs.setEnabled(True)
 
         with QSignalBlocker(self.gf_list):

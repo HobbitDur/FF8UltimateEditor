@@ -172,21 +172,126 @@ class IfritManager:
     def load_xlsx_file(self, xlsx_file):
         self._xlsx_to_dat_manager.load_file(xlsx_file)
 
-    def init_from_file(self, file_path):
-        self.enemy = MonsterAnalyser(self.game_data)
-        self.enemy.load_file_data(file_path, self.game_data)
-        self.enemy.analyse_loaded_data(self.game_data, self.decompiler)
-        self.compiler.set_battle_text_info_stat(self.enemy.battle_script_data['battle_text'],self.enemy.info_stat_data )
-        #self.decompiler.set_battle_text_info_stat(self.enemy.battle_script_data['battle_text'],self.enemy.info_stat_data )
-        self.texture_data = []          # reset from previous file
+    def parse_file(self, file_path) -> MonsterAnalyser:
+        """Parse one battle .dat into its own MonsterAnalyser (data model only).
+
+        Deliberately does NOT run analyze()/VincentTim: extracting textures spawns an
+        external process per file and is only needed for the file the user is actually
+        looking at. A multi-file load parses every file with this (fast) and defers the
+        texture step to set_active_enemy() when a file is opened. AI is decompiled here
+        (analyse_loaded_data) and stored in the returned enemy, so switching to it later
+        needs no re-decompile."""
+    def parse_file(self, file_path, free_animation=False) -> MonsterAnalyser:
+        enemy = MonsterAnalyser(self.game_data)
+        enemy.load_file_data(file_path, self.game_data)
+        enemy.analyse_loaded_data(self.game_data, self.decompiler)
+        # The expanded animation is ~90% of a parsed file's RAM. Shed it for a multi-file load:
+        #   free_animation=True  -> drop the WHOLE expansion (rotations + matrices) ~0.5 MB, and
+        #                           re-expand from the raw section bytes on first 3D view.
+        #   free_animation=False -> drop only the DERIVED matrices (~12 MB kept as source), the
+        #                           default for single-file / direct callers (tests, Watts...).
+        # Either way it is rebuilt on demand (_ensure_matrices) and save re-expands itself.
+        ad = getattr(enemy, 'animation_data', None)
+        if ad:
+            if free_animation:
+                enemy.free_animation()
+            else:
+                ad.free_bone_matrices()
+        return enemy
+
+    def _ensure_matrices(self):
+        """Make the active enemy's animation ready to read: re-expand it if it was fully freed
+        (multi-file load) and rebuild the derived bone matrices if only those were freed. Called
+        before any 3D/skeleton read or edit. No-op once ready."""
+        if hasattr(self.enemy, 'ensure_animation_expanded'):
+            self.enemy.ensure_animation_expanded()   # re-expands source AND builds matrices
+        ad = getattr(self.enemy, 'animation_data', None)
+        if ad is not None and not getattr(ad, 'matrices_built', True) and self.enemy.bone_data:
+            ad.build_bone_matrices(self.enemy.bone_data.bones)
+
+    def free_matrices(self):
+        """Drop the active enemy's derived bone matrices (rebuilt on the next 3D read)."""
+        ad = getattr(self.enemy, 'animation_data', None)
+        if ad is not None:
+            ad.free_bone_matrices()
+
+    def extract_textures(self, enemy: MonsterAnalyser, file_path):
+        """Run the (slow, external VincentTim) texture extraction for `enemy` and return its
+        (texture_data, texture_black_is_transparent) WITHOUT changing which file is active.
+
+        Lets a multi-file session pre-extract every file's textures once and cache the result,
+        so activating a file later is a cheap in-memory restore (set_active_enemy(..., textures=))
+        instead of another tim.exe run - the whole point of "pay the load cost up front, none
+        while switching"."""
+        prev = (self.enemy, self.texture_data, self.texture_black_is_transparent)
+        self.enemy = enemy
+        self.texture_data = []
         self.texture_black_is_transparent = True
         try:
-            self.analyze(file_path)     # populates self.texture_data via VincentTim
+            self.analyze(file_path)
         except Exception as e:
-            print(f"[texture] Could not extract textures: {e}")
+            print(f"[texture] Could not extract textures for {file_path}: {e}")
+        result = (self.texture_data, self.texture_black_is_transparent)
+        self.enemy, self.texture_data, self.texture_black_is_transparent = prev
+        return result
+
+    def extract_textures_from_memory(self, enemy: MonsterAnalyser):
+        """Extract textures reflecting the enemy's CURRENT in-memory bytes, not the file on disk.
+
+        Used to refresh a file's cached textures right after a texture edit is folded in (inject),
+        while the real file may still be unsaved: the edited section is only in memory, so we
+        serialise the enemy to a scratch .dat and run the normal extraction on that. Returns the
+        same (texture_data, black_is_transparent) tuple extract_textures() does."""
+        # Put the scratch .dat in its OWN subdir: analyze() derives its export dir as
+        # temp_path/<scratch-file-name>, so a scratch file sitting directly in temp_path would
+        # collide with that dir (same path). A distinctive name also avoids clashing with a real
+        # loaded file's export dir.
+        scratch_dir = self.temp_path / "_reextract_src"
+        scratch = scratch_dir / "ifrit_reextract_src.dat"
+        scratch_dir.mkdir(parents=True, exist_ok=True)
+        enemy.write_data_to_file(self.game_data, str(scratch))
+        try:
+            return self.extract_textures(enemy, str(scratch))
+        finally:
+            try:
+                shutil.rmtree(scratch_dir, ignore_errors=True)
+            except OSError:
+                pass
+
+    def set_active_enemy(self, enemy: MonsterAnalyser, file_path, textures=None):
+        """Make an already-parsed enemy the active one: point the compiler at its data and set up
+        its textures. `textures` is a cached (texture_data, black_is_transparent) tuple from
+        extract_textures() - restored in-memory (instant). Only when it is None (cache miss) does
+        this run the slow VincentTim extraction itself."""
+        self.enemy = enemy
+        self.compiler.set_battle_text_info_stat(enemy.battle_script_data['battle_text'], enemy.info_stat_data)
+        if textures is not None:
+            # Shallow-copy the cached list: the texture grid appends its "Add New" placeholder to
+            # the manager's list, which must not leak back into the cached copy (or it would grow
+            # a dummy per activation).
+            cached_data, cached_flag = textures
+            self.texture_data = list(cached_data)
+            self.texture_black_is_transparent = cached_flag
+        else:
+            self.texture_data = []          # reset from previous file
+            self.texture_black_is_transparent = True
+            try:
+                self.analyze(file_path)     # populates self.texture_data via VincentTim
+            except Exception as e:
+                print(f"[texture] Could not extract textures: {e}")
+
+    def init_from_file(self, file_path):
+        """Parse a single file and make it active (parse + activate in one call)."""
+        self.set_active_enemy(self.parse_file(file_path), file_path)
 
     def save_file(self, file_path):
         self.enemy.write_data_to_file(self.game_data, file_path)
+
+    def save_enemy(self, enemy: MonsterAnalyser, file_path):
+        """Write a specific (not necessarily active) enemy back to its file - used by the
+        multi-file 'save all changed' path to persist every edited file, not just the one
+        currently shown."""
+        enemy.write_data_to_file(self.game_data, file_path)
 
     # ── Batch fps conversion ──────────────────────────────────────────
 
@@ -367,6 +472,7 @@ class IfritManager:
         Returns world-space bone matrices for a given animation and frame.
         Now uses pre‑computed matrices from AnimationSection.
         """
+        self._ensure_matrices()          # rebuild if this file's matrices were freed
         anim_section = self.enemy.animation_data
 
         if not anim_section or not anim_section.nb_animations:
@@ -437,6 +543,7 @@ class IfritManager:
         Get animated vertices for current frame.
         If next_frame_id is provided, interpolate between frames using step (0.0-1.0).
         """
+        self._ensure_matrices()          # rebuild if this file's matrices were freed
         anim = self.enemy.animation_data.animations[anim_id]
         frame = anim.frames[frame_id]
         matrices = frame.bone_matrices  # already built!
@@ -848,6 +955,7 @@ class IfritManager:
 
     def set_bone_parent(self, bone_idx: int, parent_idx: int):
         """Change parent of a bone."""
+        self._ensure_matrices()
         bone = self.enemy.bone_data.bones[bone_idx]
         bone.parent_id = parent_idx
         self._recompute_all_animation_matrices()
@@ -860,6 +968,7 @@ class IfritManager:
         must grow by one bone). Default length follows the FF8 convention of
         negative sizes (child joint at parent + Z * size, size < 0).
         """
+        self._ensure_matrices()
         bone_section = self.enemy.bone_data
         new_id = len(bone_section.bones)
         bone = Bone()
@@ -890,6 +999,7 @@ class IfritManager:
         they are rebuilt here too. Animations keep their frames and positions
         but only the root's rotation channel remains.
         """
+        self._ensure_matrices()
         bone_section = self.enemy.bone_data
         if not bone_section.bones:
             return
@@ -1010,6 +1120,7 @@ class IfritManager:
         whatever the Euler composition order — including gimbal poses, where
         two rings simply align.
         """
+        self._ensure_matrices()
         if not self.enemy.bone_data or not self.enemy.animation_data.nb_animations:
             return None
         anims = self.enemy.animation_data.animations
@@ -1060,6 +1171,7 @@ class IfritManager:
     def set_animation_frame_bone_scale(self, anim_id: int, frame_id: int, bone_idx: int,
                                        scale_x: float, scale_y: float, scale_z: float):
         """Set the squash-and-stretch scale of a bone in a specific animation frame (1.0 = neutral)."""
+        self._ensure_matrices()
         anim: Animation = self.enemy.animation_data.animations[anim_id]
         if frame_id >= len(anim.frames):
             return
@@ -1084,6 +1196,7 @@ class IfritManager:
 
     def set_animation_frame_scale_mode(self, anim_id: int, frame_id: int, enabled: bool):
         """Enable/disable the frame's mode bit (whether its per-bone scale data is applied and stored)."""
+        self._ensure_matrices()
         anim: Animation = self.enemy.animation_data.animations[anim_id]
         if frame_id >= len(anim.frames):
             return
@@ -1102,6 +1215,10 @@ class IfritManager:
         Recompute bone matrices for a single frame.
         If changed_bone_idx is provided, only recompute that bone and its children.
         """
+        # Every incremental recompute reads sibling/parent matrices, so the frame must be built
+        # first. This is the single choke-point all rotation/length/scale edits go through, so
+        # ensuring here covers them all even if the file's matrices were freed. No-op once built.
+        self._ensure_matrices()
         frame = anim.frames[frame_id]
         bones = self.enemy.bone_data.bones
         nb_bones = len(bones)

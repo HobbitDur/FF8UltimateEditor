@@ -2,7 +2,7 @@ import os
 
 from PyQt6.QtCore import QSignalBlocker, pyqtSignal, Qt
 from PyQt6.QtGui import QIcon, QFontMetrics
-from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel,
+from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QLabel,
                              QSpinBox, QGroupBox, QFormLayout, QSizePolicy)
 
 from Common.filebinding import FileBinding
@@ -33,12 +33,6 @@ class PietWidget(QWidget):
         # File section: mtmag.bin, driven by the shared header toolbar (Import / Save).
         self.mtmag_binding = FileBinding("mtmag.bin", file_registry,
                                          load_callback=self.load_file, save_callback=self.save_file)
-
-        self.file_label = QLabel("No file loaded")
-
-        file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.file_label)
-        file_section_layout.addStretch(1)
 
         # One group box per book, each with a first/last mmag entry spinbox pair
         self.first_spinboxes = []
@@ -79,7 +73,6 @@ class PietWidget(QWidget):
         self.editor_container.setEnabled(False)
 
         main_layout = QVBoxLayout()
-        main_layout.addLayout(file_section_layout)
         main_layout.addWidget(self.editor_container)
         main_layout.addStretch(1)
         self.setLayout(main_layout)
@@ -106,7 +99,6 @@ class PietWidget(QWidget):
 
     def load_file(self, file_name):
         self.manager.load_file(file_name)
-        self.file_label.setText(os.path.basename(file_name))
         self.editor_container.setEnabled(True)
         self.reload_books()
 

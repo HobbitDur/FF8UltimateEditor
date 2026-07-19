@@ -65,11 +65,34 @@ def test_sp2_table_is_the_one_the_overlays_index(manager):
     assert (quad.texpage >> 7) & 3 == 1  # colour mode 1 = 8bpp
 
 
-def test_render_size_and_background(renderer, manager):
+def test_render_size_and_background_is_the_real_parchment(renderer, manager):
     image = renderer.render(manager.entries[0])
     assert image.size == (CANVAS_WIDTH, CANVAS_HEIGHT)
     entry = manager.entries[0]
-    # Inside the window but away from art/text: the flat background stand-in
+
+    # The parchment tile is mngrp raw file 12: a 32x32 TIM self-placed at VRAM
+    # (896, 192), the very coordinates the paper draw samples.
+    tile = renderer.paper_tile()
+    assert tile is not None and tile.size == (32, 32)
+
+    # Inside the window, away from art/text: textured paper (warm, non-flat),
+    # not the flat fallback colour.
+    strip = [image.getpixel((entry.window_x + 2 + x, entry.window_y + entry.window_height - 4))
+             for x in range(48)]
+    assert len(set(strip)) > 1, "the paper background must be textured, not flat"
+    red, green, blue = strip[0][:3]
+    assert red > blue, f"parchment through the tint should stay warm, got {strip[0]}"
+    assert all(pixel != BACKGROUND_COLOR for pixel in strip)
+
+
+def test_background_falls_back_to_flat_without_mngrp(manager):
+    from Zone.zonemanager import ZoneManager
+    bare = ZoneManager(manager.game_data)
+    bare.load_file(str(MENU_DIR / "mmag.bin"))
+    renderer = PageRenderer(bare, menu_folder=str(MENU_DIR))
+    assert renderer.paper_tile() is None
+    entry = bare.entries[0]
+    image = renderer.render(entry)
     assert image.getpixel((entry.window_x + 2, entry.window_y + entry.window_height - 2)) \
         == BACKGROUND_COLOR
 

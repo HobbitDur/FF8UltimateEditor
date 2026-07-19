@@ -9,12 +9,14 @@ stru_B8A418 table extracted from FF8_EN.exe.
 import os
 import sys
 
-from PyQt6.QtCore import QBuffer, QByteArray, QLoggingCategory, QSize, Qt, QUrl
+from PyQt6.QtCore import QBuffer, QByteArray, QLoggingCategory, Qt, QUrl
 from PyQt6.QtGui import QIcon
 from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
                              QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QAbstractItemView)
 
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Julia.juliamanager import JuliaManager
 
@@ -35,8 +37,10 @@ class JuliaWidget(QWidget):
     COL_USED_BY = 6
     HEADERS = ["#", "Format", "Ch", "Rate (Hz)", "Length", "Loop", "Used by"]
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
+        if file_registry is None:  # Used alone, it shares its files with nobody
+            file_registry = FileRegistry()
         self.icon_path = icon_path
 
         self.game_data = GameData(game_data_folder)
@@ -53,29 +57,10 @@ class JuliaWidget(QWidget):
         self.setWindowTitle("Julia")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        # --- File section ---
-        self.load_button = QPushButton()
-        self.load_button.setIcon(QIcon(os.path.join(icon_path, 'folder.png')))
-        self.load_button.setIconSize(QSize(30, 30))
-        self.load_button.setFixedSize(40, 40)
-        self.load_button.setToolTip("Open audio.fmt (audio.dat must be in the same folder)")
-        self.load_button.clicked.connect(self.load_file)
-
-        self.save_button = QPushButton()
-        self.save_button.setIcon(QIcon(os.path.join(icon_path, 'save.svg')))
-        self.save_button.setIconSize(QSize(30, 30))
-        self.save_button.setFixedSize(40, 40)
-        self.save_button.setToolTip("Rebuild and overwrite audio.fmt and audio.dat (irreversible)")
-        self.save_button.clicked.connect(self.save_file)
-        self.save_button.setEnabled(False)
-
-        self.file_label = QLabel("No file loaded")
-
-        file_layout = QHBoxLayout()
-        file_layout.addWidget(self.load_button)
-        file_layout.addWidget(self.save_button)
-        file_layout.addWidget(self.file_label)
-        file_layout.addStretch(1)
+        # audio.fmt (+ audio.dat, taken from the same folder), driven by the shared header
+        # toolbar (Import / Save).
+        self.audio_binding = FileBinding("audio.fmt", file_registry, load_callback=self.load_file,
+                                         save_callback=self.save_file, file_filter="audio.fmt")
 
         # --- Sound table ---
         self.table = QTableWidget(0, len(self.HEADERS))
@@ -120,13 +105,17 @@ class JuliaWidget(QWidget):
         self.info_label.setStyleSheet("font-style: italic;")
 
         main_layout = QVBoxLayout(self)
-        main_layout.addLayout(file_layout)
         main_layout.addWidget(self.table)
         main_layout.addLayout(action_layout)
         main_layout.addWidget(self.info_label)
         self.setLayout(main_layout)
 
         self._update_action_buttons()
+        self.audio_binding.load_opened_file()  # another tool instance may have opened one already
+
+    def file_bindings(self):
+        """The file the shared header toolbar drives for this tool (audio.fmt + audio.dat)."""
+        return [self.audio_binding]
 
     # ------------------------------------------------------------------ helpers
     def _selected_index(self):
@@ -165,19 +154,15 @@ class JuliaWidget(QWidget):
             self._refresh_row(row)
 
     # ------------------------------------------------------------------ actions
-    def load_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(
-            parent=self, caption="Open audio.fmt", filter="FF8 sound format (audio.fmt);;All files (*)")
-        if not file_name:
-            return
+    def load_file(self, file_name):
+        """Load audio.fmt (+ audio.dat from the same folder); path from the shared header
+        toolbar."""
         try:
             self.manager.load(file_name)
         except (OSError, ValueError, FileNotFoundError) as error:
             QMessageBox.critical(self, "Julia", f"Could not open the sound archive:\n{error}")
             return
         self._populate_table()
-        self.file_label.setText(f"{file_name}  ({len(self.manager.sounds)} sounds)")
-        self.save_button.setEnabled(True)
         self.export_all_button.setEnabled(True)
         self.info_label.setText("")
 

@@ -68,9 +68,9 @@ class WattsWidget(QWidget):
         self.sequence_view_selector.activated.connect(self._change_sequence_view)
 
         file_section_layout = QHBoxLayout()
-        file_section_layout.addStretch(1)
         file_section_layout.addWidget(QLabel("Sequence view:"))
         file_section_layout.addWidget(self.sequence_view_selector)
+        file_section_layout.addStretch(1)
 
         # Editor
         editor_layout = QVBoxLayout()
@@ -80,6 +80,7 @@ class WattsWidget(QWidget):
         fanfare_form = QFormLayout()
         self.song_id_spinbox = QSpinBox()
         self.song_id_spinbox.setRange(1, 255)
+        self.song_id_spinbox.setMaximumWidth(70)  # compact: 3 digits at most
         self.song_id_spinbox.setToolTip(
             "AKAO id of the fanfare. On PC the game plays DirectMusic song id = AKAO id - 1;\n"
             "the rest of Section 1 (the AKAO score and sample bank) is not used on PC.")
@@ -177,6 +178,7 @@ class WattsWidget(QWidget):
         self._zoom_spinbox.setRange(1.0, 8.0)
         self._zoom_spinbox.setSingleStep(0.25)
         self._zoom_spinbox.setValue(self._preview_zoom)
+        self._zoom_spinbox.setMaximumWidth(70)
         self._zoom_spinbox.setToolTip("Pull the camera further back for more headroom "
                                       "(1.0 = the recentred game distance)")
         self._zoom_spinbox.valueChanged.connect(self._on_zoom_changed)
@@ -377,7 +379,9 @@ class WattsWidget(QWidget):
         entries = [dict(entry, offset=offset)
                    for entry, offset in zip(self._preview_models, offsets)]
         composite = CompositeVictoryModel(entries)
-        self._preview_panel = CameraPreviewPanel(composite)
+        # The composite is a fixed victory scene (always anim 0), so hide the panel's
+        # model-animation picker - it would only ever say "anim 0".
+        self._preview_panel = CameraPreviewPanel(composite, show_model_animation=False)
         self._preview_container.addWidget(self._preview_panel, 1)
 
     def _update_set_gating(self):

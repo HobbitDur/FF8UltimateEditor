@@ -11,6 +11,8 @@ from Cid.draw import Draw
 from Cid.drawwidget import DrawWidget
 from Cid.drawillustrationwidget import DrawIllustrationWidget
 from Cid.worlddrawsection import WorldDrawSection
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 
 
@@ -30,8 +32,11 @@ class CidWidget(QWidget):
     WORLD_EXE_START_INDEX = 128  # 0-based index of the first world entry in DrawPointData
 
     def __init__(self, icon_path='Resources', game_data_folder="FF8GameData",
-                 field_images_folder=None):
+                 field_images_folder=None, file_registry=None):
         QWidget.__init__(self)
+
+        if file_registry is None:  # Used alone, it shares its files with nobody
+            file_registry = FileRegistry()
 
         # Field screenshots (from the Deling image export) live under Resources by default.
         if field_images_folder is None:
@@ -59,19 +64,16 @@ class CidWidget(QWidget):
         self._exe_dirty = False
         self._wmset_dirty = False
 
-        # Buttons
-        self._exe_dialog = QFileDialog()
-        self._exe_button = self._make_button(icon_path, 'folder.png', "Load FF8 exe (magic / refill / high-yield)",
-                                             self._load_exe)
-        self._wmset_dialog = QFileDialog()
-        self._wmset_button = self._make_button(icon_path, 'folder.png', "Load wmsetxx.obj (world positions)",
-                                               self._load_wmset)
-        # Single save button: writes the .hext and/or the wmset, depending on what was edited.
+        # The two edited inputs run from the shared header toolbar: Import drops a menu (FF8 exe /
+        # wmset), Save writes the .hext and/or the wmset (see save_folder). The exe shares its key
+        # with the other exe tool (CCGroup): opening it once feeds both.
+        self.exe_binding = FileBinding("FF8 exe", file_registry, load_callback=self.load_exe,
+                                       file_filter="*.exe")
+        self.wmset_binding = FileBinding("wmsetxx.obj", file_registry, load_callback=self.load_wmset,
+                                         file_filter="wmset*.obj;;*.obj")
+        # The save dialogs stay: each save writes to a path the user picks (.hext / wmset).
         self._save_hext_dialog = QFileDialog()
         self._save_wmset_dialog = QFileDialog()
-        self._save_button = self._make_button(icon_path, 'save.svg',
-                                              "Save edited files (EXE .hext and/or wmset positions)",
-                                              self._save)
 
         self.csv_dialog = QFileDialog()
         self._csv_upload_button = self._make_button(icon_path, 'csv_upload.png', "Upload csv", self._open_csv)
@@ -88,11 +90,6 @@ class CidWidget(QWidget):
         self._version_widget.setToolTip("Select version of the game")
 
         self._layout_top = QHBoxLayout()
-        self._layout_top.addWidget(QLabel("EXE:"))
-        self._layout_top.addWidget(self._exe_button)
-        self._layout_top.addWidget(QLabel("wmset:"))
-        self._layout_top.addWidget(self._wmset_button)
-        self._layout_top.addWidget(self._save_button)
         self._layout_top.addWidget(self._csv_upload_button)
         self._layout_top.addWidget(self._csv_save_button)
         self._layout_top.addWidget(self._fullscreen_button)
@@ -128,7 +125,20 @@ class CidWidget(QWidget):
         self.window_layout.addLayout(self._layout_top)
         self.window_layout.addWidget(self._splitter)
 
-        self._update_save_buttons()
+        self.exe_binding.load_opened_file()    # the exe may already be open (e.g. in CCGroup)
+        self.wmset_binding.load_opened_file()
+
+    def file_bindings(self):
+        """The two inputs the shared header toolbar drives: the FF8 exe and the wmsetxx.obj."""
+        return [self.exe_binding, self.wmset_binding]
+
+    def save_folder(self):
+        """The shared Save button: write the .hext and/or the wmset, whichever was edited."""
+        self._save()
+
+    def can_save_folder(self):
+        """Save is enabled once either backing file is loaded (the click decides what to write)."""
+        return self.exe_loaded or self._section.is_loaded()
 
     def _make_button(self, icon_path, icon_name, tooltip, callback):
         button = QPushButton()
@@ -138,10 +148,6 @@ class CidWidget(QWidget):
         button.setToolTip(tooltip)
         button.clicked.connect(callback)
         return button
-
-    def _update_save_buttons(self):
-        # Enabled as soon as anything is loaded; the click decides which file(s) to write.
-        self._save_button.setEnabled(self.exe_loaded or self._section.is_loaded())
 
     def _on_exe_edited(self):
         self._exe_dirty = True
@@ -166,12 +172,9 @@ class CidWidget(QWidget):
         self._draw_widget.setVisible(not checked)
 
     # ---- loading -----------------------------------------------------------
-    def _load_exe(self):
-        file_to_load = self._exe_dialog.getOpenFileName(parent=self, caption="Find FF8 exe", filter="*.exe",
-                                                        directory=os.getcwd())[0]
-        if not file_to_load:
-            return
-        with open(file_to_load, "rb") as in_file:
+    def load_exe(self, path):
+        """Load the draw magic/refill/high-yield table from the FF8 exe (path from the toolbar)."""
+        with open(path, "rb") as in_file:
             file_data = bytearray(in_file.read())
         draw_offset = self.game_data.exe_data_json["draw_data_offset"]["og_eng_start"]
         for i in range(self.NB_DRAW):
@@ -179,20 +182,16 @@ class CidWidget(QWidget):
         self.exe_loaded = True
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
-        self._update_save_buttons()
 
-    def _load_wmset(self):
-        file_to_load = self._wmset_dialog.getOpenFileName(parent=self, caption="Find wmsetxx.obj",
-                                                          filter="wmset*.obj;;*.obj", directory=os.getcwd())[0]
-        if not file_to_load:
-            return
+    def load_wmset(self, path):
+        """Load the world-map draw positions (wmset Section 34) from a wmsetxx.obj."""
         try:
-            self._section.load(file_to_load)
+            self._section.load(path)
         except Exception as error:
             self._show_error("Draw Editor - Failed to read wmset",
                              f"Could not parse Section 34 of this file:<br>{error}")
             return
-        self.wmset_file_path = file_to_load
+        self.wmset_file_path = path
         nb = min(self._section.get_nb_record(), self.NB_DRAW - self.WORLD_EXE_START_INDEX)
         for i in range(nb):
             x, y, sub_id, _pad = self._section.records[i]
@@ -200,7 +199,6 @@ class CidWidget(QWidget):
             draw.x, draw.y, draw.sub_id = x, y, sub_id
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
-        self._update_save_buttons()
 
     # ---- saving ------------------------------------------------------------
     def _save(self):
