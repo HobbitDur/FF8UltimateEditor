@@ -200,7 +200,7 @@ class ShumiFilePane(QWidget):
         for getter in (exe_section.get_section_draw_text, exe_section.get_section_card_misc_text,
                        exe_section.get_section_card_name, exe_section.get_section_scan_text):
             text_section = getter().get_text_section()
-            self._add_section(SectionWidget(text_section, first_section_line_index))
+            self._add_section(SectionWidget(text_section, first_section_line_index, allow_add=True))
             first_section_line_index += len(text_section.get_text_list())
         self._add_scroll(outer)
 

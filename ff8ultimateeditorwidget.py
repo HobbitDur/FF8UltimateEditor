@@ -325,7 +325,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.siren_launcher = SirenLauncher(os.path.join("ExternalTools", "Siren", "Siren.exe"), callback=None)
         self.junkshop_launcher = JunkshopLauncher(os.path.join("ExternalTools", "Junkshop", "Junkshop.exe"), callback=None)
         self.doomtrain_launcher = DoomtrainLauncher(os.path.join("ExternalTools", "Doomtrain", "Doomtrain.exe"), callback=None)
-        self.cactilio_launcher = CactilioLauncher(os.path.join("ExternalTools", "JumboCactuar", "Jumbo Cactuar.exe"), callback=None)
+        self.cactilio_launcher = CactilioLauncher(os.path.join("ExternalTools", "JumboCactuar", "JumboCactuar.exe"), callback=None)
         self.deling_launcher = DelingLauncher(os.path.join("ExternalTools", "Deling", "Deling.exe"), callback=None)
         self.hyne_launcher = HyneLauncher(os.path.join("ExternalTools", "Hyne", "Hyne.exe"), callback=None)
         ff8ultimate_exe_name = "FF8UltimateEditor.exe" if sys.platform == "win32" else "FF8UltimateEditor"
