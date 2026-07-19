@@ -1,10 +1,10 @@
 import json
 import os
 
-from PyQt6.QtCore import QSize, QSignalBlocker
+from PyQt6.QtCore import QSignalBlocker
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
-    QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QListWidget,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QSpinBox, QLineEdit, QGroupBox, QFormLayout, QTabWidget, QCheckBox, QGridLayout,
     QScrollArea, QComboBox, QTableWidget, QHeaderView, QAbstractSpinBox, QSizePolicy,
     QMessageBox,
@@ -15,6 +15,8 @@ RESERVED_TOOLTIP = ("Read-only: this byte has no meaning in the game (confirmed 
                     "no code reads it). It is shown for completeness and preserved on save, but "
                     "editing it would have no effect.")
 
+from Common.filebinding import FileBinding
+from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
@@ -46,8 +48,12 @@ class HyneWidget(QWidget):
     writes the outer .ff8 envelope (LZSS compression + CRC16 checksum + a mandatory .bak
     backup before every save)."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
+
+        if file_registry is None:  # Used alone, it shares its files with nobody
+            file_registry = FileRegistry()
+        self.file_registry = file_registry
 
         self.game_data = GameData(game_data_folder)
         self.manager = HyneManager(self.game_data)
@@ -109,17 +115,12 @@ class HyneWidget(QWidget):
         self.setWindowTitle("Hyne")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        self.file_dialog = QFileDialog()
-        self.load_button = self._icon_btn('folder.png', "Open a .ff8 save file", self.load_file)
-        self.save_button = self._icon_btn(
-            'save.svg', "Save all modifications back into the .ff8 file (a .bak backup of the "
-                       "previous contents is written first)", self.save_file)
-        self.save_button.setEnabled(False)
-
-        file_section_layout = QHBoxLayout()
-        file_section_layout.addWidget(self.load_button)
-        file_section_layout.addWidget(self.save_button)
-        file_section_layout.addStretch(1)
+        # Open/Save run from the shared header toolbar. A .ff8 save has no fixed FF8 name (each is
+        # slotX_saveYY.ff8, user save names…), so the binding is a single-select wildcard, like
+        # Joker's *.sp2. Save writes straight back to the loaded file (a .bak backup is made first
+        # by HyneManager). It is the only editor of .ff8 saves, so nothing else shares this key.
+        self.ff8_binding = FileBinding("save file (.ff8)", file_registry, load_callback=self.load_file,
+                                       save_callback=self.save_file, file_filter="*.ff8")
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_gf_tab(), "G-Forces")
@@ -135,20 +136,16 @@ class HyneWidget(QWidget):
         self.tabs.setEnabled(False)
 
         main_layout = QVBoxLayout()
-        main_layout.addLayout(file_section_layout)
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
 
-    # ── Small widget helpers ─────────────────────────────────────────────
+        self.ff8_binding.load_opened_file()  # pick up a .ff8 another instance already opened
 
-    def _icon_btn(self, name, tip, slot):
-        btn = QPushButton()
-        btn.setIcon(QIcon(os.path.join(self.icon_path, name)))
-        btn.setIconSize(QSize(30, 30))
-        btn.setFixedSize(40, 40)
-        btn.setToolTip(tip)
-        btn.clicked.connect(slot)
-        return btn
+    def file_bindings(self):
+        """The file the shared header toolbar opens/saves for this tool: the .ff8 save."""
+        return [self.ff8_binding]
+
+    # ── Small widget helpers ─────────────────────────────────────────────
 
     @staticmethod
     def _compact_spin(spin):
@@ -275,18 +272,13 @@ class HyneWidget(QWidget):
 
     # ── File operations ────────────────────────────────────────────────
 
-    def load_file(self):
-        file_name = self.file_dialog.getOpenFileName(parent=self, caption="Open a .ff8 save file",
-                                                     filter="*.ff8", directory=os.getcwd())[0]
-        if not file_name:
-            return
+    def load_file(self, file_name):
         try:
             self.manager.load_file(file_name)
         except ValueError as error:
             QMessageBox.critical(self, "Hyne", f"Not a valid .ff8 save file:\n{error}")
             return
         self.tabs.setEnabled(True)
-        self.save_button.setEnabled(True)
 
         with QSignalBlocker(self.gf_list):
             self.gf_list.clear()

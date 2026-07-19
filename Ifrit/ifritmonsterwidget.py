@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QTabWidget, QMessageBox, QCheckBox, QProgressDialog, QApplication,
     QListWidget, QSplitter, QFileDialog, QComboBox, QLineEdit, QSpinBox,
     QDoubleSpinBox, QAbstractButton, QPlainTextEdit, QTextEdit, QStackedWidget,
-    QDialog, QDialogButtonBox
+    QDialog, QDialogButtonBox, QSizePolicy
 )
 from Common.fileregistry import FileRegistry
 from FF8GameData.dat.monsteranalyser import GarbageFileError
@@ -66,6 +66,30 @@ _3D_SECTIONS_BY_ENTITY = {
 }
 
 
+def _shrink_stack_to_current(stack, policy_cache):
+    """Exclude every non-current page of `stack` (a QTabWidget or QStackedWidget) from its own
+    minimumSizeHint. Both report the size of their LARGEST page as their own - even for a page
+    that's hidden or has never been shown - so a single wide page permanently floors the whole
+    widget's width. That floor then propagates out through whatever container holds it (here, the
+    multi-file shell's QSplitter), pinning the file list to a sliver regardless of window size.
+    Giving each non-current page an Ignored size policy excludes it from that computation; the
+    real policy - captured once per widget in `policy_cache` - is restored when a page becomes
+    current again. Used at three levels: a pane's own tabs, its nested Stat/AI sub-tabs, and the
+    shell's stack of per-file panes (+ the "no file loaded" placeholder)."""
+    current = stack.currentWidget()
+    for i in range(stack.count()):
+        w = stack.widget(i)
+        if w is None:
+            continue
+        if id(w) not in policy_cache:
+            policy_cache[id(w)] = w.sizePolicy()
+        if w is current:
+            w.setSizePolicy(policy_cache[id(w)])
+        else:
+            w.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
+    stack.updateGeometry()
+
+
 class IfritFilePane(QWidget):
     """The whole tab editor (3D / Dynamic Texture / Sequence / Camera / Stat / AI / Static
     Texture) for ONE loaded .dat file, backed by its own IfritManager.
@@ -93,6 +117,7 @@ class IfritFilePane(QWidget):
         self._loading = False             # True while populating widgets: suppresses dirty flagging
         self._dirty_connected = set()     # id()s of widgets already wired for edit detection
         self._loaded_tabs = set()         # tabs already populated (built once, kept)
+        self._tab_size_policies = {}      # id(widget) -> its real QSizePolicy (see _shrink_tabs_to_current)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -132,9 +157,27 @@ class IfritFilePane(QWidget):
         self._tabs.currentChanged.connect(self._on_tab_changed)
         layout.addWidget(self._tabs)
 
+        # A QTabWidget (via its internal QStackedWidget) reports the size of its LARGEST page as
+        # its own minimumSizeHint - even for tabs that are hidden or never shown. With every tab
+        # eagerly built (see below) AND some tabs (Stat/AI) themselves nested QTabWidgets, that
+        # floor stacks up to 1000+ px, which propagates out through the multi-file shell's
+        # QSplitter and pins the file list to a sliver on anything narrower than that. Toggling
+        # every non-current page to an Ignored size policy excludes it from that computation, so
+        # only the tab actually on screen constrains width - applied to all three tab widgets,
+        # re-run on every tab change, one level of nesting (Stat/AI's own sub-tabs) included.
+        for tw in (self._tabs, self._stat_container, self._ai_container):
+            tw.currentChanged.connect(lambda _idx=None, t=tw: self._shrink_tabs_to_current(t))
+            self._shrink_tabs_to_current(tw)
+
         self._connect_3d_edit_signals()
         self._loading = True
         self._apply_visibility()
+        # _apply_visibility can hide the tab that was "current" (e.g. the saved current-tab index
+        # is a shared, cross-entity-type preference - it may point at Stat/AI for a file that has
+        # neither). Hiding a tab does NOT fire currentChanged, so the initial shrink pass above
+        # would leave that now-hidden tab un-ignored, permanently flooring this pane's width on
+        # a tab the user can never even see. Re-run once more now that visibility is settled.
+        self._shrink_tabs_to_current(self._tabs)
         # Load EVERY tab now, not just the visible one, so moving between this monster's tabs is
         # instant afterwards. The pane is built lazily on the file's first open and kept alive, so
         # this cost is paid once per opened file - "load when opening, clean while using". Hidden
@@ -185,6 +228,9 @@ class IfritFilePane(QWidget):
                               f"{_CAMERA_SECTION_BY_ENTITY.get(et, 6)} - Camera")
         self._tabs.setTabText(self._tabs.indexOf(self._dynamic_texture_widget),
                               f"{_DYNAMIC_TEXTURE_SECTION_BY_ENTITY.get(et, 4)} - Dynamic Texture")
+
+    def _shrink_tabs_to_current(self, tabs: QTabWidget):
+        _shrink_stack_to_current(tabs, self._tab_size_policies)
 
     # ── Lazy tab loading ──────────────────────────────────────────────
 
@@ -386,6 +432,7 @@ class IfritMonsterWidget(QWidget):
         # The cap is derived from a user RAM budget (spinbox, GB).
         self._ram_budget_gb = self.settings.value("ifrit/ram_budget_gb", defaultValue=1, type=int)
         self._pane_lru = []                # file indices with a built pane, least-recent first
+        self._stack_size_policies = {}     # id(widget) -> real QSizePolicy, see _shrink_stack_to_current
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -407,10 +454,24 @@ class IfritMonsterWidget(QWidget):
                                        "30 or 60 fps, without opening them one by one.")
         self._fps_batch_btn.clicked.connect(self._convert_files_to_fps)
 
+        # RAM budget: same value/persistence as the load-time dialog (_ask_ram_budget), but
+        # editable anytime rather than only when a load happens to exceed the current cap.
+        ram_label = QLabel("RAM budget:")
+        self._ram_budget_spin = QSpinBox()
+        self._ram_budget_spin.setRange(1, 256)
+        self._ram_budget_spin.setSuffix(" GB")
+        self._ram_budget_spin.setValue(self._ram_budget_gb)
+        self._ram_budget_spin.setToolTip(
+            "How much RAM to spend keeping monster editors pre-loaded for instant switching\n"
+            "(~60 MB/monster). Raising it to cover every currently loaded file pre-loads them\n"
+            "all right away; lowering it only evicts least-recently-used editors as new ones\n"
+            "are opened, not immediately.")
+        self._ram_budget_spin.valueChanged.connect(self._on_ram_budget_changed)
+
         # Import / Save both run from the shared header toolbar (open_files / save_folder /
         # can_save_folder below), the same wiring Alexander uses. Ctrl+S also saves. The loaded
         # file's name/monster is shown in the left side list, so no label is needed here.
-        for w in [self._cronos_checkbox, self._fps_batch_btn]:
+        for w in [self._cronos_checkbox, self._fps_batch_btn, ram_label, self._ram_budget_spin]:
             tl.addWidget(w)
         tl.addStretch()
 
@@ -418,9 +479,20 @@ class IfritMonsterWidget(QWidget):
         self._stack = QStackedWidget()
         self._placeholder = QLabel("No file loaded — use Import to open one or more battle model "
                                    "(.dat) files.")
+        self._placeholder.setWordWrap(True)   # else its own minimumSizeHint is its full unwrapped
+                                              # single-line width - see _shrink_stack_to_current
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._placeholder.setStyleSheet("color:#888;")
         self._stack.addWidget(self._placeholder)
+        # Like a pane's own tabs, this stack reports the size of its LARGEST page (any loaded
+        # file's pane, or the placeholder) as its own minimumSizeHint - even ones not currently
+        # shown. With several files pre-loaded that floors the file list's max width on whichever
+        # pane happens to be widest, regardless of which one is active. Keep only the active page
+        # counted; re-applied whenever the active page changes AND whenever a new pane is added
+        # (in _ensure_pane - adding a widget doesn't fire currentChanged by itself).
+        self._stack.currentChanged.connect(
+            lambda _idx=None: _shrink_stack_to_current(self._stack, self._stack_size_policies))
+        _shrink_stack_to_current(self._stack, self._stack_size_policies)
 
         # ── Loaded-files side list ───────────────────────────────────
         self._file_list = QListWidget()
@@ -584,6 +656,7 @@ class IfritMonsterWidget(QWidget):
             pane = f.get('pane')
             if pane is not None:
                 self._stack.removeWidget(pane)
+                self._stack_size_policies.pop(id(pane), None)   # avoid a stale entry if id() is reused
                 pane.deleteLater()
         self._files = []
 
@@ -666,6 +739,11 @@ class IfritMonsterWidget(QWidget):
         pane.dirty_changed.connect(lambda entry=f: self._on_pane_dirty(entry))
         f['pane'] = pane
         self._stack.addWidget(pane)
+        # Adding a widget doesn't make it current (no currentChanged fires), so without this the
+        # new pane's own minimumSizeHint would count toward the stack's max until it's activated -
+        # exactly the floor _shrink_stack_to_current exists to avoid, worst during pre-build when
+        # many panes get added well before any of them becomes the active one.
+        _shrink_stack_to_current(self._stack, self._stack_size_policies)
         self._pane_lru.append(index)               # newest at the end
 
     def _weapon_options_for(self, body_path):
@@ -720,6 +798,7 @@ class IfritMonsterWidget(QWidget):
         if pane is None:
             return
         self._stack.removeWidget(pane)
+        self._stack_size_policies.pop(id(pane), None)   # avoid a stale entry if id() is reused
         pane.deleteLater()
         f['pane'] = None
         if index in self._pane_lru:
@@ -759,6 +838,28 @@ class IfritMonsterWidget(QWidget):
             except Exception as e:
                 print(f"[prebuild] {index} failed: {e}")
         progress.setValue(len(to_build))            # reach max -> dialog dismisses
+
+    def _on_ram_budget_changed(self, value):
+        """Live-adjust the RAM budget from the toolbar spinbox (persisted like the load-time
+        dialog). If the new budget can hold every currently loaded file, pre-load whichever
+        aren't built yet right away, instead of waiting for the user to click through them."""
+        self._ram_budget_gb = value
+        self.settings.setValue("ifrit/ram_budget_gb", value)
+        if not self._files:
+            return
+        unbuilt = [i for i in range(len(self._files)) if self._files[i]['pane'] is None]
+        if not unbuilt or self._pane_cap() < len(self._files):
+            return
+        progress = QProgressDialog("Loading editors into memory...", "Cancel", 0, len(unbuilt), self)
+        progress.setWindowTitle("RAM budget")
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(0)
+        progress.setAutoClose(False)
+        progress.setAutoReset(False)
+        progress.setValue(0)
+        QApplication.processEvents()
+        self._prebuild_panes(progress)
+        progress.close()
 
     def _budget_gb_for(self, num_panes: int) -> int:
         """Smallest whole-GB RAM budget whose cap keeps num_panes editors loaded at once."""
@@ -801,6 +902,10 @@ class IfritMonsterWidget(QWidget):
             return False
         self._ram_budget_gb = spin.value()
         self.settings.setValue("ifrit/ram_budget_gb", self._ram_budget_gb)
+        if hasattr(self, '_ram_budget_spin'):
+            self._ram_budget_spin.blockSignals(True)
+            self._ram_budget_spin.setValue(self._ram_budget_gb)
+            self._ram_budget_spin.blockSignals(False)
         return True
 
     def _on_pane_dirty(self, entry):
@@ -862,6 +967,7 @@ class IfritMonsterWidget(QWidget):
         old = f['pane']
         if old is not None:
             self._stack.removeWidget(old)
+            self._stack_size_policies.pop(id(old), None)   # avoid a stale entry if id() is reused
             old.deleteLater()
         f['pane'] = None
         try:

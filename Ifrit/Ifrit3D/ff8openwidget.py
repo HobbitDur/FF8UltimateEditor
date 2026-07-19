@@ -49,7 +49,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
     PICK_RADIUS_PX = 14   # click-to-joint tolerance, in logical pixels
     CLICK_SLOP_PX = 4     # press/release within this distance = click, beyond = orbit drag
 
-    GIZMO_SCREEN_RADIUS_PX = 55   # ring radius, constant on screen whatever the zoom
+    # Ring radius as a fraction of the model size: the handle is anchored in the 3D scene, so it
+    # grows on screen as you zoom in and shrinks as you zoom out (rather than a constant screen
+    # size). 0.15 ~ the old 55px look at the default framing distance.
+    GIZMO_WORLD_FRACTION = 0.15
     GIZMO_PICK_TOLERANCE_PX = 8
     GIZMO_SEGMENTS = 48
     GIZMO_COLORS = ((1.0, 0.35, 0.35), (0.35, 1.0, 0.35), (0.45, 0.6, 1.0))  # X, Y, Z
@@ -132,6 +135,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.show_axis = False
         self.show_texture = True
         self.show_skeleton = False
+        self.show_gizmo = True     # rotation rings ("sphere") around the selected joint
 
         self.back_face_offset = -0.003  # Smaller offset for triangles
         self.triangle_cache = {}  # Cache for back face offsets per fra
@@ -284,6 +288,11 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self._position_help_label()
         self.update()
 
+    def set_show_gizmo(self, show: bool):
+        """Show/hide the rotation rings around the selected joint (skeleton lines stay)."""
+        self.show_gizmo = show
+        self.update()
+
     def _position_help_label(self):
         margin = 8
         self._skeleton_help.adjustSize()
@@ -414,7 +423,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         if self.show_skeleton:
             self.draw_skeleton()
-            self.draw_rotation_gizmo()
+            if self.show_gizmo:
+                self.draw_rotation_gizmo()
 
     def _should_cull_backface(self, verts, multiplicity, view_dir):
         """PSX-style per-face backface cull (exact per-face plane test, same
@@ -1042,8 +1052,14 @@ class FF8OpenGLWidget(QOpenGLWidget):
         v = np.cross(a, u)
         return a, u, v
 
+    def _gizmo_world_radius(self):
+        """Ring radius in WORLD units: a fixed fraction of the model size, so the handle is part
+        of the 3D scene - it grows on screen as you zoom in and shrinks as you zoom out. Floored
+        so a tiny model still gets a usable handle."""
+        return max(self.MODEL_SIZE, 1e-3) * self.GIZMO_WORLD_FRACTION
+
     def _gizmo_ring_points(self, axis):
-        radius = self.GIZMO_SCREEN_RADIUS_PX * self._world_units_per_pixel()
+        radius = self._gizmo_world_radius()
         center = np.array(self.gizmo_center, dtype=np.float64)
         _, u, v = self._axis_basis(axis)
         points = []

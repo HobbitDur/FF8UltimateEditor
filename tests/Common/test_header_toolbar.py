@@ -803,6 +803,58 @@ def test_window_title_marks_unsaved(main_window, monkeypatch, tmp_path):
     assert main_window.windowTitle() == base
 
 
+def _write_valid_ff8(path):
+    """A CRC-correct .ff8 save (all-literal LZSS envelope), built with the manager's own helpers -
+    no real save ships with the repo."""
+    import struct
+    from Hyne.hynemanager import (IMAGE_SIZE, CRC_OFFSET_1, CRC_OFFSET_2, CRC_SPAN_START,
+                                  CRC_SPAN_LEN, crc16_ff8, lzss_compress_all_literal)
+    image = bytearray((i * 167 + 41) & 0xFF for i in range(IMAGE_SIZE))
+    crc = crc16_ff8(bytes(image[CRC_SPAN_START:CRC_SPAN_START + CRC_SPAN_LEN]))
+    struct.pack_into("<H", image, CRC_OFFSET_1, crc)
+    struct.pack_into("<H", image, CRC_OFFSET_2, crc)
+    compressed = lzss_compress_all_literal(bytes(image))
+    with open(path, "wb") as handle:
+        handle.write(struct.pack("<I", len(compressed)))
+        handle.write(compressed)
+
+
+def test_hyne_ff8_open_save_on_shared_toolbar(main_window, monkeypatch, tmp_path):
+    """Hyne (.ff8 save editor) runs from the shared header toolbar: a single-select wildcard
+    binding (a save has no fixed FF8 name), direct-write Save, and per-tool dirty tracking so the
+    title * follows real edits."""
+    from PyQt6.QtWidgets import QMessageBox
+    monkeypatch.setattr(QMessageBox, "critical", lambda *a, **k: None)
+    tb = main_window._file_toolbar
+    hyne = main_window._hyne_widget
+    main_window.tool_stack.setCurrentWidget(hyne)
+    tb._on_tool_changed()
+
+    assert not hasattr(hyne, "load_button") and not hasattr(hyne, "save_button")  # own buttons gone
+    assert [b.file_name for b in tb._main_bindings()] == ["save file (.ff8)"]
+    assert tb.import_button.isEnabled() and tb.save_button.isEnabled() is False   # nothing loaded
+    assert hasattr(hyne, "dirty_state")                                           # got dirty tracking
+    assert hyne.tabs.isEnabled() is False
+
+    save = str(tmp_path / "slot1_save01.ff8")
+    _write_valid_ff8(save)
+    main_window.file_registry.open_file("save file (.ff8)", save)
+    assert hyne.manager.file_path == save
+    assert hyne.tabs.isEnabled()                     # loaded -> the editor is usable
+    assert tb.save_button.isEnabled()                # loaded -> Save enabled
+    assert hyne.dirty_state.dirty is False           # just loaded -> clean, no title *
+
+    hyne.gf_exp_spin.setValue(hyne.gf_exp_spin.value() + 100)  # a real edit
+    assert hyne.dirty_state.dirty is True            # -> title *
+
+    tb.save_button.click()                           # direct-write save (a .bak is made first)
+    assert hyne.dirty_state.dirty is False           # saved -> clean again
+    from Hyne.hynemanager import HyneManager
+    reloaded = HyneManager(hyne.game_data)
+    reloaded.load_file(save)                          # the written file re-loads cleanly
+    assert reloaded.file_path == save
+
+
 def test_dirty_state_marks_on_edit_and_clears():
     """DirtyState: clean at first, marks on an editable widget's edit signal, clears on demand,
     and emits changed(bool) only on a real flip."""

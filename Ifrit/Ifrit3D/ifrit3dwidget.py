@@ -1,11 +1,23 @@
 import pathlib
 
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal
-from PyQt6.QtGui import QKeySequence, QShortcut, QFontMetrics
+from PyQt6.QtGui import QKeySequence, QShortcut, QFontMetrics, QAction
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QCheckBox, QPushButton, QSlider, QSpinBox,
                              QListWidget, QListWidgetItem, QInputDialog, QMessageBox,
-                             QFileDialog, QComboBox)
+                             QFileDialog, QComboBox, QToolButton, QMenu, QToolBar,
+                             QSizePolicy)
+
+
+class _HoverMenuButton(QToolButton):
+    """A tool button that drops its menu on hover (not just click) - used to hang a small
+    options submenu off the Skeleton toggle so extra skeleton options stay out of the toolbar
+    until the user hovers to reveal them."""
+    def enterEvent(self, event):
+        super().enterEvent(event)
+        menu = self.menu()
+        if menu is not None and not menu.isVisible():
+            self.showMenu()
 
 from FF8GameData.monsterdata import AnimationFrame, AnimationSection, Animation
 from FF8GameData.dat.animloopdetector import (is_looping, analyse_animation_usage,
@@ -44,6 +56,13 @@ class Ifrit3DWidget(QWidget):
         self.interp_step = 0.0
         self.next_frame_index = 1
 
+        # Some files (e.g. Lion Heart/d0w006) have most of their mesh flagged "hidden" via the
+        # TPage 0xFE00 bit the real renderer also skips - a legitimate per-face flag, but one
+        # some files use so heavily that the visible mesh alone looks broken/incomplete in this
+        # static viewer (it can't simulate whatever dynamically reveals those faces in-game). On
+        # by default so a file opens whole rather than looking damaged; see _refresh_static_geometry.
+        self._show_hidden_faces = True
+
         # Loop detection of a character body needs its weapon file, keep what was read
         # so the file is not searched again on every conversion.
         self._animation_usage_cache = {}
@@ -57,6 +76,12 @@ class Ifrit3DWidget(QWidget):
         self._weapon_manager = None      # sibling IfritManager whose enemy is the weapon, or None
         self._weapon_options = []        # [(label, manager_or_None)] shown in the Weapon selector
         self._body_vertex_count = 0      # #verts in the body mesh; weapon indices start here
+        # The weapon has no in-file link to the hand: posed alone it sits at the character's root
+        # (see CompositeCharacterWeaponAnimation - attach_transform is identity, weapon bones at
+        # origin). So the weapon is translated to a chosen BODY bone each frame; -1 = no attach
+        # (weapon at root). The correct bone is the weapon-holding hand, per character, picked by
+        # the user in the "Hand bone" spin.
+        self._weapon_attach_bone = -1
 
         # Playlist variables
         self.playlist = []  # List of animation IDs in order
@@ -88,11 +113,18 @@ class Ifrit3DWidget(QWidget):
         self.timer.timeout.connect(self.next_frame)
 
         if show_controls:
-            # Main toolbar
-            toolbar = QWidget()
-            toolbar.setStyleSheet("background:#2a2a2f; padding:5px;")
-            toolbar_layout = QHBoxLayout(toolbar)
-            toolbar_layout.setContentsMargins(8, 4, 8, 4)
+            # Main toolbar. A real QToolBar (not a plain QWidget+QHBoxLayout) so it gets Qt's
+            # built-in overflow handling for free: when there isn't room for every control, the
+            # ones that don't fit are hidden behind a small "»" button at the end instead of being
+            # clipped or forcing the whole pane to stay wide (see the QSplitter note below).
+            toolbar = QToolBar()
+            toolbar.setMovable(False)
+            toolbar.setFloatable(False)
+            toolbar.setStyleSheet(
+                "QToolBar{background:#2a2a2f; padding:5px; spacing:4px; border:none;}"
+                "QToolBar::separator{background:#444; width:1px; margin:2px 4px;}")
+            toolbar_layout = toolbar   # every earlier `toolbar_layout.addWidget(x)` below still
+                                       # works unchanged: QToolBar.addWidget has the same signature
 
             # Left side controls
             self.cb_texture = QCheckBox("Texture")
@@ -107,6 +139,16 @@ class Ifrit3DWidget(QWidget):
             self.cb_wire.toggled.connect(self._on_wire_toggle)
             toolbar_layout.addWidget(self.cb_wire)
 
+            self.cb_hidden_faces = QCheckBox("Show hidden faces")
+            self.cb_hidden_faces.setChecked(self._show_hidden_faces)
+            self.cb_hidden_faces.setStyleSheet("color:white;")
+            self.cb_hidden_faces.setToolTip(
+                "Some faces are flagged 'hidden' in the file (a TPage bit the real renderer also\n"
+                "skips), but a few files use it so heavily the visible mesh alone looks broken\n"
+                "(e.g. Lion Heart/d0w006). Checked shows the full mesh anyway.")
+            self.cb_hidden_faces.toggled.connect(self._on_hidden_faces_toggle)
+            toolbar_layout.addWidget(self.cb_hidden_faces)
+
             self.cb_axis = QCheckBox("Axis")
             self.cb_axis.setChecked(False)
             self.cb_axis.setStyleSheet("color:white;")
@@ -118,6 +160,26 @@ class Ifrit3DWidget(QWidget):
             self.cb_skeleton.setStyleSheet("color:white;")
             self.cb_skeleton.toggled.connect(self._on_skeleton_toggle)
             toolbar_layout.addWidget(self.cb_skeleton)
+
+            # Skeleton options submenu (hover the little arrow next to "Skeleton" to reveal it).
+            # Keeps extra skeleton toggles out of the toolbar until wanted. First entry: show the
+            # rotation rings ("sphere") around the selected joint - uncheck for a clean skeleton.
+            self._skeleton_menu = QMenu(self)
+            self._gizmo_action = QAction("Rotation handle", self, checkable=True)
+            self._gizmo_action.setChecked(True)
+            self._gizmo_action.setToolTip("Rings around the selected bone, for dragging to rotate it.")
+            self._gizmo_action.toggled.connect(self._on_gizmo_toggle)
+            self._skeleton_menu.addAction(self._gizmo_action)
+            self.skeleton_opts_btn = _HoverMenuButton()
+            self.skeleton_opts_btn.setText("▾")           # small down triangle
+            self.skeleton_opts_btn.setMenu(self._skeleton_menu)
+            self.skeleton_opts_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+            self.skeleton_opts_btn.setAutoRaise(True)
+            self.skeleton_opts_btn.setToolTip("Skeleton options")
+            self.skeleton_opts_btn.setStyleSheet(
+                "QToolButton{color:white; padding:0 4px;} QToolButton::menu-indicator{image:none;}")
+            self.skeleton_opts_btn.setEnabled(False)           # enabled with the skeleton
+            toolbar_layout.addWidget(self.skeleton_opts_btn)
 
             # Animation controls
             self.play_btn = QPushButton("Play")
@@ -187,6 +249,24 @@ class Ifrit3DWidget(QWidget):
             self.weapon_selector.currentIndexChanged.connect(self._on_weapon_selected)
             toolbar_layout.addWidget(self.weapon_selector)
 
+            # Which BODY bone the weapon is pinned to (the weapon-holding hand). Not stored in the
+            # file, so it's user-picked; shown only while a weapon is displayed. -1 = weapon at the
+            # character root (unattached).
+            self.weapon_bone_label = QLabel("Hand bone:")
+            self.weapon_bone_label.setStyleSheet("color:white; padding:4px 4px;")
+            self.weapon_bone_label.setVisible(False)
+            toolbar_layout.addWidget(self.weapon_bone_label)
+            self.weapon_bone_selector = QSpinBox()
+            self.weapon_bone_selector.setMinimum(-1)
+            self.weapon_bone_selector.setStyleSheet("color:white; background:#333; padding:2px;")
+            self.weapon_bone_selector.setToolTip(
+                "Body bone the weapon is held by. The weapon isn't linked to the hand in the file,\n"
+                "so pick the bone that puts it in the character's grip (-1 = character root). Try\n"
+                "the arm/hand bones; enable 'Skeleton' to see bone positions.")
+            self.weapon_bone_selector.setVisible(False)
+            self.weapon_bone_selector.valueChanged.connect(self._on_weapon_bone_changed)
+            toolbar_layout.addWidget(self.weapon_bone_selector)
+
             self.export_gltf_btn = QPushButton("Export glTF")
             self.export_gltf_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
             self.export_gltf_btn.setToolTip("Export the loaded model (mesh, skeleton, textures and all animations)\n"
@@ -219,8 +299,11 @@ class Ifrit3DWidget(QWidget):
             self.fps60_all_btn.clicked.connect(self.convert_all_anims_to_60fps)
             toolbar_layout.addWidget(self.fps60_all_btn)
 
-            # Spacer
-            toolbar_layout.addStretch()
+            # Spacer: QToolBar has no addStretch, so push the remaining controls to the right with
+            # an expanding empty widget instead (the standard Qt trick for a toolbar spacer).
+            spacer = QWidget()
+            spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+            toolbar_layout.addWidget(spacer)
 
             # Right side controls
             reset_btn = QPushButton("Reset View")
@@ -228,7 +311,16 @@ class Ifrit3DWidget(QWidget):
             reset_btn.clicked.connect(self.gl_widget.reset_view)
             toolbar_layout.addWidget(reset_btn)
 
-            # Add toolbar to main layout
+            # The toolbar has grown a lot of controls (texture/wireframe/skeleton toggles, FPS +
+            # frame + anim selectors, weapon overlay + hand-bone pickers, fps-conversion, gltf
+            # import/export...) and no longer fits in a typical windowed (non-maximized) width. A
+            # plain QWidget+QHBoxLayout propagated its full unwrapped minimumSizeHint (2700+ px) up
+            # to whatever container held it - inside the multi-file shell's QSplitter, that became
+            # a hard floor on the 3D pane's width, and the splitter could never shrink it below
+            # that to give more room to the file list. QToolBar's own layout instead hides whatever
+            # doesn't fit behind a small "»" overflow button (its minimumSizeHint stays tiny), so
+            # the splitter is free to shrink the pane - nothing is ever clipped, just tucked behind
+            # one click when the pane is narrower than every control laid out in a single row.
             layout.addWidget(toolbar)
 
             # Add the OpenGL widget (this is the 3D view!)
@@ -382,11 +474,16 @@ class Ifrit3DWidget(QWidget):
 
             layout.addWidget(self.playlist_container)
 
-            # Info label
+            # Info label. Word-wrapped so its long single-line text doesn't become a hard minimum
+            # width on the whole 3D pane - a QLabel with wrapping off reports its FULL unwrapped
+            # text width as its minimumSizeHint, which propagates up through this pane into the
+            # multi-file shell's QSplitter and pins the file list to a sliver in anything narrower
+            # than that (see the toolbar_scroll fix just above for the same class of issue).
             self.info = QLabel(
                 f"LMB: Rotate | RMB: Pan | Scroll: Zoom | Click joint: Select bone | "
                 f"Drag ring: Rotate bone | Ctrl+Drag: Bone length"
             )
+            self.info.setWordWrap(True)
             self.info.setStyleSheet("background:#1a1a1f; color:#aaa; padding:4px 8px; font-size:10px;")
             layout.addWidget(self.info)
         else:
@@ -671,27 +768,30 @@ class Ifrit3DWidget(QWidget):
         _WEAPON_TEX_OFFSET. Only the vertex POSITIONS change per animation frame (update_animated_
         mesh); these index/uv lists stay put, so this runs on load and on weapon change, not per
         frame."""
+        ih = self._show_hidden_faces
         body = self.ifrit_manager.enemy.geometry_data
         self._body_vertex_count = len(body.get_vertices())
-        tris = body.get_triangles()
-        quads = body.get_quads()
-        tri_uv = body.get_triangles_with_uv()
-        quad_uv = body.get_quads_with_uv()
-        col_tri = body.get_colored_triangles_with_color()
-        col_quad = body.get_colored_quads_with_color()
+        tris = body.get_triangles(include_hidden=ih)
+        quads = body.get_quads(include_hidden=ih)
+        tri_uv = body.get_triangles_with_uv(include_hidden=ih)
+        quad_uv = body.get_quads_with_uv(include_hidden=ih)
+        col_tri = body.get_colored_triangles_with_color(include_hidden=ih)
+        col_quad = body.get_colored_quads_with_color(include_hidden=ih)
 
         if self._weapon_manager is not None:
             wgeo = self._weapon_manager.enemy.geometry_data
             off = self._body_vertex_count
             wt = FF8OpenGLWidget._WEAPON_TEX_OFFSET
-            tris = tris + [tuple(i + off for i in t) for t in wgeo.get_triangles()]
-            quads = quads + [tuple(i + off for i in q) for q in wgeo.get_quads()]
-            tri_uv = tri_uv + [self._offset_uv(e, off, wt) for e in wgeo.get_triangles_with_uv()]
-            quad_uv = quad_uv + [self._offset_uv(e, off, wt) for e in wgeo.get_quads_with_uv()]
+            tris = tris + [tuple(i + off for i in t) for t in wgeo.get_triangles(include_hidden=ih)]
+            quads = quads + [tuple(i + off for i in q) for q in wgeo.get_quads(include_hidden=ih)]
+            tri_uv = tri_uv + [self._offset_uv(e, off, wt)
+                               for e in wgeo.get_triangles_with_uv(include_hidden=ih)]
+            quad_uv = quad_uv + [self._offset_uv(e, off, wt)
+                                 for e in wgeo.get_quads_with_uv(include_hidden=ih)]
             col_tri = col_tri + [self._offset_colored(e, off)
-                                 for e in wgeo.get_colored_triangles_with_color()]
+                                 for e in wgeo.get_colored_triangles_with_color(include_hidden=ih)]
             col_quad = col_quad + [self._offset_colored(e, off)
-                                   for e in wgeo.get_colored_quads_with_color()]
+                                   for e in wgeo.get_colored_quads_with_color(include_hidden=ih)]
 
         self.gl_widget.set_triangles(tris)
         self.gl_widget.set_quads(quads)
@@ -730,8 +830,28 @@ class Ifrit3DWidget(QWidget):
             return en.geometry_data.get_vertices()
         wframe = self.current_frame % wmax
         wnext = (wframe + 1) % wmax
-        return wm.get_animated_vertices(anim_id=wanim, frame_id=wframe,
-                                        next_frame_id=wnext, step=self.interp_step)
+        verts = wm.get_animated_vertices(anim_id=wanim, frame_id=wframe,
+                                         next_frame_id=wnext, step=self.interp_step)
+        return self._attach_to_hand(verts)
+
+    def _attach_to_hand(self, weapon_verts):
+        """Translate the posed weapon so its root sits on the chosen body hand bone (the weapon
+        carries no in-file hand link - see _weapon_attach_bone). The weapon keeps its own
+        orientation; only the bone's world POSITION for this frame is added. -1 = leave at root."""
+        bi = self._weapon_attach_bone
+        if bi is None or bi < 0:
+            return weapon_verts
+        mats = self.ifrit_manager._get_bone_matrices(self.current_anim_id, self.current_frame)
+        if not mats or bi >= len(mats) or mats[bi] is None:
+            return weapon_verts
+        m = mats[bi]
+        ox, oy, oz = m.M41, m.M42, m.M43
+        return [(x + ox, y + oy, z + oz) for (x, y, z) in weapon_verts]
+
+    def _on_weapon_bone_changed(self, value):
+        self._weapon_attach_bone = value
+        self.update_animated_mesh()
+        self.update_skeleton()
 
     def set_weapon_options(self, options, default_index=0):
         """Populate (and show) the Weapon selector for a character body. `options` is a list of
@@ -768,10 +888,26 @@ class Ifrit3DWidget(QWidget):
         self._weapon_manager = manager
         if manager is not None:
             manager._ensure_matrices()
+        self._update_hand_bone_control()
         self._refresh_static_geometry()
         self.update_animated_mesh()
         self.update_skeleton()
         self.gl_widget.reset_view()
+
+    def _update_hand_bone_control(self):
+        """Show the Hand-bone spin only while a weapon is displayed, ranged to the body skeleton."""
+        if not hasattr(self, 'weapon_bone_selector'):
+            return
+        show = self._weapon_manager is not None
+        nb_bones = len(self.ifrit_manager.enemy.bone_data.bones) if self.ifrit_manager.enemy.bone_data else 0
+        self.weapon_bone_selector.blockSignals(True)
+        self.weapon_bone_selector.setMaximum(max(-1, nb_bones - 1))
+        if self._weapon_attach_bone > nb_bones - 1:
+            self._weapon_attach_bone = -1
+        self.weapon_bone_selector.setValue(self._weapon_attach_bone)
+        self.weapon_bone_selector.blockSignals(False)
+        self.weapon_bone_label.setVisible(show)
+        self.weapon_bone_selector.setVisible(show)
     def get_max_frames(self):
         if not self.ifrit_manager.enemy.animation_data.nb_animations:
             return 0
@@ -950,11 +1086,25 @@ class Ifrit3DWidget(QWidget):
     def _on_wire_toggle(self, checked):
         self.gl_widget.set_show_wireframe(checked)
 
+    def _on_hidden_faces_toggle(self, checked):
+        """Unlike the other toggles this changes WHICH faces are in the mesh (not just a draw
+        flag), so the triangle/quad/UV index lists must be rebuilt - re-run the same geometry
+        refresh load_file() does, then repose this frame's vertices on top of it."""
+        self._show_hidden_faces = checked
+        self._refresh_static_geometry()
+        self.update_animated_mesh()
+        self.update_skeleton()
+
     def _on_axis_toggle(self, checked):
         self.gl_widget.set_show_axis(checked)
 
     def _on_skeleton_toggle(self, checked):
         self.gl_widget.set_show_skeleton(checked)
+        if hasattr(self, 'skeleton_opts_btn'):
+            self.skeleton_opts_btn.setEnabled(checked)   # options only apply with a skeleton
+
+    def _on_gizmo_toggle(self, checked):
+        self.gl_widget.set_show_gizmo(checked)
 
     def set_show_skeleton(self, show):
         self.gl_widget.set_show_skeleton(show)

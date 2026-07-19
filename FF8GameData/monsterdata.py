@@ -643,13 +643,13 @@ class GeometrySection:
             vertices_list.extend(object.get_vertices())
         return vertices_list
 
-    def get_triangles(self):
+    def get_triangles(self, include_hidden=False):
         all_tri = []
         offset = 0
         for obj in self.object_data:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
             for tri in obj.triangles + obj.colored_triangles:
-                if tri.is_hidden():
+                if tri.is_hidden() and not include_hidden:
                     continue
                 all_tri.append((
                     tri.vertex_indexes[0] + offset,
@@ -658,13 +658,13 @@ class GeometrySection:
                 ))
             offset += obj_vert_count
         return all_tri
-    def get_quads(self):
+    def get_quads(self, include_hidden=False):
         all_quads = []
         offset = 0
         for obj in self.object_data:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
             for quad in obj.quads + obj.colored_quads:
-                if quad.is_hidden():
+                if quad.is_hidden() and not include_hidden:
                     continue
                 all_quads.append((
                     quad.vertex_indexes[0] + offset,
@@ -675,14 +675,16 @@ class GeometrySection:
             offset += obj_vert_count
         return all_quads
 
-    def get_triangles_with_uv(self):
-        """Returns list of (vertex_indices_tuple, uvs_tuple, tex_id, depth_bias) for every triangle."""
+    def get_triangles_with_uv(self, include_hidden=False):
+        """Returns list of (vertex_indices_tuple, uvs_tuple, tex_id, depth_bias) for every triangle.
+        include_hidden also returns faces whose TPage word sets the 0xFE00 "hide" bits (a real
+        engine mechanic the runtime renderer itself skips - see GeometryTriangle.is_hidden)."""
         result = []
         offset = 0
         for obj in self.object_data:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
             for tri in obj.triangles:
-                if tri.is_hidden():
+                if tri.is_hidden() and not include_hidden:
                     continue
                 indices = (
                     tri.vertex_indexes[2] + offset,  # C
@@ -700,14 +702,14 @@ class GeometrySection:
             offset += obj_vert_count
         return result
 
-    def get_quads_with_uv(self):
+    def get_quads_with_uv(self, include_hidden=False):
         """Returns list of (vertex_indices_tuple, uvs_tuple, tex_id, depth_bias) for every quad."""
         result = []
         offset = 0
         for obj in self.object_data:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
             for quad in obj.quads:
-                if quad.is_hidden():
+                if quad.is_hidden() and not include_hidden:
                     continue
                 indices = (
                     quad.vertex_indexes[0] + offset,  # A
@@ -726,14 +728,14 @@ class GeometrySection:
             offset += obj_vert_count
         return result
 
-    def get_colored_triangles_with_color(self):
+    def get_colored_triangles_with_color(self, include_hidden=False):
         """Returns list of (vertex_indices_tuple, rgb_norm_tuple, depth_bias) for every colored triangle."""
         result = []
         offset = 0
         for obj in self.object_data:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
             for tri in obj.colored_triangles:
-                if tri.is_hidden():
+                if tri.is_hidden() and not include_hidden:
                     continue
                 indices = (
                     tri.vertex_indexes[0] + offset,
@@ -744,14 +746,14 @@ class GeometrySection:
             offset += obj_vert_count
         return result
 
-    def get_colored_quads_with_color(self):
+    def get_colored_quads_with_color(self, include_hidden=False):
         """Returns list of (vertex_indices_tuple, rgb_norm_tuple, depth_bias) for every colored quad."""
         result = []
         offset = 0
         for obj in self.object_data:
             obj_vert_count = sum(vd.nb_vertices for vd in obj.vertices_data)
             for quad in obj.colored_quads:
-                if quad.is_hidden():
+                if quad.is_hidden() and not include_hidden:
                     continue
                 indices = (
                     quad.vertex_indexes[0] + offset,
