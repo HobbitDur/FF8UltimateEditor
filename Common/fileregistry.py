@@ -15,10 +15,29 @@ class FileRegistry(QObject):
     file_changed = pyqtSignal(str)  # FF8 file name: its path changed, tools must load it again
     reload_requested = pyqtSignal()  # every opened file must be re-read from disk (same paths)
 
-    def __init__(self):
+    def __init__(self, settings=None):
         QObject.__init__(self)
         self.paths = {}  # FF8 file name -> path of the file currently opened
         self.bindings = []  # every FileBinding created on this registry (registers itself)
+        # Per-tool memory of the last folder an Open dialog was used in, so it re-opens there next
+        # time - within the session and, when settings is a QSettings, across future sessions too.
+        self.settings = settings
+        self._last_folders = {}  # in-memory fallback when used without QSettings (tools alone)
+
+    def last_folder(self, tool_key):
+        """The folder an Open dialog for tool_key should start in (empty if none remembered yet)."""
+        if self.settings is not None:
+            return self.settings.value(f"last_folder/{tool_key}", "", type=str)
+        return self._last_folders.get(tool_key, "")
+
+    def remember_folder(self, tool_key, folder):
+        """Store the folder a file was just opened from, keyed by tool, for next time."""
+        if not folder:
+            return
+        if self.settings is not None:
+            self.settings.setValue(f"last_folder/{tool_key}", folder)
+        else:
+            self._last_folders[tool_key] = folder
 
     def accepted_file_names(self):
         """The concrete FF8 file names every tool can open (for the "Open folder" scan).

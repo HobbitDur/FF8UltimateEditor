@@ -4,7 +4,8 @@ from datetime import datetime
 
 from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QWidget, QMenuBar, QHBoxLayout, QVBoxLayout, QLabel, QFrame, QStackedWidget
+from PyQt6.QtWidgets import (QWidget, QMenuBar, QHBoxLayout, QVBoxLayout, QLabel, QFrame,
+                             QStackedWidget, QSizePolicy)
 
 from CCGroup.ccgroup import CCGroupWidget
 from Cid.cidwidget import CidWidget
@@ -60,7 +61,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.settings = QSettings("HobbitDur", "FF8UltimateEditor")
         # The FF8 files are opened once and shared: a file opened in one tool is used by all
         # the tools working on it, without searching for it again.
-        self.file_registry = FileRegistry()
+        self.file_registry = FileRegistry(settings=self.settings)
         self._main_layout = QVBoxLayout(self)
         self.setLayout(self._main_layout)
 
@@ -168,6 +169,9 @@ class FF8UltimateEditorWidget(QWidget):
         self._program_option_layout.addLayout(self._program_option_selector_row)
         self._program_option_layout.addLayout(self._file_buttons_row)
         self._program_option_layout.addWidget(self._opened_files_panel)
+        # Keep the selector / file buttons / opened-files rows packed at the top; spare height in
+        # this column (e.g. when the opened-files list is collapsed) goes here, not between rows.
+        self._program_option_layout.addStretch(1)
 
         # 4. Header: External Tool Buttons
         self._external_program_title = QLabel("External program:")
@@ -213,6 +217,10 @@ class FF8UltimateEditorWidget(QWidget):
 
         self._enhance_container = QWidget()
         self._enhance_container.setLayout(self._enhance_layout)
+        # The header is a fixed strip: keep it at its natural height so it never eats the window in
+        # full screen (its contents would otherwise float in the vertical middle). All the spare
+        # vertical space goes to the tool stack below (see the main layout assembly).
+        self._enhance_container.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
 
         # Separator Line
         self._enhance_end_separator_line = QFrame()
@@ -284,10 +292,11 @@ class FF8UltimateEditorWidget(QWidget):
         self._file_toolbar = FileToolbarWidget(self.tool_stack, self.file_registry, resources_path)
         self._file_buttons_row.insertWidget(0, self._file_toolbar)
 
-        # 6. Final UI Assembly
+        # 6. Final UI Assembly - the tool stack takes ALL the spare vertical space (stretch 1); the
+        # header strip and separator stay at their natural height on top.
         self._main_layout.addWidget(self._enhance_container)
         self._main_layout.addWidget(self._enhance_end_separator_line)
-        self._main_layout.addWidget(self.tool_stack)
+        self._main_layout.addWidget(self.tool_stack, 1)
 
         # 7. Initialize Launchers
         self.ifritGui_launcher = IfritGuiLauncher(os.path.join("ExternalTools", "IfritGui", "Ifrit.exe"), callback=None)

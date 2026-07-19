@@ -284,6 +284,38 @@ class IfritManager:
         """Parse a single file and make it active (parse + activate in one call)."""
         self.set_active_enemy(self.parse_file(file_path), file_path)
 
+    @staticmethod
+    def entity_type_from_filename(file_path):
+        """Infer the model kind from a battle-model filename alone (c0mXXX -> MONSTER,
+        dYwXXX -> WEAPON, dYcXXX -> CHARACTER). Used to synthesize a blank model for an empty
+        placeholder .dat, which has no header to classify. Returns None for anything else."""
+        name = os.path.basename(str(file_path)).lower()
+        if re.match(r'c0m\d{3}\.dat$', name):
+            return EntityType.MONSTER
+        if re.match(r'd[0-9a-f]w\d{3}\.dat$', name):
+            return EntityType.WEAPON
+        if re.match(r'd[0-9a-f]c\d{3}\.dat$', name):
+            return EntityType.CHARACTER
+        return None
+
+    # Types we can synthesize a clean blank for: purely model sections (skeleton/geometry/
+    # animation/sequence), all empty-able to a valid default. MONSTER/MONSTER_NO_MODEL are
+    # excluded - they carry info_stat + AI, whose parse-shaped defaults can't be conjured from
+    # nothing (a real one only exists after parsing actual bytes), and no empty monster/no-model
+    # placeholder file exists anyway (the only 0-byte battle model is the weapon slot d0w007.dat).
+    BLANKABLE_ENTITY_TYPES = {EntityType.WEAPON, EntityType.CHARACTER,
+                              EntityType.WEAPON_NO_ANIM, EntityType.CHARACTER_NO_WEAPON}
+
+    def create_blank_enemy(self, file_path) -> MonsterAnalyser:
+        """Build an editable, empty-sectioned enemy for an empty placeholder .dat so it opens in
+        the editor (with all its type's tabs, showing nothing) instead of being skipped. Returns
+        None if the filename isn't a recognized model kind, or is a kind we can't blank cleanly
+        (monsters - see BLANKABLE_ENTITY_TYPES), so the caller falls back to skipping it."""
+        entity_type = self.entity_type_from_filename(file_path)
+        if entity_type not in self.BLANKABLE_ENTITY_TYPES:
+            return None
+        return MonsterAnalyser.create_blank(self.game_data, file_path, entity_type)
+
     def save_file(self, file_path):
         self.enemy.write_data_to_file(self.game_data, file_path)
 

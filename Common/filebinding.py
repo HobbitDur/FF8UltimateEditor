@@ -55,13 +55,15 @@ class FileBinding(QObject):
         already opened the file, in which case its file_changed signal was missed."""
         self._on_registry_changed(self.file_name)
 
-    def open_dialog(self, parent):
-        """Ask for a path and share it: loads it here and offers it to every bound tool."""
+    def open_dialog(self, parent, default_dir=""):
+        """Ask for a path and share it: loads it here and offers it to every bound tool. Starts in
+        default_dir (the caller's remembered folder) when given; returns the chosen path (or "")."""
         path = QFileDialog.getOpenFileName(
             parent=parent, caption=f"Open {self.file_name}", filter=self.file_filter,
-            directory=self.current_path or os.getcwd())[0]
+            directory=default_dir or self.current_path or os.getcwd())[0]
         if path:
             self.open_path(path)
+        return path
 
     def open_path(self, path):
         """Share a path for this file: loads it here and offers it to every bound tool.

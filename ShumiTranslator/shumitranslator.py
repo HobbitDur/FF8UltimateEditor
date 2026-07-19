@@ -153,11 +153,15 @@ class ShumiTranslator(QWidget):
         a single battle-text tab; every other file gets its own tab, its kind detected by name."""
         patterns = [binding.file_filter for binding in self._bindings] + ["c0m*.dat"]
         name_filter = "FF8 text files (" + " ".join(patterns) + ");;All files (*)"
+        # One dialog covers every kind at once, so it can't key per file type - it keeps a single
+        # remembered folder for the whole tool (persisted across sessions).
+        key = "ShumiTranslator text files"
         paths = QFileDialog.getOpenFileNames(
             parent=self, caption="Open FF8 text files (several at once is fine)",
-            filter=name_filter)[0]
+            filter=name_filter, directory=self.file_registry.last_folder(key))[0]
         if not paths:
             return
+        self.file_registry.remember_folder(key, os.path.dirname(paths[0]))
         c0m_paths, unknown = [], []
         for path in paths:
             name = os.path.basename(path)
@@ -297,7 +301,10 @@ class ShumiTranslator(QWidget):
                     else f"{len(file_loaded)} c0mxx.dat")
         else:
             name = pathlib.Path(file_loaded).name
-        progress = QProgressDialog(f"Loading {name}…", None, 0, 0, self)
+        # Start determinate at 0/100 (an empty bar), not 0/0 - a 0/0 dialog shows the busy "blue
+        # marquee" that looks stuck while the first file parses. The pane's first _begin_progress
+        # replaces 100 with the real step count almost immediately.
+        progress = QProgressDialog(f"Loading {name}…", None, 0, 100, self)
         progress.setWindowTitle("ShumiTranslator")
         progress.setWindowIcon(self.__shumi_icon)
         progress.setWindowModality(Qt.WindowModality.WindowModal)

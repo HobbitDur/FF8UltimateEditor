@@ -130,6 +130,13 @@ class ShumiFilePane(QWidget):
         if self._progress:
             self._progress(self._progress_done, self._progress_total)
 
+    def _extend_progress(self, extra):
+        """Add steps to an in-progress bar without resetting it - for a second phase (e.g. building
+        the text boxes after parsing the files) that keeps moving forward instead of jumping to 0."""
+        self._progress_total += extra
+        if self._progress:
+            self._progress(self._progress_done, self._progress_total)
+
     # -- per-kind builders ---------------------------------------------------
     def _build_kernel(self, outer):
         self.manager = KernelManager(game_data=self.game_data)
@@ -200,10 +207,15 @@ class ShumiFilePane(QWidget):
     def _build_dat(self, outer):
         self.manager = BattleManager(game_data=self.game_data)
         self.manager.reset()
+        # Parsing each c0m (MonsterAnalyser) is the slow part and, with many files, the whole load -
+        # so drive the bar one step per file here, THEN extend it to also cover building the text
+        # boxes, so it moves continuously instead of sitting frozen through the parse.
+        self._begin_progress(len(self.file_loaded))
         for path in self.file_loaded:
             self.manager.add_file(path)
+            self._tick()
         sections = self.manager.get_section_list()
-        self._begin_progress(len(sections))
+        self._extend_progress(len(sections))
         first_section_line_index = 2
         for section in sections:
             self._add_section(SectionWidget(section, first_section_line_index))

@@ -242,6 +242,18 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.vertices = vertices
         self.vertices_array = np.array(self.vertices, dtype=np.float32)
 
+        if len(self.vertices) == 0:
+            # A model with no geometry (e.g. an empty placeholder file opened with default,
+            # empty section data). numpy .min()/.max() raise on a zero-size array, so fall back
+            # to a neutral unit-sized view centred on the origin instead of computing bounds.
+            self.vertices_array = np.zeros((0, 3), dtype=np.float32)
+            self.MODEL_CENTER = np.zeros(3, dtype=np.float32)
+            self.model_min = np.zeros(3, dtype=np.float32)
+            self.model_max = np.zeros(3, dtype=np.float32)
+            self.model_extents = np.zeros(3, dtype=np.float32)
+            self.MODEL_SIZE = 1.0
+            return
+
         MIN_BOUNDS = self.vertices_array.min(axis=0)
         MAX_BOUNDS = self.vertices_array.max(axis=0)
         self.MODEL_CENTER = (MIN_BOUNDS + MAX_BOUNDS) / 2
@@ -1269,6 +1281,15 @@ class FF8OpenGLWidget(QOpenGLWidget):
         """Reset camera to default position - adaptive zoom based on shape"""
         self.rot_x = 0
         self.rot_y = 180
+
+        # No geometry (empty placeholder model): keep a neutral default zoom rather than
+        # reducing an empty vertex array (numpy .min()/.max() raise on zero-size).
+        if len(self.vertices) == 0:
+            self.zoom = self.MODEL_SIZE * 1.5
+            self.pan_x = 0.0
+            self.pan_y = 0.0
+            self.update()
+            return
 
         # Calculate bounding box dimensions
         bbox_min = self.vertices_array.min(axis=0)

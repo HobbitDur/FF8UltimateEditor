@@ -24,7 +24,10 @@ def main_window(qapp):
 
 def test_left_column_stacks_selector_buttons_and_opened_files(main_window):
     col = main_window._program_option_layout
-    assert col.count() == 3  # selector row, file-buttons row, opened-files panel
+    # selector row, file-buttons row, opened-files panel, then a trailing stretch that keeps them
+    # packed at the top (so the collapsed/expanded panel doesn't leave gaps between the rows).
+    assert col.count() == 4
+    assert col.itemAt(3).spacerItem() is not None
     btn_row = col.itemAt(1).layout()
     names = [type(btn_row.itemAt(i).widget()).__name__
              for i in range(btn_row.count()) if btn_row.itemAt(i).widget()]
@@ -43,6 +46,25 @@ def test_opened_files_panel_is_collapsible_and_live(main_window):
     assert f"Opened files ({before + 1})" in panel.header_button.text()  # live count
     panel.header_button.setChecked(True)                 # expand to see them
     assert panel.file_list.isHidden() is False and panel.file_list.count() == before + 1
+
+
+def test_opened_files_panel_list_fits_its_content(qapp):
+    """Expanded, the list is sized to its rows (up to a cap), not a fixed tall box - so a couple of
+    files don't leave a big empty gap; many files cap the height and scroll."""
+    from Common.fileregistry import FileRegistry
+    from Common.openedfilespanel import OpenedFilesPanel
+    registry = FileRegistry()
+    panel = OpenedFilesPanel(registry)
+    panel.header_button.setChecked(True)  # expand
+
+    registry.open_file("kernel.bin", "some/kernel.bin")
+    registry.open_file("mngrp.bin", "some/mngrp.bin")
+    two_rows = panel.file_list.height()
+    assert 0 < two_rows < panel.MAX_LIST_HEIGHT           # small, packed - not the full box
+
+    for i in range(30):
+        registry.open_file(f"f{i:02d}.bin", f"some/dir/f{i:02d}.bin")
+    assert panel.file_list.height() == panel.MAX_LIST_HEIGHT   # many files -> capped, then scrolls
 
 
 def test_complementary_button_present_but_disabled_without_companions(main_window):
@@ -69,13 +91,20 @@ def test_import_and_save_follow_zones_active_tab(main_window):
 
 
 def test_ifrit_open_save_are_on_the_shared_toolbar(main_window):
+    """Ifrit has no per-file FileBinding (a battle model's .dat name varies and several load at
+    once), so - like Alexander - it drives the shared header through the open_files()/save_folder()
+    hooks: Import is enabled via open_files, Save via can_save_folder once a changed file loads."""
     ifrit = main_window._ifrit_widget
-    # Ifrit dropped its own open/save/reload buttons for a binding on the shared toolbar.
+    # Ifrit dropped its own open/save/reload buttons for the shared toolbar.
     assert not hasattr(ifrit, "_open_btn") and not hasattr(ifrit, "_save_btn")
     tb = main_window._file_toolbar
     main_window.tool_stack.setCurrentWidget(ifrit)
-    assert [b.file_name for b in tb._main_bindings()] == ["battle model (.dat)"]
-    assert tb.import_button.isEnabled()
+    tb._on_tool_changed()
+    # No bindings at all - Import runs through the open_files() hook, Save through save_folder().
+    assert tb._main_bindings() == [] and tb._complementary_bindings() == []
+    assert callable(getattr(ifrit, "open_files", None)) and callable(getattr(ifrit, "save_folder", None))
+    assert tb.import_button.isEnabled()          # enabled via open_files(), no bindings needed
+    assert tb.save_button.isEnabled() is False   # nothing changed/loaded yet (can_save_folder False)
 
 
 def test_reload_button_reloads_every_opened_file(main_window):
@@ -654,3 +683,49 @@ def test_shumitranslator_single_multiselect_import_opens_a_tab_each(main_window,
     assert main_window.file_registry.get_path("kernel.bin").endswith("kernel.bin")
     assert main_window.file_registry.get_path("namedic.bin").endswith("namedic.bin")
     assert "ShumiTranslator battle text (c0mxx.dat)" in main_window.file_registry.paths
+
+
+def test_registry_remembers_last_folder():
+    """The registry stores, per tool, the folder its last Open used - in memory when created alone
+    (empty settings), which is enough to verify the get/set contract."""
+    from Common.fileregistry import FileRegistry
+    reg = FileRegistry()  # no QSettings -> in-memory fallback
+    assert reg.last_folder("ToolX") == ""            # nothing remembered yet
+    reg.remember_folder("ToolX", os.path.join("C:", "some", "dir"))
+    assert reg.last_folder("ToolX") == os.path.join("C:", "some", "dir")
+    reg.remember_folder("ToolX", "")                 # empty is ignored, keeps the previous
+    assert reg.last_folder("ToolX") == os.path.join("C:", "some", "dir")
+    reg.remember_folder("ToolY", "elsewhere")        # kept per tool, independent
+    assert reg.last_folder("ToolX") == os.path.join("C:", "some", "dir")
+
+
+def test_import_dialog_starts_in_and_updates_the_remembered_folder(main_window, monkeypatch):
+    """Import opens the dialog in the folder that FILE (by its FF8 name) was last opened from, and
+    on a pick stores that file's folder - keyed per file type, so it's shared across tools and
+    survives into the next session."""
+    from PyQt6.QtWidgets import QFileDialog
+    from Common.filebinding import FileBinding
+    reg = main_window.file_registry
+    tb = main_window._file_toolbar
+    main_window.tool_stack.setCurrentWidget(main_window._siren_widget)
+    tb._on_tool_changed()
+    # A throwaway binding so opening it triggers no real file parse - we test the folder plumbing.
+    # The memory key is the file's name, NOT the tool.
+    probe = FileBinding("zzfolder.bin", reg, load_callback=lambda _p: None)
+    key = probe.file_name
+
+    seed = os.path.join("C:", "seed", "folder")
+    reg.remember_folder(key, seed)
+    seen = {}
+
+    def fake_open(parent=None, caption="", filter="", directory=""):
+        seen["directory"] = directory
+        return (os.path.join("D:", "picked", "here", "zzfolder.bin"), "")
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", staticmethod(fake_open))
+
+    tb._open_binding(probe)
+    assert seen["directory"] == seed                                   # started where we last were
+    assert reg.last_folder(key) == os.path.join("D:", "picked", "here")  # updated to the pick's folder
+
+    if reg.settings is not None:  # don't leave the test's key behind in real QSettings
+        reg.settings.remove(f"last_folder/{key}")

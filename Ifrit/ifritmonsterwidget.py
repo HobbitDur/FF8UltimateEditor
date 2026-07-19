@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QDialog, QDialogButtonBox
 )
 from Common.fileregistry import FileRegistry
+from FF8GameData.dat.monsteranalyser import GarbageFileError
 from Ifrit.IfritAI.ifritaiwidget import IfritAIWidget
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.fpsbatchdialog import (FpsBatchDialog, FpsBatchReportDialog,
@@ -370,16 +371,12 @@ class IfritMonsterWidget(QWidget):
         self._active_index = -1
 
         # Panes (full editors) are memory-heavy (~60 MB RAM + a live 3D GL viewer each), so only a
-        # bounded number are kept built at once - an LRU. After a multi-file load the rest are
-        # pre-built quietly in the background up to that cap, so clicking your working set is
-        # instant; going beyond the cap tears down the least-recently-used clean pane and rebuilds
-        # it on demand. The cap is derived from a user RAM budget (spinbox, GB).
-        self._ram_budget_gb = self.settings.value("ifrit/ram_budget_gb", defaultValue=8, type=int)
+        # bounded number are kept built at once - an LRU. On a multi-file load they are pre-built
+        # up to that cap (behind the progress bar) so clicking any loaded monster is instant; going
+        # beyond the cap tears down the least-recently-used clean pane and rebuilds it on demand.
+        # The cap is derived from a user RAM budget (spinbox, GB).
+        self._ram_budget_gb = self.settings.value("ifrit/ram_budget_gb", defaultValue=1, type=int)
         self._pane_lru = []                # file indices with a built pane, least-recent first
-        self._prebuild_queue = []          # indices still to pre-build in the background
-        self._prebuild_timer = QTimer(self)
-        self._prebuild_timer.setInterval(0)
-        self._prebuild_timer.timeout.connect(self._prebuild_step)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -396,16 +393,15 @@ class IfritMonsterWidget(QWidget):
         self._cronos_checkbox.setChecked(self.settings.value("ifrit/cronos_checkbox", defaultValue=False, type=bool))
         self._cronos_checkbox.stateChanged.connect(self._on_cronos_toggled)
 
-        self._monster_label = QLabel("No file loaded")
-
         self._fps_batch_btn = QPushButton("Files to 30/60 FPS...")
         self._fps_batch_btn.setToolTip("Convert the animations of several .dat files at once to\n"
                                        "30 or 60 fps, without opening them one by one.")
         self._fps_batch_btn.clicked.connect(self._convert_files_to_fps)
 
         # Import / Save both run from the shared header toolbar (open_files / save_folder /
-        # can_save_folder below), the same wiring Alexander uses. Ctrl+S also saves.
-        for w in [self._cronos_checkbox, self._fps_batch_btn, self._monster_label]:
+        # can_save_folder below), the same wiring Alexander uses. Ctrl+S also saves. The loaded
+        # file's name/monster is shown in the left side list, so no label is needed here.
+        for w in [self._cronos_checkbox, self._fps_batch_btn]:
             tl.addWidget(w)
         tl.addStretch()
 
@@ -451,13 +447,15 @@ class IfritMonsterWidget(QWidget):
     def open_files(self):
         """Open one or more model .dat files at once (shared header Import routes here). Non-model
         files (b0wave.dat, r0win.dat...) are rejected on the name."""
-        folder = self._file_dialog_folder or (os.path.dirname(self.file_loaded)
-                                              if self.file_loaded else os.getcwd())
+        key = "battle model (.dat)"  # per file type: re-open where models were last found (persisted)
+        folder = (self.file_registry.last_folder(key) or self._file_dialog_folder
+                  or (os.path.dirname(self.file_loaded) if self.file_loaded else os.getcwd()))
         paths, _ = QFileDialog.getOpenFileNames(
             self, "Open battle model files", folder,
             f"{IfritManager.BATTLE_MODEL_FILE_FILTER};;All .dat (*.dat)")
         if not paths:
             return
+        self.file_registry.remember_folder(key, os.path.dirname(paths[0]))
         good = [p for p in paths if IfritManager.is_battle_model_file(p)]
         skipped = [os.path.basename(p) for p in paths if not IfritManager.is_battle_model_file(p)]
         if skipped:
@@ -488,29 +486,52 @@ class IfritMonsterWidget(QWidget):
         """Parse AND texture-extract every path up front (behind the progress bar), then show the
         first one and pre-build the rest in the background up to the RAM cap. Each file gets its
         OWN manager (sharing the one GameData). Replaces any previous session."""
-        # Opening several files: let the user set how much RAM to spend keeping editors loaded.
-        if len(paths) > 1 and not self._ask_ram_budget():
+        # Only ask the RAM budget when opening more files than the current cap can keep loaded
+        # (8 monsters at the 1 GB default) - a smaller load all fits in the cache, no need to ask.
+        if len(paths) > self._pane_cap() and not self._ask_ram_budget(len(paths)):
             return
         progress = QProgressDialog("Loading models and textures...", "Cancel", 0, len(paths), self)
         progress.setWindowTitle("Load files")
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.setMinimumDuration(0)        # show at once and stay up (a load is always >0.3s),
-        progress.setValue(0)                  # rather than flashing then vanishing before the
-        QApplication.processEvents()          # slow pane build that follows
+        progress.setAutoClose(False)          # rather than flashing/vanishing; we close it by hand
+        progress.setAutoReset(False)          # (so reaching a phase's max doesn't dismiss it early)
+        progress.setValue(0)
+        QApplication.processEvents()
         files = []
+        skipped = []                          # empty / unreadable placeholder .dat
         for index, path in enumerate(paths):
             progress.setValue(index)
             progress.setLabelText(f"{os.path.basename(path)}  ({index + 1}/{len(paths)})")
             QApplication.processEvents()
             if progress.wasCanceled():
                 break
+            # Some battle .dat are empty placeholders (e.g. Squall's unused weapon slot d0w007.dat
+            # is 0 bytes). Rather than skip them, open them as a blank model of the kind the
+            # filename implies (an empty weapon/character/monster): all the type's tabs are there,
+            # just showing nothing, so the slot can be filled in and saved. Only a filename we
+            # can't classify falls through to being skipped.
+            if os.path.getsize(path) == 0:
+                manager = IfritManager(game_data=self._game_data)
+                enemy = manager.create_blank_enemy(path)
+                if enemy is None:
+                    skipped.append(os.path.basename(path))
+                    continue
+                manager.set_active_enemy(enemy, path, textures=([], True))
+                files.append({'path': path, 'manager': manager, 'pane': None,
+                              'name': 'empty'})
+                continue
             manager = IfritManager(game_data=self._game_data)
             try:
                 # free_animation=True: keep loaded files lean (~0.5 MB anim vs ~30 MB); the file's
                 # animation re-expands on its first 3D view and stays expanded after.
                 enemy = manager.parse_file(path, free_animation=True)
+            except GarbageFileError:
+                skipped.append(os.path.basename(path))   # empty/corrupt model data
+                continue
             except Exception as e:
                 print(f"[load] Could not parse {path}: {e}")
+                skipped.append(os.path.basename(path))
                 continue
             textures = (None if enemy.entity_type == EntityType.MONSTER_NO_MODEL
                         else manager.extract_textures(enemy, path))
@@ -523,21 +544,25 @@ class IfritMonsterWidget(QWidget):
             files.append({'path': path, 'manager': manager, 'pane': None, 'name': name})
         if not files:
             progress.close()
+            if skipped:
+                QMessageBox.information(self, "No files loaded",
+                    "The selected file(s) are empty or unreadable:\n\n" + "\n".join(skipped))
             return
         self._discard_panes()
         self._files = files
         self._active_index = -1
         self._file_dialog_folder = os.path.dirname(files[0]['path'])
         self._populate_file_list()
-        # Building the first file's pane (all tabs + 3D model + animation re-expand) is the slow
-        # part - keep the popup up over it with an "Opening..." message instead of letting it
-        # vanish after the fast parse/texture step and leaving the UI frozen with no feedback.
-        first = files[0]
-        progress.setLabelText(f"Opening {first['name'] or os.path.basename(first['path'])}...")
-        QApplication.processEvents()          # paint the message before the blocking pane build
-        self._activate_index(0)
-        progress.setValue(len(paths))         # reaching max dismisses the dialog now that it's shown
-        self._start_prebuild()                # fill the pane cache in the background
+        # Pre-build the panes up front (up to the cap), INCLUDING the first, so once the first is
+        # shown there's no separate "loading the current file" step - it's already built. All the
+        # slow work (all tabs + 3D model + animation re-expand per file) happens here behind the
+        # progress bar; showing the first file afterwards is then instant.
+        self._prebuild_panes(progress)
+        self._activate_index(0)               # already built by the pre-build -> instant show
+        progress.close()
+        if skipped:
+            QMessageBox.information(self, "Some files skipped",
+                "These files are empty or unreadable and were skipped:\n\n" + "\n".join(skipped))
         self.file_registry.open_file(
             "Ifrit battle model(s)",
             FileRegistry.summarize_paths([f['path'] for f in files], "model"))
@@ -545,8 +570,6 @@ class IfritMonsterWidget(QWidget):
 
     def _discard_panes(self):
         """Tear down every built pane (when replacing the session)."""
-        self._prebuild_timer.stop()
-        self._prebuild_queue = []
         self._pane_lru = []
         for f in self._files:
             pane = f.get('pane')
@@ -610,8 +633,6 @@ class IfritMonsterWidget(QWidget):
         self._stack.setCurrentWidget(f['pane'])
         self._touch_lru(index)
         self.file_loaded = f['path']
-        label = f['name'] if f['name'] else pathlib.Path(f['path']).name
-        self._monster_label.setText(f"{label}  [{pathlib.Path(f['path']).name}]")
         self._file_list.blockSignals(True)
         self._file_list.setCurrentRow(index)
         self._file_list.blockSignals(False)
@@ -672,51 +693,66 @@ class IfritMonsterWidget(QWidget):
         except Exception:
             pass
 
-    # ── Background pre-build ──────────────────────────────────────────
+    # ── Pre-build ─────────────────────────────────────────────────────
 
-    def _start_prebuild(self):
-        """Queue every not-yet-built file to be built quietly in the background (idle ticks), up
-        to the cap, so clicking your working set is instant."""
-        self._prebuild_queue = [i for i in range(len(self._files)) if self._files[i]['pane'] is None]
-        if self._prebuild_queue:
-            self._prebuild_timer.start()
-
-    def _prebuild_step(self):
-        if not self._prebuild_queue or len(self._pane_lru) >= self._pane_cap():
-            self._prebuild_timer.stop()
-            self._prebuild_queue = []
+    def _prebuild_panes(self, progress):
+        """Build every file's editor pane up front, up to the cap, so clicking any loaded monster
+        is instant. Done synchronously behind the load progress bar (a background timer is starved
+        by the active 3D viewer's playback, so panes never actually pre-built). Cancellable - any
+        not built here just build on demand (with an 'Opening...' popup) when first clicked."""
+        unbuilt = [i for i in range(len(self._files)) if self._files[i]['pane'] is None]
+        room = max(0, self._pane_cap() - len(self._pane_lru))
+        # If the RAM budget can hold every opened file (they all fit within the cap), pre-load ALL
+        # of them; otherwise fill the cache up to the cap and leave the rest to build on demand.
+        to_build = unbuilt if len(unbuilt) <= room else unbuilt[:room]
+        if not to_build:
             return
-        index = self._prebuild_queue.pop(0)
-        if 0 <= index < len(self._files) and self._files[index]['pane'] is None:
+        progress.setRange(0, len(to_build))
+        for done, index in enumerate(to_build):
+            if progress.wasCanceled():
+                break
+            progress.setValue(done)
+            name = self._files[index]['name'] or os.path.basename(self._files[index]['path'])
+            progress.setLabelText(f"Pre-loading editors for instant switching...\n"
+                                  f"{name}  ({done + 1}/{len(to_build)})")
+            QApplication.processEvents()
             try:
-                self._ensure_pane(index)            # builds, kept out of view (not activated)
+                self._ensure_pane(index)
             except Exception as e:
                 print(f"[prebuild] {index} failed: {e}")
+        progress.setValue(len(to_build))            # reach max -> dialog dismisses
 
-    def _ask_ram_budget(self) -> bool:
-        """Ask how much RAM to spend keeping editors loaded (shown when opening several files).
-        Returns False if the user cancels the whole load."""
+    def _budget_gb_for(self, num_panes: int) -> int:
+        """Smallest whole-GB RAM budget whose cap keeps num_panes editors loaded at once."""
+        need_mb = num_panes * self._PANE_RAM_MB / 0.5          # 0.5 = fraction of budget for panes
+        return max(1, min(256, -(-int(need_mb) // 1024)))      # ceil to GB, clamp to the spin range
+
+    def _ask_ram_budget(self, num_files: int = 1) -> bool:
+        """Ask how much RAM to spend keeping editors loaded (shown when opening more files than the
+        current budget can hold). Defaults to a budget that keeps ALL the opened files loaded, so
+        accepting it pre-loads them all. Returns False if the user cancels the whole load."""
+        fit_all_gb = self._budget_gb_for(num_files)
         dlg = QDialog(self)
         dlg.setWindowTitle("Load files")
         lay = QVBoxLayout(dlg)
         lay.addWidget(QLabel(
-            "Editors are pre-loaded in the background so switching between monsters is instant.\n"
-            "Each loaded editor uses roughly 60 MB of RAM (plus its 3D model in GPU memory), so\n"
-            "set how much RAM to allow for them. Monsters beyond that stay loadable and rebuild\n"
-            "instantly when you click them."))
+            f"Opening {num_files} monsters. Editors are pre-loaded so switching between them is\n"
+            f"instant; each uses ~{self._PANE_RAM_MB} MB of RAM (plus its 3D model in GPU memory).\n"
+            f"About {fit_all_gb} GB keeps ALL {num_files} loaded. A smaller budget keeps the most-recent\n"
+            f"ones loaded and rebuilds the rest instantly when you click them."))
         row = QHBoxLayout()
         row.addWidget(QLabel("RAM budget:"))
         spin = QSpinBox()
         spin.setRange(1, 256)
         spin.setSuffix(" GB")
-        spin.setValue(self._ram_budget_gb)
+        spin.setValue(max(self._ram_budget_gb, fit_all_gb))   # default to keeping them all loaded
         row.addWidget(spin)
         row.addStretch()
         lay.addLayout(row)
         cap_label = QLabel()
         lay.addWidget(cap_label)
         upd = lambda v: cap_label.setText(
-            f"→ up to ~{max(1, int(v * 1024 * 0.5 / self._PANE_RAM_MB))} monsters kept loaded at once.")
+            f"→ up to ~{max(1, int(v * 1024 * 0.5 / self._PANE_RAM_MB))} of {num_files} monsters kept loaded at once.")
         spin.valueChanged.connect(upd)
         upd(spin.value())
         bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)

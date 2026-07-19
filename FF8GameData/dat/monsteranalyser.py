@@ -23,6 +23,17 @@ class MonsterAnalyser:
     MAX_MONSTER_SIZE_TXT_IN_BATTLE = 100
     NUMBER_SECTION = len(DAT_FILE_SECTION_LIST)
 
+    # Section count (including the header as section 0) that __analyze_header_section maps each
+    # entity type onto - the inverse of that mapping, used to synthesize a blank file's header.
+    NB_SECTION_BY_ENTITY = {
+        EntityType.CHARACTER: 8,
+        EntityType.WEAPON: 9,
+        EntityType.MONSTER: 12,
+        EntityType.WEAPON_NO_ANIM: 6,
+        EntityType.CHARACTER_NO_WEAPON: 11,
+        EntityType.MONSTER_NO_MODEL: 3,
+    }
+
     def __init__(self, game_data):
         self.file_raw_data = bytearray()
         self.origin_file_name = ""
@@ -55,6 +66,38 @@ class MonsterAnalyser:
     def __str__(self):
         return "Name: {} \nData:{}".format(self.info_stat_data['monster_name'],
                                            [self.header_data, self.model_animation_data, self.info_stat_data, self.battle_script_data])
+
+    @classmethod
+    def create_blank(cls, game_data, file_path, entity_type):
+        """Build an openable, editable analyser for an empty placeholder .dat (e.g. Squall's
+        unused weapon slot d0w007.dat, 0 bytes) that has no real data to parse.
+
+        Every model section is left at its __init__ default (empty skeleton/geometry/animation/
+        sequence...), so the editor opens with all the tabs its entity type normally shows but
+        nothing to display - an empty 3D view, an empty sequence list, etc. A valid header is
+        synthesized (correct nb_section field + a zeroed section-position table) so the file
+        round-trips: write_data_to_file fills the position/size slots from the actual section
+        byte lengths, and re-loading the saved file classifies it back to `entity_type`."""
+        self = cls(game_data)
+        self.entity_type = entity_type
+        self.origin_file_name = os.path.basename(file_path)
+        self.origin_path = file_path
+        id_match = re.search(r'\d{3}', self.origin_file_name)
+        self.id = int(id_match.group()) if id_match else 0
+        nb_section = cls.NB_SECTION_BY_ENTITY[entity_type]
+        self.header_data['nb_section'] = nb_section
+        # Header layout: nb_section field (4) + one 4-byte position slot per section + file_size
+        # field (4). Only the nb_section field must be correct now (it drives classification on
+        # reload); write_data_to_file rewrites the rest from the real section sizes.
+        header_size = 4 + nb_section * 4 + 4
+        header = bytearray(header_size)
+        header[0:4] = (nb_section - 1).to_bytes(4, 'little')
+        self.section_raw_data = [header] + [bytearray() for _ in range(nb_section - 1)]
+        self.header_data['section_pos'] = [0] * (nb_section + 1)
+        # Nothing was ever freed - the (empty) animation is already fully expanded.
+        self._animation_section_index = None
+        self._animation_expanded = True
+        return self
 
     def load_file_data(self, file:str, game_data:GameData):
         self.subsection_ai_offset = {'init_code': 0, 'ennemy_turn': 0, 'counter_attack': 0, 'death': 0, 'unknown': 0}

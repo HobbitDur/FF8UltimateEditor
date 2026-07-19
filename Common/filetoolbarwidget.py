@@ -116,7 +116,7 @@ class FileToolbarWidget(QWidget):
         ShumiTranslator's c0mxx.dat) as one more, equally independent entry. All of them can
         coexist in the same menu: a tool with several fixed-name files and a wildcard multi-select
         (ShumiTranslator) offers every one of them side by side, none more special than another."""
-        entries = [(binding.file_name, (lambda b=binding: b.open_dialog(self)))
+        entries = [(binding.file_name, (lambda b=binding: self._open_binding(b)))
                   for binding in self._main_bindings()]
         opener = getattr(self.tool_stack.currentWidget(), "open_files", None)
         if callable(opener):
@@ -124,6 +124,20 @@ class FileToolbarWidget(QWidget):
             label = getattr(active, "open_files_label", "Import files")
             entries.append((label, opener))
         return entries
+
+    def _folder_scan_key(self):
+        """Key for the Open-folder button's remembered folder. A scan isn't one file type, so it is
+        remembered per tool (e.g. CCGroup's 'field' folder, Seed's main_chr)."""
+        return type(self.tool_stack.currentWidget()).__name__
+
+    def _open_binding(self, binding):
+        """Open one binding's file, starting in the folder that file (by its FF8 name) was last
+        opened from - so it re-opens there next time, and that memory is shared by every tool that
+        opens the same file. On a pick, store the file's folder for next time / next session."""
+        key = binding.file_name
+        path = binding.open_dialog(self, default_dir=self.registry.last_folder(key))
+        if path:
+            self.registry.remember_folder(key, os.path.dirname(path))
 
     def _import_main(self):
         entries = self._import_entries()
@@ -137,7 +151,7 @@ class FileToolbarWidget(QWidget):
         # multi-select dialog can bring in any number at once.
         bindings = self._complementary_bindings()
         if len(bindings) == 1:
-            bindings[0].open_dialog(self)
+            self._open_binding(bindings[0])
         elif bindings:
             self._open_several(bindings, "Open the complementary files (several at once is fine)")
 
@@ -150,16 +164,20 @@ class FileToolbarWidget(QWidget):
         menu.exec(source_button.mapToGlobal(source_button.rect().bottomLeft()))
 
     def _open_several(self, bindings, caption):
-        """One multi-select dialog for several files, routing each pick to its binding by name."""
+        """One multi-select dialog for several files, routing each pick to its binding by name. The
+        dialog starts in the first file's remembered folder, and each pick updates ITS own file's
+        folder memory (they're usually side by side, but keyed per file type all the same)."""
         names = [binding.file_name for binding in bindings]
+        start = self.registry.last_folder(bindings[0].file_name) if bindings else ""
         file_paths = QFileDialog.getOpenFileNames(
             self, caption, filter=f"Files this tool uses ({' '.join(names)})",
-            directory=os.getcwd())[0]
+            directory=start or os.getcwd())[0]
         by_name = {binding.file_name.lower(): binding for binding in bindings}
         for path in file_paths:
             binding = by_name.get(os.path.basename(path).lower())
             if binding is not None:
                 binding.open_path(path)
+                self.registry.remember_folder(binding.file_name, os.path.dirname(path))
 
     def _save(self):
         for binding in self._main_bindings():
@@ -195,11 +213,14 @@ class FileToolbarWidget(QWidget):
         A folder-based tool (e.g. the NPC card players tab, which reads a whole 'field' folder of
         .jsm/.sym scripts) is handed the folder through its load_folder(folder) method and reports
         its own result."""
+        key = self._folder_scan_key()
         folder = QFileDialog.getExistingDirectory(
             self, "Open a folder — its files are loaded into the tools "
-                  "(pick the 'field' folder for the .jsm/.sym card players)")
+                  "(pick the 'field' folder for the .jsm/.sym card players)",
+            self.registry.last_folder(key))
         if not folder:
             return
+        self.registry.remember_folder(key, folder)
         found = self.scan_folder(folder, self.registry.accepted_file_names())
         opened, problems = [], []
         for file_name, path in found.items():
