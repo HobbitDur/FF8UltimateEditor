@@ -62,20 +62,18 @@ def test_splitter_honors_a_wide_list_request_in_a_normal_sized_window():
     assert w._splitter.sizes()[0] >= 550
 
 
-def test_many_prebuilt_panes_do_not_reintroduce_the_floor():
-    """Even a pane that's pre-built but NOT currently active must not count its own width toward
-    the shared stack's minimum - only the active pane may."""
+def test_multi_file_session_does_not_reintroduce_the_floor():
+    """With several files opened (only the shown one is fully built - single-pane model), the
+    shared stack's minimum must still stay low so the file list can be widened."""
     settings = QSettings("test", "splitter_width_multi")
-    settings.setValue("ifrit/ram_budget_gb", 5)
     base = IfritManager("FF8GameData")
     w = IfritMonsterWidget(settings=settings, icon_path="Resources", game_data_folder="FF8GameData")
     w._game_data = base.game_data
-    w._ask_ram_budget = lambda n: True
     w.show()
 
     paths = [os.path.join(BATTLE, "c0m000.dat"), os.path.join(BATTLE, "c0m001.dat"), BODY]
     w._build_session(paths)
-    assert all(f['pane'] is not None for f in w._files), "test assumes every file got pre-built"
+    assert sum(1 for f in w._files if f['pane'] is not None) == 1   # only the shown file is built
 
     w.resize(1280, 800)
     QApplication.processEvents()
