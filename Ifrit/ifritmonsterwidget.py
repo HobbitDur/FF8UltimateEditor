@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QTabWidget, QMessageBox, QCheckBox, QProgressDialog, QApplication,
     QListWidget, QSplitter, QFileDialog, QComboBox, QLineEdit, QSpinBox,
     QDoubleSpinBox, QAbstractButton, QPlainTextEdit, QTextEdit, QStackedWidget,
-    QDialog, QDialogButtonBox, QSizePolicy
+    QSizePolicy
 )
 from Common.fileregistry import FileRegistry
 from FF8GameData.dat.monsteranalyser import GarbageFileError
@@ -410,6 +410,10 @@ class IfritMonsterWidget(QWidget):
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
         self.file_registry = file_registry
+        # The shared-toolbar Reload button (registry.reload_all) fans out via reload_requested.
+        # Ifrit is an Alexander-pattern tool with no per-file FileBinding, so it subscribes to the
+        # signal directly instead of through a binding (otherwise Reload is a no-op for it).
+        self.file_registry.reload_requested.connect(self._reload_from_disk)
         self.settings = settings
         self.icon_path = icon_path
         self.file_loaded = ""
@@ -422,16 +426,13 @@ class IfritMonsterWidget(QWidget):
         self._game_data = self._shared_manager.game_data
 
         # One dict per loaded file: {'path', 'manager', 'pane' (None until built), 'name'}.
+        # Opening files only parses each one LEAN (structure + name for the list, no textures, no
+        # expanded animation, no editor widgets). Exactly ONE file is ever "fully loaded" at a time:
+        # clicking a file in the list builds its whole editor (textures + expanded animation + all
+        # tabs + the 3D GL viewer) and tears the previous one down. Simple and light - no preload,
+        # no LRU, no RAM budget, and never more than one heavy 3D viewer alive.
         self._files = []
         self._active_index = -1
-
-        # Panes (full editors) are memory-heavy (~60 MB RAM + a live 3D GL viewer each), so only a
-        # bounded number are kept built at once - an LRU. On a multi-file load they are pre-built
-        # up to that cap (behind the progress bar) so clicking any loaded monster is instant; going
-        # beyond the cap tears down the least-recently-used clean pane and rebuilds it on demand.
-        # The cap is derived from a user RAM budget (spinbox, GB).
-        self._ram_budget_gb = self.settings.value("ifrit/ram_budget_gb", defaultValue=1, type=int)
-        self._pane_lru = []                # file indices with a built pane, least-recent first
         self._stack_size_policies = {}     # id(widget) -> real QSizePolicy, see _shrink_stack_to_current
 
         root = QVBoxLayout(self)
@@ -454,24 +455,10 @@ class IfritMonsterWidget(QWidget):
                                        "30 or 60 fps, without opening them one by one.")
         self._fps_batch_btn.clicked.connect(self._convert_files_to_fps)
 
-        # RAM budget: same value/persistence as the load-time dialog (_ask_ram_budget), but
-        # editable anytime rather than only when a load happens to exceed the current cap.
-        ram_label = QLabel("RAM budget:")
-        self._ram_budget_spin = QSpinBox()
-        self._ram_budget_spin.setRange(1, 256)
-        self._ram_budget_spin.setSuffix(" GB")
-        self._ram_budget_spin.setValue(self._ram_budget_gb)
-        self._ram_budget_spin.setToolTip(
-            "How much RAM to spend keeping monster editors pre-loaded for instant switching\n"
-            "(~60 MB/monster). Raising it to cover every currently loaded file pre-loads them\n"
-            "all right away; lowering it only evicts least-recently-used editors as new ones\n"
-            "are opened, not immediately.")
-        self._ram_budget_spin.valueChanged.connect(self._on_ram_budget_changed)
-
         # Import / Save both run from the shared header toolbar (open_files / save_folder /
         # can_save_folder below), the same wiring Alexander uses. Ctrl+S also saves. The loaded
         # file's name/monster is shown in the left side list, so no label is needed here.
-        for w in [self._cronos_checkbox, self._fps_batch_btn, ram_label, self._ram_budget_spin]:
+        for w in [self._cronos_checkbox, self._fps_batch_btn]:
             tl.addWidget(w)
         tl.addStretch()
 
@@ -484,12 +471,11 @@ class IfritMonsterWidget(QWidget):
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._placeholder.setStyleSheet("color:#888;")
         self._stack.addWidget(self._placeholder)
-        # Like a pane's own tabs, this stack reports the size of its LARGEST page (any loaded
-        # file's pane, or the placeholder) as its own minimumSizeHint - even ones not currently
-        # shown. With several files pre-loaded that floors the file list's max width on whichever
-        # pane happens to be widest, regardless of which one is active. Keep only the active page
-        # counted; re-applied whenever the active page changes AND whenever a new pane is added
-        # (in _ensure_pane - adding a widget doesn't fire currentChanged by itself).
+        # Like a pane's own tabs, this stack reports the size of its LARGEST page (the pane or the
+        # placeholder) as its own minimumSizeHint - even the one not currently shown - which would
+        # floor the file list's max width. Keep only the active page counted; re-applied whenever
+        # the active page changes AND whenever a new pane is added (in _build_pane - adding a widget
+        # doesn't fire currentChanged by itself).
         self._stack.currentChanged.connect(
             lambda _idx=None: _shrink_stack_to_current(self._stack, self._stack_size_policies))
         _shrink_stack_to_current(self._stack, self._stack_size_policies)
@@ -564,14 +550,12 @@ class IfritMonsterWidget(QWidget):
             self._build_session([path])
 
     def _build_session(self, paths):
-        """Parse AND texture-extract every path up front (behind the progress bar), then show the
-        first one and pre-build the rest in the background up to the RAM cap. Each file gets its
-        OWN manager (sharing the one GameData). Replaces any previous session."""
-        # Only ask the RAM budget when opening more files than the current cap can keep loaded
-        # (8 monsters at the 1 GB default) - a smaller load all fits in the cache, no need to ask.
-        if len(paths) > self._pane_cap() and not self._ask_ram_budget(len(paths)):
-            return
-        progress = QProgressDialog("Loading models and textures...", "Cancel", 0, len(paths), self)
+        """Open a set of files: parse each one LEAN (structure + name for the list only - no
+        textures, no expanded animation, no editor widgets), then show the first. The heavy work
+        (textures + animation + all tabs + 3D viewer) is done per file when it's clicked, and only
+        one file is fully loaded at a time (see _activate_index). Each file gets its OWN manager
+        sharing the one GameData. Replaces any previous session."""
+        progress = QProgressDialog("Reading files...", "Cancel", 0, len(paths), self)
         progress.setWindowTitle("Load files")
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.setMinimumDuration(0)        # show at once and stay up (a load is always >0.3s),
@@ -600,12 +584,12 @@ class IfritMonsterWidget(QWidget):
                     continue
                 manager.set_active_enemy(enemy, path, textures=([], True))
                 files.append({'path': path, 'manager': manager, 'pane': None,
-                              'name': 'empty'})
+                              'name': 'empty', 'blank': True})
                 continue
             manager = IfritManager(game_data=self._game_data)
             try:
-                # free_animation=True: keep loaded files lean (~0.5 MB anim vs ~30 MB); the file's
-                # animation re-expands on its first 3D view and stays expanded after.
+                # free_animation=True: keep the loaded file lean (~0.5 MB anim vs ~30 MB); the
+                # animation re-expands when the file is clicked and its pane is built.
                 enemy = manager.parse_file(path, free_animation=True)
             except GarbageFileError:
                 skipped.append(os.path.basename(path))   # empty/corrupt model data
@@ -614,9 +598,9 @@ class IfritMonsterWidget(QWidget):
                 print(f"[load] Could not parse {path}: {e}")
                 skipped.append(os.path.basename(path))
                 continue
-            textures = (None if enemy.entity_type == EntityType.MONSTER_NO_MODEL
-                        else manager.extract_textures(enemy, path))
-            manager.set_active_enemy(enemy, path, textures=textures)
+            # Bind the parsed enemy to its manager cheaply (compiler + empty textures, NO VincentTim
+            # extraction). Textures are extracted later, only when this file is the one being shown.
+            manager.set_active_enemy(enemy, path, textures=([], True))
             name = ""
             try:
                 name = enemy.info_stat_data['monster_name'].get_str().strip('\x00')
@@ -634,13 +618,8 @@ class IfritMonsterWidget(QWidget):
         self._active_index = -1
         self._file_dialog_folder = os.path.dirname(files[0]['path'])
         self._populate_file_list()
-        # Pre-build the panes up front (up to the cap), INCLUDING the first, so once the first is
-        # shown there's no separate "loading the current file" step - it's already built. All the
-        # slow work (all tabs + 3D model + animation re-expand per file) happens here behind the
-        # progress bar; showing the first file afterwards is then instant.
-        self._prebuild_panes(progress)
-        self._activate_index(0)               # already built by the pre-build -> instant show
         progress.close()
+        self._activate_index(0, show_busy=True)   # fully load + show the first file
         if skipped:
             QMessageBox.information(self, "Some files skipped",
                 "These files are empty or unreadable and were skipped:\n\n" + "\n".join(skipped))
@@ -649,9 +628,9 @@ class IfritMonsterWidget(QWidget):
             FileRegistry.summarize_paths([f['path'] for f in files], "model"))
         self.file_bindings_changed.emit()
 
+
     def _discard_panes(self):
-        """Tear down every built pane (when replacing the session)."""
-        self._pane_lru = []
+        """Tear down the built pane (when replacing the session)."""
         for f in self._files:
             pane = f.get('pane')
             if pane is not None:
@@ -688,15 +667,24 @@ class IfritMonsterWidget(QWidget):
         self._activate_index(row, show_busy=True)   # show "Opening..." if this file isn't built yet
 
     def _activate_index(self, index: int, show_busy: bool = False):
-        """Show file[index]. Builds its editor pane if needed (evicting the least-recently-used
-        one when at the RAM cap), then it's a pure show/hide. show_busy pops a brief "Opening..."
-        indicator while a build happens (a cache miss on a user click) - not for cache hits
-        (instant) or the load-time popup, which _build_session drives itself."""
+        """Fully load and show file[index]. Exactly one file is loaded at a time: this builds the
+        clicked file's whole editor (textures + expanded animation + all tabs + the 3D viewer) and
+        tears the previously-shown one down (freeing its 3D GL context + animation). If the file
+        being left has unsaved edits, the user is asked to save / discard / cancel first. show_busy
+        pops a brief "Opening..." indicator while the (always non-trivial) build runs."""
         if index < 0 or index >= len(self._files):
             return
-        self._active_index = index                 # set before building so it's never evicted
-        if show_busy and self._files[index]['pane'] is None:
-            f = self._files[index]
+        if index == self._active_index and self._files[index]['pane'] is not None:
+            return                                     # already the shown file
+        if not self._confirm_leave_current():          # unsaved-edits guard -> keep list on current
+            self._file_list.blockSignals(True)
+            self._file_list.setCurrentRow(self._active_index)
+            self._file_list.blockSignals(False)
+            return
+        self._destroy_current_pane()                   # only ever one pane alive
+        self._active_index = index
+        f = self._files[index]
+        if show_busy:
             name = f['name'] or os.path.basename(f['path'])
             busy = QProgressDialog(f"Opening {name}...", None, 0, 0, self)   # 0..0 = busy spinner
             busy.setWindowTitle("Opening")
@@ -705,46 +693,91 @@ class IfritMonsterWidget(QWidget):
             busy.show()
             QApplication.processEvents()
             try:
-                self._ensure_pane(index)
+                self._build_pane(index)
             finally:
                 busy.close()
         else:
-            self._ensure_pane(index)
-        f = self._files[index]
+            self._build_pane(index)
         f['pane'].show_saved_tab()
         self._stack.setCurrentWidget(f['pane'])
-        self._touch_lru(index)
         self.file_loaded = f['path']
         self._file_list.blockSignals(True)
         self._file_list.setCurrentRow(index)
         self._file_list.blockSignals(False)
 
-    # ── Pane cache (LRU, RAM-bounded) ─────────────────────────────────
+    def _confirm_leave_current(self) -> bool:
+        """Before switching away from (or reloading) the shown file, guard its unsaved edits.
+        Returns True to proceed (edits saved or discarded), False to abort the switch."""
+        if not (0 <= self._active_index < len(self._files)):
+            return True
+        f = self._files[self._active_index]
+        pane = f['pane']
+        if pane is None or not pane.dirty:
+            return True
+        name = f['name'] or os.path.basename(f['path'])
+        resp = QMessageBox.question(
+            self, "Unsaved changes",
+            f"{name} has unsaved changes.\nSave them before switching?",
+            QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard
+            | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Save)
+        if resp == QMessageBox.StandardButton.Cancel:
+            return False
+        if resp == QMessageBox.StandardButton.Save:
+            try:
+                pane.save()
+                self._refresh_list_item(self._active_index)
+                self.file_bindings_changed.emit()
+            except Exception as e:
+                QMessageBox.warning(self, "Save failed", f"Could not save {name}:\n{e}")
+                return False
+        return True
 
-    _PANE_RAM_MB = 60                      # measured ~55 MB/full pane, rounded up for headroom
+    def _destroy_current_pane(self):
+        """Tear down whichever single pane is currently built - freeing its 3D viewer + GL context
+        and reclaiming its ~30 MB expanded animation. No-op if none is built."""
+        for f in self._files:
+            pane = f.get('pane')
+            if pane is None:
+                continue
+            self._stack.removeWidget(pane)
+            self._stack_size_policies.pop(id(pane), None)   # avoid a stale entry if id() is reused
+            pane.deleteLater()
+            f['pane'] = None
+            try:
+                f['manager'].enemy.free_animation()         # drop the expanded animation
+            except Exception:
+                pass
 
-    def _pane_cap(self) -> int:
-        """How many built panes to keep alive, from the RAM budget (roughly half of it goes to
-        panes, the rest to GameData + the parsed files + OS headroom)."""
-        return max(1, int(self._ram_budget_gb * 1024 * 0.5 / self._PANE_RAM_MB))
-
-    def _ensure_pane(self, index: int):
-        """Build file[index]'s editor pane if not built, first evicting the LRU pane if at cap."""
+    def _build_pane(self, index: int):
+        """Fully load file[index]: extract its textures (VincentTim), expand its animation, and
+        build its editor pane (all tabs + the 3D viewer). This is the one heavy step, paid only
+        for the file the user actually opens."""
         f = self._files[index]
-        if f['pane'] is not None:
-            return
-        self._evict_if_needed(keep=index)
-        pane = IfritFilePane(f['manager'], f['path'], self.settings, self.icon_path,
+        manager = f['manager']
+        enemy = manager.enemy
+        # Real textures now - skipped at open time to keep loading light. Blank placeholder files
+        # (0-byte slots) have nothing to extract; they keep their empty texture set.
+        if not f.get('blank') and enemy.entity_type != EntityType.MONSTER_NO_MODEL:
+            try:
+                textures = manager.extract_textures(enemy, f['path'])
+                manager.set_active_enemy(enemy, f['path'], textures=textures)
+            except Exception as e:
+                print(f"[texture] {f['path']}: {e}")
+        # Expand the animation before the pane's 3D view poses it (bone matrices must be ready,
+        # incl. for a character's weapon overlay which reads the body's matrices).
+        try:
+            enemy.ensure_animation_expanded()
+        except Exception:
+            pass
+        pane = IfritFilePane(manager, f['path'], self.settings, self.icon_path,
                              weapon_provider=self._weapon_options_for)
         pane.dirty_changed.connect(lambda entry=f: self._on_pane_dirty(entry))
         f['pane'] = pane
         self._stack.addWidget(pane)
-        # Adding a widget doesn't make it current (no currentChanged fires), so without this the
-        # new pane's own minimumSizeHint would count toward the stack's max until it's activated -
-        # exactly the floor _shrink_stack_to_current exists to avoid, worst during pre-build when
-        # many panes get added well before any of them becomes the active one.
+        # Adding a widget doesn't make it current (no currentChanged fires), so keep the stack's
+        # min-size floored to the shown page (see _shrink_stack_to_current).
         _shrink_stack_to_current(self._stack, self._stack_size_policies)
-        self._pane_lru.append(index)               # newest at the end
 
     def _weapon_options_for(self, body_path):
         """Weapon-selector options for a character body pane: every WEAPON model loaded in the
@@ -759,8 +792,11 @@ class IfritMonsterWidget(QWidget):
         for f in self._files:
             if not IfritManager.is_weapon_file(f['path']):
                 continue
-            if f['manager'].enemy.entity_type != EntityType.WEAPON:
-                continue                               # skip reduced/no-model weapon files
+            # WEAPON = full model with its own skeleton/animation; WEAPON_NO_ANIM = the reduced
+            # form (Zell's gloves, Kiros's katals) whose mesh is skinned to the BODY's bones and
+            # posed by the body's animation (see Ifrit3DWidget._current_weapon_verts).
+            if f['manager'].enemy.entity_type not in (EntityType.WEAPON, EntityType.WEAPON_NO_ANIM):
+                continue
             matches = (IfritManager.character_slot_of(f['path']) == slot)
             weapons.append((os.path.basename(f['path']), f['manager'], matches))
         if not weapons:
@@ -773,140 +809,6 @@ class IfritMonsterWidget(QWidget):
             if matches and default_index == 0:
                 default_index = i + 1                  # +1 for the leading "None" entry
         return options, default_index
-
-    def _touch_lru(self, index: int):
-        if index in self._pane_lru:
-            self._pane_lru.remove(index)
-        self._pane_lru.append(index)               # most-recently-used at the end
-
-    def _evict_if_needed(self, keep: int):
-        """Tear down least-recently-used panes while at/over the cap, never the active/kept one or
-        a pane with unsaved edits."""
-        cap = self._pane_cap()
-        while len(self._pane_lru) >= cap:
-            victim = next((i for i in self._pane_lru
-                           if i != keep and i != self._active_index
-                           and self._files[i]['pane'] is not None
-                           and not self._files[i]['pane'].dirty), None)
-            if victim is None:
-                return                              # all remaining are active/dirty: allow over cap
-            self._evict_pane(victim)
-
-    def _evict_pane(self, index: int):
-        f = self._files[index]
-        pane = f['pane']
-        if pane is None:
-            return
-        self._stack.removeWidget(pane)
-        self._stack_size_policies.pop(id(pane), None)   # avoid a stale entry if id() is reused
-        pane.deleteLater()
-        f['pane'] = None
-        if index in self._pane_lru:
-            self._pane_lru.remove(index)
-        # Reclaim the re-expanded animation (safe: an evicted pane is clean, and re-expansion from
-        # the raw bytes is byte-identical - see MonsterAnalyser.ensure_animation_expanded).
-        try:
-            f['manager'].enemy.free_animation()
-        except Exception:
-            pass
-
-    # ── Pre-build ─────────────────────────────────────────────────────
-
-    def _prebuild_panes(self, progress):
-        """Build every file's editor pane up front, up to the cap, so clicking any loaded monster
-        is instant. Done synchronously behind the load progress bar (a background timer is starved
-        by the active 3D viewer's playback, so panes never actually pre-built). Cancellable - any
-        not built here just build on demand (with an 'Opening...' popup) when first clicked."""
-        unbuilt = [i for i in range(len(self._files)) if self._files[i]['pane'] is None]
-        room = max(0, self._pane_cap() - len(self._pane_lru))
-        # If the RAM budget can hold every opened file (they all fit within the cap), pre-load ALL
-        # of them; otherwise fill the cache up to the cap and leave the rest to build on demand.
-        to_build = unbuilt if len(unbuilt) <= room else unbuilt[:room]
-        if not to_build:
-            return
-        progress.setRange(0, len(to_build))
-        for done, index in enumerate(to_build):
-            if progress.wasCanceled():
-                break
-            progress.setValue(done)
-            name = self._files[index]['name'] or os.path.basename(self._files[index]['path'])
-            progress.setLabelText(f"Pre-loading editors for instant switching...\n"
-                                  f"{name}  ({done + 1}/{len(to_build)})")
-            QApplication.processEvents()
-            try:
-                self._ensure_pane(index)
-            except Exception as e:
-                print(f"[prebuild] {index} failed: {e}")
-        progress.setValue(len(to_build))            # reach max -> dialog dismisses
-
-    def _on_ram_budget_changed(self, value):
-        """Live-adjust the RAM budget from the toolbar spinbox (persisted like the load-time
-        dialog). If the new budget can hold every currently loaded file, pre-load whichever
-        aren't built yet right away, instead of waiting for the user to click through them."""
-        self._ram_budget_gb = value
-        self.settings.setValue("ifrit/ram_budget_gb", value)
-        if not self._files:
-            return
-        unbuilt = [i for i in range(len(self._files)) if self._files[i]['pane'] is None]
-        if not unbuilt or self._pane_cap() < len(self._files):
-            return
-        progress = QProgressDialog("Loading editors into memory...", "Cancel", 0, len(unbuilt), self)
-        progress.setWindowTitle("RAM budget")
-        progress.setWindowModality(Qt.WindowModality.WindowModal)
-        progress.setMinimumDuration(0)
-        progress.setAutoClose(False)
-        progress.setAutoReset(False)
-        progress.setValue(0)
-        QApplication.processEvents()
-        self._prebuild_panes(progress)
-        progress.close()
-
-    def _budget_gb_for(self, num_panes: int) -> int:
-        """Smallest whole-GB RAM budget whose cap keeps num_panes editors loaded at once."""
-        need_mb = num_panes * self._PANE_RAM_MB / 0.5          # 0.5 = fraction of budget for panes
-        return max(1, min(256, -(-int(need_mb) // 1024)))      # ceil to GB, clamp to the spin range
-
-    def _ask_ram_budget(self, num_files: int = 1) -> bool:
-        """Ask how much RAM to spend keeping editors loaded (shown when opening more files than the
-        current budget can hold). Defaults to a budget that keeps ALL the opened files loaded, so
-        accepting it pre-loads them all. Returns False if the user cancels the whole load."""
-        fit_all_gb = self._budget_gb_for(num_files)
-        dlg = QDialog(self)
-        dlg.setWindowTitle("Load files")
-        lay = QVBoxLayout(dlg)
-        lay.addWidget(QLabel(
-            f"Opening {num_files} monsters. Editors are pre-loaded so switching between them is\n"
-            f"instant; each uses ~{self._PANE_RAM_MB} MB of RAM (plus its 3D model in GPU memory).\n"
-            f"About {fit_all_gb} GB keeps ALL {num_files} loaded. A smaller budget keeps the most-recent\n"
-            f"ones loaded and rebuilds the rest instantly when you click them."))
-        row = QHBoxLayout()
-        row.addWidget(QLabel("RAM budget:"))
-        spin = QSpinBox()
-        spin.setRange(1, 256)
-        spin.setSuffix(" GB")
-        spin.setValue(max(self._ram_budget_gb, fit_all_gb))   # default to keeping them all loaded
-        row.addWidget(spin)
-        row.addStretch()
-        lay.addLayout(row)
-        cap_label = QLabel()
-        lay.addWidget(cap_label)
-        upd = lambda v: cap_label.setText(
-            f"→ up to ~{max(1, int(v * 1024 * 0.5 / self._PANE_RAM_MB))} of {num_files} monsters kept loaded at once.")
-        spin.valueChanged.connect(upd)
-        upd(spin.value())
-        bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        bb.accepted.connect(dlg.accept)
-        bb.rejected.connect(dlg.reject)
-        lay.addWidget(bb)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
-            return False
-        self._ram_budget_gb = spin.value()
-        self.settings.setValue("ifrit/ram_budget_gb", self._ram_budget_gb)
-        if hasattr(self, '_ram_budget_spin'):
-            self._ram_budget_spin.blockSignals(True)
-            self._ram_budget_spin.setValue(self._ram_budget_gb)
-            self._ram_budget_spin.blockSignals(False)
-        return True
 
     def _on_pane_dirty(self, entry):
         if entry in self._files:
@@ -948,33 +850,72 @@ class IfritMonsterWidget(QWidget):
         self.settings.setValue("ifrit/cronos_checkbox", state)
         self._reload_active()
 
+    # ── Reload from disk (shared toolbar button) ──────────────────────
+
+    def _reload_from_disk(self):
+        """Shared-toolbar Reload (registry.reload_all): re-read EVERY loaded file from disk and
+        rebuild. Ifrit has no per-file FileBinding, so it handles the registry signal itself.
+        Drops uncommitted edits - that is what 'reload from disk' means."""
+        if not self._files:
+            return
+        keep = self._active_index if 0 <= self._active_index < len(self._files) else 0
+        progress = QProgressDialog("Reloading files from disk...", None, 0, len(self._files), self)
+        progress.setWindowTitle("Reload")
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(0)
+        progress.setAutoClose(False)
+        progress.setAutoReset(False)
+        progress.setValue(0)
+        QApplication.processEvents()
+        self._destroy_current_pane()           # drop the shown pane; it rebuilds from fresh data
+        for i, f in enumerate(self._files):
+            progress.setValue(i)
+            progress.setLabelText(f"{os.path.basename(f['path'])}  ({i + 1}/{len(self._files)})")
+            QApplication.processEvents()
+            try:
+                if os.path.getsize(f['path']) == 0:       # 0-byte placeholder -> re-open as blank
+                    enemy = f['manager'].create_blank_enemy(f['path'])
+                    if enemy is None:
+                        continue
+                    f['manager'].set_active_enemy(enemy, f['path'], textures=([], True))
+                    f['name'] = 'empty'
+                    continue
+                # Lean re-parse (name for the list); textures + animation re-load when shown.
+                enemy = f['manager'].parse_file(f['path'], free_animation=True)
+                f['manager'].set_active_enemy(enemy, f['path'], textures=([], True))
+            except Exception as e:
+                print(f"[reload] Could not reparse {f['path']}: {e}")
+                continue
+            try:
+                f['name'] = enemy.info_stat_data['monster_name'].get_str().strip('\x00')
+            except Exception:
+                f['name'] = ""
+        self._active_index = -1
+        self._populate_file_list()
+        progress.close()
+        self._activate_index(keep, show_busy=True)
+
     # ── Reload (Cronos toggle, after fps batch) ───────────────────────
 
     def _reload_active(self):
         """Re-parse the active file from disk and rebuild its pane (drops uncommitted edits)."""
         if self._active_index < 0:
             return
-        f = self._files[self._active_index]
+        index = self._active_index
+        f = self._files[index]
         manager = f['manager']
         try:
-            enemy = manager.parse_file(f['path'])
+            enemy = manager.parse_file(f['path'], free_animation=True)
         except Exception as e:
             print(f"[reload] Could not reparse {f['path']}: {e}")
             return
-        textures = (None if enemy.entity_type == EntityType.MONSTER_NO_MODEL
-                    else manager.extract_textures(enemy, f['path']))
-        manager.set_active_enemy(enemy, f['path'], textures=textures)
-        old = f['pane']
-        if old is not None:
-            self._stack.removeWidget(old)
-            self._stack_size_policies.pop(id(old), None)   # avoid a stale entry if id() is reused
-            old.deleteLater()
-        f['pane'] = None
+        # Lean bind now; textures + animation reload when _build_pane runs below.
+        manager.set_active_enemy(enemy, f['path'], textures=([], True))
         try:
             f['name'] = enemy.info_stat_data['monster_name'].get_str().strip('\x00')
         except Exception:
             pass
-        index = self._active_index
+        self._destroy_current_pane()
         self._active_index = -1               # force _activate_index to rebuild + show
         self._activate_index(index, show_busy=True)
         self._refresh_list_item(index)

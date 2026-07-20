@@ -73,6 +73,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # --- NEW: UV / texture state ---
         self.triangles_uv = []   # list of (indices_tuple, uvs_tuple, raw_tex_id, depth_bias)
         self.quads_uv = []       # list of (indices_tuple, uvs_tuple, raw_tex_id, depth_bias)
+        # Backface-cull acceleration: face topology cached on set_*_with_uv, the per-frame cull
+        # mask recomputed once per paint (see _build_cull_topology / _recompute_cull_masks).
+        self._tri_idx3 = self._tri_mult = self._quad_idx3 = self._quad_mult = None
+        self._tri_cull_mask = self._quad_cull_mask = None
         # Colored (untextured) primitives — battle stages and magic models
         self.colored_triangles = []  # list of (indices_tuple, rgb_tuple, depth_bias)
         self.colored_quads = []      # list of (indices_tuple, rgb_tuple, depth_bias)
@@ -220,10 +224,64 @@ class FF8OpenGLWidget(QOpenGLWidget):
     def set_triangles_with_uv(self, data: list):
         """data: list of (indices_tuple, uvs_tuple, raw_tex_id, depth_bias)"""
         self.triangles_uv = data
+        self._tri_idx3, self._tri_mult = self._build_cull_topology(data, 3)
 
     def set_quads_with_uv(self, data: list):
         """data: list of (indices_tuple, uvs_tuple, raw_tex_id, depth_bias)"""
         self.quads_uv = data
+        self._quad_idx3, self._quad_mult = self._build_cull_topology(data, 4)
+
+    @staticmethod
+    def _build_cull_topology(uv_list, n):
+        """Precompute the backface-cull inputs that depend only on FACE TOPOLOGY (constant while
+        an animation plays): the first-3 vertex indices of each face (enough for its normal) and
+        each face's multiplicity (how many coincident copies share the same vertex set - a
+        double-sided pair is 2). Recomputing these + a per-face numpy normal EVERY paint was the
+        3D lag: 35-45 ms/frame at ~2600 faces, pure Python, before any GL. Cached here, the paint
+        does one vectorized cross-product+dot instead (see _cull_mask_for)."""
+        import numpy as _np
+        if not uv_list:
+            return None, None
+        idx3 = _np.array([entry[0][:3] for entry in uv_list], dtype=_np.int64)
+        count = {}
+        keys = [frozenset(entry[0]) for entry in uv_list]
+        for k in keys:
+            count[k] = count.get(k, 0) + 1
+        mult = _np.array([count[k] for k in keys], dtype=_np.int64)
+        return idx3, mult
+
+    def _cull_mask_for(self, idx3, mult, mode):
+        """Vectorized backface cull: a bool array, True = drop this face this frame. Replaces the
+        per-face _should_cull_backface loop with one numpy pass (same math: normal =
+        cross(v1-v0, v2-v0); front-facing when it points away from the eye - see
+        _should_cull_backface for the sign convention)."""
+        if idx3 is None or len(idx3) == 0:
+            return None
+        n = len(idx3)
+        if mode == 'off':
+            return np.zeros(n, dtype=bool)
+        va = self.vertices_array
+        if va is None or len(va) == 0:
+            return np.zeros(n, dtype=bool)
+        v0 = va[idx3[:, 0]]
+        normal = np.cross(va[idx3[:, 1]] - v0, va[idx3[:, 2]] - v0)
+        eye = getattr(self, '_eye_model', None)
+        if eye is not None:
+            # front-facing when the wound normal points away from the eye -> cull the rest
+            back = np.einsum('ij,ij->i', normal, np.asarray(eye, dtype=np.float64) - v0) > 0.0
+        else:
+            back = normal @ np.asarray(self._view_direction_model(), dtype=np.float64) < 0.0
+        if mode == 'duplicates':
+            back &= (mult > 1)          # only cull the hidden copy of a double-sided pair
+        return back
+
+    def _recompute_cull_masks(self):
+        """Per-paint: refresh the cull masks from the current posed vertices + camera."""
+        mode = getattr(self, 'backface_cull', 'duplicates')
+        self._tri_cull_mask = self._cull_mask_for(getattr(self, '_tri_idx3', None),
+                                                  getattr(self, '_tri_mult', None), mode)
+        self._quad_cull_mask = self._cull_mask_for(getattr(self, '_quad_idx3', None),
+                                                   getattr(self, '_quad_mult', None), mode)
 
     def set_colored_triangles(self, data: list):
         """data: list of (indices_tuple, rgb_tuple, depth_bias) — flat-colored faces"""
@@ -401,6 +459,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
         except Exception:
             self._pick_modelview = None
 
+        # One vectorized backface-cull pass for the whole model (per posed frame + camera),
+        # instead of a per-face numpy normal inside each draw loop - the 3D-lag fix.
+        self._recompute_cull_masks()
+
         if self.show_axis:
             self.draw_axis()
         if self.show_texture and self._gl_textures and (self.triangles_uv or self.quads_uv):
@@ -507,14 +569,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glEnable(GL_POLYGON_OFFSET_FILL)
         glColor4f(1.0, 1.0, 1.0, 1.0)
 
-        view_dir = self._view_direction_model()
-
-        # Count exact duplicates: double-sided parts are two opposite-winding
-        # faces, only one culled per frame (see _should_cull_backface).
-        face_count = {}
-        for indices, _, _, _ in self.triangles_uv:
-            face_key = frozenset(indices)
-            face_count[face_key] = face_count.get(face_key, 0) + 1
+        # Per-face backface cull comes from the one vectorized pass in paintGL
+        # (_recompute_cull_masks); True = drop this face this frame.
+        cull = self._tri_cull_mask
 
         # Batch consecutive same-texture triangles into one glBegin/glEnd instead of one
         # per triangle: glBegin(GL_TRIANGLES) with 3N vertices draws the same N triangles,
@@ -524,10 +581,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # texture binding, only takes effect outside glBegin/glEnd.
         current_batch_key = None
         batch_open = False
-        for indices, uvs, raw_id, depth_bias in self.triangles_uv:
-            verts = [self.vertices_array[idx] for idx in indices]
-            if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
+        for i, (indices, uvs, raw_id, depth_bias) in enumerate(self.triangles_uv):
+            if cull is not None and cull[i]:
                 continue
+            verts = [self.vertices_array[idx] for idx in indices]
             batch_key = (raw_id, depth_bias)
             if batch_key != current_batch_key:
                 if batch_open:
@@ -629,22 +686,17 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glEnable(GL_POLYGON_OFFSET_FILL)
         glColor4f(1.0, 1.0, 1.0, 1.0)
 
-        view_dir = self._view_direction_model()
-
-        face_count = {}
-        for indices, _, _, _ in self.quads_uv:
-            face_key = frozenset(indices)
-            face_count[face_key] = face_count.get(face_key, 0) + 1
+        cull = self._quad_cull_mask
 
         # Batch consecutive same-texture quads (each as two triangles) into one glBegin/
         # glEnd, same as the triangle path above. depth_bias joins the batch key (see
         # _draw_textured_triangles).
         current_batch_key = None
         batch_open = False
-        for indices, uvs, raw_id, depth_bias in self.quads_uv:
-            verts = [self.vertices_array[idx] for idx in indices]
-            if self._should_cull_backface(verts, face_count[frozenset(indices)], view_dir):
+        for i, (indices, uvs, raw_id, depth_bias) in enumerate(self.quads_uv):
+            if cull is not None and cull[i]:
                 continue
+            verts = [self.vertices_array[idx] for idx in indices]
             batch_key = (raw_id, depth_bias)
             if batch_key != current_batch_key:
                 if batch_open:
@@ -1225,8 +1277,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
                     and 0 <= self.selected_bone < len(self.skeleton_lines)):
                 self._start_length_drag(pos.x(), pos.y())
                 return
-            # Grab a rotation ring of the gizmo
-            if self.show_skeleton and self.is_edit_allowed():
+            # Grab a rotation ring of the gizmo (only when it's actually shown - a hidden gizmo
+            # must be inert, not an invisible click target that still rotates the bone)
+            if self.show_gizmo and self.show_skeleton and self.is_edit_allowed():
                 axis_index = self._pick_gizmo_axis(pos.x(), pos.y())
                 if axis_index >= 0:
                     self._start_rotation_drag(axis_index, pos.x(), pos.y())

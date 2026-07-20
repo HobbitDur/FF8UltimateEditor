@@ -1,3 +1,4 @@
+import gc
 import pathlib
 
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal
@@ -7,6 +8,45 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QListWidgetItem, QInputDialog, QMessageBox,
                              QFileDialog, QComboBox, QToolButton, QMenu, QToolBar,
                              QSizePolicy, QDialog, QDialogButtonBox, QFormLayout)
+
+
+class _PlaybackTimer(QTimer):
+    """A QTimer that suspends Python's cyclic garbage collector while it is running.
+
+    Animation playback allocates a little per frame. Automatic GC pauses scale with the TOTAL
+    live-object count across EVERY loaded file, not just the active one - so opening many files
+    makes gen1/gen2 collections stutter the 3D player even though the active file's per-frame work
+    is unchanged (measured: worst-frame time 3 ms at 2 files -> 33 ms at 16 files, mean flat). This
+    is the "flawless with two files, unbearable with many" lag. Pausing GC for the duration of
+    playback removes those pauses entirely; a single collect() when playback stops reclaims the
+    playback garbage. Ref-counted on each timer's real active state so nested/among-viewers
+    start/stop (and harmless double start()s) balance correctly, and it only re-enables GC if it
+    was the one that disabled it (never fights external gc.disable())."""
+    _running = 0
+    _we_disabled = False
+
+    def start(self, *args):
+        if not self.isActive():
+            _PlaybackTimer._running += 1
+            _PlaybackTimer._sync()
+        super().start(*args)
+
+    def stop(self):
+        if self.isActive():
+            _PlaybackTimer._running -= 1
+        super().stop()
+        _PlaybackTimer._sync()
+
+    @classmethod
+    def _sync(cls):
+        if cls._running > 0:
+            if gc.isenabled():
+                gc.disable()
+                cls._we_disabled = True
+        elif cls._we_disabled:
+            cls._we_disabled = False
+            gc.enable()
+            gc.collect()
 
 
 class _HoverMenuButton(QToolButton):
@@ -19,7 +59,7 @@ class _HoverMenuButton(QToolButton):
         if menu is not None and not menu.isVisible():
             self.showMenu()
 
-from FF8GameData.monsterdata import AnimationFrame, AnimationSection, Animation
+from FF8GameData.monsterdata import AnimationFrame, AnimationSection, Animation, EntityType
 from FF8GameData.dat.animloopdetector import (is_looping, analyse_animation_usage,
                                               find_character_weapon_file_list,
                                               get_animation_usage_from_weapon_file,
@@ -76,12 +116,9 @@ class Ifrit3DWidget(QWidget):
         self._weapon_manager = None      # sibling IfritManager whose enemy is the weapon, or None
         self._weapon_options = []        # [(label, manager_or_None)] shown in the Weapon selector
         self._body_vertex_count = 0      # #verts in the body mesh; weapon indices start here
-        # The weapon has no in-file link to the hand: posed alone it sits at the character's root
-        # (see CompositeCharacterWeaponAnimation - attach_transform is identity, weapon bones at
-        # origin). So the weapon is translated to a chosen BODY bone each frame; -1 = no attach
-        # (weapon at root). The correct bone is the weapon-holding hand, per character, picked by
-        # the user in the "Hand bone" spin.
-        self._weapon_attach_bone = -1
+        # Weapon placement is automatic: the weapon's own animation carries a per-frame root
+        # position that traces the hand (the game applies each model's own root - see
+        # _current_weapon_verts), so no user-picked attach bone is needed.
 
         # Playlist variables
         self.playlist = []  # List of animation IDs in order
@@ -94,22 +131,24 @@ class Ifrit3DWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
+        self._main_layout = layout       # for release/restore of the GL surface (see below)
+        self._gl_layout_index = None      # where the GL widget sits in the vbox (set after addWidget)
 
-        # Create OpenGL widget
+        # Create OpenGL widget. It is destroyable and rebuildable (release_gl_widget /
+        # restore_gl_widget) so only the ACTIVE file's viewer keeps a live OpenGL context: the
+        # graphics driver slows every viewer down as live contexts pile up, so the multi-file
+        # shell releases a pane's GL surface when it's switched away from.
         self.gl_widget = FF8OpenGLWidget(self)
-        # Managers providing real texture alpha (Seed) disable black keying
-        self.gl_widget.black_is_transparent = getattr(ifrit_manager, 'texture_black_is_transparent', True)
-        # Backface culling: 'all' = game-exact (default), 'duplicates', 'off'
-        self.gl_widget.backface_cull = getattr(ifrit_manager, 'backface_cull_mode', 'all')
-        # Direct skeleton edits in the view are blocked during playback
-        self.gl_widget.is_edit_allowed = lambda: not self.animating
+        self._configure_gl_widget()
         self._length_drag_start_size = None
         self._length_drag_sign = -1.0
         self._rot_drag_start_deg = None
         self._rot_drag_start_raw = None
 
-        # Setup animation timer
-        self.timer = QTimer()
+        # Setup animation timer. _PlaybackTimer pauses Python's GC while playing so gen1/gen2
+        # collection pauses (which scale with the total objects of ALL loaded files) don't stutter
+        # the 3D player - this is the many-files-open playback lag.
+        self.timer = _PlaybackTimer()
         self.timer.timeout.connect(self.next_frame)
 
         if show_controls:
@@ -258,6 +297,11 @@ class Ifrit3DWidget(QWidget):
                                     "of the list.")
             act_dup_anim.triggered.connect(self._duplicate_current_animation)
             self._anim_tools_menu.addAction(act_dup_anim)
+            act_del_anim = QAction("Delete current animation", self)
+            act_del_anim.setToolTip("Remove the whole animation currently shown (keeps at least\n"
+                                    "one). Note: later animation ids shift down by one.")
+            act_del_anim.triggered.connect(self._delete_current_animation)
+            self._anim_tools_menu.addAction(act_del_anim)
 
             self.anim_tools_btn = QToolButton()
             self.anim_tools_btn.setText("Frames ▾")
@@ -272,36 +316,22 @@ class Ifrit3DWidget(QWidget):
             # Weapon overlay selector - populated (and shown) only for character bodies via
             # set_weapon_options(); hidden for monsters/weapons. Lets the user pick which loaded
             # weapon model to display in the character's hand, or none.
+            # NOTE: this toolbar is a QToolBar - addWidget() wraps each widget in a QAction, and
+            # the TOOLBAR's layout obeys the ACTION's visibility, not the widget's. Calling
+            # widget.setVisible(True) later is silently overridden, so the show/hide of the
+            # weapon controls must go through these actions (set_weapon_options).
             self.weapon_label = QLabel("Weapon:")
             self.weapon_label.setStyleSheet("color:white; padding:4px 4px;")
-            self.weapon_label.setVisible(False)
-            toolbar_layout.addWidget(self.weapon_label)
+            self._weapon_label_action = toolbar_layout.addWidget(self.weapon_label)
+            self._weapon_label_action.setVisible(False)
             self.weapon_selector = QComboBox()
             self.weapon_selector.setStyleSheet("color:white; background:#333; padding:2px;")
             self.weapon_selector.setToolTip("Show a weapon model in the character's hand, played on\n"
                                             "the same animation. Lists the weapon files loaded in the\n"
                                             "session; defaults to this character's first weapon.")
-            self.weapon_selector.setVisible(False)
             self.weapon_selector.currentIndexChanged.connect(self._on_weapon_selected)
-            toolbar_layout.addWidget(self.weapon_selector)
-
-            # Which BODY bone the weapon is pinned to (the weapon-holding hand). Not stored in the
-            # file, so it's user-picked; shown only while a weapon is displayed. -1 = weapon at the
-            # character root (unattached).
-            self.weapon_bone_label = QLabel("Hand bone:")
-            self.weapon_bone_label.setStyleSheet("color:white; padding:4px 4px;")
-            self.weapon_bone_label.setVisible(False)
-            toolbar_layout.addWidget(self.weapon_bone_label)
-            self.weapon_bone_selector = QSpinBox()
-            self.weapon_bone_selector.setMinimum(-1)
-            self.weapon_bone_selector.setStyleSheet("color:white; background:#333; padding:2px;")
-            self.weapon_bone_selector.setToolTip(
-                "Body bone the weapon is held by. The weapon isn't linked to the hand in the file,\n"
-                "so pick the bone that puts it in the character's grip (-1 = character root). Try\n"
-                "the arm/hand bones; enable 'Skeleton' to see bone positions.")
-            self.weapon_bone_selector.setVisible(False)
-            self.weapon_bone_selector.valueChanged.connect(self._on_weapon_bone_changed)
-            toolbar_layout.addWidget(self.weapon_bone_selector)
+            self._weapon_selector_action = toolbar_layout.addWidget(self.weapon_selector)
+            self._weapon_selector_action.setVisible(False)
 
             self.export_gltf_btn = QPushButton("Export glTF")
             self.export_gltf_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
@@ -344,7 +374,8 @@ class Ifrit3DWidget(QWidget):
             # Right side controls
             reset_btn = QPushButton("Reset View")
             reset_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
-            reset_btn.clicked.connect(self.gl_widget.reset_view)
+            # via lambda, not the bound method, so it follows a rebuilt gl_widget (release/restore)
+            reset_btn.clicked.connect(lambda: self.gl_widget.reset_view())
             toolbar_layout.addWidget(reset_btn)
 
             # The toolbar has grown a lot of controls (texture/wireframe/skeleton toggles, FPS +
@@ -361,6 +392,7 @@ class Ifrit3DWidget(QWidget):
 
             # Add the OpenGL widget (this is the 3D view!)
             layout.addWidget(self.gl_widget, 1)  # The 1 makes it stretch to fill available space
+            self._gl_layout_index = layout.indexOf(self.gl_widget)
 
             # Collapsible Playlist Section
             self.playlist_container = QWidget()
@@ -385,11 +417,7 @@ class Ifrit3DWidget(QWidget):
             self.animation_changed.connect(self._update_bone_editor_animation)
 
             # Direct manipulation in the 3D view
-            self.gl_widget.bone_picked.connect(self._on_bone_picked_in_view)
-            self.gl_widget.bone_length_dragged.connect(self._on_bone_length_dragged)
-            self.gl_widget.bone_length_drag_finished.connect(self._on_bone_length_drag_finished)
-            self.gl_widget.bone_rotation_dragged.connect(self._on_bone_rotation_dragged)
-            self.gl_widget.bone_rotation_drag_finished.connect(self._on_bone_rotation_drag_finished)
+            self._connect_gl_signals()
 
             # B = add a child bone to the selected joint (works with focus
             # anywhere in the 3D tab, only while the skeleton is displayed)
@@ -661,8 +689,57 @@ class Ifrit3DWidget(QWidget):
             self.loop_quick_cb.setChecked(checked)
             self.loop_quick_cb.blockSignals(False)
 
+    # ── GL surface lifecycle (only the active file's viewer keeps a live context) ──
+    def _configure_gl_widget(self):
+        """Apply the per-manager settings to self.gl_widget. Run on creation and on rebuild."""
+        gl = self.gl_widget
+        # Managers providing real texture alpha (Seed) disable black keying
+        gl.black_is_transparent = getattr(self.ifrit_manager, 'texture_black_is_transparent', True)
+        # Backface culling: 'all' = game-exact (default), 'duplicates', 'off'
+        gl.backface_cull = getattr(self.ifrit_manager, 'backface_cull_mode', 'all')
+        # Direct skeleton edits in the view are blocked during playback
+        gl.is_edit_allowed = lambda: not self.animating
+
+    def _connect_gl_signals(self):
+        """Wire the GL widget's direct-manipulation signals to this widget's handlers. Run on
+        creation and on rebuild (a rebuilt gl_widget needs its signals reconnected)."""
+        self.gl_widget.bone_picked.connect(self._on_bone_picked_in_view)
+        self.gl_widget.bone_length_dragged.connect(self._on_bone_length_dragged)
+        self.gl_widget.bone_length_drag_finished.connect(self._on_bone_length_drag_finished)
+        self.gl_widget.bone_rotation_dragged.connect(self._on_bone_rotation_dragged)
+        self.gl_widget.bone_rotation_drag_finished.connect(self._on_bone_rotation_drag_finished)
+
+    def release_gl_widget(self):
+        """Destroy the OpenGL surface + its GL context, freeing the driver of one live context,
+        when this viewer's file is switched away from. All the model data lives in the manager, so
+        restore_gl_widget() rebuilds an identical view on demand. No-op if there's no controls
+        toolbar (embedded viewers) or it's already released."""
+        if self._gl_layout_index is None or getattr(self, 'gl_widget', None) is None:
+            return
+        if self.animating:
+            self.timer.stop()
+            self.animating = False
+        self._main_layout.removeWidget(self.gl_widget)
+        self.gl_widget.setParent(None)
+        self.gl_widget.deleteLater()
+        self.gl_widget = None
+
+    def restore_gl_widget(self):
+        """Rebuild the OpenGL surface after release_gl_widget() and re-push the model (its GL
+        context is created lazily by Qt when the widget is next actually shown). No-op if the
+        surface is already live."""
+        if self._gl_layout_index is None or getattr(self, 'gl_widget', None) is not None:
+            return
+        self.gl_widget = FF8OpenGLWidget(self)
+        self._configure_gl_widget()
+        self._main_layout.insertWidget(self._gl_layout_index, self.gl_widget, 1)
+        self._connect_gl_signals()
+        self.load_file()          # re-push geometry + textures from the (still-loaded) manager
+
     def next_frame(self):
         """Advance to next frame with interpolation"""
+        if self.gl_widget is None:          # surface released (this file isn't the active viewer)
+            return
         max_frames = self.get_max_frames()
 
         if max_frames > 0:
@@ -853,11 +930,35 @@ class Ifrit3DWidget(QWidget):
 
     def _current_weapon_verts(self):
         """The weapon's vertices for the current frame, posed on the SAME animation index as the
-        body (each model by its own frame count - see the composite-animation wiki). The weapon
-        clip already encodes the in-hand offset, so the same shared world transform places it."""
+        body (each model by its own frame count - see the composite-animation wiki), then
+        translated by the weapon-root minus body-root delta - the game's actual placement rule.
+
+        Verified in FF8_EN.exe (ProcessFieldEntitiesTransformation @0x508C90, root-bone case):
+        the engine sets EACH model's root bone world translation to model_scale * root_pos >> 8,
+        where root_pos is that model's OWN per-frame accumulated root position from its animation
+        stream. The weapon's clip carries a different root track than the body's: the difference
+        IS the in-hand offset (measured on d0w000: constant ~(-0.6,-0.2,1.6) during holds, arcing
+        2-5 world units through attack swings - the root literally traces the hand). The viewer
+        bakes no root into bone matrices and applies only the BODY's root globally (paintGL
+        model_translation), so the weapon must be shifted by (weapon_root - body_root) here to
+        land where the game puts it. No hand-bone attach exists in the files at all."""
         wm = self._weapon_manager
-        wm._ensure_matrices()          # re-expand the weapon anim (freed on multi-file load)
         en = wm.enemy
+        if en.entity_type == EntityType.WEAPON_NO_ANIM:
+            # Reduced weapon (Zell's gloves, Kiros's katals): no skeleton/animation of its own -
+            # the mesh is skinned directly to the CHARACTER BODY's bones (one glove/blade per
+            # hand, e.g. Zell verts bound to body bones 21/22), so it is posed by the BODY's
+            # matrices at the body's frame and needs no root delta. "Two weapons, one per hand,
+            # no independent movement" - by design.
+            max_frames = self.get_max_frames()
+            if max_frames == 0:
+                return en.geometry_data.get_vertices()
+            next_frame = (self.current_frame + 1) % max_frames
+            return self.ifrit_manager.get_animated_vertices(
+                anim_id=self.current_anim_id, frame_id=self.current_frame,
+                next_frame_id=next_frame, step=self.interp_step,
+                geometry=en.geometry_data)
+        wm._ensure_matrices()          # re-expand the weapon anim (freed on multi-file load)
         if not en.animation_data.nb_animations:
             return en.geometry_data.get_vertices()
         wanim = self.current_anim_id if self.current_anim_id < en.animation_data.nb_animations else 0
@@ -868,26 +969,56 @@ class Ifrit3DWidget(QWidget):
         wnext = (wframe + 1) % wmax
         verts = wm.get_animated_vertices(anim_id=wanim, frame_id=wframe,
                                          next_frame_id=wnext, step=self.interp_step)
-        return self._attach_to_hand(verts)
+        wroot = self._frame_root(wm, wanim, wframe, wnext, self.interp_step)
+        broot = self._body_root_now()
+        # Root-position units are NOT vertex units: get_pos_world() is raw/204.8 while the posed
+        # vertices/bone matrices live in raw/128, and the two spaces mirror Z. So the delta maps
+        # into vertex space as (x, y, -z) * (204.8/128 = 1.6). Calibrated empirically, not
+        # guessed: sweeping (axis mapping x scale) over full attack swings of Squall/Seifer/
+        # Irvine (model_scale 175/188/176), this mapping - and only this one - pins a weapon grip
+        # vertex to the body's hand bone with a constant offset (std 0.004-0.005 world units over
+        # 5-unit swing arcs, all three characters, best k = 1.60 exactly for each). k is
+        # model_scale-independent.
+        s = self._ROOT_DELTA_TO_VERTEX_SCALE
+        dx = s * (wroot[0] - broot[0])
+        dy = s * (wroot[1] - broot[1])
+        dz = -s * (wroot[2] - broot[2])
+        return [(x + dx, y + dy, z + dz) for (x, y, z) in verts]
 
-    def _attach_to_hand(self, weapon_verts):
-        """Translate the posed weapon so its root sits on the chosen body hand bone (the weapon
-        carries no in-file hand link - see _weapon_attach_bone). The weapon keeps its own
-        orientation; only the bone's world POSITION for this frame is added. -1 = leave at root."""
-        bi = self._weapon_attach_bone
-        if bi is None or bi < 0:
-            return weapon_verts
-        mats = self.ifrit_manager._get_bone_matrices(self.current_anim_id, self.current_frame)
-        if not mats or bi >= len(mats) or mats[bi] is None:
-            return weapon_verts
-        m = mats[bi]
-        ox, oy, oz = m.M41, m.M42, m.M43
-        return [(x + ox, y + oy, z + oz) for (x, y, z) in weapon_verts]
+    # get_pos_world (raw/204.8) -> vertex/bone-matrix units (raw/128): 204.8/128, exact.
+    _ROOT_DELTA_TO_VERTEX_SCALE = 1.6
 
-    def _on_weapon_bone_changed(self, value):
-        self._weapon_attach_bone = value
-        self.update_animated_mesh()
-        self.update_skeleton()
+    @staticmethod
+    def _frame_root(manager, anim_id, frame_id, next_frame_id=None, step=0.0):
+        """A model's per-frame root position (world units, same convention set_model_translation
+        uses), interpolated between frame and next like the vertices are."""
+        ad = manager.enemy.animation_data
+        if not ad.nb_animations or anim_id >= len(ad.animations):
+            return (0.0, 0.0, 0.0)
+        frames = ad.animations[anim_id].frames
+        if not frames:
+            return (0.0, 0.0, 0.0)
+
+        def root_of(fid):
+            fr = frames[min(fid, len(frames) - 1)]
+            if len(fr.position) >= 3:
+                return [fr.position[i].get_pos_world() for i in range(3)]
+            return [0.0, 0.0, 0.0]
+
+        pos = root_of(frame_id)
+        if next_frame_id is not None and step:
+            nxt = root_of(next_frame_id)
+            pos = [a * (1.0 - step) + b * step for a, b in zip(pos, nxt)]
+        return tuple(pos)
+
+    def _body_root_now(self):
+        """The body's root for the exact frame/interp state its vertices are posed at."""
+        max_frames = self.get_max_frames()
+        if max_frames == 0:
+            return (0.0, 0.0, 0.0)
+        next_frame = (self.current_frame + 1) % max_frames
+        return self._frame_root(self.ifrit_manager, self.current_anim_id, self.current_frame,
+                                next_frame, self.interp_step)
 
     def set_weapon_options(self, options, default_index=0):
         """Populate (and show) the Weapon selector for a character body. `options` is a list of
@@ -904,8 +1035,10 @@ class Ifrit3DWidget(QWidget):
         for label, _ in self._weapon_options:
             self.weapon_selector.addItem(label)
         show = len(self._weapon_options) > 1
-        self.weapon_label.setVisible(show)
-        self.weapon_selector.setVisible(show)
+        # QToolBar-managed widgets show/hide through their wrapping QAction (see the toolbar
+        # build) - setting the widget's own visibility does nothing there.
+        self._weapon_label_action.setVisible(show)
+        self._weapon_selector_action.setVisible(show)
         idx = default_index if 0 <= default_index < len(self._weapon_options) else 0
         self.weapon_selector.setCurrentIndex(idx)
         self.weapon_selector.blockSignals(False)
@@ -924,26 +1057,11 @@ class Ifrit3DWidget(QWidget):
         self._weapon_manager = manager
         if manager is not None:
             manager._ensure_matrices()
-        self._update_hand_bone_control()
         self._refresh_static_geometry()
         self.update_animated_mesh()
         self.update_skeleton()
         self.gl_widget.reset_view()
 
-    def _update_hand_bone_control(self):
-        """Show the Hand-bone spin only while a weapon is displayed, ranged to the body skeleton."""
-        if not hasattr(self, 'weapon_bone_selector'):
-            return
-        show = self._weapon_manager is not None
-        nb_bones = len(self.ifrit_manager.enemy.bone_data.bones) if self.ifrit_manager.enemy.bone_data else 0
-        self.weapon_bone_selector.blockSignals(True)
-        self.weapon_bone_selector.setMaximum(max(-1, nb_bones - 1))
-        if self._weapon_attach_bone > nb_bones - 1:
-            self._weapon_attach_bone = -1
-        self.weapon_bone_selector.setValue(self._weapon_attach_bone)
-        self.weapon_bone_selector.blockSignals(False)
-        self.weapon_bone_label.setVisible(show)
-        self.weapon_bone_selector.setVisible(show)
     def get_max_frames(self):
         if not self.ifrit_manager.enemy.animation_data.nb_animations:
             return 0
@@ -1016,7 +1134,7 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget.set_model_translation(pos_x, pos_y, pos_z)
 
     def update_skeleton(self):
-        if not self.ifrit_manager:
+        if not self.ifrit_manager or self.gl_widget is None:
             return
         if not self.ifrit_manager.enemy.bone_data:
             self.gl_widget.set_skeleton_data([], [])
@@ -1076,6 +1194,8 @@ class Ifrit3DWidget(QWidget):
         the triangle/quad/UV index lists are constant and set by _refresh_static_geometry (on
         load and on weapon change). When a weapon is overlaid, its posed vertices are appended
         after the body's (indices in those lists already point past the body's vertex count)."""
+        if self.gl_widget is None:          # surface released (not the active viewer)
+            return
         body_verts = self._current_body_verts()
         self.current_animated_vertices = body_verts   # body only (used by gizmo/export)
         if self._weapon_manager is not None:
@@ -1776,6 +1896,38 @@ class Ifrit3DWidget(QWidget):
             self, title,
             f"Animation {src_anim_id} duplicated as animation {new_id} ({nb_frames} frames), "
             "added at the end of the list.\nSave the file to keep it.")
+
+    def _delete_current_animation(self):
+        """Delete the whole animation currently shown (the file must keep at least one)."""
+        title = "Delete animation"
+        anim = self._current_animation_or_warn(title)
+        if anim is None:
+            return
+        ad = self.ifrit_manager.enemy.animation_data
+        if ad.nb_animations <= 1:
+            QMessageBox.information(self, title, "The file must keep at least one animation.")
+            return
+        anim_id = self.current_anim_id
+        is_last = anim_id == ad.nb_animations - 1
+        warn = ("" if is_last else
+                f"\n\nWARNING: this is not the last animation. Every animation after id {anim_id} "
+                f"shifts down by one, so any battle sequence or AI that plays a higher id will then "
+                f"play a different animation. Deleting the LAST animation avoids this.")
+        if QMessageBox.question(
+                self, title,
+                f"Delete animation {anim_id} ({len(anim.frames)} frame"
+                f"{'s' if len(anim.frames) != 1 else ''})?{warn}",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+            return
+        self._pause_playback()
+        if not self.ifrit_manager.delete_animation(anim_id):
+            return
+        self._refresh_animation_count()
+        new_count = self.ifrit_manager.enemy.animation_data.nb_animations
+        # Show a still-valid neighbour: the anim that slid into this slot, or the new last one.
+        # set_animation re-ranges the frame slider and reposes to frame 0 on its own.
+        self._select_animation(min(anim_id, new_count - 1))
 
     def _select_animation(self, anim_id: int):
         """Switch the viewer to anim_id, driving the selector spin when it exists."""

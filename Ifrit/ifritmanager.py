@@ -609,10 +609,16 @@ class IfritManager:
 
         return lines, parents
 
-    def get_animated_vertices(self, anim_id: int, frame_id: int, next_frame_id: int = None, step: float = 0.0) -> List[Tuple[float, float, float]]:
+    def get_animated_vertices(self, anim_id: int, frame_id: int, next_frame_id: int = None, step: float = 0.0,
+                              geometry=None) -> List[Tuple[float, float, float]]:
         """
         Get animated vertices for current frame.
         If next_frame_id is provided, interpolate between frames using step (0.0-1.0).
+
+        `geometry` poses a DIFFERENT model's geometry with THIS enemy's bone matrices - used for
+        the reduced weapon files (WEAPON_NO_ANIM, Zell/Kiros): their mesh carries no skeleton or
+        animation of its own, its vertices are bound by bone_id directly to the CHARACTER BODY's
+        bones (e.g. Zell's gloves to hand bones 21/22), so it is posed by the body's matrices.
         """
         self._ensure_matrices()          # rebuild if this file's matrices were freed
         anim = self.enemy.animation_data.animations[anim_id]
@@ -626,7 +632,8 @@ class IfritManager:
             next_matrices = None
 
         # Get static vertices with bone assignments
-        geometry = self.enemy.geometry_data
+        if geometry is None:
+            geometry = self.enemy.geometry_data
         all_vertices = []
 
         # Process each object
@@ -1339,6 +1346,25 @@ class IfritManager:
         del anim.frames[frame_id]
         # The frame now following the gap is delta-encoded from a different predecessor.
         anim._recompute_frame_storage_types()
+        return True
+
+    def delete_animation(self, anim_id: int) -> bool:
+        """Remove animation anim_id entirely, keeping at least one animation. Returns True if a
+        removal happened.
+
+        WARNING: animations are identified by their position, so deleting one shifts every LATER
+        animation's id down by one. A bare sequence op code IS the animation id, so any sequence or
+        AI that names a higher id will then play a different animation - deleting is only
+        side-effect-free for the LAST animation. Callers warn the user before calling this.
+        """
+        self._ensure_matrices()
+        anim_section = self.enemy.animation_data
+        if anim_id < 0 or anim_id >= len(anim_section.animations):
+            return False
+        if anim_section.nb_animations <= 1:          # never drop the last one
+            return False
+        del anim_section.animations[anim_id]
+        anim_section.nb_animations -= 1              # stays == len(animations), like create/dup
         return True
 
     def _recompute_all_animation_matrices(self):
