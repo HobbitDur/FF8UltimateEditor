@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QCheckBox, QPushButton, QSlider, QSpinBox,
                              QListWidget, QListWidgetItem, QInputDialog, QMessageBox,
                              QFileDialog, QComboBox, QToolButton, QMenu, QToolBar,
-                             QSizePolicy)
+                             QSizePolicy, QDialog, QDialogButtonBox, QFormLayout)
 
 
 class _HoverMenuButton(QToolButton):
@@ -232,6 +232,42 @@ class Ifrit3DWidget(QWidget):
             self.anim_selector.setStyleSheet("color:white; background:#333; padding:2px;")
             self.anim_selector.valueChanged.connect(self.set_animation)
             toolbar_layout.addWidget(self.anim_selector)
+
+            # Frame / animation authoring tools. Grouped under one small dropdown so the
+            # already-busy toolbar gains a single button rather than four: create a new
+            # animation from a frame range of the current one, add or delete a frame.
+            self._anim_tools_menu = QMenu(self)
+            act_add_frame = QAction("Add frame after current (copy)", self)
+            act_add_frame.setToolTip("Insert a copy of the current frame right after it, ready\n"
+                                     "to be posed into the next keyframe.")
+            act_add_frame.triggered.connect(self._add_frame_after_current)
+            self._anim_tools_menu.addAction(act_add_frame)
+            act_del_frame = QAction("Delete current frame", self)
+            act_del_frame.setToolTip("Remove the frame currently shown (keeps at least one).")
+            act_del_frame.triggered.connect(self._delete_current_frame)
+            self._anim_tools_menu.addAction(act_del_frame)
+            self._anim_tools_menu.addSeparator()
+            act_new_from_range = QAction("New animation from frame range…", self)
+            act_new_from_range.setToolTip("Create a new animation (added at the end of the list)\n"
+                                          "whose frames are a copy of a chosen frame range of the\n"
+                                          "current animation.")
+            act_new_from_range.triggered.connect(self._new_animation_from_range)
+            self._anim_tools_menu.addAction(act_new_from_range)
+            act_dup_anim = QAction("Duplicate current animation", self)
+            act_dup_anim.setToolTip("Copy the whole current animation into a new one at the end\n"
+                                    "of the list.")
+            act_dup_anim.triggered.connect(self._duplicate_current_animation)
+            self._anim_tools_menu.addAction(act_dup_anim)
+
+            self.anim_tools_btn = QToolButton()
+            self.anim_tools_btn.setText("Frames ▾")
+            self.anim_tools_btn.setMenu(self._anim_tools_menu)
+            self.anim_tools_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+            self.anim_tools_btn.setToolTip("Create and edit animation frames")
+            self.anim_tools_btn.setStyleSheet(
+                "QToolButton{background:#4a6e8a; color:white; padding:4px 10px; border-radius:3px;}"
+                "QToolButton::menu-indicator{image:none;}")
+            toolbar_layout.addWidget(self.anim_tools_btn)
 
             # Weapon overlay selector - populated (and shown) only for character bodies via
             # set_weapon_options(); hidden for monsters/weapons. Lets the user pick which loaded
@@ -1592,6 +1628,164 @@ class Ifrit3DWidget(QWidget):
         report.append(f"\nThe viewer playback speed has been set to {target_fps} fps.\n"
                       "Save the file to keep the new frames.")
         QMessageBox.information(self, title, "\n".join(report))
+
+    # ── Frame / animation authoring ───────────────────────────────────
+    def _current_animation_or_warn(self, title):
+        """The Animation currently selected, or None (with a warning) if there is none."""
+        anim_section = self.ifrit_manager.enemy.animation_data
+        if not anim_section.nb_animations or self.current_anim_id >= len(anim_section.animations):
+            QMessageBox.warning(self, title, "No animation loaded.")
+            return None
+        return anim_section.animations[self.current_anim_id]
+
+    def _refresh_after_frame_count_change(self):
+        """Re-range the frame slider and repose the view after a frame was added/removed."""
+        max_frames = self.get_max_frames()
+        self.current_frame = max(0, min(self.current_frame, max_frames - 1))
+        self.next_frame_index = (self.current_frame + 1) % max_frames if max_frames else 0
+        self.interp_step = 0.0
+        if hasattr(self, 'frame_slider'):
+            self.frame_slider.setRange(0, max(0, max_frames - 1))
+        self.update_animated_mesh()
+        self.update_skeleton()
+        self.animation_changed.emit()
+
+    def _add_frame_after_current(self):
+        """Duplicate the current frame and insert the copy right after it."""
+        title = "Add frame"
+        if self._current_animation_or_warn(title) is None:
+            return
+        self._pause_playback()
+        try:
+            new_index = self.ifrit_manager.duplicate_animation_frame(
+                self.current_anim_id, self.current_frame)
+        except ValueError as e:
+            QMessageBox.warning(self, title, f"Cannot add a frame: {e}.")
+            return
+        self.current_frame = new_index
+        self._refresh_after_frame_count_change()
+
+    def _delete_current_frame(self):
+        """Remove the frame currently shown (an animation must keep at least one)."""
+        title = "Delete frame"
+        anim = self._current_animation_or_warn(title)
+        if anim is None:
+            return
+        if len(anim.frames) <= 1:
+            QMessageBox.information(self, title, "The animation must keep at least one frame.")
+            return
+        self._pause_playback()
+        if not self.ifrit_manager.delete_animation_frame(self.current_anim_id, self.current_frame):
+            return
+        self._refresh_after_frame_count_change()
+
+    def _ask_frame_range(self, title, src_anim_id, nb_frames):
+        """Modal dialog with a Start and an End spin box; returns (start, end) inclusive, or None.
+
+        End is kept >= Start (its minimum follows Start), so the pair is always a valid range;
+        Start == End copies a single frame. A live label shows the resulting frame count.
+        """
+        dialog = QDialog(self)
+        dialog.setWindowTitle(title)
+        layout = QVBoxLayout(dialog)
+
+        form = QFormLayout()
+        last = nb_frames - 1
+        start_spin = QSpinBox()
+        start_spin.setRange(0, last)
+        start_spin.setValue(0)
+        end_spin = QSpinBox()
+        end_spin.setRange(0, last)
+        end_spin.setValue(last)
+        form.addRow(f"Start frame (0..{last}):", start_spin)
+        form.addRow(f"End frame (0..{last}):", end_spin)
+        layout.addLayout(form)
+
+        count_label = QLabel()
+        layout.addWidget(count_label)
+
+        def refresh(_=None):
+            # End can never fall below Start (same value = a single frame)
+            if end_spin.value() < start_spin.value():
+                end_spin.setValue(start_spin.value())
+            end_spin.setMinimum(start_spin.value())
+            nb = end_spin.value() - start_spin.value() + 1
+            count_label.setText(f"Copies {nb} frame{'s' if nb != 1 else ''} of animation "
+                                f"{src_anim_id} into a new animation.")
+
+        start_spin.valueChanged.connect(refresh)
+        end_spin.valueChanged.connect(refresh)
+        refresh()
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                   | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        return start_spin.value(), end_spin.value()
+
+    def _new_animation_from_range(self):
+        """Create a new animation from a chosen frame range of the current one."""
+        title = "New animation from frame range"
+        anim = self._current_animation_or_warn(title)
+        if anim is None:
+            return
+        src_anim_id = self.current_anim_id
+        nb_frames = len(anim.frames)
+        frame_range = self._ask_frame_range(title, src_anim_id, nb_frames)
+        if frame_range is None:
+            return
+        start, end = frame_range
+        self._pause_playback()
+        try:
+            new_id = self.ifrit_manager.create_animation_from_frame_range(src_anim_id, start, end)
+        except ValueError as e:
+            QMessageBox.warning(self, title, f"Cannot create the animation: {e}.")
+            return
+        self._refresh_animation_count()
+        self._select_animation(new_id)
+        QMessageBox.information(
+            self, title,
+            f"Animation {new_id} created with {end - start + 1} frame(s) copied from "
+            f"animation {src_anim_id} (frames {start}–{end}).\n\n"
+            "It is added at the end of the animation list. No sequence plays it yet — point one "
+            "at it in the sequence/AI editor if you want the game to use it.\n"
+            "Save the file to keep it.")
+
+    def _duplicate_current_animation(self):
+        """Copy the whole current animation into a new one at the end of the list."""
+        title = "Duplicate animation"
+        anim = self._current_animation_or_warn(title)
+        if anim is None:
+            return
+        src_anim_id = self.current_anim_id
+        nb_frames = len(anim.frames)
+        self._pause_playback()
+        try:
+            new_id = self.ifrit_manager.create_animation_from_frame_range(
+                src_anim_id, 0, nb_frames - 1)
+        except ValueError as e:
+            QMessageBox.warning(self, title, f"Cannot duplicate: {e}.")
+            return
+        self._refresh_animation_count()
+        self._select_animation(new_id)
+        QMessageBox.information(
+            self, title,
+            f"Animation {src_anim_id} duplicated as animation {new_id} ({nb_frames} frames), "
+            "added at the end of the list.\nSave the file to keep it.")
+
+    def _select_animation(self, anim_id: int):
+        """Switch the viewer to anim_id, driving the selector spin when it exists."""
+        if hasattr(self, 'anim_selector'):
+            if self.anim_selector.value() == anim_id:
+                self.set_animation(anim_id)   # same value: no signal, switch explicitly
+            else:
+                self.anim_selector.setValue(anim_id)   # fires set_animation
+        else:
+            self.set_animation(anim_id)
 
     def _update_bone_editor_frame(self, frame):
         """Update bone editor when frame changes"""

@@ -1,4 +1,5 @@
 import atexit
+import copy
 import os
 import pathlib
 import re
@@ -16,7 +17,7 @@ from FF8GameData.dat.monsteranalyser import MonsterAnalyser
 from FF8GameData.dat.animloopdetector import analyse_animation_usage, is_looping, ANIM_UNUSED
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
                                           get_max_frame_for_animation, get_nb_part_needed,
-                                          can_split_animation)
+                                          can_split_animation, MAX_ANIMATION_ID, MAX_ANIMATION_FRAME)
 from FF8GameData.tim.timfile import decode_tim, force_opaque
 from FF8GameData.gamedata import GameData
 from FF8GameData.monsterdata import (Matrix4x4, Animation, EntityType, Bone,
@@ -1273,6 +1274,72 @@ class IfritManager:
         frame = anim.frames[frame_id]
         frame.mode_bit = 1 if enabled else 0
         self._recompute_frame_matrices(anim, frame_id, None)
+
+    # ── Frame / animation authoring ───────────────────────────────────
+    def create_animation_from_frame_range(self, src_anim_id: int, start_frame: int,
+                                          end_frame: int) -> int:
+        """Append a new animation whose frames are a copy of frames [start_frame, end_frame]
+        (inclusive) of animation src_anim_id, and return its id.
+
+        The motion is copied as-is (frames hold ABSOLUTE per-bone rotations), so the new
+        animation plays exactly the sliced portion of the source. It is added at the END of
+        the list (new id = old count), like the splitter does, so every existing id — and the
+        sequences naming them — stay valid; no sequence plays the new animation until one is
+        pointed at it. Raises ValueError if the id cap (0x7F) is reached or the range is empty.
+        """
+        self._ensure_matrices()
+        anim_section = self.enemy.animation_data
+        if src_anim_id >= len(anim_section.animations):
+            raise ValueError(f"animation {src_anim_id} does not exist")
+        # A bare sequence op code IS the animation id, so ids stop at MAX_ANIMATION_ID (0x7F):
+        # the new id is the current count, which must stay <= that cap.
+        if anim_section.nb_animations > MAX_ANIMATION_ID:
+            raise ValueError(f"the file already has the maximum of {MAX_ANIMATION_ID + 1} animations")
+        src = anim_section.animations[src_anim_id]
+        low, high = sorted((int(start_frame), int(end_frame)))
+        low = max(0, low)
+        high = min(len(src.frames) - 1, high)
+        if high < low:
+            raise ValueError("the frame range is empty")
+
+        new_anim = Animation()
+        new_anim.frames = [copy.deepcopy(src.frames[i]) for i in range(low, high + 1)]
+        new_anim.original_tail = b""
+        # The slice starts a fresh delta chain (first frame decoded from 0): recompute the
+        # per-value storage sizes or the save truncates the new deltas (see write_to_writer).
+        new_anim._recompute_frame_storage_types()
+        anim_section.animations.append(new_anim)
+        new_id = anim_section.nb_animations
+        anim_section.nb_animations += 1
+        return new_id
+
+    def duplicate_animation_frame(self, anim_id: int, frame_id: int) -> int:
+        """Insert a copy of frame frame_id right after it in animation anim_id, and return the
+        new frame's index. The copy is an identical pose/position, ready to be edited into the
+        next keyframe. Raises ValueError past the format's 255-frame limit (count is one byte)."""
+        self._ensure_matrices()
+        anim: Animation = self.enemy.animation_data.animations[anim_id]
+        if frame_id >= len(anim.frames):
+            raise ValueError(f"frame {frame_id} does not exist")
+        if len(anim.frames) >= MAX_ANIMATION_FRAME:
+            raise ValueError(f"the animation already has the maximum of {MAX_ANIMATION_FRAME} frames")
+        new_frame = copy.deepcopy(anim.frames[frame_id])
+        anim.frames.insert(frame_id + 1, new_frame)
+        # Deltas of the inserted frame and the one after it changed: refresh storage types.
+        anim._recompute_frame_storage_types()
+        return frame_id + 1
+
+    def delete_animation_frame(self, anim_id: int, frame_id: int) -> bool:
+        """Remove frame frame_id from animation anim_id, keeping at least one frame. Returns
+        True if a frame was removed."""
+        self._ensure_matrices()
+        anim: Animation = self.enemy.animation_data.animations[anim_id]
+        if frame_id >= len(anim.frames) or len(anim.frames) <= 1:
+            return False
+        del anim.frames[frame_id]
+        # The frame now following the gap is delta-encoded from a different predecessor.
+        anim._recompute_frame_storage_types()
+        return True
 
     def _recompute_all_animation_matrices(self):
         """Rebuild bone matrices for every frame of every animation."""
