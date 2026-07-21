@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
 )
 from Common.fileregistry import FileRegistry
 from FF8GameData.dat.monsteranalyser import GarbageFileError
+from FF8GameData.dat.animloopdetector import find_character_weapon_file_list
 from Ifrit.IfritAI.ifritaiwidget import IfritAIWidget
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.fpsbatchdialog import (FpsBatchDialog, FpsBatchReportDialog,
@@ -532,7 +533,9 @@ class IfritMonsterWidget(QWidget):
                 "skipped:\n\n" + "\n".join(skipped))
         if not good:
             return
-        self._build_session(good)
+        # Add to the current session rather than replacing it: opening more models keeps the
+        # ones already open (and their unsaved edits) and appends the new ones to the list.
+        self._append_to_session(good)
 
     def save_folder(self):
         """Write every changed file back to disk - the shared header Save button routes here."""
@@ -549,12 +552,13 @@ class IfritMonsterWidget(QWidget):
             self._file_dialog_folder = os.path.dirname(path)
             self._build_session([path])
 
-    def _build_session(self, paths):
-        """Open a set of files: parse each one LEAN (structure + name for the list only - no
-        textures, no expanded animation, no editor widgets), then show the first. The heavy work
-        (textures + animation + all tabs + 3D viewer) is done per file when it's clicked, and only
-        one file is fully loaded at a time (see _activate_index). Each file gets its OWN manager
-        sharing the one GameData. Replaces any previous session."""
+    def _read_file_entries(self, paths):
+        """Lean-parse each .dat into a session entry (structure + name for the list only - no
+        textures, no expanded animation, no editor widgets). The heavy work (textures + animation
+        + all tabs + 3D viewer) is done per file when it's clicked, one at a time (_activate_index).
+        Each file gets its OWN manager sharing the one GameData. Shows a cancelable progress dialog.
+        Returns (files, skipped): the entries and the basenames of the empty/unreadable ones.
+        Shared by _build_session (replace) and _append_to_session (add)."""
         progress = QProgressDialog("Reading files...", "Cancel", 0, len(paths), self)
         progress.setWindowTitle("Load files")
         progress.setWindowModality(Qt.WindowModality.WindowModal)
@@ -607,8 +611,14 @@ class IfritMonsterWidget(QWidget):
             except Exception:
                 pass
             files.append({'path': path, 'manager': manager, 'pane': None, 'name': name})
+        progress.close()
+        return files, skipped
+
+    def _build_session(self, paths):
+        """Open a set of files, REPLACING any previous session, and show the first one.
+        (Adding to an existing session instead is _append_to_session.)"""
+        files, skipped = self._read_file_entries(paths)
         if not files:
-            progress.close()
             if skipped:
                 QMessageBox.information(self, "No files loaded",
                     "The selected file(s) are empty or unreadable:\n\n" + "\n".join(skipped))
@@ -618,7 +628,6 @@ class IfritMonsterWidget(QWidget):
         self._active_index = -1
         self._file_dialog_folder = os.path.dirname(files[0]['path'])
         self._populate_file_list()
-        progress.close()
         self._activate_index(0, show_busy=True)   # fully load + show the first file
         if skipped:
             QMessageBox.information(self, "Some files skipped",
@@ -627,6 +636,46 @@ class IfritMonsterWidget(QWidget):
             "Ifrit battle model(s)",
             FileRegistry.summarize_paths([f['path'] for f in files], "model"))
         self.file_bindings_changed.emit()
+
+    def _append_to_session(self, paths):
+        """Add files to the current session WITHOUT replacing it: the file that is open stays
+        open, the new ones are appended to the list. Files already in the session are skipped
+        (no duplicate entries). Falls back to a fresh session when nothing is open yet."""
+        if not self._files:
+            self._build_session(paths)
+            return
+        loaded = {os.path.normcase(os.path.abspath(f['path'])) for f in self._files}
+        already = [os.path.basename(p) for p in paths
+                   if os.path.normcase(os.path.abspath(p)) in loaded]
+        new_paths = [p for p in paths
+                     if os.path.normcase(os.path.abspath(p)) not in loaded]
+        if not new_paths:
+            if already:
+                QMessageBox.information(self, "Already open",
+                    "The selected file(s) are already in the session:\n\n" + "\n".join(already))
+            return
+        files, skipped = self._read_file_entries(new_paths)
+        if not files:
+            if skipped:
+                QMessageBox.information(self, "No files added",
+                    "The selected file(s) are empty or unreadable:\n\n" + "\n".join(skipped))
+            return
+        first_new = len(self._files)
+        self._files.extend(files)                       # keep _active_index / current pane as-is
+        for i in range(first_new, len(self._files)):
+            self._file_list.addItem(self._list_label(i))
+        self._file_dialog_folder = os.path.dirname(files[0]['path'])
+        self.file_registry.open_file(
+            "Ifrit battle model(s)",
+            FileRegistry.summarize_paths([f['path'] for f in self._files], "model"))
+        self.file_bindings_changed.emit()
+        notes = []
+        if already:
+            notes.append("Already open (skipped):\n" + "\n".join(already))
+        if skipped:
+            notes.append("Empty or unreadable (skipped):\n" + "\n".join(skipped))
+        if notes:
+            QMessageBox.information(self, "Some files skipped", "\n\n".join(notes))
 
 
     def _discard_panes(self):
@@ -779,6 +828,60 @@ class IfritMonsterWidget(QWidget):
         # min-size floored to the shown page (see _shrink_stack_to_current).
         _shrink_stack_to_current(self._stack, self._stack_size_policies)
 
+    def _autoload_character_weapons(self, body_path):
+        """Bring a character's weapon .dat files into the session automatically.
+
+        A character body only shows a weapon in its hand if that weapon model is loaded (see
+        _weapon_options_for). So when a character's 3D view opens, lean-load the weapon files
+        that sit next to it on disk (d0c000.dat -> d0w*.dat) but aren't in the session yet -
+        the user no longer has to hunt down and open the weapon file separately for it to
+        appear. Empty (0-byte) weapon slots and already-loaded files are skipped. Loaded
+        weapons also show up in the file list, switchable/editable like any other. Textures
+        are NOT extracted here - that is done by _ensure_weapon_textures when the weapon is
+        actually offered, so it also covers weapons that were already in the session (e.g.
+        loaded with the character from a folder) but never opened. Returns True if any file
+        was added."""
+        loaded = {os.path.normcase(os.path.abspath(f['path'])) for f in self._files}
+        added = False
+        for weapon_path in find_character_weapon_file_list(body_path):
+            path = str(weapon_path)
+            if os.path.normcase(os.path.abspath(path)) in loaded:
+                continue
+            if os.path.getsize(path) == 0:
+                continue                               # empty weapon slot - nothing to overlay
+            manager = IfritManager(game_data=self._game_data)
+            try:
+                # Lean parse (like _build_session); the animation re-expands on demand when the
+                # weapon is posed as an overlay (Ifrit3DWidget._set_weapon_manager -> _ensure_matrices).
+                enemy = manager.parse_file(path, free_animation=True)
+            except Exception as e:
+                print(f"[weapon autoload] {path}: {e}")
+                continue
+            manager.set_active_enemy(enemy, path, textures=([], True))   # bind (compiler); textures later
+            self._files.append({'path': path, 'manager': manager, 'pane': None, 'name': ''})
+            self._file_list.addItem(self._list_label(len(self._files) - 1))
+            added = True
+        if added:
+            self.file_bindings_changed.emit()
+        return added
+
+    def _ensure_weapon_textures(self, f):
+        """Extract a weapon file's textures if they aren't loaded yet, so its overlay renders
+        textured instead of merging in invisibly. A weapon loaded but never opened has empty
+        textures (they're extracted only when its own pane is built) - THAT is the 'I have to
+        click the weapon once, then go back to the character, to see it' symptom: the overlay
+        needs the weapon's textures, and nothing had extracted them. Idempotent: a weapon whose
+        textures are already loaded (opened before, or extracted here earlier) is skipped, so
+        this costs one extraction per weapon per session."""
+        manager = f['manager']
+        if f.get('blank') or manager.texture_data:
+            return
+        try:
+            textures = manager.extract_textures(manager.enemy, f['path'])
+            manager.set_active_enemy(manager.enemy, f['path'], textures=textures)
+        except Exception as e:
+            print(f"[weapon texture] {f['path']}: {e}")
+
     def _weapon_options_for(self, body_path):
         """Weapon-selector options for a character body pane: every WEAPON model loaded in the
         session, the ones for THIS character (same dXc/dXw slot digit) listed first and the rest
@@ -788,6 +891,9 @@ class IfritMonsterWidget(QWidget):
         slot = IfritManager.character_slot_of(body_path)
         if slot is None:
             return None
+        # Pull this character's weapon files in from disk first, so a character always opens
+        # with its weapon available even when the weapon file wasn't loaded by hand.
+        self._autoload_character_weapons(body_path)
         weapons = []                                   # (name, manager, matches_this_character)
         for f in self._files:
             if not IfritManager.is_weapon_file(f['path']):
@@ -798,6 +904,12 @@ class IfritMonsterWidget(QWidget):
             if f['manager'].enemy.entity_type not in (EntityType.WEAPON, EntityType.WEAPON_NO_ANIM):
                 continue
             matches = (IfritManager.character_slot_of(f['path']) == slot)
+            if matches:
+                # This character's own weapons can be overlaid (default + switching), so make sure
+                # they're textured. Other characters' weapons stay lazy (extracted if opened) - they
+                # are only an occasional cross-dress pick and keeping them lazy bounds the cost to
+                # this one character's handful of weapons.
+                self._ensure_weapon_textures(f)
             weapons.append((os.path.basename(f['path']), f['manager'], matches))
         if not weapons:
             return None

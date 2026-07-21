@@ -549,6 +549,9 @@ class Ifrit3DWidget(QWidget):
             )
             self.info.setWordWrap(True)
             self.info.setStyleSheet("background:#1a1a1f; color:#aaa; padding:4px 8px; font-size:10px;")
+            # RichText so the budget figures below can be coloured (green/orange/red) as they
+            # approach the engine limits; the base #aaa colour still applies to the plain text.
+            self.info.setTextFormat(Qt.TextFormat.RichText)
             layout.addWidget(self.info)
         else:
             # Without controls, just show the OpenGL widget
@@ -803,13 +806,7 @@ class Ifrit3DWidget(QWidget):
                 self.anim_selector.setEnabled(False)
                 self.anim_selector.setToolTip("No animation data")
 
-        if hasattr(self, 'info'):
-            self.info.setText(f"Tri: {len(self.gl_widget.triangles)} | "
-                              f"Quads: {len(self.gl_widget.quads)} | "
-                              f"Bones: {len(self.gl_widget.skeleton_lines)} | "
-                              f"LMB: Rotate | RMB: Pan | Scroll: Zoom | "
-                              f"Click joint: Select bone | Drag ring: Rotate bone | "
-                              f"Ctrl+Drag: Bone length")
+        self._update_info_label()
         if hasattr(self, 'bone_editor'):
             if self.ifrit_manager.enemy.bone_data and self.ifrit_manager.enemy.bone_data.bones:
                 # Re-enable in case the previous file had no bone data
@@ -827,6 +824,76 @@ class Ifrit3DWidget(QWidget):
 
         self._set_reference_position()
         self.gl_widget.reset_view()
+
+    # ── Vertex / primitive budget readout (info bar) ──────────────────
+    # The engine limits these are checked against were measured in FF8_EN.exe:
+    #   * 4096 verts per OBJECT - the 12-bit face index in the geometry format and in the
+    #     game's ParsePolygons. Note an object is a group INSIDE a model; a model can hold
+    #     several objects, so this is flagged per-object (the largest one), not per-model.
+    #   * ~3584 primitives per FRAME for the whole battle scene - the per-frame primitive
+    #     packet buffer is shared by every entity (all party + enemies) and every effect, so
+    #     one model's prim count is only its share of that budget.
+    _VERT_CAP_PER_OBJECT = 4096
+    _SCENE_PRIM_BUDGET = 3584
+
+    def _geometry_budget_html(self):
+        """Raw-geometry vertex/primitive counts vs the engine limits, as coloured HTML.
+
+        Sourced from geometry_data (the raw sections), NOT the culled GL lists, so the
+        figures reflect what actually gets written into the engine buffers and don't wobble
+        as the view rotates or the hidden-face toggle flips. Counts the overlaid weapon too
+        (it is drawn in the same scene), since it shares the per-frame primitive budget."""
+        managers = [self.ifrit_manager]
+        if self._weapon_manager is not None:
+            managers.append(self._weapon_manager)
+
+        total_verts = worst_obj_verts = nb_objects = total_prims = 0
+        for mgr in managers:
+            geo = getattr(mgr.enemy, 'geometry_data', None)
+            if geo is None:
+                continue
+            for obj in geo.object_data:
+                nb_objects += 1
+                v = len(obj.get_vertices())
+                total_verts += v
+                worst_obj_verts = max(worst_obj_verts, v)
+                total_prims += (obj.nb_triangle + obj.nb_quad
+                                + obj.nb_colored_triangle + obj.nb_colored_quad)
+
+        # per-object vertex figure: warn as it nears the hard 4096 cap, red once over
+        if worst_obj_verts > self._VERT_CAP_PER_OBJECT:
+            vcol = "#ff5555"
+        elif worst_obj_verts >= 3500:
+            vcol = "#ffb000"
+        else:
+            vcol = "#7fd07f"
+
+        pct = 100.0 * total_prims / self._SCENE_PRIM_BUDGET
+        # this single model vs the SHARED scene budget: >33% means ~3 of them fill a frame
+        if pct > 100.0:
+            pcol = "#ff5555"
+        elif pct > 33.0:
+            pcol = "#ffb000"
+        else:
+            pcol = "#7fd07f"
+
+        bd = getattr(self.ifrit_manager.enemy, 'bone_data', None)
+        nb_bones = len(bd.bones) if bd and bd.bones else 0
+        obj_note = f" in {nb_objects} objects" if nb_objects != 1 else ""
+        return (f"Verts: {total_verts}{obj_note} "
+                f"(largest object <span style='color:{vcol}'>{worst_obj_verts} / "
+                f"{self._VERT_CAP_PER_OBJECT}</span>) | "
+                f"Prims: <span style='color:{pcol}'>{total_prims}</span> "
+                f"(~{pct:.0f}% of {self._SCENE_PRIM_BUDGET} scene budget) | "
+                f"Bones: {nb_bones}")
+
+    def _update_info_label(self):
+        """Rebuild the info bar: geometry budget figures followed by the control hints."""
+        if not hasattr(self, 'info'):
+            return
+        help_text = ("LMB: Rotate | RMB: Pan | Scroll: Zoom | Click joint: Select bone | "
+                     "Drag ring: Rotate bone | Ctrl+Drag: Bone length")
+        self.info.setText(self._geometry_budget_html() + " | " + help_text)
 
     def _push_textures_to_gl(self):
         """Send extracted texture PNGs to the GL widget.
@@ -1061,6 +1128,7 @@ class Ifrit3DWidget(QWidget):
         self.update_animated_mesh()
         self.update_skeleton()
         self.gl_widget.reset_view()
+        self._update_info_label()   # weapon overlay adds to the scene primitive total
 
     def get_max_frames(self):
         if not self.ifrit_manager.enemy.animation_data.nb_animations:
