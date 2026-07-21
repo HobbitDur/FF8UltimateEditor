@@ -1,6 +1,7 @@
 import pathlib
 from typing import List, Tuple
 
+import numpy as np
 from PIL import Image
 from PIL.ImageQt import ImageQt
 from PyQt6.QtGui import QPixmap
@@ -250,6 +251,60 @@ class SeedManager:
         frame.rotation_vector_data[bone_idx][1].rotate_deg(rot_y_deg)
         frame.rotation_vector_data[bone_idx][2].rotate_deg(rot_z_deg)
         self._recompute_frame_matrices(anim, frame_id, bone_idx)
+
+    def get_bone_rotation_gizmo(self, anim_id: int, frame_id: int, bone_id: int):
+        """Geometry for the viewer's rotation gizmo: (center, axes).
+
+        Field-model counterpart of IfritManager.get_bone_rotation_gizmo. center
+        is the bone's joint position; axes are 3 model-space unit vectors, one
+        per Euler channel, giving the axis a +degrees turn of that channel spins
+        the bone at its current pose. They are measured by finite differences on
+        the bone's world rotation (the 3x3 of bone_matrices, which is the pure
+        rotation chain here since compute_frame_matrices only writes translation
+        into M41-M43), so they stay correct in any pose, gimbal included."""
+        anim_section = self.enemy.animation_data
+        if not self.enemy.bone_data or not anim_section or not anim_section.nb_animations:
+            return None
+        anims = anim_section.animations
+        if anim_id >= len(anims) or frame_id >= len(anims[anim_id].frames):
+            return None
+        frame = anims[anim_id].frames[frame_id]
+        bones = self.enemy.bone_data.bones
+        if bone_id >= len(bones) or bone_id >= len(frame.rotation_vector_data):
+            return None
+        if len(frame.rotation_vector_data[bone_id]) < 3:
+            return None
+
+        world = frame.bone_matrices[bone_id]
+        center = (world.M41, world.M42, world.M43)
+
+        def rot3x3():
+            c = frame.bone_matrices[bone_id]
+            return np.array([[c.M11, c.M12, c.M13],
+                             [c.M21, c.M22, c.M23],
+                             [c.M31, c.M32, c.M33]], dtype=np.float64)
+
+        delta_raw = 64  # ~5.6 deg: clean finite difference, well above rounding
+        m0 = rot3x3()
+        axes = []
+        for axis in range(3):
+            rot = frame.rotation_vector_data[bone_id][axis]
+            saved = int(rot.get_rotate_raw())
+            rot.rotate_raw(saved + delta_raw)
+            compute_frame_matrices(frame, bones)
+            m1 = rot3x3()
+            rot.rotate_raw(saved)
+            compute_frame_matrices(frame, bones)
+
+            rel = m1 @ m0.T
+            # For a rotation R about unit axis a: R - R^T = 2 sin(angle) [a]x
+            v = np.array([rel[2, 1] - rel[1, 2],
+                          rel[0, 2] - rel[2, 0],
+                          rel[1, 0] - rel[0, 1]])
+            norm = np.linalg.norm(v)
+            axes.append(tuple(v / norm) if norm > 1e-9 else (1.0, 0.0, 0.0))
+
+        return center, axes
 
     def _recompute_all_animation_matrices(self):
         for anim in self.enemy.animation_data.animations:

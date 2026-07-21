@@ -1133,9 +1133,23 @@ class Ifrit3DWidget(QWidget):
 
         self.gl_widget.set_model_translation(pos_x, pos_y, pos_z)
 
+    def _update_frame_indicator(self):
+        """Refresh the frame label and slider from current_frame. Kept separate from
+        the skeleton so it still runs for models without bone data (e.g. seed field
+        models), where update_skeleton returns early."""
+        if hasattr(self, 'frame_label'):
+            self.frame_label.setText(f"Frame: {self.current_frame}")
+        if hasattr(self, 'frame_slider'):
+            self.frame_slider.blockSignals(True)
+            self.frame_slider.setValue(self.current_frame)
+            self.frame_slider.blockSignals(False)
+        self.frame_changed.emit(self.current_frame)
+
     def update_skeleton(self):
         if not self.ifrit_manager or self.gl_widget is None:
             return
+        # Reflect the current frame in the toolbar before any skeleton-only early return.
+        self._update_frame_indicator()
         if not self.ifrit_manager.enemy.bone_data:
             self.gl_widget.set_skeleton_data([], [])
             self.gl_widget.set_show_skeleton(False)
@@ -1154,13 +1168,6 @@ class Ifrit3DWidget(QWidget):
         self._update_model_translation()
         self._update_frame_position_selection()
         self.gl_widget.update()
-        if hasattr(self, 'frame_label'):
-            self.frame_label.setText(f"Frame: {self.current_frame}")
-        if hasattr(self, 'frame_slider'):
-            self.frame_slider.blockSignals(True)
-            self.frame_slider.setValue(self.current_frame)
-            self.frame_slider.blockSignals(False)
-        self.frame_changed.emit(self.current_frame)
 
     def set_fps(self, fps: int):
         """Change the playback speed of the viewer."""
