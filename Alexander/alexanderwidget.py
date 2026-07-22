@@ -85,10 +85,12 @@ STAGE_ZOOM_FACTOR = 1.6
 # stages are static, so they are hidden.
 _ANIM_WIDGETS = ("play_btn", "reset_anim_btn", "fps_label", "fps_slider",
                  "frame_label", "frame_slider", "anim_label", "anim_selector",
-                 "fps60_btn", "fps60_all_btn", "bone_editor", "playlist_container",
-                 # the viewer's generic glTF export is replaced by Alexander's own
-                 # group-aware "Export .glb" (keeps the 4-group / sky structure).
-                 "export_gltf_btn")
+                 "bone_editor", "playlist_container",
+                 # The "Frames ▾" menu (frame/animation authoring + fps conversion) is meaningless
+                 # for a static stage; "3D files ▾" holds the viewer's generic glTF import/export,
+                 # and Alexander replaces the export with its own group-aware "Export .glb" (keeps
+                 # the 4-group / sky structure) - so both dropdowns are hidden.
+                 "anim_tools_btn", "files_btn")
 
 
 class AlexanderWidget(QWidget):

@@ -305,10 +305,14 @@ class IfritFilePane(QWidget):
                 sig = getattr(bone_editor, sig_name, None)
                 if sig is not None:
                     sig.connect(self._on_edit)
-        for btn_name in ('fps60_btn', 'fps60_all_btn', 'import_gltf_btn'):
-            btn = getattr(self._3d_widget, btn_name, None)
-            if btn is not None:
-                btn.clicked.connect(self._on_edit)
+        # Everything that edits the model bytes through the 3D view but none of the signals above -
+        # frame/animation authoring (add/delete/duplicate), fps conversion, direct in-view bone
+        # dragging (rotate ring / Ctrl+drag length), and glTF mesh import - fires this one on a
+        # real, committed change ONLY (a click that ends in a cancelled dialog never emits it, so
+        # cancelling never dirties the file).
+        model_edited = getattr(self._3d_widget, 'model_edited', None)
+        if model_edited is not None:
+            model_edited.connect(self._on_edit)
 
     def _connect_dirty_signals(self):
         """(Re)connect edit signals of the currently-built editable controls. Only user-interaction
@@ -1006,6 +1010,10 @@ class IfritMonsterWidget(QWidget):
         self._populate_file_list()
         progress.close()
         self._activate_index(keep, show_busy=True)
+        # Reload rebuilds every pane fresh (dirty=False). The file list is refreshed above, but the
+        # shared toolbar's Save state / window-title '*' only re-evaluate on file_bindings_changed -
+        # emit it so the '*' clears instead of lingering from before the reload.
+        self.file_bindings_changed.emit()
 
     # ── Reload (Cronos toggle, after fps batch) ───────────────────────
 
@@ -1031,6 +1039,7 @@ class IfritMonsterWidget(QWidget):
         self._active_index = -1               # force _activate_index to rebuild + show
         self._activate_index(index, show_busy=True)
         self._refresh_list_item(index)
+        self.file_bindings_changed.emit()     # rebuilt pane is clean -> refresh toolbar Save / title '*'
 
     # ── FPS batch ─────────────────────────────────────────────────────
 

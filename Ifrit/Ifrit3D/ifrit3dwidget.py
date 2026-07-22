@@ -84,6 +84,11 @@ class Ifrit3DWidget(QWidget):
     frame_changed = pyqtSignal(int)
     animation_finished = pyqtSignal(int)  # Emitted when an animation in playlist finishes
     animation_changed = pyqtSignal()
+    # A committed edit to the model that changes the saved bytes - used to mark the file dirty.
+    # Covers frame/animation authoring (add/delete/duplicate, fps conversion, split), direct
+    # in-view bone dragging (rotate ring / Ctrl+drag length), and glTF mesh import. Distinct from
+    # animation_changed, which also fires on mere navigation and must NOT dirty the file.
+    model_edited = pyqtSignal()
     def __init__(self, ifrit_manager:IfritManager, show_controls=True):
         super().__init__()
         self.ifrit_manager = ifrit_manager
@@ -302,6 +307,20 @@ class Ifrit3DWidget(QWidget):
                                     "one). Note: later animation ids shift down by one.")
             act_del_anim.triggered.connect(self._delete_current_animation)
             self._anim_tools_menu.addAction(act_del_anim)
+            self._anim_tools_menu.addSeparator()
+            act_fps = QAction("Convert current animation to 30/60 FPS…", self)
+            act_fps.setToolTip("Insert interpolated frames between each frame of the current\n"
+                               "animation, so the 15 fps animation becomes a 30 or a 60 fps one\n"
+                               "(asked on click). Save afterwards to write the new frames.")
+            act_fps.triggered.connect(self.convert_current_anim_to_60fps)
+            self._anim_tools_menu.addAction(act_fps)
+            act_fps_all = QAction("Convert ALL animations to 30/60 FPS…", self)
+            act_fps_all.setToolTip("Insert interpolated frames in every animation of the current\n"
+                                   "file, so all 15 fps animations become 30 or 60 fps ones\n"
+                                   "(asked on click). Save afterwards to write the new frames.")
+            act_fps_all.triggered.connect(self.convert_all_anims_to_60fps)
+            self._anim_tools_menu.addAction(act_fps_all)
+            self._anim_tools_menu.setToolTipsVisible(True)   # show the per-action tooltips above
 
             self.anim_tools_btn = QToolButton()
             self.anim_tools_btn.setText("Frames ▾")
@@ -333,37 +352,33 @@ class Ifrit3DWidget(QWidget):
             self._weapon_selector_action = toolbar_layout.addWidget(self.weapon_selector)
             self._weapon_selector_action.setVisible(False)
 
-            self.export_gltf_btn = QPushButton("Export glTF")
-            self.export_gltf_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
-            self.export_gltf_btn.setToolTip("Export the loaded model (mesh, skeleton, textures and all animations)\n"
-                                            "to a .glb file, importable in Blender (File > Import > glTF 2.0)")
-            self.export_gltf_btn.clicked.connect(self.export_gltf)
-            toolbar_layout.addWidget(self.export_gltf_btn)
+            # 3D file I/O grouped under one dropdown (glTF export/import), keeping the toolbar tidy
+            # (the fps-conversion actions now live in the Frames menu above).
+            self._files_menu = QMenu(self)
+            act_export = QAction("Export glTF (.glb)…", self)
+            act_export.setToolTip("Export the loaded model (mesh, skeleton, textures and all\n"
+                                  "animations) to a .glb file, importable in Blender\n"
+                                  "(File > Import > glTF 2.0).")
+            act_export.triggered.connect(self.export_gltf)
+            self._files_menu.addAction(act_export)
+            act_import = QAction("Import glTF (.glb)…", self)
+            act_import.setToolTip("Replace the mesh of the loaded model with the one from a .glb\n"
+                                  "file (e.g. edited in Blender, then File > Export > glTF 2.0).\n"
+                                  "Skeleton, animations and every other section are kept from the\n"
+                                  "current file. Save afterwards to write the new mesh into the .dat.")
+            act_import.triggered.connect(self.import_gltf)
+            self._files_menu.addAction(act_import)
+            self._files_menu.setToolTipsVisible(True)
 
-            self.import_gltf_btn = QPushButton("Import glTF")
-            self.import_gltf_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
-            self.import_gltf_btn.setToolTip("Replace the mesh of the loaded model with the one from a .glb file\n"
-                                            "(e.g. edited in Blender, then File > Export > glTF 2.0).\n"
-                                            "Skeleton, animations and every other section are kept from the\n"
-                                            "current file. Save afterwards to write the new mesh into the .dat.")
-            self.import_gltf_btn.clicked.connect(self.import_gltf)
-            toolbar_layout.addWidget(self.import_gltf_btn)
-
-            self.fps60_btn = QPushButton("To 30/60 FPS")
-            self.fps60_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
-            self.fps60_btn.setToolTip("Insert interpolated frames between each frame of the current animation,\n"
-                                      "so the 15 fps animation becomes a 30 or a 60 fps one (asked on click).\n"
-                                      "Save the file afterwards to write the new frames in the .dat file.")
-            self.fps60_btn.clicked.connect(self.convert_current_anim_to_60fps)
-            toolbar_layout.addWidget(self.fps60_btn)
-
-            self.fps60_all_btn = QPushButton("All to 30/60 FPS")
-            self.fps60_all_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
-            self.fps60_all_btn.setToolTip("Insert interpolated frames in every animation of the current file,\n"
-                                          "so all 15 fps animations become 30 or 60 fps ones (asked on click).\n"
-                                          "Save the file afterwards to write the new frames in the .dat file.")
-            self.fps60_all_btn.clicked.connect(self.convert_all_anims_to_60fps)
-            toolbar_layout.addWidget(self.fps60_all_btn)
+            self.files_btn = QToolButton()
+            self.files_btn.setText("3D files ▾")
+            self.files_btn.setMenu(self._files_menu)
+            self.files_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+            self.files_btn.setToolTip("Import/export the 3D model as glTF (.glb)")
+            self.files_btn.setStyleSheet(
+                "QToolButton{background:#4a6e8a; color:white; padding:4px 10px; border-radius:3px;}"
+                "QToolButton::menu-indicator{image:none;}")
+            toolbar_layout.addWidget(self.files_btn)
 
             # Spacer: QToolBar has no addStretch, so push the remaining controls to the right with
             # an expanding empty widget instead (the standard Qt trick for a toolbar spacer).
@@ -1403,6 +1418,8 @@ class Ifrit3DWidget(QWidget):
             return
         # Refresh the viewer from the (now rebuilt) model.
         self.load_file()
+        self.model_edited.emit()   # mesh replaced -> dirty (only on a successful import, not on a
+                                   # cancelled file dialog above)
         QMessageBox.information(
             self, "Import glTF",
             f"Mesh replaced from:\n{file_path}\n\n"
@@ -1444,7 +1461,10 @@ class Ifrit3DWidget(QWidget):
         return get_max_frame_for_animation(can_be_slowed, max_frames, slow_doubles)
 
     def _refresh_animation_count(self):
-        """Splitting adds animations at the end of the section: show them in the selector."""
+        """Splitting adds animations at the end of the section: show them in the selector.
+        Only ever called after a real animation-list edit (new/duplicate/delete animation, fps
+        conversion, split) - so it also announces the edit for dirty tracking."""
+        self.model_edited.emit()
         if not hasattr(self, 'anim_selector'):
             return
         nb = len(self.ifrit_manager.enemy.animation_data.animations)
@@ -1659,6 +1679,8 @@ class Ifrit3DWidget(QWidget):
         self.update_animated_mesh()
         self.update_skeleton()
         self.animation_changed.emit()
+        self.model_edited.emit()   # real frame insertion -> dirty (the split path emits via
+                                       # _refresh_animation_count; this non-split path does not)
         self.set_fps(target_fps)
 
         QMessageBox.information(self, title,
@@ -1834,7 +1856,9 @@ class Ifrit3DWidget(QWidget):
         return anim_section.animations[self.current_anim_id]
 
     def _refresh_after_frame_count_change(self):
-        """Re-range the frame slider and repose the view after a frame was added/removed."""
+        """Re-range the frame slider and repose the view after a frame was added/removed. Only
+        called after a real add/delete-frame edit, so it also announces the edit for dirty
+        tracking."""
         max_frames = self.get_max_frames()
         self.current_frame = max(0, min(self.current_frame, max_frames - 1))
         self.next_frame_index = (self.current_frame + 1) % max_frames if max_frames else 0
@@ -1844,6 +1868,7 @@ class Ifrit3DWidget(QWidget):
         self.update_animated_mesh()
         self.update_skeleton()
         self.animation_changed.emit()
+        self.model_edited.emit()
 
     def _add_frame_after_current(self):
         """Duplicate the current frame and insert the copy right after it."""
@@ -2138,6 +2163,11 @@ class Ifrit3DWidget(QWidget):
         self._length_drag_start_size = None
         if not hasattr(self, 'bone_editor') or not self.ifrit_manager.enemy.bone_data:
             return
+        # A real Ctrl+drag (start_size was set on the first drag move) commits a bone-length change
+        # here -> dirty. Emit BEFORE the commit/refresh below so that even if one of them raises
+        # (Qt would swallow the exception in this slot), the edit is still recorded. This is the
+        # in-view drag path; it goes through none of the other connected edit signals.
+        self.model_edited.emit()
         bone_id = self.bone_editor.bone_spin.value()
         self.ifrit_manager.set_bone_length(bone_id, self.bone_editor.length_spin.value())
         self.update_skeleton()
@@ -2199,6 +2229,11 @@ class Ifrit3DWidget(QWidget):
         if start_raw is None or target is None:
             self._update_gizmo()
             return
+        # A real ring drag committed a per-frame bone rotation here -> dirty. Emit BEFORE the commit
+        # /refresh below so that even if one of them raises (Qt would swallow the exception in this
+        # slot), the edit is still recorded. This is the in-view drag path; it goes through none of
+        # the other connected edit signals.
+        self.model_edited.emit()
         _, frame, bone_id = target
 
         rot = frame.rotation_vector_data[bone_id]

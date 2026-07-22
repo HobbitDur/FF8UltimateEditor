@@ -148,8 +148,12 @@ class AnimEditor(QWidget):
         pos_x_layout = QHBoxLayout()
         self.frame_pos_x = QDoubleSpinBox()
         self.frame_pos_x.setRange(-10000, 10000)
-        self.frame_pos_x.setSingleStep(1.0)
-        self.frame_pos_x.setDecimals(1)
+        # 1 raw position unit = 1/204.8 world (PositionType.get_pos_world), i.e. 204.8 raw values
+        # per world unit. 4 decimals (>=3 are the minimum: 10^3 slots > 204.8) lets every raw
+        # position be reached by typing; the 0.005 step nudges ~1 raw. Previously 1 decimal
+        # (0.1 world = ~20 raw) could only address ~1 in every 20 raw positions.
+        self.frame_pos_x.setSingleStep(0.005)
+        self.frame_pos_x.setDecimals(4)
         self.frame_pos_x.valueChanged.connect(self._on_anim_position_changed)
         self.pos_x_raw = QLabel("raw: 0")
         self.pos_x_raw.setStyleSheet("color:#888; font-size:9px;")
@@ -162,8 +166,8 @@ class AnimEditor(QWidget):
         pos_y_layout = QHBoxLayout()
         self.frame_pos_y = QDoubleSpinBox()
         self.frame_pos_y.setRange(-10000, 10000)
-        self.frame_pos_y.setSingleStep(1.0)
-        self.frame_pos_y.setDecimals(1)
+        self.frame_pos_y.setSingleStep(0.005)   # see Pos X: 204.8 raw/unit -> 4 decimals
+        self.frame_pos_y.setDecimals(4)
         self.frame_pos_y.valueChanged.connect(self._on_anim_position_changed)
         self.pos_y_raw = QLabel("raw: 0")
         self.pos_y_raw.setStyleSheet("color:#888; font-size:9px;")
@@ -176,8 +180,8 @@ class AnimEditor(QWidget):
         pos_z_layout = QHBoxLayout()
         self.frame_pos_z = QDoubleSpinBox()
         self.frame_pos_z.setRange(-10000, 10000)
-        self.frame_pos_z.setSingleStep(1.0)
-        self.frame_pos_z.setDecimals(1)
+        self.frame_pos_z.setSingleStep(0.005)   # see Pos X: 204.8 raw/unit -> 4 decimals
+        self.frame_pos_z.setDecimals(4)
         self.frame_pos_z.valueChanged.connect(self._on_anim_position_changed)
         self.pos_z_raw = QLabel("raw: 0")
         self.pos_z_raw.setStyleSheet("color:#888; font-size:9px;")
@@ -201,8 +205,10 @@ class AnimEditor(QWidget):
         rot_x_layout = QHBoxLayout()
         self.anim_rotx = QDoubleSpinBox()
         self.anim_rotx.setRange(-360, 360)
-        self.anim_rotx.setSingleStep(1.0)
-        self.anim_rotx.setDecimals(2)
+        # 1 raw rotation unit = 360/4096 = 0.088 deg (11.4 raw per degree). 3 decimals resolves
+        # every raw with margin (10^3 slots >> 11.4); the 0.1 step nudges ~1 raw.
+        self.anim_rotx.setSingleStep(0.1)
+        self.anim_rotx.setDecimals(3)
         self.anim_rotx.valueChanged.connect(self._on_anim_rotation_changed)
         self.rot_x_raw = QLabel("raw: 0")
         self.rot_x_raw.setStyleSheet("color:#888; font-size:9px;")
@@ -215,8 +221,8 @@ class AnimEditor(QWidget):
         rot_y_layout = QHBoxLayout()
         self.anim_roty = QDoubleSpinBox()
         self.anim_roty.setRange(-360, 360)
-        self.anim_roty.setSingleStep(1.0)
-        self.anim_roty.setDecimals(2)
+        self.anim_roty.setSingleStep(0.1)       # see Rot X: 11.4 raw/deg -> 3 decimals
+        self.anim_roty.setDecimals(3)
         self.anim_roty.valueChanged.connect(self._on_anim_rotation_changed)
         self.rot_y_raw = QLabel("raw: 0")
         self.rot_y_raw.setStyleSheet("color:#888; font-size:9px;")
@@ -229,8 +235,8 @@ class AnimEditor(QWidget):
         rot_z_layout = QHBoxLayout()
         self.anim_rotz = QDoubleSpinBox()
         self.anim_rotz.setRange(-360, 360)
-        self.anim_rotz.setSingleStep(1.0)
-        self.anim_rotz.setDecimals(2)
+        self.anim_rotz.setSingleStep(0.1)       # see Rot X: 11.4 raw/deg -> 3 decimals
+        self.anim_rotz.setDecimals(3)
         self.anim_rotz.valueChanged.connect(self._on_anim_rotation_changed)
         self.rot_z_raw = QLabel("raw: 0")
         self.rot_z_raw.setStyleSheet("color:#888; font-size:9px;")
@@ -270,8 +276,11 @@ class AnimEditor(QWidget):
             axis_layout = QHBoxLayout()
             spin = QDoubleSpinBox()
             spin.setRange(0.01, 32.0)
-            spin.setSingleStep(0.05)
-            spin.setDecimals(3)
+            # 1 raw scale unit = 1/1024 (ScaleType.SCALE_NEUTRAL_RAW = 1024), i.e. 1024 raw
+            # values per 1.0 factor. 4 decimals (10^4 slots > 1024) are needed to reach every
+            # raw; 3 decimals (1000 < 1024) left ~24 raw values per unit unreachable.
+            spin.setSingleStep(0.01)
+            spin.setDecimals(4)
             spin.setValue(1.0)
             spin.valueChanged.connect(self._on_scale_changed)
             raw_label = QLabel("raw: 1024")

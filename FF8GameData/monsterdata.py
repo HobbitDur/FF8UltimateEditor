@@ -175,10 +175,15 @@ class Bone:
             self._rotZ * 360.0 / 4096.0
         )
     def set_rotation_deg(self, rx: float, ry: float, rz: float):
-        """Set rotation in degrees and update raw values"""
-        self._rotX = int(rx * 4096.0 / 360.0)
-        self._rotY = int(ry * 4096.0 / 360.0)
-        self._rotZ = int(rz * 4096.0 / 360.0)
+        """Set rotation in degrees and update raw values.
+
+        round() (not int() truncation) so a degree value maps to the NEAREST raw unit and the
+        raw<->deg round-trip is lossless - matches the frame-rotation path (RotationType.rotate_deg)
+        and the position/scale setters. int() truncation drifted values down by up to one raw unit
+        (1 raw = 360/4096 = 0.088 deg)."""
+        self._rotX = round(rx * 4096.0 / 360.0)
+        self._rotY = round(ry * 4096.0 / 360.0)
+        self._rotZ = round(rz * 4096.0 / 360.0)
     def get_byte(self) -> bytearray:
         """Convert bone back to binary format"""
         data = bytearray()
