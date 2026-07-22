@@ -1,7 +1,7 @@
 import gc
 import pathlib
 
-from PyQt6.QtCore import QTimer, Qt, pyqtSignal
+from PyQt6.QtCore import QTimer, Qt, pyqtSignal, QSettings
 from PyQt6.QtGui import QKeySequence, QShortcut, QFontMetrics, QAction
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QCheckBox, QPushButton, QSlider, QSpinBox,
@@ -86,16 +86,23 @@ class Ifrit3DWidget(QWidget):
     animation_changed = pyqtSignal()
     # A committed edit to the model that changes the saved bytes - used to mark the file dirty.
     # Covers frame/animation authoring (add/delete/duplicate, fps conversion, split), direct
-    # in-view bone dragging (rotate ring / Ctrl+drag length), and glTF mesh import. Distinct from
+    # in-view bone dragging (rotate ring / Shift+drag length), and glTF mesh import. Distinct from
     # animation_changed, which also fires on mere navigation and must NOT dirty the file.
     model_edited = pyqtSignal()
     def __init__(self, ifrit_manager:IfritManager, show_controls=True):
         super().__init__()
         self.ifrit_manager = ifrit_manager
+        # Persist view toggles (skeleton / rotation handle) across files and sessions - a new
+        # Ifrit3DWidget is built per opened file, so hard-coded defaults would reset them each time.
+        self.settings = QSettings("FF8UltimateEditor", "FF8UltimateEditor")
 
         # Animation variables
         self.current_anim_id = 0
         self.current_frame = 0
+        # Bones selected in the 3D view. Ctrl+click adds/removes; the last one is the "primary"
+        # (drag/gizmo target + single-bone form). >1 bone shows the per-bone comparison tables.
+        self._selected_bone_ids = []
+        self._frame_clipboard = []   # frames copied with Ctrl+C, pasted with Ctrl+V
         self.animating = False
         self.fps = 15
         self.interp_step = 0.0
@@ -106,7 +113,7 @@ class Ifrit3DWidget(QWidget):
         # some files use so heavily that the visible mesh alone looks broken/incomplete in this
         # static viewer (it can't simulate whatever dynamically reveals those faces in-game). On
         # by default so a file opens whole rather than looking damaged; see _refresh_static_geometry.
-        self._show_hidden_faces = True
+        self._show_hidden_faces = self.settings.value("ifrit/3d/show_hidden_faces", True, type=bool)
 
         # Loop detection of a character body needs its weapon file, keep what was read
         # so the file is not searched again on every conversion.
@@ -129,7 +136,7 @@ class Ifrit3DWidget(QWidget):
         self.playlist = []  # List of animation IDs in order
         self.current_playlist_index = 0
         self.playlist_mode = False
-        self.loop_playlist = False
+        self.loop_playlist = self.settings.value("ifrit/3d/loop_playlist", False, type=bool)
         self.playlist_expanded = False  # Start collapsed
 
         # Main layout
@@ -172,13 +179,13 @@ class Ifrit3DWidget(QWidget):
 
             # Left side controls
             self.cb_texture = QCheckBox("Texture")
-            self.cb_texture.setChecked(True)
+            self.cb_texture.setChecked(self.settings.value("ifrit/3d/show_texture", True, type=bool))
             self.cb_texture.setStyleSheet("color:white;")
             self.cb_texture.toggled.connect(self._on_texture_toggle)
             toolbar_layout.addWidget(self.cb_texture)
 
             self.cb_wire = QCheckBox("Wireframe")
-            self.cb_wire.setChecked(False)
+            self.cb_wire.setChecked(self.settings.value("ifrit/3d/show_wireframe", False, type=bool))
             self.cb_wire.setStyleSheet("color:white;")
             self.cb_wire.toggled.connect(self._on_wire_toggle)
             toolbar_layout.addWidget(self.cb_wire)
@@ -194,13 +201,13 @@ class Ifrit3DWidget(QWidget):
             toolbar_layout.addWidget(self.cb_hidden_faces)
 
             self.cb_axis = QCheckBox("Axis")
-            self.cb_axis.setChecked(False)
+            self.cb_axis.setChecked(self.settings.value("ifrit/3d/show_axis", False, type=bool))
             self.cb_axis.setStyleSheet("color:white;")
             self.cb_axis.toggled.connect(self._on_axis_toggle)
             toolbar_layout.addWidget(self.cb_axis)
 
             self.cb_skeleton = QCheckBox("Skeleton")
-            self.cb_skeleton.setChecked(False)
+            self.cb_skeleton.setChecked(self.settings.value("ifrit/3d/show_skeleton", False, type=bool))
             self.cb_skeleton.setStyleSheet("color:white;")
             self.cb_skeleton.toggled.connect(self._on_skeleton_toggle)
             toolbar_layout.addWidget(self.cb_skeleton)
@@ -210,10 +217,18 @@ class Ifrit3DWidget(QWidget):
             # rotation rings ("sphere") around the selected joint - uncheck for a clean skeleton.
             self._skeleton_menu = QMenu(self)
             self._gizmo_action = QAction("Rotation handle", self, checkable=True)
-            self._gizmo_action.setChecked(True)
+            self._gizmo_action.setChecked(self.settings.value("ifrit/3d/show_gizmo", True, type=bool))
             self._gizmo_action.setToolTip("Rings around the selected bone, for dragging to rotate it.")
             self._gizmo_action.toggled.connect(self._on_gizmo_toggle)
             self._skeleton_menu.addAction(self._gizmo_action)
+            # Apply every restored view toggle to the GL widget (setChecked above did not fire the
+            # handlers when the value matched the widget's initial state, so push them explicitly;
+            # _show_hidden_faces is read straight into the geometry build by load_file()).
+            self.gl_widget.set_show_gizmo(self._gizmo_action.isChecked())
+            self.gl_widget.set_show_skeleton(self.cb_skeleton.isChecked())
+            self.gl_widget.set_show_texture(self.cb_texture.isChecked())
+            self.gl_widget.set_show_wireframe(self.cb_wire.isChecked())
+            self.gl_widget.set_show_axis(self.cb_axis.isChecked())
             self.skeleton_opts_btn = _HoverMenuButton()
             self.skeleton_opts_btn.setText("▾")           # small down triangle
             self.skeleton_opts_btn.setMenu(self._skeleton_menu)
@@ -222,7 +237,7 @@ class Ifrit3DWidget(QWidget):
             self.skeleton_opts_btn.setToolTip("Skeleton options")
             self.skeleton_opts_btn.setStyleSheet(
                 "QToolButton{color:white; padding:0 4px;} QToolButton::menu-indicator{image:none;}")
-            self.skeleton_opts_btn.setEnabled(False)           # enabled with the skeleton
+            self.skeleton_opts_btn.setEnabled(self.cb_skeleton.isChecked())   # enabled with the skeleton
             toolbar_layout.addWidget(self.skeleton_opts_btn)
 
             # Animation controls
@@ -290,6 +305,12 @@ class Ifrit3DWidget(QWidget):
             act_del_frame.setToolTip("Remove the frame currently shown (keeps at least one).")
             act_del_frame.triggered.connect(self._delete_current_frame)
             self._anim_tools_menu.addAction(act_del_frame)
+            act_interp = QAction("Interpolate between two frames…", self)
+            act_interp.setToolTip("Insert new in-between frames that morph from one chosen frame's\n"
+                                  "pose to another's. You pick the two frames and how many frames\n"
+                                  "to insert; they go right after the first one.")
+            act_interp.triggered.connect(self._interpolate_between_frames)
+            self._anim_tools_menu.addAction(act_interp)
             self._anim_tools_menu.addSeparator()
             act_new_from_range = QAction("New animation from frame range…", self)
             act_new_from_range.setToolTip("Create a new animation (added at the end of the list)\n"
@@ -434,13 +455,27 @@ class Ifrit3DWidget(QWidget):
             # Direct manipulation in the 3D view
             self._connect_gl_signals()
 
-            # B = add a child bone to the selected joint (works with focus
-            # anywhere in the 3D tab, only while the skeleton is displayed)
-            self._add_bone_shortcut = QShortcut(QKeySequence("B"), self)
-            self._add_bone_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
-            self._add_bone_shortcut.activated.connect(self._on_add_bone_shortcut)
+            # Shortcuts scoped to the 3D tab (WidgetWithChildrenShortcut = active when focus is
+            # anywhere in this tab), so they never fire from another tool or steal keys from a text
+            # field elsewhere. Every one is also spelled out in the legend below the toolbar and in
+            # the tooltips of the buttons they mirror.
+            def _tab_shortcut(seq, slot):
+                sc = QShortcut(QKeySequence(seq), self)
+                sc.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+                sc.activated.connect(slot)
+                return sc
+
+            # B = add a child bone to the selected joint (only while the skeleton is displayed).
+            self._add_bone_shortcut = _tab_shortcut("B", self._on_add_bone_shortcut)
+            # Left / Right = step to the previous / next frame (wrapping around the ends).
+            self._prev_frame_shortcut = _tab_shortcut(Qt.Key.Key_Left, self.goto_previous_frame)
+            self._next_frame_shortcut = _tab_shortcut(Qt.Key.Key_Right, self.goto_next_frame)
+            # Ctrl+C / Ctrl+V = copy a chosen frame range / paste it after the current frame.
+            self._copy_frames_shortcut = _tab_shortcut(QKeySequence.StandardKey.Copy, self.copy_frames)
+            self._paste_frames_shortcut = _tab_shortcut(QKeySequence.StandardKey.Paste, self.paste_frames)
 
             # Add bone editor to layout
+            layout.addWidget(self._make_shortcut_legend())
             layout.addWidget(self.bone_editor)
 
             playlist_main_layout = QVBoxLayout(self.playlist_container)
@@ -480,6 +515,7 @@ class Ifrit3DWidget(QWidget):
 
             self.loop_quick_cb = QCheckBox("Loop")
             self.loop_quick_cb.setStyleSheet("color:white; font-size:10px;")
+            self.loop_quick_cb.setChecked(self.loop_playlist)   # restore persisted state
             self.loop_quick_cb.toggled.connect(self.set_loop_playlist)
             header_layout.addWidget(self.loop_quick_cb)
 
@@ -543,6 +579,7 @@ class Ifrit3DWidget(QWidget):
 
             self.loop_playlist_cb = QCheckBox("Loop Playlist")
             self.loop_playlist_cb.setStyleSheet("color:white;")
+            self.loop_playlist_cb.setChecked(self.loop_playlist)   # restore persisted state
             self.loop_playlist_cb.toggled.connect(self.set_loop_playlist)
             playback_controls.addWidget(self.loop_playlist_cb)
 
@@ -560,7 +597,7 @@ class Ifrit3DWidget(QWidget):
             # than that (see the toolbar_scroll fix just above for the same class of issue).
             self.info = QLabel(
                 f"LMB: Rotate | RMB: Pan | Scroll: Zoom | Click joint: Select bone | "
-                f"Drag ring: Rotate bone | Ctrl+Drag: Bone length"
+                f"Drag ring: Rotate bone | Shift+Drag: Bone length"
             )
             self.info.setWordWrap(True)
             self.info.setStyleSheet("background:#1a1a1f; color:#aaa; padding:4px 8px; font-size:10px;")
@@ -701,11 +738,14 @@ class Ifrit3DWidget(QWidget):
     def set_loop_playlist(self, checked):
         """Set whether playlist should loop"""
         self.loop_playlist = checked
-        # Sync the quick checkbox
-        if hasattr(self, 'loop_quick_cb'):
-            self.loop_quick_cb.blockSignals(True)
-            self.loop_quick_cb.setChecked(checked)
-            self.loop_quick_cb.blockSignals(False)
+        self.settings.setValue("ifrit/3d/loop_playlist", checked)   # remembered across files/sessions
+        # Sync the two loop checkboxes to each other
+        for cb in ('loop_quick_cb', 'loop_playlist_cb'):
+            widget = getattr(self, cb, None)
+            if widget is not None and widget.isChecked() != checked:
+                widget.blockSignals(True)
+                widget.setChecked(checked)
+                widget.blockSignals(False)
 
     # ── GL surface lifecycle (only the active file's viewer keeps a live context) ──
     def _configure_gl_widget(self):
@@ -726,6 +766,7 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget.bone_length_drag_finished.connect(self._on_bone_length_drag_finished)
         self.gl_widget.bone_rotation_dragged.connect(self._on_bone_rotation_dragged)
         self.gl_widget.bone_rotation_drag_finished.connect(self._on_bone_rotation_drag_finished)
+        self.gl_widget.drawn_count_changed.connect(self._on_drawn_count_changed)
 
     def release_gl_widget(self):
         """Destroy the OpenGL surface + its GL context, freeing the driver of one live context,
@@ -852,12 +893,16 @@ class Ifrit3DWidget(QWidget):
     _SCENE_PRIM_BUDGET = 3584
 
     def _geometry_budget_html(self):
-        """Raw-geometry vertex/primitive counts vs the engine limits, as coloured HTML.
+        """Vertex/primitive counts vs the engine limits, as coloured HTML.
 
-        Sourced from geometry_data (the raw sections), NOT the culled GL lists, so the
-        figures reflect what actually gets written into the engine buffers and don't wobble
-        as the view rotates or the hidden-face toggle flips. Counts the overlaid weapon too
-        (it is drawn in the same scene), since it shares the per-frame primitive budget."""
+        Two different limits, measured differently:
+          * Verts vs the 4096/object STORAGE cap -> raw geometry_data (every vertex is stored).
+          * Prims vs the per-frame PACKET-BUFFER budget -> the DRAWN count (backface-culled for
+            the current view + hidden faces skipped), because the engine culls back-faces (GTE
+            NCLIP) before writing a polygon to the ordering table, so raw counts overstate the
+            real per-frame cost. This is why the % moves as the model rotates/animates - that is
+            the real per-frame packet-buffer load. Raw is still shown alongside for reference.
+        Counts the overlaid weapon too (merged into the same GL lists / same scene budget)."""
         managers = [self.ifrit_manager]
         if self._weapon_manager is not None:
             managers.append(self._weapon_manager)
@@ -883,7 +928,12 @@ class Ifrit3DWidget(QWidget):
         else:
             vcol = "#7fd07f"
 
-        pct = 100.0 * total_prims / self._SCENE_PRIM_BUDGET
+        # The per-frame budget holds only what the engine actually submits (back-faces culled,
+        # hidden faces skipped), so score the % on the DRAWN count for the current view; fall back
+        # to raw before the first paint (no camera yet -> nothing culled).
+        drawn = (self.gl_widget.drawn_primitive_count()
+                 if self.gl_widget is not None else total_prims)
+        pct = 100.0 * drawn / self._SCENE_PRIM_BUDGET
         # this single model vs the SHARED scene budget: >33% means ~3 of them fill a frame
         if pct > 100.0:
             pcol = "#ff5555"
@@ -895,19 +945,25 @@ class Ifrit3DWidget(QWidget):
         bd = getattr(self.ifrit_manager.enemy, 'bone_data', None)
         nb_bones = len(bd.bones) if bd and bd.bones else 0
         obj_note = f" in {nb_objects} objects" if nb_objects != 1 else ""
+        raw_note = f"; {total_prims} raw" if drawn != total_prims else ""
         return (f"Verts: {total_verts}{obj_note} "
                 f"(largest object <span style='color:{vcol}'>{worst_obj_verts} / "
                 f"{self._VERT_CAP_PER_OBJECT}</span>) | "
-                f"Prims: <span style='color:{pcol}'>{total_prims}</span> "
-                f"(~{pct:.0f}% of {self._SCENE_PRIM_BUDGET} scene budget) | "
+                f"Prims: <span style='color:{pcol}'>{drawn}</span> drawn "
+                f"(~{pct:.0f}% of {self._SCENE_PRIM_BUDGET} scene budget{raw_note}) | "
                 f"Bones: {nb_bones}")
+
+    def _on_drawn_count_changed(self, _drawn):
+        """The GL widget reports a new drawn-primitive count (view rotated / animation frame) -
+        refresh the budget readout so its % tracks what's actually submitted this frame."""
+        self._update_info_label()
 
     def _update_info_label(self):
         """Rebuild the info bar: geometry budget figures followed by the control hints."""
         if not hasattr(self, 'info'):
             return
         help_text = ("LMB: Rotate | RMB: Pan | Scroll: Zoom | Click joint: Select bone | "
-                     "Drag ring: Rotate bone | Ctrl+Drag: Bone length")
+                     "Drag ring: Rotate bone | Shift+Drag: Bone length")
         self.info.setText(self._geometry_budget_html() + " | " + help_text)
 
     def _push_textures_to_gl(self):
@@ -972,6 +1028,10 @@ class Ifrit3DWidget(QWidget):
         quad_uv = body.get_quads_with_uv(include_hidden=ih)
         col_tri = body.get_colored_triangles_with_color(include_hidden=ih)
         col_quad = body.get_colored_quads_with_color(include_hidden=ih)
+        # Per-entry hidden flags (aligned with tri_uv/quad_uv) so the budget count always excludes
+        # engine-hidden faces even when the viewer is displaying them.
+        tri_hidden = body.get_triangles_hidden_mask(include_hidden=ih)
+        quad_hidden = body.get_quads_hidden_mask(include_hidden=ih)
 
         if self._weapon_manager is not None:
             wgeo = self._weapon_manager.enemy.geometry_data
@@ -987,6 +1047,8 @@ class Ifrit3DWidget(QWidget):
                                  for e in wgeo.get_colored_triangles_with_color(include_hidden=ih)]
             col_quad = col_quad + [self._offset_colored(e, off)
                                    for e in wgeo.get_colored_quads_with_color(include_hidden=ih)]
+            tri_hidden = tri_hidden + wgeo.get_triangles_hidden_mask(include_hidden=ih)
+            quad_hidden = quad_hidden + wgeo.get_quads_hidden_mask(include_hidden=ih)
 
         self.gl_widget.set_triangles(tris)
         self.gl_widget.set_quads(quads)
@@ -994,6 +1056,7 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget.set_quads_with_uv(quad_uv)
         self.gl_widget.set_colored_triangles(col_tri)
         self.gl_widget.set_colored_quads(col_quad)
+        self.gl_widget.set_budget_hidden_masks(tri_hidden, quad_hidden)
         self._push_textures_to_gl()
 
     def _current_body_verts(self):
@@ -1328,29 +1391,35 @@ class Ifrit3DWidget(QWidget):
     def _on_texture_toggle(self, checked):
         """Toggle 3D mesh visibility"""
         self.gl_widget.set_show_texture(checked)
+        self.settings.setValue("ifrit/3d/show_texture", checked)
 
     def _on_wire_toggle(self, checked):
         self.gl_widget.set_show_wireframe(checked)
+        self.settings.setValue("ifrit/3d/show_wireframe", checked)
 
     def _on_hidden_faces_toggle(self, checked):
         """Unlike the other toggles this changes WHICH faces are in the mesh (not just a draw
         flag), so the triangle/quad/UV index lists must be rebuilt - re-run the same geometry
         refresh load_file() does, then repose this frame's vertices on top of it."""
         self._show_hidden_faces = checked
+        self.settings.setValue("ifrit/3d/show_hidden_faces", checked)
         self._refresh_static_geometry()
         self.update_animated_mesh()
         self.update_skeleton()
 
     def _on_axis_toggle(self, checked):
         self.gl_widget.set_show_axis(checked)
+        self.settings.setValue("ifrit/3d/show_axis", checked)
 
     def _on_skeleton_toggle(self, checked):
         self.gl_widget.set_show_skeleton(checked)
+        self.settings.setValue("ifrit/3d/show_skeleton", checked)   # remembered across files/sessions
         if hasattr(self, 'skeleton_opts_btn'):
             self.skeleton_opts_btn.setEnabled(checked)   # options only apply with a skeleton
 
     def _on_gizmo_toggle(self, checked):
         self.gl_widget.set_show_gizmo(checked)
+        self.settings.setValue("ifrit/3d/show_gizmo", checked)      # remembered across files/sessions
 
     def set_show_skeleton(self, show):
         self.gl_widget.set_show_skeleton(show)
@@ -1899,11 +1968,14 @@ class Ifrit3DWidget(QWidget):
             return
         self._refresh_after_frame_count_change()
 
-    def _ask_frame_range(self, title, src_anim_id, nb_frames):
+    def _ask_frame_range(self, title, src_anim_id, nb_frames, default_start=0, default_end=None,
+                         describe=None):
         """Modal dialog with a Start and an End spin box; returns (start, end) inclusive, or None.
 
         End is kept >= Start (its minimum follows Start), so the pair is always a valid range;
-        Start == End copies a single frame. A live label shows the resulting frame count.
+        Start == End is a single frame. A live label shows the resulting frame count. `default_start`
+        /`default_end` seed the boxes (default_end None = last frame); `describe(nb)` overrides the
+        label text (default: "copies N frames into a new animation").
         """
         dialog = QDialog(self)
         dialog.setWindowTitle(title)
@@ -1913,10 +1985,10 @@ class Ifrit3DWidget(QWidget):
         last = nb_frames - 1
         start_spin = QSpinBox()
         start_spin.setRange(0, last)
-        start_spin.setValue(0)
+        start_spin.setValue(max(0, min(last, default_start)))
         end_spin = QSpinBox()
         end_spin.setRange(0, last)
-        end_spin.setValue(last)
+        end_spin.setValue(last if default_end is None else max(0, min(last, default_end)))
         form.addRow(f"Start frame (0..{last}):", start_spin)
         form.addRow(f"End frame (0..{last}):", end_spin)
         layout.addLayout(form)
@@ -1924,14 +1996,18 @@ class Ifrit3DWidget(QWidget):
         count_label = QLabel()
         layout.addWidget(count_label)
 
+        if describe is None:
+            def describe(nb):
+                return (f"Copies {nb} frame{'s' if nb != 1 else ''} of animation "
+                        f"{src_anim_id} into a new animation.")
+
         def refresh(_=None):
             # End can never fall below Start (same value = a single frame)
             if end_spin.value() < start_spin.value():
                 end_spin.setValue(start_spin.value())
             end_spin.setMinimum(start_spin.value())
             nb = end_spin.value() - start_spin.value() + 1
-            count_label.setText(f"Copies {nb} frame{'s' if nb != 1 else ''} of animation "
-                                f"{src_anim_id} into a new animation.")
+            count_label.setText(describe(nb))
 
         start_spin.valueChanged.connect(refresh)
         end_spin.valueChanged.connect(refresh)
@@ -1946,6 +2022,118 @@ class Ifrit3DWidget(QWidget):
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return None
         return start_spin.value(), end_spin.value()
+
+    # ── Frame navigation / clipboard / interpolation (see the 3D-tab shortcut legend) ──
+    def goto_previous_frame(self):
+        """Left arrow: show the previous frame, wrapping from the first frame to the last."""
+        n = self.get_max_frames()
+        if n <= 0:
+            return
+        self._pause_playback()
+        self.set_frame((self.current_frame - 1) % n)
+
+    def goto_next_frame(self):
+        """Right arrow: show the next frame, wrapping from the last frame back to the first."""
+        n = self.get_max_frames()
+        if n <= 0:
+            return
+        self._pause_playback()
+        self.set_frame((self.current_frame + 1) % n)
+
+    def copy_frames(self):
+        """Ctrl+C: copy a chosen range of frames of the current animation to the frame clipboard
+        (default = just the current frame). Paste them with Ctrl+V."""
+        title = "Copy frames"
+        anim = self._current_animation_or_warn(title)
+        if anim is None:
+            return
+        self._pause_playback()
+        nb_frames = len(anim.frames)
+        rng = self._ask_frame_range(
+            title, self.current_anim_id, nb_frames,
+            default_start=self.current_frame, default_end=self.current_frame,
+            describe=lambda nb: f"Copies {nb} frame{'s' if nb != 1 else ''} to the clipboard "
+                                f"(paste with Ctrl+V).")
+        if rng is None:
+            return
+        start, end = rng
+        self._frame_clipboard = self.ifrit_manager.copy_animation_frames(
+            self.current_anim_id, start, end)
+
+    def paste_frames(self):
+        """Ctrl+V: insert the copied frames right after the current frame."""
+        title = "Paste frames"
+        if not self._frame_clipboard:
+            QMessageBox.information(self, title, "The frame clipboard is empty. Copy frames first "
+                                                 "with Ctrl+C.")
+            return
+        if self._current_animation_or_warn(title) is None:
+            return
+        self._pause_playback()
+        try:
+            nb = self.ifrit_manager.paste_animation_frames(
+                self.current_anim_id, self.current_frame, self._frame_clipboard)
+        except ValueError as e:
+            QMessageBox.warning(self, title, f"Cannot paste: {e}.")
+            return
+        if nb:
+            self.current_frame += 1          # land on the first pasted frame
+            self._refresh_after_frame_count_change()
+
+    def _interpolate_between_frames(self):
+        """Frames menu: insert new frames interpolating between two chosen frames."""
+        title = "Interpolate between two frames"
+        anim = self._current_animation_or_warn(title)
+        if anim is None:
+            return
+        nb_frames = len(anim.frames)
+        if nb_frames < 2:
+            QMessageBox.information(self, title, "The animation needs at least two frames.")
+            return
+        rng = self._ask_frame_range(
+            title, self.current_anim_id, nb_frames,
+            default_start=self.current_frame,
+            default_end=min(nb_frames - 1, self.current_frame + 1),
+            describe=lambda nb: "Frames to morph between (the in-betweens are inserted after the "
+                                "first one).")
+        if rng is None:
+            return
+        frame_a, frame_b = rng
+        count, ok = QInputDialog.getInt(
+            self, title, "How many frames to insert between them?", 1, 1, 254, 1)
+        if not ok:
+            return
+        self._pause_playback()
+        try:
+            nb = self.ifrit_manager.interpolate_between_frames(
+                self.current_anim_id, frame_a, frame_b, count)
+        except ValueError as e:
+            QMessageBox.warning(self, title, f"Cannot interpolate: {e}.")
+            return
+        if nb:
+            self.current_frame = frame_a + 1   # land on the first inserted frame
+            self._refresh_after_frame_count_change()
+
+    def _make_shortcut_legend(self):
+        """A one-line, always-visible legend of every 3D-view shortcut (each is also in a tooltip
+        or menu). Keeps the keys discoverable without opening a help dialog."""
+        legend = QLabel(
+            "Shortcuts:  ←/→ prev/next frame  ·  Ctrl+C/Ctrl+V copy/paste frames  ·  "
+            "B add child bone  ·  Shift+drag bone = length  ·  Ctrl+click = select several bones "
+            "to compare/edit  ·  drag gizmo ring = rotate")
+        legend.setWordWrap(True)
+        legend.setStyleSheet("color:#bbb; background:#2a2a2f; font-size:10px; padding:3px 6px;")
+        legend.setToolTip(
+            "3D view shortcuts:\n"
+            "  ←  /  →   : previous / next frame (wraps around)\n"
+            "  Ctrl+C    : copy a frame range (default: the current frame)\n"
+            "  Ctrl+V    : paste the copied frames after the current frame\n"
+            "  B         : add a child bone to the selected joint\n"
+            "  Shift+drag a bone : change its length\n"
+            "  Ctrl+click a joint: add/remove it from the multi-bone selection (compare + edit)\n"
+            "  drag a gizmo ring  : rotate the selected bone\n"
+            "  Ctrl+Z / Ctrl+Shift+Z : undo / redo")
+        return legend
 
     def _new_animation_from_range(self):
         """Create a new animation from a chosen frame range of the current one."""
@@ -2045,6 +2233,7 @@ class Ifrit3DWidget(QWidget):
             self.bone_editor.set_animation_info(self.current_anim_id, frame)
             self._update_bone_editor_selection()
             self._update_frame_position_selection()
+            self._update_bone_compare()
 
     def _update_bone_editor_animation(self):
         """Update bone editor when animation changes"""
@@ -2052,6 +2241,7 @@ class Ifrit3DWidget(QWidget):
             self.bone_editor.set_animation_info(self.current_anim_id, self.current_frame)
             self._update_bone_editor_selection()
             self._update_frame_position_selection()
+            self._update_bone_compare()
 
     def _update_bone_editor_selection(self):
         """Update the bone editor with current bone data"""
@@ -2103,24 +2293,80 @@ class Ifrit3DWidget(QWidget):
 
 
     def _on_bone_selected(self, bone_id: int):
-        """Handle bone selection from editor"""
-        self._update_bone_editor_selection()
-        self.gl_widget.set_selected_bone(bone_id)
+        """Bone chosen via the editor's spin box: a plain single-bone selection (clears any
+        Ctrl+click multi-selection)."""
+        self._selected_bone_ids = [bone_id]
+        self._apply_bone_selection()
+
+    def _on_bone_picked_in_view(self, bone_id: int, additive: bool = False):
+        """A joint was clicked in the 3D view. Ctrl+click (additive) adds/removes the bone from the
+        comparison selection; a plain click selects it alone. The last-clicked bone is the primary
+        one (drag/gizmo target and the single-bone form)."""
+        if not hasattr(self, 'bone_editor') or not self.bone_editor.isEnabled():
+            return
+        ids = list(self._selected_bone_ids)
+        if additive:
+            if bone_id in ids:
+                ids.remove(bone_id)      # toggle a bone back off
+            else:
+                ids.append(bone_id)
+            if not ids:
+                ids = [bone_id]          # never end up with nothing selected
+        else:
+            ids = [bone_id]
+        self._selected_bone_ids = ids
+        primary = ids[-1]
+        # Point the spin at the primary WITHOUT retriggering _on_bone_selected (which would drop
+        # the multi-selection); we apply the whole selection ourselves below.
+        self.bone_editor.bone_spin.blockSignals(True)
+        self.bone_editor.bone_spin.setValue(primary)
+        self.bone_editor.bone_spin.blockSignals(False)
+        self._apply_bone_selection()
+
+    def _apply_bone_selection(self):
+        """Refresh everything that follows the current bone selection: the single-bone form (for the
+        primary bone), the multi-bone comparison tables, the 3D highlight and the gizmo."""
+        if not self._selected_bone_ids:
+            return
+        self._update_bone_editor_selection()     # single-bone form reads bone_spin (= primary)
+        self._update_frame_position_selection()
+        self._update_bone_compare()
+        self.gl_widget.set_selected_bones(self._selected_bone_ids)
         self._update_gizmo()
         self.gl_widget.update()
 
-    def _on_bone_picked_in_view(self, bone_id: int):
-        """A joint was clicked in the 3D view: select that bone in the editor"""
-        if not hasattr(self, 'bone_editor') or not self.bone_editor.isEnabled():
+    def _update_bone_compare(self):
+        """Build the per-bone rows (length/parent + this frame's rotation/scale) for every selected
+        bone and hand them to the editor's comparison tables."""
+        if not hasattr(self, 'bone_editor'):
             return
-        if self.bone_editor.bone_spin.value() != bone_id:
-            # Triggers the whole selection chain (editor refresh + highlight)
-            self.bone_editor.bone_spin.setValue(bone_id)
-        else:
-            self.gl_widget.set_selected_bone(bone_id)
+        enemy = self.ifrit_manager.enemy
+        if not enemy.bone_data:
+            self.bone_editor.set_compare_bones([])
+            return
+        bones = enemy.bone_data.bones
+        frame = None
+        anims = enemy.animation_data.animations
+        if (self.current_anim_id < len(anims)
+                and self.current_frame < len(anims[self.current_anim_id].frames)):
+            frame = anims[self.current_anim_id].frames[self.current_frame]
+        rows = []
+        for bid in self._selected_bone_ids:
+            if not (0 <= bid < len(bones)):
+                continue
+            bone = bones[bid]
+            rot = (0.0, 0.0, 0.0)
+            scale = (1.0, 1.0, 1.0)
+            if frame is not None and bid < len(frame.rotation_vector_data):
+                rot = tuple(frame.rotation_vector_data[bid][a].get_rotate_deg() for a in range(3))
+            if frame is not None and bid < len(frame.rotation_vector_data_supp):
+                scale = frame.rotation_vector_data_supp[bid].get_scale_factors()
+            rows.append({'bone': bid, 'length': bone.get_size(), 'parent': bone.parent_id,
+                         'rot': rot, 'scale': scale})
+        self.bone_editor.set_compare_bones(rows)
 
     def _on_bone_length_dragged(self, total_delta: float):
-        """Ctrl+drag in the 3D view: change the selected bone's length.
+        """Shift+drag in the 3D view: change the selected bone's length.
         During the drag only the displayed frame is recomputed (cheap); the
         full rebuild of every animation happens once, on release."""
         if self.animating or not hasattr(self, 'bone_editor'):
@@ -2163,7 +2409,7 @@ class Ifrit3DWidget(QWidget):
         self._length_drag_start_size = None
         if not hasattr(self, 'bone_editor') or not self.ifrit_manager.enemy.bone_data:
             return
-        # A real Ctrl+drag (start_size was set on the first drag move) commits a bone-length change
+        # A real Shift+drag (start_size was set on the first drag move) commits a bone-length change
         # here -> dirty. Emit BEFORE the commit/refresh below so that even if one of them raises
         # (Qt would swallow the exception in this slot), the edit is still recorded. This is the
         # in-view drag path; it goes through none of the other connected edit signals.

@@ -733,6 +733,20 @@ class GeometrySection:
             offset += obj_vert_count
         return result
 
+    def get_triangles_hidden_mask(self, include_hidden=False):
+        """Bool per entry, aligned 1:1 with get_triangles_with_uv(include_hidden): True where the
+        face is hidden (TPage 0xFE00, never drawn by the engine). Lets a caller count only the
+        drawn faces for the packet-buffer budget independently of whether the viewer is currently
+        displaying hidden faces."""
+        return [tri.is_hidden() for obj in self.object_data for tri in obj.triangles
+                if include_hidden or not tri.is_hidden()]
+
+    def get_quads_hidden_mask(self, include_hidden=False):
+        """Bool per entry, aligned 1:1 with get_quads_with_uv(include_hidden). See
+        get_triangles_hidden_mask."""
+        return [quad.is_hidden() for obj in self.object_data for quad in obj.quads
+                if include_hidden or not quad.is_hidden()]
+
     def get_colored_triangles_with_color(self, include_hidden=False):
         """Returns list of (vertex_indices_tuple, rgb_norm_tuple, depth_bias) for every colored triangle."""
         result = []

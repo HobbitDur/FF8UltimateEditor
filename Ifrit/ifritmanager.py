@@ -1348,6 +1348,63 @@ class IfritManager:
         anim._recompute_frame_storage_types()
         return True
 
+    def copy_animation_frames(self, anim_id: int, start_frame: int, end_frame: int) -> list:
+        """Return deep copies of frames [start_frame, end_frame] (inclusive) of anim_id, ready to
+        be pasted into any animation. Frames hold ABSOLUTE per-bone rotations, so a copied range
+        plays identically wherever it is pasted. Returns [] for an empty/invalid range."""
+        self._ensure_matrices()
+        anim: Animation = self.enemy.animation_data.animations[anim_id]
+        low, high = sorted((int(start_frame), int(end_frame)))
+        low = max(0, low)
+        high = min(len(anim.frames) - 1, high)
+        if high < low:
+            return []
+        return [copy.deepcopy(anim.frames[i]) for i in range(low, high + 1)]
+
+    def paste_animation_frames(self, anim_id: int, at_index: int, frames: list) -> int:
+        """Insert copies of `frames` right after frame at_index of anim_id (at the very start if
+        at_index < 0), and return how many were inserted. Copies are taken so the same clipboard
+        can be pasted repeatedly. Clamped to the format's 255-frame limit; raises ValueError only
+        when the animation is already full."""
+        self._ensure_matrices()
+        anim: Animation = self.enemy.animation_data.animations[anim_id]
+        if not frames:
+            return 0
+        room = MAX_ANIMATION_FRAME - len(anim.frames)
+        if room <= 0:
+            raise ValueError(f"the animation already has the maximum of {MAX_ANIMATION_FRAME} frames")
+        to_insert = [copy.deepcopy(f) for f in frames[:room]]
+        pos = max(0, min(len(anim.frames), int(at_index) + 1))
+        anim.frames[pos:pos] = to_insert
+        # The inserted frames and the one after them are delta-encoded from new predecessors.
+        anim._recompute_frame_storage_types()
+        return len(to_insert)
+
+    def interpolate_between_frames(self, anim_id: int, frame_a: int, frame_b: int,
+                                   nb_insert: int) -> int:
+        """Insert nb_insert new frames interpolating from frame_a's pose to frame_b's pose, placed
+        right after frame_a, and return how many were inserted. Interpolation matches the FPS
+        converter (shortest-way rotations, linear position/scale). Raises ValueError on a bad range
+        or if it would exceed the 255-frame limit."""
+        self._ensure_matrices()
+        anim: Animation = self.enemy.animation_data.animations[anim_id]
+        n = len(anim.frames)
+        if not (0 <= frame_a < n and 0 <= frame_b < n):
+            raise ValueError("frame out of range")
+        if nb_insert <= 0:
+            return 0
+        if n + nb_insert > MAX_ANIMATION_FRAME:
+            raise ValueError(f"that would exceed the maximum of {MAX_ANIMATION_FRAME} frames")
+        bones = self.enemy.bone_data.bones
+        frame_from = anim.frames[frame_a]
+        frame_to = anim.frames[frame_b]
+        new_frames = [Animation._create_frame_between(frame_from, frame_to, k / (nb_insert + 1), bones)
+                      for k in range(1, nb_insert + 1)]
+        pos = frame_a + 1
+        anim.frames[pos:pos] = new_frames
+        anim._recompute_frame_storage_types()
+        return len(new_frames)
+
     def delete_animation(self, anim_id: int) -> bool:
         """Remove animation anim_id entirely, keeping at least one animation. Returns True if a
         removal happened.

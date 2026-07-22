@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import (QFormLayout, QSpinBox, QDoubleSpinBox,
                              QPushButton, QVBoxLayout, QHBoxLayout,
-                             QLabel, QWidget, QTabWidget, QCheckBox)
+                             QLabel, QWidget, QTabWidget, QCheckBox,
+                             QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy)
 from PyQt6.QtCore import Qt, pyqtSignal
 
 
@@ -26,6 +27,7 @@ class AnimEditor(QWidget):
         self.current_frame = 0
         self.bone_count = 0
         self._updating = False  # Flag to prevent recursive updates
+        self._compare_bone_ids = []   # bones currently shown in the multi-select comparison tables
 
         # Track expanded state
         self.expanded = False
@@ -138,6 +140,11 @@ class AnimEditor(QWidget):
         static_layout.addRow("Skeleton:", skeleton_btn_layout)
 
         static_layout.addRow("", QLabel("(Bones properties affect all animations)"))
+
+        # Multi-select comparison (Ctrl+click several bones): an editable row per selected bone.
+        # Hidden while a single bone is selected (the form above is used then).
+        self.static_compare = self._new_compare_table(["Bone", "Length", "Parent"])
+        static_layout.addRow(self.static_compare)
 
         self.tabs.addTab(self.static_tab, "Bones Properties")
 
@@ -260,6 +267,10 @@ class AnimEditor(QWidget):
         #self.anim_info.setStyleSheet("color:#aaa; font-size:10px;")
         anim_layout.addRow("", self.anim_info)
 
+        # Multi-select comparison: an editable Rot X/Y/Z row per selected bone (this frame).
+        self.rot_compare = self._new_compare_table(["Bone", "Rot X", "Rot Y", "Rot Z"])
+        anim_layout.addRow(self.rot_compare)
+
         self.tabs.addTab(self.anim_tab, "Bones rotation per frame")
 
         # Bone Scale Tab (squash-and-stretch)
@@ -297,6 +308,10 @@ class AnimEditor(QWidget):
                                  "Hierarchical: children inherit their parent's scale.\n"
                                  "Only applied on frames with the mode bit set.")
         scale_layout.addRow("", self.scale_info)
+
+        # Multi-select comparison: an editable Scale X/Y/Z row per selected bone (this frame).
+        self.scale_compare = self._new_compare_table(["Bone", "Scale X", "Scale Y", "Scale Z"])
+        scale_layout.addRow(self.scale_compare)
 
         self.tabs.addTab(self.scale_tab, "Bones scale per frame")
 
@@ -411,6 +426,160 @@ class AnimEditor(QWidget):
                 raw_label.setText(f"raw: {raw:d}")
         finally:
             self._updating = False
+
+    # ── Multi-bone comparison (Ctrl+click selects several bones) ──────────
+    def _new_compare_table(self, headers):
+        """A hidden, per-bone editable table shown only when >1 bone is selected. Sized to just fit
+        its content: columns shrink to their content (last one fills the leftover), and the height
+        is fixed to the rows after each fill (no reserved empty area, no vertical scrollbar)."""
+        table = QTableWidget(0, len(headers))
+        table.setHorizontalHeaderLabels(headers)
+        table.verticalHeader().setVisible(False)
+        header = table.horizontalHeader()
+        # Every column shrinks to its content (id + spin boxes) instead of stretching to fill the
+        # row, and the table's width/height are pinned to that content after each fill - so the
+        # table takes only the space it needs rather than the whole panel width.
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setStretchLastSection(False)
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)  # cells hold spin widgets
+        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
+        table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        table.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        table.setVisible(False)
+        return table
+
+    @staticmethod
+    def _fit_table_height(table):
+        """Fix the table's height to exactly its header + rows, so it takes only the space it needs."""
+        height = table.horizontalHeader().height() + 2 * table.frameWidth()
+        for row in range(table.rowCount()):
+            height += table.rowHeight(row)
+        table.setFixedHeight(height)
+
+    @staticmethod
+    def _fit_table_width(table):
+        """Cap the table's width to its columns' content, so compact columns (Bone/Length/Parent...)
+        don't leave a big empty area stretched across the panel."""
+        width = table.verticalHeader().width() + 2 * table.frameWidth()
+        for col in range(table.columnCount()):
+            width += table.columnWidth(col)
+        table.setMaximumWidth(width)
+
+    @staticmethod
+    def _bone_id_item(bone_id):
+        item = QTableWidgetItem(str(bone_id))
+        item.setFlags(Qt.ItemFlag.ItemIsEnabled)   # read-only label cell
+        return item
+
+    @staticmethod
+    def _compare_dspin(lo, hi, decimals, step, value):
+        spin = QDoubleSpinBox()
+        spin.setRange(lo, hi)
+        spin.setDecimals(decimals)
+        spin.setSingleStep(step)
+        spin.setValue(value)
+        return spin
+
+    def set_compare_bones(self, rows):
+        """rows = list of per-bone dicts (in Ctrl-click order), each:
+            {'bone', 'length', 'parent', 'rot':(x,y,z), 'scale':(x,y,z)}.
+        With <=1 bone the tables stay hidden (the single-bone form above is used); with several,
+        each tab shows an editable row per bone so they can be compared and edited together."""
+        multi = len(rows) > 1
+        for table in (self.static_compare, self.rot_compare, self.scale_compare):
+            table.setVisible(multi)
+        if not multi:
+            self._compare_bone_ids = []
+            return
+        ids = [row['bone'] for row in rows]
+        self._updating = True
+        try:
+            if ids != self._compare_bone_ids:
+                # Bone set changed: rebuild the rows (creates the per-cell spin widgets).
+                self._compare_bone_ids = ids
+                self._fill_static_compare(rows)
+                self._fill_axis_compare(self.rot_compare, rows, 'rot', -360, 360, 3, 0.1,
+                                        self._emit_compare_rotation)
+                self._fill_axis_compare(self.scale_compare, rows, 'scale', 0.01, 32.0, 4, 0.01,
+                                        self._emit_compare_scale)
+                for table in (self.static_compare, self.rot_compare, self.scale_compare):
+                    table.resizeColumnsToContents()
+                    self._fit_table_height(table)
+                    self._fit_table_width(table)
+            else:
+                # Same bones (e.g. a frame step or a live drag): only refresh the values, so the
+                # widgets are not torn down and rebuilt on every tick.
+                for r, row in enumerate(rows):
+                    self._set_cell_value(self.static_compare, r, 1, row['length'])
+                    self._set_cell_value(self.static_compare, r, 2,
+                                         row['parent'] if row['parent'] != 0xFFFF else -1)
+                    for axis in range(3):
+                        self._set_cell_value(self.rot_compare, r, 1 + axis, row['rot'][axis])
+                        self._set_cell_value(self.scale_compare, r, 1 + axis, row['scale'][axis])
+        finally:
+            self._updating = False
+
+    @staticmethod
+    def _set_cell_value(table, row, col, value):
+        widget = table.cellWidget(row, col)
+        if widget is not None:
+            widget.setValue(value)
+
+    def _fill_static_compare(self, rows):
+        table = self.static_compare
+        table.setRowCount(len(rows))
+        max_bone = self.bone_spin.maximum()
+        for r, row in enumerate(rows):
+            bone = row['bone']
+            table.setItem(r, 0, self._bone_id_item(bone))
+            length = self._compare_dspin(-100, 100, 3, 0.1, row['length'])
+            length.valueChanged.connect(lambda v, b=bone: self._emit_compare_length(b, v))
+            table.setCellWidget(r, 1, length)
+            parent = QSpinBox()
+            parent.setRange(-1, max_bone)
+            parent.setValue(row['parent'] if row['parent'] != 0xFFFF else -1)
+            parent.valueChanged.connect(lambda v, b=bone: self._emit_compare_parent(b, v))
+            table.setCellWidget(r, 2, parent)
+
+    def _fill_axis_compare(self, table, rows, key, lo, hi, decimals, step, emit_fn):
+        table.setRowCount(len(rows))
+        for r, row in enumerate(rows):
+            bone = row['bone']
+            table.setItem(r, 0, self._bone_id_item(bone))
+            for axis in range(3):
+                spin = self._compare_dspin(lo, hi, decimals, step, row[key][axis])
+                spin.valueChanged.connect(lambda v, t=table, rr=r, b=bone: emit_fn(t, rr, b))
+                table.setCellWidget(r, 1 + axis, spin)
+
+    def _emit_compare_length(self, bone, value):
+        if not self._updating:
+            self.bone_length_changed.emit(bone, value)
+
+    def _emit_compare_parent(self, bone, value):
+        if not self._updating:
+            self.bone_parent_changed.emit(bone, value if value != -1 else 0xFFFF)
+
+    def _emit_compare_rotation(self, table, row, bone):
+        if self._updating:
+            return
+        rx = table.cellWidget(row, 1).value()
+        ry = table.cellWidget(row, 2).value()
+        rz = table.cellWidget(row, 3).value()
+        self.animation_rotation_changed.emit(self.current_anim_id, self.current_frame, bone, rx, ry, rz)
+
+    def _emit_compare_scale(self, table, row, bone):
+        if self._updating:
+            return
+        # A non-neutral scale only shows with the frame's mode bit set - enable it like the form does.
+        if not self.scale_mode_cb.isChecked():
+            self.scale_mode_cb.blockSignals(True)
+            self.scale_mode_cb.setChecked(True)
+            self.scale_mode_cb.blockSignals(False)
+            self.frame_scale_mode_changed.emit(self.current_anim_id, self.current_frame, True)
+        sx = table.cellWidget(row, 1).value()
+        sy = table.cellWidget(row, 2).value()
+        sz = table.cellWidget(row, 3).value()
+        self.animation_scale_changed.emit(self.current_anim_id, self.current_frame, bone, sx, sy, sz)
 
     def set_animation_info(self, anim_id: int, frame_id: int):
         """Update animation info display"""

@@ -40,11 +40,12 @@ class FF8OpenGLWidget(QOpenGLWidget):
     # atlas. Larger than any real raw id (tex_id_1 & 0xFF).
     _WEAPON_TEX_OFFSET = 1 << 16
     # Direct manipulation of the skeleton in the view
-    bone_picked = pyqtSignal(int)              # a joint was clicked: bone id
-    bone_length_dragged = pyqtSignal(float)    # Ctrl+drag: total world-unit delta since drag start
+    bone_picked = pyqtSignal(int, bool)        # a joint was clicked: (bone id, additive=Ctrl held)
+    bone_length_dragged = pyqtSignal(float)    # Shift+drag: total world-unit delta since drag start
     bone_length_drag_finished = pyqtSignal()
     bone_rotation_dragged = pyqtSignal(int, float)  # ring drag: (axis 0/1/2, total degrees)
     bone_rotation_drag_finished = pyqtSignal()
+    drawn_count_changed = pyqtSignal(int)      # primitives actually submitted this frame changed
 
     PICK_RADIUS_PX = 14   # click-to-joint tolerance, in logical pixels
     CLICK_SLOP_PX = 4     # press/release within this distance = click, beyond = orbit drag
@@ -64,6 +65,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.skeleton_lines = []  # List of (start, end) or None
         self.bone_parents = []  # List of parent IDs for each bone
         self.selected_bone = -1
+        # Multi-selection (Ctrl+click adds bones to compare). selected_bone stays the "primary"
+        # (last-clicked) one, always the last entry of this list; all of them are highlighted.
+        self.selected_bones = []
         self.model_translation = [0.0, 0.0, 0.0]
         self.reference_position  = [0.0, 0.0, 0.0]
         self.triangles = []
@@ -77,6 +81,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # mask recomputed once per paint (see _build_cull_topology / _recompute_cull_masks).
         self._tri_idx3 = self._tri_mult = self._quad_idx3 = self._quad_mult = None
         self._tri_cull_mask = self._quad_cull_mask = None
+        self._tri_hidden = self._quad_hidden = None   # per-entry hidden flags for the budget count
+        self._last_drawn_count = -1        # last emitted drawn_primitive_count (change detection)
         # Colored (untextured) primitives — battle stages and magic models
         self.colored_triangles = []  # list of (indices_tuple, rgb_tuple, depth_bias)
         self.colored_quads = []      # list of (indices_tuple, rgb_tuple, depth_bias)
@@ -87,12 +93,18 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self._textures_dirty = False
         super().__init__(parent)
 
+        # Take keyboard focus when clicked, so the 3D-tab shortcuts (←/→ frame, Ctrl+C/V, B...)
+        # fire after clicking in the model view - and so clicking the view releases the focus a
+        # spin box (anim id, frame...) was holding. ClickFocus: focus on click, not on Tab.
+        self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+
         # Skeleton edit cheat-sheet, shown in the view corner while the
         # skeleton is displayed (a plain child widget floats over the GL view)
         self._skeleton_help = QLabel(
             "Click joint: select bone\n"
+            "Ctrl+click: select several bones\n"
             "Drag ring: rotate bone (X/Y/Z)\n"
-            "Ctrl+Drag: bone length\n"
+            "Shift+Drag: bone length\n"
             "B: add child bone", self)
         self._skeleton_help.setStyleSheet(
             "background: rgba(20, 20, 30, 170); color: #ddd;"
@@ -283,6 +295,34 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self._quad_cull_mask = self._cull_mask_for(getattr(self, '_quad_idx3', None),
                                                    getattr(self, '_quad_mult', None), mode)
 
+    def set_budget_hidden_masks(self, tri_hidden, quad_hidden):
+        """Per-entry hidden flags aligned with the current triangles_uv / quads_uv lists (from
+        GeometrySection.get_*_hidden_mask). drawn_primitive_count() subtracts these so the budget
+        always excludes engine-hidden faces even while the viewer is displaying them."""
+        self._tri_hidden = np.asarray(tri_hidden, dtype=bool) if tri_hidden else None
+        self._quad_hidden = np.asarray(quad_hidden, dtype=bool) if quad_hidden else None
+        self._last_drawn_count = -1        # force the next paint to re-emit
+
+    def drawn_primitive_count(self):
+        """Primitives actually submitted for the CURRENT view: textured triangles + quads that
+        survive backface culling AND are not engine-hidden, plus colored faces. Mirrors what the
+        PSX engine writes into its per-frame packet buffer - it culls back-faces (GTE NCLIP) before
+        adding a polygon to the ordering table and never draws 0xFE00-hidden faces, so raw geometry
+        counts overstate the real per-frame cost. Hidden exclusion is unconditional (independent of
+        the 'show hidden faces' display toggle)."""
+        def visible(cull, hidden, lst):
+            if not lst:
+                return 0
+            n = len(lst)
+            drop = np.zeros(n, dtype=bool) if cull is None else cull.copy()
+            if hidden is not None and len(hidden) == n:
+                drop |= hidden
+            return int((~drop).sum())
+        return (visible(self._tri_cull_mask, self._tri_hidden, getattr(self, 'triangles_uv', None))
+                + visible(self._quad_cull_mask, self._quad_hidden, getattr(self, 'quads_uv', None))
+                + len(getattr(self, 'colored_triangles', []) or [])
+                + len(getattr(self, 'colored_quads', []) or []))
+
     def set_colored_triangles(self, data: list):
         """data: list of (indices_tuple, rgb_tuple, depth_bias) — flat-colored faces"""
         self.colored_triangles = data
@@ -311,6 +351,14 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
     def set_selected_bone(self, bone_index: int):
         self.selected_bone = bone_index
+        self.selected_bones = [bone_index] if bone_index >= 0 else []
+        self.update()
+
+    def set_selected_bones(self, bone_indices: list):
+        """Set the whole highlighted selection at once (Ctrl+click multi-select). The primary bone
+        (drag/gizmo target) is the last one in the list."""
+        self.selected_bones = [b for b in bone_indices if b >= 0]
+        self.selected_bone = self.selected_bones[-1] if self.selected_bones else -1
         self.update()
 
     def set_vertices(self, vertices: list):
@@ -462,6 +510,12 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # One vectorized backface-cull pass for the whole model (per posed frame + camera),
         # instead of a per-face numpy normal inside each draw loop - the 3D-lag fix.
         self._recompute_cull_masks()
+        # Tell the info bar how many primitives actually survive culling this frame (only when it
+        # changes - a static pose emits nothing; rotating/animating updates the budget readout).
+        drawn = self.drawn_primitive_count()
+        if drawn != self._last_drawn_count:
+            self._last_drawn_count = drawn
+            self.drawn_count_changed.emit(drawn)
 
         if self.show_axis:
             self.draw_axis()
@@ -851,28 +905,35 @@ class FF8OpenGLWidget(QOpenGLWidget):
                                 glDisable(GL_BLEND)
                                 break
 
-        # Highlight the selected bone's end joint in bright red
-        if 0 <= self.selected_bone < len(self.skeleton_lines):
-            selected_line = self.skeleton_lines[self.selected_bone]
-            if selected_line is not None:
-                start, end = selected_line
+        # Highlight every selected bone's end joint. The primary (last-clicked, drag/gizmo target)
+        # is bright red; the other Ctrl-selected bones are orange, so the comparison target stands
+        # out from the bones merely being compared alongside it.
+        for sel in (self.selected_bones or ([self.selected_bone] if self.selected_bone >= 0 else [])):
+            if not (0 <= sel < len(self.skeleton_lines)):
+                continue
+            selected_line = self.skeleton_lines[sel]
+            if selected_line is None:
+                continue
+            start, end = selected_line
+            is_primary = (sel == self.selected_bone)
+            r, g, b = (1.0, 0.2, 0.2) if is_primary else (1.0, 0.6, 0.1)
 
-                # Draw larger red dot at the end point (child joint)
-                glPointSize(12.0)
-                glColor3f(1.0, 0.2, 0.2)
-                glBegin(GL_POINTS)
-                glVertex3f(end[0], end[1], end[2])
-                glEnd()
+            # Draw larger dot at the end point (child joint)
+            glPointSize(12.0 if is_primary else 10.0)
+            glColor3f(r, g, b)
+            glBegin(GL_POINTS)
+            glVertex3f(end[0], end[1], end[2])
+            glEnd()
 
-                # Add glow effect for selected bone
-                glEnable(GL_BLEND)
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-                glPointSize(18.0)
-                glColor4f(1.0, 0.2, 0.2, 0.5)
-                glBegin(GL_POINTS)
-                glVertex3f(end[0], end[1], end[2])
-                glEnd()
-                glDisable(GL_BLEND)
+            # Add glow effect
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glPointSize(18.0 if is_primary else 15.0)
+            glColor4f(r, g, b, 0.5)
+            glBegin(GL_POINTS)
+            glVertex3f(end[0], end[1], end[2])
+            glEnd()
+            glDisable(GL_BLEND)
 
         # Also highlight the line(s) where selected bone is the parent
         if hasattr(self, 'bone_parents') and 0 <= self.selected_bone < len(self.bone_parents):
@@ -1254,7 +1315,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
         return None
 
     def _start_length_drag(self, x, y):
-        """Begin a Ctrl+drag that changes the selected bone's length. Movement
+        """Begin a Shift+drag that changes the selected bone's length. Movement
         along the bone's screen direction = longer, against it = shorter."""
         direction = self._selected_bone_axis_screen_dir()
         if direction is None:
@@ -1267,12 +1328,14 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.last_mouse_y = y
 
     def mousePressEvent(self, event):
+        self.setFocus(Qt.FocusReason.MouseFocusReason)   # clicking the view takes keyboard focus
         pos = event.position()
         if event.button() == Qt.MouseButton.LeftButton:
             self._press_pos = (pos.x(), pos.y())
             # Root bones have no line of their own but do have a length (it
-            # places their children), so any valid selection can be dragged
-            if (event.modifiers() & Qt.KeyboardModifier.ControlModifier
+            # places their children), so any valid selection can be dragged.
+            # Shift+drag changes bone length (Ctrl is reserved for multi-select).
+            if (event.modifiers() & Qt.KeyboardModifier.ShiftModifier
                     and self.show_skeleton and self.is_edit_allowed()
                     and 0 <= self.selected_bone < len(self.skeleton_lines)):
                 self._start_length_drag(pos.x(), pos.y())
@@ -1342,7 +1405,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
                 if dx * dx + dy * dy <= self.CLICK_SLOP_PX ** 2:
                     bone_id = self._pick_joint(event.position().x(), event.position().y())
                     if bone_id >= 0:
-                        self.bone_picked.emit(bone_id)
+                        additive = bool(event.modifiers() & Qt.KeyboardModifier.ControlModifier)
+                        self.bone_picked.emit(bone_id, additive)
             self._press_pos = None
             self.left_button_down = False
         elif event.button() == Qt.MouseButton.RightButton:
