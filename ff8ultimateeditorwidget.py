@@ -309,6 +309,14 @@ class FF8UltimateEditorWidget(QWidget):
         self._save_shortcut = QShortcut(QKeySequence.StandardKey.Save, self)
         self._save_shortcut.activated.connect(self._file_toolbar.save_button.click)
 
+        # One global Ctrl+Z / Ctrl+Shift+Z (window-level, so it fires whatever child has focus and
+        # overrides a focused spin/text field's own field-undo). Routed to the active tool's
+        # undo()/redo() - a no-op for tools that don't implement them yet.
+        self._undo_shortcut = QShortcut(QKeySequence.StandardKey.Undo, self)
+        self._undo_shortcut.activated.connect(lambda: self._route_to_active_tool("undo"))
+        self._redo_shortcut = QShortcut(QKeySequence.StandardKey.Redo, self)
+        self._redo_shortcut.activated.connect(lambda: self._route_to_active_tool("redo"))
+
         # Show a "*" in the window title whenever the active tool has something to save.
         self._file_toolbar.save_state_changed.connect(self._update_title_save_marker)
         self._update_title_save_marker(self._file_toolbar.save_button.isEnabled())
@@ -390,6 +398,14 @@ class FF8UltimateEditorWidget(QWidget):
     def _update_title_save_marker(self, has_unsaved):
         """Prefix the window title with '*' while the active tool has something to save."""
         self.setWindowTitle(f"*{self._base_title}" if has_unsaved else self._base_title)
+
+    def _route_to_active_tool(self, method_name):
+        """Call method_name() on the currently shown tool if it has one (Ctrl+Z/Ctrl+Shift+Z ->
+        undo/redo). No-op for tools that don't implement it."""
+        tool = self.tool_stack.currentWidget()
+        fn = getattr(tool, method_name, None)
+        if callable(fn):
+            fn()
 
     def _view_mmag_entry_in_zone(self, entry_index):
         """Switch to the Zone tool and select an mmag.bin entry, requested from the Piet tool."""

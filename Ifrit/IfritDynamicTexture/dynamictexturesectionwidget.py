@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap, QColor
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QLabel, QGroupBox, QSplitter, QComboBox, QHBoxLayout, QPushButton
 
@@ -10,6 +10,11 @@ from Ifrit.IfritDynamicTexture.texturepreviewwidget import TexturePreviewWidget
 
 class DynamicTextureSectionWidget(QWidget):
     """Widget for managing DynamicTextureSection (dynamic texture animations)"""
+
+    # Emitted on a real data edit (entry field changed / entry added / removed). All three already
+    # mutate enemy.dynamic_texture_data in place, so the model is live; this just lets the host pane
+    # dirty the file + record an undo step. Navigation (texture/entry/frame selection) does NOT fire.
+    data_edited = pyqtSignal()
 
     def __init__(self, ifrit_manager: IfritManager, parent=None):
         super().__init__(parent)
@@ -267,6 +272,7 @@ class DynamicTextureSectionWidget(QWidget):
 
         self._update_frame_selector()
         self._update_rectangles()
+        self.data_edited.emit()   # entry data changed (live in enemy.dynamic_texture_data)
 
     def _on_rectangle_clicked(self, entry_idx: int, frame_idx: int):
         if entry_idx >= 0 and frame_idx >= 0:
@@ -299,6 +305,7 @@ class DynamicTextureSectionWidget(QWidget):
         # Select the newly added entry
         entries = self._get_entries_for_current_texture()
         self.entry_combo.setCurrentIndex(len(entries) - 1)
+        self.data_edited.emit()   # entry added to enemy.dynamic_texture_data
 
     def _remove_current_entry(self):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
@@ -322,6 +329,7 @@ class DynamicTextureSectionWidget(QWidget):
 
             self._update_frame_selector()
             self._update_rectangles()
+            self.data_edited.emit()   # entry removed from enemy.dynamic_texture_data
 
     def load_file(self, file_path: str):
         # Reset state

@@ -370,7 +370,13 @@ class MonsterAnalyser:
 
         raw_data_to_write.extend(self.section_raw_data[section_position])
 
-    def write_data_to_file(self, game_data: GameData, dat_path):
+    def get_bytes(self, game_data: GameData) -> bytearray:
+        """Serialize the whole enemy to its .dat byte stream - exactly what gets written to disk.
+
+        Split out of write_data_to_file so callers that need the bytes WITHOUT touching disk (undo
+        snapshots) reuse the one true save encoding. Has the same side effects a save does: it
+        re-expands the animation if it was freed and refreshes some section_raw_data entries from
+        the live model, leaving the enemy self-consistent."""
         # Saving re-encodes the animation from the expanded objects (animation_data.to_binary),
         # so a file whose animation was freed to save RAM must be re-expanded first. No-op unless
         # it was freed.
@@ -505,10 +511,12 @@ class MonsterAnalyser:
         self.section_raw_data[0][self.header_data['nb_section']*header_file_data['size'] :self.header_data['nb_section']*header_file_data['size']+ header_file_data['size']] = file_size.to_bytes(
             header_pos_data['size'], header_file_data['byteorder'])
         raw_data_to_write[0:len(self.section_raw_data[0])] = self.section_raw_data[0]
-    
-        # Write back on file
+        return raw_data_to_write
+
+    def write_data_to_file(self, game_data: GameData, dat_path):
+        """Serialize (get_bytes) and write the enemy to `dat_path`."""
         with open(dat_path, "wb") as f:
-            f.write(raw_data_to_write)
+            f.write(self.get_bytes(game_data))
 
     def __get_raw_data_from_game_data(self, sect_nb: int, sect_data: dict):
         sect_offset = self.header_data['section_pos'][sect_nb]

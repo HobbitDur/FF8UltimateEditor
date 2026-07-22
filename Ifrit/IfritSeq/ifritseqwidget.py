@@ -1,7 +1,7 @@
 import os
 import xml.etree.ElementTree as ET
 
-from PyQt6.QtCore import QSize, QSettings
+from PyQt6.QtCore import QSize, QSettings, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog,
                              QHBoxLayout, QMessageBox, QLabel, QComboBox, QDialog,
@@ -15,6 +15,10 @@ from Ifrit.IfritSeq.seqcommandwidget import build_op_code_model
 
 
 class IfritSeqWidget(QWidget):
+    # A structural change to the sequences (a whole sequence added) that touches the widgets but not
+    # the model until save. The host pane connects this to its edit detection so it dirties the file
+    # and records an undo step - a plain "Add sequence" button click otherwise reaches neither.
+    data_edited = pyqtSignal()
     ADD_LINE_SELECTOR_ITEMS = ["Condition", "Command"]
     # Same pattern as IfritAI's expert modes, minus Raw-code which has no meaning here:
     # every view shows this sequence's translation next to it except the raw hex one.
@@ -191,9 +195,19 @@ class IfritSeqWidget(QWidget):
                                game_data=self.ifrit_manager.game_data,
                                op_code_model=self.__op_code_model)
         seq_widget.set_view(view)
+        # Write straight to the in-memory monster on every edit (connected AFTER construction so the
+        # initial populate doesn't count). The code view already compiles live into the hex source
+        # of truth, so getByteData() is always current.
+        seq_widget.data_changed.connect(self.__on_seq_data_changed)
         self.seq_data_widget.append(seq_widget)
         self.main_vertical_layout.addWidget(seq_widget)
         return seq_widget
+
+    def __on_seq_data_changed(self):
+        """A sequence changed: fold all sequences into enemy.seq_animation_data now (not deferred to
+        Save) and tell the host pane so it dirties the file and records an undo step."""
+        self.__save_file()
+        self.data_edited.emit()
 
     def __add_trailing_button(self):
         next_id = max((widget.getId() for widget in self.seq_data_widget), default=0) + 1
@@ -213,6 +227,7 @@ class IfritSeqWidget(QWidget):
         self.add_sequence_button = None
         self.__add_seq_widget(bytearray(SeqWidget.DEFAULT_NEW_SEQUENCE), next_id, view)
         self.__add_trailing_button()
+        self.__on_seq_data_changed()   # sync the new sequence into enemy + dirty + undo-snapshot
 
     def __change_expert(self):
         expert_chosen = self.expert_selector.currentIndex()

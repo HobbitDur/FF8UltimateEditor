@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QSizePolicy
 )
 from Common.fileregistry import FileRegistry
+from Common.undo import UndoStack
 from FF8GameData.dat.monsteranalyser import GarbageFileError
 from FF8GameData.dat.animloopdetector import find_character_weapon_file_list
 from Ifrit.IfritAI.ifritaiwidget import IfritAIWidget
@@ -102,6 +103,7 @@ class IfritFilePane(QWidget):
     3D GL build), and stay built afterwards."""
 
     dirty_changed = pyqtSignal()   # emitted when this file first becomes edited-but-unsaved
+    edited = pyqtSignal()          # emitted on EVERY real edit (drives undo snapshots)
 
     def __init__(self, ifrit_manager: IfritManager, path: str, settings: QSettings,
                  icon_path="Resources", weapon_provider=None):
@@ -127,7 +129,13 @@ class IfritFilePane(QWidget):
         # ── Editor widgets (each bound to THIS pane's manager) ───────────
         self._ai_widget = IfritAIWidget(settings, ifrit_manager, icon_path=icon_path)
         self._seq_widget = IfritSeqWidget(ifrit_manager, icon_path=icon_path)
+        # Seq writes straight to the in-memory monster on every edit and self-reports via data_edited
+        # (so it is excluded from the generic widget scan in _connect_dirty_signals). The pane just
+        # dirties + records an undo step; nothing is deferred to Save for it.
+        self._seq_widget.data_edited.connect(self._on_edit)
         self._camera_widget = IfritCameraSeqWidget(ifrit_manager, icon_path=icon_path)
+        # Camera also writes the model live and self-reports (same as seq).
+        self._camera_widget.data_edited.connect(self._on_edit)
         self._3d_widget = Ifrit3DWidget(ifrit_manager, show_controls=True)
         self._texture_widget = IfritTextureWidget(ifrit_manager)
         self._xlsx_widget = IfritXlsxWidget(ifrit_manager)
@@ -135,6 +143,8 @@ class IfritFilePane(QWidget):
         self._name_widget = IfritMonsterNameWidget(ifrit_manager)
         self._battle_text_widget = IfritBattleTextWidget(ifrit_manager)
         self._dynamic_texture_widget = IfritDynamicTextureWidget(ifrit_manager)
+        # Dyntex also mutates the model live and self-reports (same as seq/camera).
+        self._dynamic_texture_widget.data_edited.connect(self._on_edit)
 
         # Name/Stat/StatExcel all edit section 7 -> one "Stat" tab. Battle text edits section 8
         # like AI -> lives under "AI".
@@ -316,9 +326,11 @@ class IfritFilePane(QWidget):
 
     def _connect_dirty_signals(self):
         """(Re)connect edit signals of the currently-built editable controls. Only user-interaction
-        signals are used; the 3D widget and camera/texture PREVIEW panels are excluded (their
-        controls move on a timer - 3D is wired separately, previews are read-only)."""
-        excluded_roots = [self._3d_widget]
+        signals are used; the 3D widget, the seq widget and camera/texture PREVIEW panels are
+        excluded - 3D and seq report their own edits (model_edited / data_edited), previews are
+        read-only, and all move controls on a timer."""
+        excluded_roots = [self._3d_widget, self._seq_widget, self._camera_widget,
+                          self._dynamic_texture_widget]
         excluded_roots += self._tabs.findChildren(CameraPreviewPanel)
         excluded_roots += self._tabs.findChildren(TexturePreviewWidget)
         for widget in self._tabs.findChildren(QWidget):
@@ -351,15 +363,10 @@ class IfritFilePane(QWidget):
         return False
 
     def _edited_key_for(self, sender):
-        # AI / Stat / Name / 3D edit the enemy live, so they carry no commit key.
+        # AI / Stat / Name / 3D / Seq / Camera / DynTex edit the enemy live, so no commit key. Only
+        # the Static Texture inject is still deferred.
         if sender is None:
             return None
-        if self._is_descendant(sender, self._seq_widget):
-            return 'seq'
-        if self._is_descendant(sender, self._camera_widget):
-            return 'camera'
-        if self._is_descendant(sender, self._dynamic_texture_widget):
-            return 'dyntex'
         if self._is_descendant(sender, self._texture_widget):
             return 'texture'
         return None
@@ -373,21 +380,21 @@ class IfritFilePane(QWidget):
         if not self.dirty:
             self.dirty = True
             self.dirty_changed.emit()
+        self.edited.emit()   # every real edit (not just the first) -> drives undo snapshots
 
     # ── Commit / save ─────────────────────────────────────────────────
 
-    def _commit(self):
+    def _commit(self, include_texture=True):
         """Fold the edited commit-needing widgets into this file's enemy bytes. Only the sections
-        actually changed are folded - the Static Texture inject (VincentTim) in particular runs
-        only when a texture was edited. Stat/Name/AI/3D edit the enemy live, so nothing to do."""
+        actually changed are folded. Stat/Name/AI/3D edit the enemy live, so nothing to do for them.
+
+        include_texture=False skips the Static Texture inject (VincentTim - too heavy to run on
+        every undo snapshot); the seq/camera/dyntex folds are cheap in-memory serializations, so an
+        undo snapshot folds those to capture their widget-held edits before serializing the model."""
         et = self.ifrit_manager.enemy.entity_type
-        if 'seq' in self._edited and et in _SEQ_SECTION_BY_ENTITY:
-            self._seq_widget.save_file()
-        if 'camera' in self._edited and et in _CAMERA_SECTION_BY_ENTITY:
-            self._camera_widget.save_file()
-        if 'dyntex' in self._edited and et in _DYNAMIC_TEXTURE_SECTION_BY_ENTITY:
-            self._dynamic_texture_widget.save_file()
-        if 'texture' in self._edited and et == EntityType.MONSTER:
+        # Seq/Camera/DynTex/Stat/Name/AI/3D all write the model live - only the Static Texture inject
+        # (VincentTim) is still deferred, because it is far too heavy to run on every edit/snapshot.
+        if include_texture and 'texture' in self._edited and et == EntityType.MONSTER:
             self._texture_widget.save_file()
 
     def save(self):
@@ -439,6 +446,19 @@ class IfritMonsterWidget(QWidget):
         self._files = []
         self._active_index = -1
         self._stack_size_policies = {}     # id(widget) -> real QSizePolicy, see _shrink_stack_to_current
+
+        # ── Undo/redo (snapshot based, one stack per open file - see Common/undo.py) ──
+        # Every edit fires the pane's `edited` signal; a short debounce collapses a burst (typing,
+        # dragging) into ONE undo step, then a snapshot of the file's saved bytes is recorded.
+        self._undo_debounce = QTimer(self)
+        self._undo_debounce.setSingleShot(True)
+        self._undo_debounce.setInterval(500)
+        self._undo_debounce.timeout.connect(self._commit_active_undo)
+        self._restoring_undo = False       # guard: applying an undo must not record a new edit
+        # NOTE: no QShortcut here. Ctrl+Z/Ctrl+Shift+Z are bound ONCE at the main window (like
+        # Ctrl+S) and routed to the active tool's undo()/redo() - a window-level shortcut fires
+        # regardless of which child has focus and takes precedence over a focused spin/text field's
+        # own field-level undo, which a sub-widget shortcut does not.
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -729,6 +749,7 @@ class IfritMonsterWidget(QWidget):
             return
         if index == self._active_index and self._files[index]['pane'] is not None:
             return                                     # already the shown file
+        self._flush_pending_undo()                     # snapshot pending edits of the file being left
         if not self._confirm_leave_current():          # unsaved-edits guard -> keep list on current
             self._file_list.blockSignals(True)
             self._file_list.setCurrentRow(self._active_index)
@@ -826,7 +847,9 @@ class IfritMonsterWidget(QWidget):
         pane = IfritFilePane(manager, f['path'], self.settings, self.icon_path,
                              weapon_provider=self._weapon_options_for)
         pane.dirty_changed.connect(lambda entry=f: self._on_pane_dirty(entry))
+        pane.edited.connect(self._on_active_edited)          # every edit -> (debounced) undo snapshot
         f['pane'] = pane
+        self._ensure_undo_stack(f)   # baseline = the just-loaded (== on-disk) model; kept across rebuilds
         self._stack.addWidget(pane)
         # Adding a widget doesn't make it current (no currentChanged fires), so keep the stack's
         # min-size floored to the shown page (see _shrink_stack_to_current).
@@ -931,6 +954,99 @@ class IfritMonsterWidget(QWidget):
             self._refresh_list_item(self._files.index(entry))
             self.file_bindings_changed.emit()
 
+    # ── Undo / redo (snapshot based, one stack per file) ──────────────
+    def _ensure_undo_stack(self, f):
+        """Create this file's undo stack once, its baseline captured from the current (just-loaded,
+        so == on-disk) model. Kept in the file entry so it survives pane rebuilds (an undo rebuilds
+        the pane). Blank placeholder files carry no stack."""
+        if f.get('undo') is None and not f.get('blank'):
+            f['undo'] = UndoStack(capture=lambda ff=f: self._undo_capture(ff),
+                                  restore=lambda snap, ff=f: self._undo_restore(ff, snap))
+
+    def _undo_capture(self, f):
+        """Snapshot = the file's serialized .dat bytes (the exact save encoding, a few tens of KB -
+        far smaller than the ~30 MB expanded animation, so keeping many is cheap).
+
+        Every editor now writes the model live except the Static Texture inject (VincentTim, too
+        heavy per snapshot), so the fold is a cheap no-op here today; kept (skipping texture) so a
+        future deferred section is captured automatically."""
+        pane = f.get('pane')
+        if pane is not None:
+            pane._commit(include_texture=False)
+        return bytes(f['manager'].enemy.get_bytes(self._game_data))
+
+    def _undo_restore(self, f, snapshot):
+        """Re-parse a snapshot back into the file's model and rebuild its pane so every tab shows
+        the restored state. Re-parsing via a scratch file reuses the whole, proven load path."""
+        self._restoring_undo = True
+        try:
+            manager = f['manager']
+            scratch = manager.temp_path / "_undo_restore.dat"
+            scratch.parent.mkdir(parents=True, exist_ok=True)
+            with open(scratch, "wb") as fh:
+                fh.write(snapshot)
+            try:
+                enemy = manager.parse_file(str(scratch), free_animation=True)
+            finally:
+                try:
+                    os.remove(scratch)
+                except OSError:
+                    pass
+            manager.set_active_enemy(
+                enemy, f['path'],
+                textures=(list(manager.texture_data), manager.texture_black_is_transparent))
+            index = self._files.index(f)
+            if index == self._active_index:      # rebuild the shown pane from the restored model
+                self._destroy_current_pane()
+                self._active_index = -1
+                self._activate_index(index, show_busy=False)
+            pane = f.get('pane')
+            if pane is not None:                 # dirty follows whether we're back at the saved state
+                pane.dirty = f['undo'].is_dirty()
+            self._refresh_list_item(index)
+            self.file_bindings_changed.emit()
+        finally:
+            self._restoring_undo = False
+
+    def _on_active_edited(self):
+        """A real edit happened in the shown pane: (re)start the debounce so a burst collapses to
+        one undo step. Ignored while an undo restore is repopulating (that must not record edits)."""
+        if not self._restoring_undo:
+            self._undo_debounce.start()
+
+    def _commit_active_undo(self):
+        """Fold the pending edits of the active file into one undo step (fired by the debounce, and
+        flushed before a file switch / an undo so nothing is lost or mis-attributed)."""
+        if self._restoring_undo or not (0 <= self._active_index < len(self._files)):
+            return
+        stack = self._files[self._active_index].get('undo')
+        if stack is not None:
+            stack.commit()
+
+    def _flush_pending_undo(self):
+        """Commit any not-yet-snapshotted edits now (before switching away from the file)."""
+        if self._undo_debounce.isActive():
+            self._undo_debounce.stop()
+            self._commit_active_undo()
+
+    def undo(self):
+        """Public entry point (main-window Ctrl+Z routes here for the active tool)."""
+        if not (0 <= self._active_index < len(self._files)):
+            return
+        stack = self._files[self._active_index].get('undo')
+        if stack is None:
+            return
+        self._flush_pending_undo()   # make a pending (un-snapshotted) edit undoable first
+        stack.undo()
+
+    def redo(self):
+        """Public entry point (main-window Ctrl+Shift+Z routes here for the active tool)."""
+        if not (0 <= self._active_index < len(self._files)):
+            return
+        stack = self._files[self._active_index].get('undo')
+        if stack is not None:
+            stack.redo()
+
     # ── Saving ────────────────────────────────────────────────────────
 
     def _save_file(self):
@@ -938,6 +1054,7 @@ class IfritMonsterWidget(QWidget):
         with a built pane can be dirty - a file never opened was never edited."""
         if not self._files:
             return
+        self._flush_pending_undo()
         saved = 0
         for index, f in enumerate(self._files):
             pane = f['pane']
@@ -949,6 +1066,8 @@ class IfritMonsterWidget(QWidget):
                 QMessageBox.warning(self, "Save failed",
                                     f"Could not save {os.path.basename(f['path'])}:\n{e}")
                 continue
+            if f.get('undo') is not None:
+                f['undo'].mark_saved()   # the current state is now on disk -> undo back to it = clean
             self._refresh_list_item(index)
             saved += 1
         if saved:

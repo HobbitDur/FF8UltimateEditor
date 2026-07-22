@@ -20,7 +20,7 @@ per-entity sections, so there is nothing extra to edit for characters.
 import os
 import xml.etree.ElementTree as ET
 
-from PyQt6.QtCore import Qt, QSize, QSettings, QTimer
+from PyQt6.QtCore import Qt, QSize, QSettings, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
                              QScrollArea, QGroupBox, QSpinBox, QGridLayout, QCheckBox,
@@ -177,11 +177,17 @@ class CollapsibleSection(QWidget):
 class IfritCameraSeqWidget(QWidget):
     """Camera animation collection editor for a monster's section 6."""
 
+    # Emitted after any edit is written into enemy.section_raw_data (value change or added
+    # animation). The host pane dirties the file and records an undo step from it (camera writes
+    # the model live, like Stat/3D/Seq - nothing deferred to Save).
+    data_edited = pyqtSignal()
+
     def __init__(self, ifrit_manager: IfritManager, icon_path="Resources"):
         QWidget.__init__(self)
         self.ifrit_manager = ifrit_manager
         self.icon_path = icon_path
         self.settings = QSettings("FF8UltimateEditor", "FF8UltimateEditor")
+        self._populating = False      # True while (re)building spins: their setValue must not count
         self._collection = None       # the parsed CameraCollection (a copy we edit)
         self._editable = False        # False for a file with no editable camera section
         self._spin_list = []          # every bound spin box, to refresh the hex view
@@ -448,9 +454,13 @@ class IfritCameraSeqWidget(QWidget):
         self._editable = True
         self._import_xml_button.setEnabled(True)
         self._export_xml_button.setEnabled(True)
-        self.__build()
-        self.__finish_build(collapse_slots=True)  # default: only the animation slots are open
-        self.__refresh_hex()
+        self._populating = True                   # build-time setValue must not count as edits
+        try:
+            self.__build()
+            self.__finish_build(collapse_slots=True)  # default: only the animation slots are open
+            self.__refresh_hex()
+        finally:
+            self._populating = False
 
     def __clear(self):
         self._collection = None
@@ -546,11 +556,16 @@ class IfritCameraSeqWidget(QWidget):
             QMessageBox.warning(self, "Add animation", str(error))
             return
         self._collection = parse_camera_collection(new_data)
-        self.__clear_content()
-        self.__build()
-        self.__finish_build(collapse_slots=False)  # keep slots open so the new one is visible
-        self.__refresh_hex()
+        self._populating = True
+        try:
+            self.__clear_content()
+            self.__build()
+            self.__finish_build(collapse_slots=False)  # keep slots open so the new one is visible
+            self.__refresh_hex()
+        finally:
+            self._populating = False
         self._preview_panel.invalidate()  # the section bytes changed
+        self.__sync_and_notify()          # structural change -> write to enemy live + dirty + undo
 
     def __build_animation(self, animation) -> CollapsibleSection:
         section = CollapsibleSection(f"Animation slot {animation.slot}  "
@@ -647,6 +662,13 @@ class IfritCameraSeqWidget(QWidget):
     def __on_value_changed(self, _value=None):
         if self.hex_view.isVisible():
             self.__refresh_hex()
+        if not self._populating:           # a real user edit (not a build-time setValue)
+            self.__sync_and_notify()
+
+    def __sync_and_notify(self):
+        """Push the edited collection into the in-memory monster now and tell the host pane."""
+        self.save_file()                   # collection.get_bytes() -> enemy.section_raw_data (live)
+        self.data_edited.emit()
 
     def __toggle_hex(self):
         show = self.hex_checkbox.isChecked()
