@@ -23,25 +23,34 @@ its unsaved-changes ``*`` correctly even after undoing back to the saved state.
 class UndoStack:
     def __init__(self, capture, restore, depth=40):
         self._capture = capture       # () -> snapshot
-        self._restore = restore       # (snapshot) -> None (applies + refreshes UI)
+        self._restore = restore       # (snapshot, tag) -> None (applies + refreshes UI)
         self._depth = max(1, depth)
         self._baseline = capture()    # the current committed state
         self._saved = self._baseline  # the state last written to / read from disk
         self._undo = []
         self._redo = []
+        # A `tag` travels with each step: an opaque marker (the Ifrit tools use the edited tab's
+        # index) identifying WHERE the change happened, so undo/redo can bring that spot back into
+        # view and refresh only it. _undo_tags[i] tags the edit that restoring _undo[i] reverts.
+        self._undo_tags = []
+        self._redo_tags = []
 
     # ── edit recording ────────────────────────────────────────────────
-    def commit(self):
+    def commit(self, tag=None):
         """Record that the document changed since the last commit: the previous baseline becomes
-        undoable and the current state becomes the new baseline. A no-op edit (state unchanged) is
-        ignored so a stray trigger does not add an empty undo step."""
+        undoable and the current state becomes the new baseline. `tag` marks where this edit
+        happened (see above). A no-op edit (state unchanged) is ignored so a stray trigger does not
+        add an empty undo step."""
         new_state = self._capture()
         if new_state == self._baseline:
             return
         self._undo.append(self._baseline)
+        self._undo_tags.append(tag)
         if len(self._undo) > self._depth:
             self._undo.pop(0)
+            self._undo_tags.pop(0)
         self._redo.clear()
+        self._redo_tags.clear()
         self._baseline = new_state
 
     def mark_saved(self):
@@ -64,15 +73,19 @@ class UndoStack:
     def undo(self):
         if not self._undo:
             return False
+        tag = self._undo_tags.pop()      # tag of the edit being reverted
         self._redo.append(self._baseline)
+        self._redo_tags.append(tag)      # redoing re-applies that same edit
         self._baseline = self._undo.pop()
-        self._restore(self._baseline)
+        self._restore(self._baseline, tag)
         return True
 
     def redo(self):
         if not self._redo:
             return False
+        tag = self._redo_tags.pop()
         self._undo.append(self._baseline)
+        self._undo_tags.append(tag)
         self._baseline = self._redo.pop()
-        self._restore(self._baseline)
+        self._restore(self._baseline, tag)
         return True

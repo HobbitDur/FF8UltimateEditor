@@ -180,6 +180,69 @@ class MonsterAnalyser:
             print(f"Garbage file {self.origin_file_name}")
             raise GarbageFileError
 
+    def restore_sections_from_snapshot(self, snapshot: bytes, section_numbers, game_data: GameData,
+                                       decompiler: AIDecompiler = None):
+        """Restore the given .dat sections to the state encoded in `snapshot` (a whole .dat byte
+        stream), re-deriving ONLY those sections' parsed form. Used by undo/redo instead of a full
+        re-parse: the animation section alone costs ~0.5 s to parse, so we skip it (and the AI
+        decompile, geometry...) unless that section is actually one of the ones that changed.
+
+        The header (file_raw_data + section_pos) is refreshed from the snapshot and EVERY section's
+        raw bytes are re-sliced (both cheap) - this is required because the per-section analysers
+        read counts/offsets from file_raw_data via the header table, not from section_raw_data. Only
+        the listed sections are then re-analysed (the expensive step). Sections kept raw (camera,
+        sound) and the header need no analysis - refreshing their raw bytes is enough."""
+        self.file_raw_data = bytearray(snapshot)
+        self.__analyze_header_section()          # refresh nb_section / section_pos / entity_type
+        nb = self.header_data['nb_section']
+        pos = self.header_data['section_pos']
+        self.section_raw_data = [bytearray() for _ in range(nb)]
+        for i in range(nb - 1):
+            self.section_raw_data[i] = self.file_raw_data[pos[i]:pos[i + 1]]
+        self.section_raw_data[nb - 1] = self.file_raw_data[pos[nb - 1]:len(self.file_raw_data)]
+        for i in sorted(section_numbers):
+            if 0 <= i < nb:
+                self.reanalyze_section(i, game_data, decompiler)
+
+    def reanalyze_section(self, section_number: int, game_data: GameData, decompiler: AIDecompiler = None):
+        """Re-derive the parsed data of ONE section from its (already-updated) raw bytes in
+        section_raw_data - the whole-file analyse_loaded_data dispatch, restricted to a single
+        section. Used by undo/redo to rebuild only the section a step changed instead of re-parsing
+        the entire file (the animation section alone costs ~0.5 s). Sections kept raw (camera, sound)
+        and the header need no parsed form, so they are a no-op here - updating section_raw_data is
+        enough and their widgets read it directly. Mirrors analyse_loaded_data exactly; keep in sync."""
+        et = self.entity_type
+        n = section_number
+        if et == EntityType.MONSTER:
+            if   n == 1:  self.__analyze_bone_section(1)
+            elif n == 2:  self.__analyze_geometry_section(2)
+            elif n == 3:  self.__analyze_animation_section(3)
+            elif n == 4:  self.__analyze_section_texture_anim(4)
+            elif n == 5:  self.__analyze_sequence_animation(5)
+            elif n == 7:  self.__analyze_info_stat(game_data, 7)
+            elif n == 8:  self.analyze_battle_script_section(game_data, decompiler, 8)
+            elif n == 11: self._analyze_texture_section(11)
+        elif et == EntityType.WEAPON:
+            if   n == 1:  self.__analyze_bone_section(1)
+            elif n == 2:  self.__analyze_geometry_section(2)
+            elif n == 3:  self.__analyze_animation_section(3)
+            elif n == 4:  self.__analyze_sequence_animation(4)
+        elif et == EntityType.CHARACTER:
+            if   n == 1:  self.__analyze_bone_section(1)
+            elif n == 2:  self.__analyze_geometry_section(2)
+            elif n == 3:  self.__analyze_animation_section(3)
+        elif et == EntityType.CHARACTER_NO_WEAPON:
+            if   n == 1:  self.__analyze_bone_section(1)
+            elif n == 2:  self.__analyze_geometry_section(2)
+            elif n == 3:  self.__analyze_animation_section(3)
+            elif n == 6:  self.__analyze_sequence_animation(6)
+        elif et == EntityType.WEAPON_NO_ANIM:
+            if   n == 1:  self.__analyze_geometry_section(1)
+            elif n == 2:  self.__analyze_sequence_animation(2)
+        elif et == EntityType.MONSTER_NO_MODEL:
+            if   n == 1:  self.__analyze_info_stat(game_data, 1)
+            elif n == 2:  self.analyze_battle_script_section(game_data, decompiler, 2)
+
     def prepare_seq_animation(self, raw_data_to_write:bytearray, section_position:int=5):
         # raw_data_to_write.extend(self.section_raw_data[section_position])
         self.section_raw_data[section_position] = bytearray()

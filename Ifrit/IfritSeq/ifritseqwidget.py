@@ -1,7 +1,7 @@
 import os
 import xml.etree.ElementTree as ET
 
-from PyQt6.QtCore import QSize, QSettings, pyqtSignal
+from PyQt6.QtCore import QSize, QSettings, pyqtSignal, QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog,
                              QHBoxLayout, QMessageBox, QLabel, QComboBox, QDialog,
@@ -162,7 +162,10 @@ class IfritSeqWidget(QWidget):
             file_to_load = self.file_dialog.getOpenFileName(parent=self, caption="Search dat file", filter="*.dat")[0]
         if file_to_load:
             self.file_loaded = file_to_load
-            self.clear_lines()
+            # No clear_lines() here: __setup_section_data reuses the sequence widgets whose id+bytes
+            # are unchanged and rebuilds only the ones that differ. On the first load there are none
+            # to reuse (so it builds everything), but on an undo/redo reload only the one edited
+            # sequence is rebuilt - the others (dozens of heavy command rows each) are kept as-is.
             self.__setup_section_data()
         self._export_xml_button.setEnabled(True)
         self._import_xml_button.setEnabled(True)
@@ -186,9 +189,52 @@ class IfritSeqWidget(QWidget):
         # have - line up in order and their "Add" placeholder sits in the right place.
         seq_list = sorted(self.ifrit_manager.enemy.seq_animation_data['seq_animation_data'],
                           key=lambda seq: seq['id'])
+        # Reuse the sequence widgets whose id + bytes are unchanged and rebuild only the ones that
+        # differ, so an undo/redo (which touches a single sequence) rebuilds just that one row block
+        # instead of every sequence - each of which is dozens of heavy command widgets. Keeping the
+        # untouched widgets also keeps the scroll position stable. A first load has nothing to reuse,
+        # so it builds everything exactly as before.
+        vbar = self.scroll_area.verticalScrollBar()
+        scroll_pos = vbar.value()
+        pool = {}
+        for w in self.seq_data_widget:
+            pool.setdefault(w.getId(), []).append(w)
+        if self.add_sequence_button is not None:
+            self.add_sequence_button.setParent(None)
+            self.add_sequence_button.deleteLater()
+            self.add_sequence_button = None
+        old_widgets = self.seq_data_widget
+        for w in old_widgets:                       # detach all; kept ones are re-added in order
+            self.main_vertical_layout.removeWidget(w)
+        self.seq_data_widget = []
         for seq_data in seq_list:
-            self.__add_seq_widget(seq_data['data'], seq_data['id'], view)
+            seq_id = seq_data['id']
+            reuse = None
+            candidates = pool.get(seq_id)
+            if candidates:
+                for w in candidates:
+                    if bytes(w.getByteData()) == bytes(seq_data['data']):
+                        reuse = w
+                        candidates.remove(w)
+                        break
+            if reuse is not None:
+                # Keep the widget as-is: it already shows the current view (a reload never changes
+                # the expert view - __change_expert updates the widgets directly). Do NOT call
+                # set_view here; it would rebuild all of this sequence's command rows, the exact
+                # cost the reuse is meant to avoid.
+                self.seq_data_widget.append(reuse)
+                self.main_vertical_layout.addWidget(reuse)
+            else:
+                self.__add_seq_widget(seq_data['data'], seq_id, view)
+        kept = {id(w) for w in self.seq_data_widget}
+        for w in old_widgets:                       # drop the replaced / removed ones
+            if id(w) not in kept:
+                w.setParent(None)
+                w.deleteLater()
         self.__add_trailing_button()
+        # Restore the scroll after the layout has settled (the rebuilt sequence may have a different
+        # height), so an undo leaves the user looking at the same spot instead of jumping.
+        QTimer.singleShot(0, lambda: vbar.setValue(min(scroll_pos, vbar.maximum())))
 
     def __add_seq_widget(self, data, seq_id, view):
         seq_widget = SeqWidget(data, seq_id, self.ifrit_manager.enemy.entity_type,

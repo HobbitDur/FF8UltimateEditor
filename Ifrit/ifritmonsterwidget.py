@@ -117,6 +117,8 @@ class IfritFilePane(QWidget):
         self._weapon_provider = weapon_provider
         self.dirty = False
         self._edited = set()              # commit-needing sections the user changed (seq/camera/...)
+        self._last_edited_tab_index = None  # which tab the most recent edit happened on (undo focus)
+        self._edited_sections = set()     # .dat section numbers touched since the last undo commit
         self._loading = False             # True while populating widgets: suppresses dirty flagging
         self._dirty_connected = set()     # id()s of widgets already wired for edit detection
         self._loaded_tabs = set()         # tabs already populated (built once, kept)
@@ -199,6 +201,57 @@ class IfritFilePane(QWidget):
 
     def _end_loading(self):
         self._loading = False
+
+    def _section_to_tab_map(self):
+        """Map each editable .dat section number to the tab widget that shows it (entity-type
+        aware), so an undo can invalidate only the tabs whose section actually changed. Sections
+        with no editor tab (header, sounds) are simply absent."""
+        et = self.ifrit_manager.enemy.entity_type
+        m = {}
+        if et in _3D_SECTIONS_BY_ENTITY:                       # skeleton/geometry/animation
+            for s in ((1,) if et == EntityType.WEAPON_NO_ANIM else (1, 2, 3)):
+                m[s] = self._3d_widget
+        if et in _DYNAMIC_TEXTURE_SECTION_BY_ENTITY:
+            m[_DYNAMIC_TEXTURE_SECTION_BY_ENTITY[et]] = self._dynamic_texture_widget
+        if et in _SEQ_SECTION_BY_ENTITY:
+            m[_SEQ_SECTION_BY_ENTITY[et]] = self._seq_widget
+        if et in _CAMERA_SECTION_BY_ENTITY:
+            m[_CAMERA_SECTION_BY_ENTITY[et]] = self._camera_widget
+        if et in _STAT_AI_CAPABLE_ENTITY_TYPES:
+            stat_sec, ai_sec = (1, 2) if et == EntityType.MONSTER_NO_MODEL else (7, 8)
+            m[stat_sec] = self._stat_container
+            m[ai_sec] = self._ai_container
+        if et == EntityType.MONSTER:
+            m[11] = self._texture_widget
+        return m
+
+    def reload_from_model(self, changed_sections=None, focus_tab_index=None):
+        """Refresh the pane from the manager's model after an undo/redo, REUSING every widget instead
+        of tearing the pane down and rebuilding it (which reconstructs all the editors + the 3D GL
+        view + decompiles the AI - ~2 s). Only the tabs whose section actually changed are marked
+        stale (mapped via _section_to_tab_map); the rest keep their widgets untouched. focus_tab_index
+        (the tab the undone edit happened on) is brought to the front and reloaded now; other changed
+        tabs reload lazily the next time they are shown. changed_sections=None means "unknown" and
+        invalidates everything (the safe fallback path). Entity type never changes across an undo, so
+        tab visibility/labels stay valid and are left untouched."""
+        self._loading = True   # suppress dirty flagging while the reload repopulates controls
+        try:
+            if changed_sections is None:
+                self._loaded_tabs = set()          # unknown -> every tab reloads
+            else:
+                sec_map = self._section_to_tab_map()
+                for s in changed_sections:
+                    tab = sec_map.get(s)
+                    if tab is not None:
+                        self._loaded_tabs.discard(tab)   # only the changed tabs reload
+            if (focus_tab_index is not None and 0 <= focus_tab_index < self._tabs.count()
+                    and self._tabs.isTabVisible(focus_tab_index)):
+                self._tabs.setCurrentIndex(focus_tab_index)   # jump to the tab that changed
+            current = self._tabs.currentWidget()
+            if current is not None and current not in self._loaded_tabs:
+                self._ensure_tab_loaded(current)   # reload the focused tab now (if it changed)
+        finally:
+            self._loading = False
 
     def monster_name(self) -> str:
         try:
@@ -292,7 +345,8 @@ class IfritFilePane(QWidget):
         self._loading = True
         try:
             self._load_tab(widget)
-            self._connect_dirty_signals()
+            self._connect_dirty_signals(widget)   # scope to THIS tab: scanning the whole pane's
+                                                  # widget tree on every (re)load costs ~0.2 s
         except Exception as e:
             # One tab failing to load (e.g. a file with no/broken textures) must not stop the
             # monster from opening now that every tab loads on open. Log it and let a later click
@@ -324,16 +378,20 @@ class IfritFilePane(QWidget):
         if model_edited is not None:
             model_edited.connect(self._on_edit)
 
-    def _connect_dirty_signals(self):
+    def _connect_dirty_signals(self, root=None):
         """(Re)connect edit signals of the currently-built editable controls. Only user-interaction
         signals are used; the 3D widget, the seq widget and camera/texture PREVIEW panels are
         excluded - 3D and seq report their own edits (model_edited / data_edited), previews are
-        read-only, and all move controls on a timer."""
+        read-only, and all move controls on a timer.
+
+        `root` scopes the scan to one just-(re)loaded tab; without it the whole pane's widget tree is
+        walked, which is ~0.2 s and pointless when only one tab changed (undo/redo)."""
+        scope = root if root is not None else self._tabs
         excluded_roots = [self._3d_widget, self._seq_widget, self._camera_widget,
                           self._dynamic_texture_widget]
-        excluded_roots += self._tabs.findChildren(CameraPreviewPanel)
-        excluded_roots += self._tabs.findChildren(TexturePreviewWidget)
-        for widget in self._tabs.findChildren(QWidget):
+        excluded_roots += scope.findChildren(CameraPreviewPanel)
+        excluded_roots += scope.findChildren(TexturePreviewWidget)
+        for widget in scope.findChildren(QWidget):
             if id(widget) in self._dirty_connected:
                 continue
             if any(self._is_descendant(widget, root) for root in excluded_roots):
@@ -371,9 +429,18 @@ class IfritFilePane(QWidget):
             return 'texture'
         return None
 
+    def _sections_for_tab(self, tab_widget):
+        """The .dat section number(s) a tab edits (3D spans 1/2/3), inverse of _section_to_tab_map."""
+        return [sec for sec, w in self._section_to_tab_map().items() if w is tab_widget]
+
     def _on_edit(self, *args):
         if self._loading:
             return
+        # The user has to be on a tab to edit it, so the current tab IS the edited one. Record its
+        # section(s) so the undo step knows exactly what to restore (just those, not the whole file),
+        # and its index so Ctrl+Z brings that tab back up.
+        self._last_edited_tab_index = self._tabs.currentIndex()
+        self._edited_sections.update(self._sections_for_tab(self._tabs.currentWidget()))
         key = self._edited_key_for(self.sender())
         if key is not None:
             self._edited.add(key)
@@ -961,7 +1028,7 @@ class IfritMonsterWidget(QWidget):
         the pane). Blank placeholder files carry no stack."""
         if f.get('undo') is None and not f.get('blank'):
             f['undo'] = UndoStack(capture=lambda ff=f: self._undo_capture(ff),
-                                  restore=lambda snap, ff=f: self._undo_restore(ff, snap))
+                                  restore=lambda snap, tag, ff=f: self._undo_restore(ff, snap, tag))
 
     def _undo_capture(self, f):
         """Snapshot = the file's serialized .dat bytes (the exact save encoding, a few tens of KB -
@@ -975,38 +1042,68 @@ class IfritMonsterWidget(QWidget):
             pane._commit(include_texture=False)
         return bytes(f['manager'].enemy.get_bytes(self._game_data))
 
-    def _undo_restore(self, f, snapshot):
-        """Re-parse a snapshot back into the file's model and rebuild its pane so every tab shows
-        the restored state. Re-parsing via a scratch file reuses the whole, proven load path."""
+    def _undo_restore(self, f, snapshot, tag=None):
+        """Restore a snapshot by re-deriving ONLY the sections the step changed. Every tab maps to a
+        .dat section and an undo step is tagged (at commit time) with exactly the section(s) its edit
+        touched, so we slice just those out of the snapshot and re-analyze them (seq/camera/... ~0 ms)
+        instead of re-parsing the whole file - the animation section alone is ~0.5 s, and even
+        serializing the current model to diff it would pay that. `tag` = (edited_sections, focus_tab):
+        the pane jumps to the focus tab, so Ctrl+Z from any tab lands where the change is, and only
+        the changed tabs refresh (widgets reused - a full pane rebuild would reconstruct every editor
+        + the 3D GL view + re-decompile the AI, ~2 s). Falls back to a full re-parse when the tag or
+        the section layout is unusable (should be rare)."""
         self._restoring_undo = True
         try:
             manager = f['manager']
-            scratch = manager.temp_path / "_undo_restore.dat"
-            scratch.parent.mkdir(parents=True, exist_ok=True)
-            with open(scratch, "wb") as fh:
-                fh.write(snapshot)
-            try:
-                enemy = manager.parse_file(str(scratch), free_animation=True)
-            finally:
-                try:
-                    os.remove(scratch)
-                except OSError:
-                    pass
-            manager.set_active_enemy(
-                enemy, f['path'],
-                textures=(list(manager.texture_data), manager.texture_black_is_transparent))
+            enemy = manager.enemy
+            gd = self._game_data
             index = self._files.index(f)
-            if index == self._active_index:      # rebuild the shown pane from the restored model
-                self._destroy_current_pane()
-                self._active_index = -1
-                self._activate_index(index, show_busy=False)
             pane = f.get('pane')
-            if pane is not None:                 # dirty follows whether we're back at the saved state
-                pane.dirty = f['undo'].is_dirty()
+            active = (index == self._active_index)
+            sections, focus = tag if isinstance(tag, tuple) else (None, tag)
+            if not sections:
+                self._undo_restore_full(f, snapshot, focus, active, index)   # safe fallback
+                return
+            try:
+                enemy.restore_sections_from_snapshot(snapshot, sections, gd, manager.decompiler)
+            except Exception as e:
+                print(f"[undo] fast restore failed ({e}); falling back to full re-parse")
+                self._undo_restore_full(f, snapshot, focus, active, index)
+                return
+            if pane is not None:
+                if active:
+                    pane.reload_from_model(changed_sections=sections, focus_tab_index=focus)
+                pane.dirty = f['undo'].is_dirty()   # follows whether we're back at the saved state
             self._refresh_list_item(index)
             self.file_bindings_changed.emit()
         finally:
             self._restoring_undo = False
+
+    def _undo_restore_full(self, f, snapshot, tag, active, index):
+        """Fallback restore: re-parse the whole snapshot (used only if the fast section-diff path
+        cannot match the layout). Kept as the proven, always-correct path."""
+        manager = f['manager']
+        scratch = manager.temp_path / "_undo_restore.dat"
+        scratch.parent.mkdir(parents=True, exist_ok=True)
+        with open(scratch, "wb") as fh:
+            fh.write(snapshot)
+        try:
+            enemy = manager.parse_file(str(scratch), free_animation=True)
+        finally:
+            try:
+                os.remove(scratch)
+            except OSError:
+                pass
+        manager.set_active_enemy(
+            enemy, f['path'],
+            textures=(list(manager.texture_data), manager.texture_black_is_transparent))
+        pane = f.get('pane')
+        if pane is not None:
+            if active:
+                pane.reload_from_model(focus_tab_index=tag)   # changed_sections=None -> reload all
+            pane.dirty = f['undo'].is_dirty()
+        self._refresh_list_item(index)
+        self.file_bindings_changed.emit()
 
     def _on_active_edited(self):
         """A real edit happened in the shown pane: (re)start the debounce so a burst collapses to
@@ -1019,9 +1116,18 @@ class IfritMonsterWidget(QWidget):
         flushed before a file switch / an undo so nothing is lost or mis-attributed)."""
         if self._restoring_undo or not (0 <= self._active_index < len(self._files)):
             return
-        stack = self._files[self._active_index].get('undo')
+        f = self._files[self._active_index]
+        stack = f.get('undo')
         if stack is not None:
-            stack.commit()
+            pane = f.get('pane')
+            # Tag the step with the section(s) the edit touched (so undo restores just those) and the
+            # tab it happened on (so undo/redo jumps back to it). None -> full-restore fallback.
+            if pane is not None:
+                tag = (frozenset(pane._edited_sections), pane._last_edited_tab_index)
+                pane._edited_sections = set()   # start accumulating the next step's sections fresh
+            else:
+                tag = None
+            stack.commit(tag)
 
     def _flush_pending_undo(self):
         """Commit any not-yet-snapshotted edits now (before switching away from the file)."""

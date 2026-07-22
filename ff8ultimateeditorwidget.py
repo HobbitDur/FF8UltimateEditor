@@ -2,10 +2,10 @@ import os
 import sys
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, QSettings
+from PyQt6.QtCore import Qt, QSettings, QEvent
 from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QWidget, QMenuBar, QHBoxLayout, QVBoxLayout, QLabel, QFrame,
-                             QStackedWidget, QSizePolicy)
+                             QStackedWidget, QSizePolicy, QApplication)
 
 from CCGroup.ccgroup import CCGroupWidget
 from Cid.cidwidget import CidWidget
@@ -309,13 +309,13 @@ class FF8UltimateEditorWidget(QWidget):
         self._save_shortcut = QShortcut(QKeySequence.StandardKey.Save, self)
         self._save_shortcut.activated.connect(self._file_toolbar.save_button.click)
 
-        # One global Ctrl+Z / Ctrl+Shift+Z (window-level, so it fires whatever child has focus and
-        # overrides a focused spin/text field's own field-undo). Routed to the active tool's
-        # undo()/redo() - a no-op for tools that don't implement them yet.
-        self._undo_shortcut = QShortcut(QKeySequence.StandardKey.Undo, self)
-        self._undo_shortcut.activated.connect(lambda: self._route_to_active_tool("undo"))
-        self._redo_shortcut = QShortcut(QKeySequence.StandardKey.Redo, self)
-        self._redo_shortcut.activated.connect(lambda: self._route_to_active_tool("redo"))
+        # One global Ctrl+Z / Ctrl+Shift+Z routed to the active tool's undo()/redo() (a no-op for
+        # tools that don't implement them yet). A window-level QShortcut is NOT enough here: a
+        # focused spin/text field (QSpinBox, QLineEdit, QTextEdit...) issues a ShortcutOverride for
+        # Ctrl+Z to claim it for its own field-undo, so the shortcut only fired when focus was on
+        # the bare main window. Instead we filter key presses at the QApplication level - the app
+        # filter sees the KeyPress before the focused field does, so it wins regardless of focus.
+        QApplication.instance().installEventFilter(self)
 
         # Show a "*" in the window title whenever the active tool has something to save.
         self._file_toolbar.save_state_changed.connect(self._update_title_save_marker)
@@ -399,13 +399,63 @@ class FF8UltimateEditorWidget(QWidget):
         """Prefix the window title with '*' while the active tool has something to save."""
         self.setWindowTitle(f"*{self._base_title}" if has_unsaved else self._base_title)
 
+    def eventFilter(self, obj, event):
+        """App-level Ctrl+Z / Ctrl+Shift+Z (and Ctrl+Y) -> active tool undo/redo. Installed on the
+        QApplication so it catches the KeyPress before a focused spin/text field can consume it for
+        its own field-level undo. Left alone while a modal dialog is up (its fields keep their own
+        Ctrl+Z), and only acts when the active tool actually implements the method.
+
+        Text editors (the AI IfritSeq/IfritCode areas, name fields...) get FALL-THROUGH: while the
+        focused text field still has its own undo history, Ctrl+Z does that field's native
+        keystroke undo; only once its history is exhausted (or focus isn't a text field) does it
+        reach the tool's snapshot undo. So typing in the code editor undoes character by character,
+        as in any editor, while structural edits still undo at the tool level."""
+        if event.type() == QEvent.Type.KeyPress and QApplication.activeModalWidget() is None:
+            mods = event.modifiers()
+            if mods & Qt.KeyboardModifier.ControlModifier:
+                key = event.key()
+                shift = bool(mods & Qt.KeyboardModifier.ShiftModifier)
+                redo = key == Qt.Key.Key_Y or (key == Qt.Key.Key_Z and shift)
+                method = "redo" if redo else ("undo" if key == Qt.Key.Key_Z else None)
+                if method is not None:
+                    if self._focused_text_editor_can(redo):
+                        return False   # let the focused text field do its own keystroke undo/redo
+                    if self._route_to_active_tool(method):
+                        return True    # consumed: don't let the focused field also undo
+        return super().eventFilter(obj, event)
+
+    @staticmethod
+    def _focused_text_editor_can(redo):
+        """True if the widget with keyboard focus is a text editor that still has its own undo (or
+        redo) available - meaning Ctrl+Z should go to it, not the tool. Covers QLineEdit and
+        QTextEdit/QPlainTextEdit (also when focus is on their internal viewport)."""
+        from PyQt6.QtWidgets import QLineEdit, QTextEdit, QPlainTextEdit
+        w = QApplication.focusWidget()
+        editor = w
+        while editor is not None and not isinstance(editor, (QLineEdit, QTextEdit, QPlainTextEdit)):
+            editor = editor.parentWidget()
+        if editor is None or not editor.isEnabled() or editor.isReadOnly():
+            return False
+        if isinstance(editor, (QTextEdit, QPlainTextEdit)):
+            if not editor.isUndoRedoEnabled():
+                return False
+            doc = editor.document()
+            return doc.isRedoAvailable() if redo else doc.isUndoAvailable()
+        # QLineEdit
+        try:
+            return editor.isRedoAvailable() if redo else editor.isUndoAvailable()
+        except AttributeError:
+            return True   # older Qt: assume the field can handle its own edit undo
+
     def _route_to_active_tool(self, method_name):
         """Call method_name() on the currently shown tool if it has one (Ctrl+Z/Ctrl+Shift+Z ->
-        undo/redo). No-op for tools that don't implement it."""
+        undo/redo). Returns True if the active tool handled it, False otherwise."""
         tool = self.tool_stack.currentWidget()
         fn = getattr(tool, method_name, None)
         if callable(fn):
             fn()
+            return True
+        return False
 
     def _view_mmag_entry_in_zone(self, entry_index):
         """Switch to the Zone tool and select an mmag.bin entry, requested from the Piet tool."""
