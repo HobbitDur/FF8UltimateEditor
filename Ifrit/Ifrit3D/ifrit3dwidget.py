@@ -7,7 +7,11 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QCheckBox, QPushButton, QSlider, QSpinBox,
                              QListWidget, QListWidgetItem, QInputDialog, QMessageBox,
                              QFileDialog, QComboBox, QToolButton, QMenu, QToolBar,
-                             QSizePolicy, QDialog, QDialogButtonBox, QFormLayout)
+                             QSizePolicy, QDialog, QDialogButtonBox, QFormLayout,
+                             QRadioButton)
+
+from FF8GameData.dat import interpolation
+from SmallWidget.interpolationselector import InterpolationSelector
 
 
 class _PlaybackTimer(QTimer):
@@ -66,7 +70,7 @@ from FF8GameData.dat.animloopdetector import (is_looping, analyse_animation_usag
                                               ANIM_LOOP, ANIM_ONE_SHOT, ANIM_BOTH, ANIM_UNUSED)
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_nb_part_needed,
                                           get_max_frame_for_animation,
-                                          MAX_SLOW_SAFE_ANIMATION_FRAME)
+                                          MAX_ANIMATION_FRAME, MAX_SLOW_SAFE_ANIMATION_FRAME)
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.Ifrit3D.boneeditorwidget import AnimEditor
 from Ifrit.Ifrit3D.ff8openwidget import FF8OpenGLWidget
@@ -445,6 +449,8 @@ class Ifrit3DWidget(QWidget):
             self.bone_editor.reset_skeleton_requested.connect(self._on_reset_skeleton_requested)
             self.bone_editor.animation_rotation_changed.connect(self._on_animation_rotation_changed)
             self.bone_editor.animation_position_changed.connect(self.on_frame_position_changed)
+            self.bone_editor.position_interpolation_requested.connect(
+                self._on_position_interpolation_requested)
             self.bone_editor.animation_scale_changed.connect(self._on_animation_scale_changed)
             self.bone_editor.frame_scale_mode_changed.connect(self._on_frame_scale_mode_changed)
 
@@ -1117,9 +1123,11 @@ class Ifrit3DWidget(QWidget):
         wroot = self._frame_root(wm, wanim, wframe, wnext, self.interp_step)
         broot = self._body_root_now()
         # Root-position units are NOT vertex units: get_pos_world() is raw/204.8 while the posed
-        # vertices/bone matrices live in raw/128, and the two spaces mirror Z. So the delta maps
-        # into vertex space as (x, y, -z) * (204.8/128 = 1.6). Calibrated empirically, not
-        # guessed: sweeping (axis mapping x scale) over full attack swings of Squall/Seifer/
+        # vertices/bone matrices live in raw/128, so the delta is scaled by 204.8/128 = 1.6.
+        # The Z mirror between the two spaces used to be applied here (the delta mapped as
+        # (x, y, -z)); it now lives in PositionType.AXIS_SCALE, where every consumer of the root
+        # position gets it, so all three axes are treated the same here. Calibrated empirically,
+        # not guessed: sweeping (axis mapping x scale) over full attack swings of Squall/Seifer/
         # Irvine (model_scale 175/188/176), this mapping - and only this one - pins a weapon grip
         # vertex to the body's hand bone with a constant offset (std 0.004-0.005 world units over
         # 5-unit swing arcs, all three characters, best k = 1.60 exactly for each). k is
@@ -1127,7 +1135,7 @@ class Ifrit3DWidget(QWidget):
         s = self._ROOT_DELTA_TO_VERTEX_SCALE
         dx = s * (wroot[0] - broot[0])
         dy = s * (wroot[1] - broot[1])
-        dz = -s * (wroot[2] - broot[2])
+        dz = s * (wroot[2] - broot[2])
         return [(x + dx, y + dy, z + dz) for (x, y, z) in verts]
 
     # get_pos_world (raw/204.8) -> vertex/bone-matrix units (raw/128): 204.8/128, exact.
@@ -1541,7 +1549,8 @@ class Ifrit3DWidget(QWidget):
             self.anim_selector.setRange(0, nb - 1)
             self.anim_selector.setToolTip(f"Nb animation: {nb}")
 
-    def _split_animation_to_fit(self, anim_id: int, factor: int, smooth_loop: bool, max_frames: int):
+    def _split_animation_to_fit(self, anim_id: int, factor: int, smooth_loop: bool, max_frames: int,
+                                mode: str = interpolation.LINEAR):
         """Cut an animation too long for the format in parts and chain them in the sequences.
 
         Returns the splitter report, or the reason it could not be done.
@@ -1552,7 +1561,7 @@ class Ifrit3DWidget(QWidget):
                                                enemy.animation_data,
                                                getattr(enemy, 'seq_animation_data', None),
                                                enemy.bone_data.bones,
-                                               anim_id, factor, smooth_loop, max_frames), ""
+                                               anim_id, factor, smooth_loop, max_frames, mode), ""
         except ValueError as e:
             return None, str(e)
 
@@ -1567,22 +1576,40 @@ class Ifrit3DWidget(QWidget):
         return (nb_frames - 1) * factor + 1
 
     def _ask_target_fps(self, title: str):
-        """Ask the frame rate to convert to. Returns None if the user cancels."""
-        dialog = QMessageBox(self)
+        """Ask the frame rate to convert to AND the curve the inserted frames follow, in one
+        popup. Returns (target_fps, interpolation mode), or None if the user cancels."""
+        dialog = QDialog(self)
         dialog.setWindowTitle(title)
-        dialog.setText("Convert to which frame rate?\n\n"
-                       "60 fps: smoothest, but an animation gets 4x its frames and long ones\n"
-                       "can go over the limit of the file format.\n"
-                       "30 fps: 2x the frames only, so it stays under the limit more often.")
-        button_60 = dialog.addButton("60 FPS", QMessageBox.ButtonRole.AcceptRole)
-        button_30 = dialog.addButton("30 FPS", QMessageBox.ButtonRole.AcceptRole)
-        dialog.addButton(QMessageBox.StandardButton.Cancel)
-        dialog.exec()
-        if dialog.clickedButton() == button_60:
-            return 60
-        if dialog.clickedButton() == button_30:
-            return 30
-        return None
+        layout = QVBoxLayout(dialog)
+
+        question = QLabel("Convert to which frame rate?\n\n"
+                          "60 fps: smoothest, but an animation gets 4x its frames and long ones\n"
+                          "can go over the limit of the file format.\n"
+                          "30 fps: 2x the frames only, so it stays under the limit more often.")
+        question.setWordWrap(True)
+        layout.addWidget(question)
+
+        fps_layout = QHBoxLayout()
+        button_30 = QRadioButton("30 FPS")
+        button_60 = QRadioButton("60 FPS")
+        button_30.setChecked(True)
+        fps_layout.addWidget(button_30)
+        fps_layout.addWidget(button_60)
+        fps_layout.addStretch(1)
+        layout.addLayout(fps_layout)
+
+        selector = InterpolationSelector(dialog, interpolation.DEFAULT_FOR_FPS_CONVERSION)
+        layout.addWidget(selector)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                   | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        return (60 if button_60.isChecked() else 30), selector.get_mode()
 
     def _get_animation_kind_dict(self):
         """Which animations of the loaded file loop, read from the sequence section.
@@ -1657,9 +1684,10 @@ class Ifrit3DWidget(QWidget):
             QMessageBox.information(self, title, "The animation needs at least 2 frames to interpolate.")
             return
 
-        target_fps = self._ask_target_fps(title)
-        if target_fps is None:
+        answer = self._ask_target_fps(title)
+        if answer is None:
             return
+        target_fps, interpolation_mode = answer
 
         # The sequence section says whether the game loops this animation, so the wrap
         # from the last frame back to the first one is only smoothed when it is played
@@ -1705,7 +1733,8 @@ class Ifrit3DWidget(QWidget):
                 if answer != QMessageBox.StandardButton.Yes:
                     return
                 report, reason = self._split_animation_to_fit(self.current_anim_id, factor,
-                                                              smooth_loop, max_frames)
+                                                              smooth_loop, max_frames,
+                                                              interpolation_mode)
                 if report is None:
                     QMessageBox.warning(self, title,
                                         f"The animation cannot be split: {reason}.\n\n"
@@ -1737,7 +1766,8 @@ class Ifrit3DWidget(QWidget):
             QMessageBox.warning(self, title, message)
             return
 
-        anim.create_interpolated_frames(self.ifrit_manager.enemy.bone_data.bones, factor, smooth_loop)
+        anim.create_interpolated_frames(self.ifrit_manager.enemy.bone_data.bones, factor,
+                                        smooth_loop, mode=interpolation_mode)
 
         # Refresh the viewer with the new frame count
         self.current_frame = 0
@@ -1783,9 +1813,10 @@ class Ifrit3DWidget(QWidget):
         if answer == QMessageBox.StandardButton.Cancel:
             return
 
-        target_fps = self._ask_target_fps(title)
-        if target_fps is None:
+        answer = self._ask_target_fps(title)
+        if answer is None:
             return
+        target_fps, interpolation_mode = answer
 
         # A looping animation gets its last frame interpolated back to the first one, a
         # one-shot one does not. Without a sequence section, fall back on one answer for
@@ -1848,7 +1879,8 @@ class Ifrit3DWidget(QWidget):
                 smooth_loop = smooth_loop_of(anim_id)
                 nb_frames_before = len(anim_section.animations[anim_id].frames)
                 report, reason = self._split_animation_to_fit(anim_id, factor, smooth_loop,
-                                                              self._get_max_animation_frames(anim_id))
+                                                              self._get_max_animation_frames(anim_id),
+                                                              interpolation_mode)
                 if report is None:
                     split_refused.append((anim_id, reason))
                 else:
@@ -1870,7 +1902,7 @@ class Ifrit3DWidget(QWidget):
             if nb_frames_after > self._get_max_animation_frames(anim_id):
                 skipped_too_long.append((anim_id, nb_frames_before, nb_frames_after))
                 continue
-            anim.create_interpolated_frames(bones, factor, smooth_loop)
+            anim.create_interpolated_frames(bones, factor, smooth_loop, mode=interpolation_mode)
             converted += 1
             nb_smoothed += smooth_loop
 
@@ -2080,6 +2112,139 @@ class Ifrit3DWidget(QWidget):
             self.current_frame += 1          # land on the first pasted frame
             self._refresh_after_frame_count_change()
 
+    def _ask_interpolation_settings(self, title: str, nb_frames: int):
+        """The whole "interpolate between two frames" question in one popup: which two frames, how
+        many to insert between them, and which curve to follow. Returns
+        (frame_a, frame_b, nb_insert, mode) or None if the user cancels.
+
+        Kept separate from _ask_frame_range (which picks a range to COPY): the two frames here are
+        the ends of a morph rather than a slice, so they carry their own wording, the insert count
+        and the curve chooser."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle(title)
+        layout = QVBoxLayout(dialog)
+
+        form = QFormLayout()
+        last = nb_frames - 1
+        start_spin = QSpinBox()
+        start_spin.setRange(0, last)
+        start_spin.setValue(min(last, self.current_frame))
+        end_spin = QSpinBox()
+        end_spin.setRange(0, last)
+        end_spin.setValue(min(last, self.current_frame + 1))
+        count_spin = QSpinBox()
+        count_spin.setRange(1, MAX_ANIMATION_FRAME - 1)
+        count_spin.setValue(1)
+        form.addRow(f"Morph from frame (0..{last}):", start_spin)
+        form.addRow(f"To frame (0..{last}):", end_spin)
+        form.addRow("Frames to insert between them:", count_spin)
+        layout.addLayout(form)
+
+        hint = QLabel("The new frames are inserted right after the first one. The two frames "
+                      "themselves are not modified.")
+        hint.setWordWrap(True)
+        hint.setStyleSheet("color:#999; font-size:10px;")
+        layout.addWidget(hint)
+
+        selector = InterpolationSelector(dialog, interpolation.DEFAULT_FOR_MANUAL_INSERT)
+        layout.addWidget(selector)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                   | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        return start_spin.value(), end_spin.value(), count_spin.value(), selector.get_mode()
+
+    def _ask_position_interpolation(self, title: str, axis_name: str, nb_frames: int):
+        """Which two existing frames to use as keyframes for one position axis, and which curve.
+        Returns (frame_a, frame_b, mode) or None if the user cancels."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle(title)
+        layout = QVBoxLayout(dialog)
+
+        form = QFormLayout()
+        last = nb_frames - 1
+        first_spin = QSpinBox()
+        first_spin.setRange(0, last)
+        first_spin.setValue(min(last, self.current_frame))
+        second_spin = QSpinBox()
+        second_spin.setRange(0, last)
+        second_spin.setValue(last)
+        form.addRow(f"From frame (0..{last}):", first_spin)
+        form.addRow(f"To frame (0..{last}):", second_spin)
+        layout.addLayout(form)
+
+        count_label = QLabel()
+        count_label.setWordWrap(True)
+        count_label.setStyleSheet("color:#999; font-size:10px;")
+        layout.addWidget(count_label)
+
+        def refresh(_=None):
+            low, high = sorted((first_spin.value(), second_spin.value()))
+            nb = max(0, high - low - 1)
+            count_label.setText(
+                f"Rewrites Pos {axis_name} on the {nb} frame(s) between them. Those two frames keep "
+                f"their own value, and no frame is added or removed - the animation keeps its "
+                f"length and its timing."
+                if nb else
+                "Those two frames have nothing between them: pick frames at least two apart.")
+
+        first_spin.valueChanged.connect(refresh)
+        second_spin.valueChanged.connect(refresh)
+        refresh()
+
+        selector = InterpolationSelector(dialog, interpolation.DEFAULT_FOR_MANUAL_INSERT)
+        layout.addWidget(selector)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                   | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        return first_spin.value(), second_spin.value(), selector.get_mode()
+
+    def _on_position_interpolation_requested(self, axis: int):
+        """The per-axis Interpolate button of the Frame Position tab: re-value that ONE axis on
+        the frames between two chosen keyframes, without inserting or removing any frame."""
+        axis_name = ("X", "Y", "Z")[axis]
+        title = f"Interpolate Pos {axis_name} between two frames"
+        anim = self._current_animation_or_warn(title)
+        if anim is None:
+            return
+        nb_frames = len(anim.frames)
+        if nb_frames < 3:
+            QMessageBox.information(self, title,
+                                    "The animation needs at least three frames: two keyframes and "
+                                    "something between them to fill.")
+            return
+        answer = self._ask_position_interpolation(title, axis_name, nb_frames)
+        if answer is None:
+            return
+        frame_a, frame_b, mode = answer
+        self._pause_playback()
+        try:
+            nb_changed = self.ifrit_manager.interpolate_frame_position(
+                self.current_anim_id, axis, frame_a, frame_b, mode=mode)
+        except ValueError as e:
+            QMessageBox.warning(self, title, f"Cannot interpolate: {e}.")
+            return
+        if not nb_changed:
+            return
+        # Same frame count, so only the values on screen need refreshing (no slider range change)
+        self._update_frame_position_selection()
+        self._update_model_translation()
+        self.update_animated_mesh()
+        self.update_skeleton()
+        self.animation_changed.emit()
+        self.model_edited.emit()          # real value change -> the file is dirty
+
     def _interpolate_between_frames(self):
         """Frames menu: insert new frames interpolating between two chosen frames."""
         title = "Interpolate between two frames"
@@ -2090,23 +2255,14 @@ class Ifrit3DWidget(QWidget):
         if nb_frames < 2:
             QMessageBox.information(self, title, "The animation needs at least two frames.")
             return
-        rng = self._ask_frame_range(
-            title, self.current_anim_id, nb_frames,
-            default_start=self.current_frame,
-            default_end=min(nb_frames - 1, self.current_frame + 1),
-            describe=lambda nb: "Frames to morph between (the in-betweens are inserted after the "
-                                "first one).")
-        if rng is None:
+        settings = self._ask_interpolation_settings(title, nb_frames)
+        if settings is None:
             return
-        frame_a, frame_b = rng
-        count, ok = QInputDialog.getInt(
-            self, title, "How many frames to insert between them?", 1, 1, 254, 1)
-        if not ok:
-            return
+        frame_a, frame_b, count, mode = settings
         self._pause_playback()
         try:
             nb = self.ifrit_manager.interpolate_between_frames(
-                self.current_anim_id, frame_a, frame_b, count)
+                self.current_anim_id, frame_a, frame_b, count, mode=mode)
         except ValueError as e:
             QMessageBox.warning(self, title, f"Cannot interpolate: {e}.")
             return

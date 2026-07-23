@@ -9,6 +9,8 @@ from PyQt6.QtWidgets import (QVBoxLayout, QWidget, QScrollArea, QPushButton, QFi
 
 from FF8GameData.dat.commandanalyser import CurrentIfType
 from FF8GameData.dat.sequencecodec import generate_help_html
+from FF8GameData.dat.sequencebake import bake_sequence, background_sequence_id_set
+from FF8GameData.dat.sequencetimeline import format_timeline_html
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.IfritSeq.seqwidget import SeqWidget, VIEW_HEX
 from Ifrit.IfritSeq.seqcommandwidget import build_op_code_model
@@ -236,10 +238,33 @@ class IfritSeqWidget(QWidget):
         # height), so an undo leaves the user looking at the same spot instead of jumping.
         QTimer.singleShot(0, lambda: vbar.setValue(min(scroll_pos, vbar.maximum())))
 
+    # ------------------------------------------------------------------ timeline
+    # Running a sequence needs the whole file, not one sequence: A7 and A2 chain into the
+    # others, and how long a command takes comes from the animation section. SeqWidget has
+    # neither, so the timeline is built here and handed to it as a callable.
+    MAX_TIMELINE_FRAME = 600  # ~20 seconds of battle; an idle stance never ends
+
+    def __timeline_html(self, seq_id, data):
+        """Run sequence `seq_id` - with `data` as its current, possibly unsaved bytes -
+        and return the timeline as HTML."""
+        game_data = self.ifrit_manager.game_data
+        sequence_by_id = {widget.getId(): bytes(widget.getByteData())
+                          for widget in self.seq_data_widget}
+        sequence_by_id[seq_id] = bytes(data)  # the edit being typed, not the saved bytes
+        animation_data = getattr(self.ifrit_manager.enemy, 'animation_data', None)
+        frame_count = [len(animation.frames)
+                       for animation in getattr(animation_data, 'animations', [])]
+        background_id_set = background_sequence_id_set(game_data, sequence_by_id)
+        result = bake_sequence(game_data, sequence_by_id, seq_id, frame_count,
+                               max_frame=self.MAX_TIMELINE_FRAME,
+                               as_background=seq_id in background_id_set)
+        return format_timeline_html(result)
+
     def __add_seq_widget(self, data, seq_id, view):
         seq_widget = SeqWidget(data, seq_id, self.ifrit_manager.enemy.entity_type,
                                game_data=self.ifrit_manager.game_data,
-                               op_code_model=self.__op_code_model)
+                               op_code_model=self.__op_code_model,
+                               timeline_provider=self.__timeline_html)
         seq_widget.set_view(view)
         # Write straight to the in-memory monster on every edit (connected AFTER construction so the
         # initial populate doesn't count). The code view already compiles live into the hex source

@@ -179,7 +179,7 @@ class SeqWidget(QWidget):
     def __init__(self, seq: bytearray, id: int, entity_type: EntityType = EntityType.MONSTER,
                  game_data=None, op_code_model=None, *, vm=None, title: str = None,
                  removable: bool = None, can_be_absent: bool = True,
-                 collapsible: bool = True):
+                 collapsible: bool = True, timeline_provider=None):
         QWidget.__init__(self)
         # Parameters
         self._sequence = seq
@@ -200,6 +200,11 @@ class SeqWidget(QWidget):
         self._can_be_absent = can_be_absent
         self._removable_override = removable
         self._collapsible = collapsible
+        # timeline_provider(seq_id, data) -> html, or None when no timeline can be built.
+        # Running a sequence needs what this widget does not have - the other sequences it
+        # chains into, and how long each animation is - so the host that owns the file
+        # supplies it. Without one there is simply no Timeline button (the camera editor).
+        self._timeline_provider = timeline_provider
         self._syncing = False
         self._view = VIEW_HEX
         self._equalizing_height = False
@@ -349,15 +354,37 @@ class SeqWidget(QWidget):
                                       "other sequences keep their number; it just becomes "
                                       "empty (the game skips it).")
         self.remove_button.clicked.connect(self.__remove_sequence)
+
+        # The timeline: the sequence RUN, frame by frame, instead of read command by
+        # command. It answers what the translation cannot - how long this takes, which
+        # branch the jumps take, which frame the sound lands on. Off by default and only
+        # rebuilt while shown: it is a different question from "what does this command
+        # mean", and a file has dozens of sequences.
+        self.timeline_button = QPushButton("Timeline")
+        self.timeline_button.setCheckable(True)
+        self.timeline_button.setToolTip(
+            "Run this sequence and show what happens on each frame: how long it takes, "
+            "which branch the jumps take, when each sound and effect lands")
+        self.timeline_button.toggled.connect(self.__toggle_timeline)
+        self.timeline_widget = QTextEdit()
+        self.timeline_widget.setReadOnly(True)
+        self.timeline_widget.setMinimumHeight(160)
+        self.timeline_widget.hide()
+
         self.remove_row_layout = remove_row_layout = QHBoxLayout()
         remove_row_layout.setContentsMargins(0, 0, 0, 0)
         remove_row_layout.addWidget(self.remove_button)
+        if self._timeline_provider is not None:
+            remove_row_layout.addWidget(self.timeline_button)
+        else:
+            self.timeline_button.hide()
         remove_row_layout.addStretch(1)
 
         content_outer_layout = QVBoxLayout()
         content_outer_layout.setContentsMargins(0, 0, 0, 0)
         content_outer_layout.addLayout(remove_row_layout)
         content_outer_layout.addLayout(content_layout)
+        content_outer_layout.addWidget(self.timeline_widget)
         # The editor + translation of an existing sequence, hidden when the sequence is
         # not present (offset 0) so an empty slot does not look like an empty editor.
         self.content_widget = QWidget()
@@ -391,6 +418,7 @@ class SeqWidget(QWidget):
 
         self.main_layout.addWidget(self.group_box)
         self.__refresh_translation()
+        self.__refresh_timeline()
         self.set_view(self._view)  # coherent titles/visibility before anyone switches
         self.__apply_presence()    # existing/empty -> editor or add-placeholder
 
@@ -457,6 +485,7 @@ class SeqWidget(QWidget):
         self.__apply_presence()
         self.set_view(self._view)  # rebuild the active view from the new bytes
         self.__refresh_translation()
+        self.__refresh_timeline()
         self.data_changed.emit()
 
     def __remove_sequence(self):
@@ -465,6 +494,7 @@ class SeqWidget(QWidget):
         self._syncing = False
         self.__apply_presence()
         self.__refresh_translation()
+        self.__refresh_timeline()
         self.data_changed.emit()
 
     # ----------------------------------------------------------------- views
@@ -513,6 +543,30 @@ class SeqWidget(QWidget):
         finally:
             self._equalizing_height = False
 
+    # -------------------------------------------------------------- timeline
+    def __toggle_timeline(self, shown: bool):
+        self.timeline_widget.setVisible(shown)
+        self.timeline_button.setText("Timeline ▲" if shown else "Timeline")
+        if shown:
+            self.__refresh_timeline()
+
+    def __refresh_timeline(self):
+        """Re-run the sequence and redraw the timeline. Only while it is shown: the bake
+        follows the sequence into the ones it chains to, which is not work to do on every
+        keystroke of a sequence nobody is looking at."""
+        if self._timeline_provider is None or not self.timeline_button.isChecked():
+            return
+        try:
+            data = self.getByteData()
+        except ValueError:
+            self.timeline_widget.setHtml("<p style='color:gray'>(invalid hex)</p>")
+            return
+        try:
+            html = self._timeline_provider(self._id, bytes(data))
+        except Exception as error:  # a preview must never take the editor down with it
+            html = f"<p style='color:#bf616a'>Timeline unavailable: {error}</p>"
+        self.timeline_widget.setHtml(html)
+
     def __refresh_translation(self):
         if self.vm is None:
             return
@@ -533,6 +587,7 @@ class SeqWidget(QWidget):
         if source_view != VIEW_CODE and self._view == VIEW_CODE:
             self.__rebuild_code()
         self.__refresh_translation()
+        self.__refresh_timeline()
         self.data_changed.emit()
 
     # ------------------------------------------------------------------ rows
@@ -622,4 +677,5 @@ class SeqWidget(QWidget):
         elif self._view == VIEW_CODE:
             self.__rebuild_code()
         self.__refresh_translation()
+        self.__refresh_timeline()
         self.data_changed.emit()

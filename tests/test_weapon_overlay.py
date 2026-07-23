@@ -100,9 +100,12 @@ def test_weapon_is_placed_by_its_own_animation_root(session):
     root bone world translation = model_scale * its OWN per-frame root_pos >> 8. The weapon's
     clip carries a different root track than the body's - that difference IS the in-hand offset
     (no hand-bone attach exists in the files). The viewer applies only the body's root globally,
-    so the merged weapon vertices are shifted by (weapon_root - body_root) mapped into vertex
-    space: (x, y, -z) * 1.6 (get_pos_world is raw/204.8, vertices are raw/128, Z mirrored -
-    calibrated on full attack swings of Squall/Seifer/Irvine, grip-to-hand-bone std 0.004)."""
+    so the merged weapon vertices are shifted by (weapon_root - body_root) * 1.6 (get_pos_world is
+    raw/204.8, vertices are raw/128 - calibrated on full attack swings of Squall/Seifer/Irvine,
+    grip-to-hand-bone std 0.004). The Z mirror between the two spaces is no longer applied here:
+    it lives in PositionType.AXIS_SCALE, so get_pos_world already returns vertex-space signs and
+    the three axes scale alike. The placement is the same either way - only where the sign
+    comes from changed."""
     _, pane = session
     w3d = pane._3d_widget
     w3d.weapon_selector.setCurrentIndex(1)      # make sure the weapon is shown
@@ -119,7 +122,7 @@ def test_weapon_is_placed_by_its_own_animation_root(session):
 
     d = [w - b for w, b in zip(root(wm), root(pane.ifrit_manager))]
     s = w3d._ROOT_DELTA_TO_VERTEX_SCALE
-    expected = [s * d[0], s * d[1], -s * d[2]]
+    expected = [s * d[axis] for axis in range(3)]
     shown = gl.vertices[nb_body:]
     shown_centroid = [sum(v[i] for v in shown) / len(shown) for i in range(3)]
     for axis in range(3):

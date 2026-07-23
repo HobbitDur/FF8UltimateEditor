@@ -247,8 +247,10 @@ class FieldAnimation(Animation):
 
     @staticmethod
     def _create_frame_between(frame_a: AnimationFrame, frame_b: AnimationFrame, step: float,
-                              bones: List[Bone]) -> AnimationFrame:
-        new_frame = Animation._create_frame_between(frame_a, frame_b, step, bones)
+                              bones: List[Bone], **kwargs) -> AnimationFrame:
+        # kwargs carries the interpolation mode and the neighbouring frames straight through:
+        # picking the curve is the battle code's job, only the field-specific rebuild below is ours
+        new_frame = Animation._create_frame_between(frame_a, frame_b, step, bones, **kwargs)
         for axis in range(3):
             new_frame.position[axis].scale = frame_a.position[axis].scale
         compute_frame_matrices(new_frame, bones)

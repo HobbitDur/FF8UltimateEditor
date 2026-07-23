@@ -21,6 +21,8 @@ from FF8GameData.monsterdata import AIData
 from FF8GameData.dat.sequenceanalyser import SequenceAnalyser
 from SmallWidget.nowheel import NoWheelComboBox, NoWheelSpinBox
 
+from .ifritmonsternamewidget import IfritMonsterNameWidget
+
 
 # Tooltips describing the four raw stat bytes and how the engine turns them into
 # the value shown in-game at a given level L.
@@ -180,7 +182,12 @@ class IfritStatWidget(QWidget):
         info.setWordWrap(True)
         root.addWidget(info)
 
+        # The name is section-7 data too, so it is the first sub-tab here rather than a
+        # sibling of the whole Stat editor.
+        self.name_widget = IfritMonsterNameWidget(ifrit_manager)
+
         self._tabs = QTabWidget()
+        self._tabs.addTab(self.name_widget, "Name")
         self._tabs.addTab(self._build_stats_tab(), "Stats")
         self._tabs.addTab(self._build_defense_tab(), "Defense")
         self._tabs.addTab(self._build_flags_tab(), "Flags")
@@ -692,6 +699,7 @@ class IfritStatWidget(QWidget):
 
     def load_data(self):
         """Re-read the current enemy's info_stat_data and refresh every widget."""
+        self.name_widget.load_data()
         enemy = getattr(self.ifrit_manager, "enemy", None)
         if enemy is None or not enemy.info_stat_data:
             return

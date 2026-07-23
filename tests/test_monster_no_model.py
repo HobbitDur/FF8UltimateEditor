@@ -111,4 +111,4 @@ def test_gui_loads_without_crashing_and_shows_only_stat_and_ai():
     assert not tabs.isTabVisible(tabs.indexOf(pane._texture_widget))
 
     pane._ensure_tab_loaded(pane._stat_container)   # load the Stat tab's data on demand
-    assert pane._name_widget._name_edit.text() == 'Ultimecia'
+    assert pane._stat_widget.name_widget._name_edit.text() == 'Ultimecia'

@@ -16,6 +16,10 @@ class AnimEditor(QWidget):
     reset_skeleton_requested = pyqtSignal()
     animation_rotation_changed = pyqtSignal(int, int, int, float, float, float)
     animation_position_changed = pyqtSignal(int, int, float, float, float)
+    # One position axis (0=X, 1=Y, 2=Z) to be re-valued between two existing frames, from its
+    # per-axis button in the Frame Position tab. The controller asks for the two frames and the
+    # curve, since only it knows how many frames the animation has.
+    position_interpolation_requested = pyqtSignal(int)
     animation_scale_changed = pyqtSignal(int, int, int, float, float, float)
     frame_scale_mode_changed = pyqtSignal(int, int, bool)
 
@@ -151,6 +155,7 @@ class AnimEditor(QWidget):
         # Frame Position Tab (NEW)
         self.position_tab = QWidget()
         position_layout = QFormLayout(self.position_tab)
+        self.position_interpolate_buttons = []   # one per axis, index = axis
 
         pos_x_layout = QHBoxLayout()
         self.frame_pos_x = QDoubleSpinBox()
@@ -167,6 +172,7 @@ class AnimEditor(QWidget):
         self.pos_x_raw.setFixedWidth(60)
         pos_x_layout.addWidget(self.frame_pos_x)
         pos_x_layout.addWidget(self.pos_x_raw)
+        pos_x_layout.addWidget(self._new_position_interpolate_button(0))
         pos_x_layout.addStretch(1)
         position_layout.addRow("Pos X:", pos_x_layout)
 
@@ -181,6 +187,7 @@ class AnimEditor(QWidget):
         self.pos_y_raw.setFixedWidth(60)
         pos_y_layout.addWidget(self.frame_pos_y)
         pos_y_layout.addWidget(self.pos_y_raw)
+        pos_y_layout.addWidget(self._new_position_interpolate_button(1))
         pos_y_layout.addStretch(1)
         position_layout.addRow("Pos Y:", pos_y_layout)
 
@@ -195,6 +202,7 @@ class AnimEditor(QWidget):
         self.pos_z_raw.setFixedWidth(60)
         pos_z_layout.addWidget(self.frame_pos_z)
         pos_z_layout.addWidget(self.pos_z_raw)
+        pos_z_layout.addWidget(self._new_position_interpolate_button(2))
         pos_z_layout.addStretch(1)
         position_layout.addRow("Pos Z:", pos_z_layout)
 
@@ -426,6 +434,24 @@ class AnimEditor(QWidget):
                 raw_label.setText(f"raw: {raw:d}")
         finally:
             self._updating = False
+
+    def _new_position_interpolate_button(self, axis: int):
+        """The per-axis button of the Frame Position tab: take two frames that already exist as
+        keyframes and rewrite this axis on every frame between them. Only asks; the controller
+        runs it (it knows the animation's length)."""
+        axis_name = ("X", "Y", "Z")[axis]
+        button = QPushButton("Interpolate…")
+        button.setToolTip(
+            f"Rewrite Pos {axis_name} on the frames BETWEEN two frames you choose, following a "
+            f"curve.\n"
+            f"The two frames keep their own value and act as keyframes; no frame is added or "
+            f"removed,\nso the animation keeps its length and its timing. The other two axes, the "
+            f"bone rotations\nand the scales are left alone.\n\n"
+            f"For an up-and-down movement: set the bottom, the top and the bottom again on three "
+            f"frames,\nthen run this on each half with the sine curve.")
+        button.clicked.connect(lambda _=False, a=axis: self.position_interpolation_requested.emit(a))
+        self.position_interpolate_buttons.append(button)
+        return button
 
     # ── Multi-bone comparison (Ctrl+click selects several bones) ──────────
     def _new_compare_table(self, headers):

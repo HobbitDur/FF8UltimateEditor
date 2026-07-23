@@ -594,3 +594,78 @@ class TestHexContractIsUntouched:
         widget.set_view(VIEW_USER_FRIENDLY)
         assert widget.get_view() == VIEW_HEX, "no game data: only the hex view can exist"
         assert widget.getByteData() == SAMPLE
+
+
+class TestTimelinePane:
+    """The timeline: the sequence run, not read.
+
+    Building it needs the whole file (a sequence chains into the others, and timing comes
+    from the animation lengths), which a SeqWidget does not have - so it is handed a
+    provider by the tab that owns the file. What matters here is that the pane follows the
+    bytes on screen rather than the saved ones, and that a preview can never take the
+    editor down with it.
+    """
+
+    # isHidden(), not isVisible(): an unshown parent makes everything invisible, so
+    # isVisible() would pass whatever the widget does.
+    def test_a_widget_without_a_provider_has_no_timeline_button(self, qapp, game_data):
+        widget = make_widget(game_data)
+        assert widget.timeline_button.isHidden()
+
+    def test_the_tab_gives_every_sequence_a_timeline(self, qapp, game_data):
+        tab = make_seq_tab(game_data, [{'id': 1, 'data': bytearray([0x00, 0xA2])}])
+        seq_widget = tab.seq_data_widget[0]
+        assert seq_widget._timeline_provider is not None
+        assert not seq_widget.timeline_button.isHidden()
+        assert seq_widget.timeline_widget.isHidden()
+        seq_widget.timeline_button.setChecked(True)
+        assert not seq_widget.timeline_widget.isHidden()
+        assert "frame" in seq_widget.timeline_widget.toPlainText()
+
+    def test_the_timeline_follows_the_bytes_being_edited(self, qapp, game_data):
+        # Not the saved ones: a preview of what the file used to say would be worse than
+        # no preview. A9 ends the sequence, so the timeline stops instead of looping.
+        tab = make_seq_tab(game_data, [{'id': 1, 'data': bytearray([0xA1, 0xA1, 0xA9])}])
+        seq_widget = tab.seq_data_widget[0]
+        seq_widget.timeline_button.setChecked(True)
+        assert "3 frames" in seq_widget.timeline_widget.toPlainText()
+        seq_widget.sequence_text_widget.setPlainText("a1 a9")
+        assert "2 frames" in seq_widget.timeline_widget.toPlainText()
+
+    def test_a_hidden_timeline_is_not_rebuilt(self, qapp, game_data):
+        # Running a sequence follows it into the ones it chains to; doing that on every
+        # keystroke for a pane nobody opened is work for nothing.
+        tab = make_seq_tab(game_data, [{'id': 1, 'data': bytearray([0xA1, 0xA9])}])
+        seq_widget = tab.seq_data_widget[0]
+        nb_call = [0]
+        provider = seq_widget._timeline_provider
+        seq_widget._timeline_provider = lambda *args: (nb_call.__setitem__(0, nb_call[0] + 1),
+                                                       provider(*args))[1]
+        seq_widget.sequence_text_widget.setPlainText("a1 a1 a9")
+        assert nb_call[0] == 0
+        seq_widget.timeline_button.setChecked(True)
+        assert nb_call[0] == 1
+
+    def test_a_failing_provider_does_not_break_the_editor(self, qapp, game_data):
+        def explode(seq_id, data):
+            raise RuntimeError("boom")
+
+        widget = SeqWidget(seq=bytearray(SAMPLE), id=3, entity_type=EntityType.MONSTER,
+                           game_data=game_data, timeline_provider=explode)
+        widget.timeline_button.setChecked(True)
+        assert "boom" in widget.timeline_widget.toPlainText()
+        assert widget.getByteData() == SAMPLE
+
+    def test_invalid_hex_says_so_instead_of_showing_a_stale_timeline(self, qapp, game_data):
+        # A standalone widget, not one hosted by the tab: the tab's save-on-every-edit
+        # calls getByteData() on every sequence and lets the ValueError of half-typed hex
+        # escape into a Qt slot, which aborts the process. That is a pre-existing bug of
+        # its own (it predates the timeline and fires with the timeline hidden); this test
+        # is about the timeline pane, so it stays clear of it.
+        widget = SeqWidget(seq=bytearray([0xA1, 0xA9]), id=1,
+                           entity_type=EntityType.MONSTER, game_data=game_data,
+                           timeline_provider=lambda seq_id, data: "<p>timeline</p>")
+        widget.timeline_button.setChecked(True)
+        assert "timeline" in widget.timeline_widget.toPlainText()
+        widget.sequence_text_widget.setPlainText("zz")
+        assert "invalid hex" in widget.timeline_widget.toPlainText()

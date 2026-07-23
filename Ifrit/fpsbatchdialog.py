@@ -7,6 +7,9 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushBut
                              QRadioButton, QButtonGroup, QCheckBox, QFileDialog,
                              QDialogButtonBox, QTextEdit, QMessageBox)
 
+from FF8GameData.dat import interpolation
+from SmallWidget.interpolationselector import InterpolationSelector
+
 
 class FpsBatchDialog(QDialog):
     """The frame rate to convert the chosen files to, and how."""
@@ -41,6 +44,11 @@ class FpsBatchDialog(QDialog):
         fps_layout.addWidget(self._fps_60)
         fps_layout.addStretch()
         layout.addLayout(fps_layout)
+
+        self._interpolation = InterpolationSelector(
+            self, interpolation.DEFAULT_FOR_FPS_CONVERSION,
+            label="Interpolation of the frames added between the original ones:")
+        layout.addWidget(self._interpolation)
 
         self._split_check = QCheckBox("Split the animations that are too long for the format")
         self._split_check.setChecked(True)
@@ -77,6 +85,9 @@ class FpsBatchDialog(QDialog):
 
     def get_split_when_too_long(self) -> bool:
         return self._split_check.isChecked()
+
+    def get_interpolation_mode(self) -> str:
+        return self._interpolation.get_mode()
 
 
 def select_battle_model_file_list(parent, folder: str, file_filter: str, is_model_func,

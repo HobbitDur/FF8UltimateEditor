@@ -6,6 +6,8 @@ from enum import Enum
 from typing import List, Optional, Tuple
 from urllib.parse import to_bytes
 
+from FF8GameData.dat import interpolation
+
 
 class EntityType(Enum):
     MONSTER = 1
@@ -1033,8 +1035,16 @@ class RotationType:
         self._vector_axis_deg: float = 0
         self.rotate_raw(self._vector_axis)
     def rotate_deg(self, deg):
-        self._vector_axis_deg = deg
-        self._vector_axis = round(deg * 4096.0 / 360.0)
+        """Set the rotation from a value in degrees, on the format's own grid.
+
+        A rotation is stored as a whole number of raw units (4096 per turn = 0.088 deg per unit),
+        so the degrees are rounded to the nearest unit and then DERIVED back from it: what the 3D
+        view draws is exactly what the save writes and a re-open reads. Keeping the typed degrees
+        next to the rounded raw value instead made the viewer pose the model on an angle the file
+        cannot hold, so the pose silently shifted (by up to half a unit per axis, and more down a
+        long bone chain) the first time the file was re-opened.
+        """
+        self.rotate_raw(round(deg * 4096.0 / 360.0))
     def rotate_raw(self, raw):
         self._vector_axis = raw
         self._vector_axis_deg = raw * 360.0 / 4096.0
@@ -1107,14 +1117,32 @@ class RotationVectorDataSupp:
 
 
 class PositionType:
+    """One axis of the skeleton's per-frame root position (where the whole model stands).
+
+    Stored raw, converted to the world units the vertices and bone matrices use so the viewer can
+    simply translate the model by it.
+    """
     SCALE = -1.0 /204.8  # Negative scale to match vertex coordinate system
 
+    # World units per raw unit, per axis (X, Y, Z). The magnitude is the same on all three; the
+    # SIGNS are what puts the root position in the same space as the posed vertices - X and Y are
+    # mirrored, Z is NOT.
+    #
+    # Z used to be mirrored like the other two, which sent the model the wrong way: the axis a
+    # player sees as forward/backward ran backwards in game compared to the editor. That Z is the
+    # odd one out was already established independently by the weapon overlay, which only lines a
+    # grip vertex up with the body's hand bone when the root delta is mapped (x, y, -z) out of the
+    # old uniformly-negative scale (calibrated on Squall/Seifer/Irvine over full attack swings,
+    # see Ifrit3DWidget._current_weapon_verts). Applying that mirror here instead makes it the one
+    # convention everything shares.
+    #
+    # Nothing about the FILE changes: the raw value is untouched, only how it is shown and typed.
+    AXIS_SCALE = (SCALE, SCALE, -SCALE)
 
-    def __init__(self, position_type_bits: int = 0, vector_axis: int = 0, bone_scale:float= 20480):
+    def __init__(self, position_type_bits: int = 0, vector_axis: int = 0, axis: int = 0):
         self.position_type_bits: int = position_type_bits
         self._vector_axis: int = vector_axis
-        self.scale:float = self.SCALE
-        #self.scale:float = bone_scale
+        self.scale:float = self.AXIS_SCALE[axis]
 
     def get_pos_raw(self):
         return self._vector_axis
@@ -1322,9 +1350,9 @@ class AnimationFrame:
             pz_val += prev_frame.position[2].get_pos_raw()
 
         self.position = [
-            PositionType(px_bits, px_val, bone_section.get_scale_list()[0]),
-            PositionType(py_bits, py_val, bone_section.get_scale_list()[1]),
-            PositionType(pz_bits, pz_val, bone_section.get_scale_list()[2])
+            PositionType(px_bits, px_val, axis=0),
+            PositionType(py_bits, py_val, axis=1),
+            PositionType(pz_bits, pz_val, axis=2)
         ]
 
     def rotate_all_bones(self, br: BitReader, prev_frame: 'AnimationFrame', bones: List[Bone]):
@@ -1414,7 +1442,8 @@ class Animation:
         return len(self.frames)
 
     def create_interpolated_frames(self, bones: List[Bone], factor: int = 4, smooth_loop: bool = False,
-                                   wrap_frame: 'AnimationFrame' = None):
+                                   wrap_frame: 'AnimationFrame' = None,
+                                   mode: str = interpolation.LINEAR):
         """
         Insert (factor - 1) interpolated frames between each pair of consecutive frames.
         With factor = 4, an animation made for 15 fps becomes a 60 fps animation.
@@ -1424,25 +1453,35 @@ class Animation:
         wrap_frame is the frame the loop goes back to, when it is not this animation's own
         first frame: a looping animation split in several parts wraps back to the first
         frame of its FIRST part (see FF8GameData/dat/animsplitter.py).
+        mode is the curve the inserted frames follow (see FF8GameData/dat/interpolation.py);
+        the original frames are never touched, whichever one is used.
         """
         if len(self.frames) < 2:
             return
 
+        source_frames = self.frames
         new_frames = []
-        for frame_index, frame in enumerate(self.frames):
+        for frame_index, frame in enumerate(source_frames):
             new_frames.append(frame)
 
-            is_last_frame = (frame_index == len(self.frames) - 1)
+            is_last_frame = (frame_index == len(source_frames) - 1)
             if is_last_frame and not smooth_loop:
                 continue
 
             if is_last_frame:
-                next_frame = wrap_frame if wrap_frame is not None else self.frames[0]
+                next_frame = wrap_frame if wrap_frame is not None else source_frames[0]
             else:
-                next_frame = self.frames[frame_index + 1]
+                next_frame = source_frames[frame_index + 1]
+            # The frames around the segment, for the curves that flow through the keyframes.
+            # A loop has neighbours everywhere (it wraps); a one-shot animation has none at its
+            # two ends, and every mode falls back to the segment alone there.
+            before = self._neighbour_frame(source_frames, frame_index - 1, smooth_loop)
+            after = self._neighbour_frame(source_frames, frame_index + 2, smooth_loop)
             for step_index in range(1, factor):
                 step = step_index / factor
-                new_frames.append(self._create_frame_between(frame, next_frame, step, bones))
+                new_frames.append(self._create_frame_between(frame, next_frame, step, bones,
+                                                             mode=mode, frame_before=before,
+                                                             frame_after=after))
 
         self.frames = new_frames
         self._recompute_frame_storage_types()
@@ -1451,34 +1490,79 @@ class Animation:
         self.original_tail = b""
 
     @staticmethod
+    def _neighbour_frame(frames: List['AnimationFrame'], index: int, wrap: bool):
+        """The frame at `index`, wrapping around for a looping animation and None past the ends
+        of a one-shot one (where the curves have nothing to flow from / into)."""
+        if not frames:
+            return None
+        if 0 <= index < len(frames):
+            return frames[index]
+        return frames[index % len(frames)] if wrap else None
+
+    @staticmethod
+    def _rotation_raw_of(frame: 'AnimationFrame', bone_index: int, axis: int):
+        """A bone's raw rotation on one axis, or None when the frame does not carry that bone
+        (no frame at all at the ends of a one-shot animation, or a shorter neighbour)."""
+        if frame is None or bone_index >= len(frame.rotation_vector_data):
+            return None
+        return int(frame.rotation_vector_data[bone_index][axis].get_rotate_raw())
+
+    @staticmethod
+    def _scale_raw_of(frame: 'AnimationFrame', bone_index: int, axis: int) -> int:
+        """A bone's raw scale on one axis, or the neutral value when the frame carries none."""
+        if frame is None or frame.mode_bit != 1 or bone_index >= len(frame.rotation_vector_data_supp):
+            return RotationVectorDataSupp.SCALE_NEUTRAL_RAW
+        return frame.rotation_vector_data_supp[bone_index].get_scale_raw(axis)
+
+    @staticmethod
     def _create_frame_between(frame_a: 'AnimationFrame', frame_b: 'AnimationFrame', step: float,
-                              bones: List[Bone]) -> 'AnimationFrame':
-        """Create a new frame interpolated between frame_a (step=0.0) and frame_b (step=1.0)."""
+                              bones: List[Bone], mode: str = interpolation.LINEAR,
+                              frame_before: 'AnimationFrame' = None,
+                              frame_after: 'AnimationFrame' = None) -> 'AnimationFrame':
+        """Create a new frame interpolated between frame_a (step=0.0) and frame_b (step=1.0).
+
+        `mode` picks the curve (FF8GameData/dat/interpolation.py). frame_before/frame_after are
+        the frames just outside the segment, used by the curves that flow through the keyframes;
+        None where there is none, which every mode handles by using the segment alone.
+        """
         nb_bones = len(bones)
         new_frame = AnimationFrame(nb_bones)
         new_frame.mode_bit = frame_a.mode_bit
         new_frame.rotation_vector_data_supp = copy.deepcopy(frame_a.rotation_vector_data_supp)
 
-        # Skeleton position: simple linear interpolation of the raw values
+        # Skeleton position: raw units, straight through the chosen curve
         for axis in range(3):
-            raw_a = frame_a.position[axis].get_pos_raw()
-            raw_b = frame_b.position[axis].get_pos_raw()
-            raw_value = round(raw_a + (raw_b - raw_a) * step)
-            new_frame.position.append(PositionType(0, raw_value))
+            raw_value = interpolation.interpolate_value(
+                None if frame_before is None else frame_before.position[axis].get_pos_raw(),
+                frame_a.position[axis].get_pos_raw(),
+                frame_b.position[axis].get_pos_raw(),
+                None if frame_after is None else frame_after.position[axis].get_pos_raw(),
+                step, mode)
+            new_frame.position.append(PositionType(0, round(raw_value), axis=axis))
 
-        # Bone rotations: interpolate each axis taking the shortest way around
-        # the circle (a full circle is 4096 in raw units)
+        # Bone rotations: a full circle is 4096 raw units, so every value of the segment is first
+        # unwrapped onto one continuous line (the shortest way round) before the curve is applied
         for bone_index in range(nb_bones):
             new_rotations = []
             for axis in range(3):
-                raw_a = int(frame_a.rotation_vector_data[bone_index][axis].get_rotate_raw())
-                raw_b = int(frame_b.rotation_vector_data[bone_index][axis].get_rotate_raw())
-                shortest_delta = ((raw_b - raw_a + 2048) % 4096) - 2048
-                raw_value = round(raw_a + shortest_delta * step)
-                new_rotations.append(RotationType(True, 0, raw_value))
+                # A bone the frame does not carry (a skeleton that just grew) has no rotation
+                raw_a = Animation._rotation_raw_of(frame_a, bone_index, axis) or 0
+                raw_b = Animation._rotation_raw_of(frame_b, bone_index, axis)
+                raw_b = raw_a if raw_b is None else interpolation.unwrap_rotation_raw(raw_a, raw_b)
+                # Each neighbour is unwrapped against the end of the segment it sits next to, so
+                # the four values form one continuous line for the curve to follow
+                raw_before = Animation._rotation_raw_of(frame_before, bone_index, axis)
+                if raw_before is not None:
+                    raw_before = interpolation.unwrap_rotation_raw(raw_a, raw_before)
+                raw_after = Animation._rotation_raw_of(frame_after, bone_index, axis)
+                if raw_after is not None:
+                    raw_after = interpolation.unwrap_rotation_raw(raw_b, raw_after)
+                raw_value = interpolation.interpolate_value(raw_before, raw_a, raw_b, raw_after,
+                                                            step, mode)
+                new_rotations.append(RotationType(True, 0, round(raw_value)))
             new_frame.rotation_vector_data[bone_index] = new_rotations
 
-        # Bone scales (squash-and-stretch): interpolate the raw values linearly.
+        # Bone scales (squash-and-stretch), same curve on the raw values.
         # A frame without the mode bit is entirely neutral (1024 raw).
         if frame_a.mode_bit == 1 or frame_b.mode_bit == 1:
             new_frame.mode_bit = 1
@@ -1487,15 +1571,15 @@ class Animation:
                     new_frame.rotation_vector_data_supp.append(RotationVectorDataSupp())
                 supp = new_frame.rotation_vector_data_supp[bone_index]
                 for axis in range(3):
-                    if frame_a.mode_bit == 1 and bone_index < len(frame_a.rotation_vector_data_supp):
-                        raw_a = frame_a.rotation_vector_data_supp[bone_index].get_scale_raw(axis)
-                    else:
-                        raw_a = RotationVectorDataSupp.SCALE_NEUTRAL_RAW
-                    if frame_b.mode_bit == 1 and bone_index < len(frame_b.rotation_vector_data_supp):
-                        raw_b = frame_b.rotation_vector_data_supp[bone_index].get_scale_raw(axis)
-                    else:
-                        raw_b = RotationVectorDataSupp.SCALE_NEUTRAL_RAW
-                    supp.set_scale_raw(axis, round(raw_a + (raw_b - raw_a) * step))
+                    raw_value = interpolation.interpolate_value(
+                        None if frame_before is None
+                        else Animation._scale_raw_of(frame_before, bone_index, axis),
+                        Animation._scale_raw_of(frame_a, bone_index, axis),
+                        Animation._scale_raw_of(frame_b, bone_index, axis),
+                        None if frame_after is None
+                        else Animation._scale_raw_of(frame_after, bone_index, axis),
+                        step, mode)
+                    supp.set_scale_raw(axis, round(raw_value))
 
         new_frame.set_all_bones_matrix(bones)
         return new_frame

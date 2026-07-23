@@ -24,6 +24,7 @@ reads the frame count as a byte.)
 """
 import copy
 
+from . import interpolation
 from .sequencecommand import (read_sequence_command_list, get_jump_target, is_jump,
                               is_jump_int16)
 
@@ -188,9 +189,11 @@ def rewrite_sequence_list_for_split(game_data, seq_animation_data: dict, anim_id
 
 def split_and_convert_animation(game_data, animation_section, seq_animation_data, bones,
                                 anim_id: int, factor: int, smooth_loop: bool,
-                                max_frame: int = MAX_ANIMATION_FRAME) -> dict:
+                                max_frame: int = MAX_ANIMATION_FRAME,
+                                mode: str = interpolation.LINEAR) -> dict:
     """Split animation anim_id so it fits, convert every part, and rewrite the sequences.
 
+    `mode` is the interpolation curve of the inserted frames (FF8GameData/dat/interpolation.py).
     Returns {'new_id_list', 'nb_part', 'nb_frame_before', 'frame_count_list', 'nb_rewritten'}.
     Raises ValueError when it cannot be done (see can_split_animation).
     """
@@ -210,7 +213,7 @@ def split_and_convert_animation(game_data, animation_section, seq_animation_data
     # Interpolate the WHOLE animation first, then cut the result: the parts are then
     # contiguous slices of the final frame stream, so chaining them plays exactly the
     # frames of the unsplit animation — no frame repeated at the cut, none missing.
-    animation.create_interpolated_frames(bones, factor, smooth_loop)
+    animation.create_interpolated_frames(bones, factor, smooth_loop, mode=mode)
     new_id_list = split_animation(animation_section, anim_id, max_frame)
     part_id_list = [anim_id] + new_id_list
 

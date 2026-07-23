@@ -14,6 +14,7 @@ from PIL import Image
 from PIL.ImageQt import QPixmap
 from PyQt6.QtGui import QColor, QImage
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+from FF8GameData.dat import interpolation
 from FF8GameData.dat.animloopdetector import analyse_animation_usage, is_looping, ANIM_UNUSED
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
                                           get_max_frame_for_animation, get_nb_part_needed,
@@ -406,9 +407,12 @@ class IfritManager:
         return family or [path]
 
     def convert_file_list_to_fps(self, file_list, target_fps: int, split_when_too_long: bool = True,
-                                 progress_callback=None) -> list:
+                                 progress_callback=None,
+                                 mode: str = interpolation.LINEAR) -> list:
         """Convert every .dat of file_list to target_fps, in place.
 
+        `mode` is the interpolation curve the inserted frames follow, the same for every file of
+        the batch (FF8GameData/dat/interpolation.py).
         Returns one report dict per file: file, name, nb_converted, split_list,
         skipped_list [(anim id, reason)], error, source (weapon read for a character).
         progress_callback(index, file_name) may return False to stop early.
@@ -418,10 +422,12 @@ class IfritManager:
         for index, file_path in enumerate(file_list):
             if progress_callback and progress_callback(index, os.path.basename(file_path)) is False:
                 break
-            report_list.append(self._convert_one_file_to_fps(file_path, factor, split_when_too_long))
+            report_list.append(self._convert_one_file_to_fps(file_path, factor, split_when_too_long,
+                                                             mode))
         return report_list
 
-    def _convert_one_file_to_fps(self, file_path, factor: int, split_when_too_long: bool) -> dict:
+    def _convert_one_file_to_fps(self, file_path, factor: int, split_when_too_long: bool,
+                                 mode: str = interpolation.LINEAR) -> dict:
         """Convert every animation of one file, or none of them.
 
         The frame count of an animation IS its duration: the engine reads one frame per
@@ -496,13 +502,13 @@ class IfritManager:
         for anim_id, smooth_loop, max_frame, needs_split in plan_list:
             if not needs_split:
                 monster.animation_data.animations[anim_id].create_interpolated_frames(
-                    bones, factor, smooth_loop)
+                    bones, factor, smooth_loop, mode=mode)
                 report['nb_converted'] += 1
                 continue
             nb_frame = len(monster.animation_data.animations[anim_id].frames)
             split_report = split_and_convert_animation(
                 self.game_data, monster.animation_data, monster.seq_animation_data,
-                bones, anim_id, factor, smooth_loop, max_frame)
+                bones, anim_id, factor, smooth_loop, max_frame, mode)
             report['split_list'].append((anim_id, nb_frame, split_report['nb_part'],
                                          split_report['new_id_list']))
             report['nb_converted'] += split_report['nb_part']
@@ -1380,12 +1386,61 @@ class IfritManager:
         anim._recompute_frame_storage_types()
         return len(to_insert)
 
+    def interpolate_frame_position(self, anim_id: int, axis: int, frame_a: int, frame_b: int,
+                                   mode: str = interpolation.LINEAR) -> int:
+        """Re-value ONE root-position axis across frames that already exist, and return how many
+        frames changed.
+
+        frame_a and frame_b are treated as keyframes: they keep their own value, and every frame
+        strictly between them is rewritten to follow `mode` from one to the other. Nothing is
+        inserted or deleted - the animation keeps its length and its timing, so no sequence or AI
+        that names a frame is disturbed. Only the chosen axis moves; the bone rotations, the scales
+        and the other two axes are untouched.
+
+        This is what makes an up-and-down movement practical: put the bottom, the top and the
+        bottom again on three frames of Pos Y, then run this on both halves with the sine curve.
+        Raises ValueError if a frame is out of range or the two are not at least two frames apart
+        (nothing in between to fill).
+        """
+        anim: Animation = self.enemy.animation_data.animations[anim_id]
+        nb_frames = len(anim.frames)
+        if not (0 <= frame_a < nb_frames and 0 <= frame_b < nb_frames):
+            raise ValueError("frame out of range")
+        if not 0 <= axis <= 2:
+            raise ValueError("axis must be 0 (X), 1 (Y) or 2 (Z)")
+        low, high = sorted((int(frame_a), int(frame_b)))
+        if high - low < 2:
+            raise ValueError("the two frames must have at least one frame between them")
+
+        def raw_at(frame_id):
+            frame = anim.frames[frame_id]
+            return frame.position[axis].get_pos_raw() if len(frame.position) > axis else None
+
+        value_a, value_b = raw_at(low), raw_at(high)
+        if value_a is None or value_b is None:
+            raise ValueError("those frames carry no root position")
+        # Same neighbour rule as everywhere else: the frames just outside the pair, so the curves
+        # that flow through the keyframes know where the motion comes from and where it goes.
+        before = raw_at(low - 1) if low > 0 else None
+        after = raw_at(high + 1) if high + 1 < nb_frames else None
+
+        for frame_id in range(low + 1, high):
+            step = (frame_id - low) / (high - low)
+            raw_value = interpolation.interpolate_value(before, value_a, value_b, after, step, mode)
+            anim.frames[frame_id].position[axis].set_pos_raw(round(raw_value))
+
+        # Positions are delta-encoded with a per-value bit width: refresh them or the save
+        # truncates the new deltas (see AnimationFrame.write_to_writer).
+        anim._recompute_frame_storage_types()
+        return high - low - 1
+
     def interpolate_between_frames(self, anim_id: int, frame_a: int, frame_b: int,
-                                   nb_insert: int) -> int:
+                                   nb_insert: int, mode: str = interpolation.LINEAR) -> int:
         """Insert nb_insert new frames interpolating from frame_a's pose to frame_b's pose, placed
-        right after frame_a, and return how many were inserted. Interpolation matches the FPS
-        converter (shortest-way rotations, linear position/scale). Raises ValueError on a bad range
-        or if it would exceed the 255-frame limit."""
+        right after frame_a, and return how many were inserted. Rotations always take the shortest
+        way round; `mode` picks the curve the values follow (FF8GameData/dat/interpolation.py), the
+        same set of curves the FPS converter offers. Raises ValueError on a bad range or if it
+        would exceed the 255-frame limit."""
         self._ensure_matrices()
         anim: Animation = self.enemy.animation_data.animations[anim_id]
         n = len(anim.frames)
@@ -1398,7 +1453,13 @@ class IfritManager:
         bones = self.enemy.bone_data.bones
         frame_from = anim.frames[frame_a]
         frame_to = anim.frames[frame_b]
-        new_frames = [Animation._create_frame_between(frame_from, frame_to, k / (nb_insert + 1), bones)
+        # The frames just outside the chosen pair, so a curve that flows through the keyframes has
+        # the motion's approach and follow-through to work from (None at the ends of the animation)
+        before = anim.frames[frame_a - 1] if frame_a > 0 else None
+        after = anim.frames[frame_b + 1] if frame_b + 1 < n else None
+        new_frames = [Animation._create_frame_between(frame_from, frame_to, k / (nb_insert + 1),
+                                                      bones, mode=mode, frame_before=before,
+                                                      frame_after=after)
                       for k in range(1, nb_insert + 1)]
         pos = frame_a + 1
         anim.frames[pos:pos] = new_frames

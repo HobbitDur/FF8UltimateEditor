@@ -230,9 +230,9 @@ class TestAnimationFrame:
         """AnimationFrame should handle position data."""
         frame = AnimationFrame(nb_bones=1)
         frame.position = [
-            PositionType(position_type_bits=0, vector_axis=0, bone_scale=20480),
-            PositionType(position_type_bits=0, vector_axis=0, bone_scale=20480),
-            PositionType(position_type_bits=0, vector_axis=0, bone_scale=20480),
+            PositionType(position_type_bits=0, vector_axis=0, axis=0),
+            PositionType(position_type_bits=0, vector_axis=0, axis=1),
+            PositionType(position_type_bits=0, vector_axis=0, axis=2),
         ]
         assert len(frame.position) == 3
 
@@ -291,9 +291,9 @@ class TestAnimation:
         anim = Animation()
         frame = AnimationFrame(nb_bones=1)
         frame.position = [
-            PositionType(position_type_bits=0, vector_axis=0, bone_scale=20480),
-            PositionType(position_type_bits=0, vector_axis=0, bone_scale=20480),
-            PositionType(position_type_bits=0, vector_axis=0, bone_scale=20480),
+            PositionType(position_type_bits=0, vector_axis=0, axis=0),
+            PositionType(position_type_bits=0, vector_axis=0, axis=1),
+            PositionType(position_type_bits=0, vector_axis=0, axis=2),
         ]
         frame.rotation_vector_data[0] = [
             RotationType(False, 0, 0),

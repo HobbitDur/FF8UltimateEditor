@@ -26,7 +26,6 @@ from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Ifrit.IfritTexture.ifrittexturewidget import IfritTextureWidget
 from Ifrit.IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from Ifrit.IfritStat.ifritstatwidget import IfritStatWidget
-from Ifrit.IfritStat.ifritmonsternamewidget import IfritMonsterNameWidget
 from Ifrit.IfritBattleText.ifritbattletextwidget import IfritBattleTextWidget
 
 # Which .dat section holds the animation sequence per entity type (character-with-weapon has
@@ -142,16 +141,14 @@ class IfritFilePane(QWidget):
         self._texture_widget = IfritTextureWidget(ifrit_manager)
         self._xlsx_widget = IfritXlsxWidget(ifrit_manager)
         self._stat_widget = IfritStatWidget(ifrit_manager, icon_path=icon_path)
-        self._name_widget = IfritMonsterNameWidget(ifrit_manager)
         self._battle_text_widget = IfritBattleTextWidget(ifrit_manager)
         self._dynamic_texture_widget = IfritDynamicTextureWidget(ifrit_manager)
         # Dyntex also mutates the model live and self-reports (same as seq/camera).
         self._dynamic_texture_widget.data_edited.connect(self._on_edit)
 
-        # Name/Stat/StatExcel all edit section 7 -> one "Stat" tab. Battle text edits section 8
-        # like AI -> lives under "AI".
+        # Stat (which owns the Name sub-tab) and StatExcel both edit section 7 -> one "Stat"
+        # tab. Battle text edits section 8 like AI -> lives under "AI".
         self._stat_container = QTabWidget()
-        self._stat_container.addTab(self._name_widget, "Name")
         self._stat_container.addTab(self._stat_widget, "Editor")
         self._stat_container.addTab(self._xlsx_widget, "Excel (xlsx)")
         self._ai_container = QTabWidget()
@@ -330,8 +327,7 @@ class IfritFilePane(QWidget):
                 self._dynamic_texture_widget.load_file(path)
         elif widget is self._stat_container:
             if et in _STAT_AI_CAPABLE_ENTITY_TYPES:
-                self._name_widget.load_data()
-                self._stat_widget.load_data()
+                self._stat_widget.load_data()   # loads its Name sub-tab too
         elif widget is self._ai_container:
             if et in _STAT_AI_CAPABLE_ENTITY_TYPES:
                 self._ai_widget.load_file(path)
@@ -1283,6 +1279,7 @@ class IfritMonsterWidget(QWidget):
         file_list = dialog.get_file_list()
         target_fps = dialog.get_target_fps()
         split_when_too_long = dialog.get_split_when_too_long()
+        interpolation_mode = dialog.get_interpolation_mode()
 
         progress = QProgressDialog(f"Converting to {target_fps} fps...", "Cancel",
                                    0, len(file_list), self)
@@ -1298,7 +1295,8 @@ class IfritMonsterWidget(QWidget):
 
         try:
             report_list = self._shared_manager.convert_file_list_to_fps(
-                file_list, target_fps, split_when_too_long, progress_callback=on_progress)
+                file_list, target_fps, split_when_too_long, progress_callback=on_progress,
+                mode=interpolation_mode)
         finally:
             progress.setValue(len(file_list))
 
