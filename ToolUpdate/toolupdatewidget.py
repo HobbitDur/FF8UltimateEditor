@@ -44,7 +44,12 @@ class ToolUpdateWidget(QWidget):
         self.resource_path = resource_path
         self.self_update_request = False
 
-        # Managing thread
+        # Managing thread. It is NOT started here: downloading only happens when the user asks
+        # for it, and a QThread destroyed while it is still running makes Qt abort the whole
+        # process (that is a hard abort, no exception, no message box). Leaving it running from
+        # start-up meant every teardown of this widget - closing the editor included - risked
+        # taking the process down with it. It is started on demand in _start_install and stopped
+        # again in _stop_installer_thread.
         self.installer = Installer()
         self.installer_thread = QThread()
         self.installer.progress.connect(self.install_progress)
@@ -52,7 +57,11 @@ class ToolUpdateWidget(QWidget):
         self.installer.download_progress.connect(self.update_download)
         self.install_requested.connect(self.installer.install)
         self.installer.moveToThread(self.installer_thread)
-        self.installer_thread.start()
+        # Whatever way the program goes down, the thread is stopped before Qt tears the objects
+        # down: closeEvent covers the window being closed, aboutToQuit everything else.
+        application = QApplication.instance()
+        if application is not None:
+            application.aboutToQuit.connect(self._stop_installer_thread)
 
         self.progress_install_index = 0
         self._current_tool_list = []
@@ -182,6 +191,27 @@ class ToolUpdateWidget(QWidget):
 
         self.setLayout(self.main_layout)
 
+    # ── The download thread ───────────────────────────────────────────
+
+    def _stop_installer_thread(self):
+        """Stop the download thread and wait for it, so it is never destroyed while running.
+
+        quit() ends the thread's event loop, but only once the slot it is currently in returns:
+        a download in progress therefore still has to finish, hence the bounded wait. If it has
+        not stopped by then the program is on its way out anyway and the thread is killed, which
+        is still better than the abort a running QThread's destructor would cause.
+        """
+        if not self.installer_thread.isRunning():
+            return
+        self.installer_thread.quit()
+        if not self.installer_thread.wait(5000):
+            self.installer_thread.terminate()
+            self.installer_thread.wait(1000)
+
+    def closeEvent(self, event):
+        self._stop_installer_thread()
+        super().closeEvent(event)
+
     def __canal_changed(self):
         self.settings.setValue("main/ToolUpdate/canal", self.canal_widget.currentIndex())
 
@@ -236,6 +266,10 @@ class ToolUpdateWidget(QWidget):
 
     def _start_install(self, tool_list: list):
         self._current_tool_list = tool_list
+        # The worker lives in this thread and reaches its slot through a queued connection, so
+        # the thread has to be running before the request is emitted.
+        if not self.installer_thread.isRunning():
+            self.installer_thread.start()
         self.download_button_widget.setEnabled(False)
         self.self_download_button_widget.setEnabled(False)
         self.progress.show()

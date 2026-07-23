@@ -14,6 +14,7 @@ from FF8GameData.dat.sequencetimeline import format_timeline_html
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.IfritSeq.seqwidget import SeqWidget, VIEW_HEX
 from Ifrit.IfritSeq.seqcommandwidget import build_op_code_model
+from Common.deferredcall import defer
 
 
 class IfritSeqWidget(QWidget):
@@ -236,7 +237,9 @@ class IfritSeqWidget(QWidget):
         self.__add_trailing_button()
         # Restore the scroll after the layout has settled (the rebuilt sequence may have a different
         # height), so an undo leaves the user looking at the same spot instead of jumping.
-        QTimer.singleShot(0, lambda: vbar.setValue(min(scroll_pos, vbar.maximum())))
+        # Tied to this widget: a call arriving after it is gone would touch a deleted C++ scroll
+        # bar, which aborts the process rather than reporting (see Common/deferredcall).
+        defer(self, lambda: vbar.setValue(min(scroll_pos, vbar.maximum())))
 
     # ------------------------------------------------------------------ timeline
     # Running a sequence needs the whole file, not one sequence: A7 and A2 chain into the

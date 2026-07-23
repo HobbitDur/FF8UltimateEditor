@@ -83,7 +83,7 @@ def test_copying_a_mode_keeps_its_settings():
 def test_a_plain_string_reads_as_the_default_settings():
     values = interpolation.parameters_of(interpolation.SINE)
     assert values == {spec.key: spec.default
-                      for spec in interpolation.MODE_PARAMETERS[interpolation.SINE]}
+                      for spec in interpolation.parameters_for(interpolation.SINE)}
 
 
 def test_junk_settings_fall_back_to_the_defaults_instead_of_raising():
@@ -264,6 +264,20 @@ def test_an_even_wave_count_lands_back_on_the_first_pose():
     assert interpolation.landing_ratio(mode) == pytest.approx(0.0)
 
 
+def test_the_batch_report_says_which_curve_and_settings_were_used():
+    """A saved report outlives the popup: a folder converted with a four half-wave sine is not the
+    same file set as one converted with the plain spline, so the report has to say which it was."""
+    from Ifrit.fpsbatchdialog import FpsBatchReportDialog
+
+    mode = interpolation.InterpolationMode(interpolation.SINE, {"half_waves": 4})
+    text = FpsBatchReportDialog.build_report_text([], 30, mode)
+    assert interpolation.MODE_LABEL[interpolation.SINE] in text
+    assert "Half-waves across the segment: 4" in text.splitlines()[0]
+    # ...and nothing about settings when the curve was left alone
+    plain = FpsBatchReportDialog.build_report_text([], 30, interpolation.SINE).splitlines()[0]
+    assert "Half-waves" not in plain
+
+
 def test_the_settings_that_were_changed_can_be_listed():
     """For a tooltip or a report: only what the user actually moved."""
     assert interpolation.describe_parameters(interpolation.SINE) == ""
@@ -347,9 +361,11 @@ def _selector(mode=interpolation.SINE):
 def test_the_popup_shows_one_widget_per_setting_of_the_selected_curve():
     selector = _selector(interpolation.SINE)
     assert sorted(selector._widget_dict) == sorted(
-        spec.key for spec in interpolation.MODE_PARAMETERS[interpolation.SINE])
+        spec.key for spec in interpolation.parameters_for(interpolation.SINE))
     selector.set_mode(interpolation.LINEAR)
-    assert selector._widget_dict == {}          # nothing to adjust on a straight line
+    # Nothing to adjust on a straight line - only the settings that apply whatever the curve is
+    assert sorted(selector._widget_dict) == sorted(
+        spec.key for spec in interpolation.SHARED_PARAMETERS)
 
 
 def test_the_popup_hands_back_the_settings_inside_the_mode():

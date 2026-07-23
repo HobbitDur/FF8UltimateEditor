@@ -27,6 +27,7 @@ from Ifrit.IfritTexture.ifrittexturewidget import IfritTextureWidget
 from Ifrit.IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from Ifrit.IfritStat.ifritstatwidget import IfritStatWidget
 from Ifrit.IfritBattleText.ifritbattletextwidget import IfritBattleTextWidget
+from Common.deferredcall import defer
 
 # Which .dat section holds the animation sequence per entity type (character-with-weapon has
 # none - its Sequence tab stays disabled). Camera's per-type section is _CAMERA_SECTION_BY_ENTITY.
@@ -194,7 +195,9 @@ class IfritFilePane(QWidget):
         # tabs (sections this entity type doesn't have) load nothing (gated in _load_tab).
         for index in range(self._tabs.count()):
             self._ensure_tab_loaded(self._tabs.widget(index))
-        QTimer.singleShot(0, self._end_loading)
+        # Tied to the pane: a pane closed before the tick arrives would otherwise run
+        # _end_loading on deleted C++ objects, which aborts the process (see Common/deferredcall).
+        defer(self, self._end_loading)
 
     def _end_loading(self):
         self._loading = False
@@ -351,7 +354,7 @@ class IfritFilePane(QWidget):
             self._loaded_tabs.discard(widget)
         finally:
             if not nested:
-                QTimer.singleShot(0, self._end_loading)
+                defer(self, self._end_loading)   # tied to the pane: see _load_all_tabs
 
     # ── Dirty tracking ────────────────────────────────────────────────
 
@@ -1300,7 +1303,7 @@ class IfritMonsterWidget(QWidget):
         finally:
             progress.setValue(len(file_list))
 
-        FpsBatchReportDialog(self, report_list, target_fps).exec()
+        FpsBatchReportDialog(self, report_list, target_fps, interpolation_mode).exec()
         # The active file may be one of the converted ones - reload it from disk if so.
         if self.file_loaded and any(os.path.normcase(f) == os.path.normcase(self.file_loaded)
                                     for f in file_list):

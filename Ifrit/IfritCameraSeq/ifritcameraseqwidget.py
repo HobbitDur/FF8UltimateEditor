@@ -31,6 +31,7 @@ from FF8GameData.monsterdata import EntityType
 from FF8GameData.dat.cameracollection import parse_camera_collection, CameraParseError
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
+from Common.deferredcall import defer
 
 # Which raw section index holds the camera animation collection, per entity type. Both are the
 # same bare-collection format; monsters carry it in section 6 (usually 1 set), characters in
@@ -500,7 +501,9 @@ class IfritCameraSeqWidget(QWidget):
             self._splitter.setSizes([left, max(total - left, 1)])
 
         # Defer one tick so the widgets have real size hints and the splitter a real width.
-        QTimer.singleShot(0, apply)
+        # Tied to this widget: a call arriving after it is gone would size a deleted C++ splitter,
+        # which aborts the process rather than reporting (see Common/deferredcall).
+        defer(self, apply)
 
     def __build(self):
         nb_anim = sum(1 for camera_set in self._collection.sets

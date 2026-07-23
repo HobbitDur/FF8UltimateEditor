@@ -5,10 +5,12 @@ from PyQt6.QtCore import QSignalBlocker
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
-    QSpinBox, QLineEdit, QGroupBox, QFormLayout, QTabWidget, QCheckBox, QGridLayout,
-    QScrollArea, QComboBox, QTableWidget, QHeaderView, QAbstractSpinBox, QSizePolicy,
-    QMessageBox,
+    QSpinBox, QDoubleSpinBox, QLineEdit, QGroupBox, QFormLayout, QTabWidget, QCheckBox,
+    QGridLayout, QScrollArea, QComboBox, QTableWidget, QHeaderView, QAbstractSpinBox,
+    QSizePolicy, QMessageBox,
 )
+
+U32_MAX = 0xFFFFFFFF
 
 # Tooltip shown on the read-only (greyed) padding fields.
 RESERVED_TOOLTIP = ("Read-only: this byte has no meaning in the game (confirmed unused / padding — "
@@ -36,6 +38,30 @@ JUNCTION_FIELDS = [
     ("jun_status_def1", "Status Def 1"), ("jun_status_def2", "Status Def 2"),
     ("jun_status_def3", "Status Def 3"), ("jun_status_def4", "Status Def 4"),
 ]
+
+
+class U32SpinBox(QDoubleSpinBox):
+    """A whole-number spin box for the save's 32-bit UNSIGNED fields (exp, gil).
+
+    QSpinBox is limited to a signed 32-bit int, so it stops at 2147483647 while those fields
+    hold up to 4294967295. Half the range being unreachable is bad enough on its own; worse,
+    handing QSpinBox.setValue a bigger number raises OverflowError, and an exception raised
+    inside a Qt slot (loading a save runs through one) takes the whole application down with
+    it. A QDoubleSpinBox showing no decimals looks and behaves the same and covers the range -
+    every u32 value is exact in a double, whose integers are exact up to 2^53.
+
+    value() hands back an int so the manager writes an int straight into the save.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setDecimals(0)
+        self.setRange(0, U32_MAX)
+        self.setSingleStep(1)
+        self.setGroupSeparatorShown(False)
+
+    def value(self) -> int:
+        return int(super().value())
 
 
 class HyneWidget(QWidget):
@@ -167,6 +193,30 @@ class HyneWidget(QWidget):
         if slot:
             spin.valueChanged.connect(slot)
         return spin
+
+    def _u32_spinbox(self, slot=None, tooltip=""):
+        """A spin box for a 32-bit unsigned field of the save (see U32SpinBox)."""
+        spin = U32SpinBox()
+        self._compact_spin(spin)
+        if tooltip:
+            spin.setToolTip(tooltip)
+        if slot:
+            spin.valueChanged.connect(slot)
+        return spin
+
+    @staticmethod
+    def _set_spin_value(spin, value):
+        """Show `value` in `spin`, kept inside what the widget can hold.
+
+        Every value here comes out of a save file, and a save is not always what this editor
+        expects: a hacked one, a slot from another game, a field this project has not decoded
+        right. Out of range, Qt's own setValue raises - inside the load slot, where an exception
+        does not surface as an error message but kills the process - so the clamp happens here.
+        A clamped field is visibly at its limit and the user can see something is off; the rest
+        of the save still loads and stays editable.
+        """
+        value = int(value)
+        spin.setValue(max(int(spin.minimum()), min(int(spin.maximum()), value)))
 
     def _enum_combo(self, entries, slot=None, tooltip="", adjust_size=False):
         combo = QComboBox()
@@ -310,7 +360,7 @@ class HyneWidget(QWidget):
         self._compact_line(self.gf_name_edit)
         self.gf_name_edit.editingFinished.connect(self._on_gf_name_changed)
 
-        self.gf_exp_spin = self._spinbox(0, 2147483647, self._on_gf_data_changed, "Total experience earned by this GF")
+        self.gf_exp_spin = self._u32_spinbox(self._on_gf_data_changed, "Total experience earned by this GF")
         self.gf_hp_spin = self._spinbox(0, 0xFFFF, self._on_gf_data_changed, "Current HP")
         self.gf_kills_spin = self._spinbox(0, 0xFFFF, self._on_gf_data_changed, "Number of enemies this GF has killed")
         self.gf_kos_spin = self._spinbox(0, 0xFFFF, self._on_gf_data_changed, "Number of times this GF was KO'd")
@@ -415,10 +465,10 @@ class HyneWidget(QWidget):
             (self.gf_kills_spin, gf.kills), (self.gf_kos_spin, gf.kos),
         ]:
             with QSignalBlocker(spin):
-                spin.setValue(value)
+                self._set_spin_value(spin, value)
         with QSignalBlocker(self.gf_learning_ability_combo):
             self._select_combo(self.gf_learning_ability_combo, gf.learning_ability)
-        self.gf_unused_spin.setValue(gf.unknown1)
+        self._set_spin_value(self.gf_unused_spin, gf.unknown1)
         with QSignalBlocker(self.gf_available_check):
             self.gf_available_check.setChecked(gf.available)
         for ability_id, check in self.gf_ability_checks.items():
@@ -426,7 +476,7 @@ class HyneWidget(QWidget):
                 check.setChecked(gf.has_ability(ability_id))
         for slot, spin in enumerate(self.gf_ap_spins, start=1):
             with QSignalBlocker(spin):
-                spin.setValue(gf.get_ap_ability(slot))
+                self._set_spin_value(spin, gf.get_ap_ability(slot))
 
     def _on_gf_name_changed(self):
         gf = self._selected_gf()
@@ -469,7 +519,7 @@ class HyneWidget(QWidget):
         self.char_hp_spin = self._spinbox(0, 0xFFFF, self._on_character_status_changed, "Current HP")
         self.char_hp_bonus_spin = self._spinbox(0, 0xFFFF, self._on_character_status_changed,
                                                "Max-HP bonus from HP-Bonus ability (added to base max HP)")
-        self.char_exp_spin = self._spinbox(0, 2147483647, self._on_character_status_changed, "Total experience")
+        self.char_exp_spin = self._u32_spinbox(self._on_character_status_changed, "Total experience")
         self.char_model_spin = self._spinbox(0, 0xFF, self._on_character_status_changed, "Field/battle model id")
         self.char_weapon_spin = self._spinbox(0, 0xFF, self._on_character_status_changed, "Equipped weapon id")
         self.char_kills_spin = self._spinbox(0, 0xFFFF, self._on_character_status_changed, "Number of enemies killed")
@@ -666,13 +716,13 @@ class HyneWidget(QWidget):
             (self.char_luck_spin, char.luck),
         ]:
             with QSignalBlocker(spin):
-                spin.setValue(value)
+                self._set_spin_value(spin, value)
         with QSignalBlocker(self.char_alt_model_check):
             self.char_alt_model_check.setChecked(char.alt_model)
         with QSignalBlocker(self.char_exist_check):
             self.char_exist_check.setChecked(char.exist)
         for spin, value in zip(self.char_unused_spins, [char.unknown2, char.unknown3, char.unknown4]):
-            spin.setValue(value)
+            self._set_spin_value(spin, value)
         for bit, check in self.char_status_checks.items():
             with QSignalBlocker(check):
                 check.setChecked(char.has_status(bit))
@@ -681,7 +731,7 @@ class HyneWidget(QWidget):
             with QSignalBlocker(self.char_magic_combos[i]):
                 self._select_combo(self.char_magic_combos[i], magic.magic_id)
             with QSignalBlocker(self.char_magic_qty_spins[i]):
-                self.char_magic_qty_spins[i].setValue(magic.quantity)
+                self._set_spin_value(self.char_magic_qty_spins[i], magic.quantity)
 
         for slot, combo in enumerate(self.char_active_combos):
             with QSignalBlocker(combo):
@@ -696,7 +746,7 @@ class HyneWidget(QWidget):
             self._select_combo(self.char_jun_gf2_combo, char.jun_gf2)
         for gf_id, spin in enumerate(self.char_gf_compat_spins):
             with QSignalBlocker(spin):
-                spin.setValue(char.get_gf_compatibility(gf_id))
+                self._set_spin_value(spin, char.get_gf_compatibility(gf_id))
 
         for field, combo in self.char_junction_combos.items():
             with QSignalBlocker(combo):
@@ -850,7 +900,7 @@ class HyneWidget(QWidget):
         config = self.manager.config
         for field, spin in self.config_spins.items():
             with QSignalBlocker(spin):
-                spin.setValue(getattr(config, field))
+                self._set_spin_value(spin, getattr(config, field))
         with QSignalBlocker(self.config_scan_check):
             self.config_scan_check.setChecked(bool(config.scan & 0x01))
         for mask, check in self.config_flag_checks:
@@ -907,8 +957,8 @@ class HyneWidget(QWidget):
         self.misc_griever_name_edit.setToolTip("Griever GF name (FF8 text, max 12 bytes)")
         self._compact_line(self.misc_griever_name_edit)
         self.misc_griever_name_edit.editingFinished.connect(self._on_misc_griever_name_changed)
-        self.misc_gil_spin = self._spinbox(0, 2147483647, self._on_misc_changed, "Party gil")
-        self.misc_gil_laguna_spin = self._spinbox(0, 2147483647, self._on_misc_changed, "Laguna-squad gil")
+        self.misc_gil_spin = self._u32_spinbox(self._on_misc_changed, "Party gil")
+        self.misc_gil_laguna_spin = self._u32_spinbox(self._on_misc_changed, "Laguna-squad gil")
         self.misc_weapon_laguna_spin = self._spinbox(0, 0xFF, self._on_misc_changed, "Laguna's weapon id")
         self.misc_weapon_kiros_spin = self._spinbox(0, 0xFF, self._on_misc_changed, "Kiros's weapon id")
         self.misc_weapon_ward_spin = self._spinbox(0, 0xFF, self._on_misc_changed, "Ward's weapon id")
@@ -971,7 +1021,7 @@ class HyneWidget(QWidget):
             (self.misc_weapon_ward_spin, misc.weapon_id_ward),
         ]:
             with QSignalBlocker(spin):
-                spin.setValue(value)
+                self._set_spin_value(spin, value)
         unlocked = misc.unlocked_weapons
         for bit, check in self.misc_weapon_checks:
             with QSignalBlocker(check):
@@ -983,7 +1033,7 @@ class HyneWidget(QWidget):
                     check.setChecked(bool(value & (1 << bit)))
         for i, spin in enumerate(self.misc_angelo_point_spins):
             with QSignalBlocker(spin):
-                spin.setValue(misc.get_angelo_point(i))
+                self._set_spin_value(spin, misc.get_angelo_point(i))
 
     def _on_misc_griever_name_changed(self):
         self.manager.misc.griever_name = self.misc_griever_name_edit.text()
@@ -1030,7 +1080,7 @@ class HyneWidget(QWidget):
             self.items_table.setCellWidget(row, 0, combo)
 
             qty = self._spinbox(0, 0xFF, tooltip="Amount held")
-            qty.setValue(entry.quantity)
+            self._set_spin_value(qty, entry.quantity)
             qty.valueChanged.connect(self._make_item_qty_handler(entry))
             self.items_table.setCellWidget(row, 1, qty)
 

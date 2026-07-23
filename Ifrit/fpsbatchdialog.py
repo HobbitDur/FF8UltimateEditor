@@ -151,10 +151,11 @@ def select_battle_model_file_list(parent, folder: str, file_filter: str, is_mode
 class FpsBatchReportDialog(QDialog):
     """What each file got, and why an animation was left alone."""
 
-    def __init__(self, parent, report_list: list, target_fps: int):
+    def __init__(self, parent, report_list: list, target_fps: int, mode: str = ""):
         super().__init__(parent)
         self.setWindowTitle(f"Converted to {target_fps} FPS")
         self.resize(720, 560)
+        self._mode = mode
         layout = QVBoxLayout(self)
 
         nb_file_done = sum(1 for r in report_list if not r['error'] and r['nb_converted'])
@@ -183,7 +184,7 @@ class FpsBatchReportDialog(QDialog):
         text = QTextEdit()
         text.setReadOnly(True)
         text.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
-        text.setPlainText(self.build_report_text(report_list, target_fps))
+        text.setPlainText(self.build_report_text(report_list, target_fps, mode))
         layout.addWidget(text)
 
         button_layout = QHBoxLayout()
@@ -197,8 +198,16 @@ class FpsBatchReportDialog(QDialog):
         layout.addLayout(button_layout)
 
     @staticmethod
-    def build_report_text(report_list: list, target_fps: int) -> str:
+    def build_report_text(report_list: list, target_fps: int, mode: str = "") -> str:
         line_list = []
+        if mode:
+            # Saved reports outlive the popup, and a folder converted with a sine at four
+            # half-waves is not the same file set as one converted with the plain spline.
+            settings = interpolation.describe_parameters(mode)
+            line_list.append("Interpolation: "
+                             + interpolation.MODE_LABEL.get(str(mode), str(mode))
+                             + (f" ({settings})" if settings else ""))
+            line_list.append("")
         not_done = [r for r in report_list if r['error'] or r['skipped_list']]
         if not_done:
             line_list.append(f"=== NOT converted, left untouched at 15 fps ===")
@@ -240,5 +249,5 @@ class FpsBatchReportDialog(QDialog):
         path, _ = QFileDialog.getSaveFileName(self, "Save report", f"fps_{target_fps}_report.txt",
                                               "Text file (*.txt)")
         if path:
-            pathlib.Path(path).write_text(self.build_report_text(report_list, target_fps),
-                                          encoding="utf-8")
+            pathlib.Path(path).write_text(
+                self.build_report_text(report_list, target_fps, self._mode), encoding="utf-8")

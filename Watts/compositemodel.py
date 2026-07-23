@@ -37,7 +37,13 @@ def _build_texture_atlas(entries):
 
 class _CompositeGeometry:
     """Merged geometry of several models: vertices concatenated, face indices rebased, and
-    UV faces' texture ids rebased into the shared texture atlas."""
+    UV faces' texture ids rebased into the shared texture atlas.
+
+    It stands in for a real GeometryData in front of Ifrit3DWidget, so it has to answer the same
+    calls with the same signatures - `include_hidden` included. That flag asks for the faces whose
+    TPage word sets the 0xFE00 "hide" bits, which the engine never draws and the viewer only shows
+    on request; it is passed straight down to each model rather than interpreted here.
+    """
 
     def __init__(self, entries, tex_remap):
         self._entries = entries  # list of (manager, win_pose_id, offset)
@@ -50,43 +56,58 @@ class _CompositeGeometry:
                 vertices.append((x + offset[0], y + offset[1], z + offset[2]))
         return vertices
 
-    def _rebased_faces(self, method):
+    def _rebased_faces(self, method, include_hidden):
         faces = []
         base = 0
         for manager, _win_pose, _offset in self._entries:
             geometry = manager.enemy.geometry_data
-            for indices in getattr(geometry, method)():
+            for indices in getattr(geometry, method)(include_hidden=include_hidden):
                 faces.append(tuple(index + base for index in indices))
             base += len(geometry.get_vertices())
         return faces
 
-    def _rebased_uv_faces(self, method):
+    def _rebased_uv_faces(self, method, include_hidden):
         faces = []
         base = 0
         for model_index, (manager, _win_pose, _offset) in enumerate(self._entries):
             geometry = manager.enemy.geometry_data
-            for indices, uvs, raw_tex, depth_bias in getattr(geometry, method)():
+            for indices, uvs, raw_tex, depth_bias in getattr(geometry, method)(
+                    include_hidden=include_hidden):
                 faces.append((tuple(index + base for index in indices), uvs,
                               self._tex_remap.get((model_index, raw_tex), 0), depth_bias))
             base += len(geometry.get_vertices())
         return faces
 
-    def get_triangles(self):
-        return self._rebased_faces("get_triangles")
+    def _joined_mask(self, method, include_hidden):
+        mask = []
+        for manager, _win_pose, _offset in self._entries:
+            mask.extend(getattr(manager.enemy.geometry_data, method)(include_hidden=include_hidden))
+        return mask
 
-    def get_quads(self):
-        return self._rebased_faces("get_quads")
+    def get_triangles(self, include_hidden=False):
+        return self._rebased_faces("get_triangles", include_hidden)
 
-    def get_triangles_with_uv(self):
-        return self._rebased_uv_faces("get_triangles_with_uv")
+    def get_quads(self, include_hidden=False):
+        return self._rebased_faces("get_quads", include_hidden)
 
-    def get_quads_with_uv(self):
-        return self._rebased_uv_faces("get_quads_with_uv")
+    def get_triangles_with_uv(self, include_hidden=False):
+        return self._rebased_uv_faces("get_triangles_with_uv", include_hidden)
 
-    def get_colored_triangles_with_color(self):
+    def get_quads_with_uv(self, include_hidden=False):
+        return self._rebased_uv_faces("get_quads_with_uv", include_hidden)
+
+    # Aligned 1:1 with get_*_with_uv above, model after model, so the viewer can count the faces
+    # the engine actually draws whether or not it is currently showing the hidden ones.
+    def get_triangles_hidden_mask(self, include_hidden=False):
+        return self._joined_mask("get_triangles_hidden_mask", include_hidden)
+
+    def get_quads_hidden_mask(self, include_hidden=False):
+        return self._joined_mask("get_quads_hidden_mask", include_hidden)
+
+    def get_colored_triangles_with_color(self, include_hidden=False):
         return []
 
-    def get_colored_quads_with_color(self):
+    def get_colored_quads_with_color(self, include_hidden=False):
         return []
 
 
@@ -99,8 +120,14 @@ class _CompositeAnimationData:
     skeleton overlay, both harmless in the preview."""
 
     class _Anim:
+        """Stands in for a real Animation in front of Ifrit3DWidget, so it answers the same
+        calls - get_nb_frame() included, which the viewer asks for on every frame."""
+
         def __init__(self, frames):
             self.frames = frames
+
+        def get_nb_frame(self):
+            return len(self.frames)
 
     def __init__(self, frames):
         self.nb_animations = 1

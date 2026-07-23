@@ -6,7 +6,7 @@ from enum import Enum
 from typing import List, Optional, Tuple
 from urllib.parse import to_bytes
 
-from FF8GameData.dat import interpolation
+from FF8GameData.dat import interpolation, rotation3d
 
 
 class EntityType(Enum):
@@ -1515,6 +1515,52 @@ class Animation:
         return frame.rotation_vector_data_supp[bone_index].get_scale_raw(axis)
 
     @staticmethod
+    def _blend_bone_by_angle(frame_a: 'AnimationFrame', frame_b: 'AnimationFrame',
+                             frame_before: 'AnimationFrame', frame_after: 'AnimationFrame',
+                             bone_index: int, step: float, mode) -> List['RotationType']:
+        """One bone's rotation, each of its three angles following the curve on its own.
+
+        A full circle is 4096 raw units, so every value of the segment is first unwrapped onto one
+        continuous line (the shortest way round) before the curve is applied.
+        """
+        new_rotations = []
+        for axis in range(3):
+            # A bone the frame does not carry (a skeleton that just grew) has no rotation
+            raw_a = Animation._rotation_raw_of(frame_a, bone_index, axis) or 0
+            raw_b = Animation._rotation_raw_of(frame_b, bone_index, axis)
+            raw_b = raw_a if raw_b is None else interpolation.unwrap_rotation_raw(raw_a, raw_b)
+            # Each neighbour is unwrapped against the end of the segment it sits next to, so
+            # the four values form one continuous line for the curve to follow
+            raw_before = Animation._rotation_raw_of(frame_before, bone_index, axis)
+            if raw_before is not None:
+                raw_before = interpolation.unwrap_rotation_raw(raw_a, raw_before)
+            raw_after = Animation._rotation_raw_of(frame_after, bone_index, axis)
+            if raw_after is not None:
+                raw_after = interpolation.unwrap_rotation_raw(raw_b, raw_after)
+            raw_value = interpolation.interpolate_value(raw_before, raw_a, raw_b, raw_after,
+                                                        step, mode)
+            new_rotations.append(RotationType(True, 0, round(raw_value)))
+        return new_rotations
+
+    @staticmethod
+    def _blend_bone_in_arc(frame_a: 'AnimationFrame', frame_b: 'AnimationFrame', bone_index: int,
+                           ratio: float) -> List['RotationType']:
+        """One bone's rotation as a single 3D turn, `ratio` of the way from one pose to the other.
+
+        The bone turns around one axis, the short way round, and only then are the three angles
+        the file stores worked out again (FF8GameData/dat/rotation3d.py). The curve has already
+        been applied - it is what turned the step into `ratio` - so it shapes the SPEED of that
+        one turn instead of three separate lines. The frames outside the segment have no say here:
+        a rotation has no "value just before it" to flow from, only a pose.
+        """
+        pose_a = [Animation._rotation_raw_of(frame_a, bone_index, axis) or 0 for axis in range(3)]
+        pose_b = [Animation._rotation_raw_of(frame_b, bone_index, axis) for axis in range(3)]
+        # A bone the other frame does not carry (a skeleton that just grew) simply holds its pose
+        pose_b = [pose_a[axis] if pose_b[axis] is None else pose_b[axis] for axis in range(3)]
+        blended = rotation3d.blend_euler_raw(pose_a, pose_b, ratio)
+        return [RotationType(True, 0, blended[axis]) for axis in range(3)]
+
+    @staticmethod
     def _create_frame_between(frame_a: 'AnimationFrame', frame_b: 'AnimationFrame', step: float,
                               bones: List[Bone], mode: str = interpolation.LINEAR,
                               frame_before: 'AnimationFrame' = None,
@@ -1524,6 +1570,11 @@ class Animation:
         `mode` picks the curve (FF8GameData/dat/interpolation.py). frame_before/frame_after are
         the frames just outside the segment, used by the curves that flow through the keyframes;
         None where there is none, which every mode handles by using the segment alone.
+
+        The mode also says HOW the bone rotations are blended: angle by angle (the default, exact
+        while the two poses are close - the fps conversion) or as whole 3D rotations when its
+        shortest_arc setting is on, which is what two poses far apart need (rotation3d explains
+        why an arm morphed angle by angle leaves through a T-pose).
         """
         nb_bones = len(bones)
         new_frame = AnimationFrame(nb_bones)
@@ -1540,27 +1591,16 @@ class Animation:
                 step, mode)
             new_frame.position.append(PositionType(0, round(raw_value), axis=axis))
 
-        # Bone rotations: a full circle is 4096 raw units, so every value of the segment is first
-        # unwrapped onto one continuous line (the shortest way round) before the curve is applied
+        # Bone rotations, either as whole 3D rotations or angle by angle - the mode says which
+        arc_ratio = (interpolation.shaped_step(step, mode)
+                     if interpolation.rotates_in_arc(mode) else None)
         for bone_index in range(nb_bones):
-            new_rotations = []
-            for axis in range(3):
-                # A bone the frame does not carry (a skeleton that just grew) has no rotation
-                raw_a = Animation._rotation_raw_of(frame_a, bone_index, axis) or 0
-                raw_b = Animation._rotation_raw_of(frame_b, bone_index, axis)
-                raw_b = raw_a if raw_b is None else interpolation.unwrap_rotation_raw(raw_a, raw_b)
-                # Each neighbour is unwrapped against the end of the segment it sits next to, so
-                # the four values form one continuous line for the curve to follow
-                raw_before = Animation._rotation_raw_of(frame_before, bone_index, axis)
-                if raw_before is not None:
-                    raw_before = interpolation.unwrap_rotation_raw(raw_a, raw_before)
-                raw_after = Animation._rotation_raw_of(frame_after, bone_index, axis)
-                if raw_after is not None:
-                    raw_after = interpolation.unwrap_rotation_raw(raw_b, raw_after)
-                raw_value = interpolation.interpolate_value(raw_before, raw_a, raw_b, raw_after,
-                                                            step, mode)
-                new_rotations.append(RotationType(True, 0, round(raw_value)))
-            new_frame.rotation_vector_data[bone_index] = new_rotations
+            if arc_ratio is None:
+                new_frame.rotation_vector_data[bone_index] = Animation._blend_bone_by_angle(
+                    frame_a, frame_b, frame_before, frame_after, bone_index, step, mode)
+            else:
+                new_frame.rotation_vector_data[bone_index] = Animation._blend_bone_in_arc(
+                    frame_a, frame_b, bone_index, arc_ratio)
 
         # Bone scales (squash-and-stretch), same curve on the raw values.
         # A frame without the mode bit is entirely neutral (1024 raw).

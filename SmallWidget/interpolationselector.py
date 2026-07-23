@@ -226,7 +226,8 @@ class InterpolationSelector(QWidget):
         self.mode_changed.emit()
 
     def _build_parameter_widgets(self):
-        """Rebuild the settings rows for the selected curve (none at all for the linear one)."""
+        """Rebuild the settings rows for the selected curve: its own (none at all for the linear
+        one) followed by the ones offered whatever the curve is, the 3D arc for the rotations."""
         self._loading = True
         while self._parameter_form.count():
             item = self._parameter_form.takeAt(0)
@@ -236,7 +237,7 @@ class InterpolationSelector(QWidget):
         self._widget_dict = {}
 
         name = self.get_mode_name()
-        spec_list = interpolation.MODE_PARAMETERS.get(name, ())
+        spec_list = interpolation.parameters_for(name)
         self._parameter_widget.setVisible(bool(spec_list))
         self._reset_button.setEnabled(bool(spec_list))
         if not spec_list:
@@ -286,7 +287,7 @@ class InterpolationSelector(QWidget):
             return
         name = self.get_mode_name()
         values = {}
-        for spec in interpolation.MODE_PARAMETERS.get(name, ()):
+        for spec in interpolation.parameters_for(name):
             widget = self._widget_dict.get(spec.key)
             if widget is None:
                 continue

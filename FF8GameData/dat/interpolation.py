@@ -25,6 +25,12 @@ so every layer that only forwards `mode` (the fps converter, the splitter, the m
 working, and so does anything comparing it to LINEAR/SINE/... or using it as a dict key.
 The parameters DEFAULT to the curve as it was before they existed: a plain "sine" string and an
 InterpolationMode("sine") with untouched parameters produce exactly the same frames.
+
+On top of those, SHARED_PARAMETERS apply whatever the curve is, because they are not about its
+shape: the only one so far is `shortest_arc`, which says whether the bone rotations are blended as
+3D rotations (FF8GameData/dat/rotation3d.py) instead of three numbers moving on their own. Ask a
+curve for everything it offers with parameters_for(); MODE_PARAMETERS stays what the CURVE itself
+has to adjust.
 """
 import math
 from dataclasses import dataclass
@@ -166,6 +172,26 @@ MODE_PARAMETERS = {
     ),
 }
 
+# Offered with every curve: these say WHAT is being blended, not what shape the blend follows.
+SHARED_PARAMETERS = (
+    ModeParameter(
+        "shortest_arc", "Turn the bones the short way (3D arc)", default=False, kind="bool",
+        description="Blends each bone as a 3D rotation instead of three separate angles: the "
+                    "bone makes one turn, around one axis, the short way round.\nLeave it off to "
+                    "raise the frame rate of a motion (the poses are a frame apart, the two "
+                    "blends agree, and the curves can still read the neighbouring frames). Turn "
+                    "it on to morph between two poses far apart - a stance change, an arm going "
+                    "from held out to down at the side. Blended angle by angle those bones swing "
+                    "through poses that are in neither keyframe, the arms flying out through a "
+                    "T-pose being the usual sight.\nOnly the bone rotations are concerned; the "
+                    "skeleton position and the bone scales follow the curve as they always do."),
+)
+
+# Every setting the popup shows for a curve. MODE_PARAMETERS stays what that curve itself has to
+# adjust, so a straight line still has nothing of its own.
+def parameters_for(mode) -> tuple:
+    return MODE_PARAMETERS.get(str(mode), ()) + SHARED_PARAMETERS
+
 
 class InterpolationMode(str):
     """A curve name carrying the parameters the user set on it.
@@ -182,6 +208,10 @@ class InterpolationMode(str):
         merged = dict(getattr(name, "parameters", None) or {})
         merged.update(parameters or {})
         mode.parameters = merged
+        # Read once here rather than on every value: interpolate_value runs a few hundred thousand
+        # times in one fps conversion, and a mode is built once per popup. A mode is therefore to
+        # be treated as fixed - change one with with_parameters(), not by writing in `parameters`.
+        mode.resolved_parameters = _resolve_parameters(str(mode), merged)
         return mode
 
     def with_parameters(self, **parameters) -> 'InterpolationMode':
@@ -191,21 +221,34 @@ class InterpolationMode(str):
         return f"InterpolationMode({str(self)!r}, {self.parameters!r})"
 
 
-def parameters_of(mode) -> dict:
-    """Every parameter of `mode`: the user's value where there is one, the default everywhere else.
-
-    A plain string has none set, so it always describes the curve as it was before parameters
-    existed. Unknown keys and out-of-range values are dropped rather than trusted - an
-    interpolation is never worth losing an edit over.
-    """
+def _resolve_parameters(name: str, given: dict) -> dict:
+    """The values a curve will actually use: the ones given where they are usable, the defaults
+    everywhere else. Unknown keys and out-of-range or unreadable values are dropped rather than
+    trusted - an interpolation is never worth losing an edit over."""
     values = {}
-    given = getattr(mode, "parameters", None) or {}
-    for spec in MODE_PARAMETERS.get(str(mode), ()):
+    for spec in parameters_for(name):
         try:
             values[spec.key] = spec.clamp(given[spec.key]) if spec.key in given else spec.default
         except (TypeError, ValueError):
             values[spec.key] = spec.default
     return values
+
+
+# The plain curves, resolved once at import. A mode with nothing set is by far the most common
+# thing interpolate_value is handed, and it must not pay for the machinery.
+_DEFAULT_PARAMETERS = {name: _resolve_parameters(name, {}) for name in MODE_PARAMETERS}
+_NO_PARAMETER = {}
+
+
+def parameters_of(mode) -> dict:
+    """Every parameter of `mode`: the user's value where there is one, the default everywhere else.
+
+    A plain string has none set, so it always describes the curve as it was before parameters
+    existed. The dict that comes back is shared and meant to be read, not written.
+    """
+    if type(mode) is InterpolationMode:
+        return mode.resolved_parameters
+    return _DEFAULT_PARAMETERS.get(str(mode), _NO_PARAMETER)
 
 
 def landing_ratio(mode) -> float:
@@ -217,7 +260,25 @@ def landing_ratio(mode) -> float:
     keep their own values, so a curve landing anywhere else leaves a jump at the end of the range
     and the popups say so.
     """
-    return interpolate_value(None, 0.0, 1.0, None, 1.0, mode)
+    return shaped_step(1.0, mode)
+
+
+def shaped_step(step: float, mode) -> float:
+    """How far along the segment the curve is at `step`, as one number: 0.0 is the first pose and
+    1.0 the second.
+
+    The curves work channel by channel because that is all a number needs, but a rotation blended
+    as a whole (the shortest_arc setting) has a single fraction to advance by, and this is it. The
+    curves that read the frames outside the segment see none here - there is no "neighbouring
+    value" of a fraction - so a spline flattens into an ease through the two poses.
+    """
+    return interpolate_value(None, 0.0, 1.0, None, step, mode)
+
+
+def rotates_in_arc(mode) -> bool:
+    """Whether bone rotations are to be blended as 3D rotations (rotation3d) rather than three
+    angles each moving on their own."""
+    return bool(parameters_of(mode).get("shortest_arc", False))
 
 
 def describe_parameters(mode) -> str:
@@ -226,7 +287,7 @@ def describe_parameters(mode) -> str:
     values = parameters_of(mode)
     changed = [f"{spec.label}: {values[spec.key]:g}" if spec.kind != "bool"
                else f"{spec.label}: {'yes' if values[spec.key] else 'no'}"
-               for spec in MODE_PARAMETERS.get(str(mode), ())
+               for spec in parameters_for(mode)
                if values[spec.key] != spec.default]
     return ", ".join(changed)
 
@@ -252,6 +313,10 @@ def interpolate_value(before, value_a, value_b, after, step: float, mode: str) -
     defaults). Unknown modes fall back to linear rather than raising: an interpolation is never
     worth losing an edit over.
     """
+    if mode == LINEAR:
+        # The straight line has no settings at all, and this is by far the most travelled path:
+        # answer before touching any of the parameter machinery.
+        return value_a + (value_b - value_a) * step
     parameters = parameters_of(mode)
     if mode == HOLD:
         # The classic hold (snap point 1.00) never blends: every inserted frame repeats the pose
