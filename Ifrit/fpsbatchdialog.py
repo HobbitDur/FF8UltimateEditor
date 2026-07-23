@@ -17,7 +17,9 @@ class FpsBatchDialog(QDialog):
     def __init__(self, parent, file_list: list):
         super().__init__(parent)
         self.setWindowTitle("Convert files to 30/60 FPS")
-        self.resize(560, 340)
+        # Tall on purpose: the interpolation block below carries the settings of the chosen curve
+        # and its preview, which grow and shrink as the curve changes.
+        self.resize(600, 720)
         self._file_list = list(file_list)
 
         layout = QVBoxLayout(self)
