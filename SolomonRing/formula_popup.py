@@ -84,6 +84,13 @@ class FormulaPopup(QDialog):
         self._result.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         root.addWidget(self._result)
 
+        # Curve chart (doomtrain-style): shown only for a formula that declares a "plot",
+        # i.e. one whose result is a curve over a single parameter (level).
+        self._chart = QLabel()
+        self._chart.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._chart.setVisible(False)
+        root.addWidget(self._chart)
+
         self._note = QLabel()
         self._note.setStyleSheet("color: gray; font-size: 8pt;")
         self._note.setWordWrap(True)
@@ -213,9 +220,47 @@ class FormulaPopup(QDialog):
         self._set_math(self._symbolic, out.get("latex"), out["symbolic"])
         self._set_math(self._substituted, out.get("latex_sub"), out["substituted"])
         self._result.setText(out["result"])
+        self._update_chart(out, live)
         note = out.get("note")
         self._note.setText(note or "")
         self._note.setVisible(bool(note))
+
+    def _update_chart(self, out, live):
+        """Draw the whole curve for a formula that declares a "plot": sweep its parameter over
+        the full range PARAM_DEFS allows (level 1-100) and evaluate the formula at each step,
+        marking where the current assumption sits. The swept parameter is restored afterwards,
+        so charting never changes what the assumptions box shows."""
+        spec = out.get("plot")
+        if not spec or not flx.AVAILABLE:
+            self._chart.setVisible(False)
+            return
+        key = spec["param"]
+        _, _, lo, hi, _ = fs.PARAM_DEFS[key]
+        saved = fs.PARAM_VALUES[key]
+        points = []
+        try:
+            for x in range(lo, hi + 1):
+                fs.PARAM_VALUES[key] = x
+                step = fs.compute(self._formula_key, self._current_value(), live)
+                y = step.get("value") if step else None
+                if y is not None:
+                    points.append((x, y))
+        finally:
+            fs.PARAM_VALUES[key] = saved
+        current = out.get("value")
+        marker = (saved, current) if current is not None else None
+        color = self.palette().color(QPalette.ColorRole.WindowText).name()
+        pix = flx.plot(points, x_label=spec.get("x_label", ""), y_label=spec.get("y_label", ""),
+                       marker=marker, fg=color)
+        if pix is None:
+            self._chart.setVisible(False)
+            return
+        self._chart.setPixmap(pix)
+        self._chart.setToolTip(
+            f"{spec.get('y_label', 'value')} across the whole {spec.get('x_label', 'range').lower()} "
+            "range, from this entry's current coefficients. The dot is the level in the "
+            "assumptions box below.")
+        self._chart.setVisible(True)
 
     def _set_math(self, label, latex, text_fallback):
         """Show ``latex`` as a typeset image if matplotlib is available and it parses; otherwise

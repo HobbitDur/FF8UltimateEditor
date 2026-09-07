@@ -74,6 +74,13 @@ class KernelSectionTab(QWidget):
         self._text_widgets = []          # list of QLineEdit, one per text offset
         self._field_widgets = {}         # field name -> widget descriptor
         self._embed_map = {}             # flags-field name -> [dependent field defs to nest inside it]
+        # "Unlock all fields": by default anything the unmodified game never reads is shown but
+        # greyed out (padding, dead bytes, flags with no consumer, fields whose owning enum makes
+        # them meaningless). A mod can give those a meaning, so the tool offers a global override -
+        # _locked_widgets holds what the default greys, _enable_syncs the live grey/ungrey rules.
+        self._unlock_all = False
+        self._locked_widgets = []        # (widget, kind) frozen by the default, re-enabled on unlock
+        self._enable_syncs = []          # callables re-applying the live "enabled_when" rules
 
         layout = QHBoxLayout(self)
 
@@ -375,12 +382,41 @@ class KernelSectionTab(QWidget):
                 targets.append(self._menu_refine_label)
 
             def _sync(_=None, sw=src_widget, vals=values, tgts=targets):
-                on = sw.currentData() in vals
+                on = self._unlock_all or sw.currentData() in vals
                 for t in tgts:
                     t.setEnabled(on)
 
             src_widget.currentIndexChanged.connect(_sync)
+            self._enable_syncs.append(_sync)
             _sync()
+
+    def _lock(self, widget, kind="plain"):
+        """Grey ``widget`` out because the unmodified game never reads that value, and remember
+        it so "Unlock all fields" can hand it back. ``kind`` says what else the default freezes
+        beyond the enabled state ("spin"/"edit" are also made read-only)."""
+        widget.setEnabled(False)
+        if kind == "spin":
+            widget.setReadOnly(True)
+            widget.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
+        elif kind == "edit":
+            widget.setReadOnly(True)
+        self._locked_widgets.append((widget, kind))
+
+    def set_unlock_all(self, unlocked: bool):
+        """Enable (or re-grey) every field the default hides as unused by the vanilla game.
+        Values are read and written the same either way - this only changes what the UI lets you
+        touch, for a mod that gave an unused byte or flag a meaning."""
+        self._unlock_all = bool(unlocked)
+        for widget, kind in self._locked_widgets:
+            widget.setEnabled(self._unlock_all)
+            if kind == "spin":
+                widget.setReadOnly(not self._unlock_all)
+                widget.setButtonSymbols(QSpinBox.ButtonSymbols.UpDownArrows if self._unlock_all
+                                        else QSpinBox.ButtonSymbols.NoButtons)
+            elif kind == "edit":
+                widget.setReadOnly(not self._unlock_all)
+        for sync in self._enable_syncs:
+            sync()
 
     def _emit_single_row(self, vbox, fields, flags=False):
         """One line holding all given fields (natural widths), left-hugged."""
@@ -499,7 +535,7 @@ class KernelSectionTab(QWidget):
                 # does nothing outside the Battle Items tab).
                 if readonly or entry.get("disabled") or \
                         entry["name"].lower().startswith(("unused", "padding")):
-                    cb.setEnabled(False)
+                    self._lock(cb)
                 checks.append((entry["mask"], cb))
                 if entry["mask"] in coupling_masks:
                     coupled_checks[entry["mask"]] = cb
@@ -526,10 +562,11 @@ class KernelSectionTab(QWidget):
                 sub_vbox.addLayout(row)
                 outer.addWidget(sub_box)
                 if cb:
-                    def _sync(checked, widget=wdg):
-                        widget.setEnabled(not checked)
+                    def _sync(_=None, widget=wdg, box=cb):
+                        widget.setEnabled(self._unlock_all or not box.isChecked())
                     cb.toggled.connect(_sync)
-                    _sync(cb.isChecked())
+                    self._enable_syncs.append(_sync)
+                    _sync()
             return box
 
         if lookup and lookup["type"] == "enum":
@@ -545,7 +582,7 @@ class KernelSectionTab(QWidget):
             combo.setFixedWidth(min(widest + 40, 320))
             combo.view().setMinimumWidth(widest + 40)
             if readonly:
-                combo.setEnabled(False)
+                self._lock(combo)
             self._field_widgets[name] = ("enum", field, combo)
             if field.get("formula") and not readonly:
                 return self._with_formula_button(field, combo)
@@ -554,7 +591,7 @@ class KernelSectionTab(QWidget):
         if field.get("bool"):
             cb = QCheckBox()
             if readonly:
-                cb.setEnabled(False)
+                self._lock(cb)
             self._field_widgets[name] = ("bool", field, cb)
             return cb
 
@@ -569,9 +606,7 @@ class KernelSectionTab(QWidget):
             # Size the spinbox to its biggest possible value (plus buttons/frame).
             spin.setFixedWidth(spin.fontMetrics().horizontalAdvance(str(max_value)) + 36)
             if readonly:
-                spin.setReadOnly(True)
-                spin.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
-                spin.setEnabled(False)
+                self._lock(spin, "spin")
             self._field_widgets[name] = ("int", field, spin)
             # Optional live "≈ N <unit>" hint under the spinbox for a raw byte that's
             # actually value*factor in some other unit (seconds, percent, ...).
@@ -610,8 +645,7 @@ class KernelSectionTab(QWidget):
         edit = QLineEdit()
         edit.setFixedWidth(edit.fontMetrics().horizontalAdvance("0x" + "F" * 2 * field["size"]) + 16)
         if readonly:
-            edit.setReadOnly(True)
-            edit.setEnabled(False)
+            self._lock(edit, "edit")
         self._field_widgets[name] = ("hex", field, edit)
         return edit
 

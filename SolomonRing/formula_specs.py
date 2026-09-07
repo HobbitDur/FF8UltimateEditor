@@ -102,6 +102,10 @@ def _idiv(a, b):
 # --- formula computations ---------------------------------------------------
 # Each returns a dict: symbolic (str), substituted (str), result (str), note (str|None),
 # params (tuple of PARAM_DEFS keys to expose editors for).
+# A formula that is a CURVE over one of its params can add two more keys, and the popup then
+# draws it (like doomtrain's stat charts) instead of only showing the single sampled value:
+#   value: the numeric result at the current params (None when the formula can't be evaluated)
+#   plot:  {"param": <PARAM_DEFS key to sweep>, "x_label": str, "y_label": str}
 
 def _status_timer(value, P, entry):
     bs = P["battle_speed"]
@@ -262,6 +266,8 @@ def _gf_hp(value, P, entry):
         "symbolic": "GF HP = HPMod3 + level × HPMod1 + 10 × level² / HPMod2",
         "substituted": (f"{m3} + {lvl}×{m1} + 10×{lvl}²/{m2}" if m2 else f"{m3} + {lvl}×{m1} + 10×{lvl}²/0"),
         "result": result,
+        "value": hp,
+        "plot": {"param": "gf_level", "x_label": "GF level", "y_label": "HP"},
         "note": "getGFhpForLvl @0x496120. The three HP modifiers define the GF's whole HP curve; "
                 "level is where it's sampled. HPMod1 = linear/level, HPMod2 = quadratic divisor, "
                 "HPMod3 = flat base.",
@@ -283,6 +289,8 @@ def _gf_next_exp(value, P, entry):
         "symbolic": "total EXP to reach level L = 10 × mod1 × L + mod2 × L² / 256",
         "substituted": f"10×{m1}×{lvl} + {m2}×{lvl}²/256 = {exp}",
         "result": f"≈ {exp} total EXP to reach GF level {lvl}",
+        "value": exp,
+        "plot": {"param": "gf_level", "x_label": "GF level", "y_label": "Total EXP"},
         "note": "GetGFLevelFromExperience @0x4960c0 walks levels while "
                 "experience ≥ 10×mod1×L + mod2×L²/256, so this is the cumulative EXP threshold "
                 "for level L. mod1 = linear term, mod2 = quadratic (÷256) acceleration.",
@@ -555,6 +563,8 @@ def _make_char_stat(stat):
             "note": note,
             "latex": latex,
             "latex_sub": latex_sub,
+            "value": capped,
+            "plot": {"param": "char_level", "x_label": "Level", "y_label": f"Base {ST}"},
         }
 
     return fn
@@ -578,6 +588,8 @@ def _char_exp(value, P, entry):
                     "[expLow = low byte, expHigh = high byte]",
         "substituted": f"expLow={lo}, expHigh={hi}   →   10x{n}x{lo} + {n}²x{hi}/256 = {total}",
         "result": f"Total EXP to reach level {L}: {total}   (+{per} for the next level)",
+        "value": total,
+        "plot": {"param": "char_level", "x_label": "Level", "y_label": "Total EXP"},
         "note": (f"The 'EXP modifier' WORD packs two values: low byte {lo} (linear, x10/level) and "
                  f"high byte {hi} (quadratic, /256). Here the curve is {curve}. Retail value 100 "
                  "(low=100, high=0) → a flat 1000 EXP per level. Verified in "

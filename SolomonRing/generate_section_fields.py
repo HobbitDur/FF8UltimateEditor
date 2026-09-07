@@ -1207,12 +1207,16 @@ for _f in sections["24"]["fields"]:
         _f["help"] = ("Zell Duel move table: which sequence index to jump to for the next move, "
                       "selected by the player's button input from this move.")
 
-# IDA-driven normalization: every kernel "Magic ID" effect field is typed
+# IDA-driven normalization: every kernel "Magic ID" EFFECT field is typed
 # SpecialActionID (value 2 = Fire, 102 = Thundara) and indexes the special_action
 # table, NOT the spell-name list (where 2 = Fira). Point them at special_action.
+# Fields flagged dynamic_lookup are exempt: they are real cross-references to the
+# Magic section's own entries, not effect ids. Today that means Selphie's Slot sets
+# (section 28), whose bytes really are spell ids - vanilla set 0 reads Fire/Blizzard/
+# Thunder/Cure as magic, and unrelated animations if typed as SpecialActionID.
 for cfg in sections.values():
     for f in cfg["fields"]:
-        if f.get("lookup") == "magic":
+        if f.get("lookup") == "magic" and not f.get("dynamic_lookup"):
             f["lookup"] = "attack_animation"
             if f.get("label", "").startswith("Magic ID"):
                 f["label"] = "Attack animation"

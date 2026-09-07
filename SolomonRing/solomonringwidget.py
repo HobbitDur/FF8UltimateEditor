@@ -2,7 +2,7 @@ import json
 import os
 
 from PyQt6.QtWidgets import (
-    QTabWidget, QWidget, QVBoxLayout
+    QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox
 )
 
 from Common.filebinding import FileBinding
@@ -89,6 +89,23 @@ class SolomonRingWidget(QWidget):
         self.kernel_binding = FileBinding("kernel.bin", file_registry,
                                           load_callback=self.load_file, save_callback=self._save_kernel)
 
+        # --- Unlock switch ----------------------------------------------------
+        # Fields the unmodified game never reads (padding, dead bytes, flags with no consumer,
+        # values their owning enum makes meaningless) are greyed out by default, so what you can
+        # edit is what actually does something. A mod may have given one of them a meaning, so
+        # this ticks every tab into "edit anything" mode.
+        self.unlock_check = QCheckBox("Unlock fields unused by the vanilla game")
+        self.unlock_check.setToolTip(
+            "Off (default): a field the unmodified game never reads is shown - so you can see its "
+            "value - but greyed out, so you cannot change something that does nothing.\n"
+            "On: every field becomes editable, for a mod that gave those bytes/flags a purpose. "
+            "This only changes what the UI lets you edit; loading and saving are identical either way.")
+        self.unlock_check.toggled.connect(self._set_unlock_all)
+        unlock_row = QHBoxLayout()
+        unlock_row.addWidget(self.unlock_check)
+        unlock_row.addStretch(1)
+        main_layout.addLayout(unlock_row)
+
         # --- Section tabs -----------------------------------------------------
         self.tabs = QTabWidget()
         for index, (title, entries) in enumerate(TAB_LAYOUT):
@@ -101,6 +118,11 @@ class SolomonRingWidget(QWidget):
         self.tabs.setEnabled(False)
 
         self.kernel_binding.load_opened_file()  # Another tool may have opened kernel.bin already
+
+    def _set_unlock_all(self, unlocked):
+        """Apply the "unlock unused fields" switch to every section tab at once."""
+        for tab in self._section_tabs.values():
+            tab.set_unlock_all(unlocked)
 
     def file_bindings(self):
         """The files the shared header toolbar drives for this tool (just kernel.bin)."""
