@@ -833,35 +833,54 @@ class Ifrit3DWidget(QWidget):
             self.update_animated_mesh()
             self.update_skeleton()
 
-    def load_file(self):
+    def load_file(self, keep_view=False):
+        """Push the manager's model into the viewer.
+
+        `keep_view=True` is a RELOAD of the SAME file - undo/redo putting an older state back.
+        The user is still looking at the edit they just undid, so the camera, the animation and
+        frame being watched and the bone selection (with its rotation gizmo) all stay where they
+        were, merely clamped to what the model now holds. Loading a file for the first time keeps
+        the default: front view, animation 0 / frame 0, root joint selected.
+        """
         if self.animating:
             self.timer.stop()
             if hasattr(self, 'play_btn'):
                 self.play_btn.setText("Play")
             self.animating = False
 
-        self.current_anim_id = 0
-        self.current_frame = 0
+        anim_list = self.ifrit_manager.enemy.animation_data.animations
+        if keep_view:
+            # An undo can remove the animation/frame that was on screen (undoing a "new animation",
+            # or a paste): clamp rather than jump back to the start.
+            self.current_anim_id = min(self.current_anim_id, max(0, len(anim_list) - 1))
+            self.current_frame = min(self.current_frame, max(0, self.get_max_frames() - 1))
+        else:
+            self.current_anim_id = 0
+            self.current_frame = 0
         self.interp_step = 0.0
-        self.next_frame_index = 1
+        nb_frames = self.get_max_frames()
+        self.next_frame_index = (self.current_frame + 1) % nb_frames if nb_frames else 0
         # Constant index/UV/colored lists + textures (body, plus the weapon if one is overlaid);
         # this also pushes the textures. Colored (untextured) primitives are unused by monsters
         # but present in battle-stage groups and magic-effect models.
         self._refresh_static_geometry()
         # Then this frame's vertex positions (body + weapon).
         self.update_animated_mesh()
-        self.gl_widget.reset_view()
+        if not keep_view:
+            self.gl_widget.reset_view()
 
         self._update_model_translation()
         self.update_skeleton()
 
         if hasattr(self, 'frame_slider'):
             self.frame_slider.setRange(0, self.get_max_frames() - 1)
+            if keep_view:
+                self.frame_slider.setValue(self.current_frame)
         if hasattr(self, 'anim_selector'):
             if self.ifrit_manager.enemy.animation_data.nb_animations:
-                nb = len(self.ifrit_manager.enemy.animation_data.animations)
+                nb = len(anim_list)
                 self.anim_selector.setRange(0, nb - 1)
-                self.anim_selector.setValue(0)
+                self.anim_selector.setValue(self.current_anim_id if keep_view else 0)
                 self.anim_selector.setToolTip(f"Nb animation: {nb}")
             else:
                 self.anim_selector.setRange(0, 0)
@@ -876,16 +895,26 @@ class Ifrit3DWidget(QWidget):
                 self.bone_editor.setVisible(True)
                 bone_count = len(self.ifrit_manager.enemy.bone_data.bones) - 1
                 self.bone_editor.set_bone_range(bone_count)
-                # Set the initial bone ID to 0 and update
-                self.bone_editor.bone_spin.setValue(0)
-                self._update_bone_editor_selection()
-                self._update_frame_position_selection()
+                if keep_view:
+                    # Keep the joint being worked on (undoing an "add bone" can delete it, hence
+                    # the clamp) so the gizmo does not jump back to the root.
+                    self.bone_editor.bone_spin.setValue(min(self.bone_editor.bone_spin.value(),
+                                                            bone_count))
+                    self._selected_bone_ids = [bid for bid in self._selected_bone_ids
+                                               if bid <= bone_count] or [0]
+                    self._apply_bone_selection()   # form + highlight + gizmo, on the same bone(s)
+                else:
+                    # Set the initial bone ID to 0 and update
+                    self.bone_editor.bone_spin.setValue(0)
+                    self._update_bone_editor_selection()
+                    self._update_frame_position_selection()
             else:
                 self.bone_editor.setEnabled(False)
                 self.bone_editor.setVisible(False)
 
         self._set_reference_position()
-        self.gl_widget.reset_view()
+        if not keep_view:
+            self.gl_widget.reset_view()
 
     # ── Vertex / primitive budget readout (info bar) ──────────────────
     # The engine limits these are checked against were measured in FF8_EN.exe:

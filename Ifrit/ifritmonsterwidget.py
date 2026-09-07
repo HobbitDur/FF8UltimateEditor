@@ -124,6 +124,9 @@ class IfritFilePane(QWidget):
         self._loading = False             # True while populating widgets: suppresses dirty flagging
         self._dirty_connected = set()     # id()s of widgets already wired for edit detection
         self._loaded_tabs = set()         # tabs already populated (built once, kept)
+        self._ever_loaded_tabs = set()    # tabs loaded at least once: a later load is a RELOAD
+                                          # (undo/redo), which must not reset what the user set up
+                                          # in that tab - see _load_tab
         self._tab_size_policies = {}      # id(widget) -> its real QSizePolicy (see _shrink_tabs_to_current)
 
         layout = QVBoxLayout(self)
@@ -305,7 +308,10 @@ class IfritFilePane(QWidget):
         self.settings.setValue("ifrit/current_tab", self._tabs.currentIndex())
         self._ensure_tab_loaded(self._tabs.currentWidget())
 
-    def _load_tab(self, widget):
+    def _load_tab(self, widget, is_reload=False):
+        """Populate one tab from the model. `is_reload` = this tab was already loaded and is being
+        refreshed after an undo/redo, so the tab keeps what the user set up in it (the 3D view its
+        camera, animation/frame and selected bone) instead of starting from the defaults."""
         et = self.ifrit_manager.enemy.entity_type
         path = self.path
         if widget is self._3d_widget:
@@ -313,7 +319,7 @@ class IfritFilePane(QWidget):
                 # Expand the animation + build matrices up front so the 3D tab is fully ready the
                 # moment it's shown (rather than on the first paint), keeping the tab switch clean.
                 self.ifrit_manager._ensure_matrices()
-                self._3d_widget.load_file()
+                self._3d_widget.load_file(keep_view=is_reload)
                 # A character body can display one of the session's loaded weapons in its hand,
                 # played on the same animation (see CompositeCharacterWeaponAnimation).
                 if et == EntityType.CHARACTER and self._weapon_provider is not None:
@@ -343,10 +349,12 @@ class IfritFilePane(QWidget):
         if widget is None or widget in self._loaded_tabs:
             return
         self._loaded_tabs.add(widget)
+        is_reload = widget in self._ever_loaded_tabs   # loaded before -> an undo/redo invalidated it
+        self._ever_loaded_tabs.add(widget)
         nested = self._loading
         self._loading = True
         try:
-            self._load_tab(widget)
+            self._load_tab(widget, is_reload=is_reload)
             self._connect_dirty_signals(widget)   # scope to THIS tab: scanning the whole pane's
                                                   # widget tree on every (re)load costs ~0.2 s
         except Exception as e:
@@ -355,6 +363,8 @@ class IfritFilePane(QWidget):
             # retry that one tab.
             print(f"[pane] tab load failed for {type(widget).__name__}: {e}")
             self._loaded_tabs.discard(widget)
+            if not is_reload:
+                self._ever_loaded_tabs.discard(widget)   # never loaded: a retry is still a first load
         finally:
             if not nested:
                 defer(self, self._end_loading)   # tied to the pane: see _load_all_tabs

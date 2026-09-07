@@ -77,6 +77,11 @@ class BoneSection:
             byteorder=self.SECTION_BONE_HEADER_UNKNOWN2['byteorder'])
         current_index = self.SECTION_BONE_HEADER_UNKNOWN2['offset'] + self.SECTION_BONE_HEADER_UNKNOWN2['size']
         next_index = current_index + 48
+        # Analysing REPLACES the skeleton, it does not add to it: undo/redo re-analyses this
+        # section on the same object to put an older state back, and without this the restored
+        # bones would simply be appended after the edited ones (the undo doing nothing visible,
+        # then saving a skeleton of twice the size).
+        self.bones = []
         for i in range(self.nb_bone):
             self.bones.append(Bone())
             self.bones[-1].analyze(data[current_index:next_index])
@@ -621,6 +626,10 @@ class GeometrySection:
         return bytearray(nb_object_byte+nb_offset_byte+object_data_byte+end_byte)
 
     def analyze(self, data:bytes):
+        # Analysing REPLACES the geometry, it does not add to it (see BoneSection.analyze):
+        # undo/redo re-analyses this section on the same object.
+        self.offset = []
+        self.object_data = []
         current_index = 0
         next_index = self.SECTION_GEOMETRY_HEADER_NB_OBJECT['size']
         self.nb_object = int.from_bytes(data[current_index:next_index], byteorder=self.SECTION_GEOMETRY_HEADER_NB_OBJECT['byteorder'])
@@ -1708,13 +1717,18 @@ class AnimationSection:
     def free_animations(self):
         """Drop the EXPANDED per-frame animation objects entirely (source rotations + derived
         matrices). The section is re-expandable from its tiny raw bytes via analyze(), so a file
-        loaded but not shown in 3D doesn't carry the ~30 MB expansion. offsets is cleared too so
-        a later re-analyze() doesn't append duplicates; nb_animations is kept for reference."""
+        loaded but not shown in 3D doesn't carry the ~30 MB expansion. nb_animations is kept for
+        reference."""
         self.animations = []
         self.offsets = []
         self.matrices_built = False
 
     def analyze(self, data: bytes, bone_section: BoneSection):
+        # Analysing REPLACES the animations, it does not add to them (see BoneSection.analyze):
+        # undo/redo re-analyses this section on the same object to put an older state back, and
+        # re-expansion after free_animations() does the same.
+        self.offsets = []
+        self.animations = []
         # Read animation section header
         self.nb_animations = int.from_bytes(data[0:4], byteorder='little')
         for i in range(self.nb_animations):
@@ -1867,6 +1881,10 @@ class DynamicTextureSection:
         self._original_entry_snapshot: List[bytes] = []
 
     def analyze(self, data:bytes):
+        # Analysing REPLACES the entries, it does not add to them (see BoneSection.analyze):
+        # undo/redo re-analyses this section on the same object.
+        self.offset = []
+        self.dynamic_texture_data = []
         for i in range(0, len(data)):
             offset = int.from_bytes(data[2*i: 2*(i+1)], byteorder='little')
             if offset < len(data) - 1:

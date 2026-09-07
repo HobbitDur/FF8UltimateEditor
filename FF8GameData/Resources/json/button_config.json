@@ -1,5 +1,5 @@
 {
-  "_comment": "SAVEMAP_CONFIG button-remap table (init.out/save offsets 0x08-0x13). Each physical button slot stores the id of the logical action it triggers (config value = action bit + 1; default = its own slot + 1; 0 = unassigned). Action names/behaviours identified from IDA (sub_4A2D60 remap core and its consumers). Bits 2, 9, 10 could not be resolved from static analysis.",
+  "_comment": "SAVEMAP_CONFIG button-remap table (init.out/save offsets 0x08-0x13). Each physical button slot stores the id of the logical action it triggers (config value = action bit + 1; default = its own slot + 1; 0 = unassigned). Action names/behaviours identified from IDA (sub_4A2D60 remap core and its consumers). The 12 slots are bits 0-11 of the engine pad mask, which is the PSX DualShock button word (Input_WritePsxPadButtons): bits 9-10 are L3/R3. They are only reachable on PSX with an analog pad - the PC input layer (sub_498550) has no command mapped to 0x200/0x400.",
   "physical_button": [
     {"id": 0, "name": "L2"},
     {"id": 1, "name": "R2"},
@@ -10,8 +10,8 @@
     {"id": 6, "name": "Cross"},
     {"id": 7, "name": "Square"},
     {"id": 8, "name": "Select"},
-    {"id": 9, "name": "Unknown 1"},
-    {"id": 10, "name": "Unknown 2"},
+    {"id": 9, "name": "L3"},
+    {"id": 10, "name": "R3"},
     {"id": 11, "name": "Start"}
   ],
   "action": [
@@ -25,8 +25,8 @@
     {"id": 7, "name": "Confirm / Talk", "note": "Confirm in menus; talk/examine (primary) in the field"},
     {"id": 8, "name": "Examine", "note": "Secondary field interact/examine"},
     {"id": 9, "name": "Reset controls", "note": "Resets the button config to default (Controls submenu only)"},
-    {"id": 10, "name": "Unused (phantom slot)", "note": "Filler config slot — no physical button maps here and no code consumes it"},
-    {"id": 11, "name": "Unused (phantom slot)", "note": "Filler config slot — no physical button maps here and no code consumes it"},
+    {"id": 10, "name": "L3 action", "note": "Logical L3 (pad bit 0x200). Its Controls-menu row is greyed out unless an analog/DualShock pad is connected, and the PC input layer can never emit this bit"},
+    {"id": 11, "name": "R3 action", "note": "Logical R3 (pad bit 0x400). Its Controls-menu row is greyed out unless an analog/DualShock pad is connected, and the PC input layer can never emit this bit"},
     {"id": 12, "name": "Pause / Start", "note": "Pause / system menu (Start is read from the physical button, bypassing remap)"}
   ]
 }
