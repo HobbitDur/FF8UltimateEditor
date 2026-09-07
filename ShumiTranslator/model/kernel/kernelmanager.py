@@ -58,7 +58,12 @@ class KernelManager():
         for index, section_info in enumerate(self.game_data.kernel_data_json["sections"]):
             section_id = index + 1
             section_offset_value = self.section_list[0].get_section_offset_value_from_id(section_id)
-            next_section_offset_value = self.section_list[0].get_section_offset_value_from_id(section_id + 1)
+            # A section ends where the next one starts, but the last one has no next offset in the
+            # header, it simply goes up to the end of the file
+            if section_id < len(self.game_data.kernel_data_json["sections"]):
+                next_section_offset_value = self.section_list[0].get_section_offset_value_from_id(section_id + 1)
+            else:
+                next_section_offset_value = None
             own_offset = section_offset_value
             if next_section_offset_value is None:
                 next_section_offset_value = len(current_file_data)

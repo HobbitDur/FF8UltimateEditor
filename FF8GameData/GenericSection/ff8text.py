@@ -1,6 +1,31 @@
 from .section import Section
 from ..gamedata import GameData, SectionType
 
+# Two characters sequences that the game can store on a single byte, written as a {tag} in the editor.
+COMPRESS_LIST = ["{in}", "{e }", "{ne}", "{to}", "{re}", "{HP}", "{l }", "{ll}", "{GF}", "{nt}", "{il}", "{o }",
+                 "{ef}", "{on}", "{ w}", "{ r}", "{wi}", "{fi}", "{EC}", "{s }", "{ar}", "{FE}", "{ S}", "{ag}"]
+
+
+def split_tag(text: str):
+    """Split text into (part, is_tag) couples, a tag being anything between { and }.
+
+    Compression must never modify what is inside a tag, as {Yellow} would for example
+    become {Ye{ll}ow}, which is not a valid tag anymore.
+    """
+    part_list = []
+    index = 0
+    while index < len(text):
+        start_tag = text.find('{', index)
+        end_tag = text.find('}', start_tag + 1) if start_tag != -1 else -1
+        if start_tag == -1 or end_tag == -1:  # No tag left, all the rest is plain text
+            part_list.append((text[index:], False))
+            break
+        if start_tag > index:
+            part_list.append((text[index:start_tag], False))
+        part_list.append((text[start_tag:end_tag + 1], True))
+        index = end_tag + 1
+    return part_list
+
 
 class FF8Text(Section):
     def __init__(self, game_data: GameData, own_offset: int, data_hex: bytearray, id: int, cursor_location_size=2, first_hex_literal=False):
@@ -53,20 +78,19 @@ class FF8Text(Section):
         if compressible == 1 and self.id % 2 == 1:  # Only first is compressible but we are id 1 of the subsection (not 0)
             return
 
-        compress_list = ["{in}", "{e }", "{ne}", "{to}", "{re}", "{HP}", "{l }", "{ll}", "{GF}", "{nt}", "{il}", "{o }",
-                         "{ef}", "{on}", "{ w}", "{ r}", "{wi}", "{fi}", "{EC}", "{s }", "{ar}", "{FE}", "{ S}", "{ag}"]
-        for compress_el in compress_list:
-            if compress_el[1:-1] not in self._text_str:
-                continue
-            new_str_double_bracket = self._text_str.replace(compress_el[1:-1], compress_el)
-            new_str_double_bracket = new_str_double_bracket.replace('{{', '{')
-            new_str_double_bracket = new_str_double_bracket.replace('}}', '}')
-            self.set_str(new_str_double_bracket)
+        for compress_el in COMPRESS_LIST:
+            char_couple = compress_el[1:-1]
+            new_str = ""
+            for part, is_tag in split_tag(self._text_str):
+                if is_tag:  # Already a tag ({in} or {Yellow}), leaving it untouched
+                    new_str += part
+                else:
+                    new_str += part.replace(char_couple, compress_el)
+            if new_str != self._text_str:
+                self.set_str(new_str)
 
     def uncompress_str(self):
-        compress_list = ["{in}", "{e }", "{ne}", "{to}", "{re}", "{HP}", "{l }", "{ll}", "{GF}", "{nt}", "{il}", "{o }",
-                         "{ef}", "{on}", "{ w}", "{ r}", "{wi}", "{fi}", "{EC}", "{s }", "{ar}", "{FE}", "{ S}", "{ag}"]
-        for compress_el in compress_list:
+        for compress_el in COMPRESS_LIST:
             if compress_el not in self._text_str:
                 continue
             self.set_str(self._text_str.replace(compress_el, compress_el[1:-1]))

@@ -518,12 +518,12 @@ class GameData:
                 i += 1
                 if i < hex_size:
                     hex_val = hex_list[i]
-                    if hex_val >= 0x20 and i <= 0x27:
-                        build_str += "{{Var{:02x}}}".format(hex_val - 0x20)
-                    elif hex_val >= 0x30 and i <= 0x37:
-                        build_str += "{{Var0{:02x}}}".format(hex_val - 0x30)
-                    elif hex_val >= 0x40 and i <= 0x47:
-                        build_str += "{{Varb{:02x}}}".format(hex_val - 0x40)
+                    if 0x20 <= hex_val <= 0x27:
+                        build_str += "{{Var{:d}}}".format(hex_val - 0x20)
+                    elif 0x30 <= hex_val <= 0x37:
+                        build_str += "{{Var0{:d}}}".format(hex_val - 0x30)
+                    elif 0x40 <= hex_val <= 0x47:
+                        build_str += "{{Varb{:d}}}".format(hex_val - 0x40)
                     else:
                         build_str += "{{x04{:02x}}}".format(hex_val)
 
