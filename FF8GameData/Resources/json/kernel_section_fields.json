@@ -40,12 +40,24 @@
     "help": "Which submenu opens on this command - only takes effect when Menu flags' 'Instant' bit is CLEAR (greyed out here otherwise, since the game never reads it in that case).\nShares its byte with Menu flags (the top 3 bits); each is saved independently, the other's bits are preserved.\n(BattleMenu_ExecuteSelectedCommand)"
    },
    {
+    "name": "target_side",
+    "offset": 6,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target_info",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "Data"
+   },
+   {
     "name": "target_info",
     "offset": 6,
     "size": 1,
     "group": "Data",
     "lookup": "target_info",
-    "help": "Default targeting behavior. Bitfield: combine flags."
+    "help": "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side field.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Target side field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
+    "mask": 243
    },
    {
     "name": "unknown_0x07",
@@ -106,12 +118,24 @@
     "mask": 192
    },
    {
+    "name": "target_side",
+    "offset": 10,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target_info",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "General"
+   },
+   {
     "name": "target_info",
     "offset": 10,
     "size": 1,
     "lookup": "target_info",
     "group": "General",
-    "help": "Default targeting behavior. Bitfield: combine flags."
+    "help": "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side field.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Target side field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
+    "mask": 243
    },
    {
     "name": "attack_flags_type",
@@ -130,7 +154,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is set on curative magic/items in retail data but nothing consumes it). 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine - the complete set of masks tested anywhere is 0x03, 0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action revive on hit - that is the Attack type field (Revive / Revive at full HP). What it does is let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / linkedStockFieldCharData turn it into menu-status bit 0, which makes target selection use the all-units mask instead of the living-only one. In vanilla only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 varies a lot between entries, but it is only an authoring marker for 'restores HP or cures an ailment': it tracks the curative Attack types (plus the percentage-heal items, with Float the lone oddity) and so duplicates what the Attack type field already says. 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
     "group": "General"
    },
    {
@@ -506,12 +530,24 @@
     "mask": 192
    },
    {
+    "name": "target_side",
+    "offset": 9,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target_info",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "General"
+   },
+   {
     "name": "target_info",
     "offset": 9,
     "size": 1,
     "group": "General",
     "lookup": "target_info",
-    "help": "Default targeting behavior. Bitfield: combine flags."
+    "help": "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side field.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Target side field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
+    "mask": 243
    },
    {
     "name": "attack_flags_type",
@@ -530,7 +566,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is set on curative magic/items in retail data but nothing consumes it). 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine - the complete set of masks tested anywhere is 0x03, 0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action revive on hit - that is the Attack type field (Revive / Revive at full HP). What it does is let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / linkedStockFieldCharData turn it into menu-status bit 0, which makes target selection use the all-units mask instead of the living-only one. In vanilla only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 varies a lot between entries, but it is only an authoring marker for 'restores HP or cures an ailment': it tracks the curative Attack types (plus the percentage-heal items, with Float the lone oddity) and so duplicates what the Attack type field already says. 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
     "group": "General"
    },
    {
@@ -691,7 +727,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability1",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability2",
@@ -710,7 +746,7 @@
     "group": "Abilities",
     "row": "ability2",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability2_level_or_prereq",
@@ -728,7 +764,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability2",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability3",
@@ -747,7 +783,7 @@
     "group": "Abilities",
     "row": "ability3",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability3_level_or_prereq",
@@ -765,7 +801,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability3",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability4",
@@ -784,7 +820,7 @@
     "group": "Abilities",
     "row": "ability4",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability4_level_or_prereq",
@@ -802,7 +838,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability4",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability5",
@@ -821,7 +857,7 @@
     "group": "Abilities",
     "row": "ability5",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability5_level_or_prereq",
@@ -839,7 +875,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability5",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability6",
@@ -858,7 +894,7 @@
     "group": "Abilities",
     "row": "ability6",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability6_level_or_prereq",
@@ -876,7 +912,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability6",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability7",
@@ -895,7 +931,7 @@
     "group": "Abilities",
     "row": "ability7",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability7_level_or_prereq",
@@ -913,7 +949,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability7",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability8",
@@ -932,7 +968,7 @@
     "group": "Abilities",
     "row": "ability8",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability8_level_or_prereq",
@@ -950,7 +986,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability8",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability9",
@@ -969,7 +1005,7 @@
     "group": "Abilities",
     "row": "ability9",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability9_level_or_prereq",
@@ -987,7 +1023,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability9",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability10",
@@ -1006,7 +1042,7 @@
     "group": "Abilities",
     "row": "ability10",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability10_level_or_prereq",
@@ -1024,7 +1060,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability10",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability11",
@@ -1043,7 +1079,7 @@
     "group": "Abilities",
     "row": "ability11",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability11_level_or_prereq",
@@ -1061,7 +1097,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability11",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability12",
@@ -1080,7 +1116,7 @@
     "group": "Abilities",
     "row": "ability12",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability12_level_or_prereq",
@@ -1098,7 +1134,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability12",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability13",
@@ -1117,7 +1153,7 @@
     "group": "Abilities",
     "row": "ability13",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability13_level_or_prereq",
@@ -1135,7 +1171,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability13",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability14",
@@ -1154,7 +1190,7 @@
     "group": "Abilities",
     "row": "ability14",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability14_level_or_prereq",
@@ -1172,7 +1208,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability14",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability15",
@@ -1191,7 +1227,7 @@
     "group": "Abilities",
     "row": "ability15",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability15_level_or_prereq",
@@ -1209,7 +1245,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability15",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability16",
@@ -1228,7 +1264,7 @@
     "group": "Abilities",
     "row": "ability16",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability16_level_or_prereq",
@@ -1246,7 +1282,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability16",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability17",
@@ -1265,7 +1301,7 @@
     "group": "Abilities",
     "row": "ability17",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability17_level_or_prereq",
@@ -1283,7 +1319,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability17",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability18",
@@ -1302,7 +1338,7 @@
     "group": "Abilities",
     "row": "ability18",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability18_level_or_prereq",
@@ -1320,7 +1356,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability18",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability19",
@@ -1339,7 +1375,7 @@
     "group": "Abilities",
     "row": "ability19",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability19_level_or_prereq",
@@ -1357,7 +1393,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability19",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability20",
@@ -1376,7 +1412,7 @@
     "group": "Abilities",
     "row": "ability20",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability20_level_or_prereq",
@@ -1394,7 +1430,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability20",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability21",
@@ -1413,7 +1449,7 @@
     "group": "Abilities",
     "row": "ability21",
     "readonly": true,
-    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
+    "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
    {
     "name": "ability21_level_or_prereq",
@@ -1431,7 +1467,7 @@
     "label": "Alt prereq slot",
     "group": "Abilities",
     "row": "ability21",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the retail kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "boost_param_1",
@@ -1632,7 +1668,7 @@
     "size": 1,
     "label": "Camera",
     "group": "Data",
-    "help": "Which battle-stage camera animation plays while the monster performs this attack. Read only for monster attacks (computeCommandAction, COMMAND_MONSTER_ATTACK) and consumed by cameraWhenDoingAction @0x506190:\n- low 7 bits (value & 0x7F) = the camera-animation INDEX picked from the battle stage's camera-animation collection (BS_GetCameraAnimationPointer).\n- bit 0x80 = force this camera even in the state that would otherwise skip it (sub_4A7120). ~70% of retail attacks set it.\n0xFF = default / no specific camera. Retail values are index 1-7 (e.g. 1-4, or 0x81-0x87 with the force bit). For player commands this byte is unused - their camera is chosen randomly.",
+    "help": "Which battle-stage camera animation plays while the monster performs this attack. Read only for monster attacks (computeCommandAction, COMMAND_MONSTER_ATTACK) and consumed by cameraWhenDoingAction @0x506190:\n- low 7 bits (value & 0x7F) = the camera-animation INDEX picked from the battle stage's camera-animation collection (BS_GetCameraAnimationPointer).\n- bit 0x80 = force this camera even in the state that would otherwise skip it (sub_4A7120). ~70% of vanilla attacks set it.\n0xFF = default / no specific camera. Vanilla values are index 1-7 (e.g. 1-4, or 0x81-0x87 with the force bit). For player commands this byte is unused - their camera is chosen randomly.",
     "camera_selector": true
    },
    {
@@ -1675,7 +1711,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is set on curative magic/items in retail data but nothing consumes it). 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine - the complete set of masks tested anywhere is 0x03, 0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action revive on hit - that is the Attack type field (Revive / Revive at full HP). What it does is let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / linkedStockFieldCharData turn it into menu-status bit 0, which makes target selection use the all-units mask instead of the living-only one. In vanilla only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 varies a lot between entries, but it is only an authoring marker for 'restores HP or cures an ailment': it tracks the curative Attack types (plus the percentage-heal items, with Float the lone oddity) and so duplicates what the Attack type field already says. 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
     "group": "Data"
    },
    {
@@ -2254,7 +2290,7 @@
     "size": 1,
     "label": "Padding",
     "group": "Data",
-    "help": "Unused padding - re-checked beyond the original 0-xref pass (every sibling field of this struct has a confirmed reader; this offset has none in any of them, including the menu-building code). Renzokuken finishers: retail value 100 (0x64) in all 4 entries.",
+    "help": "Unused padding - re-checked beyond the original 0-xref pass (every sibling field of this struct has a confirmed reader; this offset has none in any of them, including the menu-building code). Renzokuken finishers: vanilla value 100 (0x64) in all 4 entries.",
     "readonly": true
    },
    {
@@ -2274,12 +2310,24 @@
     "help": "Index of the reaction/impact animation the TARGET plays when the ability lands (HIT_TYPE_TARGET_ANIMATION_TO_PLAY) - a flinch, knock-back, blown-away pose, etc. A plain animation index, not a bitfield.\n(What used to look like a 2-byte value in Shot/T.Char limits was really this byte plus the separate Status window byte next to it.)\nRuntime can override the stored value: e.g. a crit forces 6, a miss forces 0/9, a monster death forces 3 (Battle_applyDamage / computeTargetData)."
    },
    {
+    "name": "target_side",
+    "offset": 10,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target_info",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "Data"
+   },
+   {
     "name": "target_info",
     "offset": 10,
     "size": 1,
     "lookup": "target_info",
     "group": "Data",
-    "help": "Default targeting behavior. Bitfield: combine flags."
+    "help": "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side field.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Target side field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
+    "mask": 243
    },
    {
     "name": "attack_flags_type",
@@ -2298,7 +2346,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is set on curative magic/items in retail data but nothing consumes it). 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine - the complete set of masks tested anywhere is 0x03, 0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action revive on hit - that is the Attack type field (Revive / Revive at full HP). What it does is let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / linkedStockFieldCharData turn it into menu-status bit 0, which makes target selection use the all-units mask instead of the living-only one. In vanilla only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 varies a lot between entries, but it is only an authoring marker for 'restores HP or cures an ailment': it tracks the curative Attack types (plus the percentage-heal items, with Float the lone oddity) and so duplicates what the Attack type field already says. 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
     "group": "Data"
    },
    {
@@ -2411,7 +2459,7 @@
     "group": "General",
     "row": "exp_curve",
     "subgroup": "EXP",
-    "help": "Low byte of the EXP curve: the linear EXP-per-level factor (×10). Cumulative EXP to reach level L = 10×(L−1)×this + the quadratic term. Retail 100 → a flat 1000 EXP/level. (Stat_ComputeLevelFromExp @0x4961d0.)"
+    "help": "Low byte of the EXP curve: the linear EXP-per-level factor (×10). Cumulative EXP to reach level L = 10×(L−1)×this + the quadratic term. Vanilla 100 → a flat 1000 EXP/level. (Stat_ComputeLevelFromExp @0x4961d0.)"
    },
    {
     "name": "exp_quadratic",
@@ -2422,7 +2470,7 @@
     "row": "exp_curve",
     "subgroup": "EXP",
     "formula": "char_exp",
-    "help": "High byte of the EXP curve: a quadratic acceleration factor (÷256), adding floor((L−1)²×this/256) to the cumulative EXP for level L. Retail 0 = a flat (non-accelerating) curve. Click ƒ(x) for the full level→EXP curve."
+    "help": "High byte of the EXP curve: a quadratic acceleration factor (÷256), adding floor((L−1)²×this/256) to the cumulative EXP for level L. Vanilla 0 = a flat (non-accelerating) curve. Click ƒ(x) for the full level→EXP curve."
    },
    {
     "name": "hp_1",
@@ -2737,7 +2785,18 @@
     "lookup": "battle_item_category",
     "label": "Category (unused)",
     "group": "Data",
-    "help": "NOT a bitfield - the retail values (0x00/0x40/0x80) never combine, they're 3 mutually exclusive category codes that line up cleanly with item type: 0x00 = pure curatives (Potion..Megalixir), 0x40 = status-cure/support items (Antidote, Remedy, Hero, Holy War, Shell/Protect/Aura Stone), 0x80 = offensive/special items (the 6 elemental stones, Gysahl Greens, Phoenix Pinion, Friendship).\nIt IS copied into the runtime battle-item inventory by updateBattleItemData - but nothing then reads that copy, and nothing reads this kernel byte directly either (exhaustive xref sweep: item-use AI keys on item id, the item-menu draw path only uses the selectability byte, and the item-effect dispatcher (computeCommandAction) resolves everything from attackType/specialActionID). The category grouping is real, deliberate design data - it's just inert in the shipped PC engine."
+    "help": "NOT a bitfield - the vanilla values (0x00/0x40/0x80) never combine, they're 3 mutually exclusive category codes that line up cleanly with item type: 0x00 = pure curatives (Potion..Megalixir), 0x40 = status-cure/support items (Antidote, Remedy, Hero, Holy War, Shell/Protect/Aura Stone), 0x80 = offensive/special items (the 6 elemental stones, Gysahl Greens, Phoenix Pinion, Friendship).\nIt IS copied into the runtime battle-item inventory by updateBattleItemData - but nothing then reads that copy, and nothing reads this kernel byte directly either (exhaustive xref sweep: item-use AI keys on item id, the item-menu draw path only uses the selectability byte, and the item-effect dispatcher (computeCommandAction) resolves everything from attackType/specialActionID). The category grouping is real, deliberate design data - it's just inert in the shipped PC engine."
+   },
+   {
+    "name": "target_side",
+    "offset": 9,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target_info",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "Data"
    },
    {
     "name": "target_info",
@@ -2745,7 +2804,8 @@
     "size": 1,
     "lookup": "target_info",
     "group": "Data",
-    "help": "Default targeting behavior. Bitfield: combine flags."
+    "help": "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side field.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Target side field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
+    "mask": 243
    },
    {
     "name": "attack_flags_type",
@@ -2764,7 +2824,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits_item",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive behave as elsewhere. 0x04 and 0x40 have NO reader anywhere. 0x20 IS read here - `updateBattleItemData` tests it directly to decide whether the item is selectable in the battle Item menu (this is the ONE section where this bit does anything; on magic/GF/limits it's inert).",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). This byte is read differently here than anywhere else: `updateBattleItemData` turns 0x80 and 0x20 into the item's 2-bit battle-menu status. 0x80 set -> status bit 0, which lets the target cursor land on a KO'd unit (it is NOT 'revive on hit' - that is the Attack type field). Vanilla sets it on all 32 real items, because the Item cursor is always allowed to point at a KO'd ally. 0x20 CLEAR -> status bit 1, which draws the row in the greyed palette and makes OK buzz instead of opening target selection; vanilla sets 0x20 on all 32 real items, so only the blank entry 0 is greyed. 0x08 Break Damage Limit and 0x10 Reflectable behave as elsewhere; 0x04 and 0x40 have NO reader anywhere.",
     "group": "Data"
    },
    {
@@ -2896,12 +2956,24 @@
     "formula": "status_accuracy"
    },
    {
+    "name": "target_side",
+    "offset": 7,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target_info",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "Data"
+   },
+   {
     "name": "target_info",
     "offset": 7,
     "size": 1,
     "lookup": "target_info",
     "group": "Data",
-    "help": "Default targeting behavior. Bitfield: combine flags."
+    "help": "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side field.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Target side field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
+    "mask": 243
    },
    {
     "name": "attack_flags_type",
@@ -2920,7 +2992,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is set on curative magic/items in retail data but nothing consumes it). 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine - the complete set of masks tested anywhere is 0x03, 0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action revive on hit - that is the Attack type field (Revive / Revive at full HP). What it does is let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / linkedStockFieldCharData turn it into menu-status bit 0, which makes target selection use the all-units mask instead of the living-only one. In vanilla only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 varies a lot between entries, but it is only an authoring marker for 'restores HP or cures an ailment': it tracks the curative Attack types (plus the percentage-heal items, with Float the lone oddity) and so duplicates what the Attack type field already says. 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
     "group": "Data"
    },
    {
@@ -3078,7 +3150,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is set on curative magic/items in retail data but nothing consumes it). 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine - the complete set of masks tested anywhere is 0x03, 0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action revive on hit - that is the Attack type field (Revive / Revive at full HP). What it does is let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / linkedStockFieldCharData turn it into menu-status bit 0, which makes target selection use the all-units mask instead of the living-only one. In vanilla only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 varies a lot between entries, but it is only an authoring marker for 'restores HP or cures an ailment': it tracks the curative Attack types (plus the percentage-heal items, with Float the lone oddity) and so duplicates what the Attack type field already says. 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
     "group": "Data"
    },
    {
@@ -3158,7 +3230,7 @@
     "lookup": "junction_ability_flags",
     "label": "Junction ability flag",
     "group": "Data",
-    "help": "A genuine 24-bit bitfield - each of the 20 junction abilities is assigned its own dedicated bit (retail data: every entry sets exactly one bit, matching its position in the list - HP-J is bit 0, Abilityx4 is bit 19).\nResetAndParseBattleAndFieldCharacter ORs this value into the character's FF8CharaAbilities bitmask for every junction ability the character has equipped, so these bits are what other systems actually test at runtime (e.g. the Double/Triple-cast check in BattleAction_ExecuteCommand reads the Abilityx3/Abilityx4 bits directly).\nBecause it's a real bitfield you can combine bits on a custom ability to grant several effects from one learned ability."
+    "help": "A genuine 24-bit bitfield - each of the 20 junction abilities is assigned its own dedicated bit (vanilla data: every entry sets exactly one bit, matching its position in the list - HP-J is bit 0, Abilityx4 is bit 19).\nResetAndParseBattleAndFieldCharacter ORs this value into the character's FF8CharaAbilities bitmask for every junction ability the character has equipped, so these bits are what other systems actually test at runtime (e.g. the Double/Triple-cast check in BattleAction_ExecuteCommand reads the Abilityx3/Abilityx4 bits directly).\nBecause it's a real bitfield you can combine bits on a custom ability to grant several effects from one learned ability."
    }
   ],
   "text_labels": [
@@ -3219,7 +3291,7 @@
     "lookup": "chara_stat_index",
     "label": "Stat to increase",
     "group": "Data",
-    "help": "NOT a bitfield, despite sharing a kernel array slot with the (real bitfield) Junction ability flag - this is a plain index picking ONE of the 9 standard stats (retail: one ability per stat, values never combine). sub_4962C0 tests it with a straight equality compare (not bitwise) against the stat being computed, one comparison per owned Stat% ability; matching abilities' Increase Value bytes just sum onto a 100 base (e.g. owning both HP+20% and HP+40% gives a combined 100+20+40=160% multiplier). Applied in Stat_RefreshCharaBattleStats: stat = multiplier * baseStat / 100."
+    "help": "NOT a bitfield, despite sharing a kernel array slot with the (real bitfield) Junction ability flag - this is a plain index picking ONE of the 9 standard stats (vanilla: one ability per stat, values never combine). sub_4962C0 tests it with a straight equality compare (not bitwise) against the stat being computed, one comparison per owned Stat% ability; matching abilities' Increase Value bytes just sum onto a 100 base (e.g. owning both HP+20% and HP+40% gives a combined 100+20+40=160% multiplier). Applied in Stat_RefreshCharaBattleStats: stat = multiplier * baseStat / 100."
    },
    {
     "name": "increase_value",
@@ -3261,7 +3333,7 @@
     "lookup": "character_ability_flags",
     "label": "Character ability flag",
     "group": "Data",
-    "help": "A genuine 24-bit bitfield, same JFlag mechanism as Junction ability flag - each ability is assigned its own dedicated bit (retail data: every entry sets exactly one bit). ResetAndParseBattleAndFieldCharacter ORs it into the character's FF8CharaAbilities bitmask for every character ability equipped; other systems test individual bits at runtime (e.g. the Expendx2-1/Expendx3-1 bits gate not consuming a spell charge on Double/Triple)."
+    "help": "A genuine 24-bit bitfield, same JFlag mechanism as Junction ability flag - each ability is assigned its own dedicated bit (vanilla data: every entry sets exactly one bit). ResetAndParseBattleAndFieldCharacter ORs it into the character's FF8CharaAbilities bitmask for every character ability equipped; other systems test individual bits at runtime (e.g. the Expendx2-1/Expendx3-1 bits gate not consuming a spell charge on Double/Triple)."
    }
   ],
   "text_labels": [
@@ -3321,7 +3393,7 @@
     "size": 1,
     "label": "Enable boost",
     "group": "Data",
-    "help": "Whether learning this ability enables the GF Boost minigame. In the retail kernel only the 'Boost' entry itself sets this (the 8 stat-percentage abilities - SumMag/GFHP+10-40% - all leave it clear); Stat to increase is the 0xFF sentinel on that same entry, since Boost isn't a stat-increase ability.",
+    "help": "Whether learning this ability enables the GF Boost minigame. In the vanilla kernel only the 'Boost' entry itself sets this (the 8 stat-percentage abilities - SumMag/GFHP+10-40% - all leave it clear); Stat to increase is the 0xFF sentinel on that same entry, since Boost isn't a stat-increase ability.",
     "bool": true
    },
    {
@@ -3460,12 +3532,24 @@
     "mask": 192
    },
    {
+    "name": "target_side",
+    "offset": 10,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target_info",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "Data"
+   },
+   {
     "name": "target_info",
     "offset": 10,
     "size": 1,
     "lookup": "target_info",
     "group": "Data",
-    "help": "Default targeting behavior. Bitfield: combine flags."
+    "help": "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side field.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Target side field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
+    "mask": 243
    },
    {
     "name": "attack_flags_type",
@@ -3484,7 +3568,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is set on curative magic/items in retail data but nothing consumes it). 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine - the complete set of masks tested anywhere is 0x03, 0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action revive on hit - that is the Attack type field (Revive / Revive at full HP). What it does is let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / linkedStockFieldCharData turn it into menu-status bit 0, which makes target selection use the all-units mask instead of the living-only one. In vanilla only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 varies a lot between entries, but it is only an authoring marker for 'restores HP or cures an ailment': it tracks the curative Attack types (plus the percentage-heal items, with Float the lone oddity) and so duplicates what the Attack type field already says. 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
     "group": "Data"
    },
    {
@@ -3536,7 +3620,7 @@
     "size": 2,
     "label": "Padding",
     "group": "Data",
-    "help": "Unused padding - re-checked beyond the original 0-xref pass (every sibling field of this struct has a confirmed reader; this offset has none in any of them, including the menu-building code). Temp-character limits: retail value 200 (0xC8, as a WORD) in all 5 entries.",
+    "help": "Unused padding - re-checked beyond the original 0-xref pass (every sibling field of this struct has a confirmed reader; this offset has none in any of them, including the menu-building code). Temp-character limits: vanilla value 200 (0xC8, as a WORD) in all 5 entries.",
     "readonly": true
    },
    {
@@ -3593,12 +3677,24 @@
     "mask": 192
    },
    {
+    "name": "target_side",
+    "offset": 9,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target_info",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "Data"
+   },
+   {
     "name": "target_info",
     "offset": 9,
     "size": 1,
     "lookup": "target_info",
     "group": "Data",
-    "help": "Default targeting behavior. Bitfield: combine flags."
+    "help": "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side field.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Target side field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
+    "mask": 243
    },
    {
     "name": "attack_flags_type",
@@ -3617,7 +3713,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is set on curative magic/items in retail data but nothing consumes it). 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine - the complete set of masks tested anywhere is 0x03, 0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action revive on hit - that is the Attack type field (Revive / Revive at full HP). What it does is let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / linkedStockFieldCharData turn it into menu-status bit 0, which makes target selection use the all-units mask instead of the living-only one. In vanilla only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 varies a lot between entries, but it is only an authoring marker for 'restores HP or cures an ailment': it tracks the curative Attack types (plus the percentage-heal items, with Float the lone oddity) and so duplicates what the Attack type field already says. 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
     "group": "Data"
    },
    {
@@ -3660,7 +3756,7 @@
     "size": 1,
     "label": "Padding",
     "group": "Data",
-    "help": "Unused padding - re-checked beyond the original 0-xref pass (every sibling field of this struct has a confirmed reader; this offset has none in any of them, including the menu-building code). Blue Magic: retail value 200 (0xC8) in only 1/16 entries (Laser Eye) - likely stray authoring noise rather than even a constant stamp.",
+    "help": "Unused padding - re-checked beyond the original 0-xref pass (every sibling field of this struct has a confirmed reader; this offset has none in any of them, including the menu-building code). Blue Magic: vanilla value 200 (0xC8) in only 1/16 entries (Laser Eye) - likely stray authoring noise rather than even a constant stamp.",
     "readonly": true
    }
   ],
@@ -3821,12 +3917,24 @@
     "mask": 192
    },
    {
+    "name": "target_side",
+    "offset": 10,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target_info",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "Data"
+   },
+   {
     "name": "target_info",
     "offset": 10,
     "size": 1,
     "lookup": "target_info",
     "group": "Data",
-    "help": "Default targeting behavior. Bitfield: combine flags."
+    "help": "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side field.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Target side field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
+    "mask": 243
    },
    {
     "name": "attack_flags_type",
@@ -3845,7 +3953,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is set on curative magic/items in retail data but nothing consumes it). 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine - the complete set of masks tested anywhere is 0x03, 0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action revive on hit - that is the Attack type field (Revive / Revive at full HP). What it does is let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / linkedStockFieldCharData turn it into menu-status bit 0, which makes target selection use the all-units mask instead of the living-only one. In vanilla only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 varies a lot between entries, but it is only an authoring marker for 'restores HP or cures an ailment': it tracks the curative Attack types (plus the percentage-heal items, with Float the lone oddity) and so duplicates what the Attack type field already says. 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
     "group": "Data"
    },
    {
@@ -3966,8 +4074,19 @@
     "size": 1,
     "label": "Padding",
     "group": "Data",
-    "help": "Unused padding - re-checked beyond the original 0-xref pass (every sibling field of this struct has a confirmed reader; this offset has none in any of them, including the menu-building code). Duel (Zell): retail value 128 (0x80) in all 10 entries.",
+    "help": "Unused padding - re-checked beyond the original 0-xref pass (every sibling field of this struct has a confirmed reader; this offset has none in any of them, including the menu-building code). Duel (Zell): vanilla value 128 (0x80) in all 10 entries.",
     "readonly": true
+   },
+   {
+    "name": "target_side",
+    "offset": 10,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target_info",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "Data"
    },
    {
     "name": "target_info",
@@ -3975,7 +4094,8 @@
     "size": 1,
     "lookup": "target_info",
     "group": "Data",
-    "help": "Default targeting behavior. Bitfield: combine flags."
+    "help": "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side field.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Target side field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
+    "mask": 243
    },
    {
     "name": "attack_flags_type",
@@ -3994,7 +4114,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is set on curative magic/items in retail data but nothing consumes it). 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine - the complete set of masks tested anywhere is 0x03, 0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action revive on hit - that is the Attack type field (Revive / Revive at full HP). What it does is let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / linkedStockFieldCharData turn it into menu-status bit 0, which makes target selection use the all-units mask instead of the living-only one. In vanilla only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 varies a lot between entries, but it is only an authoring marker for 'restores HP or cures an ailment': it tracks the curative Attack types (plus the percentage-heal items, with Float the lone oddity) and so duplicates what the Attack type field already says. 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
     "group": "Data"
    },
    {
@@ -5020,12 +5140,24 @@
     "help": "Unknown but used - read by `sub_48CFB0` (purpose not yet identified)."
    },
    {
+    "name": "target_side",
+    "offset": 5,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "Data"
+   },
+   {
     "name": "target",
     "offset": 5,
     "size": 1,
     "lookup": "target_info",
     "label": "Target",
-    "group": "Data"
+    "group": "Data",
+    "mask": 243
    },
    {
     "name": "ability_data_id",
@@ -5092,8 +5224,19 @@
     "size": 1,
     "label": "Padding",
     "group": "Data",
-    "help": "Unused padding - re-checked beyond the original 0-xref pass (every sibling field of this struct has a confirmed reader; this offset has none in any of them, including the menu-building code). Rinoa limit breaks part 2: retail value 128 (0x80) in all 5 entries.",
+    "help": "Unused padding - re-checked beyond the original 0-xref pass (every sibling field of this struct has a confirmed reader; this offset has none in any of them, including the menu-building code). Rinoa limit breaks part 2: vanilla value 128 (0x80) in all 5 entries.",
     "readonly": true
+   },
+   {
+    "name": "target_side",
+    "offset": 8,
+    "size": 1,
+    "mask": 12,
+    "lookup": "target_side",
+    "label": "Target side",
+    "embed_in": "target_info",
+    "help": "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). This field does not name a side - the side itself comes from the 0x40 Enemy flag; this only says whether the player can leave it. The two bits are never read separately - every reader tests the pair - so they are one setting, not two flags:\n  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n  0x04                both target name windows open and a direction press swaps sides.\n0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, 0x08 and 0x0C all behave identically - the three 'one side only' options exist purely so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than silently rewritten to 0x00. Setup is sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 (party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle commands, magic and battle items), 0x08 on 53, 0x0C on none.",
+    "group": "Data"
    },
    {
     "name": "target_info",
@@ -5101,7 +5244,8 @@
     "size": 1,
     "lookup": "target_info",
     "group": "Data",
-    "help": "Default targeting behavior. Bitfield: combine flags."
+    "help": "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side field.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Target side field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
+    "mask": 243
    },
    {
     "name": "attack_flags_type",
@@ -5120,7 +5264,7 @@
     "mask": 252,
     "lookup": "attack_flags_bits",
     "label": "Attack flags",
-    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is set on curative magic/items in retail data but nothing consumes it). 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
+    "help": "Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are actually read by the engine - the complete set of masks tested anywhere is 0x03, 0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action revive on hit - that is the Attack type field (Revive / Revive at full HP). What it does is let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / linkedStockFieldCharData turn it into menu-status bit 0, which makes target selection use the all-units mask instead of the living-only one. In vanilla only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 varies a lot between entries, but it is only an authoring marker for 'restores HP or cures an ailment': it tracks the curative Attack types (plus the percentage-heal items, with Float the lone oddity) and so duplicates what the Attack type field already says. 0x20 is set on virtually every player ability as an authoring convention, but is only READ for battle items (see the Battle items tab) - here it is inert.",
     "group": "Data"
    },
    {
@@ -6207,7 +6351,7 @@
     "label": "ATB speed multiplier",
     "group": "Status timers",
     "formula": "atb_speed",
-    "help": "Multiplies how fast ALL battlers' ATB gauges fill: cur_atb += 10 x this x (SPD+30) / 100, applied 3x per rendered frame (Battle_TickAtbGaugesAndGfCountdown). Retail value is 10, not a %-of-normal multiplier despite the name - click f(x) for the full picture."
+    "help": "Multiplies how fast ALL battlers' ATB gauges fill: cur_atb += 10 x this x (SPD+30) / 100, applied 3x per rendered frame (Battle_TickAtbGaugesAndGfCountdown). Vanilla value is 10, not a %-of-normal multiplier despite the name - click f(x) for the full picture."
    },
    {
     "name": "dead_timer",

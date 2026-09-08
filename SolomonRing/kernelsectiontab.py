@@ -239,14 +239,18 @@ class KernelSectionTab(QWidget):
             load_row.addStretch(1)
             vbox.addLayout(load_row)
 
-        # Fields with "enabled_unless_bit" are nested inside their referenced flags field's
-        # box (e.g. a battle command's Submenu picker) instead of a separate block.
+        # Fields are nested inside a flags field's box instead of getting a separate block
+        # when they say so: "embed_in" names the host outright (a sub-field carved out of the
+        # same byte, e.g. Target side out of Target info), while "enabled_unless_bit" both
+        # picks the host and couples the field to one of its checkboxes (a battle command's
+        # Submenu picker, greyed by the "Instant" bit).
         embed_map = {}
         embedded_names = set()
         for field in fields:
             dep = field.get("enabled_unless_bit")
-            if dep:
-                embed_map.setdefault(dep["field"], []).append(field)
+            host = field.get("embed_in") or (dep["field"] if dep else None)
+            if host:
+                embed_map.setdefault(host, []).append(field)
                 embedded_names.add(field["name"])
         self._embed_map = embed_map
 
@@ -521,7 +525,8 @@ class KernelSectionTab(QWidget):
             # together with what they gate, so the coupling reads as one unit rather
             # than being lost among the other independent flags.
             embedded = self._embed_map.get(name, [])
-            coupling_masks = {dep_field["enabled_unless_bit"]["mask"] for dep_field in embedded}
+            coupling_masks = {dep_field["enabled_unless_bit"]["mask"] for dep_field in embedded
+                              if dep_field.get("enabled_unless_bit")}
 
             grid = QGridLayout()
             checks = []
@@ -546,8 +551,10 @@ class KernelSectionTab(QWidget):
             self._field_widgets[name] = ("flags", field, checks)
 
             for dep_field in embedded:
-                dep = dep_field["enabled_unless_bit"]
-                cb = coupled_checks.get(dep["mask"])
+                # A plain "embed_in" field has no gating checkbox; only "enabled_unless_bit"
+                # pulls one out of the grid to sit above the widget it greys out.
+                dep = dep_field.get("enabled_unless_bit")
+                cb = coupled_checks.get(dep["mask"]) if dep else None
                 sub_box = QGroupBox()
                 sub_vbox = QVBoxLayout(sub_box)
                 sub_vbox.setSpacing(4)

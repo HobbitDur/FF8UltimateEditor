@@ -168,7 +168,7 @@ for i in range(1, 22):
     # to build the Junction menu's "learnable abilities" list. Byte+3 is used
     # directly as the ability id (indexed into a 128-slot seen-flags buffer sized
     # for the ability list) - that is the REAL ability, not byte+2 (which is always
-    # 0xFF in retail and reads as raw garbage in a plain "ability" picker).
+    # 0xFF in vanilla and reads as raw garbage in a plain "ability" picker).
     gf_fields.append({"name": f"ability{i}", "offset": base + 3, "size": 1,
                       "lookup": "junctionable_ability", "label": f"Ability {i}",
                       "group": "Abilities", "row": row})
@@ -190,7 +190,7 @@ for i in range(1, 22):
                               "being offered only while the OTHER slot's ability is still "
                               "unfinished, and gets cut off the moment that other ability is "
                               "completed. 0xFF = no such restriction (the normal case).\n"
-                              "Always 0xFF in the retail kernel - a working feature the engine "
+                              "Always 0xFF in the vanilla kernel - a working feature the engine "
                               "supports (BuildGFAbilityList) but the shipped data never turns "
                               "on. (This is the byte that used to display as raw 0xFF for "
                               "every ability before the fields were remapped - it was never "
@@ -632,6 +632,57 @@ except Exception as e:
     print("warn:", e)
 
 # ---- help text (hover) applied by field name across all sections ----------
+_TARGET_SIDE_HELP = (
+    "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). "
+    "This field does not name a side - the side itself comes from the 0x40 Enemy flag; this "
+    "only says whether the player can leave it. The two bits are never read separately - "
+    "every reader tests the pair - so they are one setting, not two flags:\n"
+    "  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n"
+    "  0x04                both target name windows open and a direction press swaps sides.\n"
+    "0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, "
+    "0x08 and 0x0C all behave identically - the three 'one side only' options exist purely "
+    "so the 53 vanilla entries carrying 0x08 can be displayed and saved unchanged rather than "
+    "silently rewritten to 0x00. Setup is "
+    "sub_4AB190 (v10 = 3 -> both windows, consumed by sub_4AB4F0); the swap itself is "
+    "sub_4AA1D0 at 0x4AA644 ('and al,0Ch / cmp al,4'), which flips the side mask between 7 "
+    "(party) and 0x78 (monsters) and remembers a cursor slot per side. The AI auto-resolve "
+    "decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle "
+    "commands, magic and battle items), 0x08 on 53, 0x0C on none."
+)
+_TARGET_INFO_HELP = (
+    "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side "
+    "field.\n"
+    "0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player "
+    "battle menu it only takes effect when the entry also has Attack flag 0x80, which is what "
+    "opens the cursor to KO'd units in the first place.\n"
+    "0x02 Multi-target spread - adds mask bit 0x2000.\n"
+    "0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the "
+    "auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole "
+    "side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n"
+    "0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu "
+    "sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 "
+    "(monster slots) : 7 (party slots). The Target side field does NOT name a side - it only "
+    "says whether the player may leave the one this bit picked.\n"
+    "On the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two "
+    "decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> "
+    "the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The "
+    "helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means "
+    "'the side opposing the actor' and the same byte points at different slots for a "
+    "character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but "
+    "only for the non-junctionable GF table - the player-side auto-summons - so that is "
+    "consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the "
+    "party, every attacking summon has it and targets monsters.)\n"    "0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand "
+    "tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips "
+    "BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot "
+    "when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight "
+    "into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in "
+    "sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five "
+    "battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg "
+    "and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the "
+    "sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: "
+    "stocking a drawn spell has no target to pick."
+)
+
 HELP = {
     "attack_animation": "Battle effect / animation dispatched at runtime (attack-animation id).",
     "magic_id": "Battle effect / animation dispatched at runtime (attack-animation id).",
@@ -641,8 +692,8 @@ HELP = {
                      "- low 7 bits (value & 0x7F) = the camera-animation INDEX picked from the "
                      "battle stage's camera-animation collection (BS_GetCameraAnimationPointer).\n"
                      "- bit 0x80 = force this camera even in the state that would otherwise skip it "
-                     "(sub_4A7120). ~70% of retail attacks set it.\n"
-                     "0xFF = default / no specific camera. Retail values are index 1-7 (e.g. 1-4, or "
+                     "(sub_4A7120). ~70% of vanilla attacks set it.\n"
+                     "0xFF = default / no specific camera. Vanilla values are index 1-7 (e.g. 1-4, or "
                      "0x81-0x87 with the force bit). For player commands this byte is unused - their "
                      "camera is chosen randomly.",
     "attack_type": "How the damage / effect is calculated (see Attack Type list).",
@@ -668,7 +719,7 @@ HELP = {
     "hit_count": "Number of hits (interacts with certain animations).",
     "draw_resist": "How hard the spell is to draw (higher = harder).",
     "element": "Elemental type(s) of the attack. Bitfield: combine flags.",
-    "target_info": "Default targeting behavior. Bitfield: combine flags.",
+    "target_info": _TARGET_INFO_HELP,
     "status_attack_enabler": "Accuracy for inflicting/curing the statuses below - what it actually "
                              "does depends on this entry's Attack Type: an STR/VIT or MAG/SPR "
                              "inflict roll for physical/magic attacks, a flat % cure chance for "
@@ -753,17 +804,17 @@ FINDINGS = {
     (8, "attack_flags"): (None,
         "Dual-purpose byte (IDA attackFlagsAndSelectability). In battle it is the item's "
         "ATTACK FLAGS: Battle_applyDamage loads it into ATTACK_FLAG (low 2 bits = damage-type "
-        "pair - retail curatives use 2 = Item/Medicine so MedData doubles their healing, "
+        "pair - vanilla curatives use 2 = Item/Medicine so MedData doubles their healing, "
         "offensive stones use 1 = Magical so Shell halves them; 0x80 also gates the revive "
         "path for Phoenix Down-likes).\n"
         "In the MENU the same byte feeds updateBattleItemData: bit 0x80 set = item selectable/"
-        "usable in battle, bit 0x20 clear = marks the entry dimmed (all retail items have 0x20 "
+        "usable in battle, bit 0x20 clear = marks the entry dimmed (all vanilla items have 0x20 "
         "set)."),
     (8, "padding_0x0c"): ("Padding",
         "Unused - 0x00 for all 33 items; its only xref is pointer arithmetic in "
         "getTextBattleItem's non-battle-item branch, not a semantic read."),
     (8, "battle_flag"): (None,
-        "NOT a bitfield - the retail values (0x00/0x40/0x80) never combine, they're 3 mutually "
+        "NOT a bitfield - the vanilla values (0x00/0x40/0x80) never combine, they're 3 mutually "
         "exclusive category codes that line up cleanly with item type: 0x00 = pure curatives "
         "(Potion..Megalixir), 0x40 = status-cure/support items (Antidote, Remedy, Hero, Holy "
         "War, Shell/Protect/Aura Stone), 0x80 = offensive/special items (the 6 elemental stones, "
@@ -803,12 +854,12 @@ for _k, _fn in _USED.items():
 # have none. Confirmed genuinely unused; the constant values are most likely a leftover
 # stamp from the original kernel-authoring tool, not engine-consumed data.
 _PADDING_RECHECKED = {
-    (6, "unknown_0x07"): "Renzokuken finishers: retail value 100 (0x64) in all 4 entries.",
-    (19, "unknown_0x12"): "Temp-character limits: retail value 200 (0xC8, as a WORD) in all 5 entries.",
-    (20, "unknown_0x0f"): "Blue Magic: retail value 200 (0xC8) in only 1/16 entries (Laser Eye) - "
+    (6, "unknown_0x07"): "Renzokuken finishers: vanilla value 100 (0x64) in all 4 entries.",
+    (19, "unknown_0x12"): "Temp-character limits: vanilla value 200 (0xC8, as a WORD) in all 5 entries.",
+    (20, "unknown_0x0f"): "Blue Magic: vanilla value 200 (0xC8) in only 1/16 entries (Laser Eye) - "
                           "likely stray authoring noise rather than even a constant stamp.",
-    (23, "unknown_0x09"): "Duel (Zell): retail value 128 (0x80) in all 10 entries.",
-    (26, "unknown_0x07"): "Rinoa limit breaks part 2: retail value 128 (0x80) in all 5 entries.",
+    (23, "unknown_0x09"): "Duel (Zell): vanilla value 128 (0x80) in all 10 entries.",
+    (26, "unknown_0x07"): "Rinoa limit breaks part 2: vanilla value 128 (0x80) in all 5 entries.",
 }
 for _k, _note in _PADDING_RECHECKED.items():
     FINDINGS[_k] = ("Padding", "Unused padding - re-checked beyond the original 0-xref pass "
@@ -849,13 +900,13 @@ _MEANING = {
         "Doom, Absorb, LV Up/Down) carry a real index. Also checked at setup: if the linked entry's "
         "attack flags have the Revive bit, the command is flagged as a revive."),
     (17, "enable_boost"): (None,
-        "Whether learning this ability enables the GF Boost minigame. In the retail kernel only "
+        "Whether learning this ability enables the GF Boost minigame. In the vanilla kernel only "
         "the 'Boost' entry itself sets this (the 8 stat-percentage abilities - SumMag/GFHP+10-"
         "40% - all leave it clear); Stat to increase is the 0xFF sentinel on that same entry, "
         "since Boost isn't a stat-increase ability."),
     (12, "junction_flag"): (None,
         "A genuine 24-bit bitfield - each of the 20 junction abilities is assigned its own "
-        "dedicated bit (retail data: every entry sets exactly one bit, matching its position in "
+        "dedicated bit (vanilla data: every entry sets exactly one bit, matching its position in "
         "the list - HP-J is bit 0, Abilityx4 is bit 19).\n"
         "ResetAndParseBattleAndFieldCharacter ORs this value into the character's "
         "FF8CharaAbilities bitmask for every junction ability the character has equipped, so "
@@ -865,7 +916,7 @@ _MEANING = {
         "effects from one learned ability."),
     (14, "chara_stat_to_increase"): (None,
         "NOT a bitfield, despite sharing a kernel array slot with the (real bitfield) Junction "
-        "ability flag - this is a plain index picking ONE of the 9 standard stats (retail: one "
+        "ability flag - this is a plain index picking ONE of the 9 standard stats (vanilla: one "
         "ability per stat, values never combine). sub_4962C0 tests it with a straight equality "
         "compare (not bitwise) against the stat being computed, one comparison per owned Stat% "
         "ability; matching abilities' Increase Value bytes just sum onto a 100 base (e.g. owning "
@@ -873,7 +924,7 @@ _MEANING = {
         "Stat_RefreshCharaBattleStats: stat = multiplier * baseStat / 100."),
     (15, "chara_flag"): (None,
         "A genuine 24-bit bitfield, same JFlag mechanism as Junction ability flag - each ability "
-        "is assigned its own dedicated bit (retail data: every entry sets exactly one bit). "
+        "is assigned its own dedicated bit (vanilla data: every entry sets exactly one bit). "
         "ResetAndParseBattleAndFieldCharacter ORs it into the character's FF8CharaAbilities "
         "bitmask for every character ability equipped; other systems test individual bits at "
         "runtime (e.g. the Expendx2-1/Expendx3-1 bits gate not consuming a spell charge on "
@@ -981,10 +1032,10 @@ for sid_s, cfg in sections.items():
         if sid == 7 and f["name"] == "exp_linear":
             f["help"] = ("Low byte of the EXP curve: the linear EXP-per-level factor (×10). "
                          "Cumulative EXP to reach level L = 10×(L−1)×this + the quadratic term. "
-                         "Retail 100 → a flat 1000 EXP/level. (Stat_ComputeLevelFromExp @0x4961d0.)")
+                         "Vanilla 100 → a flat 1000 EXP/level. (Stat_ComputeLevelFromExp @0x4961d0.)")
         if sid == 7 and f["name"] == "exp_quadratic":
             f["help"] = ("High byte of the EXP curve: a quadratic acceleration factor (÷256), "
-                         "adding floor((L−1)²×this/256) to the cumulative EXP for level L. Retail 0 "
+                         "adding floor((L−1)²×this/256) to the cumulative EXP for level L. Vanilla 0 "
                          "= a flat (non-accelerating) curve. Click ƒ(x) for the full level→EXP curve.")
         if sid == 7:
             _st = f["name"].rsplit("_", 1)[0]
@@ -994,7 +1045,7 @@ for sid_s, cfg in sections.items():
                 # One f(x) button per stat, on the last USED coefficient. HP uses only
                 # c1..c3 (c4 confirmed unused - Stat_ComputeCharaMaxHP @0x496310 reads
                 # struct offsets 0x08/0x09/0x0A only, never 0x0B; triple-checked incl. the
-                # DWORD/HIBYTE trap, and c4 is 0 for all 11 retail chars), so HP's button
+                # DWORD/HIBYTE trap, and c4 is 0 for all 11 vanilla chars), so HP's button
                 # sits on c3 and c4 stays greyed; the other stats' button sits on c4.
                 if _st == "hp" and f["name"] == "hp_4":
                     f["readonly"] = True
@@ -1040,12 +1091,12 @@ for sid_s, cfg in sections.items():
                                  "Haste ticks 1.5× faster, Slow 2× slower, Stop freezes it. Click ƒ(x).")
             f["formula"] = "status_timer"
         # ATB speed multiplier: a genuine, IDA-verified formula input (Battle_TickAtbGaugesAndGf
-        # Countdown @0x4842b0), NOT a percent - retail value is 10.
+        # Countdown @0x4842b0), NOT a percent - vanilla value is 10.
         if sid == 30 and f["name"] == "atb_speed_multiplier":
             f["formula"] = "atb_speed"
             f["help"] = ("Multiplies how fast ALL battlers' ATB gauges fill: "
                          "cur_atb += 10 x this x (SPD+30) / 100, applied 3x per rendered frame "
-                         "(Battle_TickAtbGaugesAndGfCountdown). Retail value is 10, not a %-of-normal "
+                         "(Battle_TickAtbGaugesAndGfCountdown). Vanilla value is 10, not a %-of-normal "
                          "multiplier despite the name - click f(x) for the full picture.")
         # "Dead timer" is really the interval between the random Gilgamesh/Angelo/Phoenix
         # auto-summon checks. summonGilgaAngelStartFight (called once per battle tick from
@@ -1064,7 +1115,7 @@ for sid_s, cfg in sections.items():
                          "then reloads this value. Loaded into DEAD_TIMER_TO_SUMMON_GILGA. Lower = "
                          "checks happen more often.")
         # Devour's HP heal/dmg quantity is sixteenths of max HP, confirmed linear across
-        # every retail entry (0->0%, 1->6.25%, 2->12.5%, 8->50%, 12->75%, 16->100%). Not
+        # every vanilla entry (0->0%, 1->6.25%, 2->12.5%, 8->50%, 12->75%, 16->100%). Not
         # an enum - earlier tool builds wrongly snapped it to power-of-2 percentages only,
         # which showed later, perfectly-valid values (e.g. 12 = 75%) as unresolved "raw".
         if sid == 29 and f["name"] == "hp_quantity":
@@ -1153,7 +1204,7 @@ for sid_s, cfg in sections.items():
                              "status-attack accuracy lives at 0x1B ('Ability 1' row's first byte).")
             # The per-ability "unlocker" (byte+0 of each 4-byte slot) is NOT what unlocks the
             # ability - BuildGFAbilityList never reads it (the real condition is the next byte,
-            # Level/prereq). It is 0 in every retail GF. The ONE exception is the first slot's
+            # Level/prereq). It is 0 in every vanilla GF. The ONE exception is the first slot's
             # byte (ability1_unlocker, 0x1B), which the engine reuses as the GF summon's status
             # accuracy.
             if f["name"] == "ability1_unlocker":
@@ -1171,7 +1222,7 @@ for sid_s, cfg in sections.items():
                 f["readonly"] = True
                 f["help"] = ("Byte+0 of this ability slot. The ability-learning code "
                              "(BuildGFAbilityList) never reads it - the REAL unlock condition is "
-                             "the next byte, 'Level/prereq'. Always 0 in retail. (Only the FIRST "
+                             "the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST "
                              "slot's byte+0 is used, and for something unrelated: the GF summon's "
                              "status-attack accuracy.)")
         # Magic damage reads spell power, attack type and hit count, but they're not a tightly-
@@ -1239,20 +1290,48 @@ _ATTACK_DT_HELP = ("The attack's damage TYPE (low 2 bits of the attack-flags byt
                    "Shell halving and no Med Data.")
 _ATTACK_BITS_HELP = ("Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type "
                      "field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are "
-                     "actually read by the engine. 0x04 and 0x40 have NO reader anywhere (0x40 is "
-                     "set on curative magic/items in retail data but nothing consumes it). 0x20 is "
-                     "set on virtually every player ability as an authoring convention, but is only "
-                     "READ for battle items (see the Battle items tab) - here it is inert.")
+                     "actually read by the engine - the complete set of masks tested anywhere is 0x03, "
+                     "0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action "
+                     "revive on hit - "
+                     "that is the Attack type field (Revive / Revive at full HP). What it does is "
+                     "let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / "
+                     "linkedStockFieldCharData turn it into menu-status bit 0, which makes target "
+                     "selection use the all-units mask instead of the living-only one. In vanilla "
+                     "only Life and Full-life have it. 0x04 and 0x40 have NO reader anywhere. 0x40 "
+                     "varies a lot between entries, but it is only an authoring marker for "
+                     "'restores HP or cures an ailment': it tracks the curative Attack types "
+                     "(plus the percentage-heal items, with Float the lone oddity) and so "
+                     "duplicates what the Attack type field already says. 0x20 "
+                     "is set on virtually every player ability as an authoring convention, but is "
+                     "only READ for battle items (see the Battle items tab) - here it is inert.")
 _ATTACK_BITS_HELP_ITEM = ("Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage "
-                          "type field). 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive "
-                          "behave as elsewhere. 0x04 and 0x40 have NO reader anywhere. 0x20 IS read "
-                          "here - `updateBattleItemData` tests it directly to decide whether the "
-                          "item is selectable in the battle Item menu (this is the ONE section where "
-                          "this bit does anything; on magic/GF/limits it's inert).")
+                          "type field). This byte is read differently here than anywhere else: "
+                          "`updateBattleItemData` turns 0x80 and 0x20 into the item's 2-bit battle-"
+                          "menu status. 0x80 set -> status bit 0, which lets the target cursor land "
+                          "on a KO'd unit (it is NOT 'revive on hit' - that is the Attack type "
+                          "field). Vanilla sets it on all 32 real items, because the Item cursor is "
+                          "always allowed to point at a KO'd ally. 0x20 CLEAR -> status bit 1, which "
+                          "draws the row in the greyed palette and makes OK buzz instead of opening "
+                          "target selection; vanilla sets 0x20 on all 32 real items, so only the "
+                          "blank entry 0 is greyed. 0x08 Break Damage Limit and 0x10 Reflectable "
+                          "behave as elsewhere; 0x04 and 0x40 have NO reader anywhere.")
 for cfg in sections.values():
     new_fields = []
     for f in cfg["fields"]:
-        if f.get("lookup") == "attack_flags":
+        if f.get("lookup") == "target_info":
+            # Bits 2-3 are a 2-bit field (see _TARGET_SIDE_HELP), so they get a combo of
+            # their own rather than two checkboxes that look like independent opposites.
+            side = {"name": "target_side", "offset": f["offset"], "size": f["size"],
+                    "mask": 0x0C, "lookup": "target_side", "label": "Target side",
+                    "embed_in": f["name"], "help": _TARGET_SIDE_HELP}
+            rest = dict(f)
+            rest["mask"] = 0xF3
+            for key in ("group", "row", "subgroup"):
+                if key in f:
+                    side[key] = f[key]
+            new_fields.append(side)
+            new_fields.append(rest)
+        elif f.get("lookup") == "attack_flags":
             dt = {"name": f["name"] + "_type", "offset": f["offset"], "size": f["size"],
                   "mask": 0x03, "lookup": "attack_damage_type", "label": "Damage type",
                   "help": _ATTACK_DT_HELP}

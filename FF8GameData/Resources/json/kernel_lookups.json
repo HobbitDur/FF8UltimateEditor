@@ -189,6 +189,27 @@
    }
   ]
  },
+ "target_side": {
+  "type": "enum",
+  "entries": [
+   {
+    "value": 0,
+    "name": "One side only"
+   },
+   {
+    "value": 4,
+    "name": "Both sides - player can switch"
+   },
+   {
+    "value": 8,
+    "name": "One side only (0x08 set - same behaviour as above)"
+   },
+   {
+    "value": 12,
+    "name": "One side only (0x04+0x08 - same behaviour; unused in vanilla)"
+   }
+  ]
+ },
  "target_info": {
   "type": "flags",
   "entries": [
@@ -201,14 +222,6 @@
     "name": "Multi-target spread"
    },
    {
-    "mask": 4,
-    "name": "Unused (0x04)"
-   },
-   {
-    "mask": 8,
-    "name": "Single Side"
-   },
-   {
     "mask": 16,
     "name": "Single"
    },
@@ -218,48 +231,11 @@
    },
    {
     "mask": 64,
-    "name": "Enemy"
+    "name": "Opposing side (the actor's enemies)"
    },
    {
     "mask": 128,
-    "name": "Unused (0x80)"
-   }
-  ]
- },
- "attack_flags": {
-  "type": "flags",
-  "entries": [
-   {
-    "mask": 1,
-    "name": "Magical (Shell applies)"
-   },
-   {
-    "mask": 2,
-    "name": "Item/Medicine (MedData)"
-   },
-   {
-    "mask": 4,
-    "name": "Unused (0x04)"
-   },
-   {
-    "mask": 8,
-    "name": "Break Damage Limit"
-   },
-   {
-    "mask": 16,
-    "name": "Reflectable"
-   },
-   {
-    "mask": 32,
-    "name": "Unused (0x20)"
-   },
-   {
-    "mask": 64,
-    "name": "Unused (0x40)"
-   },
-   {
-    "mask": 128,
-    "name": "Revive"
+    "name": "Skip target selection (auto-pick)"
    }
   ]
  },
@@ -1806,7 +1782,7 @@
    },
    {
     "mask": 32,
-    "name": "Inert here (item-selectable only)",
+    "name": "Selectable in battle Item menu (inert here)",
     "disabled": true
    },
    {
@@ -1815,36 +1791,17 @@
    },
    {
     "mask": 128,
-    "name": "Revive"
+    "name": "Can target KO'd units"
    }
   ]
  },
  "attack_flags_bits_item": {
   "type": "flags",
-  "entries": [
-   {
-    "mask": 4,
-    "name": "Unused (0x04) - no reader"
-   },
-   {
-    "mask": 8,
-    "name": "Break Damage Limit"
-   },
-   {
-    "mask": 16,
-    "name": "Reflectable"
-   },
+  "extends": "attack_flags_bits",
+  "overrides": [
    {
     "mask": 32,
     "name": "Selectable in battle Item menu"
-   },
-   {
-    "mask": 64,
-    "name": "Unused (0x40) - no reader"
-   },
-   {
-    "mask": 128,
-    "name": "Revive"
    }
   ]
  }

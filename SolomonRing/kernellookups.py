@@ -27,10 +27,38 @@ class LookupRegistry:
         return {"type": "enum",
                 "entries": [{"value": it[value_key], "name": str(it[name_key])} for it in items]}
 
+    def _extend(self, name: str, lookup: dict):
+        """Build a lookup declared as ``extends`` another one plus ``overrides``.
+
+        The same kernel byte is edited on several tabs, and a checkbox for a given bit
+        must read identically everywhere so the tabs can be compared at a glance. Where
+        one tab genuinely differs - today only attack-flags 0x20, which is read for
+        battle items and inert everywhere else - the deriving lookup overrides just that
+        entry instead of restating the whole list and letting the shared wording drift.
+        An override replaces the base entry outright (so it can also drop ``disabled``);
+        it must name a mask the base already defines, since a lookup that adds bits isn't
+        the same field any more.
+        """
+        base = self.resolve(lookup["extends"])
+        if not base:
+            raise KeyError(f"lookup {name!r} extends unknown lookup {lookup['extends']!r}")
+        overrides = {o["mask"]: o for o in lookup.get("overrides", [])}
+        unknown = overrides.keys() - {e["mask"] for e in base["entries"]}
+        if unknown:
+            raise KeyError(f"lookup {name!r} overrides mask(s) "
+                           f"{[hex(m) for m in sorted(unknown)]} absent from "
+                           f"{lookup['extends']!r}")
+        return {"type": base["type"],
+                "entries": [overrides.get(e["mask"], e) for e in base["entries"]]}
+
     def resolve(self, name: str):
-        if name in self._lookups:
-            return self._lookups[name]
         if name in self._cache:
+            return self._cache[name]
+        if name in self._lookups:
+            lookup = self._lookups[name]
+            if "extends" not in lookup:
+                return lookup
+            self._cache[name] = self._extend(name, lookup)
             return self._cache[name]
         gd = self.game_data
         result = None
