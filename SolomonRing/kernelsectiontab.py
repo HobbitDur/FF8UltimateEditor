@@ -241,7 +241,7 @@ class KernelSectionTab(QWidget):
 
         # Fields are nested inside a flags field's box instead of getting a separate block
         # when they say so: "embed_in" names the host outright (a sub-field carved out of the
-        # same byte, e.g. Target side out of Target info), while "enabled_unless_bit" both
+        # same byte, e.g. Cursor sides out of Target info), while "enabled_unless_bit" both
         # picks the host and couples the field to one of its checkboxes (a battle command's
         # Submenu picker, greyed by the "Instant" bit).
         embed_map = {}

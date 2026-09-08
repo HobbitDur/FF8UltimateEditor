@@ -632,11 +632,29 @@ except Exception as e:
     print("warn:", e)
 
 # ---- help text (hover) applied by field name across all sections ----------
+_TARGET_SCOPE_HELP = (
+    "How many units the action reaches (bits 4-5, target_info & 0x30) - one unit, the whole "
+    "side, or everything. Distinct from 'Cursor sides', which is about where the cursor "
+    "may go, not how many it hits; and unlike that field this one IS read by the AI. Like "
+    "it, though, it is a 2-bit value never read as separate flags - getTargetMaskFromInfo, "
+    "getMagicTargetMask, sub_483D20, sub_483D60 and Battle_PickRandomActionConfusedBerserk all "
+    "switch on (target_info & 0x30), and sub_4AB190 / sub_4AA1D0 on (target_info >> 4) & 3:\n"
+    "  0x00  every unit of the side the Enemy flag names (getTargetMaskAllChara / ...AllEnemy).\n"
+    "  0x10  ONE unit of that side, picked at random on the auto-resolve path\n"
+    "        (getRandomTargetCharaMask / ...MonsterMask); the cursor's single target for a player.\n"
+    "  0x20  getMaskEveryone() - all EIGHT slots, i.e. both sides at once, NOT one side. The old\n"
+    "        'Everyone on one side' name was wrong.\n"
+    "  0x30  falls through every branch and returns the raw 0x30 - no meaningful target.\n"
+    "Vanilla uses only 0x00 (74 entries) and 0x10 (135). Nothing ships with 0x20 or 0x30."
+)
+
 _TARGET_SIDE_HELP = (
-    "Whether the target cursor may cross to the OTHER side (bits 2-3, target_info & 0x0C). "
-    "This field does not name a side - the side itself comes from the 0x40 Enemy flag; this "
-    "only says whether the player can leave it. The two bits are never read separately - "
-    "every reader tests the pair - so they are one setting, not two flags:\n"
+    "Whether the PLAYER'S TARGET CURSOR may cross to the other side (bits 2-3, target_info "
+    "& 0x0C). This is about cursor freedom only - it does not name a side (that is the 0x40 "
+    "Enemy flag) and it does not say how many units are hit (that is Target scope). It is "
+    "also the one part of this byte the AI never reads: the auto-resolve decoders ignore "
+    "bits 2-3 entirely, so it has no effect on monster attacks. The two bits are never read "
+    "separately - every reader tests the pair - so they are one setting, not two flags:\n"
     "  0x00 / 0x08 / 0x0C  the cursor is locked to the side the 'Enemy' flag names.\n"
     "  0x04                both target name windows open and a direction press swaps sides.\n"
     "0x08 ('Single Side') has NO effect of its own: its only role is to veto 0x04, so 0x00, "
@@ -650,18 +668,15 @@ _TARGET_SIDE_HELP = (
     "commands, magic and battle items), 0x08 on 53, 0x0C on none."
 )
 _TARGET_INFO_HELP = (
-    "Default targeting behaviour for the remaining bits; bits 2-3 are the separate Target side "
-    "field.\n"
+    "Default targeting behaviour for the bits that are plain flags. Bits 2-3 and 4-5 are the "
+    "separate Cursor sides and Target scope fields.\n"
     "0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player "
     "battle menu it only takes effect when the entry also has Attack flag 0x80, which is what "
     "opens the cursor to KO'd units in the first place.\n"
     "0x02 Multi-target spread - adds mask bit 0x2000.\n"
-    "0x10 / 0x20 are themselves a pair (target_info & 0x30) read as one value by the "
-    "auto-resolve decoders: 0x10 = one random target of the chosen side, 0x20 = the whole "
-    "side, 0x00 = every unit of that side. 0x30 occurs on nothing in vanilla.\n"
     "0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu "
     "sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 "
-    "(monster slots) : 7 (party slots). The Target side field does NOT name a side - it only "
+    "(monster slots) : 7 (party slots). The Cursor sides field does NOT name a side - it only "
     "says whether the player may leave the one this bit picked.\n"
     "On the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two "
     "decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> "
@@ -1322,14 +1337,20 @@ for cfg in sections.values():
             # Bits 2-3 are a 2-bit field (see _TARGET_SIDE_HELP), so they get a combo of
             # their own rather than two checkboxes that look like independent opposites.
             side = {"name": "target_side", "offset": f["offset"], "size": f["size"],
-                    "mask": 0x0C, "lookup": "target_side", "label": "Target side",
+                    "mask": 0x0C, "lookup": "target_side", "label": "Cursor sides (player menu)",
                     "embed_in": f["name"], "help": _TARGET_SIDE_HELP}
+            # Bits 4-5 are a second 2-bit value in the same byte, for the same reason.
+            scope = {"name": "target_scope", "offset": f["offset"], "size": f["size"],
+                     "mask": 0x30, "lookup": "target_scope", "label": "Target scope",
+                     "embed_in": f["name"], "help": _TARGET_SCOPE_HELP}
             rest = dict(f)
-            rest["mask"] = 0xF3
+            rest["mask"] = 0xC3
             for key in ("group", "row", "subgroup"):
                 if key in f:
                     side[key] = f[key]
+                    scope[key] = f[key]
             new_fields.append(side)
+            new_fields.append(scope)
             new_fields.append(rest)
         elif f.get("lookup") == "attack_flags":
             dt = {"name": f["name"] + "_type", "offset": f["offset"], "size": f["size"],

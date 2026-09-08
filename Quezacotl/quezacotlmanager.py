@@ -446,7 +446,7 @@ class ConfigEntry:
     _FIELDS = [
         "battle_speed", "battle_message_speed", "field_message_speed", "volume", "flag", "scan", "camera",
         "map_seal", "key_l2", "key_r2", "key_l1", "key_r1", "key_triangle", "key_circle",
-        "key_cross", "key_square", "key_select", "key_unk1", "key_unk2", "key_start",
+        "key_cross", "key_square", "key_select", "key_l3", "key_r3", "key_start",
     ]
 
     # map_seal (offset 7) bit meanings (IDA: MapSeal enum).
@@ -456,25 +456,48 @@ class ConfigEntry:
         (0x40, "Resurrection locked"), (0x80, "Save locked"),
     ]
 
-    # flag (offset 4) bit meanings (IDA). Bits 1-3 have no identified use; some bits are
-    # hardware-managed and normally set by the game, not the player (marked "auto").
+    # flag (offset 4) bit meanings (IDA). Some bits are hardware-managed and normally set by
+    # the game, not the player (marked "auto").
+    #
+    # Identified by walking all 26 references to SG_SETTING.flag (0x1CFE73C) and decoding the
+    # mask each one tests. The in-game Config menu drives its rows from a 16-byte-stride table
+    # at 0xB88978 (mask at +0, optional handler at +4, three text ids at +8/+10/+12); its rows
+    # are 0x20 (Controls, handler 0x4EDD20), 0x04 (Cursor), 0x01 (Vibration) and 0x100 - the
+    # last being bit 0 of the *scan* byte at offset 5, since the code reads flag as a word.
+    #
+    #   0x04 is the Config menu's "Cursor: Memory". BattleMenu_CommandWindow_Update tests it at
+    #        0x4BBBC5 / 0x4BC659, and the stub at 0x4BB9B0 wipes the per-character remembered
+    #        cursor slots (BATTLE_CHARA_UI +0x54..+0x68) when it is CLEAR - i.e. Cursor: Initial.
+    #   0x02 has exactly one reader, au_re_xorEAX_0_0 (0x4C2FD0), which computes (flag >> 1) & 1
+    #        and passes it to return_0 - a do-nothing stub. It is a PSX audio setting whose
+    #        consumer the PC port replaced with a stub (FF8's PSX Config menu had a Sound
+    #        stereo/mono row); nothing in the PC build reads or writes it.
+    #   0x08 has no reader and no writer at all among those 26 references.
+    #   0x40 is NOT 'no controller detected'. sub_4C3060 (0x4C3060) reads the pad's
+    #        vibrate_option_enabled for port 0 via sub_49F150 and sets the bit when it is 0xFF,
+    #        and sub_4C2FF0 (0x4C2FF0) pushes it back the other way through sub_49F170 - a
+    #        straight get/set pair, i.e. the persisted pad vibration option. (Distinct from
+    #        vibrate_capable, which is a separate field of the same input struct.)
     FLAG_BITS = [
         (0x01, "Battle vibration trigger"),
-        (0x02, "Bit 1 (unknown)"),
-        (0x04, "Bit 2 (unknown)"),
-        (0x08, "Bit 3 (unknown)"),
+        (0x02, "PSX audio setting (stubbed on PC)"),
+        (0x04, "Cursor: Memory"),
+        (0x08, "Bit 3 (unused - no reader or writer)"),
         (0x10, "Vibration hardware present (auto)"),
         (0x20, "Use custom button config"),
-        (0x40, "No controller detected (auto)"),
+        (0x40, "Pad vibration option (auto)"),
         (0x80, "Controls modified from default"),
     ]
 
-    # The 12 remap bytes are physical button slots, in this order.
+    # The 12 remap bytes are physical button slots, in this order. The order is the PSX
+    # DualShock button word (see remap_pad_input @0x4A2D60), so slots 9 and 10 are L3 and R3 -
+    # they were previously mislabelled "Unknown 1/2" on the belief that a PSX pad has only ten
+    # configurable buttons.
     KEY_FIELDS = [
         ("key_l2", "L2"), ("key_r2", "R2"), ("key_l1", "L1"), ("key_r1", "R1"),
         ("key_triangle", "Triangle"), ("key_circle", "Circle"), ("key_cross", "Cross"),
-        ("key_square", "Square"), ("key_select", "Select"), ("key_unk1", "Unknown 1"),
-        ("key_unk2", "Unknown 2"), ("key_start", "Start"),
+        ("key_square", "Square"), ("key_select", "Select"), ("key_l3", "L3"),
+        ("key_r3", "R3"), ("key_start", "Start"),
     ]
 
     def __init__(self, buffer, offset):

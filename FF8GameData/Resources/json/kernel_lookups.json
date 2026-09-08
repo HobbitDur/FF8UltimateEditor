@@ -198,7 +198,7 @@
    },
    {
     "value": 4,
-    "name": "Both sides - player can switch"
+    "name": "Both sides - can switch"
    },
    {
     "value": 8,
@@ -207,6 +207,27 @@
    {
     "value": 12,
     "name": "One side only (0x04+0x08 - same behaviour; unused in vanilla)"
+   }
+  ]
+ },
+ "target_scope": {
+  "type": "enum",
+  "entries": [
+   {
+    "value": 0,
+    "name": "Whole side (every unit of it)"
+   },
+   {
+    "value": 16,
+    "name": "One unit of the side"
+   },
+   {
+    "value": 32,
+    "name": "Everyone (BOTH sides)"
+   },
+   {
+    "value": 48,
+    "name": "No effect (0x30 - absent from vanilla)"
    }
   ]
  },
@@ -220,14 +241,6 @@
    {
     "mask": 2,
     "name": "Multi-target spread"
-   },
-   {
-    "mask": 16,
-    "name": "Single"
-   },
-   {
-    "mask": 32,
-    "name": "Everyone on one side"
    },
    {
     "mask": 64,

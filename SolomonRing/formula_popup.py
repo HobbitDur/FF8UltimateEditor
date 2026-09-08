@@ -127,13 +127,25 @@ class FormulaPopup(QDialog):
         root.addWidget(lbl)
         return lbl
 
+    @staticmethod
+    def _field_title(field):
+        """Name for the title bar: the sub-box the field sits in, or the field itself.
+
+        Where a formula is fed by several bytes, those bytes share a named sub-box and only
+        one of them carries the "formula" key - so the f(x) button hangs off an arbitrary
+        member. Titling the window after that member ("GF HP modifier 3") names a parameter
+        rather than the thing on screen; the sub-box ("GF HP curve") names the formula. When
+        a field has no sub-box it is a value in its own right (each GF's compatibility, each
+        status timer) and its own label is what identifies it."""
+        return field.get("subgroup") or field.get("label", field["name"])
+
     # -------------------------------------------------- targeting a field
     def show_for(self, field):
         """(Re)point this popup at ``field`` of the current tab and show it."""
         self._disconnect_field()
         self._field = field
         self._formula_key = field.get("formula")
-        self.setWindowTitle("f(x)  " + field.get("label", field["name"]))
+        self.setWindowTitle("f(x)  " + self._field_title(field))
         # Rebuild param editors for exactly the params this formula uses.
         out = fs.compute(self._formula_key, self._current_value(), self._current_entry())
         self._build_param_editors(out["params"] if out else ())

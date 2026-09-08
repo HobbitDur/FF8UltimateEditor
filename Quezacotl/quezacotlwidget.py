@@ -808,21 +808,22 @@ class QuezacotlWidget(QWidget):
         seal_group.setLayout(seal_grid)
 
         # Button remap table (offsets 8-19): each physical button picks a logical action.
-        # unk1/unk2 (0x11/0x12) are phantom slots: a PSX pad has only 10 configurable buttons,
-        # so nothing maps to or consumes them — shown read-only.
-        phantom_tip = ("Read-only: phantom config slot. A PSX controller exposes only 10 configurable "
-                       "buttons, so no physical button maps here and no game code reads it. Preserved on save.")
+        # Slots 9/10 (0x11/0x12) are L3 and R3 - the slot order is the PSX DualShock button word
+        # (remap_pad_input @0x4A2D60). They are real, editable buttons on a PSX analog pad; it is
+        # only the PC input layer that can never emit them, so say that rather than grey them out.
+        pc_inert_tip = ("Analog-pad only. This is a real config slot and the PSX engine remaps it, but "
+                        "the PC input layer never emits pad bit 0x200/0x400 (Input_Cfg_ApplyBindingToPadBit "
+                        "has no binding for them), so on PC the button can never fire whatever you set here.")
         self.config_key_combos = {}
         key_form = QFormLayout()
         for field, label in ConfigEntry.KEY_FIELDS:
-            phantom = field in ("key_unk1", "key_unk2")
-            combo = self._enum_combo(self._button_action_entries,
-                                     None if phantom else self._on_config_changed,
-                                     phantom_tip if phantom else f"Logical action triggered by the {label} button")
+            pc_inert = field in ("key_l3", "key_r3")
+            combo = self._enum_combo(self._button_action_entries, self._on_config_changed,
+                                     pc_inert_tip if pc_inert else
+                                     f"Logical action triggered by the {label} button")
             self.config_key_combos[field] = combo
-            if phantom:
-                combo.setEnabled(False)
-                key_form.addRow(self._grey_label(f"{label} button:", phantom_tip), combo)
+            if pc_inert:
+                key_form.addRow(self._grey_label(f"{label} button:", pc_inert_tip), combo)
             else:
                 key_form.addRow(f"{label} button:", combo)
         key_group = QGroupBox("Button config (physical button → action)")
