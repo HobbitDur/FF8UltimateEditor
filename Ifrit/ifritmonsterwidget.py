@@ -501,10 +501,9 @@ class IfritMonsterWidget(QWidget):
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
         self.file_registry = file_registry
-        # The shared-toolbar Reload button (registry.reload_all) fans out via reload_requested.
-        # Ifrit is an Alexander-pattern tool with no per-file FileBinding, so it subscribes to the
-        # signal directly instead of through a binding (otherwise Reload is a no-op for it).
-        self.file_registry.reload_requested.connect(self._reload_from_disk)
+        # Ifrit is an Alexander-pattern tool with no per-file FileBinding, so the shared-toolbar
+        # Reload button reaches it through the reload_files() / can_reload_files() hooks below
+        # rather than through a binding (otherwise Reload would be a no-op for it).
         self.settings = settings
         self.icon_path = icon_path
         self.file_loaded = ""
@@ -1219,9 +1218,13 @@ class IfritMonsterWidget(QWidget):
 
     # ── Reload from disk (shared toolbar button) ──────────────────────
 
-    def _reload_from_disk(self):
-        """Shared-toolbar Reload (registry.reload_all): re-read EVERY loaded file from disk and
-        rebuild. Ifrit has no per-file FileBinding, so it handles the registry signal itself.
+    def can_reload_files(self):
+        """Whether Reload has anything to do here (the toolbar greys the button out if not)."""
+        return bool(self._files)
+
+    def reload_files(self):
+        """Shared-toolbar Reload hook: re-read every file THIS tool has loaded from disk and
+        rebuild. Ifrit has no per-file FileBinding, so the toolbar calls this hook directly.
         Drops uncommitted edits - that is what 'reload from disk' means."""
         if not self._files:
             return

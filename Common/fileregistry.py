@@ -13,7 +13,6 @@ class FileRegistry(QObject):
     """
 
     file_changed = pyqtSignal(str)  # FF8 file name: its path changed, tools must load it again
-    reload_requested = pyqtSignal()  # every opened file must be re-read from disk (same paths)
 
     def __init__(self, settings=None):
         QObject.__init__(self)
@@ -54,11 +53,6 @@ class FileRegistry(QObject):
         """Set the file every tool using file_name must now work on."""
         self.paths[file_name] = file_path
         self.file_changed.emit(file_name)
-
-    def reload_all(self):
-        """Re-read every opened file from disk (e.g. after an external tool changed it), keeping
-        the same paths. Each tool reloads its files through their FileBinding."""
-        self.reload_requested.emit()
 
     @staticmethod
     def summarize_paths(paths, noun="file", max_listed=5):

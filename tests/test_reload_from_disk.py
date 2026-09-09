@@ -1,9 +1,12 @@
-"""The shared-toolbar Reload button (Common/filetoolbarwidget.py) fires FileRegistry.reload_all(),
-which emits reload_requested to every tool. Tools with a per-file FileBinding re-read through the
-binding; Ifrit is an Alexander-pattern tool with NO binding, so it must subscribe to the registry
-signal directly. Before the fix, Reload was a silent no-op for Ifrit (reload_requested had zero
-receivers). These tests lock in that Ifrit reloads all its files from disk on that signal, keeping
-the single-live-GL-context guarantee.
+"""The shared-toolbar Reload button (Common/filetoolbarwidget.py) re-reads the files the ACTIVE
+tool is using, and only those: its own FileBindings (writable and read-only alike) plus, for a
+tool whose files have no fixed FF8 name and so no binding, its reload_files() hook. Files another
+tool has open are deliberately left untouched, so reloading in one tool cannot discard edits
+sitting in another.
+
+Ifrit is the hook case: an Alexander-pattern tool with no per-file FileBinding, it implements
+reload_files() / can_reload_files(). These tests lock in that it reloads all of its own files and
+keeps the single-live-GL-context guarantee, and that the toolbar scopes Reload to one tool.
 """
 import os
 
@@ -11,11 +14,13 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QStackedWidget, QWidget
 from PyQt6.QtCore import QSettings
 _APP = QApplication.instance() or QApplication([])
 
+from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
+from Common.filetoolbarwidget import FileToolbarWidget
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.ifritmonsterwidget import IfritMonsterWidget
 
@@ -23,7 +28,84 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BATTLE = os.path.join(REPO, "extracted_files", "battle")
 MONSTER_FILES = [os.path.join(BATTLE, f"c0m{i:03d}.dat") for i in range(4)]
 
-pytestmark = pytest.mark.skipif(
+
+# ---------------------------------------------------------------- toolbar scoping
+
+class _ToolWithFile(QWidget):
+    """Minimal tool: one binding, counting how often its file is (re)loaded."""
+
+    def __init__(self, file_name, registry):
+        QWidget.__init__(self)
+        self.loads = 0
+        self.binding = FileBinding(file_name, registry, load_callback=self._load)
+
+    def _load(self, _path):
+        self.loads += 1
+
+    def file_bindings(self):
+        return [self.binding]
+
+
+def _toolbar_with_two_tools(tmp_path):
+    registry = FileRegistry()
+    stack = QStackedWidget()
+    tool_a = _ToolWithFile("a.bin", registry)
+    tool_b = _ToolWithFile("b.bin", registry)
+    stack.addWidget(tool_a)
+    stack.addWidget(tool_b)
+    toolbar = FileToolbarWidget(stack, registry, icon_path=os.path.join(REPO, "Resources"))
+    for name, tool in (("a.bin", tool_a), ("b.bin", tool_b)):
+        path = tmp_path / name
+        path.write_bytes(b"\x00")
+        registry.open_file(name, str(path))
+    tool_a.loads = tool_b.loads = 0        # ignore the initial load
+    return toolbar, stack, tool_a, tool_b
+
+
+def test_reload_only_touches_the_active_tools_files(tmp_path):
+    toolbar, stack, tool_a, tool_b = _toolbar_with_two_tools(tmp_path)
+    stack.setCurrentWidget(tool_a)
+
+    toolbar._reload()                                  # what the toolbar button does
+
+    assert tool_a.loads == 1                           # the active tool re-read its file
+    assert tool_b.loads == 0                           # the other tool was left alone
+
+
+def test_reload_follows_the_active_tool(tmp_path):
+    toolbar, stack, tool_a, tool_b = _toolbar_with_two_tools(tmp_path)
+    stack.setCurrentWidget(tool_b)
+
+    toolbar._reload()
+
+    assert tool_b.loads == 1
+    assert tool_a.loads == 0
+
+
+def test_reload_button_greys_out_when_the_active_tool_has_no_file(tmp_path):
+    registry = FileRegistry()
+    stack = QStackedWidget()
+    loaded = _ToolWithFile("a.bin", registry)
+    empty = _ToolWithFile("b.bin", registry)
+    stack.addWidget(loaded)
+    stack.addWidget(empty)
+    toolbar = FileToolbarWidget(stack, registry, icon_path=os.path.join(REPO, "Resources"))
+    path = tmp_path / "a.bin"
+    path.write_bytes(b"\x00")
+    registry.open_file("a.bin", str(path))             # only the first tool's file is open
+
+    stack.setCurrentWidget(loaded)
+    toolbar._refresh()
+    assert toolbar.reload_button.isEnabled()
+
+    stack.setCurrentWidget(empty)                      # a file IS open in the registry, but not
+    toolbar._refresh()                                 # one this tool uses
+    assert not toolbar.reload_button.isEnabled()
+
+
+# ---------------------------------------------------------------- Ifrit's hook
+
+ifrit_only = pytest.mark.skipif(
     not all(os.path.isfile(p) for p in MONSTER_FILES),
     reason="c0m000-c0m003.dat not available")
 
@@ -44,20 +126,23 @@ def _live_gl(w):
             if f['pane'] is not None and f['pane']._3d_widget.gl_widget is not None]
 
 
-def test_ifrit_subscribes_to_the_shared_reload_signal():
-    reg = FileRegistry()
-    w = _make_widget("reload_sub", reg)
-    assert reg.receivers(reg.reload_requested) >= 1   # was 0 -> Reload was a no-op
+@ifrit_only
+def test_ifrit_exposes_the_reload_hooks():
+    w = _make_widget("reload_sub", FileRegistry())
+    assert callable(getattr(w, "reload_files", None))       # the toolbar calls this
+    assert callable(getattr(w, "can_reload_files", None))   # ...and this to grey the button
+    assert w.can_reload_files() is False                    # nothing loaded yet
 
 
-def test_reload_all_reparses_every_file_and_keeps_one_context():
-    reg = FileRegistry()
-    w = _make_widget("reload_all", reg)
+@ifrit_only
+def test_reload_reparses_every_file_and_keeps_one_context():
+    w = _make_widget("reload_all", FileRegistry())
     w._build_session(MONSTER_FILES)
     w._activate_index(2)
     panes_before = [id(f['pane']) for f in w._files if f['pane'] is not None]
+    assert w.can_reload_files() is True
 
-    reg.reload_all()                                  # what the toolbar button does
+    w.reload_files()                                  # what the toolbar button does
 
     # every pane got rebuilt from the fresh parse (identities changed)
     panes_after = [id(f['pane']) for f in w._files if f['pane'] is not None]
@@ -68,8 +153,8 @@ def test_reload_all_reparses_every_file_and_keeps_one_context():
     assert all(f['name'] for f in w._files)           # names re-resolved after reparse
 
 
+@ifrit_only
 def test_reload_with_nothing_loaded_is_a_noop():
-    reg = FileRegistry()
-    w = _make_widget("reload_empty", reg)
-    reg.reload_all()                                  # must not raise with no files open
+    w = _make_widget("reload_empty", FileRegistry())
+    w.reload_files()                                  # must not raise with no files open
     assert w._files == []

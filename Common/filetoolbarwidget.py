@@ -24,6 +24,9 @@ class FileToolbarWidget(QWidget):
       five); disabled when the active tool has none.
     - Save: writes the active tool's main file(s) back, and/or its ``save_folder()`` if it has one
       (also used by tools whose save always needs a destination picker, like Alexander's).
+    - Reload: re-reads the files the ACTIVE tool is using - its own bindings (writable and
+      read-only alike) plus its ``reload_files()`` hook if it has one. Files another tool has
+      open are left untouched, so reloading in one tool never disturbs edits in another.
     """
 
     save_state_changed = pyqtSignal(bool)  # True when the active tool has something to save
@@ -52,8 +55,8 @@ class FileToolbarWidget(QWidget):
 
         self.reload_button = self._icon_button(
             icon_path, 'reload_files.svg',
-            "Reload every opened file from disk (re-read them all after an external change)")
-        self.reload_button.clicked.connect(self.registry.reload_all)
+            "Reload this tool's files from disk (re-read them after an external change)")
+        self.reload_button.clicked.connect(self._reload)
 
         self.open_folder_button = self._icon_button(
             icon_path, 'open_folder.svg',
@@ -192,6 +195,26 @@ class FileToolbarWidget(QWidget):
         if dirty_state is not None:
             dirty_state.clear()     # just saved -> no more unsaved changes (drops the title's *)
 
+    def _reload(self):
+        """Re-read the ACTIVE tool's files from disk, and only those.
+
+        Both halves of the tool's file set are covered: every FileBinding it declares
+        (complementary/read-only ones included - it is using those files too), and, for a
+        tool whose files have no fixed FF8 name and so no binding (Ifrit's c0mXXX.dat,
+        Alexander's a0stgXXX.x), its own reload_files() hook."""
+        for binding in self._bindings():
+            binding.reload_from_disk()
+        hook = getattr(self.tool_stack.currentWidget(), "reload_files", None)
+        if callable(hook):
+            hook()
+
+    def _can_reload(self):
+        """Whether the active tool has any file of its own loaded to re-read."""
+        if any(binding.is_loaded for binding in self._bindings()):
+            return True
+        predicate = getattr(self.tool_stack.currentWidget(), "can_reload_files", None)
+        return bool(predicate()) if callable(predicate) else False
+
     def _can_save_folder(self):
         """Whether the active tool has a multi-file (folder) save with something to write."""
         predicate = getattr(self.tool_stack.currentWidget(), "can_save_folder", None)
@@ -329,8 +352,8 @@ class FileToolbarWidget(QWidget):
         self.save_button.setEnabled(can_save)
         # The window-title * marks genuine unsaved EDITS, which is a stricter thing than can_save.
         self.save_state_changed.emit(self._active_is_dirty())
-        # Reload acts on every opened file across all tools, not just the active one.
-        self.reload_button.setEnabled(bool(self.registry.paths))
+        # Reload acts on the active tool's own files only, never on other tools' files.
+        self.reload_button.setEnabled(self._can_reload())
         # Compress / Uncompress show only for tools that carry compressible game text.
         supports_compression = self._supports_text_compression()
         self.compress_button.setVisible(supports_compression)

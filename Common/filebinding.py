@@ -36,7 +36,6 @@ class FileBinding(QObject):
             self.file_opened.connect(load_callback)
         registry.bindings.append(self)  # so "Open folder" knows every file the tools accept
         registry.file_changed.connect(self._on_registry_changed)
-        registry.reload_requested.connect(self._reload_from_disk)
 
     @property
     def is_loaded(self):
@@ -85,8 +84,11 @@ class FileBinding(QObject):
             self._loaded_path = path
             self.file_opened.emit(path)
 
-    def _reload_from_disk(self):
-        """Re-read this file from disk even though its path is unchanged (registry.reload_all)."""
+    def reload_from_disk(self):
+        """Re-read this file from disk even though its path is unchanged.
+
+        Driven by the toolbar's Reload button for the ACTIVE tool's bindings only - a file
+        another tool has open is left alone, even when both tools share it."""
         path = self.current_path
         if path:
             self._loaded_path = path

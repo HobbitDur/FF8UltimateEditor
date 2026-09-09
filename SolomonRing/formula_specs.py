@@ -66,11 +66,19 @@ PARAM_DEFS = {
                        "timers. This is the PC port's well-known 'ATB speeds up with framerate' "
                        "quirk: an uncapped/high-FPS setup fills ATB faster in real time. This value "
                        "is only a what-if assumption to turn ticks into seconds."),
-    "target_resistance": ("Target status resistance", 0, 0, 100,
+    "target_resistance": ("Target status resistance", 100, 0, 255,
                        "The target's per-status mental resistance (a savemap/character stat, not "
-                       "in kernel.bin) - subtracted from the hit chance. 100 = fully immune to that "
-                       "specific status regardless of accuracy (Battle_ApplyStatusWithResistRoll "
-                       "@0x48f9f0). Default 0 = no resistance."),
+                       "in kernel.bin) - subtracted from the hit chance.\n"
+                       "100 IS THE NEUTRAL BASELINE, NOT ZERO. setBattleSlotData @0x48b310 fills "
+                       "all 40 mental-resistance bytes with 100 (mov eax, 64646464h / mov ecx, 0Ah "
+                       "/ rep stosd) before overwriting individual statuses from the character's "
+                       "ST-Def junctions or the monster's .dat. A resistance of 0 never occurs in a "
+                       "real battle, so assuming 0 overstates every status chance by ~100 points - "
+                       "for a typical enemy status attack that is the difference between ~40% and a "
+                       "guaranteed hit.\n"
+                       ">= 200 is full immunity to that status (Battle_ApplyStatusWithResistRoll "
+                       "@0x48f9f0, cmp cl, 0C8h), EXCEPT against accuracy 255, which skips the "
+                       "resistance check altogether."),
     "gf_level":       ("GF level", 100, 1, 100,
                        "The GF's level (1-100), at which to evaluate its HP / next-level EXP / "
                        "damage. GFs level from experience like characters."),
@@ -754,7 +762,7 @@ def _status_accuracy(value, P, entry):
 
     if atk_type in _PHYSICAL_ATTACK_TYPES or atk_type in _MAGICAL_ATTACK_TYPES:
         # Battle_ApplyStatusWithResistRoll @0x48f9f0: fails outright if the target already has
-        # the status, or its per-status mental resistance is >=100. Otherwise:
+        # the status, or its per-status mental resistance is >=200 (0xC8). Otherwise:
         #   chance = accuracy + attackerStat/4 - targetStat/4 - targetResistance
         #   accuracy 255      -> guaranteed (stat/resistance check skipped entirely)
         #   chance <= 0       -> fails
@@ -776,6 +784,16 @@ def _status_accuracy(value, P, entry):
                     "substituted": "accuracy = 255",
                     "result": "Always inflicts (100%) - unless the target already has it, or "
                               "it's immune"}
+        if res >= 200:
+            return {
+                "params": params, "note": note,
+                "symbolic": "resistance >= 200 -> immune, checked before any roll",
+                "substituted": f"resistance {res} >= 200",
+                "result": "Never inflicts (0%) - the target is immune to this status. Only "
+                          "accuracy 255 bypasses it, by skipping the resistance check.",
+                "latex": r"resistance \geq 200 \Rightarrow 0\%",
+                "latex_sub": rf"{res} \geq 200 \Rightarrow \text{{immune}}",
+            }
         chance = value + _idiv(atk_stat, 4) - _idiv(tgt_stat, 4) - res
         if chance <= 0:
             pct = 0.0
