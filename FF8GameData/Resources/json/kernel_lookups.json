@@ -520,35 +520,35 @@
    },
    {
     "value": 1,
-    "name": "Escape Battle (D)"
+    "name": "L2 - cfg \"RotLt\""
    },
    {
     "value": 2,
-    "name": "Escape Battle (F)"
+    "name": "R2 - cfg \"RotRt\""
    },
    {
     "value": 4,
-    "name": "Rotation Left (H)"
+    "name": "L1 - cfg \"Toggle\""
    },
    {
     "value": 8,
-    "name": "Rotation Right (G)"
+    "name": "R1 - cfg \"Trigger\""
    },
    {
     "value": 16,
-    "name": "Cancel (C)"
+    "name": "Triangle - cfg \"Menu\""
    },
    {
     "value": 32,
-    "name": "Menu (V)"
+    "name": "Circle - cfg \"Select\""
    },
    {
     "value": 64,
-    "name": "Select (X)"
+    "name": "Cross - cfg \"Exit\""
    },
    {
     "value": 128,
-    "name": "Card Game (S)"
+    "name": "Square - cfg \"Misc\""
    },
    {
     "value": 4096,
