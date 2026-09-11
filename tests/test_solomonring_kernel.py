@@ -108,3 +108,94 @@ def test_edit_persists(qapp, tmp_path):
     magic_tab2.list_widget.setCurrentRow(1)
     assert magic_tab2._field_widgets["spell_power"][2].value() == 99
     assert magic_tab2._entries[1].get_text(0) == "Fireball"
+
+
+def _duel_button_word(kernel_path, move_id, slot=0):
+    """The raw u16 of one Duel sequence slot, straight out of the file."""
+    kd = json.load(open(pathlib.Path(GAME_DATA_FOLDER) / "Resources" / "json" / "kernel_bin_data.json",
+                        encoding="utf-8"))
+    sec = next(s for s in kd["sections"] if s["id"] == 23)
+    data = pathlib.Path(kernel_path).read_bytes()
+    base = int.from_bytes(data[int(sec["section_offset"], 16):][:4], "little")
+    off = base + sec["sub_section_size"] * move_id + 16 + 2 * slot
+    return int.from_bytes(data[off:off + 2], "little")
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_the_duel_finisher_flag_is_its_own_checkbox(qapp, tmp_path):
+    """Bit 0x100 of Duel sequence button 1 is the "this move ends the Duel" flag, not part of
+    the button: the engine masks the button with 0xF0FF everywhere (BattleMenu_ZellDuel_Update
+    @0x4AF840, BuildZellDuelMenu @0x4B0280) and reads 0x100 off button 1 alone to decide
+    whether the move closes the Duel window. Both must be editable, and neither may disturb
+    the other - before this was split, Different Beat's 0x0110 showed as a raw number."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    different_beat, punch_rush = 8, 0
+    assert _duel_button_word(work, different_beat) == 0x0110
+    assert _duel_button_word(work, punch_rush) == 0x0020
+
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    duel = widget._section_tabs[23]
+
+    # Different Beat reads as the button it really is, plus a ticked finisher box.
+    duel.list_widget.setCurrentRow(different_beat)
+    button = duel._field_widgets["button_1"][2]
+    kind, _, finisher = duel._field_widgets["duel_is_finisher"]
+    # A single bit renders as a plain labelled checkbox - not a flags group box.
+    assert kind == "bool"
+    assert button.currentData() == 0x0010
+    assert "raw" not in button.currentText().lower()
+    assert finisher.isChecked()
+
+    # Untick it here, and tick it on a move that is not a finisher.
+    finisher.setChecked(False)
+    duel.list_widget.setCurrentRow(punch_rush)          # commits Different Beat
+    assert duel._field_widgets["button_1"][2].currentData() == 0x0020
+    assert not duel._field_widgets["duel_is_finisher"][2].isChecked()
+    duel._field_widgets["duel_is_finisher"][2].setChecked(True)
+    widget._save_kernel()
+
+    # The flag moved; neither button did.
+    assert _duel_button_word(work, different_beat) == 0x0010
+    assert _duel_button_word(work, punch_rush) == 0x0120
+
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    duel2 = reloaded._section_tabs[23]
+    duel2.list_widget.setCurrentRow(punch_rush)
+    assert duel2._field_widgets["button_1"][2].currentData() == 0x0020
+    assert duel2._field_widgets["duel_is_finisher"][2].isChecked()
+    duel2.list_widget.setCurrentRow(different_beat)
+    assert duel2._field_widgets["button_1"][2].currentData() == 0x0010
+    assert not duel2._field_widgets["duel_is_finisher"][2].isChecked()
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_browsing_entries_does_not_mark_the_file_dirty(qapp, tmp_path):
+    """Clicking through the entry list is navigation, not editing: the window title must not
+    gain its unsaved-changes "*". DirtyState uses user-only signals where Qt has one, but a
+    QSpinBox's valueChanged fires on setValue too, so repopulating the form for the newly
+    selected entry used to look exactly like the user typing in every numeric field."""
+    from Common.dirtytracking import install_dirty_tracking
+
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    state = install_dirty_tracking(widget)
+    state.clear()
+
+    # Battle items is where this was reported, but it is not special - walk every tab.
+    for section_id, tab in widget._section_tabs.items():
+        for row in range(min(tab.list_widget.count(), 8)):
+            tab.list_widget.setCurrentRow(row)
+        assert not state.dirty, f"selecting an entry in section {section_id} marked the file dirty"
+
+    # The tracking itself is still live: an actual field change does mark.
+    items = widget._section_tabs[8]
+    items.list_widget.setCurrentRow(1)
+    kind, _field, spin = items._field_widgets["attack_power"]
+    assert kind == "int"
+    spin.setValue(spin.value() + 1)
+    assert state.dirty

@@ -4268,6 +4268,19 @@
     "lookup": "duel_button",
     "label": "Sequence button 1",
     "group": "Data",
+    "subgroup": "Sequence buttons",
+    "mask": 61695,
+    "help": "One input of Zell's Duel sequence. The stored word is masked with 0xF0FF before the engine uses it, so bits 8-11 are NOT part of the button: BattleMenu_ZellDuel_Update (0x4AF840) compares the recorded input against (stored & 0xF0FF), and BuildZellDuelMenu (0x4B0280) picks the on-screen icon from the index of the lowest set bit of (stored & 0xF0FF). Bits 0-7 are the logical action bits the pad layer emits (read_pad_pressed_raw, truncated to its low byte - so the same remappable actions the Controls menu configures), bits 12-15 are the D-pad. In vanilla every slot holds exactly one bit after masking, so this is a single choice and not a combination - though the matcher compares the whole masked word, so a direction+button combo would work if the pad could ever emit both in one poll.\n0xFFFF marks an unused slot. The matcher counts a move's inputs by walking BACK from button 5 while the slot reads 0xFFFF, so the used slots must be packed from button 1 with no gap in the middle."
+   },
+   {
+    "name": "duel_is_finisher",
+    "offset": 16,
+    "size": 2,
+    "mask": 256,
+    "bool": true,
+    "label": "Ends the Duel",
+    "help": "Bit 0x100 of Sequence button 1 - not part of the button. BuildZellDuelMenu (0x4B0280) reads it from button 1 ONLY (`v8 = *SequenceButton1 & 0x100`) and turns it into row flag 0x40; BattleMenu_ZellDuel_Update then picks state 10 instead of state 8 when that flag is set, which closes the Duel window (BattleUI_CloseWindow(6)) instead of returning to the input loop. So: ticking this makes the move END the limit break.\nVanilla sets it on exactly the four 5-input moves - Burning Rave (0x4100), Meteor Barret (0x1100), Different Beat (0x0110) and My Final Heaven (0x1100).\nNote it reads as ticked on an unused (0xFFFF) button-1 slot, since 0xFFFF carries every bit; that combination does not occur in vanilla. Bits 0x0200/0x0400/0x0800, and bits 8-11 of buttons 2-5, are masked off everywhere and read by nothing.",
+    "group": "Data",
     "subgroup": "Sequence buttons"
    },
    {
@@ -4277,7 +4290,9 @@
     "lookup": "duel_button",
     "label": "Sequence button 2",
     "group": "Data",
-    "subgroup": "Sequence buttons"
+    "subgroup": "Sequence buttons",
+    "mask": 61695,
+    "help": "One input of Zell's Duel sequence. The stored word is masked with 0xF0FF before the engine uses it, so bits 8-11 are NOT part of the button: BattleMenu_ZellDuel_Update (0x4AF840) compares the recorded input against (stored & 0xF0FF), and BuildZellDuelMenu (0x4B0280) picks the on-screen icon from the index of the lowest set bit of (stored & 0xF0FF). Bits 0-7 are the logical action bits the pad layer emits (read_pad_pressed_raw, truncated to its low byte - so the same remappable actions the Controls menu configures), bits 12-15 are the D-pad. In vanilla every slot holds exactly one bit after masking, so this is a single choice and not a combination - though the matcher compares the whole masked word, so a direction+button combo would work if the pad could ever emit both in one poll.\n0xFFFF marks an unused slot. The matcher counts a move's inputs by walking BACK from button 5 while the slot reads 0xFFFF, so the used slots must be packed from button 1 with no gap in the middle."
    },
    {
     "name": "button_3",
@@ -4286,7 +4301,9 @@
     "lookup": "duel_button",
     "label": "Sequence button 3",
     "group": "Data",
-    "subgroup": "Sequence buttons"
+    "subgroup": "Sequence buttons",
+    "mask": 61695,
+    "help": "One input of Zell's Duel sequence. The stored word is masked with 0xF0FF before the engine uses it, so bits 8-11 are NOT part of the button: BattleMenu_ZellDuel_Update (0x4AF840) compares the recorded input against (stored & 0xF0FF), and BuildZellDuelMenu (0x4B0280) picks the on-screen icon from the index of the lowest set bit of (stored & 0xF0FF). Bits 0-7 are the logical action bits the pad layer emits (read_pad_pressed_raw, truncated to its low byte - so the same remappable actions the Controls menu configures), bits 12-15 are the D-pad. In vanilla every slot holds exactly one bit after masking, so this is a single choice and not a combination - though the matcher compares the whole masked word, so a direction+button combo would work if the pad could ever emit both in one poll.\n0xFFFF marks an unused slot. The matcher counts a move's inputs by walking BACK from button 5 while the slot reads 0xFFFF, so the used slots must be packed from button 1 with no gap in the middle."
    },
    {
     "name": "button_4",
@@ -4295,7 +4312,9 @@
     "lookup": "duel_button",
     "label": "Sequence button 4",
     "group": "Data",
-    "subgroup": "Sequence buttons"
+    "subgroup": "Sequence buttons",
+    "mask": 61695,
+    "help": "One input of Zell's Duel sequence. The stored word is masked with 0xF0FF before the engine uses it, so bits 8-11 are NOT part of the button: BattleMenu_ZellDuel_Update (0x4AF840) compares the recorded input against (stored & 0xF0FF), and BuildZellDuelMenu (0x4B0280) picks the on-screen icon from the index of the lowest set bit of (stored & 0xF0FF). Bits 0-7 are the logical action bits the pad layer emits (read_pad_pressed_raw, truncated to its low byte - so the same remappable actions the Controls menu configures), bits 12-15 are the D-pad. In vanilla every slot holds exactly one bit after masking, so this is a single choice and not a combination - though the matcher compares the whole masked word, so a direction+button combo would work if the pad could ever emit both in one poll.\n0xFFFF marks an unused slot. The matcher counts a move's inputs by walking BACK from button 5 while the slot reads 0xFFFF, so the used slots must be packed from button 1 with no gap in the middle."
    },
    {
     "name": "button_5",
@@ -4304,7 +4323,9 @@
     "lookup": "duel_button",
     "label": "Sequence button 5",
     "group": "Data",
-    "subgroup": "Sequence buttons"
+    "subgroup": "Sequence buttons",
+    "mask": 61695,
+    "help": "One input of Zell's Duel sequence. The stored word is masked with 0xF0FF before the engine uses it, so bits 8-11 are NOT part of the button: BattleMenu_ZellDuel_Update (0x4AF840) compares the recorded input against (stored & 0xF0FF), and BuildZellDuelMenu (0x4B0280) picks the on-screen icon from the index of the lowest set bit of (stored & 0xF0FF). Bits 0-7 are the logical action bits the pad layer emits (read_pad_pressed_raw, truncated to its low byte - so the same remappable actions the Controls menu configures), bits 12-15 are the D-pad. In vanilla every slot holds exactly one bit after masking, so this is a single choice and not a combination - though the matcher compares the whole masked word, so a direction+button combo would work if the pad could ever emit both in one poll.\n0xFFFF marks an unused slot. The matcher counts a move's inputs by walking BACK from button 5 while the slot reads 0xFFFF, so the used slots must be packed from button 1 with no gap in the middle."
    },
    {
     "name": "status_1",

@@ -1344,10 +1344,55 @@ _ATTACK_BITS_HELP_ITEM = ("Attack behaviour flags (upper 6 bits; the low 2 are t
                           "target selection; vanilla sets 0x20 on all 32 real items, so only the "
                           "blank entry 0 is greyed. 0x08 Break Damage Limit and 0x10 Reflectable "
                           "behave as elsewhere; 0x04 and 0x40 have NO reader anywhere.")
+# Zell's Duel sequence words are NOT a plain button id: the engine masks them with 0xF0FF
+# everywhere it uses them, and bit 0x100 of button 1 is a separate "this move ends the Duel"
+# flag. Without the mask the three vanilla entries that carry that bit (0x0110, 0x1100,
+# 0x4100) match no enum value and fall through to a raw number in the UI.
+_DUEL_BUTTON_HELP = (
+    "One input of Zell's Duel sequence. The stored word is masked with 0xF0FF before the "
+    "engine uses it, so bits 8-11 are NOT part of the button: BattleMenu_ZellDuel_Update "
+    "(0x4AF840) compares the recorded input against (stored & 0xF0FF), and BuildZellDuelMenu "
+    "(0x4B0280) picks the on-screen icon from the index of the lowest set bit of "
+    "(stored & 0xF0FF). Bits 0-7 are the logical action bits the pad layer emits "
+    "(read_pad_pressed_raw, truncated to its low byte - so the same remappable actions the "
+    "Controls menu configures), bits 12-15 are the D-pad. In vanilla every slot holds exactly "
+    "one bit after masking, so this is a single choice and not a combination - though the "
+    "matcher compares the whole masked word, so a direction+button combo would work if the "
+    "pad could ever emit both in one poll.\n"
+    "0xFFFF marks an unused slot. The matcher counts a move's inputs by walking BACK from "
+    "button 5 while the slot reads 0xFFFF, so the used slots must be packed from button 1 "
+    "with no gap in the middle.")
+_DUEL_FINISHER_HELP = (
+    "Bit 0x100 of Sequence button 1 - not part of the button. BuildZellDuelMenu (0x4B0280) "
+    "reads it from button 1 ONLY (`v8 = *SequenceButton1 & 0x100`) and turns it into row flag "
+    "0x40; BattleMenu_ZellDuel_Update then picks state 10 instead of state 8 when that flag is "
+    "set, which closes the Duel window (BattleUI_CloseWindow(6)) instead of returning to the "
+    "input loop. So: ticking this makes the move END the limit break.\n"
+    "Vanilla sets it on exactly the four 5-input moves - Burning Rave (0x4100), Meteor Barret "
+    "(0x1100), Different Beat (0x0110) and My Final Heaven (0x1100).\n"
+    "Note it reads as ticked on an unused (0xFFFF) button-1 slot, since 0xFFFF carries every "
+    "bit; that combination does not occur in vanilla. Bits 0x0200/0x0400/0x0800, and bits 8-11 "
+    "of buttons 2-5, are masked off everywhere and read by nothing.")
+
 for cfg in sections.values():
     new_fields = []
     for f in cfg["fields"]:
-        if f.get("lookup") == "target_info":
+        if f.get("lookup") == "duel_button":
+            btn = dict(f)
+            btn["mask"] = 0xF0FF
+            btn["help"] = _DUEL_BUTTON_HELP
+            new_fields.append(btn)
+            if f["name"] == "button_1":
+                # A plain masked checkbox, not a one-entry flags lookup: a single bit does
+                # not warrant a titled group box around itself.
+                ends = {"name": "duel_is_finisher", "offset": f["offset"], "size": f["size"],
+                        "mask": 0x0100, "bool": True,
+                        "label": "Ends the Duel", "help": _DUEL_FINISHER_HELP}
+                for key in ("group", "row", "subgroup"):
+                    if key in f:
+                        ends[key] = f[key]
+                new_fields.append(ends)
+        elif f.get("lookup") == "target_info":
             # Bits 2-3 are a 2-bit field (see _TARGET_SIDE_HELP), so they get a combo of
             # their own rather than two checkboxes that look like independent opposites.
             side = {"name": "target_side", "offset": f["offset"], "size": f["size"],

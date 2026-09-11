@@ -126,7 +126,10 @@ class KernelSectionTab(QWidget):
         mask = field.get("mask")
         meta = f"Offset 0x{offset:02X} · {size} byte{'s' if size > 1 else ''}"
         if field.get("bool"):
-            meta += " · boolean (0/1 - the engine only ever checks this byte for zero/nonzero)"
+            if mask is not None:
+                meta += f" · single bit (mask 0x{mask:X} of the word at this offset)"
+            else:
+                meta += " · boolean (0/1 - the engine only ever checks this byte for zero/nonzero)"
         else:
             max_value = mask if mask is not None else (1 << (8 * size)) - 1
             meta += f" · range 0–{max_value}"
@@ -555,19 +558,25 @@ class KernelSectionTab(QWidget):
                 # pulls one out of the grid to sit above the widget it greys out.
                 dep = dep_field.get("enabled_unless_bit")
                 cb = coupled_checks.get(dep["mask"]) if dep else None
-                sub_box = QGroupBox()
-                sub_vbox = QVBoxLayout(sub_box)
-                sub_vbox.setSpacing(4)
-                if cb:
-                    sub_vbox.addWidget(cb)
                 lbl, wdg = self._labeled_widget(dep_field)
                 row = QHBoxLayout()
                 row.setSpacing(6)
                 row.addWidget(lbl)
                 row.addWidget(wdg)
                 row.addStretch(1)
-                sub_vbox.addLayout(row)
-                outer.addWidget(sub_box)
+                if cb:
+                    # The gating checkbox and the widget it greys out read as one unit, so
+                    # they keep a box around the pair.
+                    sub_box = QGroupBox()
+                    sub_vbox = QVBoxLayout(sub_box)
+                    sub_vbox.setSpacing(4)
+                    sub_vbox.addWidget(cb)
+                    sub_vbox.addLayout(row)
+                    outer.addWidget(sub_box)
+                else:
+                    # A plain embedded field is one labelled control; a box of its own around
+                    # it is pure chrome (Cursor sides / Target scope inside Target info).
+                    outer.addLayout(row)
                 if cb:
                     def _sync(_=None, widget=wdg, box=cb):
                         widget.setEnabled(self._unlock_all or not box.isChecked())
@@ -740,29 +749,54 @@ class KernelSectionTab(QWidget):
             edit.setEnabled(entry.has_text(i))
             edit.setText(entry.get_text(i))
             edit.blockSignals(False)
+        # Signals stay blocked for the whole repopulation: merely SELECTING another entry must
+        # not look like an edit. DirtyState listens to user-only signals where Qt offers one
+        # (textEdited / activated / clicked), but a QSpinBox has none - its valueChanged fires
+        # on setValue too - so without this, picking a different entry whose numbers differ
+        # marked the file dirty and put a "*" in the title without anything being changed.
         for name, (kind, field, widget) in self._field_widgets.items():
             value = entry.get(name)
-            if kind == "int":
-                widget.setValue(value)
-            elif kind == "hex":
-                widget.setText(f"0x{value:X}")
-            elif kind == "enum":
-                pos = widget.findData(value)
-                if pos < 0:
-                    widget.addItem(f"0x{value:X} (raw)", value)
+            blocked = [(w, w.blockSignals(True)) for w in self._concrete_widgets(kind, widget)]
+            try:
+                if kind == "int":
+                    widget.setValue(value)
+                elif kind == "hex":
+                    widget.setText(f"0x{value:X}")
+                elif kind == "enum":
                     pos = widget.findData(value)
-                widget.setCurrentIndex(pos)
-            elif kind == "flags":
-                for mask, cb in widget:
-                    cb.setChecked(bool(value & mask))
-            elif kind == "bool":
-                widget.setChecked(bool(value))
-            elif kind == "camera":
-                widget._cam_unused.setChecked(value == 0xFF)
-                widget._cam_force.setChecked(bool(value & 0x80))
-                widget._cam_index.setValue(value & 0x7F)
+                    if pos < 0:
+                        widget.addItem(f"0x{value:X} (raw)", value)
+                        pos = widget.findData(value)
+                    widget.setCurrentIndex(pos)
+                elif kind == "flags":
+                    for mask, cb in widget:
+                        cb.setChecked(bool(value & mask))
+                elif kind == "bool":
+                    widget.setChecked(bool(value))
+                elif kind == "camera":
+                    widget._cam_unused.setChecked(value == 0xFF)
+                    widget._cam_force.setChecked(bool(value & 0x80))
+                    widget._cam_index.setValue(value & 0x7F)
+            finally:
+                for blocked_widget, was_blocked in blocked:
+                    blocked_widget.blockSignals(was_blocked)
+            if kind == "camera":
                 widget._cam_sync()
+        # The grey/ungrey rules normally ride on those same signals, so re-apply them by hand
+        # now that they have been suppressed.
+        for sync in self._enable_syncs:
+            sync()
         self._refresh_menu_refine_display(entry)
+
+    @staticmethod
+    def _concrete_widgets(kind, widget):
+        """The real QWidgets behind a field descriptor - "flags" holds a list of (mask,
+        checkbox) pairs and "camera" a box with three named children, not a single widget."""
+        if kind == "flags":
+            return [cb for _mask, cb in widget]
+        if kind == "camera":
+            return [widget._cam_unused, widget._cam_force, widget._cam_index]
+        return [widget]
 
     def _load_menu_refine_reference(self):
         mngrphd_path, _ = QFileDialog.getOpenFileName(
@@ -820,7 +854,10 @@ class KernelSectionTab(QWidget):
                         value |= mask
                 entry.set(name, value)
             elif kind == "bool":
-                entry.set(name, 1 if widget.isChecked() else 0)
+                # A masked bool owns one bit of a wider word (e.g. the Duel finisher flag,
+                # bit 0x100 of sequence button 1), so ticking it writes that bit, not 1.
+                on_value = field.get("mask") or 1
+                entry.set(name, on_value if widget.isChecked() else 0)
             elif kind == "camera":
                 if widget._cam_unused.isChecked():
                     entry.set(name, 0xFF)

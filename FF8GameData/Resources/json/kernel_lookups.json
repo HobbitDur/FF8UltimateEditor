@@ -515,8 +515,8 @@
   "type": "enum",
   "entries": [
    {
-    "value": 65535,
-    "name": "None"
+    "value": 61695,
+    "name": "None (unused slot)"
    },
    {
     "value": 1,
