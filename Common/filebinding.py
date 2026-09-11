@@ -47,6 +47,12 @@ class FileBinding(QObject):
         """The path shared for this FF8 file across the tools ("" if none is open)."""
         return self.registry.get_path(self.file_name)
 
+    def forget_loaded_file(self):
+        """Drop the memory of what this binding last loaded, without touching the registry or
+        the tool's data. The next path offered for this file - even the same one - counts as a
+        fresh load rather than a redundant one."""
+        self._loaded_path = ""
+
     def load_opened_file(self):
         """Load the bound file if another tool (or this one) already opened it.
 
@@ -69,7 +75,7 @@ class FileBinding(QObject):
 
         Used both by open_dialog and by the toolbar when it routes a multi-file pick to the
         matching binding."""
-        self._loaded_path = ""  # an explicit Import always (re)loads, even the same path
+        self.forget_loaded_file()  # an explicit Import always (re)loads, even the same path
         self.registry.open_file(self.file_name, path)  # -> _on_registry_changed, here and elsewhere
 
     def save(self):

@@ -112,28 +112,51 @@ def test_ifrit_open_save_are_on_the_shared_toolbar(main_window):
     assert tb.save_button.isEnabled() is False   # nothing changed/loaded yet (can_save_folder False)
 
 
-def test_reload_button_reloads_every_opened_file(main_window):
+def test_reload_re_reads_only_the_active_tools_files(main_window):
+    """Reload is scoped to the tool you are looking at: it re-reads that tool's own bindings and
+    leaves a file another tool has open untouched, so reloading here can never discard edits
+    there. (It used to act on the whole registry - this test pinned that older contract.)"""
+    from PyQt6.QtWidgets import QWidget
     from Common.filebinding import FileBinding
     tb = main_window._file_toolbar
-    # The Reload button sits right after Save and acts on the whole registry.
+    # The Reload button sits right after Save.
     widgets = [tb.layout().itemAt(i).widget() for i in range(tb.layout().count())]
     assert widgets.index(tb.reload_button) == widgets.index(tb.save_button) + 1
 
-    # A throwaway binding on a name no real tool uses, so no real loader runs on a fake path.
-    # (Kept in a local so it is not garbage-collected mid-test, which would drop its signals.)
-    reloaded = []
-    probe = FileBinding("zzreload.bin", main_window.file_registry, load_callback=reloaded.append)
-    assert probe.file_name == "zzreload.bin"
+    # Throwaway bindings on names no real tool uses, so no real loader runs on a fake path, and
+    # a stand-in tool that declares one of them as its own. Both are kept in locals so they are
+    # not garbage-collected mid-test, which would drop their signals.
+    mine, theirs = [], []
+    my_binding = FileBinding("zzreload.bin", main_window.file_registry, load_callback=mine.append)
+    their_binding = FileBinding("zzother.bin", main_window.file_registry, load_callback=theirs.append)
+    assert (my_binding.file_name, their_binding.file_name) == ("zzreload.bin", "zzother.bin")
+    active_tool = QWidget()
+    active_tool.file_bindings = lambda: [my_binding]
 
-    tb.reload_button.click()                     # nothing of ours open yet -> no reload
-    assert reloaded == []
+    stack = main_window.tool_stack
+    previous = stack.currentWidget()
+    stack.addWidget(active_tool)
+    try:
+        stack.setCurrentWidget(active_tool)
+        tb._on_tool_changed()
+        assert not tb.reload_button.isEnabled()   # this tool has nothing open yet
+        tb.reload_button.click()
+        assert mine == []
 
-    main_window.file_registry.open_file("zzreload.bin", "some/dir/zzreload.bin")  # first load
-    assert reloaded == ["some/dir/zzreload.bin"]
-    reloaded.clear()
-    assert tb.reload_button.isEnabled()          # something is open now
-    tb.reload_button.click()                     # reload -> re-read the same path from disk
-    assert reloaded == ["some/dir/zzreload.bin"]
+        main_window.file_registry.open_file("zzreload.bin", "some/dir/zzreload.bin")
+        main_window.file_registry.open_file("zzother.bin", "some/dir/zzother.bin")
+        assert mine == ["some/dir/zzreload.bin"] and theirs == ["some/dir/zzother.bin"]
+        mine.clear()
+        theirs.clear()
+
+        assert tb.reload_button.isEnabled()       # this tool has a file open now
+        tb.reload_button.click()
+        assert mine == ["some/dir/zzreload.bin"]  # ours is re-read from disk
+        assert theirs == []                       # the other tool's file is left alone
+    finally:
+        stack.setCurrentWidget(previous)
+        stack.removeWidget(active_tool)
+        tb._on_tool_changed()
 
 
 def test_accepted_file_names_are_the_concrete_ones(main_window):
@@ -286,6 +309,14 @@ def test_seed_drives_two_view_inputs_and_a_main_chr_folder(main_window, monkeypa
         ["chara.one", "field character model (.mch)"]
     assert not hasattr(seed, "open_one_btn") and not hasattr(seed, "save_one_btn")
     assert not hasattr(seed, "file_label")             # the "No file loaded" label is gone
+
+    # "Save is off until something is loaded" is a statement about a fresh tool, so say so
+    # explicitly instead of inheriting whatever ran before: main_window is module-scoped and
+    # shared, another test in this module opens chara.one on the same registry, and pytest.ini
+    # runs with -n auto --dist worksteal, which fixes no order between them.
+    for binding in tb._main_bindings():
+        binding.forget_loaded_file()
+    tb._on_tool_changed()
     assert tb.save_button.isEnabled() is False
 
     # Avoid the real GL viewer path (Ifrit3DWidget.load_file only needs a live 3D backend); only
