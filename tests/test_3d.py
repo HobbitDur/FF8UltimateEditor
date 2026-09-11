@@ -525,3 +525,45 @@ if __name__ == "__main__":
 
 
 
+
+
+# ---------------------------------------------------------------------------
+# Texture coordinates must reach GL unwrapped (c0m032 Wendigo head)
+# ---------------------------------------------------------------------------
+
+def test_texcoords_are_emitted_unwrapped(qapp_for_uv):
+    """A face addressing the second half of a shared VRAM page carries v in 1.0-2.0, and
+    GL_REPEAT resolves that per fragment, after interpolation. The triangle path used to wrap
+    per VERTEX and only above 1.0, so a face spanning v=1.0..1.2 kept 1.0 but turned 1.2 into
+    0.2 - the coordinate then interpolated backwards across the whole texture and the face came
+    out a smear. That is what broke Wendigo's head (v 1.0..1.22 = TIM 1 rows 0-28); the quad
+    path never did it. Emitted coordinates must be exactly the ones supplied."""
+    from unittest.mock import patch
+    from Ifrit.Ifrit3D import ff8openwidget as mod
+
+    gl = mod.FF8OpenGLWidget()
+    gl.set_vertices([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)])
+    supplied = ((0.10, 1.00), (0.90, 1.10), (0.50, 1.22))
+    gl.set_triangles_with_uv([((0, 1, 2), supplied, 0, 0)])
+    gl._tri_cull_mask = None
+
+    recorded = []
+    noop = lambda *a, **k: None
+    with patch.multiple(
+            mod,
+            glEnable=noop, glDisable=noop, glBlendFunc=noop, glAlphaFunc=noop,
+            glColor4f=noop, glPolygonOffset=noop, glBegin=noop, glEnd=noop,
+            glVertex3f=noop,
+            glTexCoord2f=lambda u, v: recorded.append((u, v))):
+        with patch.object(mod.FF8OpenGLWidget, "_bind_texture_for_raw_id", lambda self, r: True):
+            gl._draw_textured_triangles()
+
+    assert len(recorded) == 3
+    for got, want in zip(recorded, supplied):
+        assert got == pytest.approx(want), \
+            f"texcoord altered before reaching GL: {recorded} != {list(supplied)}"
+
+
+@pytest.fixture(scope="module")
+def qapp_for_uv():
+    return QApplication.instance() or QApplication(sys.argv)

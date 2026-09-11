@@ -721,13 +721,16 @@ class FF8OpenGLWidget(QOpenGLWidget):
                 glBegin(GL_TRIANGLES)
                 batch_open = True
             for i in range(3):
-                u, v = uvs[i]
-                # wrap only above 1.0: exactly 1.0 is a texture border, not 0
-                if u > 1.0:
-                    u = u - int(u)
-                if v > 1.0:
-                    v = v - int(v)
-                glTexCoord2f(u, v)
+                # UVs go out UNWRAPPED, exactly as the quad path does. A model whose faces
+                # address the second half of a shared VRAM page carries v in 1.0-2.0 (e.g.
+                # c0m032 Wendigo's head: v 1.0-1.22, TIM 1 rows 0-28), and GL_REPEAT resolves
+                # that per FRAGMENT, after interpolation - which is correct.
+                # Wrapping here instead wrapped per VERTEX, and only above 1.0: a face with one
+                # corner at exactly 1.0 and another at 1.1 kept 1.0 but turned 1.1 into 0.1, so
+                # the coordinate interpolated backwards across the whole texture and the face
+                # came out as a smear. (The "exactly 1.0 is a border" case it guarded needs no
+                # guard: GL_REPEAT maps 1.0 to texel 0 either way.)
+                glTexCoord2f(uvs[i][0], uvs[i][1])
                 glVertex3f(verts[i][0], verts[i][1], verts[i][2])
         if batch_open:
             glEnd()
