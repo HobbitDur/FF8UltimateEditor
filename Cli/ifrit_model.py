@@ -8,6 +8,8 @@ Headless monster editing, same operations as the Ifrit GUI tabs:
   • import-gltf    (.glb mesh → back into a c0m .dat; other sections preserved)
   • export-seq-xml (section 5 animation sequences → XML)
   • import-seq-xml (XML → section 5 of a c0m .dat)
+  • export-sections (.dat → one folder with one file per section)
+  • apply-sections  (section folder → onto a base .dat, sections without a file are kept)
 """
 
 import argparse
@@ -44,16 +46,15 @@ def _load_enemy(dat_path: str):
 
 
 def _collect_dat_files(inputs) -> list:
-    """Expand --input values: each may be a c0mNNN.dat file or a folder of them.
-
-    Folder scans keep only canonical c0mNNN.dat names: the xlsx manager derives
-    the monster id from the filename and chokes on anything else."""
+    """Expand --input values: each may be a c0mNNN.dat file or a folder of them (scanned by the
+    shared list_monster_files, which keeps only canonical c0mNNN.dat names - the xlsx manager
+    derives the monster id from the filename and chokes on anything else)."""
+    from FF8GameData.dat.sectionfiles import list_monster_files
     files = []
     for value in inputs:
         path = pathlib.Path(value)
         if path.is_dir():
-            files.extend(sorted(str(p) for p in path.glob("c0m*.dat")
-                                if re.fullmatch(r"c0m\d{3}\.dat", p.name)))
+            files.extend(str(dat) for dat in list_monster_files(path))
         else:
             files.append(str(path))
     if not files:
@@ -113,24 +114,50 @@ def _cmd_import_gltf(args) -> int:
 
 
 def _cmd_export_seq_xml(args) -> int:
-    from Ifrit.IfritSeq.ifritseqwidget import IfritSeqWidget
+    from FF8GameData.dat.sectionfiles import animseqfile
     _, enemy = _load_enemy(args.input)
-    IfritSeqWidget.create_anim_seq_xml(enemy.seq_animation_data['seq_animation_data'], args.output)
+    animseqfile.write_seq_animation_data(enemy.seq_animation_data['seq_animation_data'], args.output)
     nb = len(enemy.seq_animation_data['seq_animation_data'])
     print(f"[ok] {nb} animation sequences exported to {args.output}")
     return 0
 
 
 def _cmd_import_seq_xml(args) -> int:
-    from Ifrit.IfritSeq.ifritseqwidget import IfritSeqWidget
+    from FF8GameData.dat.sectionfiles import animseqfile
     game_data, enemy = _load_enemy(args.input)
-    seq_data = IfritSeqWidget.create_anim_seq_data_from_xml(args.xml)
+    seq_data = animseqfile.read_seq_animation_data(args.xml)
     if not seq_data:
         print(f"[error] No animation sequences found in {args.xml}", file=sys.stderr)
         return 1
     enemy.seq_animation_data['seq_animation_data'] = seq_data
     enemy.write_data_to_file(game_data, args.output)
     print(f"[ok] {len(seq_data)} animation sequences imported, written to {args.output}")
+    return 0
+
+
+def _section_names(value):
+    from FF8GameData.dat.sectionfiles import parse_section_names
+    return parse_section_names(value)
+
+
+def _cmd_export_sections(args) -> int:
+    from FF8GameData.dat.sectionfiles import SectionTools, export_sections, folder_name_for
+    game_data, enemy = _load_enemy(args.input)
+    reference_enemy = None
+    if args.only_changed_from:
+        _, reference_enemy = _load_enemy(args.only_changed_from)
+    folder = pathlib.Path(args.output) / folder_name_for(args.input)
+    written = export_sections(enemy, folder, SectionTools(game_data), _section_names(args.sections), reference_enemy)
+    print(f"[ok] {len(written)} section file(s) written to {folder}: {', '.join(written)}")
+    return 0
+
+
+def _cmd_apply_sections(args) -> int:
+    from FF8GameData.dat.sectionfiles import SectionTools, apply_sections
+    game_data, enemy = _load_enemy(args.input)
+    applied = apply_sections(enemy, args.folder, SectionTools(game_data), _section_names(args.sections))
+    enemy.write_data_to_file(game_data, args.output)
+    print(f"[ok] {len(applied)} section file(s) applied ({', '.join(applied)}), written to {args.output}")
     return 0
 
 
@@ -143,7 +170,7 @@ class IfritModelCliTool(BaseCliTool):
 
     @property
     def description(self) -> str:
-        return "Monster editor: xlsx stats export/import, glTF mesh export/import, seq XML"
+        return "Monster editor: xlsx stats export/import, glTF mesh export/import, seq XML, section folders"
 
     def build_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
@@ -188,6 +215,26 @@ class IfritModelCliTool(BaseCliTool):
         p_seq_in.add_argument("--xml", "-x", required=True, help="XML produced by export-seq-xml")
         p_seq_in.add_argument("--output", "-o", required=True, help="Path of the .dat to write (can equal --input)")
         p_seq_in.set_defaults(func=_cmd_import_seq_xml)
+
+        from FF8GameData.dat.sectionfiles import SECTION_FILE_NAMES
+        sections_help = f"Comma separated section files to use (default: all). Names: {', '.join(SECTION_FILE_NAMES)}"
+
+        p_sections_out = sub.add_parser("export-sections",
+                                        help="Export every section of a .dat as its own file, into <output>/<dat name>/")
+        p_sections_out.add_argument("--input", "-i", required=True, help="Path to the .dat")
+        p_sections_out.add_argument("--output", "-o", required=True, help="Folder receiving the <dat name> section folder")
+        p_sections_out.add_argument("--sections", help=sections_help)
+        p_sections_out.add_argument("--only-changed-from",
+                                    help="A reference .dat (typically vanilla): only write the sections that differ from it")
+        p_sections_out.set_defaults(func=_cmd_export_sections)
+
+        p_sections_in = sub.add_parser("apply-sections",
+                                       help="Apply a section folder onto a .dat (sections without a file are kept)")
+        p_sections_in.add_argument("--input", "-i", required=True, help="Path to the base .dat (e.g. vanilla)")
+        p_sections_in.add_argument("--folder", "-f", required=True, help="Section folder (e.g. sections/c0m071)")
+        p_sections_in.add_argument("--output", "-o", required=True, help="Path of the .dat to write (can equal --input)")
+        p_sections_in.add_argument("--sections", help=sections_help)
+        p_sections_in.set_defaults(func=_cmd_apply_sections)
 
         return parser
 

@@ -20,6 +20,10 @@ All-in-one editor for monster and summon battle files, organized as tabs sharing
 - **3D** — views the monster's 3D model and animations (mesh/wireframe, playback speed, bone list), with glTF export.
 - **Texture** / **Dynamic Texture** — edits the monster's textures and palette-animation (VRAM) effects.
 - **Xlsx** — exports/imports monster stats to/from an Excel spreadsheet for easy bulk editing.
+- **Extract sections… / Apply sections…** — writes every section of the open file as its own editable file
+  (`ai.md`, `info_stat.json`, `anim_seq.xml`, `camera.xml`, `texture_00.tim`…) in a folder named after it, and applies
+  section files back onto a file — you pick the files you want (selecting all of a folder works), the other sections stay
+  as they are. That is how a mod keeps its changes next to the game files and re-applies them to a fresh `.dat`.
 
 <img src="Resources/screenshots/ifrit_3d.png" width="800"><br>
 <img src="Resources/screenshots/ifrit_texture.png" width="800"><br>
@@ -154,7 +158,7 @@ reference data load it automatically from `FF8GameData/`.
 | Tool | Edits | Commands |
 | --- | --- | --- |
 | `shumi-translator` | all in-game text (`kernel.bin`, `mngrp.bin`, `namedic.bin`, field/world/battle, exe) | `export-csv`, `import-csv`, `export-all`, `export-all-{field,battle,kernel,namedic,mngrp,exe,world}`, `compress`, `uncompress` |
-| `ifrit` | monster/summon `c0m*.dat` (stats, model, animation seq) | `export-xlsx`, `import-xlsx`, `export-gltf`, `import-gltf`, `export-seq-xml`, `import-seq-xml` |
+| `ifrit` | monster/summon `c0m*.dat` (stats, model, animation seq) | `export-xlsx`, `import-xlsx`, `export-gltf`, `import-gltf`, `export-seq-xml`, `import-seq-xml`, `export-sections`, `apply-sections` |
 | `ifrit-ai` | monster AI scripts in `c0m*.dat` | `export-md`, `compile-md` |
 | `solomon-ring` | `kernel.bin` (all data sections, field-level) | `list-sections`, `list-fields`, `get`, `set`, `export-csv`, `import-csv` |
 | `tonberry-shop` | shop inventories (`shop.bin`) | `export-csv`, `import-csv` |

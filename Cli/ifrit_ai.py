@@ -11,12 +11,9 @@ Mirrors the exact load/compile sequence of the IfritAI GUI widget
 
 import argparse
 import pathlib
-import re
 import sys
 
 from .base import BaseCliTool
-
-AI_SECTION_TITLES = ["# Init code", "# Enemy turn", "# Counter-attack", "# Death", "# Before dying or taking a hit"]
 
 
 def _load_game_data():
@@ -49,32 +46,20 @@ def _load_enemy(dat_path: str):
 
 def _ai_data_to_md(game_data, ai_data, decompiler) -> str:
     """Same output as IfritAiWidget.create_md_from_ai_data."""
-    from bs4 import BeautifulSoup
-
-    code_text = ""
-    for index_section, section in enumerate(ai_data):
-        if index_section == len(ai_data) - 1:  # last section is the empty end marker
-            break
-        code_text += AI_SECTION_TITLES[index_section] + "\n```\n"
-        code_text += decompiler.decompile_from_command_list(section['command'])
-        code_text += "```\n\n"
-    soup = BeautifulSoup(code_text, "html.parser")
-    for br in soup.find_all("br"):
-        br.replace_with("\n")
-    return soup.get_text().replace("\xa0", " ")
+    from FF8GameData.dat.sectionfiles import aifile
+    return aifile.ai_data_to_md(ai_data, decompiler)
 
 
 def _md_to_ai_data(md_file: str, enemy, compiler, decompiler):
     """Same behaviour as IfritAiWidget.create_ai_data_from_md."""
+    from FF8GameData.dat.sectionfiles import aifile
     content = pathlib.Path(md_file).read_text(encoding='utf-8')
-    code_blocks = re.findall(r'```.*?\n(.*?)\n```', content, re.DOTALL)
+    code_blocks = aifile.md_to_code_blocks(content)
     if not code_blocks:
         print(f"[error] No ``` code blocks found in {md_file}", file=sys.stderr)
         sys.exit(1)
     for index_code, code in enumerate(code_blocks):
-        bytecode = compiler.compile(code)
-        command_list = decompiler.decompile_bytecode_to_command_list(bytecode)
-        enemy.battle_script_data['ai_data'][index_code] = {"bytecode": bytecode, "code": code, "command": command_list}
+        enemy.battle_script_data['ai_data'][index_code] = aifile.compile_code(code, compiler, decompiler)
 
 
 class IfritAiCliTool(BaseCliTool):
