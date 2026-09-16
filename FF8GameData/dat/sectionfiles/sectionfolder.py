@@ -2,11 +2,15 @@
 
     c0m071/
       skeleton.bin  geometry.bin  animation.bin  dynamic_texture.xml  anim_seq.xml  camera.xml
-      info_stat.json  battle_text.txt  ai.md  sound.bin  sound_bank.bin
+      battle_text.txt  ai.md  sound.bin  sound_bank.bin
       texture_00.tim  texture_01.tim ...
 
 Every section is a file of the folder, textures included (one per texture) - so selecting all the
 files of a folder selects every section, with nothing hidden in a sub-folder.
+
+The stats (the info/stat section) are deliberately NOT here: they are edited in the xlsx, which is
+their single source of truth (Ifrit's Stat > Excel tab, the ifrit export-xlsx / import-xlsx
+commands). A second file holding the same values would only be a way for the two to disagree.
 
 Applying replaces each section that has a file and keeps every other section of the .dat as it
 is: a folder can hold only the sections a mod changes. The same folder can be applied onto a fresh
@@ -15,14 +19,14 @@ vanilla .dat to rebuild the modded one.
 Two kinds of section file:
 - "bytes" files convert to and from the exact section bytes (raw .bin, TIM textures, camera,
   dynamic texture). Applying them swaps the section bytes in (MonsterAnalyser.replace_sections_bytes).
-- "data" files read and write the parsed data (sequences, stats, battle texts, AI).
+- "data" files read and write the parsed data (sequences, battle texts, AI).
 """
 import pathlib
 from dataclasses import dataclass
 from typing import Callable, Optional
 
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
-from . import rawfile, texturefile, camerafile, dynamictexturefile, animseqfile, infostatfile, battletextfile, aifile
+from . import rawfile, texturefile, camerafile, dynamictexturefile, animseqfile, battletextfile, aifile
 from .common import SectionFileError
 
 
@@ -74,7 +78,6 @@ SECTION_FILES = [
                 texturefile.write_section_bytes, texturefile.read_section_bytes,
                 file_pattern=texturefile.FILE_PATTERN),
     SectionFile("anim_seq", "anim_seq.xml", "anim_seq", export_data=animseqfile.export_section, apply_data=animseqfile.apply_section),
-    SectionFile("info_stat", "info_stat.json", "info_stat", export_data=infostatfile.export_section, apply_data=infostatfile.apply_section),
     SectionFile("battle_text", "battle_text.txt", "battle_script", export_data=battletextfile.export_section, apply_data=battletextfile.apply_section),
     SectionFile("ai", "ai.md", "battle_script", export_data=aifile.export_section, apply_data=aifile.apply_section),
 ]

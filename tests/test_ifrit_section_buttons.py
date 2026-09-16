@@ -80,7 +80,7 @@ def test_extract_writes_one_file_per_section_in_a_folder_named_after_the_dat(edi
     assert folder.name == "c0m071"
     written = sorted(path.name for path in folder.iterdir())
     assert set(written) >= {"skeleton.bin", "geometry.bin", "animation.bin", "dynamic_texture.xml",
-                            "anim_seq.xml", "camera.xml", "info_stat.json", "battle_text.txt",
+                            "anim_seq.xml", "camera.xml", "battle_text.txt",
                             "ai.md", "sound.bin", "sound_bank.bin", "texture_00.tim"}
     # Every section is a FILE of the folder, textures included (nothing in a sub-folder), so
     # selecting everything in it selects every section in one go
@@ -95,11 +95,11 @@ def test_apply_takes_only_the_ticked_sections(editor, monkeypatch, tmp_path):
     other_folder = tmp_path / "other" / "c0m072"
     editor.load_file(str(BATTLE_DIR / FIRST))
 
-    before = {name: _section_bytes(editor, name) for name in ("camera", "info_stat", "anim_seq")}
+    before = {name: _section_bytes(editor, name) for name in ("camera", "dynamic_texture", "anim_seq")}
     _apply_files(editor, monkeypatch, [other_folder / "camera.xml"])
-    after = {name: _section_bytes(editor, name) for name in ("camera", "info_stat", "anim_seq")}
+    after = {name: _section_bytes(editor, name) for name in ("camera", "dynamic_texture", "anim_seq")}
     assert after["camera"] != before["camera"], "the chosen file must be applied"
-    assert after["info_stat"] == before["info_stat"], "a file not chosen must be left alone"
+    assert after["dynamic_texture"] == before["dynamic_texture"], "a file not chosen must be left alone"
     assert after["anim_seq"] == before["anim_seq"]
 
 
@@ -137,16 +137,16 @@ def test_several_files_at_once_and_a_tim_takes_the_whole_texture_folder(editor, 
     other_folder = tmp_path / "other" / "c0m072"
     editor.load_file(str(BATTLE_DIR / FIRST))
 
-    before = {name: _section_bytes(editor, name) for name in ("camera", "anim_seq", "texture", "info_stat")}
+    before = {name: _section_bytes(editor, name) for name in ("camera", "anim_seq", "texture", "dynamic_texture")}
     _apply_files(editor, monkeypatch, [other_folder / "camera.xml",
                                        other_folder / "anim_seq.xml",
                                        other_folder / "texture_00.tim"])
-    after = {name: _section_bytes(editor, name) for name in ("camera", "anim_seq", "texture", "info_stat")}
+    after = {name: _section_bytes(editor, name) for name in ("camera", "anim_seq", "texture", "dynamic_texture")}
     assert after["camera"] != before["camera"]
     assert after["anim_seq"] != before["anim_seq"]
     # One texture file picked = the whole texture set of that folder
     assert after["texture"] == _other_texture_section(editor, other_folder)
-    assert after["info_stat"] == before["info_stat"], "sections whose file was not picked stay"
+    assert after["dynamic_texture"] == before["dynamic_texture"], "sections whose file was not picked stay"
 
 
 @NEEDS_FILES

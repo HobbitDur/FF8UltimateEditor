@@ -608,8 +608,9 @@ class IfritMonsterWidget(QWidget):
         # Section files: each .dat section as its own editable file, one folder per .dat.
         self._extract_sections_btn = QPushButton("Extract sections...")
         self._extract_sections_btn.setToolTip("Write every section of the open file as its own file\n"
-                                              "(ai.md, info_stat.json, camera.xml, texture/00.tim...)\n"
-                                              "in a folder named after it.")
+                                              "(ai.md, camera.xml, anim_seq.xml, texture_00.tim...)\n"
+                                              "in a folder named after it. The stats are not among\n"
+                                              "them: they are edited in the xlsx (Stat > Excel).")
         self._extract_sections_btn.clicked.connect(self._extract_sections)
 
         self._apply_sections_btn = QPushButton("Apply sections...")

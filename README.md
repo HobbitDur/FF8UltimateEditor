@@ -21,9 +21,10 @@ All-in-one editor for monster and summon battle files, organized as tabs sharing
 - **Texture** / **Dynamic Texture** — edits the monster's textures and palette-animation (VRAM) effects.
 - **Xlsx** — exports/imports monster stats to/from an Excel spreadsheet for easy bulk editing.
 - **Extract sections… / Apply sections…** — writes every section of the open file as its own editable file
-  (`ai.md`, `info_stat.json`, `anim_seq.xml`, `camera.xml`, `texture_00.tim`…) in a folder named after it, and applies
+  (`ai.md`, `anim_seq.xml`, `camera.xml`, `texture_00.tim`…) in a folder named after it, and applies
   section files back onto a file — you pick the files you want (selecting all of a folder works), the other sections stay
   as they are. That is how a mod keeps its changes next to the game files and re-applies them to a fresh `.dat`.
+  The stats are not part of it: the xlsx above is where they are edited, and their single source of truth.
 
 <img src="Resources/screenshots/ifrit_3d.png" width="800"><br>
 <img src="Resources/screenshots/ifrit_texture.png" width="800"><br>
