@@ -18,9 +18,8 @@ difference is the set count: monsters usually have 1 set (8 slots), characters h
 per-entity sections, so there is nothing extra to edit for characters.
 """
 import os
-import xml.etree.ElementTree as ET
 
-from PyQt6.QtCore import Qt, QSize, QSettings, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QSettings, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
                              QScrollArea, QGroupBox, QSpinBox, QGridLayout, QCheckBox,
@@ -202,21 +201,6 @@ class IfritCameraSeqWidget(QWidget):
 
         # ── Toolbar ──────────────────────────────────────────────────
         toolbar = QHBoxLayout()
-        self._import_xml_button = QPushButton()
-        self._import_xml_button.setIcon(QIcon(os.path.join(icon_path, 'xml_upload.png')))
-        self._import_xml_button.setIconSize(QSize(30, 30))
-        self._import_xml_button.setFixedSize(40, 40)
-        self._import_xml_button.setToolTip("Import the camera collection from an xml file")
-        self._import_xml_button.clicked.connect(self._import_xml_file)
-        self._import_xml_button.setEnabled(False)
-
-        self._export_xml_button = QPushButton()
-        self._export_xml_button.setIcon(QIcon(os.path.join(icon_path, 'xml_save.png')))
-        self._export_xml_button.setIconSize(QSize(30, 30))
-        self._export_xml_button.setFixedSize(40, 40)
-        self._export_xml_button.setToolTip("Export the camera collection to an xml file")
-        self._export_xml_button.clicked.connect(self._export_xml_file)
-        self._export_xml_button.setEnabled(False)
 
         self.info_button = QPushButton()
         self.info_button.setIcon(QIcon(os.path.join(icon_path, 'info.png')))
@@ -228,8 +212,6 @@ class IfritCameraSeqWidget(QWidget):
         self.hex_checkbox.setToolTip("Show the raw camera-section bytes (read-only), the source "
                                      "of truth every edit patches in place")
         self.hex_checkbox.stateChanged.connect(self.__toggle_hex)
-        toolbar.addWidget(self._import_xml_button)
-        toolbar.addWidget(self._export_xml_button)
         toolbar.addWidget(self.info_button)
         toolbar.addWidget(self.summary_label)
         toolbar.addStretch(1)
@@ -274,164 +256,12 @@ class IfritCameraSeqWidget(QWidget):
                 self.ifrit_manager.enemy.section_raw_data[index] = self._collection.get_bytes()
 
     # ── XML import / export (like IfritSeq) ───────────────────────────
-    def _export_xml_file(self):
-        if not self._editable or self._collection is None:
-            return
-        default_name = self.ifrit_manager.enemy.origin_file_name.replace('.dat', '_camera.xml')
-        path = self.file_dialog.getSaveFileName(parent=self, caption="Camera xml to save",
-                                                directory=default_name)[0]
-        if path:
-            self.create_camera_xml(self._collection, path)
-
-    def _import_xml_file(self):
-        path = self.file_dialog.getOpenFileName(parent=self, caption="Camera xml to import",
-                                                filter="*.xml")[0]
-        if not path:
-            return
-        collection = self.create_camera_collection_from_xml(path, self)
-        if collection is None:
-            return
-        # Replace the whole section: importing a different monster's camera changes its byte
-        # length, and the file writer recomputes the header offsets from each section's size.
-        self.__clear_content()
-        self._collection = collection
-        self._editable = True
-        self._import_xml_button.setEnabled(True)
-        self._export_xml_button.setEnabled(True)
-        self.__build()
-        self.__finish_build(collapse_slots=True)
-        self.__refresh_hex()
-
-    @staticmethod
-    def create_camera_xml(collection, xml_file: str):
-        """Write the collection as xml. The <raw> element is the lossless source of truth
-        (the exact section bytes); the structured set/animation/block/frame elements below it
-        carry the same values in a readable, hand-editable form. On import <raw> gives the
-        structure and the structured values are applied on top of it."""
-        root = ET.Element("camera_collection")
-        raw = ET.SubElement(root, "raw")
-        raw.text = bytes(collection.get_bytes()).hex(" ").upper()
-        for camera_set in collection.sets:
-            set_element = ET.SubElement(root, "set", index=str(camera_set.index))
-            for animation in camera_set.animations:
-                animation_element = ET.SubElement(set_element, "animation",
-                                                  slot=str(animation.slot))
-                if animation.empty:
-                    animation_element.set("empty", "true")
-                    continue
-                for block_index, block in enumerate(animation.blocks):
-                    block_element = ET.SubElement(
-                        animation_element, "block", index=str(block_index),
-                        control=f"0x{block.control_word:04X}", layout=str(block.layout))
-                    if block.fov_start is not None:
-                        ET.SubElement(block_element, "fov", start=str(block.fov_start.get()),
-                                      end=str(block.fov_end.get()))
-                    if block.roll_start is not None:
-                        ET.SubElement(block_element, "roll", start=str(block.roll_start.get()),
-                                      end=str(block.roll_end.get()))
-                    for frame_index, frame in enumerate(block.frames):
-                        ET.SubElement(
-                            block_element, "frame", index=str(frame_index),
-                            duration=str(frame.duration.get()),
-                            pos_x=str(frame.pos_x.get()), pos_y=str(frame.pos_y.get()),
-                            pos_z=str(frame.pos_z.get()),
-                            pos_interp=f"0x{frame.pos_interp_mode.get():02X}",
-                            look_x=str(frame.look_x.get()), look_y=str(frame.look_y.get()),
-                            look_z=str(frame.look_z.get()),
-                            look_interp=f"0x{frame.look_interp_mode.get():02X}")
-        tree = ET.ElementTree(root)
-        ET.indent(tree, space="  ")
-        tree.write(xml_file, encoding="utf-8", xml_declaration=True)
-
-    @staticmethod
-    def create_camera_collection_from_xml(xml_file: str, parent=None):
-        """Parse a camera xml back into a CameraCollection, or None on any error (a message
-        box explains why). Structure comes from <raw>; the structured elements override the
-        editable values on top of it."""
-        def fail(message):
-            if parent is not None:
-                QMessageBox.warning(parent, "Camera import", message)
-            return None
-        try:
-            root = ET.parse(xml_file).getroot()
-        except ET.ParseError as error:
-            return fail(f"The xml could not be parsed: {error}")
-        raw_element = root.find("raw")
-        if raw_element is None or not (raw_element.text or "").strip():
-            return fail("The xml has no <raw> section bytes to import.")
-        try:
-            data = bytearray(int(token, 16) for token in raw_element.text.split())
-        except ValueError:
-            return fail("The <raw> element is not valid hexadecimal bytes.")
-        try:
-            collection = parse_camera_collection(data)
-        except CameraParseError as error:
-            return fail(f"The <raw> bytes are not a valid camera collection: {error}")
-        IfritCameraSeqWidget._apply_xml_values(root, collection)
-        return collection
-
-    @staticmethod
-    def _apply_xml_values(root, collection):
-        """Overwrite the editable values of an already-parsed collection from the structured
-        xml, matching by index. Anything that does not line up with the <raw> structure is
-        skipped, so a hand-edited value takes effect while the layout stays exact."""
-        def apply(field, text):
-            if field is None or text is None:
-                return
-            text = text.strip()
-            try:
-                value = int(text, 16) if text.lower().startswith("0x") else int(text)
-            except ValueError:
-                return
-            field.set(max(field.minimum, min(field.maximum, value)))
-
-        for set_element in root.findall("set"):
-            set_index = int(set_element.get("index", "-1"))
-            if not 0 <= set_index < len(collection.sets):
-                continue
-            camera_set = collection.sets[set_index]
-            for animation_element in set_element.findall("animation"):
-                slot = int(animation_element.get("slot", "-1"))
-                if not 0 <= slot < len(camera_set.animations):
-                    continue
-                animation = camera_set.animations[slot]
-                if animation.empty:
-                    continue
-                for block_element in animation_element.findall("block"):
-                    block_index = int(block_element.get("index", "-1"))
-                    if not 0 <= block_index < len(animation.blocks):
-                        continue
-                    block = animation.blocks[block_index]
-                    fov_element = block_element.find("fov")
-                    if fov_element is not None:
-                        apply(block.fov_start, fov_element.get("start"))
-                        apply(block.fov_end, fov_element.get("end"))
-                    roll_element = block_element.find("roll")
-                    if roll_element is not None:
-                        apply(block.roll_start, roll_element.get("start"))
-                        apply(block.roll_end, roll_element.get("end"))
-                    for frame_element in block_element.findall("frame"):
-                        frame_index = int(frame_element.get("index", "-1"))
-                        if not 0 <= frame_index < len(block.frames):
-                            continue
-                        frame = block.frames[frame_index]
-                        apply(frame.duration, frame_element.get("duration"))
-                        apply(frame.pos_x, frame_element.get("pos_x"))
-                        apply(frame.pos_y, frame_element.get("pos_y"))
-                        apply(frame.pos_z, frame_element.get("pos_z"))
-                        apply(frame.pos_interp_mode, frame_element.get("pos_interp"))
-                        apply(frame.look_x, frame_element.get("look_x"))
-                        apply(frame.look_y, frame_element.get("look_y"))
-                        apply(frame.look_z, frame_element.get("look_z"))
-                        apply(frame.look_interp_mode, frame_element.get("look_interp"))
 
     # ── Loading ───────────────────────────────────────────────────────
     def __load(self):
         self.__clear()
         # The monster changed: stop any preview and reload its model on the next Preview.
         self._preview_panel.invalidate()
-        self._import_xml_button.setEnabled(False)
-        self._export_xml_button.setEnabled(False)
         enemy = getattr(self.ifrit_manager, "enemy", None)
         if enemy is None:
             self.summary_label.setText("No file loaded")
@@ -453,8 +283,6 @@ class IfritCameraSeqWidget(QWidget):
             self.summary_label.setText(f"Section 6 is not a camera collection: {error}")
             return
         self._editable = True
-        self._import_xml_button.setEnabled(True)
-        self._export_xml_button.setEnabled(True)
         self._populating = True                   # build-time setValue must not count as edits
         try:
             self.__build()

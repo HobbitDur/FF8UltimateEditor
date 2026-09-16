@@ -264,19 +264,13 @@ class TestIfritSeqWidget:
         translation = widget.translation_widget.toPlainText()
         assert "A0 05" in translation and "A2" in translation
 
-    def test_ifrit_seq_widget_export_button_exists(self, qapp):
-        """IfritSeqWidget should have export XML button."""
+    def test_ifrit_seq_widget_has_no_xml_button_of_its_own(self, qapp):
+        """The per-tab xml import/export is gone: the sequences are one section file among
+        others now, handled by Extract sections / Apply sections for the whole file at once."""
         manager = _make_mock_ifrit_manager()
         widget = IfritSeqWidget(manager)
-        assert hasattr(widget, '_export_xml_button')
-        assert widget._export_xml_button is not None
-
-    def test_ifrit_seq_widget_import_button_exists(self, qapp):
-        """IfritSeqWidget should have import XML button."""
-        manager = _make_mock_ifrit_manager()
-        widget = IfritSeqWidget(manager)
-        assert hasattr(widget, '_import_xml_button')
-        assert widget._import_xml_button is not None
+        assert not hasattr(widget, '_export_xml_button')
+        assert not hasattr(widget, '_import_xml_button')
 
 
 # ===========================================================================

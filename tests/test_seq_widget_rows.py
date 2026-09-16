@@ -506,53 +506,24 @@ class TestRemoveButtonPosition:
         assert layout.itemAt(1).widget() is None, "a stretch, not another widget"
 
 
-class TestXmlRoundTrip:
-    """Export to XML then import back must reproduce every sequence, empty slots included,
-    and export must reflect what is on screen (unsaved edits), not the last-saved model."""
+class TestSequenceXml:
+    """The sequence xml is now a section file (FF8GameData/dat/sectionfiles/animseqfile.py) and
+    the tab has no xml button of its own any more - Extract/Apply sections does it for every
+    section at once. What still matters here is that a sequence list survives the xml, empty
+    slots included."""
 
-    def _seq_list(self):
-        return [
+    def test_xml_round_trip_preserves_every_sequence(self, tmp_path):
+        from FF8GameData.dat.sectionfiles import animseqfile
+        seq_list = [
             {'id': 1, 'data': bytearray([0x00, 0xE6, 0xFD])},
             {'id': 2, 'data': bytearray()},              # empty / not present
             {'id': 3, 'data': bytearray([0x05, 0xA2])},
             {'id': 8, 'data': bytearray([0xA2])},
         ]
-
-    def test_static_export_import_preserves_everything(self, tmp_path):
-        seq_list = self._seq_list()
         xml = tmp_path / "seq.xml"
-        IfritSeqWidget.create_anim_seq_xml(seq_list, str(xml))
-        back = IfritSeqWidget.create_anim_seq_data_from_xml(str(xml))
-        assert [(s['id'], bytes(s['data'])) for s in back] == \
-               [(s['id'], bytes(s['data'])) for s in seq_list]
-
-    def test_export_includes_unsaved_widget_edits(self, qapp, game_data, tmp_path, monkeypatch):
-        tab = make_seq_tab(game_data, self._seq_list())
-        {w.getId(): w for w in tab.seq_data_widget}[3].sequence_text_widget.setPlainText("09 A2")
-        xml = tmp_path / "seq.xml"
-        monkeypatch.setattr(tab.file_dialog, "getSaveFileName", lambda *a, **k: (str(xml), ""))
-        tab._export_xml_file()
-        back = {s['id']: bytes(s['data'])
-                for s in IfritSeqWidget.create_anim_seq_data_from_xml(str(xml))}
-        assert back[3] == b"\x09\xA2", "the edit on screen must be exported"
-
-    def test_full_round_trip_through_the_tab(self, qapp, game_data, tmp_path, monkeypatch):
-        original = self._seq_list()
-        tab = make_seq_tab(game_data, [dict(id=s['id'], data=bytearray(s['data']))
-                                       for s in original])
-        xml = tmp_path / "seq.xml"
-        monkeypatch.setattr(tab.file_dialog, "getSaveFileName", lambda *a, **k: (str(xml), ""))
-        tab._export_xml_file()
-
-        monkeypatch.setattr(tab.file_dialog, "getOpenFileName", lambda *a, **k: (str(xml), ""))
-        tab._load_xml_file()
-        assert [w.getId() for w in tab.seq_data_widget] == [1, 2, 3, 8]
-        assert {w.getId(): w for w in tab.seq_data_widget}[2].is_present() is False
-
-        tab.save_file()
-        result = {s['id']: bytes(s['data'])
-                  for s in tab.ifrit_manager.enemy.seq_animation_data['seq_animation_data']}
-        assert result == {s['id']: bytes(s['data']) for s in original}
+        animseqfile.write_seq_animation_data(seq_list, str(xml))
+        back = animseqfile.read_seq_animation_data(str(xml))
+        assert [(s['id'], bytes(s['data'])) for s in back] ==                [(s['id'], bytes(s['data'])) for s in seq_list]
 
 
 class TestCodeHelpPage:

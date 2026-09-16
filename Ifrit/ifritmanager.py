@@ -1541,10 +1541,22 @@ class IfritManager:
             monster.analyse_loaded_data(self.game_data, self.decompiler)
             if callback_func:
                 callback_func(monster)
-            self._dat_xlsx_manager.export_to_xlsx(monster, file_name, self.game_data, analyse_ai)
+            self.add_monster_to_xlsx(monster, file_name, analyse_ai)
+        self.finish_xlsx_file()
 
+    def add_monster_to_xlsx(self, monster: MonsterAnalyser, file_name: str, analyse_ai=False):
+        """Write one already-loaded monster as a sheet of the xlsx opened by create_xlsx_file
+        (file_name is the .dat name the sheet refers to). Call finish_xlsx_file once at the end."""
+        self._dat_xlsx_manager.export_to_xlsx(monster, file_name, self.game_data, analyse_ai)
+
+    def finish_xlsx_file(self):
         self._dat_xlsx_manager.create_ref_data(self.game_data)
         self._dat_xlsx_manager.close_file()
+
+    def get_xlsx_monster_id_list(self) -> list:
+        """Monster ids that have a sheet in the xlsx opened by load_xlsx_file."""
+        return [int(re.search(r'\d+', sheet.title).group()) for sheet in self._xlsx_to_dat_manager.workbook
+                if sheet.title != xlsxmanager.REF_DATA_SHEET_TITLE]
 
     def xlsx_to_dat(self, file_list, monster_id_list:Tuple[int]):
         for sheet in self._xlsx_to_dat_manager.workbook:
@@ -1563,15 +1575,19 @@ class IfritManager:
                 if enemy:
                     enemy.write_data_to_file(self.game_data, current_dat_file)
 
-    def set_enemy_info_from_xlsx(self):
+    def set_enemy_info_from_xlsx(self, enemy: MonsterAnalyser = None):
+        """Set the stats and battle texts of `enemy` (default: the active enemy) from its sheet in
+        the xlsx opened by load_xlsx_file. Does nothing if the xlsx has no sheet for it."""
+        if enemy is None:
+            enemy = self.enemy
         for sheet in self._xlsx_to_dat_manager.workbook:
             if sheet.title != xlsxmanager.REF_DATA_SHEET_TITLE:
                 monster_index = int(re.search(r'\d+', sheet.title).group())
-                if monster_index != self.enemy.id:  # Only doing the monster asked
+                if monster_index != enemy.id:  # Only doing the monster asked
                     continue
                 else:
-                    self.enemy.info_stat_data = self._xlsx_to_dat_manager.get_stat_info(sheet, self.game_data)
-                    self.enemy.battle_script_data['battle_text'] = self._xlsx_to_dat_manager.get_battle_text(sheet, self.game_data)
+                    enemy.info_stat_data = self._xlsx_to_dat_manager.get_stat_info(sheet, self.game_data)
+                    enemy.battle_script_data['battle_text'] = self._xlsx_to_dat_manager.get_battle_text(sheet, self.game_data)
 
     def get_monster_data_from_xlsx(self, load_all_data=False, load_only_first=False, load_monster_id=-1) -> dict:
         monster_list = {}

@@ -11,8 +11,11 @@ from PyQt6.QtWidgets import (
 )
 from Common.fileregistry import FileRegistry
 from Common.undo import UndoStack
-from FF8GameData.dat.monsteranalyser import GarbageFileError
+from FF8GameData.dat.monsteranalyser import GarbageFileError, MonsterAnalyser
 from FF8GameData.dat.animloopdetector import find_character_weapon_file_list
+from FF8GameData.dat.sectionfiles import (SECTION_FILES, SectionTools, SectionFileError,
+                                          export_sections, apply_section_files, folder_name_for,
+                                          section_file_for_path, layout_names)
 from Ifrit.IfritAI.ifritaiwidget import IfritAIWidget
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.fpsbatchdialog import (FpsBatchDialog, FpsBatchReportDialog,
@@ -483,6 +486,47 @@ class IfritFilePane(QWidget):
         self.dirty = False
         self._edited = set()
 
+    # ── Section files (one file per .dat section, see FF8GameData/dat/sectionfiles) ────
+
+    def _section_tools(self) -> SectionTools:
+        return SectionTools(self.ifrit_manager.game_data, self.ifrit_manager.compiler,
+                            self.ifrit_manager.decompiler)
+
+    def export_section_folder(self, parent_folder):
+        """Write every section of this file as its own file in <parent_folder>/<file name>/.
+        Returns (folder, names written)."""
+        self._commit()   # fold what is still held in the widgets (texture inject) before exporting
+        folder = pathlib.Path(parent_folder) / folder_name_for(self.path)
+        written = export_sections(self.ifrit_manager.enemy, folder, self._section_tools())
+        return folder, written
+
+    def apply_section_file_list(self, paths) -> list:
+        """Apply the chosen section files onto this file (one path per section, in any folder),
+        refresh the tabs that changed and mark the file edited (which records one undo step).
+        Returns the names applied."""
+        self._commit()
+        manager = self.ifrit_manager
+        applied = apply_section_files(manager.enemy, paths, self._section_tools())
+        if not applied:
+            return []
+        layout = MonsterAnalyser.SECTION_INDEX_BY_ENTITY[manager.enemy.entity_type]
+        sections = {layout[section_file.section] for section_file in SECTION_FILES
+                    if section_file.name in applied}
+        if "texture" in applied:
+            # The Static Texture tab shows PNGs extracted by VincentTim, not the section bytes:
+            # re-extract them from the model we just changed.
+            texture_data, black_is_transparent = manager.extract_textures_from_memory(manager.enemy)
+            manager.texture_data = list(texture_data)
+            manager.texture_black_is_transparent = black_is_transparent
+        self.reload_from_model(changed_sections=sections)
+        self._edited_sections.update(sections)
+        self._last_edited_tab_index = self._tabs.currentIndex()
+        if not self.dirty:
+            self.dirty = True
+            self.dirty_changed.emit()
+        self.edited.emit()   # one undo step for the whole apply
+        return applied
+
 
 class IfritMonsterWidget(QWidget):
     """Multi-file battle-model editor: holds several .dat files, each in its own IfritFilePane
@@ -561,7 +605,20 @@ class IfritMonsterWidget(QWidget):
         # Import / Save both run from the shared header toolbar (open_files / save_folder /
         # can_save_folder below), the same wiring Alexander uses. Ctrl+S also saves. The loaded
         # file's name/monster is shown in the left side list, so no label is needed here.
-        for w in [self._cronos_checkbox, self._fps_batch_btn]:
+        # Section files: each .dat section as its own editable file, one folder per .dat.
+        self._extract_sections_btn = QPushButton("Extract sections...")
+        self._extract_sections_btn.setToolTip("Write every section of the open file as its own file\n"
+                                              "(ai.md, info_stat.json, camera.xml, texture/00.tim...)\n"
+                                              "in a folder named after it.")
+        self._extract_sections_btn.clicked.connect(self._extract_sections)
+
+        self._apply_sections_btn = QPushButton("Apply sections...")
+        self._apply_sections_btn.setToolTip("Apply a section folder onto the open file. You choose\n"
+                                            "which sections to take; the others are left as they are.")
+        self._apply_sections_btn.clicked.connect(self._apply_sections)
+
+        for w in [self._cronos_checkbox, self._fps_batch_btn, self._extract_sections_btn,
+                  self._apply_sections_btn]:
             tl.addWidget(w)
         tl.addStretch()
 
@@ -613,6 +670,7 @@ class IfritMonsterWidget(QWidget):
 
         # Load Cronos AI data once at startup (no file to reload yet).
         self._apply_cronos_ai_data(self._cronos_checkbox.isChecked())
+        self._update_section_buttons()   # nothing shown yet -> both off
 
     # ── Shared header toolbar hooks (Alexander pattern) ───────────────
 
@@ -858,6 +916,7 @@ class IfritMonsterWidget(QWidget):
         self._file_list.blockSignals(True)
         self._file_list.setCurrentRow(index)
         self._file_list.blockSignals(False)
+        self._update_section_buttons()
 
     def _confirm_leave_current(self) -> bool:
         """Before switching away from (or reloading) the shown file, guard its unsaved edits.
@@ -1296,6 +1355,88 @@ class IfritMonsterWidget(QWidget):
         self.file_bindings_changed.emit()     # rebuilt pane is clean -> refresh toolbar Save / title '*'
 
     # ── FPS batch ─────────────────────────────────────────────────────
+
+    # ── Section files ─────────────────────────────────────────────────
+
+    def _active_pane(self):
+        """The pane of the file being shown, or None (with a message) if there is none."""
+        if 0 <= self._active_index < len(self._files):
+            pane = self._files[self._active_index].get('pane')
+            if pane is not None:
+                return pane
+        QMessageBox.information(self, "No file", "Open a .dat file first.")
+        return None
+
+    def _update_section_buttons(self):
+        """Both buttons work on the shown file: off while none is shown."""
+        has_pane = (0 <= self._active_index < len(self._files)
+                    and self._files[self._active_index].get('pane') is not None)
+        self._extract_sections_btn.setEnabled(has_pane)
+        self._apply_sections_btn.setEnabled(has_pane)
+
+    def _extract_sections(self):
+        """Write every section of the shown file into <chosen folder>/<file name>/."""
+        pane = self._active_pane()
+        if pane is None:
+            return
+        parent_folder = QFileDialog.getExistingDirectory(
+            self, "Folder to write the section folder in", self._file_dialog_folder)
+        if not parent_folder:
+            return
+        self._file_dialog_folder = parent_folder
+        try:
+            folder, written = pane.export_section_folder(parent_folder)
+        except (SectionFileError, OSError) as e:
+            QMessageBox.warning(self, "Extract sections",
+                                f"Could not write the section files:\n{e}")
+            return
+        QMessageBox.information(self, "Extract sections",
+                                f"{len(written)} section file(s) written in\n{folder}\n\n"
+                                + ", ".join(written))
+
+    def _apply_sections(self):
+        """Apply section files onto the shown file: the user picks the files, so picking them IS
+        choosing the sections - one file, or several, from anywhere."""
+        pane = self._active_pane()
+        if pane is None:
+            return
+        names_of_type = layout_names(pane.ifrit_manager.enemy)
+        # Every section of this file type, so selecting all the files of a section folder works
+        wanted = [section_file.file_pattern or section_file.path_name
+                  for section_file in SECTION_FILES if section_file.name in names_of_type]
+        chosen, _ = QFileDialog.getOpenFileNames(
+            self, "Section file(s) to apply", self._file_dialog_folder,
+            "Section files (" + " ".join(wanted) + ");;All files (*)")
+        if not chosen:
+            return
+        self._file_dialog_folder = os.path.dirname(chosen[0])
+        paths = {}
+        unknown = []
+        for path in chosen:
+            section_file = section_file_for_path(path)
+            if section_file is None or section_file.name not in names_of_type:
+                unknown.append(os.path.basename(path))
+                continue
+            # A section written as several files (the textures) is read from its folder: picking
+            # one texture file, or all of them, means the same thing - that folder's textures.
+            paths[section_file.name] = (os.path.dirname(path) if section_file.is_multi_file() else path)
+        if unknown:
+            QMessageBox.warning(self, "Apply sections",
+                                "Not a section file this model can use, ignored:\n" + ", ".join(unknown))
+        if not paths:
+            return
+        self._flush_pending_undo()   # the apply becomes its own undo step
+        try:
+            applied = pane.apply_section_file_list(paths)
+        except (SectionFileError, OSError) as e:
+            QMessageBox.warning(self, "Apply sections",
+                                f"Could not apply the section files:\n{e}")
+            return
+        self._refresh_list_item(self._active_index)
+        self.file_bindings_changed.emit()
+        QMessageBox.information(self, "Apply sections",
+                                f"{len(applied)} section(s) applied: {', '.join(applied)}\n\n"
+                                "Save the file to write them to disk.")
 
     def _convert_files_to_fps(self):
         """Convert the animations of several .dat files to 30 or 60 fps in one go."""
