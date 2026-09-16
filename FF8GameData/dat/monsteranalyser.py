@@ -34,6 +34,26 @@ class MonsterAnalyser:
         EntityType.MONSTER_NO_MODEL: 3,
     }
 
+    # Which section index holds each building block, per entity type (the header, section 0, is
+    # never listed: it is always recomputed on save). The names are the wiki's building-block
+    # names, so the same name means the same byte format whatever the file type - only the index
+    # moves (the camera is monster section 6 but character section 5). Mirrors the numbering used by
+    # analyse_loaded_data / get_bytes; keep in sync.
+    SECTION_INDEX_BY_ENTITY = {
+        EntityType.MONSTER: {'skeleton': 1, 'geometry': 2, 'animation': 3, 'dynamic_texture': 4,
+                             'anim_seq': 5, 'camera': 6, 'info_stat': 7, 'battle_script': 8,
+                             'sound': 9, 'sound_bank': 10, 'texture': 11},
+        EntityType.MONSTER_NO_MODEL: {'info_stat': 1, 'battle_script': 2},
+        EntityType.CHARACTER: {'skeleton': 1, 'geometry': 2, 'animation': 3, 'dynamic_texture': 4,
+                               'camera': 5, 'texture': 6, 'extra_animation': 7},
+        EntityType.CHARACTER_NO_WEAPON: {'skeleton': 1, 'geometry': 2, 'animation': 3, 'dynamic_texture': 4,
+                                         'camera': 5, 'anim_seq': 6, 'sound': 7, 'sound_bank': 8,
+                                         'texture': 9, 'extra_animation': 10},
+        EntityType.WEAPON: {'skeleton': 1, 'geometry': 2, 'animation': 3, 'anim_seq': 4, 'sound': 5,
+                            'sound_bank': 6, 'texture': 7, 'extra_animation': 8},
+        EntityType.WEAPON_NO_ANIM: {'geometry': 1, 'anim_seq': 2, 'sound': 3, 'sound_bank': 4, 'texture': 5},
+    }
+
     def __init__(self, game_data):
         self.file_raw_data = bytearray()
         self.origin_file_name = ""
@@ -560,8 +580,13 @@ class MonsterAnalyser:
                 section_position = 11
                 self.prepare_texture(raw_data_to_write, section_position)
 
-        # Modifying the header section now that all sized are known
-        # Modifying the section position
+        self.__update_header_section_positions()
+        raw_data_to_write[0:len(self.section_raw_data[0])] = self.section_raw_data[0]
+        return raw_data_to_write
+
+    def __update_header_section_positions(self):
+        """Rewrite the header (section 0) position table and file size from the current byte
+        length of every section in section_raw_data."""
         header_pos_data = AIData.SECTION_HEADER_SECTION_POSITION
         file_size = 0
         for i in range(0, self.header_data['nb_section']):
@@ -573,8 +598,23 @@ class MonsterAnalyser:
         header_file_data = AIData.SECTION_HEADER_FILE_SIZE
         self.section_raw_data[0][self.header_data['nb_section']*header_file_data['size'] :self.header_data['nb_section']*header_file_data['size']+ header_file_data['size']] = file_size.to_bytes(
             header_pos_data['size'], header_file_data['byteorder'])
-        raw_data_to_write[0:len(self.section_raw_data[0])] = self.section_raw_data[0]
-        return raw_data_to_write
+
+    def replace_sections_bytes(self, new_section_bytes: dict, game_data: GameData, decompiler: AIDecompiler = None):
+        """Replace whole sections by new byte streams, e.g. {6: camera_bytes, 11: texture_bytes},
+        and re-derive only those sections' parsed form.
+
+        Every other section keeps its current state, edits included: the file is first serialised
+        (get_bytes, so each section_raw_data entry reflects the live model), the given sections are
+        swapped in, the header is rebuilt from the new sizes, and the result goes through the same
+        partial reload undo/redo uses (restore_sections_from_snapshot)."""
+        self.get_bytes(game_data)
+        for section_index, section_bytes in new_section_bytes.items():
+            self.section_raw_data[section_index] = bytearray(section_bytes)
+        self.__update_header_section_positions()
+        file_bytes = bytearray()
+        for section_bytes in self.section_raw_data:
+            file_bytes.extend(section_bytes)
+        self.restore_sections_from_snapshot(bytes(file_bytes), list(new_section_bytes.keys()), game_data, decompiler)
 
     def write_data_to_file(self, game_data: GameData, dat_path):
         """Serialize (get_bytes) and write the enemy to `dat_path`."""
@@ -825,6 +865,10 @@ class MonsterAnalyser:
     def __analyze_section_texture_anim(self, section_number:int = 4):
         if self.section_raw_data[section_number]:
             self.dynamic_texture_data.analyze(self.section_raw_data[section_number])
+        else:
+            # An empty section must also clear what a previous analysis left (re-analysis after
+            # undo, or a section replaced by an empty one).
+            self.dynamic_texture_data = DynamicTextureSection()
             #print(self.dynamic_texture_data)
 
     def __analyze_section_6(self, game_data: GameData):
