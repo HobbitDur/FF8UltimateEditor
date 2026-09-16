@@ -512,6 +512,9 @@ class IfritFilePane(QWidget):
         layout = MonsterAnalyser.SECTION_INDEX_BY_ENTITY[manager.enemy.entity_type]
         sections = {layout[section_file.section] for section_file in SECTION_FILES
                     if section_file.name in applied}
+        if "info_stat" in applied:
+            # The xlsx carries the battle texts too, and those live in the battle script section
+            sections.add(layout['battle_script'])
         if "texture" in applied:
             # The Static Texture tab shows PNGs extracted by VincentTim, not the section bytes:
             # re-extract them from the model we just changed.
@@ -608,9 +611,8 @@ class IfritMonsterWidget(QWidget):
         # Section files: each .dat section as its own editable file, one folder per .dat.
         self._extract_sections_btn = QPushButton("Extract sections...")
         self._extract_sections_btn.setToolTip("Write every section of the open file as its own file\n"
-                                              "(ai.md, camera.xml, anim_seq.xml, texture_00.tim...)\n"
-                                              "in a folder named after it. The stats are not among\n"
-                                              "them: they are edited in the xlsx (Stat > Excel).")
+                                              "(ai.md, camera.xml, anim_seq.xml, info_stat.xlsx,\n"
+                                              "texture_00.tim...) in a folder named after it.")
         self._extract_sections_btn.clicked.connect(self._extract_sections)
 
         self._apply_sections_btn = QPushButton("Apply sections...")
@@ -801,9 +803,10 @@ class IfritMonsterWidget(QWidget):
         self.file_bindings_changed.emit()
 
     def _append_to_session(self, paths):
-        """Add files to the current session WITHOUT replacing it: the file that is open stays
-        open, the new ones are appended to the list. Files already in the session are skipped
-        (no duplicate entries). Falls back to a fresh session when nothing is open yet."""
+        """Add files to the current session WITHOUT replacing it: the files already open stay in
+        the list, the new ones are appended to it and the first of them is shown. Files already in
+        the session are skipped (no duplicate entries). Falls back to a fresh session when nothing
+        is open yet."""
         if not self._files:
             self._build_session(paths)
             return
@@ -824,7 +827,7 @@ class IfritMonsterWidget(QWidget):
                     "The selected file(s) are empty or unreadable:\n\n" + "\n".join(skipped))
             return
         first_new = len(self._files)
-        self._files.extend(files)                       # keep _active_index / current pane as-is
+        self._files.extend(files)
         for i in range(first_new, len(self._files)):
             self._file_list.addItem(self._list_label(i))
         self._file_dialog_folder = os.path.dirname(files[0]['path'])
@@ -839,6 +842,9 @@ class IfritMonsterWidget(QWidget):
             notes.append("Empty or unreadable (skipped):\n" + "\n".join(skipped))
         if notes:
             QMessageBox.information(self, "Some files skipped", "\n\n".join(notes))
+        # Opening a file means wanting to look at it: show the first one just opened rather than
+        # staying on the file that happened to be open (the others wait in the list).
+        self._activate_index(first_new, show_busy=True)
 
 
     def _discard_panes(self):

@@ -80,7 +80,7 @@ def test_extract_writes_one_file_per_section_in_a_folder_named_after_the_dat(edi
     assert folder.name == "c0m071"
     written = sorted(path.name for path in folder.iterdir())
     assert set(written) >= {"skeleton.bin", "geometry.bin", "animation.bin", "dynamic_texture.xml",
-                            "anim_seq.xml", "camera.xml", "battle_text.txt",
+                            "anim_seq.xml", "camera.xml", "info_stat.xlsx",
                             "ai.md", "sound.bin", "sound_bank.bin", "texture_00.tim"}
     # Every section is a FILE of the folder, textures included (nothing in a sub-folder), so
     # selecting everything in it selects every section in one go

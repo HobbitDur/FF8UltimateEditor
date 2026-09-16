@@ -53,6 +53,18 @@ def test_opening_files_builds_no_panes_but_the_shown_one():
     assert _built(w) == [0] == [w._active_index]     # only the shown file is fully loaded
 
 
+def test_opening_more_files_shows_the_first_one_just_opened():
+    """Opening a file means wanting to look at it: the session keeps what was already open, and
+    the view moves to the first of the new files instead of staying where it was."""
+    w = _make()
+    w._build_session(FILES[:2])
+    assert w._active_index == 0
+    w._append_to_session(FILES[2:])
+    assert len(w._files) == 4
+    assert w._active_index == 2 == _built(w)[0]
+    assert w._file_list.currentRow() == 2
+
+
 def test_switching_tears_the_previous_pane_down():
     w = _make()
     w._build_session(FILES)

@@ -9,7 +9,8 @@ The contract pinned here is the one a mod relies on: applying a section folder o
   once (padding stop() count, unused operand bytes), so for the AI the contract is that the md is
   stable: md -> dat -> md gives the same md, and the same bytes.
 - A section without a file is kept.
-- The stats are NOT a section file: the xlsx owns them (Ifrit's Stat > Excel tab).
+- The stats are a section file of their own format: info_stat.xlsx, one monster in the workbook
+  format of Ifrit's Stat > Excel tab. It carries the battle texts too.
 - A mistake in a file is reported against that file (SectionFileError), never silently written.
 
 Needs the real (copyright, gitignored) monster files under extracted_files/battle/.
@@ -24,8 +25,8 @@ import pytest
 from FF8GameData.gamedata import GameData
 from FF8GameData.dat.cameracollection import parse_camera_collection
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
-from FF8GameData.dat.sectionfiles import (SectionTools, SectionFileError, export_sections, apply_sections,
-                                          folder_name_for)
+from FF8GameData.dat.sectionfiles import (SectionTools, SectionFileError, SECTION_FILE_NAMES,
+                                          export_sections, apply_sections, folder_name_for)
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 BATTLE_DIR = PROJECT_ROOT / "extracted_files" / "battle"
@@ -82,19 +83,16 @@ def test_section_folder_rebuilds_the_monster_on_another_file(tools, tmp_path, mo
     _quiet(apply_sections, rebuilt, first_folder, tools)
     rebuilt_sections = _sections(rebuilt, tools)
     layout = MonsterAnalyser.SECTION_INDEX_BY_ENTITY[source.entity_type]
-    # The AI is compared through its md below; the stats have no section file at all (the xlsx owns
-    # them), so section 7 legitimately keeps the values of the file it was applied onto.
-    not_compared = {layout['battle_script'], layout['info_stat']}
+    # The AI is compared through its md below (the battle texts share its section, and they are
+    # compared on their own just after); every other section is byte-exact, stats included.
+    not_compared = {layout['battle_script']}
     for index in range(1, len(expected)):
         if index not in not_compared:
             assert rebuilt_sections[index] == expected[index], f"section {index} differs"
     assert ([bytes(text.get_data_hex()) for text in rebuilt.battle_script_data['battle_text']] ==
             [bytes(text.get_data_hex()) for text in source.battle_script_data['battle_text']])
 
-    # The AI: once compiled, md -> dat -> md is stable, in text and in bytes. Re-applied on the
-    # same file the first pass used: the md carries comments naming the monster's abilities, which
-    # come from its stats - and the stats are not a section file, so they stay those of the file
-    # being written onto.
+    # The AI: once compiled, md -> dat -> md is stable, in text and in bytes.
     second_folder = tmp_path / "second"
     _quiet(export_sections, rebuilt, second_folder, tools)
     again = _load(tools, other_id)
@@ -112,13 +110,17 @@ def test_dummy_monster_round_trips_every_section_but_its_ai(tools, tmp_path):
     source = _load(tools, 0)
     expected = _sections(source, tools)
     folder = tmp_path / "c0m000"
-    _quiet(export_sections, source, folder, tools)
+    # c0m000 is not a monster of the game: the xlsx format skips it rather than writing a sheet
+    with pytest.raises(SectionFileError, match="holds no monster"):
+        _quiet(export_sections, source, folder, tools, ["info_stat"])
+    _quiet(export_sections, source, folder, tools,
+           [name for name in SECTION_FILE_NAMES if name != "info_stat"])
     rebuilt = _load(tools, 1)
     names = ["skeleton", "geometry", "animation", "dynamic_texture", "camera", "sound",
              "sound_bank", "texture", "anim_seq"]
     _quiet(apply_sections, rebuilt, folder, tools, names)
     rebuilt_sections = _sections(rebuilt, tools)
-    for index in range(1, 7):   # 7 is the stats, which have no section file (the xlsx owns them)
+    for index in range(1, 7):   # 7, the stats, is not in `names`: the xlsx has no sheet for c0m000
         assert rebuilt_sections[index] == expected[index], f"section {index} differs"
     assert rebuilt_sections[9:] == expected[9:]
     with pytest.raises(SectionFileError, match="does not compile"):
@@ -154,17 +156,41 @@ def test_a_section_without_a_file_is_kept(tools, tmp_path):
             assert result[index] == vanilla[index]
 
 
-@pytest.mark.ff8data(_battle_file(G_SOLDIER))
-def test_battle_text_line_break_round_trip(tools, tmp_path):
-    folder = tmp_path / "c0m071"
-    folder.mkdir()
-    (folder / "battle_text.txt").write_text("First line\\nSecond line\nOther text\n", encoding="utf-8")
-    monster = _load(tools, G_SOLDIER)
-    _quiet(apply_sections, monster, folder, tools)
-    assert [text.get_str() for text in monster.battle_script_data['battle_text']] == ["First line\nSecond line", "Other text"]
-    exported = tmp_path / "exported"
-    _quiet(export_sections, monster, exported, tools, ["battle_text"])
-    assert (exported / "battle_text.txt").read_text(encoding="utf-8") == "First line\\nSecond line\nOther text\n"
+@pytest.mark.ff8data(_battle_file(G_SOLDIER), _battle_file(1))
+def test_info_stat_xlsx_carries_the_stats_and_the_battle_texts(tools, tmp_path):
+    """One monster in the workbook format of the Stat > Excel tab: the stats and the texts."""
+    folder = _export(tools, tmp_path, G_SOLDIER, ["info_stat"])
+    assert [path.name for path in folder.iterdir()] == ["info_stat.xlsx"]
+    source = _load(tools, G_SOLDIER)
+    target = _load(tools, 1)
+    assert _quiet(apply_sections, target, folder, tools) == ["info_stat"]
+    stats = MonsterAnalyser.SECTION_INDEX_BY_ENTITY[target.entity_type]['info_stat']
+    assert _sections(target, tools)[stats] == _sections(source, tools)[stats]
+    assert ([text.get_str() for text in target.battle_script_data['battle_text']] ==
+            [text.get_str() for text in source.battle_script_data['battle_text']])
+
+
+@pytest.mark.ff8data(_battle_file(G_SOLDIER), _battle_file(1))
+def test_info_stat_xlsx_of_several_monsters_uses_the_monsters_own_sheet(tools, tmp_path):
+    """A workbook covering several monsters - the mod's own xlsx - works as a section file too:
+    each monster reads its own sheet, and a monster with no sheet is an error, not a guess."""
+    from Ifrit.IfritXlsx.xlsxmanager import DatToXlsx
+
+    path = tmp_path / "info_stat.xlsx"
+    writer = DatToXlsx()
+    writer.create_file(str(path))
+    for monster_id in (1, G_SOLDIER):
+        _quiet(writer.export_to_xlsx, _load(tools, monster_id), f"c0m{monster_id:03d}.dat",
+               tools.game_data, analyse_ai=False)
+    writer.close_file()
+
+    target = _load(tools, G_SOLDIER)
+    target.info_stat_data['hp'] = [1, 2, 3, 4]
+    _quiet(apply_sections, target, tmp_path, tools, ["info_stat"])
+    assert target.info_stat_data['hp'] == _load(tools, G_SOLDIER).info_stat_data['hp']
+
+    with pytest.raises(SectionFileError, match="no sheet for monster 2"):
+        _quiet(apply_sections, _load(tools, 2), tmp_path, tools, ["info_stat"])
 
 
 @pytest.mark.ff8data(_battle_file(G_SOLDIER))
