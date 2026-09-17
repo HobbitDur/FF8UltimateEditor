@@ -2067,7 +2067,7 @@ class AIData:
     SECTION_INFO_STAT_BYTE_FLAG_1 = {'offset': 0xF7, 'size': 1, 'byteorder': 'little', 'name': 'byte_flag_1', 'pretty_name': 'Byte Flag 1'}
     # Bit 3 has no effect: setMonsterInfoFromDatInfoSection is the only reader of byte 247 and never
     # tests 0x04 (checked in IDA, and the enum there says so too).
-    SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE = ['Zombie', 'Fly', 'byte1_unused_3', 'Immune NVPlus_Moins', 'Hidden HP', 'Auto-Reflect', 'Auto-Shell',
+    SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE = ['Zombie', 'Fly', 'byte1_unused_3', 'LvUp-Down Immunity', 'Hidden HP', 'Auto-Reflect', 'Auto-Shell',
                                                 'Auto-Protect']
     CARD_DATA = {'offset': 0xF8, 'size': 3, 'byteorder': 'big', 'name': 'card', 'pretty_name': 'Card data'}
     DEVOUR_DATA = {'offset': 0xFB, 'size': 3, 'byteorder': 'big', 'name': 'devour', 'pretty_name': 'Devour'}

@@ -45,7 +45,6 @@ STAT_COLORS = {
 # The few bit names that read better in a window than in a file.
 FLAG_DISPLAY_NAMES = {
     'byte1_unused_3': 'unused (bit 0x04 - no effect)',
-    'Immune NVPlus_Moins': 'LvUp-Down Immunity',
     'Hidden HP': 'HP Hidden',
     'byte2_unused_6': 'unused (bit 0x20 - no effect)',
 }

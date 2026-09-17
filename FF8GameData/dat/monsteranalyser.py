@@ -1007,7 +1007,7 @@ class MonsterAnalyser:
                                 {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
                                 {'type': 0, 'animation': 0, 'id': 0}], 'med_lvl': 25, 'high_lvl': 45,
              'camera_category': 3,
-             'byte_flag_1': {'Zombie': 0, 'Fly': 0, 'byte1_unused_3': 0, 'Immune NVPlus_Moins': 0, 'Hidden HP': 0, 'Auto-Reflect': 0, 'Auto-Shell': 0, 'Auto-Protect': 0},
+             'byte_flag_1': {'Zombie': 0, 'Fly': 0, 'byte1_unused_3': 0, 'LvUp-Down Immunity': 0, 'Hidden HP': 0, 'Auto-Reflect': 0, 'Auto-Shell': 0, 'Auto-Protect': 0},
              'card': [255, 255, 255], 'devour': [255, 255, 255],
              'byte_flag_2': {'IncreaseSurpriseRNG': 0, 'DecreaseSurpriseRNG': 0, 'SurpriseAttackImmunity': 0, 'IncreaseChanceEscape': 1, 'DecreaseChanceEscape': 0,
                              'byte2_unused_6': 0, 'Gravity Immunity': 0, 'Always obtains card': 0},
