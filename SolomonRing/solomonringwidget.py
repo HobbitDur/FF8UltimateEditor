@@ -143,9 +143,16 @@ class SolomonRingWidget(QWidget):
         # _checked absorbs the bool QPushButton.clicked emits, which would land in sid
         add_entry_callback = (lambda _checked=False, sid=section_id: self._add_growable_entry(sid)) \
             if config.get("growable") else None
+        remove_entry_callback = (lambda _checked=False, sid=section_id: self._remove_growable_entry(sid)) \
+            if config.get("growable") else None
+        # Everything below the vanilla entry count is what the unmodded engine indexes by id,
+        # so only what a mod added on top may be removed again.
+        static_config = self.kernel_manager.get_section_config(section_id) or {}
         tab = KernelSectionTab(self.game_data, self.registry, config,
                                jump_callback=self._jump_to_section,
-                               add_entry_callback=add_entry_callback)
+                               add_entry_callback=add_entry_callback,
+                               remove_entry_callback=remove_entry_callback,
+                               protected_count=static_config.get("number_sub_section") or 0)
         self._section_tabs[section_id] = tab
         return tab
 
@@ -251,6 +258,49 @@ class SolomonRingWidget(QWidget):
 
         tab.load_section(section, text_section)
         tab.list_widget.setCurrentRow(len(tab._visible_indices) - 1)
+        if section_id == 2:
+            self._refresh_magic_names()
+
+    def _remove_growable_entry(self, section_id):
+        """Delete the selected entry of a "growable" data section together with its linked
+        name/description text. Only entries beyond the vanilla count can go (the tab greys the
+        button otherwise) because the unmodded engine indexes the originals by id. Entries after
+        the deleted one shift down one id, exactly as they would in any array. If that leaves the
+        section with nothing above the GF-reserved block but the placeholder rows themselves, they
+        go too, so the file never keeps a tail of reserved-only entries."""
+        section = next((s for s in self.kernel_manager.section_list if s and s.id == section_id), None)
+        tab = self._section_tabs.get(section_id)
+        if section is None or tab is None or not section.section_text_linked:
+            return
+        cfg = self.kernel_manager.get_section_config(section_id) or {}
+        entry_index = tab.current_entry_index()
+        if not tab.can_remove(entry_index):
+            return
+        text_section = section.section_text_linked
+        nb_text = len(tab.text_labels) or 1
+
+        def _remove_one(index):
+            section.remove_subsection(index)
+            for _ in range(nb_text):
+                text_section.remove_text(index * nb_text)
+
+        _remove_one(entry_index)
+
+        # The placeholders only exist to pad the ids up to the first real entry above
+        # them, so they go when that last entry does - and only then. Keying this off
+        # the entry count alone also fired after deleting an entry below the block,
+        # which threw away the rows above it.
+        gf_start = cfg.get("gf_reserved_start")
+        gf_count = cfg.get("gf_reserved_count") or 0
+        if (gf_start is not None and entry_index >= gf_start + gf_count
+                and len(section.get_subsection_list()) == gf_start + gf_count):
+            for _ in range(gf_count):
+                _remove_one(gf_start)
+
+        tab.load_section(section, text_section)
+        if tab._visible_indices:
+            tab.list_widget.setCurrentRow(min(len(tab._visible_indices) - 1,
+                                              max(0, tab.list_widget.currentRow())))
         if section_id == 2:
             self._refresh_magic_names()
 

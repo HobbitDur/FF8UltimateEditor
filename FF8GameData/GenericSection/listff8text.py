@@ -54,6 +54,17 @@ class ListFF8Text(Section):
             first_hex_literal = False
         self._text_list.append(FF8Text(game_data=self._game_data, data_hex=text_hex, own_offset=offset, id=id, cursor_location_size=self.cursor_location_size, first_hex_literal=first_hex_literal))
 
+    def remove_text(self, index: int):
+        """Drop one string and renumber what follows, mirroring ``add_text`` (which takes
+        each id and offset from the previous entry)."""
+        del self._text_list[index]
+        offset = 0
+        for new_id, text in enumerate(self._text_list):
+            text.id = new_id
+            text.own_offset = offset
+            offset += text.get_size()
+        self.update_data_hex()
+
     def get_text_list(self):
         return self._text_list
 

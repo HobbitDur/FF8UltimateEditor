@@ -45,7 +45,7 @@ class KernelSectionTab(QWidget):
     """
 
     def __init__(self, game_data, registry, config, game_data_folder="FF8GameData", jump_callback=None,
-                 add_entry_callback=None):
+                 add_entry_callback=None, remove_entry_callback=None, protected_count=0):
         super().__init__()
         self.game_data = game_data
         self.registry = registry
@@ -61,6 +61,12 @@ class KernelSectionTab(QWidget):
         # Optional callable() -> append a new blank entry to a "growable" section (today,
         # only Magic) and refresh this tab in place; shown as an "Add" button under the list.
         self._add_entry_callback = add_entry_callback
+        # Optional callable() -> delete the selected entry of a "growable" section. Only
+        # entries added beyond the vanilla count may go: everything below protected_count is
+        # what the unmodded engine indexes itself, so the button greys out there.
+        self._remove_entry_callback = remove_entry_callback
+        self._protected_count = protected_count
+        self._remove_btn = None
         # Menu abilities' Refine data lives entirely outside kernel.bin (menu.fs's mngrp
         # files) - loaded on demand via a button, not part of the normal file-load flow.
         self._menu_refine_ref = None
@@ -102,6 +108,17 @@ class KernelSectionTab(QWidget):
                 "kernel-relocation hook. Fill in the name/description/fields, then save as usual.")
             add_btn.clicked.connect(self._add_entry_callback)
             list_col.addWidget(add_btn)
+            if self._remove_entry_callback:
+                self._remove_btn = QPushButton("- Remove entry")
+                self._remove_btn.setToolTip(
+                    "Delete the selected entry and its name/description. Only entries added\n"
+                    "beyond the vanilla ones can go - the game indexes those by id itself,\n"
+                    "and neither may an entry whose removal would shift the reserved GF id\n"
+                    "block. Entries after the deleted one shift down by one id, so anything\n"
+                    "already pointing at them (a save's junctioned magic, mmagic.bin) does\n"
+                    "too.")
+                self._remove_btn.clicked.connect(self._remove_entry_callback)
+                list_col.addWidget(self._remove_btn)
         layout.addLayout(list_col)
 
         scroll = QScrollArea()
@@ -709,6 +726,7 @@ class KernelSectionTab(QWidget):
         self.list_widget.blockSignals(False)
 
         self.setEnabled(True)
+        self._update_remove_button()
         if self._visible_indices:
             if prev_entry_index in self._visible_indices:
                 target_row = self._visible_indices.index(prev_entry_index)
@@ -734,7 +752,39 @@ class KernelSectionTab(QWidget):
             return f"{index}: {static}"
         return f"#{index}"
 
+    def current_entry_index(self):
+        """``self._entries`` index of the selected row, or None when nothing is selected."""
+        row = self.list_widget.currentRow()
+        if row < 0 or row >= len(self._visible_indices):
+            return None
+        return self._visible_indices[row]
+
+    def can_remove(self, index):
+        """Whether that entry may be deleted.
+
+        Two things block it. Entries the section originally had are what the unmodded
+        engine indexes by id, so they stay. And deleting shifts every later entry down
+        one id: if that would move the reserved block (Magic: the 32 GF rows at 64-95)
+        it is refused, because the engine reads ids 64-79 as GFs wherever the rows
+        happen to sit - the placeholders would land on 63-94 and a real spell above
+        them would land inside the block. So an entry below the block can only go
+        while the block does not exist yet."""
+        if index is None or index < self._protected_count:
+            return False
+        reserved_start = self.config.get("hidden_id_start")
+        reserved_count = self.config.get("hidden_id_count") or 0
+        if reserved_start is None or index >= reserved_start + reserved_count:
+            return True
+        return len(self._entries) <= reserved_start
+
+    def _update_remove_button(self):
+        """Grey Remove for anything that may not be deleted (see can_remove)."""
+        if self._remove_btn is None:
+            return
+        self._remove_btn.setEnabled(self.can_remove(self.current_entry_index()))
+
     def _on_row_changed(self, row):
+        self._update_remove_button()
         if row < 0 or row >= len(self._visible_indices):
             return
         if self._current_index >= 0:

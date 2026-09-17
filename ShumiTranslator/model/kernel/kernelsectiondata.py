@@ -38,6 +38,23 @@ class SectionData(Section):
         self._size = len(self._data_hex)
         return self._subsection_list[-1]
 
+    def remove_subsection(self, index: int):
+        """Drop one subsection and renumber what follows (used by a "growable" section's
+        Remove-entry UI). ``add_subsection`` derives each id and offset from the previous
+        element, so everything after the hole has to be re-derived, then the raw bytes
+        rebuilt directly - ``update_data_hex()`` would refuse the new, shorter length."""
+        del self._subsection_list[index]
+        offset = 0
+        rebuilt = bytearray()
+        for new_id, subsection in enumerate(self._subsection_list):
+            subsection.id = new_id
+            subsection.own_offset = offset
+            subsection.update_data_hex()
+            rebuilt.extend(subsection.get_data_hex())
+            offset += subsection.get_size()
+        self._data_hex = rebuilt
+        self._size = len(self._data_hex)
+
     def add_subsection(self, data_hex: bytearray):
         if self._subsection_list:
             offset = self._subsection_list[-1].own_offset + self._subsection_list[-1].get_size()

@@ -229,3 +229,127 @@ def test_add_entry_button_actually_adds(qapp, tmp_path):
     button.click()
     assert len(section.get_subsection_list()) == 97  # 64 + 32 placeholders + 1 real entry
     assert magic._visible_indices[-1] == 96
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_remove_entry_button_only_touches_added_entries(qapp, tmp_path):
+    """"- Remove entry" deletes the selected entry together with its name and description,
+    but only for entries a mod added on top: ids 0-56 are the spells the unmodded engine
+    indexes by id, so the button is greyed while one of those is selected. Removing the last
+    entry left above the GF-reserved block also drops the 32 placeholder rows, so the file
+    never keeps a tail of entries that exist only to pad the GF id range."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    magic = widget._section_tabs[2]
+    section = next(s for s in widget.kernel_manager.section_list if s and s.id == 2)
+    texts = section.section_text_linked
+    add = next(b for b in magic.findChildren(QPushButton) if "Add entry" in b.text())
+    remove = next(b for b in magic.findChildren(QPushButton) if "Remove entry" in b.text())
+
+    def select(entry_id):
+        magic.list_widget.setCurrentRow(magic._visible_indices.index(entry_id))
+
+    # Vanilla entries are not removable, wherever in the list they sit.
+    for vanilla_id in (0, 30, 56):
+        select(vanilla_id)
+        assert not remove.isEnabled(), f"id {vanilla_id} is vanilla and must not be removable"
+
+    # An added one is, and it takes its two strings with it.
+    add.click()
+    select(57)
+    assert remove.isEnabled()
+    entries_before, texts_before = len(section.get_subsection_list()), len(texts.get_text_list())
+    remove.click()
+    assert len(section.get_subsection_list()) == entries_before - 1
+    assert len(texts.get_text_list()) == texts_before - len(magic.text_labels)
+    select(56)
+    assert not remove.isEnabled()
+
+    # Removing the only entry above the reserved block takes the placeholders as well.
+    while len(section.get_subsection_list()) < 64:
+        add.click()
+    add.click()
+    assert len(section.get_subsection_list()) == 97
+    select(96)
+    remove.click()
+    assert len(section.get_subsection_list()) == 64
+    assert magic._visible_indices[-1] == 63
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_added_entry_survives_save_and_reload(qapp, tmp_path):
+    """A spell added past the GF block keeps its id and its name across save + reload, which
+    is what a modded kernel.bin has to do for FFNx's extended magic to resolve id 96."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    magic = widget._section_tabs[2]
+    section = next(s for s in widget.kernel_manager.section_list if s and s.id == 2)
+    add = next(b for b in magic.findChildren(QPushButton) if "Add entry" in b.text())
+
+    while len(section.get_subsection_list()) < 64:
+        add.click()
+    add.click()                                   # crosses into id 96
+    magic.list_widget.setCurrentRow(len(magic._visible_indices) - 1)
+    magic._text_widgets[0].setText("Testaga")
+    widget._save_kernel()
+
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    tab = reloaded._section_tabs[2]
+    assert tab._visible_indices[-1] == 96
+    assert tab._entries[96].get_text(0) == "Testaga"
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_remove_refuses_to_shift_the_reserved_gf_block(qapp, tmp_path):
+    """Deleting an entry shifts every later one down one id, so an entry below the
+    GF-reserved block may not go while the block exists: the 32 placeholders would slide
+    from 64-95 onto 63-94 - the engine still reads 64-79 as GFs, so a placeholder would
+    become a real id and a real spell above them would land inside the hidden block. It
+    used to be allowed, and the placeholder cleanup then fired on the entry count alone
+    and deleted the 32 rows plus the spell above them."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    magic = widget._section_tabs[2]
+    section = next(s for s in widget.kernel_manager.section_list if s and s.id == 2)
+    texts = section.section_text_linked
+    add = next(b for b in magic.findChildren(QPushButton) if "Add entry" in b.text())
+    remove = next(b for b in magic.findChildren(QPushButton) if "Remove entry" in b.text())
+
+    def select(entry_id):
+        magic.list_widget.setCurrentRow(magic._visible_indices.index(entry_id))
+
+    # Fill 57..63, then cross the block so there is a real entry at 96.
+    while len(section.get_subsection_list()) < 64:
+        add.click()
+    add.click()
+    assert len(section.get_subsection_list()) == 97
+    select(57)
+    magic._text_widgets[0].setText("Keepme")
+    select(96)                                   # commits the name above
+    assert texts.get_text_list()[57 * len(magic.text_labels)].get_str() == "Keepme"
+
+    # While the block is there, only the entry above it may go.
+    for below in (57, 60, 63):
+        select(below)
+        assert not remove.isEnabled(), f"id {below} would shift the reserved block"
+    select(96)
+    assert remove.isEnabled()
+
+    remove.click()
+    # The placeholders went with it, and nothing below was touched.
+    assert len(section.get_subsection_list()) == 64
+    assert magic._visible_indices[-1] == 63
+    assert texts.get_text_list()[57 * len(magic.text_labels)].get_str() == "Keepme"
+
+    # With no block left, the entries below become removable again.
+    select(57)
+    assert remove.isEnabled()
+    remove.click()
+    assert len(section.get_subsection_list()) == 63
