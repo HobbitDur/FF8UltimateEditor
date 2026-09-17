@@ -364,3 +364,58 @@ def test_a_rearranged_section_still_saves_and_reloads(widget, tmp_path):
     assert len(section.entry_offsets) == 93
     assert section.dangling_gotos() == []
     assert section.problems(must_return=True) == []
+
+
+WM2FIELD = PROJECT_ROOT / "extracted_files/main/wm2field.tbl"
+MAPLIST = PROJECT_ROOT / "extracted_files/field/mapdata/maplist"
+
+
+@pytest.fixture
+def widget_with_fields(widget):
+    """The tool with the two optional read-only files open as well."""
+    if not (WM2FIELD.exists() and MAPLIST.exists()):
+        pytest.skip("wm2field.tbl / maplist not available")
+    widget.load_field_entrances(str(WM2FIELD))
+    widget.load_field_names(str(MAPLIST))
+    return widget
+
+
+def test_a_warp_says_which_file_would_name_it_until_that_file_is_open(widget):
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    widget.script_list.setCurrentRow(11)
+    warp_row = next(row for row in range(widget.instruction_table.rowCount())
+                    if widget.instruction_table.cellWidget(row, 1).currentText() == "WARP_TO_FIELD")
+    assert "wm2field.tbl" in widget.instruction_table.item(warp_row, 4).text()
+
+
+def test_with_both_files_a_warp_names_the_field_it_goes_to(widget_with_fields):
+    widget = widget_with_fields
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    widget.script_list.setCurrentRow(11)
+    warp_row = next(row for row in range(widget.instruction_table.rowCount())
+                    if widget.instruction_table.cellWidget(row, 1).currentText() == "WARP_TO_FIELD")
+    assert widget.instruction_table.item(warp_row, 4).text().startswith("rgcock4, at x")
+    assert "warps to rgcock4" in widget.script_list.item(11).text()
+
+
+def test_the_scripts_that_settle_what_vehicles_48_and_50_are(widget_with_fields):
+    """Script 11 checks vehicle 50 and warps into the Ragnarok cockpit; script 7 checks 48 and
+    warps inside Balamb Garden. That pairing is the whole evidence for naming the two."""
+    widget = widget_with_fields
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+
+    def vehicle_and_destination(entry):
+        widget.script_list.setCurrentRow(entry)
+        vehicle = destination = None
+        for row in range(widget.instruction_table.rowCount()):
+            name = widget.instruction_table.cellWidget(row, 1).currentText()
+            if name == "CHECK_VEHICLE_TYPE":
+                vehicle = widget.instruction_table.item(row, 4).text()
+            elif name == "WARP_TO_FIELD":
+                destination = widget.instruction_table.item(row, 4).text()
+        return vehicle, destination
+
+    vehicle, destination = vehicle_and_destination(11)
+    assert vehicle == "the Ragnarok" and destination.startswith("rgcock4")
+    vehicle, destination = vehicle_and_destination(7)
+    assert vehicle == "Balamb Garden" and destination.startswith("bgsido_4")

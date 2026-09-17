@@ -113,10 +113,9 @@ OPCODE_LIST = [
     Opcode(0xFF07, "CHECK_TILE_POSITION", CONDITION, WORD,
            "The player stands on the 2048-unit map square param = tile_x + tile_y * 128."),
     Opcode(0xFF09, "CHECK_VEHICLE_TYPE", CONDITION, WORD,
-           "The vehicle the player rides matches param. 33 bike, 49 the two big ships, 128 on "
-           "foot, 129 the walking party, 130 Galbadia aircraft, 131 trains, 132/133 cars. "
-           "48 and 50 are the Ragnarok and the mobile Balamb Garden, but which is which is not "
-           "settled: the community notes and the IDB's own model tables disagree."),
+           "The vehicle the player rides matches param. 33 bike, 48 Balamb Garden, 49 the two "
+           "big ships, 50 the Ragnarok, 128 on foot, 129 the walking party, 130 Galbadia "
+           "aircraft, 131 trains, 132/133 cars."),
     Opcode(0xFF0F, "X_GREATER_THAN", CONDITION, WORD,
            "param is greater than the player X inside the current segment (X & 0x1FFF)."),
     Opcode(0xFF10, "Y_GREATER_THAN", CONDITION, WORD,
@@ -128,12 +127,12 @@ OPCODE_LIST = [
     Opcode(0xFF17, "CHECK_ENTITY_PROXIMITY", CONDITION, WORD,
            "A world object of model class param is spawned, visible and on screen."),
     Opcode(0xFF18, "CHECK_VEHICLE_APPROACHING", CONDITION, WORD,
-           "Vehicle param is in its approach state: 50 needs world state 6, 48 needs 9. Only "
-           "those two values ever pass. See CHECK_VEHICLE_TYPE on what 48 and 50 are.",
+           "Vehicle param is in its approach state: 50 (the Ragnarok) needs world state 6, "
+           "48 (Balamb Garden) needs 9. No other value ever passes.",
            aliases=("CHECK_VEHICLE_ENTERING", "CHECK_VEHICLE_DOCKING_IN_PROGRESS")),
     Opcode(0xFF19, "CHECK_VEHICLE_ACTIVE", CONDITION, WORD,
-           "Vehicle param is boarded and active: 50 needs world state 5, 48 needs 8. Only those "
-           "two values ever pass. See CHECK_VEHICLE_TYPE on what 48 and 50 are.",
+           "Vehicle param is boarded and active: 50 (the Ragnarok) needs world state 5, "
+           "48 (Balamb Garden) needs 8. No other value ever passes.",
            aliases=("CHECK_VEHICLE_BOARDED", "CHECK_VEHICLE_DOCKED")),
     Opcode(0xFF1A, "CHECK_TOUCHED_ENTITY", CONDITION, WORD,
            "The object the player just touched has model class param.",
@@ -202,8 +201,8 @@ OPCODE_LIST = [
     Opcode(0xFF13, "ADD_ENTITY", ACTION, TWO_BYTES,
            "Spawns world object of model class param1 at position record param2 of section 10 "
            "(0xFF means it places itself). Model classes are their own numbering, not the vehicle "
-           "codes: 0 Squall, 1 and 64/65 the Garden and the Ragnarok, 2/3 the two big ships, "
-           "70 a train, 73-87 cars and chocobos, 94 the Jumbo Cactuar (spawned only while GF 13, "
+           "codes: 0 Squall, 1 the Ragnarok, 64/65 Balamb Garden, 2/3 the two big ships, 70 a "
+           "train, 73-87 cars and chocobos, 94 the Jumbo Cactuar (spawned only while GF 13, "
            "Cactuar, is not owned). Section 9 only."),
     Opcode(0xFF14, "ADD_ENTITY_ALT", ACTION, TWO_BYTES,
            "Same fields and same handling as ADD_ENTITY."),
@@ -736,19 +735,20 @@ PAD_BUTTON_NAMES = ["L2", "R2", "L1", "R1", "Triangle", "Circle", "Cross", "Squa
 
 # byte_2036B70, the world-map state, as CHECK_WORLD_MAP_STATE and SET_WORLD_MAP_STATE see it.
 WORLD_MAP_STATE_NAMES = {
-    0: "normal", 5: "vehicle 50 active", 6: "vehicle 50 approaching", 7: "Shumi train",
-    8: "vehicle 48 active", 9: "vehicle 48 approaching", 10: "draw point open",
+    0: "normal", 5: "Ragnarok active", 6: "Ragnarok approaching", 7: "Shumi train",
+    8: "Balamb Garden active", 9: "Balamb Garden approaching", 10: "draw point open",
     13: "leaving to a field", 14: "player cannot move (a dialog is up)",
 }
 
-# CHECK_VEHICLE_TYPE values. 48 and 50 are left unnamed on purpose: the community notes call 48
-# Balamb Garden and 50 the Ragnarok, while the IDB's own model tables say the opposite
-# (Wm_ModelIdToVehicleCode maps world model 1 -> 50 and models 64/65 -> 48, and the same
-# function's callers name model 1 the Garden). Nothing checked so far settles it, so the tool
-# does not put a name on a number it cannot back up.
+# CHECK_VEHICLE_TYPE values. 48 and 50 were long reported both ways round; the scripts settle
+# it once a wm2field.tbl is open to say where they warp. Section 36 script 7 checks vehicle 48
+# and warps to bgsido_4, inside Balamb Garden; script 11 checks vehicle 50 and warps to rgcock4,
+# the Ragnarok cockpit. So 48 is the Garden and 50 the Ragnarok, as the community notes had it -
+# and the IDB's model tables, which say the opposite, have their labels swapped.
 VEHICLE_NAMES = {
-    33: "bike", 49: "the two big ships", 128: "on foot", 129: "the walking party",
-    130: "Galbadia aircraft", 131: "trains", 132: "cars", 133: "cars",
+    33: "bike", 48: "Balamb Garden", 49: "the two big ships", 50: "the Ragnarok",
+    128: "on foot", 129: "the walking party", 130: "Galbadia aircraft", 131: "trains",
+    132: "cars", 133: "cars",
 }
 
 
@@ -763,10 +763,12 @@ def button_mask_text(mask):
     return " + ".join(names) if names else "no button"
 
 
-# World object model classes, only the ones something in the exe actually pins down. 1, 64 and
-# 65 are the Ragnarok and the mobile Garden, but see VEHICLE_NAMES on why neither gets a name.
+# World object model classes. These are not the CHECK_VEHICLE_TYPE codes: Wm_VehicleCodeToModelId
+# maps vehicle 50 (the Ragnarok) to model 1 and vehicle 48 (Balamb Garden) to model 64, so the two
+# numberings cross over exactly where it is easiest to get them backwards.
 MODEL_CLASS_NAMES = {
-    0: "Squall", 3: "Boko (only with a Chocobo World save)",
+    0: "Squall", 1: "the Ragnarok", 3: "Boko (only with a Chocobo World save)",
+    64: "Balamb Garden", 65: "Balamb Garden (second model)",
     70: "a train", 94: "the Jumbo Cactuar (gone once GF 13 is owned)",
 }
 

@@ -14,6 +14,7 @@ from FF8GameData.gamedata import GameData
 from Chocoboy.chocoboymanager import (ChocoboyManager, SCRIPT_SECTION_LIST, TEXT_SECTION_LIST,
                                       SECTION_NAME, SECTION_DESCRIPTION, SPAWN_SCRIPT_SECTION,
                                       DIALOG_SECTION)
+from Chocoboy.fieldentrances import describe_entrance, entrance_field_name
 from Chocoboy.scripttext import section_to_text, text_to_section
 from SmallWidget.listsearchbar import ListSearchBar
 from Chocoboy.wmsetscript import (OPCODE_LIST, Instruction, to_pseudo_code, value_text,
@@ -67,6 +68,19 @@ class ChocoboyWidget(QWidget):
                                          load_callback=self.load_file, save_callback=self.save_file,
                                          file_filter="wmset*.obj;;*.obj")
 
+        # Read-only companions: the world map says "entrance 44", and only these two say that
+        # 44 is the Ragnarok cockpit. Opening a folder finds them by name, and without them the
+        # tool just shows the number.
+        self.wm2field_binding = FileBinding("wm2field.tbl", file_registry,
+                                            load_callback=self.load_field_entrances,
+                                            read_only=True)
+        # "maplist" is a bare generic name with no extension, so leaving it out of the folder
+        # scan (which is what a wildcard filter does) keeps it from turning up in every other
+        # tool's "Open folder" - it is opened on purpose instead.
+        self.maplist_binding = FileBinding("maplist", file_registry,
+                                           load_callback=self.load_field_names,
+                                           file_filter="maplist;;*", read_only=True)
+
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_script_tab(), "Scripts")
         self.tabs.addTab(self._build_text_tab(), "Texts")
@@ -76,11 +90,12 @@ class ChocoboyWidget(QWidget):
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
 
-        self.wmset_binding.load_opened_file()  # another tool may have opened a wmset already
+        for binding in self.file_bindings():
+            binding.load_opened_file()  # another tool may have opened one of these already
 
     def file_bindings(self):
-        """The one file the shared header toolbar drives for this tool."""
-        return [self.wmset_binding]
+        """The wmset this tool edits, and the two read-only files that put names on its numbers."""
+        return [self.wmset_binding, self.wm2field_binding, self.maplist_binding]
 
     def undo(self):
         """Ctrl+Z, routed here by the main window when this tool is the one shown."""
@@ -344,6 +359,16 @@ class ChocoboyWidget(QWidget):
         # Baseline = what was just read, which is what is on disk
         self._undo_stack = UndoStack(capture=self.manager.snapshot, restore=self._undo_restore)
 
+    def load_field_entrances(self, file_path):
+        """wm2field.tbl arrived: every WARP_TO_FIELD can now say where it goes."""
+        self.manager.load_field_entrances(file_path)
+        self._reload_script_section()
+
+    def load_field_names(self, file_path):
+        """maplist arrived: a destination field can now be named rather than numbered."""
+        self.manager.load_field_names(file_path)
+        self._reload_script_section()
+
     def save_file(self):
         if not self.manager.is_loaded:
             return
@@ -403,7 +428,9 @@ class ChocoboyWidget(QWidget):
                 text = dialogs.get(instruction.param2, "")
                 note = f"says \"{text.splitlines()[0][:40] if text else instruction.param2}\""
             elif code == 0xFF08:
-                note = f"warps to entrance {instruction.word}"
+                where = entrance_field_name(instruction.word, self.manager.field_entrances,
+                                            self.manager.field_names)
+                note = f"warps to {where or ('entrance ' + str(instruction.word))}"
             elif code == 0xFF2B:
                 note = f"battle {instruction.word}"
             elif code == 0xFF28:
@@ -592,6 +619,9 @@ class ChocoboyWidget(QWidget):
             return self.manager.spawn_positions.describe(instruction.param1, instruction.param2)
         if instruction.code == GOTO_CODE:
             return self._goto_target_text(section, instruction)
+        if instruction.code == 0xFF08:
+            return describe_entrance(instruction.word, self.manager.field_entrances,
+                                     self.manager.field_names)
         return value_text(instruction)
 
     def _goto_target_text(self, section, instruction):

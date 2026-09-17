@@ -8,6 +8,7 @@ rebuilds the header, so a section is free to change size.
 
 import struct
 
+from Chocoboy.fieldentrances import FieldEntranceTable, FieldNameList
 from Chocoboy.wmsetscript import ScriptSection
 
 NB_SECTION = 48
@@ -160,8 +161,9 @@ class SpawnPositionSection:
 
     # Model classes that ignore the position record and read their own saved position instead
     # (World_BuildObjectInstanceList special-cases each of them before the table lookup).
-    SAVED_POSITION_MODELS = {1: "its saved position", 64: "its saved position",
-                             65: "its saved position"}
+    SAVED_POSITION_MODELS = {1: "the Ragnarok's saved position",
+                             64: "Balamb Garden's saved position",
+                             65: "Balamb Garden's saved position"}
 
     def describe(self, model_class, index):
         """One line about where an ADD_ENTITY puts the object it spawns."""
@@ -188,6 +190,10 @@ class ChocoboyManager:
         self.script_sections = {}  # section index -> ScriptSection
         self.text_sections = {}  # section index -> TextSection
         self.spawn_positions = None  # SpawnPositionSection, what ADD_ENTITY points at
+        # Optional and read-only: with them a WARP_TO_FIELD says where it goes instead of
+        # showing the entrance number it was written with.
+        self.field_entrances = None  # wm2field.tbl
+        self.field_names = None  # field/mapdata/maplist
 
     @property
     def is_loaded(self):
@@ -231,6 +237,12 @@ class ChocoboyManager:
         with open(file_path, "wb") as out_file:
             out_file.write(file_data)
         self.file_path = file_path
+
+    def load_field_entrances(self, file_path):
+        self.field_entrances = FieldEntranceTable.from_file(file_path)
+
+    def load_field_names(self, file_path):
+        self.field_names = FieldNameList.from_file(file_path)
 
     def snapshot(self):
         """Everything the tool can change in the open file, as one comparable value.

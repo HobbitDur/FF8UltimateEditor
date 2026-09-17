@@ -113,9 +113,12 @@ and which instruction of which script a `GOTO` lands on. Selecting a line also l
 in the file that touches the same save flag, script variable, dialog or message window — which for a
 side quest spread over a dozen scripts is the only way to see the whole of it.
 
-Each line of the script list says what its script does ("gives Three Stars", "warps to entrance 17",
+Each line of the script list says what its script does ("gives Three Stars", "warps to rgcock4",
 "sets flag 61"), and Ctrl+F searches those, so finding the script behind a side quest takes a few
-letters rather than opening all 92. Whole scripts can be added, duplicated, removed and reordered —
+letters rather than opening all 92. Opening `wm2field.tbl` and `field/mapdata/maplist` alongside
+(both read-only, both found by "Open folder") is what turns a warp's entrance number into the field
+it lands on, with the spawn position and facing. Whole scripts can be added, duplicated, removed
+and reordered —
 which matters, because in sections 7 and 11 the first script whose conditions pass is the one that
 runs, so the order of the table decides the answer.
 
