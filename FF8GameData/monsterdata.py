@@ -2062,19 +2062,28 @@ class AIData:
     ELEM_DEF_DATA = {'offset': 0x160, 'size': 8, 'byteorder': 'big', 'name': 'elem_def', 'pretty_name': 'Elemental def'}
     STATUS_DEF_DATA = {'offset': 0x168, 'size': 20, 'byteorder': 'big', 'name': 'status_def', 'pretty_name': 'Status def'}
     SECTION_INFO_STAT_BYTE_FLAG_0 = {'offset': 0xF6, 'size': 1, 'byteorder': 'little', 'name': 'byte_flag_0', 'pretty_name': 'Byte Flag 0'}
-    SECTION_INFO_STAT_BYTE_FLAG_0_LIST_VALUE = ['byte0_zz1', 'byte0_zz2', 'byte0_zz3', 'byte0_unused4', 'byte0_unused5', 'byte0_unused6', 'byte0_unused7',
-                                                'byte0_unused8']
+    # Byte 246 is not a bitfield: it is the camera category, a small number (0-4 in vanilla) read
+    # once at battle start (getMonsterCameraCategory). Its bits are named for what they are.
+    SECTION_INFO_STAT_BYTE_FLAG_0_LIST_VALUE = ['camera_category_bit_0', 'camera_category_bit_1', 'camera_category_bit_2',
+                                                'camera_category_bit_3', 'camera_category_unused_5', 'camera_category_unused_6',
+                                                'camera_category_unused_7', 'camera_category_unused_8']
     SECTION_INFO_STAT_BYTE_FLAG_1 = {'offset': 0xF7, 'size': 1, 'byteorder': 'little', 'name': 'byte_flag_1', 'pretty_name': 'Byte Flag 1'}
-    SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE = ['Zombie', 'Fly', 'byte1_zz1', 'Immune NVPlus_Moins', 'Hidden HP', 'Auto-Reflect', 'Auto-Shell', 'Auto-Protect']
+    # Bit 3 has no effect: setMonsterInfoFromDatInfoSection is the only reader of byte 247 and never
+    # tests 0x04 (checked in IDA, and the enum there says so too).
+    SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE = ['Zombie', 'Fly', 'byte1_unused_3', 'Immune NVPlus_Moins', 'Hidden HP', 'Auto-Reflect', 'Auto-Shell',
+                                                'Auto-Protect']
     CARD_DATA = {'offset': 0xF8, 'size': 3, 'byteorder': 'big', 'name': 'card', 'pretty_name': 'Card data'}
     DEVOUR_DATA = {'offset': 0xFB, 'size': 3, 'byteorder': 'big', 'name': 'devour', 'pretty_name': 'Devour'}
     SECTION_INFO_STAT_BYTE_FLAG_2 = {'offset': 0xFE, 'size': 1, 'byteorder': 'little', 'name': 'byte_flag_2', 'pretty_name': 'Byte Flag 2'}
     SECTION_INFO_STAT_BYTE_FLAG_2_LIST_VALUE = ['IncreaseSurpriseRNG', 'DecreaseSurpriseRNG', 'SurpriseAttackImmunity', 'IncreaseChanceEscape', 'DecreaseChanceEscape',
                                                 'byte2_unused_6',
-                                                'Diablos-missed', 'Always obtains card']
+                                                'Gravity Immunity', 'Always obtains card']
     SECTION_INFO_STAT_BYTE_FLAG_3 = {'offset': 0xFF, 'size': 1, 'byteorder': 'little', 'name': 'byte_flag_3', 'pretty_name': 'Byte Flag 3'}
-    SECTION_INFO_STAT_BYTE_FLAG_3_LIST_VALUE = ['byte3_zz1', 'byte3_zz2', 'byte3_zz3', 'byte3_zz4', 'byte3_unused_5', 'byte3_unused_6', 'byte3_unused_7',
-                                                'byte3_unused_8']
+    # Byte 255 is not a bitfield either: it is the devour category, a number 0-8 (see the Devour
+    # system). Same idea as byte 246 - the bits are the number's bits.
+    SECTION_INFO_STAT_BYTE_FLAG_3_LIST_VALUE = ['devour_category_bit_0', 'devour_category_bit_1', 'devour_category_bit_2',
+                                                'devour_category_bit_3', 'devour_category_unused_5', 'devour_category_unused_6',
+                                                'devour_category_unused_7', 'devour_category_unused_8']
     ABILITIES_LOW_DATA = {'offset': 0x34, 'size': 64, 'byteorder': 'little', 'name': 'abilities_low', 'pretty_name': 'Abilities Low Level'}
     ABILITIES_MED_DATA = {'offset': 0x74, 'size': 64, 'byteorder': 'little', 'name': 'abilities_med', 'pretty_name': 'Abilities Medium Level'}
     ABILITIES_HIGH_DATA = {'offset': 0xB4, 'size': 64, 'byteorder': 'little', 'name': 'abilities_high', 'pretty_name': 'Abilities High Level'}

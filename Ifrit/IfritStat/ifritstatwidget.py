@@ -42,18 +42,16 @@ STAT_COLORS = {
     'spr': '#9a6fd0', 'spd': '#3cc0c0', 'eva': '#d05fb0',
 }
 
-# Placeholder bit names in AIData mapped to their real wiki meaning for display.
-# (The canonical dict keys are kept unchanged for round-trip compatibility.)
+# The few bit names that read better in a window than in a file.
 FLAG_DISPLAY_NAMES = {
-    'byte1_zz1': 'unused (bit 0x04 - no effect)',
+    'byte1_unused_3': 'unused (bit 0x04 - no effect)',
     'Immune NVPlus_Moins': 'LvUp-Down Immunity',
     'Hidden HP': 'HP Hidden',
-    'byte2_unused_6': 'unused',
-    'Diablos-missed': 'Gravity Immunity',
+    'byte2_unused_6': 'unused (bit 0x20 - no effect)',
 }
 
-# Flag bits the loader never reads — shown but not editable.
-UNUSED_FLAG_BITS = {'byte1_zz1', 'byte2_unused_6'}
+# Flag bits no code reads - shown but not editable.
+UNUSED_FLAG_BITS = {'byte1_unused_3', 'byte2_unused_6'}
 
 
 class StatCurvePlot(QWidget):
