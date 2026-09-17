@@ -113,6 +113,12 @@ and which instruction of which script a `GOTO` lands on. Selecting a line also l
 in the file that touches the same save flag, script variable, dialog or message window — which for a
 side quest spread over a dozen scripts is the only way to see the whole of it.
 
+Double-clicking a `GOTO` follows it; double-clicking a cross-reference line goes to that
+instruction. "Check section" looks for what would actually break the game — a jump to nowhere, a
+script not ending on `RETURN`, a branch whose conditions can pass with no actions to run — and
+reports nothing on the untouched game file. Ctrl+Z / Ctrl+Shift+Z undo and redo, including a whole
+text import.
+
 A whole section can be written out as a text file, annotated and edited in any editor, and read back
 in. Jump targets are written as labels there rather than byte offsets, so instructions can be
 inserted, deleted, and whole scripts added or removed, and the jumps still land where they were

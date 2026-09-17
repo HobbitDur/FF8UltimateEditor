@@ -7,6 +7,7 @@ import pathlib
 import sys
 
 import pytest
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
@@ -164,9 +165,88 @@ def test_selecting_a_flag_shows_everywhere_else_it_is_touched(widget):
 
     flag = widget.instruction_table.cellWidget(flag_row, 2).value()
     assert widget.usage_group.title() == f"What else touches save flag {flag}"
-    users = widget.usage_view.toPlainText().splitlines()
+    users = [widget.usage_view.item(row) for row in range(widget.usage_view.count())]
     assert len(users) > 1, "flag 63 is set by several scripts, not just checked by this one"
-    assert all(line.startswith("Section ") for line in users)
+    assert all(item.text().startswith("Section ") for item in users)
+    # Each line carries where it is, so double-clicking one goes there
+    assert all(item.data(Qt.ItemDataRole.UserRole) is not None for item in users)
+
+
+def test_following_a_jump_lands_on_the_instruction_it_points_at(widget):
+    """A jump's target is a byte offset, so the only way to read one is to be taken there."""
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    widget.script_list.setCurrentRow(1)
+    goto_row = next(row for row in range(widget.instruction_table.rowCount())
+                    if widget.instruction_table.cellWidget(row, 1).currentText() == "GOTO")
+    target_offset = widget.instruction_table.cellWidget(goto_row, 2).value()
+
+    widget._on_instruction_double_clicked(goto_row, 0)
+
+    selected = widget.instruction_table.currentRow()
+    assert widget.instruction_table.item(selected, 0).text() == str(target_offset)
+    assert widget.instruction_table.cellWidget(selected, 1).currentText() == "CONSUME_INPUT"
+
+
+def test_a_cross_reference_line_takes_you_to_that_script(widget):
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    widget.script_list.setCurrentRow(1)
+    flag_row = next(row for row in range(widget.instruction_table.rowCount())
+                    if widget.instruction_table.cellWidget(row, 1).currentText() == "CHECK_BIT_FLAG")
+    widget.instruction_table.setCurrentCell(flag_row, 0)
+
+    # The last line of the list is in some other script: going there must show that script
+    last = widget.usage_view.item(widget.usage_view.count() - 1)
+    section_index, offset = last.data(Qt.ItemDataRole.UserRole)
+    widget._on_usage_double_clicked(last)
+
+    assert widget.script_section_combo.currentData() == section_index
+    selected = widget.instruction_table.currentRow()
+    assert widget.instruction_table.item(selected, 0).text() == str(offset)
+
+
+def test_the_check_finds_nothing_wrong_with_the_shipped_scripts(widget):
+    """The strongest thing the check can be held to: it must not cry wolf over the real file."""
+    for section_index, section in widget.manager.script_sections.items():
+        problems = section.problems(must_return=section_index != 9)
+        assert problems == [], f"section {section_index}: {problems[:3]}"
+
+
+def test_an_edit_can_be_undone_and_redone(widget):
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    widget.script_list.setCurrentRow(0)
+    before = widget.manager.script_sections[36].instructions[1].param1
+
+    widget.instruction_table.cellWidget(1, 2).setValue(7)
+    assert widget.manager.script_sections[36].instructions[1].param1 == 7
+
+    widget.undo()
+    assert widget.manager.script_sections[36].instructions[1].param1 == before
+    widget.redo()
+    assert widget.manager.script_sections[36].instructions[1].param1 == 7
+
+
+def test_undo_brings_back_what_a_text_import_replaced(widget, tmp_path):
+    """The hardest thing to undo: an import rewrites every script of the section at once, and
+    the names and comments it brought in exist nowhere in the .obj."""
+    from Chocoboy.scripttext import section_to_text, text_to_section
+    from Chocoboy.chocoboymanager import SECTION_NAME
+
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    section = widget.manager.script_sections[36]
+    before = section.snapshot()
+
+    text = section_to_text(section, SECTION_NAME[36]).replace(
+        "=== Script #0 ===", "=== Script #0 (named by hand) ===")
+    result = text_to_section(text)
+    assert result.ok, result.errors
+    section.replace_scripts(result.scripts, result.names, result.trailing_comments)
+    widget._mark_dirty()
+    assert section.script_names[0] == "named by hand"
+
+    widget.undo()
+    assert widget.manager.script_sections[36].snapshot() == before
+    widget.redo()
+    assert widget.manager.script_sections[36].script_names[0] == "named by hand"
 
 
 def test_a_section_goes_out_to_text_and_comes_back(widget, tmp_path):

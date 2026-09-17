@@ -14,6 +14,7 @@ NB_SECTION = 48
 HEADER_SIZE = NB_SECTION * 4
 
 SCRIPT_SECTION_LIST = [7, 9, 11, 36]
+SPAWN_SCRIPT_SECTION = 9  # its scripts end on END, not RETURN: they are a plain action list
 SPAWN_POSITION_SECTION = 10  # where the entities the section 9 scripts spawn are placed
 DIALOG_SECTION = 13
 LOCATION_NAME_SECTION = 31
@@ -30,12 +31,16 @@ SECTION_NAME = {
 
 SECTION_DESCRIPTION = {
     7: "Run when the player walks onto a location entry: field warps at docks and stations, "
-       "and what a location offers when the game asks it what it could trigger.",
+       "and what a location offers when the game asks it what it could trigger. First match "
+       "wins - the scripts are tried in order and the first whose IF list passes is the one "
+       "that runs, so inserting a script can shadow a later one.",
     9: "Run when the map loads, to spawn the world objects of the current state: party, "
        "vehicles, landmarks. These end on END rather than RETURN.",
-    11: "Run when the player boards or rides a vehicle. They answer through SET_RETURN_VALUE.",
+    11: "Run when the player boards or rides a vehicle, first match wins like section 7. They "
+        "answer through SET_RETURN_VALUE.",
     36: "Evaluated every frame while the world map is up: side-quest flags, dialogs, item "
-        "rewards, forced battles, docking states.",
+        "rewards, forced battles, docking states. Unlike sections 7 and 11, every script here "
+        "is tried, not just the first one that matches.",
     13: "The dialog strings SHOW_TEXT_BOX and SHOW_CHOICE_BOX open, by id.",
     31: "The world-map location names (towns, Gardens, Tears' Point...).",
 }
@@ -112,6 +117,26 @@ class TextSection:
     def lookup(self):
         """``string id -> text``, for showing a dialog next to the opcode that opens it."""
         return {index: entry.text for index, entry in enumerate(self.entries)}
+
+    def snapshot(self):
+        return tuple(entry.text for entry in self.entries)
+
+    def restore_snapshot(self, snapshot):
+        for entry, text in zip(self.entries, snapshot):
+            entry.text = text
+
+
+class ScriptUsage:
+    """One instruction somewhere in the file that touches the thing being looked up."""
+
+    def __init__(self, section, entry, offset, text):
+        self.section = section
+        self.entry = entry
+        self.offset = offset
+        self.text = text
+
+    def __str__(self):
+        return f"Section {self.section}, script #{self.entry}, offset {self.offset}: {self.text}"
 
 
 class SpawnPositionSection:
@@ -207,6 +232,24 @@ class ChocoboyManager:
             out_file.write(file_data)
         self.file_path = file_path
 
+    def snapshot(self):
+        """Everything the tool can change in the open file, as one comparable value.
+
+        The undo stack keeps one of these per step, so it holds the six sections this tool edits
+        rather than the whole megabyte of wmsetxx.obj - the other 42 sections cannot change.
+        """
+        return (tuple(sorted((index, section.snapshot())
+                             for index, section in self.script_sections.items())),
+                tuple(sorted((index, section.snapshot())
+                             for index, section in self.text_sections.items())))
+
+    def restore_snapshot(self, snapshot):
+        script_snapshots, text_snapshots = snapshot
+        for index, section_snapshot in script_snapshots:
+            self.script_sections[index].restore_snapshot(section_snapshot)
+        for index, section_snapshot in text_snapshots:
+            self.text_sections[index].restore_snapshot(section_snapshot)
+
     def dialog_lookup(self):
         text_section = self.text_sections.get(DIALOG_SECTION)
         return text_section.lookup() if text_section else {}
@@ -227,9 +270,9 @@ class ChocoboyManager:
                 for position in range(start, end):
                     instruction = section.instructions[position]
                     if match(instruction):
-                        users.append(f"Section {index}, script #{entry}, offset "
-                                     f"{section.instruction_offset(position)}: "
-                                     f"{describe(instruction)}")
+                        users.append(ScriptUsage(index, entry,
+                                                 section.instruction_offset(position),
+                                                 describe(instruction)))
         return users
 
     def find_flag_users(self, flag):

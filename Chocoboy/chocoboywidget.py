@@ -1,17 +1,19 @@
 import os
 
-from PyQt6.QtCore import Qt, QSignalBlocker
+from PyQt6.QtCore import Qt, QSignalBlocker, QTimer
 from PyQt6.QtGui import QIcon, QFontMetrics
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QListWidget, QLabel,
                              QTableWidget, QTableWidgetItem, QHeaderView, QPlainTextEdit,
                              QPushButton, QSplitter, QTabWidget, QGroupBox, QSpinBox, QMessageBox,
-                             QAbstractItemView, QFileDialog)
+                             QAbstractItemView, QFileDialog, QListWidgetItem)
 
 from Common.filebinding import FileBinding
+from Common.undo import UndoStack
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Chocoboy.chocoboymanager import (ChocoboyManager, SCRIPT_SECTION_LIST, TEXT_SECTION_LIST,
-                                      SECTION_NAME, SECTION_DESCRIPTION)
+                                      SECTION_NAME, SECTION_DESCRIPTION, SPAWN_SCRIPT_SECTION,
+                                      DIALOG_SECTION)
 from Chocoboy.scripttext import section_to_text, text_to_section
 from Chocoboy.wmsetscript import (OPCODE_LIST, Instruction, to_pseudo_code, value_text,
                                   NO_PARAM, WORD, GOTO_CODE)
@@ -29,6 +31,9 @@ class ChocoboyWidget(QWidget):
     """
 
     VALUE_COLUMN_MAX_WIDTH = 320  # a resolved dialog line runs to hundreds of characters
+    # Held down, a spin box fires one change per step; without this every one of them would be
+    # its own undo step and Ctrl+Z would walk back through the number one unit at a time.
+    UNDO_DEBOUNCE_MS = 400
     COMBO_DECORATION_WIDTH = 46  # the drop-down arrow, the frame and the cell margins
 
     def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
@@ -41,6 +46,16 @@ class ChocoboyWidget(QWidget):
         self.game_data.load_sysfnt_data()  # the character table the world-map texts are encoded in
         self.game_data.load_item_data()  # to name the item an ADD_ITEM hands out
         self.manager = ChocoboyManager(self.game_data)
+
+        # Ctrl+Z / Ctrl+Shift+Z: the main window routes them to undo() / redo() on the shown
+        # tool. The snapshot is the six sections this tool can change, not the whole megabyte of
+        # wmsetxx.obj, so keeping forty of them costs well under a megabyte.
+        self._undo_stack = None
+        self._restoring_undo = False
+        self._undo_debounce = QTimer(self)
+        self._undo_debounce.setSingleShot(True)
+        self._undo_debounce.setInterval(self.UNDO_DEBOUNCE_MS)
+        self._undo_debounce.timeout.connect(self._commit_undo)
 
         self.setWindowTitle("Chocoboy")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
@@ -66,6 +81,42 @@ class ChocoboyWidget(QWidget):
         """The one file the shared header toolbar drives for this tool."""
         return [self.wmset_binding]
 
+    def undo(self):
+        """Ctrl+Z, routed here by the main window when this tool is the one shown."""
+        self._flush_pending_undo()  # an edit not yet folded into a step must be undoable first
+        if self._undo_stack is not None:
+            self._undo_stack.undo()
+
+    def redo(self):
+        self._flush_pending_undo()
+        if self._undo_stack is not None:
+            self._undo_stack.redo()
+
+    def _flush_pending_undo(self):
+        if self._undo_debounce.isActive():
+            self._undo_debounce.stop()
+            self._commit_undo()
+
+    def _commit_undo(self):
+        """Fold everything edited since the last step into one undo step."""
+        if self._undo_stack is not None and not self._restoring_undo:
+            self._undo_stack.commit(self.script_section_combo.currentData())
+
+    def _undo_restore(self, snapshot, tag=None):
+        """Put a snapshot back and redraw, showing the section the undone edit happened in."""
+        self._restoring_undo = True
+        try:
+            self.manager.restore_snapshot(snapshot)
+            if tag is not None:
+                index = self.script_section_combo.findData(tag)
+                if index >= 0:
+                    with QSignalBlocker(self.script_section_combo):
+                        self.script_section_combo.setCurrentIndex(index)
+            self._reload_script_section()
+            self._reload_text_section()
+        finally:
+            self._restoring_undo = False
+
     def _mark_dirty(self):
         """Tell the shared header there are unsaved edits (it puts the * in the window title).
 
@@ -74,6 +125,8 @@ class ChocoboyWidget(QWidget):
         dirty_state = getattr(self, "dirty_state", None)
         if dirty_state is not None:
             dirty_state.mark()
+        if not self._restoring_undo:
+            self._undo_debounce.start()
 
     # -- building ---------------------------------------------------------------------------
 
@@ -133,12 +186,19 @@ class ChocoboyWidget(QWidget):
                                       "scripts may have grown, shrunk, appeared or disappeared")
         self.import_button.clicked.connect(self._on_import_section)
 
+        self.check_button = QPushButton("Check section")
+        self.check_button.setToolTip("Look for what would break the game: a jump to nowhere, a "
+                                     "script not ending on RETURN, a branch with no actions")
+        self.check_button.clicked.connect(self._on_check_section)
+
         button_row = QHBoxLayout()
         button_row.addWidget(self.add_button)
         button_row.addWidget(self.remove_button)
         button_row.addSpacing(16)
         button_row.addWidget(self.export_button)
         button_row.addWidget(self.import_button)
+        button_row.addSpacing(16)
+        button_row.addWidget(self.check_button)
         button_row.addStretch(1)
 
         table_panel = QWidget()
@@ -156,8 +216,9 @@ class ChocoboyWidget(QWidget):
         pseudo_code_layout.addWidget(self.pseudo_code_view)
         pseudo_code_group.setLayout(pseudo_code_layout)
 
-        self.usage_view = QPlainTextEdit()
-        self.usage_view.setReadOnly(True)
+        self.usage_view = QListWidget()
+        self.usage_view.setToolTip("Double-click a line to go to that instruction")
+        self.usage_view.itemDoubleClicked.connect(self._on_usage_double_clicked)
         self.usage_group = QGroupBox("What else touches this")
         usage_layout = QVBoxLayout()
         usage_layout.addWidget(self.usage_view)
@@ -175,6 +236,7 @@ class ChocoboyWidget(QWidget):
         editor_splitter.setStretchFactor(0, 3)
         editor_splitter.setStretchFactor(1, 2)
         self.instruction_table.currentCellChanged.connect(self._on_instruction_selected)
+        self.instruction_table.cellDoubleClicked.connect(self._on_instruction_double_clicked)
 
         tab = QWidget()
         layout = QHBoxLayout()
@@ -237,10 +299,16 @@ class ChocoboyWidget(QWidget):
         self.tabs.setEnabled(True)
         self._reload_script_section()
         self._reload_text_section()
+        # Baseline = what was just read, which is what is on disk
+        self._undo_stack = UndoStack(capture=self.manager.snapshot, restore=self._undo_restore)
 
     def save_file(self):
-        if self.manager.is_loaded:
-            self.manager.save_file()
+        if not self.manager.is_loaded:
+            return
+        self._flush_pending_undo()  # so the state written to disk is the one undo calls clean
+        self.manager.save_file()
+        if self._undo_stack is not None:
+            self._undo_stack.mark_saved()
 
     # -- scripts ----------------------------------------------------------------------------
 
@@ -274,13 +342,59 @@ class ChocoboyWidget(QWidget):
         section = self.current_script_section
         index = self._instruction_index(row)
         if section is None or index is None:
-            self.usage_view.setPlainText("")
+            self.usage_view.clear()
             return
         instruction = section.instructions[index]
         title, users = self._usage_of(instruction)
         self.usage_group.setTitle(title)
-        self.usage_view.setPlainText("\n".join(users) if users
-                                     else "Nothing else in the file touches it.")
+        self.usage_view.clear()
+        if not users:
+            self.usage_view.addItem("Nothing else in the file touches it.")
+            return
+        for usage in users:
+            item = QListWidgetItem(str(usage))
+            item.setData(Qt.ItemDataRole.UserRole, (usage.section, usage.offset))
+            self.usage_view.addItem(item)
+
+    def _on_instruction_double_clicked(self, row, _column):
+        """Double-clicking a jump follows it, which is the only way to read one at a glance."""
+        section = self.current_script_section
+        index = self._instruction_index(row)
+        if section is None or index is None:
+            return
+        instruction = section.instructions[index]
+        if instruction.code != GOTO_CODE:
+            return
+        target = section.index_at_offset(instruction.word)
+        if target is not None:
+            self._show_instruction(self.script_section_combo.currentData(),
+                                   section.instruction_offset(target))
+
+    def _on_usage_double_clicked(self, item):
+        place = item.data(Qt.ItemDataRole.UserRole)
+        if place is not None:
+            self._show_instruction(*place)
+
+    def _show_instruction(self, section_index, offset):
+        """Bring one instruction of one section into view and select it."""
+        combo_index = self.script_section_combo.findData(section_index)
+        if combo_index < 0:
+            return
+        self.script_section_combo.setCurrentIndex(combo_index)
+        section = self.current_script_section
+        target = section.index_at_offset(offset)
+        if target is None:
+            return
+        owners = [entry for entry in range(len(section.entry_offsets))
+                  if section.script_range(entry)[0] <= target < section.script_range(entry)[1]]
+        if not owners:
+            return
+        self.script_list.setCurrentRow(owners[0])
+        for row in range(self.instruction_table.rowCount()):
+            if self._instruction_index(row) == target:
+                self.instruction_table.setCurrentCell(row, 0)
+                self.instruction_table.scrollToItem(self.instruction_table.item(row, 0))
+                return
 
     def _usage_of(self, instruction):
         """(what is being looked up, everywhere it is used) for the selected instruction."""
@@ -415,7 +529,12 @@ class ChocoboyWidget(QWidget):
         return f"item {item_id}"
 
     def _instruction_index(self, row):
-        """The stream index the table row stands for (rows show one script, the stream is shared)."""
+        """The stream index the table row stands for, or None when the row is not one.
+
+        Emptying the table makes Qt report the selection moving to row -1, so "no row" has to be
+        an answer here rather than something the caller has to think about."""
+        if row < 0:
+            return None
         item = self.instruction_table.item(row, 0)
         return item.data(Qt.ItemDataRole.UserRole) if item else None
 
@@ -503,6 +622,24 @@ class ChocoboyWidget(QWidget):
         QMessageBox.information(self, f"Chocoboy - Section {index} imported",
                                 "\n".join(result.warnings))
 
+    def _on_check_section(self):
+        section = self.current_script_section
+        if section is None:
+            return
+        index = self.script_section_combo.currentData()
+        problems = section.problems(must_return=index != SPAWN_SCRIPT_SECTION)
+        if not problems:
+            QMessageBox.information(
+                self, f"Chocoboy - Section {index}",
+                f"Nothing wrong with the {len(section.entry_offsets)} script(s) of this section.")
+            return
+        lines = [f"Script #{entry}, offset {offset}: {message}"
+                 for entry, offset, message in problems[:40]]
+        if len(problems) > 40:
+            lines.append(f"... and {len(problems) - 40} more")
+        QMessageBox.warning(self, f"Chocoboy - Section {index}",
+                            f"{len(problems)} problem(s):\n\n" + "\n".join(lines))
+
     def _reload_script_section_keeping_selection(self):
         """Redraw after an edit that moved offsets: every script's header line changed too."""
         entry = self.script_list.currentRow()
@@ -549,9 +686,10 @@ class ChocoboyWidget(QWidget):
                 self.text_users_view.setPlainText("")
                 return
             self.text_edit.setPlainText(section.entries[row].text)
-        users = self.manager.find_text_users(row) if section.index == 13 else []
+        users = self.manager.find_text_users(row) if section.index == DIALOG_SECTION else []
         self.text_users_view.setPlainText(
-            "\n".join(users) if users else "No script opens this text.")
+            "\n".join(str(usage) for usage in users) if users
+            else "No script opens this text.")
 
     def _on_text_edited(self):
         section = self.current_text_section

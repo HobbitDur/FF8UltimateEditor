@@ -261,3 +261,78 @@ def test_real_wmset_dialogs_are_reachable_from_the_scripts(game_data):
     lookup = manager.dialog_lookup()
     assert len(lookup) > 100
     assert manager.find_text_users(61), "dialog 61 (the Obel Lake shadow) should be opened by a script"
+
+
+# --- the structure check -----------------------------------------------------------------------
+
+def test_the_check_passes_a_well_formed_if_else_chain():
+    section = ScriptSection(36, build_script_section(
+        [0],
+        [(0xFF01,), (0xFF27, 5, 1), (0xFF04,), (0xFF0A,), (0xFF20, 64, 0), (0xFF0B,),
+         (0xFF28, 5, 0), (0xFF05,), (0xFF0D,), (0xFF28, 5, 1), (0xFF05,), (0xFF05,), (0xFF16,)]))
+    assert section.problems(must_return=True) == []
+
+
+def test_the_check_catches_a_script_that_does_not_end_on_return():
+    section = ScriptSection(36, build_script_section([0], [(0xFF36,), (0xFF05,)]))
+    problems = section.problems(must_return=True)
+    assert len(problems) == 1
+    assert "instead of RETURN" in problems[0][2]
+    assert section.problems(must_return=False) == []  # section 9's lists end on END on purpose
+
+
+def test_the_check_catches_a_branch_with_no_actions():
+    """An IF_BLOCK whose conditions can pass but that has no THEN: the interpreter never gets to
+    return an action pointer for it, so the branch silently does nothing."""
+    section = ScriptSection(36, build_script_section(
+        [0], [(0xFF0A,), (0xFF20, 64, 0), (0xFF05,), (0xFF16,)]))
+    problems = section.problems(must_return=True)
+    assert len(problems) == 1
+    assert "no THEN" in problems[0][2]
+
+
+def test_the_check_catches_an_else_with_no_chain_to_continue():
+    section = ScriptSection(36, build_script_section([0], [(0xFF0D,), (0xFF36,), (0xFF16,)]))
+    problems = section.problems(must_return=True)
+    assert any("no IF_BLOCK chain" in message for _entry, _offset, message in problems)
+
+
+def test_the_check_catches_a_jump_to_nowhere():
+    section = ScriptSection(36, build_script_section([0], [(0xFF0E, 200, 0), (0xFF16,)]))
+    problems = section.problems(must_return=True)
+    assert len(problems) == 1
+    assert "not the start of an instruction" in problems[0][2]
+
+
+def test_an_end_closing_the_scripts_own_do_block_is_not_a_problem():
+    """Not every END belongs to an IF_BLOCK: the outermost one closes the DO block, and some
+    scripts have it while others just run into their RETURN."""
+    section = ScriptSection(36, build_script_section(
+        [0], [(0xFF01,), (0xFF27, 5, 1), (0xFF04,), (0xFF36,), (0xFF05,), (0xFF16,)]))
+    assert section.problems(must_return=True) == []
+
+
+# --- snapshots ---------------------------------------------------------------------------------
+
+def test_a_snapshot_brings_back_the_names_and_comments_too():
+    """They have nowhere to live in the .obj, so a snapshot of the bytes alone would lose them
+    the first time an edit was undone past a text import."""
+    section = ScriptSection(36, build_script_section([0], [(0xFF36,), (0xFF16,)]))
+    section.script_names[0] = "The UFO"
+    section.instructions[0].comments = ["; eats the button press"]
+    section.instructions[0].trailing = "; here"
+    section.script_trailing_comments[0] = ["; end of it"]
+    snapshot = section.snapshot()
+
+    section.script_names.clear()
+    section.instructions[0].comments = []
+    section.instructions[0].trailing = ""
+    section.script_trailing_comments.clear()
+    section.delete_instruction(0)
+
+    section.restore_snapshot(snapshot)
+    assert len(section.instructions) == 2
+    assert section.script_names == {0: "The UFO"}
+    assert section.instructions[0].comments == ["; eats the button press"]
+    assert section.instructions[0].trailing == "; here"
+    assert section.script_trailing_comments == {0: ["; end of it"]}

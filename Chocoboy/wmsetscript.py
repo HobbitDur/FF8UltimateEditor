@@ -397,6 +397,35 @@ class ScriptSection:
             if instruction.code == GOTO_CODE and instruction.word > offset:
                 instruction.set_word(instruction.word + delta)
 
+    # -- snapshots (undo) ---------------------------------------------------------------------
+
+    def snapshot(self):
+        """Everything about this section that an edit can change, as comparable plain values.
+
+        Not just the bytes: the names and comments a text import brought in have nowhere to live
+        in the .obj, so undoing back past an import has to bring them back too.
+        """
+        return (self.to_bytes(),
+                tuple(sorted(self.script_names.items())),
+                tuple(sorted((entry, tuple(lines))
+                             for entry, lines in self.script_trailing_comments.items())),
+                tuple((tuple(instruction.comments), instruction.trailing)
+                      for instruction in self.instructions))
+
+    def restore_snapshot(self, snapshot):
+        data, names, trailing_comments, notes = snapshot
+        self.entry_offsets = []
+        self.instructions = []
+        self.padding = b""
+        self._parse(data)
+        self.script_names = dict(names)
+        self.script_trailing_comments = {entry: list(lines) for entry, lines in trailing_comments}
+        for instruction, (comments, trailing) in zip(self.instructions, notes):
+            instruction.comments = list(comments)
+            instruction.trailing = trailing
+
+    # -- checking -----------------------------------------------------------------------------
+
     def dangling_gotos(self):
         """The GOTO instructions whose target is not the start of an instruction any more.
 
@@ -408,6 +437,79 @@ class ScriptSection:
             if instruction.code == GOTO_CODE and self.index_at_offset(instruction.word) is None:
                 dangling.append(index)
         return dangling
+
+    def problems(self, must_return):
+        """Everything structurally wrong with this section, as ``(entry, offset, message)``.
+
+        Only what the interpreter would actually trip over, checked against how it walks the
+        bytes - not style. ``must_return`` says whether this section's scripts are run through
+        the interpreter (7, 11 and 36, which end on RETURN) or as a plain action list (9).
+        """
+        found = []
+        for entry in range(len(self.entry_offsets)):
+            start, end = self.script_range(entry)
+            if start >= end:
+                found.append((entry, self.entry_offsets[entry],
+                              "starts outside the section's instructions"))
+                continue
+            found.extend(self._script_problems(entry, start, end, must_return))
+        return found
+
+    def _script_problems(self, entry, start, end, must_return):
+        """One script's problems.
+
+        The only structure that can be checked without knowing which conditions pass is the
+        IF_BLOCK chain, and it is not a plain nesting: an END closes the *branch*, and an
+        ELSE_IF or ELSE right after it opens the next branch of the same chain. An END with no
+        chain open is fine - that is the one closing the script's own DO block.
+        """
+        found = []
+        last = self.instructions[end - 1]
+        if must_return and last.code != RETURN_CODE:
+            found.append((entry, self.instruction_offset(end - 1),
+                          f"ends on {last.name} instead of RETURN, so the interpreter reads "
+                          "straight into whatever follows"))
+        branch_has_actions = []  # one flag per open chain: whether its current branch has a THEN
+        for index in range(start, end):
+            instruction = self.instructions[index]
+            offset = self.instruction_offset(index)
+            code = instruction.code
+            if code == 0xFF0A:
+                branch_has_actions.append(False)
+            elif code == 0xFF0B:
+                if not branch_has_actions:
+                    found.append((entry, offset, "THEN with no IF_BLOCK or ELSE_IF before it"))
+                else:
+                    branch_has_actions[-1] = True
+            elif code in (0xFF0C, 0xFF0D):
+                if not branch_has_actions:
+                    found.append((entry, offset,
+                                  f"{instruction.name} with no IF_BLOCK chain to continue"))
+                else:  # an ELSE runs its actions straight away, an ELSE_IF still needs its THEN
+                    branch_has_actions[-1] = code == 0xFF0D
+            elif code == END_CODE:
+                if branch_has_actions:
+                    if not branch_has_actions[-1]:
+                        found.append((entry, offset,
+                                      "the branch this closes has no THEN, so its conditions can "
+                                      "pass with nothing to run"))
+                    following = (self.instructions[index + 1].code if index + 1 < end else None)
+                    if following not in (0xFF0C, 0xFF0D):  # no next branch: the chain is over
+                        branch_has_actions.pop()
+            elif code == GOTO_CODE:
+                target = self.index_at_offset(instruction.word)
+                if target is None:
+                    found.append((entry, offset,
+                                  f"jumps to {instruction.word}, which is not the start of an "
+                                  "instruction"))
+                elif not start <= target < end:
+                    found.append((entry, offset,
+                                  f"jumps to {instruction.word}, outside this script - legal, "
+                                  "but nothing in the shipped file does it"))
+        for _ in branch_has_actions:
+            found.append((entry, self.instruction_offset(end - 1),
+                          "an IF_BLOCK chain is left open when the script ends"))
+        return found
 
     # -- writing ------------------------------------------------------------------------------
 
