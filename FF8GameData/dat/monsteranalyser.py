@@ -1058,15 +1058,8 @@ class MonsterAnalyser:
             elif el['name'] in AIData.BYTE_FLAG_LIST:  # Flag in byte management
                 byte_value = format((int.from_bytes(raw_data_selected)), '08b')[::-1]  # Reversing
                 value = {}
-                if el['name'] == 'byte_flag_0':
-                    byte_list = AIData.SECTION_INFO_STAT_BYTE_FLAG_0_LIST_VALUE
-                elif el['name'] == 'byte_flag_1':
-                    byte_list = AIData.SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE
-                elif el['name'] == 'byte_flag_2':
-                    byte_list = AIData.SECTION_INFO_STAT_BYTE_FLAG_2_LIST_VALUE
-                elif el['name'] == 'byte_flag_3':
-                    byte_list = AIData.SECTION_INFO_STAT_BYTE_FLAG_3_LIST_VALUE
-                else:
+                byte_list = AIData.BYTE_FLAG_VALUES.get(el['name'])
+                if byte_list is None:
                     print("Unexpected byte flag {}".format(el['name']))
                     byte_list = AIData.SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE
                 for index, bit_name in enumerate(byte_list):

@@ -18,13 +18,15 @@ A mod can also ADD spells to its kernel.bin, and then the workbook offers fewer 
 grow_list_in_workbook writes the missing ones where they are picked from and stretches the
 drop-downs to reach them.
 """
+import pathlib
 import re
 import shutil
 import zipfile
 from xml.sax.saxutils import escape, unescape
 
-from Ifrit.IfritXlsx.xlsxmanager import (REF_DATA_SHEET_TITLE, REF_DATA_COL_ABILITIES,
-                                         REF_DATA_COL_ITEM, REF_DATA_COL_MAGIC)
+from FF8GameData.monsterdata import AIData
+from Ifrit.IfritXlsx.xlsxmanager import (COL_MISC, REF_DATA_SHEET_TITLE, REF_DATA_COL_ABILITIES,
+                                         REF_DATA_COL_ITEM, REF_DATA_COL_MAGIC, ROW_BYTE_FLAG)
 
 TEXT_PATTERN = re.compile(r"(<t[^>]*>)([^<]*)(</t>)")
 SHARED_STRINGS = "xl/sharedStrings.xml"
@@ -35,6 +37,22 @@ REF_DATA_COLUMN = {
     "item": REF_DATA_COL_ITEM,
     "enemy_ability": REF_DATA_COL_ABILITIES,
 }
+
+
+def _replace_workbook(xlsx_file, entries, files):
+    """Write the patched workbook over the old one, through a file next to it: a failure half way
+    then leaves the original where it was. A workbook open in Excel cannot be replaced, and saying
+    so is more use than the error Windows gives."""
+    temporary_file = str(xlsx_file) + ".patching"
+    with zipfile.ZipFile(temporary_file, "w", zipfile.ZIP_DEFLATED) as new_workbook:
+        for info, _ in entries:
+            new_workbook.writestr(info, files[info.filename], compress_type=info.compress_type)
+    try:
+        shutil.move(temporary_file, xlsx_file)
+    except PermissionError as error:
+        pathlib.Path(temporary_file).unlink(missing_ok=True)
+        raise PermissionError(f"{xlsx_file} cannot be written to - it is open in Excel or "
+                              f"LibreOffice. Close it and run this again.") from error
 
 
 def name_renames(old_names: dict, new_names: dict) -> dict:
@@ -94,12 +112,7 @@ def rename_in_workbook(xlsx_file, renames: dict) -> dict:
     if not replaced:
         return {}
 
-    # Written next to the workbook first, so a failure half way leaves the original in place
-    temporary_file = str(xlsx_file) + ".renaming"
-    with zipfile.ZipFile(temporary_file, "w", zipfile.ZIP_DEFLATED) as new_workbook:
-        for info, content in patched:
-            new_workbook.writestr(info, content, compress_type=info.compress_type)
-    shutil.move(temporary_file, xlsx_file)
+    _replace_workbook(xlsx_file, patched, {info.filename: content for info, content in patched})
     return replaced
 
 
@@ -171,11 +184,7 @@ def grow_list_in_workbook(xlsx_file, list_name: str, texts: list) -> int:
             if grown != text:
                 files[name] = grown.encode("utf8")
 
-    temporary_file = str(xlsx_file) + ".growing"
-    with zipfile.ZipFile(temporary_file, "w", zipfile.ZIP_DEFLATED) as new_workbook:
-        for info, _ in entries:
-            new_workbook.writestr(info, files[info.filename], compress_type=info.compress_type)
-    shutil.move(temporary_file, xlsx_file)
+    _replace_workbook(xlsx_file, entries, files)
     return len(missing)
 
 
@@ -248,3 +257,50 @@ def _column_style(sheet: str, letter: str) -> str:
 def _last_row(sheet: str) -> int:
     rows = [int(match.group(1)) for match in ROW_PATTERN.finditer(sheet)]
     return max(rows) if rows else 0
+
+
+# ---------------------------------------------------------------------------------------------
+# Relabelling the bit flags
+# ---------------------------------------------------------------------------------------------
+
+def refresh_byte_flag_labels(xlsx_file) -> dict:
+    """Label the bit flags of every monster sheet with what the tools call them today.
+
+    A bit IS its position in the byte; its name is only what the tools call it, and those are
+    still being found - byte 2's first five were "byte2_zz1", "byte2_unused_3"... until someone
+    worked out what they do. A workbook keeps whatever it was written with, so the labels are
+    rewritten in place, by position, leaving the values beside them exactly where they are.
+
+    Returns {old label: new label} for the ones that changed."""
+    labels = [label for flag in AIData.BYTE_FLAG_LIST for label in AIData.BYTE_FLAG_VALUES[flag]]
+    letter = column_letter(COL_MISC)
+    first_row = ROW_BYTE_FLAG + 1     # The writer counts its rows from 0, a sheet from 1
+
+    with zipfile.ZipFile(xlsx_file) as workbook:
+        entries = [(info, workbook.read(info.filename)) for info in workbook.infolist()]
+        reference = _ref_data_path(workbook)
+    files = {info.filename: content for info, content in entries}
+
+    shared, indexes = _shared_strings(files[SHARED_STRINGS].decode("utf8"), labels)
+    texts = re.findall(r"<t[^>]*>([^<]*)</t>", shared)
+    changed = {}
+    for name in files:
+        if not name.startswith("xl/worksheets/sheet") or name == reference:
+            continue
+        sheet = files[name].decode("utf8")
+        for place, (label, index) in enumerate(zip(labels, indexes)):
+            pattern = re.compile(rf"(<c r=\"{letter}{first_row + place}\"[^>]*t=\"s\"[^>]*><v>)(\d+)(</v>)")
+            match = pattern.search(sheet)
+            if not match or int(match.group(2)) == index:
+                continue
+            was = unescape(texts[int(match.group(2))])
+            if was != label:
+                changed[was] = label
+            sheet = pattern.sub(match.group(1) + str(index) + match.group(3), sheet, count=1)
+        files[name] = sheet.encode("utf8")
+    if not changed:
+        return {}
+    files[SHARED_STRINGS] = shared.encode("utf8")
+
+    _replace_workbook(xlsx_file, entries, files)
+    return changed

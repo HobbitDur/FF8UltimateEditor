@@ -2137,6 +2137,12 @@ class AIData:
     SECTION_TEXTURE_DICT = {'nb_texture': 0, 'tim_offset': [], 'eof_texture': 0, 'texture_data': []}
 
     BYTE_FLAG_LIST = ['byte_flag_0', 'byte_flag_1', 'byte_flag_2', 'byte_flag_3']
+    # The bits of each flag byte, in order. A bit IS its position; the name is only what the tools
+    # call it, and those are still being found - byte 2's first five were "unused" until they were.
+    BYTE_FLAG_VALUES = {'byte_flag_0': SECTION_INFO_STAT_BYTE_FLAG_0_LIST_VALUE,
+                        'byte_flag_1': SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE,
+                        'byte_flag_2': SECTION_INFO_STAT_BYTE_FLAG_2_LIST_VALUE,
+                        'byte_flag_3': SECTION_INFO_STAT_BYTE_FLAG_3_LIST_VALUE}
     CARD_OBTAIN_ORDER = ['DROP', 'MOD', 'RARE_MOD']
     MISC_ORDER = ['med_lvl', 'high_lvl', 'extra_xp', 'xp', 'mug_rate', 'drop_rate', 'ap']
     ABILITIES_HIGHNESS_ORDER = ['abilities_low', 'abilities_med', 'abilities_high']
