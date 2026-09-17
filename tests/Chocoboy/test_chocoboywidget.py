@@ -295,3 +295,72 @@ def test_the_columns_fit_what_is_in_them_and_stay_draggable(widget):
            max(shown, key=len) == max((widget.instruction_table.cellWidget(row, 1).currentText()
                                        for row in range(widget.instruction_table.rowCount())),
                                       key=len)
+
+
+def test_each_script_line_says_what_that_script_does(widget):
+    """92 lines reading "Script #N" are no help at all; this is what makes the list navigable
+    and what the search box matches on."""
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    lines = [widget.script_list.item(row).text() for row in range(widget.script_list.count())]
+    assert any("gives Three Stars" in line for line in lines)
+    assert any("warps to entrance" in line for line in lines)
+    assert any("battle" in line for line in lines)
+
+
+def test_searching_the_list_leaves_only_the_scripts_that_do_it(widget):
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    widget.script_search.search_field.setText("Three Stars")
+    shown = [row for row in range(widget.script_list.count())
+             if not widget.script_list.item(row).isHidden()]
+    assert len(shown) == 1
+    assert "Three Stars" in widget.script_list.item(shown[0]).text()
+
+    widget.script_search.search_field.setText("")
+    assert all(not widget.script_list.item(row).isHidden()
+               for row in range(widget.script_list.count()))
+
+
+def test_a_new_script_cannot_shadow_the_ones_after_it(widget):
+    """In sections 7 and 11 the first script whose conditions pass is the one that runs, so a
+    new script that matched everything would stop every script after it from ever running."""
+    widget.script_section_combo.setCurrentIndex(0)  # section 7
+    widget.script_list.setCurrentRow(0)
+    before = widget.script_list.count()
+
+    widget._on_add_script()
+
+    section = widget.manager.script_sections[7]
+    assert len(section.entry_offsets) == before + 1
+    start, end = section.script_range(0)
+    assert [section.instructions[index].name for index in range(start, end)] == \
+           ["IF", "FAIL", "RETURN"]
+    assert section.problems(must_return=True) == []
+
+
+def test_adding_a_script_can_be_undone(widget):
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    before = widget.manager.script_sections[36].snapshot()
+    widget.script_list.setCurrentRow(0)
+    widget._on_add_script()
+    assert len(widget.manager.script_sections[36].entry_offsets) == 93
+
+    widget.undo()
+    assert widget.manager.script_sections[36].snapshot() == before
+
+
+def test_a_rearranged_section_still_saves_and_reloads(widget, tmp_path):
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    widget.script_list.setCurrentRow(1)  # the script with three jumps
+    widget._on_duplicate_script()
+    widget._on_move_script(-1)
+
+    destination = tmp_path / "wmsetus.obj"
+    widget.manager.save_file(str(destination))
+
+    from Chocoboy.chocoboymanager import ChocoboyManager
+    reloaded = ChocoboyManager(widget.game_data)
+    reloaded.load_file(str(destination))
+    section = reloaded.script_sections[36]
+    assert len(section.entry_offsets) == 93
+    assert section.dangling_gotos() == []
+    assert section.problems(must_return=True) == []

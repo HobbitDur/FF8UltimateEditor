@@ -390,6 +390,116 @@ class ScriptSection:
         del self.instructions[index]
         self._shift_targets(offset, -4)
 
+    # -- whole scripts ------------------------------------------------------------------------
+
+    def scripts(self):
+        """Each script as its own list of Instructions, sharing the objects with the stream."""
+        return [self.instructions[start:end]
+                for start, end in (self.script_range(entry)
+                                   for entry in range(len(self.entry_offsets)))]
+
+    def scripts_cover_everything(self):
+        """Whether every instruction belongs to some script.
+
+        Nothing here can be rebuilt from a list of scripts unless they account for the whole
+        stream, and the shipped file does - but an entry pointing into the middle of another
+        script would leave a gap, and the bytes in it would be dropped.
+        """
+        covered = set()
+        for entry in range(len(self.entry_offsets)):
+            covered.update(range(*self.script_range(entry)))
+        return len(covered) == len(self.instructions)
+
+    def rearrange_scripts(self, scripts, names=None, trailing_comments=None, also_aiming_at=None):
+        """Lay the section out again from a list of scripts, keeping every jump on its target.
+
+        Adding, removing or moving a script shifts byte offsets all over the section - the
+        offset table changes size the moment the script count does, which moves every script -
+        so a jump written as a number would end up somewhere else. Each jump is remembered here
+        by the instruction object it points at and rewritten to wherever that instruction lands.
+        ``also_aiming_at`` says the same thing for jumps in scripts that are not in the section
+        yet, which is what duplicating a script needs.
+        """
+        aiming_at = dict(also_aiming_at or {})
+        for instruction in self.instructions:
+            if instruction.code == GOTO_CODE:
+                target = self.index_at_offset(instruction.word)
+                if target is not None:
+                    aiming_at.setdefault(id(instruction), self.instructions[target])
+        self.replace_scripts(scripts, names, trailing_comments)
+        landed = {id(instruction): self.instruction_offset(index)
+                  for index, instruction in enumerate(self.instructions)}
+        for instruction in self.instructions:
+            target = aiming_at.get(id(instruction))
+            if target is not None and id(target) in landed:
+                instruction.set_word(landed[id(target)])
+
+    def _renumbered(self, mapping, names, trailing_comments):
+        """Move the per-script notes to where their scripts went. ``mapping`` is old -> new."""
+        return ({mapping[entry]: name for entry, name in names.items() if entry in mapping},
+                {mapping[entry]: lines for entry, lines in trailing_comments.items()
+                 if entry in mapping})
+
+    def add_script(self, at_entry, instructions):
+        """Insert a new script before ``at_entry`` (or at the end when it is the script count)."""
+        scripts = self.scripts()
+        scripts.insert(at_entry, list(instructions))
+        mapping = {entry: entry + (entry >= at_entry) for entry in range(len(scripts) - 1)}
+        names, trailing = self._renumbered(mapping, self.script_names,
+                                           self.script_trailing_comments)
+        self.rearrange_scripts(scripts, names, trailing)
+
+    def duplicate_script(self, entry):
+        """Copy a script in right after itself, with its own jumps pointing inside the copy."""
+        scripts = self.scripts()
+        original = scripts[entry]
+        copy = [Instruction(instruction.code, instruction.param1, instruction.param2)
+                for instruction in original]
+        for index, instruction in enumerate(original):
+            copy[index].comments = list(instruction.comments)
+            copy[index].trailing = instruction.trailing
+        # A jump inside the original must aim at the copy's own line, not at the original's
+        also_aiming_at = {}
+        for index, instruction in enumerate(original):
+            if instruction.code != GOTO_CODE:
+                continue
+            target = self.index_at_offset(instruction.word)
+            start, end = self.script_range(entry)
+            if target is not None and start <= target < end:
+                also_aiming_at[id(copy[index])] = copy[target - start]
+        scripts.insert(entry + 1, copy)
+        mapping = {old: old + (old > entry) for old in range(len(scripts) - 1)}
+        names, trailing = self._renumbered(mapping, self.script_names,
+                                           self.script_trailing_comments)
+        name = self.script_names.get(entry)
+        if name:
+            names[entry + 1] = f"{name} (copy)"
+        self.rearrange_scripts(scripts, names, trailing, also_aiming_at)
+
+    def remove_script(self, entry):
+        """Drop a script. A jump from elsewhere into it is left as it was, for the check to find."""
+        scripts = self.scripts()
+        del scripts[entry]
+        mapping = {old: old - (old > entry) for old in range(len(scripts) + 1) if old != entry}
+        names, trailing = self._renumbered(mapping, self.script_names,
+                                           self.script_trailing_comments)
+        self.rearrange_scripts(scripts, names, trailing)
+
+    def move_script(self, entry, to_entry):
+        """Move a script to another place in the table.
+
+        Worth doing: in sections 7 and 11 the interpreter stops at the first script whose
+        condition list passes, so the order of the table is what decides which one runs.
+        """
+        scripts = self.scripts()
+        scripts.insert(to_entry, scripts.pop(entry))
+        order = list(range(len(scripts)))
+        order.insert(to_entry, order.pop(entry))
+        mapping = {old: new for new, old in enumerate(order)}
+        names, trailing = self._renumbered(mapping, self.script_names,
+                                           self.script_trailing_comments)
+        self.rearrange_scripts(scripts, names, trailing)
+
     def _shift_targets(self, offset, delta):
         self.entry_offsets = [entry + delta if entry > offset else entry
                               for entry in self.entry_offsets]
@@ -653,11 +763,24 @@ def button_mask_text(mask):
     return " + ".join(names) if names else "no button"
 
 
+# World object model classes, only the ones something in the exe actually pins down. 1, 64 and
+# 65 are the Ragnarok and the mobile Garden, but see VEHICLE_NAMES on why neither gets a name.
+MODEL_CLASS_NAMES = {
+    0: "Squall", 3: "Boko (only with a Chocobo World save)",
+    70: "a train", 94: "the Jumbo Cactuar (gone once GF 13 is owned)",
+}
+
+
 def value_text(instruction):
     """What this instruction's parameter stands for, when the tool can say ("" when it cannot)."""
     code = instruction.code
     if code == 0xFF20:
         return button_mask_text(instruction.word)
+    if code == 0xFF07:  # the square is a single number, which hides where on the map it is
+        square = instruction.word
+        return f"map square x {square % 128}, y {square // 128}"
+    if code in (0xFF17, 0xFF1A, 0xFF1B, 0xFF1C, 0xFF1D):
+        return MODEL_CLASS_NAMES.get(instruction.word, "")
     if code == 0xFF25:
         return WORLD_MAP_STATE_NAMES.get(instruction.word, "")
     if code == 0xFF26:

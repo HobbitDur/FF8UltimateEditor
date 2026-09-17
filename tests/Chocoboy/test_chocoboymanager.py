@@ -336,3 +336,97 @@ def test_a_snapshot_brings_back_the_names_and_comments_too():
     assert section.instructions[0].comments == ["; eats the button press"]
     assert section.instructions[0].trailing == "; here"
     assert section.script_trailing_comments == {0: ["; end of it"]}
+
+
+# --- whole scripts -----------------------------------------------------------------------------
+
+def jumps_as_places(section):
+    """Every jump as (script it is in, line in that script, script it lands in, line there).
+
+    Byte offsets all move when a script is added, removed or reordered; what must not move is
+    which instruction each jump lands on, and this is the shape of that.
+    """
+    ranges = [section.script_range(entry) for entry in range(len(section.entry_offsets))]
+    places = []
+    for entry, (start, end) in enumerate(ranges):
+        for index in range(start, end):
+            instruction = section.instructions[index]
+            if instruction.code != 0xFF0E:
+                continue
+            target = section.index_at_offset(instruction.word)
+            owner = next((other for other, (first, last) in enumerate(ranges)
+                          if first <= target < last), None)
+            places.append((entry, index - start, owner,
+                           None if owner is None else target - ranges[owner][0]))
+    return places
+
+
+def a_jumping_section():
+    """Three scripts; the middle one jumps to its own last line.
+
+    The table holds 3 offsets plus the sentinel, so the instructions start at byte 16 and the
+    jump's target, instruction 5, sits at byte 36.
+    """
+    return ScriptSection(36, build_script_section(
+        [0, 2, 6],
+        [(0xFF36,), (0xFF16,),
+         (0xFF0E, 36, 0), (0xFF36,), (0xFF36,), (0xFF16,),
+         (0xFF36,), (0xFF16,)]))
+
+
+def test_adding_a_script_moves_every_other_one_and_keeps_the_jumps():
+    section = a_jumping_section()
+    before = jumps_as_places(section)
+    section.add_script(0, [Instruction(0xFF01), Instruction(0xFF1E), Instruction(0xFF16)])
+
+    assert len(section.entry_offsets) == 4
+    assert section.table_size == 20  # one more offset: every script moved 4 bytes further on
+    # The jump was in script 1 and is now in script 2, still landing on the same line of it
+    assert [(entry - 1, line, owner - 1, target)
+            for entry, line, owner, target in jumps_as_places(section)] == before
+    assert section.dangling_gotos() == []
+
+
+def test_a_duplicated_script_jumps_inside_itself_not_into_the_original():
+    section = a_jumping_section()
+    section.duplicate_script(1)
+
+    assert len(section.entry_offsets) == 4
+    places = jumps_as_places(section)
+    assert (1, 0, 1, 3) in places, "the original still jumps to its own last line"
+    assert (2, 0, 2, 3) in places, "and so does the copy, into the copy"
+
+
+def test_removing_a_script_renumbers_the_rest_and_keeps_the_jumps():
+    section = a_jumping_section()
+    section.remove_script(0)
+
+    assert len(section.entry_offsets) == 2
+    assert jumps_as_places(section) == [(0, 0, 0, 3)]
+    assert section.dangling_gotos() == []
+
+
+def test_moving_a_script_changes_which_one_answers_first():
+    """The order of the table is what decides which script runs in sections 7 and 11, so moving
+    one is a real edit, not a cosmetic one."""
+    section = a_jumping_section()
+    section.move_script(2, 0)
+
+    assert len(section.entry_offsets) == 3
+    assert jumps_as_places(section) == [(2, 0, 2, 3)]  # the jumping script is now the last
+    assert section.dangling_gotos() == []
+
+
+def test_the_names_follow_their_scripts_when_one_moves():
+    section = a_jumping_section()
+    section.script_names = {0: "first", 1: "jumper", 2: "last"}
+    section.move_script(0, 2)
+    assert section.script_names == {2: "first", 0: "jumper", 1: "last"}
+
+
+def test_a_section_whose_scripts_leave_a_gap_says_so():
+    """Rebuilding from a list of scripts would drop instructions belonging to none of them."""
+    section = ScriptSection(36, build_script_section(
+        [0], [(0xFF16,), (0xFF36,), (0xFF16,)]))  # the last two lines belong to no script
+    assert not section.scripts_cover_everything()
+    assert a_jumping_section().scripts_cover_everything()

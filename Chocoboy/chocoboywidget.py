@@ -15,6 +15,7 @@ from Chocoboy.chocoboymanager import (ChocoboyManager, SCRIPT_SECTION_LIST, TEXT
                                       SECTION_NAME, SECTION_DESCRIPTION, SPAWN_SCRIPT_SECTION,
                                       DIALOG_SECTION)
 from Chocoboy.scripttext import section_to_text, text_to_section
+from SmallWidget.listsearchbar import ListSearchBar
 from Chocoboy.wmsetscript import (OPCODE_LIST, Instruction, to_pseudo_code, value_text,
                                   NO_PARAM, WORD, GOTO_CODE)
 
@@ -142,14 +143,20 @@ class ChocoboyWidget(QWidget):
 
         self.script_list = QListWidget()
         self.script_list.currentRowChanged.connect(self._on_script_changed)
+        # Each line says what its script does, so this searches the section's behaviour: type
+        # "Three Stars", "flag 61" or "battle" and only the scripts doing it are left.
+        self.script_search = ListSearchBar(self.script_list, match_index=True,
+                                           placeholder="Search the scripts (Ctrl+F)")
 
         script_group = QGroupBox("Scripts")
         script_group_layout = QVBoxLayout()
         script_group_layout.addWidget(self.script_section_combo)
         script_group_layout.addWidget(self.script_section_note)
+        script_group_layout.addWidget(self.script_search)
         script_group_layout.addWidget(self.script_list)
+        script_group_layout.addLayout(self._build_script_buttons())
         script_group.setLayout(script_group_layout)
-        script_group.setFixedWidth(330)
+        script_group.setFixedWidth(360)
 
         self.instruction_table = QTableWidget()
         self.instruction_table.setColumnCount(6)
@@ -245,6 +252,41 @@ class ChocoboyWidget(QWidget):
         tab.setLayout(layout)
         return tab
 
+    def _build_script_buttons(self):
+        """Adding, copying, removing and reordering whole scripts.
+
+        Reordering is not cosmetic in sections 7 and 11: the interpreter stops at the first
+        script whose condition list passes, so the order of the table is what decides which one
+        runs, and a script moved up can shadow the one that used to answer.
+        """
+        self.add_script_button = QPushButton("Add")
+        self.add_script_button.setToolTip("Insert an empty script before the selected one. It is "
+                                          "an IF / FAIL / RETURN, which never matches, so it "
+                                          "cannot shadow anything until you fill it in")
+        self.add_script_button.clicked.connect(self._on_add_script)
+
+        self.duplicate_script_button = QPushButton("Duplicate")
+        self.duplicate_script_button.setToolTip("Copy the selected script in right after it, "
+                                                "with its jumps pointing inside the copy")
+        self.duplicate_script_button.clicked.connect(self._on_duplicate_script)
+
+        self.remove_script_button = QPushButton("Remove")
+        self.remove_script_button.setToolTip("Delete the selected script")
+        self.remove_script_button.clicked.connect(self._on_remove_script)
+
+        self.move_up_button = QPushButton("Up")
+        self.move_up_button.setToolTip("Move the script one place earlier in the table")
+        self.move_up_button.clicked.connect(lambda: self._on_move_script(-1))
+        self.move_down_button = QPushButton("Down")
+        self.move_down_button.setToolTip("Move the script one place later in the table")
+        self.move_down_button.clicked.connect(lambda: self._on_move_script(1))
+
+        row = QHBoxLayout()
+        for button in (self.add_script_button, self.duplicate_script_button,
+                       self.remove_script_button, self.move_up_button, self.move_down_button):
+            row.addWidget(button)
+        return row
+
     def _build_text_tab(self):
         self.text_section_combo = QComboBox()
         for index in TEXT_SECTION_LIST:
@@ -327,12 +369,54 @@ class ChocoboyWidget(QWidget):
         with QSignalBlocker(self.script_list):
             self.script_list.clear()
             if section is not None:
-                for entry, offset in enumerate(section.entry_offsets):
-                    self.script_list.addItem(f"Script #{entry}  (offset {offset})")
+                for entry in range(len(section.entry_offsets)):
+                    self.script_list.addItem(self._script_line(section, entry))
+        self.script_search.search()  # a refilled list has to be filtered again
         if self.script_list.count():
             self.script_list.setCurrentRow(0)
         else:
             self._reload_instructions()
+
+    def _script_line(self, section, entry):
+        """One line of the script list: its number, its name, and what it does.
+
+        Without the last part the list is 92 identical lines, and there is no way to find the
+        script that gives the Three Stars except by opening all of them. It doubles as what the
+        search box matches on.
+        """
+        name = section.script_names.get(entry)
+        summary = ", ".join(self._script_summary(section, entry)[:4])
+        head = f"#{entry}" + (f" {name}" if name else "")
+        return f"{head} - {summary}" if summary else head
+
+    def _script_summary(self, section, entry):
+        """The handful of things a script does that tell you which script it is."""
+        dialogs = self.manager.dialog_lookup()
+        seen = []
+        start, end = section.script_range(entry)
+        for index in range(start, end):
+            instruction = section.instructions[index]
+            code = instruction.code
+            if code == 0xFF37:
+                note = f"gives {self._item_name(instruction.param1)}"
+            elif code in (0xFF1F, 0xFF23):
+                text = dialogs.get(instruction.param2, "")
+                note = f"says \"{text.splitlines()[0][:40] if text else instruction.param2}\""
+            elif code == 0xFF08:
+                note = f"warps to entrance {instruction.word}"
+            elif code == 0xFF2B:
+                note = f"battle {instruction.word}"
+            elif code == 0xFF28:
+                note = f"sets flag {instruction.param1}"
+            elif code in (0xFF13, 0xFF14):
+                note = f"spawns model {instruction.param1}"
+            elif code == 0xFF26:
+                note = f"world state {instruction.param1}"
+            else:
+                continue
+            if note not in seen:
+                seen.append(note)
+        return seen
 
     def _on_script_changed(self):
         self._reload_instructions()
@@ -585,6 +669,97 @@ class ChocoboyWidget(QWidget):
         section.delete_instruction(index)
         self._mark_dirty()
         self._reload_script_section_keeping_selection()
+
+    def _new_script(self):
+        """A script that does nothing and, more to the point, matches nothing.
+
+        A bare RETURN would be worse than useless in sections 7 and 11: with no condition list
+        in front of it, it matches at once and stops the scan, so every script after it would
+        stop running. IF / FAIL / RETURN can never pass, so it shadows nothing.
+        """
+        if self.script_section_combo.currentData() == SPAWN_SCRIPT_SECTION:
+            return [Instruction(0xFF05)]  # a spawn list, which ends on END rather than RETURN
+        return [Instruction(0xFF01), Instruction(0xFF1E), Instruction(0xFF16)]
+
+    def _on_add_script(self):
+        section = self.current_script_section
+        if section is None or not self._can_rearrange(section):
+            return
+        entry = max(self.script_list.currentRow(), 0)
+        section.add_script(entry, self._new_script())
+        self._after_script_change(entry)
+
+    def _on_duplicate_script(self):
+        section = self.current_script_section
+        entry = self.script_list.currentRow()
+        if section is None or entry < 0 or not self._can_rearrange(section):
+            return
+        section.duplicate_script(entry)
+        self._after_script_change(entry + 1)
+
+    def _on_remove_script(self):
+        section = self.current_script_section
+        entry = self.script_list.currentRow()
+        if section is None or entry < 0 or not self._can_rearrange(section):
+            return
+        jumps_in = [usage for usage in self._jumps_into_script(section, entry)]
+        warning = ("\n\nSomething jumps into it, and that jump will be left pointing at whatever "
+                   "takes its place:\n" + "\n".join(jumps_in)) if jumps_in else ""
+        if QMessageBox.question(self, "Chocoboy - Remove a script",
+                                f"Remove script #{entry} of section "
+                                f"{self.script_section_combo.currentData()}?" + warning
+                                ) != QMessageBox.StandardButton.Yes:
+            return
+        section.remove_script(entry)
+        self._after_script_change(min(entry, len(section.entry_offsets) - 1))
+
+    def _on_move_script(self, delta):
+        section = self.current_script_section
+        entry = self.script_list.currentRow()
+        if section is None or entry < 0 or not self._can_rearrange(section):
+            return
+        destination = entry + delta
+        if not 0 <= destination < len(section.entry_offsets):
+            return
+        section.move_script(entry, destination)
+        self._after_script_change(destination)
+
+    def _jumps_into_script(self, section, entry):
+        """The jumps from elsewhere that land inside this script, as text lines."""
+        start, end = section.script_range(entry)
+        lines = []
+        for other in range(len(section.entry_offsets)):
+            if other == entry:
+                continue
+            other_start, other_end = section.script_range(other)
+            for index in range(other_start, other_end):
+                instruction = section.instructions[index]
+                if instruction.code != GOTO_CODE:
+                    continue
+                target = section.index_at_offset(instruction.word)
+                if target is not None and start <= target < end:
+                    lines.append(f"script #{other}, offset {section.instruction_offset(index)}")
+        return lines
+
+    def _can_rearrange(self, section):
+        """Refuse to rebuild a section whose scripts do not account for all of its bytes.
+
+        Nothing in the shipped file is like that, but an entry pointing into the middle of
+        another script would leave instructions belonging to no script, and rebuilding from a
+        list of scripts would drop them.
+        """
+        if section.scripts_cover_everything():
+            return True
+        QMessageBox.warning(self, "Chocoboy - Cannot rearrange this section",
+                            "Some of this section's instructions belong to no script, so adding "
+                            "or moving one would lose them. Edit it as text instead.")
+        return False
+
+    def _after_script_change(self, entry):
+        self._mark_dirty()
+        self._reload_script_section()
+        if 0 <= entry < self.script_list.count():
+            self.script_list.setCurrentRow(entry)
 
     def _on_export_section(self):
         section = self.current_script_section
