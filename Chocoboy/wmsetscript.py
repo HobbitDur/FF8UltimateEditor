@@ -1,0 +1,461 @@
+"""The world-map script bytecode of ``wmsetxx.obj`` (sections 7, 9, 11 and 36).
+
+Every instruction is 4 bytes: a signed int16 opcode (always ``0xFFxx``, so always negative)
+followed by either one uint16 parameter or two uint8 parameters. A section is an offset table
+(one uint32 per entry point, ended by a ``0x00000000`` sentinel) followed by one single stream
+of instructions; each table entry is a byte offset *into the section* where one script starts.
+
+Two things the game does that the older notes get wrong, both checked against the interpreter
+(``Wmset_warpConditionSystem``, FF8_EN.exe 0x545F10) and against the shipped ``wmsetus.obj``:
+
+- ``GOTO`` jumps to an offset counted **from the start of the section**, the same numbers the
+  offset table uses - not from the start of the current script. So moving one instruction moves
+  every jump target after it, wherever in the section it lives.
+- A script does not stop at the next table offset, it stops at its own ``RETURN``. The offset
+  table is not sorted either - in ``wmsetus.obj`` two of section 36's scripts are stored out of
+  table order - so "this script runs to the next offset" would give one of them a negative
+  length. That is why this module keeps one instruction stream per section rather than a private
+  copy of the bytes per script.
+"""
+
+import struct
+
+# kind: what the instruction does, which is also how the pseudo-code prints it.
+CONTROL = "control"        # IF / THEN / ELSE / END structure
+CONDITION = "condition"    # tested inside an IF, passes or fails
+ACTION = "action"          # run inside a THEN block
+TERMINATOR = "terminator"  # ends the script
+
+# params: how the 2 bytes after the opcode are read.
+NO_PARAM = "none"  # both bytes ignored by the game (still stored, still written back)
+WORD = "word"      # one uint16 = param1 + param2 * 256
+TWO_BYTES = "two"  # two independent uint8
+
+
+class Opcode:
+    """One entry of the world-map instruction set.
+
+    ``aliases`` are the names the FF8ModdingWiki uses where this tool renamed an opcode to say
+    what it actually does; they are still accepted when text is pasted back in, so a script
+    written against the wiki still imports.
+    """
+
+    def __init__(self, code, name, kind, params, description, aliases=()):
+        self.code = code  # the 0xFFxx value as stored, e.g. 0xFF27
+        self.name = name
+        self.kind = kind
+        self.params = params
+        self.description = description
+        self.aliases = tuple(aliases)
+
+    @property
+    def signed_code(self):
+        return self.code - 0x10000
+
+    def __str__(self):
+        return self.name
+
+
+OPCODE_LIST = [
+    # --- Control flow -------------------------------------------------------------------------
+    Opcode(0xFF01, "IF", CONTROL, NO_PARAM,
+           "Starts a condition list: every instruction after it is tested until a THEN is met."),
+    Opcode(0xFF04, "THEN_ALWAYS", CONTROL, NO_PARAM,
+           "Starts an action block that always runs, with no condition before it.",
+           aliases=("EXEC",)),
+    Opcode(0xFF05, "END", CONTROL, NO_PARAM,
+           "Ends an action block. Also ends the whole event when the global event runner meets it.",
+           aliases=("ENDIF", "END_ACTIONS")),
+    Opcode(0xFF0A, "IF_BLOCK", CONTROL, NO_PARAM,
+           "Opens an IF structure, which a THEN / ELSE_IF / ELSE chain then fills.",
+           aliases=("IFBLOCK",)),
+    Opcode(0xFF0B, "THEN", CONTROL, NO_PARAM,
+           "The conditions passed: the actions up to the next END are the ones to run.",
+           aliases=("ELSE",)),
+    Opcode(0xFF0C, "ELSE_IF", CONTROL, NO_PARAM,
+           "The previous conditions failed: test this new condition list instead.",
+           aliases=("NESTEDIF",)),
+    Opcode(0xFF0D, "ELSE", CONTROL, NO_PARAM,
+           "Every condition above failed: run the actions up to the next END.",
+           aliases=("NESTEDELSE",)),
+    Opcode(0xFF0E, "GOTO", CONTROL, WORD,
+           "Jump to a byte offset counted from the start of the section (same origin as the "
+           "offset table), not from the start of this script."),
+    Opcode(0xFF16, "RETURN", TERMINATOR, NO_PARAM,
+           "Ends this script. Every script of sections 7, 11 and 36 ends with one."),
+    Opcode(0xFF15, "SET_RETURN_VALUE", ACTION, WORD,
+           "Sets the value the script hands back without stopping it. 3 takes the special "
+           "vehicle-warp path of section 11."),
+    Opcode(0xFF08, "WARP_TO_FIELD", TERMINATOR, WORD,
+           "Ends the script and warps: the parameter is an entrance id in wm2field.tbl.",
+           aliases=("RETURN_WITH_VALUE",)),
+    Opcode(0xFF2B, "START_BATTLE", TERMINATOR, WORD,
+           "Ends the script and starts a battle: the parameter is the encounter (scene) id.",
+           aliases=("RETURN_WITH_CODE_3",)),
+
+    # --- Conditions ---------------------------------------------------------------------------
+    Opcode(0xFF02, "STORY_AT_LEAST", CONDITION, WORD,
+           "Story progress has reached the parameter (param <= world_story_progress).",
+           aliases=("LTEQ_THAN", "GTEQ_THAN")),
+    Opcode(0xFF03, "STORY_BELOW", CONDITION, WORD,
+           "Story progress has not reached the parameter yet (param > world_story_progress).",
+           aliases=("GREATER_THAN", "LESS_THAN")),
+    Opcode(0xFF06, "CHECK_REGION_NUMBER", CONDITION, WORD,
+           "The player stands in world-map region number param."),
+    Opcode(0xFF07, "CHECK_TILE_POSITION", CONDITION, WORD,
+           "The player stands on the 2048-unit map square param = tile_x + tile_y * 128."),
+    Opcode(0xFF09, "CHECK_VEHICLE_TYPE", CONDITION, WORD,
+           "The vehicle the player rides matches param. 33 bike, 48 Balamb Garden, 49 chocobo, "
+           "50 Ragnarok, 128 on foot, 129 walking party, 130 Galbadia aircraft, 131 trains, "
+           "132/133 cars."),
+    Opcode(0xFF0F, "X_GREATER_THAN", CONDITION, WORD,
+           "param is greater than the player X inside the current segment (X & 0x1FFF)."),
+    Opcode(0xFF10, "Y_GREATER_THAN", CONDITION, WORD,
+           "param is greater than the player Y inside the current segment (Y & 0x1FFF)."),
+    Opcode(0xFF11, "X_LESS_THAN", CONDITION, WORD,
+           "param is less than the player X inside the current segment (X & 0x1FFF)."),
+    Opcode(0xFF12, "Y_LESS_THAN", CONDITION, WORD,
+           "param is less than the player Y inside the current segment (Y & 0x1FFF)."),
+    Opcode(0xFF17, "CHECK_ENTITY_PROXIMITY", CONDITION, WORD,
+           "A world object of model class param is spawned, visible and on screen."),
+    Opcode(0xFF18, "CHECK_VEHICLE_APPROACHING", CONDITION, WORD,
+           "Vehicle param is in its approach state: 50 (Ragnarok) needs world state 6, "
+           "48 (Balamb Garden) needs 9.",
+           aliases=("CHECK_VEHICLE_ENTERING", "CHECK_VEHICLE_DOCKING_IN_PROGRESS")),
+    Opcode(0xFF19, "CHECK_VEHICLE_ACTIVE", CONDITION, WORD,
+           "Vehicle param is boarded and active: 50 (Ragnarok) needs world state 5, "
+           "48 (Balamb Garden) needs 8.",
+           aliases=("CHECK_VEHICLE_BOARDED", "CHECK_VEHICLE_DOCKED")),
+    Opcode(0xFF1A, "CHECK_TOUCHED_ENTITY", CONDITION, WORD,
+           "The object the player just touched has model class param.",
+           aliases=("CHECK_CHARACTER_LOCATION",)),
+    Opcode(0xFF1B, "CHECK_TOUCHED_ENTITY_NO_VEHICLE", CONDITION, WORD,
+           "Same as CHECK_TOUCHED_ENTITY, but the 7 reserved party/vehicle slots do not count.",
+           aliases=("CHECK_CHARACTER_LOCATION_EX",)),
+    Opcode(0xFF1C, "CHECK_FACED_ENTITY", CONDITION, WORD,
+           "The object the player faces has model class param and the player looks within "
+           "512 angle units (~11 degrees) of it.",
+           aliases=("CHECK_CHARACTER_LOCATION_2",)),
+    Opcode(0xFF1D, "CHECK_FACED_ENTITY_NO_VEHICLE", CONDITION, WORD,
+           "Same as CHECK_FACED_ENTITY, but the 7 reserved party/vehicle slots do not count.",
+           aliases=("CHECK_CHARACTER_DISTANCE",)),
+    Opcode(0xFF1E, "FAIL", CONDITION, NO_PARAM,
+           "Always fails, which forces the ELSE branch."),
+    Opcode(0xFF20, "CHECK_BUTTON_INPUT", CONDITION, WORD,
+           "A button was pressed this frame. param is a button mask; 0xFFFF means any button or "
+           "a stick push past 45. Never passes after CONSUME_INPUT."),
+    Opcode(0xFF21, "CHECK_BATTLE_STATE", CONDITION, WORD,
+           "The party save flag at offset 109 (battle just resolved) equals param."),
+    Opcode(0xFF22, "CHECK_LOCATION_ENTRY_INDEX", CONDITION, WORD,
+           "The location block currently being drawn is entry number param.",
+           aliases=("CHECK_LOCATION_DRAW_REGISTER",)),
+    Opcode(0xFF25, "CHECK_WORLD_MAP_STATE", CONDITION, WORD,
+           "The world-map state byte equals param. 0 normal, 5 Ragnarok active, 6 Ragnarok "
+           "approaching, 7 Shumi train, 8 Garden active, 9 Garden approaching, 10 draw point, "
+           "13 leaving to a field, 14 vehicle transition."),
+    Opcode(0xFF27, "CHECK_BIT_FLAG", CONDITION, TWO_BYTES,
+           "Save-game world bit param1 (0-63) equals param2 (0 or 1). This is the side-quest "
+           "flag the world map keeps in the save file."),
+    Opcode(0xFF29, "CHECK_DIALOG_ANSWERED", CONDITION, WORD,
+           "Message window param has an answer picked, and remembers which one for "
+           "COMPARE_DIALOG_RESPONSE.",
+           aliases=("CHECK_DIALOG_STATE", "CHECK_DIALOG_CHOICE_PICKED")),
+    Opcode(0xFF2A, "COMPARE_DIALOG_RESPONSE", CONDITION, WORD,
+           "The answer remembered by CHECK_DIALOG_ANSWERED equals param."),
+    Opcode(0xFF2C, "CHECK_DIALOG_OPEN", CONDITION, TWO_BYTES,
+           "Message window param1 being open equals param2 (1 open, 0 closed).",
+           aliases=("CHECK_DIALOG_ACTIVE", "CHECK_DIALOG_CONFIRMED")),
+    Opcode(0xFF2D, "COMPARE_SCRIPT_VAR", CONDITION, TWO_BYTES,
+           "Save-game script byte param1 (0 or 1) equals param2."),
+    Opcode(0xFF2F, "CHECK_RANDOM_NUMBER", CONDITION, WORD,
+           "A random 16-bit draw is below param. 0 never passes, 65535 always does."),
+    Opcode(0xFF30, "COMPARE_SCRIPT_VAR_GT", CONDITION, TWO_BYTES,
+           "param2 is greater than save-game script byte param1."),
+    Opcode(0xFF31, "COMPARE_SCRIPT_VAR_LT", CONDITION, TWO_BYTES,
+           "param2 is less than save-game script byte param1."),
+    Opcode(0xFF32, "CHECK_LOCATION_FLAG", CONDITION, WORD,
+           "Bit 3 of the drawn location block's flag byte, inverted, equals param."),
+    Opcode(0xFF33, "COMPARE_LOCATION_BYTE", CONDITION, TWO_BYTES,
+           "The drawn location block's byte at offset 13 equals param1."),
+    Opcode(0xFF34, "CHECK_COMBAT_SCENE_ID", CONDITION, WORD,
+           "The last encounter (scene) id equals param."),
+    Opcode(0xFF35, "CHECK_BATTLE_ESCAPED", CONDITION, NO_PARAM,
+           "The last battle was escaped from. Reads no parameter.",
+           aliases=("CHECK_BATTLE_RESULT",)),
+    Opcode(0xFF38, "CHECK_MOVEMENT", CONDITION, WORD,
+           "The player moving equals param (1 moving, 0 standing still)."),
+    Opcode(0xFF39, "CHECK_BATTLEVAR", CONDITION, WORD,
+           "An as-yet unidentified save-game battle variable equals param."),
+
+    # --- Actions ------------------------------------------------------------------------------
+    Opcode(0xFF13, "ADD_ENTITY", ACTION, TWO_BYTES,
+           "Spawns world object of model class param1 at position record param2 of section 10 "
+           "(0xFF keeps the default). Section 9 only."),
+    Opcode(0xFF14, "ADD_ENTITY_ALT", ACTION, TWO_BYTES,
+           "Same fields and same handling as ADD_ENTITY."),
+    Opcode(0xFF1F, "SHOW_TEXT_BOX", ACTION, TWO_BYTES,
+           "Opens message window param1 (0-12) on text param2 of section 13."),
+    Opcode(0xFF23, "SHOW_CHOICE_BOX", ACTION, TWO_BYTES,
+           "Opens message window param1 on text param2 of section 13, with two selectable "
+           "lines. Read the answer back with CHECK_DIALOG_ANSWERED."),
+    Opcode(0xFF24, "CLOSE_TEXT_BOX", ACTION, WORD,
+           "Closes message window param."),
+    Opcode(0xFF26, "SET_WORLD_MAP_STATE", ACTION, TWO_BYTES,
+           "Sets the world-map state byte to param1. See CHECK_WORLD_MAP_STATE for the values."),
+    Opcode(0xFF28, "SET_BIT_FLAG", ACTION, TWO_BYTES,
+           "Sets save-game world bit param1 (0-63) to param2 (0 or 1)."),
+    Opcode(0xFF2E, "SET_SCRIPT_VAR", ACTION, TWO_BYTES,
+           "Sets save-game script byte param1 (0 or 1) to param2."),
+    Opcode(0xFF36, "CONSUME_INPUT", ACTION, NO_PARAM,
+           "Eats this frame's button press, so no later CHECK_BUTTON_INPUT passes.",
+           aliases=("SET_GLOBAL_EVENT_TRIGGERED",)),
+    Opcode(0xFF37, "ADD_ITEM", ACTION, TWO_BYTES,
+           "Puts param2 copies of item param1 in the inventory."),
+]
+
+OPCODE_BY_CODE = {opcode.code: opcode for opcode in OPCODE_LIST}
+OPCODE_BY_NAME = {}
+for _opcode in OPCODE_LIST:
+    OPCODE_BY_NAME[_opcode.name] = _opcode
+    for _alias in _opcode.aliases:
+        OPCODE_BY_NAME.setdefault(_alias, _opcode)
+
+RETURN_CODE = 0xFF16
+GOTO_CODE = 0xFF0E
+END_CODE = 0xFF05
+
+
+class Instruction:
+    """One 4-byte world-map instruction, kept as read so an unknown opcode still round-trips."""
+
+    def __init__(self, code, param1=0, param2=0):
+        self.code = code & 0xFFFF
+        self.param1 = param1 & 0xFF
+        self.param2 = param2 & 0xFF
+
+    @classmethod
+    def from_bytes(cls, data, offset):
+        code, param1, param2 = struct.unpack_from("<HBB", data, offset)
+        return cls(code, param1, param2)
+
+    def to_bytes(self):
+        return struct.pack("<HBB", self.code, self.param1, self.param2)
+
+    @property
+    def opcode(self):
+        """The known Opcode, or None when the bytes are not an instruction this tool knows."""
+        return OPCODE_BY_CODE.get(self.code)
+
+    @property
+    def name(self):
+        opcode = self.opcode
+        return opcode.name if opcode else f"RAW_{self.code:04X}"
+
+    @property
+    def word(self):
+        """The two parameter bytes read as the single uint16 the game uses for WORD opcodes."""
+        return self.param1 + self.param2 * 256
+
+    def set_word(self, value):
+        value &= 0xFFFF
+        self.param1 = value & 0xFF
+        self.param2 = value >> 8
+
+    def param_text(self):
+        """The parameters the way the game reads them for this opcode."""
+        opcode = self.opcode
+        if opcode is None:
+            return f"{self.param1}, {self.param2}"
+        if opcode.params == NO_PARAM:
+            return ""
+        if opcode.params == WORD:
+            return str(self.word)
+        return f"{self.param1}, {self.param2}"
+
+    def __str__(self):
+        parameters = self.param_text()
+        return f"{self.name} {parameters}".strip()
+
+
+class ScriptSection:
+    """One generic script section of wmsetxx.obj: an offset table plus one instruction stream.
+
+    The instructions are held once, in file order, and ``entry_offsets`` points into them. That
+    is how the game reads the section, and it is the only way to keep the two entries of section
+    36 that jump into a script owned by another entry.
+    """
+
+    def __init__(self, index, section_data):
+        self.index = index
+        self.entry_offsets = []  # byte offset, from the start of the section, of each script
+        self.instructions = []
+        self.padding = b""  # the zero word most sections end with, kept so saving is byte-exact
+        self.original_data = section_data  # for a section holding no script at all (see to_bytes)
+        self._parse(section_data)
+
+    def _parse(self, section_data):
+        read = 0
+        while read + 4 <= len(section_data):
+            offset = struct.unpack_from("<I", section_data, read)[0]
+            read += 4
+            if offset == 0:  # sentinel: the table ends here and the instructions start
+                break
+            self.entry_offsets.append(offset)
+        self.table_size = read
+        stream = section_data[read:]
+        while len(stream) >= 4 and stream[-4:] == b"\x00\x00\x00\x00":
+            self.padding = stream[-4:] + self.padding
+            stream = stream[:-4]
+        for offset in range(0, len(stream) - len(stream) % 4, 4):
+            self.instructions.append(Instruction.from_bytes(stream, offset))
+
+    # -- offsets ------------------------------------------------------------------------------
+
+    def instruction_offset(self, index):
+        """Where instruction ``index`` sits, counted from the start of the section."""
+        return self.table_size + index * 4
+
+    def index_at_offset(self, offset):
+        """The instruction a section offset points at, or None when it points outside the stream."""
+        index = (offset - self.table_size) // 4
+        if 0 <= index < len(self.instructions) and (offset - self.table_size) % 4 == 0:
+            return index
+        return None
+
+    def script_range(self, entry_index):
+        """The instructions of one script, as a ``(first, last_excluded)`` index pair.
+
+        A script runs from its entry point to its own RETURN, which is what the interpreter does.
+        Sections without a RETURN (section 9 spawn lists end on END instead) stop at the next
+        entry point, and a script with neither stops at the end of the section.
+        """
+        start = self.index_at_offset(self.entry_offsets[entry_index])
+        if start is None:
+            return 0, 0
+        for index in range(start, len(self.instructions)):
+            if self.instructions[index].code == RETURN_CODE:
+                return start, index + 1
+        following = [self.index_at_offset(offset) for offset in self.entry_offsets]
+        after = [index for index in following if index is not None and index > start]
+        return start, min(after) if after else len(self.instructions)
+
+    def entry_points_at(self, index):
+        """Which scripts start on instruction ``index`` (usually one, sometimes none)."""
+        offset = self.instruction_offset(index)
+        return [entry for entry, entry_offset in enumerate(self.entry_offsets) if entry_offset == offset]
+
+    # -- editing ------------------------------------------------------------------------------
+
+    def insert_instruction(self, index, instruction):
+        """Insert before instruction ``index``, moving every entry point and GOTO that follows.
+
+        A target sitting exactly on ``index`` stays put, so the new instruction joins the script
+        you are editing instead of being appended to the one before it.
+        """
+        self.instructions.insert(index, instruction)
+        self._shift_targets(self.instruction_offset(index), 4)
+
+    def delete_instruction(self, index):
+        """Delete instruction ``index``, moving every entry point and GOTO that follows.
+
+        A target sitting exactly on ``index`` stays put, so it now points at what came after the
+        deleted instruction.
+        """
+        offset = self.instruction_offset(index)
+        del self.instructions[index]
+        self._shift_targets(offset, -4)
+
+    def _shift_targets(self, offset, delta):
+        self.entry_offsets = [entry + delta if entry > offset else entry
+                              for entry in self.entry_offsets]
+        for instruction in self.instructions:
+            if instruction.code == GOTO_CODE and instruction.word > offset:
+                instruction.set_word(instruction.word + delta)
+
+    def dangling_gotos(self):
+        """The GOTO instructions whose target is not the start of an instruction any more.
+
+        Nothing here produces one - both edits move the targets - but a hand-edited file can,
+        and the game would read those 4 bytes as an instruction wherever they land.
+        """
+        dangling = []
+        for index, instruction in enumerate(self.instructions):
+            if instruction.code == GOTO_CODE and self.index_at_offset(instruction.word) is None:
+                dangling.append(index)
+        return dangling
+
+    # -- writing ------------------------------------------------------------------------------
+
+    def to_bytes(self):
+        if not self.entry_offsets:  # empty, or not a script section at all: hand the bytes back
+            return self.original_data
+        table_size = 4 * (len(self.entry_offsets) + 1)
+        if table_size != self.table_size:  # only adding or removing a script can do this
+            raise ValueError(f"Section {self.index}: the offset table changed size")
+        data = bytearray()
+        for offset in self.entry_offsets:
+            data += struct.pack("<I", offset)
+        data += b"\x00\x00\x00\x00"
+        for instruction in self.instructions:
+            data += instruction.to_bytes()
+        data += self.padding
+        return bytes(data)
+
+
+def to_pseudo_code(section, entry_index, text_lookup=None):
+    """Render one script the way the interpreter walks it: an IF / THEN / ELSE tree.
+
+    ``text_lookup`` is an optional ``id -> string`` mapping of section 13, used to show the
+    dialog a SHOW_TEXT_BOX opens next to it.
+    """
+    start, end = section.script_range(entry_index)
+    lines = []
+    depth = 0
+
+    def emit(text, offset):
+        lines.append(f"{offset:>5}  {'    ' * max(depth, 0)}{text}")
+
+    for index in range(start, end):
+        instruction = section.instructions[index]
+        offset = section.instruction_offset(index)
+        also_starts = [entry for entry in section.entry_points_at(index) if entry != entry_index]
+        for entry in also_starts:
+            lines.append(f"       <- script #{entry} starts here too")
+        code = instruction.code
+        if code == 0xFF0A:
+            emit("if", offset)
+            depth += 1
+        elif code == 0xFF01:
+            emit("if", offset)
+            depth += 1
+        elif code == 0xFF0B:
+            depth = max(depth - 1, 0)
+            emit("then", offset)
+            depth += 1
+        elif code == 0xFF04:
+            depth = max(depth - 1, 0)
+            emit("always then", offset)
+            depth += 1
+        elif code == 0xFF0C:
+            # The END that closed the branch before already stepped back out, so ELSE_IF and
+            # ELSE line up with their IF without stepping out again.
+            emit("else if", offset)
+            depth += 1
+        elif code == 0xFF0D:
+            emit("else", offset)
+            depth += 1
+        elif code == END_CODE:
+            depth = max(depth - 1, 0)
+            emit("end", offset)
+        else:
+            emit(_instruction_line(instruction, text_lookup), offset)
+    return "\n".join(lines)
+
+
+def _instruction_line(instruction, text_lookup):
+    line = str(instruction)
+    if text_lookup is not None and instruction.code in (0xFF1F, 0xFF23):
+        text = text_lookup.get(instruction.param2)
+        if text is not None:
+            line += "   ; " + text.replace("\n", " / ")
+    return line

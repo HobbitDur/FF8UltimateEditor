@@ -99,6 +99,16 @@ so a question can offer more than the standard YES/NO. Also edits the shared exa
 in-game preview (using the real FF8 font widths from `sysfnt.tdw`) shows how each question lays out
 and flags text that would overflow the vanilla window. Excel/CSV export/import for bulk editing.
 
+### Chocoboy — world map script editor (`wmsetxx.obj`)
+Edits the world map's own event bytecode, which is where every world-map side quest lives (the UFO,
+the Obel Lake rock, Chocobo forests, the train stations, boarding the Ragnarok) along with the field
+warps, forced battles and item rewards it triggers. Four script sections are shown side by side with
+the pseudo-code the game actually walks (an IF / THEN / ELSE tree), and each instruction is edited as
+an opcode and its parameters, with what it does spelled out — the dialog a `SHOW_TEXT_BOX` opens, the
+item an `ADD_ITEM` hands out. Adding or removing an instruction moves every script entry point and
+every `GOTO` in the section along with it, so the file stays readable by the game. The dialog texts
+and location names the scripts show are on a second tab, each listed with the scripts that open it.
+
 ## Other tools made by other modders (launched from the toolbar)
 
 These are external, standalone programs. The launcher can check for and download updates for them

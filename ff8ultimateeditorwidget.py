@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (QWidget, QMenuBar, QHBoxLayout, QVBoxLayout, QLabel
                              QStackedWidget, QSizePolicy, QApplication)
 
 from CCGroup.ccgroup import CCGroupWidget
+from Chocoboy.chocoboywidget import ChocoboyWidget
 from Cid.cidwidget import CidWidget
 from Common.dirtytracking import install_dirty_tracking
 from Common.fileregistry import FileRegistry
@@ -90,6 +91,7 @@ class FF8UltimateEditorWidget(QWidget):
             "Zone (mmag.bin / mmag2.bin editor)",
             "Fujin (Magic animation explorer)",
             "Watts (r0win.dat victory editor)",
+            "Chocoboy (World map script editor)",
             "Hyne (.ff8 save editor)"
         ]
 
@@ -98,8 +100,6 @@ class FF8UltimateEditorWidget(QWidget):
         # exe+wmset, ShumiTranslator's many file types) and Other (no raw game file at all - Hyne's
         # save file lives outside the install, Fujin reads an IDA research dump). Every entry must
         # be an exact HOBBIT_OPTION_ITEMS string (checked below) so a typo fails loudly, not silently.
-        # World is defined (its own folder, e.g. Cid's wmsetxx.obj) but has no tool of its own yet,
-        # so it is left out of HIDDEN_CATEGORIES' complement below - kept ready, not shown.
         self.CATEGORY_DEFINITIONS = [
             ("Battle", ["Ifrit (3D/Stat/AI/Seq/Texture)", "Alexander (Battle stage viewer)",
                         "Watts (r0win.dat victory editor)"]),
@@ -109,13 +109,13 @@ class FF8UltimateEditorWidget(QWidget):
                       "Junkshop (mwepon.bin editor)", "Odine (magsort.bin editor)",
                       "Piet (mtmag.bin editor)", "Zone (mmag.bin / mmag2.bin editor)",
                       "TonberryShop (Shop editor)", "Joker (sp2 sprite editor)"]),
-            ("World", []),  # reserved: no tool has World as its primary category yet
+            ("World", ["Chocoboy (World map script editor)"]),
             ("Main", ["SolomonRing (kernel.bin editor)", "Quezacotl (init.out editor)",
                       "Julia (Sound editor)"]),
             ("Multi", ["Cid (Draw editor)", "ShumiTranslator(All text editor)"]),
             ("Other", ["Hyne (.ff8 save editor)", "Fujin (Magic animation explorer)"]),
         ]
-        self.HIDDEN_CATEGORIES = {"World"}  # defined above, just not shown in the selector yet
+        self.HIDDEN_CATEGORIES = set()  # every category has a tool and is shown in the selector
 
         # Completeness check: every tool must belong to exactly one category, and every category
         # entry must be a real tool name (HOBBIT_OPTION_ITEMS.index below raises otherwise).
@@ -255,6 +255,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._zone_widget = ZoneTabsWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._fujin_widget = FujinWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._watts_widget = WattsWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
+        self._chocoboy_widget = ChocoboyWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._hyne_widget = HyneWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
 
 
@@ -280,6 +281,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._zone_widget) # Index 19
         self.tool_stack.addWidget(self._fujin_widget) # Index 21
         self.tool_stack.addWidget(self._watts_widget) # Watts (r0win.dat)
+        self.tool_stack.addWidget(self._chocoboy_widget) # Chocoboy (wmsetxx.obj world map scripts)
         self.tool_stack.addWidget(self._hyne_widget) # Hyne (.ff8 save editor), keep last in HOBBIT_OPTION_ITEMS
         self._piet_widget.view_in_zone_requested.connect(self._view_mmag_entry_in_zone)
 
