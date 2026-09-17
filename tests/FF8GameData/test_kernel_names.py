@@ -115,25 +115,38 @@ def test_only_an_unambiguous_name_is_renamed():
         "43:Death": {"magic": "43:Reaper", "item": "43:Doom"}}
 
 
+def _monster_workbook(game_data, tmp_path, monster_file=None):
+    """One monster written as the editor writes it: its sheet, and the ref_data sheet holding the
+    lists every drop-down of it points at."""
+    from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+    from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
+    from Ifrit.IfritXlsx.xlsxmanager import DatToXlsx
+
+    monster = MonsterAnalyser(game_data)
+    path = tmp_path / "monster.xlsx"
+    with contextlib.redirect_stdout(io.StringIO()):
+        monster.load_file_data(str(monster_file or PROJECT_ROOT / BATTLE_FILE), game_data)
+        monster.analyse_loaded_data(game_data, AIDecompiler(game_data))
+        writer = DatToXlsx()
+        writer.create_file(str(path))
+        writer.export_to_xlsx(monster, "c0m071.dat", game_data, analyse_ai=False)
+        writer.create_ref_data(game_data)
+        writer.close_file()
+    return path
+
+
 @pytest.mark.ff8data(BATTLE_FILE)
 def test_renaming_a_workbook_keeps_everything_it_holds(game_data, tmp_path):
     """The names shown change; the workbook itself - its charts, its drop-downs, the values it
     holds - is the same file with one part rewritten."""
     from FF8GameData.dat.monsteranalyser import MonsterAnalyser
     from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
-    from Ifrit.IfritXlsx.xlsxmanager import DatToXlsx
 
     monster = MonsterAnalyser(game_data)
-    decompiler = AIDecompiler(game_data)
     with contextlib.redirect_stdout(io.StringIO()):
         monster.load_file_data(str(PROJECT_ROOT / BATTLE_FILE), game_data)
-        monster.analyse_loaded_data(game_data, decompiler)
-        writer = DatToXlsx()
-        path = tmp_path / "monster.xlsx"
-        writer.create_file(str(path))
-        writer.export_to_xlsx(monster, "c0m071.dat", game_data, analyse_ai=False)
-        writer.create_ref_data(game_data)
-        writer.close_file()
+        monster.analyse_loaded_data(game_data, AIDecompiler(game_data))
+    path = _monster_workbook(game_data, tmp_path)
     before = {info.filename: zipfile.ZipFile(path).read(info.filename)
               for info in zipfile.ZipFile(path).infolist()}
 
@@ -165,3 +178,75 @@ def test_a_workbook_without_those_names_is_left_alone(game_data, tmp_path):
     path.write_bytes(b"not a workbook")
     assert xlsxnames.rename_in_workbook(path, {}) == {}
     assert path.read_bytes() == b"not a workbook"
+
+
+# ---------------------------------------------------------------------------------------------
+# A mod that ADDS spells: more of them to offer
+# ---------------------------------------------------------------------------------------------
+
+def _kernel_with_more_magic(game_data, source, destination, added_names: dict):
+    """A kernel.bin with a longer magic section, the way SolomonRing's "+ Add entry" grows it:
+    blank entries appended, and the ids 64-95 the game keeps for the GF summons skipped over."""
+    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+
+    kernel_manager = KernelManager(game_data)
+    kernel_manager.load_file(str(source))
+    by_id = {section.id: section for section in kernel_manager.section_list if section}
+    magic, texts = by_id[2], by_id[33]
+    for _ in range(max(added_names) + 1 - len(magic.get_subsection_list())):
+        magic.append_blank_subsection()
+        texts.add_text(bytearray([0x00]))
+        texts.add_text(bytearray([0x00]))
+    for id_, name in added_names.items():
+        texts.get_text_list()[id_ * 2].set_str(name)
+    kernel_manager.save_file(str(destination))
+    return destination
+
+
+@pytest.mark.ff8data(KERNEL)
+def test_spells_a_mod_adds_are_read_and_offered(game_data, tmp_path):
+    """Ids 57 to 63 are free, 64 to 95 belong to the GF summons and 96 up is free again. A spell
+    added in a free id is a change like a rename, and one past the end of the list is added to it."""
+    grown = _kernel_with_more_magic(game_data, PROJECT_ROOT / KERNEL, tmp_path / "grown.bin",
+                                    {57: "Blast Wave", 97: "Meteor Rain"})
+    changes = kernelnames.name_changes(game_data, grown, vanilla_kernel_file=PROJECT_ROOT / KERNEL)
+    assert changes == {"magic": {57: "Blast Wave", 97: "Meteor Rain"}}
+
+    spells_before = len(game_data.magic_data_json["magic"])
+    assert kernelnames.apply_names(game_data, changes) == 2
+    spells = {entry["id"]: entry["name"] for entry in game_data.magic_data_json["magic"]}
+    assert spells[57] == "Blast Wave"                      # was "Unknown 0x39", a free id
+    assert spells[97] == "Meteor Rain"                     # past the end: the list is longer now
+    assert len(game_data.magic_data_json["magic"]) == spells_before + 1
+    assert [entry["id"] for entry in game_data.magic_data_json["magic"]] == sorted(spells)
+    # The rows a grown section holds for the GF summons are padding, not names
+    assert spells[64] == "Thunder Storm (Quezacotl)"
+    game_data.load_names()
+
+
+@pytest.mark.ff8data(BATTLE_FILE)
+def test_a_workbook_offers_the_spells_added_to_it(game_data, tmp_path):
+    """The names are picked from a column of the ref_data sheet, so offering more of them is
+    writing them there and stretching every drop-down that reads it."""
+    from openpyxl import load_workbook
+
+    path = _monster_workbook(game_data, tmp_path)
+    offered = xlsxnames.list_length_in_workbook(path, "magic")
+    assert offered == len(game_data.magic_data_json["magic"])
+
+    texts = [f"{entry['id']}:{entry['name']}" for entry in game_data.magic_data_json["magic"]]
+    assert xlsxnames.grow_list_in_workbook(path, "magic", texts) == 0   # nothing new to offer
+    texts += ["97:Meteor Rain", "98:Blast Wave"]
+    assert xlsxnames.grow_list_in_workbook(path, "magic", texts) == 2
+    assert xlsxnames.list_length_in_workbook(path, "magic") == offered + 2
+
+    workbook = load_workbook(path, read_only=True, data_only=True, keep_links=False)
+    reference = workbook["ref_data"]
+    column = xlsxnames.REF_DATA_COLUMN["magic"] + 1
+    assert [reference.cell(row=offered + row, column=column).value for row in (1, 2, 3)] == \
+           [texts[-3], "97:Meteor Rain", "98:Blast Wave"]
+    workbook.close()
+
+    with zipfile.ZipFile(path) as opened:
+        sheet = opened.read("xl/worksheets/sheet1.xml").decode("utf8")
+    assert f"ref_data!$C2:$C${offered + 3}" in sheet   # the drop-down reaches the new rows

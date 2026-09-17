@@ -18,6 +18,10 @@ Those labels are worth keeping; a rename is what the mod means to say.
 
 The baseline is a vanilla kernel.bin when there is one, the json names otherwise (which also
 reports the handful of places where the shipped json and the game file spell a name differently).
+
+A mod can also make a list LONGER - the magic section is growable, so it can hold spells the game
+never had. Those ids are changes like any other: applying them extends the list, and the new
+spells are then offered wherever one is chosen, the xlsx columns included.
 """
 import json
 import pathlib
@@ -44,6 +48,22 @@ NAME_LISTS = (
     NameList("item", "item_data_json", "items", section_id=9, first_id=33),
     NameList("enemy_ability", "enemy_abilities_data_json", "abilities", section_id=4),
 )
+
+
+def _section_config(game_data, section_id: int) -> dict:
+    for config in game_data.kernel_data_json["sections"]:
+        if config["id"] == section_id:
+            return config
+    return {}
+
+
+def _reserved_ids(game_data, section_id: int) -> range:
+    """The ids a section keeps for something else - the spells 64 to 95 are the GF summons, which
+    the magic section never holds. A file grown past them has placeholder rows there ("reserved for
+    GF - do not use"), and taking those as names would rub out the summons' own names."""
+    config = _section_config(game_data, section_id)
+    start, count = config.get("gf_reserved_start"), config.get("gf_reserved_count") or 0
+    return range(start, start + count) if start is not None else range(0)
 
 
 def _texts_per_entry(game_data, section_id: int) -> int:
@@ -81,9 +101,10 @@ def _section_names(game_data, kernel_manager, section_id: int) -> list:
             for index in range(len(section.get_subsection_list()))]
 
 
-def read_names(game_data, kernel_file) -> dict:
+def read_names(game_data, kernel_file, keep_unnamed=False) -> dict:
     """Every name a kernel.bin holds, as {list name: {id: name}}. Entries the file leaves unnamed
-    are left out - the json is what names those."""
+    are left out - the json is what names those - unless keep_unnamed, which keeps them as an empty
+    name so that a caller can see how far a list goes (a mod that adds spells makes it longer)."""
     from ShumiTranslator.model.kernel.kernelmanager import KernelManager
 
     kernel_manager = KernelManager(game_data)
@@ -91,10 +112,12 @@ def read_names(game_data, kernel_file) -> dict:
     names = {}
     for name_list in NAME_LISTS:
         section_names = _section_names(game_data, kernel_manager, name_list.section_id)
+        reserved = _reserved_ids(game_data, name_list.section_id)
         found = names.setdefault(name_list.name, {})
         for index, name in enumerate(section_names):
-            if name:
-                found[name_list.first_id + index] = name
+            id_ = name_list.first_id + index
+            if id_ not in reserved and (name or keep_unnamed):
+                found[id_] = name
     return names
 
 
@@ -108,36 +131,64 @@ def json_names(game_data) -> dict:
 
 
 def name_changes(game_data, kernel_file, vanilla_kernel_file=None) -> dict:
-    """What `kernel_file` renames, as {list name: {id: name}}.
+    """What `kernel_file` renames and what it ADDS, as {list name: {id: name}}.
 
     Compared with `vanilla_kernel_file` when given - the exact answer, "what this mod changed" -
     and with the json names otherwise, which also picks up the few entries the shipped json and a
-    vanilla kernel.bin spell differently."""
+    vanilla kernel.bin spell differently.
+
+    A file can hold more entries than the game shipped (a mod adding spells), so an id the lists
+    have never had is a change too: it is what makes the new spells offered everywhere they are
+    chosen. One the mod has not named yet still takes a place, under the name the json gives the
+    ids it does not know."""
     baseline = read_names(game_data, vanilla_kernel_file) if vanilla_kernel_file else json_names(game_data)
+    known = json_names(game_data)
     changes = {}
-    for list_name, names in read_names(game_data, kernel_file).items():
-        renamed = {id_: name for id_, name in names.items() if baseline.get(list_name, {}).get(id_) != name}
-        if renamed:
-            changes[list_name] = renamed
+    for list_name, names in read_names(game_data, kernel_file, keep_unnamed=True).items():
+        for id_, name in names.items():
+            if not name:
+                if id_ in known.get(list_name, {}):
+                    continue          # The file does not name it, the json does
+                name = f"Unknown 0x{id_:02X}"   # A new id, unnamed so far: named as the json names those
+            if baseline.get(list_name, {}).get(id_) != name:
+                changes.setdefault(list_name, {})[id_] = name
     return changes
 
 
 def apply_names(game_data, changes: dict) -> int:
-    """Write `changes` into the names GameData holds. Returns how many names were changed.
+    """Write `changes` into the names GameData holds. Returns how many entries were touched.
 
     Everything showing a spell, an item or an enemy attack reads them from there, so this is what
-    makes a mod's own names appear in the xlsx, in its drop-downs and in the AI editor."""
+    makes a mod's own names appear in the xlsx, in its drop-downs and in the AI editor. An id no
+    list has yet is added, in id order: a mod that adds spells to its kernel.bin gets them offered
+    like every other one."""
     applied = 0
-    for name_list in NAME_LISTS:
-        renamed = changes.get(name_list.name) or {}
+    for name_list in _target_lists():
+        renamed = {int(id_): name for id_, name in (changes.get(name_list.name) or {}).items()}
         if not renamed:
             continue
-        for entry in getattr(game_data, name_list.game_data_field)[name_list.json_key]:
-            new_name = renamed.get(entry["id"], renamed.get(str(entry["id"])))
+        entries = getattr(game_data, name_list.game_data_field)[name_list.json_key]
+        for entry in entries:
+            new_name = renamed.pop(entry["id"], None)
             if new_name is not None and entry["name"] != new_name:
                 entry["name"] = new_name
                 applied += 1
+        if renamed:   # Ids the game never had: the mod made its list longer
+            entries.extend({"id": id_, "name": name} for id_, name in sorted(renamed.items()))
+            entries.sort(key=lambda entry: entry["id"])
+            applied += len(renamed)
     return applied
+
+
+def _target_lists() -> list:
+    """One NameList per list of names: the items come from two kernel sections but are one list,
+    and adding an entry twice would add it twice."""
+    seen, targets = set(), []
+    for name_list in NAME_LISTS:
+        if name_list.name not in seen:
+            seen.add(name_list.name)
+            targets.append(name_list)
+    return targets
 
 
 def read_changes_file(path) -> dict:
