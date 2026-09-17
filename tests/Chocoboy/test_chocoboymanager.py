@@ -126,14 +126,19 @@ def test_unknown_bytes_are_kept_as_they_are():
 
 
 def test_pseudo_code_nests_the_if_then_else_chain():
+    """The script's own condition list reads "require" / "do", not "if" / "then".
+
+    A failed condition there ends the script; a failed one inside an IF_BLOCK only picks the
+    next branch. Printing both as "if" would hide the one difference that matters.
+    """
     section = ScriptSection(36, build_script_section(
         [0],
         [(0xFF01,), (0xFF27, 5, 1), (0xFF04,), (0xFF0A,), (0xFF20, 64, 0), (0xFF0B,),
          (0xFF28, 5, 0), (0xFF05,), (0xFF0D,), (0xFF28, 5, 1), (0xFF05,), (0xFF05,), (0xFF16,)]))
     assert pseudo_code_lines(section, 0) == [
-        "if",
+        "require",
         "    CHECK_BIT_FLAG 5, 1",
-        "always then",
+        "do",
         "    if",
         "        CHECK_BUTTON_INPUT 64",
         "    then",

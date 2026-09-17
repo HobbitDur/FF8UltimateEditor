@@ -263,3 +263,21 @@ def test_check_battle_escaped_keeps_its_parameter(game_data):
     assert [instruction.word for instruction in section.instructions
             if instruction.code == 0xFF35 and instruction.word != 0] == \
            [instruction.word for instruction in with_parameter]
+
+
+def test_the_old_name_for_do_still_imports():
+    """THEN_ALWAYS was this tool's own first name for FF04, before the shipped scripts showed it
+    never runs unconditionally. It stays readable so a file exported before the rename still is.
+
+    The wiki's name for the same opcode, EXEC, does not: it belongs to the other editor's
+    dialect, which as a whole is refused rather than read wrong."""
+    section = ScriptSection(36, build_script_section([0], [(0xFF16,)]))
+    assert import_into(section, "=== Script #0 ===\nIF\nDO\nRETURN\n").ok
+    codes = [instruction.code for instruction in section.instructions]
+
+    section = ScriptSection(36, build_script_section([0], [(0xFF16,)]))
+    assert import_into(section, "=== Script #0 ===\nIF\nTHEN_ALWAYS\nRETURN\n").ok
+    assert [instruction.code for instruction in section.instructions] == codes
+
+    section = ScriptSection(36, build_script_section([0], [(0xFF16,)]))
+    assert not import_into(section, "=== Script #0 ===\nIF\nEXEC\nRETURN\n").ok

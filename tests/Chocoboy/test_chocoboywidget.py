@@ -189,3 +189,29 @@ def test_a_section_goes_out_to_text_and_comes_back(widget, tmp_path):
     assert widget.script_list.count() == 92
     assert section.script_names[0] == "Closes the dialog on flag 61"
     assert section.instructions[0].comments == ["; worked out by hand"]
+
+
+def test_the_columns_fit_what_is_in_them_and_stay_draggable(widget):
+    """Left to themselves the opcode column asks for the width of its whole drop-down list and
+    the value column for the longest dialog in the game, and between them they push the
+    description out of the table."""
+    from PyQt6.QtWidgets import QHeaderView
+
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    widget.script_list.setCurrentRow(1)
+    header = widget.instruction_table.horizontalHeader()
+
+    assert all(header.sectionResizeMode(column) == QHeaderView.ResizeMode.Interactive
+               for column in range(6)), "every column must be draggable"
+    assert header.stretchLastSection()
+    assert widget.instruction_table.columnWidth(4) <= widget.VALUE_COLUMN_MAX_WIDTH
+
+    # The opcode column follows what is on screen, not the longest name in the whole set
+    shown = [widget.instruction_table.cellWidget(row, 1).currentText()
+             for row in range(widget.instruction_table.rowCount())]
+    with_a_long_name = widget.instruction_table.columnWidth(1)
+    widget.script_list.setCurrentRow(19)  # a script of short opcodes
+    assert widget.instruction_table.columnWidth(1) != with_a_long_name or \
+           max(shown, key=len) == max((widget.instruction_table.cellWidget(row, 1).currentText()
+                                       for row in range(widget.instruction_table.rowCount())),
+                                      key=len)

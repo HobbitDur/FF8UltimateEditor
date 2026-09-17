@@ -59,18 +59,26 @@ class Opcode:
 OPCODE_LIST = [
     # --- Control flow -------------------------------------------------------------------------
     Opcode(0xFF01, "IF", CONTROL, NO_PARAM,
-           "Starts a condition list: every instruction after it is tested until a THEN is met."),
-    Opcode(0xFF04, "THEN_ALWAYS", CONTROL, NO_PARAM,
-           "Starts an action block that always runs, with no condition before it.",
-           aliases=("EXEC",)),
+           "Starts the script's own condition list: every instruction from here to the DO is "
+           "tested. There is no ELSE for it - the moment one of them fails the script is over "
+           "and nothing in it runs. That is what makes it different from IF_BLOCK."),
+    Opcode(0xFF04, "DO", CONTROL, NO_PARAM,
+           "The IF list above passed: here start the actions. Not the same as THEN, which closes "
+           "an IF_BLOCK and has an ELSE to fall to; reaching DO means the script is already "
+           "committed to running.",
+           aliases=("EXEC", "THEN_ALWAYS")),
     Opcode(0xFF05, "END", CONTROL, NO_PARAM,
            "Ends an action block. Also ends the whole event when the global event runner meets it.",
            aliases=("ENDIF", "END_ACTIONS")),
     Opcode(0xFF0A, "IF_BLOCK", CONTROL, NO_PARAM,
-           "Opens an IF structure, which a THEN / ELSE_IF / ELSE chain then fills.",
+           "Opens a branch inside the actions: its conditions run up to the THEN, and if one "
+           "fails the ELSE_IF / ELSE chain after gets its turn instead of the script stopping.",
            aliases=("IFBLOCK",)),
     Opcode(0xFF0B, "THEN", CONTROL, NO_PARAM,
-           "The conditions passed: the actions up to the next END are the ones to run.",
+           "The IF_BLOCK or ELSE_IF above passed: run the actions up to the next END. Had it "
+           "failed, the ELSE_IF / ELSE after that END would have had their turn - a failed "
+           "condition here picks another branch, it does not end the script the way the "
+           "script's own IF does.",
            aliases=("ELSE",)),
     Opcode(0xFF0C, "ELSE_IF", CONTROL, NO_PARAM,
            "The previous conditions failed: test this new condition list instead.",
@@ -469,9 +477,12 @@ def indent_depths(section, entry_index):
     return depths
 
 
+# How each structure opcode reads in the pseudo-code. "require" and "do" for the script's own
+# condition list, because a failure there ends the script rather than picking another branch -
+# which "if" / "then" would hide, since that is exactly what IF_BLOCK / THEN do instead.
 PSEUDO_CODE_WORD = {
-    0xFF01: "if", 0xFF0A: "if", 0xFF0B: "then", 0xFF04: "always then",
-    0xFF0C: "else if", 0xFF0D: "else", END_CODE: "end",
+    0xFF01: "require", 0xFF04: "do",
+    0xFF0A: "if", 0xFF0B: "then", 0xFF0C: "else if", 0xFF0D: "else", END_CODE: "end",
 }
 
 

@@ -1,7 +1,7 @@
 import os
 
 from PyQt6.QtCore import Qt, QSignalBlocker
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QFontMetrics
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QListWidget, QLabel,
                              QTableWidget, QTableWidgetItem, QHeaderView, QPlainTextEdit,
                              QPushButton, QSplitter, QTabWidget, QGroupBox, QSpinBox, QMessageBox,
@@ -27,6 +27,9 @@ class ChocoboyWidget(QWidget):
 
     Named after Chocoboy, the boy who turns up in every Chocobo Forest on the world map.
     """
+
+    VALUE_COLUMN_MAX_WIDTH = 320  # a resolved dialog line runs to hundreds of characters
+    COMBO_DECORATION_WIDTH = 46  # the drop-down arrow, the frame and the cell margins
 
     def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
@@ -102,9 +105,12 @@ class ChocoboyWidget(QWidget):
              "What the instruction does"])
         self.instruction_table.verticalHeader().setVisible(False)
         self.instruction_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        for column in (4, 5):  # the two columns worth reading get whatever width is left
-            self.instruction_table.horizontalHeader().setSectionResizeMode(
-                column, QHeaderView.ResizeMode.Stretch)
+        # Every column can be dragged to whatever width suits the script being read, and the
+        # last one takes up the slack. Sharing the spare width between the two text columns
+        # instead would blow the parameter column up to half the table for a two-word value.
+        header = self.instruction_table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setStretchLastSection(True)
 
         self.add_button = QPushButton("Add instruction")
         self.add_button.setToolTip("Insert a copy of the selected line just above it, ready to be "
@@ -305,10 +311,22 @@ class ChocoboyWidget(QWidget):
         for row, index in enumerate(range(start, end)):
             self._fill_instruction_row(row, section, index)
         self.instruction_table.resizeColumnsToContents()
-        for column in (4, 5):
-            self.instruction_table.horizontalHeader().setSectionResizeMode(
-                column, QHeaderView.ResizeMode.Stretch)
+        # Two columns come out far too wide on their own. A combo box asks for the width of its
+        # whole drop-down list - every opcode name at once - so the opcode column is sized to the
+        # names actually on screen instead. And a resolved dialog line runs long enough to push
+        # everything else out of the table, so that column is capped. Both stay draggable.
+        self.instruction_table.setColumnWidth(1, self._opcode_column_width())
+        self.instruction_table.setColumnWidth(
+            4, min(self.instruction_table.columnWidth(4), self.VALUE_COLUMN_MAX_WIDTH))
         self._refresh_pseudo_code()
+
+    def _opcode_column_width(self):
+        """Wide enough for the longest opcode name shown right now, and no wider."""
+        metrics = QFontMetrics(self.instruction_table.font())
+        widest = max((metrics.horizontalAdvance(
+            self.instruction_table.cellWidget(row, 1).currentText())
+            for row in range(self.instruction_table.rowCount())), default=0)
+        return widest + self.COMBO_DECORATION_WIDTH
 
     def _fill_instruction_row(self, row, section, index):
         """One line of the table: where it is, what it is, and its parameters as the game reads them."""
