@@ -14,6 +14,7 @@ pinned here:
 import contextlib
 import io
 import pathlib
+import re
 import zipfile
 
 import pytest
@@ -250,3 +251,19 @@ def test_a_workbook_offers_the_spells_added_to_it(game_data, tmp_path):
     with zipfile.ZipFile(path) as opened:
         sheet = opened.read("xl/worksheets/sheet1.xml").decode("utf8")
     assert f"ref_data!$C2:$C${offered + 3}" in sheet   # the drop-down reaches the new rows
+
+
+@pytest.mark.ff8data(BATTLE_FILE)
+def test_a_workbook_is_written_with_the_names_in_use(game_data, tmp_path):
+    """Every workbook this repository writes - the no-edit one a Cronos build produces included -
+    shows the names loaded at the time, so a mod's own names need no pass over the file."""
+    game_data.load_names("names_cronos.json")
+    try:
+        path = _monster_workbook(game_data, tmp_path)
+        with zipfile.ZipFile(path) as workbook:
+            texts = set(re.findall(r"<t[^>]*>([^<]*)</t>",
+                                   workbook.read("xl/sharedStrings.xml").decode("utf8")))
+        assert {"43:Reaper", "144:Stone Skin", "16:Arm Machine Gun"} <= texts
+        assert not {"43:Death", "144:Arctic Wind", "16:Arm Slash"} & texts
+    finally:
+        game_data.load_names()
