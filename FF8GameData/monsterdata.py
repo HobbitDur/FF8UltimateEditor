@@ -2077,7 +2077,10 @@ class AIData:
                                                 'Gravity Immunity', 'Always obtains card']
     # Byte 255 is not a bitfield either: it is the devour category, a number 0-8 the Devour system
     # reads (8 = inedible, which is also what the engine writes on a failed devour).
-    DEVOUR_CATEGORY_DATA = {'offset': 0xFF, 'size': 1, 'byteorder': 'little', 'name': 'devour_category', 'pretty_name': 'Devour category'}
+    # Read, but nothing shows it: on a successful devour the engine returns this byte as the hit's
+    # damage, against a monster that is being ejected anyway (computeDevour / Battle_DamageGettingRelated).
+    DEVOUR_CATEGORY_DATA = {'offset': 0xFF, 'size': 1, 'byteorder': 'little', 'name': 'devour_category',
+                            'pretty_name': 'Devour category (no visible effect)'}
     ABILITIES_LOW_DATA = {'offset': 0x34, 'size': 64, 'byteorder': 'little', 'name': 'abilities_low', 'pretty_name': 'Abilities Low Level'}
     ABILITIES_MED_DATA = {'offset': 0x74, 'size': 64, 'byteorder': 'little', 'name': 'abilities_med', 'pretty_name': 'Abilities Medium Level'}
     ABILITIES_HIGH_DATA = {'offset': 0xB4, 'size': 64, 'byteorder': 'little', 'name': 'abilities_high', 'pretty_name': 'Abilities High Level'}

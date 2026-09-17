@@ -29,7 +29,7 @@ ROW_MONSTER_NB_ANIMATION = 3
 ROW_MONSTER_COMBAT_TEXT = 4
 
 ROW_BYTE_FLAG = 8
-ROW_CATEGORY = ROW_BYTE_FLAG + 8 * 2   # The two real flag bytes come first, 8 rows each
+ROW_CAMERA_CATEGORY = ROW_BYTE_FLAG + 8 * 2   # Under the two real flag bytes, 8 rows each
 ROW_RENZOKUKEN = 41
 NB_RENZOKUKEN = 8
 ROW_ORIGINAl_FILE_NAME = 44
@@ -204,24 +204,28 @@ class DatToXlsx:
 
     # The camera and devour categories (bytes 246 and 255) are numbers with a list of names each,
     # so they are written like a drop, a card or a devour: "<id>:<name>", chosen from ref_data.
-    CATEGORY_REF = {'camera_category': ('camera_category_data_json', 'camera_category', REF_DATA_COL_CAMERA_CATEGORY),
-                    'devour_category': ('devour_category_data_json', 'devour_category', REF_DATA_COL_DEVOUR_CATEGORY)}
+    # Each one sits where it belongs: the devour category under the Devour block it classifies, the
+    # camera category under the flags. (json field, json key, ref_data column, row, column)
+    CATEGORY_REF = {'camera_category': ('camera_category_data_json', 'camera_category', REF_DATA_COL_CAMERA_CATEGORY,
+                                        ROW_CAMERA_CATEGORY, COL_MISC),
+                    'devour_category': ('devour_category_data_json', 'devour_category', REF_DATA_COL_DEVOUR_CATEGORY,
+                                        ROW_DEVOUR + 4, COL_DEVOUR)}
 
     def __category_entries(self, game_data: GameData, category_name: str) -> list:
-        field, key, _column = self.CATEGORY_REF[category_name]
+        field, key = self.CATEGORY_REF[category_name][:2]
         return getattr(game_data, field)[key]
 
     def __write_category(self, worksheet, game_data: GameData, category_name: str, value):
         entries = self.__category_entries(game_data, category_name)
-        row = ROW_CATEGORY + AIData.CATEGORY_ORDER.index(category_name)
+        _field, _key, ref_column, row, column = self.CATEGORY_REF[category_name]
         pretty = [x['pretty_name'] for x in AIData.SECTION_INFO_STAT_LIST_DATA if x['name'] == category_name][0]
         chosen = [f"{x['id']}:{x['name']}" for x in entries if x['id'] == value]
-        worksheet.write(row, COL_MISC, pretty, self.row_title_style)
-        worksheet.write(row, COL_MISC + 1, chosen[0] if chosen else f"{value}:Unknown", self.border_style)
-        column = xlsxwriter.utility.xl_col_to_name(self.CATEGORY_REF[category_name][2])
-        worksheet.data_validation(row, COL_MISC + 1, row, COL_MISC + 1,
+        worksheet.write(row, column, pretty, self.row_title_style)
+        worksheet.write(row, column + 1, chosen[0] if chosen else f"{value}:Unknown", self.border_style)
+        ref_letter = xlsxwriter.utility.xl_col_to_name(ref_column)
+        worksheet.data_validation(row, column + 1, row, column + 1,
                                   {'validate': 'list',
-                                   'source': '=' + REF_DATA_SHEET_TITLE + '!$' + column + '2:$' + column + '$' + str(len(entries) + 1)})
+                                   'source': '=' + REF_DATA_SHEET_TITLE + '!$' + ref_letter + '2:$' + ref_letter + '$' + str(len(entries) + 1)})
 
     def __validate_renzokuken(self, worksheet, game_data: GameData):
         col_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_ATTACK_ANIMATION)
@@ -866,13 +870,11 @@ class XlsxToDat:
     @staticmethod
     def read_category(game_data: GameData, sheet, enemy: MonsterAnalyser):
         """The camera and devour categories, each written "<id>:<name>" like every other list the
-        sheet offers - the id in front is the value, the name is what a modder reads."""
-        category_range = sheet.iter_rows(min_row=ROW_CATEGORY + 1,
-                                         max_row=ROW_CATEGORY + len(AIData.CATEGORY_ORDER),
-                                         min_col=COL_MISC + 2, max_col=COL_MISC + 2,
-                                         values_only=True)
-        for category_name, row in zip(AIData.CATEGORY_ORDER, category_range):
-            cell_value = row[0]
+        sheet offers - the id in front is the value, the name is what a modder reads. Each one is
+        read where DatToXlsx puts it (DatToXlsx.CATEGORY_REF)."""
+        for category_name in AIData.CATEGORY_ORDER:
+            _field, _key, _ref_column, row, column = DatToXlsx.CATEGORY_REF[category_name]
+            cell_value = sheet.cell(row + 1, column + 2).value
             if cell_value and isinstance(cell_value, str) and ':' in cell_value:
                 enemy.info_stat_data[category_name] = int(cell_value.split(':')[0])
             elif isinstance(cell_value, (int, float)):
