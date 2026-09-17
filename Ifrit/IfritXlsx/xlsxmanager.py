@@ -534,9 +534,10 @@ class DatToXlsx:
                 # Abilities menu
                 elif param_name in AIData.ABILITIES_HIGHNESS_ORDER:
                     for el2 in value:
-                        ability_type_ref = [f"{x['id']}:{x['name']}" for x in game_data.enemy_abilities_data_json['abilities_type'] if x['id'] == el2['type']][
-                            0]
-                        ability_type = [x for x in game_data.enemy_abilities_data_json['abilities_type'] if x['id'] == el2['type']][0]
+                        # A file can hold a type the game never uses; say so rather than stopping
+                        known = [x for x in game_data.enemy_abilities_data_json['abilities_type'] if x['id'] == el2['type']]
+                        ability_type = known[0] if known else {'id': el2['type'], 'name': 'Unknown type'}
+                        ability_type_ref = f"{ability_type['id']}:{ability_type['name']}"
                         worksheet.write(row_index['abilities'], column_index['abilities'], ability_type_ref, self.border_style)
                         # Excel data validation
                         self.__validate_abilities(worksheet, game_data, ability_type, el2['id'], row_index['abilities'], column_index['abilities'])

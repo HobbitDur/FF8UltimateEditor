@@ -1,11 +1,10 @@
 {
   "abilities_type": [
-    {"id":0,  "name":"Not defined"},
-    {"id":2,  "name":"Magic"},
-    {"id":4,  "name":"Item"},
-    {"id":8,  "name":"Custom"},
-    {"id":179,  "name":"Ultimecia_weird_file_127"},
-    {"id":236,  "name":"Seifer"}
+	{"id":0,  "name":"Nothing (empty slot)"},
+	{"id":2,  "name":"Magic"},
+	{"id":4,  "name":"Item"},
+	{"id":8,  "name":"Monster attack"},
+	{"id":236,"name":"Monster attack (Seifer)"}
   ],
   "abilities": [
     {"id":0,  "name":"Not defined"},

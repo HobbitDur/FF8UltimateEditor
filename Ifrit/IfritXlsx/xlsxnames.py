@@ -26,7 +26,8 @@ from xml.sax.saxutils import escape, unescape
 
 from FF8GameData.monsterdata import AIData
 from Ifrit.IfritXlsx.xlsxmanager import (COL_MISC, REF_DATA_SHEET_TITLE, REF_DATA_COL_ABILITIES,
-                                         REF_DATA_COL_ITEM, REF_DATA_COL_MAGIC, ROW_BYTE_FLAG)
+                                         REF_DATA_COL_ABILITIES_TYPE, REF_DATA_COL_ITEM, REF_DATA_COL_MAGIC,
+                                         ROW_BYTE_FLAG)
 
 TEXT_PATTERN = re.compile(r"(<t[^>]*>)([^<]*)(</t>)")
 SHARED_STRINGS = "xl/sharedStrings.xml"
@@ -36,6 +37,7 @@ REF_DATA_COLUMN = {
     "magic": REF_DATA_COL_MAGIC,
     "item": REF_DATA_COL_ITEM,
     "enemy_ability": REF_DATA_COL_ABILITIES,
+    "ability_type": REF_DATA_COL_ABILITIES_TYPE,
 }
 
 
@@ -304,3 +306,40 @@ def refresh_byte_flag_labels(xlsx_file) -> dict:
 
     _replace_workbook(xlsx_file, entries, files)
     return changed
+
+
+def list_in_workbook(xlsx_file, list_name: str) -> dict:
+    """What that list offers in this workbook today, as {id: shown text}, read from the ref_data
+    column the drop-downs point at."""
+    letter = column_letter(REF_DATA_COLUMN[list_name])
+    with zipfile.ZipFile(xlsx_file) as workbook:
+        sheet_path = _ref_data_path(workbook)
+        if sheet_path is None:
+            return {}
+        sheet = workbook.read(sheet_path).decode("utf8")
+        texts = re.findall(r"<t[^>]*>([^<]*)</t>", workbook.read(SHARED_STRINGS).decode("utf8"))
+    shown = {}
+    for match in CELL_PATTERN.finditer(sheet):
+        if match.group(1) != letter or match.group(2) == "1":   # row 1 is the column's title
+            continue
+        index = re.search(r"<v>(\d+)</v>", match.group(0))
+        if not index or 't="s"' not in match.group(0):
+            continue
+        text = unescape(texts[int(index.group(1))])
+        if ":" in text and text.split(":")[0].isdigit():
+            shown[int(text.split(":")[0])] = text
+    return shown
+
+
+def refresh_list_in_workbook(xlsx_file, list_name: str, entries: list) -> dict:
+    """Make a workbook show `entries` ({'id', 'name'} as the json holds them) for a list it already
+    offers. For lists the tool itself names - the ability types, say - rather than the ones a
+    kernel.bin owns: what the workbook shows is compared with what the tool says today, by id."""
+    renames = {}
+    current = list_in_workbook(xlsx_file, list_name)
+    for entry in entries:
+        shown = current.get(entry["id"])
+        wanted = f"{entry['id']}:{entry['name']}"
+        if shown is not None and shown != wanted:
+            renames[shown] = wanted
+    return rename_in_workbook(xlsx_file, renames)
