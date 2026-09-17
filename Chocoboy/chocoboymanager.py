@@ -14,6 +14,7 @@ NB_SECTION = 48
 HEADER_SIZE = NB_SECTION * 4
 
 SCRIPT_SECTION_LIST = [7, 9, 11, 36]
+SPAWN_POSITION_SECTION = 10  # where the entities the section 9 scripts spawn are placed
 DIALOG_SECTION = 13
 LOCATION_NAME_SECTION = 31
 TEXT_SECTION_LIST = [DIALOG_SECTION, LOCATION_NAME_SECTION]
@@ -113,6 +114,44 @@ class TextSection:
         return {index: entry.text for index, entry in enumerate(self.entries)}
 
 
+class SpawnPositionSection:
+    """Section 10: where each world object an ADD_ENTITY spawns is placed.
+
+    No header, 16 bytes per record. ``ADD_ENTITY``'s second parameter is an index into this
+    list (``World_BuildObjectInstanceList``, FF8_EN.exe 0x544860, reads
+    ``spawn_positions + 16 * param2``); ``0xFF`` means the object brings its own position, from
+    the save game or from the code.
+    """
+
+    RECORD_SIZE = 16
+    NO_POSITION = 0xFF
+
+    def __init__(self, section_data):
+        self.records = []
+        for start in range(0, len(section_data) - len(section_data) % self.RECORD_SIZE,
+                           self.RECORD_SIZE):
+            x, y, z, yaw, pitch = struct.unpack_from("<iiihh", section_data, start)
+            self.records.append({"x": x, "y": y, "z": z, "yaw": yaw, "pitch": pitch})
+
+    # Model classes that ignore the position record and read their own saved position instead
+    # (World_BuildObjectInstanceList special-cases each of them before the table lookup).
+    SAVED_POSITION_MODELS = {1: "its saved position", 64: "its saved position",
+                             65: "its saved position"}
+
+    def describe(self, model_class, index):
+        """One line about where an ADD_ENTITY puts the object it spawns."""
+        saved = self.SAVED_POSITION_MODELS.get(model_class)
+        if saved:
+            return f"model {model_class} ignores the record and spawns at {saved}"
+        if index == self.NO_POSITION:
+            return "no position record: the object places itself"
+        if not 0 <= index < len(self.records):
+            return f"position record {index}, which section 10 does not have"
+        record = self.records[index]
+        return (f"position record {index}: x {record['x']}, y {record['y']}, z {record['z']}, "
+                f"yaw {record['yaw']}")
+
+
 class ChocoboyManager:
     """The open ``wmsetxx.obj``: its six editable sections, and the raw bytes of the other 42."""
 
@@ -123,6 +162,7 @@ class ChocoboyManager:
         self.raw_sections = []  # every section as read, so untouched ones are written back as-is
         self.script_sections = {}  # section index -> ScriptSection
         self.text_sections = {}  # section index -> TextSection
+        self.spawn_positions = None  # SpawnPositionSection, what ADD_ENTITY points at
 
     @property
     def is_loaded(self):
@@ -144,6 +184,7 @@ class ChocoboyManager:
                                 for index in SCRIPT_SECTION_LIST}
         self.text_sections = {index: TextSection(index, self.raw_sections[index], self.game_data)
                               for index in TEXT_SECTION_LIST}
+        self.spawn_positions = SpawnPositionSection(self.raw_sections[SPAWN_POSITION_SECTION])
         self.file_path = file_path
 
     def save_file(self, file_path=""):
@@ -170,11 +211,13 @@ class ChocoboyManager:
         text_section = self.text_sections.get(DIALOG_SECTION)
         return text_section.lookup() if text_section else {}
 
-    def find_text_users(self, text_id):
-        """Every SHOW_TEXT_BOX / SHOW_CHOICE_BOX opening dialog ``text_id``, as text lines.
+    def find_instruction_users(self, match, describe):
+        """Every instruction of every script section that ``match`` accepts, as text lines.
 
-        A dialog is only ever reached from a script, so this is how you find out what a string
-        is for - and what would break if you rewrote it.
+        ``match(instruction)`` says whether an instruction counts, ``describe(instruction)`` says
+        what it does with the thing being looked up. This is how the tool answers "what else
+        touches this?" - which, for a save-game flag shared by half a side quest, is the only way
+        to see the whole of it.
         """
         users = []
         for index in SCRIPT_SECTION_LIST:
@@ -183,7 +226,48 @@ class ChocoboyManager:
                 start, end = section.script_range(entry)
                 for position in range(start, end):
                     instruction = section.instructions[position]
-                    if instruction.code in (0xFF1F, 0xFF23) and instruction.param2 == text_id:
-                        users.append(f"Section {index}, script #{entry}: "
-                                     f"{instruction.name} in window {instruction.param1}")
+                    if match(instruction):
+                        users.append(f"Section {index}, script #{entry}, offset "
+                                     f"{section.instruction_offset(position)}: "
+                                     f"{describe(instruction)}")
         return users
+
+    def find_flag_users(self, flag):
+        """Everywhere save-game world bit ``flag`` (0-63) is read or written."""
+        return self.find_instruction_users(
+            lambda instruction: (instruction.code in (0xFF27, 0xFF28)
+                                 and instruction.param1 == flag),
+            lambda instruction: ("checks it is " if instruction.code == 0xFF27 else "sets it to ")
+                                + str(instruction.param2))
+
+    def find_script_var_users(self, var):
+        """Everywhere save-game script byte ``var`` (0 or 1) is read or written."""
+        compare = {0xFF2D: "checks it equals", 0xFF30: "checks it is under",
+                   0xFF31: "checks it is over", 0xFF2E: "sets it to"}
+        return self.find_instruction_users(
+            lambda instruction: instruction.code in compare and instruction.param1 == var,
+            lambda instruction: f"{compare[instruction.code]} {instruction.param2}")
+
+    def find_message_window_users(self, window):
+        """Everywhere message window ``window`` (0-12) is opened, closed or tested."""
+        opened = {0xFF1F: "opens it on text", 0xFF23: "opens it as a choice on text"}
+        return self.find_instruction_users(
+            lambda instruction: (
+                (instruction.code in opened and instruction.param1 == window)
+                or (instruction.code == 0xFF24 and instruction.word == window)
+                or (instruction.code == 0xFF2C and instruction.param1 == window)),
+            lambda instruction:
+                f"{opened[instruction.code]} {instruction.param2}" if instruction.code in opened
+                else ("closes it" if instruction.code == 0xFF24
+                      else f"checks it is {'open' if instruction.param2 else 'closed'}"))
+
+    def find_text_users(self, text_id):
+        """Every SHOW_TEXT_BOX / SHOW_CHOICE_BOX opening dialog ``text_id``, as text lines.
+
+        A dialog is only ever reached from a script, so this is how you find out what a string
+        is for - and what would break if you rewrote it.
+        """
+        return self.find_instruction_users(
+            lambda instruction: (instruction.code in (0xFF1F, 0xFF23)
+                                 and instruction.param2 == text_id),
+            lambda instruction: f"{instruction.name} in window {instruction.param1}")

@@ -104,10 +104,20 @@ Edits the world map's own event bytecode, which is where every world-map side qu
 the Obel Lake rock, Chocobo forests, the train stations, boarding the Ragnarok) along with the field
 warps, forced battles and item rewards it triggers. Four script sections are shown side by side with
 the pseudo-code the game actually walks (an IF / THEN / ELSE tree), and each instruction is edited as
-an opcode and its parameters, with what it does spelled out — the dialog a `SHOW_TEXT_BOX` opens, the
-item an `ADD_ITEM` hands out. Adding or removing an instruction moves every script entry point and
-every `GOTO` in the section along with it, so the file stays readable by the game. The dialog texts
-and location names the scripts show are on a second tab, each listed with the scripts that open it.
+an opcode and its parameters.
+
+The hard part of these scripts is that the parameters are bare numbers, so every one the tool can
+resolve is spelled out next to it: the dialog a `SHOW_TEXT_BOX` opens, the item an `ADD_ITEM` hands
+out, the buttons a `CHECK_BUTTON_INPUT` mask stands for, where an `ADD_ENTITY` puts what it spawns,
+and which instruction of which script a `GOTO` lands on. Selecting a line also lists everywhere else
+in the file that touches the same save flag, script variable, dialog or message window — which for a
+side quest spread over a dozen scripts is the only way to see the whole of it.
+
+A whole section can be written out as a text file, annotated and edited in any editor, and read back
+in. Jump targets are written as labels there rather than byte offsets, so instructions can be
+inserted, deleted, and whole scripts added or removed, and the jumps still land where they were
+meant to. Editing in the table does the same fix-ups in place. The dialog texts and location names
+the scripts show are on a second tab, each listed with the scripts that open it.
 
 ## Other tools made by other modders (launched from the toolbar)
 

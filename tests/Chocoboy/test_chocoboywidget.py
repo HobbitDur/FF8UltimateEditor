@@ -131,3 +131,61 @@ def test_editing_a_text_reaches_the_saved_file(widget, tmp_path):
     reloaded.load_file(str(destination))
     assert reloaded.dialog_lookup()[61] == "Chocoboy was here"
     assert reloaded.dialog_lookup()[60] == widget.manager.dialog_lookup()[60]
+
+
+def test_the_value_column_says_what_the_numbers_mean(widget):
+    """The point of the column: 64, 90 and 60, 2 say nothing on their own."""
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    widget.script_list.setCurrentRow(1)
+    values = {widget.instruction_table.cellWidget(row, 1).currentText():
+              widget.instruction_table.item(row, 4).text()
+              for row in range(widget.instruction_table.rowCount())}
+    assert values["CHECK_BUTTON_INPUT"] in ("Cross", "any button, or the stick pushed past 45")
+    assert values["CHECK_WORLD_MAP_STATE"] == "player cannot move (a dialog is up)"
+    assert values["GOTO"].startswith("lands on CONSUME_INPUT, in script #")
+
+
+def test_an_add_item_is_named_and_an_add_entity_is_placed(widget):
+    widget.script_section_combo.setCurrentIndex(1)  # section 9, the spawn scripts
+    widget.script_list.setCurrentRow(19)
+    spawns = [widget.instruction_table.item(row, 4).text()
+              for row in range(widget.instruction_table.rowCount())
+              if widget.instruction_table.cellWidget(row, 1).currentText() == "ADD_ENTITY"]
+    assert spawns, "expected ADD_ENTITY instructions in section 9"
+    assert any(text.startswith("position record") for text in spawns)
+
+
+def test_selecting_a_flag_shows_everywhere_else_it_is_touched(widget):
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    widget.script_list.setCurrentRow(1)
+    flag_row = next(row for row in range(widget.instruction_table.rowCount())
+                    if widget.instruction_table.cellWidget(row, 1).currentText() == "CHECK_BIT_FLAG")
+    widget.instruction_table.setCurrentCell(flag_row, 0)
+
+    flag = widget.instruction_table.cellWidget(flag_row, 2).value()
+    assert widget.usage_group.title() == f"What else touches save flag {flag}"
+    users = widget.usage_view.toPlainText().splitlines()
+    assert len(users) > 1, "flag 63 is set by several scripts, not just checked by this one"
+    assert all(line.startswith("Section ") for line in users)
+
+
+def test_a_section_goes_out_to_text_and_comes_back(widget, tmp_path):
+    from Chocoboy.scripttext import section_to_text, text_to_section
+    from Chocoboy.chocoboymanager import SECTION_NAME
+
+    widget.script_section_combo.setCurrentIndex(3)  # section 36
+    section = widget.manager.script_sections[36]
+    path = tmp_path / "section36.txt"
+    path.write_text(section_to_text(section, SECTION_NAME[36]), encoding="utf8")
+
+    # Name a script and give it a comment, the way a modder annotates one
+    text = path.read_text(encoding="utf8").replace(
+        "=== Script #0 ===", "=== Script #0 (Closes the dialog on flag 61) ===\n; worked out by hand")
+    result = text_to_section(text)
+    assert result.ok, result.errors
+    section.replace_scripts(result.scripts, result.names, result.trailing_comments)
+
+    widget._reload_script_section()
+    assert widget.script_list.count() == 92
+    assert section.script_names[0] == "Closes the dialog on flag 61"
+    assert section.instructions[0].comments == ["; worked out by hand"]

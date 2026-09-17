@@ -105,9 +105,10 @@ OPCODE_LIST = [
     Opcode(0xFF07, "CHECK_TILE_POSITION", CONDITION, WORD,
            "The player stands on the 2048-unit map square param = tile_x + tile_y * 128."),
     Opcode(0xFF09, "CHECK_VEHICLE_TYPE", CONDITION, WORD,
-           "The vehicle the player rides matches param. 33 bike, 48 Balamb Garden, 49 chocobo, "
-           "50 Ragnarok, 128 on foot, 129 walking party, 130 Galbadia aircraft, 131 trains, "
-           "132/133 cars."),
+           "The vehicle the player rides matches param. 33 bike, 49 the two big ships, 128 on "
+           "foot, 129 the walking party, 130 Galbadia aircraft, 131 trains, 132/133 cars. "
+           "48 and 50 are the Ragnarok and the mobile Balamb Garden, but which is which is not "
+           "settled: the community notes and the IDB's own model tables disagree."),
     Opcode(0xFF0F, "X_GREATER_THAN", CONDITION, WORD,
            "param is greater than the player X inside the current segment (X & 0x1FFF)."),
     Opcode(0xFF10, "Y_GREATER_THAN", CONDITION, WORD,
@@ -119,12 +120,12 @@ OPCODE_LIST = [
     Opcode(0xFF17, "CHECK_ENTITY_PROXIMITY", CONDITION, WORD,
            "A world object of model class param is spawned, visible and on screen."),
     Opcode(0xFF18, "CHECK_VEHICLE_APPROACHING", CONDITION, WORD,
-           "Vehicle param is in its approach state: 50 (Ragnarok) needs world state 6, "
-           "48 (Balamb Garden) needs 9.",
+           "Vehicle param is in its approach state: 50 needs world state 6, 48 needs 9. Only "
+           "those two values ever pass. See CHECK_VEHICLE_TYPE on what 48 and 50 are.",
            aliases=("CHECK_VEHICLE_ENTERING", "CHECK_VEHICLE_DOCKING_IN_PROGRESS")),
     Opcode(0xFF19, "CHECK_VEHICLE_ACTIVE", CONDITION, WORD,
-           "Vehicle param is boarded and active: 50 (Ragnarok) needs world state 5, "
-           "48 (Balamb Garden) needs 8.",
+           "Vehicle param is boarded and active: 50 needs world state 5, 48 needs 8. Only those "
+           "two values ever pass. See CHECK_VEHICLE_TYPE on what 48 and 50 are.",
            aliases=("CHECK_VEHICLE_BOARDED", "CHECK_VEHICLE_DOCKED")),
     Opcode(0xFF1A, "CHECK_TOUCHED_ENTITY", CONDITION, WORD,
            "The object the player just touched has model class param.",
@@ -179,8 +180,10 @@ OPCODE_LIST = [
            "The drawn location block's byte at offset 13 equals param1."),
     Opcode(0xFF34, "CHECK_COMBAT_SCENE_ID", CONDITION, WORD,
            "The last encounter (scene) id equals param."),
-    Opcode(0xFF35, "CHECK_BATTLE_ESCAPED", CONDITION, NO_PARAM,
-           "The last battle was escaped from. Reads no parameter.",
+    Opcode(0xFF35, "CHECK_BATTLE_ESCAPED", CONDITION, WORD,
+           "Whether the last battle was escaped from equals param (1 escaped, 0 not). The "
+           "parameter IS read, whatever the older notes say: wm_scriptCheckCondition compares "
+           "a1[1] against the escaped flag like every other condition.",
            aliases=("CHECK_BATTLE_RESULT",)),
     Opcode(0xFF38, "CHECK_MOVEMENT", CONDITION, WORD,
            "The player moving equals param (1 moving, 0 standing still)."),
@@ -190,7 +193,10 @@ OPCODE_LIST = [
     # --- Actions ------------------------------------------------------------------------------
     Opcode(0xFF13, "ADD_ENTITY", ACTION, TWO_BYTES,
            "Spawns world object of model class param1 at position record param2 of section 10 "
-           "(0xFF keeps the default). Section 9 only."),
+           "(0xFF means it places itself). Model classes are their own numbering, not the vehicle "
+           "codes: 0 Squall, 1 and 64/65 the Garden and the Ragnarok, 2/3 the two big ships, "
+           "70 a train, 73-87 cars and chocobos, 94 the Jumbo Cactuar (spawned only while GF 13, "
+           "Cactuar, is not owned). Section 9 only."),
     Opcode(0xFF14, "ADD_ENTITY_ALT", ACTION, TWO_BYTES,
            "Same fields and same handling as ADD_ENTITY."),
     Opcode(0xFF1F, "SHOW_TEXT_BOX", ACTION, TWO_BYTES,
@@ -232,11 +238,20 @@ class Instruction:
         self.code = code & 0xFFFF
         self.param1 = param1 & 0xFF
         self.param2 = param2 & 0xFF
+        # What a text edit wrote around this line. The .obj has nowhere to keep either, so they
+        # live in this session only - and in whatever text file they were imported from.
+        self.comments = []  # whole lines (comments, blank lines) written just above it
+        self.trailing = ""  # the "; ..." note written at the end of its own line
 
     @classmethod
     def from_bytes(cls, data, offset):
         code, param1, param2 = struct.unpack_from("<HBB", data, offset)
         return cls(code, param1, param2)
+
+    @property
+    def is_padding(self):
+        """A zero word: the filler a section ends on, not an instruction the game would run."""
+        return self.code == 0 and self.param1 == 0 and self.param2 == 0
 
     def to_bytes(self):
         return struct.pack("<HBB", self.code, self.param1, self.param2)
@@ -288,6 +303,8 @@ class ScriptSection:
     def __init__(self, index, section_data):
         self.index = index
         self.entry_offsets = []  # byte offset, from the start of the section, of each script
+        self.script_names = {}  # entry index -> the name a text edit gave that script
+        self.script_trailing_comments = {}  # entry index -> comment lines written after its end
         self.instructions = []
         self.padding = b""  # the zero word most sections end with, kept so saving is byte-exact
         self.original_data = section_data  # for a section holding no script at all (see to_bytes)
@@ -386,12 +403,32 @@ class ScriptSection:
 
     # -- writing ------------------------------------------------------------------------------
 
+    def replace_scripts(self, scripts, names=None, trailing_comments=None):
+        """Lay the whole section out again from a list of scripts, each a list of Instructions.
+
+        This is what a text import does. The scripts are written back to back in table order, so
+        one that grew, shrank, appeared or disappeared is fine - even the offset table changing
+        size, which shifts every script. GOTO targets are NOT touched here: the caller resolves
+        them (the text format names its jump targets, so it can).
+        """
+        self.table_size = 4 * (len(scripts) + 1)
+        self.entry_offsets = []
+        self.instructions = []
+        offset = self.table_size
+        for script in scripts:
+            self.entry_offsets.append(offset)
+            self.instructions.extend(script)
+            offset += 4 * len(script)
+        self.script_names = dict(names or {})
+        self.script_trailing_comments = dict(trailing_comments or {})
+
     def to_bytes(self):
         if not self.entry_offsets:  # empty, or not a script section at all: hand the bytes back
             return self.original_data
         table_size = 4 * (len(self.entry_offsets) + 1)
-        if table_size != self.table_size:  # only adding or removing a script can do this
-            raise ValueError(f"Section {self.index}: the offset table changed size")
+        if table_size != self.table_size:
+            raise ValueError(f"Section {self.index}: the offset table and the script count "
+                             f"disagree ({table_size} != {self.table_size})")
         data = bytearray()
         for offset in self.entry_offsets:
             data += struct.pack("<I", offset)
@@ -402,6 +439,42 @@ class ScriptSection:
         return bytes(data)
 
 
+def indent_depths(section, entry_index):
+    """How deep each instruction of a script sits, as a list parallel to its instructions.
+
+    This is the interpreter's own structure: IF opens a condition list, THEN / ELSE / ELSE_IF
+    open an action block, END closes one. ELSE_IF and ELSE do not step back out first, because
+    the END that closed the branch before them already did.
+    """
+    start, end = section.script_range(entry_index)
+    depths = []
+    depth = 0
+    for index in range(start, end):
+        code = section.instructions[index].code
+        if code in (0xFF01, 0xFF0A):  # IF / IF_BLOCK: the conditions go one level in
+            depths.append(depth)
+            depth += 1
+        elif code in (0xFF0B, 0xFF04):  # THEN / THEN_ALWAYS: back out, then the actions go in
+            depth = max(depth - 1, 0)
+            depths.append(depth)
+            depth += 1
+        elif code in (0xFF0C, 0xFF0D):  # ELSE_IF / ELSE: already back out, so just go in
+            depths.append(depth)
+            depth += 1
+        elif code == END_CODE:
+            depth = max(depth - 1, 0)
+            depths.append(depth)
+        else:
+            depths.append(depth)
+    return depths
+
+
+PSEUDO_CODE_WORD = {
+    0xFF01: "if", 0xFF0A: "if", 0xFF0B: "then", 0xFF04: "always then",
+    0xFF0C: "else if", 0xFF0D: "else", END_CODE: "end",
+}
+
+
 def to_pseudo_code(section, entry_index, text_lookup=None):
     """Render one script the way the interpreter walks it: an IF / THEN / ELSE tree.
 
@@ -409,46 +482,17 @@ def to_pseudo_code(section, entry_index, text_lookup=None):
     dialog a SHOW_TEXT_BOX opens next to it.
     """
     start, end = section.script_range(entry_index)
+    depths = indent_depths(section, entry_index)
     lines = []
-    depth = 0
-
-    def emit(text, offset):
-        lines.append(f"{offset:>5}  {'    ' * max(depth, 0)}{text}")
-
     for index in range(start, end):
         instruction = section.instructions[index]
-        offset = section.instruction_offset(index)
-        also_starts = [entry for entry in section.entry_points_at(index) if entry != entry_index]
-        for entry in also_starts:
-            lines.append(f"       <- script #{entry} starts here too")
-        code = instruction.code
-        if code == 0xFF0A:
-            emit("if", offset)
-            depth += 1
-        elif code == 0xFF01:
-            emit("if", offset)
-            depth += 1
-        elif code == 0xFF0B:
-            depth = max(depth - 1, 0)
-            emit("then", offset)
-            depth += 1
-        elif code == 0xFF04:
-            depth = max(depth - 1, 0)
-            emit("always then", offset)
-            depth += 1
-        elif code == 0xFF0C:
-            # The END that closed the branch before already stepped back out, so ELSE_IF and
-            # ELSE line up with their IF without stepping out again.
-            emit("else if", offset)
-            depth += 1
-        elif code == 0xFF0D:
-            emit("else", offset)
-            depth += 1
-        elif code == END_CODE:
-            depth = max(depth - 1, 0)
-            emit("end", offset)
-        else:
-            emit(_instruction_line(instruction, text_lookup), offset)
+        for entry in section.entry_points_at(index):
+            if entry != entry_index:
+                lines.append(f"       <- script #{entry} starts here too")
+        indent = "    " * depths[index - start]
+        word = PSEUDO_CODE_WORD.get(instruction.code)
+        text = word if word else _instruction_line(instruction, text_lookup)
+        lines.append(f"{section.instruction_offset(index):>5}  {indent}{text}")
     return "\n".join(lines)
 
 
@@ -459,3 +503,52 @@ def _instruction_line(instruction, text_lookup):
         if text is not None:
             line += "   ; " + text.replace("\n", " / ")
     return line
+
+
+# The world map reads the PSX pad button word straight out of the input layer, so a
+# CHECK_BUTTON_INPUT mask is a set of DualShock bits (bit 6 = Cross, which is why every "press to
+# interact" script on the world map tests 64). Same bit order as FF8GameData's button_config.json.
+PAD_BUTTON_NAMES = ["L2", "R2", "L1", "R1", "Triangle", "Circle", "Cross", "Square",
+                    "Select", "L3", "R3", "Start"]
+
+# byte_2036B70, the world-map state, as CHECK_WORLD_MAP_STATE and SET_WORLD_MAP_STATE see it.
+WORLD_MAP_STATE_NAMES = {
+    0: "normal", 5: "vehicle 50 active", 6: "vehicle 50 approaching", 7: "Shumi train",
+    8: "vehicle 48 active", 9: "vehicle 48 approaching", 10: "draw point open",
+    13: "leaving to a field", 14: "player cannot move (a dialog is up)",
+}
+
+# CHECK_VEHICLE_TYPE values. 48 and 50 are left unnamed on purpose: the community notes call 48
+# Balamb Garden and 50 the Ragnarok, while the IDB's own model tables say the opposite
+# (Wm_ModelIdToVehicleCode maps world model 1 -> 50 and models 64/65 -> 48, and the same
+# function's callers name model 1 the Garden). Nothing checked so far settles it, so the tool
+# does not put a name on a number it cannot back up.
+VEHICLE_NAMES = {
+    33: "bike", 49: "the two big ships", 128: "on foot", 129: "the walking party",
+    130: "Galbadia aircraft", 131: "trains", 132: "cars", 133: "cars",
+}
+
+
+def button_mask_text(mask):
+    """The buttons a CHECK_BUTTON_INPUT mask stands for."""
+    if mask == 0xFFFF:
+        return "any button, or the stick pushed past 45"
+    names = [name for bit, name in enumerate(PAD_BUTTON_NAMES) if mask & (1 << bit)]
+    unknown = mask & ~((1 << len(PAD_BUTTON_NAMES)) - 1)
+    if unknown:
+        names.append(f"unknown bits 0x{unknown:04X}")
+    return " + ".join(names) if names else "no button"
+
+
+def value_text(instruction):
+    """What this instruction's parameter stands for, when the tool can say ("" when it cannot)."""
+    code = instruction.code
+    if code == 0xFF20:
+        return button_mask_text(instruction.word)
+    if code == 0xFF25:
+        return WORLD_MAP_STATE_NAMES.get(instruction.word, "")
+    if code == 0xFF26:
+        return WORLD_MAP_STATE_NAMES.get(instruction.param1, "")
+    if code == 0xFF09:
+        return VEHICLE_NAMES.get(instruction.word, "")
+    return ""

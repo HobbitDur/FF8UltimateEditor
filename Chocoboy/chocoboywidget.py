@@ -5,14 +5,15 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QListWidget, QLabel,
                              QTableWidget, QTableWidgetItem, QHeaderView, QPlainTextEdit,
                              QPushButton, QSplitter, QTabWidget, QGroupBox, QSpinBox, QMessageBox,
-                             QAbstractItemView)
+                             QAbstractItemView, QFileDialog)
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Chocoboy.chocoboymanager import (ChocoboyManager, SCRIPT_SECTION_LIST, TEXT_SECTION_LIST,
                                       SECTION_NAME, SECTION_DESCRIPTION)
-from Chocoboy.wmsetscript import (OPCODE_LIST, Instruction, to_pseudo_code,
+from Chocoboy.scripttext import section_to_text, text_to_section
+from Chocoboy.wmsetscript import (OPCODE_LIST, Instruction, to_pseudo_code, value_text,
                                   NO_PARAM, WORD, GOTO_CODE)
 
 
@@ -95,13 +96,15 @@ class ChocoboyWidget(QWidget):
         script_group.setFixedWidth(330)
 
         self.instruction_table = QTableWidget()
-        self.instruction_table.setColumnCount(5)
+        self.instruction_table.setColumnCount(6)
         self.instruction_table.setHorizontalHeaderLabels(
-            ["Offset", "Instruction", "Parameter", "Parameter 2", "What it does"])
+            ["Offset", "Instruction", "Parameter", "Parameter 2", "What the parameters are",
+             "What the instruction does"])
         self.instruction_table.verticalHeader().setVisible(False)
         self.instruction_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.instruction_table.horizontalHeader().setSectionResizeMode(
-            4, QHeaderView.ResizeMode.Stretch)
+        for column in (4, 5):  # the two columns worth reading get whatever width is left
+            self.instruction_table.horizontalHeader().setSectionResizeMode(
+                column, QHeaderView.ResizeMode.Stretch)
 
         self.add_button = QPushButton("Add instruction")
         self.add_button.setToolTip("Insert a copy of the selected line just above it, ready to be "
@@ -113,9 +116,23 @@ class ChocoboyWidget(QWidget):
                                       "every GOTO after it moves with the change.")
         self.remove_button.clicked.connect(self._on_remove_instruction)
 
+        self.export_button = QPushButton("Export to text")
+        self.export_button.setToolTip("Write every script of this section to a text file: "
+                                      "opcodes, named jump targets, and room for your own "
+                                      "comments and a name per script")
+        self.export_button.clicked.connect(self._on_export_section)
+        self.import_button = QPushButton("Import from text")
+        self.import_button.setToolTip("Read a section back from a text file written here. "
+                                      "Jump targets are resolved from their labels, so the "
+                                      "scripts may have grown, shrunk, appeared or disappeared")
+        self.import_button.clicked.connect(self._on_import_section)
+
         button_row = QHBoxLayout()
         button_row.addWidget(self.add_button)
         button_row.addWidget(self.remove_button)
+        button_row.addSpacing(16)
+        button_row.addWidget(self.export_button)
+        button_row.addWidget(self.import_button)
         button_row.addStretch(1)
 
         table_panel = QWidget()
@@ -133,11 +150,25 @@ class ChocoboyWidget(QWidget):
         pseudo_code_layout.addWidget(self.pseudo_code_view)
         pseudo_code_group.setLayout(pseudo_code_layout)
 
+        self.usage_view = QPlainTextEdit()
+        self.usage_view.setReadOnly(True)
+        self.usage_group = QGroupBox("What else touches this")
+        usage_layout = QVBoxLayout()
+        usage_layout.addWidget(self.usage_view)
+        self.usage_group.setLayout(usage_layout)
+
+        bottom_splitter = QSplitter(Qt.Orientation.Horizontal)
+        bottom_splitter.addWidget(pseudo_code_group)
+        bottom_splitter.addWidget(self.usage_group)
+        bottom_splitter.setStretchFactor(0, 3)
+        bottom_splitter.setStretchFactor(1, 2)
+
         editor_splitter = QSplitter(Qt.Orientation.Vertical)
         editor_splitter.addWidget(table_panel)
-        editor_splitter.addWidget(pseudo_code_group)
+        editor_splitter.addWidget(bottom_splitter)
         editor_splitter.setStretchFactor(0, 3)
         editor_splitter.setStretchFactor(1, 2)
+        self.instruction_table.currentCellChanged.connect(self._on_instruction_selected)
 
         tab = QWidget()
         layout = QHBoxLayout()
@@ -232,6 +263,36 @@ class ChocoboyWidget(QWidget):
     def _on_script_changed(self):
         self._reload_instructions()
 
+    def _on_instruction_selected(self, row, _column, _previous_row, _previous_column):
+        """Show everywhere else in the file that touches what the selected line touches."""
+        section = self.current_script_section
+        index = self._instruction_index(row)
+        if section is None or index is None:
+            self.usage_view.setPlainText("")
+            return
+        instruction = section.instructions[index]
+        title, users = self._usage_of(instruction)
+        self.usage_group.setTitle(title)
+        self.usage_view.setPlainText("\n".join(users) if users
+                                     else "Nothing else in the file touches it.")
+
+    def _usage_of(self, instruction):
+        """(what is being looked up, everywhere it is used) for the selected instruction."""
+        if instruction.code in (0xFF27, 0xFF28):
+            return (f"What else touches save flag {instruction.param1}",
+                    self.manager.find_flag_users(instruction.param1))
+        if instruction.code in (0xFF2D, 0xFF2E, 0xFF30, 0xFF31):
+            return (f"What else touches script var {instruction.param1}",
+                    self.manager.find_script_var_users(instruction.param1))
+        if instruction.code in (0xFF1F, 0xFF23):
+            return (f"What else opens dialog {instruction.param2}",
+                    self.manager.find_text_users(instruction.param2))
+        if instruction.code in (0xFF24, 0xFF2C):
+            window = instruction.word if instruction.code == 0xFF24 else instruction.param1
+            return (f"What else uses message window {window}",
+                    self.manager.find_message_window_users(window))
+        return ("What else touches this", [])
+
     def _reload_instructions(self):
         section = self.current_script_section
         entry = self.script_list.currentRow()
@@ -244,8 +305,9 @@ class ChocoboyWidget(QWidget):
         for row, index in enumerate(range(start, end)):
             self._fill_instruction_row(row, section, index)
         self.instruction_table.resizeColumnsToContents()
-        self.instruction_table.horizontalHeader().setSectionResizeMode(
-            4, QHeaderView.ResizeMode.Stretch)
+        for column in (4, 5):
+            self.instruction_table.horizontalHeader().setSectionResizeMode(
+                column, QHeaderView.ResizeMode.Stretch)
         self._refresh_pseudo_code()
 
     def _fill_instruction_row(self, row, section, index):
@@ -286,25 +348,47 @@ class ChocoboyWidget(QWidget):
             lambda value, r=row: self._on_parameter_changed(r, 1, value))
         self.instruction_table.setCellWidget(row, 3, second_spinbox)
 
-        description_item = QTableWidgetItem(self._describe(section, instruction))
-        description_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
-        self.instruction_table.setItem(row, 4, description_item)
+        value_item = QTableWidgetItem(self._value_of(section, instruction))
+        value_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+        self.instruction_table.setItem(row, 4, value_item)
 
-    def _describe(self, section, instruction):
-        """The plain-English line shown next to an instruction, with what its parameters point at."""
-        opcode = instruction.opcode
-        if opcode is None:
-            return "Not an instruction this tool knows. Kept as it is."
-        description = opcode.description
+        description_item = QTableWidgetItem(
+            instruction.opcode.description if instruction.opcode
+            else "Not an instruction this tool knows. Kept as it is.")
+        description_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+        self.instruction_table.setItem(row, 5, description_item)
+
+    def _value_of(self, section, instruction):
+        """What this instruction's parameters actually stand for, when the tool can say.
+
+        The parameters are the whole difficulty of reading these scripts: a bare 61, 124 or 60, 2
+        says nothing. Whatever can be resolved from the file itself or from the game data - the
+        dialog a number opens, the item it hands out, the buttons a mask stands for, the place an
+        entity spawns at, the instruction a jump lands on - is spelled out here."""
+        if instruction.opcode is None:
+            return f"raw bytes {instruction.param1}, {instruction.param2}"
         if instruction.code in (0xFF1F, 0xFF23):
             text = self.manager.dialog_lookup().get(instruction.param2)
-            if text is not None:
-                description += f'  ->  "{text}"'
-        elif instruction.code == 0xFF37:
-            description += f"  ->  {self._item_name(instruction.param1)}"
-        elif instruction.code == GOTO_CODE and section.index_at_offset(instruction.word) is None:
-            description += "  ->  WARNING: that offset is not the start of an instruction."
-        return description
+            return f'"{text}"' if text is not None else f"no text {instruction.param2} in section 13"
+        if instruction.code == 0xFF37:
+            return self._item_name(instruction.param1)
+        if instruction.code in (0xFF13, 0xFF14) and self.manager.spawn_positions:
+            return self.manager.spawn_positions.describe(instruction.param1, instruction.param2)
+        if instruction.code == GOTO_CODE:
+            return self._goto_target_text(section, instruction)
+        return value_text(instruction)
+
+    def _goto_target_text(self, section, instruction):
+        """Where a jump lands, which the raw number never tells you."""
+        target = section.index_at_offset(instruction.word)
+        if target is None:
+            return "WARNING: that offset is not the start of an instruction"
+        owners = [entry for entry in range(len(section.entry_offsets))
+                  if section.script_range(entry)[0] <= target < section.script_range(entry)[1]]
+        landing = section.instructions[target].name
+        if not owners:
+            return f"lands on {landing}, in no script of this section"
+        return f"lands on {landing}, in script #{owners[0]}"
 
     def _item_name(self, item_id):
         items = getattr(self.game_data, "item_data_json", {}).get("items", [])
@@ -339,9 +423,9 @@ class ChocoboyWidget(QWidget):
             instruction.param1 = value
         else:
             instruction.param2 = value
-        description_item = self.instruction_table.item(row, 4)
-        if description_item is not None:
-            description_item.setText(self._describe(section, instruction))
+        value_item = self.instruction_table.item(row, 4)
+        if value_item is not None:
+            value_item.setText(self._value_of(section, instruction))
         self._mark_dirty()
         self._refresh_pseudo_code()
 
@@ -364,6 +448,42 @@ class ChocoboyWidget(QWidget):
         section.delete_instruction(index)
         self._mark_dirty()
         self._reload_script_section_keeping_selection()
+
+    def _on_export_section(self):
+        section = self.current_script_section
+        if section is None:
+            return
+        index = self.script_section_combo.currentData()
+        default_name = f"section{index}_scripts.txt"
+        folder = os.path.dirname(self.manager.file_path) or os.getcwd()
+        path = QFileDialog.getSaveFileName(self, f"Export section {index} scripts",
+                                           os.path.join(folder, default_name), "*.txt")[0]
+        if not path:
+            return
+        with open(path, "w", encoding="utf8") as out_file:
+            out_file.write(section_to_text(section, SECTION_NAME[index]))
+
+    def _on_import_section(self):
+        section = self.current_script_section
+        if section is None:
+            return
+        index = self.script_section_combo.currentData()
+        folder = os.path.dirname(self.manager.file_path) or os.getcwd()
+        path = QFileDialog.getOpenFileName(self, f"Import section {index} scripts", folder,
+                                           "*.txt")[0]
+        if not path:
+            return
+        with open(path, encoding="utf8") as in_file:
+            result = text_to_section(in_file.read())
+        if not result.ok:
+            QMessageBox.critical(self, f"Chocoboy - Section {index} not imported",
+                                 "Nothing was changed.\n\n" + "\n".join(result.errors[:20]))
+            return
+        section.replace_scripts(result.scripts, result.names, result.trailing_comments)
+        self._mark_dirty()
+        self._reload_script_section()
+        QMessageBox.information(self, f"Chocoboy - Section {index} imported",
+                                "\n".join(result.warnings))
 
     def _reload_script_section_keeping_selection(self):
         """Redraw after an edit that moved offsets: every script's header line changed too."""
