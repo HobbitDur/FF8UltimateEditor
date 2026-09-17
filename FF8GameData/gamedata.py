@@ -211,6 +211,19 @@ class GameData:
         with open(file_path, encoding="utf8") as f:
             self.magic_data_json = json.load(f)
 
+    def load_names(self, renames_json_name=None):
+        """Reload the vanilla spell, item and enemy attack names, then apply a mod's renames on top
+        when one is named (names_cronos.json): what every tool shows for them - the xlsx columns
+        and their drop-downs, the AI parameters, the monster drops and draws.
+
+        The renames file is generated from the mod's kernel.bin, see FF8GameData/kernelnames.py."""
+        self.load_magic_data()
+        self.load_item_data()
+        self.load_enemy_abilities_data()
+        if renames_json_name:
+            from FF8GameData.kernelnames import apply_names, read_changes_file
+            apply_names(self, read_changes_file(os.path.join(self.resource_folder_json, renames_json_name)))
+
     def load_attack_animation_data(self):
         file_path = os.path.join(self.resource_folder_json, "attack_animation.json")
         with open(file_path, encoding="utf8") as f:

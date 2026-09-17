@@ -1,0 +1,22 @@
+{
+  "_comment": "Generated from kernel.bin by the Cronos repository (python main_cli.py names) - do not edit by hand.",
+  "magic": {
+    "43": "Reaper",
+    "47": "Poisona",
+    "48": "Soul Lift",
+    "54": "Earthra",
+    "55": "Earthga",
+    "56": "Wind Blast"
+  },
+  "item": {
+    "18": "Grenade",
+    "19": "Cluster Bomb",
+    "20": "Arctic Wind",
+    "21": "Grendel Fang",
+    "144": "Stone Skin",
+    "145": "Buel Wing"
+  },
+  "enemy_ability": {
+    "16": "Arm Machine Gun"
+  }
+}

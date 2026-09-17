@@ -596,7 +596,7 @@ class IfritMonsterWidget(QWidget):
         tl.setSpacing(4)
 
         self._cronos_checkbox = QCheckBox("Cronos")
-        self._cronos_checkbox.setToolTip("Load AI data with cronos configuration")
+        self._cronos_checkbox.setToolTip("Use the Cronos configuration: its AI definitions, and the\nspell and item names its kernel.bin renames.")
         self._cronos_checkbox.setChecked(self.settings.value("ifrit/cronos_checkbox", defaultValue=False, type=bool))
         self._cronos_checkbox.stateChanged.connect(self._on_cronos_toggled)
 
@@ -671,8 +671,8 @@ class IfritMonsterWidget(QWidget):
         # the active tool through the shared toolbar - no per-tool shortcut, to avoid an ambiguous
         # Ctrl+S when Ifrit has focus.
 
-        # Load Cronos AI data once at startup (no file to reload yet).
-        self._apply_cronos_ai_data(self._cronos_checkbox.isChecked())
+        # Load the Cronos AI tables and names once at startup (no file to reload yet).
+        self._apply_cronos_data(self._cronos_checkbox.isChecked())
         self._update_section_buttons()   # nothing shown yet -> both off
 
     # ── Shared header toolbar hooks (Alexander pattern) ───────────────
@@ -1272,13 +1272,16 @@ class IfritMonsterWidget(QWidget):
 
     # ── Cronos ────────────────────────────────────────────────────────
 
-    def _apply_cronos_ai_data(self, checked):
+    def _apply_cronos_data(self, checked):
+        """Cronos changes the AI tables, and renames a few spells and items in its kernel.bin.
+        Unchecked, everything stays as the game ships it: the vanilla names, never a mod's."""
         self._game_data.load_ai_data("ai_cronos.json" if checked else "ai_vanilla.json")
+        self._game_data.load_names("names_cronos.json" if checked else None)
 
     def _on_cronos_toggled(self, state):
         """Cronos changes how AI is decompiled - reload the active file so it re-decompiles with
         the new tables (other files re-decompile when next reloaded)."""
-        self._apply_cronos_ai_data(self._cronos_checkbox.isChecked())
+        self._apply_cronos_data(self._cronos_checkbox.isChecked())
         self.settings.setValue("ifrit/cronos_checkbox", state)
         self._reload_active()
 

@@ -20,6 +20,9 @@ All-in-one editor for monster and summon battle files, organized as tabs sharing
 - **3D** — views the monster's 3D model and animations (mesh/wireframe, playback speed, bone list), with glTF export.
 - **Texture** / **Dynamic Texture** — edits the monster's textures and palette-animation (VRAM) effects.
 - **Xlsx** — exports/imports monster stats to/from an Excel spreadsheet for easy bulk editing.
+- **Cronos** — shows that mod's configuration instead of the game's: its AI definitions, and the spells and items
+  its `kernel.bin` renames (`FF8GameData/kernelnames.py` reads those out of a kernel.bin; unticked, every name is
+  the one the game ships).
 - **Extract sections… / Apply sections…** — writes every section of the open file as its own editable file
   (`ai.md`, `anim_seq.xml`, `camera.xml`, `info_stat.xlsx`, `texture_00.tim`…) in a folder named after it, and applies
   section files back onto a file — you pick the files you want (selecting all of a folder works), the other sections stay
