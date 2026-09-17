@@ -161,8 +161,8 @@ class IfritStatWidget(QWidget):
         self._elem_spins = []        # [8 QSpinBox]
         self._status_spins = []      # [20 QSpinBox]
         self._flag_checks = {}       # byte_flag_name -> {bit_name: QCheckBox}
-        self._camera_combo = None    # byte_flag_0 (camera category)
-        self._devour_cat_combo = None  # byte_flag_3 (devour category)
+        self._camera_combo = None      # camera_category (byte 246)
+        self._devour_cat_combo = None  # devour_category (byte 255)
         self._misc_spins = {}        # misc name -> QSpinBox
         self._card_combos = []       # [3 QComboBox]
         self._devour_combos = []     # [3 QComboBox]
@@ -333,8 +333,7 @@ class IfritStatWidget(QWidget):
                            "Unused padding byte (offset 334). Always 0 — shown read-only.",
                            read_only=True)
 
-        # Camera category (byte_flag_0) and Devour category (byte_flag_3) are
-        # small integers, not real bitfields, so present them as named combos.
+        # The camera and devour categories are small numbers, each with its own list of names.
         camera_tip = ("Byte 246 — camera framing class.\n"
                       "Read once at battle start and converted into the entity's cameraDataRelated,\n"
                       "which the battle camera uses as a size/distance class (it is what pulls the\n"
@@ -343,7 +342,7 @@ class IfritStatWidget(QWidget):
         self._camera_combo = self._combo_from_json(
             self.game_data.camera_category_data_json['camera_category'],
             tooltip=camera_tip, max_chars=34, compact=True)
-        self._camera_combo.activated.connect(partial(self._on_category_changed, 'byte_flag_0'))
+        self._camera_combo.activated.connect(partial(self._on_category_changed, 'camera_category'))
         form.addRow(self._info_label("Camera category (byte 246)", camera_tip), self._camera_combo)
 
         devour_tip = ("Byte 255 — devour classification consumed by the Devour system.\n"
@@ -353,7 +352,7 @@ class IfritStatWidget(QWidget):
         self._devour_cat_combo = self._combo_from_json(
             self.game_data.devour_category_data_json['devour_category'],
             tooltip=devour_tip, max_chars=16, compact=True)
-        self._devour_cat_combo.activated.connect(partial(self._on_category_changed, 'byte_flag_3'))
+        self._devour_cat_combo.activated.connect(partial(self._on_category_changed, 'devour_category'))
         form.addRow(self._info_label("Devour category (byte 255)", devour_tip), self._devour_cat_combo)
 
         layout.addWidget(misc_group)
@@ -436,8 +435,8 @@ class IfritStatWidget(QWidget):
             'byte_flag_2', "Byte flag 2 (byte 254) — surprise / escape / card",
             AIData.SECTION_INFO_STAT_BYTE_FLAG_2_LIST_VALUE,
             "Bitfield at offset 254. Each box is one on/off flag."))
-        note = QLabel("Note: byte flag 0 and 3 are the Camera and Devour categories, "
-                      "editable as lists in the Stats tab.")
+        note = QLabel("Note: bytes 246 and 255 are not flags - they are the Camera and Devour "
+                      "categories, chosen from a list in the Stats tab.")
         note.setWordWrap(True)
         layout.addWidget(note)
         layout.addStretch(1)
@@ -719,9 +718,8 @@ class IfritStatWidget(QWidget):
                 else:
                     spin.setValue(int(value))
 
-            # Categories (stored as bit dicts, edited as small ints)
-            self._set_combo_id(self._camera_combo, self._flag_dict_to_int(data.get('byte_flag_0', {})))
-            self._set_combo_id(self._devour_cat_combo, self._flag_dict_to_int(data.get('byte_flag_3', {})))
+            self._set_combo_id(self._camera_combo, int(data.get('camera_category', 0)))
+            self._set_combo_id(self._devour_cat_combo, int(data.get('devour_category', 0)))
 
             # Elemental / status defense
             for i, spin in enumerate(self._elem_spins):
@@ -781,19 +779,6 @@ class IfritStatWidget(QWidget):
         stats = {name: [sp.value() for sp in spins] for name, spins in self._stat_spins.items()}
         self._stat_plot.set_data(stats)
 
-    # ── Byte-flag <-> int conversion ─────────────────────────────────────
-
-    @staticmethod
-    def _flag_dict_to_int(flag_dict) -> int:
-        value = 0
-        for i, bit in enumerate(flag_dict.values()):
-            value |= (int(bit) << i)
-        return value
-
-    @staticmethod
-    def _int_to_flag_dict(value, bit_names) -> dict:
-        return {name: (value >> i) & 1 for i, name in enumerate(bit_names)}
-
     # ── Mug/drop rate <-> raw byte conversion ────────────────────────────
     # info_stat_data stores the rate as a % float (raw * 100 / 255); we edit the
     # raw 0-255 byte the engine actually compares against random(0..255).
@@ -822,16 +807,11 @@ class IfritStatWidget(QWidget):
         else:
             self._data[key] = value
 
-    def _on_category_changed(self, flag_key, _combo_index):
+    def _on_category_changed(self, category_key, _combo_index):
         if self._loading or self._data is None:
             return
-        if flag_key == 'byte_flag_0':
-            combo = self._camera_combo
-            names = AIData.SECTION_INFO_STAT_BYTE_FLAG_0_LIST_VALUE
-        else:
-            combo = self._devour_cat_combo
-            names = AIData.SECTION_INFO_STAT_BYTE_FLAG_3_LIST_VALUE
-        self._data[flag_key] = self._int_to_flag_dict(combo.currentData(), names)
+        combo = self._camera_combo if category_key == 'camera_category' else self._devour_cat_combo
+        self._data[category_key] = int(combo.currentData())
 
     def _on_elem_changed(self, index, value):
         if self._loading or self._data is None:

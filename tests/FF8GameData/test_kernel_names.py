@@ -285,16 +285,17 @@ def test_the_bit_flags_are_relabelled_without_moving_a_value(game_data, tmp_path
                    enumerate(["byte2_zz1", "byte2_zz2", "byte2_unused_3", "byte2_unused_4", "byte2_unused_5"])}
     assert xlsxnames.rename_in_workbook(path, found_since) == {name: 1 for name in found_since}
 
+    bits = sum(len(AIData.BYTE_FLAG_VALUES[flag]) for flag in AIData.BYTE_FLAG_LIST)
     before = load_workbook(path, data_only=True, keep_links=False)
     sheet = before[[name for name in before.sheetnames if name != "ref_data"][0]]
-    values = [sheet.cell(row=ROW_BYTE_FLAG + 1 + bit, column=COL_MISC + 2).value for bit in range(32)]
+    values = [sheet.cell(row=ROW_BYTE_FLAG + 1 + bit, column=COL_MISC + 2).value for bit in range(bits)]
     before.close()
 
     assert xlsxnames.refresh_byte_flag_labels(path) == {was: now for now, was in found_since.items()}
 
     after = load_workbook(path, data_only=True, keep_links=False)
     sheet = after[[name for name in after.sheetnames if name != "ref_data"][0]]
-    assert [sheet.cell(row=ROW_BYTE_FLAG + 1 + bit, column=COL_MISC + 1).value for bit in range(32)] == \
+    assert [sheet.cell(row=ROW_BYTE_FLAG + 1 + bit, column=COL_MISC + 1).value for bit in range(bits)] == \
            [label for flag in AIData.BYTE_FLAG_LIST for label in AIData.BYTE_FLAG_VALUES[flag]]
-    assert [sheet.cell(row=ROW_BYTE_FLAG + 1 + bit, column=COL_MISC + 2).value for bit in range(32)] == values
+    assert [sheet.cell(row=ROW_BYTE_FLAG + 1 + bit, column=COL_MISC + 2).value for bit in range(bits)] == values
     after.close()

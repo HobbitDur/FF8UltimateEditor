@@ -2061,12 +2061,9 @@ class AIData:
     SECTION_INFO_STAT_RENZOKUKEN = {'offset': 0x150, 'size': 16, 'byteorder': 'little', 'name': 'renzokuken', 'pretty_name': 'Renzokuken'}
     ELEM_DEF_DATA = {'offset': 0x160, 'size': 8, 'byteorder': 'big', 'name': 'elem_def', 'pretty_name': 'Elemental def'}
     STATUS_DEF_DATA = {'offset': 0x168, 'size': 20, 'byteorder': 'big', 'name': 'status_def', 'pretty_name': 'Status def'}
-    SECTION_INFO_STAT_BYTE_FLAG_0 = {'offset': 0xF6, 'size': 1, 'byteorder': 'little', 'name': 'byte_flag_0', 'pretty_name': 'Byte Flag 0'}
     # Byte 246 is not a bitfield: it is the camera category, a small number (0-4 in vanilla) read
-    # once at battle start (getMonsterCameraCategory). Its bits are named for what they are.
-    SECTION_INFO_STAT_BYTE_FLAG_0_LIST_VALUE = ['camera_category_bit_0', 'camera_category_bit_1', 'camera_category_bit_2',
-                                                'camera_category_bit_3', 'camera_category_unused_5', 'camera_category_unused_6',
-                                                'camera_category_unused_7', 'camera_category_unused_8']
+    # once at battle start (getMonsterCameraCategory) and turned into the entity's cameraDataRelated.
+    CAMERA_CATEGORY_DATA = {'offset': 0xF6, 'size': 1, 'byteorder': 'little', 'name': 'camera_category', 'pretty_name': 'Camera category'}
     SECTION_INFO_STAT_BYTE_FLAG_1 = {'offset': 0xF7, 'size': 1, 'byteorder': 'little', 'name': 'byte_flag_1', 'pretty_name': 'Byte Flag 1'}
     # Bit 3 has no effect: setMonsterInfoFromDatInfoSection is the only reader of byte 247 and never
     # tests 0x04 (checked in IDA, and the enum there says so too).
@@ -2078,26 +2075,23 @@ class AIData:
     SECTION_INFO_STAT_BYTE_FLAG_2_LIST_VALUE = ['IncreaseSurpriseRNG', 'DecreaseSurpriseRNG', 'SurpriseAttackImmunity', 'IncreaseChanceEscape', 'DecreaseChanceEscape',
                                                 'byte2_unused_6',
                                                 'Gravity Immunity', 'Always obtains card']
-    SECTION_INFO_STAT_BYTE_FLAG_3 = {'offset': 0xFF, 'size': 1, 'byteorder': 'little', 'name': 'byte_flag_3', 'pretty_name': 'Byte Flag 3'}
-    # Byte 255 is not a bitfield either: it is the devour category, a number 0-8 (see the Devour
-    # system). Same idea as byte 246 - the bits are the number's bits.
-    SECTION_INFO_STAT_BYTE_FLAG_3_LIST_VALUE = ['devour_category_bit_0', 'devour_category_bit_1', 'devour_category_bit_2',
-                                                'devour_category_bit_3', 'devour_category_unused_5', 'devour_category_unused_6',
-                                                'devour_category_unused_7', 'devour_category_unused_8']
+    # Byte 255 is not a bitfield either: it is the devour category, a number 0-8 the Devour system
+    # reads (8 = inedible, which is also what the engine writes on a failed devour).
+    DEVOUR_CATEGORY_DATA = {'offset': 0xFF, 'size': 1, 'byteorder': 'little', 'name': 'devour_category', 'pretty_name': 'Devour category'}
     ABILITIES_LOW_DATA = {'offset': 0x34, 'size': 64, 'byteorder': 'little', 'name': 'abilities_low', 'pretty_name': 'Abilities Low Level'}
     ABILITIES_MED_DATA = {'offset': 0x74, 'size': 64, 'byteorder': 'little', 'name': 'abilities_med', 'pretty_name': 'Abilities Medium Level'}
     ABILITIES_HIGH_DATA = {'offset': 0xB4, 'size': 64, 'byteorder': 'little', 'name': 'abilities_high', 'pretty_name': 'Abilities High Level'}
     SECTION_INFO_STAT_DICT = {'monster_name': "", 'hp': [], 'str': [], 'vit': [], 'mag': [], 'spr': [], 'spd': [], 'eva': [],
                               'abilities_low': [], 'abilities_med': [], 'abilities_high': [], 'med_lvl': 0, 'high_lvl': 0,
-                              'byte_flag_0': {}, 'byte_flag_1': {}, 'card': [], 'devour': [], 'byte_flag_2': {}, 'byte_flag_3': {},
+                              'camera_category': 0, 'byte_flag_1': {}, 'card': [], 'devour': [], 'byte_flag_2': {}, 'devour_category': 0,
                               'extra_xp': 0, 'xp': 0, 'low_lvl_mag': [], 'med_lvl_mag': [], 'high_lvl_mag': [],
                               'low_lvl_mug': [], 'med_lvl_mug': [], 'high_lvl_mug': [],
                               'low_lvl_drop': [], 'med_lvl_drop': [], 'high_lvl_drop': [], 'mug_rate': 0, 'drop_rate': 0,
                               'padding': 0, 'ap': 0, 'renzokuken': [], 'elem_def': [], 'status_def': []}
     SECTION_INFO_STAT_LIST_DATA = [SECTION_INFO_STAT_NAME_DATA, HP_DATA, STR_DATA, VIT_DATA, MAG_DATA, SPR_DATA, SPD_DATA, EVA_DATA,
                                    ABILITIES_LOW_DATA, ABILITIES_MED_DATA, ABILITIES_HIGH_DATA, MED_LVL_DATA, HIGH_LVL_DATA,
-                                   SECTION_INFO_STAT_BYTE_FLAG_0, SECTION_INFO_STAT_BYTE_FLAG_1, CARD_DATA, DEVOUR_DATA,
-                                   SECTION_INFO_STAT_BYTE_FLAG_2, SECTION_INFO_STAT_BYTE_FLAG_3,
+                                   CAMERA_CATEGORY_DATA, SECTION_INFO_STAT_BYTE_FLAG_1, CARD_DATA, DEVOUR_DATA,
+                                   SECTION_INFO_STAT_BYTE_FLAG_2, DEVOUR_CATEGORY_DATA,
                                    EXTRA_XP_DATA, XP_DATA, LOW_LVL_MAG_DATA, MED_LVL_MAG_DATA, HIGH_LVL_MAG_DATA,
                                    LOW_LVL_MUG_DATA, MED_LVL_MUG_DATA, HIGH_LVL_MUG_DATA, LOW_LVL_DROP_DATA, MED_LVL_DROP_DATA, HIGH_LVL_DROP_DATA,
                                    MUG_RATE_DATA, DROP_RATE_DATA, PADDING_DATA, AP_DATA, SECTION_INFO_STAT_RENZOKUKEN, ELEM_DEF_DATA, STATUS_DEF_DATA]
@@ -2145,13 +2139,16 @@ class AIData:
     SECTION_TEXTURE_LIST_DATA = [SECTION_TEXTURE_NB, SECTION_TEXTURE_OFFSET, SECTION_TEXTURE_END_OF_FILE, SECTION_TEXTURE_DATA]
     SECTION_TEXTURE_DICT = {'nb_texture': 0, 'tim_offset': [], 'eof_texture': 0, 'texture_data': []}
 
-    BYTE_FLAG_LIST = ['byte_flag_0', 'byte_flag_1', 'byte_flag_2', 'byte_flag_3']
+    # The two bytes that really are bitfields (bytes 247 and 254); 246 and 255 are the camera and
+    # devour categories, which are numbers.
+    BYTE_FLAG_LIST = ['byte_flag_1', 'byte_flag_2']
     # The bits of each flag byte, in order. A bit IS its position; the name is only what the tools
     # call it, and those are still being found - byte 2's first five were "unused" until they were.
-    BYTE_FLAG_VALUES = {'byte_flag_0': SECTION_INFO_STAT_BYTE_FLAG_0_LIST_VALUE,
-                        'byte_flag_1': SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE,
-                        'byte_flag_2': SECTION_INFO_STAT_BYTE_FLAG_2_LIST_VALUE,
-                        'byte_flag_3': SECTION_INFO_STAT_BYTE_FLAG_3_LIST_VALUE}
+    BYTE_FLAG_VALUES = {'byte_flag_1': SECTION_INFO_STAT_BYTE_FLAG_1_LIST_VALUE,
+                        'byte_flag_2': SECTION_INFO_STAT_BYTE_FLAG_2_LIST_VALUE}
+    # The per-monster classifications, each a number with its own list of names (camera_category.json,
+    # devour_category.json) - chosen from a list, never edited bit by bit.
+    CATEGORY_ORDER = ['camera_category', 'devour_category']
     CARD_OBTAIN_ORDER = ['DROP', 'MOD', 'RARE_MOD']
     MISC_ORDER = ['med_lvl', 'high_lvl', 'extra_xp', 'xp', 'mug_rate', 'drop_rate', 'ap']
     ABILITIES_HIGHNESS_ORDER = ['abilities_low', 'abilities_med', 'abilities_high']

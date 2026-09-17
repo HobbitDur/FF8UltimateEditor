@@ -304,7 +304,7 @@ class MonsterAnalyser:
             property_elem = [x for ind, x in enumerate(AIData.SECTION_INFO_STAT_LIST_DATA) if x['name'] == param_name][0]
             if param_name in ([x['name'] for x in game_data.stat_data_json['stat']] + ['card', 'devour']):  # List of 1 byte value
                 value_to_set = bytes(value)
-            elif param_name in ['med_lvl', 'high_lvl', 'extra_xp', 'xp', 'ap', 'nb_animation', 'padding']:
+            elif param_name in ['med_lvl', 'high_lvl', 'extra_xp', 'xp', 'ap', 'nb_animation', 'padding'] + AIData.CATEGORY_ORDER:
                 value_to_set = value.to_bytes(length=property_elem['size'], byteorder=property_elem['byteorder'])
             elif param_name in ['low_lvl_mag', 'med_lvl_mag', 'high_lvl_mag', 'low_lvl_mug', 'med_lvl_mug', 'high_lvl_mug', 'low_lvl_drop',
                                 'med_lvl_drop',
@@ -1006,12 +1006,12 @@ class MonsterAnalyser:
                                 {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
                                 {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0}, {'type': 0, 'animation': 0, 'id': 0},
                                 {'type': 0, 'animation': 0, 'id': 0}], 'med_lvl': 25, 'high_lvl': 45,
-             'byte_flag_0': {'camera_category_bit_0': 1, 'camera_category_bit_1': 1, 'camera_category_bit_2': 0, 'camera_category_bit_3': 0, 'camera_category_unused_5': 0, 'camera_category_unused_6': 0, 'camera_category_unused_7': 0, 'camera_category_unused_8': 0},
+             'camera_category': 3,
              'byte_flag_1': {'Zombie': 0, 'Fly': 0, 'byte1_unused_3': 0, 'Immune NVPlus_Moins': 0, 'Hidden HP': 0, 'Auto-Reflect': 0, 'Auto-Shell': 0, 'Auto-Protect': 0},
              'card': [255, 255, 255], 'devour': [255, 255, 255],
              'byte_flag_2': {'IncreaseSurpriseRNG': 0, 'DecreaseSurpriseRNG': 0, 'SurpriseAttackImmunity': 0, 'IncreaseChanceEscape': 1, 'DecreaseChanceEscape': 0,
                              'byte2_unused_6': 0, 'Gravity Immunity': 0, 'Always obtains card': 0},
-             'byte_flag_3': {'devour_category_bit_0': 0, 'devour_category_bit_1': 0, 'devour_category_bit_2': 0, 'devour_category_bit_3': 1, 'devour_category_unused_5': 0, 'devour_category_unused_6': 0, 'devour_category_unused_7': 0, 'devour_category_unused_8': 0},
+             'devour_category': 8,
              'extra_xp': 3, 'xp': 20, 'low_lvl_mag': [{'ID': 1, 'value': 0}, {'ID': 7, 'value': 0}, {'ID': 4, 'value': 0}, {'ID': 21, 'value': 0}],
              'med_lvl_mag': [{'ID': 2, 'value': 0}, {'ID': 8, 'value': 0}, {'ID': 5, 'value': 0}, {'ID': 22, 'value': 0}],
              'high_lvl_mag': [{'ID': 3, 'value': 0}, {'ID': 9, 'value': 0}, {'ID': 6, 'value': 0}, {'ID': 23, 'value': 0}],
@@ -1032,7 +1032,7 @@ class MonsterAnalyser:
                 value = FF8Text(game_data=game_data, own_offset=0, data_hex=raw_data_selected, id=0)
             elif el['name'] in ([x['name'] for x in game_data.stat_data_json['stat']] + ['card', 'devour']):
                 value = list(raw_data_selected)
-            elif el['name'] in ['med_lvl', 'high_lvl', 'extra_xp', 'xp', 'ap', 'padding']:
+            elif el['name'] in ['med_lvl', 'high_lvl', 'extra_xp', 'xp', 'ap', 'padding'] + AIData.CATEGORY_ORDER:
                 value = int.from_bytes(raw_data_selected, byteorder=el['byteorder'])
             elif el['name'] in ['low_lvl_mag', 'med_lvl_mag', 'high_lvl_mag', 'low_lvl_mug', 'med_lvl_mug', 'high_lvl_mug', 'low_lvl_drop', 'med_lvl_drop',
                                 'high_lvl_drop']:  # Case with 4 values linked to 4 IDs

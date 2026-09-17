@@ -29,6 +29,7 @@ ROW_MONSTER_NB_ANIMATION = 3
 ROW_MONSTER_COMBAT_TEXT = 4
 
 ROW_BYTE_FLAG = 8
+ROW_CATEGORY = ROW_BYTE_FLAG + 8 * 2   # The two real flag bytes come first, 8 rows each
 ROW_RENZOKUKEN = 41
 NB_RENZOKUKEN = 8
 ROW_ORIGINAl_FILE_NAME = 44
@@ -61,8 +62,10 @@ REF_DATA_COL_ITEM = 3
 REF_DATA_COL_CARD = 4
 REF_DATA_COL_DEVOUR = 5
 REF_DATA_COL_ATTACK_ANIMATION = 6
+REF_DATA_COL_CAMERA_CATEGORY = 7
+REF_DATA_COL_DEVOUR_CATEGORY = 8
 REF_DATA_COL_LIST = [REF_DATA_COL_ABILITIES_TYPE, REF_DATA_COL_ABILITIES, REF_DATA_COL_MAGIC, REF_DATA_COL_ITEM, REF_DATA_COL_CARD, REF_DATA_COL_DEVOUR,
-                     REF_DATA_COL_ATTACK_ANIMATION]
+                     REF_DATA_COL_ATTACK_ANIMATION, REF_DATA_COL_CAMERA_CATEGORY, REF_DATA_COL_DEVOUR_CATEGORY]
 REF_DATA_SHEET_TITLE = 'ref_data'
 
 MAX_COMBAT_TXT = 34
@@ -198,6 +201,27 @@ class DatToXlsx:
         source_str = '=' + REF_DATA_SHEET_TITLE + '!$' + col_str + '2:$' + col_str + '$' + str(len(game_data.devour_data_json['devour']) + 1)
         worksheet.data_validation(ROW_DEVOUR + 1, COL_DEVOUR + 1, ROW_DEVOUR + 1 + 2, COL_DEVOUR + 1,
                                   {'validate': 'list', 'source': source_str})
+
+    # The camera and devour categories (bytes 246 and 255) are numbers with a list of names each,
+    # so they are written like a drop, a card or a devour: "<id>:<name>", chosen from ref_data.
+    CATEGORY_REF = {'camera_category': ('camera_category_data_json', 'camera_category', REF_DATA_COL_CAMERA_CATEGORY),
+                    'devour_category': ('devour_category_data_json', 'devour_category', REF_DATA_COL_DEVOUR_CATEGORY)}
+
+    def __category_entries(self, game_data: GameData, category_name: str) -> list:
+        field, key, _column = self.CATEGORY_REF[category_name]
+        return getattr(game_data, field)[key]
+
+    def __write_category(self, worksheet, game_data: GameData, category_name: str, value):
+        entries = self.__category_entries(game_data, category_name)
+        row = ROW_CATEGORY + AIData.CATEGORY_ORDER.index(category_name)
+        pretty = [x['pretty_name'] for x in AIData.SECTION_INFO_STAT_LIST_DATA if x['name'] == category_name][0]
+        chosen = [f"{x['id']}:{x['name']}" for x in entries if x['id'] == value]
+        worksheet.write(row, COL_MISC, pretty, self.row_title_style)
+        worksheet.write(row, COL_MISC + 1, chosen[0] if chosen else f"{value}:Unknown", self.border_style)
+        column = xlsxwriter.utility.xl_col_to_name(self.CATEGORY_REF[category_name][2])
+        worksheet.data_validation(row, COL_MISC + 1, row, COL_MISC + 1,
+                                  {'validate': 'list',
+                                   'source': '=' + REF_DATA_SHEET_TITLE + '!$' + column + '2:$' + column + '$' + str(len(entries) + 1)})
 
     def __validate_renzokuken(self, worksheet, game_data: GameData):
         col_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_ATTACK_ANIMATION)
@@ -542,6 +566,8 @@ class DatToXlsx:
                         worksheet.write(ROW_BYTE_FLAG + row_index['byte_flag'], COL_MISC, bit_name, self.row_title_style)
                         worksheet.write(ROW_BYTE_FLAG + row_index['byte_flag'], COL_MISC + 1, bit_value, self.border_style)
                         row_index['byte_flag'] += 1
+                elif param_name in AIData.CATEGORY_ORDER:
+                    self.__write_category(worksheet, game_data, param_name, value)
                 elif param_name in ['renzokuken']:
                     row_index['renzokuken'] = 0
                     for el in value:
@@ -672,7 +698,8 @@ class DatToXlsx:
         # Creating reference data on last tab
         worksheet = self.workbook.add_worksheet(REF_DATA_SHEET_TITLE)
         worksheet.write_row(0, REF_DATA_COL_ABILITIES_TYPE,
-                            ['Monster type abilities', 'Monster abilities', 'Magic', 'Items', 'Card', 'Devour', 'Attack animation'],
+                            ['Monster type abilities', 'Monster abilities', 'Magic', 'Items', 'Card', 'Devour', 'Attack animation',
+                             'Camera category', 'Devour category'],
                             cell_format=self.column_title_style)
         for index, el in enumerate(game_data.enemy_abilities_data_json['abilities_type']):
             worksheet.write(index + 1, REF_DATA_COL_ABILITIES_TYPE, f"{el['id']}:{el['name']}", self.border_style)
@@ -688,6 +715,9 @@ class DatToXlsx:
             worksheet.write(index + 1, REF_DATA_COL_CARD, f"{el['id']}:{el['name']}", self.border_style)
         for index, el in enumerate(game_data.attack_animation_data_json['attack_animation']):
             worksheet.write(index + 1, REF_DATA_COL_ATTACK_ANIMATION, f"{el['id']}:{el['name']}", self.border_style)
+        for category_name in AIData.CATEGORY_ORDER:
+            for index, el in enumerate(self.__category_entries(game_data, category_name)):
+                worksheet.write(index + 1, self.CATEGORY_REF[category_name][2], f"{el['id']}:{el['name']}", self.border_style)
 
         worksheet.autofit()
 
@@ -731,6 +761,7 @@ class XlsxToDat:
         self.read_card(game_data, sheet, current_enemy)
         self.read_devour(game_data, sheet, current_enemy)
         self.read_byte_flag(game_data, sheet, current_enemy)
+        self.read_category(game_data, sheet, current_enemy)
         self.read_renzokuken(game_data, sheet, current_enemy)
 
         return current_enemy
@@ -746,6 +777,7 @@ class XlsxToDat:
         self.read_card(game_data, sheet, current_enemy)
         self.read_devour(game_data, sheet, current_enemy)
         self.read_byte_flag(game_data, sheet, current_enemy)
+        self.read_category(game_data, sheet, current_enemy)
         self.read_renzokuken(game_data, sheet, current_enemy)
         return current_enemy.info_stat_data
 
@@ -830,6 +862,23 @@ class XlsxToDat:
                 devour_list.append(0)
 
         enemy.info_stat_data['devour'] = devour_list
+
+    @staticmethod
+    def read_category(game_data: GameData, sheet, enemy: MonsterAnalyser):
+        """The camera and devour categories, each written "<id>:<name>" like every other list the
+        sheet offers - the id in front is the value, the name is what a modder reads."""
+        category_range = sheet.iter_rows(min_row=ROW_CATEGORY + 1,
+                                         max_row=ROW_CATEGORY + len(AIData.CATEGORY_ORDER),
+                                         min_col=COL_MISC + 2, max_col=COL_MISC + 2,
+                                         values_only=True)
+        for category_name, row in zip(AIData.CATEGORY_ORDER, category_range):
+            cell_value = row[0]
+            if cell_value and isinstance(cell_value, str) and ':' in cell_value:
+                enemy.info_stat_data[category_name] = int(cell_value.split(':')[0])
+            elif isinstance(cell_value, (int, float)):
+                enemy.info_stat_data[category_name] = int(cell_value)
+            else:
+                enemy.info_stat_data[category_name] = 0
 
     @staticmethod
     def read_byte_flag(game_data: GameData, sheet, enemy: MonsterAnalyser):
