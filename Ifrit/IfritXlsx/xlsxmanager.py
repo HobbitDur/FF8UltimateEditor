@@ -248,36 +248,33 @@ class DatToXlsx:
                 worksheet.data_validation(row_value, COL_ITEM + col_value, row_value + 3, COL_ITEM + col_value,
                                           {'validate': 'list', 'source': source_str})
 
-    def __validate_abilities(self, worksheet, game_data: GameData, ability_type, id, row_index, column_index):
-        if ability_type['name'] == "Magic":
-            ability_name = [f"{x['id']}:{x['name']}" for x in game_data.magic_data_json['magic'] if x['id'] == id][0]
-            col_ab_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_MAGIC)
-        elif ability_type['name'] == "Custom":
-            ability_name = [f"{x['id']}:{x['name']}" for x in game_data.enemy_abilities_data_json['abilities'] if x['id'] == id][0]
-            col_ab_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_ABILITIES)
-        elif ability_type['name'] == "Item":
-            ability_name = [f"{x['id']}:{x['name']}" for x in game_data.item_data_json['items'] if x['id'] == id][0]
-            col_ab_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_ITEM)
-        elif ability_type['name'] == "Seifer":
-            ability_name = [f"{x['id']}:{x['name']}" for x in game_data.enemy_abilities_data_json['abilities'] if x['id'] == id][0]
-            col_ab_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_ITEM)
-        else:
-            if id < len(game_data.enemy_abilities_data_json):
-                ability_name = [f"{x['id']}:{x['name']}" for x in game_data.enemy_abilities_data_json['abilities'] if x['id'] == id][0]
-            else:
-                ability_name = str(id) + ":Unknown name"
-            col_ab_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_ABILITIES)
+    # Which list an ability id belongs to, by the type in front of it. The type IS a command type
+    # (computeCommandAction switches on it): 2 reads the magic table, 4 the items, 8 the enemy
+    # attacks - and 236, Seifer's, shares that same enemy-attack table.
+    ABILITY_LIST_BY_TYPE = {2: ('magic_data_json', 'magic', REF_DATA_COL_MAGIC),
+                            4: ('item_data_json', 'items', REF_DATA_COL_ITEM),
+                            8: ('enemy_abilities_data_json', 'abilities', REF_DATA_COL_ABILITIES),
+                            236: ('enemy_abilities_data_json', 'abilities', REF_DATA_COL_ABILITIES)}
 
-        col_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_ABILITIES_TYPE)
-        source_str = '=' + REF_DATA_SHEET_TITLE + '!$' + col_str + '2:$' + col_str + '$' + str(len(game_data.enemy_abilities_data_json['abilities_type']) + 1)
-        worksheet.data_validation(row_index, column_index, row_index, column_index,
-                                  {'validate': 'list', 'source': source_str})
+    def __validate_abilities(self, worksheet, game_data: GameData, ability_type, id, row_index, column_index):
+        """Write an ability's id next to its type, each with the drop-down of its own list."""
+        field, key, column = self.ABILITY_LIST_BY_TYPE.get(
+            ability_type['id'], ('enemy_abilities_data_json', 'abilities', REF_DATA_COL_ABILITIES))
+        entries = getattr(game_data, field)[key]
+        named = [f"{x['id']}:{x['name']}" for x in entries if x['id'] == id]
+        ability_name = named[0] if named else f"{id}:Unknown name"
+
+        self.__validate_from_ref_data(worksheet, row_index, column_index, REF_DATA_COL_ABILITIES_TYPE,
+                                      len(game_data.enemy_abilities_data_json['abilities_type']))
         worksheet.write(row_index, column_index + 1, ability_name, self.border_style)
-        source_str = '=' + REF_DATA_SHEET_TITLE + '!$' + col_ab_str + '2:$' + col_ab_str + '$' + str(
-            len(game_data.enemy_abilities_data_json['abilities_type']) + 1)
-        worksheet.data_validation(row_index, column_index + 1, row_index,
-                                  column_index + 1,
-                                  {'validate': 'list', 'source': source_str})
+        self.__validate_from_ref_data(worksheet, row_index, column_index + 1, column, len(entries))
+
+    def __validate_from_ref_data(self, worksheet, row, column, ref_column, entry_count):
+        """Let one cell choose from a whole ref_data column - all of it, not the first few rows."""
+        letter = xlsxwriter.utility.xl_col_to_name(ref_column)
+        worksheet.data_validation(row, column, row, column,
+                                  {'validate': 'list',
+                                   'source': '=' + REF_DATA_SHEET_TITLE + '!$' + letter + '2:$' + letter + '$' + str(entry_count + 1)})
 
     def export_to_xlsx(self, monster_analyser: MonsterAnalyser, file_name: str, game_data: GameData, analyse_ai=True):
         # Chart
