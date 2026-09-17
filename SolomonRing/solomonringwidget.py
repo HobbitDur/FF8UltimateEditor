@@ -140,7 +140,8 @@ class SolomonRingWidget(QWidget):
 
     def _make_section_tab(self, section_id):
         config = self._section_configs[str(section_id)]
-        add_entry_callback = (lambda sid=section_id: self._add_growable_entry(sid)) \
+        # _checked absorbs the bool QPushButton.clicked emits, which would land in sid
+        add_entry_callback = (lambda _checked=False, sid=section_id: self._add_growable_entry(sid)) \
             if config.get("growable") else None
         tab = KernelSectionTab(self.game_data, self.registry, config,
                                jump_callback=self._jump_to_section,

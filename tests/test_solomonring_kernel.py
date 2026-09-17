@@ -8,7 +8,7 @@ import json
 import pathlib
 
 import pytest
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QPushButton
 
 from FF8GameData.gamedata import GameData, SectionType
 from ShumiTranslator.model.kernel.kernelmanager import KernelManager
@@ -199,3 +199,33 @@ def test_browsing_entries_does_not_mark_the_file_dirty(qapp, tmp_path):
     assert kind == "int"
     spin.setValue(spin.value() + 1)
     assert state.dirty
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_add_entry_button_actually_adds(qapp, tmp_path):
+    """Clicking the Magic tab's "+ Add entry" button must add an entry, not merely calling
+    _add_growable_entry directly. QPushButton.clicked emits a checked bool and the callback
+    took the section id as a plain positional parameter, so Qt passed False into it: the
+    handler looked for a section whose id was False, found none, and returned silently - the
+    button did nothing at all, with no error. Crossing id 64 must also insert the 32 GF
+    placeholder rows, so the new entry lands on 96, the first id FFNx treats as extended
+    magic (ids 64-95 stay reserved for the GFs)."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    magic = widget._section_tabs[2]
+    button = next(b for b in magic.findChildren(QPushButton) if "Add entry" in b.text())
+    section = next(s for s in widget.kernel_manager.section_list if s and s.id == 2)
+
+    assert len(section.get_subsection_list()) == 57
+    button.click()
+    assert len(section.get_subsection_list()) == 58, "the + Add entry button did nothing"
+    assert magic._visible_indices[-1] == 57
+
+    # Fill 58..63, then one more click crosses into the GF-reserved block.
+    while len(section.get_subsection_list()) < 64:
+        button.click()
+    button.click()
+    assert len(section.get_subsection_list()) == 97  # 64 + 32 placeholders + 1 real entry
+    assert magic._visible_indices[-1] == 96
