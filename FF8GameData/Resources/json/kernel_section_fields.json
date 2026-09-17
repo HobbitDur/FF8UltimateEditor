@@ -193,7 +193,7 @@
     "size": 1,
     "label": "Hit count",
     "group": "General",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "How many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",
@@ -615,7 +615,7 @@
     "size": 1,
     "group": "General",
     "label": "Hit count",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "How many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",
@@ -724,6 +724,24 @@
     "subgroup": "GF damage mods",
     "row": "gf_dmg_mods",
     "formula": "gf_damage"
+   },
+   {
+    "name": "unknown_0x17",
+    "offset": 23,
+    "size": 1,
+    "group": "General",
+    "label": "Padding",
+    "readonly": true,
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs to FF8KernelJunctionableGF.align). Always 0x00 in vanilla."
+   },
+   {
+    "name": "unknown_0x6f",
+    "offset": 111,
+    "size": 1,
+    "group": "Abilities",
+    "label": "Padding",
+    "readonly": true,
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs to FF8KernelJunctionableGF.padding2). Sits between the 21-entry ability array (ends 0x6E) and the GF compatibility block (starts 0x70)."
    },
    {
     "name": "ability1",
@@ -1748,12 +1766,12 @@
     "group": "Data"
    },
    {
-    "name": "unknown_0x09",
+    "name": "hit_count_and_name_flag",
     "offset": 9,
     "size": 1,
     "label": "Hit count / name flag",
     "group": "Data",
-    "help": "Bits 0-6 = hit count; bit 7 = show attack name (if clear, the attack-name text is suppressed). Read in computeCommandAction."
+    "help": "Bits 0-6 = hit count; bit 7 = show attack name (if clear, the attack-name text is suppressed). Read in computeCommandAction.\nHow many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",
@@ -2335,7 +2353,7 @@
     "help": "Base power fed into the damage formula."
    },
    {
-    "name": "unknown_0x09",
+    "name": "target_animation",
     "offset": 9,
     "size": 1,
     "label": "Target hit animation",
@@ -2399,7 +2417,7 @@
     "size": 1,
     "label": "Hit count",
     "group": "Data",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "How many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",
@@ -2935,7 +2953,7 @@
     "help": "Physical hit rate — accuracy rolled against the target's Evade to decide hit vs. miss. 0xFF (255) = always hits. Battle_applyDamage loads it into HIT_ATTACK_HITPERCENT, the same slot a character's Hit% stat fills; separate from status attack accuracy (which governs status infliction)."
    },
    {
-    "name": "unknown_0x15",
+    "name": "random_select_flag",
     "offset": 21,
     "size": 1,
     "label": "Random-select flag",
@@ -2949,7 +2967,7 @@
     "size": 1,
     "label": "Hit count",
     "group": "Data",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "How many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",
@@ -3075,7 +3093,7 @@
     "size": 1,
     "label": "Hit count",
     "group": "Data",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "How many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",
@@ -3225,7 +3243,7 @@
     "size": 1,
     "label": "Hit count",
     "group": "Data",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "How many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",
@@ -3654,7 +3672,7 @@
     "size": 1,
     "label": "Hit count",
     "group": "Data",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "How many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",
@@ -3728,7 +3746,7 @@
     "help": "Battle effect / animation dispatched at runtime (attack-animation id)."
    },
    {
-    "name": "unknown_0x06",
+    "name": "target_animation",
     "offset": 6,
     "size": 1,
     "label": "Target hit animation",
@@ -3810,7 +3828,7 @@
     "size": 1,
     "label": "Hit count",
     "group": "Data",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "How many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",
@@ -4061,7 +4079,7 @@
     "size": 1,
     "label": "Hit count",
     "group": "Data",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "How many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",
@@ -4233,7 +4251,7 @@
     "size": 1,
     "label": "Hit count",
     "group": "Data",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "How many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",
@@ -5263,12 +5281,14 @@
   "section_id": 25,
   "fields": [
    {
-    "name": "unknown_flags",
+    "name": "status_window_flags",
     "offset": 4,
     "size": 1,
-    "label": "Unknown flags",
+    "lookup": "status_window_flags",
+    "label": "Status window",
     "group": "Data",
-    "help": "Unknown but used - read by `sub_48CFB0` (purpose not yet identified)."
+    "help": "Status-window flags for battle target selection (same bits as the top of a battle command's Menu flags). 'Hide ally status panel' CLEAR = while the target cursor is up, the party HP/status panel opens (heal spells use 0x00); 'shows ailments' switches that panel to list status ailments instead of HP (Esuna/Dispel/support use 0x40). Offensive entries use 0x80 (panel hidden).\n(Confirm path: list entry -> target cursor +36 -> sub_4B1E70 -> BattleHUD_StatusWinOpenRequest/DetailMode.)\nBuildLimitMenuEntry_Rinoa (0x48CFB0) writes this byte into the same slot of the 5-byte limit-menu record that the Quistis (Blue magic +0x08) and Seifer/Edea (Temp-char +0x09) builders fill from their own Status window byte, and that the Shot builder hardcodes to 0x80. Both vanilla entries hold 0xA0: bit 0x80 (panel hidden) plus a 0x20 bit that no code reads and that no other kernel entry sets.",
+    "mask": 192
    },
    {
     "name": "target_side",
@@ -5307,7 +5327,7 @@
     "size": 1,
     "label": "Ability data ID",
     "group": "Data",
-    "help": "Rinoa 'Combine' (Angelo) entry field. NOT the same as the battle-command Ability data ID: it does NOT index section 11 - no code reads this byte (only UnknownFlags and Target of this section are consumed, by sub_48CFB0), so any linkage is positional/unused. Left as a raw value rather than a section-11 picker."
+    "help": "Rinoa 'Combine' (Angelo) entry field. NOT the same as the battle-command Ability data ID: it does NOT index section 11, and nothing reads it - IDA reports 0 cross-references to this struct member, and BuildLimitMenuEntry_Rinoa (0x48CFB0), the one function that touches this section, only consumes Status window and Target. Vanilla holds 0xFF in both entries. Left as a raw value rather than a section-11 picker."
    },
    {
     "name": "unknown_0x07",
@@ -5426,7 +5446,7 @@
     "size": 1,
     "label": "Hit count",
     "group": "Data",
-    "help": "Number of hits (interacts with certain animations)."
+    "help": "How many times the attack runs. computeCommandAction copies this byte into CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - uses it for two things:\n1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit all hits reuse the same mask and land on the same target.\n2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, status rolls and the elemental/defence maths are all re-evaluated per hit. calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage numbers.\nNothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). 0 means the hit loop never runs and the attack does nothing at all."
    },
    {
     "name": "element",

@@ -60,7 +60,7 @@
    },
    {
     "value": 14,
-    "name": "Summon Item?"
+    "name": "Summon item (non-junctionable GF)"
    },
    {
     "value": 15,
@@ -88,7 +88,7 @@
    },
    {
     "value": 21,
-    "name": "Unknown 1"
+    "name": "Curative Magic (% of target's Max HP)"
    },
    {
     "value": 22,
@@ -124,11 +124,11 @@
    },
    {
     "value": 30,
-    "name": "Unknown 2"
+    "name": "No handler (does nothing)"
    },
    {
     "value": 31,
-    "name": "Unknown 3"
+    "name": "No handler (does nothing)"
    },
    {
     "value": 32,
@@ -136,7 +136,7 @@
    },
    {
     "value": 33,
-    "name": "Unknown 4"
+    "name": "Magic damage from step count"
    },
    {
     "value": 34,

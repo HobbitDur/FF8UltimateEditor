@@ -161,6 +161,17 @@ for it in gf_general:
     if label:
         f["label"] = label
     gf_fields.append(f)
+# The two bytes the GF struct pads with. Confirmed dead in IDA: 0 xrefs to
+# FF8KernelJunctionableGF.align (0x17) and .padding2 (0x6F).
+gf_fields.append({"name": "unknown_0x17", "offset": 0x17, "size": 1, "group": "General",
+                  "label": "Padding", "readonly": True,
+                  "help": "Unused padding - no code references this byte (IDA: 0 xrefs to "
+                          "FF8KernelJunctionableGF.align). Always 0x00 in vanilla."})
+gf_fields.append({"name": "unknown_0x6f", "offset": 0x6F, "size": 1, "group": "Abilities",
+                  "label": "Padding", "readonly": True,
+                  "help": "Unused padding - no code references this byte (IDA: 0 xrefs to "
+                          "FF8KernelJunctionableGF.padding2). Sits between the 21-entry ability "
+                          "array (ends 0x6E) and the GF compatibility block (starts 0x70)."})
 for i in range(1, 22):
     base = 0x1B + 4 * (i - 1)
     row = f"ability{i}"
@@ -233,7 +244,7 @@ sec(4, 1, ["Name"], [("Data", [
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
     ("attack_flags", 1, "attack_flags"),
-    ("unknown_0x09", 1, None, "Unknown 0x09"),
+    ("hit_count_and_name_flag", 1, None, "Hit count / name flag"),
     ("element", 1, "element"),
     ("crit_bonus", 1, None, "Attack crit bonus"),
     ("status_attack_enabler", 1, None, "Status attack accuracy"),
@@ -262,7 +273,7 @@ sec(6, 2, NAMEDESC, [("Data", [
     ("attack_type", 1, "attack_type"),
     ("unknown_0x07", 1, None, "Unknown 0x07"),
     ("attack_power", 1, None, "Attack power"),
-    ("unknown_0x09", 1, None, "Unknown 0x09"),
+    ("target_animation", 1, None, "Target hit animation"),
     ("target_info", 1, "target_info"),
     ("attack_flags", 1, "attack_flags"),
     ("hit_count", 1, None, "Hit count"),
@@ -307,7 +318,7 @@ sec(8, 2, NAMEDESC, [("Data", [
     ("status_1", 2, "status_1", "Status 1"),
     ("status_2", 4, "status_2", "Status 2"),
     ("hit_rate", 1, None, "Hit rate"),
-    ("unknown_0x15", 1, None, "Unknown 0x15"),
+    ("random_select_flag", 1, None, "Random-select flag"),
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element"),
 ])], sub_size=24)
@@ -422,7 +433,7 @@ sec(19, 2, NAMEDESC, [("Data", [
 # 20: Blue magic (Quistis) ----------------------------------------------------
 sec(20, 2, NAMEDESC, [("Data", [
     ("attack_animation", 2, "attack_animation", "Attack animation"),
-    ("unknown_0x06", 1, None, "Unknown 0x06"),
+    ("target_animation", 1, None, "Target hit animation"),
     ("attack_type", 1, "attack_type"),
     ("status_window_flags", 1, "status_window_flags", "Status window"),
     ("target_info", 1, "target_info"),
@@ -503,7 +514,7 @@ sections["24"] = {"section_id": 24, "fields": duel_fields, "entry_names": ["Duel
 
 # 25: Rinoa limit breaks part 1 ----------------------------------------------
 sec(25, 2, NAMEDESC, [("Data", [
-    ("unknown_flags", 1, None, "Unknown flags"),
+    ("status_window_flags", 1, "status_window_flags", "Status window"),
     ("target", 1, "target_info", "Target"),
     ("ability_data_id", 1, None, "Ability data ID"),
     ("unknown_0x07", 1, None, "Unknown / Unused"),
@@ -712,6 +723,26 @@ _TARGET_INFO_HELP = (
     "stocking a drawn spell has no target to pick."
 )
 
+# Round 31: Hit count, confirmed end to end in IDA. computeCommandAction copies the
+# byte into CURRENT_ATTACK_HIT_COUNT; processMultiHitAttackExecution (0x48E830) is its
+# ONLY reader. Nothing about it is animation-specific - the old "works with meteor
+# animation, not sure about others" reading was wrong.
+_HIT_COUNT_HELP = (
+    "How many times the attack runs. computeCommandAction copies this byte into "
+    "CURRENT_ATTACK_HIT_COUNT, and processMultiHitAttackExecution (0x48E830) - its only reader - "
+    "uses it for two things:\n"
+    "1. It computes one target mask per hit into TARGET_MASK_FOR_EACH_HIT[]. If the resolved target "
+    "mask has the spread bit 0x2000 (from Target info 0x02 'Multi-target spread'), EVERY hit re-rolls "
+    "its own random target (getRandomTargetCharaMask / getRandomTargetMonsterMask); without that bit "
+    "all hits reuse the same mask and land on the same target.\n"
+    "2. It then runs Battle_applyDamage + computeTargetData once per hit per targeted slot, so damage, "
+    "status rolls and the elemental/defence maths are all re-evaluated per hit. "
+    "calculateHitDistributionPerSlot stores the per-slot tally in hit_count_to_receive for the damage "
+    "numbers.\n"
+    "Nothing here is animation-specific: vanilla uses it on Meteor and Meteor Stone (10 hits, spread bit "
+    "set -> 10 random targets), Lion Heart (17), Terra Break (16), Wishing Star (8) and Blood Pain (6). "
+    "0 means the hit loop never runs and the attack does nothing at all.")
+
 HELP = {
     "attack_animation": "Battle effect / animation dispatched at runtime (attack-animation id).",
     "magic_id": "Battle effect / animation dispatched at runtime (attack-animation id).",
@@ -745,7 +776,7 @@ HELP = {
                            "GF level modifier 2.",
     "gf_level_modifier_2": "Quadratic (÷256) acceleration of the GF EXP curve. Click f(x) for the "
                            "level→EXP curve.",
-    "hit_count": "Number of hits (interacts with certain animations).",
+    "hit_count": _HIT_COUNT_HELP,
     "draw_resist": "How hard the spell is to draw (higher = harder).",
     "element": "Elemental type(s) of the attack. Bitfield: combine flags.",
     "target_info": _TARGET_INFO_HELP,
@@ -822,9 +853,10 @@ FINDINGS = {
     (2, "unknown_0x0f"): ("Unused (padding)", "No code references this byte (IDA: 0 xrefs)."),
     (2, "unknown_0x3a"): ("Unused (padding)", "No code references these 2 bytes (IDA: 0 xrefs)."),
     (5, "unknown_0x03"): ("Unused (padding)", "No code references this byte (IDA: 0 xrefs)."),
-    (4, "unknown_0x09"): ("Hit count / name flag",
+    (4, "hit_count_and_name_flag"): ("Hit count / name flag",
                           "Bits 0-6 = hit count; bit 7 = show attack name (if clear, the "
-                          "attack-name text is suppressed). Read in computeCommandAction."),
+                          "attack-name text is suppressed). Read in computeCommandAction.\n"
+                          + _HIT_COUNT_HELP),
     (2, "status_window_flags"): _STATUS_WIN,
     (3, "status_window_flags"): _STATUS_WIN,
     (19, "status_window_flags"): _STATUS_WIN,
@@ -863,16 +895,8 @@ _PADDING = [(6, "unknown_0x07"), (6, "unknown_0x10"), (10, "unknown_0x11"),
             (16, "unused_0x06"), (19, "unknown_0x12"), (20, "unknown_0x0f"),
             (23, "unknown_0x09"), (25, "unknown_0x07"),
             (26, "unknown_0x07"), (1, "unknown_0x07")]
-_USED = {
-    (6, "unknown_0x09"): "Battle_applyDamage",
-    (8, "unknown_0x15"): "sub_483CA0",
-    (20, "unknown_0x06"): "Battle_applyDamage",
-    (25, "unknown_flags"): "sub_48CFB0",
-}
 for _k in _PADDING:
     FINDINGS[_k] = ("Padding", "Unused padding - no code references this byte (IDA: 0 xrefs).")
-for _k, _fn in _USED.items():
-    FINDINGS[_k] = (None, f"Unknown but used - read by `{_fn}` (purpose not yet identified).")
 
 # Round 30: these 5 padding bytes hold the SAME constant across every entry of their
 # section (not 0, not random garbage) - suspicious enough, after the attack_flags 0x20
@@ -908,11 +932,11 @@ _FLAGS = ("Attack flags (swapped)",
           "Attack flags - low 2 bits become the last-attacker flag (ATTACK_FLAG). In this "
           "command type the flags/animation byte order is swapped vs other attacks. (Battle_applyDamage)")
 _MEANING = {
-    (2, "animation"): _ANIM, (6, "unknown_0x09"): _ANIM, (22, "target_animation"): _ANIM,
-    (20, "unknown_0x06"): _ANIM, (19, "target_animation"): _ANIM, (10, "target_hit_animation"): _ANIM,
+    (2, "animation"): _ANIM, (6, "target_animation"): _ANIM, (22, "target_animation"): _ANIM,
+    (20, "target_animation"): _ANIM, (19, "target_animation"): _ANIM, (10, "target_hit_animation"): _ANIM,
     (23, "target_animation"): _ANIM, (26, "target_animation"): _ANIM,
     (8, "target_animation"): _ANIM,
-    (8, "unknown_0x15"): ("Random-select flag",
+    (8, "random_select_flag"): ("Random-select flag",
                           "Bit 0 marks the item eligible for random battle-item selection "
                           "(sub_483CA0 picks a random inventory item with this bit set)."),
     (5, "hit_rate"): (None,
@@ -995,11 +1019,18 @@ _MEANING = {
         "Shares its byte with Menu flags (the top 3 bits); each is saved independently, the "
         "other's bits are preserved.\n"
         "(BattleMenu_ExecuteSelectedCommand)"),
+    (25, "status_window_flags"): (None, _STATUS_WIN[1] + "\n"
+        "BuildLimitMenuEntry_Rinoa (0x48CFB0) writes this byte into the same slot of the 5-byte "
+        "limit-menu record that the Quistis (Blue magic +0x08) and Seifer/Edea (Temp-char +0x09) "
+        "builders fill from their own Status window byte, and that the Shot builder hardcodes to "
+        "0x80. Both vanilla entries hold 0xA0: bit 0x80 (panel hidden) plus a 0x20 bit that no code "
+        "reads and that no other kernel entry sets."),
     (25, "ability_data_id"): (None,
         "Rinoa 'Combine' (Angelo) entry field. NOT the same as the battle-command Ability data ID: "
-        "it does NOT index section 11 - no code reads this byte (only UnknownFlags and Target of "
-        "this section are consumed, by sub_48CFB0), so any linkage is positional/unused. Left as a "
-        "raw value rather than a section-11 picker."),
+        "it does NOT index section 11, and nothing reads it - IDA reports 0 cross-references to this "
+        "struct member, and BuildLimitMenuEntry_Rinoa (0x48CFB0), the one function that touches this "
+        "section, only consumes Status window and Target. Vanilla holds 0xFF in both entries. Left "
+        "as a raw value rather than a section-11 picker."),
 }
 FINDINGS.update(_MEANING)
 
@@ -1017,7 +1048,7 @@ _READONLY = set(_PADDING) | {
 # happens to be 0 or 1 in this particular kernel.bin. Rendered as a plain checkbox.
 _BOOL_FIELDS = {
     (5, "melee"),          # Weapon melee flag (33 weapons, real 0/1 split)
-    (8, "unknown_0x15"),   # Battle item random-select flag (33 items, real 0/1 split)
+    (8, "random_select_flag"),   # Battle item random-select flag (33 items, real 0/1 split)
     (17, "enable_boost"),  # GF ability "enables Boost" (9 abilities: 1 only on "Boost" itself)
 }
 
