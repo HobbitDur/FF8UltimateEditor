@@ -21,7 +21,8 @@ class ClosedFileView(QObject):
         self.content = QWidget()
         self.content.setLayout(tool.layout())  # re-hosts the layout AND its widgets in the page
         names = ", ".join(binding.file_name for binding in self._bindings)
-        self.placeholder = QLabel(f"No file loaded - {names} was removed from the opened files.\n"
+        verb = "were" if len(self._bindings) > 1 else "was"
+        self.placeholder = QLabel(f"No file loaded - {names} {verb} removed from the opened files.\n"
                                   "Use Import to open one.")
         self.placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.placeholder.setWordWrap(True)
