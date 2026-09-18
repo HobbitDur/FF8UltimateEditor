@@ -153,8 +153,16 @@ class SolomonRingWidget(QWidget):
                                add_entry_callback=add_entry_callback,
                                remove_entry_callback=remove_entry_callback,
                                protected_count=static_config.get("number_sub_section") or 0)
+        # A group paste / "Apply to..." writes the data without typing in a field, so it marks
+        # the unsaved-edit state itself (dirty_state is installed on this tool by the main window).
+        tab.edited.connect(self._mark_edited)
         self._section_tabs[section_id] = tab
         return tab
+
+    def _mark_edited(self):
+        dirty_state = getattr(self, "dirty_state", None)
+        if dirty_state is not None:
+            dirty_state.mark()
 
     def _jump_to_section(self, section_id):
         # TAB_LAYOUT groups are all single-section today, so a top-level tab index is

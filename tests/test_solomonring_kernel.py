@@ -353,3 +353,60 @@ def test_remove_refuses_to_shift_the_reserved_gf_block(qapp, tmp_path):
     assert remove.isEnabled()
     remove.click()
     assert len(section.get_subsection_list()) == 63
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_a_field_group_copies_between_entries(qapp, tmp_path, monkeypatch):
+    """Copy / Paste / Apply to... move a whole field group (Magic's junction stats) between
+    entries: pasting onto one entry, "Apply to..." onto several ticked in a list. Other groups
+    and read-only fields are untouched, the edit is flagged unsaved, and it saves."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QDialog, QMessageBox
+    from Common.dirtytracking import DirtyState
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.dirty_state = DirtyState(widget)
+    widget.load_file(str(work))
+    tab = widget._section_tabs[2]
+    group = "Junction (stats)"
+    fields = [f for f in tab.fields if f.get("group") == group]
+    names = tab._group_field_names(fields)
+    assert "j_str" in names and "j_status_defend" in names and "compat_ifrit" not in names
+
+    tab.list_widget.setCurrentRow(1)                          # Fire
+    tab._field_widgets["j_str"][2].setValue(77)               # an unsaved form edit is copied too
+    tab.copy_group(group, fields)
+    assert tab._group_paste_buttons[group].isEnabled()
+    fire = {name: tab._entries[1].get(name) for name in names}
+    assert fire["j_str"] == 77
+
+    tab.list_widget.setCurrentRow(2)                          # Blizzard
+    blizzard_power = tab._entries[2].get("spell_power")
+    blizzard_compat = tab._entries[2].get("compat_shiva")
+    tab.paste_group(group)
+    assert {name: tab._entries[2].get(name) for name in names} == fire
+    assert tab._field_widgets["j_str"][2].value() == 77       # the form shows it at once
+    assert tab._entries[2].get("spell_power") == blizzard_power
+    assert tab._entries[2].get("compat_shiva") == blizzard_compat
+    assert widget.dirty_state.dirty
+
+    # "Apply to...": tick Thunder (4) and Water (7) in the list, apply.
+    def fake_exec(dialog):
+        entry_list = dialog.findChild(type(tab.list_widget))
+        for row in range(entry_list.count()):
+            if entry_list.item(row).data(Qt.ItemDataRole.UserRole) in (4, 7):
+                entry_list.item(row).setCheckState(Qt.CheckState.Checked)
+        return QDialog.DialogCode.Accepted
+    monkeypatch.setattr(QDialog, "exec", fake_exec)
+    tab._apply_group_dialog(group, fields)
+    for index in (4, 7):
+        assert {name: tab._entries[index].get(name) for name in names} == fire
+    assert tab._entries[3].get("j_str") != 77                 # not ticked: untouched
+
+    widget._save_kernel()
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    for index in (2, 4, 7):
+        assert {name: reloaded._section_tabs[2]._entries[index].get(name) for name in names} == fire

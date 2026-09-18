@@ -1,12 +1,12 @@
 import os
 import textwrap
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QLabel,
     QComboBox, QSpinBox, QLineEdit, QListWidget, QGroupBox, QScrollArea, QCheckBox,
-    QPushButton, QToolButton, QFileDialog, QMessageBox
+    QPushButton, QToolButton, QFileDialog, QMessageBox, QDialog, QDialogButtonBox, QListWidgetItem
 )
 
 from SolomonRing.kernelentry import KernelEntry
@@ -14,6 +14,11 @@ from SolomonRing.menu_refine_reference import MenuRefineReference
 from SolomonRing.formula_popup import FormulaPopup
 from SmallWidget.listsearchbar import ListSearchBar
 from SmallWidget.nowheel import NoWheelComboBox, NoWheelSpinBox
+
+
+# Copied field-group values, shared by every tab: (section id, group name) -> {field: value}.
+# Keyed by section AND group, so a paste can only land on the same kind of data.
+_GROUP_CLIPBOARD = {}
 
 
 def _prettify(name: str) -> str:
@@ -43,6 +48,10 @@ class KernelSectionTab(QWidget):
       * ``entry_names``  : optional static labels when the section has no names
       * ``fields``       : list of field defs (see ``kernel_bin_data.json`` -> ``section_fields``)
     """
+
+    # A change made by code rather than by typing in a field (a group paste / "Apply to..."):
+    # the widget listening marks the file as having unsaved edits.
+    edited = pyqtSignal()
 
     def __init__(self, game_data, registry, config, game_data_folder="FF8GameData", jump_callback=None,
                  add_entry_callback=None, remove_entry_callback=None, protected_count=0):
@@ -75,6 +84,7 @@ class KernelSectionTab(QWidget):
         self._formula_popup = None       # single live formula preview window for this tab
 
         self._entries = []
+        self._group_paste_buttons = {}   # group name -> its Paste button (enabled once copied)
         self._visible_indices = []       # list_widget row -> self._entries index (hides reserved ids)
         self._current_index = -1
         self._text_widgets = []          # list of QLineEdit, one per text offset
@@ -193,6 +203,7 @@ class KernelSectionTab(QWidget):
             box = QGroupBox(gname)
             vbox = QVBoxLayout(box)
             vbox.setSpacing(4)
+            self._add_group_copy_bar(vbox, gname, group_map[gname])
 
             # A field can opt into a named nested sub-box via "subgroup"; those fields (and
             # any button/panel their fields trigger) render inside that inner QGroupBox
@@ -221,6 +232,144 @@ class KernelSectionTab(QWidget):
                 vbox.addWidget(sub_box)
 
             self._form_layout.addWidget(box)
+
+    # ── Copy a whole field group between entries ─────────────────────────
+
+    def _group_field_names(self, fields):
+        """The fields of a group that copying carries: every editable one (read-only padding
+        and unused bytes stay as each entry has them)."""
+        return [f["name"] for f in fields
+                if not f.get("readonly") and f["name"] in self._field_widgets]
+
+    def _add_group_copy_bar(self, vbox, gname, fields):
+        """Copy / Paste / Apply to... for this group: several entries often share the same
+        values (spells with the same junction stats), so the whole group moves in one go."""
+        bar = QHBoxLayout()
+        bar.addStretch(1)
+        copy_btn = QToolButton()
+        copy_btn.setText("Copy")
+        copy_btn.setToolTip(_wrap_tooltip(
+            f"Copy every value of \"{gname}\" of this entry, to paste it on another entry."))
+        paste_btn = QToolButton()
+        paste_btn.setText("Paste")
+        paste_btn.setToolTip(_wrap_tooltip(
+            f"Replace every value of \"{gname}\" of this entry with the copied ones."))
+        apply_btn = QToolButton()
+        apply_btn.setText("Apply to…")
+        apply_btn.setToolTip(_wrap_tooltip(
+            f"Give several entries at once the \"{gname}\" values of this entry: tick them in "
+            "the list (searchable) and apply. Faster than copy/paste for a family of entries "
+            "that share the same values."))
+        # The widgets of the group only exist once rendered below, so the names are resolved
+        # when a button is clicked.
+        copy_btn.clicked.connect(lambda _=False: self.copy_group(gname, fields))
+        paste_btn.clicked.connect(lambda _=False: self.paste_group(gname))
+        apply_btn.clicked.connect(lambda _=False: self._apply_group_dialog(gname, fields))
+        paste_btn.setEnabled((self.section_id, gname) in _GROUP_CLIPBOARD)
+        self._group_paste_buttons[gname] = paste_btn
+        for button in (copy_btn, paste_btn, apply_btn):
+            bar.addWidget(button)
+        vbox.addLayout(bar)
+
+    def _current_entry(self):
+        index = self.current_entry_index()
+        return None if index is None else self._entries[index]
+
+    def copy_group(self, gname, fields):
+        """Remember the group's values of the shown entry (form edits included)."""
+        entry = self._current_entry()
+        if entry is None:
+            return
+        self.commit()
+        _GROUP_CLIPBOARD[(self.section_id, gname)] = {
+            name: entry.get(name) for name in self._group_field_names(fields)}
+        self._group_paste_buttons[gname].setEnabled(True)
+
+    def paste_group(self, gname):
+        """Put the copied values of the group on the shown entry."""
+        values = _GROUP_CLIPBOARD.get((self.section_id, gname))
+        if values is None or self._current_entry() is None:
+            return
+        self.commit()
+        self.apply_group_values(values, [self.current_entry_index()])
+
+    def apply_group_values(self, values, entry_indices):
+        """Write `values` ({field: value}) on those entries, refresh the shown one and signal
+        the edit. Returns how many entries were written."""
+        for index in entry_indices:
+            for name, value in values.items():
+                self._entries[index].set(name, value)
+        if self._current_index >= 0:
+            self._load_entry(self._current_index)
+        if entry_indices:
+            self.edited.emit()
+        return len(entry_indices)
+
+    def _apply_group_dialog(self, gname, fields):
+        entry = self._current_entry()
+        if entry is None:
+            return
+        self.commit()
+        source_index = self.current_entry_index()
+        values = {name: entry.get(name) for name in self._group_field_names(fields)}
+        targets = self._pick_entries(
+            f"Apply \"{gname}\" to…",
+            f"Give the ticked entries the {len(values)} \"{gname}\" values of "
+            f"{self._entry_label(source_index, entry)}.", exclude=source_index)
+        if targets is None:
+            return
+        count = self.apply_group_values(values, targets)
+        QMessageBox.information(self, f"Apply \"{gname}\"",
+                                f"\"{gname}\" applied to {count} entr{'y' if count == 1 else 'ies'}.")
+
+    def _pick_entries(self, title, text, exclude=None):
+        """A searchable, checkable list of this section's entries. Returns the ticked entry
+        indices, or None when cancelled."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle(title)
+        layout = QVBoxLayout(dialog)
+        label = QLabel(text)
+        label.setWordWrap(True)
+        layout.addWidget(label)
+        entry_list = QListWidget()
+        for index in self._visible_indices:
+            if index == exclude:
+                continue
+            item = QListWidgetItem(self._entry_label(index, self._entries[index]))
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Unchecked)
+            item.setData(Qt.ItemDataRole.UserRole, index)
+            entry_list.addItem(item)
+        search = ListSearchBar(entry_list)
+        layout.addWidget(search)
+        layout.addWidget(entry_list, 1)
+        tick_row = QHBoxLayout()
+        for caption, state in (("Tick shown", Qt.CheckState.Checked),
+                               ("Untick all", Qt.CheckState.Unchecked)):
+            button = QPushButton(caption)
+
+            def _set(_=False, st=state, only_shown=(state == Qt.CheckState.Checked)):
+                for row in range(entry_list.count()):
+                    item = entry_list.item(row)
+                    if not only_shown or not item.isHidden():
+                        item.setCheckState(st)
+            button.clicked.connect(_set)
+            tick_row.addWidget(button)
+        tick_row.addStretch(1)
+        layout.addLayout(tick_row)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                   | QDialogButtonBox.StandardButton.Cancel)
+        buttons.button(QDialogButtonBox.StandardButton.Ok).setText("Apply")
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        dialog.resize(420, 520)
+        self._pick_dialog = dialog  # reachable from tests
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        return [entry_list.item(row).data(Qt.ItemDataRole.UserRole)
+                for row in range(entry_list.count())
+                if entry_list.item(row).checkState() == Qt.CheckState.Checked]
 
     def _render_field_block(self, vbox, fields, combos_first=False):
         """Render a set of fields into ``vbox``: any reference button/panel their fields
