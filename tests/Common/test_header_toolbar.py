@@ -242,6 +242,10 @@ def test_cid_drives_two_inputs_and_shares_the_exe(main_window, monkeypatch):
     tb = main_window._file_toolbar
     cid = main_window._cid_widget
     cc = main_window._ccgroup_widget
+    # The module-scoped window is shared and tests run in any order across workers: an earlier
+    # one (Ctrl+S) may have left the exe open. Start from nothing opened for Cid.
+    main_window.file_registry.close_file("FF8 exe")
+    main_window.file_registry.close_file("wmsetxx.obj")
     main_window.tool_stack.setCurrentWidget(cid)
     tb._on_tool_changed()
     assert [b.file_name for b in tb._main_bindings()] == ["FF8 exe", "wmsetxx.obj"]
