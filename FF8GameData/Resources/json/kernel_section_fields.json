@@ -1743,7 +1743,8 @@
     "size": 1,
     "label": "Attack power",
     "group": "Data",
-    "help": "Base power fed into the damage formula."
+    "help": "Base power fed into the damage formula.",
+    "formula": "monster_damage"
    },
    {
     "name": "attack_flags_type",

@@ -1223,6 +1223,9 @@ for sid_s, cfg in sections.items():
         # Enemy attacks' hit rate: same physical roll, attacker LUCK = 0 (monster).
         if sid == 4 and f["name"] == "hit_rate":
             f["formula"] = "monster_hit"
+        # Enemy attacks' power: damage from a monster attacker (monster STR/MAG, magic halved).
+        if sid == 4 and f["name"] == "attack_power":
+            f["formula"] = "monster_damage"
         # Status inflict chance: every "status attack accuracy" byte across the kernel feeds
         # Battle_ApplyStatusWithResistRoll: STR/VIT for physical-dispatch Attack Types, MAG/SPR
         # for the magic/GF-dispatch ones (picked live from this entry's own Attack Type field).

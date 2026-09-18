@@ -57,6 +57,17 @@ PARAM_DEFS = {
     "target_luck":    ("Target LUCK", 20, 0, 255,
                        "The target CHARACTER's LUCK — also subtracted from the attacker's hit%. "
                        "Only asked when a character is the target: a monster's LUCK is always 0."),
+    "monster_str":    ("Monster STR", 40, 0, 255,
+                       "The attacking monster's STR (its .dat STR curve at its level × the AI "
+                       "stat multiplier, capped 255). Monsters get no weapon STR bonus."),
+    "monster_mag":    ("Monster MAG", 40, 0, 255,
+                       "The attacking monster's MAG (its .dat MAG curve at its level × the AI "
+                       "stat multiplier, capped 255)."),
+    "attacker_maxhp": ("Attacker max HP", 2000, 1, 999999,
+                       "The attacking monster's own max HP (Kamikaze deals 5× this)."),
+    "target_kills":   ("Target kill count", 50, 0, 65535,
+                       "How many enemies the target character has killed (savemap NumKills) - "
+                       "Everyone's Grudge multiplies its power by this."),
     "hit_junction_bonus": ("Junctioned HIT bonus", 0, 0, 255,
                        "Extra Hit% from magic junctioned to the character's HIT stat "
                        "(K_MAGIC.hitJunctionValue × stock / 100). Added to the weapon's hit "
@@ -478,6 +489,145 @@ def _magic_damage(value, P, entry):
         f"'{name}' — power {p}. (Physical/GF/fixed-damage types aren't modelled in this preview.)",
         "Only magic, curative, %-HP and revive families have a modelled formula here; physical, GF "
         "and fixed-damage types depend on STR/GF-level/etc.")
+
+
+class _PowerAs:
+    """Entry view that answers ``get("spell_power")`` with another field (the Enemy-attack
+    section calls its power byte ``attack_power``), so _magic_damage can be reused as is."""
+
+    def __init__(self, entry, power):
+        self._entry = entry
+        self._power = power
+
+    def get(self, name):
+        if name == "spell_power":
+            return self._power
+        if name == "hit_count":
+            return 1
+        return self._entry.get(name) if self._entry else None
+
+
+def _monster_damage(value, P, entry):
+    # Enemy attack (kernel §4) power, per attack type through Damage_DispatchByAttackType
+    # @0x4922b0. The attacker is a MONSTER: its STR/MAG come from the .dat stat curves, it has no
+    # LUCK and no weapon STR bonus, and Damage_ComputeMagicAndGF @0x491ad0 HALVES offensive magic
+    # when the attacker slot is >= 3 (a monster).
+    p = entry.get("attack_power") if entry else None
+    if p is None:
+        p = value
+    att = entry.get("attack_type") if entry else 1
+    name = ATTACK_TYPE_NAMES.get(att, f"type {att}")
+
+    def out(params, sym, sub, res, note, latex, latex_sub):
+        return {"params": params, "symbolic": sym, "substituted": sub, "result": res,
+                "note": note, "latex": latex, "latex_sub": latex_sub}
+
+    # --- physical (Damage_ComputePhysicalCore @0x492c40 mode 0; 36 = mode 19, VIT forced 0) ---
+    if att in (1, 36):
+        s = P["monster_str"]
+        vit = 0 if att == 36 else P["target_vit"]
+        mid = _idiv(p * _idiv((265 - vit) * (s + _idiv(s * s, 16)), 256), 16)
+        avg, lo, hi = (_idiv(r * mid, 256) for r in (256, 240, 272))
+        return out(
+            ("monster_str",) + (() if att == 36 else ("target_vit",)),
+            "dmg = P × (265−VIT) × (STR + STR²/16) / 256 / 16 × rand[240..272]/256   (×2 on crit)"
+            + ("   [VIT forced 0]" if att == 36 else ""),
+            f"{p} × (265−{vit}) × ({s} + {s}²/16)/256 / 16 × ~1",
+            f"≈ {avg} damage per hit  (random {lo}–{hi}; a crit doubles it → ≈{2 * avg})",
+            f"Attack type '{name}'. Damage_ComputePhysicalCore @0x492c40 with the MONSTER's STR "
+            "(its .dat STR curve × the AI stat multiplier) - no weapon STR bonus. VIT is the "
+            "target character's (0 under Vit0/Meltdown). Crit ×2, Back Attack ×2, Protect ÷2, "
+            "Zombie target ÷2 (Damage_ApplyPhysicalModifiers @0x48f600); Defend / Invincible / "
+            "Petrify nullify it. Hit roll: see the Hit rate f(x). Elemental not shown.",
+            r"dmg = \left\lfloor\frac{P\,(265{-}VIT)\,(STR + \lfloor STR^2/16\rfloor)}{256\cdot 16}"
+            r"\right\rfloor\cdot\frac{rand}{256}",
+            rf"\frac{{{p}\,(265{{-}}{vit})\,({s}+\lfloor {s}^2/16\rfloor)}}{{4096}}\approx {avg}")
+
+    # --- offensive magic: same core as a spell, then halved for a monster caster ---
+    if att in (0, 2, 22, 26):
+        spr = 0 if att == 22 else P["target_spr"]
+        elem = P["elem_defense"]
+        t2 = _idiv(p * _idiv((265 - spr) * (p + P["monster_mag"]), 4), 256)
+
+        def roll(r):
+            return _idiv(_idiv(_idiv(r * t2, 256), 2) * (900 - elem), 100)
+
+        avg, lo, hi = roll(256), roll(240), roll(272)
+        return out(
+            ("monster_mag",) + (() if att == 22 else ("target_spr",)) + ("elem_defense",),
+            "dmg = P × (265−SPR) × (P+MAG)/4 / 256 × rand[240..272]/256 ÷ 2 (monster) "
+            "× (900−elemDef)/100" + ("   [SPR forced 0]" if att == 22 else ""),
+            f"{p} × (265−{spr}) × ({p}+{P['monster_mag']})/4 / 256 → {t2};  ÷2;  "
+            f"×(900−{elem})/100",
+            f"≈ {avg} damage   (random {lo}–{hi})",
+            (f"Attack type is None (empty slot); showing the Magic Attack formula for reference. "
+             if att == 0 else f"Attack type '{name}'. ")
+            + "Damage_ComputeMagicAndGF @0x491ad0: a MONSTER caster's magic damage is halved "
+            "(damage >>= 1 when the attacker slot >= 3) - the same spell hurts half as much from a "
+            "monster as from a character. Then Shell ÷2, Defend ÷2, elemental (900−elemDef)/100 "
+            "(> 900 = absorb, shown as a green heal)."
+            + (" LV? Attack only hits targets whose level is a multiple of the hit rate byte."
+               if att == 26 else ""),
+            r"dmg = \left\lfloor\frac{rand}{256}\cdot\frac{P\,(265-SPR)(P+MAG)}{4\cdot256}"
+            r"\right\rfloor\cdot\frac{1}{2}\cdot\frac{900-elemDef}{100}",
+            rf"\frac{{{p}\,(265-{spr})({p}+{P['monster_mag']})}}{{1024}}\cdot\frac{{1}}{{2}}"
+            rf"\cdot\frac{{900-{elem}}}{{100}}\approx {avg}")
+
+    # --- % current HP (7 = physical path mode 1, 8 = magic path): P × curHP / 16 ---
+    if att in (7, 8):
+        hp = P["target_hp"]
+        dmg = _idiv(p * hp, 16)
+        return out(
+            ("target_hp",), "damage = P × currentHP / 16", f"{p} × {hp} / 16",
+            f"≈ {dmg} damage   ({p}/16 = {p / 16 * 100:.1f}% of current HP)",
+            f"Attack type '{name}'. Gravity-immune targets are missed"
+            + (" (physical path: also needs the hit roll; Protect halves)." if att == 7 else
+               " (magic path: Shell / Defend halve). Not halved for a monster caster."),
+            r"dmg=\frac{P\cdot currentHP}{16}", rf"\frac{{{p}\cdot{hp}}}{{16}}={dmg}")
+
+    # --- Kamikaze: Damage_ComputePhysicalCore mode 3 ---
+    if att == 18:
+        mhp = P["attacker_maxhp"]
+        return out(
+            ("attacker_maxhp",), "damage = 5 × attacker max HP   (power not used)",
+            f"5 × {mhp}", f"≈ {5 * mhp} damage  (before the 9999 cap)",
+            "Kamikaze (Damage_ComputePhysicalCore @0x492c40 mode 3): 5 × the monster's own max "
+            "HP; the power byte is ignored. Rolls the physical hit; Protect halves.",
+            r"dmg = 5\cdot maxHP_{atk}", rf"5\cdot{mhp}={5 * mhp}")
+
+    # --- Everyone's Grudge: mode 16, P × target character's kill count ---
+    if att == 34:
+        kills = P["target_kills"]
+        return out(
+            ("target_kills",), "damage = P × target's kill count", f"{p} × {kills}",
+            f"≈ {p * kills} damage  (before the 9999 cap)",
+            "Everyone's Grudge (Damage_ComputePhysicalWithHitCritRoll @0x492e10 mode 16): power × "
+            "the TARGET character's NumKills from the savemap; 0 against a monster target.",
+            r"dmg = P\cdot kills_{tgt}", rf"{p}\cdot{kills}={p * kills}")
+
+    # --- fixed family: Damage_ComputeFixedSpecial @0x4931c0 ---
+    if att == 27:
+        hr = (entry.get("hit_rate") if entry else 0) or 0
+        dmg = 100 * p - hr
+        return out(
+            (), "damage = 100 × P − hitRate", f"100 × {p} − {hr}", f"{dmg} damage  (no random spread)",
+            "Fixed Damage (Damage_ComputeFixedSpecial @0x4931c0 mode 11): the hit rate byte is "
+            "SUBTRACTED from 100 × power - it is not an accuracy here. Ignores STR/MAG/VIT/SPR; "
+            "misses Petrify/Invincible targets.",
+            r"dmg = 100\,P - hitRate", rf"100\cdot{p}-{hr}={dmg}")
+    if att == 28:
+        hp = P["target_hp"]
+        return out(("target_hp",), "damage = target current HP − 1", f"{hp} − 1",
+                   f"{hp - 1} damage  (leaves the target at 1 HP)",
+                   "Damage_ComputeFixedSpecial @0x4931c0 mode 12; power is ignored.",
+                   r"dmg = currentHP - 1", rf"{hp}-1={hp - 1}")
+    if att == 35:
+        return out((), "damage = 1", "power not used", "1 damage",
+                   "Damage_ComputeFixedSpecial @0x4931c0 mode 18 (Excalipoor-style): always 1.",
+                   r"dmg = 1", r"1")
+
+    # --- heals / revive / status-only types: same formulas as a spell, power = this byte ---
+    return _magic_damage(p, P, _PowerAs(entry, p))
 
 
 def _crisis(value, P, entry):
@@ -980,6 +1130,7 @@ def _status_accuracy(value, P, entry):
 _PHYS_HIT_ROLL_TYPES = {1, 7, 9, 18, 34, 36}
 ATTACK_TYPE_GUNBLADE = 10
 ATTACK_TYPE_LV_ATTACK = 26
+ATTACK_TYPE_FIXED_DAMAGE = 27
 
 
 def _hit_rate_not_rolled(att, hr):
@@ -1012,6 +1163,17 @@ def _hit_rate_not_rolled(att, hr):
                     "byte is the level divisor, not an accuracy percentage.",
             "latex": r"hit \iff level_{tgt} \bmod hitRate = 0",
             "latex_sub": rf"level_{{tgt}} \bmod {hr} = 0",
+        }
+    if att == ATTACK_TYPE_FIXED_DAMAGE:
+        return {
+            "params": (),
+            "symbolic": "Fixed Damage: no hit roll;  damage = 100 × power − hitRate",
+            "substituted": f"subtracts {hr} from the damage",
+            "result": f"Always hits; this byte lowers the damage by {hr}",
+            "note": "Damage_ComputeFixedSpecial @0x4931c0 (mode 11): damage = 100 × attack power "
+                    "− this byte. It is a damage fine-tune here, not an accuracy.",
+            "latex": r"dmg = 100\,P - hitRate",
+            "latex_sub": rf"dmg = 100\,P - {hr}",
         }
     return {
         "params": (),
@@ -1116,6 +1278,7 @@ FORMULAS = {
     "monster_crit": ("Critical-hit chance (monster attacker)", _crit_chance_monster),
     "weapon_hit": ("Hit rate (character weapon)", _weapon_hit),
     "monster_hit": ("Hit rate (monster attacker)", _monster_hit),
+    "monster_damage": ("Enemy attack damage", _monster_damage),
     "status_accuracy": ("Status inflict chance", _status_accuracy),
 }
 for _st in _CHAR_STAT_LABELS:
