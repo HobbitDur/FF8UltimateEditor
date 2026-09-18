@@ -189,7 +189,7 @@ class FileToolbarWidget(QWidget):
         for binding in self._main_bindings():
             binding.save()          # the tool's single-file bindings
         saver = getattr(active, "save_folder", None)
-        if callable(saver):
+        if callable(saver) and not self._active_is_blank():
             saver()                 # ...and its multi-file / folder save, if it has one
         dirty_state = getattr(active, "dirty_state", None)
         if dirty_state is not None:
@@ -215,8 +215,16 @@ class FileToolbarWidget(QWidget):
         predicate = getattr(self.tool_stack.currentWidget(), "can_reload_files", None)
         return bool(predicate()) if callable(predicate) else False
 
+    def _active_is_blank(self):
+        """Whether the active tool's file was removed from the opened files, so its view is the
+        "No file loaded" page (see Common/closedfileview.py) and it has nothing left to save."""
+        view = getattr(self.tool_stack.currentWidget(), "closed_file_view", None)
+        return view is not None and view.is_blank
+
     def _can_save_folder(self):
         """Whether the active tool has a multi-file (folder) save with something to write."""
+        if self._active_is_blank():
+            return False
         predicate = getattr(self.tool_stack.currentWidget(), "can_save_folder", None)
         return bool(predicate()) if callable(predicate) else False
 

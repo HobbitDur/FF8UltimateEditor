@@ -910,3 +910,27 @@ def test_dirty_state_marks_on_edit_and_clears():
     assert state.dirty is False and flips == [True, False]
     state.clear()                    # already clean -> no emit
     assert flips == [True, False]
+
+
+def test_removing_a_fixed_file_clears_the_tool_and_disables_save(main_window, monkeypatch):
+    """Every fixed-file tool (and Zone/Moomba/CCGroup's card tab) swaps to a "No file loaded"
+    page once its file is removed from Opened files; Save then has nothing to write."""
+    own_close = (main_window._shumi_translator_widget, main_window._ccgroup_widget,
+                 main_window._zone_widget)
+    for index in range(main_window.tool_stack.count()):
+        tool = main_window.tool_stack.widget(index)
+        if callable(getattr(tool, "file_bindings", None)) and tool not in own_close:
+            assert hasattr(tool, "closed_file_view"), type(tool).__name__
+    for page in (main_window._zone_widget.mmag_widget, main_window._zone_widget.mmag2_widget,
+                 main_window._ccgroup_widget.scroll_widget):
+        assert hasattr(page, "closed_file_view")
+
+    siren = main_window._siren_widget
+    main_window.tool_stack.setCurrentWidget(siren)
+    tb = main_window._file_toolbar
+    tb._on_tool_changed()
+    registry = main_window.file_registry
+    registry.open_file("price.bin", str(PROJECT_ROOT / "extracted_files" / "menu" / "price.bin"))
+    assert tb.save_button.isEnabled() and not siren.closed_file_view.is_blank
+    registry.close_file("price.bin")
+    assert siren.closed_file_view.is_blank and not tb.save_button.isEnabled()

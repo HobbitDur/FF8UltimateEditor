@@ -125,6 +125,10 @@ class CidWidget(QWidget):
         self.window_layout.addLayout(self._layout_top)
         self.window_layout.addWidget(self._splitter)
 
+        # Removing one of the two files from the Opened files panel drops its part of the table.
+        self.exe_binding.file_closed.connect(self._on_file_closed)
+        self.wmset_binding.file_closed.connect(self._on_file_closed)
+
         self.exe_binding.load_opened_file()    # the exe may already be open (e.g. in CCGroup)
         self.wmset_binding.load_opened_file()
 
@@ -197,6 +201,24 @@ class CidWidget(QWidget):
             x, y, sub_id, _pad = self._section.records[i]
             draw = self._draw_list[self.WORLD_EXE_START_INDEX + i]
             draw.x, draw.y, draw.sub_id = x, y, sub_id
+        self._draw_widget.set_draw(self._draw_list)
+        self._illustration.set_draw_list(self._draw_list)
+
+    def _on_file_closed(self, _path):
+        """The exe or the wmset was removed: rebuild the table from the file still open (if any),
+        so the removed file's values - and their unsaved edits - are gone."""
+        self.exe_loaded = False
+        self._section = WorldDrawSection()
+        self.wmset_file_path = ""
+        self._exe_dirty = False
+        self._wmset_dirty = False
+        for draw in self._draw_list:
+            draw.set_exe_byte(0)
+            draw.x, draw.y, draw.sub_id = 0, 0, 0
+        if self.exe_binding.is_loaded:
+            self.load_exe(self.exe_binding.current_path)
+        if self.wmset_binding.is_loaded:
+            self.load_wmset(self.wmset_binding.current_path)
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
 

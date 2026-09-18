@@ -138,3 +138,41 @@ def test_shumi_tab_closes_with_its_file(qapp):
     registry.close_file("kernel.bin")
     assert shumi.tab_widget.count() == 0
     assert not shumi.can_save_folder()
+
+
+@pytest.mark.ff8data("extracted_files/menu/price.bin")
+def test_fixed_file_tool_view_clears_and_comes_back(qapp):
+    from Common.closedfileview import install_closed_file_view
+    from Siren.sirenwidget import SirenWidget
+    registry = FileRegistry()
+    siren = SirenWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"), file_registry=registry)
+    view = install_closed_file_view(siren)
+    assert not view.is_blank                 # a fresh tool keeps its own look
+    price = str(PROJECT_ROOT / "extracted_files" / "menu" / "price.bin")
+    registry.open_file("price.bin", price)
+    assert not view.is_blank
+    registry.close_file("price.bin")
+    assert view.is_blank                     # the removed file's data is off screen
+    registry.open_file("price.bin", price)
+    assert not view.is_blank                 # opening a file brings the editor back
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/world/dat/wmsetus.obj")
+def test_cid_drops_only_the_removed_file(qapp):
+    from Cid.cidwidget import CidWidget
+    registry = FileRegistry()
+    cid = CidWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"), file_registry=registry)
+    registry.open_file("FF8 exe", str(PROJECT_ROOT / "extracted_files" / "FF8_EN.exe"))
+    registry.open_file("wmsetxx.obj",
+                       str(PROJECT_ROOT / "extracted_files" / "world" / "dat" / "wmsetus.obj"))
+    world = cid._draw_list[cid.WORLD_EXE_START_INDEX]
+    exe_bytes = [draw.get_exe_byte() for draw in cid._draw_list]
+    position = (world.x, world.y)
+    assert any(exe_bytes) and position != (0, 0)
+
+    registry.close_file("FF8 exe")           # the exe part goes, the world positions stay
+    assert not cid.exe_loaded and not any(d.get_exe_byte() for d in cid._draw_list)
+    assert (world.x, world.y) == position and cid._section.is_loaded()
+
+    registry.close_file("wmsetxx.obj")
+    assert (world.x, world.y) == (0, 0) and not cid.can_save_folder()

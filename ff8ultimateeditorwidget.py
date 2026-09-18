@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (QWidget, QMenuBar, QHBoxLayout, QVBoxLayout, QLabel
 from CCGroup.ccgroup import CCGroupWidget
 from Chocoboy.chocoboywidget import ChocoboyWidget
 from Cid.cidwidget import CidWidget
+from Common.closedfileview import install_closed_file_view
 from Common.dirtytracking import install_dirty_tracking
 from Common.fileregistry import FileRegistry
 from Common.filetoolbarwidget import FileToolbarWidget
@@ -288,6 +289,19 @@ class FF8UltimateEditorWidget(QWidget):
         # Give every binding-based tool an unsaved-changes tracker (tool.dirty_state) so the window
         # title's * reflects real edits. Tools that load through hooks (Ifrit/Alexander/...) already
         # report changes via can_save_folder(), so they don't need one.
+        # Removing a fixed-file tool's file from the Opened files panel clears its view. Tools
+        # that already drop their own files are left out (ShumiTranslator closes its tabs); the
+        # tabbed tools get it per tab, on the page that edits the file, so their other tab stays.
+        own_close = (self._shumi_translator_widget, self._ccgroup_widget, self._zone_widget)
+        for index in range(self.tool_stack.count()):
+            tool = self.tool_stack.widget(index)
+            if (callable(getattr(tool, "file_bindings", None)) and tool not in own_close
+                    and tool.layout() is not None):
+                install_closed_file_view(tool)
+        install_closed_file_view(self._zone_widget.mmag_widget)
+        install_closed_file_view(self._zone_widget.mmag2_widget)
+        install_closed_file_view(self._ccgroup_widget.scroll_widget,
+                                 [self._ccgroup_widget.exe_binding])
         for index in range(self.tool_stack.count()):
             tool = self.tool_stack.widget(index)
             if callable(getattr(tool, "file_bindings", None)):
