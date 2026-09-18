@@ -61,20 +61,30 @@ def test_kernel_bin_names_the_draws_and_goes_away_with_it(app, renamed_kernel, m
     ifrit.load_file(str(MODEL))
     pane = ifrit._files[0]['pane']
     stats = pane._stat_widget
-    stats.load_data()
-    assert _draw_combo_text(pane, 1) == "1: Fire"
+    draw = stats._loot_widgets['low_lvl_mag'][0][0]
+    mug = stats._loot_widgets['low_lvl_mug'][0][0]
 
-    # An unsaved edit made before the kernel.bin opens must survive the refresh.
-    stats._data['low_lvl_mag'][0]['ID'] = 1
+    # No kernel.bin: no built-in spell or item names either - the id only, greyed out, and the
+    # group's notice says to open one. The quantities stay editable.
+    stats._data['low_lvl_mag'][0]['ID'] = 1           # an unsaved edit, kept through it all
+    stats.load_data()
+    assert not draw.isEnabled() and draw.count() == 1 and draw.currentData() == 1
+    assert "kernel.bin" in draw.currentText() and "Fire" not in draw.currentText()
+    assert not mug.isEnabled()
+    assert not stats._loot_notices['low_lvl_mag'].isHidden()
+    assert stats._loot_widgets['low_lvl_mag'][0][1].isEnabled()
+
     registry.open_file("kernel.bin", renamed_kernel)   # e.g. opened in SolomonRing
     assert stats._data['low_lvl_mag'][0]['ID'] == 1
     stats.load_data()
-    assert _draw_combo_text(pane, 1) == "1: Blaze"
-    assert pane._stat_widget._loot_widgets['low_lvl_mag'][0][0].currentData() == 1
+    assert draw.isEnabled() and _draw_combo_text(pane, 1) == "1: Blaze" and draw.currentData() == 1
+    assert mug.isEnabled() and mug.itemText(mug.findData(1)) == "1: Potion"
+    assert stats._loot_notices['low_lvl_mag'].isHidden()
 
-    registry.close_file("kernel.bin")                  # removed: back to the built-in names
+    registry.close_file("kernel.bin")                  # removed: back to no names at all
     stats.load_data()
-    assert _draw_combo_text(pane, 1) == "1: Fire"
+    assert not draw.isEnabled() and draw.count() == 1 and draw.currentData() == 1
+    assert stats._data['low_lvl_mag'][0]['ID'] == 1
     ifrit.deleteLater()
 
 
@@ -116,8 +126,8 @@ def test_devour_effects_are_named_only_by_a_kernel_bin(app, monkeypatch):
     ifrit.deleteLater()
 
 
-def test_without_a_kernel_bin_saving_keeps_the_devour_bytes(app, monkeypatch, tmp_path):
-    """No kernel.bin, so no devour names: the boxes only SHOW the ids of the .dat, and a save
+def test_without_a_kernel_bin_saving_keeps_the_loot_ids(app, monkeypatch, tmp_path):
+    """No kernel.bin, so no devour, spell or item names: the boxes only SHOW the ids of the .dat, and a save
     writes them back exactly as they were."""
     import shutil
     from PyQt6.QtCore import QSettings
@@ -132,9 +142,12 @@ def test_without_a_kernel_bin_saving_keeps_the_devour_bytes(app, monkeypatch, tm
     ifrit.load_file(str(work))
     f = ifrit._files[0]
     f['pane']._stat_widget.load_data()
-    before = list(f['manager'].enemy.info_stat_data['devour'])
-    assert any(before)                       # c0m071 has real devour effects to lose
+    loot_keys = ('devour', 'low_lvl_mag', 'med_lvl_mag', 'high_lvl_mag', 'low_lvl_mug',
+                 'med_lvl_mug', 'high_lvl_mug', 'low_lvl_drop', 'med_lvl_drop', 'high_lvl_drop')
+    info = f['manager'].enemy.info_stat_data
+    before = {key: [dict(e) if isinstance(e, dict) else e for e in info[key]] for key in loot_keys}
+    assert any(before['devour'])             # c0m071 has real devour effects to lose
     f['manager'].save_file(str(work))
     saved = f['manager'].parse_file(str(work), free_animation=True)
-    assert saved.info_stat_data['devour'] == before
+    assert {key: saved.info_stat_data[key] for key in loot_keys} == before
     ifrit.deleteLater()

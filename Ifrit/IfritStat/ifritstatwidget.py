@@ -166,6 +166,7 @@ class IfritStatWidget(QWidget):
         self._card_combos = []       # [3 QComboBox]
         self._devour_combos = []     # [3 QComboBox]
         self._loot_widgets = {}      # loot key -> [(id_combo, value_spin) x4]
+        self._loot_notices = {}      # loot key -> its group's "open kernel.bin" notice
         self._ability_widgets = {}   # ability key -> [(type_combo, id_combo, anim_spin) x16]
         self._ability_seq_view = {}  # ability key -> QPlainTextEdit (read-only anim seq viewer)
         self._anim_spin_level = {}   # QSpinBox -> ability key (for focus tracking)
@@ -501,9 +502,7 @@ class IfritStatWidget(QWidget):
             combo.activated.connect(partial(self._on_devour_changed, index))
             devour_form.addRow(label, combo)
             self._devour_combos.append(combo)
-        self._devour_notice = QLabel(self.DEVOUR_NEEDS_KERNEL)
-        self._devour_notice.setWordWrap(True)
-        self._devour_notice.setStyleSheet("color:#c0392b; font-weight:bold;")
+        self._devour_notice = self._kernel_notice("devour effect")
         devour_form.addRow(self._devour_notice)
         top.addWidget(devour_group)
         top.addStretch(1)
@@ -511,34 +510,37 @@ class IfritStatWidget(QWidget):
 
         # Draw / Mug / Drop
         layout.addWidget(self._build_loot_group(
-            "Draw (magic)", ['low_lvl_mag', 'med_lvl_mag', 'high_lvl_mag'],
-            self.game_data.magic_data_json['magic'],
+            "Draw (magic)", ['low_lvl_mag', 'med_lvl_mag', 'high_lvl_mag'], "spell",
             id_tip="Magic that can be drawn (per level tier).",
             value_tip="Quantity field (0-255). Unused for draw — the drawn amount is computed at runtime."))
         layout.addWidget(self._build_loot_group(
-            "Mug (item)", ['low_lvl_mug', 'med_lvl_mug', 'high_lvl_mug'],
-            self.game_data.item_data_json['items'],
+            "Mug (item)", ['low_lvl_mug', 'med_lvl_mug', 'high_lvl_mug'], "item",
             id_tip="Item that can be stolen/mugged (per level tier).",
             value_tip="Quantity stolen (0-255)."))
         layout.addWidget(self._build_loot_group(
-            "Drop (item)", ['low_lvl_drop', 'med_lvl_drop', 'high_lvl_drop'],
-            self.game_data.item_data_json['items'],
+            "Drop (item)", ['low_lvl_drop', 'med_lvl_drop', 'high_lvl_drop'], "item",
             id_tip="Item that can drop on kill (per level tier).",
             value_tip="Quantity dropped (0-255)."))
         layout.addStretch(1)
         return self._scrollable(container)
 
-    DEVOUR_NEEDS_KERNEL = ("No devour effect names: they come only from kernel.bin. Open one "
-                           "with the toolbar's \"Import complementary\" button to fill this list.")
+    # Devour and the Draw / Mug / Drop lists are named ONLY by a kernel.bin - no built-in list.
+    KERNEL_NEEDED_TEXT = ("No {what} names: they come only from kernel.bin. Open one with the "
+                          "toolbar's \"Import complementary\" button to fill this list.")
 
-    def _load_devour(self, devour):
-        """The three devour effects, named from the kernel.bin when one is open. Without it there
-        is no name to offer: each box shows only the id the file holds, greyed out, and the notice
-        says which file to open."""
-        names = self.game_data.devour_data_json.get('devour', [])
-        self._devour_notice.setVisible(not names)
-        for i, combo in enumerate(self._devour_combos):
-            value = devour[i] if i < len(devour) else 0
+    def _kernel_notice(self, what) -> QLabel:
+        notice = QLabel(self.KERNEL_NEEDED_TEXT.format(what=what))
+        notice.setWordWrap(True)
+        notice.setStyleSheet("color:#c0392b; font-weight:bold;")
+        return notice
+
+    def _load_kernel_named(self, combos_and_ids, names, notice):
+        """Fill combos whose names come only from a kernel.bin. With one open: its list, each box
+        on the id the .dat holds. Without: no name to offer - each box shows only that id, greyed
+        out, and the notice says which file to open. Never writes anything back, so the .dat's
+        ids stay exactly as they are."""
+        notice.setVisible(not names)
+        for combo, value in combos_and_ids:
             if names:
                 self._fill_combo(combo, names)
                 self._set_combo_id(combo, value)
@@ -550,11 +552,18 @@ class IfritStatWidget(QWidget):
             combo.setEnabled(bool(names))
             self._refresh_combo_tooltip(combo)
 
+    def _load_devour(self, devour):
+        """The three devour effects, named from the kernel.bin (devour_data_json) when one is open."""
+        pairs = [(combo, devour[i] if i < len(devour) else 0)
+                 for i, combo in enumerate(self._devour_combos)]
+        self._load_kernel_named(pairs, self.game_data.devour_data_json.get('devour', []),
+                                self._devour_notice)
+
     def _loot_names(self, key):
-        """The CURRENT name list of a loot row: magic for Draw, items for Mug and Drop."""
-        if key.endswith('_mag'):
-            return self.game_data.magic_data_json['magic']
-        return self.game_data.item_data_json['items']
+        """The name list of a loot row, straight from the open kernel.bin (spells for Draw, items
+        for Mug and Drop) - empty without one, never the built-in names."""
+        names = self.game_data.kernel_names.get('magic' if key.endswith('_mag') else 'item', {})
+        return [{'id': id_, 'name': name or "(no name)"} for id_, name in sorted(names.items())]
 
     @staticmethod
     def _fill_combo(combo: QComboBox, json_list):
@@ -565,7 +574,7 @@ class IfritStatWidget(QWidget):
             combo.addItem(f"{el['id']}: {el['name']}", el['id'])
         combo.blockSignals(False)
 
-    def _build_loot_group(self, title, keys, json_list, id_tip, value_tip) -> QGroupBox:
+    def _build_loot_group(self, title, keys, what, id_tip, value_tip) -> QGroupBox:
         group = QGroupBox(title)
         grid = QGridLayout(group)
         grid.setHorizontalSpacing(6)
@@ -574,13 +583,17 @@ class IfritStatWidget(QWidget):
             grid.addWidget(QLabel(f"<b>{tier}</b>"), 0, col * 2, 1, 2, Qt.AlignmentFlag.AlignCenter)
             self._loot_widgets[key] = []
             for row in range(4):
-                combo = self._combo_from_json(json_list, tooltip=id_tip, max_chars=20, compact=True)
+                combo = self._combo_from_json([], tooltip=id_tip, max_chars=20, compact=True)
                 combo.activated.connect(partial(self._on_loot_id_changed, key, row))
                 value_spin = self._spin(0, 255, tooltip=value_tip, compact=True)
                 value_spin.valueChanged.connect(partial(self._on_loot_value_changed, key, row))
                 grid.addWidget(combo, row + 1, col * 2)
                 grid.addWidget(value_spin, row + 1, col * 2 + 1)
                 self._loot_widgets[key].append((combo, value_spin))
+        notice = self._kernel_notice(what)
+        grid.addWidget(notice, 5, 0, 1, len(keys) * 2)
+        for key in keys:
+            self._loot_notices[key] = notice
         grid.setColumnStretch(len(keys) * 2, 1)  # trailing spacer soaks leftover width
         return group
 
@@ -781,15 +794,16 @@ class IfritStatWidget(QWidget):
                 self._set_combo_id(combo, card[i] if i < len(card) else 0)
             self._load_devour(data.get('devour', [0, 0, 0]))
 
-            # Draw / Mug / Drop - the name lists are refilled on every load: they follow the
-            # kernel.bin opened as a complementary file (or the Cronos names) when one changes them.
+            # Draw / Mug / Drop - named only by the open kernel.bin (refilled on every load, so
+            # opening or removing one shows at once); the quantities stay editable either way.
             for key, rows in self._loot_widgets.items():
                 entries = data.get(key, [])
-                names = self._loot_names(key)
-                for row, (combo, value_spin) in enumerate(rows):
-                    self._fill_combo(combo, names)
-                    entry = entries[row] if row < len(entries) else {'ID': 0, 'value': 0}
-                    self._set_combo_id(combo, entry.get('ID', 0))
+                entries = [entries[row] if row < len(entries) else {'ID': 0, 'value': 0}
+                           for row in range(len(rows))]
+                self._load_kernel_named([(combo, entry.get('ID', 0))
+                                         for (combo, _spin), entry in zip(rows, entries)],
+                                        self._loot_names(key), self._loot_notices[key])
+                for (_combo, value_spin), entry in zip(rows, entries):
                     value_spin.setValue(entry.get('value', 0))
 
             # Abilities

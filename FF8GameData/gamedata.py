@@ -61,6 +61,11 @@ class GameData:
         self.resource_folder_image = os.path.join(game_data_submodule_path, "Resources", "image")
         self.resource_folder = os.path.join(game_data_submodule_path, "Resources")
         self.devour_data_json = {}
+        # The names of the kernel.bin a tool has open, exactly as that file holds them:
+        # {list name: {id: name}} (kernelnames.read_names, "magic" / "item" / "enemy_ability").
+        # Empty when none is open - lists that must come from a kernel.bin only (Ifrit's loot)
+        # read here rather than the json-backed lists, which always have names.
+        self.kernel_names = {}
         self.camera_category_data_json = {}
         self.devour_category_data_json = {}
         self.magic_data_json = {}
@@ -222,6 +227,7 @@ class GameData:
         self.load_item_data()
         self.load_enemy_abilities_data()
         self.load_devour_data()  # empty until a kernel.bin names them
+        self.kernel_names = {}
         if renames_json_name:
             from FF8GameData.kernelnames import apply_names, read_changes_file
             apply_names(self, read_changes_file(os.path.join(self.resource_folder_json, renames_json_name)))

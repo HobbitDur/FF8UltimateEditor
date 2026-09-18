@@ -1318,9 +1318,11 @@ class IfritMonsterWidget(QWidget):
         devour effects, which only a kernel.bin names."""
         if not self.kernel_binding.is_loaded:
             return
-        from FF8GameData.kernelnames import apply_names, name_changes, read_devour_names
+        from FF8GameData.kernelnames import apply_names, name_changes, read_devour_names, read_names
         path = self.kernel_binding.current_path
         try:
+            # The file's own lists, nothing else mixed in: the Stat tab's loot reads only these.
+            self._game_data.kernel_names = read_names(self._game_data, path, keep_unnamed=True)
             apply_names(self._game_data, name_changes(self._game_data, path))
             # The devour effects have no built-in names at all: only a kernel.bin gives them.
             self._game_data.devour_data_json = {"devour": read_devour_names(self._game_data, path)}
