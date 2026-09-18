@@ -55,7 +55,12 @@ PARAM_DEFS = {
     "target_eva":     ("Target EVA", 10, 0, 255,
                        "The target's Evade stat — subtracted from the attacker's hit%."),
     "target_luck":    ("Target LUCK", 20, 0, 255,
-                       "The target's LUCK — also subtracted from the attacker's hit%."),
+                       "The target CHARACTER's LUCK — also subtracted from the attacker's hit%. "
+                       "Only asked when a character is the target: a monster's LUCK is always 0."),
+    "hit_junction_bonus": ("Junctioned HIT bonus", 0, 0, 255,
+                       "Extra Hit% from magic junctioned to the character's HIT stat "
+                       "(K_MAGIC.hitJunctionValue × stock / 100). Added to the weapon's hit "
+                       "rate; the total is capped at 255."),
     "attacker_spd":   ("Attacker SPD", 30, 0, 255,
                        "The battler's SPD stat — drives how fast their own ATB gauge fills. A "
                        "mid-game value is ~20-40."),
@@ -659,6 +664,21 @@ def _crit_chance(value, P, entry):
     # Shot - confirmed the SAME roll for all 4 via their RELATED_TO_CRIT_BONUS write sites in
     # Battle_applyDamage (0x4901e9 Blue Magic, 0x49041e default/weapon+enemy-attack+Shot dispatch).
     # `value` is always this specific field's own current value, so no need to know its name.
+    if entry and entry.get("attack_type") == ATTACK_TYPE_GUNBLADE:
+        # Damage_ComputeGunblade @0x48f480 clears BOOL_ATTACK_CRITED and never calls the roll.
+        return {
+            "params": (),
+            "symbolic": "Gunblade attack: no crit roll",
+            "substituted": f"crit bonus {value} is not read in battle",
+            "result": "0% critical-hit chance — the trigger replaces crits (×1.5 on a perfect "
+                      "trigger)",
+            "note": "Damage_DispatchByAttackType @0x4922b0 sends Attack Type 10 to "
+                    "Damage_ComputeGunblade @0x48f480, which sets BOOL_ATTACK_CRITED = 0 and never "
+                    "calls Damage_RollCrit. Its damage multiplier is (triggerDamage/20 + 2)/2: "
+                    "×1 without a trigger, ×1.5 with a perfect one.",
+            "latex": r"\text{Gunblade: no crit roll}",
+            "latex_sub": r"P(crit) = 0",
+        }
     luck = P["attacker_luck"]
     thr = min(255, value + luck)
     pct = (thr + 1) / 256 * 100 if thr > 0 else 0.0
@@ -953,38 +973,130 @@ def _status_accuracy(value, P, entry):
     }
 
 
-def _weapon_hit(value, P, entry):
-    # computeAttackPhysical @0x492e10: hit = hitRate + atkLUCK/2 - tgtEVA - tgtLUCK, clamped >=0;
-    # then hit if 255*hit/100 >= rand(0..255). hitRate 255 = always hits (roll skipped).
-    hr = entry.get("hit_rate") if entry else None
-    if hr is None:
-        hr = value
-    aluck = P["attacker_luck"]
-    eva = P["target_eva"]
-    tluck = P["target_luck"]
-    if hr == 255:
+# Attack types whose damage path rolls the physical hit (Damage_DispatchByAttackType @0x4922b0):
+# Physical (1), % Physical (7), Renzokuken finisher (9) and Kamikaze (18) call Damage_IsAutoHit +
+# Damage_RollPhysicalHit; Everyone's Grudge (34) / Physical ignore VIT (36) roll the same formula
+# inline in Damage_ComputePhysicalWithHitCritRoll @0x492e10.
+_PHYS_HIT_ROLL_TYPES = {1, 7, 9, 18, 34, 36}
+ATTACK_TYPE_GUNBLADE = 10
+ATTACK_TYPE_LV_ATTACK = 26
+
+
+def _hit_rate_not_rolled(att, hr):
+    """Render dict for an attack type that never runs the physical hit roll."""
+    name = ATTACK_TYPE_NAMES.get(att, f"type {att}")
+    if att == ATTACK_TYPE_GUNBLADE:
         return {
-            "params": ("attacker_luck", "target_eva", "target_luck"),
-            "symbolic": "hitRate = 255 → always hits (accuracy roll skipped)",
-            "substituted": "hitRate = 255",
-            "result": "Always hits (100%) — unless the target is untargetable",
-            "note": "computeAttackPhysical @0x492e10 skips the accuracy roll when hitRate is 255.",
-            "latex": r"hitRate = 255 \Rightarrow 100\%",
+            "params": (),
+            "symbolic": "Gunblade attack: no hit roll (and no crit roll) → always hits",
+            "substituted": f"Attack Type {att} ({name}) - hit rate {hr} is not read in battle",
+            "result": "Always hits (100%) — only Petrify / Invincible / Defend on the target "
+                      "nullify it",
+            "note": "Damage_DispatchByAttackType @0x4922b0 sends type 10 straight to "
+                    "Damage_ComputeGunblade @0x48f480, which has NO accuracy roll and NO crit roll "
+                    "(the trigger replaces crits: ×1.5 on a perfect trigger). So for Squall's "
+                    "gunblades this byte - like Darkness, target EVA and LUCK - never affects the "
+                    "attack; it only shows as the Hit% stat in the Status menu "
+                    "(Stat_ComputeCharaHit @0x4967c0).",
+            "latex": r"\text{Gunblade: no hit roll} \Rightarrow 100\%",
+            "latex_sub": rf"type\ {att} \Rightarrow \text{{always hits}}",
+        }
+    if att == ATTACK_TYPE_LV_ATTACK:
+        return {
+            "params": (),
+            "symbolic": "LV? Attack: hits only if  targetLevel mod hitRate = 0",
+            "substituted": f"divisor = {hr}",
+            "result": (f"Hits targets whose level is a multiple of {hr}" if hr else
+                       "Divisor 0 — the engine would divide by zero; do not use 0 here"),
+            "note": "Damage_ComputeMagicAndGF @0x491ad0 (MAGIC_DAMAGE mode): for LV? Attack this "
+                    "byte is the level divisor, not an accuracy percentage.",
+            "latex": r"hit \iff level_{tgt} \bmod hitRate = 0",
+            "latex_sub": rf"level_{{tgt}} \bmod {hr} = 0",
+        }
+    return {
+        "params": (),
+        "symbolic": "no physical hit roll for this Attack Type",
+        "substituted": f"Attack Type {att} ({name})",
+        "result": "This byte is not used as accuracy by this Attack Type",
+        "note": "Only Physical (1), % Physical (7), Renzokuken finisher (9), Kamikaze (18), "
+                "Everyone's Grudge (34) and Physical ignore VIT (36) roll the physical hit "
+                "(Damage_DispatchByAttackType @0x4922b0). Magic/GF types never miss on accuracy; "
+                "status landing uses the separate status accuracy byte.",
+        "latex": r"\text{no hit roll}",
+        "latex_sub": "",
+    }
+
+
+def _physical_hit_roll(hr, aluck, eva, tluck, params, who_note):
+    # Damage_IsAutoHit @0x492b00 + Damage_RollPhysicalHit @0x492ba0: auto-hit if hit% == 255 (or
+    # target Sleep/Stop); else (Darkness: hit% >>= 2) hit = hit% + atkLUCK/2 - tgtEVA - tgtLUCK,
+    # clamped >= 0; lands if 255*hit/100 >= rand byte (and != 0).
+    if hr >= 255:
+        return {
+            "params": params,
+            "symbolic": "hit% = 255 → always hits (accuracy roll skipped)",
+            "substituted": "hit% = 255",
+            "result": "Always hits (100%) — only Petrify / Invincible / Defend on the target "
+                      "nullify it",
+            "note": "Damage_IsAutoHit @0x492b00: a hit% of exactly 255 (or a Sleeping/Stopped "
+                    "target) skips the accuracy roll, so Darkness never applies. " + who_note,
+            "latex": r"hit\% = 255 \Rightarrow 100\%",
             "latex_sub": r"255 \Rightarrow \text{always hits}",
         }
     hit = max(0, hr + aluck // 2 - eva - tluck)
     thr = _idiv(255 * hit, 100)
     pct = min(100.0, (thr + 1) / 256 * 100) if thr > 0 else 0.0
     return {
-        "params": ("attacker_luck", "target_eva", "target_luck"),
-        "symbolic": "hit% = hitRate + LUCK/2 − targetEVA − targetLUCK ;  hit if 255×hit%/100 ≥ rand",
-        "substituted": f"{hr} + {aluck}/2 − {eva} − {tluck} = {hit}%",
-        "result": f"≈ {pct:.1f}% chance to land  (effective hit {hit}%)",
-        "note": "computeAttackPhysical @0x492e10. Darkness quarters the base hit% first; hitRate 255 "
-                "always hits. The final hit is a roll of 255×hit%/100 against a random byte.",
-        "latex": r"hit\% = hitRate + \tfrac{LUCK}{2} - EVA_{tgt} - LUCK_{tgt}",
-        "latex_sub": rf"{hr} + \tfrac{{{aluck}}}{{2}} - {eva} - {tluck} = {hit}\%",
+        "params": params,
+        "symbolic": "hit = hit% + atkLUCK/2 − tgtEVA − tgtLUCK ;  lands if rand(0..255) ≤ 255×hit/100",
+        "substituted": f"{hr} + {aluck}/2 − {eva} − {tluck} = {hit}   → threshold {thr}",
+        "result": f"≈ {pct:.1f}% chance to land",
+        "note": "Damage_RollPhysicalHit @0x492ba0. Darkness on the attacker quarters hit% first "
+                "(hit% >> 2); a Sleeping/Stopped target is always hit. " + who_note,
+        "latex": r"hit = hit\% + \tfrac{LUCK_{atk}}{2} - EVA_{tgt} - LUCK_{tgt}",
+        "latex_sub": rf"{hr} + \tfrac{{{aluck}}}{{2}} - {eva} - {tluck} = {hit}",
     }
+
+
+def _weapon_hit(value, P, entry):
+    # A weapon is swung by a CHARACTER: HIT_ATTACK_HITPERCENT = charaStat[7] = the Hit% stat,
+    # Stat_ComputeCharaHit @0x4967c0 = weapon.hitRate + HIT-junction bonus, capped 255; the 255
+    # auto-hit test is on that FINAL stat. The target is a monster, whose LUCK is always 0
+    # (setMonsterInfoFromDatInfoSection @0x48bbd0), so the target-LUCK term is a hard 0.
+    hr = entry.get("hit_rate") if entry else None
+    if hr is None:
+        hr = value
+    att = entry.get("attack_type") if entry else None
+    if att is not None and att not in _PHYS_HIT_ROLL_TYPES:
+        return _hit_rate_not_rolled(att, hr)
+    bonus = P["hit_junction_bonus"]
+    stat = min(255, hr + bonus)
+    out = _physical_hit_roll(
+        stat, P["attacker_luck"], P["target_eva"], 0,
+        ("attacker_luck", "hit_junction_bonus", "target_eva"),
+        "Target is a monster: monsters have no LUCK stat (always 0), so the target-LUCK term "
+        f"drops out. hit% is the character's Hit% stat = weapon hit rate {hr} + junctioned HIT "
+        f"bonus {bonus}, capped at 255 (Stat_ComputeCharaHit @0x4967c0) - reaching 255 through "
+        "junctions also makes the character never miss.")
+    if bonus:
+        out["substituted"] = f"hit% = min(255, {hr} + {bonus}) = {stat};   " + out["substituted"]
+    return out
+
+
+def _monster_hit(value, P, entry):
+    # Enemy attack (kernel §4): HIT_ATTACK_HITPERCENT = K_ENEMY_ATTACK.hitRate (Battle_applyDamage
+    # @0x4902d9). Attacker is a monster -> attacker LUCK = 0; target is a character (EVA + LUCK).
+    hr = entry.get("hit_rate") if entry else None
+    if hr is None:
+        hr = value
+    att = entry.get("attack_type") if entry else None
+    if att is not None and att not in _PHYS_HIT_ROLL_TYPES:
+        return _hit_rate_not_rolled(att, hr)
+    return _physical_hit_roll(
+        hr, 0, P["target_eva"], P["target_luck"], ("target_eva", "target_luck"),
+        "Attacker is a monster: monsters have no LUCK stat (always 0, "
+        "setMonsterInfoFromDatInfoSection @0x48bbd0), so the attacker LUCK/2 bonus is 0. "
+        "Target EVA and LUCK are the character's.")
 
 
 FORMULAS = {
@@ -1002,7 +1114,8 @@ FORMULAS = {
     "physical_damage": ("Physical damage", _physical_damage),
     "weapon_crit": ("Critical-hit chance", _crit_chance),
     "monster_crit": ("Critical-hit chance (monster attacker)", _crit_chance_monster),
-    "weapon_hit": ("Hit rate", _weapon_hit),
+    "weapon_hit": ("Hit rate (character weapon)", _weapon_hit),
+    "monster_hit": ("Hit rate (monster attacker)", _monster_hit),
     "status_accuracy": ("Status inflict chance", _status_accuracy),
 }
 for _st in _CHAR_STAT_LABELS:

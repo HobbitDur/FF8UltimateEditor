@@ -940,9 +940,20 @@ _MEANING = {
                           "Bit 0 marks the item eligible for random battle-item selection "
                           "(sub_483CA0 picks a random inventory item with this bit set)."),
     (5, "hit_rate"): (None,
-        "The character's base Hit% stat while this weapon is equipped. GetCharacterHit reads it "
-        "directly: HIT% = weapon.hitRate + (junctioned HIT magic bonus), capped at 255 - there is "
-        "no character-level term, so this byte alone sets a character's baseline accuracy."),
+        "The character's base Hit% stat while this weapon is equipped (Stat_ComputeCharaHit): "
+        "HIT% = weapon.hitRate + (junctioned HIT magic bonus), capped at 255 - no level term. "
+        "In battle: 255 = never misses; otherwise hit = HIT% + LUCK/2 - target EVA (monsters have "
+        "no LUCK). Ignored for Squall's gunblades (Attack Type 10): they never roll to hit. "
+        "Click f(x) for detail."),
+    (5, "crit_bonus"): (None,
+        "Bonus to the critical-hit rate. Damage_RollCrit: crit if rand(0-255) <= this + attacker "
+        "LUCK; a crit doubles physical damage. Ignored for Squall's gunblades (Attack Type 10): "
+        "they never roll a crit - the trigger replaces it. Click f(x) for detail."),
+    (4, "hit_rate"): (None,
+        "Physical hit rate of this enemy attack. 255 = always hits; otherwise hit = this - "
+        "target EVA - target LUCK (the monster attacker has no LUCK, so no LUCK/2 bonus). Only "
+        "physical-type attacks roll it; separate from the status attack accuracy. Click f(x) "
+        "for detail."),
     (1, "ability_data_id"): (None,
         "Index into kernel section 11 (Command ability data in battle) giving this command's "
         "fixed built-in effect - magic/effect id, attack type, power, hit count, element, status "
@@ -1209,6 +1220,9 @@ for sid_s, cfg in sections.items():
         if sid == 4 and f["name"] == "crit_bonus":
             f["formula"] = "monster_crit"
             f["help"] = _CRIT_BONUS_MONSTER_HELP
+        # Enemy attacks' hit rate: same physical roll, attacker LUCK = 0 (monster).
+        if sid == 4 and f["name"] == "hit_rate":
+            f["formula"] = "monster_hit"
         # Status inflict chance: every "status attack accuracy" byte across the kernel feeds
         # Battle_ApplyStatusWithResistRoll: STR/VIT for physical-dispatch Attack Types, MAG/SPR
         # for the magic/GF-dispatch ones (picked live from this entry's own Attack Type field).

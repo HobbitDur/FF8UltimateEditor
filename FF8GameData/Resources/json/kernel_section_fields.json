@@ -1805,7 +1805,8 @@
     "size": 1,
     "label": "Hit rate",
     "group": "Data",
-    "help": "Physical hit rate — accuracy rolled against the target's Evade to decide hit vs. miss. 0xFF (255) = always hits. Battle_applyDamage loads it into HIT_ATTACK_HITPERCENT, the same slot a character's Hit% stat fills; separate from status attack accuracy (which governs status infliction)."
+    "help": "Physical hit rate of this enemy attack. 255 = always hits; otherwise hit = this - target EVA - target LUCK (the monster attacker has no LUCK, so no LUCK/2 bonus). Only physical-type attacks roll it; separate from the status attack accuracy. Click f(x) for detail.",
+    "formula": "monster_hit"
    },
    {
     "name": "status_1",
@@ -2271,7 +2272,7 @@
     "size": 1,
     "label": "Hit rate",
     "group": "Data",
-    "help": "The character's base Hit% stat while this weapon is equipped. GetCharacterHit reads it directly: HIT% = weapon.hitRate + (junctioned HIT magic bonus), capped at 255 - there is no character-level term, so this byte alone sets a character's baseline accuracy.",
+    "help": "The character's base Hit% stat while this weapon is equipped (Stat_ComputeCharaHit): HIT% = weapon.hitRate + (junctioned HIT magic bonus), capped at 255 - no level term. In battle: 255 = never misses; otherwise hit = HIT% + LUCK/2 - target EVA (monsters have no LUCK). Ignored for Squall's gunblades (Attack Type 10): they never roll to hit. Click f(x) for detail.",
     "formula": "weapon_hit"
    },
    {
@@ -2298,7 +2299,7 @@
     "size": 1,
     "label": "Crit bonus",
     "group": "Data",
-    "help": "Bonus to the critical-hit rate. Damage_RollCrit: crit if rand(0-255) <= this + attacker LUCK; a crit doubles physical damage. Click f(x) for detail.",
+    "help": "Bonus to the critical-hit rate. Damage_RollCrit: crit if rand(0-255) <= this + attacker LUCK; a crit doubles physical damage. Ignored for Squall's gunblades (Attack Type 10): they never roll a crit - the trigger replaces it. Click f(x) for detail.",
     "formula": "weapon_crit"
    },
    {
