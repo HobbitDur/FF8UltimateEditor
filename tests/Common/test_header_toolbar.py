@@ -105,8 +105,10 @@ def test_ifrit_open_save_are_on_the_shared_toolbar(main_window):
     tb = main_window._file_toolbar
     main_window.tool_stack.setCurrentWidget(ifrit)
     tb._on_tool_changed()
-    # No bindings at all - Import runs through the open_files() hook, Save through save_folder().
-    assert tb._main_bindings() == [] and tb._complementary_bindings() == []
+    # No main binding - Import runs through the open_files() hook, Save through save_folder(). Its
+    # one binding is the complementary kernel.bin, which names the spells/items/enemy attacks.
+    assert tb._main_bindings() == []
+    assert [b.file_name for b in tb._complementary_bindings()] == ["kernel.bin"]
     assert callable(getattr(ifrit, "open_files", None)) and callable(getattr(ifrit, "save_folder", None))
     assert tb.import_button.isEnabled()          # enabled via open_files(), no bindings needed
     assert tb.save_button.isEnabled() is False   # nothing changed/loaded yet (can_save_folder False)
@@ -916,7 +918,7 @@ def test_removing_a_fixed_file_clears_the_tool_and_disables_save(main_window, mo
     """Every fixed-file tool (and Zone/Moomba/CCGroup's card tab) swaps to a "No file loaded"
     page once its file is removed from Opened files; Save then has nothing to write."""
     own_close = (main_window._shumi_translator_widget, main_window._ccgroup_widget,
-                 main_window._zone_widget)
+                 main_window._zone_widget, main_window._ifrit_widget)
     for index in range(main_window.tool_stack.count()):
         tool = main_window.tool_stack.widget(index)
         if callable(getattr(tool, "file_bindings", None)) and tool not in own_close:

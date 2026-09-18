@@ -292,7 +292,9 @@ class FF8UltimateEditorWidget(QWidget):
         # Removing a fixed-file tool's file from the Opened files panel clears its view. Tools
         # that already drop their own files are left out (ShumiTranslator closes its tabs); the
         # tabbed tools get it per tab, on the page that edits the file, so their other tab stays.
-        own_close = (self._shumi_translator_widget, self._ccgroup_widget, self._zone_widget)
+        # Ifrit's only binding is its complementary kernel.bin: its .dat files close on their own.
+        own_close = (self._shumi_translator_widget, self._ccgroup_widget, self._zone_widget,
+                     self._ifrit_widget)
         for index in range(self.tool_stack.count()):
             tool = self.tool_stack.widget(index)
             if (callable(getattr(tool, "file_bindings", None)) and tool not in own_close
@@ -304,7 +306,8 @@ class FF8UltimateEditorWidget(QWidget):
                                  [self._ccgroup_widget.exe_binding])
         for index in range(self.tool_stack.count()):
             tool = self.tool_stack.widget(index)
-            if callable(getattr(tool, "file_bindings", None)):
+            # Ifrit tracks its own unsaved edits per file (undo stacks, '*' in its file list).
+            if callable(getattr(tool, "file_bindings", None)) and tool is not self._ifrit_widget:
                 install_dirty_tracking(tool)
 
         saved_tool_index = self.settings.value("main/program_option", defaultValue=0, type=int)

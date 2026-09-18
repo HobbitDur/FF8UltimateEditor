@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QDoubleSpinBox, QAbstractButton, QPlainTextEdit, QTextEdit, QStackedWidget,
     QSizePolicy
 )
+from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.undo import UndoStack
 from FF8GameData.dat.monsteranalyser import GarbageFileError, MonsterAnalyser
@@ -551,6 +552,13 @@ class IfritMonsterWidget(QWidget):
             file_registry = FileRegistry()
         self.file_registry = file_registry
         file_registry.file_closed.connect(self._on_registry_file_closed)
+        # kernel.bin, a complementary (read-only) file: when one is open - here or in any other
+        # tool - its spell, item and enemy-attack names are the ones shown (Draw / Mug / Drop,
+        # abilities, AI), so a modded kernel.bin's names and added spells appear.
+        self.kernel_binding = FileBinding("kernel.bin", file_registry,
+                                          load_callback=self._on_kernel_names_changed,
+                                          file_filter="*kernel*.bin", read_only=True)
+        self.kernel_binding.file_closed.connect(self._on_kernel_names_changed)
         # Ifrit is an Alexander-pattern tool with no per-file FileBinding, so the shared-toolbar
         # Reload button reaches it through the reload_files() / can_reload_files() hooks below
         # rather than through a binding (otherwise Reload would be a no-op for it).
@@ -677,6 +685,12 @@ class IfritMonsterWidget(QWidget):
         # Load the Cronos AI tables and names once at startup (no file to reload yet).
         self._apply_cronos_data(self._cronos_checkbox.isChecked())
         self._update_section_buttons()   # nothing shown yet -> both off
+        self.kernel_binding.load_opened_file()   # another tool may have opened a kernel.bin already
+
+    def file_bindings(self):
+        """The one fixed-name file of this tool: kernel.bin, complementary (read-only). The .dat
+        models have no fixed name - they go through open_files() / save_folder()."""
+        return [self.kernel_binding]
 
     # ── Shared header toolbar hooks (Alexander pattern) ───────────────
 
@@ -1296,6 +1310,32 @@ class IfritMonsterWidget(QWidget):
         Unchecked, everything stays as the game ships it: the vanilla names, never a mod's."""
         self._game_data.load_ai_data("ai_cronos.json" if checked else "ai_vanilla.json")
         self._game_data.load_names("names_cronos.json" if checked else None)
+        self._apply_kernel_names()
+
+    def _apply_kernel_names(self):
+        """Put the names of the complementary kernel.bin, when one is open, over the current ones:
+        every spell, item and enemy attack it names differently, and the spells it adds."""
+        if not self.kernel_binding.is_loaded:
+            return
+        from FF8GameData.kernelnames import apply_names, name_changes
+        path = self.kernel_binding.current_path
+        try:
+            apply_names(self._game_data, name_changes(self._game_data, path))
+        except Exception as error:  # noqa: BLE001 - a bad kernel.bin must not break the editor
+            QMessageBox.warning(self, "Ifrit - kernel.bin",
+                                f"Could not read the names of this kernel.bin:\n{path}\n\n{error}")
+
+    def _on_kernel_names_changed(self, _path=None):
+        """A kernel.bin was opened, reloaded or removed: rebuild the names from scratch (built-in,
+        Cronos, then this kernel.bin if still open) and refresh the shown file WITHOUT re-reading
+        it from disk, so its unsaved edits stay."""
+        self._game_data.load_names("names_cronos.json" if self._cronos_checkbox.isChecked() else None)
+        self._apply_kernel_names()
+        if 0 <= self._active_index < len(self._files):
+            pane = self._files[self._active_index].get('pane')
+            if pane is not None:
+                pane._commit(include_texture=False)
+                pane.reload_from_model()
 
     def _on_cronos_toggled(self, state):
         """Cronos changes how AI is decompiled - reload the active file so it re-decompiles with

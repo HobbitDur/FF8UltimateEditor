@@ -524,6 +524,21 @@ class IfritStatWidget(QWidget):
         layout.addStretch(1)
         return self._scrollable(container)
 
+    def _loot_names(self, key):
+        """The CURRENT name list of a loot row: magic for Draw, items for Mug and Drop."""
+        if key.endswith('_mag'):
+            return self.game_data.magic_data_json['magic']
+        return self.game_data.item_data_json['items']
+
+    @staticmethod
+    def _fill_combo(combo: QComboBox, json_list):
+        """Replace a combo's entries with json_list ("id: name", id as data), without firing."""
+        combo.blockSignals(True)
+        combo.clear()
+        for el in json_list:
+            combo.addItem(f"{el['id']}: {el['name']}", el['id'])
+        combo.blockSignals(False)
+
     def _build_loot_group(self, title, keys, json_list, id_tip, value_tip) -> QGroupBox:
         group = QGroupBox(title)
         grid = QGridLayout(group)
@@ -742,10 +757,13 @@ class IfritStatWidget(QWidget):
             for i, combo in enumerate(self._devour_combos):
                 self._set_combo_id(combo, devour[i] if i < len(devour) else 0)
 
-            # Draw / Mug / Drop
+            # Draw / Mug / Drop - the name lists are refilled on every load: they follow the
+            # kernel.bin opened as a complementary file (or the Cronos names) when one changes them.
             for key, rows in self._loot_widgets.items():
                 entries = data.get(key, [])
+                names = self._loot_names(key)
                 for row, (combo, value_spin) in enumerate(rows):
+                    self._fill_combo(combo, names)
                     entry = entries[row] if row < len(entries) else {'ID': 0, 'value': 0}
                     self._set_combo_id(combo, entry.get('ID', 0))
                     value_spin.setValue(entry.get('value', 0))
