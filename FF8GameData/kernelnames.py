@@ -223,3 +223,24 @@ def write_changes_file(path, changes: dict, comment: str = ""):
     for list_name, names in changes.items():
         content[list_name] = {str(id_): names[id_] for id_ in sorted(names)}
     pathlib.Path(path).write_text(json.dumps(content, indent=2, ensure_ascii=False) + "\n", encoding="utf8")
+
+
+# Weapons and the junctionable abilities: named only by a kernel.bin, no json fallback. The ability
+# ids are the global FF8 ability enum: the seven ability sections one after the other (junction,
+# command, stat %, character, party, GF, menu) - 116 ids, 0 = none, 115 = Card Mod.
+WEAPON_SECTION_ID = 5
+ABILITY_SECTION_IDS = (12, 13, 14, 15, 16, 17, 18)
+
+
+def read_weapon_and_ability_names(game_data, kernel_file) -> dict:
+    """{"weapon": [name by weapon id], "ability": [name by ability id]} of a kernel.bin, exactly
+    as the file holds them (an entry the file leaves unnamed has an empty name)."""
+    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+
+    kernel_manager = KernelManager(game_data)
+    kernel_manager.load_file(str(kernel_file))
+    abilities = []
+    for section_id in ABILITY_SECTION_IDS:
+        abilities.extend(_section_names(game_data, kernel_manager, section_id))
+    return {"weapon": _section_names(game_data, kernel_manager, WEAPON_SECTION_ID),
+            "ability": abilities}

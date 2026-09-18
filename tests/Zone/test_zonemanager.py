@@ -148,8 +148,11 @@ class TestZoneManagerSynthetic:
         assert manager.texture_raw_file(entry) == 42
 
     def test_name_lookups(self, manager):
-        assert manager.get_weapon_name(6) == "Lion Heart"
+        # Weapon names come only from a kernel.bin: without one a weapon is just its id.
+        assert manager.get_weapon_name(6) == "Weapon 6"
         assert manager.get_weapon_name(0xFF) == "None"
+        manager.set_weapon_names(["Revolver"] * 6 + ["Lion Heart"])
+        assert manager.get_weapon_name(6) == "Lion Heart"
         assert manager.get_duel_move_name(4) == "Dolphin Blow"
         assert manager.get_angelo_move_name(5) == "Angelo Strike"
         assert manager.get_texture_category_name(1) == "Combat King"
@@ -178,6 +181,11 @@ class TestZoneManagerRealFile:
 
     def test_retail_content_matches_magazine_map(self, manager):
         manager.load_file(str(MMAG_PATH))
+        from FF8GameData.kernelnames import read_weapon_and_ability_names
+        game_data = manager.game_data
+        game_data.load_kernel_data()
+        kernel = MMAG_PATH.parent.parent / "main" / "kernel.bin"
+        manager.set_weapon_names(read_weapon_and_ability_names(game_data, kernel)["weapon"])
         # Weapons Monthly 1st Issue: the four ultimate weapons, one per page
         ultimate_pages = [manager.get_weapon_name(manager.entries[i].weapon_index)
                           for i in range(4)]

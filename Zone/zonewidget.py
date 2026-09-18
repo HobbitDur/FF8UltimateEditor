@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
+from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.magpage import MagPageEntry, UNUSED_ID
 from SmallWidget.listsearchbar import ListSearchBar
@@ -75,6 +76,10 @@ class ZoneWidget(QWidget):
             "mitem.bin": FileBinding("mitem.bin", file_registry, load_callback=self._apply_mitem,
                                      read_only=True),
         }
+        # The same kernel.bin also names the weapons - the only source of those names.
+        self.kernel_names = KernelNameSource(self.game_data, file_registry,
+                                             binding=self.companion_bindings["kernel.bin"])
+        self.kernel_names.changed.connect(self._on_kernel_names_changed)
 
         # Entry list (left), with a Ctrl+F search bar filtering it
         self.entry_list = QListWidget()
@@ -286,9 +291,8 @@ class ZoneWidget(QWidget):
 
     def _build_unlock_group(self):
         self.weapon_combo = QComboBox()
-        self.weapon_combo.addItem("None", UNUSED_ID)
-        for weapon_index, name in enumerate(self.manager.weapon_name_list):
-            self.weapon_combo.addItem(f"{weapon_index}: {name}", weapon_index)
+        self.weapon_notice = KernelNameSource.make_notice("weapon")
+        self._fill_weapon_combo(UNUSED_ID)
 
         self.duel_combo = QComboBox()
         self.duel_combo.addItem("None", UNUSED_ID)
@@ -321,6 +325,7 @@ class ZoneWidget(QWidget):
         weapon_layout.addWidget(self.weapon_spacing)
         weapon_layout.addStretch(1)
         layout.addRow("Weapon (mwepon line):", weapon_layout)
+        layout.addRow("", self.weapon_notice)
         duel_layout = QHBoxLayout()
         duel_layout.addWidget(self.duel_combo)
         duel_layout.addWidget(QLabel("Combo X"))
@@ -411,6 +416,31 @@ class ZoneWidget(QWidget):
                                      button_icon_style=self.button_icon_combo.currentData())
         self._update_resolved_labels()
         self._refresh_preview()
+
+    def _fill_weapon_combo(self, weapon_index):
+        """The weapon choices: 'None' plus the kernel.bin's weapons. Without a kernel.bin there
+        are no names - only the entry's own id is shown, greyed out, next to the notice."""
+        names = self.kernel_names.weapons
+        self.weapon_combo.blockSignals(True)
+        self.weapon_combo.clear()
+        self.weapon_combo.addItem("None", UNUSED_ID)
+        if names:
+            for index, name in enumerate(names):
+                self.weapon_combo.addItem(f"{index}: {name or f'Weapon {index}'}", index)
+        elif weapon_index != UNUSED_ID:
+            self.weapon_combo.addItem(f"{weapon_index}: open kernel.bin to name it", weapon_index)
+        self._set_combo_data(self.weapon_combo, weapon_index,
+                             f"{weapon_index}: (not in kernel.bin)")
+        self.weapon_combo.setEnabled(bool(names))
+        self.weapon_combo.blockSignals(False)
+        self.weapon_notice.setVisible(not names)
+
+    def _on_kernel_names_changed(self):
+        """A kernel.bin was opened or removed: re-label the weapons, keeping the value in the
+        form (even an unsaved one)."""
+        self.manager.set_weapon_names(self.kernel_names.weapons)
+        current = self.weapon_combo.currentData()
+        self._fill_weapon_combo(UNUSED_ID if current is None else current)
 
     def _apply_kernel(self, file_name):
         self._apply_companion(self.manager.load_kernel, "kernel.bin", file_name)
@@ -509,8 +539,7 @@ class ZoneWidget(QWidget):
                              f"{entry.texture_category}: Direct raw file")
         self.texture_page.setValue(entry.texture_page)
         self.footer_flag.setChecked(bool(entry.footer_flag))
-        self._set_combo_data(self.weapon_combo, entry.weapon_index,
-                             f"{entry.weapon_index}: Unknown weapon")
+        self._fill_weapon_combo(entry.weapon_index)
         self._set_combo_data(self.duel_combo, entry.duel_move_id,
                              f"{entry.duel_move_id}: Unknown duel move")
         self._set_combo_data(self.angelo_combo, entry.angelo_move_id,

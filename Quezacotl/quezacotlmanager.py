@@ -12,6 +12,7 @@ CHARACTER_NAMES = ["Squall", "Zell", "Irvine", "Quistis", "Rinoa", "Selphie", "S
 # 0x27-0x39. 0 = None/empty in both.
 ACTIVE_ABILITY_RANGE = range(0x14, 0x27)   # 20..38 command abilities (Magic, GF, Draw...)
 PASSIVE_ABILITY_RANGE = range(0x27, 0x3A)  # 39..57 passive abilities (HP+20%, Str+40%...)
+ABILITY_COUNT = 116  # ability ids 0 (none) .. 115 (Card Mod): the 7 kernel.bin ability sections
 
 # GF compatibility per GF (u16). Game clamps to [1000, 6000] (IDA
 # itemAction_ModifyGfCompatibility); 1000 = minimum / neutral, 6000 = maximum.

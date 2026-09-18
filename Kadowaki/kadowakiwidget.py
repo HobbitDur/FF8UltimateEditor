@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWid
                              QComboBox, QCheckBox, QGroupBox, QSpinBox, QGridLayout)
 
 from Common.filebinding import FileBinding
+from Common.kernelnamesource import KernelNameSource
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Kadowaki.kadowakimanager import KadowakiManager
@@ -45,12 +46,17 @@ class ParamWidget(QGroupBox):
         self._list_combo = QComboBox()
         self._list_combo_ids = []
         self._list_combo.activated.connect(self._on_value_changed)
+        # A list named only by a kernel.bin (abilities) has nothing to offer without one.
+        self._kernel_only_empty = False
+        self._kernel_notice = KernelNameSource.make_notice("ability")
+        self._kernel_notice.hide()
 
         self._layout = QVBoxLayout()
         self._layout.addWidget(self._unused_label)
         self._layout.addWidget(self._int_spinbox)
         self._layout.addWidget(self._flag_container)
         self._layout.addWidget(self._list_combo)
+        self._layout.addWidget(self._kernel_notice)
         self._layout.addStretch(1)
         self.setLayout(self._layout)
 
@@ -83,6 +89,12 @@ class ParamWidget(QGroupBox):
                 for value_info in self.manager.get_param_list_values(param_type_info):
                     self._list_combo.addItem(value_info["name"])
                     self._list_combo_ids.append(value_info["id"])
+        # Abilities are named only by a kernel.bin: without one, show the id alone, greyed out.
+        self._kernel_only_empty = (self._widget_type == "list"
+                                   and param_type_info.get("source") == "junctionable_ability"
+                                   and not self.manager.ability_names)
+        self._list_combo.setEnabled(not self._kernel_only_empty)
+        self._kernel_notice.setVisible(self._kernel_only_empty)
         self.set_value(current_value)
 
     def set_value(self, value):
@@ -94,7 +106,8 @@ class ParamWidget(QGroupBox):
         with QSignalBlocker(self._list_combo):
             if self._widget_type == "list":
                 if value not in self._list_combo_ids:  # Unknown value, add a temporary entry to not lose it
-                    self._list_combo.addItem(f"Unknown ({value})")
+                    self._list_combo.addItem(f"{value}: open kernel.bin to name it"
+                                             if self._kernel_only_empty else f"Unknown ({value})")
                     self._list_combo_ids.append(value)
                 self._list_combo.setCurrentIndex(self._list_combo_ids.index(value))
 
@@ -144,6 +157,9 @@ class KadowakiWidget(QWidget):
         # header toolbar (Import / Save) through the registry.
         self.mitem_binding = FileBinding("mitem.bin", file_registry,
                                          load_callback=self.load_file, save_callback=self.save_file)
+        # kernel.bin, complementary: the only source of the ability names (GF ability params).
+        self.kernel_names = KernelNameSource(self.game_data, file_registry)
+        self.kernel_names.changed.connect(self._on_kernel_names_changed)
 
         # Item list (left side), with a Ctrl+F search bar filtering it (item name or item id)
         self.item_list = QListWidget()
@@ -204,10 +220,20 @@ class KadowakiWidget(QWidget):
         self.setLayout(main_layout)
 
         self.mitem_binding.load_opened_file()  # Another tool may have opened mitem.bin already
+        self.kernel_names.binding.load_opened_file()  # ...or a kernel.bin
 
     def file_bindings(self):
-        """The files the shared header toolbar drives for this tool (just mitem.bin)."""
-        return [self.mitem_binding]
+        """The files the shared header toolbar drives for this tool: mitem.bin, and kernel.bin as
+        a complementary file naming the abilities."""
+        return [self.mitem_binding, self.kernel_names.binding]
+
+    def _on_kernel_names_changed(self):
+        """A kernel.bin was opened or removed: re-label the ability choices of the shown item
+        (edits are already in the item data, so nothing is lost)."""
+        self.manager.ability_names = list(self.kernel_names.abilities)
+        menu_item = self._selected_menu_item()
+        if menu_item:
+            self._update_param_widgets(menu_item)
 
     def load_file(self, file_name):
         self.manager.load_file(file_name)

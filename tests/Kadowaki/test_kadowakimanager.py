@@ -83,6 +83,8 @@ class TestMitemJson:
         for param_type in game_data.mitem_data_json["param_type"]:
             if param_type["widget"] == "list":
                 list_values = manager.get_param_list_values(param_type)
+                if param_type.get("source") == "junctionable_ability":
+                    continue  # named only by a kernel.bin: empty until one is open (tested below)
                 assert list_values, f"Param type '{param_type['name']}' resolves to an empty list"
                 for value in list_values:
                     assert "id" in value and "name" in value
@@ -95,10 +97,19 @@ class TestMitemJson:
         assert "All GFs" in names
         assert list_values[-1]["id"] == 255
 
-    def test_gf_ability_resolves_kernel_ability_names(self, manager):
-        """gf_ability values come from the shared kernel ability enum (kernel_lookups.json)."""
+    @pytest.mark.ff8data("extracted_files/main/kernel.bin")
+    def test_gf_ability_names_come_only_from_a_kernel_bin(self, manager):
+        """gf_ability values are named by a kernel.bin's ability sections - there is no built-in
+        list, so without one there is nothing to offer."""
+        from FF8GameData.kernelnames import read_weapon_and_ability_names
         gf_ability = manager.get_param_type_info("gf_ability")
         assert gf_ability["widget"] == "list"
+        manager.ability_names = []
+        assert not any(value["name"] == "HP-J" for value in manager.get_param_list_values(gf_ability))
+
+        manager.game_data.load_kernel_data()
+        kernel = pathlib.Path(__file__).parent.parent.parent / "extracted_files" / "main" / "kernel.bin"
+        manager.ability_names = read_weapon_and_ability_names(manager.game_data, kernel)["ability"]
         names = {value["id"]: value["name"] for value in manager.get_param_list_values(gf_ability)}
         # Vanilla item-taught abilities: HP-J Scroll (1), Ribbon (77), Steel Pipe (83)
         assert names[1] == "HP-J"

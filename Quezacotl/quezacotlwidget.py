@@ -16,10 +16,11 @@ RESERVED_TOOLTIP = ("Read-only: this byte has no meaning in the game (confirmed 
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
+from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
-    QuezacotlManager, ACTIVE_ABILITY_RANGE, PASSIVE_ABILITY_RANGE,
+    QuezacotlManager, ACTIVE_ABILITY_RANGE, PASSIVE_ABILITY_RANGE, ABILITY_COUNT,
     GF_COMPATIBILITY_MIN, GF_COMPATIBILITY_MAX,
 )
 
@@ -58,17 +59,11 @@ class QuezacotlWidget(QWidget):
         self._magic_entries = self.lookups.resolve("magic")["entries"]
         self._item_entries = self.lookups.resolve("item")["entries"]
         self._gforce_entries = self.lookups.resolve("gforce")["entries"]
-        self._ability_entries = self.lookups.resolve("junctionable_ability")["entries"]
         self._status_entries = self.lookups.resolve("status_1")["entries"]
         self._party_entries = (self.lookups.resolve("weapon_character")["entries"]
                                + [{"value": 0xFF, "name": "None"}])
-        # Ability slots use the shared enum, restricted to the game-validated sub-ranges,
-        # with "None" (0) always available to clear a slot.
-        none_ability = [self._ability_entries[0]]
-        self._active_ability_entries = none_ability + [
-            e for e in self._ability_entries if e["value"] in ACTIVE_ABILITY_RANGE]
-        self._passive_ability_entries = none_ability + [
-            e for e in self._ability_entries if e["value"] in PASSIVE_ABILITY_RANGE]
+        # The ability and weapon NAMES come only from a kernel.bin, opened as a complementary
+        # file (see _on_kernel_names_changed) - there is no built-in list of them.
 
         json_dir = os.path.join(game_data_folder, "Resources", "json")
 
@@ -83,9 +78,9 @@ class QuezacotlWidget(QWidget):
 
         # Weapon names for the "unlocked weapons" bitmask: bit i = kernel weapon id i (1:1).
         # Only bits 0-27 (the 28 junk-shop-upgradeable party weapons) are used by the game.
+        # The names come from kernel.bin; only whose weapon each bit is stays built in.
         weapon_data = _load_json("kernel_bin_data.json")["weapon_data"]
-        self._weapon_bits = [(w["id"], f"{w['weapon_name']} ({w['character']})")
-                             for w in weapon_data if w["id"] < 28]
+        self._weapon_characters = {w["id"]: w["character"] for w in weapon_data if w["id"] < 28}
 
         # Limit-break unlock bitfields. Irvine's shot names come from item.json (ids 101-108).
         limit_data = _load_json("limit_break.json")
@@ -112,6 +107,10 @@ class QuezacotlWidget(QWidget):
         # init.out, this tool's one editable file, driven by the shared header toolbar.
         self.init_binding = FileBinding("init.out", file_registry,
                                         load_callback=self.load_file, save_callback=self.save_file)
+        # kernel.bin, complementary: the only source of the ability and weapon names.
+        self.kernel_names = KernelNameSource(self.game_data, file_registry)
+        self.kernel_names.changed.connect(self._on_kernel_names_changed)
+        self.kernel_notice = KernelNameSource.make_notice("ability and weapon")
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_gf_tab(), "G-Forces")
@@ -127,14 +126,60 @@ class QuezacotlWidget(QWidget):
         self.tabs.setEnabled(False)
 
         main_layout = QVBoxLayout()
+        main_layout.addWidget(self.kernel_notice)
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
 
+        self._on_kernel_names_changed()  # no kernel.bin yet: ids only, greyed out
         self.init_binding.load_opened_file()  # Another tool may have opened init.out already
+        self.kernel_names.binding.load_opened_file()  # ...or a kernel.bin
 
     def file_bindings(self):
-        """The files the shared header toolbar drives for this tool (just init.out)."""
-        return [self.init_binding]
+        """The files the shared header toolbar drives for this tool: init.out, and kernel.bin as a
+        complementary file naming the abilities and weapons."""
+        return [self.init_binding, self.kernel_names.binding]
+
+    # ── Names from kernel.bin ────────────────────────────────────────────
+
+    def _ability_choices(self, allowed):
+        """The abilities a combo offers: 'None' plus those in `allowed` (every one when None),
+        named by the open kernel.bin - an empty list without one."""
+        entries = self.kernel_names.ability_entries()
+        if not entries:
+            return []
+        return [entries[0]] + [e for e in entries[1:] if allowed is None or e["value"] in allowed]
+
+    def _fill_ability_combo(self, combo, value, allowed):
+        """Fill an ability combo and select `value`. Without a kernel.bin there is no name to
+        offer: only the value itself, greyed out - it is never changed."""
+        choices = self._ability_choices(allowed)
+        with QSignalBlocker(combo):
+            combo.clear()
+            for entry in choices:
+                combo.addItem(f"{entry['value']}: {entry['name']}", entry["value"])
+            if not choices:
+                combo.addItem(f"{value}: open kernel.bin to name it", value)
+            self._select_combo(combo, value)
+        combo.setEnabled(bool(choices))
+
+    def _on_kernel_names_changed(self):
+        """A kernel.bin was opened or removed: re-label the abilities and weapons. The values in
+        the file (and unsaved edits) are untouched - only the names change."""
+        names = self.kernel_names
+        self.kernel_notice.setVisible(not (names.abilities and names.weapons))
+        for combo, allowed in ([(self.gf_learning_ability_combo, None)]
+                               + [(c, ACTIVE_ABILITY_RANGE) for c in self.char_active_combos]
+                               + [(c, PASSIVE_ABILITY_RANGE) for c in self.char_passive_combos]):
+            current = combo.currentData()
+            self._fill_ability_combo(combo, 0 if current is None else current, allowed)
+        for ability_id, check in self.gf_ability_checks.items():
+            check.setText(names.ability_name(ability_id) or f"Ability {ability_id}")
+            check.setEnabled(bool(names.abilities))
+        for bit, check in self.misc_weapon_checks:
+            name = names.weapon_name(bit)
+            check.setText(f"{name} ({self._weapon_characters.get(bit, '?')})" if name
+                          else f"Weapon {bit}")
+            check.setEnabled(bool(names.weapons))
 
     # ── Small widget helpers ─────────────────────────────────────────────
 
@@ -302,7 +347,7 @@ class QuezacotlWidget(QWidget):
         self.gf_kills_spin = self._spinbox(0, 0xFFFF, self._on_gf_data_changed, "Number of enemies this GF has killed")
         self.gf_kos_spin = self._spinbox(0, 0xFFFF, self._on_gf_data_changed, "Number of times this GF was KO'd")
         self.gf_learning_ability_combo = self._enum_combo(
-            self._ability_entries, self._on_gf_data_changed,
+            [], self._on_gf_data_changed,
             "Ability the GF is currently set to learn — earned AP is applied to it. This is an "
             "ability id, not an AP amount; the AP invested per ability is on the AP tab.")
         self.gf_available_check = QCheckBox("Available")
@@ -336,12 +381,11 @@ class QuezacotlWidget(QWidget):
         self.gf_ability_checks = {}
         ability_grid = QGridLayout()
         columns = 4
-        ability_list = [e for e in self._ability_entries if e["value"] != 0]
-        for i, entry in enumerate(ability_list):
-            check = QCheckBox(entry["name"])
-            check.setToolTip(f"Ability id {entry['value']} learned")
+        for i, ability_id in enumerate(range(1, ABILITY_COUNT)):
+            check = QCheckBox(f"Ability {ability_id}")  # named once a kernel.bin is open
+            check.setToolTip(f"Ability id {ability_id} learned")
             check.stateChanged.connect(self._on_gf_ability_changed)
-            self.gf_ability_checks[entry["value"]] = check
+            self.gf_ability_checks[ability_id] = check
             ability_grid.addWidget(check, i // columns, i % columns)
         ability_container = QWidget()
         ability_container.setLayout(ability_grid)
@@ -403,8 +447,7 @@ class QuezacotlWidget(QWidget):
         ]:
             with QSignalBlocker(spin):
                 spin.setValue(value)
-        with QSignalBlocker(self.gf_learning_ability_combo):
-            self._select_combo(self.gf_learning_ability_combo, gf.learning_ability)
+        self._fill_ability_combo(self.gf_learning_ability_combo, gf.learning_ability, None)
         self.gf_unused_spin.setValue(gf.unknown1)
         with QSignalBlocker(self.gf_available_check):
             self.gf_available_check.setChecked(gf.available)
@@ -544,11 +587,11 @@ class QuezacotlWidget(QWidget):
 
         # Command / passive abilities (4 slots each, shared FF8Abilities enum)
         self.char_active_combos = [
-            self._enum_combo(self._active_ability_entries, self._on_character_abilities_changed,
+            self._enum_combo([], self._on_character_abilities_changed,
                              "Equipped command ability (Magic, GF, Draw, Item, Card…)")
             for _ in range(4)]
         self.char_passive_combos = [
-            self._enum_combo(self._passive_ability_entries, self._on_character_abilities_changed,
+            self._enum_combo([], self._on_character_abilities_changed,
                              "Equipped passive/junction ability (HP+20%, Str+40%…)")
             for _ in range(4)]
         abilities_form = QFormLayout()
@@ -671,11 +714,9 @@ class QuezacotlWidget(QWidget):
                 self.char_magic_qty_spins[i].setValue(magic.quantity)
 
         for slot, combo in enumerate(self.char_active_combos):
-            with QSignalBlocker(combo):
-                self._select_combo(combo, char.get_active_ability(slot))
+            self._fill_ability_combo(combo, char.get_active_ability(slot), ACTIVE_ABILITY_RANGE)
         for slot, combo in enumerate(self.char_passive_combos):
-            with QSignalBlocker(combo):
-                self._select_combo(combo, char.get_passive_ability(slot))
+            self._fill_ability_combo(combo, char.get_passive_ability(slot), PASSIVE_ABILITY_RANGE)
 
         with QSignalBlocker(self.char_jun_gf1_combo):
             self._select_combo(self.char_jun_gf1_combo, char.jun_gf1)
@@ -915,7 +956,7 @@ class QuezacotlWidget(QWidget):
         general_group.setLayout(general_form)
 
         # Unlocked weapons: bit i = kernel weapon id i (28 upgradeable party weapons).
-        weapon_entries = [{"bit": wid, "name": name} for wid, name in self._weapon_bits]
+        weapon_entries = [{"bit": wid, "name": f"Weapon {wid}"} for wid in self._weapon_characters]
         weapons_group, self.misc_weapon_checks = self._bitfield_group(
             "Unlocked weapons",
             "Weapon-upgrade recipes already built/owned (Junk Shop). Bit i = kernel weapon id i.",

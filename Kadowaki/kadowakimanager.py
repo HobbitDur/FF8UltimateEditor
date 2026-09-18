@@ -31,6 +31,8 @@ class KadowakiManager:
         self.file_path = ""
         self.menu_items = []
         self._lookup_json_cache = {}
+        # The ability names come only from a kernel.bin (the tool sets them) - none built in.
+        self.ability_names = []
 
     def load_file(self, file_path):
         self.file_path = file_path
@@ -78,9 +80,10 @@ class KadowakiManager:
         source = param_type_info.get("source")
         if source == "gforce":
             list_values.extend(self.game_data.gforce_data_json["gforce"])
-        elif source == "junctionable_ability":  # Shared kernel ability enum (kernel_lookups.json)
-            for entry in self._load_lookup_json("kernel_lookups.json")["junctionable_ability"]["entries"]:
-                list_values.append({"id": entry["value"], "name": entry["name"]})
+        elif source == "junctionable_ability":  # Ability names: only from a kernel.bin
+            for ability_id, name in enumerate(self.ability_names):
+                list_values.append({"id": ability_id,
+                                    "name": name or ("None" if ability_id == 0 else f"Ability {ability_id}")})
         elif source == "quistis_blue_magic":  # Blue Magic limits in kernel order (limit_break.json)
             for entry in self._load_lookup_json("limit_break.json")["quistis_blue_magic"]:
                 list_values.append({"id": entry["bit"], "name": entry["name"]})

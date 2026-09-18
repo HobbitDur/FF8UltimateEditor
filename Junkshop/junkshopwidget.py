@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
+from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
 from Junkshop.junkshopmanager import JunkshopManager, WeaponUpgrade
 from SmallWidget.listsearchbar import ListSearchBar
@@ -39,6 +40,10 @@ class JunkshopWidget(QWidget):
         # File section: mwepon.bin, driven by the shared header toolbar (Import / Save).
         self.mwepon_binding = FileBinding("mwepon.bin", file_registry,
                                           load_callback=self.load_file, save_callback=self.save_file)
+        # kernel.bin, complementary: the only source of the weapon names.
+        self.kernel_names = KernelNameSource(self.game_data, file_registry)
+        self.kernel_names.changed.connect(self._on_kernel_names_changed)
+        self.weapon_notice = KernelNameSource.make_notice("weapon")
 
         # Weapon list (left side)
         self.weapon_list = QListWidget()
@@ -111,17 +116,33 @@ class JunkshopWidget(QWidget):
         main_editor_layout.addWidget(self.editor_container)
 
         main_layout = QVBoxLayout()
+        main_layout.addWidget(self.weapon_notice)
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
 
         self.mwepon_binding.load_opened_file()  # Another tool may have opened mwepon.bin already
+        self.kernel_names.binding.load_opened_file()  # ...or a kernel.bin
 
     def file_bindings(self):
-        """The files the shared header toolbar drives for this tool (just mwepon.bin)."""
-        return [self.mwepon_binding]
+        """The files the shared header toolbar drives for this tool: mwepon.bin, and kernel.bin as
+        a complementary file naming the weapons."""
+        return [self.mwepon_binding, self.kernel_names.binding]
+
+    def _on_kernel_names_changed(self):
+        """A kernel.bin was opened or removed: re-label the weapons (their data is untouched)."""
+        self.weapon_notice.setVisible(not self.kernel_names.weapons)
+        self.manager.set_weapon_names(self.kernel_names.weapons)
+        for row, weapon in enumerate(self.manager.weapon_upgrades):
+            item = self.weapon_list.item(row)
+            if item is not None:
+                item.setText(weapon.name)
+        weapon = self._selected_weapon()
+        if weapon:
+            self.weapon_name_label.setText(weapon.name)
 
     def load_file(self, file_name):
         self.manager.load_file(file_name)
+        self.manager.set_weapon_names(self.kernel_names.weapons)
         self.editor_container.setEnabled(True)
         with QSignalBlocker(self.weapon_list):
             self.weapon_list.clear()

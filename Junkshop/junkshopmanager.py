@@ -1,6 +1,3 @@
-import json
-import os
-
 from FF8GameData.gamedata import GameData
 
 
@@ -72,18 +69,18 @@ class JunkshopManager:
         self.game_data = game_data
         self.file_path = ""
         self.weapon_upgrades = []
-        self.weapon_name_list = self._load_weapon_names()
+        # The weapon names come only from a kernel.bin (set_weapon_names) - none built in.
+        self.weapon_name_list = []
 
-    def _load_weapon_names(self):
-        # weapon.json ships with the rest of the game-data json (like item.json), so it travels
-        # next to the exe via FF8GameData and needs no per-tool bundling.
-        file_path = os.path.join(self.game_data.resource_folder_json, "weapon.json")
-        with open(file_path, encoding="utf8") as f:
-            weapon_data = json.load(f)
-        return [weapon["name"] for weapon in weapon_data["weapons"]]
+    def set_weapon_names(self, names):
+        """Name the weapons from a kernel.bin (an empty list: none open) - re-labels the loaded
+        upgrades too, without touching their data."""
+        self.weapon_name_list = list(names)
+        for weapon_upgrade in self.weapon_upgrades:
+            weapon_upgrade.name = self.get_weapon_name(weapon_upgrade.weapon_id)
 
     def get_weapon_name(self, weapon_id):
-        if 0 <= weapon_id < len(self.weapon_name_list):
+        if 0 <= weapon_id < len(self.weapon_name_list) and self.weapon_name_list[weapon_id]:
             return self.weapon_name_list[weapon_id]
         return f"Weapon {weapon_id}"
 

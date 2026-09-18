@@ -1,4 +1,3 @@
-import json
 import os
 
 from FF8GameData.gamedata import GameData
@@ -69,7 +68,8 @@ class ZoneManager(MagPageManager):
 
     def __init__(self, game_data: GameData):
         super().__init__(game_data)
-        self.weapon_name_list = self._load_weapon_names()
+        # The weapon names come only from a kernel.bin (set_weapon_names) - none built in.
+        self.weapon_name_list = []
         self._book_text_cache = {}
         # The unlock block only draws with these: kernel.bin gives Zell's Duel button
         # sequences, mwepon.bin the weapon remodel item lists. Loaded on demand.
@@ -82,11 +82,9 @@ class ZoneManager(MagPageManager):
         self._icon_cache = {}
         self._menu_items = None
 
-    def _load_weapon_names(self):
-        file_path = os.path.join(self.game_data.resource_folder_json, "weapon.json")
-        with open(file_path, encoding="utf8") as f:
-            weapon_data = json.load(f)
-        return [weapon["name"] for weapon in weapon_data["weapons"]]
+    def set_weapon_names(self, names):
+        """Name the weapons from a kernel.bin (an empty list: none open)."""
+        self.weapon_name_list = list(names)
 
     def _on_mngrp_loaded(self):
         self._book_text_cache = {}
@@ -121,7 +119,7 @@ class ZoneManager(MagPageManager):
     def get_weapon_name(self, weapon_index):
         if weapon_index == UNUSED_ID:
             return "None"
-        if 0 <= weapon_index < len(self.weapon_name_list):
+        if 0 <= weapon_index < len(self.weapon_name_list) and self.weapon_name_list[weapon_index]:
             return self.weapon_name_list[weapon_index]
         return f"Weapon {weapon_index}"
 

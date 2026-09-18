@@ -89,6 +89,11 @@ def install_dirty_tracking(tool):
     state.track(tool)
     bindings = tool.file_bindings() if hasattr(tool, "file_bindings") else []
     for binding in bindings:
+        if binding.read_only:
+            # A complementary file (kernel.bin naming things...) only re-labels the tool: its
+            # unsaved edits are still there, so keep the '*' - just track any new widgets.
+            binding.file_opened.connect(lambda _path, t=tool, s=state: s.track(t))
+            continue
         # After a file loads (populate has already run and may have marked dirty), pick up any new
         # widgets and reset to clean. file_opened carries the path; we ignore it.
         binding.file_opened.connect(lambda _path, t=tool, s=state: (s.track(t), s.clear()))

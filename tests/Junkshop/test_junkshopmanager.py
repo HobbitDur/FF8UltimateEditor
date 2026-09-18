@@ -84,10 +84,15 @@ class TestWeaponUpgrade:
 
 
 class TestJunkshopManager:
-    def test_weapon_names_loaded(self, manager):
-        assert len(manager.weapon_name_list) > 0
-        assert manager.get_weapon_name(0) == manager.weapon_name_list[0]
+    def test_weapon_names_come_only_from_a_kernel_bin(self, manager):
+        # No built-in names: without a kernel.bin every weapon is just its id.
+        assert manager.weapon_name_list == []
+        assert manager.get_weapon_name(0) == "Weapon 0"
+        manager.set_weapon_names(["Revolver", "Shear Trigger"])
+        assert manager.get_weapon_name(0) == "Revolver"
         assert manager.get_weapon_name(9999) == "Weapon 9999"
+        manager.set_weapon_names([])
+        assert manager.get_weapon_name(1) == "Weapon 1"
 
     def test_load_file(self, manager, mwepon_file):
         file_path, entries = mwepon_file
