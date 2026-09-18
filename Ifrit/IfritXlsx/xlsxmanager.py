@@ -196,8 +196,17 @@ class DatToXlsx:
         worksheet.data_validation(ROW_DROP_CARD + 1, COL_DROP_CARD + 1, ROW_DROP_CARD + 1 + 2, COL_DROP_CARD + 1,
                                   {'validate': 'list', 'source': source_str})
 
+    @staticmethod
+    def __devour_text(game_data: GameData, devour_id):
+        """ "<id>:<name>" of a devour effect - just "<id>:" when no kernel.bin named it (the
+        devour effects have no built-in names), which read_devour still parses back."""
+        names = [x['name'] for x in game_data.devour_data_json['devour'] if x['id'] == devour_id]
+        return f"{devour_id}:{names[0]}" if names else f"{devour_id}:"
+
     def __validate_devour(self, worksheet, game_data: GameData):
         col_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_DEVOUR)
+        if not game_data.devour_data_json['devour']:
+            return  # no names without a kernel.bin: nothing to pick from, the id stays as written
         source_str = '=' + REF_DATA_SHEET_TITLE + '!$' + col_str + '2:$' + col_str + '$' + str(len(game_data.devour_data_json['devour']) + 1)
         worksheet.data_validation(ROW_DEVOUR + 1, COL_DEVOUR + 1, ROW_DEVOUR + 1 + 2, COL_DEVOUR + 1,
                                   {'validate': 'list', 'source': source_str})
@@ -556,13 +565,13 @@ class DatToXlsx:
                 elif param_name in ['devour']:
                     worksheet.write(ROW_DEVOUR + 1, COL_DEVOUR, 'Low', self.row_title_style)
                     worksheet.write(ROW_DEVOUR + 1, COL_DEVOUR + 1,
-                                    [f"{x['id']}:{x['name']}" for x in game_data.devour_data_json['devour'] if x['id'] == value[0]][0], self.border_style)
+                                    self.__devour_text(game_data, value[0]), self.border_style)
                     worksheet.write(ROW_DEVOUR + 2, COL_DEVOUR, 'Medium', self.row_title_style)
                     worksheet.write(ROW_DEVOUR + 2, COL_DEVOUR + 1,
-                                    [f"{x['id']}:{x['name']}" for x in game_data.devour_data_json['devour'] if x['id'] == value[1]][0], self.border_style)
+                                    self.__devour_text(game_data, value[1]), self.border_style)
                     worksheet.write(ROW_DEVOUR + 3, COL_DEVOUR, 'High', self.row_title_style)
                     worksheet.write(ROW_DEVOUR + 3, COL_DEVOUR + 1,
-                                    [f"{x['id']}:{x['name']}" for x in game_data.devour_data_json['devour'] if x['id'] == value[2]][0], self.border_style)
+                                    self.__devour_text(game_data, value[2]), self.border_style)
                 elif param_name in AIData.BYTE_FLAG_LIST:
                     for bit_name, bit_value in monster_analyser.info_stat_data[param_name].items():
                         worksheet.write(ROW_BYTE_FLAG + row_index['byte_flag'], COL_MISC, bit_name, self.row_title_style)

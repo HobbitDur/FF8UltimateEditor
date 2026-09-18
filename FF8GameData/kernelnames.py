@@ -121,6 +121,23 @@ def read_names(game_data, kernel_file, keep_unnamed=False) -> dict:
     return names
 
 
+# The devour effects: no json names them, only a kernel.bin (its texts are the lines shown when a
+# monster is eaten, "Tastes okay...", "Gained strength"...).
+DEVOUR_SECTION_ID = 29
+
+
+def read_devour_names(game_data, kernel_file) -> list:
+    """The devour effects of a kernel.bin, as [{"id", "name"}] in id order - the list GameData
+    keeps in devour_data_json["devour"]. An effect whose text is empty is still listed (it exists
+    and can be chosen), named by its id."""
+    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+
+    kernel_manager = KernelManager(game_data)
+    kernel_manager.load_file(str(kernel_file))
+    names = _section_names(game_data, kernel_manager, DEVOUR_SECTION_ID)
+    return [{"id": id_, "name": name or f"Devour {id_}"} for id_, name in enumerate(names)]
+
+
 def json_names(game_data) -> dict:
     """The names FF8GameData ships, in the same shape as read_names."""
     names = {}

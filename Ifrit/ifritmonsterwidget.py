@@ -1314,13 +1314,16 @@ class IfritMonsterWidget(QWidget):
 
     def _apply_kernel_names(self):
         """Put the names of the complementary kernel.bin, when one is open, over the current ones:
-        every spell, item and enemy attack it names differently, and the spells it adds."""
+        every spell, item and enemy attack it names differently, and the spells it adds - and the
+        devour effects, which only a kernel.bin names."""
         if not self.kernel_binding.is_loaded:
             return
-        from FF8GameData.kernelnames import apply_names, name_changes
+        from FF8GameData.kernelnames import apply_names, name_changes, read_devour_names
         path = self.kernel_binding.current_path
         try:
             apply_names(self._game_data, name_changes(self._game_data, path))
+            # The devour effects have no built-in names at all: only a kernel.bin gives them.
+            self._game_data.devour_data_json = {"devour": read_devour_names(self._game_data, path)}
         except Exception as error:  # noqa: BLE001 - a bad kernel.bin must not break the editor
             QMessageBox.warning(self, "Ifrit - kernel.bin",
                                 f"Could not read the names of this kernel.bin:\n{path}\n\n{error}")

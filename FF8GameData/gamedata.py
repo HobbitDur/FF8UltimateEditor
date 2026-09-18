@@ -182,9 +182,10 @@ class GameData:
             self.status_data_json = json.load(f)
 
     def load_devour_data(self):
-        file_path = os.path.join(self.resource_folder_json, "devour.json")
-        with open(file_path, encoding="utf8") as f:
-            self.devour_data_json = json.load(f)
+        """The devour effects have NO built-in names: they are the texts of a kernel.bin (section
+        29), filled by FF8GameData.kernelnames.read_devour_names when a tool has one open. Until
+        then the list is empty, and the tools say to open a kernel.bin."""
+        self.devour_data_json = {"devour": []}
 
     def load_camera_category_data(self):
         file_path = os.path.join(self.resource_folder_json, "camera_category.json")
@@ -220,6 +221,7 @@ class GameData:
         self.load_magic_data()
         self.load_item_data()
         self.load_enemy_abilities_data()
+        self.load_devour_data()  # empty until a kernel.bin names them
         if renames_json_name:
             from FF8GameData.kernelnames import apply_names, read_changes_file
             apply_names(self, read_changes_file(os.path.join(self.resource_folder_json, renames_json_name)))

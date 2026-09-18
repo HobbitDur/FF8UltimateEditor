@@ -495,12 +495,16 @@ class IfritStatWidget(QWidget):
             'High': "Devour effect for high level tier.",
         }
         for label in ('Low', 'Medium', 'High'):
-            combo = self._combo_from_json(self.game_data.devour_data_json['devour'],
-                                          tooltip=devour_tips[label], max_chars=18, compact=True)
+            # Filled on load_data: the devour effects are named ONLY by a kernel.bin.
+            combo = self._combo_from_json([], tooltip=devour_tips[label], max_chars=18, compact=True)
             index = len(self._devour_combos)
             combo.activated.connect(partial(self._on_devour_changed, index))
             devour_form.addRow(label, combo)
             self._devour_combos.append(combo)
+        self._devour_notice = QLabel(self.DEVOUR_NEEDS_KERNEL)
+        self._devour_notice.setWordWrap(True)
+        self._devour_notice.setStyleSheet("color:#c0392b; font-weight:bold;")
+        devour_form.addRow(self._devour_notice)
         top.addWidget(devour_group)
         top.addStretch(1)
         layout.addLayout(top)
@@ -523,6 +527,28 @@ class IfritStatWidget(QWidget):
             value_tip="Quantity dropped (0-255)."))
         layout.addStretch(1)
         return self._scrollable(container)
+
+    DEVOUR_NEEDS_KERNEL = ("No devour effect names: they come only from kernel.bin. Open one "
+                           "with the toolbar's \"Import complementary\" button to fill this list.")
+
+    def _load_devour(self, devour):
+        """The three devour effects, named from the kernel.bin when one is open. Without it there
+        is no name to offer: each box shows only the id the file holds, greyed out, and the notice
+        says which file to open."""
+        names = self.game_data.devour_data_json.get('devour', [])
+        self._devour_notice.setVisible(not names)
+        for i, combo in enumerate(self._devour_combos):
+            value = devour[i] if i < len(devour) else 0
+            if names:
+                self._fill_combo(combo, names)
+                self._set_combo_id(combo, value)
+                if combo.currentText().endswith("(unknown)"):  # an id the kernel.bin doesn't hold
+                    combo.setItemText(combo.currentIndex(), f"{value}: (not in kernel.bin)")
+            else:
+                self._fill_combo(combo, [{'id': value, 'name': "open kernel.bin to name it"}])
+                combo.setCurrentIndex(0)
+            combo.setEnabled(bool(names))
+            self._refresh_combo_tooltip(combo)
 
     def _loot_names(self, key):
         """The CURRENT name list of a loot row: magic for Draw, items for Mug and Drop."""
@@ -753,9 +779,7 @@ class IfritStatWidget(QWidget):
             card = data.get('card', [0, 0, 0])
             for i, combo in enumerate(self._card_combos):
                 self._set_combo_id(combo, card[i] if i < len(card) else 0)
-            devour = data.get('devour', [0, 0, 0])
-            for i, combo in enumerate(self._devour_combos):
-                self._set_combo_id(combo, devour[i] if i < len(devour) else 0)
+            self._load_devour(data.get('devour', [0, 0, 0]))
 
             # Draw / Mug / Drop - the name lists are refilled on every load: they follow the
             # kernel.bin opened as a complementary file (or the Cronos names) when one changes them.
