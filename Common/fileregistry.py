@@ -13,6 +13,9 @@ class FileRegistry(QObject):
     """
 
     file_changed = pyqtSignal(str)  # FF8 file name: its path changed, tools must load it again
+    # (FF8 file name, path it had): the file was removed from the opened files - every tool must
+    # stop using it (no save, no reload, no pick-up by a tool opened later).
+    file_closed = pyqtSignal(str, str)
 
     def __init__(self, settings=None):
         QObject.__init__(self)
@@ -52,6 +55,15 @@ class FileRegistry(QObject):
     def open_file(self, file_name, file_path):
         """Set the file every tool using file_name must now work on."""
         self.paths[file_name] = file_path
+        self.file_changed.emit(file_name)
+
+    def close_file(self, file_name):
+        """Remove a file from the opened files: file_closed tells every tool to drop it, then
+        file_changed refreshes the views that list or count the opened files."""
+        file_path = self.paths.pop(file_name, None)
+        if file_path is None:
+            return
+        self.file_closed.emit(file_name, file_path)
         self.file_changed.emit(file_name)
 
     @staticmethod

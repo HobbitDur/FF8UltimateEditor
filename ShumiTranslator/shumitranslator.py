@@ -32,12 +32,16 @@ class ShumiTranslator(QWidget):
     CSV_FOLDER = "csv"
     file_bindings_changed = pyqtSignal()  # active tab / tab set changed -> header Save re-checks
 
+    # The one summary entry the battle-text tab's c0mxx.dat set has in the Opened files panel.
+    C0M_REGISTRY_NAME = "ShumiTranslator battle text (c0mxx.dat)"
+
     def __init__(self, icon_path='Resources', game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
 
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
         self.file_registry = file_registry
+        file_registry.file_closed.connect(self.__on_registry_file_closed)
 
         self.game_data = GameData(game_data_folder)
         self.game_data.load_kernel_data()
@@ -195,7 +199,7 @@ class ShumiTranslator(QWidget):
         if not valid_paths:
             return
         self.__add_pane(FileType.DAT, valid_paths)
-        self.file_registry.open_file("ShumiTranslator battle text (c0mxx.dat)",
+        self.file_registry.open_file(self.C0M_REGISTRY_NAME,
                                      FileRegistry.summarize_paths(valid_paths, "file"))
 
     def save_folder(self):
@@ -327,6 +331,18 @@ class ShumiTranslator(QWidget):
         self.tab_widget.removeTab(index)
         pane.deleteLater()
         self.file_bindings_changed.emit()
+
+    def __on_registry_file_closed(self, file_name, file_path):
+        """A file was removed from the Opened files panel: close the tab(s) showing it - the
+        battle-text tab for the c0mxx.dat set, else the tab of that exact path."""
+        for index in reversed(range(self.tab_widget.count())):
+            pane = self.tab_widget.widget(index)
+            if file_name == self.C0M_REGISTRY_NAME:
+                closing = pane.file_type == FileType.DAT
+            else:
+                closing = pane.file_type != FileType.DAT and pane.file_loaded == file_path
+            if closing:
+                self.__close_tab(index)
 
     def __active_pane(self) -> ShumiFilePane:
         return self.tab_widget.currentWidget()

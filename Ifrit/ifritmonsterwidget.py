@@ -541,6 +541,8 @@ class IfritMonsterWidget(QWidget):
     buttons, and the loaded set is published to the Opened-files panel as one summary entry."""
 
     file_bindings_changed = pyqtSignal()
+    # The one summary entry the loaded .dat set has in the Opened files panel.
+    REGISTRY_NAME = "Ifrit battle model(s)"
 
     def __init__(self, settings: QSettings, icon_path="Resources", game_data_folder="FF8GameData",
                  file_registry=None):
@@ -548,6 +550,7 @@ class IfritMonsterWidget(QWidget):
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
         self.file_registry = file_registry
+        file_registry.file_closed.connect(self._on_registry_file_closed)
         # Ifrit is an Alexander-pattern tool with no per-file FileBinding, so the shared-toolbar
         # Reload button reaches it through the reload_files() / can_reload_files() hooks below
         # rather than through a binding (otherwise Reload would be a no-op for it).
@@ -798,7 +801,7 @@ class IfritMonsterWidget(QWidget):
             QMessageBox.information(self, "Some files skipped",
                 "These files are empty or unreadable and were skipped:\n\n" + "\n".join(skipped))
         self.file_registry.open_file(
-            "Ifrit battle model(s)",
+            self.REGISTRY_NAME,
             FileRegistry.summarize_paths([f['path'] for f in files], "model"))
         self.file_bindings_changed.emit()
 
@@ -832,7 +835,7 @@ class IfritMonsterWidget(QWidget):
             self._file_list.addItem(self._list_label(i))
         self._file_dialog_folder = os.path.dirname(files[0]['path'])
         self.file_registry.open_file(
-            "Ifrit battle model(s)",
+            self.REGISTRY_NAME,
             FileRegistry.summarize_paths([f['path'] for f in self._files], "model"))
         self.file_bindings_changed.emit()
         notes = []
@@ -856,6 +859,22 @@ class IfritMonsterWidget(QWidget):
                 self._stack_size_policies.pop(id(pane), None)   # avoid a stale entry if id() is reused
                 sip.delete(pane)   # synchronous, see _destroy_current_pane
         self._files = []
+
+    def _on_registry_file_closed(self, file_name, _path):
+        """The .dat set was removed from the Opened files panel: close the whole session."""
+        if file_name == self.REGISTRY_NAME:
+            self._close_session()
+
+    def _close_session(self):
+        """Drop every open file (and its unsaved edits / undo history) and show the placeholder."""
+        self._undo_debounce.stop()
+        self._stack.setCurrentWidget(self._placeholder)
+        self._discard_panes()
+        self._active_index = -1
+        self.file_loaded = ""
+        self._populate_file_list()
+        self._update_section_buttons()
+        self.file_bindings_changed.emit()
 
     def _populate_file_list(self):
         self._file_list.blockSignals(True)

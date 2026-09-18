@@ -103,12 +103,15 @@ class AlexanderWidget(QWidget):
     # opened into an internal list at once), so it can't rely on the registry's file_changed signal
     # the way every other converted tool does.
     file_bindings_changed = pyqtSignal()
+    # The one summary entry the opened stages have in the Opened files panel.
+    REGISTRY_NAME = "Alexander battle stage(s)"
 
     def __init__(self, icon_path='Resources', settings=None, file_registry=None):
         super().__init__()
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
         self.file_registry = file_registry
+        file_registry.file_closed.connect(self._on_registry_file_closed)
         self.settings = settings
         self.manager = AlexanderManager()
         self.bridge = ViewerBridge(self.manager)
@@ -230,6 +233,7 @@ class AlexanderWidget(QWidget):
         gl.update()
 
     def _load_into_viewer(self, keep_view: bool = False):
+        self.viewer_3d.show()  # hidden while no stage is open (see _close_stages)
         cam = self._save_camera() if keep_view else None
         self.bridge.refresh_textures()
         self.viewer_3d.load_file()
@@ -272,7 +276,7 @@ class AlexanderWidget(QWidget):
         # summary entry in the Opened files panel instead (each name when there are few, otherwise
         # just the count and folder, so opening dozens at once doesn't flood the panel).
         self.file_registry.open_file(
-            "Alexander battle stage(s)", FileRegistry.summarize_paths(file_paths, "stage"))
+            self.REGISTRY_NAME, FileRegistry.summarize_paths(file_paths, "stage"))
 
     def _export_glb(self):
         if not self.manager.is_loaded:
@@ -355,6 +359,22 @@ class AlexanderWidget(QWidget):
             if has_sky else "This stage has no separate sky dome.")
         # can_save may have just flipped true (a stage/mesh is now loaded): let the shared header
         # toolbar re-check can_save_folder (see the file_bindings_changed docstring above).
+        self.file_bindings_changed.emit()
+
+    def _on_registry_file_closed(self, file_name, _path):
+        """The stages were removed from the Opened files panel: drop them all."""
+        if file_name == self.REGISTRY_NAME:
+            self._close_stages()
+
+    def _close_stages(self):
+        self.manager.close()
+        self._stage_names = []
+        self.stage_list.blockSignals(True)
+        self.stage_list.clear()
+        self.stage_list.blockSignals(False)
+        self.file_label.setText("No stage loaded  -  Open a battle stage (.x) file")
+        self._update_sky_button()
+        self.viewer_3d.hide()  # it would keep drawing the last stage; shown again on the next load
         self.file_bindings_changed.emit()
 
     def can_save_folder(self):

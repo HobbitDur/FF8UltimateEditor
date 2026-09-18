@@ -92,4 +92,6 @@ def install_dirty_tracking(tool):
         # After a file loads (populate has already run and may have marked dirty), pick up any new
         # widgets and reset to clean. file_opened carries the path; we ignore it.
         binding.file_opened.connect(lambda _path, t=tool, s=state: (s.track(t), s.clear()))
+        # Removed from the opened files: its unsaved edits can no longer be saved, so no '*'.
+        binding.file_closed.connect(lambda _path, s=state: s.clear())
     return state

@@ -110,6 +110,13 @@ class SeedManager:
         pathlib.Path(dest_path).write_bytes(data)
         return modified
 
+    def close_chara_one(self):
+        """Forget the open chara.one and every model built from it (unsaved edits included)."""
+        self.chara_one = None
+        self.chara_one_path = None
+        self.models = {}
+        self.current_entry_index = None
+
     def load_mch(self, path):
         """Load a standalone d0xx.mch (only its internal rest pose is available)."""
         path = pathlib.Path(path)

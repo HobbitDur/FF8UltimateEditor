@@ -21,6 +21,10 @@ class AlexanderManager:
     texture_black_is_transparent = False
 
     def __init__(self):
+        self.close()
+
+    def close(self):
+        """Forget every opened stage and the loaded model (back to the just-created state)."""
         self.enemy = BattleStageModel()
         self.show_sky = False           # sky dome hidden by default (it hides the stage)
         self._full_model = None

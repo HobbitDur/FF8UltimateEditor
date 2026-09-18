@@ -15,6 +15,9 @@ from SmallWidget.listsearchbar import ListSearchBar
 class SeedWidget(QWidget):
     """Seed: field character model viewer (chara.one / main_chr .mch)."""
 
+    # The main_chr folder's entry in the Opened files panel.
+    MAIN_CHR_REGISTRY_NAME = "Seed main_chr folder"
+
     def __init__(self, icon_path='Resources', settings=None, file_registry=None):
         super().__init__()
         if file_registry is None:  # Used alone, it shares its files with nobody
@@ -38,6 +41,9 @@ class SeedWidget(QWidget):
         self.mch_binding = FileBinding(
             "field character model (.mch)", file_registry, load_callback=self.load_mch,
             file_filter="*.mch")
+        self.chara_one_binding.file_closed.connect(self._close_chara_one)
+        self.mch_binding.file_closed.connect(self._close_mch)
+        file_registry.file_closed.connect(self._on_registry_file_closed)
 
         # --- Model list + 3D viewer ---
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -75,6 +81,28 @@ class SeedWidget(QWidget):
         self.chara_one_binding.load_opened_file()  # Another tool instance may have opened one
         self.mch_binding.load_opened_file()
 
+    def _on_registry_file_closed(self, file_name, _path):
+        """The main_chr folder was removed from the Opened files panel: stop using it (it is
+        auto-detected again from the next chara.one opened)."""
+        if file_name != self.MAIN_CHR_REGISTRY_NAME:
+            return
+        self.seed_manager.main_chr_folder = None
+        if self.settings:
+            self.settings.remove("seed/main_chr_folder")
+
+    def _close_chara_one(self, _path):
+        """chara.one was removed from the Opened files panel: empty the model list and viewer."""
+        self.seed_manager.close_chara_one()
+        self.model_list.blockSignals(True)
+        self.model_list.clear()
+        self.model_list.blockSignals(False)
+        self.viewer_3d.hide()  # it would keep drawing the last model; shown again on the next load
+
+    def _close_mch(self, _path):
+        """The standalone .mch was removed: hide it, unless a chara.one model replaced it since."""
+        if self.seed_manager.current_entry_index is None:
+            self.viewer_3d.hide()
+
     def file_bindings(self):
         """The files the shared header toolbar drives: chara.one (edited/saved) and a standalone
         field character model (view-only - only chara.one is ever written back)."""
@@ -88,7 +116,7 @@ class SeedWidget(QWidget):
         if self.settings:
             self.settings.setValue("seed/main_chr_folder", folder_path)
         # It's a folder setting, not a single FF8 file, but still worth a line in Opened files.
-        self.file_registry.open_file("Seed main_chr folder", folder_path)
+        self.file_registry.open_file(self.MAIN_CHR_REGISTRY_NAME, folder_path)
 
     def load_chara_one(self, file_path):
         """Load a field chara.one (path from the shared header toolbar)."""
@@ -112,7 +140,7 @@ class SeedWidget(QWidget):
             folder = str(self.seed_manager.main_chr_folder)
             if self.settings:
                 self.settings.setValue("seed/main_chr_folder", folder)
-            self.file_registry.open_file("Seed main_chr folder", folder)
+            self.file_registry.open_file(self.MAIN_CHR_REGISTRY_NAME, folder)
         self.model_list.blockSignals(True)
         self.model_list.clear()
         for entry in entries:
@@ -135,6 +163,7 @@ class SeedWidget(QWidget):
         self.model_list.blockSignals(True)
         self.model_list.clear()
         self.model_list.blockSignals(False)
+        self.viewer_3d.show()
         self.viewer_3d.load_file()
 
     def _save_chara_one(self):
@@ -168,4 +197,5 @@ class SeedWidget(QWidget):
         except Exception as e:
             QMessageBox.warning(self, "Seed", f"Could not load this model:\n{e}")
             return
+        self.viewer_3d.show()
         self.viewer_3d.load_file()

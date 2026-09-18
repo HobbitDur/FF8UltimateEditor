@@ -1,5 +1,6 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QListWidget
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget,
+                             QListWidgetItem, QToolButton, QMessageBox)
 
 from Common.fileregistry import FileRegistry
 
@@ -9,6 +10,8 @@ class OpenedFilesPanel(QWidget):
 
     Replaces the old pop-up: files show up in the list as they are opened by any tool (the
     header keeps their count), and the list collapses to just its header to stay out of the way.
+    Each row has a ✕ button that removes the file from the opened files: every tool then stops
+    using it (see FileRegistry.close_file).
     """
 
     def __init__(self, registry: FileRegistry):
@@ -66,6 +69,39 @@ class OpenedFilesPanel(QWidget):
         self._update_header()
         self.file_list.clear()
         for file_name, file_path in sorted(self.registry.paths.items()):
-            self.file_list.addItem(f"{file_name}:  {file_path}")
+            item = QListWidgetItem(f"{file_name}:  {file_path}")
+            self.file_list.addItem(item)
+            self.file_list.setItemWidget(item, self._close_row(file_name))
         if not self.file_list.isHidden():
             self._fit_list_height()
+
+    def _close_row(self, file_name):
+        """A transparent overlay for one row: the row's own text shows through on the left, the ✕
+        button sits on the right."""
+        button = QToolButton()
+        button.setText("✕")
+        button.setAutoRaise(True)
+        button.setToolTip(f"Remove {file_name} from the opened files: the tools stop using it "
+                          f"(nothing is saved or reloaded for it anymore).")
+        button.clicked.connect(lambda _=False, name=file_name: self.close_file(name))
+        row = QWidget()
+        row.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        layout = QHBoxLayout(row)
+        layout.setContentsMargins(0, 0, 2, 0)
+        layout.addStretch(1)
+        layout.addWidget(button)
+        return row
+
+    def close_file(self, file_name):
+        """Remove file_name from the opened files, after confirmation."""
+        if self._confirm_close(file_name):
+            self.registry.close_file(file_name)
+
+    def _confirm_close(self, file_name):
+        answer = QMessageBox.question(
+            self, "Remove opened file",
+            f"Remove {file_name} from the opened files?\n\n"
+            f"{self.registry.get_path(file_name)}\n\n"
+            "The tools stop using it: its unsaved changes are lost and Save no longer writes it. "
+            "The file on disk is not touched.")
+        return answer == QMessageBox.StandardButton.Yes

@@ -22,6 +22,7 @@ class FileBinding(QObject):
     """
 
     file_opened = pyqtSignal(str)  # emitted with the path whenever the bound file must be loaded
+    file_closed = pyqtSignal(str)  # emitted with the path when the file is removed from the opened files
 
     def __init__(self, file_name, registry: FileRegistry, load_callback=None, save_callback=None,
                  file_filter=None, read_only=False):
@@ -32,10 +33,12 @@ class FileBinding(QObject):
         self.read_only = read_only
         self._save_callback = save_callback
         self._loaded_path = ""
+        self._closed = False  # removed from the opened files: saves nothing until opened again
         if load_callback is not None:
             self.file_opened.connect(load_callback)
         registry.bindings.append(self)  # so "Open folder" knows every file the tools accept
         registry.file_changed.connect(self._on_registry_changed)
+        registry.file_closed.connect(self._on_registry_closed)
 
     @property
     def is_loaded(self):
@@ -79,6 +82,8 @@ class FileBinding(QObject):
         self.registry.open_file(self.file_name, path)  # -> _on_registry_changed, here and elsewhere
 
     def save(self):
+        if self._closed:
+            return  # removed from the opened files: its data must not be written anymore
         if not self.read_only and self._save_callback is not None:
             self._save_callback()
 
@@ -88,7 +93,17 @@ class FileBinding(QObject):
         path = self.current_path
         if path and path != self._loaded_path:  # skip a redundant reload of the same path
             self._loaded_path = path
+            self._closed = False
             self.file_opened.emit(path)
+
+    def _on_registry_closed(self, file_name, file_path):
+        """The file was removed from the opened files: this binding no longer has it loaded, so
+        the shared Save and Reload skip it, and opening the same path again reloads it."""
+        if file_name != self.file_name or not self._loaded_path:
+            return
+        self._loaded_path = ""
+        self._closed = True
+        self.file_closed.emit(file_path)
 
     def reload_from_disk(self):
         """Re-read this file from disk even though its path is unchanged.
@@ -98,4 +113,5 @@ class FileBinding(QObject):
         path = self.current_path
         if path:
             self._loaded_path = path
+            self._closed = False
             self.file_opened.emit(path)

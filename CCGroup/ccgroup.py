@@ -15,6 +15,8 @@ from FF8GameData.gamedata import GameData
 
 class CCGroupWidget(QWidget):
     file_bindings_changed = pyqtSignal()  # the active tab changed
+    # The one summary entry the NPC tab's .jsm scripts have in the Opened files panel.
+    NPC_REGISTRY_NAME = "CCGroup NPC scripts"
     CARD_DATA_SIZE = 8
     GENERAL_OFFSET = 0x400000
     LANG_LIST = ["en", "fr"]
@@ -27,6 +29,7 @@ class CCGroupWidget(QWidget):
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
         self.file_registry = file_registry
+        file_registry.file_closed.connect(self._on_registry_file_closed)
         if settings is None:
             settings = QSettings("HobbitDur", "FF8UltimateEditor")
         self.settings = settings
@@ -127,7 +130,13 @@ class CCGroupWidget(QWidget):
                 # Opened files instead of one per script (see FileRegistry.summarize_paths).
                 jsm_paths = [f.jsm_path for f in self.npc_card_game_widget.manager.jsm_files]
                 self.file_registry.open_file(
-                    "CCGroup NPC scripts", FileRegistry.summarize_paths(jsm_paths, "script"))
+                    self.NPC_REGISTRY_NAME, FileRegistry.summarize_paths(jsm_paths, "script"))
+
+    def _on_registry_file_closed(self, file_name, _path):
+        """The NPC scripts were removed from the Opened files panel: unload the NPC tab."""
+        if file_name == self.NPC_REGISTRY_NAME:
+            self.npc_card_game_widget.close_folder()
+            self.file_bindings_changed.emit()
 
     def save_folder(self):
         """The header's Save button, multi-file side: on the NPC tab, save the patched .jsm files."""

@@ -403,6 +403,9 @@ class NpcCardGameWidget(QWidget):
     Right: the parameter editor of the selected player (built on demand - a full game
     dump contains hundreds of players, so only one editor exists at a time)."""
 
+    NO_FOLDER_TEXT = ("Use the header's Open-folder button on your 'field' folder (.jsm/.sym "
+                      "scripts, e.g. extracted with Deling) to list the NPC card players.")
+
     def __init__(self, icon_path='Resources', settings: QSettings = None):
         QWidget.__init__(self)
         self.manager = CardGameFolderManager()
@@ -414,9 +417,7 @@ class NpcCardGameWidget(QWidget):
 
         # Opening the folder and saving the patched .jsm files both run from the shared header
         # toolbar (Open-folder -> load_folder, Save -> save_folder); this tab keeps only its list.
-        self.__info_label = QLabel("Use the header's Open-folder button on your 'field' folder"
-                                   " (.jsm/.sym scripts, e.g. extracted with Deling) to list the"
-                                   " NPC card players.")
+        self.__info_label = QLabel(self.NO_FOLDER_TEXT)
 
         self.__layout_top = QHBoxLayout()
         self.__layout_top.addWidget(self.__info_label)
@@ -463,6 +464,13 @@ class NpcCardGameWidget(QWidget):
         else:
             self.__info_label.setText(f"{nb_players} card player(s) found in {len(self.manager.jsm_files)}"
                                       f" file(s) - {folder_path}")
+
+    def close_folder(self):
+        """Forget the loaded folder and its card players (unsaved patches included)."""
+        self.folder_loaded = ""
+        self.manager = CardGameFolderManager()
+        self.__rebuild_tree()
+        self.__info_label.setText(self.NO_FOLDER_TEXT)
 
     def __rebuild_tree(self):
         self.__tree.clear()
