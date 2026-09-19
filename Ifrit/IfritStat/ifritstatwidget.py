@@ -406,9 +406,11 @@ class IfritStatWidget(QWidget):
 
         status_group = QGroupBox("Status resistance %")
         status_form = QFormLayout(status_group)
-        status_tip = ("Status resistance %, range {0}..{1}.\n"
-                      "0 = fully vulnerable, higher = more resistant, 155 = immune.\n"
-                      "Stored byte = % + 100."
+        status_tip = ("Status resistance, range {0}..{1} (stored byte = value + 100).\n"
+                      "0 = neutral. Each point lowers the chance a status lands by 1%:\n"
+                      "  chance = accuracy + attacker STR (or MAG)/4 - target VIT (or SPR)/4 - (value + 100)\n"
+                      "100 or more = immune (stored byte >= 200) - only an accuracy of 255 still lands.\n"
+                      "Below 0 = more vulnerable than neutral."
                       ).format(AIData.STATUS_DEF_MIN_VAL, AIData.STATUS_DEF_MAX_VAL)
         status_group.setToolTip(status_tip)
         for status in self.game_data.status_data_json['status']:

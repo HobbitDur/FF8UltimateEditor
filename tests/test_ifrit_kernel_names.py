@@ -151,3 +151,29 @@ def test_without_a_kernel_bin_saving_keeps_the_loot_ids(app, monkeypatch, tmp_pa
     saved = f['manager'].parse_file(str(work), free_animation=True)
     assert {key: saved.info_stat_data[key] for key in loot_keys} == before
     ifrit.deleteLater()
+
+
+def test_status_defense_shows_values_below_neutral(app, monkeypatch, tmp_path):
+    """A status defense byte under 100 (more vulnerable than neutral: retail has 80) must show as
+    its real value (-20), not clamped to 0, and survive a save untouched."""
+    import shutil
+    from PyQt6.QtCore import QSettings
+    from Common.fileregistry import FileRegistry
+    from FF8GameData.monsterdata import AIData
+    from Ifrit.ifritmonsterwidget import IfritMonsterWidget
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: QMessageBox.StandardButton.Ok)
+    assert AIData.STATUS_DEF_MIN_VAL == -100 and AIData.STATUS_DEF_MAX_VAL == 155   # bytes 0..255
+    work = tmp_path / MODEL.name
+    shutil.copy(MODEL, work)
+    ifrit = IfritMonsterWidget(QSettings("FF8UltimateEditorTest", "StatusDef"),
+                               game_data_folder=str(PROJECT_ROOT / "FF8GameData"),
+                               file_registry=FileRegistry())
+    ifrit.load_file(str(work))
+    f = ifrit._files[0]
+    stats = f['pane']._stat_widget
+    stats._data['status_def'][0] = -20
+    stats.load_data()
+    assert stats._status_spins[0].value() == -20
+    f['manager'].save_file(str(work))
+    assert f['manager'].parse_file(str(work), free_animation=True).info_stat_data['status_def'][0] == -20
+    ifrit.deleteLater()

@@ -1054,7 +1054,7 @@ class MonsterAnalyser:
             elif el['name'] in ['status_def']:  # Case with elem
                 value = list(raw_data_selected)
                 for i in range(data_size):
-                    value[i] = value[i] - 100  # Give percentage, 155 means immune.
+                    value[i] = value[i] - 100  # 0 = neutral (byte 100), >= 100 = immune (byte >= 200)
             elif el['name'] in AIData.BYTE_FLAG_LIST:  # Flag in byte management
                 byte_value = format((int.from_bytes(raw_data_selected)), '08b')[::-1]  # Reversing
                 value = {}

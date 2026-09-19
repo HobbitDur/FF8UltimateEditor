@@ -2164,7 +2164,9 @@ class AIData:
     AI_CODE_NAME_LIST = ["Initialization fight", "Enemy turn", "Counter-Attack", "Death", "Before dying or taking a hit", "End"]
     ELEM_DEF_MIN_VAL = -100
     ELEM_DEF_MAX_VAL = 400
-    STATUS_DEF_MIN_VAL = 0
+    # Shown as (stored byte - 100): 0 = neutral (byte 100), >= 100 = immune (byte >= 200, the
+    # engine's cmp 0C8h), below 0 = more vulnerable than neutral (byte < 100).
+    STATUS_DEF_MIN_VAL = -100
     STATUS_DEF_MAX_VAL = 155
     STAT_MIN_VAL = 0
     STAT_MAX_VAL = 255
