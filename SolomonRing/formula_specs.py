@@ -82,19 +82,17 @@ PARAM_DEFS = {
                        "timers. This is the PC port's well-known 'ATB speeds up with framerate' "
                        "quirk: an uncapped/high-FPS setup fills ATB faster in real time. This value "
                        "is only a what-if assumption to turn ticks into seconds."),
-    "target_resistance": ("Target status resistance", 100, 0, 255,
-                       "The target's per-status mental resistance (a savemap/character stat, not "
-                       "in kernel.bin) - subtracted from the hit chance.\n"
-                       "100 IS THE NEUTRAL BASELINE, NOT ZERO. setBattleSlotData @0x48b310 fills "
-                       "all 40 mental-resistance bytes with 100 (mov eax, 64646464h / mov ecx, 0Ah "
-                       "/ rep stosd) before overwriting individual statuses from the character's "
-                       "ST-Def junctions or the monster's .dat. A resistance of 0 never occurs in a "
-                       "real battle, so assuming 0 overstates every status chance by ~100 points - "
-                       "for a typical enemy status attack that is the difference between ~40% and a "
-                       "guaranteed hit.\n"
-                       ">= 200 is full immunity to that status (Battle_ApplyStatusWithResistRoll "
-                       "@0x48f9f0, cmp cl, 0C8h), EXCEPT against accuracy 255, which skips the "
-                       "resistance check altogether."),
+    "target_resistance": ("Target status resistance %", 0, -100, 155,
+                       "The target's resistance to this status, as the Ifrit Stat tab shows it: "
+                       "0 = neutral, 100 or more = immune, below 0 = more vulnerable. Each point "
+                       "lowers the chance by 1%.\n"
+                       "The game stores it as this value + 100: setBattleSlotData @0x48b310 fills "
+                       "every status resistance with 100 before a battle, then a monster's .dat or a "
+                       "character's ST-Def junctions overwrite it.\n"
+                       "Vanilla monsters: mostly 20 for Poison / Blind / Silence / Sleep / Doom, 0 "
+                       "for Haste / Regen / Reflect / Drain, 155 (immune) for bosses.\n"
+                       "Immunity (stored >= 200: Battle_ApplyStatusWithResistRoll @0x48f9f0, cmp "
+                       "cl, 0C8h) is skipped only by an accuracy of 255."),
     "gf_level":       ("GF level", 100, 1, 100,
                        "The GF's level (1-100), at which to evaluate its HP / next-level EXP / "
                        "damage. GFs level from experience like characters."),
@@ -928,7 +926,8 @@ _NO_ROLL_TYPES = {27, 28, 29, 35}
 
 def _status_accuracy(value, P, entry):
     atk_type = entry.get("attack_type") if entry and entry.has_field("attack_type") else None
-    res = P["target_resistance"]
+    res_pct = P["target_resistance"]   # as the Ifrit Stat tab shows it: 0 = neutral, >= 100 immune
+    res = res_pct + 100                # the stored resistance the engine compares
 
     if atk_type in _PHYSICAL_ATTACK_TYPES or atk_type in _MAGICAL_ATTACK_TYPES:
         # Battle_ApplyStatusWithResistRoll @0x48f9f0: fails outright if the target already has
@@ -955,7 +954,7 @@ def _status_accuracy(value, P, entry):
                 + ("VIT" if physical else "SPR") + " count as 0; nothing is rolled if the attack "
                 "itself missed, nor while the target still has hits to receive (a multi-hit "
                 "attack rolls its statuses once, on the last hit); the target's resistance is "
-                "per status (100 = neutral, >= 200 = immune).\n"
+                "per status (0% = neutral, >= 100% = immune, as the Ifrit Stat tab shows it).\n"
                 "Exceptions, whatever the roll: Stop never lands on a monster; a Zombie target "
                 "can't get Slow or Death; Angel Wing blocks Shell, Silence and Berserk; "
                 "inflicting Zombie removes Doom.")
@@ -969,12 +968,12 @@ def _status_accuracy(value, P, entry):
         if res >= 200:
             return {
                 "params": params, "note": note,
-                "symbolic": "resistance >= 200 -> immune, checked before any roll",
-                "substituted": f"resistance {res} >= 200",
+                "symbolic": "resistance >= 100% -> immune, checked before any roll",
+                "substituted": f"resistance {res_pct}% >= 100%  (stored {res} >= 200)",
                 "result": "Never inflicts (0%) - the target is immune to this status. Only "
                           "accuracy 255 bypasses it, by skipping the resistance check.",
-                "latex": r"resistance \geq 200 \Rightarrow 0\%",
-                "latex_sub": rf"{res} \geq 200 \Rightarrow \text{{immune}}",
+                "latex": r"resistance \geq 100\% \Rightarrow 0\%",
+                "latex_sub": rf"{res_pct}\% \geq 100\% \Rightarrow \text{{immune}}",
             }
         chance = value + _idiv(atk_stat, 4) - _idiv(tgt_stat, 4) - res
         if chance <= 0:
@@ -987,14 +986,14 @@ def _status_accuracy(value, P, entry):
         return {
             "params": params, "note": note,
             "symbolic": f"chance = accuracy + {stat_label.split('/')[0]}/4 − "
-                        f"{stat_label.split('/')[1]}/4 − resistance  (255 = guaranteed, "
+                        f"{stat_label.split('/')[1]}/4 − (resistance% + 100)  (255 = guaranteed, "
                         "250-254 = guaranteed-if-positive, else rolled)",
-            "substituted": f"{value} + {atk_stat}/4 − {tgt_stat}/4 − {res} = {chance}%",
+            "substituted": f"{value} + {atk_stat}/4 − {tgt_stat}/4 − ({res_pct} + 100) = {chance}%",
             "result": f"≈ {pct:.1f}% chance to inflict  (before target-already-has-it / "
                       "immunity checks)",
-            "latex": r"chance = accuracy + \tfrac{atkStat}{4} - \tfrac{tgtStat}{4} - resistance",
-            "latex_sub": rf"{value} + \tfrac{{{atk_stat}}}{{4}} - \tfrac{{{tgt_stat}}}{{4}} "
-                         rf"- {res} = {chance}\%",
+            "latex": r"chance = accuracy + \frac{atkStat}{4} - \frac{tgtStat}{4} - (resistance\% + 100)",
+            "latex_sub": rf"{value} + \frac{{{atk_stat}}}{{4}} - \frac{{{tgt_stat}}}{{4}} "
+                         rf"- ({res_pct} + 100) = {chance}\%",
         }
 
     if atk_type in _CURE_FLAT_TYPES:
@@ -1090,7 +1089,7 @@ def _status_accuracy(value, P, entry):
                     "current HP ≥ the target's, then succeeds with chance (attackerHP − targetHP)/"
                     "attackerHP. On success the Devour effect (heal + temporary stat boost + status) "
                     "is read from the Devour kernel section, not from this byte.",
-            "latex": r"P(devour) = \frac{HP_{atk} - HP_{tgt}}{HP_{atk}}\ (HP_{atk}\ge HP_{tgt})",
+            "latex": r"P(devour) = \frac{HP_{atk} - HP_{tgt}}{HP_{atk}}\ (HP_{atk}\geq HP_{tgt})",
             "latex_sub": r"\text{HP-ratio roll}",
         }
     if atk_type in _UTILITY_TYPES:
@@ -1173,8 +1172,8 @@ def _hit_rate_not_rolled(att, hr):
                        "Divisor 0 — the engine would divide by zero; do not use 0 here"),
             "note": "Damage_ComputeMagicAndGF @0x491ad0 (MAGIC_DAMAGE mode): for LV? Attack this "
                     "byte is the level divisor, not an accuracy percentage.",
-            "latex": r"hit \iff level_{tgt} \bmod hitRate = 0",
-            "latex_sub": rf"level_{{tgt}} \bmod {hr} = 0",
+            "latex": r"hit \Leftrightarrow level_{tgt} \mathrm{mod} hitRate = 0",
+            "latex_sub": rf"level_{{tgt}} \mathrm{{mod}} {hr} = 0",
         }
     if att == ATTACK_TYPE_FIXED_DAMAGE:
         return {
@@ -1227,8 +1226,8 @@ def _physical_hit_roll(hr, aluck, eva, tluck, params, who_note):
         "result": f"≈ {pct:.1f}% chance to land",
         "note": "Damage_RollPhysicalHit @0x492ba0. Darkness on the attacker quarters hit% first "
                 "(hit% >> 2); a Sleeping/Stopped target is always hit. " + who_note,
-        "latex": r"hit = hit\% + \tfrac{LUCK_{atk}}{2} - EVA_{tgt} - LUCK_{tgt}",
-        "latex_sub": rf"{hr} + \tfrac{{{aluck}}}{{2}} - {eva} - {tluck} = {hit}",
+        "latex": r"hit = hit\% + \frac{LUCK_{atk}}{2} - EVA_{tgt} - LUCK_{tgt}",
+        "latex_sub": rf"{hr} + \frac{{{aluck}}}{{2}} - {eva} - {tluck} = {hit}",
     }
 
 
