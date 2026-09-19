@@ -201,6 +201,7 @@ class KernelSectionTab(QWidget):
 
         for gname in groups:
             box = QGroupBox(gname)
+            box.setProperty("group_name", gname)
             vbox = QVBoxLayout(box)
             vbox.setSpacing(4)
             self._add_group_copy_bar(vbox, gname, group_map[gname])
@@ -244,8 +245,8 @@ class KernelSectionTab(QWidget):
     def _add_group_copy_bar(self, vbox, gname, fields):
         """Copy / Paste / Apply to... for this group: several entries often share the same
         values (spells with the same junction stats), so the whole group moves in one go."""
+        # Top-left of the group, right under its title - the first thing seen, above the values.
         bar = QHBoxLayout()
-        bar.addStretch(1)
         copy_btn = QToolButton()
         copy_btn.setText("Copy")
         copy_btn.setToolTip(_wrap_tooltip(
@@ -269,6 +270,7 @@ class KernelSectionTab(QWidget):
         self._group_paste_buttons[gname] = paste_btn
         for button in (copy_btn, paste_btn, apply_btn):
             bar.addWidget(button)
+        bar.addStretch(1)
         vbox.addLayout(bar)
 
     def _current_entry(self):
