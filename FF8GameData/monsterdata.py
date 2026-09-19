@@ -2162,8 +2162,11 @@ class AIData:
                   "DarkgreyBlink", "GreyBlink", "YellowBlink", "RedBlink", "GreenBlink", "BlueBlink", "PurpleBlink", "WhiteBlink"]
     LOCATION_LIST = ["Galbadia", "Esthar", "Balamb", "Dollet", "Timber", "Trabia", "Centra", "Horizon"]
     AI_CODE_NAME_LIST = ["Initialization fight", "Enemy turn", "Counter-Attack", "Death", "Before dying or taking a hit", "End"]
-    ELEM_DEF_MIN_VAL = -100
-    ELEM_DEF_MAX_VAL = 400
+    # Shown as the damage taken % (900 - stored byte x 10): 100 = normal, 200 = double, 0 = none,
+    # negative = absorbs. The whole byte range is offered (byte 255 .. 0), not just what vanilla
+    # uses (-100 .. 400), so a modded value is never clamped.
+    ELEM_DEF_MIN_VAL = -1650
+    ELEM_DEF_MAX_VAL = 900
     # Shown as (stored byte - 100): 0 = neutral (byte 100), >= 100 = immune (byte >= 200, the
     # engine's cmp 0C8h), below 0 = more vulnerable than neutral (byte < 100).
     STATUS_DEF_MIN_VAL = -100

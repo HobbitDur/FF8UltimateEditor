@@ -20,9 +20,15 @@ PARAM_DEFS = {
                        "The MAG stat of the magic/GF caster. Doomtrain damage-chart default 0."),
     "target_spr":     ("Target SPR", 0, 0, 255,
                        "The SPR (spirit) stat of the target - magic defence. Doomtrain default 0."),
-    "elem_defense":   ("Target elem def", 800, 0, 900,
-                       "Target elemental defence: 800 = neutral (x1.0 damage), 900 = immune (x0), "
-                       "0 = x9 weakness. Doomtrain default 800."),
+    "elem_defense":   ("Target element damage %", 100, -1650, 900,
+                       "How much damage of the spell's element the target takes, as the Ifrit Stat "
+                       "tab shows it: 100 = normal, 200 = double (weak), 0 = none (immune), below "
+                       "0 = absorbs (heals). Steps of 10.\n"
+                       "The game keeps elemDef = 900 - this value (a monster's .dat byte x 10, "
+                       "setMonsterInfoFromDatInfoSection @0x48bbd0) and multiplies magic/GF damage "
+                       "by (900 - elemDef)/100, i.e. by this %.\n"
+                       "Vanilla monsters: mostly 100; e.g. Snow Lion Fire 250 / Ice -100, Bomb Fire "
+                       "-100 / Ice 300."),
     "target_hp":      ("Target current HP", 1000, 1, 99999999,
                        "Target's current HP - used by Demi / %-HP attacks. Doomtrain default 1000."),
     "target_maxhp":   ("Target max HP", 1000, 1, 99999999,
@@ -252,6 +258,19 @@ def _gf_compat(value, P, entry):
     }
 
 
+# The elemental term, checked in IDA (Damage_ComputeMagicAndGF @0x491ad0 for magic/GF,
+# Damage_ApplyPhysicalModifiers @0x48f600 for physical): the engine keeps elemDef = 900 - element%
+# per element (a monster's .dat byte x 10), so "element%" here is what the Ifrit Stat tab shows.
+_ELEMENT_NOTE = (
+    "elemental term: damage × element%/100, where element% is the target's damage taken for "
+    "that element as the Ifrit Stat tab shows it (100 = normal, 200 = double, 0 = immune, "
+    "negative = absorbs: the result heals, shown as a GREEN number). Applied only when the "
+    "attack has an element, and with several elements only the FIRST one set (lowest bit: Fire, "
+    "Ice, Thunder, Earth, Bio, Wind, Water, Holy) counts. Holy against a Zombie target always "
+    "counts as 200%. No cap on weakness. (Physical attacks use the attack's element % too: "
+    "damage + damage × elementPercent/100 × (element% - 100)/100.)")
+
+
 # The real FF8 attack_type enum (kernel value -> meaning), from the attack_type dispatcher
 # Damage_DispatchByAttackType (0x4922b0). Used to pick the correct damage formula per spell.
 ATTACK_TYPE_NAMES = {
@@ -378,34 +397,32 @@ def _magic_damage(value, P, entry):
     if att in (0, 2, 22, 26):
         ignore = att == 22
         spr_eff = 0 if ignore else P["target_spr"]
-        elem = P["elem_defense"]
+        elem = P["elem_defense"]   # damage taken %, as Ifrit shows it (= 900 - engine elemDef)
         t1 = _idiv((265 - spr_eff) * (p + P["caster_mag"]), 4)
         t2 = _idiv(p * t1, 256)
 
         def roll(r):
-            return _idiv(_idiv(r * t2, 256) * (900 - elem), 100) * hit
+            return _idiv(_idiv(r * t2, 256) * elem, 100) * hit
 
         avg, lo, hi = roll(256), roll(240), roll(272)
         return _msg(
-            "t1=(265−SPR)×(P+MAG)/4   t2=P×t1/256   dmg=(rand[240..272]/256)×t2×(900−elemDef)/100"
+            "t1=(265−SPR)×(P+MAG)/4   t2=P×t1/256   dmg=(rand[240..272]/256)×t2×element%/100"
             + (" [SPR forced 0]" if ignore else ""),
             f"t1=(265−{spr_eff})×({p}+{P['caster_mag']})/4={t1}   t2={p}×{t1}/256={t2}   "
-            f"×(900−{elem})/100{hits_txt}",
+            f"×{elem}/100{hits_txt}",
             f"≈ {avg} damage   (random spread {lo}–{hi})",
             (f"This entry's attack type is None (unused/empty slot); showing the standard Magic "
              f"Attack formula for reference. " if att == 0 else f"Attack type '{name}'. ")
-            + "Real formula (Damage_ComputeMagicAndGF), incl. the random roll and elemental "
-            "(900−elemDef)/100. Not modelled: monster casters halve, Shell halves (and shows the "
-            "Shell shimmer, effect 40), Defend halves (magic only — Defend fully nullifies "
-            "PHYSICAL), weakness caps ×2. elemDef > 900 = absorb: the negative result heals and "
-            "displays as a GREEN number (HIT_TYPE_RESTORATIVE)."
+            + "Real formula (Damage_ComputeMagicAndGF), incl. the random roll and " + _ELEMENT_NOTE
+            + " Not modelled: monster casters halve, Shell halves (and shows the Shell shimmer, "
+            "effect 40), Defend halves (magic only — Defend fully nullifies PHYSICAL)."
             + (" LV? Attack also only hits on matching level." if att == 26 else ""),
             ("caster_mag", "target_spr", "elem_defense"),
             latex=(r"dmg=\left\lfloor\frac{rand}{256}\cdot\frac{P\,(265-SPR)(P+MAG)}{4\cdot256}"
-                   r"\right\rfloor\cdot\frac{900-elemDef}{100}"),
+                   r"\right\rfloor\cdot\frac{element\%}{100}"),
             latex_sub=(rf"\frac{{240..272}}{{256}}\cdot"
                        rf"\frac{{{p}\,(265-{spr_eff})({p}+{P['caster_mag']})}}{{1024}}\cdot"
-                       rf"\frac{{900-{elem}}}{{100}}" + (rf"\cdot{hit}" if hit > 1 else "")))
+                       rf"\frac{{{elem}}}{{100}}" + (rf"\cdot{hit}" if hit > 1 else "")))
 
     # --- curative magic ---
     if att == 3:
@@ -544,32 +561,30 @@ def _monster_damage(value, P, entry):
     # --- offensive magic: same core as a spell, then halved for a monster caster ---
     if att in (0, 2, 22, 26):
         spr = 0 if att == 22 else P["target_spr"]
-        elem = P["elem_defense"]
+        elem = P["elem_defense"]   # damage taken %, as Ifrit shows it (= 900 - engine elemDef)
         t2 = _idiv(p * _idiv((265 - spr) * (p + P["monster_mag"]), 4), 256)
 
         def roll(r):
-            return _idiv(_idiv(_idiv(r * t2, 256), 2) * (900 - elem), 100)
+            return _idiv(_idiv(_idiv(r * t2, 256), 2) * elem, 100)
 
         avg, lo, hi = roll(256), roll(240), roll(272)
         return out(
             ("monster_mag",) + (() if att == 22 else ("target_spr",)) + ("elem_defense",),
             "dmg = P × (265−SPR) × (P+MAG)/4 / 256 × rand[240..272]/256 ÷ 2 (monster) "
-            "× (900−elemDef)/100" + ("   [SPR forced 0]" if att == 22 else ""),
-            f"{p} × (265−{spr}) × ({p}+{P['monster_mag']})/4 / 256 → {t2};  ÷2;  "
-            f"×(900−{elem})/100",
+            "× element%/100" + ("   [SPR forced 0]" if att == 22 else ""),
+            f"{p} × (265−{spr}) × ({p}+{P['monster_mag']})/4 / 256 → {t2};  ÷2;  ×{elem}/100",
             f"≈ {avg} damage   (random {lo}–{hi})",
             (f"Attack type is None (empty slot); showing the Magic Attack formula for reference. "
              if att == 0 else f"Attack type '{name}'. ")
             + "Damage_ComputeMagicAndGF @0x491ad0: a MONSTER caster's magic damage is halved "
             "(damage >>= 1 when the attacker slot >= 3) - the same spell hurts half as much from a "
-            "monster as from a character. Then Shell ÷2, Defend ÷2, elemental (900−elemDef)/100 "
-            "(> 900 = absorb, shown as a green heal)."
+            "monster as from a character. Then Shell ÷2, Defend ÷2, then the " + _ELEMENT_NOTE
             + (" LV? Attack only hits targets whose level is a multiple of the hit rate byte."
                if att == 26 else ""),
             r"dmg = \left\lfloor\frac{rand}{256}\cdot\frac{P\,(265-SPR)(P+MAG)}{4\cdot256}"
-            r"\right\rfloor\cdot\frac{1}{2}\cdot\frac{900-elemDef}{100}",
+            r"\right\rfloor\cdot\frac{1}{2}\cdot\frac{element\%}{100}",
             rf"\frac{{{p}\,(265-{spr})({p}+{P['monster_mag']})}}{{1024}}\cdot\frac{{1}}{{2}}"
-            rf"\cdot\frac{{900-{elem}}}{{100}}\approx {avg}")
+            rf"\cdot\frac{{{elem}}}{{100}}\approx {avg}")
 
     # --- % current HP (7 = physical path mode 1, 8 = magic path): P × curHP / 16 ---
     if att in (7, 8):

@@ -52,3 +52,29 @@ def test_status_resistance_is_the_ifrit_percentage():
         assert "immune" in formula_specs.compute("status_accuracy", 150, _Entry(attack_type=1))["result"]
     finally:
         formula_specs.PARAM_VALUES["target_resistance"] = saved
+
+
+def test_element_input_is_the_ifrit_damage_percentage():
+    """100 = normal damage, 200 = double, 0 = none, negative = absorbs - Ifrit Stat's scale; the
+    engine multiplies magic damage by (900 - elemDef)/100 where elemDef = 900 - this %."""
+    label, default, low, high, _help = formula_specs.PARAM_DEFS["elem_defense"]
+    assert (default, low, high) == (100, -1650, 900) and "%" in label
+    saved = formula_specs.PARAM_VALUES["elem_defense"]
+    try:
+        results = {}
+        for pct in (100, 200, 0, -100):
+            formula_specs.PARAM_VALUES["elem_defense"] = pct
+            out = formula_specs.compute("magic_damage", 20, _Entry(attack_type=2, spell_power=20, hit_count=1))
+            results[pct] = int(out["result"].split("≈ ")[1].split(" ")[0])
+        assert results[200] == 2 * results[100] or abs(results[200] - 2 * results[100]) <= 1
+        assert results[0] == 0 and results[-100] == -results[100]
+    finally:
+        formula_specs.PARAM_VALUES["elem_defense"] = saved
+        assert "weakness caps" not in formula_specs.compute(
+            "magic_damage", 20, _Entry(attack_type=2))["note"]
+
+
+def test_ifrit_element_range_covers_every_byte():
+    from FF8GameData.monsterdata import AIData
+    # 900 - 10 * byte, byte 0..255
+    assert (AIData.ELEM_DEF_MAX_VAL, AIData.ELEM_DEF_MIN_VAL) == (900 - 10 * 0, 900 - 10 * 255)

@@ -390,9 +390,11 @@ class IfritStatWidget(QWidget):
 
         elem_group = QGroupBox("Elemental resistance %")
         elem_form = QFormLayout(elem_group)
-        elem_tip = ("Elemental resistance %, range {0}..{1} (step 10 = 1 raw unit).\n"
-                    "100 = neutral, >100 = resistant, <100 = weak.\n"
-                    "Stored byte = floor((900 - %) / 10)."
+        elem_tip = ("Elemental damage taken %, range {0}..{1} (step 10 = 1 raw unit).\n"
+                    "The damage this monster takes from the element, in %:\n"
+                    "100 = normal, 200 = double (weak), 0 = none (immune), below 0 = absorbs (heals).\n"
+                    "Magic / GF damage is multiplied by value/100 (only for an attack with that element).\n"
+                    "Stored byte = floor((900 - value) / 10)."
                     ).format(AIData.ELEM_DEF_MIN_VAL, AIData.ELEM_DEF_MAX_VAL)
         elem_group.setToolTip(elem_tip)
         for elem in self.game_data.magic_data_json['magic_type']:
