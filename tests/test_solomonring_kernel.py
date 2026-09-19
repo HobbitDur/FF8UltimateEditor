@@ -427,3 +427,26 @@ def test_the_last_section_tab_is_remembered(qapp, tmp_path):
     # Used alone (no settings), nothing is remembered.
     alone = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
     assert alone.tabs.currentIndex() == 0
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_a_name_typed_before_add_entry_is_kept(qapp, tmp_path):
+    """Rename a spell, then "+ Add entry" straight away: the rename must reach the file. The
+    add rebuilds the tab's entries from the data, and the typed name used to be dropped."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    tab = widget._section_tabs[2]
+    tab.list_widget.setCurrentRow(1)
+    tab._text_widgets[0].setText("Blaze")
+    widget._add_growable_entry(2)
+    new_index = tab.current_entry_index()
+    tab._text_widgets[0].setText("Megaflare")
+    widget._save_kernel()
+
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    entries = reloaded._section_tabs[2]._entries
+    assert entries[1].get_text(0) == "Blaze"
+    assert entries[new_index].get_text(0) == "Megaflare"

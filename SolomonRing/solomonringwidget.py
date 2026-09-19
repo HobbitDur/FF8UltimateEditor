@@ -260,6 +260,10 @@ class SolomonRingWidget(QWidget):
         cfg = self.kernel_manager.get_section_config(section_id)
         text_section = section.section_text_linked
         nb_text = len(tab.text_labels) or 1
+        # The shown entry's form is only written back on a row change, and load_section() below
+        # rebuilds every entry from the data: write it first, or a name/value just typed (a spell
+        # renamed, then "+ Add entry") is lost.
+        tab.commit()
 
         def _append_one():
             section.append_blank_subsection()
@@ -303,6 +307,7 @@ class SolomonRingWidget(QWidget):
         entry_index = tab.current_entry_index()
         if not tab.can_remove(entry_index):
             return
+        tab.commit()  # same as adding: load_section() below rebuilds the entries from the data
         text_section = section.section_text_linked
         nb_text = len(tab.text_labels) or 1
 
