@@ -944,9 +944,21 @@ def _status_accuracy(value, P, entry):
         else:
             atk_stat, tgt_stat, stat_label = P["caster_mag"], P["target_spr"], "MAG/SPR"
             params = ("caster_mag", "target_spr", "target_resistance")
-        note = ("Battle_ApplyStatusWithResistRoll @0x48f9f0. This entry's Attack Type routes "
-                f"through the {'physical' if atk_type in _PHYSICAL_ATTACK_TYPES else 'magic/GF'} "
-                f"damage core, so the stat pair is {stat_label}.")
+        physical = atk_type in _PHYSICAL_ATTACK_TYPES
+        note = ("Battle_ApplyStatusWithResistRoll @0x48f9f0, called by "
+                + ("Damage_ApplyPhysicalModifiers @0x48f600" if physical
+                   else "applyHitStatusEffect @0x492090 (from Damage_ComputeMagicAndGF)")
+                + f": this Attack Type goes through the {'physical' if physical else 'magic/GF'} "
+                f"damage core, so the stat pair is {stat_label}. Each listed status is rolled "
+                "separately.\n"
+                "Also: Vit0 / Meltdown on the target makes its "
+                + ("VIT" if physical else "SPR") + " count as 0; nothing is rolled if the attack "
+                "itself missed, nor while the target still has hits to receive (a multi-hit "
+                "attack rolls its statuses once, on the last hit); the target's resistance is "
+                "per status (100 = neutral, >= 200 = immune).\n"
+                "Exceptions, whatever the roll: Stop never lands on a monster; a Zombie target "
+                "can't get Slow or Death; Angel Wing blocks Shell, Silence and Berserk; "
+                "inflicting Zombie removes Doom.")
         if value == 255:
             return {"params": params, "note": note, "latex": r"accuracy=255\Rightarrow 100\%",
                     "latex_sub": r"255 \Rightarrow \text{always}",
