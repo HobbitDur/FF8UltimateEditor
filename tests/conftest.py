@@ -29,9 +29,21 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PyQt6 import sip
-from PyQt6.QtCore import QObject
+from PyQt6.QtCore import QCoreApplication, QObject
 
 gc.disable()
+
+# The QApplication lives for the whole run. Test files get it from a module-scoped `qapp`
+# fixture (`QApplication.instance() or QApplication(...)`); when the module that created it
+# ended, its fixture dropped the last reference and the application was destroyed. The next
+# module then built a second QApplication, and destroying a 3D (OpenGL) view made under that
+# second application crashed the process (access violation), blamed on whichever test was
+# running - e.g. a SolomonRing test followed by Alexander's stage viewer. Creating it here, once,
+# and holding it means every fixture's `instance()` finds it and it is never recreated.
+from PyQt6.QtWidgets import QApplication  # noqa: E402 - after QT_QPA_PLATFORM is set
+
+_APPLICATION = QApplication.instance() or QApplication([])
+_APPLICATIONS = [_APPLICATION]
 
 
 def _collect_qt_garbage_safely():
@@ -42,6 +54,10 @@ def _collect_qt_garbage_safely():
     finally:
         gc.set_debug(0)
     for obj in gc.garbage:
+        if isinstance(obj, QCoreApplication):
+            if obj not in _APPLICATIONS:
+                _APPLICATIONS.append(obj)  # the application outlives every test: keep it
+            continue
         if isinstance(obj, QObject) and not sip.isdeleted(obj):
             sip.delete(obj)                # parents first or not - isdeleted() guards children
     gc.garbage.clear()
