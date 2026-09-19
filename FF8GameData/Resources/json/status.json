@@ -16,8 +16,8 @@
 	{"id":13, "name":"Doom"},
 	{"id":14, "name":"Sub-petrify"},
 	{"id":15, "name":"Float"},
-	{"id":16, "name":"Drain"},
-	{"id":17, "name":"Confusion"},
+	{"id":16, "name":"Confusion"},
+	{"id":17, "name":"Drain"},
 	{"id":18, "name":"Ejection"},
 	{"id":19, "name":"Unused"}
   ],

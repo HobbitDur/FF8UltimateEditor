@@ -177,3 +177,14 @@ def test_status_defense_shows_values_below_neutral(app, monkeypatch, tmp_path):
     f['manager'].save_file(str(work))
     assert f['manager'].parse_file(str(work), free_animation=True).info_stat_data['status_def'][0] == -20
     ifrit.deleteLater()
+
+
+def test_status_defense_rows_are_named_in_the_engine_order():
+    """The 20 status-defense bytes of a monster .dat are copied by setMonsterInfoFromDatInfoSection
+    @0x48bbd0 into FF8BattleMentalStatus: byte 16 -> Confuse (offset 22, STATUS2 0x4000), byte 17 ->
+    Drain (offset 23, 0x8000). The labels used to swap those two."""
+    import json
+    names = [s["name"] for s in json.load(open(PROJECT_ROOT / "FF8GameData" / "Resources" / "json" /
+                                                "status.json", encoding="utf8"))["status"]]
+    assert names[16] == "Confusion" and names[17] == "Drain"
+    assert names[12:16] == ["Reflect", "Doom", "Sub-petrify", "Float"] and names[18] == "Ejection"
