@@ -110,9 +110,10 @@ def test_dummy_monster_round_trips_every_section_but_its_ai(tools, tmp_path):
     source = _load(tools, 0)
     expected = _sections(source, tools)
     folder = tmp_path / "c0m000"
-    # c0m000 is not a monster of the game: the xlsx format skips it rather than writing a sheet
-    with pytest.raises(SectionFileError, match="holds no monster"):
-        _quiet(export_sections, source, folder, tools, ["info_stat"])
+    # c0m000 is the game's "Dummy": every monster file gets a stats sheet now (a mod can put a
+    # real monster in any slot), this one included
+    _quiet(export_sections, source, folder, tools, ["info_stat"])
+    assert any(folder.glob("*.xlsx"))
     _quiet(export_sections, source, folder, tools,
            [name for name in SECTION_FILE_NAMES if name != "info_stat"])
     rebuilt = _load(tools, 1)

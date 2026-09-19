@@ -289,10 +289,6 @@ class DatToXlsx:
         # Chart
         ## Stat chart
         chart_stat = {}
-        file_index = self.__get_file_index(monster_analyser)
-        if file_index == 0 or file_index == 127 or file_index > 143:  # Ignoring garbage files
-            return
-
         chart_stat[monster_analyser] = self.workbook.add_chart({'type': 'line'})
         tab_name = self.__get_tab_name(monster_analyser)
         worksheet = self.workbook.add_worksheet(tab_name)

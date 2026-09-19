@@ -73,7 +73,7 @@ def _cmd_export_xlsx(args) -> int:
     manager.create_xlsx_file(args.output)
     manager.dat_to_xlsx(files, analyse_ai=args.ai)
     print(f"[ok] {len(files)} .dat file(s) exported to {args.output} "
-          "(garbage ids 0/127/>143 skipped)")
+          "(files that are not monsters skipped)")
     return 0
 
 

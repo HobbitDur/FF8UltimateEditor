@@ -13,7 +13,7 @@ import numpy as np
 from PIL import Image
 from PIL.ImageQt import QPixmap
 from PyQt6.QtGui import QColor, QImage
-from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+from FF8GameData.dat.monsteranalyser import GarbageFileError, MonsterAnalyser
 from FF8GameData.dat import interpolation
 from FF8GameData.dat.animloopdetector import analyse_animation_usage, is_looping, ANIM_UNUSED
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
@@ -1533,12 +1533,15 @@ class IfritManager:
     def dat_to_xlsx(self, file_list, analyse_ai=False, callback_func=None):
         for monster_file in file_list:
             file_name = os.path.basename(monster_file)
-            file_index = int(re.search(r'\d{3}', file_name).group())
-            if file_index == 0 or file_index == 127 or file_index > 143:  # Avoid working on garbage file
-                continue
+            # Every monster file given gets its sheet - c0m000, c0m127 and c0m144+ included (a mod
+            # puts new monsters there). Only a file that can't be read as a monster is skipped.
             monster = MonsterAnalyser(self.game_data)
-            monster.load_file_data(monster_file, self.game_data)
-            monster.analyse_loaded_data(self.game_data, self.decompiler)
+            try:
+                monster.load_file_data(monster_file, self.game_data)
+                monster.analyse_loaded_data(self.game_data, self.decompiler)
+            except GarbageFileError:
+                print(f"{file_name}: not a monster file, skipped")
+                continue
             if callback_func:
                 callback_func(monster)
             self.add_monster_to_xlsx(monster, file_name, analyse_ai)
