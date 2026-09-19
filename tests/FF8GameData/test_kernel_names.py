@@ -89,10 +89,13 @@ def test_a_renames_file_survives_being_written_and_read(game_data, tmp_path):
 
 
 def test_game_data_loads_a_mods_names_and_goes_back_to_the_vanilla_ones(tmp_path):
-    """GameData.load_names is what the Ifrit Cronos checkbox and the Cronos tool both call."""
+    """GameData.load_names(<changes file>) is what the Cronos tool calls with the file its
+    "names" command writes (FF8UltimateEditor itself no longer ships one)."""
     data = GameData(str(PROJECT_ROOT / "FF8GameData"))
     data.load_all()
-    data.load_names("names_cronos.json")
+    names_file = tmp_path / "names_cronos.json"
+    kernelnames.write_changes_file(names_file, {"magic": {43: "Reaper"}, "item": {144: "Stone Skin"}, "enemy_ability": {16: "Arm Machine Gun"}})
+    data.load_names(str(names_file))
     assert kernelnames.json_names(data)["magic"][43] == "Reaper"
     data.load_names()
     assert kernelnames.json_names(data)["magic"][43] == "Death"
@@ -257,7 +260,9 @@ def test_a_workbook_offers_the_spells_added_to_it(game_data, tmp_path):
 def test_a_workbook_is_written_with_the_names_in_use(game_data, tmp_path):
     """Every workbook this repository writes - the no-edit one a Cronos build produces included -
     shows the names loaded at the time, so a mod's own names need no pass over the file."""
-    game_data.load_names("names_cronos.json")
+    names_file = tmp_path / "names_cronos.json"
+    kernelnames.write_changes_file(names_file, {"magic": {43: "Reaper"}, "item": {144: "Stone Skin"}, "enemy_ability": {16: "Arm Machine Gun"}})
+    game_data.load_names(str(names_file))
     try:
         path = _monster_workbook(game_data, tmp_path)
         with zipfile.ZipFile(path) as workbook:

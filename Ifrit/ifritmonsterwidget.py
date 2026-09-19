@@ -607,7 +607,7 @@ class IfritMonsterWidget(QWidget):
         tl.setSpacing(4)
 
         self._cronos_checkbox = QCheckBox("Cronos")
-        self._cronos_checkbox.setToolTip("Use the Cronos configuration: its AI definitions, and the\nspell and item names its kernel.bin renames.")
+        self._cronos_checkbox.setToolTip("Use the Cronos AI definitions.\nCronos's spell, item and enemy-attack names come from its kernel.bin:\nopen it with \"Import complementary\".")
         self._cronos_checkbox.setChecked(self.settings.value("ifrit/cronos_checkbox", defaultValue=False, type=bool))
         self._cronos_checkbox.stateChanged.connect(self._on_cronos_toggled)
 
@@ -1306,11 +1306,9 @@ class IfritMonsterWidget(QWidget):
     # ── Cronos ────────────────────────────────────────────────────────
 
     def _apply_cronos_data(self, checked):
-        """Cronos changes the AI tables, and renames a few spells and items in its kernel.bin.
-        Unchecked, everything stays as the game ships it: the vanilla names, never a mod's."""
+        """Cronos changes the AI tables. Its names are not a Cronos matter here: they come from
+        the kernel.bin opened as a complementary file (Cronos's own, when working on Cronos)."""
         self._game_data.load_ai_data("ai_cronos.json" if checked else "ai_vanilla.json")
-        self._game_data.load_names("names_cronos.json" if checked else None)
-        self._apply_kernel_names()
 
     def _apply_kernel_names(self):
         """Put the names of the complementary kernel.bin, when one is open, over the current ones:
@@ -1332,9 +1330,9 @@ class IfritMonsterWidget(QWidget):
 
     def _on_kernel_names_changed(self, _path=None):
         """A kernel.bin was opened, reloaded or removed: rebuild the names from scratch (built-in,
-        Cronos, then this kernel.bin if still open) and refresh the shown file WITHOUT re-reading
-        it from disk, so its unsaved edits stay."""
-        self._game_data.load_names("names_cronos.json" if self._cronos_checkbox.isChecked() else None)
+        then this kernel.bin if still open) and refresh the shown file WITHOUT re-reading it from
+        disk, so its unsaved edits stay."""
+        self._game_data.load_names()
         self._apply_kernel_names()
         if 0 <= self._active_index < len(self._files):
             pane = self._files[self._active_index].get('pane')

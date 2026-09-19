@@ -1,9 +1,8 @@
-"""The Cronos checkbox of the Ifrit monster editor and the names it shows.
+"""The Cronos checkbox of the Ifrit monster editor switches the AI tables - and only them.
 
-Cronos renames a few spells and items in its own kernel.bin (Death -> Reaper, Arctic Wind ->
-Stone Skin...). Ticking the checkbox is what asks for those names - everywhere they are shown: the
-xlsx it exports, the drops and draws, the AI parameters. Unticked, the editor shows the names the
-game ships, whatever a mod calls them: nothing a mod renames leaks into a vanilla file.
+Cronos's spell, item and enemy-attack names are not the checkbox's business: they come from its
+kernel.bin, opened as a complementary file like any other (see test_ifrit_kernel_names.py). So
+ticking it never renames anything, and FF8UltimateEditor ships no Cronos names file.
 """
 import os
 import pathlib
@@ -34,22 +33,14 @@ def _name(editor, list_field, key, id_):
     return next(entry["name"] for entry in getattr(editor._game_data, list_field)[key] if entry["id"] == id_)
 
 
-def test_unticked_the_editor_shows_the_names_the_game_ships(editor):
-    editor._cronos_checkbox.setChecked(False)
-    editor._apply_cronos_data(False)
-    assert _name(editor, "magic_data_json", "magic", 43) == "Death"
-    assert _name(editor, "item_data_json", "items", 144) == "Arctic Wind"
-    assert _name(editor, "enemy_abilities_data_json", "abilities", 16) == "Arm Slash"
-
-
-def test_ticked_it_shows_the_names_cronos_gives_them(editor):
+def test_the_checkbox_switches_the_ai_tables_and_nothing_else(editor):
     editor._apply_cronos_data(True)
-    assert _name(editor, "magic_data_json", "magic", 43) == "Reaper"
-    assert _name(editor, "item_data_json", "items", 144) == "Stone Skin"
-    assert _name(editor, "enemy_abilities_data_json", "abilities", 16) == "Arm Machine Gun"
     assert editor._game_data.ai_json_file_name == "ai_cronos.json"
-
-    # And unticking puts every one of them back - a checkbox, not a one way door
+    assert _name(editor, "magic_data_json", "magic", 43) == "Death"      # no rename
+    assert _name(editor, "item_data_json", "items", 144) != "Stone Skin"
     editor._apply_cronos_data(False)
-    assert _name(editor, "magic_data_json", "magic", 43) == "Death"
     assert editor._game_data.ai_json_file_name == "ai_vanilla.json"
+
+
+def test_no_cronos_names_file_is_shipped():
+    assert not (PROJECT_ROOT / "FF8GameData" / "Resources" / "json" / "names_cronos.json").exists()

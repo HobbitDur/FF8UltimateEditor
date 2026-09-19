@@ -219,7 +219,8 @@ class GameData:
 
     def load_names(self, renames_json_name=None):
         """Reload the vanilla spell, item and enemy attack names, then apply a mod's renames on top
-        when one is named (names_cronos.json): what every tool shows for them - the xlsx columns
+        when one is named (a changes file written by kernelnames.write_changes_file, e.g. by the
+        Cronos repository's "names" command): what every tool shows for them - the xlsx columns
         and their drop-downs, the AI parameters, the monster drops and draws.
 
         The renames file is generated from the mod's kernel.bin, see FF8GameData/kernelnames.py."""
