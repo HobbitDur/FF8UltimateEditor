@@ -54,8 +54,13 @@ TAB_LAYOUT = [
 class SolomonRingWidget(QWidget):
     """kernel.bin editor with full doomtrain field parity, driven by JSON field defs."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
+    CURRENT_TAB_KEY = "solomonring/current_tab"
+
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None,
+                 settings=None):
         super().__init__()
+        # The app's QSettings: remembers the last section tab across sessions (None: not kept).
+        self.settings = settings
 
         if file_registry is None:  # The tool is used alone, it shares its files with nobody
             file_registry = FileRegistry()
@@ -113,6 +118,8 @@ class SolomonRingWidget(QWidget):
             for section_id, _ in entries:
                 self._tab_index_by_section[section_id] = index
         main_layout.addWidget(self.tabs)
+        self._restore_current_tab()
+        self.tabs.currentChanged.connect(self._remember_current_tab)
 
         self.setLayout(main_layout)
         self.tabs.setEnabled(False)
@@ -137,6 +144,18 @@ class SolomonRingWidget(QWidget):
         for section_id, label in entries:
             inner.addTab(self._make_section_tab(section_id), label)
         return inner
+
+    def _restore_current_tab(self):
+        """Re-open on the section tab used last time (like Ifrit does)."""
+        if self.settings is None:
+            return
+        index = self.settings.value(self.CURRENT_TAB_KEY, defaultValue=0, type=int)
+        if 0 <= index < self.tabs.count():
+            self.tabs.setCurrentIndex(index)
+
+    def _remember_current_tab(self, index):
+        if self.settings is not None:
+            self.settings.setValue(self.CURRENT_TAB_KEY, index)
 
     def _make_section_tab(self, section_id):
         config = self._section_configs[str(section_id)]

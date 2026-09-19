@@ -410,3 +410,20 @@ def test_a_field_group_copies_between_entries(qapp, tmp_path, monkeypatch):
     reloaded.load_file(str(work))
     for index in (2, 4, 7):
         assert {name: reloaded._section_tabs[2]._entries[index].get(name) for name in names} == fire
+
+
+def test_the_last_section_tab_is_remembered(qapp, tmp_path):
+    """Re-opening SolomonRing lands on the section tab used last (kept in the app settings).
+    A temporary ini file stands in for the app's QSettings - never the real registry."""
+    from PyQt6.QtCore import QSettings
+    settings = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
+    first = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER,
+                              settings=settings)
+    assert first.tabs.currentIndex() == 0
+    first.tabs.setCurrentIndex(5)
+    second = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER,
+                               settings=settings)
+    assert second.tabs.currentIndex() == 5
+    # Used alone (no settings), nothing is remembered.
+    alone = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    assert alone.tabs.currentIndex() == 0
