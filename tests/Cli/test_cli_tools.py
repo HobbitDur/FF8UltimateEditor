@@ -407,7 +407,7 @@ def test_moomba_export_png(tmp_path):
 
 
 @pytest.mark.ff8data("extracted_files/menu/mmag.bin", "extracted_files/menu/mngrp.bin",
-                     "extracted_files/menu/mngrphd.bin")
+                     "extracted_files/menu/mngrphd.bin", "extracted_files/main/kernel.bin")
 def test_zone_roundtrip_and_show(capsys, tmp_path):
     from Cli.zone import ZoneCliTool
     source = EXTRACTED / "menu" / "mmag.bin"
@@ -419,7 +419,10 @@ def test_zone_roundtrip_and_show(capsys, tmp_path):
                               "--mngrp", str(EXTRACTED / "menu" / "mngrp.bin")]) == 0
     out = capsys.readouterr().out
     assert "Weapons Monthly 1st Issue" in out  # magazine map + resolved text overlay
-    assert "Lion Heart" in out  # weapon unlock resolved by name
+    assert "weapon=Weapon 6" in out  # no kernel.bin: weapon names are not built in, id only
+    assert _run(ZoneCliTool, ["show", "--input", str(source), "--entry", "0",
+                              "--kernel", str(EXTRACTED / "main" / "kernel.bin")]) == 0
+    assert "Lion Heart" in capsys.readouterr().out  # named by the kernel.bin
 
 
 def _shumi_csv_stable(argv_export_extra, source_files, tmp_path, import_extra=()):

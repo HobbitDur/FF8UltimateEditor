@@ -95,6 +95,11 @@ def _cmd_show(args) -> int:
         raise ValueError(f"Entry must be 0-{len(manager.entries) - 1}, got {args.entry}")
     if args.mngrp:
         manager.load_mngrp(args.mngrp)
+    if args.kernel:  # weapon names come only from a kernel.bin - none built in
+        from FF8GameData.kernelnames import read_weapon_and_ability_names
+        manager.game_data.load_kernel_data()
+        manager.set_weapon_names(
+            read_weapon_and_ability_names(manager.game_data, args.kernel)["weapon"])
     entry = manager.entries[args.entry]
 
     print(f"Entry {args.entry}: {manager.entry_name(args.entry)}")
@@ -220,6 +225,8 @@ class ZoneCliTool(BaseCliTool):
         p_show.add_argument("--entry", "-e", required=True, type=int, help="Entry index (0-68)")
         p_show.add_argument("--mngrp", help="Path to mngrp.bin (mngrphd.bin auto-detected "
                                             "next to it) to resolve the text overlay strings")
+        p_show.add_argument("--kernel", "-k", help="Path to kernel.bin: names the unlocked "
+                                                   "weapon (without it, only its id is shown)")
         p_show.set_defaults(func=_cmd_show)
 
         p_png = sub.add_parser("export-png", help="Render a page the way the menu draws it")
