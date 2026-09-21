@@ -614,3 +614,24 @@ def test_a_vanilla_ability_can_be_removed_to_free_an_id(qapp, tmp_path, monkeypa
     magic = widget._section_tabs[2]
     magic.list_widget.setCurrentRow(magic._visible_indices.index(30))
     assert not _remove_button(magic).isEnabled()
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_the_pool_counter_reflects_the_loaded_file(qapp, tmp_path):
+    """The tabs are built before a kernel.bin is open, when every section is empty. The
+    counter has to be refreshed once one is loaded, or it sits at the widget's starting
+    state and claims all 128 ids are free on a vanilla file."""
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+
+    text, can_add = widget._ability_pool_status(17)
+    assert text == "" and not can_add, "nothing to say before a file is open"
+
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget.load_file(str(work))
+
+    for section_id in widget._ability_section_ids():
+        label = widget._section_tabs[section_id]._pool_label
+        assert "116 / 128" in label.text() and "12 left" in label.text(), \
+            f"section {section_id} still shows {label.text()!r}"
+

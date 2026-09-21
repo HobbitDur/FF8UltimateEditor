@@ -223,6 +223,7 @@ class SolomonRingWidget(QWidget):
             tab.load_section(section, text_section)
         self._refresh_magic_names()
         self._refresh_ability_names()
+        self._refresh_ability_pool()
         self._refresh_slot_set_summaries()
 
     def _refresh_slot_set_summaries(self):
@@ -308,7 +309,13 @@ class SolomonRingWidget(QWidget):
     def _ability_pool_status(self, section_id=None):
         """(counter text, may another entry be added) for a pooled tab's Add button.
         The shared budget applies everywhere; the menu tab also shows its own cap,
-        which can stop it while other sections still have room."""
+        which can stop it while other sections still have room.
+
+        The tabs are built before any kernel.bin is open, when every section is empty -
+        so with no file loaded this says nothing rather than claiming all 128 ids are
+        free."""
+        if not self.loaded_filename:
+            return "", False
         used, maximum = self._ability_total(), self._ability_id_max()
         text = f"{used} / {maximum} ability ids - {maximum - used} left"
         can_add = used < maximum
