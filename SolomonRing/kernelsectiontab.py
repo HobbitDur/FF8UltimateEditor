@@ -128,17 +128,21 @@ class KernelSectionTab(QWidget):
             if self._remove_entry_callback:
                 self._remove_btn = QPushButton("- Remove entry")
                 self._remove_btn.setToolTip(
-                    "Delete the selected entry and its name/description. Only entries added\n"
-                    "beyond the vanilla ones can go - the game indexes those by id itself,\n"
-                    "and neither may an entry whose removal would shift the reserved GF id\n"
-                    "block. Entries after the deleted one shift down by one id, so anything\n"
-                    "already pointing at them (a save's junctioned magic, mmagic.bin) does\n"
-                    "too.")
+                    "Delete the selected entry and its name/description. Entries after it\n"
+                    "shift down by one id, and anything already pointing at them follows\n"
+                    "(a GF's learn list here, a save's junctioned magic and mmagic.bin for\n"
+                    "spells).\n\n"
+                    "Magic keeps its vanilla spells: the unmodded engine indexes those by id\n"
+                    "itself, and an entry whose removal would shift the reserved GF id block\n"
+                    "cannot go either. Abilities have no such fixed ids - the loader reads\n"
+                    "every group boundary from the section sizes - so a vanilla ability may\n"
+                    "be removed to spend its id somewhere else.")
                 self._remove_btn.clicked.connect(self._remove_entry_callback)
                 list_col.addWidget(self._remove_btn)
             if self._pool_callback:
                 self._pool_label = QLabel()
-                self._pool_label.setStyleSheet("font-size: 9pt; color: #555;")
+                # No colour: a hardcoded grey vanishes into the dark theme's background.
+                self._pool_label.setStyleSheet("font-size: 9pt;")
                 self._pool_label.setWordWrap(True)
                 self._pool_label.setToolTip(
                     "The seven ability sections share one id space - the engine reads\n"

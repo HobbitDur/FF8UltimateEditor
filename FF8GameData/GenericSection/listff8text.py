@@ -54,6 +54,25 @@ class ListFF8Text(Section):
             first_hex_literal = False
         self._text_list.append(FF8Text(game_data=self._game_data, data_hex=text_hex, own_offset=offset, id=id, cursor_location_size=self.cursor_location_size, first_hex_literal=first_hex_literal))
 
+    def insert_text(self, index: int, text_hex: bytearray):
+        """Insert one string at ``index`` and renumber what follows.
+
+        ``add_text`` only appends, taking its id and offset from the previous entry. A
+        section that may also grow in the MIDDLE - an ability inserted after the selected
+        one, which pushes every later id up - needs its name and description to land at
+        the matching position, or the entries and their strings drift apart."""
+        first_hex_literal = "Test seed" in self.name
+        self._text_list.insert(index, FF8Text(game_data=self._game_data, data_hex=text_hex,
+                                              own_offset=0, id=index,
+                                              cursor_location_size=self.cursor_location_size,
+                                              first_hex_literal=first_hex_literal))
+        offset = 0
+        for new_id, text in enumerate(self._text_list):
+            text.id = new_id
+            text.own_offset = offset
+            offset += text.get_size()
+        self.update_data_hex()
+
     def remove_text(self, index: int):
         """Drop one string and renumber what follows, mirroring ``add_text`` (which takes
         each id and offset from the previous entry)."""

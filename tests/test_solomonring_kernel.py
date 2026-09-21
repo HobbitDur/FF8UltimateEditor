@@ -444,10 +444,11 @@ def _add_button(tab):
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
 def test_adding_an_ability_renumbers_the_gf_learn_lists(qapp, tmp_path):
-    """Sections 12-18 are one id space, so an entry appended to the stat-percentage
-    section takes id 58 and pushes character, party, GF and menu abilities up by one.
-    Every GF learn slot naming one of those has to follow, or a GF would start teaching
-    whatever slid into the id it stored."""
+    """Sections 12-18 are one id space, so an entry added to the stat-percentage section
+    takes the id right after the selected one and pushes everything behind it up - the rest
+    of that group, then character, party, GF and menu abilities. Every GF learn slot naming
+    one of those has to follow, or a GF would start teaching whatever slid into the id it
+    stored."""
     work = tmp_path / "kernel.bin"
     work.write_bytes(KERNEL.read_bytes())
     widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
@@ -468,17 +469,21 @@ def test_adding_an_ability_renumbers_the_gf_learn_lists(qapp, tmp_path):
 
     assert widget._ability_total() == 116
     assert widget._ability_first_id(14) == 39
+    stat = widget._section_tabs[14]
+    stat.list_widget.setCurrentRow(stat._visible_indices.index(0))   # insert after id 39
     before = _ability_refs(widget)
-    new_id = 39 + 19                     # appended after the 19 vanilla stat-% abilities
+    new_id = 39 + 1
     assert any(ref >= new_id for ref in before), "nothing above the insert point to renumber"
 
-    _add_button(widget._section_tabs[14]).click()
+    _add_button(stat).click()
 
     assert widget._ability_total() == 117
     assert widget._ability_first_id(15) == 59, "character abilities did not shift"
     assert widget._ability_first_id(18) == 93
     for old, new in zip(before, _ability_refs(widget)):
         assert new == (old + 1 if old >= new_id else old)
+    assert stat.list_widget.currentRow() == stat._visible_indices.index(1), \
+        "the new entry should be the selected one"
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
@@ -520,9 +525,10 @@ def test_removing_an_ability_frees_the_budget_and_clears_its_slots(qapp, tmp_pat
     widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
     widget.load_file(str(work))
     gf_tab = widget._section_tabs[17]
+    gf_tab.list_widget.setCurrentRow(gf_tab._visible_indices.index(8))  # after the last one
     _add_button(gf_tab).click()
 
-    new_id = widget._ability_first_id(17) + 9          # the entry just appended
+    new_id = widget._ability_first_id(17) + 9          # the entry just added
     assert widget._ability_total() == 117
     entry, field = next(iter(widget._ability_reference_entries()))
     entry.set(field, new_id)
@@ -566,3 +572,45 @@ def test_menu_abilities_stop_at_their_own_cap(qapp, tmp_path):
     assert gf_add.isEnabled(), "the menu cap must not freeze the other tabs"
     widget._add_growable_entry(18)
     assert widget._ability_entry_count(18) == 32, "the handler must refuse it too"
+
+
+def _remove_button(tab):
+    return next(b for b in tab.findChildren(QPushButton) if "Remove entry" in b.text())
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_a_vanilla_ability_can_be_removed_to_free_an_id(qapp, tmp_path, monkeypatch):
+    """Unlike a spell, no ability id is fixed in the engine - the loader reads every group
+    boundary from the section sizes - so dropping a vanilla ability is a legitimate way to
+    spend its id in another section. Ability id 0 is the exception: it is the "no ability"
+    value an empty learn slot holds."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    monkeypatch.setattr(QMessageBox, "question",
+                        lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+
+    assert widget._ability_total() == 116
+    party = widget._section_tabs[16]           # party abilities: 5 vanilla entries
+    party.list_widget.setCurrentRow(party._visible_indices.index(4))
+    assert _remove_button(party).isEnabled(), "a vanilla ability must be removable"
+    _remove_button(party).click()
+
+    assert widget._ability_total() == 115
+    assert widget._ability_entry_count(16) == 4
+    assert widget._ability_first_id(17) == 82, "GF abilities did not shift down"
+    text, can_add = widget._ability_pool_status()
+    assert "13 left" in text and can_add
+
+    # Id 0 is the "none" an empty learn slot holds, so the first junction ability stays.
+    junction = widget._section_tabs[12]
+    junction.list_widget.setCurrentRow(junction._visible_indices.index(0))
+    assert not _remove_button(junction).isEnabled(), "ability id 0 must not be removable"
+    junction.list_widget.setCurrentRow(junction._visible_indices.index(1))
+    assert _remove_button(junction).isEnabled()
+
+    # Magic is unchanged: its vanilla spells are still indexed by id by the engine.
+    magic = widget._section_tabs[2]
+    magic.list_widget.setCurrentRow(magic._visible_indices.index(30))
+    assert not _remove_button(magic).isEnabled()

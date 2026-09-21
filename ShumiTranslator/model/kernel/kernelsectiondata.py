@@ -38,6 +38,27 @@ class SectionData(Section):
         self._size = len(self._data_hex)
         return self._subsection_list[-1]
 
+    def insert_blank_subsection(self, index: int):
+        """Insert an all-zero subsection at ``index`` and renumber what follows.
+
+        ``append_blank_subsection`` grows the end, which is all a spell list needs. The
+        ability sections can also grow in the middle: a new entry goes after the selected
+        one, takes that id + 1, and pushes everything behind it up. Built by appending and
+        moving the new element into place, so it is shaped exactly like its neighbours."""
+        self.append_blank_subsection()
+        self._subsection_list.insert(index, self._subsection_list.pop())
+        offset = 0
+        rebuilt = bytearray()
+        for new_id, subsection in enumerate(self._subsection_list):
+            subsection.id = new_id
+            subsection.own_offset = offset
+            subsection.update_data_hex()
+            rebuilt.extend(subsection.get_data_hex())
+            offset += subsection.get_size()
+        self._data_hex = rebuilt
+        self._size = len(self._data_hex)
+        return self._subsection_list[index]
+
     def remove_subsection(self, index: int):
         """Drop one subsection and renumber what follows (used by a "growable" section's
         Remove-entry UI). ``add_subsection`` derives each id and offset from the previous

@@ -172,7 +172,7 @@ class SolomonRingWidget(QWidget):
                                jump_callback=self._jump_to_section,
                                add_entry_callback=add_entry_callback,
                                remove_entry_callback=remove_entry_callback,
-                               protected_count=static_config.get("number_sub_section") or 0,
+                               protected_count=self._protected_entry_count(section_id, static_config),
                                pool_callback=(lambda sid=section_id: self._ability_pool_status(sid))
                                if config.get("ability_pool") else None)
         # A group paste / "Apply to..." writes the data without typing in a field, so it marks
@@ -185,6 +185,20 @@ class SolomonRingWidget(QWidget):
         dirty_state = getattr(self, "dirty_state", None)
         if dirty_state is not None:
             dirty_state.mark()
+
+    def _protected_entry_count(self, section_id, static_config):
+        """How many leading entries of a section may never be deleted.
+
+        For Magic that is every vanilla spell: the unmodded engine indexes them by id.
+        The ability sections are different - FFNx's AddMoreAbility patch rewrites every
+        group boundary from the section sizes it reads, so no ability id is fixed and a
+        vanilla one may be dropped to spend its id in another section. The single
+        exception is ability id 0, the "no ability" value a GF's empty learn slots hold,
+        which is the first entry of the first ability section."""
+        config = self._section_configs.get(str(section_id)) or {}
+        if not config.get("ability_pool"):
+            return static_config.get("number_sub_section") or 0
+        return 1 if section_id == self._ability_section_ids()[0] else 0
 
     def _jump_to_section(self, section_id):
         # TAB_LAYOUT groups are all single-section today, so a top-level tab index is
@@ -388,22 +402,38 @@ class SolomonRingWidget(QWidget):
         # (or a caller that is not the button) must not grow it anyway.
         if pooled and not self._ability_pool_status(section_id)[1]:
             return
-        # The new entry lands right after this section's last one, so every ability id
-        # from there on moves up by one - and the GF learn lists have to follow.
-        new_ability_id = self._ability_first_id(section_id) + len(section.get_subsection_list()) if pooled else None
+        # The new entry goes right after the selected one (at the end when nothing is
+        # selected), takes that id + 1, and pushes every ability id from there on up by
+        # one - which the GF learn lists have to follow.
+        insert_index = None
+        new_ability_id = None
+        if pooled:
+            current = tab.current_entry_index()
+            insert_index = current + 1 if current is not None and current >= 0 \
+                else len(section.get_subsection_list())
+            new_ability_id = self._ability_first_id(section_id) + insert_index
 
         def _append_one():
             section.append_blank_subsection()
             for _ in range(nb_text):
                 text_section.add_text(bytearray([0x00]))
 
-        gf_start = cfg.get("gf_reserved_start")
-        gf_count = cfg.get("gf_reserved_count") or 0
-        n = len(section.get_subsection_list())
-        pad = gf_count if (gf_start is not None and n == gf_start) else 0
-        for _ in range(pad):
+        def _insert_one(index):
+            section.insert_blank_subsection(index)
+            for i in range(nb_text):
+                text_section.insert_text(index * nb_text + i, bytearray([0x00]))
+
+        pad = 0
+        if pooled:
+            _insert_one(insert_index)
+        else:
+            gf_start = cfg.get("gf_reserved_start")
+            gf_count = cfg.get("gf_reserved_count") or 0
+            n = len(section.get_subsection_list())
+            pad = gf_count if (gf_start is not None and n == gf_start) else 0
+            for _ in range(pad):
+                _append_one()
             _append_one()
-        _append_one()
 
         # Label the auto-inserted placeholder rows BEFORE load_section() builds the list
         # widget's item text from them, so they show as reserved from the moment they
@@ -418,7 +448,10 @@ class SolomonRingWidget(QWidget):
             self._renumber_ability_references(new_ability_id, 1)
 
         tab.load_section(section, text_section)
-        tab.list_widget.setCurrentRow(len(tab._visible_indices) - 1)
+        if insert_index is not None and insert_index in tab._visible_indices:
+            tab.list_widget.setCurrentRow(tab._visible_indices.index(insert_index))
+        else:
+            tab.list_widget.setCurrentRow(len(tab._visible_indices) - 1)
         if section_id == 2:
             self._refresh_magic_names()
         if pooled:
@@ -427,8 +460,9 @@ class SolomonRingWidget(QWidget):
 
     def _remove_growable_entry(self, section_id):
         """Delete the selected entry of a "growable" data section together with its linked
-        name/description text. Only entries beyond the vanilla count can go (the tab greys the
-        button otherwise) because the unmodded engine indexes the originals by id. Entries after
+        name/description text. What may go depends on the section - see
+        _protected_entry_count: every vanilla spell stays, while a vanilla ability may be
+        removed to free its id for another ability section. Entries after
         the deleted one shift down one id, exactly as they would in any array. If that leaves the
         section with nothing above the GF-reserved block but the placeholder rows themselves, they
         go too, so the file never keeps a tail of reserved-only entries."""
