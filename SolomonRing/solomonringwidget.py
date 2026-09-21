@@ -173,7 +173,8 @@ class SolomonRingWidget(QWidget):
                                add_entry_callback=add_entry_callback,
                                remove_entry_callback=remove_entry_callback,
                                protected_count=static_config.get("number_sub_section") or 0,
-                               pool_callback=self._ability_pool_status if config.get("ability_pool") else None)
+                               pool_callback=(lambda sid=section_id: self._ability_pool_status(sid))
+                               if config.get("ability_pool") else None)
         # A group paste / "Apply to..." writes the data without typing in a field, so it marks
         # the unsaved-edit state itself (dirty_state is installed on this tool by the main window).
         tab.edited.connect(self._mark_edited)
@@ -255,6 +256,13 @@ class SolomonRingWidget(QWidget):
     # learned-ability mask, and what FFNx's AddMoreAbility patch refuses to exceed.
 
     ABILITY_REF_SECTION = 3      # Junctionable GFs: the only section storing ability ids
+    # Mirrors what FFNx's AddMoreAbility patch refuses at load: besides the shared
+    # 128, a learned menu ability is one bit of a single dword, so that group tops
+    # out at 32 entries. (Its other rule - the GF group must still start at id 64
+    # or above - cannot be reached from here: only sections before it could push it
+    # down, and their vanilla entries are not removable.)
+    MENU_ABILITY_SECTION = 18
+    MAX_MENU_ABILITIES = 32
 
     def _ability_id_max(self):
         return self.game_data.kernel_data_json.get("ability_id_max", 128)
@@ -283,10 +291,18 @@ class SolomonRingWidget(QWidget):
             total += self._ability_entry_count(sid)
         return total
 
-    def _ability_pool_status(self):
-        """(counter text, may another entry be added) for a pooled tab's Add button."""
+    def _ability_pool_status(self, section_id=None):
+        """(counter text, may another entry be added) for a pooled tab's Add button.
+        The shared budget applies everywhere; the menu tab also shows its own cap,
+        which can stop it while other sections still have room."""
         used, maximum = self._ability_total(), self._ability_id_max()
-        return f"{used} / {maximum} ability ids - {maximum - used} left", used < maximum
+        text = f"{used} / {maximum} ability ids - {maximum - used} left"
+        can_add = used < maximum
+        if section_id == self.MENU_ABILITY_SECTION:
+            menu = self._ability_entry_count(section_id)
+            text += f"  (menu {menu} / {self.MAX_MENU_ABILITIES})"
+            can_add = can_add and menu < self.MAX_MENU_ABILITIES
+        return text, can_add
 
     def _refresh_ability_pool(self):
         for sid in self._ability_section_ids():
@@ -367,9 +383,10 @@ class SolomonRingWidget(QWidget):
         # renamed, then "+ Add entry") is lost.
         tab.commit()
         pooled = bool(cfg.get("ability_pool"))
-        # The seven ability sections share one id space; the button greys out when it is
-        # full, but a stale click (or a caller that is not the button) must not grow it.
-        if pooled and self._ability_total() >= self._ability_id_max():
+        # The seven ability sections share one id space, and the menu group has a cap
+        # of its own; the button greys out when either is reached, but a stale click
+        # (or a caller that is not the button) must not grow it anyway.
+        if pooled and not self._ability_pool_status(section_id)[1]:
             return
         # The new entry lands right after this section's last one, so every ability id
         # from there on moves up by one - and the GF learn lists have to follow.

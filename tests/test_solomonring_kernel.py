@@ -541,3 +541,28 @@ def test_removing_an_ability_frees_the_budget_and_clears_its_slots(qapp, tmp_pat
     assert entry.get(field) == 0, "the slot teaching the removed ability was not cleared"
     text, can_add = widget._ability_pool_status()
     assert "12 left" in text and can_add
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_menu_abilities_stop_at_their_own_cap(qapp, tmp_path):
+    """The editor enforces what the loader enforces. A learned menu ability is one bit
+    of a single dword, so that group tops out at 32 even while the shared budget still
+    has room - and the cap belongs to that tab alone: the other six keep adding."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    menu_add = _add_button(widget._section_tabs[18])
+    gf_add = _add_button(widget._section_tabs[17])
+
+    for _ in range(8):
+        menu_add.click()
+
+    assert widget._ability_entry_count(18) == 32
+    assert widget._ability_total() == 124, "the shared budget still has 4 ids left"
+    text, can_add = widget._ability_pool_status(18)
+    assert "menu 32 / 32" in text and not can_add
+    assert not menu_add.isEnabled()
+    assert gf_add.isEnabled(), "the menu cap must not freeze the other tabs"
+    widget._add_growable_entry(18)
+    assert widget._ability_entry_count(18) == 32, "the handler must refuse it too"
