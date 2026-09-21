@@ -54,7 +54,8 @@ class KernelSectionTab(QWidget):
     edited = pyqtSignal()
 
     def __init__(self, game_data, registry, config, game_data_folder="FF8GameData", jump_callback=None,
-                 add_entry_callback=None, remove_entry_callback=None, protected_count=0):
+                 add_entry_callback=None, remove_entry_callback=None, protected_count=0,
+                 pool_callback=None):
         super().__init__()
         self.game_data = game_data
         self.registry = registry
@@ -76,6 +77,12 @@ class KernelSectionTab(QWidget):
         self._remove_entry_callback = remove_entry_callback
         self._protected_count = protected_count
         self._remove_btn = None
+        self._add_btn = None
+        # Sections sharing an entry budget with others (the seven ability sections share
+        # one 128-id space) get a "N left" line under Add, refreshed by the owner through
+        # set_pool_status(); pool_callback() -> (text, can_add) supplies it on rebuild.
+        self._pool_callback = pool_callback
+        self._pool_label = None
         # Menu abilities' Refine data lives entirely outside kernel.bin (menu.fs's mngrp
         # files) - loaded on demand via a button, not part of the normal file-load flow.
         self._menu_refine_ref = None
@@ -111,7 +118,7 @@ class KernelSectionTab(QWidget):
         list_col.addWidget(self.search_bar)
         list_col.addWidget(self.list_widget)
         if self.config.get("growable") and self._add_entry_callback:
-            add_btn = QPushButton("+ Add entry")
+            self._add_btn = add_btn = QPushButton("+ Add entry")
             add_btn.setToolTip(
                 "Append a new blank entry at the end of this section (kernel.bin grows to fit - "
                 "not something the original game supports without a loader patch like FFNx's "
@@ -129,6 +136,17 @@ class KernelSectionTab(QWidget):
                     "too.")
                 self._remove_btn.clicked.connect(self._remove_entry_callback)
                 list_col.addWidget(self._remove_btn)
+            if self._pool_callback:
+                self._pool_label = QLabel()
+                self._pool_label.setStyleSheet("font-size: 9pt; color: #555;")
+                self._pool_label.setWordWrap(True)
+                self._pool_label.setToolTip(
+                    "The seven ability sections share one id space - the engine reads\n"
+                    "them as a single array - and a savegame stores 128 learned-ability\n"
+                    "bits per GF. That is the budget: spend it in whichever sections you\n"
+                    "like, and free some again by removing entries from another one.")
+                list_col.addWidget(self._pool_label)
+                self.refresh_pool_status()
         layout.addLayout(list_col)
 
         scroll = QScrollArea()
@@ -909,6 +927,19 @@ class KernelSectionTab(QWidget):
         if row < 0 or row >= len(self._visible_indices):
             return None
         return self._visible_indices[row]
+
+    def set_pool_status(self, text, can_add):
+        """Show how much of a shared entry budget is left, and grey Add when it is
+        spent. No-op on a tab that does not share one."""
+        if self._pool_label is not None:
+            self._pool_label.setText(text)
+        if self._add_btn is not None:
+            self._add_btn.setEnabled(can_add)
+
+    def refresh_pool_status(self):
+        """Pull the current budget from the owner (used on build and after a reload)."""
+        if self._pool_callback:
+            self.set_pool_status(*self._pool_callback())
 
     def can_remove(self, index):
         """Whether that entry may be deleted.

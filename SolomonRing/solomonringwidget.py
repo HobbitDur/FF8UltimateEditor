@@ -2,7 +2,7 @@ import json
 import os
 
 from PyQt6.QtWidgets import (
-    QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox
+    QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QMessageBox
 )
 
 from Common.filebinding import FileBinding
@@ -10,6 +10,7 @@ from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from ShumiTranslator.model.kernel.kernelmanager import KernelManager
 from SolomonRing.kernellookups import LookupRegistry
+from SolomonRing.kernelentry import KernelEntry
 from SolomonRing.kernelsectiontab import KernelSectionTab
 
 
@@ -171,7 +172,8 @@ class SolomonRingWidget(QWidget):
                                jump_callback=self._jump_to_section,
                                add_entry_callback=add_entry_callback,
                                remove_entry_callback=remove_entry_callback,
-                               protected_count=static_config.get("number_sub_section") or 0)
+                               protected_count=static_config.get("number_sub_section") or 0,
+                               pool_callback=self._ability_pool_status if config.get("ability_pool") else None)
         # A group paste / "Apply to..." writes the data without typing in a field, so it marks
         # the unsaved-edit state itself (dirty_state is installed on this tool by the main window).
         tab.edited.connect(self._mark_edited)
@@ -205,6 +207,7 @@ class SolomonRingWidget(QWidget):
             text_section = by_id.get(text_id) if text_id else None
             tab.load_section(section, text_section)
         self._refresh_magic_names()
+        self._refresh_ability_names()
         self._refresh_slot_set_summaries()
 
     def _refresh_slot_set_summaries(self):
@@ -243,6 +246,105 @@ class SolomonRingWidget(QWidget):
         for other_tab in self._section_tabs.values():
             other_tab.refresh_dynamic_combos()
 
+    # ---- the shared ability id space --------------------------------------------
+    # Sections 12-18 are ONE array to the engine: getAbilityName(id) and friends index
+    # them as a single 8-byte-entry array and decide the group from where the id falls,
+    # so an entry appended to one section takes the id just after that section's last,
+    # and every ability behind it shifts up by one. The budget they share is
+    # kernel_bin_data.json's "ability_id_max" - 128, the width of a savegame's per-GF
+    # learned-ability mask, and what FFNx's AddMoreAbility patch refuses to exceed.
+
+    ABILITY_REF_SECTION = 3      # Junctionable GFs: the only section storing ability ids
+
+    def _ability_id_max(self):
+        return self.game_data.kernel_data_json.get("ability_id_max", 128)
+
+    def _ability_section_ids(self):
+        """The sections sharing the ability id space, in id order."""
+        return [section["id"] for section in self.game_data.kernel_data_json["sections"]
+                if section.get("ability_pool")]
+
+    def _section_by_id(self, section_id):
+        return next((s for s in self.kernel_manager.section_list if s and s.id == section_id), None)
+
+    def _ability_entry_count(self, section_id):
+        section = self._section_by_id(section_id)
+        return len(section.get_subsection_list()) if section else 0
+
+    def _ability_total(self):
+        return sum(self._ability_entry_count(sid) for sid in self._ability_section_ids())
+
+    def _ability_first_id(self, section_id):
+        """Global id of a section's first entry: everything in the sections before it."""
+        total = 0
+        for sid in self._ability_section_ids():
+            if sid == section_id:
+                break
+            total += self._ability_entry_count(sid)
+        return total
+
+    def _ability_pool_status(self):
+        """(counter text, may another entry be added) for a pooled tab's Add button."""
+        used, maximum = self._ability_total(), self._ability_id_max()
+        return f"{used} / {maximum} ability ids - {maximum - used} left", used < maximum
+
+    def _refresh_ability_pool(self):
+        for sid in self._ability_section_ids():
+            tab = self._section_tabs.get(sid)
+            if tab:
+                tab.refresh_pool_status()
+
+    def _refresh_ability_names(self):
+        """The "junctionable_ability" lookup (the GF learn-list pickers on the
+        G-Forces tab) reflects what is ACTUALLY loaded - renamed abilities and any
+        added through "+ Add entry" - rather than the static vanilla list, and stays
+        correct after a renumbering."""
+        entries, ability_id = [], 0
+        for sid in self._ability_section_ids():
+            tab = self._section_tabs.get(sid)
+            if not tab:
+                return
+            for index in range(len(tab._entries)):
+                name = tab._entries[index].get_text(0).strip()
+                entries.append({"value": ability_id, "name": name or f"(unnamed {ability_id})"})
+                ability_id += 1
+        self.registry.set_dynamic("junctionable_ability", entries)
+        ref_tab = self._section_tabs.get(self.ABILITY_REF_SECTION)
+        if ref_tab:
+            ref_tab.refresh_dynamic_combos()
+
+    def _ability_reference_entries(self):
+        """Every (entry, field name) in section 3 that stores an ability id."""
+        section = self._section_by_id(self.ABILITY_REF_SECTION)
+        config = self._section_configs.get(str(self.ABILITY_REF_SECTION))
+        if section is None or config is None or not section.section_text_linked:
+            return
+        fields = config["fields"]
+        names = [f["name"] for f in fields if f.get("lookup") == "junctionable_ability"]
+        nb_text = len(config.get("text_labels", [])) or 1
+        for index, subsection in enumerate(section.get_subsection_list()):
+            entry = KernelEntry(subsection, section.section_text_linked, nb_text, index,
+                                fields, self.game_data)
+            for name in names:
+                yield entry, name
+
+    def _count_ability_references(self, ability_id):
+        return sum(1 for entry, name in self._ability_reference_entries() if entry.get(name) == ability_id)
+
+    def _renumber_ability_references(self, from_id, delta, removed_id=None):
+        """Follow an insert or delete through every stored ability id: ids at or past
+        ``from_id`` move by ``delta``, and any slot still pointing at ``removed_id``
+        falls back to 0 (None) because the ability it named is gone."""
+        cleared = 0
+        for entry, name in self._ability_reference_entries():
+            value = entry.get(name)
+            if removed_id is not None and value == removed_id:
+                entry.set(name, 0)
+                cleared += 1
+            elif value >= from_id:
+                entry.set(name, value + delta)
+        return cleared
+
     def _add_growable_entry(self, section_id):
         """Append one new blank entry to a "growable" data section (today, only Magic -
         kernel_bin_data.json "growable": true) and its linked name/description text,
@@ -264,6 +366,14 @@ class SolomonRingWidget(QWidget):
         # rebuilds every entry from the data: write it first, or a name/value just typed (a spell
         # renamed, then "+ Add entry") is lost.
         tab.commit()
+        pooled = bool(cfg.get("ability_pool"))
+        # The seven ability sections share one id space; the button greys out when it is
+        # full, but a stale click (or a caller that is not the button) must not grow it.
+        if pooled and self._ability_total() >= self._ability_id_max():
+            return
+        # The new entry lands right after this section's last one, so every ability id
+        # from there on moves up by one - and the GF learn lists have to follow.
+        new_ability_id = self._ability_first_id(section_id) + len(section.get_subsection_list()) if pooled else None
 
         def _append_one():
             section.append_blank_subsection()
@@ -287,10 +397,16 @@ class SolomonRingWidget(QWidget):
             for entry_index in range(new_total - pad - 1, new_total - 1):
                 text_list[entry_index * nb_text].set_str("(reserved for GF - do not use)")
 
+        if pooled:
+            self._renumber_ability_references(new_ability_id, 1)
+
         tab.load_section(section, text_section)
         tab.list_widget.setCurrentRow(len(tab._visible_indices) - 1)
         if section_id == 2:
             self._refresh_magic_names()
+        if pooled:
+            self._refresh_ability_names()
+            self._refresh_ability_pool()
 
     def _remove_growable_entry(self, section_id):
         """Delete the selected entry of a "growable" data section together with its linked
@@ -310,6 +426,17 @@ class SolomonRingWidget(QWidget):
         tab.commit()  # same as adding: load_section() below rebuilds the entries from the data
         text_section = section.section_text_linked
         nb_text = len(tab.text_labels) or 1
+        pooled = bool(cfg.get("ability_pool"))
+        removed_ability_id = self._ability_first_id(section_id) + entry_index if pooled else None
+        if pooled:
+            # Deleting an ability a GF still teaches would leave that slot pointing at
+            # whatever slides into the id, so those slots are cleared - say so first.
+            used_by = self._count_ability_references(removed_ability_id)
+            if used_by and QMessageBox.question(
+                    self, "Remove ability",
+                    f"{used_by} GF learn slot(s) still teach this ability. "
+                    "Removing it sets them to None. Continue?") != QMessageBox.StandardButton.Yes:
+                return
 
         def _remove_one(index):
             section.remove_subsection(index)
@@ -329,12 +456,18 @@ class SolomonRingWidget(QWidget):
             for _ in range(gf_count):
                 _remove_one(gf_start)
 
+        if pooled:
+            self._renumber_ability_references(removed_ability_id + 1, -1, removed_id=removed_ability_id)
+
         tab.load_section(section, text_section)
         if tab._visible_indices:
             tab.list_widget.setCurrentRow(min(len(tab._visible_indices) - 1,
                                               max(0, tab.list_widget.currentRow())))
         if section_id == 2:
             self._refresh_magic_names()
+        if pooled:
+            self._refresh_ability_names()
+            self._refresh_ability_pool()
 
     def compress_text(self):
         """Compress all kernel text (the shared toolbar's Compress button calls this)."""

@@ -8,7 +8,7 @@ import json
 import pathlib
 
 import pytest
-from PyQt6.QtWidgets import QApplication, QPushButton
+from PyQt6.QtWidgets import QApplication, QMessageBox, QPushButton
 
 from FF8GameData.gamedata import GameData, SectionType
 from ShumiTranslator.model.kernel.kernelmanager import KernelManager
@@ -433,6 +433,21 @@ def test_the_last_section_tab_is_remembered(qapp, tmp_path):
 def test_a_name_typed_before_add_entry_is_kept(qapp, tmp_path):
     """Rename a spell, then "+ Add entry" straight away: the rename must reach the file. The
     add rebuilds the tab's entries from the data, and the typed name used to be dropped."""
+def _ability_refs(widget):
+    """Every ability id currently stored in a GF's learn list."""
+    return [entry.get(name) for entry, name in widget._ability_reference_entries()]
+
+
+def _add_button(tab):
+    return next(b for b in tab.findChildren(QPushButton) if "Add entry" in b.text())
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_adding_an_ability_renumbers_the_gf_learn_lists(qapp, tmp_path):
+    """Sections 12-18 are one id space, so an entry appended to the stat-percentage
+    section takes id 58 and pushes character, party, GF and menu abilities up by one.
+    Every GF learn slot naming one of those has to follow, or a GF would start teaching
+    whatever slid into the id it stored."""
     work = tmp_path / "kernel.bin"
     work.write_bytes(KERNEL.read_bytes())
     widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
@@ -450,3 +465,79 @@ def test_a_name_typed_before_add_entry_is_kept(qapp, tmp_path):
     entries = reloaded._section_tabs[2]._entries
     assert entries[1].get_text(0) == "Blaze"
     assert entries[new_index].get_text(0) == "Megaflare"
+
+    assert widget._ability_total() == 116
+    assert widget._ability_first_id(14) == 39
+    before = _ability_refs(widget)
+    new_id = 39 + 19                     # appended after the 19 vanilla stat-% abilities
+    assert any(ref >= new_id for ref in before), "nothing above the insert point to renumber"
+
+    _add_button(widget._section_tabs[14]).click()
+
+    assert widget._ability_total() == 117
+    assert widget._ability_first_id(15) == 59, "character abilities did not shift"
+    assert widget._ability_first_id(18) == 93
+    for old, new in zip(before, _ability_refs(widget)):
+        assert new == (old + 1 if old >= new_id else old)
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_ability_pool_stops_at_the_savemap_limit(qapp, tmp_path):
+    """The seven sections share 128 ids - the width of a savegame's per-GF learned
+    mask - so the counter counts down across all of them and Add greys out at zero,
+    whichever tab the entries were added from."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    gf_add = _add_button(widget._section_tabs[17])
+    menu_add = _add_button(widget._section_tabs[18])
+
+    text, can_add = widget._ability_pool_status()
+    assert "116 / 128" in text and "12 left" in text and can_add
+
+    for _ in range(5):
+        gf_add.click()
+    for _ in range(7):
+        menu_add.click()
+
+    assert widget._ability_total() == 128
+    text, can_add = widget._ability_pool_status()
+    assert "0 left" in text and not can_add
+    # Both tabs' buttons, not just the one last clicked, and the handler itself refuses.
+    assert not gf_add.isEnabled() and not menu_add.isEnabled()
+    widget._add_growable_entry(17)
+    assert widget._ability_total() == 128
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_removing_an_ability_frees_the_budget_and_clears_its_slots(qapp, tmp_path, monkeypatch):
+    """Removing an added ability gives its id back to the pool, renumbers what followed
+    it, and sets any learn slot still teaching it to None rather than letting the slot
+    point at whatever moves into that id."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    gf_tab = widget._section_tabs[17]
+    _add_button(gf_tab).click()
+
+    new_id = widget._ability_first_id(17) + 9          # the entry just appended
+    assert widget._ability_total() == 117
+    entry, field = next(iter(widget._ability_reference_entries()))
+    entry.set(field, new_id)
+    assert widget._count_ability_references(new_id) == 1
+
+    monkeypatch.setattr(QMessageBox, "question",
+                        lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+    gf_tab.list_widget.setCurrentRow(gf_tab._visible_indices.index(9))
+    next(b for b in gf_tab.findChildren(QPushButton) if "Remove entry" in b.text()).click()
+
+    assert widget._ability_total() == 116
+    assert widget._ability_first_id(18) == 92, "menu abilities did not shift back"
+    # Not a count of references to 92: that id now belongs to the first menu ability,
+    # which GFs legitimately teach. What matters is the slot that named the entry.
+    entry, field = next(iter(widget._ability_reference_entries()))
+    assert entry.get(field) == 0, "the slot teaching the removed ability was not cleared"
+    text, can_add = widget._ability_pool_status()
+    assert "12 left" in text and can_add

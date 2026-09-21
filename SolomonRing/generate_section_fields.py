@@ -412,6 +412,18 @@ sec(18, 2, NAMEDESC, [("Data", [
     ("end_offset", 1, None, "End offset"),
 ])], sub_size=8)
 
+# Sections 12-18 are ONE ability id space to the engine: seven 8-byte entry
+# arrays laid out back to back, which getAbilityName() and friends index as a
+# single array, so an entry added to one renumbers every group behind it.
+# FFNx's AddMoreAbility patch rewrites those group boundaries from the file's
+# own section sizes, which makes all seven growable - the shared budget is
+# kernel_bin_data.json's "ability_id_max" (128, the width of a savegame's
+# per-GF learned mask). "ability_pool" marks the tabs that share it, so the tab
+# can show what is left next to its Add button.
+for _ability_section in range(12, 19):
+    sections[str(_ability_section)]["growable"] = True
+    sections[str(_ability_section)]["ability_pool"] = True
+
 # 19: Temporary character limit breaks ---------------------------------------
 sec(19, 2, NAMEDESC, [("Data", [
     ("magic_id", 2, "magic", "Magic ID"),
