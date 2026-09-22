@@ -222,8 +222,8 @@ def test_open_folder_brings_every_gf_file():
 
 
 @needs_files
-def test_import_is_one_folder_pick(monkeypatch):
-    """Import offers no file menu for Laguna: one folder dialog, every GF file inside is loaded."""
+def test_import_is_one_file_dialog(monkeypatch):
+    """Import offers no menu of file names for Laguna: one file dialog, the picked files load."""
     from PyQt6.QtWidgets import QFileDialog, QStackedWidget, QApplication
     from Common.fileregistry import FileRegistry
     from Common.filetoolbarwidget import FileToolbarWidget
@@ -235,11 +235,11 @@ def test_import_is_one_folder_pick(monkeypatch):
     toolbar = FileToolbarWidget(stack, registry)
     entries = toolbar._import_entries()
     assert len(entries) == 1                                   # no list of files to choose from
-    assert not toolbar.import_complementary_button.isEnabled()
-    monkeypatch.setattr(QFileDialog, "getExistingDirectory",
-                        staticmethod(lambda *args, **kwargs: str(PROJECT_ROOT / "extracted_files")))
+    picked = [str(MAGIC / "MAG205_B.00"), str(MAGIC / "MAG205_B.01")]
+    monkeypatch.setattr(QFileDialog, "getOpenFileNames",
+                        staticmethod(lambda *args, **kwargs: (picked, "")))
     entries[0][1]()
     QApplication.processEvents()
-    assert widget.gf_selector.count() == 7 and widget._missing_files() == []
+    assert widget.current_gf == "Eden" and "Eden" in widget.companions
     toolbar.deleteLater()
     stack.deleteLater()
