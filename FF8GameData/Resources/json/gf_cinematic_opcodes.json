@@ -1,0 +1,4245 @@
+{
+ "_about": "GF cinematic-engine script VM (Ifrit/Leviathan/Bahamut/Cerberus/Alexander/Brothers/Eden). Decoded from FF8_EN.exe (Ifrit module VmOpcodeTable 0x1874F10; all 7 GFs share the numbering). length = python expr over op (opcode word) and w (following words, signed); refs: word index of a relative offset (base = opcode word unless base=word0), kind code/spawn/particle/data.",
+ "gf_order": [
+  "Ifrit",
+  "Leviathan",
+  "Bahamut",
+  "Cerberus",
+  "Alexander",
+  "Brothers",
+  "Eden"
+ ],
+ "opcodes": {
+  "0x000": {
+   "name": "EndChannel",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "end",
+   "semantics": "If channel!=0: StreamCursor=0 (channel pointer stored as 0 = channel unused), wait 0x8000. If channel 0: KILL BONE: clear the 3 chanStreamPtr + chanWait, free its node-matrix slot (B651E0/B65270; key table 0x2797204 entry = bone id cleared), --sceneHeader+0x18 (live bone count), rt->boneCursor-- (order list shifted), wait=chanWaitSpeed.",
+   "confidence": "high",
+   "notes": "Existing IDA name GF_Ifrit_AnimVM_Op0_FrameYield kept (misleading: it is end-channel / kill-bone).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x001": {
+   "name": "LoopSequenceOrFinish",
+   "length": "4",
+   "operands": [
+    {
+     "name": "restartTarget",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "restart",
+   "semantics": "If ctx+0xD0 (loop count) < ctx+0xD1 (loop max): ++count, GF_Ifrit_InitBones(), cursor = opcode+param0, boneCursor=0 (whole summon restarts). Else: bone order list filled with 0xFF, SequenceState+8=0, all channels cleared, wait=-1, sceneHeader+0x18=0, sceneHeader+0x1A=4 (sequence finished).",
+   "confidence": "high",
+   "notes": "Existing name GF_Ifrit_AnimVM_Op1_SubSeqLoop kept. Used once, at the end of the root program.",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": false
+  },
+  "0x002": {
+   "name": "Jump",
+   "length": "4",
+   "operands": [
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "jump",
+   "semantics": "StreamCursor += param0 (byte offset relative to the opcode word).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": false
+  },
+  "0x003": {
+   "name": "Call",
+   "length": "4",
+   "operands": [
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "call",
+   "semantics": "Per-channel return stack: bone[+0x24 + 8*chan + 4*depth] = &param1 (= opcode+4), depth byte bone+0x44+chan ++ (2 levels per channel); cursor = opcode + param0.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x004": {
+   "name": "Return",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "return",
+   "semantics": "--depth byte bone+0x44+chan; cursor = saved return address from bone+0x24+8*chan+4*depth.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x005": {
+   "name": "FlagOp",
+   "length": "4 + (2 if (op >> 12) in (2, 3) else 0)",
+   "operands": [
+    {
+     "name": "mask",
+     "type": "u16"
+    },
+    {
+     "name": "target (sub-op 2/3 only)",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "op>>12 = sub-op: 0 (and 6..15) flags|=mask; 1 flags&=~mask; 2 if (flags&mask)!=0 jump opcode+param1 else fall through; 3 if (flags&mask)==0 jump; 4 wait (retry same instr next tick) while (flags&mask)!=0; 5 wait until (flags&mask)!=0. Bits 9..11 unused.",
+   "flow": "cond_jump",
+   "semantics": "Operates on the shared 16-bit sequence flag word *(rt+0x10)+2 (inter-bone synchronisation flags). Sub-ops 4/5 yield wait=chanWaitSpeed and leave the cursor on the instruction.",
+   "confidence": "high",
+   "notes": "Verified in the root program (e.g. 5005 1000 = wait until flag 0x1000).",
+   "refs": [
+    {
+     "word": 1,
+     "kind": "code",
+     "cond": "(op >> 12) in (2, 3)"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x006": {
+   "name": "LoadFile",
+   "length": "4 if (op & 0x8000) == 0 else 2",
+   "operands": [
+    {
+     "name": "source (only when bit15 clear)",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "bit15 clear: slot=op>>9 (0..63); param0 = source: lo byte 0xFF -> dest ctx+0xB8; lo<0x80 -> dest=Magic_b_00[lo] (+ sub-table offset via dword_1874894/dword_18748B0 indexed by hi byte unless hi==0xFF); lo&0x80 -> dest=Magic_b_00[lo&0x7F]+(hi<<12). bit15 set: slot=(op>>9)&0x3F, dest=ctx+0xB8; if slot&0x20 the file id = (slot&0x1F)+363 and Magic_b_00 is not updated.",
+   "flow": "none",
+   "semantics": "Starts an async battle-file load (pre_LoadBattleFile, callback B2BB40) of file ctx->frameLimit+ctx[0xA2]+slot into dest, records Magic_b_00[ctx[0xA2]+slot]=dest, ctx+0xB4=dest, sets busy flag byte_2798219. If a load is already busy: wait chanWaitSpeed and retry the same instruction.",
+   "confidence": "high",
+   "notes": "Old IDA name au_re_BattleFile_preLoad_55 was wrong. Length: cursor=&param0 when (s16)op<=0 i.e. bit15 set, else &param1. Seen: 8406 (len 2), 0c06 0501 (len 4).",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x007": {
+   "name": "SetFreezeOthers",
+   "length": "2",
+   "operands": [],
+   "high_bits": "bit15 -> rt->boneSkipFlag=0xFF; bit14 -> boneSkipFlag=0",
+   "flow": "none",
+   "semantics": "Freeze/unfreeze other bones; marks current bone 0x80 in the bone order list (keeps running).",
+   "confidence": "high",
+   "notes": "Existing name kept.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x008": {
+   "name": "WaitLoadDone",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "yield",
+   "semantics": "If a file load is busy (byte_2798219) or not completed (byte_2798218==0): wait chanWaitSpeed and retry; else advance.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x009": {
+   "name": "Wait",
+   "length": "2",
+   "operands": [],
+   "high_bits": "op>>9 = tick count",
+   "flow": "yield",
+   "semantics": "vmWaitRequest = (op>>9)<<7 (128 = one tick at the default chanWaitSpeed).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x00A": {
+   "name": "SetAccum",
+   "length": "2 + 2*popcount((op >> 10) & 0x3F)",
+   "operands": [
+    {
+     "name": "one value per set mask bit, bit15 first",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x00: mode 0 Set, field desc 0): target accum (accumRotXYZ +0x50..0x58, accumPosXYZ +0x5C..0x64), encoding s32 16.16, value<<16; postAction 1: run BoneHandlerTable[bone->handlerId] then outAngle=HIWORD(accumRot) (B2C440). Operands: one s16 per set mask bit, 0x7654 = leave component unchanged.",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x00B": {
+   "name": "SetVel",
+   "length": "2 + 2*popcount((op >> 10) & 0x3F)",
+   "operands": [
+    {
+     "name": "one value per set mask bit, bit15 first",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x01: mode 0 Set, field desc 1): target vel (velRotXYZ +0x68..0x70, velPosXYZ +0x74..0x7C), encoding s32, value<<8; no post action. Operands: one s16 per set mask bit, 0x7654 = leave component unchanged.",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x00C": {
+   "name": "SetAccel",
+   "length": "2 + 2*popcount((op >> 10) & 0x3F)",
+   "operands": [
+    {
+     "name": "one value per set mask bit, bit15 first",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x02: mode 0 Set, field desc 2): target accel (accelRotXYZ +0x80..0x84, accelPosXYZ +0x86..0x8A), encoding s16, set: value>>4 / add+random: value<<4; postAction 2: recompute bone->flags (bit0 if any accelRot!=0, bit3 if any accelPos!=0) = integrator enable (B2D460). Operands: one s16 per set mask bit, 0x7654 = leave component unchanged.",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x00D": {
+   "name": "SetAllAccum",
+   "length": "4",
+   "operands": [
+    {
+     "name": "value/range (applied to all masked components)",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x10: mode 1 SetAll, field desc 0): target accum (accumRotXYZ +0x50..0x58, accumPosXYZ +0x5C..0x64), encoding s32 16.16, value<<16; postAction 1: run BoneHandlerTable[bone->handlerId] then outAngle=HIWORD(accumRot) (B2C440). Operands: one s16 written to every masked component.",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x00E": {
+   "name": "SetAllVel",
+   "length": "4",
+   "operands": [
+    {
+     "name": "value/range (applied to all masked components)",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x11: mode 1 SetAll, field desc 1): target vel (velRotXYZ +0x68..0x70, velPosXYZ +0x74..0x7C), encoding s32, value<<8; no post action. Operands: one s16 written to every masked component.",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x00F": {
+   "name": "SetAllAccel",
+   "length": "4",
+   "operands": [
+    {
+     "name": "value/range (applied to all masked components)",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x12: mode 1 SetAll, field desc 2): target accel (accelRotXYZ +0x80..0x84, accelPosXYZ +0x86..0x8A), encoding s16, set: value>>4 / add+random: value<<4; postAction 2: recompute bone->flags (bit0 if any accelRot!=0, bit3 if any accelPos!=0) = integrator enable (B2D460). Operands: one s16 written to every masked component.",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x010": {
+   "name": "AddAccum",
+   "length": "2 + 2*popcount((op >> 10) & 0x3F)",
+   "operands": [
+    {
+     "name": "one value per set mask bit, bit15 first",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x20: mode 2 Add, field desc 0): target accum (accumRotXYZ +0x50..0x58, accumPosXYZ +0x5C..0x64), encoding s32 16.16, value<<16; postAction 1: run BoneHandlerTable[bone->handlerId] then outAngle=HIWORD(accumRot) (B2C440). Operands: one s16 per set mask bit added, 0x7654 = skip.",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x011": {
+   "name": "SetVelInt",
+   "length": "2 + 2*popcount((op >> 10) & 0x3F)",
+   "operands": [
+    {
+     "name": "one value per set mask bit, bit15 first",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x03: mode 0 Set, field desc 3): target vel (velRotXYZ +0x68..0x70, velPosXYZ +0x74..0x7C), encoding s32, value<<16; no post action. Operands: one s16 per set mask bit, 0x7654 = leave component unchanged.",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x012": {
+   "name": "AddRandomAccum",
+   "length": "2 + 2*popcount((op >> 10) & 0x3F)",
+   "operands": [
+    {
+     "name": "one value per set mask bit, bit15 first",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x30: mode 3 AddRandom, field desc 0): target accum (accumRotXYZ +0x50..0x58, accumPosXYZ +0x5C..0x64), encoding s32 16.16, value<<16; postAction 1: run BoneHandlerTable[bone->handlerId] then outAngle=HIWORD(accumRot) (B2C440). Operands: one s16 range per set bit, adds rand(range) (0 = skip, word still consumed).",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x013": {
+   "name": "AddRandomVel",
+   "length": "2 + 2*popcount((op >> 10) & 0x3F)",
+   "operands": [
+    {
+     "name": "one value per set mask bit, bit15 first",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x31: mode 3 AddRandom, field desc 1): target vel (velRotXYZ +0x68..0x70, velPosXYZ +0x74..0x7C), encoding s32, value<<8; no post action. Operands: one s16 range per set bit, adds rand(range) (0 = skip, word still consumed).",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x014": {
+   "name": "AddRandomAccel",
+   "length": "2 + 2*popcount((op >> 10) & 0x3F)",
+   "operands": [
+    {
+     "name": "one value per set mask bit, bit15 first",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x32: mode 3 AddRandom, field desc 2): target accel (accelRotXYZ +0x80..0x84, accelPosXYZ +0x86..0x8A), encoding s16, set: value>>4 / add+random: value<<4; postAction 2: recompute bone->flags (bit0 if any accelRot!=0, bit3 if any accelPos!=0) = integrator enable (B2D460). Operands: one s16 range per set bit, adds rand(range) (0 = skip, word still consumed).",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x015": {
+   "name": "AddRandomVelInt",
+   "length": "2 + 2*popcount((op >> 10) & 0x3F)",
+   "operands": [
+    {
+     "name": "one value per set mask bit, bit15 first",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x33: mode 3 AddRandom, field desc 3): target vel (velRotXYZ +0x68..0x70, velPosXYZ +0x74..0x7C), encoding s32, value<<16; no post action. Operands: one s16 range per set bit, adds rand(range) (0 = skip, word still consumed).",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x016": {
+   "name": "AddRandomAllAccum",
+   "length": "4",
+   "operands": [
+    {
+     "name": "value/range (applied to all masked components)",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x40: mode 4 AddRandomAll, field desc 0): target accum (accumRotXYZ +0x50..0x58, accumPosXYZ +0x5C..0x64), encoding s32 16.16, value<<16; postAction 1: run BoneHandlerTable[bone->handlerId] then outAngle=HIWORD(accumRot) (B2C440). Operands: one range; ONE rand(range) added to every masked component.",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x017": {
+   "name": "AddRandomPairAccum",
+   "length": "2 + 4*popcount((op >> 10) & 0x3F)",
+   "operands": [
+    {
+     "name": "(base,range) pair per set mask bit",
+     "type": "s16,s16"
+    }
+   ],
+   "high_bits": "Component mask = bits 15..10, walked from bit 15: 15=RotX 14=RotY 13=RotZ 12=PosX 11=PosY 10=PosZ (6 components, not 3). Bit 9 ignored.",
+   "flow": "none",
+   "semantics": "Generic write (attrib 0x50: mode 5 AddRandomPair, field desc 0): target accum (accumRotXYZ +0x50..0x58, accumPosXYZ +0x5C..0x64), encoding s32 16.16, value<<16; postAction 1: run BoneHandlerTable[bone->handlerId] then outAngle=HIWORD(accumRot) (B2C440). Operands: two s16 (a,b) per set bit: adds ((b<0 ? -a : a) + rand(b)); a first rand(a) call is made and discarded.",
+   "confidence": "high",
+   "notes": "Handler GF_Ifrit_AnimVM_GenericOpcode, shared by 0x0A-0x17 only (0x18/0x19 are NULL in the opcode table; no other index uses it). AttribTable@0x1874ED6 (indexed by opcode), FieldDescTable@0x1874EF0 {off,shift,size,post}: 0={0x50,16,4,1} 1={0x68,8,4,0} 2={0x80,4,2,2} 3={0x68,16,4,0}. Quirk: size-2 field (accel) mode 0/1/4 uses value>>shift but mode 2/3/5 use value<<shift.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x01A": {
+   "name": "SetBoneHandler",
+   "length": "4 + 2*(w[0] & 0xF)",
+   "operands": [
+    {
+     "name": "hi byte = boneHandlerId, lo nibble = N extra words",
+     "type": "u16"
+    },
+    {
+     "name": "N handler parameter words",
+     "type": "s16[N]"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "bone->handlerId(+0x18) = param0>>8; bone+0xA0 = pointer to param1 (inline handler parameter block of N words, read later by the bone handler).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x01B": {
+   "name": "Nop4",
+   "length": "4",
+   "operands": [
+    {
+     "name": "ignored",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "No effect, skips one operand word.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x01C": {
+   "name": "PokeBoneField",
+   "length": "6",
+   "operands": [
+    {
+     "name": "boneOffset",
+     "type": "u16"
+    },
+    {
+     "name": "value",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "op>>9 == 1 -> write s16, otherwise write u8",
+   "flow": "none",
+   "semantics": "*(bone + param0) = param1 (byte or word). Raw field poke on the current bone.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x01D": {
+   "name": "WaitBoneGoneThenEnd",
+   "length": "4",
+   "operands": [
+    {
+     "name": "boneRef",
+     "type": "bone_id"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "yield",
+   "semantics": "Resolve bone ref param0 (GfCinematic_GetRotationVector @0xB65370 = find bone by id in the order list; 0xFFF0+ = relative refs via self/parent ids at +0x14/+0x16, bit14 = id relative to bone[0x1B]). While it exists: wait 128 (1 tick) and retry. When not found (returns bones[0]): executes op 0x00 (end channel / kill bone).",
+   "confidence": "high",
+   "notes": "Cursor never advances; length 4 is nominal (param0 read at +2). B65370 is misnamed in IDA (it is FindBoneByRef).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x01E": {
+   "name": "SetLoopCounter",
+   "length": "4",
+   "operands": [
+    {
+     "name": "count",
+     "type": "u16 (low byte stored)"
+    }
+   ],
+   "high_bits": "op>>14 = counter index (0..3)",
+   "flow": "none",
+   "semantics": "bone byte[+0x20 + (op>>14)] = param0 (loop counter for op 0x1F).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x01F": {
+   "name": "LoopDecJump",
+   "length": "4",
+   "operands": [
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "op>>14 = counter index",
+   "flow": "cond_jump",
+   "semantics": "--bone[+0x20+(op>>14)]; if nonzero cursor = opcode+param0 (backward loop) else fall through.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x020": {
+   "name": "SetFadeLayers",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "RGB = clamp(outPosX/Y/Z,0..255) packed (B66A90); intensity = clamp(16*outAngleX,0..4096); writes intensity+colour into the 4 entries of stru_1D9898C (global colour/fade layers, 44 bytes each; op 0x6D toggles their bit1).",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x021": {
+   "name": "SetDataPointer",
+   "length": "8",
+   "operands": [
+    {
+     "name": "offset",
+     "type": "u32 (two words, lo first)"
+    },
+    {
+     "name": "size",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bit15: base = Magic_b_01+*(Magic_b_01+0x1C) else MAGIC_TEXTURE_BUFFER_PTR. sub=(op>>12)&7: 1 -> ctx+0xB8 = base+offset; 2 -> ctx+0x212 = base+offset, half=(size<<8)/2 stored, ctx+0x216 = ptr + half*pingPong (double buffer); other -> ctx+0x74 and ctx+0x70 = base+offset (bump arena base/cursor).",
+   "flow": "none",
+   "semantics": "Sets engine work-buffer pointers inside the magic texture buffer.",
+   "confidence": "high",
+   "notes": "Root program starts with 0021 {0x50000} and 1021 {0x40000}.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x022": {
+   "name": "ApplyActionResult",
+   "length": "2",
+   "operands": [],
+   "high_bits": "(op & 0xF000)==0x8000 -> all targets",
+   "flow": "none",
+   "semantics": "Applies the GF action result (ctx+0xCC -> action: target array +8, count +16): all targets (ApplyActionResultToTargets) or only the target whose TargetSlotId == bone+0x1B (ApplyActionResultToTarget).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x023": {
+   "name": "SetBlendMode",
+   "length": "2",
+   "operands": [],
+   "high_bits": "op>>9 = abr 0..3 (semi-transparent); >3 = opaque",
+   "flow": "none",
+   "semantics": "<=3: bone+0xCC |= 0x02000000 (semi-trans), bone+0x92 bits5-6 = abr; >3: clear semi-trans bit, bits5-6 = 1.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x024": {
+   "name": "SetOptionBits",
+   "length": "2",
+   "operands": [],
+   "high_bits": "v=op>>9: if (v&3)!=0 bone+0xDE = v else bone+0xDE |= v",
+   "flow": "none",
+   "semantics": "Sets the bone's draw option byte +0xDE (OT bias / blending variants).",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x025": {
+   "name": "SetSpriteOriented",
+   "length": "4",
+   "operands": [
+    {
+     "name": "spriteRef",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Same as op 0x36 (sprite setup, draw handler 5) then orientation byte bone+0x1E = 9.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x026": {
+   "name": "StartChannel",
+   "length": "6",
+   "operands": [
+    {
+     "name": "channel (0 = first free of 1..2)",
+     "type": "u16"
+    },
+    {
+     "name": "program",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "spawn",
+   "semantics": "bone->chanStreamPtr[ch] = opcode + param1, chanWait[ch]=0, return-stack depth[ch]=0 (B2D8A0). Starts a parallel script on the SAME bone. If param0==0 and channels 1,2 are busy the scan reaches index 3 (overflows into chanWait); if that is nonzero too the instruction is skipped.",
+   "confidence": "high",
+   "notes": "Offset relative to the opcode word.",
+   "refs": [
+    {
+     "word": 1,
+     "kind": "spawn"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x027": {
+   "name": "UploadAltTexAndImage",
+   "length": "4",
+   "operands": [
+    {
+     "name": "textureId",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "yield",
+   "semantics": "If a file load is busy: wait+retry. Else upload alternative texture param0 (isGF_Ifrit_AltTextureLoader @B2E700: Magic_ReadAlternativeTexture + GF_AlternativeTexture_UNK), then rewinds 4 and uploads image param0 from the loaded-file table (B2E750, as op 0x28). Each step waits chanWaitSpeed and retries the whole instruction if the VRAM queue is full.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x028": {
+   "name": "UploadImage",
+   "length": "4",
+   "operands": [
+    {
+     "name": "imageId",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "yield",
+   "semantics": "Thunk to B2E750: if load busy wait; else B66560(param0) resolves image data (ctx+0xA8 index -> Magic_b_00 file) + RECT (ctx+0x9C table) and queues the VRAM upload; queue full -> wait+retry, success -> advance 4.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x029": {
+   "name": "VramUpload",
+   "length": "4 if (op & 0x8000) else (8 if (op & 0x4000) else (10 if (op & 0x2000) else 4))",
+   "operands": [
+    {
+     "name": "rectIndex / textureId / inline RECT x",
+     "type": "s16"
+    },
+    {
+     "name": "(bit14) file index / (bit13) RECT y",
+     "type": "s16"
+    },
+    {
+     "name": "(bit14) 4KB page / (bit13) RECT w",
+     "type": "s16"
+    },
+    {
+     "name": "(bit13) RECT h",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bit15: rect=ctx+0x98 table[param0] (8-byte RECTs), data=ctx+0xB4 (last loaded file) len 4; else bit14: rect=table[param0], data=Magic_b_00[param1&0x7F]+(param2<<12) len 8; else bit13: inline RECT {x,y,w,h}=param0..3, data=ctx+0xB4 len 10; else: alt-texture upload of param0 (as op 0x27 first half) len 4.",
+   "flow": "none",
+   "semantics": "Queues Battle_QueueVramUpload_Type0_RectData. Waits+retries while a file load is busy.",
+   "confidence": "high",
+   "notes": "Seen in Ifrit: 2029 {704,256,64,256}.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x02A": {
+   "name": "StopChannels",
+   "length": "2",
+   "operands": [],
+   "high_bits": "op>>14 = channel (1..3); 0 = channels 1 and 2",
+   "flow": "none",
+   "semantics": "bone->chanStreamPtr[ch]=0 (kills parallel channel scripts on the current bone).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x02B": {
+   "name": "PlaySE",
+   "length": "4",
+   "operands": [
+    {
+     "name": "attr",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "op>>9 = sound index in the table at ctx+0xC4",
+   "flow": "none",
+   "semantics": "BdPlaySE(ctx+0xC4 table[op>>9], attr=param0, pos=0x80 centre).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x02C": {
+   "name": "StopSoundChannels",
+   "length": "2",
+   "operands": [],
+   "high_bits": "(op>>9)&0xF = channel mask (bit n -> sound channel n+1)",
+   "flow": "none",
+   "semantics": "sub_46B450(0, mask): stops the masked sound channels.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x02D": {
+   "name": "SetCameraFlag",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "BYTE1(CAMERA_FLAG_RELATED) |= 0x80.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x02E": {
+   "name": "SetBoneIdShort",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "bone id (+0x12) = the NEXT stream word (param0), but the cursor only advances 2, so that word is then executed as an opcode.",
+   "confidence": "medium",
+   "notes": "Looks like a bug/variant of 0x33 (same write, len 4). Not reached in the Ifrit script.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x02F": {
+   "name": "StopMotion",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Zero velRot/velPos/accelRot/accelPos (+0x68..+0x8B), recompute integrator flags (B2D460).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x030": {
+   "name": "PlaySummonStream",
+   "length": "2",
+   "operands": [],
+   "high_bits": "op>>9 = stream argument",
+   "flow": "none",
+   "semantics": "BdPlaySummonStream(0x80, 1, op>>9).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x031": {
+   "name": "TransSummonStream",
+   "length": "2",
+   "operands": [],
+   "high_bits": "(op>>9)&0xF = stream slot; bit15 -> byte_1D96DC4=0",
+   "flow": "none",
+   "semantics": "If file load busy wait+retry; else BdTransSummonStream(B25DB0(slot), &ctx+0xA3 ready flag). Pair with 0x34.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x032": {
+   "name": "SpawnBone",
+   "length": "4",
+   "operands": [
+    {
+     "name": "program",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "spawn",
+   "semantics": "If the bone order list has room (list[sceneHeader+0x38 - 1]==0xFF): take the first free bone slot (chanStreamPtr[0]==0), append it to the order list, its chan0 = opcode+param0, ++sceneHeader+0x18, init (B65160), copy accumRot/accumPos, handlerId, renderListOffset, +0x1B target slot and +0xB0..0xB7 from the current bone; new+0x14 = parent id, new+0x16 = parent+0x14, new id = sceneHeader[0]++; run its bone handler; workspace+0xFC = new bone. Else skip.",
+   "confidence": "high",
+   "notes": "Most common opcode in the Ifrit script (97 reached hits). Program offset relative to the opcode word; new bone runs in the same tick if later in the order list.",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "spawn"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x033": {
+   "name": "SetBoneId",
+   "length": "4",
+   "operands": [
+    {
+     "name": "id",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "bone id (+0x12) = param0 (key for node matrices and bone refs).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x034": {
+   "name": "WaitStreamReady",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "yield",
+   "semantics": "If ctx+0xA3 (summon-stream ready flag set by 0x31) == 0: wait chanWaitSpeed and retry; else advance.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x035": {
+   "name": "NullNoAdvance",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "nullsub: does not advance the cursor nor set a wait -> infinite loop if executed. Unused.",
+   "confidence": "high",
+   "notes": "Length unknown/irrelevant (never used).",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x036": {
+   "name": "SetSprite",
+   "length": "4",
+   "operands": [
+    {
+     "name": "spriteRef (bit15: hi7=group, lo8=frame)",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "B66270: semi-trans bits in +0xCC, frame-script pointers +0xD0/+0xD4/+0xD8 and descriptor +0xE4 from the sprite table (param0 bit15 selects group/frame form), sets draw handler 5 (B65320 also appends the bone to the draw order list); orientation +0x1E = 1.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x037": {
+   "name": "ResetAccum",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Zero accumRot/accumPos (+0x50..+0x67), run the bone handler, outAngle = HIWORD(accumRot).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x038": {
+   "name": "SetTargetModelColor",
+   "length": "2",
+   "operands": [],
+   "high_bits": "(op & 0xFE00) != 0 -> source outAngleXYZ, else outPosXYZ",
+   "flow": "none",
+   "semantics": "RGB = clamp(base colour bytes at CURRENT_BS_MODEL_PALETTE + src - 128) packed, stored at (*(sceneHeader+0x60+4*bone[0x1B]))+0x28: tints the battle model of the target slot.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x039": {
+   "name": "CameraAndSound",
+   "length": "4",
+   "operands": [
+    {
+     "name": "lookAtBoneRef / voice (lo=slot, hi=sound-1)",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "op>>12 sub-op (see IDA comment)",
+   "flow": "none",
+   "semantics": "Camera / sound opcode (existing name kept).",
+   "confidence": "high",
+   "notes": "All sub-ops consume 4 bytes.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x03A": {
+   "name": "NullNoAdvance",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "nullsub: no advance, no wait (hang if executed). Unused.",
+   "confidence": "high",
+   "notes": "Length unknown.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x03B": {
+   "name": "SequenceFlags",
+   "length": "4",
+   "operands": [
+    {
+     "name": "bits (bit15 = clear)",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "param0>=0: SequenceState+8 |= param0; else SequenceState+8 &= ~(param0&0x7FFF).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x03C": {
+   "name": "SetMeshScaled",
+   "length": "4",
+   "operands": [
+    {
+     "name": "meshId",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "B2F380: clear semi-trans, +0xBC=0, mesh ptr +0xD8 = B657E0(meshId), draw handler 1 registered; then drawHandlerId=2 (mesh with outAngle*16 XYZ scale).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x03D": {
+   "name": "SetMeshTexParam",
+   "length": "8",
+   "operands": [
+    {
+     "name": "drawHandler",
+     "type": "u16"
+    },
+    {
+     "name": "meshRes",
+     "type": "u16"
+    },
+    {
+     "name": "texParam",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "colour(+0xCC)=0x808080 keeping bit25; meshPtr(+0xD8)=MagResource(w1); +0xB8=16*w2; +0xBC=0; SetDrawHandler(w0 & 0xFF) (also adds the bone to the draw order list).",
+   "confidence": "high",
+   "notes": "MagResource = sub_B657E0 (b00 resource table via ctx+0xAC).",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x03E": {
+   "name": "SetInlineDescriptor3",
+   "length": "8",
+   "operands": [
+    {
+     "name": "data0",
+     "type": "s16"
+    },
+    {
+     "name": "data1",
+     "type": "s16"
+    },
+    {
+     "name": "data2",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "bone+0xBC = pointer to the 3 inline words following the opcode (&w0); data read by the draw handler.",
+   "confidence": "high",
+   "notes": "Verified: 003e ffff 0005 0006 0209 ... (3 words then wait).",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x03F": {
+   "name": "CreateEmbeddedModel",
+   "length": "4",
+   "operands": [
+    {
+     "name": "modelRes",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Allocates (bump arena, 0x80 bytes) an embedded battle-model instance from mag resource w0 (skeleton/anim/geometry, BattleAnimHeader+Cmd, pre_Battle_ReadAnimation), stores it at bone+0xBC and selects draw handler 3 (the creature).",
+   "confidence": "high",
+   "notes": "Sub-function 0xB26860 renamed GF_201Ifrit_CreateEmbeddedModelInstance.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x040": {
+   "name": "ColourFromBoneOutPos",
+   "length": "4",
+   "operands": [
+    {
+     "name": "srcBone",
+     "type": "bone_ref"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "bone colour(+0xCC) RGB = clamp(0..255) of srcBone outPos X/Y/Z, top byte kept.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x041": {
+   "name": "EmbeddedModelFlags",
+   "length": "6 if (op >> 12) == 1 else 4",
+   "operands": [
+    {
+     "name": "bits_or_data0",
+     "type": "u16"
+    },
+    {
+     "name": "data1 (sub-op 1 only)",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "op>>12 sub-op: 0 = clear bits w0 in instance word +2; 1 = set flag 0x400 in instance word +2 and instance+0x7C = &w0 (2 inline words); 8 = set bits w0; any other sub-op does NOT advance the cursor (hang, never used).",
+   "flow": "none",
+   "semantics": "Flag/override operations on the embedded model instance at bone+0xBC (created by 0x3F).",
+   "confidence": "medium",
+   "notes": "Meaning of sub-op 1 inline data unknown (read by draw handler 3).",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x042": {
+   "name": "EntityAnimSeq",
+   "length": "4",
+   "operands": [
+    {
+     "name": "seqIndex_or_target",
+     "type": "s16 (sub 0: battle-entity AnimSeq index; sub 2: rel16)"
+    }
+   ],
+   "high_bits": "op>>9 = sub-op: 0 = start anim seq; 2 = test anim finished. Any other value returns without advancing the cursor (would hang; unused).",
+   "flow": "none",
+   "semantics": "Entity = SceneHeader entity ptr [bone+0x1B] (bone's battle-entity slot, SceneHeader+0x60+4*slot). Sub 0: QueueChainTransformation(entity, p0) = start that entity's section-5 AnimSeq p0 (multi-part chain aware; bit 0x1000 forces). Sub 2: if entity.anim_cmd.current_frame (+0x72) == total_frames (+0x73) jump rel p0.",
+   "confidence": "high",
+   "notes": "Handlers identical. Validated: Bahamut '0042 0004 5005', '0042 0004 0002'; Brothers '0042 0004 5005 0020'; Bahamut sub 2 '0442 0074 0001'.",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code",
+     "cond": "(op >> 9) == 2"
+    }
+   ],
+   "fallthrough": true,
+   "gfs": [
+    "Bahamut",
+    "Brothers"
+   ]
+  },
+  "0x043": {
+   "name": "SetDrawHandlerInlineData",
+   "length": "6 + 2*w[1]",
+   "operands": [
+    {
+     "name": "drawHandler",
+     "type": "u16"
+    },
+    {
+     "name": "wordCount",
+     "type": "u16"
+    },
+    {
+     "name": "data[wordCount]",
+     "type": "s16[]"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "SetDrawHandler(w0); bone+0xB8 = pointer to the inline block of w1 words; bone+0xBC=0; cursor skips the block.",
+   "confidence": "high",
+   "notes": "Verified in MAG200_B.00: 0043 0015 0003 xxxx xxxx xxxx -> draw handler 21 (texture scroll) with 3 inline words, next word is a valid opcode.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x044": {
+   "name": "SetDrawHandlerInlineDataReset",
+   "length": "6 + 2*w[1]",
+   "operands": [
+    {
+     "name": "drawHandler",
+     "type": "u16"
+    },
+    {
+     "name": "wordCount",
+     "type": "u16"
+    },
+    {
+     "name": "data[wordCount]",
+     "type": "s16[]"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "As 0x43 and also clears bone+0xC0 and bone+0xC4 (handler frame/timer state).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x045": {
+   "name": "EntityFlagBits",
+   "length": "4",
+   "operands": [
+    {
+     "name": "bits",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "op>>12: 0 = set bits w0; 1 = clear bits only if (sceneHeader+0x4E[slot] & w0)==0; 8 = clear bits; others = no-op.",
+   "flow": "none",
+   "semantics": "Sets/clears bits in the first u16 (entity_flags/status_flags) of the FF8BattleEntitySlotData of bone->slotId (sceneHeader+0x60 table).",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x046": {
+   "name": "JumpIfTargetResult",
+   "length": "4",
+   "operands": [
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "op>>9 condition on the target record (ctx+0xCC list, 24-byte entries, entry[0]==bone slot): 1 = jump if entry[3]&4; 2 = jump if entry[2]&8; 3 = jump if entry[3]&2; 4 = jump if BATTLE_SLOT_DATA[slot].status_2 & 0x2000; other (0,5..127) = jump if !(entry[3]&4).",
+   "flow": "cond_jump",
+   "semantics": "Conditional jump to opcode address + w0 on the action-result state of the bone's target slot; else falls through (4 bytes).",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x047": {
+   "name": "CameraShakeFromOutPos",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "BATTLE_CAMERA_SHAKE_OFFSET_X/Y/Z = current bone outPos X/Y/Z.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x048": {
+   "name": "OverrideEntityTransform",
+   "length": "2",
+   "operands": [],
+   "high_bits": "(op>>9)&0xF: 0 = entity based_position(+0x1C..+0x20) = outPos, and if bit15 also entity+0x24 = outPosY; 1 = entity based_rotation(+0x0C..+0x10) = outAngle; others = flag only. Always entity status_flags |= 0x10.",
+   "flow": "none",
+   "semantics": "Drives the battle entity of bone->slotId from the bone outputs.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x049": {
+   "name": "JumpIfEntitySize",
+   "length": "6",
+   "operands": [
+    {
+     "name": "value",
+     "type": "s16"
+    },
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "op & 0xFE00 != 0: fall through if entity+0x26 >= w0 else jump; == 0: fall through if entity+0x26 <= w0 else jump.",
+   "flow": "cond_jump",
+   "semantics": "Compares entity+0x26 (s16; IDB name animation_speed_factor, used as size/radius by 0x60/0x75) with w0, jumps to opcode address + w1.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [
+    {
+     "word": 1,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x04A": {
+   "name": "SetMeshDrawHandler",
+   "length": "4",
+   "operands": [
+    {
+     "name": "meshRes",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "op>>9 = draw handler id",
+   "flow": "none",
+   "semantics": "colour &= 0x2FFFFFF; +0xBC=0; meshPtr(+0xD8)=MagResource(w0); SetDrawHandler(op>>9).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x04B": {
+   "name": "TintPaletteUpload",
+   "length": "10 if (op >> 12) == 1 else (8 if (op >> 12) == 2 else 6)",
+   "operands": [
+    {
+     "name": "clutRes (lo=res id, hi=dest bank)",
+     "type": "u16"
+    },
+    {
+     "name": "firstColour",
+     "type": "u16"
+    },
+    {
+     "name": "colourCount (sub-op 1/2)",
+     "type": "s16"
+    },
+    {
+     "name": "rgbSrcBone (sub-op 1)",
+     "type": "bone_ref"
+    }
+   ],
+   "high_bits": "op>>12: 0 = 256 colours, delta from own outAngle; 1 = w2 colours, delta from bone w3 outAngle; 2 = w2 colours, own outAngle.",
+   "flow": "none",
+   "semantics": "Copies CLUT resource (w0&0xFF) from colour w1, adds a 5-bit RGB delta (outAngle X/Y/Z, <32) to each 15-bit colour into bank 0x279822C+512*(w0>>8), uploads it as alternate texture palette.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x04C": {
+   "name": "SetBoneHandler",
+   "length": "4",
+   "operands": [
+    {
+     "name": "boneHandler",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "boneHandlerId(+0x18) = w0; runs BoneHandlerTable[w0] immediately.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x04D": {
+   "name": "SetupScreenTint",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "boneHandlerId=0, renderListOffset=0, SetDrawHandler(4) (full-screen tint).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x04E": {
+   "name": "SetDescriptorInlineData",
+   "length": "6 + 2*w[1]",
+   "operands": [
+    {
+     "name": "slot",
+     "type": "u16"
+    },
+    {
+     "name": "wordCount",
+     "type": "u16"
+    },
+    {
+     "name": "data[wordCount]",
+     "type": "s16[]"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "*(u32*)(bone+0xB8+4*w0) = pointer to inline block of w1 words; cursor skips the block.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x04F": {
+   "name": "Nop4F",
+   "length": "8",
+   "operands": [
+    {
+     "name": "unused0",
+     "type": "s16"
+    },
+    {
+     "name": "unused1",
+     "type": "s16"
+    },
+    {
+     "name": "unused2",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "No-op, skips 3 words.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x050": {
+   "name": "FreeArenaBlock",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Arena top (ctx+0x74) -= bone+0xC4 bytes (4-aligned): releases the bone's pool.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x051": {
+   "name": "SetOptionBitsAndC0",
+   "length": "4",
+   "operands": [
+    {
+     "name": "valueC0",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "op>>9 ORed into option bits +0xDE",
+   "flow": "none",
+   "semantics": "bone+0xDE |= op>>9; bone+0xC0 (u16) = w0.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x052": {
+   "name": "SetTexture",
+   "length": "4",
+   "operands": [
+    {
+     "name": "texRes",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "w0 == -1: clear tpage(+0x92), uv(+0x9A), clut(+0x9E); else set them from texture resource w0 (tpage keeps bits 0x60).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x053": {
+   "name": "MusicVolume",
+   "length": "4",
+   "operands": [
+    {
+     "name": "volume",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "bit15: 1 = Music_SetVolumeTrans(channel 0); 0 = sub_47E3C0 (credits/intro channel, skipped if ENCOUTER_BATTLE_FLAG&2)",
+   "flow": "none",
+   "semantics": "Sets music volume w0 (low byte), no transition.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x054": {
+   "name": "SetMesh",
+   "length": "4",
+   "operands": [
+    {
+     "name": "meshRes",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "colour &= 0x2FFFFFF; +0xBC=0; meshPtr(+0xD8)=MagResource(w0); SetDrawHandler(1).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x055": {
+   "name": "JumpIfSummonState",
+   "length": "4",
+   "operands": [
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "op>>9: 1 = jump if ctx+0xD0 != ctx+0xD1; 2 = jump if (rec.byte1 & 3)==1; 3 = jump if rec.byte1 & 2; other = jump if ctx+0xD0 != 0 (rec = *(ctx+0xC0)).",
+   "flow": "cond_jump",
+   "semantics": "Conditional jump to opcode address + w0 on summon-wide state.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x056": {
+   "name": "SetClippedMesh",
+   "length": "6",
+   "operands": [
+    {
+     "name": "meshRes",
+     "type": "u16"
+    },
+    {
+     "name": "clipMode",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "As 0x54, then draw handler 9 (Y-plane clipped mesh) and +0xC2 = w1.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x057": {
+   "name": "Nop57",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "No-op.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x058": {
+   "name": "CreateParticlePool",
+   "length": "4",
+   "operands": [
+    {
+     "name": "count",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Allocates 80*w0+16 bytes (arena) as particle pool at +0xB8, clears it, SetDrawHandler(6).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x059": {
+   "name": "EmitParticle",
+   "length": "6 if op & 0x1000 else 4",
+   "operands": [
+    {
+     "name": "poolBone (bit12 only)",
+     "type": "bone_ref"
+    },
+    {
+     "name": "particleScript",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "bit12 = emit into the pool of bone w0 (else own pool).",
+   "flow": "spawn",
+   "semantics": "Takes next ring slot of the pool, starts its particle mini-script at (bit12: address of w0 + w1; else opcode address + w0); particle pos = current bone outPos<<8, tpage/uv/colour from pool bone.",
+   "confidence": "high",
+   "notes": "Bug: with bit12, if w0 resolves to no bone (bones[0]) the cursor advances only 4 bytes. Verified: runs like 0059 0016 0059 0012 0059 000e 0059 000a 0209 0002 ffee all point to the same particle script; 0x02 then loops back.",
+   "refs": [
+    {
+     "word": 1,
+     "kind": "particle",
+     "base": "word0",
+     "cond": "op & 0x1000"
+    },
+    {
+     "word": 0,
+     "kind": "particle",
+     "cond": "not (op & 0x1000)"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x05A": {
+   "name": "SetBoneHandlerParam",
+   "length": "6",
+   "operands": [
+    {
+     "name": "boneHandler",
+     "type": "u16"
+    },
+    {
+     "name": "paramB0",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "boneHandlerId=w0, bone+0xB0=w1, runs the handler.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x05B": {
+   "name": "AttachToModelJoint",
+   "length": "8 if op & 0x800 else 4",
+   "operands": [
+    {
+     "name": "modelBone",
+     "type": "bone_ref"
+    },
+    {
+     "name": "joint(lo)/nodeOfs(hi)",
+     "type": "u16"
+    },
+    {
+     "name": "scaleX16",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bit10 = use the battle entity of bone->slotId (w0 ignored); bit11 = explicit joint w1 & scale 16*w2 (else joint = own outAngleX, scale 4096, matrix scaled by modelBone outAngle*16); op>>12: 0 = accumPos = joint pos + run bone handler; 1 = own node = Cam x joint matrix; 2 = write joint matrix to bone+0x20+(w1>>8) (if nonzero) or own node.",
+   "flow": "none",
+   "semantics": "Attaches the bone to a joint of an embedded or battle model (BattleModel_BuildBoneMatricesFromPose + sub_B66B80).",
+   "confidence": "medium",
+   "notes": "Skips if modelBone has no model (+0xBC==0).",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x05C": {
+   "name": "SnapToBoneVertex",
+   "length": "8 if (op & 0x8000) else 6",
+   "operands": [
+    {
+     "name": "targetBone",
+     "type": "bone_id (GfCinematic_GetRotationVector)"
+    },
+    {
+     "name": "vertexIndex",
+     "type": "s16"
+    },
+    {
+     "name": "matrixParam (only when bit15 set)",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bit15 (curOpcode < 0) selects mode: clear = morph-lerp vertex path (3 words); set = model-vertex transform path (4 words). Other bits ignored.",
+   "flow": "none",
+   "semantics": "Sets the CURRENT bone's accumPos (<<16) to the position of vertex vertexIndex of another bone's model, then calls the current bone's BoneHandlerTable[handlerId]. bit15 clear: vertex = lerp(modelA.v, modelB.v, weightBone.outPos/256 per axis) from morph descriptor *(target+0xBC) = {weightBone, modelA, modelB}, scaled by target.outAngle (16*x/4096), + parent(target).outPos. bit15 set: matrix from parent(target).outAngle + matrixParam (sub_B65590), scaled by target.outAngle, transform target.outPos and vertex of target's model (*(target+0xD8)).",
+   "confidence": "high",
+   "notes": "All three are byte-identical clones. Validated: Brothers '805c 13ba 006c 0001 0209' x19 (8 B), Leviathan '005c 1dc4 0045 1c10' (6 B), Eden '805c 1676 0000 0000 0116'. Saves/restores g_GfCinematic_CurBonePtr via workspace+0x60.",
+   "refs": [],
+   "fallthrough": true,
+   "gfs": [
+    "Leviathan",
+    "Brothers",
+    "Eden"
+   ]
+  },
+  "0x05D": {
+   "name": "SpawnPerTarget",
+   "length": "4",
+   "operands": [
+    {
+     "name": "program",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "spawn",
+   "semantics": "For each target (count sceneHeader+0x41, slots at sceneHeader+0x48+i) spawns a clone bone via op 0x32's routine (0xB2D610) running program at opcode address + w0, and sets the clone's slotId(+0x1B).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "spawn"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x05E": {
+   "name": "PosFromSlotHome",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "accumPos = s16 xyz at sceneHeader+0x84+8*slot <<16; runs bone handler, refreshes outAngle.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x05F": {
+   "name": "PosFromEntityOffset",
+   "length": "8",
+   "operands": [
+    {
+     "name": "dx",
+     "type": "s16"
+    },
+    {
+     "name": "dy",
+     "type": "s16"
+    },
+    {
+     "name": "dz",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "accumPos = entity based_position + w (component skipped if w == 0x7654); boneHandlerId=1, runs handler 1.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x060": {
+   "name": "PosFromEntityJoint",
+   "length": "8 if op & 0x8000 else 4",
+   "operands": [
+    {
+     "name": "joint",
+     "type": "u16"
+    },
+    {
+     "name": "radiusMul",
+     "type": "s16"
+    },
+    {
+     "name": "angle",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bit15 = orbit: X += w1*(entity+0x26)*sin(16*w2)>>..., Z += ...cos.",
+   "flow": "none",
+   "semantics": "accumPos = world position of joint w0 of the slot entity (+ orbit offset); runs bone handler.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x061": {
+   "name": "CopyAccumFromBone",
+   "length": "6",
+   "operands": [
+    {
+     "name": "mask",
+     "type": "u16"
+    },
+    {
+     "name": "srcBone",
+     "type": "bone_ref"
+    }
+   ],
+   "high_bits": "shared with 0x62: only op word == 0x0061 exactly copies accumulators; any other word copies velocities",
+   "flow": "none",
+   "semantics": "For mask bits 0..5 (rotXYZ,posXYZ) copies srcBone accumRot/accumPos; refreshes outAngle, runs bone handler.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x062": {
+   "name": "CopyVelFromBone",
+   "length": "6",
+   "operands": [
+    {
+     "name": "mask",
+     "type": "u16"
+    },
+    {
+     "name": "srcBone",
+     "type": "bone_ref"
+    }
+   ],
+   "high_bits": "see 0x61",
+   "flow": "none",
+   "semantics": "Same as 0x61 with velRot/velPos.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x063": {
+   "name": "PosFromBoneViaParent",
+   "length": "6",
+   "operands": [
+    {
+     "name": "srcBone",
+     "type": "bone_ref"
+    },
+    {
+     "name": "rotOrder",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Transforms srcBone outPos by its parent bone's (parentNodeId as bone ref) rotation (order w1: 0,1,2,3) + outPos; result to own accumPos; runs bone handler.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x064": {
+   "name": "SetBoneSlot",
+   "length": "4 if (op & 0x9000) == 0x1000 else 2",
+   "operands": [
+    {
+     "name": "slot (bit12 only)",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "bit15 = slot of *(ctx+0xC0) (caster/primary); else bit12 = slot w0; else sceneHeader+0x48 (first target).",
+   "flow": "none",
+   "semantics": "Sets bone->slotId(+0x1B), the battle slot used by every entity opcode.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x065": {
+   "name": "NodeCamRotFromPos",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Node = Cam x Rot(outPos as angles), translation = camera translation.",
+   "confidence": "high",
+   "notes": "w0 not read.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x066": {
+   "name": "NodeCamTranslate",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Node = camera rotation, translation = Cam x outPos, projection = ctx+2.",
+   "confidence": "high",
+   "notes": "w0 not read.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x067": {
+   "name": "NodeCamRotTranslate",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "op>>12 = rotation order (0 default,1,2,3=ZYX)",
+   "flow": "none",
+   "semantics": "Node = Cam x Rot(outAngle), translation = Cam x outPos.",
+   "confidence": "high",
+   "notes": "w0 not read.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x068": {
+   "name": "SetParentNode",
+   "length": "4",
+   "operands": [
+    {
+     "name": "parentNodeId",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "parentNodeId(+0x9C) = w0 (param0, wiki says param1: wrong).",
+   "confidence": "high",
+   "notes": " Data uses w0 = 0xFFFF/0xFFFE/0xFFFD (bone-ref style special ids, resolved later by GetParentMatrix).",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x069": {
+   "name": "NodeChildOfParent",
+   "length": "6",
+   "operands": [
+    {
+     "name": "unused",
+     "type": "s16"
+    },
+    {
+     "name": "parentBone",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Node = Rot(outAngle) x Cam x parent node (w1), translation = outPos.",
+   "confidence": "high",
+   "notes": "w0 not read.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x06A": {
+   "name": "NodeCamRotLocalPos",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "op>>12 = rotation order",
+   "flow": "none",
+   "semantics": "Node = Cam x Rot(outAngle), translation = raw outPos, projection = ctx+2.",
+   "confidence": "high",
+   "notes": "w0 not read.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x06B": {
+   "name": "SetFlagCA",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "bone+0xCA |= 0x8000 (sprite frame-set mode flag, see sprite setup sub_B66270).",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x06C": {
+   "name": "ClearFlagCA",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "bone+0xCA &= ~0x8000.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x06D": {
+   "name": "PartyRecordFlag",
+   "length": "2",
+   "operands": [],
+   "high_bits": "bit15: 1 = clear bit1, 0 = set bit1",
+   "flow": "none",
+   "semantics": "Sets/clears bit1 of byte +5 in 4 records of 44 bytes at 0x1D9898C.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x06E": {
+   "name": "PosFromTargetsJointAvg",
+   "length": "4",
+   "operands": [
+    {
+     "name": "joint",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "op bits 12/13/14 = write X/Y/Z",
+   "flow": "none",
+   "semantics": "accumPos components = average position of joint w0 over all targets; runs bone handler.",
+   "confidence": "high",
+   "notes": "Divides by target count (div by zero if none).",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x06F": {
+   "name": "Nop6F",
+   "length": "6",
+   "operands": [
+    {
+     "name": "unused0",
+     "type": "s16"
+    },
+    {
+     "name": "unused1",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "No-op.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x070": {
+   "name": "Unused70",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "none",
+   "semantics": "nullsub, does not advance (would hang); never valid.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x071": {
+   "name": "DrawEntityInCinematic",
+   "length": "2",
+   "operands": [],
+   "high_bits": "bit15: 1 = clear entity_flags 0x20; 0 = set it and draw the entity now",
+   "flow": "none",
+   "semantics": "entity_flags |= 0x20 on the slot entity and renders its battle model into the cinematic render list (sub_5088A0); bit15 undoes the flag.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x072": {
+   "name": "RotFromEntity",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "accumRot = slot entity based_rotation(+0x0C) <<16; refreshes outAngle.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x073": {
+   "name": "SetSpriteOrient2",
+   "length": "6",
+   "operands": [
+    {
+     "name": "spriteRes",
+     "type": "u16"
+    },
+    {
+     "name": "paramB8",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Sprite setup (sub_B2DA00: sprite res w0, draw handler 5, orientation 1), then orientation(+0x1E)=2 and bone+0xB8 = w1 (s16).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x074": {
+   "name": "DrawFlagBits",
+   "length": "4",
+   "operands": [
+    {
+     "name": "bits",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "bit15: 1 = 'clear' (buggy), 0 = set",
+   "flow": "none",
+   "semantics": "drawFlags(+0x4C) |= w0; with bit15 code does flags &= ~w0 then flags |= ~w0 => flags = ~w0.",
+   "confidence": "high",
+   "notes": "Clear path bug.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x075": {
+   "name": "AccumFromEntitySize",
+   "length": "4",
+   "operands": [
+    {
+     "name": "mul",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bits15..10 = mask rotX,rotY,rotZ,posX,posY,posZ; bit9 = size = max(entity+0x26, joint0 height extents)",
+   "flow": "none",
+   "semantics": "Selected accumulators = (entitySize * w0) << 8; runs bone handler, refreshes outAngle.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x076": {
+   "name": "AccumAddRandom",
+   "length": "4",
+   "operands": [
+    {
+     "name": "rangeBone",
+     "type": "bone_ref"
+    }
+   ],
+   "high_bits": "bits15..10 = mask rotX,rotY,rotZ,posX,posY,posZ",
+   "flow": "none",
+   "semantics": "Per masked component accum += rand(range)<<16, range = rangeBone outAngle (rot) / outPos (pos); runs bone handler.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x077": {
+   "name": "Nop77",
+   "length": "6",
+   "operands": [
+    {
+     "name": "unused0",
+     "type": "s16"
+    },
+    {
+     "name": "unused1",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "No-op.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x078": {
+   "name": "SetTexPage",
+   "length": "4",
+   "operands": [
+    {
+     "name": "page",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "bone+0x9A (tpage/uv base) = sceneHdr[+0x1C] + (page & 0xF) + 4*(page & 0x1F0) (X page bits 0-3, Y page bits 4-8 moved to the PSX tpage layout).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x079": {
+   "name": "CompareFieldJump",
+   "length": "6",
+   "operands": [
+    {
+     "name": "value",
+     "type": "s16"
+    },
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "bits 12-14 = field index f: tested value = hi16 of dword at bone+0x50+4*f (0-2 accumRot XYZ, 3-5 accumPos XYZ, 6-7 velRot X/Y); bit 15 = comparison direction",
+   "flow": "cond_jump",
+   "semantics": "bit15=0: if field < value fall through (+6) else jump; bit15=1: if field > value fall through else jump. Jump = cursor += target (relative to the opcode word). Used to loop until an accumulator crosses a value.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 1,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x07A": {
+   "name": "NodeFromParentAndMatrix",
+   "length": "6",
+   "operands": [
+    {
+     "name": "parentBone",
+     "type": "bone_id"
+    },
+    {
+     "name": "matrixOffset",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bit 15: node projection value (matrix +0x12) = word ctx+0x02, else 0",
+   "flow": "none",
+   "semantics": "Node builder: own node slot (sub_B65480, keyed by bone id) = ComposeAffineTransform(parentNode, M) where parentNode = node of parentBone (camera node 0 if parentBone==0) and M = 3x3 matrix at curBone+matrixOffset (or the own node's current matrix if 0).",
+   "confidence": "high",
+   "notes": "NOT in the wiki's node-builder list (0x65/66/67/69/6A/CB): it is a node builder too and must be logged/replayed by the 30fps held-frame rework if a script uses it.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x07B": {
+   "name": "WaitThenReloadA8defTim",
+   "length": "2",
+   "operands": [],
+   "high_bits": "ignored",
+   "flow": "yield",
+   "semantics": "If byte_2798218 (a8def.tim loader-idle flag) != 0: queue a load_aA8defTim task (sub_508630(dword ctx+0xB8, &flag); clears the flag) and continue (+2). Else vmWaitRequest = bone->chanWaitSpeed without advancing: the same instruction re-executes next tick (wait-until).",
+   "confidence": "medium",
+   "notes": "Yields only while the flag is 0.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x07C": {
+   "name": "RandomOffsetXZ",
+   "length": "10",
+   "operands": [
+    {
+     "name": "radiusZBase",
+     "type": "s16"
+    },
+    {
+     "name": "radiusZRand",
+     "type": "s16"
+    },
+    {
+     "name": "radiusXBase",
+     "type": "s16"
+    },
+    {
+     "name": "radiusXRand",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "a=rand(4096); accumPosZ += 16*(radiusZBase+rand(radiusZRand))*cos(a); accumPosX += 16*(radiusXBase+rand(radiusXRand))*sin(a) (random point on an ellipse in the XZ plane). Consumes rand().",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x07D": {
+   "name": "SetBoneCount",
+   "length": "4",
+   "operands": [
+    {
+     "name": "count",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "If count > sceneHdr[+0x38] (bones in use): clears chanStreamPtr[0] of bones [old..count) and sets sceneHdr[+0x38]=count (grow only).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x081": {
+   "name": "SetSpriteAnimOriented",
+   "length": "4",
+   "operands": [
+    {
+     "name": "frameScript",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "bits 12-15 = sprite orientation type written to bone+0x1E",
+   "flow": "none",
+   "semantics": "Same as op 0x80 (sub_B2DA00 -> sub_B66270(frameScript): sprite frame script at bone+0xD0.., colour code 0x2C, draw handler 5; frameScript bit15 = bank (p>>8)&0x7F + index p&0xFF), then bone+0x1E (orientation) = op>>12.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x082": {
+   "name": "VelocityTowardBone",
+   "length": "6",
+   "operands": [
+    {
+     "name": "targetBone",
+     "type": "bone_id"
+    },
+    {
+     "name": "frames",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "velPos XYZ = (target.accumPos - cur.accumPos)/frames (linear move onto another bone's position in N ticks).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x083": {
+   "name": "ColorFromOutAngle",
+   "length": "2",
+   "operands": [],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "bone+0xCC colour RGB (low 24 bits) = clamp(outAngle X/Y/Z, 0, 255); top byte (GPU code / semi-trans) kept.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x084": {
+   "name": "CopyMatrix",
+   "length": "8",
+   "operands": [
+    {
+     "name": "srcBone",
+     "type": "bone_id"
+    },
+    {
+     "name": "srcOffset",
+     "type": "s16"
+    },
+    {
+     "name": "dstOffset",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "Copies a 32-byte matrix (3x3 + proj + translation) from srcBone+srcOffset (srcBone's node slot if 0) to curBone+dstOffset (cur's node slot if 0) via sub_B656A0.",
+   "confidence": "high",
+   "notes": "Writes node slots: relevant for the 30fps node-opcode replay.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x087": {
+   "name": "VelocityScaleAccum",
+   "length": "6",
+   "operands": [
+    {
+     "name": "scale256",
+     "type": "s16"
+    },
+    {
+     "name": "frames",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bits 15..10 = component mask (bit15 velRotX .. bit10 velPosZ)",
+   "flow": "none",
+   "semantics": "For each masked component: vel = ((accum>>16)*(scale256-256)<<8)/frames, so after `frames` ticks accum = accum*scale256/256 (scale toward/away from the origin).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x089": {
+   "name": "StepEmbeddedModelAnim",
+   "length": "2",
+   "operands": [],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "sub_B269B0(bone+0xBC model block): SetupParentXformScaled, clear bit1 of block+2, GF_201Ifrit_StepEmbeddedModelAnim (advance creature keyframes), set bit1 again.",
+   "confidence": "medium",
+   "notes": "Advances the handler-3 creature animation from the VM (animation phase), not only in the draw pass.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x08A": {
+   "name": "BattleScreenFx",
+   "length": "6 if (op >> 12) not in (1, 2, 3) else (4 if (op >> 12) in (1, 2) else 2)",
+   "operands": [
+    {
+     "name": "value",
+     "type": "s16"
+    },
+    {
+     "name": "value2",
+     "type": "s16 (sub-op 0/>=4 only)"
+    }
+   ],
+   "high_bits": "bits 12-15 = sub-op",
+   "flow": "none",
+   "semantics": "sub-op 1: sub_501F30(value) (retarget the existing battle fx task dword_1D96EBC: +0xE=value); 2: sub_501E40(value) (create that fx task if none, param=value); 3: sub_4A8480(0) (battle state: set bit 2 at +943, clear 0x100 at +942), no operand; other: byte +0xB = value+1 and byte +9 = value2 of the struct pointed by ctx+0xC0 (action/command context).",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x08B": {
+   "name": "StartChannel",
+   "length": "6",
+   "operands": [
+    {
+     "name": "channel",
+     "type": "u16"
+    },
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "spawn",
+   "semantics": "Starts a script on the SAME bone: channel = channel (1-3) or, if 0, first free of chanStreamPtr[1..3] (none free -> no-op). chanStreamPtr[ch] = (opcodeAddr + target) & 0x7FFFFFFF (positive = runs in the Pos phase); chanWait[ch]=0 and per-channel byte bone+0x44+ch = 0 (sub_B2D8A0). Current stream continues.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 1,
+     "kind": "spawn"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x08D": {
+   "name": "ModelFlagsSetClear",
+   "length": "4",
+   "operands": [
+    {
+     "name": "bits",
+     "type": "s16 (sign-extended to 32)"
+    }
+   ],
+   "high_bits": "bit 15: 0 = OR bits, 1 = AND NOT bits",
+   "flow": "none",
+   "semantics": "Object entry = dword sceneHdr[0x60 + 4*byte bone+0x1B]; its dword +0x7C |= bits (or &= ~bits).",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x08E": {
+   "name": "RemoveFromDrawList",
+   "length": "2",
+   "operands": [],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "Removes the current bone id from g_GfCinematic_DrawOrderList (MAG_006_sub_B65270).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x090": {
+   "name": "Nop10",
+   "length": "10",
+   "operands": [
+    {
+     "name": "unused0",
+     "type": "u16"
+    },
+    {
+     "name": "unused1",
+     "type": "u16"
+    },
+    {
+     "name": "unused2",
+     "type": "u16"
+    },
+    {
+     "name": "unused3",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "No-op that just skips 10 bytes (stub in the Ifrit copy; probably a real opcode in another GF of the family).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x091": {
+   "name": "AccumFromBoneOutputs",
+   "length": "6",
+   "operands": [
+    {
+     "name": "mask",
+     "type": "u16"
+    },
+    {
+     "name": "srcBone",
+     "type": "bone_id"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "For mask bits 0..5 (LOW bit first: rotX,rotY,rotZ,posX,posY,posZ): cur.accum[i] = src.out[i]<<16 (outAngle XYZ / outPos XYZ); then recompute outAngle (B2C440) and run BoneHandlerTable[handlerId] (snap to another bone's pose).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x092": {
+   "name": "SetField92And9A",
+   "length": "6",
+   "operands": [
+    {
+     "name": "value92",
+     "type": "s16"
+    },
+    {
+     "name": "value9A",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "bone+0x92 (word after outAngleZ) = value92, bone+0x9A (tpage/uv base) = value9A.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x093": {
+   "name": "BuildLightMatrices",
+   "length": "10",
+   "operands": [
+    {
+     "name": "lightSlot",
+     "type": "u16 (index into g_GfCinematic_BoneMatrixTable, 80 B each)"
+    },
+    {
+     "name": "lightBoneA",
+     "type": "bone_id or -1"
+    },
+    {
+     "name": "lightBoneB",
+     "type": "bone_id or -1"
+    },
+    {
+     "name": "lightBoneC",
+     "type": "bone_id or -1"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Builds a light set in BoneMatrixTable[slot]: +0 light-direction matrix = M(cols = 16*outPos of bones A/B/C, zero when -1) * Rot(16*lowbyte(cur.outPos)); +0x20 light-colour matrix (16*outAngle of A/B/C); +0x40 back colour = 16*cur.outAngle. Used when drawing bones with matrixSlotId != 0.",
+   "confidence": "high",
+   "notes": "Identical clones. Validated in MAG200 and MAG005: '0093 000N 0cXX ffff ffff 0209' x4, Leviathan '0093 0001 0c1c 0c1d ffff 0209'.",
+   "refs": [],
+   "fallthrough": true,
+   "gfs": [
+    "Ifrit",
+    "Leviathan"
+   ]
+  },
+  "0x094": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x095": {
+   "name": "Nop4",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused0",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "No-op that just skips 4 bytes (stub in the Ifrit copy; probably a real opcode in another GF of the family).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x096": {
+   "name": "CaptureScreenToVram",
+   "length": "6",
+   "operands": [
+    {
+     "name": "vramX",
+     "type": "s16"
+    },
+    {
+     "name": "vramY",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "workspace.altTexParamA = vramX, workspace+0xF4 = vramY, then inserts into the render list a MoveImage of the current display buffer (5 strips of 64 px = 320 wide) to VRAM (vramX, vramY): screen grab for later distortion effects. Cerberus sub 0xB0EB60 (renamed GF_203Cerberus_QueueScreenCaptureMoveImage) = Eden GF_206Eden_Draw26_QueueScreenCaptureMoveImage 0xAEA2F0.",
+   "confidence": "high",
+   "notes": "Validated: Cerberus '0096 0240 0100 0209'. No unambiguous occurrence found in Eden's script region (only in its other programs, or not used).",
+   "refs": [],
+   "fallthrough": true,
+   "gfs": [
+    "Cerberus",
+    "Eden"
+   ]
+  },
+  "0x09A": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x09B": {
+   "name": "ClearOptionBits",
+   "length": "2",
+   "operands": [],
+   "high_bits": "bits 9-15 = bits to clear in bone+0xDE",
+   "flow": "none",
+   "semantics": "bone+0xDE (option bits: OT bias/blending) &= ~((op>>9)&0x7F).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x09C": {
+   "name": "SpawnBoneChained",
+   "length": "4",
+   "operands": [
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "spawn",
+   "semantics": "Same as op 0x32 (sub_B2D610): if the bone order list has room, take the first bone with chanStreamPtr[0]==0, append it to the bone order list and draw list, its chanStreamPtr[0] = opcodeAddr+target, clone accumPos/accumRot, handlerId, renderListOffset, +0x1B, +0xB0..0xB7, owner (+0x14/+0x16 = cur +0x12/+0x14), id = sceneHdr[0]++; run its bone handler; ws->parentMatrixPtr = new bone. 0x9C then overwrites new+0x14/+0x16 with id/+0x14 of the PREVIOUS bone in the array (chain).",
+   "confidence": "medium",
+   "notes": "If the list is full, ws->parentMatrixPtr = stale ecx and 0x9C writes through it (latent bug). Spawned stream pointer is not masked (sign of the absolute address decides the Neg/Pos phase).",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "spawn"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x09D": {
+   "name": "RecenterModelOffsetBone",
+   "length": "10",
+   "operands": [
+    {
+     "name": "modelId",
+     "type": "s16 (sub_B657E0 model index)"
+    },
+    {
+     "name": "scaleX",
+     "type": "s16 (/256)"
+    },
+    {
+     "name": "scaleY",
+     "type": "s16 (/256)"
+    },
+    {
+     "name": "scaleZ",
+     "type": "s16 (/256)"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Computes the bounding-box centre c of model modelId's vertices (count at model+0x18, verts at model+*(model+0x14), 8-byte stride); cur.accumPos += (c*scale/256)<<16 per axis; calls the current bone handler; then subtracts c from every vertex (mesh re-centred IN PLACE, so later calls see c ~ 0).",
+   "confidence": "high",
+   "notes": "Validated: 38 consecutive '009d 00NN 0120 0120 0120 364a ...' in MAG204.",
+   "refs": [],
+   "fallthrough": true,
+   "gfs": [
+    "Brothers"
+   ]
+  },
+  "0x09E": {
+   "name": "JumpIfCtxFlag15Clear",
+   "length": "4",
+   "operands": [
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "cond_jump",
+   "semantics": "If (ctx->flags & 0x8000)==0 jump cursor += target, else continue (+4).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x09F": {
+   "name": "JumpIfCtxFlag15Set",
+   "length": "4",
+   "operands": [
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "cond_jump",
+   "semantics": "If (ctx->flags & 0x8000)!=0 jump cursor += target, else continue (+4). Decoded from raw bytes (no IDA function there).",
+   "confidence": "high",
+   "notes": "IDA refused create_function at 0xB2FFF0; not renamed.",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x0A0": {
+   "name": "JumpIfCtxFlag13Clear",
+   "length": "4",
+   "operands": [
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "cond_jump",
+   "semantics": "If (ctx->flags & 0x2000)==0 jump cursor += target, else continue (+4).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x0A1": {
+   "name": "RandomJump",
+   "length": "6",
+   "operands": [
+    {
+     "name": "threshold",
+     "type": "s16"
+    },
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "cond_jump",
+   "semantics": "r=|rand(256)|; if r <= threshold jump cursor += target, else continue (+6). Probability (threshold+1)/256.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 1,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x0A2": {
+   "name": "Nop4",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused0",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "No-op that just skips 4 bytes (stub in the Ifrit copy; probably a real opcode in another GF of the family).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0A3": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0A4": {
+   "name": "SetBoneHandler",
+   "length": "6",
+   "operands": [
+    {
+     "name": "handlerId",
+     "type": "u16"
+    },
+    {
+     "name": "refBone",
+     "type": "bone_id"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "bone->boneHandlerId (+0x18) = handlerId, word bone+0xB0 = refBone; if handlerId==3, converts current outPos to polar around refBone: accumPosZ = angle<<16, accumPosX = XZ distance<<16, accumPosY = (cur.outPosY-ref.outPosY)<<16; then runs the bone handler.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0A5": {
+   "name": "Nop4",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused0",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "No-op that just skips 4 bytes (stub in the Ifrit copy; probably a real opcode in another GF of the family).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0A6": {
+   "name": "Nop4",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused0",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "No-op that just skips 4 bytes (stub in the Ifrit copy; probably a real opcode in another GF of the family).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0A7": {
+   "name": "SetCounter",
+   "length": "6",
+   "operands": [
+    {
+     "name": "counterIdx",
+     "type": "u16"
+    },
+    {
+     "name": "value",
+     "type": "u16 (low byte)"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "byte sceneHdr[0x14 + counterIdx] = value (loop counter for op 0xA8).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0A8": {
+   "name": "DecCounterJumpNZ",
+   "length": "6",
+   "operands": [
+    {
+     "name": "counterIdx",
+     "type": "u16"
+    },
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "cond_jump",
+   "semantics": "if (--byte sceneHdr[0x14+counterIdx]) != 0 jump cursor += target, else continue (+6) (DJNZ loop).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 1,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x0AA": {
+   "name": "SetLightSlot",
+   "length": "4",
+   "operands": [
+    {
+     "name": "slot",
+     "type": "s16 (-1 -> 0)"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "bone->lightSlot (+0xE1, matrixSlotId) = slot (-1 = 0 = unlit).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0AB": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0AC": {
+   "name": "AccelerateToTarget",
+   "length": "(4 + 2*popcount((op >> 10) & 0x3F)) if (op & 0x200) else 6",
+   "operands": [
+    {
+     "name": "frames",
+     "type": "s16"
+    },
+    {
+     "name": "targetBone",
+     "type": "bone_id (only if bit9 clear)"
+    },
+    {
+     "name": "targets",
+     "type": "s16 per mask bit, bit15 first (only if bit9 set)"
+    }
+   ],
+   "high_bits": "bits 15..10 = component mask (accel rotX,rotY,rotZ,posX,posY,posZ); bit 9 = immediate targets instead of a target bone",
+   "flow": "none",
+   "semantics": "For each masked component, accel = (target - accum - frames*vel) / (frames*(frames+1)) (fixed point) so the bone reaches target after `frames` ticks; target = targetBone.accum or immediate<<16. Then recomputes bone->flags (bit0 rot accel / bit3 pos accel).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0AD": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0AE": {
+   "name": "NextTargetOrJump",
+   "length": "4",
+   "operands": [
+    {
+     "name": "doneTarget",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "cond_jump",
+   "semantics": "Target iterator: if byte ctx+0xD0 (index) < byte ctx+0xD1 (count): ++index, load that target entry (ctx+0xCC = entries+20*index; sceneHdr +0x44/+0x48/+0x4E.. entity lists; bone+0x1B = first entity) and continue (+4); else jump cursor += doneTarget.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x0AF": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0B0": {
+   "name": "RandomWait",
+   "length": "4",
+   "operands": [
+    {
+     "name": "maxTicks",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "yield",
+   "semantics": "vmWaitRequest = rand(maxTicks)*chanWaitSpeed; if that is 0, execution continues without yielding.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0B1": {
+   "name": "SetSeqStateByte6",
+   "length": "4",
+   "operands": [
+    {
+     "name": "value",
+     "type": "u16 (low byte)"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "byte g_GfCinematic_SequenceStatePtr+6 = value.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0B2": {
+   "name": "SetCtxByteA2",
+   "length": "4",
+   "operands": [
+    {
+     "name": "value",
+     "type": "u16 (low byte)"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "byte ctx+0xA2 = value.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0B3": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0B4": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0B5": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0B6": {
+   "name": "QueueVramBlit",
+   "length": "4",
+   "operands": [
+    {
+     "name": "blockOffset",
+     "type": "rel16 (from opcode word) -> 12-byte block {s16 x, y, w, h; s16 x2; s16 y2}"
+    }
+   ],
+   "high_bits": "unused (scripts encode 0x80B6)",
+   "flow": "none",
+   "semantics": "QueueBlitCommand(&block.rect, block.x2, block.y2): queues a type-3 VRAM rect copy command in g_command_bffer.",
+   "confidence": "high",
+   "notes": "Hex-Rays shows wrong struct offsets; the asm reads block+8 and block+10. Validated: '80b6 01fe 80b6 0206 80b6 020e 0209'; blocks (704,256,64,256,384,256), (768,...,448,256), (832,...,512,256).",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "data",
+     "size": 12
+    }
+   ],
+   "fallthrough": true,
+   "gfs": [
+    "Eden"
+   ]
+  },
+  "0x0B7": {
+   "name": "SdStreamingVolume",
+   "length": "6",
+   "operands": [
+    {
+     "name": "a",
+     "type": "s16"
+    },
+    {
+     "name": "b",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "op>>12 = sub-op; only 1 is implemented (script word 0x10B7).",
+   "flow": "none",
+   "semantics": "SdStreamingVolumeTranslation(a, b): PSX streamed-audio volume change. On PC it is a stub that only prints a warning, so this is effectively a no-op.",
+   "confidence": "high",
+   "notes": "Validated: '10b7 0040 0000 5005', '10b7 0080 0000 5005'.",
+   "refs": [],
+   "fallthrough": true,
+   "gfs": [
+    "Eden"
+   ]
+  },
+  "0x0B8": {
+   "name": "Nop8",
+   "length": "8",
+   "operands": [
+    {
+     "name": "unused0",
+     "type": "u16"
+    },
+    {
+     "name": "unused1",
+     "type": "u16"
+    },
+    {
+     "name": "unused2",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "No-op that just skips 8 bytes (stub in the Ifrit copy; probably a real opcode in another GF of the family).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0B9": {
+   "name": "NegateField",
+   "length": "4",
+   "operands": [
+    {
+     "name": "fieldIdx",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "If fieldIdx > 0: dword at bone+0x50+4*fieldIdx = -itself (1-2 accumRot Y/Z -> recompute outAngle; 3-5 accumPos -> run bone handler; >=6 vel/acc, no recompute). fieldIdx 0 (accumRotX) is a no-op (>0 test).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0BA": {
+   "name": "NegateFieldNeg",
+   "length": "4",
+   "operands": [
+    {
+     "name": "fieldIdx",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "If fieldIdx < 0: dword at bone+0x50+4*fieldIdx (before accumRot: -1 = +0x4C drawFlags ...) = -itself, then recompute outAngle. Else no-op.",
+   "confidence": "medium",
+   "notes": "Looks like a buggy sibling of 0xB9.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0BB": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0BC": {
+   "name": "SetSpriteFrameSpeed",
+   "length": "4",
+   "operands": [
+    {
+     "name": "speed",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "ignored",
+   "flow": "none",
+   "semantics": "bone+0xCA (sprite frame speed) = speed.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0BD": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0BE": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "hang",
+   "semantics": "Handler is an empty nullsub: it neither advances g_GfCinematic_StreamCursor nor sets vmWaitRequest, so executing it would loop forever in the dispatcher. Opcode unused by Ifrit.",
+   "confidence": "high",
+   "notes": "Real consumed length is 0 (infinite loop); '2' is only a nominal value for disassemblers.",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0C0": {
+   "name": "VelPosTowardSpawner",
+   "length": "4",
+   "operands": [
+    {
+     "name": "frames",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Target = bone whose id is cur+0x14 (the spawner/parent bone id, set by the spawn ops 0x32/0x135); velPos XYZ = (target.accumPos - cur.accumPos) / frames (16.16), i.e. 'move onto the spawner in N frames' (follow with a wait).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0C1": {
+   "name": "Nop",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "No-op (skips the opcode word only).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0C3": {
+   "name": "PauseResumeSounds",
+   "length": "2",
+   "operands": [],
+   "high_bits": "bit15: 0 = pause, 1 = resume",
+   "flow": "none",
+   "semantics": "bit15 clear -> sub_46B3A0(2),(3) (runs sub_46A740 on all 32 DirectSound instances = pause/stop); bit15 set -> sub_46B3E0(2),(3) (sub_46A7E0 on all 32 = resume).",
+   "confidence": "medium",
+   "notes": "Exact pause-vs-stop semantics of sub_46A740/46A7E0 not fully checked.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0C4": {
+   "name": "NodeLocalNoCamera",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bits12-15 (op>>12) = Euler rotation order passed to sub_B65590",
+   "flow": "none",
+   "semantics": "Node builder: this bone's node slot (sub_B65480 find-or-alloc) = rotation matrix from outAngle (order op>>12), translation = raw outPos (NOT multiplied by node 0/camera), projection word (+0x12) = *(u16*)(ctx+2).",
+   "confidence": "high",
+   "notes": "param0 skipped but unused. Pure function of outAngle/outPos -> candidate for the 30fps node-replay list.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0C5": {
+   "name": "JumpIfBattleStage",
+   "length": "6",
+   "operands": [
+    {
+     "name": "stageId",
+     "type": "u16 (COMBAT_SCENE_ID)"
+    },
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "cond_jump",
+   "semantics": "If COMBAT_SCENE_ID (current battle stage) == stageId, jump to opcode_addr + target; otherwise fall through.",
+   "confidence": "high",
+   "notes": "Validated: '00c5 003f 0016 e015', '00c5 003f 0040 1c0a' (stage 63).",
+   "refs": [
+    {
+     "word": 1,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true,
+   "gfs": [
+    "Brothers"
+   ]
+  },
+  "0x0C6": {
+   "name": "SetFogColorAndNear",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Depth cue/fog: GTE far colour RFC/GFC/BFC = outAngleX/Y/Z*16 (someCameraWork_45DD60); fog near = outPosX (sub_56CCC0 stores dword_209AB64 and recomputes GTE_DQA/DQB via sub_56CC50(near, far, outPosY)).",
+   "confidence": "high",
+   "notes": "outPosY = DQA divisor. Pair with 0x11B (sets far).",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0C7": {
+   "name": "InitSpriteAnimH22",
+   "length": "4",
+   "operands": [
+    {
+     "name": "spriteAnimId",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Runs op 0x36's handler sub_B2DA00: sub_B66270(id) sets up the sprite frame script (bit15 set: table (id>>8)&0x7F entry id&0xFF; else table id), colour code bits, draw handler 5 + draw-list add, bone+0x1E = 1; then overrides drawHandlerId = 22.",
+   "confidence": "high",
+   "notes": "Same as op 0x36 but ends with draw handler 22 instead of 5.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0CA": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0CB": {
+   "name": "NodeLookAt",
+   "length": "6",
+   "operands": [
+    {
+     "name": "eyeBone",
+     "type": "bone_id (0 = self)"
+    },
+    {
+     "name": "targetBone",
+     "type": "bone_id (0 = self)"
+    }
+   ],
+   "high_bits": "bit12: translation from targetBone (1) or eyeBone (0)",
+   "flow": "none",
+   "semantics": "Node builder: look-at matrix from eyeBone.outPos toward targetBone.outPos (sub_B66E50), translation = outPos of the chosen bone, composed with node 0 (camera); projection word = 0.",
+   "confidence": "high",
+   "notes": "Existing name kept.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0CC": {
+   "name": "SetBoneHandler7",
+   "length": "4",
+   "operands": [
+    {
+     "name": "value",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "bone+0xB0 = value; boneHandlerId = 7; runs BoneHandler 7 immediately (handler 7: outPos = bone[*(u16*)(bone+0xA0)].outPos + hi(accumPos), i.e. position relative to another bone).",
+   "confidence": "medium",
+   "notes": "Meaning of +0xB0 (probably the bone-id word that +0xA0 points at = followed bone) not proven.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0CD": {
+   "name": "SetRenderListOffset",
+   "length": "4",
+   "operands": [
+    {
+     "name": "otBucket",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "bone->renderListOffset (+0x48) = param0 (OT depth bucket of this bone's packets).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0CE": {
+   "name": "SetBoneId",
+   "length": "4",
+   "operands": [
+    {
+     "name": "id",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "bone->id (+0x12) = param0 + bone+0x1B (per-bone battle-slot / id base byte). Changes the key used by node slots and bone lookups by id.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0CF": {
+   "name": "RetargetToMultiPartRoot",
+   "length": "2",
+   "operands": [],
+   "high_bits": "op>>12 = sub-op 0 or 1; any other value returns without advancing (unused).",
+   "flow": "none",
+   "semantics": "Entity = SceneHeader entity[bone+0x1B]. If it is part of a multi-part chain (entity+0x8C): sub 0 saves the bone slot at hdr+372 and sets hdr+378 = 1; sub 1 first backs up the target count (hdr+65) to hdr+378 and the target list hdr+72.. to hdr+372... Both then retarget bone.entitySlot and hdr target[0] (+72) to the chain root (compare_com_127_501FF0 = lowest slot in the chain) and set the target count to 1. Not multi-part: hdr+378 = 0.",
+   "confidence": "medium",
+   "notes": "Identical in both GFs. Validated: '10cf 0032' near the start of both the Brothers and Eden root programs.",
+   "refs": [],
+   "fallthrough": true,
+   "gfs": [
+    "Brothers",
+    "Eden"
+   ]
+  },
+  "0x0D0": {
+   "name": "RemoveFromDrawList",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Removes the current bone from g_GfCinematic_DrawOrderList (MAG_006_sub_B65270); bone stops being drawn.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0D1": {
+   "name": "JumpIfModelSlot0FileId",
+   "length": "6",
+   "operands": [
+    {
+     "name": "fileId",
+     "type": "u16 (battle_file_id)"
+    },
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "cond_jump",
+   "semantics": "If battle model slot 0 (stru_1D9898C[0].battle_file_id) == fileId, jump to opcode_addr + target; otherwise fall through.",
+   "confidence": "high",
+   "notes": "Validated: chain '00d1 002c 0020 00d1 002d 001a 00d1 002e 0014' with all three targets landing on the same 0x6B0 ('00da ...').",
+   "refs": [
+    {
+     "word": 1,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true,
+   "gfs": [
+    "Brothers"
+   ]
+  },
+  "0x0D2": {
+   "name": "NegateMotionComponent",
+   "length": "4",
+   "operands": [
+    {
+     "name": "index",
+     "type": "u16 0..11"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Negates dword #index of the block at bone+0x50 (0-2 accumRot XYZ, 3-5 accumPos, 6-8 velRot, 9-11 velPos), then runs the bone handler and outAngle = hi(accumRot) (sub_B2C440). Bounce / mirror.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0D3": {
+   "name": "ColorFromBoneOutPos",
+   "length": "4",
+   "operands": [
+    {
+     "name": "srcBone",
+     "type": "bone_id"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "colour (+0xCC, low 24 bits) = clamp(src.outPos XYZ * src.outAngleX / 256, 0..255) as R,G,B; top byte (code/semi-trans) kept. Animated colour through a helper bone.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0D4": {
+   "name": "SetColor",
+   "length": "4 if op & 0x8000 else 8",
+   "operands": [
+    {
+     "name": "r_or_grey",
+     "type": "u16"
+    },
+    {
+     "name": "g (only if bit15 clear)",
+     "type": "u16"
+    },
+    {
+     "name": "b (only if bit15 clear)",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "bit15: 1 = grey, one word (R=G=B=param0); 0 = three words R,G,B",
+   "flow": "none",
+   "semantics": "colour (+0xCC) low 24 bits = R | G<<8 | B<<16, top byte kept.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0D5": {
+   "name": "NorgBossTargetFixup",
+   "length": "4",
+   "operands": [
+    {
+     "name": "target",
+     "type": "rel16 (used by sub 1 only)"
+    }
+   ],
+   "high_bits": "op>>12 = sub-op 0 or 1. Outside the Norg room every value skips 4; inside it, other values hang.",
+   "flow": "none",
+   "semantics": "Active only when COMBAT_SCENE_ID == COMBAT_SCENE_NORG_BOSS_MASTERS_ROOM. Sub 0: if the first target (hdr+72) != slot 3, set flag byte 0x2796D30 = 1 and force the target list (hdr+65 = 4, hdr+75 = 3, copy a position to hdr+156, hdr+84/+108); otherwise flag = 0. Sub 1: if flag && bone.entitySlot == 3, jump to opcode_addr + target.",
+   "confidence": "medium",
+   "notes": "Validated: '00d5 0000 10cf' (root program), '10d5 0006 1022 1c0d'.",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "code",
+     "cond": "(op >> 12) == 1"
+    }
+   ],
+   "fallthrough": true,
+   "gfs": [
+    "Brothers"
+   ]
+  },
+  "0x0D7": {
+   "name": "Nop2",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "No-op skipping one operand word (stub of a feature of another GF copy).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0DA": {
+   "name": "RenderEntityToVram",
+   "length": "2 if (op & 0x1000) else 10",
+   "operands": [
+    {
+     "name": "x",
+     "type": "s16 (only when bit12 clear)"
+    },
+    {
+     "name": "y",
+     "type": "s16"
+    },
+    {
+     "name": "w",
+     "type": "s16"
+    },
+    {
+     "name": "h",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bit12 selects the mode.",
+   "flow": "none",
+   "semantics": "bit12 set: bone.scalePacked (colour) = (scalePacked & 0x2000000) | 0x808000 | ((2*byte(dword_1D98A4C) - 160)/3 + 127). bit12 clear: if the RenderCtx[1] flag word == 0, stores the rect in workspace+0xD0.., allocates a 23532-byte scratch buffer (sub_B656E0) and calls sub_B65F30, which renders battle model slot 1 (stru_1D9898C[1]) off-screen at the current bone's outPos/outAngle into VRAM rect (x, y, w, h). The cursor always advances 10.",
+   "confidence": "medium",
+   "notes": "Validated: '00da 0180 0100 00c0 0100 0209' and '10da 0209'.",
+   "refs": [],
+   "fallthrough": true,
+   "gfs": [
+    "Brothers"
+   ]
+  },
+  "0x0DB": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0DF": {
+   "name": "SetupDrawHandler29",
+   "length": "10",
+   "operands": [
+    {
+     "name": "a",
+     "type": "s16"
+    },
+    {
+     "name": "b",
+     "type": "s16"
+    },
+    {
+     "name": "c",
+     "type": "s16"
+    },
+    {
+     "name": "d",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "bone+0xB8 = 2*a, +0xBC = 2*b, +0xC0 = 0x279822C + 2*c (pointer into a global table), +0xC4 = d; drawHandlerId = 29 (0x1D) and bone added to the draw list (sub_B65320).",
+   "confidence": "medium",
+   "notes": "Draw handler 29 is not among the handlers Ifrit is known to use; field meanings unknown.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0E2": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0E7": {
+   "name": "WaitUntilFieldGreater",
+   "length": "6",
+   "operands": [
+    {
+     "name": "fieldByteOffset",
+     "type": "s16 (from outAngleX, bone+0x8C)"
+    },
+    {
+     "name": "value",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "yield",
+   "semantics": "If *(s16*)(bone+0x8C+off) > value: continue (cursor += 6); else vmWaitRequest = chanWaitSpeed and cursor stays (re-test next tick). off 0/2/4 = outAngle XYZ, 8/10/12 = outPos XYZ.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0EB": {
+   "name": "AddToDrawList",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Adds the current bone to g_GfCinematic_DrawOrderList if absent (sub_B652E0), drawHandlerId unchanged.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0ED": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0F0": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0F1": {
+   "name": "Nop2",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "No-op skipping one operand word.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0F2": {
+   "name": "BakeOutPosToAccum",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "accumPos XYZ = outPos XYZ << 16 and boneHandlerId = 0: freezes the current (possibly derived) position into the accumulators and returns to the plain handler.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0F4": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0F9": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x0FB": {
+   "name": "WaitUntilFieldLess",
+   "length": "6",
+   "operands": [
+    {
+     "name": "fieldByteOffset",
+     "type": "s16 (from outAngleX)"
+    },
+    {
+     "name": "value",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "yield",
+   "semantics": "If *(s16*)(bone+0x8C+off) < value: continue (cursor += 6); else yield chanWaitSpeed and re-test next tick.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x0FD": {
+   "name": "JumpIfFieldInRange",
+   "length": "10",
+   "operands": [
+    {
+     "name": "fieldByteOffset",
+     "type": "s16 (from outAngleX)"
+    },
+    {
+     "name": "min",
+     "type": "s16"
+    },
+    {
+     "name": "max",
+     "type": "s16"
+    },
+    {
+     "name": "target",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "cond_jump",
+   "semantics": "If min <= *(s16*)(bone+0x8C+off) <= max: cursor += target (relative to the opcode word); else fall through (cursor += 10).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 3,
+     "kind": "code"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x104": {
+   "name": "BuildBillboardSlot",
+   "length": "4",
+   "operands": [
+    {
+     "name": "slot",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Aux/billboard matrix slot (32-byte table at 0x2798B68 + 32*slot): rotation = CamMatrixAlt x Rot(outAngle), translation = CamMatrixAlt * outPos; projection word = 0.",
+   "confidence": "high",
+   "notes": "Node-builder-like, pure function of outAngle/outPos + camera -> 30fps replay candidate.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x105": {
+   "name": "NodeFromBillboardSlot",
+   "length": "6",
+   "operands": [
+    {
+     "name": "slot",
+     "type": "u16"
+    },
+    {
+     "name": "unused",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bits12-15 = Euler rotation order for sub_B65590",
+   "flow": "none",
+   "semantics": "Node builder: this bone's node = slot[slot] (0x2798B68 table) x Rot(outAngle, order op>>12), translation = slot * outPos; projection word = 0.",
+   "confidence": "high",
+   "notes": "Advances 6 bytes but reads only param0. Pure function -> 30fps replay candidate.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x106": {
+   "name": "WaitUntilFieldLessThanBone",
+   "length": "6",
+   "operands": [
+    {
+     "name": "fieldByteOffset",
+     "type": "s16 (from outAngleX)"
+    },
+    {
+     "name": "otherBone",
+     "type": "bone_id"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "yield",
+   "semantics": "If cur.field(off) < other.field(off): continue (cursor += 6); else yield chanWaitSpeed and re-test next tick.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x109": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x10B": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x10C": {
+   "name": "BoneFlagOps",
+   "length": "6 if ((op >> 12) & 0xF) in (2, 3) else 4",
+   "operands": [
+    {
+     "name": "mask",
+     "type": "u16"
+    },
+    {
+     "name": "target (sub 2/3 only)",
+     "type": "rel16"
+    }
+   ],
+   "high_bits": "op>>12 = sub-op: 0 (and 6..15) set bits; 1 clear bits; 2 jump if (flags&mask)!=0; 3 jump if ==0; 4 wait while (flags&mask)!=0; 5 wait while ==0",
+   "flow": "cond_jump",
+   "semantics": "Same as op 0x05 but on the per-bone flag word bone+0x4A. Sub 2/3: taken jump = cursor += target (relative to opcode word), else cursor += 6. Sub 4/5: while the condition holds, yield chanWaitSpeed and re-test (length 4 once passed).",
+   "confidence": "high",
+   "notes": "",
+   "refs": [
+    {
+     "word": 1,
+     "kind": "code",
+     "cond": "((op >> 12) & 0xF) in (2, 3)"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x10D": {
+   "name": "WaitOtherBoneFlags",
+   "length": "6",
+   "operands": [
+    {
+     "name": "otherBone",
+     "type": "bone_id"
+    },
+    {
+     "name": "mask",
+     "type": "u16 (&0x3FFF)"
+    }
+   ],
+   "high_bits": "bit12: 1 = wait until (other.flags4A & mask)==0; 0 = wait until !=0",
+   "flow": "yield",
+   "semantics": "Tests another bone's +0x4A flag word against mask&0x3FFF; continues (cursor += 6) when satisfied, else yield chanWaitSpeed and re-test next tick. Cross-bone synchronisation.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x110": {
+   "name": "PlaceAtMidpoint",
+   "length": "6",
+   "operands": [
+    {
+     "name": "boneA",
+     "type": "bone_id"
+    },
+    {
+     "name": "boneB",
+     "type": "bone_id"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "cur.boneHandlerId = A.boneHandlerId; cur.accumPos = midpoint of A.accumPos and B.accumPos; runs the bone handler.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x112": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x113": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x116": {
+   "name": "NodeCamPosLocalRot",
+   "length": "4",
+   "operands": [
+    {
+     "name": "unused",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Node builder: translation = node 0 (camera) * outPos, rotation = Rot(outAngle) alone (NOT multiplied by the camera); projection word = 0. Screen-aligned object at a world position.",
+   "confidence": "high",
+   "notes": "Pure function -> 30fps replay candidate.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x117": {
+   "name": "SetRotRelativeToRoot",
+   "length": "8",
+   "operands": [
+    {
+     "name": "angleX",
+     "type": "s16"
+    },
+    {
+     "name": "angleY",
+     "type": "s16"
+    },
+    {
+     "name": "angleZ",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "accumRot XYZ = (angle - g_GfCinematic_RootAngleXYZ) << 16, then outAngle = hi(accumRot) (sub_B2C440). Absolute angle compensated by the root orientation.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x11A": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x11B": {
+   "name": "SetFogColorAndFar",
+   "length": "2",
+   "operands": [],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Same as 0xC6 but sets fog FAR = outPosX (dword_C78BF0 via sub_56CCA0): GTE far colour = outAngle*16, DQA/DQB recomputed with outPosY.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x120": {
+   "name": "SetCtx74FromCtx70",
+   "length": "4",
+   "operands": [
+    {
+     "name": "offset64k",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "ctx+0x74 = ctx+0x70 + (param0 << 16). ctx+0x70/+0x74 are the pointers set by op 0x21 (sub-op 0/3+: base in the magic buffer + u32); this rewinds/sets the second pointer (bump arena top per the wiki) to base + N*64KB.",
+   "confidence": "low",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x127": {
+   "name": "Nop4",
+   "length": "6",
+   "operands": [
+    {
+     "name": "unused",
+     "type": "s16"
+    },
+    {
+     "name": "unused",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "No-op skipping two operand words.",
+   "confidence": "high",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x12E": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x134": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x135": {
+   "name": "SpawnBoneWithId",
+   "length": "6",
+   "operands": [
+    {
+     "name": "program",
+     "type": "rel16"
+    },
+    {
+     "name": "newBoneId",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "spawn",
+   "semantics": "Same as op 0x32 (sub_B2D610): if the bone order list has room, take the first free bone (chanStreamPtr[0]==0), append it to the bone order list, chanStreamPtr[0] = opcode word address + program, copy accumPos/accumRot/handlerId/renderListOffset/+0x1B/+0xB0..B7 from the current bone, +0x14 = current id, +0x16 = current +0x14, id = hdr[0]++, run its bone handler; then this op overwrites the new bone's id (+0x12) with newBoneId.",
+   "confidence": "high",
+   "notes": "If the order list is full, sub_B2D610 leaves workspace->parentMatrixPtr = ECX garbage and the id write lands there (latent engine bug). Channel 0 pointer is positive -> child runs in the Pos phase.",
+   "refs": [
+    {
+     "word": 0,
+     "kind": "spawn"
+    }
+   ],
+   "fallthrough": true
+  },
+  "0x136": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x13D": {
+   "name": "BattleEntityVisibility",
+   "length": "4",
+   "operands": [
+    {
+     "name": "mode",
+     "type": "u16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "none",
+   "semantics": "Hide/restore battle entities (bit 2 of the 156-byte entity records at 0x1D96FC0; restore keeps entities flagged hidden in sceneHdr+78): mode 0 restore caster's side, 1 hide caster's side, 2 restore opposite side, 3 hide opposite side, 4 restore all 7, 5 hide all 7. Caster side from bones[0]+0x1B (<3 = party).",
+   "confidence": "high",
+   "notes": "Seen in the Ifrit root program at file+0x114 (013d 0002), aligned.",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x140": {
+   "name": "WaitScaledBySlot",
+   "length": "4",
+   "operands": [
+    {
+     "name": "frames",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "unused",
+   "flow": "yield",
+   "semantics": "vmWaitRequest = (frames * u8 sceneHdr[204 + bone+0x1B]) << 7: wait scaled by a per-battle-slot factor.",
+   "confidence": "medium",
+   "notes": "",
+   "refs": [],
+   "fallthrough": true
+  },
+  "0x144": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x145": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  },
+  "0x146": {
+   "name": "Unused",
+   "length": "2",
+   "operands": [],
+   "high_bits": "n/a",
+   "flow": "invalid",
+   "semantics": "Unused/stub opcode (nullsub); would hang the VM if encountered.",
+   "confidence": "high",
+   "notes": "Handler is a 1-byte `retn` nullsub: it neither advances StreamCursor nor sets vmWaitRequest, so the dispatcher would re-execute the same word forever (hang). Opcode is not valid in Ifrit scripts (feature compiled out of this GF copy).",
+   "refs": [],
+   "fallthrough": false
+  }
+ }
+}

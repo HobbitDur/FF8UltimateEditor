@@ -41,6 +41,7 @@ from Cli.moomba import MoombaCliTool
 from Cli.joker import JokerCliTool
 from Cli.piet import PietCliTool
 from Cli.watts import WattsCliTool
+from Cli.laguna import LagunaCliTool
 
 
 def _register_all_tools():
@@ -69,6 +70,7 @@ def _register_all_tools():
     registry.register(JokerCliTool)
     registry.register(PietCliTool)
     registry.register(WattsCliTool)
+    registry.register(LagunaCliTool)
 
 
 def build_main_parser() -> argparse.ArgumentParser:

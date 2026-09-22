@@ -47,6 +47,7 @@ from Zone.zonetabswidget import ZoneTabsWidget
 from SolomonRing.solomonringwidget import SolomonRingWidget
 from Fujin.fujinwidget import FujinWidget
 from Watts.wattswidget import WattsWidget
+from Laguna.lagunawidget import LagunaWidget
 
 
 class FF8UltimateEditorWidget(QWidget):
@@ -92,6 +93,7 @@ class FF8UltimateEditorWidget(QWidget):
             "Zone (mmag.bin / mmag2.bin editor)",
             "Fujin (Magic animation explorer)",
             "Watts (r0win.dat victory editor)",
+            "Laguna (GF cinematic script editor)",
             "Chocoboy (World map script editor)",
             "Hyne (.ff8 save editor)"
         ]
@@ -103,7 +105,7 @@ class FF8UltimateEditorWidget(QWidget):
         # be an exact HOBBIT_OPTION_ITEMS string (checked below) so a typo fails loudly, not silently.
         self.CATEGORY_DEFINITIONS = [
             ("Battle", ["Ifrit (3D/Stat/AI/Seq/Texture)", "Alexander (Battle stage viewer)",
-                        "Watts (r0win.dat victory editor)"]),
+                        "Watts (r0win.dat victory editor)", "Laguna (GF cinematic script editor)"]),
             ("Field", ["Seed (Field model viewer)", "CCGroup (Card value editor)"]),
             ("Menu", ["Shiva (mngrp.bin editor: refine, SeeD tests, sprites)", "Siren (price.bin editor)",
                       "Kadowaki (Item menu editor)", "Minimog (icon.sp1 editor)",
@@ -257,6 +259,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._zone_widget = ZoneTabsWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._fujin_widget = FujinWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path))
         self._watts_widget = WattsWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
+        self._laguna_widget = LagunaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._chocoboy_widget = ChocoboyWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._hyne_widget = HyneWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
 
@@ -283,6 +286,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._zone_widget) # Index 19
         self.tool_stack.addWidget(self._fujin_widget) # Index 21
         self.tool_stack.addWidget(self._watts_widget) # Watts (r0win.dat)
+        self.tool_stack.addWidget(self._laguna_widget) # Laguna (GF cinematic MAGxxx_B.00 scripts)
         self.tool_stack.addWidget(self._chocoboy_widget) # Chocoboy (wmsetxx.obj world map scripts)
         self.tool_stack.addWidget(self._hyne_widget) # Hyne (.ff8 save editor), keep last in HOBBIT_OPTION_ITEMS
         self._piet_widget.view_in_zone_requested.connect(self._view_mmag_entry_in_zone)
