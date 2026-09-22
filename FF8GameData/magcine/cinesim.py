@@ -8,7 +8,7 @@ and kills (0x00 on channel 0), plus the motion integrator for the generic write 
 
 What cannot be known without the battle is chosen, not guessed at random:
  - branches on battle state (targets, entities, stage) fall through, except 0xAE which iterates
-   `target_count` targets;
+   `target_count` targets; ctx->flags (0x9E/0x9F/0xA0) is 0 as the summon setup leaves it;
  - random opcodes (0xA1 branch, 0xB0 wait, 0x12-0x17 random adds) draw from a seeded generator:
    the same seed replays the same run, another seed shows another possible run;
  - "wait until the file load / stream / texture is ready" opcodes are ready at once;
@@ -139,6 +139,7 @@ class CineSimulation:
         self.bones = []
         self.order = []            # indices of live bones, in order-list order
         self.sync_flags = 0        # shared flag word (op 0x05)
+        self.ctx_flags = 0         # ctx->flags (ops 0x9E/0x9F/0xA0): 0 in battle
         self.scene_counters = {}   # op 0xA7/0xA8
         self.target_index = 0
         self.tick = 0
@@ -148,6 +149,10 @@ class CineSimulation:
         # camera written by op 0x39 sub-op 0 (eye bone index, look-at bone index, projection, roll).
         self.frames = []
         self.cameras = {}
+        # VRAM uploads in execution order, for CineVram: (tick, "tex"/"clut", (id,)),
+        # (tick, "raw", (texture RECT id, file slot, byte offset)), (tick, "rawrect", (RECT, file slot))
+        self.vram_events = []
+        self._last_load = None     # file slot of the last streamed load (op 0x06)
         self._next_id = 0x8000
         self._cursor = 0           # position in the order list of the bone after the running one
         self._cache = {}
@@ -369,6 +374,10 @@ class CineSimulation:
                 self.target_index += 1
                 return None
             return ("goto", at + w[0])
+        if code in (0x9E, 0x9F, 0xA0):                # ctx->flags: cleared by the summon setup
+            bit = 0x2000 if code == 0xA0 else 0x8000   # (MAG_201_sub_B25820) and never set by a script
+            taken = bool(self.ctx_flags & bit) == (code == 0x9F)
+            return ("goto", at + w[0]) if taken else None
         if code == 0xA1:
             return ("goto", at + w[1]) if self.rng.randrange(256) <= w[0] else None
         if code in (0x26, 0x8B):
@@ -532,9 +541,32 @@ class CineSimulation:
                 elif code == 0xCB:
                     refs = tuple(self.resolve_ref(bone, r).index if r else bone.index for r in w[:2])
                 record("node", (code, op, tuple(w), refs))
+        elif code in (0x52, 0x78, 0x92, 0x23):
+            record("tex_op", (code, op, tuple(w)))   # texture page / CLUT / uv of the bone's meshes
+        elif code == 0x06:
+            slot = (op >> 9) & 0x3F
+            if not (op & 0x8000 and slot & 0x20):    # (a shared MA8DEF_P file otherwise)
+                self._last_load = slot
+        elif code in (0x27, 0x28, 0x29):
+            self._record_upload(code, op, w)
         elif code == 0x39 and op >> 12 == 0:
             target = self.resolve_ref(bone, w[0])
             self.cameras[self.tick] = (bone.index, target.index if target else -1)
+
+    def _record_upload(self, code, op, w):
+        events = self.vram_events
+        if code == 0x27:
+            events += [(self.tick, "tex", (w[0],)), (self.tick, "clut", (w[0],))]
+        elif code == 0x28:
+            events.append((self.tick, "clut", (w[0],)))
+        elif op & 0x8000:                             # raw pages of the last streamed file
+            events.append((self.tick, "raw", (w[0], self._last_load, 0)))
+        elif op & 0x4000:                             # file slot + n x 4 KB
+            events.append((self.tick, "raw", (w[0], w[1] & 0x7F, (w[2] & 0xFFFF) << 12)))
+        elif op & 0x2000:                             # inline RECT
+            events.append((self.tick, "rawrect", (tuple(w[:4]), self._last_load)))
+        else:
+            events.append((self.tick, "tex", (w[0],)))
 
     def resolve_ref(self, bone, ref):
         """The engine's bone reference (GfCinematic_GetRotationVector 0xB65370): an id, 0x4000|n =

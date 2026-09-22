@@ -13,7 +13,7 @@ Node builders (what a bone's own node is), camera left out:
 A drawn bone is placed in its PARENT node (op 0x68, default node 0 = the camera): mesh handler 1
 at outPos, 2 with the scale outAngle x 16, 3 (the creature) at outPos scaled by outAngle x 16, 7 under
 the camera. Approximations: bone handlers 2, 4, 8-11 are not evaluated (see CineSimulation),
-billboards face nothing in particular, textures are not sampled.
+billboards face nothing in particular. Textures come from a CineVram (the uploads replayed).
 
 Coordinates are the engine's: 4096 = one turn, +Y points down.
 """
@@ -72,16 +72,19 @@ class SceneItem:
     mesh: object = None       # CineMesh (mesh) / CreatureFrame (creature)
     draw: int = 0             # draw handler id
     label: str = ""
+    # the bone's (tpage OR +0x92, CLUT add +0x9A, uv add +0x9E, semi-transparent colour bit 25)
+    texture_state: tuple = (0, 0, 0, False)
 
 
 @dataclass
 class CreatureFrame:
     vertices: np.ndarray      # (n, 3) engine units
     faces: list               # [indices]
+    textures: list = None     # per face: ([uv words], CLUT word, tpage word) or None
 
 
 class CineScene:
-    def __init__(self, simulation, containers, creature_provider=None):
+    def __init__(self, simulation, containers, creature_provider=None, vram=None):
         """containers: MagContainers (the .00 first, then .01 and streamed parts), searched in
         order for an object id. creature_provider(object_id) -> (animations) where animations is a
         list of lists of CreatureFrame, or None."""
@@ -92,6 +95,7 @@ class CineScene:
                 self.objects.setdefault(obj.index, obj)
         self.creature_provider = creature_provider
         self._creatures = {}
+        self.vram = vram          # CineVram (textures), or None for untextured
 
     @property
     def tick_count(self):
@@ -199,7 +203,7 @@ class CineScene:
                             scale = [max(1, angle[2] * 16) / TURN] * 3
                     position = (0, 0, 0) if draw == 9 else pos
                     result.append(SceneItem(bone, "mesh", base @ affine(pos=position, scale=scale),
-                                            mesh.mesh, draw, label))
+                                            mesh.mesh, draw, label, self.texture_state(sim_bone, tick)))
                     continue
             if draw == 3:
                 frame = self._creature_frame(sim_bone, tick)
@@ -215,6 +219,35 @@ class CineScene:
                 matrix = node if node is not None else self.parent_matrix(bone, tick, cache) @ affine(pos=pos)
                 result.append(SceneItem(bone, "marker", matrix, None, draw, label))
         return result
+
+    def texture_state(self, sim_bone, tick):
+        """The bone's (tpage OR, CLUT add, uv add) at `tick`, replayed from its texture opcodes:
+        0x52 SetTexture (a texture id's page + CLUT, or -1 = none), 0x78 SetTexPage (CLUT from a page
+        number), 0x92 (raw +0x92/+0x9A), 0x23 SetBlendMode (tpage bits 5-6)."""
+        from .cinevram import texture_tpage, clut_id, CLUT_BASE
+        tpage, clut, uv, semi = 0, 0, 0, False
+        descriptor = self.vram.descriptor if self.vram is not None else None
+        for when, key, value in sim_bone.props:
+            if when > tick:
+                break
+            if key != "tex_op":
+                continue
+            code, op, words = value
+            if code == 0x52:
+                if words[0] == -1 or descriptor is None or not 0 <= words[0] < len(descriptor["textures"]):
+                    tpage, clut, uv = 0, 0, 0
+                else:
+                    tpage, clut, uv = texture_tpage(descriptor, words[0], tpage), clut_id(descriptor, words[0]), 0
+            elif code == 0x78:
+                page = words[0]
+                clut = CLUT_BASE + (page & 0xF) + 4 * (page & 0x1F0)
+            elif code == 0x92:
+                tpage, clut = words[0] & 0xFFFF, words[1] & 0xFFFF
+            elif code == 0x23:
+                abr = op >> 9
+                tpage = (tpage & ~0x60) | ((abr if abr <= 3 else 1) << 5)
+                semi = abr <= 3
+        return tpage, clut, uv, semi
 
     def _creature_frame(self, sim_bone, tick):
         model = sim_bone.prop("model", tick)

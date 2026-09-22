@@ -15,6 +15,7 @@ from Laguna.timelinewidget import TimelineCanvas, MotionCanvas, CATEGORY_COLORS,
 from Laguna.meshpreview import MeshPreview
 from Laguna.sceneview import SceneView
 from FF8GameData.magcine.cinescene import CineScene
+from FF8GameData.magcine.cinevram import CineVram
 from FF8GameData.magcine.magcontainer import MagContainer, PRIM_NAME, HEADER_FIELDS
 
 _KIND_COLORS = {"code": None, "spawn": QColor(15, 157, 88), "particle": QColor(244, 160, 0),
@@ -77,7 +78,8 @@ class LagunaWidget(QWidget):
         # The parts streamed in during the summon (battle/magNNN_b.02...): more meshes, read-only.
         # Like every file here they come through the shared registry, so "Open folder" on the game
         # data folder brings the whole set at once.
-        self.parts = {}             # gf -> {part number: MagContainer}
+        self.parts = {}             # gf -> {part number: MagContainer} (packed parts: objects)
+        self.part_data = {}         # gf -> {part number: bytes} (every part: VRAM pages too)
         self.part_bindings = {}
         for gf in CINEMATIC_GFS:
             for number, name in streamed_part_names(gf).items():
@@ -265,11 +267,17 @@ class LagunaWidget(QWidget):
         self.helpers_check.toggled.connect(self._scene_option_changed)
         self.scene_wire_check = QCheckBox("Wireframe")
         self.scene_wire_check.toggled.connect(self._scene_option_changed)
+        self.texture_check = QCheckBox("Textures")
+        self.texture_check.setToolTip("Sample the VRAM the script has built at this tick (needs the .01 and the "
+                                      "streamed parts: Open folder on the game data folder)")
+        self.texture_check.setChecked(True)
+        self.texture_check.toggled.connect(self._scene_option_changed)
         frame_button = QPushButton("Frame all")
         frame_button.clicked.connect(lambda: self.scene_view.frame_all())
         view_options = QHBoxLayout()
         view_options.addWidget(self.camera_combo)
         view_options.addWidget(self.helpers_check)
+        view_options.addWidget(self.texture_check)
         view_options.addWidget(self.scene_wire_check)
         view_options.addWidget(frame_button)
         view_options.addStretch(1)
@@ -806,7 +814,8 @@ class LagunaWidget(QWidget):
                                   f"{sim.warnings[0][1]:05X})" if sim.warnings else ""))
         self.timeline.set_simulation(sim, self._labels)
         self.motion.set_bone(None, 1)
-        self.scene_view.set_scene(CineScene(sim, self._scene_containers(), self._creature_loader()))
+        vram = CineVram(self.current_gf, self._scene_files(), sim.vram_events)
+        self.scene_view.set_scene(CineScene(sim, self._scene_containers(), self._creature_loader(), vram))
         with QSignalBlocker(self.tick_slider):
             self.tick_slider.setRange(0, max(0, len(sim.frames) - 1))
         self._set_tick(min(tick, len(sim.frames) - 1))
@@ -821,6 +830,14 @@ class LagunaWidget(QWidget):
             containers.append(self.companions[self.current_gf])
         containers.extend(container for _number, container in sorted(self.parts.get(self.current_gf, {}).items()))
         return containers
+
+    def _scene_files(self):
+        """File slots for the VRAM: 0 = the edited .00, 1 = the .01, k = streamed part k."""
+        files = {0: bytes(self.manager.data)}
+        if self.current_gf in self.companions:
+            files[1] = self.companions[self.current_gf].data
+        files.update(self.part_data.get(self.current_gf, {}))
+        return files
 
     def _creature_loader(self):
         from Laguna.creature import CreatureLoader
@@ -875,6 +892,7 @@ class LagunaWidget(QWidget):
     def _scene_option_changed(self):
         self.scene_view.show_helpers = self.helpers_check.isChecked()
         self.scene_view.wireframe = self.scene_wire_check.isChecked()
+        self.scene_view.textured = self.texture_check.isChecked()
         self.scene_view.update()
 
     def _load_part(self, path, gf, number):
@@ -884,12 +902,14 @@ class LagunaWidget(QWidget):
         except OSError as error:
             QMessageBox.warning(self, "Laguna", f"Cannot read {path}:\n{error}")
             return
+        self.part_data.setdefault(gf, {})[number] = container.data
         if container.packed:  # the raw ones are VRAM pages: no objects to show
             self.parts.setdefault(gf, {})[number] = container
         self._schedule_refresh(gf)
 
     def _close_part(self, gf, number):
         self.parts.get(gf, {}).pop(number, None)
+        self.part_data.get(gf, {}).pop(number, None)
         self._schedule_refresh(gf)
 
     def _schedule_refresh(self, gf):

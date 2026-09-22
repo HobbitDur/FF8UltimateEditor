@@ -86,7 +86,7 @@ def test_every_gf_script_decodes_and_simulates(gf, path):
 def test_ifrit_simulated_length_matches_the_game():
     # measured in game (30 fps FFNx branch log): Ifrit's summon runs 324 real ticks
     data = (MAGIC / "MAG200_B.00").read_bytes()
-    assert CineSimulation(data, root_program_offset(data)).finished_tick == 322
+    assert CineSimulation(data, root_program_offset(data)).finished_tick == 323
 
 
 @needs_files
@@ -149,7 +149,7 @@ def test_widget_loads_edits_and_simulates():
     registry.open_file("MAG200_B.01", str(MAGIC / "MAG200_B.01"))
     assert widget.current_gf == "Ifrit"
     assert widget.listing.rowCount() > 1000
-    assert widget._simulation is not None and widget._simulation.finished_tick == 322
+    assert widget._simulation is not None and widget._simulation.finished_tick == 323
     assert widget.resource_tree.topLevelItemCount() == 2
     wait = next(i for i in widget.manager.program.sorted_instructions() if i.code == 0x09)
     widget._select_offset(wait.offset)
@@ -243,3 +243,34 @@ def test_import_is_one_file_dialog(monkeypatch):
     assert widget.current_gf == "Eden" and "Eden" in widget.companions
     toolbar.deleteLater()
     stack.deleteLater()
+
+
+# --------------------------------------------------------------------- textures
+@needs_files
+def test_vram_replays_uploads_and_textures_the_creature():
+    import glob
+    from FF8GameData.magcine.cinevram import CineVram
+    data00 = (MAGIC / "MAG200_B.00").read_bytes()
+    files = {0: data00, 1: (MAGIC / "MAG200_B.01").read_bytes()}
+    for path in glob.glob(str(PROJECT_ROOT / "extracted_files" / "battle" / "mag200_b.*")):
+        files[int(path[-2:])] = open(path, "rb").read()
+    simulation = CineSimulation(data00, root_program_offset(data00))
+    kinds = {kind for _tick, kind, _args in simulation.vram_events}
+    assert {"tex", "clut", "raw"} <= kinds                 # the streamed path (ctx->flags = 0)
+    vram = CineVram("Ifrit", files, simulation.vram_events)
+    page = vram.page_rgba(100, 0xBD, 0x3814)               # the creature's page + palette
+    assert (page[..., 3] > 0).mean() > 0.5                  # mostly opaque texels
+    assert not vram.missing
+
+
+def test_decode_page_4bpp_and_8bpp():
+    import numpy as np
+    from FF8GameData.magcine.cinevram import decode_page
+    vram = np.zeros((512, 1024), np.uint16)
+    vram[0, 0:16] = np.arange(16) | 0x8000                 # a CLUT at (0, 0)
+    vram[256, 64] = 0x3210                                  # 4 bpp page 1/y 256: texels 0, 1, 2, 3
+    page = decode_page(vram, 0x11, 0)
+    assert [int(p) for p in page[0, 0:4, 0]] == [(0x8000 & 0x1F) << 3, 1 << 3, 2 << 3, 3 << 3]
+    vram[256, 128] = 0x0302                                 # 8 bpp page 2: texels 2, 3
+    page = decode_page(vram, 0x92, 0)
+    assert [int(p) for p in page[0, 0:2, 0]] == [2 << 3, 3 << 3]

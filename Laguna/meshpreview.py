@@ -57,7 +57,8 @@ class MeshPreview(QWidget):
                 painter.drawPoint(QPointF(x, y))
             return
         faces = []
-        for prim_type, indices, rgb in self.mesh.faces:
+        for face in self.mesh.faces:
+            prim_type, indices, rgb = face[:3]
             corners = [points[i] for i in indices]
             if len(corners) == 4:  # PSX quad order 0-1-3-2
                 corners = [corners[0], corners[1], corners[3], corners[2]]

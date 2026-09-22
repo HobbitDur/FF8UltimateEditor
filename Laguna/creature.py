@@ -70,15 +70,40 @@ class CreatureLoader:
             except OSError:
                 pass
         manager.enemy = enemy
-        geometry_data = enemy.geometry_data
-        faces = [list(t) for t in geometry_data.get_triangles()]
-        faces += [[q[0], q[1], q[3], q[2]] for q in geometry_data.get_quads()]
+        faces, textures = self._faces(enemy.geometry_data)
         animations = []
         for anim_id, anim in enumerate(enemy.animation_data.animations):
             frames = []
             for frame_id in range(len(anim.frames)):
                 viewer = np.asarray(manager.get_animated_vertices(anim_id, frame_id), float)
                 engine = np.column_stack((viewer[:, 0] * AXIS[0], viewer[:, 1] * AXIS[1], viewer[:, 2] * AXIS[2])) * _VIEWER_SCALE
-                frames.append(CreatureFrame(engine, faces))
+                frames.append(CreatureFrame(engine, faces, textures))
             animations.append(frames)
         return animations
+
+    @staticmethod
+    def _faces(geometry):
+        """Faces (quads in PlayStation order 0-1-3-2, like the mag meshes) and, per face, its texture
+        ([uv words], CLUT word, tpage word) - absolute VRAM words for the creature - or None."""
+        faces, textures = [], []
+        uv = lambda t: (t.get_u_raw() & 0xFF) | ((t.get_v_raw() & 0xFF) << 8)
+        offset = 0
+        for obj in geometry.object_data:
+            for tri in obj.triangles:
+                if not tri.is_hidden():   # vertices C, A, B carry uvs a, b, c (see get_triangles_with_uv)
+                    faces.append([tri.vertex_indexes[2] + offset, tri.vertex_indexes[0] + offset,
+                                  tri.vertex_indexes[1] + offset])
+                    textures.append(([uv(tri.vta), uv(tri.vtb), uv(tri.vtc)], tri.tex_id_1, tri.tex_id_2))
+            for quad in obj.quads:
+                if not quad.is_hidden():
+                    faces.append([quad.vertex_indexes[i] + offset for i in (0, 1, 3, 2)])
+                    textures.append(([uv(quad.vta), uv(quad.vtb), uv(quad.vtd), uv(quad.vtc)],
+                                     quad.tex_id_1, quad.tex_id_2))
+            for tri in obj.colored_triangles:
+                faces.append([i + offset for i in tri.vertex_indexes[:3]])
+                textures.append(None)
+            for quad in obj.colored_quads:
+                faces.append([quad.vertex_indexes[i] + offset for i in (0, 1, 3, 2)])
+                textures.append(None)
+            offset += sum(vd.nb_vertices for vd in obj.vertices_data)
+        return faces, textures

@@ -31,6 +31,9 @@ PRIM_VERTEX_FIELDS = {2: (14, 16, 18), 6: (4, 6, 8), 7: (12, 14, 16), 8: (10, 12
                       12: (20, 22, 24, 26), 16: (4, 6, 8, 10), 17: (16, 18, 20, 22),
                       18: (12, 14, 16, 18), 19: (24, 26, 28, 30)}
 TEXTURED = {8, 9, 18, 19}
+# textured primitives: (uv field offsets, CLUT offset, tpage offset)
+PRIM_TEXTURE_FIELDS = {8: ((4, 6, 8), 16, 18), 9: ((12, 14, 16), 24, 26),
+                       18: ((4, 6, 8, 10), 20, 22), 19: ((16, 18, 20, 22), 32, 34)}
 
 HEADER_FIELDS = [
     (0x04, "script (root program)"), (0x08, "CLUT table"), (0x0C, "object table"),
@@ -51,7 +54,9 @@ def _u16(data, offset):
 class CineMesh:
     flags: int
     vertices: list                                # (x, y, z)
-    faces: list = field(default_factory=list)     # (prim type, [vertex indices], rgb)
+    faces: list = field(default_factory=list)     # (prim type, [vertex indices], rgb, texture)
+    # texture = None, or ([uv words], clut word, tpage word) as stored - the drawing bone adds its own
+    # CLUT (+0x9A) and uv (+0x9E) offsets and ORs its tpage (+0x92), see GF_201Ifrit_Prim18_FT4
     prim_counts: dict = field(default_factory=dict)
     normal_count: int = 0
 
@@ -157,7 +162,12 @@ class MagContainer:
                 if any(i >= vertex_count for i in indices):
                     raise ValueError(f"vertex index out of range at 0x{record:X}")
                 rgb = _u32(data, record) & 0xFFFFFF
-                mesh.faces.append((prim_type, indices, rgb))
+                texture = None
+                if prim_type in PRIM_TEXTURE_FIELDS:
+                    uv_fields, clut_field, tpage_field = PRIM_TEXTURE_FIELDS[prim_type]
+                    texture = ([_u16(data, record + f) for f in uv_fields],
+                               _u16(data, record + clut_field), _u16(data, record + tpage_field))
+                mesh.faces.append((prim_type, indices, rgb, texture))
             cursor += count * size
         return mesh
 
