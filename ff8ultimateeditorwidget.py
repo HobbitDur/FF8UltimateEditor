@@ -105,7 +105,7 @@ class FF8UltimateEditorWidget(QWidget):
         # be an exact HOBBIT_OPTION_ITEMS string (checked below) so a typo fails loudly, not silently.
         self.CATEGORY_DEFINITIONS = [
             ("Battle", ["Ifrit (3D/Stat/AI/Seq/Texture)", "Alexander (Battle stage viewer)",
-                        "Watts (r0win.dat victory editor)", "Laguna (GF cinematic script editor)"]),
+                        "Watts (r0win.dat victory editor)"]),
             ("Field", ["Seed (Field model viewer)", "CCGroup (Card value editor)"]),
             ("Menu", ["Shiva (mngrp.bin editor: refine, SeeD tests, sprites)", "Siren (price.bin editor)",
                       "Kadowaki (Item menu editor)", "Minimog (icon.sp1 editor)",
@@ -116,7 +116,8 @@ class FF8UltimateEditorWidget(QWidget):
             ("Main", ["SolomonRing (kernel.bin editor)", "Quezacotl (init.out editor)",
                       "Julia (Sound editor)"]),
             ("Multi", ["Cid (Draw editor)", "ShumiTranslator(All text editor)"]),
-            ("Other", ["Hyne (.ff8 save editor)", "Fujin (Magic animation explorer)"]),
+            ("Other", ["Hyne (.ff8 save editor)", "Fujin (Magic animation explorer)",
+                       "Laguna (GF cinematic script editor)"]),
         ]
         self.HIDDEN_CATEGORIES = set()  # every category has a tool and is shown in the selector
 

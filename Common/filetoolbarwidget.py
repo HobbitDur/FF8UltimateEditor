@@ -120,7 +120,13 @@ class FileToolbarWidget(QWidget):
         multi-select of a wildcard name with no fixed FF8 name, e.g. Alexander's a0stgXXX.x or
         ShumiTranslator's c0mxx.dat) as one more, equally independent entry. All of them can
         coexist in the same menu: a tool with several fixed-name files and a wildcard multi-select
-        (ShumiTranslator) offers every one of them side by side, none more special than another."""
+        (ShumiTranslator) offers every one of them side by side, none more special than another.
+
+        A tool whose files only make sense as a whole set (Laguna: every GF's .00, .01 and streamed
+        parts) defines import_files() instead: Import then runs that one action, no file menu."""
+        whole_set = getattr(self.tool_stack.currentWidget(), "import_files", None)
+        if callable(whole_set):
+            return [("Import", whole_set)]
         entries = [(binding.file_name, (lambda b=binding: self._open_binding(b)))
                   for binding in self._main_bindings()]
         opener = getattr(self.tool_stack.currentWidget(), "open_files", None)
@@ -359,7 +365,9 @@ class FileToolbarWidget(QWidget):
         main_bindings = self._main_bindings()
         complementary_bindings = self._complementary_bindings()
         self.import_button.setEnabled(bool(self._import_entries()))
-        self.import_complementary_button.setEnabled(bool(complementary_bindings))
+        # a tool importing its whole file set at once (import_files) brings its read-only files too
+        whole_set = callable(getattr(self.tool_stack.currentWidget(), "import_files", None))
+        self.import_complementary_button.setEnabled(bool(complementary_bindings) and not whole_set)
         # Save covers the tool's single-file bindings AND any multi-file (folder) save it has - it
         # stays enabled whenever a file is loaded (so saving is never blocked).
         can_save = any(binding.is_loaded for binding in main_bindings) or self._can_save_folder()

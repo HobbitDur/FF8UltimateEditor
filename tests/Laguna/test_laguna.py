@@ -219,3 +219,27 @@ def test_open_folder_brings_every_gf_file():
               for item in widget.scene_view.scene.items(tick, False) if item.kind == "mesh"]
     assert meshes
     widget.deleteLater()
+
+
+@needs_files
+def test_import_is_one_folder_pick(monkeypatch):
+    """Import offers no file menu for Laguna: one folder dialog, every GF file inside is loaded."""
+    from PyQt6.QtWidgets import QFileDialog, QStackedWidget, QApplication
+    from Common.fileregistry import FileRegistry
+    from Common.filetoolbarwidget import FileToolbarWidget
+    from Laguna.lagunawidget import LagunaWidget
+    registry = FileRegistry()
+    widget = LagunaWidget(file_registry=registry)
+    stack = QStackedWidget()
+    stack.addWidget(widget)
+    toolbar = FileToolbarWidget(stack, registry)
+    entries = toolbar._import_entries()
+    assert len(entries) == 1                                   # no list of files to choose from
+    assert not toolbar.import_complementary_button.isEnabled()
+    monkeypatch.setattr(QFileDialog, "getExistingDirectory",
+                        staticmethod(lambda *args, **kwargs: str(PROJECT_ROOT / "extracted_files")))
+    entries[0][1]()
+    QApplication.processEvents()
+    assert widget.gf_selector.count() == 7 and widget._missing_files() == []
+    toolbar.deleteLater()
+    stack.deleteLater()

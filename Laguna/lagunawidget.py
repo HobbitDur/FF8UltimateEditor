@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBo
                              QTreeWidget, QTreeWidgetItem, QTableWidget, QTableWidgetItem, QSplitter,
                              QHeaderView, QAbstractItemView, QGroupBox, QFormLayout, QSpinBox,
                              QPushButton, QMessageBox, QScrollArea, QCheckBox, QLineEdit,
-                             QSlider)
+                             QSlider, QFileDialog)
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -47,6 +47,7 @@ class LagunaWidget(QWidget):
         QWidget.__init__(self)
         if file_registry is None:  # The tool is used alone, it shares its files with nobody
             file_registry = FileRegistry()
+        self._registry = file_registry
         self.setWindowTitle("Laguna")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
@@ -89,9 +90,9 @@ class LagunaWidget(QWidget):
         self.gf_selector = QComboBox()
         self.gf_selector.setToolTip("Which loaded GF mag file is shown (import them with the toolbar)")
         self.gf_selector.activated.connect(lambda _i: self._show_gf(self.gf_selector.currentData()))
-        self.file_label = QLabel("No file loaded: use Open folder on the game data folder (it loads every GF "
-                                 "with its .00, .01 and streamed parts), or import MAG200_B.00 (Ifrit), "
-                                 "MAG005_B.00 (Leviathan), MAG201-205_B.00 (Bahamut ... Eden)")
+        self.file_label = QLabel("No file loaded: click Import (or Open folder) and pick the game data folder - "
+                                 "every GF (Ifrit, Leviathan, Bahamut, Cerberus, Alexander, Brothers, Eden) is "
+                                 "loaded with its .00, .01 and streamed parts")
         self.file_label.setWordWrap(True)
         top = QHBoxLayout()
         top.addWidget(QLabel("GF:"))
@@ -112,6 +113,26 @@ class LagunaWidget(QWidget):
 
         for binding in self.file_bindings():
             binding.load_opened_file()  # Another tool may have opened these files already
+
+    def import_files(self):
+        """The toolbar's Import: pick the game data folder (or any folder above magic/ and battle/),
+        every GF file found in it is opened - the .00 of each GF, its .01 and its streamed parts."""
+        from Common.filetoolbarwidget import FileToolbarWidget
+        key = type(self).__name__
+        folder = QFileDialog.getExistingDirectory(
+            self, "Laguna - pick the game data folder (the one holding magic/ and battle/)",
+            self._registry.last_folder(key))
+        if not folder:
+            return
+        self._registry.remember_folder(key, folder)
+        wanted = {binding.file_name for binding in self.file_bindings()}
+        found = FileToolbarWidget.scan_folder(folder, wanted)
+        if not any(name in found for name in (b.file_name for b in self.bindings.values())):
+            QMessageBox.information(self, "Laguna", f"No GF cinematic file (MAG200_B.00, MAG005_B.00, "
+                                                    f"MAG201-205_B.00) was found in:\n{folder}")
+            return
+        for name, path in found.items():
+            self._registry.open_file(name, path)
 
     def file_bindings(self):
         return (list(self.bindings.values()) + list(self.companion_bindings.values())
