@@ -29,6 +29,18 @@ CINEMATIC_GFS = {
 }
 
 
+# Highest streamed part of each GF: battle/magNNN_b.02 .. .NN, loaded during the summon by
+# script opcode 0x06 (the .00/.01 are loaded when it starts).
+STREAMED_PART_LAST = {"Ifrit": 12, "Leviathan": 17, "Bahamut": 39, "Cerberus": 12, "Alexander": 15,
+                      "Brothers": 11, "Eden": 56}
+
+
+def streamed_part_names(gf):
+    """{part number: file name} of the battle/magNNN_b.0k parts of a GF."""
+    stem = CINEMATIC_GFS[gf][1][:-3].lower()  # "mag200_b"
+    return {k: f"{stem}.{k:02d}" for k in range(2, STREAMED_PART_LAST[gf] + 1)}
+
+
 def gf_from_file_name(path):
     name = os.path.basename(path).upper()
     for gf, (_effect, file_name) in CINEMATIC_GFS.items():

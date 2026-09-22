@@ -6,11 +6,11 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBo
                              QTreeWidget, QTreeWidgetItem, QTableWidget, QTableWidgetItem, QSplitter,
                              QHeaderView, QAbstractItemView, QGroupBox, QFormLayout, QSpinBox,
                              QPushButton, QMessageBox, QScrollArea, QCheckBox, QLineEdit,
-                             QSlider, QFileDialog)
+                             QSlider)
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
-from Laguna.lagunamanager import LagunaManager, CINEMATIC_GFS
+from Laguna.lagunamanager import LagunaManager, CINEMATIC_GFS, streamed_part_names
 from Laguna.timelinewidget import TimelineCanvas, MotionCanvas, CATEGORY_COLORS, TICKS_PER_SECOND
 from Laguna.meshpreview import MeshPreview
 from Laguna.sceneview import SceneView
@@ -55,6 +55,7 @@ class LagunaWidget(QWidget):
         self.current_gf = ""
         self._labels = {}
         self._simulation = None
+        self._refresh_pending = False
         self._row_of_offset = {}
         self._editing_offset = -1
 
@@ -72,13 +73,26 @@ class LagunaWidget(QWidget):
             binding.file_opened.connect(lambda path, g=gf: self._load_companion(path, g))
             binding.file_closed.connect(lambda _path, g=gf: self._close_companion(g))
             self.companion_bindings[gf] = binding
+        # The parts streamed in during the summon (battle/magNNN_b.02...): more meshes, read-only.
+        # Like every file here they come through the shared registry, so "Open folder" on the game
+        # data folder brings the whole set at once.
+        self.parts = {}             # gf -> {part number: MagContainer}
+        self.part_bindings = {}
+        for gf in CINEMATIC_GFS:
+            for number, name in streamed_part_names(gf).items():
+                binding = FileBinding(name, file_registry, read_only=True)
+                binding.file_opened.connect(lambda path, g=gf, k=number: self._load_part(path, g, k))
+                binding.file_closed.connect(lambda _path, g=gf, k=number: self._close_part(g, k))
+                self.part_bindings[(gf, number)] = binding
 
         # ---- top bar
         self.gf_selector = QComboBox()
         self.gf_selector.setToolTip("Which loaded GF mag file is shown (import them with the toolbar)")
         self.gf_selector.activated.connect(lambda _i: self._show_gf(self.gf_selector.currentData()))
-        self.file_label = QLabel("No file loaded: import MAG200_B.00 (Ifrit), MAG005_B.00 (Leviathan), "
-                                 "MAG201-205_B.00 (Bahamut, Cerberus, Alexander, Brothers, Eden)")
+        self.file_label = QLabel("No file loaded: use Open folder on the game data folder (it loads every GF "
+                                 "with its .00, .01 and streamed parts), or import MAG200_B.00 (Ifrit), "
+                                 "MAG005_B.00 (Leviathan), MAG201-205_B.00 (Bahamut ... Eden)")
+        self.file_label.setWordWrap(True)
         top = QHBoxLayout()
         top.addWidget(QLabel("GF:"))
         top.addWidget(self.gf_selector)
@@ -100,7 +114,8 @@ class LagunaWidget(QWidget):
             binding.load_opened_file()  # Another tool may have opened these files already
 
     def file_bindings(self):
-        return list(self.bindings.values()) + list(self.companion_bindings.values())
+        return (list(self.bindings.values()) + list(self.companion_bindings.values())
+                + list(self.part_bindings.values()))
 
     @property
     def manager(self):
@@ -232,11 +247,6 @@ class LagunaWidget(QWidget):
         view_options.addWidget(self.scene_wire_check)
         view_options.addWidget(frame_button)
         view_options.addStretch(1)
-        self.parts_button = QPushButton("Add streamed parts (battle/magNNN_b.0k)...")
-        self.parts_button.setToolTip("Some meshes are loaded during the summon from battle/magNNN_b.02, .03...: "
-                                     "add those files to see them (read-only)")
-        self.parts_button.clicked.connect(self._add_streamed_parts)
-        view_options.addWidget(self.parts_button)
         scene_box = QWidget()
         scene_layout = QVBoxLayout(scene_box)
         scene_layout.setContentsMargins(0, 0, 0, 0)
@@ -313,7 +323,6 @@ class LagunaWidget(QWidget):
         layout.addLayout(info)
         self._update_hidden_categories()
         self._selected_bone = -1
-        self._extra_parts = {}      # gf -> [MagContainer] of streamed battle/magNNN_b.0k parts
         return tab
 
     def _build_opcode_tab(self):
@@ -353,18 +362,11 @@ class LagunaWidget(QWidget):
         self.wireframe_check.toggled.connect(self._toggle_wireframe)
         self.resource_info = QLabel("Select an object (mesh or model) in the list to preview it.")
         self.resource_info.setWordWrap(True)
-        self.import_01_button = QPushButton("Import the .01 (most meshes)...")
-        self.import_01_button.setToolTip("The .01 companion file holds most meshes and textures; it is read-only here")
-        self.import_01_button.clicked.connect(self._import_companion)
-        self.resource_parts_button = QPushButton("Add streamed parts (battle/magNNN_b.0k)...")
-        self.resource_parts_button.clicked.connect(self._add_streamed_parts)
         right = QWidget()
         right_layout = QVBoxLayout(right)
         top = QHBoxLayout()
         top.addWidget(self.wireframe_check)
         top.addStretch(1)
-        top.addWidget(self.import_01_button)
-        top.addWidget(self.resource_parts_button)
         right_layout.addLayout(top)
         right_layout.addWidget(self.mesh_preview, 1)
         right_layout.addWidget(self.resource_info)
@@ -388,13 +390,16 @@ class LagunaWidget(QWidget):
         files = [(file_name, MagContainer(bytes(manager.data)))]
         if self.current_gf in self.companions:
             files.append((file_name[:-2] + "01", self.companions[self.current_gf]))
-        for index, container in enumerate(self._extra_parts.get(self.current_gf, [])):
-            files.append((f"streamed part {index + 1}", container))
-        if self.current_gf not in self.companions:
-            missing = QTreeWidgetItem([file_name[:-2] + "01 not loaded", "",
-                                       "Most meshes are in the .01: click 'Import the .01' above"])
-            missing.setForeground(0, QColor(220, 60, 60))
-            self.resource_tree.addTopLevelItem(missing)
+        part_names = streamed_part_names(self.current_gf)
+        for number, container in sorted(self.parts.get(self.current_gf, {}).items()):
+            files.append((part_names[number] + " (streamed)", container))
+        missing = self._missing_files()
+        if missing:
+            item = QTreeWidgetItem([f"{len(missing)} file(s) not loaded", "",
+                                    "Open folder on the game data folder loads them: " + ", ".join(missing)])
+            item.setToolTip(2, item.text(2))
+            item.setForeground(0, QColor(220, 60, 60))
+            self.resource_tree.addTopLevelItem(item)
         for name, container in files:
             root = QTreeWidgetItem([name, "", f"{len(container.data)} bytes"])
             self.resource_tree.addTopLevelItem(root)
@@ -464,10 +469,6 @@ class LagunaWidget(QWidget):
             vertices=[tuple(v) for v in frame.vertices.tolist()],
             faces=[(0, indices, 0x6E96CD) for indices in frame.faces]))
 
-    def _import_companion(self):
-        if self.manager is None:
-            return
-        self.companion_bindings[self.current_gf].open_dialog(self, os.path.dirname(self.manager.file_path))
 
     def _load_companion(self, path, gf):
         try:
@@ -476,15 +477,11 @@ class LagunaWidget(QWidget):
         except OSError as error:
             QMessageBox.critical(self, "Laguna", f"Cannot read {path}:\n{error}")
             return
-        if gf == self.current_gf:
-            self._fill_resources()
-            self._run_simulation(keep_tick=True)  # its meshes join the 3D scene
+        self._schedule_refresh(gf)  # its meshes join the 3D scene
 
     def _close_companion(self, gf):
         self.companions.pop(gf, None)
-        if gf == self.current_gf:
-            self._fill_resources()
-            self._run_simulation(keep_tick=True)
+        self._schedule_refresh(gf)
 
     # ------------------------------------------------------------------ files
     def load_file(self, path, gf):
@@ -496,7 +493,9 @@ class LagunaWidget(QWidget):
             return
         self.managers[gf] = manager
         self._refresh_gf_selector()
-        self._show_gf(gf)
+        # Open folder brings all seven GFs: show the first, the others wait in the GF selector
+        if self.current_gf in ("", gf):
+            self._show_gf(gf)
 
     def save_file(self, gf):
         manager = self.managers.get(gf)
@@ -794,7 +793,7 @@ class LagunaWidget(QWidget):
         containers = [MagContainer(bytes(self.manager.data))]
         if self.current_gf in self.companions:
             containers.append(self.companions[self.current_gf])
-        containers.extend(self._extra_parts.get(self.current_gf, []))
+        containers.extend(container for _number, container in sorted(self.parts.get(self.current_gf, {}).items()))
         return containers
 
     def _creature_loader(self):
@@ -852,27 +851,42 @@ class LagunaWidget(QWidget):
         self.scene_view.wireframe = self.scene_wire_check.isChecked()
         self.scene_view.update()
 
-    def _add_streamed_parts(self):
-        if self.manager is None:
+    def _load_part(self, path, gf, number):
+        try:
+            with open(path, "rb") as f:
+                container = MagContainer(f.read())
+        except OSError as error:
+            QMessageBox.warning(self, "Laguna", f"Cannot read {path}:\n{error}")
             return
-        folder = os.path.dirname(self.manager.file_path)
-        paths, _filter = QFileDialog.getOpenFileNames(
-            self, "Add streamed parts (battle/magNNN_b.02, .03...)", folder,
-            f"{CINEMATIC_GFS[self.current_gf][1][:6]}_B.* parts (*)")
-        parts = []
-        for path in paths:
-            try:
-                with open(path, "rb") as f:
-                    container = MagContainer(f.read())
-            except OSError as error:
-                QMessageBox.warning(self, "Laguna", f"Cannot read {path}:\n{error}")
-                continue
-            if container.packed:  # raw VRAM pages carry no objects
-                parts.append(container)
-        if parts:
-            self._extra_parts.setdefault(self.current_gf, []).extend(parts)
+        if container.packed:  # the raw ones are VRAM pages: no objects to show
+            self.parts.setdefault(gf, {})[number] = container
+        self._schedule_refresh(gf)
+
+    def _close_part(self, gf, number):
+        self.parts.get(gf, {}).pop(number, None)
+        self._schedule_refresh(gf)
+
+    def _schedule_refresh(self, gf):
+        """Open folder delivers dozens of parts one by one: rebuild the scene once, afterwards."""
+        if gf == self.current_gf and self.manager is not None and not self._refresh_pending:
+            self._refresh_pending = True
+            QTimer.singleShot(0, self._refresh_resources_and_scene)
+
+    def _refresh_resources_and_scene(self):
+        self._refresh_pending = False
+        if self.manager is not None:
             self._fill_resources()
             self._run_simulation(keep_tick=True)
+
+    def _missing_files(self):
+        """Names of the .01 and streamed parts of the current GF that are not loaded."""
+        missing = []
+        if self.current_gf not in self.companions:
+            missing.append(CINEMATIC_GFS[self.current_gf][1][:-2] + "01")
+        loaded = set(self.parts.get(self.current_gf, {}))
+        missing += [name for number, name in streamed_part_names(self.current_gf).items()
+                    if number not in loaded and not self.part_bindings[(self.current_gf, number)].is_loaded]
+        return missing
 
     def _update_hidden_categories(self):
         self.timeline.hidden_categories = {c for c, check in self.category_checks.items() if not check.isChecked()}

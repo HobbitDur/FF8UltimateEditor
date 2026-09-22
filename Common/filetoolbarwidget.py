@@ -174,8 +174,11 @@ class FileToolbarWidget(QWidget):
         folder memory (they're usually side by side, but keyed per file type all the same)."""
         names = [binding.file_name for binding in bindings]
         start = self.registry.last_folder(bindings[0].file_name) if bindings else ""
+        # A long list of exact names (Laguna reads ~180 GF mag parts) makes an unusable filter: past
+        # a handful, filter by extension; every pick is still routed by its exact name below.
+        patterns = names if len(names) <= 12 else sorted({"*" + os.path.splitext(n)[1] for n in names})
         file_paths = QFileDialog.getOpenFileNames(
-            self, caption, filter=f"Files this tool uses ({' '.join(names)})",
+            self, caption, filter=f"Files this tool uses ({' '.join(patterns)})",
             directory=start or os.getcwd())[0]
         by_name = {binding.file_name.lower(): binding for binding in bindings}
         for path in file_paths:
@@ -305,7 +308,10 @@ class FileToolbarWidget(QWidget):
     def _report_open_folder(self, folder, opened, problems):
         lines = [f"Opened {len(opened)} file(s) from:\n{folder}"]
         if opened:
-            lines.append("\n" + "\n".join(f"  • {name}" for name in sorted(opened)))
+            listed = sorted(opened)
+            shown = listed[:40]  # a game data folder opens hundreds of files: keep the box readable
+            more = f"\n  ... and {len(listed) - len(shown)} more" if len(listed) > len(shown) else ""
+            lines.append("\n" + "\n".join(f"  • {name}" for name in shown) + more)
         else:
             lines.append("\nNo file a tool can read was found here or in its subfolders.")
         if problems:

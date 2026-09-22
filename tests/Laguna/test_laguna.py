@@ -196,3 +196,26 @@ def test_widget_playback_follows_edits():
     widget._apply_instruction()          # the simulation re-runs by itself after an edit
     assert widget._simulation.finished_tick != before
     widget.deleteLater()
+
+
+@needs_files
+def test_open_folder_brings_every_gf_file():
+    """The shared Open-folder scan finds the .00, .01 and every streamed part, and the scene uses them."""
+    from Common.fileregistry import FileRegistry
+    from Common.filetoolbarwidget import FileToolbarWidget
+    from Laguna.lagunawidget import LagunaWidget
+    registry = FileRegistry()
+    widget = LagunaWidget(file_registry=registry)
+    folder = PROJECT_ROOT / "extracted_files"
+    found = FileToolbarWidget.scan_folder(str(folder), {b.file_name for b in widget.file_bindings()})
+    assert len(found) == 169  # 7 x (.00 + .01) + 155 streamed parts
+    for name in ("MAG200_B.00", "MAG200_B.01") + tuple(n for n in found if n.startswith("mag200_b.")):
+        registry.open_file(name, found[name])
+    from PyQt6.QtWidgets import QApplication
+    QApplication.processEvents()
+    assert widget.current_gf == "Ifrit" and widget._missing_files() == []
+    assert widget.parts["Ifrit"]  # the packed parts (the raw ones are VRAM pages)
+    meshes = [item for tick in range(0, widget.scene_view.scene.tick_count, 10)
+              for item in widget.scene_view.scene.items(tick, False) if item.kind == "mesh"]
+    assert meshes
+    widget.deleteLater()

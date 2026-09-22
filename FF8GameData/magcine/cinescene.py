@@ -45,15 +45,16 @@ def affine(rot=None, pos=(0, 0, 0), scale=None):
     return m
 
 
-def look_at(eye, target, up=(0.0, -1.0, 0.0)):
-    """World matrix of an object at `eye` whose +Z looks at `target` (+Y down)."""
-    eye, target, up = np.asarray(eye, float), np.asarray(target, float), np.asarray(up, float)
+def look_at(eye, target, down=(0.0, 1.0, 0.0)):
+    """World matrix of an object at `eye` whose +Z looks at `target`, +X = screen right, +Y =
+    screen down (the engine's axes: right x down = forward)."""
+    eye, target, down = np.asarray(eye, float), np.asarray(target, float), np.asarray(down, float)
     forward = target - eye
     norm = np.linalg.norm(forward)
     if norm < 1e-6:
         return affine(pos=eye)
     forward /= norm
-    right = np.cross(up, forward)
+    right = np.cross(down, forward)
     if np.linalg.norm(right) < 1e-6:
         right = np.array([1.0, 0.0, 0.0])
     right /= np.linalg.norm(right)
