@@ -13,11 +13,13 @@ What cannot be known without the battle is chosen, not guessed at random:
    the same seed replays the same run, another seed shows another possible run;
  - "wait until the file load / stream / texture is ready" opcodes are ready at once;
  - 0x140 (wait scaled by the battle slot) uses factor 1;
- - bone handlers other than 0/1 (polar, lerp, copy of another bone...) are not evaluated, those
-   bones keep outPos = accumPos.
+ - bone handlers 0/1 (outPos = accumulator), 3 (polar around a bone), 5 (copy a bone), 6 (lerp
+   between two bones) and 7 (a bone + accumulator) are evaluated; the others keep outPos;
+ - opcodes reading the battle (entity positions, joints, targets' size) leave the bone unmoved.
 So the result is the vanilla choreography as the scripts describe it, a close approximation of
 the game's timing - not a frame-exact replay.
 """
+import math
 import random
 import struct
 from dataclasses import dataclass, field
@@ -47,6 +49,11 @@ EVENT_CATEGORIES = {
     0x07: "freeze", 0x93: "light", 0xC6: "fog", 0x11B: "fog",
     0x05: "flag", 0x10C: "flag", 0x01: "sequence",
 }
+# Opcodes other than the generic writes that change a bone's motion (handled by _motion_op).
+_MOTION_OPS = {0x2F, 0x37, 0x61, 0x62, 0x91, 0x82, 0xC0, 0x87, 0xAC, 0xB9, 0xD2, 0x7C, 0x117,
+               0x1A, 0xA4, 0xCC, 0xF2, 0x110}
+ROOT_ANGLES = (256, 768, 0)  # g_GfCinematic_RootAngleX/Y/Z set by SetupSectionPtrs
+NODE_BUILDERS = {0x65, 0x66, 0x67, 0x69, 0x6A, 0xCB, 0x7A, 0x84, 0xC4, 0x104, 0x105, 0x116}
 _REPEATING = {"node"}  # re-run every tick by "keep node updated" loops: only the first one is kept
 
 
@@ -67,6 +74,8 @@ class SimBone:
     parent: int = -1               # index of the spawning bone
     spawned_at: int = -1           # offset of the spawning instruction
     bone_id: int = 0
+    parent_id: int = 0             # bone+0x14: id of the spawning bone
+    grandparent_id: int = 0        # bone+0x16: that bone's +0x14
     death_tick: int = -1           # -1 = still alive at the end
     channels: list = field(default_factory=lambda: [None, None, None])  # ip per channel
     waits: list = field(default_factory=lambda: [0, 0, 0])
@@ -80,13 +89,29 @@ class SimBone:
     events: list = field(default_factory=list)
     track: list = field(default_factory=list)  # (tick, outAngle xyz, outPos xyz)
     visited: set = field(default_factory=set)  # instruction offsets executed
+    props: list = field(default_factory=list)  # (tick, key, value): draw handler, mesh, node...
+    handler: int = 0               # bone handler id (+0x18): how accumPos becomes outPos
+    handler_words: tuple = ()      # its parameter block (op 0x1A), bone refs for handlers 5/6/7
+    handler_ref: int = 0           # +0xB0 reference bone (handler 3, ops 0xA4/0xCC)
+    out_pos: list = field(default_factory=lambda: [0, 0, 0])
 
     @property
     def alive(self):
         return self.death_tick < 0
 
     def out(self):
-        return tuple(_s16(a >> 16) for a in self.accum)
+        """(outAngle xyz, outPos xyz) - outPos as the bone handler derived it."""
+        return tuple(_s16(a >> 16) for a in self.accum[:3]) + tuple(self.out_pos)
+
+    def prop(self, key, tick, default=None):
+        """Value of a property (see CineSimulation._record_props) as it was at `tick`."""
+        value = default
+        for when, name, item in self.props:
+            if when > tick:
+                break
+            if name == key:
+                value = item
+        return value
 
 
 def _s16(value):
@@ -119,6 +144,10 @@ class CineSimulation:
         self.tick = 0
         self.finished_tick = -1    # tick of op 0x01 (sequence end)
         self.warnings = []
+        # For the 3D scene: per tick, every live bone's (outAngle xyz, outPos xyz), and the battle
+        # camera written by op 0x39 sub-op 0 (eye bone index, look-at bone index, projection, roll).
+        self.frames = []
+        self.cameras = {}
         self._next_id = 0x8000
         self._cursor = 0           # position in the order list of the bone after the running one
         self._cache = {}
@@ -136,6 +165,11 @@ class CineSimulation:
         bone = SimBone(len(self.bones), self.tick, program, parent.index if parent else -1, at)
         if parent is not None:
             bone.accum = list(parent.accum)
+            # the engine also copies handlerId and the +0xB0..+0xB7 handler words
+            bone.handler, bone.handler_words, bone.handler_ref = parent.handler, parent.handler_words, parent.handler_ref
+            bone.out_pos = list(parent.out_pos)
+            bone.parent_id = parent.bone_id
+            bone.grandparent_id = parent.parent_id
             bone.bone_id = self._next_id
             self._next_id += 1
         if bone_id is not None:
@@ -182,6 +216,7 @@ class CineSimulation:
                     break
             if self.track_motion:
                 self._integrate()
+                self.frames.append({index: self.bones[index].out() for index in self.order})
             self.tick += 1
 
     def _integrate(self):
@@ -189,12 +224,44 @@ class CineSimulation:
             bone = self.bones[index]
             if not bone.alive:
                 continue
-            for i in range(6):
-                if bone.accel[i]:
-                    bone.vel[i] = _s32(bone.vel[i] + (bone.accel[i] << 12))
-                bone.accum[i] = _s32(bone.accum[i] + bone.vel[i])
-            if any(bone.vel) or not bone.track:
-                bone.track.append((self.tick,) + bone.out())
+            self._integrate_bone(bone)
+
+    def _apply_handler(self, bone):
+        """BoneHandlerTable[handler]: outPos from the accumulators (0xB262E0.. in the Ifrit module)."""
+        accum = [_s16(a >> 16) for a in bone.accum[3:]]
+        handler = bone.handler
+        if handler in (3, 5, 6, 7):
+            words = bone.handler_words
+            if handler == 3:
+                ref = self.resolve_ref(bone, bone.handler_ref)
+                angle = (bone.accum[5] >> 16) * 2 * math.pi / 4096
+                radius = bone.accum[3] / 65536.0
+                bone.out_pos = [_s16(ref.out_pos[0] + int(math.sin(angle) * radius)),
+                                _s16(ref.out_pos[1] + accum[1]),
+                                _s16(ref.out_pos[2] + int(math.cos(angle) * radius))]
+            elif handler == 5 and words:
+                bone.out_pos = list(self.resolve_ref(bone, words[0]).out_pos)
+            elif handler == 6 and len(words) >= 2:
+                a, b = self.resolve_ref(bone, words[0]), self.resolve_ref(bone, words[1])
+                ratios = [r >> 16 for r in bone.accum[:3]]
+                bone.out_pos = [_s16(int(ratios[i] * (b.out_pos[i] - a.out_pos[i]) / 256) + a.out_pos[i] + accum[i])
+                                for i in range(3)]
+            elif handler == 7 and words:
+                ref = self.resolve_ref(bone, words[0])
+                bone.out_pos = [_s16(ref.out_pos[i] + accum[i]) for i in range(3)]
+            return
+        if handler in (0, 1, 9):
+            bone.out_pos = accum
+        # 2, 4, 8, 10, 11: outPos left untouched
+
+    def _integrate_bone(self, bone):
+        for i in range(6):
+            if bone.accel[i]:
+                bone.vel[i] = _s32(bone.vel[i] + (bone.accel[i] << 12))
+            bone.accum[i] = _s32(bone.accum[i] + bone.vel[i])
+        self._apply_handler(bone)
+        if any(bone.vel) or bone.handler in (3, 5, 6, 7) or not bone.track:
+            bone.track.append((self.tick,) + bone.out())
 
     def _run_slice(self, bone, channel):
         ip = bone.channels[channel]
@@ -248,6 +315,7 @@ class CineSimulation:
             self._event(bone, ins, category)
         if category in ("draw", "model"):
             bone.draw = ins.name
+        self._record_props(bone, ins)
 
         if code == 0x00:
             return ("kill", None) if channel == 0 else ("stop", None)
@@ -332,8 +400,86 @@ class CineSimulation:
             return ("kill", None) if channel == 0 else ("stop", None)
         if code in _GENERIC and self.track_motion:
             self._generic_write(bone, code, op, w)
+            self._apply_handler(bone)
+            return None
+        if code in _MOTION_OPS and self.track_motion:
+            self._motion_op(bone, code, op, w)
+            self._apply_handler(bone)
             return None
         return None
+
+    def _motion_op(self, bone, code, op, w):
+        """Opcodes that move a bone other than the generic writes (see gf_cinematic_opcodes.json)."""
+        if code == 0x2F:                                   # StopMotion
+            bone.vel, bone.accel = [0] * 6, [0] * 6
+        elif code == 0x37:                                 # ResetAccum
+            bone.accum = [0] * 6
+        elif code in (0x61, 0x62):                         # Copy accum (op word 0x0061 exactly) / vel
+            source = self.resolve_ref(bone, w[1])
+            field_name = "accum" if op == 0x0061 else "vel"
+            for i in range(6):
+                if w[0] & (1 << i):
+                    getattr(bone, field_name)[i] = getattr(source, field_name)[i]
+        elif code == 0x91:                                 # accum = another bone's outputs
+            source = self.resolve_ref(bone, w[1])
+            outputs = source.out()
+            for i in range(6):
+                if w[0] & (1 << i):
+                    bone.accum[i] = outputs[i] << 16
+        elif code in (0x82, 0xC0):                         # move onto a bone in N ticks
+            target = self.resolve_ref(bone, w[0]) if code == 0x82 else (self._bone_with_id(bone.parent_id) or self.bones[0])
+            frames = (w[1] if code == 0x82 else w[0]) or 1
+            for i in range(3, 6):
+                bone.vel[i] = _s32(int((target.accum[i] - bone.accum[i]) / frames))
+        elif code == 0x87:                                 # scale toward the origin over N ticks
+            frames = w[1] or 1
+            for i in range(6):
+                if (op >> 10) & (0x20 >> i):
+                    bone.vel[i] = _s32(int(((bone.accum[i] >> 16) * (w[0] - 256) << 8) / frames))
+        elif code == 0xAC:                                 # accelerate to reach a target in N ticks
+            frames = w[0] or 1
+            mask = (op >> 10) & 0x3F
+            if op & 0x200:
+                values = iter(w[1:])
+                targets = {i: next(values, 0) << 16 for i in range(6) if mask & (0x20 >> i)}
+            else:
+                other = self.resolve_ref(bone, w[1])
+                targets = {i: other.accum[i] for i in range(6) if mask & (0x20 >> i)}
+            for i, target in targets.items():
+                gap = target - bone.accum[i] - frames * bone.vel[i]
+                bone.accel[i] = max(-32768, min(32767, int(2 * gap / (frames * (frames + 1)) / 4096)))
+        elif code in (0xB9, 0xD2):                         # negate one motion value
+            index = w[0]
+            if (code == 0xD2 or index > 0) and 0 <= index < 12:
+                block = bone.accum if index < 6 else bone.vel
+                block[index % 6] = _s32(-block[index % 6])
+        elif code == 0x7C:                                 # random point on an ellipse (XZ)
+            angle = self.rng.randrange(4096) * 2 * math.pi / 4096
+            bone.accum[5] = _s32(bone.accum[5] + int((w[0] + self._rand(w[1])) * math.cos(angle) * 65536))
+            bone.accum[3] = _s32(bone.accum[3] + int((w[2] + self._rand(w[3])) * math.sin(angle) * 65536))
+        elif code == 0x117:                                # rotation relative to the root angles
+            for i, root in enumerate(ROOT_ANGLES):
+                bone.accum[i] = _s32((w[i] - root) << 16)
+        elif code == 0x1A:                                 # bone handler + parameter block
+            bone.handler, bone.handler_words = (w[0] >> 8) & 0xFF, tuple(w[1:])
+        elif code == 0xA4:                                 # bone handler + reference bone
+            bone.handler, bone.handler_ref = w[0] & 0xFF, w[1] & 0xFFFF
+            if bone.handler == 3:                          # convert to polar around the reference
+                ref = self.resolve_ref(bone, bone.handler_ref)
+                dx, dz = bone.out_pos[0] - ref.out_pos[0], bone.out_pos[2] - ref.out_pos[2]
+                bone.accum[5] = int(math.atan2(dx, dz) * 4096 / (2 * math.pi)) << 16
+                bone.accum[3] = int(math.hypot(dx, dz)) << 16
+                bone.accum[4] = (bone.out_pos[1] - ref.out_pos[1]) << 16
+        elif code == 0xCC:                                 # handler 7 relative to a bone
+            bone.handler, bone.handler_words = 7, (w[0],)
+        elif code == 0xF2:                                 # bake outPos, back to handler 0
+            bone.accum[3:] = [v << 16 for v in bone.out_pos]
+            bone.handler = 0
+        elif code == 0x110:                                # midpoint of two bones
+            a, b = self.resolve_ref(bone, w[0]), self.resolve_ref(bone, w[1])
+            bone.handler = a.handler
+            for i in range(3, 6):
+                bone.accum[i] = _s32((a.accum[i] + b.accum[i]) // 2)
 
     def _rand(self, bound):
         """The engine's rand(n): 0..n-1 (sign of n kept), 0 for n == 0."""
@@ -341,6 +487,82 @@ class CineSimulation:
             return 0
         value = self.rng.randrange(abs(bound))
         return value if bound > 0 else -value
+
+    def _record_props(self, bone, ins):
+        """What the 3D scene needs to know about a bone, with the tick it changed:
+        draw (draw handler id), mesh / model (object ids), node (the node-builder instruction the
+        bone runs: code, op, words), parent (parentNodeId ref of op 0x68), handler (bone handler)."""
+        code, op, w = ins.code, ins.op, ins.words
+        record = lambda key, value: bone.props.append((self.tick, key, value))
+        if code == 0x3D:
+            record("draw", w[0] & 0xFF)
+            record("mesh", w[1] & 0xFFFF)
+        elif code == 0x4A:
+            record("draw", op >> 9)
+            record("mesh", w[0] & 0xFFFF)
+        elif code == 0x54:
+            record("draw", 1)
+            record("mesh", w[0] & 0xFFFF)
+        elif code in (0x43, 0x44):
+            record("draw", w[0] & 0xFF)
+        elif code == 0x4D:
+            record("draw", 4)
+        elif code == 0x58:
+            record("draw", 6)
+        elif code == 0x3F:
+            record("draw", 3)
+            record("model", (w[0] & 0xFF, (w[0] >> 8) & 0xFF))
+        elif code == 0xD0:
+            record("hidden", True)
+        elif code == 0xEB:
+            record("hidden", False)
+        elif code == 0x68:
+            parent = self.resolve_ref(bone, w[0])
+            record("parent", parent.index if parent is not bone else -1)
+        elif code == 0x1A:
+            record("handler", (w[0] >> 8) & 0xFF)
+        elif code in NODE_BUILDERS:
+            # node builders run every tick: record only a change of builder
+            if bone.prop("node", self.tick, (None,))[0] != code:
+                refs = ()
+                if code == 0x69:
+                    refs = (self.resolve_ref(bone, w[1]).index,)
+                elif code == 0x7A:
+                    refs = (self.resolve_ref(bone, w[0]).index if w[0] else -1,)
+                elif code == 0xCB:
+                    refs = tuple(self.resolve_ref(bone, r).index if r else bone.index for r in w[:2])
+                record("node", (code, op, tuple(w), refs))
+        elif code == 0x39 and op >> 12 == 0:
+            target = self.resolve_ref(bone, w[0])
+            self.cameras[self.tick] = (bone.index, target.index if target else -1)
+
+    def resolve_ref(self, bone, ref):
+        """The engine's bone reference (GfCinematic_GetRotationVector 0xB65370): an id, 0x4000|n =
+        the bone's battle slot + n, 0xFFFF = the spawner, 0xFFFE its spawner, 0xFFFD / 0xFFFC one
+        and two levels higher; not found = the root bone."""
+        ref &= 0xFFFF
+        if ref >= 0xFFF0:
+            level = (~ref) & 3
+            if level == 0:
+                wanted = bone.parent_id
+            elif level == 1:
+                wanted = bone.grandparent_id
+            else:
+                holder = self._bone_with_id(bone.grandparent_id)
+                if holder is None:
+                    return self.bones[0]
+                wanted = holder.parent_id if level == 2 else holder.grandparent_id
+        elif ref & 0x4000:
+            wanted = ref & 0x3FFF  # battle slot + n: the slot is unknown here, take n
+        else:
+            wanted = ref
+        return self._bone_with_id(wanted) or self.bones[0]
+
+    def _bone_with_id(self, bone_id):
+        for index in self.order:
+            if self.bones[index].bone_id == bone_id:
+                return self.bones[index]
+        return None
 
     def _flag_op(self, sub, w, at, nxt, target):
         flags = self.sync_flags if target == "sync" else target.flags

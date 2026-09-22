@@ -1,17 +1,20 @@
 import os
 
-from PyQt6.QtCore import Qt, QSignalBlocker
+from PyQt6.QtCore import Qt, QSignalBlocker, QTimer
 from PyQt6.QtGui import QIcon, QColor, QFont
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QTabWidget,
                              QTreeWidget, QTreeWidgetItem, QTableWidget, QTableWidgetItem, QSplitter,
                              QHeaderView, QAbstractItemView, QGroupBox, QFormLayout, QSpinBox,
-                             QPushButton, QMessageBox, QScrollArea, QCheckBox, QLineEdit)
+                             QPushButton, QMessageBox, QScrollArea, QCheckBox, QLineEdit,
+                             QSlider, QFileDialog)
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Laguna.lagunamanager import LagunaManager, CINEMATIC_GFS
 from Laguna.timelinewidget import TimelineCanvas, MotionCanvas, CATEGORY_COLORS, TICKS_PER_SECOND
 from Laguna.meshpreview import MeshPreview
+from Laguna.sceneview import SceneView
+from FF8GameData.magcine.cinescene import CineScene
 from FF8GameData.magcine.magcontainer import MagContainer, PRIM_NAME, HEADER_FIELDS
 
 _KIND_COLORS = {"code": None, "spawn": QColor(15, 157, 88), "particle": QColor(244, 160, 0),
@@ -31,8 +34,9 @@ class LagunaWidget(QWidget):
     - Script: every script reachable from the root program (bone programs, subroutines, jump
       targets) disassembled with named opcodes, plus the unreached bytes (particle scripts, dead
       code); an instruction's modifier bits and operands are edited in place.
-    - Timeline: the scripts replayed tick by tick without the game (who spawns when, camera cuts,
-      sounds, draw setup, particles) and each bone's motion curves.
+    - Playback: the scripts replayed tick by tick without the game (re-run after every edit), shown
+      in 3D (meshes, the animated creature, the battle camera) and as a timeline of the bones (who
+      spawns when, camera cuts, sounds, draw setup, particles) with each bone's motion curves.
     - Resources: the meshes, embedded creature model and sprite lists of the .00 and of the
       companion .01 (read-only), with an untextured 3D preview of the meshes.
     - Opcodes: the decoded instruction set.
@@ -82,7 +86,7 @@ class LagunaWidget(QWidget):
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_script_tab(), "Script")
-        self.tabs.addTab(self._build_timeline_tab(), "Timeline")
+        self.tabs.addTab(self._build_timeline_tab(), "Playback (3D + timeline)")
         self.tabs.addTab(self._build_resource_tab(), "Resources")
         self.tabs.addTab(self._build_opcode_tab(), "Opcodes")
 
@@ -106,7 +110,8 @@ class LagunaWidget(QWidget):
     def _build_script_tab(self):
         self.block_tree = QTreeWidget()
         self.block_tree.setHeaderLabels(["Script", "Offset", "Instr."])
-        self.block_tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.block_tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.block_tree.setColumnWidth(0, 170)
         self.block_tree.itemClicked.connect(self._on_block_clicked)
         self.block_filter = QLineEdit()
         self.block_filter.setPlaceholderText("Filter (label or offset)...")
@@ -184,23 +189,80 @@ class LagunaWidget(QWidget):
         return tab
 
     def _build_timeline_tab(self):
+        """Playback: the scripts replayed without the game (re-run automatically after every edit),
+        shown in 3D on top and as a timeline (one row per bone) below, sharing one play head."""
+        # --- simulation settings
         self.seed_spin = _NoWheelSpinBox()
         self.seed_spin.setRange(0, 9999)
         self.seed_spin.setToolTip("Seed of the random opcodes (random branch/wait/offsets): "
                                   "another seed shows another possible run")
+        self.seed_spin.valueChanged.connect(lambda _v: self._run_simulation())
         self.target_spin = _NoWheelSpinBox()
         self.target_spin.setRange(1, 8)
         self.target_spin.setToolTip("Number of targets of the summon (per-target spawns and target loops)")
-        run_button = QPushButton("Run simulation")
-        run_button.clicked.connect(self._run_simulation)
+        self.target_spin.valueChanged.connect(lambda _v: self._run_simulation())
         self.sim_label = QLabel("")
-        controls = QHBoxLayout()
-        controls.addWidget(QLabel("Seed:"))
-        controls.addWidget(self.seed_spin)
-        controls.addWidget(QLabel("Targets:"))
-        controls.addWidget(self.target_spin)
-        controls.addWidget(run_button)
-        controls.addWidget(self.sim_label, 1)
+        self.sim_label.setToolTip("The simulation replays the script without the game. It runs by itself when a "
+                                  "file is loaded and after every edit; seed and targets re-run it too.")
+        settings = QHBoxLayout()
+        settings.addWidget(QLabel("Random seed:"))
+        settings.addWidget(self.seed_spin)
+        settings.addWidget(QLabel("Targets:"))
+        settings.addWidget(self.target_spin)
+        settings.addWidget(self.sim_label, 1)
+
+        # --- 3D view + its options
+        self.scene_view = SceneView()
+        self.scene_view.bone_clicked.connect(lambda bone: self._select_bone(bone, jump_tick=False))
+        self.camera_combo = QComboBox()
+        self.camera_combo.addItems(["Free camera", "Game camera"])
+        self.camera_combo.setToolTip("Free: orbit with the mouse. Game: the battle camera the script drives (op 0x39)")
+        self.camera_combo.currentIndexChanged.connect(self._camera_mode_changed)
+        self.helpers_check = QCheckBox("Show other bones")
+        self.helpers_check.setToolTip("Dots for the bones that draw no mesh (camera, particles, sprites, helpers)")
+        self.helpers_check.setChecked(True)
+        self.helpers_check.toggled.connect(self._scene_option_changed)
+        self.scene_wire_check = QCheckBox("Wireframe")
+        self.scene_wire_check.toggled.connect(self._scene_option_changed)
+        frame_button = QPushButton("Frame all")
+        frame_button.clicked.connect(lambda: self.scene_view.frame_all())
+        view_options = QHBoxLayout()
+        view_options.addWidget(self.camera_combo)
+        view_options.addWidget(self.helpers_check)
+        view_options.addWidget(self.scene_wire_check)
+        view_options.addWidget(frame_button)
+        view_options.addStretch(1)
+        self.parts_button = QPushButton("Add streamed parts (battle/magNNN_b.0k)...")
+        self.parts_button.setToolTip("Some meshes are loaded during the summon from battle/magNNN_b.02, .03...: "
+                                     "add those files to see them (read-only)")
+        self.parts_button.clicked.connect(self._add_streamed_parts)
+        view_options.addWidget(self.parts_button)
+        scene_box = QWidget()
+        scene_layout = QVBoxLayout(scene_box)
+        scene_layout.setContentsMargins(0, 0, 0, 0)
+        scene_layout.addLayout(view_options)
+        scene_layout.addWidget(self.scene_view, 1)
+
+        # --- play controls
+        self.play_button = QPushButton("Play")
+        self.play_button.setCheckable(True)
+        self.play_button.toggled.connect(self._toggle_play)
+        self.tick_slider = QSlider(Qt.Orientation.Horizontal)
+        self.tick_slider.valueChanged.connect(self._set_tick)
+        self.tick_label = QLabel("tick 0")
+        self.speed_combo = QComboBox()
+        self.speed_combo.addItems(["x0.25", "x0.5", "x1 (15 ticks/s)", "x2"])
+        self.speed_combo.setCurrentIndex(2)
+        self.speed_combo.currentIndexChanged.connect(self._update_play_speed)
+        self.play_timer = QTimer(self)
+        self.play_timer.timeout.connect(self._advance_tick)
+        play = QHBoxLayout()
+        play.addWidget(self.play_button)
+        play.addWidget(self.tick_slider, 1)
+        play.addWidget(self.tick_label)
+        play.addWidget(self.speed_combo)
+
+        # --- timeline + motion
         legend = QHBoxLayout()
         self.category_checks = {}
         for category, color in CATEGORY_COLORS.items():
@@ -211,30 +273,47 @@ class LagunaWidget(QWidget):
             self.category_checks[category] = check
             legend.addWidget(check)
         legend.addStretch(1)
-        legend.addWidget(QLabel("Ctrl+wheel: zoom - click a marker: show it in Script"))
+        legend.addWidget(QLabel("Click: select the bone and move the play head - double-click: open in Script - "
+                                "Ctrl+wheel: zoom"))
 
         self.timeline = TimelineCanvas()
+        self.timeline.picked.connect(self._on_timeline_picked)
         self.timeline.event_clicked.connect(self._goto_offset_from_timeline)
-        self.timeline.bone_clicked.connect(self._on_bone_clicked)
         scroll = QScrollArea()
         scroll.setWidget(self.timeline)
         scroll.setWidgetResizable(False)
         self.motion = MotionCanvas()
-        motion_group = QGroupBox("Selected bone motion (simulated outAngle / outPos)")
-        motion_layout = QVBoxLayout(motion_group)
-        self.motion_label = QLabel("")
-        motion_layout.addWidget(self.motion_label)
-        motion_layout.addWidget(self.motion)
+        timeline_box = QWidget()
+        timeline_layout = QVBoxLayout(timeline_box)
+        timeline_layout.setContentsMargins(0, 0, 0, 0)
+        timeline_layout.addLayout(legend)
+        timeline_layout.addWidget(scroll, 1)
+        self.bottom_tabs = QTabWidget()
+        self.bottom_tabs.addTab(timeline_box, "Timeline (one row per bone)")
+        self.bottom_tabs.addTab(self.motion, "Motion curves of the selected bone")
+
+        self.bone_info = QLabel("Click a bone in the 3D view or in the timeline.")
+        self.bone_info.setWordWrap(True)
+        self.bone_script_button = QPushButton("Open its script")
+        self.bone_script_button.setEnabled(False)
+        self.bone_script_button.clicked.connect(self._open_selected_bone_script)
+        info = QHBoxLayout()
+        info.addWidget(self.bone_info, 1)
+        info.addWidget(self.bone_script_button)
+
         splitter = QSplitter(Qt.Orientation.Vertical)
-        splitter.addWidget(scroll)
-        splitter.addWidget(motion_group)
-        splitter.setSizes([600, 220])
+        splitter.addWidget(scene_box)
+        splitter.addWidget(self.bottom_tabs)
+        splitter.setSizes([520, 300])
         tab = QWidget()
         layout = QVBoxLayout(tab)
-        layout.addLayout(controls)
-        layout.addLayout(legend)
+        layout.addLayout(settings)
         layout.addWidget(splitter, 1)
+        layout.addLayout(play)
+        layout.addLayout(info)
         self._update_hidden_categories()
+        self._selected_bone = -1
+        self._extra_parts = {}      # gf -> [MagContainer] of streamed battle/magNNN_b.0k parts
         return tab
 
     def _build_opcode_tab(self):
@@ -255,27 +334,38 @@ class LagunaWidget(QWidget):
                 item = QTableWidgetItem(value)
                 item.setToolTip(value)
                 widget.setItem(row, column, item)
+        widget.resizeColumnsToContents()
         header = widget.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)  # every column can be resized
+        header.setStretchLastSection(True)
         for column in range(5):
-            header.setSectionResizeMode(column, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
-        header.setMaximumSectionSize(420)
+            widget.setColumnWidth(column, min(widget.columnWidth(column), 320))
         return widget
 
     def _build_resource_tab(self):
         self.resource_tree = QTreeWidget()
         self.resource_tree.setHeaderLabels(["Resource", "Offset", "Details"])
-        self.resource_tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.resource_tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.resource_tree.setColumnWidth(0, 200)
         self.resource_tree.itemClicked.connect(self._on_resource_clicked)
         self.mesh_preview = MeshPreview()
         self.wireframe_check = QCheckBox("Wireframe")
         self.wireframe_check.toggled.connect(self._toggle_wireframe)
-        self.resource_info = QLabel("The .01 companion file (most meshes and textures) is read-only here: "
-                                    "import it with the toolbar next to the .00.")
+        self.resource_info = QLabel("Select an object (mesh or model) in the list to preview it.")
         self.resource_info.setWordWrap(True)
+        self.import_01_button = QPushButton("Import the .01 (most meshes)...")
+        self.import_01_button.setToolTip("The .01 companion file holds most meshes and textures; it is read-only here")
+        self.import_01_button.clicked.connect(self._import_companion)
+        self.resource_parts_button = QPushButton("Add streamed parts (battle/magNNN_b.0k)...")
+        self.resource_parts_button.clicked.connect(self._add_streamed_parts)
         right = QWidget()
         right_layout = QVBoxLayout(right)
-        right_layout.addWidget(self.wireframe_check)
+        top = QHBoxLayout()
+        top.addWidget(self.wireframe_check)
+        top.addStretch(1)
+        top.addWidget(self.import_01_button)
+        top.addWidget(self.resource_parts_button)
+        right_layout.addLayout(top)
         right_layout.addWidget(self.mesh_preview, 1)
         right_layout.addWidget(self.resource_info)
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -298,6 +388,13 @@ class LagunaWidget(QWidget):
         files = [(file_name, MagContainer(bytes(manager.data)))]
         if self.current_gf in self.companions:
             files.append((file_name[:-2] + "01", self.companions[self.current_gf]))
+        for index, container in enumerate(self._extra_parts.get(self.current_gf, [])):
+            files.append((f"streamed part {index + 1}", container))
+        if self.current_gf not in self.companions:
+            missing = QTreeWidgetItem([file_name[:-2] + "01 not loaded", "",
+                                       "Most meshes are in the .01: click 'Import the .01' above"])
+            missing.setForeground(0, QColor(220, 60, 60))
+            self.resource_tree.addTopLevelItem(missing)
         for name, container in files:
             root = QTreeWidgetItem([name, "", f"{len(container.data)} bytes"])
             self.resource_tree.addTopLevelItem(root)
@@ -309,7 +406,8 @@ class LagunaWidget(QWidget):
             for obj in container.objects:
                 item = QTreeWidgetItem([f"object {obj.index} ({obj.kind})", f"{obj.offset:05X}",
                                         self._object_details(obj)])
-                item.setToolTip(2, item.text(2))
+                for column in range(3):
+                    item.setToolTip(column, f"{item.text(0)} at 0x{obj.offset:05X}: {item.text(2)}")
                 item.setData(0, Qt.ItemDataRole.UserRole, obj)
                 root.addChild(item)
             textures, cluts = container.texture_entries(), container.clut_entries()
@@ -340,6 +438,7 @@ class LagunaWidget(QWidget):
             return
         self.mesh_preview.set_mesh(obj.mesh if obj.kind == "mesh" else None)
         if obj.kind == "model":
+            self._preview_creature(obj.index)
             self.resource_info.setText("The creature: a standard battle model (skeleton = .dat section 1, geometry = "
                                        "section 2, animation = section 3), placed and moved by its cinematic bone "
                                        "(draw handler 3).")
@@ -347,9 +446,28 @@ class LagunaWidget(QWidget):
             codes = {0: "next", 1: "end", 2: "loop"}
             self.resource_info.setText("Sprite frames (duration in ticks / then): " + ", ".join(
                 f"{f['duration']}/{codes.get(f['code'], f['code'])}" for f in obj.info.get("frames", [])[:24]))
+        elif obj.mesh is not None and obj.mesh.is_morph_target:
+            self.resource_info.setText("Morph target: vertices only (no faces), blended into another mesh by "
+                                       "draw handlers 1/2. Shown as points.")
         else:
             self.resource_info.setText("Untextured preview (the texture VRAM rectangles are in FF8_EN.exe). "
                                        "Drag to rotate, wheel to zoom.")
+
+    def _preview_creature(self, object_id):
+        from types import SimpleNamespace
+        animations = self._creature_loader()(object_id)
+        if not animations or not animations[0]:
+            self.mesh_preview.set_mesh(None)
+            return
+        frame = animations[0][0]
+        self.mesh_preview.set_mesh(SimpleNamespace(
+            vertices=[tuple(v) for v in frame.vertices.tolist()],
+            faces=[(0, indices, 0x6E96CD) for indices in frame.faces]))
+
+    def _import_companion(self):
+        if self.manager is None:
+            return
+        self.companion_bindings[self.current_gf].open_dialog(self, os.path.dirname(self.manager.file_path))
 
     def _load_companion(self, path, gf):
         try:
@@ -360,11 +478,13 @@ class LagunaWidget(QWidget):
             return
         if gf == self.current_gf:
             self._fill_resources()
+            self._run_simulation(keep_tick=True)  # its meshes join the 3D scene
 
     def _close_companion(self, gf):
         self.companions.pop(gf, None)
         if gf == self.current_gf:
             self._fill_resources()
+            self._run_simulation(keep_tick=True)
 
     # ------------------------------------------------------------------ files
     def load_file(self, path, gf):
@@ -412,8 +532,10 @@ class LagunaWidget(QWidget):
         self.current_gf = gf or ""
         manager = self.manager
         self._simulation = None
+        self.play_button.setChecked(False)
         self.timeline.set_simulation(None)
         self.motion.set_bone(None, 1)
+        self.scene_view.set_scene(None)
         self.sim_label.setText("")
         if manager is None:
             self._set_enabled(False)
@@ -471,6 +593,8 @@ class LagunaWidget(QWidget):
             else:
                 continue
             item = QTreeWidgetItem([label, f"{offset:05X}", str(instruction_count.get(offset, ""))])
+            item.setToolTip(0, f"{label} at 0x{offset:05X}" + (f", {instruction_count[offset]} instructions"
+                                                                 if offset in instruction_count else ""))
             item.setData(0, Qt.ItemDataRole.UserRole, offset)
             groups[group].addChild(item)
         for start, end in unreached:
@@ -525,8 +649,7 @@ class LagunaWidget(QWidget):
             self._row_of_offset.setdefault(offset, row)
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
-                if column == 4:
-                    item.setToolTip(value)
+                item.setToolTip(value)
                 if not reached:
                     item.setForeground(grey)
                 elif column == 3 and not isinstance(instruction, tuple):
@@ -626,8 +749,7 @@ class LagunaWidget(QWidget):
             return
         self._mark_dirty()
         self._refresh_program(keep_offset=self._editing_offset)
-        self._simulation = None
-        self.sim_label.setText("Script changed: run the simulation again")
+        self._run_simulation(keep_tick=True)  # show the change right away
 
     def _follow_reference(self):
         instruction = self.manager.instruction_at(self._editing_offset) if self.manager else None
@@ -643,32 +765,161 @@ class LagunaWidget(QWidget):
             self._select_offset(instruction.refs[0][1])
 
     # ------------------------------------------------------------------ timeline
-    def _run_simulation(self):
+    def _run_simulation(self, keep_tick=False):
+        """Replay the script (runs by itself on load, after every edit, and when seed/targets change)."""
         manager = self.manager
         if manager is None:
             return
+        tick = self.tick_slider.value() if keep_tick else 0
         self._simulation = manager.simulate(seed=self.seed_spin.value(), target_count=self.target_spin.value())
         sim = self._simulation
         end = sim.finished_tick if sim.finished_tick >= 0 else sim.tick
         state = "ends (op 0x01)" if sim.finished_tick >= 0 else "did not end (stopped)"
-        self.sim_label.setText(f"{len(sim.bones)} bones, sequence {state} at tick {end} "
-                               f"= {end / TICKS_PER_SECOND:.1f} s at 15 ticks/s"
+        self.sim_label.setText(f"Simulation: {len(sim.bones)} bones, the summon {state} at tick {end} "
+                               f"= {end / TICKS_PER_SECOND:.1f} s"
                                + (f" - {len(sim.warnings)} warnings (first: {sim.warnings[0][2]} at "
                                   f"{sim.warnings[0][1]:05X})" if sim.warnings else ""))
         self.timeline.set_simulation(sim, self._labels)
         self.motion.set_bone(None, 1)
+        self.scene_view.set_scene(CineScene(sim, self._scene_containers(), self._creature_loader()))
+        with QSignalBlocker(self.tick_slider):
+            self.tick_slider.setRange(0, max(0, len(sim.frames) - 1))
+        self._set_tick(min(tick, len(sim.frames) - 1))
+        if self._selected_bone >= len(sim.bones):
+            self._selected_bone = -1
+        self._select_bone(self._selected_bone, jump_tick=False)
+
+    def _scene_containers(self):
+        """The GF's files for the 3D scene: the edited .00 (current bytes), the .01, streamed parts."""
+        containers = [MagContainer(bytes(self.manager.data))]
+        if self.current_gf in self.companions:
+            containers.append(self.companions[self.current_gf])
+        containers.extend(self._extra_parts.get(self.current_gf, []))
+        return containers
+
+    def _creature_loader(self):
+        from Laguna.creature import CreatureLoader
+        key = (self.current_gf, len(self._scene_containers()))
+        if getattr(self, "_creature_loader_key", None) != key:
+            self._creature_loader_key = key
+            self._creature_loader_cache = CreatureLoader(self._scene_containers())
+            self._creature_cache = {}
+        loader = self._creature_loader_cache
+        cache = self._creature_cache
+
+        def provide(object_id):  # posed creatures are costly: keep them across re-simulations
+            if object_id not in cache:
+                cache[object_id] = loader(object_id)
+            return cache[object_id]
+        return provide
+
+    def _set_tick(self, tick):
+        tick = max(0, tick)
+        if self.tick_slider.value() != tick:
+            with QSignalBlocker(self.tick_slider):
+                self.tick_slider.setValue(tick)
+        self.tick_label.setText(f"tick {tick} ({tick / TICKS_PER_SECOND:.2f} s)")
+        self.scene_view.set_tick(tick)
+        self.timeline.set_playhead(tick)
+
+    def _toggle_play(self, playing):
+        self.play_button.setText("Pause" if playing else "Play")
+        if playing:
+            if self.tick_slider.value() >= self.tick_slider.maximum():
+                self._set_tick(0)
+            self._update_play_speed()
+            self.play_timer.start()
+        else:
+            self.play_timer.stop()
+
+    def _update_play_speed(self):
+        speed = [0.25, 0.5, 1.0, 2.0][self.speed_combo.currentIndex()]
+        self.play_timer.setInterval(int(1000 / (TICKS_PER_SECOND * speed)))
+
+    def _advance_tick(self):
+        tick = self.tick_slider.value() + 1
+        if tick > self.tick_slider.maximum():
+            self.play_button.setChecked(False)
+            return
+        self._set_tick(tick)
+
+    def _camera_mode_changed(self, index):
+        self.scene_view.game_camera = index == 1
+        self.scene_view.update()
+
+    def _scene_option_changed(self):
+        self.scene_view.show_helpers = self.helpers_check.isChecked()
+        self.scene_view.wireframe = self.scene_wire_check.isChecked()
+        self.scene_view.update()
+
+    def _add_streamed_parts(self):
+        if self.manager is None:
+            return
+        folder = os.path.dirname(self.manager.file_path)
+        paths, _filter = QFileDialog.getOpenFileNames(
+            self, "Add streamed parts (battle/magNNN_b.02, .03...)", folder,
+            f"{CINEMATIC_GFS[self.current_gf][1][:6]}_B.* parts (*)")
+        parts = []
+        for path in paths:
+            try:
+                with open(path, "rb") as f:
+                    container = MagContainer(f.read())
+            except OSError as error:
+                QMessageBox.warning(self, "Laguna", f"Cannot read {path}:\n{error}")
+                continue
+            if container.packed:  # raw VRAM pages carry no objects
+                parts.append(container)
+        if parts:
+            self._extra_parts.setdefault(self.current_gf, []).extend(parts)
+            self._fill_resources()
+            self._run_simulation(keep_tick=True)
 
     def _update_hidden_categories(self):
         self.timeline.hidden_categories = {c for c, check in self.category_checks.items() if not check.isChecked()}
         self.timeline.update()
 
-    def _on_bone_clicked(self, index):
-        if self._simulation is None:
+    def _on_timeline_picked(self, bone, tick):
+        self._set_tick(tick)
+        self._select_bone(bone, jump_tick=False)
+
+    def _select_bone(self, index, jump_tick=False):
+        """One selected bone for the 3D view, the timeline and the motion curves."""
+        self._selected_bone = index
+        self.scene_view.selected_bone = index
+        self.scene_view.update()
+        self.timeline.selected_bone = index
+        self.timeline.update()
+        sim = self._simulation
+        if sim is None or not 0 <= index < len(sim.bones):
+            self.bone_info.setText("Click a bone in the 3D view or in the timeline.")
+            self.bone_script_button.setEnabled(False)
+            self.motion.set_bone(None, 1)
             return
-        bone = self._simulation.bones[index]
-        self.motion.set_bone(bone, self._simulation.tick)
-        self.motion_label.setText(f"{self.timeline.bone_label(bone)} - spawn tick {bone.spawn_tick}, "
-                                  f"{len(bone.track)} motion samples")
+        bone = sim.bones[index]
+        tick = self.tick_slider.value()
+        if jump_tick:
+            self._set_tick(bone.spawn_tick)
+        self.motion.set_bone(bone, sim.tick)
+        death = f"dies at tick {bone.death_tick}" if bone.death_tick >= 0 else "alive until the end"
+        draw = bone.prop("draw", tick, 0)
+        mesh = bone.prop("mesh", tick)
+        model = bone.prop("model", tick)
+        what = {0: "draws nothing (helper / camera / sound)", 1: "mesh", 2: "scaled mesh", 3: "the creature",
+                4: "screen tint", 5: "animated sprite", 6: "particle emitter", 7: "mesh under the camera",
+                9: "clipped mesh", 21: "texture scroll", 27: "billboard mesh"}.get(draw, f"draw handler {draw}")
+        if mesh is not None and draw in (1, 2, 7, 9, 27):
+            what += f" (object {mesh})"
+        if model is not None and draw == 3:
+            what += f" (object {model[0]}, animation {model[1]})"
+        out = sim.frames[tick].get(index) if tick < len(sim.frames) else None
+        where = f" - outPos {out[3:]} outAngle {out[:3]}" if out else " - not alive at this tick"
+        self.bone_info.setText(f"<b>{self.timeline.bone_label(bone)}</b>: {what}; spawned at tick {bone.spawn_tick} "
+                               f"by #{bone.parent}, {death}{where}")
+        self.bone_script_button.setEnabled(True)
+
+    def _open_selected_bone_script(self):
+        if self._simulation is not None and 0 <= self._selected_bone < len(self._simulation.bones):
+            self._goto_offset_from_timeline(self._simulation.bones[self._selected_bone].program)
 
     def _goto_offset_from_timeline(self, offset):
         if offset is None or offset < 0:
@@ -686,8 +937,10 @@ class LagunaWidget(QWidget):
         if self.manager and self.manager.undo():
             self._mark_dirty()
             self._refresh_program(keep_offset=self._editing_offset)
+            self._run_simulation(keep_tick=True)
 
     def redo(self):
         if self.manager and self.manager.redo():
             self._mark_dirty()
             self._refresh_program(keep_offset=self._editing_offset)
+            self._run_simulation(keep_tick=True)

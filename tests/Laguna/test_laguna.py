@@ -159,3 +159,40 @@ def test_widget_loads_edits_and_simulates():
     widget.undo()
     assert not widget.manager.modified
     widget.deleteLater()
+
+
+# --------------------------------------------------------------------- 3D scene
+@needs_files
+def test_scene_places_the_creature_and_the_camera():
+    from FF8GameData.magcine.cinescene import CineScene
+    from Laguna.creature import CreatureLoader
+    data00 = (MAGIC / "MAG200_B.00").read_bytes()
+    containers = [MagContainer(data00), MagContainer((MAGIC / "MAG200_B.01").read_bytes())]
+    simulation = CineSimulation(data00, root_program_offset(data00))
+    scene = CineScene(simulation, containers, CreatureLoader(containers))
+    items = scene.items(120)
+    creature = [item for item in items if item.kind == "creature"]
+    assert len(creature) == 1 and len(creature[0].mesh.faces) > 500
+    # the creature is at full size (outAngle 256 x 16 = 4096 = 1.0): scale 1 on every axis
+    import numpy as np
+    assert abs(np.linalg.norm(creature[0].matrix[:3, 0]) - 1.0) < 1e-6
+    eye, target = scene.camera(120)
+    assert eye.shape == (3,) and not (eye == target).all()
+
+
+@needs_files
+def test_widget_playback_follows_edits():
+    from Common.fileregistry import FileRegistry
+    from Laguna.lagunawidget import LagunaWidget
+    registry = FileRegistry()
+    widget = LagunaWidget(file_registry=registry)
+    registry.open_file("MAG200_B.00", str(MAGIC / "MAG200_B.00"))
+    widget._on_timeline_picked(17, 120)
+    assert widget.tick_slider.value() == 120 and widget.scene_view.selected_bone == 17
+    before = widget._simulation.finished_tick
+    wait = next(i for i in widget.manager.program.sorted_instructions() if i.code == 0x09 and i.modifier == 1)
+    widget._select_offset(wait.offset)
+    widget.modifier_spin.setValue(20)
+    widget._apply_instruction()          # the simulation re-runs by itself after an edit
+    assert widget._simulation.finished_tick != before
+    widget.deleteLater()

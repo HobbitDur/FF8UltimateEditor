@@ -27,9 +27,10 @@ CATEGORY_COLORS = {
 
 
 class TimelineCanvas(QWidget):
-    """The painted timeline. `bone_clicked(index)` / `event_clicked(offset)` on clicks."""
+    """The painted timeline. A click emits picked(bone, tick) (select the bone, move the play head
+    there); a double click emits event_clicked(script offset) of the marker or the bone's program."""
 
-    bone_clicked = pyqtSignal(int)
+    picked = pyqtSignal(int, int)
     event_clicked = pyqtSignal(int)
 
     ROW_HEIGHT = 16
@@ -45,6 +46,7 @@ class TimelineCanvas(QWidget):
         self.pixels_per_tick = 3.0
         self.hidden_categories = set()
         self.selected_bone = -1
+        self.playhead = 0
         self.setMouseTracking(True)
 
     # ------------------------------------------------------------------ data
@@ -69,6 +71,15 @@ class TimelineCanvas(QWidget):
             self.rows.append(index)
             self.depth[index] = depth
             stack.extend((child, depth + 1) for child in reversed(children.get(index, [])))
+
+    def set_playhead(self, tick):
+        old = self._x(self.playhead)
+        self.playhead = tick
+        self.update(old - 2, 0, 5, self.height())
+        self.update(self._x(tick) - 2, 0, 5, self.height())
+
+    def _tick_at(self, x):
+        return max(0, min(self.total_ticks(), int((x - self.LABEL_WIDTH) / self.pixels_per_tick)))
 
     def total_ticks(self):
         return max(1, self.simulation.tick) if self.simulation else 1
@@ -173,6 +184,9 @@ class TimelineCanvas(QWidget):
         if self.simulation.finished_tick >= 0:
             x = self._x(self.simulation.finished_tick)
             painter.drawLine(x, 0, x, self.height())
+        painter.setPen(QPen(QColor(229, 57, 53), 2))
+        x = self._x(self.playhead)
+        painter.drawLine(x, 0, x, self.height())
 
     # ------------------------------------------------------------------ interaction
     def mouseMoveEvent(self, event):
@@ -199,12 +213,16 @@ class TimelineCanvas(QWidget):
         if self.simulation is None:
             return
         pos = event.position().toPoint()
+        row = self._row_at(pos.y())
+        tick = self._tick_at(pos.x()) if pos.x() >= self.LABEL_WIDTH else self.playhead
+        self.picked.emit(self.rows[row] if row >= 0 else -1, tick)
+
+    def mouseDoubleClickEvent(self, event):
+        if self.simulation is None:
+            return
+        pos = event.position().toPoint()
         sim_event = self._event_at(pos)
         row = self._row_at(pos.y())
-        if row >= 0:
-            self.selected_bone = self.rows[row]
-            self.update()
-            self.bone_clicked.emit(self.selected_bone)
         if sim_event is not None:
             self.event_clicked.emit(sim_event.offset)
         elif row >= 0:
