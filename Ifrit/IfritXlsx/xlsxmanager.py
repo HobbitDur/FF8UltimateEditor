@@ -72,14 +72,63 @@ MAX_COMBAT_TXT = 34
 MAX_SHEET_TITLE_SIZE = 31
 INVALID_CHAR_TITLE_EXCEL_LIST = ['[', ']', ':', '*', '?', '/', '\\']
 
+# What a spreadsheet shows for a formula dividing by 0 - a stat byte of 0 does that
+EXCEL_DIV_ZERO = '#DIV/0!'
+
+
+def stat_impacts(stat_name: str, stat_bytes: list, level: int) -> list:
+    """The four impacts of a stat's curve bytes at a level, computed like the xlsx formulas do.
+
+    An impact whose formula divides by a 0 byte is None: the spreadsheet shows #DIV/0! there."""
+    b0, b1, b2, b3 = stat_bytes
+    if stat_name == 'hp':
+        return [floor(b0 * (level * level / 20 + level)), 10 * b1, b2 * 100 * level, 1000 * b3]
+    if stat_name in ('str', 'mag'):
+        return [floor(level * b0 / 40),
+                floor(level / (4 * b1)) if b1 else None,
+                floor(b2 / 4),
+                floor(level * level / (8 * b3)) if b3 else None]
+    # vit / spr / spd / eva
+    return [level * b0,
+            floor(level / b1) if b1 else None,
+            b2,
+            -floor(level / b3) if b3 else None]
+
+
+def stat_total(impacts: list):
+    """The sum of the impacts, None when one of them is a division by 0."""
+    if None in impacts:
+        return None
+    return sum(impacts)
+
+
+def cell_result(value):
+    """What a formula cell holds as its result: the value, or the error it computes to."""
+    return EXCEL_DIV_ZERO if value is None else value
+
+
+def ref_data_list_source(ref_column: int, entry_count: int) -> str:
+    """A drop-down source picking from a ref_data column, row 2 to its last entry.
+
+    Both rows are absolute: a relative first row moves down with every cell of a multi-cell
+    drop-down, and the lower cells then lose the first entries of the list."""
+    letter = xlsxwriter.utility.xl_col_to_name(ref_column)
+    return '=' + REF_DATA_SHEET_TITLE + '!$' + letter + '$2:$' + letter + '$' + str(entry_count + 1)
+
 
 class DatToXlsx:
     def __init__(self):
         self.__file_name_list = []
         self.workbook = None
+        # The data validations of the sheet being written, grouped by rule: {rule key: (options, [ranges])}
+        self.__validations = {}
+        self.__with_stat_graph = True
 
-    def create_file(self, ifrit_xlsx):
+    def create_file(self, ifrit_xlsx, with_stat_graph=True):
+        """with_stat_graph=False leaves out the stat chart and the level table under it: a
+        workbook edited by hand opens much faster without 200 of them."""
         self.workbook = xlsxwriter.Workbook(ifrit_xlsx)  # {'strings_to_numbers':True}
+        self.__with_stat_graph = with_stat_graph
         self.__init_style()
 
     def close_file(self):
@@ -162,19 +211,35 @@ class DatToXlsx:
         self.__file_name_list.append(file_name)
         return file_name
 
+    def __add_validation(self, first_row, first_col, last_row, last_col, options):
+        """Give a range a data validation. Every range with the same rule shares a single one,
+        written for the whole sheet by __write_validations - one rule per cell is thousands of them
+        in a workbook of 200 monsters, and a spreadsheet opens that much slower."""
+        key = repr(sorted(options.items()))
+        cell_range = xlsxwriter.utility.xl_range(first_row, first_col, last_row, last_col)
+        self.__validations.setdefault(key, (options, []))[1].append(cell_range)
+
+    def __write_validations(self, worksheet):
+        for options, cell_ranges in self.__validations.values():
+            # multi_range holds every range of the rule; the first cell is only where xlsxwriter anchors it
+            first_row, first_col = xlsxwriter.utility.xl_cell_to_rowcol(cell_ranges[0].split(':')[0])
+            worksheet.data_validation(first_row, first_col, first_row, first_col,
+                                      dict(options, multi_range=' '.join(cell_ranges)))
+        self.__validations = {}
+
     def __validate_elem_def(self, worksheet, game_data: GameData, row_index, column_index):
-        worksheet.data_validation(row_index, column_index, row_index, column_index,
-                                  {'validate': 'integer', 'criteria': 'between',
-                                   'minimum': AIData.ELEM_DEF_MIN_VAL, 'maximum': AIData.ELEM_DEF_MAX_VAL,
-                                   'input_title': 'Elem def',
-                                   'input_message': 'Between ' + str(AIData.ELEM_DEF_MIN_VAL) + ' and ' + str(AIData.ELEM_DEF_MAX_VAL)})
+        self.__add_validation(row_index, column_index, row_index, column_index,
+                              {'validate': 'integer', 'criteria': 'between',
+                               'minimum': AIData.ELEM_DEF_MIN_VAL, 'maximum': AIData.ELEM_DEF_MAX_VAL,
+                               'input_title': 'Elem def',
+                               'input_message': 'Between ' + str(AIData.ELEM_DEF_MIN_VAL) + ' and ' + str(AIData.ELEM_DEF_MAX_VAL)})
 
     def __validate_status_def(self, worksheet, game_data: GameData, row_index, column_index):
-        worksheet.data_validation(row_index, column_index, row_index, column_index,
-                                  {'validate': 'integer', 'criteria': 'between',
-                                   'minimum': AIData.STATUS_DEF_MIN_VAL, 'maximum': AIData.STATUS_DEF_MAX_VAL,
-                                   'input_title': 'Status def',
-                                   'input_message': 'Between ' + str(AIData.STATUS_DEF_MIN_VAL) + ' and ' + str(AIData.STATUS_DEF_MAX_VAL)})
+        self.__add_validation(row_index, column_index, row_index, column_index,
+                              {'validate': 'integer', 'criteria': 'between',
+                               'minimum': AIData.STATUS_DEF_MIN_VAL, 'maximum': AIData.STATUS_DEF_MAX_VAL,
+                               'input_title': 'Status def',
+                               'input_message': 'Between ' + str(AIData.STATUS_DEF_MIN_VAL) + ' and ' + str(AIData.STATUS_DEF_MAX_VAL)})
 
     def __validation_post_process_all(self, worksheet, game_data: GameData):
         self.__validate_stat(worksheet, game_data)
@@ -182,19 +247,19 @@ class DatToXlsx:
         self.__validate_devour(worksheet, game_data)
         self.__validate_draw_drop_mug(worksheet, game_data)
         self.__validate_renzokuken(worksheet, game_data)
+        self.__write_validations(worksheet)
 
     def __validate_stat(self, worksheet, game_data: GameData):
-        worksheet.data_validation(1, COL_STAT + 1, 1 + 6, COL_STAT + 1 + 4,
-                                  {'validate': 'integer', 'criteria': 'between',
-                                   'minimum': AIData.STAT_MIN_VAL, 'maximum': AIData.STAT_MAX_VAL,
-                                   'input_title': 'Stat',
-                                   'input_message': 'Between ' + str(AIData.STAT_MIN_VAL) + ' and ' + str(AIData.STAT_MAX_VAL)})
+        self.__add_validation(1, COL_STAT + 1, 1 + 6, COL_STAT + 1 + 4,
+                              {'validate': 'integer', 'criteria': 'between',
+                               'minimum': AIData.STAT_MIN_VAL, 'maximum': AIData.STAT_MAX_VAL,
+                               'input_title': 'Stat',
+                               'input_message': 'Between ' + str(AIData.STAT_MIN_VAL) + ' and ' + str(AIData.STAT_MAX_VAL)})
 
     def __validate_card(self, worksheet, game_data: GameData):
-        col_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_CARD)
-        source_str = '=' + REF_DATA_SHEET_TITLE + '!$' + col_str + '2:$' + col_str + '$' + str(len(game_data.card_data_json['card_info']) + 1)
-        worksheet.data_validation(ROW_DROP_CARD + 1, COL_DROP_CARD + 1, ROW_DROP_CARD + 1 + 2, COL_DROP_CARD + 1,
-                                  {'validate': 'list', 'source': source_str})
+        source_str = ref_data_list_source(REF_DATA_COL_CARD, len(game_data.card_data_json['card_info']))
+        self.__add_validation(ROW_DROP_CARD + 1, COL_DROP_CARD + 1, ROW_DROP_CARD + 1 + 2, COL_DROP_CARD + 1,
+                              {'validate': 'list', 'source': source_str})
 
     @staticmethod
     def __devour_text(game_data: GameData, devour_id):
@@ -204,12 +269,11 @@ class DatToXlsx:
         return f"{devour_id}:{names[0]}" if names else f"{devour_id}:"
 
     def __validate_devour(self, worksheet, game_data: GameData):
-        col_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_DEVOUR)
         if not game_data.devour_data_json['devour']:
             return  # no names without a kernel.bin: nothing to pick from, the id stays as written
-        source_str = '=' + REF_DATA_SHEET_TITLE + '!$' + col_str + '2:$' + col_str + '$' + str(len(game_data.devour_data_json['devour']) + 1)
-        worksheet.data_validation(ROW_DEVOUR + 1, COL_DEVOUR + 1, ROW_DEVOUR + 1 + 2, COL_DEVOUR + 1,
-                                  {'validate': 'list', 'source': source_str})
+        source_str = ref_data_list_source(REF_DATA_COL_DEVOUR, len(game_data.devour_data_json['devour']))
+        self.__add_validation(ROW_DEVOUR + 1, COL_DEVOUR + 1, ROW_DEVOUR + 1 + 2, COL_DEVOUR + 1,
+                              {'validate': 'list', 'source': source_str})
 
     # The camera and devour categories (bytes 246 and 255) are numbers with a list of names each,
     # so they are written like a drop, a card or a devour: "<id>:<name>", chosen from ref_data.
@@ -231,31 +295,25 @@ class DatToXlsx:
         chosen = [f"{x['id']}:{x['name']}" for x in entries if x['id'] == value]
         worksheet.write(row, column, pretty, self.row_title_style)
         worksheet.write(row, column + 1, chosen[0] if chosen else f"{value}:Unknown", self.border_style)
-        ref_letter = xlsxwriter.utility.xl_col_to_name(ref_column)
-        worksheet.data_validation(row, column + 1, row, column + 1,
-                                  {'validate': 'list',
-                                   'source': '=' + REF_DATA_SHEET_TITLE + '!$' + ref_letter + '2:$' + ref_letter + '$' + str(len(entries) + 1)})
+        self.__add_validation(row, column + 1, row, column + 1,
+                              {'validate': 'list', 'source': ref_data_list_source(ref_column, len(entries))})
 
     def __validate_renzokuken(self, worksheet, game_data: GameData):
-        col_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_ATTACK_ANIMATION)
-        source_str = '=' + REF_DATA_SHEET_TITLE + '!$' + col_str + '2:$' + col_str + '$' + str(len(game_data.attack_animation_data_json['attack_animation']) + 1)
-        worksheet.data_validation(ROW_RENZOKUKEN + 1, COL_MISC + 1, ROW_RENZOKUKEN + 1 + 2, COL_MISC + 1,
-                                  {'validate': 'list', 'source': source_str})
+        source_str = ref_data_list_source(REF_DATA_COL_ATTACK_ANIMATION, len(game_data.attack_animation_data_json['attack_animation']))
+        self.__add_validation(ROW_RENZOKUKEN + 1, COL_MISC + 1, ROW_RENZOKUKEN + 1 + 2, COL_MISC + 1,
+                              {'validate': 'list', 'source': source_str})
 
     def __validate_draw_drop_mug(self, worksheet, game_data: GameData):
         col_values = [COL_SHEET_LOW_LVL, COL_SHEET_MED_LVL, COL_SHEET_HIGH_LVL]
-        col_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_MAGIC)
-        source_str = '=' + REF_DATA_SHEET_TITLE + '!$' + col_str + '2:$' + col_str + '$' + str(len(game_data.magic_data_json['magic']) + 1)
-        # ROW_MAG, COL_ABILITIES + col_value, ROW_MAG + 3, COL_ABILITIES + col_value,
+        source_str = ref_data_list_source(REF_DATA_COL_MAGIC, len(game_data.magic_data_json['magic']))
         for col_value in col_values:
-            worksheet.data_validation(ROW_MAG, COL_ITEM + col_value, ROW_MAG + 3, COL_ITEM + col_value, {'validate': 'list', 'source': source_str})
-        col_str = xlsxwriter.utility.xl_col_to_name(REF_DATA_COL_ITEM)
-        source_str = '=' + REF_DATA_SHEET_TITLE + '!$' + col_str + '2:$' + col_str + '$' + str(len(game_data.item_data_json['items']) + 1)
+            self.__add_validation(ROW_MAG, COL_ITEM + col_value, ROW_MAG + 3, COL_ITEM + col_value, {'validate': 'list', 'source': source_str})
+        source_str = ref_data_list_source(REF_DATA_COL_ITEM, len(game_data.item_data_json['items']))
         row_values = [ROW_MUG, ROW_DROP]
         for col_value in col_values:
             for row_value in row_values:
-                worksheet.data_validation(row_value, COL_ITEM + col_value, row_value + 3, COL_ITEM + col_value,
-                                          {'validate': 'list', 'source': source_str})
+                self.__add_validation(row_value, COL_ITEM + col_value, row_value + 3, COL_ITEM + col_value,
+                                      {'validate': 'list', 'source': source_str})
 
     # Which list an ability id belongs to, by the type in front of it. The type IS a command type
     # (computeCommandAction switches on it): 2 reads the magic table, 4 the items, 8 the enemy
@@ -280,19 +338,41 @@ class DatToXlsx:
 
     def __validate_from_ref_data(self, worksheet, row, column, ref_column, entry_count):
         """Let one cell choose from a whole ref_data column - all of it, not the first few rows."""
-        letter = xlsxwriter.utility.xl_col_to_name(ref_column)
-        worksheet.data_validation(row, column, row, column,
-                                  {'validate': 'list',
-                                   'source': '=' + REF_DATA_SHEET_TITLE + '!$' + letter + '2:$' + letter + '$' + str(entry_count + 1)})
+        self.__add_validation(row, column, row, column,
+                              {'validate': 'list', 'source': ref_data_list_source(ref_column, entry_count)})
+
+    def __write_stat_level_column(self, worksheet, tab_name, stat_chart, param_name, pretty_name, stat_bytes, stat_cell, column):
+        """One stat of the level table (its value at level 1 to 100, read from the curve cells of
+        the sheet) and its line on the stat chart."""
+        column_letter = xlsxwriter.utility.xl_col_to_name(column)
+        worksheet.write(ROW_GRAPH_PER_LVL, column, pretty_name, self.column_title_style)
+        for level in range(1, 101):
+            level_cell = xlsxwriter.utility.xl_col_to_name(COL_GRAPH_PER_LVL) + str(ROW_GRAPH_PER_LVL + level + 1)
+            result = stat_total(stat_impacts(param_name, stat_bytes, level))
+            if param_name == 'hp':
+                # The HP is far higher than the other stats: shown /100 to fit on the same chart
+                formula = self.__hp_excel_formula(stat_cell, level_cell)
+                result = result / 100   # no division by a byte in it: never an error
+            elif param_name in ('str', 'mag'):
+                formula = self.__str_excel_formula(stat_cell, level_cell)
+            else:
+                formula = '={}*{}+FLOOR({}/{},1)+{}-FLOOR({}/{},1)'.format(level_cell, stat_cell[0], level_cell, stat_cell[1],
+                                                                          stat_cell[2], level_cell, stat_cell[3])
+            worksheet.write_formula(ROW_GRAPH_PER_LVL + level, column, formula, self.not_modified_style, cell_result(result))
+
+        series_name = pretty_name + '/100' if param_name == 'hp' else pretty_name
+        stat_chart.add_series({'name': series_name,
+                               'categories': '=\'' + tab_name + '\'!$E$35:$E$135',
+                               'values': '=\'' + tab_name + '\'!${}$35:${}$135'.format(column_letter, column_letter),
+                               'smooth': True})
 
     def export_to_xlsx(self, monster_analyser: MonsterAnalyser, file_name: str, game_data: GameData, analyse_ai=True):
-        # Chart
-        ## Stat chart
-        chart_stat = {}
-        chart_stat[monster_analyser] = self.workbook.add_chart({'type': 'line'})
+        # The stat chart, and the level table it draws - only in a workbook written with them
+        stat_chart = self.workbook.add_chart({'type': 'line'}) if self.__with_stat_graph else None
         tab_name = self.__get_tab_name(monster_analyser)
         worksheet = self.workbook.add_worksheet(tab_name)
         print("Write to XLSX sheet: {}".format(tab_name))
+        self.__validations = {}
 
         # Column position of different "menu"
         column_index = {}
@@ -312,9 +392,10 @@ class DatToXlsx:
         worksheet.write(ROW_FILE_DATA + 1, COL_FILE_DATA + 1, file_name, self.not_modified_style)
 
         # Graph level
-        worksheet.write(ROW_GRAPH_PER_LVL, COL_GRAPH_PER_LVL, "Level", self.column_title_style)
-        for i in range(1, 101):
-            worksheet.write(ROW_GRAPH_PER_LVL + i, COL_GRAPH_PER_LVL, i, self.not_modified_style)
+        if stat_chart:
+            worksheet.write(ROW_GRAPH_PER_LVL, COL_GRAPH_PER_LVL, "Level", self.column_title_style)
+            for i in range(1, 101):
+                worksheet.write(ROW_GRAPH_PER_LVL + i, COL_GRAPH_PER_LVL, i, self.not_modified_style)
 
         # Index setting
         row_index = {}
@@ -367,105 +448,85 @@ class DatToXlsx:
                     # Writing the Impact and total stat
                     monster_lvl_cell = xlsxwriter.utility.xl_col_to_name(COL_MONSTER_INFO + 1) + str(ROW_MONSTER_LVL + 1)
                     stat_cell = [None] * 4
-                    # Title lvl column stat
-                    worksheet.write(ROW_GRAPH_PER_LVL, column_index['graph_stat'], pretty_name, self.column_title_style)
+                    # Every formula is written with the result it computes: a spreadsheet that does not
+                    # recalculate on opening shows it as it is, and one that did would take ages.
+                    impacts = stat_impacts(param_name, value, DEFAULT_MONSTER_LVL)
+                    impacts_total = cell_result(stat_total(impacts))
                     if param_name == 'hp':
                         # Impact 1
                         stat_cell[0] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 1) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'],
-                                        '=FLOOR({}*({}*{}/20+{}),1)'.format(stat_cell[0], monster_lvl_cell, monster_lvl_cell, monster_lvl_cell),
-                                        self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'],
+                                                '=FLOOR({}*({}*{}/20+{}),1)'.format(stat_cell[0], monster_lvl_cell, monster_lvl_cell, monster_lvl_cell),
+                                                self.not_modified_style, cell_result(impacts[0]))
                         # Impact 2
                         stat_cell[1] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 2) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'] + 1, '=10*{}'.format(stat_cell[1]), self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 1, '=10*{}'.format(stat_cell[1]), self.not_modified_style,
+                                                cell_result(impacts[1]))
                         # Impact 3
                         stat_cell[2] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 3) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'] + 2, '={}*100*{}'.format(stat_cell[2], monster_lvl_cell),
-                                        self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 2, '={}*100*{}'.format(stat_cell[2], monster_lvl_cell),
+                                                self.not_modified_style, cell_result(impacts[2]))
                         # Impact 4
                         stat_cell[3] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 4) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'] + 3, '=1000*{}'.format(stat_cell[3]), self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 3, '=1000*{}'.format(stat_cell[3]), self.not_modified_style,
+                                                cell_result(impacts[3]))
                         # Total Sum
-                        worksheet.write(row_index['stat'], column_index['stat'] + 4,
-                                        '=SUM({}:{})'.format(xlsxwriter.utility.xl_col_to_name(COL_STAT + 5) + str(row_index['stat'] + 1),
-                                                             xlsxwriter.utility.xl_col_to_name(COL_STAT + 8) + str(row_index['stat'] + 1)),
-                                        self.not_modified_style)
-                        # Total Formula
-                        # The HP is harder to show on a graph, so we divide it by 100 to show it better
-                        worksheet.write(ROW_GRAPH_PER_LVL, column_index['graph_stat'], pretty_name, self.column_title_style)
-                        for i in range(1, 101):
-                            monster_lvl_cell = xlsxwriter.utility.xl_col_to_name(COL_GRAPH_PER_LVL) + str(ROW_GRAPH_PER_LVL + i + 1)
-                            # i corresponding to the monster level
-                            # /101 because HP is too high to be plot correctly with others values.
-                            str_formula = self.__hp_excel_formula(stat_cell, monster_lvl_cell)
-                            worksheet.write(ROW_GRAPH_PER_LVL + i, column_index['graph_stat'], str_formula, self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 4,
+                                                '=SUM({}:{})'.format(xlsxwriter.utility.xl_col_to_name(COL_STAT + 5) + str(row_index['stat'] + 1),
+                                                                     xlsxwriter.utility.xl_col_to_name(COL_STAT + 8) + str(row_index['stat'] + 1)),
+                                                self.not_modified_style, impacts_total)
 
                     elif param_name == 'str' or param_name == 'mag':
                         # Impact 1
                         stat_cell[0] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 1) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'], '=FLOOR({}*{}/40, 1)'.format(monster_lvl_cell, stat_cell[0]),
-                                        self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'], '=FLOOR({}*{}/40, 1)'.format(monster_lvl_cell, stat_cell[0]),
+                                                self.not_modified_style, cell_result(impacts[0]))
                         # Impact 2
                         stat_cell[1] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 2) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'] + 1, '=FLOOR({}/(4*{}),1)'.format(monster_lvl_cell, stat_cell[1]),
-                                        self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 1, '=FLOOR({}/(4*{}),1)'.format(monster_lvl_cell, stat_cell[1]),
+                                                self.not_modified_style, cell_result(impacts[1]))
                         # Impact 3
                         stat_cell[2] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 3) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'] + 2, '=FLOOR({}/4,1)'.format(stat_cell[2]), self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 2, '=FLOOR({}/4,1)'.format(stat_cell[2]), self.not_modified_style,
+                                                cell_result(impacts[2]))
                         # Impact 4
                         stat_cell[3] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 4) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'] + 3,
-                                        '=FLOOR({}*{}/(8*{}),1)'.format(monster_lvl_cell, monster_lvl_cell, stat_cell[3]), self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 3,
+                                                '=FLOOR({}*{}/(8*{}),1)'.format(monster_lvl_cell, monster_lvl_cell, stat_cell[3]), self.not_modified_style,
+                                                cell_result(impacts[3]))
                         # Total
-                        worksheet.write(row_index['stat'], column_index['stat'] + 4,
-                                        '=SUM({}:{})'.format(xlsxwriter.utility.xl_col_to_name(COL_STAT + 5) + str(row_index['stat'] + 1),
-                                                             xlsxwriter.utility.xl_col_to_name(COL_STAT + 8) + str(row_index['stat'] + 1)),
-                                        self.not_modified_style)
-                        # Total Formula
-                        for i in range(1, 101):
-                            monster_lvl_cell = xlsxwriter.utility.xl_col_to_name(COL_GRAPH_PER_LVL) + str(ROW_GRAPH_PER_LVL + i + 1)
-                            # i corresponding to the monster level
-                            str_formula = self.__str_excel_formula(stat_cell, monster_lvl_cell)
-                            worksheet.write(ROW_GRAPH_PER_LVL + i, column_index['graph_stat'], str_formula, self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 4,
+                                                '=SUM({}:{})'.format(xlsxwriter.utility.xl_col_to_name(COL_STAT + 5) + str(row_index['stat'] + 1),
+                                                                     xlsxwriter.utility.xl_col_to_name(COL_STAT + 8) + str(row_index['stat'] + 1)),
+                                                self.not_modified_style, impacts_total)
                     elif param_name == 'vit' or param_name == 'spr' or param_name == 'spd' or param_name == 'eva':
                         # Impact 1
                         stat_cell[0] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 1) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'], '={}*{}'.format(monster_lvl_cell, stat_cell[0]), self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'], '={}*{}'.format(monster_lvl_cell, stat_cell[0]),
+                                                self.not_modified_style, cell_result(impacts[0]))
                         # Impact 2
                         stat_cell[1] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 2) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'] + 1, '=FLOOR({}/{},1)'.format(monster_lvl_cell, stat_cell[1]),
-                                        self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 1, '=FLOOR({}/{},1)'.format(monster_lvl_cell, stat_cell[1]),
+                                                self.not_modified_style, cell_result(impacts[1]))
                         # Impact 3
                         stat_cell[2] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 3) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'] + 2, '={}'.format(stat_cell[2]), self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 2, '={}'.format(stat_cell[2]), self.not_modified_style,
+                                                cell_result(impacts[2]))
                         # Impact 4
                         stat_cell[3] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 4) + str(row_index['stat'] + 1)
-                        worksheet.write(row_index['stat'], column_index['stat'] + 3, '=-FLOOR({}/{},1)'.format(monster_lvl_cell, stat_cell[3]),
-                                        self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 3, '=-FLOOR({}/{},1)'.format(monster_lvl_cell, stat_cell[3]),
+                                                self.not_modified_style, cell_result(impacts[3]))
                         # Total
-                        worksheet.write(row_index['stat'], column_index['stat'] + 4,
-                                        '=SUM({}:{})'.format(xlsxwriter.utility.xl_col_to_name(COL_STAT + 5) + str(row_index['stat'] + 1),
-                                                             xlsxwriter.utility.xl_col_to_name(COL_STAT + 8) + str(row_index['stat'] + 1)),
-                                        self.not_modified_style)
-                        # Total Formula
-                        for i in range(1, 101):
-                            monster_lvl_cell = xlsxwriter.utility.xl_col_to_name(COL_GRAPH_PER_LVL) + str(ROW_GRAPH_PER_LVL + i + 1)
-                            # i corresponding to the monster level
-                            str_formula = '={}*{}+FLOOR({}/{},1)+{}-FLOOR({}/{},1)'.format(monster_lvl_cell, stat_cell[0], monster_lvl_cell, stat_cell[1],
-                                                                                           stat_cell[2], monster_lvl_cell, stat_cell[3])
-                            worksheet.write(ROW_GRAPH_PER_LVL + i, column_index['graph_stat'], str_formula, self.not_modified_style)
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 4,
+                                                '=SUM({}:{})'.format(xlsxwriter.utility.xl_col_to_name(COL_STAT + 5) + str(row_index['stat'] + 1),
+                                                                     xlsxwriter.utility.xl_col_to_name(COL_STAT + 8) + str(row_index['stat'] + 1)),
+                                                self.not_modified_style, impacts_total)
 
+                    if stat_chart:
+                        self.__write_stat_level_column(worksheet, tab_name, stat_chart, param_name, pretty_name, value, stat_cell,
+                                                       column_index['graph_stat'])
                     row_index['stat'] += 1
                     column_index['graph_stat'] += 1
-
-                    # Creating chart with data computed
-                    current_stat_column_str = xlsxwriter.utility.xl_col_to_name(column_index['graph_stat'] - 1)
-                    lvl_range_str = '=\'' + tab_name + '\'!$E$35:$E$135'
-                    lvl_stat_str = '=\'' + tab_name + '\'!${}$35:${}$135'.format(current_stat_column_str, current_stat_column_str)
-                    graph_serie_name = pretty_name
-                    if param_name == 'hp':
-                        graph_serie_name += '/100'
-                    chart_stat[monster_analyser].add_series({'name': graph_serie_name, 'categories': lvl_range_str, 'values': lvl_stat_str, 'smooth': True})
                 # Def menu
                 elif param_name in ['elem_def', 'status_def']:
                     for el2 in value:
@@ -693,12 +754,12 @@ class DatToXlsx:
         self.__validation_post_process_all(worksheet, game_data)
 
         # Chart management
-        chart_stat[monster_analyser].set_title({'name': 'Stat graph'})
-        chart_stat[monster_analyser].set_x_axis({'name': 'Level'})
-        chart_stat[monster_analyser].set_y_axis({'name': 'Stat'})
-        chart_stat[monster_analyser].set_size({'width': STAT_GRAPH_WIDTH, 'height': STAT_GRAPH_HEIGHT})
-
-        worksheet.insert_chart(STAT_GRAPH_CELL_PLACEMENT, chart_stat[monster_analyser])
+        if stat_chart:
+            stat_chart.set_title({'name': 'Stat graph'})
+            stat_chart.set_x_axis({'name': 'Level'})
+            stat_chart.set_y_axis({'name': 'Stat'})
+            stat_chart.set_size({'width': STAT_GRAPH_WIDTH, 'height': STAT_GRAPH_HEIGHT})
+            worksheet.insert_chart(STAT_GRAPH_CELL_PLACEMENT, stat_chart)
         worksheet.autofit()
 
     def create_ref_data(self, game_data: GameData):

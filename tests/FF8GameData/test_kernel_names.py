@@ -253,7 +253,7 @@ def test_a_workbook_offers_the_spells_added_to_it(game_data, tmp_path):
 
     with zipfile.ZipFile(path) as opened:
         sheet = opened.read("xl/worksheets/sheet1.xml").decode("utf8")
-    assert f"ref_data!$C2:$C${offered + 3}" in sheet   # the drop-down reaches the new rows
+    assert f"ref_data!$C$2:$C${offered + 3}" in sheet   # the drop-down reaches the new rows
 
 
 @pytest.mark.ff8data(BATTLE_FILE)

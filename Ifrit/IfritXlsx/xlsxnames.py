@@ -175,9 +175,10 @@ def grow_list_in_workbook(xlsx_file, list_name: str, texts: list) -> int:
     files[sheet_path] = _write_column(files[sheet_path].decode("utf8"), letter,
                                       already + 2, indexes).encode("utf8")
 
-    # The drop-downs name the rows they read: every one of them now reaches the last of them
+    # The drop-downs name the rows they read: every one of them now reaches the last of them.
+    # Their first row is $2 in a workbook written today, a relative 2 in an older one.
     last_row = already + 1 + len(missing)
-    range_pattern = re.compile(rf"({re.escape(REF_DATA_SHEET_TITLE)}!\${letter}\d*:\${letter}\$)(\d+)")
+    range_pattern = re.compile(rf"({re.escape(REF_DATA_SHEET_TITLE)}!\${letter}\$?\d*:\${letter}\$)(\d+)")
     for name in list(files):
         if name.startswith("xl/worksheets/sheet") and name != sheet_path:
             text = files[name].decode("utf8")

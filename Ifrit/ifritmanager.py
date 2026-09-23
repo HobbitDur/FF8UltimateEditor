@@ -168,8 +168,8 @@ class IfritManager:
         self._xlsx_to_dat_manager.close_file()
         self._dat_xlsx_manager.close_file()
 
-    def create_xlsx_file(self, xlsx_file):
-        self._dat_xlsx_manager.create_file(xlsx_file)
+    def create_xlsx_file(self, xlsx_file, with_stat_graph=True):
+        self._dat_xlsx_manager.create_file(xlsx_file, with_stat_graph)
 
     def load_xlsx_file(self, xlsx_file):
         self._xlsx_to_dat_manager.load_file(xlsx_file)
