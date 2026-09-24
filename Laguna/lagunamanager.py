@@ -10,6 +10,7 @@ waits. See FF8GameData/magcine/cinescript.py for the byte code and cinesim.py fo
 Edits are made in place: an instruction keeps its length, so no offset of the file moves and
 every relative jump stays valid. An unmodified load/save is byte-exact.
 """
+import ntpath
 import os
 import struct
 
@@ -42,7 +43,7 @@ def streamed_part_names(gf):
 
 
 def gf_from_file_name(path):
-    name = os.path.basename(path).upper()
+    name = ntpath.basename(path).upper()  # splits on both \ and / on every OS
     for gf, (_effect, file_name) in CINEMATIC_GFS.items():
         if name == file_name:
             return gf

@@ -19,6 +19,8 @@ import json
 import os
 import struct
 
+from Common.apppaths import app_path
+
 SLOT_COUNT = 400
 # Fallback status when magic_effect.json is not present yet (fresh checkout). The JSON, once
 # loaded, is authoritative and overrides these.
@@ -50,7 +52,7 @@ class EffectEntry:
 class FujinManager:
     def __init__(self, tool_folder=None, game_data_folder="FF8GameData"):
         if tool_folder is None:
-            tool_folder = os.path.dirname(os.path.abspath(__file__))
+            tool_folder = str(app_path("Fujin"))  # not __file__: a temp unpack folder in the exe
         self.entries = []
         self.data_loaded = False
         self.data_path = ""

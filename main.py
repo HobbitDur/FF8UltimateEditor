@@ -8,12 +8,8 @@ from PyQt6.QtWidgets import QApplication
 # Where the app itself lives. Everything it needs (Resources, FF8GameData, ExternalTools) sits
 # next to this file, so it can be started from anywhere - `python path/to/main.py`, a shortcut, or
 # another project holding it as a submodule - and not only from its own folder.
-# In the PyInstaller one-file release, __file__ points into the temporary _MEIxxxx extraction
-# folder, not next to the .exe where the release ships its folders - use the executable's folder.
-if getattr(sys, "frozen", False):
-    APP_FOLDER = pathlib.Path(sys.executable).resolve().parent
-else:
-    APP_FOLDER = pathlib.Path(__file__).resolve().parent
+# (the exe's folder in the PyInstaller release, where __file__ is a temporary unpack folder)
+from Common.apppaths import APP_FOLDER
 
 from ff8ultimateeditorwidget import FF8UltimateEditorWidget
 sys._excepthook = sys.excepthook

@@ -80,6 +80,31 @@ def pytest_collection_modifyitems(config, items):
                     reason=f"FF8 game files not available (copyright, not in repo): {', '.join(missing)}"))
 
 
+@pytest.fixture(autouse=True)
+def _no_blocking_dialog(monkeypatch):
+    """Make a real message box or file dialog fail the test instead of hanging the run.
+
+    Nobody is there to click it: a modal dialog opened by a test (typically the error box shown
+    when a game file is missing) waits forever - under the offscreen platform it is not even
+    visible - and the CI job sits there until its 6-hour limit. Raising turns that into an
+    ordinary failure that names the dialog. A test that expects a dialog monkeypatches it itself,
+    which takes precedence over this.
+    """
+    from PyQt6.QtWidgets import QFileDialog, QMessageBox
+
+    def refuse(kind):
+        def raise_instead(*args, **kwargs):
+            text = " | ".join(str(a) for a in args if isinstance(a, str))
+            raise RuntimeError(f"Test opened a blocking {kind}: {text}")
+        return raise_instead
+
+    for name in ("information", "warning", "critical", "question", "about"):
+        monkeypatch.setattr(QMessageBox, name, staticmethod(refuse(f"QMessageBox.{name}")))
+    monkeypatch.setattr(QMessageBox, "exec", refuse("QMessageBox.exec"))
+    for name in ("getOpenFileName", "getOpenFileNames", "getSaveFileName", "getExistingDirectory"):
+        monkeypatch.setattr(QFileDialog, name, staticmethod(refuse(f"QFileDialog.{name}")))
+
+
 def pytest_runtest_setup(item):
     _keep_qapplication_alive()
 

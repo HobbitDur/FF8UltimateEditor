@@ -23,6 +23,7 @@ No Qt and no audio here: this module only answers "which entry", so it can be te
 headless; JuliaManager owns the archive and the panel owns the playback.
 """
 import json
+import ntpath
 import os
 import re
 
@@ -36,7 +37,7 @@ def actor_key_for_file(file_name):
 
     c0mNNN.dat (monster) -> 16 + NNN; dXc/dXw (character body / weapon, X hex) -> X.
     """
-    name = os.path.basename(file_name or "").lower()
+    name = ntpath.basename(file_name or "").lower()  # splits on both \ and / on every OS
     match = re.match(r"c0m(\d{3})", name)
     if match:
         return 16 + int(match.group(1))

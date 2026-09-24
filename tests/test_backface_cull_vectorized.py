@@ -72,6 +72,7 @@ def test_vectorized_cull_matches_per_face(fname, mode):
         assert new == old, f"{fname} {mode}: {sum(a != b for a, b in zip(old, new))} faces differ"
 
 
+@pytest.mark.ff8data("extracted_files/battle/c0m000.dat")
 def test_topology_rebuilt_when_geometry_changes():
     """Merging in a weapon (or reloading) changes the face count; the cached topology must track
     it so the cull mask stays the right length."""

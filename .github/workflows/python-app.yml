@@ -79,6 +79,8 @@ jobs:
         mkdir -p release/ShumiTranslator/csv
         cp -R ShumiTranslator/csv/. release/ShumiTranslator/csv
         cp ToolUpdate/list.json release/ToolUpdate/
+        mkdir -p release/Fujin
+        cp Fujin/effect_table.csv release/Fujin/
         cp -R FF8GameData/Resources/. release/FF8GameData/Resources/
         cp -R Resources/. release/Resources/
         chmod +x release/FF8UltimateEditor release/Patcher/Patcher
@@ -249,6 +251,8 @@ jobs:
         mkdir -p release/ShumiTranslator/csv
         cp -R ShumiTranslator/csv/. release/ShumiTranslator/csv
         cp ToolUpdate/list.json release/ToolUpdate/
+        mkdir -p release/Fujin
+        cp Fujin/effect_table.csv release/Fujin/
         cp -R FF8GameData/Resources/. release/FF8GameData/Resources/
         cp -R Resources/. release/Resources/
         rm -R release/build

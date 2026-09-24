@@ -9,14 +9,8 @@ import so files edited in Excel with ";" or "," still work).
 
 import csv
 import pathlib
-import sys
 
-# The PyInstaller one-file release unpacks the code into a temporary _MEIxxxx folder, so
-# __file__ is not next to the shipped FF8GameData/ folders there - use the executable's folder.
-if getattr(sys, "frozen", False):
-    PROJECT_ROOT = pathlib.Path(sys.executable).resolve().parent
-else:
-    PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
+from Common.apppaths import APP_FOLDER as PROJECT_ROOT  # the exe's folder in the release
 DEFAULT_DELIMITER = "|"
 
 _game_data = None

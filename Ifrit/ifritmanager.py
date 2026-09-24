@@ -27,6 +27,7 @@ from Ifrit.IfritAI.AICompiler.AICompiler import AICompiler
 from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
 from Ifrit.IfritXlsx import xlsxmanager
 from Ifrit.IfritXlsx.xlsxmanager import DatToXlsx, XlsxToDat
+from Common.apppaths import app_path
 
 
 class MetaData:
@@ -140,13 +141,13 @@ class IfritManager:
         # them mid-operation, producing corrupted textures rather than an
         # error. Keyed by pid + a random suffix so it is unique per process AND
         # per instance.
-        self.temp_path = (pathlib.Path(__file__).parent.resolve() / "temp_vincent_tim"
+        # app_path, not __file__: in the release exe __file__ is a temporary unpack folder.
+        self.temp_path = (app_path("Ifrit", "temp_vincent_tim")
                           / f"{os.getpid()}_{uuid.uuid4().hex[:8]}")
         atexit.register(self._cleanup_temp_path)
 
-        current_script_dir = pathlib.Path(__file__).parent.resolve()
         if vincent_tim_path is None:
-            self.vincent_tim_path = current_script_dir.parent / "ExternalTools" / "VincentTim" / "tim.exe"
+            self.vincent_tim_path = app_path("ExternalTools", "VincentTim", "tim.exe")
         else:
             self.vincent_tim_path = pathlib.Path(vincent_tim_path).resolve()
         self._dat_xlsx_manager = DatToXlsx()
