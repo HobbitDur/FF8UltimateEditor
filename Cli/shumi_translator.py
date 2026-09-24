@@ -16,6 +16,7 @@ import sys
 from typing import List, Tuple
 
 from .base import BaseCliTool
+from .common import PROJECT_ROOT
 
 
 # Language mapping: folder name -> 2-letter code
@@ -38,7 +39,7 @@ DEFAULT_DELIMITER = "|"
 def _load_game_data():
     """Load game data from FF8GameData module."""
     from FF8GameData.gamedata import GameData
-    gd = GameData(str(pathlib.Path(__file__).resolve().parent.parent / "FF8GameData"))
+    gd = GameData(str(PROJECT_ROOT / "FF8GameData"))
     gd.load_kernel_data()
     gd.load_mngrp_data()
     gd.load_item_data()

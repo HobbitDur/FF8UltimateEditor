@@ -14,11 +14,12 @@ import pathlib
 import sys
 
 from .base import BaseCliTool
+from .common import PROJECT_ROOT
 
 
 def _load_game_data():
     from FF8GameData.gamedata import GameData
-    gd = GameData(str(pathlib.Path(__file__).resolve().parent.parent / "FF8GameData"))
+    gd = GameData(str(PROJECT_ROOT / "FF8GameData"))
     gd.load_all()
     return gd
 
