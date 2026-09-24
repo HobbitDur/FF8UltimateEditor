@@ -712,8 +712,10 @@ class GeometrySection:
                     (tri.vtb.get_u_norm(), tri.vtb.get_v_norm()),  # for A
                     (tri.vtc.get_u_norm(), tri.vtc.get_v_norm()),  # for B
                 )
-                # tex_id_1 upper 6 bits encode CLUT/page info; low bits = texture index
-                tex_id = tri.tex_id_1 & 0xFF
+                # tex_id_1 is the PSX CLUT word (y << 6 | x / 16), one palette row per texture, so
+                # the whole word tells the textures apart. Its low byte alone does not: rows 224
+                # and 228 (0x3800 / 0x3900) share 0x00 and c0m121's wings got the body texture.
+                tex_id = tri.tex_id_1
                 result.append((indices, uvs, tex_id, tri.depth_bias))
             offset += obj_vert_count
         return result
@@ -739,7 +741,7 @@ class GeometrySection:
                     (quad.vtc.get_u_norm(), quad.vtc.get_v_norm()),
                     (quad.vtd.get_u_norm(), quad.vtd.get_v_norm()),
                 )
-                tex_id = quad.tex_id_1 & 0xFF
+                tex_id = quad.tex_id_1  # full CLUT word, see get_triangles_with_uv
                 result.append((indices, uvs, tex_id, quad.depth_bias))
             offset += obj_vert_count
         return result

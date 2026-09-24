@@ -36,8 +36,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
     FF8 Monster Viewer Widget - Reusable PyQt Widget
     """
     # When a character body and its weapon are drawn in the same viewer, the weapon's raw texture
-    # ids (0-255) are shifted up by this so they never collide with the body's in the merged
-    # atlas. Larger than any real raw id (tex_id_1 & 0xFF).
+    # ids (16-bit CLUT words) are shifted up by this so they never collide with the body's in the
+    # merged atlas. Larger than any real raw id (tex_id_1 <= 0xFFFF).
     _WEAPON_TEX_OFFSET = 1 << 16
     # Direct manipulation of the skeleton in the view
     bone_picked = pyqtSignal(int, bool)        # a joint was clicked: (bone id, additive=Ctrl held)

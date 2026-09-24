@@ -25,12 +25,11 @@ refreshes the raw bytes of section 2, leaving every other section untouched.
 What the mesh rebuild recovers vs. loses
 ----------------------------------------
 Recovered: vertex positions (exact, via the skin's inverse-bind matrices),
-per-vertex bone assignment (JOINTS_0), UVs, the low-byte texture id (from the
+per-vertex bone assignment (JOINTS_0), UVs, the texture id = CLUT word (from the
 ``ff8_texture_<id>`` material name), and face connectivity.
 
 Lost (inherent to the glTF export): quads become triangle pairs; per-corner
-vertices are merged back by (bone, position); the texture-id upper bits
-(CLUT/TPage) and ``tex_id_2``; per-face depth bias; hidden/colored faces (the
+vertices are merged back by (bone, position); ``tex_id_2`` (TPage); per-face depth bias; hidden/colored faces (the
 exporter never writes them). A saved model therefore renders correctly in the
 viewer but is not byte-identical to the original section 2.
 """
@@ -146,8 +145,8 @@ class GltfImporter:
             tri.vta = self._make_uv(uv0)   # C
             tri.vtb = self._make_uv(uv1)   # A
             tri.vtc = self._make_uv(uv2)   # B
-            tri.tex_id_1 = tex_id & 0xFF
-            tri.tex_id_2 = 0               # visible (upper CLUT/TPage bits lost)
+            tri.tex_id_1 = tex_id & 0xFFFF  # the CLUT word
+            tri.tex_id_2 = 0                # visible (TPage lost)
             obj.triangles.append(tri)
         obj.nb_triangle = len(obj.triangles)
         obj.nb_quad = obj.nb_colored_triangle = obj.nb_colored_quad = 0
@@ -229,7 +228,7 @@ class GltfImporter:
 
     @staticmethod
     def _material_tex_id(gltf, material_index, fallback):
-        """Recover the FF8 low-byte texture id from the material name written by
+        """Recover the FF8 texture id (CLUT word) from the material name written by
         the exporter (``ff8_texture_<id>``); fall back to a stable sequential id."""
         if material_index is None:
             return 0
