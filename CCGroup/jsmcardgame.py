@@ -12,6 +12,8 @@ Reference: FF8ModdingWiki, Field Opcodes 13A_CARDGAME.
 import os
 import struct
 
+from CCGroup.jsmvariant import analyze_variants
+
 # Push opcodes (instruction = opcode << 24 | param24)
 OPCODE_PSHN_L = 0x07  # push literal
 OPCODE_PSHI_L = 0x08  # push temporary variable
@@ -127,6 +129,7 @@ class CardGamePlayer:
         self.script_name = script_name
         self.cardgame_file_offset = cardgame_file_offset
         self.params = params  # list of 7 CardGameParam in push order
+        self.variant = None  # jsmvariant.VariantInfo: what picks this call among its script's ones
 
     def is_modified(self):
         return any(param.is_modified() for param in self.params)
@@ -191,7 +194,11 @@ class JsmCardGameFile:
             self.data = bytearray(jsm_file.read())
         self.players = []
         self.card_moves = []  # SETCARD calls with literal arguments
+        self.offset_script = 0
+        self.script_positions = []
+        self.script_literals = {}  # editable literals of the variant conditions, by file offset
         self.__analyze()
+        analyze_variants(self)
 
     def __analyze(self):
         if len(self.data) < 8:
@@ -207,6 +214,8 @@ class JsmCardGameFile:
         for entry_index in range(nb_script_entries):
             entry = struct.unpack_from("<H", self.data, offset_section1 + entry_index * 2)[0]
             script_positions.append((entry & 0x7FFF) * 4)
+        self.offset_script = offset_script
+        self.script_positions = script_positions
 
         script_names = self.__read_script_names(nb_entity)
 
@@ -323,13 +332,16 @@ class JsmCardGameFile:
         return "entity?", f"offset 0x{instruction_offset:X}"
 
     def is_modified(self):
-        return any(player.is_modified() for player in self.players)
+        return (any(player.is_modified() for player in self.players)
+                or any(literal.is_modified() for literal in self.script_literals.values()))
 
     def apply_params(self):
-        """Write the current param values back into the in-memory file data."""
+        """Write the current param values (and variant condition literals) back into the data."""
         for player in self.players:
             for param in player.params:
                 struct.pack_into("<I", self.data, param.file_offset, param.to_dword())
+        for literal in self.script_literals.values():
+            struct.pack_into("<I", self.data, literal.file_offset, literal.to_dword())
 
     def save(self, output_path: str = ""):
         """Patch the params and write the .jsm back to disk (in place by default)."""
@@ -342,6 +354,8 @@ class JsmCardGameFile:
             for param in player.params:
                 param.original_opcode = param.opcode
                 param.original_value = param.value
+        for literal in self.script_literals.values():
+            literal.original_value = literal.value
 
 
 class CardGameFolderManager:

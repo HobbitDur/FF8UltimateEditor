@@ -454,6 +454,97 @@ def clear_layout(layout):
             clear_layout(item.layout())
 
 
+TOOLTIP_VARIANT = (
+    "<b>Variants</b><br/>"
+    "This NPC's script holds several CARDGAME calls, each with its own deck, rules and AI,<br/>"
+    "and branches to one of them before the match: on a <b>random roll</b> (RND, 0-255) or on<br/>"
+    "the <b>game state</b> (story progress, flags...). The conditions below are the branches<br/>"
+    "that lead to this call; the values in boxes are the numbers the script compares with,<br/>"
+    "and can be edited in place (e.g. change 85 to 128 to make the first variant 50%).")
+
+
+def variant_text(player: CardGamePlayer):
+    """Short description of how a variant is picked: its random chance, or its conditions."""
+    variant = player.variant
+    chance = variant.random_chance()
+    conditions = " and ".join(condition.text() for condition in variant.conditions) or "always"
+    if chance is not None:
+        return f"{chance:.0f}% ({variant.random_ranges_text()} of 0-255)"
+    return conditions
+
+
+class VariantGroup(QGroupBox):
+    """Which of the script's CARDGAME calls this is, and the editable conditions that pick it."""
+
+    def __init__(self, player: CardGamePlayer, changed_callback, select_player_callback):
+        variant = player.variant
+        QGroupBox.__init__(self, f"Variant {variant.index + 1} of {len(variant.siblings)}"
+                                 f" ({player.entity_name}::{player.script_name})")
+        self.setToolTip(TOOLTIP_VARIANT)
+        self.player = player
+        self.changed_callback = changed_callback
+        self.select_player_callback = select_player_callback
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        layout.addWidget(wrapped_label(
+            f"The script of {player.entity_name} holds {len(variant.siblings)} CARDGAME calls and branches to"
+            f" one of them before the match. This one plays when:"))
+        if not variant.conditions:
+            layout.addWidget(QLabel("<i>(no branch found before this call)</i>"))
+        for condition in variant.conditions:
+            row = QHBoxLayout()
+            row.addWidget(QLabel("\u2022"))
+            for token in condition.tokens():
+                if isinstance(token, str):
+                    row.addWidget(QLabel(token))
+                else:
+                    row.addWidget(self.__literal_spinbox(token))
+            row.addStretch(1)
+            layout.addLayout(row)
+        self.chance_label = QLabel()
+        layout.addWidget(self.chance_label)
+        layout.addWidget(QLabel("All the variants of this script:"))
+        self.siblings_label = QLabel()
+        self.siblings_label.setWordWrap(True)
+        self.siblings_label.linkActivated.connect(self.__link_activated)
+        layout.addWidget(self.siblings_label)
+        self.refresh()
+
+    def __literal_spinbox(self, literal):
+        spinbox = QSpinBox()
+        spinbox.setRange(-0x800000, 0x7FFFFF)
+        spinbox.setValue(literal.value)
+        spinbox.wheelEvent = lambda event: None
+        spinbox.setToolTip(f"Number the script compares with (PSHN_L at file offset 0x{literal.file_offset:X}),"
+                           f" original value {literal.original_value}. Shared by every variant that tests it.")
+
+        def value_changed(value):
+            literal.value = value
+            self.refresh()
+            self.changed_callback(self.player)
+
+        spinbox.valueChanged.connect(value_changed)
+        return spinbox
+
+    def refresh(self):
+        variant = self.player.variant
+        chance = variant.random_chance()
+        self.chance_label.setText(f"<b>Chance: {chance:.1f}%</b> of the random rolls pick this variant."
+                                  if chance is not None else "")
+        self.chance_label.setVisible(chance is not None)
+        lines = []
+        for index, sibling in enumerate(variant.siblings):
+            text = f"{index + 1}. {variant_text(sibling)}"
+            if sibling is self.player:
+                lines.append(f"<b>{text} (this one)</b>")
+            else:
+                lines.append(f'<a href="{index}">{text}</a>')
+        self.siblings_label.setText("<br/>".join(lines))
+
+    def __link_activated(self, link: str):
+        self.select_player_callback(self.player.variant.siblings[int(link)])
+
+
 class RareCardsGroup(QGroupBox):
     """What the Deck ID means for rare cards: the card that starts there, the cards scripts move
     there, and the other card players sharing the same pocket (links select them)."""
@@ -732,7 +823,10 @@ class CardPlayerWidget(QWidget):
             row.add_to_grid(grid, row_index, row.layout())
             row.on_change = self.__param_changed
 
-        self.rare_cards_group = RareCardsGroup(card_images, manager, select_player_callback or (lambda _: None))
+        select_player_callback = select_player_callback or (lambda _: None)
+        if player.variant is not None and player.variant.is_variant():
+            main_layout.addWidget(VariantGroup(player, self.__variant_changed, select_player_callback))
+        self.rare_cards_group = RareCardsGroup(card_images, manager, select_player_callback)
         main_layout.addWidget(self.rare_cards_group)
         jsm_file = manager.file_of(player)
         level_param = player.params[PARAM_LEVEL_MASK]
@@ -753,6 +847,11 @@ class CardPlayerWidget(QWidget):
     def __refresh_previews(self):
         self.rare_cards_group.refresh(self.player)
         self.deck_preview_group.refresh(self.player)
+
+    def __variant_changed(self, _player):
+        if self.changed_callback is not None:
+            for sibling in self.player.variant.siblings:  # a shared literal changes their odds too
+                self.changed_callback(sibling)
 
     def __param_changed(self):
         self.__refresh_previews()
@@ -853,6 +952,11 @@ class NpcCardGameWidget(QWidget):
                 text += f"  - {self.card_images.names[start_card]}"
             elif deck_param.value == cardlocation.LOCATION_QUEEN:
                 text += "  - Queen of Cards"
+        variant = player.variant
+        if variant is not None and variant.is_variant():
+            text += f"  [variant {variant.index + 1}/{len(variant.siblings)}"
+            chance = variant.random_chance()
+            text += f", {chance:.0f}%]" if chance is not None else "]"
         return text
 
     def select_player(self, player: CardGamePlayer):
