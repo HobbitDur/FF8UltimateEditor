@@ -9,6 +9,7 @@ Every file is read from the folder of the NPC's .jsm, the same Deling-extracted 
 """
 import os
 
+import numpy as np
 from PIL.ImageQt import ImageQt
 from PyQt6.QtCore import Qt, QPointF, QRectF
 from PyQt6.QtGui import QPixmap, QPainter, QPen, QColor, QFont
@@ -19,6 +20,8 @@ from FF8GameData.field.fieldcamera import FieldCamera, Walkmesh
 
 MARKER_RADIUS = 6
 MARKER_COLOR = QColor(255, 40, 40)
+# Camera distance in model heights: (1/2) / tan(22.5 deg) = 1.21 fits the height exactly
+CHARACTER_FRAMING = 1.35
 
 
 class BackgroundView(QWidget):
@@ -211,6 +214,25 @@ class NpcFieldView(QWidget):
                                  f" (SETMODEL of {player.entity_name})")
         viewer.show()
         viewer.load_file()
+        self.__frame_character(viewer.gl_widget)
+
+    @staticmethod
+    def __frame_character(gl_widget):
+        """reset_view treats a standing character as an elongated shape and backs off to 3.5x its
+        height: frame the height in the 45 deg field of view instead, with a small margin."""
+        if len(gl_widget.vertices) == 0:
+            return
+        bbox_min = gl_widget.vertices_array.min(axis=0)
+        bbox_max = gl_widget.vertices_array.max(axis=0)
+        gl_widget.zoom = max(bbox_max - bbox_min) * CHARACTER_FRAMING
+        # The orbit targets the frame-0 reference position, not the middle of the model (a
+        # standing character's feet are much further from it than its head): pan to the box
+        # center. reset_view's front view is rot_x 0 / rot_y 180, which mirrors x.
+        center = ((bbox_min + bbox_max) / 2 - np.asarray(gl_widget.reference_position, dtype=float)
+                  + np.asarray(gl_widget.model_translation, dtype=float))
+        gl_widget.pan_x = float(center[0])
+        gl_widget.pan_y = float(-center[1])
+        gl_widget.update()
 
     def __model_failed(self, text: str):
         self.model_label.setText(text)
