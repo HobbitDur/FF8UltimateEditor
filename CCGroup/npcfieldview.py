@@ -144,13 +144,15 @@ class NpcFieldView(QWidget):
         layout.addWidget(self.splitter)
 
     def __ensure_viewer(self):
-        """The 3D viewer is heavy (OpenGL): created on the first model shown."""
+        """The 3D viewer is heavy (OpenGL): created on the first model shown. View only: no
+        toolbar, anim editor or playlist (show_controls=False), the skeleton stays hidden so
+        bones cannot be picked or edited; mouse rotate / pan / zoom only, on the first frame."""
         if self.viewer_3d is None:
             from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
             from Seed.seedmanager import SeedManager
             self.seed_manager = SeedManager()
-            self.viewer_3d = Ifrit3DWidget(self.seed_manager, show_controls=True)
-            self.viewer_3d.set_fps(self.seed_manager.anim_native_fps)
+            self.viewer_3d = Ifrit3DWidget(self.seed_manager, show_controls=False)
+            self.viewer_3d.setToolTip("Left drag: rotate - Right drag: pan - Wheel: zoom")
             self.__model_layout.addWidget(self.viewer_3d, 1)
         return self.viewer_3d
 
