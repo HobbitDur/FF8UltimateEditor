@@ -154,7 +154,23 @@ class SolomonRingWidget(QWidget):
         if 0 <= index < self.tabs.count():
             self.tabs.setCurrentIndex(index)
 
+    def _commit_ability_tabs(self):
+        """Write back the ability tabs' open forms and re-read their names.
+
+        A name typed into a form only reaches the data when that form is written back,
+        which otherwise waits for a row change - so an ability renamed and then looked
+        for on the G-Forces tab (one tab away) would still show its old name in the
+        learn-slot pickers."""
+        if not self.loaded_filename:
+            return
+        for section_id in self._ability_section_ids():
+            tab = self._section_tabs.get(section_id)
+            if tab is not None:
+                tab.commit()
+        self._refresh_ability_names()
+
     def _remember_current_tab(self, index):
+        self._commit_ability_tabs()
         if self.settings is not None:
             self.settings.setValue(self.CURRENT_TAB_KEY, index)
 

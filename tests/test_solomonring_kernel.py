@@ -635,3 +635,36 @@ def test_the_pool_counter_reflects_the_loaded_file(qapp, tmp_path):
         assert "116 / 128" in label.text() and "12 left" in label.text(), \
             f"section {section_id} still shows {label.text()!r}"
 
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_a_renamed_ability_reaches_the_gf_learn_slot_pickers(qapp, tmp_path):
+    """A GF learns a new ability by taking one of its 21 slots, chosen on the G-Forces tab.
+    That picker lists what the loaded file holds, so an ability added and named on another
+    tab has to show up there under its real name - which means its form has to be written
+    back when the tab is left, not only when its row changes."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+
+    gf = widget._section_tabs[17]
+    gf.list_widget.setCurrentRow(gf._visible_indices.index(8))   # after the last GF ability
+    _add_button(gf).click()
+    new_id = widget._ability_first_id(17) + 9                    # 83 + 9 = 92
+    gf._text_widgets[0].setText("SumMag+50%")
+
+    # Leaving the tab commits the form; the G-Forces pickers read the names again.
+    widget.tabs.setCurrentIndex(widget._tab_index_by_section[3])
+
+    entries = {e["value"]: e["name"] for e in widget.registry.resolve("junctionable_ability")["entries"]}
+    assert entries[new_id] == "SumMag+50%"
+
+    # And it can actually be put in a learn slot: slot 20 of Quezacotl, replacing "GF".
+    gforces = widget._section_tabs[3]
+    gforces.list_widget.setCurrentRow(0)
+    kind, _field, combo = gforces._field_widgets["ability21"]
+    assert kind == "enum"
+    combo.setCurrentIndex(combo.findData(new_id))
+    assert combo.currentData() == new_id
+    assert combo.currentText() == "SumMag+50%"
+

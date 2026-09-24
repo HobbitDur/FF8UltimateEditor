@@ -121,3 +121,44 @@ def test_quezacotl_and_hyne_abilities_and_weapons(qapp, tool_name):
     registry.close_file("kernel.bin")
     assert check_hp_j.text() == "Ability 1" and not _own_enabled(check_hp_j)
     assert tool.gf_learning_ability_combo.currentData() == learning
+
+
+@pytest.mark.ff8data("extracted_files/menu/mitem.bin")
+def test_an_added_ability_is_offered_by_the_teach_ability_item(qapp, tmp_path):
+    """An item of type "Teach GF ability" names its ability from the kernel.bin that is open -
+    there is no json list of abilities - so an ability ADDED to a modded kernel.bin is offered
+    by that item as soon as the file is. This is how a new ability is reached in game without
+    spending one of a GF's 21 learn slots, which are all taken in vanilla."""
+    from PyQt6.QtWidgets import QPushButton
+    from SolomonRing.solomonringwidget import SolomonRingWidget
+    from Kadowaki.kadowakiwidget import KadowakiWidget
+
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(pathlib.Path(KERNEL).read_bytes())
+    editor = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA)
+    editor.load_file(str(work))
+    gf = editor._section_tabs[17]
+    gf.list_widget.setCurrentRow(gf._visible_indices.index(8))
+    next(b for b in gf.findChildren(QPushButton) if "Add entry" in b.text()).click()
+    gf._text_widgets[0].setText("SumMag+50%")
+    editor._save_kernel()
+
+    registry = FileRegistry()
+    tool = KadowakiWidget(game_data_folder=GAME_DATA, file_registry=registry)
+    registry.open_file("mitem.bin", str(DATA / "menu" / "mitem.bin"))
+    registry.open_file("kernel.bin", str(work))
+
+    assert len(tool.kernel_names.abilities) == 117, "the added ability is not in the list"
+    assert tool.kernel_names.ability_name(92) == "SumMag+50%"
+    assert {"value": 92, "name": "SumMag+50%"} in tool.kernel_names.ability_entries()
+
+    # The vanilla teach-ability item can be pointed at it.
+    tool.item_list.setCurrentRow(tool.manager.menu_items.index(
+        next(m for m in tool.manager.menu_items if m.name == "HP-J Scroll")))
+    param = next(w for w in (tool.param1_widget, tool.param2_widget)
+                 if w._widget_type == "list" and w._list_combo.isEnabled())
+    index = param._list_combo_ids.index(92)
+    param._list_combo.setCurrentIndex(index)
+    assert param.get_value() == 92
+    assert param._list_combo.currentText() == "SumMag+50%"
+

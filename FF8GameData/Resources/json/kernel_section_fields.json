@@ -748,6 +748,7 @@
     "offset": 30,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 1",
     "group": "Abilities",
     "row": "ability1"
@@ -785,6 +786,7 @@
     "offset": 34,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 2",
     "group": "Abilities",
     "row": "ability2"
@@ -822,6 +824,7 @@
     "offset": 38,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 3",
     "group": "Abilities",
     "row": "ability3"
@@ -859,6 +862,7 @@
     "offset": 42,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 4",
     "group": "Abilities",
     "row": "ability4"
@@ -896,6 +900,7 @@
     "offset": 46,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 5",
     "group": "Abilities",
     "row": "ability5"
@@ -933,6 +938,7 @@
     "offset": 50,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 6",
     "group": "Abilities",
     "row": "ability6"
@@ -970,6 +976,7 @@
     "offset": 54,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 7",
     "group": "Abilities",
     "row": "ability7"
@@ -1007,6 +1014,7 @@
     "offset": 58,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 8",
     "group": "Abilities",
     "row": "ability8"
@@ -1044,6 +1052,7 @@
     "offset": 62,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 9",
     "group": "Abilities",
     "row": "ability9"
@@ -1081,6 +1090,7 @@
     "offset": 66,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 10",
     "group": "Abilities",
     "row": "ability10"
@@ -1118,6 +1128,7 @@
     "offset": 70,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 11",
     "group": "Abilities",
     "row": "ability11"
@@ -1155,6 +1166,7 @@
     "offset": 74,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 12",
     "group": "Abilities",
     "row": "ability12"
@@ -1192,6 +1204,7 @@
     "offset": 78,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 13",
     "group": "Abilities",
     "row": "ability13"
@@ -1229,6 +1242,7 @@
     "offset": 82,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 14",
     "group": "Abilities",
     "row": "ability14"
@@ -1266,6 +1280,7 @@
     "offset": 86,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 15",
     "group": "Abilities",
     "row": "ability15"
@@ -1303,6 +1318,7 @@
     "offset": 90,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 16",
     "group": "Abilities",
     "row": "ability16"
@@ -1340,6 +1356,7 @@
     "offset": 94,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 17",
     "group": "Abilities",
     "row": "ability17"
@@ -1377,6 +1394,7 @@
     "offset": 98,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 18",
     "group": "Abilities",
     "row": "ability18"
@@ -1414,6 +1432,7 @@
     "offset": 102,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 19",
     "group": "Abilities",
     "row": "ability19"
@@ -1451,6 +1470,7 @@
     "offset": 106,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 20",
     "group": "Abilities",
     "row": "ability20"
@@ -1488,6 +1508,7 @@
     "offset": 110,
     "size": 1,
     "lookup": "junctionable_ability",
+    "dynamic_lookup": true,
     "label": "Ability 21",
     "group": "Abilities",
     "row": "ability21"

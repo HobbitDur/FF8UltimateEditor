@@ -180,9 +180,12 @@ for i in range(1, 22):
     # directly as the ability id (indexed into a 128-slot seen-flags buffer sized
     # for the ability list) - that is the REAL ability, not byte+2 (which is always
     # 0xFF in vanilla and reads as raw garbage in a plain "ability" picker).
+    # dynamic_lookup: the ability list is rebuilt from the loaded kernel.bin (names as the
+    # file spells them, and any ability a mod added), and adding or removing one renumbers
+    # every ability behind it - so these combos have to be repopulated, not just relabelled.
     gf_fields.append({"name": f"ability{i}", "offset": base + 3, "size": 1,
-                      "lookup": "junctionable_ability", "label": f"Ability {i}",
-                      "group": "Abilities", "row": row})
+                      "lookup": "junctionable_ability", "dynamic_lookup": True,
+                      "label": f"Ability {i}", "group": "Abilities", "row": row})
     gf_fields.append({"name": f"ability{i}_unlocker", "offset": base, "size": 1,
                       "label": "Unlocker", "group": "Abilities", "row": row})
     gf_fields.append({"name": f"ability{i}_level_or_prereq", "offset": base + 1, "size": 1,
