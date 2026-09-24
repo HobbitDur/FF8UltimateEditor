@@ -7,7 +7,8 @@ Reference: FF8ModdingWiki, Field File Format / FileFormat_MIM and FileFormat_MAP
 .mim, no header, two fixed sizes:
   type 1 (438272 bytes): 24 palettes (0x3000 bytes) + a 1664x256 byte image (13 pages of 128)
   type 2 (401408 bytes): 16 palettes (0x2000 bytes) + a 1536x256 byte image (12 pages)
-Palettes are 256 PSX colors (R5G5B5 + STP bit); the tiles use palette (id + 8).
+Palettes are 256 PSX colors (R5G5B5 + STP bit); type 1 tiles use palette (id + 8) (its first 8
+palettes are unused), type 2 tiles palette id directly.
 
 .map, 16 bytes per tile, ends with x = 0x7FFF:
   type 1: x i16, y i16, z u16, tex u16, pal u16, src_x u8, src_y u8, layer u8, blend u8,
@@ -27,7 +28,7 @@ TILE_SIZE = 16
 PAGE_WIDTH = 128  # bytes per texture page row
 IMAGE_HEIGHT = 256
 PALETTE_SIZE = 512  # 256 colors x 2 bytes
-PALETTE_ID_OFFSET = 8
+PALETTE_ID_OFFSET_TYPE1 = 8  # type 2 has no offset (checked on bccent15)
 MAP_END_X = 0x7FFF
 BLEND_NONE = 4
 NO_ANIMATION = 0xFF
@@ -85,6 +86,7 @@ def render_background(mim_data: bytes, map_data: bytes, all_animation_states: bo
         raise ValueError(f"Unknown .mim size {len(mim_data)}")
     palette_bytes, image_width = MIM_TYPES[len(mim_data)]
     is_type2 = palette_bytes == 0x2000
+    palette_offset = 0 if is_type2 else PALETTE_ID_OFFSET_TYPE1
     palettes = np.frombuffer(mim_data, dtype="<u2", count=palette_bytes // 2).reshape(-1, 256)
     palettes_rgba = psx_colors_to_rgba(palettes.astype(np.uint32))
     image = np.frombuffer(mim_data, dtype=np.uint8, offset=palette_bytes).reshape(IMAGE_HEIGHT, image_width)
@@ -101,7 +103,7 @@ def render_background(mim_data: bytes, map_data: bytes, all_animation_states: bo
     canvas = np.zeros((height, width, 4), dtype=np.float32)
 
     for tile in sorted(tiles, key=lambda tile: -tile.z):
-        palette_index = min(tile.palette_id + PALETTE_ID_OFFSET, len(palettes_rgba) - 1)
+        palette_index = min(tile.palette_id + palette_offset, len(palettes_rgba) - 1)
         page_x = tile.texture_page * PAGE_WIDTH
         rows = image[tile.src_y:tile.src_y + TILE_SIZE]
         if rows.shape[0] < TILE_SIZE:

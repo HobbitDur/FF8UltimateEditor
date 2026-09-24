@@ -31,6 +31,16 @@ def test_background_is_rebuilt_from_the_tiles():
     assert len({tuple(pixel) for pixel in pixels[::8, ::8].reshape(-1, 4)}) > 200  # a real picture, not noise
 
 
+@pytest.mark.ff8data("extracted_files/field/mapdata/bc/bccent15/bccent15.mim",
+                     "extracted_files/field/mapdata/bc/bccent15/bccent15.map")
+def test_type2_background_uses_the_palette_id_directly():
+    image, _ = render_field_folder(str(PROJECT_ROOT / "extracted_files" / "field" / "mapdata" / "bc" / "bccent15"))
+    pixels = np.asarray(image).astype(int)
+    assert image.size == (480, 288) and (pixels[..., 3] == 255).all()
+    # With the type 1 "+8" palette offset the picture came out as a flat purple wash
+    assert pixels[..., :3].std(axis=(0, 1)).min() > 30
+
+
 def test_tile_depth_is_read_from_bits_7_8():
     tiles = parse_map((BGMON / "bgmon_4.map").read_bytes(), is_type2=False)
     assert {tile.depth for tile in tiles} <= {0, 1, 2}
