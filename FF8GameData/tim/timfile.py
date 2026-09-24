@@ -210,7 +210,8 @@ def _to5(rgb):
 def encode_clut(rgba_rows, source_rows: Optional[List[List[int]]] = None) -> List[List[int]]:
     """CLUT words from an (rows, colors, 4) RGBA array. A color whose 5-bit RGB and
     transparency class match the source word at the same slot keeps that word verbatim
-    (preserves its STP bit); a changed one gets alpha 0 -> 0x0000 (transparent), otherwise
+    (preserves its STP bit) - rows past the source's take its row 0 as that reference; a
+    changed one gets alpha 0 -> 0x0000 (transparent), otherwise
     BGR555 with the source STP bit, and pure black is written 0x8000 so it stays opaque."""
     import numpy as np
     rgba_rows = np.asarray(rgba_rows)
@@ -221,8 +222,11 @@ def encode_clut(rgba_rows, source_rows: Optional[List[List[int]]] = None) -> Lis
             red, green, blue = (int(v) for v in _to5(rgba_rows[r, i, :3]))
             transparent = rgba_rows[r, i, 3] == 0
             src = None
-            if source_rows and r < len(source_rows) and i < len(source_rows[r]):
-                src = source_rows[r][i]
+            if source_rows:
+                # a row the source did not have takes row 0 as its reference (STP bits)
+                source_row = source_rows[r] if r < len(source_rows) else source_rows[0]
+                if i < len(source_row):
+                    src = source_row[i]
             if src is not None:
                 s = word_to_rgba(src)
                 if (s[3] == 0) == transparent and (transparent or tuple(_to5(s[:3])) == (red, green, blue)):

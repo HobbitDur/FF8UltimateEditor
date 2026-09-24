@@ -1,7 +1,7 @@
 import os
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QPixmap, QIcon, QImage
-from PyQt6.QtWidgets import QLabel, QPushButton, QFileDialog, QFrame, QMessageBox
+from PyQt6.QtGui import QPixmap, QIcon, QImage, QPainter
+from PyQt6.QtWidgets import QLabel, QPushButton, QFileDialog, QFrame, QMessageBox, QInputDialog
 
 
 class EditableTextureWidget(QLabel):
@@ -121,16 +121,48 @@ class EditableTextureWidget(QLabel):
             current = self._current_pixmap
             if (self.type == 1 and current is not None and not current.isNull()
                     and pix.size() != current.size()):
-                # A palette must keep its CLUT shape (colors x rows): the geometry and any
-                # palette-row switch (e.g. a CLUT-row override hext) address rows by position
-                QMessageBox.critical(
-                    self, "IfritTexture - Error",
-                    f"This palette is {current.width()}x{current.height()} "
-                    f"({current.height()} row(s) of {current.width()} colors); the selected image "
-                    f"is {pix.width()}x{pix.height()}. Import an image of the same size.")
-                return
+                pix = self._fit_palette(pix, current)
+                if pix is None:
+                    return
             self.set_image(pix)
             self.imageChanged.emit(path)
+
+    def _fit_palette(self, pix: QPixmap, current: QPixmap):
+        """A palette image whose row count differs from the current palette: ask whether it
+        replaces some rows (fewer rows) or the whole palette. None when cancelled/impossible."""
+        rows, current_rows = pix.height(), current.height()
+        if pix.width() != current.width():
+            QMessageBox.critical(
+                self, "IfritTexture - Error",
+                f"This palette has {current.width()} colors per row; the selected image is "
+                f"{pix.width()} pixels wide.")
+            return None
+        whole = f"Replace the whole palette ({current_rows} rows -> {rows} row{'s' if rows > 1 else ''})"
+        choices = []
+        if rows < current_rows:
+            for start in range(current_rows - rows + 1):
+                choices.append(f"Replace row {start}" if rows == 1
+                               else f"Replace rows {start}-{start + rows - 1}")
+        choices.append(whole)
+        choice, ok = QInputDialog.getItem(
+            self, "Import palette",
+            f"The palette has {current_rows} row(s), the selected image has {rows}:",
+            choices, 0, False)
+        if not ok:
+            return None
+        if choice == whole:
+            return pix
+        return self.replace_palette_rows(current, pix, choices.index(choice))
+
+    @staticmethod
+    def replace_palette_rows(current: QPixmap, rows: QPixmap, start_row: int) -> QPixmap:
+        """`current` with its rows start_row.. overwritten by `rows` (alpha copied as is)."""
+        image = current.toImage().convertToFormat(QImage.Format.Format_ARGB32)
+        painter = QPainter(image)
+        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Source)
+        painter.drawImage(0, start_row, rows.toImage().convertToFormat(QImage.Format.Format_ARGB32))
+        painter.end()
+        return QPixmap.fromImage(image)
 
     def _on_refresh(self):
         self.set_image(self._original_pixmap, False)

@@ -195,3 +195,56 @@ def test_export_splits_multi_row_palette_one_set_per_row(manager, tmp_path):
     widget._export(str(scratch))
     assert (scratch / "texture_0_palette.png").exists()
     assert Image.open(scratch / "texture_0_palette.png").size == (256, 3)
+
+
+@pytest.mark.ff8data("extracted_files/battle/c0m071.dat")
+def test_one_row_palette_import_replaces_the_chosen_row(manager, tmp_path, monkeypatch):
+    """Importing a 1-row palette onto a 6-row one offers 'Replace row k': only that CLUT row
+    changes on save, the other rows and every texel index stay as they were."""
+    from PyQt6.QtGui import QImage, QPixmap
+    from PyQt6.QtWidgets import QInputDialog
+    from FF8GameData.tim.timfile import PalettedTim
+
+    # A 6-row palette: the soldier's own row repeated, saved and reloaded
+    work = _load(manager, "c0m071.dat", tmp_path)
+    widget = IfritTextureWidget(manager)
+    palette_widget = widget._texture_widgets[0]._palette_image_widget
+    one_row = palette_widget.get_image().toImage()
+    six = QImage(256, 6, QImage.Format.Format_ARGB32)
+    for row in range(6):
+        six = QImage(palette_widget.replace_palette_rows(QPixmap.fromImage(six), QPixmap.fromImage(one_row), row).toImage())
+    palette_widget.set_image(QPixmap.fromImage(six))
+    widget.save_file()
+    manager.save_file(str(work))
+    manager.init_from_file(str(work))
+    before = PalettedTim.parse(bytes(manager.enemy.texture_data["texture_data"][0]["data"]))
+    assert len(before.clut_rows) == 6 and all(r == before.clut_rows[0] for r in before.clut_rows)
+
+    # Import a 1-row palette (red and blue swapped) through the widget, answering "Replace row 3"
+    widget = IfritTextureWidget(manager)
+    palette_widget = widget._texture_widgets[0]._palette_image_widget
+    swapped = palette_widget.get_image().toImage().copy(0, 0, 256, 1).rgbSwapped()
+    png = tmp_path / "swapped.png"
+    swapped.save(str(png))
+    offered = []
+    def get_item(parent, title, label, items, current, editable):
+        offered.extend(items)
+        return "Replace row 3", True
+    monkeypatch.setattr(QInputDialog, "getItem", get_item)
+    monkeypatch.setattr("Ifrit.IfritTexture.editabletexturewidget.QFileDialog.getOpenFileName",
+                        lambda *args, **kwargs: (str(png), ""))
+    palette_widget._on_edit()
+    assert offered == [f"Replace row {k}" for k in range(6)] + ["Replace the whole palette (6 rows -> 1 row)"]
+    assert palette_widget.get_image().height() == 6
+    widget.save_file()
+
+    after = PalettedTim.parse(bytes(manager.enemy.texture_data["texture_data"][0]["data"]))
+    assert after.indices == before.indices
+    for row in range(6):
+        if row == 3:
+            assert after.clut_rows[3] != before.clut_rows[3]
+            for old, new in zip(before.clut_rows[3], after.clut_rows[3]):
+                swapped_word = (old & 0x83E0) | ((old & 0x1F) << 10) | ((old >> 10) & 0x1F)
+                assert new == (swapped_word or 0x8000 if old else 0)
+        else:
+            assert after.clut_rows[row] == before.clut_rows[row]
