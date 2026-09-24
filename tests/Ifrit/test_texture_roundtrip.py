@@ -1,33 +1,23 @@
 """Export -> reimport -> save round trip for the Ifrit static texture editor.
 
 The texture widget (Ifrit.IfritTexture.ifrittexturewidget.IfritTextureWidget)
-edits battle ``c0mNNN.dat`` section 11 (the monster's TIM textures) through an
-external native tool, VincentTim's ``tim.exe``: on load, each TIM is decoded
-to a PNG + palette PNG + meta file; on save, those are re-encoded back into a
-TIM by the same tool. This test drives that exact pipeline with no edits:
+edits battle ``c0mNNN.dat`` section 11 (the monster's TIM textures). Monster
+TIMs are read and written natively (IfritManager._analyze_native /
+_build_tims_native): each TIM becomes a texture PNG + a palette PNG (one pixel
+row per CLUT row) + a meta file, and saving rebuilds the TIM from them while
+keeping every CLUT word whose color did not change and every texel's palette
+index where it still shows what the source TIM rendered there. So:
 
-    IfritManager.init_from_file(path)   # load a monster .dat (auto-runs tim.exe)
-    IfritTextureWidget(manager).save_file()  # export pixmaps -> tim.exe -> rebuild TIMs
-    IfritManager.save_file(path)        # re-serialise the .dat to disk
+    IfritManager.init_from_file(path)        # load a monster .dat
+    IfritTextureWidget(manager).save_file()  # export pixmaps -> rebuild TIMs
+    IfritManager.save_file(path)             # re-serialise the .dat to disk
 
-Unlike the geometry/animation round trip in test_realfile_monster.py, the raw
-TIM bytes are *not* required to match byte-for-byte here. Some monster CLUTs
-contain duplicate palette entries (two indices sharing the exact same 15-bit
-color), and tim.exe's PNG -> TIM encoder is free to pick either index when it
-re-quantizes -- same rendered image, different raw index byte. That was
-confirmed by hand on c0m001.dat: after fixing FF8GameData/tim/timfile.py's
-5-bit -> 8-bit color expansion to match tim.exe's own rounding formula
-(round(v * 255/31), from VincentTim's PsColor.cpp), the only remaining raw
-byte differences trace back to palette slots holding identical colors.
+A no-edit round trip is byte-exact, and a palette-only edit moves no texel to
+another slot (palette swaps recolor by slot; the old VincentTim re-quantizing
+path moved thousands of texels between duplicate/near colors).
 
-So the invariant asserted here is pixel-exactness after decoding through the
-palette (which is what actually reaches the screen / the game), not raw byte
-equality: every texture's decoded RGBA image must be identical before and
-after the round trip, and the overall file size must be unchanged.
-
-Needs the real (copyright, gitignored) monster files under extracted_files/battle/
-and the external tim.exe under ExternalTools/VincentTim/, so it is marked
-``ff8data`` and skipped in CI / when those files are absent.
+Needs the real (copyright, gitignored) monster files under extracted_files/battle/,
+so it is marked ``ff8data`` and skipped in CI / when those files are absent.
 """
 import pathlib
 import shutil
@@ -130,7 +120,31 @@ def test_texture_roundtrip_no_edit_is_pixel_exact(manager, monster_name, tmp_pat
             f"{label}: decoded RGBA pixels differ after a no-edit round trip "
             f"(max abs diff: {np.abs(img_before.astype(int) - img_after.astype(int)).max()})"
         )
+        assert before == after, f"{label}: TIM bytes changed after a no-edit round trip"
 
     out = tmp_path / "out.dat"
     manager.save_file(str(out))
     assert len(out.read_bytes()) == original_size, f"{monster_name}: file size changed on save"
+
+
+@pytest.mark.ff8data("extracted_files/battle/c0m071.dat")
+def test_palette_only_edit_keeps_every_texel_index(manager, tmp_path):
+    """Replacing only the palette (here: red and blue swapped) rewrites the CLUT and leaves
+    every texel on its slot, even though the texture view still shows the old colors."""
+    from PyQt6.QtGui import QImage, QPixmap
+    from FF8GameData.tim.timfile import PalettedTim
+
+    _load(manager, "c0m071.dat", tmp_path)
+    before = PalettedTim.parse(bytes(manager.enemy.texture_data["texture_data"][0]["data"]))
+    widget = IfritTextureWidget(manager)
+    palette_widget = widget._texture_widgets[0]._palette_image_widget
+    swapped = palette_widget.get_image().toImage().rgbSwapped()
+    palette_widget.set_image(QPixmap.fromImage(QImage(swapped)))
+    widget.save_file()
+
+    after = PalettedTim.parse(bytes(manager.enemy.texture_data["texture_data"][0]["data"]))
+    assert after.indices == before.indices
+    for old, new in zip(before.clut_rows[0], after.clut_rows[0]):
+        # red and blue fields swapped, green and the STP bit kept
+        swapped_word = (old & 0x83E0) | ((old & 0x1F) << 10) | ((old >> 10) & 0x1F)
+        assert new == (swapped_word or 0x8000 if old else 0)

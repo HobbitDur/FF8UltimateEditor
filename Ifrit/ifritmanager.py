@@ -19,7 +19,8 @@ from FF8GameData.dat.animloopdetector import analyse_animation_usage, is_looping
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
                                           get_max_frame_for_animation, get_nb_part_needed,
                                           can_split_animation, MAX_ANIMATION_ID, MAX_ANIMATION_FRAME)
-from FF8GameData.tim.timfile import decode_tim, force_opaque
+from FF8GameData.tim.timfile import (decode_tim, force_opaque, word_to_rgba, PalettedTim,
+                                     encode_clut, encode_indices)
 from FF8GameData.gamedata import GameData
 from FF8GameData.monsterdata import (Matrix4x4, Animation, EntityType, Bone,
                                      RotationType, RotationVectorDataSupp)
@@ -88,6 +89,9 @@ class TextureData:
             self.palette_image = self._load_pixmap(palette_path)
         else:
             self.palette_image = None
+        # The TIM this texture was read from (PalettedTim), when read natively: saving keeps
+        # the palette index of every texel that still shows what this TIM rendered there
+        self.source_tim = None
     @staticmethod
     def _create_dummy_meta():
         new_meta = MetaData()
@@ -696,7 +700,90 @@ class IfritManager:
         return (result_x, result_y, result_z)
 
 
+    @staticmethod
+    def _tims_in_file(data: bytes):
+        """The 4/8bpp TIMs of a monster .dat's texture section, or of a file that is just TIMs
+        back to back (a .tim, the summon-import blob), as (raw bytes, PalettedTim) pairs.
+        None when it is neither."""
+        def u32(offset):
+            return int.from_bytes(data[offset:offset + 4], 'little')
+
+        def tim_length(pos):
+            if pos + 20 > len(data) or u32(pos) != 0x10:
+                return 0
+            img_pos = pos + 8 + u32(pos + 8)
+            if img_pos + 12 > len(data):
+                return 0
+            return img_pos - pos + u32(img_pos)
+
+        def parse_all(starts):
+            tims = []
+            for start in starts:
+                length = tim_length(start)
+                tim = PalettedTim.parse(data[start:start + length]) if length else None
+                if tim is None:
+                    return None
+                tims.append((data[start:start + length], tim))
+            return tims or None
+
+        # Monster .dat: 11 section offsets, section 11 = [nb][offsets..][eof] then the TIMs
+        if len(data) >= 48 and u32(0) == 11:
+            offsets = [u32(4 + 4 * k) for k in range(11)]
+            if all(a <= b for a, b in zip(offsets, offsets[1:])) and offsets[-1] < len(data):
+                sec = offsets[10]
+                nb = u32(sec)
+                if 0 < nb <= 64:
+                    return parse_all([sec + u32(sec + 4 + 4 * k) for k in range(nb)])
+            return None
+        starts, pos = [], 0
+        while pos < len(data):
+            length = tim_length(pos)
+            if not length:
+                return None
+            starts.append(pos)
+            pos += length
+        return parse_all(starts) if pos == len(data) else None
+
+    def _analyze_native(self, file_path_to_analyze) -> bool:
+        """Monster textures read straight from the TIMs: one TextureData per TIM, a multi-row
+        CLUT kept as one palette image (one pixel row per CLUT row), real per-texel alpha.
+        False (nothing added) when the file does not hold plain 4/8bpp TIMs."""
+        if self.enemy.entity_type != EntityType.MONSTER:
+            return False
+        tims = self._tims_in_file(pathlib.Path(file_path_to_analyze).read_bytes())
+        if not tims:
+            return False
+        textures = []
+        for raw, tim in tims:
+            decoded = decode_tim(raw, 0, palette_index=0)
+            if decoded is None:
+                return False
+            meta = MetaData()
+            meta.depth = 4 if tim.bpp == 0 else 8
+            meta.imageX, meta.imageY = tim.image_x, tim.image_y
+            meta.paletteX, meta.paletteY = tim.clut_x, tim.clut_y
+            texture = TextureData(meta)
+            # Monster faces do not enable ABE by default, so STP texels render opaque
+            texture.texture_image = self._pil_to_pixmap(force_opaque(decoded.image))
+            palette = Image.new('RGBA', (len(tim.clut_rows[0]), len(tim.clut_rows)))
+            palette.putdata([(r, g, b, 255 if a else 0) for row in tim.clut_rows
+                             for r, g, b, a in map(word_to_rgba, row)])
+            texture.palette_image = self._pil_to_pixmap(palette)
+            texture.source_tim = tim
+            textures.append(texture)
+        self.texture_data.extend(textures)
+        self.texture_black_is_transparent = False
+        return True
+
+    @staticmethod
+    def _pil_to_pixmap(img: Image.Image) -> QPixmap:
+        img = img.convert('RGBA')
+        return QPixmap.fromImage(QImage(img.tobytes('raw', 'RGBA'), img.width, img.height,
+                                        4 * img.width, QImage.Format.Format_RGBA8888).copy())
+
     def analyze(self, file_path_to_analyze):
+        if self._analyze_native(file_path_to_analyze):
+            return
         if not self.vincent_tim_path.exists():
             raise FileNotFoundError(f"Critical Error: 'tim.exe' not found")
 
@@ -971,23 +1058,72 @@ class IfritManager:
                     str(self.temp_path)
                 ], check=True, capture_output=True)
 
-    def _inject_in_com(self):
-        tim_list = list(self.temp_path.glob("*.tim"))
+    def _build_tims_native(self):
+        """Rebuild the monster TIMs from the exported texture_<i> files without re-quantizing:
+        CLUT slots whose color did not change keep their exact word, texels that still show what
+        the source TIM rendered keep their index (see encode_indices), and every row of a
+        multi-row palette is written. None when this cannot apply (not a monster, 16bpp...),
+        so the caller falls back to VincentTim."""
+        if self.enemy.entity_type != EntityType.MONSTER:
+            return None
+        metas = {}
+        for meta_path in self.temp_path.glob("texture_*.meta"):
+            match = re.fullmatch(r'texture_(\d+)\.meta', meta_path.name)
+            if match:
+                metas[int(match.group(1))] = meta_path
+        if not metas or sorted(metas) != list(range(len(metas))):
+            return None
+        tims = []
+        for index in range(len(metas)):
+            meta = MetaData(metas[index])
+            texture_png = self.temp_path / f"texture_{index}_texture.png"
+            palette_png = self.temp_path / f"texture_{index}_palette.png"
+            if meta.depth not in (4, 8) or not texture_png.exists() or not palette_png.exists():
+                return None
+            with Image.open(texture_png) as img:
+                texture = np.array(img.convert('RGBA'))
+            with Image.open(palette_png) as img:
+                palette = np.array(img.convert('RGBA'))
+            bpp = 0 if meta.depth == 4 else 1
+            if palette.shape[1] != (16 if bpp == 0 else 256):
+                return None
+            source = None
+            if index < len(self.texture_data):
+                source = getattr(self.texture_data[index], 'source_tim', None)
+            if source is not None and source.bpp != bpp:
+                source = None
+            clut_rows = encode_clut(palette, source.clut_rows if source else None)
+            height, width = texture.shape[:2]
+            indices = encode_indices(texture, clut_rows[0], source)
+            tims.append(PalettedTim(bpp, meta.paletteX, meta.paletteY, clut_rows,
+                                    meta.imageX, meta.imageY, width, height, indices))
+        return tims
+
+    def _inject_in_com(self, tim_list: List[bytes] = None):
+        if tim_list is None:
+            tim_list = [tim.read_bytes() for tim in self.temp_path.glob("*.tim")]
         self.enemy.texture_data["nb_texture"] = len(tim_list)
         self.enemy.texture_data["tim_offset"] = []
         self.enemy.texture_data["texture_data"] = []
         base_offset = 4+ len(tim_list*4)+ 4
         self.enemy.texture_data["tim_offset"].append(base_offset)
         for i in range(len(tim_list)-1):
-            base_offset = base_offset  + tim_list[i].stat().st_size
+            base_offset = base_offset  + len(tim_list[i])
             self.enemy.texture_data["tim_offset"].append(base_offset)
         if  self.enemy.texture_data["tim_offset"]:
-            self.enemy.texture_data["eof_texture"] =   self.enemy.texture_data["tim_offset"][-1] + tim_list[-1].stat().st_size
+            self.enemy.texture_data["eof_texture"] =   self.enemy.texture_data["tim_offset"][-1] + len(tim_list[-1])
         else: # Should not happen, but better safe than sorry
             self.enemy.texture_data["eof_texture"] =  self.enemy.header_data['section_pos'][11]
         for i, tim in enumerate(tim_list):
-            self.enemy.texture_data["texture_data"].append({'id':i, 'data': bytearray(tim.read_bytes())})
+            self.enemy.texture_data["texture_data"].append({'id':i, 'data': bytearray(tim)})
     def inject(self):
+        tims = self._build_tims_native()
+        if tims is not None:
+            self._inject_in_com([tim.to_bytes() for tim in tims])
+            # the saved TIMs are the reference the next save compares against
+            for texture, tim in zip(self.texture_data, tims):
+                texture.source_tim = tim
+            return
         self._create_tim_from_texture_data()
         self._inject_in_com()
 

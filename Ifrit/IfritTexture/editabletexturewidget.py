@@ -77,20 +77,14 @@ class EditableTextureWidget(QLabel):
         if not pix.isNull():
             if is_original:
                 self._original_pixmap = pix
-            if self.type == 1 and pix.size().height() == 1:
+            if self.type == 1:
+                # One pixel row per CLUT row (a TIM can hold several), each shown 10 px tall.
+                # FastTransformation: smoothing would blend neighbouring palette entries
                 scaled_pix = pix.scaled(
-                    QSize(pix.size().width(),10),
+                    QSize(pix.size().width(), 10 * pix.size().height()),
                     Qt.AspectRatioMode.IgnoreAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation
+                    Qt.TransformationMode.FastTransformation
                 )
-            elif  self.type == 1 and pix.size().height() != 1:
-                print(f"Unexpected height {pix.size().height} for a palette. Use only 1 px height")
-                message_box = QMessageBox()
-                message_box.setText(f"Unexpected height {pix.size().height()} for a palette. Use only 1 px height")
-                message_box.setIcon(QMessageBox.Icon.Critical)
-                message_box.setWindowTitle("IfritTexture - Error")
-                message_box.exec()
-                return
             elif pix.size().height() > 256 or pix.size().width() > 256:
                 scaled_pix = pix.scaled(
                     QSize(self.max_size, self.max_size),
@@ -123,7 +117,19 @@ class EditableTextureWidget(QLabel):
             # via QImage: QPixmap(fileName) caches on path + size + mtime-in-
             # seconds, so re-importing the same file after editing it would
             # show the previous version (see IfritManager.TextureData)
-            self.set_image(QPixmap.fromImage(QImage(str(path))))
+            pix = QPixmap.fromImage(QImage(str(path)))
+            current = self._current_pixmap
+            if (self.type == 1 and current is not None and not current.isNull()
+                    and pix.size() != current.size()):
+                # A palette must keep its CLUT shape (colors x rows): the geometry and any
+                # palette-row switch (e.g. a CLUT-row override hext) address rows by position
+                QMessageBox.critical(
+                    self, "IfritTexture - Error",
+                    f"This palette is {current.width()}x{current.height()} "
+                    f"({current.height()} row(s) of {current.width()} colors); the selected image "
+                    f"is {pix.width()}x{pix.height()}. Import an image of the same size.")
+                return
+            self.set_image(pix)
             self.imageChanged.emit(path)
 
     def _on_refresh(self):
