@@ -12,7 +12,7 @@ Reference: FF8ModdingWiki, Field Opcodes 13A_CARDGAME.
 import os
 import struct
 
-from CCGroup.jsmvariant import analyze_variants
+from CCGroup.jsmvariant import analyze_variants, decode_instructions
 
 # Push opcodes (instruction = opcode << 24 | param24)
 OPCODE_PSHN_L = 0x07  # push literal
@@ -27,6 +27,9 @@ OPCODE_PSHAC = 0x13
 OPCODE_CAL = 0x01
 OPCODE_POPM_B = 0x0B
 OPCODE_RND = 0xE8  # I[0] = random 0-255
+OPCODE_SETMODEL = 0x2B  # param = entry index in the field's chara.one
+OPCODE_SET = 0x1D  # pops x, y; param = walkmesh triangle
+OPCODE_SET3 = 0x1E  # pops x, y, z; param = walkmesh triangle
 CAL_AND = 0x0C
 CAL_OR = 0x0D
 
@@ -197,6 +200,7 @@ class JsmCardGameFile:
         self.offset_script = 0
         self.script_positions = []
         self.script_literals = {}  # editable literals of the variant conditions, by file offset
+        self.script_names = []  # (entity, script) per script entry, from the .sym
         self.__analyze()
         analyze_variants(self)
 
@@ -217,7 +221,9 @@ class JsmCardGameFile:
         self.offset_script = offset_script
         self.script_positions = script_positions
 
+        self.script_positions = script_positions
         script_names = self.__read_script_names(nb_entity)
+        self.script_names = script_names
 
         script_data_size = len(self.data) - offset_script
         nb_instruction = script_data_size // 4
@@ -251,6 +257,42 @@ class JsmCardGameFile:
             (dword,) = struct.unpack_from("<I", self.data, offset)
             instructions.append((dword >> 24, dword & 0xFFFFFF) if dword >> 24 else (dword & 0xFFFF, None))
         return instructions
+
+    def __entity_instructions(self, entity_name: str):
+        """(index, opcode, param) of the instructions of an entity's scripts, init first."""
+        instructions = decode_instructions(self.data, self.offset_script)
+        for script_index, name in enumerate(self.script_names):
+            if name is None or name[0] != entity_name or script_index >= len(self.script_positions):
+                continue
+            start = self.script_positions[script_index] // 4
+            end = min((position // 4 for position in self.script_positions if position // 4 > start),
+                      default=len(instructions))
+            for index in range(start, min(end, len(instructions))):
+                yield (index,) + instructions[index]
+
+    def entity_model_index(self, entity_name: str):
+        """Model of an entity: its first SETMODEL = entry index in the field's chara.one
+        (usually in the init script, sometimes in the default one). None if not found."""
+        for _, opcode, param in self.__entity_instructions(entity_name):
+            if opcode == OPCODE_SETMODEL:
+                return param
+        return None
+
+    def entity_position(self, entity_name: str):
+        """Initial position of an entity: its first SET3 (x, y, z, triangle) or SET (x, y, None,
+        triangle - the game takes Z from the walkmesh triangle) with literal coordinates."""
+        instructions = decode_instructions(self.data, self.offset_script)
+        for index, opcode, param in self.__entity_instructions(entity_name):
+            nb_coordinates = {OPCODE_SET3: 3, OPCODE_SET: 2}.get(opcode)
+            if nb_coordinates is None or index < nb_coordinates:
+                continue
+            pushes = instructions[index - nb_coordinates:index]
+            if any(push_opcode != OPCODE_PSHN_L for push_opcode, _ in pushes):
+                return None  # position computed at runtime
+            coordinates = [value for _, value in pushes]
+            z = coordinates[2] if nb_coordinates == 3 else None
+            return coordinates[0], coordinates[1], z, param
+        return None
 
     def level_mask_options(self, variable: int):
         """How the scripts of this map write a level-mask variable, from the patterns the vanilla
@@ -302,33 +344,43 @@ class JsmCardGameFile:
                                         card_dword & 0xFFFFFF, location_dword & 0xFFFFFF))
 
     def __read_script_names(self, nb_entity: int):
-        """The .sym file lists the entity names, then for each entity (in script-table order)
-        the entity name followed by one line per method script ("entity::method")."""
+        """(entity, script) per script entry point, from the .sym file.
+
+        The .sym starts with a list of entity names, then one group per entity: a line with the
+        entity name (its init script) followed by one "entity::method" line per method. The groups
+        follow the entities sorted by their first script (entity entry = count | first << 7, with
+        count + 1 scripts each); the name list at the top can be one line short, so the groups
+        start on the line just before the first "::" line (checked on the 849 vanilla fields)."""
+        names = [None] * len(self.script_positions)
         if not self.sym_path or not os.path.isfile(self.sym_path):
-            return []
+            return names
         with open(self.sym_path, "r", encoding="ascii", errors="replace") as sym_file:
             lines = [line.strip() for line in sym_file if line.strip()]
-        script_names = []
-        for line in lines[nb_entity:]:
-            if "::" in line:
-                entity_name, script_name = line.split("::", 1)
-                script_names.append((entity_name, script_name))
-            else:
-                script_names.append((line, "init"))
-        return script_names
+        first_method = next((index for index, line in enumerate(lines) if "::" in line), None)
+        if first_method is None or first_method == 0:
+            return names
+        groups = []
+        for line in lines[first_method - 1:]:
+            if "::" not in line:
+                groups.append([(line, "init")])
+            elif groups:
+                groups[-1].append(tuple(line.split("::", 1)))
+        entities = sorted((struct.unpack_from("<H", self.data, 8 + 2 * index)[0] for index in range(nb_entity)),
+                          key=lambda entry: entry >> 7)
+        for group, entry in zip(groups, entities):
+            first_script = entry >> 7
+            for script_offset, name in enumerate(group[:(entry & 0x7F) + 1]):
+                if first_script + script_offset < len(names):
+                    names[first_script + script_offset] = name
+        return names
 
     def __find_script_name(self, instruction_offset: int, script_positions: list,
                            script_names: list, script_data_size: int):
-        for script_index in range(len(script_names)):
-            if script_index >= len(script_positions):
-                break
-            start = script_positions[script_index]
-            if script_index + 1 < len(script_positions):
-                end = script_positions[script_index + 1]
-            else:
-                end = script_data_size
-            if start <= instruction_offset < end:
-                return script_names[script_index]
+        start = max((position for position in script_positions if position <= instruction_offset), default=None)
+        if start is not None:
+            name = script_names[script_positions.index(start)]
+            if name is not None:
+                return name
         return "entity?", f"offset 0x{instruction_offset:X}"
 
     def is_modified(self):

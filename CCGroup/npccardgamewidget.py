@@ -8,8 +8,10 @@ The game/trade rules and the card levels can either be a fixed value or follow t
 game state (savemap variables, e.g. the regional rules spread by the Queen of Cards):
 a named checkbox switches between the two modes.
 
-Below the parameters, the editor shows what they mean in play: the rare cards tied to the
-Deck ID (and the other NPCs sharing it) and a preview of the deck the NPC deals.
+Below the parameters, the editor shows what they mean in play: the variant (when the script
+picks among several CARDGAME calls), the rare cards tied to the Deck ID (and the other NPCs
+sharing it) and a preview of the deck the NPC deals. A third column shows where the NPC stands
+on the field background and its 3D model.
 
 All values and descriptions come from the FF8ModdingWiki page 13A_CARDGAME.
 """
@@ -24,6 +26,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSc
                              QTreeWidget, QTreeWidgetItem)
 
 from CCGroup import cardlocation
+from CCGroup.npcfieldview import NpcFieldView
 from CCGroup.jsmcardgame import (CardGameFolderManager, OPCODE_PSHN_L, CardGamePlayer, CardGameParam,
                                  GAME_RULE_BITS, TRADE_RULE_NAMES, AI_STRATEGY_NAMES,
                                  AI_SEARCH_DEPTH_NAMES, AI_SEARCH_NO_GUESS_BIT,
@@ -914,12 +917,17 @@ class NpcCardGameWidget(QWidget):
         self.__editor_scroll.setWidgetResizable(True)
         self.__editor_scroll.setWidget(QLabel("Select a card player in the list."))
 
+        # Right pane: where the NPC stands (field background) and its 3D model
+        self.field_view = NpcFieldView()
+
         self.__splitter = QSplitter(Qt.Orientation.Horizontal)
         self.__splitter.addWidget(left_widget)
         self.__splitter.addWidget(self.__editor_scroll)
+        self.__splitter.addWidget(self.field_view)
         self.__splitter.setStretchFactor(0, 1)
         self.__splitter.setStretchFactor(1, 2)
-        self.__splitter.setSizes([300, 800])
+        self.__splitter.setStretchFactor(2, 2)
+        self.__splitter.setSizes([260, 700, 520])
         self.__main_layout.addWidget(self.__splitter, 1)
 
     def load_folder(self, folder_path: str):
@@ -1014,7 +1022,11 @@ class NpcCardGameWidget(QWidget):
             old_widget.deleteLater()
         if player is None:
             self.__editor_scroll.setWidget(QLabel("Select a card player in the list."))
+            self.field_view.clear()
         else:
+            jsm_file = self.manager.file_of(player)
+            if jsm_file is not None:
+                self.field_view.show_player(jsm_file, player)
             editor_widget = QWidget()
             editor_layout = QVBoxLayout()
             editor_layout.addWidget(CardPlayerWidget(player, self.card_images, self.manager,
