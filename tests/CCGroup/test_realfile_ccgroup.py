@@ -70,6 +70,30 @@ class TestParsing:
         assert all(player.entity_name == "entity?" for player in jsm_file.players)
 
 
+class TestScriptAnalysis:
+
+    def test_level_mask_var_is_a_random_roll_of_the_map_script(self, bghall_jsm):
+        # seito8/seito10: var 1041 = RND, then banded into one of 5 fixed masks
+        options = bghall_jsm.level_mask_options(1041)
+        assert [option.always_bits for option in options] == [7, 11, 13, 14, 15]
+        assert not any(option.is_random() for option in options)
+
+    @pytest.mark.ff8data("extracted_files/field/mapdata/bg/bgmon_4/bgmon_4.jsm")
+    def test_joker_level_mask_is_and_or_on_a_random_byte(self):
+        jsm_path = PROJECT_ROOT / "extracted_files" / "field" / "mapdata" / "bg" / "bgmon_4" / "bgmon_4.jsm"
+        options = JsmCardGameFile(str(jsm_path)).level_mask_options(1024)
+        assert [(option.always_bits, option.random_bits) for option in options] == [(22, 31), (22, 127)]
+
+    @pytest.mark.ff8data("extracted_files/field/mapdata/do/dopub_2/dopub_2.jsm",
+                         "extracted_files/field/mapdata/do/dopub_2/dopub_2.sym")
+    def test_setcard_moves_are_read_location_first(self):
+        jsm_path = PROJECT_ROOT / "extracted_files" / "field" / "mapdata" / "do" / "dopub_2" / "dopub_2.jsm"
+        jsm_file = JsmCardGameFile(str(jsm_path), str(jsm_path.with_suffix(".sym")))
+        moves = {(move.card_id, move.location) for move in jsm_file.card_moves}
+        assert (80, 72) in moves  # the Queen of Cards sends MiniMog to Deck ID 72
+        assert all(move.entity_name == "queen_dol" for move in jsm_file.card_moves)
+
+
 class TestFolderManager:
 
     def test_recursive_scan(self, bghall_folder):

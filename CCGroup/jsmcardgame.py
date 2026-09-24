@@ -22,6 +22,11 @@ OPCODE_PSHSM_B = 0x10  # push savemap variable (signed)
 OPCODE_PSHSM_W = 0x11
 OPCODE_PSHSM_L = 0x12
 OPCODE_PSHAC = 0x13
+OPCODE_CAL = 0x01
+OPCODE_POPM_B = 0x0B
+OPCODE_RND = 0xE8  # I[0] = random 0-255
+CAL_AND = 0x0C
+CAL_OR = 0x0D
 
 VARIABLE_PUSH_OPCODES = (OPCODE_PSHM_B, OPCODE_PSHM_W, OPCODE_PSHM_L,
                          OPCODE_PSHSM_B, OPCODE_PSHSM_W, OPCODE_PSHSM_L)
@@ -29,21 +34,18 @@ PUSH_OPCODES = (OPCODE_PSHN_L, OPCODE_PSHI_L, OPCODE_PSHAC) + VARIABLE_PUSH_OPCO
 
 CARDGAME_DWORD = 0x0000013A  # opcodes >= 0x100 are stored with a zero high byte
 NB_CARDGAME_PARAMS = 7
+# SETCARD pops the card id (pushed last) then the location (pushed first) and moves the card there.
+SETCARD_DWORD = 0x0000015E
 
 # Savemap variables conventionally used by the card-game scripts.
 # 292/293 are filled by the cardgamemaster "maeshori" script with the ruleset of the
 # current region (the one the Queen of Cards spreads/abolishes rules in).
 VAR_CURRENT_REGION_GAME_RULES = 292
 VAR_CURRENT_REGION_TRADE_RULE = 293
-# Level masks raised by some NPC scripts each time they are challenged, so their deck
-# grows stronger as you keep playing (e.g. the bghall_1 students escalate var 1041
-# 7 -> 11 -> 13 -> 14 -> 15). These are the only 4 such variables used in the game.
-ESCALATING_LEVEL_MASK_VARS = [
-    (1041, "Balamb Garden hall students (var 1041)"),
-    (1040, "Balamb Garden hall SeeDs (var 1040)"),
-    (1024, "Joker in the training center (var 1024)"),
-    (1025, "Joker on the Ragnarok (var 1025)"),
-]
+# A few NPCs push their level mask from a savemap variable that their own map script rolls
+# at random right before the match (e.g. the bghall_1 students: var 1041 = one of 7, 11, 13,
+# 14, 15; Joker: var 1024 = (random & 31) | 22). Those variables (1024+) are per-map scratch
+# variables: another map does not set them. See JsmCardGameFile.level_mask_options.
 
 # The 7 parameters in push order (first pushed -> last pushed)
 PARAM_DECK_ID = 0
@@ -133,6 +135,51 @@ class CardGamePlayer:
         return f"{self.entity_name}::{self.script_name} @0x{self.cardgame_file_offset:X}"
 
 
+class LevelMaskOption:
+    """One way a field script sets a level-mask variable: a fixed value, or a random roll
+    ``(random & random_bits) | always_bits``."""
+
+    def __init__(self, always_bits: int, random_bits: int = 0):
+        self.always_bits = always_bits & 0xFF
+        self.random_bits = random_bits & 0xFF
+
+    def is_random(self):
+        return bool(self.random_bits & ~self.always_bits)
+
+    def union_mask(self):
+        """Every level this option can enable."""
+        return self.always_bits | self.random_bits
+
+    def roll(self, rng):
+        return (rng.randrange(256) & self.random_bits) | self.always_bits
+
+    def __eq__(self, other):
+        return (isinstance(other, LevelMaskOption) and self.always_bits == other.always_bits
+                and self.random_bits == other.random_bits)
+
+    def __hash__(self):
+        return hash((self.always_bits, self.random_bits))
+
+    def __repr__(self):
+        if self.is_random():
+            return f"LevelMaskOption((rnd & {self.random_bits}) | {self.always_bits})"
+        return f"LevelMaskOption({self.always_bits})"
+
+
+class CardMove:
+    """A SETCARD with literal arguments: a script moving a card to a location (Deck ID)."""
+
+    def __init__(self, map_name: str, entity_name: str, script_name: str, card_id: int, location: int):
+        self.map_name = map_name
+        self.entity_name = entity_name
+        self.script_name = script_name
+        self.card_id = card_id
+        self.location = location
+
+    def __str__(self):
+        return f"{self.map_name} {self.entity_name}::{self.script_name}: card {self.card_id} -> {self.location}"
+
+
 class JsmCardGameFile:
     """A .jsm field script file and the card players found inside it."""
 
@@ -143,6 +190,7 @@ class JsmCardGameFile:
         with open(jsm_path, "rb") as jsm_file:
             self.data = bytearray(jsm_file.read())
         self.players = []
+        self.card_moves = []  # SETCARD calls with literal arguments
         self.__analyze()
 
     def __analyze(self):
@@ -167,6 +215,10 @@ class JsmCardGameFile:
         for instruction_index in range(nb_instruction):
             instruction_offset = instruction_index * 4
             (dword,) = struct.unpack_from("<I", self.data, offset_script + instruction_offset)
+            if dword == SETCARD_DWORD and instruction_index >= 2:
+                self.__add_card_move(offset_script, instruction_offset, script_positions, script_names,
+                                     script_data_size)
+                continue
             if dword != CARDGAME_DWORD:
                 continue
             if instruction_index < NB_CARDGAME_PARAMS:
@@ -181,6 +233,64 @@ class JsmCardGameFile:
                                                                script_names, script_data_size)
             self.players.append(CardGamePlayer(entity_name, script_name,
                                                offset_script + instruction_offset, params))
+
+    def __instructions(self):
+        """(opcode, param) of every instruction of the script section."""
+        offset_script = struct.unpack_from("<H", self.data, 6)[0]
+        instructions = []
+        for offset in range(offset_script, len(self.data) - 3, 4):
+            (dword,) = struct.unpack_from("<I", self.data, offset)
+            instructions.append((dword >> 24, dword & 0xFFFFFF) if dword >> 24 else (dword & 0xFFFF, None))
+        return instructions
+
+    def level_mask_options(self, variable: int):
+        """How the scripts of this map write a level-mask variable, from the patterns the vanilla
+        card players use: ``PSHN_L x / POPM_B var`` (fixed value) and
+        ``PSHM_B var / PSHN_L a / CAL AND / POPM_B var`` + ``... CAL OR ...`` on a random byte
+        (``RND / PSHI_L 0 / POPM_B var``); a lone ``CAL OR`` adds its levels to every option found.
+        Returns the distinct LevelMaskOption found (may be empty)."""
+        if len(self.data) < 8:
+            return []
+        instructions = self.__instructions()
+        options = []
+        extra_or_bits = []
+        pending_and = None
+        for index, (opcode, param) in enumerate(instructions):
+            if opcode != OPCODE_POPM_B or param != variable or index < 1:
+                continue
+            previous_opcode, previous_param = instructions[index - 1]
+            if previous_opcode == OPCODE_PSHN_L:
+                options.append(LevelMaskOption(previous_param))
+                pending_and = None
+            elif previous_opcode == OPCODE_CAL and index >= 3:
+                push_var, push_value = instructions[index - 3], instructions[index - 2]
+                if push_var != (OPCODE_PSHM_B, variable) or push_value[0] != OPCODE_PSHN_L:
+                    continue
+                if previous_param == CAL_AND:
+                    pending_and = push_value[1]
+                elif previous_param == CAL_OR and pending_and is not None:
+                    options.append(LevelMaskOption(push_value[1], pending_and | push_value[1]))
+                    pending_and = None
+                elif previous_param == CAL_OR:
+                    extra_or_bits.append(push_value[1])  # conditional extra levels (e.g. bghall1b +Lv5)
+        for or_bits in extra_or_bits:
+            options += [LevelMaskOption(option.always_bits | or_bits, option.random_bits | or_bits)
+                        for option in list(options)]
+        unique = []
+        for option in options:
+            if option not in unique:
+                unique.append(option)
+        return unique
+
+    def __add_card_move(self, offset_script: int, instruction_offset: int, script_positions: list,
+                        script_names: list, script_data_size: int):
+        location_dword, card_dword = struct.unpack_from("<II", self.data, offset_script + instruction_offset - 8)
+        if location_dword >> 24 != OPCODE_PSHN_L or card_dword >> 24 != OPCODE_PSHN_L:
+            return  # computed at runtime (e.g. from a savemap variable), nothing to show statically
+        entity_name, script_name = self.__find_script_name(instruction_offset, script_positions,
+                                                           script_names, script_data_size)
+        self.card_moves.append(CardMove(self.map_name, entity_name, script_name,
+                                        card_dword & 0xFFFFFF, location_dword & 0xFFFFFF))
 
     def __read_script_names(self, nb_entity: int):
         """The .sym file lists the entity names, then for each entity (in script-table order)
@@ -239,9 +349,11 @@ class CardGameFolderManager:
 
     def __init__(self):
         self.jsm_files = []
+        self.card_moves = []  # every literal SETCARD of the folder, card players or not
 
     def load_folder(self, folder_path: str):
         self.jsm_files = []
+        self.card_moves = []
         for root, _, files in os.walk(folder_path):
             for file_name in sorted(files):
                 if not file_name.lower().endswith(".jsm"):
@@ -253,9 +365,25 @@ class CardGameFolderManager:
                 except (OSError, struct.error) as error:
                     print(f"CCGroup: could not read {jsm_path}: {error}")
                     continue
+                self.card_moves.extend(jsm_file.card_moves)
                 if jsm_file.players:
                     self.jsm_files.append(jsm_file)
         return self.jsm_files
+
+    def file_of(self, player: CardGamePlayer):
+        for jsm_file in self.jsm_files:
+            if player in jsm_file.players:
+                return jsm_file
+        return None
+
+    def players_with_deck_id(self, deck_id: int):
+        """(jsm_file, player) of every card player whose Deck ID is currently this literal value."""
+        return [(jsm_file, player) for jsm_file in self.jsm_files for player in jsm_file.players
+                if player.params[PARAM_DECK_ID].is_literal() and player.params[PARAM_DECK_ID].value == deck_id]
+
+    def moves_to_location(self, location: int):
+        """The SETCARD calls that move a card to this location."""
+        return [move for move in self.card_moves if move.location == location]
 
     def nb_players(self):
         return sum(len(jsm_file.players) for jsm_file in self.jsm_files)

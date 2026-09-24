@@ -42,7 +42,10 @@ class CCGroupWidget(QWidget):
         self.scroll_widget = QWidget()
         self.scroll_area = QScrollArea()
         self.tab_widget.addTab(self.scroll_area, "Card values")
-        self.npc_card_game_widget = NpcCardGameWidget(icon_path=icon_path, settings=settings)
+        self.game_data = GameData(game_data_path)
+        self.game_data.load_card_data()
+        self.npc_card_game_widget = NpcCardGameWidget(icon_path=icon_path, settings=settings,
+                                                      game_data=self.game_data)
         self.tab_widget.addTab(self.npc_card_game_widget, "NPC card players")
         self.tab_widget.currentChanged.connect(self.__tab_changed)
         self.tab_widget.setCurrentIndex(self.settings.value("ccgroup/current_tab", defaultValue=0, type=int))
@@ -100,8 +103,6 @@ class CCGroupWidget(QWidget):
         self.__layout_top.addStretch(1)
 
         self.current_file_data = bytearray()
-        self.game_data = GameData(game_data_path)
-        self.game_data.load_card_data()
         self.game_data.load_exe_data()
 
         self.__layout_main.addLayout(self.__layout_top)
