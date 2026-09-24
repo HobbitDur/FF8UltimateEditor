@@ -23,8 +23,9 @@ import struct
 
 import numpy as np
 
-_DESCRIPTOR_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                "Resources", "json", "gf_cinematic_vram.json")
+from FF8GameData.packagepath import RESOURCES_JSON_FOLDER
+
+_DESCRIPTOR_PATH = str(RESOURCES_JSON_FOLDER / "gf_cinematic_vram.json")
 VRAM_WIDTH, VRAM_HEIGHT = 1024, 512
 CLUT_BASE = 14356  # sceneHdr+0x1C set by SetupSectionPtrs: CLUT id of (320, 224), base of op 0x78
 

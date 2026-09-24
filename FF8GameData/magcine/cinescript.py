@@ -17,8 +17,9 @@ import os
 import struct
 from dataclasses import dataclass, field
 
-_SPEC_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                          "Resources", "json", "gf_cinematic_opcodes.json")
+from FF8GameData.packagepath import RESOURCES_JSON_FOLDER
+
+_SPEC_PATH = str(RESOURCES_JSON_FOLDER / "gf_cinematic_opcodes.json")
 
 
 def popcount(value: int) -> int:

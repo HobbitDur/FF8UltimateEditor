@@ -130,6 +130,9 @@ jobs:
         fi
 
         cp -R ShumiTranslator/csv/*.csv release-cli/ShumiTranslator/csv/ 2>/dev/null || true
+        mkdir -p release-cli/FF8GameData/Resources release-cli/TonberryShop/Resources
+        cp -R FF8GameData/Resources/. release-cli/FF8GameData/Resources/
+        cp -R TonberryShop/Resources/. release-cli/TonberryShop/Resources/
 
         rm -rf deling_temp
         rm -f deling-cli-linux_x64.tar.xz
@@ -315,6 +318,9 @@ jobs:
 
         # Copy CSV files
         cp -R ShumiTranslator/csv/*.csv release-cli/ShumiTranslator/csv/ 2>/dev/null || true
+        mkdir -p release-cli/FF8GameData/Resources release-cli/TonberryShop/Resources
+        cp -R FF8GameData/Resources/. release-cli/FF8GameData/Resources/
+        cp -R TonberryShop/Resources/. release-cli/TonberryShop/Resources/
 
         # Clean up
         rm -rf deling_temp
