@@ -30,6 +30,7 @@ from SmallWidget.listsearchbar import ListSearchBar
 from FF8GameData.monsterdata import EntityType
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Ifrit.IfritTexture.ifrittexturewidget import IfritTextureWidget
+from Ifrit.IfritTexture.editabletexturewidget import EditableTextureWidget
 from Ifrit.IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
 from Ifrit.IfritStat.ifritstatwidget import IfritStatWidget
 from Ifrit.IfritBattleText.ifritbattletextwidget import IfritBattleTextWidget
@@ -413,7 +414,12 @@ class IfritFilePane(QWidget):
             if any(self._is_descendant(widget, root) for root in excluded_roots):
                 continue
             signal = None
-            if isinstance(widget, QLineEdit):
+            if isinstance(widget, EditableTextureWidget):
+                # Static Texture image/palette swapped (or reset) from a PNG: without this the
+                # 'texture' key is never set and Save silently skips the texture inject
+                widget.imageRefreshed.connect(self._on_edit)
+                signal = widget.imageChanged
+            elif isinstance(widget, QLineEdit):
                 signal = widget.textEdited
             elif isinstance(widget, QComboBox):
                 signal = widget.activated
