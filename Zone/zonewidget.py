@@ -292,7 +292,6 @@ class ZoneWidget(QWidget):
     def _build_unlock_group(self):
         self.weapon_combo = QComboBox()
         self.weapon_notice = KernelNameSource.make_notice("weapon")
-        self._fill_weapon_combo(UNUSED_ID)
 
         self.duel_combo = QComboBox()
         self.duel_combo.addItem("None", UNUSED_ID)
@@ -336,6 +335,9 @@ class ZoneWidget(QWidget):
         layout.addRow("Zell Duel move:", duel_layout)
         layout.addRow("Angelo move:", self.angelo_combo)
         group.setLayout(layout)
+        # Only now: the notice is shown while no kernel.bin is open, and a label shown before it
+        # has a parent pops up as its own little window for an instant at start-up
+        self._fill_weapon_combo(UNUSED_ID)
         return group
 
     def _build_overlays_group(self):
