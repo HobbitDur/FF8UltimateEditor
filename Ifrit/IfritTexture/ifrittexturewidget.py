@@ -3,6 +3,7 @@ import shutil
 from typing import List
 
 from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout,
                              QScrollArea, QGridLayout, QFileDialog, QMessageBox)
 
@@ -158,7 +159,7 @@ class IfritTextureWidget(QWidget):
             f"Save the file to persist the changes.")
 
     def save_file(self):
-        self._export(self.ifrit_manager.temp_path)
+        self._export(self.ifrit_manager.temp_path, split_palette_rows=False)
         self._save()
 
     def _save(self, delete_temp=True):
@@ -167,7 +168,15 @@ class IfritTextureWidget(QWidget):
             if self.ifrit_manager.temp_path.exists() and self.ifrit_manager.temp_path.is_dir():
                 shutil.rmtree(self.ifrit_manager.temp_path)
 
-    def _export(self, export_dir=None):
+    def _export(self, export_dir=None, split_palette_rows=None):
+        """Write texture_<i>.meta / _texture.png / _palette.png per texture.
+
+        split_palette_rows (default: on for a user export, off for the save's own scratch export,
+        which must keep one palette image per TIM): a palette with several rows is exported as
+        one texture_<i>_row<k> set per row - the texture drawn with that row, that row alone as
+        the palette, and a meta whose paletteY points at that row."""
+        if split_palette_rows is None:
+            split_palette_rows = not export_dir
         if not export_dir:
             export_dir = QFileDialog.getExistingDirectory(self, "Select Export Directory")
         else:
@@ -179,25 +188,52 @@ class IfritTextureWidget(QWidget):
 
         for index, widget in enumerate(self._texture_widgets):
             if not widget.get_plus_type():
-                base_name = f"texture_{index}"
-                meta_path = os.path.join(export_dir, f"{base_name}.meta")
-                try:
-                    with open(meta_path, 'w') as f:
-                        f.write(f"depth={widget.get_depth()}\n")
-                        f.write(f"imageX={widget.get_imageX()}\n")
-                        f.write(f"imageY={widget.get_imageY()}\n")
-                        f.write(f"paletteX={widget.get_paletteX()}\n")
-                        f.write(f"paletteY={widget.get_paletteY()}\n")
-                except Exception as e:
-                    print(f"Failed to save meta: {e}")
-
                 texture_pixmap = widget.get_texture_img()
+                palette_pixmap = widget.get_palette_img()
+                if (split_palette_rows and texture_pixmap and palette_pixmap
+                        and palette_pixmap.height() > 1):
+                    self._export_palette_rows(export_dir, index, widget, texture_pixmap, palette_pixmap)
+                    continue
+                base_name = f"texture_{index}"
+                self._write_meta(os.path.join(export_dir, f"{base_name}.meta"), widget, widget.get_paletteY())
                 if texture_pixmap:
                     texture_pixmap.save(os.path.join(export_dir, f"{base_name}_texture.png"), "PNG")
-
-                palette_pixmap = widget.get_palette_img()
                 if palette_pixmap:
                     palette_pixmap.save(os.path.join(export_dir, f"{base_name}_palette.png"), "PNG")
+
+    @staticmethod
+    def _write_meta(meta_path, widget, palette_y):
+        try:
+            with open(meta_path, 'w') as f:
+                f.write(f"depth={widget.get_depth()}\n")
+                f.write(f"imageX={widget.get_imageX()}\n")
+                f.write(f"imageY={widget.get_imageY()}\n")
+                f.write(f"paletteX={widget.get_paletteX()}\n")
+                f.write(f"paletteY={palette_y}\n")
+        except Exception as e:
+            print(f"Failed to save meta: {e}")
+
+    def _export_palette_rows(self, export_dir, index, widget, texture_pixmap, palette_pixmap):
+        import numpy as np
+        from PIL import Image
+        from FF8GameData.tim.timfile import render_palette_rows
+
+        def to_rgba(pixmap):
+            img = pixmap.toImage().convertToFormat(QImage.Format.Format_RGBA8888)
+            ptr = img.constBits()
+            ptr.setsize(img.sizeInBytes())
+            rows = np.frombuffer(bytes(ptr), dtype=np.uint8).reshape(img.height(), img.bytesPerLine())
+            return rows[:, :img.width() * 4].reshape(img.height(), img.width(), 4)
+
+        palette = to_rgba(palette_pixmap)
+        textures = render_palette_rows(to_rgba(texture_pixmap), palette,
+                                       getattr(widget.texture_data, 'source_tim', None))
+        for row, texture in enumerate(textures):
+            base_name = f"texture_{index}_row{row}"
+            self._write_meta(os.path.join(export_dir, f"{base_name}.meta"), widget, widget.get_paletteY() + row)
+            Image.fromarray(texture, 'RGBA').save(os.path.join(export_dir, f"{base_name}_texture.png"))
+            Image.fromarray(np.ascontiguousarray(palette[row:row + 1]), 'RGBA').save(
+                os.path.join(export_dir, f"{base_name}_palette.png"))
 
     def sizeHint(self):
         return QSize(800, 600)  # Provided a more standard default size

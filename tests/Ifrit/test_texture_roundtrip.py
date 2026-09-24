@@ -148,3 +148,50 @@ def test_palette_only_edit_keeps_every_texel_index(manager, tmp_path):
         # red and blue fields swapped, green and the STP bit kept
         swapped_word = (old & 0x83E0) | ((old & 0x1F) << 10) | ((old >> 10) & 0x1F)
         assert new == (swapped_word or 0x8000 if old else 0)
+
+
+@pytest.mark.ff8data("extracted_files/battle/c0m071.dat")
+def test_export_splits_multi_row_palette_one_set_per_row(manager, tmp_path):
+    """The user Export writes a palette of N rows as N texture_<i>_row<k> sets: the texture drawn
+    with row k, row k alone as the palette, paletteY + k in the meta. One-row palettes keep the
+    plain texture_<i> names, and the save's own scratch export is never split."""
+    from PIL import Image
+    from PyQt6.QtGui import QImage, QPixmap
+    from FF8GameData.tim.timfile import PalettedTim, word_to_rgba
+
+    _load(manager, "c0m071.dat", tmp_path)
+    tim = PalettedTim.parse(bytes(manager.enemy.texture_data["texture_data"][0]["data"]))
+    widget = IfritTextureWidget(manager)
+    palette_widget = widget._texture_widgets[0]._palette_image_widget
+    row0 = np.array(Image.frombytes('RGBA', (256, 1), bytes(
+        palette_widget.get_image().toImage().convertToFormat(QImage.Format.Format_RGBA8888).constBits().asstring(1024))))
+    rows = np.concatenate([row0, row0[:, :, [2, 1, 0, 3]], np.dstack([255 - row0[:, :, :3], row0[:, :, 3:]])])
+    rows = np.ascontiguousarray(rows)
+    palette_widget.set_image(QPixmap.fromImage(QImage(rows.tobytes(), 256, 3, 1024, QImage.Format.Format_RGBA8888).copy()))
+
+    out = tmp_path / "export"
+    out.mkdir()
+    widget._export(str(out), split_palette_rows=True)
+    names = sorted(p.name for p in out.iterdir())
+    assert names == sorted(f"texture_0_row{k}{suffix}" for k in range(3)
+                           for suffix in (".meta", "_texture.png", "_palette.png"))
+    indices = np.frombuffer(tim.indices, dtype=np.uint8)
+    for k in range(3):
+        meta = (out / f"texture_0_row{k}.meta").read_text()
+        assert f"paletteY={tim.clut_y + k}" in meta
+        palette = np.array(Image.open(out / f"texture_0_row{k}_palette.png").convert('RGBA'))
+        assert palette.shape == (1, 256, 4)
+        # (a fully transparent entry's RGB is not kept by Qt, so compare RGB where it shows)
+        opaque = rows[k][:, 3] > 0
+        assert np.array_equal(palette[0][:, 3], rows[k][:, 3])
+        assert np.array_equal(palette[0][opaque, :3], rows[k][opaque, :3])
+        texture = np.array(Image.open(out / f"texture_0_row{k}_texture.png").convert('RGBA')).reshape(-1, 4)
+        # every texel is its original slot, drawn with row k
+        shown = texture[:, 3] > 0
+        assert np.array_equal(shown, rows[k][indices][:, 3] > 0)
+        assert np.array_equal(texture[shown, :3], rows[k][indices][shown, :3])
+
+    scratch = tmp_path / "scratch"
+    widget._export(str(scratch))
+    assert (scratch / "texture_0_palette.png").exists()
+    assert Image.open(scratch / "texture_0_palette.png").size == (256, 3)

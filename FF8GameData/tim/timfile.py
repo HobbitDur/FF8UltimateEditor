@@ -300,3 +300,20 @@ def _group_rows(values, positions):
     inverse = inverse.reshape(-1)
     for k in range(len(uniq)):
         yield uniq[k], positions[inverse == k]
+
+
+def render_palette_rows(rgba, palette_rgba, source: Optional[PalettedTim] = None) -> list:
+    """The (H, W, 4) texture redrawn with each row of an (rows, colors, 4) palette, as a list of
+    RGBA arrays (one per row). Texels are mapped to slots exactly as a save would (see
+    encode_indices, row 0 = the colors the texture is shown in); STP texels come out opaque,
+    only 0x0000 is transparent, like the texture view."""
+    import numpy as np
+    rgba = np.asarray(rgba)
+    clut_rows = encode_clut(palette_rgba, source.clut_rows if source else None)
+    indices = np.frombuffer(encode_indices(rgba, clut_rows[0], source), dtype=np.uint8)
+    images = []
+    for row in clut_rows:
+        lut = np.array([(r, g, b, 255 if a else 0) for r, g, b, a in map(word_to_rgba, row)],
+                       dtype=np.uint8)
+        images.append(lut[np.minimum(indices, len(row) - 1)].reshape(rgba.shape[0], rgba.shape[1], 4))
+    return images
