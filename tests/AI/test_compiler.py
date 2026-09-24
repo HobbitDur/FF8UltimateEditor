@@ -846,25 +846,26 @@ class TestAICompiler:
         compiler.game_data.load_ai_data("ai_vanilla.json")
         compiler.reset_ai_data()
 
-    def test_printAlt(self, compiler: AICompiler):
+    def test_printWithDelay(self, compiler: AICompiler):
+        # The game reads 2 parameter bytes for opcode 34: the text, then the delay
         # First declare different source code case
         ## Raw data (already int)
         source_code_raw = \
             """
-            printAlt(1);
+            printWithDelay(1, 5);
             """
         ## Type data
         source_code_type = \
             """
-            printAlt("Second battle text");
+            printWithDelay("Second battle text", 5);
             """
         ## Error data
         source_code_error = \
             """
-            printAlt("Text not existing");
+            printWithDelay("Text not existing", 5);
             """
         # The expected output
-        expected = [34, 1, 0, 0]
+        expected = [34, 1, 5, 0]  # opcode, text, delay, padding to 4 bytes
 
         # The work
         code_raw_compiled = compiler.compile(source_code_raw)

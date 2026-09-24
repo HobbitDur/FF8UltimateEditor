@@ -715,8 +715,8 @@ class TestAIDecompiler:
         decompiler.game_data.load_ai_data("ai_vanilla.json")
         decompiler.reset_ai_data()
 
-    def test_printAlt(self, decompiler: AIDecompiler):
-        bytecode = [34, 1]
+    def test_printWithDelay(self, decompiler: AIDecompiler):
+        bytecode = [34, 1, 5]
         code = decompiler.decompile(bytecode)
         print(f"\n=== Decompiled ===")
         print(self.pretty_code(code))
@@ -725,7 +725,7 @@ class TestAIDecompiler:
         normalized = self.normalize_code(code)
         expected = self.normalize_code(
             """
-            printAlt(1);
+            printWithDelay(1, 5);
             """
         )
         assert expected == normalized
