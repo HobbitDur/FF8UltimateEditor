@@ -55,7 +55,7 @@ class KernelSectionTab(QWidget):
 
     def __init__(self, game_data, registry, config, game_data_folder="FF8GameData", jump_callback=None,
                  add_entry_callback=None, remove_entry_callback=None, protected_count=0,
-                 pool_callback=None):
+                 pool_callback=None, copy_between_entries=True):
         super().__init__()
         self.game_data = game_data
         self.registry = registry
@@ -83,6 +83,9 @@ class KernelSectionTab(QWidget):
         # set_pool_status(); pool_callback() -> (text, can_add) supplies it on rebuild.
         self._pool_callback = pool_callback
         self._pool_label = None
+        # Copy / Paste / Apply to... move a field group from one entry to another, so a section
+        # with a single entry (Misc, Duel Params, Slot Array) gets no such bar at all.
+        self._copy_between_entries = copy_between_entries
         # Menu abilities' Refine data lives entirely outside kernel.bin (menu.fs's mngrp
         # files) - loaded on demand via a button, not part of the normal file-load flow.
         self._menu_refine_ref = None
@@ -92,6 +95,7 @@ class KernelSectionTab(QWidget):
 
         self._entries = []
         self._group_paste_buttons = {}   # group name -> its Paste button (enabled once copied)
+        self._unit_hints = []            # callables refreshing the "≈ N s" hints from their spinbox
         self._visible_indices = []       # list_widget row -> self._entries index (hides reserved ids)
         self._current_index = -1
         self._text_widgets = []          # list of QLineEdit, one per text offset
@@ -226,7 +230,8 @@ class KernelSectionTab(QWidget):
             box.setProperty("group_name", gname)
             vbox = QVBoxLayout(box)
             vbox.setSpacing(4)
-            self._add_group_copy_bar(vbox, gname, group_map[gname])
+            if self._copy_between_entries:
+                self._add_group_copy_bar(vbox, gname, group_map[gname])
 
             # A field can opt into a named nested sub-box via "subgroup"; those fields (and
             # any button/panel their fields trigger) render inside that inner QGroupBox
@@ -840,6 +845,9 @@ class KernelSectionTab(QWidget):
 
                 spin.valueChanged.connect(_update_hint)
                 _update_hint(spin.value())
+                # Loading an entry sets the spinbox with its signals blocked, so the hint is
+                # also refreshed by hand after each load (see _load_entry).
+                self._unit_hints.append(lambda sp=spin, upd=_update_hint: upd(sp.value()))
                 vbox.addWidget(hint_label)
                 inner = container
             # A field that feeds a runtime formula gets a small "f(x)" button that opens
@@ -1018,10 +1026,12 @@ class KernelSectionTab(QWidget):
                     blocked_widget.blockSignals(was_blocked)
             if kind == "camera":
                 widget._cam_sync()
-        # The grey/ungrey rules normally ride on those same signals, so re-apply them by hand
-        # now that they have been suppressed.
+        # The grey/ungrey rules and the "≈ N s" hints normally ride on those same signals, so
+        # re-apply them by hand now that they have been suppressed.
         for sync in self._enable_syncs:
             sync()
+        for refresh_hint in self._unit_hints:
+            refresh_hint()
         self._refresh_menu_refine_display(entry)
 
     @staticmethod

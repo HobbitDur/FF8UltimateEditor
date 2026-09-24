@@ -412,6 +412,34 @@ def test_a_field_group_copies_between_entries(qapp, tmp_path, monkeypatch):
         assert {name: reloaded._section_tabs[2]._entries[index].get(name) for name in names} == fire
 
 
+def test_single_entry_sections_have_no_copy_bar(qapp):
+    """A section with a single entry (Misc, Duel Params, Slot Array) has nowhere to copy a
+    group to, so its groups get no Copy / Paste / Apply to... bar at all - not even greyed out
+    before a kernel.bin is opened. Magic keeps one per group."""
+    from PyQt6.QtWidgets import QToolButton
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    for section_id in (24, 27, 30):
+        tab = widget._section_tabs[section_id]
+        captions = {button.text() for button in tab.findChildren(QToolButton)}
+        assert not captions & {"Copy", "Paste", "Apply to…"}, f"section {section_id}"
+    assert widget._section_tabs[2]._group_paste_buttons
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_the_seconds_hint_follows_the_loaded_value(qapp):
+    """The "≈ N s" hint under a timer shows the value of the opened file, not the 0 the
+    spinbox held before loading (loading fills the spinboxes with their signals blocked)."""
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(KERNEL))
+    from PyQt6.QtWidgets import QLabel
+    _kind, field, spin = widget._section_tabs[30]._field_widgets["timer_sleep"]
+    assert spin.value() > 0
+    hints = [label.text() for label in spin.parentWidget().findChildren(QLabel)
+             if label.text().startswith("≈")]
+    assert hints == [f"≈ {spin.value() * field['seconds_factor']:.1f}s"]
+
+
+
 def test_the_last_section_tab_is_remembered(qapp, tmp_path):
     """Re-opening SolomonRing lands on the section tab used last (kept in the app settings).
     A temporary ini file stands in for the app's QSettings - never the real registry."""

@@ -190,7 +190,9 @@ class SolomonRingWidget(QWidget):
                                remove_entry_callback=remove_entry_callback,
                                protected_count=self._protected_entry_count(section_id, static_config),
                                pool_callback=(lambda sid=section_id: self._ability_pool_status(sid))
-                               if config.get("ability_pool") else None)
+                               if config.get("ability_pool") else None,
+                               copy_between_entries=(static_config.get("number_sub_section") or 0) > 1
+                               or bool(config.get("growable")))
         # A group paste / "Apply to..." writes the data without typing in a field, so it marks
         # the unsaved-edit state itself (dirty_state is installed on this tool by the main window).
         tab.edited.connect(self._mark_edited)
