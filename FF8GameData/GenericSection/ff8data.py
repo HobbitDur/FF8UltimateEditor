@@ -27,8 +27,6 @@ class FF8Data(Section):
     def set_offset_value(self, value: int):
         if not self._offset_type:
             pass #print("Can't set offset as the data is not an offset")
-        elif int.from_bytes(self._data_hex) == 0xFFFF:
-            pass #print("Unused data")
         else:
             self._data_hex = value.to_bytes(byteorder="little", length=len(self._data_hex))
 

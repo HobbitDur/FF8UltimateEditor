@@ -55,8 +55,16 @@ class SubSectionData(Section):
         current_subsection_offset = last_offset
         for i in range(len(text_list)):  # Assuming offset data is always at the beginning of the subsection
             text_size = len(text_list[i])
-            self._data_list[i].set_offset_value(current_subsection_offset)
-            current_subsection_offset += text_size
+            if text_size == 0:
+                # No text for this entry: the offset must be (or become) the "unused" sentinel,
+                # not a computed offset pointing at nothing. Deciding this here from the new
+                # text's size - rather than in FF8Data.set_offset_value from the entry's own
+                # stale prior value - is what lets giving a previously-textless entry real text
+                # (or clearing an entry's text) actually take effect on save.
+                self._data_list[i].set_offset_value(0xFFFF)
+            else:
+                self._data_list[i].set_offset_value(current_subsection_offset)
+                current_subsection_offset += text_size
 
         # Updating subsection data
         self._data_hex = bytearray()
