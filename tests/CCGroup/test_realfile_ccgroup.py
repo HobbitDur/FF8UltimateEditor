@@ -67,7 +67,11 @@ class TestParsing:
         jsm_path = bghall_folder / "field" / "bg" / "bghall_1.jsm"
         jsm_file = JsmCardGameFile(str(jsm_path), str(jsm_path) + ".does_not_exist")
         assert len(jsm_file.players) == 4
-        assert all(player.entity_name == "entity?" for player in jsm_file.players)
+        # No .sym: generic names from the entity table (entity index, script index)
+        assert not jsm_file.names_from_sym
+        assert all(player.entity_name.startswith("entity") and player.script_name.startswith("script")
+                   for player in jsm_file.players)
+        assert jsm_file.entity_model_index(jsm_file.players[0].entity_name) is not None
 
 
 class TestScriptAnalysis:

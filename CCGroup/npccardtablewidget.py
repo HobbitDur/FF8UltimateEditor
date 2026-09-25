@@ -23,6 +23,7 @@ MODIFIED_COLOR = QColor(255, 170, 60)
 # (header, params shown in the column (to flag modified cells), tooltip)
 COLUMNS = [
     ("Map", [], "Field map (.jsm file)"),
+    ("Source", [], "Where the map's script is read from: the vanilla or the modified field folder"),
     ("NPC", [], "Entity that starts the match"),
     ("Script", [], "Script of the entity holding the CARDGAME call"),
     ("Variant", [], "When the script holds several CARDGAME calls: which one, and its odds or condition"),
@@ -271,6 +272,7 @@ class NpcCardTableWidget(QWidget):
             variant_text = ""
         values = [
             NumericItem(jsm_file.map_name),
+            NumericItem("modified" if jsm_file.modified_path else "vanilla"),
             NumericItem(player.entity_name),
             NumericItem(player.script_name),
             NumericItem(variant_text),

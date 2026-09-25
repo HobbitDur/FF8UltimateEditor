@@ -5,7 +5,8 @@ Top: the field background (rebuilt from the map's .mim/.map) with the NPC's init
 (its first SET3/SET) projected through the field camera (.ca). Bottom: the NPC's 3D model, the
 chara.one entry its SETMODEL picks, in the Seed/Ifrit 3D viewer.
 
-Every file is read from the folder of the NPC's .jsm, the same Deling-extracted field folder.
+Every file comes from the map's folder in the modified field folder when it has it, else from
+the vanilla one (JsmCardGameFile.asset_path).
 """
 import os
 
@@ -80,28 +81,30 @@ class BackgroundView(QWidget):
 
 
 class FieldScene:
-    """Background picture, camera and walkmesh of one field folder (built once, then cached)."""
+    """Background picture, camera and walkmesh of one map (built once, then cached). Each file is
+    taken from the modified folder when it has it, else from vanilla (jsm_file.asset_path)."""
 
-    def __init__(self, folder: str, map_name: str):
+    def __init__(self, jsm_file):
         self.pixmap = None
         self.origin = (0, 0)
         self.camera = None
         self.walkmesh = None
         self.error = ""
-        base = os.path.join(folder, map_name)
+        map_name = jsm_file.map_name
         try:
-            with open(base + ".mim", "rb") as mim_file, open(base + ".map", "rb") as map_file:
+            with open(jsm_file.asset_path(map_name + ".mim"), "rb") as mim_file, \
+                    open(jsm_file.asset_path(map_name + ".map"), "rb") as map_file:
                 image, self.origin = render_background(mim_file.read(), map_file.read())
             self.pixmap = QPixmap.fromImage(ImageQt(image).copy())
         except (OSError, ValueError) as error:
             self.error = f"No background: {error}"
         try:
-            with open(base + ".ca", "rb") as ca_file:
+            with open(jsm_file.asset_path(map_name + ".ca"), "rb") as ca_file:
                 self.camera = FieldCamera(ca_file.read())
         except (OSError, ValueError, IndexError):
             self.camera = None
         try:
-            with open(base + ".id", "rb") as id_file:
+            with open(jsm_file.asset_path(map_name + ".id"), "rb") as id_file:
                 self.walkmesh = Walkmesh(id_file.read())
         except (OSError, ValueError, IndexError):
             self.walkmesh = None
@@ -128,6 +131,7 @@ class NpcFieldView(QWidget):
         self.seed_manager = None
         self.viewer_3d = None
         self.__chara_one_path = None
+        self.main_chr_folders = []
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -160,10 +164,19 @@ class NpcFieldView(QWidget):
         return self.viewer_3d
 
     def scene(self, jsm_file):
-        folder = os.path.dirname(jsm_file.jsm_path)
-        if folder not in self.__scenes:
-            self.__scenes[folder] = FieldScene(folder, jsm_file.map_name)
-        return self.__scenes[folder]
+        key = (jsm_file.map_name, tuple(jsm_file.asset_folders))
+        if key not in self.__scenes:
+            self.__scenes[key] = FieldScene(jsm_file)
+        return self.__scenes[key]
+
+    def set_field_folders(self, vanilla_folder: str, modified_folder: str = ""):
+        """The opened field folders: scenes are rebuilt on demand, and main characters (whose
+        chara.one entry points to field/model/main_chr/d0xx.mch) are read from their
+        model/main_chr subfolder - the modified folder's first, then vanilla's."""
+        self.__scenes = {}
+        self.__chara_one_path = None
+        self.main_chr_folders = [os.path.join(folder, "model", "main_chr")
+                                 for folder in (modified_folder, vanilla_folder) if folder]
 
     def clear(self):
         self.background_view.set_picture(None, message="Select a card player.")
@@ -188,18 +201,27 @@ class NpcFieldView(QWidget):
 
     def __show_model(self, jsm_file, player):
         model_index = jsm_file.entity_model_index(player.entity_name)
-        chara_one_path = os.path.join(os.path.dirname(jsm_file.jsm_path), "chara.one")
+        chara_one_path = jsm_file.asset_path("chara.one")
         if model_index is None:
             self.__model_failed(f"{player.entity_name} has no SETMODEL: no model to show.")
             return
-        if not os.path.isfile(chara_one_path):
-            self.__model_failed(f"No chara.one next to {os.path.basename(jsm_file.jsm_path)}.")
+        if not chara_one_path:
+            self.__model_failed(f"No chara.one for {jsm_file.map_name} (neither in the modified nor the vanilla"
+                                f" folder).")
             return
         viewer = self.__ensure_viewer()
         try:
             if self.__chara_one_path != chara_one_path:
                 self.seed_manager.load_chara_one(chara_one_path)
                 self.__chara_one_path = chara_one_path
+            entries = self.seed_manager.chara_one.entries
+            if model_index < len(entries) and entries[model_index].is_main:
+                mch_name = entries[model_index].name + ".mch"
+                folder = next((folder for folder in self.main_chr_folders
+                               if os.path.isfile(os.path.join(folder, mch_name))), None)
+                if folder is not None:
+                    import pathlib
+                    self.seed_manager.main_chr_folder = pathlib.Path(folder)
             entries = self.seed_manager.chara_one.entries
             if model_index >= len(entries):
                 self.__model_failed(f"SETMODEL {model_index}: the chara.one only has {len(entries)} models.")

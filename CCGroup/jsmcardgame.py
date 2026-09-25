@@ -37,6 +37,9 @@ VARIABLE_PUSH_OPCODES = (OPCODE_PSHM_B, OPCODE_PSHM_W, OPCODE_PSHM_L,
                          OPCODE_PSHSM_B, OPCODE_PSHSM_W, OPCODE_PSHSM_L)
 PUSH_OPCODES = (OPCODE_PSHN_L, OPCODE_PSHI_L, OPCODE_PSHAC) + VARIABLE_PUSH_OPCODES
 
+# Minimum script similarity (0-1) to name a modded entity/script after its vanilla counterpart
+ENTITY_NAME_MATCH_MIN = 0.5
+
 CARDGAME_DWORD = 0x0000013A  # opcodes >= 0x100 are stored with a zero high byte
 NB_CARDGAME_PARAMS = 7
 # SETCARD pops the card id (pushed last) then the location (pushed first) and moves the card there.
@@ -189,9 +192,22 @@ class CardMove:
 class JsmCardGameFile:
     """A .jsm field script file and the card players found inside it."""
 
-    def __init__(self, jsm_path: str, sym_path: str = ""):
+    def __init__(self, jsm_path: str, sym_path: str = "", sym_fallbacks=(), name_reference=None):
+        """sym_path, then each of sym_fallbacks, is used only if it matches the script's entity
+        table (a modded .jsm may have more entities than the vanilla .sym describes); with none
+        matching, the scripts are named after name_reference (the vanilla JsmCardGameFile of the
+        same map) by matching each entity to the vanilla entity with the most similar scripts, and
+        whatever stays unmatched gets a generic name ("entity3", "script2")."""
+        self.name_reference = name_reference
         self.jsm_path = jsm_path
         self.sym_path = sym_path
+        self.sym_candidates = [path for path in [sym_path, *sym_fallbacks] if path]
+        self.names_from_sym = False  # True when a .sym matching the entity table named the scripts
+        # Layered loading (CardGameFolderManager): where this map comes from
+        self.rel_path = os.path.basename(jsm_path)  # path relative to the field folder(s)
+        self.vanilla_path = jsm_path
+        self.modified_path = ""
+        self.asset_folders = [os.path.dirname(jsm_path)]  # searched in order for the map's other files
         self.map_name = os.path.splitext(os.path.basename(jsm_path))[0]
         with open(jsm_path, "rb") as jsm_file:
             self.data = bytearray(jsm_file.read())
@@ -344,29 +360,146 @@ class JsmCardGameFile:
                                         card_dword & 0xFFFFFF, location_dword & 0xFFFFFF))
 
     def __read_script_names(self, nb_entity: int):
-        """(entity, script) per script entry point, from the .sym file.
+        """(entity, script) per script entry point.
 
         The .sym starts with a list of entity names, then one group per entity: a line with the
         entity name (its init script) followed by one "entity::method" line per method. The groups
         follow the entities sorted by their first script (entity entry = count | first << 7, with
         count + 1 scripts each); the name list at the top can be one line short, so the groups
-        start on the line just before the first "::" line (checked on the 849 vanilla fields)."""
-        names = [None] * len(self.script_positions)
-        if not self.sym_path or not os.path.isfile(self.sym_path):
-            return names
-        with open(self.sym_path, "r", encoding="ascii", errors="replace") as sym_file:
+        start on the line just before the first "::" line (checked on the 849 vanilla fields).
+        A .sym whose groups do not match the entity table is not used."""
+        entities = sorted((struct.unpack_from("<H", self.data, 8 + 2 * index)[0] for index in range(nb_entity)),
+                          key=lambda entry: entry >> 7)
+        for sym_path in self.sym_candidates:
+            groups = self.__read_sym_groups(sym_path)
+            if groups is None or len(groups) != len(entities) or any(
+                    len(group) != (entry & 0x7F) + 1 for group, entry in zip(groups, entities)):
+                continue
+            self.sym_path = sym_path
+            self.names_from_sym = True
+            return self.__names_from_groups(groups, entities)
+        generic = [[(f"entity{index}", "init")] + [(f"entity{index}", f"script{script}")
+                                                   for script in range(1, (entry & 0x7F) + 1)]
+                   for index, entry in enumerate(entities)]
+        if self.name_reference is not None and self.name_reference.names_from_sym:
+            generic = self.__names_matched_to_reference(entities, generic)
+        return self.__names_from_groups(generic, entities)
+
+    def entity_script_bodies(self):
+        """Per entity (sorted by first script): the instruction list of each of its scripts, LBL
+        left out (it holds the script index, which shifts when a mod adds scripts)."""
+        instructions = decode_instructions(self.data, self.offset_script)
+        nb_entity = sum(self.data[0:4])
+        entries = sorted((struct.unpack_from("<H", self.data, 8 + 2 * index)[0] for index in range(nb_entity)),
+                         key=lambda entry: entry >> 7)
+        bodies = []
+        for entry in entries:
+            scripts = []
+            for script_index in range(entry >> 7, (entry >> 7) + (entry & 0x7F) + 1):
+                if script_index >= len(self.script_positions):
+                    break
+                start = self.script_positions[script_index] // 4
+                end = min((position // 4 for position in self.script_positions if position // 4 > start),
+                          default=len(instructions))
+                scripts.append(tuple(instruction for instruction in instructions[start:end]
+                                     if instruction[0] != 0x05))
+            bodies.append(scripts)
+        return bodies
+
+    def __names_matched_to_reference(self, entities, generic):
+        """Name a modded script from the vanilla one: each entity takes the name of the vanilla
+        entity whose scripts look the most alike (greedy, best similarity first), and each of its
+        scripts the name of the most similar vanilla script of that entity."""
+        from difflib import SequenceMatcher
+        reference = self.name_reference
+        reference_bodies = reference.entity_script_bodies()
+        reference_groups = []
+        for scripts in reference_bodies:
+            reference_groups.append([])
+        # Names of the reference, per entity in the same (sorted) order as its bodies
+        reference_entries = sorted((struct.unpack_from("<H", reference.data, 8 + 2 * index)[0]
+                                    for index in range(sum(reference.data[0:4]))), key=lambda entry: entry >> 7)
+        for index, entry in enumerate(reference_entries):
+            reference_groups[index] = [reference.script_names[script_index]
+                                       for script_index in range(entry >> 7, (entry >> 7) + (entry & 0x7F) + 1)
+                                       if script_index < len(reference.script_names)]
+        own_bodies = self.entity_script_bodies()
+
+        def similarity(first, second):
+            if first == second:
+                return 1.0
+            first_flat = [instruction for script in first for instruction in script]
+            second_flat = [instruction for script in second for instruction in script]
+            if not first_flat or not second_flat:
+                return 0.0
+            matcher = SequenceMatcher(None, first_flat, second_flat, autojunk=False)
+            # Cheap upper bounds first: most pairs are unrelated entities
+            if matcher.real_quick_ratio() < ENTITY_NAME_MATCH_MIN or matcher.quick_ratio() < ENTITY_NAME_MATCH_MIN:
+                return 0.0
+            return matcher.ratio()
+
+        # Unchanged entities (most of a modded script) match exactly: pair them first, then only
+        # compare the remaining ones
+        scores = []
+        exact_reference = {}
+        for ref_index, ref in enumerate(reference_bodies):
+            exact_reference.setdefault(tuple(ref), []).append(ref_index)
+        exact_pairs = set()
+        for own_index, own in enumerate(own_bodies):
+            candidates = exact_reference.get(tuple(own))
+            if candidates:
+                exact_pairs.add((own_index, candidates.pop(0)))
+        exact_own = {own_index for own_index, _ in exact_pairs}
+        exact_ref = {ref_index for _, ref_index in exact_pairs}
+        scores = [(1.0, own_index, ref_index) for own_index, ref_index in exact_pairs]
+        scores += sorted(((similarity(own, ref), own_index, ref_index)
+                          for own_index, own in enumerate(own_bodies) if own_index not in exact_own
+                          for ref_index, ref in enumerate(reference_bodies) if ref_index not in exact_ref),
+                         reverse=True)
+        matched_own, matched_reference = set(), set()
+        for score, own_index, ref_index in scores:
+            if score < ENTITY_NAME_MATCH_MIN or own_index in matched_own or ref_index in matched_reference:
+                continue
+            matched_own.add(own_index)
+            matched_reference.add(ref_index)
+            names = reference_groups[ref_index]
+            if not names or names[0] is None:
+                continue
+            entity_name = names[0][0]
+            group = [(entity_name, "init")]
+            used = set()
+            for own_script in own_bodies[own_index][1:]:
+                best = max(((SequenceMatcher(None, own_script, ref_script, autojunk=False).ratio(), position)
+                            for position, ref_script in enumerate(reference_bodies[ref_index])
+                            if position > 0 and position not in used and position < len(names)),
+                           default=(0.0, None))
+                if best[1] is not None and best[0] >= ENTITY_NAME_MATCH_MIN:
+                    used.add(best[1])
+                    group.append((entity_name, names[best[1]][1]))
+                else:
+                    group.append((entity_name, f"script{len(group)}"))
+            generic[own_index] = group
+        return generic
+
+    @staticmethod
+    def __read_sym_groups(sym_path: str):
+        if not os.path.isfile(sym_path):
+            return None
+        with open(sym_path, "r", encoding="ascii", errors="replace") as sym_file:
             lines = [line.strip() for line in sym_file if line.strip()]
         first_method = next((index for index, line in enumerate(lines) if "::" in line), None)
-        if first_method is None or first_method == 0:
-            return names
+        if not first_method:
+            return None
         groups = []
         for line in lines[first_method - 1:]:
             if "::" not in line:
                 groups.append([(line, "init")])
             elif groups:
                 groups[-1].append(tuple(line.split("::", 1)))
-        entities = sorted((struct.unpack_from("<H", self.data, 8 + 2 * index)[0] for index in range(nb_entity)),
-                          key=lambda entry: entry >> 7)
+        return groups
+
+    def __names_from_groups(self, groups, entities):
+        names = [None] * len(self.script_positions)
         for group, entry in zip(groups, entities):
             first_script = entry >> 7
             for script_offset, name in enumerate(group[:(entry & 0x7F) + 1]):
@@ -402,6 +535,20 @@ class JsmCardGameFile:
             output_path = self.jsm_path
         with open(output_path, "wb") as jsm_file:
             jsm_file.write(self.data)
+        self.mark_saved()
+
+    def asset_path(self, file_name: str):
+        """A file of this map (background, camera, chara.one...): the modified folder's copy when it
+        has one, else the vanilla one. "" when no folder has it."""
+        for folder in self.asset_folders:
+            path = os.path.join(folder, file_name)
+            if os.path.isfile(path):
+                return path
+        return ""
+
+    def mark_saved(self):
+        """The current values become the reference ones (after a save, or when there was nothing
+        to write because the patched file equals vanilla)."""
         for player in self.players:
             for param in player.params:
                 param.original_opcode = param.opcode
@@ -410,31 +557,73 @@ class JsmCardGameFile:
             literal.original_value = literal.value
 
 
+class SaveReport:
+    """What CardGameFolderManager.save_all did."""
+
+    def __init__(self):
+        self.written = []  # JsmCardGameFile written to disk
+        self.identical_to_vanilla = []  # modified-folder maps that now equal vanilla again (not written)
+
+
+def collect_jsm_paths(folder: str):
+    """{path relative to folder: absolute path} of every .jsm under folder."""
+    paths = {}
+    if not folder:
+        return paths
+    for root, _, files in os.walk(folder):
+        for file_name in files:
+            if file_name.lower().endswith(".jsm"):
+                path = os.path.join(root, file_name)
+                paths[os.path.relpath(path, folder)] = path
+    return paths
+
+
 class CardGameFolderManager:
-    """Scans a folder (recursively) for .jsm files and gathers every card player found."""
+    """Gathers every card player of a field folder, optionally with a modified folder on top.
+
+    The vanilla folder holds the whole game; the modified folder (e.g. a mod's field folder) only
+    the maps it changes, at the same relative paths. A map is read from the modified folder when
+    it has it, else from vanilla. With a modified folder, saving writes there only, and only the
+    maps that differ from vanilla; without one, files are saved in place."""
 
     def __init__(self):
         self.jsm_files = []
         self.card_moves = []  # every literal SETCARD of the folder, card players or not
+        self.vanilla_folder = ""
+        self.modified_folder = ""
 
-    def load_folder(self, folder_path: str):
+    def load_folder(self, folder_path: str, modified_folder: str = ""):
         self.jsm_files = []
         self.card_moves = []
-        for root, _, files in os.walk(folder_path):
-            for file_name in sorted(files):
-                if not file_name.lower().endswith(".jsm"):
-                    continue
-                jsm_path = os.path.join(root, file_name)
-                sym_path = os.path.splitext(jsm_path)[0] + ".sym"
-                try:
-                    jsm_file = JsmCardGameFile(jsm_path, sym_path)
-                except (OSError, struct.error) as error:
-                    print(f"CCGroup: could not read {jsm_path}: {error}")
-                    continue
-                self.card_moves.extend(jsm_file.card_moves)
-                if jsm_file.players:
-                    self.jsm_files.append(jsm_file)
+        self.vanilla_folder = folder_path
+        self.modified_folder = modified_folder
+        vanilla_paths = collect_jsm_paths(folder_path)
+        modified_paths = collect_jsm_paths(modified_folder)
+        for rel_path in sorted(set(vanilla_paths) | set(modified_paths)):
+            vanilla_path = vanilla_paths.get(rel_path, "")
+            modified_path = modified_paths.get(rel_path, "")
+            jsm_path = modified_path or vanilla_path
+            syms = [os.path.splitext(path)[0] + ".sym" for path in (modified_path, vanilla_path) if path]
+            try:
+                jsm_file = JsmCardGameFile(jsm_path, syms[0], syms[1:])
+                if not jsm_file.names_from_sym and modified_path and vanilla_path:
+                    # The modded script no longer matches the vanilla .sym: name it by similarity
+                    name_reference = JsmCardGameFile(vanilla_path, os.path.splitext(vanilla_path)[0] + ".sym")
+                    jsm_file = JsmCardGameFile(jsm_path, syms[0], syms[1:], name_reference=name_reference)
+            except (OSError, struct.error) as error:
+                print(f"CCGroup: could not read {jsm_path}: {error}")
+                continue
+            jsm_file.rel_path = rel_path
+            jsm_file.vanilla_path = vanilla_path
+            jsm_file.modified_path = modified_path
+            jsm_file.asset_folders = [os.path.dirname(path) for path in (modified_path, vanilla_path) if path]
+            self.card_moves.extend(jsm_file.card_moves)
+            if jsm_file.players:
+                self.jsm_files.append(jsm_file)
         return self.jsm_files
+
+    def nb_from_modified_folder(self):
+        return sum(1 for jsm_file in self.jsm_files if jsm_file.modified_path)
 
     def file_of(self, player: CardGamePlayer):
         for jsm_file in self.jsm_files:
@@ -456,9 +645,50 @@ class CardGameFolderManager:
 
     def save_all(self):
         """Save every file that has modifications. Returns the number of files written."""
-        nb_saved = 0
+        return len(self.save_all_report().written)
+
+    def save_all_report(self):
+        """Save every modified map. Without a modified folder: in place. With one: to
+        <modified folder>/<same relative path>, and only when the patched bytes differ from the
+        vanilla file (a map edited back to vanilla is not written; if the modified folder already
+        had it, it is listed in identical_to_vanilla so the caller can offer to delete it)."""
+        report = SaveReport()
         for jsm_file in self.jsm_files:
-            if jsm_file.is_modified():
+            if not jsm_file.is_modified():
+                continue
+            if not self.modified_folder:
                 jsm_file.save()
-                nb_saved += 1
-        return nb_saved
+                report.written.append(jsm_file)
+                continue
+            jsm_file.apply_params()
+            vanilla_data = None
+            if jsm_file.vanilla_path:
+                with open(jsm_file.vanilla_path, "rb") as vanilla_file:
+                    vanilla_data = vanilla_file.read()
+            if vanilla_data == bytes(jsm_file.data):
+                jsm_file.mark_saved()
+                if jsm_file.modified_path:
+                    report.identical_to_vanilla.append(jsm_file)
+                continue
+            target = os.path.join(self.modified_folder, jsm_file.rel_path)
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            jsm_file.save(target)
+            if not jsm_file.modified_path:
+                jsm_file.modified_path = target
+                jsm_file.jsm_path = target
+                jsm_file.asset_folders.insert(0, os.path.dirname(target))
+            report.written.append(jsm_file)
+        return report
+
+    def delete_from_modified_folder(self, jsm_file):
+        """Remove a map's .jsm from the modified folder (it equals vanilla): vanilla is used again."""
+        if not jsm_file.modified_path:
+            return
+        os.remove(jsm_file.modified_path)
+        modified_dir = os.path.dirname(jsm_file.modified_path)
+        if not os.listdir(modified_dir):  # the map's folder only held this script
+            os.rmdir(modified_dir)
+        if modified_dir in jsm_file.asset_folders:
+            jsm_file.asset_folders.remove(modified_dir)
+        jsm_file.modified_path = ""
+        jsm_file.jsm_path = jsm_file.vanilla_path
