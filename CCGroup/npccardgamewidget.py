@@ -923,9 +923,9 @@ class NpcCardGameWidget(QWidget):
         modified_layout = QHBoxLayout()
         modified_title = QLabel("<b>Modified field folder:</b>")
         modified_title.setToolTip(self.TOOLTIP_MODIFIED_FOLDER)
+        modified_layout.addWidget(self.__modified_button)  # first, so it is not missed
         modified_layout.addWidget(modified_title)
         modified_layout.addWidget(self.__modified_label, 1)
-        modified_layout.addWidget(self.__modified_button)
         modified_layout.addWidget(self.__remove_modified_button)
         self.__main_layout.addLayout(modified_layout)
 
