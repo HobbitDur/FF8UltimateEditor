@@ -654,13 +654,16 @@ class CardGameFolderManager:
     # ------------------------------------------------------------------ NPCs and texts
 
     def npcs(self, jsm_file):
-        """NPCs of a map (entities with a model and a talk script), main characters left out."""
+        """NPCs of a map (entities with a model and a talk script); the main characters (Zell,
+        Selphie... met as NPCs in towns) are included and flagged is_main_character."""
         key = id(jsm_file)
         if key not in self.__npcs:
             from CCGroup import jsmnpc
             main_models = self.__main_character_models(jsm_file)
-            self.__npcs[key] = [npc for npc in jsmnpc.list_npcs(jsm_file)
-                                if npc.plays_cards() or npc.model_index not in main_models]
+            npcs = jsmnpc.list_npcs(jsm_file)
+            for npc in npcs:
+                npc.is_main_character = npc.model_index in main_models
+            self.__npcs[key] = npcs
         return self.__npcs[key]
 
     @staticmethod

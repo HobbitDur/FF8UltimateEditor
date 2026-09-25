@@ -1005,7 +1005,7 @@ class NpcCardGameWidget(QWidget):
         self.__show_all_checkbox = QCheckBox("Show the NPCs without a card game")
         self.__show_all_checkbox.setChecked(True)
         self.__show_all_checkbox.setToolTip("Also list every NPC that does not play cards (greyed), with a button to give\n"
-                                            "them a card game. Main characters are never listed.")
+                                            "them a card game. Main characters (party members met as NPCs) are marked.")
         self.__show_all_checkbox.toggled.connect(lambda _: self.__rebuild_tree_keeping_selection())
         self.__tree = QTreeWidget()
         self.__tree.setColumnCount(2)
@@ -1215,7 +1215,8 @@ class NpcCardGameWidget(QWidget):
                 self.__player_items[id(player)] = player_item
                 map_item.addChild(player_item)
             for npc in npcs_without_cards:
-                npc_item = QTreeWidgetItem([f"{npc.entity_name}  (talk)", ADD_CARD_GAME_TEXT])
+                main = "  - main character" if npc.is_main_character else ""
+                npc_item = QTreeWidgetItem([f"{npc.entity_name}  (talk){main}", ADD_CARD_GAME_TEXT])
                 npc_item.setData(0, NPC_ROLE, (jsm_file, npc))
                 npc_item.setForeground(0, QBrush(NO_CARD_GAME_COLOR))
                 npc_item.setForeground(1, QBrush(ADD_BUTTON_COLOR))

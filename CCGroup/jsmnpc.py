@@ -78,6 +78,7 @@ class NpcEntity:
         self.talk_script = talk_script  # script index of its talk method
         self.model_index = model_index
         self.players = players  # its CARDGAME calls (empty: no card game)
+        self.is_main_character = False  # its model is a party member's (set by the folder manager)
 
     def plays_cards(self):
         return bool(self.players)

@@ -659,7 +659,11 @@ class CharaOne:
             tim_offsets = self.entries[entry.shared_tex_entry].tim_offsets
         model.tim_images = [decode_tim(self.data, offset) for offset in tim_offsets]
         end = entry.data_offset + entry.size
-        model.animation_data = parse_packed_animation_section(
+        # Headerless (PS-layout) files keep their animations in the uncompressed 6-byte format of
+        # the mch files: read as packed 4-byte poses they came out folded and truncated (bccent12,
+        # glsta3, test10: 1 crumpled animation instead of 2-3 standing ones).
+        parse_animations = parse_uncompressed_animation_section if self.headerless             else parse_packed_animation_section
+        model.animation_data = parse_animations(
             self.data, entry.model_offset + model.anim_offset, model.bone_data.nb_bone, end)
         compute_animation_matrices(model.animation_data, model.bone_data)
         return model

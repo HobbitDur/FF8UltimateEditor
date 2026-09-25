@@ -57,10 +57,11 @@ def npc(manager, map_name, entity_name):
     return next(entity for entity in manager.npcs(map_file(manager, map_name)) if entity.entity_name == entity_name)
 
 
-def test_npcs_leave_main_characters_out(manager):
-    names = {entity.entity_name: entity.plays_cards() for entity in manager.npcs(map_file(manager, "bghall_1"))}
-    assert names["seito6"] and not names["seito5"]
-    assert not {"squall", "zell", "selphie"} & set(names)
+def test_npcs_include_and_flag_main_characters(manager):
+    npcs = {entity.entity_name: entity for entity in manager.npcs(map_file(manager, "bghall_1"))}
+    assert npcs["seito6"].plays_cards() and not npcs["seito5"].plays_cards()
+    assert not npcs["seito5"].is_main_character
+    assert npcs["zell"].is_main_character and not npcs["zell"].plays_cards()
 
 
 def test_msd_round_trip_and_append(game_data):

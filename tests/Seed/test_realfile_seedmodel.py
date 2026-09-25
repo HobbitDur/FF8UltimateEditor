@@ -145,3 +145,20 @@ def test_real_d000_mch_parses_meaningful_geometry(qapp):
     assert manager.enemy.tim_images, "no TIM textures listed"
     assert any(tim is not None for tim in manager.enemy.tim_images), "no TIM decoded"
     assert manager.texture_data, "no viewer textures built"
+
+
+@pytest.mark.ff8data("extracted_files/field/mapdata/bc/bccent12/chara.one", ESK_CHARA_ONE_REL)
+def test_headerless_animations_use_the_uncompressed_format(qapp):
+    """Headerless (PS-layout) containers keep their animations in the 6-byte uncompressed format
+    of the mch files. Read as packed 4-byte poses they came out as ONE crumpled animation (the
+    folded Squall in bccent12); read right, each model has its rest pose plus its idle/walk cycles."""
+    field = SeedManager()
+    field.load_chara_one(str(PROJECT_ROOT / "extracted_files/field/mapdata/bc/bccent12/chara.one"))
+    field.load_entry(0)
+    frames = [len(animation.frames) for animation in field.enemy.animation_data.animations]
+    assert frames == [1, 28, 20]
+
+    world = SeedManager()
+    world.load_chara_one(str(ESK_CHARA_ONE))
+    world.load_entry(0)
+    assert world.enemy.animation_data.nb_animations == 8
