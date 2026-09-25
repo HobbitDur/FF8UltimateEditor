@@ -65,26 +65,31 @@ def status_pair_1_then_2():
 # the submenu id - both share the same byte, so they're two field defs at the
 # same offset distinguished by "mask" (KernelEntry does read-modify-write so
 # neither field clobbers the other on save).
+# Byte 7 is padding on the vanilla 39 commands (shown greyed like any unused byte, and
+# editable once unused fields are unlocked). FFNx's AddMoreCommand reads it for commands
+# added after them: the engine has no code of its own for a new command, so it runs
+# through the code of one of the ten commands whose effect comes entirely from their
+# command ability data - there the same byte is "Behaves like" (0 = Mad Rush). Two field
+# defs on one byte, each shown only on its own entries; both sit next to Ability data.
 sections["1"] = {"section_id": 1, "text_labels": NAMEDESC, "fields": [
     {"name": "ability_data_id", "offset": 4, "size": 1, "group": "Data",
-     "lookup": "command_ability_ref", "label": "Ability data ID"},
+     "lookup": "command_ability_ref", "label": "Ability data ID", "row": "ability_data"},
+    {"name": "unused_0x07", "offset": 7, "size": 1, "group": "Data", "row": "ability_data",
+     "label": "Unused 0x07", "readonly": True, "visible_below_index": 39,
+     "help": "Unused padding on the vanilla commands (always 0).\n"
+             "On a command added after the vanilla 39, this byte becomes \"Behaves like\"."},
+    {"name": "behaves_like", "offset": 7, "size": 1, "group": "Data", "row": "ability_data",
+     "lookup": "command_family", "label": "Behaves like", "visible_from_index": 39,
+     "help": "Not a vanilla setting: FFNx's AddMoreCommand reads it for commands added after\n"
+             "the vanilla 39. The engine has no code of its own for a new command, so it runs\n"
+             "through the code of one of these ten commands, whose effect comes entirely from\n"
+             "the command ability data entry picked alongside. 0 means Mad Rush."},
     {"name": "menu_bits", "offset": 5, "size": 1, "group": "Data", "mask": 0xE0,
      "lookup": "command_menu_bits", "label": "Menu flags"},
     {"name": "menu_submenu", "offset": 5, "size": 1, "group": "Data", "mask": 0x1F,
      "lookup": "command_menu_submenu", "label": "Submenu",
      "enabled_unless_bit": {"field": "menu_bits", "mask": 0x20}},
     {"name": "target_info", "offset": 6, "size": 1, "group": "Data", "lookup": "target_info"},
-    # Padding in vanilla (0 everywhere). FFNx's AddMoreCommand reads it for commands
-    # past the vanilla 39: the engine has no code for a new command id, so it runs as
-    # one of the ten commands whose effect comes entirely from their command ability
-    # data - this byte names which one (0 = Mad Rush).
-    # Shown only on added commands: on the vanilla 39 it is unused padding.
-    {"name": "behaves_like", "offset": 7, "size": 1, "group": "Data",
-     "lookup": "command_family", "label": "Behaves like", "visible_from_index": 39,
-     "help": "Not a vanilla setting: FFNx's AddMoreCommand reads it for commands added after\n"
-             "the vanilla 39. The engine has no code of its own for a new command, so it runs\n"
-             "through the code of one of these ten commands, whose effect comes entirely from\n"
-             "the command ability data entry picked above. 0 means Mad Rush."},
 ]}
 # Battle commands (section 1) and their command ability data (section 11) may grow
 # with FFNx's AddMoreCommand patch. "max_count" is the loader's own limit: command ids

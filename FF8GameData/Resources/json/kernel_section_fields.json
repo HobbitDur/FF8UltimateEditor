@@ -13,7 +13,31 @@
     "group": "Data",
     "lookup": "command_ability_ref",
     "label": "Ability data ID",
+    "row": "ability_data",
     "help": "Index into kernel section 11 (Command ability data in battle) giving this command's fixed built-in effect - magic/effect id, attack type, power, hit count, element, status and animation all come from that section-11 entry (computeCommandAction).\n0xFF (255) = no fixed effect: the command's action is chosen at runtime from the player's selection. Attack, Magic, Draw, GF and Item all use 0xFF (they resolve to the spell/GF/item you pick). Fixed-effect commands (Card, Devour, Defend, Mad Rush, Treatment, Recover, Revive, Doom, Absorb, LV Up/Down) carry a real index. Also checked at setup: if the linked entry's attack flags have the Revive bit, the command is flagged as a revive.",
+    "dynamic_lookup": true
+   },
+   {
+    "name": "unused_0x07",
+    "offset": 7,
+    "size": 1,
+    "group": "Data",
+    "row": "ability_data",
+    "label": "Unused 0x07",
+    "readonly": true,
+    "visible_below_index": 39,
+    "help": "Unused padding on the vanilla commands (always 0).\nOn a command added after the vanilla 39, this byte becomes \"Behaves like\"."
+   },
+   {
+    "name": "behaves_like",
+    "offset": 7,
+    "size": 1,
+    "group": "Data",
+    "row": "ability_data",
+    "lookup": "command_family",
+    "label": "Behaves like",
+    "visible_from_index": 39,
+    "help": "Not a vanilla setting: FFNx's AddMoreCommand reads it for commands added after\nthe vanilla 39. The engine has no code of its own for a new command, so it runs\nthrough the code of one of these ten commands, whose effect comes entirely from\nthe command ability data entry picked alongside. 0 means Mad Rush.",
     "dynamic_lookup": true
    },
    {
@@ -70,17 +94,6 @@
     "lookup": "target_info",
     "help": "Default targeting behaviour for the bits that are plain flags. Bits 2-3 and 4-5 are the separate Cursor sides and Target scope fields.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Cursor sides field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
     "mask": 195
-   },
-   {
-    "name": "behaves_like",
-    "offset": 7,
-    "size": 1,
-    "group": "Data",
-    "lookup": "command_family",
-    "label": "Behaves like",
-    "visible_from_index": 39,
-    "help": "Not a vanilla setting: FFNx's AddMoreCommand reads it for commands added after\nthe vanilla 39. The engine has no code of its own for a new command, so it runs\nthrough the code of one of these ten commands, whose effect comes entirely from\nthe command ability data entry picked above. 0 means Mad Rush.",
-    "dynamic_lookup": true
    }
   ],
   "growable": true,

@@ -111,9 +111,10 @@ class KernelSectionTab(QWidget):
         self._unlock_all = False
         self._locked_widgets = []        # (widget, kind) frozen by the default, re-enabled on unlock
         self._enable_syncs = []          # callables re-applying the live "enabled_when" rules
-        # (first entry index, label, widget) of fields that only exist for entries a mod
-        # added ("visible_from_index"), shown or hidden on every entry load.
-        self._index_gated = []
+        # Fields shown only on some entries - "visible_from_index" (entries a mod added) or
+        # "visible_below_index" (the vanilla ones) - so one byte can read differently on
+        # each: name -> (first index, end index, label, widget).
+        self._index_gated = {}
 
         layout = QHBoxLayout(self)
 
@@ -517,9 +518,16 @@ class KernelSectionTab(QWidget):
         widget.setToolTip(tooltip)
         label = QLabel(field.get("label", _prettify(field["name"])))
         label.setToolTip(tooltip)
-        if field.get("visible_from_index") is not None:
-            self._index_gated.append((field["visible_from_index"], label, widget))
+        if field.get("visible_from_index") is not None or field.get("visible_below_index") is not None:
+            self._index_gated[field["name"]] = (field.get("visible_from_index", 0),
+                                                field.get("visible_below_index", float("inf")),
+                                                label, widget)
         return label, widget
+
+    def _shown_for(self, name, entry_index):
+        """Whether a field applies to that entry (always, unless index-gated)."""
+        gate = self._index_gated.get(name)
+        return gate is None or gate[0] <= entry_index < gate[1]
 
     def _emit_aligned_rows(self, vbox, rows):
         """Render a set of rows (each a list of fields). Labels are aligned *per column*
@@ -1040,10 +1048,11 @@ class KernelSectionTab(QWidget):
             sync()
         for refresh_hint in self._unit_hints:
             refresh_hint()
-        # A byte the vanilla entries leave as padding, read only for entries a mod added
-        # (a battle command's "Behaves like"), is not shown on the vanilla ones at all.
-        for first_index, label, widget in self._index_gated:
-            shown = self._visible_indices[row] >= first_index
+        # A byte that means one thing on the vanilla entries and another on entries a mod
+        # added (a battle command's padding, then "Behaves like") shows only the field
+        # that applies to this entry.
+        for name, (_, _, label, widget) in self._index_gated.items():
+            shown = self._shown_for(name, self._visible_indices[row])
             label.setVisible(shown)
             widget.setVisible(shown)
         self._refresh_menu_refine_display(entry)
@@ -1096,6 +1105,10 @@ class KernelSectionTab(QWidget):
             if entry.has_text(i):
                 entry.set_text(i, edit.text())
         for name, (kind, field, widget) in self._field_widgets.items():
+            # The hidden twin of a shared byte still holds that byte's loaded value, and
+            # writing it after the shown one would undo the edit.
+            if not self._shown_for(name, entry_index):
+                continue
             if kind == "int":
                 entry.set(name, widget.value())
             elif kind == "hex":

@@ -715,10 +715,14 @@ def test_added_battle_command_is_ready_for_ffnx(qapp, tmp_path, monkeypatch):
     _add_button(commands).click()
     assert commands.current_entry_index() == 39, "the new command should be the selected one"
     behaves_like = commands._field_widgets["behaves_like"][2]
+    unused = commands._field_widgets["unused_0x07"][2]
     assert not behaves_like.isHidden(), "an added command must offer Behaves like"
+    assert unused.isHidden(), "on an added command byte 7 is Behaves like, not padding"
     commands._text_widgets[0].setText("Test Rush")
     commands.list_widget.setCurrentRow(0)             # writes the form back
     assert behaves_like.isHidden(), "a vanilla command has no Behaves like - that byte is padding"
+    assert not unused.isHidden() and not unused.isEnabled(), \
+        "on a vanilla command byte 7 is shown as unused, greyed until unlocked"
     entries = widget._section_entries(1)
     assert entries[39].get("ability_data_id") == entries[24].get("ability_data_id")
     assert entries[39].get("target_info") == entries[24].get("target_info")
