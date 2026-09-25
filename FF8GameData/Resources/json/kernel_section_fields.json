@@ -13,7 +13,8 @@
     "group": "Data",
     "lookup": "command_ability_ref",
     "label": "Ability data ID",
-    "help": "Index into kernel section 11 (Command ability data in battle) giving this command's fixed built-in effect - magic/effect id, attack type, power, hit count, element, status and animation all come from that section-11 entry (computeCommandAction).\n0xFF (255) = no fixed effect: the command's action is chosen at runtime from the player's selection. Attack, Magic, Draw, GF and Item all use 0xFF (they resolve to the spell/GF/item you pick). Fixed-effect commands (Card, Devour, Defend, Mad Rush, Treatment, Recover, Revive, Doom, Absorb, LV Up/Down) carry a real index. Also checked at setup: if the linked entry's attack flags have the Revive bit, the command is flagged as a revive."
+    "help": "Index into kernel section 11 (Command ability data in battle) giving this command's fixed built-in effect - magic/effect id, attack type, power, hit count, element, status and animation all come from that section-11 entry (computeCommandAction).\n0xFF (255) = no fixed effect: the command's action is chosen at runtime from the player's selection. Attack, Magic, Draw, GF and Item all use 0xFF (they resolve to the spell/GF/item you pick). Fixed-effect commands (Card, Devour, Defend, Mad Rush, Treatment, Recover, Revive, Doom, Absorb, LV Up/Down) carry a real index. Also checked at setup: if the linked entry's attack flags have the Revive bit, the command is flagged as a revive.",
+    "dynamic_lookup": true
    },
    {
     "name": "menu_bits",
@@ -77,7 +78,8 @@
     "group": "Data",
     "lookup": "command_family",
     "label": "Behaves like",
-    "help": "Only read for a battle command added after the vanilla 39 (FFNx AddMoreCommand).\nThe engine has no code of its own for a new command, so it runs through the\ncode of one of these ten commands, whose effect comes entirely from the\ncommand ability data entry picked above. 0 means Mad Rush.\nIgnored for the vanilla commands."
+    "help": "Only read for a battle command added after the vanilla 39 (FFNx AddMoreCommand).\nThe engine has no code of its own for a new command, so it runs through the\ncode of one of these ten commands, whose effect comes entirely from the\ncommand ability data entry picked above. 0 means Mad Rush.\nIgnored for the vanilla commands.",
+    "dynamic_lookup": true
    }
   ],
   "growable": true,
@@ -3369,7 +3371,8 @@
     "lookup": "battle_command",
     "label": "Battle command",
     "group": "Data",
-    "help": "Battle command granted when this ability is learned."
+    "help": "Battle command granted when this ability is learned.",
+    "dynamic_lookup": true
    },
    {
     "name": "unknown_0x06",

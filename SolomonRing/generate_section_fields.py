@@ -1523,6 +1523,14 @@ for cfg in sections.values():
             new_fields.append(f)
     cfg["fields"] = new_fields
 
+# Battle commands and command ability data may grow (FFNx AddMoreCommand), so the
+# pickers naming them are rebuilt from the loaded kernel.bin, not the vanilla lists:
+# a command ability's battle command, a battle command's data entry and family.
+for cfg in sections.values():
+    for f in cfg["fields"]:
+        if f.get("lookup") in ("battle_command", "command_ability_ref", "command_family"):
+            f["dynamic_lookup"] = True
+
 with open(DEST, "w", encoding="utf-8") as f:
     json.dump(sections, f, indent=1, ensure_ascii=False)
 
