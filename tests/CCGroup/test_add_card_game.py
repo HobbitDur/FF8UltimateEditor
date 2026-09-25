@@ -131,3 +131,19 @@ def test_saved_into_the_modified_folder_and_reloaded(manager, folders, game_data
     assert texts == ["Play?\nYes\nNo", "5 cards!"]
     assert reloaded.msd(map_file(reloaded, "bghall_1")).text(59) == "Cards?\nYes\nNo"
     assert not reloaded.has_modifications()
+
+
+def test_added_npcs_get_their_own_deck_id(manager):
+    from CCGroup import cardlocation
+    from CCGroup.jsmcardgame import PARAM_DECK_ID
+    gate = map_file(manager, "bggate_2")
+    first = manager.add_card_game(gate, npc(manager, "bggate_2", "s1"), "Q\nYes\nNo", "N")
+    second = manager.add_card_game(gate, npc(manager, "bggate_2", "s2"), "Q\nYes\nNo", "N")
+    deck_ids = [first.params[PARAM_DECK_ID].value, second.params[PARAM_DECK_ID].value]
+    assert deck_ids[0] != deck_ids[1]
+    for deck_id in deck_ids:
+        assert not cardlocation.is_reserved_location(deck_id)
+        assert len(manager.deck_id_users(deck_id)) == 1  # only the NPC itself
+    chosen = manager.add_card_game(map_file(manager, "bghall_1"), npc(manager, "bghall_1", "seito5"), "Q", "N",
+                                   deck_id=31)
+    assert chosen.params[PARAM_DECK_ID].value == 31  # an explicit Deck ID is kept (shared with seito6)

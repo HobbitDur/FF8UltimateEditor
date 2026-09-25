@@ -705,18 +705,42 @@ class CardGameFolderManager:
         region = self.__region_by_folder.get(jsm_file.map_name[:2], jsmnpc.REGIONS[0])
         return jsmnpc.REGIONS.index(region)
 
+    def deck_id_users(self, deck_id: int):
+        """What already uses a Deck ID: '<map> <entity>' of the card players with it, and of the
+        scripts moving cards there (SETCARD)."""
+        users = [f"{jsm_file.map_name} {player.entity_name}" for jsm_file in self.all_files or self.jsm_files
+                 for player in jsm_file.players
+                 if player.params[PARAM_DECK_ID].is_literal() and player.params[PARAM_DECK_ID].value == deck_id]
+        users += [f"{move.map_name} {move.entity_name} (SETCARD)" for move in self.card_moves if move.location == deck_id]
+        return sorted(set(users))
+
+    def free_deck_id(self):
+        """A Deck ID nobody uses and the game does not reserve (0 no rare, 1 Queen, 200-232 rare card
+        starting owners, 240 player): a new NPC gets its own pocket, so a rare card lost to it stays
+        with it only. None when every value is taken."""
+        from CCGroup import cardlocation
+        for deck_id in range(2, 256):
+            if cardlocation.is_reserved_location(deck_id) or self.deck_id_users(deck_id):
+                continue
+            return deck_id
+        return None
+
     def add_card_game(self, jsm_file, npc, question_text: str, not_enough_text: str, region: int = 0,
-                      on_no: str = "nothing"):
+                      on_no: str = "nothing", deck_id: int = None):
         """Give an NPC a card game (see jsmnpc.add_card_game); its two texts are appended to the map's
-        .msd. Returns the new CardGamePlayer."""
+        .msd. deck_id None = a free one (free_deck_id). Returns the new CardGamePlayer."""
         from CCGroup import jsmnpc
+        if deck_id is None:
+            deck_id = self.free_deck_id() or 0
+        card_game = list(jsmnpc.DEFAULT_CARD_GAME)
+        card_game[PARAM_DECK_ID] = deck_id
         msd_file = self.msd(jsm_file)
         if msd_file is None:
             raise ValueError(f"No {jsm_file.map_name}.msd found: the card game texts cannot be added")
         question_id = msd_file.add_text(question_text)
         not_enough_id = msd_file.add_text(not_enough_text)
         try:
-            player = jsmnpc.add_card_game(jsm_file, npc, question_id, not_enough_id, region, on_no)
+            player = jsmnpc.add_card_game(jsm_file, npc, question_id, not_enough_id, region, on_no, card_game)
         except Exception:
             del msd_file.messages[not_enough_id:]
             raise

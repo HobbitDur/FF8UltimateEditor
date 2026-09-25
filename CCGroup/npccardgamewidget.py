@@ -302,9 +302,12 @@ class DeckIdParamRow(SpinParamRow):
             self.spinbox.setValue(self.picker_values[index])
 
     def __sync_picker(self):
-        # Item 0 describes a value that is not in the list (and invites to pick one)
+        # Item 0 describes a value that is not in the list; a listed value shows its own item instead
         value = self.spinbox.value()
-        self.picker.setItemText(0, f"{value} - " + cardlocation.location_label(value, self.card_names))
+        if value in self.picker_values:
+            self.picker.setItemText(0, "Other value (type it in the box)")
+        else:
+            self.picker.setItemText(0, f"{value} - " + cardlocation.location_label(value, self.card_names))
         self.picker.setCurrentIndex(self.picker_values.index(value) if value in self.picker_values else 0)
 
 
@@ -1231,15 +1234,18 @@ class NpcCardGameWidget(QWidget):
         """The '+ Add card game' button: ask the texts/options, add, select the new card player."""
         calls = jsm_npc.card_master_calls(jsm_file) if jsm_npc.has_card_master(jsm_file) else None
         dialog = AddCardGameDialog(self, jsm_file.map_name, npc.entity_name, jsm_npc.has_card_master(jsm_file),
-                                   calls["region"] if calls else "", self.manager.region_guess(jsm_file))
+                                   calls["region"] if calls else "", self.manager.region_guess(jsm_file),
+                                   self.manager.free_deck_id(), self.manager.deck_id_users)
         if dialog.exec() != AddCardGameDialog.DialogCode.Accepted:
             return
         self.add_card_game(jsm_file, npc, dialog.question_text(), dialog.not_enough_text(), dialog.region(),
-                           dialog.on_no())
+                           dialog.on_no(), dialog.deck_id())
 
-    def add_card_game(self, jsm_file, npc, question_text, not_enough_text, region=0, on_no=jsm_npc.ON_NO_NOTHING):
+    def add_card_game(self, jsm_file, npc, question_text, not_enough_text, region=0, on_no=jsm_npc.ON_NO_NOTHING,
+                      deck_id=None):
         try:
-            player = self.manager.add_card_game(jsm_file, npc, question_text, not_enough_text, region, on_no)
+            player = self.manager.add_card_game(jsm_file, npc, question_text, not_enough_text, region, on_no,
+                                                deck_id)
         except (ValueError, OSError) as error:
             QMessageBox.warning(self, "CC Group", f"Could not add a card game to {npc.entity_name}:\n{error}")
             return None

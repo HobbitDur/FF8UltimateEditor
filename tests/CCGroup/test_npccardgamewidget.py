@@ -77,3 +77,13 @@ def test_preview_of_a_script_rolled_level_mask(npc_tab):
     for _ in range(20):
         preview.deal()
         assert len(preview.hand) == 5 and all(card_id < 44 for card_id in preview.hand)
+
+
+def test_deck_id_picker_has_no_duplicate_entry(npc_tab):
+    seito6 = players_by_name(npc_tab)["seito6"]
+    npc_tab.select_player(seito6)
+    deck_row = current_editor(npc_tab).rows[0]
+    deck_row.spinbox.setValue(0)
+    texts = [deck_row.picker.itemText(index) for index in range(deck_row.picker.count())]
+    assert deck_row.picker.currentText() == "0 - No rare cards"
+    assert sum(text.lower().startswith("0 - no rare") for text in texts) == 1

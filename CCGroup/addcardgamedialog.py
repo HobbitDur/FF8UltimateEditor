@@ -2,10 +2,12 @@
 Dialog of the NPC tab's "+ Add card game": the texts and options of a card game given to an NPC
 that has none (see jsmnpc.add_card_game).
 """
-from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QFormLayout, QLabel, QComboBox, QPlainTextEdit,
-                             QDialogButtonBox)
+from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, QLabel, QComboBox, QPlainTextEdit,
+                             QDialogButtonBox, QSpinBox)
 
-from CCGroup import jsmnpc
+from CCGroup import cardlocation, jsmnpc
+
+CARD_NAMES_PLACEHOLDER = [""] * cardlocation.NB_CARDS  # location_label only needs names for 200-232
 
 TOOLTIP_TEXTS = ("One line per window line. For the question, the 2nd and 3rd lines are the answers\n"
                  "(the first one = play). The texts are added to the map's .msd and can be edited later\n"
@@ -14,7 +16,9 @@ TOOLTIP_TEXTS = ("One line per window line. For the question, the 2nd and 3rd li
 
 class AddCardGameDialog(QDialog):
     def __init__(self, parent, map_name: str, entity_name: str, has_card_master: bool, region_calls: str,
-                 region_guess: int):
+                 region_guess: int, free_deck_id=None, deck_id_users=None):
+        """free_deck_id: preset Deck ID (unused by anyone); deck_id_users(deck_id) -> list of what
+        already uses a Deck ID, for the live note."""
         QDialog.__init__(self, parent)
         self.setWindowTitle(f"Add a card game to {entity_name} ({map_name})")
         layout = QVBoxLayout()
@@ -42,6 +46,22 @@ class AddCardGameDialog(QDialog):
         if not has_card_master:
             form.addRow("Rules of the region:", self.region_combobox)
 
+        self.deck_id_users = deck_id_users or (lambda _: [])
+        self.deck_id_spinbox = QSpinBox()
+        self.deck_id_spinbox.setRange(0, 255)
+        self.deck_id_spinbox.setValue(free_deck_id if free_deck_id is not None else 0)
+        self.deck_id_spinbox.setToolTip(
+            "The NPC's rare card pocket. A Deck ID of its own (the preset: nobody else uses it) means a\n"
+            "rare card the player loses to this NPC stays with it, and only it can play it back.")
+        self.deck_id_note = QLabel()
+        self.deck_id_note.setWordWrap(True)
+        self.deck_id_spinbox.valueChanged.connect(self.__deck_id_changed)
+        deck_row = QHBoxLayout()
+        deck_row.addWidget(self.deck_id_spinbox)
+        deck_row.addWidget(self.deck_id_note, 1)
+        form.addRow("Deck ID:", deck_row)
+        self.__deck_id_changed(self.deck_id_spinbox.value())
+
         self.on_no_combobox = QComboBox()
         self.on_no_combobox.addItem("Nothing (like the vanilla card players)", jsmnpc.ON_NO_NOTHING)
         self.on_no_combobox.addItem("The NPC's original dialogue", jsmnpc.ON_NO_ORIGINAL)
@@ -59,8 +79,8 @@ class AddCardGameDialog(QDialog):
         self.not_enough_edit.setFixedHeight(55)
         form.addRow("Not enough cards:", self.not_enough_edit)
 
-        note = QLabel("The NPC starts with Deck ID 0 (no rare card), 0 % rare chance, the weakest AI and Lv1-2"
-                      " cards: set them in the editor once added.")
+        note = QLabel("The NPC starts with 0 % rare chance, the weakest AI and Lv1-2 cards: set them in the"
+                      " editor once added.")
         note.setWordWrap(True)
         layout.addWidget(note)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -69,6 +89,22 @@ class AddCardGameDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
         self.resize(520, self.sizeHint().height())
+
+    def __deck_id_changed(self, deck_id: int):
+        if cardlocation.is_reserved_location(deck_id):
+            self.deck_id_note.setText(f"Reserved: {cardlocation.location_label(deck_id, CARD_NAMES_PLACEHOLDER)}"
+                                      if deck_id not in range(200, 233) else
+                                      "Reserved: the starting owner of a rare card (this NPC would share it)")
+            return
+        users = self.deck_id_users(deck_id)
+        if not users:
+            self.deck_id_note.setText("Unique: no other card player uses it")
+        else:
+            shown = ", ".join(users[:4]) + (f" and {len(users) - 4} more" if len(users) > 4 else "")
+            self.deck_id_note.setText(f"Shared with {shown}")
+
+    def deck_id(self):
+        return self.deck_id_spinbox.value()
 
     def region(self):
         return self.region_combobox.currentIndex()

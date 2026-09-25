@@ -102,6 +102,11 @@ def roll_opponent_hand(level_mask: int, rare_chance: int, rare_candidates, rng: 
     return hand
 
 
+def is_reserved_location(location: int):
+    """Locations the game gives a meaning: no rare, Queen, rare card starting owners, player."""
+    return location in (LOCATION_NO_RARE, LOCATION_QUEEN, LOCATION_PLAYER) or starting_rare_card(location) is not None
+
+
 def location_label(location: int, card_names):
     """Short description of a location code for the UI."""
     if location == LOCATION_NO_RARE:
