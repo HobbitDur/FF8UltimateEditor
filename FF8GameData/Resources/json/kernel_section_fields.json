@@ -71,15 +71,17 @@
     "mask": 195
    },
    {
-    "name": "unknown_0x07",
+    "name": "behaves_like",
     "offset": 7,
     "size": 1,
     "group": "Data",
-    "label": "Padding",
-    "help": "Unused padding - no code references this byte (IDA: 0 xrefs).",
-    "readonly": true
+    "lookup": "command_family",
+    "label": "Behaves like",
+    "help": "Only read for a battle command added after the vanilla 39 (FFNx AddMoreCommand).\nThe engine has no code of its own for a new command, so it runs through the\ncode of one of these ten commands, whose effect comes entirely from the\ncommand ability data entry picked above. 0 means Mad Rush.\nIgnored for the vanilla commands."
    }
-  ]
+  ],
+  "growable": true,
+  "max_count": 176
  },
  "2": {
   "section_id": 2,
@@ -3304,6 +3306,8 @@
     "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
    }
   ],
+  "growable": true,
+  "max_count": 255,
   "entry_names": [
    "Recover",
    "Revive",

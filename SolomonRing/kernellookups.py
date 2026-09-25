@@ -21,6 +21,12 @@ class LookupRegistry:
         # is loaded) still renders as a combo, not a plain spinbox; set_dynamic() replaces
         # this with real per-file content once available, and the widget refreshes in place.
         self.set_dynamic("slot_set_summary", [{"value": i, "name": f"Set {i}"} for i in range(16)])
+        # The commands a battle command added for FFNx's AddMoreCommand may behave like;
+        # renamed from the loaded kernel.bin's own command names once one is open.
+        self.set_dynamic("command_family", [{"value": v, "name": f"{v}: {n}"} for v, n in (
+            (0, "default (Mad Rush)"), (0x17, "Defend"), (0x18, "Mad Rush"), (0x19, "Treatment"),
+            (0x1A, "Recover"), (0x1B, "Revive"), (0x1E, "Doom"), (0x1F, "Kamikaze"),
+            (0x20, "Trance"), (0x21, "LV Down"), (0x22, "LV Up"))])
 
     @staticmethod
     def _enum(items, value_key, name_key):

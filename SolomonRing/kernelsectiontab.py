@@ -55,7 +55,7 @@ class KernelSectionTab(QWidget):
 
     def __init__(self, game_data, registry, config, game_data_folder="FF8GameData", jump_callback=None,
                  add_entry_callback=None, remove_entry_callback=None, protected_count=0,
-                 pool_callback=None, copy_between_entries=True):
+                 pool_callback=None, copy_between_entries=True, pool_tooltip=None):
         super().__init__()
         self.game_data = game_data
         self.registry = registry
@@ -80,8 +80,11 @@ class KernelSectionTab(QWidget):
         self._add_btn = None
         # Sections sharing an entry budget with others (the seven ability sections share
         # one 128-id space) get a "N left" line under Add, refreshed by the owner through
-        # set_pool_status(); pool_callback() -> (text, can_add) supplies it on rebuild.
+        # set_pool_status(); pool_callback() -> (text, can_add) supplies it on rebuild. A
+        # section with a cap of its own (battle commands, command ability data) uses the same
+        # line, with pool_tooltip explaining where its limit comes from.
         self._pool_callback = pool_callback
+        self._pool_tooltip = pool_tooltip
         self._pool_label = None
         # Copy / Paste / Apply to... move a field group from one entry to another, so a section
         # with a single entry (Misc, Duel Params, Slot Array) gets no such bar at all.
@@ -148,7 +151,7 @@ class KernelSectionTab(QWidget):
                 # No colour: a hardcoded grey vanishes into the dark theme's background.
                 self._pool_label.setStyleSheet("font-size: 9pt;")
                 self._pool_label.setWordWrap(True)
-                self._pool_label.setToolTip(
+                self._pool_label.setToolTip(self._pool_tooltip or
                     "The seven ability sections share one id space - the engine reads\n"
                     "them as a single array - and a savegame stores 128 learned-ability\n"
                     "bits per GF. That is the budget: spend it in whichever sections you\n"

@@ -696,3 +696,66 @@ def test_a_renamed_ability_reaches_the_gf_learn_slot_pickers(qapp, tmp_path):
     assert combo.currentData() == new_id
     assert combo.currentText() == "SumMag+50%"
 
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_added_battle_command_is_ready_for_ffnx(qapp, tmp_path, monkeypatch):
+    """Battle commands and command ability data grow for FFNx's AddMoreCommand. A new
+    command starts as a copy of Mad Rush's settings - a data entry, flags, targeting
+    and "behaves like" Mad Rush - so the loader accepts it as is; pointing it at a new
+    data entry and saving keeps both sections grown."""
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args, **kwargs: pytest.fail(args[2]))
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+
+    _add_button(widget._section_tabs[11]).click()
+    commands = widget._section_tabs[1]
+    _add_button(commands).click()
+    assert commands.current_entry_index() == 39, "the new command should be the selected one"
+    commands._text_widgets[0].setText("Test Rush")
+    commands.list_widget.setCurrentRow(0)             # writes the form back
+    entries = widget._section_entries(1)
+    assert entries[39].get("ability_data_id") == entries[24].get("ability_data_id")
+    assert entries[39].get("target_info") == entries[24].get("target_info")
+    assert entries[39].get("behaves_like") == 0x18
+    entries[39].set("ability_data_id", 12)
+    assert widget.command_problems() == []
+    widget._save_kernel()
+
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    assert reloaded._ability_entry_count(1) == 40 and reloaded._ability_entry_count(11) == 13
+    entry = reloaded._section_tabs[1]._entries[39]
+    assert entry.get_text(0) == "Test Rush" and entry.get("ability_data_id") == 12
+    assert "40 / 176" in reloaded._entry_budget_status(1)[0]
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_removing_a_command_or_its_data_clears_what_pointed_at_it(qapp, tmp_path, monkeypatch):
+    """A command ability naming a removed command falls back to command 0, and a command
+    using a removed data entry falls back to "none" - which the save check then reports,
+    since the loader refuses a new command without data."""
+    monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    _add_button(widget._section_tabs[11]).click()
+    _add_button(widget._section_tabs[1]).click()
+    widget._section_tabs[1].list_widget.setCurrentRow(0)
+    widget._section_entries(1)[39].set("ability_data_id", 12)
+    widget._section_entries(13)[7].set("battle_command_index", 39)
+
+    data_tab = widget._section_tabs[11]
+    data_tab.list_widget.setCurrentRow(12)
+    _remove_button(data_tab).click()
+    assert widget._section_entries(1)[39].get("ability_data_id") == 0xFF
+    assert any("no command ability data" in p for p in widget.command_problems())
+
+    commands = widget._section_tabs[1]
+    commands.list_widget.setCurrentRow(39)
+    _remove_button(commands).click()
+    assert widget._ability_entry_count(1) == 39
+    assert widget._section_entries(13)[7].get("battle_command_index") == 0

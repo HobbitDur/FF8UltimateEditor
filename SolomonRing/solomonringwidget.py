@@ -171,6 +171,7 @@ class SolomonRingWidget(QWidget):
 
     def _remember_current_tab(self, index):
         self._commit_ability_tabs()
+        self._commit_command_tab()
         if self.settings is not None:
             self.settings.setValue(self.CURRENT_TAB_KEY, index)
 
@@ -184,13 +185,20 @@ class SolomonRingWidget(QWidget):
         # Everything below the vanilla entry count is what the unmodded engine indexes by id,
         # so only what a mod added on top may be removed again.
         static_config = self.kernel_manager.get_section_config(section_id) or {}
+        if config.get("ability_pool"):
+            pool_callback, pool_tooltip = (lambda sid=section_id: self._ability_pool_status(sid)), None
+        elif config.get("max_count"):
+            pool_callback = lambda sid=section_id: self._entry_budget_status(sid)
+            pool_tooltip = self.ENTRY_BUDGET_TOOLTIPS.get(section_id)
+        else:
+            pool_callback, pool_tooltip = None, None
         tab = KernelSectionTab(self.game_data, self.registry, config,
                                jump_callback=self._jump_to_section,
                                add_entry_callback=add_entry_callback,
                                remove_entry_callback=remove_entry_callback,
                                protected_count=self._protected_entry_count(section_id, static_config),
-                               pool_callback=(lambda sid=section_id: self._ability_pool_status(sid))
-                               if config.get("ability_pool") else None,
+                               pool_callback=pool_callback,
+                               pool_tooltip=pool_tooltip,
                                copy_between_entries=(static_config.get("number_sub_section") or 0) > 1
                                or bool(config.get("growable")))
         # A group paste / "Apply to..." writes the data without typing in a field, so it marks
@@ -242,6 +250,8 @@ class SolomonRingWidget(QWidget):
         self._refresh_magic_names()
         self._refresh_ability_names()
         self._refresh_ability_pool()
+        self._refresh_command_lookups()
+        self._refresh_entry_budgets()
         self._refresh_slot_set_summaries()
 
     def _refresh_slot_set_summaries(self):
@@ -400,6 +410,155 @@ class SolomonRingWidget(QWidget):
                 entry.set(name, value + delta)
         return cleared
 
+    # ---- battle commands and their command ability data ------------------------
+    # With FFNx's AddMoreCommand patch, the battle commands (section 1) and the command
+    # ability data (section 11) may grow. A command ability names a battle command by
+    # id, and a battle command names its data entry by id. The engine has no code for a
+    # command id past the vanilla 39, so FFNx runs a new one as one of the ten commands
+    # whose effect comes entirely from their data entry - "Behaves like" picks which.
+
+    BATTLE_COMMAND_SECTION = 1
+    COMMAND_DATA_SECTION = 11
+    COMMAND_ABILITY_SECTION = 13
+    VANILLA_COMMAND_COUNT = 39
+    NO_COMMAND_DATA = 0xFF
+    # Defend, Mad Rush, Treatment, Recover, Revive, Doom, Kamikaze, Trance, LV Down, LV Up.
+    DATA_DRIVEN_COMMANDS = (0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1E, 0x1F, 0x20, 0x21, 0x22)
+    DEFAULT_FAMILY = 0x18   # Mad Rush: what 0 in "Behaves like" means, and a new command's template
+
+    ENTRY_BUDGET_TOOLTIPS = {
+        BATTLE_COMMAND_SECTION:
+            "FFNx's AddMoreCommand loader takes up to 176 battle commands: command ids\n"
+            "from 0xB0 up belong to the engine itself (Renzokuken finisher, G-Force...).\n"
+            "A new command copies Mad Rush's settings; give it a name, pick its command\n"
+            "ability data, then point a command ability at it.",
+        COMMAND_DATA_SECTION:
+            "Up to 255 entries: a battle command stores which one it uses in a byte where\n"
+            "0xFF means \"none\".",
+    }
+
+    def _entry_budget_status(self, section_id):
+        """(counter text, may another entry be added) for a section with a "max_count"."""
+        if not self.loaded_filename:
+            return "", False
+        used = self._ability_entry_count(section_id)
+        maximum = self._section_configs[str(section_id)]["max_count"]
+        return f"{used} / {maximum} entries - {maximum - used} left", used < maximum
+
+    def _refresh_entry_budgets(self):
+        for section_id, tab in self._section_tabs.items():
+            if self._section_configs[str(section_id)].get("max_count"):
+                tab.refresh_pool_status()
+
+    def _section_entries(self, section_id):
+        """A KernelEntry for every entry of a data section, straight from the data."""
+        section = self._section_by_id(section_id)
+        config = self._section_configs.get(str(section_id))
+        if section is None or config is None:
+            return []
+        nb_text = len(config.get("text_labels", [])) or 1
+        return [KernelEntry(subsection, section.section_text_linked, nb_text, index,
+                            config["fields"], self.game_data)
+                for index, subsection in enumerate(section.get_subsection_list())]
+
+    def _battle_command_names(self):
+        tab = self._section_tabs.get(self.BATTLE_COMMAND_SECTION)
+        if not tab:
+            return []
+        return [tab._entries[i].get_text(0).strip() for i in range(len(tab._entries))]
+
+    def _commit_command_tab(self):
+        """Write back the battle command form, so a renamed or re-pointed command shows
+        up in the pickers of the other tabs."""
+        if not self.loaded_filename:
+            return
+        tab = self._section_tabs.get(self.BATTLE_COMMAND_SECTION)
+        if tab is not None:
+            tab.commit()
+        self._refresh_command_lookups()
+
+    def _refresh_command_lookups(self):
+        """Three pickers depend on what is loaded, not on the vanilla lists: the battle
+        command a command ability grants, the data entry a battle command uses (named by
+        the commands that use it), and the family a new command behaves like."""
+        names = self._battle_command_names()
+        if not names:
+            return
+        commands = [{"value": i, "name": f"{i}: {name or '(unnamed)'}"} for i, name in enumerate(names)]
+        self.registry.set_dynamic("battle_command", commands)
+
+        users = {}
+        for index, entry in enumerate(self._section_entries(self.BATTLE_COMMAND_SECTION)):
+            users.setdefault(entry.get("ability_data_id"), []).append(names[index] or f"#{index}")
+        data = [{"value": i, "name": f"{i}: " + (", ".join(users.get(i, [])) or "(unused)")}
+                for i in range(self._ability_entry_count(self.COMMAND_DATA_SECTION))]
+        data.append({"value": self.NO_COMMAND_DATA, "name": "None (chosen at runtime)"})
+        self.registry.set_dynamic("command_ability_ref", data)
+
+        family = [{"value": 0, "name": f"0: default ({names[self.DEFAULT_FAMILY]})"}]
+        family += [{"value": c, "name": f"{c}: {names[c]}"} for c in self.DATA_DRIVEN_COMMANDS if c < len(names)]
+        self.registry.set_dynamic("command_family", family)
+
+        for tab in self._section_tabs.values():
+            tab.refresh_dynamic_combos()
+
+    def _init_new_battle_command(self, index):
+        """A blank battle command has no data entry FFNx accepts and no targeting; start
+        it as a copy of Mad Rush's settings instead (not its name)."""
+        # Raw bytes rather than field by field: target info is split into several masked
+        # fields, and copying the byte whole cannot miss one.
+        subsections = self._section_by_id(self.BATTLE_COMMAND_SECTION).get_subsection_list()
+        template = subsections[self.DEFAULT_FAMILY].get_data_list()[-1].get_data_hex()
+        new = subsections[index].get_data_list()[-1].get_data_hex()
+        new[:] = template
+        self._section_entries(self.BATTLE_COMMAND_SECTION)[index].set("behaves_like", self.DEFAULT_FAMILY)
+
+    def _renumber_command_references(self, section_id, removed):
+        """Follow a deleted battle command or data entry through what points at it: ids
+        past it move down one, and what pointed at it falls back to "nothing" (command 0 /
+        no data). Returns how many references were cleared."""
+        if section_id == self.BATTLE_COMMAND_SECTION:
+            refs, field, fallback = self.COMMAND_ABILITY_SECTION, "battle_command_index", 0
+        else:
+            refs, field, fallback = self.BATTLE_COMMAND_SECTION, "ability_data_id", self.NO_COMMAND_DATA
+        cleared = 0
+        for entry in self._section_entries(refs):
+            value = entry.get(field)
+            if value == removed:
+                entry.set(field, fallback)
+                cleared += 1
+            elif value != self.NO_COMMAND_DATA and value > removed:
+                entry.set(field, value - 1)
+        return cleared
+
+    def _count_command_references(self, section_id, index):
+        if section_id == self.BATTLE_COMMAND_SECTION:
+            refs, field = self.COMMAND_ABILITY_SECTION, "battle_command_index"
+        else:
+            refs, field = self.BATTLE_COMMAND_SECTION, "ability_data_id"
+        return sum(1 for entry in self._section_entries(refs) if entry.get(field) == index)
+
+    def command_problems(self):
+        """What FFNx's AddMoreCommand loader would refuse in the current file. It drops
+        the whole extension on any of these, so they are shown before saving."""
+        problems = []
+        names = self._battle_command_names()
+        data_count = self._ability_entry_count(self.COMMAND_DATA_SECTION)
+        for index, entry in enumerate(self._section_entries(self.BATTLE_COMMAND_SECTION)):
+            label = f"Battle command {index} ({names[index] if index < len(names) and names[index] else 'unnamed'})"
+            data_id = entry.get("ability_data_id")
+            if data_id != self.NO_COMMAND_DATA and data_id >= data_count:
+                problems.append(f"{label} uses command ability data {data_id}, but there are only {data_count}.")
+            if index < self.VANILLA_COMMAND_COUNT:
+                continue
+            if data_id == self.NO_COMMAND_DATA:
+                problems.append(f"{label} has no command ability data - a new command needs one.")
+            family = entry.get("behaves_like")
+            if family and family not in self.DATA_DRIVEN_COMMANDS:
+                problems.append(f"{label} behaves like command {family}, which does not take its "
+                                "effect from command ability data.")
+        return problems
+
     def _add_growable_entry(self, section_id):
         """Append one new blank entry to a "growable" data section (today, only Magic -
         kernel_bin_data.json "growable": true) and its linked name/description text,
@@ -412,10 +571,11 @@ class SolomonRingWidget(QWidget):
         only labelled here for anyone inspecting the raw file outside SolomonRing."""
         section = next((s for s in self.kernel_manager.section_list if s and s.id == section_id), None)
         tab = self._section_tabs.get(section_id)
-        if section is None or tab is None or not section.section_text_linked:
+        # Command ability data is the one growable section without any text.
+        if section is None or tab is None or (tab.text_labels and not section.section_text_linked):
             return
         cfg = self.kernel_manager.get_section_config(section_id)
-        text_section = section.section_text_linked
+        text_section = section.section_text_linked if tab.text_labels else None
         nb_text = len(tab.text_labels) or 1
         # The shown entry's form is only written back on a row change, and load_section() below
         # rebuilds every entry from the data: write it first, or a name/value just typed (a spell
@@ -426,6 +586,8 @@ class SolomonRingWidget(QWidget):
         # of its own; the button greys out when either is reached, but a stale click
         # (or a caller that is not the button) must not grow it anyway.
         if pooled and not self._ability_pool_status(section_id)[1]:
+            return
+        if self._section_configs[str(section_id)].get("max_count") and not self._entry_budget_status(section_id)[1]:
             return
         # The new entry goes right after the selected one (at the end when nothing is
         # selected), takes that id + 1, and pushes every ability id from there on up by
@@ -440,12 +602,12 @@ class SolomonRingWidget(QWidget):
 
         def _append_one():
             section.append_blank_subsection()
-            for _ in range(nb_text):
+            for _ in range(nb_text if text_section else 0):
                 text_section.add_text(bytearray([0x00]))
 
         def _insert_one(index):
             section.insert_blank_subsection(index)
-            for i in range(nb_text):
+            for i in range(nb_text if text_section else 0):
                 text_section.insert_text(index * nb_text + i, bytearray([0x00]))
 
         pad = 0
@@ -471,6 +633,8 @@ class SolomonRingWidget(QWidget):
 
         if pooled:
             self._renumber_ability_references(new_ability_id, 1)
+        if section_id == self.BATTLE_COMMAND_SECTION:
+            self._init_new_battle_command(len(section.get_subsection_list()) - 1)
 
         tab.load_section(section, text_section)
         if insert_index is not None and insert_index in tab._visible_indices:
@@ -482,6 +646,9 @@ class SolomonRingWidget(QWidget):
         if pooled:
             self._refresh_ability_names()
             self._refresh_ability_pool()
+        if section_id in (self.BATTLE_COMMAND_SECTION, self.COMMAND_DATA_SECTION):
+            self._refresh_command_lookups()
+            self._refresh_entry_budgets()
 
     def _remove_growable_entry(self, section_id):
         """Delete the selected entry of a "growable" data section together with its linked
@@ -493,15 +660,26 @@ class SolomonRingWidget(QWidget):
         go too, so the file never keeps a tail of reserved-only entries."""
         section = next((s for s in self.kernel_manager.section_list if s and s.id == section_id), None)
         tab = self._section_tabs.get(section_id)
-        if section is None or tab is None or not section.section_text_linked:
+        if section is None or tab is None or (tab.text_labels and not section.section_text_linked):
             return
         cfg = self.kernel_manager.get_section_config(section_id) or {}
         entry_index = tab.current_entry_index()
         if not tab.can_remove(entry_index):
             return
         tab.commit()  # same as adding: load_section() below rebuilds the entries from the data
-        text_section = section.section_text_linked
+        text_section = section.section_text_linked if tab.text_labels else None
         nb_text = len(tab.text_labels) or 1
+        commands = section_id in (self.BATTLE_COMMAND_SECTION, self.COMMAND_DATA_SECTION)
+        if commands:
+            # A command ability granting this command, or a command using this data
+            # entry, would silently pick up whatever slides into the id - clear them.
+            used_by = self._count_command_references(section_id, entry_index)
+            what = ("command abilit(ies) grant this command. Removing it sets them to command 0"
+                    if section_id == self.BATTLE_COMMAND_SECTION else
+                    "battle command(s) use this data entry. Removing it sets them to None")
+            if used_by and QMessageBox.question(
+                    self, "Remove entry", f"{used_by} {what}. Continue?") != QMessageBox.StandardButton.Yes:
+                return
         pooled = bool(cfg.get("ability_pool"))
         removed_ability_id = self._ability_first_id(section_id) + entry_index if pooled else None
         if pooled:
@@ -516,7 +694,7 @@ class SolomonRingWidget(QWidget):
 
         def _remove_one(index):
             section.remove_subsection(index)
-            for _ in range(nb_text):
+            for _ in range(nb_text if text_section else 0):
                 text_section.remove_text(index * nb_text)
 
         _remove_one(entry_index)
@@ -534,6 +712,16 @@ class SolomonRingWidget(QWidget):
 
         if pooled:
             self._renumber_ability_references(removed_ability_id + 1, -1, removed_id=removed_ability_id)
+        if commands:
+            ref_id = self.COMMAND_ABILITY_SECTION if section_id == self.BATTLE_COMMAND_SECTION \
+                else self.BATTLE_COMMAND_SECTION
+            ref_tab, ref_section = self._section_tabs.get(ref_id), self._section_by_id(ref_id)
+            # Its open form is written back first, then rebuilt from the renumbered data.
+            if ref_tab is not None:
+                ref_tab.commit()
+            self._renumber_command_references(section_id, entry_index)
+            if ref_tab is not None and ref_section is not None:
+                ref_tab.load_section(ref_section, ref_section.section_text_linked)
 
         tab.load_section(section, text_section)
         if tab._visible_indices:
@@ -544,6 +732,9 @@ class SolomonRingWidget(QWidget):
         if pooled:
             self._refresh_ability_names()
             self._refresh_ability_pool()
+        if commands:
+            self._refresh_command_lookups()
+            self._refresh_entry_budgets()
 
     def compress_text(self):
         """Compress all kernel text (the shared toolbar's Compress button calls this)."""
@@ -583,5 +774,12 @@ class SolomonRingWidget(QWidget):
         # Any magic name typed this session (including newly-added spells) needs to be
         # in the "magic" lookup BEFORE save, since Slot Sets' picker reads names from it.
         self._refresh_magic_names()
+        # Saved regardless - the file is still valid for the unmodded game - but FFNx would
+        # ignore every added command, so say why now rather than in its log.
+        problems = self.command_problems()
+        if problems:
+            QMessageBox.warning(self, "Added battle commands",
+                                "FFNx's AddMoreCommand will ignore the added battle commands "
+                                "until this is fixed:\n\n" + "\n".join(problems))
         self.kernel_manager.save_file(self.loaded_filename)
         print(f"Saved to {self.loaded_filename}")

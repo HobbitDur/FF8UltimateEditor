@@ -74,8 +74,23 @@ sections["1"] = {"section_id": 1, "text_labels": NAMEDESC, "fields": [
      "lookup": "command_menu_submenu", "label": "Submenu",
      "enabled_unless_bit": {"field": "menu_bits", "mask": 0x20}},
     {"name": "target_info", "offset": 6, "size": 1, "group": "Data", "lookup": "target_info"},
-    {"name": "unknown_0x07", "offset": 7, "size": 1, "group": "Data", "label": "Unknown 0x07"},
+    # Padding in vanilla (0 everywhere). FFNx's AddMoreCommand reads it for commands
+    # past the vanilla 39: the engine has no code for a new command id, so it runs as
+    # one of the ten commands whose effect comes entirely from their command ability
+    # data - this byte names which one (0 = Mad Rush).
+    {"name": "behaves_like", "offset": 7, "size": 1, "group": "Data",
+     "lookup": "command_family", "label": "Behaves like",
+     "help": "Only read for a battle command added after the vanilla 39 (FFNx AddMoreCommand).\n"
+             "The engine has no code of its own for a new command, so it runs through the\n"
+             "code of one of these ten commands, whose effect comes entirely from the\n"
+             "command ability data entry picked above. 0 means Mad Rush.\n"
+             "Ignored for the vanilla commands."},
 ]}
+# Battle commands (section 1) and their command ability data (section 11) may grow
+# with FFNx's AddMoreCommand patch. "max_count" is the loader's own limit: command ids
+# from 0xB0 up belong to the engine, and 0xFF is the "no data" value.
+sections["1"]["growable"] = True
+sections["1"]["max_count"] = 0xB0
 
 # 2: Magic (built earlier - keep identical) ----------------------------------
 JSTATS = ["hp", "str", "vit", "mag", "spr", "spd", "eva", "hit", "luck"]
@@ -364,6 +379,8 @@ sec(11, 0, [], [("Data", [
     ("status_1", 2, "status_1", "Status 1"),
     ("status_2", 4, "status_2", "Status 2"),
 ])], sub_size=16)
+sections["11"]["growable"] = True
+sections["11"]["max_count"] = 0xFF
 
 # 12: Junction abilities -----------------------------------------------------
 sec(12, 2, NAMEDESC, [("Data", [
