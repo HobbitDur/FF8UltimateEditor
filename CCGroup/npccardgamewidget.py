@@ -17,6 +17,7 @@ All values and descriptions come from the FF8ModdingWiki page 13A_CARDGAME.
 """
 import os
 import random
+from collections import Counter
 
 from PIL.ImageQt import ImageQt
 from PyQt6.QtCore import Qt, QSettings
@@ -24,9 +25,11 @@ from PyQt6.QtGui import QPixmap, QBrush, QColor
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea,
                              QLabel, QComboBox, QCheckBox, QPushButton, QFileDialog,
                              QSpinBox, QGroupBox, QMessageBox, QSplitter, QLineEdit,
-                             QTreeWidget, QTreeWidgetItem, QTabWidget)
+                             QTreeWidget, QTreeWidgetItem, QTabWidget, QHeaderView, QPlainTextEdit)
 
 from CCGroup import cardlocation
+from CCGroup import jsmnpc as jsm_npc
+from CCGroup.addcardgamedialog import AddCardGameDialog
 from CCGroup.npccardtablewidget import NpcCardTableWidget
 from CCGroup.npcfieldview import NpcFieldView
 from CCGroup.jsmcardgame import (CardGameFolderManager, OPCODE_PSHN_L, CardGamePlayer, CardGameParam,
@@ -415,6 +418,11 @@ class AiSearchParamRow(CardGameParamRow):
 
 CARD_THUMBNAIL_SIZE = 48
 MODIFIED_FOLDER_COLOR = QColor(40, 110, 210)  # maps read from the modified folder
+NO_CARD_MASTER_COLOR = QColor(215, 120, 0)  # maps without a cardgamemaster entity
+NO_CARD_GAME_COLOR = QColor(150, 150, 150)  # NPCs that do not play cards
+ADD_BUTTON_COLOR = QColor(40, 150, 60)
+ADD_CARD_GAME_TEXT = "+ Add card game"
+NPC_ROLE = Qt.ItemDataRole.UserRole + 1  # tree item data of an NPC without a card game: (jsm_file, NpcEntity)
 
 
 class CardImages:
@@ -549,6 +557,59 @@ class VariantGroup(QGroupBox):
 
     def __link_activated(self, link: str):
         self.select_player_callback(self.player.variant.siblings[int(link)])
+
+
+class TextsGroup(QGroupBox):
+    """The texts of a card player's script (question, 'not enough cards', other lines), editable in
+    the map's .msd. A message several script lines show is changed for all of them."""
+
+    def __init__(self, player: CardGamePlayer, jsm_file, manager, changed_callback=None):
+        QGroupBox.__init__(self, "Texts")
+        self.player = player
+        self.changed_callback = changed_callback
+        layout = QGridLayout()
+        layout.setColumnStretch(1, 1)
+        self.setLayout(layout)
+        self.editors = {}  # message id -> QPlainTextEdit
+        msd_file = manager.msd(jsm_file)
+        if msd_file is None:
+            layout.addWidget(QLabel(f"No {jsm_file.map_name}.msd found: the texts cannot be shown."), 0, 0, 1, 2)
+            return
+        uses_in_file = Counter()
+        instructions = jsm_file.instructions()
+        for index, (opcode, _) in enumerate(instructions):
+            nb_values = jsm_npc.MESSAGE_OPCODES.get(opcode)
+            if nb_values is not None and index >= nb_values and instructions[index - nb_values + 1][0] == OPCODE_PSHN_L:
+                uses_in_file[instructions[index - nb_values + 1][1]] += 1
+        row = 0
+        for use in jsm_npc.player_messages(jsm_file, player):
+            if use.message_id in self.editors or not 0 <= use.message_id < len(msd_file):
+                continue
+            role = QLabel(f"{use.role}:")
+            role.setToolTip(f"Message {use.message_id} of {jsm_file.map_name}.msd")
+            editor = QPlainTextEdit(msd_file.text(use.message_id))
+            editor.setFixedHeight(editor.fontMetrics().height() * (msd_file.text(use.message_id).count("\n") + 1) + 14)
+            tooltip = f"Message {use.message_id} of {jsm_file.map_name}.msd."
+            if uses_in_file[use.message_id] > 1:
+                tooltip += f" Shown by {uses_in_file[use.message_id]} script lines of this map: editing changes them all."
+            if msd_file.encode(msd_file.text(use.message_id)) != msd_file.messages[use.message_id]:
+                editor.setReadOnly(True)
+                tooltip += (" Read-only: it holds codes this tool cannot re-encode exactly (edit it with"
+                            " ShumiTranslator).")
+            editor.setToolTip(tooltip)
+            editor.textChanged.connect(lambda message_id=use.message_id, text_editor=editor, msd=msd_file:
+                                       self.__text_changed(msd, message_id, text_editor))
+            layout.addWidget(role, row, 0, Qt.AlignmentFlag.AlignTop)
+            layout.addWidget(editor, row, 1)
+            self.editors[use.message_id] = editor
+            row += 1
+        if not self.editors:
+            layout.addWidget(QLabel("No text found in this script."), 0, 0, 1, 2)
+
+    def __text_changed(self, msd_file, message_id, editor):
+        msd_file.set_text(message_id, editor.toPlainText())
+        if self.changed_callback is not None:
+            self.changed_callback(self.player)
 
 
 class RareCardsGroup(QGroupBox):
@@ -830,6 +891,9 @@ class CardPlayerWidget(QWidget):
             row.on_change = self.__param_changed
 
         select_player_callback = select_player_callback or (lambda _: None)
+        jsm_file = manager.file_of(player)
+        if jsm_file is not None:
+            main_layout.addWidget(TextsGroup(player, jsm_file, manager, changed_callback))
         if player.variant is not None and player.variant.is_variant():
             main_layout.addWidget(VariantGroup(player, self.__variant_changed, select_player_callback))
         self.rare_cards_group = RareCardsGroup(card_images, manager, select_player_callback)
@@ -891,8 +955,9 @@ class NpcCardGameWidget(QWidget):
         if getattr(game_data, "card_data_json", None) is None:
             game_data.load_card_data()
         self.card_images = CardImages(game_data)
+        self.game_data = game_data
         self.__player_items = {}  # id(player) -> its tree item
-        self.manager = CardGameFolderManager()
+        self.manager = CardGameFolderManager(game_data)
         self.folder_loaded = ""
         self.settings = settings
 
@@ -934,14 +999,31 @@ class NpcCardGameWidget(QWidget):
         self.__filter_edit.setPlaceholderText("Filter by map or NPC name...")
         self.__filter_edit.setClearButtonEnabled(True)
         self.__filter_edit.textChanged.connect(self.__filter_changed)
+        self.__show_all_checkbox = QCheckBox("Show the NPCs without a card game")
+        self.__show_all_checkbox.setChecked(True)
+        self.__show_all_checkbox.setToolTip("Also list every NPC that does not play cards (greyed), with a button to give\n"
+                                            "them a card game. Main characters are never listed.")
+        self.__show_all_checkbox.toggled.connect(lambda _: self.__rebuild_tree_keeping_selection())
         self.__tree = QTreeWidget()
+        self.__tree.setColumnCount(2)
         self.__tree.setHeaderHidden(True)
+        self.__tree.header().setStretchLastSection(False)
+        self.__tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.__tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.__tree.currentItemChanged.connect(self.__selection_changed)
+        self.__tree.itemClicked.connect(self.__item_clicked)
+        legend = QLabel(f'<span style="color:{NO_CARD_MASTER_COLOR.name()}">Orange map</span>: no card master - a card'
+                        f' game added there uses the region rules directly (no Queen of Cards rule spreading).'
+                        f' <span style="color:{MODIFIED_FOLDER_COLOR.name()}">Blue map</span>: read from the modified'
+                        f' folder. Grey: NPC without a card game.')
+        legend.setWordWrap(True)
         left_widget = QWidget()
         left_layout = QVBoxLayout()
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.addWidget(self.__filter_edit)
+        left_layout.addWidget(self.__show_all_checkbox)
         left_layout.addWidget(self.__tree)
+        left_layout.addWidget(legend)
         left_widget.setLayout(left_layout)
 
         # Right pane: editor of the selected player
@@ -959,7 +1041,7 @@ class NpcCardGameWidget(QWidget):
         self.__splitter.setStretchFactor(0, 1)
         self.__splitter.setStretchFactor(1, 2)
         self.__splitter.setStretchFactor(2, 2)
-        self.__splitter.setSizes([260, 700, 520])
+        self.__splitter.setSizes([360, 680, 480])
 
         # Two views of the same players: one at a time (Editor) or all in a table (bulk edits)
         self.table_widget = NpcCardTableWidget(self.card_images.names)
@@ -1012,7 +1094,7 @@ class NpcCardGameWidget(QWidget):
 
     def __confirm_discard(self):
         """Reloading drops unsaved edits: ask first when there are some."""
-        if not any(jsm_file.is_modified() for jsm_file in self.manager.jsm_files):
+        if not self.manager.has_modifications():
             return True
         answer = QMessageBox.question(self, "CC Group", "Unsaved card player changes will be lost. Continue?",
                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
@@ -1046,7 +1128,7 @@ class NpcCardGameWidget(QWidget):
         """Forget the loaded folders and their card players (unsaved patches included)."""
         self.folder_loaded = ""
         self.modified_folder = ""
-        self.manager = CardGameFolderManager()
+        self.manager = CardGameFolderManager(self.game_data)
         self.field_view.set_field_folders("", "")
         self.__rebuild_tree()
         self.table_widget.set_manager(self.manager)
@@ -1107,20 +1189,65 @@ class NpcCardGameWidget(QWidget):
         self.__tree.clear()
         self.__player_items = {}
         self.__show_editor(None)
-        for jsm_file in self.manager.jsm_files:
+        show_all = self.__show_all_checkbox.isChecked()
+        files = self.manager.all_files if show_all else self.manager.jsm_files
+        for jsm_file in files:
+            npcs_without_cards = [npc for npc in self.manager.npcs(jsm_file) if not npc.plays_cards()] \
+                if show_all else []
+            if not jsm_file.players and not npcs_without_cards:
+                continue
             source = "  [modified]" if jsm_file.modified_path else ""
-            map_item = QTreeWidgetItem([f"{jsm_file.map_name}  ({len(jsm_file.players)}){source}"])
-            map_item.setToolTip(0, jsm_file.jsm_path)
-            if jsm_file.modified_path:
+            map_item = QTreeWidgetItem([f"{jsm_file.map_name}  ({len(jsm_file.players)}){source}", ""])
+            tooltip = jsm_file.jsm_path
+            if not jsm_npc.has_card_master(jsm_file):
+                map_item.setForeground(0, QBrush(NO_CARD_MASTER_COLOR))
+                tooltip += ("\nNo card master in this map: a card game added here uses the region rules"
+                            " directly, without the Queen of Cards rule spreading.")
+            elif jsm_file.modified_path:
                 map_item.setForeground(0, QBrush(MODIFIED_FOLDER_COLOR))
+            map_item.setToolTip(0, tooltip)
             for player in jsm_file.players:
-                player_item = QTreeWidgetItem([self.player_label(player)])
+                player_item = QTreeWidgetItem([self.player_label(player), ""])
                 player_item.setData(0, Qt.ItemDataRole.UserRole, player)
                 self.__player_items[id(player)] = player_item
                 map_item.addChild(player_item)
+            for npc in npcs_without_cards:
+                npc_item = QTreeWidgetItem([f"{npc.entity_name}  (talk)", ADD_CARD_GAME_TEXT])
+                npc_item.setData(0, NPC_ROLE, (jsm_file, npc))
+                npc_item.setForeground(0, QBrush(NO_CARD_GAME_COLOR))
+                npc_item.setForeground(1, QBrush(ADD_BUTTON_COLOR))
+                npc_item.setToolTip(1, "Give this NPC a card game (talk to it -> 'Will you play cards with me?')")
+                map_item.addChild(npc_item)
             self.__tree.addTopLevelItem(map_item)
         self.__tree.expandAll()
         self.__filter_changed(self.__filter_edit.text())
+
+    def __item_clicked(self, item: QTreeWidgetItem, column: int):
+        if column == 1 and item.data(0, NPC_ROLE) is not None:
+            jsm_file, npc = item.data(0, NPC_ROLE)
+            self.add_card_game_dialog(jsm_file, npc)
+
+    def add_card_game_dialog(self, jsm_file, npc):
+        """The '+ Add card game' button: ask the texts/options, add, select the new card player."""
+        calls = jsm_npc.card_master_calls(jsm_file) if jsm_npc.has_card_master(jsm_file) else None
+        dialog = AddCardGameDialog(self, jsm_file.map_name, npc.entity_name, jsm_npc.has_card_master(jsm_file),
+                                   calls["region"] if calls else "", self.manager.region_guess(jsm_file))
+        if dialog.exec() != AddCardGameDialog.DialogCode.Accepted:
+            return
+        self.add_card_game(jsm_file, npc, dialog.question_text(), dialog.not_enough_text(), dialog.region(),
+                           dialog.on_no())
+
+    def add_card_game(self, jsm_file, npc, question_text, not_enough_text, region=0, on_no=jsm_npc.ON_NO_NOTHING):
+        try:
+            player = self.manager.add_card_game(jsm_file, npc, question_text, not_enough_text, region, on_no)
+        except (ValueError, OSError) as error:
+            QMessageBox.warning(self, "CC Group", f"Could not add a card game to {npc.entity_name}:\n{error}")
+            return None
+        self.__rebuild_tree()
+        self.table_widget.set_manager(self.manager)
+        self.__update_labels()
+        self.select_player(player)
+        return player
 
     def __filter_changed(self, text: str):
         text = text.strip().lower()
@@ -1137,8 +1264,33 @@ class NpcCardGameWidget(QWidget):
             map_item.setHidden(nb_visible_children == 0)
 
     def __selection_changed(self, current: QTreeWidgetItem, previous: QTreeWidgetItem):
+        npc_data = current.data(0, NPC_ROLE) if current is not None else None
+        if npc_data is not None:
+            self.__show_npc_without_cards(*npc_data)
+            return
         player = current.data(0, Qt.ItemDataRole.UserRole) if current is not None else None
         self.__show_editor(player)
+
+    def __show_npc_without_cards(self, jsm_file, npc):
+        old_widget = self.__editor_scroll.takeWidget()
+        if old_widget is not None:
+            old_widget.deleteLater()
+        panel = QWidget()
+        layout = QVBoxLayout()
+        panel.setLayout(layout)
+        text = f"<b>{npc.entity_name}</b> ({jsm_file.map_name}) does not play cards."
+        if not jsm_npc.has_card_master(jsm_file):
+            text += ("<br/>This map has <b>no card master</b>: a card game added here uses the region rules"
+                     " directly, without the Queen of Cards rule spreading.")
+        label = QLabel(text)
+        label.setWordWrap(True)
+        layout.addWidget(label)
+        button = QPushButton(ADD_CARD_GAME_TEXT)
+        button.clicked.connect(lambda: self.add_card_game_dialog(jsm_file, npc))
+        layout.addWidget(button)
+        layout.addStretch(1)
+        self.__editor_scroll.setWidget(panel)
+        self.field_view.show_entity(jsm_file, npc.entity_name)
 
     def __show_editor(self, player):
         old_widget = self.__editor_scroll.takeWidget()
@@ -1171,6 +1323,9 @@ class NpcCardGameWidget(QWidget):
             lines += [f"  - {jsm_file.rel_path}" for jsm_file in report.written[:30]]
             if len(report.written) > 30:
                 lines.append(f"  ... and {len(report.written) - 30} more")
+        if report.written_texts:
+            lines.append(f"{len(report.written_texts)} dialogue file(s) saved:")
+            lines += [f"  - {path}" for path in report.written_texts]
         if report.identical_to_vanilla:
             names = "\n".join(f"  - {jsm_file.rel_path}" for jsm_file in report.identical_to_vanilla)
             answer = QMessageBox.question(
@@ -1184,7 +1339,7 @@ class NpcCardGameWidget(QWidget):
                              f" modified folder.")
         if not lines:
             lines.append("No modification to save.")
-        if report.written or report.identical_to_vanilla:
+        if report.written or report.identical_to_vanilla or report.written_texts:
             self.__rebuild_tree_keeping_selection()
         QMessageBox.information(self, "CC Group", "\n".join(lines))
 

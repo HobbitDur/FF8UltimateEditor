@@ -211,6 +211,12 @@ class JsmCardGameFile:
         self.map_name = os.path.splitext(os.path.basename(jsm_path))[0]
         with open(jsm_path, "rb") as jsm_file:
             self.data = bytearray(jsm_file.read())
+        self.structure_modified = False  # code added (e.g. a card game given to an NPC): save the file
+        self.reanalyze()
+
+    def reanalyze(self):
+        """(Re)build the card players, names and variants from self.data (after code was added)."""
+        self.__instructions_cache = None
         self.players = []
         self.card_moves = []  # SETCARD calls with literal arguments
         self.offset_script = 0
@@ -276,7 +282,7 @@ class JsmCardGameFile:
 
     def __entity_instructions(self, entity_name: str):
         """(index, opcode, param) of the instructions of an entity's scripts, init first."""
-        instructions = decode_instructions(self.data, self.offset_script)
+        instructions = self.instructions()
         for script_index, name in enumerate(self.script_names):
             if name is None or name[0] != entity_name or script_index >= len(self.script_positions):
                 continue
@@ -297,7 +303,7 @@ class JsmCardGameFile:
     def entity_position(self, entity_name: str):
         """Initial position of an entity: its first SET3 (x, y, z, triangle) or SET (x, y, None,
         triangle - the game takes Z from the walkmesh triangle) with literal coordinates."""
-        instructions = decode_instructions(self.data, self.offset_script)
+        instructions = self.instructions()
         for index, opcode, param in self.__entity_instructions(entity_name):
             nb_coordinates = {OPCODE_SET3: 3, OPCODE_SET: 2}.get(opcode)
             if nb_coordinates is None or index < nb_coordinates:
@@ -385,10 +391,18 @@ class JsmCardGameFile:
             generic = self.__names_matched_to_reference(entities, generic)
         return self.__names_from_groups(generic, entities)
 
+    def instructions(self):
+        """(opcode, param) of every instruction, decoded once per analysis. Values edited in place
+        afterwards (CARDGAME params, variant literals) are not reflected: only use it for what the
+        editor never patches (opcodes, models, positions, messages, calls)."""
+        if self.__instructions_cache is None:
+            self.__instructions_cache = decode_instructions(self.data, self.offset_script)
+        return self.__instructions_cache
+
     def entity_script_bodies(self):
         """Per entity (sorted by first script): the instruction list of each of its scripts, LBL
         left out (it holds the script index, which shifts when a mod adds scripts)."""
-        instructions = decode_instructions(self.data, self.offset_script)
+        instructions = self.instructions()
         nb_entity = sum(self.data[0:4])
         entries = sorted((struct.unpack_from("<H", self.data, 8 + 2 * index)[0] for index in range(nb_entity)),
                          key=lambda entry: entry >> 7)
@@ -517,7 +531,7 @@ class JsmCardGameFile:
         return "entity?", f"offset 0x{instruction_offset:X}"
 
     def is_modified(self):
-        return (any(player.is_modified() for player in self.players)
+        return (self.structure_modified or any(player.is_modified() for player in self.players)
                 or any(literal.is_modified() for literal in self.script_literals.values()))
 
     def apply_params(self):
@@ -549,6 +563,7 @@ class JsmCardGameFile:
     def mark_saved(self):
         """The current values become the reference ones (after a save, or when there was nothing
         to write because the patched file equals vanilla)."""
+        self.structure_modified = False
         for player in self.players:
             for param in player.params:
                 param.original_opcode = param.opcode
@@ -562,6 +577,7 @@ class SaveReport:
 
     def __init__(self):
         self.written = []  # JsmCardGameFile written to disk
+        self.written_texts = []  # .msd files written (relative paths)
         self.identical_to_vanilla = []  # modified-folder maps that now equal vanilla again (not written)
 
 
@@ -586,15 +602,24 @@ class CardGameFolderManager:
     it has it, else from vanilla. With a modified folder, saving writes there only, and only the
     maps that differ from vanilla; without one, files are saved in place."""
 
-    def __init__(self):
-        self.jsm_files = []
+    def __init__(self, game_data=None):
+        self.jsm_files = []  # the maps with card players
+        self.all_files = []  # every map (NPCs without a card game included)
         self.card_moves = []  # every literal SETCARD of the folder, card players or not
         self.vanilla_folder = ""
         self.modified_folder = ""
+        self.game_data = game_data  # text codec of the .msd dialogues (None: texts unavailable)
+        self.__msd_files = {}  # map folder (relative) -> MsdFile
+        self.__npcs = {}  # id(jsm_file) -> [NpcEntity]
+        self.__region_by_folder = None
 
     def load_folder(self, folder_path: str, modified_folder: str = ""):
         self.jsm_files = []
+        self.all_files = []
         self.card_moves = []
+        self.__msd_files = {}
+        self.__npcs = {}
+        self.__region_by_folder = None
         self.vanilla_folder = folder_path
         self.modified_folder = modified_folder
         vanilla_paths = collect_jsm_paths(folder_path)
@@ -616,11 +641,94 @@ class CardGameFolderManager:
             jsm_file.rel_path = rel_path
             jsm_file.vanilla_path = vanilla_path
             jsm_file.modified_path = modified_path
-            jsm_file.asset_folders = [os.path.dirname(path) for path in (modified_path, vanilla_path) if path]
+            # The modified folder may hold the map's other files (dialogues...) without its script
+            jsm_file.asset_folders = [folder for folder in (
+                os.path.join(modified_folder, os.path.dirname(rel_path)) if modified_folder else "",
+                os.path.dirname(vanilla_path) if vanilla_path else os.path.dirname(modified_path)) if folder]
             self.card_moves.extend(jsm_file.card_moves)
+            self.all_files.append(jsm_file)
             if jsm_file.players:
                 self.jsm_files.append(jsm_file)
         return self.jsm_files
+
+    # ------------------------------------------------------------------ NPCs and texts
+
+    def npcs(self, jsm_file):
+        """NPCs of a map (entities with a model and a talk script), main characters left out."""
+        key = id(jsm_file)
+        if key not in self.__npcs:
+            from CCGroup import jsmnpc
+            main_models = self.__main_character_models(jsm_file)
+            self.__npcs[key] = [npc for npc in jsmnpc.list_npcs(jsm_file)
+                                if npc.plays_cards() or npc.model_index not in main_models]
+        return self.__npcs[key]
+
+    @staticmethod
+    def __main_character_models(jsm_file):
+        """chara.one entries that are main characters (party members, not NPCs)."""
+        path = jsm_file.asset_path("chara.one")
+        if not path:
+            return set()
+        try:
+            from FF8GameData.mch.mchanalyser import CharaOne
+            with open(path, "rb") as chara_file:
+                chara_one = CharaOne(chara_file.read())
+            return {index for index, entry in enumerate(chara_one.entries) if entry.is_main}
+        except Exception:  # an unreadable chara.one only loses the filtering
+            return set()
+
+    def msd(self, jsm_file):
+        """The map's dialogue file (modified folder's copy first), None when unavailable."""
+        if self.game_data is None:
+            return None
+        key = os.path.dirname(jsm_file.rel_path)
+        if key not in self.__msd_files:
+            from FF8GameData.field.msdfile import MsdFile
+            path = jsm_file.asset_path(jsm_file.map_name + ".msd")
+            msd_file = None
+            if path:
+                with open(path, "rb") as msd_data:
+                    msd_file = MsdFile(msd_data.read(), self.game_data)
+                msd_file.path = path
+                msd_file.rel_path = os.path.join(key, jsm_file.map_name + ".msd")
+                msd_file.vanilla_path = os.path.join(os.path.dirname(jsm_file.vanilla_path), jsm_file.map_name + ".msd") \
+                    if jsm_file.vanilla_path else ""
+            self.__msd_files[key] = msd_file
+        return self.__msd_files[key]
+
+    def region_guess(self, jsm_file):
+        """Region index for a map without a card master: the region most card players of the same
+        map folder prefix use ("bg" maps -> Balamb), Balamb when unknown."""
+        from CCGroup import jsmnpc
+        if self.__region_by_folder is None:
+            self.__region_by_folder = jsmnpc.region_by_folder(self.jsm_files)
+        region = self.__region_by_folder.get(jsm_file.map_name[:2], jsmnpc.REGIONS[0])
+        return jsmnpc.REGIONS.index(region)
+
+    def add_card_game(self, jsm_file, npc, question_text: str, not_enough_text: str, region: int = 0,
+                      on_no: str = "nothing"):
+        """Give an NPC a card game (see jsmnpc.add_card_game); its two texts are appended to the map's
+        .msd. Returns the new CardGamePlayer."""
+        from CCGroup import jsmnpc
+        msd_file = self.msd(jsm_file)
+        if msd_file is None:
+            raise ValueError(f"No {jsm_file.map_name}.msd found: the card game texts cannot be added")
+        question_id = msd_file.add_text(question_text)
+        not_enough_id = msd_file.add_text(not_enough_text)
+        try:
+            player = jsmnpc.add_card_game(jsm_file, npc, question_id, not_enough_id, region, on_no)
+        except Exception:
+            del msd_file.messages[not_enough_id:]
+            raise
+        self.__npcs.pop(id(jsm_file), None)
+        if jsm_file not in self.jsm_files:
+            self.jsm_files.append(jsm_file)
+            self.jsm_files.sort(key=lambda file: file.rel_path)
+        return player
+
+    def has_modifications(self):
+        return any(jsm_file.is_modified() for jsm_file in self.all_files or self.jsm_files) or any(
+            msd_file is not None and msd_file.is_modified() for msd_file in self.__msd_files.values())
 
     def nb_from_modified_folder(self):
         return sum(1 for jsm_file in self.jsm_files if jsm_file.modified_path)
@@ -653,7 +761,8 @@ class CardGameFolderManager:
         vanilla file (a map edited back to vanilla is not written; if the modified folder already
         had it, it is listed in identical_to_vanilla so the caller can offer to delete it)."""
         report = SaveReport()
-        for jsm_file in self.jsm_files:
+        self.__save_msd_files(report)
+        for jsm_file in self.all_files or self.jsm_files:
             if not jsm_file.is_modified():
                 continue
             if not self.modified_folder:
@@ -676,9 +785,33 @@ class CardGameFolderManager:
             if not jsm_file.modified_path:
                 jsm_file.modified_path = target
                 jsm_file.jsm_path = target
-                jsm_file.asset_folders.insert(0, os.path.dirname(target))
             report.written.append(jsm_file)
         return report
+
+    def __save_msd_files(self, report):
+        """Edited dialogue files: in place without a modified folder, else into it when they differ
+        from vanilla (same rule as the scripts)."""
+        for msd_file in self.__msd_files.values():
+            if msd_file is None or not msd_file.is_modified():
+                continue
+            data = msd_file.to_bytes()
+            if self.modified_folder:
+                vanilla = b""
+                if msd_file.vanilla_path and os.path.isfile(msd_file.vanilla_path):
+                    with open(msd_file.vanilla_path, "rb") as vanilla_file:
+                        vanilla = vanilla_file.read()
+                if data == vanilla:
+                    msd_file.mark_saved()
+                    continue
+                target = os.path.join(self.modified_folder, msd_file.rel_path)
+            else:
+                target = msd_file.path
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            with open(target, "wb") as out:
+                out.write(data)
+            msd_file.path = target
+            msd_file.mark_saved()
+            report.written_texts.append(msd_file.rel_path)
 
     def delete_from_modified_folder(self, jsm_file):
         """Remove a map's .jsm from the modified folder (it equals vanilla): vanilla is used again."""
@@ -688,7 +821,5 @@ class CardGameFolderManager:
         modified_dir = os.path.dirname(jsm_file.modified_path)
         if not os.listdir(modified_dir):  # the map's folder only held this script
             os.rmdir(modified_dir)
-        if modified_dir in jsm_file.asset_folders:
-            jsm_file.asset_folders.remove(modified_dir)
         jsm_file.modified_path = ""
         jsm_file.jsm_path = jsm_file.vanilla_path

@@ -122,6 +122,13 @@ class FieldScene:
         return screen[0] + self.origin[0], screen[1] + self.origin[1]
 
 
+class _Entity:
+    """What show_entity needs of a player: its entity name."""
+
+    def __init__(self, entity_name: str):
+        self.entity_name = entity_name
+
+
 class NpcFieldView(QWidget):
     """Background + 3D model of the selected card player."""
 
@@ -185,6 +192,11 @@ class NpcFieldView(QWidget):
             self.viewer_3d.hide()
 
     def show_player(self, jsm_file, player):
+        self.show_entity(jsm_file, player.entity_name)
+
+    def show_entity(self, jsm_file, entity_name: str):
+        """Background, position and model of any entity of the map (card player or not)."""
+        player = _Entity(entity_name)
         scene = self.scene(jsm_file)
         position = jsm_file.entity_position(player.entity_name)
         marker = scene.picture_position(position)
