@@ -230,9 +230,10 @@ def test_shared_save_drives_the_npc_multi_file_save(main_window, monkeypatch):
     tb._refresh()
     assert cc.can_save_folder() and tb.save_button.isEnabled()  # players loaded -> Save enabled
 
+    from CCGroup.jsmcardgame import SaveReport
     saved = []
-    monkeypatch.setattr(npc.manager, "save_all", lambda: (saved.append(1), 2)[1])
-    tb._save()                                   # shared Save -> NPC save_folder -> save_all
+    monkeypatch.setattr(npc.manager, "save_all_report", lambda: (saved.append(1), SaveReport())[1])
+    tb._save()                                   # shared Save -> NPC save_folder -> save_all_report
     assert saved == [1]
 
 
