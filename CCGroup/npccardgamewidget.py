@@ -23,9 +23,10 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea,
                              QLabel, QComboBox, QCheckBox, QPushButton,
                              QSpinBox, QGroupBox, QMessageBox, QSplitter, QLineEdit,
-                             QTreeWidget, QTreeWidgetItem)
+                             QTreeWidget, QTreeWidgetItem, QTabWidget)
 
 from CCGroup import cardlocation
+from CCGroup.npccardtablewidget import NpcCardTableWidget
 from CCGroup.npcfieldview import NpcFieldView
 from CCGroup.jsmcardgame import (CardGameFolderManager, OPCODE_PSHN_L, CardGamePlayer, CardGameParam,
                                  GAME_RULE_BITS, TRADE_RULE_NAMES, AI_STRATEGY_NAMES,
@@ -928,7 +929,16 @@ class NpcCardGameWidget(QWidget):
         self.__splitter.setStretchFactor(1, 2)
         self.__splitter.setStretchFactor(2, 2)
         self.__splitter.setSizes([260, 700, 520])
-        self.__main_layout.addWidget(self.__splitter, 1)
+
+        # Two views of the same players: one at a time (Editor) or all in a table (bulk edits)
+        self.table_widget = NpcCardTableWidget(self.card_images.names)
+        self.table_widget.players_changed.connect(self.__players_bulk_changed)
+        self.table_widget.open_player.connect(self.__open_from_table)
+        self.view_tabs = QTabWidget()
+        self.view_tabs.addTab(self.__splitter, "Editor")
+        self.view_tabs.addTab(self.table_widget, "Table (bulk edit)")
+        self.view_tabs.currentChanged.connect(self.__view_changed)
+        self.__main_layout.addWidget(self.view_tabs, 1)
 
     def load_folder(self, folder_path: str):
         self.folder_loaded = folder_path
@@ -936,6 +946,7 @@ class NpcCardGameWidget(QWidget):
             self.settings.setValue("ccgroup/npc_last_folder", folder_path)
         self.manager.load_folder(folder_path)
         self.__rebuild_tree()
+        self.table_widget.set_manager(self.manager)
         nb_players = self.manager.nb_players()
         if nb_players == 0:
             self.__info_label.setText(f"No card player found in {folder_path}")
@@ -948,6 +959,7 @@ class NpcCardGameWidget(QWidget):
         self.folder_loaded = ""
         self.manager = CardGameFolderManager()
         self.__rebuild_tree()
+        self.table_widget.set_manager(self.manager)
         self.__info_label.setText(self.NO_FOLDER_TEXT)
 
     def player_label(self, player: CardGamePlayer):
@@ -976,6 +988,23 @@ class NpcCardGameWidget(QWidget):
             self.__filter_edit.clear()
         self.__tree.setCurrentItem(item)
         self.__tree.scrollToItem(item)
+
+    def __players_bulk_changed(self, players: list):
+        """A bulk edit of the table changed these players: refresh their tree labels and the editor."""
+        for player in players:
+            self.__player_changed(player)
+        current = self.__tree.currentItem()
+        current_player = current.data(0, Qt.ItemDataRole.UserRole) if current is not None else None
+        if current_player is not None and current_player in players:
+            self.__show_editor(current_player)
+
+    def __open_from_table(self, player: CardGamePlayer):
+        self.view_tabs.setCurrentIndex(0)
+        self.select_player(player)
+
+    def __view_changed(self, index: int):
+        if self.view_tabs.widget(index) is self.table_widget:
+            self.table_widget.refresh()  # edits made in the editor since the last look
 
     def __player_changed(self, player: CardGamePlayer):
         item = self.__player_items.get(id(player))
