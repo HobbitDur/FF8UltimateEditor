@@ -111,6 +111,9 @@ class KernelSectionTab(QWidget):
         self._unlock_all = False
         self._locked_widgets = []        # (widget, kind) frozen by the default, re-enabled on unlock
         self._enable_syncs = []          # callables re-applying the live "enabled_when" rules
+        # (first entry index, label, widget) of fields that only exist for entries a mod
+        # added ("visible_from_index"), shown or hidden on every entry load.
+        self._index_gated = []
 
         layout = QHBoxLayout(self)
 
@@ -514,6 +517,8 @@ class KernelSectionTab(QWidget):
         widget.setToolTip(tooltip)
         label = QLabel(field.get("label", _prettify(field["name"])))
         label.setToolTip(tooltip)
+        if field.get("visible_from_index") is not None:
+            self._index_gated.append((field["visible_from_index"], label, widget))
         return label, widget
 
     def _emit_aligned_rows(self, vbox, rows):
@@ -1035,6 +1040,12 @@ class KernelSectionTab(QWidget):
             sync()
         for refresh_hint in self._unit_hints:
             refresh_hint()
+        # A byte the vanilla entries leave as padding, read only for entries a mod added
+        # (a battle command's "Behaves like"), is not shown on the vanilla ones at all.
+        for first_index, label, widget in self._index_gated:
+            shown = self._visible_indices[row] >= first_index
+            label.setVisible(shown)
+            widget.setVisible(shown)
         self._refresh_menu_refine_display(entry)
 
     @staticmethod

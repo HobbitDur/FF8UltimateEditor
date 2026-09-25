@@ -78,7 +78,8 @@
     "group": "Data",
     "lookup": "command_family",
     "label": "Behaves like",
-    "help": "Only read for a battle command added after the vanilla 39 (FFNx AddMoreCommand).\nThe engine has no code of its own for a new command, so it runs through the\ncode of one of these ten commands, whose effect comes entirely from the\ncommand ability data entry picked above. 0 means Mad Rush.\nIgnored for the vanilla commands.",
+    "visible_from_index": 39,
+    "help": "Not a vanilla setting: FFNx's AddMoreCommand reads it for commands added after\nthe vanilla 39. The engine has no code of its own for a new command, so it runs\nthrough the code of one of these ten commands, whose effect comes entirely from\nthe command ability data entry picked above. 0 means Mad Rush.",
     "dynamic_lookup": true
    }
   ],

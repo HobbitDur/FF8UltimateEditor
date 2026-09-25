@@ -78,13 +78,13 @@ sections["1"] = {"section_id": 1, "text_labels": NAMEDESC, "fields": [
     # past the vanilla 39: the engine has no code for a new command id, so it runs as
     # one of the ten commands whose effect comes entirely from their command ability
     # data - this byte names which one (0 = Mad Rush).
+    # Shown only on added commands: on the vanilla 39 it is unused padding.
     {"name": "behaves_like", "offset": 7, "size": 1, "group": "Data",
-     "lookup": "command_family", "label": "Behaves like",
-     "help": "Only read for a battle command added after the vanilla 39 (FFNx AddMoreCommand).\n"
-             "The engine has no code of its own for a new command, so it runs through the\n"
-             "code of one of these ten commands, whose effect comes entirely from the\n"
-             "command ability data entry picked above. 0 means Mad Rush.\n"
-             "Ignored for the vanilla commands."},
+     "lookup": "command_family", "label": "Behaves like", "visible_from_index": 39,
+     "help": "Not a vanilla setting: FFNx's AddMoreCommand reads it for commands added after\n"
+             "the vanilla 39. The engine has no code of its own for a new command, so it runs\n"
+             "through the code of one of these ten commands, whose effect comes entirely from\n"
+             "the command ability data entry picked above. 0 means Mad Rush."},
 ]}
 # Battle commands (section 1) and their command ability data (section 11) may grow
 # with FFNx's AddMoreCommand patch. "max_count" is the loader's own limit: command ids
