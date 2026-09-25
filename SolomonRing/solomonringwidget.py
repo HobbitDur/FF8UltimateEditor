@@ -399,7 +399,15 @@ class SolomonRingWidget(QWidget):
     def _renumber_ability_references(self, from_id, delta, removed_id=None):
         """Follow an insert or delete through every stored ability id: ids at or past
         ``from_id`` move by ``delta``, and any slot still pointing at ``removed_id``
-        falls back to 0 (None) because the ability it named is gone."""
+        falls back to 0 (None) because the ability it named is gone.
+
+        The G-Forces tab keeps its selected GF in an open form, which is written back on
+        the next row change or save: flushed before the renumbering and rebuilt after it,
+        or it would restore that GF's old ids (the selected GF - Quezacotl by default -
+        kept its whole learn list un-renumbered)."""
+        ref_tab = self._section_tabs.get(self.ABILITY_REF_SECTION)
+        if ref_tab is not None:
+            ref_tab.commit()
         cleared = 0
         for entry, name in self._ability_reference_entries():
             value = entry.get(name)
@@ -408,6 +416,9 @@ class SolomonRingWidget(QWidget):
                 cleared += 1
             elif value >= from_id:
                 entry.set(name, value + delta)
+        ref_section = self._section_by_id(self.ABILITY_REF_SECTION)
+        if ref_tab is not None and ref_section is not None:
+            ref_tab.load_section(ref_section, ref_section.section_text_linked)
         return cleared
 
     # ---- battle commands and their command ability data ------------------------

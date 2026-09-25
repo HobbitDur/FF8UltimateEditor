@@ -560,6 +560,10 @@ def test_removing_an_ability_frees_the_budget_and_clears_its_slots(qapp, tmp_pat
     assert widget._ability_total() == 117
     entry, field = next(iter(widget._ability_reference_entries()))
     entry.set(field, new_id)
+    # Written behind the G-Forces tab's back: reload it so its open form shows the slot,
+    # as it would after picking the ability there.
+    gf_section = widget._section_by_id(3)
+    widget._section_tabs[3].load_section(gf_section, gf_section.section_text_linked)
     assert widget._count_ability_references(new_id) == 1
 
     monkeypatch.setattr(QMessageBox, "question",
@@ -766,3 +770,26 @@ def test_removing_a_command_or_its_data_clears_what_pointed_at_it(qapp, tmp_path
     _remove_button(commands).click()
     assert widget._ability_entry_count(1) == 39
     assert widget._section_entries(13)[7].get("battle_command_index") == 0
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_the_selected_gf_is_renumbered_too(qapp, tmp_path):
+    """The G-Forces tab keeps its selected GF (Quezacotl, row 0, by default) in an open
+    form that is written back on save. An ability added elsewhere renumbers every learn
+    list in the data - the open form must follow, or the save restores that GF's old
+    ids and it alone teaches the wrong abilities."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    widget._section_tabs[3].list_widget.setCurrentRow(0)
+    before = [widget._section_entries(3)[0].get(f"ability{i}") for i in range(1, 22)]
+    junction = widget._section_tabs[12]
+    junction.list_widget.setCurrentRow(19)           # the new junction ability takes id 20
+    _add_button(junction).click()
+    widget._save_kernel()
+
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    after = [reloaded._section_entries(3)[0].get(f"ability{i}") for i in range(1, 22)]
+    assert after == [v + 1 if v >= 20 else v for v in before]
