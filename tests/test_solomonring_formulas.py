@@ -78,3 +78,108 @@ def test_ifrit_element_range_covers_every_byte():
     from FF8GameData.monsterdata import AIData
     # 900 - 10 * byte, byte 0..255
     assert (AIData.ELEM_DEF_MAX_VAL, AIData.ELEM_DEF_MIN_VAL) == (900 - 10 * 0, 900 - 10 * 255)
+
+
+# --- Cronos damage formula and battle setup ----------------------------------
+from SolomonRing import battle_setup  # noqa: E402
+
+
+@pytest.fixture
+def cronos():
+    formula_specs.PARAM_VALUES["cronos_formula"] = 1
+    yield
+    formula_specs.PARAM_VALUES["cronos_formula"] = 0
+
+
+@pytest.mark.skipif(not formula_latex.AVAILABLE, reason="matplotlib not installed")
+def test_every_formula_renders_as_math_with_the_cronos_formula(qapp, cronos):
+    failed = []
+    for key in formula_specs.FORMULAS:
+        for attack_type in (range(37) if key in ATTACK_TYPED else [None]):
+            entry = _Entry() if attack_type is None else _Entry(attack_type=attack_type)
+            out = formula_specs.compute(key, 20, entry)
+            for field in ("latex", "latex_sub"):
+                if out.get(field) and formula_latex.render(out[field], "#000000") is None:
+                    failed.append((key, attack_type, field, out[field]))
+    assert failed == []
+
+
+def _average(out):
+    return int(out["result"].split("≈ ")[1].split()[0])
+
+
+def test_cronos_magic_uses_320_and_twice_the_mag(cronos):
+    """DamageFormulaUpdate: 265 -> 320 and Power+MAG -> MAG+MAG, the power still multiplying."""
+    params = {"caster_mag": 100, "target_spr": 50, "elem_defense": 100}
+    saved = {k: formula_specs.PARAM_VALUES[k] for k in params}
+    formula_specs.PARAM_VALUES.update(params)
+    try:
+        spell = _Entry(attack_type=2, spell_power=20, hit_count=1)
+        # t1 = (320-50) * 200 / 4 = 13500, t2 = 20 * 13500 / 256 = 1054
+        assert _average(formula_specs.compute("magic_damage", 20, spell)) == 1054
+        formula_specs.PARAM_VALUES["cronos_formula"] = 0
+        # t1 = (265-50) * 120 / 4 = 6450, t2 = 20 * 6450 / 256 = 503
+        assert _average(formula_specs.compute("magic_damage", 20, spell)) == 503
+    finally:
+        formula_specs.PARAM_VALUES.update(saved)
+
+
+def test_cronos_does_not_halve_a_monster_caster(cronos):
+    attack = _Entry(attack_type=2, attack_power=20)
+    params = {"monster_mag": 100, "target_spr": 50, "elem_defense": 100}
+    saved = {k: formula_specs.PARAM_VALUES[k] for k in params}
+    formula_specs.PARAM_VALUES.update(params)
+    try:
+        assert _average(formula_specs.compute("monster_damage", 20, attack)) == 1054
+        formula_specs.PARAM_VALUES["cronos_formula"] = 0
+        assert _average(formula_specs.compute("monster_damage", 20, attack)) == 251   # 503 / 2
+    finally:
+        formula_specs.PARAM_VALUES.update(saved)
+
+
+def test_cronos_changes_only_the_gunblade(cronos):
+    params = {"attacker_str": 100, "target_vit": 50}
+    saved = {k: formula_specs.PARAM_VALUES[k] for k in params}
+    formula_specs.PARAM_VALUES.update(params)
+    try:
+        gunblade = _Entry(attack_type=formula_specs.ATTACK_TYPE_GUNBLADE, attack_power=20, str_bonus=0)
+        other = _Entry(attack_type=1, attack_power=20, str_bonus=0)
+        # (320-50) * (100 + 625) / 256 = 764, * 20 / 16 = 955
+        assert _average(formula_specs.compute("physical_damage", 20, gunblade)) == 955
+        # (265-50) * 725 / 256 = 608, * 20 / 16 = 760
+        assert _average(formula_specs.compute("physical_damage", 20, other)) == 760
+    finally:
+        formula_specs.PARAM_VALUES.update(saved)
+
+
+def _c_div(a, b):
+    q = abs(a) // abs(b)
+    return -q if (a < 0) != (b < 0) else q
+
+
+def test_monster_stats_follow_the_game_curve():
+    """Stat_ComputeMonsterStatCurve @0x48c3f0, instruction by instruction: STR/MAG subtract the
+    quadratic term (Ifrit's graph adds it), VIT/SPR/SPD/EVA are linear."""
+    for curve in ([40, 5, 20, 30], [12, 3, 200, 7], [255, 1, 255, 1]):
+        a, b, c, d = curve
+        for level in (1, 30, 60, 100):
+            quad = _c_div(level * level, d)
+            want = max(0, min(255, _c_div(_c_div(level * a, 10) + _c_div(level, b) - (quad - (quad >> 31)) // 2 + c, 4)))
+            assert battle_setup.monster_stat("str", curve, level) == want
+            assert battle_setup.monster_stat("vit", curve, level) == max(0, min(255, c + level * a + level // b - level // d))
+    assert battle_setup.monster_hp([10, 20, 1, 2], 30) == 10 * 900 // 20 + 30 * 110 + 10 * 220
+
+
+def test_the_setup_fills_each_side_of_the_formula():
+    setup = battle_setup.BattleSetup()
+    setup.monsters_provider = lambda: [{"name": "Grat", "curves": {s: [10, 2, 5, 4] for s in
+                                                                  ("hp", "str", "vit", "mag", "spr", "spd", "eva")}}]
+    setup.monster = 0
+    setup.monster_level = 20
+    values, sources = setup.overrides("magic_damage")
+    assert values["target_spr"] == battle_setup.monster_stat("spr", [10, 2, 5, 4], 20)
+    assert sources["target_spr"] == "Grat" and "caster_mag" not in values   # no character picked
+    values, _ = setup.overrides("monster_damage")
+    assert values["monster_mag"] == battle_setup.monster_stat("mag", [10, 2, 5, 4], 20)
+    assert "target_spr" not in values                                      # the target is the character
+    assert setup.overrides("gf_hp") == ({}, {})

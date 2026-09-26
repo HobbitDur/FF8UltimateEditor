@@ -12,6 +12,7 @@ from ShumiTranslator.model.kernel.kernelmanager import KernelManager
 from SolomonRing.kernellookups import LookupRegistry
 from SolomonRing.kernelentry import KernelEntry
 from SolomonRing.kernelsectiontab import KernelSectionTab
+from SolomonRing.battle_setup import SETUP as BATTLE_SETUP
 
 
 # One top-level tab per kernel section (a kernel section == a tab). Order follows the
@@ -126,6 +127,31 @@ class SolomonRingWidget(QWidget):
         self.tabs.setEnabled(False)
 
         self.kernel_binding.load_opened_file()  # Another tool may have opened kernel.bin already
+
+        # The damage formula popups' battle setup picks a character of this kernel.bin; the
+        # monsters come from Ifrit, connected by the main window (set_monster_provider).
+        BATTLE_SETUP.characters_provider = self._battle_characters
+
+    CHARACTER_SECTION = 7
+
+    def _battle_characters(self):
+        """[(name, entry)] of the Characters section, as currently edited."""
+        if not self.loaded_filename:
+            return []
+        tab = self._section_tabs.get(self.CHARACTER_SECTION)
+        if tab is not None:
+            tab.commit()                 # its open form may hold curve edits not written back yet
+        names = self._section_configs[str(self.CHARACTER_SECTION)].get("entry_names") or []
+        characters = []
+        for index, entry in enumerate(self._section_entries(self.CHARACTER_SECTION)):
+            name = entry.get_text(0).strip() or (names[index] if index < len(names) else f"#{index}")
+            characters.append((name, entry))
+        return characters
+
+    def set_monster_provider(self, provider):
+        """callable() -> [{'name', 'curves'}]: the monsters the battle setup can pick (Ifrit's
+        opened ones, IfritMonsterWidget.battle_setup_monsters)."""
+        BATTLE_SETUP.monsters_provider = provider
 
     def _set_unlock_all(self, unlocked):
         """Apply the "unlock unused fields" switch to every section tab at once."""

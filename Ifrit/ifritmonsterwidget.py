@@ -698,6 +698,24 @@ class IfritMonsterWidget(QWidget):
         models have no fixed name - they go through open_files() / save_folder()."""
         return [self.kernel_binding]
 
+    STAT_CURVES = ('hp', 'str', 'vit', 'mag', 'spr', 'spd', 'eva')
+
+    def battle_setup_monsters(self):
+        """The monsters opened here, for SolomonRing's damage formula popups: {'name', 'curves'}
+        with each stat's 4 curve bytes, as currently edited. Files without monster stats (a
+        character or weapon model, an empty file) are left out."""
+        monsters = []
+        for f in self._files:
+            if f.get('blank'):
+                continue
+            info = getattr(f['manager'].enemy, 'info_stat_data', None) or {}
+            curves = {stat: list(info.get(stat) or []) for stat in self.STAT_CURVES}
+            if any(len(curve) != 4 for curve in curves.values()):
+                continue
+            label = os.path.basename(f['path'])
+            monsters.append({'name': f"{f['name']} ({label})" if f['name'] else label, 'curves': curves})
+        return monsters
+
     # ── Shared header toolbar hooks (Alexander pattern) ───────────────
 
     def open_files(self):

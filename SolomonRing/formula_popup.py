@@ -4,11 +4,12 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPalette, QPixmap
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QFormLayout, QGroupBox, QLabel, QSpinBox, QPushButton,
-    QHBoxLayout, QWidget,
+    QHBoxLayout, QWidget, QCheckBox, QComboBox,
 )
 
 from . import formula_specs as fs
 from . import formula_latex as flx
+from .battle_setup import SETUP, SETUP_FORMULAS, BONUS_STATS
 
 
 class _LiveEntry:
@@ -96,6 +97,9 @@ class FormulaPopup(QDialog):
         self._note.setWordWrap(True)
         root.addWidget(self._note)
 
+        self._setup_group = self._build_setup_group()
+        root.addWidget(self._setup_group)
+
         self._params_group = QGroupBox("Assumptions — edit these; they are NOT saved to kernel")
         self._params_form = QFormLayout(self._params_group)
         self._params_form.setContentsMargins(8, 8, 8, 8)
@@ -112,6 +116,130 @@ class FormulaPopup(QDialog):
         close.clicked.connect(self.close)
         btn_row.addWidget(close)
         root.addLayout(btn_row)
+
+    # -------------------------------------------------- battle setup
+    def _build_setup_group(self):
+        """Cronos formula switch, and a real character / monster whose stats replace the typed
+        assumptions they cover (battle_setup.py). Shown for the damage, hit and crit formulas."""
+        group = QGroupBox("Battle setup — a real character and monster instead of typed stats")
+        form = QFormLayout(group)
+        form.setContentsMargins(8, 8, 8, 8)
+        form.setSpacing(6)
+
+        self._cronos_check = QCheckBox("Cronos damage formula (DamageFormulaUpdate)")
+        self._cronos_check.setToolTip(fs.PARAM_DEFS["cronos_formula"][4])
+        self._cronos_check.toggled.connect(self._on_cronos)
+        form.addRow(self._cronos_check)
+
+        self._char_combo = QComboBox()
+        self._char_combo.setToolTip("A character of the loaded kernel.bin: its STR/VIT/MAG/SPR/LUCK/HP "
+                                    "come from its stat curves at the level beside it, plus the bonuses "
+                                    "below. \"Typed stats\" uses the assumptions instead.")
+        self._char_combo.currentIndexChanged.connect(self._on_setup_changed)
+        self._char_level = self._setup_spin(1, 100, SETUP.character_level, "Character level")
+        row = QHBoxLayout()
+        row.addWidget(self._char_combo, 1)
+        row.addWidget(QLabel("Lv"))
+        row.addWidget(self._char_level)
+        form.addRow("Character", row)
+
+        self._bonus_spins = {}
+        bonus_row = QHBoxLayout()
+        for stat in BONUS_STATS:
+            spin = self._setup_spin(0, 255, SETUP.bonus[stat],
+                                    f"{stat.upper()} added to the curve's value: junctioned magic, the "
+                                    "weapon, stat % abilities... (the total is capped at 255).")
+            bonus_row.addWidget(QLabel(f"+{stat.upper()}"))
+            bonus_row.addWidget(spin)
+            self._bonus_spins[stat] = spin
+        bonus_row.addStretch(1)
+        form.addRow("Bonus", bonus_row)
+
+        self._monster_combo = QComboBox()
+        self._monster_combo.setToolTip("A monster opened in Ifrit: its stats come from its .dat stat "
+                                       "curves at the level beside it. Open monsters in Ifrit to list "
+                                       "them here.")
+        self._monster_combo.currentIndexChanged.connect(self._on_setup_changed)
+        self._monster_level = self._setup_spin(1, 100, SETUP.monster_level, "Monster level")
+        refresh = QPushButton("Refresh")
+        refresh.setToolTip("Reload the list of monsters opened in Ifrit.")
+        refresh.clicked.connect(self._fill_setup_combos)
+        row = QHBoxLayout()
+        row.addWidget(self._monster_combo, 1)
+        row.addWidget(QLabel("Lv"))
+        row.addWidget(self._monster_level)
+        row.addWidget(refresh)
+        form.addRow("Monster", row)
+
+        self._setup_summary = QLabel()
+        self._setup_summary.setStyleSheet("font-size: 8pt;")
+        self._setup_summary.setWordWrap(True)
+        form.addRow(self._setup_summary)
+        return group
+
+    def _setup_spin(self, lo, hi, value, tooltip):
+        spin = QSpinBox()
+        spin.setRange(lo, hi)
+        spin.setValue(value)
+        spin.setToolTip(tooltip)
+        spin.valueChanged.connect(self._on_setup_changed)
+        return spin
+
+    def _fill_setup_combos(self):
+        """(Re)list the characters and the monsters opened in Ifrit, keeping the choice."""
+        for combo, items, current in ((self._char_combo, [n for n, _ in SETUP.characters()], SETUP.character),
+                                      (self._monster_combo, [m["name"] for m in SETUP.monsters()], SETUP.monster)):
+            combo.blockSignals(True)
+            combo.clear()
+            combo.addItem("Typed stats", None)
+            for index, name in enumerate(items):
+                combo.addItem(name, index)
+            pos = combo.findData(current) if current is not None else 0
+            combo.setCurrentIndex(max(pos, 0))
+            combo.blockSignals(False)
+        if not SETUP.monsters():
+            self._monster_combo.setItemText(0, "Typed stats (open monsters in Ifrit to pick one)")
+        self._on_setup_changed()
+
+    def _on_cronos(self, checked):
+        fs.PARAM_VALUES["cronos_formula"] = int(checked)
+        self._recompute()
+
+    def _on_setup_changed(self, *_):
+        SETUP.character = self._char_combo.currentData()
+        SETUP.monster = self._monster_combo.currentData()
+        SETUP.character_level = self._char_level.value()
+        SETUP.monster_level = self._monster_level.value()
+        for stat, spin in self._bonus_spins.items():
+            SETUP.bonus[stat] = spin.value()
+        char, mon = SETUP.character_stats(), SETUP.monster_stats()
+        lines = []
+        if char:
+            lines.append(f"{char['name']} Lv {char['level']}: HP {char['hp']}  STR {char['str']}  "
+                         f"VIT {char['vit']}  MAG {char['mag']}  SPR {char['spr']}  LUCK {char['luck']}"
+                         "  (with bonuses)")
+        if mon:
+            lines.append(f"{mon['name']} Lv {mon['level']}: HP {mon['hp']}  STR {mon['str']}  "
+                         f"VIT {mon['vit']}  MAG {mon['mag']}  SPR {mon['spr']}  EVA {mon['eva']}")
+        self._setup_summary.setText("\n".join(lines))
+        self._setup_summary.setVisible(bool(lines))
+        self._apply_overrides()
+        self._recompute()
+
+    def _apply_overrides(self):
+        """Show the setup's values in the assumption editors they replace, greyed out."""
+        values, sources = SETUP.overrides(self._formula_key)
+        for pk, spin in self._param_spins.items():
+            spin.blockSignals(True)
+            if pk in values:
+                spin.setValue(values[pk])
+                spin.setEnabled(False)
+                spin.setToolTip(f"From the battle setup ({sources[pk]}).")
+            else:
+                spin.setValue(fs.PARAM_VALUES[pk])
+                spin.setEnabled(True)
+                spin.setToolTip(fs.PARAM_DEFS[pk][4])
+            spin.blockSignals(False)
 
     def _boxed(self, caption, root):
         """A small gray caption above a bordered, word-wrapping monospace line."""
@@ -149,6 +277,12 @@ class FormulaPopup(QDialog):
         # Rebuild param editors for exactly the params this formula uses.
         out = fs.compute(self._formula_key, self._current_value(), self._current_entry())
         self._build_param_editors(out["params"] if out else ())
+        self._setup_group.setVisible(self._formula_key in SETUP_FORMULAS)
+        self._cronos_check.blockSignals(True)
+        self._cronos_check.setChecked(bool(fs.PARAM_VALUES["cronos_formula"]))
+        self._cronos_check.blockSignals(False)
+        if self._formula_key in SETUP_FORMULAS:
+            self._fill_setup_combos()
         # Recompute live when ANY editor on the tab changes: a formula may read sibling fields
         # (stat coefficients, the two EXP bytes, attack type, ...), so listening only to this
         # field's own widget would leave the preview stale after editing a sibling.
@@ -189,10 +323,10 @@ class FormulaPopup(QDialog):
 
     def _reset(self):
         fs.reset_params()
-        for pk, spin in self._param_spins.items():
-            spin.blockSignals(True)
-            spin.setValue(fs.PARAM_VALUES[pk])
-            spin.blockSignals(False)
+        self._cronos_check.blockSignals(True)
+        self._cronos_check.setChecked(False)
+        self._cronos_check.blockSignals(False)
+        self._apply_overrides()
         self._recompute()
 
     def _current_entry(self):

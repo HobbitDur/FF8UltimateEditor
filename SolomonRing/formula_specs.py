@@ -108,10 +108,22 @@ PARAM_DEFS = {
     "gf_summon_mag":  ("Summon MAG bonus", 0, 0, 255,
                        "The SumMag% bonus from magic junctioned to the GF's SumMag slots (raises GF "
                        "damage by (this+100)/100). 0 = no SumMag magic junctioned."),
+    # A switch, not a number: the popup shows it as a checkbox in its battle setup, never as
+    # a spinbox (no formula lists it in its "params").
+    "cronos_formula": ("Cronos damage formula", 0, 0, 1,
+                       "Cronos's DamageFormulaUpdate hext: magic uses (320 - SPR) x 2 x MAG instead "
+                       "of (265 - SPR) x (Power + MAG) and is no longer halved for a monster caster; "
+                       "the gunblade uses 320 - VIT instead of 265 - VIT. Other physical attacks and "
+                       "GF damage are unchanged."),
 }
 
 # Live, user-editable values (start at defaults). Edited in the formula popups.
 PARAM_VALUES = {k: v[1] for k, v in PARAM_DEFS.items()}
+
+# callable(formula_key) -> {param: value}, applied on top of PARAM_VALUES by compute(): the
+# stats of a real character and monster picked in the battle setup (battle_setup.py) replace
+# the typed assumptions they cover. None: typed assumptions only.
+PARAM_OVERRIDES = None
 
 
 def reset_params():
@@ -125,6 +137,30 @@ def _idiv(a, b):
         return 0
     q = abs(a) // abs(b)
     return -q if (a < 0) != (b < 0) else q
+
+
+# --- Cronos's DamageFormulaUpdate hext -------------------------------------
+# Four patches, checked against the exe (Cronos CronosFiles/DifficultyBalance/
+# DamageFormulaUpdate): in Damage_ComputeMagicAndGF's Magic case the defence constant 265
+# (0x491C90) becomes 320, "add eax, ebp" (MAG + Power, 0x491C95) becomes "add eax, eax"
+# (MAG + MAG), and "cmp ebx, 3" before the monster-caster halving (0x491CC6) becomes
+# "cmp ebx, 15", which no slot reaches. In Damage_ComputeGunblade the 265 (0x48F58F) becomes
+# 320. GF damage and every other physical attack keep 265.
+def _cronos(P):
+    return bool(P.get("cronos_formula"))
+
+
+def _magic_core(P, power, mag):
+    """(defence constant, magic term, then that term as text / substituted text / LaTeX /
+    substituted LaTeX) for an offensive spell, vanilla or Cronos."""
+    if _cronos(P):
+        return 320, 2 * mag, "(2×MAG)", f"(2×{mag})", r"(2\,MAG)", rf"(2\cdot{mag})"
+    return 265, power + mag, "(P+MAG)", f"({power}+{mag})", r"(P+MAG)", rf"({power}+{mag})"
+
+
+def _cronos_magic_note(P):
+    return ("Cronos damage formula: 320 instead of 265, 2×MAG instead of Power+MAG (the power "
+            "still multiplies the result), no halving for a monster caster. ") if _cronos(P) else ""
 
 
 # --- formula computations ---------------------------------------------------
@@ -398,7 +434,8 @@ def _magic_damage(value, P, entry):
         ignore = att == 22
         spr_eff = 0 if ignore else P["target_spr"]
         elem = P["elem_defense"]   # damage taken %, as Ifrit shows it (= 900 - engine elemDef)
-        t1 = _idiv((265 - spr_eff) * (p + P["caster_mag"]), 4)
+        k, base, base_sym, base_sub, base_tex, base_tex_sub = _magic_core(P, p, P["caster_mag"])
+        t1 = _idiv((k - spr_eff) * base, 4)
         t2 = _idiv(p * t1, 256)
 
         def roll(r):
@@ -406,22 +443,23 @@ def _magic_damage(value, P, entry):
 
         avg, lo, hi = roll(256), roll(240), roll(272)
         return _msg(
-            "t1=(265−SPR)×(P+MAG)/4   t2=P×t1/256   dmg=(rand[240..272]/256)×t2×element%/100"
+            f"t1=({k}−SPR)×{base_sym}/4   t2=P×t1/256   dmg=(rand[240..272]/256)×t2×element%/100"
             + (" [SPR forced 0]" if ignore else ""),
-            f"t1=(265−{spr_eff})×({p}+{P['caster_mag']})/4={t1}   t2={p}×{t1}/256={t2}   "
+            f"t1=({k}−{spr_eff})×{base_sub}/4={t1}   t2={p}×{t1}/256={t2}   "
             f"×{elem}/100{hits_txt}",
             f"≈ {avg} damage   (random spread {lo}–{hi})",
             (f"This entry's attack type is None (unused/empty slot); showing the standard Magic "
              f"Attack formula for reference. " if att == 0 else f"Attack type '{name}'. ")
+            + _cronos_magic_note(P)
             + "Real formula (Damage_ComputeMagicAndGF), incl. the random roll and " + _ELEMENT_NOTE
             + " Not modelled: monster casters halve, Shell halves (and shows the Shell shimmer, "
             "effect 40), Defend halves (magic only — Defend fully nullifies PHYSICAL)."
             + (" LV? Attack also only hits on matching level." if att == 26 else ""),
             ("caster_mag", "target_spr", "elem_defense"),
-            latex=(r"dmg=\left\lfloor\frac{rand}{256}\cdot\frac{P\,(265-SPR)(P+MAG)}{4\cdot256}"
+            latex=(rf"dmg=\left\lfloor\frac{{rand}}{{256}}\cdot\frac{{P\,({k}-SPR){base_tex}}}{{4\cdot256}}"
                    r"\right\rfloor\cdot\frac{element\%}{100}"),
             latex_sub=(rf"\frac{{240..272}}{{256}}\cdot"
-                       rf"\frac{{{p}\,(265-{spr_eff})({p}+{P['caster_mag']})}}{{1024}}\cdot"
+                       rf"\frac{{{p}\,({k}-{spr_eff}){base_tex_sub}}}{{1024}}\cdot"
                        rf"\frac{{{elem}}}{{100}}" + (rf"\cdot{hit}" if hit > 1 else "")))
 
     # --- curative magic ---
@@ -562,29 +600,36 @@ def _monster_damage(value, P, entry):
     if att in (0, 2, 22, 26):
         spr = 0 if att == 22 else P["target_spr"]
         elem = P["elem_defense"]   # damage taken %, as Ifrit shows it (= 900 - engine elemDef)
-        t2 = _idiv(p * _idiv((265 - spr) * (p + P["monster_mag"]), 4), 256)
+        k, base, base_sym, base_sub, base_tex, base_tex_sub = _magic_core(P, p, P["monster_mag"])
+        t2 = _idiv(p * _idiv((k - spr) * base, 4), 256)
+        halve = 1 if _cronos(P) else 2       # Cronos never halves a monster caster
 
         def roll(r):
-            return _idiv(_idiv(_idiv(r * t2, 256), 2) * elem, 100)
+            return _idiv(_idiv(_idiv(r * t2, 256), halve) * elem, 100)
 
         avg, lo, hi = roll(256), roll(240), roll(272)
+        halving_sym = "" if halve == 1 else " ÷ 2 (monster)"
         return out(
             ("monster_mag",) + (() if att == 22 else ("target_spr",)) + ("elem_defense",),
-            "dmg = P × (265−SPR) × (P+MAG)/4 / 256 × rand[240..272]/256 ÷ 2 (monster) "
+            f"dmg = P × ({k}−SPR) × {base_sym}/4 / 256 × rand[240..272]/256{halving_sym} "
             "× element%/100" + ("   [SPR forced 0]" if att == 22 else ""),
-            f"{p} × (265−{spr}) × ({p}+{P['monster_mag']})/4 / 256 → {t2};  ÷2;  ×{elem}/100",
+            f"{p} × ({k}−{spr}) × {base_sub}/4 / 256 → {t2};" + ("  ÷2;" if halve == 2 else "")
+            + f"  ×{elem}/100",
             f"≈ {avg} damage   (random {lo}–{hi})",
             (f"Attack type is None (empty slot); showing the Magic Attack formula for reference. "
              if att == 0 else f"Attack type '{name}'. ")
-            + "Damage_ComputeMagicAndGF @0x491ad0: a MONSTER caster's magic damage is halved "
-            "(damage >>= 1 when the attacker slot >= 3) - the same spell hurts half as much from a "
-            "monster as from a character. Then Shell ÷2, Defend ÷2, then the " + _ELEMENT_NOTE
+            + _cronos_magic_note(P)
+            + ("Damage_ComputeMagicAndGF @0x491ad0: a MONSTER caster's magic damage is halved "
+               "(damage >>= 1 when the attacker slot >= 3) - the same spell hurts half as much from "
+               "a monster as from a character. " if halve == 2 else "Damage_ComputeMagicAndGF @0x491ad0. ")
+            + "Then Shell ÷2, Defend ÷2, then the " + _ELEMENT_NOTE
             + (" LV? Attack only hits targets whose level is a multiple of the hit rate byte."
                if att == 26 else ""),
-            r"dmg = \left\lfloor\frac{rand}{256}\cdot\frac{P\,(265-SPR)(P+MAG)}{4\cdot256}"
-            r"\right\rfloor\cdot\frac{1}{2}\cdot\frac{element\%}{100}",
-            rf"\frac{{{p}\,(265-{spr})({p}+{P['monster_mag']})}}{{1024}}\cdot\frac{{1}}{{2}}"
-            rf"\cdot\frac{{{elem}}}{{100}}\approx {avg}")
+            rf"dmg = \left\lfloor\frac{{rand}}{{256}}\cdot\frac{{P\,({k}-SPR){base_tex}}}{{4\cdot256}}"
+            r"\right\rfloor" + (r"\cdot\frac{1}{2}" if halve == 2 else "") + r"\cdot\frac{element\%}{100}",
+            rf"\frac{{{p}\,({k}-{spr}){base_tex_sub}}}{{1024}}"
+            + (r"\cdot\frac{1}{2}" if halve == 2 else "")
+            + rf"\cdot\frac{{{elem}}}{{100}}\approx {avg}")
 
     # --- % current HP (7 = physical path mode 1, 8 = magic path): P × curHP / 16 ---
     if att in (7, 8):
@@ -789,7 +834,11 @@ def _physical_damage(value, P, entry):
     base_str = P["attacker_str"]
     eff_str = min(255, base_str + sbonus)
     vit = P["target_vit"]
-    inner = _idiv((265 - vit) * (eff_str + _idiv(eff_str * eff_str, 16)), 256)
+    # Cronos patches only Damage_ComputeGunblade's constant: a gunblade (Squall, Seifer) uses
+    # 320 - VIT there, every other weapon keeps 265.
+    gunblade = bool(entry) and entry.get("attack_type") == ATTACK_TYPE_GUNBLADE
+    k = 320 if (_cronos(P) and gunblade) else 265
+    inner = _idiv((k - vit) * (eff_str + _idiv(eff_str * eff_str, 16)), 256)
     mid = _idiv(p * inner, 16)
 
     def roll(r):
@@ -800,11 +849,15 @@ def _physical_damage(value, P, entry):
     return {
         "params": ("attacker_str", "target_vit"),
         "symbolic": "STR₊ = STR + weaponStrBonus;  "
-                    "dmg = power × (265−VIT) × (STR₊ + STR₊²/16) / 256 / 16 × rand[240..272]/256"
+                    f"dmg = power × ({k}−VIT) × (STR₊ + STR₊²/16) / 256 / 16 × rand[240..272]/256"
                     "   (×2 on crit)",
-        "substituted": f"{strp};   {p} × (265−{vit}) × ({eff_str} + {eff_str}²/16)/256 / 16 × ~1",
+        "substituted": f"{strp};   {p} × ({k}−{vit}) × ({eff_str} + {eff_str}²/16)/256 / 16 × ~1",
         "result": f"≈ {avg} damage per hit  (random {lo}–{hi}; a crit doubles it → ≈{2 * avg})",
-        "note": "Physical damage core (ComputeWithDamageSTRFormula @0x492c40). The STR bonus IS "
+        "note": ("Cronos damage formula: a gunblade uses 320 instead of 265 (Damage_ComputeGunblade); "
+                 "a trigger hit is ×1.5. " if k == 320 else
+                 "Cronos damage formula: only gunblades change (320 instead of 265); this weapon "
+                 "keeps the vanilla formula. " if _cronos(P) else "")
+                + "Physical damage core (ComputeWithDamageSTRFormula @0x492c40). The STR bonus IS "
                 "accounted for — this weapon's STR bonus is added into the STR stat (GetCharacterStat "
                 "@0x496440, STR only) and that boosted STR₊ is what feeds this formula. So set "
                 "'Attacker STR' to your STR before this weapon; the bonus is added on top. VIT is the "
@@ -814,9 +867,9 @@ def _physical_damage(value, P, entry):
                 "physical (unlike magic, which Defend only halves). Elemental and drain modifiers "
                 "not shown; a negative final result (elemental absorb) displays as a GREEN heal "
                 "number (HIT_TYPE_RESTORATIVE).",
-        "latex": (r"dmg = \left\lfloor\frac{power\,(265{-}VIT)\,(STR_{+} + \lfloor STR_{+}^2/16\rfloor)}"
+        "latex": (rf"dmg = \left\lfloor\frac{{power\,({k}{{-}}VIT)\,(STR_{{+}} + \lfloor STR_{{+}}^2/16\rfloor)}}"
                   r"{256\cdot 16}\right\rfloor\cdot\frac{rand}{256},\quad STR_{+}=STR+bonus"),
-        "latex_sub": (rf"STR_{{+}}={eff_str};\ \frac{{{p}\,(265{{-}}{vit})\,({eff_str}+\lfloor {eff_str}^2/16\rfloor)}}"
+        "latex_sub": (rf"STR_{{+}}={eff_str};\ \frac{{{p}\,({k}{{-}}{vit})\,({eff_str}+\lfloor {eff_str}^2/16\rfloor)}}"
                       rf"{{4096}}\approx {avg}"),
     }
 
@@ -1317,6 +1370,9 @@ def compute(formula_key, value, entry):
     spec = FORMULAS.get(formula_key)
     if not spec:
         return None
-    out = spec[1](value, PARAM_VALUES, entry)
+    params = dict(PARAM_VALUES)
+    if PARAM_OVERRIDES is not None:
+        params.update(PARAM_OVERRIDES(formula_key))
+    out = spec[1](value, params, entry)
     out["title"] = spec[0]
     return out

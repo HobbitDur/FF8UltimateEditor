@@ -793,3 +793,40 @@ def test_the_selected_gf_is_renumbered_too(qapp, tmp_path):
     reloaded.load_file(str(work))
     after = [reloaded._section_entries(3)[0].get(f"ability{i}") for i in range(1, 22)]
     assert after == [v + 1 if v >= 20 else v for v in before]
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_the_battle_setup_feeds_a_spell_formula(qapp, tmp_path):
+    """Pick Squall (with a MAG bonus) and a monster opened in Ifrit in a spell's f(x) popup: the
+    caster MAG and target SPR come from them, greyed out, and the result follows."""
+    from SolomonRing import battle_setup, formula_specs
+    from SolomonRing.formula_popup import FormulaPopup
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    widget.set_monster_provider(lambda: [{"name": "Test monster", "curves": {
+        s: [2, 3, 10, 5] for s in ("hp", "str", "vit", "mag", "spr", "spd", "eva")}}])
+    magic = widget._section_tabs[2]
+    magic.list_widget.setCurrentRow(1)                     # Fire
+    field = next(f for f in magic.fields if f.get("formula") == "magic_damage")
+    popup = FormulaPopup(widget, magic)
+    try:
+        popup.show_for(field)
+        assert not popup._setup_group.isHidden()
+        popup._char_combo.setCurrentIndex(1)               # Squall
+        popup._char_level.setValue(30)
+        popup._bonus_spins["mag"].setValue(40)
+        popup._monster_combo.setCurrentIndex(1)
+        popup._monster_level.setValue(25)
+
+        squall = battle_setup.SETUP.character_stats()
+        assert squall["name"] == "Squall" and squall["mag"] >= 40
+        mag_spin = popup._param_spins["caster_mag"]
+        assert mag_spin.value() == squall["mag"] and not mag_spin.isEnabled()
+        assert popup._param_spins["target_spr"].value() == battle_setup.monster_stat("spr", [2, 3, 10, 5], 25)
+        expected = formula_specs.compute("magic_damage", popup._current_value(), popup._current_entry())
+        assert popup._result.text() == expected["result"]
+    finally:
+        popup.close()
+        battle_setup.SETUP.character = battle_setup.SETUP.monster = None

@@ -244,6 +244,8 @@ class FF8UltimateEditorWidget(QWidget):
         self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry,
                                                      settings=self.settings)
         self._ifrit_widget = IfritMonsterWidget( settings=self.settings, icon_path=resources_path, game_data_folder=game_data_path, file_registry=self.file_registry)
+        # SolomonRing's damage formulas can use a monster opened in Ifrit
+        self._solomonring_widget.set_monster_provider(self._ifrit_widget.battle_setup_monsters)
         self._kadowaki_widget = KadowakiWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._minimog_widget = MinimogWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._seed_widget = SeedWidget(icon_path=os.path.join(resources_path), settings=self.settings, file_registry=self.file_registry)
