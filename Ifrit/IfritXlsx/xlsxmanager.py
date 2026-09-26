@@ -7,6 +7,7 @@ from openpyxl.reader.excel import load_workbook
 
 from FF8GameData.GenericSection.ff8text import FF8Text
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+from FF8GameData.dat.monsterstatcurve import str_mag_terms, to_stat_byte
 from FF8GameData.gamedata import GameData
 from FF8GameData.monsterdata import AIData
 from Ifrit.IfritAI.AICompiler.AIDecompiler import AIDecompiler
@@ -84,10 +85,13 @@ def stat_impacts(stat_name: str, stat_bytes: list, level: int) -> list:
     if stat_name == 'hp':
         return [floor(b0 * (level * level / 20 + level)), 10 * b1, b2 * 100 * level, 1000 * b3]
     if stat_name in ('str', 'mag'):
-        return [floor(level * b0 / 40),
-                floor(level / (4 * b1)) if b1 else None,
-                floor(b2 / 4),
-                floor(level * level / (8 * b3)) if b3 else None]
+        # The game's four terms, each divided by the one final /4 so the impacts still add up to
+        # the stat (Stat_ComputeMonsterStatCurve: (C + L*A/10 + L/B - (L*L/D)/2) / 4).
+        terms = str_mag_terms(stat_bytes, level)
+        return [terms[0] / 4,
+                terms[1] / 4 if b1 else None,
+                terms[2] / 4,
+                terms[3] / 4 if b3 else None]
     # vit / spr / spd / eva
     return [level * b0,
             floor(level / b1) if b1 else None,
@@ -95,11 +99,16 @@ def stat_impacts(stat_name: str, stat_bytes: list, level: int) -> list:
             -floor(level / b3) if b3 else None]
 
 
-def stat_total(impacts: list):
-    """The sum of the impacts, None when one of them is a division by 0."""
+def stat_total(impacts: list, stat_name: str = 'hp'):
+    """The stat the impacts add up to, None when one of them is a division by 0. Every stat but
+    HP is capped at 255 and stored in a byte, so a negative total wraps (-3 is 253); STR and MAG
+    also truncate their final /4 toward zero."""
     if None in impacts:
         return None
-    return sum(impacts)
+    total = sum(impacts)
+    if stat_name == 'hp':
+        return total
+    return to_stat_byte(int(total))
 
 
 def cell_result(value):
@@ -169,8 +178,15 @@ class DatToXlsx:
                 .format(stat_cell[0], monster_lvl, monster_lvl, monster_lvl, stat_cell[1], stat_cell[2], monster_lvl, stat_cell[3]))
 
     def __str_excel_formula(self, stat_cell: list, monster_lvl: int):
-        return ('=FLOOR({}*{}/40, 1)+FLOOR({}/(4*{}),1)+FLOOR({}/4,1)+FLOOR({}*{}/(8*{}),1)'
-                .format(monster_lvl, stat_cell[0], monster_lvl, stat_cell[1], stat_cell[2], monster_lvl, monster_lvl, stat_cell[3]))
+        # (C + L*A/10 + L/B - (L*L/D)/2) / 4, truncated, capped at 255, wrapped into a byte
+        return ('=MOD(MIN(255,TRUNC(({2}+TRUNC({0}*{1}/10)+TRUNC({0}/{3})-TRUNC(TRUNC({0}*{0}/{4})/2))/4)),256)'
+                .format(monster_lvl, stat_cell[0], stat_cell[2], stat_cell[1], stat_cell[3]))
+
+    @staticmethod
+    def __byte_total_formula(first_cell: str, last_cell: str, truncate: bool):
+        """A stat's total cell: the sum of its impacts, capped at 255 and wrapped into a byte."""
+        total = 'SUM({}:{})'.format(first_cell, last_cell)
+        return '=MOD(MIN(255,{}),256)'.format('TRUNC({})'.format(total) if truncate else total)
 
     def __create_title(self, game_data: GameData, worksheet):
         worksheet.write_row(0, COL_MONSTER_INFO, ["Monster info"], cell_format=self.column_title_style)
@@ -348,7 +364,7 @@ class DatToXlsx:
         worksheet.write(ROW_GRAPH_PER_LVL, column, pretty_name, self.column_title_style)
         for level in range(1, 101):
             level_cell = xlsxwriter.utility.xl_col_to_name(COL_GRAPH_PER_LVL) + str(ROW_GRAPH_PER_LVL + level + 1)
-            result = stat_total(stat_impacts(param_name, stat_bytes, level))
+            result = stat_total(stat_impacts(param_name, stat_bytes, level), param_name)
             if param_name == 'hp':
                 # The HP is far higher than the other stats: shown /100 to fit on the same chart
                 formula = self.__hp_excel_formula(stat_cell, level_cell)
@@ -356,8 +372,8 @@ class DatToXlsx:
             elif param_name in ('str', 'mag'):
                 formula = self.__str_excel_formula(stat_cell, level_cell)
             else:
-                formula = '={}*{}+FLOOR({}/{},1)+{}-FLOOR({}/{},1)'.format(level_cell, stat_cell[0], level_cell, stat_cell[1],
-                                                                          stat_cell[2], level_cell, stat_cell[3])
+                formula = '=MOD(MIN(255,{}*{}+FLOOR({}/{},1)+{}-FLOOR({}/{},1)),256)'.format(
+                    level_cell, stat_cell[0], level_cell, stat_cell[1], stat_cell[2], level_cell, stat_cell[3])
             worksheet.write_formula(ROW_GRAPH_PER_LVL + level, column, formula, self.not_modified_style, cell_result(result))
 
         series_name = pretty_name + '/100' if param_name == 'hp' else pretty_name
@@ -451,7 +467,9 @@ class DatToXlsx:
                     # Every formula is written with the result it computes: a spreadsheet that does not
                     # recalculate on opening shows it as it is, and one that did would take ages.
                     impacts = stat_impacts(param_name, value, DEFAULT_MONSTER_LVL)
-                    impacts_total = cell_result(stat_total(impacts))
+                    impacts_total = cell_result(stat_total(impacts, param_name))
+                    first_impact = xlsxwriter.utility.xl_col_to_name(COL_STAT + 5) + str(row_index['stat'] + 1)
+                    last_impact = xlsxwriter.utility.xl_col_to_name(COL_STAT + 8) + str(row_index['stat'] + 1)
                     if param_name == 'hp':
                         # Impact 1
                         stat_cell[0] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 1) + str(row_index['stat'] + 1)
@@ -477,27 +495,27 @@ class DatToXlsx:
                                                 self.not_modified_style, impacts_total)
 
                     elif param_name == 'str' or param_name == 'mag':
+                        # (C + L*A/10 + L/B - (L*L/D)/2) / 4: each impact is one term / 4
                         # Impact 1
                         stat_cell[0] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 1) + str(row_index['stat'] + 1)
-                        worksheet.write_formula(row_index['stat'], column_index['stat'], '=FLOOR({}*{}/40, 1)'.format(monster_lvl_cell, stat_cell[0]),
+                        worksheet.write_formula(row_index['stat'], column_index['stat'], '=TRUNC({}*{}/10)/4'.format(monster_lvl_cell, stat_cell[0]),
                                                 self.not_modified_style, cell_result(impacts[0]))
                         # Impact 2
                         stat_cell[1] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 2) + str(row_index['stat'] + 1)
-                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 1, '=FLOOR({}/(4*{}),1)'.format(monster_lvl_cell, stat_cell[1]),
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 1, '=TRUNC({}/{})/4'.format(monster_lvl_cell, stat_cell[1]),
                                                 self.not_modified_style, cell_result(impacts[1]))
                         # Impact 3
                         stat_cell[2] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 3) + str(row_index['stat'] + 1)
-                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 2, '=FLOOR({}/4,1)'.format(stat_cell[2]), self.not_modified_style,
+                        worksheet.write_formula(row_index['stat'], column_index['stat'] + 2, '={}/4'.format(stat_cell[2]), self.not_modified_style,
                                                 cell_result(impacts[2]))
                         # Impact 4
                         stat_cell[3] = xlsxwriter.utility.xl_col_to_name(COL_STAT + 4) + str(row_index['stat'] + 1)
                         worksheet.write_formula(row_index['stat'], column_index['stat'] + 3,
-                                                '=FLOOR({}*{}/(8*{}),1)'.format(monster_lvl_cell, monster_lvl_cell, stat_cell[3]), self.not_modified_style,
+                                                '=-TRUNC(TRUNC({0}*{0}/{1})/2)/4'.format(monster_lvl_cell, stat_cell[3]), self.not_modified_style,
                                                 cell_result(impacts[3]))
                         # Total
                         worksheet.write_formula(row_index['stat'], column_index['stat'] + 4,
-                                                '=SUM({}:{})'.format(xlsxwriter.utility.xl_col_to_name(COL_STAT + 5) + str(row_index['stat'] + 1),
-                                                                     xlsxwriter.utility.xl_col_to_name(COL_STAT + 8) + str(row_index['stat'] + 1)),
+                                                self.__byte_total_formula(first_impact, last_impact, truncate=True),
                                                 self.not_modified_style, impacts_total)
                     elif param_name == 'vit' or param_name == 'spr' or param_name == 'spd' or param_name == 'eva':
                         # Impact 1
@@ -518,8 +536,7 @@ class DatToXlsx:
                                                 self.not_modified_style, cell_result(impacts[3]))
                         # Total
                         worksheet.write_formula(row_index['stat'], column_index['stat'] + 4,
-                                                '=SUM({}:{})'.format(xlsxwriter.utility.xl_col_to_name(COL_STAT + 5) + str(row_index['stat'] + 1),
-                                                                     xlsxwriter.utility.xl_col_to_name(COL_STAT + 8) + str(row_index['stat'] + 1)),
+                                                self.__byte_total_formula(first_impact, last_impact, truncate=False),
                                                 self.not_modified_style, impacts_total)
 
                     if stat_chart:

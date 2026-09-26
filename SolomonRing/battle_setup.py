@@ -8,6 +8,8 @@ stats then replace the typed assumptions of the formula being shown, on the side
 on: the character attacks in a spell's / weapon's / GF's formula, the monster in an enemy
 attack's.
 """
+from FF8GameData.dat.monsterstatcurve import monster_stat, monster_hp  # noqa: F401 (re-exported)
+
 from . import formula_specs as fs
 
 # Formulas where the character attacks the monster, and where the monster attacks.
@@ -18,31 +20,8 @@ SETUP_FORMULAS = CHARACTER_ATTACKS | MONSTER_ATTACKS
 BONUS_STATS = ("str", "vit", "mag", "spr")
 
 
-def _idiv(a, b):
-    return fs._idiv(a, b)
-
-
 def _cap(value):
     return max(0, min(255, value))
-
-
-def monster_stat(name, curve, level):
-    """A monster's stat at a level, as Stat_ComputeMonsterStatCurve @0x48c3f0 computes it from
-    the four bytes A, B, C, D of its .dat curve (before the AI stat multiplier, 10 = x1).
-
-    STR and MAG: (C + L*A/10 + L/B - (L*L/D)/2) / 4. VIT, SPR, SPD, EVA: C + L*A + L/B - L/D.
-    Every division truncates and the result is capped at 255. The game divides by B and D
-    unchecked, so a 0 there would crash it; it counts as 0 here."""
-    a, b, c, d = curve
-    if name in ("str", "mag"):
-        return _cap(_idiv(c + _idiv(level * a, 10) + _idiv(level, b) - _idiv(_idiv(level * level, d), 2), 4))
-    return _cap(c + level * a + _idiv(level, b) - _idiv(level, d))
-
-
-def monster_hp(curve, level):
-    """Stat_ComputeMonsterMaxHP @0x48c500: HP1*L*L/20 + L*(HP1 + 100*HP3) + 10*(HP2 + 100*HP4)."""
-    hp1, hp2, hp3, hp4 = curve
-    return _idiv(hp1 * level * level, 20) + level * (hp1 + 100 * hp3) + 10 * (hp2 + 100 * hp4)
 
 
 class BattleSetup:

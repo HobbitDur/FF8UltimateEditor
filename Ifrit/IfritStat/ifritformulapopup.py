@@ -20,23 +20,33 @@ _DEFAULT_LEVEL = 20
 # LaTeX form of each stat's per-level curve, keyed the same way as StatCurvePlot._stat_value.
 # Every multiplication is spelled out with \times so substituted numbers never read as one
 # concatenated digit string (e.g. "1000" next to "4" looking like "10004").
+# The game's formulas (Stat_ComputeMonsterStatCurve / Stat_ComputeMonsterMaxHP, see
+# FF8GameData.dat.monsterstatcurve): every division truncates, and STR/MAG subtract the L²
+# term before one final /4.
+_LINEAR = r"S=L \times b_0+\lfloor\frac{L}{b_1}\rfloor+b_2-\lfloor\frac{L}{b_3}\rfloor"
+_STR_MAG = (r"S=\lfloor\frac{b_2+\lfloor\frac{L \times b_0}{10}\rfloor+\lfloor\frac{L}{b_1}\rfloor"
+            r"-\lfloor\frac{\lfloor L^2/b_3\rfloor}{2}\rfloor}{4}\rfloor")
 _LATEX = {
-    'hp': r"HP=\lfloor b_0 \times (\frac{L^2}{20}+L)\rfloor+10 \times b_1+100 \times b_2 \times L+1000 \times b_3",
-    'str': r"S=\lfloor\frac{L \times b_0}{40}\rfloor+\lfloor\frac{L}{4 \times b_1}\rfloor+\lfloor\frac{b_2}{4}\rfloor+\lfloor\frac{L^2}{8 \times b_3}\rfloor",
-    'mag': r"S=\lfloor\frac{L \times b_0}{40}\rfloor+\lfloor\frac{L}{4 \times b_1}\rfloor+\lfloor\frac{b_2}{4}\rfloor+\lfloor\frac{L^2}{8 \times b_3}\rfloor",
-    'vit': r"S=L \times b_0+\lfloor\frac{L}{b_1}\rfloor+b_2-\lfloor\frac{L}{b_3}\rfloor",
-    'spr': r"S=L \times b_0+\lfloor\frac{L}{b_1}\rfloor+b_2-\lfloor\frac{L}{b_3}\rfloor",
-    'spd': r"S=L \times b_0+\lfloor\frac{L}{b_1}\rfloor+b_2-\lfloor\frac{L}{b_3}\rfloor",
-    'eva': r"S=L \times b_0+\lfloor\frac{L}{b_1}\rfloor+b_2-\lfloor\frac{L}{b_3}\rfloor",
+    'hp': r"HP=\lfloor\frac{b_0 \times L^2}{20}\rfloor+b_0 \times L+10 \times b_1+100 \times b_2 \times L+1000 \times b_3",
+    'str': _STR_MAG,
+    'mag': _STR_MAG,
+    'vit': _LINEAR,
+    'spr': _LINEAR,
+    'spd': _LINEAR,
+    'eva': _LINEAR,
 }
 
 
 def _plain_formula(stat_name):
     if stat_name == 'hp':
-        return "HP = floor(b0 × (L × L / 20 + L)) + 10 × b1 + b2 × 100 × L + 1000 × b3"
+        return "HP = b0 × L × L / 20 + b0 × L + 10 × b1 + 100 × b2 × L + 1000 × b3"
     if stat_name in ('str', 'mag'):
-        return "S = floor(L × b0 / 40) + floor(L / (4 × b1)) + floor(b2 / 4) + floor(L × L / (8 × b3))"
-    return "S = L × b0 + floor(L / b1) + b2 - floor(L / b3)"
+        return "S = (b2 + L × b0 / 10 + L / b1 - (L × L / b3) / 2) / 4"
+    return "S = L × b0 + L / b1 + b2 - L / b3"
+
+
+_WRAP_NOTE = ("   (every division truncates; capped at 255, and a negative result wraps: "
+              "the game stores the stat in a byte)")
 
 
 def _substitute(text, b, level):
@@ -152,7 +162,8 @@ class IfritFormulaPopup(QDialog):
         plain_sub = _substitute(plain, b, level)
         self._set_math(self._substituted, latex_sub, plain_sub)
 
-        self._result.setText(f"{self._stat_name.upper()}(L={level}) = {result}")
+        self._result.setText(f"{self._stat_name.upper()}(L={level}) = {result}"
+                             + ("" if self._stat_name == 'hp' else _WRAP_NOTE))
 
     def _set_math(self, label, latex, text_fallback):
         """Show ``latex`` as a typeset image if matplotlib is available and it parses;

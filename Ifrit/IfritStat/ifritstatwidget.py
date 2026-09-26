@@ -7,7 +7,6 @@ button. It mirrors the exact analyse/prepare logic of ``MonsterAnalyser`` so the
 values shown here match what gets serialized back to the .dat file.
 """
 from functools import partial
-from math import floor
 
 from PyQt6.QtCore import Qt, QEvent, QPointF
 from PyQt6.QtGui import QPainter, QPen, QColor, QFont, QPolygonF
@@ -17,6 +16,7 @@ from PyQt6.QtWidgets import (
     QTabWidget, QScrollArea, QPlainTextEdit, QSizePolicy, QToolButton,
 )
 
+from FF8GameData.dat.monsterstatcurve import monster_hp, monster_stat
 from FF8GameData.monsterdata import AIData
 from FF8GameData.dat.sequenceanalyser import SequenceAnalyser
 from SmallWidget.nowheel import NoWheelComboBox, NoWheelSpinBox
@@ -26,14 +26,16 @@ from .ifritmonsternamewidget import IfritMonsterNameWidget
 
 # Tooltips describing the four raw stat bytes and how the engine turns them into
 # the value shown in-game at a given level L.
+# Divisions truncate; STR..EVA are capped at 255 and a negative result wraps (stored in a byte).
+_CAP_NOTE = "\nCapped at 255; a negative result wraps (-3 becomes 253), as the game stores it in a byte."
 STAT_TOOLTIPS = {
-    'hp': "HP curve, 4 raw bytes (0-255).\nHP = floor(b0*(L*L/20+L)) + 10*b1 + b2*100*L + 1000*b3  (L = level)",
-    'str': "STR curve, 4 raw bytes (0-255).\nSTR = floor(L*b0/40) + floor(L/(4*b1)) + floor(b2/4) + floor(L*L/(8*b3))",
-    'mag': "MAG curve, 4 raw bytes (0-255).\nMAG = floor(L*b0/40) + floor(L/(4*b1)) + floor(b2/4) + floor(L*L/(8*b3))",
-    'vit': "VIT curve, 4 raw bytes (0-255).\nVIT = L*b0 + floor(L/b1) + b2 - floor(L/b3)",
-    'spr': "SPR curve, 4 raw bytes (0-255).\nSPR = L*b0 + floor(L/b1) + b2 - floor(L/b3)",
-    'spd': "SPD curve, 4 raw bytes (0-255).\nSPD = L*b0 + floor(L/b1) + b2 - floor(L/b3)",
-    'eva': "EVA curve, 4 raw bytes (0-255).\nEVA = L*b0 + floor(L/b1) + b2 - floor(L/b3)",
+    'hp': "HP curve, 4 raw bytes (0-255).\nHP = b0*L*L/20 + b0*L + 10*b1 + 100*b2*L + 1000*b3  (L = level)",
+    'str': "STR curve, 4 raw bytes (0-255).\nSTR = (b2 + L*b0/10 + L/b1 - (L*L/b3)/2) / 4" + _CAP_NOTE,
+    'mag': "MAG curve, 4 raw bytes (0-255).\nMAG = (b2 + L*b0/10 + L/b1 - (L*L/b3)/2) / 4" + _CAP_NOTE,
+    'vit': "VIT curve, 4 raw bytes (0-255).\nVIT = L*b0 + L/b1 + b2 - L/b3" + _CAP_NOTE,
+    'spr': "SPR curve, 4 raw bytes (0-255).\nSPR = L*b0 + L/b1 + b2 - L/b3" + _CAP_NOTE,
+    'spd': "SPD curve, 4 raw bytes (0-255).\nSPD = L*b0 + L/b1 + b2 - L/b3" + _CAP_NOTE,
+    'eva': "EVA curve, 4 raw bytes (0-255).\nEVA = L*b0 + L/b1 + b2 - L/b3" + _CAP_NOTE,
 }
 
 # Per-stat curve colours used by the live plot / legend.
@@ -84,14 +86,11 @@ class StatCurvePlot(QWidget):
 
     @staticmethod
     def _stat_value(name, b, level):
-        b0, b1, b2, b3 = b[0], b[1], b[2], b[3]
+        """The stat at a level, as the game computes it (FF8GameData.dat.monsterstatcurve)."""
+        curve = list(b[:4])
         if name == 'hp':
-            return floor(b0 * (level * level / 20 + level)) + 10 * b1 + b2 * 100 * level + 1000 * b3
-        if name in ('str', 'mag'):
-            return (floor(level * b0 / 40) + (floor(level / (4 * b1)) if b1 else 0)
-                    + floor(b2 / 4) + (floor(level * level / (8 * b3)) if b3 else 0))
-        # vit / spr / spd / eva
-        return level * b0 + (floor(level / b1) if b1 else 0) + b2 - (floor(level / b3) if b3 else 0)
+            return monster_hp(curve, level)
+        return monster_stat(name, curve, level)
 
     def paintEvent(self, event):
         painter = QPainter(self)

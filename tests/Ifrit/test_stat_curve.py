@@ -34,6 +34,16 @@ class TestStrMag:
         # b1 and b3 are divisors; 0 must be guarded, not crash
         assert stat_value('str', [40, 0, 5, 0], 40) == 40 + (5 // 4)
 
+    def test_the_level_squared_term_is_subtracted(self):
+        # Stat_ComputeMonsterStatCurve: (C + L*A/10 + L/B - (L*L/D)/2) / 4
+        # L=100: (4 + 300 + 12 - 10000/16/2) / 4 = (316 - 312) / 4 = 1
+        assert stat_value('str', [30, 8, 4, 16], 100) == 1
+        assert stat_value('str', [30, 8, 4, 16], 20) == (4 + 60 + 2 - 400 // 16 // 2) // 4
+
+    def test_a_negative_result_wraps_into_a_byte(self):
+        # The game only caps the top, then stores the stat in a byte: -1225 becomes 55
+        assert stat_value('mag', [10, 255, 0, 1], 100) == (-1225) & 0xFF
+
 
 class TestOtherStats:
     def test_vit_formula(self):
@@ -54,7 +64,7 @@ class TestOtherStats:
 class TestMonotonicity:
     @pytest.mark.parametrize("name,bytes_", [
         ('hp', [5, 2, 1, 0]),
-        ('str', [30, 8, 4, 16]),
+        ('str', [30, 8, 4, 255]),
         ('vit', [2, 10, 3, 0]),
     ])
     def test_stat_is_non_decreasing_with_level(self, name, bytes_):

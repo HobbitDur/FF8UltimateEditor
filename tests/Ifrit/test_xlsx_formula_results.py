@@ -28,9 +28,9 @@ STAT_NAMES = ['hp', 'str', 'vit', 'mag', 'spr', 'spd', 'eva']
 @pytest.mark.parametrize("stat_name", STAT_NAMES)
 @pytest.mark.parametrize("stat_bytes", [[1, 2, 3, 4], [30, 40, 0, 1], [255, 255, 255, 255], [7, 1, 50, 130]])
 def test_the_formula_results_are_the_game_curve(stat_name, stat_bytes):
-    """With no 0 divisor, the xlsx formula is the curve the stat editor draws."""
+    """With no 0 divisor, the xlsx formula is the curve the stat editor draws - the game's."""
     for level in (1, 10, 55, 100):
-        assert stat_total(stat_impacts(stat_name, stat_bytes, level)) == StatCurvePlot._stat_value(stat_name, stat_bytes, level)
+        assert stat_total(stat_impacts(stat_name, stat_bytes, level), stat_name) == StatCurvePlot._stat_value(stat_name, stat_bytes, level)
 
 
 @pytest.mark.parametrize("stat_name", ['str', 'vit'])
@@ -102,7 +102,7 @@ def test_every_stat_formula_holds_its_result(written):
         assert [formulas.cell(row, column).value for column in range(5, 9)] == stat_bytes   # E..H: the 4 bytes
         impacts = stat_impacts(stat_name, stat_bytes, DEFAULT_MONSTER_LVL)
         assert [results.cell(row, column).value for column in range(9, 13)] == [cell_result(x) for x in impacts]   # I..L
-        assert results.cell(row, 13).value == cell_result(stat_total(impacts))   # M: total
+        assert results.cell(row, 13).value == cell_result(stat_total(impacts, stat_name))   # M: total
         # The level table: level L on row 34 + L, one column per stat from F
         for level in (1, 50, 100):
             expected = StatCurvePlot._stat_value(stat_name, stat_bytes, level)

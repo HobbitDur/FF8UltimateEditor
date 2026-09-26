@@ -159,14 +159,15 @@ def _c_div(a, b):
 
 def test_monster_stats_follow_the_game_curve():
     """Stat_ComputeMonsterStatCurve @0x48c3f0, instruction by instruction: STR/MAG subtract the
-    quadratic term (Ifrit's graph adds it), VIT/SPR/SPD/EVA are linear."""
+    quadratic term, VIT/SPR/SPD/EVA are linear, and a negative result wraps into a byte."""
     for curve in ([40, 5, 20, 30], [12, 3, 200, 7], [255, 1, 255, 1]):
         a, b, c, d = curve
         for level in (1, 30, 60, 100):
             quad = _c_div(level * level, d)
-            want = max(0, min(255, _c_div(_c_div(level * a, 10) + _c_div(level, b) - (quad - (quad >> 31)) // 2 + c, 4)))
+            # CapTo255 caps the top only; the byte store wraps a negative value
+            want = min(255, _c_div(_c_div(level * a, 10) + _c_div(level, b) - (quad - (quad >> 31)) // 2 + c, 4)) & 0xFF
             assert battle_setup.monster_stat("str", curve, level) == want
-            assert battle_setup.monster_stat("vit", curve, level) == max(0, min(255, c + level * a + level // b - level // d))
+            assert battle_setup.monster_stat("vit", curve, level) == min(255, c + level * a + level // b - level // d) & 0xFF
     assert battle_setup.monster_hp([10, 20, 1, 2], 30) == 10 * 900 // 20 + 30 * 110 + 10 * 220
 
 
