@@ -204,6 +204,11 @@ class SolomonRingWidget(QWidget):
         # A group paste / "Apply to..." writes the data without typing in a field, so it marks
         # the unsaved-edit state itself (dirty_state is installed on this tool by the main window).
         tab.edited.connect(self._mark_edited)
+        if section_id == self.BATTLE_COMMAND_SECTION:
+            # The data picker names each entry by the commands using it; a pick made on one
+            # command is written back when another is selected, so relabel right then -
+            # otherwise the entry just assigned still reads "(unused)".
+            tab.list_widget.currentRowChanged.connect(lambda _row: self._refresh_command_lookups())
         self._section_tabs[section_id] = tab
         return tab
 
