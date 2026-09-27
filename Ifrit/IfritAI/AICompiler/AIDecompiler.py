@@ -60,6 +60,10 @@ class AIDecompiler:
         return list_result
 
     def decompile_from_command_list(self, command_list: List[CommandAnalyser]):
+        # The hex editor and the user-friendly combos edit a command's raw bytes (set_op_code /
+        # set_op_id), which leaves param_typed holding those bytes: an IF would then come out as
+        # if(9, 0, 0, 3, 0, 4, 0) and compile to another target. Type them again from the bytes.
+        self.type_resolver.resolve(command_list)
         func_list = []
         if_list_count = []
         else_list_count = []
