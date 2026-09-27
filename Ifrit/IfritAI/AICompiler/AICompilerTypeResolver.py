@@ -613,20 +613,18 @@ class AICompilerTypeResolver:
         # 3. Special target
         # 4. Target stored in variable
 
+        if slot:
+            list_target_key = 'target_slot'
+        elif advanced:
+            list_target_key = 'target_advanced_specific' if specific else 'target_advanced_generic'
+        else:
+            list_target_key = 'target_basic'
+        list_target_data = self.game_data.ai_data_json[list_target_key]
+
         if not slot:
             for i in range(len(self.game_data.ai_data_json['list_target_char'])):
                 list_target.append({"id": i, "data": self.game_data.ai_data_json['list_target_char'][i]})
-            for i in range(0, len(self.game_data.monster_data_json["monster"])):
-                list_target.append({"id": self.game_data.monster_data_json["monster"][i]["entity_id"], "data": self.game_data.monster_data_json["monster"][i]["name"]})
-        if slot:
-            list_target_data = self.game_data.ai_data_json['target_slot']
-        elif advanced:
-            if specific:
-                list_target_data = self.game_data.ai_data_json['target_advanced_specific']
-            else:
-                list_target_data = self.game_data.ai_data_json['target_advanced_generic']
-        else:
-            list_target_data = self.game_data.ai_data_json['target_basic']
+            list_target.extend(self.game_data.get_ai_monster_targets(list_target_key))
 
         for el in list_target_data:
             if el['param_type'] == "monster_name":
