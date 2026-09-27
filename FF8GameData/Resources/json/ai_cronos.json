@@ -26,7 +26,6 @@
   {"op_code": 226, "var_type":"local" ,  "var_name": "varG"},
   {"op_code": 227, "var_type":"local" ,  "var_name": "varH"}
 ],
-"extended_monster_targets": true,
 "list_target_char": ["Squall", "Zell", "Irvine", "Quistis", "Rinoa", "Selphie", "Seifer", "Edea", "Laguna", "Kiros", "Ward"],
 "list_comparator_html": ["==", "&lt;", "&gt;", "≠", "≤", "≥"],
 "list_comparator_ifritAI": ["==", "<", ">", "!=", "<=", ">="],

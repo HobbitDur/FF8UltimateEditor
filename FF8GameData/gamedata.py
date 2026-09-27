@@ -243,22 +243,22 @@ class GameData:
         with open(file_path, encoding="utf8") as f:
             self.monster_data_json = json.load(f)
 
-    # c0m144-c0m199: files on disk the vanilla exe cannot load, usable with FFNx's
-    # AllMonsterFilesUsable patch. Their AI target id is c0m + 16, like every monster.
-    EXTRA_MONSTER_COM_IDS = range(144, 200)
+    CRONOS_AI_FILE = "ai_cronos.json"
 
     def get_ai_monster_targets(self, target_list_key: str):
         """The monsters an AI target parameter of this kind (the ai json list: "target_basic",
         "target_advanced_specific", "target_advanced_generic") can name, as {"id", "data"}.
 
-        The ai json decides whether c0m144-c0m199 are in ("extended_monster_targets", on for
-        Cronos only). The target byte is one value space: the game decodes a special target
-        before looking for a monster with that id, so a monster whose id is a special target of
-        that same list (200 = self...) can't be named there and is left out. Each opcode family
-        reserves its own values, so c0m184-c0m193 (ids 200-209) are in some lists and not others."""
-        monsters = [{"id": m["entity_id"], "data": m["name"]} for m in self.monster_data_json["monster"]]
-        if self.ai_data_json.get("extended_monster_targets", False):
-            monsters += [{"id": com_id + 16, "data": f"c0m{com_id:03d}"} for com_id in self.EXTRA_MONSTER_COM_IDS]
+        monster.json flags c0m144-c0m199 "extended_monster_targets": files the vanilla exe
+        cannot load, usable with FFNx's AllMonsterFilesUsable patch - so they are in only with
+        the Cronos AI tables. The target byte is one value space: the game decodes a special
+        target before looking for a monster with that id, so a monster whose id is a special
+        target of that same list (200 = self...) can't be named there and is left out. Each
+        opcode family reserves its own values, so c0m184-c0m193 (ids 200-209) are in some lists
+        and not others."""
+        extended = self.ai_json_file_name == self.CRONOS_AI_FILE
+        monsters = [{"id": m["entity_id"], "data": m["name"]} for m in self.monster_data_json["monster"]
+                    if extended or not m.get("extended_monster_targets", False)]
         reserved = {el["param_id"] for el in self.ai_data_json.get(target_list_key, [])}
         return [m for m in monsters if m["id"] not in reserved]
 
