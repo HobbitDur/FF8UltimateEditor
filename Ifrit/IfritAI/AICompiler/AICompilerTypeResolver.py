@@ -544,6 +544,11 @@ class AICompilerTypeResolver:
             if value_resolved.value.isdigit():
                 if int(value_resolved.value) in mapping.values():
                     return value_resolved
+                # A text id typed as a number is kept as it is: the texts can come from elsewhere
+                # (Cronos keeps them in its xlsx, a new c0m file has none yet), and two identical
+                # texts share one mapping entry so the lower id is missing from mapping.values()
+                if expected_type in ("battle_text", "scan_text") and int(value_resolved.value) <= 255:
+                    return value_resolved
             if normalized in mapping:
                 value_resolved.value = str(mapping[normalized])  # Returns int
                 return value_resolved

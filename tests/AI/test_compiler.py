@@ -70,6 +70,15 @@ class TestAICompiler:
         code_raw_compiled = compiler.compile(source_code_raw)
         code_type_compiled = compiler.compile(source_code_type)
 
+    def test_print_text_id_not_in_the_file(self, compiler: AICompiler):
+        """A numeric text id compiles even when the file does not hold that text: a new c0m file
+        (Cronos c0m145) has no texts until its xlsx fills them in. A text given by name still has
+        to exist."""
+        assert compiler.compile("print(11);") == [0x01, 11, 0, 0]
+        assert compiler.compile("printWithDelay(11, 5);") == [34, 11, 5, 0]
+        with pytest.raises(ParamBattleTextError):
+            compiler.compile('print("Text not existing");')
+
     def test_print_double_space(self, compiler: AICompiler):
         # First declare different source code case
         ## Raw data (already int)
