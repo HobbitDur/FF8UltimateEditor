@@ -662,21 +662,21 @@ Character names section|6|10|Ward
 Battle item names section|7|0|
 Battle item names section|7|1|
 Battle item names section|7|2|Potion
-Battle item names section|7|3|{x0e33} {HP} by 200
+Battle item names section|7|3|{Restores} {HP} by 200
 Battle item names section|7|4|Potion+
-Battle item names section|7|5|{x0e33} {HP} by 400
+Battle item names section|7|5|{Restores} {HP} by 400
 Battle item names section|7|6|Hi-Potion
-Battle item names section|7|7|{x0e33} {HP} by 1000
+Battle item names section|7|7|{Restores} {HP} by 1000
 Battle item names section|7|8|Hi-Potion+
-Battle item names section|7|9|{x0e33} {HP} by 2000
+Battle item names section|7|9|{Restores} {HP} by 2000
 Battle item names section|7|10|X-Potion
-Battle item names section|7|11|Fu{ll}y {x0e33} {HP}
+Battle item names section|7|11|Fu{ll}y {Restores} {HP}
 Battle item names section|7|12|Mega-Potion
-Battle item names section|7|13|{x0e33} {HP} by 1000 {to} a{ll} members
+Battle item names section|7|13|{Restores} {HP} by 1000 {to} a{ll} members
 Battle item names section|7|14|Phoenix Down
-Battle item names section|7|15|Remove{s }KO {x0e34}
+Battle item names section|7|15|Remove{s }KO {status}
 Battle item names section|7|16|Mega Phoenix
-Battle item names section|7|17|Remove{s }KO {x0e34} from a{ll} members
+Battle item names section|7|17|Remove{s }KO {status} from a{ll} members
 Battle item names section|7|18|Elixir
 Battle item names section|7|19|Fu{ll}y{ r}es{to}{re}{s }abnorma{l }statu{s }and {HP}
 Battle item names section|7|20|Megalixir
@@ -692,9 +692,9 @@ Battle item names section|7|29|Cu{re}{s }S{il}ence
 Battle item names section|7|30|Holy Water
 Battle item names section|7|31|Cu{re}{s }Zombie, Curse
 Battle item names section|7|32|Remedy
-Battle item names section|7|33|Cu{re}{s }abnorma{l }{x0e34}
+Battle item names section|7|33|Cu{re}{s }abnorma{l }{status}
 Battle item names section|7|34|Remedy+
-Battle item names section|7|35|Cu{re}{s }abnorma{l }{x0e34} and {x0e37} {ef}fects
+Battle item names section|7|35|Cu{re}{s }abnorma{l }{status} and {Magic} {ef}fects
 Battle item names section|7|36|Hero-trial
 Battle item names section|7|37|Make{s }ch{ar}acter {in}v{in}cibl{e }sometimes
 Battle item names section|7|38|Hero
@@ -728,145 +728,145 @@ Battle item names section|7|65|When used {in} battle...
 Non-battle item names section|8|0|Tent
 Non-battle item names section|8|1|Fu{ll}y{ r}es{to}{re}{s }abnorma{l }statu{s }and {HP} {to} a{ll}
 Non-battle item names section|8|2|Pet House
-Non-battle item names section|8|3|{x0e33} {HP} {to} a{ll} {GF}
+Non-battle item names section|8|3|{Restores} {HP} {to} a{ll} {GF}
 Non-battle item names section|8|4|Cottage
 Non-battle item names section|8|5|Sam{e }{ef}fect a{s }Te{nt} plu{s }{re}s{to}{re}{s }a{ll} {GF}
 Non-battle item names section|8|6|G-Potion
-Non-battle item names section|8|7|{x0e33} 200 {HP} {to} {GF}
+Non-battle item names section|8|7|{Restores} 200 {HP} {to} {GF}
 Non-battle item names section|8|8|G-Hi-Potion
-Non-battle item names section|8|9|{x0e33} 1000 {HP} {to} {GF}
+Non-battle item names section|8|9|{Restores} 1000 {HP} {to} {GF}
 Non-battle item names section|8|10|G-Mega-Potion
-Non-battle item names section|8|11|{x0e33} 1000 {HP} {to} a{ll} {GF}
+Non-battle item names section|8|11|{Restores} 1000 {HP} {to} a{ll} {GF}
 Non-battle item names section|8|12|G-Returner
 Non-battle item names section|8|13|Revive{s }{GF} from KO
 Non-battle item names section|8|14|Rename Card
 Non-battle item names section|8|15|Change{s }{GF}'{s }name
 Non-battle item names section|8|16|Amnesia Greens
-Non-battle item names section|8|17|Make{s }{GF} forget an {x0e36}
+Non-battle item names section|8|17|Make{s }{GF} forget an {ability}
 Non-battle item names section|8|18|HP-J Scroll
-Non-battle item names section|8|19|{GF} {x0e35} {HP}-J {x0e36}
+Non-battle item names section|8|19|{GF} {learns} {HP}-J {ability}
 Non-battle item names section|8|20|Str-J Scroll
-Non-battle item names section|8|21|{GF} {x0e35}{ S}tr-J {x0e36}
+Non-battle item names section|8|21|{GF} {learns}{ S}tr-J {ability}
 Non-battle item names section|8|22|Vit-J Scroll
-Non-battle item names section|8|23|{GF} {x0e35} Vit-J {x0e36}
+Non-battle item names section|8|23|{GF} {learns} Vit-J {ability}
 Non-battle item names section|8|24|Mag-J Scroll
-Non-battle item names section|8|25|{GF} {x0e35} M{ag}-J {x0e36}
+Non-battle item names section|8|25|{GF} {learns} M{ag}-J {ability}
 Non-battle item names section|8|26|Spr-J Scroll
-Non-battle item names section|8|27|{GF} {x0e35}{ S}pr-J {x0e36}
+Non-battle item names section|8|27|{GF} {learns}{ S}pr-J {ability}
 Non-battle item names section|8|28|Spd-J Scroll
-Non-battle item names section|8|29|{GF} {x0e35}{ S}pd-J {x0e36}
+Non-battle item names section|8|29|{GF} {learns}{ S}pd-J {ability}
 Non-battle item names section|8|30|Luck-J Scroll
-Non-battle item names section|8|31|{GF} {x0e35} Luck-J {x0e36}
+Non-battle item names section|8|31|{GF} {learns} Luck-J {ability}
 Non-battle item names section|8|32|Aegis Amulet
-Non-battle item names section|8|33|{GF} {x0e35} Eva-J {x0e36}
+Non-battle item names section|8|33|{GF} {learns} Eva-J {ability}
 Non-battle item names section|8|34|Elem Atk
-Non-battle item names section|8|35|{GF} {x0e35} Elem-Atk-J {x0e36}
+Non-battle item names section|8|35|{GF} {learns} Elem-Atk-J {ability}
 Non-battle item names section|8|36|Elem Guard
-Non-battle item names section|8|37|{GF} {x0e35} Elem-D{ef}x4 {x0e36}
+Non-battle item names section|8|37|{GF} {learns} Elem-D{ef}x4 {ability}
 Non-battle item names section|8|38|Status Atk
-Non-battle item names section|8|39|{GF} {x0e35}{ S}T-Atk-J {x0e36}
+Non-battle item names section|8|39|{GF} {learns}{ S}T-Atk-J {ability}
 Non-battle item names section|8|40|Status Guard
-Non-battle item names section|8|41|{GF} {x0e35}{ S}T-D{ef}x4 {x0e36}
+Non-battle item names section|8|41|{GF} {learns}{ S}T-D{ef}x4 {ability}
 Non-battle item names section|8|42|Rosetta Stone
-Non-battle item names section|8|43|{GF} {x0e35} {x0e36}x4 {x0e36}
+Non-battle item names section|8|43|{GF} {learns} {ability}x4 {ability}
 Non-battle item names section|8|44|Magic Scroll
-Non-battle item names section|8|45|{GF} {x0e35} {x0e37} {x0e36}
+Non-battle item names section|8|45|{GF} {learns} {Magic} {ability}
 Non-battle item names section|8|46|GF Scroll
-Non-battle item names section|8|47|{GF} {x0e35} {GF} {x0e36}
+Non-battle item names section|8|47|{GF} {learns} {GF} {ability}
 Non-battle item names section|8|48|Draw Scroll
-Non-battle item names section|8|49|{GF} {x0e35} Draw {x0e36}
+Non-battle item names section|8|49|{GF} {learns} Draw {ability}
 Non-battle item names section|8|50|Item Scroll
-Non-battle item names section|8|51|{GF} {x0e35} Item {x0e36}
+Non-battle item names section|8|51|{GF} {learns} Item {ability}
 Non-battle item names section|8|52|Gambler Spirit
-Non-battle item names section|8|53|{GF} {x0e35} C{ar}d {x0e36}
+Non-battle item names section|8|53|{GF} {learns} C{ar}d {ability}
 Non-battle item names section|8|54|Healing Ring
-Non-battle item names section|8|55|{GF} {x0e35} Recover {x0e36}
+Non-battle item names section|8|55|{GF} {learns} Recover {ability}
 Non-battle item names section|8|56|Phoenix Spirit
-Non-battle item names section|8|57|{GF} {x0e35} Reviv{e }{x0e36}
+Non-battle item names section|8|57|{GF} {learns} Reviv{e }{ability}
 Non-battle item names section|8|58|Med Kit
-Non-battle item names section|8|59|{GF} {x0e35} T{re}atme{nt} {x0e36}
+Non-battle item names section|8|59|{GF} {learns} T{re}atme{nt} {ability}
 Non-battle item names section|8|60|Bomb Spirit
-Non-battle item names section|8|61|{GF} {x0e35} Kamikaz{e }{x0e36}
+Non-battle item names section|8|61|{GF} {learns} Kamikaz{e }{ability}
 Non-battle item names section|8|62|Hungry Cookpot
-Non-battle item names section|8|63|{GF} {x0e35} Devour {x0e36}
+Non-battle item names section|8|63|{GF} {learns} Devour {ability}
 Non-battle item names section|8|64|Mog's Amulet
-Non-battle item names section|8|65|{GF} {x0e35} M{in}iMog {x0e36}
+Non-battle item names section|8|65|{GF} {learns} M{in}iMog {ability}
 Non-battle item names section|8|66|Steel Pipe
-Non-battle item names section|8|67|{GF} {x0e35}{ S}umM{ag}+10% {x0e36}
+Non-battle item names section|8|67|{GF} {learns}{ S}umM{ag}+10% {ability}
 Non-battle item names section|8|68|Star Fragment
-Non-battle item names section|8|69|{GF} {x0e35}{ S}umM{ag}+20% {x0e36}
+Non-battle item names section|8|69|{GF} {learns}{ S}umM{ag}+20% {ability}
 Non-battle item names section|8|70|Energy Crystal
-Non-battle item names section|8|71|{GF} {x0e35}{ S}umM{ag}+30% {x0e36}
+Non-battle item names section|8|71|{GF} {learns}{ S}umM{ag}+30% {ability}
 Non-battle item names section|8|72|Samantha Soul
-Non-battle item names section|8|73|{GF} {x0e35}{ S}umM{ag}+40% {x0e36}
+Non-battle item names section|8|73|{GF} {learns}{ S}umM{ag}+40% {ability}
 Non-battle item names section|8|74|Healing Mail
-Non-battle item names section|8|75|{GF} {x0e35} {GF}{HP}+10% {x0e36}
+Non-battle item names section|8|75|{GF} {learns} {GF}{HP}+10% {ability}
 Non-battle item names section|8|76|Silver Mail
-Non-battle item names section|8|77|{GF} {x0e35} {GF}{HP}+20% {x0e36}
+Non-battle item names section|8|77|{GF} {learns} {GF}{HP}+20% {ability}
 Non-battle item names section|8|78|Gold Armor
-Non-battle item names section|8|79|{GF} {x0e35} {GF}{HP}+30% {x0e36}
+Non-battle item names section|8|79|{GF} {learns} {GF}{HP}+30% {ability}
 Non-battle item names section|8|80|Diamond Armor
-Non-battle item names section|8|81|{GF} {x0e35} {GF}{HP}+40% {x0e36}
+Non-battle item names section|8|81|{GF} {learns} {GF}{HP}+40% {ability}
 Non-battle item names section|8|82|Regen Ring
-Non-battle item names section|8|83|{GF} {x0e35} {HP}+20% {x0e36}
+Non-battle item names section|8|83|{GF} {learns} {HP}+20% {ability}
 Non-battle item names section|8|84|Giant's Ring
-Non-battle item names section|8|85|{GF} {x0e35} {HP}+40% {x0e36}
+Non-battle item names section|8|85|{GF} {learns} {HP}+40% {ability}
 Non-battle item names section|8|86|Gaea's Ring
-Non-battle item names section|8|87|{GF} {x0e35} {HP}+80% {x0e36}
+Non-battle item names section|8|87|{GF} {learns} {HP}+80% {ability}
 Non-battle item names section|8|88|Strength Love
-Non-battle item names section|8|89|{GF} {x0e35}{ S}tr+20% {x0e36}
+Non-battle item names section|8|89|{GF} {learns}{ S}tr+20% {ability}
 Non-battle item names section|8|90|Power Wrist
-Non-battle item names section|8|91|{GF} {x0e35}{ S}tr+40% {x0e36}
+Non-battle item names section|8|91|{GF} {learns}{ S}tr+40% {ability}
 Non-battle item names section|8|92|Hyper Wrist
-Non-battle item names section|8|93|{GF} {x0e35}{ S}tr+60% {x0e36}
+Non-battle item names section|8|93|{GF} {learns}{ S}tr+60% {ability}
 Non-battle item names section|8|94|Turtle Shell
-Non-battle item names section|8|95|{GF} {x0e35} Vit+20% {x0e36}
+Non-battle item names section|8|95|{GF} {learns} Vit+20% {ability}
 Non-battle item names section|8|96|Orihalcon
-Non-battle item names section|8|97|{GF} {x0e35} Vit+40% {x0e36}
+Non-battle item names section|8|97|{GF} {learns} Vit+40% {ability}
 Non-battle item names section|8|98|Adamantine
-Non-battle item names section|8|99|{GF} {x0e35} Vit+60% {x0e36}
+Non-battle item names section|8|99|{GF} {learns} Vit+60% {ability}
 Non-battle item names section|8|100|Rune Armlet
-Non-battle item names section|8|101|{GF} {x0e35}{ S}pr+20% {x0e36}
+Non-battle item names section|8|101|{GF} {learns}{ S}pr+20% {ability}
 Non-battle item names section|8|102|Force Armlet
-Non-battle item names section|8|103|{GF} {x0e35}{ S}pr+40% {x0e36}
+Non-battle item names section|8|103|{GF} {learns}{ S}pr+40% {ability}
 Non-battle item names section|8|104|Magic Armlet
-Non-battle item names section|8|105|{GF} {x0e35}{ S}pr+60% {x0e36}
+Non-battle item names section|8|105|{GF} {learns}{ S}pr+60% {ability}
 Non-battle item names section|8|106|Circlet
-Non-battle item names section|8|107|{GF} {x0e35} M{ag}+20% {x0e36}
+Non-battle item names section|8|107|{GF} {learns} M{ag}+20% {ability}
 Non-battle item names section|8|108|Hypno Crown
-Non-battle item names section|8|109|{GF} {x0e35} M{ag}+40% {x0e36}
+Non-battle item names section|8|109|{GF} {learns} M{ag}+40% {ability}
 Non-battle item names section|8|110|Royal Crown
-Non-battle item names section|8|111|{GF} {x0e35} M{ag}+60% {x0e36}
+Non-battle item names section|8|111|{GF} {learns} M{ag}+60% {ability}
 Non-battle item names section|8|112|Jet Engine
-Non-battle item names section|8|113|{GF} {x0e35}{ S}pd+20% {x0e36}
+Non-battle item names section|8|113|{GF} {learns}{ S}pd+20% {ability}
 Non-battle item names section|8|114|Rocket Engine
-Non-battle item names section|8|115|{GF} {x0e35}{ S}pd+40% {x0e36}
+Non-battle item names section|8|115|{GF} {learns}{ S}pd+40% {ability}
 Non-battle item names section|8|116|Moon Curtain
-Non-battle item names section|8|117|{GF} {x0e35} Au{to}-She{ll} {x0e36}
+Non-battle item names section|8|117|{GF} {learns} Au{to}-She{ll} {ability}
 Non-battle item names section|8|118|Steel Curtain
-Non-battle item names section|8|119|{GF} {x0e35} Au{to}-Protect {x0e36}
+Non-battle item names section|8|119|{GF} {learns} Au{to}-Protect {ability}
 Non-battle item names section|8|120|Glow Curtain
-Non-battle item names section|8|121|{GF} {x0e35} Au{to}-R{ef}lect {x0e36}
+Non-battle item names section|8|121|{GF} {learns} Au{to}-R{ef}lect {ability}
 Non-battle item names section|8|122|Accelerator
-Non-battle item names section|8|123|{GF} {x0e35} Au{to}-Hast{e }{x0e36}
+Non-battle item names section|8|123|{GF} {learns} Au{to}-Hast{e }{ability}
 Non-battle item names section|8|124|Monk's Code
-Non-battle item names section|8|125|{GF} {x0e35} Cou{nt}er {x0e36}
+Non-battle item names section|8|125|{GF} {learns} Cou{nt}er {ability}
 Non-battle item names section|8|126|Knight's Code
-Non-battle item names section|8|127|{GF} {x0e35} Cover {x0e36}
+Non-battle item names section|8|127|{GF} {learns} Cover {ability}
 Non-battle item names section|8|128|Doc's Code
-Non-battle item names section|8|129|{GF} {x0e35} Med Data {x0e36}
+Non-battle item names section|8|129|{GF} {learns} Med Data {ability}
 Non-battle item names section|8|130|Hundred Needles
-Non-battle item names section|8|131|{GF} {x0e35} Return Dam{ag}{e }{x0e36}
+Non-battle item names section|8|131|{GF} {learns} Return Dam{ag}{e }{ability}
 Non-battle item names section|8|132|Three Stars
-Non-battle item names section|8|133|{GF} {x0e35} Expendx3-1 {x0e36}
+Non-battle item names section|8|133|{GF} {learns} Expendx3-1 {ability}
 Non-battle item names section|8|134|Ribbon
-Non-battle item names section|8|135|{GF} {x0e35} Ribb{on} {x0e36}
+Non-battle item names section|8|135|{GF} {learns} Ribb{on} {ability}
 Non-battle item names section|8|136|Normal Ammo
 Non-battle item names section|8|137|Norma{l }Ammo
 Non-battle item names section|8|138|Shotgun Ammo
 Non-battle item names section|8|139|Amm{o }that attack{s }a{ll} opp{on}e{nt}s
 Non-battle item names section|8|140|Dark Ammo
-Non-battle item names section|8|141|Amm{o }{wi}th {x0e34} chang{in}g {ef}fect
+Non-battle item names section|8|141|Amm{o }{wi}th {status} chang{in}g {ef}fect
 Non-battle item names section|8|142|Fire Ammo
 Non-battle item names section|8|143|Amm{o }{wi}th Fi{re} eleme{nt}
 Non-battle item names section|8|144|Demolition Ammo
@@ -878,11 +878,11 @@ Non-battle item names section|8|149|Armor-pierc{in}g ammo
 Non-battle item names section|8|150|Pulse Ammo
 Non-battle item names section|8|151|Amm{o }that c{on}ta{in}{s }powerfu{l }e{ne}rgy
 Non-battle item names section|8|152|M-Stone Piece
-Non-battle item names section|8|153|S{to}{ne}{ w}ith a littl{e }{x0e37} power
+Non-battle item names section|8|153|S{to}{ne}{ w}ith a littl{e }{Magic} power
 Non-battle item names section|8|154|Magic Stone
-Non-battle item names section|8|155|S{to}{ne}{ w}ith {x0e37} power
+Non-battle item names section|8|155|S{to}{ne}{ w}ith {Magic} power
 Non-battle item names section|8|156|Wizard Stone
-Non-battle item names section|8|157|S{to}{ne}{ w}ith str{on}g {x0e37} power
+Non-battle item names section|8|157|S{to}{ne}{ w}ith str{on}g {Magic} power
 Non-battle item names section|8|158|Ochu Tentacle
 Non-battle item names section|8|159|Str{on}g, flexibl{e }te{nt}acle
 Non-battle item names section|8|160|Healing Water
@@ -986,7 +986,7 @@ Non-battle item names section|8|257|S{to}{ne}{ w}ith mystica{l }power
 Non-battle item names section|8|258|Fuel
 Non-battle item names section|8|259|Fue{l }for a{ r}e{nt}a{l }c{ar}
 Non-battle item names section|8|260|Girl Next Door
-Non-battle item names section|8|261|Naughty {x0e3c}
+Non-battle item names section|8|261|Naughty {Magazine}
 Non-battle item names section|8|262|Sorceress' Letter
 Non-battle item names section|8|263|Edea'{s }{in}troducti{on} letter
 Non-battle item names section|8|264|Chocobo's Tag
@@ -998,65 +998,65 @@ Non-battle item names section|8|269|Mysteriou{s }old{ r}{in}g
 Non-battle item names section|8|270|Magical Lamp
 Non-battle item names section|8|271|You should{ S}av{e }your gam{e }b{ef}o{re} us{in}g it!
 Non-battle item names section|8|272|HP Up
-Non-battle item names section|8|273|{x0e3a} {HP}
+Non-battle item names section|8|273|{Raises} {HP}
 Non-battle item names section|8|274|Str Up
-Non-battle item names section|8|275|{x0e3a}{ S}t{re}ngth
+Non-battle item names section|8|275|{Raises}{ S}t{re}ngth
 Non-battle item names section|8|276|Vit Up
-Non-battle item names section|8|277|{x0e3a} Vitality
+Non-battle item names section|8|277|{Raises} Vitality
 Non-battle item names section|8|278|Mag Up
-Non-battle item names section|8|279|{x0e3a} {x0e37}
+Non-battle item names section|8|279|{Raises} {Magic}
 Non-battle item names section|8|280|Spr Up
-Non-battle item names section|8|281|{x0e3a}{ S}pirit
+Non-battle item names section|8|281|{Raises}{ S}pirit
 Non-battle item names section|8|282|Spd Up
-Non-battle item names section|8|283|{x0e3a}{ S}peed
+Non-battle item names section|8|283|{Raises}{ S}peed
 Non-battle item names section|8|284|Luck Up
-Non-battle item names section|8|285|{x0e3a} Luck
+Non-battle item names section|8|285|{Raises} Luck
 Non-battle item names section|8|286|LuvLuv G
-Non-battle item names section|8|287|{x0e3a} compatib{il}ity{ w}ith a{ll} {GF}
+Non-battle item names section|8|287|{Raises} compatib{il}ity{ w}ith a{ll} {GF}
 Non-battle item names section|8|288|Weapons Mon 1st
-Non-battle item names section|8|289|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|289|Weap{on}{s }{re}se{ar}ch {Magazine}
 Non-battle item names section|8|290|Weapons Mon Mar
-Non-battle item names section|8|291|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|291|Weap{on}{s }{re}se{ar}ch {Magazine}
 Non-battle item names section|8|292|Weapons Mon Apr
-Non-battle item names section|8|293|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|293|Weap{on}{s }{re}se{ar}ch {Magazine}
 Non-battle item names section|8|294|Weapons Mon May
-Non-battle item names section|8|295|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|295|Weap{on}{s }{re}se{ar}ch {Magazine}
 Non-battle item names section|8|296|Weapons Mon Jun
-Non-battle item names section|8|297|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|297|Weap{on}{s }{re}se{ar}ch {Magazine}
 Non-battle item names section|8|298|Weapons Mon Jul
-Non-battle item names section|8|299|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|299|Weap{on}{s }{re}se{ar}ch {Magazine}
 Non-battle item names section|8|300|Weapons Mon Aug
-Non-battle item names section|8|301|Weap{on}{s }{re}se{ar}ch {x0e3c}
+Non-battle item names section|8|301|Weap{on}{s }{re}se{ar}ch {Magazine}
 Non-battle item names section|8|302|Combat King 001
-Non-battle item names section|8|303|{x0e3c} for {fi}ghters
+Non-battle item names section|8|303|{Magazine} for {fi}ghters
 Non-battle item names section|8|304|Combat King 002
-Non-battle item names section|8|305|{x0e3c} for {fi}ghters
+Non-battle item names section|8|305|{Magazine} for {fi}ghters
 Non-battle item names section|8|306|Combat King 003
-Non-battle item names section|8|307|{x0e3c} for {fi}ghters
+Non-battle item names section|8|307|{Magazine} for {fi}ghters
 Non-battle item names section|8|308|Combat King 004
-Non-battle item names section|8|309|{x0e3c} for {fi}ghters
+Non-battle item names section|8|309|{Magazine} for {fi}ghters
 Non-battle item names section|8|310|Combat King 005
-Non-battle item names section|8|311|{x0e3c} for {fi}ghters
+Non-battle item names section|8|311|{Magazine} for {fi}ghters
 Non-battle item names section|8|312|Pet Pals Vol.1
-Non-battle item names section|8|313|{x0e3c} for dog lovers
+Non-battle item names section|8|313|{Magazine} for dog lovers
 Non-battle item names section|8|314|Pet Pals Vol.2
-Non-battle item names section|8|315|{x0e3c} for dog lovers
+Non-battle item names section|8|315|{Magazine} for dog lovers
 Non-battle item names section|8|316|Pet Pals Vol.3
-Non-battle item names section|8|317|{x0e3c} for dog lovers
+Non-battle item names section|8|317|{Magazine} for dog lovers
 Non-battle item names section|8|318|Pet Pals Vol.4
-Non-battle item names section|8|319|{x0e3c} for dog lovers
+Non-battle item names section|8|319|{Magazine} for dog lovers
 Non-battle item names section|8|320|Pet Pals Vol.5
-Non-battle item names section|8|321|{x0e3c} for dog lovers
+Non-battle item names section|8|321|{Magazine} for dog lovers
 Non-battle item names section|8|322|Pet Pals Vol.6
-Non-battle item names section|8|323|{x0e3c} for dog lovers
+Non-battle item names section|8|323|{Magazine} for dog lovers
 Non-battle item names section|8|324|Occult Fan I
-Non-battle item names section|8|325|World'{s }Mysterie{s }{x0e3c} { S}coop Issue
+Non-battle item names section|8|325|World'{s }Mysterie{s }{Magazine} { S}coop Issue
 Non-battle item names section|8|326|Occult Fan II
-Non-battle item names section|8|327|World'{s }Mysterie{s }{x0e3c}  Pho{to} Issue
+Non-battle item names section|8|327|World'{s }Mysterie{s }{Magazine}  Pho{to} Issue
 Non-battle item names section|8|328|Occult Fan III
-Non-battle item names section|8|329|World'{s }Mysterie{s }{x0e3c}  {x0e37} Issue
+Non-battle item names section|8|329|World'{s }Mysterie{s }{Magazine}  {Magic} Issue
 Non-battle item names section|8|330|Occult Fan IV
-Non-battle item names section|8|331|World'{s }Mysterie{s }{x0e3c}  Report Issue
+Non-battle item names section|8|331|World'{s }Mysterie{s }{Magazine}  Report Issue
 Non-junctionable GF attack name section|9|0|Zantetsuken
 Non-junctionable GF attack name section|9|1|Rebirth Flame
 Non-junctionable GF attack name section|9|2|ChocoFire
@@ -1076,119 +1076,119 @@ Non-junctionable GF attack name section|9|15|MoombaMoomba
 Junction abilities text section|10|0|
 Junction abilities text section|10|1|
 Junction abilities text section|10|2|HP-J
-Junction abilities text section|10|3|{x0e39} {x0e37} {to} {HP}
+Junction abilities text section|10|3|{Junctions} {Magic} {to} {HP}
 Junction abilities text section|10|4|Str-J
-Junction abilities text section|10|5|{x0e39} {x0e37} {to}{ S}t{re}ngth
+Junction abilities text section|10|5|{Junctions} {Magic} {to}{ S}t{re}ngth
 Junction abilities text section|10|6|Vit-J
-Junction abilities text section|10|7|{x0e39} {x0e37} {to} Vitality
+Junction abilities text section|10|7|{Junctions} {Magic} {to} Vitality
 Junction abilities text section|10|8|Mag-J
-Junction abilities text section|10|9|{x0e39} {x0e37} {to} {x0e37}
+Junction abilities text section|10|9|{Junctions} {Magic} {to} {Magic}
 Junction abilities text section|10|10|Spr-J
-Junction abilities text section|10|11|{x0e39} {x0e37} {to}{ S}pirit
+Junction abilities text section|10|11|{Junctions} {Magic} {to}{ S}pirit
 Junction abilities text section|10|12|Spd-J
-Junction abilities text section|10|13|{x0e39} {x0e37} {to}{ S}peed
+Junction abilities text section|10|13|{Junctions} {Magic} {to}{ S}peed
 Junction abilities text section|10|14|Eva-J
-Junction abilities text section|10|15|{x0e39} {x0e37} {to} Evade
+Junction abilities text section|10|15|{Junctions} {Magic} {to} Evade
 Junction abilities text section|10|16|Hit-J
-Junction abilities text section|10|17|{x0e39} {x0e37} {to} Hit
+Junction abilities text section|10|17|{Junctions} {Magic} {to} Hit
 Junction abilities text section|10|18|Luck-J
-Junction abilities text section|10|19|{x0e39} {x0e37} {to} Luck
+Junction abilities text section|10|19|{Junctions} {Magic} {to} Luck
 Junction abilities text section|10|20|Elem-Atk-J
-Junction abilities text section|10|21|{x0e39} {x0e37} {to} Elem-Atk
+Junction abilities text section|10|21|{Junctions} {Magic} {to} Elem-Atk
 Junction abilities text section|10|22|ST-Atk-J
-Junction abilities text section|10|23|{x0e39} {x0e37} {to}{ S}T-Atk
+Junction abilities text section|10|23|{Junctions} {Magic} {to}{ S}T-Atk
 Junction abilities text section|10|24|Elem-Def-J
-Junction abilities text section|10|25|{x0e39} {x0e37} {to} Elem-D{ef}
+Junction abilities text section|10|25|{Junctions} {Magic} {to} Elem-D{ef}
 Junction abilities text section|10|26|ST-Def-J
-Junction abilities text section|10|27|{x0e39} {x0e37} {to}{ S}T-D{ef}
+Junction abilities text section|10|27|{Junctions} {Magic} {to}{ S}T-D{ef}
 Junction abilities text section|10|28|Elem-Defx2
-Junction abilities text section|10|29|{x0e39} 2 {x0e37} {to} Elem-D{ef}
+Junction abilities text section|10|29|{Junctions} 2 {Magic} {to} Elem-D{ef}
 Junction abilities text section|10|30|Elem-Defx4
-Junction abilities text section|10|31|{x0e39} 4 {x0e37} {to} Elem-D{ef}
+Junction abilities text section|10|31|{Junctions} 4 {Magic} {to} Elem-D{ef}
 Junction abilities text section|10|32|ST-Def-Jx2
-Junction abilities text section|10|33|{x0e39} 2 {x0e37} {to}{ S}T-D{ef}
+Junction abilities text section|10|33|{Junctions} 2 {Magic} {to}{ S}T-D{ef}
 Junction abilities text section|10|34|ST-Def-Jx4
-Junction abilities text section|10|35|{x0e39} 4 {x0e37} {to} {to}{ S}T-D{ef}
+Junction abilities text section|10|35|{Junctions} 4 {Magic} {to} {to}{ S}T-D{ef}
 Junction abilities text section|10|36|Abilityx3
 Junction abilities text section|10|37|Set up {to} 3 ab{il}ities
 Junction abilities text section|10|38|Abilityx4
 Junction abilities text section|10|39|Set up {to} 4 ab{il}ities
 Command abilities text section|11|0|Magic
-Command abilities text section|11|1|Us{e }{x0e37} {x0e3b}
+Command abilities text section|11|1|Us{e }{Magic} {command}
 Command abilities text section|11|2|GF
-Command abilities text section|11|3|Us{e }{GF} {x0e3b}
+Command abilities text section|11|3|Us{e }{GF} {command}
 Command abilities text section|11|4|Draw
-Command abilities text section|11|5|Us{e }Draw {x0e3b}
+Command abilities text section|11|5|Us{e }Draw {command}
 Command abilities text section|11|6|Item
-Command abilities text section|11|7|Us{e }Item {x0e3b}
+Command abilities text section|11|7|Us{e }Item {command}
 Command abilities text section|11|8|Empty
 Command abilities text section|11|9|Empty
 Command abilities text section|11|10|Card
-Command abilities text section|11|11|Us{e }C{ar}d {x0e3b}
+Command abilities text section|11|11|Us{e }C{ar}d {command}
 Command abilities text section|11|12|Doom
-Command abilities text section|11|13|Us{e }Doom {x0e3b}
+Command abilities text section|11|13|Us{e }Doom {command}
 Command abilities text section|11|14|Mad Rush
-Command abilities text section|11|15|Us{e }Mad Rush {x0e3b}
+Command abilities text section|11|15|Us{e }Mad Rush {command}
 Command abilities text section|11|16|Treatment
-Command abilities text section|11|17|Us{e }T{re}atme{nt} {x0e3b}
+Command abilities text section|11|17|Us{e }T{re}atme{nt} {command}
 Command abilities text section|11|18|Defend
-Command abilities text section|11|19|Us{e }D{ef}end {x0e3b}
+Command abilities text section|11|19|Us{e }D{ef}end {command}
 Command abilities text section|11|20|Darkside
-Command abilities text section|11|21|Us{e }D{ar}ksid{e }{x0e3b}
+Command abilities text section|11|21|Us{e }D{ar}ksid{e }{command}
 Command abilities text section|11|22|Recover
-Command abilities text section|11|23|Us{e }Recover {x0e3b}
+Command abilities text section|11|23|Us{e }Recover {command}
 Command abilities text section|11|24|Absorb
-Command abilities text section|11|25|Us{e }Absorb {x0e3b}
+Command abilities text section|11|25|Us{e }Absorb {command}
 Command abilities text section|11|26|Revive
-Command abilities text section|11|27|Us{e }Reviv{e }{x0e3b}
+Command abilities text section|11|27|Us{e }Reviv{e }{command}
 Command abilities text section|11|28|LV Down
-Command abilities text section|11|29|Us{e }LV Down {x0e3b}
+Command abilities text section|11|29|Us{e }LV Down {command}
 Command abilities text section|11|30|LV Up
-Command abilities text section|11|31|Us{e }LV Up {x0e3b}
+Command abilities text section|11|31|Us{e }LV Up {command}
 Command abilities text section|11|32|Kamikaze
-Command abilities text section|11|33|Us{e }Kamikaz{e }{x0e3b}
+Command abilities text section|11|33|Us{e }Kamikaz{e }{command}
 Command abilities text section|11|34|Devour
-Command abilities text section|11|35|Us{e }Devour {x0e3b}
+Command abilities text section|11|35|Us{e }Devour {command}
 Command abilities text section|11|36|MiniMog
-Command abilities text section|11|37|Us{e }M{in}iMog {x0e3b}
+Command abilities text section|11|37|Us{e }M{in}iMog {command}
 Stat percentage increasing abilities text section|12|0|HP+20%
-Stat percentage increasing abilities text section|12|1|{x0e3a} {HP} by 20%
+Stat percentage increasing abilities text section|12|1|{Raises} {HP} by 20%
 Stat percentage increasing abilities text section|12|2|HP+40%
-Stat percentage increasing abilities text section|12|3|{x0e3a} {HP} by 40%
+Stat percentage increasing abilities text section|12|3|{Raises} {HP} by 40%
 Stat percentage increasing abilities text section|12|4|HP+80%
-Stat percentage increasing abilities text section|12|5|{x0e3a} {HP} by 80%
+Stat percentage increasing abilities text section|12|5|{Raises} {HP} by 80%
 Stat percentage increasing abilities text section|12|6|Str+20%
-Stat percentage increasing abilities text section|12|7|{x0e3a}{ S}tr by 20%
+Stat percentage increasing abilities text section|12|7|{Raises}{ S}tr by 20%
 Stat percentage increasing abilities text section|12|8|Str+40%
-Stat percentage increasing abilities text section|12|9|{x0e3a}{ S}tr by 40%
+Stat percentage increasing abilities text section|12|9|{Raises}{ S}tr by 40%
 Stat percentage increasing abilities text section|12|10|Str+60%
-Stat percentage increasing abilities text section|12|11|{x0e3a}{ S}tr by 60%
+Stat percentage increasing abilities text section|12|11|{Raises}{ S}tr by 60%
 Stat percentage increasing abilities text section|12|12|Vit+20%
-Stat percentage increasing abilities text section|12|13|{x0e3a} Vit by 20%
+Stat percentage increasing abilities text section|12|13|{Raises} Vit by 20%
 Stat percentage increasing abilities text section|12|14|Vit+40%
-Stat percentage increasing abilities text section|12|15|{x0e3a} Vit by 40%
+Stat percentage increasing abilities text section|12|15|{Raises} Vit by 40%
 Stat percentage increasing abilities text section|12|16|Vit+60%
-Stat percentage increasing abilities text section|12|17|{x0e3a} Vit by 60%
+Stat percentage increasing abilities text section|12|17|{Raises} Vit by 60%
 Stat percentage increasing abilities text section|12|18|Mag+20%
-Stat percentage increasing abilities text section|12|19|{x0e3a} M{ag}ic dam{ag}{e }by 20%
+Stat percentage increasing abilities text section|12|19|{Raises} M{ag}ic dam{ag}{e }by 20%
 Stat percentage increasing abilities text section|12|20|Mag+40%
-Stat percentage increasing abilities text section|12|21|{x0e3a} M{ag}ic dam{ag}{e }by 40%
+Stat percentage increasing abilities text section|12|21|{Raises} M{ag}ic dam{ag}{e }by 40%
 Stat percentage increasing abilities text section|12|22|Mag+60%
-Stat percentage increasing abilities text section|12|23|{x0e3a} M{ag}ic dam{ag}{e }by 60%
+Stat percentage increasing abilities text section|12|23|{Raises} M{ag}ic dam{ag}{e }by 60%
 Stat percentage increasing abilities text section|12|24|Spr+20%
-Stat percentage increasing abilities text section|12|25|{x0e3a}{ S}pr by 20%
+Stat percentage increasing abilities text section|12|25|{Raises}{ S}pr by 20%
 Stat percentage increasing abilities text section|12|26|Spr+40%
-Stat percentage increasing abilities text section|12|27|{x0e3a}{ S}pr by 40%
+Stat percentage increasing abilities text section|12|27|{Raises}{ S}pr by 40%
 Stat percentage increasing abilities text section|12|28|Spr+60%
-Stat percentage increasing abilities text section|12|29|{x0e3a}{ S}pr by 60%
+Stat percentage increasing abilities text section|12|29|{Raises}{ S}pr by 60%
 Stat percentage increasing abilities text section|12|30|Spd+20%
-Stat percentage increasing abilities text section|12|31|{x0e3a}{ S}pd by 20%
+Stat percentage increasing abilities text section|12|31|{Raises}{ S}pd by 20%
 Stat percentage increasing abilities text section|12|32|Spd+40%
-Stat percentage increasing abilities text section|12|33|{x0e3a}{ S}pd by 40%
+Stat percentage increasing abilities text section|12|33|{Raises}{ S}pd by 40%
 Stat percentage increasing abilities text section|12|34|Eva+30%
-Stat percentage increasing abilities text section|12|35|{x0e3a} Eva by 30%
+Stat percentage increasing abilities text section|12|35|{Raises} Eva by 30%
 Stat percentage increasing abilities text section|12|36|Luck+50%
-Stat percentage increasing abilities text section|12|37|{x0e3a} Luck by 50%
+Stat percentage increasing abilities text section|12|37|{Raises} Luck by 50%
 Character ability text section|13|0|Mug
 Character ability text section|13|1|Chang{e }Attack {to} Mug
 Character ability text section|13|2|Med Data
@@ -1202,7 +1202,7 @@ Character ability text section|13|9|Receive{s }attack {in} plac{e }of a p{ar}ty 
 Character ability text section|13|10|Initiative
 Character ability text section|13|11|Enable{s }acti{on} a{s }so{on} a{s }battl{e }beg{in}s
 Character ability text section|13|12|Move-HP Up
-Character ability text section|13|13|{x0e33} {HP} by{ w}alk{in}g
+Character ability text section|13|13|{Restores} {HP} by{ w}alk{in}g
 Character ability text section|13|14|HP Bonus
 Character ability text section|13|15|+30 B{on}u{s }{to} {HP} at leve{l }up
 Character ability text section|13|16|Str Bonus
@@ -1224,11 +1224,11 @@ Character ability text section|13|31|Hast{e }activate{s }au{to}matica{ll}y {in} 
 Character ability text section|13|32|Auto-Potion
 Character ability text section|13|33|Us{e }{re}covery item{s }au{to}matica{ll}y{ w}hen hit
 Character ability text section|13|34|Expendx2-1
-Character ability text section|13|35|Only 1 {x0e37} spe{nt}{ w}h{il}{e }Double
+Character ability text section|13|35|Only 1 {Magic} spe{nt}{ w}h{il}{e }Double
 Character ability text section|13|36|Expendx3-1
-Character ability text section|13|37|Only 1 {x0e37} spe{nt}{ w}h{il}{e }Triple
+Character ability text section|13|37|Only 1 {Magic} spe{nt}{ w}h{il}{e }Triple
 Character ability text section|13|38|Ribbon
-Character ability text section|13|39|P{re}ve{nt}{s }a{ll} {x0e34} abnormality
+Character ability text section|13|39|P{re}ve{nt}{s }a{ll} {status} abnormality
 Party ability text section|14|0|Alert
 Party ability text section|14|1|P{re}ve{nt}{s }Back Attack
 Party ability text section|14|2|Move-Find
@@ -1240,21 +1240,21 @@ Party ability text section|14|7|N{o }encou{nt}ers
 Party ability text section|14|8|Rare Item
 Party ability text section|14|9|Mo{re} likely {to}{ r}eceiv{e }r{ar}{e }items
 GF ability text section|15|0|SumMag+10%
-GF ability text section|15|1|{x0e3a}{ S}umM{ag} dam{ag}{e }by 10%
+GF ability text section|15|1|{Raises}{ S}umM{ag} dam{ag}{e }by 10%
 GF ability text section|15|2|SumMag+20%
-GF ability text section|15|3|{x0e3a}{ S}umM{ag} dam{ag}{e }by 20%
+GF ability text section|15|3|{Raises}{ S}umM{ag} dam{ag}{e }by 20%
 GF ability text section|15|4|SumMag+30%
-GF ability text section|15|5|{x0e3a}{ S}umM{ag} dam{ag}{e }by 30%
+GF ability text section|15|5|{Raises}{ S}umM{ag} dam{ag}{e }by 30%
 GF ability text section|15|6|SumMag+40%
-GF ability text section|15|7|{x0e3a}{ S}umM{ag} dam{ag}{e }by 40%
+GF ability text section|15|7|{Raises}{ S}umM{ag} dam{ag}{e }by 40%
 GF ability text section|15|8|GFHP+10%
-GF ability text section|15|9|{x0e3a} {GF}'{s }{HP} by 10%
+GF ability text section|15|9|{Raises} {GF}'{s }{HP} by 10%
 GF ability text section|15|10|GFHP+20%
-GF ability text section|15|11|{x0e3a} {GF}'{s }{HP} by 20%
+GF ability text section|15|11|{Raises} {GF}'{s }{HP} by 20%
 GF ability text section|15|12|GFHP+30%
-GF ability text section|15|13|{x0e3a} {GF}'{s }{HP} by 30%
+GF ability text section|15|13|{Raises} {GF}'{s }{HP} by 30%
 GF ability text section|15|14|GFHP+40%
-GF ability text section|15|15|{x0e3a} {GF}'{s }{HP} by 40%
+GF ability text section|15|15|{Raises} {GF}'{s }{HP} by 40%
 GF ability text section|15|16|Boost
 GF ability text section|15|17|Boost {GF}
 Menu ability text section|16|0|Haggle
@@ -1268,43 +1268,43 @@ Menu ability text section|16|7|Ca{ll} shop{s }from menu sc{re}en
 Menu ability text section|16|8|Junk Shop
 Menu ability text section|16|9|Ca{ll} junk shop from menu sc{re}en
 Menu ability text section|16|10|T Mag-RF
-Menu ability text section|16|11|{x0e38} Lightn{in}g/W{in}d {x0e37} from an item
+Menu ability text section|16|11|{Refine} Lightn{in}g/W{in}d {Magic} from an item
 Menu ability text section|16|12|I Mag-RF
-Menu ability text section|16|13|{x0e38} Water/Ic{e }{x0e37} from an item
+Menu ability text section|16|13|{Refine} Water/Ic{e }{Magic} from an item
 Menu ability text section|16|14|F Mag-RF
-Menu ability text section|16|15|{x0e38} Fi{re} {x0e37} from an item
+Menu ability text section|16|15|{Refine} Fi{re} {Magic} from an item
 Menu ability text section|16|16|L Mag-RF
-Menu ability text section|16|17|{x0e38} Life/Recovery {x0e37} from an item
+Menu ability text section|16|17|{Refine} Life/Recovery {Magic} from an item
 Menu ability text section|16|18|Time Mag-RF
-Menu ability text section|16|19|{x0e38} Time/Spac{e }{x0e37} from an item
+Menu ability text section|16|19|{Refine} Time/Spac{e }{Magic} from an item
 Menu ability text section|16|20|ST Mag-RF
-Menu ability text section|16|21|{x0e38} {x0e34} {x0e37} from an item
+Menu ability text section|16|21|{Refine} {status} {Magic} from an item
 Menu ability text section|16|22|Supt Mag-RF
-Menu ability text section|16|23|{x0e38}{ S}upport {x0e37} from an item
+Menu ability text section|16|23|{Refine}{ S}upport {Magic} from an item
 Menu ability text section|16|24|Forbid Mag-RF
-Menu ability text section|16|25|{x0e38} Forbidden {x0e37} from an item
+Menu ability text section|16|25|{Refine} Forbidden {Magic} from an item
 Menu ability text section|16|26|Recov Med-RF
-Menu ability text section|16|27|{x0e38} Recovery Medic{in}{e }from an item
+Menu ability text section|16|27|{Refine} Recovery Medic{in}{e }from an item
 Menu ability text section|16|28|ST Med-RF
-Menu ability text section|16|29|{x0e38} {x0e34} Recovery Medic{in}{e }from an item
+Menu ability text section|16|29|{Refine} {status} Recovery Medic{in}{e }from an item
 Menu ability text section|16|30|Ammo-RF
-Menu ability text section|16|31|{x0e38} Ammuniti{on} from an item
+Menu ability text section|16|31|{Refine} Ammuniti{on} from an item
 Menu ability text section|16|32|Tool-RF
-Menu ability text section|16|33|{x0e38} Tool{s }from an item
+Menu ability text section|16|33|{Refine} Tool{s }from an item
 Menu ability text section|16|34|Forbid Med-RF
-Menu ability text section|16|35|{x0e38} Forbidden Medic{in}{e }from an item
+Menu ability text section|16|35|{Refine} Forbidden Medic{in}{e }from an item
 Menu ability text section|16|36|GFRecov Med-RF
-Menu ability text section|16|37|{x0e38} Recovery Medic{in}{e }for {GF} from an item
+Menu ability text section|16|37|{Refine} Recovery Medic{in}{e }for {GF} from an item
 Menu ability text section|16|38|GFAbl Med-RF
 Menu ability text section|16|39|R{ef}{in}{e }ab{il}ity le{ar}n{in}g medic{in}{e }for {GF} from items
 Menu ability text section|16|40|Mid Mag-RF
-Menu ability text section|16|41|{x0e38} Mid-Leve{l }{x0e37} from other {x0e37}
+Menu ability text section|16|41|{Refine} Mid-Leve{l }{Magic} from other {Magic}
 Menu ability text section|16|42|High Mag-RF
-Menu ability text section|16|43|{x0e38} High Leve{l }{x0e37} from other {x0e37}
+Menu ability text section|16|43|{Refine} High Leve{l }{Magic} from other {Magic}
 Menu ability text section|16|44|Med LV Up
 Menu ability text section|16|45|Level{s }up medic{in}e
 Menu ability text section|16|46|Card Mod
-Menu ability text section|16|47|{x0e38} item{s }from c{ar}ds
+Menu ability text section|16|47|{Refine} item{s }from c{ar}ds
 Temporary character limit break text section|17|0|No Mercy
 Temporary character limit break text section|17|1|Dam{ag}{e }a{ll} e{ne}mies
 Temporary character limit break text section|17|2|Ice Strike
@@ -1414,7 +1414,7 @@ Misc text section|24|2|GF
 Misc text section|24|3|PAUSE
 Misc text section|24|4|Can't escape
 Misc text section|24|5|Draw failed!
-Misc text section|24|6|Received {x0a23}
+Misc text section|24|6|Received {CardReceived}
 Misc text section|24|7|learned!
 Misc text section|24|8|s!
 Misc text section|24|9|Received
@@ -1432,7 +1432,7 @@ Misc text section|24|20|Can't select
 Misc text section|24|21|Item received
 Misc text section|24|22|to confirm
 Misc text section|24|23|EXP received
-Misc text section|24|24|{x0a23}\nover 100 was discarded
+Misc text section|24|24|{CardReceived}\nover 100 was discarded
 Misc text section|24|25|End
 Misc text section|24|26|is
 Misc text section|24|27|'s
@@ -1517,8 +1517,8 @@ Misc text section|24|105|{x0561}
 Misc text section|24|106|{x0562}
 Misc text section|24|107|{x0563}
 Misc text section|24|108|{x0564}
-Misc text section|24|109|GF received {x0a20}AP!
-Misc text section|24|110|{x0a23}'s Card
+Misc text section|24|109|GF received {CurrentSeedTestLevel}AP!
+Misc text section|24|110|{CardReceived}'s Card
 Misc text section|24|111|Raising GF
 Misc text section|24|112|Couldn't Devour!
 Misc text section|24|113|?????

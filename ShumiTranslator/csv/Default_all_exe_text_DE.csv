@@ -1,10 +1,10 @@
 Section data name|Section Widget id|Text Sub id|Text
 Draw text|0|0|Das CD-Fach ist offen.
-Draw text|0|1|Bitte FINALFANTASY{xa8}\nCD {Var17} einlegen.
+Draw text|0|1|Bitte FINALFANTASY{xa8}\nCD {Var07} einlegen.
 Draw text|0|2|Draw-Punkt entdeckt!\n{x0c20} gefunden.
 Draw text|0|3|Draw-Punkt entdeckt!\nJedoch nichts gefunden...
 Draw text|0|4|Wer soll ziehen?\nNicht ziehen.\n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   
-Draw text|0|5|{Squall} hat {Var17} × {x0c20} gezogen.
+Draw text|0|5|{Squall} hat {Var07} × {x0c20} gezogen.
 Draw text|0|6|{Squall} kann {x0c20} nicht lagern.
 Draw text|0|7|Draw-Punkt entdeckt!!\nAber niemand kann ziehen...
 Draw text|0|8|Fehler auf der CD.

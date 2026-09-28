@@ -1,10 +1,10 @@
 Section data name|Section Widget id|Text Sub id|Text
 Draw text|0|0|Le couvercle du compartiment\nà disque est ouvert.
-Draw text|0|1|Veuillez insérer le CD {Var17}\nde FINAL FANTASY{xa8}
+Draw text|0|1|Veuillez insérer le CD {Var07}\nde FINAL FANTASY{xa8}
 Draw text|0|2|Source de magie\n{x0c20} en stock
 Draw text|0|3|Une source de magie!\nElle est vide...
 Draw text|0|4|Qui va voler?\nNe rien voler\n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   
-Draw text|0|5|{Squall} a stocké {Var17} {x0c20}(s).
+Draw text|0|5|{Squall} a stocké {Var07} {x0c20}(s).
 Draw text|0|6|{Squall} ne peut stocker aucun(e) {x0c20}.
 Draw text|0|7|Une source de magie!\nImpossible de rien voler
 Draw text|0|8|Une source de magie!\nVol impossible

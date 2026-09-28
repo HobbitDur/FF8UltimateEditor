@@ -231,13 +231,13 @@ tkmnmes2.bin - subsection n°8|3|8|Give All
 tkmnmes2.bin - subsection n°8|3|9|Split
 tkmnmes2.bin - subsection n°8|3|10|Choose magic
 tkmnmes2.bin - subsection n°8|3|11|Already have 100
-tkmnmes2.bin - subsection n°8|3|12|Can't carry {x0a26}
+tkmnmes2.bin - subsection n°8|3|12|Can't carry {SeedRank}
 tkmnmes2.bin - subsection n°8|3|13|Take All
 tkmnmes2.bin - subsection n°8|3|14|All
 tkmnmes2.bin - subsection n°8|3|15|Take all magic from other members
 tkmnmes2.bin - subsection n°8|3|16|Select member to receive magic
 tkmnmes2.bin - subsection n°8|3|17|Select member to transfer magic
-tkmnmes2.bin - subsection n°8|3|18|Discarding all of {x0a27}'s {x0a26}\nOK?
+tkmnmes2.bin - subsection n°8|3|18|Discarding all of {x0a27}'s {SeedRank}\nOK?
 tkmnmes2.bin - subsection n°8|3|19|Manual
 tkmnmes2.bin - subsection n°8|3|20|Rearrange manually
 tkmnmes2.bin - subsection n°8|3|21|Attack·Restore·Indirect
@@ -262,10 +262,10 @@ tkmnmes2.bin - subsection n°13|4|6|PLAYER
 tkmnmes2.bin - subsection n°13|4|7|TOTAL
 tkmnmes2.bin - subsection n°13|4|8|MONSTER
 tkmnmes2.bin - subsection n°13|4|9|AREA
-tkmnmes2.bin - subsection n°13|4|10|Level {x0a20} Monster Card
-tkmnmes2.bin - subsection n°13|4|11|Level {x0a20} Boss Card
-tkmnmes2.bin - subsection n°13|4|12|Level {x0a20} GF Card
-tkmnmes2.bin - subsection n°13|4|13|Level {x0a20} Player Card
+tkmnmes2.bin - subsection n°13|4|10|Level {CurrentSeedTestLevel} Monster Card
+tkmnmes2.bin - subsection n°13|4|11|Level {CurrentSeedTestLevel} Boss Card
+tkmnmes2.bin - subsection n°13|4|12|Level {CurrentSeedTestLevel} GF Card
+tkmnmes2.bin - subsection n°13|4|13|Level {CurrentSeedTestLevel} Player Card
 tkmnmes2.bin - subsection n°13|4|14|N/A
 tkmnmes2.bin - subsection n°14|5|0|Checking ‘Chocobo World'
 tkmnmes2.bin - subsection n°14|5|1|‘Chocobo World' not downloaded.\nDownload?  (uses 7 blocks)
@@ -372,7 +372,7 @@ tkmnmes3.bin - subsection n°3|7|38|Quantity
 tkmnmes3.bin - subsection n°3|7|39|Price
 tkmnmes3.bin - subsection n°3|7|40|Atk
 tkmnmes3.bin - subsection n°3|7|41|Hit
-tkmnmes3.bin - subsection n°3|7|42|Remodel {x0a27}'s weapon\nto ‘{x0a26}'\nOK?
+tkmnmes3.bin - subsection n°3|7|42|Remodel {x0a27}'s weapon\nto ‘{SeedRank}'\nOK?
 tkmnmes3.bin - subsection n°3|7|43|\n?
 tkmnmes3.bin - subsection n°3|7|44|Not enough items,\ncome back later.
 tkmnmes3.bin - subsection n°3|7|45|Not enough items
@@ -403,7 +403,7 @@ tkmnmes3.bin - subsection n°4|8|6|Can't remove from party
 tkmnmes3.bin - subsection n°4|8|7|({x0564})
 tkmnmes3.bin - subsection n°4|8|8|Can't include in party
 tkmnmes3.bin - subsection n°4|8|9|({x0564})
-tkmnmes3.bin - subsection n°4|8|10|Exchanges {x0a27} and {x0a26}'s junction status.\nAre you sure?
+tkmnmes3.bin - subsection n°4|8|10|Exchanges {x0a27} and {SeedRank}'s junction status.\nAre you sure?
 tkmnmes3.bin - subsection n°4|8|11|({x0564})
 tkmnmes3.bin - subsection n°4|8|12|The party has not been set
 tkmnmes3.bin - subsection n°4|8|13|The junction party has not been set
@@ -532,13 +532,13 @@ tkmnmes3.bin - subsection n°9|12|26|Nothing happened......
 tkmnmes3.bin - subsection n°9|12|27|{x0a24} learned {x0a25}!!!
 tkmnmes3.bin - subsection n°9|12|28|{x0a24} already knows {x0a25}
 tkmnmes3.bin - subsection n°9|12|29|{x0a24} can't learn anymore abilities
-tkmnmes3.bin - subsection n°9|12|30|{x0a27}'s compatibility with {x0a24} went up {x0a22}!
+tkmnmes3.bin - subsection n°9|12|30|{x0a27}'s compatibility with {x0a24} went up {NextSeedTestLevel}!
 tkmnmes3.bin - subsection n°9|12|31|{x0a27}'s compatibility with {x0a24} is at max
-tkmnmes3.bin - subsection n°9|12|32|{x0a27}'s {x0a28} went up {x0a22}!!!
+tkmnmes3.bin - subsection n°9|12|32|{x0a27}'s {x0a28} went up {NextSeedTestLevel}!!!
 tkmnmes3.bin - subsection n°9|12|33|{x0a27}'s {x0a28} won't go up anymore
 tkmnmes3.bin - subsection n°9|12|34|Basic {x0a28} Value
 tkmnmes3.bin - subsection n°9|12|35|{x0a27} has max compatibility with all GF
-tkmnmes3.bin - subsection n°9|12|36|{x0a27}'s compatibility with all GF went up {x0a22}!!!
+tkmnmes3.bin - subsection n°9|12|36|{x0a27}'s compatibility with all GF went up {NextSeedTestLevel}!!!
 tkmnmes3.bin - subsection n°9|12|37|『{x0a25}』\n
 tkmnmes3.bin - subsection n°11|13|0|Junction
 tkmnmes3.bin - subsection n°11|13|1|Junctioning
@@ -642,10 +642,10 @@ tkmnmes3.bin - subsection n°13|14|30|When you have to go back
 tkmnmes3.bin - subsection n°13|14|31|Select a heading to search
 tkmnmes3.bin - subsection n°13|14|32|SeeD Written Test
 tkmnmes3.bin - subsection n°13|14|33|SeeD Written Test (Trial)
-tkmnmes3.bin - subsection n°13|14|34|SeeD Written Test Level {x0a22}
+tkmnmes3.bin - subsection n°13|14|34|SeeD Written Test Level {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|35|SeeD Written Test Review 
 tkmnmes3.bin - subsection n°13|14|36|SeeD Test (Trial) Review
-tkmnmes3.bin - subsection n°13|14|37|SeeD Test Review Level {x0a22}
+tkmnmes3.bin - subsection n°13|14|37|SeeD Test Review Level {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|38|SeeD Written Test Level
 tkmnmes3.bin - subsection n°13|14|39|SeeD Written Test (Trial)
 tkmnmes3.bin - subsection n°13|14|40|Choose level to review
@@ -863,17 +863,17 @@ Chocobo tutorial|18|11|{xc4}         {xc4}{xc4}{xc4}                {Blue}Status
 Chocobo tutorial|18|12|{xc4}{xc4}{Blue}Optical Communication Screen{White} 8/8\n1: Neutral position.\n2: Receiver selects the bottom.\n3: Sender selects the top.\n4: Operate like any other battle.\n  The Chicobo on the right is yours.\n5: Take your opponent's ID\n  if you win.  Compare with your\n  own.  Select it like a weapon.\n
 Chocobo tutorial|18|13|{xc4}         {xc4}{xc4}            {Blue}ChocoboWorld{White} 8/8\n
 Chocobo tutorial|18|14|1: Select {Blue}World{White} to move Chicobo\n  into ChocoboWorld.\n2: Select {Blue}Home{White} to move Chicobo\n  back into FF{xc6}{xc7} world.\n3: If you want to start over\n  from where you left off,\n  select {Blue}Do over{White}.\n4: {Blue}How to play{White}: This tutorial.\n
-Test seed general|19|0|{x00}We will begin the SeeD written test.\nWill you take the level {x0a22} test?\n\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
-Test seed general|19|1|{x00}We will begin the SeeD written test.\nYour test level now is {x0a20}.\n\nWill you take the level {x0a22} test?\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
-Test seed general|19|2|{x00}Your scored 100%.\nYou {Red}passed{White} the level {x0a20} written test.\nYour SeeD rank will go up to {x0a26}.\n\n\n\n  {Cursor_location_id:0x20}END
-Test seed general|19|3|{x00}Your score was 100%.\nYou passed level {x0a20} written test.\nYour SeeD rank won't go any higher than {x0a20}.\n\n\n\n  {Cursor_location_id:0x20}END\n
-Test seed general|19|4|{x00}Your score was {x0a20}.\nYou failed.\nBetter luck next time.\n\n\n\n  {Cursor_location_id:0x20}END
+Test seed general|19|0|{x00}We will begin the SeeD written test.\nWill you take the level {NextSeedTestLevel} test?\n\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
+Test seed general|19|1|{x00}We will begin the SeeD written test.\nYour test level now is {CurrentSeedTestLevel}.\n\nWill you take the level {NextSeedTestLevel} test?\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
+Test seed general|19|2|{x00}Your scored 100%.\nYou {Red}passed{White} the level {CurrentSeedTestLevel} written test.\nYour SeeD rank will go up to {SeedRank}.\n\n\n\n  {Cursor_location_id:0x20}END
+Test seed general|19|3|{x00}Your score was 100%.\nYou passed level {CurrentSeedTestLevel} written test.\nYour SeeD rank won't go any higher than {CurrentSeedTestLevel}.\n\n\n\n  {Cursor_location_id:0x20}END\n
+Test seed general|19|4|{x00}Your score was {CurrentSeedTestLevel}.\nYou failed.\nBetter luck next time.\n\n\n\n  {Cursor_location_id:0x20}END
 Test seed general|19|5|{x00}Your written test level is 30.\nYou are not allowed to take any more SeeD written\ntests.\n\n\n\n  {Cursor_location_id:0x20}GO BACK\n
-Test seed general|19|6|{x00}Your SeeD rank is {x0a26}.\nYour SeeD rank won't go any higher;\nwill you still take the written test?\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
+Test seed general|19|6|{x00}Your SeeD rank is {SeedRank}.\nYour SeeD rank won't go any higher;\nwill you still take the written test?\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed general|19|7|{x00}Really?\n\n\n\n\n\n  {Cursor_location_id:0x20}NO      {Cursor_location_id:0x21}YES\n
-Test seed general|19|8|{x00}End of review!\nYou have mastered everything in level {x0a20}!\n\n\n\n\n  {Cursor_location_id:0x20}END\n
-Test seed general|19|9|{x00}You scored {x0a20}.\nWhat happened...?\n\n\n\n\n  {Cursor_location_id:0x20}END
-Test seed general|19|10|{x00}{Squall} is at level {x0a20}.\nYou can't take anything above {x0a22}.\nPlease level up first and try again.\n\n\n\n  {Cursor_location_id:0x20}END
+Test seed general|19|8|{x00}End of review!\nYou have mastered everything in level {CurrentSeedTestLevel}!\n\n\n\n\n  {Cursor_location_id:0x20}END\n
+Test seed general|19|9|{x00}You scored {CurrentSeedTestLevel}.\nWhat happened...?\n\n\n\n\n  {Cursor_location_id:0x20}END
+Test seed general|19|10|{x00}{Squall} is at level {CurrentSeedTestLevel}.\nYou can't take anything above {NextSeedTestLevel}.\nPlease level up first and try again.\n\n\n\n  {Cursor_location_id:0x20}END
 Test seed 1 |20|0|{x00}Question 1\n\nThe Draw command extracts magic from enemies.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 1 |20|1|{x01}Question 2\n\nGF stands for Garden Fighter.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 1 |20|2|{x00}Question 3\n\nThere are a total of 8 elemental attributes.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO

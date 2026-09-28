@@ -4,7 +4,7 @@ Battle command text section|0|1|
 Battle command text section|0|2|Angriff
 Battle command text section|0|3|Angriff mit Waffen
 Battle command text section|0|4|Zauber
-Battle command text section|0|5|Benutzt {x0e3a}
+Battle command text section|0|5|Benutzt {Raises}
 Battle command text section|0|6|G.F.
 Battle command text section|0|7|Beschwört eine G.F. herbei
 Battle command text section|0|8|Item
@@ -12,15 +12,15 @@ Battle command text section|0|9|Benutzt Items
 Battle command text section|0|10|Multi
 Battle command text section|0|11|Setzt eine Spezial-Technik ein
 Battle command text section|0|12|Draw
-Battle command text section|0|13|Zieht {x0e3a} aus Gegner
+Battle command text section|0|13|Zieht {Raises} aus Gegner
 Battle command text section|0|14|Fressen
 Battle command text section|0|15|Frißt einen Gegner
 Battle command text section|0|16|
 Battle command text section|0|17|
 Battle command text section|0|18|Zaubern
-Battle command text section|0|19|Benutzt gezogenen {x0e3a}, ohne ihn zu lagern
+Battle command text section|0|19|Benutzt gezogenen {Raises}, ohne ihn zu lagern
 Battle command text section|0|20|Lagern
-Battle command text section|0|21|Lagert gezogene {x0e3a}
+Battle command text section|0|21|Lagert gezogene {Raises}
 Battle command text section|0|22|Duell
 Battle command text section|0|23|Verschiedene Combo-Techniken
 Battle command text section|0|24|Rauben
@@ -32,7 +32,7 @@ Battle command text section|0|29|Schießt auf Gegner mit Munition
 Battle command text section|0|30|Blauer Zauber
 Battle command text section|0|31|Wendet Techniken des Gegeners an
 Battle command text section|0|32|Tombola
-Battle command text section|0|33|Wendet einen zufällig ausgewählten {x0e3a} an
+Battle command text section|0|33|Wendet einen zufällig ausgewählten {Raises} an
 Battle command text section|0|34|Wegräumen
 Battle command text section|0|35|Schwertangriff
 Battle command text section|0|36|Magie
@@ -70,55 +70,55 @@ Battle command text section|0|67|Senkt den Monsterlevel
 Battle command text section|0|68|LV-Plus
 Battle command text section|0|69|Erhöht den Monsterlevel
 Battle command text section|0|70|Solo
-Battle command text section|0|71|{x0e3a} wird einmal angewendet
+Battle command text section|0|71|{Raises} wird einmal angewendet
 Battle command text section|0|72|Doppel
-Battle command text section|0|73|{x0e3a} wird zweimal angewendet
+Battle command text section|0|73|{Raises} wird zweimal angewendet
 Battle command text section|0|74|Tripel
-Battle command text section|0|75|{x0e3a} wird dreimal vangewendet
+Battle command text section|0|75|{Raises} wird dreimal vangewendet
 Battle command text section|0|76|Mogry-Kid
 Battle command text section|0|77|Beschwört Mogry-Kid herbei
 Magic text section|1|0|
 Magic text section|1|1|
 Magic text section|1|2|Feuer
-Magic text section|1|3|{x0e35}Hitze-{x0e3a}
+Magic text section|1|3|{learns}Hitze-{Raises}
 Magic text section|1|4|Feura
-Magic text section|1|5|{x0e35}Hitze-{x0e3a}
+Magic text section|1|5|{learns}Hitze-{Raises}
 Magic text section|1|6|Feuga
-Magic text section|1|7|{x0e35}Hitze-{x0e3a}
+Magic text section|1|7|{learns}Hitze-{Raises}
 Magic text section|1|8|Eis
-Magic text section|1|9|{x0e35}Kälte-{x0e3a}
+Magic text section|1|9|{learns}Kälte-{Raises}
 Magic text section|1|10|Eisra
-Magic text section|1|11|{x0e35}Kälte-{x0e3a}
+Magic text section|1|11|{learns}Kälte-{Raises}
 Magic text section|1|12|Eisga
-Magic text section|1|13|{x0e35}Kälte-{x0e3a}
+Magic text section|1|13|{learns}Kälte-{Raises}
 Magic text section|1|14|Blitz
-Magic text section|1|15|{x0e35}Donner-{x0e3a}
+Magic text section|1|15|{learns}Donner-{Raises}
 Magic text section|1|16|Blitzra
-Magic text section|1|17|{x0e35}Donner-{x0e3a}
+Magic text section|1|17|{learns}Donner-{Raises}
 Magic text section|1|18|Blitzga
-Magic text section|1|19|{x0e35}Donner-{x0e3a}
+Magic text section|1|19|{learns}Donner-{Raises}
 Magic text section|1|20|Aqua
-Magic text section|1|21|{x0e35}Wasser-{x0e3a}
+Magic text section|1|21|{learns}Wasser-{Raises}
 Magic text section|1|22|Aero
-Magic text section|1|23|{x0e35}Wind-{x0e3a}
+Magic text section|1|23|{learns}Wind-{Raises}
 Magic text section|1|24|Bio
-Magic text section|1|25|{x0e35}Gift-{x0e3a}
+Magic text section|1|25|{learns}Gift-{Raises}
 Magic text section|1|26|Gravit
 Magic text section|1|27|HP eines Gegners wird um 1/4 verringert
 Magic text section|1|28|Holy
-Magic text section|1|29|{x0e35}Holy-{x0e3a}
+Magic text section|1|29|{learns}Holy-{Raises}
 Magic text section|1|30|Flare
-Magic text section|1|31|{x0e35}Hitze-{x0e3a}
+Magic text section|1|31|{learns}Hitze-{Raises}
 Magic text section|1|32|Meteor
 Magic text section|1|33|Zufalls-Schaden auf alle Gegner
 Magic text section|1|34|Beben
-Magic text section|1|35|Schaden auf alle Gegner mit Erd-{x0e3a}
+Magic text section|1|35|Schaden auf alle Gegner mit Erd-{Raises}
 Magic text section|1|36|Tornado
-Magic text section|1|37|Schaden auf alle Gegner mit Wind-{x0e3a}
+Magic text section|1|37|Schaden auf alle Gegner mit Wind-{Raises}
 Magic text section|1|38|Ultima
-Magic text section|1|39|Schaden auf alle Gegner mit Neutral-{x0e3a}
+Magic text section|1|39|Schaden auf alle Gegner mit Neutral-{Raises}
 Magic text section|1|40|Apocalypse
-Magic text section|1|41|Schaden auf alle Gegner mit Neutral-{x0e3a}
+Magic text section|1|41|Schaden auf alle Gegner mit Neutral-{Raises}
 Magic text section|1|42|Vita
 Magic text section|1|43|Heilt HP
 Magic text section|1|44|Vitra
@@ -134,19 +134,19 @@ Magic text section|1|53|HP regeneriert sich von selbst für eine Weile
 Magic text section|1|54|Medica
 Magic text section|1|55|Unnatürliche Zustände werden kuriert
 Magic text section|1|56|Anti-Z
-Magic text section|1|57|{x0e3a}wirkung wird gelöscht
+Magic text section|1|57|{Raises}wirkung wird gelöscht
 Magic text section|1|58|Protes
 Magic text section|1|59|Körper-Wert steigt für eine Weile
 Magic text section|1|60|Shell
-Magic text section|1|61|Abwehr gegen {x0e3a} steigt für eine Weile
+Magic text section|1|61|Abwehr gegen {Raises} steigt für eine Weile
 Magic text section|1|62|Reflek
-Magic text section|1|63|Reflektiert {x0e3a} für eine Weile
+Magic text section|1|63|Reflektiert {Raises} für eine Weile
 Magic text section|1|64|Aura
 Magic text section|1|65|Spezial-Technik wird öfter verfügbar
 Magic text section|1|66|Doppel
-Magic text section|1|67|2 {x0e3a} können auf einmal verwendet werden
+Magic text section|1|67|2 {Raises} können auf einmal verwendet werden
 Magic text section|1|68|Tripel
-Magic text section|1|69|3 {x0e3a} können auf einmal verwendet werden
+Magic text section|1|69|3 {Raises} können auf einmal verwendet werden
 Magic text section|1|70|Hast
 Magic text section|1|71|Geschwindigkeitserhöhung für eine Weile
 Magic text section|1|72|Gemach
@@ -160,7 +160,7 @@ Magic text section|1|79|Verwirrungseffekt
 Magic text section|1|80|Schlaf
 Magic text section|1|81|Schläfert ein
 Magic text section|1|82|Schweigen
-Magic text section|1|83|Jeglicher {x0e3a} wird versiegelt
+Magic text section|1|83|Jeglicher {Raises} wird versiegelt
 Magic text section|1|84|Stein
 Magic text section|1|85|Versteinerungseffekt
 Magic text section|1|86|Tod
@@ -192,37 +192,37 @@ Magic text section|1|111|
 Magic text section|1|112|The End...
 Magic text section|1|113|Beseitigt alle Gegner
 Junctionable GF text section|2|0|Gewittersturm
-Junctionable GF text section|2|1|{x0e36}DONNER-{x0e43}.
+Junctionable GF text section|2|1|{ability}DONNER-{x0e43}.
 Junctionable GF text section|2|2|Diamantenstaub
-Junctionable GF text section|2|3|{x0e36}KÄLTE-{x0e43}.
+Junctionable GF text section|2|3|{ability}KÄLTE-{x0e43}.
 Junctionable GF text section|2|4|Meteorfeuer
-Junctionable GF text section|2|5|{x0e36}HITZE-{x0e43}.
+Junctionable GF text section|2|5|{ability}HITZE-{x0e43}.
 Junctionable GF text section|2|6|Sirenengesang
-Junctionable GF text section|2|7|{x0e36}{x0e43} und Schweigen.
+Junctionable GF text section|2|7|{ability}{x0e43} und Schweigen.
 Junctionable GF text section|2|8|Rinderwahn
-Junctionable GF text section|2|9|{x0e36}ERD-{x0e43}.
+Junctionable GF text section|2|9|{ability}ERD-{x0e43}.
 Junctionable GF text section|2|10|Bote des Schattens
-Junctionable GF text section|2|11|{x0e36}Neutraler {x0e33}.
+Junctionable GF text section|2|11|{ability}Neutraler {Restores}.
 Junctionable GF text section|2|12|Rubinenglanz
-Junctionable GF text section|2|13|{x0e36}Reflek auf eigene Truppe.
+Junctionable GF text section|2|13|{ability}Reflek auf eigene Truppe.
 Junctionable GF text section|2|14|Sintflut
-Junctionable GF text section|2|15|{x0e36}WASSER-{x0e43}.
+Junctionable GF text section|2|15|{ability}WASSER-{x0e43}.
 Junctionable GF text section|2|16|Wirbelsturm
-Junctionable GF text section|2|17|{x0e36}WIND-{x0e43}.
+Junctionable GF text section|2|17|{ability}WIND-{x0e43}.
 Junctionable GF text section|2|18|Höllenwache
-Junctionable GF text section|2|19|{x0e36}Doppel und Tripel auf die Truppe.
+Junctionable GF text section|2|19|{ability}Doppel und Tripel auf die Truppe.
 Junctionable GF text section|2|20|Das Jüngste Gericht
-Junctionable GF text section|2|21|{x0e36}HOLY-{x0e43}.
+Junctionable GF text section|2|21|{ability}HOLY-{x0e43}.
 Junctionable GF text section|2|22|Endlose Irrfahrt
-Junctionable GF text section|2|23|{x0e36}GIFT-{x0e43}.
+Junctionable GF text section|2|23|{ability}GIFT-{x0e43}.
 Junctionable GF text section|2|24|Mega-Flare
-Junctionable GF text section|2|25|{x0e36}Neutraler {x0e33}.
+Junctionable GF text section|2|25|{ability}Neutraler {Restores}.
 Junctionable GF text section|2|26|Zigtausend Stacheln
-Junctionable GF text section|2|27|{x0e36}Neutraler {x0e33}.
+Junctionable GF text section|2|27|{ability}Neutraler {Restores}.
 Junctionable GF text section|2|28|Küchenmesser
-Junctionable GF text section|2|29|{x0e36}Neutraler {x0e34}.
+Junctionable GF text section|2|29|{ability}Neutraler {status}.
 Junctionable GF text section|2|30|Hauch des Universums
-Junctionable GF text section|2|31|{x0e36}Neutraler {x0e33}.
+Junctionable GF text section|2|31|{ability}Neutraler {Restores}.
 Enemy attack text section|3|0|
 Enemy attack text section|3|1|
 Enemy attack text section|3|2|
@@ -744,123 +744,123 @@ Non-battle item names section|8|15|G.F.-Name wird geändert
 Non-battle item names section|8|16|Vergißmeinnicht
 Non-battle item names section|8|17|G.F.-Ability kann gelöst werden
 Non-battle item names section|8|18|HP-Buch
-Non-battle item names section|8|19|{x0e38}HP-K]
+Non-battle item names section|8|19|{Refine}HP-K]
 Non-battle item names section|8|20|Stärke-Buch
-Non-battle item names section|8|21|{x0e38}Stärke-K]
+Non-battle item names section|8|21|{Refine}Stärke-K]
 Non-battle item names section|8|22|Körper-Buch
-Non-battle item names section|8|23|{x0e38}Körper-K]
+Non-battle item names section|8|23|{Refine}Körper-K]
 Non-battle item names section|8|24|Magie-Buch
-Non-battle item names section|8|25|{x0e38}Magie-K]
+Non-battle item names section|8|25|{Refine}Magie-K]
 Non-battle item names section|8|26|Geist-Buch
-Non-battle item names section|8|27|{x0e38}Geist-K]
+Non-battle item names section|8|27|{Refine}Geist-K]
 Non-battle item names section|8|28|Geschicks-Buch
-Non-battle item names section|8|29|{x0e38}Geschick-K]
+Non-battle item names section|8|29|{Refine}Geschick-K]
 Non-battle item names section|8|30|Glücks-Buch
-Non-battle item names section|8|31|{x0e38}Glück-K]
+Non-battle item names section|8|31|{Refine}Glück-K]
 Non-battle item names section|8|32|Agis-Talisman
-Non-battle item names section|8|33|{x0e38}Reflex-K]
+Non-battle item names section|8|33|{Refine}Reflex-K]
 Non-battle item names section|8|34|EL-Schwert
-Non-battle item names section|8|35|{x0e38}EL-Angriff-K]
+Non-battle item names section|8|35|{Refine}EL-Angriff-K]
 Non-battle item names section|8|36|EL-Schild
-Non-battle item names section|8|37|{x0e38}EL-Abwehr-K ×4]
+Non-battle item names section|8|37|{Refine}EL-Abwehr-K ×4]
 Non-battle item names section|8|38|ZU-Schwert
-Non-battle item names section|8|39|{x0e38}ZU-Angriff-K]
+Non-battle item names section|8|39|{Refine}ZU-Angriff-K]
 Non-battle item names section|8|40|ZU-Schild
-Non-battle item names section|8|41|{x0e38}ZU-Abwehr-K ×4]
+Non-battle item names section|8|41|{Refine}ZU-Abwehr-K ×4]
 Non-battle item names section|8|42|Rosetta-Stein
-Non-battle item names section|8|43|{x0e38}Ability ×4]
+Non-battle item names section|8|43|{Refine}Ability ×4]
 Non-battle item names section|8|44|Zauberbuch
-Non-battle item names section|8|45|{x0e38}{x0e3a}]
+Non-battle item names section|8|45|{Refine}{Raises}]
 Non-battle item names section|8|46|G.F.-Buch
-Non-battle item names section|8|47|{x0e38}G.F.]
+Non-battle item names section|8|47|{Refine}G.F.]
 Non-battle item names section|8|48|Draw-Buch
-Non-battle item names section|8|49|{x0e38}Draw]
+Non-battle item names section|8|49|{Refine}Draw]
 Non-battle item names section|8|50|Item-Buch
-Non-battle item names section|8|51|{x0e38}Item]
+Non-battle item names section|8|51|{Refine}Item]
 Non-battle item names section|8|52|Zockerseele
-Non-battle item names section|8|53|{x0e38}Karte]
+Non-battle item names section|8|53|{Refine}Karte]
 Non-battle item names section|8|54|Vita-Ring
-Non-battle item names section|8|55|{x0e38}Heilen]
+Non-battle item names section|8|55|{Refine}Heilen]
 Non-battle item names section|8|56|Seele des Phönix
-Non-battle item names section|8|57|{x0e38}Beleben]
+Non-battle item names section|8|57|{Refine}Beleben]
 Non-battle item names section|8|58|Verbandskasten
-Non-battle item names section|8|59|{x0e38}Behandeln]
+Non-battle item names section|8|59|{Refine}Behandeln]
 Non-battle item names section|8|60|Bomber-Seele
-Non-battle item names section|8|61|{x0e38}Kamikaze]
+Non-battle item names section|8|61|{Refine}Kamikaze]
 Non-battle item names section|8|62|Vielfraß-Faß
-Non-battle item names section|8|63|{x0e38}Fressen]
+Non-battle item names section|8|63|{Refine}Fressen]
 Non-battle item names section|8|64|Mog-Talisman
-Non-battle item names section|8|65|{x0e38}Mogry-Kid]
+Non-battle item names section|8|65|{Refine}Mogry-Kid]
 Non-battle item names section|8|66|Eisenrohr
-Non-battle item names section|8|67|{x0e38}G.F.-Magie+10%]
+Non-battle item names section|8|67|{Refine}G.F.-Magie+10%]
 Non-battle item names section|8|68|Sternensplitter
-Non-battle item names section|8|69|{x0e38}G.F.-Magie+20%]
+Non-battle item names section|8|69|{Refine}G.F.-Magie+20%]
 Non-battle item names section|8|70|Energiekristall
-Non-battle item names section|8|71|{x0e38}G.F.-Magie+30%]
+Non-battle item names section|8|71|{Refine}G.F.-Magie+30%]
 Non-battle item names section|8|72|Beschwörerseele
-Non-battle item names section|8|73|{x0e38}G.F.-Magie+40%]
+Non-battle item names section|8|73|{Refine}G.F.-Magie+40%]
 Non-battle item names section|8|74|Vita-Rüstung
-Non-battle item names section|8|75|{x0e38}G.F.-HP+10%]
+Non-battle item names section|8|75|{Refine}G.F.-HP+10%]
 Non-battle item names section|8|76|Silberrüstung
-Non-battle item names section|8|77|{x0e38}G.F.-HP+20%]
+Non-battle item names section|8|77|{Refine}G.F.-HP+20%]
 Non-battle item names section|8|78|Goldrüstung
-Non-battle item names section|8|79|{x0e38}G.F.-HP+30%]
+Non-battle item names section|8|79|{Refine}G.F.-HP+30%]
 Non-battle item names section|8|80|Platin-Rüstung
-Non-battle item names section|8|81|{x0e38}G.F.-HP+40%]
+Non-battle item names section|8|81|{Refine}G.F.-HP+40%]
 Non-battle item names section|8|82|Phönix-Ring
-Non-battle item names section|8|83|{x0e38}HP+20%]
+Non-battle item names section|8|83|{Refine}HP+20%]
 Non-battle item names section|8|84|Giga-Ring
-Non-battle item names section|8|85|{x0e38}HP+40%]
+Non-battle item names section|8|85|{Refine}HP+40%]
 Non-battle item names section|8|86|Gaia-Ring
-Non-battle item names section|8|87|{x0e38}HP+80%]
+Non-battle item names section|8|87|{Refine}HP+80%]
 Non-battle item names section|8|88|Kraftband
-Non-battle item names section|8|89|{x0e38}Stärke+20%]
+Non-battle item names section|8|89|{Refine}Stärke+20%]
 Non-battle item names section|8|90|Kraftreif
-Non-battle item names section|8|91|{x0e38}Stärke+40%]
+Non-battle item names section|8|91|{Refine}Stärke+40%]
 Non-battle item names section|8|92|Hyper-Reif
-Non-battle item names section|8|93|{x0e38}Stärke+60%]
+Non-battle item names section|8|93|{Refine}Stärke+60%]
 Non-battle item names section|8|94|Kröten-Panzer
-Non-battle item names section|8|95|{x0e38}Körper+20%]
+Non-battle item names section|8|95|{Refine}Körper+20%]
 Non-battle item names section|8|96|Orihalcon
-Non-battle item names section|8|97|{x0e38}Körper+40%]
+Non-battle item names section|8|97|{Refine}Körper+40%]
 Non-battle item names section|8|98|Adamantine
-Non-battle item names section|8|99|{x0e38}Körper+60%]
+Non-battle item names section|8|99|{Refine}Körper+60%]
 Non-battle item names section|8|100|Runen-Reif
-Non-battle item names section|8|101|{x0e38}Geist+20%]
+Non-battle item names section|8|101|{Refine}Geist+20%]
 Non-battle item names section|8|102|Force-Reif
-Non-battle item names section|8|103|{x0e38}Geist+40%]
+Non-battle item names section|8|103|{Refine}Geist+40%]
 Non-battle item names section|8|104|Teufels-Reif
-Non-battle item names section|8|105|{x0e38}Geist+60%]
+Non-battle item names section|8|105|{Refine}Geist+60%]
 Non-battle item names section|8|106|Diadem
-Non-battle item names section|8|107|{x0e38}Magie+20%]
+Non-battle item names section|8|107|{Refine}Magie+20%]
 Non-battle item names section|8|108|Hypno-Krone
-Non-battle item names section|8|109|{x0e38}Magie+40%]
+Non-battle item names section|8|109|{Refine}Magie+40%]
 Non-battle item names section|8|110|Königskrone
-Non-battle item names section|8|111|{x0e38}Magie+60%]
+Non-battle item names section|8|111|{Refine}Magie+60%]
 Non-battle item names section|8|112|Düsenantrieb
-Non-battle item names section|8|113|{x0e38}Geschick+20%]
+Non-battle item names section|8|113|{Refine}Geschick+20%]
 Non-battle item names section|8|114|Raketenantrieb
-Non-battle item names section|8|115|{x0e38}Geschick+40%]
+Non-battle item names section|8|115|{Refine}Geschick+40%]
 Non-battle item names section|8|116|Mondschleier
-Non-battle item names section|8|117|{x0e38}Auto-Shell]
+Non-battle item names section|8|117|{Refine}Auto-Shell]
 Non-battle item names section|8|118|Eisenvorhang
-Non-battle item names section|8|119|{x0e38}Auto-Protes]
+Non-battle item names section|8|119|{Refine}Auto-Protes]
 Non-battle item names section|8|120|Lichtschleier
-Non-battle item names section|8|121|{x0e38}Auto-Reflek]
+Non-battle item names section|8|121|{Refine}Auto-Reflek]
 Non-battle item names section|8|122|Beschleuniger
-Non-battle item names section|8|123|{x0e38}Auto-Hast]
+Non-battle item names section|8|123|{Refine}Auto-Hast]
 Non-battle item names section|8|124|Lehre der Mönche
-Non-battle item names section|8|125|{x0e38}Kontern]
+Non-battle item names section|8|125|{Refine}Kontern]
 Non-battle item names section|8|126|Lehre der Ritter
-Non-battle item names section|8|127|{x0e38}Beschützen]
+Non-battle item names section|8|127|{Refine}Beschützen]
 Non-battle item names section|8|128|Lehre der Ärzte
-Non-battle item names section|8|129|{x0e38}Medizinkunde]
+Non-battle item names section|8|129|{Refine}Medizinkunde]
 Non-battle item names section|8|130|100 Stacheln
-Non-battle item names section|8|131|{x0e38}Rächen]
+Non-battle item names section|8|131|{Refine}Rächen]
 Non-battle item names section|8|132|Dreigestirn
-Non-battle item names section|8|133|{x0e38}Öko-Tripel]
+Non-battle item names section|8|133|{Refine}Öko-Tripel]
 Non-battle item names section|8|134|Schleife
-Non-battle item names section|8|135|{x0e38}Schleife]
+Non-battle item names section|8|135|{Refine}Schleife]
 Non-battle item names section|8|136|N-Munition
 Non-battle item names section|8|137|Normale Munition
 Non-battle item names section|8|138|Splittermunition
@@ -878,11 +878,11 @@ Non-battle item names section|8|149|Durchstößt jede Rüstung
 Non-battle item names section|8|150|Pulsar-Munition
 Non-battle item names section|8|151|Munition mit wahnsinniger Zerstörungskraft
 Non-battle item names section|8|152|Zaubersplitter
-Non-battle item names section|8|153|Ein Stein mit leichter {x0e3a}kraft
+Non-battle item names section|8|153|Ein Stein mit leichter {Raises}kraft
 Non-battle item names section|8|154|Zauberstein
-Non-battle item names section|8|155|Ein Stein mit {x0e3a}kraft
+Non-battle item names section|8|155|Ein Stein mit {Raises}kraft
 Non-battle item names section|8|156|Magischer Stein
-Non-battle item names section|8|157|Ein Stein mit sehr starker {x0e3a}kraft
+Non-battle item names section|8|157|Ein Stein mit sehr starker {Raises}kraft
 Non-battle item names section|8|158|Küßchen-Fühler
 Non-battle item names section|8|159|Weicher, aber stabieler Fühler
 Non-battle item names section|8|160|Heilwasser
@@ -914,35 +914,35 @@ Non-battle item names section|8|185|Ring mit Lebenskraft
 Non-battle item names section|8|186|Drachenzahn
 Non-battle item names section|8|187|Drachenzahn mit Heilkraft
 Non-battle item names section|8|188|Spinnennetz
-Non-battle item names section|8|189|{x0e37}Hyper-Vibra]
+Non-battle item names section|8|189|{Magic}Hyper-Vibra]
 Non-battle item names section|8|190|Korallensplitter
-Non-battle item names section|8|191|{x0e37}Elektra]
+Non-battle item names section|8|191|{Magic}Elektra]
 Non-battle item names section|8|192|Kralle des Fluchs
-Non-battle item names section|8|193|{x0e37}Level ?-Tod]
+Non-battle item names section|8|193|{Magic}Level ?-Tod]
 Non-battle item names section|8|194|Schwarzes Loch
-Non-battle item names section|8|195|{x0e37}Desionator]
+Non-battle item names section|8|195|{Magic}Desionator]
 Non-battle item names section|8|196|Wasserkristall
-Non-battle item names section|8|197|{x0e37}Nasser Hauch]
+Non-battle item names section|8|197|{Magic}Nasser Hauch]
 Non-battle item names section|8|198|Rakete
-Non-battle item names section|8|199|{x0e37}Mikro-Rakete]
+Non-battle item names section|8|199|{Magic}Mikro-Rakete]
 Non-battle item names section|8|200|???-Flüssigkeit
-Non-battle item names section|8|201|{x0e37}Verdauungssaft]
+Non-battle item names section|8|201|{Magic}Verdauungssaft]
 Non-battle item names section|8|202|Kiefer-MG
-Non-battle item names section|8|203|{x0e37}Gatling-Gun]
+Non-battle item names section|8|203|{Magic}Gatling-Gun]
 Non-battle item names section|8|204|Feuerzahn
-Non-battle item names section|8|205|{x0e37}Feurigen Hauch]
+Non-battle item names section|8|205|{Magic}Feurigen Hauch]
 Non-battle item names section|8|206|Morbol-Fühler
-Non-battle item names section|8|207|{x0e37}Mundgeruch]
+Non-battle item names section|8|207|{Magic}Mundgeruch]
 Non-battle item names section|8|208|Windgeflüster
-Non-battle item names section|8|209|{x0e37}Weißer Wind]
+Non-battle item names section|8|209|{Magic}Weißer Wind]
 Non-battle item names section|8|210|Laser-Kanone
-Non-battle item names section|8|211|{x0e37}Zielsuchrakete]
+Non-battle item names section|8|211|{Magic}Zielsuchrakete]
 Non-battle item names section|8|212|Schutzschilde
-Non-battle item names section|8|213|{x0e37}Total-Abwehr]
+Non-battle item names section|8|213|{Magic}Total-Abwehr]
 Non-battle item names section|8|214|V96-Motor
-Non-battle item names section|8|215|{x0e37}Strahlenbombe]
+Non-battle item names section|8|215|{Magic}Strahlenbombe]
 Non-battle item names section|8|216|Anti-Materie
-Non-battle item names section|8|217|{x0e37}Schock-Pulsor]
+Non-battle item names section|8|217|{Magic}Schock-Pulsor]
 Non-battle item names section|8|218|Bomber-Splitter
 Non-battle item names section|8|219|Ein Stein mit Hitze-Element
 Non-battle item names section|8|220|Roter Stoßzahn
@@ -1014,19 +1014,19 @@ Non-battle item names section|8|285|Erhöht [Glück] eines {x0e42}s
 Non-battle item names section|8|286|LoveLove-G
 Non-battle item names section|8|287|Erhöht [Freundschaft] zu allen G.F.
 Non-battle item names section|8|288|Waffen 1.Ausg.
-Non-battle item names section|8|289|{x0e39}
+Non-battle item names section|8|289|{Junctions}
 Non-battle item names section|8|290|Waffen März
-Non-battle item names section|8|291|{x0e39}
+Non-battle item names section|8|291|{Junctions}
 Non-battle item names section|8|292|Waffen April
-Non-battle item names section|8|293|{x0e39}
+Non-battle item names section|8|293|{Junctions}
 Non-battle item names section|8|294|Waffen Mai
-Non-battle item names section|8|295|{x0e39}
+Non-battle item names section|8|295|{Junctions}
 Non-battle item names section|8|296|Waffen Juni
-Non-battle item names section|8|297|{x0e39}
+Non-battle item names section|8|297|{Junctions}
 Non-battle item names section|8|298|Waffen Juli
-Non-battle item names section|8|299|{x0e39}
+Non-battle item names section|8|299|{Junctions}
 Non-battle item names section|8|300|Waffen August
-Non-battle item names section|8|301|{x0e39}
+Non-battle item names section|8|301|{Junctions}
 Non-battle item names section|8|302|Beat{xba}em Up 001
 Non-battle item names section|8|303|{x0e44}
 Non-battle item names section|8|304|Beat{xba}em Up 002
@@ -1038,17 +1038,17 @@ Non-battle item names section|8|309|{x0e44}
 Non-battle item names section|8|310|Beat{xba}em Up 005
 Non-battle item names section|8|311|{x0e44}
 Non-battle item names section|8|312|Mein Hund Nr.1
-Non-battle item names section|8|313|{x0e3b}
+Non-battle item names section|8|313|{command}
 Non-battle item names section|8|314|Mein Hund Nr.2
-Non-battle item names section|8|315|{x0e3b}
+Non-battle item names section|8|315|{command}
 Non-battle item names section|8|316|Mein Hund Nr.3
-Non-battle item names section|8|317|{x0e3b}
+Non-battle item names section|8|317|{command}
 Non-battle item names section|8|318|Mein Hund Nr.4
-Non-battle item names section|8|319|{x0e3b}
+Non-battle item names section|8|319|{command}
 Non-battle item names section|8|320|Mein Hund Nr.5
-Non-battle item names section|8|321|{x0e3b}
+Non-battle item names section|8|321|{command}
 Non-battle item names section|8|322|Mein Hund Nr.6
-Non-battle item names section|8|323|{x0e3b}
+Non-battle item names section|8|323|{command}
 Non-battle item names section|8|324|Okkult-Fan I
 Non-battle item names section|8|325|{x0e48} [Ungeklärte Fälle]
 Non-battle item names section|8|326|Okkult-Fan II
@@ -1114,43 +1114,43 @@ Junction abilities text section|10|37|Maximal 3 Abilitys können gekoppelt werde
 Junction abilities text section|10|38|Ability x4
 Junction abilities text section|10|39|Maximal 4 Abilitys können gekoppelt werden
 Command abilities text section|11|0|Zauber
-Command abilities text section|11|1|[{x0e3a}{x0e3c}
+Command abilities text section|11|1|[{Raises}{Magazine}
 Command abilities text section|11|2|G.F.
-Command abilities text section|11|3|[G.F.{x0e3c}
+Command abilities text section|11|3|[G.F.{Magazine}
 Command abilities text section|11|4|Draw
-Command abilities text section|11|5|[Draw{x0e3c}
+Command abilities text section|11|5|[Draw{Magazine}
 Command abilities text section|11|6|Item
-Command abilities text section|11|7|[Item{x0e3c}
+Command abilities text section|11|7|[Item{Magazine}
 Command abilities text section|11|8| 
 Command abilities text section|11|9| 
 Command abilities text section|11|10|Karte
-Command abilities text section|11|11|[Karte{x0e3c}
+Command abilities text section|11|11|[Karte{Magazine}
 Command abilities text section|11|12|Todesurteil
-Command abilities text section|11|13|[Todesurteil{x0e3c}
+Command abilities text section|11|13|[Todesurteil{Magazine}
 Command abilities text section|11|14|Stürmen
-Command abilities text section|11|15|[Stürmen{x0e3c}
+Command abilities text section|11|15|[Stürmen{Magazine}
 Command abilities text section|11|16|Behandeln
-Command abilities text section|11|17|[Behandeln{x0e3c}
+Command abilities text section|11|17|[Behandeln{Magazine}
 Command abilities text section|11|18|Abwehr
-Command abilities text section|11|19|[Abwehr{x0e3c}
+Command abilities text section|11|19|[Abwehr{Magazine}
 Command abilities text section|11|20|Schatten
-Command abilities text section|11|21|[Schatten{x0e3c}
+Command abilities text section|11|21|[Schatten{Magazine}
 Command abilities text section|11|22|Heilen
-Command abilities text section|11|23|[Heilen{x0e3c}
+Command abilities text section|11|23|[Heilen{Magazine}
 Command abilities text section|11|24|Saugen
-Command abilities text section|11|25|[Saugen{x0e3c}
+Command abilities text section|11|25|[Saugen{Magazine}
 Command abilities text section|11|26|Beleben
-Command abilities text section|11|27|[Beleben{x0e3c}
+Command abilities text section|11|27|[Beleben{Magazine}
 Command abilities text section|11|28|LV-Minus
-Command abilities text section|11|29|[LV-Minus{x0e3c}
+Command abilities text section|11|29|[LV-Minus{Magazine}
 Command abilities text section|11|30|LV-Plus
-Command abilities text section|11|31|[LV-Plus{x0e3c}
+Command abilities text section|11|31|[LV-Plus{Magazine}
 Command abilities text section|11|32|Kamikaze
-Command abilities text section|11|33|[Kamikaze{x0e3c}
+Command abilities text section|11|33|[Kamikaze{Magazine}
 Command abilities text section|11|34|Fressen
-Command abilities text section|11|35|[Fressen{x0e3c}
+Command abilities text section|11|35|[Fressen{Magazine}
 Command abilities text section|11|36|Mogry-Kid
-Command abilities text section|11|37|[Mogry-Kid{x0e3c}
+Command abilities text section|11|37|[Mogry-Kid{Magazine}
 Stat percentage increasing abilities text section|12|0|HP+20%
 Stat percentage increasing abilities text section|12|1|{x0e41}HP um 20%
 Stat percentage increasing abilities text section|12|2|HP+40%
@@ -1268,21 +1268,21 @@ Menu ability text section|16|7|Ein Händler wird herbeigerufen
 Menu ability text section|16|8|Junk-Shop
 Menu ability text section|16|9|Ein Schrotthändler wird herbeigerufen
 Menu ability text section|16|10|Donner-Wandler
-Menu ability text section|16|11|Erzeugt Donner- und Wind-{x0e3a} aus Items
+Menu ability text section|16|11|Erzeugt Donner- und Wind-{Raises} aus Items
 Menu ability text section|16|12|Kälte-Wandler
-Menu ability text section|16|13|Erzeugt Wasser- und Kälte-{x0e3a} aus Items
+Menu ability text section|16|13|Erzeugt Wasser- und Kälte-{Raises} aus Items
 Menu ability text section|16|14|Hitze-Wandler
-Menu ability text section|16|15|Erzeugt Hitze-{x0e3a} aus Items
+Menu ability text section|16|15|Erzeugt Hitze-{Raises} aus Items
 Menu ability text section|16|16|Lebens-Wandler
-Menu ability text section|16|17|Erzeugt Lebens- und Heil-{x0e3a} aus Items
+Menu ability text section|16|17|Erzeugt Lebens- und Heil-{Raises} aus Items
 Menu ability text section|16|18|Zeit-Wandler
-Menu ability text section|16|19|Erzeugt Zeit- und Raum-{x0e3a} aus Items
+Menu ability text section|16|19|Erzeugt Zeit- und Raum-{Raises} aus Items
 Menu ability text section|16|20|Zustands-Wandler
-Menu ability text section|16|21|Erzeugt Zustands-{x0e3a} aus Items
+Menu ability text section|16|21|Erzeugt Zustands-{Raises} aus Items
 Menu ability text section|16|22|Hilfs-Wandler
-Menu ability text section|16|23|Erzeugt Support-{x0e3a} aus Items
+Menu ability text section|16|23|Erzeugt Support-{Raises} aus Items
 Menu ability text section|16|24|Super-Wandler
-Menu ability text section|16|25|Erzeugt verbotene {x0e3a} aus Items
+Menu ability text section|16|25|Erzeugt verbotene {Raises} aus Items
 Menu ability text section|16|26|Heil-Medizin
 Menu ability text section|16|27|Erzeugt Heilmedikamente aus Items
 Menu ability text section|16|28|Zustands-Medizin
@@ -1298,9 +1298,9 @@ Menu ability text section|16|37|Erzeugt G.F.-Heilmedikamente aus Items
 Menu ability text section|16|38|G.F.-Doping
 Menu ability text section|16|39|Erzeugt Items zum erlernen von Abilitys
 Menu ability text section|16|40|Zauberwandler-M
-Menu ability text section|16|41|Aus {x0e3a} wird M-{x0e3a} erzeugt
+Menu ability text section|16|41|Aus {Raises} wird M-{Raises} erzeugt
 Menu ability text section|16|42|Zauberwandler-H
-Menu ability text section|16|43|Aus M-{x0e3a} wird H-{x0e3a} erzeugt
+Menu ability text section|16|43|Aus M-{Raises} wird H-{Raises} erzeugt
 Menu ability text section|16|44|Medizin-Wandler
 Menu ability text section|16|45|Verstärkt die Wirkung von Heiltränken
 Menu ability text section|16|46|Karten-Wandler
@@ -1330,13 +1330,13 @@ Blue magic text section|18|11|Angriff auf alle Gegner durch Wasser-{x0e43}
 Blue magic text section|18|12|Mikro-Rakete
 Blue magic text section|18|13|Schaden an einem Gegner.
 Blue magic text section|18|14|Verdauungssaft
-Blue magic text section|18|15|Zustands-{x0e34}
+Blue magic text section|18|15|Zustands-{status}
 Blue magic text section|18|16|Gatling-Gun
 Blue magic text section|18|17|Schaden an einem Gegner.
 Blue magic text section|18|18|Feuriger Hauch
 Blue magic text section|18|19|Angriff auf alle Gegner durch Hitze-{x0e43}
 Blue magic text section|18|20|Mundgeruch
-Blue magic text section|18|21|Zustands-{x0e33}
+Blue magic text section|18|21|Zustands-{Restores}
 Blue magic text section|18|22|Weißer Wind
 Blue magic text section|18|23|HP-Heilung der eigenen {x0e42}e
 Blue magic text section|18|24|Zielsuchrakete
@@ -1346,7 +1346,7 @@ Blue magic text section|18|27|100% Schutz auf eigene {x0e42}e
 Blue magic text section|18|28|Strahlenbombe
 Blue magic text section|18|29|Schaden an allen Gegner.
 Blue magic text section|18|30|Schock-Pulsor
-Blue magic text section|18|31|Extremer {x0e33}
+Blue magic text section|18|31|Extremer {Restores}
 Shot text section|19|0|Standardschuß
 Shot text section|19|1|Schaden an einem Gegner.
 Shot text section|19|2|Splitterschuß
@@ -1354,7 +1354,7 @@ Shot text section|19|3|Schaden an allen Gegner.
 Shot text section|19|4|Schattenschuß
 Shot text section|19|5|ZU-Schäden auf einen Gegner
 Shot text section|19|6|Flammenschuß
-Shot text section|19|7|Hitze-{x0e33}
+Shot text section|19|7|Hitze-{Restores}
 Shot text section|19|8|Kanisterschuß
 Shot text section|19|9|Schaden an einem Gegner.
 Shot text section|19|10|Schnellschuß
@@ -1364,25 +1364,25 @@ Shot text section|19|13|Angriff auf einen Gegner
 Shot text section|19|14|Hyper-Schuß
 Shot text section|19|15|Angriff auf einen Gegner
 Duel text section|20|0|Sturmfaust
-Duel text section|20|1|{x0e34}
+Duel text section|20|1|{status}
 Duel text section|20|2|Kopfstoß
-Duel text section|20|3|{x0e34}
+Duel text section|20|3|{status}
 Duel text section|20|4|Ferskick
-Duel text section|20|5|{x0e34}
+Duel text section|20|5|{status}
 Duel text section|20|6|Sonic-Kick
-Duel text section|20|7|{x0e34}
+Duel text section|20|7|{status}
 Duel text section|20|8|Delphin-Schlag
-Duel text section|20|9|{x0e34}
+Duel text section|20|9|{status}
 Duel text section|20|10|Meteor-Wurf
-Duel text section|20|11|{x0e34}
+Duel text section|20|11|{status}
 Duel text section|20|12|Burning-Rave
-Duel text section|20|13|{x0e33}
+Duel text section|20|13|{Restores}
 Duel text section|20|14|Meteor-Bullet
-Duel text section|20|15|{x0e34}
+Duel text section|20|15|{status}
 Duel text section|20|16|Different Beat
-Duel text section|20|17|{x0e34}
+Duel text section|20|17|{status}
 Duel text section|20|18|Xells Final-Heaven
-Duel text section|20|19|{x0e33}
+Duel text section|20|19|{Restores}
 Rinoa limit break (part 1) text section|21|0|{Angelo}
 Rinoa limit break (part 1) text section|21|1|{Angelo} kämpft mit!
 Rinoa limit break (part 1) text section|21|2|Vari
@@ -1414,7 +1414,7 @@ Misc text section|24|2|G.F.
 Misc text section|24|3|PAUSE
 Misc text section|24|4|Flucht nicht möglich
 Misc text section|24|5|Draw fehlgeschlagen
-Misc text section|24|6|{x0a23} erhalten
+Misc text section|24|6|{CardReceived} erhalten
 Misc text section|24|7|erlernt!
 Misc text section|24|8|___
 Misc text section|24|9|erhalten!
@@ -1432,7 +1432,7 @@ Misc text section|24|20|Keine Auswahl
 Misc text section|24|21|Erhaltene Items
 Misc text section|24|22|zum Bestätigen
 Misc text section|24|23|EXP erhalten
-Misc text section|24|24|{x0a23} konnte\n nicht mehr aufgenommen werden
+Misc text section|24|24|{CardReceived} konnte\n nicht mehr aufgenommen werden
 Misc text section|24|25|zum Beenden
 Misc text section|24|26|___
 Misc text section|24|27|von
@@ -1517,8 +1517,8 @@ Misc text section|24|105|{x0561}
 Misc text section|24|106|{x0562}
 Misc text section|24|107|{x0563}
 Misc text section|24|108|{x0564}
-Misc text section|24|109|Die G.F. haben {x0a20} AP erhalten
-Misc text section|24|110|{x0a23}-Karte
+Misc text section|24|109|Die G.F. haben {CurrentSeedTestLevel} AP erhalten
+Misc text section|24|110|{CardReceived}-Karte
 Misc text section|24|111|Die G.F. haben sich weiterentwickelt
 Misc text section|24|112|Konnte nicht gefressen werden!
 Misc text section|24|113|?????

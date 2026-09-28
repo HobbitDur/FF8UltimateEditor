@@ -14,7 +14,7 @@ Battle command text section|0|11|Ataca c{on} es{to}cada{s }múltiples.
 Battle command text section|0|12|Extraer
 Battle command text section|0|13|Extra{e }m{ag}ia.
 Battle command text section|0|14|Engullir
-Battle command text section|0|15|Engu{ll}{e }a un {x0e38}.
+Battle command text section|0|15|Engu{ll}{e }a un {Refine}.
 Battle command text section|0|16|
 Battle command text section|0|17|
 Battle command text section|0|18|Aplicar
@@ -28,7 +28,7 @@ Battle command text section|0|25|Aprovecha {x0e52}ataqu{e }p{ar}a {ar}{re}bat{ar
 Battle command text section|0|26|
 Battle command text section|0|27|
 Battle command text section|0|28|Duelo
-Battle command text section|0|29|Ataca a{l }{x0e38} c{on} munici{on}e{s }disp{on}ibles.
+Battle command text section|0|29|Ataca a{l }{Refine} c{on} munici{on}e{s }disp{on}ibles.
 Battle command text section|0|30|Magia azul
 Battle command text section|0|31|Ataca c{on} técnica{s }ap{re}ndidas{x0e49}m{on}struos.
 Battle command text section|0|32|Ruleta
@@ -60,11 +60,11 @@ Battle command text section|0|57|Ataca a costa{x0e49}{x0e53}propia vitalidad.
 Battle command text section|0|58|Carta
 Battle command text section|0|59|Transforma a un m{on}stru{o }en c{ar}ta.
 Battle command text section|0|60|Condena
-Battle command text section|0|61|C{on}dena a muert{e }a un {x0e38}.
+Battle command text section|0|61|C{on}dena a muert{e }a un {Refine}.
 Battle command text section|0|62|Kamikaze
-Battle command text section|0|63|Daña a{l }{x0e38}, per{o }{x0e52}guer{re}r{o }e{s }elim{in}ado.
+Battle command text section|0|63|Daña a{l }{Refine}, per{o }{x0e52}guer{re}r{o }e{s }elim{in}ado.
 Battle command text section|0|64|Absorber
-Battle command text section|0|65|Absorb{e }{x0e53}vitalidad d{x0e52}{x0e38}.
+Battle command text section|0|65|Absorb{e }{x0e53}vitalidad d{x0e52}{Refine}.
 Battle command text section|0|66|Nivel↓
 Battle command text section|0|67|Dism{in}uy{e }{x0e52}niv{x0e52}d{e }un m{on}struo.
 Battle command text section|0|68|Nivel↑
@@ -80,45 +80,45 @@ Battle command text section|0|77|Llama a un moguri{to}.
 Magic text section|1|0|
 Magic text section|1|1|
 Magic text section|1|2|Piro
-Magic text section|1|3|{x0e35}Fueg{o }a un {x0e38}.
+Magic text section|1|3|{learns}Fueg{o }a un {Refine}.
 Magic text section|1|4|Piro+
-Magic text section|1|5|{x0e35}Fueg{o }a un {x0e38}.
+Magic text section|1|5|{learns}Fueg{o }a un {Refine}.
 Magic text section|1|6|Piro++
-Magic text section|1|7|{x0e35}Fueg{o }a un {x0e38}.
+Magic text section|1|7|{learns}Fueg{o }a un {Refine}.
 Magic text section|1|8|Hielo
-Magic text section|1|9|{x0e35}Frí{o }a un {x0e38}.
+Magic text section|1|9|{learns}Frí{o }a un {Refine}.
 Magic text section|1|10|Hielo+
-Magic text section|1|11|{x0e35}Frí{o }a un {x0e38}.
+Magic text section|1|11|{learns}Frí{o }a un {Refine}.
 Magic text section|1|12|Hielo++
-Magic text section|1|13|{x0e35}Frí{o }a un {x0e38}.
+Magic text section|1|13|{learns}Frí{o }a un {Refine}.
 Magic text section|1|14|Electro
-Magic text section|1|15|{x0e35}Ray{o }a un {x0e38}.
+Magic text section|1|15|{learns}Ray{o }a un {Refine}.
 Magic text section|1|16|Electro+
-Magic text section|1|17|{x0e35}Ray{o }a un {x0e38}.
+Magic text section|1|17|{learns}Ray{o }a un {Refine}.
 Magic text section|1|18|Electro++
-Magic text section|1|19|{x0e35}Ray{o }a un {x0e38}.
+Magic text section|1|19|{learns}Ray{o }a un {Refine}.
 Magic text section|1|20|Aqua
-Magic text section|1|21|{x0e35}Agua a un {x0e38}.
+Magic text section|1|21|{learns}Agua a un {Refine}.
 Magic text section|1|22|Aero
-Magic text section|1|23|{x0e35}Ai{re} a un {x0e38}.
+Magic text section|1|23|{learns}Ai{re} a un {Refine}.
 Magic text section|1|24|Bio
 Magic text section|1|25|Enve{ne}na y daña c{on} ELM Ve{ne}n{o }a un{ r}ival.
 Magic text section|1|26|Gravedad
-Magic text section|1|27|Reduc{e }{x0e53}vitalidad{x0e49}un {x0e38} a 3/4.
+Magic text section|1|27|Reduc{e }{x0e53}vitalidad{x0e49}un {Refine} a 3/4.
 Magic text section|1|28|Sanctus
-Magic text section|1|29|{x0e35}Sacr{o }a un {x0e38}.
+Magic text section|1|29|{learns}Sacr{o }a un {Refine}.
 Magic text section|1|30|Fulgor
-Magic text section|1|31|{x0e4a}dañ{o }n{o }{x0e37} a un {x0e38}.
+Magic text section|1|31|{x0e4a}dañ{o }n{o }{Magic} a un {Refine}.
 Magic text section|1|32|Meteo
-Magic text section|1|33|{x0e4a}dañ{o }n{o }{x0e37} a{l }az{ar}.
+Magic text section|1|33|{x0e4a}dañ{o }n{o }{Magic} a{l }az{ar}.
 Magic text section|1|34|Seísmo
-Magic text section|1|35|{x0e4a}dañ{o }ELM Tierra a {to}do{s }lo{s }{x0e38}s.
+Magic text section|1|35|{x0e4a}dañ{o }ELM Tierra a {to}do{s }lo{s }{Refine}s.
 Magic text section|1|36|Tornado
-Magic text section|1|37|{x0e4a}dañ{o }ELM Ai{re} a {to}do{s }lo{s }{x0e38}s.
+Magic text section|1|37|{x0e4a}dañ{o }ELM Ai{re} a {to}do{s }lo{s }{Refine}s.
 Magic text section|1|38|Artema
-Magic text section|1|39|{x0e4a}dañ{o }n{o }{x0e37} a {to}do{s }lo{s }{x0e38}s.
+Magic text section|1|39|{x0e4a}dañ{o }n{o }{Magic} a {to}do{s }lo{s }{Refine}s.
 Magic text section|1|40|Apocalipsis
-Magic text section|1|41|{x0e4a}dañ{o }n{o }{x0e37} a {to}do{s }lo{s }{x0e38}s.
+Magic text section|1|41|{x0e4a}dañ{o }n{o }{Magic} a {to}do{s }lo{s }{Refine}s.
 Magic text section|1|42|Cura
 Magic text section|1|43|{x0e46} 
 Magic text section|1|44|Cura+
@@ -176,53 +176,53 @@ Magic text section|1|95|Suspend{e }a un {in}dividu{o }en {x0e52}ai{re}.
 Magic text section|1|96|Zombi
 Magic text section|1|97|C{on}viert{e }en zombi.
 Magic text section|1|98|Fusión
-Magic text section|1|99|{x0e4a}dañ{o }n{o }{x0e37} y{ r}educ{e }{x0e53}RST a 0.
+Magic text section|1|99|{x0e4a}dañ{o }n{o }{Magic} y{ r}educ{e }{x0e53}RST a 0.
 Magic text section|1|100|Libra
-Magic text section|1|101|Muestra VIT y pu{nt}o{s }déb{il}e{s }d{x0e52}{x0e38}.
+Magic text section|1|101|Muestra VIT y pu{nt}o{s }déb{il}e{s }d{x0e52}{Refine}.
 Magic text section|1|102|Cura total
 Magic text section|1|103|Restablec{e }VIT y cura EST{x0e49}{to}d{o }{x0e52}grupo.
 Magic text section|1|104|Muro
 Magic text section|1|105|Proteg{e }a {to}d{o }{x0e52}grup{o }c{on} Coraza y Escudo.
 Magic text section|1|106|Lévita++
-Magic text section|1|107|Hac{e }desap{ar}ecer a{l }{x0e38}.
+Magic text section|1|107|Hac{e }desap{ar}ecer a{l }{Refine}.
 Magic text section|1|108| 
 Magic text section|1|109| 
 Magic text section|1|110| 
 Magic text section|1|111| 
 Magic text section|1|112|The End
-Magic text section|1|113|Elim{in}a a {to}do{s }lo{s }{x0e38}s.
+Magic text section|1|113|Elim{in}a a {to}do{s }lo{s }{Refine}s.
 Junctionable GF text section|2|0|Tormenta eléctrica
-Junctionable GF text section|2|1|{x0e36}{x0e49}ELM Rayo.
+Junctionable GF text section|2|1|{ability}{x0e49}ELM Rayo.
 Junctionable GF text section|2|2|Polvo de diamantes
-Junctionable GF text section|2|3|{x0e36}{x0e49}ELM Frío.
+Junctionable GF text section|2|3|{ability}{x0e49}ELM Frío.
 Junctionable GF text section|2|4|Llamas del infierno
-Junctionable GF text section|2|5|{x0e36}{x0e49}ELM Fuego.
+Junctionable GF text section|2|5|{ability}{x0e49}ELM Fuego.
 Junctionable GF text section|2|6|Canto mesmerizante
-Junctionable GF text section|2|7|{x0e36} qu{e }daña y enmudece.
+Junctionable GF text section|2|7|{ability} qu{e }daña y enmudece.
 Junctionable GF text section|2|8|Amor fraternal
-Junctionable GF text section|2|9|{x0e36}{x0e49}ELM Tierra.
+Junctionable GF text section|2|9|{ability}{x0e49}ELM Tierra.
 Junctionable GF text section|2|10|Emisario de la noche
-Junctionable GF text section|2|11|{x0e36} n{o }{x0e37}.
+Junctionable GF text section|2|11|{ability} n{o }{Magic}.
 Junctionable GF text section|2|12|Resplandor de rubí
 Junctionable GF text section|2|13|Aplica {x0e53}m{ag}ia Espej{o }a {to}do{s }{x0e52}grupo.
 Junctionable GF text section|2|14|Rugido oceánico
-Junctionable GF text section|2|15|{x0e36}{x0e49}ELM Agua.
+Junctionable GF text section|2|15|{ability}{x0e49}ELM Agua.
 Junctionable GF text section|2|16|Zona huracanada
-Junctionable GF text section|2|17|{x0e36}{x0e49}ELM Ai{re}.
+Junctionable GF text section|2|17|{ability}{x0e49}ELM Ai{re}.
 Junctionable GF text section|2|18|Custodio del averno
 Junctionable GF text section|2|19|Aplica la{s }m{ag}ia{s }Dobl{e }y Tripl{e }a{l }grupo.
 Junctionable GF text section|2|20|Veredicto final
-Junctionable GF text section|2|21|{x0e36}{x0e49}ELM{ S}acro.
+Junctionable GF text section|2|21|{ability}{x0e49}ELM{ S}acro.
 Junctionable GF text section|2|22|Vías de eternidad
-Junctionable GF text section|2|23|{x0e36}{x0e49}ELM Ve{ne}no.
+Junctionable GF text section|2|23|{ability}{x0e49}ELM Ve{ne}no.
 Junctionable GF text section|2|24|Megafulgor
-Junctionable GF text section|2|25|{x0e36} n{o }{x0e37}.
+Junctionable GF text section|2|25|{ability} n{o }{Magic}.
 Junctionable GF text section|2|26|Miles de espinas
-Junctionable GF text section|2|27|{x0e36} n{o }{x0e37}.
+Junctionable GF text section|2|27|{ability} n{o }{Magic}.
 Junctionable GF text section|2|28|Cuchilla
-Junctionable GF text section|2|29|{x0e36} n{o }{x0e37}.
+Junctionable GF text section|2|29|{ability} n{o }{Magic}.
 Junctionable GF text section|2|30|Extremaunción
-Junctionable GF text section|2|31|{x0e36} n{o }{x0e37}.
+Junctionable GF text section|2|31|{ability} n{o }{Magic}.
 Enemy attack text section|3|0|
 Enemy attack text section|3|1|
 Enemy attack text section|3|2|
@@ -641,13 +641,13 @@ Weapon text section|4|30|Ametralladora
 Weapon text section|4|31|Kathar
 Weapon text section|4|32|Harpón
 Renzokuken finishers text section|5|0|Mandoble final
-Renzokuken finishers text section|5|1|{x0e33} 
+Renzokuken finishers text section|5|1|{Restores} 
 Renzokuken finishers text section|5|2|Círculo letal
-Renzokuken finishers text section|5|3|{x0e34} 
+Renzokuken finishers text section|5|3|{status} 
 Renzokuken finishers text section|5|4|Guillotina cósmica
-Renzokuken finishers text section|5|5|{x0e34} 
+Renzokuken finishers text section|5|5|{status} 
 Renzokuken finishers text section|5|6|Súmmum
-Renzokuken finishers text section|5|7|{x0e33} 
+Renzokuken finishers text section|5|7|{Restores} 
 Character names section|6|0|
 Character names section|6|1|Zell
 Character names section|6|2|Irvine
@@ -744,123 +744,123 @@ Non-battle item names section|8|15|Permit{e }cambi{ar} {x0e52}nomb{re} a un{x0e4
 Non-battle item names section|8|16|Sal amnésica
 Non-battle item names section|8|17|Hac{e }olvid{ar} una hab{il}idad a un{x0e4e}
 Non-battle item names section|8|18|Libro de la VIT
-Non-battle item names section|8|19|{x0e3c}Enlac{e }{x0e57}.
+Non-battle item names section|8|19|{Magazine}Enlac{e }{x0e57}.
 Non-battle item names section|8|20|Libro de la FRZ
-Non-battle item names section|8|21|{x0e3c}Enlac{e }FRZ.
+Non-battle item names section|8|21|{Magazine}Enlac{e }FRZ.
 Non-battle item names section|8|22|Libro de la RST
-Non-battle item names section|8|23|{x0e3c}Enlac{e }RST.
+Non-battle item names section|8|23|{Magazine}Enlac{e }RST.
 Non-battle item names section|8|24|Libro del PM
-Non-battle item names section|8|25|{x0e3c}Enlac{e }PM.
+Non-battle item names section|8|25|{Magazine}Enlac{e }PM.
 Non-battle item names section|8|26|Libro del ESP
-Non-battle item names section|8|27|{x0e3c}Enlac{e }ESP.
+Non-battle item names section|8|27|{Magazine}Enlac{e }ESP.
 Non-battle item names section|8|28|Libro de la RAP
-Non-battle item names section|8|29|{x0e3c}Enlac{e }RAP.
+Non-battle item names section|8|29|{Magazine}Enlac{e }RAP.
 Non-battle item names section|8|30|Libro de la SUE
-Non-battle item names section|8|31|{x0e3c}Enlac{e }SUE.
+Non-battle item names section|8|31|{Magazine}Enlac{e }SUE.
 Non-battle item names section|8|32|Égida
-Non-battle item names section|8|33|{x0e3c}Enlac{e }EVS.
+Non-battle item names section|8|33|{Magazine}Enlac{e }EVS.
 Non-battle item names section|8|34|Papiro atq. ELM
-Non-battle item names section|8|35|{x0e3c}Enl. ataqu{e }ELM.
+Non-battle item names section|8|35|{Magazine}Enl. ataqu{e }ELM.
 Non-battle item names section|8|36|Papiro def. ELM
-Non-battle item names section|8|37|{x0e3c}Enl. d{ef}. ELM x4.
+Non-battle item names section|8|37|{Magazine}Enl. d{ef}. ELM x4.
 Non-battle item names section|8|38|Papiro atq. EST
-Non-battle item names section|8|39|{x0e3c}Enl. ataqu{e }EST.
+Non-battle item names section|8|39|{Magazine}Enl. ataqu{e }EST.
 Non-battle item names section|8|40|Papiro def. EST
-Non-battle item names section|8|41|{x0e3c}Enl. d{ef}. EST x4.
+Non-battle item names section|8|41|{Magazine}Enl. d{ef}. EST x4.
 Non-battle item names section|8|42|Piedra Rosetta
-Non-battle item names section|8|43|{x0e3c}4 hab{il}idades.
+Non-battle item names section|8|43|{Magazine}4 hab{il}idades.
 Non-battle item names section|8|44|Libro de magia
-Non-battle item names section|8|45|{x0e3c}M{ag}ia.
+Non-battle item names section|8|45|{Magazine}M{ag}ia.
 Non-battle item names section|8|46|Libro de los G. F.
-Non-battle item names section|8|47|{x0e3c}G. F.
+Non-battle item names section|8|47|{Magazine}G. F.
 Non-battle item names section|8|48|Libro extracción
-Non-battle item names section|8|49|{x0e3c}Extraer.
+Non-battle item names section|8|49|{Magazine}Extraer.
 Non-battle item names section|8|50|Libro objetos
-Non-battle item names section|8|51|{x0e3c}Obje{to}.
+Non-battle item names section|8|51|{Magazine}Obje{to}.
 Non-battle item names section|8|52|Alma lúdica
-Non-battle item names section|8|53|{x0e3c}C{ar}ta.
+Non-battle item names section|8|53|{Magazine}C{ar}ta.
 Non-battle item names section|8|54|Anillo de cura
-Non-battle item names section|8|55|{x0e3c}Recuper{ar}.
+Non-battle item names section|8|55|{Magazine}Recuper{ar}.
 Non-battle item names section|8|56|Alma de fénix
-Non-battle item names section|8|57|{x0e3c}Resucit{ar}.
+Non-battle item names section|8|57|{Magazine}Resucit{ar}.
 Non-battle item names section|8|58|Estetoscopio
-Non-battle item names section|8|59|{x0e3c}San{ar}.
+Non-battle item names section|8|59|{Magazine}San{ar}.
 Non-battle item names section|8|60|Alma de bom
-Non-battle item names section|8|61|{x0e3c}Kamikaze.
+Non-battle item names section|8|61|{Magazine}Kamikaze.
 Non-battle item names section|8|62|Olla del hambre
-Non-battle item names section|8|63|{x0e3c}Engu{ll}ir.
+Non-battle item names section|8|63|{Magazine}Engu{ll}ir.
 Non-battle item names section|8|64|Amuleto Mogu
-Non-battle item names section|8|65|{x0e3c}Moguri{to}.
+Non-battle item names section|8|65|{Magazine}Moguri{to}.
 Non-battle item names section|8|66|Tubo de hierro
-Non-battle item names section|8|67|{x0e3c}M{ag}ia{x0e4e} +1{x0e56}
+Non-battle item names section|8|67|{Magazine}M{ag}ia{x0e4e} +1{x0e56}
 Non-battle item names section|8|68|Polvo estelar
-Non-battle item names section|8|69|{x0e3c}M{ag}ia{x0e4e} +2{x0e56}
+Non-battle item names section|8|69|{Magazine}M{ag}ia{x0e4e} +2{x0e56}
 Non-battle item names section|8|70|Energía pura
-Non-battle item names section|8|71|{x0e3c}M{ag}ia{x0e4e} +3{x0e56}
+Non-battle item names section|8|71|{Magazine}M{ag}ia{x0e4e} +3{x0e56}
 Non-battle item names section|8|72|Alma de Tábata
-Non-battle item names section|8|73|{x0e3c}M{ag}ia{x0e4e} +4{x0e56}
+Non-battle item names section|8|73|{Magazine}M{ag}ia{x0e4e} +4{x0e56}
 Non-battle item names section|8|74|Malla de vida
-Non-battle item names section|8|75|{x0e3c}{x0e57}{x0e4e} +1{x0e56}
+Non-battle item names section|8|75|{Magazine}{x0e57}{x0e4e} +1{x0e56}
 Non-battle item names section|8|76|Malla de plata
-Non-battle item names section|8|77|{x0e3c}{x0e57}{x0e4e} +2{x0e56}
+Non-battle item names section|8|77|{Magazine}{x0e57}{x0e4e} +2{x0e56}
 Non-battle item names section|8|78|Coraza de oro
-Non-battle item names section|8|79|{x0e3c}{x0e57}{x0e4e} +3{x0e56}
+Non-battle item names section|8|79|{Magazine}{x0e57}{x0e4e} +3{x0e56}
 Non-battle item names section|8|80|Coraza diamante
-Non-battle item names section|8|81|{x0e3c}{x0e57}{x0e4e} +4{x0e56}
+Non-battle item names section|8|81|{Magazine}{x0e57}{x0e4e} +4{x0e56}
 Non-battle item names section|8|82|Anillo de Enoc
-Non-battle item names section|8|83|{x0e3c}{x0e57} +2{x0e56}
+Non-battle item names section|8|83|{Magazine}{x0e57} +2{x0e56}
 Non-battle item names section|8|84|Anillo de gigante
-Non-battle item names section|8|85|{x0e3c}{x0e57} +4{x0e56}
+Non-battle item names section|8|85|{Magazine}{x0e57} +4{x0e56}
 Non-battle item names section|8|86|Anillo de Gaia
-Non-battle item names section|8|87|{x0e3c}{x0e57} +8{x0e56}
+Non-battle item names section|8|87|{Magazine}{x0e57} +8{x0e56}
 Non-battle item names section|8|88|Cinto de fuerza
-Non-battle item names section|8|89|{x0e3c}FRZ +2{x0e56}
+Non-battle item names section|8|89|{Magazine}FRZ +2{x0e56}
 Non-battle item names section|8|90|Brazal de poder
-Non-battle item names section|8|91|{x0e3c}FRZ +4{x0e56}
+Non-battle item names section|8|91|{Magazine}FRZ +4{x0e56}
 Non-battle item names section|8|92|Brazal de titán
-Non-battle item names section|8|93|{x0e3c}FRZ +6{x0e56}
+Non-battle item names section|8|93|{Magazine}FRZ +6{x0e56}
 Non-battle item names section|8|94|Caparazón
-Non-battle item names section|8|95|{x0e3c}RST +2{x0e56}
+Non-battle item names section|8|95|{Magazine}RST +2{x0e56}
 Non-battle item names section|8|96|Orichalcum
-Non-battle item names section|8|97|{x0e3c}RST +4{x0e56}
+Non-battle item names section|8|97|{Magazine}RST +4{x0e56}
 Non-battle item names section|8|98|Adamantino
-Non-battle item names section|8|99|{x0e3c}RST +6{x0e56}
+Non-battle item names section|8|99|{Magazine}RST +6{x0e56}
 Non-battle item names section|8|100|Manilla de Lun
-Non-battle item names section|8|101|{x0e3c}ESP +2{x0e56}
+Non-battle item names section|8|101|{Magazine}ESP +2{x0e56}
 Non-battle item names section|8|102|Manilla de Mitra
-Non-battle item names section|8|103|{x0e3c}ESP +4{x0e56}
+Non-battle item names section|8|103|{Magazine}ESP +4{x0e56}
 Non-battle item names section|8|104|Manilla de Osiris
-Non-battle item names section|8|105|{x0e3c}ESP +6{x0e56}
+Non-battle item names section|8|105|{Magazine}ESP +6{x0e56}
 Non-battle item names section|8|106|Tiara mágica
-Non-battle item names section|8|107|{x0e3c}PM +2{x0e56}
+Non-battle item names section|8|107|{Magazine}PM +2{x0e56}
 Non-battle item names section|8|108|Corona de Juno
-Non-battle item names section|8|109|{x0e3c}PM +4{x0e56}
+Non-battle item names section|8|109|{Magazine}PM +4{x0e56}
 Non-battle item names section|8|110|Corona real
-Non-battle item names section|8|111|{x0e3c}PM +6{x0e56}
+Non-battle item names section|8|111|{Magazine}PM +6{x0e56}
 Non-battle item names section|8|112|Motor de jet
-Non-battle item names section|8|113|{x0e3c}RAP +2{x0e56}
+Non-battle item names section|8|113|{Magazine}RAP +2{x0e56}
 Non-battle item names section|8|114|Motor de cohete
-Non-battle item names section|8|115|{x0e3c}RAP +4{x0e56}
+Non-battle item names section|8|115|{Magazine}RAP +4{x0e56}
 Non-battle item names section|8|116|Manto de luna
-Non-battle item names section|8|117|{x0e3c}Au{to}escudo.
+Non-battle item names section|8|117|{Magazine}Au{to}escudo.
 Non-battle item names section|8|118|Manto de hierro
-Non-battle item names section|8|119|{x0e3c}Au{to}coraza.
+Non-battle item names section|8|119|{Magazine}Au{to}coraza.
 Non-battle item names section|8|120|Manto de luz
-Non-battle item names section|8|121|{x0e3c}Au{to}espejo.
+Non-battle item names section|8|121|{Magazine}Au{to}espejo.
 Non-battle item names section|8|122|Acelerador
-Non-battle item names section|8|123|{x0e3c}Au{to}prisa.
+Non-battle item names section|8|123|{Magazine}Au{to}prisa.
 Non-battle item names section|8|124|Alma monacal
-Non-battle item names section|8|125|{x0e3c}C{on}traataque.
+Non-battle item names section|8|125|{Magazine}C{on}traataque.
 Non-battle item names section|8|126|Alma guerrera
-Non-battle item names section|8|127|{x0e3c}Proteger.
+Non-battle item names section|8|127|{Magazine}Proteger.
 Non-battle item names section|8|128|Diploma médico
-Non-battle item names section|8|129|{x0e3c}Saber médico.
+Non-battle item names section|8|129|{Magazine}Saber médico.
 Non-battle item names section|8|130|Cien espinas
-Non-battle item names section|8|131|{x0e3c}Devolver daño.
+Non-battle item names section|8|131|{Magazine}Devolver daño.
 Non-battle item names section|8|132|Tres estrellas
-Non-battle item names section|8|133|{x0e3c}3 m{ag}ia{s }por 1.
+Non-battle item names section|8|133|{Magazine}3 m{ag}ia{s }por 1.
 Non-battle item names section|8|134|Cinta
-Non-battle item names section|8|135|{x0e3c}C{in}ta.
+Non-battle item names section|8|135|{Magazine}C{in}ta.
 Non-battle item names section|8|136|Bala común
 Non-battle item names section|8|137|Munición común p{ar}a{ r}ifle.
 Non-battle item names section|8|138|Bala expansiva
@@ -914,35 +914,35 @@ Non-battle item names section|8|185|C{on}tie{ne} fuerza vital.
 Non-battle item names section|8|186|Diente de dragón
 Non-battle item names section|8|187|Pose{e }poder{x0e49}{re}cuperación.
 Non-battle item names section|8|188|Tela de araña
-Non-battle item names section|8|189|{x0e3b}azu{l }Megavibración.
+Non-battle item names section|8|189|{command}azu{l }Megavibración.
 Non-battle item names section|8|190|Trozo de coral
-Non-battle item names section|8|191|{x0e3b}azu{l }Electroshock.
+Non-battle item names section|8|191|{command}azu{l }Electroshock.
 Non-battle item names section|8|192|Uña maldita
-Non-battle item names section|8|193|{x0e3b}azu{l }Muert{e }niv{x0e52}?.
+Non-battle item names section|8|193|{command}azu{l }Muert{e }niv{x0e52}?.
 Non-battle item names section|8|194|Agujero negro
-Non-battle item names section|8|195|{x0e3b}azu{l }Des{in}tegrador.
+Non-battle item names section|8|195|{command}azu{l }Des{in}tegrador.
 Non-battle item names section|8|196|Agua cristal
-Non-battle item names section|8|197|{x0e3b}azu{l }Vah{o }acuático.
+Non-battle item names section|8|197|{command}azu{l }Vah{o }acuático.
 Non-battle item names section|8|198|Misil
-Non-battle item names section|8|199|{x0e3b}azu{l }Micromis{il}es.
+Non-battle item names section|8|199|{command}azu{l }Micromis{il}es.
 Non-battle item names section|8|200|Fluido misterioso
-Non-battle item names section|8|201|{x0e3b}azu{l }Lluvia ácida.
+Non-battle item names section|8|201|{command}azu{l }Lluvia ácida.
 Non-battle item names section|8|202|Bioametralladora
-Non-battle item names section|8|203|{x0e3b}azu{l }Biometra{ll}a.
+Non-battle item names section|8|203|{command}azu{l }Biometra{ll}a.
 Non-battle item names section|8|204|Pelo de dragón
-Non-battle item names section|8|205|{x0e3b}azu{l }Llam{ar}ada.
+Non-battle item names section|8|205|{command}azu{l }Llam{ar}ada.
 Non-battle item names section|8|206|Tentáculo molbol
-Non-battle item names section|8|207|{x0e3b}azu{l }Alie{nt}{o }fétido.
+Non-battle item names section|8|207|{command}azu{l }Alie{nt}{o }fétido.
 Non-battle item names section|8|208|Rumor del viento
-Non-battle item names section|8|209|{x0e3b}azu{l }Vie{nt}{o }blanco.
+Non-battle item names section|8|209|{command}azu{l }Vie{nt}{o }blanco.
 Non-battle item names section|8|210|Cañón láser
-Non-battle item names section|8|211|{x0e3b}Láser au{to}guiado.
+Non-battle item names section|8|211|{command}Láser au{to}guiado.
 Non-battle item names section|8|212|Blindaje
-Non-battle item names section|8|213|{x0e3b}azu{l }B{ar}{re}ra {to}tal.
+Non-battle item names section|8|213|{command}azu{l }B{ar}{re}ra {to}tal.
 Non-battle item names section|8|214|Generador
-Non-battle item names section|8|215|{x0e3b}azu{l }Ray{o }bomba.
+Non-battle item names section|8|215|{command}azu{l }Ray{o }bomba.
 Non-battle item names section|8|216|Materia oscura
-Non-battle item names section|8|217|{x0e3b}azu{l }Onda expansiva.
+Non-battle item names section|8|217|{command}azu{l }Onda expansiva.
 Non-battle item names section|8|218|Trozo de bom
 Non-battle item names section|8|219|C{on}tie{ne} eleme{nt}{o }Fuego.
 Non-battle item names section|8|220|Colmillo rojo
@@ -1014,19 +1014,19 @@ Non-battle item names section|8|285|Mejora {x0e53}suert{e }d{x0e52}guer{re}ro.
 Non-battle item names section|8|286|Anillo nupcial
 Non-battle item names section|8|287|{x0e43}{x0e53}a{fi}nidad d{x0e52}guer{re}r{o }c{on} sus{x0e4e}
 Non-battle item names section|8|288|“Armas”, núm. 1
-Non-battle item names section|8|289|{x0e39}
+Non-battle item names section|8|289|{Junctions}
 Non-battle item names section|8|290|“Armas” Marzo
-Non-battle item names section|8|291|{x0e39}
+Non-battle item names section|8|291|{Junctions}
 Non-battle item names section|8|292|“Armas” Abril
-Non-battle item names section|8|293|{x0e39}
+Non-battle item names section|8|293|{Junctions}
 Non-battle item names section|8|294|“Armas” Mayo
-Non-battle item names section|8|295|{x0e39}
+Non-battle item names section|8|295|{Junctions}
 Non-battle item names section|8|296|“Armas” Junio
-Non-battle item names section|8|297|{x0e39}
+Non-battle item names section|8|297|{Junctions}
 Non-battle item names section|8|298|“Armas” Julio
-Non-battle item names section|8|299|{x0e39}
+Non-battle item names section|8|299|{Junctions}
 Non-battle item names section|8|300|“Armas” Agosto
-Non-battle item names section|8|301|{x0e39}
+Non-battle item names section|8|301|{Junctions}
 Non-battle item names section|8|302|“Karateka” 001
 Non-battle item names section|8|303|{x0e45}
 Non-battle item names section|8|304|“Karateka” 002
@@ -1038,17 +1038,17 @@ Non-battle item names section|8|309|{x0e45}
 Non-battle item names section|8|310|“Karateka” 005
 Non-battle item names section|8|311|{x0e45}
 Non-battle item names section|8|312|“Hocicos”, N. 1
-Non-battle item names section|8|313|{x0e3a}
+Non-battle item names section|8|313|{Raises}
 Non-battle item names section|8|314|“Hocicos”, N. 2
-Non-battle item names section|8|315|{x0e3a}
+Non-battle item names section|8|315|{Raises}
 Non-battle item names section|8|316|“Hocicos”, N. 3
-Non-battle item names section|8|317|{x0e3a}
+Non-battle item names section|8|317|{Raises}
 Non-battle item names section|8|318|“Hocicos”, N. 4
-Non-battle item names section|8|319|{x0e3a}
+Non-battle item names section|8|319|{Raises}
 Non-battle item names section|8|320|“Hocicos”, N. 5
-Non-battle item names section|8|321|{x0e3a}
+Non-battle item names section|8|321|{Raises}
 Non-battle item names section|8|322|“Hocicos”, N. 6
-Non-battle item names section|8|323|{x0e3a}
+Non-battle item names section|8|323|{Raises}
 Non-battle item names section|8|324|“Expediente F” 1
 Non-battle item names section|8|325|{x0e51}Última{s }noticias
 Non-battle item names section|8|326|“Expediente F” 2
@@ -1306,47 +1306,47 @@ Menu ability text section|16|45|Cambia b{re}baje{s }meno{re}{s }en b{re}baje{s }
 Menu ability text section|16|46|Convertir cartas
 Menu ability text section|16|47|Produc{e }obje{to}{s }a p{ar}tir{x0e49}c{ar}tas.
 Temporary character limit break text section|17|0|Exterminio
-Temporary character limit break text section|17|1|{x0e34} 
+Temporary character limit break text section|17|1|{status} 
 Temporary character limit break text section|17|2|Luz helada
-Temporary character limit break text section|17|3|{x0e33} 
+Temporary character limit break text section|17|3|{Restores} 
 Temporary character limit break text section|17|4|Desperado
-Temporary character limit break text section|17|5|{x0e34} 
+Temporary character limit break text section|17|5|{status} 
 Temporary character limit break text section|17|6|Carnicería
-Temporary character limit break text section|17|7|{x0e33} 
+Temporary character limit break text section|17|7|{Restores} 
 Temporary character limit break text section|17|8|Mataballenas
-Temporary character limit break text section|17|9|{x0e34} 
+Temporary character limit break text section|17|9|{status} 
 Blue magic text section|18|0|Ojo máser
-Blue magic text section|18|1|Daña a un {x0e38}.
+Blue magic text section|18|1|Daña a un {Refine}.
 Blue magic text section|18|2|Megavibración
-Blue magic text section|18|3|Daña a {to}do{s }lo{s }{x0e38}s.
+Blue magic text section|18|3|Daña a {to}do{s }lo{s }{Refine}s.
 Blue magic text section|18|4|Electroshock
-Blue magic text section|18|5|{x0e4a}dañ{o }ELM Ray{o }a {to}do{s }lo{s }{x0e38}s.
+Blue magic text section|18|5|{x0e4a}dañ{o }ELM Ray{o }a {to}do{s }lo{s }{Refine}s.
 Blue magic text section|18|6|Muerte nivel ?
-Blue magic text section|18|7|Mata a un {x0e38}{x0e49}un niv{x0e52}determ{in}ado.
+Blue magic text section|18|7|Mata a un {Refine}{x0e49}un niv{x0e52}determ{in}ado.
 Blue magic text section|18|8|Desintegrador
-Blue magic text section|18|9|Hac{e }desap{ar}ecer a un {x0e38}.
+Blue magic text section|18|9|Hac{e }desap{ar}ecer a un {Refine}.
 Blue magic text section|18|10|Vaho acuático
-Blue magic text section|18|11|{x0e4a}dañ{o }ELM Agua a {to}do{s }lo{s }{x0e38}s.
+Blue magic text section|18|11|{x0e4a}dañ{o }ELM Agua a {to}do{s }lo{s }{Refine}s.
 Blue magic text section|18|12|Micromisiles
-Blue magic text section|18|13|Daña a un {x0e38}.
+Blue magic text section|18|13|Daña a un {Refine}.
 Blue magic text section|18|14|Lluvia ácida
-Blue magic text section|18|15|P{on}{e }a un {x0e38} en estad{o }alterado.
+Blue magic text section|18|15|P{on}{e }a un {Refine} en estad{o }alterado.
 Blue magic text section|18|16|Biometralla
-Blue magic text section|18|17|Daña a un {x0e38}.
+Blue magic text section|18|17|Daña a un {Refine}.
 Blue magic text section|18|18|Llamarada
-Blue magic text section|18|19|{x0e4a}dañ{o }ELM Fueg{o }a {to}do{s }lo{s }{x0e38}s.
+Blue magic text section|18|19|{x0e4a}dañ{o }ELM Fueg{o }a {to}do{s }lo{s }{Refine}s.
 Blue magic text section|18|20|Aliento fétido
-Blue magic text section|18|21|P{on}{e }a {to}do{s }lo{s }{x0e38}{s }en estad{o }alterado.
+Blue magic text section|18|21|P{on}{e }a {to}do{s }lo{s }{Refine}{s }en estad{o }alterado.
 Blue magic text section|18|22|Viento blanco
 Blue magic text section|18|23|Restablec{e }{x0e53}vitalidad{x0e49}{to}d{o }{x0e52}grupo.
 Blue magic text section|18|24|Láser autoguiado
-Blue magic text section|18|25|Daña a un {x0e38}.
+Blue magic text section|18|25|Daña a un {Refine}.
 Blue magic text section|18|26|Barrera total
 Blue magic text section|18|27|Proteg{e }a {to}d{o }{x0e52}grupo.
 Blue magic text section|18|28|Rayo bomba
-Blue magic text section|18|29|Daña a {to}do{s }lo{s }{x0e38}s.
+Blue magic text section|18|29|Daña a {to}do{s }lo{s }{Refine}s.
 Blue magic text section|18|30|Onda expansiva
-Blue magic text section|18|31|Daña graveme{nt}{e }a {to}do{s }lo{s }{x0e38}s.
+Blue magic text section|18|31|Daña graveme{nt}{e }a {to}do{s }lo{s }{Refine}s.
 Shot text section|19|0|Tiro normal
 Shot text section|19|1|Daña a un e{ne}migo.
 Shot text section|19|2|Tiro múltiple
@@ -1364,25 +1364,25 @@ Shot text section|19|13|Daña a un e{ne}mig{o }traspasand{o }su{s }d{ef}ensas.
 Shot text section|19|14|Tiro fulmíneo
 Shot text section|19|15|Daña a un e{ne}migo.
 Duel text section|20|0|Lluvia de puños
-Duel text section|20|1|{x0e33}
+Duel text section|20|1|{Restores}
 Duel text section|20|2|Rodillazo
-Duel text section|20|3|{x0e33}
+Duel text section|20|3|{Restores}
 Duel text section|20|4|Golpe de talón
-Duel text section|20|5|{x0e33}
+Duel text section|20|5|{Restores}
 Duel text section|20|6|Patada lateral
-Duel text section|20|7|{x0e33}
+Duel text section|20|7|{Restores}
 Duel text section|20|8|Ataque del delfín
-Duel text section|20|9|{x0e33}
+Duel text section|20|9|{Restores}
 Duel text section|20|10|Titán
-Duel text section|20|11|{x0e33}
+Duel text section|20|11|{Restores}
 Duel text section|20|12|Furia ardiente
-Duel text section|20|13|{x0e34}
+Duel text section|20|13|{status}
 Duel text section|20|14|Bala humana
-Duel text section|20|15|{x0e33}
+Duel text section|20|15|{Restores}
 Duel text section|20|16|Novamás
-Duel text section|20|17|{x0e33}
+Duel text section|20|17|{Restores}
 Duel text section|20|18|Mi juicio final
-Duel text section|20|19|{x0e34}
+Duel text section|20|19|{status}
 Rinoa limit break (part 1) text section|21|0|{Angelo}
 Rinoa limit break (part 1) text section|21|1|Lucha junto con {Angelo}
 Rinoa limit break (part 1) text section|21|2|Hada
@@ -1414,7 +1414,7 @@ Misc text section|24|2|G. F.
 Misc text section|24|3|PAUSA
 Misc text section|24|4|No hay escapatoria.
 Misc text section|24|5|¡Ha fallado la extracción!
-Misc text section|24|6|¡Has obtenido {x0a23}!
+Misc text section|24|6|¡Has obtenido {CardReceived}!
 Misc text section|24|7|ha aprendido
 Misc text section|24|8|N/A
 Misc text section|24|9|¡Has obtenido
@@ -1432,7 +1432,7 @@ Misc text section|24|20|Opción no disponible
 Misc text section|24|21|Objetos obtenidos
 Misc text section|24|22| Confirmar.
 Misc text section|24|23|Experiencia
-Misc text section|24|24|Objetos desechados ({x0a23})\npor exceder las 100 unidades.
+Misc text section|24|24|Objetos desechados ({CardReceived})\npor exceder las 100 unidades.
 Misc text section|24|25| - Terminar.
 Misc text section|24|26|N/A
 Misc text section|24|27|ha perdido el estado
@@ -1517,8 +1517,8 @@ Misc text section|24|105|{x0561}
 Misc text section|24|106|{x0562}
 Misc text section|24|107|{x0563}
 Misc text section|24|108|{x0564}
-Misc text section|24|109|¡Los G. F. han adquirido {x0a20} PH!
-Misc text section|24|110|Carta de {x0a23}
+Misc text section|24|109|¡Los G. F. han adquirido {CurrentSeedTestLevel} PH!
+Misc text section|24|110|Carta de {CardReceived}
 Misc text section|24|111|Desarrollo de los G. F.
 Misc text section|24|112|¡No se ha dejado comer!
 Misc text section|24|113|?????

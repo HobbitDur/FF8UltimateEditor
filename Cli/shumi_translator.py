@@ -216,7 +216,7 @@ def _export_remaster_csv(gd, input_file: str, output_file: str):
 def _export_field_csv(gd, input_file: str, output_file: str):
     """Export field.fs to CSV."""
     from ShumiTranslator.model.field.fieldfsmanager import FieldFsManager
-    mgr = FieldFsManager(game_data=gd, game_data_folder=os.path.join("..", "FF8GameData"))
+    mgr = FieldFsManager(game_data=gd, game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
     mgr.load_file(input_file)
     mgr.save_csv(output_file)
 
@@ -224,7 +224,7 @@ def _export_field_csv(gd, input_file: str, output_file: str):
 def _export_world_csv(gd, input_file: str, output_file: str):
     """Export world.fs to CSV."""
     from ShumiTranslator.model.world.worldfsmanager import WorldFsManager
-    mgr = WorldFsManager(game_data=gd, game_data_folder=os.path.join("..", "FF8GameData"))
+    mgr = WorldFsManager(game_data=gd, game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
     mgr.load_file(input_file)
     mgr.save_csv(output_file)
 

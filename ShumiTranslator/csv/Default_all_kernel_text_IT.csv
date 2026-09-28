@@ -80,45 +80,45 @@ Battle command text section|0|77|Chiama {il} Komoguri
 Magic text section|1|0|
 Magic text section|1|1|
 Magic text section|1|2|Fire
-Magic text section|1|3|{x0e35} Fuoco
+Magic text section|1|3|{learns} Fuoco
 Magic text section|1|4|Fira
-Magic text section|1|5|{x0e35} Fuoco
+Magic text section|1|5|{learns} Fuoco
 Magic text section|1|6|Firaga
-Magic text section|1|7|{x0e35} Fuoco
+Magic text section|1|7|{learns} Fuoco
 Magic text section|1|8|Blizzard
-Magic text section|1|9|{x0e35} Gelo
+Magic text section|1|9|{learns} Gelo
 Magic text section|1|10|Blizzara
-Magic text section|1|11|{x0e35} Gelo
+Magic text section|1|11|{learns} Gelo
 Magic text section|1|12|Blizzaga
-Magic text section|1|13|{x0e35} Gelo
+Magic text section|1|13|{learns} Gelo
 Magic text section|1|14|Thunder
-Magic text section|1|15|{x0e35} Tu{on}o
+Magic text section|1|15|{learns} Tu{on}o
 Magic text section|1|16|Thundara
-Magic text section|1|17|{x0e35} Tu{on}o
+Magic text section|1|17|{learns} Tu{on}o
 Magic text section|1|18|Thundaga
-Magic text section|1|19|{x0e35} Tu{on}o
+Magic text section|1|19|{learns} Tu{on}o
 Magic text section|1|20|Idro
-Magic text section|1|21|{x0e35} Acqua
+Magic text section|1|21|{learns} Acqua
 Magic text section|1|22|Aero
-Magic text section|1|23|{x0e35} Ve{nt}{o }
+Magic text section|1|23|{learns} Ve{nt}{o }
 Magic text section|1|24|Bio
 Magic text section|1|25|Attacc{o }m{ag}ic{o }elem. Veleno, statu{s }Veleno
 Magic text section|1|26|Antima
 Magic text section|1|27|M{ag}ia ch{e }{to}gli{e }1/4 di {HP} a{l }{ne}mico
 Magic text section|1|28|Sancta
-Magic text section|1|29|{x0e35}{ S}acro
+Magic text section|1|29|{learns}{ S}acro
 Magic text section|1|30|Flare
-Magic text section|1|31|Attacc{o }m{ag}ic{o }s{in}gol{o }{x0e37}
+Magic text section|1|31|Attacc{o }m{ag}ic{o }s{in}gol{o }{Magic}
 Magic text section|1|32|Meteor
 Magic text section|1|33|Attacc{o }m{ag}ic{o }global{e }n{on} eleme{nt}al{e }casuale
 Magic text section|1|34|Quake
-Magic text section|1|35|Attacc{o }m{ag}ic{o }globale, {x0e38} Terra
+Magic text section|1|35|Attacc{o }m{ag}ic{o }globale, {Refine} Terra
 Magic text section|1|36|Tornado
-Magic text section|1|37|Attacc{o }m{ag}ic{o }globale, {x0e38} Ve{nt}o
+Magic text section|1|37|Attacc{o }m{ag}ic{o }globale, {Refine} Ve{nt}o
 Magic text section|1|38|Ultima
-Magic text section|1|39|Attacc{o }m{ag}ic{o }global{e }{x0e37}
+Magic text section|1|39|Attacc{o }m{ag}ic{o }global{e }{Magic}
 Magic text section|1|40|Apocalypse
-Magic text section|1|41|Attacc{o }m{ag}ic{o }global{e }{x0e37}
+Magic text section|1|41|Attacc{o }m{ag}ic{o }global{e }{Magic}
 Magic text section|1|42|Energia
 Magic text section|1|43|Recupera {HP}
 Magic text section|1|44|Energira
@@ -176,7 +176,7 @@ Magic text section|1|95|Permett{e }di fluttu{ar}{e }{in} {ar}ia
 Magic text section|1|96|Zombie
 Magic text section|1|97|Provoca statu{s }Zombie
 Magic text section|1|98|Zero
-Magic text section|1|99|Azzera RES {ne}mic{o }c{on} attacc{o }{x0e37}
+Magic text section|1|99|Azzera RES {ne}mic{o }c{on} attacc{o }{Magic}
 Magic text section|1|100|Scan
 Magic text section|1|101|Trova {HP} {e }pu{nt}i deboli de{l }{ne}mico
 Magic text section|1|102|Megaene
@@ -192,37 +192,37 @@ Magic text section|1|111|Dan{ne}ggia notevolme{nt}{e }tutti i {ne}mici
 Magic text section|1|112|The End
 Magic text section|1|113|Cance{ll}a tutti i {ne}mici
 Junctionable GF text section|2|0|Tempesta di tuoni
-Junctionable GF text section|2|1|{x0e36}di {x0e38} Tu{on}o
+Junctionable GF text section|2|1|{ability}di {Refine} Tu{on}o
 Junctionable GF text section|2|2|Polvere di diamante
-Junctionable GF text section|2|3|{x0e36}di {x0e38} Gelo
+Junctionable GF text section|2|3|{ability}di {Refine} Gelo
 Junctionable GF text section|2|4|Fiamme infernali
-Junctionable GF text section|2|5|{x0e36}di {x0e38} Fuoco
+Junctionable GF text section|2|5|{ability}di {Refine} Fuoco
 Junctionable GF text section|2|6|Voce del silenzio
 Junctionable GF text section|2|7|G.F.: causa Mutism{o }{e }altri danni
 Junctionable GF text section|2|8|Dovere fraterno
-Junctionable GF text section|2|9|{x0e36}di {x0e38} Terra
+Junctionable GF text section|2|9|{ability}di {Refine} Terra
 Junctionable GF text section|2|10|Messaggero della notte
-Junctionable GF text section|2|11| {x0e36}{x0e37}
+Junctionable GF text section|2|11| {ability}{Magic}
 Junctionable GF text section|2|12|Bagliore di rubini
 Junctionable GF text section|2|13|G.F.: applica m{ag}ia R{ef}lex a tutta la squadra 
 Junctionable GF text section|2|14|Ruggito oceanico
-Junctionable GF text section|2|15|{x0e36}di {x0e38} Acqua
+Junctionable GF text section|2|15|{ability}di {Refine} Acqua
 Junctionable GF text section|2|16|Attacco ciclonico
-Junctionable GF text section|2|17|{x0e36}di {x0e38} Ve{nt}o
+Junctionable GF text section|2|17|{ability}di {Refine} Ve{nt}o
 Junctionable GF text section|2|18|Contrattacco satanico
 Junctionable GF text section|2|19|G.F.: statu{s }Double/Tripl{e }a{ll}a squadra
 Junctionable GF text section|2|20|Verdetto divino
-Junctionable GF text section|2|21|{x0e36}di {x0e38}{ S}acr{o } 
+Junctionable GF text section|2|21|{ability}di {Refine}{ S}acr{o } 
 Junctionable GF text section|2|22|Caos infernale
-Junctionable GF text section|2|23|{x0e36}di {x0e38} Veleno
+Junctionable GF text section|2|23|{ability}di {Refine} Veleno
 Junctionable GF text section|2|24|Megaflare
-Junctionable GF text section|2|25| {x0e36}{x0e37}
+Junctionable GF text section|2|25| {ability}{Magic}
 Junctionable GF text section|2|26|1000 e 1 ago
-Junctionable GF text section|2|27| {x0e36}{x0e37}
+Junctionable GF text section|2|27| {ability}{Magic}
 Junctionable GF text section|2|28|Coltello da chef
-Junctionable GF text section|2|29| {x0e36}{x0e37}
+Junctionable GF text section|2|29| {ability}{Magic}
 Junctionable GF text section|2|30|Respiro eterno
-Junctionable GF text section|2|31| {x0e36}{x0e37}
+Junctionable GF text section|2|31| {ability}{Magic}
 Enemy attack text section|3|0|
 Enemy attack text section|3|1|
 Enemy attack text section|3|2|
@@ -744,123 +744,123 @@ Non-battle item names section|8|15|Cambia {il} nom{e }de{l }G.F.
 Non-battle item names section|8|16|Smemorerba
 Non-battle item names section|8|17|Fa dime{nt}ic{ar}{e }l{e }ab{il}ità a{l }G.F.
 Non-battle item names section|8|18|Vol HP
-Non-battle item names section|8|19|{x0e3a}J {HP} a{l }G.F.
+Non-battle item names section|8|19|{Raises}J {HP} a{l }G.F.
 Non-battle item names section|8|20|Vol forza
-Non-battle item names section|8|21|{x0e3a}J FRZ a{l }G.F.
+Non-battle item names section|8|21|{Raises}J FRZ a{l }G.F.
 Non-battle item names section|8|22|Vol resistenza
-Non-battle item names section|8|23|{x0e3a}J RES a{l }G.F.
+Non-battle item names section|8|23|{Raises}J RES a{l }G.F.
 Non-battle item names section|8|24|Vol forza mag
-Non-battle item names section|8|25|{x0e3a}J MAG a{l }G.F.
+Non-battle item names section|8|25|{Raises}J MAG a{l }G.F.
 Non-battle item names section|8|26|Vol spirito
-Non-battle item names section|8|27|{x0e3a}J{ S}PR a{l }G.F.
+Non-battle item names section|8|27|{Raises}J{ S}PR a{l }G.F.
 Non-battle item names section|8|28|Vol velocità
-Non-battle item names section|8|29|{x0e3a}J VEL a{l }G.F.
+Non-battle item names section|8|29|{Raises}J VEL a{l }G.F.
 Non-battle item names section|8|30|Vol fortuna
-Non-battle item names section|8|31|{x0e3a}J FOR a{l }G.F.
+Non-battle item names section|8|31|{Raises}J FOR a{l }G.F.
 Non-battle item names section|8|32|Amuleto di Kuzna
-Non-battle item names section|8|33|{x0e3a}J DST a{l }G.F.
+Non-battle item names section|8|33|{Raises}J DST a{l }G.F.
 Non-battle item names section|8|34|Vol attacco
-Non-battle item names section|8|35|{x0e3a}J Elem-Att a{l }G.F.
+Non-battle item names section|8|35|{Raises}J Elem-Att a{l }G.F.
 Non-battle item names section|8|36|Vol difesa
-Non-battle item names section|8|37|{x0e3a}J Elem-Dif 4x a{l }G.F.
+Non-battle item names section|8|37|{Raises}J Elem-Dif 4x a{l }G.F.
 Non-battle item names section|8|38|Vol attacco ST
-Non-battle item names section|8|39|{x0e3a}J{ S}T-Att a{l }G.F.
+Non-battle item names section|8|39|{Raises}J{ S}T-Att a{l }G.F.
 Non-battle item names section|8|40|Vol difesa ST
-Non-battle item names section|8|41|{x0e3a}J{ S}T-Dif 4x a{l }G.F.
+Non-battle item names section|8|41|{Raises}J{ S}T-Dif 4x a{l }G.F.
 Non-battle item names section|8|42|Stele di Rosetta
-Non-battle item names section|8|43|{x0e3a}Ab{il}ità 4x a{l }G.F.
+Non-battle item names section|8|43|{Raises}Ab{il}ità 4x a{l }G.F.
 Non-battle item names section|8|44|Libro di Magie
-Non-battle item names section|8|45|{x0e3a}M{ag}i{e }a{l }G.F.
+Non-battle item names section|8|45|{Raises}M{ag}i{e }a{l }G.F.
 Non-battle item names section|8|46|Libro sui G.F.
-Non-battle item names section|8|47|{x0e3a}G.F. a{l }G.F.
+Non-battle item names section|8|47|{Raises}G.F. a{l }G.F.
 Non-battle item names section|8|48|Libro di Scienze
-Non-battle item names section|8|49|{x0e3a}Assim{il}a a{l }G.F.
+Non-battle item names section|8|49|{Raises}Assim{il}a a{l }G.F.
 Non-battle item names section|8|50|Libro Oggetti
-Non-battle item names section|8|51|{x0e3a}Oggetti a{l }G.F.
+Non-battle item names section|8|51|{Raises}Oggetti a{l }G.F.
 Non-battle item names section|8|52|Anima del baro
-Non-battle item names section|8|53|{x0e3a}C{ar}ta a{l }G.F.
+Non-battle item names section|8|53|{Raises}C{ar}ta a{l }G.F.
 Non-battle item names section|8|54|Anello ossidato
-Non-battle item names section|8|55|{x0e3a}Recuper{o }a{l }G.F.
+Non-battle item names section|8|55|{Raises}Recuper{o }a{l }G.F.
 Non-battle item names section|8|56|Anima di fenice
-Non-battle item names section|8|57|{x0e3a}Risvegli{o }a{l }G.F.
+Non-battle item names section|8|57|{Raises}Risvegli{o }a{l }G.F.
 Non-battle item names section|8|58|Kit di soccorso
-Non-battle item names section|8|59|{x0e3a}Vitam{in}a a{l }G.F.
+Non-battle item names section|8|59|{Raises}Vitam{in}a a{l }G.F.
 Non-battle item names section|8|60|Anima di Piros
-Non-battle item names section|8|61|{x0e3a}Kamikaz{e }a{l }G.F.
+Non-battle item names section|8|61|{Raises}Kamikaz{e }a{l }G.F.
 Non-battle item names section|8|62|Pentola magica
-Non-battle item names section|8|63|{x0e3a}Divora a{l }G.F.
+Non-battle item names section|8|63|{Raises}Divora a{l }G.F.
 Non-battle item names section|8|64|Amuleto Moghy
-Non-battle item names section|8|65|{x0e3a}Komoguri a{l }G.F.
+Non-battle item names section|8|65|{Raises}Komoguri a{l }G.F.
 Non-battle item names section|8|66|Tubo di ferro
-Non-battle item names section|8|67|{x0e3a}M{ag}Invocate+10% a{l }G.F.
+Non-battle item names section|8|67|{Raises}M{ag}Invocate+10% a{l }G.F.
 Non-battle item names section|8|68|Scheggia stella
-Non-battle item names section|8|69|{x0e3a}M{ag}Invocate+20% a{l }G.F.
+Non-battle item names section|8|69|{Raises}M{ag}Invocate+20% a{l }G.F.
 Non-battle item names section|8|70|Biocristallo
-Non-battle item names section|8|71|{x0e3a}M{ag}Invocate+30% a{l }G.F.
+Non-battle item names section|8|71|{Raises}M{ag}Invocate+30% a{l }G.F.
 Non-battle item names section|8|72|Anima di Samasa
-Non-battle item names section|8|73|{x0e3a}M{ag}Invocate+40% a{l }G.F.
+Non-battle item names section|8|73|{Raises}M{ag}Invocate+40% a{l }G.F.
 Non-battle item names section|8|74|Abito eroico
-Non-battle item names section|8|75|{x0e3a}{GF} {HP}+10% a{l }G.F.
+Non-battle item names section|8|75|{Raises}{GF} {HP}+10% a{l }G.F.
 Non-battle item names section|8|76|Abito fatato
-Non-battle item names section|8|77|{x0e3a}{GF} {HP}+20% a{l }G.F.
+Non-battle item names section|8|77|{Raises}{GF} {HP}+20% a{l }G.F.
 Non-battle item names section|8|78|Armatura d'oro
-Non-battle item names section|8|79|{x0e3a}{GF} {HP}+30% a{l }G.F.
+Non-battle item names section|8|79|{Raises}{GF} {HP}+30% a{l }G.F.
 Non-battle item names section|8|80|Armatura di Leda
-Non-battle item names section|8|81|{x0e3a}{GF} {HP}+40% a{l }G.F.
+Non-battle item names section|8|81|{Raises}{GF} {HP}+40% a{l }G.F.
 Non-battle item names section|8|82|Anello sacro
-Non-battle item names section|8|83|{x0e3a}{HP}+20% a{l }G.F.
+Non-battle item names section|8|83|{Raises}{HP}+20% a{l }G.F.
 Non-battle item names section|8|84|Anello di Titano
-Non-battle item names section|8|85|{x0e3a}{HP}+40% a{l }G.F.
+Non-battle item names section|8|85|{Raises}{HP}+40% a{l }G.F.
 Non-battle item names section|8|86|Anello di Gaia
-Non-battle item names section|8|87|{x0e3a}{HP}+80% a{l }G.F.
+Non-battle item names section|8|87|{Raises}{HP}+80% a{l }G.F.
 Non-battle item names section|8|88|Lista della forza
-Non-battle item names section|8|89|{x0e3a}FRZ+20% a{l }G.F.
+Non-battle item names section|8|89|{Raises}FRZ+20% a{l }G.F.
 Non-battle item names section|8|90|Lista dei poteri
-Non-battle item names section|8|91|{x0e3a}FRZ+40% a{l }G.F.
+Non-battle item names section|8|91|{Raises}FRZ+40% a{l }G.F.
 Non-battle item names section|8|92|Lista magica
-Non-battle item names section|8|93|{x0e3a}FRZ+60% a{l }G.F.
+Non-battle item names section|8|93|{Raises}FRZ+60% a{l }G.F.
 Non-battle item names section|8|94|Guscio di sauro
-Non-battle item names section|8|95|{x0e3a}RES+20% a{l }G.F.
+Non-battle item names section|8|95|{Raises}RES+20% a{l }G.F.
 Non-battle item names section|8|96|Orialco
-Non-battle item names section|8|97|{x0e3a}RES+40% a{l }G.F.
+Non-battle item names section|8|97|{Raises}RES+40% a{l }G.F.
 Non-battle item names section|8|98|Adamantio
-Non-battle item names section|8|99|{x0e3a}RES+60% a{l }G.F.
+Non-battle item names section|8|99|{Raises}RES+60% a{l }G.F.
 Non-battle item names section|8|100|Bracciale di Rah
-Non-battle item names section|8|101|{x0e3a}SPR+20% a{l }G.F.
+Non-battle item names section|8|101|{Raises}SPR+20% a{l }G.F.
 Non-battle item names section|8|102|Bracciale di Aya
-Non-battle item names section|8|103|{x0e3a}SPR+40% a{l }G.F.
+Non-battle item names section|8|103|{Raises}SPR+40% a{l }G.F.
 Non-battle item names section|8|104|Bracciale magico
-Non-battle item names section|8|105|{x0e3a}SPR+60% a{l }G.F.
+Non-battle item names section|8|105|{Raises}SPR+60% a{l }G.F.
 Non-battle item names section|8|106|Corona ossidata
-Non-battle item names section|8|107|{x0e3a}MAG+20% a{l }G.F.
+Non-battle item names section|8|107|{Raises}MAG+20% a{l }G.F.
 Non-battle item names section|8|108|Corona di Yupu
-Non-battle item names section|8|109|{x0e3a}MAG+40% a{l }G.F.
+Non-battle item names section|8|109|{Raises}MAG+40% a{l }G.F.
 Non-battle item names section|8|110|Corona reale
-Non-battle item names section|8|111|{x0e3a}MAG+60% a{l }G.F.
+Non-battle item names section|8|111|{Raises}MAG+60% a{l }G.F.
 Non-battle item names section|8|112|Motore Jet
-Non-battle item names section|8|113|{x0e3a}VEL+20% a{l }G.F.
+Non-battle item names section|8|113|{Raises}VEL+20% a{l }G.F.
 Non-battle item names section|8|114|Reattore
-Non-battle item names section|8|115|{x0e3a}VEL+40% a{l }G.F.
+Non-battle item names section|8|115|{Raises}VEL+40% a{l }G.F.
 Non-battle item names section|8|116|Cortina lunare
-Non-battle item names section|8|117|{x0e3a}Au{to}she{ll} a{l }G.F.
+Non-battle item names section|8|117|{Raises}Au{to}she{ll} a{l }G.F.
 Non-battle item names section|8|118|Cortina di ferro
-Non-battle item names section|8|119|{x0e3a}Au{to}protect a{l }G.F.
+Non-battle item names section|8|119|{Raises}Au{to}protect a{l }G.F.
 Non-battle item names section|8|120|Cortina luminosa
-Non-battle item names section|8|121|{x0e3a}Au{to}{re}flex a{l }G.F.
+Non-battle item names section|8|121|{Raises}Au{to}{re}flex a{l }G.F.
 Non-battle item names section|8|122|Acceleratore
-Non-battle item names section|8|123|{x0e3a}Au{to}hast{e }a{l }G.F.
+Non-battle item names section|8|123|{Raises}Au{to}hast{e }a{l }G.F.
 Non-battle item names section|8|124|Arte del monaco
-Non-battle item names section|8|125|{x0e3a}C{on}trattacc{o }a{l }G.F.
+Non-battle item names section|8|125|{Raises}C{on}trattacc{o }a{l }G.F.
 Non-battle item names section|8|126|Arte guerriera
-Non-battle item names section|8|127|{x0e3a}Altruism{o }a{l }G.F.
+Non-battle item names section|8|127|{Raises}Altruism{o }a{l }G.F.
 Non-battle item names section|8|128|Arte del medico
-Non-battle item names section|8|129|{x0e3a}Nozi{on}i medich{e }a{l }G.F.
+Non-battle item names section|8|129|{Raises}Nozi{on}i medich{e }a{l }G.F.
 Non-battle item names section|8|130|Set 100 aculei
-Non-battle item names section|8|131|{x0e3a}Occhi{o }x occhi{o }a{l }G.F.
+Non-battle item names section|8|131|{Raises}Occhi{o }x occhi{o }a{l }G.F.
 Non-battle item names section|8|132|Triostella
-Non-battle item names section|8|133|{x0e3a}Detriplica a{l }G.F.     
+Non-battle item names section|8|133|{Raises}Detriplica a{l }G.F.     
 Non-battle item names section|8|134|Fiocco
-Non-battle item names section|8|135|{x0e3a}Fiocc{o }a{l }G.F.
+Non-battle item names section|8|135|{Raises}Fiocc{o }a{l }G.F.
 Non-battle item names section|8|136|Colpi normali
 Non-battle item names section|8|137|Colpi normali
 Non-battle item names section|8|138|Colpi di piombo
@@ -914,45 +914,45 @@ Non-battle item names section|8|185|A{ne}{ll}{o }ch{e }sprigi{on}a forza vitale
 Non-battle item names section|8|186|Zanne di grifone
 Non-battle item names section|8|187|Zan{ne} c{on} potenza{ r}ige{ne}ratrice
 Non-battle item names section|8|188|Ragnatela
-Non-battle item names section|8|189|{x0e39}Ond{e }s{on}iche
+Non-battle item names section|8|189|{Junctions}Ond{e }s{on}iche
 Non-battle item names section|8|190|Scheggia corallo
-Non-battle item names section|8|191|{x0e39}Elettroshock
+Non-battle item names section|8|191|{Junctions}Elettroshock
 Non-battle item names section|8|192|Artiglio malefico
-Non-battle item names section|8|193|{x0e39}Live{ll}{o }Ad{e }?
+Non-battle item names section|8|193|{Junctions}Live{ll}{o }Ad{e }?
 Non-battle item names section|8|194|Buco nero
-Non-battle item names section|8|195|{x0e39}Dis{in}tegrazi{on}e
+Non-battle item names section|8|195|{Junctions}Dis{in}tegrazi{on}e
 Non-battle item names section|8|196|Idrocristallo
-Non-battle item names section|8|197|{x0e39}Respir{o }m{ar}{in}o
+Non-battle item names section|8|197|{Junctions}Respir{o }m{ar}{in}o
 Non-battle item names section|8|198|Missile
-Non-battle item names section|8|199|{x0e39}Micromiss{il}i
+Non-battle item names section|8|199|{Junctions}Micromiss{il}i
 Non-battle item names section|8|200|Fluido misterioso
-Non-battle item names section|8|201|{x0e39}Liquid{o }letale
+Non-battle item names section|8|201|{Junctions}Liquid{o }letale
 Non-battle item names section|8|202|Mitra
-Non-battle item names section|8|203|{x0e39}Biomitr{ag}lia{to}{re}
+Non-battle item names section|8|203|{Junctions}Biomitr{ag}lia{to}{re}
 Non-battle item names section|8|204|Zanna di drago
-Non-battle item names section|8|205|{x0e39}Respir{o }{in}fuoca{to}
+Non-battle item names section|8|205|{Junctions}Respir{o }{in}fuoca{to}
 Non-battle item names section|8|206|Antenna Molboro
-Non-battle item names section|8|207|{x0e39}Ali{to} fetido
+Non-battle item names section|8|207|{Junctions}Ali{to} fetido
 Non-battle item names section|8|208|Polvere di vento
-Non-battle item names section|8|209|{x0e39}Bianc{o }ve{nt}o
+Non-battle item names section|8|209|{Junctions}Bianc{o }ve{nt}o
 Non-battle item names section|8|210|Cannone laser
-Non-battle item names section|8|211|{x0e39}Mult{il}aser
+Non-battle item names section|8|211|{Junctions}Mult{il}aser
 Non-battle item names section|8|212|Sistema zeta
-Non-battle item names section|8|213|{x0e39}Multidifesa
+Non-battle item names section|8|213|{Junctions}Multidifesa
 Non-battle item names section|8|214|Generatore
-Non-battle item names section|8|215|{x0e39}Termocaos
+Non-battle item names section|8|215|{Junctions}Termocaos
 Non-battle item names section|8|216|Dagmata
-Non-battle item names section|8|217|{x0e39}Onda cosmica
+Non-battle item names section|8|217|{Junctions}Onda cosmica
 Non-battle item names section|8|218|Scheggia Piros
-Non-battle item names section|8|219|Pietra di {x0e38} Fuoc{o } 
+Non-battle item names section|8|219|Pietra di {Refine} Fuoc{o } 
 Non-battle item names section|8|220|Zanna rossa
-Non-battle item names section|8|221|Zanna di dr{ag}{o }di {x0e38} Fuoco
+Non-battle item names section|8|221|Zanna di dr{ag}{o }di {Refine} Fuoco
 Non-battle item names section|8|222|Vento antartico
-Non-battle item names section|8|223|Ve{nt}{o }glacial{e }di {x0e38} Gelo
+Non-battle item names section|8|223|Ve{nt}{o }glacial{e }di {Refine} Gelo
 Non-battle item names section|8|224|Vento artico
-Non-battle item names section|8|225|Ve{nt}{o }glacial{e }{e }fortissim{o }di {x0e38} Gelo
+Non-battle item names section|8|225|Ve{nt}{o }glacial{e }{e }fortissim{o }di {Refine} Gelo
 Non-battle item names section|8|226|Dinamo
-Non-battle item names section|8|227|Ge{ne}ra{to}{re} di e{ne}rgia di {x0e38} Tu{on}o
+Non-battle item names section|8|227|Ge{ne}ra{to}{re} di e{ne}rgia di {Refine} Tu{on}o
 Non-battle item names section|8|228|Piuma del vento
 Non-battle item names section|8|229|Piuma ch{e }vola a{l }sof{fi}{o }de{l }ve{nt}o
 Non-battle item names section|8|230|Zanna velenosa
@@ -1014,29 +1014,29 @@ Non-battle item names section|8|285|{x0e45}Fortuna
 Non-battle item names section|8|286|Love Love G
 Non-battle item names section|8|287|Aume{nt}a {il} live{ll}{o }di af{fi}nità c{on} {il} G.F.
 Non-battle item names section|8|288|Armi mese, n°1
-Non-battle item names section|8|289|{x0e3b}
+Non-battle item names section|8|289|{command}
 Non-battle item names section|8|290|Armi mese, n°3
-Non-battle item names section|8|291|{x0e3b}
+Non-battle item names section|8|291|{command}
 Non-battle item names section|8|292|Armi mese, n°4
-Non-battle item names section|8|293|{x0e3b}
+Non-battle item names section|8|293|{command}
 Non-battle item names section|8|294|Armi mese, n°5
-Non-battle item names section|8|295|{x0e3b}
+Non-battle item names section|8|295|{command}
 Non-battle item names section|8|296|Armi mese, n°6
-Non-battle item names section|8|297|{x0e3b}
+Non-battle item names section|8|297|{command}
 Non-battle item names section|8|298|Armi mese, n°7
-Non-battle item names section|8|299|{x0e3b}
+Non-battle item names section|8|299|{command}
 Non-battle item names section|8|300|Armi mese, n°8
-Non-battle item names section|8|301|{x0e3b}
+Non-battle item names section|8|301|{command}
 Non-battle item names section|8|302|La guerra 001
-Non-battle item names section|8|303|{x0e3c}
+Non-battle item names section|8|303|{Magazine}
 Non-battle item names section|8|304|La guerra 002
-Non-battle item names section|8|305|{x0e3c}
+Non-battle item names section|8|305|{Magazine}
 Non-battle item names section|8|306|La guerra 003
-Non-battle item names section|8|307|{x0e3c}
+Non-battle item names section|8|307|{Magazine}
 Non-battle item names section|8|308|La guerra 004
-Non-battle item names section|8|309|{x0e3c}
+Non-battle item names section|8|309|{Magazine}
 Non-battle item names section|8|310|La guerra 005
-Non-battle item names section|8|311|{x0e3c}
+Non-battle item names section|8|311|{Magazine}
 Non-battle item names section|8|312|Il cane n°1
 Non-battle item names section|8|313|{x0e3f}
 Non-battle item names section|8|314|Il cane n°2
@@ -1320,13 +1320,13 @@ Blue magic text section|18|1|Dan{ne}ggia un {ne}mico
 Blue magic text section|18|2|Onde soniche
 Blue magic text section|18|3|Dan{ne}ggia tutti i {ne}mici
 Blue magic text section|18|4|Elettroshock
-Blue magic text section|18|5|Causa danni di {x0e38} Tu{on}{o }a tutti i {ne}mici
+Blue magic text section|18|5|Causa danni di {Refine} Tu{on}{o }a tutti i {ne}mici
 Blue magic text section|18|6|Livello Ade ?
 Blue magic text section|18|7|M{ag}ia Ad{e }c{on}tr{o }{ne}mici di un det. live{ll}o
 Blue magic text section|18|8|Disintegrazione
 Blue magic text section|18|9|Dis{in}tegra {il} {ne}mico
 Blue magic text section|18|10|Respiro marino
-Blue magic text section|18|11|Causa danni di {x0e38} Acqua a tutti i {ne}mici
+Blue magic text section|18|11|Causa danni di {Refine} Acqua a tutti i {ne}mici
 Blue magic text section|18|12|Micromissili
 Blue magic text section|18|13|Dan{ne}ggia un {ne}mico
 Blue magic text section|18|14|Liquido letale
@@ -1334,7 +1334,7 @@ Blue magic text section|18|15|Danni {e }alterazi{on}{e }di status
 Blue magic text section|18|16|Biomitragliatore
 Blue magic text section|18|17|Dan{ne}ggia un {ne}mico
 Blue magic text section|18|18|Respiro infuocato
-Blue magic text section|18|19|Causa danni di {x0e38} Fuoc{o }a tutti i {ne}mici
+Blue magic text section|18|19|Causa danni di {Refine} Fuoc{o }a tutti i {ne}mici
 Blue magic text section|18|20|Alito fetido
 Blue magic text section|18|21|Altera statu{s }di tutti i {ne}mici
 Blue magic text section|18|22|Bianco vento
@@ -1360,29 +1360,29 @@ Shot text section|19|9|Dan{ne}ggia un {ne}mico
 Shot text section|19|10|Colpo veloce
 Shot text section|19|11|Dan{ne}ggia un {ne}mico
 Shot text section|19|12|Colpo penetrante
-Shot text section|19|13|{x0e33} superand{o }ogni difesa
+Shot text section|19|13|{Restores} superand{o }ogni difesa
 Shot text section|19|14|Ipercolpo
 Shot text section|19|15|Dan{ne}ggia un {ne}mico
 Duel text section|20|0|Colpo al volto
-Duel text section|20|1|{x0e33} 
+Duel text section|20|1|{Restores} 
 Duel text section|20|2|Booya
-Duel text section|20|3|{x0e33} 
+Duel text section|20|3|{Restores} 
 Duel text section|20|4|Calcio rovesciato
-Duel text section|20|5|{x0e33} 
+Duel text section|20|5|{Restores} 
 Duel text section|20|6|Calcio laterale
-Duel text section|20|7|{x0e33} 
+Duel text section|20|7|{Restores} 
 Duel text section|20|8|Colpo di delfino
-Duel text section|20|9|{x0e33} 
+Duel text section|20|9|{Restores} 
 Duel text section|20|10|Meteostrike
-Duel text section|20|11|{x0e33} 
+Duel text section|20|11|{Restores} 
 Duel text section|20|12|Estasi di fuoco
-Duel text section|20|13|{x0e34} 
+Duel text section|20|13|{status} 
 Duel text section|20|14|Meteoattacco
-Duel text section|20|15|{x0e33} 
+Duel text section|20|15|{Restores} 
 Duel text section|20|16|Attacco multiplo
-Duel text section|20|17|{x0e33}
+Duel text section|20|17|{Restores}
 Duel text section|20|18|Giudizio finale
-Duel text section|20|19|{x0e34} 
+Duel text section|20|19|{status} 
 Rinoa limit break (part 1) text section|21|0|{Angelo}
 Rinoa limit break (part 1) text section|21|1|Permette di combattere con {Angelo}
 Rinoa limit break (part 1) text section|21|2|Ali di fata
@@ -1414,7 +1414,7 @@ Misc text section|24|2|G.F.
 Misc text section|24|3|Pausa
 Misc text section|24|4|Impossibile fuggire
 Misc text section|24|5|Impossibile assimilare
-Misc text section|24|6|Ottenuto {x0a23}
+Misc text section|24|6|Ottenuto {CardReceived}
 Misc text section|24|7|appresa!
 Misc text section|24|8|magia
 Misc text section|24|9|Ottenuto:
@@ -1432,7 +1432,7 @@ Misc text section|24|20|Non selezionabile
 Misc text section|24|21|Oggetti ottenuti
 Misc text section|24|22|continua
 Misc text section|24|23|EXP ottenuti
-Misc text section|24|24|{x0a23}: \n gettate le unità eccedenti le 100
+Misc text section|24|24|{CardReceived}: \n gettate le unità eccedenti le 100
 Misc text section|24|25| Fine
 Misc text section|24|26| è
 Misc text section|24|27|ST
@@ -1517,8 +1517,8 @@ Misc text section|24|105|{x0561}
 Misc text section|24|106|{x0562}
 Misc text section|24|107|{x0563}
 Misc text section|24|108|{x0564}
-Misc text section|24|109|I G.F. hanno ottenuto {x0a20} AP
-Misc text section|24|110|Carta {x0a23} 
+Misc text section|24|109|I G.F. hanno ottenuto {CurrentSeedTestLevel} AP
+Misc text section|24|110|Carta {CardReceived} 
 Misc text section|24|111|Sviluppo G.F.
 Misc text section|24|112|Impossibile mangiare!
 Misc text section|24|113|????

@@ -231,13 +231,13 @@ tkmnmes2.bin - subsection n°8|3|8|Entregar todas.
 tkmnmes2.bin - subsection n°8|3|9|Compartir.
 tkmnmes2.bin - subsection n°8|3|10|Decide cómo distribuir las magias.
 tkmnmes2.bin - subsection n°8|3|11|Ya tiene 100.
-tkmnmes2.bin - subsection n°8|3|12|No le caben más magias {x0a26}.
+tkmnmes2.bin - subsection n°8|3|12|No le caben más magias {SeedRank}.
 tkmnmes2.bin - subsection n°8|3|13|Recibir todas.
 tkmnmes2.bin - subsection n°8|3|14|Recibir
 tkmnmes2.bin - subsection n°8|3|15|Recibe todas las magias de otro personaje.
 tkmnmes2.bin - subsection n°8|3|16|Elige al personaje que recibirá las magias.
 tkmnmes2.bin - subsection n°8|3|17|Elige al personaje que entregará las magias.
-tkmnmes2.bin - subsection n°8|3|18|¿Deseas que {x0a27} se deshaga\nde todas sus magias {x0a26}?
+tkmnmes2.bin - subsection n°8|3|18|¿Deseas que {x0a27} se deshaga\nde todas sus magias {SeedRank}?
 tkmnmes2.bin - subsection n°8|3|19|Manual
 tkmnmes2.bin - subsection n°8|3|20|Permite ordenar las magias manualmente.
 tkmnmes2.bin - subsection n°8|3|21|Ataque / Cura / Otras
@@ -262,10 +262,10 @@ tkmnmes2.bin - subsection n°13|4|6|Personajes
 tkmnmes2.bin - subsection n°13|4|7|TOTAL
 tkmnmes2.bin - subsection n°13|4|8|Se obtiene de:
 tkmnmes2.bin - subsection n°13|4|9|Área/Poseedor
-tkmnmes2.bin - subsection n°13|4|10|Carta de monstruo (clase {x0a20})
-tkmnmes2.bin - subsection n°13|4|11|Carta de jefazo (clase {x0a20})
-tkmnmes2.bin - subsection n°13|4|12|Carta de G. F. (clase {x0a20})
-tkmnmes2.bin - subsection n°13|4|13|Carta de personaje (clase {x0a20})
+tkmnmes2.bin - subsection n°13|4|10|Carta de monstruo (clase {CurrentSeedTestLevel})
+tkmnmes2.bin - subsection n°13|4|11|Carta de jefazo (clase {CurrentSeedTestLevel})
+tkmnmes2.bin - subsection n°13|4|12|Carta de G. F. (clase {CurrentSeedTestLevel})
+tkmnmes2.bin - subsection n°13|4|13|Carta de personaje (clase {CurrentSeedTestLevel})
 tkmnmes2.bin - subsection n°13|4|14|Ninguno
 tkmnmes2.bin - subsection n°14|5|0|Verificando la 【Chocobo World】...
 tkmnmes2.bin - subsection n°14|5|1|Chocobo World no está cargado. ¿Lo\ncargas? (7 bloques de memoria).
@@ -372,7 +372,7 @@ tkmnmes3.bin - subsection n°3|7|38|Cantidad
 tkmnmes3.bin - subsection n°3|7|39|Precio
 tkmnmes3.bin - subsection n°3|7|40|Potencia
 tkmnmes3.bin - subsection n°3|7|41|Precisión
-tkmnmes3.bin - subsection n°3|7|42|¿Deseas convertir el arma\nde {x0a27} en {x0a26}?
+tkmnmes3.bin - subsection n°3|7|42|¿Deseas convertir el arma\nde {x0a27} en {SeedRank}?
 tkmnmes3.bin - subsection n°3|7|43|\n?
 tkmnmes3.bin - subsection n°3|7|44|{xc8}Te faltan objetos!\nVuelve cuando los tengas...
 tkmnmes3.bin - subsection n°3|7|45|{xc8}Te faltan objetos!
@@ -403,7 +403,7 @@ tkmnmes3.bin - subsection n°4|8|6|No puedes quitar a ese personaje.
 tkmnmes3.bin - subsection n°4|8|7|({x0564})
 tkmnmes3.bin - subsection n°4|8|8|No puedes incluir a ese personaje.
 tkmnmes3.bin - subsection n°4|8|9|({x0564})
-tkmnmes3.bin - subsection n°4|8|10|¿Deseas intercambiar los enlaces\nentre {x0a27} y {x0a26}?
+tkmnmes3.bin - subsection n°4|8|10|¿Deseas intercambiar los enlaces\nentre {x0a27} y {SeedRank}?
 tkmnmes3.bin - subsection n°4|8|11|({x0564})
 tkmnmes3.bin - subsection n°4|8|12|No hay un grupo de acción formado.
 tkmnmes3.bin - subsection n°4|8|13|No hay un grupo de enlace formado.
@@ -534,13 +534,13 @@ tkmnmes3.bin - subsection n°9|12|27|No ha sucedido nada en absoluto...
 tkmnmes3.bin - subsection n°9|12|28|{xc8}{x0a24} ha aprendido {x0a25}!
 tkmnmes3.bin - subsection n°9|12|29|{x0a24} ya posee la habilidad {x0a25}.
 tkmnmes3.bin - subsection n°9|12|30|{x0a24} no puede aprender más habilidades.
-tkmnmes3.bin - subsection n°9|12|31|{xc8}{x0a27} ha ganado afinidad {x0a22} con {x0a24}!
+tkmnmes3.bin - subsection n°9|12|31|{xc8}{x0a27} ha ganado afinidad {NextSeedTestLevel} con {x0a24}!
 tkmnmes3.bin - subsection n°9|12|32|{x0a27} ya tiene afinidad máxima con {x0a24}.
-tkmnmes3.bin - subsection n°9|12|33|{xc8}{x0a27} ha ganado {x0a22} punto(s) de {x0a28}!
+tkmnmes3.bin - subsection n°9|12|33|{xc8}{x0a27} ha ganado {NextSeedTestLevel} punto(s) de {x0a28}!
 tkmnmes3.bin - subsection n°9|12|34|{x0a27} ya no puede ganar más {x0a28}.
 tkmnmes3.bin - subsection n°9|12|35|Valor básico de {x0a28}
 tkmnmes3.bin - subsection n°9|12|36|{x0a27} ya tiene afinidad máxima con los G. F.
-tkmnmes3.bin - subsection n°9|12|37|{xc8}{x0a27} ha ganado afinidad {x0a22} con los G.F.!
+tkmnmes3.bin - subsection n°9|12|37|{xc8}{x0a27} ha ganado afinidad {NextSeedTestLevel} con los G.F.!
 tkmnmes3.bin - subsection n°9|12|38|『{x0a25}』
 tkmnmes3.bin - subsection n°11|13|0|Enlaces
 tkmnmes3.bin - subsection n°11|13|1|Permite efectuar enlaces.
@@ -644,10 +644,10 @@ tkmnmes3.bin - subsection n°13|14|30|Casos en que sólo se puede dar marcha atr
 tkmnmes3.bin - subsection n°13|14|31|Elige una opción.
 tkmnmes3.bin - subsection n°13|14|32|Examen escrito de Seed
 tkmnmes3.bin - subsection n°13|14|33|Examen escrito de Seed (preliminar)
-tkmnmes3.bin - subsection n°13|14|34|Examen escrito de Seed, rango {x0a22}
+tkmnmes3.bin - subsection n°13|14|34|Examen escrito de Seed, rango {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|35|Repaso del examen escrito de Seed
 tkmnmes3.bin - subsection n°13|14|36|Repaso del examen escrito de Seed (preliminar)
-tkmnmes3.bin - subsection n°13|14|37|Repaso del examen de Seed, rango {x0a22}
+tkmnmes3.bin - subsection n°13|14|37|Repaso del examen de Seed, rango {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|38|Examen de Seed rango
 tkmnmes3.bin - subsection n°13|14|39|Examen escrito de Seed (preliminar)
 tkmnmes3.bin - subsection n°13|14|40|Elige el examen que deseas repasar.
@@ -875,17 +875,17 @@ Chocobo tutorial|18|12|\n1: Posición neutra.\n2: Receptor - barra inferior.\n3:
 Chocobo tutorial|18|13|{xc4}      {Blue}Consola-【Chocobo World】{White}  8/8\n
 Chocobo tutorial|18|14|1: {Blue}A pasear:{White} El chocobito pasa de\n   FF{xc6}{xc7} a la 【Chocobo World】.\n2: {Blue}A casa:{White} El chocobito vuelve\n   a FF{xc6}{xc7}.\n3: Si pierdes la 【Chocobo World】 o\n   quieres empezar desde FF{xc6}{xc7},\n   selecciona {Blue}Otra vez{White}.\n4: {Blue}Cómo jugar:{White} Esta explicación.
 Chocobo tutorial|18|15|{Blue}Pantalla de comunicación óptica{White}  8/9\n
-Test seed general|19|0|{x00}\nA continuación empezará el examen escrito de Seed.\n¿Quieres examinarte para obtener el rango {x0a22}?\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
-Test seed general|19|1|{x00}\nA continuación empezará el examen escrito de Seed.\nTu rango es actualmente {x0a20}.\n\n¿Quieres examinarte para obtener el rango {x0a22}?\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
-Test seed general|19|2|{x00}\nHas obtenido 100 puntos.\nHas {Red}aprobado{White} el examen escrito del rango {x0a20}.\nTu rango Seed subirá a {x0a26}.\n\n\n\n  {Cursor_location_id:0x20}Terminar
-Test seed general|19|3|{x00}\nHas obtenido 100 puntos.\nHas aprobado el examen escrito del rango {x0a20}.\nSin embargo, como tu rango Seed ya es\n{x0a26}ano cambiará.\n\n\n  {Cursor_location_id:0x20}Terminar
-Test seed general|19|4|{x00}\nHas obtenido {x0a20} puntos.\nLamentablemente no has aprobado.\nEsperamos que la próxima vez\nte vaya mejor. {xc8}Buena suerte!\n\n\n  {Cursor_location_id:0x20}Terminar
+Test seed general|19|0|{x00}\nA continuación empezará el examen escrito de Seed.\n¿Quieres examinarte para obtener el rango {NextSeedTestLevel}?\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
+Test seed general|19|1|{x00}\nA continuación empezará el examen escrito de Seed.\nTu rango es actualmente {CurrentSeedTestLevel}.\n\n¿Quieres examinarte para obtener el rango {NextSeedTestLevel}?\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
+Test seed general|19|2|{x00}\nHas obtenido 100 puntos.\nHas {Red}aprobado{White} el examen escrito del rango {CurrentSeedTestLevel}.\nTu rango Seed subirá a {SeedRank}.\n\n\n\n  {Cursor_location_id:0x20}Terminar
+Test seed general|19|3|{x00}\nHas obtenido 100 puntos.\nHas aprobado el examen escrito del rango {CurrentSeedTestLevel}.\nSin embargo, como tu rango Seed ya es\n{SeedRank}ano cambiará.\n\n\n  {Cursor_location_id:0x20}Terminar
+Test seed general|19|4|{x00}\nHas obtenido {CurrentSeedTestLevel} puntos.\nLamentablemente no has aprobado.\nEsperamos que la próxima vez\nte vaya mejor. {xc8}Buena suerte!\n\n\n  {Cursor_location_id:0x20}Terminar
 Test seed general|19|5|{x00}\nTu último examen ha sido de rango 30.\nNo es posible hacer un examen escrito\nde Seed por encima de ese rango.\n\n\n\n  {Cursor_location_id:0x20}Volver
-Test seed general|19|6|{x00}\nTu rango Seed actual es {x0a26}.\nNo podrás obtener un rango Seed más elevado.\n¿Aún así quieres examinarte?\n\n\n\n  {Cursor_location_id:0x20}SÍ      {Cursor_location_id:0x21}NO\n
+Test seed general|19|6|{x00}\nTu rango Seed actual es {SeedRank}.\nNo podrás obtener un rango Seed más elevado.\n¿Aún así quieres examinarte?\n\n\n\n  {Cursor_location_id:0x20}SÍ      {Cursor_location_id:0x21}NO\n
 Test seed general|19|7|{x00}\n¿Seguro?\n\n\n\n\n\n  {Cursor_location_id:0x20}NO      {Cursor_location_id:0x21}SÍ\n
-Test seed general|19|8|{x00}\n{xc8}Fin del repaso! {xc8}Te sabes perfectamente\nlos temas del rango {x0a20}!\n\n\n\n\n  {Cursor_location_id:0x20}Terminar
-Test seed general|19|9|{x00}\nSólo has obtenido {x0a20} puntos.\nPero si antes te lo sabías...\n\n\n\n\n  {Cursor_location_id:0x20}Terminar
-Test seed general|19|10|{x00}\nComo el nivel actual de {Squall} es {x0a20},\nno puedes examinarte para un rango\nsuperior a {x0a22}.\nVuelve a probarlo cuando {Squall} haya\nsubido de nivel.\n\n  {Cursor_location_id:0x20}Terminar
+Test seed general|19|8|{x00}\n{xc8}Fin del repaso! {xc8}Te sabes perfectamente\nlos temas del rango {CurrentSeedTestLevel}!\n\n\n\n\n  {Cursor_location_id:0x20}Terminar
+Test seed general|19|9|{x00}\nSólo has obtenido {CurrentSeedTestLevel} puntos.\nPero si antes te lo sabías...\n\n\n\n\n  {Cursor_location_id:0x20}Terminar
+Test seed general|19|10|{x00}\nComo el nivel actual de {Squall} es {CurrentSeedTestLevel},\nno puedes examinarte para un rango\nsuperior a {NextSeedTestLevel}.\nVuelve a probarlo cuando {Squall} haya\nsubido de nivel.\n\n  {Cursor_location_id:0x20}Terminar
 Test seed 1 |20|0|{x00}Pregunta 1\n\nEl comando Extraer quita magias al enemigo.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 1 |20|1|{x01}Pregunta 2\n\nLa sigla G. F. significa Guerrero Formidable.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 1 |20|2|{x00}Pregunta 3\n\nHay un total de 8 clases de elementos.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO

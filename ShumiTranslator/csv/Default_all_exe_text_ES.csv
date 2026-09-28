@@ -1,10 +1,10 @@
 Section data name|Section Widget id|Text Sub id|Text
 Draw text|0|0|La cubierta del disco está abierta.
-Draw text|0|1|FINAL FANTASY {xa8}\nColoca el disco {Var17}.
+Draw text|0|1|FINAL FANTASY {xa8}\nColoca el disco {Var07}.
 Draw text|0|2|¡Has encontrado un punto de extracción!\nContiene la magia {x0c20}.
 Draw text|0|3|¡Has encontrado un punto de extracción!\nPero está agotado...
 Draw text|0|4|¿Quién extraerá?\nNadie.\n{Darkgrey}{Squall}.   \n{Darkgrey}{Squall}.   \n{Darkgrey}{Squall}.   
-Draw text|0|5|{Squall} ha guardado\n{Var17} magia(s) {x0c20}.
+Draw text|0|5|{Squall} ha guardado\n{Var07} magia(s) {x0c20}.
 Draw text|0|6|{Squall} no puede\nguardar la magia {x0c20}.
 Draw text|0|7|¡Has encontrado un punto de extracción!\nPero nadie puede extraer...
 Draw text|0|8|ERROR DE DISCO

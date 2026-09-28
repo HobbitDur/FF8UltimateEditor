@@ -80,45 +80,45 @@ Battle command text section|0|77|Appeler Minikikou
 Magic text section|1|0|
 Magic text section|1|1|
 Magic text section|1|2|Brasier
-Magic text section|1|3|Dégât Feu{x0e38}
+Magic text section|1|3|Dégât Feu{Refine}
 Magic text section|1|4|Brasier+
-Magic text section|1|5|Dégât Feu{x0e38}
+Magic text section|1|5|Dégât Feu{Refine}
 Magic text section|1|6|BrasierX
-Magic text section|1|7|Dégât Feu{x0e38}
+Magic text section|1|7|Dégât Feu{Refine}
 Magic text section|1|8|Glacier
-Magic text section|1|9|Dégât Neige{x0e38}
+Magic text section|1|9|Dégât Neige{Refine}
 Magic text section|1|10|Glacier+
-Magic text section|1|11|Dégât Neige{x0e38}
+Magic text section|1|11|Dégât Neige{Refine}
 Magic text section|1|12|GlacierX
-Magic text section|1|13|Dégât Neige{x0e38}
+Magic text section|1|13|Dégât Neige{Refine}
 Magic text section|1|14|Foudre
-Magic text section|1|15|Dégât Tonnerre{x0e38}
+Magic text section|1|15|Dégât Tonnerre{Refine}
 Magic text section|1|16|Foudre+
-Magic text section|1|17|Dégât Tonnerre{x0e38}
+Magic text section|1|17|Dégât Tonnerre{Refine}
 Magic text section|1|18|FoudreX
-Magic text section|1|19|Dégât Tonnerre{x0e38}
+Magic text section|1|19|Dégât Tonnerre{Refine}
 Magic text section|1|20|H2o
-Magic text section|1|21|Dégât Eau{x0e38}
+Magic text section|1|21|Dégât Eau{Refine}
 Magic text section|1|22|Rafale
-Magic text section|1|23|Dégât Vent{x0e38}
+Magic text section|1|23|Dégât Vent{Refine}
 Magic text section|1|24|Cyanure
 Magic text section|1|25|Attaque Poison et mentale/ 1 ennemi
 Magic text section|1|26|Quart
 Magic text section|1|27|Réduire HP ennemi de 25%
 Magic text section|1|28|Sidéral
-Magic text section|1|29|Dégât Sacré{x0e38}
+Magic text section|1|29|Dégât Sacré{Refine}
 Magic text section|1|30|Fournaise
-Magic text section|1|31|Dégât {x0e39}{x0e38} 
+Magic text section|1|31|Dégât {Junctions}{Refine} 
 Magic text section|1|32|Météore
-Magic text section|1|33|Dégât {x0e39} aléatoire/Tous
+Magic text section|1|33|Dégât {Junctions} aléatoire/Tous
 Magic text section|1|34|Quake
 Magic text section|1|35|Dégât Terre/Tous
 Magic text section|1|36|Tornade
 Magic text section|1|37|Dégât Vent/Tous
 Magic text section|1|38|Ultima
-Magic text section|1|39|Dégât {x0e39} /Tous
+Magic text section|1|39|Dégât {Junctions} /Tous
 Magic text section|1|40|Apocalypse
-Magic text section|1|41|Dégât {x0e39} /Tous
+Magic text section|1|41|Dégât {Junctions} /Tous
 Magic text section|1|42|Soin
 Magic text section|1|43|Rétablir HP
 Magic text section|1|44|Soin +
@@ -192,37 +192,37 @@ Magic text section|1|111|
 Magic text section|1|112|The End
 Magic text section|1|113|Triomphe général
 Junctionable GF text section|2|0|Feu purificateur
-Junctionable GF text section|2|1|{x0e37}T{on}{ne}r{re} 
+Junctionable GF text section|2|1|{Magic}T{on}{ne}r{re} 
 Junctionable GF text section|2|2|Transcendantale
-Junctionable GF text section|2|3|{x0e37}Neige
+Junctionable GF text section|2|3|{Magic}Neige
 Junctionable GF text section|2|4|Divine comédie
-Junctionable GF text section|2|5|{x0e37}Feu
+Junctionable GF text section|2|5|{Magic}Feu
 Junctionable GF text section|2|6|Andersen
-Junctionable GF text section|2|7|{x0e37}Aphasie
+Junctionable GF text section|2|7|{Magic}Aphasie
 Junctionable GF text section|2|8|Auroch
-Junctionable GF text section|2|9|{x0e37}Ter{re}
+Junctionable GF text section|2|9|{Magic}Ter{re}
 Junctionable GF text section|2|10|Carpathes knight
-Junctionable GF text section|2|11|{x0e37}{x0e39} 
+Junctionable GF text section|2|11|{Magic}{Junctions} 
 Junctionable GF text section|2|12|Underground
-Junctionable GF text section|2|13|{x0e37}Boomerang
+Junctionable GF text section|2|13|{Magic}Boomerang
 Junctionable GF text section|2|14|Tsunami
-Junctionable GF text section|2|15|{x0e37}Eau
+Junctionable GF text section|2|15|{Magic}Eau
 Junctionable GF text section|2|16|Twister
-Junctionable GF text section|2|17|{x0e37}Ve{nt}
+Junctionable GF text section|2|17|{Magic}Ve{nt}
 Junctionable GF text section|2|18|Sépulcre
-Junctionable GF text section|2|19|{x0e37}Double/Triple
+Junctionable GF text section|2|19|{Magic}Double/Triple
 Junctionable GF text section|2|20|Jugement Dernier
-Junctionable GF text section|2|21|{x0e37}Sacrée
+Junctionable GF text section|2|21|{Magic}Sacrée
 Junctionable GF text section|2|22|Death Express
-Junctionable GF text section|2|23|{x0e37}Pois{on}
+Junctionable GF text section|2|23|{Magic}Pois{on}
 Junctionable GF text section|2|24|Ouroboros
-Junctionable GF text section|2|25|{x0e37}{x0e39} 
+Junctionable GF text section|2|25|{Magic}{Junctions} 
 Junctionable GF text section|2|26|1000 épines
-Junctionable GF text section|2|27|{x0e37}{x0e39} 
+Junctionable GF text section|2|27|{Magic}{Junctions} 
 Junctionable GF text section|2|28|Force verte
-Junctionable GF text section|2|29|{x0e37}{x0e39} 
+Junctionable GF text section|2|29|{Magic}{Junctions} 
 Junctionable GF text section|2|30|Otono
-Junctionable GF text section|2|31|{x0e37}{x0e39} 
+Junctionable GF text section|2|31|{Magic}{Junctions} 
 Enemy attack text section|3|0|
 Enemy attack text section|3|1|
 Enemy attack text section|3|2|
@@ -744,29 +744,29 @@ Non-battle item names section|8|15|Permet de changer nom G-Force
 Non-battle item names section|8|16|Décapaciteur
 Non-battle item names section|8|17|G-Force oublie une capacité 
 Non-battle item names section|8|18|Livret HP-A
-Non-battle item names section|8|19|{x0e3a}HP-A
+Non-battle item names section|8|19|{Raises}HP-A
 Non-battle item names section|8|20|Livret Vgr-A
-Non-battle item names section|8|21|{x0e3a}Vgr-A
+Non-battle item names section|8|21|{Raises}Vgr-A
 Non-battle item names section|8|22|Livret Dfs-A
-Non-battle item names section|8|23|{x0e3a}Dfs-A
+Non-battle item names section|8|23|{Raises}Dfs-A
 Non-battle item names section|8|24|Livret Mgi-A
-Non-battle item names section|8|25|{x0e3a}Mgi-A
+Non-battle item names section|8|25|{Raises}Mgi-A
 Non-battle item names section|8|26|Livret Psy-A
-Non-battle item names section|8|27|{x0e3a}Psy-A
+Non-battle item names section|8|27|{Raises}Psy-A
 Non-battle item names section|8|28|Livret Vts-A
-Non-battle item names section|8|29|{x0e3a}Vts-A
+Non-battle item names section|8|29|{Raises}Vts-A
 Non-battle item names section|8|30|Livret Chc-A 
-Non-battle item names section|8|31|{x0e3a}Chc-A
+Non-battle item names section|8|31|{Raises}Chc-A
 Non-battle item names section|8|32|Shadow
-Non-battle item names section|8|33|{x0e3a}Esq-A
+Non-battle item names section|8|33|{Raises}Esq-A
 Non-battle item names section|8|34|Assaut Elé
-Non-battle item names section|8|35|{x0e3a}Atq-Elé-A
+Non-battle item names section|8|35|{Raises}Atq-Elé-A
 Non-battle item names section|8|36|Antichoc Elé
-Non-battle item names section|8|37|{x0e3a}Déf-EléX4
+Non-battle item names section|8|37|{Raises}Déf-EléX4
 Non-battle item names section|8|38|Assaut Mtl
-Non-battle item names section|8|39|{x0e3a}Atq-Mtl-A
+Non-battle item names section|8|39|{Raises}Atq-Mtl-A
 Non-battle item names section|8|40|Antichoc Mtl 
-Non-battle item names section|8|41|{x0e3a}Déf-MtlX4
+Non-battle item names section|8|41|{Raises}Déf-MtlX4
 Non-battle item names section|8|42|Roc Rosette
 Non-battle item names section|8|43|G-Force apprend CapacitéX4
 Non-battle item names section|8|44|GrimoMagic
@@ -780,87 +780,87 @@ Non-battle item names section|8|51|G-Force acquiert capacité Objets
 Non-battle item names section|8|52|Vegas Feel
 Non-battle item names section|8|53|G-Force acquiert capacité Carte
 Non-battle item names section|8|54|Sanatorium
-Non-battle item names section|8|55|{x0e3a}Arnica
+Non-battle item names section|8|55|{Raises}Arnica
 Non-battle item names section|8|56|MétemPsy
-Non-battle item names section|8|57|{x0e3a}Ranimer
+Non-battle item names section|8|57|{Raises}Ranimer
 Non-battle item names section|8|58|Bandage
-Non-battle item names section|8|59|{x0e3a}Traitement
+Non-battle item names section|8|59|{Raises}Traitement
 Non-battle item names section|8|60|Nova
-Non-battle item names section|8|61|{x0e3a}Kamikaze
+Non-battle item names section|8|61|{Raises}Kamikaze
 Non-battle item names section|8|62|Régime
-Non-battle item names section|8|63|{x0e3a}Cannibale
+Non-battle item names section|8|63|{Raises}Cannibale
 Non-battle item names section|8|64|Kikkou Mania
-Non-battle item names section|8|65|{x0e3a}Minikikou
+Non-battle item names section|8|65|{Raises}Minikikou
 Non-battle item names section|8|66|Samâdhi
-Non-battle item names section|8|67|{x0e3a}Invoc+10% 
+Non-battle item names section|8|67|{Raises}Invoc+10% 
 Non-battle item names section|8|68|Zodiaque
-Non-battle item names section|8|69|{x0e3a}Invoc+20% 
+Non-battle item names section|8|69|{Raises}Invoc+20% 
 Non-battle item names section|8|70|Nuclide
-Non-battle item names section|8|71|{x0e3a}Invoc+30% 
+Non-battle item names section|8|71|{Raises}Invoc+30% 
 Non-battle item names section|8|72|Sacrum
-Non-battle item names section|8|73|{x0e3a}Invoc+40% 
+Non-battle item names section|8|73|{Raises}Invoc+40% 
 Non-battle item names section|8|74|Billet
-Non-battle item names section|8|75|{x0e3a}HP-GF+10% 
+Non-battle item names section|8|75|{Raises}HP-GF+10% 
 Non-battle item names section|8|76|Vierge
-Non-battle item names section|8|77|{x0e3a}HP-GF+20% 
+Non-battle item names section|8|77|{Raises}HP-GF+20% 
 Non-battle item names section|8|78|Armure d'or
-Non-battle item names section|8|79|{x0e3a}HP-GF+30% 
+Non-battle item names section|8|79|{Raises}HP-GF+30% 
 Non-battle item names section|8|80|Cuirasse
-Non-battle item names section|8|81|{x0e3a}HP-GF+40% 
+Non-battle item names section|8|81|{Raises}HP-GF+40% 
 Non-battle item names section|8|82|Anneau Récup
-Non-battle item names section|8|83|{x0e3a}HP+20% 
+Non-battle item names section|8|83|{Raises}HP+20% 
 Non-battle item names section|8|84|Alliance
-Non-battle item names section|8|85|{x0e3a}HP+40% 
+Non-battle item names section|8|85|{Raises}HP+40% 
 Non-battle item names section|8|86|Bague Gaêa
-Non-battle item names section|8|87|{x0e3a}HP+80% 
+Non-battle item names section|8|87|{Raises}HP+80% 
 Non-battle item names section|8|88|Vitamine
-Non-battle item names section|8|89|{x0e3a}Vgr+20% 
+Non-battle item names section|8|89|{Raises}Vgr+20% 
 Non-battle item names section|8|90|Sagou
-Non-battle item names section|8|91|{x0e3a}Vgr+40% 
+Non-battle item names section|8|91|{Raises}Vgr+40% 
 Non-battle item names section|8|92|Sagette
-Non-battle item names section|8|93|{x0e3a}Vgr+60% 
+Non-battle item names section|8|93|{Raises}Vgr+60% 
 Non-battle item names section|8|94|Coquille
-Non-battle item names section|8|95|{x0e3a}Dfs+20% 
+Non-battle item names section|8|95|{Raises}Dfs+20% 
 Non-battle item names section|8|96|Halcyon
-Non-battle item names section|8|97|{x0e3a}Dfs+40% 
+Non-battle item names section|8|97|{Raises}Dfs+40% 
 Non-battle item names section|8|98|Adamantine
-Non-battle item names section|8|99|{x0e3a}Dfs+60% 
+Non-battle item names section|8|99|{Raises}Dfs+60% 
 Non-battle item names section|8|100|Obole
-Non-battle item names section|8|101|{x0e3a}Psy+20% 
+Non-battle item names section|8|101|{Raises}Psy+20% 
 Non-battle item names section|8|102|Tao
-Non-battle item names section|8|103|{x0e3a}Psy+40% 
+Non-battle item names section|8|103|{Raises}Psy+40% 
 Non-battle item names section|8|104|Lacan
-Non-battle item names section|8|105|{x0e3a}Psy+60% 
+Non-battle item names section|8|105|{Raises}Psy+60% 
 Non-battle item names section|8|106|Garcinord
-Non-battle item names section|8|107|{x0e3a}Mgi+20% 
+Non-battle item names section|8|107|{Raises}Mgi+20% 
 Non-battle item names section|8|108|Merlin
-Non-battle item names section|8|109|{x0e3a}Mgi+40% 
+Non-battle item names section|8|109|{Raises}Mgi+40% 
 Non-battle item names section|8|110|Magax
-Non-battle item names section|8|111|{x0e3a}Mgi+60% 
+Non-battle item names section|8|111|{Raises}Mgi+60% 
 Non-battle item names section|8|112|Injection
-Non-battle item names section|8|113|{x0e3a}Vts+20% 
+Non-battle item names section|8|113|{Raises}Vts+20% 
 Non-battle item names section|8|114|SuperSonic
-Non-battle item names section|8|115|{x0e3a}Vts+40% 
+Non-battle item names section|8|115|{Raises}Vts+40% 
 Non-battle item names section|8|116|Pied de biche
-Non-battle item names section|8|117|{x0e3a}Auto-Blindage
+Non-battle item names section|8|117|{Raises}Auto-Blindage
 Non-battle item names section|8|118|Ecaille
-Non-battle item names section|8|119|{x0e3a}Auto-Carapace
+Non-battle item names section|8|119|{Raises}Auto-Carapace
 Non-battle item names section|8|120|Tasmania
-Non-battle item names section|8|121|{x0e3a}Auto-Boomerang
+Non-battle item names section|8|121|{Raises}Auto-Boomerang
 Non-battle item names section|8|122|Speedy
-Non-battle item names section|8|123|{x0e3a}Auto-Booster
+Non-battle item names section|8|123|{Raises}Auto-Booster
 Non-battle item names section|8|124|Réactor
-Non-battle item names section|8|125|{x0e3a}Amorce
+Non-battle item names section|8|125|{Raises}Amorce
 Non-battle item names section|8|126|Protector
-Non-battle item names section|8|127|{x0e3a}Empathie
+Non-battle item names section|8|127|{Raises}Empathie
 Non-battle item names section|8|128|Pasteur
-Non-battle item names section|8|129|{x0e3a}Schweitzer
+Non-battle item names section|8|129|{Raises}Schweitzer
 Non-battle item names section|8|130|Manivelle
-Non-battle item names section|8|131|{x0e3a}Backlash
+Non-battle item names section|8|131|{Raises}Backlash
 Non-battle item names section|8|132|Trilogie
-Non-battle item names section|8|133|{x0e3a}TriplEco
+Non-battle item names section|8|133|{Raises}TriplEco
 Non-battle item names section|8|134|Freud
-Non-battle item names section|8|135|{x0e3a}Freud
+Non-battle item names section|8|135|{Raises}Freud
 Non-battle item names section|8|136|Balles normales
 Non-battle item names section|8|137|Munitions
 Non-battle item names section|8|138|Mitra-balles
@@ -916,33 +916,33 @@ Non-battle item names section|8|187|Dent de dragon au pouvoir régénérant
 Non-battle item names section|8|188|U-Boat
 Non-battle item names section|8|189|Quistis peut apprendre Ultra Waves
 Non-battle item names section|8|190|Etoile
-Non-battle item names section|8|191|{x0e3b}Firmament
+Non-battle item names section|8|191|{command}Firmament
 Non-battle item names section|8|192|Weirdo
-Non-battle item names section|8|193|{x0e3b}Freak
+Non-battle item names section|8|193|{command}Freak
 Non-battle item names section|8|194|Gen-X
 Non-battle item names section|8|195|Quistis peut apprendre Dégénérator
 Non-battle item names section|8|196|Fluide
-Non-battle item names section|8|197|{x0e3b}Fréon
+Non-battle item names section|8|197|{command}Fréon
 Non-battle item names section|8|198|M-Double
 Non-battle item names section|8|199|Quistis peut apprendre Micro Missiles
 Non-battle item names section|8|200|House
-Non-battle item names section|8|201|{x0e3b}Acid
+Non-battle item names section|8|201|{command}Acid
 Non-battle item names section|8|202|Chevrotine
-Non-battle item names section|8|203|{x0e3b}Mitraille
+Non-battle item names section|8|203|{command}Mitraille
 Non-battle item names section|8|204|Canicule
-Non-battle item names section|8|205|{x0e3b}Dead Heat
+Non-battle item names section|8|205|{command}Dead Heat
 Non-battle item names section|8|206|Germe
-Non-battle item names section|8|207|{x0e3b}Infection
+Non-battle item names section|8|207|{command}Infection
 Non-battle item names section|8|208|Rhône 
-Non-battle item names section|8|209|{x0e3b}Mistral
+Non-battle item names section|8|209|{command}Mistral
 Non-battle item names section|8|210|Rayon
-Non-battle item names section|8|211|{x0e3b}Laser
+Non-battle item names section|8|211|{command}Laser
 Non-battle item names section|8|212|Vierge
 Non-battle item names section|8|213|Quistis peut apprendre Mother
 Non-battle item names section|8|214|V-Choc
-Non-battle item names section|8|215|{x0e3b}Shockwave
+Non-battle item names section|8|215|{command}Shockwave
 Non-battle item names section|8|216|H-Espace
-Non-battle item names section|8|217|{x0e3b}Outerspace
+Non-battle item names section|8|217|{command}Outerspace
 Non-battle item names section|8|218|Hot Rock
 Non-battle item names section|8|219|Pierre élémentale (feu)
 Non-battle item names section|8|220|Molaire
@@ -1014,19 +1014,19 @@ Non-battle item names section|8|285|Augmente Chance
 Non-battle item names section|8|286|Amour bestial
 Non-battle item names section|8|287|Améliore compatibilité avec G-Forces
 Non-battle item names section|8|288|F.F.F. Fév
-Non-battle item names section|8|289|{x0e3c}
+Non-battle item names section|8|289|{Magazine}
 Non-battle item names section|8|290|F.F.F. Mar
-Non-battle item names section|8|291|{x0e3c}
+Non-battle item names section|8|291|{Magazine}
 Non-battle item names section|8|292|F.F.F. Avr
-Non-battle item names section|8|293|{x0e3c}
+Non-battle item names section|8|293|{Magazine}
 Non-battle item names section|8|294|F.F.F. Mai
-Non-battle item names section|8|295|{x0e3c}
+Non-battle item names section|8|295|{Magazine}
 Non-battle item names section|8|296|F.F.F. Jun
-Non-battle item names section|8|297|{x0e3c}
+Non-battle item names section|8|297|{Magazine}
 Non-battle item names section|8|298|F.F.F. Jul
-Non-battle item names section|8|299|{x0e3c}
+Non-battle item names section|8|299|{Magazine}
 Non-battle item names section|8|300|F.F.F. Aoû
-Non-battle item names section|8|301|{x0e3c}
+Non-battle item names section|8|301|{Magazine}
 Non-battle item names section|8|302|Baston mag 1
 Non-battle item names section|8|303|{x0e3f}
 Non-battle item names section|8|304|Baston mag 2
@@ -1076,31 +1076,31 @@ Non-junctionable GF attack name section|9|15|MoombaMoomba
 Junction abilities text section|10|0|
 Junction abilities text section|10|1|
 Junction abilities text section|10|2|HP-A
-Junction abilities text section|10|3|{x0e33}HP
+Junction abilities text section|10|3|{Restores}HP
 Junction abilities text section|10|4|Vgr-A
-Junction abilities text section|10|5|{x0e33}Vigueur
+Junction abilities text section|10|5|{Restores}Vigueur
 Junction abilities text section|10|6|Dfs-A
-Junction abilities text section|10|7|{x0e33}Défense
+Junction abilities text section|10|7|{Restores}Défense
 Junction abilities text section|10|8|Mgi-A
-Junction abilities text section|10|9|{x0e33}Magie
+Junction abilities text section|10|9|{Restores}Magie
 Junction abilities text section|10|10|Psy-A
-Junction abilities text section|10|11|{x0e33}Psy
+Junction abilities text section|10|11|{Restores}Psy
 Junction abilities text section|10|12|Vts-A
-Junction abilities text section|10|13|{x0e33}Vitesse
+Junction abilities text section|10|13|{Restores}Vitesse
 Junction abilities text section|10|14|Esq-A
-Junction abilities text section|10|15|{x0e33}Esquive
+Junction abilities text section|10|15|{Restores}Esquive
 Junction abilities text section|10|16|Prc-A
-Junction abilities text section|10|17|{x0e33}Précision
+Junction abilities text section|10|17|{Restores}Précision
 Junction abilities text section|10|18|Chc-A
-Junction abilities text section|10|19|{x0e33}Chance
+Junction abilities text section|10|19|{Restores}Chance
 Junction abilities text section|10|20|Atq-Elé-A
-Junction abilities text section|10|21|{x0e33}Atq-Elé
+Junction abilities text section|10|21|{Restores}Atq-Elé
 Junction abilities text section|10|22|Atq-Mtl-A
-Junction abilities text section|10|23|{x0e33}Atq-Mtl
+Junction abilities text section|10|23|{Restores}Atq-Mtl
 Junction abilities text section|10|24|Déf-Elé-A
-Junction abilities text section|10|25|{x0e33}Déf-Elé
+Junction abilities text section|10|25|{Restores}Déf-Elé
 Junction abilities text section|10|26|Déf-Mtl-A
-Junction abilities text section|10|27|{x0e33}Déf-Mtl
+Junction abilities text section|10|27|{Restores}Déf-Mtl
 Junction abilities text section|10|28|Déf-EléX2
 Junction abilities text section|10|29|Associer 2 Magies à Déf-Elé
 Junction abilities text section|10|30|Déf-EléX4
@@ -1114,43 +1114,43 @@ Junction abilities text section|10|37|Sélectionner 3 capacités maxi
 Junction abilities text section|10|38|CapacitéX4
 Junction abilities text section|10|39|Sélectionner 4 capacités maxi
 Command abilities text section|11|0|Magie
-Command abilities text section|11|1|{x0e34}Magie
+Command abilities text section|11|1|{status}Magie
 Command abilities text section|11|2|G-Force
-Command abilities text section|11|3|{x0e34}G-Force
+Command abilities text section|11|3|{status}G-Force
 Command abilities text section|11|4|Voler
-Command abilities text section|11|5|{x0e34}Voler
+Command abilities text section|11|5|{status}Voler
 Command abilities text section|11|6|Objets
-Command abilities text section|11|7|{x0e34}Objets
+Command abilities text section|11|7|{status}Objets
 Command abilities text section|11|8| 
 Command abilities text section|11|9| 
 Command abilities text section|11|10|Carte
-Command abilities text section|11|11|{x0e34}Carte
+Command abilities text section|11|11|{status}Carte
 Command abilities text section|11|12|Châtiment
 Command abilities text section|11|13|Utiliser action Châtiment
 Command abilities text section|11|14|Mad Rush
-Command abilities text section|11|15|{x0e34}Mad Rush
+Command abilities text section|11|15|{status}Mad Rush
 Command abilities text section|11|16|Traitement
-Command abilities text section|11|17|{x0e34}Traitement
+Command abilities text section|11|17|{status}Traitement
 Command abilities text section|11|18|Défense
-Command abilities text section|11|19|{x0e34}Défense
+Command abilities text section|11|19|{status}Défense
 Command abilities text section|11|20|Combustion
-Command abilities text section|11|21|{x0e34}Combustion
+Command abilities text section|11|21|{status}Combustion
 Command abilities text section|11|22|Arnica
-Command abilities text section|11|23|{x0e34}Arnica
+Command abilities text section|11|23|{status}Arnica
 Command abilities text section|11|24|Phagocyte
-Command abilities text section|11|25|{x0e34}Phagocyte
+Command abilities text section|11|25|{status}Phagocyte
 Command abilities text section|11|26|Ranimer
-Command abilities text section|11|27|{x0e34}Ranimer
+Command abilities text section|11|27|{status}Ranimer
 Command abilities text section|11|28|Nv Moins
-Command abilities text section|11|29|{x0e34}Nv Plus
+Command abilities text section|11|29|{status}Nv Plus
 Command abilities text section|11|30|Nv Plus
-Command abilities text section|11|31|{x0e34}Nv Moins
+Command abilities text section|11|31|{status}Nv Moins
 Command abilities text section|11|32|Kamikaze
-Command abilities text section|11|33|{x0e34}Kamikaze
+Command abilities text section|11|33|{status}Kamikaze
 Command abilities text section|11|34|Cannibale
-Command abilities text section|11|35|{x0e34}Cannibale
+Command abilities text section|11|35|{status}Cannibale
 Command abilities text section|11|36|MiniMog
-Command abilities text section|11|37|{x0e34}MiniMog
+Command abilities text section|11|37|{status}MiniMog
 Stat percentage increasing abilities text section|12|0|HP+20%
 Stat percentage increasing abilities text section|12|1|Augmenter HP de 20%
 Stat percentage increasing abilities text section|12|2|HP+40%
@@ -1364,25 +1364,25 @@ Shot text section|19|13|Attaque anti-protection/1 ennemi
 Shot text section|19|14|Percuteur
 Shot text section|19|15|Endommager 1 ennemi
 Duel text section|20|0|Top Punch
-Duel text section|20|1|{x0e35}
+Duel text section|20|1|{learns}
 Duel text section|20|2|Feinte
-Duel text section|20|3|{x0e35}
+Duel text section|20|3|{learns}
 Duel text section|20|4|Achille
-Duel text section|20|5|{x0e35}
+Duel text section|20|5|{learns}
 Duel text section|20|6|Forcing
-Duel text section|20|7|{x0e35}
+Duel text section|20|7|{learns}
 Duel text section|20|8|Delphinium
-Duel text section|20|9|{x0e35}
+Duel text section|20|9|{learns}
 Duel text section|20|10|Apesanteur
-Duel text section|20|11|{x0e35}
+Duel text section|20|11|{learns}
 Duel text section|20|12|Fahrenheit
-Duel text section|20|13|{x0e36}
+Duel text section|20|13|{ability}
 Duel text section|20|14|Stratosphère
-Duel text section|20|15|{x0e35}
+Duel text section|20|15|{learns}
 Duel text section|20|16|Trapèze
-Duel text section|20|17|{x0e35}
+Duel text section|20|17|{learns}
 Duel text section|20|18|Global Wave
-Duel text section|20|19|{x0e36}
+Duel text section|20|19|{ability}
 Rinoa limit break (part 1) text section|21|0|{Angelo}
 Rinoa limit break (part 1) text section|21|1|Combat au côté d'{Angelo}
 Rinoa limit break (part 1) text section|21|2|Canonisation
@@ -1414,7 +1414,7 @@ Misc text section|24|2|G-Force
 Misc text section|24|3|PAUSE
 Misc text section|24|4|Fuite impossible!
 Misc text section|24|5|Vol raté
-Misc text section|24|6|Gain: {x0a23}
+Misc text section|24|6|Gain: {CardReceived}
 Misc text section|24|7|acquis
 Misc text section|24|8|?
 Misc text section|24|9|Gain:
@@ -1432,7 +1432,7 @@ Misc text section|24|20|Choix impossible
 Misc text section|24|21|Objet reçu
 Misc text section|24|22|confirmer
 Misc text section|24|23|EXP acquis
-Misc text section|24|24|Elimination {x0a23}\nsupérieur à 100
+Misc text section|24|24|Elimination {CardReceived}\nsupérieur à 100
 Misc text section|24|25|Fin
 Misc text section|24|26|est
 Misc text section|24|27|de
@@ -1517,8 +1517,8 @@ Misc text section|24|105|{x0561}
 Misc text section|24|106|{x0562}
 Misc text section|24|107|{x0563}
 Misc text section|24|108|{x0564}
-Misc text section|24|109|G-Force reçoit {x0a20} PDC
-Misc text section|24|110|Carte {x0a23}
+Misc text section|24|109|G-Force reçoit {CurrentSeedTestLevel} PDC
+Misc text section|24|110|Carte {CardReceived}
 Misc text section|24|111|Eduquer GF
 Misc text section|24|112|Cannibale impossible
 Misc text section|24|113|?????

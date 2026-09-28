@@ -231,13 +231,13 @@ tkmnmes2.bin - subsection n°8|3|8|Alles geben
 tkmnmes2.bin - subsection n°8|3|9|Aufteilen
 tkmnmes2.bin - subsection n°8|3|10|Zauber verteilen
 tkmnmes2.bin - subsection n°8|3|11|Besitzt schon 100 Stück
-tkmnmes2.bin - subsection n°8|3|12|Zu viel {x0a26}
+tkmnmes2.bin - subsection n°8|3|12|Zu viel {SeedRank}
 tkmnmes2.bin - subsection n°8|3|13|Alles nehmen
 tkmnmes2.bin - subsection n°8|3|14|Alles
 tkmnmes2.bin - subsection n°8|3|15|Sämtliche Zauber von jemanden nehmen
 tkmnmes2.bin - subsection n°8|3|16|Wer soll Zauber empfangen?
 tkmnmes2.bin - subsection n°8|3|17|Wer soll Zauber geben?
-tkmnmes2.bin - subsection n°8|3|18|{x0a27}: {x0a26} wegschmeißen\nOk?
+tkmnmes2.bin - subsection n°8|3|18|{x0a27}: {SeedRank} wegschmeißen\nOk?
 tkmnmes2.bin - subsection n°8|3|19|Selber
 tkmnmes2.bin - subsection n°8|3|20|Eigenhändiges anordnen
 tkmnmes2.bin - subsection n°8|3|21|Angriff·Heilung·Indirekt
@@ -261,10 +261,10 @@ tkmnmes2.bin - subsection n°13|4|5|Spieler
 tkmnmes2.bin - subsection n°13|4|6|Total
 tkmnmes2.bin - subsection n°13|4|7|Monster
 tkmnmes2.bin - subsection n°13|4|8|Area
-tkmnmes2.bin - subsection n°13|4|9|Lv.{x0a20} Monster-Karte
-tkmnmes2.bin - subsection n°13|4|10|Lv.{x0a20} Boss-Karte
-tkmnmes2.bin - subsection n°13|4|11|Lv.{x0a20} G.F.-Karte
-tkmnmes2.bin - subsection n°13|4|12|Lv.{x0a20} Charakter-Karte
+tkmnmes2.bin - subsection n°13|4|9|Lv.{CurrentSeedTestLevel} Monster-Karte
+tkmnmes2.bin - subsection n°13|4|10|Lv.{CurrentSeedTestLevel} Boss-Karte
+tkmnmes2.bin - subsection n°13|4|11|Lv.{CurrentSeedTestLevel} G.F.-Karte
+tkmnmes2.bin - subsection n°13|4|12|Lv.{CurrentSeedTestLevel} Charakter-Karte
 tkmnmes2.bin - subsection n°14|5|0|Status der 【Chocobo World】
 tkmnmes2.bin - subsection n°14|5|1|【Chocobo World】 nicht gefunden\nHerunterladen? (7 Blöcke)
 tkmnmes2.bin - subsection n°14|5|2|【Chocobo World】 nicht gefunden\nNicht genügend freie Blöcke (7 Bl.)
@@ -369,7 +369,7 @@ tkmnmes3.bin - subsection n°3|7|38|Stückzahl
 tkmnmes3.bin - subsection n°3|7|39|Preis
 tkmnmes3.bin - subsection n°3|7|40|Str
 tkmnmes3.bin - subsection n°3|7|41|Trf
-tkmnmes3.bin - subsection n°3|7|42|Die Waffe von {x0a27} wird\nzum [{x0a26}] aufgerüstet
+tkmnmes3.bin - subsection n°3|7|42|Die Waffe von {x0a27} wird\nzum [{SeedRank}] aufgerüstet
 tkmnmes3.bin - subsection n°3|7|43|\n?
 tkmnmes3.bin - subsection n°3|7|44|Nicht genügend Items!\nKommt wieder.
 tkmnmes3.bin - subsection n°3|7|45|Nicht genügend Items!
@@ -400,7 +400,7 @@ tkmnmes3.bin - subsection n°4|8|6|Kann nicht ausgewechselt werden
 tkmnmes3.bin - subsection n°4|8|7|({x0564})
 tkmnmes3.bin - subsection n°4|8|8|Kann nicht aufgenommen werden
 tkmnmes3.bin - subsection n°4|8|9|({x0564})
-tkmnmes3.bin - subsection n°4|8|10|Die Kopplungen von {x0a27} und {x0a26} werden vertauscht\n Bestätigen?
+tkmnmes3.bin - subsection n°4|8|10|Die Kopplungen von {x0a27} und {SeedRank} werden vertauscht\n Bestätigen?
 tkmnmes3.bin - subsection n°4|8|11|({x0564})
 tkmnmes3.bin - subsection n°4|8|12|Die Truppe steht noch nicht
 tkmnmes3.bin - subsection n°4|8|13|Die Truppe steht noch nicht!
@@ -529,13 +529,13 @@ tkmnmes3.bin - subsection n°9|12|26|Nichts passiert......
 tkmnmes3.bin - subsection n°9|12|27|{x0a24} hat {x0a25} gelernt!
 tkmnmes3.bin - subsection n°9|12|28|{x0a24} kennt {x0a25} bereits
 tkmnmes3.bin - subsection n°9|12|29|{x0a24} kann nichts mehr lernen
-tkmnmes3.bin - subsection n°9|12|30|Freundschaft zu {x0a24} um {x0a22} gestiegen!
+tkmnmes3.bin - subsection n°9|12|30|Freundschaft zu {x0a24} um {NextSeedTestLevel} gestiegen!
 tkmnmes3.bin - subsection n°9|12|31|Freundschaft zu {x0a24} maximal
-tkmnmes3.bin - subsection n°9|12|32|{x0a27}: {x0a28} um {x0a22} gestiegen!!
+tkmnmes3.bin - subsection n°9|12|32|{x0a27}: {x0a28} um {NextSeedTestLevel} gestiegen!!
 tkmnmes3.bin - subsection n°9|12|33|{x0a27}: {x0a28} maximal
 tkmnmes3.bin - subsection n°9|12|34|Basiswert von {x0a28}
 tkmnmes3.bin - subsection n°9|12|35|Freundschaft zu allen G.F. maximal
-tkmnmes3.bin - subsection n°9|12|36|Freundschaft zu allen G.F. um {x0a22} gestiegen!!
+tkmnmes3.bin - subsection n°9|12|36|Freundschaft zu allen G.F. um {NextSeedTestLevel} gestiegen!!
 tkmnmes3.bin - subsection n°9|12|37|[{x0a25}]\n
 tkmnmes3.bin - subsection n°11|13|0|Koppeln
 tkmnmes3.bin - subsection n°11|13|1|Zauber und G.F. werden gekoppelt
@@ -640,10 +640,10 @@ tkmnmes3.bin - subsection n°13|14|30|Wann man sich zurückziehen muß
 tkmnmes3.bin - subsection n°13|14|31|Bitte Menüpunkt auswählen
 tkmnmes3.bin - subsection n°13|14|32|SEED-Prüfung
 tkmnmes3.bin - subsection n°13|14|33|SEED-Prüfung (Test)
-tkmnmes3.bin - subsection n°13|14|34|SEED-Prüfung Level {x0a22}
+tkmnmes3.bin - subsection n°13|14|34|SEED-Prüfung Level {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|35|SEED-Nachprüfung
 tkmnmes3.bin - subsection n°13|14|36|SEED-Nachprüfung (Test)
-tkmnmes3.bin - subsection n°13|14|37|SEED-Nachprüfung Level {x0a22}
+tkmnmes3.bin - subsection n°13|14|37|SEED-Nachprüfung Level {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|38|SEED-Prüfung Level
 tkmnmes3.bin - subsection n°13|14|39|SEED-Prüfung (Test)
 tkmnmes3.bin - subsection n°13|14|40|Bitte den Level der Nachprüfung angeben
@@ -865,17 +865,17 @@ Chocobo tutorial|18|11|{xc4}{xc4}{xc4}{xc4}                  {Blue}Die Status-An
 Chocobo tutorial|18|12|{xc4}             {Blue}Infrarotverbindung{White}  8/8\n1: Neutralposition.\n2: Empfänger wählen.\n3: Versender wählen.\n4: Die Kampfsequenz.\n   Rechts steht dein Chocobo-Kid.\n5: Der Sieger kann die Gegner-ID\n   übernehmen. Man kann die eigene\n   ID mit dem Gegner tauschen.\n
 Chocobo tutorial|18|13|{xc4}         {xc4}{xc4}          {Blue}ChocoboWorld{White} 8/8\n
 Chocobo tutorial|18|14|1: Mit {Blue}Unterwegs{White} verläßt der\n   Chocobo FF{xc6}{xc7} und beginnt\n   sein Abenteuer.\n2: Mit {Blue}Nach Hause{White} kehrt der\n   Chocobo nach FF{xc6}{xc7} zurück.\n3: Mit {Blue}Neu{White} wird das Spiel\n   neu gestartet.\n4: {Blue}Anleitung{White}: Du liest sie gerade!\n
-Test seed general|19|0|{x00}\nHier wird die schriftliche SEED-Prüfung abgehalten.\nWollen Sie an der Level {x0a22}-Prüfung teilnehmen?\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
-Test seed general|19|1|{x00}\nHier wird die schriftliche SEED-Prüfung abgehalten.\nSie sind auf Level {x0a20}.\n\nWollen Sie an der Level {x0a22}-Prüfung teilnehmen?\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
-Test seed general|19|2|{x00}\nSie haben 100 von 100 Punkten erreicht.\nDamit haben Sie die Level {x0a20}-Prüfung {Red}bestanden!!!{White}\nIhr SEED-Level ist jetzt auf {x0a26}.\n\n\n  {Cursor_location_id:0x20}Beenden
-Test seed general|19|3|{x00}\nSie haben 100 von 100 Punkten erreicht.\nDamit haben Sie die Level {x0a20}-Prüfung bestanden!!!\nIhr SEED-Level ist bereits auf {x0a26}\nund steigt nicht mehr.\n\n  {Cursor_location_id:0x20}Beenden\n
-Test seed general|19|4|{x00}\nSie haben {x0a20} von 100 Punkten erreicht.\nLeider sind Sie durchgefallen.\nBereiten Sie sich bitte sorgfältiger\nvor. Viel Glück beim nächsten Mal.\n\n  {Cursor_location_id:0x20}Beenden
+Test seed general|19|0|{x00}\nHier wird die schriftliche SEED-Prüfung abgehalten.\nWollen Sie an der Level {NextSeedTestLevel}-Prüfung teilnehmen?\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
+Test seed general|19|1|{x00}\nHier wird die schriftliche SEED-Prüfung abgehalten.\nSie sind auf Level {CurrentSeedTestLevel}.\n\nWollen Sie an der Level {NextSeedTestLevel}-Prüfung teilnehmen?\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
+Test seed general|19|2|{x00}\nSie haben 100 von 100 Punkten erreicht.\nDamit haben Sie die Level {CurrentSeedTestLevel}-Prüfung {Red}bestanden!!!{White}\nIhr SEED-Level ist jetzt auf {SeedRank}.\n\n\n  {Cursor_location_id:0x20}Beenden
+Test seed general|19|3|{x00}\nSie haben 100 von 100 Punkten erreicht.\nDamit haben Sie die Level {CurrentSeedTestLevel}-Prüfung bestanden!!!\nIhr SEED-Level ist bereits auf {SeedRank}\nund steigt nicht mehr.\n\n  {Cursor_location_id:0x20}Beenden\n
+Test seed general|19|4|{x00}\nSie haben {CurrentSeedTestLevel} von 100 Punkten erreicht.\nLeider sind Sie durchgefallen.\nBereiten Sie sich bitte sorgfältiger\nvor. Viel Glück beim nächsten Mal.\n\n  {Cursor_location_id:0x20}Beenden
 Test seed general|19|5|{x00}\nIhr TEST-Level ist bereits auf 30.\nSie können daher an keiner Prüfung\nmehr teilnehmen.\n\n\n  {Cursor_location_id:0x20}Zurück.
-Test seed general|19|6|{x00}\nIhr SEED-Level ist bereits auf {x0a26}.\nDas ist der höchste SEED-Rang.\nWollen Sie trotzdem teilnehmen?\n\n\n  {Cursor_location_id:0x20}Trotzdem teilnehmen     {Cursor_location_id:0x21}Lassen
+Test seed general|19|6|{x00}\nIhr SEED-Level ist bereits auf {SeedRank}.\nDas ist der höchste SEED-Rang.\nWollen Sie trotzdem teilnehmen?\n\n\n  {Cursor_location_id:0x20}Trotzdem teilnehmen     {Cursor_location_id:0x21}Lassen
 Test seed general|19|7|{x00}\nWirklich?\n\n\n\n\n  {Cursor_location_id:0x20}Gelogen     {Cursor_location_id:0x21}Klar
-Test seed general|19|8|{x00}\nNachtest bestanden! Level {x0a20} beherrschen Sie\nperfekt!!\n\n\n\n  {Cursor_location_id:0x20}Ende\n
-Test seed general|19|9|{x00}\n{x0a20} von 100 Punkten...Sie haben sich verschlechtert.\n\n\n\n\n  {Cursor_location_id:0x20}Ende
-Test seed general|19|10|{x00}\nDer Level von {Squall} ist auf {x0a20}. Daher können\nSie nicht an einem Prüfungslevel, der höher\nist als {x0a22}, teilnehmen.\nKommen Sie wieder, wenn Ihr Level gestiegen ist.\n\n  {Cursor_location_id:0x20}Ende
+Test seed general|19|8|{x00}\nNachtest bestanden! Level {CurrentSeedTestLevel} beherrschen Sie\nperfekt!!\n\n\n\n  {Cursor_location_id:0x20}Ende\n
+Test seed general|19|9|{x00}\n{CurrentSeedTestLevel} von 100 Punkten...Sie haben sich verschlechtert.\n\n\n\n\n  {Cursor_location_id:0x20}Ende
+Test seed general|19|10|{x00}\nDer Level von {Squall} ist auf {CurrentSeedTestLevel}. Daher können\nSie nicht an einem Prüfungslevel, der höher\nist als {NextSeedTestLevel}, teilnehmen.\nKommen Sie wieder, wenn Ihr Level gestiegen ist.\n\n  {Cursor_location_id:0x20}Ende
 Test seed 1 |20|0|{x00}Frage 1\n\nMit 【Draw】 kann man Zauber vom Gegner ziehen.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 1 |20|1|{x01}Frage 2\n\n【G.F.】 bedeutet 【GARDEN FIGHTER】.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 1 |20|2|{x00}Frage 3\n\nEs gibt insgesamt 8 Elemente.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein

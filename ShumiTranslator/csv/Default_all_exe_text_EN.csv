@@ -1,10 +1,10 @@
 Section data name|Section Widget id|Text Sub id|Text
 Draw text|0|0|The disc cover is open.
-Draw text|0|1|Please insert FINAL FANTASY{xa8}\nDISC {Var17}.
+Draw text|0|1|Please insert FINAL FANTASY{xa8}\nDISC {Var07}.
 Draw text|0|2|Found a draw point!\n{x0c20} found.
 Draw text|0|3|Found a draw point!\nNothing there...
 Draw text|0|4|Who will draw?\nDon't draw\n{Darkgrey}{Squall}      \n{Darkgrey}{Squall}      \n{Darkgrey}{Squall}      
-Draw text|0|5|{Squall} stocked {Var17} {x0c20}s.
+Draw text|0|5|{Squall} stocked {Var07} {x0c20}s.
 Draw text|0|6|{Squall} is unable to stock {x0c20}.
 Draw text|0|7|Found a draw point!\nNo one can draw...
 Draw text|0|8|Disc error

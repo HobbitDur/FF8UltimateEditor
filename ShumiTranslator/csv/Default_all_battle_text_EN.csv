@@ -1,520 +1,521 @@
 Section data name|Section Widget id|Text Sub id|Text
-GIM52A|0|0|GIM52A
-Blobra|1|0|Blobra
-Thrustaevis|2|0|Thrustaevis
-Thrustaevis|2|1|{Irvine} “Oh, I forgot to tell you...”
-Thrustaevis|2|2|“For my Limit Break, Shot,”
-Thrustaevis|2|3|“pull the trigger with the {R1}.”
-Thrustaevis|2|4|“Got it?”
-Geezard|3|0|Geezard
-Belhelmel|4|0|Belhelmel
-Belhelmel|4|1|It's laughing!
-Belhelmel|4|2|It's scowling!
-Belhelmel|4|3|Belhelmel laughed!
-Belhelmel|4|4|Belhelmel is furious!
-Belhelmel|4|5|Belhelmel's anger attack!
-Belhelmel|4|6|Belhelmel's laugh attack!
-Glacial Eye|5|0|Glacial Eye
-SAM08G|6|0|SAM08G
-GIM47N|7|0|GIM47N
-Mesmerize|8|0|Mesmerize
-Mesmerize|8|1|The horn broke off!
-Buel|9|0|Buel
-Sphinxaur|10|0|Sphinxaur
-Sphinxara|11|0|Sphinxara
-Snow Lion|12|0|Snow Lion
-Anacondaur|13|0|Anacondaur
-Anacondaur|13|1|Seifer “Listen up!”
-Anacondaur|13|2|“The finishing blow determines”
-Anacondaur|13|3|“the EXP.  Save it for me!”
-Grat|14|0|Grat
-Cockatrice|15|0|Cockatrice
-Caterchipillar|16|0|Caterchipillar
-Red Bat|17|0|Red Bat
-Red Bat|17|1|{Quistis} “{Squall}, you still remember?”
-Red Bat|17|2|“The {R1} is the trigger.”
-Red Bat|17|3|“Pull it just as you strike.”
-Blitz|18|0|Blitz
-Blitz|18|1|Blitz charged itself up!
-Blitz|18|2|Charging...
-Fastitocalon|19|0|Fastitocalon
+Dummy|0|0|Dummy
+GIM52A|1|0|GIM52A
+Blobra|2|0|Blobra
+Thrustaevis|3|0|Thrustaevis
+Thrustaevis|3|1|{Irvine} “Oh, I forgot to tell you...”
+Thrustaevis|3|2|“For my Limit Break, Shot,”
+Thrustaevis|3|3|“pull the trigger with the {R1}.”
+Thrustaevis|3|4|“Got it?”
+Geezard|4|0|Geezard
+Belhelmel|5|0|Belhelmel
+Belhelmel|5|1|It's laughing!
+Belhelmel|5|2|It's scowling!
+Belhelmel|5|3|Belhelmel laughed!
+Belhelmel|5|4|Belhelmel is furious!
+Belhelmel|5|5|Belhelmel's anger attack!
+Belhelmel|5|6|Belhelmel's laugh attack!
+Glacial Eye|6|0|Glacial Eye
+SAM08G|7|0|SAM08G
+GIM47N|8|0|GIM47N
+Mesmerize|9|0|Mesmerize
+Mesmerize|9|1|The horn broke off!
+Buel|10|0|Buel
+Sphinxaur|11|0|Sphinxaur
+Sphinxara|12|0|Sphinxara
+Snow Lion|13|0|Snow Lion
+Anacondaur|14|0|Anacondaur
+Anacondaur|14|1|Seifer “Listen up!”
+Anacondaur|14|2|“The finishing blow determines”
+Anacondaur|14|3|“the EXP.  Save it for me!”
+Grat|15|0|Grat
+Cockatrice|16|0|Cockatrice
+Caterchipillar|17|0|Caterchipillar
+Red Bat|18|0|Red Bat
+Red Bat|18|1|{Quistis} “{Squall}, you still remember?”
+Red Bat|18|2|“The {R1} is the trigger.”
+Red Bat|18|3|“Pull it just as you strike.”
+Blitz|19|0|Blitz
+Blitz|19|1|Blitz charged itself up!
+Blitz|19|2|Charging...
 Fastitocalon|20|0|Fastitocalon
-Gesper|21|0|Gesper
-Creeps|22|0|Creeps
-Hexadragon|23|0|Hexadragon
-Blood Soul|24|0|Blood Soul
-Elastoid|25|0|Elastoid
-Armadodo|26|0|Armadodo
-Armadodo|26|1|Armadodo fell over!
-Armadodo|26|2|Armadodo got up!
-Bite Bug|27|0|Bite Bug
-Bite Bug|27|1|{Quistis} “{Squall}, you still remember?”
-Bite Bug|27|2|“The {R1} is the trigger.”
-Bite Bug|27|3|“Pull it just as you strike.”
-Bite Bug|27|4|“Same for the Renzokuken!”
-Jelleye|28|0|Jelleye
-Jelleye|28|1|Normal Defense Morph
-Jelleye|28|2|Complete Defense Morph
-Jelleye|28|3|Magic Defense Morph
-Jelleye|28|4|Physical Defense Morph
-Tri-Point|29|0|Tri-Point
-Tri-Point|29|1|“USING ELEMENTAL ATTACKS.”
-Tri-Point|29|2|“WHATEVER I DON'T USE, I DON'T LIKE.”
-Turtapod|30|0|Turtapod
-Wendigo|31|0|Wendigo
-Gayla|32|0|Gayla
-Gerogero|33|0|Gerogero
-Gerogero|33|1|{Zell} “...The hell is this!?”
-Gerogero|33|2|{Squall} “What the...?”
-Gerogero|33|3|{Selphie} “Ewww!  Nasty!”
-Death Claw|34|0|Death Claw
-Tri-Face|35|0|Tri-Face
-Grand Mantis|36|0|Grand Mantis
-Krysta|37|0|Krysta
-Krysta|37|1|“SHOW ME WHAT YOU GOT!”
-Krysta|37|2|“YOU'LL REGRET FIGHTING ME!”
-Lefty|38|0|Lefty
-Righty|39|0|Righty
-Blue Dragon|40|0|Blue Dragon
-Forbidden|41|0|Forbidden
-Bomb|42|0|Bomb
-Bomb|42|1|{Quistis} “Bomb... An elemental monster.”
-Bomb|42|2|“Use an ice attack for these.”
-Bomb|42|3|“Check the monster's weakness with Scan.”
-Abyss Worm|43|0|Abyss Worm
-Ochu|44|0|Ochu
-Adamantoise|45|0|Adamantoise
-Chimera|46|0|Chimera
-Malboro|47|0|Malboro
-Iron Giant|48|0|Iron Giant
-Behemoth|49|0|Behemoth
-T-Rexaur|50|0|T-Rexaur
-T-Rexaur|50|1|{Quistis} “T-Rexaur!!!”
-T-Rexaur|50|2|“{Squall}, be careful!”
-T-Rexaur|50|3|“Sometimes it's better to run!”
-Ruby Dragon|51|0|Ruby Dragon
-Grendel|52|0|Grendel
-Vysage|53|0|Vysage
-Cactuar|54|0|Cactuar
-Cactuar|54|1|Escaped...
-Tonberry|55|0|Tonberry
-Tonberry|55|1|Tonberry fell over...
-Torama|56|0|Torama
-Funguar|57|0|Funguar
-Imp|58|0|Imp
-PuPu|59|0|PuPu
-PuPu|59|1|“Elixir please!”
-PuPu|59|2|“More Elixir please!”
-PuPu|59|3|“Thank you!”
-PuPu|59|4|“Ahhhhh.....”
-Ifrit|60|0|Ifrit
-Ifrit|60|1|{Squall} “Fire magic ineffective?”
-Ifrit|60|2|{Quistis} “Fire won't work.”
-Ifrit|60|3|“Hm!  Not bad for a human.”
-Ifrit|60|4|“They have {Shiva}!?”
-Ifrit|60|5|“For me to lose to a human...”
-Ifrit|60|6|“Ugh, I underestimated {Shiva}.”
-Ifrit|60|7|“Very well, I will join you.”
-Ifrit|60|8|“Impudent humans!”
-Minotaur|61|0|Minotaur
-Minotaur|61|1|Minotaur “the rest is up to you, bro...”
-Minotaur|61|2|Minotaur “the brothers, defeated...?”
-Minotaur|61|3|Minotaur “mighty ones...”
-Minotaur|61|4|Minotaur “may we join you?”
-Sacred|62|0|Sacred
-Sacred|62|1|Sacred “THEY'RE PRETTY STRONG!”
-Sacred|62|2|Sacred “BRO, I LOST...”
-Sacred|62|3|Sacred “THE BROTHERS, DEFEATED...”
-Sacred|62|4|Sacred “I GUESS WE'LL JOIN YA.”
-Base Leader|63|0|Base Leader
-Base Leader|63|1|“Time for us to get serious!”
-Base Leader|63|2|“My men!  How dare you!!!”
-Base Leader|63|3|“Are they from Garden?”
-Base Leader|63|4|“Go for the weak one!”
-Base Leader|63|5|“Attack with magic!”
-Cerberus|64|0|Cerberus
-Cerberus|64|1|{Squall} “G Garden uses GF, too?”
-Cerberus|64|2|{Quistis} “I don't think G Garden uses GF.”
-Cerberus|64|3|{Zell} “Do people here know GF?”
-Cerberus|64|4|{Selphie} “Is this a GF!?”
-Cerberus|64|5|{Irvine} “Never knew about this one.”
-Cerberus|64|6|{Rinoa} “Could this be a GF?”
-Cerberus|64|7|{Squall} “Ahh... Let's just take it.”
-Cerberus|64|8|{Quistis} “Let's take it!”
-Cerberus|64|9|{Zell} “This baby's ours!”
-Cerberus|64|10|{Selphie} “We're gonna take it...!”
-Cerberus|64|11|{Irvine} “We should just take it.”
-Cerberus|64|12|{Rinoa} “Mr. GF, give us your power!”
-Cerberus|64|13|Cerberus “...PRETTY CONFIDENT.”
-Cerberus|64|14|Cerberus “LET'S SEE HOW YOU DO.”
-Cerberus|64|15|Cerberus “SHOW ME WHAT YOU GOT!”
-Cerberus|64|16|Cerberus “NOT BAD...MORTALS.”
-Diablos|65|0|Diablos
-Diablos|65|1|“Who dares disturb my sleep?”
-Diablos|65|2|“Too much sleep... Too weak...”
-Bahamut|66|0|Bahamut
-Bahamut|66|1|“I am...Bahamut”
-Bahamut|66|2|{Squall} “The Great GF...Bahamut.”
-Bahamut|66|3|{Zell} “The Great GF...Bahamut.”
-Bahamut|66|4|{Quistis} “The Great GF...Bahamut.”
-Bahamut|66|5|{Selphie} “The Great GF...Bahamut.”
-Bahamut|66|6|{Irvine} “The Great GF...Bahamut.”
-Bahamut|66|7|{Rinoa} “The Great GF...Bahamut.”
-Bahamut|66|8|Bahamut “...GF?  I...?”
-Bahamut|66|9|Bahamut “Using my powers...”
-Bahamut|66|10|Bahamut “...It is you humans...I fear...”
-Bahamut|66|11|Bahamut “Have you seen the light...?”
-NORG Pod|67|0|NORG Pod
-NORG Pod|67|1|NORG “Bujurururu...”
-NORG Pod|67|2|NORG “BLUE-YELLOW-RED.”
-NORG Pod|67|3|NORG “LOTS-OF-MAGIC-WHEN-RED!”
-NORG Pod|67|4|NORG “AS-LONG-AS-COLOR-STAYS,”
-NORG Pod|67|5|NORG “I-WILL-ATTACK-SeeD-WITH-MAGIC!”
-Garden Faculty|68|0|Garden Faculty
-Garden Faculty|68|1|“Seize them!”
-Garden Faculty|68|2|“NORG is the true ruler of the Garden!”
-Garden Faculty|68|3|“Now, attack!”
-Garden Faculty|68|4|“Stall them.”
-Garden Faculty|68|5|“This Garden belongs to NORG!”
-Garden Faculty|68|6|“More SeeDs here!?”
-Garden Faculty|68|7|“You're siding with the headmaster!?”
-Garden Faculty|68|8|“Those opposed to NORG must die!”
-Garden Faculty|68|9|“Face the wrath of this monster!”
-Odin|69|0|Odin
-Odin|69|1|Odin “Splendid knights!”
-Odin|69|2|Odin “As promised, my sword is thine.”
-Odin|69|3|Odin “Henceforth, I serve thee.”
-Odin|69|4|Odin “Summon me in times of need.”
-Odin|69|5|Odin “Heaven hath decreed thy fate...”
-Odin|69|6|Odin “FALL BEFORE MY BLADE!”
-G-Soldier|70|0|G-Soldier
-G-Soldier|70|1|“They're Dollet reinforcements?”
-G-Soldier|70|2|“They still look like kids!”
-G-Soldier|70|3|“Elite forces from Garden?”
-G-Soldier|70|4|“Look out, it's SeeD!”
-G-Soldier|70|5|“Argh!  Hot Hot HOT!!!”
-Elite Soldier|71|0|Elite Soldier
-Elite Soldier|71|1|“You're not goin' anywhere!”
-Elite Soldier|71|2|Captain “That piece of crap!”
-Elite Soldier|71|3|Private2 “What now, captain!?”
-Elite Soldier|71|4|Private1 “It needs repairs, sir!”
-Elite Soldier|71|5|Captain “We'll kill'em, first!”
-Elite Soldier|71|6|“AWWW HOT HOT HOT!!!”
-Wedge|72|0|Wedge
-Wedge|72|1|Biggs “Damn!  They're good.”
-Wedge|72|2|Wedge “Ahhhhh!”
-Wedge|72|3|Wedge “Major Biggs...”
-Wedge|72|4|Wedge “Have you finished the repairs, sir?”
-Wedge|72|5|Wedge “What is the enemy doing here!?”
-Wedge|72|6|Biggs “WEDGE!  Where were you!?”
-Wedge|72|7|Biggs “No pay for you this month!”
-Wedge|72|8|Wedge “...Should've stayed home!”
-Biggs|73|0|Biggs
-Biggs|73|1|Biggs “Prepare for the worst, you brats!”
-Biggs|73|2|Biggs “Damn!  They're good.”
-Biggs|73|3|Wedge “Major Biggs...”
-Biggs|73|4|Wedge “Have you finished the repairs, sir?”
-Biggs|73|5|Wedge “What is the enemy doing here!?”
-Biggs|73|6|Biggs “WEDGE!  Where were you!?”
-Biggs|73|7|Biggs “No pay for you this month!”
-Biggs|73|8|Wedge “...Should've stayed home!”
-Biggs|73|9|Wedge “Major!  We're doomed!”
-Biggs|73|10|Biggs “Stop your whining!”
-Biggs|73|11|Biggs “What the...!?”
-Fake President|74|0|Fake President
-Fake President|74|1|“YOu...fEll...FOr...iT”
-Fake President|74|2|“kiLL...thE...REsisTanCE...”
-Fake President|74|3|“aMusINg... tHIs iS AmuSinG!”
-Fake President|74|4|“Mwa...MwAhaHAha...”
-Guard|75|0|Guard
-Guard|75|1|“Hey!  What are you doing!?”
-Guard|75|2|“Who's there!?”
-Guard|75|3|“SeeDs have escaped!”
-Guard|75|4|“Yo, I found the SeeDs!”
-Guard|75|5|“SeeDs, you ain't gettin' away!”
-NORG|76|0|NORG
-NORG|76|1|NORG “DAMN-THOSE-SeeDs!”
-NORG|76|2|NORG “THIS-IS-MY-GARDEN!”
-NORG|76|3|NORG “YOU-CAN'T-DO-AS-YOU-PLEASE!”
-NORG|76|4|NORG “Fushururu...I'M-DONE-FOR!”
-NORG|76|5|NORG “I'M-AFRAID-OF-YOU!”
-NORG|76|6|NORG “ME-WHY-ME...?”
-Esthar Soldier|77|0|Esthar Soldier
+Fastitocalon|21|0|Fastitocalon
+Gesper|22|0|Gesper
+Creeps|23|0|Creeps
+Hexadragon|24|0|Hexadragon
+Blood Soul|25|0|Blood Soul
+Elastoid|26|0|Elastoid
+Armadodo|27|0|Armadodo
+Armadodo|27|1|Armadodo fell over!
+Armadodo|27|2|Armadodo got up!
+Bite Bug|28|0|Bite Bug
+Bite Bug|28|1|{Quistis} “{Squall}, you still remember?”
+Bite Bug|28|2|“The {R1} is the trigger.”
+Bite Bug|28|3|“Pull it just as you strike.”
+Bite Bug|28|4|“Same for the Renzokuken!”
+Jelleye|29|0|Jelleye
+Jelleye|29|1|Normal Defense Morph
+Jelleye|29|2|Complete Defense Morph
+Jelleye|29|3|Magic Defense Morph
+Jelleye|29|4|Physical Defense Morph
+Tri-Point|30|0|Tri-Point
+Tri-Point|30|1|“USING ELEMENTAL ATTACKS.”
+Tri-Point|30|2|“WHATEVER I DON'T USE, I DON'T LIKE.”
+Turtapod|31|0|Turtapod
+Wendigo|32|0|Wendigo
+Gayla|33|0|Gayla
+Gerogero|34|0|Gerogero
+Gerogero|34|1|{Zell} “...The hell is this!?”
+Gerogero|34|2|{Squall} “What the...?”
+Gerogero|34|3|{Selphie} “Ewww!  Nasty!”
+Death Claw|35|0|Death Claw
+Tri-Face|36|0|Tri-Face
+Grand Mantis|37|0|Grand Mantis
+Krysta|38|0|Krysta
+Krysta|38|1|“SHOW ME WHAT YOU GOT!”
+Krysta|38|2|“YOU'LL REGRET FIGHTING ME!”
+Lefty|39|0|Lefty
+Righty|40|0|Righty
+Blue Dragon|41|0|Blue Dragon
+Forbidden|42|0|Forbidden
+Bomb|43|0|Bomb
+Bomb|43|1|{Quistis} “Bomb... An elemental monster.”
+Bomb|43|2|“Use an ice attack for these.”
+Bomb|43|3|“Check the monster's weakness with Scan.”
+Abyss Worm|44|0|Abyss Worm
+Ochu|45|0|Ochu
+Adamantoise|46|0|Adamantoise
+Chimera|47|0|Chimera
+Malboro|48|0|Malboro
+Iron Giant|49|0|Iron Giant
+Behemoth|50|0|Behemoth
+T-Rexaur|51|0|T-Rexaur
+T-Rexaur|51|1|{Quistis} “T-Rexaur!!!”
+T-Rexaur|51|2|“{Squall}, be careful!”
+T-Rexaur|51|3|“Sometimes it's better to run!”
+Ruby Dragon|52|0|Ruby Dragon
+Grendel|53|0|Grendel
+Vysage|54|0|Vysage
+Cactuar|55|0|Cactuar
+Cactuar|55|1|Escaped...
+Tonberry|56|0|Tonberry
+Tonberry|56|1|Tonberry fell over...
+Torama|57|0|Torama
+Funguar|58|0|Funguar
+Imp|59|0|Imp
+PuPu|60|0|PuPu
+PuPu|60|1|“Elixir please!”
+PuPu|60|2|“More Elixir please!”
+PuPu|60|3|“Thank you!”
+PuPu|60|4|“Ahhhhh.....”
+Ifrit|61|0|Ifrit
+Ifrit|61|1|{Squall} “Fire magic ineffective?”
+Ifrit|61|2|{Quistis} “Fire won't work.”
+Ifrit|61|3|“Hm!  Not bad for a human.”
+Ifrit|61|4|“They have {Shiva}!?”
+Ifrit|61|5|“For me to lose to a human...”
+Ifrit|61|6|“Ugh, I underestimated {Shiva}.”
+Ifrit|61|7|“Very well, I will join you.”
+Ifrit|61|8|“Impudent humans!”
+Minotaur|62|0|Minotaur
+Minotaur|62|1|Minotaur “the rest is up to you, bro...”
+Minotaur|62|2|Minotaur “the brothers, defeated...?”
+Minotaur|62|3|Minotaur “mighty ones...”
+Minotaur|62|4|Minotaur “may we join you?”
+Sacred|63|0|Sacred
+Sacred|63|1|Sacred “THEY'RE PRETTY STRONG!”
+Sacred|63|2|Sacred “BRO, I LOST...”
+Sacred|63|3|Sacred “THE BROTHERS, DEFEATED...”
+Sacred|63|4|Sacred “I GUESS WE'LL JOIN YA.”
+Base Leader|64|0|Base Leader
+Base Leader|64|1|“Time for us to get serious!”
+Base Leader|64|2|“My men!  How dare you!!!”
+Base Leader|64|3|“Are they from Garden?”
+Base Leader|64|4|“Go for the weak one!”
+Base Leader|64|5|“Attack with magic!”
+Cerberus|65|0|Cerberus
+Cerberus|65|1|{Squall} “G Garden uses GF, too?”
+Cerberus|65|2|{Quistis} “I don't think G Garden uses GF.”
+Cerberus|65|3|{Zell} “Do people here know GF?”
+Cerberus|65|4|{Selphie} “Is this a GF!?”
+Cerberus|65|5|{Irvine} “Never knew about this one.”
+Cerberus|65|6|{Rinoa} “Could this be a GF?”
+Cerberus|65|7|{Squall} “Ahh... Let's just take it.”
+Cerberus|65|8|{Quistis} “Let's take it!”
+Cerberus|65|9|{Zell} “This baby's ours!”
+Cerberus|65|10|{Selphie} “We're gonna take it...!”
+Cerberus|65|11|{Irvine} “We should just take it.”
+Cerberus|65|12|{Rinoa} “Mr. GF, give us your power!”
+Cerberus|65|13|Cerberus “...PRETTY CONFIDENT.”
+Cerberus|65|14|Cerberus “LET'S SEE HOW YOU DO.”
+Cerberus|65|15|Cerberus “SHOW ME WHAT YOU GOT!”
+Cerberus|65|16|Cerberus “NOT BAD...MORTALS.”
+Diablos|66|0|Diablos
+Diablos|66|1|“Who dares disturb my sleep?”
+Diablos|66|2|“Too much sleep... Too weak...”
+Bahamut|67|0|Bahamut
+Bahamut|67|1|“I am...Bahamut”
+Bahamut|67|2|{Squall} “The Great GF...Bahamut.”
+Bahamut|67|3|{Zell} “The Great GF...Bahamut.”
+Bahamut|67|4|{Quistis} “The Great GF...Bahamut.”
+Bahamut|67|5|{Selphie} “The Great GF...Bahamut.”
+Bahamut|67|6|{Irvine} “The Great GF...Bahamut.”
+Bahamut|67|7|{Rinoa} “The Great GF...Bahamut.”
+Bahamut|67|8|Bahamut “...GF?  I...?”
+Bahamut|67|9|Bahamut “Using my powers...”
+Bahamut|67|10|Bahamut “...It is you humans...I fear...”
+Bahamut|67|11|Bahamut “Have you seen the light...?”
+NORG Pod|68|0|NORG Pod
+NORG Pod|68|1|NORG “Bujurururu...”
+NORG Pod|68|2|NORG “BLUE-YELLOW-RED.”
+NORG Pod|68|3|NORG “LOTS-OF-MAGIC-WHEN-RED!”
+NORG Pod|68|4|NORG “AS-LONG-AS-COLOR-STAYS,”
+NORG Pod|68|5|NORG “I-WILL-ATTACK-SeeD-WITH-MAGIC!”
+Garden Faculty|69|0|Garden Faculty
+Garden Faculty|69|1|“Seize them!”
+Garden Faculty|69|2|“NORG is the true ruler of the Garden!”
+Garden Faculty|69|3|“Now, attack!”
+Garden Faculty|69|4|“Stall them.”
+Garden Faculty|69|5|“This Garden belongs to NORG!”
+Garden Faculty|69|6|“More SeeDs here!?”
+Garden Faculty|69|7|“You're siding with the headmaster!?”
+Garden Faculty|69|8|“Those opposed to NORG must die!”
+Garden Faculty|69|9|“Face the wrath of this monster!”
+Odin|70|0|Odin
+Odin|70|1|Odin “Splendid knights!”
+Odin|70|2|Odin “As promised, my sword is thine.”
+Odin|70|3|Odin “Henceforth, I serve thee.”
+Odin|70|4|Odin “Summon me in times of need.”
+Odin|70|5|Odin “Heaven hath decreed thy fate...”
+Odin|70|6|Odin “FALL BEFORE MY BLADE!”
+G-Soldier|71|0|G-Soldier
+G-Soldier|71|1|“They're Dollet reinforcements?”
+G-Soldier|71|2|“They still look like kids!”
+G-Soldier|71|3|“Elite forces from Garden?”
+G-Soldier|71|4|“Look out, it's SeeD!”
+G-Soldier|71|5|“Argh!  Hot Hot HOT!!!”
+Elite Soldier|72|0|Elite Soldier
+Elite Soldier|72|1|“You're not goin' anywhere!”
+Elite Soldier|72|2|Captain “That piece of crap!”
+Elite Soldier|72|3|Private2 “What now, captain!?”
+Elite Soldier|72|4|Private1 “It needs repairs, sir!”
+Elite Soldier|72|5|Captain “We'll kill'em, first!”
+Elite Soldier|72|6|“AWWW HOT HOT HOT!!!”
+Wedge|73|0|Wedge
+Wedge|73|1|Biggs “Damn!  They're good.”
+Wedge|73|2|Wedge “Ahhhhh!”
+Wedge|73|3|Wedge “Major Biggs...”
+Wedge|73|4|Wedge “Have you finished the repairs, sir?”
+Wedge|73|5|Wedge “What is the enemy doing here!?”
+Wedge|73|6|Biggs “WEDGE!  Where were you!?”
+Wedge|73|7|Biggs “No pay for you this month!”
+Wedge|73|8|Wedge “...Should've stayed home!”
+Biggs|74|0|Biggs
+Biggs|74|1|Biggs “Prepare for the worst, you brats!”
+Biggs|74|2|Biggs “Damn!  They're good.”
+Biggs|74|3|Wedge “Major Biggs...”
+Biggs|74|4|Wedge “Have you finished the repairs, sir?”
+Biggs|74|5|Wedge “What is the enemy doing here!?”
+Biggs|74|6|Biggs “WEDGE!  Where were you!?”
+Biggs|74|7|Biggs “No pay for you this month!”
+Biggs|74|8|Wedge “...Should've stayed home!”
+Biggs|74|9|Wedge “Major!  We're doomed!”
+Biggs|74|10|Biggs “Stop your whining!”
+Biggs|74|11|Biggs “What the...!?”
+Fake President|75|0|Fake President
+Fake President|75|1|“YOu...fEll...FOr...iT”
+Fake President|75|2|“kiLL...thE...REsisTanCE...”
+Fake President|75|3|“aMusINg... tHIs iS AmuSinG!”
+Fake President|75|4|“Mwa...MwAhaHAha...”
+Guard|76|0|Guard
+Guard|76|1|“Hey!  What are you doing!?”
+Guard|76|2|“Who's there!?”
+Guard|76|3|“SeeDs have escaped!”
+Guard|76|4|“Yo, I found the SeeDs!”
+Guard|76|5|“SeeDs, you ain't gettin' away!”
+NORG|77|0|NORG
+NORG|77|1|NORG “DAMN-THOSE-SeeDs!”
+NORG|77|2|NORG “THIS-IS-MY-GARDEN!”
+NORG|77|3|NORG “YOU-CAN'T-DO-AS-YOU-PLEASE!”
+NORG|77|4|NORG “Fushururu...I'M-DONE-FOR!”
+NORG|77|5|NORG “I'M-AFRAID-OF-YOU!”
+NORG|77|6|NORG “ME-WHY-ME...?”
 Esthar Soldier|78|0|Esthar Soldier
-Right Orb|79|0|Right Orb
-Left Orb|80|0|Left Orb
-Gunblade|81|0|Gunblade
-Tonberry King|82|0|Tonberry King
-Tonberry King|82|1|Looks a bit frightened.
-Tonberry King|82|2|“I...I'm sorry.”
-Tonberry King|82|3|Tonberry joined your party!
-Jumbo Cactuar|83|0|Jumbo Cactuar
-Jumbo Cactuar|83|1|Jumbo Cactuar is hesitating...
-Seifer|84|0|Seifer
-Seifer|84|1|Seifer “{Squall}, you're mine!”
-Seifer|84|2|Seifer “I...lost...!?”
-Seifer|84|3|Seifer “Thought I was dead, eh?”
-Seifer|84|4|Seifer “Not until I fulfill my dream!”
-Seifer|84|5|Seifer “{Squall}, this is it!”
-Seifer|84|6|Seifer “Ugh, not bad...”
+Esthar Soldier|79|0|Esthar Soldier
+Right Orb|80|0|Right Orb
+Left Orb|81|0|Left Orb
+Gunblade|82|0|Gunblade
+Tonberry King|83|0|Tonberry King
+Tonberry King|83|1|Looks a bit frightened.
+Tonberry King|83|2|“I...I'm sorry.”
+Tonberry King|83|3|Tonberry joined your party!
+Jumbo Cactuar|84|0|Jumbo Cactuar
+Jumbo Cactuar|84|1|Jumbo Cactuar is hesitating...
 Seifer|85|0|Seifer
-Seifer|85|1|Seifer “Let's go after them monsters!”
-Seifer|85|2|Seifer “Show me what you got.”
-Seifer|85|3|Seifer “I'll show you who's the better man!”
-Seifer|85|4|Seifer “Is that all you got!?”
-Seifer|85|5|Seifer “I can't be beaten.”
-Seifer|85|6|Seifer “This can't be!  Why!?”
-Seifer|85|7|Seifer “Ready to die, {Squall}?”
-Seifer|85|8|Seifer “Kneel before me!”
+Seifer|85|1|Seifer “{Squall}, you're mine!”
+Seifer|85|2|Seifer “I...lost...!?”
+Seifer|85|3|Seifer “Thought I was dead, eh?”
+Seifer|85|4|Seifer “Not until I fulfill my dream!”
+Seifer|85|5|Seifer “{Squall}, this is it!”
+Seifer|85|6|Seifer “Ugh, not bad...”
 Seifer|86|0|Seifer
-Seifer|86|1|Seifer “I'm the sorceress' knight.”
-Seifer|86|2|“You'll never...get past me.”
-Seifer|86|3|Seifer “I can't afford to lose.”
-Seifer|86|4|Seifer “Ughaah!”
-Seifer|86|5|Seifer “...Damn. I'm disgraced.”
-Edea|87|0|Edea
-Edea|87|1|{Rinoa} “I can fight if I'm with you!”
-Edea|87|2|{Rinoa} “That's why I'm here!”
-Edea|87|3|{Irvine} “I have to redeem myself.”
-Edea|87|4|Edea “...The accursed SeeD.”
-Edea|87|5|Edea “...SeeD, is that all you've got?”
-Edea|87|6|Edea “How boring...”
-Edea|87|7|Edea “You've reached the end, SeeDs.”
-Edea|87|8|Edea “Impudent SeeDs!”
-Propagator|88|0|Propagator
-Ultima Weapon|89|0|Ultima Weapon
-Elvoret|90|0|Elvoret
-Elvoret|90|1|{Zell} “What the hell is it?”
-Elvoret|90|2|{Squall} “What the...!?”
-Elvoret|90|3|{Selphie} “Huh?  What is it?”
-X-ATM092|91|0|X-ATM092
-X-ATM092|91|1|{Zell} “Huh, is it repairing itself!?”
-X-ATM092|91|2|{Squall} “A self-repair mechanism?”
-X-ATM092|91|3|{Selphie} “What's goin' on here!?”
-X-ATM092|91|4|{Zell} “Let's get the hell outta here!”
-X-ATM092|91|5|{Selphie} “Hurry to the rendezvous!”
-X-ATM092|91|6|{Squall} “Alright, withdraw.”
-X-ATM092|91|7|{L2}, {R2} buttons to escape.
-X-ATM092|91|8|Repairing... 20%
-X-ATM092|91|9|Repairing... 40%
-X-ATM092|91|10|Repairing... 60%
-X-ATM092|91|11|Repairing... 80%
-X-ATM092|91|12|{Zell} “Geez, not again!!!”
-X-ATM092|91|13|{Squall} “There's no end to this...”
-X-ATM092|91|14|{Selphie} “No more!”
-Iguion|92|0|Iguion
-Iguion|92|1|{Irvine} “We have to save {Rinoa}!”
-Iguion|92|2|{Irvine} “Oh, I forgot to tell you...”
-Iguion|92|3|“For my Limit Break, Shot,”
-Iguion|92|4|“pull the trigger with the {R1}.”
-Iguion|92|5|“Got it?”
-Gargantua|93|0|Gargantua
-Granaldo|94|0|Granaldo
-Raldo|95|0|Raldo
-Propagator|96|0|Propagator
+Seifer|86|1|Seifer “Let's go after them monsters!”
+Seifer|86|2|Seifer “Show me what you got.”
+Seifer|86|3|Seifer “I'll show you who's the better man!”
+Seifer|86|4|Seifer “Is that all you got!?”
+Seifer|86|5|Seifer “I can't be beaten.”
+Seifer|86|6|Seifer “This can't be!  Why!?”
+Seifer|86|7|Seifer “Ready to die, {Squall}?”
+Seifer|86|8|Seifer “Kneel before me!”
+Seifer|87|0|Seifer
+Seifer|87|1|Seifer “I'm the sorceress' knight.”
+Seifer|87|2|“You'll never...get past me.”
+Seifer|87|3|Seifer “I can't afford to lose.”
+Seifer|87|4|Seifer “Ughaah!”
+Seifer|87|5|Seifer “...Damn. I'm disgraced.”
+Edea|88|0|Edea
+Edea|88|1|{Rinoa} “I can fight if I'm with you!”
+Edea|88|2|{Rinoa} “That's why I'm here!”
+Edea|88|3|{Irvine} “I have to redeem myself.”
+Edea|88|4|Edea “...The accursed SeeD.”
+Edea|88|5|Edea “...SeeD, is that all you've got?”
+Edea|88|6|Edea “How boring...”
+Edea|88|7|Edea “You've reached the end, SeeDs.”
+Edea|88|8|Edea “Impudent SeeDs!”
+Propagator|89|0|Propagator
+Ultima Weapon|90|0|Ultima Weapon
+Elvoret|91|0|Elvoret
+Elvoret|91|1|{Zell} “What the hell is it?”
+Elvoret|91|2|{Squall} “What the...!?”
+Elvoret|91|3|{Selphie} “Huh?  What is it?”
+X-ATM092|92|0|X-ATM092
+X-ATM092|92|1|{Zell} “Huh, is it repairing itself!?”
+X-ATM092|92|2|{Squall} “A self-repair mechanism?”
+X-ATM092|92|3|{Selphie} “What's goin' on here!?”
+X-ATM092|92|4|{Zell} “Let's get the hell outta here!”
+X-ATM092|92|5|{Selphie} “Hurry to the rendezvous!”
+X-ATM092|92|6|{Squall} “Alright, withdraw.”
+X-ATM092|92|7|{L2}, {R2} buttons to escape.
+X-ATM092|92|8|Repairing... 20%
+X-ATM092|92|9|Repairing... 40%
+X-ATM092|92|10|Repairing... 60%
+X-ATM092|92|11|Repairing... 80%
+X-ATM092|92|12|{Zell} “Geez, not again!!!”
+X-ATM092|92|13|{Squall} “There's no end to this...”
+X-ATM092|92|14|{Selphie} “No more!”
+Iguion|93|0|Iguion
+Iguion|93|1|{Irvine} “We have to save {Rinoa}!”
+Iguion|93|2|{Irvine} “Oh, I forgot to tell you...”
+Iguion|93|3|“For my Limit Break, Shot,”
+Iguion|93|4|“pull the trigger with the {R1}.”
+Iguion|93|5|“Got it?”
+Gargantua|94|0|Gargantua
+Granaldo|95|0|Granaldo
+Raldo|96|0|Raldo
 Propagator|97|0|Propagator
-Oilboyle|98|0|Oilboyle
-Edea|99|0|Edea
-Edea|99|1|Edea “Defeated... Useless fool.”
-Edea|99|2|Edea “Enough play.  SeeDs must die!”
-Edea|99|3|Edea “A...Ahhh...”
-BGH251F2|100|0|BGH251F2
-BGH251F2|100|1|Captain “Stand by for beam cannon!”
-BGH251F2|100|2|Private 1 “Yes, sir!”
-BGH251F2|100|3|Captain “Shoot'em again!”
-BGH251F2|100|4|Private 2 “Setting target!”
-BGH251F2|100|5|Private 2 “AHHH!  Captain!”
-BGH251F2|100|6|Captain “It's only 1, don't worry!”
-BGH251F2|100|7|Private 1 “I can't control it!”
-BGH251F2|100|8|Captain “What!!!?”
-BGH251F2|100|9|Captain “Keep attacking anyway!”
-BGH251F2|100|10|Private 2 “Let's just get outta here!”
-BGH251F2|100|11|Captain “Can't let them seize this MRV!”
+Propagator|98|0|Propagator
+Oilboyle|99|0|Oilboyle
+Edea|100|0|Edea
+Edea|100|1|Edea “Defeated... Useless fool.”
+Edea|100|2|Edea “Enough play.  SeeDs must die!”
+Edea|100|3|Edea “A...Ahhh...”
 BGH251F2|101|0|BGH251F2
-BGH251F2|101|1|{Rinoa} “It's here!”
-BGH251F2|101|2|{Zell} “We got a big one on our hands!”
-BGH251F2|101|3|{Irvine} “Here comes their latest invention!”
-BGH251F2|101|4|{Quistis} “Galbadia's latest weapon.”
-BGH251F2|101|5|{Squall} “Let's destroy this thing!”
-Abadon|102|0|Abadon
-Abadon|102|1|{Squall} “An undead monster...”
-Abadon|102|2|“Use recovery-related magic and items.”
+BGH251F2|101|1|Captain “Stand by for beam cannon!”
+BGH251F2|101|2|Private 1 “Yes, sir!”
+BGH251F2|101|3|Captain “Shoot'em again!”
+BGH251F2|101|4|Private 2 “Setting target!”
+BGH251F2|101|5|Private 2 “AHHH!  Captain!”
+BGH251F2|101|6|Captain “It's only 1, don't worry!”
+BGH251F2|101|7|Private 1 “I can't control it!”
+BGH251F2|101|8|Captain “What!!!?”
+BGH251F2|101|9|Captain “Keep attacking anyway!”
+BGH251F2|101|10|Private 2 “Let's just get outta here!”
+BGH251F2|101|11|Captain “Can't let them seize this MRV!”
+BGH251F2|102|0|BGH251F2
+BGH251F2|102|1|{Rinoa} “It's here!”
+BGH251F2|102|2|{Zell} “We got a big one on our hands!”
+BGH251F2|102|3|{Irvine} “Here comes their latest invention!”
+BGH251F2|102|4|{Quistis} “Galbadia's latest weapon.”
+BGH251F2|102|5|{Squall} “Let's destroy this thing!”
 Abadon|103|0|Abadon
-Mobile Type 8|104|0|Mobile Type 8
-Mobile Type 8|104|1|Mobile weaponry attack mode ON
-Mobile Type 8|104|2|Support weaponry attack mode OFF
-Mobile Type 8|104|3|Mobile weaponry attack mode OFF
-Mobile Type 8|104|4|Support weaponry attack mode ON
-Left Probe|105|0|Left Probe
-Right Probe|106|0|Right Probe
-Paratrooper|107|0|Paratrooper
-Paratrooper|107|1|“Dispose of this Garden as planned!”
-Paratrooper|107|2|{Quistis} “There's no way we'll let you!”
-Paratrooper|107|3|{Squall} “Not a chance!”
-Paratrooper|107|4|{Irvine} “Dispose!?”
-Paratrooper|107|5|{Selphie} “NO WAY!”
-Paratrooper|107|6|“You little SeeD twerps!”
-Trauma|108|0|Trauma
-Trauma|108|1|The magic petrifying Trauma has expired!
-Droma|109|0|Droma
-Propagator|110|0|Propagator
-Adel|111|0|Adel
-Adel|111|1|{Squall} “Just go for Adel!”
-Adel|111|2|{Zell} “Gotta save {Rinoa}!”
-Adel|111|3|{Selphie} “We have to save {Rinoa}!”
-Adel|111|4|{Quistis} “We're saving {Rinoa}!”
-Adel|111|5|{Rinoa} “AHHH...!”
-Adel|111|6|Magical powers are concentrated on Adel!
-{Rinoa}|112|0|{Rinoa}
-{Rinoa}|112|1|{Rinoa} “AHHH...!”
-{Rinoa}|112|2|{Rinoa}...
-{Rinoa}|112|3|{Rinoa} “AHHH...!”
-{Rinoa}|112|4|{Rinoa} “AHHH...!”
-{Rinoa}|112|5|{Rinoa} “AHHH...!”
-Omega Weapon|113|0|Omega Weapon
-“Sorceress”|114|0|“Sorceress”
-“Sorceress”|114|1|Time is being compressed...
+Abadon|103|1|{Squall} “An undead monster...”
+Abadon|103|2|“Use recovery-related magic and items.”
+Abadon|104|0|Abadon
+Mobile Type 8|105|0|Mobile Type 8
+Mobile Type 8|105|1|Mobile weaponry attack mode ON
+Mobile Type 8|105|2|Support weaponry attack mode OFF
+Mobile Type 8|105|3|Mobile weaponry attack mode OFF
+Mobile Type 8|105|4|Support weaponry attack mode ON
+Left Probe|106|0|Left Probe
+Right Probe|107|0|Right Probe
+Paratrooper|108|0|Paratrooper
+Paratrooper|108|1|“Dispose of this Garden as planned!”
+Paratrooper|108|2|{Quistis} “There's no way we'll let you!”
+Paratrooper|108|3|{Squall} “Not a chance!”
+Paratrooper|108|4|{Irvine} “Dispose!?”
+Paratrooper|108|5|{Selphie} “NO WAY!”
+Paratrooper|108|6|“You little SeeD twerps!”
+Trauma|109|0|Trauma
+Trauma|109|1|The magic petrifying Trauma has expired!
+Droma|110|0|Droma
+Propagator|111|0|Propagator
+Adel|112|0|Adel
+Adel|112|1|{Squall} “Just go for Adel!”
+Adel|112|2|{Zell} “Gotta save {Rinoa}!”
+Adel|112|3|{Selphie} “We have to save {Rinoa}!”
+Adel|112|4|{Quistis} “We're saving {Rinoa}!”
+Adel|112|5|{Rinoa} “AHHH...!”
+Adel|112|6|Magical powers are concentrated on Adel!
+{Rinoa}|113|0|{Rinoa}
+{Rinoa}|113|1|{Rinoa} “AHHH...!”
+{Rinoa}|113|2|{Rinoa}...
+{Rinoa}|113|3|{Rinoa} “AHHH...!”
+{Rinoa}|113|4|{Rinoa} “AHHH...!”
+{Rinoa}|113|5|{Rinoa} “AHHH...!”
+Omega Weapon|114|0|Omega Weapon
 “Sorceress”|115|0|“Sorceress”
+“Sorceress”|115|1|Time is being compressed...
 “Sorceress”|116|0|“Sorceress”
-“Sorceress”|116|1|5
-“Sorceress”|116|2|4
-“Sorceress”|116|3|3
-“Sorceress”|116|4|2
-“Sorceress”|116|5|1
-UFO?|117|0|UFO?
-Fujin|118|0|Fujin
-Fujin|118|1|Fujin “ELLONE, WHERE?”
-Fujin|118|2|Fujin “I...WITHDRAW.  RAIJIN, GO.”
-Fujin|118|3|Fujin “I... DEFEATED...”
-Raijin|119|0|Raijin
-Raijin|119|1|{Zell} “You'll pay for this, Raijin!”
-Raijin|119|2|Raijin “Time to get serious, ya know!?”
-Raijin|119|3|Raijin “Ouuuch!  Not bad, ya know...”
-Raijin|119|4|Raijin “Ughhh, you got me, ya know...”
-Raijin|119|5|Raijin “I don't hit girls, ya know?”
-Raijin|119|6|Raijin “Too troublesome, ya know?”
-Raijin|119|7|Raijin “Sorry Fujin...they got me, ya...”
-Raijin|119|8|Raijin “Fujin, come on, ya know?”
-Raijin|119|9|Raijin “Fujin, I lost too, ya know...”
-Ultimecia|120|0|Ultimecia
-Ultimecia|120|1|“The most powerful GF...”
-Ultimecia|120|2|“...You shall...”
-Ultimecia|120|3|“...SUFFER...!”
-Ultimecia|120|4|“HAHAHA...”
-Ultimecia|120|5|Absorbed into time...
-{Griever}|121|0|{Griever}
-{Griever}|121|1|Absorbed into time...
-{Griever}|121|2|Magic drained into time.
-{Griever}|121|3|GF defense has been destroyed.
-{Griever}|121|4|“The GF's true power...”
-{Griever}|121|5|“Allow me...”
-{Griever}|121|6|“To show you...!”
-{Griever}|121|7|“{Griever}!  Make them bleed!”
- |122|0| 
- |122|1|“I shall junction myself...”
- |122|2|“...Unto {Griever}!”
-Ultimecia|123|0|Ultimecia
-Ultimecia|123|1|Absorbed into time...
-Ultimecia|123|2|Magic drained into time.
-Ultimecia|123|3|GF defense has been destroyed.
-Ultimecia|123|4|“I shall junction myself...”
-Ultimecia|123|5|“...Unto {Griever}!”
-Ultimecia|123|6|“Rghaah...”
-Helix|124|0|Helix
-Ultimecia|125|0|Ultimecia
-Ultimecia|125|1|Absorbed into time...
-Ultimecia|125|2|“I am Ultimecia.”
-Ultimecia|125|3|GF defense has been destroyed.
-Ultimecia|125|4|“Time shall compress...”
-Ultimecia|125|5|“...All existence denied.”
-Ultimecia|125|6|“Reflect on your...”
-Ultimecia|125|7|“Childhood...”
-Ultimecia|125|8|“Your sensation...”
-Ultimecia|125|9|“Your words...”
-Ultimecia|125|10|“Your emotions...”
-Ultimecia|125|11|“Time...”
-Ultimecia|125|12|“It will not wait...”
-Ultimecia|125|13|“No matter...”
-Ultimecia|125|14|“...how hard you hold on.”
-Ultimecia|125|15|“It escapes you...”
-Ultimecia|125|16|“And...”
-Seifer|126|0|Seifer
-Seifer|126|1|“You gave me the 4th one...”
-Seifer|126|2|“Huh?  Was it you...?”
-Seifer|126|3|“Then dodge my sword!”
-Seifer|126|4|“Eat this!!!”
-Seifer|126|5|“Ugh”
-Seifer|126|6|“Ergwahhhh!!!”
-Seifer|126|7|“Where is the dimensional interval...?”
-Seifer|126|8|{Squall} “Odin...!?”
-Seifer|126|9|Seifer “Hah, I won't go down that easy.”
-Seifer|126|10|Seifer “Show me what you got, {Squall}!”
-Seifer|126|11|Seifer “Let me add another scar for ya!”
-Seifer|126|12|Seifer “Is this...the end...?”
-Slapper|127|0|Slapper
-Slapper|127|1|“We have heart!  Go, Galbadia!”
-Slapper|127|2|“Formation G!  Go!!!”
-Slapper|127|3|“Formation M!  Go!!!”
-Slapper|127|4|“Roger!”
-Red Giant|128|0|Red Giant
-Red Giant|128|1|“GWahaHA!  PHysical attacKS?  USeleSS!”
-Red Giant|128|2|“THat magic is useleSS!”
-Red Giant|128|3|“THat GF is a waste of tiME!”
-Red Giant|128|4|“Urgh!  N-NO more DEMI, pleaSE...!!!”
-Red Giant|128|5|“{Diablos}!  Defeat is immineNT!”
-Elnoyle|129|0|Elnoyle
-Tiamat|130|0|Tiamat
-Tiamat|130|1|D         
-Tiamat|130|2|Da        
-Tiamat|130|3|Dar       
-Tiamat|130|4|Dark F    
-Tiamat|130|5|Dark Fla  
-Catoblepas|131|0|Catoblepas
-Catoblepas|131|1|“I am Catoblepas.”
-Catoblepas|131|2|“What do you humans plan to do...”
-Catoblepas|131|3|“Against the likes of me...?”
-Wedge|132|0|Wedge
-Wedge|132|1|Wedge “O-Ouch!”
-Wedge|132|2|Wedge “They're always trouble...”
-Wedge|132|3|Wedge “I don't wanna be demoted!”
-Wedge|132|4|Wedge “Stop pickin' on us!”
-Wedge|132|5|Wedge “W-Why...?”
-Wedge|132|6|Wedge is pissed!
-Wedge|132|7|Pissed...
-Biggs|133|0|Biggs
-Biggs|133|1|Biggs “I was demoted because of you!”
-Biggs|133|2|Biggs “I'm only a lieutenant now!”
-Biggs|133|3|Biggs “I'll get my revenge!”
-Biggs|133|4|Biggs “We're just getting started!”
-Biggs|133|5|Biggs “You idiot!  What are you doing!”
-Biggs|133|6|Biggs “What's below lieutenant...?”
-Biggs|133|7|Wedge “Yikes, what was I doing!?”
-Fujin|134|0|Fujin
-Fujin|134|1|Fujin “DECISION.”
-Fujin|134|2|Fujin “DESTROY.  HELP, SEIFER.”
-Fujin|134|3|Fujin “CALLOUS...”
-Raijin|135|0|Raijin
-Raijin|135|1|Raijin “See, just like I said, ya know?”
-Raijin|135|2|Fujin “......”
-Raijin|135|3|Raijin “I...I lost again, ya know...”
-Raijin|135|4|Raijin “Not bad, {Squall}!”
-Raijin|135|5|Raijin “I see why you're Seifer's rival!”
-Raijin|135|6|Raijin “Whoa... Wow!”
-Raijin|135|7|Raijin “No wonder Seifer fears ya!”
-Raijin|135|8|Raijin “Time to get serious, ya know!?”
-Raijin|135|9|Rajin “Prepare yourself for defeat!”
-Raijin|135|10|Raijin “I won't take it easy on ya!”
-UFO?|136|0|UFO?
+“Sorceress”|117|0|“Sorceress”
+“Sorceress”|117|1|5
+“Sorceress”|117|2|4
+“Sorceress”|117|3|3
+“Sorceress”|117|4|2
+“Sorceress”|117|5|1
+UFO?|118|0|UFO?
+Fujin|119|0|Fujin
+Fujin|119|1|Fujin “ELLONE, WHERE?”
+Fujin|119|2|Fujin “I...WITHDRAW.  RAIJIN, GO.”
+Fujin|119|3|Fujin “I... DEFEATED...”
+Raijin|120|0|Raijin
+Raijin|120|1|{Zell} “You'll pay for this, Raijin!”
+Raijin|120|2|Raijin “Time to get serious, ya know!?”
+Raijin|120|3|Raijin “Ouuuch!  Not bad, ya know...”
+Raijin|120|4|Raijin “Ughhh, you got me, ya know...”
+Raijin|120|5|Raijin “I don't hit girls, ya know?”
+Raijin|120|6|Raijin “Too troublesome, ya know?”
+Raijin|120|7|Raijin “Sorry Fujin...they got me, ya...”
+Raijin|120|8|Raijin “Fujin, come on, ya know?”
+Raijin|120|9|Raijin “Fujin, I lost too, ya know...”
+Ultimecia|121|0|Ultimecia
+Ultimecia|121|1|“The most powerful GF...”
+Ultimecia|121|2|“...You shall...”
+Ultimecia|121|3|“...SUFFER...!”
+Ultimecia|121|4|“HAHAHA...”
+Ultimecia|121|5|Absorbed into time...
+{Griever}|122|0|{Griever}
+{Griever}|122|1|Absorbed into time...
+{Griever}|122|2|Magic drained into time.
+{Griever}|122|3|GF defense has been destroyed.
+{Griever}|122|4|“The GF's true power...”
+{Griever}|122|5|“Allow me...”
+{Griever}|122|6|“To show you...!”
+{Griever}|122|7|“{Griever}!  Make them bleed!”
+ |123|0| 
+ |123|1|“I shall junction myself...”
+ |123|2|“...Unto {Griever}!”
+Ultimecia|124|0|Ultimecia
+Ultimecia|124|1|Absorbed into time...
+Ultimecia|124|2|Magic drained into time.
+Ultimecia|124|3|GF defense has been destroyed.
+Ultimecia|124|4|“I shall junction myself...”
+Ultimecia|124|5|“...Unto {Griever}!”
+Ultimecia|124|6|“Rghaah...”
+Helix|125|0|Helix
+Ultimecia|126|0|Ultimecia
+Ultimecia|126|1|Absorbed into time...
+Ultimecia|126|2|“I am Ultimecia.”
+Ultimecia|126|3|GF defense has been destroyed.
+Ultimecia|126|4|“Time shall compress...”
+Ultimecia|126|5|“...All existence denied.”
+Ultimecia|126|6|“Reflect on your...”
+Ultimecia|126|7|“Childhood...”
+Ultimecia|126|8|“Your sensation...”
+Ultimecia|126|9|“Your words...”
+Ultimecia|126|10|“Your emotions...”
+Ultimecia|126|11|“Time...”
+Ultimecia|126|12|“It will not wait...”
+Ultimecia|126|13|“No matter...”
+Ultimecia|126|14|“...how hard you hold on.”
+Ultimecia|126|15|“It escapes you...”
+Ultimecia|126|16|“And...”
+Seifer|127|0|Seifer
+Seifer|127|1|“You gave me the 4th one...”
+Seifer|127|2|“Huh?  Was it you...?”
+Seifer|127|3|“Then dodge my sword!”
+Seifer|127|4|“Eat this!!!”
+Seifer|127|5|“Ugh”
+Seifer|127|6|“Ergwahhhh!!!”
+Seifer|127|7|“Where is the dimensional interval...?”
+Seifer|127|8|{Squall} “Odin...!?”
+Seifer|127|9|Seifer “Hah, I won't go down that easy.”
+Seifer|127|10|Seifer “Show me what you got, {Squall}!”
+Seifer|127|11|Seifer “Let me add another scar for ya!”
+Seifer|127|12|Seifer “Is this...the end...?”
+Slapper|128|0|Slapper
+Slapper|128|1|“We have heart!  Go, Galbadia!”
+Slapper|128|2|“Formation G!  Go!!!”
+Slapper|128|3|“Formation M!  Go!!!”
+Slapper|128|4|“Roger!”
+Red Giant|129|0|Red Giant
+Red Giant|129|1|“GWahaHA!  PHysical attacKS?  USeleSS!”
+Red Giant|129|2|“THat magic is useleSS!”
+Red Giant|129|3|“THat GF is a waste of tiME!”
+Red Giant|129|4|“Urgh!  N-NO more DEMI, pleaSE...!!!”
+Red Giant|129|5|“{Diablos}!  Defeat is immineNT!”
+Elnoyle|130|0|Elnoyle
+Tiamat|131|0|Tiamat
+Tiamat|131|1|D         
+Tiamat|131|2|Da        
+Tiamat|131|3|Dar       
+Tiamat|131|4|Dark F    
+Tiamat|131|5|Dark Fla  
+Catoblepas|132|0|Catoblepas
+Catoblepas|132|1|“I am Catoblepas.”
+Catoblepas|132|2|“What do you humans plan to do...”
+Catoblepas|132|3|“Against the likes of me...?”
+Wedge|133|0|Wedge
+Wedge|133|1|Wedge “O-Ouch!”
+Wedge|133|2|Wedge “They're always trouble...”
+Wedge|133|3|Wedge “I don't wanna be demoted!”
+Wedge|133|4|Wedge “Stop pickin' on us!”
+Wedge|133|5|Wedge “W-Why...?”
+Wedge|133|6|Wedge is pissed!
+Wedge|133|7|Pissed...
+Biggs|134|0|Biggs
+Biggs|134|1|Biggs “I was demoted because of you!”
+Biggs|134|2|Biggs “I'm only a lieutenant now!”
+Biggs|134|3|Biggs “I'll get my revenge!”
+Biggs|134|4|Biggs “We're just getting started!”
+Biggs|134|5|Biggs “You idiot!  What are you doing!”
+Biggs|134|6|Biggs “What's below lieutenant...?”
+Biggs|134|7|Wedge “Yikes, what was I doing!?”
+Fujin|135|0|Fujin
+Fujin|135|1|Fujin “DECISION.”
+Fujin|135|2|Fujin “DESTROY.  HELP, SEIFER.”
+Fujin|135|3|Fujin “CALLOUS...”
+Raijin|136|0|Raijin
+Raijin|136|1|Raijin “See, just like I said, ya know?”
+Raijin|136|2|Fujin “......”
+Raijin|136|3|Raijin “I...I lost again, ya know...”
+Raijin|136|4|Raijin “Not bad, {Squall}!”
+Raijin|136|5|Raijin “I see why you're Seifer's rival!”
+Raijin|136|6|Raijin “Whoa... Wow!”
+Raijin|136|7|Raijin “No wonder Seifer fears ya!”
+Raijin|136|8|Raijin “Time to get serious, ya know!?”
+Raijin|136|9|Rajin “Prepare yourself for defeat!”
+Raijin|136|10|Raijin “I won't take it easy on ya!”
 UFO?|137|0|UFO?
 UFO?|138|0|UFO?
 UFO?|139|0|UFO?
-Gunblade|140|0|Gunblade
-Gunblade|140|1|{Zell} “...The hell is this!?”
-Gunblade|140|2|{Squall} “What the...?”
-Gunblade|140|3|{Selphie} “Ewww!  Nasty!”
-Base Soldier|141|0|Base Soldier
-Base Soldier|141|1|“Captain, they're too strong!”
-Base Soldier|141|2|“C-Captain...”
-Base Soldier|141|3|“Ughhhh!”
-Base Soldier|141|4|“How dare you mess up our plan!”
-Base Soldier|141|5|“You're all going down!”
+UFO?|140|0|UFO?
+Gunblade|141|0|Gunblade
+Gunblade|141|1|{Zell} “...The hell is this!?”
+Gunblade|141|2|{Squall} “What the...?”
+Gunblade|141|3|{Selphie} “Ewww!  Nasty!”
+Base Soldier|142|0|Base Soldier
+Base Soldier|142|1|“Captain, they're too strong!”
+Base Soldier|142|2|“C-Captain...”
+Base Soldier|142|3|“Ughhhh!”
+Base Soldier|142|4|“How dare you mess up our plan!”
+Base Soldier|142|5|“You're all going down!”

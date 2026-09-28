@@ -50781,6 +50781,204 @@ Viel Erfolg.",""
  gleichfarbigen Monster killen, oder?”",""
 "#rgguest3","833"
 "",""
+"#rgguest4","834"
+"“Test”",""
+"Quistis
+“Wir...fliegen......”",""
+"Xell
+“Selphie wird doch das
+ Ding nicht steuern...?”",""
+"Quistis
+“Ich fürchte, doch...”",""
+"(Und Irvine freut sich
+ wie ein Blöder......)",""
+"Laguna
+“So!”",""
+"Laguna
+“Leute!”",""
+"Laguna
+“Wir werden jetzt die
+ Mission durchziehen!!”
+{NewPage}
+“Jetzt nochmal zum Plan!”",""
+"Laguna
+“Zunächst stürmen wir die
+ {Blue}【Lunatic Pandora】{White} und
+ retten Ellione.”",""
+"Laguna
+“Dann {Blue}【besiegen wir Adell】{White}. Die
+ Hexe wird zwar noch schlafen,
+ aber das ist uns jetzt egal.”",""
+"Laguna
+“Eins ist zu beachten!”",""
+"Laguna
+“Adell wird ihre Macht übertragen.
+ {Rinoa}, wirst du sie übernehmen?”",""
+"{Rinoa}
+“Geht in Ordnung!”",""
+"Laguna
+“Okay!”",""
+"Laguna
+“Wir {Blue}【warten】{White}, bis Artemisia
+ in {Rinoa} eindringt!”",""
+"Laguna
+“Das ist bestimmt kein leichter
+ Job. Schaffst du das, {Rinoa}?”",""
+"{Rinoa}
+“......ja.”",""
+"Laguna
+“Braves Kind!”",""
+"Laguna
+“Anschließend schickt Ellione die
+beiden {Blue}【in die Vergangenheit】{White}!”
+{NewPage}
+“Die {Blue}【Zeitkompresse beginnt】{White}!
+ Ellione wird {Blue}【{Rinoa} zurückholen】{White}!”",""
+"Laguna
+“Ihr werdet {Blue}【in der komprimierten
+ Zeit in die Zukunft gehen】{White}!”",""
+"Laguna
+“Artemisia lebt in der Zukunft. Wir
+ existieren drüben gar nicht.”
+{NewPage}
+“Wie können wir das am besten
+ schaffen?”",""
+"Laguna
+“Ihr müßt an euch selbst glauben!
+ Ihr müßt an eure Freunde glauben!”",""
+"Laguna
+“Wenn ihr an die Existenz der anderen
+ glaubt, werden die anderen an eure
+ Existenz glauben!”",""
+"Laguna
+“Freundschaften schließen, sich
+ lieben, geliebt werden......”
+{NewPage}
+“Kann man das alleine? Nein!
+ Dazu gehören immer 2!”",""
+"Laguna
+“Was meint ihr?”
+{NewPage}
+“Wo seid ihr am liebsten?
+ Wo wart ihr immer zusammen?”
+{NewPage}
+“Ihr müßt euch diesen Ort
+ zusammen vorstellen!!”
+{NewPage}
+“Stellt euch einen Ort vor,
+ den ihr zusammen ansteuert!”",""
+"Laguna
+“Dann wird alles klappen!
+ Ihr werdet diesen Ort erreichen.”
+{NewPage}
+“Egal in welcher Zeitepoche!
+ Für diese Mission braucht ihr
+ Liebe, Mut und Freundschaft!”",""
+"Laguna
+“Das ist unsere Mission:
+ 【Liebe, Mut & Freundschaft】!”",""
+"Laguna
+“Viel Erfolg, Leute!”",""
+"{Squall}
+“Liebe, Freundschaft... das klingt
+ kitschig, aber wir sind motiviert.”",""
+"Laguna
+“Werdet ihr das schaffen?”",""
+"{Squall}
+“Wir werden{xba}s schaffen.”",""
+"Ward
+“..................”",""
+"Laguna
+“Vielen Dank, Ward.”",""
+"Kiros
+“Deine Ansprache war genial!
+ Das war dein bisher größter Auftritt.”
+{NewPage}
+“Du hast nicht umsonst geübt. Kein
+ Stottern, keine Krämpfe, kein Fehler.
+ Das war wirklich lobenswert, Laguna.”",""
+"Kiros
+“Du ähnelst deiner Mutter.”",""
+"Ward
+“............”",""
+"Kiros
+“Er sagt ‘Ein Glück, daß du
+ deinem Vater nicht ähnelst.'”",""
+"Laguna
+“Wir reden, wenn alles vorbei ist.”
+{NewPage}
+“Ich muß dir, ähm...echt vieles
+ erzählen.”",""
+"Laguna
+“Aber nur, wenn du Bock
+ hast, mir zuzuhören.”",""
+"“Kartenspiel? Wenn du meinst.”
+ Ja
+ Nein",""
+"“Du kennst Regeln, die hier
+ nicht sehr oft benutzt werden.”
+{NewPage}
+“Wir mischen die Regeln von
+ hier mit den Balamb-Regeln.”",""
+"“Du kennst Regeln, die hier
+ nicht sehr oft benutzt werden.”
+{NewPage}
+“Wir mischen die Regeln von
+ hier mit den Galbadia-Regeln.”",""
+"“Du kennst Regeln, die hier
+ nicht sehr oft benutzt werden.”
+{NewPage}
+“Wir mischen die Regeln von
+ hier mit den Trabia-Regeln.”",""
+"“Du kennst Regeln, die hier
+ nicht sehr oft benutzt werden.”
+{NewPage}
+“Wir mischen die Regeln von
+ hier mit den Centra-Regeln.”",""
+"“Du kennst Regeln, die hier
+ nicht sehr oft benutzt werden.”
+{NewPage}
+“Wir mischen die Regeln von
+ hier mit den Dollet-Regeln.”",""
+"“Du kennst Regeln, die hier
+ nicht sehr oft benutzt werden.”
+{NewPage}
+“Wir mischen die Regeln von
+ hier mit den F.H.-Regeln.”",""
+"“Du kennst Regeln, die hier
+ nicht sehr oft benutzt werden.”
+{NewPage}
+“Wir mischen die Regeln von
+ hier mit den Weltall-Regeln.”",""
+"“Du kennst Regeln, die hier
+ nicht sehr oft benutzt werden.”
+{NewPage}
+“Wir mischen die Regeln von
+ hier mit den Esthar-Regeln.”",""
+"Zum Spielen werden mindestens
+5 Karten benötigt.",""
+"Die {Blue}【Open】{White}-Regel hat sich
+hier verbreitet.",""
+"Die {Blue}【Same】{White}-Regel hat sich
+hier verbreitet.",""
+"Die {Blue}【Plus】{White}-Regel hat sich
+hier verbreitet.",""
+"Die {Blue}【Random-Hand】{White}-Regel hat sich
+hier verbreitet.",""
+"Die {Blue}【Suddendeath】{White}-Regel hat sich
+hier verbreitet.",""
+"Die {Blue}【Retry】{White}-Regel hat sich
+hier verbreitet.",""
+"Die {Blue}【Wall-Same】{White}-Regel hat sich
+hier verbreitet.",""
+"Die {Blue}【Element】{White}-Regel hat sich
+hier verbreitet.",""
+"Die {Blue}【Open】{White}-Regel ist jetzt Out.",""
+"Die {Blue}【Same】{White}-Regel ist jetzt Out.",""
+"Die {Blue}【Plus】{White}-Regel ist jetzt Out.",""
+"Die {Blue}【Random-Hand】{White}-Regel ist jetzt Out.",""
+"Die {Blue}【Suddendeath】{White}-Regel ist jetzt Out.",""
+"Die {Blue}【Retry】{White}-Regel ist jetzt Out.",""
 "#rghang1","836"
 "",""
 "#rghang11","837"

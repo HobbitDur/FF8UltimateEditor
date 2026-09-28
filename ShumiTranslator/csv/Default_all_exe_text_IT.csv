@@ -1,10 +1,10 @@
 Section data name|Section Widget id|Text Sub id|Text
 Draw text|0|0|Il coperchio PlayStation è aperto.
-Draw text|0|1|INSERIRE IL DISCO {Var17}\nFINALFANTASY{xa8}
+Draw text|0|1|INSERIRE IL DISCO {Var07}\nFINALFANTASY{xa8}
 Draw text|0|2|Fonte energetica!\nTrovato {x0c20}.
 Draw text|0|3|Fonte energetica!\nMa non c'è niente...
 Draw text|0|4|Scegliere il personaggio.\nNessuno\n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   \n{Darkgrey}{Squall}   
-Draw text|0|5|{Squall} ha accumulato {Var17} {x0c20}.
+Draw text|0|5|{Squall} ha accumulato {Var07} {x0c20}.
 Draw text|0|6|{Squall} non può ottenere {x0c20}.
 Draw text|0|7|Fonte energetica!\nMa nessuno può assimilarla...
 Draw text|0|8|ERRORE NEL DISCO
