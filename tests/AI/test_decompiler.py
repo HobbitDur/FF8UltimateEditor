@@ -1145,19 +1145,10 @@ class TestAIDecompiler:
         assert expected == normalized
 
     def test_addCurrentHP(self, decompiler: AIDecompiler):
-        bytecode = [60, 10]
-        code = decompiler.decompile(bytecode)
-        print(f"\n=== Decompiled ===")
-        print(self.pretty_code(code))
-        print("==================================")
-
-        normalized = self.normalize_code(code)
-        expected = self.normalize_code(
-            """
-            addCurrentHP(10);
-            """
-        )
-        assert expected == normalized
+        # Signed int16 LE param (engine handler 0x489F30 reads 2 bytes)
+        for bytecode, value in (([60, 10, 0], 10), ([60, 0xE8, 0x03], 1000), ([60, 0xF6, 0xFF], -10)):
+            code = decompiler.decompile(bytecode)
+            assert self.normalize_code(code) == self.normalize_code(f"addCurrentHP({value});")
 
     def test_proofOfOmega(self, decompiler: AIDecompiler):
         bytecode = [61]

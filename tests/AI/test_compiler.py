@@ -1491,34 +1491,14 @@ class TestAICompiler:
             compiler.compile(source_code_error)
 
     def test_addCurrentHP(self, compiler: AICompiler):
-        # First declare different source code case
-        ## Raw data (already int)
-        source_code_raw = \
-            """
-            addCurrentHP(10);
-            """
-        ## Type data
-        source_code_type = \
-            """
-            addCurrentHP(10);
-            """
-        ## Error data
-        source_code_error = \
-            """
-            addCurrentHP(-10);
-            """
-        # The expected output
-        expected = [60, 10, 0, 0]
-
-        # The work
-        code_raw_compiled = compiler.compile(source_code_raw)
-        code_type_compiled = compiler.compile(source_code_type)
-
-        # Assert the expected result
-        assert code_raw_compiled == expected, f"Expected {expected}, got {code_raw_compiled}"
-        assert code_type_compiled == expected, f"Expected {expected}, got {code_type_compiled}"
-        with pytest.raises(ParamIntError):
-            compiler.compile(source_code_error)
+        # The engine handler (0x489F30) reads a signed int16 LE: (int16)(b0 | b1 << 8)
+        assert compiler.compile("addCurrentHP(10);") == [60, 10, 0, 0]
+        assert compiler.compile("addCurrentHP(1000);") == [60, 0xE8, 0x03, 0]
+        assert compiler.compile("addCurrentHP(-10);") == [60, 0xF6, 0xFF, 0]
+        # addCurrentHP must not swallow the following opcode anymore
+        assert compiler.compile("addCurrentHP(1); fillAtb();") == [60, 1, 0, 36, 0, 0, 0, 0]
+        with pytest.raises(ParamInt16Error):
+            compiler.compile("addCurrentHP(40000);")
 
     def test_proofOfOmega(self, compiler: AICompiler):
         source_code_raw = \

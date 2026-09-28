@@ -616,7 +616,7 @@ class CommandAnalyser:
                     param_value.append(str(self.__op_code[op_index]))
                     self.param_possible_list.append([])
                 elif type == "int16":
-                    param_value.append(str(int.from_bytes(bytearray(self.__op_code[op_index: op_index+2]), byteorder='little')))
+                    param_value.append(str(int.from_bytes(bytearray(self.__op_code[op_index: op_index+2]), byteorder='little', signed=True)))
                     self.param_possible_list.append([])
                     op_index_shift += 1
                 elif type == "int32":

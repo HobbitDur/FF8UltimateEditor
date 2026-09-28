@@ -207,6 +207,8 @@ class CodeLine:
                     byte1 = int.from_bytes([jump_2_byte[0]])
                     byte2 = int.from_bytes([jump_2_byte[1]])
                     op_code_list = [byte1, byte2]
+            elif op_info['op_code'] == 60 and len(op_code_list) == 1:  # addCurrentHP: signed int16 LE
+                op_code_list = list(int(op_code_list[0]).to_bytes(length=2, byteorder="little", signed=True))
             elif op_info['op_code'] == 45 and len(op_code_list) == 2:
                 target = 900 - int(op_code_list[1])
                 low_byte = target // 256
