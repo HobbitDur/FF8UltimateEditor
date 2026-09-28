@@ -1414,7 +1414,7 @@ Misc text section|24|2|G-Force
 Misc text section|24|3|PAUSE
 Misc text section|24|4|Fuite impossible!
 Misc text section|24|5|Vol raté
-Misc text section|24|6|Gain: {CardReceived}
+Misc text section|24|6|Gain: {RewardItem}
 Misc text section|24|7|acquis
 Misc text section|24|8|?
 Misc text section|24|9|Gain:
@@ -1432,7 +1432,7 @@ Misc text section|24|20|Choix impossible
 Misc text section|24|21|Objet reçu
 Misc text section|24|22|confirmer
 Misc text section|24|23|EXP acquis
-Misc text section|24|24|Elimination {CardReceived}\nsupérieur à 100
+Misc text section|24|24|Elimination {RewardItem}\nsupérieur à 100
 Misc text section|24|25|Fin
 Misc text section|24|26|est
 Misc text section|24|27|de
@@ -1517,8 +1517,8 @@ Misc text section|24|105|{x0561}
 Misc text section|24|106|{x0562}
 Misc text section|24|107|{x0563}
 Misc text section|24|108|{x0564}
-Misc text section|24|109|G-Force reçoit {CurrentSeedTestLevel} PDC
-Misc text section|24|110|Carte {CardReceived}
+Misc text section|24|109|G-Force reçoit {RewardAmount} PDC
+Misc text section|24|110|Carte {RewardItem}
 Misc text section|24|111|Eduquer GF
 Misc text section|24|112|Cannibale impossible
 Misc text section|24|113|?????

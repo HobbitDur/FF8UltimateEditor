@@ -1414,7 +1414,7 @@ Misc text section|24|2|G. F.
 Misc text section|24|3|PAUSA
 Misc text section|24|4|No hay escapatoria.
 Misc text section|24|5|¡Ha fallado la extracción!
-Misc text section|24|6|¡Has obtenido {CardReceived}!
+Misc text section|24|6|¡Has obtenido {RewardItem}!
 Misc text section|24|7|ha aprendido
 Misc text section|24|8|N/A
 Misc text section|24|9|¡Has obtenido
@@ -1432,7 +1432,7 @@ Misc text section|24|20|Opción no disponible
 Misc text section|24|21|Objetos obtenidos
 Misc text section|24|22| Confirmar.
 Misc text section|24|23|Experiencia
-Misc text section|24|24|Objetos desechados ({CardReceived})\npor exceder las 100 unidades.
+Misc text section|24|24|Objetos desechados ({RewardItem})\npor exceder las 100 unidades.
 Misc text section|24|25| - Terminar.
 Misc text section|24|26|N/A
 Misc text section|24|27|ha perdido el estado
@@ -1517,8 +1517,8 @@ Misc text section|24|105|{x0561}
 Misc text section|24|106|{x0562}
 Misc text section|24|107|{x0563}
 Misc text section|24|108|{x0564}
-Misc text section|24|109|¡Los G. F. han adquirido {CurrentSeedTestLevel} PH!
-Misc text section|24|110|Carta de {CardReceived}
+Misc text section|24|109|¡Los G. F. han adquirido {RewardAmount} PH!
+Misc text section|24|110|Carta de {RewardItem}
 Misc text section|24|111|Desarrollo de los G. F.
 Misc text section|24|112|¡No se ha dejado comer!
 Misc text section|24|113|?????

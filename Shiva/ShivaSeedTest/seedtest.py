@@ -66,7 +66,8 @@ class SeedString:
         return string_hex
 
     def get_text(self):
-        return self._game_data.translate_hex_to_str(self._text_hex, cursor_location_size=2)
+        return self._game_data.translate_hex_to_str(self._text_hex, cursor_location_size=2,
+                                                    special_value_context="seed_test")
 
     def set_text(self, text: str):
         if text == self.get_text():  # Don't lose the original bytes on a no-op

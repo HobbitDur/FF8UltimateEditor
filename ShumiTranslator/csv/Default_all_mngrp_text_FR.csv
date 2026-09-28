@@ -231,13 +231,13 @@ tkmnmes2.bin - subsection n°8|3|8|Donner
 tkmnmes2.bin - subsection n°8|3|9|Partager
 tkmnmes2.bin - subsection n°8|3|10|Choix magie
 tkmnmes2.bin - subsection n°8|3|11|Possède déjà 100
-tkmnmes2.bin - subsection n°8|3|12|{SeedRank} impossible
+tkmnmes2.bin - subsection n°8|3|12|{x0a26} impossible
 tkmnmes2.bin - subsection n°8|3|13|Prendre
 tkmnmes2.bin - subsection n°8|3|14|Tout
 tkmnmes2.bin - subsection n°8|3|15|Prendre magie de tous les alliés
 tkmnmes2.bin - subsection n°8|3|16|Choix du personnage récepteur
 tkmnmes2.bin - subsection n°8|3|17|Choix du membre donneur 
-tkmnmes2.bin - subsection n°8|3|18|Annuler tous {SeedRank} de {x0a27}\nOK?
+tkmnmes2.bin - subsection n°8|3|18|Annuler tous {x0a26} de {x0a27}\nOK?
 tkmnmes2.bin - subsection n°8|3|19|Manuel
 tkmnmes2.bin - subsection n°8|3|20|Classer manuellement
 tkmnmes2.bin - subsection n°8|3|21|Attaque·Soins·Divers
@@ -261,10 +261,10 @@ tkmnmes2.bin - subsection n°13|4|5|JOUEUR
 tkmnmes2.bin - subsection n°13|4|6|TOTAL
 tkmnmes2.bin - subsection n°13|4|7|MONSTRE
 tkmnmes2.bin - subsection n°13|4|8|ZONE
-tkmnmes2.bin - subsection n°13|4|9|Carte Monstre niveau {CurrentSeedTestLevel}
-tkmnmes2.bin - subsection n°13|4|10|Carte Boss niveau {CurrentSeedTestLevel}
-tkmnmes2.bin - subsection n°13|4|11|Carte G-Force niveau {CurrentSeedTestLevel}
-tkmnmes2.bin - subsection n°13|4|12|Carte Perso niveau {CurrentSeedTestLevel}
+tkmnmes2.bin - subsection n°13|4|9|Carte Monstre niveau {x0a20}
+tkmnmes2.bin - subsection n°13|4|10|Carte Boss niveau {x0a20}
+tkmnmes2.bin - subsection n°13|4|11|Carte G-Force niveau {x0a20}
+tkmnmes2.bin - subsection n°13|4|12|Carte Perso niveau {x0a20}
 tkmnmes2.bin - subsection n°14|5|0|Vérification 【Chocobo World】
 tkmnmes2.bin - subsection n°14|5|1|Chocobo World non téléchargé.\nTélécharger? (7 blocs mémoires)
 tkmnmes2.bin - subsection n°14|5|2|Chocobo World pas téléchargé.\n7 blocs mémoires indisponibles
@@ -370,7 +370,7 @@ tkmnmes3.bin - subsection n°3|7|38|Quantité
 tkmnmes3.bin - subsection n°3|7|39|Prix
 tkmnmes3.bin - subsection n°3|7|40|Atq
 tkmnmes3.bin - subsection n°3|7|41|Prc
-tkmnmes3.bin - subsection n°3|7|42|Changer arme de {x0a27}\nen {SeedRank}\nOK?
+tkmnmes3.bin - subsection n°3|7|42|Changer arme de {x0a27}\nen {x0a26}\nOK?
 tkmnmes3.bin - subsection n°3|7|43|\n?
 tkmnmes3.bin - subsection n°3|7|44|Pas assez d'objets.\nRevenez plus tard.
 tkmnmes3.bin - subsection n°3|7|45|Pas assez d'objets
@@ -401,7 +401,7 @@ tkmnmes3.bin - subsection n°4|8|6|Impossible de retirer
 tkmnmes3.bin - subsection n°4|8|7|({x0564})
 tkmnmes3.bin - subsection n°4|8|8|Impossible d'ajouter
 tkmnmes3.bin - subsection n°4|8|9|({x0564})
-tkmnmes3.bin - subsection n°4|8|10|Modifier association {x0a27}/{SeedRank}\nVous confirmez?
+tkmnmes3.bin - subsection n°4|8|10|Modifier association {x0a27}/{x0a26}\nVous confirmez?
 tkmnmes3.bin - subsection n°4|8|11|({x0564})
 tkmnmes3.bin - subsection n°4|8|12|Equipe non déterminée
 tkmnmes3.bin - subsection n°4|8|13|Association Equipe non précisée
@@ -518,8 +518,8 @@ tkmnmes3.bin - subsection n°9|12|14|Mon nom est...
 tkmnmes3.bin - subsection n°9|12|15|Je suis ton serviteur
 tkmnmes3.bin - subsection n°9|12|16|Plus de capacité à apprendre
 tkmnmes3.bin - subsection n°9|12|17|Capacité\n
-tkmnmes3.bin - subsection n°9|12|18|{x0a29} apprise par {Quistis}
-tkmnmes3.bin - subsection n°9|12|19|{Quistis} a déjà appris {x0a29}
+tkmnmes3.bin - subsection n°9|12|18|{MessageBlueMagic} apprise par {Quistis}
+tkmnmes3.bin - subsection n°9|12|19|{Quistis} a déjà appris {MessageBlueMagic}
 tkmnmes3.bin - subsection n°9|12|20|Désapprendre?
 tkmnmes3.bin - subsection n°9|12|21|Annuler toutes G-Forces et magie\nOK?
 tkmnmes3.bin - subsection n°9|12|22|Annuler toutes les magies\nOK?
@@ -527,17 +527,17 @@ tkmnmes3.bin - subsection n°9|12|23|Ranger
 tkmnmes3.bin - subsection n°9|12|24|Ranger automatiquement
 tkmnmes3.bin - subsection n°9|12|25|{CrossLeft}·{CrossRight}: voir /{Circle}: menu Objets 
 tkmnmes3.bin - subsection n°9|12|26|Il ne se passe rien...
-tkmnmes3.bin - subsection n°9|12|27|{x0a24} a appris {x0a25}
-tkmnmes3.bin - subsection n°9|12|28|{x0a24} connaît déjà {x0a25}
-tkmnmes3.bin - subsection n°9|12|29|{x0a24} ne peut plus apprendre
-tkmnmes3.bin - subsection n°9|12|30|Compatibilité {x0a27}/{x0a24}: + {NextSeedTestLevel}
-tkmnmes3.bin - subsection n°9|12|31|Compatibilité maxi {x0a27}/{x0a24}
-tkmnmes3.bin - subsection n°9|12|32|{x0a28} de {x0a27}: + {NextSeedTestLevel}
-tkmnmes3.bin - subsection n°9|12|33|{x0a28} de {x0a27}: maximum
-tkmnmes3.bin - subsection n°9|12|34|Données de base {x0a28}
-tkmnmes3.bin - subsection n°9|12|35|{x0a27} compati maxi toutes GF
-tkmnmes3.bin - subsection n°9|12|36|Compati {x0a27}/toutes GF: + {NextSeedTestLevel}
-tkmnmes3.bin - subsection n°9|12|37|『{x0a25}』\n
+tkmnmes3.bin - subsection n°9|12|27|{MessageGF} a appris {MessageAbility}
+tkmnmes3.bin - subsection n°9|12|28|{MessageGF} connaît déjà {MessageAbility}
+tkmnmes3.bin - subsection n°9|12|29|{MessageGF} ne peut plus apprendre
+tkmnmes3.bin - subsection n°9|12|30|Compatibilité {MessageCharacter}/{MessageGF}: + {MessageAmount}
+tkmnmes3.bin - subsection n°9|12|31|Compatibilité maxi {MessageCharacter}/{MessageGF}
+tkmnmes3.bin - subsection n°9|12|32|{MessageStat} de {MessageCharacter}: + {MessageAmount}
+tkmnmes3.bin - subsection n°9|12|33|{MessageStat} de {MessageCharacter}: maximum
+tkmnmes3.bin - subsection n°9|12|34|Données de base {MessageStat}
+tkmnmes3.bin - subsection n°9|12|35|{MessageCharacter} compati maxi toutes GF
+tkmnmes3.bin - subsection n°9|12|36|Compati {MessageCharacter}/toutes GF: + {MessageAmount}
+tkmnmes3.bin - subsection n°9|12|37|『{MessageAbility}』\n
 tkmnmes3.bin - subsection n°9|12|38|
 tkmnmes3.bin - subsection n°9|12|39|
 tkmnmes3.bin - subsection n°9|12|40|
@@ -652,10 +652,10 @@ tkmnmes3.bin - subsection n°13|14|30|Au moment de revenir
 tkmnmes3.bin - subsection n°13|14|31|Choix d'un sujet
 tkmnmes3.bin - subsection n°13|14|32|Examen écrit du Seed
 tkmnmes3.bin - subsection n°13|14|33|Examen blanc Seed
-tkmnmes3.bin - subsection n°13|14|34|Examen Seed. Niveau {NextSeedTestLevel}
+tkmnmes3.bin - subsection n°13|14|34|Examen Seed. Niveau {x0a22}
 tkmnmes3.bin - subsection n°13|14|35|Révision anciens tests Seed
 tkmnmes3.bin - subsection n°13|14|36|Révision examens blancs Seed
-tkmnmes3.bin - subsection n°13|14|37|Révision tests Seed, niveau {NextSeedTestLevel}
+tkmnmes3.bin - subsection n°13|14|37|Révision tests Seed, niveau {x0a22}
 tkmnmes3.bin - subsection n°13|14|38|Test écrit Seed
 tkmnmes3.bin - subsection n°13|14|39|Examen blanc Seed
 tkmnmes3.bin - subsection n°13|14|40|Choix d'un niveau à réviser
@@ -874,16 +874,16 @@ Chocobo tutorial|18|12|  {Blue}Ecran Communication Optique{White} 8/8\n1:Positio
 Chocobo tutorial|18|13|{xc4}         {xc4}{xc4}          {Blue}ChocoboWorld{White} 8/8\n
 Chocobo tutorial|18|14|1:{Blue}World{White} pour faire passer Boko\n de FF{xc6}{xc7} à la 【Chocobo World】.\n2:{Blue}Retour{White} pour replacer Boko\n dans l'univers de FF{xc6}{xc7}.\n3: {Blue}Nouveau{White} pour retrouver \n votre position dans FF{xc6}{xc7}, ou\n si vous perdez votre 【Chocobo World】.\n4:Merci d'avoir lu ces explications.\n
 Test seed general|19|0|{x00}Vous allez maintenant passer l'examen\nécrit du Seed. Vous commencez au niveau {NextSeedTestLevel}?\n\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
-Test seed general|19|1|{x00}Débutons maintenant l'épreuve écrite du Seed.\nVous avez atteint le niveau {CurrentSeedTestLevel}.\n\nVoulez-vous passer le test de niveau {NextSeedTestLevel}?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
-Test seed general|19|2|{x00}Vous obtenez 100% de bonnes réponses.\nVous avez réussi le test de niveau {CurrentSeedTestLevel}.\nVotre rang Seed passe donc à {SeedRank}.\n\n\n\n  {Cursor_location_id:0x20}Retour
-Test seed general|19|3|{x00}Vous avez obtenu 100%.\nVous avez réussi le test du niveau {CurrentSeedTestLevel}.\nVotre rang ne dépassera pas {SeedRank}.\n\n\n\n  {Cursor_location_id:0x20}Retour
-Test seed general|19|4|{x00}Votre score est de {CurrentSeedTestLevel}.\nVous avez échoué à l'examen.\nRéessayez plus tard.\n\n\n\n  {Cursor_location_id:0x20}Retour
+Test seed general|19|1|{x00}Débutons maintenant l'épreuve écrite du Seed.\nVous avez atteint le niveau {SeedTestLevelOrScore}.\n\nVoulez-vous passer le test de niveau {NextSeedTestLevel}?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
+Test seed general|19|2|{x00}Vous obtenez 100% de bonnes réponses.\nVous avez réussi le test de niveau {SeedTestLevelOrScore}.\nVotre rang Seed passe donc à {SeedRank}.\n\n\n\n  {Cursor_location_id:0x20}Retour
+Test seed general|19|3|{x00}Vous avez obtenu 100%.\nVous avez réussi le test du niveau {SeedTestLevelOrScore}.\nVotre rang ne dépassera pas {SeedRank}.\n\n\n\n  {Cursor_location_id:0x20}Retour
+Test seed general|19|4|{x00}Votre score est de {SeedTestLevelOrScore}.\nVous avez échoué à l'examen.\nRéessayez plus tard.\n\n\n\n  {Cursor_location_id:0x20}Retour
 Test seed general|19|5|{x00}Vous avez réussi le test No 30.\nIl s'agit du dernier examen écrit.\n\n\n\n\n  {Cursor_location_id:0x20}Retour
 Test seed general|19|6|{x00}Votre avez le rang {SeedRank}.\nVous ne pouvez pas aller plus haut.\nVoulez-vous quand même\npasser l'épreuve écrite?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed general|19|7|{x00}Vous confirmez?\n\n\n\n\n\n  {Cursor_location_id:0x20}Non    {Cursor_location_id:0x21}Oui
-Test seed general|19|8|{x00}Fin de la révision!\nVous maîtrisez le niveau {CurrentSeedTestLevel}!\n\n\n\n\n  {Cursor_location_id:0x20}Retour
-Test seed general|19|9|{x00}Vous avez obtenu {CurrentSeedTestLevel}. C'est pas terrible!\n\n\n\n\n\n  {Cursor_location_id:0x20}Retour
-Test seed general|19|10|{x00}{Squall} est au niveau {CurrentSeedTestLevel}.\nVous ne pouvez rien passer au-dessus de {NextSeedTestLevel}.\nAméliorez votre niveau puis recommencez.\n\n\n\n  {Cursor_location_id:0x20}Retour
+Test seed general|19|8|{x00}Fin de la révision!\nVous maîtrisez le niveau {SeedTestLevelOrScore}!\n\n\n\n\n  {Cursor_location_id:0x20}Retour
+Test seed general|19|9|{x00}Vous avez obtenu {SeedTestLevelOrScore}. C'est pas terrible!\n\n\n\n\n\n  {Cursor_location_id:0x20}Retour
+Test seed general|19|10|{x00}{Squall} est au niveau {SeedTestLevelOrScore}.\nVous ne pouvez rien passer au-dessus de {NextSeedTestLevel}.\nAméliorez votre niveau puis recommencez.\n\n\n\n  {Cursor_location_id:0x20}Retour
 Test seed 1 |20|0|{x00}Question 1\n\nVoler sert-il à dérober les sorts ennemis?\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 1 |20|1|{x01}Question 2\n\nLes G-Forces assistent-elles\nles ennemis?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 1 |20|2|{x00}Question 3\n\nExiste-t-il 8 forces élémentales?\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non

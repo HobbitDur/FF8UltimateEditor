@@ -1414,7 +1414,7 @@ Misc text section|24|2|G.F.
 Misc text section|24|3|Pausa
 Misc text section|24|4|Impossibile fuggire
 Misc text section|24|5|Impossibile assimilare
-Misc text section|24|6|Ottenuto {CardReceived}
+Misc text section|24|6|Ottenuto {RewardItem}
 Misc text section|24|7|appresa!
 Misc text section|24|8|magia
 Misc text section|24|9|Ottenuto:
@@ -1432,7 +1432,7 @@ Misc text section|24|20|Non selezionabile
 Misc text section|24|21|Oggetti ottenuti
 Misc text section|24|22|continua
 Misc text section|24|23|EXP ottenuti
-Misc text section|24|24|{CardReceived}: \n gettate le unità eccedenti le 100
+Misc text section|24|24|{RewardItem}: \n gettate le unità eccedenti le 100
 Misc text section|24|25| Fine
 Misc text section|24|26| è
 Misc text section|24|27|ST
@@ -1517,8 +1517,8 @@ Misc text section|24|105|{x0561}
 Misc text section|24|106|{x0562}
 Misc text section|24|107|{x0563}
 Misc text section|24|108|{x0564}
-Misc text section|24|109|I G.F. hanno ottenuto {CurrentSeedTestLevel} AP
-Misc text section|24|110|Carta {CardReceived} 
+Misc text section|24|109|I G.F. hanno ottenuto {RewardAmount} AP
+Misc text section|24|110|Carta {RewardItem} 
 Misc text section|24|111|Sviluppo G.F.
 Misc text section|24|112|Impossibile mangiare!
 Misc text section|24|113|????

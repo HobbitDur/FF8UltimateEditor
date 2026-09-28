@@ -55,7 +55,8 @@ class ListFF8Text(Section):
         else:
             first_hex_literal = False
         self._text_list.append(FF8Text(game_data=self._game_data, data_hex=text_hex, own_offset=offset, id=id, cursor_location_size=self.cursor_location_size, first_hex_literal=first_hex_literal,
-                                       terminate_empty=self.terminate_empty))
+                                       terminate_empty=self.terminate_empty,
+                                       special_value_context=self._game_data.special_value_context_for_section(self.name)))
 
     def insert_text(self, index: int, text_hex: bytearray):
         """Insert one string at ``index`` and renumber what follows.
@@ -69,7 +70,8 @@ class ListFF8Text(Section):
                                               own_offset=0, id=index,
                                               cursor_location_size=self.cursor_location_size,
                                               first_hex_literal=first_hex_literal,
-                                              terminate_empty=self.terminate_empty))
+                                              terminate_empty=self.terminate_empty,
+                                              special_value_context=self._game_data.special_value_context_for_section(self.name)))
         offset = 0
         for new_id, text in enumerate(self._text_list):
             text.id = new_id

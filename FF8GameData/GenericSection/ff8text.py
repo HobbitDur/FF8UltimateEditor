@@ -29,14 +29,16 @@ def split_tag(text: str):
 
 class FF8Text(Section):
     def __init__(self, game_data: GameData, own_offset: int, data_hex: bytearray, id: int, cursor_location_size=2, first_hex_literal=False,
-                 terminate_empty=False):
+                 terminate_empty=False, special_value_context=None):
         Section.__init__(self, game_data=game_data, own_offset=own_offset, data_hex=data_hex, id=id, name="")
         self._cursor_location_size = cursor_location_size
         # An empty text written as 0 bytes shares its offset with the next text. Formats where the
         # engine reads that offset (mngrp strings) need the \x00, or the next text shows instead.
         self._terminate_empty = terminate_empty
+        self._special_value_context = special_value_context
         self._text_str = self._game_data.translate_hex_to_str(self._data_hex,
-                                                              cursor_location_size=self._cursor_location_size, first_hex_literal=first_hex_literal)
+                                                              cursor_location_size=self._cursor_location_size, first_hex_literal=first_hex_literal,
+                                                              special_value_context=special_value_context)
         self.set_str(self._text_str)  # To remove unwanted 0 for example
         self.type = SectionType.FF8_TEXT
 
@@ -61,7 +63,8 @@ class FF8Text(Section):
             new_cursor_location_size = other._cursor_location_size
 
         return FF8Text(game_data=self._game_data, own_offset=own_offset, data_hex=data_hex, id=new_id,
-                       cursor_location_size=new_cursor_location_size, terminate_empty=self._terminate_empty)
+                       cursor_location_size=new_cursor_location_size, terminate_empty=self._terminate_empty,
+                       special_value_context=self._special_value_context)
 
     def get_str(self):
         return self._text_str

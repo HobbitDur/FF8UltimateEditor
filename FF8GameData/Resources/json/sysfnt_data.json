@@ -97,10 +97,34 @@
     "Eden"
   ],
   "SpecialValues": {
-    "0x0a20": "CurrentSeedTestLevel",
-    "0x0a22": "NextSeedTestLevel",
-    "0x0a23": "CardReceived",
-    "0x0a26": "SeedRank"
+    "seed_test": {
+      "0x0a20": "SeedTestLevelOrScore",
+      "0x0a22": "NextSeedTestLevel",
+      "0x0a26": "SeedRank"
+    },
+    "battle_reward": {
+      "0x0a20": "RewardAmount",
+      "0x0a23": "RewardItem",
+      "0x0a25": "RewardAbility",
+      "0x0a26": "RewardMagic"
+    },
+    "item_menu_message": {
+      "0x0a22": "MessageAmount",
+      "0x0a24": "MessageGF",
+      "0x0a25": "MessageAbility",
+      "0x0a27": "MessageCharacter",
+      "0x0a28": "MessageStat",
+      "0x0a29": "MessageBlueMagic"
+    }
+  },
+  "SpecialValueSections": {
+    "Test seed": "seed_test",
+    "Misc text section": "battle_reward",
+    "tkmnmes3.bin - subsection n°9": "item_menu_message"
+  },
+  "SpecialValueLegacyNames": {
+    "CurrentSeedTestLevel": "0x0a20",
+    "CardReceived": "0x0a23"
   }
 }
 

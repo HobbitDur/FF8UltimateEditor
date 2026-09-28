@@ -1414,7 +1414,7 @@ Misc text section|24|2|GF
 Misc text section|24|3|PAUSE
 Misc text section|24|4|Can't escape
 Misc text section|24|5|Draw failed!
-Misc text section|24|6|Received {CardReceived}
+Misc text section|24|6|Received {RewardItem}
 Misc text section|24|7|learned!
 Misc text section|24|8|s!
 Misc text section|24|9|Received
@@ -1432,7 +1432,7 @@ Misc text section|24|20|Can't select
 Misc text section|24|21|Item received
 Misc text section|24|22|to confirm
 Misc text section|24|23|EXP received
-Misc text section|24|24|{CardReceived}\nover 100 was discarded
+Misc text section|24|24|{RewardItem}\nover 100 was discarded
 Misc text section|24|25|End
 Misc text section|24|26|is
 Misc text section|24|27|'s
@@ -1517,8 +1517,8 @@ Misc text section|24|105|{x0561}
 Misc text section|24|106|{x0562}
 Misc text section|24|107|{x0563}
 Misc text section|24|108|{x0564}
-Misc text section|24|109|GF received {CurrentSeedTestLevel}AP!
-Misc text section|24|110|{CardReceived}'s Card
+Misc text section|24|109|GF received {RewardAmount}AP!
+Misc text section|24|110|{RewardItem}'s Card
 Misc text section|24|111|Raising GF
 Misc text section|24|112|Couldn't Devour!
 Misc text section|24|113|?????

@@ -41,9 +41,8 @@ EXE = "extracted_files/FF8_EN.exe"
 BATTLE_ONE = "extracted_files/battle/c0m001.dat"
 
 RAW_CODE_RE = re.compile(r"\{x[0-9a-f]{2,4}\}")
-# 0x0a slots that FF8GameData now gives a friendly name (SpecialValues).  None of these
-# must ever appear in export as a raw {x0aNN} token, otherwise the naming did not apply.
-NAMED_0A_SLOTS = {"0a20", "0a22", "0a23", "0a26"}
+# A 0x0a slot is only named inside the sections of the screen that fills it
+# (SpecialValues / SpecialValueSections in sysfnt_data.json): there it must never stay raw.
 
 
 @pytest.fixture(scope="module")
@@ -225,8 +224,9 @@ def test_residual_raw_codes_are_consistent(game_data, capsys):
 
     These raw codes are legitimate FF8 data (context-specific menu 0x0a values, MNGRP_STRING
     literal padding, icons/locations past the named tables) -- the round-trip tests above prove
-    they are never lost.  This test additionally guarantees that a code we *have* named never
-    leaks back out as raw, and prints the full residual histogram as a report.
+    they are never lost.  This test additionally guarantees that a 0x0a code named for a
+    section's screen never stays raw in that section, and that the names of one screen never
+    show up in the sections of another, then prints the full residual histogram as a report.
     """
     from ShumiTranslator.model.kernel.kernelmanager import KernelManager
     from FF8GameData.menu.mngrp.string.sectionstring import SectionString
@@ -236,30 +236,37 @@ def test_residual_raw_codes_are_consistent(game_data, capsys):
     import collections
 
     def all_strings():
+        """(section name, decoded string) of every text."""
         k = KernelManager(game_data); k.load_file(str(EF / "main/kernel.bin"))
         for sec in _kernel_sections(k):
-            yield from (t.get_str() for t in sec.get_text_list())
+            yield from ((sec.name, t.get_str()) for t in sec.get_text_list())
         n = SectionString(game_data); n.load_file(str(EF / "main/namedic.bin"))
-        yield from (t.get_str() for t in n.get_text_list())
+        yield from (("namedic", t.get_str()) for t in n.get_text_list())
         m = MngrpManager(game_data); m.load_file(str(EF / "menu/mngrphd.bin"), str(EF / "menu/mngrp.bin"))
         for sec in _mngrp_sections(m):
-            yield from (t.get_str() for t in sec.get_text_list())
+            yield from ((sec.name, t.get_str()) for t in sec.get_text_list())
         e = ExeManager(game_data); e.load_file(str(EF / "FF8_EN.exe"))
         for sec in _exe_sections(e):
-            yield from (t.get_str() for t in sec.get_text_list())
+            yield from ((sec.name, t.get_str()) for t in sec.get_text_list())
         b = BattleManager(game_data); b.reset()
         for f in _battle_files_filtered():
             b.add_file(str(f))
         for sec in b.get_section_list():
-            yield from (t.get_str() for t in sec.get_text_list())
+            yield from ((sec.name, t.get_str()) for t in sec.get_text_list())
 
+    special_values = game_data.sysfnt_data_json["SpecialValues"]
     hist = collections.Counter()
-    for s in all_strings():
+    for section_name, s in all_strings():
+        context = game_data.special_value_context_for_section(section_name)
+        named_here = {code[2:] for code in special_values.get(context, {})}
         for tok in RAW_CODE_RE.findall(s):
             hist[tok[2:-1]] += 1  # strip {x .. }
-
-    leaked = NAMED_0A_SLOTS & set(hist)
-    assert not leaked, f"named 0x0a slots leaked as raw codes (naming did not apply): {sorted(leaked)}"
+            assert tok[2:-1] not in named_here,                 f"[{section_name}] {tok} stayed raw although {context} names it: {s!r}"
+        for other_context, names in special_values.items():
+            if other_context == context:
+                continue
+            for name in names.values():
+                assert "{" + name + "}" not in s,                     f"[{section_name}] {{{name}}} of {other_context} used outside its screen: {s!r}"
 
     a0 = {k: v for k, v in hist.items() if k.startswith("0a")}
     report = ["", "==== residual raw {xNN} codes across all containers ====",

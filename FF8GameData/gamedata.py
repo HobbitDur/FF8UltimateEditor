@@ -267,6 +267,28 @@ class GameData:
         with open(file_path, encoding="utf8") as f:
             self.sysfnt_data_json = json.load(f)
 
+    def special_value_context_for_section(self, section_name: str):
+        """The 0x0a context of a text section, or None when no name table applies there.
+
+        A 0x0a slot means what the screen drawing the text puts in it (the SeeD test, the
+        battle rewards and the item-menu messages each fill their own values), so a slot
+        only gets a name inside a section known to be drawn by that screen."""
+        for section_prefix, context in self.sysfnt_data_json.get('SpecialValueSections', {}).items():
+            if section_name == section_prefix or section_name.startswith(section_prefix + " "):
+                return context
+        return None
+
+    def _special_value_code_from_name(self, name: str):
+        """0x0a code of a special value name, whatever its context (names are unique), or None."""
+        for special_values in self.sysfnt_data_json.get('SpecialValues', {}).values():
+            for code_str, special_name in special_values.items():
+                if special_name == name:
+                    return int(code_str[-2:], 16)
+        legacy_code = self.sysfnt_data_json.get('SpecialValueLegacyNames', {}).get(name)
+        if legacy_code:
+            return int(legacy_code[-2:], 16)
+        return None
+
     def load_item_data(self):
         file_path = os.path.join(self.resource_folder_json, "item.json")
         with open(file_path, encoding="utf8") as f:
@@ -482,13 +504,10 @@ class GameData:
                     elif substring in self.sysfnt_data_json['Locations']:  # {Location}
                         index_list = self.sysfnt_data_json['Locations'].index(substring)
                         encode_list.extend([0x0e, 0x20 + index_list])
-                    elif substring in self.sysfnt_data_json.get('SpecialValues', {}).values():  # {SpecialValue} 0x0a
-                        # Reverse-lookup the code from the name; keys are "0x0aXX".
-                        # Note: the raw form {x0aXX} still encodes via the generic 'x' branch below (backward compatible).
-                        for code_str, name in self.sysfnt_data_json['SpecialValues'].items():
-                            if name == substring:
-                                encode_list.extend([0x0a, int(code_str[-2:], 16)])
-                                break
+                    elif self._special_value_code_from_name(substring) is not None:  # {SpecialValue} 0x0a
+                        # Encoding needs no context: every name is unique, old names included.
+                        # The raw form {x0aXX} still encodes via the generic 'x' branch below.
+                        encode_list.extend([0x0a, self._special_value_code_from_name(substring)])
                     elif 'Cursor_location_id:0x' in substring:
                         len_curs = len('Cursor_location_id:0x')
                         if len(substring) == len_curs + 4:
@@ -525,7 +544,8 @@ class GameData:
             c += 1
         return encode_list
 
-    def translate_hex_to_str(self, hex_list, zero_as_slash_n=False, first_hex_literal=False, cursor_location_size=2):
+    def translate_hex_to_str(self, hex_list, zero_as_slash_n=False, first_hex_literal=False, cursor_location_size=2,
+                             special_value_context=None):
         build_str = ""
         i = 0
         hex_size = len(hex_list)
@@ -604,7 +624,8 @@ class GameData:
                 i += 1
                 if i < hex_size:
                     hex_val = hex_list[i]
-                    special_values = self.sysfnt_data_json.get('SpecialValues', {})
+                    # Named only in the screen that fills the slot (special_value_context_for_section)
+                    special_values = self.sysfnt_data_json.get('SpecialValues', {}).get(special_value_context, {})
                     key = "0x0a{:02x}".format(hex_val)
                     if key in special_values:
                         build_str += '{' + special_values[key] + '}'

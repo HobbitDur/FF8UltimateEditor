@@ -1414,7 +1414,7 @@ Misc text section|24|2|G.F.
 Misc text section|24|3|PAUSE
 Misc text section|24|4|Flucht nicht möglich
 Misc text section|24|5|Draw fehlgeschlagen
-Misc text section|24|6|{CardReceived} erhalten
+Misc text section|24|6|{RewardItem} erhalten
 Misc text section|24|7|erlernt!
 Misc text section|24|8|___
 Misc text section|24|9|erhalten!
@@ -1432,7 +1432,7 @@ Misc text section|24|20|Keine Auswahl
 Misc text section|24|21|Erhaltene Items
 Misc text section|24|22|zum Bestätigen
 Misc text section|24|23|EXP erhalten
-Misc text section|24|24|{CardReceived} konnte\n nicht mehr aufgenommen werden
+Misc text section|24|24|{RewardItem} konnte\n nicht mehr aufgenommen werden
 Misc text section|24|25|zum Beenden
 Misc text section|24|26|___
 Misc text section|24|27|von
@@ -1517,8 +1517,8 @@ Misc text section|24|105|{x0561}
 Misc text section|24|106|{x0562}
 Misc text section|24|107|{x0563}
 Misc text section|24|108|{x0564}
-Misc text section|24|109|Die G.F. haben {CurrentSeedTestLevel} AP erhalten
-Misc text section|24|110|{CardReceived}-Karte
+Misc text section|24|109|Die G.F. haben {RewardAmount} AP erhalten
+Misc text section|24|110|{RewardItem}-Karte
 Misc text section|24|111|Die G.F. haben sich weiterentwickelt
 Misc text section|24|112|Konnte nicht gefressen werden!
 Misc text section|24|113|?????
