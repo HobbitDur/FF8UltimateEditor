@@ -1,8 +1,9 @@
 """0x0a context values are named only in the screen that fills them.
 
 The same slot means different things per screen: 0x0a26 is the SeeD rank in the SeeD test
-(Menu_SeedTest_ParseCursorStops 0x4D4A80), a spell in the battle rewards (0x4A3260) and an item
-in "Can't carry ..." (tkmnmes2), so a name given everywhere mislabels most of them.
+(Menu_SeedTest_ParseCursorStops 0x4D4A80), a spell in the battle rewards
+(BattleText_FormatRewardMessage 0x4A3260) and the Magic menu (Menu_Magic_FormatMessage 0x4EFF40),
+and the new weapon in the Junk Shop, so a name given everywhere mislabels most of them.
 """
 import pathlib
 
@@ -25,7 +26,10 @@ def game_data():
     ("Test seed 12", "seed_test"),
     ("Misc text section", "battle_reward"),
     ("tkmnmes3.bin - subsection n°9", "item_menu_message"),
-    ("tkmnmes2.bin - subsection n°8", None),
+    ("tkmnmes2.bin - subsection n°8", "magic_menu"),
+    ("tkmnmes3.bin - subsection n°3", "junk_shop"),
+    ("tkmnmes3.bin - subsection n°11", "junction_menu"),
+    ("tkmnmes2.bin - subsection n°13", None),
     ("tkmnmes3.bin - subsection n°90", None),
     ("Book text", None),
 ])
@@ -37,6 +41,7 @@ def test_same_slot_decodes_per_screen(game_data):
     rank_slot = [0x0a, 0x26]
     assert game_data.translate_hex_to_str(rank_slot, special_value_context="seed_test") == "{SeedRank}"
     assert game_data.translate_hex_to_str(rank_slot, special_value_context="battle_reward") == "{RewardMagic}"
+    assert game_data.translate_hex_to_str(rank_slot, special_value_context="junk_shop") == "{JunkShopWeapon}"
     assert game_data.translate_hex_to_str(rank_slot) == "{x0a26}"
 
 

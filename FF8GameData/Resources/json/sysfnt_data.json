@@ -115,12 +115,26 @@
       "0x0a27": "MessageCharacter",
       "0x0a28": "MessageStat",
       "0x0a29": "MessageBlueMagic"
+    },
+    "magic_menu": {
+      "0x0a26": "MagicMenuSpell",
+      "0x0a27": "MagicMenuCharacter"
+    },
+    "junk_shop": {
+      "0x0a26": "JunkShopWeapon",
+      "0x0a27": "JunkShopCharacter"
+    },
+    "junction_menu": {
+      "0x0a27": "JunctionCharacter"
     }
   },
   "SpecialValueSections": {
     "Test seed": "seed_test",
     "Misc text section": "battle_reward",
-    "tkmnmes3.bin - subsection n°9": "item_menu_message"
+    "tkmnmes3.bin - subsection n°9": "item_menu_message",
+    "tkmnmes2.bin - subsection n°8": "magic_menu",
+    "tkmnmes3.bin - subsection n°3": "junk_shop",
+    "tkmnmes3.bin - subsection n°11": "junction_menu"
   },
   "SpecialValueLegacyNames": {
     "CurrentSeedTestLevel": "0x0a20",

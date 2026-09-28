@@ -231,13 +231,13 @@ tkmnmes2.bin - subsection n°8|3|8|Donner
 tkmnmes2.bin - subsection n°8|3|9|Partager
 tkmnmes2.bin - subsection n°8|3|10|Choix magie
 tkmnmes2.bin - subsection n°8|3|11|Possède déjà 100
-tkmnmes2.bin - subsection n°8|3|12|{x0a26} impossible
+tkmnmes2.bin - subsection n°8|3|12|{MagicMenuSpell} impossible
 tkmnmes2.bin - subsection n°8|3|13|Prendre
 tkmnmes2.bin - subsection n°8|3|14|Tout
 tkmnmes2.bin - subsection n°8|3|15|Prendre magie de tous les alliés
 tkmnmes2.bin - subsection n°8|3|16|Choix du personnage récepteur
 tkmnmes2.bin - subsection n°8|3|17|Choix du membre donneur 
-tkmnmes2.bin - subsection n°8|3|18|Annuler tous {x0a26} de {x0a27}\nOK?
+tkmnmes2.bin - subsection n°8|3|18|Annuler tous {MagicMenuSpell} de {MagicMenuCharacter}\nOK?
 tkmnmes2.bin - subsection n°8|3|19|Manuel
 tkmnmes2.bin - subsection n°8|3|20|Classer manuellement
 tkmnmes2.bin - subsection n°8|3|21|Attaque·Soins·Divers
@@ -370,7 +370,7 @@ tkmnmes3.bin - subsection n°3|7|38|Quantité
 tkmnmes3.bin - subsection n°3|7|39|Prix
 tkmnmes3.bin - subsection n°3|7|40|Atq
 tkmnmes3.bin - subsection n°3|7|41|Prc
-tkmnmes3.bin - subsection n°3|7|42|Changer arme de {x0a27}\nen {x0a26}\nOK?
+tkmnmes3.bin - subsection n°3|7|42|Changer arme de {JunkShopCharacter}\nen {JunkShopWeapon}\nOK?
 tkmnmes3.bin - subsection n°3|7|43|\n?
 tkmnmes3.bin - subsection n°3|7|44|Pas assez d'objets.\nRevenez plus tard.
 tkmnmes3.bin - subsection n°3|7|45|Pas assez d'objets
@@ -617,7 +617,7 @@ tkmnmes3.bin - subsection n°11|13|64|Annuler toutes magies associées\nOK?
 tkmnmes3.bin - subsection n°11|13|65|Choix d'une G-Force à associer
 tkmnmes3.bin - subsection n°11|13|66|Choix d'un espace à associer
 tkmnmes3.bin - subsection n°11|13|67|Choix d'une magie à associer
-tkmnmes3.bin - subsection n°11|13|68|Associer à {x0a27}
+tkmnmes3.bin - subsection n°11|13|68|Associer à {JunctionCharacter}
 tkmnmes3.bin - subsection n°13|14|0|Vide
 tkmnmes3.bin - subsection n°13|14|1|Config. Manette
 tkmnmes3.bin - subsection n°13|14|2|Commandes de FF{xc6}{xc7}

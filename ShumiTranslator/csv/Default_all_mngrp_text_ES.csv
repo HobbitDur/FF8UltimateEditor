@@ -231,13 +231,13 @@ tkmnmes2.bin - subsection n°8|3|8|Entregar todas.
 tkmnmes2.bin - subsection n°8|3|9|Compartir.
 tkmnmes2.bin - subsection n°8|3|10|Decide cómo distribuir las magias.
 tkmnmes2.bin - subsection n°8|3|11|Ya tiene 100.
-tkmnmes2.bin - subsection n°8|3|12|No le caben más magias {x0a26}.
+tkmnmes2.bin - subsection n°8|3|12|No le caben más magias {MagicMenuSpell}.
 tkmnmes2.bin - subsection n°8|3|13|Recibir todas.
 tkmnmes2.bin - subsection n°8|3|14|Recibir
 tkmnmes2.bin - subsection n°8|3|15|Recibe todas las magias de otro personaje.
 tkmnmes2.bin - subsection n°8|3|16|Elige al personaje que recibirá las magias.
 tkmnmes2.bin - subsection n°8|3|17|Elige al personaje que entregará las magias.
-tkmnmes2.bin - subsection n°8|3|18|¿Deseas que {x0a27} se deshaga\nde todas sus magias {x0a26}?
+tkmnmes2.bin - subsection n°8|3|18|¿Deseas que {MagicMenuCharacter} se deshaga\nde todas sus magias {MagicMenuSpell}?
 tkmnmes2.bin - subsection n°8|3|19|Manual
 tkmnmes2.bin - subsection n°8|3|20|Permite ordenar las magias manualmente.
 tkmnmes2.bin - subsection n°8|3|21|Ataque / Cura / Otras
@@ -372,7 +372,7 @@ tkmnmes3.bin - subsection n°3|7|38|Cantidad
 tkmnmes3.bin - subsection n°3|7|39|Precio
 tkmnmes3.bin - subsection n°3|7|40|Potencia
 tkmnmes3.bin - subsection n°3|7|41|Precisión
-tkmnmes3.bin - subsection n°3|7|42|¿Deseas convertir el arma\nde {x0a27} en {x0a26}?
+tkmnmes3.bin - subsection n°3|7|42|¿Deseas convertir el arma\nde {JunkShopCharacter} en {JunkShopWeapon}?
 tkmnmes3.bin - subsection n°3|7|43|\n?
 tkmnmes3.bin - subsection n°3|7|44|{xc8}Te faltan objetos!\nVuelve cuando los tengas...
 tkmnmes3.bin - subsection n°3|7|45|{xc8}Te faltan objetos!
@@ -609,7 +609,7 @@ tkmnmes3.bin - subsection n°11|13|63|¿Deseas anular todos los enlaces\nactuale
 tkmnmes3.bin - subsection n°11|13|64|Elige el G. F. que deseas enlazar.
 tkmnmes3.bin - subsection n°11|13|65|Elige el parámetro a enlazar.
 tkmnmes3.bin - subsection n°11|13|66|Elige la magia que deseas enlazar.
-tkmnmes3.bin - subsection n°11|13|67|Está enlazado a {x0a27}.
+tkmnmes3.bin - subsection n°11|13|67|Está enlazado a {JunctionCharacter}.
 tkmnmes3.bin - subsection n°13|14|0|Empt
 tkmnmes3.bin - subsection n°13|14|1|Uso del Mando
 tkmnmes3.bin - subsection n°13|14|2|Funciones de cada control del Mando en FF {xc6}{xc7}

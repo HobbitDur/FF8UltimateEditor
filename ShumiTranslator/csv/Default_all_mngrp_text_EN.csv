@@ -231,13 +231,13 @@ tkmnmes2.bin - subsection n°8|3|8|Give All
 tkmnmes2.bin - subsection n°8|3|9|Split
 tkmnmes2.bin - subsection n°8|3|10|Choose magic
 tkmnmes2.bin - subsection n°8|3|11|Already have 100
-tkmnmes2.bin - subsection n°8|3|12|Can't carry {x0a26}
+tkmnmes2.bin - subsection n°8|3|12|Can't carry {MagicMenuSpell}
 tkmnmes2.bin - subsection n°8|3|13|Take All
 tkmnmes2.bin - subsection n°8|3|14|All
 tkmnmes2.bin - subsection n°8|3|15|Take all magic from other members
 tkmnmes2.bin - subsection n°8|3|16|Select member to receive magic
 tkmnmes2.bin - subsection n°8|3|17|Select member to transfer magic
-tkmnmes2.bin - subsection n°8|3|18|Discarding all of {x0a27}'s {x0a26}\nOK?
+tkmnmes2.bin - subsection n°8|3|18|Discarding all of {MagicMenuCharacter}'s {MagicMenuSpell}\nOK?
 tkmnmes2.bin - subsection n°8|3|19|Manual
 tkmnmes2.bin - subsection n°8|3|20|Rearrange manually
 tkmnmes2.bin - subsection n°8|3|21|Attack·Restore·Indirect
@@ -372,7 +372,7 @@ tkmnmes3.bin - subsection n°3|7|38|Quantity
 tkmnmes3.bin - subsection n°3|7|39|Price
 tkmnmes3.bin - subsection n°3|7|40|Atk
 tkmnmes3.bin - subsection n°3|7|41|Hit
-tkmnmes3.bin - subsection n°3|7|42|Remodel {x0a27}'s weapon\nto ‘{x0a26}'\nOK?
+tkmnmes3.bin - subsection n°3|7|42|Remodel {JunkShopCharacter}'s weapon\nto ‘{JunkShopWeapon}'\nOK?
 tkmnmes3.bin - subsection n°3|7|43|\n?
 tkmnmes3.bin - subsection n°3|7|44|Not enough items,\ncome back later.
 tkmnmes3.bin - subsection n°3|7|45|Not enough items
@@ -607,7 +607,7 @@ tkmnmes3.bin - subsection n°11|13|63|Remove all junctioned magic\nOK?
 tkmnmes3.bin - subsection n°11|13|64|Choose GF to junction
 tkmnmes3.bin - subsection n°11|13|65|Choose slot to junction
 tkmnmes3.bin - subsection n°11|13|66|Choose magic to junction
-tkmnmes3.bin - subsection n°11|13|67|Junctioned to {x0a27}
+tkmnmes3.bin - subsection n°11|13|67|Junctioned to {JunctionCharacter}
 tkmnmes3.bin - subsection n°13|14|0|Empty
 tkmnmes3.bin - subsection n°13|14|1|Basic Operation
 tkmnmes3.bin - subsection n°13|14|2|Basic Control Explanation in FF{xc6}{xc7}

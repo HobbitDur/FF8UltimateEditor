@@ -231,13 +231,13 @@ tkmnmes2.bin - subsection n°8|3|8|Alles geben
 tkmnmes2.bin - subsection n°8|3|9|Aufteilen
 tkmnmes2.bin - subsection n°8|3|10|Zauber verteilen
 tkmnmes2.bin - subsection n°8|3|11|Besitzt schon 100 Stück
-tkmnmes2.bin - subsection n°8|3|12|Zu viel {x0a26}
+tkmnmes2.bin - subsection n°8|3|12|Zu viel {MagicMenuSpell}
 tkmnmes2.bin - subsection n°8|3|13|Alles nehmen
 tkmnmes2.bin - subsection n°8|3|14|Alles
 tkmnmes2.bin - subsection n°8|3|15|Sämtliche Zauber von jemanden nehmen
 tkmnmes2.bin - subsection n°8|3|16|Wer soll Zauber empfangen?
 tkmnmes2.bin - subsection n°8|3|17|Wer soll Zauber geben?
-tkmnmes2.bin - subsection n°8|3|18|{x0a27}: {x0a26} wegschmeißen\nOk?
+tkmnmes2.bin - subsection n°8|3|18|{MagicMenuCharacter}: {MagicMenuSpell} wegschmeißen\nOk?
 tkmnmes2.bin - subsection n°8|3|19|Selber
 tkmnmes2.bin - subsection n°8|3|20|Eigenhändiges anordnen
 tkmnmes2.bin - subsection n°8|3|21|Angriff·Heilung·Indirekt
@@ -369,7 +369,7 @@ tkmnmes3.bin - subsection n°3|7|38|Stückzahl
 tkmnmes3.bin - subsection n°3|7|39|Preis
 tkmnmes3.bin - subsection n°3|7|40|Str
 tkmnmes3.bin - subsection n°3|7|41|Trf
-tkmnmes3.bin - subsection n°3|7|42|Die Waffe von {x0a27} wird\nzum [{x0a26}] aufgerüstet
+tkmnmes3.bin - subsection n°3|7|42|Die Waffe von {JunkShopCharacter} wird\nzum [{JunkShopWeapon}] aufgerüstet
 tkmnmes3.bin - subsection n°3|7|43|\n?
 tkmnmes3.bin - subsection n°3|7|44|Nicht genügend Items!\nKommt wieder.
 tkmnmes3.bin - subsection n°3|7|45|Nicht genügend Items!
@@ -605,7 +605,7 @@ tkmnmes3.bin - subsection n°11|13|64|Die Zauber werden alle gelöst\nOk?
 tkmnmes3.bin - subsection n°11|13|65|Zu koppelnde G.F. wählen
 tkmnmes3.bin - subsection n°11|13|66|Mit was soll er gekoppelt werden?
 tkmnmes3.bin - subsection n°11|13|67|Den zu koppelnden Zauber wählen
-tkmnmes3.bin - subsection n°11|13|68|Ist schon mit {x0a27} gekoppelt
+tkmnmes3.bin - subsection n°11|13|68|Ist schon mit {JunctionCharacter} gekoppelt
 tkmnmes3.bin - subsection n°13|14|0|Leer
 tkmnmes3.bin - subsection n°13|14|1|Grundsteuerung
 tkmnmes3.bin - subsection n°13|14|2|Die Steuerung in F.F.{xc6}{xc7}
