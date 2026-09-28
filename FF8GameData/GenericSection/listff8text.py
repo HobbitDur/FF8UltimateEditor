@@ -4,12 +4,14 @@ from.ff8text import FF8Text
 
 
 class ListFF8Text(Section):
-    def __init__(self, game_data: GameData, data_hex: bytearray, id: int, own_offset: int, name: str, section_data_linked=None, cursor_location_size=2):
+    def __init__(self, game_data: GameData, data_hex: bytearray, id: int, own_offset: int, name: str, section_data_linked=None, cursor_location_size=2,
+                 terminate_empty=False):
         Section.__init__(self, game_data=game_data, data_hex=data_hex, id=id, own_offset=own_offset, name=name)
         self._text_list = []
         self.section_data_linked = section_data_linked
         self.type = SectionType.FF8_TEXT
         self.cursor_location_size = cursor_location_size
+        self.terminate_empty = terminate_empty
 
     def __str__(self):
         return f"FF8SectionText({str(self._text_list)})"
@@ -52,7 +54,8 @@ class ListFF8Text(Section):
             first_hex_literal = True
         else:
             first_hex_literal = False
-        self._text_list.append(FF8Text(game_data=self._game_data, data_hex=text_hex, own_offset=offset, id=id, cursor_location_size=self.cursor_location_size, first_hex_literal=first_hex_literal))
+        self._text_list.append(FF8Text(game_data=self._game_data, data_hex=text_hex, own_offset=offset, id=id, cursor_location_size=self.cursor_location_size, first_hex_literal=first_hex_literal,
+                                       terminate_empty=self.terminate_empty))
 
     def insert_text(self, index: int, text_hex: bytearray):
         """Insert one string at ``index`` and renumber what follows.
@@ -65,7 +68,8 @@ class ListFF8Text(Section):
         self._text_list.insert(index, FF8Text(game_data=self._game_data, data_hex=text_hex,
                                               own_offset=0, id=index,
                                               cursor_location_size=self.cursor_location_size,
-                                              first_hex_literal=first_hex_literal))
+                                              first_hex_literal=first_hex_literal,
+                                              terminate_empty=self.terminate_empty))
         offset = 0
         for new_id, text in enumerate(self._text_list):
             text.id = new_id

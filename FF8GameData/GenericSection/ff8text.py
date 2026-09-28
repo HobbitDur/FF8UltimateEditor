@@ -28,9 +28,13 @@ def split_tag(text: str):
 
 
 class FF8Text(Section):
-    def __init__(self, game_data: GameData, own_offset: int, data_hex: bytearray, id: int, cursor_location_size=2, first_hex_literal=False):
+    def __init__(self, game_data: GameData, own_offset: int, data_hex: bytearray, id: int, cursor_location_size=2, first_hex_literal=False,
+                 terminate_empty=False):
         Section.__init__(self, game_data=game_data, own_offset=own_offset, data_hex=data_hex, id=id, name="")
         self._cursor_location_size = cursor_location_size
+        # An empty text written as 0 bytes shares its offset with the next text. Formats where the
+        # engine reads that offset (mngrp strings) need the \x00, or the next text shows instead.
+        self._terminate_empty = terminate_empty
         self._text_str = self._game_data.translate_hex_to_str(self._data_hex,
                                                               cursor_location_size=self._cursor_location_size, first_hex_literal=first_hex_literal)
         self.set_str(self._text_str)  # To remove unwanted 0 for example
@@ -57,7 +61,7 @@ class FF8Text(Section):
             new_cursor_location_size = other._cursor_location_size
 
         return FF8Text(game_data=self._game_data, own_offset=own_offset, data_hex=data_hex, id=new_id,
-                       cursor_location_size=new_cursor_location_size)
+                       cursor_location_size=new_cursor_location_size, terminate_empty=self._terminate_empty)
 
     def get_str(self):
         return self._text_str
@@ -66,7 +70,7 @@ class FF8Text(Section):
         converted_data_list = self._game_data.translate_str_to_hex(text)
         self._data_hex = bytearray(converted_data_list)
         self._text_str = text
-        if text != "":  # If empty don't put \x00
+        if text != "" or self._terminate_empty:  # If empty don't put \x00, unless the format needs it
             self._data_hex.extend([0x00])
         self._size = len(self._data_hex)
 
