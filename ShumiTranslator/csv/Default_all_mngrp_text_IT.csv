@@ -261,10 +261,10 @@ tkmnmes2.bin - subsection n°13|4|5|GIOCATORE
 tkmnmes2.bin - subsection n°13|4|6|TOTALE
 tkmnmes2.bin - subsection n°13|4|7|MOSTRO
 tkmnmes2.bin - subsection n°13|4|8|AREA
-tkmnmes2.bin - subsection n°13|4|9|Carta mostro livello {x0a20}
-tkmnmes2.bin - subsection n°13|4|10|Carta boss livello {x0a20}
-tkmnmes2.bin - subsection n°13|4|11|Carta G.F. livello {x0a20}
-tkmnmes2.bin - subsection n°13|4|12|Carta giocatore livello {x0a20}
+tkmnmes2.bin - subsection n°13|4|9|Carta mostro livello {CardAlbumLevel}
+tkmnmes2.bin - subsection n°13|4|10|Carta boss livello {CardAlbumLevel}
+tkmnmes2.bin - subsection n°13|4|11|Carta G.F. livello {CardAlbumLevel}
+tkmnmes2.bin - subsection n°13|4|12|Carta giocatore livello {CardAlbumLevel}
 tkmnmes2.bin - subsection n°14|5|0|Verifica lo stato della 【Chocobo World】
 tkmnmes2.bin - subsection n°14|5|1|‘Chocobo World' non è presente.\nTrasferisci il gioco (Usa 7 blocchi)?
 tkmnmes2.bin - subsection n°14|5|2|‘Chocobo World' non è presente.\n7 blocchi necessari non disponibili
@@ -641,10 +641,10 @@ tkmnmes3.bin - subsection n°13|14|30|Situazioni in cui si deve rinunciare
 tkmnmes3.bin - subsection n°13|14|31|Selezione voce
 tkmnmes3.bin - subsection n°13|14|32|Esame scritto SeeD
 tkmnmes3.bin - subsection n°13|14|33|Esame scritto SeeD (simulazione)
-tkmnmes3.bin - subsection n°13|14|34|Esame scritto SeeD Livello {x0a22}
+tkmnmes3.bin - subsection n°13|14|34|Esame scritto SeeD Livello {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|35|Ripasso esame scritto SeeD
 tkmnmes3.bin - subsection n°13|14|36|Ripasso esame scritto SeeD (simulazione)
-tkmnmes3.bin - subsection n°13|14|37|Ripasso esame scritto SeeD livello {x0a22}
+tkmnmes3.bin - subsection n°13|14|37|Ripasso esame scritto SeeD livello {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|38|Livello esame scritto SeeD
 tkmnmes3.bin - subsection n°13|14|39|Livello esame scritto SeeD (simulazione)
 tkmnmes3.bin - subsection n°13|14|40|Scegliere livello di ripasso.

@@ -261,10 +261,10 @@ tkmnmes2.bin - subsection n°13|4|5|Spieler
 tkmnmes2.bin - subsection n°13|4|6|Total
 tkmnmes2.bin - subsection n°13|4|7|Monster
 tkmnmes2.bin - subsection n°13|4|8|Area
-tkmnmes2.bin - subsection n°13|4|9|Lv.{x0a20} Monster-Karte
-tkmnmes2.bin - subsection n°13|4|10|Lv.{x0a20} Boss-Karte
-tkmnmes2.bin - subsection n°13|4|11|Lv.{x0a20} G.F.-Karte
-tkmnmes2.bin - subsection n°13|4|12|Lv.{x0a20} Charakter-Karte
+tkmnmes2.bin - subsection n°13|4|9|Lv.{CardAlbumLevel} Monster-Karte
+tkmnmes2.bin - subsection n°13|4|10|Lv.{CardAlbumLevel} Boss-Karte
+tkmnmes2.bin - subsection n°13|4|11|Lv.{CardAlbumLevel} G.F.-Karte
+tkmnmes2.bin - subsection n°13|4|12|Lv.{CardAlbumLevel} Charakter-Karte
 tkmnmes2.bin - subsection n°14|5|0|Status der 【Chocobo World】
 tkmnmes2.bin - subsection n°14|5|1|【Chocobo World】 nicht gefunden\nHerunterladen? (7 Blöcke)
 tkmnmes2.bin - subsection n°14|5|2|【Chocobo World】 nicht gefunden\nNicht genügend freie Blöcke (7 Bl.)
@@ -640,10 +640,10 @@ tkmnmes3.bin - subsection n°13|14|30|Wann man sich zurückziehen muß
 tkmnmes3.bin - subsection n°13|14|31|Bitte Menüpunkt auswählen
 tkmnmes3.bin - subsection n°13|14|32|SEED-Prüfung
 tkmnmes3.bin - subsection n°13|14|33|SEED-Prüfung (Test)
-tkmnmes3.bin - subsection n°13|14|34|SEED-Prüfung Level {x0a22}
+tkmnmes3.bin - subsection n°13|14|34|SEED-Prüfung Level {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|35|SEED-Nachprüfung
 tkmnmes3.bin - subsection n°13|14|36|SEED-Nachprüfung (Test)
-tkmnmes3.bin - subsection n°13|14|37|SEED-Nachprüfung Level {x0a22}
+tkmnmes3.bin - subsection n°13|14|37|SEED-Nachprüfung Level {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|38|SEED-Prüfung Level
 tkmnmes3.bin - subsection n°13|14|39|SEED-Prüfung (Test)
 tkmnmes3.bin - subsection n°13|14|40|Bitte den Level der Nachprüfung angeben

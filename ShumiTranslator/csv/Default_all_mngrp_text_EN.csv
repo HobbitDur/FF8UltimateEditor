@@ -262,10 +262,10 @@ tkmnmes2.bin - subsection n°13|4|6|PLAYER
 tkmnmes2.bin - subsection n°13|4|7|TOTAL
 tkmnmes2.bin - subsection n°13|4|8|MONSTER
 tkmnmes2.bin - subsection n°13|4|9|AREA
-tkmnmes2.bin - subsection n°13|4|10|Level {x0a20} Monster Card
-tkmnmes2.bin - subsection n°13|4|11|Level {x0a20} Boss Card
-tkmnmes2.bin - subsection n°13|4|12|Level {x0a20} GF Card
-tkmnmes2.bin - subsection n°13|4|13|Level {x0a20} Player Card
+tkmnmes2.bin - subsection n°13|4|10|Level {CardAlbumLevel} Monster Card
+tkmnmes2.bin - subsection n°13|4|11|Level {CardAlbumLevel} Boss Card
+tkmnmes2.bin - subsection n°13|4|12|Level {CardAlbumLevel} GF Card
+tkmnmes2.bin - subsection n°13|4|13|Level {CardAlbumLevel} Player Card
 tkmnmes2.bin - subsection n°13|4|14|N/A
 tkmnmes2.bin - subsection n°14|5|0|Checking ‘Chocobo World'
 tkmnmes2.bin - subsection n°14|5|1|‘Chocobo World' not downloaded.\nDownload?  (uses 7 blocks)
@@ -642,10 +642,10 @@ tkmnmes3.bin - subsection n°13|14|30|When you have to go back
 tkmnmes3.bin - subsection n°13|14|31|Select a heading to search
 tkmnmes3.bin - subsection n°13|14|32|SeeD Written Test
 tkmnmes3.bin - subsection n°13|14|33|SeeD Written Test (Trial)
-tkmnmes3.bin - subsection n°13|14|34|SeeD Written Test Level {x0a22}
+tkmnmes3.bin - subsection n°13|14|34|SeeD Written Test Level {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|35|SeeD Written Test Review 
 tkmnmes3.bin - subsection n°13|14|36|SeeD Test (Trial) Review
-tkmnmes3.bin - subsection n°13|14|37|SeeD Test Review Level {x0a22}
+tkmnmes3.bin - subsection n°13|14|37|SeeD Test Review Level {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|38|SeeD Written Test Level
 tkmnmes3.bin - subsection n°13|14|39|SeeD Written Test (Trial)
 tkmnmes3.bin - subsection n°13|14|40|Choose level to review

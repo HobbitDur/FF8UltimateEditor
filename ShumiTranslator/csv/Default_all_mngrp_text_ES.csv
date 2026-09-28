@@ -262,10 +262,10 @@ tkmnmes2.bin - subsection n°13|4|6|Personajes
 tkmnmes2.bin - subsection n°13|4|7|TOTAL
 tkmnmes2.bin - subsection n°13|4|8|Se obtiene de:
 tkmnmes2.bin - subsection n°13|4|9|Área/Poseedor
-tkmnmes2.bin - subsection n°13|4|10|Carta de monstruo (clase {x0a20})
-tkmnmes2.bin - subsection n°13|4|11|Carta de jefazo (clase {x0a20})
-tkmnmes2.bin - subsection n°13|4|12|Carta de G. F. (clase {x0a20})
-tkmnmes2.bin - subsection n°13|4|13|Carta de personaje (clase {x0a20})
+tkmnmes2.bin - subsection n°13|4|10|Carta de monstruo (clase {CardAlbumLevel})
+tkmnmes2.bin - subsection n°13|4|11|Carta de jefazo (clase {CardAlbumLevel})
+tkmnmes2.bin - subsection n°13|4|12|Carta de G. F. (clase {CardAlbumLevel})
+tkmnmes2.bin - subsection n°13|4|13|Carta de personaje (clase {CardAlbumLevel})
 tkmnmes2.bin - subsection n°13|4|14|Ninguno
 tkmnmes2.bin - subsection n°14|5|0|Verificando la 【Chocobo World】...
 tkmnmes2.bin - subsection n°14|5|1|Chocobo World no está cargado. ¿Lo\ncargas? (7 bloques de memoria).
@@ -644,10 +644,10 @@ tkmnmes3.bin - subsection n°13|14|30|Casos en que sólo se puede dar marcha atr
 tkmnmes3.bin - subsection n°13|14|31|Elige una opción.
 tkmnmes3.bin - subsection n°13|14|32|Examen escrito de Seed
 tkmnmes3.bin - subsection n°13|14|33|Examen escrito de Seed (preliminar)
-tkmnmes3.bin - subsection n°13|14|34|Examen escrito de Seed, rango {x0a22}
+tkmnmes3.bin - subsection n°13|14|34|Examen escrito de Seed, rango {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|35|Repaso del examen escrito de Seed
 tkmnmes3.bin - subsection n°13|14|36|Repaso del examen escrito de Seed (preliminar)
-tkmnmes3.bin - subsection n°13|14|37|Repaso del examen de Seed, rango {x0a22}
+tkmnmes3.bin - subsection n°13|14|37|Repaso del examen de Seed, rango {NextSeedTestLevel}
 tkmnmes3.bin - subsection n°13|14|38|Examen de Seed rango
 tkmnmes3.bin - subsection n°13|14|39|Examen escrito de Seed (preliminar)
 tkmnmes3.bin - subsection n°13|14|40|Elige el examen que deseas repasar.

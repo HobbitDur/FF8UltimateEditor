@@ -29,7 +29,9 @@ def game_data():
     ("tkmnmes2.bin - subsection n°8", "magic_menu"),
     ("tkmnmes3.bin - subsection n°3", "junk_shop"),
     ("tkmnmes3.bin - subsection n°11", "junction_menu"),
-    ("tkmnmes2.bin - subsection n°13", None),
+    ("tkmnmes2.bin - subsection n°13", "card_album"),
+    ("tkmnmes3.bin - subsection n°13", "seed_test"),
+    ("tkmnmes3.bin - subsection n°4", None),
     ("tkmnmes3.bin - subsection n°90", None),
     ("Book text", None),
 ])

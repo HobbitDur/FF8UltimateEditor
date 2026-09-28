@@ -126,6 +126,9 @@
     },
     "junction_menu": {
       "0x0a27": "JunctionCharacter"
+    },
+    "card_album": {
+      "0x0a20": "CardAlbumLevel"
     }
   },
   "SpecialValueSections": {
@@ -134,7 +137,9 @@
     "tkmnmes3.bin - subsection n°9": "item_menu_message",
     "tkmnmes2.bin - subsection n°8": "magic_menu",
     "tkmnmes3.bin - subsection n°3": "junk_shop",
-    "tkmnmes3.bin - subsection n°11": "junction_menu"
+    "tkmnmes3.bin - subsection n°11": "junction_menu",
+    "tkmnmes3.bin - subsection n°13": "seed_test",
+    "tkmnmes2.bin - subsection n°13": "card_album"
   },
   "SpecialValueLegacyNames": {
     "CurrentSeedTestLevel": "0x0a20",
