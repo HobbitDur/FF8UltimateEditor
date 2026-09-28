@@ -102,11 +102,12 @@ def string_section_view(game_data, sec: bytes, first_hex_literal=False):
         if off == 0:
             view.append(None)
             continue
-        end = len(sec)
-        for later in offsets[i + 1:]:
-            if later:
-                end = later
-                break
+        # Up to the \x00, like the engine: reading up to the next offset would see "" for an
+        # empty string saved as 0 bytes, where the game shows the next string instead.
+        # A SeeD test string starts with its answer byte, which can itself be 0.
+        start = off + 1 if first_hex_literal else off
+        end = sec.find(b"\x00", start)
+        end = len(sec) if end == -1 else end
         view.append(decode(game_data, sec[off:end], first_hex_literal=first_hex_literal))
     return count, view
 
