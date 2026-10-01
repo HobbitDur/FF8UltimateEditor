@@ -1,8 +1,9 @@
 """Ifrit multi-file shell: closing single files from the side list (the cross on each row) and the
 'modified' flag following real changes only.
 
-  * Browsing - another AI section, another AI editing mode, hex display - is not an edit.
-  * A value changed then put back leaves the file clean (the flag compares the file's bytes).
+  * Browsing - another AI section, another AI editing mode, hex display, an Anim-seq preview - is
+    not an edit. The flag comes only from controls registered as edits: never checked afterwards,
+    so these tests assert it right away, with no delay.
   * The cross of a row closes that file; the shown file's unsaved edits ask Save / Discard / Cancel,
     and Discard really drops them (the model goes back to the file on disk).
 """
@@ -58,10 +59,17 @@ def _pane(w):
 
 
 def _commit(w):
-    """What the 500 ms debounce does after an edit."""
+    """What the 500 ms debounce does after an edit (records the undo step)."""
     _settle()
     w._undo_debounce.stop()
     w._commit_active_undo()
+
+
+def _assert_clean(w, pane):
+    _settle()
+    assert not pane.dirty
+    assert not w._undo_debounce.isActive()           # no edit was even signalled
+    assert not w._list_label(w._active_index).startswith("*")
 
 
 def _answer(monkeypatch, button):
@@ -96,9 +104,28 @@ def test_browsing_ai_sections_and_modes_does_not_modify(files):
         _settle()
     ai.hex_selector.click()
     ai.hex_selector.click()
-    _commit(w)
-    assert not pane.dirty
-    assert not w._list_label(w._active_index).startswith("*")
+    _assert_clean(w, pane)
+
+
+def test_typing_ai_code_without_compiling_does_not_modify(files):
+    """The code text is rewritten on every switch and only Compile changes the file."""
+    w = _make(files)
+    pane = _pane(w)
+    pane._ai_widget.code_widget.code_area_widget.setPlainText("anything")
+    _assert_clean(w, pane)
+
+
+def test_anim_seq_preview_does_not_modify(files):
+    """Stat tab: selecting an 'Anim seq' cell fills a read-only preview - not an edit."""
+    w = _make(files)
+    pane = _pane(w)
+    pane._tabs.setCurrentWidget(pane._stat_container)
+    _settle()
+    stat = pane._stat_widget
+    assert stat._ability_seq_view
+    for key in stat._ability_seq_view:
+        stat._update_anim_seq_view(key, 0)
+    _assert_clean(w, pane)
 
 
 def test_every_tab_and_sub_tab_is_clean_after_browsing(files):
@@ -112,8 +139,7 @@ def test_every_tab_and_sub_tab_is_clean_after_browsing(files):
         for k in range(sub.count()):
             sub.setCurrentIndex(k)
             _settle()
-    _commit(w)
-    assert not pane.dirty
+    _assert_clean(w, pane)
 
 
 def test_real_ai_edit_after_switching_section_is_detected(files):
@@ -140,28 +166,6 @@ def test_real_ai_edit_after_switching_section_is_detected(files):
     spin.setValue(old + 1 if old < spin.maximum() else old - 1)
     _commit(w)
     assert pane.dirty
-
-
-def test_value_put_back_is_clean(files):
-    w = _make(files)
-    pane = _pane(w)
-    pane._tabs.setCurrentWidget(pane._ai_container)
-    _settle()
-    ai = pane._ai_widget
-    ai.expert_selector.setCurrentIndex(1)
-    ai.expert_selector.activated.emit(1)
-    _settle()
-    spin = _first_ai_spin(pane)
-    if spin is None:
-        pytest.skip("no AI command in the default section")
-    old = spin.value()
-    spin.setValue(old + 1 if old < spin.maximum() else old - 1)
-    _commit(w)
-    assert pane.dirty
-    spin = _first_ai_spin(pane)                      # the row rebuilds its controls on change
-    spin.setValue(old)
-    _commit(w)
-    assert not pane.dirty
 
 
 # ── closing files ─────────────────────────────────────────────────────

@@ -19,6 +19,7 @@ from FF8GameData.dat.sectionfiles import (SECTION_FILES, SectionTools, SectionFi
                                           export_sections, apply_section_files, folder_name_for,
                                           section_file_for_path, layout_names)
 from Ifrit.IfritAI.ifritaiwidget import IfritAIWidget
+from Ifrit.IfritAI.commandwidget import CommandWidget
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.fpsbatchdialog import (FpsBatchDialog, FpsBatchReportDialog,
                                   select_battle_model_file_list)
@@ -274,9 +275,12 @@ class IfritFilePane(QWidget):
         self._xlsx_widget.data_edited.connect(self._on_edit)
         # Switching AI section (or inserting a line) rebuilds the command rows: wire the new ones.
         self._ai_widget.lines_rebuilt.connect(lambda: self._connect_dirty_signals(self._ai_container))
+        # Controls that only change what is shown. The AI code text is rewritten on every section /
+        # mode / hex switch and typing in it changes nothing until Compile (which reports ai_edited).
         for view_control in (self._ai_widget.script_section, self._ai_widget.expert_selector,
-                             self._ai_widget.hex_selector, self._xlsx_widget.process_selector,
-                             self._xlsx_widget.open_xlsx):
+                             self._ai_widget.hex_selector,
+                             self._ai_widget.code_widget.code_area_widget,
+                             self._xlsx_widget.process_selector, self._xlsx_widget.open_xlsx):
             view_control.setProperty(_VIEW_ONLY_PROPERTY, True)
 
         # Stat (which owns the Name sub-tab) and StatExcel both edit section 7 -> one "Stat"
@@ -518,9 +522,10 @@ class IfritFilePane(QWidget):
 
     def _connect_dirty_signals(self, root=None):
         """(Re)connect edit signals of the currently-built editable controls. Only user-interaction
-        signals are used; the 3D widget, the seq widget and camera/texture PREVIEW panels are
-        excluded - 3D and seq report their own edits (model_edited / data_edited), previews are
-        read-only, and all move controls on a timer.
+        signals are used. Skipped: the 3D / seq / camera / dyntex widgets and the AI command rows
+        (they report their own edits), camera/texture PREVIEW panels (read-only, moved by a timer),
+        read-only controls (previews filled from the selection) and controls registered as
+        view-only (_VIEW_ONLY_PROPERTY). Whether a control edits the file is thus known up front.
 
         `root` scopes the scan to one just-(re)loaded tab; without it the whole pane's widget tree is
         walked, which is ~0.2 s and pointless when only one tab changed (undo/redo)."""
@@ -529,9 +534,14 @@ class IfritFilePane(QWidget):
                           self._dynamic_texture_widget]
         excluded_roots += scope.findChildren(CameraPreviewPanel)
         excluded_roots += scope.findChildren(TexturePreviewWidget)
+        excluded_roots += scope.findChildren(CommandWidget)
         for widget in scope.findChildren(QWidget):
             if widget.property(_DIRTY_WIRED_PROPERTY) or widget.property(_VIEW_ONLY_PROPERTY):
                 continue
+            if getattr(widget, 'isReadOnly', None) is not None and widget.isReadOnly():
+                continue                                   # a display, filled by code
+            if isinstance(widget, QLineEdit) and isinstance(widget.parent(), (QSpinBox, QDoubleSpinBox)):
+                continue                                   # a spin box's own text: its valueChanged counts
             if any(self._is_descendant(widget, root) for root in excluded_roots):
                 continue
             signal = None
@@ -1470,16 +1480,6 @@ class IfritMonsterWidget(QWidget):
             else:
                 tag = None
             stack.commit(tag)
-            if pane is not None:
-                # An edit signal only says a control was touched. Whether the FILE changed is the
-                # snapshot compared to the saved one: a value picked then put back, or a control
-                # that turned out not to change the data, leaves the file clean. The Static Texture
-                # edit is held in its widget (not in the snapshot), so it counts apart.
-                dirty = stack.is_dirty() or bool(pane._edited)
-                if dirty != pane.dirty:
-                    pane.dirty = dirty
-                    self._refresh_list_item(self._active_index)
-                    self.file_bindings_changed.emit()
 
     def _flush_pending_undo(self):
         """Commit any not-yet-snapshotted edits now (before switching away from the file)."""
