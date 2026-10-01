@@ -7,6 +7,9 @@ from Ifrit.IfritAI.qspinhex import QSpinHex
 
 class OpIdChangedEmitter(QObject):
     op_id_signal = pyqtSignal()
+    # The command's id or a parameter was changed by the user. The row rebuilds its own controls on
+    # each change, so the host cannot wire them once: it listens to this instead.
+    data_edited = pyqtSignal()
 
 
 class CommandWidget(QWidget):
@@ -126,6 +129,7 @@ class CommandWidget(QWidget):
         self.__reset_op_code_widget()
         self.widget_text.setText(self._command.get_text(html=True))
         self.op_id_changed_signal_emitter.op_id_signal.emit()
+        self.op_id_changed_signal_emitter.data_edited.emit()
 
     def __op_code_change(self):
         print("op_code_change")
@@ -142,6 +146,7 @@ class CommandWidget(QWidget):
         self._command.set_op_code(op_code)
         self.widget_text.setText(self._command.get_text(html=True))
         self.__reset_op_code_widget()
+        self.op_id_changed_signal_emitter.data_edited.emit()
 
     def __reset_op_id_widget(self):
         self.op_id_widget.setParent(None)

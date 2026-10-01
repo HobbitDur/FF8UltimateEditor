@@ -4,7 +4,7 @@ import pathlib
 import subprocess
 import sys
 
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QCheckBox, QComboBox, QLabel, QHBoxLayout, QSpinBox, QFileDialog, \
     QMessageBox, QFrame
@@ -14,6 +14,7 @@ from Ifrit.ifritmanager import IfritManager
 
 class IfritXlsxWidget(QWidget):
     WORK_OPTION = ["Dat -> Xlsx", "Xlsx -> Dat"]
+    data_edited = pyqtSignal()   # an xlsx was applied onto the open file (Xlsx -> Dat)
 
     def __init__(self, ifrit_manager:IfritManager,icon_path="Resources"):
         QWidget.__init__(self)
@@ -166,6 +167,7 @@ class IfritXlsxWidget(QWidget):
             elif self.process_selector.currentIndex() == 1:  # Xlsx to dat
                 self.ifrit_manager.load_xlsx_file(self.xlsx_file_selected)
                 self.ifrit_manager.set_enemy_info_from_xlsx()
+                self.data_edited.emit()
                 #self.ifrit_manager.xlsx_to_dat(dat_file_current_list, dat_id_current_list)
             self.ifrit_manager.close_xlsx_file()
             if self.open_xlsx.isChecked():

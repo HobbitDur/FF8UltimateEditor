@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-from PyQt6.QtCore import Qt, QSize, QSettings
+from PyQt6.QtCore import Qt, QSize, QSettings, pyqtSignal
 from PyQt6.QtGui import QIcon, QKeyEvent
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QLabel, \
     QColorDialog, QCheckBox, QMessageBox, QApplication
@@ -27,6 +27,13 @@ class IfritAIWidget(QWidget):
     MAX_OP_ID = 61
     MAX_OP_CODE_VALUE = 255
     MIN_OP_CODE_VALUE = 0
+
+    # Any change to the AI data: a command row edited, a line added/removed with +/-, code
+    # compiled, an .md imported.
+    ai_edited = pyqtSignal()
+    # The command rows were rebuilt (section switched, line inserted...): the new rows' controls
+    # are not wired to the host's edit detection yet.
+    lines_rebuilt = pyqtSignal()
 
     def __init__(self,  settings:QSettings, ifrit_manager:IfritManager, icon_path="Resources", game_data_folder="FF8GameData"):
         QWidget.__init__(self)
@@ -193,6 +200,8 @@ class IfritAIWidget(QWidget):
             self.__append_line(new_command=command, create_data=delete_data)
         self.__change_expert()
         self.__hide_show_expert()
+        self.lines_rebuilt.emit()
+        self.ai_edited.emit()   # compiled code replaced the section's commands
 
     def __hide_show_expert(self):
         expert_chosen = self.expert_selector.currentIndex()
@@ -290,6 +299,9 @@ class IfritAIWidget(QWidget):
 
         self.__add_line(new_command)
         self.__compute_if()
+        self.lines_rebuilt.emit()
+        if create_data:
+            self.ai_edited.emit()
 
     def __add_line(self, command: CommandAnalyser):
         # Add the + button
@@ -306,6 +318,7 @@ class IfritAIWidget(QWidget):
         self.remove_button_widget.insert(command.line_index, remove_button)
         command_widget = CommandWidget(command, self.expert_selector.currentIndex(), self.hex_selector.isChecked())
         command_widget.op_id_changed_signal_emitter.op_id_signal.connect(self.__compute_if)
+        command_widget.op_id_changed_signal_emitter.data_edited.connect(self.ai_edited)
         self.command_line_widget.insert(command.line_index, command_widget)
 
         # Adding widget to layout
@@ -346,6 +359,8 @@ class IfritAIWidget(QWidget):
         self.ai_layout.takeAt(index_to_remove)
 
         self.__compute_if()
+        if delete_data:
+            self.ai_edited.emit()
 
     def __clear_layout_except_item(self, layout):
         if layout:
@@ -419,6 +434,7 @@ class IfritAIWidget(QWidget):
         self._set_text_expert()
         self.__hide_show_expert()
         self.__compute_if()
+        self.lines_rebuilt.emit()
 
     def _load_md_file(self):
         md_file_to_load = self.file_dialog_export.getOpenFileName(parent=self, caption="Md file to import", filter="*.md", directory=self._import_md_folder)[0]
@@ -429,6 +445,7 @@ class IfritAIWidget(QWidget):
             self.create_ai_data_from_md(md_file_to_load, self.ifrit_manager.game_data, self.ifrit_manager.enemy, self.ifrit_manager.enemy.battle_script_data['ai_data'], self.expert_selector.currentIndex(),self.ifrit_manager.compiler, self.ifrit_manager.decompiler)
             self.ifrit_manager.enemy.ai = self.ifrit_manager.enemy.battle_script_data['ai_data']
             self.__setup_section_data()
+            self.ai_edited.emit()
 
     @staticmethod
     def create_ai_data_from_md(md_file: str, game_data:GameData, enemy: MonsterAnalyser, ai_data, current_index, compiler:AICompiler, decompiler:AIDecompiler):

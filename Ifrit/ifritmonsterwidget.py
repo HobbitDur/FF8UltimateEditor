@@ -1,13 +1,14 @@
 import os
 import pathlib
 from PyQt6 import sip
-from PyQt6.QtCore import QSettings, Qt, pyqtSignal, QTimer
+from PyQt6.QtCore import QSettings, Qt, pyqtSignal, QTimer, QEvent, QRect, QPointF
+from PyQt6.QtGui import QPainter, QPen, QColor
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTabWidget, QMessageBox, QCheckBox, QProgressDialog, QApplication,
     QListWidget, QSplitter, QFileDialog, QComboBox, QLineEdit, QSpinBox,
     QDoubleSpinBox, QAbstractButton, QPlainTextEdit, QTextEdit, QStackedWidget,
-    QSizePolicy
+    QSizePolicy, QStyledItemDelegate, QStyle, QStyleOptionViewItem, QToolTip
 )
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -74,6 +75,15 @@ _3D_SECTIONS_BY_ENTITY = {
     EntityType.WEAPON_NO_ANIM: "1",
 }
 
+# Dynamic property on a control that only changes what is SHOWN (which AI section, the editing
+# mode, hex display...), never the file: the edit scan skips it, so browsing a file does not mark
+# it modified.
+_VIEW_ONLY_PROPERTY = "ifritViewOnly"
+# Set on a control once it is wired to edit detection. Kept on the widget itself rather than in a
+# set of id()s: the AI tab rebuilds its command rows, and a new row reusing a deleted row's id()
+# was taken as already wired, so its edits went unnoticed.
+_DIRTY_WIRED_PROPERTY = "ifritDirtyWired"
+
 
 def _shrink_stack_to_current(stack, policy_cache):
     """Exclude every non-current page of `stack` (a QTabWidget or QStackedWidget) from its own
@@ -97,6 +107,108 @@ def _shrink_stack_to_current(stack, policy_cache):
         else:
             w.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
     stack.updateGeometry()
+
+
+class _ClosableItemDelegate(QStyledItemDelegate):
+    """Draws a small cross at the right end of every row of a QListWidget; clicking it (or
+    middle-clicking the row) calls on_close(row). The click is consumed, so closing a row does not
+    select it first."""
+    CROSS_BOX = 16      # clickable square, px
+    MARGIN = 4
+
+    def __init__(self, list_widget, on_close):
+        super().__init__(list_widget)
+        self._list = list_widget
+        self._on_close = on_close
+        self._hover_row = -1             # row under the mouse
+        self._hover_cross = False        # ...and the mouse is on its cross
+        self._pressed_row = -1           # row whose cross got the mouse press
+        list_widget.setMouseTracking(True)
+        list_widget.viewport().installEventFilter(self)
+
+    def cross_rect(self, row_rect: QRect) -> QRect:
+        s = self.CROSS_BOX
+        return QRect(row_rect.right() - s - self.MARGIN, row_rect.center().y() - s // 2 + 1, s, s)
+
+    def sizeHint(self, option, index):
+        size = super().sizeHint(option, index)
+        size.setWidth(size.width() + self.CROSS_BOX + 2 * self.MARGIN)
+        size.setHeight(max(size.height(), self.CROSS_BOX + 4))
+        return size
+
+    def paint(self, painter, option, index):
+        # Row background (selection/hover) across the whole row, then the text kept clear of the
+        # cross so a long name elides before it instead of running under it.
+        style = option.widget.style() if option.widget else QApplication.style()
+        style.drawPrimitive(QStyle.PrimitiveElement.PE_PanelItemViewItem, option, painter, option.widget)
+        text_option = QStyleOptionViewItem(option)
+        text_option.rect = option.rect.adjusted(0, 0, -(self.CROSS_BOX + 2 * self.MARGIN), 0)
+        super().paint(painter, text_option, index)
+
+        row = index.row()
+        box = self.cross_rect(option.rect)
+        on_cross = row == self._hover_row and self._hover_cross
+        selected = bool(option.state & QStyle.StateFlag.State_Selected)
+        painter.save()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        if on_cross:
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(200, 60, 60))
+            painter.drawRoundedRect(box, 3, 3)
+            color = QColor(255, 255, 255)
+        else:
+            color = QColor(option.palette.color(option.palette.ColorRole.HighlightedText if selected
+                                                else option.palette.ColorRole.Text))
+            if row != self._hover_row and not selected:
+                color.setAlpha(110)      # discreet until the row is hovered or selected
+        painter.setPen(QPen(color, 1.6))
+        r = box.adjusted(4, 4, -4, -4)
+        painter.drawLine(QPointF(r.left(), r.top()), QPointF(r.right() + 1, r.bottom() + 1))
+        painter.drawLine(QPointF(r.right() + 1, r.top()), QPointF(r.left(), r.bottom() + 1))
+        painter.restore()
+
+    def _hit(self, pos):
+        """(row, on_cross) under a viewport position; row -1 when on no row."""
+        index = self._list.indexAt(pos)
+        if not index.isValid():
+            return -1, False
+        return index.row(), self.cross_rect(self._list.visualRect(index)).contains(pos)
+
+    def eventFilter(self, obj, event):
+        t = event.type()
+        if t == QEvent.Type.MouseMove:
+            row, on_cross = self._hit(event.position().toPoint())
+            if (row, on_cross) != (self._hover_row, self._hover_cross):
+                self._hover_row, self._hover_cross = row, on_cross
+                self._list.viewport().update()
+        elif t == QEvent.Type.Leave:
+            self._hover_row, self._hover_cross = -1, False
+            self._list.viewport().update()
+        elif t == QEvent.Type.MouseButtonPress:
+            row, on_cross = self._hit(event.position().toPoint())
+            if event.button() == Qt.MouseButton.LeftButton and on_cross:
+                self._pressed_row = row
+                return True
+            if event.button() == Qt.MouseButton.MiddleButton and row >= 0:
+                return True
+        elif t == QEvent.Type.MouseButtonDblClick:
+            if self._hit(event.position().toPoint())[1]:
+                return True              # a quick second click on the cross is not a row activation
+        elif t == QEvent.Type.MouseButtonRelease:
+            row, on_cross = self._hit(event.position().toPoint())
+            if event.button() == Qt.MouseButton.LeftButton and self._pressed_row >= 0:
+                pressed, self._pressed_row = self._pressed_row, -1
+                if on_cross and row == pressed:
+                    self._on_close(row)
+                return True
+            if event.button() == Qt.MouseButton.MiddleButton and row >= 0:
+                self._on_close(row)
+                return True
+        elif t == QEvent.Type.ToolTip:
+            if self._hit(event.pos())[1]:
+                QToolTip.showText(event.globalPos(), "Close this file", self._list.viewport())
+                return True
+        return super().eventFilter(obj, event)
 
 
 class IfritFilePane(QWidget):
@@ -127,7 +239,6 @@ class IfritFilePane(QWidget):
         self._last_edited_tab_index = None  # which tab the most recent edit happened on (undo focus)
         self._edited_sections = set()     # .dat section numbers touched since the last undo commit
         self._loading = False             # True while populating widgets: suppresses dirty flagging
-        self._dirty_connected = set()     # id()s of widgets already wired for edit detection
         self._loaded_tabs = set()         # tabs already populated (built once, kept)
         self._ever_loaded_tabs = set()    # tabs loaded at least once: a later load is a RELOAD
                                           # (undo/redo), which must not reset what the user set up
@@ -157,6 +268,16 @@ class IfritFilePane(QWidget):
         self._dynamic_texture_widget = IfritDynamicTextureWidget(ifrit_manager)
         # Dyntex also mutates the model live and self-reports (same as seq/camera).
         self._dynamic_texture_widget.data_edited.connect(self._on_edit)
+        # Changes no single control reports: AI lines added/removed, AI code compiled or imported,
+        # an xlsx applied onto the file.
+        self._ai_widget.ai_edited.connect(self._on_edit)
+        self._xlsx_widget.data_edited.connect(self._on_edit)
+        # Switching AI section (or inserting a line) rebuilds the command rows: wire the new ones.
+        self._ai_widget.lines_rebuilt.connect(lambda: self._connect_dirty_signals(self._ai_container))
+        for view_control in (self._ai_widget.script_section, self._ai_widget.expert_selector,
+                             self._ai_widget.hex_selector, self._xlsx_widget.process_selector,
+                             self._xlsx_widget.open_xlsx):
+            view_control.setProperty(_VIEW_ONLY_PROPERTY, True)
 
         # Stat (which owns the Name sub-tab) and StatExcel both edit section 7 -> one "Stat"
         # tab. Battle text edits section 8 like AI -> lives under "AI".
@@ -409,7 +530,7 @@ class IfritFilePane(QWidget):
         excluded_roots += scope.findChildren(CameraPreviewPanel)
         excluded_roots += scope.findChildren(TexturePreviewWidget)
         for widget in scope.findChildren(QWidget):
-            if id(widget) in self._dirty_connected:
+            if widget.property(_DIRTY_WIRED_PROPERTY) or widget.property(_VIEW_ONLY_PROPERTY):
                 continue
             if any(self._is_descendant(widget, root) for root in excluded_roots):
                 continue
@@ -431,7 +552,7 @@ class IfritFilePane(QWidget):
                 signal = widget.textChanged                # guarded by _loading
             if signal is not None:
                 signal.connect(self._on_edit)
-                self._dirty_connected.add(id(widget))
+                widget.setProperty(_DIRTY_WIRED_PROPERTY, True)
 
     @staticmethod
     def _is_descendant(widget, root) -> bool:
@@ -663,8 +784,10 @@ class IfritMonsterWidget(QWidget):
         # ── Loaded-files side list ───────────────────────────────────
         self._file_list = QListWidget()
         self._file_list.setToolTip("Files loaded in memory. Click one to edit it; a leading * "
-                                   "marks a file with unsaved changes.")
+                                   "marks a file with unsaved changes. The cross (or a middle-click) "
+                                   "closes a file.")
         self._file_list.currentRowChanged.connect(self._on_file_list_changed)
+        self._file_list.setItemDelegate(_ClosableItemDelegate(self._file_list, self._close_file))
         left_panel = QWidget()
         lp = QVBoxLayout(left_panel)
         lp.setContentsMargins(4, 4, 0, 4)
@@ -952,7 +1075,7 @@ class IfritMonsterWidget(QWidget):
         if index == self._active_index and self._files[index]['pane'] is not None:
             return                                     # already the shown file
         self._flush_pending_undo()                     # snapshot pending edits of the file being left
-        if not self._confirm_leave_current():          # unsaved-edits guard -> keep list on current
+        if not self._confirm_leave_current("switching"):  # unsaved-edits guard -> keep list on current
             self._file_list.blockSignals(True)
             self._file_list.setCurrentRow(self._active_index)
             self._file_list.blockSignals(False)
@@ -982,9 +1105,10 @@ class IfritMonsterWidget(QWidget):
         self._file_list.blockSignals(False)
         self._update_section_buttons()
 
-    def _confirm_leave_current(self) -> bool:
-        """Before switching away from (or reloading) the shown file, guard its unsaved edits.
-        Returns True to proceed (edits saved or discarded), False to abort the switch."""
+    def _confirm_leave_current(self, action="switching") -> bool:
+        """Before switching away from (or closing) the shown file, guard its unsaved edits: Save
+        writes them, Discard drops them (the file goes back to its on-disk content), Cancel keeps
+        the file shown. Returns True to proceed, False to abort. `action` words the question."""
         if not (0 <= self._active_index < len(self._files)):
             return True
         f = self._files[self._active_index]
@@ -994,7 +1118,7 @@ class IfritMonsterWidget(QWidget):
         name = f['name'] or os.path.basename(f['path'])
         resp = QMessageBox.question(
             self, "Unsaved changes",
-            f"{name} has unsaved changes.\nSave them before switching?",
+            f"{name} has unsaved changes.\nSave them before {action}?",
             QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard
             | QMessageBox.StandardButton.Cancel,
             QMessageBox.StandardButton.Save)
@@ -1003,12 +1127,82 @@ class IfritMonsterWidget(QWidget):
         if resp == QMessageBox.StandardButton.Save:
             try:
                 pane.save()
+                if f.get('undo') is not None:
+                    f['undo'].mark_saved()
                 self._refresh_list_item(self._active_index)
                 self.file_bindings_changed.emit()
             except Exception as e:
                 QMessageBox.warning(self, "Save failed", f"Could not save {name}:\n{e}")
                 return False
+        else:
+            # Every editor writes the model live, so leaving the edits in memory would bring them
+            # back the next time the file is opened (and Save would write them after all).
+            self._undo_debounce.stop()
+            self._destroy_current_pane()
+            self._reparse_entry(f)
+            self._refresh_list_item(self._active_index)
+            self.file_bindings_changed.emit()
         return True
+
+    def _reparse_entry(self, f):
+        """Re-read one session entry from disk, lean (as when opened): its manager gets the on-disk
+        model back and its undo history restarts from it. The entry must have no built pane."""
+        manager = f['manager']
+        f['undo'] = None                  # baseline re-captured from the fresh model on next open
+        try:
+            if os.path.getsize(f['path']) == 0:       # 0-byte placeholder -> re-open as blank
+                enemy = manager.create_blank_enemy(f['path'])
+                if enemy is not None:
+                    manager.set_active_enemy(enemy, f['path'], textures=([], True))
+                    f['name'] = 'empty'
+                return
+            # Lean re-parse (name for the list); textures + animation re-load when shown.
+            enemy = manager.parse_file(f['path'], free_animation=True)
+            manager.set_active_enemy(enemy, f['path'], textures=([], True))
+        except Exception as e:
+            print(f"[reload] Could not reparse {f['path']}: {e}")
+            return
+        try:
+            f['name'] = enemy.info_stat_data['monster_name'].get_str().strip('\x00')
+        except Exception:
+            f['name'] = ""
+
+    def _close_file(self, index: int):
+        """Close one file of the session (the cross of its row in the list). Unsaved edits of the
+        shown file are guarded (Save / Discard / Cancel) - only the shown file can have any, the
+        others were saved or discarded when switching away. Closing the shown file shows its
+        neighbour; closing the last one empties the session."""
+        if not (0 <= index < len(self._files)):
+            return
+        was_active = index == self._active_index
+        if was_active:
+            self._flush_pending_undo()
+            if not self._confirm_leave_current("closing"):
+                return
+            self._undo_debounce.stop()
+            self._destroy_current_pane()
+            self._stack.setCurrentWidget(self._placeholder)
+        del self._files[index]
+        self._file_list.blockSignals(True)
+        self._file_list.takeItem(index)
+        self._file_list.blockSignals(False)
+        if not self._files:
+            self._close_session()
+            self.file_registry.close_file(self.REGISTRY_NAME)
+            return
+        self.file_registry.open_file(
+            self.REGISTRY_NAME,
+            FileRegistry.summarize_paths([f['path'] for f in self._files], "model"))
+        if was_active:
+            self._active_index = -1
+            self._activate_index(min(index, len(self._files) - 1), show_busy=True)
+        else:
+            if index < self._active_index:
+                self._active_index -= 1
+            self._file_list.blockSignals(True)
+            self._file_list.setCurrentRow(self._active_index)
+            self._file_list.blockSignals(False)
+        self.file_bindings_changed.emit()
 
     def _destroy_current_pane(self):
         """Tear down whichever single pane is currently built - freeing its 3D viewer + GL context
@@ -1276,6 +1470,16 @@ class IfritMonsterWidget(QWidget):
             else:
                 tag = None
             stack.commit(tag)
+            if pane is not None:
+                # An edit signal only says a control was touched. Whether the FILE changed is the
+                # snapshot compared to the saved one: a value picked then put back, or a control
+                # that turned out not to change the data, leaves the file clean. The Static Texture
+                # edit is held in its widget (not in the snapshot), so it counts apart.
+                dirty = stack.is_dirty() or bool(pane._edited)
+                if dirty != pane.dirty:
+                    pane.dirty = dirty
+                    self._refresh_list_item(self._active_index)
+                    self.file_bindings_changed.emit()
 
     def _flush_pending_undo(self):
         """Commit any not-yet-snapshotted edits now (before switching away from the file)."""
@@ -1397,24 +1601,7 @@ class IfritMonsterWidget(QWidget):
             progress.setValue(i)
             progress.setLabelText(f"{os.path.basename(f['path'])}  ({i + 1}/{len(self._files)})")
             QApplication.processEvents()
-            try:
-                if os.path.getsize(f['path']) == 0:       # 0-byte placeholder -> re-open as blank
-                    enemy = f['manager'].create_blank_enemy(f['path'])
-                    if enemy is None:
-                        continue
-                    f['manager'].set_active_enemy(enemy, f['path'], textures=([], True))
-                    f['name'] = 'empty'
-                    continue
-                # Lean re-parse (name for the list); textures + animation re-load when shown.
-                enemy = f['manager'].parse_file(f['path'], free_animation=True)
-                f['manager'].set_active_enemy(enemy, f['path'], textures=([], True))
-            except Exception as e:
-                print(f"[reload] Could not reparse {f['path']}: {e}")
-                continue
-            try:
-                f['name'] = enemy.info_stat_data['monster_name'].get_str().strip('\x00')
-            except Exception:
-                f['name'] = ""
+            self._reparse_entry(f)
         self._active_index = -1
         self._populate_file_list()
         progress.close()

@@ -66,8 +66,10 @@ class UndoStack:
         return bool(self._redo)
 
     def is_dirty(self):
-        """Whether the current state differs from the last saved/loaded one (identity, cheap)."""
-        return self._baseline is not self._saved
+        """Whether the current state differs from the last saved/loaded one. Identity first (cheap,
+        the common case), then content: an edit put back by hand (a value changed then restored)
+        yields a new snapshot equal to the saved one, which is clean, not dirty."""
+        return self._baseline is not self._saved and self._baseline != self._saved
 
     # ── navigation ────────────────────────────────────────────────────
     def undo(self):
