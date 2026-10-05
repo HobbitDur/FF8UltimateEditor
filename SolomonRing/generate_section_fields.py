@@ -793,7 +793,15 @@ HELP = {
                      "0xFF = default / no specific camera. Vanilla values are index 1-7 (e.g. 1-4, or "
                      "0x81-0x87 with the force bit). For player commands this byte is unused - their "
                      "camera is chosen randomly.",
-    "attack_type": "How the damage / effect is calculated (see Attack Type list).",
+    "attack_type": (
+        "Selects the damage formula or effect routine: physical damage, magic/GF damage, "
+        "healing, revival, fixed damage, etc. The routine determines the relevant stats, "
+        "hit/critical rules and protection checks.\n"
+        "Separate from Reaction category, which controls interaction rules and the "
+        "category reported to enemy AI. A physical damage calculation can have Magical "
+        "reaction category: No Mercy, Desperado, Blood Pain, Massive Anchor and Irvine's "
+        "Shot do this in the original data. They still use physical damage and Protect, "
+        "not Shell."),
     "spell_power": "Base power fed into the damage formula.",
     "attack_power": "Base power fed into the damage formula.",
     "gf_power": "GF base power (the `Power` term of the GF damage formula, appearing 3× in it). "
@@ -1386,28 +1394,34 @@ for cfg in sections.values():
             if f.get("label", "").startswith("Magic ID"):
                 f["label"] = "Attack animation"
 
-# The low 2 bits of every attack_flags byte are ONE 2-bit damage-type value (ATTACK_FLAG & 3:
-# 0 Physical / 1 Magical / 2 Item-Medicine / 3 special), NOT two independent flags. Rendering
-# them as separate "Magical" and "Item/Medicine" checkboxes wrongly implied both could be ticked
-# (value 3 lit both, e.g. every Blue Magic reads 0x23 - looked like "Magical + Item/Medicine" but
-# is really "special"). Split each attack_flags field into a masked damage-type dropdown + the
-# masked remaining behaviour-flag checkboxes (KernelEntry's read-modify-write keeps them in sync).
-_ATTACK_DT_HELP = ("The attack's damage TYPE (low 2 bits of the attack-flags byte, ATTACK_FLAG & 3) "
-                   "- one value, not a set of flags:\n"
-                   "Physical (0): the only type that can trigger the target's Counter, wake "
-                   "Sleep/Confusion, or remove Back Attack.\n"
-                   "Magical (1): the target's Shell status halves the damage/heal.\n"
-                   "Item/Medicine (2): battle items; enables the Med Data ability's healing doubling "
-                   "and (being non-Magical) dodges Shell.\n"
-                   "Special (3): none of the above - forced by Renzokuken/Gunblade, and what every "
-                   "Blue Magic uses. Not Physical, not Magical, not Item, so it gets no Counter, no "
-                   "Shell halving and no Med Data.")
-_ATTACK_BITS_HELP = ("Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage type "
+# Every consumer compares ATTACK_FLAG & 3 as one category, not independent bits.
+# The names describe conventional interaction categories, not the formula selector:
+# physical-formula temporary-character limits and Shot use category 1, while
+# some magic-formula enemy attacks use category 0. Keep the picker separate from
+# the damage calculation and upper behaviour bits (KernelEntry preserves sibling masks).
+_ATTACK_DT_HELP = (
+    "Interaction category (ATTACK_FLAG & 3), separate from Damage calculation's formula/effect. "
+    "Enemy AI opcode 0x02 (IF), subject 10, parameter 0 reads this exact value as "
+    "LAST ACTION DAMAGE TYPE, regardless of the formula.\n"
+    "Physical (0): clears Sleep/Confusion and Back Attack. The only category eligible "
+    "for the player's Counter ability and Cover on incoming enemy attacks (other "
+    "conditions still apply). Enemy counter scripts can run for any category.\n"
+    "Magical (1): enables Shell halving in the magic/GF damage routine. With a physical "
+    "damage calculation, damage still uses the physical routine and Protect; Shell has no effect.\n"
+    "Item/Medicine (2): enables Med Data doubling in the curative-item/special healing routine.\n"
+    "Special (3): does not match categories 0, 1 or 2. Skips their classification-specific "
+    "gates, but still follows the selected formula's rules. Curative magic, for example, "
+    "checks Shell independently of classification.\n"
+    "Original limit conventions: temporary-character limits and Shot use 1, Duel uses 0, "
+    "Blue Magic and Renzokuken finishers use 3. These categories do not select physical "
+    "versus magical damage. Gargantua's Counter Twist checks exactly 0, so a physical "
+    "formula classified as 1 does not qualify for that counter.")
+_ATTACK_BITS_HELP = ("Attack behaviour flags (upper 6 bits; the low 2 are the separate Reaction category "
                      "field). Only 0x08 Break Damage Limit, 0x10 Reflectable and 0x80 Revive are "
                      "actually read by the engine - the complete set of masks tested anywhere is 0x03, "
                      "0x08, 0x10, 0x20 (items only) and 0x80. 0x80 does NOT make the action "
                      "revive on hit - "
-                     "that is the Attack type field (Revive / Revive at full HP). What it does is "
+                     "that is the Damage calculation field (Revive / Revive at full HP). What it does is "
                      "let the menu cursor land on a KO'd unit: setMenuFlagMagicOnCharaData / "
                      "linkedStockFieldCharData turn it into menu-status bit 0, which makes target "
                      "selection use the all-units mask instead of the living-only one. In vanilla "
@@ -1415,14 +1429,14 @@ _ATTACK_BITS_HELP = ("Attack behaviour flags (upper 6 bits; the low 2 are the se
                      "varies a lot between entries, but it is only an authoring marker for "
                      "'restores HP or cures an ailment': it tracks the curative Attack types "
                      "(plus the percentage-heal items, with Float the lone oddity) and so "
-                     "duplicates what the Attack type field already says. 0x20 "
+                     "duplicates what the Damage calculation field already says. 0x20 "
                      "is set on virtually every player ability as an authoring convention, but is "
                      "only READ for battle items (see the Battle items tab) - here it is inert.")
-_ATTACK_BITS_HELP_ITEM = ("Attack behaviour flags (upper 6 bits; the low 2 are the separate Damage "
-                          "type field). This byte is read differently here than anywhere else: "
+_ATTACK_BITS_HELP_ITEM = ("Attack behaviour flags (upper 6 bits; the low 2 are the separate Reaction "
+                          "category field). This byte is read differently here than anywhere else: "
                           "`updateBattleItemData` turns 0x80 and 0x20 into the item's 2-bit battle-"
                           "menu status. 0x80 set -> status bit 0, which lets the target cursor land "
-                          "on a KO'd unit (it is NOT 'revive on hit' - that is the Attack type "
+                          "on a KO'd unit (it is NOT 'revive on hit' - that is the Damage calculation "
                           "field). Vanilla sets it on all 32 real items, because the Item cursor is "
                           "always allowed to point at a KO'd ally. 0x20 CLEAR -> status bit 1, which "
                           "draws the row in the greyed palette and makes OK buzz instead of opening "
@@ -1469,6 +1483,8 @@ _DUEL_FINISHER_HELP = (
 for cfg in sections.values():
     new_fields = []
     for f in cfg["fields"]:
+        if f.get("lookup") == "attack_type":
+            f["label"] = "Damage calculation"
         if f.get("lookup") == "duel_button":
             btn = dict(f)
             btn["mask"] = 0xF0FF
@@ -1505,7 +1521,7 @@ for cfg in sections.values():
             new_fields.append(rest)
         elif f.get("lookup") == "attack_flags":
             dt = {"name": f["name"] + "_type", "offset": f["offset"], "size": f["size"],
-                  "mask": 0x03, "lookup": "attack_damage_type", "label": "Damage type",
+                  "mask": 0x03, "lookup": "attack_damage_type", "label": "Reaction category",
                   "help": _ATTACK_DT_HELP}
             # Battle items (section 8) are the ONE place 0x20 is actually read
             # (updateBattleItemData -> Item-menu selectability) - every other section's

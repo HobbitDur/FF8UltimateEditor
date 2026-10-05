@@ -1766,15 +1766,15 @@
    },
    {
     "value": 1,
-    "name": "Magical (Shell halves)"
+    "name": "Magical"
    },
    {
     "value": 2,
-    "name": "Item/Medicine (Med Data doubles)"
+    "name": "Item/Medicine"
    },
    {
     "value": 3,
-    "name": "Special - none of the above (Renzokuken/Gunblade/Blue Magic)"
+    "name": "Special"
    }
   ]
  },

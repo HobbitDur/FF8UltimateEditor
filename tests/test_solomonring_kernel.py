@@ -15,6 +15,7 @@ from ShumiTranslator.model.kernel.kernelmanager import KernelManager
 from SolomonRing.kernellookups import LookupRegistry
 from SolomonRing.kernelsectiontab import KernelSectionTab
 from SolomonRing.solomonringwidget import SolomonRingWidget
+from SolomonRing.attack_behaviour import describe_attack_behaviour
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent
 KERNEL = PROJECT_ROOT / "extracted_files" / "main" / "kernel.bin"
@@ -108,6 +109,105 @@ def test_edit_persists(qapp, tmp_path):
     magic_tab2.list_widget.setCurrentRow(1)
     assert magic_tab2._field_widgets["spell_power"][2].value() == 99
     assert magic_tab2._entries[1].get_text(0) == "Fireball"
+
+
+@pytest.mark.parametrize("attack_type, category, protect, shell", [
+    (1, 1, "halves damage", "no effect"),        # No Mercy / most Shot
+    (36, 1, "halves damage", "no effect"),       # Armor Shot
+    (9, 3, "halves damage", "no effect"),        # Renzokuken finisher
+    (7, 0, "halves damage", "no effect"),        # Meteor Strike
+    (2, 1, "no effect", "halves damage"),        # Ice Strike
+    (2, 0, "no effect", "no effect"),           # Beam Cannon
+    (2, 3, "no effect", "no effect"),           # Blue Magic
+    (8, 1, "no effect", "halves damage"),        # Percentage magic
+    (20, 1, "no effect", "halves damage"),       # Percentage GF
+    (3, 3, "no effect", "halves healing"),       # Category cannot bypass Cure's Shell check
+    (21, 0, "no effect", "halves healing"),      # Percentage curative magic
+    (27, 1, "no effect", "no effect"),          # Fixed damage bypasses both
+])
+def test_attack_behaviour_protection_rules(attack_type, category, protect, shell):
+    result = describe_attack_behaviour(attack_type, category)
+    assert (result.protect, result.shell) == (protect, shell)
+
+
+def test_attack_behaviour_special_effects():
+    assert "doubles healing" in describe_attack_behaviour(4, 2).med_data
+    assert describe_attack_behaviour(4, 3).med_data == "no effect"
+    # Revival's Med Data check is based on the item command, not category 2.
+    assert describe_attack_behaviour(5, 3).med_data == describe_attack_behaviour(5, 2).med_data
+    assert "Zombie" in describe_attack_behaviour(5, 1).shell
+    assert describe_attack_behaviour(14, 1).shell == "depends on summoned action"
+    assert describe_attack_behaviour(255, 1).shell == "unknown"
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_attack_behaviour_panel_updates_and_saves_independent_values(qapp, tmp_path):
+    """Live combinations, navigation, bulk edits and raw values retain masked-byte writes."""
+    from Common.dirtytracking import install_dirty_tracking
+
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    state = install_dirty_tracking(widget)
+    state.clear()
+    tab = widget._section_tabs[19]
+    panel = tab._attack_behaviour_panel
+    assert panel is not None
+    assert panel.calculation is tab._field_widgets["attack_type"][2]
+    assert panel.category is tab._field_widgets["attack_flags_type"][2]
+    assert widget._section_tabs[5]._attack_behaviour_panel is None  # no stored category
+
+    def select(name):
+        index = next(i for i, entry in enumerate(tab._entries) if entry.get_text(0) == name)
+        tab.list_widget.setCurrentRow(tab._visible_indices.index(index))
+        return index
+
+    no_mercy = select("No Mercy")
+    assert panel.protection.text() == "Protect: halves damage · Shell: no effect"
+    assert panel.enemy_ai.text() == "Magical (1)"
+    select("Ice Strike")
+    assert panel.protection.text() == "Protect: no effect · Shell: halves damage"
+    assert not state.dirty
+
+    panel.category.setCurrentIndex(panel.category.findData(3))
+    panel.category.activated.emit(panel.category.currentIndex())
+    assert state.dirty
+    assert panel.protection.text() == "Protect: no effect · Shell: no effect"
+    assert panel.enemy_ai.text() == "Special (3)"
+    select("No Mercy")
+    before = bytes(tab._entries[no_mercy]._payload)
+    flags_before = tab._entries[no_mercy].get("attack_flags")
+    panel.calculation.setCurrentIndex(panel.calculation.findData(2))
+    panel.category.setCurrentIndex(panel.category.findData(0))
+    assert panel.protection.text() == "Protect: no effect · Shell: no effect"
+    assert panel.statuses.text() == "Cleared before resolution"
+    tab.commit()
+    expected = bytearray(before)
+    for name, value in (("attack_type", 2), ("attack_flags_type", 0)):
+        field = tab._field_widgets[name][1]
+        offset = field["offset"] - tab._entries[no_mercy]._payload_start
+        mask = field.get("mask", 0xFF)
+        expected[offset] = (expected[offset] & ~mask) | value
+    assert bytes(tab._entries[no_mercy]._payload) == bytes(expected)
+    assert tab._entries[no_mercy].get("attack_flags") == flags_before
+
+    # Bulk/group paste blocks editor signals while loading: the readout still refreshes.
+    tab.apply_group_values({"attack_flags_type": 1}, [no_mercy])
+    assert panel.protection.text() == "Protect: no effect · Shell: halves damage"
+    widget._save_kernel()
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    saved = reloaded._section_tabs[19]._entries[no_mercy]
+    assert (saved.get("attack_type"), saved.get("attack_flags_type"), saved.get("attack_flags")) == (
+        2, 1, flags_before)
+
+    # Unknown mod values stay editable and do not receive an invented protection rule.
+    tab.apply_group_values({"attack_type": 255}, [no_mercy])
+    assert panel.calculation.currentData() == 255
+    assert panel.protection.text() == "Protect: unknown · Shell: unknown"
+    tab.commit()
+    assert tab._entries[no_mercy].get("attack_type") == 255
 
 
 def _duel_button_word(kernel_path, move_id, slot=0):

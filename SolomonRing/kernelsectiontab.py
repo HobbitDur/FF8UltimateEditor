@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 from SolomonRing.kernelentry import KernelEntry
 from SolomonRing.menu_refine_reference import MenuRefineReference
 from SolomonRing.formula_popup import FormulaPopup
+from SolomonRing.attack_behaviour import AttackBehaviourPanel
 from SmallWidget.listsearchbar import ListSearchBar
 from SmallWidget.nowheel import NoWheelComboBox, NoWheelSpinBox
 
@@ -95,6 +96,7 @@ class KernelSectionTab(QWidget):
         self._menu_refine_label = None
         self._menu_refine_button = None
         self._formula_popup = None       # single live formula preview window for this tab
+        self._attack_behaviour_panel = None
 
         self._entries = []
         self._group_paste_buttons = {}   # group name -> its Paste button (enabled once copied)
@@ -458,6 +460,19 @@ class KernelSectionTab(QWidget):
                 embed_map.setdefault(host, []).append(field)
                 embedded_names.add(field["name"])
         self._embed_map = embed_map
+
+        # Keep the two stored values independent, but present their combined behaviour
+        # in one panel rather than scattering apparently contradictory physical/magic
+        # selectors among unrelated fields. Register each editor exactly once as usual.
+        calculation = next((f for f in fields if f.get("lookup") == "attack_type"), None)
+        category = next((f for f in fields if f.get("lookup") == "attack_damage_type"), None)
+        if calculation and category:
+            calculation_label, calculation_widget = self._labeled_widget(calculation)
+            category_label, category_widget = self._labeled_widget(category)
+            self._attack_behaviour_panel = AttackBehaviourPanel(
+                calculation_label, calculation_widget, category_label, category_widget)
+            vbox.addWidget(self._attack_behaviour_panel)
+            fields = [f for f in fields if f is not calculation and f is not category]
 
         # Group fields by editor kind so like-widgets line up: spinboxes, then combos, then
         # bitfields; fields sharing a "row" stay on one line together.
@@ -1048,6 +1063,8 @@ class KernelSectionTab(QWidget):
             sync()
         for refresh_hint in self._unit_hints:
             refresh_hint()
+        if self._attack_behaviour_panel is not None:
+            self._attack_behaviour_panel.refresh()
         # A byte that means one thing on the vanilla entries and another on entries a mod
         # added (a battle command's padding, then "Behaves like") shows only the field
         # that applies to this entry.
