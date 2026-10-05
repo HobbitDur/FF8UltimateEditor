@@ -550,8 +550,9 @@ class CharaOne:
     Two layouts exist in the PC files:
     - headered: u32 model count then per-model headers (most fields). Optional
       fields vary per file: duplicated size, model name, 0xEEEEEEEE marker.
-    - headerless: u32 EOF then raw TIM and model-data chunks back to back
-      (PS-style layout kept for some fields). Parsed by signature scanning.
+    - headerless: u32 EOF then raw TIM / model-data / animation blocks back to back, with the
+      model index stored at the END of the file, read backwards (PS-style layout kept for some
+      fields, see _parse_headerless_index).
     """
 
     def __init__(self, data):
@@ -621,6 +622,63 @@ class CharaOne:
             self.entries.append(entry)
 
     def _parse_headerless(self):
+        if not self._parse_headerless_index():
+            self._parse_headerless_scan()
+
+    def _parse_headerless_index(self) -> bool:
+        """Read the model index stored at the end of a headerless file, backwards.
+
+        Last dword = model count (= the SETMODEL ids 0..count-1 of the field script). Before it,
+        walking toward the start of the file, model 0 first:
+        - main character: 0xD0xxxxxx flag (low 16 bits = main_chr dNNN.mch), then the absolute
+          offset of its animation block (uncompressed 6-byte format, no geometry);
+        - NPC: its absolute TIM offset(s), 0xFFFFFFFF, then the absolute model data offset.
+        Returns False (nothing parsed) when the tail isn't such an index."""
+        data = self.data
+        size = len(data)
+        count = _u32(data, size - 4)
+        if not 0 < count <= 64:
+            return False
+        pos = size - 8
+        entries = []
+        for index in range(count):
+            entry = CharaOneEntry()
+            entry.index = index
+            if pos < 4:
+                return False
+            flag = _u32(data, pos)
+            if flag >> 24 == 0xD0:
+                entry.is_main = True
+                entry.main_chr_id = flag & 0xFFFF
+                entry.scale_raw = (flag >> 8) & 0xFFFF
+                entry.data_offset = _u32(data, pos - 4)
+                entry.name = entry.mch_file_name[:-4]
+                pos -= 8
+            else:
+                while pos >= 4 and _u32(data, pos) != 0xFFFFFFFF:
+                    entry.tim_offsets.insert(0, _u32(data, pos))
+                    pos -= 4
+                    if len(entry.tim_offsets) > 6:
+                        return False
+                if pos < 4 or not entry.tim_offsets:
+                    return False
+                entry.model_offset = _u32(data, pos - 4)
+                entry.data_offset = min(entry.tim_offsets + [entry.model_offset])
+                entry.name = f"model{index}"
+                pos -= 8
+            offsets = entry.tim_offsets + [entry.data_offset, entry.model_offset]
+            if any(not 4 <= offset < pos + 4 for offset in offsets if offset):
+                return False
+            entries.append(entry)
+        # Each block runs to the start of the next one (or to the index itself).
+        index_start = pos + 4
+        starts = sorted({entry.data_offset for entry in entries} | {index_start})
+        for entry in entries:
+            entry.size = next(start for start in starts if start > entry.data_offset) - entry.data_offset
+        self.entries = entries
+        return True
+
+    def _parse_headerless_scan(self):
         """Scan raw TIM / model-data chunks (PS-style layout, uncompressed on PC)."""
         data = self.data
         end = len(data)
@@ -688,7 +746,10 @@ class CharaOne:
         model.name = entry.name
         model.tim_images = [decode_tim(mch_file.data, offset) for offset in mch_file.tim_offsets]
         end = entry.data_offset + entry.size
-        model.animation_data = parse_packed_animation_section(
+        # Headerless files store main character animations uncompressed (6-byte), like their NPCs.
+        parse_animations = parse_uncompressed_animation_section if self.headerless \
+            else parse_packed_animation_section
+        model.animation_data = parse_animations(
             self.data, entry.data_offset, model.bone_data.nb_bone, end)
         compute_animation_matrices(model.animation_data, model.bone_data)
         return model

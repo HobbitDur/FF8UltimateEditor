@@ -56,6 +56,21 @@ def test_nameless_main_entries_use_the_flag_mch_id():
 
 
 @needs_field
+def test_headerless_index_at_end_of_file():
+    """Headerless chara.one keep their model index at the end, backwards: bg2f_1a = 9 main
+    characters (animation blocks only) + 3 NPCs, matching the field script's SETMODEL 0-11."""
+    from FF8GameData.mch.mchanalyser import CharaOne
+    path = next(FIELD.rglob("bg2f_1a/chara.one"))
+    one = CharaOne(path.read_bytes())
+    assert one.headerless
+    assert [e.name for e in one.entries] == ["d000", "d002", "d009", "d011", "d027", "d029", "d018",
+                                             "d024", "d016", "model9", "model10", "model11"]
+    first = one.entries[0]
+    model = one.build_main_model(first, (MAIN_CHR / first.mch_file_name).read_bytes())
+    assert [len(a.frames) for a in model.animation_data.animations] == [1, 28, 20]
+
+
+@needs_field
 def test_widget_open_field_folder_lists_all_fields():
     from PyQt6.QtWidgets import QApplication
     from Seed.seedwidget import SeedWidget
