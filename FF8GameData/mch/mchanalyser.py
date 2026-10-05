@@ -37,6 +37,7 @@ MCH_QUAD_OPCODE = 0x2d010709
 # files carry a countdown in the high byte (0x20..., 0x10..., 0x00...);
 # 0xA0000000 marks a shared-texture reference instead of an offset.
 MCH_OFFSET_MASK = 0x0FFFFFFF
+MCH_MODEL_HEADER_SIZE = 0x40
 MCH_BONE_SIZE = 64
 MCH_FACE_SIZE = 64
 MCH_VERTEX_SIZE = 8
@@ -66,19 +67,30 @@ def _signed12(value: int) -> int:
     return value - 0x1000 if value >= 0x800 else value
 
 
-def mch_texture_id(tex_group: int, abe: bool) -> int:
-    """Face texture id encoding the TIM group plus the PSX ABE bit: even ids
-    use the semi-transparent texture (STP texels blend), odd ids the opaque
-    one. Decoded back with mch_texture_group() / mch_texture_is_semi()."""
-    return 2 * tex_group + (0 if abe else 1)
+def mch_texture_id(tex_group: int, command: int, flags: int) -> int:
+    """Face texture id carrying every per-face attribute the engine reads besides geometry, so
+    they survive the viewer and a glTF round trip (material ff8_texture_<id>):
+    bits 0-2 = TIM group (face +0x36), bit 3 = bit 0x04 of the face word +0x08, bits 8-15 = the
+    primitive command byte +0x1D (bit 0x02 = PSX ABE: STP texels blend only on ABE faces).
+    Decoded back with mch_texture_group / mch_texture_is_semi / mch_face_command / mch_face_flags."""
+    return (tex_group & 0x7) | (((flags >> 2) & 1) << 3) | ((command & 0xFF) << 8)
 
 
 def mch_texture_group(tex_id: int) -> int:
-    return (tex_id & 0xFF) // 2
+    return tex_id & 0x7
 
 
 def mch_texture_is_semi(tex_id: int) -> bool:
-    return (tex_id & 0xFF) % 2 == 0
+    """ABE face: its STP texels blend (semi-transparent texture variant)."""
+    return bool(mch_face_command(tex_id) & 0x02)
+
+
+def mch_face_command(tex_id: int) -> int:
+    return (tex_id >> 8) & 0xFF
+
+
+def mch_face_flag_04(tex_id: int) -> bool:
+    return bool(tex_id & 0x08)
 
 
 class FieldModel:
@@ -97,6 +109,20 @@ class FieldModel:
         self.anim_offset = 0
         self.tex_anim_offset = 0
         self.tex_anim_size = 0
+        # Raw source pieces kept to write the model data back (write_model_data) after the
+        # mesh is replaced (glTF import): header, bones, texture animation, face records
+        # (templates for the bytes the engine ignores), and the vertex normalization.
+        self.raw_header = b""
+        self.raw_bones = b""
+        self.raw_tex_anim = b""
+        self.raw_faces: List[bytes] = []
+        self.vertex_scale_factor = 1.0
+        self.parsed_geometry = None  # geometry_data as parsed: mesh_replaced compares to it
+
+    @property
+    def mesh_replaced(self) -> bool:
+        """Whether geometry_data was swapped since parsing (glTF mesh import)."""
+        return self.parsed_geometry is not None and self.geometry_data is not self.parsed_geometry
 
 
 def parse_model_data(data, base: int, vertex_scale_factor: float = 1.0) -> FieldModel:
@@ -122,6 +148,13 @@ def parse_model_data(data, base: int, vertex_scale_factor: float = 1.0) -> Field
     if nb_bones > 512 or nb_vertices > 100000 or nb_faces > 100000:
         raise ValueError(f"Model data at {hex(base)} looks invalid "
                          f"(bones:{nb_bones}, vertices:{nb_vertices}, faces:{nb_faces})")
+    model.raw_header = bytes(data[base:base + MCH_MODEL_HEADER_SIZE])
+    model.raw_bones = bytes(data[base + bone_offset:base + bone_offset + nb_bones * MCH_BONE_SIZE])
+    model.raw_tex_anim = bytes(data[base + model.tex_anim_offset:
+                                    base + model.tex_anim_offset + model.tex_anim_size])
+    model.raw_faces = [bytes(data[base + face_offset + i * MCH_FACE_SIZE:
+                                  base + face_offset + (i + 1) * MCH_FACE_SIZE]) for i in range(nb_faces)]
+    model.vertex_scale_factor = vertex_scale_factor
 
     # --- Bones (64 bytes each: parent u16 1-based, +8: length s16) ---
     model.bone_data.nb_bone = nb_bones
@@ -183,10 +216,9 @@ def parse_model_data(data, base: int, vertex_scale_factor: float = 1.0) -> Field
         # Byte 0x1D is the render-primitive command byte (Field_Chara-
         # CreateModelInstance / sub_531310); bit 0x02 = ABE (PSX semi-
         # transparency enable). STP-flagged texels only blend on ABE faces,
-        # so route ABE faces to the "semi" texture (even tex id) and the rest
-        # to the "opaque" texture (odd tex id). See mch_texture_id_group().
-        abe = bool(data[face_pos + 0x1D] & 0x02)
-        tex_id = mch_texture_id(tex_group, abe)
+        # so ABE faces use the "semi" texture and the rest the "opaque" one.
+        # The tex id carries it, with the face word +0x08 flag: see mch_texture_id().
+        tex_id = mch_texture_id(tex_group, data[face_pos + 0x1D], _u16(data, face_pos + 0x08))
 
         if opcode == MCH_TRIANGLE_OPCODE:
             triangle = GeometryTriangle()
@@ -196,14 +228,15 @@ def parse_model_data(data, base: int, vertex_scale_factor: float = 1.0) -> Field
             triangle.vtb = uvs[0]
             triangle.vtc = uvs[1]
             triangle.tex_id_1 = tex_id
-            triangle.tex_id_2 = tex_id
+            # tex_id_2 is the battle TPage word (0xFE00 bits = hidden face): none here
+            triangle.tex_id_2 = 0
             object_data.triangles.append(triangle)
         elif opcode == MCH_QUAD_OPCODE:
             quad = GeometryQuad()
             quad.vertex_indexes = indexes
             quad.vta, quad.vtb, quad.vtc, quad.vtd = uvs
             quad.tex_id_1 = tex_id
-            quad.tex_id_2 = tex_id
+            quad.tex_id_2 = 0
             object_data.quads.append(quad)
         else:
             model.nb_unknown_faces += 1
@@ -213,7 +246,118 @@ def parse_model_data(data, base: int, vertex_scale_factor: float = 1.0) -> Field
     model.geometry_data.nb_object = 1
     model.geometry_data.object_data = [object_data]
     model.geometry_data.end = nb_vertices
+    model.parsed_geometry = model.geometry_data
     return model
+
+
+def _face_record(template: bytes, opcode: int, indexes, uvs, tex_id: int) -> bytes:
+    """One 64-byte face from a template face of the model. The engine (sub_531310 command 17)
+    reads only the opcode, the s16 at 0x08 (bit 0x04 semi-transparency), the vertex indexes
+    (0x0C), the primitive command byte 0x1D (bit 0x02 = ABE), the UVs (0x2C) and the TIM index
+    (0x36): the rest is copied from the template."""
+    record = bytearray(template)
+    record[0:4] = opcode.to_bytes(4, 'little')
+    for slot in range(4):
+        index = indexes[slot] if slot < len(indexes) else 0
+        record[0x0C + 2 * slot:0x0E + 2 * slot] = index.to_bytes(2, 'little')
+        u, v = uvs[slot] if slot < len(uvs) else (0, 0)
+        record[0x2C + 2 * slot] = u & 0xFF
+        record[0x2D + 2 * slot] = v & 0xFF
+    record[0x1D] = mch_face_command(tex_id)
+    flags = _u16(record, 0x08) & ~0x04
+    if mch_face_flag_04(tex_id):
+        flags |= 0x04
+    record[0x08:0x0A] = flags.to_bytes(2, 'little')
+    record[0x36:0x38] = mch_texture_group(tex_id).to_bytes(2, 'little')
+    return bytes(record)
+
+
+def _default_face(opcode: int) -> bytes:
+    """Face template for a model without any face of that kind (values of the vanilla faces)."""
+    record = bytearray(MCH_FACE_SIZE)
+    record[0:4] = opcode.to_bytes(4, 'little')
+    record[0x08] = 1
+    record[0x1C:0x20] = bytes((0x80, 0x7F, 0x80, 0x80))
+    return bytes(record)
+
+
+def write_model_data(model: FieldModel, animation_bytes: bytes) -> bytes:
+    """Serialize header-less MCH model data from `model` (its current geometry) plus the given
+    section 7 bytes. Bones, texture animation and the unknown header fields are written back
+    from the parsed source; vertices, faces, skin objects and the draw group (section 5) are
+    rebuilt. Layout as in every vanilla file: header, bones, vertices, texture animation,
+    faces, section 5, skins, animation, back to back."""
+    vertices = []
+    skins = []
+    for obj in model.geometry_data.object_data:
+        for vertices_data in obj.vertices_data:
+            if vertices_data.vertices:
+                skins.append((len(vertices), len(vertices_data.vertices), vertices_data.bone_id + 1))
+            vertices.extend(vertices_data.vertices)
+
+    def raw16(value):
+        return max(-32768, min(32767, int(round(value)))) & 0xFFFF
+
+    factor = model.vertex_scale_factor or 1.0
+    vertex_bytes = bytearray()
+    for vertex in vertices:  # inverse of parse_model_data's slot mapping
+        for value in (-vertex._x / factor, vertex._z / factor, -vertex._y / factor, 0):
+            vertex_bytes += raw16(value).to_bytes(2, 'little')
+
+    # Templates for the bytes the engine ignores: a face of the same kind and attributes
+    # when the model has one (keeps them close to the original), else any of that kind.
+    templates = {}
+    for record in model.raw_faces:
+        opcode = _u32(record, 0)
+        attributes = mch_texture_id(_u16(record, 0x36), record[0x1D], _u16(record, 0x08))
+        templates.setdefault((opcode, attributes), record)
+        templates.setdefault((opcode, None), record)
+
+    def template_for(opcode, tex_id):
+        return (templates.get((opcode, tex_id))
+                or templates.get((opcode, None)) or _default_face(opcode))
+
+    faces = bytearray()
+    nb_triangles = nb_quads = 0
+    for obj in model.geometry_data.object_data:
+        for triangle in obj.triangles:
+            uvs = [(uv._u, uv._v) for uv in (triangle.vtb, triangle.vtc, triangle.vta)]
+            faces += _face_record(template_for(MCH_TRIANGLE_OPCODE, triangle.tex_id_1), MCH_TRIANGLE_OPCODE,
+                                  list(triangle.vertex_indexes[:3]), uvs, triangle.tex_id_1)
+            nb_triangles += 1
+        for quad in obj.quads:
+            uvs = [(uv._u, uv._v) for uv in (quad.vta, quad.vtb, quad.vtc, quad.vtd)]
+            faces += _face_record(template_for(MCH_QUAD_OPCODE, quad.tex_id_1), MCH_QUAD_OPCODE,
+                                  list(quad.vertex_indexes[:4]), uvs, quad.tex_id_1)
+            nb_quads += 1
+
+    # One draw group covering every skin object, triangle and quad (what most vanilla models have).
+    group = bytearray(32)
+    group[0:4] = (0).to_bytes(2, 'little') + len(skins).to_bytes(2, 'little')
+    group[16:24] = (0).to_bytes(2, 'little') + nb_triangles.to_bytes(2, 'little') \
+        + (0).to_bytes(2, 'little') + nb_quads.to_bytes(2, 'little')
+    skin_bytes = b"".join(first.to_bytes(2, 'little') + count.to_bytes(2, 'little')
+                          + bone.to_bytes(2, 'little') + b"\x00\x00" for first, count, bone in skins)
+
+    sections = [model.raw_bones, bytes(vertex_bytes), model.raw_tex_anim, bytes(faces), bytes(group),
+                skin_bytes]
+    offsets = []
+    position = MCH_MODEL_HEADER_SIZE
+    for section in sections:
+        offsets.append(position)
+        position += len(section)
+    anim_offset = position
+
+    header = bytearray(model.raw_header.ljust(MCH_MODEL_HEADER_SIZE, b"\x00"))
+    header[0x04:0x08] = len(vertices).to_bytes(4, 'little')
+    header[0x0C:0x10] = (nb_triangles + nb_quads).to_bytes(4, 'little')
+    header[0x10:0x14] = (1).to_bytes(4, 'little')
+    header[0x14:0x18] = len(skins).to_bytes(4, 'little')
+    header[0x1C:0x20] = nb_triangles.to_bytes(2, 'little') + nb_quads.to_bytes(2, 'little')
+    for slot, offset in zip((0x20, 0x24, 0x28, 0x2C, 0x30, 0x34), offsets):
+        header[slot:slot + 4] = offset.to_bytes(4, 'little')
+    header[0x38:0x3C] = anim_offset.to_bytes(4, 'little')
+    return bytes(header) + b"".join(sections) + animation_bytes
 
 
 def _make_vertices_data(bone_id: int, vertices: List[Vertex]) -> VerticesData:
@@ -489,6 +633,13 @@ class MchFile:
         if self.model_address + 0x40 > len(data):
             raise ValueError("Not a valid MCH file (model data offset out of range)")
 
+    def rebuild_with_model(self, model: FieldModel) -> bytes:
+        """The .mch bytes with `model`'s mesh written in (TIM list + TIMs kept, they always
+        come before the model data; the mch rest animation is copied verbatim - the game
+        replaces it with each field's chara.one animations anyway)."""
+        rest_animation = bytes(self.data[self.model_address + model.anim_offset:])
+        return bytes(self.data[:self.model_address]) + write_model_data(model, rest_animation)
+
     def build_model(self, character_scale: float = DEFAULT_MODEL_SCALE) -> FieldModel:
         factor = DEFAULT_MODEL_SCALE / character_scale if character_scale else 1.0
         model = parse_model_data(self.data, self.model_address, factor)
@@ -760,7 +911,11 @@ class CharaOne:
         """Data block for an entry with `model`'s animations serialized in."""
         animation_bytes = write_packed_animation_section(model.animation_data)
         if entry.is_main:
-            return animation_bytes
+            return animation_bytes  # its mesh lives in main_chr: see build_main_mch
+        if model.mesh_replaced:
+            # TIMs always come before the model data: keep them, rebuild the model data.
+            tims = bytes(self.data[entry.data_offset:entry.model_offset])
+            return tims + write_model_data(model, animation_bytes)
         # The animation section is the last section of the model data:
         # keep everything up to it (TIMs + geometry) and append.
         cut = (entry.model_offset + model.anim_offset) - entry.data_offset

@@ -39,8 +39,6 @@ class SeedManager:
     # glTF export: field bone matrices take vertices as plain v' = R * v + t
     # (see _transform_vertex), unlike the battle .dat (x, -y, -z) swizzle.
     vertex_axis_signs = (1.0, 1.0, 1.0)
-    # chara.one saving rewrites animations only: an imported glTF mesh is view-only.
-    can_save_mesh = False
 
     def __init__(self):
         self.enemy = FieldModel()
@@ -124,20 +122,43 @@ class SeedManager:
         self.current_entry_index = index
 
     def modified_entry_names(self) -> List[str]:
-        """Names of the viewed models whose animations differ from the file."""
+        """Names of the viewed models whose animations or mesh differ from the files."""
         if self.chara_one is None or self.chara_one.headerless:
             return []
-        return [self.chara_one.entries[index].name
-                for index in self.chara_one.changed_entries(self.models)]
+        changed = set(self.chara_one.changed_entries(self.models))
+        changed.update(index for index, _ in self.main_mesh_changes())
+        return [self.chara_one.entries[index].name for index in sorted(changed)]
+
+    def main_mesh_changes(self) -> List[Tuple[int, pathlib.Path]]:
+        """(entry index, .mch path) of the main characters whose mesh was replaced (glTF import).
+        Their mesh lives in main_chr, shared by every field, not in this chara.one."""
+        if self.chara_one is None or self.main_chr_folder is None:
+            return []
+        return [(index, self.main_chr_folder / self.chara_one.entries[index].mch_file_name)
+                for index, model in sorted(self.models.items())
+                if self.chara_one.entries[index].is_main and model.mesh_replaced]
+
+    @property
+    def can_save_mesh(self) -> bool:
+        """An imported mesh can be saved for a model of a headered chara.one (NPC: into the
+        chara.one, main character: into its main_chr .mch); not for a standalone .mch view."""
+        return (self.chara_one is not None and not self.chara_one.headerless
+                and self.current_entry_index is not None)
 
     def save_chara_one(self, dest_path) -> List[str]:
-        """Write the chara.one back with the animations of every model
-        modified in this session (60 fps conversions, bone edits...). Other
-        entries are copied verbatim. Returns the modified model names."""
+        """Write the chara.one back with the animations (and imported NPC meshes) of every
+        model modified in this session (60 fps conversions, bone edits, glTF mesh import...),
+        and the .mch of every main character whose mesh was replaced. Other entries are copied
+        verbatim. Returns the modified model names."""
         if self.chara_one is None:
             raise ValueError("No chara.one loaded")
         modified = self.modified_entry_names()
         data = self.chara_one.rebuild_with_models(self.models)
+        for index, mch_path in self.main_mesh_changes():
+            mch_file = MchFile(mch_path.read_bytes())
+            mch_path.write_bytes(mch_file.rebuild_with_model(self.models[index]))
+            # Saved: the written mesh is now the file's mesh
+            self.models[index].parsed_geometry = self.models[index].geometry_data
         pathlib.Path(dest_path).write_bytes(data)
         return modified
 
@@ -172,34 +193,42 @@ class SeedManager:
 
     def _build_texture_data(self, model: FieldModel) -> List[SeedTextureData]:
         """One texture per distinct face tex id, ordered to match the sorted
-        unique ids (the viewer maps ids to this list by rank). Even ids keep
-        the semi-transparent TIM, odd ids get an opaque copy — see
+        unique ids (the viewer maps ids to this list by rank). ABE faces keep
+        the semi-transparent TIM, the others get an opaque copy — see
         mchanalyser.mch_texture_id()."""
         used_ids = set()
         for obj in model.geometry_data.object_data:
             for triangle in obj.triangles:
-                used_ids.add(triangle.tex_id_1 & 0xFF)
+                used_ids.add(triangle.tex_id_1)
             for quad in obj.quads:
-                used_ids.add(quad.tex_id_1 & 0xFF)
+                used_ids.add(quad.tex_id_1)
 
-        opaque_cache = {}
+        # Ids differing only by attributes the texture doesn't depend on share one texture
+        # object (same pixmap): one per (TIM group, semi-transparent or opaque variant).
+        variants = {}
         texture_data = []
         for tex_id in sorted(used_ids):
             group = mch_texture_group(tex_id)
-            if group >= len(model.tim_images) or model.tim_images[group] is None:
-                texture_data.append(SeedTextureData(Image.new('RGBA', (2, 2), (0, 255, 0, 255))))
-                continue
-            image = model.tim_images[group].image
-            if not mch_texture_is_semi(tex_id):
-                if group not in opaque_cache:
-                    opaque_cache[group] = self._force_opaque(image)
-                image = opaque_cache[group]
-            texture_data.append(SeedTextureData(image))
+            key = (group, mch_texture_is_semi(tex_id))
+            if key not in variants:
+                if group >= len(model.tim_images) or model.tim_images[group] is None:
+                    image = Image.new('RGBA', (2, 2), (0, 255, 0, 255))
+                else:
+                    image = model.tim_images[group].image
+                    if not key[1]:
+                        image = self._force_opaque(image)
+                variants[key] = SeedTextureData(image)
+            texture_data.append(variants[key])
         return texture_data
 
     # ---------------------------------------------------- viewer support
     # Same math as IfritManager: transforms bone-local vertices with the
     # pre-computed frame matrices.
+
+    def on_mesh_imported(self):
+        """The mesh was replaced (glTF import): the viewer maps face texture ids to texture_data
+        by rank, so rebuild it for the new set of ids."""
+        self.texture_data = self._build_texture_data(self.enemy)
 
     def _ensure_matrices(self):
         """IfritManager surface (glTF export): field frame matrices are always built on load."""

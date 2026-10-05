@@ -38,6 +38,8 @@ How the FF8 data is mapped to glTF:
 import math
 import struct
 
+import numpy as np
+
 from PyQt6.QtCore import QBuffer, QIODevice
 from PyQt6.QtGui import QImage
 
@@ -275,14 +277,19 @@ class GltfExporter:
         gltf["images"] = []
         gltf["textures"] = []
         semi_transparent = []  # per texture: has partly transparent texels (PSX STP blending)
-        for image_index, pixmap in enumerate(pixmaps):
-            png_bytes, has_partial_alpha = _pixmap_to_png_bytes(pixmap, self.black_is_transparent)
+        image_of_pixmap = {}   # the same pixmap listed for several ids is embedded once
+        for pixmap in pixmaps:
+            key = pixmap.cacheKey()
+            if key not in image_of_pixmap:
+                png_bytes, has_partial_alpha = _pixmap_to_png_bytes(pixmap, self.black_is_transparent)
+                image_of_pixmap[key] = (len(gltf["images"]), has_partial_alpha)
+                gltf["images"].append({
+                    "name": f"texture_{len(gltf['images'])}",
+                    "mimeType": "image/png",
+                    "bufferView": builder.add_buffer_view(png_bytes),
+                })
+            image_index, has_partial_alpha = image_of_pixmap[key]
             semi_transparent.append(has_partial_alpha)
-            gltf["images"].append({
-                "name": f"texture_{image_index}",
-                "mimeType": "image/png",
-                "bufferView": builder.add_buffer_view(png_bytes),
-            })
             gltf["textures"].append({"sampler": 0, "source": image_index})
 
         # Map raw tex_ids to textures with the same rule as the viewer
@@ -379,22 +386,16 @@ class GltfExporter:
 
             # translations[bone_id][frame] = (x, y, z) ; rotations[...] = (x, y, z, w)
             # scales[bone_id][frame] = (sx, sy, sz)
-            translations = [[] for _ in bones]
-            rotations = [[] for _ in bones]
-            scales = [[] for _ in bones]
-            for frame in anim.frames:
-                frame_globals = self._global_bone_matrices(frame)
-                frame_locals = self._local_bone_transforms(frame_globals, bones)
-                for bone_id, (translation, rotation, scale) in enumerate(frame_locals):
-                    # Keep quaternions on the same hemisphere as the previous frame,
-                    # otherwise the interpolation takes the "long way around".
-                    if rotations[bone_id]:
-                        previous = rotations[bone_id][-1]
-                        if sum(p * r for p, r in zip(previous, rotation)) < 0:
-                            rotation = tuple(-component for component in rotation)
-                    translations[bone_id].append(translation)
-                    rotations[bone_id].append(rotation)
-                    scales[bone_id].append(scale)
+            frame_translations, frame_rotations, frame_scales = _animation_local_transforms(
+                [self._global_bone_matrices(frame) for frame in anim.frames], bones)
+            # Keep quaternions on the same hemisphere as the previous frame,
+            # otherwise the interpolation takes the "long way around".
+            for frame_id in range(1, len(anim.frames)):
+                flip = np.einsum('bi,bi->b', frame_rotations[frame_id - 1], frame_rotations[frame_id]) < 0
+                frame_rotations[frame_id][flip] *= -1
+            translations = [[tuple(v) for v in frame_translations[:, bone_id]] for bone_id in range(len(bones))]
+            rotations = [[tuple(v) for v in frame_rotations[:, bone_id]] for bone_id in range(len(bones))]
+            scales = [[tuple(v) for v in frame_scales[:, bone_id]] for bone_id in range(len(bones))]
 
             times = [frame_id / self.fps for frame_id in range(len(anim.frames))]
             input_accessor = builder.add_accessor(times, COMPONENT_FLOAT, "SCALAR",
@@ -455,6 +456,58 @@ class GltfExporter:
         name = str(info_stat_data.get("monster_name", "") or getattr(enemy, 'name', ""))
         name = "".join(char for char in name if char.isalnum() or char in " _-").strip()
         return name or "ff8_model"
+
+
+def _animation_local_transforms(frame_globals, bones):
+    """Vectorized GltfExporter._local_bone_transforms over every frame of an animation (the
+    per-matrix Python version made exporting take ~0.5 s per model). Same math and the same
+    quaternion branch choice as _decompose_rotation_scale / _quat_from_matrix.
+
+    frame_globals: per frame, the list of 4x4 world matrices (GltfExporter._global_bone_matrices).
+    Returns float arrays translations (F, B, 3), rotations (F, B, 4) as (x, y, z, w), scales (F, B, 3).
+    """
+    globals_array = np.asarray(frame_globals, dtype=np.float64)          # (F, B, 4, 4)
+    nb_frames, nb_bones = globals_array.shape[:2]
+    parents = [bone.parent_id for bone in bones]
+    has_parent = np.array([parent != 0xFFFF for parent in parents], dtype=bool)
+    parent_index = np.array([parent if parent != 0xFFFF else 0 for parent in parents], dtype=np.int64)
+
+    try:
+        parent_inverse = np.linalg.inv(globals_array[:, parent_index])
+    except np.linalg.LinAlgError:  # a singular matrix: fall back to the exact scalar routine
+        parent_inverse = np.array([[_mat4_inverse(frame[parent].tolist()) for parent in parent_index]
+                                   for frame in globals_array])
+    local = np.where(has_parent[None, :, None, None], parent_inverse @ globals_array, globals_array)
+
+    translations = local[:, :, :3, 3].copy()
+    basis = local[:, :, :3, :3]                                           # rows x columns
+    scales = np.linalg.norm(basis, axis=2)                               # column lengths (F, B, 3)
+    scales[scales == 0] = 1.0
+    rot = basis / scales[:, :, None, :]
+    det = np.linalg.det(rot)
+    reflected = det < 0
+    scales[..., 0] = np.where(reflected, -scales[..., 0], scales[..., 0])
+    rot[..., :, 0] = np.where(reflected[..., None], -rot[..., :, 0], rot[..., :, 0])
+
+    m00, m01, m02 = rot[..., 0, 0], rot[..., 0, 1], rot[..., 0, 2]
+    m10, m11, m12 = rot[..., 1, 0], rot[..., 1, 1], rot[..., 1, 2]
+    m20, m21, m22 = rot[..., 2, 0], rot[..., 2, 1], rot[..., 2, 2]
+    trace = m00 + m11 + m22
+    with np.errstate(invalid='ignore', divide='ignore'):
+        s0 = np.sqrt(np.maximum(trace + 1.0, 0)) * 2
+        s1 = np.sqrt(np.maximum(1.0 + m00 - m11 - m22, 0)) * 2
+        s2 = np.sqrt(np.maximum(1.0 + m11 - m00 - m22, 0)) * 2
+        s3 = np.sqrt(np.maximum(1.0 + m22 - m00 - m11, 0)) * 2
+        candidates = [
+            np.stack([(m21 - m12) / s0, (m02 - m20) / s0, (m10 - m01) / s0, 0.25 * s0], axis=-1),
+            np.stack([0.25 * s1, (m01 + m10) / s1, (m02 + m20) / s1, (m21 - m12) / s1], axis=-1),
+            np.stack([(m01 + m10) / s2, 0.25 * s2, (m12 + m21) / s2, (m02 - m20) / s2], axis=-1),
+            np.stack([(m02 + m20) / s3, (m12 + m21) / s3, 0.25 * s3, (m10 - m01) / s3], axis=-1),
+        ]
+    branch = np.where(trace > 0, 0, np.where((m00 > m11) & (m00 > m22), 1, np.where(m11 > m22, 2, 3)))
+    rotations = np.choose(branch[..., None], candidates)
+    rotations /= np.linalg.norm(rotations, axis=-1, keepdims=True)
+    return translations, rotations, scales
 
 
 # ----------------------------------------------------------------------

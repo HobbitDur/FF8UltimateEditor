@@ -3,11 +3,12 @@ import pathlib
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel,
                              QListWidget, QListWidgetItem, QMessageBox,
-                             QSplitter)
+                             QSplitter, QFileDialog, QProgressDialog, QApplication)
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
+from Seed.seedbatchexport import export_fields_to_gltf
 from Seed.seedmanager import SeedManager
 from SmallWidget.listsearchbar import ListSearchBar
 
@@ -64,6 +65,11 @@ class SeedWidget(QWidget):
 
         self.viewer_3d = Ifrit3DWidget(self.seed_manager, show_controls=True)
         self.viewer_3d.set_fps(self.seed_manager.anim_native_fps)  # field animations run at 30 fps
+        self.viewer_3d.add_files_menu_action(
+            "Export all opened fields to glTF…",
+            "Export every model of every opened field (the Fields list of an opened folder, or the\n"
+            "open chara.one) to .glb files: one subfolder per field, one file per model.",
+            self.export_all_gltf)
 
         splitter.addWidget(left_panel)
         splitter.addWidget(self.viewer_3d)
@@ -253,17 +259,66 @@ class SeedWidget(QWidget):
             return
         modified = self.seed_manager.modified_entry_names()
         if not modified:
-            QMessageBox.information(self, "Seed", "No animation changes to save: the file "
+            QMessageBox.information(self, "Seed", "No animation or mesh changes to save: the file "
                                                   "would be identical to the original.")
             return
+        main_meshes = self.seed_manager.main_mesh_changes()
+        if main_meshes:
+            files = "\n".join(f"  • {path}" for _, path in main_meshes)
+            answer = QMessageBox.question(
+                self, "Seed",
+                "The mesh of these main characters was replaced. It is stored in main_chr, "
+                "shared by every field, so saving changes the character everywhere:\n"
+                f"{files}\n\nWrite these .mch files too?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+            if answer != QMessageBox.StandardButton.Yes:
+                return
         try:
             saved = self.seed_manager.save_chara_one(self.seed_manager.chara_one_path)
         except Exception as e:
             QMessageBox.critical(self, "Seed", f"Could not save {self.seed_manager.chara_one_path}:\n{e}")
             return
         QMessageBox.information(self, "Seed",
-                                f"Saved.\nAnimations written for: {', '.join(saved)}.\n"
+                                f"Saved.\nChanges written for: {', '.join(saved)}.\n"
                                 f"All other models were copied unchanged from the original file.")
+
+    def export_all_gltf(self):
+        """Files menu of the 3D viewer: every model of every opened field to .glb files."""
+        if self._field_paths:
+            paths = list(self._field_paths)
+        elif self.seed_manager.chara_one_path is not None:
+            paths = [self.seed_manager.chara_one_path]
+        else:
+            QMessageBox.warning(self, "Export all to glTF",
+                                "Open a field folder (or a chara.one) first.")
+            return
+        out_dir = QFileDialog.getExistingDirectory(
+            self, f"Export {len(paths)} field(s) to glTF: choose the output folder")
+        if not out_dir:
+            return
+        progress = QProgressDialog("Exporting...", "Cancel", 0, len(paths), self)
+        progress.setWindowTitle("Export all to glTF")
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(0)
+
+        def on_field(index, field):
+            progress.setValue(index)
+            progress.setLabelText(f"Field {index + 1}/{len(paths)}: {field}")
+            QApplication.processEvents()
+            return not progress.wasCanceled()
+
+        written, failures = export_fields_to_gltf(
+            paths, out_dir, self.seed_manager.main_chr_folder, self.seed_manager, on_field)
+        cancelled = progress.wasCanceled()
+        progress.close()
+        lines = [f"{len(written)} model(s) exported to:\n{out_dir}"]
+        if cancelled:
+            lines.append("\nCancelled before the end.")
+        if failures:
+            shown = "\n".join(f"  • {failure}" for failure in failures[:20])
+            more = f"\n  ... and {len(failures) - 20} more" if len(failures) > 20 else ""
+            lines.append(f"\n{len(failures)} could not be exported:\n{shown}{more}")
+        QMessageBox.information(self, "Export all to glTF", "\n".join(lines))
 
     def _on_model_selected(self, row: int):
         if row < 0 or not self.seed_manager.chara_one:

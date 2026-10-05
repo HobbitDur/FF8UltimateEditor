@@ -1482,6 +1482,17 @@ class Ifrit3DWidget(QWidget):
         """Return the underlying OpenGL widget for advanced control"""
         return self.gl_widget
 
+    def add_files_menu_action(self, text: str, tooltip: str, callback):
+        """Let the host tool add its own entry to the 3D Files menu (e.g. Seed's export of every
+        opened field). Returns the QAction, or None when the viewer has no controls."""
+        if not hasattr(self, '_files_menu'):
+            return None
+        action = QAction(text, self)
+        action.setToolTip(tooltip)
+        action.triggered.connect(callback)
+        self._files_menu.addAction(action)
+        return action
+
     def export_gltf(self):
         """Export the loaded model to a glTF binary file (.glb), importable in Blender."""
         if not self.ifrit_manager.enemy.geometry_data.object_data:
@@ -1525,6 +1536,9 @@ class Ifrit3DWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Import glTF", f"Import failed: {e}")
             return
+        on_mesh_imported = getattr(self.ifrit_manager, 'on_mesh_imported', None)
+        if on_mesh_imported is not None:
+            on_mesh_imported()
         # Refresh the viewer from the (now rebuilt) model.
         self.load_file()
         can_save_mesh = getattr(self.ifrit_manager, 'can_save_mesh', True)
