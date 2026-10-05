@@ -56,8 +56,8 @@ class SeedManager:
         self.chara_one = CharaOne(self.chara_one_path.read_bytes())
         self.models = {}
         self.current_entry_index = None
-        if self.main_chr_folder is None:
-            self.main_chr_folder = self._find_main_chr_folder()
+        if not self.is_main_chr_folder(self.main_chr_folder):
+            self.main_chr_folder = self._find_main_chr_folder() or self.main_chr_folder
         return self.chara_one.entries
 
     def _find_main_chr_folder(self):
@@ -67,6 +67,32 @@ class SeedManager:
             if candidate.is_dir():
                 return candidate
         return None
+
+    @staticmethod
+    def is_main_chr_folder(folder) -> bool:
+        """Whether folder holds the main characters' d0xx.mch models."""
+        return folder is not None and pathlib.Path(folder).is_dir() \
+            and any(pathlib.Path(folder).glob("*.mch"))
+
+    @classmethod
+    def find_main_chr_folder_in(cls, folder):
+        """The main_chr folder for a picked folder: the folder itself if it holds .mch models,
+        else its field/model/main_chr (picked 'field', its parent, or a field room folder)."""
+        folder = pathlib.Path(folder)
+        if cls.is_main_chr_folder(folder):
+            return folder
+        for base in (folder, *folder.parents):
+            for candidate in (base / "model" / "main_chr", base / "field" / "model" / "main_chr"):
+                if cls.is_main_chr_folder(candidate):
+                    return candidate
+        return None
+
+    @staticmethod
+    def find_chara_ones(folder) -> List[pathlib.Path]:
+        """Every chara.one found in folder or its subfolders, sorted by field (folder) name."""
+        found = [path for path in pathlib.Path(folder).rglob("*")
+                 if path.name.lower() == "chara.one" and path.is_file()]
+        return sorted(found, key=lambda path: (path.parent.name.lower(), str(path).lower()))
 
     def load_entry(self, index: int):
         if index in self.models:  # keep edits made on a previously viewed model
