@@ -6898,96 +6898,116 @@
     "formula": "crisis"
    },
    {
-    "name": "duel_start_seq_cl1",
-    "offset": 48,
-    "size": 1,
-    "label": "Duel start seq CL1",
-    "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 1. `linkedToZellDuel` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
-   },
-   {
     "name": "duel_timer_cl1",
-    "offset": 49,
+    "offset": 48,
     "size": 1,
     "label": "Duel timer CL1",
     "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 1 (higher crisis = longer).\nPaired with 'Duel start seq CL1'."
+    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 1 (higher crisis = longer).\nPaired with 'Duel start seq CL1'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "seconds_factor": 0.06666666666666667,
+    "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
    },
    {
-    "name": "duel_start_seq_cl2",
-    "offset": 50,
+    "name": "duel_start_seq_cl1",
+    "offset": 49,
     "size": 1,
-    "label": "Duel start seq CL2",
+    "label": "Duel start seq CL1",
     "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 2. `linkedToZellDuel` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
+    "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 1. `computeCommandAction` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
    },
    {
     "name": "duel_timer_cl2",
-    "offset": 51,
+    "offset": 50,
     "size": 1,
     "label": "Duel timer CL2",
     "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 2 (higher crisis = longer).\nPaired with 'Duel start seq CL2'."
+    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 2 (higher crisis = longer).\nPaired with 'Duel start seq CL2'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "seconds_factor": 0.06666666666666667,
+    "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
    },
    {
-    "name": "duel_start_seq_cl3",
-    "offset": 52,
+    "name": "duel_start_seq_cl2",
+    "offset": 51,
     "size": 1,
-    "label": "Duel start seq CL3",
+    "label": "Duel start seq CL2",
     "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 3. `linkedToZellDuel` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
+    "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 2. `computeCommandAction` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
    },
    {
     "name": "duel_timer_cl3",
-    "offset": 53,
+    "offset": 52,
     "size": 1,
     "label": "Duel timer CL3",
     "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 3 (higher crisis = longer).\nPaired with 'Duel start seq CL3'."
+    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 3 (higher crisis = longer).\nPaired with 'Duel start seq CL3'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "seconds_factor": 0.06666666666666667,
+    "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
    },
    {
-    "name": "duel_start_seq_cl4",
-    "offset": 54,
+    "name": "duel_start_seq_cl3",
+    "offset": 53,
     "size": 1,
-    "label": "Duel start seq CL4",
+    "label": "Duel start seq CL3",
     "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 4. `linkedToZellDuel` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
+    "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 3. `computeCommandAction` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
    },
    {
     "name": "duel_timer_cl4",
-    "offset": 55,
+    "offset": 54,
     "size": 1,
     "label": "Duel timer CL4",
     "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 4 (higher crisis = longer).\nPaired with 'Duel start seq CL4'."
+    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 4 (higher crisis = longer).\nPaired with 'Duel start seq CL4'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "seconds_factor": 0.06666666666666667,
+    "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
+   },
+   {
+    "name": "duel_start_seq_cl4",
+    "offset": 55,
+    "size": 1,
+    "label": "Duel start seq CL4",
+    "group": "Duel timers",
+    "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 4. `computeCommandAction` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
    },
    {
     "name": "shot_timer_cl1",
     "offset": 56,
     "size": 1,
     "label": "Shot timer CL1",
-    "group": "Shot timers"
+    "group": "Shot timers",
+    "help": "Irvine 'Shot' limit break - duration of the shooting window at crisis level 1.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "seconds_factor": 0.06666666666666667,
+    "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
    },
    {
     "name": "shot_timer_cl2",
     "offset": 57,
     "size": 1,
     "label": "Shot timer CL2",
-    "group": "Shot timers"
+    "group": "Shot timers",
+    "help": "Irvine 'Shot' limit break - duration of the shooting window at crisis level 2.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "seconds_factor": 0.06666666666666667,
+    "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
    },
    {
     "name": "shot_timer_cl3",
     "offset": 58,
     "size": 1,
     "label": "Shot timer CL3",
-    "group": "Shot timers"
+    "group": "Shot timers",
+    "help": "Irvine 'Shot' limit break - duration of the shooting window at crisis level 3.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "seconds_factor": 0.06666666666666667,
+    "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
    },
    {
     "name": "shot_timer_cl4",
     "offset": 59,
     "size": 1,
     "label": "Shot timer CL4",
-    "group": "Shot timers"
+    "group": "Shot timers",
+    "help": "Irvine 'Shot' limit break - duration of the shooting window at crisis level 4.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "seconds_factor": 0.06666666666666667,
+    "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
    }
   ],
   "entry_names": [

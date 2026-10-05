@@ -645,8 +645,8 @@ misc_limits = [(f"limit_{n.lower().replace(' ', '_')}_{i}", 1, None, f"{n} limit
                for i, n in enumerate(LIMIT_EFFECTS)]
 misc_duel = []
 for cl in range(1, 5):
-    misc_duel.append((f"duel_start_seq_cl{cl}", 1, None, f"Duel start seq CL{cl}"))
     misc_duel.append((f"duel_timer_cl{cl}", 1, None, f"Duel timer CL{cl}"))
+    misc_duel.append((f"duel_start_seq_cl{cl}", 1, None, f"Duel start seq CL{cl}"))
 misc_shot = [(f"shot_timer_cl{cl}", 1, None, f"Shot timer CL{cl}") for cl in range(1, 5)]
 sec(30, 0, [], [
     ("Status timers", misc_timers),
@@ -1356,13 +1356,22 @@ for sid_s, cfg in sections.items():
         if sid == 30 and f["name"].startswith("limit_"):
             f["formula"] = "crisis"
 
-# Zell "Duel" limit-break help (decompiled: linkedToZellDuel / sub_4852B0 / K_DUEL_PARAM).
+# Duel pairs store duration first, then sequence: linkedToZellDuel (0x48E5A0)
+# reads 46 + 2*CL; computeCommandAction (0x48D200) reads 47 + 2*CL.
+# BattleMenu_ZellDuel_Open (0x4B03B0) and RelatedToUpdateShotIrvineLimit
+# (0x4AD7D0) load 4*raw ticks. Duel's HUD (0x4AFD10) divides by 60.
+_LIMIT_TIMER_SECONDS_NOTE = (
+    "Duration = raw value / 15 seconds at normal game speed. The game loads "
+    "4 × raw countdown ticks, with 60 ticks per displayed second.\n"
+    "This is the limit input timer, separate from the status timers' Battle Speed conversion. "
+    "The countdown can pause while its input window is inactive."
+)
 for _f in sections["30"]["fields"]:
     _n = _f["name"]
     if _n.startswith("duel_start_seq_cl"):
         _cl = _n[-1]
         _f["help"] = (f"Zell 'Duel' limit break - starting index into the Duel move table "
-                      f"(section 24 'Duel Params') at crisis level {_cl}. `linkedToZellDuel` reads "
+                      f"(section 24 'Duel Params') at crisis level {_cl}. `computeCommandAction` reads "
                       f"this to seed the move sequence; the per-tick driver `sub_4852B0` then plays "
                       f"`duelMoves[seq].StartMove` and the player's button input branches via that "
                       f"entry's Next Sequence bytes. Higher crisis level -> different opening chain.")
@@ -1370,7 +1379,15 @@ for _f in sections["30"]["fields"]:
         _cl = _n[-1]
         _f["help"] = (f"Zell 'Duel' limit break - duration of the Duel input window at crisis "
                       f"level {_cl} (higher crisis = longer).\n"
-                      f"Paired with 'Duel start seq CL{_cl}'.")
+                      f"Paired with 'Duel start seq CL{_cl}'.\n" + _LIMIT_TIMER_SECONDS_NOTE)
+        _f["seconds_factor"] = 1.0 / 15.0
+        _f["seconds_note"] = _LIMIT_TIMER_SECONDS_NOTE
+    elif _n.startswith("shot_timer_cl"):
+        _cl = _n[-1]
+        _f["help"] = (f"Irvine 'Shot' limit break - duration of the shooting window at crisis "
+                      f"level {_cl}.\n" + _LIMIT_TIMER_SECONDS_NOTE)
+        _f["seconds_factor"] = 1.0 / 15.0
+        _f["seconds_note"] = _LIMIT_TIMER_SECONDS_NOTE
 for _f in sections["24"]["fields"]:
     if _f["name"].startswith("start_move_"):
         _f["help"] = ("Zell Duel move table: the Duel move performed when this sequence is the "

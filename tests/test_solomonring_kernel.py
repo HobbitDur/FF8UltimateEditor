@@ -539,6 +539,68 @@ def test_the_seconds_hint_follows_the_loaded_value(qapp):
     assert hints == [f"≈ {spin.value() * field['seconds_factor']:.1f}s"]
 
 
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_duel_and_shot_timer_bytes_and_seconds(qapp, game_data, tmp_path):
+    """Duration/sequence pairs decode correctly, show seconds and save to distinct bytes."""
+    from PyQt6.QtWidgets import QLabel
+
+    cfg_path = pathlib.Path(GAME_DATA_FOLDER) / "Resources" / "json" / "kernel_section_fields.json"
+    with cfg_path.open(encoding="utf-8") as cfg_file:
+        cfg = json.load(cfg_file)["30"]
+    km = KernelManager(game_data)
+    km.load_file(str(KERNEL))
+    section = next(s for s in km.section_list if s and s.id == 30)
+    tab = KernelSectionTab(game_data, LookupRegistry(game_data, GAME_DATA_FOLDER), cfg)
+    tab.load_section(section, None)
+    entry = tab._entries[0]
+    # Known engine layout, independent of whether the local kernel has been modded.
+    entry._payload[48:60] = bytes([70, 0, 100, 0, 140, 1, 180, 1, 60, 90, 150, 200])
+    tab._load_entry(0)
+    original = bytes(entry._payload)
+    expected = bytearray(original)
+    data_before, text_before = _snapshot(game_data, KERNEL)
+
+    def hint(spin):
+        return [label.text() for label in spin.parentWidget().findChildren(QLabel)
+                if label.text().startswith("≈")]
+
+    for cl in range(1, 5):
+        duel_offset = 48 + 2 * (cl - 1)
+        _kind, sequence_field, sequence_spin = tab._field_widgets[f"duel_start_seq_cl{cl}"]
+        assert sequence_field["offset"] == duel_offset + 1
+        assert sequence_spin.value() == original[duel_offset + 1]
+        assert "seconds_factor" not in sequence_field
+
+        for name, offset in ((f"duel_timer_cl{cl}", duel_offset),
+                             (f"shot_timer_cl{cl}", 56 + cl - 1)):
+            _kind, field, spin = tab._field_widgets[name]
+            raw = original[offset]
+            assert field["offset"] == offset
+            assert spin.value() == raw
+            assert hint(spin) == [f"≈ {raw / 15:.1f}s"]
+            spin.setValue(raw + 15)
+            assert hint(spin) == [f"≈ {raw / 15 + 1:.1f}s"]
+            expected[offset] = raw + 15
+
+    tab._field_widgets["duel_start_seq_cl3"][2].setValue(2)
+    expected[53] = 2
+    tab.commit()
+    assert bytes(entry._payload) == bytes(expected)
+
+    # Loading values with signals blocked must refresh the seconds hint too.
+    tab.apply_group_values({"shot_timer_cl1": 105}, [0])
+    expected[56] = 105
+    assert hint(tab._field_widgets["shot_timer_cl1"][2]) == ["≈ 7.0s"]
+    tab.commit()
+    out = tmp_path / "limit_timers.bin"
+    km.save_file(str(out))
+    data_after, text_after = _snapshot(game_data, out)
+    assert data_after[30] == bytes(expected)
+    assert {sid: data for sid, data in data_after.items() if sid != 30} == {
+        sid: data for sid, data in data_before.items() if sid != 30}
+    assert text_after == text_before
+
+
 
 def test_the_last_section_tab_is_remembered(qapp, tmp_path):
     """Re-opening SolomonRing lands on the section tab used last (kept in the app settings).
