@@ -50,11 +50,19 @@ from FF8GameData.gltf.glbbuilder import (
 
 
 class GltfExporter:
-    # The viewer plays the animations at 15 frames per second.
+    # Battle .dat animations play at 15 frames per second; a manager can say otherwise
+    # with anim_native_fps (field models: 30).
     FPS = 15.0
+    # How a bone matrix takes a vertex: battle .dat = M * (x, -y, -z) (see the module
+    # docstring); a manager can override it with vertex_axis_signs (field models: plain M * v).
+    VERTEX_AXIS_SIGNS = (1.0, -1.0, -1.0)
 
     def __init__(self, ifrit_manager):
         self.ifrit_manager = ifrit_manager
+        self.fps = float(getattr(ifrit_manager, 'anim_native_fps', self.FPS))
+        self.axis_signs = getattr(ifrit_manager, 'vertex_axis_signs', self.VERTEX_AXIS_SIGNS)
+        # Field textures carry real alpha; battle ones use pure black as the transparent color.
+        self.black_is_transparent = getattr(ifrit_manager, 'texture_black_is_transparent', True)
 
     def export(self, filepath: str, first_animation_id: int = None):
         """
@@ -82,9 +90,10 @@ class GltfExporter:
             bind_animation = next(anim for anim in all_animations if anim.frames)
             bind_globals = self._global_bone_matrices(bind_animation.frames[0])
             # Store the mesh in its bind pose: the pose the viewer shows on load.
+            sx, sy, sz = self.axis_signs
             world_positions = []
             for (x, y, z), bone_id in zip(raw_positions, vertex_bone_ids):
-                world_positions.append(_transform_point(bind_globals[bone_id], (x, -y, -z)))
+                world_positions.append(_transform_point(bind_globals[bone_id], (sx * x, sy * y, sz * z)))
         else:
             world_positions = raw_positions
 
@@ -265,8 +274,10 @@ class GltfExporter:
         }]
         gltf["images"] = []
         gltf["textures"] = []
+        semi_transparent = []  # per texture: has partly transparent texels (PSX STP blending)
         for image_index, pixmap in enumerate(pixmaps):
-            png_bytes = _pixmap_to_png_bytes(pixmap)
+            png_bytes, has_partial_alpha = _pixmap_to_png_bytes(pixmap, self.black_is_transparent)
+            semi_transparent.append(has_partial_alpha)
             gltf["images"].append({
                 "name": f"texture_{image_index}",
                 "mimeType": "image/png",
@@ -281,7 +292,7 @@ class GltfExporter:
         material_of_tex_id = {}
         for rank, tex_id in enumerate(used_tex_ids):
             texture_index = min(rank, len(pixmaps) - 1)
-            gltf["materials"].append({
+            material = {
                 "name": f"ff8_texture_{tex_id}",
                 "pbrMetallicRoughness": {
                     "baseColorTexture": {"index": texture_index},
@@ -292,7 +303,12 @@ class GltfExporter:
                 "alphaMode": "MASK",
                 "alphaCutoff": 0.5,
                 "doubleSided": True,
-            })
+            }
+            if semi_transparent[texture_index]:
+                # Half-transparent texels (PSX semi-transparency) must blend, not be cut
+                material["alphaMode"] = "BLEND"
+                del material["alphaCutoff"]
+            gltf["materials"].append(material)
             material_of_tex_id[tex_id] = rank
         return material_of_tex_id
 
@@ -380,7 +396,7 @@ class GltfExporter:
                     rotations[bone_id].append(rotation)
                     scales[bone_id].append(scale)
 
-            times = [frame_id / self.FPS for frame_id in range(len(anim.frames))]
+            times = [frame_id / self.fps for frame_id in range(len(anim.frames))]
             input_accessor = builder.add_accessor(times, COMPONENT_FLOAT, "SCALAR",
                                                   with_min_max=True)
 
@@ -433,8 +449,10 @@ class GltfExporter:
         return gltf_animations
 
     def model_name(self):
-        """Monster name usable as a file/object name."""
-        name = str(self.ifrit_manager.enemy.info_stat_data.get("monster_name", ""))
+        """Monster (or field model) name usable as a file/object name."""
+        enemy = self.ifrit_manager.enemy
+        info_stat_data = getattr(enemy, 'info_stat_data', None) or {}
+        name = str(info_stat_data.get("monster_name", "") or getattr(enemy, 'name', ""))
         name = "".join(char for char in name if char.isalnum() or char in " _-").strip()
         return name or "ff8_model"
 
@@ -571,19 +589,24 @@ def _quat_from_matrix(matrix):
 # at the top of this module) so the Alexander battle-stage tool can share them.
 
 
-def _pixmap_to_png_bytes(pixmap):
+def _pixmap_to_png_bytes(pixmap, black_is_transparent=True):
     """
-    Encode a QPixmap as PNG bytes (in memory), making pure black pixels transparent.
-    FF8 textures use black as the transparency color; the viewer does the same
-    conversion before uploading to OpenGL (FF8OpenGLWidget._upload_pending_textures).
+    Encode a QPixmap as PNG bytes (in memory). Returns (png_bytes, has_partial_alpha).
+
+    Battle textures use pure black as the transparency color, so it is made transparent
+    (the viewer does the same before uploading to OpenGL, FF8OpenGLWidget). Field textures
+    already carry their real alpha (opaque black kept, semi-transparent texels at half
+    alpha): pass black_is_transparent=False to keep it as is.
     """
     image = pixmap.toImage().convertToFormat(QImage.Format.Format_RGBA8888)
     ptr = image.bits()
     ptr.setsize(image.sizeInBytes())
     pixels = bytearray(ptr)
-    for i in range(0, len(pixels), 4):
-        if pixels[i] == 0 and pixels[i + 1] == 0 and pixels[i + 2] == 0:
-            pixels[i + 3] = 0  # black -> fully transparent
+    if black_is_transparent:
+        for i in range(0, len(pixels), 4):
+            if pixels[i] == 0 and pixels[i + 1] == 0 and pixels[i + 2] == 0:
+                pixels[i + 3] = 0  # black -> fully transparent
+    has_partial_alpha = any(0 < alpha < 255 for alpha in pixels[3::4])
     transparent_image = QImage(bytes(pixels), image.width(), image.height(),
                                image.bytesPerLine(), QImage.Format.Format_RGBA8888)
 
@@ -591,4 +614,4 @@ def _pixmap_to_png_bytes(pixmap):
     buffer.open(QIODevice.OpenModeFlag.WriteOnly)
     transparent_image.save(buffer, "PNG")
     buffer.close()
-    return bytes(buffer.data())
+    return bytes(buffer.data()), has_partial_alpha

@@ -52,8 +52,11 @@ class GltfImportError(Exception):
 
 
 class GltfImporter:
-    def __init__(self):
+    def __init__(self, vertex_axis_signs=(1.0, -1.0, -1.0)):
+        """vertex_axis_signs: how the exporter fed vertices to the bone matrices (battle .dat
+        (x, -y, -z); field models plain (x, y, z)) - GltfExporter.axis_signs of the same manager."""
         self.stats = {}
+        self.axis_signs = tuple(vertex_axis_signs)
 
     # ------------------------------------------------------------------
     # Public API
@@ -70,8 +73,8 @@ class GltfImporter:
         geometry = self.import_geometry(glb_path, original_end=original_end)
         enemy.geometry_data = geometry
         # Section 2 is written from section_raw_data on save (it is not
-        # re-serialized from geometry_data), so refresh it here.
-        if len(enemy.section_raw_data) > 2:
+        # re-serialized from geometry_data), so refresh it here. Field models have no sections.
+        if len(getattr(enemy, 'section_raw_data', ())) > 2:
             enemy.section_raw_data[2] = geometry.get_byte()
         return self.stats
 
@@ -211,7 +214,7 @@ class GltfImporter:
                 for local_vertex in set(indices):
                     px, py, pz = positions[local_vertex][:3]
                     bone = int(joints[local_vertex][0]) if joints is not None else 0
-                    raw = self._world_to_raw(px, py, pz, bone, ibms)
+                    raw = self._world_to_raw(px, py, pz, bone, ibms, self.axis_signs)
                     corner_id = len(corner_bone)
                     corner_bone.append(bone)
                     corner_pos.append(raw)
@@ -242,12 +245,13 @@ class GltfImporter:
         return fallback[material_index]
 
     @staticmethod
-    def _world_to_raw(px, py, pz, bone, ibms):
+    def _world_to_raw(px, py, pz, bone, ibms, axis_signs=(1.0, -1.0, -1.0)):
         """Invert the exporter's vertex placement to FF8 raw integer (x, y, z).
 
-        Exporter: world = bind_global[bone] @ (x, -y, -z) with
-        (x, y, z) = Vertex.get_list() = (-_x/2048, _z/2048, -_y/2048).
-        So IBM[bone] @ world = (x, -y, -z), and we undo the swizzle + scale.
+        Exporter: world = bind_global[bone] @ (sx*x, sy*y, sz*z) with
+        (x, y, z) = Vertex.get_list() = (-_x/2048, _z/2048, -_y/2048) and the axis signs
+        (battle .dat: (1, -1, -1); field models: (1, 1, 1)).
+        So IBM[bone] @ world = the signed vertex, and we undo the signs + scale.
         For a static (unskinned) export, world already holds get_list() values.
         """
         if ibms is not None and bone < len(ibms):
@@ -255,7 +259,8 @@ class GltfImporter:
             s0 = f[0] * px + f[4] * py + f[8] * pz + f[12]
             s1 = f[1] * px + f[5] * py + f[9] * pz + f[13]
             s2 = f[2] * px + f[6] * py + f[10] * pz + f[14]
-            vx, vy, vz = s0, -s1, -s2
+            sx, sy, sz = axis_signs
+            vx, vy, vz = sx * s0, sy * s1, sz * s2
         else:
             vx, vy, vz = px, py, pz
         raw_x = int(round(-vx * _VERTEX_SCALE))

@@ -1487,7 +1487,9 @@ class Ifrit3DWidget(QWidget):
         if not self.ifrit_manager.enemy.geometry_data.object_data:
             QMessageBox.warning(self, "Export glTF", "No model loaded in the 3D viewer.")
             return
-        self.ifrit_manager._ensure_matrices()   # exporter reads frame.bone_matrices directly
+        ensure_matrices = getattr(self.ifrit_manager, '_ensure_matrices', None)
+        if ensure_matrices is not None:
+            ensure_matrices()   # exporter reads frame.bone_matrices directly
         exporter = GltfExporter(self.ifrit_manager)
         default_name = exporter.model_name() + ".glb"
         file_path, _ = QFileDialog.getSaveFileName(self, "Export to glTF", default_name,
@@ -1518,21 +1520,27 @@ class Ifrit3DWidget(QWidget):
         if not file_path:
             return
         try:
-            stats = GltfImporter().import_into_enemy(file_path, self.ifrit_manager.enemy)
+            axis_signs = getattr(self.ifrit_manager, 'vertex_axis_signs', GltfExporter.VERTEX_AXIS_SIGNS)
+            stats = GltfImporter(axis_signs).import_into_enemy(file_path, self.ifrit_manager.enemy)
         except Exception as e:
             QMessageBox.critical(self, "Import glTF", f"Import failed: {e}")
             return
         # Refresh the viewer from the (now rebuilt) model.
         self.load_file()
-        self.model_edited.emit()   # mesh replaced -> dirty (only on a successful import, not on a
-                                   # cancelled file dialog above)
+        can_save_mesh = getattr(self.ifrit_manager, 'can_save_mesh', True)
+        if can_save_mesh:
+            self.model_edited.emit()   # mesh replaced -> dirty (only on a successful import, not
+                                       # on a cancelled file dialog above)
+            save_note = "Save the file to write the new mesh into the .dat."
+        else:
+            save_note = ("This file format can't store an edited mesh yet: the new mesh is only "
+                         "shown here and is NOT written when saving.")
         QMessageBox.information(
             self, "Import glTF",
             f"Mesh replaced from:\n{file_path}\n\n"
             f"Vertices: {stats['vertices']}   Triangles: {stats['triangles']}   "
             f"Bones used: {stats['bones_used']}\n\n"
-            "Skeleton and animations were kept from the current file. "
-            "Save the file to write the new mesh into the .dat.")
+            "Skeleton and animations were kept from the current file. " + save_note)
 
     def _get_slowable_animation_id_set(self):
         """Animations Slow status can reach: they have a lower frame limit.

@@ -36,6 +36,11 @@ class SeedManager:
     # TIM decoding provides real alpha (0x0000 transparent, 0x8000 opaque
     # black): the viewer must not key pure black to transparent.
     texture_black_is_transparent = False
+    # glTF export: field bone matrices take vertices as plain v' = R * v + t
+    # (see _transform_vertex), unlike the battle .dat (x, -y, -z) swizzle.
+    vertex_axis_signs = (1.0, 1.0, 1.0)
+    # chara.one saving rewrites animations only: an imported glTF mesh is view-only.
+    can_save_mesh = False
 
     def __init__(self):
         self.enemy = FieldModel()
@@ -195,6 +200,9 @@ class SeedManager:
     # ---------------------------------------------------- viewer support
     # Same math as IfritManager: transforms bone-local vertices with the
     # pre-computed frame matrices.
+
+    def _ensure_matrices(self):
+        """IfritManager surface (glTF export): field frame matrices are always built on load."""
 
     def _get_bone_matrices(self, anim_id: int, frame_id: int) -> List[Matrix4x4]:
         anim_section = self.enemy.animation_data
