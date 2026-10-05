@@ -64,7 +64,7 @@ class ActorSoundWidget(QWidget):
         self.table = QTableWidget(self.model.ROWS, 2 + self.model.SLOTS)
         self.table.setHorizontalHeaderLabels(["Actor ID", "Actor"] + [f"Slot {slot}" for slot in range(7)])
         self.table.setToolTip("Select a slot to see how its ID resolves. Double-click a slot to edit its decimal world sound ID; 0 means unused.")
-        self.table.horizontalHeaderItem(0).setToolTip("Characters use rows 0–15. Monster c0mNNN uses actor row NNN + 16.")
+        self.table.horizontalHeaderItem(0).setToolTip("Characters use rows 0-15. Monster c0mNNN uses actor row NNN + 16.")
         for column in range(2, 9):
             self.table.horizontalHeaderItem(column).setToolTip("One of seven sound references for this actor. Store a world sound ID, not a direct audio archive index.")
         self.table.verticalHeader().hide()
