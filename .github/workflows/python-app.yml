@@ -429,8 +429,9 @@ jobs:
             ;;
           minor)
             COMMITS=$(commit_log $PREVIOUS_TAG..$CURRENT_TAG)
-            FEAT_COMMITS=$(commit_log $PREVIOUS_TAG..$CURRENT_TAG | grep -i "^feat\|^feature\|^add" || echo "")
-            BUG_COMMITS=$(commit_log $PREVIOUS_TAG..$CURRENT_TAG | grep -i "^fix\|^bug\|^hotfix" || echo "")
+            # Lines look like "- **[Area: ]subject**", so match the keyword after that prefix
+            FEAT_COMMITS=$(commit_log $PREVIOUS_TAG..$CURRENT_TAG | grep -iE '^- \*\*([^*:]+: )?(feat|feature|add|added)\b' || echo "")
+            BUG_COMMITS=$(commit_log $PREVIOUS_TAG..$CURRENT_TAG | grep -iE '^- \*\*([^*:]+: )?(fix|fixed|bug|hotfix)\b' || echo "")
             
             NOTES=""
             
