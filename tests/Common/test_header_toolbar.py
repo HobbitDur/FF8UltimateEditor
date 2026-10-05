@@ -541,8 +541,8 @@ def test_joker_sp2_open_and_direct_save(main_window, tmp_path):
 
 @pytest.mark.ff8data("extracted_files")
 def test_julia_audio_fmt_open_and_direct_save(main_window, monkeypatch, tmp_path):
-    """Julia edits audio.fmt (+ audio.dat from the same folder), a fixed FF8 name - a plain
-    FileBinding, no hooks needed. Save writes straight back to the loaded path (JuliaManager.save
+    """Julia exposes audio.fmt and audio.dat as the main pair on both tabs.
+    Save on Audio archive writes straight back to the loaded paths (JuliaManager.save
     always fully rebuilds/repacks, so it is never byte-identical even unedited - verified instead
     by reloading and checking the sound count round-trips)."""
     import shutil
@@ -553,7 +553,8 @@ def test_julia_audio_fmt_open_and_direct_save(main_window, monkeypatch, tmp_path
     tb._on_tool_changed()
 
     assert not hasattr(julia, "load_button") and not hasattr(julia, "save_button")
-    assert [b.file_name for b in tb._main_bindings()] == ["audio.fmt"]
+    assert [b.file_name for b in tb._main_bindings()] == ["audio.fmt", "audio.dat"]
+    assert [b.file_name for b in tb._complementary_bindings()] == ["battle_actor_sounds.bin"]
     assert tb.import_button.isEnabled() is True
     assert tb.save_button.isEnabled() is False   # nothing loaded yet
 

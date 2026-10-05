@@ -19,10 +19,12 @@ class FileToolbarWidget(QWidget):
     - Import: opens the file(s) the active tool edits (its writable "main" bindings). A tool whose
       open doesn't fit one-FF8-name-per-path (e.g. Alexander's multi-select of several a0stgXXX.x
       at once) implements ``open_files(self)`` instead and pops its own dialog.
-    - Import complementary: opens the read-only file(s) it only reads to feed its preview (shared,
-      each edited in another tool). Several at once when the tool has several (e.g. Zone reads
+    - Import complementary: opens side files, usually read-only preview data. An editable side
+      file can supply its own save controls or be saved by a tool's save_files() hook.
+      Several at once when the tool has several (e.g. Zone reads
       five); disabled when the active tool has none.
-    - Save: writes the active tool's main file(s) back, and/or its ``save_folder()`` if it has one
+    - Save: calls save_files() when the tool handles tab-specific saves; otherwise writes its
+      main file(s) back, and/or its ``save_folder()`` if it has one
       (also used by tools whose save always needs a destination picker, like Alexander's).
     - Reload: re-reads the files the ACTIVE tool is using - its own bindings (writable and
       read-only alike) plus its ``reload_files()`` hook if it has one. Files another tool has
@@ -44,8 +46,7 @@ class FileToolbarWidget(QWidget):
 
         self.import_complementary_button = self._icon_button(
             icon_path, 'import_complementary.svg',
-            "Import the complementary file(s) this tool only reads to feed its preview "
-            "(each edited in another tool, shared read-only with every tool using it)")
+            "Import complementary files (side files or read-only preview data)")
         self.import_complementary_button.clicked.connect(self._import_complementary)
 
         self.save_button = self._icon_button(
@@ -108,10 +109,12 @@ class FileToolbarWidget(QWidget):
         return list(getter()) if callable(getter) else []
 
     def _main_bindings(self):
-        return [binding for binding in self._bindings() if not binding.read_only]
+        return [binding for binding in self._bindings()
+                if not binding.read_only and not getattr(binding, "complementary", False)]
 
     def _complementary_bindings(self):
-        return [binding for binding in self._bindings() if binding.read_only]
+        return [binding for binding in self._bindings()
+                if binding.read_only or getattr(binding, "complementary", False)]
 
     # -- actions --------------------------------------------------------------------
     def _import_entries(self):
@@ -195,11 +198,15 @@ class FileToolbarWidget(QWidget):
 
     def _save(self):
         active = self.tool_stack.currentWidget()
-        for binding in self._main_bindings():
-            binding.save()          # the tool's single-file bindings
-        saver = getattr(active, "save_folder", None)
-        if callable(saver) and not self._active_is_blank():
-            saver()                 # ...and its multi-file / folder save, if it has one
+        save_files = getattr(active, "save_files", None)
+        if callable(save_files):
+            save_files()
+        else:
+            for binding in self._main_bindings():
+                binding.save()          # the tool's single-file bindings
+            saver = getattr(active, "save_folder", None)
+            if callable(saver) and not self._active_is_blank():
+                saver()                 # ...and its multi-file / folder save, if it has one
         dirty_state = getattr(active, "dirty_state", None)
         if dirty_state is not None:
             dirty_state.clear()     # just saved -> no more unsaved changes (drops the title's *)
@@ -367,7 +374,9 @@ class FileToolbarWidget(QWidget):
         self.import_button.setEnabled(bool(self._import_entries()))
         # a tool importing its whole file set at once (import_files) brings its read-only files too
         whole_set = callable(getattr(self.tool_stack.currentWidget(), "import_files", None))
-        self.import_complementary_button.setEnabled(bool(complementary_bindings) and not whole_set)
+        self.import_complementary_button.setEnabled(
+            bool(complementary_bindings) and (not whole_set or any(
+                getattr(binding, "complementary", False) for binding in complementary_bindings)))
         # Save covers the tool's single-file bindings AND any multi-file (folder) save it has - it
         # stays enabled whenever a file is loaded (so saving is never blocked).
         can_save = any(binding.is_loaded for binding in main_bindings) or self._can_save_folder()

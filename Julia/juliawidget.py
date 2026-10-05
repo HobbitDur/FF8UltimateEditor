@@ -8,17 +8,19 @@ stru_B8A418 table extracted from FF8_EN.exe.
 """
 import os
 import sys
+import struct
 
-from PyQt6.QtCore import QBuffer, QByteArray, QLoggingCategory, Qt, QUrl
+from PyQt6.QtCore import QBuffer, QByteArray, QLoggingCategory, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
-                             QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QAbstractItemView)
+                             QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QAbstractItemView, QTabWidget)
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Julia.juliamanager import JuliaManager
+from Julia.actorsoundwidget import ActorSoundWidget
 
 # Qt's FFmpeg backend dumps the stream layout to the console on every play.
 # QT_LOGGING_RULES still overrides this, so it can be turned back on to debug.
@@ -27,6 +29,8 @@ QLoggingCategory.setFilterRules("qt.multimedia.ffmpeg*=false")
 
 class JuliaWidget(QWidget):
     """Editor for the FF8 sound archive (audio.fmt + audio.dat)."""
+
+    file_bindings_changed = pyqtSignal()
 
     COL_INDEX = 0
     COL_FORMAT = 1
@@ -42,6 +46,7 @@ class JuliaWidget(QWidget):
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
         self.icon_path = icon_path
+        self._opening_archive = False
 
         self.game_data = GameData(game_data_folder)
         self.game_data.load_monster_data()
@@ -61,6 +66,8 @@ class JuliaWidget(QWidget):
         # toolbar (Import / Save).
         self.audio_binding = FileBinding("audio.fmt", file_registry, load_callback=self.load_file,
                                          save_callback=self.save_file, file_filter="audio.fmt")
+        self.dat_binding = FileBinding("audio.dat", file_registry, load_callback=self.load_dat_file,
+                                       file_filter="audio.dat")
 
         # --- Sound table ---
         self.table = QTableWidget(0, len(self.HEADERS))
@@ -108,18 +115,61 @@ class JuliaWidget(QWidget):
         self.info_label = QLabel("")
         self.info_label.setStyleSheet("font-style: italic;")
 
+        archive_widget = QWidget()
+        archive_layout = QVBoxLayout(archive_widget)
+        archive_layout.addWidget(self.table)
+        archive_layout.addLayout(action_layout)
+        archive_layout.addWidget(self.info_label)
+        self.actor_sound_widget = ActorSoundWidget(self.game_data, file_registry, self.manager)
+        self.actor_sound_widget.play_requested.connect(self.play_sound)
+        self.actor_sound_widget.file_state_changed.connect(self.file_bindings_changed.emit)
+        self.tabs = QTabWidget()
+        self.tabs.addTab(archive_widget, "Audio archive")
+        self.tabs.addTab(self.actor_sound_widget, "Actor sound IDs")
+        self.tabs.currentChanged.connect(lambda _index: self.file_bindings_changed.emit())
         main_layout = QVBoxLayout(self)
-        main_layout.addWidget(self.table)
-        main_layout.addLayout(action_layout)
-        main_layout.addWidget(self.info_label)
-        self.setLayout(main_layout)
+        self.archive_label = QLabel("Main files: audio.fmt + audio.dat — Import opens both files.")
+        self.archive_label.setWordWrap(True)
+        main_layout.addWidget(self.archive_label)
+        main_layout.addWidget(self.tabs)
 
         self._update_action_buttons()
         self.audio_binding.load_opened_file()  # another tool instance may have opened one already
+        self.dat_binding.load_opened_file()
 
     def file_bindings(self):
         """The file the shared header toolbar drives for this tool (audio.fmt + audio.dat)."""
-        return [self.audio_binding]
+        return [self.audio_binding, self.dat_binding, self.actor_sound_widget.binding]
+
+    def save_files(self):
+        if self.tabs.currentWidget() is self.actor_sound_widget:
+            self.actor_sound_widget.save_file()
+        else:
+            self.save_file()
+
+    def can_save_folder(self):
+        return (self.tabs.currentWidget() is self.actor_sound_widget
+                and (self.actor_sound_widget.path is None or self.actor_sound_widget.dirty))
+
+    def import_files(self):
+        paths, _ = QFileDialog.getOpenFileNames(
+            self, "Open sound archive: select audio.fmt and audio.dat",
+            self.audio_binding.registry.last_folder("audio.fmt")
+            or os.path.dirname(self.manager.fmt_path or "") or os.getcwd(),
+            "FF8 sound archive (audio.fmt audio.dat)")
+        if not paths:
+            return
+        selected = {os.path.basename(path).lower(): path for path in paths}
+        if set(selected) != {"audio.fmt", "audio.dat"}:
+            QMessageBox.warning(self, "Julia", "Select both audio.fmt and audio.dat to open the archive.")
+            return
+        self.load_archive(selected["audio.fmt"], selected["audio.dat"])
+
+    def load_dat_file(self, path):
+        if self._opening_archive:
+            return
+        fmt = os.path.join(os.path.dirname(path), "audio.fmt")
+        self.load_archive(fmt if os.path.isfile(fmt) else self.audio_binding.current_path, path)
 
     # ------------------------------------------------------------------ helpers
     def _selected_index(self):
@@ -168,19 +218,39 @@ class JuliaWidget(QWidget):
     def load_file(self, file_name):
         """Load audio.fmt (+ audio.dat from the same folder); path from the shared header
         toolbar."""
+        if self._opening_archive:
+            return
+        dat = os.path.join(os.path.dirname(file_name), "audio.dat")
+        self.load_archive(file_name, dat if os.path.isfile(dat) else self.dat_binding.current_path)
+
+    def load_archive(self, fmt_path, dat_path):
         try:
-            self.manager.load(file_name)
-        except (OSError, ValueError, FileNotFoundError) as error:
+            self.manager.load(fmt_path, dat_path)
+        except (OSError, ValueError, struct.error) as error:
             QMessageBox.critical(self, "Julia", f"Could not open the sound archive:\n{error}")
             return
+        self._opening_archive = True
+        try:
+            self.audio_binding.open_path(fmt_path)
+            self.dat_binding.open_path(dat_path)
+        finally:
+            self._opening_archive = False
+        self.audio_binding.registry.remember_folder("audio.fmt", os.path.dirname(fmt_path))
+        self.audio_binding.registry.remember_folder("audio.dat", os.path.dirname(dat_path))
+        self.archive_label.setText(f"Main files — audio.fmt: {fmt_path}\naudio.dat: {dat_path}")
         self._populate_table()
         self.export_all_button.setEnabled(True)
         self.info_label.setText("")
+        self.actor_sound_widget.update_preview()
 
     def play_selected(self):
         index = self._selected_index()
         if index is None:
             return
+        self.play_sound(index)
+
+    def play_sound(self, index):
+        """Play an archive entry using the same player for both Julia tabs."""
         try:
             wav = self.manager.get_wav(index)
         except Exception as error:  # noqa: BLE001 - decoding can fail on exotic formats

@@ -25,12 +25,13 @@ class FileBinding(QObject):
     file_closed = pyqtSignal(str)  # emitted with the path when the file is removed from the opened files
 
     def __init__(self, file_name, registry: FileRegistry, load_callback=None, save_callback=None,
-                 file_filter=None, read_only=False):
+                 file_filter=None, read_only=False, complementary=False):
         QObject.__init__(self)
         self.file_name = file_name
         self.registry = registry
         self.file_filter = file_filter or file_name  # default: only the file's exact name
         self.read_only = read_only
+        self.complementary = complementary  # side file, with its own save controls if editable
         self._save_callback = save_callback
         self._loaded_path = ""
         self._closed = False  # removed from the opened files: saves nothing until opened again

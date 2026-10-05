@@ -84,7 +84,7 @@ Views and edits battle stage geometry/textures (`a0stgXXX.x` files from `battle.
 <img src="Resources/screenshots/alexander.png" width="800">
 
 ### Julia — sound editor
-Edits the battle sound archive (`audio.fmt` / `audio.dat`).
+Edits the battle sound archive (`audio.fmt` / `audio.dat`), the main files on both tabs. **Import** opens the pair; **Import complementary** opens the side file `battle_actor_sounds.bin`. The **Actor sound IDs** tab shows seven world sound IDs per actor through c0m199, with a panel explaining the selected slot's category, offset, hardcoded starting archive sound and final archive index. **Play slot** previews it using the loaded archive. New tables preserve original sounds and leave added monster rows empty; copy an actor's row to reuse its sounds. The shared **Save** writes `audio.fmt` / `audio.dat` on Audio archive, and writes the BIN on Actor sound IDs (asking for a destination for a new file). Save the BIN in your mod's `direct/exe/` folder.
 
 <img src="Resources/screenshots/julia.png" width="800">
 

@@ -17,7 +17,8 @@ class ClosedFileView(QObject):
 
     def __init__(self, tool: QWidget, bindings):
         QObject.__init__(self, tool)
-        self._bindings = [binding for binding in bindings if not binding.read_only]
+        self._bindings = [binding for binding in bindings
+                          if not binding.read_only and not getattr(binding, "complementary", False)]
         self.content = QWidget()
         self.content.setLayout(tool.layout())  # re-hosts the layout AND its widgets in the page
         names = ", ".join(binding.file_name for binding in self._bindings)
