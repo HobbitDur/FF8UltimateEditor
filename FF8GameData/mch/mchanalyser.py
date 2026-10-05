@@ -510,6 +510,10 @@ class CharaOneEntry:
         self.size = 0
         self.is_main = False  # main character: model comes from main_chr d0xx.mch
         self.scale_raw = 0  # raw scale (main characters only); world scale = raw / 16
+        # Main characters: main_chr model number = low 16 bits of the 0xD0 flag. The engine
+        # (Field_CharaOne 0x532A40) loads main_chr/d<NNN>.mch from it; the optional 4-char header
+        # name is never read (e.g. bgmast_6 has nameless main entries).
+        self.main_chr_id: Optional[int] = None
         self.tim_offsets: List[int] = []  # absolute offsets
         # NPC variant with no own texture: index of the entry whose texture is
         # reused (0xA0 dword in place of the TIM list, bits 20-27 = entry index).
@@ -523,6 +527,11 @@ class CharaOneEntry:
         if self.is_main and self.scale_raw:
             return self.scale_raw / 16.0
         return DEFAULT_MODEL_SCALE
+
+    @property
+    def mch_file_name(self) -> str:
+        """main_chr file of a main character entry, as the engine builds it (d + 3 digits)."""
+        return f"d{self.main_chr_id:03d}.mch"
 
     def __repr__(self):
         kind = "main" if self.is_main else "npc"
@@ -576,6 +585,7 @@ class CharaOne:
             if flag >> 24 == 0xd0:
                 entry.is_main = True
                 entry.scale_raw = (flag >> 8) & 0xFFFF
+                entry.main_chr_id = flag & 0xFFFF
                 pos += 4
                 pos += 4  # model data offset field (always 0 for main models)
             elif flag >> 28 == 0xA:
@@ -599,6 +609,8 @@ class CharaOne:
             if _is_model_name(bytes(data[pos:pos + 4])):
                 entry.name = bytes(data[pos:pos + 4]).decode('ascii')
                 pos += 8
+            elif entry.is_main:
+                entry.name = entry.mch_file_name[:-4]  # nameless main entry: name it after its mch
             else:
                 entry.name = f"model{i}"
             if entry.shared_tex_entry is not None \

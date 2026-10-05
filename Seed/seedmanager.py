@@ -104,8 +104,8 @@ class SeedManager:
             if self.main_chr_folder is None:
                 raise FileNotFoundError(
                     f"{entry.name} is a main character: its model is in main_chr "
-                    f"({entry.name}.mch), please select the main_chr folder.")
-            mch_path = self.main_chr_folder / f"{entry.name}.mch"
+                    f"({entry.mch_file_name}), please select the main_chr folder.")
+            mch_path = self.main_chr_folder / entry.mch_file_name
             if not mch_path.is_file():
                 raise FileNotFoundError(f"{mch_path} not found")
             mch_data = mch_path.read_bytes()

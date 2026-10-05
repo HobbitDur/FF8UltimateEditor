@@ -228,7 +228,7 @@ class NpcFieldView(QWidget):
                 self.__chara_one_path = chara_one_path
             entries = self.seed_manager.chara_one.entries
             if model_index < len(entries) and entries[model_index].is_main:
-                mch_name = entries[model_index].name + ".mch"
+                mch_name = entries[model_index].mch_file_name
                 folder = next((folder for folder in self.main_chr_folders
                                if os.path.isfile(os.path.join(folder, mch_name))), None)
                 if folder is not None:

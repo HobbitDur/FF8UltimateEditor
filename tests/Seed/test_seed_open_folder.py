@@ -45,6 +45,17 @@ def test_stale_main_chr_setting_is_redetected(tmp_path):
 
 
 @needs_field
+def test_nameless_main_entries_use_the_flag_mch_id():
+    """bgmast_6 main entries carry no 4-char name: the engine loads d<flag & 0xFFFF>.mch."""
+    from FF8GameData.mch.mchanalyser import CharaOne
+    path = next(FIELD.rglob("bgmast_6/chara.one"))
+    entries = CharaOne(path.read_bytes()).entries
+    assert [(e.name, e.mch_file_name) for e in entries if e.is_main] == \
+        [("d002", "d002.mch"), ("d000", "d000.mch")]
+    assert all((MAIN_CHR / e.mch_file_name).is_file() for e in entries if e.is_main)
+
+
+@needs_field
 def test_widget_open_field_folder_lists_all_fields():
     from PyQt6.QtWidgets import QApplication
     from Seed.seedwidget import SeedWidget
