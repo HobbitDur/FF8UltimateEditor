@@ -45,14 +45,17 @@ class ActorSoundWidget(QWidget):
         layout.addWidget(explanation)
         actions = QHBoxLayout()
         self.new_button = QPushButton("New (original sounds)")
+        self.new_button.setToolTip("Create a table with the original 160 actors' sounds and empty slots for added actors. Unsaved changes require confirmation.")
         self.new_button.clicked.connect(self.new_file)
         actions.addWidget(self.new_button)
         actions.addWidget(QLabel("Copy sounds from:"))
         self.copy_source = QComboBox()
+        self.copy_source.setToolTip("Choose the actor whose seven sound IDs you want to reuse.")
         for row, name in enumerate(self.actor_names):
             self.copy_source.addItem(f"{row}: {name}", row)
         actions.addWidget(self.copy_source)
         self.copy_button = QPushButton("Copy to selected actor")
+        self.copy_button.setToolTip("Copy all seven IDs from the source actor to the actor selected in the table. Save to write the BIN.")
         self.copy_button.clicked.connect(self.copy_selected)
         actions.addWidget(self.copy_button)
         actions.addStretch()
@@ -60,6 +63,10 @@ class ActorSoundWidget(QWidget):
 
         self.table = QTableWidget(self.model.ROWS, 2 + self.model.SLOTS)
         self.table.setHorizontalHeaderLabels(["Actor ID", "Actor"] + [f"Slot {slot}" for slot in range(7)])
+        self.table.setToolTip("Select a slot to see how its ID resolves. Double-click a slot to edit its decimal world sound ID; 0 means unused.")
+        self.table.horizontalHeaderItem(0).setToolTip("Characters use rows 0–15. Monster c0mNNN uses actor row NNN + 16.")
+        for column in range(2, 9):
+            self.table.horizontalHeaderItem(column).setToolTip("One of seven sound references for this actor. Store a world sound ID, not a direct audio archive index.")
         self.table.verticalHeader().hide()
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
@@ -81,6 +88,7 @@ class ActorSoundWidget(QWidget):
         preview_layout = QHBoxLayout()
         self.preview_label = QLabel()
         self.play_button = QPushButton("Play slot")
+        self.play_button.setToolTip("Play the resolved sound from the loaded audio.fmt + audio.dat archive. Unused, empty or out-of-range entries cannot be played.")
         self.play_button.clicked.connect(self.play_selected_slot)
         preview_layout.addWidget(self.play_button)
         preview_layout.addWidget(self.preview_label)
@@ -113,6 +121,13 @@ class ActorSoundWidget(QWidget):
         self.detail_table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.detail_table.setFixedHeight(self.detail_table.horizontalHeader().height()
                                          + 5 * self.detail_table.verticalHeader().defaultSectionSize() + 2)
+        tooltips = {
+            "world": "Unsigned 32-bit ID stored in the BIN. 0 marks an unused slot. Example: 400025 uses category 40 and offset 25.",
+            "category": "Integer division by 10000 selects the game's sound group. Categories share the same audio archive.",
+            "offset": "The remainder after division by 10000. Counts archive entries, not bytes. Example: 400025 has offset 25.",
+            "base": "The game's hardcoded starting archive index for the category. Usually, final index = starting index + offset.",
+            "archive": "The resolved entry number in Audio archive. Example: world ID 400025 resolves to 1230 + 25 = #1255.",
+        }
         self.detail_values = {}
         for row, (key, title) in enumerate([("world", "Stored world ID"), ("category", "Category (ID // 10000)"),
                            ("offset", "Offset (ID % 10000)"), ("base", "Starting archive sound"),
@@ -121,7 +136,9 @@ class ActorSoundWidget(QWidget):
             label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             label.setWordWrap(True)
             self.detail_values[key] = label
+            label.setToolTip(tooltips[key])
             title_label = QLabel(title)
+            title_label.setToolTip(tooltips[key])
             title_label.setContentsMargins(6, 0, 6, 0)
             label.setContentsMargins(6, 0, 6, 0)
             self.detail_table.setCellWidget(row, 0, title_label)
@@ -144,6 +161,16 @@ class ActorSoundWidget(QWidget):
             self.category_table.insertRow(row)
             self.category_table.setItem(row, 0, QTableWidgetItem(str(category)))
             self.category_table.setItem(row, 1, QTableWidgetItem(base))
+            if category == 69:
+                tooltip = "Category 69 has no single starting index: ID 690000 plays archive #2060; every other ID in this category resolves to ID - 688040. Example: 690001 plays #1961."
+            elif category == "Other":
+                tooltip = "Categories absent from this list use starting index 0, so their archive index equals the offset."
+            elif category == 0:
+                tooltip = "Category 0 uses the offset directly as its archive index. World ID 0 is an unused actor slot."
+            else:
+                tooltip = f"Category {category} starts at archive #{base}. Add the world ID's offset (ID % 10000) to find the final archive entry."
+            for column in range(2):
+                self.category_table.item(row, column).setToolTip(tooltip)
             self.category_rows[category] = row
         relation_layout.addWidget(self.category_table)
         explanation = QLabel("The game defines these starting indices; they are not calculated from the "
@@ -175,6 +202,7 @@ class ActorSoundWidget(QWidget):
         self.detail_values["base"].setText("Special rule" if category == 69 else str(WORLD_SOUND_BASES.get(category, 0)))
         self.detail_values["archive"].setText(f"#{archive_id}" if world_id else "Unused slot")
         category_row = self.category_rows.get(category, self.category_rows["Other"])
+        self.detail_values["base"].setToolTip(self.category_table.item(category_row, 1).toolTip())
         self.category_table.selectRow(category_row)
         self.category_table.scrollToItem(self.category_table.item(category_row, 0))
 
