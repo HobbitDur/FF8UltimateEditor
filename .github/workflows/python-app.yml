@@ -400,6 +400,13 @@ jobs:
       shell: bash
       id: official_notes
       run: |
+        # Commit subjects are escaped: backslashes survive echo -e (a literal \x00 in a
+        # subject used to become a NUL and cut the notes), and <...> is not eaten as HTML.
+        commit_log() {
+          git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" "$@" \
+            | sed -e 's/\\/\\\\/g' -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'
+        }
+        
         CURRENT_TAG="${{ github.ref_name }}"
         RELEASE_TYPE="${{ steps.version_info.outputs.release_type }}"
         PREVIOUS_TAG="${{ steps.version_info.outputs.previous_tag }}"
@@ -407,7 +414,7 @@ jobs:
         
         case "$RELEASE_TYPE" in
           patch)
-            COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG)
+            COMMITS=$(commit_log $PREVIOUS_TAG..$CURRENT_TAG)
             
             NOTES=""
             
@@ -421,9 +428,9 @@ jobs:
             NOTES+="$COMMITS"
             ;;
           minor)
-            COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG)
-            FEAT_COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG | grep -i "^feat\|^feature\|^add" || echo "")
-            BUG_COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG | grep -i "^fix\|^bug\|^hotfix" || echo "")
+            COMMITS=$(commit_log $PREVIOUS_TAG..$CURRENT_TAG)
+            FEAT_COMMITS=$(commit_log $PREVIOUS_TAG..$CURRENT_TAG | grep -i "^feat\|^feature\|^add" || echo "")
+            BUG_COMMITS=$(commit_log $PREVIOUS_TAG..$CURRENT_TAG | grep -i "^fix\|^bug\|^hotfix" || echo "")
             
             NOTES=""
             
@@ -448,7 +455,7 @@ jobs:
             NOTES+="$COMMITS"
             ;;
           major)
-            COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $PREVIOUS_TAG..$CURRENT_TAG)
+            COMMITS=$(commit_log $PREVIOUS_TAG..$CURRENT_TAG)
             
             NOTES="⚠️ **This release contains breaking changes!** ⚠️\n\n"
             
@@ -462,7 +469,7 @@ jobs:
             NOTES+="$COMMITS"
             ;;
           first)
-            COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" -n 100 HEAD)
+            COMMITS=$(commit_log -n 100 HEAD)
             
             NOTES=""
             
@@ -485,19 +492,26 @@ jobs:
       shell: bash
       id: continuous_notes
       run: |
+        # Commit subjects are escaped: backslashes survive echo -e (a literal \x00 in a
+        # subject used to become a NUL and cut the notes), and <...> is not eaten as HTML.
+        commit_log() {
+          git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" "$@" \
+            | sed -e 's/\\/\\\\/g' -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'
+        }
+        
         LAST_TAG=$(git tag -l | grep -v "continuous" | sort -V | tail -n1 || echo "")
         
         SHORT_SHA="${{ github.sha }}"
         SHORT_SHA=${SHORT_SHA:0:7}
         
         if [ -z "$LAST_TAG" ]; then
-          COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" -n 100 HEAD)
+          COMMITS=$(commit_log -n 100 HEAD)
           
           NOTES="⚠️ **This is an automated pre-release build** ⚠️\n\n"
           NOTES+="### 📝 Latest Commits (showing up to 100)\n\n"
           NOTES+="$COMMITS"
         else
-          COMMITS=$(git log --pretty=format:"- **%s** (%h) - [@%an](https://github.com/%an)" $LAST_TAG..HEAD)
+          COMMITS=$(commit_log $LAST_TAG..HEAD)
           
           NOTES="⚠️ **This is an automated pre-release build** ⚠️\n\n"
           NOTES+="**Changes since last official release:** \`$LAST_TAG\`\n\n"
