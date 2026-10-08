@@ -1496,11 +1496,13 @@ _DUEL_FINISHER_HELP = (
     "(Burning Rave, Meteor Barret, Different Beat, My Final Heaven) are therefore the only "
     "possible finishers, and this flag must match that rule:\n"
     "- ticked on moves 0-5: the window closes but the action side keeps waiting for the next "
-    "pick, so the battle SOFTLOCKS;\n"
-    "- unticked on moves 6-9: the Duel ends but the window stays open in its input state.\n"
+    "pick, so the battle SOFTLOCKS - unless the exe carries DuelFinisherFlag.hext, which makes "
+    "the action side honour this flag: the move is played as a normal hit, then the Duel ends "
+    "the way the time-out ends it;\n"
+    "- unticked on moves 6-9: the Duel ends but the window stays open in its input state (keep "
+    "it ticked there).\n"
     "Vanilla sets it on exactly moves 6-9 - Burning Rave (0x4100), Meteor Barret "
-    "(0x1100), Different Beat (0x0110) and My Final Heaven (0x1100). Leave it as vanilla; to "
-    "make a different move a finisher, put it in slots 6-9 instead.\n"
+    "(0x1100), Different Beat (0x0110) and My Final Heaven (0x1100).\n"
     "Note it reads as ticked on an unused (0xFFFF) button-1 slot, since 0xFFFF carries every "
     "bit; that combination does not occur in vanilla. Bits 0x0200/0x0400/0x0800, and bits 8-11 "
     "of buttons 2-5, are masked off everywhere and read by nothing.")
@@ -1519,8 +1521,9 @@ for cfg in sections.values():
                 # A plain masked checkbox, not a one-entry flags lookup: a single bit does
                 # not warrant a titled group box around itself.
                 ends = {"name": "duel_is_finisher", "offset": f["offset"], "size": f["size"],
-                        "mask": 0x0100, "bool": True, "readonly": True,
-                        "label": "Closes Duel menu (finisher)", "help": _DUEL_FINISHER_HELP}
+                        "mask": 0x0100, "bool": True,
+                        "label": "Ends the Duel (needs hext on moves 0-5)",
+                        "help": _DUEL_FINISHER_HELP}
                 for key in ("group", "row", "subgroup"):
                     if key in f:
                         ends[key] = f[key]
