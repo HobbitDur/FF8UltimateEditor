@@ -13,7 +13,7 @@ from SolomonRing.kernellookups import LookupRegistry
 from SolomonRing.kernelentry import KernelEntry
 from SolomonRing.kernelsectiontab import KernelSectionTab
 from SolomonRing.battle_setup import SETUP as BATTLE_SETUP
-from SolomonRing.cronos_elemdef import CronosElemDefDialog
+from SolomonRing.cronos_elemdef import CronosElemDefDialog, GF_COUNT, MAGIC_PAGE, GF_PAGE
 
 
 # One top-level tab per kernel section (a kernel section == a tab). Order follows the
@@ -272,41 +272,55 @@ class SolomonRingWidget(QWidget):
         self.kernel_manager.load_file(filename)
         self._populate_tabs()
         self.tabs.setEnabled(True)
-        self.elemdef_button.setEnabled(True)
+        for button in self.elemdef_buttons.values():
+            button.setEnabled(True)
 
     MAGIC_SECTION = 2
-    MAGIC_JUNCTION_GROUP = "Junction (stats)"
+    GF_SECTION = 3
+    # Where each "Elemental defense table..." button sits: under the kernel.bin data it extends.
+    CRONOS_ELEMDEF_PLACES = {MAGIC_SECTION: "Junction (stats)", GF_SECTION: "General"}
 
     def _add_cronos_extension(self):
-        """Data the Cronos DLLs read beside kernel.bin, edited where the kernel.bin data it extends
-        is: the elemental defense table sits in Magic > Junction (stats), under J-Elem defense."""
-        self.elemdef_button = QPushButton("Elemental defense table...")
-        self.elemdef_button.setToolTip(
-            "Per-element Elem-Def junction values, weaknesses included (Cronos NegativeElemDef.dll).\n"
-            "Replaces the J-Elem defense / value above for every spell the table lists.")
-        self.elemdef_button.clicked.connect(self._open_elemdef_table)
-        self.elemdef_button.setEnabled(False)   # needs the spells of a loaded kernel.bin
+        """Data the Cronos DLLs read beside kernel.bin, edited where the kernel.bin data it extends is:
+        the elemental defense table opens from Magic > Junction (stats) (on its Magic page, under
+        J-Elem defense) and from G-Forces > General (on its G-Forces page)."""
+        self.elemdef_buttons = {}
+        tips = {self.MAGIC_SECTION: "Per-element Elem-Def junction values, weaknesses included (Cronos "
+                                    "NegativeElemDef.dll).\nReplaces the J-Elem defense / value above for "
+                                    "every spell the table lists.",
+                self.GF_SECTION: "Elemental defense a junctioned G-Force gives its character, per element, "
+                                 "weaknesses included (Cronos NegativeElemDef.dll)."}
+        for section_id, group_name in self.CRONOS_ELEMDEF_PLACES.items():
+            tab = self._section_tabs.get(section_id)
+            group = next((box for box in (tab.findChildren(QGroupBox) if tab else [])
+                          if box.property("group_name") == group_name), None)
+            if group is None:
+                continue
+            button = QPushButton("Elemental defense table...")
+            button.setToolTip(tips[section_id])
+            button.clicked.connect(lambda _checked=False, sid=section_id: self._open_elemdef_table(sid))
+            button.setEnabled(False)   # needs the spells / GFs of a loaded kernel.bin
+            cronos_box = QGroupBox("Cronos extension")
+            cronos_layout = QHBoxLayout(cronos_box)
+            cronos_layout.addWidget(button)
+            cronos_layout.addStretch(1)
+            group.layout().addWidget(cronos_box)
+            self.elemdef_buttons[section_id] = button
+
+    def _open_elemdef_table(self, section_id=MAGIC_SECTION):
+        """The Cronos elemental defense table, for the spells and GFs of the kernel.bin loaded now."""
         magic_tab = self._section_tabs.get(self.MAGIC_SECTION)
-        group = next((box for box in (magic_tab.findChildren(QGroupBox) if magic_tab else [])
-                      if box.property("group_name") == self.MAGIC_JUNCTION_GROUP), None)
-        if group is None:
+        if not magic_tab:
             return
-        cronos_box = QGroupBox("Cronos extension")
-        cronos_layout = QHBoxLayout(cronos_box)
-        cronos_layout.addWidget(self.elemdef_button)
-        cronos_layout.addStretch(1)
-        group.layout().addWidget(cronos_box)
-
-    def _open_elemdef_table(self):
-        """The Cronos elemental defense table, for the spells of the kernel.bin loaded now."""
-        tab = self._section_tabs.get(2)
-        if not tab:
-            return
-        tab.commit()   # the table's "Fill from kernel.bin" reads what the Magic tab shows
-        entries = {i: tab._entries[i] for i in tab._visible_indices}
+        magic_tab.commit()   # the table's "Fill spells from kernel.bin" reads what the Magic tab shows
+        entries = {i: magic_tab._entries[i] for i in magic_tab._visible_indices}
         names = {i: (entry.get_text(0).strip() or f"(unnamed {i})") for i, entry in entries.items()}
-        CronosElemDefDialog(self, entries, names, self.settings).exec()
-
+        # The G-Forces section's own text is the summon's attack name ("Thunder Storm"): the GF
+        # names (also the junction bit order, GF0 = Quezacotl) come from gforce.json.
+        gf_names = {gf["id"]: gf["name"] for gf in self.game_data.gforce_data_json.get("gforce", [])
+                    if 0 <= gf["id"] < GF_COUNT}
+        page = GF_PAGE if section_id == self.GF_SECTION else MAGIC_PAGE
+        CronosElemDefDialog(self, entries, names, gf_names, self.settings, page).exec()
     def _populate_tabs(self):
         by_id = {s.id: s for s in self.kernel_manager.section_list if s}
         for section_id, tab in self._section_tabs.items():

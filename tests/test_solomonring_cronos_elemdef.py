@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from SolomonRing.cronos_elemdef import read_table, write_table, rows_from_kernel, ELEMENTS
+from SolomonRing.cronos_elemdef import read_table, write_table, rows_from_kernel, ELEMENTS, GF_PAGE, MAGIC_PAGE
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KERNEL = os.path.join(PROJECT_ROOT, "extracted_files", "main", "kernel.bin")
@@ -24,28 +24,43 @@ class _Entry:
 
 
 def test_round_trip(tmp_path):
-    rows = {1: [50, -50, 0, 0, 0, 0, 0, 0], 7: [0] * 8, 56: [-275, 999, -999, 1, 2, 3, 4, 5]}
+    spells = {1: [50, -50, 0, 0, 0, 0, 0, 0], 7: [0] * 8, 56: [-275, 999, -999, 1, 2, 3, 4, 5]}
+    gfs = {2: [30, -30, 0, 0, 0, 0, 0, 0], 15: [0, 0, 0, 0, 0, 0, 0, 100]}
     path = tmp_path / "elemdef.csv"
-    write_table(path, rows, {1: "Fire", 56: "Ultima # with a hash"})
-    assert read_table(path) == rows
+    write_table(path, spells, gfs, {1: "Fire", 56: "Ultima # with a hash"}, {2: "Ifrit"})
+    assert read_table(path) == (spells, gfs)
     text = path.read_text(encoding="utf-8")
     assert "# id;" + ";".join(ELEMENTS) in text
     assert "1;50;-50;0;0;0;0;0;0    # Fire" in text
+    assert "GF2;30;-30;0;0;0;0;0;0    # Ifrit" in text
+
+
+def test_spells_only_file_has_no_gf_section(tmp_path):
+    path = tmp_path / "elemdef.csv"
+    write_table(path, {1: [20] + [0] * 7})
+    assert "GF" not in "".join(line for line in path.read_text(encoding="utf-8").splitlines() if not line.startswith("#"))
+    assert read_table(path) == ({1: [20] + [0] * 7}, {})
 
 
 def test_parser_rules_match_the_dll(tmp_path):
-    # Same rules as NegativeElemDef.dll: '#' lines, ; , or tab, 9 numbers, id 0-255, rest ignored
+    # Same rules as NegativeElemDef.dll: '#' lines, ; , or tab, 9 numbers, spell id 0-255,
+    # GF id 0-15 after "GF" (any case), the rest ignored
     path = tmp_path / "elemdef.csv"
     path.write_text("# comment\n\n"
                     "2,10,20,30,40,50,60,70,80\n"
                     "3\t-1\t-2\t-3\t-4\t-5\t-6\t-7\t-8\r\n"
                     "4;1;2;3;4;5;6;7;8;99 trailing\n"
+                    "  gf2;30;-30;0;0;0;0;0;0    # Ifrit\n"
+                    "GF15;1;1;1;1;1;1;1;1\n"
+                    "GF16;1;2;3;4;5;6;7;8\n"         # GF id out of range
                     "5;1;2;3\n"                      # too short
-                    "300;1;2;3;4;5;6;7;8\n"          # id out of range
+                    "300;1;2;3;4;5;6;7;8\n"          # spell id out of range
                     "not;a;line\n", encoding="utf-8")
-    assert read_table(path) == {2: [10, 20, 30, 40, 50, 60, 70, 80],
-                                3: [-1, -2, -3, -4, -5, -6, -7, -8],
-                                4: [1, 2, 3, 4, 5, 6, 7, 8]}
+    spells, gfs = read_table(path)
+    assert spells == {2: [10, 20, 30, 40, 50, 60, 70, 80],
+                      3: [-1, -2, -3, -4, -5, -6, -7, -8],
+                      4: [1, 2, 3, 4, 5, 6, 7, 8]}
+    assert gfs == {2: [30, -30, 0, 0, 0, 0, 0, 0], 15: [1] * 8}
 
 
 def test_rows_from_kernel_change_nothing():
@@ -56,45 +71,64 @@ def test_rows_from_kernel_change_nothing():
     assert rows[30] == [0] * 8
 
 
+def _group_names_above(widget):
+    names, parent = [], widget.parentWidget()
+    while parent is not None:
+        names.append(parent.property("group_name"))
+        parent = parent.parentWidget()
+    return names
+
+
 @pytest.mark.skipif(not os.path.isfile(KERNEL), reason="needs extracted_files/main/kernel.bin")
 def test_dialog_on_a_real_kernel(qapp, tmp_path):
     from SolomonRing.solomonringwidget import SolomonRingWidget
     from SolomonRing.cronos_elemdef import CronosElemDefDialog
 
     widget = SolomonRingWidget(game_data_folder=os.path.join(PROJECT_ROOT, "FF8GameData"))
-    assert not widget.elemdef_button.isEnabled()
-    # The button lives in Magic > Junction (stats), under the J-Elem defense fields it replaces
-    parent, groups = widget.elemdef_button.parentWidget(), []
-    while parent is not None:
-        groups.append(parent.property("group_name"))
-        parent = parent.parentWidget()
-    assert "Junction (stats)" in groups
-    assert widget.elemdef_button.window() is widget
+    buttons = widget.elemdef_buttons
+    assert set(buttons) == {2, 3}
+    assert not any(button.isEnabled() for button in buttons.values())
+    # Magic > Junction (stats), under the J-Elem defense fields; G-Forces > General
+    assert "Junction (stats)" in _group_names_above(buttons[2])
+    assert "General" in _group_names_above(buttons[3])
     widget.load_file(KERNEL)
-    assert widget.elemdef_button.isEnabled()
+    assert all(button.isEnabled() for button in buttons.values())
 
-    tab = widget._section_tabs[2]
-    entries = {i: tab._entries[i] for i in tab._visible_indices}
+    magic_tab = widget._section_tabs[2]
+    entries = {i: magic_tab._entries[i] for i in magic_tab._visible_indices}
     names = {i: entry.get_text(0).strip() for i, entry in entries.items()}
-    dialog = CronosElemDefDialog(widget, entries, names)
-    assert dialog.rows() == {}                       # nothing used until filled or imported
-    dialog._load_rows(rows_from_kernel(entries))
-    rows = dialog.rows()
-    assert set(rows) == set(entries)
-    fire_id = next(i for i, name in names.items() if name == "Fire")
-    assert rows[fire_id][0] > 0 and rows[fire_id][1:] == [0] * 7   # Fire defends Fire only
+    gf_names = {gf["id"]: gf["name"] for gf in widget.game_data.gforce_data_json["gforce"] if gf["id"] < 16}
+    assert gf_names[0] == "Quezacotl" and gf_names[2] == "Ifrit"
 
-    # Editing a value of an unused spell puts it in the table; unticking takes it out.
-    dialog._load_rows({})
-    dialog._spins[fire_id][1].setValue(-50)
+    dialog = CronosElemDefDialog(widget, entries, names, gf_names, page=GF_PAGE)
+    assert dialog.pages.currentIndex() == GF_PAGE
+    assert dialog.rows() == {} and dialog.gf_rows() == {}   # nothing used until filled or imported
+    dialog._fill_from_kernel()
+    assert set(dialog.rows()) == set(entries) and dialog.gf_rows() == {}   # GFs not touched
+    fire_id = next(i for i, name in names.items() if name == "Fire")
+    assert dialog.rows()[fire_id][0] > 0 and dialog.rows()[fire_id][1:] == [0] * 7
+
+    # Editing a value of an unused row puts it in the table; unticking takes it out.
+    dialog.magic_grid.load({})
+    dialog.magic_grid.spins[fire_id][1].setValue(-50)
     assert dialog.rows() == {fire_id: [0, -50, 0, 0, 0, 0, 0, 0]}
-    dialog._use[fire_id].setChecked(False)
+    dialog.magic_grid.use[fire_id].setChecked(False)
     assert dialog.rows() == {}
 
-    dialog._spins[fire_id][0].setValue(50)
-    dialog._spins[fire_id][1].setValue(-50)
+    dialog.magic_grid.spins[fire_id][0].setValue(50)
+    dialog.magic_grid.spins[fire_id][1].setValue(-50)
+    dialog.gf_grid.spins[2][0].setValue(30)    # Ifrit Fire +30 / Ice -30
+    dialog.gf_grid.spins[2][1].setValue(-30)
     dialog._path = str(tmp_path / "elemdef.csv")
     assert dialog._save()
-    assert read_table(tmp_path / "elemdef.csv") == {fire_id: [50, -50, 0, 0, 0, 0, 0, 0]}
-    dialog._dirty = False
-    dialog.close()
+    assert read_table(tmp_path / "elemdef.csv") == ({fire_id: [50, -50, 0, 0, 0, 0, 0, 0]},
+                                                    {2: [30, -30, 0, 0, 0, 0, 0, 0]})
+    assert "GF2;30;-30;0;0;0;0;0;0    # Ifrit" in (tmp_path / "elemdef.csv").read_text(encoding="utf-8")
+
+    # Import puts every row back, on both pages
+    other = CronosElemDefDialog(widget, entries, names, gf_names, page=MAGIC_PAGE)
+    other._load(*read_table(tmp_path / "elemdef.csv"))
+    assert other.rows() == dialog.rows() and other.gf_rows() == dialog.gf_rows()
+    for opened in (dialog, other):
+        opened._dirty = False
+        opened.close()
