@@ -350,7 +350,7 @@
     "size": 1,
     "label": "J-Elem defense value",
     "group": "Junction (stats)",
-    "help": "Elemental resistance this spell gives, when junctioned to Elem-Def, to every element ticked in J-Elem defense. Applied as value x stock / 100 (100 held = full value) on top of the neutral 800 (shown 0%); +100 = immune, above +100 = absorb (vanilla uses up to 200: Holy, Quake, Aero). NEGATIVE values (a weakness) need the Cronos NegativeElemDef hext: -5 to -275 in steps of 5, stored as byte 256 + value/5 (-100 = byte 236 = x2 damage, -200 = byte 216 = x3). Without the hext the game reads those bytes as +201..+255. The total is capped at -800% (x9).",
+    "help": "Elemental resistance this spell gives, when junctioned to Elem-Def, to every element ticked in J-Elem defense. Applied as value x stock / 100 (100 held = full value) on top of the neutral 800 (shown 0%); +100 = immune, above +100 = absorb (vanilla uses up to 200: Holy, Quake, Aero). NEGATIVE values (a weakness) need the Cronos NegativeElemDef DLL: -5 to -275 in steps of 5, stored as byte 256 + value/5 (-100 = byte 236 = x2 damage, -200 = byte 216 = x3). Without the DLL the game reads those bytes as +201..+255. The total is capped at -800% (x9).",
     "signed_elem_def": true
    },
    {

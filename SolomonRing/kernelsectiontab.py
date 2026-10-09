@@ -21,7 +21,7 @@ from SmallWidget.nowheel import NoWheelComboBox, NoWheelSpinBox
 # Keyed by section AND group, so a paste can only land on the same kind of data.
 _GROUP_CLIPBOARD = {}
 
-# Magic J-Elem defense value encoding (Cronos NegativeElemDef hext, getMagicElemDefValue @0x4969E0):
+# Magic J-Elem defense value encoding (Cronos NegativeElemDef.dll, getMagicElemDefValue @0x4969E0):
 # byte 0-200 = +0..+200 (vanilla), byte 201-255 = (byte - 256) * 5 = -275..-5.
 ELEM_DEF_MIN, ELEM_DEF_MAX = -275, 200
 
