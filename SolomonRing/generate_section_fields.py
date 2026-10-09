@@ -784,10 +784,9 @@ HELP = {
     "j_elem_defense_value": "Elemental resistance this spell gives, when junctioned to Elem-Def, to every element "
                             "ticked in J-Elem defense. Applied as value x stock / 100 (100 held = full value) "
                             "on top of the neutral 800 (shown 0%); +100 = immune, above +100 = absorb (vanilla "
-                            "uses up to 200: Holy, Quake, Aero). NEGATIVE values (a weakness) need the Cronos "
-                            "NegativeElemDef DLL: -5 to -275 in steps of 5, stored as byte 256 + value/5 "
-                            "(-100 = byte 236 = x2 damage, -200 = byte 216 = x3). Without the DLL the game "
-                            "reads those bytes as +201..+255. The total is capped at -800% (x9).",
+                            "uses up to 200: Holy, Quake, Aero). Unsigned: vanilla has no weakness. With the "
+                            "Cronos NegativeElemDef DLL, a spell listed in the elemental defense table (Cronos "
+                            "extension button) uses the table's per-element values instead, weaknesses included.",
     "attack_animation": "Battle effect / animation dispatched at runtime (attack-animation id).",
     "magic_id": "Battle effect / animation dispatched at runtime (attack-animation id).",
     "camera_change": "Which battle-stage camera animation plays while the monster performs this "
@@ -1290,11 +1289,6 @@ for sid_s, cfg in sections.items():
         # battle-stage camera-animation index, bit 0x80 = force; 0xFF = default/none.
         if sid == 4 and f["name"] == "camera_change":
             f["camera_selector"] = True
-        # Magic J-Elem defense value -> signed editor (-275..+200). Bytes 0-200 are the vanilla
-        # +0..+200; 201-255 are the Cronos NegativeElemDef weaknesses (byte-256)*5 = -275..-5,
-        # decoded by NegativeElemDef.dll's getMagicElemDefValue @0x4969E0 replacement.
-        if sid == 2 and f["name"] == "j_elem_defense_value":
-            f["signed_elem_def"] = True
         # G-Forces (section 3): three coupled groups, each rendered as a nested sub-box with one
         # shared f(x) button (like a character HP stat curve), plus a standalone GF power button.
         if sid == 3:

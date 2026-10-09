@@ -21,24 +21,6 @@ from SmallWidget.nowheel import NoWheelComboBox, NoWheelSpinBox
 # Keyed by section AND group, so a paste can only land on the same kind of data.
 _GROUP_CLIPBOARD = {}
 
-# Magic J-Elem defense value encoding (Cronos NegativeElemDef.dll, getMagicElemDefValue @0x4969E0):
-# byte 0-200 = +0..+200 (vanilla), byte 201-255 = (byte - 256) * 5 = -275..-5.
-ELEM_DEF_MIN, ELEM_DEF_MAX = -275, 200
-
-
-def elem_def_value_from_byte(byte: int) -> int:
-    return byte if byte <= ELEM_DEF_MAX else (byte - 256) * 5
-
-
-def elem_def_byte_from_value(value: int) -> int:
-    """Inverse of elem_def_value_from_byte; a negative value is rounded to the nearest
-    multiple of 5 (half away from zero, so -1/-2 become 0) and clamped to -275..0."""
-    value = max(ELEM_DEF_MIN, min(ELEM_DEF_MAX, int(value)))
-    if value >= 0:
-        return value
-    steps = (-value + 2) // 5
-    return 256 - steps if steps else 0
-
 
 def _prettify(name: str) -> str:
     return name.replace("_", " ").strip().title()
@@ -848,24 +830,6 @@ class KernelSectionTab(QWidget):
                 return self._with_formula_button(field, combo)
             return combo
 
-        if field.get("signed_elem_def"):
-            # Magic J-Elem defense value: 0-200 = +0..+200 (vanilla), bytes 201-255 = the Cronos
-            # NegativeElemDef weaknesses -275..-5 in steps of 5. Edited as one signed number;
-            # a negative value snaps to the nearest multiple of 5 when editing finishes.
-            spin = NoWheelSpinBox()
-            spin.setRange(ELEM_DEF_MIN, ELEM_DEF_MAX)
-            spin.setFixedWidth(spin.fontMetrics().horizontalAdvance("-275") + 36)
-
-            def _snap(sp=spin):
-                snapped = elem_def_value_from_byte(elem_def_byte_from_value(sp.value()))
-                if snapped != sp.value():
-                    sp.setValue(snapped)
-            spin.editingFinished.connect(_snap)
-            if readonly:
-                self._lock(spin, "spin")
-            self._field_widgets[name] = ("elem_def", field, spin)
-            return spin
-
         if field.get("bool"):
             cb = QCheckBox()
             if readonly:
@@ -1084,8 +1048,6 @@ class KernelSectionTab(QWidget):
                         cb.setChecked(bool(value & mask))
                 elif kind == "bool":
                     widget.setChecked(bool(value))
-                elif kind == "elem_def":
-                    widget.setValue(elem_def_value_from_byte(value))
                 elif kind == "camera":
                     widget._cam_unused.setChecked(value == 0xFF)
                     widget._cam_force.setChecked(bool(value & 0x80))
@@ -1186,8 +1148,6 @@ class KernelSectionTab(QWidget):
                 # bit 0x100 of sequence button 1), so ticking it writes that bit, not 1.
                 on_value = field.get("mask") or 1
                 entry.set(name, on_value if widget.isChecked() else 0)
-            elif kind == "elem_def":
-                entry.set(name, elem_def_byte_from_value(widget.value()))
             elif kind == "camera":
                 if widget._cam_unused.isChecked():
                     entry.set(name, 0xFF)

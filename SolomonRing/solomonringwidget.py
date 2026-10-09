@@ -2,7 +2,7 @@ import json
 import os
 
 from PyQt6.QtWidgets import (
-    QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QMessageBox
+    QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QMessageBox, QGroupBox, QPushButton
 )
 
 from Common.filebinding import FileBinding
@@ -13,6 +13,7 @@ from SolomonRing.kernellookups import LookupRegistry
 from SolomonRing.kernelentry import KernelEntry
 from SolomonRing.kernelsectiontab import KernelSectionTab
 from SolomonRing.battle_setup import SETUP as BATTLE_SETUP
+from SolomonRing.cronos_elemdef import CronosElemDefDialog
 
 
 # One top-level tab per kernel section (a kernel section == a tab). Order follows the
@@ -120,6 +121,7 @@ class SolomonRingWidget(QWidget):
             for section_id, _ in entries:
                 self._tab_index_by_section[section_id] = index
         main_layout.addWidget(self.tabs)
+        self._add_cronos_extension()
         self._restore_current_tab()
         self.tabs.currentChanged.connect(self._remember_current_tab)
 
@@ -270,6 +272,40 @@ class SolomonRingWidget(QWidget):
         self.kernel_manager.load_file(filename)
         self._populate_tabs()
         self.tabs.setEnabled(True)
+        self.elemdef_button.setEnabled(True)
+
+    MAGIC_SECTION = 2
+    MAGIC_JUNCTION_GROUP = "Junction (stats)"
+
+    def _add_cronos_extension(self):
+        """Data the Cronos DLLs read beside kernel.bin, edited where the kernel.bin data it extends
+        is: the elemental defense table sits in Magic > Junction (stats), under J-Elem defense."""
+        self.elemdef_button = QPushButton("Elemental defense table...")
+        self.elemdef_button.setToolTip(
+            "Per-element Elem-Def junction values, weaknesses included (Cronos NegativeElemDef.dll).\n"
+            "Replaces the J-Elem defense / value above for every spell the table lists.")
+        self.elemdef_button.clicked.connect(self._open_elemdef_table)
+        self.elemdef_button.setEnabled(False)   # needs the spells of a loaded kernel.bin
+        magic_tab = self._section_tabs.get(self.MAGIC_SECTION)
+        group = next((box for box in (magic_tab.findChildren(QGroupBox) if magic_tab else [])
+                      if box.property("group_name") == self.MAGIC_JUNCTION_GROUP), None)
+        if group is None:
+            return
+        cronos_box = QGroupBox("Cronos extension")
+        cronos_layout = QHBoxLayout(cronos_box)
+        cronos_layout.addWidget(self.elemdef_button)
+        cronos_layout.addStretch(1)
+        group.layout().addWidget(cronos_box)
+
+    def _open_elemdef_table(self):
+        """The Cronos elemental defense table, for the spells of the kernel.bin loaded now."""
+        tab = self._section_tabs.get(2)
+        if not tab:
+            return
+        tab.commit()   # the table's "Fill from kernel.bin" reads what the Magic tab shows
+        entries = {i: tab._entries[i] for i in tab._visible_indices}
+        names = {i: (entry.get_text(0).strip() or f"(unnamed {i})") for i, entry in entries.items()}
+        CronosElemDefDialog(self, entries, names, self.settings).exec()
 
     def _populate_tabs(self):
         by_id = {s.id: s for s in self.kernel_manager.section_list if s}
