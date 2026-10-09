@@ -13,7 +13,8 @@ from SolomonRing.kernellookups import LookupRegistry
 from SolomonRing.kernelentry import KernelEntry
 from SolomonRing.kernelsectiontab import KernelSectionTab
 from SolomonRing.battle_setup import SETUP as BATTLE_SETUP
-from SolomonRing.cronos_elemdef import CronosElemDefDialog, GF_COUNT, MAGIC_PAGE, GF_PAGE
+from SolomonRing.cronos_elemdef import (CronosElemDefDialog, GF_COUNT, CHARA_COUNT, MAGIC_PAGE, GF_PAGE,
+                                        CHARACTER_PAGE)
 
 
 # One top-level tab per kernel section (a kernel section == a tab). Order follows the
@@ -278,7 +279,7 @@ class SolomonRingWidget(QWidget):
     MAGIC_SECTION = 2
     GF_SECTION = 3
     # Where each "Elemental defense table..." button sits: under the kernel.bin data it extends.
-    CRONOS_ELEMDEF_PLACES = {MAGIC_SECTION: "Junction (stats)", GF_SECTION: "General"}
+    CRONOS_ELEMDEF_PLACES = {MAGIC_SECTION: "Junction (stats)", GF_SECTION: "General", CHARACTER_SECTION: "General"}
 
     def _add_cronos_extension(self):
         """Data the Cronos DLLs read beside kernel.bin, edited where the kernel.bin data it extends is:
@@ -289,7 +290,9 @@ class SolomonRingWidget(QWidget):
                                     "NegativeElemDef.dll).\nReplaces the J-Elem defense / value above for "
                                     "every spell the table lists.",
                 self.GF_SECTION: "Elemental defense a junctioned G-Force gives its character, per element, "
-                                 "weaknesses included (Cronos NegativeElemDef.dll)."}
+                                 "weaknesses included (Cronos NegativeElemDef.dll).",
+                self.CHARACTER_SECTION: "The character's own base elemental defense, per element, weaknesses "
+                                        "included, always active (Cronos NegativeElemDef.dll)."}
         for section_id, group_name in self.CRONOS_ELEMDEF_PLACES.items():
             tab = self._section_tabs.get(section_id)
             group = next((box for box in (tab.findChildren(QGroupBox) if tab else [])
@@ -319,8 +322,16 @@ class SolomonRingWidget(QWidget):
         # names (also the junction bit order, GF0 = Quezacotl) come from gforce.json.
         gf_names = {gf["id"]: gf["name"] for gf in self.game_data.gforce_data_json.get("gforce", [])
                     if 0 <= gf["id"] < GF_COUNT}
-        page = GF_PAGE if section_id == self.GF_SECTION else MAGIC_PAGE
-        CronosElemDefDialog(self, entries, names, gf_names, self.settings, page).exec()
+        page = {self.GF_SECTION: GF_PAGE, self.CHARACTER_SECTION: CHARACTER_PAGE}.get(section_id, MAGIC_PAGE)
+        CronosElemDefDialog(self, entries, names, gf_names, self.default_character_names(), self.settings,
+                            page).exec()
+
+    def default_character_names(self):
+        """The save's 8 character records under the game's default names. kernel.bin is no use here:
+        Squall's and Rinoa's names are empty in it (the player names them). Laguna, Kiros and Ward use
+        Squall, Zell and Irvine's records in the dreams."""
+        names = self._section_configs.get(str(self.CHARACTER_SECTION), {}).get("entry_names", [])
+        return {i: names[i] if i < len(names) else f"Character {i}" for i in range(CHARA_COUNT)}
     def _populate_tabs(self):
         by_id = {s.id: s for s in self.kernel_manager.section_list if s}
         for section_id, tab in self._section_tabs.items():

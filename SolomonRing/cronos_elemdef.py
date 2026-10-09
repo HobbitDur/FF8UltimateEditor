@@ -6,7 +6,9 @@ NegativeElemDef DLL reads this table instead:
   - a spell line: one signed value per element (Fire +50 and Ice -50 from the same spell, a weakness
     being a negative value), applied x stock / 100 per Elem-Def slot like the kernel value;
   - a GF line: one signed value per element, given flat (no stock, no level) to the character the GF
-    is junctioned to (Ifrit Fire +30 / Ice -30).
+    is junctioned to (Ifrit Fire +30 / Ice -30);
+  - a character line: the character's own base resistance, flat, always (CH0 = Squall ... CH7 = Edea;
+    Laguna, Kiros and Ward use Squall, Zell and Irvine's records in the dreams, so their lines too).
 Everything adds up on top of the neutral 800 and the DLL clamps the total to -800% .. +200%.
 
 The file (cronos/elemdef.csv in the mod, served by Junction VIII from the game folder):
@@ -14,9 +16,10 @@ The file (cronos/elemdef.csv in the mod, served by Junction VIII from the game f
     # comment
     id;Fire;Ice;Thunder;Earth;Poison;Wind;Water;Holy      a spell (magic id)
     GFid;Fire;Ice;Thunder;Earth;Poison;Wind;Water;Holy    a G-Force (GF0 = Quezacotl ... GF15 = Eden)
+    CHid;Fire;Ice;Thunder;Earth;Poison;Wind;Water;Holy    a character (CH0 = Squall ... CH7 = Edea)
                                                           anything after the 9 numbers is ignored
 
-A spell without a line keeps its kernel.bin values, exactly as vanilla; a GF without a line gives nothing.
+A spell without a line keeps its kernel.bin values, exactly as vanilla; a GF or a character without a\nline gives nothing.
 """
 import os
 
@@ -29,25 +32,27 @@ from SmallWidget.nowheel import NoWheelSpinBox
 
 ELEMENTS = ["Fire", "Ice", "Thunder", "Earth", "Poison", "Wind", "Water", "Holy"]
 GF_COUNT = 16
+CHARA_COUNT = 8   # the save's character records; Laguna/Kiros/Ward use Squall/Zell/Irvine's in the dreams
 VALUE_MIN, VALUE_MAX = -999, 999
 FILE_FILTER = "Elemental defense table (*.csv);;All files (*)"
 DEFAULT_FILE_NAME = "elemdef.csv"
 SETTINGS_KEY = "solomonring/cronos_elemdef_path"
-MAGIC_PAGE, GF_PAGE = 0, 1
+MAGIC_PAGE, GF_PAGE, CHARACTER_PAGE = 0, 1, 2
 
 
 # ---- the file ---------------------------------------------------------------------------------------
 
 def read_table(path):
-    """(spell rows, GF rows), each {id: [8 values]} - the same rules as the DLL: '#' lines skipped,
-    ; , or tab between the numbers, 9 numbers per line (a GF line starts with GF), spell id 0-255,
-    GF id 0-15, anything after the 9 numbers ignored."""
-    spells, gfs = {}, {}
+    """(spell rows, GF rows, character rows), each {id: [8 values]} - the same rules as the DLL: '#'
+    lines skipped, ; , or tab between the numbers, 9 numbers per line (a GF line starts with GF, a
+    character line with CH, any case), spell id 0-255, GF id 0-15, character id 0-7, anything after the
+    9 numbers ignored."""
+    spells, gfs, characters = {}, {}, {}
     with open(path, encoding="utf-8-sig") as file:
         for line in file:
             text = line.split("#", 1)[0].strip()
-            is_gf = text[:2].upper() == "GF"
-            if is_gf:
+            kind = text[:2].upper() if text[:2].upper() in ("GF", "CH") else ""
+            if kind:
                 text = text[2:]
             fields = [part.strip() for part in text.replace(",", ";").replace("\t", ";").split(";") if part.strip()]
             try:
@@ -56,20 +61,21 @@ def read_table(path):
                 continue
             if len(numbers) != 9:
                 continue
-            if is_gf and 0 <= numbers[0] < GF_COUNT:
-                gfs[numbers[0]] = numbers[1:]
-            elif not is_gf and 0 <= numbers[0] <= 255:
-                spells[numbers[0]] = numbers[1:]
-    return spells, gfs
+            target, limit = {"GF": (gfs, GF_COUNT), "CH": (characters, CHARA_COUNT), "": (spells, 256)}[kind]
+            if 0 <= numbers[0] < limit:
+                target[numbers[0]] = numbers[1:]
+    return spells, gfs, characters
 
 
-def write_table(path, spells, gfs=None, spell_names=None, gf_names=None):
-    spell_names, gf_names, gfs = spell_names or {}, gf_names or {}, gfs or {}
+def write_table(path, spells, gfs=None, characters=None, spell_names=None, gf_names=None, character_names=None):
+    gfs, characters = gfs or {}, characters or {}
+    spell_names, gf_names, character_names = spell_names or {}, gf_names or {}, character_names or {}
     with open(path, "w", encoding="utf-8", newline="\n") as file:
         file.write("# Cronos elemental defense table, read by NegativeElemDef.dll (edit it in SolomonRing >\n"
-                   "# Magic or G-Forces > Cronos extension). The resistance % given to each element:\n"
-                   "#   spell line: when junctioned to Elem-Def, x stock / 100 (no line = kernel.bin values)\n"
-                   "#   GF line:    flat, to the character the GF is junctioned to (no line = nothing)\n"
+                   "# Magic, G-Forces or Characters > Cronos extension). The resistance % given to each element:\n"
+                   "#   spell line:     when junctioned to Elem-Def, x stock / 100 (no line = kernel.bin values)\n"
+                   "#   GF line:        flat, to the character the GF is junctioned to (no line = nothing)\n"
+                   "#   character line: flat, always - the character's base (no line = nothing)\n"
                    "# +100 = immune, more = absorb, negative = weakness.\n"
                    "# id;" + ";".join(ELEMENTS) + "\n")
         for magic_id in sorted(spells):
@@ -78,7 +84,10 @@ def write_table(path, spells, gfs=None, spell_names=None, gf_names=None):
             file.write("\n# G-Forces: GFid;" + ";".join(ELEMENTS) + "\n")
             for gf_id in sorted(gfs):
                 file.write(_line(f"GF{gf_id}", gfs[gf_id], gf_names.get(gf_id, "")))
-
+        if characters:
+            file.write("\n# Characters: CHid;" + ";".join(ELEMENTS) + "\n")
+            for chara_id in sorted(characters):
+                file.write(_line(f"CH{chara_id}", characters[chara_id], character_names.get(chara_id, "")))
 
 def _line(key, values, name):
     return f"{key};" + ";".join(str(value) for value in values) + (f"    # {name}" if name else "") + "\n"
@@ -184,13 +193,15 @@ class _ElemGrid(QTableWidget):
 class CronosElemDefDialog(QDialog):
     """Edit the table: a Magic tab (the spells of the loaded kernel.bin) and a G-Forces tab."""
 
-    def __init__(self, parent, magic_entries, magic_names, gf_names, settings=None, page=MAGIC_PAGE):
+    def __init__(self, parent, magic_entries, magic_names, gf_names, character_names=None, settings=None,
+                 page=MAGIC_PAGE):
         super().__init__(parent)
         self.setWindowTitle("Cronos extension - Elemental defense table")
         self.resize(1000, 720)
         self._entries = magic_entries          # {id: KernelEntry}
         self._magic_names = magic_names        # {id: name}
         self._gf_names = gf_names              # {GF id: name}
+        self._character_names = character_names or {}   # {character id: name}
         self._settings = settings
         self._path = settings.value(SETTINGS_KEY, "") if settings is not None else ""
         self._dirty = False
@@ -201,7 +212,8 @@ class CronosElemDefDialog(QDialog):
             "<span style='color:#d04040'>negative = weakness</span> (-100 = x2 damage). "
             "<b>Magic</b>: what a <b>used</b> spell gives when junctioned to Elem-Def (x stock / 100); an unused "
             "spell keeps its kernel.bin J-Elem defense. <b>G-Forces</b>: what a GF gives, flat, to the character "
-            "it is junctioned to. Everything adds up, clamped to -800% .. +200%.<br>"
+            "it is junctioned to. <b>Characters</b>: the character's own base, flat, always (Squall/Zell/Irvine "
+            "also cover Laguna/Kiros/Ward). Everything adds up, clamped to -800% .. +200%.<br>"
             "Cronos ships the file as <i>CronosFiles/GameEnhancement/NegativeElemDef/cronos/elemdef.csv</i>.")
         info.setWordWrap(True)
         layout.addWidget(info)
@@ -214,7 +226,9 @@ class CronosElemDefDialog(QDialog):
         self.magic_grid = _ElemGrid(magic_names, "Id", "(not in this kernel.bin)", self._changed)
         self.gf_grid = _ElemGrid(gf_names, "GF", "(unknown GF)", self._changed)
         self.pages.addTab(self.magic_grid, "Magic")
+        self.character_grid = _ElemGrid(self._character_names, "CH", "(unknown character)", self._changed)
         self.pages.addTab(self.gf_grid, "G-Forces")
+        self.pages.addTab(self.character_grid, "Characters")
         self.pages.setCurrentIndex(page)
         layout.addWidget(self.pages, 1)
 
@@ -222,7 +236,7 @@ class CronosElemDefDialog(QDialog):
         for label, slot, tip in (
                 ("Fill spells from kernel.bin", self._fill_from_kernel,
                  "Every spell, with the values its kernel.bin J-Elem defense gives today (changes nothing in game). "
-                 "GFs are not touched: the kernel.bin gives them no elemental defense."),
+                 "GFs and characters are not touched: the kernel.bin gives them no elemental defense."),
                 ("Import...", self._import, "Open an existing table"),
                 ("Save", self._save, "Save to the current file"),
                 ("Save as...", self._save_as, "Save to a new file")):
@@ -245,15 +259,19 @@ class CronosElemDefDialog(QDialog):
     def _changed(self):
         self._dirty = True
 
-    def _load(self, spells, gfs):
+    def _load(self, spells, gfs, characters):
         self.magic_grid.load(spells)
         self.gf_grid.load(gfs)
+        self.character_grid.load(characters)
 
     def rows(self):
         return self.magic_grid.rows()
 
     def gf_rows(self):
         return self.gf_grid.rows()
+
+    def character_rows(self):
+        return self.character_grid.rows()
 
     # ---- buttons ---------------------------------------------------------------------------------
     def _fill_from_kernel(self):
@@ -283,7 +301,8 @@ class CronosElemDefDialog(QDialog):
         if not self._path:
             return self._save_as()
         try:
-            write_table(self._path, self.rows(), self.gf_rows(), self._magic_names, self._gf_names)
+            write_table(self._path, self.rows(), self.gf_rows(), self.character_rows(),
+                        self._magic_names, self._gf_names, self._character_names)
         except OSError as error:
             QMessageBox.warning(self, "Save", f"Cannot write {self._path}:\n{error}")
             return False
