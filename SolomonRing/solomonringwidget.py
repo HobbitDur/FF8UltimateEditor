@@ -217,7 +217,12 @@ class SolomonRingWidget(QWidget):
             if config.get("growable") else None
         static_config = self.kernel_manager.get_section_config(section_id) or {}
         if config.get("ability_pool"):
-            pool_callback, pool_tooltip = (lambda sid=section_id: self._ability_pool_status(sid)), None
+            pool_callback = lambda sid=section_id: self._ability_pool_status(sid)
+            pool_tooltip = ("The category maximum assumes abilities in the other categories are removed.\n"
+                            "Ability ID 0 (None) is always kept. The menu group's first ID must\n"
+                            "stay below 128, and menu abilities have their own 32-entry limit.\n"
+                            "The shared pool shows how many IDs are available right now;\n"
+                            "removing an ability frees an ID for any category.")
         elif config.get("max_count"):
             pool_callback = lambda sid=section_id: self._entry_budget_status(sid)
             pool_tooltip = self.ENTRY_BUDGET_TOOLTIPS.get(section_id)
@@ -426,6 +431,16 @@ class SolomonRingWidget(QWidget):
             total += self._ability_entry_count(sid)
         return total
 
+    def _ability_category_max(self, section_id):
+        """Maximum after removing the other groups' removable entries, not today's free IDs."""
+        # Only the first group's None entry is protected. Even an empty menu group
+        # must start at an ID below 128, leaving at most 127 entries before it.
+        reserved_elsewhere = 0 if section_id == self._ability_section_ids()[0] else 1
+        maximum = self._ability_id_max() - reserved_elsewhere
+        if section_id == self.MENU_ABILITY_SECTION:
+            return max(0, min(maximum, self.MAX_MENU_ABILITIES))
+        return max(0, min(maximum, 127 - reserved_elsewhere))
+
     def _ability_pool_status(self, section_id=None):
         """(counter text, may another entry be added) for a pooled tab's Add button.
         The shared budget applies everywhere; the menu tab also shows its own cap,
@@ -438,6 +453,10 @@ class SolomonRingWidget(QWidget):
             return "", False
         used, maximum = self._ability_total(), self._ability_id_max()
         text = f"{used} / {maximum} ability ids - {maximum - used} left"
+        if section_id is not None:
+            entries = self._ability_entry_count(section_id)
+            text = (f"{entries} entries - category maximum {self._ability_category_max(section_id)}\n"
+                    f"Shared pool: {text}")
         can_add = used < maximum
         if section_id is not None and section_id != self.MENU_ABILITY_SECTION and self._ability_first_id(self.MENU_ABILITY_SECTION) >= 127:
             text += "  (menu group start must stay below 128)"

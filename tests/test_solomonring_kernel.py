@@ -690,6 +690,10 @@ def test_ability_pool_stops_at_the_savemap_limit(qapp, tmp_path):
 
     text, can_add = widget._ability_pool_status()
     assert "116 / 128" in text and "12 left" in text and can_add
+    for section_id, current in ((16, 5), (17, 9)):
+        text, can_add = widget._ability_pool_status(section_id)
+        assert f"{current} entries - category maximum 126" in text
+        assert "Shared pool: 116 / 128" in text and "12 left" in text and can_add
 
     for _ in range(5):
         gf_add.click()
@@ -793,6 +797,10 @@ def test_original_abilities_can_be_removed_and_their_ids_reused(qapp, tmp_path, 
         assert widget._ability_entry_count(sid) == count
     assert widget._ability_total() == 116
     assert not widget._section_tabs[12].can_remove(0)
+    assert widget._ability_category_max(12) == 127
+    assert widget._ability_category_max(16) == 126
+    assert widget._ability_category_max(17) == 126
+    assert widget._ability_category_max(18) == 32
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
@@ -1114,17 +1122,22 @@ def test_empty_command_ability_section_can_be_saved_and_grown_again(qapp, tmp_pa
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
-def test_empty_menu_group_keeps_its_start_representable(qapp, tmp_path):
+@pytest.mark.parametrize("section_id, expected_max", [(12, 127), (16, 126), (17, 126)])
+def test_empty_menu_group_keeps_its_start_representable(qapp, tmp_path, section_id, expected_max):
     work = tmp_path / "kernel.bin"
     work.write_bytes(KERNEL.read_bytes())
     widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
     widget.load_file(str(work))
-    menu = widget._section_by_id(18)
-    while menu.get_subsection_list():
-        menu.remove_subsection(0)
-    junction = widget._section_by_id(12)
+    for sid in widget._ability_section_ids():
+        section = widget._section_by_id(sid)
+        keep = 1 if sid == 12 else 0
+        while len(section.get_subsection_list()) > keep:
+            section.remove_subsection(len(section.get_subsection_list()) - 1)
+    target = widget._section_by_id(section_id)
     while widget._ability_total() < 127:
-        junction.append_blank_subsection()
+        target.append_blank_subsection()
+    assert widget._ability_entry_count(section_id) == expected_max
+    assert widget._ability_category_max(section_id) == expected_max
     assert widget._ability_first_id(18) == 127
     assert not widget._ability_pool_status(12)[1]
     assert not widget._ability_pool_status(17)[1]

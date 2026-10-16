@@ -29,14 +29,15 @@ def app():
 
 
 @pytest.fixture
-def editor(app, monkeypatch):
+def editor(app, monkeypatch, tmp_path):
     """The Ifrit tool with c0m071 open, and every message box silenced."""
     from PyQt6.QtCore import QSettings
     from Ifrit.ifritmonsterwidget import IfritMonsterWidget
 
     monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: QMessageBox.StandardButton.Ok)
     monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: QMessageBox.StandardButton.Ok)
-    widget = IfritMonsterWidget(QSettings("FF8UltimateEditorTest", "SectionButtons"),
+    settings = QSettings(str(tmp_path / "sections.ini"), QSettings.Format.IniFormat)
+    widget = IfritMonsterWidget(settings,
                                 game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
     widget.load_file(str(BATTLE_DIR / FIRST))
     yield widget
@@ -85,6 +86,23 @@ def test_extract_writes_one_file_per_section_in_a_folder_named_after_the_dat(edi
     # Every section is a FILE of the folder, textures included (nothing in a sub-folder), so
     # selecting everything in it selects every section in one go
     assert all(path.is_file() for path in folder.iterdir())
+
+
+@NEEDS_FILES
+def test_extract_uses_the_same_saved_selection_for_different_monsters(editor, monkeypatch, tmp_path):
+    editor.settings.setValue("ifrit/export_sections", ["camera", "texture"])
+    folder = _extract_into(editor, monkeypatch, tmp_path / "first")
+    assert {path.name for path in folder.iterdir()} == {"camera.xml"} | {
+        path.name for path in folder.glob("texture_*.tim")}
+    assert list(folder.glob("texture_*.tim"))
+
+    editor.load_file(str(BATTLE_DIR / SECOND))
+    monkeypatch.setattr(QFileDialog, "getExistingDirectory", lambda *a, **k: str(tmp_path / "second"))
+    editor._extract_sections()
+    other_folder = tmp_path / "second" / "c0m072"
+    assert {path.name for path in other_folder.iterdir()} == {"camera.xml"} | {
+        path.name for path in other_folder.glob("texture_*.tim")}
+    assert list(other_folder.glob("texture_*.tim"))
 
 
 @NEEDS_FILES

@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QTabWidget, QMessageBox, QCheckBox, QProgressDialog, QApplication,
     QListWidget, QSplitter, QFileDialog, QComboBox, QLineEdit, QSpinBox,
     QDoubleSpinBox, QAbstractButton, QPlainTextEdit, QTextEdit, QStackedWidget,
-    QSizePolicy, QStyledItemDelegate, QStyle, QStyleOptionViewItem, QToolTip
+    QSizePolicy, QStyledItemDelegate, QStyle, QStyleOptionViewItem, QToolTip, QMenu
 )
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -23,6 +23,7 @@ from Ifrit.IfritAI.commandwidget import CommandWidget
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.fpsbatchdialog import (FpsBatchDialog, FpsBatchReportDialog,
                                   select_battle_model_file_list)
+from Ifrit.sectionexportdialog import SectionExportDialog
 from Ifrit.IfritDynamicTexture.ifritdynamictexturewidget import IfritDynamicTextureWidget
 from Ifrit.IfritSeq.ifritseqwidget import IfritSeqWidget
 from Ifrit.IfritCameraSeq.ifritcameraseqwidget import IfritCameraSeqWidget, _CAMERA_SECTION_BY_ENTITY
@@ -630,12 +631,12 @@ class IfritFilePane(QWidget):
         return SectionTools(self.ifrit_manager.game_data, self.ifrit_manager.compiler,
                             self.ifrit_manager.decompiler)
 
-    def export_section_folder(self, parent_folder):
-        """Write every section of this file as its own file in <parent_folder>/<file name>/.
+    def export_section_folder(self, parent_folder, names=None):
+        """Write the selected sections in <parent_folder>/<file name>/ (default: all).
         Returns (folder, names written)."""
         self._commit()   # fold what is still held in the widgets (texture inject) before exporting
         folder = pathlib.Path(parent_folder) / folder_name_for(self.path)
-        written = export_sections(self.ifrit_manager.enemy, folder, self._section_tools())
+        written = export_sections(self.ifrit_manager.enemy, folder, self._section_tools(), names=names)
         return folder, written
 
     def apply_section_file_list(self, paths) -> list:
@@ -758,10 +759,13 @@ class IfritMonsterWidget(QWidget):
         # file's name/monster is shown in the left side list, so no label is needed here.
         # Section files: each .dat section as its own editable file, one folder per .dat.
         self._extract_sections_btn = QPushButton("Extract sections...")
-        self._extract_sections_btn.setToolTip("Write every section of the open file as its own file\n"
+        self._extract_sections_btn.setToolTip("Write the selected sections of the open file as separate files\n"
                                               "(ai.md, camera.xml, anim_seq.xml, info_stat.xlsx,\n"
-                                              "texture_00.tim...) in a folder named after it.")
+                                              "texture_00.tim...) in a folder named after it.\n"
+                                              "Right-click to define which sections to export for all models.")
         self._extract_sections_btn.clicked.connect(self._extract_sections)
+        self._extract_sections_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self._extract_sections_btn.customContextMenuRequested.connect(self._extract_sections_menu)
 
         self._apply_sections_btn = QPushButton("Apply sections...")
         self._apply_sections_btn.setToolTip("Apply a section folder onto the open file. You choose\n"
@@ -1657,10 +1661,40 @@ class IfritMonsterWidget(QWidget):
         self._extract_sections_btn.setEnabled(has_pane)
         self._apply_sections_btn.setEnabled(has_pane)
 
-    def _extract_sections(self):
-        """Write every section of the shown file into <chosen folder>/<file name>/."""
+    def _export_section_names(self):
+        """One saved choice for every model, including files opened in later sessions."""
+        names = self.settings.value("ifrit/export_sections",
+                                    defaultValue=[s.name for s in SECTION_FILES], type=list)
+        known = [s.name for s in SECTION_FILES if s.name in names]
+        return known or [s.name for s in SECTION_FILES]
+
+    def _extract_sections_menu(self, position):
+        menu = QMenu(self)
+        menu.addAction("Define sections...", self._define_export_sections)
+        menu.exec(self._extract_sections_btn.mapToGlobal(position))
+
+    def _define_export_sections(self):
         pane = self._active_pane()
         if pane is None:
+            return
+        enemy = pane.ifrit_manager.enemy
+        saved_names = self._export_section_names()
+        dialog = SectionExportDialog(self, saved_names, enemy.entity_type)
+        if dialog.exec() == SectionExportDialog.DialogCode.Accepted:
+            # Editing a monster's choice must retain sections only characters/weapons have.
+            names = (set(saved_names) - set(layout_names(enemy))) | set(dialog.selected_names())
+            self.settings.setValue("ifrit/export_sections", [s.name for s in SECTION_FILES if s.name in names])
+
+    def _extract_sections(self):
+        """Write the saved selection into <chosen folder>/<file name>/."""
+        pane = self._active_pane()
+        if pane is None:
+            return
+        names = self._export_section_names()
+        if not set(names).intersection(layout_names(pane.ifrit_manager.enemy)):
+            QMessageBox.information(self, "Extract sections",
+                                    "This model has none of the selected sections.\n"
+                                    "Right-click Extract sections and choose Define sections to change them.")
             return
         parent_folder = QFileDialog.getExistingDirectory(
             self, "Folder to write the section folder in", self._file_dialog_folder)
@@ -1668,7 +1702,7 @@ class IfritMonsterWidget(QWidget):
             return
         self._file_dialog_folder = parent_folder
         try:
-            folder, written = pane.export_section_folder(parent_folder)
+            folder, written = pane.export_section_folder(parent_folder, names=names)
         except (SectionFileError, OSError) as e:
             QMessageBox.warning(self, "Extract sections",
                                 f"Could not write the section files:\n{e}")
