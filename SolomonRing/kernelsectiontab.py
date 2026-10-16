@@ -928,7 +928,9 @@ class KernelSectionTab(QWidget):
         hidden_end = hidden_start + hidden_count if hidden_start is not None else None
         self._visible_indices = [
             i for i in range(len(self._entries))
-            if hidden_start is None or not (hidden_start <= i < hidden_end)
+            if (hidden_start is None or not (hidden_start <= i < hidden_end))
+            and not (self.config.get("removed_entry_field")
+                     and self._entries[i].get(self.config["removed_entry_field"]) == self.config["removed_entry_value"])
         ]
 
         self.list_widget.blockSignals(True)

@@ -773,7 +773,7 @@ def _remove_button(tab):
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
-def test_ability_sections_keep_the_minimum_ffnx_accepts(qapp, tmp_path, monkeypatch):
+def test_original_abilities_can_be_removed_and_their_ids_reused(qapp, tmp_path, monkeypatch):
     work = tmp_path / "kernel.bin"
     work.write_bytes(KERNEL.read_bytes())
     widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
@@ -784,15 +784,15 @@ def test_ability_sections_keep_the_minimum_ffnx_accepts(qapp, tmp_path, monkeypa
         tab = widget._section_tabs[sid]
         count = len(tab._entries)
         tab.list_widget.setCurrentRow(count - 1)
-        assert not tab.can_remove(count - 1)
-        assert not _remove_button(tab).isEnabled()
-        widget._remove_growable_entry(sid)
-        assert widget._ability_entry_count(sid) == count
-        _add_button(tab).click()
-        assert tab.can_remove(tab.current_entry_index())
+        assert tab.can_remove(count - 1)
+        assert _remove_button(tab).isEnabled()
         _remove_button(tab).click()
+        assert widget._ability_entry_count(sid) == count - 1
+        assert widget._ability_total() == 115
+        _add_button(tab).click()
         assert widget._ability_entry_count(sid) == count
     assert widget._ability_total() == 116
+    assert not widget._section_tabs[12].can_remove(0)
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
@@ -1048,3 +1048,84 @@ def test_nomsg_display_uses_section_without_changing_game_text(qapp, tmp_path):
     assert commands._entry_label(0, entry) == "0: Battle Commands"
     assert widget._battle_command_names()[0] == "Battle Commands 0"
     assert entry.get_text(0) == "#nomsg"
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_removing_original_commands_and_data_preserves_engine_ids(qapp, tmp_path, monkeypatch):
+    monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    commands = widget._section_tabs[1]
+    recover = commands._entries[26].get_text(0)
+    assert widget._section_entries(13)[8].get("battle_command_index") == 25
+    commands.list_widget.setCurrentRow(commands._visible_indices.index(25))
+    assert _remove_button(commands).isEnabled()
+    _remove_button(commands).click()
+    assert 25 not in commands._visible_indices
+    assert widget._ability_entry_count(1) == 39
+    assert commands._entries[26].get_text(0) == recover
+    assert widget._section_entries(13)[8].get("battle_command_index") == 0
+    assert 25 not in {e["value"] for e in widget.registry.resolve("battle_command")["entries"]}
+    assert "1 reserved after removal" in widget._entry_budget_status(1)[0]
+    assert not commands.can_remove(0)
+
+    data = widget._section_tabs[11]
+    data.list_widget.setCurrentRow(data._visible_indices.index(2))
+    _remove_button(data).click()
+    assert 2 not in data._visible_indices
+    assert widget._ability_entry_count(11) == 12
+    assert commands._entries[25].get("ability_data_id") == 0xFF
+    assert 2 not in {e["value"] for e in widget.registry.resolve("command_ability_ref")["entries"]}
+    assert widget.command_problems() == []
+    widget._save_kernel()
+
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    assert 25 not in reloaded._section_tabs[1]._visible_indices
+    assert 2 not in reloaded._section_tabs[11]._visible_indices
+    assert reloaded._section_tabs[1]._entries[26].get_text(0) == recover
+    assert reloaded._section_entries(13)[8].get("battle_command_index") == 0
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_empty_command_ability_section_can_be_saved_and_grown_again(qapp, tmp_path, monkeypatch):
+    monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    abilities = widget._section_tabs[13]
+    for _ in range(19):
+        abilities.list_widget.setCurrentRow(abilities.list_widget.count() - 1)
+        _remove_button(abilities).click()
+    assert widget._ability_entry_count(13) == 0
+    assert widget._ability_total() == 97
+    widget._save_kernel()
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    assert reloaded._ability_entry_count(13) == 0
+    abilities = reloaded._section_tabs[13]
+    _add_button(abilities).click()
+    assert reloaded._ability_entry_count(13) == 1
+    assert abilities._entries[0].get_text(0) == "Command Abilities 20"
+    reloaded._save_kernel()
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_empty_menu_group_keeps_its_start_representable(qapp, tmp_path):
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    menu = widget._section_by_id(18)
+    while menu.get_subsection_list():
+        menu.remove_subsection(0)
+    junction = widget._section_by_id(12)
+    while widget._ability_total() < 127:
+        junction.append_blank_subsection()
+    assert widget._ability_first_id(18) == 127
+    assert not widget._ability_pool_status(12)[1]
+    assert not widget._ability_pool_status(17)[1]
+    assert widget._ability_pool_status(18)[1]

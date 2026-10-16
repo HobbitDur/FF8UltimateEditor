@@ -207,15 +207,14 @@ class SolomonRingWidget(QWidget):
     def _make_section_tab(self, section_id):
         config = dict(self._section_configs[str(section_id)])
         config["entry_fallback_name"] = self._section_name(section_id)
-        if config.get("ability_pool"):
-            config["min_count"] = (self.kernel_manager.get_section_config(section_id) or {}).get("number_sub_section", 0)
+        if section_id in self.REMOVABLE_ENGINE_SECTIONS:
+            config["removed_entry_field"] = self.REMOVABLE_ENGINE_SECTIONS[section_id][0]
+            config["removed_entry_value"] = self.REMOVED_ENTRY
         # _checked absorbs the bool QPushButton.clicked emits, which would land in sid
         add_entry_callback = (lambda _checked=False, sid=section_id: self._add_growable_entry(sid)) \
             if config.get("growable") else None
         remove_entry_callback = (lambda _checked=False, sid=section_id: self._remove_growable_entry(sid)) \
             if config.get("growable") else None
-        # Everything below the vanilla entry count is what the unmodded engine indexes by id,
-        # so only what a mod added on top may be removed again.
         static_config = self.kernel_manager.get_section_config(section_id) or {}
         if config.get("ability_pool"):
             pool_callback, pool_tooltip = (lambda sid=section_id: self._ability_pool_status(sid)), None
@@ -259,6 +258,8 @@ class SolomonRingWidget(QWidget):
     def _protected_entry_count(self, section_id, static_config):
         """Keep fixed vanilla IDs, and the ability-zero sentinel, undeletable."""
         config = self._section_configs.get(str(section_id)) or {}
+        if section_id in self.REMOVABLE_ENGINE_SECTIONS:
+            return 1 if section_id == self.BATTLE_COMMAND_SECTION else 0
         if not config.get("ability_pool"):
             return static_config.get("number_sub_section") or 0
         return 1 if section_id == self._ability_section_ids()[0] else 0
@@ -336,7 +337,7 @@ class SolomonRingWidget(QWidget):
         names = self._section_configs.get(str(self.CHARACTER_SECTION), {}).get("entry_names", [])
         return {i: names[i] if i < len(names) else f"Character {i}" for i in range(CHARA_COUNT)}
     def _populate_tabs(self):
-        by_id = {s.id: s for s in self.kernel_manager.section_list if s}
+        by_id = {s.id: s for s in self.kernel_manager.section_list if s is not None}
         for section_id, tab in self._section_tabs.items():
             section = by_id.get(section_id)
             text_id = self._text_link.get(section_id, 0)
@@ -394,11 +395,7 @@ class SolomonRingWidget(QWidget):
     # learned-ability mask, and what FFNx's AddMoreAbility patch refuses to exceed.
 
     ABILITY_REF_SECTION = 3      # Junctionable GFs: the only section storing ability ids
-    # Mirrors what FFNx's AddMoreAbility patch refuses at load: besides the shared
-    # 128, a learned menu ability is one bit of a single dword, so that group tops
-    # out at 32 entries. (Its other rule - the GF group must still start at id 64
-    # or above - cannot be reached from here: only sections before it could push it
-    # down, and their vanilla entries are not removable.)
+    # Learned menu abilities also have their own 32-bit mask.
     MENU_ABILITY_SECTION = 18
     MAX_MENU_ABILITIES = 32
 
@@ -411,7 +408,7 @@ class SolomonRingWidget(QWidget):
                 if section.get("ability_pool")]
 
     def _section_by_id(self, section_id):
-        return next((s for s in self.kernel_manager.section_list if s and s.id == section_id), None)
+        return next((s for s in self.kernel_manager.section_list if s is not None and s.id == section_id), None)
 
     def _ability_entry_count(self, section_id):
         section = self._section_by_id(section_id)
@@ -442,6 +439,9 @@ class SolomonRingWidget(QWidget):
         used, maximum = self._ability_total(), self._ability_id_max()
         text = f"{used} / {maximum} ability ids - {maximum - used} left"
         can_add = used < maximum
+        if section_id is not None and section_id != self.MENU_ABILITY_SECTION and self._ability_first_id(self.MENU_ABILITY_SECTION) >= 127:
+            text += "  (menu group start must stay below 128)"
+            can_add = False
         if section_id == self.MENU_ABILITY_SECTION:
             menu = self._ability_entry_count(section_id)
             text += f"  (menu {menu} / {self.MAX_MENU_ABILITIES})"
@@ -543,13 +543,31 @@ class SolomonRingWidget(QWidget):
             "0xFF means \"none\".",
     }
 
+    REMOVED_ENTRY = 0xFE
+    REMOVABLE_ENGINE_SECTIONS = {1: ("unused_0x07", 39), 11: ("unknown_0x02", 12)}
+
+    def _entry_removed(self, section_id, index, entry=None):
+        spec = self.REMOVABLE_ENGINE_SECTIONS.get(section_id)
+        if spec is None:
+            return False
+        if entry is None:
+            entries = self._section_entries(section_id)
+            if not 0 <= index < len(entries):
+                return False
+            entry = entries[index]
+        return entry.get(spec[0]) == self.REMOVED_ENTRY
+
     def _entry_budget_status(self, section_id):
         """(counter text, may another entry be added) for a section with a "max_count"."""
         if not self.loaded_filename:
             return "", False
         used = self._ability_entry_count(section_id)
         maximum = self._section_configs[str(section_id)]["max_count"]
-        return f"{used} / {maximum} entries - {maximum - used} left", used < maximum
+        removed = sum(self._entry_removed(section_id, i, e)
+                      for i, e in enumerate(self._section_entries(section_id)))
+        text = (f"{used - removed} entries / {maximum} slots ({removed} reserved after removal)"
+                if removed else f"{used} / {maximum} entries - {maximum - used} left")
+        return text, used < maximum
 
     def _refresh_entry_budgets(self):
         for section_id, tab in self._section_tabs.items():
@@ -591,14 +609,18 @@ class SolomonRingWidget(QWidget):
         names = self._battle_command_names()
         if not names:
             return
-        commands = [{"value": i, "name": f"{i}: {name or '(unnamed)'}"} for i, name in enumerate(names)]
+        commands = [{"value": i, "name": f"{i}: {name or '(unnamed)'}"} for i, name in enumerate(names)
+                    if not self._entry_removed(self.BATTLE_COMMAND_SECTION, i)]
         self.registry.set_dynamic("battle_command", commands)
 
         users = {}
         for index, entry in enumerate(self._section_entries(self.BATTLE_COMMAND_SECTION)):
+            if self._entry_removed(self.BATTLE_COMMAND_SECTION, index, entry):
+                continue
             users.setdefault(entry.get("ability_data_id"), []).append(names[index] or f"#{index}")
         data = [{"value": i, "name": f"{i}: " + (", ".join(users.get(i, [])) or "(unused)")}
-                for i in range(self._ability_entry_count(self.COMMAND_DATA_SECTION))]
+                for i in range(self._ability_entry_count(self.COMMAND_DATA_SECTION))
+                if not self._entry_removed(self.COMMAND_DATA_SECTION, i)]
         data.append({"value": self.NO_COMMAND_DATA, "name": "None (chosen at runtime)"})
         self.registry.set_dynamic("command_ability_ref", data)
 
@@ -621,8 +643,10 @@ class SolomonRingWidget(QWidget):
         new = subsections[index].get_data_list()[-1].get_data_hex()
         new[:] = template
         entries[index].set("behaves_like", family)
+        if self._entry_removed(self.COMMAND_DATA_SECTION, entries[index].get("ability_data_id")):
+            entries[index].set("ability_data_id", self.NO_COMMAND_DATA)
 
-    def _renumber_command_references(self, section_id, removed):
+    def _renumber_command_references(self, section_id, removed, compact=True):
         """Follow a deleted battle command or data entry through what points at it: ids
         past it move down one, and what pointed at it falls back to "nothing" (command 0 /
         no data). Returns how many references were cleared."""
@@ -636,7 +660,7 @@ class SolomonRingWidget(QWidget):
             if value == removed:
                 entry.set(field, fallback)
                 cleared += 1
-            elif value != self.NO_COMMAND_DATA and value > removed:
+            elif compact and value != self.NO_COMMAND_DATA and value > removed:
                 entry.set(field, value - 1)
         return cleared
 
@@ -654,9 +678,11 @@ class SolomonRingWidget(QWidget):
         names = self._battle_command_names()
         data_count = self._ability_entry_count(self.COMMAND_DATA_SECTION)
         for index, entry in enumerate(self._section_entries(self.BATTLE_COMMAND_SECTION)):
+            if self._entry_removed(self.BATTLE_COMMAND_SECTION, index, entry):
+                continue
             label = f"Battle command {index} ({names[index] if index < len(names) and names[index] else 'unnamed'})"
             data_id = entry.get("ability_data_id")
-            if data_id != self.NO_COMMAND_DATA and data_id >= data_count:
+            if data_id != self.NO_COMMAND_DATA and (data_id >= data_count or self._entry_removed(self.COMMAND_DATA_SECTION, data_id)):
                 problems.append(f"{label} uses command ability data {data_id}, but there are only {data_count}.")
             if index < self.VANILLA_COMMAND_COUNT:
                 continue
@@ -678,10 +704,10 @@ class SolomonRingWidget(QWidget):
         hides that id range from its list entirely (kernel_section_fields.json's
         hidden_id_start/count), so the placeholder rows never actually appear - they're
         only labelled here for anyone inspecting the raw file outside SolomonRing."""
-        section = next((s for s in self.kernel_manager.section_list if s and s.id == section_id), None)
+        section = next((s for s in self.kernel_manager.section_list if s is not None and s.id == section_id), None)
         tab = self._section_tabs.get(section_id)
         # Command ability data is the one growable section without any text.
-        if section is None or tab is None or (tab.text_labels and not section.section_text_linked):
+        if section is None or tab is None or (tab.text_labels and section.section_text_linked is None):
             return
         cfg = self.kernel_manager.get_section_config(section_id)
         text_section = section.section_text_linked if tab.text_labels else None
@@ -712,12 +738,12 @@ class SolomonRingWidget(QWidget):
 
         def _append_one():
             section.append_blank_subsection()
-            for _ in range(nb_text if text_section else 0):
+            for _ in range(nb_text if text_section is not None else 0):
                 text_section.add_text(bytearray([0x00]))
 
         def _insert_one(index):
             section.insert_blank_subsection(index)
-            for i in range(nb_text if text_section else 0):
+            for i in range(nb_text if text_section is not None else 0):
                 text_section.insert_text(index * nb_text + i, bytearray([0x00]))
 
         pad = 0
@@ -749,7 +775,7 @@ class SolomonRingWidget(QWidget):
         elif section_id == self.COMMAND_DATA_SECTION and selected is not None:
             subsections = section.get_subsection_list()
             subsections[new_index].get_data_list()[-1].get_data_hex()[:] = subsections[selected].get_data_list()[-1].get_data_hex()
-        if text_section:
+        if text_section is not None:
             name_id = new_ability_id if pooled else new_index
             text_section.get_text_list()[new_index * nb_text].set_str(f"{self._section_name(section_id)} {name_id}")
 
@@ -769,18 +795,16 @@ class SolomonRingWidget(QWidget):
 
     def _remove_growable_entry(self, section_id):
         """Delete the selected entry of a "growable" data section together with its linked
-        name/description text. Vanilla spell IDs stay fixed; ability groups keep at least
-        their vanilla entry counts, as required by FFNx. Entries after
+        name/description text. Ability sections compact and free their shared IDs.
+        Original engine command/data rows retain reserved slots. Entries after
         the deleted one shift down one id, exactly as they would in any array. If that leaves the
         section with nothing above the GF-reserved block but the placeholder rows themselves, they
         go too, so the file never keeps a tail of reserved-only entries."""
-        section = next((s for s in self.kernel_manager.section_list if s and s.id == section_id), None)
+        section = next((s for s in self.kernel_manager.section_list if s is not None and s.id == section_id), None)
         tab = self._section_tabs.get(section_id)
-        if section is None or tab is None or (tab.text_labels and not section.section_text_linked):
+        if section is None or tab is None or (tab.text_labels and section.section_text_linked is None):
             return
         cfg = self.kernel_manager.get_section_config(section_id) or {}
-        if cfg.get("ability_pool") and self._ability_entry_count(section_id) <= cfg["number_sub_section"]:
-            return
         entry_index = tab.current_entry_index()
         if not tab.can_remove(entry_index):
             return
@@ -812,10 +836,15 @@ class SolomonRingWidget(QWidget):
 
         def _remove_one(index):
             section.remove_subsection(index)
-            for _ in range(nb_text if text_section else 0):
+            for _ in range(nb_text if text_section is not None else 0):
                 text_section.remove_text(index * nb_text)
 
-        _remove_one(entry_index)
+        retired = commands and entry_index < self.REMOVABLE_ENGINE_SECTIONS[section_id][1]
+        if retired:
+            field = self.REMOVABLE_ENGINE_SECTIONS[section_id][0]
+            self._section_entries(section_id)[entry_index].set(field, self.REMOVED_ENTRY)
+        else:
+            _remove_one(entry_index)
 
         # The placeholders only exist to pad the ids up to the first real entry above
         # them, so they go when that last entry does - and only then. Keying this off
@@ -837,7 +866,7 @@ class SolomonRingWidget(QWidget):
             # Its open form is written back first, then rebuilt from the renumbered data.
             if ref_tab is not None:
                 ref_tab.commit()
-            self._renumber_command_references(section_id, entry_index)
+            self._renumber_command_references(section_id, entry_index, compact=not retired)
             if ref_tab is not None and ref_section is not None:
                 ref_tab.load_section(ref_section, ref_section.section_text_linked)
 
@@ -858,7 +887,7 @@ class SolomonRingWidget(QWidget):
         """Compress all kernel text (the shared toolbar's Compress button calls this)."""
         if not self.loaded_filename:
             return
-        by_id = {s.id: s for s in self.kernel_manager.section_list if s}
+        by_id = {s.id: s for s in self.kernel_manager.section_list if s is not None}
         for data_id, text_id in self._text_link.items():
             text_section = by_id.get(text_id) if text_id else None
             config = self._section_configs.get(str(data_id))
@@ -882,7 +911,7 @@ class SolomonRingWidget(QWidget):
 
     def _all_text_sections(self):
         linked_ids = {tid for tid in self._text_link.values() if tid}
-        return [s for s in self.kernel_manager.section_list if s and s.id in linked_ids]
+        return [s for s in self.kernel_manager.section_list if s is not None and s.id in linked_ids]
 
     def _save_kernel(self):
         if not self.loaded_filename:
