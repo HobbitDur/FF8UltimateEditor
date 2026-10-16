@@ -72,6 +72,11 @@ class KernelEntry:
             return ""
         return self._text_section.get_text_list()[self._text_list_index(text_index)].get_str()
 
+    def display_name(self, fallback: str) -> str:
+        """Name for lists and pickers; keep the original game text untouched."""
+        name = self.get_text(0).strip()
+        return fallback if not name or name.casefold() == "#nomsg" else name
+
     def set_text(self, text_index: int, value: str):
         if not self.has_text(text_index):
             return

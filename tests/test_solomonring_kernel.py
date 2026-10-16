@@ -773,41 +773,26 @@ def _remove_button(tab):
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
-def test_a_vanilla_ability_can_be_removed_to_free_an_id(qapp, tmp_path, monkeypatch):
-    """Unlike a spell, no ability id is fixed in the engine - the loader reads every group
-    boundary from the section sizes - so dropping a vanilla ability is a legitimate way to
-    spend its id in another section. Ability id 0 is the exception: it is the "no ability"
-    value an empty learn slot holds."""
+def test_ability_sections_keep_the_minimum_ffnx_accepts(qapp, tmp_path, monkeypatch):
     work = tmp_path / "kernel.bin"
     work.write_bytes(KERNEL.read_bytes())
     widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
     widget.load_file(str(work))
     monkeypatch.setattr(QMessageBox, "question",
                         lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
-
+    for sid in widget._ability_section_ids():
+        tab = widget._section_tabs[sid]
+        count = len(tab._entries)
+        tab.list_widget.setCurrentRow(count - 1)
+        assert not tab.can_remove(count - 1)
+        assert not _remove_button(tab).isEnabled()
+        widget._remove_growable_entry(sid)
+        assert widget._ability_entry_count(sid) == count
+        _add_button(tab).click()
+        assert tab.can_remove(tab.current_entry_index())
+        _remove_button(tab).click()
+        assert widget._ability_entry_count(sid) == count
     assert widget._ability_total() == 116
-    party = widget._section_tabs[16]           # party abilities: 5 vanilla entries
-    party.list_widget.setCurrentRow(party._visible_indices.index(4))
-    assert _remove_button(party).isEnabled(), "a vanilla ability must be removable"
-    _remove_button(party).click()
-
-    assert widget._ability_total() == 115
-    assert widget._ability_entry_count(16) == 4
-    assert widget._ability_first_id(17) == 82, "GF abilities did not shift down"
-    text, can_add = widget._ability_pool_status()
-    assert "13 left" in text and can_add
-
-    # Id 0 is the "none" an empty learn slot holds, so the first junction ability stays.
-    junction = widget._section_tabs[12]
-    junction.list_widget.setCurrentRow(junction._visible_indices.index(0))
-    assert not _remove_button(junction).isEnabled(), "ability id 0 must not be removable"
-    junction.list_widget.setCurrentRow(junction._visible_indices.index(1))
-    assert _remove_button(junction).isEnabled()
-
-    # Magic is unchanged: its vanilla spells are still indexed by id by the engine.
-    magic = widget._section_tabs[2]
-    magic.list_widget.setCurrentRow(magic._visible_indices.index(30))
-    assert not _remove_button(magic).isEnabled()
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
@@ -992,3 +977,74 @@ def test_the_battle_setup_feeds_a_spell_formula(qapp, tmp_path):
     finally:
         popup.close()
         battle_setup.SETUP.character = battle_setup.SETUP.monster = None
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_new_treatment_command_round_trip(qapp, tmp_path, monkeypatch):
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args, **kwargs: pytest.fail(args[2]))
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+
+    data = widget._section_tabs[11]
+    data.list_widget.setCurrentRow(2)  # Treatment's effect data
+    _add_button(data).click()
+    subsections = widget._section_by_id(11).get_subsection_list()
+    payload = lambda index: bytes(subsections[index].get_data_list()[-1].get_data_hex())
+    assert payload(12) == payload(2)
+    assert data._entry_label(12, data._entries[12]) == "12: Command Ability Data"
+
+    commands = widget._section_tabs[1]
+    commands.list_widget.setCurrentRow(25)  # Treatment
+    _add_button(commands).click()
+    assert commands._entries[39].get_text(0) == "Battle Commands 39"
+    assert commands._entries[39].get("behaves_like") == 25
+    assert commands._entries[39].get("target_info") == commands._entries[25].get("target_info")
+    commands._text_widgets[0].setText("Cleanse")
+    combo = commands._field_widgets["ability_data_id"][2]
+    combo.setCurrentIndex(combo.findData(12))
+    commands.commit()
+
+    abilities = widget._section_tabs[13]
+    abilities.list_widget.setCurrentRow(18)
+    _add_button(abilities).click()
+    abilities._text_widgets[0].setText("Cleanse")
+    combo = abilities._field_widgets["battle_command_index"][2]
+    combo.setCurrentIndex(combo.findData(39))
+    abilities.commit()
+    widget._section_entries(13)[19].set("ap", 100)
+    abilities.load_section(widget._section_by_id(13), widget._section_by_id(13).section_text_linked)
+    widget.tabs.setCurrentIndex(widget._tab_index_by_section[3])
+    gforces = widget._section_tabs[3]
+    gforces.list_widget.setCurrentRow(0)
+    combo = gforces._field_widgets["ability21"][2]
+    combo.setCurrentIndex(combo.findData(39))
+    assert "Cleanse" in combo.currentText()
+    assert widget.command_problems() == []
+    widget._save_kernel()
+
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    subsections = reloaded._section_by_id(11).get_subsection_list()
+    assert payload(12) == payload(2)
+    assert reloaded._section_entries(1)[39].get("ability_data_id") == 12
+    assert reloaded._section_entries(1)[39].get("behaves_like") == 25
+    assert reloaded._section_entries(13)[19].get("battle_command_index") == 39
+    assert reloaded._section_entries(13)[19].get("ap") == 100
+    assert reloaded._section_entries(3)[0].get("ability21") == 39
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_nomsg_display_uses_section_without_changing_game_text(qapp, tmp_path):
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    commands = widget._section_tabs[1]
+    commands._text_widgets[0].setText("#nomsg")
+    commands.commit()
+    entry = commands._entries[0]
+    assert commands._entry_label(0, entry) == "0: Battle Commands"
+    assert widget._battle_command_names()[0] == "Battle Commands 0"
+    assert entry.get_text(0) == "#nomsg"

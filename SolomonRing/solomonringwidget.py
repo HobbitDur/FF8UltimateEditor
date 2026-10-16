@@ -205,7 +205,10 @@ class SolomonRingWidget(QWidget):
             self.settings.setValue(self.CURRENT_TAB_KEY, index)
 
     def _make_section_tab(self, section_id):
-        config = self._section_configs[str(section_id)]
+        config = dict(self._section_configs[str(section_id)])
+        config["entry_fallback_name"] = self._section_name(section_id)
+        if config.get("ability_pool"):
+            config["min_count"] = (self.kernel_manager.get_section_config(section_id) or {}).get("number_sub_section", 0)
         # _checked absorbs the bool QPushButton.clicked emits, which would land in sid
         add_entry_callback = (lambda _checked=False, sid=section_id: self._add_growable_entry(sid)) \
             if config.get("growable") else None
@@ -246,15 +249,15 @@ class SolomonRingWidget(QWidget):
         if dirty_state is not None:
             dirty_state.mark()
 
-    def _protected_entry_count(self, section_id, static_config):
-        """How many leading entries of a section may never be deleted.
+    def _section_name(self, section_id):
+        return next(title for title, sections in TAB_LAYOUT
+                    if any(sid == section_id for sid, _label in sections))
 
-        For Magic that is every vanilla spell: the unmodded engine indexes them by id.
-        The ability sections are different - FFNx's AddMoreAbility patch rewrites every
-        group boundary from the section sizes it reads, so no ability id is fixed and a
-        vanilla one may be dropped to spend its id in another section. The single
-        exception is ability id 0, the "no ability" value a GF's empty learn slots hold,
-        which is the first entry of the first ability section."""
+    def _entry_name(self, section_id, index, entry):
+        return entry.display_name(f"{self._section_name(section_id)} {index}")
+
+    def _protected_entry_count(self, section_id, static_config):
+        """Keep fixed vanilla IDs, and the ability-zero sentinel, undeletable."""
         config = self._section_configs.get(str(section_id)) or {}
         if not config.get("ability_pool"):
             return static_config.get("number_sub_section") or 0
@@ -462,8 +465,8 @@ class SolomonRingWidget(QWidget):
             if not tab:
                 return
             for index in range(len(tab._entries)):
-                name = tab._entries[index].get_text(0).strip()
-                entries.append({"value": ability_id, "name": name or f"(unnamed {ability_id})"})
+                name = self._entry_name(sid, ability_id, tab._entries[index])
+                entries.append({"value": ability_id, "name": name})
                 ability_id += 1
         self.registry.set_dynamic("junctionable_ability", entries)
         ref_tab = self._section_tabs.get(self.ABILITY_REF_SECTION)
@@ -533,8 +536,8 @@ class SolomonRingWidget(QWidget):
         BATTLE_COMMAND_SECTION:
             "FFNx's AddMoreCommand loader takes up to 176 battle commands: command ids\n"
             "from 0xB0 up belong to the engine itself (Renzokuken finisher, G-Force...).\n"
-            "A new command copies Mad Rush's settings; give it a name, pick its command\n"
-            "ability data, then point a command ability at it.",
+            "A new command copies the selected data-driven command (otherwise Mad Rush).\n"
+            "Pick its effect data, then point a command ability at it.",
         COMMAND_DATA_SECTION:
             "Up to 255 entries: a battle command stores which one it uses in a byte where\n"
             "0xFF means \"none\".",
@@ -568,7 +571,8 @@ class SolomonRingWidget(QWidget):
         tab = self._section_tabs.get(self.BATTLE_COMMAND_SECTION)
         if not tab:
             return []
-        return [tab._entries[i].get_text(0).strip() for i in range(len(tab._entries))]
+        return [self._entry_name(self.BATTLE_COMMAND_SECTION, i, entry)
+                for i, entry in enumerate(tab._entries)]
 
     def _commit_command_tab(self):
         """Write back the battle command form, so a renamed or re-pointed command shows
@@ -605,16 +609,18 @@ class SolomonRingWidget(QWidget):
         for tab in self._section_tabs.values():
             tab.refresh_dynamic_combos()
 
-    def _init_new_battle_command(self, index):
-        """A blank battle command has no data entry FFNx accepts and no targeting; start
-        it as a copy of Mad Rush's settings instead (not its name)."""
-        # Raw bytes rather than field by field: target info is split into several masked
-        # fields, and copying the byte whole cannot miss one.
+    def _init_new_battle_command(self, index, selected):
+        """Copy an eligible selected command; use Mad Rush for menu-driven commands."""
+        entries = self._section_entries(self.BATTLE_COMMAND_SECTION)
+        source = selected if selected is not None else self.DEFAULT_FAMILY
+        family = source if source < self.VANILLA_COMMAND_COUNT else (entries[source].get("behaves_like") or self.DEFAULT_FAMILY)
+        if family not in self.DATA_DRIVEN_COMMANDS or entries[source].get("ability_data_id") == self.NO_COMMAND_DATA:
+            source = family = self.DEFAULT_FAMILY
         subsections = self._section_by_id(self.BATTLE_COMMAND_SECTION).get_subsection_list()
-        template = subsections[self.DEFAULT_FAMILY].get_data_list()[-1].get_data_hex()
+        template = subsections[source].get_data_list()[-1].get_data_hex()
         new = subsections[index].get_data_list()[-1].get_data_hex()
         new[:] = template
-        self._section_entries(self.BATTLE_COMMAND_SECTION)[index].set("behaves_like", self.DEFAULT_FAMILY)
+        entries[index].set("behaves_like", family)
 
     def _renumber_command_references(self, section_id, removed):
         """Follow a deleted battle command or data entry through what points at it: ids
@@ -684,6 +690,7 @@ class SolomonRingWidget(QWidget):
         # rebuilds every entry from the data: write it first, or a name/value just typed (a spell
         # renamed, then "+ Add entry") is lost.
         tab.commit()
+        selected = tab.current_entry_index()
         pooled = bool(cfg.get("ability_pool"))
         # The seven ability sections share one id space, and the menu group has a cap
         # of its own; the button greys out when either is reached, but a stale click
@@ -736,8 +743,15 @@ class SolomonRingWidget(QWidget):
 
         if pooled:
             self._renumber_ability_references(new_ability_id, 1)
+        new_index = insert_index if pooled else len(section.get_subsection_list()) - 1
         if section_id == self.BATTLE_COMMAND_SECTION:
-            self._init_new_battle_command(len(section.get_subsection_list()) - 1)
+            self._init_new_battle_command(new_index, selected)
+        elif section_id == self.COMMAND_DATA_SECTION and selected is not None:
+            subsections = section.get_subsection_list()
+            subsections[new_index].get_data_list()[-1].get_data_hex()[:] = subsections[selected].get_data_list()[-1].get_data_hex()
+        if text_section:
+            name_id = new_ability_id if pooled else new_index
+            text_section.get_text_list()[new_index * nb_text].set_str(f"{self._section_name(section_id)} {name_id}")
 
         tab.load_section(section, text_section)
         if insert_index is not None and insert_index in tab._visible_indices:
@@ -755,9 +769,8 @@ class SolomonRingWidget(QWidget):
 
     def _remove_growable_entry(self, section_id):
         """Delete the selected entry of a "growable" data section together with its linked
-        name/description text. What may go depends on the section - see
-        _protected_entry_count: every vanilla spell stays, while a vanilla ability may be
-        removed to free its id for another ability section. Entries after
+        name/description text. Vanilla spell IDs stay fixed; ability groups keep at least
+        their vanilla entry counts, as required by FFNx. Entries after
         the deleted one shift down one id, exactly as they would in any array. If that leaves the
         section with nothing above the GF-reserved block but the placeholder rows themselves, they
         go too, so the file never keeps a tail of reserved-only entries."""
@@ -766,6 +779,8 @@ class SolomonRingWidget(QWidget):
         if section is None or tab is None or (tab.text_labels and not section.section_text_linked):
             return
         cfg = self.kernel_manager.get_section_config(section_id) or {}
+        if cfg.get("ability_pool") and self._ability_entry_count(section_id) <= cfg["number_sub_section"]:
+            return
         entry_index = tab.current_entry_index()
         if not tab.can_remove(entry_index):
             return

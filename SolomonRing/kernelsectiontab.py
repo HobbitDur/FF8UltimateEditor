@@ -952,7 +952,7 @@ class KernelSectionTab(QWidget):
             self.list_widget.verticalScrollBar().setValue(prev_scroll)
 
     def _entry_label(self, index, entry):
-        text_name = entry.get_text(0).strip() if (self.text_labels and entry.has_text(0)) else ""
+        text_name = entry.display_name("") if (self.text_labels and entry.has_text(0)) else ""
         static = self.entry_names[index] if (self.entry_names and index < len(self.entry_names)) else ""
         # entry_name_primary: the static name (e.g. the GF name) is the identity; the
         # editable text (its attack name) is shown in parentheses.
@@ -962,7 +962,7 @@ class KernelSectionTab(QWidget):
             return f"{index}: {text_name}"
         if static:
             return f"{index}: {static}"
-        return f"#{index}"
+        return f"{index}: {self.config.get('entry_fallback_name', 'Entry')}"
 
     def current_entry_index(self):
         """``self._entries`` index of the selected row, or None when nothing is selected."""
@@ -994,6 +994,8 @@ class KernelSectionTab(QWidget):
         happen to sit - the placeholders would land on 63-94 and a real spell above
         them would land inside the block. So an entry below the block can only go
         while the block does not exist yet."""
+        if len(self._entries) <= self.config.get("min_count", 0):
+            return False
         if index is None or index < self._protected_count:
             return False
         reserved_start = self.config.get("hidden_id_start")
