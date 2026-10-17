@@ -1,6 +1,7 @@
 import json
 import os
 
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QMessageBox, QGroupBox, QPushButton
 )
@@ -12,6 +13,8 @@ from ShumiTranslator.model.kernel.kernelmanager import KernelManager
 from SolomonRing.kernellookups import LookupRegistry
 from SolomonRing.kernelentry import KernelEntry
 from SolomonRing.kernelsectiontab import KernelSectionTab
+from SolomonRing.commandanimationpanel import CommandAnimationPanel
+from SolomonRing.commandtypes import command_type_options, FIRST_DLL_TYPE, LAST_DLL_TYPE
 from SolomonRing.battle_setup import SETUP as BATTLE_SETUP
 from SolomonRing.cronos_elemdef import (CronosElemDefDialog, GF_COUNT, CHARA_COUNT, MAGIC_PAGE, GF_PAGE,
                                         CHARACTER_PAGE)
@@ -59,6 +62,7 @@ class SolomonRingWidget(QWidget):
     """kernel.bin editor with full doomtrain field parity, driven by JSON field defs."""
 
     CURRENT_TAB_KEY = "solomonring/current_tab"
+    file_bindings_changed = pyqtSignal()
 
     def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None,
                  settings=None):
@@ -70,6 +74,8 @@ class SolomonRingWidget(QWidget):
             file_registry = FileRegistry()
 
         self.game_data_folder = game_data_folder
+        self.file_registry = file_registry
+        self.command_animation_panel = None
         self.game_data = GameData(game_data_folder)
         self.game_data.load_all()
 
@@ -160,20 +166,51 @@ class SolomonRingWidget(QWidget):
         """Apply the "unlock unused fields" switch to every section tab at once."""
         for tab in self._section_tabs.values():
             tab.set_unlock_all(unlocked)
+        self._refresh_command_data_enabled()
 
     def file_bindings(self):
-        """The files the shared header toolbar drives for this tool (just kernel.bin)."""
-        return [self.kernel_binding]
+        """kernel.bin and the read-only battle files imported for animation previews."""
+        preview = self.command_animation_panel
+        return [self.kernel_binding] + (preview.file_bindings() if preview else [])
 
     def _build_group(self, entries):
         if len(entries) == 1:
             section_id, _ = entries[0]
-            return self._make_section_tab(section_id)
+            tab = self._make_section_tab(section_id)
+            if section_id == self.BATTLE_COMMAND_SECTION:
+                panel = self.command_animation_panel = CommandAnimationPanel(self.game_data, self.file_registry)
+                panel.file_bindings_changed.connect(self.file_bindings_changed.emit)
+                tab.list_widget.currentRowChanged.connect(
+                    lambda _row: self._refresh_command_preview())
+                tab._field_widgets["behaves_like"][2].currentIndexChanged.connect(
+                    lambda _index: self._refresh_command_preview())
+                container = QWidget()
+                row = QHBoxLayout(container)
+                row.setContentsMargins(0, 0, 0, 0)
+                row.addWidget(tab, 1)
+                row.addWidget(panel)
+                def preview_layout(active):
+                    tab.set_render_preview_active(active)
+                    panel.setMaximumWidth(16777215 if active else panel.minimumWidth())
+                    row.setStretch(0, 0 if active else 1)
+                    row.setStretch(1, 1 if active else 0)
+                panel.preview_available_changed.connect(preview_layout)
+                tab.command_type_requested.connect(self._add_command_type)
+                preview_layout(False)
+                return container
+            return tab
         inner = QTabWidget()
         inner.setTabPosition(QTabWidget.TabPosition.West)
         for section_id, label in entries:
             inner.addTab(self._make_section_tab(section_id), label)
         return inner
+
+    def _refresh_command_preview(self):
+        tab = self._section_tabs[self.BATTLE_COMMAND_SECTION]
+        command = tab.current_entry_index()
+        execution_type = tab._field_widgets["behaves_like"][2].currentData() \
+            if command is not None and command >= self.VANILLA_COMMAND_COUNT else None
+        self.command_animation_panel.set_command(command, execution_type)
 
     def _restore_current_tab(self):
         """Re-open on the section tab used last time (like Ifrit does)."""
@@ -206,10 +243,14 @@ class SolomonRingWidget(QWidget):
 
     def _make_section_tab(self, section_id):
         config = dict(self._section_configs[str(section_id)])
+        config["compact_form"] = section_id == self.BATTLE_COMMAND_SECTION
         config["entry_fallback_name"] = self._section_name(section_id)
         if section_id in self.REMOVABLE_ENGINE_SECTIONS:
             config["removed_entry_field"] = self.REMOVABLE_ENGINE_SECTIONS[section_id][0]
             config["removed_entry_value"] = self.REMOVED_ENTRY
+        if section_id == self.BATTLE_COMMAND_SECTION:
+            config["keep_removed_entries"] = True
+            config["disable_entry_count"] = self.VANILLA_COMMAND_COUNT
         # _checked absorbs the bool QPushButton.clicked emits, which would land in sid
         add_entry_callback = (lambda _checked=False, sid=section_id: self._add_growable_entry(sid)) \
             if config.get("growable") else None
@@ -584,7 +625,9 @@ class SolomonRingWidget(QWidget):
         maximum = self._section_configs[str(section_id)]["max_count"]
         removed = sum(self._entry_removed(section_id, i, e)
                       for i, e in enumerate(self._section_entries(section_id)))
-        text = (f"{used - removed} entries / {maximum} slots ({removed} reserved after removal)"
+        text = (f"{used - removed} active / {used} slots ({removed} disabled; maximum {maximum})"
+                if removed and section_id == self.BATTLE_COMMAND_SECTION else
+                f"{used - removed} entries / {maximum} slots ({removed} reserved after removal)"
                 if removed else f"{used} / {maximum} entries - {maximum - used} left")
         return text, used < maximum
 
@@ -621,6 +664,17 @@ class SolomonRingWidget(QWidget):
             tab.commit()
         self._refresh_command_lookups()
 
+    def _refresh_command_data_enabled(self):
+        """Only commands with a fixed effect use this picker during execution."""
+        tab = self._section_tabs.get(self.BATTLE_COMMAND_SECTION)
+        if tab is None:
+            return
+        index = tab.current_entry_index()
+        uses_data = index is not None and (
+            index in (7, 29) or index in self.DATA_DRIVEN_COMMANDS
+            or index >= self.VANILLA_COMMAND_COUNT)
+        tab._field_widgets["ability_data_id"][2].setEnabled(tab._unlock_all or uses_data)
+
     def _refresh_command_lookups(self):
         """Three pickers depend on what is loaded, not on the vanilla lists: the battle
         command a command ability grants, the data entry a battle command uses (named by
@@ -637,25 +691,51 @@ class SolomonRingWidget(QWidget):
             if self._entry_removed(self.BATTLE_COMMAND_SECTION, index, entry):
                 continue
             users.setdefault(entry.get("ability_data_id"), []).append(names[index] or f"#{index}")
-        data = [{"value": i, "name": f"{i}: " + (", ".join(users.get(i, [])) or "(unused)")}
+        data = [{"value": i, "name": f"{i}: " + (", ".join(users.get(i, []))
+                                               or f"{self._section_name(self.COMMAND_DATA_SECTION)} (unused)")}
                 for i in range(self._ability_entry_count(self.COMMAND_DATA_SECTION))
                 if not self._entry_removed(self.COMMAND_DATA_SECTION, i)]
         data.append({"value": self.NO_COMMAND_DATA, "name": "None (chosen at runtime)"})
         self.registry.set_dynamic("command_ability_ref", data)
 
-        family = [{"value": 0, "name": f"0: default ({names[self.DEFAULT_FAMILY]})"}]
-        family += [{"value": c, "name": f"{c}: {names[c]}"} for c in self.DATA_DRIVEN_COMMANDS if c < len(names)]
-        self.registry.set_dynamic("command_family", family)
+        used_types = {entry.get("behaves_like") for i, entry in enumerate(
+            self._section_entries(self.BATTLE_COMMAND_SECTION))
+            if i >= self.VANILLA_COMMAND_COUNT and not self._entry_removed(self.BATTLE_COMMAND_SECTION, i)}
+        self.registry.set_dynamic("command_family", command_type_options(used_types))
 
         for tab in self._section_tabs.values():
             tab.refresh_dynamic_combos()
+        self._refresh_command_data_enabled()
+
+    def _add_command_type(self):
+        """Allocate an execution ID; its switch case belongs to the user's independent DLL."""
+        tab = self._section_tabs[self.BATTLE_COMMAND_SECTION]
+        index = tab.current_entry_index()
+        if index is None or index < self.VANILLA_COMMAND_COUNT or tab.entry_disabled(index):
+            return
+        tab.commit()
+        used = {entry.get("behaves_like") for entry in tab._entries[self.VANILLA_COMMAND_COUNT:]}
+        code = next((value for value in range(FIRST_DLL_TYPE, LAST_DLL_TYPE + 1) if value not in used), None)
+        if code is None:
+            QMessageBox.information(self, "Execution IDs", "No free DLL execution IDs remain below 0xB0.")
+            return
+        tab._entries[index].set("behaves_like", code)
+        self._refresh_command_lookups()
+        combo = tab._field_widgets["behaves_like"][2]
+        position = combo.findData(code)
+        combo.setCurrentIndex(position)
+        tab.commit()
+        combo.activated.emit(position)
+        tab.edited.emit()
 
     def _init_new_battle_command(self, index, selected):
         """Copy an eligible selected command; use Mad Rush for menu-driven commands."""
         entries = self._section_entries(self.BATTLE_COMMAND_SECTION)
         source = selected if selected is not None else self.DEFAULT_FAMILY
         family = source if source < self.VANILLA_COMMAND_COUNT else (entries[source].get("behaves_like") or self.DEFAULT_FAMILY)
-        if family not in self.DATA_DRIVEN_COMMANDS or entries[source].get("ability_data_id") == self.NO_COMMAND_DATA:
+        dll_type = FIRST_DLL_TYPE <= family <= LAST_DLL_TYPE
+        if not dll_type and (family not in self.DATA_DRIVEN_COMMANDS
+                             or entries[source].get("ability_data_id") == self.NO_COMMAND_DATA):
             source = family = self.DEFAULT_FAMILY
         subsections = self._section_by_id(self.BATTLE_COMMAND_SECTION).get_subsection_list()
         template = subsections[source].get_data_list()[-1].get_data_hex()
@@ -709,8 +789,9 @@ class SolomonRingWidget(QWidget):
                 problems.append(f"{label} has no command ability data - a new command needs one.")
             family = entry.get("behaves_like")
             if family and family not in self.DATA_DRIVEN_COMMANDS:
-                problems.append(f"{label} behaves like command {family}, which does not take its "
-                                "effect from command ability data.")
+                problems.append(f"{label} uses execution ID {family}, which standard FFNx's AddMoreCommand "
+                                "does not accept. An independent DLL must implement this ID and handle "
+                                "command dispatch and loader compatibility.")
         return problems
 
     def _add_growable_entry(self, section_id):
@@ -826,6 +907,16 @@ class SolomonRingWidget(QWidget):
         cfg = self.kernel_manager.get_section_config(section_id) or {}
         entry_index = tab.current_entry_index()
         if not tab.can_remove(entry_index):
+            return
+        if section_id == self.BATTLE_COMMAND_SECTION and entry_index < self.VANILLA_COMMAND_COUNT:
+            tab.commit()
+            entry = self._section_entries(section_id)[entry_index]
+            entry.set("unused_0x07", 0 if self._entry_removed(section_id, entry_index, entry)
+                      else self.REMOVED_ENTRY)
+            tab.load_section(section, section.section_text_linked)
+            self._refresh_command_lookups()
+            self._refresh_entry_budgets()
+            self._mark_edited()
             return
         tab.commit()  # same as adding: load_section() below rebuilds the entries from the data
         text_section = section.section_text_linked if tab.text_labels else None

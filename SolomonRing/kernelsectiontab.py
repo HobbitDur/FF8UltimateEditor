@@ -1,12 +1,12 @@
 import os
 import textwrap
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QIntValidator
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QEvent
+from PyQt6.QtGui import QIntValidator, QPalette
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QLabel,
     QComboBox, QSpinBox, QLineEdit, QListWidget, QGroupBox, QScrollArea, QCheckBox,
-    QPushButton, QToolButton, QFileDialog, QMessageBox, QDialog, QDialogButtonBox, QListWidgetItem
+    QPushButton, QToolButton, QFileDialog, QMessageBox, QDialog, QDialogButtonBox, QListWidgetItem, QSizePolicy
 )
 
 from SolomonRing.kernelentry import KernelEntry
@@ -40,6 +40,53 @@ def _wrap_tooltip(text: str, width: int = 62) -> str:
     return "\n".join(lines)
 
 
+class _ContentWidthScrollArea(QScrollArea):
+    """Reserve the form's natural width, leaving spare space for its preview."""
+
+    def __init__(self):
+        super().__init__()
+        self._compact = False
+
+    def set_compact(self, compact):
+        self._compact = compact
+        tab = self.parentWidget()
+        if compact:
+            self._fit_width()
+        else:
+            self.setMinimumWidth(0)
+            self.setMaximumWidth(16777215)
+            tab.setMaximumWidth(16777215)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed if compact else QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Expanding)
+        tab.updateGeometry()
+
+    def _fit_width(self):
+        self.setFixedWidth(self.sizeHint().width())
+        tab = self.parentWidget()
+        if tab is not None and tab.layout() is not None:
+            tab.layout().invalidate()
+            tab.setMaximumWidth(tab.layout().minimumSize().width())
+
+    def setWidget(self, widget):
+        super().setWidget(widget)
+        widget.installEventFilter(self)
+
+    def eventFilter(self, watched, event):
+        if self._compact and watched is self.widget() \
+                and event.type() in (QEvent.Type.LayoutRequest, QEvent.Type.Show):
+            self._fit_width()
+        return super().eventFilter(watched, event)
+
+    def sizeHint(self):
+        hint = super().sizeHint()
+        if self._compact and self.widget() is not None:
+            width = self.widget().minimumSizeHint().width()
+            width += 2 * self.frameWidth()
+            width += self.verticalScrollBar().sizeHint().width()
+            return QSize(width, hint.height())
+        return hint
+
+
 class KernelSectionTab(QWidget):
     """Generic list + form editor for one kernel data section, driven by JSON field defs.
 
@@ -53,6 +100,7 @@ class KernelSectionTab(QWidget):
     # A change made by code rather than by typing in a field (a group paste / "Apply to..."):
     # the widget listening marks the file as having unsaved edits.
     edited = pyqtSignal()
+    command_type_requested = pyqtSignal()
 
     def __init__(self, game_data, registry, config, game_data_folder="FF8GameData", jump_callback=None,
                  add_entry_callback=None, remove_entry_callback=None, protected_count=0,
@@ -166,7 +214,7 @@ class KernelSectionTab(QWidget):
                 self.refresh_pool_status()
         layout.addLayout(list_col)
 
-        scroll = QScrollArea()
+        scroll = self._form_scroll = _ContentWidthScrollArea() if config.get("compact_form") else QScrollArea()
         scroll.setWidgetResizable(True)
         self._form_host = QWidget()
         self._form_layout = QVBoxLayout(self._form_host)
@@ -177,6 +225,10 @@ class KernelSectionTab(QWidget):
         layout.addWidget(scroll, 1)
 
         self.setEnabled(False)
+
+    def set_render_preview_active(self, active):
+        if isinstance(self._form_scroll, _ContentWidthScrollArea):
+            self._form_scroll.set_compact(active)
 
     # --------------------------------------------------------------------- build
     def _field_tooltip(self, field):
@@ -219,7 +271,7 @@ class KernelSectionTab(QWidget):
                 edit = QLineEdit()
                 edit.setToolTip(f"{label} string for this entry.")
                 # Names are short; descriptions a bit longer, but neither needs full width.
-                edit.setFixedWidth(200 if label == "Name" else 380)
+                edit.setFixedWidth(200 if label == "Name" else 280 if self.config.get("compact_form") else 380)
                 self._text_widgets.append(edit)
                 form.addRow(QLabel(label), edit)
             self._form_layout.addWidget(box)
@@ -334,6 +386,7 @@ class KernelSectionTab(QWidget):
     def apply_group_values(self, values, entry_indices):
         """Write `values` ({field: value}) on those entries, refresh the shown one and signal
         the edit. Returns how many entries were written."""
+        entry_indices = [index for index in entry_indices if not self.entry_disabled(index)]
         for index in entry_indices:
             for name, value in values.items():
                 self._entries[index].set(name, value)
@@ -371,7 +424,7 @@ class KernelSectionTab(QWidget):
         layout.addWidget(label)
         entry_list = QListWidget()
         for index in self._visible_indices:
-            if index == exclude:
+            if index == exclude or self.entry_disabled(index):
                 continue
             item = QListWidgetItem(self._entry_label(index, self._entries[index]))
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
@@ -553,6 +606,8 @@ class KernelSectionTab(QWidget):
         drift left/right depending on which row it landed in (e.g. a lone field lacking a
         formula button next to siblings that all have one)."""
         rows = [r for r in rows if r]
+        if self.config.get("compact_form"):
+            rows = [[field] for row in rows for field in row]
         if not rows:
             return
         metrics = self.fontMetrics()
@@ -774,7 +829,8 @@ class KernelSectionTab(QWidget):
                 if entry["mask"] in coupling_masks:
                     coupled_checks[entry["mask"]] = cb
                 else:
-                    grid.addWidget(cb, grid_i // 4, grid_i % 4)
+                    columns = 1 if self.config.get("compact_form") else 4
+                    grid.addWidget(cb, grid_i // columns, grid_i % columns)
                     grid_i += 1
             outer.addLayout(grid)
             self._field_widgets[name] = ("flags", field, checks)
@@ -821,11 +877,21 @@ class KernelSectionTab(QWidget):
             metrics = combo.fontMetrics()
             widest = max((metrics.horizontalAdvance(e["name"]) for e in lookup["entries"]),
                          default=60)
-            combo.setFixedWidth(min(widest + 40, 320))
+            combo.setFixedWidth(min(widest + 40, 240 if self.config.get("compact_form") else 320))
             combo.view().setMinimumWidth(widest + 40)
             if readonly:
                 self._lock(combo)
             self._field_widgets[name] = ("enum", field, combo)
+            if field.get("lookup") == "command_family":
+                box = QWidget()
+                row = QHBoxLayout(box)
+                row.setContentsMargins(0, 0, 0, 0)
+                row.addWidget(combo)
+                combo.add_id_button = QPushButton("+ Add ID")
+                combo.add_id_button.setToolTip("Add an execution ID for an independent DLL to implement.")
+                combo.add_id_button.clicked.connect(lambda _checked=False: self.command_type_requested.emit())
+                row.addWidget(combo.add_id_button)
+                return box
             if field.get("formula") and not readonly:
                 return self._with_formula_button(field, combo)
             return combo
@@ -929,7 +995,8 @@ class KernelSectionTab(QWidget):
         self._visible_indices = [
             i for i in range(len(self._entries))
             if (hidden_start is None or not (hidden_start <= i < hidden_end))
-            and not (self.config.get("removed_entry_field")
+            and not (not self.config.get("keep_removed_entries")
+                     and self.config.get("removed_entry_field")
                      and self._entries[i].get(self.config["removed_entry_field"]) == self.config["removed_entry_value"])
         ]
 
@@ -937,6 +1004,10 @@ class KernelSectionTab(QWidget):
         self.list_widget.clear()
         for entry_index in self._visible_indices:
             self.list_widget.addItem(self._entry_label(entry_index, self._entries[entry_index]))
+            if self.entry_disabled(entry_index):
+                item = self.list_widget.item(self.list_widget.count() - 1)
+                item.setForeground(self.palette().brush(QPalette.ColorGroup.Disabled,
+                                                        QPalette.ColorRole.Text))
         self.list_widget.blockSignals(False)
 
         self.setEnabled(True)
@@ -954,6 +1025,8 @@ class KernelSectionTab(QWidget):
             self.list_widget.verticalScrollBar().setValue(prev_scroll)
 
     def _entry_label(self, index, entry):
+        if self.entry_disabled(index):
+            return f"{index}: {entry.display_name(self.config.get('entry_fallback_name', 'Entry'))} (disabled)"
         text_name = entry.display_name("") if (self.text_labels and entry.has_text(0)) else ""
         static = self.entry_names[index] if (self.entry_names and index < len(self.entry_names)) else ""
         # entry_name_primary: the static name (e.g. the GF name) is the identity; the
@@ -972,6 +1045,12 @@ class KernelSectionTab(QWidget):
         if row < 0 or row >= len(self._visible_indices):
             return None
         return self._visible_indices[row]
+
+    def entry_disabled(self, index):
+        field = self.config.get("removed_entry_field")
+        if not self.config.get("keep_removed_entries") or not field or index is None:
+            return False
+        return self._entries[index].get(field) == self.config["removed_entry_value"]
 
     def set_pool_status(self, text, can_add):
         """Show how much of a shared entry budget is left, and grey Add when it is
@@ -1007,10 +1086,21 @@ class KernelSectionTab(QWidget):
         return len(self._entries) <= reserved_start
 
     def _update_remove_button(self):
-        """Grey Remove for anything that may not be deleted (see can_remove)."""
+        """Update the selected entry's action and availability."""
         if self._remove_btn is None:
             return
-        self._remove_btn.setEnabled(self.can_remove(self.current_entry_index()))
+        index = self.current_entry_index()
+        if self.config.get("keep_removed_entries") and index is not None \
+                and index < self.config["disable_entry_count"]:
+            self._remove_btn.setText("Reactivate command" if self.entry_disabled(index)
+                                     else "Disable command")
+            self._remove_btn.setToolTip("Keep this command's numbered slot and settings. "
+                                       "Disabled commands cannot be edited or used by the player.")
+        elif self.config.get("keep_removed_entries"):
+            self._remove_btn.setText("Delete command")
+            self._remove_btn.setToolTip("Delete this added command and free its slot. Later added IDs "
+                                       "shift down; kernel references are updated.")
+        self._remove_btn.setEnabled(self.can_remove(index))
 
     def _on_row_changed(self, row):
         self._update_remove_button()
@@ -1023,6 +1113,7 @@ class KernelSectionTab(QWidget):
 
     def _load_entry(self, row):
         entry = self._entries[self._visible_indices[row]]
+        self._form_host.setEnabled(not self.entry_disabled(self._visible_indices[row]))
         for i, edit in enumerate(self._text_widgets):
             edit.blockSignals(True)
             edit.setEnabled(entry.has_text(i))
@@ -1121,6 +1212,8 @@ class KernelSectionTab(QWidget):
 
     def _save_entry(self, row):
         entry_index = self._visible_indices[row]
+        if self.entry_disabled(entry_index):
+            return
         entry = self._entries[entry_index]
         for i, edit in enumerate(self._text_widgets):
             if entry.has_text(i):
@@ -1186,7 +1279,7 @@ class KernelSectionTab(QWidget):
             metrics = widget.fontMetrics()
             widest = max((metrics.horizontalAdvance(e["name"]) for e in lookup["entries"]),
                         default=60)
-            widget.setFixedWidth(min(widest + 40, 480))
+            widget.setFixedWidth(min(widest + 40, 240 if self.config.get("compact_form") else 480))
             widget.view().setMinimumWidth(widest + 40)
             pos = widget.findData(current)
             if pos < 0 and current is not None:

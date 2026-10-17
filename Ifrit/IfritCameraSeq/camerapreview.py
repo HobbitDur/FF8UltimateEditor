@@ -80,6 +80,7 @@ class CameraPreviewPanel(QWidget):
         self.ifrit_manager = ifrit_manager
         self.setMinimumWidth(320)
         self._view = None          # Ifrit3DWidget, created lazily on first preview
+        self._weapon_manager = None
         self._gl = None
         self._needs_reload = True  # (re)load the model on the next preview
         self._animation = None
@@ -145,6 +146,12 @@ class CameraPreviewPanel(QWidget):
         self._timer.setInterval(int(1000 / self._FPS))
 
     # ── Called by the tab ─────────────────────────────────────────────
+    def set_weapon(self, manager):
+        """Use a character's selected weapon (with textures loaded) on the next preview."""
+        if manager is not self._weapon_manager:
+            self._weapon_manager = manager
+            self.invalidate()
+
     def invalidate(self):
         """A new file was loaded: stop playback and reload the model on the next preview."""
         self._timer.stop()
@@ -190,7 +197,12 @@ class CameraPreviewPanel(QWidget):
             self._layout.insertWidget(1, self._view, 1)  # where the placeholder sits
             self._gl = self._view.gl_widget
         if self._needs_reload:
+            # Lean imports have no expanded frames yet. Ifrit3D checks them before its
+            # first mesh update, so expand first or a static preview shows raw bone-local vertices.
+            self.ifrit_manager._ensure_matrices()
             self._view.load_file()
+            if self._weapon_manager is not None or self._view._weapon_manager is not None:
+                self._view.set_weapon_options([("Preview weapon", self._weapon_manager)])
             if getattr(self._view, "timer", None) is not None:
                 self._view.timer.stop()  # we drive frames ourselves, one timer for both
             center = getattr(self._gl, "MODEL_CENTER", None)
@@ -230,7 +242,10 @@ class CameraPreviewPanel(QWidget):
             anim_id = self._model_anim_spin.value()
             frame = tick % self.__model_frame_count(anim_id)
             try:
-                self._gl.set_vertices(self.ifrit_manager.get_animated_vertices(anim_id, frame))
+                if self._view.current_anim_id != anim_id:
+                    self._view.set_animation(anim_id)
+                self._view.set_frame(frame)
+                self._view._update_model_translation()
             except Exception:
                 pass
         sample = _sample(_frame_values(self._animation), tick)

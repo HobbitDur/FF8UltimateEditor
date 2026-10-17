@@ -77,13 +77,14 @@ sections["1"] = {"section_id": 1, "text_labels": NAMEDESC, "fields": [
     {"name": "unused_0x07", "offset": 7, "size": 1, "group": "Data", "row": "ability_data",
      "label": "Unused 0x07", "readonly": True, "visible_below_index": 39,
      "help": "Unused padding on the vanilla commands (always 0).\n"
-             "On a command added after the vanilla 39, this byte becomes \"Behaves like\"."},
-    {"name": "behaves_like", "offset": 7, "size": 1, "group": "Data", "row": "ability_data",
-     "lookup": "command_family", "label": "Behaves like", "visible_from_index": 39,
-     "help": "Not a vanilla setting: FFNx's AddMoreCommand reads it for commands added after\n"
-             "the vanilla 39. The engine has no code of its own for a new command, so it runs\n"
-             "through the code of one of these ten commands, whose effect comes entirely from\n"
-             "the command ability data entry picked alongside. 0 means Mad Rush."},
+             "On a command added after the vanilla 39, this byte becomes \"Execution type\"."},
+    {"name": "behaves_like", "offset": 7, "size": 1, "group": "Data", "row": "execution_type",
+     "lookup": "command_family", "label": "Execution type", "visible_from_index": 39,
+     "help": "FFNx uses this ID for added commands. The three built-in choices are named by\n"
+             "their Seq anim / initial cam anim combination; existing aliases keep their IDs.\n"
+             "+ Add ID allocates a new ID for an independent DLL to implement in the game's\n"
+             "command switch. Standard FFNx rejects those custom IDs: the DLL must also handle\n"
+             "dispatch and loader compatibility. This editor does not provide the DLL handler."},
     {"name": "menu_bits", "offset": 5, "size": 1, "group": "Data", "mask": 0xE0,
      "lookup": "command_menu_bits", "label": "Menu flags"},
     {"name": "menu_submenu", "offset": 5, "size": 1, "group": "Data", "mask": 0x1F,

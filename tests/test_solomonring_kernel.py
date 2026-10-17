@@ -773,7 +773,7 @@ def test_menu_abilities_stop_at_their_own_cap(qapp, tmp_path):
 
 
 def _remove_button(tab):
-    return next(b for b in tab.findChildren(QPushButton) if "Remove entry" in b.text())
+    return tab._remove_btn
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
@@ -875,11 +875,11 @@ def test_added_battle_command_is_ready_for_ffnx(qapp, tmp_path, monkeypatch):
     assert commands.current_entry_index() == 39, "the new command should be the selected one"
     behaves_like = commands._field_widgets["behaves_like"][2]
     unused = commands._field_widgets["unused_0x07"][2]
-    assert not behaves_like.isHidden(), "an added command must offer Behaves like"
+    assert behaves_like.isVisibleTo(commands._form_host), "an added command must offer an execution type"
     assert unused.isHidden(), "on an added command byte 7 is Behaves like, not padding"
     commands._text_widgets[0].setText("Test Rush")
     commands.list_widget.setCurrentRow(0)             # writes the form back
-    assert behaves_like.isHidden(), "a vanilla command has no Behaves like - that byte is padding"
+    assert not behaves_like.isVisibleTo(commands._form_host), "a vanilla command has padding instead of an execution type"
     assert not unused.isHidden() and not unused.isEnabled(), \
         "on a vanilla command byte 7 is shown as unused, greyed until unlocked"
     entries = widget._section_entries(1)
@@ -899,10 +899,8 @@ def test_added_battle_command_is_ready_for_ffnx(qapp, tmp_path, monkeypatch):
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
-def test_removing_a_command_or_its_data_clears_what_pointed_at_it(qapp, tmp_path, monkeypatch):
-    """A command ability naming a removed command falls back to command 0, and a command
-    using a removed data entry falls back to "none" - which the save check then reports,
-    since the loader refuses a new command without data."""
+def test_removing_an_added_command_or_its_data_clears_links(qapp, tmp_path, monkeypatch):
+    """Deleting an added command or effect data clears references to that entry."""
     monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
     work = tmp_path / "kernel.bin"
     work.write_bytes(KERNEL.read_bytes())
@@ -925,6 +923,7 @@ def test_removing_a_command_or_its_data_clears_what_pointed_at_it(qapp, tmp_path
     _remove_button(commands).click()
     assert widget._ability_entry_count(1) == 39
     assert widget._section_entries(13)[7].get("battle_command_index") == 0
+    assert widget.command_problems() == []
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
@@ -1071,12 +1070,15 @@ def test_removing_original_commands_and_data_preserves_engine_ids(qapp, tmp_path
     commands.list_widget.setCurrentRow(commands._visible_indices.index(25))
     assert _remove_button(commands).isEnabled()
     _remove_button(commands).click()
-    assert 25 not in commands._visible_indices
+    assert 25 in commands._visible_indices
+    assert commands.entry_disabled(25)
+    assert not commands._form_host.isEnabled()
+    assert _remove_button(commands).text() == "Reactivate command"
     assert widget._ability_entry_count(1) == 39
     assert commands._entries[26].get_text(0) == recover
-    assert widget._section_entries(13)[8].get("battle_command_index") == 0
+    assert widget._section_entries(13)[8].get("battle_command_index") == 25
     assert 25 not in {e["value"] for e in widget.registry.resolve("battle_command")["entries"]}
-    assert "1 reserved after removal" in widget._entry_budget_status(1)[0]
+    assert "1 disabled" in widget._entry_budget_status(1)[0]
     assert not commands.can_remove(0)
 
     data = widget._section_tabs[11]
@@ -1091,10 +1093,71 @@ def test_removing_original_commands_and_data_preserves_engine_ids(qapp, tmp_path
 
     reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
     reloaded.load_file(str(work))
-    assert 25 not in reloaded._section_tabs[1]._visible_indices
+    assert 25 in reloaded._section_tabs[1]._visible_indices
+    assert reloaded._section_tabs[1].entry_disabled(25)
     assert 2 not in reloaded._section_tabs[11]._visible_indices
     assert reloaded._section_tabs[1]._entries[26].get_text(0) == recover
-    assert reloaded._section_entries(13)[8].get("battle_command_index") == 0
+    assert reloaded._section_entries(13)[8].get("battle_command_index") == 25
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_original_command_reactivates_and_added_commands_can_be_deleted(qapp, tmp_path, monkeypatch):
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    commands = widget._section_tabs[1]
+    _add_button(commands).click()
+    commands._text_widgets[0].setText("Treatment2")
+    _add_button(commands).click()
+    commands.list_widget.setCurrentRow(commands._visible_indices.index(25))
+    widget._section_entries(13)[7].set("battle_command_index", 39)
+    widget._section_entries(13)[9].set("battle_command_index", 40)
+    ref_section = widget._section_by_id(13)
+    widget._section_tabs[13].load_section(ref_section, ref_section.section_text_linked)
+    before = bytes(commands._entries[25]._payload)
+    following = bytes(commands._entries[40]._payload)
+    assert _remove_button(commands).text() == "Disable command"
+    _remove_button(commands).click()
+    assert commands.current_entry_index() == 25
+    assert commands.entry_disabled(25)
+    assert "(disabled)" in commands.list_widget.currentItem().text()
+    assert not commands._text_widgets[0].isEnabled()
+    widget.unlock_check.setChecked(True)
+    assert not commands._field_widgets["ability_data_id"][2].isEnabled()
+    assert commands.apply_group_values({"ability_data_id": 0}, [25]) == 0
+    commands._text_widgets[0].setText("must not be saved")
+    commands.commit()
+    assert commands._entries[25].get_text(0) == "Treatment"
+    widget._save_kernel()
+
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    commands = reloaded._section_tabs[1]
+    commands.list_widget.setCurrentRow(commands._visible_indices.index(25))
+    assert commands.entry_disabled(25) and not commands._form_host.isEnabled()
+    assert _remove_button(commands).text() == "Reactivate command"
+    _remove_button(commands).click()
+    assert not commands.entry_disabled(25) and commands._form_host.isEnabled()
+    assert _remove_button(commands).text() == "Disable command"
+    assert bytes(commands._entries[25]._payload) == before
+    assert bytes(commands._entries[40]._payload) == following
+    assert reloaded._ability_entry_count(1) == 41
+    assert reloaded._section_entries(13)[8].get("battle_command_index") == 25
+    assert 25 in {e["value"] for e in reloaded.registry.resolve("battle_command")["entries"]}
+    assert not commands._field_widgets["unused_0x07"][2].isEnabled()
+
+    original_rows = [bytes(e._payload) for e in commands._entries[:39]]
+    commands.list_widget.setCurrentRow(commands._visible_indices.index(39))
+    assert _remove_button(commands).text() == "Delete command"
+    monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+    _remove_button(commands).click()
+    assert reloaded._ability_entry_count(1) == 40
+    assert [bytes(e._payload) for e in commands._entries[:39]] == original_rows
+    assert bytes(commands._entries[39]._payload) == following
+    assert reloaded._section_entries(13)[7].get("battle_command_index") == 0
+    assert reloaded._section_entries(13)[9].get("battle_command_index") == 39
+    reloaded._save_kernel()
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
@@ -1142,3 +1205,45 @@ def test_empty_menu_group_keeps_its_start_representable(qapp, tmp_path, section_
     assert not widget._ability_pool_status(12)[1]
     assert not widget._ability_pool_status(17)[1]
     assert widget._ability_pool_status(18)[1]
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_new_command_data_can_be_found_selected_and_saved(qapp, tmp_path, monkeypatch):
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtTest import QTest
+
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args, **kwargs: pytest.fail(args[2]))
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    data = widget._section_tabs[11]
+    data.list_widget.setCurrentRow(data._visible_indices.index(2))
+    _add_button(data).click()
+
+    commands = widget._section_tabs[1]
+    commands.list_widget.setCurrentRow(commands._visible_indices.index(24))
+    _add_button(commands).click()
+    commands._text_widgets[0].setText("Stone")
+    combo = commands._field_widgets["ability_data_id"][2]
+    index = combo.findData(12)
+    assert index >= 0
+    assert combo.itemText(index) == "12: Command Ability Data (unused)"
+    assert combo.isEnabled()
+    # Use the same key navigation as the real picker: None is last, new row12 before it.
+    QTest.keyClick(combo, Qt.Key.Key_End)
+    QTest.keyClick(combo, Qt.Key.Key_Up)
+    assert combo.currentData() == 12
+    widget.tabs.setCurrentIndex(widget._tab_index_by_section[11])
+    assert widget._section_entries(1)[39].get("ability_data_id") == 12
+    assert widget._section_entries(1)[24].get("ability_data_id") == 3
+    widget._save_kernel()
+
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    commands = reloaded._section_tabs[1]
+    commands.list_widget.setCurrentRow(commands._visible_indices.index(39))
+    combo = commands._field_widgets["ability_data_id"][2]
+    assert combo.currentData() == 12
+    assert combo.currentText() == "12: Stone"
+    assert reloaded._section_entries(1)[24].get("ability_data_id") == 3

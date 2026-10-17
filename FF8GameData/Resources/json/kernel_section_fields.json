@@ -26,18 +26,18 @@
     "label": "Unused 0x07",
     "readonly": true,
     "visible_below_index": 39,
-    "help": "Unused padding on the vanilla commands (always 0).\nOn a command added after the vanilla 39, this byte becomes \"Behaves like\"."
+    "help": "Unused padding on the vanilla commands (always 0).\nOn a command added after the vanilla 39, this byte becomes \"Execution type\"."
    },
    {
     "name": "behaves_like",
     "offset": 7,
     "size": 1,
     "group": "Data",
-    "row": "ability_data",
+    "row": "execution_type",
     "lookup": "command_family",
-    "label": "Behaves like",
+    "label": "Execution type",
     "visible_from_index": 39,
-    "help": "Not a vanilla setting: FFNx's AddMoreCommand reads it for commands added after\nthe vanilla 39. The engine has no code of its own for a new command, so it runs\nthrough the code of one of these ten commands, whose effect comes entirely from\nthe command ability data entry picked alongside. 0 means Mad Rush.",
+    "help": "FFNx uses this ID for added commands. The three built-in choices are named by\ntheir Seq anim / initial cam anim combination; existing aliases keep their IDs.\n+ Add ID allocates a new ID for an independent DLL to implement in the game's\ncommand switch. Standard FFNx rejects those custom IDs: the DLL must also handle\ndispatch and loader compatibility. This editor does not provide the DLL handler.",
     "dynamic_lookup": true
    },
    {

@@ -50,6 +50,12 @@ class DirtyState(QObject):
         """Connect every not-yet-tracked editable widget under root to mark(). Safe to call again
         after a load that built new widgets."""
         for widget in root.findChildren(QWidget):
+            # Preview controls navigate imported data; they never edit the tool's file.
+            ancestor = widget
+            while ancestor is not None and not ancestor.property("read_only_preview"):
+                ancestor = ancestor.parentWidget()
+            if ancestor is not None:
+                continue
             key = id(widget)
             if key in self._tracked:
                 continue
