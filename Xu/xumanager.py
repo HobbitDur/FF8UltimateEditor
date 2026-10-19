@@ -254,7 +254,7 @@ class XuManager:
             return f"{row:03d}  {state}"
         if row < FIRST_MONSTER_ROW:
             name = CHARACTER_NAMES[row] if row < len(CHARACTER_NAMES) else "character"
-            return f"{row:03d}  {name} (not scannable)"
+            return f"{row:03d}  d{row:x}c {name}"
         c0m = c0m_for_row(row)
         if c0m > LAST_C0M_FILE:
             return f"{row:03d}  com_id {com_id_for_row(row)} (no c0m file)"

@@ -29,7 +29,7 @@ def test_nothing_to_edit_without_a_source(qapp):
     """No exe and no .bin: the rows have no values to show (nothing is stored in the tool)."""
     from Xu.xuwidget import XuWidget
     w = XuWidget()
-    assert not w.manager.loaded and not w.editor_group.isEnabled() and not w.new_button.isEnabled()
+    assert not w.manager.loaded and not w.editor_group.isEnabled()
     assert not w.can_save_folder()
 
 
@@ -69,8 +69,10 @@ def test_copy_reset_and_filter(widget):
 def test_models_follow_the_row(widget, tmp_path):
     """Opened c0m files are matched to rows by their c0m number; other names are ignored."""
     w, _path = widget
-    w.add_models([str(tmp_path / "c0m071.dat"), str(tmp_path / "notes.txt")])
-    assert w._model_paths == {71: str(tmp_path / "c0m071.dat")}
+    w.add_models([str(tmp_path / name) for name in ("c0m071.dat", "notes.txt", "d4c004.dat", "d4c005.dat")])
+    # keyed by com_id: c0m071 = 87, Rinoa d4c = 4 (the first costume opened is kept)
+    assert w._model_paths == {87: str(tmp_path / "c0m071.dat"), 4: str(tmp_path / "d4c004.dat")}
+    assert w._model_com_id_for_row(162) == 119  # Abadon's alternate form shows Abadon
 
 
 def test_scan_text_tab(widget, tmp_path):
@@ -102,28 +104,38 @@ def test_scan_text_tab(widget, tmp_path):
 
 
 @pytest.mark.ff8data(EXE)
-def test_exe_rows_edited_then_saved_as(qapp, tmp_path, monkeypatch):
-    """Exe open, no camera file: its vanilla rows are editable and Save asks where to write them."""
+def test_exe_import_then_save_writes_both_files(qapp, tmp_path, monkeypatch):
+    """Importing only the exe gives its vanilla rows and texts; Save writes both FFNx files
+    to a folder asked once, and they become the opened files."""
     from PyQt6.QtWidgets import QFileDialog
     from Xu.xumanager import XuManager
+    from Xu.xutext import XuTextManager
     from Xu.xuwidget import XuWidget
     w = XuWidget()
-    w.exe_binding.open_path(EXE)
-    assert w.manager.loaded and w.editor_group.isEnabled() and w.new_button.isEnabled()
-    assert not w.can_save_folder()
+    w.import_paths([EXE])
+    assert w.manager.loaded and w.editor_group.isEnabled() and w.text_manager.loaded
+    assert w.can_save_folder()
     w.row_list.setCurrentRow(168)
     assert w._spinboxes["distance"].value() == -0x1200  # FFNx's G-Soldier copy
     w._spinboxes["distance"].setValue(-5000)
-    assert w.can_save_folder()
-    target = tmp_path / "battle_scan_cameras.bin"
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *args, **kwargs: (str(target), ""))
+    w.text_manager.set_str(87, "Edited")
+    monkeypatch.setattr(QFileDialog, "getExistingDirectory", lambda *args, **kwargs: str(tmp_path))
     w.save_files()
     saved = XuManager()
-    saved.load_file(str(target))
+    saved.load_file(str(tmp_path / "battle_scan_cameras.bin"))
     assert saved.rows[168].distance == -5000 and saved.rows[87].distance == -0x1200
-    assert w.binding.is_loaded and not w.can_save_folder()  # now saved into the opened file
+    texts = XuTextManager(w.game_data)
+    texts.load_file(str(tmp_path / "battle_scans.msd"))
+    assert len(texts.texts) == 160 and texts.get_str(87) == "Edited"
+    assert w.binding.is_loaded and w.text_binding.is_loaded
     w._reset_row()
     assert w._spinboxes["distance"].value() == -0x1200  # reset = the exe's value
+
+
+def test_import_routes_by_type(widget, tmp_path):
+    w, path = widget
+    w.import_paths([str(path)])
+    assert w.binding.current_path == str(path)
 
 
 @pytest.mark.ff8data(EXE)

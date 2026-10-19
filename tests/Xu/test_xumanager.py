@@ -105,7 +105,7 @@ def test_labels():
     manager = XuManager()
     assert manager.row_label(87) == "087  c0m071 G-Soldier"
     assert "Abadon" in manager.row_label(162)
-    assert "not scannable" in manager.row_label(0)
+    assert manager.row_label(0) == "000  d0c Squall"  # characters are scannable too
     assert "no c0m file" in manager.row_label(230)
 
 

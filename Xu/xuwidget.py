@@ -13,13 +13,14 @@ from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Xu.xuhud import ScanHud
 from Xu.xumanager import (XuManager, FILE_NAME, ROW_COUNT, ALTERNATE_ROWS, FIRST_MONSTER_ROW,
-                          LAST_C0M_FILE, c0m_for_row, com_id_for_row)
+                          LAST_C0M_FILE, CHARACTER_NAMES, c0m_for_row, com_id_for_row)
 from Xu.xupreview import XuPreviewPanel
 from Xu.xutext import XuTextManager, FILE_NAME as TEXT_FILE_NAME
 
 MODEL_FOLDER_KEY = "battle model (.dat)"  # same remembered folder as Ifrit's model dialog
 TEXT_COUNT_FOR_ALL_MONSTERS = LAST_C0M_FILE + 16 + 1  # com_id 0..215
 _C0M_FILE = re.compile(r"^c0m(\d{3})\.dat$", re.IGNORECASE)
+_CHARACTER_FILE = re.compile(r"^d([0-9a-f])c(\d{3})\.dat$", re.IGNORECASE)
 
 FIELD_HELP = {
     "distance": ("Distance", "How far the camera stands from the aim point.\n"
@@ -108,30 +109,20 @@ class XuWidget(QWidget):
                                          read_only=True)
         self._spinboxes = {}
         self._checkboxes = {}
-        self._model_paths = {}           # c0m number -> opened c0m###.dat
+        self._model_paths = {}           # com_id -> opened c0m###.dat / d?c###.dat
         self._pending_follow_row = None  # model to load once the tool is shown
         self._translation_widget = None
 
         # Top bar
-        self.exe_button = QPushButton("Open FF8 exe...")
-        self.exe_button.setToolTip("The exe gives the vanilla camera rows (EN, FR, DE, IT or ES exe):\n"
-                                   "they are compared with, reset to, and used for a new file.")
-        self.exe_button.clicked.connect(lambda: self.exe_binding.open_dialog(self))
-        self.new_button = QPushButton("New camera file from the exe...")
-        self.new_button.setToolTip(f"Write a {FILE_NAME} with the exe's vanilla rows (new monsters start\n"
-                                   "with G-Soldier's framing, like FFNx does) and open it.\n"
-                                   "Put it in FFNx's direct/exe/ folder.")
-        self.new_button.clicked.connect(self._create_from_exe)
-        self.import_button = QPushButton(f"Import {FILE_NAME}...")
-        self.import_button.setToolTip(f"Open a {FILE_NAME} to edit (FFNx reads it from direct/exe/).\n"
-                                      "The header Import button does the same.")
-        self.import_button.clicked.connect(lambda: self.binding.open_dialog(self))
+        self.import_button = QPushButton("Import...")
+        self.import_button.setToolTip(f"Open the FF8 exe, {FILE_NAME} and/or {TEXT_FILE_NAME} (select one or several).\n"
+                                      "The exe gives the vanilla camera rows and scan texts (EN, FR, DE, IT or ES);\n"
+                                      "the .bin and .msd are the FFNx files (direct/exe/) to edit.")
+        self.import_button.clicked.connect(self._import)
         self.file_label = QLabel()
         self.file_label.setWordWrap(True)
         top_bar = QHBoxLayout()
         top_bar.addWidget(self.import_button)
-        top_bar.addWidget(self.exe_button)
-        top_bar.addWidget(self.new_button)
         top_bar.addWidget(self.file_label, 1)
 
         # Row list
@@ -167,9 +158,10 @@ class XuWidget(QWidget):
 
         # Preview
         self.preview = XuPreviewPanel(game_data_folder, hud=self.hud)
-        self.model_button = QPushButton("Monster models...")
-        self.model_button.setToolTip("Open the c0m###.dat files to preview (Ctrl+A in the dialog for all).\n"
-                                     "Each row then shows its own monster when its file is open.")
+        self.model_button = QPushButton("Battle models...")
+        self.model_button.setToolTip("Open the c0m###.dat monster and d?c###.dat character files to preview\n"
+                                     "(Ctrl+A in the dialog for all). Each row then shows its own model when\n"
+                                     "its file is open (a character: the first of its files opened).")
         self.model_button.clicked.connect(self._open_models)
         self.font_button = QPushButton("Game font...")
         self.font_button.setToolTip("Open mngrp.bin: the scan text is then drawn with the game font\n"
@@ -254,16 +246,9 @@ class XuWidget(QWidget):
         return group
 
     def _build_text_tab(self):
-        self.text_file_label = QLabel(f"No {TEXT_FILE_NAME} loaded. Import one, or make one from the FF8 exe "
-                                      "(FFNx also writes it in direct/exe/ with save_exe_data).")
+        self.text_file_label = QLabel(f"No scan texts: Import the FF8 exe (its texts) or a {TEXT_FILE_NAME}.")
         self.text_file_label.setWordWrap(True)
         self.text_file_label.setStyleSheet("color: gray")
-        self.text_open_button = QPushButton(f"Import {TEXT_FILE_NAME}...")
-        self.text_open_button.clicked.connect(lambda: self.text_binding.open_dialog(self))
-        self.text_from_exe_button = QPushButton("New from FF8 exe...")
-        self.text_from_exe_button.setToolTip(f"Build a default {TEXT_FILE_NAME} from the scan texts of an FF8 exe\n"
-                                             "(EN, FR, DE, IT or ES; the language is read from the exe) and open it.")
-        self.text_from_exe_button.clicked.connect(self._create_text_from_exe)
         self.text_export_button = QPushButton("Export as...")
         self.text_export_button.setToolTip(f"Write the texts to another {TEXT_FILE_NAME}")
         self.text_export_button.clicked.connect(self._export_text)
@@ -271,8 +256,6 @@ class XuWidget(QWidget):
         self.text_all_button.setToolTip("Edit every scan text in one list, like ShumiTranslator")
         self.text_all_button.clicked.connect(self._show_all_texts)
         buttons = QHBoxLayout()
-        buttons.addWidget(self.text_open_button)
-        buttons.addWidget(self.text_from_exe_button)
         buttons.addWidget(self.text_export_button)
         buttons.addWidget(self.text_all_button)
         buttons.addStretch(1)
@@ -313,6 +296,7 @@ class XuWidget(QWidget):
             return
         self._update_source_state()
         self._fill_row_list()
+        self._load_texts_from_exe(path)
 
     def load_file(self, path):
         try:
@@ -323,18 +307,40 @@ class XuWidget(QWidget):
         self._update_source_state()
         self._fill_row_list()
 
+    def _import(self):
+        """One dialog for the three sources; each pick goes to its own file binding."""
+        folder = (self.file_registry.last_folder(FILE_NAME) or os.path.dirname(self.exe_binding.current_path)
+                  or os.getcwd())
+        paths = QFileDialog.getOpenFileNames(
+            self, "Import the FF8 exe and/or the FFNx scan files", folder,
+            f"FF8 exe and scan files (*.exe {FILE_NAME} {TEXT_FILE_NAME});;FF8 exe (*.exe);;"
+            f"Scan camera rows ({FILE_NAME} *.bin);;Scan texts ({TEXT_FILE_NAME} *.msd)")[0]
+        self.import_paths(paths)
+
+    def import_paths(self, paths):
+        """Route picked files by type: the exe first (it is the reference), then .bin, then .msd."""
+        order = {".exe": 0, ".bin": 1, ".msd": 2}
+        for path in sorted(paths, key=lambda p: order.get(os.path.splitext(p)[1].lower(), 3)):
+            extension = os.path.splitext(path)[1].lower()
+            binding = {".exe": self.exe_binding, ".bin": self.binding, ".msd": self.text_binding}.get(extension)
+            if binding is None:
+                QMessageBox.warning(self, "Xu", f"{os.path.basename(path)}: not an FF8 exe, .bin or .msd")
+                continue
+            if extension != ".exe":
+                self.file_registry.remember_folder(FILE_NAME, os.path.dirname(path))
+            binding.open_path(path)
+
     def _update_source_state(self):
         loaded = self.manager.loaded
         self.editor_group.setEnabled(loaded)
-        self.new_button.setEnabled(self.manager.vanilla is not None)
         exe = os.path.basename(self.exe_binding.current_path) if self.manager.vanilla is not None else ""
         if self.binding.is_loaded:
             text = self.binding.current_path + (f" - compared with {exe}" if exe else " - no exe open: "
                                                 "compared with the file as opened")
         elif loaded:
-            text = f"Vanilla rows of {exe}. Edit them and Save, or make a {FILE_NAME} from them."
+            text = f"Vanilla rows of {exe}: Save writes them to a {FILE_NAME}."
         else:
-            text = f"Open the FF8 exe (vanilla values) or import a {FILE_NAME} to see and edit the rows."
+            text = f"Import the FF8 exe (vanilla values) or a {FILE_NAME} to see and edit the rows."
         self.file_label.setText(text)
         self.file_label.setStyleSheet("" if loaded else "color: #c06000")
 
@@ -347,39 +353,43 @@ class XuWidget(QWidget):
             QMessageBox.warning(self, "Xu", f"Cannot save:\n{error}")
 
     def can_save_folder(self):
-        """Save has work with no camera file opened: the exe's rows, edited."""
-        return not self.binding.is_loaded and self.manager.loaded and bool(self.manager.changed_rows())
+        """Save has work as soon as rows or texts are loaded, even with no file opened yet."""
+        return self.manager.loaded or self.text_manager.loaded
 
     def save_files(self):
-        """The header Save: both files, asking where to write the camera rows the first time."""
-        if self.binding.is_loaded:
-            self.save_file()
-        elif self.can_save_folder():
-            self._save_camera_as()
-        self.save_text_file()
-
-    def _save_camera_as(self):
-        default = os.path.join(self.file_registry.last_folder(FILE_NAME) or os.getcwd(), FILE_NAME)
-        path = QFileDialog.getSaveFileName(self, f"Save {FILE_NAME} (FFNx direct/exe/)", default, FILE_NAME)[0]
-        if not path:
+        """The header Save: writes both FFNx files. A file not opened yet (values from the exe)
+        goes, with its own name, to a folder asked once (FFNx's direct/exe/)."""
+        missing = []
+        if self.manager.loaded and not self.binding.is_loaded:
+            missing.append(FILE_NAME)
+        if self.text_manager.loaded and not self.text_binding.is_loaded:
+            missing.append(TEXT_FILE_NAME)
+        folder = ""
+        if missing:
+            start = (self.file_registry.last_folder(FILE_NAME) or os.path.dirname(self.text_binding.current_path)
+                     or os.path.dirname(self.binding.current_path) or os.getcwd())
+            folder = QFileDialog.getExistingDirectory(self, f"Folder to save {' and '.join(missing)} in "
+                                                            "(FFNx direct/exe/)", start)
+            if not folder:
+                return
+            self.file_registry.remember_folder(FILE_NAME, folder)
+        try:
+            if self.binding.is_loaded:
+                self.manager.save_file(self.binding.current_path)
+            elif FILE_NAME in missing:
+                self.manager.save_file(os.path.join(folder, FILE_NAME))
+            if self.text_binding.is_loaded:
+                self.text_manager.save_file(self.text_binding.current_path)
+            elif TEXT_FILE_NAME in missing:
+                self.text_manager.save_file(os.path.join(folder, TEXT_FILE_NAME))
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Xu", f"Cannot save:\n{error}")
             return
-        self.manager.save_file(path)
-        self.file_registry.remember_folder(FILE_NAME, os.path.dirname(path))
-        self.binding.open_path(path)
-
-    def _create_from_exe(self):
-        if self.manager.vanilla is None:
-            return
-        rows = self.manager.rows
-        self.manager.rows = [row.copy() for row in self.manager.vanilla]
-        default = os.path.join(self.file_registry.last_folder(FILE_NAME) or os.getcwd(), FILE_NAME)
-        path = QFileDialog.getSaveFileName(self, f"Create {FILE_NAME} (FFNx direct/exe/)", default, FILE_NAME)[0]
-        if not path:
-            self.manager.rows = rows
-            return
-        self.manager.save_file(path)
-        self.file_registry.remember_folder(FILE_NAME, os.path.dirname(path))
-        self.binding.open_path(path)
+        # The new files become the opened ones (Opened files panel, next Save in place)
+        if FILE_NAME in missing:
+            self.binding.open_path(os.path.join(folder, FILE_NAME))
+        if TEXT_FILE_NAME in missing:
+            self.text_binding.open_path(os.path.join(folder, TEXT_FILE_NAME))
 
     # ------------------------------------------------------------------ text file
     def load_text_file(self, path):
@@ -411,25 +421,21 @@ class XuWidget(QWidget):
             self.text_manager.save_file(path)
             self.text_manager.file_path = self.text_binding.current_path  # Save keeps the opened file
 
-    def _create_text_from_exe(self):
-        """Extract the exe's scan texts (ShumiTranslator's exe parser) into a new msd."""
-        exe_path = self.exe_binding.current_path or self.exe_binding.open_dialog(self)
-        if not exe_path:
+    def _load_texts_from_exe(self, exe_path):
+        """With no msd opened, the exe's own scan texts (ShumiTranslator's exe parser) are the
+        ones edited; Save writes them to a battle_scans.msd."""
+        if self.text_binding.is_loaded:
             return
         try:
-            msd = build_msd_from_exe(self.game_data, exe_path)
+            self.text_manager.load_bytes(build_msd_from_exe(self.game_data, exe_path))
         except Exception as error:  # not an FF8 exe, or a release the exe data does not cover
             QMessageBox.warning(self, "Xu", f"Cannot read the scan texts of {exe_path}:\n{error}")
             return
-        default = os.path.join(self.file_registry.last_folder(TEXT_FILE_NAME) or os.getcwd(), TEXT_FILE_NAME)
-        path = QFileDialog.getSaveFileName(self, f"Save the new {TEXT_FILE_NAME} (FFNx direct/exe/)",
-                                           default, "MSD file (*.msd)")[0]
-        if not path:
-            return
-        with open(path, "wb") as file:
-            file.write(msd)
-        self.file_registry.remember_folder(TEXT_FILE_NAME, os.path.dirname(path))
-        self.text_binding.open_path(path)
+        self.text_manager.file_path = ""
+        self.text_file_label.setStyleSheet("")
+        self.load_text_label_count()
+        self._update_text_buttons()
+        self._show_row_text(self.current_row())
 
     def _update_text_buttons(self):
         loaded = self.text_manager.loaded
@@ -485,8 +491,11 @@ class XuWidget(QWidget):
         self._show_row_text(self.current_row())
 
     def load_text_label_count(self):
-        path = self.text_binding.current_path
-        self.text_file_label.setText(f"{path} - {len(self.text_manager.texts)} texts (com_id 0-"
+        if self.text_binding.is_loaded:
+            source = self.text_binding.current_path
+        else:
+            source = f"Texts of {os.path.basename(self.exe_binding.current_path)} (Save writes a {TEXT_FILE_NAME})"
+        self.text_file_label.setText(f"{source} - {len(self.text_manager.texts)} texts (com_id 0-"
                                      f"{len(self.text_manager.texts) - 1})")
 
     def _on_text_edited(self):
@@ -522,6 +531,8 @@ class XuWidget(QWidget):
         title = self.preview.model_name() if self.preview.has_model else ""
         if not title and c0m is not None:
             title = self.manager.monster_name(c0m)
+        if not title and row < len(CHARACTER_NAMES):  # a character .dat carries no name
+            title = CHARACTER_NAMES[row]
         self.preview.set_texts(title, scan_text)
         too_wide = self.hud.too_wide_lines(scan_text) if scan_text else []
         pages = self.hud.page_count(scan_text) if scan_text else 1
@@ -631,38 +642,60 @@ class XuWidget(QWidget):
 
     def _open_models(self):
         folder = self.file_registry.last_folder(MODEL_FOLDER_KEY) or os.getcwd()
-        paths = QFileDialog.getOpenFileNames(self, "Monster models to preview (Ctrl+A for all)", folder,
-                                             "Monster battle model (c0m*.dat)")[0]
+        paths = QFileDialog.getOpenFileNames(self, "Battle models to preview (Ctrl+A for all)", folder,
+                                             "Monster and character battle models (c0m*.dat d?c*.dat)")[0]
         if paths:
             self.add_models(paths)
 
+    @staticmethod
+    def model_com_id(path):
+        """The com_id a battle model shows: c0mNNN = NNN + 16, character dXcNNN = X; else None."""
+        name = os.path.basename(path)
+        match = _C0M_FILE.match(name)
+        if match:
+            return int(match.group(1)) + FIRST_MONSTER_ROW
+        match = _CHARACTER_FILE.match(name)
+        if match:
+            return int(match.group(1), 16)
+        return None
+
     def add_models(self, paths):
-        """Make c0m###.dat files available to the preview (other names are ignored)."""
+        """Make c0m###.dat / d?c###.dat files available to the preview (other names are ignored).
+        A character has several files (one per costume): the first one opened is kept."""
         added = 0
         for path in paths:
-            match = _C0M_FILE.match(os.path.basename(path))
-            if match:
-                self._model_paths[int(match.group(1))] = path
+            com_id = self.model_com_id(path)
+            if com_id is not None and (com_id >= FIRST_MONSTER_ROW or com_id not in self._model_paths):
+                self._model_paths[com_id] = path
                 added += 1
         if paths:
             self.file_registry.remember_folder(MODEL_FOLDER_KEY, os.path.dirname(paths[0]))
-        self.model_button.setText(f"Monster models ({len(self._model_paths)})...")
+        self.model_button.setText(f"Battle models ({len(self._model_paths)})...")
         if added:
             self._follow_model(self.current_row())
 
+    def _model_com_id_for_row(self, row):
+        """The com_id whose model a row frames (alternate rows: their monster's)."""
+        com_id = com_id_for_row(row)
+        if com_id is None and row in ALTERNATE_ROWS:
+            com_id = ALTERNATE_ROWS[row][0] + FIRST_MONSTER_ROW
+        return com_id
+
     def _follow_model(self, row):
-        """Show the row's own monster: the row gives the com_id, so the c0m file."""
+        """Show the row's own monster or character: the row gives the com_id, so the file."""
         if not self.isVisible():  # the editor builds every tool at start: load nothing yet
             self._pending_follow_row = row
             return
-        c0m = c0m_for_row(row)
-        if c0m is None or c0m > LAST_C0M_FILE:
-            self._set_model_status("No monster model for this row.")
+        com_id = self._model_com_id_for_row(row)
+        if com_id is None or com_id > LAST_C0M_FILE + FIRST_MONSTER_ROW:
+            self._set_model_status("No battle model for this row.")
             return
-        path = self._model_paths.get(c0m)
+        path = self._model_paths.get(com_id)
         if path is None:
+            wanted = (f"c0m{com_id - FIRST_MONSTER_ROW:03d}.dat" if com_id >= FIRST_MONSTER_ROW
+                      else f"a d{com_id:x}c###.dat")
             shown = f" (still showing {os.path.basename(self.preview.model_path)})" if self.preview.has_model else ""
-            self._set_model_status(f"c0m{c0m:03d}.dat is not open: add it with Monster models...{shown}",
+            self._set_model_status(f"{wanted} is not open: add it with Battle models...{shown}",
                                    warning=bool(self._model_paths))
             return
         if os.path.normcase(path) != os.path.normcase(self.preview.model_path):
