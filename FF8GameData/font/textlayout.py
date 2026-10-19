@@ -141,8 +141,10 @@ def _glyph_char(game_data, code):
 
 
 def layout_text(text_str, game_data, metrics: FontMetrics,
-                line_height=MENU_TEXT_LINE_HEIGHT) -> TextLayout:
-    """Lay out a decoded FF8 string exactly as the engine would, pen starting at (0, 0)."""
+                line_height=MENU_TEXT_LINE_HEIGHT, first_page_only=False) -> TextLayout:
+    """Lay out a decoded FF8 string exactly as the engine would, pen starting at (0, 0).
+    first_page_only: stop at a page break (0x01/0x07) like Text_RenderGlyphs, for a text layer
+    that is never paged (e.g. the Scan description)."""
     text_hex = bytes(game_data.translate_str_to_hex(text_str))
     glyphs = []
     stops = []
@@ -154,7 +156,7 @@ def layout_text(text_str, game_data, metrics: FontMetrics,
     size = len(text_hex)
     while i < size:
         code = text_hex[i]
-        if code == 0x00:
+        if code == 0x00 or (first_page_only and code in (0x01, 0x07)):
             break
         if code in (0x01, 0x02):  # New page / new line
             line_widths.append(x)

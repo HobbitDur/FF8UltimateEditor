@@ -52,11 +52,16 @@ def test_bad_files(game_data):
 
 
 def test_scan_text_layout(game_data):
-    from Xu.xuhud import ScanHud, lines_per_page
+    from Xu.xuhud import ScanHud, visible_lines
     hud = ScanHud(game_data)
-    assert lines_per_page() == 7  # (128 - 12) / 16
+    assert visible_lines() == 7  # (128 - 12) / 16
     text = NL.join(f"line {i}" for i in range(9))
-    assert hud.page_count(text) == 2
+    assert hud.hidden_lines(text) == 2  # the scan text has no pages: lines 8-9 are never seen
+    assert not hud.has_page_break(text)
     assert hud.too_wide_lines("short" + NL + "W" * 40) == [2]
-    image = hud.render("G-Soldier", text, page=1)
+    # Text_RenderGlyphs stops at a page break: what follows is never drawn
+    broken = "line 0{NewPage}" + "W" * 40
+    assert hud.has_page_break(broken) and hud.too_wide_lines(broken) == [] and hud.hidden_lines(broken) == 0
+    assert not hud.has_page_break("line 0{NewPage}")
+    image = hud.render("G-Soldier", text)
     assert image.size == (320, 240) and image.getbbox() is not None

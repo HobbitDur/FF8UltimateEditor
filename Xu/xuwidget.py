@@ -559,13 +559,15 @@ class XuWidget(QWidget):
             title = CHARACTER_NAMES[row]
         self.preview.set_texts(title, scan_text)
         too_wide = self.hud.too_wide_lines(scan_text) if scan_text else []
-        pages = self.hud.page_count(scan_text) if scan_text else 1
+        hidden = self.hud.hidden_lines(scan_text) if scan_text else 0
         warnings = []
         if too_wide:
             warnings.append(f"Line(s) {', '.join(map(str, too_wide))} wider than the text box (124 px)"
                             + ("" if self.hud.atlas is not None else ", measured with the fallback widths"))
-        if pages > 1:
-            warnings.append(f"{pages} pages of 7 lines")
+        if hidden:
+            warnings.append(f"{hidden} line(s) past the 7 that fit: the scan text has no pages")
+        if scan_text and self.hud.has_page_break(scan_text):
+            warnings.append("the text after the page break is never shown")
         self.text_warning.setText(" - ".join(warnings))
 
     def _mark_dirty(self):

@@ -25,7 +25,7 @@ import numpy as np
 from PyQt6.QtCore import Qt, QTimer, QSignalBlocker
 from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QCheckBox,
-                             QSizePolicy, QSpinBox)
+                             QSizePolicy)
 
 from Xu.xumanager import ScanCameraRow
 
@@ -156,14 +156,6 @@ class XuPreviewPanel(QWidget):
         self.text_check.setChecked(True)
         self.text_check.setToolTip("Draw the monster name and scan text where the Scan screen draws them")
         self.text_check.stateChanged.connect(lambda _s: self._refresh_hud())
-        self.page_spin = QSpinBox()
-        self.page_spin.setPrefix("Text page ")
-        self.page_spin.setRange(1, 1)
-        self.page_spin.setToolTip("The Scan screen shows 7 lines of scan text at a time. A longer text is\n"
-                                  "split into pages: the game turns them on a button press or by itself\n"
-                                  "after a delay, and starts over after the last one. Pick the page to\n"
-                                  "preview - only enabled when the text has more than 7 lines.")
-        self.page_spin.valueChanged.connect(lambda _v: self._refresh_hud())
 
         # Weapon shown in a character's hand: the imported d?w###.dat of that character.
         # Hidden when none is imported (the body is shown alone).
@@ -179,7 +171,6 @@ class XuPreviewPanel(QWidget):
         controls.addWidget(self.turn_check)
         controls.addWidget(self.animate_check)
         controls.addWidget(self.text_check)
-        controls.addWidget(self.page_spin)
         controls.addWidget(self.weapon_label)
         controls.addWidget(self.weapon_combo)
         controls.addStretch(1)
@@ -287,16 +278,13 @@ class XuPreviewPanel(QWidget):
 
     def set_texts(self, title: str, scan_text: str):
         self._title, self._scan_text = title, scan_text
-        pages = self.hud.page_count(scan_text) if self.hud is not None else 1
-        self.page_spin.setRange(1, pages)
-        self.page_spin.setEnabled(pages > 1)
         self._refresh_hud()
 
     def _refresh_hud(self):
         if self.hud is None or not self.text_check.isChecked() or self.mode_combo.currentIndex() != MODE_SCAN_SCREEN:
             self._hud_image = None
         else:
-            image = self.hud.render(self._title, self._scan_text, self.page_spin.value() - 1)
+            image = self.hud.render(self._title, self._scan_text)
             self._hud_image = QImage(image.tobytes("raw", "RGBA"), image.width, image.height,
                                      QImage.Format.Format_RGBA8888).copy()
         self._place_hud()

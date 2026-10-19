@@ -1,10 +1,12 @@
 """The Scan screen's text, drawn where the game draws it on its 320x240 screen.
 
-MAG_040_SCAN_Viewer_State0_SpawnTextPager (0x84F8D0) opens two text layers:
+MAG_040_SCAN_Viewer_State0_SpawnTextPager (0x84F8D0) opens the text layers:
   * layer 2, the monster name: rect (170, 30) 136x28;
   * layer 0, the scan text:    rect (170, 52) 136x128.
-setTextPosition (0x4A07A0) draws a layer's text 6 px inside its rect, one line every 16 px,
-(height - 12) / 16 lines per page - 7 lines for the scan text, the TextPager turning pages.
+setTextPosition (0x4A07A0) draws a layer's text 6 px inside its rect, one line every 16 px, with
+room for (height - 12) / 16 lines - 7 for the scan text. The scan text is never paged: only its
+first 7 lines fit and Text_RenderGlyphs stops at a page break. The TextPager pages the one-line
+info bar (layer 1: level/HP, element affinities, the AI's setScanText line), not the scan text.
 """
 from PIL import Image, ImageDraw
 
@@ -17,12 +19,12 @@ TEXT_PADDING = 6
 LINE_HEIGHT = 16
 
 
-def lines_per_page(rect=TEXT_RECT) -> int:
+def visible_lines(rect=TEXT_RECT) -> int:
     return max(1, (rect[3] - 12) // LINE_HEIGHT)
 
 
 class ScanHud:
-    """Renders the name + one page of scan text as a transparent 320x240 overlay."""
+    """Renders the name + the scan text as a transparent 320x240 overlay."""
 
     def __init__(self, game_data):
         self.game_data = game_data
@@ -36,11 +38,18 @@ class ScanHud:
         self.metrics = FontMetrics.from_folder(folder)
 
     def layout(self, text):
-        return layout_text(text, self.game_data, self.metrics, line_height=LINE_HEIGHT)
+        """What the game draws: the text up to its first page break."""
+        return layout_text(text, self.game_data, self.metrics, line_height=LINE_HEIGHT, first_page_only=True)
 
-    def page_count(self, text) -> int:
-        layout = self.layout(text)
-        return max(1, -(-layout.line_count // lines_per_page()))
+    def hidden_lines(self, text) -> int:
+        """Lines past the 7 that fit in the text box."""
+        return max(0, self.layout(text).line_count - visible_lines())
+
+    def has_page_break(self, text) -> bool:
+        """True when a page break hides the rest of the text (the game never shows it)."""
+        full = layout_text(text, self.game_data, self.metrics, line_height=LINE_HEIGHT)
+        shown = self.layout(text)
+        return len(full.glyphs) > len(shown.glyphs)
 
     def too_wide_lines(self, text) -> list:
         """1-based line numbers wider than the text box."""
@@ -48,22 +57,21 @@ class ScanHud:
         return [index + 1 for index, line_width in enumerate(self.layout(text).line_widths)
                 if line_width > width]
 
-    def render(self, name, text, page=0) -> Image.Image:
+    def render(self, name, text) -> Image.Image:
         image = Image.new("RGBA", SCREEN_SIZE, (0, 0, 0, 0))
-        self._draw(image, name, NAME_RECT, 0)
-        self._draw(image, text, TEXT_RECT, page)
+        self._draw(image, name, NAME_RECT)
+        self._draw(image, text, TEXT_RECT)
         return image
 
-    def _draw(self, image, text, rect, page):
+    def _draw(self, image, text, rect):
         if not text:
             return
         layout = self.layout(text)
-        per_page = lines_per_page(rect)
-        first, last = page * per_page * LINE_HEIGHT, (page + 1) * per_page * LINE_HEIGHT
-        x0, y0 = rect[0] + TEXT_PADDING, rect[1] + TEXT_PADDING - first
+        last = visible_lines(rect) * LINE_HEIGHT
+        x0, y0 = rect[0] + TEXT_PADDING, rect[1] + TEXT_PADDING
         draw = None
         for glyph in layout.glyphs:
-            if not first <= glyph.y < last:
+            if glyph.y >= last:
                 continue
             cell = self.atlas.glyph(glyph.code, glyph.color) if self.atlas is not None else None
             if cell is not None:
