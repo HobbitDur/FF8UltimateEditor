@@ -18,8 +18,8 @@ further, by the per-track offsets of that json). A track is::
 Both offsets are relative to the track, the script jumps are relative and the engine only reads
 the track (the VM writes its variables elsewhere), so a track works wherever it is stored.
 
-Edits keep every track at its exe size (same script length, same keyframe layout): the exe has
-no free room after a track. They are saved as a .hext that FFNx applies to the running game; the
+Edits keep every track at its exe size (a script no longer than the exe's, filled up when shorter;
+the same keyframes and header): the exe has no free room after a track. They are saved as a .hext that FFNx applies to the running game; the
 .hext only fits the language of the exe it was made from, so it says which one it is for.
 """
 import json
@@ -104,19 +104,35 @@ class CameraTrack:
         return track
 
     def _set_parts(self, data: bytes, vm):
+        """Split `data` into header / script / padding / keyframes. All or nothing: on an error the
+        track keeps its current parts."""
+        if self.original and data[:SCRIPT_OFFSET] != self.original[:SCRIPT_OFFSET]:
+            raise ValueError(f"effect {self.effect_id}: the track header (size, script and keyframe "
+                             "offsets) cannot change - a track keeps its exe size and layout")
         _count, script_offset, keyframe_offset, size = HEADER.unpack_from(data)
         if script_offset != SCRIPT_OFFSET or not script_offset < keyframe_offset < size or size != len(data):
             raise ValueError(f"effect {self.effect_id}: not a camera track at 0x{self.address:X}")
-        self.header = bytes(data[:SCRIPT_OFFSET])
-        self.script, self.padding = split_script(vm, bytes(data[SCRIPT_OFFSET:keyframe_offset]))
-        self.collection = parse_camera_collection(bytearray(data[keyframe_offset:]))
+        script, padding = split_script(vm, bytes(data[SCRIPT_OFFSET:keyframe_offset]))
+        collection = parse_camera_collection(bytearray(data[keyframe_offset:]))
+        if bytes(collection.get_bytes()) != bytes(data[keyframe_offset:]):
+            raise ValueError(f"effect {self.effect_id}: the keyframes do not fill the track exactly")
+        self.header, self.script, self.padding, self.collection = bytes(data[:SCRIPT_OFFSET]), script, padding, collection
 
     @property
     def size(self) -> int:
         return len(self.original)
 
+    @property
+    def script_room(self) -> int:
+        """Bytes the script may use: its exe length (the padding byte stays apart)."""
+        return len(self.script)
+
     def to_bytes(self) -> bytes:
-        return self.header + self.script + self.padding + bytes(self.collection.get_bytes())
+        data = self.header + self.script + self.padding + bytes(self.collection.get_bytes())
+        if len(data) != self.size:  # nothing should get here: every edit keeps the size
+            raise ValueError(f"effect {self.effect_id}: the track is {len(data)} bytes, "
+                             f"the exe has room for exactly {self.size}")
+        return data
 
     @property
     def modified(self) -> bool:
@@ -227,14 +243,21 @@ class CameraEffectManager:
         """The script as editable code (sequencecodec syntax)."""
         return sequence_to_code(self.vm, track.script)
 
-    def set_script_code(self, track: CameraTrack, code: str):
-        """Replace the script from code. It must keep its exe length: the track cannot grow."""
+    def script_size(self, code: str) -> int:
+        """Bytes `code` compiles to (ValueError when it does not compile)."""
+        return len(code_to_sequence(self.vm, code))
+
+    def set_script_code(self, track: CameraTrack, code: str) -> int:
+        """Replace the script from code. The track cannot grow: a longer script is refused, a
+        shorter one is filled up to its exe length after its last command (an end() for an odd
+        byte, then nop(0)s), which never runs since the script stops before. Returns the filler size."""
         script = bytes(code_to_sequence(self.vm, code))
-        if len(script) != len(track.script):
-            raise ValueError(f"the script is {len(script)} bytes, the exe has room for exactly "
-                             f"{len(track.script)} (pad a shorter script with nop(0) = 2 bytes, "
-                             f"or a single byte with end())")
-        track.script = script
+        filler = track.script_room - len(script)
+        if filler < 0:
+            raise ValueError(f"the script is {len(script)} bytes, the exe has room for "
+                             f"{track.script_room}: remove {-filler} byte(s)")
+        track.script = script + b"\x01" * (filler % 2) + b"\x09\x00" * (filler // 2)
+        return filler
 
     # ------------------------------------------------------------------ hext
     def hext_text(self) -> str:
@@ -286,7 +309,16 @@ class CameraEffectManager:
             offset = address - track.address
             images[track.effect_id][offset:offset + len(data)] = data
             touched.add(track.effect_id)
+        # Check every touched track before changing any, so a refused .hext leaves the tracks as they were.
+        checked = {}
         for effect_id in touched:
             track = self.tracks[effect_id]
-            track._set_parts(bytes(images[effect_id]), self.vm)
+            check = CameraTrack(effect_id=effect_id, name=track.name, label=track.label, address=track.address,
+                                push_operand=track.push_operand, original=track.original)
+            check._set_parts(bytes(images[effect_id]), self.vm)
+            checked[effect_id] = check
+        for effect_id, check in checked.items():
+            track = self.tracks[effect_id]
+            track.header, track.script, track.padding, track.collection = (
+                check.header, check.script, check.padding, check.collection)
         return len(touched)

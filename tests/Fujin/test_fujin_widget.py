@@ -57,7 +57,11 @@ def test_script_apply_refuses_a_longer_script(fujin, monkeypatch):
     editor = fujin.camera_editor
     editor.exe_binding.open_path(EXE)
     editor.select_effect(LIFE)
+    room = editor.manager.track(LIFE).script_room
+    assert editor.script_size_label.text() == f"{room} / {room} bytes"
     editor.script_editor.setPlainText(editor.script_editor.toPlainText() + "\nend()")
+    assert "1 too many" in editor.script_size_label.text()
+    assert not editor.apply_script_button.isEnabled()          # Apply is off while too long
     editor._apply_script()
-    assert warnings and "exactly" in warnings[0]
+    assert warnings and "remove 1 byte" in warnings[0]
     assert not editor.manager.track(LIFE).modified

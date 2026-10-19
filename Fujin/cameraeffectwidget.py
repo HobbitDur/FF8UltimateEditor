@@ -96,10 +96,12 @@ class CameraEffectEditorWidget(QWidget):
         self.script_editor.setFont(monospace)
         self.script_editor.setToolTip("The camera script as code, one command per line. It picks which "
                                       "keyframe animation plays (play / play_var) from the attacker, the "
-                                      "target, random values... Apply keeps the exe length: same number "
-                                      "of bytes.")
+                                      "target, random values... The track cannot grow: a script longer "
+                                      "than the exe's is refused, a shorter one is filled up on Apply.")
+        self.script_editor.textChanged.connect(self._update_script_size)
         self.apply_script_button = QPushButton("Apply script")
         self.apply_script_button.clicked.connect(self._apply_script)
+        self.script_size_label = QLabel()
         self.script_description = QPlainTextEdit()
         self.script_description.setReadOnly(True)
         self.script_description.setFont(monospace)
@@ -110,7 +112,10 @@ class CameraEffectEditorWidget(QWidget):
         editor_layout.setContentsMargins(0, 0, 0, 0)
         editor_layout.addWidget(QLabel("Code (editable)"))
         editor_layout.addWidget(self.script_editor, 1)
-        editor_layout.addWidget(self.apply_script_button, 0, Qt.AlignmentFlag.AlignLeft)
+        apply_row = QHBoxLayout()
+        apply_row.addWidget(self.apply_script_button)
+        apply_row.addWidget(self.script_size_label, 1)
+        editor_layout.addLayout(apply_row)
         description_side = QWidget()
         description_layout = QVBoxLayout(description_side)
         description_layout.setContentsMargins(0, 0, 0, 0)
@@ -177,8 +182,13 @@ class CameraEffectEditorWidget(QWidget):
             path = QFileDialog.getSaveFileName(self, "Save the camera patch", default, "*.hext")[0]
         if not path:
             return False
+        try:
+            text = self.manager.hext_text()
+        except ValueError as error:  # a track no longer fits its exe room: write nothing
+            QMessageBox.warning(self, "Camera effect editor", f"The .hext was not saved:\n{error}")
+            return False
         with open(path, "w", encoding="utf-8") as file:
-            file.write(self.manager.hext_text())
+            file.write(text)
         self.file_registry.remember_folder(HEXT_FOLDER_KEY, os.path.dirname(path))
         return True
 
@@ -282,6 +292,31 @@ class CameraEffectEditorWidget(QWidget):
         self.script_editor.setPlainText(code)
         self.script_editor.blockSignals(False)
         self.script_description.setPlainText(description)
+        self._update_script_size()
+
+    def _update_script_size(self):
+        """Live 'used / room' byte count; Apply is off while the script is too long for the track."""
+        track = self.manager.track(self._selected_effect())
+        if track is None:
+            self.script_size_label.setText("")
+            return
+        try:
+            size = self.manager.script_size(self.script_editor.toPlainText())
+        except ValueError:
+            self.script_size_label.setStyleSheet("color: red;")
+            self.script_size_label.setText(f"Not valid code - room: {track.script_room} bytes")
+            self.apply_script_button.setEnabled(True)  # Apply tells which line is wrong
+            return
+        too_long = size > track.script_room
+        self.script_size_label.setStyleSheet("color: red;" if too_long else "")
+        if too_long:
+            text = f"{size} / {track.script_room} bytes: {size - track.script_room} too many (the track cannot grow)"
+        elif size < track.script_room:
+            text = f"{size} / {track.script_room} bytes (Apply fills the {track.script_room - size} left)"
+        else:
+            text = f"{size} / {track.script_room} bytes"
+        self.script_size_label.setText(text)
+        self.apply_script_button.setEnabled(not too_long)
 
     # ------------------------------------------------------------------ edits
     def _on_keyframes_changed(self):

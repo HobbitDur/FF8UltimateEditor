@@ -78,9 +78,37 @@ def test_script_code_round_trip(manager):
 @pytest.mark.ff8data(EXE)
 def test_script_keeps_its_exe_length(fresh_manager):
     track = fresh_manager.track(LIFE)
-    with pytest.raises(ValueError, match="exactly"):
+    with pytest.raises(ValueError, match="remove 1 byte"):
         fresh_manager.set_script_code(track, fresh_manager.script_code(track) + "\nend()")
     assert not track.modified
+
+
+@pytest.mark.ff8data(EXE)
+def test_shorter_script_is_filled_up(fresh_manager):
+    track = fresh_manager.track(LIFE)
+    room = track.script_room
+    assert fresh_manager.set_script_code(track, "end()") == room - 1
+    assert len(track.script) == room and len(track.to_bytes()) == track.size
+    filler = track.script[1:]
+    if len(filler) % 2:                                       # odd: one more end() first
+        assert filler[:1] == b"\x01"
+        filler = filler[1:]
+    assert filler == b"\x09\x00" * (len(filler) // 2)        # then nop(0)s
+    assert fresh_manager.script_code(track).splitlines()[0] == "end()"
+
+
+@pytest.mark.ff8data(EXE)
+def test_hext_cannot_change_a_track_size(fresh_manager):
+    life, cure = fresh_manager.track(LIFE), fresh_manager.track(CURE)
+    keyframe_byte = cure.address + len(cure.original) - 2 - 0x400000
+    size_field = life.address + 6 - 0x400000
+    # a keyframe edit on Cure plus a size change on Life: refused as a whole, nothing applied
+    with pytest.raises(ValueError, match="header"):
+        fresh_manager.apply_hext_text(f"+400000\n{keyframe_byte:X} = 7F\n{size_field:X} = FF 00\n")
+    assert not fresh_manager.modified_tracks()
+    life.padding += b"\x00"                                   # a track that somehow grew
+    with pytest.raises(ValueError, match="room for exactly"):
+        life.to_bytes()
 
 
 @pytest.mark.ff8data(EXE)
