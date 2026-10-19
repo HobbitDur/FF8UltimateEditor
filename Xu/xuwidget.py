@@ -1,4 +1,5 @@
 import os
+import re
 
 from PyQt6.QtCore import Qt, QSignalBlocker
 from PyQt6.QtGui import QIcon
@@ -18,6 +19,7 @@ from Xu.xutext import XuTextManager, FILE_NAME as TEXT_FILE_NAME
 
 MODEL_FOLDER_KEY = "battle model (.dat)"  # same remembered folder as Ifrit's model dialog
 TEXT_COUNT_FOR_ALL_MONSTERS = LAST_C0M_FILE + 16 + 1  # com_id 0..215
+_C0M_FILE = re.compile(r"^c0m(\d{3})\.dat$", re.IGNORECASE)
 
 FIELD_HELP = {
     "distance": ("Distance", "How far the camera stands from the aim point.\n"
@@ -42,13 +44,17 @@ def build_msd_from_exe(game_data, exe_path) -> bytes:
     """battle_scans.msd content made from an FF8 exe's own scan texts (one per com_id)."""
     from FF8GameData.ExeSection.exefile import SectionExeFile
     from FF8GameData.gamedata import MsdType
+    _ensure_exe_data(game_data)
+    with open(exe_path, "rb") as file:
+        section = SectionExeFile(game_data, bytearray(file.read()))
+    return bytes(section.produce_msd(MsdType.SCAN_TEXT))
+
+
+def _ensure_exe_data(game_data):
     if not getattr(game_data, "card_data_json", None):
         game_data.load_card_data()
     if not game_data.exe_data_json:
         game_data.load_exe_data()
-    with open(exe_path, "rb") as file:
-        section = SectionExeFile(game_data, bytearray(file.read()))
-    return bytes(section.produce_msd(MsdType.SCAN_TEXT))
 
 
 class _TextSection:
@@ -70,8 +76,9 @@ class XuWidget(QWidget):
     """Scan editor: how the Scan screen frames each monster (battle_scan_cameras.bin) and
     what it says about it (battle_scans.msd).
 
-    The game keeps both tables inside FF8_EN.exe; FFNx reads them from direct/exe/ so they can
-    be edited, and gives every monster from c0m144 on a camera row and a text of its own.
+    The game keeps both tables inside the FF8 exe; FFNx reads them from direct/exe/ so they can
+    be edited, and gives every monster from c0m144 on a camera row and a text of its own. The
+    values always come from a file: the exe (vanilla) or the .bin/.msd being edited.
 
     Named after Xu, the SeeD who briefs the squad on their target."""
 
@@ -84,33 +91,41 @@ class XuWidget(QWidget):
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
         self.manager = XuManager()
-        self.game_data = GameData(game_data_folder)  # text encoding tables
+        self.game_data = GameData(game_data_folder)  # text encoding tables + exe.json
         self.text_manager = XuTextManager(self.game_data)
         self.hud = ScanHud(self.game_data)
         self.binding = FileBinding(FILE_NAME, file_registry, load_callback=self.load_file,
                                    save_callback=self.save_file)
         self.text_binding = FileBinding(TEXT_FILE_NAME, file_registry, load_callback=self.load_text_file,
                                         save_callback=self.save_text_file)
+        # The exe gives the vanilla camera rows and the default scan texts - shared with
+        # Cid/ShumiTranslator: opening it in any of them feeds this tool too.
+        self.exe_binding = FileBinding("FF8 exe", file_registry, load_callback=self.load_exe,
+                                       read_only=True, file_filter="*.exe")
         # mngrp.bin only matters for what sits next to it: sysfnt.TEX/.tdw, the game font
         # (the Zone/Moomba/IfritSeq convention - never a guessed folder).
         self.mngrp_binding = FileBinding("mngrp.bin", file_registry, load_callback=self._on_mngrp_opened,
                                          read_only=True)
-        # The exe the default battle_scans.msd is extracted from - shared with Cid/ShumiTranslator
-        self.exe_binding = FileBinding("FF8 exe", file_registry, read_only=True, file_filter="*.exe")
         self._spinboxes = {}
         self._checkboxes = {}
+        self._model_paths = {}           # c0m number -> opened c0m###.dat
         self._pending_follow_row = None  # model to load once the tool is shown
         self._translation_widget = None
 
         # Top bar
-        self.new_button = QPushButton("New camera file from vanilla...")
-        self.new_button.setToolTip(f"Write a {FILE_NAME} with the vanilla rows (new monsters start with\n"
-                                   "G-Soldier's framing) and open it. Put it in FFNx's direct/exe/ folder.")
-        self.new_button.clicked.connect(self._create_from_vanilla)
-        self.file_label = QLabel(f"No {FILE_NAME} opened: you edit the vanilla rows, Save asks where to "
-                                 "write the file.")
-        self.file_label.setStyleSheet("color: gray")
+        self.exe_button = QPushButton("Open FF8 exe...")
+        self.exe_button.setToolTip("The exe gives the vanilla camera rows (EN, FR, DE, IT or ES exe):\n"
+                                   "they are compared with, reset to, and used for a new file.")
+        self.exe_button.clicked.connect(lambda: self.exe_binding.open_dialog(self))
+        self.new_button = QPushButton("New camera file from the exe...")
+        self.new_button.setToolTip(f"Write a {FILE_NAME} with the exe's vanilla rows (new monsters start\n"
+                                   "with G-Soldier's framing, like FFNx does) and open it.\n"
+                                   "Put it in FFNx's direct/exe/ folder.")
+        self.new_button.clicked.connect(self._create_from_exe)
+        self.file_label = QLabel()
+        self.file_label.setWordWrap(True)
         top_bar = QHBoxLayout()
+        top_bar.addWidget(self.exe_button)
         top_bar.addWidget(self.new_button)
         top_bar.addWidget(self.file_label, 1)
 
@@ -119,6 +134,8 @@ class XuWidget(QWidget):
         self.filter_edit.setPlaceholderText("Filter (name, c0m number, row)")
         self.filter_edit.textChanged.connect(self._apply_filter)
         self.changed_only = QCheckBox("Changed rows only")
+        self.changed_only.setToolTip("Rows that differ from the exe's vanilla values\n"
+                                     "(from the file as opened when no exe is open)")
         self.changed_only.stateChanged.connect(lambda _s: self._apply_filter())
         self.row_list = QListWidget()
         self.row_list.currentRowChanged.connect(self._on_row_selected)
@@ -145,15 +162,16 @@ class XuWidget(QWidget):
 
         # Preview
         self.preview = XuPreviewPanel(game_data_folder, hud=self.hud)
-        self.model_button = QPushButton("Battle folder...")
-        self.model_button.setToolTip("The folder holding the c0m###.dat monster files: each row shows its "
-                                     "own monster from it\n(the row gives the com_id, so the c0m number).")
-        self.model_button.clicked.connect(self._choose_model_folder)
+        self.model_button = QPushButton("Monster models...")
+        self.model_button.setToolTip("Open the c0m###.dat files to preview (Ctrl+A in the dialog for all).\n"
+                                     "Each row then shows its own monster when its file is open.")
+        self.model_button.clicked.connect(self._open_models)
         self.font_button = QPushButton("Game font...")
         self.font_button.setToolTip("Open mngrp.bin: the scan text is then drawn with the game font\n"
                                     "(sysfnt.TEX/.tdw next to it) and its real character widths.")
         self.font_button.clicked.connect(lambda: self.mngrp_binding.open_dialog(self))
         self.model_label = QLabel("")
+        self.model_label.setWordWrap(True)
         self.model_label.setStyleSheet("color: gray")
         model_row = QHBoxLayout()
         model_row.addWidget(self.model_button)
@@ -179,7 +197,9 @@ class XuWidget(QWidget):
 
         self._fill_row_list()
         self.row_list.setCurrentRow(87)
+        self._update_source_state()
         # Another tool may have opened the files already
+        self.exe_binding.load_opened_file()
         self.binding.load_opened_file()
         self.text_binding.load_opened_file()
         self.mngrp_binding.load_opened_file()
@@ -206,19 +226,22 @@ class XuWidget(QWidget):
         self.copy_source = QComboBox()
         self.copy_source.setMinimumContentsLength(24)
         self.copy_source.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
-        self.copy_source.setToolTip("Row to copy the framing from (e.g. a vanilla monster of a similar size)")
-        self.copy_button = QPushButton("Copy into this row")
+        self.copy_source.setToolTip("The row whose values are copied, e.g. a vanilla monster of a similar size")
+        self.copy_button = QPushButton("Copy its values here")
+        self.copy_button.setToolTip("Replace every value of this row by the ones of the row picked on the left:\n"
+                                    "the quickest start for a new monster.")
         self.copy_button.clicked.connect(self._copy_row)
         copy_row = QHBoxLayout()
         copy_row.addWidget(self.copy_source, 1)
         copy_row.addWidget(self.copy_button)
-        self.reset_button = QPushButton("Reset row to vanilla")
+        self.reset_button = QPushButton("Reset row")
+        self.reset_button.setToolTip("Back to the exe's vanilla values (to the file as opened when no exe is open)")
         self.reset_button.clicked.connect(self._reset_row)
 
         group = QGroupBox("Scan camera row")
         layout = QVBoxLayout()
         layout.addLayout(form)
-        layout.addWidget(QLabel("Copy the framing of:"))
+        layout.addWidget(QLabel("Copy all the values of another row:"))
         layout.addLayout(copy_row)
         layout.addWidget(self.reset_button)
         layout.addStretch(1)
@@ -226,8 +249,8 @@ class XuWidget(QWidget):
         return group
 
     def _build_text_tab(self):
-        self.text_file_label = QLabel(f"No {TEXT_FILE_NAME} loaded. Import one (header Import, or below) - "
-                                      "FFNx makes it in direct/exe/ with save_exe_data.")
+        self.text_file_label = QLabel(f"No {TEXT_FILE_NAME} loaded. Import one, or make one from the FF8 exe "
+                                      "(FFNx also writes it in direct/exe/ with save_exe_data).")
         self.text_file_label.setWordWrap(True)
         self.text_file_label.setStyleSheet("color: gray")
         self.text_open_button = QPushButton(f"Import {TEXT_FILE_NAME}...")
@@ -273,38 +296,42 @@ class XuWidget(QWidget):
 
     def file_bindings(self):
         """The files the shared header toolbar drives for this tool."""
-        return [self.binding, self.text_binding, self.mngrp_binding, self.exe_binding]
+        return [self.binding, self.text_binding, self.exe_binding, self.mngrp_binding]
 
-    def _camera_changed(self):
-        return any(not self.manager.is_vanilla(row) for row in range(ROW_COUNT))
+    # ------------------------------------------------------------------ sources
+    def load_exe(self, path):
+        _ensure_exe_data(self.game_data)
+        try:
+            self.manager.load_exe(path, self.game_data.exe_data_json)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Xu", f"Cannot read the scan camera rows of {path}:\n{error}")
+            return
+        self._update_source_state()
+        self._fill_row_list()
 
-    def can_save_folder(self):
-        """Save has work even with no camera file opened: the edited vanilla rows."""
-        return not self.binding.is_loaded and self._camera_changed()
-
-    def save_files(self):
-        """The header Save: both files, asking where to write the camera rows the first time."""
-        if self.binding.is_loaded:
-            self.save_file()
-        elif self._camera_changed():
-            default = os.path.join(self.file_registry.last_folder(FILE_NAME) or os.getcwd(), FILE_NAME)
-            path = QFileDialog.getSaveFileName(self, f"Save {FILE_NAME} (FFNx direct/exe/)", default, FILE_NAME)[0]
-            if path:
-                self.manager.save_file(path)
-                self.file_registry.remember_folder(FILE_NAME, os.path.dirname(path))
-                self.binding.open_path(path)
-        self.save_text_file()
-
-    # ------------------------------------------------------------------ camera file
     def load_file(self, path):
         try:
             self.manager.load_file(path)
         except (OSError, ValueError) as error:
             QMessageBox.warning(self, "Xu", f"Cannot load {path}:\n{error}")
             return
-        self.file_label.setText(path)
-        self.file_label.setStyleSheet("")
+        self._update_source_state()
         self._fill_row_list()
+
+    def _update_source_state(self):
+        loaded = self.manager.loaded
+        self.editor_group.setEnabled(loaded)
+        self.new_button.setEnabled(self.manager.vanilla is not None)
+        exe = os.path.basename(self.exe_binding.current_path) if self.manager.vanilla is not None else ""
+        if self.binding.is_loaded:
+            text = self.binding.current_path + (f" - compared with {exe}" if exe else " - no exe open: "
+                                                "compared with the file as opened")
+        elif loaded:
+            text = f"Vanilla rows of {exe}. Edit them and Save, or make a {FILE_NAME} from them."
+        else:
+            text = f"Open the FF8 exe (vanilla values) or import a {FILE_NAME} to see and edit the rows."
+        self.file_label.setText(text)
+        self.file_label.setStyleSheet("" if loaded else "color: #c06000")
 
     def save_file(self):
         if not self.binding.is_loaded:  # the shared Save calls every binding of the tool
@@ -314,12 +341,38 @@ class XuWidget(QWidget):
         except (OSError, ValueError) as error:
             QMessageBox.warning(self, "Xu", f"Cannot save:\n{error}")
 
-    def _create_from_vanilla(self):
+    def can_save_folder(self):
+        """Save has work with no camera file opened: the exe's rows, edited."""
+        return not self.binding.is_loaded and self.manager.loaded and bool(self.manager.changed_rows())
+
+    def save_files(self):
+        """The header Save: both files, asking where to write the camera rows the first time."""
+        if self.binding.is_loaded:
+            self.save_file()
+        elif self.can_save_folder():
+            self._save_camera_as()
+        self.save_text_file()
+
+    def _save_camera_as(self):
         default = os.path.join(self.file_registry.last_folder(FILE_NAME) or os.getcwd(), FILE_NAME)
-        path = QFileDialog.getSaveFileName(self, f"Create {FILE_NAME}", default, FILE_NAME)[0]
+        path = QFileDialog.getSaveFileName(self, f"Save {FILE_NAME} (FFNx direct/exe/)", default, FILE_NAME)[0]
         if not path:
             return
-        XuManager().save_file(path)
+        self.manager.save_file(path)
+        self.file_registry.remember_folder(FILE_NAME, os.path.dirname(path))
+        self.binding.open_path(path)
+
+    def _create_from_exe(self):
+        if self.manager.vanilla is None:
+            return
+        rows = self.manager.rows
+        self.manager.rows = [row.copy() for row in self.manager.vanilla]
+        default = os.path.join(self.file_registry.last_folder(FILE_NAME) or os.getcwd(), FILE_NAME)
+        path = QFileDialog.getSaveFileName(self, f"Create {FILE_NAME} (FFNx direct/exe/)", default, FILE_NAME)[0]
+        if not path:
+            self.manager.rows = rows
+            return
+        self.manager.save_file(path)
         self.file_registry.remember_folder(FILE_NAME, os.path.dirname(path))
         self.binding.open_path(path)
 
@@ -330,9 +383,8 @@ class XuWidget(QWidget):
         except (OSError, ValueError) as error:
             QMessageBox.warning(self, "Xu", f"Cannot load {path}:\n{error}")
             return
-        self.text_file_label.setText(f"{path} - {len(self.text_manager.texts)} texts (com_id 0-"
-                                     f"{len(self.text_manager.texts) - 1})")
         self.text_file_label.setStyleSheet("")
+        self.load_text_label_count()
         self._update_text_buttons()
         self._show_row_text(self.current_row())
 
@@ -496,7 +548,7 @@ class XuWidget(QWidget):
         self._on_row_selected(current)
 
     def _list_text(self, row):
-        return ("* " if not self.manager.is_vanilla(row) else "  ") + self.manager.row_label(row)
+        return ("* " if not self.manager.is_reference(row) else "  ") + self.manager.row_label(row)
 
     def _refresh_list_item(self, row):
         item = self.row_list.item(row)
@@ -508,7 +560,7 @@ class XuWidget(QWidget):
         for row in range(self.row_list.count()):
             item = self.row_list.item(row)
             hidden = bool(text) and text not in item.text().lower()
-            if self.changed_only.isChecked() and self.manager.is_vanilla(row):
+            if self.changed_only.isChecked() and self.manager.is_reference(row):
                 hidden = True
             item.setHidden(hidden)
 
@@ -519,24 +571,26 @@ class XuWidget(QWidget):
     def _on_row_selected(self, row):
         if not 0 <= row < ROW_COUNT:
             return
-        values = self.manager.rows[row]
         title = self.manager.row_label(row)
         if row in ALTERNATE_ROWS:
             title += f"  (model: c0m{ALTERNATE_ROWS[row][0]:03d})"
         self.row_title.setText(title)
-        for field, spin in self._spinboxes.items():
-            with QSignalBlocker(spin):
-                spin.setValue(getattr(values, field))
-        for field, check in self._checkboxes.items():
-            with QSignalBlocker(check):
-                check.setChecked(bool(getattr(values, field)))
         self._follow_model(row)
-        self.preview.set_row(values)
+        if self.manager.loaded:
+            values = self.manager.rows[row]
+            for field, spin in self._spinboxes.items():
+                with QSignalBlocker(spin):
+                    spin.setValue(getattr(values, field))
+            for field, check in self._checkboxes.items():
+                with QSignalBlocker(check):
+                    check.setChecked(bool(getattr(values, field)))
+            self.preview.set_row(values)
+        self.reset_button.setEnabled(self.manager.reference is not None)
         self._show_row_text(row)
 
     def _on_field_edited(self, field, value):
         row = self.current_row()
-        if not 0 <= row < ROW_COUNT:
+        if not 0 <= row < ROW_COUNT or not self.manager.loaded:
             return
         self.manager.set_field(row, field, value)
         self._refresh_list_item(row)
@@ -544,16 +598,17 @@ class XuWidget(QWidget):
 
     def _copy_row(self):
         row, source = self.current_row(), self.copy_source.currentData()
-        if source is None or not 0 <= row < ROW_COUNT:
+        if source is None or not 0 <= row < ROW_COUNT or not self.manager.loaded:
             return
         self.manager.copy_row(source, row)
         self._after_row_replaced(row)
 
     def _reset_row(self):
         row = self.current_row()
-        if not 0 <= row < ROW_COUNT:
+        reference = self.manager.reference_row(row) if 0 <= row < ROW_COUNT else None
+        if reference is None or not self.manager.loaded:
             return
-        self.manager.rows[row] = self.manager.vanilla_row(row)
+        self.manager.rows[row] = reference
         self._after_row_replaced(row)
 
     def _after_row_replaced(self, row):
@@ -569,31 +624,41 @@ class XuWidget(QWidget):
             self._follow_model(row)
             self._refresh_preview_text(row)
 
-    def _choose_model_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Folder holding the c0m###.dat monster files",
-                                                  self.file_registry.last_folder(MODEL_FOLDER_KEY) or os.getcwd())
-        if not folder:
-            return
-        self.file_registry.remember_folder(MODEL_FOLDER_KEY, folder)
-        self._follow_model(self.current_row())
+    def _open_models(self):
+        folder = self.file_registry.last_folder(MODEL_FOLDER_KEY) or os.getcwd()
+        paths = QFileDialog.getOpenFileNames(self, "Monster models to preview (Ctrl+A for all)", folder,
+                                             "Monster battle model (c0m*.dat)")[0]
+        if paths:
+            self.add_models(paths)
+
+    def add_models(self, paths):
+        """Make c0m###.dat files available to the preview (other names are ignored)."""
+        added = 0
+        for path in paths:
+            match = _C0M_FILE.match(os.path.basename(path))
+            if match:
+                self._model_paths[int(match.group(1))] = path
+                added += 1
+        if paths:
+            self.file_registry.remember_folder(MODEL_FOLDER_KEY, os.path.dirname(paths[0]))
+        self.model_button.setText(f"Monster models ({len(self._model_paths)})...")
+        if added:
+            self._follow_model(self.current_row())
 
     def _follow_model(self, row):
-        """Show the row's own monster: the row gives the com_id, so the c0m file to load."""
+        """Show the row's own monster: the row gives the com_id, so the c0m file."""
         if not self.isVisible():  # the editor builds every tool at start: load nothing yet
             self._pending_follow_row = row
             return
         c0m = c0m_for_row(row)
-        folder = self.file_registry.last_folder(MODEL_FOLDER_KEY)
         if c0m is None or c0m > LAST_C0M_FILE:
             self._set_model_status("No monster model for this row.")
             return
-        if not folder:
-            self._set_model_status("Choose the battle folder to see the monsters.")
-            return
-        path = os.path.join(folder, f"c0m{c0m:03d}.dat")
-        if not os.path.isfile(path):
+        path = self._model_paths.get(c0m)
+        if path is None:
             shown = f" (still showing {os.path.basename(self.preview.model_path)})" if self.preview.has_model else ""
-            self._set_model_status(f"c0m{c0m:03d}.dat is not in {folder}{shown}.", warning=True)
+            self._set_model_status(f"c0m{c0m:03d}.dat is not open: add it with Monster models...{shown}",
+                                   warning=bool(self._model_paths))
             return
         if os.path.normcase(path) != os.path.normcase(self.preview.model_path):
             self._load_model(path)
@@ -613,5 +678,6 @@ class XuWidget(QWidget):
         self._set_model_status(os.path.basename(path))
         row = self.current_row()
         if 0 <= row < ROW_COUNT:
-            self.preview.set_row(self.manager.rows[row])
+            if self.manager.loaded:
+                self.preview.set_row(self.manager.rows[row])
             self._refresh_preview_text(row)

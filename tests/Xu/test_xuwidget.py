@@ -1,8 +1,13 @@
 """Xu GUI: editing rows through the widget and saving them via the shared file binding."""
+import struct
 import sys
 
 import pytest
 from PyQt6.QtWidgets import QApplication
+
+from tests.Xu.test_xumanager import synthetic_bin
+
+EXE = "extracted_files/FF8_EN.exe"
 
 
 @pytest.fixture(scope="module")
@@ -12,13 +17,20 @@ def qapp():
 
 @pytest.fixture
 def widget(qapp, tmp_path):
-    from Xu.xumanager import XuManager
     from Xu.xuwidget import XuWidget
     path = tmp_path / "battle_scan_cameras.bin"
-    XuManager().save_file(str(path))
+    path.write_bytes(synthetic_bin())
     w = XuWidget()
     w.binding.open_path(str(path))
     return w, path
+
+
+def test_nothing_to_edit_without_a_source(qapp):
+    """No exe and no .bin: the rows have no values to show (nothing is stored in the tool)."""
+    from Xu.xuwidget import XuWidget
+    w = XuWidget()
+    assert not w.manager.loaded and not w.editor_group.isEnabled() and not w.new_button.isEnabled()
+    assert not w.can_save_folder()
 
 
 def test_edit_and_save(widget):
@@ -27,7 +39,7 @@ def test_edit_and_save(widget):
     w.row_list.setCurrentRow(168)
     w._spinboxes["distance"].setValue(-5000)
     w._checkboxes["can_yaw"].setChecked(False)
-    assert w.row_list.item(168).text().startswith("* ")
+    assert w.row_list.item(168).text().startswith("* ")  # differs from the file as opened
     w.binding.save()
 
     from Xu.xumanager import XuManager
@@ -42,9 +54,9 @@ def test_copy_reset_and_filter(widget):
     w.copy_source.setCurrentIndex(w.copy_source.findData(162))
     w._copy_row()
     assert w.manager.rows[170] == w.manager.rows[162]
-    assert w._spinboxes["distance"].value() == -18496
+    assert w._spinboxes["distance"].value() == -162
     w._reset_row()
-    assert w.manager.is_vanilla(170)
+    assert w.manager.is_reference(170) and w._spinboxes["distance"].value() == -170
 
     w.changed_only.setChecked(True)
     assert all(w.row_list.item(row).isHidden() for row in range(w.row_list.count()))
@@ -54,12 +66,18 @@ def test_copy_reset_and_filter(widget):
     assert 87 in visible and len(visible) < 10
 
 
+def test_models_follow_the_row(widget, tmp_path):
+    """Opened c0m files are matched to rows by their c0m number; other names are ignored."""
+    w, _path = widget
+    w.add_models([str(tmp_path / "c0m071.dat"), str(tmp_path / "notes.txt")])
+    assert w._model_paths == {71: str(tmp_path / "c0m071.dat")}
+
+
 def test_scan_text_tab(widget, tmp_path):
     from Xu.xutext import XuTextManager
     w, _path = widget
     game_data = w.game_data
     texts = [bytes(game_data.translate_str_to_hex(f"Text {i}")) + b"\x00" for i in range(166)]
-    import struct
     offsets, position = [], 4 * len(texts)
     for blob in texts:
         offsets.append(position)
@@ -83,14 +101,18 @@ def test_scan_text_tab(widget, tmp_path):
     assert saved.get_str(166) == "New monster" and saved.get_str(87) == "Text 87"
 
 
-def test_camera_edits_without_a_file_save_as(qapp, tmp_path, monkeypatch):
-    """No camera file opened: the rows stay editable and Save asks where to write them."""
+@pytest.mark.ff8data(EXE)
+def test_exe_rows_edited_then_saved_as(qapp, tmp_path, monkeypatch):
+    """Exe open, no camera file: its vanilla rows are editable and Save asks where to write them."""
     from PyQt6.QtWidgets import QFileDialog
     from Xu.xumanager import XuManager
     from Xu.xuwidget import XuWidget
     w = XuWidget()
-    assert w.editor_group.isEnabled() and not w.can_save_folder()
+    w.exe_binding.open_path(EXE)
+    assert w.manager.loaded and w.editor_group.isEnabled() and w.new_button.isEnabled()
+    assert not w.can_save_folder()
     w.row_list.setCurrentRow(168)
+    assert w._spinboxes["distance"].value() == -0x1200  # FFNx's G-Soldier copy
     w._spinboxes["distance"].setValue(-5000)
     assert w.can_save_folder()
     target = tmp_path / "battle_scan_cameras.bin"
@@ -98,11 +120,13 @@ def test_camera_edits_without_a_file_save_as(qapp, tmp_path, monkeypatch):
     w.save_files()
     saved = XuManager()
     saved.load_file(str(target))
-    assert saved.rows[168].distance == -5000
+    assert saved.rows[168].distance == -5000 and saved.rows[87].distance == -0x1200
     assert w.binding.is_loaded and not w.can_save_folder()  # now saved into the opened file
+    w._reset_row()
+    assert w._spinboxes["distance"].value() == -0x1200  # reset = the exe's value
 
 
-@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+@pytest.mark.ff8data(EXE)
 def test_default_msd_from_the_exe(qapp):
     """The default battle_scans.msd holds the exe's 160 texts, in com_id order."""
     from FF8GameData.gamedata import GameData
@@ -110,6 +134,6 @@ def test_default_msd_from_the_exe(qapp):
     from Xu.xuwidget import build_msd_from_exe
     game_data = GameData("FF8GameData")
     manager = XuTextManager(game_data)
-    manager.load_bytes(build_msd_from_exe(game_data, "extracted_files/FF8_EN.exe"))
+    manager.load_bytes(build_msd_from_exe(game_data, EXE))
     assert len(manager.texts) == 160
     assert manager.get_str(87).startswith("Galbadian soldier")  # G-Soldier

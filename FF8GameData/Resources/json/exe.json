@@ -46,6 +46,16 @@
     "es_offset":       "0xAE0"
 
   },
+  "scan_camera_offset":{
+    "eng_section_start":     "0x11D0B40",
+    "eng_short_scan_start":  "0x1194998",
+    "nb_row":            "0xA6",
+    "row_size":          "0x10",
+    "fr_offset":       "0xB0",
+    "it_offset":       "0x160",
+    "de_offset":       "0x200",
+    "es_offset":       "0x170"
+  },
   "draw_data_offset":{
     "og_eng_start":     "0x792328",
     "size":     "0x100"

@@ -18,11 +18,18 @@ from .common import write_csv, read_csv
 CSV_HEADER = ["row", "label"]
 
 
-def _manager(path=None):
+def _manager(path=None, exe=None):
+    """The rows of a .bin (path) and/or the vanilla rows of an FF8 exe (exe)."""
     from Xu.xumanager import XuManager
     manager = XuManager()
     if path:
         manager.load_file(path)
+    if exe:
+        from .common import load_game_data
+        game_data = load_game_data()
+        if not game_data.exe_data_json:
+            game_data.load_exe_data()
+        manager.load_exe(exe, game_data.exe_data_json)
     return manager
 
 
@@ -40,7 +47,7 @@ def _row_arg(args, prefix=""):
 
 def _format(manager, row):
     values = ", ".join(f"{name}={value}" for name, value in zip(_fields(), manager.rows[row].values()))
-    return f"{'*' if not manager.is_vanilla(row) else ' '} {manager.row_label(row)}: {values}"
+    return f"{'*' if not manager.is_reference(row) else ' '} {manager.row_label(row)}: {values}"
 
 
 def _fields():
@@ -49,16 +56,18 @@ def _fields():
 
 
 def _cmd_new(args) -> int:
-    _manager().save_file(args.output)
+    _manager(exe=args.exe).save_file(args.output)
     print(f"[ok] vanilla scan camera table written to {args.output}")
     return 0
 
 
 def _cmd_list(args) -> int:
     from Xu.xumanager import ROW_COUNT
-    manager = _manager(args.input)
+    manager = _manager(args.input, args.exe)
+    if args.changed and manager.vanilla is None:
+        raise ValueError("--changed compares with the vanilla rows: give the FF8 exe with --exe")
     for row in range(ROW_COUNT):
-        if not args.changed or not manager.is_vanilla(row):
+        if not args.changed or not manager.is_reference(row):
             print(_format(manager, row))
     return 0
 
@@ -135,13 +144,15 @@ class XuCliTool(BaseCliTool):
                                          description="Headless battle_scan_cameras.bin editor (same data as the Xu GUI)")
         sub = parser.add_subparsers(dest="command", required=True)
 
-        p_new = sub.add_parser("new", help="Write a battle_scan_cameras.bin with the vanilla rows")
+        p_new = sub.add_parser("new", help="Write a battle_scan_cameras.bin with the vanilla rows of an FF8 exe")
+        p_new.add_argument("--exe", "-e", required=True, help="FF8 exe (EN, FR, DE, IT or ES) to read the rows from")
         p_new.add_argument("--output", "-o", required=True, help="Output path")
         p_new.set_defaults(func=_cmd_new)
 
         p_list = sub.add_parser("list", help="Print the rows")
         p_list.add_argument("--input", "-i", required=True, help="Path to battle_scan_cameras.bin")
-        p_list.add_argument("--changed", action="store_true", help="Only rows that differ from vanilla")
+        p_list.add_argument("--exe", "-e", help="FF8 exe giving the vanilla rows (marks the changed rows with *)")
+        p_list.add_argument("--changed", action="store_true", help="Only rows that differ from vanilla (needs --exe)")
         p_list.set_defaults(func=_cmd_list)
 
         p_set = sub.add_parser("set", help="Change fields of one row")

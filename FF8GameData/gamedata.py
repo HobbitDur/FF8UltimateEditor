@@ -318,6 +318,8 @@ class GameData:
             self.exe_data_json["scan_data_offset"][key] = int(self.exe_data_json["scan_data_offset"][key], 16)
         for key in self.exe_data_json["draw_text_offset"]:
             self.exe_data_json["draw_text_offset"][key] = int(self.exe_data_json["draw_text_offset"][key], 16)
+        for key in self.exe_data_json["scan_camera_offset"]:
+            self.exe_data_json["scan_camera_offset"][key] = int(self.exe_data_json["scan_camera_offset"][key], 16)
         for key in self.exe_data_json["draw_data_offset"]:
             self.exe_data_json["draw_data_offset"][key] = int(self.exe_data_json["draw_data_offset"][key], 16)
 
