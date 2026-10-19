@@ -67,6 +67,24 @@ This fixes the former origin-camera problem: valid F3/F4 keyframes with zero off
 were stripped of their reference modes and placed the eye and target at the model centre.
 Squall's first six opening shots include these holds.
 
+## Fujin: effect cameras
+
+Fujin's **Camera effect editor** tab reuses the same player for the 221 spell/attack camera
+tracks stored in the exe. Import a caster and a target (`d?c###.dat` / `c0m###.dat`) with
+**Import models…** or the header's **Import read-only**; they are read-only and remembered
+for Auto-upload. The character becomes the caster and the monster the target by default; the
+target can be *none* (a marker).
+
+An effect track starts with a camera script that chooses the animation to play. Fujin runs it
+(`FF8GameData/dat/camerascript.py`, the shared VM's arithmetic and jumps plus the camera
+op codes) with the **Script inputs**: opening shot (camera variable 0: 0-5 for a character,
+8 for a monster's Magic, -1 for none), attacker and target slots (C3 18/19, also used to place
+the actors), target status (C3 16), target camera category (C3 15, from the target monster's
+byte 246), affected targets, action count and the random value (C3 11; C3 1C-22 use it modulo
+2-8). The line under the inputs names the chosen animation index (set = index >> 4,
+slot = index & 7) and the values the script read. **▶ Play effect camera** runs it again; a
+slot's **▶ Preview** plays that slot as is. Keyframe edits replay at once from the same tick.
+
 ## Scope
 
 This is a preview of the selected DAT camera animation with manual or encounter placement,

@@ -215,6 +215,19 @@ class CameraPreviewPanel(QWidget):
         if self._total > 0:  # auto-play multi-keyframe animations
             self._start_playback()
 
+    def refresh(self):
+        """The previewed animation's keyframes were edited in place: replay them from the same tick."""
+        if self._animation is None or self._gl is None:
+            return
+        if self._battle_setup is not None:
+            self._rebuild_battle()
+            return
+        self._values = _frame_values(self._animation)
+        self._total = _total_ticks(self._values)
+        self._slider.setRange(0, max(self._total, 0))
+        self._slider.setEnabled(self._total > 0)
+        self._apply(min(self._tick, self._total))
+
     def _build_battle_poses(self):
         self._poses = []
         if self._battle_setup is None or self._animation is None:

@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTabWidget
 from Common.autoimport import AutoImportSource
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
+from Fujin.cameraeffectpreview import MODEL_FOLDER_KEY, MODEL_PATTERNS, MODEL_SELECTION_KEY
 from Fujin.cameraeffectwidget import CameraEffectEditorWidget
 from Fujin.magicexplorerwidget import MagicExplorerWidget
 
@@ -47,6 +48,11 @@ class FujinWidget(QWidget):
                 ("Camera patch: .hext saved by the Camera effect editor", self.camera_editor.import_hext),
                 ("Magic files (from a de-archived magic.fs)", self.magic_explorer.import_files)]
 
+    def complementary_entries(self):
+        """The header Import read-only menu: the preview's caster/target, never edited here."""
+        return [("Camera preview caster/target: battle models c0m###.dat / d?c###.dat (several at once)",
+                 self.camera_editor.preview.import_models)]
+
     def save_folder(self):
         """Save writes the camera .hext (the exe itself is never written)."""
         self.camera_editor.save_hext()
@@ -56,7 +62,9 @@ class FujinWidget(QWidget):
 
     def auto_import_sources(self):
         exe_folder = self.file_registry.last_folder("FF8 exe")
-        return ([AutoImportSource.for_binding(self.camera_editor.exe_binding, exe_folder)]
+        return ([AutoImportSource.for_binding(self.camera_editor.exe_binding, exe_folder),
+                 AutoImportSource(MODEL_FOLDER_KEY, MODEL_PATTERNS, self.camera_editor.preview.add_models,
+                                  selection_only=True, selection_key=MODEL_SELECTION_KEY)]
                 + self.magic_explorer.auto_import_sources())
 
     def _sync_dirty_marker(self):

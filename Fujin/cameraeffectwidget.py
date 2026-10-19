@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWid
 
 from Common.filebinding import FileBinding
 from Fujin.cameraeffectmanager import CameraEffectManager
+from Fujin.cameraeffectpreview import CameraEffectPreview
 from SmallWidget.listsearchbar import ListSearchBar
 from Watts.cameracollectionwidget import CameraCollectionWidget
 
@@ -29,7 +30,10 @@ class CameraEffectEditorWidget(QWidget):
     Open the FF8 exe (shared "FF8 exe" file: opening it in Cid, Xu... opens it here too), pick an
     effect, edit its keyframes or its camera script, and Save writes a .hext of the changed bytes
     for that exe's language. A saved .hext can be imported back over the exe to go on editing.
-    Edits keep each track at its exe size: the exe has no free room after a track."""
+    Edits keep each track at its exe size: the exe has no free room after a track.
+    The preview on the right plays the effect's camera around an imported caster and target:
+    the camera script chooses the animation from the Script inputs, a slot's ▶ Preview plays
+    that slot as is, and keyframe edits replay at once."""
 
     modified_changed = pyqtSignal()
 
@@ -44,6 +48,7 @@ class CameraEffectEditorWidget(QWidget):
         # keystroke in the script editor before Apply.
         self.setProperty("read_only_preview", True)
         self._collection_widget = None
+        self.preview = CameraEffectPreview(self.manager, file_registry)
 
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
@@ -78,7 +83,9 @@ class CameraEffectEditorWidget(QWidget):
         splitter = QSplitter()
         splitter.addWidget(self.effect_search.column)
         splitter.addWidget(details)
+        splitter.addWidget(self.preview)
         splitter.setStretchFactor(1, 1)
+        splitter.setStretchFactor(2, 1)
 
         layout = QVBoxLayout()
         layout.addWidget(self.status_label)
@@ -259,6 +266,7 @@ class CameraEffectEditorWidget(QWidget):
             self.info_label.setText(text)
             self._set_collection_widget(None)
             self._set_script_texts("", "")
+            self.preview.set_track(None)
             return
         same = ", ".join(f"{other} {self.manager.effect_names.get(other, '')}" for other in track.same_as)
         same_text = (f"<br>Same bytes in the exe as: {same} (separate copies: editing this one only "
@@ -270,6 +278,7 @@ class CameraEffectEditorWidget(QWidget):
             f"Pushed by the effect's code at 0x{track.push_operand - 1:X}.{same_text}")
         self._set_collection_widget(track)
         self._set_script_texts(self.manager.script_code(track), self.manager.script_text(track))
+        self.preview.set_track(track)
 
     def _set_editors_enabled(self, enabled):
         self.reset_button.setEnabled(enabled)
@@ -282,8 +291,9 @@ class CameraEffectEditorWidget(QWidget):
             placeholder = QLabel("")
             self.keyframe_scroll.setWidget(placeholder)
             return
-        widget = CameraCollectionWidget(track.collection, show_preview_buttons=False)
+        widget = CameraCollectionWidget(track.collection)
         widget.data_changed.connect(self._on_keyframes_changed)
+        widget.preview_requested.connect(self.preview.preview_animation)
         self._collection_widget = widget
         self.keyframe_scroll.setWidget(widget)
 
@@ -321,6 +331,7 @@ class CameraEffectEditorWidget(QWidget):
     # ------------------------------------------------------------------ edits
     def _on_keyframes_changed(self):
         self._track_edited(self._selected_effect())
+        self.preview.refresh()
 
     def _apply_script(self):
         effect_id = self._selected_effect()
@@ -334,6 +345,7 @@ class CameraEffectEditorWidget(QWidget):
             return
         self._set_script_texts(self.manager.script_code(track), self.manager.script_text(track))
         self._track_edited(effect_id)
+        self.preview.set_track(track)  # the script may now choose another animation
 
     def _reset_selected(self):
         effect_id = self._selected_effect()
