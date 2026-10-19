@@ -86,7 +86,7 @@ only individual draw data and positions, not group ranges or phase rules.
 
 ## Story dependence is real; disc labels are only a guide
 
-The **Phase info...** button in **Groups and phases** explains the story
+The **Phase info** icon in the top row, after the phase selector, explains the story
 transitions and lists the exact original JSM assignment sites. It is available
 without loading game files. These explanations describe the original English
 scripts; a mod that changes field scripts can change the transitions.

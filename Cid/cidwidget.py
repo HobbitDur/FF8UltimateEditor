@@ -14,6 +14,7 @@ from Cid.worlddrawsection import WorldDrawSection
 from Cid.worlddrawgeometry import WorldDrawGeometry
 from Cid.worlddrawphases import WorldDrawPhases
 from Cid.drawgroupswidget import DrawGroupsWidget
+from Cid.phasestory import PhaseStoryDialog
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
@@ -105,7 +106,6 @@ class CidWidget(QWidget):
         self._layout_top.addWidget(self._fullscreen_button)
         self._layout_top.addWidget(self._version_label)
         self._layout_top.addWidget(self._version_widget)
-        self._layout_top.addStretch(1)
 
         self._phase_widget = QComboBox()
         self._phase_widget.addItem('All world phases', None)
@@ -113,6 +113,14 @@ class CidWidget(QWidget):
             self._phase_widget.addItem(f'World phase {phase}', phase)
         self._phase_widget.setToolTip('Story phases used by the OG game; these are not disc numbers.')
         self._layout_top.addWidget(self._phase_widget)
+        self._phase_info_label = QLabel('Phase info')
+        self._phase_info_button = self._make_button(
+            icon_path, 'info.png', 'When each world phase changes, with verified field-script references',
+            self._show_phase_info)
+        self._phase_info_button.setAccessibleName('Phase info')
+        self._layout_top.addWidget(self._phase_info_label)
+        self._layout_top.addWidget(self._phase_info_button)
+        self._layout_top.addStretch(1)
 
         self._save_status = QLabel()
         self._save_status.setWordWrap(True)
@@ -202,6 +210,9 @@ class CidWidget(QWidget):
         self._exe_dirty = True
         self._groups_widget.refresh_members()
         self._update_save_status()
+
+    def _show_phase_info(self):
+        PhaseStoryDialog(self).exec()
 
     def _on_world_edited(self):
         self._wmset_dirty = True

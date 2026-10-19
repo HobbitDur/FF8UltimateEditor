@@ -9,7 +9,6 @@ from PyQt6.QtTest import QSignalSpy
 from Cid.cidwidget import CidWidget
 from Cid.worlddrawphases import WorldDrawPhases
 from Cid.worlddrawsection import WorldDrawSection
-from Cid.drawgroupswidget import DrawGroupsWidget
 from Cid.phasestory import PhaseStoryDialog, STORY_PHASES
 from Common.filetoolbarwidget import FileToolbarWidget
 
@@ -228,12 +227,13 @@ def test_shared_save_button_writes_both_outputs_without_extra_cid_save_buttons(e
     stack.close()
 
 
-def test_phase_info_button_explains_story_and_script_sources_without_editing(app, monkeypatch):
-    widget = DrawGroupsWidget()
+def test_phase_info_button_explains_story_and_script_sources_without_editing(editor, monkeypatch):
+    widget, _source, _exe = editor
     opened = []
     monkeypatch.setattr(PhaseStoryDialog, 'exec', lambda dialog: opened.append(dialog.browser.toPlainText()))
-    exe_changes, world_changes = QSignalSpy(widget.exe_changed), QSignalSpy(widget.world_changed)
-    widget.phase_info_button.click()
+    groups = widget._groups_widget
+    exe_changes, world_changes = QSignalSpy(groups.exe_changed), QSignalSpy(groups.world_changed)
+    widget._phase_info_button.click()
     assert len(opened) == 1
     text = opened[0]
     assert 'not disc numbers' in text
