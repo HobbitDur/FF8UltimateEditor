@@ -27,6 +27,7 @@ from Cli.junkshop import JunkshopCliTool
 from Cli.quezacotl import QuezacotlCliTool
 from Cli.hyne import HyneCliTool
 from Cli.minimog import MinimogCliTool
+from Cli.xu import XuCliTool
 from Cli.shiva import ShivaCliTool
 from Cli.ccgroup import CCGroupCliTool
 from Cli.cid import CidCliTool
@@ -56,6 +57,7 @@ def _register_all_tools():
     registry.register(QuezacotlCliTool)
     registry.register(HyneCliTool)
     registry.register(MinimogCliTool)
+    registry.register(XuCliTool)
     registry.register(ShivaCliTool)
     registry.register(CCGroupCliTool)
     registry.register(CidCliTool)

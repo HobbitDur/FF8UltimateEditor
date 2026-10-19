@@ -165,6 +165,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # black is keyed to transparent. Tools that provide real alpha
         # (e.g. Seed's TIM decoding) set this to False to keep opaque black.
         self.black_is_transparent = True
+        self.clear_color = (0.12, 0.12, 0.18, 1.0)  # background; Xu uses the Scan screen blue
+        # Around the game's 4:3 frame of an explicit-lens camera; None = same as clear_color
+        self.letterbox_color = None
+        self._game_viewport = None
 
     @staticmethod
     def _rank_texture_map(tex_ids_used: list, n: int, base_index: int = 0) -> dict:
@@ -446,6 +450,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
             vw = min(w, int(h * 4 / 3))
             vh = min(h, int(w * 3 / 4))
             glViewport((w - vw) // 2, (h - vh) // 2, max(1, vw), max(1, vh))
+            self._game_viewport = ((w - vw) // 2, (h - vh) // 2, max(1, vw), max(1, vh))
             distance = np.linalg.norm(self._explicit_eye - self._explicit_target)
             # Orbit zoom is unrelated to an explicit camera; using it for near clipping
             # could remove a close-up even when the shot's coordinates were correct.
@@ -457,6 +462,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
             glMatrixMode(GL_MODELVIEW)
             return
         glViewport(0, 0, w, h)
+        self._game_viewport = None
         far_extent = max(getattr(self, 'MODEL_SIZE', 0.0), self.zoom, 1.0)
         near = max(self.zoom * 0.05, 0.05)
         far = far_extent * 3.0 + 100.0
@@ -642,7 +648,17 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         self._apply_projection(self.width(), self.height())
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        if self.letterbox_color is not None and self._game_viewport is not None:
+            glClearColor(*self.letterbox_color)
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glEnable(GL_SCISSOR_TEST)
+            glScissor(*self._game_viewport)
+            glClearColor(*self.clear_color)
+            glClear(GL_COLOR_BUFFER_BIT)
+            glDisable(GL_SCISSOR_TEST)
+        else:
+            glClearColor(*self.clear_color)
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
 
         placement, yaw = getattr(self, '_preview_model_transform', ((0., 0., 0.), 0.))
