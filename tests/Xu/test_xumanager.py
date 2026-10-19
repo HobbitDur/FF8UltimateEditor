@@ -147,3 +147,25 @@ def test_cli_new_set_copy_csv(tmp_path):
     assert run("export-csv", "-i", path, "-o", csv_path) == 0
     assert run("import-csv", "-i", path, "-c", csv_path, "-o", out) == 0
     assert out.read_bytes() == path.read_bytes()
+
+
+def test_viewer_pose_turns_around_the_pivot():
+    """Scan screen pose (MAG_040_SCAN_Viewer_Update): R = RotY(turn) * RotX(tilt) * zoom, and
+    the point model_offset_y above the origin stays put whatever the turn, tilt and zoom."""
+    import sys
+    import numpy as np
+    from PyQt6.QtWidgets import QApplication
+    QApplication.instance() or QApplication(sys.argv)
+    from Xu.xupreview import XuPreviewPanel
+    panel = XuPreviewPanel()
+    panel._row = ScanCameraRow(*G_SOLDIER)
+    panel._spin, panel._tilt, panel._zoom = 700, 300, 6000
+    linear, position = panel.viewer_transform()
+    pivot = np.array((0., -G_SOLDIER[3], 0.))  # model_offset_y up (negative = up)
+    assert np.allclose(linear @ pivot + position, pivot)
+    assert np.isclose(abs(np.linalg.det(linear)), (6000 / 4096) ** 3)
+    panel._idle_ticks = 75
+    panel.turn_check.setChecked(True)
+    for _ in range(75):
+        panel._advance()
+    assert (panel._spin, panel._tilt, panel._zoom) == (0, 0, 4096)  # the game's 5 s reset

@@ -39,6 +39,13 @@ CENTRE_SELECTOR = 5            # skeleton header byte read for bone selector 0xF
 
 MODE_SCAN_SCREEN, MODE_ZOOM_IN, MODE_SHORT_SCAN = range(3)
 
+# The Scan screen's player controls (MAG_040_SCAN_ReadViewInput / Viewer_Update / Viewer_Reset)
+VIEWER_SCALE_DEFAULT = 4096
+VIEWER_SCALE_MIN, VIEWER_SCALE_MAX = 2048, 8192   # zoom 0.5x - 2x
+VIEWER_ZOOM_STEP = 256                            # per wheel notch (the pad: 128 per tick)
+VIEWER_ROTATION_PER_PIXEL = 8                     # mouse drag (the pad: 128 per tick)
+VIEWER_IDLE_RESET_TICKS = 75                      # untouched for 5 s: back to the start pose
+
 
 def _rotation(yaw):
     c, s = math.cos(yaw), math.sin(yaw)
@@ -107,7 +114,12 @@ class XuPreviewPanel(QWidget):
         self._view = None
         self._gl = None
         self._row = ScanCameraRow()
-        self._spin = 0
+        self._spin = 0              # the model's rotation_y in the Scan screen (4096 = one turn)
+        self._tilt = 0              # its tilt (rotation about its own horizontal axis)
+        self._zoom = VIEWER_SCALE_DEFAULT
+        self._pan = [0., 0.]        # engine units, in the screen plane
+        self._idle_ticks = 0        # ticks left before the game resets the pose (0 = not touched)
+        self._drag = None           # (button, last position) during a mouse drag
         self._tick = 0
         self._short_tick = 0
         self.model_path = ""
@@ -131,8 +143,9 @@ class XuPreviewPanel(QWidget):
         self.mode_combo.currentIndexChanged.connect(lambda _i: self._restart())
         self.turn_check = QCheckBox("Move like the game")
         self.turn_check.setChecked(True)
-        self.turn_check.setToolTip("Scan screen: the model turns (Turns). Short scan: the camera circles "
-                                   "(Circles in short scan) and lowers for tall targets.")
+        self.turn_check.setToolTip("Scan screen: the model turns (Turns), and 5 s after you last moved it with\n"
+                                   "the mouse it goes back to its start pose, like the game.\n"
+                                   "Short scan: the camera circles (Circles in short scan) and lowers for tall targets.")
         self.turn_check.stateChanged.connect(lambda _s: self._update_timer())
         self.animate_check = QCheckBox("Animate")
         self.animate_check.setChecked(True)
@@ -200,6 +213,7 @@ class XuPreviewPanel(QWidget):
         self._gl.show_axis = False
         self._gl.clear_color = SCAN_BLUE
         self._gl.letterbox_color = (0., 0., 0., 1.)  # outside the game's 4:3 screen
+        self._gl.installEventFilter(self)  # the mouse plays the Scan screen's pad controls
         self._layout.insertWidget(1, self._view, 1)
         self._view.load_file()
         if getattr(self._view, "timer", None) is not None:
@@ -293,22 +307,31 @@ class XuPreviewPanel(QWidget):
 
     # ------------------------------------------------------------- motion
     def _turning(self):
+        """The Scan screen turns the model by itself only while the player leaves it alone."""
         return (self.mode_combo.currentIndex() == MODE_SCAN_SCREEN and self._row.can_yaw == 1
-                and self.turn_check.isChecked())
+                and self.turn_check.isChecked() and self._idle_ticks == 0)
 
     def _short_scan_moving(self):
         return self.mode_combo.currentIndex() == MODE_SHORT_SCAN and self.turn_check.isChecked() and (
             self._row.short_scan_orbit == 1 or self._row.offset_y < TALL_TARGET_OFFSET_Y)
 
-    def _restart(self):
+    def _reset_viewer(self):
+        """MAG_040_SCAN_Viewer_Reset: back to the starting pose."""
         self._spin = 0
+        self._tilt = 0
+        self._zoom = VIEWER_SCALE_DEFAULT
+        self._pan = [0., 0.]
+        self._idle_ticks = 0
+
+    def _restart(self):
+        self._reset_viewer()
         self._short_tick = 0
         self._apply()
         self._update_timer()
         self._refresh_hud()
 
     def _update_timer(self):
-        if self._manager is not None and (self._turning() or self._short_scan_moving()
+        if self._manager is not None and (self._turning() or self._short_scan_moving() or self._idle_ticks
                                           or self.animate_check.isChecked()):
             self._timer.start()
         else:
@@ -317,11 +340,79 @@ class XuPreviewPanel(QWidget):
 
     def _advance(self):
         self._tick += 1
-        if self._turning():
+        if self._idle_ticks:
+            # 75 ticks after the last input, the game puts the model back and turns it again
+            self._idle_ticks -= 1
+            if self._idle_ticks == 0 and self.turn_check.isChecked():
+                self._reset_viewer()
+        elif self._turning():
             self._spin = (self._spin + SCAN_SPIN_PER_TICK) % 4096
         if self._short_scan_moving():
             self._short_tick += 1
         self._apply()
+
+    # ------------------------------------------------------------- mouse = the pad
+    def eventFilter(self, watched, event):
+        """In the Scan screen the mouse does what the pad does: drag left/right turns the model,
+        up/down tilts it (each only when the row allows it), right drag moves it, the wheel zooms
+        (0.5x-2x) and a double click resets it."""
+        from PyQt6.QtCore import QEvent
+        if watched is not self._gl or self.mode_combo.currentIndex() != MODE_SCAN_SCREEN or self._manager is None:
+            return super().eventFilter(watched, event)
+        kind = event.type()
+        if kind == QEvent.Type.MouseButtonDblClick:
+            self._reset_viewer()
+        elif kind == QEvent.Type.MouseButtonPress:
+            self._drag = (event.button(), event.position())
+            self._touch()
+        elif kind == QEvent.Type.MouseMove and self._drag is not None:
+            button, last = self._drag
+            dx, dy = event.position().x() - last.x(), event.position().y() - last.y()
+            self._drag = (button, event.position())
+            if button == Qt.MouseButton.LeftButton:
+                if self._row.can_yaw == 1:
+                    self._spin = int(self._spin - dx * VIEWER_ROTATION_PER_PIXEL) % 4096
+                if self._row.can_pitch == 1:
+                    self._tilt = int(self._tilt + dy * VIEWER_ROTATION_PER_PIXEL) % 4096
+            else:
+                per_pixel = self._world_per_pixel()
+                self._pan[0] += dx * per_pixel
+                self._pan[1] += dy * per_pixel
+            self._touch()
+        elif kind == QEvent.Type.MouseButtonRelease:
+            self._drag = None
+        elif kind == QEvent.Type.Wheel:
+            steps = event.angleDelta().y() / 120
+            self._zoom = int(min(VIEWER_SCALE_MAX, max(VIEWER_SCALE_MIN, self._zoom + steps * VIEWER_ZOOM_STEP)))
+            self._touch()
+        else:
+            return super().eventFilter(watched, event)
+        self._apply()
+        return True
+
+    def _touch(self):
+        self._idle_ticks = VIEWER_IDLE_RESET_TICKS
+        self._update_timer()
+
+    def _world_per_pixel(self) -> float:
+        """Battle units per widget pixel at the aim point: the game screen is 320 px wide under a
+        lens of 576, letterboxed into the widget."""
+        width = min(self._gl.width(), int(self._gl.height() * 4 / 3)) or 1
+        return abs(self._row.distance) / SCAN_PROJECTION * 320 / width
+
+    def viewer_transform(self):
+        """(3x3 rotation*scale, position) of the model in battle units, as
+        MAG_040_SCAN_Viewer_Update builds it: R = RotY(turn) * RotX(tilt), scaled by the zoom,
+        turning around a pivot model_offset_y above its origin, moved in the screen plane."""
+        yaw = MONSTER_YAW + self._spin * 2 * math.pi / 4096
+        if self.mode_combo.currentIndex() != MODE_SCAN_SCREEN:
+            return _rotation(yaw), np.zeros(3)
+        tilt = self._tilt * 2 * math.pi / 4096
+        c, s = math.cos(tilt), math.sin(tilt)
+        linear = _rotation(yaw) @ np.array(((1., 0., 0.), (0., c, -s), (0., s, c))) * (self._zoom / 4096)
+        pivot = np.array((0., self._row.model_offset_y, 0.))
+        position = linear @ pivot - pivot + _rotation(MONSTER_YAW) @ np.array((self._pan[0], self._pan[1], 0.))
+        return linear, position
 
     def _frame(self):
         if not self.animate_check.isChecked():
@@ -358,12 +449,21 @@ class XuPreviewPanel(QWidget):
         eye, target = scan_camera(self._row, centre_point(self._manager), zoom_in=mode != MODE_SCAN_SCREEN,
                                   orbit=orbit, height=height)
         self._gl.set_model_translation(*model_root(self._manager, 0, frame))
+        linear, position = self.viewer_transform()
+        flip = np.diag((-1., -1., 1.))  # battle axes -> viewer axes (the same flip as to_viewer)
         yaw = MONSTER_YAW + self._spin * 2 * math.pi / 4096
-        self._gl.set_preview_model_transform(to_viewer((0., 0., 0.)), -yaw)
+        self._gl.set_preview_model_transform(to_viewer(position), -yaw, linear=flip @ linear @ flip)
         self._gl.set_camera(to_viewer(eye), to_viewer(target), (0., 1., 0.),
                             projection=SCAN_PROJECTION, translate_model=True)
         self._place_hud()
         distance = abs(self._row.distance if mode == MODE_SCAN_SCREEN else zoom_in_distance(self._row))
+        controls = ""
+        if mode == MODE_SCAN_SCREEN:
+            allowed = [name for name, flag in (("drag left/right: turn", self._row.can_yaw),
+                                               ("drag up/down: tilt", self._row.can_pitch)) if flag == 1]
+            controls = ("\nMouse = the pad: " + ", ".join(allowed + ["right drag: move", "wheel: zoom",
+                                                                  "double click: reset"])
+                        + f"   (zoom {self._zoom / 4096:.2f}x)")
         self.readout.setText(
             f"Eye ({eye[0]:.0f}, {eye[1]:.0f}, {eye[2]:.0f})   aim ({target[0]:.0f}, {target[1]:.0f}, "
-            f"{target[2]:.0f})   distance {distance}   lens {SCAN_PROJECTION}")
+            f"{target[2]:.0f})   distance {distance}   lens {SCAN_PROJECTION}{controls}")

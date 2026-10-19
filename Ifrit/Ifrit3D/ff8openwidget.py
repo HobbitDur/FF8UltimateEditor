@@ -557,10 +557,23 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self._preview_actor = mesh
         self.update()
 
-    def set_preview_model_transform(self, position, yaw):
-        """World placement for a loaded actor; yaw in viewer-space radians."""
+    def set_preview_model_transform(self, position, yaw, linear=None):
+        """World placement for a loaded actor; yaw in viewer-space radians. `linear` (a 3x3
+        viewer-space matrix: rotation and scale, e.g. Xu's turn x tilt x zoom) replaces the yaw."""
         self._preview_model_transform = (tuple(position), math.degrees(yaw))
+        self._preview_model_linear = None
+        if linear is not None:
+            matrix = np.identity(4)
+            matrix[:3, :3] = np.asarray(linear, float)
+            self._preview_model_linear = matrix.T.astype(np.float32).flatten()  # GL is column-major
         self.update()
+
+    def _apply_preview_model_orientation(self, yaw):
+        linear = getattr(self, '_preview_model_linear', None)
+        if linear is not None:
+            glMultMatrixf(linear)
+        else:
+            glRotatef(yaw, 0., 1., 0.)
 
     def _draw_preview_actor(self):
         if getattr(self, '_preview_textures_dirty', False):
@@ -674,7 +687,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
             glMultMatrixf(self._explicit_view)
             if getattr(self, '_explicit_model_translation', False):
                 glTranslatef(*placement)
-                glRotatef(yaw, 0., 1., 0.)
+                self._apply_preview_model_orientation(yaw)
                 glTranslatef(*self.model_translation)
         else:
             # Pull camera back
@@ -689,7 +702,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
             # Apply frame position translation
             glTranslatef(*placement)
-            glRotatef(yaw, 0., 1., 0.)
+            self._apply_preview_model_orientation(yaw)
             glTranslatef(self.model_translation[0], self.model_translation[1], self.model_translation[2])
 
         # Camera position in model space, for exact per-face backface culling
