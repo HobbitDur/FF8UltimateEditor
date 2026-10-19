@@ -381,7 +381,7 @@ class WattsWidget(QWidget):
         composite = CompositeVictoryModel(entries)
         # The composite is a fixed victory scene (always anim 0), so hide the panel's
         # model-animation picker - it would only ever say "anim 0".
-        self._preview_panel = CameraPreviewPanel(composite, show_model_animation=False)
+        self._preview_panel = CameraPreviewPanel(composite, show_model_animation=False, battle_context=False)
         self._preview_container.addWidget(self._preview_panel, 1)
 
     def _update_set_gating(self):

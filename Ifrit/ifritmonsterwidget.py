@@ -259,7 +259,8 @@ class IfritFilePane(QWidget):
         # (so it is excluded from the generic widget scan in _connect_dirty_signals). The pane just
         # dirties + records an undo step; nothing is deferred to Save for it.
         self._seq_widget.data_edited.connect(self._on_edit)
-        self._camera_widget = IfritCameraSeqWidget(ifrit_manager, icon_path=icon_path)
+        self._camera_widget = IfritCameraSeqWidget(ifrit_manager, icon_path=icon_path,
+                                                  file_registry=file_registry)
         # Camera also writes the model live and self-reports (same as seq).
         self._camera_widget.data_edited.connect(self._on_edit)
         self._3d_widget = Ifrit3DWidget(ifrit_manager, show_controls=True)

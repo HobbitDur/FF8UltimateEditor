@@ -49,16 +49,16 @@ _FRAME_TOOLTIP = {
     "pos_x": "Camera position X (side to side), world units, signed (−32768…32767).",
     "pos_y": "Camera position Y (up/down), world units, signed.",
     "pos_z": "Camera position Z (depth / forward-back), world units, signed.",
-    "pos_interp": "Position easing mode (raw byte, e.g. 0x90 shown as 144): how the move to "
-                  "the next keyframe is interpolated. Curve meaning not fully decoded yet.",
+    "pos_interp": "Position reference mode (0x90 caster, 0xA0 target, 0xF3 previous eye): "
+                  "the coordinate frame in which this position is expressed.",
     "look_x": "Look-at target X — the point the camera faces, world units, signed.",
     "look_y": "Look-at target Y — the point the camera faces, world units, signed.",
     "look_z": "Look-at target Z — the point the camera faces, world units, signed.",
-    "look_interp": "Look-at easing mode (raw byte). Curve meaning not fully decoded yet.",
+    "look_interp": "Look-at reference mode: 0x90 caster, 0xA0 target, 0xF4 previous look-at, 0xF5 midpoint.",
 }
 _BLOCK_FIELD_TOOLTIP = {
-    "FOV start": "Field of view at the start of this block. Lower = zoomed in (telephoto), "
-                 "higher = wider. Default is 0x200 (512).",
+    "FOV start": "Field of view at the start of this block. Higher = zoomed in (telephoto), "
+                 "lower = wider. Default is 0x200 (512).",
     "FOV end": "Field of view at the end of this block (the FOV animates from start to end).",
     "Roll start": "Camera roll — tilt around the view direction — at the start of this block. "
                   "0 = level.",
@@ -182,7 +182,7 @@ class IfritCameraSeqWidget(QWidget):
     # the model live, like Stat/3D/Seq - nothing deferred to Save).
     data_edited = pyqtSignal()
 
-    def __init__(self, ifrit_manager: IfritManager, icon_path="Resources"):
+    def __init__(self, ifrit_manager: IfritManager, icon_path="Resources", file_registry=None):
         QWidget.__init__(self)
         self.ifrit_manager = ifrit_manager
         self.icon_path = icon_path
@@ -235,7 +235,7 @@ class IfritCameraSeqWidget(QWidget):
         self.scroll_area.setWidget(self.content_widget)
 
         # One shared preview panel for every animation (not a popup per slot).
-        self._preview_panel = CameraPreviewPanel(self.ifrit_manager)
+        self._preview_panel = CameraPreviewPanel(self.ifrit_manager, file_registry=file_registry)
 
         self._splitter = QSplitter(Qt.Orientation.Horizontal)
         self._splitter.addWidget(self.scroll_area)
@@ -418,10 +418,8 @@ class IfritCameraSeqWidget(QWidget):
 
     def __open_preview(self, animation):
         # One shared panel on the right plays whichever animation's Preview was clicked.
-        # Bake it into per-frame poses first so playback matches the engine exactly (block
-        # chaining, hold, cubic spline, sine easing) instead of a plain linear interpolation.
-        from FF8GameData.dat.camerabake import BakedAnimation
-        self._preview_panel.preview(BakedAnimation(animation))
+        # Keep modes and lens values: the shared panel resolves them in its battle context.
+        self._preview_panel.preview(animation)
 
     def __build_block(self, block) -> QWidget:
         holder = QWidget()

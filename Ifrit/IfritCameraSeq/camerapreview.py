@@ -8,10 +8,12 @@ actual monster model (reusing Ifrit3D) and, at 15 fps, drives:
   - optionally the monster's own animation, so you see a moving model filmed by the moving
     camera.
 
-Camera coordinates map into the viewer's space the same way the model does: the vertex axis
-convention (x, y, z) -> (-x, z, -y) at the world-position scale (1/204.8), anchored on the
-model's centre so the camera looks at the monster.
+Raw DAT previews use BattlePreviewSetup: caster/target skeleton references, previous view,
+projection and roll are evaluated before conversion to viewer space. Watts supplies already
+baked composite coordinates and keeps its existing placement through battle_context=False.
 """
+import math
+
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
                              QSlider, QSpinBox, QCheckBox, QSizePolicy)
@@ -75,7 +77,8 @@ class CameraPreviewPanel(QWidget):
 
     _FPS = 15
 
-    def __init__(self, ifrit_manager, parent=None, show_model_animation=True):
+    def __init__(self, ifrit_manager, parent=None, show_model_animation=True, battle_context=True,
+                 file_registry=None):
         super().__init__(parent)
         self.ifrit_manager = ifrit_manager
         self.setMinimumWidth(320)
@@ -88,6 +91,13 @@ class CameraPreviewPanel(QWidget):
         self._total = 0
         self._tick = 0
         self._center = (0.0, 0.0, 0.0)
+        self._poses = []
+        self._empty_camera = False
+        self._battle_setup = None
+        if battle_context:
+            from Ifrit.IfritCameraSeq.battlepreview import BattlePreviewSetup
+            self._battle_setup = BattlePreviewSetup(ifrit_manager, file_registry=file_registry)
+            self._battle_setup.changed.connect(self._rebuild_battle)
 
         self._placeholder = QLabel("Click a slot's ▶ Preview to play its camera here.")
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -104,12 +114,12 @@ class CameraPreviewPanel(QWidget):
         self._animate_model = QCheckBox("Animate model")
         self._animate_model.setChecked(True)
         self._animate_model.setToolTip("Also play the monster's own animation while previewing")
-        self._animate_model.stateChanged.connect(lambda _s: self._apply(self._tick))
+        self._animate_model.stateChanged.connect(lambda _s: self._rebuild_battle())
         self._model_anim_spin = _NoWheelSpinBox()
         self._model_anim_spin.setToolTip("Which of the monster's animations to play in the "
                                          "preview while the camera moves")
         self._model_anim_spin.setMaximumWidth(60)
-        self._model_anim_spin.valueChanged.connect(lambda _v: self._apply(self._tick))
+        self._model_anim_spin.valueChanged.connect(lambda _v: self._rebuild_battle())
 
         self._readout = QLabel()
         self._readout.setStyleSheet("color: gray")
@@ -137,6 +147,8 @@ class CameraPreviewPanel(QWidget):
         self._layout.addWidget(QLabel("Camera preview"))
         self._layout.addWidget(self._placeholder, 1)
         self._layout.addLayout(controls)
+        if self._battle_setup is not None:
+            self._layout.addWidget(self._battle_setup)
         self._layout.addWidget(self._model_row)
         self._layout.addWidget(self._readout)
         self._set_controls_enabled(False)
@@ -158,6 +170,9 @@ class CameraPreviewPanel(QWidget):
         self._play_button.setText("▶ Play")
         self._needs_reload = True
         self._animation = None
+        self._poses = []
+        if self._battle_setup is not None:
+            self._battle_setup.encounters.refresh_model()
         self._set_controls_enabled(False)
         if self._view is not None:
             self._view.hide()
@@ -174,9 +189,13 @@ class CameraPreviewPanel(QWidget):
                 self._view.hide()
             self._set_controls_enabled(False)
             return
+        if self._battle_setup is not None:
+            self._animation = None
+            self._battle_setup.encounters.refresh_model()
         self._animation = animation
         self._values = _frame_values(animation)
         self._total = _total_ticks(self._values)
+        self._build_battle_poses()
         self._placeholder.hide()
         self._view.show()
         self._slider.blockSignals(True)
@@ -189,6 +208,26 @@ class CameraPreviewPanel(QWidget):
         if self._total > 0:  # auto-play multi-keyframe animations
             self._timer.start()
             self._play_button.setText("⏸ Pause")
+
+    def _build_battle_poses(self):
+        self._poses = []
+        if self._battle_setup is None or self._animation is None:
+            return
+        from FF8GameData.dat.battlecamera import play_camera_animation
+        context = self._battle_setup.build(self._model_anim_spin.value(), self._animate_model.isChecked())
+        self._poses = play_camera_animation(self._animation, context)
+        self._empty_camera = not self._poses
+        if self._empty_camera:
+            self._poses = [context.initial]
+        self._total = max(0, len(self._poses) - 1)
+
+    def _rebuild_battle(self):
+        if self._animation is None or self._gl is None:
+            return
+        self._build_battle_poses()
+        self._slider.setRange(0, self._total)
+        self._slider.setEnabled(self._total > 0)
+        self._apply(min(self._tick, self._total))
 
     # ── Model / camera ────────────────────────────────────────────────
     def _ensure_model(self):
@@ -238,9 +277,9 @@ class CameraPreviewPanel(QWidget):
         if self._animation is None or self._gl is None:
             return
         # Model animation: step the monster's own animation in step with the camera.
-        if self._animate_model.isChecked() and self.__nb_model_animations() > 0:
+        if self.__nb_model_animations() > 0:
             anim_id = self._model_anim_spin.value()
-            frame = tick % self.__model_frame_count(anim_id)
+            frame = tick % self.__model_frame_count(anim_id) if self._animate_model.isChecked() else 0
             try:
                 if self._view.current_anim_id != anim_id:
                     self._view.set_animation(anim_id)
@@ -248,12 +287,37 @@ class CameraPreviewPanel(QWidget):
                 self._view._update_model_translation()
             except Exception:
                 pass
+        if self._poses:
+            self._apply_battle(tick)
+            return
         sample = _sample(_frame_values(self._animation), tick)
         if sample is not None:
             (cx, cy, cz), (tx, ty, tz) = sample
             self._readout.setText(
                 f"camera ({cx:.0f}, {cy:.0f}, {cz:.0f})   look-at ({tx:.0f}, {ty:.0f}, {tz:.0f})")
             self._gl.set_camera(self._to_viewer(sample[0]), self._to_viewer(sample[1]))
+
+    def _apply_battle(self, tick):
+        from Ifrit.IfritCameraSeq.battlepreview import model_root
+        setup = self._battle_setup
+        pose = self._poses[min(tick, len(self._poses) - 1)]
+        frame = tick if self._animate_model.isChecked() else 0
+        self._gl.set_model_translation(*model_root(self.ifrit_manager, self._model_anim_spin.value(), frame))
+        self._gl.set_preview_model_transform(setup.to_viewer(setup.main_position), -setup.main_yaw)
+        other = setup.to_viewer(setup._other.position)
+        self._gl.set_preview_markers(0., tuple(other))
+        self._gl.set_preview_actor(setup.opponent_mesh(tick, self._animate_model.isChecked()))
+        if setup.view_mode.currentIndex() == 0:
+            angle = pose.roll * 2 * math.pi / 4096
+            up = (-math.sin(angle), math.cos(angle), 0.)
+            self._gl.set_camera(setup.to_viewer(pose.eye), setup.to_viewer(pose.target), up,
+                                projection=pose.projection, translate_model=True)
+        else:
+            self._gl.clear_explicit_camera()
+        warning = '; '.join(sorted(setup.context.warnings))
+        title = 'Empty camera: holding starting view' if self._empty_camera else f'Block {pose.block}'
+        self._readout.setText(f'{title} · Lens {pose.projection:.0f} · Roll {pose.roll:.0f}'
+                             + (f' · {warning}' if warning else ''))
 
     def _toggle_play(self):
         if self._timer.isActive():

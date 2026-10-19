@@ -438,6 +438,24 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # absolute size: tying it to model size instead gave a far/near ratio in the
         # tens of thousands for large battle stages, which starves the depth buffer's
         # precision at distance and shows up as z-fighting/flicker on coincident faces.
+        projection = getattr(self, '_explicit_projection', None)
+        if projection is not None:
+            from FF8GameData.dat.battlecamera import projection_frustum
+            # Keep the game's 4:3 frame instead of stretching a shot to the dock's shape.
+            vw = min(w, int(h * 4 / 3))
+            vh = min(h, int(w * 3 / 4))
+            glViewport((w - vw) // 2, (h - vh) // 2, max(1, vw), max(1, vh))
+            distance = np.linalg.norm(self._explicit_eye - self._explicit_target)
+            # Orbit zoom is unrelated to an explicit camera; using it for near clipping
+            # could remove a close-up even when the shot's coordinates were correct.
+            near = max(distance * .001, .001)
+            far = max(1000., distance * 20, np.linalg.norm(self._explicit_eye) * 4)
+            glMatrixMode(GL_PROJECTION)
+            glLoadIdentity()
+            glFrustum(*projection_frustum(projection, near=near), near, far)
+            glMatrixMode(GL_MODELVIEW)
+            return
+        glViewport(0, 0, w, h)
         far_extent = max(getattr(self, 'MODEL_SIZE', 0.0), self.zoom, 1.0)
         near = max(self.zoom * 0.05, 0.05)
         far = far_extent * 3.0 + 100.0
@@ -486,7 +504,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glDisable(GL_TEXTURE_2D)
         if ground_y is not None:
             # A quiet grid: large enough to still be there after a long 9E move.
-            half_size, step = 40.0, 4.0
+            half_size = max(40., max(abs(float(v)) for v in target) * 1.2) if target is not None else 40.
+            step = max(4., math.ceil(half_size / 10))
             glColor3f(0.32, 0.32, 0.38)
             glBegin(GL_LINES)
             line = -half_size
@@ -509,16 +528,55 @@ class FF8OpenGLWidget(QOpenGLWidget):
             glVertex3f(tx, ty, tz + 1.5)
             glEnd()
 
-    def set_camera(self, eye, target, up=(0.0, 1.0, 0.0)):
+    def set_camera(self, eye, target, up=(0.0, 1.0, 0.0), *, projection=None, translate_model=False):
         """Place an explicit eye->target camera (used by the camera-animation preview),
         replacing the orbit camera. Coordinates are in viewer space - the same space
         set_vertices() uses. Call clear_explicit_camera() to restore the orbit controls."""
         self._explicit_view = _look_at_matrix(eye, target, up)
+        self._explicit_eye = np.asarray(eye, float)
+        self._explicit_target = np.asarray(target, float)
+        self._explicit_projection = projection
+        self._explicit_model_translation = translate_model
         self.update()
+
+    def set_preview_actor(self, mesh):
+        """Optional read-only opponent mesh, already placed in viewer world coordinates."""
+        self._preview_actor = mesh
+        self.update()
+
+    def set_preview_model_transform(self, position, yaw):
+        """World placement for a loaded actor; yaw in viewer-space radians."""
+        self._preview_model_transform = (tuple(position), math.degrees(yaw))
+        self.update()
+
+    def _draw_preview_actor(self):
+        mesh = getattr(self, '_preview_actor', None)
+        if mesh is None:
+            return
+        vertices, triangles, quads = mesh
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_POLYGON_BIT)
+        glDisable(GL_TEXTURE_2D)
+        glDisable(GL_CULL_FACE)
+        # PSX quads use strip order A,B,C,D, not the GL_QUADS perimeter order.
+        # Match the textured model path's A,B,D / A,C,D split.
+        quad_triangles = [tuple(face[i] for i in corners) for face in quads
+                          for corners in ((0, 1, 3), (0, 2, 3))]
+        for faces in (triangles, quad_triangles):
+            glBegin(GL_TRIANGLES)
+            for face in faces:
+                a, b, c = (vertices[index] for index in face[:3])
+                normal = np.cross(b - a, c - a)
+                shade = .45 + .55 * abs(normal[1]) / max(np.linalg.norm(normal), 1e-9)
+                glColor3f(.4 * shade, .55 * shade, .75 * shade)
+                for index in face:
+                    glVertex3f(*vertices[index])
+            glEnd()
+        glPopAttrib()
 
     def clear_explicit_camera(self):
         """Restore the normal orbit camera (rot/zoom/pan)."""
         self._explicit_view = None
+        self._explicit_projection = None
         self.update()
 
     def paintGL(self):
@@ -530,11 +588,17 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
 
+        placement, yaw = getattr(self, '_preview_model_transform', ((0., 0., 0.), 0.))
+
         if getattr(self, "_explicit_view", None) is not None:
             # Explicit eye->target camera (the camera-animation preview): apply the view
             # matrix and draw the model at its raw vertex positions (the caller places the
             # eye/target relative to the model's own bounds, so no orbit centering here).
             glMultMatrixf(self._explicit_view)
+            if getattr(self, '_explicit_model_translation', False):
+                glTranslatef(*placement)
+                glRotatef(yaw, 0., 1., 0.)
+                glTranslatef(*self.model_translation)
         else:
             # Pull camera back
             glTranslatef(self.pan_x, self.pan_y, -self.zoom)
@@ -547,6 +611,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
             glTranslatef(-self.reference_position[0], -self.reference_position[1], -self.reference_position[2])
 
             # Apply frame position translation
+            glTranslatef(*placement)
+            glRotatef(yaw, 0., 1., 0.)
             glTranslatef(self.model_translation[0], self.model_translation[1], self.model_translation[2])
 
         # Camera position in model space, for exact per-face backface culling
@@ -582,14 +648,18 @@ class FF8OpenGLWidget(QOpenGLWidget):
         if self.show_axis:
             self.draw_axis()
         if (getattr(self, '_preview_markers', (None, None)) != (None, None)
-                or getattr(self, '_effect_flash', None) is not None):
+                or getattr(self, '_effect_flash', None) is not None
+                or getattr(self, '_preview_actor', None) is not None):
             # The markers are the scene's FIXED reference, so they must not ride along
             # with the model translation applied just above: undo it around them.
             glPushMatrix()
             glTranslatef(-self.model_translation[0], -self.model_translation[1],
                          -self.model_translation[2])
+            glRotatef(-yaw, 0., 1., 0.)
+            glTranslatef(*(-np.asarray(placement)))
             self._draw_preview_markers()
             self._draw_effect_flash()
+            self._draw_preview_actor()
             glPopMatrix()
         if self.show_texture and self._gl_textures and (self.triangles_uv or self.quads_uv):
             self._draw_textured_triangles()

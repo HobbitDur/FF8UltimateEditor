@@ -1,5 +1,8 @@
-"""Engine-faithful playback of a battle camera animation (shared by Ifrit's camera tab
-and Watts' victory-camera preview).
+"""Raw-coordinate camera baking for Watts' composite victory preview.
+
+DAT camera previews use battlecamera.play_camera_animation instead: it retains the
+coordinate modes and resolves their caster/target/previous-view references and lens.
+This module also supplies the shared easing and spline routines used by that player.
 
 Replicates `ProcessCameraAnimation` (FF8_EN.exe 0x5035E0) + `BS_Camera_ReadAnimation`
 (0x503C70): a camera animation is a chain of blocks; each block holds keyframes and its
