@@ -69,10 +69,13 @@ def test_bar_length():
 
 
 def test_hud_matrix():
-    """RotZ * RotX * RotY then the per-axis scale: a 2048 Z turn sends +x to -x."""
+    """RotY * RotX * RotZ (Mtx_Rot* multiply on the right) then the per-axis scale: a 2048 Z
+    turn sends +x to -x; with X and Z quarter turns, Z acts first (+x -> +y -> +z)."""
     matrix = hud_matrix((0, 0, 2048), (8192, 4096, 4096))
     assert np.allclose(matrix @ np.array((1., 0., 0.)), (-2., 0., 0.))
     assert np.allclose(hud_matrix((0, 1024, 0)) @ np.array((0., 0., 1.)), (1., 0., 0.))
+    assert np.allclose(hud_matrix((1024, 0, 1024)) @ np.array((1., 0., 0.)), (0., 0., 1.))
+    assert np.allclose(hud_matrix((1024, 1024, 0)) @ np.array((0., 1., 0.)), (1., 0., 0.))
 
 
 def test_canvas_blending():

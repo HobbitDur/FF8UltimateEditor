@@ -15,7 +15,7 @@ MAG_040_SCAN_DrawHudModel 0x84D8B0 draws each one):
   * Backdrop (Backdrop_State0_Init 0x84FA50): the blue panel behind the model, at view position
     (-3968, 3840, 32767), scale 4608, fading in from black by 512/4096 per tick;
   * Spinner (Spinner_State0_Init 0x84F390): a small shape at (-128, -160, 1152), turning by
-    192/4096 a tick about Y and 96/4096 about Z (Spinner_Tick 0x84F300), fading in by 256 a tick;
+    192/4096 a tick about Y and 96/4096 about X (Spinner_Tick 0x84F300), fading in by 256 a tick;
   * StatBoard (StatBoard_State0_Init 0x84F4A0): one textured quad at (-64, -88, 576), its texture
     in the Scan effect's mag039-067.tim;
   * 8 StatBars (StatBar_State0_Init 0x84F5C0) around the board, placed by a table of the exe
@@ -24,7 +24,8 @@ MAG_040_SCAN_DrawHudModel 0x84D8B0 draws each one):
     grows by 768 a tick up to its length (16384 = 4x at the top value) and pulses: fade =
     (sin(phase) + 4096) / 6, the phase moving 256 a tick (StatBar_Tick 0x84F520).
 
-DrawHudModel's matrix is RotZ * RotX * RotY scaled per axis (4096 = 1), translated, with no camera:
+DrawHudModel's matrix is RotY * RotX * RotZ (Mtx_RotY, Mtx_RotX, Mtx_RotZ each multiply on the
+right), its columns scaled per axis (4096 = 1), translated, with no camera:
 the models live in view space and project with the scan lens (576) around the screen centre -
 at z 576 one unit is one pixel. The render header has flags 0xF0: every face is two-sided and
 every colour is depth-cued (GTE DPCS / DPCT) towards black by the fade value (4096 = black).
@@ -54,7 +55,7 @@ SEMI_TRANSPARENT_BIT = 0x02     # in the primitive's GPU code byte
 
 # Task parameters (code immediates)
 BACKDROP_POSITION, BACKDROP_SCALE, BACKDROP_FADE_STEP = (-3968, 3840, 32767), 4608, 512
-SPINNER_POSITION, SPINNER_TURN_Y, SPINNER_TURN_Z, SPINNER_FADE_STEP = (-128, -160, 1152), 192, 96, 256
+SPINNER_POSITION, SPINNER_TURN_X, SPINNER_TURN_Y, SPINNER_FADE_STEP = (-128, -160, 1152), 96, 192, 256
 BOARD_POSITION = (-64, -88, 576)
 BAR_GROW_STEP, BAR_PULSE_STEP, BAR_PULSE_DIVISOR = 768, 256, 6
 BAR_COUNT = 8
@@ -246,9 +247,9 @@ def _rotation(axis, angle):
 
 
 def hud_matrix(turn=(0, 0, 0), scale=(ONE, ONE, ONE)):
-    """DrawHudModel: RotZ * RotX * RotY (each premultiplied), then the per-axis scale."""
+    """DrawHudModel: RotY * RotX * RotZ (each Mtx_Rot* multiplies on the right), columns scaled."""
     rx, ry, rz = turn
-    matrix = _rotation("z", rz) @ _rotation("x", rx) @ _rotation("y", ry)
+    matrix = _rotation("y", ry) @ _rotation("x", rx) @ _rotation("z", rz)
     return matrix * (np.asarray(scale, float) / ONE)
 
 
@@ -434,7 +435,7 @@ class ScanBackground:
             position = (BOARD_POSITION[0] + int(x / 2), BOARD_POSITION[1] + int(y / 2), BOARD_POSITION[2])
             canvas.draw_model(self.data.bars[index], position, hud_matrix((0, 0, z_turn), (length, ONE, ONE)),
                               fade=fade)
-        turn = ((0, SPINNER_TURN_Y * (tick + 1), SPINNER_TURN_Z * (tick + 1)))
+        turn = (SPINNER_TURN_X * (tick + 1), SPINNER_TURN_Y * (tick + 1), 0)
         canvas.draw_model(self.data.spinner, SPINNER_POSITION, hud_matrix(turn),
                           fade=max(0, ONE - SPINNER_FADE_STEP * tick))
         return canvas.image(opaque=False)
