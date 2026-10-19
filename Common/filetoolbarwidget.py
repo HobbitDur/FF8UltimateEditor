@@ -130,6 +130,11 @@ class FileToolbarWidget(QWidget):
         whole_set = getattr(self.tool_stack.currentWidget(), "import_files", None)
         if callable(whole_set):
             return [("Import", whole_set)]
+        # A tool whose Import lines are not one per binding (Xu: one line takes either its .bin or
+        # the exe) lists them itself, as (label, callback) pairs.
+        custom = getattr(self.tool_stack.currentWidget(), "import_entries", None)
+        if callable(custom):
+            return list(custom())
         entries = [(binding.file_name, (lambda b=binding: self._open_binding(b)))
                   for binding in self._main_bindings()]
         opener = getattr(self.tool_stack.currentWidget(), "open_files", None)
@@ -161,6 +166,12 @@ class FileToolbarWidget(QWidget):
             self._pick_from_menu(entries, self.import_button)
 
     def _import_complementary(self):
+        # A tool whose side files have no fixed names (Xu's preview models, c0m###.dat) runs its
+        # own multi-select dialog.
+        hook = getattr(self.tool_stack.currentWidget(), "open_complementary_files", None)
+        if callable(hook):
+            hook()
+            return
         # Complementary files share the "these exact names" pattern (e.g. Zone's five), so one
         # multi-select dialog can bring in any number at once.
         bindings = self._complementary_bindings()
@@ -374,9 +385,10 @@ class FileToolbarWidget(QWidget):
         self.import_button.setEnabled(bool(self._import_entries()))
         # a tool importing its whole file set at once (import_files) brings its read-only files too
         whole_set = callable(getattr(self.tool_stack.currentWidget(), "import_files", None))
-        self.import_complementary_button.setEnabled(
+        complementary_hook = callable(getattr(self.tool_stack.currentWidget(), "open_complementary_files", None))
+        self.import_complementary_button.setEnabled(complementary_hook or (
             bool(complementary_bindings) and (not whole_set or any(
-                getattr(binding, "complementary", False) for binding in complementary_bindings)))
+                getattr(binding, "complementary", False) for binding in complementary_bindings))))
         # Save covers the tool's single-file bindings AND any multi-file (folder) save it has - it
         # stays enabled whenever a file is loaded (so saving is never blocked).
         can_save = any(binding.is_loaded for binding in main_bindings) or self._can_save_folder()

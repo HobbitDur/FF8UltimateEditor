@@ -113,16 +113,10 @@ class XuWidget(QWidget):
         self._pending_follow_row = None  # model to load once the tool is shown
         self._translation_widget = None
 
-        # Top bar
-        self.import_button = QPushButton("Import...")
-        self.import_button.setToolTip(f"Open the FF8 exe, {FILE_NAME} and/or {TEXT_FILE_NAME} (select one or several).\n"
-                                      "The exe gives the vanilla camera rows and scan texts (EN, FR, DE, IT or ES);\n"
-                                      "the .bin and .msd are the FFNx files (direct/exe/) to edit.")
-        self.import_button.clicked.connect(self._import)
+        # Top line: where the values come from (the files open through the header Import)
         self.file_label = QLabel()
         self.file_label.setWordWrap(True)
         top_bar = QHBoxLayout()
-        top_bar.addWidget(self.import_button)
         top_bar.addWidget(self.file_label, 1)
 
         # Row list
@@ -158,21 +152,11 @@ class XuWidget(QWidget):
 
         # Preview
         self.preview = XuPreviewPanel(game_data_folder, hud=self.hud)
-        self.model_button = QPushButton("Battle models...")
-        self.model_button.setToolTip("Open the c0m###.dat monster and d?c###.dat character files to preview\n"
-                                     "(Ctrl+A in the dialog for all). Each row then shows its own model when\n"
-                                     "its file is open (a character: the first of its files opened).")
-        self.model_button.clicked.connect(self._open_models)
-        self.font_button = QPushButton("Game font...")
-        self.font_button.setToolTip("Open mngrp.bin: the scan text is then drawn with the game font\n"
-                                    "(sysfnt.TEX/.tdw next to it) and its real character widths.")
-        self.font_button.clicked.connect(lambda: self.mngrp_binding.open_dialog(self))
-        self.model_label = QLabel("")
+        self.model_label = QLabel("Preview: open battle models (c0m###.dat, d?c###.dat) and mngrp.bin (game font) "
+                                  "with the header's Import read-only.")
         self.model_label.setWordWrap(True)
         self.model_label.setStyleSheet("color: gray")
         model_row = QHBoxLayout()
-        model_row.addWidget(self.model_button)
-        model_row.addWidget(self.font_button)
         model_row.addWidget(self.model_label, 1)
         preview_holder = QWidget()
         preview_layout = QVBoxLayout(preview_holder)
@@ -246,7 +230,7 @@ class XuWidget(QWidget):
         return group
 
     def _build_text_tab(self):
-        self.text_file_label = QLabel(f"No scan texts: Import the FF8 exe (its texts) or a {TEXT_FILE_NAME}.")
+        self.text_file_label = QLabel(f"No scan texts: header Import - the camera line with the FF8 exe (its texts), or the {TEXT_FILE_NAME} line.")
         self.text_file_label.setWordWrap(True)
         self.text_file_label.setStyleSheet("color: gray")
         self.text_export_button = QPushButton("Export as...")
@@ -283,8 +267,44 @@ class XuWidget(QWidget):
         return tab
 
     def file_bindings(self):
-        """The files the shared header toolbar drives for this tool."""
-        return [self.binding, self.text_binding, self.exe_binding, self.mngrp_binding]
+        """The files the shared header toolbar drives for this tool (Save, Reload). The exe is
+        left out: it is opened through the camera Import line (see import_entries)."""
+        return [self.binding, self.text_binding, self.mngrp_binding]
+
+    def import_entries(self):
+        """The header Import menu: one line for the camera rows (the FFNx .bin, or the exe's
+        vanilla rows - the exe also gives the scan texts), one for the scan texts."""
+        return [(f"Scan camera rows: {FILE_NAME} or FF8 exe", self._import_camera),
+                (f"Scan text: {TEXT_FILE_NAME}", self._import_text)]
+
+    def open_complementary_files(self):
+        """The header Import read-only: what the preview uses, never edited here - battle models
+        (any number, Ctrl+A for all) and mngrp.bin (the game font next to it)."""
+        folder = self.file_registry.last_folder(MODEL_FOLDER_KEY) or os.getcwd()
+        paths = QFileDialog.getOpenFileNames(
+            self, "Preview files: battle models and/or mngrp.bin (Ctrl+A for all)", folder,
+            "Preview files (c0m*.dat d?c*.dat mngrp.bin);;Battle models (c0m*.dat d?c*.dat);;"
+            "Game font (mngrp.bin)")[0]
+        models = [path for path in paths if self.model_com_id(path) is not None]
+        for path in paths:
+            if os.path.basename(path).lower() == "mngrp.bin":
+                self.mngrp_binding.open_path(path)
+                self.file_registry.remember_folder("mngrp.bin", os.path.dirname(path))
+        if models:
+            self.add_models(models)
+
+    def _import_camera(self):
+        folder = self.file_registry.last_folder(FILE_NAME) or os.getcwd()
+        path = QFileDialog.getOpenFileName(
+            self, f"Scan camera rows: {FILE_NAME} or the FF8 exe (vanilla)", folder,
+            f"Scan camera rows ({FILE_NAME} *.exe);;{FILE_NAME} ({FILE_NAME} *.bin);;FF8 exe (*.exe)")[0]
+        if path:
+            self.import_paths([path])
+
+    def _import_text(self):
+        path = self.text_binding.open_dialog(self, default_dir=self.file_registry.last_folder(TEXT_FILE_NAME))
+        if path:
+            self.file_registry.remember_folder(TEXT_FILE_NAME, os.path.dirname(path))
 
     # ------------------------------------------------------------------ sources
     def load_exe(self, path):
@@ -306,16 +326,6 @@ class XuWidget(QWidget):
             return
         self._update_source_state()
         self._fill_row_list()
-
-    def _import(self):
-        """One dialog for the three sources; each pick goes to its own file binding."""
-        folder = (self.file_registry.last_folder(FILE_NAME) or os.path.dirname(self.exe_binding.current_path)
-                  or os.getcwd())
-        paths = QFileDialog.getOpenFileNames(
-            self, "Import the FF8 exe and/or the FFNx scan files", folder,
-            f"FF8 exe and scan files (*.exe {FILE_NAME} {TEXT_FILE_NAME});;FF8 exe (*.exe);;"
-            f"Scan camera rows ({FILE_NAME} *.bin);;Scan texts ({TEXT_FILE_NAME} *.msd)")[0]
-        self.import_paths(paths)
 
     def import_paths(self, paths):
         """Route picked files by type: the exe first (it is the reference), then .bin, then .msd."""
@@ -340,7 +350,7 @@ class XuWidget(QWidget):
         elif loaded:
             text = f"Vanilla rows of {exe}: Save writes them to a {FILE_NAME}."
         else:
-            text = f"Import the FF8 exe (vanilla values) or a {FILE_NAME} to see and edit the rows."
+            text = f"Header Import, 'Scan camera rows': the FF8 exe (vanilla values) or a {FILE_NAME}."
         self.file_label.setText(text)
         self.file_label.setStyleSheet("" if loaded else "color: #c06000")
 
@@ -640,13 +650,6 @@ class XuWidget(QWidget):
             self._follow_model(row)
             self._refresh_preview_text(row)
 
-    def _open_models(self):
-        folder = self.file_registry.last_folder(MODEL_FOLDER_KEY) or os.getcwd()
-        paths = QFileDialog.getOpenFileNames(self, "Battle models to preview (Ctrl+A for all)", folder,
-                                             "Monster and character battle models (c0m*.dat d?c*.dat)")[0]
-        if paths:
-            self.add_models(paths)
-
     @staticmethod
     def model_com_id(path):
         """The com_id a battle model shows: c0mNNN = NNN + 16, character dXcNNN = X; else None."""
@@ -670,7 +673,6 @@ class XuWidget(QWidget):
                 added += 1
         if paths:
             self.file_registry.remember_folder(MODEL_FOLDER_KEY, os.path.dirname(paths[0]))
-        self.model_button.setText(f"Battle models ({len(self._model_paths)})...")
         if added:
             self._follow_model(self.current_row())
 
@@ -695,7 +697,7 @@ class XuWidget(QWidget):
             wanted = (f"c0m{com_id - FIRST_MONSTER_ROW:03d}.dat" if com_id >= FIRST_MONSTER_ROW
                       else f"a d{com_id:x}c###.dat")
             shown = f" (still showing {os.path.basename(self.preview.model_path)})" if self.preview.has_model else ""
-            self._set_model_status(f"{wanted} is not open: add it with Battle models...{shown}",
+            self._set_model_status(f"{wanted} is not open: open it with the header's Import read-only{shown}",
                                    warning=bool(self._model_paths))
             return
         if os.path.normcase(path) != os.path.normcase(self.preview.model_path):

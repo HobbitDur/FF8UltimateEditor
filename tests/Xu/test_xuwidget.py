@@ -149,3 +149,28 @@ def test_default_msd_from_the_exe(qapp):
     manager.load_bytes(build_msd_from_exe(game_data, EXE))
     assert len(manager.texts) == 160
     assert manager.get_str(87).startswith("Galbadian soldier")  # G-Soldier
+
+
+def test_header_toolbar_lines(qapp, tmp_path, monkeypatch):
+    """Import offers two lines (camera: .bin or exe, text: .msd); Import read-only takes the
+    preview files - battle models and mngrp.bin - in one dialog."""
+    from PyQt6.QtWidgets import QFileDialog, QStackedWidget
+    from Common.fileregistry import FileRegistry
+    from Common.filetoolbarwidget import FileToolbarWidget
+    from Xu.xuwidget import XuWidget
+    registry = FileRegistry()
+    stack = QStackedWidget()
+    w = XuWidget(file_registry=registry)
+    stack.addWidget(w)
+    toolbar = FileToolbarWidget(stack, registry)
+    labels = [label for label, _callback in toolbar._import_entries()]
+    assert labels == ["Scan camera rows: battle_scan_cameras.bin or FF8 exe", "Scan text: battle_scans.msd"]
+    toolbar._refresh()
+    assert toolbar.import_complementary_button.isEnabled()
+
+    picked = [str(tmp_path / "c0m071.dat"), str(tmp_path / "d0c000.dat"), str(tmp_path / "mngrp.bin")]
+    (tmp_path / "mngrp.bin").write_bytes(b"")
+    monkeypatch.setattr(QFileDialog, "getOpenFileNames", lambda *args, **kwargs: (picked, ""))
+    toolbar._import_complementary()
+    assert set(w._model_paths) == {87, 0}
+    assert registry.get_path("mngrp.bin") == picked[2]
