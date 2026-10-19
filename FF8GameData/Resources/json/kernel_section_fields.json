@@ -721,8 +721,8 @@
     "offset": 26,
     "size": 1,
     "group": "General",
-    "label": "Status attack acc. (unused)",
-    "help": "Struct byte 0x1A ('statusAttackAccuracy') - genuinely DEAD, read by nothing. Deep-audited: 0 field xrefs, 0 direct-address xrefs, AND all register-relative accesses checked (the case that hid the attack-flag 0x20 bug) - the 3 functions that hold a GF-entry pointer (incl. the GF/junction menu and ability-learn code) touch only offset 0 or 0x1B, never 0x1A; no aliases or bulk copies read it. The GF summon's real status-attack accuracy lives at 0x1B ('Ability 1' row's first byte).",
+    "label": "Unused status attack accuracy",
+    "help": "Byte 0x1A (IDA unusedStatusAttackAccuracy) is unused, read by nothing. Deep-audited: 0 field xrefs, 0 direct-address xrefs, AND all register-relative accesses checked (the case that hid the attack-flag 0x20 bug) - the 3 functions that hold a GF-entry pointer (incl. the GF/junction menu and ability-learn code) touch only offset 0 or 0x1B, never 0x1A; no aliases or bulk copies read it. The GF summon's real status-attack accuracy lives at 0x1B ('Ability 1' row's first byte).",
     "readonly": true
    },
    {
@@ -753,7 +753,7 @@
     "group": "General",
     "label": "Padding",
     "readonly": true,
-    "help": "Unused padding - no code references this byte (IDA: 0 xrefs to FF8KernelJunctionableGF.align). Always 0x00 in vanilla."
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs to FF8KernelJunctionableGF.padding1). Always 0x00 in vanilla."
    },
    {
     "name": "unknown_0x6f",
@@ -778,11 +778,11 @@
     "name": "ability1_unlocker",
     "offset": 27,
     "size": 1,
-    "label": "GF summon status acc.",
+    "label": "GF summon status accuracy",
     "group": "Abilities",
     "row": "ability1",
     "formula": "status_accuracy",
-    "help": "Despite sitting where 'Ability 1's unlocker byte' would be (0x1B), this byte is the GF SUMMON's status-attack accuracy - Battle_applyDamage's GF case reads it as HIT_ATTACK_ACCURACY (the dedicated 0x1A 'Status attack accuracy' field is dead). 0 = the summon inflicts no status (e.g. Ifrit); it only matters for GFs whose summon carries a Status 1/2. The ability-learning code (BuildGFAbilityList) never reads this byte. Click f(x)."
+    "help": "GF summon status accuracy (0x1B; IDA abilityData[0].summonStatusAccuracyOrUnused). Battle_applyDamage's GF case reads it as HIT_ATTACK_ACCURACY (the dedicated 0x1A 'Status attack accuracy' field is dead). 0 = the summon inflicts no status (e.g. Ifrit); it only matters for GFs whose summon carries a Status 1/2. The ability-learning code (BuildGFAbilityList) never reads this byte. Click f(x)."
    },
    {
     "name": "ability1_level_or_prereq",
@@ -791,16 +791,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability1",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability1_alt_prereq",
     "offset": 29,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability1",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability2",
@@ -816,7 +816,7 @@
     "name": "ability2_unlocker",
     "offset": 31,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability2",
     "readonly": true,
@@ -829,16 +829,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability2",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability2_alt_prereq",
     "offset": 33,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability2",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability3",
@@ -854,7 +854,7 @@
     "name": "ability3_unlocker",
     "offset": 35,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability3",
     "readonly": true,
@@ -867,16 +867,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability3",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability3_alt_prereq",
     "offset": 37,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability3",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability4",
@@ -892,7 +892,7 @@
     "name": "ability4_unlocker",
     "offset": 39,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability4",
     "readonly": true,
@@ -905,16 +905,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability4",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability4_alt_prereq",
     "offset": 41,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability4",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability5",
@@ -930,7 +930,7 @@
     "name": "ability5_unlocker",
     "offset": 43,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability5",
     "readonly": true,
@@ -943,16 +943,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability5",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability5_alt_prereq",
     "offset": 45,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability5",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability6",
@@ -968,7 +968,7 @@
     "name": "ability6_unlocker",
     "offset": 47,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability6",
     "readonly": true,
@@ -981,16 +981,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability6",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability6_alt_prereq",
     "offset": 49,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability6",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability7",
@@ -1006,7 +1006,7 @@
     "name": "ability7_unlocker",
     "offset": 51,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability7",
     "readonly": true,
@@ -1019,16 +1019,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability7",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability7_alt_prereq",
     "offset": 53,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability7",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability8",
@@ -1044,7 +1044,7 @@
     "name": "ability8_unlocker",
     "offset": 55,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability8",
     "readonly": true,
@@ -1057,16 +1057,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability8",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability8_alt_prereq",
     "offset": 57,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability8",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability9",
@@ -1082,7 +1082,7 @@
     "name": "ability9_unlocker",
     "offset": 59,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability9",
     "readonly": true,
@@ -1095,16 +1095,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability9",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability9_alt_prereq",
     "offset": 61,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability9",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability10",
@@ -1120,7 +1120,7 @@
     "name": "ability10_unlocker",
     "offset": 63,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability10",
     "readonly": true,
@@ -1133,16 +1133,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability10",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability10_alt_prereq",
     "offset": 65,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability10",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability11",
@@ -1158,7 +1158,7 @@
     "name": "ability11_unlocker",
     "offset": 67,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability11",
     "readonly": true,
@@ -1171,16 +1171,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability11",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability11_alt_prereq",
     "offset": 69,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability11",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability12",
@@ -1196,7 +1196,7 @@
     "name": "ability12_unlocker",
     "offset": 71,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability12",
     "readonly": true,
@@ -1209,16 +1209,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability12",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability12_alt_prereq",
     "offset": 73,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability12",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability13",
@@ -1234,7 +1234,7 @@
     "name": "ability13_unlocker",
     "offset": 75,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability13",
     "readonly": true,
@@ -1247,16 +1247,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability13",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability13_alt_prereq",
     "offset": 77,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability13",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability14",
@@ -1272,7 +1272,7 @@
     "name": "ability14_unlocker",
     "offset": 79,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability14",
     "readonly": true,
@@ -1285,16 +1285,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability14",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability14_alt_prereq",
     "offset": 81,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability14",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability15",
@@ -1310,7 +1310,7 @@
     "name": "ability15_unlocker",
     "offset": 83,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability15",
     "readonly": true,
@@ -1323,16 +1323,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability15",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability15_alt_prereq",
     "offset": 85,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability15",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability16",
@@ -1348,7 +1348,7 @@
     "name": "ability16_unlocker",
     "offset": 87,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability16",
     "readonly": true,
@@ -1361,16 +1361,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability16",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability16_alt_prereq",
     "offset": 89,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability16",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability17",
@@ -1386,7 +1386,7 @@
     "name": "ability17_unlocker",
     "offset": 91,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability17",
     "readonly": true,
@@ -1399,16 +1399,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability17",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability17_alt_prereq",
     "offset": 93,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability17",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability18",
@@ -1424,7 +1424,7 @@
     "name": "ability18_unlocker",
     "offset": 95,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability18",
     "readonly": true,
@@ -1437,16 +1437,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability18",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability18_alt_prereq",
     "offset": 97,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability18",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability19",
@@ -1462,7 +1462,7 @@
     "name": "ability19_unlocker",
     "offset": 99,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability19",
     "readonly": true,
@@ -1475,16 +1475,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability19",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability19_alt_prereq",
     "offset": 101,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability19",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability20",
@@ -1500,7 +1500,7 @@
     "name": "ability20_unlocker",
     "offset": 103,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability20",
     "readonly": true,
@@ -1513,16 +1513,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability20",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability20_alt_prereq",
     "offset": 105,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability20",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "ability21",
@@ -1538,7 +1538,7 @@
     "name": "ability21_unlocker",
     "offset": 107,
     "size": 1,
-    "label": "Unused (byte+0)",
+    "label": "Unused slot byte",
     "group": "Abilities",
     "row": "ability21",
     "readonly": true,
@@ -1551,16 +1551,16 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability21",
-    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n1-100 = the GF must be at least this level.\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
+    "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
     "name": "ability21_alt_prereq",
     "offset": 109,
     "size": 1,
-    "label": "Alt prereq slot",
+    "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability21",
-    "help": "Points at another ability slot (0-20) on this same GF and makes the two mutually exclusive until one is done: this ability keeps being offered only while the OTHER slot's ability is still unfinished, and gets cut off the moment that other ability is completed. 0xFF = no such restriction (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
+    "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
     "name": "boost_param_1",
@@ -1768,8 +1768,9 @@
     "name": "animation",
     "offset": 5,
     "size": 1,
-    "label": "Animation triggered",
-    "group": "Data"
+    "label": "Target hit animation",
+    "group": "Data",
+    "help": "Index of the reaction/impact animation the TARGET plays when the ability lands (HIT_TYPE_TARGET_ANIMATION_TO_PLAY) - a flinch, knock-back, blown-away pose, etc. A plain animation index, not a bitfield.\n(What used to look like a 2-byte value in Shot/T.Char limits was really this byte plus the separate Status window byte next to it.)\nRuntime can override the stored value: e.g. a crit forces 6, a miss forces 0/9, a monster death forces 3 (Battle_applyDamage / computeTargetData)."
    },
    {
     "name": "attack_type",
@@ -3157,7 +3158,7 @@
     "offset": 12,
     "size": 1,
     "lookup": "nonjgf_status_1",
-    "label": "Status (Sleep..Reflect)",
+    "label": "Status 2 low byte (Sleep..Reflect)",
     "group": "Data"
    },
    {
@@ -3165,7 +3166,7 @@
     "offset": 13,
     "size": 1,
     "lookup": "nonjgf_status_2",
-    "label": "Status (Aura..Drain)",
+    "label": "Status 2 byte 1 (Aura..Drain)",
     "group": "Data"
    },
    {
@@ -3173,7 +3174,7 @@
     "offset": 14,
     "size": 1,
     "lookup": "nonjgf_status_3",
-    "label": "Status (Eject..Back attack)",
+    "label": "Status 2 byte 2 (Eject..Back attack)",
     "group": "Data"
    },
    {
@@ -3181,7 +3182,7 @@
     "offset": 15,
     "size": 1,
     "lookup": "nonjgf_status_4",
-    "label": "Status (Vit0..Summon GF)",
+    "label": "Status 2 byte 3 (Vit0..Summon GF)",
     "group": "Data"
    },
    {
@@ -3189,7 +3190,7 @@
     "offset": 16,
     "size": 1,
     "lookup": "nonjgf_status_5",
-    "label": "Status (Death..Zombie)",
+    "label": "Status 1 low byte (Death..Zombie)",
     "group": "Data"
    },
    {
@@ -3247,8 +3248,9 @@
     "name": "animation",
     "offset": 3,
     "size": 1,
-    "label": "Animation triggered",
-    "group": "Data"
+    "label": "Target hit animation",
+    "group": "Data",
+    "help": "Index of the reaction/impact animation the TARGET plays when the ability lands (HIT_TYPE_TARGET_ANIMATION_TO_PLAY) - a flinch, knock-back, blown-away pose, etc. A plain animation index, not a bitfield.\n(What used to look like a 2-byte value in Shot/T.Char limits was really this byte plus the separate Status window byte next to it.)\nRuntime can override the stored value: e.g. a crit forces 6, a miss forces 0/9, a monster death forces 3 (Battle_applyDamage / computeTargetData)."
    },
    {
     "name": "attack_type",
@@ -3366,7 +3368,7 @@
     "lookup": "junction_ability_flags",
     "label": "Junction ability flag",
     "group": "Data",
-    "help": "A genuine 24-bit bitfield - each of the 20 junction abilities is assigned its own dedicated bit (vanilla data: every entry sets exactly one bit, matching its position in the list - HP-J is bit 0, Abilityx4 is bit 19).\nResetAndParseBattleAndFieldCharacter ORs this value into the character's FF8CharaAbilities bitmask for every junction ability the character has equipped, so these bits are what other systems actually test at runtime (e.g. the Double/Triple-cast check in BattleAction_ExecuteCommand reads the Abilityx3/Abilityx4 bits directly).\nBecause it's a real bitfield you can combine bits on a custom ability to grant several effects from one learned ability."
+    "help": "A genuine 24-bit bitfield - the 19 non-dummy junction abilities each have their own dedicated bit (vanilla data: each non-dummy entry sets exactly one bit; the None entry sets none - HP-J is bit 0, Abilityx4 is bit 18).\nResetAndParseBattleAndFieldCharacter ORs this value into the character's FF8CharaAbilities bitmask for every junction ability the character has equipped, so these bits are what other systems actually test at runtime (e.g. the Double/Triple-cast check in BattleAction_ExecuteCommand reads the Abilityx3/Abilityx4 bits directly).\nBecause it's a real bitfield you can combine bits on a custom ability to grant several effects from one learned ability."
    }
   ],
   "text_labels": [
@@ -4450,7 +4452,7 @@
     "label": "Seq 0: start",
     "group": "Duel move graph",
     "row": "duel_seq_0",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_0_1",
@@ -4486,7 +4488,7 @@
     "label": "Seq 1: start",
     "group": "Duel move graph",
     "row": "duel_seq_1",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_1_1",
@@ -4522,7 +4524,7 @@
     "label": "Seq 2: start",
     "group": "Duel move graph",
     "row": "duel_seq_2",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_2_1",
@@ -4558,7 +4560,7 @@
     "label": "Seq 3: start",
     "group": "Duel move graph",
     "row": "duel_seq_3",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_3_1",
@@ -4594,7 +4596,7 @@
     "label": "Seq 4: start",
     "group": "Duel move graph",
     "row": "duel_seq_4",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_4_1",
@@ -4630,7 +4632,7 @@
     "label": "Seq 5: start",
     "group": "Duel move graph",
     "row": "duel_seq_5",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_5_1",
@@ -4666,7 +4668,7 @@
     "label": "Seq 6: start",
     "group": "Duel move graph",
     "row": "duel_seq_6",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_6_1",
@@ -4702,7 +4704,7 @@
     "label": "Seq 7: start",
     "group": "Duel move graph",
     "row": "duel_seq_7",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_7_1",
@@ -4738,7 +4740,7 @@
     "label": "Seq 8: start",
     "group": "Duel move graph",
     "row": "duel_seq_8",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_8_1",
@@ -4774,7 +4776,7 @@
     "label": "Seq 9: start",
     "group": "Duel move graph",
     "row": "duel_seq_9",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_9_1",
@@ -4810,7 +4812,7 @@
     "label": "Seq 10: start",
     "group": "Duel move graph",
     "row": "duel_seq_10",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_10_1",
@@ -4846,7 +4848,7 @@
     "label": "Seq 11: start",
     "group": "Duel move graph",
     "row": "duel_seq_11",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_11_1",
@@ -4882,7 +4884,7 @@
     "label": "Seq 12: start",
     "group": "Duel move graph",
     "row": "duel_seq_12",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_12_1",
@@ -4918,7 +4920,7 @@
     "label": "Seq 13: start",
     "group": "Duel move graph",
     "row": "duel_seq_13",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_13_1",
@@ -4954,7 +4956,7 @@
     "label": "Seq 14: start",
     "group": "Duel move graph",
     "row": "duel_seq_14",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_14_1",
@@ -4990,7 +4992,7 @@
     "label": "Seq 15: start",
     "group": "Duel move graph",
     "row": "duel_seq_15",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_15_1",
@@ -5026,7 +5028,7 @@
     "label": "Seq 16: start",
     "group": "Duel move graph",
     "row": "duel_seq_16",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_16_1",
@@ -5062,7 +5064,7 @@
     "label": "Seq 17: start",
     "group": "Duel move graph",
     "row": "duel_seq_17",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_17_1",
@@ -5098,7 +5100,7 @@
     "label": "Seq 18: start",
     "group": "Duel move graph",
     "row": "duel_seq_18",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_18_1",
@@ -5134,7 +5136,7 @@
     "label": "Seq 19: start",
     "group": "Duel move graph",
     "row": "duel_seq_19",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_19_1",
@@ -5170,7 +5172,7 @@
     "label": "Seq 20: start",
     "group": "Duel move graph",
     "row": "duel_seq_20",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_20_1",
@@ -5206,7 +5208,7 @@
     "label": "Seq 21: start",
     "group": "Duel move graph",
     "row": "duel_seq_21",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_21_1",
@@ -5242,7 +5244,7 @@
     "label": "Seq 22: start",
     "group": "Duel move graph",
     "row": "duel_seq_22",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_22_1",
@@ -5278,7 +5280,7 @@
     "label": "Seq 23: start",
     "group": "Duel move graph",
     "row": "duel_seq_23",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_23_1",
@@ -5314,7 +5316,7 @@
     "label": "Seq 24: start",
     "group": "Duel move graph",
     "row": "duel_seq_24",
-    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level."
+    "help": "Zell Duel move table: the Duel move performed when this sequence is the current one (values >= 6 end the Duel with a finisher). Section 24 = the move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level."
    },
    {
     "name": "next_seq_24_1",
@@ -6902,9 +6904,9 @@
     "name": "duel_timer_cl1",
     "offset": 48,
     "size": 1,
-    "label": "Duel timer CL1",
+    "label": "Duel duration CL1",
     "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 1 (higher crisis = longer).\nPaired with 'Duel start seq CL1'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 1 (higher crisis = longer).\nPaired with 'Duel initial sequence CL1'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
     "seconds_factor": 0.06666666666666667,
     "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
    },
@@ -6912,7 +6914,7 @@
     "name": "duel_start_seq_cl1",
     "offset": 49,
     "size": 1,
-    "label": "Duel start seq CL1",
+    "label": "Duel initial sequence CL1",
     "group": "Duel timers",
     "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 1. `computeCommandAction` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
    },
@@ -6920,9 +6922,9 @@
     "name": "duel_timer_cl2",
     "offset": 50,
     "size": 1,
-    "label": "Duel timer CL2",
+    "label": "Duel duration CL2",
     "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 2 (higher crisis = longer).\nPaired with 'Duel start seq CL2'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 2 (higher crisis = longer).\nPaired with 'Duel initial sequence CL2'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
     "seconds_factor": 0.06666666666666667,
     "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
    },
@@ -6930,7 +6932,7 @@
     "name": "duel_start_seq_cl2",
     "offset": 51,
     "size": 1,
-    "label": "Duel start seq CL2",
+    "label": "Duel initial sequence CL2",
     "group": "Duel timers",
     "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 2. `computeCommandAction` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
    },
@@ -6938,9 +6940,9 @@
     "name": "duel_timer_cl3",
     "offset": 52,
     "size": 1,
-    "label": "Duel timer CL3",
+    "label": "Duel duration CL3",
     "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 3 (higher crisis = longer).\nPaired with 'Duel start seq CL3'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 3 (higher crisis = longer).\nPaired with 'Duel initial sequence CL3'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
     "seconds_factor": 0.06666666666666667,
     "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
    },
@@ -6948,7 +6950,7 @@
     "name": "duel_start_seq_cl3",
     "offset": 53,
     "size": 1,
-    "label": "Duel start seq CL3",
+    "label": "Duel initial sequence CL3",
     "group": "Duel timers",
     "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 3. `computeCommandAction` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
    },
@@ -6956,9 +6958,9 @@
     "name": "duel_timer_cl4",
     "offset": 54,
     "size": 1,
-    "label": "Duel timer CL4",
+    "label": "Duel duration CL4",
     "group": "Duel timers",
-    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 4 (higher crisis = longer).\nPaired with 'Duel start seq CL4'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
+    "help": "Zell 'Duel' limit break - duration of the Duel input window at crisis level 4 (higher crisis = longer).\nPaired with 'Duel initial sequence CL4'.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
     "seconds_factor": 0.06666666666666667,
     "seconds_note": "Duration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive."
    },
@@ -6966,7 +6968,7 @@
     "name": "duel_start_seq_cl4",
     "offset": 55,
     "size": 1,
-    "label": "Duel start seq CL4",
+    "label": "Duel initial sequence CL4",
     "group": "Duel timers",
     "help": "Zell 'Duel' limit break - starting index into the Duel move table (section 24 'Duel Params') at crisis level 4. `computeCommandAction` reads this to seed the move sequence; the per-tick driver `sub_4852B0` then plays `duelMoves[seq].StartMove` and the player's button input branches via that entry's Next Sequence bytes. Higher crisis level -> different opening chain."
    },
@@ -6974,7 +6976,7 @@
     "name": "shot_timer_cl1",
     "offset": 56,
     "size": 1,
-    "label": "Shot timer CL1",
+    "label": "Shot duration CL1",
     "group": "Shot timers",
     "help": "Irvine 'Shot' limit break - duration of the shooting window at crisis level 1.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
     "seconds_factor": 0.06666666666666667,
@@ -6984,7 +6986,7 @@
     "name": "shot_timer_cl2",
     "offset": 57,
     "size": 1,
-    "label": "Shot timer CL2",
+    "label": "Shot duration CL2",
     "group": "Shot timers",
     "help": "Irvine 'Shot' limit break - duration of the shooting window at crisis level 2.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
     "seconds_factor": 0.06666666666666667,
@@ -6994,7 +6996,7 @@
     "name": "shot_timer_cl3",
     "offset": 58,
     "size": 1,
-    "label": "Shot timer CL3",
+    "label": "Shot duration CL3",
     "group": "Shot timers",
     "help": "Irvine 'Shot' limit break - duration of the shooting window at crisis level 3.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
     "seconds_factor": 0.06666666666666667,
@@ -7004,7 +7006,7 @@
     "name": "shot_timer_cl4",
     "offset": 59,
     "size": 1,
-    "label": "Shot timer CL4",
+    "label": "Shot duration CL4",
     "group": "Shot timers",
     "help": "Irvine 'Shot' limit break - duration of the shooting window at crisis level 4.\nDuration = raw value / 15 seconds at normal game speed. The game loads 4 × raw countdown ticks, with 60 ticks per displayed second.\nThis is the limit input timer, separate from the status timers' Battle Speed conversion. The countdown can pause while its input window is inactive.",
     "seconds_factor": 0.06666666666666667,

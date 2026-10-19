@@ -6,8 +6,9 @@ computed end offset against the known sub_section_size, catching any drift.
 
 Sources: FF8ModdingWiki 'Section Structure' tables, cross-checked against the
 doomtrain KernelWorker.cs structs. Section 3 (GFs) reuses the proven
-`junctionable_gf_data` offsets from kernel_bin_data.json (the wiki's section-3
-tail is off by one - flagged for the IDA pass).
+`junctionable_gf_data` offsets from kernel_bin_data.json. Section numbers are
+1-based; field offsets are relative to one entry. Historical field keys stay
+stable while labels follow the wiki/IDA kernel naming convention.
 """
 import json
 import os
@@ -102,7 +103,7 @@ sections["1"]["max_count"] = 0xB0
 JSTATS = ["hp", "str", "vit", "mag", "spr", "spd", "eva", "hit", "luck"]
 sec(2, 2, NAMEDESC, [
     ("General", [
-        ("magic_id", 2, "magic", "Magic ID (effect/anim)"),
+        ("magic_id", 2, "attack_animation", "Attack animation"),
         ("animation", 1, None, "Animation category"),
         ("attack_type", 1, "attack_type"),
         ("spell_power", 1, None, "Spell power"),
@@ -183,11 +184,11 @@ for it in gf_general:
         f["label"] = label
     gf_fields.append(f)
 # The two bytes the GF struct pads with. Confirmed dead in IDA: 0 xrefs to
-# FF8KernelJunctionableGF.align (0x17) and .padding2 (0x6F).
+# FF8KernelJunctionableGF.padding1 (0x17) and .padding2 (0x6F).
 gf_fields.append({"name": "unknown_0x17", "offset": 0x17, "size": 1, "group": "General",
                   "label": "Padding", "readonly": True,
                   "help": "Unused padding - no code references this byte (IDA: 0 xrefs to "
-                          "FF8KernelJunctionableGF.align). Always 0x00 in vanilla."})
+                          "FF8KernelJunctionableGF.padding1). Always 0x00 in vanilla."})
 gf_fields.append({"name": "unknown_0x6f", "offset": 0x6F, "size": 1, "group": "Abilities",
                   "label": "Padding", "readonly": True,
                   "help": "Unused padding - no code references this byte (IDA: 0 xrefs to "
@@ -213,25 +214,24 @@ for i in range(1, 22):
                       "label": "Level/prereq", "group": "Abilities", "row": row,
                       "help": "What this ability needs to unlock (read by BuildGFAbilityList, "
                               "the Junction-menu ability list builder):\n"
-                              "1-100 = the GF must be at least this level.\n"
+                              "0-100 = minimum GF level (0 means no level requirement).\n"
                               "101-121 = instead of a level, ability slot (value-101) on this "
                               "same GF must already be fully learned first - i.e. \"finish "
                               "that ability before this one becomes available\" (a same-GF "
                               "unlock chain, e.g. SumMag+20% requires SumMag+10% first)."})
     gf_fields.append({"name": f"ability{i}_alt_prereq", "offset": base + 2, "size": 1,
-                      "label": "Alt prereq slot", "group": "Abilities", "row": row,
-                      "help": "Points at another ability slot (0-20) on this same GF and makes "
-                              "the two mutually exclusive until one is done: this ability keeps "
-                              "being offered only while the OTHER slot's ability is still "
-                              "unfinished, and gets cut off the moment that other ability is "
-                              "completed. 0xFF = no such restriction (the normal case).\n"
+                      "label": "Excluded slot", "group": "Abilities", "row": row,
+                      "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). "
+                              "Points at another ability slot (0-20) on this same GF: this "
+                              "ability is no longer offered after that slot's ability is "
+                              "fully learned. 0xFF = no excluded slot (the normal case).\n"
                               "Always 0xFF in the vanilla kernel - a working feature the engine "
                               "supports (BuildGFAbilityList) but the shipped data never turns "
                               "on. (This is the byte that used to display as raw 0xFF for "
                               "every ability before the fields were remapped - it was never "
                               "the ability id.)"})
-# GF Boost parameters @0x80-0x81 (IDA gfBoostParams: each byte x15 -> Boost min/max,
-# pre_computeGFBoost)
+# GF Boost timing @0x80-0x81: first safe-phase duration, then total input-window
+# duration; each byte is multiplied by 15 ticks (pre_computeGFBoost).
 gf_fields.append({"name": "boost_param_1", "offset": 0x80, "size": 1, "group": "General",
                   "label": "Boost phase 1 length (x15)",
                   "help": "Initial length (x15 = ticks) of the FIRST 'safe' Boost phase\n"
@@ -262,9 +262,9 @@ sections["3"] = {"section_id": 3, "text_labels": NAMEDESC, "fields": gf_fields}
 
 # 4: Enemy attacks -----------------------------------------------------------
 sec(4, 1, ["Name"], [("Data", [
-    ("magic_id", 2, "magic", "Magic ID"),
+    ("magic_id", 2, "attack_animation", "Attack animation"),
     ("camera_change", 1, None, "Camera"),
-    ("animation", 1, None, "Animation triggered"),
+    ("animation", 1, None, "Target hit animation"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
     ("attack_flags", 1, "attack_flags"),
@@ -293,7 +293,7 @@ sec(5, 1, ["Name"], [("Data", [
 
 # 6: Renzokuken finishers ----------------------------------------------------
 sec(6, 2, NAMEDESC, [("Data", [
-    ("magic_id", 2, "magic", "Magic ID"),
+    ("magic_id", 2, "attack_animation", "Attack animation"),
     ("attack_type", 1, "attack_type"),
     ("unknown_0x07", 1, None, "Unknown 0x07"),
     ("attack_power", 1, None, "Attack power"),
@@ -330,7 +330,7 @@ sec(7, 1, ["Name"], [
 
 # 8: Battle items ------------------------------------------------------------
 sec(8, 2, NAMEDESC, [("Data", [
-    ("magic_id", 2, "magic", "Magic ID"),
+    ("magic_id", 2, "attack_animation", "Attack animation"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
     ("battle_flag", 1, "battle_item_category", "Category (unused)"),
@@ -361,11 +361,11 @@ sec(10, 1, ["Name"], [("Data", [
     ("target_hit_animation", 1, None, "Target hit animation"),
     ("hit_count", 1, None, "Hit count"),
     ("element", 1, "element"),
-    ("status_group_1", 1, "nonjgf_status_1", "Status (Sleep..Reflect)"),
-    ("status_group_2", 1, "nonjgf_status_2", "Status (Aura..Drain)"),
-    ("status_group_3", 1, "nonjgf_status_3", "Status (Eject..Back attack)"),
-    ("status_group_4", 1, "nonjgf_status_4", "Status (Vit0..Summon GF)"),
-    ("status_group_5", 1, "nonjgf_status_5", "Status (Death..Zombie)"),
+    ("status_group_1", 1, "nonjgf_status_1", "Status 2 low byte (Sleep..Reflect)"),
+    ("status_group_2", 1, "nonjgf_status_2", "Status 2 byte 1 (Aura..Drain)"),
+    ("status_group_3", 1, "nonjgf_status_3", "Status 2 byte 2 (Eject..Back attack)"),
+    ("status_group_4", 1, "nonjgf_status_4", "Status 2 byte 3 (Vit0..Summon GF)"),
+    ("status_group_5", 1, "nonjgf_status_5", "Status 1 low byte (Death..Zombie)"),
     ("unknown_0x11", 1, None, "Unknown 0x11"),
     ("power_mod", 1, None, "Power mod"),
     ("level_mod", 1, None, "Level mod"),
@@ -373,9 +373,9 @@ sec(10, 1, ["Name"], [("Data", [
 
 # 11: Command ability data (in battle) ---------------------------------------
 sec(11, 0, [], [("Data", [
-    ("magic_id", 2, "magic", "Magic ID"),
-    ("unknown_0x02", 1, None, "Unknown 0x02"),
-    ("animation", 1, None, "Animation triggered"),
+    ("magic_id", 2, "attack_animation", "Attack animation"),
+    ("unknown_0x02", 1, None, "Padding"),
+    ("animation", 1, None, "Target hit animation"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
     ("attack_flags", 1, "attack_flags"),
@@ -452,7 +452,7 @@ for _ability_section in range(12, 19):
 
 # 19: Temporary character limit breaks ---------------------------------------
 sec(19, 2, NAMEDESC, [("Data", [
-    ("magic_id", 2, "magic", "Magic ID"),
+    ("magic_id", 2, "attack_animation", "Attack animation"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
     ("target_animation", 1, None, "Target hit animation"),
@@ -498,7 +498,7 @@ sec(21, 0, [], [("Data", [
 
 # 22: Shot (Irvine) ----------------------------------------------------------
 sec(22, 2, NAMEDESC, [("Data", [
-    ("magic_id", 2, "magic", "Magic ID"),
+    ("magic_id", 2, "attack_animation", "Attack animation"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
     ("target_animation", 1, None, "Target hit animation"),
@@ -517,7 +517,7 @@ sec(22, 2, NAMEDESC, [("Data", [
 
 # 23: Duel (Zell) ------------------------------------------------------------
 sec(23, 2, NAMEDESC, [("Data", [
-    ("magic_id", 2, "magic", "Magic ID"),
+    ("magic_id", 2, "attack_animation", "Attack animation"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
     ("target_animation", 1, None, "Target hit animation"),
@@ -560,7 +560,7 @@ sec(25, 2, NAMEDESC, [("Data", [
 
 # 26: Rinoa limit breaks part 2 (name only) ----------------------------------
 sec(26, 1, ["Name"], [("Data", [
-    ("magic_id", 2, "magic", "Magic ID"),
+    ("magic_id", 2, "attack_animation", "Attack animation"),
     ("attack_type", 1, "attack_type"),
     ("attack_power", 1, None, "Attack power"),
     ("target_animation", 1, None, "Target hit animation"),
@@ -646,9 +646,9 @@ misc_limits = [(f"limit_{n.lower().replace(' ', '_')}_{i}", 1, None, f"{n} limit
                for i, n in enumerate(LIMIT_EFFECTS)]
 misc_duel = []
 for cl in range(1, 5):
-    misc_duel.append((f"duel_timer_cl{cl}", 1, None, f"Duel timer CL{cl}"))
-    misc_duel.append((f"duel_start_seq_cl{cl}", 1, None, f"Duel start seq CL{cl}"))
-misc_shot = [(f"shot_timer_cl{cl}", 1, None, f"Shot timer CL{cl}") for cl in range(1, 5)]
+    misc_duel.append((f"duel_timer_cl{cl}", 1, None, f"Duel duration CL{cl}"))
+    misc_duel.append((f"duel_start_seq_cl{cl}", 1, None, f"Duel initial sequence CL{cl}"))
+misc_shot = [(f"shot_timer_cl{cl}", 1, None, f"Shot duration CL{cl}") for cl in range(1, 5)]
 sec(30, 0, [], [
     ("Status timers", misc_timers),
     ("Status limit effects", misc_limits),
@@ -984,6 +984,7 @@ _FLAGS = ("Attack flags (swapped)",
           "Attack flags - low 2 bits become the last-attacker flag (ATTACK_FLAG). In this "
           "command type the flags/animation byte order is swapped vs other attacks. (Battle_applyDamage)")
 _MEANING = {
+    (4, "animation"): _ANIM, (11, "animation"): _ANIM,
     (2, "animation"): _ANIM, (6, "target_animation"): _ANIM, (22, "target_animation"): _ANIM,
     (20, "target_animation"): _ANIM, (19, "target_animation"): _ANIM, (10, "target_hit_animation"): _ANIM,
     (23, "target_animation"): _ANIM, (26, "target_animation"): _ANIM,
@@ -1021,9 +1022,9 @@ _MEANING = {
         "40% - all leave it clear); Stat to increase is the 0xFF sentinel on that same entry, "
         "since Boost isn't a stat-increase ability."),
     (12, "junction_flag"): (None,
-        "A genuine 24-bit bitfield - each of the 20 junction abilities is assigned its own "
-        "dedicated bit (vanilla data: every entry sets exactly one bit, matching its position in "
-        "the list - HP-J is bit 0, Abilityx4 is bit 19).\n"
+        "A genuine 24-bit bitfield - the 19 non-dummy junction abilities each have their own "
+        "dedicated bit (vanilla data: each non-dummy entry sets exactly one bit; the None entry "
+        "sets none - HP-J is bit 0, Abilityx4 is bit 18).\n"
         "ResetAndParseBattleAndFieldCharacter ORs this value into the character's "
         "FF8CharaAbilities bitmask for every junction ability the character has equipped, so "
         "these bits are what other systems actually test at runtime (e.g. the Double/Triple-cast "
@@ -1315,16 +1316,16 @@ for sid_s, cfg in sections.items():
             # Level/Power mod pair, so it carries its own button).
             if f["name"] == "gf_power":
                 f["formula"] = "gf_damage"
-            # The "Status attack accuracy" byte at 0x1A (struct statusAttackAccuracy) is DEAD:
+            # Byte 0x1A (IDA unusedStatusAttackAccuracy) is DEAD:
             # get_xrefs_to_field returns 0. The GF summon's real status-attack accuracy is at
-            # 0x1B - abilityData[0].abilityUnlocker (Battle_applyDamage GF case @0x490043:
-            # HIT_ATTACK_ACCURACY = abilityData[0].abilityUnlocker). So move the status formula
+            # 0x1B - abilityData[0].summonStatusAccuracyOrUnused (GF case @0x490043).
+            # So move the status formula
             # off 0x1A and onto ability1_unlocker, and mark 0x1A unused.
             if f["name"] == "status_attack_enabler":
                 f.pop("formula", None)
-                f["label"] = "Status attack acc. (unused)"
+                f["label"] = "Unused status attack accuracy"
                 f["readonly"] = True
-                f["help"] = ("Struct byte 0x1A ('statusAttackAccuracy') - genuinely DEAD, read by "
+                f["help"] = ("Byte 0x1A (IDA unusedStatusAttackAccuracy) is unused, read by "
                              "nothing. Deep-audited: 0 field xrefs, 0 direct-address xrefs, AND all "
                              "register-relative accesses checked (the case that hid the attack-flag "
                              "0x20 bug) - the 3 functions that hold a GF-entry pointer (incl. the GF/"
@@ -1337,17 +1338,17 @@ for sid_s, cfg in sections.items():
             # byte (ability1_unlocker, 0x1B), which the engine reuses as the GF summon's status
             # accuracy.
             if f["name"] == "ability1_unlocker":
-                f["label"] = "GF summon status acc."
+                f["label"] = "GF summon status accuracy"
                 f["formula"] = "status_accuracy"
-                f["help"] = ("Despite sitting where 'Ability 1's unlocker byte' would be (0x1B), "
-                             "this byte is the GF SUMMON's status-attack accuracy - "
+                f["help"] = ("GF summon status accuracy (0x1B; IDA "
+                             "abilityData[0].summonStatusAccuracyOrUnused). "
                              "Battle_applyDamage's GF case reads it as HIT_ATTACK_ACCURACY "
                              "(the dedicated 0x1A 'Status attack accuracy' field is dead). "
                              "0 = the summon inflicts no status (e.g. Ifrit); it only matters "
                              "for GFs whose summon carries a Status 1/2. The ability-learning "
                              "code (BuildGFAbilityList) never reads this byte. Click f(x).")
             elif f["name"].endswith("_unlocker"):
-                f["label"] = "Unused (byte+0)"
+                f["label"] = "Unused slot byte"
                 f["readonly"] = True
                 f["help"] = ("Byte+0 of this ability slot. The ability-learning code "
                              "(BuildGFAbilityList) never reads it - the REAL unlock condition is "
@@ -1386,7 +1387,7 @@ for _f in sections["30"]["fields"]:
         _cl = _n[-1]
         _f["help"] = (f"Zell 'Duel' limit break - duration of the Duel input window at crisis "
                       f"level {_cl} (higher crisis = longer).\n"
-                      f"Paired with 'Duel start seq CL{_cl}'.\n" + _LIMIT_TIMER_SECONDS_NOTE)
+                      f"Paired with 'Duel initial sequence CL{_cl}'.\n" + _LIMIT_TIMER_SECONDS_NOTE)
         _f["seconds_factor"] = 1.0 / 15.0
         _f["seconds_note"] = _LIMIT_TIMER_SECONDS_NOTE
     elif _n.startswith("shot_timer_cl"):
@@ -1399,13 +1400,13 @@ for _f in sections["24"]["fields"]:
     if _f["name"].startswith("start_move_"):
         _f["help"] = ("Zell Duel move table: the Duel move performed when this sequence is the "
                       "current one (values >= 6 end the Duel with a finisher). Section 24 = the "
-                      "move graph; the Misc 'Duel start seq' bytes pick the entry point per crisis level.")
+                      "move graph; the Misc 'Duel initial sequence' bytes pick the entry point per crisis level.")
     elif _f["name"].startswith("next_seq_"):
         _f["help"] = ("Zell Duel move table: which sequence index to jump to for the next move, "
                       "selected by the player's button input from this move.")
 
 # IDA-driven normalization: every kernel "Magic ID" EFFECT field is typed
-# SpecialActionID (value 2 = Fire, 102 = Thundara) and indexes the special_action
+# AttackAnimationID (value 2 = Fire, 102 = Thundara) and indexes the effect
 # table, NOT the spell-name list (where 2 = Fira). Point them at special_action.
 # Fields flagged dynamic_lookup are exempt: they are real cross-references to the
 # Magic section's own entries, not effect ids. Today that means Selphie's Slot sets
