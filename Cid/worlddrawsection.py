@@ -4,7 +4,7 @@ import struct
 class WorldDrawSection:
     """Parses and rebuilds Section 34 of a ``wmsetxx.obj`` file (world-map draw points).
 
-    Section 34 only stores the *position* of each world draw point, not its magic.
+    Section 34 stores world draw positions and grouped trigger ranges, not magic.
     Layout (see FF8ModdingWiki - WorldMap wmsetxx File Format):
 
     - ``0x00`` : 44-byte header (5 x 8-byte phase ranges + a 4-byte records base at +40).
@@ -14,9 +14,9 @@ class WorldDrawSection:
     (Draw ID ``129 + N`` in the 1-based numbering used by the Draw editor).
     The magic / refill / high-yield of a world draw point lives in the EXE, not here.
 
-    The header and every other section are preserved untouched: records are edited
-    in place, the record count never changes, so the section size (and therefore the
-    whole file's section-offset table) stays valid.
+    Records and range boundaries are edited in place. Padding, every other section,
+    and the record count stay unchanged, so the whole file's section-offset table
+    stays valid.
     """
 
     NB_SECTION = 48
@@ -82,8 +82,29 @@ class WorldDrawSection:
         """World phases scanning this record, using the loaded file's own range header."""
         offset = self.HEADER_SIZE + index * self.RECORD_SIZE
         groups = list(struct.iter_unpack('<II', self.header[:40]))
-        return tuple(phase for phase, selected in enumerate(phase_groups or self.PHASE_GROUPS)
+        rules = self.PHASE_GROUPS if phase_groups is None else phase_groups
+        return tuple(phase for phase, selected in enumerate(rules)
                      if any(groups[group][0] <= offset < groups[group][1] for group in selected))
+
+    def group_range(self, group):
+        """Record indices [start, end) of one of the five groups."""
+        if not self._loaded:
+            raise ValueError('Load wmsetxx.obj before reading group ranges')
+        if not 0 <= group < 5:
+            raise ValueError('The original wmset supports groups 0-4')
+        start, end = struct.unpack_from('<II', self.header, group * 8)
+        return ((start - self.HEADER_SIZE) // 4, (end - self.HEADER_SIZE) // 4)
+
+    def set_group_range(self, group, start, end):
+        """Edit only the range header; no record IDs or draw status slots are renumbered."""
+        old = self.group_range(group)
+        if not 0 <= start <= end <= len(self.records):
+            raise ValueError('A group must be a contiguous range of existing world draw records')
+        if old == (start, end):
+            return False
+        struct.pack_into('<II', self.header, group * 8,
+                         self.HEADER_SIZE + 4 * start, self.HEADER_SIZE + 4 * end)
+        return True
 
     def set_position(self, index, x, y, sub_id):
         record = self.records[index]

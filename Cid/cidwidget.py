@@ -5,13 +5,15 @@ import os
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QFileDialog, QPushButton, QHBoxLayout, QLabel, QComboBox,
-                             QMessageBox, QSplitter)
+                             QMessageBox, QSplitter, QTabWidget)
 
 from Cid.draw import Draw
 from Cid.drawwidget import DrawWidget
 from Cid.drawillustrationwidget import DrawIllustrationWidget
 from Cid.worlddrawsection import WorldDrawSection
 from Cid.worlddrawgeometry import WorldDrawGeometry
+from Cid.worlddrawphases import WorldDrawPhases
+from Cid.drawgroupswidget import DrawGroupsWidget
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
@@ -24,7 +26,9 @@ class CidWidget(QWidget):
     table for magic / refill / high-yield (exported as a ``.hext``). World draw
     points (129..256) additionally have a world-map position stored in wmset
     Section 34 (X, Y, Sub ID), editable here and on the map, saved back into
-    ``wmsetxx.obj``.
+    ``wmsetxx.obj``. The Groups and phases tab edits the same section's five
+    trigger ranges and the EXE's ordered phase searches, saved as wmset and Hext
+    respectively.
     """
 
     GENERAL_OFFSET = 0x400000
@@ -60,6 +64,7 @@ class CidWidget(QWidget):
         self.exe_loaded = False
         self.wmset_file_path = ""
         self._section = WorldDrawSection()
+        self._phase_rules = WorldDrawPhases()
         self._selected_row = -1
         # Unsaved-change flags: which of the two backing files has edits to write.
         self._exe_dirty = False
@@ -109,9 +114,9 @@ class CidWidget(QWidget):
         self._phase_widget.setToolTip('Story phases used by the OG game; these are not disc numbers.')
         self._layout_top.addWidget(self._phase_widget)
 
-        self._save_hext_button = QPushButton('Export magic / refill (.hext)')
+        self._save_hext_button = QPushButton('Export magic / phase rules (.hext)')
         self._save_hext_button.clicked.connect(self._save_hext_only)
-        self._save_positions_button = QPushButton('Save world positions (wmset)')
+        self._save_positions_button = QPushButton('Save positions / groups (wmset)')
         self._save_positions_button.clicked.connect(self._save_positions_only)
         self._save_status = QLabel()
         self._save_status.setWordWrap(True)
@@ -151,6 +156,15 @@ class CidWidget(QWidget):
         self._splitter.setStretchFactor(0, 3)
         self._splitter.setStretchFactor(1, 2)
 
+        self._groups_widget = DrawGroupsWidget(self)
+        self._groups_widget.set_sources(self._section, self._phase_rules, self._draw_list)
+        self._groups_widget.world_changed.connect(self._on_group_ranges_edited)
+        self._groups_widget.exe_changed.connect(self._on_phase_rules_edited)
+        self.tabs = QTabWidget()
+        self.tabs.addTab(self._splitter, 'Draw points')
+        self.tabs.addTab(self._groups_widget, 'Groups and phases')
+        self.tabs.currentChanged.connect(self._on_tab_changed)
+
         self.window_layout = QVBoxLayout()
         self.setLayout(self.window_layout)
         self.window_layout.addLayout(self._layout_top)
@@ -158,7 +172,7 @@ class CidWidget(QWidget):
         self.window_layout.addWidget(self._save_status)
         self.window_layout.addWidget(self._names_status)
         self.window_layout.addWidget(self._map_status)
-        self.window_layout.addWidget(self._splitter)
+        self.window_layout.addWidget(self.tabs)
 
         # Removing one of the two files from the Opened files panel drops its part of the table.
         self.exe_binding.file_closed.connect(self._on_exe_closed)
@@ -195,6 +209,7 @@ class CidWidget(QWidget):
 
     def _on_exe_edited(self):
         self._exe_dirty = True
+        self._groups_widget.refresh_members()
         self._update_save_status()
 
     def _on_world_edited(self):
@@ -206,9 +221,39 @@ class CidWidget(QWidget):
         self._save_positions_button.setEnabled(self._section.is_loaded())
         exe = 'modified' if self._exe_dirty else ('loaded' if self.exe_loaded else 'not loaded')
         wm = 'modified' if self._wmset_dirty else ('loaded' if self._section.is_loaded() else 'not loaded')
-        self._save_status.setText(f'.hext: magic ID, refill, high yield ({exe}). '
-                                  f'wmset: world X, Y, triangle ({wm}). '
+        self._save_status.setText(f'.hext: magic ID, refill, high yield, phase searches ({exe}). '
+                                  f'wmset: world X, Y, triangle, group ranges ({wm}). '
                                   'Save in the header writes the edited outputs. kernel.bin is read-only.')
+
+    def _on_tab_changed(self, index):
+        for widget in (self._csv_upload_button, self._csv_save_button, self._fullscreen_button,
+                       self._phase_widget, self._map_status):
+            widget.setVisible(index == 0)
+        if index == 1:
+            self._groups_widget.refresh()
+
+    def _refresh_world_phases(self):
+        for i, draw in enumerate(self._draw_list[self.WORLD_EXE_START_INDEX:]):
+            draw.world_phases = (self._section.phases_for_record(i, self._phase_rules.phase_groups)
+                                 if draw.position_loaded and self._section.is_loaded() else ())
+        self._draw_widget.refresh_phases()
+        self._illustration.refresh()
+        self._groups_widget.set_sources(self._section, self._phase_rules, self._draw_list)
+        if self._section.is_loaded():
+            nb = min(self._section.get_nb_record(), 128)
+            count = sum(bool(draw.world_phases) for draw in self._draw_list[128:])
+            self._phase_widget.setItemText(0, f'All phases ({count}/{nb} world records)')
+            source = 'loaded EXE rules' if self._phase_rules.loaded else 'original OG rules (no EXE loaded)'
+            self._phase_widget.setToolTip(f'{nb} world slots; {count} scanned using {source}. '
+                                         'Several records can share an exact trigger.')
+
+    def _on_group_ranges_edited(self):
+        self._refresh_world_phases()
+        self._on_world_edited()
+
+    def _on_phase_rules_edited(self):
+        self._refresh_world_phases()
+        self._on_exe_edited()
 
     def _save_hext_only(self):
         if self._save_hext():
@@ -247,16 +292,20 @@ class CidWidget(QWidget):
                 file_data = in_file.read()
             if len(file_data) < draw_offset + self.NB_DRAW:
                 raise ValueError('File is too short for the OG English 2013 draw table')
+            rules = WorldDrawPhases()
+            rules.load_exe_bytes(file_data)
         except (OSError, ValueError) as error:
             self._show_error('Cid - Failed to read FF8 EXE', str(error))
             return
         for i in range(self.NB_DRAW):
             self._draw_list[i].set_exe_byte(file_data[draw_offset + i])
         self.exe_loaded = True
+        self._phase_rules = rules
         self._exe_dirty = False
         self._draw_widget._exe_loaded = True
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
+        self._refresh_world_phases()
         self._update_save_status()
 
     def load_kernel(self, path):
@@ -271,12 +320,14 @@ class CidWidget(QWidget):
         self.game_data.kernel_names = names
         self._names_status.setText(f'Spell names: {path} (read-only). Draw magic IDs are limited to 0-63.')
         self._draw_widget.set_draw(self._draw_list)
+        self._groups_widget.refresh_members()
         self._illustration.refresh()
 
     def _on_kernel_closed(self, _path):
         self.game_data.kernel_names = {}
         self._names_status.setText('Spell names: load complementary kernel.bin (read-only).')
         self._draw_widget.set_draw(self._draw_list)
+        self._groups_widget.refresh_members()
         self._illustration.refresh()
 
     def load_wmx(self, path):
@@ -322,23 +373,22 @@ class CidWidget(QWidget):
             draw = self._draw_list[self.WORLD_EXE_START_INDEX + i]
             draw.x, draw.y, draw.sub_id = x, y, sub_id
             draw.position_loaded = True
-            draw.world_phases = self._section.phases_for_record(i)
+            draw.world_phases = self._section.phases_for_record(i, self._phase_rules.phase_groups)
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
-        count = sum(bool(draw.world_phases) for draw in self._draw_list[self.WORLD_EXE_START_INDEX:])
-        self._phase_widget.setToolTip(f'{nb} world slots loaded; {count} scanned by the OG world phases. '
-                                      'Several records can share a block or even an exact trigger.')
-        self._phase_widget.setItemText(0, f'All phases ({count}/{nb} world records)')
+        self._refresh_world_phases()
         self._update_save_status()
 
     def _on_exe_closed(self, _path):
         """Closing one source cannot discard edits belonging to the other source."""
         self.exe_loaded = False
+        self._phase_rules = WorldDrawPhases()
         self._draw_widget._exe_loaded = False
         self._exe_dirty = False
         for draw in self._draw_list:
             draw.set_exe_byte(0)
         self._draw_widget.set_draw(self._draw_list)
+        self._refresh_world_phases()
         self._illustration.refresh()
         self._update_save_status()
 
@@ -353,6 +403,7 @@ class CidWidget(QWidget):
         self._phase_widget.setItemText(0, 'All world phases')
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
+        self._refresh_world_phases()
         self._update_save_status()
 
     # ---- saving ------------------------------------------------------------
@@ -390,6 +441,10 @@ class CidWidget(QWidget):
             address = draw_offset + draw_index
             hext_str += f"#Draw ID {draw.get_id()} ({draw.get_magic_name()})\n"
             hext_str += " {:X} = {:02X}\n\n".format(address, draw.get_exe_byte())
+        phase_lines = self._phase_rules.hext_lines(self.GENERAL_OFFSET)
+        if phase_lines:
+            hext_str += '#World draw phase searches: ordered group IDs; FF ends a row\n'
+            hext_str += '\n'.join(phase_lines) + '\n'
         with open(file_to_save, "w", encoding="utf-8") as hext_file:
             hext_file.write(hext_str)
         return True
@@ -459,6 +514,7 @@ class CidWidget(QWidget):
             self._wmset_dirty = True
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
+        self._groups_widget.refresh()
         self._update_save_status()
 
     @staticmethod

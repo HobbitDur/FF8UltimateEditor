@@ -8,7 +8,9 @@ and world-phase lookup are for that build.
 | Edit | Input | Output |
 | --- | --- | --- |
 | Magic ID, refill, high yield, for both field and world points | FF8 EXE | `.hext` patch; the EXE is not overwritten |
+| Ordered draw-group searches for each world phase | FF8 EXE | Same `.hext` patch |
 | World block X/Y and terrain triangle index | `wmsetus.obj` (or the matching language's `wmsetxx.obj`) | Updated `.obj` |
+| Draw-ID ranges defining group contents | `wmsetxx.obj` | Same updated `.obj` |
 | Spell names displayed by CID | Optional complementary `kernel.bin` | None; read-only |
 | Triangle positions displayed by CID | Optional complementary `wmx.obj` | None; read-only |
 
@@ -46,6 +48,41 @@ position bytes. Without wmx, dragging changes only the block bytes and preserves
 the triangle index; that index must exist in the destination block to work in-game.
 The table still allows direct byte edits. Nothing moves until wmset is loaded.
 
+## Editing groups and phase availability
+
+The **Groups and phases** tab edits two parts of the draw-point rules:
+
+- **Group contents**: set the first and last Draw ID included in each group, or
+  clear **Has members** to empty that group. Select a group to inspect its member
+  IDs, spell names (when kernel.bin is loaded), default locations and phase list.
+- **Phase searches**: choose up to four group searches per world phase, in order.
+  Choose **None** to remove a search; later groups shift left. An empty row makes
+  that phase scan no draw groups.
+
+The original format has **five groups (0-4)**. A group is one contiguous range,
+and ranges may overlap. There is no independent membership bit per draw point.
+Changing a range preserves draw IDs, magic bytes and saved draw-status IDs.
+Adding a sixth group would require changing the executable's format handling:
+it reads the records-base pointer at header offset 40, directly after five ranges.
+CID therefore exposes the five existing groups rather than inserting another
+range into the records-base pointer.
+
+The game searches groups in the specified order, and records in ascending ID
+order within each group. The first record matching the player's block and
+triangle wins. The tab reports distinct draw IDs sharing a trigger in the same
+phase, identifying the ID that matches first. Reordering searches can change
+which spell is obtained at that trigger.
+
+Group-range edits mark **wmset** modified. Phase-search edits mark **Hext**
+modified. Both immediately refresh the draw table's phase column, map filter
+membership and the member preview. Opening files in either order works: the
+phase searches come from the **loaded EXE**, including its existing custom rules.
+Until an EXE is loaded, phase editing is disabled and the preview identifies its
+use of the original OG rules. The Hext output includes all 20 loaded phase-table
+bytes, preserving negative terminators and ignored trailing bytes in unchanged
+rows; surrounding EXE data is not exported by this table. CSV continues to carry
+only individual draw data and positions, not group ranges or phase rules.
+
 ## Story dependence is real; disc labels are only a guide
 
 `WorldMap_DrawPointsParsing_wmset35` at VA `0x54F920` selects up to four ranges
@@ -61,10 +98,13 @@ at VA `0xC76770` is:
 | 3 | 0, 2, 3, 4 |
 | 4 | 0, 2, 3, 4 |
 
-CID reads each range's offsets from the loaded wmset. It displays the resulting
-phase membership per record and can filter map markers by phase. This does not
-edit story conditions or the range header. Physical accessibility (vehicles,
-barriers and terrain) is separate from being scanned by this lookup.
+CID reads each range's offsets from the loaded wmset and reads the phase table
+from EXE file offset `0x876770` (20 bytes for five rows). The editor changes these
+rules, without modifying the scripts that advance the saved phase. The saved
+selector is field-script variable **266**, `WorldmapVariantIndex`, copied into
+the runtime phase during world-map initialization. Phase numbers are **not disc
+numbers**; there are five supported phases and four discs. Physical accessibility
+(vehicles, barriers and terrain) is separate from being scanned by this lookup.
 
 In the original `wmsetus.obj`, Draw ID 246 is scanned only in phase 0; ID 247
 is scanned in phases 1-4. They have the same block and triangle, but their EXE
@@ -98,7 +138,8 @@ Corrected location references include:
 
 Changing a location label does not change game data. Every original world record's
 triangle index resolves in the base `wmx.obj`. No-edit wmset saves are byte-exact;
-position edits preserve the phase header, padding and every other section.
+position edits preserve the phase header, padding and every other section. Group
+edits change only the selected range's eight header bytes.
 
 References: [Papastew draw-point guide](https://www.papastew.co.uk/ff8draw),
 [world-map wmset format](https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/worldmap/worldmap-wmsetxx-file-format/),

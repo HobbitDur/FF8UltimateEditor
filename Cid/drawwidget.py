@@ -52,6 +52,14 @@ class DrawWidget(QTableWidget):
     def get_draw(self) -> [Draw]:
         return self._draw
 
+    def refresh_phases(self):
+        """Update derived availability without rebuilding the editable cells or selection."""
+        for row, draw in enumerate(self._draw):
+            item = self.item(row, 8)
+            if item is not None:
+                phases = ', '.join(map(str, draw.world_phases)) or 'Not scanned'
+                item.setText(phases if draw.position_loaded and draw.is_world() else '')
+
     def setup_table(self):
         self.setHorizontalHeaderLabels(self.COLUMNS)
         for column in range(len(self.COLUMNS)):
