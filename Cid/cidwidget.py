@@ -98,12 +98,6 @@ class CidWidget(QWidget):
         self._csv_upload_button = self._make_button(icon_path, 'csv_upload.png', "Upload csv", self._open_csv)
         self._csv_save_button = self._make_button(icon_path, 'csv_save.png', "Save to csv", self._save_csv)
 
-        self._fullscreen_button = QPushButton("Illustration full screen")
-        self._fullscreen_button.setCheckable(True)
-        self._fullscreen_button.setProperty('read_only_preview', True)
-        self._fullscreen_button.setToolTip("Fill the CID tool with the illustration; click again or press Escape to return")
-        self._fullscreen_button.toggled.connect(self._on_fullscreen_toggled)
-
         self._version_label = QLabel("Game version")
         self._version_widget = QComboBox(parent=self)
         self._version_widget.addItems(self.VERSION_LIST)
@@ -161,17 +155,17 @@ class CidWidget(QWidget):
         self._undo_stack = UndoStack(self._undo_capture, self._undo_restore)
 
         self._draw_widget = DrawWidget(self.game_data, self._draw_list, parent=self)
+        # Resizing/scrolling the table changes its scrollbars, never draw data.
+        for scrollbar in (self._draw_widget.horizontalScrollBar(), self._draw_widget.verticalScrollBar()):
+            scrollbar.setProperty('read_only_preview', True)
         self._illustration = DrawIllustrationWidget(os.path.join(icon_path, 'map2.png'), self._draw_field_map,
                                                     field_images_folder, parent=self)
         self._illustration.set_draw_list(self._draw_list)
         self._illustration.map.set_phases(self._phase_checks)
 
-        # Keep the expand/restore control beside the illustration in both modes.
-        self._illustration_panel = QWidget()
-        panel_layout = QHBoxLayout(self._illustration_panel)
-        panel_layout.setContentsMargins(0, 0, 0, 0)
-        panel_layout.addWidget(self._fullscreen_button, 0, Qt.AlignmentFlag.AlignTop)
-        panel_layout.addWidget(self._illustration, 1)
+        # The expand/restore control belongs to the world map, over its background.
+        self._fullscreen_button = self._illustration.map.fullscreen_button
+        self._fullscreen_button.toggled.connect(self._on_fullscreen_toggled)
         self._normal_splitter_sizes = None
 
         # Wiring: table <-> illustration
@@ -189,7 +183,7 @@ class CidWidget(QWidget):
 
         self._splitter = QSplitter(Qt.Orientation.Vertical)
         self._splitter.addWidget(self._draw_widget)
-        self._splitter.addWidget(self._illustration_panel)
+        self._splitter.addWidget(self._illustration)
         self._splitter.setStretchFactor(0, 3)
         self._splitter.setStretchFactor(1, 2)
 
@@ -234,6 +228,12 @@ class CidWidget(QWidget):
         self.wmx_binding.load_opened_file()
         self._apply_draw_filters()
         self._update_save_status()
+        # Start with a large world map and no implicit field/world selection.
+        with QSignalBlocker(self._draw_widget):
+            self._draw_widget.setCurrentCell(-1, -1)
+            self._draw_widget.clearSelection()
+        self._on_selection_changed(-1)
+        self._fullscreen_button.setChecked(True)
 
     def file_bindings(self):
         """Two edited sources and two optional read-only complementary files."""
@@ -293,7 +293,7 @@ class CidWidget(QWidget):
         if selected >= 0 and self._draw_list[selected].is_world():
             prefer_world = True
         if selected not in visible or (prefer_world and world and not self._draw_list[selected].is_world()):
-            if selected < 0 and not self.exe_loaded and not self._section.is_loaded():
+            if selected < 0:
                 selected = -1
             else:
                 selected = (world[0] if prefer_world and world else visible[0]) if visible else -1
@@ -390,7 +390,7 @@ class CidWidget(QWidget):
                                   'Save in the header writes the edited outputs. kernel.bin is read-only.')
 
     def _on_tab_changed(self, index):
-        for widget in (self._csv_upload_button, self._csv_save_button, self._fullscreen_button,
+        for widget in (self._csv_upload_button, self._csv_save_button,
                        self._field_check, self._phase_widget, self._map_status):
             widget.setVisible(index == 0)
         if index == 1:
@@ -430,7 +430,12 @@ class CidWidget(QWidget):
     def _on_selection_changed(self, row):
         self._selected_row = row
         draw = self._draw_list[row] if 0 <= row < len(self._draw_list) else None
-        self._illustration.set_selected(row, draw)
+        with QSignalBlocker(self._draw_widget):
+            if draw is not None and not draw.is_world() and self._fullscreen_button.isChecked():
+                self._fullscreen_button.setChecked(False)
+            self._illustration.set_selected(row, draw)
+            if self._draw_widget.currentRow() != row:
+                self._draw_widget.setCurrentCell(row, 0 if row >= 0 else -1)
 
     def _on_map_selection_picked(self, row):
         self._draw_widget.setCurrentCell(row, 0)
@@ -447,18 +452,31 @@ class CidWidget(QWidget):
         self._illustration.refresh()
 
     def _on_fullscreen_toggled(self, checked):
-        if checked:
-            self._normal_splitter_sizes = self._splitter.sizes()
-            self._fullscreen_layout.addWidget(self._illustration_panel)
-            self._view_stack.setCurrentWidget(self._fullscreen_page)
-        else:
-            self._splitter.addWidget(self._illustration_panel)
-            self._view_stack.setCurrentWidget(self._normal_page)
-            if self._normal_splitter_sizes:
-                self._splitter.setSizes(self._normal_splitter_sizes)
-        self._illustration_panel.show()
-        self._fullscreen_button.setText('Exit full screen' if checked else 'Illustration full screen')
-        self._fullscreen_button.setFocus()
+        if checked and 0 <= self._selected_row < 128:
+            self._fullscreen_button.setChecked(False)
+            return
+        # Showing the table can emit a transient current-cell change. Keep the
+        # real selection intact while moving the preview between containers.
+        with QSignalBlocker(self._draw_widget):
+            if checked:
+                sizes = self._splitter.sizes()
+                if self._splitter.isVisible() and all(size > 0 for size in sizes):
+                    self._normal_splitter_sizes = sizes
+                self._fullscreen_layout.addWidget(self._illustration)
+                self._view_stack.setCurrentWidget(self._fullscreen_page)
+            else:
+                self._splitter.addWidget(self._illustration)
+                self._view_stack.setCurrentWidget(self._normal_page)
+                self._splitter.setSizes(self._normal_splitter_sizes or [600, 400])
+            self._draw_widget.setCurrentCell(self._selected_row, 0 if self._selected_row >= 0 else -1)
+            if self._selected_row < 0:
+                self._draw_widget.clearSelection()
+        self._illustration.show()
+        self._fullscreen_button.setToolTip('Restore the editor (also: Escape)' if checked else
+                                           'Fill the CID tool with the world map')
+        if self._selected_row < 0 or self._draw_list[self._selected_row].is_world():
+            self._fullscreen_button.setFocus()
+        self._sync_dirty_marker()
 
     # ---- loading -----------------------------------------------------------
     def load_exe(self, path):

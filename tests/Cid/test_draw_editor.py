@@ -266,7 +266,7 @@ def test_phase_checkboxes_combine_variants_and_unused_without_recording_edits(wi
     checks[1].click()
     checks[2].click()
     assert [d.get_id() for d in widget._draw_list if view._visible(d)] == [256]
-    assert widget._draw_widget.currentRow() == 255
+    assert widget._draw_widget.currentRow() == -1  # filters do not invent a selection
     assert widget._illustration._stack.currentWidget() is view
     assert view._hits(view._marker(widget._draw_list[255], view._image_rect())) == [255]
     assert '1 record' in checks[DrawMapWidget.NO_PHASE].toolTip()
@@ -314,19 +314,32 @@ def test_field_and_phase_filters_hide_rows_without_changing_data_or_history(widg
 
 
 def test_fullscreen_fills_cid_and_restores_layout_with_button_and_escape(widget, app, tmp_path):
+    view, button = widget._illustration.map, widget._fullscreen_button
+    assert button.isChecked() and button.text() == 'Map full screen'
+    assert widget._selected_row == -1 and widget._draw_widget.currentRow() == -1
+    assert widget._illustration._stack.currentWidget() is view
     widget.load_wmset(str(_wmset(tmp_path)))
     widget.resize(1450, 900)
     widget.show()
     app.processEvents()
     dirty = install_dirty_tracking(widget)
     before = widget._undo_capture()
-    view, button = widget._illustration.map, widget._fullscreen_button
+    assert widget._selected_row == -1 and view._selected_index == -1
+    assert widget._view_stack.currentWidget() is widget._fullscreen_page
+    assert button.parentWidget() is view
+    assert button.pos() == QPoint(12, 12)
+    assert view.width() == widget._illustration.width()
+    assert view.height() == widget._view_stack.height()
+    QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+    app.processEvents()
     assert widget._phase_widget.title() == 'Phase'
     assert len({check.y() for check in widget._phase_checks.values()}) == 1
     assert all(check.isChecked() for check in widget._phase_checks.values())
     assert view._phases == frozenset((*range(5), DrawMapWidget.NO_PHASE))
-    assert button.mapTo(widget, QPoint()).x() < view.mapTo(widget, QPoint()).x()
+    assert button.geometry().intersects(view.rect())
     normal_height = widget._illustration.height()
+    assert normal_height >= view.minimumHeight()
+    assert widget._draw_widget.height() > 0
     sizes = widget._splitter.sizes()
     view._zoom, view._pan = 2., QPointF(20, -10)
     for use_escape in (False, True):
@@ -334,9 +347,9 @@ def test_fullscreen_fills_cid_and_restores_layout_with_button_and_escape(widget,
         app.processEvents()
         assert widget._view_stack.currentWidget() is widget._fullscreen_page
         assert not widget.tabs.isVisible() and not widget._phase_widget.isVisible()
-        assert button.isVisible() and 'Exit' in button.text()
+        assert button.isVisible() and button.text() == 'Map full screen'
         assert widget._illustration.height() > normal_height
-        assert widget._illustration_panel.height() == widget._view_stack.height()
+        assert widget._illustration.height() == widget._view_stack.height()
         assert view._zoom == 2 and view._pan == QPointF(20, -10)
         if use_escape:
             QTest.keyClick(button, Qt.Key.Key_Escape)
@@ -345,9 +358,40 @@ def test_fullscreen_fills_cid_and_restores_layout_with_button_and_escape(widget,
         app.processEvents()
         assert not button.isChecked()
         assert widget.tabs.isVisible() and widget._phase_widget.isVisible()
-        assert widget._splitter.widget(1) is widget._illustration_panel
+        assert widget._splitter.widget(1) is widget._illustration
         assert widget._splitter.sizes() == sizes
         assert button.isVisible()
+    assert widget._undo_capture() == before and not widget._undo_stack.can_undo()
+    assert not dirty.dirty
+
+
+def test_fullscreen_is_world_map_only_and_empty_selection_shows_the_map(widget, app, tmp_path):
+    widget.load_wmset(str(_wmset(tmp_path)))
+    widget.resize(1450, 900)
+    widget.show()
+    app.processEvents()
+    view, button = widget._illustration.map, widget._fullscreen_button
+    dirty = install_dirty_tracking(widget)
+    before = widget._undo_capture()
+    assert widget._selected_row == -1 and button.isChecked()
+    # The overlay is an actual child control: clicking it never selects/moves a marker.
+    picked, selected = QSignalSpy(view.position_picked), QSignalSpy(view.selection_picked)
+    QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+    assert not picked and not selected and widget._selected_row == -1
+    QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+    widget._draw_widget.setCurrentCell(0, 0)
+    app.processEvents()
+    assert not button.isChecked() and not button.isVisible()
+    assert widget._view_stack.currentWidget() is widget._normal_page
+    assert widget._illustration._stack.currentWidget() is widget._illustration.field_view
+    button.setChecked(True)  # even a programmatic attempt cannot expand a field illustration
+    assert not button.isChecked()
+    widget._draw_widget.setCurrentCell(-1, -1)
+    app.processEvents()
+    assert widget._selected_row == -1 and widget._illustration._stack.currentWidget() is view
+    assert button.isVisible() and view._selected_index == -1
+    QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+    assert button.isChecked() and widget._view_stack.currentWidget() is widget._fullscreen_page
     assert widget._undo_capture() == before and not widget._undo_stack.can_undo()
     assert not dirty.dirty
 

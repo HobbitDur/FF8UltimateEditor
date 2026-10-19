@@ -37,6 +37,17 @@ class DrawMapWidget(QWidget):
         self.setToolTip('Click a marker to select; click and drag any marker to move. Ctrl+Z undoes a move. Mouse wheel zooms. '
                         'Right drag pans; wheel click resets the view. '
                         'Without wmx.obj, markers show approximate block centres; numbers count overlapping records.')
+        self.fullscreen_button = QPushButton('Map full screen', self)
+        self.fullscreen_button.setCheckable(True)
+        self.fullscreen_button.setProperty('read_only_preview', True)
+        self.fullscreen_button.setToolTip('Fill the CID tool with the world map')
+        self.fullscreen_button.setStyleSheet(
+            'QPushButton { color: #e5ebf6; background: #202b48; border: 1px solid #63708e; '
+            'border-radius: 3px; padding: 5px 9px; } '
+            'QPushButton:hover { background: #304367; } '
+            'QPushButton:checked { background: #315b82; }')
+        self.fullscreen_button.adjustSize()
+        self.fullscreen_button.move(12, 12)
         self._guide = QWidget(self)
         self._guide.setProperty('read_only_preview', True)
         self._guide.setStyleSheet('QLabel, QCheckBox { color: #e5ebf6; }')

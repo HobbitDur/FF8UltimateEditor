@@ -84,10 +84,14 @@ The table still allows direct byte edits. Nothing moves until wmset is loaded.
 **Right-drag** pans the map. The **mouse wheel** zooms around the pointer;
 **middle-click** (pressing the wheel) resets zoom and recentres the map. The
 **Reset view** button provides the same action without a working middle button.
-**Illustration full screen**, to the left of the illustration, fills the CID tool
-area with the map or field image, hiding the filters, status text, tabs and table.
-The button stays on the left as **Exit full screen**; Escape also restores the
-normal layout and previous table/map split. Pan and zoom are retained.
+**Map full screen** sits over the map's background at the upper left and fills
+the CID tool area with the world map, hiding the filters, status text, tabs and
+table. The button stays on the map; clicking it again or pressing Escape restores
+the normal layout and previous table/map split. Pan and zoom are retained.
+CID starts with the world map enlarged and no draw point selected. Loading files
+or changing filters preserves an empty selection. With nothing selected, the
+preview stays on the world map. Selecting a field point shows its field images
+in the normal editor; the map fullscreen control belongs only to the world map.
 
 **Locations** overlays named city/landmark references from the loaded wmset:
 Section 30 supplies world coordinates and Section 31 supplies FF8-encoded names.

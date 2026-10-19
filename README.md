@@ -65,7 +65,8 @@ markers count overlapping records; without terrain their block-centre positions 
 Drag any marker directly; **Ctrl+Z** undoes edits and **Ctrl+Shift+Z / Ctrl+Y** redoes them.
 **Mesh** shows the terrain triangles. **Locations** adds city/landmark references from wmset's names and coordinates.
 Right-drag pans; wheel-click or **Reset view** resets zoom and centres the map.
-**Illustration full screen**, on the left of the map, fills the CID tool area; click again or press Escape to restore the editor.
+**Map full screen**, over the map's background at the upper left, fills the CID tool area; click again or press Escape to restore the editor.
+CID starts with the world map enlarged and no draw point selected. Field images stay in the normal editor.
 The map's right-hand guide lists the controls.
 The shared **Save** button writes EXE `.hext` data and/or world positions
 in `wmsetxx.obj`, according to the edited data. The **Groups and phases** tab
