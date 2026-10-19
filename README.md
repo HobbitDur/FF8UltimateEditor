@@ -66,7 +66,7 @@ Drag any marker directly; **Ctrl+Z** undoes edits and **Ctrl+Shift+Z / Ctrl+Y** 
 **Mesh** shows the terrain triangles. **Locations** adds city/landmark references from wmset's names and coordinates.
 Right-drag pans; wheel-click or **Reset view** resets zoom and centres the map.
 **Map full screen**, over the map's background at the upper left, fills the CID tool area; click again or press Escape to restore the editor.
-CID starts with the world map enlarged and no draw point selected. Field images stay in the normal editor.
+CID starts in the normal editor with the world map visible and no draw point selected. Map fullscreen is off by default and is not saved. Field images stay in the normal editor.
 The map's right-hand guide lists the controls.
 The shared **Save** button writes EXE `.hext` data and/or world positions
 in `wmsetxx.obj`, according to the edited data. The **Groups and phases** tab

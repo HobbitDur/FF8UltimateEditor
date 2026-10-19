@@ -315,7 +315,7 @@ def test_field_and_phase_filters_hide_rows_without_changing_data_or_history(widg
 
 def test_fullscreen_fills_cid_and_restores_layout_with_button_and_escape(widget, app, tmp_path):
     view, button = widget._illustration.map, widget._fullscreen_button
-    assert button.isChecked() and button.text() == 'Map full screen'
+    assert not button.isChecked() and button.text() == 'Map full screen'
     assert widget._selected_row == -1 and widget._draw_widget.currentRow() == -1
     assert widget._illustration._stack.currentWidget() is view
     widget.load_wmset(str(_wmset(tmp_path)))
@@ -325,13 +325,11 @@ def test_fullscreen_fills_cid_and_restores_layout_with_button_and_escape(widget,
     dirty = install_dirty_tracking(widget)
     before = widget._undo_capture()
     assert widget._selected_row == -1 and view._selected_index == -1
-    assert widget._view_stack.currentWidget() is widget._fullscreen_page
+    assert widget._view_stack.currentWidget() is widget._normal_page
     assert button.parentWidget() is view
     assert button.pos() == QPoint(12, 12)
     assert view.width() == widget._illustration.width()
-    assert view.height() == widget._view_stack.height()
-    QTest.mouseClick(button, Qt.MouseButton.LeftButton)
-    app.processEvents()
+    assert widget.tabs.isVisible() and widget._draw_widget.isVisible()
     assert widget._phase_widget.title() == 'Phase'
     assert len({check.y() for check in widget._phase_checks.values()}) == 1
     assert all(check.isChecked() for check in widget._phase_checks.values())
@@ -373,12 +371,11 @@ def test_fullscreen_is_world_map_only_and_empty_selection_shows_the_map(widget, 
     view, button = widget._illustration.map, widget._fullscreen_button
     dirty = install_dirty_tracking(widget)
     before = widget._undo_capture()
-    assert widget._selected_row == -1 and button.isChecked()
+    assert widget._selected_row == -1 and not button.isChecked()
     # The overlay is an actual child control: clicking it never selects/moves a marker.
     picked, selected = QSignalSpy(view.position_picked), QSignalSpy(view.selection_picked)
     QTest.mouseClick(button, Qt.MouseButton.LeftButton)
     assert not picked and not selected and widget._selected_row == -1
-    QTest.mouseClick(button, Qt.MouseButton.LeftButton)
     widget._draw_widget.setCurrentCell(0, 0)
     app.processEvents()
     assert not button.isChecked() and not button.isVisible()

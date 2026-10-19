@@ -88,7 +88,8 @@ The table still allows direct byte edits. Nothing moves until wmset is loaded.
 the CID tool area with the world map, hiding the filters, status text, tabs and
 table. The button stays on the map; clicking it again or pressing Escape restores
 the normal layout and previous table/map split. Pan and zoom are retained.
-CID starts with the world map enlarged and no draw point selected. Loading files
+CID starts in the normal editor with the world map visible and no draw point
+selected. Map fullscreen is off by default and is not saved. Loading files
 or changing filters preserves an empty selection. With nothing selected, the
 preview stays on the world map. Selecting a field point shows its field images
 in the normal editor; the map fullscreen control belongs only to the world map.

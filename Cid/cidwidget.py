@@ -228,12 +228,12 @@ class CidWidget(QWidget):
         self.wmx_binding.load_opened_file()
         self._apply_draw_filters()
         self._update_save_status()
-        # Start with a large world map and no implicit field/world selection.
+        # Fullscreen is a temporary view action; always start in the normal editor.
         with QSignalBlocker(self._draw_widget):
             self._draw_widget.setCurrentCell(-1, -1)
             self._draw_widget.clearSelection()
         self._on_selection_changed(-1)
-        self._fullscreen_button.setChecked(True)
+        self._fullscreen_button.setChecked(False)
 
     def file_bindings(self):
         """Two edited sources and two optional read-only complementary files."""
