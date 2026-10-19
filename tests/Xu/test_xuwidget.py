@@ -198,3 +198,20 @@ def test_header_toolbar_lines(qapp, tmp_path, monkeypatch):
     w._import_camera()
     assert camera_starts[1] == str(exe_folder)
     assert registry.last_folder("FF8 exe") == str(exe_folder)  # shared with Cid/ShumiTranslator
+
+
+def test_character_weapons_listed(widget, tmp_path):
+    """Imported weapons (d?w###.dat) are listed for their character, first one selected; a
+    monster row (or a character without imported weapons) hides the list."""
+    w, _path = widget
+    w.add_models([str(tmp_path / name) for name in ("d0w001.dat", "d0w000.dat", "d4w000.dat")])
+    assert w._weapon_paths == {0: [str(tmp_path / "d0w000.dat"), str(tmp_path / "d0w001.dat")],
+                               4: [str(tmp_path / "d4w000.dat")]}
+    w.show()
+    w.row_list.setCurrentRow(0)  # Squall
+    combo = w.preview.weapon_combo
+    assert [combo.itemText(i) for i in range(combo.count())] == ["No weapon", "d0w000.dat", "d0w001.dat"]
+    assert combo.currentText() == "d0w000.dat" and not combo.isHidden()
+    w.row_list.setCurrentRow(87)  # a monster
+    assert combo.count() == 0 and combo.isHidden()
+    w.hide()

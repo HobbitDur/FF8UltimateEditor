@@ -22,7 +22,7 @@ by -height/32 towards the aim level, stopping at 0.
 import math
 
 import numpy as np
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, QSignalBlocker
 from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QCheckBox,
                              QSizePolicy, QSpinBox)
@@ -151,13 +151,25 @@ class XuPreviewPanel(QWidget):
                                   "preview - only enabled when the text has more than 7 lines.")
         self.page_spin.valueChanged.connect(lambda _v: self._refresh_hud())
 
+        # Weapon shown in a character's hand: the imported d?w###.dat of that character.
+        # Hidden when none is imported (the body is shown alone).
+        self.weapon_label = QLabel("Weapon:")
+        self.weapon_combo = QComboBox()
+        self.weapon_combo.setToolTip("Weapon shown in the character's hand (the imported d?w###.dat files of\n"
+                                     "this character), played on the same animation")
+        self.weapon_combo.currentIndexChanged.connect(lambda _i: self._apply_weapon())
+        self._weapon_managers = {}  # path -> IfritManager, loaded once
+
         controls = QHBoxLayout()
         controls.addWidget(self.mode_combo)
         controls.addWidget(self.turn_check)
         controls.addWidget(self.animate_check)
         controls.addWidget(self.text_check)
         controls.addWidget(self.page_spin)
+        controls.addWidget(self.weapon_label)
+        controls.addWidget(self.weapon_combo)
         controls.addStretch(1)
+        self.set_weapon_choices([])
 
         self._hud_image = None
         self.readout = QLabel()
@@ -176,15 +188,8 @@ class XuPreviewPanel(QWidget):
     # ------------------------------------------------------------- model
     def load_model(self, path: str):
         """Load a battle model; raises on a file the 3D viewer cannot show."""
-        from Ifrit.ifritmanager import IfritManager
         from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
-        if self._game_data is None:
-            from FF8GameData.gamedata import GameData
-            self._game_data = GameData(self._game_data_folder)
-            self._game_data.load_all()
-        manager = IfritManager(self._game_data_folder, game_data=self._game_data)
-        manager.init_from_file(path)
-        manager._ensure_matrices()
+        manager = self._new_manager(path)
         self._manager = manager
         if self._view is not None:
             self._layout.removeWidget(self._view)
@@ -201,11 +206,57 @@ class XuPreviewPanel(QWidget):
             self._view.timer.stop()  # frames are driven here
         self._placeholder.hide()
         self.model_path = path
+        self._apply_weapon()  # the new body gets the selected weapon back
         self._restart()
+
+    def _new_manager(self, path):
+        from Ifrit.ifritmanager import IfritManager
+        if self._game_data is None:
+            from FF8GameData.gamedata import GameData
+            self._game_data = GameData(self._game_data_folder)
+            self._game_data.load_all()
+        manager = IfritManager(self._game_data_folder, game_data=self._game_data)
+        manager.init_from_file(path)
+        manager._ensure_matrices()
+        return manager
 
     @property
     def has_model(self):
         return self._manager is not None
+
+    # ------------------------------------------------------------- weapon
+    def set_weapon_choices(self, choices):
+        """[(label, path)] of the shown character's weapons; the first one is shown when any."""
+        current = self.weapon_combo.currentData()
+        with QSignalBlocker(self.weapon_combo):
+            self.weapon_combo.clear()
+            if choices:
+                self.weapon_combo.addItem("No weapon", None)
+            for label, path in choices:
+                self.weapon_combo.addItem(label, path)
+            paths = [path for _label, path in choices]
+            self.weapon_combo.setCurrentIndex(
+                self.weapon_combo.findData(current) if current in paths else (1 if choices else 0))
+        visible = bool(choices)
+        self.weapon_label.setVisible(visible)
+        self.weapon_combo.setVisible(visible)
+        self._apply_weapon()
+
+    def _apply_weapon(self):
+        if self._view is None:
+            return
+        path = self.weapon_combo.currentData()
+        manager = None
+        if path:
+            manager = self._weapon_managers.get(path)
+            if manager is None:
+                try:
+                    manager = self._weapon_managers[path] = self._new_manager(path)
+                except Exception:  # a weapon file the viewer cannot read: show the body alone
+                    manager = None
+        if manager is not getattr(self._view, "_weapon_manager", None):
+            self._view.set_weapon_options([("Weapon", manager)])
+            self._apply()
 
     def model_name(self) -> str:
         """The name the loaded .dat carries (what the Scan screen shows), or ""."""

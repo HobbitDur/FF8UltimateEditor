@@ -23,6 +23,7 @@ CAMERA_DIALOG_KEY = "Xu scan camera rows"
 TEXT_COUNT_FOR_ALL_MONSTERS = LAST_C0M_FILE + 16 + 1  # com_id 0..215
 _C0M_FILE = re.compile(r"^c0m(\d{3})\.dat$", re.IGNORECASE)
 _CHARACTER_FILE = re.compile(r"^d([0-9a-f])c(\d{3})\.dat$", re.IGNORECASE)
+_WEAPON_FILE = re.compile(r"^d([0-9a-f])w(\d{3})\.dat$", re.IGNORECASE)
 
 FIELD_HELP = {
     "distance": ("Distance", "How far the camera stands from the aim point.\n"
@@ -112,6 +113,7 @@ class XuWidget(QWidget):
         self._spinboxes = {}
         self._checkboxes = {}
         self._model_paths = {}           # com_id -> opened c0m###.dat / d?c###.dat
+        self._weapon_paths = {}          # character com_id -> [opened d?w###.dat]
         self._pending_follow_row = None  # model to load once the tool is shown
         self._translation_widget = None
 
@@ -282,7 +284,7 @@ class XuWidget(QWidget):
     def complementary_entries(self):
         """The header Import read-only menu: the files the preview uses, never edited here."""
         return [("Game font: mngrp.bin (sysfnt.TEX/.tdw next to it)", self._import_font),
-                ("Battle models: c0m###.dat / d?c###.dat (several, Ctrl+A for all)", self._import_models)]
+                ("Battle models: c0m###.dat / d?c###.dat, weapons d?w###.dat (several, Ctrl+A for all)", self._import_models)]
 
     def _import_font(self):
         path = self.mngrp_binding.open_dialog(self, default_dir=self.file_registry.last_folder("mngrp.bin"))
@@ -292,7 +294,7 @@ class XuWidget(QWidget):
     def _import_models(self):
         paths = QFileDialog.getOpenFileNames(
             self, "Battle models to preview (Ctrl+A for all)", self._start_folder(MODEL_FOLDER_KEY),
-            "Monster and character battle models (c0m*.dat d?c*.dat)")[0]
+            "Monster, character and weapon battle models (c0m*.dat d?c*.dat d?w*.dat)")[0]
         if paths:
             self.add_models(paths)  # remembers the models' folder
 
@@ -675,10 +677,19 @@ class XuWidget(QWidget):
         return None
 
     def add_models(self, paths):
-        """Make c0m###.dat / d?c###.dat files available to the preview (other names are ignored).
-        A character has several files (one per costume): the first one opened is kept."""
+        """Make c0m###.dat / d?c###.dat / d?w###.dat files available to the preview (other names
+        are ignored). A character has several body files (one per costume): the first one opened
+        is kept. Weapons are listed for their character (d?w with the same digit as d?c)."""
         added = 0
         for path in paths:
+            weapon = _WEAPON_FILE.match(os.path.basename(path))
+            if weapon:
+                weapons = self._weapon_paths.setdefault(int(weapon.group(1), 16), [])
+                if path not in weapons:
+                    weapons.append(path)
+                    weapons.sort(key=lambda p: os.path.basename(p).lower())
+                    added += 1
+                continue
             com_id = self.model_com_id(path)
             if com_id is not None and (com_id >= FIRST_MONSTER_ROW or com_id not in self._model_paths):
                 self._model_paths[com_id] = path
@@ -701,6 +712,9 @@ class XuWidget(QWidget):
             self._pending_follow_row = row
             return
         com_id = self._model_com_id_for_row(row)
+        # A character's imported weapons (optional): the preview lists them, first one shown
+        weapons = self._weapon_paths.get(com_id, []) if com_id is not None and com_id < FIRST_MONSTER_ROW else []
+        self.preview.set_weapon_choices([(os.path.basename(path), path) for path in weapons])
         if com_id is None or com_id > LAST_C0M_FILE + FIRST_MONSTER_ROW:
             self._set_model_status("No battle model for this row.")
             return
