@@ -5,9 +5,19 @@ from pathlib import Path
 import numpy as np
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
-                             QSpinBox, QPushButton, QFileDialog, QGroupBox)
+                             QSpinBox, QPushButton, QFileDialog, QSizePolicy)
 
 from FF8GameData.dat.battlecamera import BattleCameraContext, CameraActor, CameraPose
+from Common.collapsiblesection import CollapsibleSection
+
+
+# computeSomeStatusData (EN 47DBA0), table B81030..B81047. The game chooses
+# a formation by occupied party count, then assigns entries in party-slot order.
+PARTY_FORMATIONS = {
+    1: ((0, 0, 1800),),
+    2: ((-1000, 0, 1800), (1000, 0, 1800)),
+    3: ((-1200, 0, 2100), (0, 0, 1500), (1200, 0, 2100)),
+}
 
 
 def model_scale(manager):
@@ -75,27 +85,37 @@ class BattlePreviewSetup(QWidget):
         self.main_yaw = 0.
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        from .encounterpreview import EncounterPicker
-        self.encounters = EncounterPicker(manager, file_registry)
-        self.encounters.changed.connect(self._encounter_changed)
-        layout.addWidget(self.encounters)
         row = QHBoxLayout()
         self.view_mode = QComboBox()
         self.view_mode.addItems(['Game camera', 'Free camera'])
         self.view_mode.setToolTip('Free camera: orbit with the mouse to inspect the scene.')
         row.addWidget(self.view_mode)
-        self.group = QGroupBox('Battle setup')
-        self.group.setCheckable(True)
-        self.group.setChecked(False)
+        self.group = CollapsibleSection('Battle setup', expanded=False)
+        self.group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.options = QWidget()
-        group_layout = QVBoxLayout(self.group)
-        group_layout.addWidget(self.options)
-        self.group.toggled.connect(self.options.setVisible)
-        self.options.hide()
+        self.group.content_layout().addWidget(self.options)
         layout.addLayout(row)
         layout.addWidget(self.group)
         options = QVBoxLayout(self.options)
         options.setContentsMargins(0, 0, 0, 0)
+        from .encounterpreview import EncounterPicker
+        self.encounters = EncounterPicker(manager, file_registry)
+        self.encounters.changed.connect(self._encounter_changed)
+        options.addWidget(self.encounters)
+        party_row = QHBoxLayout()
+        party_row.addWidget(QLabel('Party size:'))
+        self.party_size = QSpinBox()
+        self.party_size.setRange(1, 3)
+        self.party_size.setValue(3)
+        party_row.addWidget(self.party_size)
+        party_row.addWidget(QLabel('Player slot:'))
+        self.party_slot = QSpinBox()
+        self.party_slot.setRange(0, 2)
+        self.party_slot.setToolTip('Zero-based party order. Uses the game\'s normal battle formation.')
+        party_row.addWidget(self.party_slot)
+        options.addLayout(party_row)
+        self.party_size.valueChanged.connect(self._party_changed)
+        self.party_slot.valueChanged.connect(lambda _v: self.changed.emit())
         role_row = QHBoxLayout()
         role_row.addWidget(QLabel('Loaded model:'))
         self.role = QComboBox()
@@ -116,7 +136,7 @@ class BattlePreviewSetup(QWidget):
         position_row = QHBoxLayout()
         position_row.addWidget(QLabel('Opponent position:'))
         self.position = []
-        for axis, default in zip('XYZ', (0, 0, 5000)):
+        for axis, default in zip('XYZ', (0, 0, 5000 if is_monster else -5000)):
             position_row.addWidget(QLabel(axis))
             spin = QSpinBox()
             spin.setRange(-30000, 30000)
@@ -144,12 +164,18 @@ class BattlePreviewSetup(QWidget):
         import_row.addWidget(load)
         import_row.addWidget(clear)
         options.addLayout(import_row)
-        self.status = QLabel('Opponent: marker. Positions are assumed; no effect script is running.')
+        self.status = QLabel('Opponent model not loaded. Manual placement.')
         self.status.setWordWrap(True)
         options.addWidget(self.status)
         self.role.currentIndexChanged.connect(lambda _value: self.changed.emit())
         self.initial_view.currentIndexChanged.connect(lambda _value: self.changed.emit())
         self.view_mode.currentIndexChanged.connect(lambda _value: self.changed.emit())
+
+    def _party_changed(self, value):
+        self.party_slot.blockSignals(True)
+        self.party_slot.setMaximum(value - 1)
+        self.party_slot.blockSignals(False)
+        self.changed.emit()
 
     def _encounter_changed(self):
         active = self.encounters.selected is not None
@@ -192,7 +218,7 @@ class BattlePreviewSetup(QWidget):
 
     def _clear_opponent(self):
         self.opponent = None
-        self.status.setText('Opponent: marker. Positions are assumed; no effect script is running.')
+        self.status.setText('Opponent model not loaded. Manual placement.')
         self.changed.emit()
 
     def build(self, animation=0, animate=False):
@@ -201,10 +227,14 @@ class BattlePreviewSetup(QWidget):
         self.main_position, self.main_yaw = (0., 0., 0.), 0.
         if self.encounters.selected is not None and self.encounters.selected_slot is not None:
             return self._build_encounter(animation, animate)
-        main = actor_from_model(self.manager, animation=animation, animate=animate)
+        self.status.setText('Opponent: ' + (f'{self.opponent.enemy.origin_file_name} (untextured).'
+                            if self.opponent else 'model not loaded.') + ' Manual placement.')
+        self.main_yaw = math.pi if self.encounters.is_monster else 0.
+        other_yaw = 0. if self.encounters.is_monster else math.pi
+        main = actor_from_model(self.manager, yaw=self.main_yaw, animation=animation, animate=animate)
         position = tuple(spin.value() for spin in self.position)
-        other = (actor_from_model(self.opponent, position, math.pi, animate=animate)
-                 if self.opponent is not None else CameraActor(position, math.pi))
+        other = (actor_from_model(self.opponent, position, other_yaw, animate=animate)
+                 if self.opponent is not None else CameraActor(position, other_yaw))
         if self.opponent is None:
             other.anchor = lambda selector, tick: np.asarray(position) + np.array((0., -800. if selector == 0 else -400., 0.))
         caster, target = (main, other) if self.role.currentIndex() == 0 else (other, main)
@@ -219,7 +249,7 @@ class BattlePreviewSetup(QWidget):
             self._scene_mesh_actors.append((self.opponent, other))
         return self.context
 
-    def _asset(self, name, stage=False):
+    def _asset(self, name):
         folders = [self.encounters.path.parent,
                    Path(getattr(self.manager.enemy, 'origin_path', '')).parent]
         path = next((folder / name for folder in folders if (folder / name).is_file()), None)
@@ -227,14 +257,9 @@ class BattlePreviewSetup(QWidget):
             return None
         key = (path, path.stat().st_mtime_ns)
         if key not in self._asset_cache:
-            if stage:
-                from Alexander.alexandermanager import AlexanderManager
-                manager = AlexanderManager()
-                manager.load_stage_file(str(path))
-            else:
-                manager = self._load_model(path, self.manager.game_data)
+            manager = self._load_model(path, self.manager.game_data)
             # Keep revisiting encounters cheap without retaining an entire battle
-            # archive's expanded skeletons/stages over a long editing session.
+            # archive's expanded skeletons over a long editing session.
             if len(self._asset_cache) >= 16:
                 self._asset_cache.pop(next(iter(self._asset_cache)))
             self._asset_cache[key] = manager
@@ -243,10 +268,11 @@ class BattlePreviewSetup(QWidget):
     def _build_encounter(self, animation, animate):
         encounter, selected = self.encounters.selected, self.encounters.selected_slot
         monster = self.encounters.is_monster
-        # scene.out has no party layout. A centre party member at the origin is an
-        # explicit assumption; enemy coordinates remain verbatim, including X and Y.
-        self.main_position = selected.position if monster else (0., 0., 0.)
-        self.main_yaw = 0. if monster else math.pi
+        player_slot = self.party_slot.value()
+        player_position = PARTY_FORMATIONS[self.party_size.value()][player_slot]
+        self.main_position = selected.position if monster else player_position
+        # resetBasedRotation (EN 502070): party=0, monster=2048.
+        self.main_yaw = math.pi if monster else 0.
         main = actor_from_model(self.manager, self.main_position, self.main_yaw, animation, animate)
         slots, notes = {}, []
         for slot in encounter.enabled_slots():
@@ -262,22 +288,30 @@ class BattlePreviewSetup(QWidget):
                 except Exception as error:
                     manager = None
                     notes.append(f'{name}: {error}')
-                actor = (actor_from_model(manager, slot.position, animate=animate) if manager else
-                         CameraActor(slot.position))
+                actor = (actor_from_model(manager, slot.position, math.pi, animate=animate) if manager else
+                         CameraActor(slot.position, math.pi))
                 if manager is not None and slot.loaded and slot.visible:
                     self._scene_mesh_actors.append((manager, actor))
             slots[3 + slot.slot_index] = actor
         if monster:
-            other = (actor_from_model(self.opponent, yaw=math.pi, animate=animate) if self.opponent else
-                     CameraActor(yaw=math.pi))
-            if self.opponent is not None:
-                self._scene_mesh_actors.append((self.opponent, other))
-            main_slot, other_slot = 3 + selected.slot_index, 0
-            slots[0] = other
+            player = self.opponent
+            if player is None:
+                try:
+                    player = self._asset('d0c000.dat')
+                except Exception as error:
+                    notes.append(f'Player model: {error}')
+            other = (actor_from_model(player, player_position, animate=animate) if player else
+                     CameraActor(player_position))
+            if player is not None:
+                self._scene_mesh_actors.append((player, other))
+            else:
+                notes.append('Player model missing; load a player DAT')
+            main_slot, other_slot = 3 + selected.slot_index, player_slot
+            slots[player_slot] = other
         else:
             other = slots[3 + selected.slot_index]
-            main_slot, other_slot = 0, 3 + selected.slot_index
-            slots[0] = main
+            main_slot, other_slot = player_slot, 3 + selected.slot_index
+            slots[player_slot] = main
         caster, target = (main, other) if self.role.currentIndex() == 0 else (other, main)
         ids = (main_slot, other_slot) if self.role.currentIndex() == 0 else (other_slot, main_slot)
         for spin, value in zip((self.caster_slot, self.target_slot), ids):
@@ -290,19 +324,11 @@ class BattlePreviewSetup(QWidget):
         eye = centre + np.array((-4000., -2000., -7000.))
         self.context = BattleCameraContext(caster, target, CameraPose(tuple(eye), tuple(centre)), slots)
         self._other = other
-        stage_name = f'a0stg{encounter.stage_id:03}.x'
-        try:
-            stage = self._asset(stage_name, stage=True)
-            if stage is not None:
-                self._scene_mesh_actors.append((stage, None))
-                notes.insert(0, f'{stage_name}: untextured geometry')
-            else:
-                notes.insert(0, f'{stage_name}: missing (grid shown)')
-        except Exception as error:
-            notes.insert(0, f'{stage_name}: {error}')
         self.encounters.status.setText(
-            f'Encounter {encounter.index} · stage {encounter.stage_id}. Enemy XYZ from scene.out; '
-            'party member at origin (assumed), normal facing. ' + '; '.join(notes))
+            f'Encounter {encounter.index}. Party {self.party_size.value()}, player slot {player_slot}: '
+            f'{player_position}. ' + '; '.join(notes))
+        self.status.setText('Player: imported model or Squall from the battle folder.' if monster else
+                            'Enemy models are loaded from the selected encounter (untextured).')
         return self.context
 
     def to_viewer(self, point):
@@ -314,15 +340,11 @@ class BattlePreviewSetup(QWidget):
         all_vertices, triangles, quads = [], [], []
         offset = 0
         for manager, actor in self._scene_mesh_actors:
-            if actor is None:  # Alexander's static stage is already posed, raw units / 2048.
-                vertices = np.asarray(manager.get_animated_vertices(0, 0))
-                engine = vertices * np.array((-1., -1., 1.)) * 2048
-            else:
-                count = len(manager.enemy.animation_data.animations[0].frames)
-                frame = tick % max(1, count) if animate else 0
-                vertices = np.asarray(manager.get_animated_vertices(0, frame)) + model_root(manager, 0, frame)
-                engine = vertices * np.array((-1., -1., 1.)) * (model_scale(manager) / 2)
-                engine = engine @ actor.rotation.T + actor.position
+            count = len(manager.enemy.animation_data.animations[0].frames)
+            frame = tick % max(1, count) if animate else 0
+            vertices = np.asarray(manager.get_animated_vertices(0, frame)) + model_root(manager, 0, frame)
+            engine = vertices * np.array((-1., -1., 1.)) * (model_scale(manager) / 2)
+            engine = engine @ actor.rotation.T + actor.position
             geo = manager.enemy.geometry_data
             all_vertices.extend(self.to_viewer(engine))
             triangles.extend(tuple(i + offset for i in face) for face in geo.get_triangles())

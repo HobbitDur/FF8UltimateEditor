@@ -1,5 +1,6 @@
 """Read-only encounter picker shared by monster and character camera previews."""
 from pathlib import Path
+import struct
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QLabel
@@ -18,6 +19,7 @@ class EncounterPicker(QWidget):
         self.encounters = []
         self.path = None
         self._model_key = None
+        self._name_cache = {}
         self.registry = registry if registry is not None else FileRegistry()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -38,7 +40,6 @@ class EncounterPicker(QWidget):
         self.enemy_slot = QComboBox()
         row.addWidget(self.enemy_slot, 1)
         layout.addLayout(row)
-        self.slot_row = row
         self.status = QLabel('Open scene.out to use encounter placement.')
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
@@ -86,12 +87,49 @@ class EncounterPicker(QWidget):
         self.path = None
         self.refresh_model(force=True)
 
+    def monster_name(self, com_id):
+        """Prefer the edited/current DAT name, then loose DAT names, then the catalog.
+
+        Only read the section-7 name bytes; building a list must not expand every
+        monster's geometry, animations or AI (including mod-added monsters).
+        """
+        enemy = self.manager.enemy
+        if self.is_monster and com_id == getattr(enemy, 'id', None):
+            name = getattr(enemy, 'info_stat_data', {}).get('monster_name')
+            if name is not None:
+                return str(name).strip('\x00').strip() or f'Monster {com_id}'
+        if com_id in self._name_cache:
+            return self._name_cache[com_id]
+        game_data = getattr(self.manager, 'game_data', None)
+        folders = ([self.path.parent] if self.path else []) + [
+            Path(getattr(enemy, 'origin_path', '')).parent]
+        for folder in folders:
+            try:
+                with (folder / f'c0m{com_id:03}.dat').open('rb') as source:
+                    header = source.read(32)
+                    if len(header) != 32 or struct.unpack_from('<I', header)[0] < 7:
+                        continue
+                    # Section 0 is the header itself; section N's pointer is DWORD N.
+                    source.seek(struct.unpack_from('<I', header, 28)[0])
+                    raw = source.read(24).split(b'\0', 1)[0]
+                name = game_data.translate_hex_to_str(bytearray(raw)).strip()
+                if name:
+                    self._name_cache[com_id] = name
+                    return name
+            except (OSError, ValueError, AttributeError):
+                continue
+        catalog = getattr(game_data, 'monster_data_json', {}).get('monster', [])
+        name = next((m['name'] for m in catalog if m['com_id'] == com_id), f'Monster {com_id}')
+        self._name_cache[com_id] = name
+        return name
+
     def refresh_model(self, force=False):
         key = (getattr(self.manager.enemy, 'origin_path', ''), self.is_monster,
                getattr(self.manager.enemy, 'id', None))
         if key == self._model_key and not force:
             return
         self._model_key = key
+        self._name_cache.clear()
         self.encounter.blockSignals(True)
         self.encounter.clear()
         self.encounter.addItem('Manual placement', None)
@@ -101,7 +139,7 @@ class EncounterPicker(QWidget):
                 continue
             if self.is_monster and not any(s.com_file_id == key[2] for s in slots):
                 continue
-            names = ', '.join(f'c0m{s.com_file_id:03}' for s in slots)
+            names = ', '.join(self.monster_name(s.com_file_id) for s in slots)
             self.encounter.addItem(f'Encounter {encounter.index} · stage {encounter.stage_id} · {names}', encounter)
         self.encounter.blockSignals(False)
         self._picked()
@@ -115,7 +153,7 @@ class EncounterPicker(QWidget):
                 if self.is_monster and slot.com_file_id != self.manager.enemy.id:
                     continue
                 self.enemy_slot.addItem(
-                    f'Scene slot {slot.slot_index} · c0m{slot.com_file_id:03} · {slot.position}', slot)
+                    f'Slot {slot.slot_index} · {self.monster_name(slot.com_file_id)} · {slot.position}', slot)
         self.enemy_slot.blockSignals(False)
         self.slot_label.setText('Loaded monster:' if self.is_monster else 'Enemy opponent:')
         self.slot_label.setVisible(encounter is not None)
@@ -126,5 +164,5 @@ class EncounterPicker(QWidget):
                                 'Open scene.out to use encounter placement.')
         else:
             self.status.setText(f'Encounter {encounter.index} · stage {encounter.stage_id} · '
-                                'Enemy positions from scene.out; party placement is a preview assumption.')
+                                'Enemy positions from scene.out; normal party formation.')
         self.changed.emit()

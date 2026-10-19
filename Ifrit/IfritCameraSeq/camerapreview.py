@@ -81,7 +81,7 @@ class CameraPreviewPanel(QWidget):
                  file_registry=None):
         super().__init__(parent)
         self.ifrit_manager = ifrit_manager
-        self.setMinimumWidth(320)
+        self.setMinimumWidth(420 if battle_context else 320)
         self._view = None          # Ifrit3DWidget, created lazily on first preview
         self._weapon_manager = None
         self._gl = None
@@ -235,6 +235,9 @@ class CameraPreviewPanel(QWidget):
             self._view = Ifrit3DWidget(self.ifrit_manager, show_controls=False)
             self._layout.insertWidget(1, self._view, 1)  # where the placeholder sits
             self._gl = self._view.gl_widget
+            if self._battle_setup is not None:
+                self._gl.setMinimumHeight(300)
+                self._gl.show_axis = False
         if self._needs_reload:
             # Lean imports have no expanded frames yet. Ifrit3D checks them before its
             # first mesh update, so expand first or a static preview shows raw bone-local vertices.
@@ -304,8 +307,7 @@ class CameraPreviewPanel(QWidget):
         frame = tick if self._animate_model.isChecked() else 0
         self._gl.set_model_translation(*model_root(self.ifrit_manager, self._model_anim_spin.value(), frame))
         self._gl.set_preview_model_transform(setup.to_viewer(setup.main_position), -setup.main_yaw)
-        other = setup.to_viewer(setup._other.position)
-        self._gl.set_preview_markers(0., tuple(other))
+        self._gl.set_preview_markers(None, None)
         self._gl.set_preview_actor(setup.opponent_mesh(tick, self._animate_model.isChecked()))
         if setup.view_mode.currentIndex() == 0:
             angle = pose.roll * 2 * math.pi / 4096

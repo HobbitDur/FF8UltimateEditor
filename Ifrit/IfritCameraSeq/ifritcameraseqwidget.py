@@ -24,13 +24,14 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
                              QScrollArea, QGroupBox, QSpinBox, QGridLayout, QCheckBox,
                              QMessageBox, QPlainTextEdit, QSizePolicy, QFileDialog,
-                             QToolButton, QSplitter)
+                             QSplitter)
 
 from FF8GameData.monsterdata import EntityType
 from FF8GameData.dat.cameracollection import parse_camera_collection, CameraParseError
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
 from Common.deferredcall import defer
+from Common.collapsiblesection import CollapsibleSection
 
 # Which raw section index holds the camera animation collection, per entity type. Both are the
 # same bare-collection format; monsters carry it in section 6 (usually 1 set), characters in
@@ -120,60 +121,6 @@ def _bind_spin(field, tooltip: str = "") -> NoWheelSpinBox:
     return spin
 
 
-class CollapsibleSection(QWidget):
-    """A titled section that folds away by clicking an arrow (▼ open / ▶ collapsed).
-
-    Used for both the sets and the animation slots, matching the fold-to-focus feel of the
-    Sequence tab but with an arrow toggle instead of a checkbox. Extra header widgets (e.g. a
-    Preview button) sit next to the arrow; content goes in content_layout(), slightly indented.
-    """
-
-    def __init__(self, title: str, parent=None, expanded: bool = True, tooltip: str = ""):
-        super().__init__(parent)
-        self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
-        self._toggle = QToolButton()
-        self._toggle.setStyleSheet("QToolButton { border: none; font-weight: bold; }")
-        self._toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        self._toggle.setText(title)
-        if tooltip:
-            self._toggle.setToolTip(tooltip)
-        self._toggle.setCheckable(True)
-        self._toggle.setChecked(expanded)
-        self._toggle.setArrowType(Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow)
-        self._toggle.clicked.connect(self.__on_toggle)
-
-        self._header = QHBoxLayout()
-        self._header.setContentsMargins(0, 0, 0, 0)
-        self._header.addWidget(self._toggle)
-        self._header.addStretch(1)
-
-        self._content = QWidget()
-        self._content_layout = QVBoxLayout(self._content)
-        self._content_layout.setContentsMargins(16, 0, 0, 0)  # indent under the arrow
-        self._content.setVisible(expanded)
-
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(2)
-        outer.addLayout(self._header)
-        outer.addWidget(self._content)
-
-    def content_layout(self) -> QVBoxLayout:
-        return self._content_layout
-
-    def add_header_widget(self, widget):
-        self._header.insertWidget(self._header.count() - 1, widget)  # before the stretch
-
-    def set_expanded(self, expanded: bool):
-        self._toggle.setChecked(expanded)
-        self._toggle.setArrowType(Qt.ArrowType.DownArrow if expanded
-                                  else Qt.ArrowType.RightArrow)
-        self._content.setVisible(expanded)
-
-    def __on_toggle(self):
-        self.set_expanded(self._toggle.isChecked())
-
-
 class IfritCameraSeqWidget(QWidget):
     """Camera animation collection editor for a monster's section 6."""
 
@@ -240,8 +187,8 @@ class IfritCameraSeqWidget(QWidget):
         self._splitter = QSplitter(Qt.Orientation.Horizontal)
         self._splitter.addWidget(self.scroll_area)
         self._splitter.addWidget(self._preview_panel)
-        self._splitter.setStretchFactor(0, 3)
-        self._splitter.setStretchFactor(1, 2)
+        self._splitter.setStretchFactor(0, 1)
+        self._splitter.setStretchFactor(1, 1)
         root.addWidget(self._splitter, 1)
 
     # ── Public API (called by IfritMonsterWidget) ─────────────────────
@@ -325,7 +272,7 @@ class IfritCameraSeqWidget(QWidget):
                              default=360)
             needed = grid_width + 90
             preview_min = max(self._preview_panel.minimumWidth(), 300)
-            left = min(needed, max(total - preview_min, 300))
+            left = min(needed, max(total - preview_min, 300), max(300, int(total * .50)))
             self._splitter.setSizes([left, max(total - left, 1)])
 
         # Defer one tick so the widgets have real size hints and the splitter a real width.

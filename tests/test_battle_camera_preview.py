@@ -117,6 +117,31 @@ def test_encounter_picker_filters_monsters_and_shares_read_only_scene(tmp_path):
     picker.close()
 
 
+def test_encounter_labels_prefer_modded_dat_names_to_catalog_ids(tmp_path):
+    from Ifrit.IfritCameraSeq.encounterpreview import EncounterPicker
+    model = bytearray(88)
+    struct.pack_into('<I', model, 0, 8)
+    struct.pack_into('<I', model, 7 * 4, 40)  # section 7 is DWORD 7 (header is section 0)
+    struct.pack_into('<I', model, 8 * 4, 64)
+    model[40:46] = b'Medic\0'
+    model[64:70] = b'Wrong\0'
+    (tmp_path / 'c0m145.dat').write_bytes(model)
+    raw = bytearray(128)
+    raw[7], raw[0x38] = 0x80, 145 + 16
+    scene = tmp_path / 'scene.out'
+    scene.write_bytes(raw)
+    game_data = SimpleNamespace(translate_hex_to_str=lambda raw: raw.decode('ascii'),
+                                monster_data_json={'monster': [{'com_id': 145, 'name': 'Catalog name'}]})
+    enemy = SimpleNamespace(entity_type=SimpleNamespace(name='CHARACTER'), id=0, origin_path='')
+    picker = EncounterPicker(SimpleNamespace(enemy=enemy, game_data=game_data))
+    assert picker.load(scene)
+    assert 'Medic' in picker.encounter.itemText(1)
+    assert 'Catalog name' not in picker.encounter.itemText(1)
+    picker.encounter.setCurrentIndex(1)
+    assert 'Medic' in picker.enemy_slot.currentText()
+    picker.close()
+
+
 ROOT = Path(__file__).resolve().parents[1]
 BODY = ROOT / 'extracted_files/battle/d0c000.dat'
 
@@ -169,9 +194,9 @@ def test_shared_preview_battle_setup_and_read_only_opponent():
     assert BODY.read_bytes() == before
 
 
-@pytest.mark.ff8data('extracted_files/battle/d0c000.dat', 'extracted_files/battle/c0m071.dat',
-                    'extracted_files/battle/a0stg000.x')
-def test_scene_picker_places_world_actors_and_stage_without_editing_files(tmp_path):
+@pytest.mark.ff8data('extracted_files/battle/d0c000.dat', 'extracted_files/battle/c0m071.dat')
+def test_scene_picker_places_world_actors_without_environment_or_file_edits(tmp_path):
+    from PyQt6.QtCore import Qt
     from Common.fileregistry import FileRegistry
     from Ifrit.ifritmanager import IfritManager
     from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
@@ -195,22 +220,37 @@ def test_scene_picker_places_world_actors_and_stage_without_editing_files(tmp_pa
     panel.preview(animation)
     panel._timer.stop()
     setup = panel._battle_setup
-    setup.group.setChecked(True)
+    assert setup.group._toggle.arrowType() == Qt.ArrowType.RightArrow
+    assert setup.options.isAncestorOf(setup.encounters)
+    assert setup.options.isEnabled()  # folding hides; it never disables controls
+    setup.group.set_expanded(True)
     picker = setup.encounters
     assert picker.encounter.count() == 2
+    assert 'G-Soldier' in picker.encounter.itemText(1)
+    assert 'c0m071' not in picker.encounter.itemText(1)
     picker.encounter.setCurrentIndex(1)
-    assert setup.context.caster.position == (0., 0., 0.)
-    assert setup.main_yaw == math.pi
+    assert setup.context.caster.position == (-1200, 0, 2100)
+    assert setup.main_yaw == 0.
+    assert setup.context.target.yaw == math.pi
     assert setup.context.target.position == (-1100, 77, -2900)
     assert setup.context.slots[4].position == (1300, 0, -4200)
     assert not setup.position[0].isEnabled()
-    assert len(setup._scene_mesh_actors) == 3  # two enemies + stage
-    assert any(actor is None for _manager, actor in setup._scene_mesh_actors)
-    assert 'untextured geometry' in picker.status.text()
+    assert len(setup._scene_mesh_actors) == 2  # only the two enemies
+    assert all(actor is not None for _manager, actor in setup._scene_mesh_actors)
+    assert panel._gl._preview_markers == (None, None)
+    assert not panel._gl.show_axis
+    setup.party_size.setValue(1)
+    assert setup.context.caster.position == (0, 0, 1800)
+    setup.party_size.setValue(2)
+    setup.party_slot.setValue(1)
+    assert setup.context.caster.position == (1000, 0, 1800)
+    assert setup.caster_slot.value() == 1
+    setup.party_size.setValue(3)
+    setup.party_slot.setValue(0)
     picker.enemy_slot.setCurrentIndex(1)
     assert setup.context.target.position == (1300, 0, -4200)
     assert setup.target_slot.value() == 4
-    assert panel._gl._preview_model_transform[1] == pytest.approx(-180)
+    assert panel._gl._preview_model_transform[1] == pytest.approx(0)
     mesh = setup.opponent_mesh()
     assert np.isfinite(mesh[0]).all()
     assert all(max(face) < len(mesh[0]) for face in mesh[1] + mesh[2])
@@ -229,13 +269,14 @@ def test_scene_picker_places_world_actors_and_stage_without_editing_files(tmp_pa
     picker.encounter.setCurrentIndex(1)
     picker.enemy_slot.setCurrentIndex(1)
     assert setup.context.caster.position == (1300, 0, -4200)
-    assert setup.context.target.position == (0., 0., 0.)
+    assert setup.context.target.position == (-1200, 0, 2100)
+    assert setup.main_yaw == math.pi and setup.context.target.yaw == 0
     assert setup.caster_slot.value() == 4 and setup.target_slot.value() == 0
     np.testing.assert_allclose(panel._gl._preview_model_transform[0],
                                setup.to_viewer((1300, 0, -4200)))
-    local = actor_from_model(manager).point(0, 0)
+    local = actor_from_model(manager, yaw=math.pi).point(0, 0)
     np.testing.assert_allclose(setup.context.caster.point(0, 0), local + (1300, 0, -4200))
-    assert len(setup._scene_mesh_actors) == 2  # other monster + stage, no duplicate loaded model
+    assert len(setup._scene_mesh_actors) == 2  # other monster + player, no stage or duplicate loaded model
     panel.preview(SimpleNamespace(blocks=[]))
     assert panel._total == 0 and panel._poses == [setup.context.initial]
     assert 'Empty camera' in panel._readout.text()
