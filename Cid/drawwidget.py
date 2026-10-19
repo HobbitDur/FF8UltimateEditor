@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, QSignalBlocker
 from PyQt6.QtWidgets import QComboBox, QTableWidget, QHeaderView, QTableWidgetItem, QCheckBox, QWidget, QHBoxLayout, QSpinBox
 
 from Cid.draw import Draw
@@ -59,6 +59,19 @@ class DrawWidget(QTableWidget):
             if item is not None:
                 phases = ', '.join(map(str, draw.world_phases)) or 'Not scanned'
                 item.setText(phases if draw.position_loaded and draw.is_world() else '')
+
+    def refresh_values(self):
+        """Restore edited values without replacing focused editors or emitting edits."""
+        for row, draw in enumerate(self._draw):
+            controls = ((self.cellWidget(row, 1), draw.magic_index, 'setCurrentIndex'),
+                        (self.cellWidget(row, 2).checkbox, draw.high_yield, 'setChecked'),
+                        (self.cellWidget(row, 3).checkbox, draw.refill, 'setChecked'),
+                        (self.cellWidget(row, self.COL_X), draw.x, 'setValue'),
+                        (self.cellWidget(row, self.COL_Y), draw.y, 'setValue'),
+                        (self.cellWidget(row, self.COL_SUB), draw.sub_id, 'setValue'))
+            for control, value, setter in controls:
+                with QSignalBlocker(control):
+                    getattr(control, setter)(value)
 
     def setup_table(self):
         self.setHorizontalHeaderLabels(self.COLUMNS)
@@ -123,6 +136,7 @@ class DrawWidget(QTableWidget):
     def _make_byte_spinbox(value, row, callback, enabled):
         spin = QSpinBox()
         spin.setRange(0, 255)
+        spin.setKeyboardTracking(False)
         spin.setValue(value)
         spin.setEnabled(enabled)
         if not enabled:

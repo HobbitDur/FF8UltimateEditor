@@ -246,6 +246,73 @@ def test_phase_info_button_explains_story_and_script_sources_without_editing(edi
     widget.close()
 
 
+def test_undo_keeps_separate_save_states_and_exact_phase_table_bytes(editor, monkeypatch, tmp_path):
+    widget, _source, exe = editor
+    raw = bytearray(exe.read_bytes())
+    raw[WorldDrawPhases.FILE_OFFSET + 2:WorldDrawPhases.FILE_OFFSET + 4] = bytes((0x80, 0xFA))
+    exe.write_bytes(raw)
+    widget.load_exe(str(exe))
+    original = widget._undo_capture()
+    widget._draw_widget.cellWidget(135, 1).setCurrentIndex(5)
+    widget.tabs.setCurrentIndex(1)
+    widget._groups_widget._last[4].setValue(256)
+    combo = widget._groups_widget._searches[0][1]
+    combo.setCurrentIndex(combo.findData(2))
+    widget.tabs.setCurrentIndex(0)
+    widget._draw_widget.setCurrentCell(135, 0)
+    widget._draw_widget.set_row_position(135, 42, 12, 7)
+    edited = widget._undo_capture()
+    patch = tmp_path / 'saved.hext'
+    monkeypatch.setattr(widget._save_hext_dialog, 'getSaveFileName', lambda **kw: (str(patch), ''))
+    monkeypatch.setattr(widget._save_wmset_dialog, 'getSaveFileName', lambda **kw: ('', ''))
+    widget.save_folder()
+    assert not widget._exe_dirty and widget._wmset_dirty
+    assert widget.undo()  # position
+    assert not widget._exe_dirty and widget._wmset_dirty
+    assert widget.undo()  # phase search order
+    assert widget._phase_rules.table_bytes() == original[0][1]  # includes ignored tail bytes
+    assert widget._exe_dirty and widget._wmset_dirty
+    assert widget.undo()  # group range
+    assert widget._exe_dirty and not widget._wmset_dirty
+    assert widget.undo()  # magic
+    assert widget._undo_capture() == original
+    assert widget._exe_dirty and not widget._wmset_dirty  # Hext had been saved after the edits
+    for _ in range(4):
+        assert widget.redo()
+    assert widget._undo_capture() == edited
+    assert not widget._exe_dirty and widget._wmset_dirty
+    assert widget.undo()
+    widget._draw_widget.set_row_position(135, 43, 12, 7)
+    assert not widget._undo_stack.can_redo()  # a new edit replaces the discarded future
+    widget.load_wmset(str(_source))
+    assert not widget.undo()  # history never restores a replaced file
+
+
+def test_csv_import_is_one_undo_step_and_reference_reload_preserves_history(editor, monkeypatch, tmp_path):
+    widget, _source, _exe = editor
+    original = widget._undo_capture()
+    csv = tmp_path / 'draws.csv'
+    rows = ['Draw ID,Magic ID,High Yield,Refill,X,Y,Sub ID']
+    for draw in widget._draw_list:
+        magic = 5 if draw.get_id() == 1 else draw.magic_index
+        position = (42, 12, 7) if draw.get_id() == 136 else (draw.x, draw.y, draw.sub_id)
+        rows.append(','.join(map(str, (draw.get_id(), magic, int(draw.high_yield), int(draw.refill), *position))))
+    csv.write_text('\n'.join(rows), encoding='utf8')
+    monkeypatch.setattr(widget.csv_dialog, 'getOpenFileName', lambda **kw: (str(csv), ''))
+    widget._open_csv()
+    imported = widget._undo_capture()
+    assert imported != original and widget._exe_dirty and widget._wmset_dirty
+    monkeypatch.setattr('FF8GameData.kernelnames.read_names', lambda *a, **k: {'magic': {5: 'New name'}})
+    widget.load_kernel('reference/kernel.bin')
+    assert widget.undo()
+    assert widget._undo_capture() == original
+    assert not widget._exe_dirty and not widget._wmset_dirty
+    assert not widget._undo_stack.can_undo()
+    assert widget.redo()
+    assert widget._undo_capture() == imported
+    assert widget._draw_list[0].get_magic_name() == 'New name'
+
+
 @pytest.mark.ff8data(*[f'extracted_files/field/mapdata/{name[:2]}/{name}/{name}.jsm'
                       for name in ('gmpark2', 'bgsido_8', 'ewbrdg1', 'ssspace2', 'eaplane1')])
 def test_story_info_references_match_all_original_non_debug_phase_writes():

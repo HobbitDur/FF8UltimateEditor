@@ -5,8 +5,8 @@ import struct
 import pytest
 from PyQt6.QtCore import Qt, QPointF, QEvent
 from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtTest import QSignalSpy
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtTest import QSignalSpy, QTest
+from PyQt6.QtWidgets import QApplication, QWidget, QStackedWidget, QVBoxLayout
 
 from Cid.cidwidget import CidWidget
 from Cid.draw import Draw
@@ -14,6 +14,7 @@ from Cid.drawmapwidget import DrawMapWidget
 from Cid.worlddrawgeometry import WorldDrawGeometry
 from Cid.worlddrawsection import WorldDrawSection
 from FF8GameData.gamedata import GameData
+from Common.dirtytracking import install_dirty_tracking
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -59,7 +60,7 @@ def _mouse(view, kind, point, button=Qt.MouseButton.LeftButton, buttons=None):
     QApplication.sendEvent(view, event)
 
 
-def test_map_click_never_moves_and_drag_must_start_on_selected_marker(app):
+def test_map_click_never_moves_and_any_marker_can_be_dragged_directly(app):
     view = DrawMapWidget('')
     view.resize(1280, 960)
     draw = Draw(GameData(str(ROOT / 'FF8GameData')), 136, bytearray())
@@ -67,7 +68,7 @@ def test_map_click_never_moves_and_drag_must_start_on_selected_marker(app):
     draw.position_loaded = True
     draw.world_phases = (0, 1, 2, 3, 4)
     view.set_draw_list([draw])
-    view.set_selected(0)
+    view.selection_picked.connect(view.set_selected)
     picked = QSignalSpy(view.position_picked)
     start = view._marker(draw, view._image_rect())
     target = view._block_to_point(60.5, 40.5, view._image_rect())
@@ -83,6 +84,45 @@ def test_map_click_never_moves_and_drag_must_start_on_selected_marker(app):
     _mouse(view, QEvent.Type.MouseButtonPress, start)
     _mouse(view, QEvent.Type.MouseMove, target, Qt.MouseButton.NoButton, Qt.MouseButton.LeftButton)
     _mouse(view, QEvent.Type.MouseButtonRelease, target)
+    assert list(picked) == [[60, 20, -1]]
+    view.close()
+
+
+def test_first_click_on_overlapping_markers_selects_then_later_clicks_cycle(app):
+    view = DrawMapWidget('')
+    draws = [Draw(GameData(str(ROOT / 'FF8GameData')), id, bytearray()) for id in (136, 137)]
+    for draw in draws:
+        draw.position_loaded, draw.world_phases = True, (0,)
+        draw.set_block_xy(50, 35)
+    view.set_draw_list(draws)
+    view.selection_picked.connect(view.set_selected)
+    picked = QSignalSpy(view.position_picked)
+    point = view._marker(draws[0], view._image_rect())
+    for expected in (0, 1, 0):
+        _mouse(view, QEvent.Type.MouseButtonPress, point)
+        _mouse(view, QEvent.Type.MouseButtonRelease, point)
+        assert view._selected_index == expected
+    assert not picked
+    view.close()
+
+
+def test_direct_drag_picks_the_nearest_marker_even_with_a_selected_neighbour(app):
+    view = DrawMapWidget('')
+    view.resize(1280, 960)
+    draws = [Draw(GameData(str(ROOT / 'FF8GameData')), id, bytearray()) for id in (136, 137)]
+    for bx, draw in zip((49, 50), draws):
+        draw.position_loaded, draw.world_phases = True, (0,)
+        draw.set_block_xy(bx, 35)
+    view.set_draw_list(draws)
+    view.set_selected(0)
+    view.selection_picked.connect(view.set_selected)
+    picked = QSignalSpy(view.position_picked)
+    point = view._marker(draws[1], view._image_rect())
+    target = view._block_to_point(60.5, 40.5, view._image_rect())
+    _mouse(view, QEvent.Type.MouseButtonPress, point)
+    _mouse(view, QEvent.Type.MouseMove, target, Qt.MouseButton.NoButton, Qt.MouseButton.LeftButton)
+    _mouse(view, QEvent.Type.MouseButtonRelease, target)
+    assert view._selected_index == 1
     assert list(picked) == [[60, 20, -1]]
     view.close()
 
@@ -151,32 +191,103 @@ def test_world_phases_use_the_header_and_final_unused_slot_is_distinct(tmp_path)
     assert out.read_bytes() == source.read_bytes()
 
 
-def test_phase_selector_separates_story_variants_and_selects_unused_record(widget, tmp_path):
+def test_phase_checkboxes_combine_variants_and_unused_without_recording_edits(widget, tmp_path):
     widget.load_wmset(str(_wmset(tmp_path)))
-    selector, view = widget._phase_widget, widget._illustration.map
-    assert [selector.itemData(i) for i in range(selector.count())] == [0, 1, 2, 3, 4, -1]
+    checks, view = widget._phase_checks, widget._illustration.map
+    dirty = install_dirty_tracking(widget)
     positions = [(d.x, d.y, d.sub_id) for d in widget._draw_list]
     for phase, count in enumerate((118, 118, 120, 126, 126)):
-        selector.setCurrentIndex(selector.findData(phase))
+        for value, check in checks.items():
+            if check.isChecked() != (value == phase):
+                check.click()
         assert sum(view._visible(d) for d in widget._draw_list) == count
-        assert f'{count} records' in selector.currentText()
+        assert f'{count} records' in checks[phase].toolTip()
         assert view._visible(widget._draw_list[245]) == (phase == 0)
         assert view._visible(widget._draw_list[246]) == (phase != 0)
-    selector.setCurrentIndex(selector.findData(DrawMapWidget.NO_PHASE))
+    checks[4].click()
+    checks[1].click()
+    checks[2].click()
+    assert sum(view._visible(d) for d in widget._draw_list) == 120  # union, without duplicate markers
+    checks[DrawMapWidget.NO_PHASE].click()
+    assert sum(view._visible(d) for d in widget._draw_list) == 121
+    checks[1].click()
+    checks[2].click()
     assert [d.get_id() for d in widget._draw_list if view._visible(d)] == [256]
     assert widget._draw_widget.currentRow() == 255
     assert widget._illustration._stack.currentWidget() is view
     assert view._hits(view._marker(widget._draw_list[255], view._image_rect())) == [255]
-    assert '1 record' in selector.currentText()
+    assert '1 record' in checks[DrawMapWidget.NO_PHASE].toolTip()
     assert positions == [(d.x, d.y, d.sub_id) for d in widget._draw_list]
     assert not widget._exe_dirty and not widget._wmset_dirty
+    assert not dirty.dirty and not widget._undo_stack.can_undo()
+    checks[DrawMapWidget.NO_PHASE].click()
+    assert not any(view._visible(d) for d in widget._draw_list)
+    checks[DrawMapWidget.NO_PHASE].click()
     # Removing the slot from No phase updates the filter immediately, using the edited ranges.
     widget._groups_widget._last[4].setValue(256)
     assert not any(view._visible(d) for d in widget._draw_list)
-    assert '0 records' in selector.currentText()
+    assert '0 records' in checks[DrawMapWidget.NO_PHASE].toolTip()
     widget._on_wmset_closed('wmsetus.obj')
     assert not any(view._visible(d) for d in widget._draw_list)
-    assert selector.currentText() == 'No phase (unused)'
+    assert checks[DrawMapWidget.NO_PHASE].toolTip() == 'No phase (unused)'
+
+
+def test_direct_drag_supports_real_undo_redo_shortcuts_and_saved_state(widget, app, tmp_path, monkeypatch):
+    from ff8ultimateeditorwidget import FF8UltimateEditorWidget
+
+    class UndoHost(FF8UltimateEditorWidget):
+        def __init__(self, tool):
+            QWidget.__init__(self)
+            self.tool_stack = QStackedWidget(self)
+            self.tool_stack.addWidget(tool)
+            QVBoxLayout(self).addWidget(self.tool_stack)
+
+    source = _wmset(tmp_path)
+    data = bytearray(source.read_bytes())
+    struct.pack_into('BBB', data, 192 + 44 + 7 * 4, 178, 17, 31)
+    source.write_bytes(data)
+    widget.load_wmset(str(source))
+    dirty = install_dirty_tracking(widget)
+    host = UndoHost(widget)
+    host.resize(1280, 1000)
+    app.installEventFilter(host)
+    host.show()
+    app.processEvents()
+    try:
+        widget._draw_widget.setCurrentCell(128, 0)  # a different marker is selected
+        view, draw = widget._illustration.map, widget._draw_list[135]
+        start = view._marker(draw, view._image_rect())
+        target = view._block_to_point(60.5, 40.5, view._image_rect())
+        _mouse(view, QEvent.Type.MouseButtonPress, start)
+        _mouse(view, QEvent.Type.MouseMove, target, Qt.MouseButton.NoButton, Qt.MouseButton.LeftButton)
+        _mouse(view, QEvent.Type.MouseButtonRelease, target)
+        assert widget._draw_widget.currentRow() == 135
+        assert (draw.x, draw.y, draw.sub_id) == (60, 20, 31)
+        assert widget._wmset_dirty and dirty.dirty and not widget._exe_dirty
+        QTest.keyClick(view, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier)
+        assert (draw.x, draw.y, draw.sub_id) == (178, 17, 31)
+        assert [widget._draw_widget.cellWidget(135, col).value() for col in (4, 5, 6)] == [178, 17, 31]
+        assert not widget._wmset_dirty and not dirty.dirty
+        assert not widget._undo_stack.can_undo()  # a whole drag was one step
+        QTest.keyClick(view, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
+        assert (draw.x, draw.y, draw.sub_id) == (60, 20, 31)
+        saved = tmp_path / 'saved.obj'
+        monkeypatch.setattr(widget._save_wmset_dialog, 'getSaveFileName', lambda **kw: (str(saved), ''))
+        widget.save_folder()
+        assert not widget._wmset_dirty
+        QTest.keyClick(view, Qt.Key.Key_Z, Qt.KeyboardModifier.ControlModifier)
+        assert widget._wmset_dirty  # the saved state was the moved position
+        QTest.keyClick(view, Qt.Key.Key_Y, Qt.KeyboardModifier.ControlModifier)
+        assert not widget._wmset_dirty
+        reloaded = WorldDrawSection()
+        reloaded.load(saved)
+        assert reloaded.records[7][:3] == [60, 20, 31]
+    finally:
+        app.removeEventFilter(host)
+        host.tool_stack.removeWidget(widget)
+        widget.setParent(None)
+        host.close()
+        host.deleteLater()
 
 
 def test_geometry_uses_polygon_index_and_resolves_drop_to_triangle(tmp_path):
@@ -222,6 +333,19 @@ def test_real_world_inventory_and_terrain(widget):
     assert geometry.pick(*position) == (draw.x, draw.y, draw.sub_id)
     bx, by = draw.get_block_xy()
     assert position != (bx + .5, by + .5)
+    original_position = (draw.x, draw.y, draw.sub_id)
+    destination = widget._draw_list[165]
+    target = widget._illustration.map._marker(destination, rect)
+    _mouse(widget._illustration.map, QEvent.Type.MouseButtonPress, point)
+    _mouse(widget._illustration.map, QEvent.Type.MouseMove, target,
+           Qt.MouseButton.NoButton, Qt.MouseButton.LeftButton)
+    _mouse(widget._illustration.map, QEvent.Type.MouseButtonRelease, target)
+    assert (draw.x, draw.y, draw.sub_id) == (destination.x, destination.y, destination.sub_id)
+    assert widget._wmset_dirty
+    assert widget.undo()
+    assert (draw.x, draw.y, draw.sub_id) == original_position
+    assert widget._illustration.map._marker(draw, rect) == point
+    assert not widget._wmset_dirty and source.read_bytes() == before
     widget.wmx_binding.registry.close_file('wmx.obj')
     assert widget._illustration.map.geometry is None
     assert 'approximate block centres' in widget._map_status.text()

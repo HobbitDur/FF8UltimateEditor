@@ -59,13 +59,14 @@ rate it gives, and its position on the world map.
 Load complementary `kernel.bin` for spell names (numeric IDs otherwise), and
 `wmx.obj` for terrain-triangle marker positions. World markers move only by
 dragging; a sibling `wmx.obj` is picked up automatically when wmset is loaded.
-The map selector shows individual story phases or **No phase (unused)**. Numbered
+Phase checkboxes combine any story phases and **No phase** for unused records. Numbered
 markers count overlapping records; without terrain their block-centre positions are approximate.
+Drag any marker directly; **Ctrl+Z** undoes edits and **Ctrl+Shift+Z / Ctrl+Y** redoes them.
 The shared **Save** button writes EXE `.hext` data and/or world positions
 in `wmsetxx.obj`, according to the edited data. The **Groups and phases** tab
 edits the five draw-ID ranges
 (wmset) and the ordered groups searched in each world story phase (Hext).
-The **Phase info** icon beside the phase selector explains the story transitions with verified script references.
+The **Phase info** icon beside the phase checkboxes explains the story transitions with verified script references.
 See [CID files, map positions and world phases](docs/Cid.md).
 
 <img src="Resources/screenshots/draweditor.png" width="800">

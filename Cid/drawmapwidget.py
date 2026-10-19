@@ -19,15 +19,17 @@ class DrawMapWidget(QWidget):
         self._draw_list = []
         self._selected_index = -1
         self._press = None
+        self._press_selected = False
         self._dragging = False
         self._drag_point = None
         self._zoom = 1.0
         self._pan = QPointF()
-        self._phase = 0
+        self._phases = frozenset((0,))
         self.geometry = None
         self.setMinimumHeight(280)
         self.setMouseTracking(True)
-        self.setToolTip('Click a marker to select; drag the selected marker to move. Mouse wheel zooms. '
+        self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        self.setToolTip('Click a marker to select; click and drag any marker to move. Ctrl+Z undoes a move. Mouse wheel zooms. '
                         'Without wmx.obj, markers show approximate block centres; numbers count overlapping records.')
 
     def set_draw_list(self, draw_list):
@@ -48,7 +50,10 @@ class DrawMapWidget(QWidget):
         self.update()
 
     def set_phase(self, phase):
-        self._phase = phase
+        self.set_phases(range(5) if phase is None else (phase,))
+
+    def set_phases(self, phases):
+        self._phases = frozenset(phases)
         self._press, self._dragging, self._drag_point = None, False, None
         self.update()
 
@@ -71,9 +76,9 @@ class DrawMapWidget(QWidget):
     def _visible(self, draw):
         if not draw.is_world() or not draw.position_loaded:
             return False
-        if self._phase == self.NO_PHASE:
-            return not draw.world_phases
-        return bool(draw.world_phases) and (self._phase is None or self._phase in draw.world_phases)
+        if not draw.world_phases:
+            return self.NO_PHASE in self._phases
+        return bool(self._phases.intersection(draw.world_phases))
 
     def _marker(self, draw, rect):
         triangle = self._triangle(draw)
@@ -92,8 +97,15 @@ class DrawMapWidget(QWidget):
 
     def _hits(self, position):
         rect = self._image_rect()
-        return [i for i, draw in enumerate(self._draw_list)
-                if self._visible(draw) and (self._marker(draw, rect) - position).manhattanLength() <= 10]
+        candidates = [(i, self._marker(draw, rect)) for i, draw in enumerate(self._draw_list)
+                      if self._visible(draw)]
+        candidates = [(i, point) for i, point in candidates if (point - position).manhattanLength() <= 10]
+        if not candidates:
+            return []
+        nearest = min(candidates, key=lambda item: (item[1] - position).manhattanLength())[1]
+        # A nearby selected marker must not steal a drag from the marker under
+        # the pointer. Preserve cycling only for records at the same position.
+        return [i for i, point in candidates if (point - nearest).manhattanLength() < .01]
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -150,10 +162,15 @@ class DrawMapWidget(QWidget):
         if event.button() != Qt.MouseButton.LeftButton:
             return
         hits = self._hits(event.position())
-        if self._selected_index in hits:
+        if hits:
+            was_selected = self._selected_index in hits
+            if not was_selected:
+                self.set_selected(hits[0])
+                self.selection_picked.emit(hits[0])
+            # Selection callbacks reset the drag state; arm this gesture afterwards.
+            self._press_selected = was_selected
             self._press = event.position()
-        elif hits:
-            self.selection_picked.emit(hits[0])
+            self.setFocus(Qt.FocusReason.MouseFocusReason)
 
     def mouseMoveEvent(self, event):
         if self._press is None or not (event.buttons() & Qt.MouseButton.LeftButton):
@@ -161,7 +178,7 @@ class DrawMapWidget(QWidget):
             if hits:
                 precision = ('terrain triangle positions' if self.geometry else
                              'approximate block centres; load wmx.obj to separate their triangles')
-                header = (f'{len(hits)} records near this marker ({precision}).\n' if len(hits) > 1 else '')
+                header = (f'{len(hits)} records at this marker ({precision}).\n' if len(hits) > 1 else '')
                 QToolTip.showText(event.globalPosition().toPoint(), header + '\n'.join(
                     f'ID {self._draw_list[i].get_id()} - Magic ID {self._draw_list[i].magic_index} '
                     f'{self._draw_list[i].get_magic_name()} (triangle {self._draw_list[i].sub_id})'
@@ -184,7 +201,7 @@ class DrawMapWidget(QWidget):
             return
         if not dragging:
             hits = self._hits(event.position())
-            if len(hits) > 1 and self._selected_index in hits:
+            if self._press_selected and len(hits) > 1 and self._selected_index in hits:
                 self.selection_picked.emit(hits[(hits.index(self._selected_index) + 1) % len(hits)])
             return
         rect = self._image_rect()

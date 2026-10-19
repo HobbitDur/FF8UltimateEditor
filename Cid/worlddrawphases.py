@@ -32,6 +32,15 @@ class WorldDrawPhases:
         raw = bytes(data[self.FILE_OFFSET:self.FILE_OFFSET + size])
         if len(raw) != size:
             raise ValueError('File is too short for the OG English 2013 world draw phase table')
+        self.load_table_bytes(raw)
+
+    def table_bytes(self):
+        return bytes(self._data)
+
+    def load_table_bytes(self, raw):
+        """Restore the complete table, preserving terminators and ignored tail bytes."""
+        if len(raw) != self.PHASE_COUNT * self.SEARCH_COUNT:
+            raise ValueError('The world draw phase table must contain 20 bytes')
         for phase in range(self.PHASE_COUNT):
             self._decode(raw[phase * 4:phase * 4 + 4])
         self._data = bytearray(raw)

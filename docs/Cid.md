@@ -48,24 +48,37 @@ When loading wmset, CID automatically opens a sibling `wmx.obj` as a read-only
 complementary file if no terrain is already loaded or selected. A manually loaded
 terrain file is preserved. Otherwise use the read-only import to choose it.
 
-The selector beside Game version chooses **World phase 0-4**; each entry shows
-how many world records that phase searches. **No phase (unused)** shows loaded
-records searched by none of the phases, including the original unused ID 256.
-Choosing it also selects the first such record in the table. It uses the stored
-position, even when the unused slot contains zero coordinates. Switching this
-view does not change a record's phase assignments or coordinates.
+The checkboxes beside Game version select **phases 0-4** in any combination.
+For example, check phases 1 and 2 to show their combined records; a record in both
+phases is drawn once. Hover over a checkbox for its record count. **No phase**
+also includes records searched by none of the phases, including the original
+unused ID 256. Check only No phase to inspect those records, or combine it with
+normal phases. Clearing every checkbox hides all markers. The view uses the
+stored position even when an unused slot contains zero coordinates. Changing
+these checkboxes does not edit the file or create an undo step.
 
 The original Hell-island record **ID 215** refers to block `(9, 49)`, triangle
 32, whose ground type in the base wmx is **34 (sea)**. This is already in the
 source files; CID preserves it rather than moving it to a nearby land triangle.
 Being included in a phase's search range does not prove physical accessibility.
 
-Only dragging a selected marker moves it. Clicking empty map or a marker never
-changes coordinates. A drag requires the normal system drag threshold. With
+Click and drag any marker to move it in one gesture; it need not be selected
+first. A click without a drag selects it; later clicks cycle overlapping records.
+Dragging empty map never moves a point. A drag requires the normal system drag threshold. With
 wmx loaded the drop chooses the triangle under the pointer and updates all three
 position bytes. Without wmx, dragging changes only the block bytes and preserves
 the triangle index; that index must exist in the destination block to work in-game.
 The table still allows direct byte edits. Nothing moves until wmset is loaded.
+
+**Ctrl+Z** undoes the last CID edit; **Ctrl+Shift+Z** or **Ctrl+Y** redoes it.
+Each completed drag is one undo step, restoring its block and triangle together.
+History also includes table edits, magic/refill/high-yield settings, group ranges,
+phase search rules, and each CSV import as one step. Undo selects the affected
+draw or tab and refreshes the map and editor values. Save indicators track the
+last successful save independently for Hext and wmset; cancelling one output
+keeps it unsaved. Saving preserves history; opening/reloading/closing a primary
+EXE or wmset starts a new history to avoid restoring another file's data.
+Read-only kernel/terrain loads and phase-view changes preserve history.
 
 ## Editing groups and phase availability
 
@@ -104,7 +117,7 @@ only individual draw data and positions, not group ranges or phase rules.
 
 ## Story dependence is real; disc labels are only a guide
 
-The **Phase info** icon in the top row, after the phase selector, explains the story
+The **Phase info** icon in the top row, after the phase checkboxes, explains the story
 transitions and lists the exact original JSM assignment sites. It is available
 without loading game files. These explanations describe the original English
 scripts; a mod that changes field scripts can change the transitions.

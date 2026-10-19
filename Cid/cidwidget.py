@@ -5,7 +5,7 @@ import os
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QFileDialog, QPushButton, QHBoxLayout, QLabel, QComboBox,
-                             QMessageBox, QSplitter, QTabWidget)
+                             QMessageBox, QSplitter, QTabWidget, QCheckBox)
 
 from Cid.draw import Draw
 from Cid.drawwidget import DrawWidget
@@ -18,6 +18,7 @@ from Cid.drawmapwidget import DrawMapWidget
 from Cid.phasestory import PhaseStoryDialog
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
+from Common.undo import UndoStack
 from FF8GameData.gamedata import GameData
 
 
@@ -112,12 +113,21 @@ class CidWidget(QWidget):
         self._layout_top.addWidget(self._version_label)
         self._layout_top.addWidget(self._version_widget)
 
-        self._phase_widget = QComboBox()
+        self._phase_widget = QWidget()
+        self._phase_widget.setProperty('read_only_preview', True)
+        phase_layout = QHBoxLayout(self._phase_widget)
+        phase_layout.setContentsMargins(0, 0, 0, 0)
+        self._phase_checks = {}
         for phase in range(5):
-            self._phase_widget.addItem(f'World phase {phase}', phase)
-        self._phase_widget.addItem('No phase (unused)', DrawMapWidget.NO_PHASE)
-        self._phase_widget.setToolTip('Choose a world story phase, or No phase for records never searched. '
-                                      'These are not disc numbers.')
+            check = QCheckBox(f'Phase {phase}')
+            phase_layout.addWidget(check)
+            self._phase_checks[phase] = check
+        check = QCheckBox('No phase')
+        phase_layout.addWidget(check)
+        self._phase_checks[DrawMapWidget.NO_PHASE] = check
+        self._phase_checks[0].setChecked(True)
+        self._phase_widget.setToolTip('Check any combination of world story phases. '
+                                      'No phase includes records never searched by a phase.')
         self._layout_top.addWidget(self._phase_widget)
         self._phase_info_label = QLabel('Phase info')
         self._phase_info_button = self._make_button(
@@ -137,6 +147,9 @@ class CidWidget(QWidget):
 
         # Model: full 256-entry list, kept alive and updated as files load.
         self._draw_list = [Draw(self.game_data, id=i + 1, data_hex=bytearray()) for i in range(self.NB_DRAW)]
+        self._restoring_undo = False
+        self._saved_exe, self._saved_wmset = self._undo_capture()
+        self._undo_stack = UndoStack(self._undo_capture, self._undo_restore)
 
         self._draw_widget = DrawWidget(self.game_data, self._draw_list, parent=self)
         self._illustration = DrawIllustrationWidget(os.path.join(icon_path, 'map2.png'), self._draw_field_map,
@@ -147,9 +160,9 @@ class CidWidget(QWidget):
         self._draw_widget.selection_changed.connect(self._on_selection_changed)
         self._draw_widget.position_changed.connect(self._illustration.refresh)
         self._illustration.position_picked.connect(self._on_map_position_picked)
-        self._illustration.map.selection_picked.connect(lambda row: self._draw_widget.setCurrentCell(row, 0))
-        self._phase_widget.currentIndexChanged.connect(self._on_phase_selected)
-        self._illustration.map.set_phase(self._phase_widget.currentData())
+        self._illustration.map.selection_picked.connect(self._on_map_selection_picked)
+        for check in self._phase_checks.values():
+            check.toggled.connect(self._on_phases_selected)
 
         # Wiring: edits mark the corresponding backing file dirty.
         self._draw_widget.exe_changed.connect(self._on_exe_edited)
@@ -212,16 +225,19 @@ class CidWidget(QWidget):
         return button
 
     def _on_exe_edited(self):
+        if self._restoring_undo:
+            return
         self._exe_dirty = True
         self._groups_widget.refresh_members()
+        self._record_undo()
         self._update_save_status()
 
     def _show_phase_info(self):
         PhaseStoryDialog(self).exec()
 
-    def _on_phase_selected(self):
+    def _on_phases_selected(self):
         view = self._illustration.map
-        view.set_phase(self._phase_widget.currentData())
+        view.set_phases(phase for phase, check in self._phase_checks.items() if check.isChecked())
         if 0 <= self._selected_row < len(self._draw_list) and view._visible(self._draw_list[self._selected_row]):
             return
         for row, draw in enumerate(self._draw_list):
@@ -229,10 +245,85 @@ class CidWidget(QWidget):
                 self._draw_widget.setCurrentCell(row, 0)
                 self._draw_widget.scrollToItem(self._draw_widget.item(row, 0))
                 break
+        # Scrolling/selecting a new table row can finish an editor's Qt signals;
+        # this preview action must retain the document's actual dirty state.
+        self._sync_dirty_marker()
 
     def _on_world_edited(self):
+        if self._restoring_undo:
+            return
         self._wmset_dirty = True
+        self._record_undo()
         self._update_save_status()
+
+    # One snapshot per committed edit. Map drags emit once, on release.
+    def _undo_capture(self):
+        exe = (bytes(draw.get_exe_byte() for draw in self._draw_list), self._phase_rules.table_bytes())
+        wmset = (bytes(self._section.header),
+                 tuple((draw.x, draw.y, draw.sub_id, draw.pad) for draw in self._draw_list))
+        return exe, wmset
+
+    def _record_undo(self):
+        tab = self.tabs.currentIndex()
+        row = self._groups_widget.groups.currentRow() if tab == 1 else self._selected_row
+        self._undo_stack.commit((tab, row))
+        self._sync_dirty_marker()
+
+    def _reset_undo(self, source):
+        """Primary-file replacement starts a new history; companion files do not."""
+        snapshot = self._undo_capture()
+        if source == 'exe':
+            self._saved_exe = snapshot[0]
+        else:
+            self._saved_wmset = snapshot[1]
+        self._undo_stack = UndoStack(self._undo_capture, self._undo_restore)
+
+    def _sync_dirty_marker(self):
+        state = getattr(self, 'dirty_state', None)
+        if state is not None:
+            (state.mark if self._exe_dirty or self._wmset_dirty else state.clear)()
+
+    def _undo_restore(self, snapshot, tag=None):
+        before = self._undo_capture()
+        self._restoring_undo = True
+        try:
+            exe, wmset = snapshot
+            for draw, value, position in zip(self._draw_list, exe[0], wmset[1]):
+                draw.set_exe_byte(value)
+                draw.x, draw.y, draw.sub_id, draw.pad = position
+            if self._phase_rules.loaded:
+                self._phase_rules.load_table_bytes(exe[1])
+            self._section.header = bytearray(wmset[0])
+            self._draw_widget.refresh_values()
+            self._refresh_world_phases()
+            self._exe_dirty = exe != self._saved_exe
+            self._wmset_dirty = wmset != self._saved_wmset
+            changed = [row for row in range(len(self._draw_list))
+                       if exe[0][row] != before[0][0][row] or wmset[1][row] != before[1][1][row]]
+            if changed:
+                row = tag[1] if tag and tag[0] == 0 and tag[1] in changed else changed[0]
+                draw = self._draw_list[row]
+                if draw.is_world() and draw.position_loaded and not self._illustration.map._visible(draw):
+                    phase = draw.world_phases[0] if draw.world_phases else DrawMapWidget.NO_PHASE
+                    self._phase_checks[phase].setChecked(True)
+                self.tabs.setCurrentIndex(0)
+                self._draw_widget.setCurrentCell(row, 0)
+                self._draw_widget.scrollToItem(self._draw_widget.item(row, 0))
+            elif tag:
+                self.tabs.setCurrentIndex(tag[0])
+                if tag[0] == 1 and tag[1] >= 0:
+                    self._groups_widget.groups.setCurrentCell(tag[1], 0)
+            self._update_save_status()
+            self._sync_dirty_marker()
+        finally:
+            self._restoring_undo = False
+
+    def undo(self):
+        """The main window routes Ctrl+Z to the active tool."""
+        return self._undo_stack.undo()
+
+    def redo(self):
+        return self._undo_stack.redo()
 
     def _update_save_status(self):
         exe = 'modified' if self._exe_dirty else ('loaded' if self.exe_loaded else 'not loaded')
@@ -255,17 +346,16 @@ class CidWidget(QWidget):
         self._draw_widget.refresh_phases()
         self._illustration.refresh()
         self._groups_widget.set_sources(self._section, self._phase_rules, self._draw_list)
-        for index in range(self._phase_widget.count()):
-            phase = self._phase_widget.itemData(index)
+        for phase, check in self._phase_checks.items():
             label = 'No phase (unused)' if phase == DrawMapWidget.NO_PHASE else f'World phase {phase}'
             if self._section.is_loaded():
                 count = sum(draw.position_loaded and
                             (not draw.world_phases if phase == DrawMapWidget.NO_PHASE else phase in draw.world_phases)
                             for draw in self._draw_list[128:])
                 label += f' - {count} record' + ('s' if count != 1 else '')
-            self._phase_widget.setItemText(index, label)
+            check.setToolTip(label)
         source = 'loaded EXE rules' if self._phase_rules.loaded else 'original OG rules (no EXE loaded)'
-        self._phase_widget.setToolTip(f'Filter the world map using {source}. No phase shows loaded '
+        self._phase_widget.setToolTip(f'Check several phases to show their combined records using {source}. No phase shows loaded '
                                       'records never searched by any phase, including unused slots. '
                                       'World phases are story states, not disc numbers.')
 
@@ -282,6 +372,11 @@ class CidWidget(QWidget):
         self._selected_row = row
         draw = self._draw_list[row] if 0 <= row < len(self._draw_list) else None
         self._illustration.set_selected(row, draw)
+
+    def _on_map_selection_picked(self, row):
+        self._draw_widget.setCurrentCell(row, 0)
+        self._draw_widget.scrollToItem(self._draw_widget.item(row, 0))
+        self._sync_dirty_marker()
 
     def _on_map_position_picked(self, x, y, sub_id=-1):
         # Only world draw points have a map position to place.
@@ -314,6 +409,7 @@ class CidWidget(QWidget):
         self.exe_loaded = True
         self._phase_rules = rules
         self._exe_dirty = False
+        self._reset_undo('exe')
         self._draw_widget._exe_loaded = True
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
@@ -386,6 +482,7 @@ class CidWidget(QWidget):
             draw.x, draw.y, draw.sub_id = x, y, sub_id
             draw.position_loaded = True
             draw.world_phases = self._section.phases_for_record(i, self._phase_rules.phase_groups)
+        self._reset_undo('wmset')
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
         self._refresh_world_phases()
@@ -406,6 +503,7 @@ class CidWidget(QWidget):
         self._exe_dirty = False
         for draw in self._draw_list:
             draw.set_exe_byte(0)
+        self._reset_undo('exe')
         self._draw_widget.set_draw(self._draw_list)
         self._refresh_world_phases()
         self._illustration.refresh()
@@ -419,6 +517,7 @@ class CidWidget(QWidget):
             draw.x, draw.y, draw.sub_id = 0, 0, 0
             draw.position_loaded = False
             draw.world_phases = ()
+        self._reset_undo('wmset')
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
         self._refresh_world_phases()
@@ -437,9 +536,12 @@ class CidWidget(QWidget):
 
         if save_exe and self._save_hext():
             self._exe_dirty = False
+            self._saved_exe = self._undo_capture()[0]
         if save_wmset and self._save_wmset():
             self._wmset_dirty = False
+            self._saved_wmset = self._undo_capture()[1]
         self._update_save_status()
+        self._sync_dirty_marker()
 
     def _save_hext(self):
         if not self.exe_loaded:
@@ -533,6 +635,7 @@ class CidWidget(QWidget):
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
         self._groups_widget.refresh()
+        self._record_undo()
         self._update_save_status()
 
     @staticmethod
