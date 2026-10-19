@@ -58,7 +58,10 @@ rate it gives, and its position on the world map.
 
 Load complementary `kernel.bin` for spell names (numeric IDs otherwise), and
 `wmx.obj` for terrain-triangle marker positions. World markers move only by
-dragging. The shared **Save** button writes EXE `.hext` data and/or world positions
+dragging; a sibling `wmx.obj` is picked up automatically when wmset is loaded.
+The map selector shows individual story phases or **No phase (unused)**. Numbered
+markers count overlapping records; without terrain their block-centre positions are approximate.
+The shared **Save** button writes EXE `.hext` data and/or world positions
 in `wmsetxx.obj`, according to the edited data. The **Groups and phases** tab
 edits the five draw-ID ranges
 (wmset) and the ordered groups searched in each world story phase (Hext).

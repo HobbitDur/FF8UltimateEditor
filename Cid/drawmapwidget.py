@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QWidget, QApplication, QToolTip
 class DrawMapWidget(QWidget):
     """Block overview, optional wmx triangle resolution, and drag-only movement."""
     BLOCK_COLS, BLOCK_ROWS = 128, 96
+    NO_PHASE = -1
     position_picked = pyqtSignal(int, int, int)  # encoded x, y, triangle (-1 = keep)
     selection_picked = pyqtSignal(int)
 
@@ -22,7 +23,7 @@ class DrawMapWidget(QWidget):
         self._drag_point = None
         self._zoom = 1.0
         self._pan = QPointF()
-        self._phase = None
+        self._phase = 0
         self.geometry = None
         self.setMinimumHeight(280)
         self.setMouseTracking(True)
@@ -67,13 +68,12 @@ class DrawMapWidget(QWidget):
         return ((point.x() - rect.x()) / rect.width() * 128,
                 (point.y() - rect.y()) / rect.height() * 96)
 
-    @staticmethod
-    def _is_placed(draw):
-        return draw.position_loaded and bool(draw.world_phases)
-
     def _visible(self, draw):
-        return (draw.is_world() and self._is_placed(draw)
-                and (self._phase is None or self._phase in draw.world_phases))
+        if not draw.is_world() or not draw.position_loaded:
+            return False
+        if self._phase == self.NO_PHASE:
+            return not draw.world_phases
+        return bool(draw.world_phases) and (self._phase is None or self._phase in draw.world_phases)
 
     def _marker(self, draw, rect):
         triangle = self._triangle(draw)
@@ -132,7 +132,12 @@ class DrawMapWidget(QWidget):
                 painter.setBrush(QColor(0, 200, 255))
                 painter.drawEllipse(point, 6., 6.)
                 name = draw.get_magic_name()
-                painter.drawText(point + QPointF(9, 4), f'ID {draw.get_id()}' + (f' - {name}' if name else ''))
+                label = f'ID {draw.get_id()}' + (f' - {name}' if name else '')
+                metrics = painter.fontMetrics()
+                label_x = max(2., min(point.x() + 9, self.width() - metrics.horizontalAdvance(label) - 2))
+                label_y = max(float(metrics.ascent() + 2),
+                              min(point.y() + 4, self.height() - metrics.descent() - 2))
+                painter.drawText(QPointF(label_x, label_y), label)
         if self._dragging and self._drag_point is not None:
             painter.setPen(QPen(QColor('white'), 2, Qt.PenStyle.DashLine))
             painter.setBrush(QColor(0, 200, 255, 120))
@@ -154,9 +159,13 @@ class DrawMapWidget(QWidget):
         if self._press is None or not (event.buttons() & Qt.MouseButton.LeftButton):
             hits = self._hits(event.position())
             if hits:
-                QToolTip.showText(event.globalPosition().toPoint(), '\n'.join(
+                precision = ('terrain triangle positions' if self.geometry else
+                             'approximate block centres; load wmx.obj to separate their triangles')
+                header = (f'{len(hits)} records near this marker ({precision}).\n' if len(hits) > 1 else '')
+                QToolTip.showText(event.globalPosition().toPoint(), header + '\n'.join(
                     f'ID {self._draw_list[i].get_id()} - Magic ID {self._draw_list[i].magic_index} '
                     f'{self._draw_list[i].get_magic_name()} (triangle {self._draw_list[i].sub_id})'
+                    + (' - No phase (unused)' if not self._draw_list[i].world_phases else '')
                     for i in hits), self)
             return
         if (event.position() - self._press).manhattanLength() >= QApplication.startDragDistance():

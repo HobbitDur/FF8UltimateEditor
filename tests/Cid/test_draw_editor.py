@@ -151,6 +151,34 @@ def test_world_phases_use_the_header_and_final_unused_slot_is_distinct(tmp_path)
     assert out.read_bytes() == source.read_bytes()
 
 
+def test_phase_selector_separates_story_variants_and_selects_unused_record(widget, tmp_path):
+    widget.load_wmset(str(_wmset(tmp_path)))
+    selector, view = widget._phase_widget, widget._illustration.map
+    assert [selector.itemData(i) for i in range(selector.count())] == [0, 1, 2, 3, 4, -1]
+    positions = [(d.x, d.y, d.sub_id) for d in widget._draw_list]
+    for phase, count in enumerate((118, 118, 120, 126, 126)):
+        selector.setCurrentIndex(selector.findData(phase))
+        assert sum(view._visible(d) for d in widget._draw_list) == count
+        assert f'{count} records' in selector.currentText()
+        assert view._visible(widget._draw_list[245]) == (phase == 0)
+        assert view._visible(widget._draw_list[246]) == (phase != 0)
+    selector.setCurrentIndex(selector.findData(DrawMapWidget.NO_PHASE))
+    assert [d.get_id() for d in widget._draw_list if view._visible(d)] == [256]
+    assert widget._draw_widget.currentRow() == 255
+    assert widget._illustration._stack.currentWidget() is view
+    assert view._hits(view._marker(widget._draw_list[255], view._image_rect())) == [255]
+    assert '1 record' in selector.currentText()
+    assert positions == [(d.x, d.y, d.sub_id) for d in widget._draw_list]
+    assert not widget._exe_dirty and not widget._wmset_dirty
+    # Removing the slot from No phase updates the filter immediately, using the edited ranges.
+    widget._groups_widget._last[4].setValue(256)
+    assert not any(view._visible(d) for d in widget._draw_list)
+    assert '0 records' in selector.currentText()
+    widget._on_wmset_closed('wmsetus.obj')
+    assert not any(view._visible(d) for d in widget._draw_list)
+    assert selector.currentText() == 'No phase (unused)'
+
+
 def test_geometry_uses_polygon_index_and_resolves_drop_to_triangle(tmp_path):
     data = bytearray(768 * 0x9000)
     struct.pack_into('<I', data, 4, 68)
@@ -169,8 +197,12 @@ def test_geometry_uses_polygon_index_and_resolves_drop_to_triangle(tmp_path):
 
 @pytest.mark.ff8data('extracted_files/world/dat/wmsetus.obj', 'extracted_files/world/dat/wmx.obj')
 def test_real_world_inventory_and_terrain(widget):
-    widget.load_wmset(str(ROOT / 'extracted_files/world/dat/wmsetus.obj'))
-    widget.load_wmx(str(ROOT / 'extracted_files/world/dat/wmx.obj'))
+    source = ROOT / 'extracted_files/world/dat/wmsetus.obj'
+    before = source.read_bytes()
+    widget.wmset_binding.open_path(str(source))
+    # The sibling terrain is registered as a complementary read-only file automatically.
+    assert Path(widget.wmx_binding.current_path) == ROOT / 'extracted_files/world/dat/wmx.obj'
+    assert widget.wmx_binding.read_only
     world = widget._draw_list[128:]
     assert len(world) == 128
     assert sum(bool(draw.world_phases) for draw in world) == 127
@@ -180,6 +212,19 @@ def test_real_world_inventory_and_terrain(widget):
     assert 'Yaulny' in widget._draw_list[135].get_location()
     assert all(widget._illustration.map.geometry.triangle(draw) is not None for draw in world)
     assert widget._illustration.map._pixmap.size().width() == 1024  # terrain-derived overview
+    assert not widget._exe_dirty and not widget._wmset_dirty
+    assert source.read_bytes() == before
+    geometry = widget._illustration.map.geometry
+    draw = widget._draw_list[135]  # Yaulny Canyon uses its actual triangle, not the centre of its block.
+    rect = widget._illustration.map._image_rect()
+    point = widget._illustration.map._marker(draw, rect)
+    position = widget._illustration.map._map_position(point, rect)
+    assert geometry.pick(*position) == (draw.x, draw.y, draw.sub_id)
+    bx, by = draw.get_block_xy()
+    assert position != (bx + .5, by + .5)
+    widget.wmx_binding.registry.close_file('wmx.obj')
+    assert widget._illustration.map.geometry is None
+    assert 'approximate block centres' in widget._map_status.text()
 
 
 @pytest.mark.ff8data('kernel.bin')

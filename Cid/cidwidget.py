@@ -14,6 +14,7 @@ from Cid.worlddrawsection import WorldDrawSection
 from Cid.worlddrawgeometry import WorldDrawGeometry
 from Cid.worlddrawphases import WorldDrawPhases
 from Cid.drawgroupswidget import DrawGroupsWidget
+from Cid.drawmapwidget import DrawMapWidget
 from Cid.phasestory import PhaseStoryDialog
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -36,6 +37,10 @@ class CidWidget(QWidget):
     VERSION_LIST = ["OG (2013)"]
     NB_DRAW = 256
     WORLD_EXE_START_INDEX = 128  # 0-based index of the first world entry in DrawPointData
+    APPROXIMATE_MAP_STATUS = (
+        'Map: approximate block centres on an illustrative background; coastal points may appear in water. '
+        'Load read-only wmx.obj for terrain and triangle positions. Numbers count overlapping records; '
+        'click cycles them, drag moves, wheel zooms.')
 
     def __init__(self, icon_path='Resources', game_data_folder="FF8GameData",
                  field_images_folder=None, file_registry=None):
@@ -108,10 +113,11 @@ class CidWidget(QWidget):
         self._layout_top.addWidget(self._version_widget)
 
         self._phase_widget = QComboBox()
-        self._phase_widget.addItem('All world phases', None)
         for phase in range(5):
             self._phase_widget.addItem(f'World phase {phase}', phase)
-        self._phase_widget.setToolTip('Story phases used by the OG game; these are not disc numbers.')
+        self._phase_widget.addItem('No phase (unused)', DrawMapWidget.NO_PHASE)
+        self._phase_widget.setToolTip('Choose a world story phase, or No phase for records never searched. '
+                                      'These are not disc numbers.')
         self._layout_top.addWidget(self._phase_widget)
         self._phase_info_label = QLabel('Phase info')
         self._phase_info_button = self._make_button(
@@ -126,8 +132,7 @@ class CidWidget(QWidget):
         self._save_status.setWordWrap(True)
         self._names_status = QLabel('Spell names: load complementary kernel.bin (read-only).')
         self._names_status.setWordWrap(True)
-        self._map_status = QLabel('Map: approximate block centres; load complementary wmx.obj for terrain triangles. '
-                                 'Click selects; drag moves; wheel zooms.')
+        self._map_status = QLabel(self.APPROXIMATE_MAP_STATUS)
         self._map_status.setWordWrap(True)
 
         # Model: full 256-entry list, kept alive and updated as files load.
@@ -143,8 +148,8 @@ class CidWidget(QWidget):
         self._draw_widget.position_changed.connect(self._illustration.refresh)
         self._illustration.position_picked.connect(self._on_map_position_picked)
         self._illustration.map.selection_picked.connect(lambda row: self._draw_widget.setCurrentCell(row, 0))
-        self._phase_widget.currentIndexChanged.connect(
-            lambda: self._illustration.map.set_phase(self._phase_widget.currentData()))
+        self._phase_widget.currentIndexChanged.connect(self._on_phase_selected)
+        self._illustration.map.set_phase(self._phase_widget.currentData())
 
         # Wiring: edits mark the corresponding backing file dirty.
         self._draw_widget.exe_changed.connect(self._on_exe_edited)
@@ -214,6 +219,17 @@ class CidWidget(QWidget):
     def _show_phase_info(self):
         PhaseStoryDialog(self).exec()
 
+    def _on_phase_selected(self):
+        view = self._illustration.map
+        view.set_phase(self._phase_widget.currentData())
+        if 0 <= self._selected_row < len(self._draw_list) and view._visible(self._draw_list[self._selected_row]):
+            return
+        for row, draw in enumerate(self._draw_list):
+            if view._visible(draw):
+                self._draw_widget.setCurrentCell(row, 0)
+                self._draw_widget.scrollToItem(self._draw_widget.item(row, 0))
+                break
+
     def _on_world_edited(self):
         self._wmset_dirty = True
         self._update_save_status()
@@ -239,13 +255,19 @@ class CidWidget(QWidget):
         self._draw_widget.refresh_phases()
         self._illustration.refresh()
         self._groups_widget.set_sources(self._section, self._phase_rules, self._draw_list)
-        if self._section.is_loaded():
-            nb = min(self._section.get_nb_record(), 128)
-            count = sum(bool(draw.world_phases) for draw in self._draw_list[128:])
-            self._phase_widget.setItemText(0, f'All phases ({count}/{nb} world records)')
-            source = 'loaded EXE rules' if self._phase_rules.loaded else 'original OG rules (no EXE loaded)'
-            self._phase_widget.setToolTip(f'{nb} world slots; {count} scanned using {source}. '
-                                         'Several records can share an exact trigger.')
+        for index in range(self._phase_widget.count()):
+            phase = self._phase_widget.itemData(index)
+            label = 'No phase (unused)' if phase == DrawMapWidget.NO_PHASE else f'World phase {phase}'
+            if self._section.is_loaded():
+                count = sum(draw.position_loaded and
+                            (not draw.world_phases if phase == DrawMapWidget.NO_PHASE else phase in draw.world_phases)
+                            for draw in self._draw_list[128:])
+                label += f' - {count} record' + ('s' if count != 1 else '')
+            self._phase_widget.setItemText(index, label)
+        source = 'loaded EXE rules' if self._phase_rules.loaded else 'original OG rules (no EXE loaded)'
+        self._phase_widget.setToolTip(f'Filter the world map using {source}. No phase shows loaded '
+                                      'records never searched by any phase, including unused slots. '
+                                      'World phases are story states, not disc numbers.')
 
     def _on_group_ranges_edited(self):
         self._refresh_world_phases()
@@ -334,13 +356,13 @@ class CidWidget(QWidget):
             return
         self._illustration.map.set_geometry(geometry, overview)
         self._map_status.setText('Map: base-world terrain and trigger triangles from wmx.obj. '
-                                 'Story replacement terrain can differ. Drag chooses a destination triangle; wheel zooms.')
+                                 'Story replacement terrain can differ. Numbers count overlapping records; '
+                                 'click cycles them. Drag chooses a destination triangle; wheel zooms.')
         self._illustration.refresh()
 
     def _on_wmx_closed(self, _path):
         self._illustration.map.set_geometry(None)
-        self._map_status.setText('Map: approximate block centres; load complementary wmx.obj for terrain triangles. '
-                                 'Click selects; drag moves; wheel zooms.')
+        self._map_status.setText(self.APPROXIMATE_MAP_STATUS)
         self._illustration.refresh()
 
     def load_wmset(self, path):
@@ -369,6 +391,13 @@ class CidWidget(QWidget):
         self._refresh_world_phases()
         self._update_save_status()
 
+        # Extracted world archives keep the matching terrain beside wmset. Prefer
+        # those exact triangles over approximate markers on the reference image.
+        terrain_path = os.path.join(os.path.dirname(path), 'wmx.obj')
+        if (self._illustration.map.geometry is None and not self.wmx_binding.current_path
+                and os.path.isfile(terrain_path)):
+            self.wmx_binding.open_path(terrain_path)
+
     def _on_exe_closed(self, _path):
         """Closing one source cannot discard edits belonging to the other source."""
         self.exe_loaded = False
@@ -390,7 +419,6 @@ class CidWidget(QWidget):
             draw.x, draw.y, draw.sub_id = 0, 0, 0
             draw.position_loaded = False
             draw.world_phases = ()
-        self._phase_widget.setItemText(0, 'All world phases')
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
         self._refresh_world_phases()

@@ -33,14 +33,32 @@ The two block bytes decode as `column = x & 127`, `row = 2*y + (x >> 7)` on a
 
 With only wmset loaded, the marker is at the **approximate block centre**, and
 the selected block is outlined. Points sharing a block overlap; the number beside
-the marker counts the records there. Click to select/cycle overlapping records,
+the marker counts the records there, even when their triangle indices differ.
+For example, **5 means five records**, not Draw ID 5. Click to select/cycle overlapping records,
 or select one in the table. Use the mouse wheel to zoom in or out.
+The bundled background is illustrative, so a block-centre marker near the coast
+can appear in the water. These approximate positions do not change the saved bytes.
 
 Load complementary `wmx.obj` to position markers at their terrain-triangle
 centroids and outline the selected triangle. The trigger covers the triangle,
 not just its centroid. CID also builds a flat terrain overview from this file,
 so the background and markers use the same projection. This is the **base
 world**: story replacement segments may differ.
+When loading wmset, CID automatically opens a sibling `wmx.obj` as a read-only
+complementary file if no terrain is already loaded or selected. A manually loaded
+terrain file is preserved. Otherwise use the read-only import to choose it.
+
+The selector beside Game version chooses **World phase 0-4**; each entry shows
+how many world records that phase searches. **No phase (unused)** shows loaded
+records searched by none of the phases, including the original unused ID 256.
+Choosing it also selects the first such record in the table. It uses the stored
+position, even when the unused slot contains zero coordinates. Switching this
+view does not change a record's phase assignments or coordinates.
+
+The original Hell-island record **ID 215** refers to block `(9, 49)`, triangle
+32, whose ground type in the base wmx is **34 (sea)**. This is already in the
+source files; CID preserves it rather than moving it to a nearby land triangle.
+Being included in a phase's search range does not prove physical accessibility.
 
 Only dragging a selected marker moves it. Clicking empty map or a marker never
 changes coordinates. A drag requires the normal system drag threshold. With
