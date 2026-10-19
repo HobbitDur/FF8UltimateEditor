@@ -122,9 +122,14 @@ class XuWidget(QWidget):
                                    "with G-Soldier's framing, like FFNx does) and open it.\n"
                                    "Put it in FFNx's direct/exe/ folder.")
         self.new_button.clicked.connect(self._create_from_exe)
+        self.import_button = QPushButton(f"Import {FILE_NAME}...")
+        self.import_button.setToolTip(f"Open a {FILE_NAME} to edit (FFNx reads it from direct/exe/).\n"
+                                      "The header Import button does the same.")
+        self.import_button.clicked.connect(lambda: self.binding.open_dialog(self))
         self.file_label = QLabel()
         self.file_label.setWordWrap(True)
         top_bar = QHBoxLayout()
+        top_bar.addWidget(self.import_button)
         top_bar.addWidget(self.exe_button)
         top_bar.addWidget(self.new_button)
         top_bar.addWidget(self.file_label, 1)
