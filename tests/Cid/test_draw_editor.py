@@ -13,6 +13,7 @@ from Cid.draw import Draw
 from Cid.drawmapwidget import DrawMapWidget
 from Cid.worlddrawgeometry import WorldDrawGeometry
 from Cid.worlddrawsection import WorldDrawSection
+from Cid.worldlandmarks import read_landmarks
 from FF8GameData.gamedata import GameData
 from Common.dirtytracking import install_dirty_tracking
 
@@ -172,6 +173,10 @@ def test_right_drag_pans_middle_click_resets_and_zoom_keeps_pointer_anchored(app
     assert view._image_rect().center() == view._map_viewport().center()
     assert not picked and not selected
     assert view._guide.geometry() == guide_rect
+    view._zoom, view._pan = 3., QPointF(40, -20)
+    QTest.mouseClick(view.reset_button, Qt.MouseButton.LeftButton)
+    assert view._zoom == 1 and view._pan == QPointF()
+    assert not picked and not selected
     view.close()
 
 
@@ -285,12 +290,13 @@ def test_field_and_phase_filters_hide_rows_without_changing_data_or_history(widg
     dirty = install_dirty_tracking(widget)
     before = widget._undo_capture()
     table = widget._draw_widget
-    assert sum(not table.isRowHidden(row) for row in range(table.rowCount())) == 128 + 118
+    assert all(check.isChecked() for check in widget._phase_checks.values())
+    assert sum(not table.isRowHidden(row) for row in range(table.rowCount())) == 256
     widget._field_check.click()
     assert all(table.isRowHidden(row) for row in range(128))
-    assert sum(not table.isRowHidden(row) for row in range(table.rowCount())) == 118
-    widget._phase_checks[DrawMapWidget.NO_PHASE].click()
-    widget._phase_checks[0].click()
+    assert sum(not table.isRowHidden(row) for row in range(table.rowCount())) == 128
+    for phase in range(5):
+        widget._phase_checks[phase].click()
     assert [row + 1 for row in range(table.rowCount()) if not table.isRowHidden(row)] == [256]
     widget._phase_checks[DrawMapWidget.NO_PHASE].click()
     assert all(table.isRowHidden(row) for row in range(table.rowCount()))
@@ -305,6 +311,103 @@ def test_field_and_phase_filters_hide_rows_without_changing_data_or_history(widg
     widget._on_wmset_closed('wmsetus.obj')
     # EXE-only editing still exposes world slots, whose phase membership is unknown.
     assert sum(not table.isRowHidden(row) for row in range(table.rowCount())) == 256
+
+
+def test_fullscreen_fills_cid_and_restores_layout_with_button_and_escape(widget, app, tmp_path):
+    widget.load_wmset(str(_wmset(tmp_path)))
+    widget.resize(1450, 900)
+    widget.show()
+    app.processEvents()
+    dirty = install_dirty_tracking(widget)
+    before = widget._undo_capture()
+    view, button = widget._illustration.map, widget._fullscreen_button
+    assert widget._phase_widget.title() == 'Phase'
+    assert len({check.y() for check in widget._phase_checks.values()}) == 1
+    assert all(check.isChecked() for check in widget._phase_checks.values())
+    assert view._phases == frozenset((*range(5), DrawMapWidget.NO_PHASE))
+    assert button.mapTo(widget, QPoint()).x() < view.mapTo(widget, QPoint()).x()
+    normal_height = widget._illustration.height()
+    sizes = widget._splitter.sizes()
+    view._zoom, view._pan = 2., QPointF(20, -10)
+    for use_escape in (False, True):
+        QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+        app.processEvents()
+        assert widget._view_stack.currentWidget() is widget._fullscreen_page
+        assert not widget.tabs.isVisible() and not widget._phase_widget.isVisible()
+        assert button.isVisible() and 'Exit' in button.text()
+        assert widget._illustration.height() > normal_height
+        assert widget._illustration_panel.height() == widget._view_stack.height()
+        assert view._zoom == 2 and view._pan == QPointF(20, -10)
+        if use_escape:
+            QTest.keyClick(button, Qt.Key.Key_Escape)
+        else:
+            QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+        app.processEvents()
+        assert not button.isChecked()
+        assert widget.tabs.isVisible() and widget._phase_widget.isVisible()
+        assert widget._splitter.widget(1) is widget._illustration_panel
+        assert widget._splitter.sizes() == sizes
+        assert button.isVisible()
+    assert widget._undo_capture() == before and not widget._undo_stack.can_undo()
+    assert not dirty.dirty
+
+
+def test_landmarks_use_localised_wmset_names_and_world_coordinates():
+    game = GameData(str(ROOT / 'FF8GameData'))
+    names = ['Test town', 'Other city', '']
+    encoded = [bytes(game.translate_str_to_hex(name)) + b'\0' for name in names]
+    header_size = 4 * (len(names) + 1)
+    text = bytearray()
+    offset = header_size
+    for name in encoded:
+        text += struct.pack('<I', offset)
+        offset += len(name)
+    text += bytes(4) + b''.join(encoded)
+    records = struct.pack('<I', 4 + 4 * 12)
+    records += struct.pack('<BBBBii', 0, 0, 0, 0, 4096, 6144)
+    records += struct.pack('<BBBBii', 0, 0, 0, 0, 4096, 6144)  # duplicate story variant
+    records += struct.pack('<BBBBii', 0, 0, 1, 0, -2048, -4096)
+    records += struct.pack('<BBBBii', 0, 0, 2, 0, 0, 0)  # unnamed: omit
+    data = bytearray(192) + records + text
+    for index, offset in ((30, 192), (31, 192 + len(records)), (32, len(data))):
+        struct.pack_into('<I', data, index * 4, offset)
+    original = bytes(data)
+    assert read_landmarks(data, game) == [('Test town', 66., 45.), ('Other city', 63., 50.)]
+    assert bytes(data) == original
+    struct.pack_into('<I', data, 192 + len(records), 0xFFFFFFFC)
+    with pytest.raises(ValueError):
+        read_landmarks(data, game)
+
+
+@pytest.mark.ff8data('extracted_files/world/dat/wmsetus.obj')
+def test_real_landmarks_follow_world_projection_and_remain_read_only(widget, app):
+    source = ROOT / 'extracted_files/world/dat/wmsetus.obj'
+    data = source.read_bytes()
+    widget.load_wmset(str(source))
+    view = widget._illustration.map
+    names = {name: (x, y) for name, x, y in view._landmarks}
+    assert len(names) == 19
+    assert names['Balamb'] == pytest.approx((70.05224609375, 35.07666015625))
+    assert names['Deling City'] == pytest.approx((34.03466796875, 32.9619140625))
+    assert names['Shumi Village'] == pytest.approx((70.07958984375, 7.080078125))
+    assert "Tears' Point" in names and 'Esthar/Airstation' in names
+    dirty = install_dirty_tracking(widget)
+    before = widget._undo_capture()
+    widget.resize(1450, 900)
+    widget.show()
+    app.processEvents()
+    assert view.landmarks_check.isEnabled() and view.landmarks_check.isChecked()
+    assert view._landmarks == read_landmarks(data, widget.game_data)
+    normal = view.grab().toImage()
+    QTest.mouseClick(view.landmarks_check, Qt.MouseButton.LeftButton)
+    assert normal != view.grab().toImage()
+    view._zoom, view._pan = 3., QPointF(60, -20)
+    QTest.mouseClick(view.reset_button, Qt.MouseButton.LeftButton)
+    assert view._zoom == 1 and view._pan == QPointF()
+    assert widget._undo_capture() == before and not widget._undo_stack.can_undo()
+    assert not dirty.dirty and source.read_bytes() == data
+    widget._on_wmset_closed(str(source))
+    assert not view._landmarks and not view.landmarks_check.isEnabled()
 
 
 def test_direct_drag_supports_real_undo_redo_shortcuts_and_saved_state(widget, app, tmp_path, monkeypatch):

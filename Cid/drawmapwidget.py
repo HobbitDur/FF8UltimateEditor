@@ -2,7 +2,7 @@ import os
 import math
 from PyQt6.QtCore import Qt, pyqtSignal, QRectF, QPointF, QSignalBlocker
 from PyQt6.QtGui import QPixmap, QPainter, QColor, QPen, QPolygonF
-from PyQt6.QtWidgets import QWidget, QApplication, QToolTip, QVBoxLayout, QLabel, QCheckBox
+from PyQt6.QtWidgets import QWidget, QApplication, QToolTip, QVBoxLayout, QLabel, QCheckBox, QPushButton, QHBoxLayout
 
 
 class DrawMapWidget(QWidget):
@@ -26,7 +26,8 @@ class DrawMapWidget(QWidget):
         self._zoom = 1.0
         self._pan = QPointF()
         self._pan_press = None
-        self._phases = frozenset((0,))
+        self._phases = frozenset((*range(5), self.NO_PHASE))
+        self._landmarks = []
         self.geometry = None
         self._mesh_pixmap = QPixmap()
         self.setMinimumHeight(280)
@@ -49,7 +50,20 @@ class DrawMapWidget(QWidget):
         self.mesh_check.setEnabled(False)
         self.mesh_check.setToolTip('Show the terrain triangles from read-only wmx.obj')
         self.mesh_check.toggled.connect(self.set_mesh_visible)
-        guide_layout.addWidget(self.mesh_check)
+        mesh_row = QHBoxLayout()
+        mesh_row.addWidget(self.mesh_check)
+        self.reset_button = QPushButton('Reset view')
+        self.reset_button.setToolTip('Reset zoom and centre the map (also: middle mouse button)')
+        self.reset_button.clicked.connect(self.reset_view)
+        mesh_row.addWidget(self.reset_button)
+        guide_layout.addLayout(mesh_row)
+        self.landmarks_check = QCheckBox('Locations')
+        self.landmarks_check.setChecked(True)
+        self.landmarks_check.setEnabled(False)
+        self.landmarks_check.setToolTip('Reference locations and names from wmsetxx.obj. '
+                                        'Fixed references; they do not follow story-phase availability or moving Gardens.')
+        self.landmarks_check.toggled.connect(self.update)
+        guide_layout.addWidget(self.landmarks_check)
         self._guide_note = QLabel('Load wmx.obj to see the triangles used for draw-point placement.')
         self._guide_note.setWordWrap(True)
         guide_layout.addWidget(self._guide_note)
@@ -67,6 +81,33 @@ class DrawMapWidget(QWidget):
         self._draw_list = draw_list
         self._press, self._dragging, self._drag_point = None, False, None
         self.update()
+
+    def set_landmarks(self, landmarks):
+        self._landmarks = list(landmarks)
+        self.landmarks_check.setEnabled(bool(self._landmarks))
+        self.update()
+
+    def _paint_landmarks(self, painter, rect, viewport):
+        if not self.landmarks_check.isChecked():
+            return
+        occupied = []
+        metrics = painter.fontMetrics()
+        for name, x, y in self._landmarks:
+            point = self._block_to_point(x, y, rect)
+            if not viewport.contains(point):
+                continue
+            painter.setPen(QPen(QColor(255, 224, 150), 1))
+            painter.setBrush(QColor(30, 35, 45, 220))
+            painter.drawRect(QRectF(point.x() - 3, point.y() - 3, 6, 6))
+            width, height = metrics.horizontalAdvance(name) + 8, metrics.height() + 4
+            for dx, dy in ((7, -height / 2), (7, -height - 5), (7, 5), (-width - 7, -height / 2)):
+                label = QRectF(point.x() + dx, point.y() + dy, width, height)
+                if viewport.contains(label) and not any(label.intersects(other) for other in occupied):
+                    painter.fillRect(label, QColor(18, 24, 38, 210))
+                    painter.setPen(QColor(255, 224, 150))
+                    painter.drawText(label, Qt.AlignmentFlag.AlignCenter, name)
+                    occupied.append(label.adjusted(-2, -2, 2, 2))
+                    break
 
     def set_geometry(self, geometry, overview=None):
         self.geometry = geometry
@@ -186,6 +227,7 @@ class DrawMapWidget(QWidget):
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
             painter.drawPixmap(rect.toRect(), self._mesh_pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        self._paint_landmarks(painter, rect, viewport)
         groups = {}
         for index, draw in enumerate(self._draw_list):
             if not self._visible(draw):
@@ -277,6 +319,11 @@ class DrawMapWidget(QWidget):
                     f'{self._draw_list[i].get_magic_name()} (triangle {self._draw_list[i].sub_id})'
                     + (' - No phase (unused)' if not self._draw_list[i].world_phases else '')
                     for i in hits), self)
+            elif self.landmarks_check.isChecked():
+                for name, x, y in self._landmarks:
+                    if (self._block_to_point(x, y, self._image_rect()) - event.position()).manhattanLength() <= 10:
+                        QToolTip.showText(event.globalPosition().toPoint(), name + ' (reference location)', self)
+                        break
             return
         if (event.position() - self._press).manhattanLength() >= QApplication.startDragDistance():
             self._dragging = True

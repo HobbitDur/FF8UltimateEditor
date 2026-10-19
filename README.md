@@ -59,11 +59,13 @@ rate it gives, and its position on the world map.
 Load complementary `kernel.bin` for spell names (numeric IDs otherwise), and
 `wmx.obj` for terrain-triangle marker positions. World markers move only by
 dragging; a sibling `wmx.obj` is picked up automatically when wmset is loaded.
-Compact stacked phase checkboxes combine any story phases and **No phase** for unused records;
+The compact horizontal **Phase** group combines any story phases and **No phase** for unused records (all checked by default);
 the separate **Field** checkbox hides field rows. Numbered
 markers count overlapping records; without terrain their block-centre positions are approximate.
 Drag any marker directly; **Ctrl+Z** undoes edits and **Ctrl+Shift+Z / Ctrl+Y** redoes them.
-**Mesh** shows the terrain triangles. Right-drag pans; wheel-click resets zoom and centres the map.
+**Mesh** shows the terrain triangles. **Locations** adds city/landmark references from wmset's names and coordinates.
+Right-drag pans; wheel-click or **Reset view** resets zoom and centres the map.
+**Illustration full screen**, on the left of the map, fills the CID tool area; click again or press Escape to restore the editor.
 The map's right-hand guide lists the controls.
 The shared **Save** button writes EXE `.hext` data and/or world positions
 in `wmsetxx.obj`, according to the edited data. The **Groups and phases** tab

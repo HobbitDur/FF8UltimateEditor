@@ -1,17 +1,19 @@
 import csv
 import json
 import os
+import struct
 
 from PyQt6.QtCore import QSize, Qt, QSignalBlocker
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtGui import QIcon, QPixmap, QShortcut, QKeySequence
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QFileDialog, QPushButton, QHBoxLayout, QLabel, QComboBox,
-                             QMessageBox, QSplitter, QTabWidget, QCheckBox)
+                             QMessageBox, QSplitter, QTabWidget, QCheckBox, QGroupBox, QStackedWidget)
 
 from Cid.draw import Draw
 from Cid.drawwidget import DrawWidget
 from Cid.drawillustrationwidget import DrawIllustrationWidget
 from Cid.worlddrawsection import WorldDrawSection
 from Cid.worlddrawgeometry import WorldDrawGeometry
+from Cid.worldlandmarks import read_landmarks
 from Cid.worlddrawphases import WorldDrawPhases
 from Cid.drawgroupswidget import DrawGroupsWidget
 from Cid.drawmapwidget import DrawMapWidget
@@ -98,7 +100,8 @@ class CidWidget(QWidget):
 
         self._fullscreen_button = QPushButton("Illustration full screen")
         self._fullscreen_button.setCheckable(True)
-        self._fullscreen_button.setToolTip("Hide the table and let the map / field image take all the space")
+        self._fullscreen_button.setProperty('read_only_preview', True)
+        self._fullscreen_button.setToolTip("Fill the CID tool with the illustration; click again or press Escape to return")
         self._fullscreen_button.toggled.connect(self._on_fullscreen_toggled)
 
         self._version_label = QLabel("Game version")
@@ -109,7 +112,6 @@ class CidWidget(QWidget):
         self._layout_top = QHBoxLayout()
         self._layout_top.addWidget(self._csv_upload_button)
         self._layout_top.addWidget(self._csv_save_button)
-        self._layout_top.addWidget(self._fullscreen_button)
         self._layout_top.addWidget(self._version_label)
         self._layout_top.addWidget(self._version_widget)
 
@@ -119,23 +121,20 @@ class CidWidget(QWidget):
         self._field_check.setToolTip('Show field draw points in the table')
         self._layout_top.addWidget(self._field_check)
 
-        self._phase_widget = QWidget()
+        self._phase_widget = QGroupBox('Phase')
         self._phase_widget.setProperty('read_only_preview', True)
         phase_layout = QHBoxLayout(self._phase_widget)
-        phase_layout.setContentsMargins(0, 0, 0, 0)
-        phase_layout.addWidget(QLabel('Phase'))
-        phase_checks_layout = QVBoxLayout()
-        phase_checks_layout.setSpacing(0)
-        phase_layout.addLayout(phase_checks_layout)
+        phase_layout.setContentsMargins(8, 2, 8, 4)
         self._phase_checks = {}
         for phase in range(5):
             check = QCheckBox(str(phase))
-            phase_checks_layout.addWidget(check)
+            phase_layout.addWidget(check)
             self._phase_checks[phase] = check
         check = QCheckBox('No phase')
-        phase_checks_layout.addWidget(check)
+        phase_layout.addWidget(check)
         self._phase_checks[DrawMapWidget.NO_PHASE] = check
-        self._phase_checks[0].setChecked(True)
+        for check in self._phase_checks.values():
+            check.setChecked(True)
         self._phase_widget.setToolTip('Check any combination of world story phases. '
                                       'No phase includes records never searched by a phase.')
         self._layout_top.addWidget(self._phase_widget)
@@ -165,6 +164,15 @@ class CidWidget(QWidget):
         self._illustration = DrawIllustrationWidget(os.path.join(icon_path, 'map2.png'), self._draw_field_map,
                                                     field_images_folder, parent=self)
         self._illustration.set_draw_list(self._draw_list)
+        self._illustration.map.set_phases(self._phase_checks)
+
+        # Keep the expand/restore control beside the illustration in both modes.
+        self._illustration_panel = QWidget()
+        panel_layout = QHBoxLayout(self._illustration_panel)
+        panel_layout.setContentsMargins(0, 0, 0, 0)
+        panel_layout.addWidget(self._fullscreen_button, 0, Qt.AlignmentFlag.AlignTop)
+        panel_layout.addWidget(self._illustration, 1)
+        self._normal_splitter_sizes = None
 
         # Wiring: table <-> illustration
         self._draw_widget.selection_changed.connect(self._on_selection_changed)
@@ -181,7 +189,7 @@ class CidWidget(QWidget):
 
         self._splitter = QSplitter(Qt.Orientation.Vertical)
         self._splitter.addWidget(self._draw_widget)
-        self._splitter.addWidget(self._illustration)
+        self._splitter.addWidget(self._illustration_panel)
         self._splitter.setStretchFactor(0, 3)
         self._splitter.setStretchFactor(1, 2)
 
@@ -194,13 +202,25 @@ class CidWidget(QWidget):
         self.tabs.addTab(self._groups_widget, 'Groups and phases')
         self.tabs.currentChanged.connect(self._on_tab_changed)
 
-        self.window_layout = QVBoxLayout()
-        self.setLayout(self.window_layout)
+        self._normal_page = QWidget()
+        self.window_layout = QVBoxLayout(self._normal_page)
         self.window_layout.addLayout(self._layout_top)
         self.window_layout.addWidget(self._save_status)
         self.window_layout.addWidget(self._names_status)
         self.window_layout.addWidget(self._map_status)
         self.window_layout.addWidget(self.tabs)
+        self._fullscreen_page = QWidget()
+        self._fullscreen_layout = QVBoxLayout(self._fullscreen_page)
+        self._fullscreen_layout.setContentsMargins(0, 0, 0, 0)
+        self._view_stack = QStackedWidget()
+        self._view_stack.addWidget(self._normal_page)
+        self._view_stack.addWidget(self._fullscreen_page)
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.addWidget(self._view_stack)
+        self._exit_fullscreen = QShortcut(QKeySequence('Escape'), self)
+        self._exit_fullscreen.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._exit_fullscreen.activated.connect(lambda: self._fullscreen_button.setChecked(False))
 
         # Removing one of the two files from the Opened files panel drops its part of the table.
         self.exe_binding.file_closed.connect(self._on_exe_closed)
@@ -427,7 +447,18 @@ class CidWidget(QWidget):
         self._illustration.refresh()
 
     def _on_fullscreen_toggled(self, checked):
-        self._draw_widget.setVisible(not checked)
+        if checked:
+            self._normal_splitter_sizes = self._splitter.sizes()
+            self._fullscreen_layout.addWidget(self._illustration_panel)
+            self._view_stack.setCurrentWidget(self._fullscreen_page)
+        else:
+            self._splitter.addWidget(self._illustration_panel)
+            self._view_stack.setCurrentWidget(self._normal_page)
+            if self._normal_splitter_sizes:
+                self._splitter.setSizes(self._normal_splitter_sizes)
+        self._illustration_panel.show()
+        self._fullscreen_button.setText('Exit full screen' if checked else 'Illustration full screen')
+        self._fullscreen_button.setFocus()
 
     # ---- loading -----------------------------------------------------------
     def load_exe(self, path):
@@ -509,6 +540,12 @@ class CidWidget(QWidget):
                              f"Could not parse Section 34 of this file:<br>{error}")
             return
         self.wmset_file_path = path
+        # Optional display metadata must never prevent loading valid draw records.
+        try:
+            landmarks = read_landmarks(self._section._file_data, self.game_data)
+        except (ValueError, IndexError, struct.error):
+            landmarks = []
+        self._illustration.map.set_landmarks(landmarks)
         self._wmset_dirty = False
         for draw in self._draw_list[self.WORLD_EXE_START_INDEX:]:
             draw.position_loaded = False
@@ -551,6 +588,7 @@ class CidWidget(QWidget):
 
     def _on_wmset_closed(self, _path):
         self._section = WorldDrawSection()
+        self._illustration.map.set_landmarks([])
         self.wmset_file_path = ""
         self._wmset_dirty = False
         for draw in self._draw_list:

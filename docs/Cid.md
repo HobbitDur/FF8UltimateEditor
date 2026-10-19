@@ -52,8 +52,8 @@ Enable **Mesh** in the dark guide area to the right of the map to see the actual
 terrain-triangle edges. Zoom in to inspect a destination triangle before dropping
 a draw point. Mesh is available when wmx is loaded; toggling it is a view change.
 
-The compact **Phase** control beside Game version stacks the numeric checkboxes
-for **phases 0-4**, plus No phase. Select any combination.
+The compact **Phase** group beside Game version aligns the checkboxes in one row
+for **phases 0-4**, plus No phase. All are checked by default. Select any combination.
 For example, check phases 1 and 2 to show their combined records; a record in both
 phases is drawn once. Hover over a checkbox for its record count. **No phase**
 also includes records searched by none of the phases, including the original
@@ -83,7 +83,24 @@ The table still allows direct byte edits. Nothing moves until wmset is loaded.
 
 **Right-drag** pans the map. The **mouse wheel** zooms around the pointer;
 **middle-click** (pressing the wheel) resets zoom and recentres the map. The
-control guide remains fixed on the unused background to the right, with Mesh
+**Reset view** button provides the same action without a working middle button.
+**Illustration full screen**, to the left of the illustration, fills the CID tool
+area with the map or field image, hiding the filters, status text, tabs and table.
+The button stays on the left as **Exit full screen**; Escape also restores the
+normal layout and previous table/map split. Pan and zoom are retained.
+
+**Locations** overlays named city/landmark references from the loaded wmset:
+Section 30 supplies world coordinates and Section 31 supplies FF8-encoded names.
+Labels use the same world projection as the terrain and follow pan/zoom. Duplicate
+story records are merged; crowded labels appear as more room becomes available
+when zooming. Hover over a location square to read its name. These are fixed
+references, including the original Garden sites; they do not simulate moving
+Gardens or phase-dependent accessibility. Unnamed locations are omitted. Closing
+wmset removes the labels; missing or malformed optional location data does not
+prevent draw-point editing. Locations, Reset view and fullscreen do not modify
+files or add undo steps.
+
+The control guide remains fixed on the unused background to the right, with Mesh
 and the navigation/undo shortcuts. Panning, zooming, resetting, and filtering
 never move a draw point or add an undo step. Drop targets are restricted to the
 map area, so dragging over the guide cannot change a position.
