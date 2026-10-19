@@ -21,7 +21,7 @@ An empty camera keeps the configured starting view and still displays the encoun
   the player's position from the engine's normal battle formation, defaulting to three
   members and slot 0. The same controls place the player facing a loaded monster.
 - Enemy DATs are searched beside scene.out first, then beside the loaded
-  model. Available enemies are displayed without textures; missing
+  model. Available enemies are displayed with their extracted textures; missing
   assets are reported. Only actors are drawn: no battle stage, ground grid or axis gizmo.
   Auxiliary imports never save files.
   The loaded model keeps its normal textures and weapon. Scene files opened in another
@@ -30,7 +30,7 @@ An empty camera keeps the configured starting view and still displays the encoun
   set their battle slot IDs and place the opponent in world units (Y points down) in
   manual mode. Encounter mode derives those slots and disables manual coordinates.
 - **Load opponent** imports another monster/character DAT read-only and displays its
-  posed mesh without textures. In a monster encounter preview the player defaults to
+  textured posed mesh. In a monster encounter preview the player defaults to
   Squall (`d0c000.dat`) from the battle folder when no custom opponent is loaded.
 - **Starting view** supplies the preceding camera for shots that start with a previous-view
   reference. Model animation and the selected skeletal clip can be changed independently.
@@ -42,6 +42,14 @@ layout 0 resolves them live. Block timing, final holds, easing and cubic curves 
 the camera math already used by Watts. The renderer applies the projection H value
 (higher means a tighter lens), the battle screen centre (160,108), roll and model root.
 Close-up clipping uses the actual camera distance rather than the unrelated orbit zoom.
+
+Playback uses elapsed wall time at 15 game ticks per second. Delayed redraws skip to
+the due tick instead of stretching the camera duration; pause/resume and manual seeking
+reset the clock anchor. Native shots still have their original 15 Hz sampling.
+Auxiliary actors use cached topology, UVs, posed frames and shared textures. Culling
+and fallback shading are vectorized; materials are submitted through vertex arrays,
+without a Python normal/vertex loop per triangle. Textures are extracted on first
+model import and uploaded once per preview context, not during each animation tick.
 
 The normal party formation comes from `computeSomeStatusData` (EN `0x47DBA0`),
 using the table at `0xB81030` (world XYZ, Y down):
@@ -88,3 +96,5 @@ SolomonRing character/weapon previews and Watts playback are checked separately.
 Encounter checks cover source model switching, duplicate monster slots, XYZ preservation,
 automatic asset lookup, actor mesh indices, named/modded monsters, normal party
 formations, absence of stage geometry, invalid imports and shared-file closing.
+Clock regressions cover delayed callbacks, pause/resume, seeking and final holds.
+Prepared-mesh checks cover quad winding/culling, UVs and per-model texture mapping.

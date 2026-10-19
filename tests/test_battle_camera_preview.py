@@ -142,6 +142,54 @@ def test_encounter_labels_prefer_modded_dat_names_to_catalog_ids(tmp_path):
     picker.close()
 
 
+def test_playback_clock_catches_up_after_delayed_redraw_and_resumes_from_seek(monkeypatch):
+    from Ifrit.IfritCameraSeq import camerapreview
+    clock = [10.]
+    monkeypatch.setattr(camerapreview, 'perf_counter', lambda: clock[0])
+    manager = SimpleNamespace(enemy=SimpleNamespace(entity_type=SimpleNamespace(name='CHARACTER')))
+    panel = camerapreview.CameraPreviewPanel(manager)
+    panel._total = 50
+    panel._slider.setRange(0, 50)
+    panel._start_playback()
+    clock[0] = 10.8  # a busy event loop coalesced several native frame deadlines
+    panel._advance()
+    assert panel._slider.value() == 12
+    clock[0] = 11.5
+    panel._advance()
+    assert panel._slider.value() == 22
+    panel._toggle_play()  # pause time must not count toward playback
+    clock[0] = 20.
+    panel._toggle_play()
+    clock[0] = 21.
+    panel._advance()
+    assert panel._slider.value() == 37
+    panel._slider.setValue(10)  # manual seek while playing starts a new clock anchor
+    clock[0] = 22.
+    panel._advance()
+    assert panel._slider.value() == 25
+    clock[0] = 30.
+    panel._advance()
+    assert panel._slider.value() == 50 and not panel._timer.isActive()
+    panel.close()
+
+
+def test_prepared_quad_halves_share_face_normal_and_keep_uvs_and_texture_rank():
+    from Ifrit.Ifrit3D.previewmesh import prepare_batches
+    uv = ((0., 0.), (1., 0.), (0., 1.), (1., 1.))
+    geometry = SimpleNamespace(
+        get_triangles_with_uv=lambda: [((4, 5, 6), uv[:3], 48, 0)],
+        get_quads_with_uv=lambda: [((0, 1, 2, 3), uv, 16, -2)],
+        get_colored_triangles_with_color=lambda: [], get_colored_quads_with_color=lambda: [])
+    images = [object(), object()]
+    batches = prepare_batches(geometry, [SimpleNamespace(texture_image=p) for p in images], offset=10)
+    quad = next(b for b in batches if b.depth_bias == -2)
+    triangle = next(b for b in batches if b.depth_bias == 0)
+    np.testing.assert_array_equal(quad.indices, ((10, 11, 13), (10, 12, 13)))
+    np.testing.assert_array_equal(quad.normal_indices, ((10, 11, 12), (10, 11, 12)))
+    np.testing.assert_array_equal(quad.uvs, ((uv[0], uv[1], uv[3]), (uv[0], uv[2], uv[3])))
+    assert quad.pixmap is images[0] and triangle.pixmap is images[1]
+
+
 ROOT = Path(__file__).resolve().parents[1]
 BODY = ROOT / 'extracted_files/battle/d0c000.dat'
 
@@ -184,7 +232,8 @@ def test_shared_preview_battle_setup_and_read_only_opponent():
                                panel._battle_setup.to_viewer(panel._poses[9].eye))
     assert panel._battle_setup.load_opponent(ROOT / 'extracted_files/battle/c0m071.dat')
     assert panel._gl._preview_actor is not None
-    assert panel._gl._preview_actor[0].shape[1] == 3
+    assert panel._gl._preview_actor.vertices.shape[1] == 3
+    assert any(batch.pixmap is not None for batch in panel._gl._preview_actor.batches)
     panel._battle_setup.role.setCurrentIndex(1)
     assert panel._battle_setup.context.target.position == (0., 0., 0.)
     panel._battle_setup.view_mode.setCurrentIndex(1)
@@ -252,8 +301,10 @@ def test_scene_picker_places_world_actors_without_environment_or_file_edits(tmp_
     assert setup.target_slot.value() == 4
     assert panel._gl._preview_model_transform[1] == pytest.approx(0)
     mesh = setup.opponent_mesh()
-    assert np.isfinite(mesh[0]).all()
-    assert all(max(face) < len(mesh[0]) for face in mesh[1] + mesh[2])
+    assert np.isfinite(mesh.vertices).all()
+    assert all(batch.indices.max() < len(mesh.vertices) for batch in mesh.batches)
+    assert any(batch.pixmap is not None for batch in mesh.batches)
+    assert setup.opponent_mesh(1, True) is mesh  # pose changes retain topology/materials
     assert not picker.load(tmp_path / 'absent.out')
     assert picker.selected.index == 0  # failed import keeps current placement
     bad = tmp_path / 'truncated.out'

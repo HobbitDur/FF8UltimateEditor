@@ -418,6 +418,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.quads = quads
 
     def initializeGL(self):
+        self._preview_texture_ids = {}  # GL names belong to this context
         glClearColor(0.12, 0.12, 0.18, 1.0)
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_CULL_FACE)
@@ -540,7 +541,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.update()
 
     def set_preview_actor(self, mesh):
-        """Optional read-only opponent mesh, already placed in viewer world coordinates."""
+        """Prepared actor mesh in viewer world coordinates; topology/materials stay cached."""
+        if mesh is not getattr(self, '_preview_actor', None):
+            self._preview_textures_dirty = True
         self._preview_actor = mesh
         self.update()
 
@@ -550,28 +553,82 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.update()
 
     def _draw_preview_actor(self):
+        if getattr(self, '_preview_textures_dirty', False):
+            old = list(getattr(self, '_preview_texture_ids', {}).values())
+            if old:
+                glDeleteTextures(len(old), old)
+            self._preview_texture_ids = {}
+            self._preview_textures_dirty = False
         mesh = getattr(self, '_preview_actor', None)
         if mesh is None:
             return
-        vertices, triangles, quads = mesh
-        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_POLYGON_BIT)
-        glDisable(GL_TEXTURE_2D)
+        # Current matrix is the world view (the loaded actor's placement/root has
+        # already been undone). One vectorized cull/shade pass replaces thousands
+        # of Python np.cross/glVertex calls per frame.
+        mv = np.asarray(glGetFloatv(GL_MODELVIEW_MATRIX), dtype=np.float64).T
+        eye = (np.linalg.inv(mv) @ np.array((0., 0., 0., 1.)))[:3]
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_POLYGON_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT)
+        glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT)
+        glEnableClientState(GL_VERTEX_ARRAY)
         glDisable(GL_CULL_FACE)
-        # PSX quads use strip order A,B,C,D, not the GL_QUADS perimeter order.
-        # Match the textured model path's A,B,D / A,C,D split.
-        quad_triangles = [tuple(face[i] for i in corners) for face in quads
-                          for corners in ((0, 1, 3), (0, 2, 3))]
-        for faces in (triangles, quad_triangles):
-            glBegin(GL_TRIANGLES)
-            for face in faces:
-                a, b, c = (vertices[index] for index in face[:3])
-                normal = np.cross(b - a, c - a)
-                shade = .45 + .55 * abs(normal[1]) / max(np.linalg.norm(normal), 1e-9)
-                glColor3f(.4 * shade, .55 * shade, .75 * shade)
-                for index in face:
-                    glVertex3f(*vertices[index])
-            glEnd()
+        glEnable(GL_DEPTH_TEST)
+        glEnable(GL_POLYGON_OFFSET_FILL)
+        for batch in mesh.batches:
+            face = mesh.vertices[batch.normal_indices]
+            normal = np.cross(face[:, 1] - face[:, 0], face[:, 2] - face[:, 0])
+            visible = (np.einsum('ij,ij->i', normal, eye - face[:, 0]) <= 0
+                       if self.backface_cull != 'off' else np.ones(len(face), dtype=bool))
+            if not visible.any():
+                continue
+            vertices = np.ascontiguousarray(mesh.vertices[batch.indices[visible]].reshape(-1, 3))
+            glVertexPointer(3, GL_FLOAT, 0, vertices)
+            glPolygonOffset(0., self._depth_bias_offset_units(batch.depth_bias))
+            if batch.pixmap is not None and self.show_texture:
+                key = (id(batch.pixmap), batch.black_is_transparent)
+                tex = self._preview_texture_ids.get(key)
+                if tex is None:
+                    tex = self._upload_preview_texture(batch.pixmap, batch.black_is_transparent)
+                    self._preview_texture_ids[key] = tex
+                glEnable(GL_TEXTURE_2D)
+                glEnable(GL_ALPHA_TEST)
+                glAlphaFunc(GL_GREATER, .5)
+                glEnable(GL_BLEND)
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+                glBindTexture(GL_TEXTURE_2D, tex)
+                glDisableClientState(GL_COLOR_ARRAY)
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY)
+                uvs = np.ascontiguousarray(batch.uvs[visible].reshape(-1, 2))
+                glTexCoordPointer(2, GL_FLOAT, 0, uvs)
+                glColor4f(1., 1., 1., 1.)
+            else:
+                glDisable(GL_TEXTURE_2D)
+                glDisable(GL_ALPHA_TEST)
+                glDisable(GL_BLEND)
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY)
+                glEnableClientState(GL_COLOR_ARRAY)
+                shade = .45 + .55 * np.abs(normal[visible, 1]) / np.maximum(np.linalg.norm(normal[visible], axis=1), 1e-9)
+                colors = np.ascontiguousarray(np.repeat(shade[:, None] * batch.color, 3, axis=0), dtype=np.float32)
+                glColorPointer(3, GL_FLOAT, 0, colors)
+            glDrawArrays(GL_TRIANGLES, 0, len(vertices))
+        glPopClientAttrib()
         glPopAttrib()
+
+    @staticmethod
+    def _upload_preview_texture(pixmap, black_is_transparent):
+        img = pixmap.toImage().convertToFormat(QImage.Format.Format_RGBA8888)
+        ptr = img.bits()
+        ptr.setsize(img.sizeInBytes())
+        pixels = np.frombuffer(ptr, dtype=np.uint8).reshape(img.height(), img.width(), 4).copy()
+        if black_is_transparent:
+            pixels[np.all(pixels[:, :, :3] == 0, axis=2), 3] = 0
+        tex = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, tex)
+        for name, value in ((GL_TEXTURE_WRAP_S, GL_REPEAT), (GL_TEXTURE_WRAP_T, GL_REPEAT),
+                            (GL_TEXTURE_MIN_FILTER, GL_NEAREST), (GL_TEXTURE_MAG_FILTER, GL_NEAREST)):
+            glTexParameteri(GL_TEXTURE_2D, name, value)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, pixels)
+        return tex
 
     def clear_explicit_camera(self):
         """Restore the normal orbit camera (rot/zoom/pan)."""

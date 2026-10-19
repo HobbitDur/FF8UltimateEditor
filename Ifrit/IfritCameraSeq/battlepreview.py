@@ -81,6 +81,8 @@ class BattlePreviewSetup(QWidget):
         self.unit = 1.
         self._asset_cache = {}
         self._scene_mesh_actors = []
+        self._mesh = None
+        self._pose_cache = {}
         self.main_position = (0., 0., 0.)
         self.main_yaw = 0.
         layout = QVBoxLayout(self)
@@ -193,11 +195,11 @@ class BattlePreviewSetup(QWidget):
     def _load_model(path, game_data):
         from Ifrit.ifritmanager import IfritManager
         manager = IfritManager(game_data=game_data)
-        # Auxiliary actors are untextured: avoid the texture extraction subprocess.
         manager.enemy = manager.parse_file(str(path))
         if not manager.enemy.bone_data.bones or not manager.enemy.animation_data.nb_animations:
             raise ValueError('select a monster or character with skeletal animations')
         manager._ensure_matrices()
+        manager.texture_data, manager.texture_black_is_transparent = manager.extract_textures(manager.enemy, str(path))
         return manager
 
     def _choose_opponent(self):
@@ -212,7 +214,7 @@ class BattlePreviewSetup(QWidget):
             self.status.setText(f'Cannot load opponent: {error}')
             return False
         self.opponent = manager
-        self.status.setText(f'Opponent: {Path(path).name} (untextured preview). Assumed battle placement.')
+        self.status.setText(f'Opponent: {Path(path).name}. Preview placement.')
         self.changed.emit()
         return True
 
@@ -224,10 +226,12 @@ class BattlePreviewSetup(QWidget):
     def build(self, animation=0, animate=False):
         self.unit = 2 / model_scale(self.manager)
         self._scene_mesh_actors = []
+        self._mesh = None
+        self._pose_cache = {}
         self.main_position, self.main_yaw = (0., 0., 0.), 0.
         if self.encounters.selected is not None and self.encounters.selected_slot is not None:
             return self._build_encounter(animation, animate)
-        self.status.setText('Opponent: ' + (f'{self.opponent.enemy.origin_file_name} (untextured).'
+        self.status.setText('Opponent: ' + (f'{self.opponent.enemy.origin_file_name}.'
                             if self.opponent else 'model not loaded.') + ' Manual placement.')
         self.main_yaw = math.pi if self.encounters.is_monster else 0.
         other_yaw = 0. if self.encounters.is_monster else math.pi
@@ -328,7 +332,7 @@ class BattlePreviewSetup(QWidget):
             f'Encounter {encounter.index}. Party {self.party_size.value()}, player slot {player_slot}: '
             f'{player_position}. ' + '; '.join(notes))
         self.status.setText('Player: imported model or Squall from the battle folder.' if monster else
-                            'Enemy models are loaded from the selected encounter (untextured).')
+                            'Enemy models and textures are loaded from the selected encounter.')
         return self.context
 
     def to_viewer(self, point):
@@ -337,17 +341,27 @@ class BattlePreviewSetup(QWidget):
     def opponent_mesh(self, tick=0, animate=False):
         if not self._scene_mesh_actors:
             return None
-        all_vertices, triangles, quads = [], [], []
-        offset = 0
-        for manager, actor in self._scene_mesh_actors:
+        if self._mesh is None:
+            from Ifrit.Ifrit3D.previewmesh import PreviewMesh, prepare_batches
+            batches, self._mesh_slices, offset = [], [], 0
+            for manager, actor in self._scene_mesh_actors:
+                count = len(manager.enemy.geometry_data.get_vertices())
+                batches.extend(prepare_batches(manager.enemy.geometry_data, manager.texture_data,
+                                               manager.texture_black_is_transparent, offset))
+                self._mesh_slices.append((manager, actor, slice(offset, offset + count)))
+                offset += count
+            self._mesh = PreviewMesh(np.empty((offset, 3), dtype=np.float32), batches)
+        for manager, actor, dest in self._mesh_slices:
             count = len(manager.enemy.animation_data.animations[0].frames)
             frame = tick % max(1, count) if animate else 0
-            vertices = np.asarray(manager.get_animated_vertices(0, frame)) + model_root(manager, 0, frame)
-            engine = vertices * np.array((-1., -1., 1.)) * (model_scale(manager) / 2)
+            key = (id(manager), frame)
+            if key not in self._pose_cache:
+                vertices = np.asarray(manager.get_animated_vertices(0, frame)) + model_root(manager, 0, frame)
+                engine = vertices * np.array((-1., -1., 1.)) * (model_scale(manager) / 2)
+                if len(self._pose_cache) >= 120:
+                    self._pose_cache.pop(next(iter(self._pose_cache)))
+                self._pose_cache[key] = engine
+            engine = self._pose_cache[key]
             engine = engine @ actor.rotation.T + actor.position
-            geo = manager.enemy.geometry_data
-            all_vertices.extend(self.to_viewer(engine))
-            triangles.extend(tuple(i + offset for i in face) for face in geo.get_triangles())
-            quads.extend(tuple(i + offset for i in face) for face in geo.get_quads())
-            offset += len(vertices)
-        return np.asarray(all_vertices), triangles, quads
+            self._mesh.vertices[dest] = self.to_viewer(engine)
+        return self._mesh

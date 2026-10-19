@@ -13,6 +13,7 @@ projection and roll are evaluated before conversion to viewer space. Watts suppl
 baked composite coordinates and keeps its existing placement through battle_context=False.
 """
 import math
+from time import perf_counter
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -93,6 +94,9 @@ class CameraPreviewPanel(QWidget):
         self._center = (0.0, 0.0, 0.0)
         self._poses = []
         self._empty_camera = False
+        self._clock_tick = 0
+        self._play_origin = 0.
+        self._advancing = False
         self._battle_setup = None
         if battle_context:
             from Ifrit.IfritCameraSeq.battlepreview import BattlePreviewSetup
@@ -155,7 +159,8 @@ class CameraPreviewPanel(QWidget):
 
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._advance)
-        self._timer.setInterval(int(1000 / self._FPS))
+        self._timer.setTimerType(Qt.TimerType.PreciseTimer)
+        self._timer.setInterval(16)  # the wall clock selects the 15 Hz game tick
 
     # ── Called by the tab ─────────────────────────────────────────────
     def set_weapon(self, manager):
@@ -180,6 +185,8 @@ class CameraPreviewPanel(QWidget):
         self._placeholder.show()
 
     def preview(self, animation):
+        self._timer.stop()
+        self._play_button.setText('▶ Play')
         try:
             self._ensure_model()
         except Exception as error:  # a file the 3D viewer cannot render
@@ -206,8 +213,7 @@ class CameraPreviewPanel(QWidget):
         self._slider.setEnabled(self._total > 0)
         self._apply(0)
         if self._total > 0:  # auto-play multi-keyframe animations
-            self._timer.start()
-            self._play_button.setText("⏸ Pause")
+            self._start_playback()
 
     def _build_battle_poses(self):
         self._poses = []
@@ -224,10 +230,14 @@ class CameraPreviewPanel(QWidget):
     def _rebuild_battle(self):
         if self._animation is None or self._gl is None:
             return
+        playing = self._timer.isActive()
+        self._timer.stop()  # loading an encounter/texture is outside playback time
         self._build_battle_poses()
         self._slider.setRange(0, self._total)
         self._slider.setEnabled(self._total > 0)
         self._apply(min(self._tick, self._total))
+        if playing and self._total > 0:
+            self._start_playback()
 
     # ── Model / camera ────────────────────────────────────────────────
     def _ensure_model(self):
@@ -328,18 +338,32 @@ class CameraPreviewPanel(QWidget):
         else:
             if self._slider.value() >= self._total:
                 self._slider.setValue(0)
-            self._timer.start()
-            self._play_button.setText("⏸ Pause")
+            self._start_playback()
+
+    def _start_playback(self):
+        self._clock_tick = self._slider.value()
+        self._play_origin = perf_counter()
+        self._timer.start()
+        self._play_button.setText('⏸ Pause')
 
     def _advance(self):
-        nxt = self._slider.value() + 1
-        if nxt > self._total:  # play once, then stop at the end (no loop)
+        # Qt may coalesce timeouts during a busy redraw. One frame per callback
+        # stretched a 40-tick camera to nine seconds; elapsed time keeps native speed.
+        due = self._clock_tick + int((perf_counter() - self._play_origin) * self._FPS)
+        nxt = min(due, self._total)
+        if nxt != self._slider.value():
+            self._advancing = True
+            try:
+                self._slider.setValue(nxt)
+            finally:
+                self._advancing = False
+        if due > self._total:  # final tick is held, then playback stops
             self._timer.stop()
             self._play_button.setText("▶ Play")
-            return
-        self._slider.setValue(nxt)
 
     def _on_slider(self, value):
+        if not self._advancing and self._timer.isActive():
+            self._clock_tick, self._play_origin = value, perf_counter()
         self._apply(value)
 
     def _set_controls_enabled(self, enabled: bool):
