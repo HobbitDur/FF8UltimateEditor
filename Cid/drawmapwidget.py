@@ -1,14 +1,15 @@
 import os
 import math
-from PyQt6.QtCore import Qt, pyqtSignal, QRectF, QPointF
+from PyQt6.QtCore import Qt, pyqtSignal, QRectF, QPointF, QSignalBlocker
 from PyQt6.QtGui import QPixmap, QPainter, QColor, QPen, QPolygonF
-from PyQt6.QtWidgets import QWidget, QApplication, QToolTip
+from PyQt6.QtWidgets import QWidget, QApplication, QToolTip, QVBoxLayout, QLabel, QCheckBox
 
 
 class DrawMapWidget(QWidget):
     """Block overview, optional wmx triangle resolution, and drag-only movement."""
     BLOCK_COLS, BLOCK_ROWS = 128, 96
     NO_PHASE = -1
+    GUIDE_WIDTH = 200
     position_picked = pyqtSignal(int, int, int)  # encoded x, y, triangle (-1 = keep)
     selection_picked = pyqtSignal(int)
 
@@ -24,13 +25,43 @@ class DrawMapWidget(QWidget):
         self._drag_point = None
         self._zoom = 1.0
         self._pan = QPointF()
+        self._pan_press = None
         self._phases = frozenset((0,))
         self.geometry = None
+        self._mesh_pixmap = QPixmap()
         self.setMinimumHeight(280)
+        self.setMinimumWidth(480)
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.setToolTip('Click a marker to select; click and drag any marker to move. Ctrl+Z undoes a move. Mouse wheel zooms. '
+                        'Right drag pans; wheel click resets the view. '
                         'Without wmx.obj, markers show approximate block centres; numbers count overlapping records.')
+        self._guide = QWidget(self)
+        self._guide.setProperty('read_only_preview', True)
+        self._guide.setStyleSheet('QLabel, QCheckBox { color: #e5ebf6; }')
+        guide_layout = QVBoxLayout(self._guide)
+        guide_layout.setContentsMargins(12, 12, 12, 12)
+        guide_layout.setSpacing(4)
+        guide_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        title = QLabel('<b>Map controls</b>')
+        guide_layout.addWidget(title)
+        self.mesh_check = QCheckBox('Mesh')
+        self.mesh_check.setEnabled(False)
+        self.mesh_check.setToolTip('Show the terrain triangles from read-only wmx.obj')
+        self.mesh_check.toggled.connect(self.set_mesh_visible)
+        guide_layout.addWidget(self.mesh_check)
+        self._guide_note = QLabel('Load wmx.obj to see the triangles used for draw-point placement.')
+        self._guide_note.setWordWrap(True)
+        guide_layout.addWidget(self._guide_note)
+        for gesture, action in (('Left click', 'Select point'), ('Left drag', 'Move point'),
+                                ('Click again', 'Cycle overlaps'), ('Right drag', 'Pan map'),
+                                ('Wheel', 'Zoom at pointer'), ('Wheel click', 'Reset view'),
+                                ('Ctrl+Z', 'Undo'), ('Ctrl+Y', 'Redo')):
+            control = QLabel(f'<b>{gesture}</b> {action}')
+            control.setWordWrap(True)
+            guide_layout.addWidget(control)
+        self._guide.setToolTip('Redo also supports Ctrl+Shift+Z.')
+        self._place_guide()
 
     def set_draw_list(self, draw_list):
         self._draw_list = draw_list
@@ -39,10 +70,43 @@ class DrawMapWidget(QWidget):
 
     def set_geometry(self, geometry, overview=None):
         self.geometry = geometry
+        self._mesh_pixmap = QPixmap()
+        self.mesh_check.setEnabled(geometry is not None)
+        self._guide_note.setText('A draw point covers a triangle. Enable Mesh and zoom in to choose its location.'
+                                 if geometry else 'Load wmx.obj to see the triangles used for draw-point placement.')
+        self.set_mesh_visible(self.mesh_check.isChecked() and geometry is not None)
         self._pixmap = overview if overview is not None else self._reference_pixmap
-        self._zoom, self._pan = 1., QPointF()
-        self._press, self._dragging, self._drag_point = None, False, None
+        self.reset_view()
+
+    def set_mesh_visible(self, visible):
+        visible = bool(visible and self.geometry is not None)
+        if visible and self._mesh_pixmap.isNull():
+            try:
+                if not self._mesh_pixmap.loadFromData(self.geometry.mesh_png()):
+                    raise ValueError('Could not build the triangle overlay')
+            except Exception as error:
+                visible = False
+                self._guide_note.setText(f'Mesh unavailable: {error}')
+        with QSignalBlocker(self.mesh_check):
+            self.mesh_check.setChecked(visible)
         self.update()
+
+    def reset_view(self):
+        self._zoom, self._pan = 1., QPointF()
+        self._pan_press = None
+        self._press, self._dragging, self._drag_point = None, False, None
+        self.unsetCursor()
+        self.update()
+
+    def _map_viewport(self):
+        return QRectF(0, 0, max(1, self.width() - self.GUIDE_WIDTH), self.height())
+
+    def _place_guide(self):
+        self._guide.setGeometry(int(self._map_viewport().width()), 0, self.GUIDE_WIDTH, self.height())
+
+    def resizeEvent(self, event):
+        self._place_guide()
+        super().resizeEvent(event)
 
     def set_selected(self, index):
         self._selected_index = index
@@ -62,9 +126,10 @@ class DrawMapWidget(QWidget):
 
     def _image_rect(self):
         w, h = (self._pixmap.width(), self._pixmap.height()) if not self._pixmap.isNull() else (128, 96)
-        scale = min(self.width() / w, self.height() / h) * self._zoom
-        return QRectF((self.width() - w * scale) / 2 + self._pan.x(),
-                      (self.height() - h * scale) / 2 + self._pan.y(), w * scale, h * scale)
+        viewport = self._map_viewport()
+        scale = min(viewport.width() / w, viewport.height() / h) * self._zoom
+        return QRectF(viewport.center().x() - w * scale / 2 + self._pan.x(),
+                      viewport.center().y() - h * scale / 2 + self._pan.y(), w * scale, h * scale)
 
     def _block_to_point(self, x, y, rect):
         return QPointF(rect.x() + x / 128 * rect.width(), rect.y() + y / 96 * rect.height())
@@ -96,6 +161,8 @@ class DrawMapWidget(QWidget):
             return None
 
     def _hits(self, position):
+        if not self._map_viewport().contains(position):
+            return []
         rect = self._image_rect()
         candidates = [(i, self._marker(draw, rect)) for i, draw in enumerate(self._draw_list)
                       if self._visible(draw)]
@@ -110,9 +177,14 @@ class DrawMapWidget(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor(18, 24, 48))
+        viewport = self._map_viewport()
+        painter.setClipRect(viewport)
         rect = self._image_rect()
         if not self._pixmap.isNull():
             painter.drawPixmap(rect.toRect(), self._pixmap)
+        if self.mesh_check.isChecked() and not self._mesh_pixmap.isNull():
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+            painter.drawPixmap(rect.toRect(), self._mesh_pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         groups = {}
         for index, draw in enumerate(self._draw_list):
@@ -146,7 +218,7 @@ class DrawMapWidget(QWidget):
                 name = draw.get_magic_name()
                 label = f'ID {draw.get_id()}' + (f' - {name}' if name else '')
                 metrics = painter.fontMetrics()
-                label_x = max(2., min(point.x() + 9, self.width() - metrics.horizontalAdvance(label) - 2))
+                label_x = max(2., min(point.x() + 9, viewport.right() - metrics.horizontalAdvance(label) - 2))
                 label_y = max(float(metrics.ascent() + 2),
                               min(point.y() + 4, self.height() - metrics.descent() - 2))
                 painter.drawText(QPointF(label_x, label_y), label)
@@ -159,6 +231,18 @@ class DrawMapWidget(QWidget):
     def mousePressEvent(self, event):
         self._press, self._dragging = None, False
         self._drag_point = None
+        if not self._map_viewport().contains(event.position()):
+            return
+        if event.button() == Qt.MouseButton.MiddleButton:
+            self.reset_view()
+            event.accept()
+            return
+        if event.button() == Qt.MouseButton.RightButton:
+            self._pan_press = (event.position(), QPointF(self._pan))
+            self.setFocus(Qt.FocusReason.MouseFocusReason)
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            event.accept()
+            return
         if event.button() != Qt.MouseButton.LeftButton:
             return
         hits = self._hits(event.position())
@@ -173,6 +257,15 @@ class DrawMapWidget(QWidget):
             self.setFocus(Qt.FocusReason.MouseFocusReason)
 
     def mouseMoveEvent(self, event):
+        if self._pan_press is not None:
+            if event.buttons() & Qt.MouseButton.RightButton:
+                origin, start_pan = self._pan_press
+                self._pan = start_pan + event.position() - origin
+                self.update()
+                event.accept()
+                return
+            self._pan_press = None
+            self.unsetCursor()
         if self._press is None or not (event.buttons() & Qt.MouseButton.LeftButton):
             hits = self._hits(event.position())
             if hits:
@@ -192,6 +285,11 @@ class DrawMapWidget(QWidget):
             self.update()
 
     def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.RightButton:
+            self._pan_press = None
+            self.unsetCursor()
+            event.accept()
+            return
         press, dragging = self._press, self._dragging
         self._press, self._dragging = None, False
         self._drag_point = None
@@ -205,7 +303,7 @@ class DrawMapWidget(QWidget):
                 self.selection_picked.emit(hits[(hits.index(self._selected_index) + 1) % len(hits)])
             return
         rect = self._image_rect()
-        if not rect.contains(event.position()):
+        if not self._map_viewport().contains(event.position()) or not rect.contains(event.position()):
             return
         x, y = self._map_position(event.position(), rect)
         if self.geometry:
@@ -220,6 +318,9 @@ class DrawMapWidget(QWidget):
             self.position_picked.emit(bx | ((by & 1) << 7), by >> 1, -1)
 
     def wheelEvent(self, event):
+        if not self._map_viewport().contains(event.position()):
+            event.ignore()
+            return
         old = self._image_rect()
         zoom = max(1., min(12., self._zoom * (1.25 if event.angleDelta().y() > 0 else .8)))
         ratio = zoom / self._zoom
@@ -227,7 +328,7 @@ class DrawMapWidget(QWidget):
         if zoom == 1:
             self._pan = QPointF()
         else:
-            centre = QPointF(self.width() / 2, self.height() / 2)
+            centre = self._map_viewport().center()
             self._pan = event.position() + (old.center() - event.position()) * ratio - centre
         self.update()
         event.accept()

@@ -3,8 +3,8 @@ from pathlib import Path
 import struct
 
 import pytest
-from PyQt6.QtCore import Qt, QPointF, QEvent
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtCore import Qt, QPointF, QPoint, QEvent
+from PyQt6.QtGui import QMouseEvent, QWheelEvent
 from PyQt6.QtTest import QSignalSpy, QTest
 from PyQt6.QtWidgets import QApplication, QWidget, QStackedWidget, QVBoxLayout
 
@@ -127,6 +127,54 @@ def test_direct_drag_picks_the_nearest_marker_even_with_a_selected_neighbour(app
     view.close()
 
 
+def test_right_drag_pans_middle_click_resets_and_zoom_keeps_pointer_anchored(app):
+    view = DrawMapWidget('')
+    view.resize(1280, 960)
+    draw = Draw(GameData(str(ROOT / 'FF8GameData')), 136, bytearray())
+    draw.position_loaded, draw.world_phases = True, (0,)
+    draw.set_block_xy(50, 35)
+    view.set_draw_list([draw])
+    view.set_selected(0)
+    view.show()
+    app.processEvents()
+    original = (draw.x, draw.y, draw.sub_id)
+    picked, selected = QSignalSpy(view.position_picked), QSignalSpy(view.selection_picked)
+    point = view._marker(draw, view._image_rect())
+    anchor = view._map_position(point, view._image_rect())
+    guide_rect = view._guide.geometry()
+    assert guide_rect.left() == int(view._map_viewport().right())
+    wheel = QWheelEvent(point, point, QPoint(), QPoint(0, 120), Qt.MouseButton.NoButton,
+                        Qt.KeyboardModifier.NoModifier, Qt.ScrollPhase.NoScrollPhase, False)
+    QApplication.sendEvent(view, wheel)
+    assert view._zoom > 1
+    assert view._map_position(point, view._image_rect()) == pytest.approx(anchor)
+    before_pan = view._image_rect()
+    delta = QPointF(40, -25)
+    _mouse(view, QEvent.Type.MouseButtonPress, point, Qt.MouseButton.RightButton)
+    _mouse(view, QEvent.Type.MouseMove, point + delta, Qt.MouseButton.NoButton, Qt.MouseButton.RightButton)
+    _mouse(view, QEvent.Type.MouseButtonRelease, point + delta, Qt.MouseButton.RightButton)
+    assert view._image_rect().center() == before_pan.center() + delta
+    assert view._hits(point + delta) == [0]
+    assert not picked and not selected
+    assert (draw.x, draw.y, draw.sub_id) == original
+    assert view._guide.geometry() == guide_rect
+    # The image can pan behind the guide, but its hidden markers cannot be hit there.
+    guide_point = QPointF(guide_rect.center())
+    _mouse(view, QEvent.Type.MouseButtonPress, point + delta, Qt.MouseButton.RightButton)
+    _mouse(view, QEvent.Type.MouseMove, guide_point, Qt.MouseButton.NoButton, Qt.MouseButton.RightButton)
+    _mouse(view, QEvent.Type.MouseButtonRelease, guide_point, Qt.MouseButton.RightButton)
+    assert (view._marker(draw, view._image_rect()) - guide_point).manhattanLength() == pytest.approx(0)
+    assert view._hits(guide_point) == []
+    assert not picked and not selected
+    _mouse(view, QEvent.Type.MouseButtonPress, point, Qt.MouseButton.MiddleButton)
+    _mouse(view, QEvent.Type.MouseButtonRelease, point, Qt.MouseButton.MiddleButton)
+    assert view._zoom == 1 and view._pan == QPointF()
+    assert view._image_rect().center() == view._map_viewport().center()
+    assert not picked and not selected
+    assert view._guide.geometry() == guide_rect
+    view.close()
+
+
 def test_only_loaded_positions_can_be_moved(widget):
     draw = widget._draw_list[135]
     widget._draw_widget.set_row_position(135, 10, 20, 5)
@@ -232,6 +280,33 @@ def test_phase_checkboxes_combine_variants_and_unused_without_recording_edits(wi
     assert checks[DrawMapWidget.NO_PHASE].toolTip() == 'No phase (unused)'
 
 
+def test_field_and_phase_filters_hide_rows_without_changing_data_or_history(widget, tmp_path):
+    widget.load_wmset(str(_wmset(tmp_path)))
+    dirty = install_dirty_tracking(widget)
+    before = widget._undo_capture()
+    table = widget._draw_widget
+    assert sum(not table.isRowHidden(row) for row in range(table.rowCount())) == 128 + 118
+    widget._field_check.click()
+    assert all(table.isRowHidden(row) for row in range(128))
+    assert sum(not table.isRowHidden(row) for row in range(table.rowCount())) == 118
+    widget._phase_checks[DrawMapWidget.NO_PHASE].click()
+    widget._phase_checks[0].click()
+    assert [row + 1 for row in range(table.rowCount()) if not table.isRowHidden(row)] == [256]
+    widget._phase_checks[DrawMapWidget.NO_PHASE].click()
+    assert all(table.isRowHidden(row) for row in range(table.rowCount()))
+    assert table.currentRow() == -1 and widget._selected_row == -1
+    widget._field_check.click()
+    assert [row + 1 for row in range(table.rowCount()) if not table.isRowHidden(row)] == list(range(1, 129))
+    widget._phase_checks[1].click()
+    widget._phase_checks[2].click()
+    assert sum(not table.isRowHidden(row) for row in range(table.rowCount())) == 128 + 120
+    assert widget._undo_capture() == before and not widget._undo_stack.can_undo()
+    assert not dirty.dirty and not widget._exe_dirty and not widget._wmset_dirty
+    widget._on_wmset_closed('wmsetus.obj')
+    # EXE-only editing still exposes world slots, whose phase membership is unknown.
+    assert sum(not table.isRowHidden(row) for row in range(table.rowCount())) == 256
+
+
 def test_direct_drag_supports_real_undo_redo_shortcuts_and_saved_state(widget, app, tmp_path, monkeypatch):
     from ff8ultimateeditorwidget import FF8UltimateEditorWidget
 
@@ -326,6 +401,18 @@ def test_real_world_inventory_and_terrain(widget):
     assert not widget._exe_dirty and not widget._wmset_dirty
     assert source.read_bytes() == before
     geometry = widget._illustration.map.geometry
+    preview = widget._undo_capture()
+    view = widget._illustration.map
+    dirty = install_dirty_tracking(widget)
+    assert view.mesh_check.isEnabled()
+    view.mesh_check.click()
+    assert view.mesh_check.isChecked() and view._mesh_pixmap.width() == 4096
+    vertex = geometry.triangle(widget._draw_list[135])[0]
+    assert view._mesh_pixmap.toImage().pixelColor(round(vertex[0] * 32), round(vertex[1] * 32)).alpha() > 0
+    view.grab()  # exercise overlay painting at the map's current pan/zoom
+    view.mesh_check.click()
+    assert widget._undo_capture() == preview and not widget._undo_stack.can_undo()
+    assert not dirty.dirty
     draw = widget._draw_list[135]  # Yaulny Canyon uses its actual triangle, not the centre of its block.
     rect = widget._illustration.map._image_rect()
     point = widget._illustration.map._marker(draw, rect)
@@ -348,6 +435,7 @@ def test_real_world_inventory_and_terrain(widget):
     assert not widget._wmset_dirty and source.read_bytes() == before
     widget.wmx_binding.registry.close_file('wmx.obj')
     assert widget._illustration.map.geometry is None
+    assert not view.mesh_check.isEnabled() and not view.mesh_check.isChecked()
     assert 'approximate block centres' in widget._map_status.text()
 
 

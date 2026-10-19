@@ -304,7 +304,9 @@ def test_csv_import_is_one_undo_step_and_reference_reload_preserves_history(edit
     assert imported != original and widget._exe_dirty and widget._wmset_dirty
     monkeypatch.setattr('FF8GameData.kernelnames.read_names', lambda *a, **k: {'magic': {5: 'New name'}})
     widget.load_kernel('reference/kernel.bin')
+    widget._field_check.setChecked(False)
     assert widget.undo()
+    assert widget._field_check.isChecked()  # undo reveals the affected field draw
     assert widget._undo_capture() == original
     assert not widget._exe_dirty and not widget._wmset_dirty
     assert not widget._undo_stack.can_undo()

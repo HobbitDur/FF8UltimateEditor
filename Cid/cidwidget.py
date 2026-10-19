@@ -2,7 +2,7 @@ import csv
 import json
 import os
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, QSignalBlocker
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QFileDialog, QPushButton, QHBoxLayout, QLabel, QComboBox,
                              QMessageBox, QSplitter, QTabWidget, QCheckBox)
@@ -113,17 +113,27 @@ class CidWidget(QWidget):
         self._layout_top.addWidget(self._version_label)
         self._layout_top.addWidget(self._version_widget)
 
+        self._field_check = QCheckBox('Field')
+        self._field_check.setChecked(True)
+        self._field_check.setProperty('read_only_preview', True)
+        self._field_check.setToolTip('Show field draw points in the table')
+        self._layout_top.addWidget(self._field_check)
+
         self._phase_widget = QWidget()
         self._phase_widget.setProperty('read_only_preview', True)
         phase_layout = QHBoxLayout(self._phase_widget)
         phase_layout.setContentsMargins(0, 0, 0, 0)
+        phase_layout.addWidget(QLabel('Phase'))
+        phase_checks_layout = QVBoxLayout()
+        phase_checks_layout.setSpacing(0)
+        phase_layout.addLayout(phase_checks_layout)
         self._phase_checks = {}
         for phase in range(5):
-            check = QCheckBox(f'Phase {phase}')
-            phase_layout.addWidget(check)
+            check = QCheckBox(str(phase))
+            phase_checks_layout.addWidget(check)
             self._phase_checks[phase] = check
         check = QCheckBox('No phase')
-        phase_layout.addWidget(check)
+        phase_checks_layout.addWidget(check)
         self._phase_checks[DrawMapWidget.NO_PHASE] = check
         self._phase_checks[0].setChecked(True)
         self._phase_widget.setToolTip('Check any combination of world story phases. '
@@ -163,6 +173,7 @@ class CidWidget(QWidget):
         self._illustration.map.selection_picked.connect(self._on_map_selection_picked)
         for check in self._phase_checks.values():
             check.toggled.connect(self._on_phases_selected)
+        self._field_check.toggled.connect(self._apply_draw_filters)
 
         # Wiring: edits mark the corresponding backing file dirty.
         self._draw_widget.exe_changed.connect(self._on_exe_edited)
@@ -201,6 +212,7 @@ class CidWidget(QWidget):
         self.wmset_binding.load_opened_file()
         self.kernel_binding.load_opened_file()
         self.wmx_binding.load_opened_file()
+        self._apply_draw_filters()
         self._update_save_status()
 
     def file_bindings(self):
@@ -238,15 +250,38 @@ class CidWidget(QWidget):
     def _on_phases_selected(self):
         view = self._illustration.map
         view.set_phases(phase for phase, check in self._phase_checks.items() if check.isChecked())
-        if 0 <= self._selected_row < len(self._draw_list) and view._visible(self._draw_list[self._selected_row]):
-            return
-        for row, draw in enumerate(self._draw_list):
-            if view._visible(draw):
-                self._draw_widget.setCurrentCell(row, 0)
-                self._draw_widget.scrollToItem(self._draw_widget.item(row, 0))
-                break
-        # Scrolling/selecting a new table row can finish an editor's Qt signals;
-        # this preview action must retain the document's actual dirty state.
+        self._apply_draw_filters(prefer_world=True)
+
+    def _apply_draw_filters(self, _checked=None, *, prefer_world=False):
+        """View filters apply to table rows and map markers, never to file data."""
+        view, table = self._illustration.map, self._draw_widget
+        visible = []
+        with QSignalBlocker(table):
+            for row, draw in enumerate(self._draw_list):
+                if not draw.is_world():
+                    show = self._field_check.isChecked()
+                elif not self._section.is_loaded():
+                    # Without wmset the phase membership is unknown; keep EXE-only editing usable.
+                    show = any(check.isChecked() for check in self._phase_checks.values())
+                else:
+                    show = view._visible(draw)
+                table.setRowHidden(row, not show)
+                if show:
+                    visible.append(row)
+        selected = self._selected_row
+        world = [row for row in visible if self._draw_list[row].is_world()]
+        if selected >= 0 and self._draw_list[selected].is_world():
+            prefer_world = True
+        if selected not in visible or (prefer_world and world and not self._draw_list[selected].is_world()):
+            if selected < 0 and not self.exe_loaded and not self._section.is_loaded():
+                selected = -1
+            else:
+                selected = (world[0] if prefer_world and world else visible[0]) if visible else -1
+        table.setCurrentCell(selected, 0 if selected >= 0 else -1)
+        # Keep the illustration in sync even if Qt changed its current row while hiding it.
+        self._on_selection_changed(selected)
+        if selected >= 0:
+            table.scrollToItem(table.item(selected, 0))
         self._sync_dirty_marker()
 
     def _on_world_edited(self):
@@ -303,6 +338,8 @@ class CidWidget(QWidget):
             if changed:
                 row = tag[1] if tag and tag[0] == 0 and tag[1] in changed else changed[0]
                 draw = self._draw_list[row]
+                if not draw.is_world():
+                    self._field_check.setChecked(True)
                 if draw.is_world() and draw.position_loaded and not self._illustration.map._visible(draw):
                     phase = draw.world_phases[0] if draw.world_phases else DrawMapWidget.NO_PHASE
                     self._phase_checks[phase].setChecked(True)
@@ -334,7 +371,7 @@ class CidWidget(QWidget):
 
     def _on_tab_changed(self, index):
         for widget in (self._csv_upload_button, self._csv_save_button, self._fullscreen_button,
-                       self._phase_widget, self._map_status):
+                       self._field_check, self._phase_widget, self._map_status):
             widget.setVisible(index == 0)
         if index == 1:
             self._groups_widget.refresh()
@@ -357,7 +394,9 @@ class CidWidget(QWidget):
         source = 'loaded EXE rules' if self._phase_rules.loaded else 'original OG rules (no EXE loaded)'
         self._phase_widget.setToolTip(f'Check several phases to show their combined records using {source}. No phase shows loaded '
                                       'records never searched by any phase, including unused slots. '
-                                      'World phases are story states, not disc numbers.')
+                                      'World phases are story states, not disc numbers. Without wmset, '
+                                      'world-row membership is unknown and the EXE slots remain available.')
+        self._apply_draw_filters()
 
     def _on_group_ranges_edited(self):
         self._refresh_world_phases()
@@ -486,6 +525,7 @@ class CidWidget(QWidget):
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
         self._refresh_world_phases()
+        self._apply_draw_filters(prefer_world=True)
         self._update_save_status()
 
         # Extracted world archives keep the matching terrain beside wmset. Prefer

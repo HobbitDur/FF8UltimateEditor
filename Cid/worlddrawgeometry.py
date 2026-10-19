@@ -85,6 +85,27 @@ class WorldDrawGeometry:
         triangles = self.triangles(*draw.get_block_xy())
         return triangles[draw.sub_id] if 0 <= draw.sub_id < len(triangles) else None
 
+    def mesh_png(self):
+        """Transparent triangle edges in the same world projection as the overview.
+
+        Build once on demand. A high-resolution overlay keeps pan/zoom responsive
+        without drawing hundreds of thousands of individual polygons every frame.
+        """
+        from io import BytesIO
+        from PIL import Image, ImageDraw
+
+        scale = 32
+        image = Image.new('RGBA', (128 * scale, 96 * scale))
+        painter = ImageDraw.Draw(image)
+        for by in range(96):
+            for bx in range(128):
+                for triangle in self.triangles(bx, by, cache=False):
+                    points = [(round(x * scale), round(y * scale)) for x, y in triangle]
+                    painter.line(points + [points[0]], fill=(235, 245, 255, 115), width=1)
+        output = BytesIO()
+        image.save(output, format='PNG')
+        return output.getvalue()
+
     def pick(self, x, y):
         """Return the polygon under a map position, or None outside valid terrain."""
         if not (0 <= x < 128 and 0 <= y < 96):

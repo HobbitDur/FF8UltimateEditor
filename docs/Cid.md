@@ -48,7 +48,12 @@ When loading wmset, CID automatically opens a sibling `wmx.obj` as a read-only
 complementary file if no terrain is already loaded or selected. A manually loaded
 terrain file is preserved. Otherwise use the read-only import to choose it.
 
-The checkboxes beside Game version select **phases 0-4** in any combination.
+Enable **Mesh** in the dark guide area to the right of the map to see the actual
+terrain-triangle edges. Zoom in to inspect a destination triangle before dropping
+a draw point. Mesh is available when wmx is loaded; toggling it is a view change.
+
+The compact **Phase** control beside Game version stacks the numeric checkboxes
+for **phases 0-4**, plus No phase. Select any combination.
 For example, check phases 1 and 2 to show their combined records; a record in both
 phases is drawn once. Hover over a checkbox for its record count. **No phase**
 also includes records searched by none of the phases, including the original
@@ -56,6 +61,12 @@ unused ID 256. Check only No phase to inspect those records, or combine it with
 normal phases. Clearing every checkbox hides all markers. The view uses the
 stored position even when an unused slot contains zero coordinates. Changing
 these checkboxes does not edit the file or create an undo step.
+The separate **Field** checkbox shows or hides the first 128 field-draw rows.
+With wmset loaded, phase checkboxes filter world rows in the table as well as map
+markers. Turning Field off and checking only No phase isolates the unused world
+records. With every filter cleared, the table and map have no visible records.
+Without wmset, world-row membership is unknown, so the EXE's world slots remain
+available while a phase filter is enabled.
 
 The original Hell-island record **ID 215** refers to block `(9, 49)`, triangle
 32, whose ground type in the base wmx is **34 (sea)**. This is already in the
@@ -69,6 +80,13 @@ wmx loaded the drop chooses the triangle under the pointer and updates all three
 position bytes. Without wmx, dragging changes only the block bytes and preserves
 the triangle index; that index must exist in the destination block to work in-game.
 The table still allows direct byte edits. Nothing moves until wmset is loaded.
+
+**Right-drag** pans the map. The **mouse wheel** zooms around the pointer;
+**middle-click** (pressing the wheel) resets zoom and recentres the map. The
+control guide remains fixed on the unused background to the right, with Mesh
+and the navigation/undo shortcuts. Panning, zooming, resetting, and filtering
+never move a draw point or add an undo step. Drop targets are restricted to the
+map area, so dragging over the guide cannot change a position.
 
 **Ctrl+Z** undoes the last CID edit; **Ctrl+Shift+Z** or **Ctrl+Y** redoes it.
 Each completed drag is one undo step, restoring its block and triangle together.
