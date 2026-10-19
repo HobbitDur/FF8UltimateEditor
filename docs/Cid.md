@@ -3,6 +3,13 @@
 CID currently targets **the original English PC / Steam 2013 EXE**. Its offsets
 and world-phase lookup are for that build.
 
+Use **wmsetus.obj** for English, or the matching language-suffixed wmset file.
+The file literally named `wmset.obj` is documented as an apparently unused
+leftover with a different layout; it is not interchangeable with `wmsetus.obj`.
+`wmx.obj` is the terrain mesh; the active wmset bundle holds the world-map
+scripts, names, encounters and draw-point positions. See the
+[wmset format reference](https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/worldmap/worldmap-wmsetxx-file-format/).
+
 ## Which file should I save?
 
 | Edit | Input | Output |
@@ -13,6 +20,10 @@ and world-phase lookup are for that build.
 | Draw-ID ranges defining group contents | `wmsetxx.obj` | Same updated `.obj` |
 | Spell names displayed by CID | Optional complementary `kernel.bin` | None; read-only |
 | Triangle positions displayed by CID | Optional complementary `wmx.obj` | None; read-only |
+
+**Import complementary** offers a menu with **kernel.bin** and **wmx.obj**, just
+like the main Import menu offers the EXE and wmset. Choose the file type first,
+then its file picker opens in that file's remembered folder.
 
 The shared header **Save** button writes whichever backing data has edits:
 magic and phase searches to Hext, positions and group ranges to wmset. There are

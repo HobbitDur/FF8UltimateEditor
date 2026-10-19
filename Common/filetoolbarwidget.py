@@ -22,8 +22,8 @@ class FileToolbarWidget(QWidget):
       at once) implements ``open_files(self)`` instead and pops its own dialog.
     - Import complementary: opens side files, usually read-only preview data. An editable side
       file can supply its own save controls or be saved by a tool's save_files() hook.
-      Several at once when the tool has several (e.g. Zone reads
-      five); disabled when the active tool has none.
+      Offers a file-choice menu like Import when the tool has several;
+      disabled when the active tool has none.
     - Auto-upload: reopens the active tool's last selected main and complementary files,
       including custom multi-file inputs declared by auto_import_sources(). No picker.
     - Save: calls save_files() when the tool handles tab-specific saves; otherwise writes its
@@ -221,18 +221,13 @@ class FileToolbarWidget(QWidget):
         custom = getattr(self.tool_stack.currentWidget(), "complementary_entries", None)
         if callable(custom):
             entries = list(custom())
-            if len(entries) == 1:
-                entries[0][1]()
-            elif entries:
-                self._pick_from_menu(entries, self.import_complementary_button)
-            return
-        # Complementary files share the "these exact names" pattern (e.g. Zone's five), so one
-        # multi-select dialog can bring in any number at once.
-        bindings = self._complementary_bindings()
-        if len(bindings) == 1:
-            self._open_binding(bindings[0])
-        elif bindings:
-            self._open_several(bindings, "Open the complementary files (several at once is fine)")
+        else:
+            entries = [(binding.file_name, (lambda b=binding: self._open_binding(b)))
+                       for binding in self._complementary_bindings()]
+        if len(entries) == 1:
+            entries[0][1]()
+        elif entries:
+            self._pick_from_menu(entries, self.import_complementary_button)
 
     def _pick_from_menu(self, entries, source_button):
         """Drop a menu under the button; each (label, callback) entry opens its own thing."""
