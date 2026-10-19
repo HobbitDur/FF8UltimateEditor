@@ -13,22 +13,31 @@ CameraBlendStep / CameraApply, FF8_EN.exe 0x84E870..0x84EC80), in battle world u
 
 R = rotation of the target's facing, lens (projection H) 576. In the Scan screen the model
 then turns by 64/4096 of a turn per game tick when can_yaw is set.
+
+The short scan (a repeat scan with the Config Scan option on short) keeps the zoom-in camera
+and, every tick (ShortScanner_State3, 0x8511A0): turns the camera around the target by 64/4096
+when short_scan_orbit is 1, and when offset_y < -384 (tall target) moves the camera height
+by -height/32 towards the aim level, stopping at 0.
 """
 import math
 
 import numpy as np
 from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QCheckBox,
-                             QSizePolicy)
+                             QSizePolicy, QSpinBox)
 
 from Xu.xumanager import ScanCameraRow
 
 SCAN_PROJECTION = 576
-SCAN_SPIN_PER_TICK = 64        # rotation_y units (4096 = one turn) per game tick
+SCAN_SPIN_PER_TICK = 64        # rotation units (4096 = one turn) per game tick
+TALL_TARGET_OFFSET_Y = -384    # short scan lowers the camera for aim heights above this
 GAME_TICK_MS = 1000 // 15
 MONSTER_YAW = math.pi          # monsters face the party
 SCAN_BLUE = (0.0, 0.02, 0.32, 1.0)
 CENTRE_SELECTOR = 5            # skeleton header byte read for bone selector 0xF1
+
+MODE_SCAN_SCREEN, MODE_ZOOM_IN, MODE_SHORT_SCAN = range(3)
 
 
 def _rotation(yaw):
@@ -56,15 +65,31 @@ def centre_point(manager, animation=0, frame=0):
     return point * np.array((-1., -1., 1.)) * (model_scale(manager) / 2)
 
 
-def scan_camera(row: ScanCameraRow, centre, yaw=MONSTER_YAW, zoom_in=False):
-    """(eye, target) in battle world units for a target at the origin facing `yaw`."""
+def zoom_in_distance(row: ScanCameraRow) -> int:
+    return int(3 * row.distance / 4)
+
+
+def short_scan_height(row: ScanCameraRow, tick: int) -> int:
+    """Camera height of the short scan after `tick` ticks (starts at the zoom-in height)."""
+    start = int(zoom_in_distance(row) / 2)
+    if row.offset_y >= TALL_TARGET_OFFSET_Y:
+        return start
+    return min(0, start + tick * int(start / -32))
+
+
+def scan_camera(row: ScanCameraRow, centre, yaw=MONSTER_YAW, zoom_in=False, orbit=0, height=None):
+    """(eye, target) in battle world units for a target at the origin facing `yaw`.
+
+    orbit (4096 = one turn) turns the zoom-in camera around the target and height replaces
+    its height: both are the short scan's."""
     rotation = _rotation(yaw)
     aim = rotation @ np.asarray(centre, float) if row.aim_at_model else np.zeros(3)
     aim[1] = 0.
     if zoom_in:
-        distance = int(3 * row.distance / 4)
+        distance = zoom_in_distance(row)
+        camera_height = int(distance / 2) if height is None else height
         target = aim + rotation @ np.array((0., row.offset_y, 0.))
-        eye = target + rotation @ np.array((0., int(distance / 2), distance))
+        eye = target + _rotation(yaw + orbit * 2 * math.pi / 4096) @ np.array((0., camera_height, distance))
     else:
         target = aim + rotation @ np.array((row.offset_x, row.offset_y, 0.))
         eye = target + rotation @ np.array((0., 0., row.distance))
@@ -74,7 +99,7 @@ def scan_camera(row: ScanCameraRow, centre, yaw=MONSTER_YAW, zoom_in=False):
 class XuPreviewPanel(QWidget):
     """Shows the selected row on a monster model, the way the Scan screen does."""
 
-    def __init__(self, game_data_folder="FF8GameData", parent=None):
+    def __init__(self, game_data_folder="FF8GameData", parent=None, hud=None):
         super().__init__(parent)
         self._game_data_folder = game_data_folder
         self._game_data = None
@@ -84,7 +109,11 @@ class XuPreviewPanel(QWidget):
         self._row = ScanCameraRow()
         self._spin = 0
         self._tick = 0
+        self._short_tick = 0
         self.model_path = ""
+        self.hud = hud              # ScanHud, set by the widget
+        self._title = ""
+        self._scan_text = ""
 
         self._placeholder = QLabel("Choose a monster model (c0m###.dat) to preview the scan camera.")
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -93,26 +122,44 @@ class XuPreviewPanel(QWidget):
         self._placeholder.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         self.mode_combo = QComboBox()
-        self.mode_combo.addItems(["Scan screen", "Zoom-in (target lock)"])
-        self.mode_combo.setToolTip("Scan screen: the framing of the info screen (camera mode 1).\n"
-                                   "Zoom-in: where the camera ends while the reticle locks on (mode 0).")
-        self.mode_combo.currentIndexChanged.connect(lambda _i: self._apply())
-        self.turn_check = QCheckBox("Turn like the game")
+        self.mode_combo.addItems(["Scan screen", "Zoom-in (target lock)", "Short scan (repeat)"])
+        self.mode_combo.setToolTip(
+            "Scan screen: the info screen (camera mode 1), with the name and scan text.\n"
+            "Zoom-in: where the camera ends while the reticle locks on (mode 0).\n"
+            "Short scan: a repeat scan with the Config Scan option on short - the zoom-in\n"
+            "camera, circling the target when the row says so.")
+        self.mode_combo.currentIndexChanged.connect(lambda _i: self._restart())
+        self.turn_check = QCheckBox("Move like the game")
         self.turn_check.setChecked(True)
-        self.turn_check.setToolTip("The Scan screen turns the model when the row allows it (can yaw)")
+        self.turn_check.setToolTip("Scan screen: the model turns (Turns). Short scan: the camera circles "
+                                   "(Circles in short scan) and lowers for tall targets.")
         self.turn_check.stateChanged.connect(lambda _s: self._update_timer())
         self.animate_check = QCheckBox("Animate")
+        self.animate_check.setChecked(True)
         self.animate_check.setToolTip("Play the monster's idle animation (animation 0)")
         self.animate_check.stateChanged.connect(lambda _s: self._update_timer())
+        self.text_check = QCheckBox("Text")
+        self.text_check.setChecked(True)
+        self.text_check.setToolTip("Draw the monster name and scan text where the Scan screen draws them")
+        self.text_check.stateChanged.connect(lambda _s: self._refresh_hud())
+        self.page_spin = QSpinBox()
+        self.page_spin.setPrefix("Text page ")
+        self.page_spin.setRange(1, 1)
+        self.page_spin.setToolTip("The Scan screen shows 7 lines of scan text at a time. A longer text is\n"
+                                  "split into pages: the game turns them on a button press or by itself\n"
+                                  "after a delay, and starts over after the last one. Pick the page to\n"
+                                  "preview - only enabled when the text has more than 7 lines.")
+        self.page_spin.valueChanged.connect(lambda _v: self._refresh_hud())
 
         controls = QHBoxLayout()
         controls.addWidget(self.mode_combo)
         controls.addWidget(self.turn_check)
         controls.addWidget(self.animate_check)
+        controls.addWidget(self.text_check)
+        controls.addWidget(self.page_spin)
         controls.addStretch(1)
 
-        self._name_label = QLabel()
-        self._name_label.setStyleSheet("color: white; font: bold 13pt 'Consolas'; background: transparent")
+        self._hud_image = None
         self.readout = QLabel()
         self.readout.setStyleSheet("color: gray")
         self.readout.setWordWrap(True)
@@ -149,39 +196,69 @@ class XuPreviewPanel(QWidget):
         self._gl.clear_color = SCAN_BLUE
         self._gl.letterbox_color = (0., 0., 0., 1.)  # outside the game's 4:3 screen
         self._layout.insertWidget(1, self._view, 1)
-        self._name_label.setParent(self._gl)
-        self._name_label.move(12, 8)
-        self._name_label.show()
         self._view.load_file()
         if getattr(self._view, "timer", None) is not None:
             self._view.timer.stop()  # frames are driven here
         self._placeholder.hide()
         self.model_path = path
-        self._spin = 0
-        self._tick = 0
-        self._apply()
-        self._update_timer()
+        self._restart()
 
     @property
     def has_model(self):
         return self._manager is not None
 
-    def set_title(self, text: str):
-        self._name_label.setText(text)
-        self._name_label.adjustSize()
+    def model_name(self) -> str:
+        """The name the loaded .dat carries (what the Scan screen shows), or ""."""
+        try:
+            return self._manager.enemy.info_stat_data['monster_name'].get_str().strip('\x00')
+        except Exception:
+            return ""
 
-    # ------------------------------------------------------------- row
+    # ------------------------------------------------------------- row + text
     def set_row(self, row: ScanCameraRow):
         self._row = row.copy()
+        self._restart()
+
+    def set_texts(self, title: str, scan_text: str):
+        self._title, self._scan_text = title, scan_text
+        pages = self.hud.page_count(scan_text) if self.hud is not None else 1
+        self.page_spin.setRange(1, pages)
+        self.page_spin.setEnabled(pages > 1)
+        self._refresh_hud()
+
+    def _refresh_hud(self):
+        if self.hud is None or not self.text_check.isChecked() or self.mode_combo.currentIndex() != MODE_SCAN_SCREEN:
+            self._hud_image = None
+        else:
+            image = self.hud.render(self._title, self._scan_text, self.page_spin.value() - 1)
+            self._hud_image = QImage(image.tobytes("raw", "RGBA"), image.width, image.height,
+                                     QImage.Format.Format_RGBA8888).copy()
+        self._place_hud()
+
+    def _place_hud(self):
+        if self._gl is not None:
+            self._gl.overlay_image = self._hud_image  # drawn over the 4:3 game frame
+            self._gl.update()
+
+    # ------------------------------------------------------------- motion
+    def _turning(self):
+        return (self.mode_combo.currentIndex() == MODE_SCAN_SCREEN and self._row.can_yaw == 1
+                and self.turn_check.isChecked())
+
+    def _short_scan_moving(self):
+        return self.mode_combo.currentIndex() == MODE_SHORT_SCAN and self.turn_check.isChecked() and (
+            self._row.short_scan_orbit == 1 or self._row.offset_y < TALL_TARGET_OFFSET_Y)
+
+    def _restart(self):
         self._spin = 0
+        self._short_tick = 0
         self._apply()
         self._update_timer()
-
-    def _turning(self):
-        return self.mode_combo.currentIndex() == 0 and self._row.can_yaw == 1 and self.turn_check.isChecked()
+        self._refresh_hud()
 
     def _update_timer(self):
-        if self._manager is not None and (self._turning() or self.animate_check.isChecked()):
+        if self._manager is not None and (self._turning() or self._short_scan_moving()
+                                          or self.animate_check.isChecked()):
             self._timer.start()
         else:
             self._timer.stop()
@@ -191,6 +268,8 @@ class XuPreviewPanel(QWidget):
         self._tick += 1
         if self._turning():
             self._spin = (self._spin + SCAN_SPIN_PER_TICK) % 4096
+        if self._short_scan_moving():
+            self._short_tick += 1
         self._apply()
 
     def _frame(self):
@@ -219,21 +298,21 @@ class XuPreviewPanel(QWidget):
         def to_viewer(point):
             return np.asarray(point, float) * np.array((-1., -1., 1.)) * unit
 
-        zoom_in = self.mode_combo.currentIndex() == 1
-        # The camera is placed once, from the pose the scan starts on (frame 0, no turn).
-        eye, target = scan_camera(self._row, centre_point(self._manager), zoom_in=zoom_in)
+        mode = self.mode_combo.currentIndex()
+        orbit, height = 0, None
+        if mode == MODE_SHORT_SCAN:
+            orbit = (self._short_tick * SCAN_SPIN_PER_TICK) % 4096 if self._row.short_scan_orbit == 1 else 0
+            height = short_scan_height(self._row, self._short_tick)
+        # The camera aims at the pose the scan starts on (frame 0, before any turn).
+        eye, target = scan_camera(self._row, centre_point(self._manager), zoom_in=mode != MODE_SCAN_SCREEN,
+                                  orbit=orbit, height=height)
         self._gl.set_model_translation(*model_root(self._manager, 0, frame))
         yaw = MONSTER_YAW + self._spin * 2 * math.pi / 4096
         self._gl.set_preview_model_transform(to_viewer((0., 0., 0.)), -yaw)
         self._gl.set_camera(to_viewer(eye), to_viewer(target), (0., 1., 0.),
                             projection=SCAN_PROJECTION, translate_model=True)
-        viewport = getattr(self._gl, "_game_viewport", None)  # keep the title inside the 4:3 frame
-        if viewport is not None:
-            self._name_label.move(viewport[0] + 12, self._gl.height() - viewport[1] - viewport[3] + 8)
+        self._place_hud()
+        distance = abs(self._row.distance if mode == MODE_SCAN_SCREEN else zoom_in_distance(self._row))
         self.readout.setText(
             f"Eye ({eye[0]:.0f}, {eye[1]:.0f}, {eye[2]:.0f})   aim ({target[0]:.0f}, {target[1]:.0f}, "
-            f"{target[2]:.0f})   distance {abs(row_distance(self._row, zoom_in))}   lens {SCAN_PROJECTION}")
-
-
-def row_distance(row: ScanCameraRow, zoom_in: bool) -> int:
-    return int(3 * row.distance / 4) if zoom_in else row.distance
+            f"{target[2]:.0f})   distance {distance}   lens {SCAN_PROJECTION}")

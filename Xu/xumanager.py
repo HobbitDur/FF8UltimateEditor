@@ -14,7 +14,8 @@ exactly ROW_COUNT rows::
                                 aimed at its position
     0xC  uint8  can_pitch       1 = the player can tilt the model
     0xD  uint8  can_yaw         1 = the model turns, and the player can turn it
-    0xE  uint8  unknown         1 in every vanilla row
+    0xE  uint8  short_scan_orbit 1 = the camera circles the target during the short scan
+                                (a repeat scan with the Config Scan option on short)
     0xF  uint8  padding
 
 Rows 0-159 follow the com_id (characters 0-15, then a monster's row is its c0m number
@@ -67,7 +68,7 @@ class ScanCameraRow:
     view_offset_y: int = 0
     can_pitch: int = 1
     can_yaw: int = 1
-    unknown: int = 1
+    short_scan_orbit: int = 1
     padding: int = 0
 
     @classmethod

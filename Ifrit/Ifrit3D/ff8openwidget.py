@@ -168,7 +168,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.clear_color = (0.12, 0.12, 0.18, 1.0)  # background; Xu uses the Scan screen blue
         # Around the game's 4:3 frame of an explicit-lens camera; None = same as clear_color
         self.letterbox_color = None
-        self._game_viewport = None
+        self._game_viewport = None  # (x, y, w, h) in device pixels, GL origin bottom-left
+        self.overlay_image = None   # QImage painted over the game frame (Xu's Scan text)
 
     @staticmethod
     def _rank_texture_map(tex_ids_used: list, n: int, base_index: int = 0) -> dict:
@@ -428,8 +429,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
         glDisable(GL_CULL_FACE)
 
     def resizeGL(self, w, h):
-        glViewport(0, 0, w, h)
-        self._apply_projection(w, h)
+        self._apply_projection(self.width(), self.height())
 
     def _apply_projection(self, w, h):
         """(Re)build the projection matrix with clip planes sized to the current
@@ -444,6 +444,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
         # tens of thousands for large battle stages, which starves the depth buffer's
         # precision at distance and shows up as z-fighting/flicker on coincident faces.
         projection = getattr(self, '_explicit_projection', None)
+        # w/h are logical pixels; glViewport takes framebuffer (device) pixels, which differ
+        # on a scaled (HiDPI) screen.
+        dpr = self.devicePixelRatioF()
+        w, h = max(1, round(w * dpr)), max(1, round(h * dpr))
         if projection is not None:
             from FF8GameData.dat.battlecamera import projection_frustum
             # Keep the game's 4:3 frame instead of stretching a shot to the dock's shape.
@@ -704,7 +708,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
         try:
             self._pick_modelview = glGetDoublev(GL_MODELVIEW_MATRIX)
             self._pick_projection = glGetDoublev(GL_PROJECTION_MATRIX)
-            self._pick_viewport = glGetIntegerv(GL_VIEWPORT)
+            # In logical pixels, like the mouse positions picking compares it with
+            dpr = self.devicePixelRatioF()
+            self._pick_viewport = [value / dpr for value in glGetIntegerv(GL_VIEWPORT)]
         except Exception:
             self._pick_modelview = None
 
@@ -756,6 +762,29 @@ class FF8OpenGLWidget(QOpenGLWidget):
             self.draw_skeleton()
             if self.show_gizmo:
                 self.draw_rotation_gizmo()
+
+        if self.overlay_image is not None:
+            self._draw_overlay_image()
+
+    def _draw_overlay_image(self):
+        """Paint overlay_image over the game's 4:3 frame (or the whole view) with QPainter.
+
+        A transparent child widget does not composite over a QOpenGLWidget, so the overlay is
+        drawn into the same framebuffer, after the scene; the GL state QPainter changes is
+        restored for the next frame."""
+        from PyQt6.QtCore import QRectF
+        from PyQt6.QtGui import QPainter
+        if self._game_viewport is not None:
+            dpr = self.devicePixelRatioF()
+            x, y, width, height = (value / dpr for value in self._game_viewport)
+            target = QRectF(x, self.height() - y - height, width, height)  # GL y counts from the bottom
+        else:
+            target = QRectF(0, 0, self.width(), self.height())
+        painter = QPainter(self)
+        painter.drawImage(target, self.overlay_image)
+        painter.end()
+        glEnable(GL_DEPTH_TEST)
+        glDisable(GL_CULL_FACE)
 
     def _should_cull_backface(self, verts, multiplicity, view_dir):
         """PSX-style per-face backface cull (exact per-face plane test, same
