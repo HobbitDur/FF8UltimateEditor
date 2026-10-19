@@ -320,9 +320,10 @@ class GameData:
             self.exe_data_json["draw_text_offset"][key] = int(self.exe_data_json["draw_text_offset"][key], 16)
         for key in self.exe_data_json["scan_camera_offset"]:
             self.exe_data_json["scan_camera_offset"][key] = int(self.exe_data_json["scan_camera_offset"][key], 16)
-        for key, value in self.exe_data_json["text_icon_sprite_offset"].items():
-            if key != "comment":
-                self.exe_data_json["text_icon_sprite_offset"][key] = int(value, 16)
+        for section in ("text_icon_sprite_offset", "scan_background_offset"):
+            for key, value in self.exe_data_json[section].items():
+                if key != "comment":
+                    self.exe_data_json[section][key] = int(value, 16)
         for key in self.exe_data_json["draw_data_offset"]:
             self.exe_data_json["draw_data_offset"][key] = int(self.exe_data_json["draw_data_offset"][key], 16)
 

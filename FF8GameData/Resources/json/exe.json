@@ -66,6 +66,25 @@
     "de_offset":       "-0x38",
     "es_offset":       "-0x38"
   },
+  "scan_background_offset":{
+    "comment":         "Scan screen effect models (Effect_RenderPrimModel) + StatBar table (x, y, z turn, delay, phase) x 8; EN VA = file + 0x400000",
+    "backdrop":        "0x11CEA34",
+    "spinner":         "0x11CF37C",
+    "board":           "0x11CF5B4",
+    "bar0":            "0x11CF6FC",
+    "bar1":            "0x11CF6FC",
+    "bar2":            "0x11CF784",
+    "bar3":            "0x11CF80C",
+    "bar4":            "0x11CF894",
+    "bar5":            "0x11CF91C",
+    "bar6":            "0x11CF9A4",
+    "bar7":            "0x11CFA2C",
+    "bar_layout":      "0x11D1678",
+    "fr_offset":       "0xB0",
+    "it_offset":       "0x160",
+    "de_offset":       "0x200",
+    "es_offset":       "0x170"
+  },
   "draw_data_offset":{
     "og_eng_start":     "0x792328",
     "size":     "0x100"

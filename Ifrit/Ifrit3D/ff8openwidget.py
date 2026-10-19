@@ -170,6 +170,10 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.letterbox_color = None
         self._game_viewport = None  # (x, y, w, h) in device pixels, GL origin bottom-left
         self.overlay_image = None   # QImage painted over the game frame (Xu's Scan text)
+        self.overlay_add_image = None  # QImage ADDED over the game frame (additive GPU blending)
+        self.underlay_image = None  # QImage drawn behind the scene, over the game frame
+        self._underlay_texture = None
+        self._underlay_uploaded = None  # the QImage whose pixels the texture holds
 
     @staticmethod
     def _rank_texture_map(tex_ids_used: list, n: int, base_index: int = 0) -> dict:
@@ -676,6 +680,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
         else:
             glClearColor(*self.clear_color)
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        if self.underlay_image is not None:
+            self._draw_underlay_image()
         glLoadIdentity()
 
         placement, yaw = getattr(self, '_preview_model_transform', ((0., 0., 0.), 0.))
@@ -776,8 +782,53 @@ class FF8OpenGLWidget(QOpenGLWidget):
             if self.show_gizmo:
                 self.draw_rotation_gizmo()
 
-        if self.overlay_image is not None:
+        if self.overlay_image is not None or self.overlay_add_image is not None:
             self._draw_overlay_image()
+
+    def _draw_underlay_image(self):
+        """Draw underlay_image as a textured quad filling the current viewport (the game frame),
+        behind everything: no depth write, all GL state put back."""
+        image = self.underlay_image
+        if self._underlay_texture is None:
+            self._underlay_texture = glGenTextures(1)
+        glPushAttrib(GL_ALL_ATTRIB_BITS)
+        glBindTexture(GL_TEXTURE_2D, self._underlay_texture)
+        if self._underlay_uploaded is not image:
+            rgba = image.convertToFormat(QImage.Format.Format_RGBA8888)
+            data = rgba.constBits().asstring(rgba.sizeInBytes())
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 4)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, rgba.width(), rgba.height(), 0, GL_RGBA,
+                         GL_UNSIGNED_BYTE, data)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+            self._underlay_uploaded = image
+        glDisable(GL_DEPTH_TEST)
+        glDepthMask(GL_FALSE)
+        glDisable(GL_LIGHTING)
+        glDisable(GL_BLEND)
+        glDisable(GL_CULL_FACE)
+        glEnable(GL_TEXTURE_2D)
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
+        glMatrixMode(GL_PROJECTION)
+        glPushMatrix()
+        glLoadIdentity()
+        glOrtho(0, 1, 1, 0, -1, 1)
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        glLoadIdentity()
+        glBegin(GL_QUADS)
+        for u, v in ((0, 0), (1, 0), (1, 1), (0, 1)):
+            glTexCoord2f(u, v)
+            glVertex2f(u, v)
+        glEnd()
+        glPopMatrix()
+        glMatrixMode(GL_PROJECTION)
+        glPopMatrix()
+        glMatrixMode(GL_MODELVIEW)
+        glBindTexture(GL_TEXTURE_2D, 0)
+        glPopAttrib()
 
     def _draw_overlay_image(self):
         """Paint overlay_image over the game's 4:3 frame (or the whole view) with QPainter.
@@ -794,7 +845,12 @@ class FF8OpenGLWidget(QOpenGLWidget):
         else:
             target = QRectF(0, 0, self.width(), self.height())
         painter = QPainter(self)
-        painter.drawImage(target, self.overlay_image)
+        if self.overlay_add_image is not None:  # added to the frame, like the GPU's additive mode
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Plus)
+            painter.drawImage(target, self.overlay_add_image)
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
+        if self.overlay_image is not None:
+            painter.drawImage(target, self.overlay_image)
         painter.end()
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_CULL_FACE)

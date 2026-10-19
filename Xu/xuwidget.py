@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLa
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
+from Xu.xubackground import background_from_exe, TimTexture
 from Xu.xuhud import ScanHud
 from Xu.xuinfobar import misc_texts_from_kernel, icon_table_from_exe
 from Xu.xumanager import (XuManager, FILE_NAME, ROW_COUNT, ALTERNATE_ROWS, FIRST_MONSTER_ROW,
@@ -19,6 +20,7 @@ from Xu.xupreview import XuPreviewPanel
 from Xu.xutext import XuTextManager, FILE_NAME as TEXT_FILE_NAME
 
 MODEL_FOLDER_KEY = "battle model (.dat)"  # same remembered folder as Ifrit's model dialog
+SCAN_TEXTURE_NAME = "mag039-067.tim"      # the Scan effects' texture (magic/ folder)
 # Where the camera dialog reopens (whichever of the .bin or the exe was picked in it last)
 CAMERA_DIALOG_KEY = "Xu scan camera rows"
 TEXT_COUNT_FOR_ALL_MONSTERS = LAST_C0M_FILE + 16 + 1  # com_id 0..215
@@ -119,6 +121,10 @@ class XuWidget(QWidget):
         self.icon_binding = FileBinding("icon.sp1", file_registry, load_callback=self._on_icons_opened,
                                         read_only=True)
         self.icon_binding.file_closed.connect(lambda _path: self._set_icons(None))
+        # The Scan effects' texture: the stat board's labels
+        self.scan_texture_binding = FileBinding(SCAN_TEXTURE_NAME, file_registry,
+                                                load_callback=self._on_scan_texture_opened, read_only=True)
+        self.scan_texture_binding.file_closed.connect(lambda _path: self.preview.set_background_texture(None))
         self._spinboxes = {}
         self._checkboxes = {}
         self._model_paths = {}           # com_id -> opened c0m###.dat / d?c###.dat
@@ -199,6 +205,7 @@ class XuWidget(QWidget):
         self.mngrp_binding.load_opened_file()
         self.kernel_binding.load_opened_file()
         self.icon_binding.load_opened_file()
+        self.scan_texture_binding.load_opened_file()
 
     def _build_camera_tab(self):
         form = QFormLayout()
@@ -284,7 +291,8 @@ class XuWidget(QWidget):
     def file_bindings(self):
         """The files the shared header toolbar drives for this tool (Save, Reload). The exe is
         left out: it is opened through the camera Import line (see import_entries)."""
-        return [self.binding, self.text_binding, self.mngrp_binding, self.kernel_binding, self.icon_binding]
+        return [self.binding, self.text_binding, self.mngrp_binding, self.kernel_binding, self.icon_binding,
+                self.scan_texture_binding]
 
     def import_entries(self):
         """The header Import menu: one line for the camera rows (the FFNx .bin, or the exe's
@@ -297,7 +305,8 @@ class XuWidget(QWidget):
         return [("Game font: mngrp.bin (sysfnt.TEX/.tdw next to it)", self._import_font),
                 ("Battle models: c0m###.dat / d?c###.dat, weapons d?w###.dat (several, Ctrl+A for all)", self._import_models),
                 ("Info bar texts: kernel.bin", self._import_kernel),
-                ("Info bar icons: icon.sp1 (icon.TEX next to it)", self._import_icons)]
+                ("Info bar icons: icon.sp1 (icon.TEX next to it)", self._import_icons),
+                (f"Stat board texture: {SCAN_TEXTURE_NAME}", self._import_scan_texture)]
 
     def _import_font(self):
         path = self.mngrp_binding.open_dialog(self, default_dir=self.file_registry.last_folder("mngrp.bin"))
@@ -313,6 +322,19 @@ class XuWidget(QWidget):
         path = self.icon_binding.open_dialog(self, default_dir=self.file_registry.last_folder("icon.sp1"))
         if path:
             self.file_registry.remember_folder("icon.sp1", os.path.dirname(path))
+
+    def _import_scan_texture(self):
+        path = self.scan_texture_binding.open_dialog(self, default_dir=self.file_registry.last_folder(SCAN_TEXTURE_NAME))
+        if path:
+            self.file_registry.remember_folder(SCAN_TEXTURE_NAME, os.path.dirname(path))
+
+    def _on_scan_texture_opened(self, path):
+        try:
+            texture = TimTexture.from_file(path)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Xu", f"Cannot read {path}:\n{error}")
+            texture = None
+        self.preview.set_background_texture(texture)
 
     def _import_models(self):
         paths = QFileDialog.getOpenFileNames(
@@ -354,11 +376,19 @@ class XuWidget(QWidget):
         self._update_source_state()
         self._fill_row_list()
         self._load_texts_from_exe(path)
-        try:  # the icon.sp1 id of each text icon code, for the info bar's element icons
+        try:
             with open(path, "rb") as file:
-                self.hud.icon_table = icon_table_from_exe(file.read(), self.game_data.exe_data_json)
-        except (OSError, ValueError):
+                exe = file.read()
+        except OSError:
+            exe = b""
+        try:  # the icon.sp1 id of each text icon code, for the info bar's element icons
+            self.hud.icon_table = icon_table_from_exe(exe, self.game_data.exe_data_json)
+        except ValueError:
             self.hud.icon_table = {}
+        try:  # the Scan screen's backdrop, spinner and stat board
+            self.preview.set_background_data(background_from_exe(exe, self.game_data.exe_data_json))
+        except ValueError:
+            self.preview.set_background_data(None)
         self.preview.set_info_texts(self.preview.info_texts)
 
     def load_file(self, path):

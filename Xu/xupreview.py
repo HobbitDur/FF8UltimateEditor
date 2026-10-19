@@ -20,7 +20,9 @@ when short_scan_orbit is 1, and when offset_y < -384 (tall target) moves the cam
 by -height/32 towards the aim level, stopping at 0.
 
 Under the model, the info bar (Xu.xuinfobar) shows one line at a time and turns to the next one
-every 45 ticks, back to the first after the last.
+every 45 ticks, back to the first after the last. Around it, the Scan screen's own graphics
+(Xu.xubackground): the backdrop panel behind the model, the spinner and the stat board/bars over it,
+on the black of the hidden battle stage.
 """
 import math
 
@@ -30,6 +32,7 @@ from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QCheckBox,
                              QSizePolicy, QSpinBox)
 
+from Xu.xubackground import ScanBackground, BarValues, FINAL_TICK
 from Xu.xuinfobar import (InfoBarBuilder, InfoBarSubject, ai_scan_texts, LINE_TICKS, MAX_LEVEL,
                           MAX_SHOWN_NUMBER)
 from Xu.xumanager import ScanCameraRow
@@ -39,7 +42,8 @@ SCAN_SPIN_PER_TICK = 64        # rotation units (4096 = one turn) per game tick
 TALL_TARGET_OFFSET_Y = -384    # short scan lowers the camera for aim heights above this
 GAME_TICK_MS = 1000 // 15
 MONSTER_YAW = math.pi          # monsters face the party
-SCAN_BLUE = (0.0, 0.02, 0.32, 1.0)
+SCAN_BLUE = (0.0, 0.02, 0.32, 1.0)   # stand-in for the backdrop when no exe gives its model
+SCAN_BLACK = (0.0, 0.0, 0.0, 1.0)    # the Scan screen hides the battle stage
 CENTRE_SELECTOR = 5            # skeleton header byte read for bone selector 0xF1
 
 MODE_SCAN_SCREEN, MODE_ZOOM_IN, MODE_SHORT_SCAN = range(3)
@@ -137,6 +141,11 @@ class XuPreviewPanel(QWidget):
         self._character = False     # the row is a character's: only the level/HP line
         self._info_lines = []       # [InfoBarLine] the game would page through
         self._info_tick = 0         # ticks the shown line has been up
+        self._background_data = None    # ScanBackgroundData of the opened exe
+        self._background_texture = None  # TimTexture of mag039-067.tim (the stat board)
+        self._background = None
+        self._scan_tick = 0         # ticks since the Scan screen opened (its parts appear)
+        self._background_key = None
 
         self._placeholder = QLabel("Choose a monster model (c0m###.dat) to preview the scan camera.")
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -166,6 +175,13 @@ class XuPreviewPanel(QWidget):
         self.text_check.setChecked(True)
         self.text_check.setToolTip("Draw the monster name and scan text where the Scan screen draws them")
         self.text_check.stateChanged.connect(lambda _s: self._refresh_hud())
+        self.background_check = QCheckBox("Background")
+        self.background_check.setChecked(True)
+        self.background_check.setToolTip("The Scan screen's own graphics, from the FF8 exe: the blue backdrop behind\n"
+                                          "the model, the spinner, the stat board and its bars (HP, STR, VIT, MAG, SPR,\n"
+                                          "SPD, EVA at the level picked). They appear like the game's when Animate or\n"
+                                          "Move like the game is on. The board's labels need mag039-067.tim.")
+        self.background_check.stateChanged.connect(lambda _s: self._apply())
 
         # Weapon shown in a character's hand: the imported d?w###.dat of that character.
         # Hidden when none is imported (the body is shown alone).
@@ -181,6 +197,7 @@ class XuPreviewPanel(QWidget):
         controls.addWidget(self.turn_check)
         controls.addWidget(self.animate_check)
         controls.addWidget(self.text_check)
+        controls.addWidget(self.background_check)
         controls.addWidget(self.weapon_label)
         controls.addWidget(self.weapon_combo)
         controls.addStretch(1)
@@ -222,6 +239,9 @@ class XuPreviewPanel(QWidget):
         self.info_hint = QLabel()
         self.info_hint.setWordWrap(True)
         self.info_hint.setStyleSheet("color: #c06000")
+        self.background_hint = QLabel()
+        self.background_hint.setWordWrap(True)
+        self.background_hint.setStyleSheet("color: #c06000")
 
         self._hud_image = None
         self.readout = QLabel()
@@ -232,10 +252,12 @@ class XuPreviewPanel(QWidget):
         self._layout.addLayout(controls)
         self._layout.addLayout(info_controls)
         self._layout.addWidget(self.info_hint)
+        self._layout.addWidget(self.background_hint)
         self._layout.addWidget(self._placeholder, 1)
         self._layout.addWidget(self.readout)
         self._fill_scan_texts()
         self._rebuild_info_lines()
+        self._update_background_hint()
 
         self._timer = QTimer(self)
         self._timer.setInterval(GAME_TICK_MS)
@@ -255,6 +277,7 @@ class XuPreviewPanel(QWidget):
         self._gl.setMinimumHeight(300)
         self._gl.show_axis = False
         self._gl.clear_color = SCAN_BLUE
+        self._background_key = None  # a new GL widget: give it the layers again
         self._gl.letterbox_color = (0., 0., 0., 1.)  # outside the game's 4:3 screen
         self._gl.installEventFilter(self)  # the mouse plays the Scan screen's pad controls
         self._layout.insertWidget(self._layout.indexOf(self._placeholder), self._view, 1)
@@ -349,6 +372,71 @@ class XuPreviewPanel(QWidget):
             self._character = character
             self._on_new_subject()
 
+    # ------------------------------------------------------------- Scan screen graphics
+    def set_background_data(self, data):
+        """The exe's Scan screen models (None: no exe, a plain blue stands in)."""
+        self._background_data = data
+        self._rebuild_background()
+
+    def set_background_texture(self, texture):
+        """mag039-067.tim's TimTexture (None: the stat board is not drawn)."""
+        self._background_texture = texture
+        self._rebuild_background()
+
+    def _rebuild_background(self):
+        self._background = (ScanBackground(self._background_data, self._background_texture)
+                            if self._background_data is not None else None)
+        self._background_key = None
+        self._update_background_hint()
+        self._apply()
+
+    def _update_background_hint(self):
+        hints = []
+        if self._background_data is None:
+            hints.append("Background: open the FF8 exe (its Scan screen models); a plain blue stands in.")
+        elif self._background_texture is None:
+            hints.append("Background: open mag039-067.tim (header Import read-only) for the stat board's labels.")
+        self.background_hint.setText("  ".join(hints))
+        self.background_hint.setVisible(bool(hints))
+
+    def _bar_values(self):
+        subject = self._subject()
+        if subject is None:
+            return BarValues()
+        stats = self._monster_stats()
+        if stats is None:  # a character: only the HP picked here is known
+            return BarValues(hp=subject.current_hp)
+        return BarValues.from_info_stat(stats, subject.level, subject.current_hp)
+
+    def _background_tick(self):
+        """The Scan screen's tick: it runs while the preview moves, else every part is shown."""
+        return self._scan_tick if self._timer.isActive() else FINAL_TICK
+
+    def _place_background(self):
+        """Give the GL view the backdrop (behind the model) and the HUD parts (added over it)."""
+        if self._gl is None:
+            return
+        shown = (self._background is not None and self.background_check.isChecked()
+                 and self.mode_combo.currentIndex() == MODE_SCAN_SCREEN)
+        if not shown:
+            if self._background_key is not False:
+                self._gl.underlay_image = self._gl.overlay_add_image = None
+                self._gl.clear_color = SCAN_BLUE
+                self._background_key = False
+            return
+        tick = self._background_tick()
+        values = self._bar_values()
+        backdrop_tick = min(tick, 9)  # faded in by then
+        key = (id(self._background), backdrop_tick, tick, values)
+        if key == self._background_key:
+            return
+        previous = self._background_key or (None, None, None, None)
+        if previous[:2] != key[:2]:
+            self._gl.underlay_image = _qimage(self._background.backdrop(backdrop_tick))
+        self._gl.overlay_add_image = _qimage(self._background.hud(tick, values))
+        self._gl.clear_color = SCAN_BLACK
+        self._background_key = key
+
     def _monster_stats(self):
         """The loaded monster's .dat section 7, or None (no model, or not a monster)."""
         if self._manager is None or self._character:
@@ -424,6 +512,7 @@ class XuPreviewPanel(QWidget):
                 self.info_combo.addItem(f"{index + 1}/{len(lines)} {line.label}")
             self.info_combo.setCurrentIndex(min(max(previous, 0), len(lines) - 1) if lines else -1)
         self.info_combo.setEnabled(bool(lines))
+        self._place_background()  # the stat bars follow the level / HP too
         self._refresh_hud()
 
     def _on_info_line_picked(self, _index):
@@ -485,6 +574,7 @@ class XuPreviewPanel(QWidget):
     def _restart(self):
         self._reset_viewer()
         self._short_tick = 0
+        self._scan_tick = 0
         self._apply()
         self._update_timer()
         self._refresh_hud()
@@ -508,6 +598,7 @@ class XuPreviewPanel(QWidget):
             self._spin = (self._spin + SCAN_SPIN_PER_TICK) % 4096
         if self._short_scan_moving():
             self._short_tick += 1
+        self._scan_tick += 1
         self._advance_info_bar()
         self._apply()
 
@@ -617,6 +708,7 @@ class XuPreviewPanel(QWidget):
         self._gl.set_preview_model_transform(to_viewer(position), -yaw, linear=flip @ linear @ flip)
         self._gl.set_camera(to_viewer(eye), to_viewer(target), (0., 1., 0.),
                             projection=SCAN_PROJECTION, translate_model=True)
+        self._place_background()
         self._place_hud()
         distance = abs(self._row.distance if mode == MODE_SCAN_SCREEN else zoom_in_distance(self._row))
         controls = ""
@@ -629,3 +721,9 @@ class XuPreviewPanel(QWidget):
         self.readout.setText(
             f"Eye ({eye[0]:.0f}, {eye[1]:.0f}, {eye[2]:.0f})   aim ({target[0]:.0f}, {target[1]:.0f}, "
             f"{target[2]:.0f})   distance {distance}   lens {SCAN_PROJECTION}{controls}")
+
+
+def _qimage(image):
+    """A PIL RGBA image as a QImage (copied, so it outlives the PIL buffer)."""
+    return QImage(image.tobytes("raw", "RGBA"), image.width, image.height,
+                  QImage.Format.Format_RGBA8888).copy()

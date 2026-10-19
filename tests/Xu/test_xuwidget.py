@@ -170,7 +170,8 @@ def test_header_toolbar_lines(qapp, tmp_path, monkeypatch):
     side = [label for label, _callback in w.complementary_entries()]
     assert side[0].startswith("Game font: mngrp.bin") and side[1].startswith("Battle models:")
     assert side[2].startswith("Info bar texts: kernel.bin") and side[3].startswith("Info bar icons: icon.sp1")
-    assert w.kernel_binding.read_only and w.icon_binding.read_only
+    assert side[4].startswith("Stat board texture: mag039-067.tim")
+    assert w.kernel_binding.read_only and w.icon_binding.read_only and w.scan_texture_binding.read_only
 
     models = tmp_path / "battle"
     models.mkdir()
@@ -278,3 +279,36 @@ def test_info_bar_pages_like_the_game(widget):
     for _tick in range(45):
         preview._advance_info_bar()
     assert preview.info_combo.currentIndex() == 0  # back to the first line
+
+
+def test_background_needs_the_exe(widget):
+    """No exe: no Scan screen models, a hint says so (a plain blue stands in)."""
+    w, _path = widget
+    assert w.preview._background is None
+    assert "FF8 exe" in w.preview.background_hint.text()
+
+
+@pytest.mark.ff8data(EXE, "extracted_files/magic/mag039-067.tim")
+def test_background_from_the_opened_files(widget):
+    """The exe gives the models, mag039-067.tim the stat board labels; the bars read the monster's
+    stats at the level picked."""
+    import contextlib
+    import io
+    w, _path = widget
+    w.exe_binding.open_path(EXE)
+    assert w.preview._background is not None and "mag039-067.tim" in w.preview.background_hint.text()
+    w.scan_texture_binding.open_path("extracted_files/magic/mag039-067.tim")
+    assert w.preview._background.texture is not None and not w.preview.background_hint.isVisibleTo(w.preview)
+    w.row_list.setCurrentRow(43 + 16)  # Bomb
+    preview = w.preview
+    with contextlib.redirect_stdout(io.StringIO()):
+        preview._manager = preview._new_manager("extracted_files/battle/c0m043.dat")
+    preview._on_new_subject()
+    values = preview._bar_values()
+    stats = preview._manager.enemy.info_stat_data
+    from FF8GameData.dat.monsterstatcurve import monster_hp, monster_stat
+    level = preview.level_spin.value()
+    assert values.hp == monster_hp(list(stats['hp'][:4]), level)
+    assert values.spd == monster_stat('spd', list(stats['spd'][:4]), level)
+    w.file_registry.close_file("mag039-067.tim")  # removed from the opened files: no board labels
+    assert w.preview._background.texture is None
