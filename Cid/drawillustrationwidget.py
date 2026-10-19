@@ -79,13 +79,13 @@ class FieldImageView(QWidget):
 class DrawIllustrationWidget(QWidget):
     """Context-aware illustration for the selected draw point.
 
-    World draw points (129..256) show the clickable world map with markers;
+    World draw points (129..256) show the world map with draggable markers;
     field draw points (1..128) show every field screenshot the draw point
     appears in (from the Deling image export), resolved through
     ``draw_field.json`` (draw ID -> field name(s)).
     """
 
-    position_picked = pyqtSignal(int, int)  # re-emitted from the world map
+    position_picked = pyqtSignal(int, int, int)  # re-emitted from the world map
 
     def __init__(self, map_path, draw_field_map, images_dir, parent=None):
         super().__init__(parent)

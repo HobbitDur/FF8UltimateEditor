@@ -3,7 +3,7 @@ import json
 import os
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QFileDialog, QPushButton, QHBoxLayout, QLabel, QComboBox,
                              QMessageBox, QSplitter)
 
@@ -11,6 +11,7 @@ from Cid.draw import Draw
 from Cid.drawwidget import DrawWidget
 from Cid.drawillustrationwidget import DrawIllustrationWidget
 from Cid.worlddrawsection import WorldDrawSection
+from Cid.worlddrawgeometry import WorldDrawGeometry
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
@@ -45,8 +46,8 @@ class CidWidget(QWidget):
         self.game_data = GameData(game_data_folder)
         self.game_data.load_field_data()
         self.game_data.load_exe_data()
-        self.game_data.load_magic_data()
         self.game_data.load_draw_data()
+        self.game_data.load_kernel_data()
 
         # Draw ID -> field internal name(s), used to show a field screenshot per draw point.
         self._draw_field_map = {}
@@ -71,6 +72,10 @@ class CidWidget(QWidget):
                                        file_filter="*.exe")
         self.wmset_binding = FileBinding("wmsetxx.obj", file_registry, load_callback=self.load_wmset,
                                          file_filter="wmset*.obj;;*.obj")
+        self.kernel_binding = FileBinding("kernel.bin", file_registry, load_callback=self.load_kernel,
+                                          read_only=True)
+        self.wmx_binding = FileBinding("wmx.obj", file_registry, load_callback=self.load_wmx,
+                                       read_only=True)
         # The save dialogs stay: each save writes to a path the user picks (.hext / wmset).
         self._save_hext_dialog = QFileDialog()
         self._save_wmset_dialog = QFileDialog()
@@ -97,6 +102,29 @@ class CidWidget(QWidget):
         self._layout_top.addWidget(self._version_widget)
         self._layout_top.addStretch(1)
 
+        self._phase_widget = QComboBox()
+        self._phase_widget.addItem('All world phases', None)
+        for phase in range(5):
+            self._phase_widget.addItem(f'World phase {phase}', phase)
+        self._phase_widget.setToolTip('Story phases used by the OG game; these are not disc numbers.')
+        self._layout_top.addWidget(self._phase_widget)
+
+        self._save_hext_button = QPushButton('Export magic / refill (.hext)')
+        self._save_hext_button.clicked.connect(self._save_hext_only)
+        self._save_positions_button = QPushButton('Save world positions (wmset)')
+        self._save_positions_button.clicked.connect(self._save_positions_only)
+        self._save_status = QLabel()
+        self._save_status.setWordWrap(True)
+        self._names_status = QLabel('Spell names: load complementary kernel.bin (read-only).')
+        self._names_status.setWordWrap(True)
+        self._map_status = QLabel('Map: approximate block centres; load complementary wmx.obj for terrain triangles. '
+                                 'Click selects; drag moves; wheel zooms.')
+        self._map_status.setWordWrap(True)
+        save_row = QHBoxLayout()
+        save_row.addWidget(self._save_hext_button)
+        save_row.addWidget(self._save_positions_button)
+        save_row.addStretch(1)
+
         # Model: full 256-entry list, kept alive and updated as files load.
         self._draw_list = [Draw(self.game_data, id=i + 1, data_hex=bytearray()) for i in range(self.NB_DRAW)]
 
@@ -109,6 +137,9 @@ class CidWidget(QWidget):
         self._draw_widget.selection_changed.connect(self._on_selection_changed)
         self._draw_widget.position_changed.connect(self._illustration.refresh)
         self._illustration.position_picked.connect(self._on_map_position_picked)
+        self._illustration.map.selection_picked.connect(lambda row: self._draw_widget.setCurrentCell(row, 0))
+        self._phase_widget.currentIndexChanged.connect(
+            lambda: self._illustration.map.set_phase(self._phase_widget.currentData()))
 
         # Wiring: edits mark the corresponding backing file dirty.
         self._draw_widget.exe_changed.connect(self._on_exe_edited)
@@ -123,18 +154,27 @@ class CidWidget(QWidget):
         self.window_layout = QVBoxLayout()
         self.setLayout(self.window_layout)
         self.window_layout.addLayout(self._layout_top)
+        self.window_layout.addLayout(save_row)
+        self.window_layout.addWidget(self._save_status)
+        self.window_layout.addWidget(self._names_status)
+        self.window_layout.addWidget(self._map_status)
         self.window_layout.addWidget(self._splitter)
 
         # Removing one of the two files from the Opened files panel drops its part of the table.
-        self.exe_binding.file_closed.connect(self._on_file_closed)
-        self.wmset_binding.file_closed.connect(self._on_file_closed)
+        self.exe_binding.file_closed.connect(self._on_exe_closed)
+        self.wmset_binding.file_closed.connect(self._on_wmset_closed)
+        self.kernel_binding.file_closed.connect(self._on_kernel_closed)
+        self.wmx_binding.file_closed.connect(self._on_wmx_closed)
 
         self.exe_binding.load_opened_file()    # the exe may already be open (e.g. in CCGroup)
         self.wmset_binding.load_opened_file()
+        self.kernel_binding.load_opened_file()
+        self.wmx_binding.load_opened_file()
+        self._update_save_status()
 
     def file_bindings(self):
-        """The two inputs the shared header toolbar drives: the FF8 exe and the wmsetxx.obj."""
-        return [self.exe_binding, self.wmset_binding]
+        """Two edited sources and two optional read-only complementary files."""
+        return [self.exe_binding, self.wmset_binding, self.kernel_binding, self.wmx_binding]
 
     def save_folder(self):
         """The shared Save button: write the .hext and/or the wmset, whichever was edited."""
@@ -155,9 +195,30 @@ class CidWidget(QWidget):
 
     def _on_exe_edited(self):
         self._exe_dirty = True
+        self._update_save_status()
 
     def _on_world_edited(self):
         self._wmset_dirty = True
+        self._update_save_status()
+
+    def _update_save_status(self):
+        self._save_hext_button.setEnabled(self.exe_loaded)
+        self._save_positions_button.setEnabled(self._section.is_loaded())
+        exe = 'modified' if self._exe_dirty else ('loaded' if self.exe_loaded else 'not loaded')
+        wm = 'modified' if self._wmset_dirty else ('loaded' if self._section.is_loaded() else 'not loaded')
+        self._save_status.setText(f'.hext: magic ID, refill, high yield ({exe}). '
+                                  f'wmset: world X, Y, triangle ({wm}). '
+                                  'Save in the header writes the edited outputs. kernel.bin is read-only.')
+
+    def _save_hext_only(self):
+        if self._save_hext():
+            self._exe_dirty = False
+        self._update_save_status()
+
+    def _save_positions_only(self):
+        if self._save_wmset():
+            self._wmset_dirty = False
+        self._update_save_status()
 
     # ---- table <-> illustration wiring ------------------------------------
     def _on_selection_changed(self, row):
@@ -165,11 +226,13 @@ class CidWidget(QWidget):
         draw = self._draw_list[row] if 0 <= row < len(self._draw_list) else None
         self._illustration.set_selected(row, draw)
 
-    def _on_map_position_picked(self, x, y):
+    def _on_map_position_picked(self, x, y, sub_id=-1):
         # Only world draw points have a map position to place.
         if self._selected_row < 0 or not self._draw_list[self._selected_row].is_world():
             return
-        self._draw_widget.set_row_position(self._selected_row, x, y)
+        if not self._section.is_loaded():
+            return
+        self._draw_widget.set_row_position(self._selected_row, x, y, sub_id)
         self._illustration.refresh()
 
     def _on_fullscreen_toggled(self, checked):
@@ -178,14 +241,66 @@ class CidWidget(QWidget):
     # ---- loading -----------------------------------------------------------
     def load_exe(self, path):
         """Load the draw magic/refill/high-yield table from the FF8 exe (path from the toolbar)."""
-        with open(path, "rb") as in_file:
-            file_data = bytearray(in_file.read())
         draw_offset = self.game_data.exe_data_json["draw_data_offset"]["og_eng_start"]
+        try:
+            with open(path, "rb") as in_file:
+                file_data = in_file.read()
+            if len(file_data) < draw_offset + self.NB_DRAW:
+                raise ValueError('File is too short for the OG English 2013 draw table')
+        except (OSError, ValueError) as error:
+            self._show_error('Cid - Failed to read FF8 EXE', str(error))
+            return
         for i in range(self.NB_DRAW):
             self._draw_list[i].set_exe_byte(file_data[draw_offset + i])
         self.exe_loaded = True
+        self._exe_dirty = False
+        self._draw_widget._exe_loaded = True
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
+        self._update_save_status()
+
+    def load_kernel(self, path):
+        from FF8GameData.kernelnames import read_names
+        try:
+            names = read_names(self.game_data, path, keep_unnamed=True)
+            if not names.get('magic'):
+                raise ValueError('No magic name entries found')
+        except Exception as error:
+            self._show_error('Cid - Failed to read kernel.bin', str(error))
+            return
+        self.game_data.kernel_names = names
+        self._names_status.setText(f'Spell names: {path} (read-only). Draw magic IDs are limited to 0-63.')
+        self._draw_widget.set_draw(self._draw_list)
+        self._illustration.refresh()
+
+    def _on_kernel_closed(self, _path):
+        self.game_data.kernel_names = {}
+        self._names_status.setText('Spell names: load complementary kernel.bin (read-only).')
+        self._draw_widget.set_draw(self._draw_list)
+        self._illustration.refresh()
+
+    def load_wmx(self, path):
+        try:
+            geometry = WorldDrawGeometry(path)
+            # Validate every referenced block before installing it in the painter.
+            for draw in self._draw_list[self.WORLD_EXE_START_INDEX:]:
+                if draw.position_loaded:
+                    geometry.triangle(draw)
+            overview = QPixmap()
+            overview.loadFromData(geometry.overview_png())
+        except Exception as error:
+            self._show_error('Cid - Failed to read wmx.obj', str(error))
+            return
+        self._illustration.map.set_geometry(geometry, overview)
+        self._map_status.setText('Map: base-world terrain and trigger triangles from wmx.obj. '
+                                 'Story replacement terrain can differ. Drag chooses a destination triangle; wheel zooms.')
+        self._illustration.refresh()
+
+    def _on_wmx_closed(self, _path):
+        self._illustration.map.set_geometry(None)
+        self._map_status.setText('Map: approximate block centres; load complementary wmx.obj for terrain triangles. '
+                                 'Click selects; drag moves; wheel zooms.')
+        self._illustration.refresh()
 
     def load_wmset(self, path):
         """Load the world-map draw positions (wmset Section 34) from a wmsetxx.obj."""
@@ -196,31 +311,49 @@ class CidWidget(QWidget):
                              f"Could not parse Section 34 of this file:<br>{error}")
             return
         self.wmset_file_path = path
+        self._wmset_dirty = False
+        for draw in self._draw_list[self.WORLD_EXE_START_INDEX:]:
+            draw.position_loaded = False
+            draw.world_phases = ()
+            draw.x, draw.y, draw.sub_id = 0, 0, 0
         nb = min(self._section.get_nb_record(), self.NB_DRAW - self.WORLD_EXE_START_INDEX)
         for i in range(nb):
             x, y, sub_id, _pad = self._section.records[i]
             draw = self._draw_list[self.WORLD_EXE_START_INDEX + i]
             draw.x, draw.y, draw.sub_id = x, y, sub_id
+            draw.position_loaded = True
+            draw.world_phases = self._section.phases_for_record(i)
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
+        count = sum(bool(draw.world_phases) for draw in self._draw_list[self.WORLD_EXE_START_INDEX:])
+        self._phase_widget.setToolTip(f'{nb} world slots loaded; {count} scanned by the OG world phases. '
+                                      'Several records can share a block or even an exact trigger.')
+        self._phase_widget.setItemText(0, f'All phases ({count}/{nb} world records)')
+        self._update_save_status()
 
-    def _on_file_closed(self, _path):
-        """The exe or the wmset was removed: rebuild the table from the file still open (if any),
-        so the removed file's values - and their unsaved edits - are gone."""
+    def _on_exe_closed(self, _path):
+        """Closing one source cannot discard edits belonging to the other source."""
         self.exe_loaded = False
-        self._section = WorldDrawSection()
-        self.wmset_file_path = ""
+        self._draw_widget._exe_loaded = False
         self._exe_dirty = False
-        self._wmset_dirty = False
         for draw in self._draw_list:
             draw.set_exe_byte(0)
+        self._draw_widget.set_draw(self._draw_list)
+        self._illustration.refresh()
+        self._update_save_status()
+
+    def _on_wmset_closed(self, _path):
+        self._section = WorldDrawSection()
+        self.wmset_file_path = ""
+        self._wmset_dirty = False
+        for draw in self._draw_list:
             draw.x, draw.y, draw.sub_id = 0, 0, 0
-        if self.exe_binding.is_loaded:
-            self.load_exe(self.exe_binding.current_path)
-        if self.wmset_binding.is_loaded:
-            self.load_wmset(self.wmset_binding.current_path)
+            draw.position_loaded = False
+            draw.world_phases = ()
+        self._phase_widget.setItemText(0, 'All world phases')
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
+        self._update_save_status()
 
     # ---- saving ------------------------------------------------------------
     def _save(self):
@@ -237,6 +370,7 @@ class CidWidget(QWidget):
             self._exe_dirty = False
         if save_wmset and self._save_wmset():
             self._wmset_dirty = False
+        self._update_save_status()
 
     def _save_hext(self):
         if not self.exe_loaded:
@@ -256,7 +390,7 @@ class CidWidget(QWidget):
             address = draw_offset + draw_index
             hext_str += f"#Draw ID {draw.get_id()} ({draw.get_magic_name()})\n"
             hext_str += " {:X} = {:02X}\n\n".format(address, draw.get_exe_byte())
-        with open(file_to_save, "w") as hext_file:
+        with open(file_to_save, "w", encoding="utf-8") as hext_file:
             hext_file.write(hext_str)
         return True
 
@@ -325,6 +459,7 @@ class CidWidget(QWidget):
             self._wmset_dirty = True
         self._draw_widget.set_draw(self._draw_list)
         self._illustration.set_draw_list(self._draw_list)
+        self._update_save_status()
 
     @staticmethod
     def _show_error(title, text):

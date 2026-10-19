@@ -18,6 +18,8 @@ class Draw:
         self.y = 0
         self.sub_id = 0
         self.pad = 0
+        self.position_loaded = False
+        self.world_phases = ()
         if data_hex:
             self.__analyze_data(data_hex)
 
@@ -65,12 +67,7 @@ class Draw:
         self._id = id
 
     def get_magic_name(self):
-        magic_name = [x['name'] for x in self.game_data.magic_data_json["magic"] if x["id"] == self.magic_index]
-        if magic_name:
-            return magic_name[0]
-        else:
-            print(f"Magic not found for id: {self.magic_index}")
-            return ""
+        return self.game_data.kernel_names.get("magic", {}).get(self.magic_index, "")
 
     def get_location(self):
         field_myst_ref = [x['field_myst_ref'] for x in self.game_data.draw_data_json["draw"] if x["id"] == self._id]

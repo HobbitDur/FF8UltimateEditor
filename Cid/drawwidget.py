@@ -23,7 +23,8 @@ class CenteredCheckBox(QWidget):
 
 class DrawWidget(QTableWidget):
 
-    COLUMNS = ["Draw ID", "Magic", "HighYield", "Refill", "X", "Y", "Sub ID", "Default Location"]
+    COLUMNS = ["Draw ID", "Magic (.hext)", "High yield (.hext)", "Refill (.hext)",
+               "X (wmset)", "Y (wmset)", "Triangle (wmset)", "Default Location", "World phases"]
     COL_X, COL_Y, COL_SUB = 4, 5, 6
 
     # Emits the draw-list index of the selected row (-1 when none is selected).
@@ -40,6 +41,7 @@ class DrawWidget(QTableWidget):
         self._draw = list(draw_list)
         self.game_data = game_data
         self._loading = False
+        self._exe_loaded = False
         self.setup_table()
         self.currentCellChanged.connect(self._on_current_cell_changed)
 
@@ -61,7 +63,7 @@ class DrawWidget(QTableWidget):
         self._loading = True
         self.setEnabled(False)
         self.setRowCount(len(self._draw))
-        magic_options = [x['name'] for x in self.game_data.magic_data_json['magic']]
+        names = self.game_data.kernel_names.get('magic', {})
 
         for row, draw in enumerate(self._draw):
             id_item = QTableWidgetItem(f"{draw.get_id()}")
@@ -70,23 +72,29 @@ class DrawWidget(QTableWidget):
             self.setItem(row, 0, id_item)
 
             combo = QComboBox()
-            combo.addItems(magic_options)
+            # The EXE stores six bits, even if the complementary kernel has more spells.
+            for magic_id in range(64):
+                name = names.get(magic_id, '')
+                combo.addItem(f"{magic_id}: {name}" if name else str(magic_id), magic_id)
             combo.setCurrentIndex(draw.magic_index)
+            combo.setEnabled(self._exe_loaded)
             combo.currentIndexChanged.connect(lambda state, r=row: self._magic_changed(state, r))
             self.setCellWidget(row, 1, combo)
 
             high_yield_check = CenteredCheckBox()
             high_yield_check.setChecked(draw.high_yield)
+            high_yield_check.setEnabled(self._exe_loaded)
             high_yield_check.checkbox.stateChanged.connect(lambda state, r=row: self._high_yield_changed(state, r))
             self.setCellWidget(row, 2, high_yield_check)
 
             refill_check = CenteredCheckBox()
             refill_check.setChecked(draw.refill)
+            refill_check.setEnabled(self._exe_loaded)
             refill_check.checkbox.stateChanged.connect(lambda state, r=row: self._refill_changed(state, r))
             self.setCellWidget(row, 3, refill_check)
 
             # Position columns - only world draw points have a wmset position.
-            is_world = draw.is_world()
+            is_world = draw.is_world() and draw.position_loaded
             self.setCellWidget(row, self.COL_X, self._make_byte_spinbox(draw.x, row, self._x_changed, is_world))
             self.setCellWidget(row, self.COL_Y, self._make_byte_spinbox(draw.y, row, self._y_changed, is_world))
             self.setCellWidget(row, self.COL_SUB, self._make_byte_spinbox(draw.sub_id, row, self._sub_id_changed, is_world))
@@ -95,6 +103,11 @@ class DrawWidget(QTableWidget):
             location_item.setFlags(location_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             location_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft)
             self.setItem(row, 7, location_item)
+            phases = (', '.join(map(str, draw.world_phases)) if draw.world_phases else 'Not scanned')
+            phase_item = QTableWidgetItem(phases if is_world else '')
+            phase_item.setFlags(phase_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            phase_item.setToolTip('World story phases, not disc numbers. Read from wmset ranges and the OG EXE lookup.')
+            self.setItem(row, 8, phase_item)
         self.setEnabled(True)
         self._loading = False
 
@@ -105,15 +118,22 @@ class DrawWidget(QTableWidget):
         spin.setValue(value)
         spin.setEnabled(enabled)
         if not enabled:
-            spin.setToolTip("Field draw points have no world-map position")
+            spin.setToolTip("World positions require a loaded wmsetxx.obj; field points have no world position")
         spin.valueChanged.connect(lambda new_value, r=row: callback(new_value, r))
         return spin
 
-    def set_row_position(self, row, x, y):
+    def set_row_position(self, row, x, y, sub_id=-1):
         """Apply a map-picked position to a row's model and spinboxes."""
         draw = self._draw[row]
+        if not draw.position_loaded:
+            return
+        if sub_id < 0:
+            sub_id = draw.sub_id
+        if (draw.x, draw.y, draw.sub_id) == (x, y, sub_id):
+            return
         draw.x, draw.y = x, y
-        for column, value in ((self.COL_X, x), (self.COL_Y, y)):
+        draw.sub_id = sub_id
+        for column, value in ((self.COL_X, x), (self.COL_Y, y), (self.COL_SUB, sub_id)):
             spin = self.cellWidget(row, column)
             spin.blockSignals(True)
             spin.setValue(value)
@@ -157,4 +177,5 @@ class DrawWidget(QTableWidget):
     def _sub_id_changed(self, value, row):
         self._draw[row].sub_id = value
         if not self._loading:
+            self.position_changed.emit()
             self.world_changed.emit()

@@ -52,8 +52,14 @@ Edits Triple Triad card values (ranks/elements) and which cards NPCs play with.
 <img src="Resources/screenshots/ccgroup.png" width="800">
 
 ### Cid — draw point editor
+
 Edits every draw point in the game (field and world map), including which spell/quantity/refill
 rate it gives, and its position on the world map.
+
+Load complementary `kernel.bin` for spell names (numeric IDs otherwise), and
+`wmx.obj` for terrain-triangle marker positions. World markers move only by
+dragging. Separate save controls identify EXE `.hext` data versus world positions
+in `wmsetxx.obj`; see [CID files, map positions and world phases](docs/Cid.md).
 
 <img src="Resources/screenshots/draweditor.png" width="800">
 

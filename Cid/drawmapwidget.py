@@ -1,60 +1,99 @@
 import os
-
+import math
 from PyQt6.QtCore import Qt, pyqtSignal, QRectF, QPointF
-from PyQt6.QtGui import QPixmap, QPainter, QColor, QPen, QBrush
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtGui import QPixmap, QPainter, QColor, QPen, QPolygonF
+from PyQt6.QtWidgets import QWidget, QApplication, QToolTip
 
 
 class DrawMapWidget(QWidget):
-    """World-map view for locating / placing world draw points.
-
-    Draw points are anchored to a 128 x 96 block grid. A record's block is
-    ``blockX = x & 0x7F`` (west->east), ``blockY = 2*y + (x >> 7)`` (north->south),
-    which maps linearly onto the world map image. Clicking the map converts the
-    pixel back to a block and emits :attr:`position_picked` with the encoded
-    ``(x, y)`` record bytes.
-    """
-
-    BLOCK_COLS = 128
-    BLOCK_ROWS = 96
-    position_picked = pyqtSignal(int, int)  # encoded record bytes (x, y)
+    """Block overview, optional wmx triangle resolution, and drag-only movement."""
+    BLOCK_COLS, BLOCK_ROWS = 128, 96
+    position_picked = pyqtSignal(int, int, int)  # encoded x, y, triangle (-1 = keep)
+    selection_picked = pyqtSignal(int)
 
     def __init__(self, map_path, parent=None):
         super().__init__(parent)
         self._pixmap = QPixmap(map_path) if map_path and os.path.exists(map_path) else QPixmap()
+        self._reference_pixmap = self._pixmap
         self._draw_list = []
-        self._selected_index = -1  # index into _draw_list, or -1
+        self._selected_index = -1
+        self._press = None
+        self._dragging = False
+        self._drag_point = None
+        self._zoom = 1.0
+        self._pan = QPointF()
+        self._phase = None
+        self.geometry = None
         self.setMinimumHeight(280)
-        self.setToolTip("Click to place the selected world draw point")
+        self.setMouseTracking(True)
+        self.setToolTip('Click a marker to select; drag the selected marker to move. Mouse wheel zooms. '
+                        'Without wmx.obj, markers show approximate block centres; numbers count overlapping records.')
 
     def set_draw_list(self, draw_list):
         self._draw_list = draw_list
+        self._press, self._dragging, self._drag_point = None, False, None
+        self.update()
+
+    def set_geometry(self, geometry, overview=None):
+        self.geometry = geometry
+        self._pixmap = overview if overview is not None else self._reference_pixmap
+        self._zoom, self._pan = 1., QPointF()
+        self._press, self._dragging, self._drag_point = None, False, None
         self.update()
 
     def set_selected(self, index):
         self._selected_index = index
+        self._press, self._dragging, self._drag_point = None, False, None
+        self.update()
+
+    def set_phase(self, phase):
+        self._phase = phase
+        self._press, self._dragging, self._drag_point = None, False, None
         self.update()
 
     def refresh(self):
         self.update()
 
-    def _image_rect(self) -> QRectF:
-        if self._pixmap.isNull():
-            return QRectF(0, 0, self.width(), self.height())
-        pixmap_w, pixmap_h = self._pixmap.width(), self._pixmap.height()
-        scale = min(self.width() / pixmap_w, self.height() / pixmap_h)
-        width, height = pixmap_w * scale, pixmap_h * scale
-        return QRectF((self.width() - width) / 2, (self.height() - height) / 2, width, height)
+    def _image_rect(self):
+        w, h = (self._pixmap.width(), self._pixmap.height()) if not self._pixmap.isNull() else (128, 96)
+        scale = min(self.width() / w, self.height() / h) * self._zoom
+        return QRectF((self.width() - w * scale) / 2 + self._pan.x(),
+                      (self.height() - h * scale) / 2 + self._pan.y(), w * scale, h * scale)
 
-    def _block_to_point(self, block_x, block_y, rect: QRectF) -> QPointF:
-        px = rect.x() + block_x / self.BLOCK_COLS * rect.width()
-        py = rect.y() + block_y / self.BLOCK_ROWS * rect.height()
-        return QPointF(px, py)
+    def _block_to_point(self, x, y, rect):
+        return QPointF(rect.x() + x / 128 * rect.width(), rect.y() + y / 96 * rect.height())
+
+    def _map_position(self, point, rect):
+        return ((point.x() - rect.x()) / rect.width() * 128,
+                (point.y() - rect.y()) / rect.height() * 96)
 
     @staticmethod
     def _is_placed(draw):
-        # Draw ID 256 (and any unset world row) sits at block (0,0); treat as unplaced.
-        return not (draw.x == 0 and draw.y == 0)
+        return draw.position_loaded and bool(draw.world_phases)
+
+    def _visible(self, draw):
+        return (draw.is_world() and self._is_placed(draw)
+                and (self._phase is None or self._phase in draw.world_phases))
+
+    def _marker(self, draw, rect):
+        triangle = self._triangle(draw)
+        if triangle:
+            return self._block_to_point(sum(p[0] for p in triangle) / 3,
+                                        sum(p[1] for p in triangle) / 3, rect)
+        bx, by = draw.get_block_xy()
+        return self._block_to_point(bx + .5, by + .5, rect)
+
+    def _triangle(self, draw):
+        try:
+            return self.geometry.triangle(draw) if self.geometry else None
+        except (ValueError, IndexError):
+            # A malformed destination block must not raise through a Qt paint callback.
+            return None
+
+    def _hits(self, position):
+        rect = self._image_rect()
+        return [i for i, draw in enumerate(self._draw_list)
+                if self._visible(draw) and (self._marker(draw, rect) - position).manhattanLength() <= 10]
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -63,42 +102,106 @@ class DrawMapWidget(QWidget):
         if not self._pixmap.isNull():
             painter.drawPixmap(rect.toRect(), self._pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-
-        selected_point = None
+        groups = {}
         for index, draw in enumerate(self._draw_list):
-            if not draw.is_world() or not self._is_placed(draw):
+            if not self._visible(draw):
                 continue
-            block_x, block_y = draw.get_block_xy()
-            point = self._block_to_point(block_x, block_y, rect)
-            if index == self._selected_index:
-                selected_point = (point, draw)
-                continue
+            point = self._marker(draw, rect)
+            groups.setdefault((round(point.x(), 2), round(point.y(), 2)), []).append(index)
             painter.setPen(QPen(QColor(255, 235, 120), 1))
-            painter.setBrush(QBrush(QColor(235, 60, 60)))
-            painter.drawEllipse(point, 3.0, 3.0)
-
-        # Draw the selected marker last so it stays on top.
-        if selected_point is not None:
-            point, draw = selected_point
-            painter.setPen(QPen(QColor(255, 255, 255), 2))
-            painter.setBrush(QBrush(QColor(0, 200, 255)))
-            painter.drawEllipse(point, 6.0, 6.0)
-            label = f"ID {draw.get_id()}"
-            painter.setPen(QPen(QColor(255, 255, 255)))
-            painter.drawText(QPointF(point.x() + 9, point.y() + 4), label)
+            painter.setBrush(QColor(235, 60, 60))
+            painter.drawEllipse(point, 3., 3.)
+        painter.setPen(QColor('white'))
+        for (x, y), indices in groups.items():
+            if len(indices) > 1:
+                painter.drawText(QPointF(x + 5, y - 5), str(len(indices)))
+        if 0 <= self._selected_index < len(self._draw_list):
+            draw = self._draw_list[self._selected_index]
+            if self._visible(draw):
+                bx, by = draw.get_block_xy()
+                triangle = self._triangle(draw)
+                painter.setPen(QPen(QColor(0, 220, 255), 1))
+                painter.setBrush(QColor(0, 200, 255, 65))
+                if triangle:
+                    painter.drawPolygon(QPolygonF([self._block_to_point(*p, rect) for p in triangle]))
+                else:
+                    painter.drawRect(QRectF(self._block_to_point(bx, by, rect),
+                                            self._block_to_point(bx + 1, by + 1, rect)))
+                point = self._marker(draw, rect)
+                painter.setPen(QPen(QColor('white'), 2))
+                painter.setBrush(QColor(0, 200, 255))
+                painter.drawEllipse(point, 6., 6.)
+                name = draw.get_magic_name()
+                painter.drawText(point + QPointF(9, 4), f'ID {draw.get_id()}' + (f' - {name}' if name else ''))
+        if self._dragging and self._drag_point is not None:
+            painter.setPen(QPen(QColor('white'), 2, Qt.PenStyle.DashLine))
+            painter.setBrush(QColor(0, 200, 255, 120))
+            painter.drawEllipse(self._drag_point, 7., 7.)
         painter.end()
 
     def mousePressEvent(self, event):
-        if self._selected_index < 0:
+        self._press, self._dragging = None, False
+        self._drag_point = None
+        if event.button() != Qt.MouseButton.LeftButton:
+            return
+        hits = self._hits(event.position())
+        if self._selected_index in hits:
+            self._press = event.position()
+        elif hits:
+            self.selection_picked.emit(hits[0])
+
+    def mouseMoveEvent(self, event):
+        if self._press is None or not (event.buttons() & Qt.MouseButton.LeftButton):
+            hits = self._hits(event.position())
+            if hits:
+                QToolTip.showText(event.globalPosition().toPoint(), '\n'.join(
+                    f'ID {self._draw_list[i].get_id()} - Magic ID {self._draw_list[i].magic_index} '
+                    f'{self._draw_list[i].get_magic_name()} (triangle {self._draw_list[i].sub_id})'
+                    for i in hits), self)
+            return
+        if (event.position() - self._press).manhattanLength() >= QApplication.startDragDistance():
+            self._dragging = True
+            self._drag_point = event.position()
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        press, dragging = self._press, self._dragging
+        self._press, self._dragging = None, False
+        self._drag_point = None
+        self.unsetCursor()
+        self.update()
+        if event.button() != Qt.MouseButton.LeftButton or press is None:
+            return
+        if not dragging:
+            hits = self._hits(event.position())
+            if len(hits) > 1 and self._selected_index in hits:
+                self.selection_picked.emit(hits[(hits.index(self._selected_index) + 1) % len(hits)])
             return
         rect = self._image_rect()
-        pos = event.position()
-        if not rect.contains(pos):
+        if not rect.contains(event.position()):
             return
-        norm_x = (pos.x() - rect.x()) / rect.width()
-        norm_y = (pos.y() - rect.y()) / rect.height()
-        block_x = max(0, min(self.BLOCK_COLS - 1, round(norm_x * self.BLOCK_COLS)))
-        block_y = max(0, min(self.BLOCK_ROWS - 1, round(norm_y * self.BLOCK_ROWS)))
-        x = (block_x & 0x7F) | ((block_y & 1) << 7)
-        y = block_y >> 1
-        self.position_picked.emit(x, y)
+        x, y = self._map_position(event.position(), rect)
+        if self.geometry:
+            try:
+                picked = self.geometry.pick(x, y)
+            except (ValueError, IndexError):
+                picked = None
+            if picked:
+                self.position_picked.emit(*picked)
+        else:
+            bx, by = min(127, math.floor(x)), min(95, math.floor(y))
+            self.position_picked.emit(bx | ((by & 1) << 7), by >> 1, -1)
+
+    def wheelEvent(self, event):
+        old = self._image_rect()
+        zoom = max(1., min(12., self._zoom * (1.25 if event.angleDelta().y() > 0 else .8)))
+        ratio = zoom / self._zoom
+        self._zoom = zoom
+        if zoom == 1:
+            self._pan = QPointF()
+        else:
+            centre = QPointF(self.width() / 2, self.height() / 2)
+            self._pan = event.position() + (old.center() - event.position()) * ratio - centre
+        self.update()
+        event.accept()
