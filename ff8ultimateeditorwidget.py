@@ -92,7 +92,7 @@ class FF8UltimateEditorWidget(QWidget):
             "Joker (sp2 sprite editor)",
             "Piet (mtmag.bin editor)",
             "Zone (mmag.bin / mmag2.bin editor)",
-            "Fujin (Magic animation explorer)",
+            "Fujin (Effect explorer)",
             "Watts (r0win.dat victory editor)",
             "Xu (Scan camera editor)",
             "Laguna (GF cinematic script editor)",
@@ -103,8 +103,9 @@ class FF8UltimateEditorWidget(QWidget):
         # Category = the game folder a tool's main file lives in (Battle/Field/Menu/Main), or a
         # catch-all for tools that don't map to exactly one folder: Multi (several folders - Cid's
         # exe+wmset, ShumiTranslator's many file types) and Other (no raw game file at all - Hyne's
-        # save file lives outside the install, Fujin reads an IDA research dump). Every entry must
-        # be an exact HOBBIT_OPTION_ITEMS string (checked below) so a typo fails loudly, not silently.
+        # save file lives outside the install, Fujin reads an IDA research dump and the exe's camera
+        # tracks). Every entry must be an exact HOBBIT_OPTION_ITEMS string (checked below) so a typo
+        # fails loudly, not silently.
         self.CATEGORY_DEFINITIONS = [
             ("Battle", ["Ifrit (3D/Stat/AI/Seq/Texture)", "Alexander (Battle stage viewer)",
                         "Watts (r0win.dat victory editor)", "Xu (Scan camera editor)"]),
@@ -118,7 +119,7 @@ class FF8UltimateEditorWidget(QWidget):
             ("Main", ["SolomonRing (kernel.bin editor)", "Quezacotl (init.out editor)",
                       "Julia (Sound editor)"]),
             ("Multi", ["Cid (Draw editor)", "ShumiTranslator(All text editor)"]),
-            ("Other", ["Hyne (.ff8 save editor)", "Fujin (Magic animation explorer)",
+            ("Other", ["Hyne (.ff8 save editor)", "Fujin (Effect explorer)",
                        "Laguna (GF cinematic script editor)"]),
         ]
         self.HIDDEN_CATEGORIES = set()  # every category has a tool and is shown in the selector
@@ -306,7 +307,7 @@ class FF8UltimateEditorWidget(QWidget):
         # tabbed tools get it per tab, on the page that edits the file, so their other tab stays.
         # Ifrit's only binding is its complementary kernel.bin: its .dat files close on their own.
         own_close = (self._shumi_translator_widget, self._ccgroup_widget, self._zone_widget,
-                     self._ifrit_widget)
+                     self._ifrit_widget, self._fujin_widget)
         for index in range(self.tool_stack.count()):
             tool = self.tool_stack.widget(index)
             if (callable(getattr(tool, "file_bindings", None)) and tool not in own_close
@@ -314,6 +315,8 @@ class FF8UltimateEditorWidget(QWidget):
                 install_closed_file_view(tool)
         install_closed_file_view(self._zone_widget.mmag_widget)
         install_closed_file_view(self._zone_widget.mmag2_widget)
+        install_closed_file_view(self._fujin_widget.camera_editor,  # its Magic explorer tab needs no exe
+                                 [self._fujin_widget.camera_editor.exe_binding])
         install_closed_file_view(self._ccgroup_widget.scroll_widget,
                                  [self._ccgroup_widget.exe_binding])
         for index in range(self.tool_stack.count()):

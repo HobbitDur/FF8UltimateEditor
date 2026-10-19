@@ -86,6 +86,7 @@ class GameData:
         self.exe_data_json = {}
         self.ai_data_json = {}
         self.anim_sequence_data_json = {}
+        self.camera_sequence_data_json = {}
         self.ai_json_file_name = ai_file
         # Japanese support: 4-table font (Deling sysfnt_jp.txt). Table 0 = single-byte glyphs (0x20-0xFF);
         # tables 1/2/3 reached via 2-byte lead bytes 0x19/0x1a/0x1b. Set jp_encoding=True to author/read JP text.
@@ -353,6 +354,18 @@ class GameData:
         for i, el in enumerate(self.anim_sequence_data_json["sound_id_from_category"]):
             if el["param_id"]:
                 self.anim_sequence_data_json["sound_id_from_category"][i]["param_id"] = int(self.anim_sequence_data_json["sound_id_from_category"][i]["param_id"], 16)
+
+    def load_camera_sequence_data(self):
+        """The battle camera script VM op codes (camera_sequence_vm reads this)."""
+        file_path = os.path.join(self.resource_folder_json, "camera_sequence_info.json")
+        with open(file_path, encoding="utf8") as f:
+            self.camera_sequence_data_json = json.load(f)
+        for key in ("op_code_info",):
+            for el in self.camera_sequence_data_json[key]:
+                el["op_code"] = int(el["op_code"], 16)
+        for key in ("special_change_current_value_params", "e5_special_params"):
+            for el in self.camera_sequence_data_json[key]:
+                el["param_id"] = int(el["param_id"], 16)
 
     def load_mngrp_data(self):
         file_path = os.path.join(self.resource_folder_json, "mngrp_bin_data.json")

@@ -248,7 +248,9 @@ def test_custom_imports_use_the_existing_loader(main_window, tmp_path, monkeypat
     registry.remember_folder(key, str(tmp_path))
     path = touch(tmp_path, filename)
     loader = Mock()
-    monkeypatch.setattr(tool, method, loader)
+    # Fujin's magic files are loaded by its Magic explorer tab
+    loader_owner = tool.magic_explorer if widget_name == "_fujin_widget" else tool
+    monkeypatch.setattr(loader_owner, method, loader)
     main_window.tool_stack.setCurrentWidget(tool)
     sources = main_window._file_toolbar._auto_import_sources()
     source = next(source for source in sources if source.key == key)

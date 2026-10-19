@@ -941,13 +941,13 @@ def test_removing_a_fixed_file_clears_the_tool_and_disables_save(main_window, mo
     """Every fixed-file tool (and Zone/Moomba/CCGroup's card tab) swaps to a "No file loaded"
     page once its file is removed from Opened files; Save then has nothing to write."""
     own_close = (main_window._shumi_translator_widget, main_window._ccgroup_widget,
-                 main_window._zone_widget, main_window._ifrit_widget)
+                 main_window._zone_widget, main_window._ifrit_widget, main_window._fujin_widget)
     for index in range(main_window.tool_stack.count()):
         tool = main_window.tool_stack.widget(index)
         if callable(getattr(tool, "file_bindings", None)) and tool not in own_close:
             assert hasattr(tool, "closed_file_view"), type(tool).__name__
     for page in (main_window._zone_widget.mmag_widget, main_window._zone_widget.mmag2_widget,
-                 main_window._ccgroup_widget.scroll_widget):
+                 main_window._ccgroup_widget.scroll_widget, main_window._fujin_widget.camera_editor):
         assert hasattr(page, "closed_file_view")
 
     siren = main_window._siren_widget

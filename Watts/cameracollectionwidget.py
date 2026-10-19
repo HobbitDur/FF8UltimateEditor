@@ -102,9 +102,10 @@ class CameraCollectionWidget(QWidget):
         "look_z": "Look-at target Z (what the camera aims at).",
     }
 
-    def __init__(self, collection, set_notes=None):
+    def __init__(self, collection, set_notes=None, show_preview_buttons=True):
         QWidget.__init__(self)
         self._collection = collection
+        self._show_preview_buttons = show_preview_buttons
         set_notes = set_notes or {}
         self._set_boxes = {}  # set index -> _CollapsibleBox, for enabling/greying out
         layout = QVBoxLayout()
@@ -138,16 +139,17 @@ class CameraCollectionWidget(QWidget):
                 frames = sum(len(block.frames) for block in animation.blocks)
                 slot_group = QGroupBox(f"Slot {animation.slot} - {frames} keyframes")
                 slot_layout = QVBoxLayout()
-                preview_button = QPushButton("▶ Preview")
-                preview_button.setToolTip("Play this camera animation on the imported "
-                                          "character model (right panel)")
-                preview_button.setMaximumWidth(110)
-                preview_button.clicked.connect(
-                    lambda _checked, anim=animation: self.preview_requested.emit(anim))
-                preview_row = QHBoxLayout()
-                preview_row.addWidget(preview_button)
-                preview_row.addStretch(1)
-                slot_layout.addLayout(preview_row)
+                if self._show_preview_buttons:
+                    preview_button = QPushButton("▶ Preview")
+                    preview_button.setToolTip("Play this camera animation on the imported "
+                                              "character model (right panel)")
+                    preview_button.setMaximumWidth(110)
+                    preview_button.clicked.connect(
+                        lambda _checked, anim=animation: self.preview_requested.emit(anim))
+                    preview_row = QHBoxLayout()
+                    preview_row.addWidget(preview_button)
+                    preview_row.addStretch(1)
+                    slot_layout.addLayout(preview_row)
                 for block_index, block in enumerate(animation.blocks):
                     slot_layout.addWidget(self._build_block(block_index, block))
                 slot_group.setLayout(slot_layout)

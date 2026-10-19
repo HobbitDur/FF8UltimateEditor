@@ -1,0 +1,1145 @@
+{
+ "comment": "Battle camera script VM (camera tracks, battle stage .x, r0win.dat section 2). Op codes 00-09 are CameraSeq_DispatchActionOpcode (EN 0x509810); C0-F3 are the shared computeAnimationSequence op codes, identical to anim_sequence_info.json. C3 reads = CameraSeq_ReadSpecialVar_C3 (0x509640), E5 writes = CameraSeq_WriteSpecialVar_E5 (0x5097C0); ids >= 0x78 address the VM stack like the entity VM.",
+ "op_code_info": [
+  {
+   "op_code": "0x00",
+   "size": 1,
+   "text": "Play camera animation {} (set = id >> 4, slot = id & 7)",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "Play camera",
+   "func_name": "play",
+   "comment": "BS_GetCameraAnimationPointer(collection, id): starts the keyframe animation; the script goes on with the next op code"
+  },
+  {
+   "op_code": "0x01",
+   "size": 0,
+   "text": "End the camera script (the camera keeps its last position)",
+   "param_index": [],
+   "complexity": "simple",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "End",
+   "func_name": "end",
+   "comment": "Returns -1: the VM stops; CURRENT_CAMERA_SETTING_ADDR keeps pointing here"
+  },
+  {
+   "op_code": "0x02",
+   "size": 0,
+   "text": "End the camera script and clear it",
+   "param_index": [],
+   "complexity": "simple",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "End and clear",
+   "func_name": "end_clear",
+   "comment": "Script pointer set to 0: the camera script will not run again"
+  },
+  {
+   "op_code": "0x03",
+   "size": 0,
+   "text": "Save the current view as the return view, clear the camera flag",
+   "param_index": [],
+   "complexity": "simple",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "Capture return view",
+   "func_name": "capture_return",
+   "comment": "BS_Camera_CaptureReturnView, then CAMERA_FLAG_RELATED &= 0x7FFF"
+  },
+  {
+   "op_code": "0x04",
+   "size": 1,
+   "text": "Start camera oscillation (wobble) with strength {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "Wobble",
+   "func_name": "wobble",
+   "comment": "Queues UpdateCameraOscillation"
+  },
+  {
+   "op_code": "0x05",
+   "size": 1,
+   "text": "Play camera animation whose id is read from variable {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "Play camera (var)",
+   "func_name": "play_var",
+   "comment": "id = CameraSeq_ReadSpecialVar_C3(var), then like 00"
+  },
+  {
+   "op_code": "0x06",
+   "size": 0,
+   "text": "Set the camera flag (0x8000)",
+   "param_index": [],
+   "complexity": "simple",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "Set camera flag",
+   "func_name": "set_flag",
+   "comment": "CAMERA_FLAG_RELATED |= 0x8000"
+  },
+  {
+   "op_code": "0x07",
+   "size": 0,
+   "text": "Clear the camera flag (0x8000)",
+   "param_index": [],
+   "complexity": "simple",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "Clear camera flag",
+   "func_name": "clear_flag",
+   "comment": "CAMERA_FLAG_RELATED &= 0x7FFF"
+  },
+  {
+   "op_code": "0x08",
+   "size": 0,
+   "text": "Stop the script shot and blend back to the return view",
+   "param_index": [],
+   "complexity": "simple",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "Return to view",
+   "func_name": "return_view",
+   "comment": "g_BattleCam_ScriptShotActive = 0, Battle_Camera_ReturnViewBlend = 4096"
+  },
+  {
+   "op_code": "0x09",
+   "size": 1,
+   "text": "No operation (skips 1 byte: {})",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "Nop",
+   "func_name": "nop",
+   "comment": "Parameter ignored"
+  },
+  {
+   "op_code": "0xC0",
+   "size": 2,
+   "text": "current_value = {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "value = int16",
+   "func_name": "set_i16",
+   "comment": ""
+  },
+  {
+   "op_code": "0xC1",
+   "size": 1,
+   "text": "current_value = {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "value = int8",
+   "func_name": "set_i8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xC2",
+   "size": 1,
+   "text": "current_value = {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "value = uint8",
+   "func_name": "set_u8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xC3",
+   "size": 1,
+   "text": "current_value = {}",
+   "param_index": [],
+   "complexity": "complex",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "value = var",
+   "func_name": "set_var",
+   "comment": ""
+  },
+  {
+   "op_code": "0xC4",
+   "size": 2,
+   "text": "current_value += {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "value += int16",
+   "func_name": "add_i16",
+   "comment": ""
+  },
+  {
+   "op_code": "0xC5",
+   "size": 1,
+   "text": "current_value += {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "value += int8",
+   "func_name": "add_i8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xC6",
+   "size": 1,
+   "text": "current_value += {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "value += uint8",
+   "func_name": "add_u8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xC7",
+   "size": 1,
+   "text": "current_value += {}",
+   "param_index": [],
+   "complexity": "complex",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "value += var",
+   "func_name": "add_var",
+   "comment": ""
+  },
+  {
+   "op_code": "0xC8",
+   "size": 2,
+   "text": "current_value -= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "value -= int16",
+   "func_name": "sub_i16",
+   "comment": ""
+  },
+  {
+   "op_code": "0xC9",
+   "size": 1,
+   "text": "current_value -= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "value -= int8",
+   "func_name": "sub_i8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xCA",
+   "size": 1,
+   "text": "current_value -= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "value -= uint8",
+   "func_name": "sub_u8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xCB",
+   "size": 1,
+   "text": "current_value -= {}",
+   "param_index": [],
+   "complexity": "complex",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "value -= var",
+   "func_name": "sub_var",
+   "comment": ""
+  },
+  {
+   "op_code": "0xCC",
+   "size": 2,
+   "text": "current_value *= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "value *= int16",
+   "func_name": "mul_i16",
+   "comment": ""
+  },
+  {
+   "op_code": "0xCD",
+   "size": 1,
+   "text": "current_value *= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "value *= int8",
+   "func_name": "mul_i8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xCE",
+   "size": 1,
+   "text": "current_value *= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "value *= uint8",
+   "func_name": "mul_u8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xCF",
+   "size": 1,
+   "text": "current_value *= {}",
+   "param_index": [],
+   "complexity": "complex",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "value *= var",
+   "func_name": "mul_var",
+   "comment": ""
+  },
+  {
+   "op_code": "0xD0",
+   "size": 2,
+   "text": "current_value /= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "value /= int16",
+   "func_name": "div_i16",
+   "comment": ""
+  },
+  {
+   "op_code": "0xD1",
+   "size": 1,
+   "text": "current_value /= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "value /= int8",
+   "func_name": "div_i8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xD2",
+   "size": 1,
+   "text": "current_value /= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "value /= uint8",
+   "func_name": "div_u8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xD3",
+   "size": 1,
+   "text": "current_value /= {}",
+   "param_index": [],
+   "complexity": "complex",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "value /= var",
+   "func_name": "div_var",
+   "comment": ""
+  },
+  {
+   "op_code": "0xD4",
+   "size": 2,
+   "text": "current_value &= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "value &= int16",
+   "func_name": "and_i16",
+   "comment": ""
+  },
+  {
+   "op_code": "0xD5",
+   "size": 1,
+   "text": "current_value &= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "value &= int8",
+   "func_name": "and_i8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xD6",
+   "size": 1,
+   "text": "current_value &= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "value &= uint8",
+   "func_name": "and_u8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xD7",
+   "size": 1,
+   "text": "current_value &= {}",
+   "param_index": [],
+   "complexity": "complex",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "value &= var",
+   "func_name": "and_var",
+   "comment": ""
+  },
+  {
+   "op_code": "0xD8",
+   "size": 2,
+   "text": "current_value |= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "value |= int16",
+   "func_name": "or_i16",
+   "comment": ""
+  },
+  {
+   "op_code": "0xD9",
+   "size": 1,
+   "text": "current_value |= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "value |= int8",
+   "func_name": "or_i8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xDA",
+   "size": 1,
+   "text": "current_value |= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "value |= uint8",
+   "func_name": "or_u8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xDB",
+   "size": 1,
+   "text": "current_value |= {}",
+   "param_index": [],
+   "complexity": "complex",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "value |= var",
+   "func_name": "or_var",
+   "comment": ""
+  },
+  {
+   "op_code": "0xDC",
+   "size": 2,
+   "text": "current_value ^= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "value ^= int16",
+   "func_name": "xor_i16",
+   "comment": ""
+  },
+  {
+   "op_code": "0xDD",
+   "size": 1,
+   "text": "current_value ^= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "value ^= int8",
+   "func_name": "xor_i8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xDE",
+   "size": 1,
+   "text": "current_value ^= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "value ^= uint8",
+   "func_name": "xor_u8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xDF",
+   "size": 1,
+   "text": "current_value ^= {}",
+   "param_index": [],
+   "complexity": "complex",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "value ^= var",
+   "func_name": "xor_var",
+   "comment": ""
+  },
+  {
+   "op_code": "0xE0",
+   "size": 2,
+   "text": "current_value %= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "value %= int16",
+   "func_name": "mod_i16",
+   "comment": ""
+  },
+  {
+   "op_code": "0xE1",
+   "size": 1,
+   "text": "current_value %= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "value %= int8",
+   "func_name": "mod_i8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xE2",
+   "size": 1,
+   "text": "current_value %= {}",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "ubyte"
+   ],
+   "param_list": [],
+   "short_text": "value %= uint8",
+   "func_name": "mod_u8",
+   "comment": ""
+  },
+  {
+   "op_code": "0xE3",
+   "size": 1,
+   "text": "current_value %= {}",
+   "param_index": [],
+   "complexity": "complex",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "value %= var",
+   "func_name": "mod_var",
+   "comment": ""
+  },
+  {
+   "op_code": "0xE4",
+   "size": 0,
+   "text": "current_value = 0 (BUGGED: never advances the pointer, hangs the interpreter - do not use)",
+   "param_index": [],
+   "complexity": "simple",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "value = 0 (BUGGED)",
+   "func_name": "reset_value_bugged",
+   "comment": "Confirmed in FF8_EN.exe: xor esi,esi then jumps back to re-read the same opcode byte"
+  },
+  {
+   "op_code": "0xE5",
+   "size": 1,
+   "text": "Write current_value to {}",
+   "param_index": [],
+   "complexity": "complex",
+   "param_type": [],
+   "param_list": [],
+   "short_text": "Store value to var",
+   "func_name": "store_var",
+   "comment": "Verified via decompile (2026-09): each parameter is a single store into the entity running the sequence; nothing is queued and nothing is masked (only the C3 read side masks). Notes on 0x17 (Y rotation), the one that surprises people: it writes based_rotation_y (entity +0x0E) ABSOLUTELY - there is no rotate-by opcode, compute the new angle and store it again. 4096 = a full turn; the neutral facing is 0 for party slots and 2048 (180 degrees) for monsters (resetBasedRotation 0x502070). The renderer never reads the field directly: pre_pre_linkedToAnimationSequence (0x502AB0) rebuilds the entity matrix from it EVERY tick via ComposeZYXRotationMatrix, so the write is level-triggered - it lands next frame and holds until something overwrites it. What overwrites it: opcode A2 (end of sequence) and AC (restore base model) reset it to neutral, and so does 92 (setup targeting) when the target is self or multiple - but 92 with a single target other than self instead SNAPS the facing to that target (based_rotation_y = CalculateAngleBetweenXZ(attacker, target), AnimSeq92_SetupTargetingContext 0x50D300). So write 0x17 AFTER any 92, never before. Two cases where the value is stored but not seen: with combat flag TURN_BACK (opcode 9C) the renderer applies ApplyYRotation(angleToCamera - based_rotation_y - 1024), making the field a negative offset from the camera angle rather than the facing; and on a part linked into a multi-part chain (opcode 90) the chain head's whole matrix block is copied over this entity's, discarding its rotation. E5 0x31 is the same write aimed at the current target. Axis note: the three angle fields are applied X (+0x0C), Y (+0x0E), Z (+0x10), Y last (outermost, a world yaw); the exe's own field names for +0x0C and +0x10 are swapped relative to the axis they drive, the 0x30/0x31/0x32 names used here are the correct ones."
+  },
+  {
+   "op_code": "0xE6",
+   "size": 1,
+   "text": "Jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "Jump",
+   "func_name": "jump",
+   "comment": "Target = opcode address + signed byte (can jump backward)"
+  },
+  {
+   "op_code": "0xE7",
+   "size": 1,
+   "text": "If current_value > 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "Jump if >0",
+   "func_name": "jump_gt",
+   "comment": "Else skip param"
+  },
+  {
+   "op_code": "0xE8",
+   "size": 1,
+   "text": "If current_value >= 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "Jump if >=0",
+   "func_name": "jump_ge",
+   "comment": "Else skip param"
+  },
+  {
+   "op_code": "0xE9",
+   "size": 1,
+   "text": "If current_value == 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "Jump if ==0",
+   "func_name": "jump_eq",
+   "comment": "Else skip param"
+  },
+  {
+   "op_code": "0xEA",
+   "size": 1,
+   "text": "If current_value != 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "Jump if !=0",
+   "func_name": "jump_ne",
+   "comment": "Else skip param"
+  },
+  {
+   "op_code": "0xEB",
+   "size": 1,
+   "text": "If current_value <= 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "Jump if <=0",
+   "func_name": "jump_le",
+   "comment": "Else skip param"
+  },
+  {
+   "op_code": "0xEC",
+   "size": 1,
+   "text": "If current_value < 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "sbyte"
+   ],
+   "param_list": [],
+   "short_text": "Jump if <0",
+   "func_name": "jump_lt",
+   "comment": "Else skip param"
+  },
+  {
+   "op_code": "0xED",
+   "size": 2,
+   "text": "Jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "Jump (16)",
+   "func_name": "jump16",
+   "comment": "int16 little-endian offset; target = opcode address + offset"
+  },
+  {
+   "op_code": "0xEE",
+   "size": 2,
+   "text": "If current_value > 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "Jump if >0 (16)",
+   "func_name": "jump_gt16",
+   "comment": "Else skip param (3 bytes total)"
+  },
+  {
+   "op_code": "0xEF",
+   "size": 2,
+   "text": "If current_value >= 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "Jump if >=0 (16)",
+   "func_name": "jump_ge16",
+   "comment": "Else skip param (3 bytes total)"
+  },
+  {
+   "op_code": "0xF0",
+   "size": 2,
+   "text": "If current_value == 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "Jump if ==0 (16)",
+   "func_name": "jump_eq16",
+   "comment": "Else skip param (3 bytes total)"
+  },
+  {
+   "op_code": "0xF1",
+   "size": 2,
+   "text": "If current_value != 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "Jump if !=0 (16)",
+   "func_name": "jump_ne16",
+   "comment": "Else skip param (3 bytes total)"
+  },
+  {
+   "op_code": "0xF2",
+   "size": 2,
+   "text": "If current_value <= 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "Jump if <=0 (16)",
+   "func_name": "jump_le16",
+   "comment": "Else skip param (3 bytes total)"
+  },
+  {
+   "op_code": "0xF3",
+   "size": 2,
+   "text": "If current_value < 0 jump {} bytes from start of command",
+   "param_index": [
+    0
+   ],
+   "complexity": "simple",
+   "param_type": [
+    "int16"
+   ],
+   "param_list": [],
+   "short_text": "Jump if <0 (16)",
+   "func_name": "jump_lt16",
+   "comment": "Else skip param (3 bytes total)"
+  }
+ ],
+ "special_change_current_value_params": [
+  {
+   "param_id": "0x00",
+   "text": "camera variable 0 (CURRENT_CAMERA_ANIMATION[0])"
+  },
+  {
+   "param_id": "0x01",
+   "text": "camera variable 1 (CURRENT_CAMERA_ANIMATION[1])"
+  },
+  {
+   "param_id": "0x02",
+   "text": "camera variable 2 (CURRENT_CAMERA_ANIMATION[2])"
+  },
+  {
+   "param_id": "0x03",
+   "text": "camera variable 3 (CURRENT_CAMERA_ANIMATION[3])"
+  },
+  {
+   "param_id": "0x04",
+   "text": "camera variable 4 (CURRENT_CAMERA_ANIMATION[4])"
+  },
+  {
+   "param_id": "0x05",
+   "text": "camera variable 5 (CURRENT_CAMERA_ANIMATION[5])"
+  },
+  {
+   "param_id": "0x06",
+   "text": "camera variable 6 (CURRENT_CAMERA_ANIMATION[6])"
+  },
+  {
+   "param_id": "0x07",
+   "text": "camera variable 7 (CURRENT_CAMERA_ANIMATION[7])"
+  },
+  {
+   "param_id": "0x10",
+   "text": "camera script shot flag (g_BattleCam_ScriptShotActive)"
+  },
+  {
+   "param_id": "0x11",
+   "text": "random value"
+  },
+  {
+   "param_id": "0x13",
+   "text": "number of party members in animation state bit 2"
+  },
+  {
+   "param_id": "0x15",
+   "text": "target's camera category (cameraDataRelated)"
+  },
+  {
+   "param_id": "0x16",
+   "text": "target's animation status (bit 0 = weak/poison/sleep/curse for a character)"
+  },
+  {
+   "param_id": "0x17",
+   "text": "battle task value 2"
+  },
+  {
+   "param_id": "0x18",
+   "text": "attacker slot"
+  },
+  {
+   "param_id": "0x19",
+   "text": "target slot"
+  },
+  {
+   "param_id": "0x1A",
+   "text": "number of affected targets"
+  },
+  {
+   "param_id": "0x1B",
+   "text": "number of party members with animation status 0"
+  },
+  {
+   "param_id": "0x1C",
+   "text": "random value modulo 2"
+  },
+  {
+   "param_id": "0x1D",
+   "text": "random value modulo 3"
+  },
+  {
+   "param_id": "0x1E",
+   "text": "random value modulo 4"
+  },
+  {
+   "param_id": "0x1F",
+   "text": "random value modulo 5"
+  },
+  {
+   "param_id": "0x20",
+   "text": "random value modulo 6"
+  },
+  {
+   "param_id": "0x21",
+   "text": "random value modulo 7"
+  },
+  {
+   "param_id": "0x22",
+   "text": "random value modulo 8"
+  },
+  {
+   "param_id": "0x23",
+   "text": "sub_50E4E0 result"
+  },
+  {
+   "param_id": "0x78",
+   "text": "camera saved value 0 (0x1D99B1E - 2 * 0x78)"
+  },
+  {
+   "param_id": "0x79",
+   "text": "camera saved value 1 (0x1D99B1E - 2 * 0x79)"
+  },
+  {
+   "param_id": "0x7A",
+   "text": "camera saved value 2 (0x1D99B1E - 2 * 0x7A)"
+  },
+  {
+   "param_id": "0x7B",
+   "text": "camera saved value 3 (0x1D99B1E - 2 * 0x7B)"
+  },
+  {
+   "param_id": "0x7C",
+   "text": "camera saved value 4 (0x1D99B1E - 2 * 0x7C)"
+  },
+  {
+   "param_id": "0x7D",
+   "text": "camera saved value 5 (0x1D99B1E - 2 * 0x7D)"
+  },
+  {
+   "param_id": "0x7E",
+   "text": "camera saved value 6 (0x1D99B1E - 2 * 0x7E)"
+  },
+  {
+   "param_id": "0x7F",
+   "text": "camera saved value 7 (0x1D99B1E - 2 * 0x7F)"
+  },
+  {
+   "param_id": "0x80",
+   "text": "Read from stack {}"
+  }
+ ],
+ "e5_special_params": [
+  {
+   "param_id": "0x00",
+   "text": "camera variable 0 (CURRENT_CAMERA_ANIMATION[0])"
+  },
+  {
+   "param_id": "0x01",
+   "text": "camera variable 1 (CURRENT_CAMERA_ANIMATION[1])"
+  },
+  {
+   "param_id": "0x02",
+   "text": "camera variable 2 (CURRENT_CAMERA_ANIMATION[2])"
+  },
+  {
+   "param_id": "0x03",
+   "text": "camera variable 3 (CURRENT_CAMERA_ANIMATION[3])"
+  },
+  {
+   "param_id": "0x04",
+   "text": "camera variable 4 (CURRENT_CAMERA_ANIMATION[4])"
+  },
+  {
+   "param_id": "0x05",
+   "text": "camera variable 5 (CURRENT_CAMERA_ANIMATION[5])"
+  },
+  {
+   "param_id": "0x06",
+   "text": "camera variable 6 (CURRENT_CAMERA_ANIMATION[6])"
+  },
+  {
+   "param_id": "0x07",
+   "text": "camera variable 7 (CURRENT_CAMERA_ANIMATION[7])"
+  },
+  {
+   "param_id": "0x10",
+   "text": "camera script shot flag (g_BattleCam_ScriptShotActive)"
+  },
+  {
+   "param_id": "0x78",
+   "text": "camera saved value 0 (0x1D99B1E - 2 * 0x78)"
+  },
+  {
+   "param_id": "0x79",
+   "text": "camera saved value 1 (0x1D99B1E - 2 * 0x79)"
+  },
+  {
+   "param_id": "0x7A",
+   "text": "camera saved value 2 (0x1D99B1E - 2 * 0x7A)"
+  },
+  {
+   "param_id": "0x7B",
+   "text": "camera saved value 3 (0x1D99B1E - 2 * 0x7B)"
+  },
+  {
+   "param_id": "0x7C",
+   "text": "camera saved value 4 (0x1D99B1E - 2 * 0x7C)"
+  },
+  {
+   "param_id": "0x7D",
+   "text": "camera saved value 5 (0x1D99B1E - 2 * 0x7D)"
+  },
+  {
+   "param_id": "0x7E",
+   "text": "camera saved value 6 (0x1D99B1E - 2 * 0x7E)"
+  },
+  {
+   "param_id": "0x7F",
+   "text": "camera saved value 7 (0x1D99B1E - 2 * 0x7F)"
+  },
+  {
+   "param_id": "0x80",
+   "text": "stack {}"
+  }
+ ]
+}
