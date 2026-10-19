@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLa
                              QPlainTextEdit, QDialog, QScrollArea, QDialogButtonBox)
 
 from Common.filebinding import FileBinding
+from Common.autoimport import AutoImportSource
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Xu.xubackground import background_from_exe, TimTexture
@@ -299,6 +300,20 @@ class XuWidget(QWidget):
         vanilla rows - the exe also gives the scan texts), one for the scan texts."""
         return [(f"Scan camera rows: {FILE_NAME} or FF8 exe", self._import_camera),
                 (f"Scan text: {TEXT_FILE_NAME}", self._import_text)]
+
+    def auto_import_bindings(self):
+        # The exe supplies the vanilla reference; the saved camera/text files override it.
+        return []
+
+    def auto_import_sources(self):
+        folder = self.file_registry.last_folder(CAMERA_DIALOG_KEY)
+        sources = [AutoImportSource.for_binding(binding, folder)
+                   for binding in (self.exe_binding, self.binding)]
+        sources.extend(AutoImportSource.for_binding(binding)
+                       for binding in self.file_bindings() if binding is not self.binding)
+        sources.append(AutoImportSource(MODEL_FOLDER_KEY,
+                                        ("c0m*.dat", "d?c*.dat", "d?w*.dat"), self.add_models))
+        return sources
 
     def complementary_entries(self):
         """The header Import read-only menu: the files the preview uses, never edited here."""

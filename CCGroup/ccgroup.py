@@ -9,6 +9,7 @@ from CCGroup.card import Card
 from CCGroup.cardwidget import CardWidget
 from CCGroup.npccardgamewidget import NpcCardGameWidget
 from Common.filebinding import FileBinding
+from Common.autoimport import AutoImportSource
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 
@@ -118,6 +119,15 @@ class CCGroupWidget(QWidget):
         if self.tab_widget.currentIndex() == 0:
             return [self.exe_binding]
         return []
+
+    def auto_import_sources(self):
+        if self.tab_widget.currentWidget() is not self.npc_card_game_widget:
+            return []
+        key = type(self).__name__
+        folder = (self.file_registry.last_folder(key)
+                  or self.settings.value("ccgroup/npc_last_folder", "", type=str))
+        return [AutoImportSource(key, ("*.jsm",), lambda _paths: self.load_folder(folder),
+                                 folder=folder, recursive=True)] if folder else []
 
     def load_folder(self, folder_path):
         """The header's Open-folder button: on the NPC tab, load every .jsm/.sym card player found

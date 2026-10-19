@@ -8,6 +8,8 @@ from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLa
                              QMessageBox, QScrollArea)
 
 from Fujin.fujinmanager import FujinManager
+from Common.autoimport import AutoImportSource
+from Common.fileregistry import FileRegistry
 from SmallWidget.listsearchbar import ListSearchBar
 
 
@@ -21,8 +23,9 @@ class FujinWidget(QWidget):
     previews the spell textures you import from a de-archived magic.fs.
     See FF8ModdingWiki "Magic Effect Anatomy & Authoring" and "Case study: Firaga animation"."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData"):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
+        self.file_registry = file_registry if file_registry is not None else FileRegistry()
 
         self.manager = FujinManager(game_data_folder=game_data_folder)
 
@@ -179,11 +182,18 @@ class FujinWidget(QWidget):
         else:
             self.data_label.setText("No data - run Fujin/ResearchScript/dump_magic_effects.py in IDA")
 
-    def import_files(self):
-        file_names = self.file_dialog.getOpenFileNames(parent=self, caption="Import magic files",
-                                                       directory=os.getcwd())[0]
+    def auto_import_sources(self):
+        return [AutoImportSource(type(self).__name__, ("mag*",), self.import_files)]
+
+    def import_files(self, file_names=None):
+        key = type(self).__name__
+        if file_names is None or isinstance(file_names, bool):
+            file_names = self.file_dialog.getOpenFileNames(
+                parent=self, caption="Import magic files",
+                directory=self.file_registry.last_folder(key) or os.getcwd())[0]
         if not file_names:
             return
+        self.file_registry.remember_folder(key, os.path.dirname(file_names[0]))
         self.manager.import_files(file_names)
         self._reload_texture()
 

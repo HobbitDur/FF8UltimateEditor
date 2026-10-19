@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLa
                              QListWidget, QFileDialog, QMessageBox, QSplitter, QCheckBox)
 
 from Common.fileregistry import FileRegistry
+from Common.autoimport import AutoImportSource
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Alexander.alexandermanager import AlexanderManager
 from SmallWidget.listsearchbar import ListSearchBar
@@ -254,15 +255,21 @@ class AlexanderWidget(QWidget):
 
     # ------------------------------------------------------------------ actions
 
-    def open_files(self):
+    def auto_import_sources(self):
+        return [AutoImportSource(self.REGISTRY_NAME, ("a0stg*.x",), self.open_files,
+                                 folder=self._last_dir())]
+
+    def open_files(self, file_paths=None):
         """Open one or more battle stage files at once (the shared header Import button calls
         this - a0stgXXX.x has no fixed name, and several are loaded into the list together)."""
-        file_paths, _ = QFileDialog.getOpenFileNames(
-            self, "Open battle stage file(s)", self._last_dir(),
-            "Battle stage (a0stg*.x);;All files (*)")
+        if file_paths is None:
+            file_paths, _ = QFileDialog.getOpenFileNames(
+                self, "Open battle stage file(s)", self._last_dir(),
+                "Battle stage (a0stg*.x);;All files (*)")
         if not file_paths:
             return
         self._save_last_dir(file_paths[0])
+        self.file_registry.remember_folder(self.REGISTRY_NAME, os.path.dirname(file_paths[0]))
         names = self.manager.open_files(file_paths)
         self._stage_names = names
         self.stage_list.blockSignals(True)

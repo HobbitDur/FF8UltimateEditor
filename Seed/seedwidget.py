@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel,
                              QSplitter, QFileDialog, QProgressDialog, QApplication)
 
 from Common.filebinding import FileBinding
+from Common.autoimport import AutoImportSource
 from Common.fileregistry import FileRegistry
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Seed.seedbatchexport import export_fields_to_gltf
@@ -134,6 +135,14 @@ class SeedWidget(QWidget):
         """The files the shared header toolbar drives: chara.one (edited/saved) and a standalone
         field character model (view-only - only chara.one is ever written back)."""
         return [self.chara_one_binding, self.mch_binding]
+
+    def auto_import_sources(self):
+        key = type(self).__name__
+        folder = self.file_registry.last_folder(key)
+        if not folder and self.settings:
+            folder = self.settings.value("seed/main_chr_folder", "", type=str)
+        return [AutoImportSource(key, ("chara.one", "*.mch"), lambda _paths: self.load_folder(folder),
+                                 folder=folder, recursive=True)] if folder else []
 
     def load_folder(self, folder_path):
         """The header's Open-folder button. Every chara.one inside the folder (e.g. the 'field'

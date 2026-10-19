@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"
+     stroke="#0d3a66" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
+  <!-- Remembered folder, with an import arrow and an automatic-action sparkle. -->
+  <path d="M6 18 h10 l3 3 h20 a2 2 0 0 1 2 2 v16 a2 2 0 0 1 -2 2 H8 a2 2 0 0 1 -2 -2 Z"
+        fill="#f6c078"/>
+  <path d="M6 26 h35 v13 a2 2 0 0 1 -2 2 H8 a2 2 0 0 1 -2 -2 Z" fill="#fbd79e"/>
+  <path d="M25 6 v25 m-6 -6 6 6 6 -6"/>
+  <path d="m38 5 1.8 5.2 L45 12 l-5.2 1.8 L38 19 l-1.8 -5.2 L31 12 l5.2 -1.8 Z"
+        fill="#bcd7f2" stroke-width="2"/>
+</svg>

@@ -25,6 +25,13 @@ class FileRegistry(QObject):
         # time - within the session and, when settings is a QSettings, across future sessions too.
         self.settings = settings
         self._last_folders = {}  # in-memory fallback when used without QSettings (tools alone)
+        self._last_files = {}
+
+    def last_file(self, file_key):
+        """Last selected path, used to disambiguate wildcard imports across sessions."""
+        if self.settings is not None:
+            return self.settings.value(f"last_file/{file_key}", "", type=str)
+        return self._last_files.get(file_key, "")
 
     def last_folder(self, tool_key):
         """The folder an Open dialog for tool_key should start in (empty if none remembered yet)."""
@@ -54,6 +61,13 @@ class FileRegistry(QObject):
 
     def open_file(self, file_name, file_path):
         """Set the file every tool using file_name must now work on."""
+        # Summary entries for multi-file tools are labels, not actual file paths.
+        if os.path.isfile(file_path):
+            self.remember_folder(file_name, os.path.dirname(os.path.abspath(file_path)))
+            if self.settings is not None:
+                self.settings.setValue(f"last_file/{file_name}", os.path.abspath(file_path))
+            else:
+                self._last_files[file_name] = os.path.abspath(file_path)
         self.paths[file_name] = file_path
         self.file_changed.emit(file_name)
 

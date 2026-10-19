@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QSizePolicy, QStyledItemDelegate, QStyle, QStyleOptionViewItem, QToolTip, QMenu
 )
 from Common.filebinding import FileBinding
+from Common.autoimport import AutoImportSource
 from Common.fileregistry import FileRegistry
 from Common.undo import UndoStack
 from FF8GameData.dat.monsteranalyser import GarbageFileError, MonsterAnalyser
@@ -856,15 +857,20 @@ class IfritMonsterWidget(QWidget):
 
     # ── Shared header toolbar hooks (Alexander pattern) ───────────────
 
-    def open_files(self):
+    def auto_import_sources(self):
+        return [AutoImportSource("battle model (.dat)",
+                                 ("c0m*.dat", "d?c*.dat", "d?w*.dat"), self.open_files)]
+
+    def open_files(self, paths=None):
         """Open one or more model .dat files at once (shared header Import routes here). Non-model
         files (b0wave.dat, r0win.dat...) are rejected on the name."""
         key = "battle model (.dat)"  # per file type: re-open where models were last found (persisted)
         folder = (self.file_registry.last_folder(key) or self._file_dialog_folder
                   or (os.path.dirname(self.file_loaded) if self.file_loaded else os.getcwd()))
-        paths, _ = QFileDialog.getOpenFileNames(
-            self, "Open battle model files", folder,
-            f"{IfritManager.BATTLE_MODEL_FILE_FILTER};;All .dat (*.dat)")
+        if paths is None:
+            paths, _ = QFileDialog.getOpenFileNames(
+                self, "Open battle model files", folder,
+                f"{IfritManager.BATTLE_MODEL_FILE_FILTER};;All .dat (*.dat)")
         if not paths:
             return
         self.file_registry.remember_folder(key, os.path.dirname(paths[0]))

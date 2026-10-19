@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLa
                              QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QAbstractItemView, QTabWidget)
 
 from Common.filebinding import FileBinding
+from Common.autoimport import AutoImportSource
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Julia.juliamanager import JuliaManager
@@ -146,6 +147,22 @@ class JuliaWidget(QWidget):
             self.actor_sound_widget.save_file()
         else:
             self.save_file()
+
+    def auto_import_bindings(self):
+        return [self.actor_sound_widget.binding]
+
+    def auto_import_sources(self):
+        registry = self.audio_binding.registry
+        return [AutoImportSource("audio.fmt", ("audio.fmt",), self._auto_import_archive,
+                                 multiple=False, folder=registry.last_folder("audio.dat"))]
+
+    def _auto_import_archive(self, paths):
+        # Resolve the pair before parsing either half, including separately remembered folders.
+        source = AutoImportSource.for_binding(self.dat_binding, os.path.dirname(paths[0]))
+        dat_paths = source.find_paths(self.audio_binding.registry)
+        if not dat_paths:
+            raise ValueError("audio.dat was not found in its remembered folder")
+        self.load_archive(paths[0], dat_paths[0])
 
     def can_save_folder(self):
         return (self.tabs.currentWidget() is self.actor_sound_widget

@@ -5,6 +5,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QMenu
 
 from Common.fileregistry import FileRegistry
+from Common.autoimport import AutoImportSource
 
 
 class FileToolbarWidget(QWidget):
@@ -23,6 +24,8 @@ class FileToolbarWidget(QWidget):
       file can supply its own save controls or be saved by a tool's save_files() hook.
       Several at once when the tool has several (e.g. Zone reads
       five); disabled when the active tool has none.
+    - Auto-upload: imports the active tool's main and complementary files from remembered
+      folders, including custom multi-file inputs declared by auto_import_sources(). No picker.
     - Save: calls save_files() when the tool handles tab-specific saves; otherwise writes its
       main file(s) back, and/or its ``save_folder()`` if it has one
       (also used by tools whose save always needs a destination picker, like Alexander's).
@@ -48,6 +51,12 @@ class FileToolbarWidget(QWidget):
             icon_path, 'import_complementary.svg',
             "Import complementary files (side files or read-only preview data)")
         self.import_complementary_button.clicked.connect(self._import_complementary)
+
+        self.auto_upload_button = self._icon_button(
+            icon_path, 'auto_upload.svg',
+            "Auto-upload: import this tool's main and complementary files from their remembered folders")
+        self.auto_upload_button.setAccessibleName("Auto-upload")
+        self.auto_upload_button.clicked.connect(self._auto_upload)
 
         self.save_button = self._icon_button(
             icon_path, 'save.svg',
@@ -82,6 +91,7 @@ class FileToolbarWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.import_button)
         layout.addWidget(self.import_complementary_button)
+        layout.addWidget(self.auto_upload_button)
         layout.addWidget(self.save_button)
         layout.addWidget(self.reload_button)
         layout.addWidget(self.open_folder_button)
@@ -164,6 +174,46 @@ class FileToolbarWidget(QWidget):
             entries[0][1]()
         elif entries:
             self._pick_from_menu(entries, self.import_button)
+
+    def _auto_import_sources(self):
+        active = self.tool_stack.currentWidget()
+        getter = getattr(active, "auto_import_bindings", None)
+        bindings = list(getter()) if callable(getter) else self._bindings()
+        # Whole-set imports historically remembered only a tool-level directory (Laguna).
+        folder = (self.registry.last_folder(self._folder_scan_key())
+                  if callable(getattr(active, "import_files", None)) else "")
+        sources = [AutoImportSource.for_binding(binding, folder) for binding in bindings]
+        custom = getattr(active, "auto_import_sources", None)
+        if callable(custom):
+            sources.extend(custom())
+        return sources
+
+    def _auto_upload(self):
+        """Import only the active tool's expected files, without opening a file picker."""
+        sources = self._auto_import_sources()
+        opened, problems = 0, []
+        # Resolve everything before loading: loading can change a tool's tabs and folders.
+        pending = []
+        for source in sources:
+            try:
+                paths = source.find_paths(self.registry)
+                if paths:
+                    pending.append((source, paths))
+            except (OSError, ValueError) as error:
+                problems.append(f"{source.key}: {error}")
+        for source, paths in pending:
+            try:
+                source.loader(paths)
+                opened += len(paths)
+            except Exception as error:
+                problems.append(f"{source.key}: {error}")
+        self._refresh()
+        if problems:
+            QMessageBox.warning(self, "Auto-upload", "Could not import:\n" + "\n".join(problems))
+        elif not opened:
+            QMessageBox.information(
+                self, "Auto-upload", "No matching files were found in this tool's remembered folders.\n"
+                "Import files or open a folder once to remember their locations.")
 
     def _import_complementary(self):
         # A tool whose side files have no fixed names (Xu's preview models, c0m###.dat) lists its
@@ -387,6 +437,7 @@ class FileToolbarWidget(QWidget):
         main_bindings = self._main_bindings()
         complementary_bindings = self._complementary_bindings()
         self.import_button.setEnabled(bool(self._import_entries()))
+        self.auto_upload_button.setEnabled(bool(self._auto_import_sources()))
         # a tool importing its whole file set at once (import_files) brings its read-only files too
         whole_set = callable(getattr(self.tool_stack.currentWidget(), "import_files", None))
         complementary_hook = callable(getattr(self.tool_stack.currentWidget(), "complementary_entries", None))

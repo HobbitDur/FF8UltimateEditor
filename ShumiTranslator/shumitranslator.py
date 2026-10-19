@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBo
     QMessageBox, QCheckBox, QTabWidget, QStackedWidget, QProgressDialog, QApplication
 
 from Common.filebinding import FileBinding
+from Common.autoimport import AutoImportSource
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData, FileType
 from .shumifilepane import ShumiFilePane
@@ -151,7 +152,14 @@ class ShumiTranslator(QWidget):
     # the registry but are not offered one-by-one), and Import calls open_files() below.
     open_files_label = "Open FF8 text file(s)"
 
-    def open_files(self):
+    def auto_import_sources(self):
+        folder = self.file_registry.last_folder("ShumiTranslator text files")
+        sources = [AutoImportSource.for_binding(binding, folder) for binding in self._bindings]
+        sources.append(AutoImportSource("ShumiTranslator battle text", ("c0m[0-9][0-9][0-9].dat",),
+                                        self.open_files, folder=folder))
+        return sources
+
+    def open_files(self, paths=None):
         """The whole tool's Import: one multi-select dialog whose filter preselects every FF8 text
         file ShumiTranslator reads, opening one tab per file picked. Several c0mxx.dat collapse into
         a single battle-text tab; every other file gets its own tab, its kind detected by name."""
@@ -160,9 +168,10 @@ class ShumiTranslator(QWidget):
         # One dialog covers every kind at once, so it can't key per file type - it keeps a single
         # remembered folder for the whole tool (persisted across sessions).
         key = "ShumiTranslator text files"
-        paths = QFileDialog.getOpenFileNames(
-            parent=self, caption="Open FF8 text files (several at once is fine)",
-            filter=name_filter, directory=self.file_registry.last_folder(key))[0]
+        if paths is None:
+            paths = QFileDialog.getOpenFileNames(
+                parent=self, caption="Open FF8 text files (several at once is fine)",
+                filter=name_filter, directory=self.file_registry.last_folder(key))[0]
         if not paths:
             return
         self.file_registry.remember_folder(key, os.path.dirname(paths[0]))
@@ -177,6 +186,8 @@ class ShumiTranslator(QWidget):
             else:
                 unknown.append(name)
         self.__open_c0m_set(c0m_paths)
+        if c0m_paths:
+            self.file_registry.remember_folder("ShumiTranslator battle text", os.path.dirname(c0m_paths[0]))
         if unknown:
             QMessageBox.warning(self, "ShumiTranslator - unrecognised files",
                                 "Skipped, ShumiTranslator doesn't read these:<br>" + "<br>".join(unknown))
