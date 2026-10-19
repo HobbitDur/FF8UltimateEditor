@@ -28,7 +28,13 @@ An empty camera keeps the configured starting view and still displays the encoun
   tool are shared through the file bank. Closing scene.out restores manual placement.
 - Expand **Battle setup** to choose whether the loaded model is the caster or target,
   set their battle slot IDs and place the opponent in world units (Y points down) in
-  manual mode. Encounter mode derives those slots and disables manual coordinates.
+  manual mode. Encounter mode disables manual coordinates and points the slots at the loaded
+  model and its opponent; they stay editable to pick any placed slot (another enemy, a party
+  member). Changing the loaded model keeps the selected encounter while it still matches.
+- A host tool can supply the other actors: imported models by file name (encounter enemies,
+  the default player), a body and weapon per party slot, and the opponent's weapon. Every
+  party slot of the formation is then placed, and party members are drawn with their weapon
+  (a reduced weapon such as Zell's gloves is posed by the body's bones).
 - **Load opponent** imports another monster/character DAT read-only and displays its
   textured posed mesh. In a monster encounter preview the player defaults to
   Squall (`d0c000.dat`) from the battle folder when no custom opponent is loaded.
@@ -70,20 +76,24 @@ Squall's first six opening shots include these holds.
 ## Fujin: effect cameras
 
 Fujin's **Camera effect editor** tab reuses the same player for the 221 spell/attack camera
-tracks stored in the exe. Import a caster and a target (`d?c###.dat` / `c0m###.dat`) with
-**Import models…** or the header's **Import read-only**; they are read-only and remembered
-for Auto-upload. The character becomes the caster and the monster the target by default; the
-target can be *none* (a marker).
+tracks stored in the exe, and only feeds the shared setup. Import characters (`d?c###.dat`),
+their weapons (`d?w###.dat`) and monsters (`c0m###.dat`) with **Import models…** or the header's
+**Import read-only**; they are read-only and remembered for Auto-upload. Each **Party** slot
+takes a character and one of its weapons. **Open scene.out** (the shared file, also in the
+setup's encounter picker) places a real encounter: pick it in **Battle setup**, and **Caster** /
+**Target** then list its battle slots, party members and enemies alike. Without scene.out the
+setup's manual placement puts the caster and an imported monster face to face.
 
 An effect track starts with a camera script that chooses the animation to play. Fujin runs it
 (`FF8GameData/dat/camerascript.py`, the shared VM's arithmetic and jumps plus the camera
-op codes) with the **Script inputs**: opening shot (camera variable 0: 0-5 for a character,
-8 for a monster's Magic, -1 for none), attacker and target slots (C3 18/19, also used to place
-the actors), target status (C3 16), target camera category (C3 15, from the target monster's
-byte 246), affected targets, action count and the random value (C3 11; C3 1C-22 use it modulo
-2-8). The line under the inputs names the chosen animation index (set = index >> 4,
-slot = index & 7) and the values the script read. **▶ Play effect camera** runs it again; a
-slot's **▶ Preview** plays that slot as is. Keyframe edits replay at once from the same tick.
+op codes). The attacker and target slots (C3 18/19) are the setup's caster/target slots; the
+**Script inputs** set the rest: opening shot (camera variable 0: 0-5 for a character, 8 for a
+monster's Magic, -1 for none), target status (C3 16), target camera category (C3 15, from the
+target monster's byte 246), affected targets, action count and the random value (C3 11;
+C3 1C-22 use it modulo 2-8). The line under the inputs names the chosen animation index
+(set = index >> 4, slot = index & 7) and the values the script read. **▶ Play effect camera**
+runs it again; a slot's **▶ Preview** plays that slot as is. Keyframe edits replay at once
+from the same tick.
 
 ## Scope
 

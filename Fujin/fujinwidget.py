@@ -41,7 +41,7 @@ class FujinWidget(QWidget):
 
     # --- shared header toolbar hooks ----------------------------------------------------
     def file_bindings(self):
-        return [self.camera_editor.exe_binding]
+        return [self.camera_editor.exe_binding, self.camera_editor.preview.sceneout_binding]
 
     def import_entries(self):
         return [("FF8 exe (effect camera tracks)", self.camera_editor.open_exe),
@@ -50,8 +50,10 @@ class FujinWidget(QWidget):
 
     def complementary_entries(self):
         """The header Import read-only menu: the preview's caster/target, never edited here."""
-        return [("Camera preview caster/target: battle models c0m###.dat / d?c###.dat (several at once)",
-                 self.camera_editor.preview.import_models)]
+        preview = self.camera_editor.preview
+        return [("Camera preview models: characters d?c###.dat, their weapons d?w###.dat, monsters "
+                 "c0m###.dat (several at once)", preview.import_models),
+                ("Camera preview encounters: scene.out", preview.import_sceneout)]
 
     def save_folder(self):
         """Save writes the camera .hext (the exe itself is never written)."""
@@ -64,7 +66,9 @@ class FujinWidget(QWidget):
         exe_folder = self.file_registry.last_folder("FF8 exe")
         return ([AutoImportSource.for_binding(self.camera_editor.exe_binding, exe_folder),
                  AutoImportSource(MODEL_FOLDER_KEY, MODEL_PATTERNS, self.camera_editor.preview.add_models,
-                                  selection_only=True, selection_key=MODEL_SELECTION_KEY)]
+                                  selection_only=True, selection_key=MODEL_SELECTION_KEY),
+                 AutoImportSource.for_binding(self.camera_editor.preview.sceneout_binding,
+                                              self.file_registry.last_folder("scene.out"))]
                 + self.magic_explorer.auto_import_sources())
 
     def _sync_dirty_marker(self):

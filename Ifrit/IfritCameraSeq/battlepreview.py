@@ -1,4 +1,11 @@
-"""Read-only caster/target setup for the shared DAT camera preview."""
+"""Read-only caster/target setup for the shared DAT camera preview.
+
+A host (Ifrit's Camera tab, SolomonRing, Fujin's effect cameras) gives the model it films; the
+setup places it with an opponent by hand or in a scene.out encounter. A host that imported other
+models offers them through `models` (file name -> manager: the encounter's enemies, the default
+player), `party_models` (party slot -> (body, weapon)) and `opponent_weapon`, before the setup
+falls back to the DATs beside scene.out. In an encounter every battle slot is placed, and the
+caster/target slot spins pick any of them (defaults: the loaded model and its opponent)."""
 import math
 from pathlib import Path
 
@@ -8,6 +15,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBo
                              QSpinBox, QPushButton, QFileDialog, QSizePolicy)
 
 from FF8GameData.dat.battlecamera import BattleCameraContext, CameraActor, CameraPose
+from FF8GameData.monsterdata import EntityType
 from Common.collapsiblesection import CollapsibleSection
 
 
@@ -81,10 +89,15 @@ class BattlePreviewSetup(QWidget):
         self.unit = 1.
         self._asset_cache = {}
         self._scene_mesh_actors = []
+        self._scene_weapons = []        # [(weapon manager, actor, body manager)] drawn with the scene
         self._mesh = None
         self._pose_cache = {}
         self.main_position = (0., 0., 0.)
         self.main_yaw = 0.
+        self.models = {}                # lower-case file name -> manager imported by the host
+        self.party_models = {}          # party slot -> (body manager, weapon manager or None)
+        self.opponent_weapon = None     # weapon of a character opponent (manual / monster encounters)
+        self._kind = None               # whether the defaults below were set for a monster
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         row = QHBoxLayout()
@@ -117,7 +130,7 @@ class BattlePreviewSetup(QWidget):
         party_row.addWidget(self.party_slot)
         options.addLayout(party_row)
         self.party_size.valueChanged.connect(self._party_changed)
-        self.party_slot.valueChanged.connect(lambda _v: self.changed.emit())
+        self.party_slot.valueChanged.connect(lambda _v: self._roles_changed())
         role_row = QHBoxLayout()
         role_row.addWidget(QLabel('Loaded model:'))
         self.role = QComboBox()
@@ -127,10 +140,12 @@ class BattlePreviewSetup(QWidget):
         slot_row = QHBoxLayout()
         self.caster_slot, self.target_slot = QSpinBox(), QSpinBox()
         is_monster = getattr(self.manager.enemy.entity_type, 'name', '').startswith('MONSTER')
+        self._kind = is_monster
         for label, spin, default in (('Caster slot:', self.caster_slot, 3 if is_monster else 0),
                                      ('Target slot:', self.target_slot, 0 if is_monster else 3)):
             spin.setRange(0, 10)
             spin.setValue(default)
+            spin.setToolTip('Battle slot: party 0-2, enemies 3-10. In an encounter, any placed slot.')
             spin.valueChanged.connect(lambda _value: self.changed.emit())
             slot_row.addWidget(QLabel(label))
             slot_row.addWidget(spin)
@@ -169,7 +184,7 @@ class BattlePreviewSetup(QWidget):
         self.status = QLabel('Opponent model not loaded. Manual placement.')
         self.status.setWordWrap(True)
         options.addWidget(self.status)
-        self.role.currentIndexChanged.connect(lambda _value: self.changed.emit())
+        self.role.currentIndexChanged.connect(lambda _value: self._roles_changed())
         self.initial_view.currentIndexChanged.connect(lambda _value: self.changed.emit())
         self.view_mode.currentIndexChanged.connect(lambda _value: self.changed.emit())
 
@@ -177,6 +192,10 @@ class BattlePreviewSetup(QWidget):
         self.party_slot.blockSignals(True)
         self.party_slot.setMaximum(value - 1)
         self.party_slot.blockSignals(False)
+        self._roles_changed()
+
+    def _roles_changed(self):
+        self.reset_encounter_slots()
         self.changed.emit()
 
     def _encounter_changed(self):
@@ -184,19 +203,56 @@ class BattlePreviewSetup(QWidget):
         for spin in self.position:
             spin.setEnabled(not active)
         self.position_label.setEnabled(not active)
-        for spin in (self.caster_slot, self.target_slot):
-            spin.setEnabled(not active)
         for button in self.opponent_buttons:
             button.setEnabled(not active or self.encounters.is_monster)
             button.setToolTip('Load a party stand-in for a monster preview. Encounter enemies are loaded automatically.')
+        self.reset_encounter_slots()
         self.changed.emit()
 
+    def encounter_roles(self):
+        """(loaded model's slot, opponent's slot) in the selected encounter, or None."""
+        selected = self.encounters.selected_slot
+        if self.encounters.selected is None or selected is None:
+            return None
+        enemy, player = 3 + selected.slot_index, self.party_slot.value()
+        return (enemy, player) if self.encounters.is_monster else (player, enemy)
+
+    def reset_encounter_slots(self):
+        """Point the caster/target slot spins at the loaded model and its opponent (by the role)
+        when the encounter, the loaded model's slot or the role changes. They stay editable."""
+        roles = self.encounter_roles()
+        if roles is None:
+            return
+        ids = roles if self.role.currentIndex() == 0 else roles[::-1]
+        for spin, value in zip((self.caster_slot, self.target_slot), ids):
+            spin.blockSignals(True)
+            spin.setValue(value)
+            spin.blockSignals(False)
+
+    def _sync_kind(self):
+        """The loaded model changed kind (monster <-> character): the opponent stands on the
+        other side and the default slots swap, as for a setup built for that kind."""
+        is_monster = self.encounters.is_monster
+        if is_monster == self._kind:
+            return
+        self._kind = is_monster
+        defaults = [(self.position[2], 5000 if is_monster else -5000)]
+        if self.encounter_roles() is None:  # an encounter sets the slots itself
+            defaults += [(self.caster_slot, 3 if is_monster else 0), (self.target_slot, 0 if is_monster else 3)]
+        for spin, value in defaults:
+            spin.blockSignals(True)
+            spin.setValue(value)
+            spin.blockSignals(False)
+
     @staticmethod
-    def _load_model(path, game_data):
+    def _load_model(path, game_data, weapon=False):
+        """A read-only model with its textures. weapon=True also accepts the reduced weapons
+        with no skeleton of their own (Zell's gloves: posed by the body's bones)."""
         from Ifrit.ifritmanager import IfritManager
         manager = IfritManager(game_data=game_data)
         manager.enemy = manager.parse_file(str(path))
-        if not manager.enemy.bone_data.bones or not manager.enemy.animation_data.nb_animations:
+        reduced = weapon and manager.enemy.entity_type == EntityType.WEAPON_NO_ANIM
+        if not reduced and (not manager.enemy.bone_data.bones or not manager.enemy.animation_data.nb_animations):
             raise ValueError('select a monster or character with skeletal animations')
         manager._ensure_matrices()
         manager.texture_data, manager.texture_black_is_transparent = manager.extract_textures(manager.enemy, str(path))
@@ -226,9 +282,11 @@ class BattlePreviewSetup(QWidget):
     def build(self, animation=0, animate=False):
         self.unit = 2 / model_scale(self.manager)
         self._scene_mesh_actors = []
+        self._scene_weapons = []
         self._mesh = None
         self._pose_cache = {}
         self.main_position, self.main_yaw = (0., 0., 0.), 0.
+        self._sync_kind()
         if self.encounters.selected is not None and self.encounters.selected_slot is not None:
             return self._build_encounter(animation, animate)
         self.status.setText('Opponent: ' + (f'{self.opponent.enemy.origin_file_name}.'
@@ -251,9 +309,13 @@ class BattlePreviewSetup(QWidget):
         self._other = other
         if self.opponent is not None:
             self._scene_mesh_actors.append((self.opponent, other))
+            if self.opponent_weapon is not None:
+                self._scene_weapons.append((self.opponent_weapon, other, self.opponent))
         return self.context
 
     def _asset(self, name):
+        if name.lower() in self.models:  # imported by the host
+            return self.models[name.lower()]
         folders = [self.encounters.path.parent,
                    Path(getattr(self.manager.enemy, 'origin_path', '')).parent]
         path = next((folder / name for folder in folders if (folder / name).is_file()), None)
@@ -297,31 +359,39 @@ class BattlePreviewSetup(QWidget):
                 if manager is not None and slot.loaded and slot.visible:
                     self._scene_mesh_actors.append((manager, actor))
             slots[3 + slot.slot_index] = actor
-        if monster:
+        party = dict(self.party_models)
+        if monster and player_slot not in party:
             player = self.opponent
             if player is None:
                 try:
                     player = self._asset('d0c000.dat')
                 except Exception as error:
                     notes.append(f'Player model: {error}')
-            other = (actor_from_model(player, player_position, animate=animate) if player else
-                     CameraActor(player_position))
-            if player is not None:
-                self._scene_mesh_actors.append((player, other))
-            else:
+            party[player_slot] = (player, self.opponent_weapon if player is self.opponent else None)
+            if player is None:
                 notes.append('Player model missing; load a player DAT')
-            main_slot, other_slot = 3 + selected.slot_index, player_slot
-            slots[player_slot] = other
-        else:
-            other = slots[3 + selected.slot_index]
-            main_slot, other_slot = player_slot, 3 + selected.slot_index
-            slots[player_slot] = main
-        caster, target = (main, other) if self.role.currentIndex() == 0 else (other, main)
-        ids = (main_slot, other_slot) if self.role.currentIndex() == 0 else (other_slot, main_slot)
+        for party_slot, position in enumerate(PARTY_FORMATIONS[self.party_size.value()]):
+            if not monster and party_slot == player_slot:
+                slots[party_slot] = main
+                continue
+            body, weapon = party.get(party_slot, (None, None))
+            actor = actor_from_model(body, position, animate=animate) if body else CameraActor(position)
+            if body is not None:
+                self._scene_mesh_actors.append((body, actor))
+                if weapon is not None:
+                    self._scene_weapons.append((weapon, actor, body))
+            slots[party_slot] = actor
+        main_slot, other_slot = self.encounter_roles()
+        defaults = (main_slot, other_slot) if self.role.currentIndex() == 0 else (other_slot, main_slot)
+        # The spins pick any placed slot; one naming an empty slot falls back to its default
+        ids = tuple(spin.value() if spin.value() in slots else default
+                    for spin, default in zip((self.caster_slot, self.target_slot), defaults))
         for spin, value in zip((self.caster_slot, self.target_slot), ids):
             spin.blockSignals(True)
             spin.setValue(value)
             spin.blockSignals(False)
+        caster, target = slots[ids[0]], slots[ids[1]]
+        other = target if caster is main else caster
         centre = (main.point(0, 0) + other.point(0, 0)) / 2
         if self.initial_view.currentIndex() == 1:
             centre = main.point(0, 0)
@@ -339,29 +409,48 @@ class BattlePreviewSetup(QWidget):
         return np.asarray(point) * np.array((-1., -1., 1.)) * self.unit
 
     def opponent_mesh(self, tick=0, animate=False):
-        if not self._scene_mesh_actors:
+        if not self._scene_mesh_actors and not self._scene_weapons:
             return None
         if self._mesh is None:
             from Ifrit.Ifrit3D.previewmesh import PreviewMesh, prepare_batches
             batches, self._mesh_slices, offset = [], [], 0
-            for manager, actor in self._scene_mesh_actors:
+            drawn = ([(manager, actor, None) for manager, actor in self._scene_mesh_actors]
+                     + list(self._scene_weapons))
+            for manager, actor, body in drawn:
                 count = len(manager.enemy.geometry_data.get_vertices())
                 batches.extend(prepare_batches(manager.enemy.geometry_data, manager.texture_data,
                                                manager.texture_black_is_transparent, offset))
-                self._mesh_slices.append((manager, actor, slice(offset, offset + count)))
+                self._mesh_slices.append((manager, actor, body, slice(offset, offset + count)))
                 offset += count
             self._mesh = PreviewMesh(np.empty((offset, 3), dtype=np.float32), batches)
-        for manager, actor, dest in self._mesh_slices:
-            count = len(manager.enemy.animation_data.animations[0].frames)
-            frame = tick % max(1, count) if animate else 0
-            key = (id(manager), frame)
+        for manager, actor, body, dest in self._mesh_slices:
+            key = (id(manager), id(body), self._pose_frame(body or manager, tick, animate))
             if key not in self._pose_cache:
-                vertices = np.asarray(manager.get_animated_vertices(0, frame)) + model_root(manager, 0, frame)
-                engine = vertices * np.array((-1., -1., 1.)) * (model_scale(manager) / 2)
                 if len(self._pose_cache) >= 120:
                     self._pose_cache.pop(next(iter(self._pose_cache)))
-                self._pose_cache[key] = engine
+                self._pose_cache[key] = self._posed(manager, body, tick, animate)
             engine = self._pose_cache[key]
             engine = engine @ actor.rotation.T + actor.position
             self._mesh.vertices[dest] = self.to_viewer(engine)
         return self._mesh
+
+    @staticmethod
+    def _pose_frame(manager, tick, animate):
+        animations = manager.enemy.animation_data.animations
+        count = len(animations[0].frames) if animations else 0
+        return tick % max(1, count) if animate else 0
+
+    def _posed(self, manager, body, tick, animate):
+        """Engine-space vertices of a scene model on animation 0, before its actor transform.
+
+        Each model is placed by its own root (a weapon's root track is the hand: see
+        Ifrit3DWidget._current_attached_verts); a reduced weapon (no skeleton) is posed by the
+        body's bones at the body's frame."""
+        if body is not None and manager.enemy.entity_type == EntityType.WEAPON_NO_ANIM:
+            frame = self._pose_frame(body, tick, animate)
+            vertices = (np.asarray(body.get_animated_vertices(0, frame, geometry=manager.enemy.geometry_data))
+                        + model_root(body, 0, frame))
+            return vertices * np.array((-1., -1., 1.)) * (model_scale(body) / 2)
+        frame = self._pose_frame(manager, tick, animate)
+        vertices = np.asarray(manager.get_animated_vertices(0, frame)) + model_root(manager, 0, frame)
+        return vertices * np.array((-1., -1., 1.)) * (model_scale(manager) / 2)

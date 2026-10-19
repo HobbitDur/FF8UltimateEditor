@@ -1,5 +1,7 @@
-"""Fujin's Camera effect editor 3D preview: caster/target models, the script inputs, the slot
-▶ Preview buttons and live keyframe edits, all wired to the shared battle camera preview."""
+"""Fujin's Camera effect editor 3D preview: Fujin feeds the shared battle camera preview (models,
+party and weapons, scene.out encounter, caster/target slots); the script inputs, the slot
+▶ Preview buttons and live keyframe edits drive what it plays."""
+import struct
 import sys
 from pathlib import Path
 
@@ -10,6 +12,9 @@ from PyQt6.QtWidgets import QApplication
 ROOT = Path(__file__).resolve().parents[2]
 EXE = "extracted_files/FF8_EN.exe"
 SQUALL = "extracted_files/battle/d0c000.dat"
+GUNBLADE = "extracted_files/battle/d0w000.dat"
+ZELL = "extracted_files/battle/d1c003.dat"
+GLOVES = "extracted_files/battle/d1w008.dat"   # a reduced weapon: no skeleton, posed by Zell's bones
 SOLDIER = "extracted_files/battle/c0m071.dat"
 CURE, PHOENIX_DOWN = 1, 5
 
@@ -25,41 +30,52 @@ def fujin(qapp):
     return FujinWidget()
 
 
+def paths(*names):
+    return [str(ROOT / name) for name in names]
+
+
 def test_preview_hooks_without_models(fujin):
     from Fujin.cameraeffectpreview import MODEL_SELECTION_KEY
     preview = fujin.camera_editor.preview
     assert preview.panel is None and "Import" in preview.placeholder.text()
-    assert [label for label, _callback in fujin.complementary_entries()][0].startswith("Camera preview")
+    labels = [label for label, _callback in fujin.complementary_entries()]
+    assert labels[0].startswith("Camera preview models") and "scene.out" in labels[1]
     sources = fujin.auto_import_sources()
-    assert any(source.selection_key == MODEL_SELECTION_KEY and source.selection_only for source in sources)
-    preview.add_models(["d0w000.dat", "notamodel.dat"])  # weapons and other files are not offered
-    assert preview.model_paths() == [] and preview.panel is None
+    assert any(source.selection_key == MODEL_SELECTION_KEY and source.selection_only
+               and "d?w*.dat" in source.patterns for source in sources)
+    assert any(source.exact_name == "scene.out" for source in sources)
+    assert preview.sceneout_binding in fujin.file_bindings()
+    preview.add_models(["notamodel.dat", "d0w000.dat"])  # a lone weapon has no one to hold it
+    assert preview.model_paths() == ["d0w000.dat"] and preview.panel is None
+    assert preview.caster_key() is None
 
 
-@pytest.mark.ff8data(EXE, SQUALL, SOLDIER)
+@pytest.mark.ff8data(EXE, SQUALL, GUNBLADE, SOLDIER)
 def test_effect_camera_plays_around_caster_and_target(fujin):
     from FF8GameData.dat.camerascript import camera_animation_at
     editor = fujin.camera_editor
     preview = editor.preview
-    files = {path: (ROOT / path).read_bytes() for path in (EXE, SQUALL, SOLDIER)}
+    files = {path: (ROOT / path).read_bytes() for path in (EXE, SQUALL, GUNBLADE, SOLDIER)}
     editor.exe_binding.open_path(EXE)
     editor.select_effect(CURE)
     track = editor.manager.track(CURE)
     assert preview.track is track and "animation <b>23</b>" in preview.result_label.text()
 
-    # Caster = the character, target = the monster, whatever the import order
-    preview.add_models([str(ROOT / SOLDIER), str(ROOT / SQUALL)])
+    # The character joins the party with its weapon and casts; the monster is the target
+    preview.add_models(paths(SOLDIER, SQUALL, GUNBLADE))
     panel = preview.panel
     panel._timer.stop()
-    assert Path(preview.caster_path()).name == "d0c000.dat"
-    assert Path(preview.target_path()).name == "c0m071.dat"
     setup = panel._battle_setup
-    assert setup.opponent is preview.model(preview.target_path()) and setup.role.currentIndex() == 0
-    assert (preview.attacker_spin.value(), preview.target_slot_spin.value()) == (0, 3)
-    assert (setup.caster_slot.value(), setup.target_slot.value()) == (0, 3)
+    assert preview.party_members() == {0: (str(ROOT / SQUALL), str(ROOT / GUNBLADE))}
+    assert preview.caster_key() == ("party", 0)
+    assert preview.target_key() == ("monster", str(ROOT / SOLDIER))
+    assert setup.opponent is preview.model(str(ROOT / SOLDIER)) and setup.role.currentIndex() == 0
+    assert panel._weapon_manager is preview.model(str(ROOT / GUNBLADE))   # in the caster's hands
+    assert preview.battle_slots() == (0, 3) == (setup.caster_slot.value(), setup.target_slot.value())
+    assert setup.context.target.position == (0, 0, -5000)                   # the setup's own placement
     assert preview.previewed is camera_animation_at(track.collection, 23)
     assert panel._animation is preview.previewed and len(panel._poses) > 1
-    assert panel._gl._preview_actor is not None             # the target is drawn
+    assert panel._gl._preview_actor is not None                             # the target is drawn
 
     # Script inputs choose another animation
     preview.random_spin.setValue(1)
@@ -96,15 +112,75 @@ def test_effect_camera_plays_around_caster_and_target(fujin):
     assert all((ROOT / path).read_bytes() == data for path, data in files.items())
 
 
+def _scene_out(tmp_path):
+    """One encounter: two G-Soldiers (c0m071) at distinct positions."""
+    raw = bytearray(128)
+    raw[7] = 0xC0
+    raw[0x38:0x3A] = bytes((71 + 16, 71 + 16))
+    struct.pack_into('<3h', raw, 8, -1100, 77, -2900)
+    struct.pack_into('<3h', raw, 14, 1300, 0, -4200)
+    scene = tmp_path / "scene.out"
+    scene.write_bytes(raw)
+    return scene
+
+
+@pytest.mark.ff8data(EXE, SQUALL, GUNBLADE, ZELL, GLOVES, SOLDIER)
+def test_scene_out_places_party_and_enemies(fujin, tmp_path):
+    from Ifrit.IfritCameraSeq.battlepreview import PARTY_FORMATIONS
+    editor = fujin.camera_editor
+    preview = editor.preview
+    editor.exe_binding.open_path(EXE)
+    editor.select_effect(CURE)
+    preview.add_models(paths(SQUALL, GUNBLADE, ZELL, GLOVES, SOLDIER))
+    preview.panel._timer.stop()
+    assert set(preview.party_members()) == {0, 1}
+    scene = _scene_out(tmp_path)
+    fujin.file_registry.open_file("scene.out", str(scene))  # shared: the setup's picker loads it
+    setup = preview.panel._battle_setup
+    picker = setup.encounters
+    picker.encounter.setCurrentIndex(1)
+    preview.panel._timer.stop()
+
+    # Enemies stand at their scene.out slots, the party in the game's formation
+    labels = [preview.caster_combo.itemText(row) for row in range(preview.caster_combo.count())]
+    assert labels[:2] == ["Party 0: d0c000.dat", "Party 1: d1c003.dat"]
+    assert any(label.startswith("Enemy 4:") for label in labels)
+    assert preview.caster_key() == ("party", 0) and preview.target_key() == ("enemy", 0)
+    formation = PARTY_FORMATIONS[2]
+    assert setup.context.caster.position == formation[0]
+    assert setup.context.target.position == (-1100, 77, -2900)
+    assert setup.context.slots[1].position == formation[1]
+    assert setup.context.slots[4].position == (1300, 0, -4200)
+    # Zell (party 1) is drawn with his gloves; Squall's gunblade is the main model's
+    assert [weapon for weapon, _actor, _body in setup._scene_weapons] == [preview.model(str(ROOT / GLOVES))]
+    mesh = setup.opponent_mesh(2, True)
+    assert np.isfinite(mesh.vertices).all()
+
+    # The other soldier as target: picked in Fujin, or with the picker's enemy slot
+    preview.target_combo.setCurrentIndex(labels.index(next(l for l in labels if l.startswith("Enemy 4:"))) + 1)
+    preview.panel._timer.stop()
+    assert preview.battle_slots() == (0, 4) and setup.context.target.position == (1300, 0, -4200)
+
+    # An enemy casts: the monster is filmed at its own slot, a party member is the target
+    preview.caster_combo.setCurrentIndex(labels.index(next(l for l in labels if l.startswith("Enemy 4:"))))
+    preview.panel._timer.stop()
+    assert preview.caster_key() == ("enemy", 1) and preview.target_key()[0] == "party"
+    assert setup.main_position == (1300, 0, -4200) and picker.selected_slot.slot_index == 1
+    assert setup.context.caster.position == (1300, 0, -4200)
+    assert preview.battle_slots()[0] == 4 and preview.opening_spin.value() == 8
+    assert len(setup._scene_weapons) == 2                  # both party members hold their weapons
+    assert preview.last_run is not None and preview.panel._animation is preview.previewed
+    assert scene.read_bytes()[:8] == bytes(7) + b"\xC0"     # read-only
+
+
 @pytest.mark.ff8data(EXE, SOLDIER)
 def test_monster_caster_defaults(fujin):
     editor = fujin.camera_editor
     preview = editor.preview
     editor.exe_binding.open_path(EXE)
     editor.select_effect(CURE)
-    preview.add_models([str(ROOT / SOLDIER)])
+    preview.add_models(paths(SOLDIER))
     preview.panel._timer.stop()
-    assert preview.target_path() is None                    # no second model: a marker
-    assert (preview.opening_spin.value(), preview.attacker_spin.value(),
-            preview.target_slot_spin.value()) == (8, 3, 0)
+    assert preview.target_key() is None                     # no second model: a marker
+    assert preview.opening_spin.value() == 8 and preview.battle_slots() == (3, 0)
     assert preview.last_run.chosen is not None and preview.panel._animation is preview.previewed

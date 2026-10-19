@@ -130,6 +130,7 @@ class EncounterPicker(QWidget):
             return
         self._model_key = key
         self._name_cache.clear()
+        previous = self.selected
         self.encounter.blockSignals(True)
         self.encounter.clear()
         self.encounter.addItem('Manual placement', None)
@@ -141,11 +142,15 @@ class EncounterPicker(QWidget):
                 continue
             names = ', '.join(self.monster_name(s.com_file_id) for s in slots)
             self.encounter.addItem(f'Encounter {encounter.index} · stage {encounter.stage_id} · {names}', encounter)
+            if previous is not None and encounter.index == previous.index:
+                # Another model loaded: stay in the same encounter while it still matches
+                self.encounter.setCurrentIndex(self.encounter.count() - 1)
         self.encounter.blockSignals(False)
         self._picked()
 
     def _picked(self, _index=0):
         encounter = self.selected
+        previous = self.selected_slot
         self.enemy_slot.blockSignals(True)
         self.enemy_slot.clear()
         if encounter is not None:
@@ -154,6 +159,8 @@ class EncounterPicker(QWidget):
                     continue
                 self.enemy_slot.addItem(
                     f'Slot {slot.slot_index} · {self.monster_name(slot.com_file_id)} · {slot.position}', slot)
+                if previous is not None and slot.slot_index == previous.slot_index:
+                    self.enemy_slot.setCurrentIndex(self.enemy_slot.count() - 1)
         self.enemy_slot.blockSignals(False)
         self.slot_label.setText('Loaded monster:' if self.is_monster else 'Enemy opponent:')
         self.slot_label.setVisible(encounter is not None)
