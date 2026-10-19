@@ -169,3 +169,38 @@ def test_viewer_pose_turns_around_the_pivot():
     for _ in range(75):
         panel._advance()
     assert (panel._spin, panel._tilt, panel._zoom) == (0, 0, 4096)  # the game's 5 s reset
+
+
+def test_mouse_drags_turn_tilt_and_move():
+    """Left drag turns/tilts (tilt slower), right, middle or Shift+left drag moves the model."""
+    import sys
+    from PyQt6.QtCore import QEvent, QPointF, Qt
+    from PyQt6.QtGui import QMouseEvent
+    from PyQt6.QtWidgets import QApplication, QWidget
+    QApplication.instance() or QApplication(sys.argv)
+    from Xu.xupreview import XuPreviewPanel, VIEWER_TILT_PER_PIXEL, VIEWER_TURN_PER_PIXEL
+    panel = XuPreviewPanel()
+    panel._row = ScanCameraRow(*G_SOLDIER)
+    panel._gl = QWidget()
+    panel._gl.resize(640, 480)
+    panel._manager = object()
+    panel._apply = lambda: None
+
+    def drag(button, dx, dy, modifiers=Qt.KeyboardModifier.NoModifier):
+        for kind, x, y in ((QEvent.Type.MouseButtonPress, 100, 100), (QEvent.Type.MouseMove, 100 + dx, 100 + dy),
+                           (QEvent.Type.MouseButtonRelease, 100 + dx, 100 + dy)):
+            event = QMouseEvent(kind, QPointF(x, y), QPointF(x, y), button, button, modifiers)
+            assert panel.eventFilter(panel._gl, event)
+
+    drag(Qt.MouseButton.LeftButton, 10, 10)
+    assert panel._spin == (-10 * VIEWER_TURN_PER_PIXEL) % 4096
+    assert panel._tilt == 10 * VIEWER_TILT_PER_PIXEL and VIEWER_TILT_PER_PIXEL < VIEWER_TURN_PER_PIXEL
+    assert panel._pan == [0., 0.]
+    for button, modifiers in ((Qt.MouseButton.RightButton, Qt.KeyboardModifier.NoModifier),
+                              (Qt.MouseButton.MiddleButton, Qt.KeyboardModifier.NoModifier),
+                              (Qt.MouseButton.LeftButton, Qt.KeyboardModifier.ShiftModifier)):
+        spin, tilt, pan_x = panel._spin, panel._tilt, panel._pan[0]
+        drag(button, 20, 0, modifiers)
+        assert (panel._spin, panel._tilt) == (spin, tilt)
+        assert panel._pan[0] > pan_x
+    panel._timer.stop()

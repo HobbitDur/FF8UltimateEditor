@@ -43,7 +43,8 @@ MODE_SCAN_SCREEN, MODE_ZOOM_IN, MODE_SHORT_SCAN = range(3)
 VIEWER_SCALE_DEFAULT = 4096
 VIEWER_SCALE_MIN, VIEWER_SCALE_MAX = 2048, 8192   # zoom 0.5x - 2x
 VIEWER_ZOOM_STEP = 256                            # per wheel notch (the pad: 128 per tick)
-VIEWER_ROTATION_PER_PIXEL = 8                     # mouse drag (the pad: 128 per tick)
+VIEWER_TURN_PER_PIXEL = 6                         # mouse drag: a full turn over ~680 px
+VIEWER_TILT_PER_PIXEL = 2                         # tilting is felt much more: 90 degrees over 512 px
 VIEWER_IDLE_RESET_TICKS = 75                      # untouched for 5 s: back to the start pose
 
 
@@ -354,8 +355,8 @@ class XuPreviewPanel(QWidget):
     # ------------------------------------------------------------- mouse = the pad
     def eventFilter(self, watched, event):
         """In the Scan screen the mouse does what the pad does: drag left/right turns the model,
-        up/down tilts it (each only when the row allows it), right drag moves it, the wheel zooms
-        (0.5x-2x) and a double click resets it."""
+        up/down tilts it (each only when the row allows it), right, middle or Shift+drag moves it
+        across the screen, the wheel zooms (0.5x-2x) and a double click resets it."""
         from PyQt6.QtCore import QEvent
         if watched is not self._gl or self.mode_combo.currentIndex() != MODE_SCAN_SCREEN or self._manager is None:
             return super().eventFilter(watched, event)
@@ -363,17 +364,19 @@ class XuPreviewPanel(QWidget):
         if kind == QEvent.Type.MouseButtonDblClick:
             self._reset_viewer()
         elif kind == QEvent.Type.MouseButtonPress:
-            self._drag = (event.button(), event.position())
+            moving = (event.button() != Qt.MouseButton.LeftButton
+                      or event.modifiers() & Qt.KeyboardModifier.ShiftModifier)
+            self._drag = (bool(moving), event.position())
             self._touch()
         elif kind == QEvent.Type.MouseMove and self._drag is not None:
-            button, last = self._drag
+            moving, last = self._drag
             dx, dy = event.position().x() - last.x(), event.position().y() - last.y()
-            self._drag = (button, event.position())
-            if button == Qt.MouseButton.LeftButton:
+            self._drag = (moving, event.position())
+            if not moving:
                 if self._row.can_yaw == 1:
-                    self._spin = int(self._spin - dx * VIEWER_ROTATION_PER_PIXEL) % 4096
+                    self._spin = int(round(self._spin - dx * VIEWER_TURN_PER_PIXEL)) % 4096
                 if self._row.can_pitch == 1:
-                    self._tilt = int(self._tilt + dy * VIEWER_ROTATION_PER_PIXEL) % 4096
+                    self._tilt = int(round(self._tilt + dy * VIEWER_TILT_PER_PIXEL)) % 4096
             else:
                 per_pixel = self._world_per_pixel()
                 self._pan[0] += dx * per_pixel
@@ -461,8 +464,8 @@ class XuPreviewPanel(QWidget):
         if mode == MODE_SCAN_SCREEN:
             allowed = [name for name, flag in (("drag left/right: turn", self._row.can_yaw),
                                                ("drag up/down: tilt", self._row.can_pitch)) if flag == 1]
-            controls = ("\nMouse = the pad: " + ", ".join(allowed + ["right drag: move", "wheel: zoom",
-                                                                  "double click: reset"])
+            controls = ("\nMouse = the pad: " + ", ".join(allowed + [
+                "right drag or Shift+drag: move across the screen", "wheel: zoom", "double click: reset"])
                         + f"   (zoom {self._zoom / 4096:.2f}x)")
         self.readout.setText(
             f"Eye ({eye[0]:.0f}, {eye[1]:.0f}, {eye[2]:.0f})   aim ({target[0]:.0f}, {target[1]:.0f}, "
