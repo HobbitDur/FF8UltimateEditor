@@ -168,6 +168,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self.clear_color = (0.12, 0.12, 0.18, 1.0)  # background; Xu uses the Scan screen blue
         # Around the game's 4:3 frame of an explicit-lens camera; None = same as clear_color
         self.letterbox_color = None
+        # A 1-pixel line around that 4:3 frame, inside the letterbox (None = no line)
+        self.letterbox_outline_color = None
         self._game_viewport = None  # (x, y, w, h) in device pixels, GL origin bottom-left
         self.overlay_image = None   # QImage painted over the game frame (Xu's Scan text)
         self.overlay_add_image = None  # QImage ADDED over the game frame (additive GPU blending)
@@ -673,6 +675,13 @@ class FF8OpenGLWidget(QOpenGLWidget):
             glClearColor(*self.letterbox_color)
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glEnable(GL_SCISSOR_TEST)
+            if self.letterbox_outline_color is not None:
+                # The frame one pixel larger in the outline colour; the scene clear below
+                # covers all of it but that 1-pixel border.
+                x, y, w, h = self._game_viewport
+                glScissor(x - 1, y - 1, w + 2, h + 2)
+                glClearColor(*self.letterbox_outline_color)
+                glClear(GL_COLOR_BUFFER_BIT)
             glScissor(*self._game_viewport)
             glClearColor(*self.clear_color)
             glClear(GL_COLOR_BUFFER_BIT)

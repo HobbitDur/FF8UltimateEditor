@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushBut
 
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 
+BATTLE_SETUP_STATE_KEY = "camera preview/battle setup expanded"  # QSettings key of its folded state
 _WORLD_SCALE = 1.0 / 204.8  # world-position scale (matches PositionType), not the vertex 1/2048
 
 
@@ -102,6 +103,9 @@ class CameraPreviewPanel(QWidget):
             from Ifrit.IfritCameraSeq.battlepreview import BattlePreviewSetup
             self._battle_setup = BattlePreviewSetup(ifrit_manager, file_registry=file_registry)
             self._battle_setup.changed.connect(self._rebuild_battle)
+            # Folded or not, the Battle setup stays as the user left it (all camera previews)
+            self._battle_setup.group.remember(getattr(file_registry, "settings", None),
+                                              BATTLE_SETUP_STATE_KEY)
 
         self._placeholder = QLabel("Click a slot's ▶ Preview to play its camera here.")
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -258,6 +262,10 @@ class CameraPreviewPanel(QWidget):
             self._view = Ifrit3DWidget(self.ifrit_manager, show_controls=False)
             self._layout.insertWidget(1, self._view, 1)  # where the placeholder sits
             self._gl = self._view.gl_widget
+            # Outside the game's 4:3 screen of a game camera: black bars and a thin frame, so
+            # a model cut at the edge reads as off screen rather than hidden in the background
+            self._gl.letterbox_color = (0., 0., 0., 1.)
+            self._gl.letterbox_outline_color = (.45, .45, .5, 1.)
             if self._battle_setup is not None:
                 self._gl.setMinimumHeight(300)
                 self._gl.show_axis = False

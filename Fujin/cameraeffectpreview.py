@@ -22,7 +22,8 @@ from types import SimpleNamespace
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QLabel,
-                             QComboBox, QSpinBox, QPushButton, QFileDialog, QMessageBox, QApplication)
+                             QComboBox, QSpinBox, QPushButton, QFileDialog, QMessageBox, QApplication,
+                             QSizePolicy)
 
 from Common.collapsiblesection import CollapsibleSection
 from Common.filebinding import FileBinding
@@ -30,6 +31,8 @@ from FF8GameData.dat.camerascript import (CameraScriptInputs, OPENING_MONSTER_MA
                                           STATUS_LOW_HEALTH, animation_index_parts, camera_animation_at,
                                           camera_category_value, run_camera_script)
 
+SETTINGS_STATE_KEY = "fujin/camera preview settings expanded"   # QSettings key of its folded state
+INPUTS_STATE_KEY = "fujin/camera preview script inputs expanded"
 MODEL_FOLDER_KEY = "battle model (.dat)"           # same remembered folder as Ifrit's and Xu's dialogs
 MODEL_SELECTION_KEY = "Fujin camera preview models"
 MODEL_PATTERNS = ("c0m*.dat", "d?c*.dat", "d?w*.dat")
@@ -192,11 +195,23 @@ class CameraEffectPreview(QWidget):
         self.placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.placeholder.setStyleSheet("color: gray")
 
+        # Everything above the result line folds away, so the 3D view can take all the room
+        self.settings_section = CollapsibleSection(
+            "Preview settings", expanded=True,
+            tooltip="Party, caster/target and script inputs: fold them to enlarge the 3D preview")
+        self.settings_section.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        settings_layout = self.settings_section.content_layout()
+        settings_layout.setContentsMargins(0, 0, 0, 0)
+        settings_layout.addLayout(top)
+        settings_layout.addLayout(cast)
+        settings_layout.addWidget(self.inputs_section)
+        settings = getattr(file_registry, "settings", None)
+        self.settings_section.remember(settings, SETTINGS_STATE_KEY)
+        self.inputs_section.remember(settings, INPUTS_STATE_KEY)
+
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.addLayout(top)
-        self._layout.addLayout(cast)
-        self._layout.addWidget(self.inputs_section)
+        self._layout.addWidget(self.settings_section)
         self._layout.addWidget(self.result_label)
         self._layout.addWidget(self.play_button, 0, Qt.AlignmentFlag.AlignLeft)
         self._layout.addWidget(self.placeholder, 1)
@@ -461,8 +476,11 @@ class CameraEffectPreview(QWidget):
         from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
         self._stage = IfritManager(game_data=self._shared_game_data())
         self.panel = CameraPreviewPanel(self._stage, file_registry=self.file_registry)
+        from Ifrit.IfritCameraSeq.camerapreview import BATTLE_SETUP_STATE_KEY
         setup = self.panel._battle_setup
-        setup.group.set_expanded(True)          # the encounter picker is how actors get placed
+        settings = getattr(self.file_registry, "settings", None)
+        if settings is None or not settings.contains(BATTLE_SETUP_STATE_KEY):
+            setup.group.set_expanded(True)      # the encounter picker is how actors get placed
         setup.encounters.changed.connect(self._encounter_changed)
         for spin in (setup.caster_slot, setup.target_slot):
             spin.valueChanged.connect(lambda _value: self._slots_changed())

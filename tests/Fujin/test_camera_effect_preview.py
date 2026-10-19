@@ -50,6 +50,28 @@ def test_preview_hooks_without_models(fujin):
     assert preview.caster_key() is None
 
 
+def test_settings_fold_and_are_remembered(qapp):
+    """The pickers and inputs fold away to give the 3D view the room, and stay folded next time."""
+    from PyQt6.QtCore import QSettings
+    from Common.fileregistry import FileRegistry
+    from Fujin.cameraeffectpreview import SETTINGS_STATE_KEY
+    from Fujin.fujinwidget import FujinWidget
+    settings = QSettings("HobbitDur", "FF8UltimateEditor")   # isolated by the root conftest
+    settings.remove(SETTINGS_STATE_KEY)
+    registry = FileRegistry(settings=settings)
+    fujin = FujinWidget(file_registry=registry)
+    preview = fujin.camera_editor.preview
+    section = preview.settings_section
+    assert section.is_expanded() and section.isAncestorOf(preview.caster_combo)
+    assert section.isAncestorOf(preview.party_combos[0]) and section.isAncestorOf(preview.inputs_section)
+    assert not section.isAncestorOf(preview.result_label)   # what the script chose stays in sight
+    section._toggle.click()
+    assert not section.is_expanded() and settings.value(SETTINGS_STATE_KEY, type=bool) is False
+    again = FujinWidget(file_registry=registry)
+    assert not again.camera_editor.preview.settings_section.is_expanded()
+    settings.remove(SETTINGS_STATE_KEY)
+
+
 @pytest.mark.ff8data(EXE, SQUALL, GUNBLADE, SOLDIER)
 def test_effect_camera_plays_around_caster_and_target(fujin):
     from FF8GameData.dat.camerascript import camera_animation_at
@@ -76,6 +98,8 @@ def test_effect_camera_plays_around_caster_and_target(fujin):
     assert preview.previewed is camera_animation_at(track.collection, 23)
     assert panel._animation is preview.previewed and len(panel._poses) > 1
     assert panel._gl._preview_actor is not None                             # the target is drawn
+    # Black bars and a frame line outside the game's 4:3 screen, not the scene's background
+    assert panel._gl.letterbox_color == (0., 0., 0., 1.) and panel._gl.letterbox_outline_color is not None
 
     # Script inputs choose another animation
     preview.random_spin.setValue(1)
