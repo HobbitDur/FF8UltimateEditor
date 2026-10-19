@@ -166,11 +166,15 @@ class FileToolbarWidget(QWidget):
             self._pick_from_menu(entries, self.import_button)
 
     def _import_complementary(self):
-        # A tool whose side files have no fixed names (Xu's preview models, c0m###.dat) runs its
-        # own multi-select dialog.
-        hook = getattr(self.tool_stack.currentWidget(), "open_complementary_files", None)
-        if callable(hook):
-            hook()
+        # A tool whose side files have no fixed names (Xu's preview models, c0m###.dat) lists its
+        # own lines, as (label, callback) pairs - a menu, like Import, when there are several.
+        custom = getattr(self.tool_stack.currentWidget(), "complementary_entries", None)
+        if callable(custom):
+            entries = list(custom())
+            if len(entries) == 1:
+                entries[0][1]()
+            elif entries:
+                self._pick_from_menu(entries, self.import_complementary_button)
             return
         # Complementary files share the "these exact names" pattern (e.g. Zone's five), so one
         # multi-select dialog can bring in any number at once.
@@ -385,7 +389,7 @@ class FileToolbarWidget(QWidget):
         self.import_button.setEnabled(bool(self._import_entries()))
         # a tool importing its whole file set at once (import_files) brings its read-only files too
         whole_set = callable(getattr(self.tool_stack.currentWidget(), "import_files", None))
-        complementary_hook = callable(getattr(self.tool_stack.currentWidget(), "open_complementary_files", None))
+        complementary_hook = callable(getattr(self.tool_stack.currentWidget(), "complementary_entries", None))
         self.import_complementary_button.setEnabled(complementary_hook or (
             bool(complementary_bindings) and (not whole_set or any(
                 getattr(binding, "complementary", False) for binding in complementary_bindings))))

@@ -18,6 +18,8 @@ from Xu.xupreview import XuPreviewPanel
 from Xu.xutext import XuTextManager, FILE_NAME as TEXT_FILE_NAME
 
 MODEL_FOLDER_KEY = "battle model (.dat)"  # same remembered folder as Ifrit's model dialog
+# Where the camera dialog reopens (whichever of the .bin or the exe was picked in it last)
+CAMERA_DIALOG_KEY = "Xu scan camera rows"
 TEXT_COUNT_FOR_ALL_MONSTERS = LAST_C0M_FILE + 16 + 1  # com_id 0..215
 _C0M_FILE = re.compile(r"^c0m(\d{3})\.dat$", re.IGNORECASE)
 _CHARACTER_FILE = re.compile(r"^d([0-9a-f])c(\d{3})\.dat$", re.IGNORECASE)
@@ -277,29 +279,39 @@ class XuWidget(QWidget):
         return [(f"Scan camera rows: {FILE_NAME} or FF8 exe", self._import_camera),
                 (f"Scan text: {TEXT_FILE_NAME}", self._import_text)]
 
-    def open_complementary_files(self):
-        """The header Import read-only: what the preview uses, never edited here - battle models
-        (any number, Ctrl+A for all) and mngrp.bin (the game font next to it)."""
-        folder = self.file_registry.last_folder(MODEL_FOLDER_KEY) or os.getcwd()
+    def complementary_entries(self):
+        """The header Import read-only menu: the files the preview uses, never edited here."""
+        return [("Game font: mngrp.bin (sysfnt.TEX/.tdw next to it)", self._import_font),
+                ("Battle models: c0m###.dat / d?c###.dat (several, Ctrl+A for all)", self._import_models)]
+
+    def _import_font(self):
+        path = self.mngrp_binding.open_dialog(self, default_dir=self.file_registry.last_folder("mngrp.bin"))
+        if path:
+            self.file_registry.remember_folder("mngrp.bin", os.path.dirname(path))
+
+    def _import_models(self):
         paths = QFileDialog.getOpenFileNames(
-            self, "Preview files: battle models and/or mngrp.bin (Ctrl+A for all)", folder,
-            "Preview files (c0m*.dat d?c*.dat mngrp.bin);;Battle models (c0m*.dat d?c*.dat);;"
-            "Game font (mngrp.bin)")[0]
-        models = [path for path in paths if self.model_com_id(path) is not None]
-        for path in paths:
-            if os.path.basename(path).lower() == "mngrp.bin":
-                self.mngrp_binding.open_path(path)
-                self.file_registry.remember_folder("mngrp.bin", os.path.dirname(path))
-        if models:
-            self.add_models(models)
+            self, "Battle models to preview (Ctrl+A for all)", self._start_folder(MODEL_FOLDER_KEY),
+            "Monster and character battle models (c0m*.dat d?c*.dat)")[0]
+        if paths:
+            self.add_models(paths)  # remembers the models' folder
 
     def _import_camera(self):
-        folder = self.file_registry.last_folder(FILE_NAME) or os.getcwd()
+        folder = self._start_folder(CAMERA_DIALOG_KEY, FILE_NAME, self.exe_binding.file_name)
         path = QFileDialog.getOpenFileName(
             self, f"Scan camera rows: {FILE_NAME} or the FF8 exe (vanilla)", folder,
             f"Scan camera rows ({FILE_NAME} *.exe);;{FILE_NAME} ({FILE_NAME} *.bin);;FF8 exe (*.exe)")[0]
         if path:
+            self.file_registry.remember_folder(CAMERA_DIALOG_KEY, os.path.dirname(path))
             self.import_paths([path])
+
+    def _start_folder(self, *keys):
+        """The first remembered folder among keys (the dialog's own memory first), else cwd."""
+        for key in keys:
+            folder = self.file_registry.last_folder(key)
+            if folder:
+                return folder
+        return os.getcwd()
 
     def _import_text(self):
         path = self.text_binding.open_dialog(self, default_dir=self.file_registry.last_folder(TEXT_FILE_NAME))
@@ -336,8 +348,8 @@ class XuWidget(QWidget):
             if binding is None:
                 QMessageBox.warning(self, "Xu", f"{os.path.basename(path)}: not an FF8 exe, .bin or .msd")
                 continue
-            if extension != ".exe":
-                self.file_registry.remember_folder(FILE_NAME, os.path.dirname(path))
+            # Each file type keeps its own folder too (the exe's is shared with Cid/ShumiTranslator)
+            self.file_registry.remember_folder(binding.file_name, os.path.dirname(path))
             binding.open_path(path)
 
     def _update_source_state(self):

@@ -152,8 +152,8 @@ def test_default_msd_from_the_exe(qapp):
 
 
 def test_header_toolbar_lines(qapp, tmp_path, monkeypatch):
-    """Import offers two lines (camera: .bin or exe, text: .msd); Import read-only takes the
-    preview files - battle models and mngrp.bin - in one dialog."""
+    """Import and Import read-only both show their lines; each dialog reopens where its
+    files were last picked from."""
     from PyQt6.QtWidgets import QFileDialog, QStackedWidget
     from Common.fileregistry import FileRegistry
     from Common.filetoolbarwidget import FileToolbarWidget
@@ -167,10 +167,34 @@ def test_header_toolbar_lines(qapp, tmp_path, monkeypatch):
     assert labels == ["Scan camera rows: battle_scan_cameras.bin or FF8 exe", "Scan text: battle_scans.msd"]
     toolbar._refresh()
     assert toolbar.import_complementary_button.isEnabled()
+    side = [label for label, _callback in w.complementary_entries()]
+    assert side[0].startswith("Game font: mngrp.bin") and side[1].startswith("Battle models:")
 
-    picked = [str(tmp_path / "c0m071.dat"), str(tmp_path / "d0c000.dat"), str(tmp_path / "mngrp.bin")]
-    (tmp_path / "mngrp.bin").write_bytes(b"")
-    monkeypatch.setattr(QFileDialog, "getOpenFileNames", lambda *args, **kwargs: (picked, ""))
-    toolbar._import_complementary()
+    models = tmp_path / "battle"
+    models.mkdir()
+    picked = [str(models / "c0m071.dat"), str(models / "d0c000.dat")]
+    starts = []
+
+    def fake_open_names(_parent, _caption, directory, _filter):
+        starts.append(directory)
+        return picked, ""
+    monkeypatch.setattr(QFileDialog, "getOpenFileNames", fake_open_names)
+    w._import_models()
+    w._import_models()
     assert set(w._model_paths) == {87, 0}
-    assert registry.get_path("mngrp.bin") == picked[2]
+    assert starts[1] == str(models)  # the second dialog reopens in the models' folder
+
+    exe_folder = tmp_path / "game"
+    exe_folder.mkdir()
+    (exe_folder / "FF8_EN.exe").write_bytes(b"MZ")
+    camera_starts = []
+
+    def fake_open_name(_parent, _caption, directory, _filter):
+        camera_starts.append(directory)
+        return str(exe_folder / "FF8_EN.exe"), ""
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", fake_open_name)
+    monkeypatch.setattr("PyQt6.QtWidgets.QMessageBox.warning", lambda *args, **kwargs: None)  # not a real exe
+    w._import_camera()
+    w._import_camera()
+    assert camera_starts[1] == str(exe_folder)
+    assert registry.last_folder("FF8 exe") == str(exe_folder)  # shared with Cid/ShumiTranslator
