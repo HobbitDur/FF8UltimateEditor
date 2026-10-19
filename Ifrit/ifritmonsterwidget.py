@@ -135,15 +135,13 @@ class _ClosableItemDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         size = super().sizeHint(option, index)
-        # Rows fill the viewport; long file names must not push their cross off-screen.
-        size.setWidth(min(size.width() + self.CROSS_BOX + 2 * self.MARGIN,
-                          self._list.viewport().width()))
+        size.setWidth(size.width() + self.CROSS_BOX + 2 * self.MARGIN)
         size.setHeight(max(size.height(), self.CROSS_BOX + 4))
         return size
 
     def paint(self, painter, option, index):
         # Row background (selection/hover) across the whole row, then the text kept clear of the
-        # cross so a long name elides before it instead of running under it.
+        # cross. The list reserves enough width for the complete, unshortened name.
         style = option.widget.style() if option.widget else QApplication.style()
         style.drawPrimitive(QStyle.PrimitiveElement.PE_PanelItemViewItem, option, painter, option.widget)
         text_option = QStyleOptionViewItem(option)
@@ -803,12 +801,15 @@ class IfritMonsterWidget(QWidget):
         self._file_list = QListWidget()
         self._file_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._file_list.setResizeMode(QListWidget.ResizeMode.Adjust)
-        self._file_list.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self._file_list.setTextElideMode(Qt.TextElideMode.ElideNone)
         self._file_list.setToolTip("Files loaded in memory. Click one to edit it; a leading * "
                                    "marks a file with unsaved changes. The cross (or a middle-click) "
                                    "closes a file.")
         self._file_list.currentRowChanged.connect(self._on_file_list_changed)
         self._file_list.setItemDelegate(_ClosableItemDelegate(self._file_list, self._close_file))
+        model = self._file_list.model()
+        for signal in (model.rowsInserted, model.rowsRemoved, model.modelReset, model.dataChanged):
+            signal.connect(self._fit_file_list_width)
         left_panel = QWidget()
         lp = QVBoxLayout(left_panel)
         lp.setContentsMargins(4, 4, 0, 4)
@@ -820,6 +821,7 @@ class IfritMonsterWidget(QWidget):
 
         self._splitter = QSplitter(Qt.Orientation.Horizontal)
         self._splitter.addWidget(left_panel)
+        self._splitter.setCollapsible(0, False)
         self._splitter.addWidget(self._stack)
         self._splitter.setStretchFactor(0, 0)
         self._splitter.setStretchFactor(1, 1)
@@ -1065,6 +1067,18 @@ class IfritMonsterWidget(QWidget):
         self._populate_file_list()
         self._update_section_buttons()
         self.file_bindings_changed.emit()
+
+    def _fit_file_list_width(self, *_args):
+        """Reserve the widest complete label, its close cross, and the scrollbar gutter."""
+        listing = self._file_list
+        option = QStyleOptionViewItem()
+        option.initFrom(listing)
+        option.widget = listing
+        width = max((listing.itemDelegate().sizeHint(option, listing.model().index(row, 0)).width()
+                     for row in range(listing.count())), default=0)
+        if width:
+            width += 2 * listing.frameWidth() + listing.verticalScrollBar().sizeHint().width()
+        listing.setMinimumWidth(width)
 
     def _populate_file_list(self):
         self._file_list.blockSignals(True)
