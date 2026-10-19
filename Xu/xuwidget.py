@@ -6,7 +6,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLabel, QLineEdit,
                              QListWidget, QListWidgetItem, QSpinBox, QCheckBox, QPushButton,
                              QComboBox, QGroupBox, QSplitter, QFileDialog, QMessageBox, QTabWidget,
-                             QPlainTextEdit, QDialog, QScrollArea, QDialogButtonBox)
+                             QPlainTextEdit, QDialog, QScrollArea, QDialogButtonBox, QStyleOptionViewItem)
 
 from Common.filebinding import FileBinding
 from Common.autoimport import AutoImportSource
@@ -148,6 +148,9 @@ class XuWidget(QWidget):
                                      "(from the file as opened when no exe is open)")
         self.changed_only.stateChanged.connect(lambda _s: self._apply_filter())
         self.row_list = QListWidget()
+        self.row_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.row_list.setTextElideMode(Qt.TextElideMode.ElideNone)
+        self.row_list.setResizeMode(QListWidget.ResizeMode.Adjust)
         self.row_list.currentRowChanged.connect(self._on_row_selected)
         list_layout = QVBoxLayout()
         list_layout.addWidget(self.filter_edit)
@@ -155,6 +158,7 @@ class XuWidget(QWidget):
         list_layout.addWidget(self.row_list, 1)
         list_holder = QWidget()
         list_holder.setLayout(list_layout)
+        self._row_list_holder = list_holder
 
         # Middle: camera row + scan text tabs
         self.row_title = QLabel("-")
@@ -185,9 +189,10 @@ class XuWidget(QWidget):
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(list_holder)
+        splitter.setCollapsible(0, False)
         splitter.addWidget(middle_holder)
         splitter.addWidget(preview_holder)
-        splitter.setStretchFactor(0, 2)
+        splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 3)
         splitter.setStretchFactor(2, 5)
 
@@ -670,6 +675,23 @@ class XuWidget(QWidget):
             self.dirty_state.mark()
 
     # ------------------------------------------------------------------ list
+    def _fit_row_list_width(self):
+        """Keep the list column fixed at the widest full name, even while filtering/resizing."""
+        option = QStyleOptionViewItem()
+        option.initFrom(self.row_list)
+        option.widget = self.row_list
+        width = max((self.row_list.itemDelegate().sizeHint(
+            option, self.row_list.model().index(row, 0)).width()
+                     for row in range(self.row_list.count())), default=0)
+        # Reserve the dirty marker and the vertical scrollbar before either is shown.
+        width += (self.row_list.fontMetrics().horizontalAdvance("* ")
+                  + 2 * self.row_list.frameWidth()
+                  + self.row_list.verticalScrollBar().sizeHint().width())
+        width = max(width, self.filter_edit.minimumSizeHint().width(),
+                    self.changed_only.minimumSizeHint().width())
+        margins = self._row_list_holder.layout().contentsMargins()
+        self._row_list_holder.setFixedWidth(width + margins.left() + margins.right())
+
     def _fill_row_list(self):
         current = max(self.row_list.currentRow(), 0)
         with QSignalBlocker(self.row_list):
@@ -680,6 +702,7 @@ class XuWidget(QWidget):
             self.copy_source.clear()
             for row in range(FIRST_MONSTER_ROW, ROW_COUNT):
                 self.copy_source.addItem(self.manager.row_label(row), row)
+        self._fit_row_list_width()
         self._apply_filter()
         self.row_list.setCurrentRow(current)
         self._on_row_selected(current)
