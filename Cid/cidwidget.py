@@ -14,6 +14,7 @@ from Cid.drawillustrationwidget import DrawIllustrationWidget
 from Cid.worlddrawsection import WorldDrawSection
 from Cid.worlddrawgeometry import WorldDrawGeometry
 from Cid.worldlandmarks import read_landmarks
+from Cid.worldlandscape import WorldLandscape
 from Cid.worlddrawphases import WorldDrawPhases
 from Cid.drawgroupswidget import DrawGroupsWidget
 from Cid.drawmapwidget import DrawMapWidget
@@ -41,7 +42,7 @@ class CidWidget(QWidget):
     NB_DRAW = 256
     WORLD_EXE_START_INDEX = 128  # 0-based index of the first world entry in DrawPointData
     APPROXIMATE_MAP_STATUS = (
-        'Map: approximate block centres on an illustrative background; coastal points may appear in water. '
+        'Map: approximate block centres on the bundled reference terrain image. '
         'Load read-only wmx.obj for terrain and triangle positions. Numbers count overlapping records; '
         'click cycles them, drag moves, wheel zooms.')
 
@@ -158,7 +159,7 @@ class CidWidget(QWidget):
         # Resizing/scrolling the table changes its scrollbars, never draw data.
         for scrollbar in (self._draw_widget.horizontalScrollBar(), self._draw_widget.verticalScrollBar()):
             scrollbar.setProperty('read_only_preview', True)
-        self._illustration = DrawIllustrationWidget(os.path.join(icon_path, 'map2.png'), self._draw_field_map,
+        self._illustration = DrawIllustrationWidget(os.path.join(icon_path, 'worldmap.png'), self._draw_field_map,
                                                     field_images_folder, parent=self)
         self._illustration.set_draw_list(self._draw_list)
         self._illustration.map.set_phases(self._phase_checks)
@@ -558,6 +559,7 @@ class CidWidget(QWidget):
                              f"Could not parse Section 34 of this file:<br>{error}")
             return
         self.wmset_file_path = path
+        self._illustration.map.set_landscape(WorldLandscape(self._section._file_data, self.game_data))
         # Optional display metadata must never prevent loading valid draw records.
         try:
             landmarks = read_landmarks(self._section._file_data, self.game_data)
@@ -606,6 +608,7 @@ class CidWidget(QWidget):
 
     def _on_wmset_closed(self, _path):
         self._section = WorldDrawSection()
+        self._illustration.map.set_landscape(None)
         self._illustration.map.set_landmarks([])
         self.wmset_file_path = ""
         self._wmset_dirty = False

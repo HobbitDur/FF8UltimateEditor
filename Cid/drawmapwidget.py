@@ -1,8 +1,11 @@
 import os
 import math
-from PyQt6.QtCore import Qt, pyqtSignal, QRectF, QPointF, QSignalBlocker
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QRectF, QPointF, QSignalBlocker, QThreadPool
 from PyQt6.QtGui import QPixmap, QPainter, QColor, QPen, QPolygonF
-from PyQt6.QtWidgets import QWidget, QApplication, QToolTip, QVBoxLayout, QLabel, QCheckBox, QPushButton, QHBoxLayout
+from PyQt6.QtWidgets import QWidget, QApplication, QToolTip, QVBoxLayout, QLabel, QCheckBox, QPushButton, QHBoxLayout, QScrollArea
+
+from Cid.worldlandscape import GROUND_NAMES
+from Cid.terrainrender import TerrainRenderTask
 
 
 class DrawMapWidget(QWidget):
@@ -17,6 +20,14 @@ class DrawMapWidget(QWidget):
         super().__init__(parent)
         self._pixmap = QPixmap(map_path) if map_path and os.path.exists(map_path) else QPixmap()
         self._reference_pixmap = self._pixmap
+        self._plain_pixmap = self._pixmap
+        self._textured_pixmap = QPixmap()
+        self._textures_requested = True
+        self.landscape = None
+        self._render_generation = 0
+        self._texture_tasks = {}
+        tasks = self._texture_tasks
+        self.destroyed.connect(lambda: [task.cancelled.set() for task in tasks.values()])
         self._draw_list = []
         self._selected_index = -1
         self._press = None
@@ -48,10 +59,16 @@ class DrawMapWidget(QWidget):
             'QPushButton:checked { background: #315b82; }')
         self.fullscreen_button.adjustSize()
         self.fullscreen_button.move(12, 12)
-        self._guide = QWidget(self)
+        self._guide = QScrollArea(self)
         self._guide.setProperty('read_only_preview', True)
-        self._guide.setStyleSheet('QLabel, QCheckBox { color: #e5ebf6; }')
-        guide_layout = QVBoxLayout(self._guide)
+        self._guide.setWidgetResizable(True)
+        self._guide.setStyleSheet('QScrollArea { border: none; background: #121830; } '
+                                 'QLabel, QCheckBox { color: #e5ebf6; }')
+        self._guide_content = QWidget()
+        self._guide_content.setObjectName('cidMapGuide')
+        self._guide_content.setStyleSheet('QWidget#cidMapGuide { background: #121830; }')
+        self._guide.setWidget(self._guide_content)
+        guide_layout = QVBoxLayout(self._guide_content)
         guide_layout.setContentsMargins(12, 12, 12, 12)
         guide_layout.setSpacing(4)
         guide_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -74,7 +91,25 @@ class DrawMapWidget(QWidget):
         self.landmarks_check.setToolTip('Reference locations and names from wmsetxx.obj. '
                                         'Fixed references; they do not follow story-phase availability or moving Gardens.')
         self.landmarks_check.toggled.connect(self.update)
-        guide_layout.addWidget(self.landmarks_check)
+        background_row = QHBoxLayout()
+        background_row.addWidget(self.landmarks_check)
+        self.textures_check = QCheckBox('Textures')
+        self.textures_check.setEnabled(False)
+        self.textures_check.setToolTip('Use the original low-resolution terrain textures from wmsetxx.obj. '
+                                      'Requires wmx.obj; built once in the background. Static base world.')
+        self.textures_check.toggled.connect(self.set_textured)
+        background_row.addWidget(self.textures_check)
+        guide_layout.addLayout(background_row)
+        self._texture_status = QLabel('Textures: load wmset and wmx.')
+        self._texture_status.setWordWrap(True)
+        guide_layout.addWidget(self._texture_status)
+        guide_layout.addWidget(QLabel('<b>Landscape</b>'))
+        self.terrain_info = QLabel('Load wmx.obj for terrain details.')
+        self.terrain_info.setTextFormat(Qt.TextFormat.PlainText)
+        self.terrain_info.setWordWrap(True)
+        self.terrain_info.setToolTip('Elevation is in game units above sea level; slope is in degrees. '
+                                    'Region and reference area names need wmset. The preview uses base-world terrain.')
+        guide_layout.addWidget(self.terrain_info)
         self._guide_note = QLabel('Load wmx.obj to see the triangles used for draw-point placement.')
         self._guide_note.setWordWrap(True)
         guide_layout.addWidget(self._guide_note)
@@ -97,6 +132,111 @@ class DrawMapWidget(QWidget):
         self._landmarks = list(landmarks)
         self.landmarks_check.setEnabled(bool(self._landmarks))
         self.update()
+
+    def set_landscape(self, landscape):
+        self.landscape = landscape
+        self._invalidate_textures()
+        self._show_terrain()
+
+    def _invalidate_textures(self):
+        for task in self._texture_tasks.values():
+            task.cancelled.set()
+        self._render_generation += 1
+        self._textured_pixmap = QPixmap()
+        self._pixmap = self._plain_pixmap
+        available = self.geometry is not None and self.landscape is not None and self.landscape.textures is not None
+        self.textures_check.setEnabled(available)
+        if available:
+            self._texture_status.setText('Textures ready to build.')
+            self._texture_status.setToolTip('')
+            self.set_textured(self._textures_requested)
+        else:
+            with QSignalBlocker(self.textures_check):
+                self.textures_check.setChecked(False)
+            error = self.landscape.texture_error if self.landscape else ''
+            self._texture_status.setText('Textures unavailable.' if error else 'Textures: load wmset and wmx.')
+            self._texture_status.setToolTip(error)
+        self.update()
+
+    def set_textured(self, visible):
+        self._textures_requested = bool(visible)
+        visible = bool(visible and self.textures_check.isEnabled())
+        with QSignalBlocker(self.textures_check):
+            self.textures_check.setChecked(visible)
+        if visible and self._textured_pixmap.isNull():
+            generation = self._render_generation
+            if generation not in self._texture_tasks:
+                task = TerrainRenderTask(generation, self.geometry, self.landscape.textures)
+                self._texture_tasks[generation] = task
+                task.signals.finished.connect(self._on_textures_ready)
+                self._texture_status.setText('Building textures…')
+                QThreadPool.globalInstance().start(task)
+        self._pixmap = self._textured_pixmap if visible and not self._textured_pixmap.isNull() else self._plain_pixmap
+        self.update()
+
+    @pyqtSlot(int, bytes, str)
+    def _on_textures_ready(self, generation, data, error):
+        self._texture_tasks.pop(generation, None)
+        if generation != self._render_generation:
+            return
+        if error or not data or not self._textured_pixmap.loadFromData(data):
+            with QSignalBlocker(self.textures_check):
+                self.textures_check.setChecked(False)
+            self._texture_status.setText('Textures unavailable; using colours.')
+            self._texture_status.setToolTip(error or 'Could not render the texture preview')
+            self._pixmap = self._plain_pixmap
+        else:
+            self._texture_status.setText('Textures cached (base world).')
+            self._texture_status.setToolTip('Static original textures from wmset. Story replacement terrain and animations are not simulated.')
+            self.set_textured(self.textures_check.isChecked())
+        self.update()
+
+    def _show_terrain(self, position=None):
+        if self.geometry is None:
+            self.terrain_info.setText('Load wmx.obj for terrain details.')
+            return
+        draw = None
+        if position is not None:
+            if not self._map_viewport().contains(position) or not self._image_rect().contains(position):
+                position = None
+            else:
+                hits = self._hits(position)
+                if hits:
+                    index = self._selected_index if self._selected_index in hits else hits[0]
+                    draw = self._draw_list[index]
+        if position is None and 0 <= self._selected_index < len(self._draw_list):
+            candidate = self._draw_list[self._selected_index]
+            if self._visible(candidate):
+                draw = candidate
+        if draw is not None:
+            position = self._marker(draw, self._image_rect())
+        if position is None:
+            self.terrain_info.setText('Hover over the map or select a world draw point.')
+            return
+        x, y = self._map_position(position, self._image_rect())
+        try:
+            info = self.geometry.terrain_at(x, y, draw.sub_id if draw else None)
+        except (ValueError, IndexError):
+            info = None
+        if info is None:
+            self.terrain_info.setText('No triangle at this position.')
+            return
+        lines = [f'Draw ID {draw.get_id()}' if draw else 'Under pointer']
+        if self.landscape:
+            place = self.landscape.location_at(x, y)
+            if place.get('location_name'):
+                lines.append(place['location_name'])
+            if place.get('region') is not None:
+                lines.append(f"Region: {place['region_name']} ({place['region']})")
+        ground = info['ground']
+        lines.extend((f"Ground: {GROUND_NAMES.get(ground, 'Unknown')} ({ground})",
+                      f"Block: {info['block_x']}, {info['block_y']} · Triangle: {info['triangle']}",
+                      f"Height: {info['height']:.1f} game units", f"Slope: {info['slope']:.1f}°"))
+        self.terrain_info.setText('\n'.join(lines))
+
+    def leaveEvent(self, event):
+        self._show_terrain()
+        super().leaveEvent(event)
 
     def _paint_landmarks(self, painter, rect, viewport):
         if not self.landmarks_check.isChecked():
@@ -128,6 +268,8 @@ class DrawMapWidget(QWidget):
                                  if geometry else 'Load wmx.obj to see the triangles used for draw-point placement.')
         self.set_mesh_visible(self.mesh_check.isChecked() and geometry is not None)
         self._pixmap = overview if overview is not None else self._reference_pixmap
+        self._plain_pixmap = self._pixmap
+        self._invalidate_textures()
         self.reset_view()
 
     def set_mesh_visible(self, visible):
@@ -148,6 +290,7 @@ class DrawMapWidget(QWidget):
         self._pan_press = None
         self._press, self._dragging, self._drag_point = None, False, None
         self.unsetCursor()
+        self._show_terrain()
         self.update()
 
     def _map_viewport(self):
@@ -163,6 +306,7 @@ class DrawMapWidget(QWidget):
     def set_selected(self, index):
         self._selected_index = index
         self._press, self._dragging, self._drag_point = None, False, None
+        self._show_terrain()
         self.update()
 
     def set_phase(self, phase):
@@ -174,6 +318,7 @@ class DrawMapWidget(QWidget):
         self.update()
 
     def refresh(self):
+        self._show_terrain()
         self.update()
 
     def _image_rect(self):
@@ -233,6 +378,7 @@ class DrawMapWidget(QWidget):
         painter.setClipRect(viewport)
         rect = self._image_rect()
         if not self._pixmap.isNull():
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
             painter.drawPixmap(rect.toRect(), self._pixmap)
         if self.mesh_check.isChecked() and not self._mesh_pixmap.isNull():
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
@@ -314,11 +460,13 @@ class DrawMapWidget(QWidget):
             if event.buttons() & Qt.MouseButton.RightButton:
                 origin, start_pan = self._pan_press
                 self._pan = start_pan + event.position() - origin
+                self._show_terrain(event.position())
                 self.update()
                 event.accept()
                 return
             self._pan_press = None
             self.unsetCursor()
+        self._show_terrain(event.position())
         if self._press is None or not (event.buttons() & Qt.MouseButton.LeftButton):
             hits = self._hits(event.position())
             if hits:

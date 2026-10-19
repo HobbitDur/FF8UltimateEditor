@@ -64,6 +64,10 @@ the separate **Field** checkbox hides field rows. Numbered
 markers count overlapping records; without terrain their block-centre positions are approximate.
 Drag any marker directly; **Ctrl+Z** undoes edits and **Ctrl+Shift+Z / Ctrl+Y** redoes them.
 **Mesh** shows the terrain triangles. **Locations** adds city/landmark references from wmset's names and coordinates.
+The **Landscape** readout shows terrain type, area/region, block/triangle, height and slope under the pointer.
+**Textures**, on by default when both files are loaded, uses the original terrain, sea and road textures from wmset with the wmx base mesh;
+the preview builds in the background and is cached, with no game-data changes.
+The default background is a clean textured map render, with no baked-in markers or location labels.
 Right-drag pans; wheel-click or **Reset view** resets zoom and centres the map.
 **Map full screen**, over the map's background at the upper left, fills the CID tool area; click again or press Escape to restore the editor.
 CID starts in the normal editor with the world map visible and no draw point selected. Map fullscreen is off by default and is not saved. Field images stay in the normal editor.

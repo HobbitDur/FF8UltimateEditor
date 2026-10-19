@@ -5,6 +5,7 @@ The trigger covers that triangle; its centroid is a useful map marker.
 Story replacement segments are deliberately not guessed here.
 """
 import struct
+import math
 from pathlib import Path
 
 
@@ -24,6 +25,23 @@ class WorldDrawGeometry:
             return self._blocks[key]
         if not (0 <= block_x < 128 and 0 <= block_y < 96):
             return []
+        base, coords, faces = self.read_block(block_x, block_y)
+        triangles = []
+        for i in range(faces):
+            indices = self.data[base + 4 + i * 16:base + 7 + i * 16]
+            if any(index >= len(coords) for index in indices):
+                raise ValueError("Invalid wmx triangle vertex")
+            triangles.append(tuple((block_x + coords[index][0] / self.BLOCK_SIZE,
+                                    block_y - coords[index][2] / self.BLOCK_SIZE)
+                                   for index in indices))
+        if cache:
+            self._blocks[key] = triangles
+        return triangles
+
+    def read_block(self, block_x, block_y):
+        """Validated raw vertices and face-table address, without caching the world."""
+        if not (0 <= block_x < 128 and 0 <= block_y < 96):
+            raise ValueError('World block is outside the base map')
         segment = (block_y // 4 * 32 + block_x // 4) * self.SEGMENT_SIZE
         entry = block_y % 4 * 4 + block_x % 4
         offset = struct.unpack_from('<I', self.data, segment + 4 + 4 * entry)[0] & ~3
@@ -36,24 +54,47 @@ class WorldDrawGeometry:
             raise ValueError("Truncated wmx block")
         coords = [struct.unpack_from('<hhh', self.data, vertex_base + i * 8)
                   for i in range(vertices)]
-        triangles = []
-        for i in range(faces):
-            indices = self.data[base + 4 + i * 16:base + 7 + i * 16]
-            if any(index >= vertices for index in indices):
-                raise ValueError("Invalid wmx triangle vertex")
-            triangles.append(tuple((block_x + coords[index][0] / self.BLOCK_SIZE,
-                                    block_y - coords[index][2] / self.BLOCK_SIZE)
-                                   for index in indices))
-        if cache:
-            self._blocks[key] = triangles
-        return triangles
+        return base, coords, faces
+
+    def terrain_at(self, x, y, triangle_index=None):
+        """Ground, interpolated elevation and slope in game units at a map position.
+
+        Raw wmx Y points down; sea is zero. Supplying a triangle index inspects
+        that draw trigger even if a bridge or another surface overlaps it.
+        """
+        picked = self.pick(x, y) if triangle_index is None else None
+        if triangle_index is None:
+            if picked is None:
+                return None
+            triangle_index = picked[2]
+        if not (0 <= x < 128 and 0 <= y < 96):
+            return None
+        bx, by = int(x), int(y)
+        base, coords, faces = self.read_block(bx, by)
+        if not 0 <= triangle_index < faces:
+            return None
+        face = self.data[base + 4 + triangle_index * 16:base + 20 + triangle_index * 16]
+        if any(i >= len(coords) for i in face[:3]):
+            raise ValueError('Invalid wmx triangle vertex')
+        vertices = [(coords[i][0], -coords[i][2], -coords[i][1]) for i in face[:3]]
+        a, b, c = vertices
+        dx1, dy1, dh1 = (b[i] - a[i] for i in range(3))
+        dx2, dy2, dh2 = (c[i] - a[i] for i in range(3))
+        determinant = dx1 * dy2 - dx2 * dy1
+        if abs(determinant) < 1e-10:
+            return None
+        hx = (dh1 * dy2 - dh2 * dy1) / determinant
+        hy = (dx1 * dh2 - dx2 * dh1) / determinant
+        height = a[2] + hx * ((x - bx) * self.BLOCK_SIZE - a[0]) + hy * ((y - by) * self.BLOCK_SIZE - a[1])
+        return dict(block_x=bx, block_y=by, triangle=triangle_index, ground=face[13],
+                    height=height, slope=math.degrees(math.atan(math.hypot(hx, hy))))
 
     def overview_png(self):
         """Flat base-terrain map in the same coordinate system as the trigger records.
 
-        The bundled illustration is not a surveyed projection. Drawing coastlines
-        from wmx avoids calibrating markers against a hand-drawn background.
-        Do not retain the entire world mesh just to build this small preview.
+        Generate from the loaded file so modded geometry is reflected rather than
+        relying on the bundled reference terrain. Do not retain the entire world
+        mesh just to build this small preview.
         """
         from io import BytesIO
         from PIL import Image, ImageDraw

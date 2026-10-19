@@ -20,6 +20,7 @@ scripts, names, encounters and draw-point positions. See the
 | Draw-ID ranges defining group contents | `wmsetxx.obj` | Same updated `.obj` |
 | Spell names displayed by CID | Optional complementary `kernel.bin` | None; read-only |
 | Triangle positions displayed by CID | Optional complementary `wmx.obj` | None; read-only |
+| Landscape details and original texture preview | `wmx.obj` plus the already loaded `wmsetxx.obj` | None; view only |
 
 **Import complementary** offers a menu with **kernel.bin** and **wmx.obj**, just
 like the main Import menu offers the EXE and wmset. Choose the file type first,
@@ -47,8 +48,13 @@ the selected block is outlined. Points sharing a block overlap; the number besid
 the marker counts the records there, even when their triangle indices differ.
 For example, **5 means five records**, not Draw ID 5. Click to select/cycle overlapping records,
 or select one in the table. Use the mouse wheel to zoom in or out.
-The bundled background is illustrative, so a block-centre marker near the coast
-can appear in the water. These approximate positions do not change the saved bytes.
+The bundled `Resources/worldmap.png` is a clean textured render of the original
+base-world terrain, without draw markers, location labels or UI. It replaces the
+old `map2.png` illustration and is displayed even with no game files loaded.
+A block centre can still lie away from the trigger's actual triangle, including
+in water near the coast. These approximate positions do not change the saved bytes.
+Load the matching wmx for triangle positions and to reflect any modded geometry;
+the bundled reference image itself always depicts the original base world.
 
 Load complementary `wmx.obj` to position markers at their terrain-triangle
 centroids and outline the selected triangle. The trigger covers the triangle,
@@ -62,6 +68,35 @@ terrain file is preserved. Otherwise use the read-only import to choose it.
 Enable **Mesh** in the dark guide area to the right of the map to see the actual
 terrain-triangle edges. Zoom in to inspect a destination triangle before dropping
 a draw point. Mesh is available when wmx is loaded; toggling it is a view change.
+
+The **Landscape** readout in the right-hand guide follows the pointer and shows
+the ground type (with its original numeric ID), world block and triangle,
+interpolated height above sea level in **game units**, and slope in degrees.
+With wmset loaded it also shows the encounter region and the area name associated
+with that world-map cell (for example Yaulny Canyon). These area names use CID's
+reference name list; unknown ground/region IDs stay explicitly unknown with their
+numeric value. Hovering over a draw marker inspects that record's own triangle;
+leaving the map shows the selected draw's terrain details. An empty selection
+stays empty while inspecting the landscape. Height and slope describe the mesh,
+not a guarantee that the party or a particular vehicle can reach it.
+
+**Textures**, beside Locations, is enabled by default once both wmset and wmx
+are loaded. It uses the original terrain, coast, sea and road textures stored in
+wmset; uncheck it to use the coloured overview. The static
+4096 x 3072 preview is built in a background worker; the coloured overview remains
+visible while it builds and the editor stays usable. Subsequent toggles use the
+cached image. Changing display modes preserves zoom, pan, selection and positions.
+Reloading either source invalidates its texture cache; an old background result
+cannot overwrite the new source. Closing wmset removes its region/texture data;
+closing wmx restores the approximate map and disables the terrain inspection and
+texture option. Missing or malformed optional textures leave the coloured view
+and draw-point editing available. The guide scrolls on smaller map panels.
+
+This preview uses the base-world mesh and the low-resolution textures embedded
+in wmset; it does not require `texl.obj`. Story replacement segments, moving
+objects, palette/sea animations and vehicle collision rules are not simulated.
+Texture mode does not follow the combined phase checkboxes. These are display
+features: they never change the EXE, wmset or wmx and create no undo steps.
 
 The compact **Phase** group beside Game version aligns the checkboxes in one row
 for **phases 0-4**, plus No phase. All are checked by default. Select any combination.
