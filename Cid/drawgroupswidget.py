@@ -2,7 +2,9 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QGroupBox, QTableWidget,
                              QTableWidgetItem, QHeaderView, QSpinBox, QCheckBox, QComboBox,
-                             QSplitter)
+                             QSplitter, QHBoxLayout, QPushButton)
+
+from Cid.phasestory import PhaseStoryDialog
 
 
 class DrawGroupsWidget(QWidget):
@@ -68,7 +70,13 @@ class DrawGroupsWidget(QWidget):
         hint = QLabel('Searches run left to right. The first record matching the player\'s block and '
                       'triangle wins. Choosing None removes that search and shifts later groups left.')
         hint.setWordWrap(True)
-        phase_layout.addWidget(hint)
+        phase_heading = QHBoxLayout()
+        phase_heading.addWidget(hint, 1)
+        self.phase_info_button = QPushButton('Phase info...')
+        self.phase_info_button.setToolTip('When each world phase changes, with verified field-script references')
+        self.phase_info_button.clicked.connect(self._show_phase_info)
+        phase_heading.addWidget(self.phase_info_button)
+        phase_layout.addLayout(phase_heading)
         self.phases = QTableWidget(5, 5)
         self.phases.setHorizontalHeaderLabels(['World phase', 'Search 1', 'Search 2', 'Search 3', 'Search 4'])
         self.phases.verticalHeader().hide()
@@ -111,6 +119,9 @@ class DrawGroupsWidget(QWidget):
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             table.setItem(row, column, item)
         item.setText(text)
+
+    def _show_phase_info(self):
+        PhaseStoryDialog(self).exec()
 
     def set_sources(self, section, rules, draws):
         self._section, self._rules, self._draws = section, rules, draws

@@ -114,10 +114,6 @@ class CidWidget(QWidget):
         self._phase_widget.setToolTip('Story phases used by the OG game; these are not disc numbers.')
         self._layout_top.addWidget(self._phase_widget)
 
-        self._save_hext_button = QPushButton('Export magic / phase rules (.hext)')
-        self._save_hext_button.clicked.connect(self._save_hext_only)
-        self._save_positions_button = QPushButton('Save positions / groups (wmset)')
-        self._save_positions_button.clicked.connect(self._save_positions_only)
         self._save_status = QLabel()
         self._save_status.setWordWrap(True)
         self._names_status = QLabel('Spell names: load complementary kernel.bin (read-only).')
@@ -125,10 +121,6 @@ class CidWidget(QWidget):
         self._map_status = QLabel('Map: approximate block centres; load complementary wmx.obj for terrain triangles. '
                                  'Click selects; drag moves; wheel zooms.')
         self._map_status.setWordWrap(True)
-        save_row = QHBoxLayout()
-        save_row.addWidget(self._save_hext_button)
-        save_row.addWidget(self._save_positions_button)
-        save_row.addStretch(1)
 
         # Model: full 256-entry list, kept alive and updated as files load.
         self._draw_list = [Draw(self.game_data, id=i + 1, data_hex=bytearray()) for i in range(self.NB_DRAW)]
@@ -168,7 +160,6 @@ class CidWidget(QWidget):
         self.window_layout = QVBoxLayout()
         self.setLayout(self.window_layout)
         self.window_layout.addLayout(self._layout_top)
-        self.window_layout.addLayout(save_row)
         self.window_layout.addWidget(self._save_status)
         self.window_layout.addWidget(self._names_status)
         self.window_layout.addWidget(self._map_status)
@@ -217,8 +208,6 @@ class CidWidget(QWidget):
         self._update_save_status()
 
     def _update_save_status(self):
-        self._save_hext_button.setEnabled(self.exe_loaded)
-        self._save_positions_button.setEnabled(self._section.is_loaded())
         exe = 'modified' if self._exe_dirty else ('loaded' if self.exe_loaded else 'not loaded')
         wm = 'modified' if self._wmset_dirty else ('loaded' if self._section.is_loaded() else 'not loaded')
         self._save_status.setText(f'.hext: magic ID, refill, high yield, phase searches ({exe}). '
@@ -254,16 +243,6 @@ class CidWidget(QWidget):
     def _on_phase_rules_edited(self):
         self._refresh_world_phases()
         self._on_exe_edited()
-
-    def _save_hext_only(self):
-        if self._save_hext():
-            self._exe_dirty = False
-        self._update_save_status()
-
-    def _save_positions_only(self):
-        if self._save_wmset():
-            self._wmset_dirty = False
-        self._update_save_status()
 
     # ---- table <-> illustration wiring ------------------------------------
     def _on_selection_changed(self, row):

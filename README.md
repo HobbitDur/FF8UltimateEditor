@@ -58,9 +58,11 @@ rate it gives, and its position on the world map.
 
 Load complementary `kernel.bin` for spell names (numeric IDs otherwise), and
 `wmx.obj` for terrain-triangle marker positions. World markers move only by
-dragging. Separate save controls identify EXE `.hext` data versus world positions
-in `wmsetxx.obj`. The **Groups and phases** tab edits the five draw-ID ranges
+dragging. The shared **Save** button writes EXE `.hext` data and/or world positions
+in `wmsetxx.obj`, according to the edited data. The **Groups and phases** tab
+edits the five draw-ID ranges
 (wmset) and the ordered groups searched in each world story phase (Hext).
+Its **Phase info...** button explains the story transitions with verified script references.
 See [CID files, map positions and world phases](docs/Cid.md).
 
 <img src="Resources/screenshots/draweditor.png" width="800">

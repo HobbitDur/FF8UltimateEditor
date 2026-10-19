@@ -3,11 +3,15 @@ from pathlib import Path
 import struct
 
 import pytest
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QStackedWidget, QPushButton
+from PyQt6.QtTest import QSignalSpy
 
 from Cid.cidwidget import CidWidget
 from Cid.worlddrawphases import WorldDrawPhases
 from Cid.worlddrawsection import WorldDrawSection
+from Cid.drawgroupswidget import DrawGroupsWidget
+from Cid.phasestory import PhaseStoryDialog, STORY_PHASES
+from Common.filetoolbarwidget import FileToolbarWidget
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -126,7 +130,7 @@ def test_group_tab_edits_ranges_and_refreshes_main_table(editor, monkeypatch, tm
     assert widget._section.group_range(0) == (0, 1)
     out = tmp_path / 'saved.obj'
     monkeypatch.setattr(widget._save_wmset_dialog, 'getSaveFileName', lambda **kw: (str(out), ''))
-    widget._save_positions_only()
+    widget.save_folder()
     reloaded = WorldDrawSection()
     reloaded.load(out)
     assert reloaded.group_range(0) == (0, 1)
@@ -147,7 +151,7 @@ def test_phase_tab_changes_search_order_exports_hext_and_reports_shadowing(edito
     assert widget._draw_widget.item(246, 8).text() == '0, 1, 2, 3, 4'
     patch = tmp_path / 'draw.hext'
     monkeypatch.setattr(widget._save_hext_dialog, 'getSaveFileName', lambda **kw: (str(patch), ''))
-    widget._save_hext_only()
+    widget.save_folder()
     text = patch.read_text(encoding='utf8')
     assert ' 876771 = 02' in text
     assert ' 876783 = 04' in text
@@ -192,3 +196,84 @@ def test_loading_sources_in_either_order_and_closing_exe_preserves_groups(app, t
     assert not widget._groups_widget.phases.isEnabled()
     widget.close()
     widget.deleteLater()
+
+
+def test_shared_save_button_writes_both_outputs_without_extra_cid_save_buttons(editor, monkeypatch, tmp_path):
+    widget, _source, _exe = editor
+    stack = QStackedWidget()
+    stack.addWidget(widget)
+    toolbar = FileToolbarWidget(stack, widget.exe_binding.registry, str(ROOT / 'Resources'))
+    widget.tabs.setCurrentIndex(1)
+    widget._groups_widget._first[0].setValue(130)
+    combo = widget._groups_widget._searches[0][1]
+    combo.setCurrentIndex(combo.findData(2))
+    assert widget._exe_dirty and widget._wmset_dirty
+    assert not hasattr(widget, '_save_hext_button')
+    assert not hasattr(widget, '_save_positions_button')
+    assert not any('Export magic' in button.text() or 'Save positions' in button.text()
+                   for button in widget.findChildren(QPushButton))
+    hext, wmset = tmp_path / 'draw.hext', tmp_path / 'saved.obj'
+    monkeypatch.setattr(widget._save_hext_dialog, 'getSaveFileName', lambda **kw: (str(hext), ''))
+    monkeypatch.setattr(widget._save_wmset_dialog, 'getSaveFileName', lambda **kw: (str(wmset), ''))
+    assert toolbar.save_button.isEnabled()
+    toolbar.save_button.click()
+    assert ' 876771 = 02' in hext.read_text(encoding='utf8')
+    section = WorldDrawSection()
+    section.load(wmset)
+    assert section.group_range(0) == (1, 117)
+    assert not widget._exe_dirty and not widget._wmset_dirty
+    toolbar.close()
+    stack.removeWidget(widget)
+    widget.setParent(None)
+    stack.close()
+
+
+def test_phase_info_button_explains_story_and_script_sources_without_editing(app, monkeypatch):
+    widget = DrawGroupsWidget()
+    opened = []
+    monkeypatch.setattr(PhaseStoryDialog, 'exec', lambda dialog: opened.append(dialog.browser.toPlainText()))
+    exe_changes, world_changes = QSignalSpy(widget.exe_changed), QSignalSpy(widget.world_changed)
+    widget.phase_info_button.click()
+    assert len(opened) == 1
+    text = opened[0]
+    assert 'not disc numbers' in text
+    assert 'Missile Base' in text and 'Balamb Garden' in text and 'Esthar' in text and 'Rinoa' in text
+    assert 'during Disc 3' in text and 'variable 266' in text
+    assert 'ssspace2.jsm' in text and '0xDBC' in text
+    assert 'dic::defalut' in text
+    assert not exe_changes and not world_changes
+    assert [phase.phase for phase in STORY_PHASES] == list(range(5))
+    widget.close()
+
+
+@pytest.mark.ff8data(*[f'extracted_files/field/mapdata/{name[:2]}/{name}/{name}.jsm'
+                      for name in ('gmpark2', 'bgsido_8', 'ewbrdg1', 'ssspace2', 'eaplane1')])
+def test_story_info_references_match_all_original_non_debug_phase_writes():
+    from CCGroup.jsmvariant import decode_instructions
+    from CCGroup.jsmcardgame import JsmCardGameFile
+
+    base = ROOT / 'extracted_files/field/mapdata'
+    expected = set()
+    for phase in STORY_PHASES:
+        for source in phase.sources:
+            path = base / source.field[:2] / source.field / f'{source.field}.jsm'
+            data = path.read_bytes()
+            assert struct.unpack_from('<II', data, source.offset - 4) == (0x07000000 | phase.phase, 0x0B00010A)
+            model = JsmCardGameFile(str(path), str(path.with_suffix('.sym')))
+            position = source.offset - model.offset_script
+            entry = max((i for i, start in enumerate(model.script_positions) if start <= position),
+                        key=lambda i: model.script_positions[i])
+            assert model.script_names[entry] == (source.entity, source.script)
+            expected.add((source.field, source.offset))
+    observed = set()
+    for path in base.rglob('*.jsm'):
+        if path.stem.startswith('test') or path.stem == 'bgmast_6':
+            continue
+        data = path.read_bytes()
+        if len(data) < 8:
+            continue
+        start = struct.unpack_from('<H', data, 6)[0]
+        for index, (opcode, arg) in enumerate(decode_instructions(data, start)):
+            if opcode in (0x0B, 0x0D, 0x0F) and arg is not None and arg <= 266 < arg + {0x0B: 1, 0x0D: 2, 0x0F: 4}[opcode]:
+                observed.add((path.stem, start + index * 4))
+    assert observed == expected

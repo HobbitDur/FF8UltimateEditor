@@ -14,8 +14,9 @@ and world-phase lookup are for that build.
 | Spell names displayed by CID | Optional complementary `kernel.bin` | None; read-only |
 | Triangle positions displayed by CID | Optional complementary `wmx.obj` | None; read-only |
 
-The two labelled save buttons write their respective output. The shared header
-Save writes whichever backing data has edits. With no edits it offers to save
+The shared header **Save** button writes whichever backing data has edits:
+magic and phase searches to Hext, positions and group ranges to wmset. There are
+no separate CID save/export buttons for these outputs. With no edits it offers to save
 the loaded outputs again. Cancelling a save keeps that output marked modified.
 Changing both kinds of data requires **both** outputs in the game: apply the Hext
 through the mod's patch loader, and replace/repack the matching world archive's
@@ -85,6 +86,38 @@ only individual draw data and positions, not group ranges or phase rules.
 
 ## Story dependence is real; disc labels are only a guide
 
+The **Phase info...** button in **Groups and phases** explains the story
+transitions and lists the exact original JSM assignment sites. It is available
+without loading game files. These explanations describe the original English
+scripts; a mod that changes field scripts can change the transitions.
+
+| Phase | When the original scripts assign it | Disc context |
+| --- | --- | --- |
+| 0 | Initial variant; no normal field script in the audit explicitly assigns 0 | Disc 1 and early Disc 2 |
+| 1 | Missile Base finale, during Selphie's team's escape; both ending branches assign 1 | Disc 2 |
+| 2 | After Balamb Garden's emergency steering movie, avoiding Balamb town; story progress is set to 570 | Disc 2, continuing into early Disc 3 |
+| 3 | After the Esthar city-reveal sequence on the approach bridge beyond the Great Salt Lake; story progress is set to 1750 | Disc 3 |
+| 4 | During the successful rescue of Rinoa in space, after the Lunar Cry; reasserted in the later Esthar air-station scene at story progress 3150 | Late Disc 3 and Disc 4 |
+
+The six normal field-script writes to variable 266 were checked directly:
+
+| Phase | Original field script | Absolute JSM byte offset of `POPM_B 266` |
+| --- | --- | --- |
+| 1 | `gmpark2`: `lastevent2_1::touchOn` | `0x1CD4` |
+| 1 | `gmpark2`: `lastevent2_2::touchOn` | `0x2410` |
+| 2 | `bgsido_8`: `dic::defalut` (original spelling) | `0x2284` |
+| 3 | `ewbrdg1`: `Director::default` | `0x1AD0` |
+| 4 | `ssspace2`: `director0::default` | `0xDBC` |
+| 4 | `eaplane1`: `Director::default` | `0x648` |
+
+Each assignment is immediately preceded by `PSHN_L <phase>`. These are offsets
+inside the original English JSM files, not Hext addresses. The original `.sym`
+files supply the entity/method names. The audit excludes `test*` fields and the
+unused `bgmast_6` debug menu. The real-file regression test verifies every listed
+assignment, its symbol, and that the list covers all non-debug writers to the
+phase byte across the extracted field scripts. Reading scripts for this audit
+does not modify them.
+
 `WorldMap_DrawPointsParsing_wmset35` at VA `0x54F920` selects up to four ranges
 from the wmset header using `WM_WorldPhase & 31`. This is a **story phase**, not
 a world region or a direct disc-number check. The original English EXE's lookup
@@ -109,8 +142,9 @@ numbers**; there are five supported phases and four discs. Physical accessibilit
 In the original `wmsetus.obj`, Draw ID 246 is scanned only in phase 0; ID 247
 is scanned in phases 1-4. They have the same block and triangle, but their EXE
 bytes give Blizzard and Cure respectively. IDs 248-249 begin in phase 2;
-250-255 begin in phase 3. The attached guide and Papastew disagree on the disc
-cutover for Alcauld Plains, so CID deliberately reports the verified phase values.
+250-255 begin in phase 3. This resolves the guide discrepancy: Alcauld Plains
+stays Blizzard into early Disc 2 and changes to Cure at the phase-1 assignment
+in the Missile Base finale, rather than switching merely because Disc 2 starts.
 
 ## Inventory audit against the original game files
 
