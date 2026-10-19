@@ -185,6 +185,28 @@ def test_real_scan_screen(game_data):
     backdrop = np.asarray(background.backdrop())[..., :3].astype(int)
     assert backdrop[120, 80, 2] > 40 and backdrop[120, 80, 0] == 0  # blue on the left
     assert backdrop[120, 260].sum() == 0                            # black under the text
+    # the scan lines fill the whole screen behind, the right half included, scrolling 1 px a tick
+    underlay = np.asarray(background.underlay(40))[..., :3].astype(int)
+    assert underlay[:, 200:, 2].max() > 40 and underlay[:, 200:, 0].max() < 40
+    assert np.array_equal(np.roll(underlay[:, 200:], 1, axis=0)[1:], np.asarray(background.underlay(41))[1:, 200:, :3])
+    assert np.array_equal(underlay, np.asarray(background.underlay(40 + 64))[..., :3])
     with_texture = np.asarray(background.hud())[16:48, 72:120, 3].sum()
     without = np.asarray(ScanBackground(data, supersample=1).hud())[16:48, 72:120, 3].sum()
     assert with_texture > without
+
+
+def test_scan_bars_tiles(game_data):
+    """DrawScanBars: 128x64 opaque textured tiles over the whole screen, u read from 128 down to 0,
+    their black texels transparent; without the texture there are none."""
+    background = ScanBackground(background_from_exe(fake_exe(game_data), game_data.exe_data_json), supersample=1)
+    assert background.scan_bars(0) is None
+    texture = TimTexture(tim_bytes())  # texels at u 0-3 of page 640: CLUT 3CD4 (row 243)
+    texture.clut_y = 242               # let the tiles' CLUT 3C94 (row 242) read the same colours
+    background = ScanBackground(background.data, texture, supersample=1)
+    rgb, drawn = background.scan_bars(0)
+    assert rgb.shape == (240, 320, 3)
+    # u 128 -> 0 over the 128 px of a tile: texel u=0 (red) lands at the tile's right edge,
+    # u=1 (green) next to it, u=2 (index 0) is transparent; every tile and row repeats it
+    assert drawn[0, 127] and tuple(rgb[0, 127]) == (255, 0, 0) and tuple(rgb[0, 126]) == (0, 255, 0)
+    assert not drawn[0, 125] and not drawn[0, 60]
+    assert drawn[0, 127 + 128] and drawn[64, 127] and not drawn[10, 127]  # TIM rows 0-1 only

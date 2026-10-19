@@ -1,8 +1,16 @@
 """The Scan screen's own graphics around the model: backdrop panel, spinner, stat board and bars.
 
-When the Scan screen opens (FF8_EN.exe, MAG_040_SCAN), the Dimmer hides the battle stage and the
-other entities, so the screen is black except for four effect models the exe carries in its data
-(Effect_RenderPrimModel models, MAG_040_SCAN_DrawHudModel 0x84D8B0 draws each one):
+When the Scan screen opens (FF8_EN.exe, MAG_040_SCAN), the Dimmer has hidden the battle stage and
+the other entities. What fills the screen:
+
+  * ScanBars (MAG_040_SCAN_DrawScanBars 0x84F0B0, from the zoom-in until the screen is closed):
+    5 rows x 3 columns of 128x64 textured quads (opaque, code 0x2C) over the whole screen, the
+    scan lines of mag039-067.tim (tpage 0xBA, CLUT 0x3C94, u 128 -> 0, v 0 -> 64), scrolling down
+    one pixel a tick (top = (frame & 63) - 64), faded in to full brightness (128) during the zoom;
+    their black texels are transparent;
+
+and four effect models the exe carries in its data (Effect_RenderPrimModel models,
+MAG_040_SCAN_DrawHudModel 0x84D8B0 draws each one):
 
   * Backdrop (Backdrop_State0_Init 0x84FA50): the blue panel behind the model, at view position
     (-3968, 3840, 32767), scale 4608, fading in from black by 512/4096 per tick;
@@ -52,6 +60,12 @@ BAR_GROW_STEP, BAR_PULSE_STEP, BAR_PULSE_DIVISOR = 768, 256, 6
 BAR_COUNT = 8
 BAR_STATS = ("hp", "hp", "str", "vit", "mag", "spr", "spd", "eva")
 FINAL_TICK = 1000                # a tick by which every part has finished appearing
+# DrawScanBars' quads (screen pixels)
+SCAN_BARS_TILE = (128, 64)
+SCAN_BARS_COLUMNS, SCAN_BARS_ROWS = 3, 5
+SCAN_BARS_UVS = ((128, 0), (0, 0), (128, 64), (0, 64))
+SCAN_BARS_CLUT, SCAN_BARS_TPAGE, SCAN_BARS_CODE = 0x3C94, 0xBA, 0x2C
+SCAN_BARS_BRIGHTNESS = 128
 
 
 def bar_length(stat: str, value: int) -> int:
@@ -242,10 +256,10 @@ class Canvas:
     """A 320x240 (x supersample) float RGB buffer the parts are added into (additive blending,
     like the GPU's semi-transparency mode 1), opaque texels replacing what is under them."""
 
-    def __init__(self, supersample=2):
+    def __init__(self, supersample=2, height=SCREEN_H):
         self.scale = supersample
-        self.rgb = np.zeros((SCREEN_H * supersample, SCREEN_W * supersample, 3))
-        self.alpha = np.zeros((SCREEN_H * supersample, SCREEN_W * supersample))
+        self.rgb = np.zeros((height * supersample, SCREEN_W * supersample, 3))
+        self.alpha = np.zeros((height * supersample, SCREEN_W * supersample))
 
     def image(self, opaque=True) -> Image.Image:
         """The buffer as an RGBA image: opaque (black where nothing is drawn) or with alpha =
@@ -253,6 +267,15 @@ class Canvas:
         rgb = np.clip(self.rgb, 0, 255).astype(np.uint8)
         alpha = np.full(rgb.shape[:2], 255, np.uint8) if opaque else (self.alpha > 0).astype(np.uint8) * 255
         return Image.fromarray(np.dstack((rgb, alpha)), "RGBA")
+
+    def draw_screen_prim(self, prim: Prim, points, texture=None):
+        """Draw a primitive given in screen pixels (no projection), like a GPU packet."""
+        points = np.asarray(points, float)
+        colors = np.array(prim.colors if len(prim.colors) > 1 else prim.colors * len(prim.indices), float)
+        triangles = [(0, 1, 2)] if len(prim.indices) == 3 else [(0, 1, 2), (1, 3, 2)]
+        for triangle in triangles:
+            uvs = np.array([prim.uvs[i] for i in triangle], float) if prim.textured else None
+            self._triangle(points[list(triangle)] * self.scale, colors[list(triangle)], prim, uvs, texture)
 
     def draw_model(self, model: PrimModel, position, matrix, fade=0, texture=None):
         """Project and draw a model at a view-space position; fade 0-4096 = towards black."""
@@ -342,6 +365,42 @@ class ScanBackground:
         self.texture = texture
         self.supersample = supersample
         self._backdrop_full = None
+        self._scan_bars = None      # (rgb, drawn mask) at scroll 0; the pattern repeats every 64 px
+
+    def scan_bars(self, tick=0):
+        """(rgb, drawn) of the scrolling scan line tiles (None without the texture)."""
+        if self.texture is None:
+            return None
+        width, height = SCAN_BARS_TILE
+        if self._scan_bars is None:
+            # one period of the pattern, as tall as the 5 rows, scrolled by rolling it
+            canvas = Canvas(self.supersample, height=SCAN_BARS_ROWS * height)
+            gray = (SCAN_BARS_BRIGHTNESS,) * 3
+            for row in range(SCAN_BARS_ROWS):
+                top = row * height
+                for column in range(SCAN_BARS_COLUMNS):
+                    left = column * width
+                    corners = np.array(((left, top), (left + width, top), (left, top + height),
+                                        (left + width, top + height)), float)
+                    prim = Prim("FT4", SCAN_BARS_CODE, [0, 1, 2, 3], [gray], list(SCAN_BARS_UVS),
+                                SCAN_BARS_CLUT, SCAN_BARS_TPAGE)
+                    canvas.draw_screen_prim(prim, corners, self.texture)
+            self._scan_bars = np.clip(canvas.rgb, 0, 255).astype(np.uint16), canvas.alpha > 0
+        rgb, drawn = self._scan_bars
+        shift = (tick & (height - 1)) * self.supersample   # top row at (frame & 63) - 64
+        rows = SCREEN_H * self.supersample
+        return np.roll(rgb, shift, axis=0)[:rows], np.roll(drawn, shift, axis=0)[:rows]
+
+    def underlay(self, tick=FINAL_TICK) -> Image.Image:
+        """What is behind the model: the scan line tiles, with the backdrop added over them."""
+        fade_tick = min(tick, 1 + ONE // BACKDROP_FADE_STEP)  # faded in by then
+        if getattr(self, "_backdrop_u16_tick", None) != fade_tick:
+            self._backdrop_u16 = np.asarray(self.backdrop(fade_tick))[..., :3].astype(np.uint16)
+            self._backdrop_u16_tick = fade_tick
+        bars = self.scan_bars(tick)
+        rgb = self._backdrop_u16 if bars is None else bars[0] + self._backdrop_u16
+        rgb = np.minimum(rgb, 255).astype(np.uint8)
+        return Image.fromarray(np.dstack((rgb, np.full(rgb.shape[:2], 255, np.uint8))), "RGBA")
 
     def backdrop(self, tick=FINAL_TICK) -> Image.Image:
         """The backdrop over the black screen (Backdrop task: from tick 1, fading in 512 a tick)."""

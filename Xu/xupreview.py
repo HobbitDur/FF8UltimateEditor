@@ -180,7 +180,8 @@ class XuPreviewPanel(QWidget):
         self.background_check.setToolTip("The Scan screen's own graphics, from the FF8 exe: the blue backdrop behind\n"
                                           "the model, the spinner, the stat board and its bars (HP, STR, VIT, MAG, SPR,\n"
                                           "SPD, EVA at the level picked). They appear like the game's when Animate or\n"
-                                          "Move like the game is on. The board's labels need mag039-067.tim.")
+                                          "Move like the game is on. The scrolling scan lines behind and the\n"
+                                          "board's labels need mag039-067.tim.")
         self.background_check.stateChanged.connect(lambda _s: self._apply())
 
         # Weapon shown in a character's hand: the imported d?w###.dat of that character.
@@ -395,7 +396,8 @@ class XuPreviewPanel(QWidget):
         if self._background_data is None:
             hints.append("Background: open the FF8 exe (its Scan screen models); a plain blue stands in.")
         elif self._background_texture is None:
-            hints.append("Background: open mag039-067.tim (header Import read-only) for the stat board's labels.")
+            hints.append("Background: open mag039-067.tim (header Import read-only) for the scan line texture "
+                         "and the stat board's labels.")
         self.background_hint.setText("  ".join(hints))
         self.background_hint.setVisible(bool(hints))
 
@@ -426,13 +428,12 @@ class XuPreviewPanel(QWidget):
             return
         tick = self._background_tick()
         values = self._bar_values()
-        backdrop_tick = min(tick, 9)  # faded in by then
-        key = (id(self._background), backdrop_tick, tick, values)
+        key = (id(self._background), tick, values)
         if key == self._background_key:
             return
-        previous = self._background_key or (None, None, None, None)
-        if previous[:2] != key[:2]:
-            self._gl.underlay_image = _qimage(self._background.backdrop(backdrop_tick))
+        previous = self._background_key or (None, None, None)
+        if previous[:2] != key[:2]:  # the scan lines scroll every tick
+            self._gl.underlay_image = _qimage(self._background.underlay(tick))
         self._gl.overlay_add_image = _qimage(self._background.hud(tick, values))
         self._gl.clear_color = SCAN_BLACK
         self._background_key = key
