@@ -56,6 +56,16 @@
     "de_offset":       "0x200",
     "es_offset":       "0x170"
   },
+  "text_icon_sprite_offset":{
+    "comment":         "TEXT_ICON_CODE_TO_SPRITE (EN VA 0xB86D84): icon.sp1 id of text icon code 0x05 XX for XX >= 0x40",
+    "eng_section_start": "0x786E04",
+    "first_code":      "0x40",
+    "nb_code":         "0xC0",
+    "fr_offset":       "-0x38",
+    "it_offset":       "-0x38",
+    "de_offset":       "-0x38",
+    "es_offset":       "-0x38"
+  },
   "draw_data_offset":{
     "og_eng_start":     "0x792328",
     "size":     "0x100"

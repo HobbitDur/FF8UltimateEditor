@@ -12,6 +12,7 @@ from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Xu.xuhud import ScanHud
+from Xu.xuinfobar import misc_texts_from_kernel, icon_table_from_exe
 from Xu.xumanager import (XuManager, FILE_NAME, ROW_COUNT, ALTERNATE_ROWS, FIRST_MONSTER_ROW,
                           LAST_C0M_FILE, CHARACTER_NAMES, c0m_for_row, com_id_for_row)
 from Xu.xupreview import XuPreviewPanel
@@ -110,6 +111,14 @@ class XuWidget(QWidget):
         # (the Zone/Moomba/IfritSeq convention - never a guessed folder).
         self.mngrp_binding = FileBinding("mngrp.bin", file_registry, load_callback=self._on_mngrp_opened,
                                          read_only=True)
+        # The info bar under the model is made of kernel.bin's misc texts, and its element names
+        # are icon.sp1 icons (icon.TEX next to it) - both only read, edited in other tools.
+        self.kernel_binding = FileBinding("kernel.bin", file_registry, load_callback=self._on_kernel_opened,
+                                          file_filter="*kernel*.bin", read_only=True)
+        self.kernel_binding.file_closed.connect(lambda _path: self.preview.set_info_texts(None))
+        self.icon_binding = FileBinding("icon.sp1", file_registry, load_callback=self._on_icons_opened,
+                                        read_only=True)
+        self.icon_binding.file_closed.connect(lambda _path: self._set_icons(None))
         self._spinboxes = {}
         self._checkboxes = {}
         self._model_paths = {}           # com_id -> opened c0m###.dat / d?c###.dat
@@ -156,8 +165,8 @@ class XuWidget(QWidget):
 
         # Preview
         self.preview = XuPreviewPanel(game_data_folder, hud=self.hud)
-        self.model_label = QLabel("Preview: open battle models (c0m###.dat, d?c###.dat) and mngrp.bin (game font) "
-                                  "with the header's Import read-only.")
+        self.model_label = QLabel("Preview: open battle models (c0m###.dat, d?c###.dat), mngrp.bin (game font) and "
+                                  "kernel.bin + icon.sp1 (info bar) with the header's Import read-only.")
         self.model_label.setWordWrap(True)
         self.model_label.setStyleSheet("color: gray")
         model_row = QHBoxLayout()
@@ -188,6 +197,8 @@ class XuWidget(QWidget):
         self.binding.load_opened_file()
         self.text_binding.load_opened_file()
         self.mngrp_binding.load_opened_file()
+        self.kernel_binding.load_opened_file()
+        self.icon_binding.load_opened_file()
 
     def _build_camera_tab(self):
         form = QFormLayout()
@@ -273,7 +284,7 @@ class XuWidget(QWidget):
     def file_bindings(self):
         """The files the shared header toolbar drives for this tool (Save, Reload). The exe is
         left out: it is opened through the camera Import line (see import_entries)."""
-        return [self.binding, self.text_binding, self.mngrp_binding]
+        return [self.binding, self.text_binding, self.mngrp_binding, self.kernel_binding, self.icon_binding]
 
     def import_entries(self):
         """The header Import menu: one line for the camera rows (the FFNx .bin, or the exe's
@@ -284,12 +295,24 @@ class XuWidget(QWidget):
     def complementary_entries(self):
         """The header Import read-only menu: the files the preview uses, never edited here."""
         return [("Game font: mngrp.bin (sysfnt.TEX/.tdw next to it)", self._import_font),
-                ("Battle models: c0m###.dat / d?c###.dat, weapons d?w###.dat (several, Ctrl+A for all)", self._import_models)]
+                ("Battle models: c0m###.dat / d?c###.dat, weapons d?w###.dat (several, Ctrl+A for all)", self._import_models),
+                ("Info bar texts: kernel.bin", self._import_kernel),
+                ("Info bar icons: icon.sp1 (icon.TEX next to it)", self._import_icons)]
 
     def _import_font(self):
         path = self.mngrp_binding.open_dialog(self, default_dir=self.file_registry.last_folder("mngrp.bin"))
         if path:
             self.file_registry.remember_folder("mngrp.bin", os.path.dirname(path))
+
+    def _import_kernel(self):
+        path = self.kernel_binding.open_dialog(self, default_dir=self.file_registry.last_folder("kernel.bin"))
+        if path:
+            self.file_registry.remember_folder("kernel.bin", os.path.dirname(path))
+
+    def _import_icons(self):
+        path = self.icon_binding.open_dialog(self, default_dir=self.file_registry.last_folder("icon.sp1"))
+        if path:
+            self.file_registry.remember_folder("icon.sp1", os.path.dirname(path))
 
     def _import_models(self):
         paths = QFileDialog.getOpenFileNames(
@@ -331,6 +354,12 @@ class XuWidget(QWidget):
         self._update_source_state()
         self._fill_row_list()
         self._load_texts_from_exe(path)
+        try:  # the icon.sp1 id of each text icon code, for the info bar's element icons
+            with open(path, "rb") as file:
+                self.hud.icon_table = icon_table_from_exe(file.read(), self.game_data.exe_data_json)
+        except (OSError, ValueError):
+            self.hud.icon_table = {}
+        self.preview.set_info_texts(self.preview.info_texts)
 
     def load_file(self, path):
         try:
@@ -471,6 +500,25 @@ class XuWidget(QWidget):
         self.hud.set_font_folder(folder if os.path.isfile(os.path.join(folder, "sysfnt.TEX")) else None)
         self._refresh_preview_text(self.current_row())
 
+    def _on_kernel_opened(self, path):
+        try:
+            texts = misc_texts_from_kernel(self.game_data, path)
+        except Exception as error:  # noqa: BLE001 - not a kernel.bin this reader knows
+            QMessageBox.warning(self, "Xu", f"Cannot read the misc texts of {path}:\n{error}")
+            texts = None
+        self.preview.set_info_texts(texts)
+
+    def _on_icons_opened(self, path):
+        try:
+            self._set_icons(path)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Xu", f"Cannot load {path}:\n{error}")
+            self._set_icons(None)
+
+    def _set_icons(self, path):
+        self.hud.set_icon_file(path)
+        self.preview.set_info_texts(self.preview.info_texts)
+
     def _text_com_id(self, row):
         """The msd entry a row's monster reads (alternate rows show their monster's text)."""
         com_id = com_id_for_row(row)
@@ -557,6 +605,7 @@ class XuWidget(QWidget):
             title = self.manager.monster_name(c0m)
         if not title and row < len(CHARACTER_NAMES):  # a character .dat carries no name
             title = CHARACTER_NAMES[row]
+        self.preview.set_character(row < FIRST_MONSTER_ROW)
         self.preview.set_texts(title, scan_text)
         too_wide = self.hud.too_wide_lines(scan_text) if scan_text else []
         hidden = self.hud.hidden_lines(scan_text) if scan_text else 0

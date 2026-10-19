@@ -169,6 +169,8 @@ def test_header_toolbar_lines(qapp, tmp_path, monkeypatch):
     assert toolbar.import_complementary_button.isEnabled()
     side = [label for label, _callback in w.complementary_entries()]
     assert side[0].startswith("Game font: mngrp.bin") and side[1].startswith("Battle models:")
+    assert side[2].startswith("Info bar texts: kernel.bin") and side[3].startswith("Info bar icons: icon.sp1")
+    assert w.kernel_binding.read_only and w.icon_binding.read_only
 
     models = tmp_path / "battle"
     models.mkdir()
@@ -215,3 +217,64 @@ def test_character_weapons_listed(widget, tmp_path):
     w.row_list.setCurrentRow(87)  # a monster
     assert combo.count() == 0 and combo.isHidden()
     w.hide()
+
+
+def test_info_bar_needs_kernel_bin(widget):
+    """No kernel.bin: no info bar line, a hint says which file to open."""
+    w, _path = widget
+    preview = w.preview
+    assert preview.info_line() == b"" and not preview.info_combo.isEnabled()
+    assert "kernel.bin" in preview.info_hint.text()
+
+
+def test_info_bar_character_row(widget):
+    """A character's row has only the level/HP line, with the level and HP picked by the user."""
+    from tests.Xu.test_xuinfobar import synthetic_misc
+    w, _path = widget
+    preview = w.preview
+    preview.set_info_texts(synthetic_misc(w.game_data))
+    w.row_list.setCurrentRow(0)  # Squall
+    assert preview.hp_spin.isVisibleTo(preview)
+    preview.level_spin.setValue(9)
+    preview.hp_spin.setValue(456)
+    assert w.game_data.translate_hex_to_str(preview.info_line()) == "LV 9 PV 456/456"
+    assert preview.info_combo.count() == 1
+    w.row_list.setCurrentRow(87)  # a monster with no model open: no line, a hint
+    assert preview.info_line() == b"" and ".dat" in preview.info_hint.text()
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin", "extracted_files/battle/c0m005.dat", EXE,
+                     "extracted_files/menu/icon.sp1")
+def test_info_bar_pages_like_the_game(widget):
+    """Belhelmel (c0m005): level/HP, Fly, its element lines and the AI's scan text; a line stays
+    45 ticks, then the next one, wrapping."""
+    import contextlib
+    import io
+    w, _path = widget
+    w.exe_binding.open_path(EXE)
+    w.kernel_binding.open_path("extracted_files/main/kernel.bin")
+    w.icon_binding.open_path("extracted_files/menu/icon.sp1")
+    w.row_list.setCurrentRow(5 + 16)
+    preview = w.preview
+    with contextlib.redirect_stdout(io.StringIO()):
+        preview._manager = preview._new_manager("extracted_files/battle/c0m005.dat")
+    preview._on_new_subject()
+    labels = [preview.info_combo.itemText(i).split(" ", 1)[1] for i in range(preview.info_combo.count())]
+    assert labels == ["Level and HP", "Fly monster", "Weak against (1)", "Strong against (1)",
+                      "AI scan text (setScanText)"]
+    assert preview.scan_text_combo.count() == 3  # none + the 2 texts its AI can set
+    assert preview.info_hint.text() == ""        # texts, exe icon codes and icons all there
+    medium = preview._manager.enemy.info_stat_data['med_lvl']
+    assert preview.level_spin.value() == medium
+    hp = w.game_data.translate_hex_to_str(preview.info_line())
+    assert hp.startswith(f"LEVEL {medium} HP ")
+    preview.animate_check.setChecked(True)
+    for _tick in range(44):
+        preview._advance_info_bar()
+    assert preview.info_combo.currentIndex() == 0
+    preview._advance_info_bar()
+    assert preview.info_combo.currentIndex() == 1
+    preview.info_combo.setCurrentIndex(4)
+    for _tick in range(45):
+        preview._advance_info_bar()
+    assert preview.info_combo.currentIndex() == 0  # back to the first line

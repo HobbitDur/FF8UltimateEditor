@@ -18,6 +18,9 @@ The short scan (a repeat scan with the Config Scan option on short) keeps the zo
 and, every tick (ShortScanner_State3, 0x8511A0): turns the camera around the target by 64/4096
 when short_scan_orbit is 1, and when offset_y < -384 (tall target) moves the camera height
 by -height/32 towards the aim level, stopping at 0.
+
+Under the model, the info bar (Xu.xuinfobar) shows one line at a time and turns to the next one
+every 45 ticks, back to the first after the last.
 """
 import math
 
@@ -25,8 +28,10 @@ import numpy as np
 from PyQt6.QtCore import Qt, QTimer, QSignalBlocker
 from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QCheckBox,
-                             QSizePolicy)
+                             QSizePolicy, QSpinBox)
 
+from Xu.xuinfobar import (InfoBarBuilder, InfoBarSubject, ai_scan_texts, LINE_TICKS, MAX_LEVEL,
+                          MAX_SHOWN_NUMBER)
 from Xu.xumanager import ScanCameraRow
 
 SCAN_PROJECTION = 576
@@ -38,6 +43,7 @@ SCAN_BLUE = (0.0, 0.02, 0.32, 1.0)
 CENTRE_SELECTOR = 5            # skeleton header byte read for bone selector 0xF1
 
 MODE_SCAN_SCREEN, MODE_ZOOM_IN, MODE_SHORT_SCAN = range(3)
+INFO_TEXT_WIDTH = 296 - 2 * 6   # the info bar rect, less the text layer's 6 px on each side
 
 # The Scan screen's player controls (MAG_040_SCAN_ReadViewInput / Viewer_Update / Viewer_Reset)
 VIEWER_SCALE_DEFAULT = 4096
@@ -127,6 +133,10 @@ class XuPreviewPanel(QWidget):
         self.hud = hud              # ScanHud, set by the widget
         self._title = ""
         self._scan_text = ""
+        self._info_builder = None   # InfoBarBuilder over the opened kernel.bin's misc texts
+        self._character = False     # the row is a character's: only the level/HP line
+        self._info_lines = []       # [InfoBarLine] the game would page through
+        self._info_tick = 0         # ticks the shown line has been up
 
         self._placeholder = QLabel("Choose a monster model (c0m###.dat) to preview the scan camera.")
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -176,6 +186,43 @@ class XuPreviewPanel(QWidget):
         controls.addStretch(1)
         self.set_weapon_choices([])
 
+        # The info bar: which line is up (the game turns to the next one every 45 ticks), and the
+        # battle slot values the lines read that a .dat does not fix
+        self.info_combo = QComboBox()
+        self.info_combo.setMinimumContentsLength(18)
+        self.info_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.info_combo.setToolTip("The info bar line shown under the model. The game shows one line for 3 s\n"
+                                   "(45 ticks), then the next one, back to the first after the last:\n"
+                                   "it cycles here too while Animate or Move like the game is on.")
+        self.info_combo.currentIndexChanged.connect(self._on_info_line_picked)
+        self.level_spin = QSpinBox()
+        self.level_spin.setRange(1, MAX_LEVEL)
+        self.level_spin.setPrefix("Lv ")
+        self.level_spin.setToolTip("The target's level: a monster's HP follows it (its .dat HP curve).\n"
+                                   "Starts at the monster's medium level.")
+        self.level_spin.valueChanged.connect(lambda _v: self._rebuild_info_lines())
+        self.hp_spin = QSpinBox()
+        self.hp_spin.setRange(0, MAX_SHOWN_NUMBER + 1)
+        self.hp_spin.setPrefix("HP ")
+        self.hp_spin.setValue(1000)
+        self.hp_spin.setToolTip("A character's max HP (it comes from the save, not from the .dat).\n"
+                                "Above 99999 the game shows ?????.")
+        self.hp_spin.valueChanged.connect(lambda _v: self._rebuild_info_lines())
+        self.scan_text_combo = QComboBox()
+        self.scan_text_combo.setToolTip("The text the monster's AI sets with setScanText (opcode 0x25): the last\n"
+                                        "info bar line. Listed: every text its AI can set. The game starts with none\n"
+                                        "(cleared when the monster is set up); the init section's one is picked first.")
+        self.scan_text_combo.currentIndexChanged.connect(lambda _i: self._rebuild_info_lines())
+        info_controls = QHBoxLayout()
+        info_controls.addWidget(QLabel("Info bar:"))
+        info_controls.addWidget(self.info_combo, 1)
+        info_controls.addWidget(self.level_spin)
+        info_controls.addWidget(self.hp_spin)
+        info_controls.addWidget(self.scan_text_combo, 1)
+        self.info_hint = QLabel()
+        self.info_hint.setWordWrap(True)
+        self.info_hint.setStyleSheet("color: #c06000")
+
         self._hud_image = None
         self.readout = QLabel()
         self.readout.setStyleSheet("color: gray")
@@ -183,8 +230,12 @@ class XuPreviewPanel(QWidget):
 
         self._layout = QVBoxLayout(self)
         self._layout.addLayout(controls)
+        self._layout.addLayout(info_controls)
+        self._layout.addWidget(self.info_hint)
         self._layout.addWidget(self._placeholder, 1)
         self._layout.addWidget(self.readout)
+        self._fill_scan_texts()
+        self._rebuild_info_lines()
 
         self._timer = QTimer(self)
         self._timer.setInterval(GAME_TICK_MS)
@@ -206,13 +257,14 @@ class XuPreviewPanel(QWidget):
         self._gl.clear_color = SCAN_BLUE
         self._gl.letterbox_color = (0., 0., 0., 1.)  # outside the game's 4:3 screen
         self._gl.installEventFilter(self)  # the mouse plays the Scan screen's pad controls
-        self._layout.insertWidget(1, self._view, 1)
+        self._layout.insertWidget(self._layout.indexOf(self._placeholder), self._view, 1)
         self._view.load_file()
         if getattr(self._view, "timer", None) is not None:
             self._view.timer.stop()  # frames are driven here
         self._placeholder.hide()
         self.model_path = path
         self._apply_weapon()  # the new body gets the selected weapon back
+        self._on_new_subject()
         self._restart()
 
     def _new_manager(self, path):
@@ -280,11 +332,129 @@ class XuPreviewPanel(QWidget):
         self._title, self._scan_text = title, scan_text
         self._refresh_hud()
 
+    # ------------------------------------------------------------- info bar
+    def set_info_texts(self, misc_texts):
+        """The kernel.bin misc texts the info bar is made of (None: no kernel.bin, no info bar)."""
+        self._info_builder = InfoBarBuilder(misc_texts) if misc_texts else None
+        self._rebuild_info_lines()
+
+    @property
+    def info_texts(self):
+        """The misc texts in use (None without a kernel.bin)."""
+        return self._info_builder.misc if self._info_builder is not None else None
+
+    def set_character(self, character: bool):
+        """A character's row: the info bar only has the level/HP line, with the HP picked here."""
+        if character != self._character:
+            self._character = character
+            self._on_new_subject()
+
+    def _monster_stats(self):
+        """The loaded monster's .dat section 7, or None (no model, or not a monster)."""
+        if self._manager is None or self._character:
+            return None
+        try:
+            stats = self._manager.enemy.info_stat_data
+            return stats if stats.get('hp') and stats.get('elem_def') else None
+        except AttributeError:
+            return None
+
+    def _on_new_subject(self):
+        stats = self._monster_stats()
+        if stats is not None:
+            with QSignalBlocker(self.level_spin):
+                self.level_spin.setValue(max(1, min(int(stats.get('med_lvl') or 1), MAX_LEVEL)))
+        self._fill_scan_texts()
+        self._info_tick = 0
+        self._rebuild_info_lines()
+
+    def _fill_scan_texts(self):
+        texts = []
+        if self._monster_stats() is not None:
+            try:
+                texts = ai_scan_texts(self._manager.enemy.battle_script_data)
+            except AttributeError:
+                texts = []
+        with QSignalBlocker(self.scan_text_combo):
+            self.scan_text_combo.clear()
+            self.scan_text_combo.addItem("No AI scan text", b"")
+            for text_id, data, _section in texts:
+                label = (self.hud.game_data.translate_hex_to_str(data.split(b"\x00")[0])
+                         if self.hud is not None else "")
+                self.scan_text_combo.addItem(f"AI text {text_id}: {label}", data)
+            init = [index for index, (_id, _data, section) in enumerate(texts) if section == 0]
+            self.scan_text_combo.setCurrentIndex(init[0] + 1 if init else 0)
+        self.scan_text_combo.setVisible(bool(texts))
+
+    def _subject(self):
+        """The battle slot the info bar reads, or None when it cannot be known."""
+        if self._character:
+            hp = self.hp_spin.value()
+            return InfoBarSubject(level=self.level_spin.value(), current_hp=hp, max_hp=hp, monster=False)
+        stats = self._monster_stats()
+        return InfoBarSubject.from_info_stat(stats, self.level_spin.value()) if stats is not None else None
+
+    def _rebuild_info_lines(self):
+        subject = self._subject()
+        lines = []
+        if self._info_builder is not None and subject is not None:
+            lines = self._info_builder.lines(subject, self.scan_text_combo.currentData() or b"")
+        hints = []
+        if self._info_builder is None:
+            hints.append("Info bar: open kernel.bin with the header's Import read-only (its texts make the bar).")
+        if subject is None:
+            hints.append("Info bar: open this monster's .dat (its level, HP and elements).")
+        if self.hud is not None and any(b"\x05" in line.data for line in lines):
+            missing = [name for name, ok in (("the FF8 exe (text icon codes)", bool(self.hud.icon_table)),
+                                             ("icon.sp1 (the icons)", self.hud.icons is not None)) if not ok]
+            if missing:
+                hints.append("Element icons drawn as boxes: open " + " and ".join(missing) + ".")
+        if self.hud is not None:
+            too_wide = [line.label for line in lines if self.hud.battle_text_width(line.data) > INFO_TEXT_WIDTH]
+            if too_wide:
+                hints.append(f"Wider than the info bar ({INFO_TEXT_WIDTH} px): " + ", ".join(too_wide) + ".")
+        self.hp_spin.setVisible(self._character)
+        self.info_hint.setText("  ".join(hints))
+        self.info_hint.setVisible(bool(hints))
+        previous = self.info_combo.currentIndex()
+        self._info_lines = lines
+        with QSignalBlocker(self.info_combo):
+            self.info_combo.clear()
+            for index, line in enumerate(lines):
+                self.info_combo.addItem(f"{index + 1}/{len(lines)} {line.label}")
+            self.info_combo.setCurrentIndex(min(max(previous, 0), len(lines) - 1) if lines else -1)
+        self.info_combo.setEnabled(bool(lines))
+        self._refresh_hud()
+
+    def _on_info_line_picked(self, _index):
+        self._info_tick = 0  # a picked line stays its full 45 ticks
+        self._refresh_hud()
+
+    def info_line(self) -> bytes:
+        """The FF8 bytes of the info bar line shown ("" when there is none)."""
+        index = self.info_combo.currentIndex()
+        return self._info_lines[index].data if 0 <= index < len(self._info_lines) else b""
+
+    def _info_paging(self):
+        return (len(self._info_lines) > 1 and self.mode_combo.currentIndex() == MODE_SCAN_SCREEN
+                and (self.animate_check.isChecked() or self.turn_check.isChecked()))
+
+    def _advance_info_bar(self):
+        """MAG_040_SCAN_TextPager: 45 ticks a line, then the next one, wrapping."""
+        if not self._info_paging():
+            return
+        self._info_tick += 1
+        if self._info_tick >= LINE_TICKS:
+            self._info_tick = 0
+            with QSignalBlocker(self.info_combo):
+                self.info_combo.setCurrentIndex((self.info_combo.currentIndex() + 1) % len(self._info_lines))
+            self._refresh_hud()
+
     def _refresh_hud(self):
         if self.hud is None or not self.text_check.isChecked() or self.mode_combo.currentIndex() != MODE_SCAN_SCREEN:
             self._hud_image = None
         else:
-            image = self.hud.render(self._title, self._scan_text)
+            image = self.hud.render(self._title, self._scan_text, self.info_line())
             self._hud_image = QImage(image.tobytes("raw", "RGBA"), image.width, image.height,
                                      QImage.Format.Format_RGBA8888).copy()
         self._place_hud()
@@ -338,6 +508,7 @@ class XuPreviewPanel(QWidget):
             self._spin = (self._spin + SCAN_SPIN_PER_TICK) % 4096
         if self._short_scan_moving():
             self._short_tick += 1
+        self._advance_info_bar()
         self._apply()
 
     # ------------------------------------------------------------- mouse = the pad
