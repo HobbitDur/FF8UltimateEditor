@@ -183,7 +183,7 @@ class FujinWidget(QWidget):
             self.data_label.setText("No data - run Fujin/ResearchScript/dump_magic_effects.py in IDA")
 
     def auto_import_sources(self):
-        return [AutoImportSource(type(self).__name__, ("mag*",), self.import_files)]
+        return [AutoImportSource(type(self).__name__, ("mag*",), self.import_files, selection_only=True)]
 
     def import_files(self, file_names=None):
         key = type(self).__name__
@@ -193,7 +193,7 @@ class FujinWidget(QWidget):
                 directory=self.file_registry.last_folder(key) or os.getcwd())[0]
         if not file_names:
             return
-        self.file_registry.remember_folder(key, os.path.dirname(file_names[0]))
+        self.file_registry.remember_files(key, file_names)
         self.manager.import_files(file_names)
         self._reload_texture()
 

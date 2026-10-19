@@ -24,8 +24,8 @@ class FileToolbarWidget(QWidget):
       file can supply its own save controls or be saved by a tool's save_files() hook.
       Several at once when the tool has several (e.g. Zone reads
       five); disabled when the active tool has none.
-    - Auto-upload: imports the active tool's main and complementary files from remembered
-      folders, including custom multi-file inputs declared by auto_import_sources(). No picker.
+    - Auto-upload: reopens the active tool's last selected main and complementary files,
+      including custom multi-file inputs declared by auto_import_sources(). No picker.
     - Save: calls save_files() when the tool handles tab-specific saves; otherwise writes its
       main file(s) back, and/or its ``save_folder()`` if it has one
       (also used by tools whose save always needs a destination picker, like Alexander's).
@@ -54,7 +54,7 @@ class FileToolbarWidget(QWidget):
 
         self.auto_upload_button = self._icon_button(
             icon_path, 'auto_upload.svg',
-            "Auto-upload: import this tool's main and complementary files from their remembered folders")
+            "Auto-upload: reopen this tool's last selected main and complementary files")
         self.auto_upload_button.setAccessibleName("Auto-upload")
         self.auto_upload_button.clicked.connect(self._auto_upload)
 
@@ -212,8 +212,8 @@ class FileToolbarWidget(QWidget):
             QMessageBox.warning(self, "Auto-upload", "Could not import:\n" + "\n".join(problems))
         elif not opened:
             QMessageBox.information(
-                self, "Auto-upload", "No matching files were found in this tool's remembered folders.\n"
-                "Import files or open a folder once to remember their locations.")
+                self, "Auto-upload", "No previously selected files or expected files were found.\n"
+                "Use Import to select the files you want Auto-upload to reopen.")
 
     def _import_complementary(self):
         # A tool whose side files have no fixed names (Xu's preview models, c0m###.dat) lists its

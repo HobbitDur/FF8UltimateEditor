@@ -252,7 +252,80 @@ def test_custom_imports_use_the_existing_loader(main_window, tmp_path, monkeypat
     main_window.tool_stack.setCurrentWidget(tool)
     sources = main_window._file_toolbar._auto_import_sources()
     source = next(source for source in sources if source.key == key)
+    registry.remember_files(source.selection_key or key, [path])
     paths = source.find_paths(registry)
     assert paths == [path]
     source.loader(paths)
     loader.assert_called_once_with([path])
+
+
+def test_exact_multifile_selection_survives_restart_without_scanning_folder(tmp_path, monkeypatch):
+    ini = str(tmp_path / "settings.ini")
+    registry = FileRegistry(QSettings(ini, QSettings.Format.IniFormat))
+    selected = [touch(tmp_path / "one", "c0m003.dat"), touch(tmp_path / "two", "c0m001.dat")]
+    touch(tmp_path / "one", "c0m004.dat")
+    registry.remember_files("Ifrit battle models", selected)
+    registry.settings.sync()
+    reopened = FileRegistry(QSettings(ini, QSettings.Format.IniFormat))
+    source = AutoImportSource("battle model (.dat)", ("*.dat",), Mock(),
+                              selection_only=True, selection_key="Ifrit battle models")
+    monkeypatch.setattr("Common.autoimport.os.scandir", Mock(side_effect=AssertionError("no scan")))
+    assert source.find_paths(reopened) == selected
+    copy = reopened.last_files("Ifrit battle models")
+    copy.clear()
+    assert reopened.last_files("Ifrit battle models") == selected
+
+
+def test_model_import_with_only_legacy_folder_does_not_load_all_models(tmp_path):
+    registry = FileRegistry()
+    touch(tmp_path, "c0m000.dat")
+    touch(tmp_path, "c0m001.dat")
+    registry.remember_folder("battle model (.dat)", str(tmp_path))
+    source = AutoImportSource("battle model (.dat)", ("*.dat",), Mock(),
+                              selection_only=True, selection_key="Ifrit battle models")
+    assert source.find_paths(registry) == []
+
+
+def test_missing_selected_files_do_not_expand_selection(tmp_path):
+    registry = FileRegistry()
+    surviving = touch(tmp_path, "c0m000.dat")
+    missing = touch(tmp_path, "c0m001.dat")
+    touch(tmp_path, "c0m002.dat")
+    registry.remember_files("models", [surviving, missing])
+    Path(missing).unlink()
+    source = AutoImportSource("models", ("*.dat",), Mock(), selection_only=True)
+    assert source.find_paths(registry) == [surviving]
+    Path(surviving).unlink()
+    assert source.find_paths(registry) == []
+
+
+def test_last_selected_variant_is_preferred_to_canonical_file(tmp_path):
+    registry = FileRegistry()
+    touch(tmp_path, "kernel.bin")
+    selected = touch(tmp_path, "custom_kernel.bin")
+    binding = FileBinding("kernel.bin", registry, file_filter="*kernel*.bin")
+    registry.open_file("kernel.bin", selected)
+    assert AutoImportSource.for_binding(binding).find_paths(registry) == [selected]
+
+
+def test_ifrit_manual_import_saves_only_its_last_pick(main_window, tmp_path, monkeypatch):
+    tool = main_window._ifrit_widget
+    registry = main_window.file_registry
+    paths = [touch(tmp_path, name) for name in ("c0m000.dat", "c0m001.dat", "c0m002.dat")]
+    loader = Mock()
+    monkeypatch.setattr(tool, "_append_to_session", loader)
+    tool.open_files(paths[:2])
+    assert registry.last_files("Ifrit battle models") == paths[:2]
+    tool.open_files(paths[2:])
+    assert registry.last_files("Ifrit battle models") == paths[2:]
+    # Xu shares the model directory, but keeps a separate selected set.
+    registry.remember_files("Xu battle models", paths[:1])
+    assert tool.auto_import_sources()[0].find_paths(registry) == paths[2:]
+
+
+def test_cancelled_import_does_not_clear_previous_selection(tmp_path):
+    registry = FileRegistry()
+    selected = touch(tmp_path, "c0m000.dat")
+    registry.remember_files("models", [selected, selected])
+    registry.remember_files("models", [])
+    assert registry.last_files("models") == [selected]

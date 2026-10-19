@@ -257,7 +257,7 @@ class AlexanderWidget(QWidget):
 
     def auto_import_sources(self):
         return [AutoImportSource(self.REGISTRY_NAME, ("a0stg*.x",), self.open_files,
-                                 folder=self._last_dir())]
+                                 selection_only=True)]
 
     def open_files(self, file_paths=None):
         """Open one or more battle stage files at once (the shared header Import button calls
@@ -269,7 +269,7 @@ class AlexanderWidget(QWidget):
         if not file_paths:
             return
         self._save_last_dir(file_paths[0])
-        self.file_registry.remember_folder(self.REGISTRY_NAME, os.path.dirname(file_paths[0]))
+        self.file_registry.remember_files(self.REGISTRY_NAME, file_paths)
         names = self.manager.open_files(file_paths)
         self._stage_names = names
         self.stage_list.blockSignals(True)

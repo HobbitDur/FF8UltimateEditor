@@ -26,6 +26,34 @@ class FileRegistry(QObject):
         self.settings = settings
         self._last_folders = {}  # in-memory fallback when used without QSettings (tools alone)
         self._last_files = {}
+        self._last_selections = {}
+
+    def last_files(self, file_key):
+        """Last explicit selection, or None when this input has no saved selection yet."""
+        if self.settings is not None:
+            key = f"last_files/{file_key}"
+            return self.settings.value(key, [], type=list) if self.settings.contains(key) else None
+        paths = self._last_selections.get(file_key)
+        return list(paths) if paths is not None else None
+
+    def remember_files(self, file_key, paths):
+        """Persist the exact last selection, preserving order and files in different folders."""
+        selected, seen = [], set()
+        for path in paths:
+            absolute = os.path.abspath(path)
+            normalized = os.path.normcase(absolute)
+            if normalized not in seen:
+                selected.append(absolute)
+                seen.add(normalized)
+        if not selected:
+            return  # cancelling a picker must not erase the previous selection
+        self.remember_folder(file_key, os.path.dirname(selected[0]))
+        if self.settings is not None:
+            self.settings.setValue(f"last_files/{file_key}", selected)
+            self.settings.setValue(f"last_file/{file_key}", selected[0])
+        else:
+            self._last_selections[file_key] = selected
+            self._last_files[file_key] = selected[0]
 
     def last_file(self, file_key):
         """Last selected path, used to disambiguate wildcard imports across sessions."""
@@ -63,11 +91,7 @@ class FileRegistry(QObject):
         """Set the file every tool using file_name must now work on."""
         # Summary entries for multi-file tools are labels, not actual file paths.
         if os.path.isfile(file_path):
-            self.remember_folder(file_name, os.path.dirname(os.path.abspath(file_path)))
-            if self.settings is not None:
-                self.settings.setValue(f"last_file/{file_name}", os.path.abspath(file_path))
-            else:
-                self._last_files[file_name] = os.path.abspath(file_path)
+            self.remember_files(file_name, [file_path])
         self.paths[file_name] = file_path
         self.file_changed.emit(file_name)
 

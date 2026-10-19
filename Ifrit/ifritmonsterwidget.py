@@ -135,7 +135,9 @@ class _ClosableItemDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         size = super().sizeHint(option, index)
-        size.setWidth(size.width() + self.CROSS_BOX + 2 * self.MARGIN)
+        # Rows fill the viewport; long file names must not push their cross off-screen.
+        size.setWidth(min(size.width() + self.CROSS_BOX + 2 * self.MARGIN,
+                          self._list.viewport().width()))
         size.setHeight(max(size.height(), self.CROSS_BOX + 4))
         return size
 
@@ -799,6 +801,9 @@ class IfritMonsterWidget(QWidget):
 
         # ── Loaded-files side list ───────────────────────────────────
         self._file_list = QListWidget()
+        self._file_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._file_list.setResizeMode(QListWidget.ResizeMode.Adjust)
+        self._file_list.setTextElideMode(Qt.TextElideMode.ElideRight)
         self._file_list.setToolTip("Files loaded in memory. Click one to edit it; a leading * "
                                    "marks a file with unsaved changes. The cross (or a middle-click) "
                                    "closes a file.")
@@ -859,7 +864,8 @@ class IfritMonsterWidget(QWidget):
 
     def auto_import_sources(self):
         return [AutoImportSource("battle model (.dat)",
-                                 ("c0m*.dat", "d?c*.dat", "d?w*.dat"), self.open_files)]
+                                 ("*.dat",), self.open_files, selection_only=True,
+                                 selection_key="Ifrit battle models")]
 
     def open_files(self, paths=None):
         """Open one or more model .dat files at once (shared header Import routes here). Non-model
@@ -883,6 +889,7 @@ class IfritMonsterWidget(QWidget):
                 "skipped:\n\n" + "\n".join(skipped))
         if not good:
             return
+        self.file_registry.remember_files("Ifrit battle models", good)
         # Add to the current session rather than replacing it: opening more models keeps the
         # ones already open (and their unsaved edits) and appends the new ones to the list.
         self._append_to_session(good)
@@ -900,6 +907,7 @@ class IfritMonsterWidget(QWidget):
         """Load a single .dat (replaces the session with just it)."""
         if path:
             self._file_dialog_folder = os.path.dirname(path)
+            self.file_registry.remember_files("Ifrit battle models", [path])
             self._build_session([path])
 
     def _read_file_entries(self, paths):

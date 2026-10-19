@@ -156,7 +156,7 @@ class ShumiTranslator(QWidget):
         folder = self.file_registry.last_folder("ShumiTranslator text files")
         sources = [AutoImportSource.for_binding(binding, folder) for binding in self._bindings]
         sources.append(AutoImportSource("ShumiTranslator battle text", ("c0m[0-9][0-9][0-9].dat",),
-                                        self.open_files, folder=folder))
+                                        self.open_files, selection_only=True))
         return sources
 
     def open_files(self, paths=None):
@@ -187,7 +187,7 @@ class ShumiTranslator(QWidget):
                 unknown.append(name)
         self.__open_c0m_set(c0m_paths)
         if c0m_paths:
-            self.file_registry.remember_folder("ShumiTranslator battle text", os.path.dirname(c0m_paths[0]))
+            self.file_registry.remember_files("ShumiTranslator battle text", c0m_paths)
         if unknown:
             QMessageBox.warning(self, "ShumiTranslator - unrecognised files",
                                 "Skipped, ShumiTranslator doesn't read these:<br>" + "<br>".join(unknown))

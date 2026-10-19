@@ -312,7 +312,8 @@ class XuWidget(QWidget):
         sources.extend(AutoImportSource.for_binding(binding)
                        for binding in self.file_bindings() if binding is not self.binding)
         sources.append(AutoImportSource(MODEL_FOLDER_KEY,
-                                        ("c0m*.dat", "d?c*.dat", "d?w*.dat"), self.add_models))
+                                        ("c0m*.dat", "d?c*.dat", "d?w*.dat"), self.add_models,
+                                        selection_only=True, selection_key="Xu battle models"))
         return sources
 
     def complementary_entries(self):
@@ -792,6 +793,7 @@ class XuWidget(QWidget):
                 added += 1
         if paths:
             self.file_registry.remember_folder(MODEL_FOLDER_KEY, os.path.dirname(paths[0]))
+            self.file_registry.remember_files("Xu battle models", paths)
         if added:
             self._follow_model(self.current_row())
 

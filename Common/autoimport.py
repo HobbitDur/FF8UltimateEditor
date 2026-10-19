@@ -10,8 +10,8 @@ from typing import Callable
 class AutoImportSource:
     """One independent import, with the same loader used by a tool's manual import.
 
-    Only the remembered directory is searched. Single-file inputs prefer their exact
-    FF8 name, then the last selected file; multiple matches otherwise need a manual pick.
+    Saved selections are reopened exactly, skipping missing files. Single-file inputs
+    without selection history can discover their expected FF8 name in the remembered folder.
     """
 
     key: str
@@ -21,6 +21,8 @@ class AutoImportSource:
     folder: str = ""
     exact_name: str = ""
     recursive: bool = False
+    selection_only: bool = False
+    selection_key: str = ""
 
     @classmethod
     def for_binding(cls, binding, folder=""):
@@ -33,6 +35,16 @@ class AutoImportSource:
                    folder=folder, exact_name=binding.file_name)
 
     def find_paths(self, registry):
+        selected = registry.last_files(self.selection_key or self.key)
+        if selected is None and not self.multiple and registry.last_file(self.key):
+            selected = [registry.last_file(self.key)]  # selections saved by older versions
+        if selected is not None:
+            paths = [path for path in selected if os.path.isfile(path)
+                     and any(fnmatchcase(os.path.basename(path).lower(), pattern.lower())
+                             for pattern in self.patterns)]
+            return paths if self.multiple else paths[:1]
+        if self.selection_only:
+            return []  # a legacy folder alone must never expand into hundreds of model files
         folder = registry.last_folder(self.key) or self.folder
         if not folder:
             return []
