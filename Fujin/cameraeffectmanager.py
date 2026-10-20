@@ -21,6 +21,11 @@ the track (the VM writes its variables elsewhere), so a track works wherever it 
 Edits keep every track at its exe size (a script no longer than the exe's, filled up when shorter;
 the same keyframes and header): the exe has no free room after a track. They are saved as a .hext that FFNx applies to the running game; the
 .hext only fits the language of the exe it was made from, so it says which one it is for.
+
+One effect's track can also be exported as a .cam file: the track bytes as the exe stores them,
+which FFNx loads from <direct_mode_path>/battle/effect_camera/effect_NNN.cam instead of the exe's
+(julianxhokaxhiu/FFNx#1047, docs/ff8/mods/effect_camera.md). Tracks are the same in every
+language, so a .cam works with every exe.
 """
 import json
 import re
@@ -39,6 +44,9 @@ IMAGE_BASE = 0x400000
 HEADER = struct.Struct("<4H")
 SCRIPT_OFFSET = 8
 HEXT_BYTES_PER_LINE = 16
+CAM_POINTER_COUNT = 2           # every track: script + keyframe collection
+CAM_MAX_SIZE = 0xFFFF           # the header size field is a u16
+CAM_FFNX_FOLDER = "direct/battle/effect_camera"  # where FFNx reads them, in the game folder
 
 # exe.json "lang" value keys -> offset key prefix (None = English), like the other exe readers
 _EXE_LANGUAGES = {"english_value": None, "french_value": "fr", "italian_value": "it",
@@ -155,6 +163,39 @@ class CameraTrack:
         return runs
 
 
+def cam_file_name(effect_id: int) -> str:
+    """The name FFNx looks for: effect_NNN.cam, NNN = the effect id (1 = Cure)."""
+    return f"effect_{effect_id:03d}.cam"
+
+
+def cam_track_error(data: bytes):
+    """Why FFNx would ignore this .cam file, or None when it loads it. The same checks as
+    ff8_effect_camera_is_valid (FFNx src/ff8/battle/effect_camera.cpp)."""
+    if not 0 < len(data) <= CAM_MAX_SIZE:
+        return "file too big" if data else "file too small"
+    if len(data) < HEADER.size:
+        return "file too small"
+    count, script_offset, keyframe_offset, size = HEADER.unpack_from(data)
+    if count != CAM_POINTER_COUNT or script_offset != SCRIPT_OFFSET:
+        return "bad header"
+    if size != len(data):
+        return "header size does not match the file size"
+    if keyframe_offset <= script_offset or keyframe_offset + 2 > size:
+        return "keyframe offset out of range"
+    collection_size = size - keyframe_offset
+    set_count = struct.unpack_from("<H", data, keyframe_offset)[0]
+    table_size = 2 + 2 * set_count + 2
+    if set_count == 0 or table_size > collection_size:
+        return "bad keyframe set count"
+    if struct.unpack_from("<H", data, keyframe_offset + table_size - 2)[0] != collection_size:
+        return "keyframe collection size does not match the file size"
+    for index in range(set_count):
+        set_offset = struct.unpack_from("<H", data, keyframe_offset + 2 + 2 * index)[0]
+        if not table_size <= set_offset < collection_size:
+            return "keyframe set offset out of range"
+    return None
+
+
 class CameraEffectManager:
     def __init__(self, game_data):
         self.game_data = game_data
@@ -258,6 +299,16 @@ class CameraEffectManager:
                              f"{track.script_room}: remove {-filler} byte(s)")
         track.script = script + b"\x01" * (filler % 2) + b"\x09\x00" * (filler // 2)
         return filler
+
+    # ------------------------------------------------------------------ .cam (FFNx)
+    @staticmethod
+    def cam_bytes(track: CameraTrack) -> bytes:
+        """The track as it is now (edits included), as an FFNx effect_NNN.cam file."""
+        data = track.to_bytes()
+        error = cam_track_error(data)
+        if error is not None:
+            raise ValueError(f"effect {track.effect_id}: FFNx would ignore this track ({error})")
+        return data
 
     # ------------------------------------------------------------------ hext
     def hext_text(self) -> str:

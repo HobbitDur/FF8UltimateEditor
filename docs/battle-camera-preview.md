@@ -95,6 +95,10 @@ C3 1C-22 use it modulo 2-8). The line under the inputs names the chosen animatio
 runs it again; a slot's **▶ Preview** plays that slot as is. Keyframe edits replay at once
 from the same tick.
 
+**Export .cam…** saves the selected effect's track, edits included, as `effect_NNN.cam` for
+FFNx (`direct/battle/effect_camera/` in the game folder): FFNx plays it instead of the exe's
+track, with no .hext and in every exe language. The file is checked with FFNx's own rules first.
+
 ## Scope
 
 This is a preview of the selected DAT camera animation with manual or encounter placement,

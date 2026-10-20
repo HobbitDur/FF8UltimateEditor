@@ -7,12 +7,13 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWid
                              QMessageBox, QFileDialog)
 
 from Common.filebinding import FileBinding
-from Fujin.cameraeffectmanager import CameraEffectManager
+from Fujin.cameraeffectmanager import CAM_FFNX_FOLDER, CameraEffectManager, cam_file_name
 from Fujin.cameraeffectpreview import CameraEffectPreview
 from SmallWidget.listsearchbar import ListSearchBar
 from Watts.cameracollectionwidget import CameraCollectionWidget
 
 HEXT_FOLDER_KEY = "camera effect .hext"
+CAM_FOLDER_KEY = "camera effect .cam"
 
 _NO_TRACK_TEXT = {
     "file": "This effect has no camera track in the exe: it plays the camera stored in its own "
@@ -64,9 +65,19 @@ class CameraEffectEditorWidget(QWidget):
         self.reset_button = QPushButton("Reset to the exe values")
         self.reset_button.setToolTip("Undo every change made to this effect's camera track")
         self.reset_button.clicked.connect(self._reset_selected)
+        self.export_cam_button = QPushButton("Export .cam…")
+        self.export_cam_button.setToolTip(
+            "Save this effect's camera track (with its edits) as an FFNx camera file, effect_NNN.cam.\n"
+            f"FFNx plays it instead of the exe's from the game folder's {CAM_FFNX_FOLDER}/ - works with\n"
+            "every exe language, and needs no .hext.")
+        self.export_cam_button.clicked.connect(lambda: self.export_cam())
         info_row = QHBoxLayout()
         info_row.addWidget(self.info_label, 1)
-        info_row.addWidget(self.reset_button, 0, Qt.AlignmentFlag.AlignTop)
+        info_buttons = QVBoxLayout()
+        info_buttons.addWidget(self.reset_button)
+        info_buttons.addWidget(self.export_cam_button)
+        info_buttons.addStretch(1)
+        info_row.addLayout(info_buttons)
 
         self.tabs = QTabWidget()
         self.keyframe_scroll = QScrollArea()
@@ -199,6 +210,33 @@ class CameraEffectEditorWidget(QWidget):
         self.file_registry.remember_folder(HEXT_FOLDER_KEY, os.path.dirname(path))
         return True
 
+    def export_cam(self, path=None) -> bool:
+        """Write the selected effect's track as an FFNx effect_NNN.cam file."""
+        effect_id = self._selected_effect()
+        track = self.manager.track(effect_id)
+        if track is None:
+            return False
+        try:
+            data = self.manager.cam_bytes(track)  # checked before anything is written
+        except ValueError as error:
+            QMessageBox.warning(self, "Camera effect editor", f"Cannot export the camera:\n{error}")
+            return False
+        if not path:
+            default = os.path.join(self.file_registry.last_folder(CAM_FOLDER_KEY) or os.getcwd(),
+                                   cam_file_name(effect_id))
+            path = QFileDialog.getSaveFileName(
+                self, f"Export the camera of effect {effect_id} for FFNx ({CAM_FFNX_FOLDER}/)",
+                default, "FFNx effect camera (*.cam)")[0]
+        if not path:
+            return False
+        with open(path, "wb") as file:
+            file.write(data)
+        self.file_registry.remember_folder(CAM_FOLDER_KEY, os.path.dirname(path))
+        if os.path.basename(path).lower() != cam_file_name(effect_id):
+            self.status_label.setText(self.status_label.text() + f" - {os.path.basename(path)} written: "
+                                      f"FFNx only reads it named {cam_file_name(effect_id)}.")
+        return True
+
     # ------------------------------------------------------------------ list
     def _fill_list(self):
         row = self.effect_list.currentRow()
@@ -282,6 +320,7 @@ class CameraEffectEditorWidget(QWidget):
 
     def _set_editors_enabled(self, enabled):
         self.reset_button.setEnabled(enabled)
+        self.export_cam_button.setEnabled(enabled)
         self.apply_script_button.setEnabled(enabled)
         self.script_editor.setReadOnly(not enabled)
 
