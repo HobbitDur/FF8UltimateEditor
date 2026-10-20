@@ -162,14 +162,25 @@ class MagFile:
                 self.warnings.append("Camera header is outside the file")
 
     def _tim(self):
-        self._mark(0, "TIM header", "header", [MagField("Magic", 0), MagField("Flags / depth", 4)])
-        if len(self.data) < 8:
+        # A .tim can pack several complete TIMs back to back (e.g. Carbuncle's body atlas).
+        # Parse each image independently so both its palette and pixels can be edited.
+        end = self._tim_one(0, "")
+        index = 1
+        while end is not None and self.data[end:end+4] == b"\x10\0\0\0":
+            end = self._tim_one(end, f"TIM {index} ")
+            index += 1
+        if end is not None and end < len(self.data):
+            self._mark(end, "Trailing data")
+
+    def _tim_one(self, base, prefix):
+        self._mark(base, prefix+"TIM header", "header", [MagField("Magic", base), MagField("Flags / depth", base+4)], tim_offset=base)
+        if len(self.data)-base < 8:
             self.warnings.append("Truncated TIM header")
             return
-        flags = self._u32(4)
+        flags = self._u32(base+4)
         if flags & 7 > 3:
             self.warnings.append("Unsupported TIM depth")
-        p = 8
+        p = base+8
         for kind in (("CLUT", "palette"), ("Image", "pixels")) if flags & 8 else (("Image", "pixels"),):
             name, typ = kind
             if p+12 > len(self.data):
@@ -179,7 +190,7 @@ class MagFile:
             size = self._u32(p)
             fields = [MagField("Block byte size", p)] + [MagField(n, p+4+2*i, "H") for i, n in enumerate(
                 ("VRAM X", "VRAM Y", "Width (16-bit words)", "Height"))]
-            self._mark(p, name + " header", "tim_block", fields)
+            self._mark(p, prefix+name + " header", "tim_block", fields, tim_offset=base)
             if size < 12 or p+size > len(self.data):
                 self.warnings.append(f"Invalid TIM {name} block size")
                 self._mark(p+12, name + " data (truncated)")
@@ -187,10 +198,9 @@ class MagFile:
             width, height = struct.unpack_from("<HH", self.data, p+8)
             if 12+width*height*2 != size:
                 self.warnings.append(f"TIM {name}: dimensions and block length differ")
-            self._mark(p+12, name + " data", typ, width=width, height=height, depth=flags & 7)
+            self._mark(p+12, prefix+name + " data", typ, width=width, height=height, depth=flags & 7, tim_offset=base)
             p += size
-        if p < len(self.data):
-            self._mark(p, "Trailing data")
+        return p
 
     def _indexed(self):
         """Validated count/directories, with an optional explicit end offset."""
@@ -224,6 +234,20 @@ class MagFile:
                                note="Validated directory span; payload-specific semantics are not inferred.")
             if end < len(self.data):
                 self._mark(end, "Trailing data")
+            # Standard four-section battle creature model, used both in MAG files and exe data.
+            # The skeleton header is 16 bytes, followed by 48 bytes per bone.
+            if n == 4 and variant == "offsets_end" and offsets[0]+2 <= offsets[1]:
+                bones = self.data[offsets[0]]
+                if bones > 0 and offsets[1]-offsets[0] == 16+48*bones:
+                    for i, (label, kind, field_name, fmt) in enumerate((
+                            ("Skeleton", "skeleton", "Bone count", "B"),
+                            ("Geometry", "geometry", "Object count", "I"),
+                            ("Animation", "animation", "Animation count", "I"),
+                            ("Model trailer", "model_trailer", "", "I"))):
+                        if offsets[i] < (offsets[i+1] if i+1 < n else end):
+                            fields = [MagField(field_name, offsets[i], fmt)] if field_name else []
+                            self._mark(offsets[i], label, kind, fields,
+                                       note="Standard battle creature model section.")
             return True
         return False
 
@@ -256,7 +280,7 @@ class MagFile:
             fields = [MagField(n, base+4*i) for i, n in enumerate(("Model byte size", "Skeleton offset",
                       "Geometry offset", "Animation offset", "Extra / variant field", "Flags / variant field", "End offset"))]
             result.append(MagSection(section.name+" header", base, base+skel, "model_header", fields))
-            for name, a, b, kind, fmt in (("Skeleton", skel, geom, "skeleton", "H"),
+            for name, a, b, kind, fmt in (("Skeleton", skel, geom, "skeleton", "B"),
                                          ("Geometry", geom, anim, "geometry", "I"),
                                          ("Animation", anim, size, "animation", "I")):
                 result.append(MagSection(section.name+" "+name, base+a, base+b, kind,
@@ -272,6 +296,30 @@ class MagFile:
 
     def fields_for(self, section):
         """Named numeric fields, generated only when a section is opened."""
+        if section.kind == "skeleton" and section.size >= 16:
+            base = section.start
+            count = self.data[base]
+            fields = [MagField("Bone count", base, "B"), MagField("Extra data flag", base+1, "B")]
+            fields += [MagField(name, base+offset, fmt) for name, offset, fmt in (
+                ("Header unknown 0", 2, "H"), ("Header unknown 1", 4, "H"),
+                ("Header unknown 2", 6, "H"), ("Scale X", 8, "h"), ("Scale Y", 10, "h"),
+                ("Scale Z", 12, "h"), ("Header unknown 3", 14, "H"))]
+            if 16+48*count <= section.size:
+                for bone in range(count):
+                    fields += [MagField(f"Bone {bone} {name}", base+16+48*bone+offset, fmt)
+                               for name, offset, fmt in (("parent", 0, "H"), ("length", 2, "h"),
+                                   ("rotation X", 4, "h"), ("rotation Y", 6, "h"), ("rotation Z", 8, "h"))]
+            return fields
+        if section.kind == "animation" and section.size >= 4:
+            base, count = section.start, self._u32(section.start)
+            fields = [MagField("Animation count", base)]
+            if count <= min(4096, (section.size-4)//4):
+                for index in range(count):
+                    fields.append(MagField(f"Animation {index} offset", base+4+4*index))
+                    offset = self._u32(base+4+4*index)
+                    if 4+4*count <= offset < section.size:
+                        fields.append(MagField(f"Animation {index} frame count", base+offset, "B"))
+            return fields
         if section.fields:
             return section.fields
         if section.kind == "palette":

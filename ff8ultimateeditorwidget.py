@@ -48,7 +48,6 @@ from SolomonRing.solomonringwidget import SolomonRingWidget
 from Fujin.fujinwidget import FujinWidget
 from Watts.wattswidget import WattsWidget
 from Xu.xuwidget import XuWidget
-from Laguna.lagunawidget import LagunaWidget
 
 
 class FF8UltimateEditorWidget(QWidget):
@@ -92,10 +91,9 @@ class FF8UltimateEditorWidget(QWidget):
             "Joker (sp2 sprite editor)",
             "Piet (mtmag.bin editor)",
             "Zone (mmag.bin / mmag2.bin editor)",
-            "Fujin (Effect explorer)",
+            "Fujin (Battle effect editor)",
             "Watts (r0win.dat victory editor)",
             "Xu (Scan camera editor)",
-            "Laguna (MAG section editor)",
             "Chocoboy (World map script editor)",
             "Hyne (.ff8 save editor)"
         ]
@@ -103,12 +101,13 @@ class FF8UltimateEditorWidget(QWidget):
         # Category = the game folder a tool's main file lives in (Battle/Field/Menu/Main), or a
         # catch-all for tools that don't map to exactly one folder: Multi (several folders - Cid's
         # exe+wmset, ShumiTranslator's many file types) and Other (no raw game file at all - Hyne's
-        # save file lives outside the install, Fujin reads an IDA research dump and the exe's camera
-        # tracks). Every entry must be an exact HOBBIT_OPTION_ITEMS string (checked below) so a typo
+        # save file lives outside the install). Fujin groups battle-effect resources from the
+        # executable and extracted archives. Every entry must be an exact HOBBIT_OPTION_ITEMS string so a typo
         # fails loudly, not silently.
         self.CATEGORY_DEFINITIONS = [
             ("Battle", ["Ifrit (3D/Stat/AI/Seq/Texture)", "Alexander (Battle stage viewer)",
-                        "Watts (r0win.dat victory editor)", "Xu (Scan camera editor)"]),
+                        "Watts (r0win.dat victory editor)", "Xu (Scan camera editor)",
+                        "Fujin (Battle effect editor)"]),
             ("Field", ["Seed (Field model viewer)", "CCGroup (Card value editor)"]),
             ("Menu", ["Shiva (mngrp.bin editor: refine, SeeD tests, sprites)", "Siren (price.bin editor)",
                       "Kadowaki (Item menu editor)", "Minimog (icon.sp1 editor)",
@@ -119,8 +118,7 @@ class FF8UltimateEditorWidget(QWidget):
             ("Main", ["SolomonRing (kernel.bin editor)", "Quezacotl (init.out editor)",
                       "Julia (Sound editor)"]),
             ("Multi", ["Cid (Draw editor)", "ShumiTranslator(All text editor)"]),
-            ("Other", ["Hyne (.ff8 save editor)", "Fujin (Effect explorer)",
-                       "Laguna (MAG section editor)"]),
+            ("Other", ["Hyne (.ff8 save editor)"]),
         ]
         self.HIDDEN_CATEGORIES = set()  # every category has a tool and is shown in the selector
 
@@ -266,7 +264,6 @@ class FF8UltimateEditorWidget(QWidget):
         self._fujin_widget = FujinWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._watts_widget = WattsWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._xu_widget = XuWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
-        self._laguna_widget = LagunaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._chocoboy_widget = ChocoboyWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._hyne_widget = HyneWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
 
@@ -294,7 +291,6 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._fujin_widget) # Index 21
         self.tool_stack.addWidget(self._watts_widget) # Watts (r0win.dat)
         self.tool_stack.addWidget(self._xu_widget) # Xu (battle_scan_cameras.bin)
-        self.tool_stack.addWidget(self._laguna_widget) # Laguna (MAG sections and cinematic scripts)
         self.tool_stack.addWidget(self._chocoboy_widget) # Chocoboy (wmsetxx.obj world map scripts)
         self.tool_stack.addWidget(self._hyne_widget) # Hyne (.ff8 save editor), keep last in HOBBIT_OPTION_ITEMS
         self._piet_widget.view_in_zone_requested.connect(self._view_mmag_entry_in_zone)
@@ -315,7 +311,7 @@ class FF8UltimateEditorWidget(QWidget):
                 install_closed_file_view(tool)
         install_closed_file_view(self._zone_widget.mmag_widget)
         install_closed_file_view(self._zone_widget.mmag2_widget)
-        install_closed_file_view(self._fujin_widget.camera_editor,  # its Magic explorer tab needs no exe
+        install_closed_file_view(self._fujin_widget.camera_editor,
                                  [self._fujin_widget.camera_editor.exe_binding])
         install_closed_file_view(self._ccgroup_widget.scroll_widget,
                                  [self._ccgroup_widget.exe_binding])

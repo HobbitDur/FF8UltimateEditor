@@ -39,7 +39,7 @@ class CameraEffectEditorWidget(QWidget):
 
     modified_changed = pyqtSignal()
 
-    def __init__(self, game_data, file_registry):
+    def __init__(self, game_data, file_registry, embedded=False):
         QWidget.__init__(self)
         self.file_registry = file_registry
         self.manager = CameraEffectManager(game_data)
@@ -102,6 +102,8 @@ class CameraEffectEditorWidget(QWidget):
         splitter.addWidget(self.effect_search.column)
         splitter.addWidget(details)
         splitter.addWidget(self.preview)
+        if embedded:
+            self.effect_search.column.hide()
         splitter.setStretchFactor(1, 1)
         splitter.setStretchFactor(2, 1)
 
@@ -297,6 +299,7 @@ class CameraEffectEditorWidget(QWidget):
             if self.effect_list.item(row).data(Qt.ItemDataRole.UserRole) == effect_id:
                 self.effect_list.setCurrentRow(row)
                 return
+        self.effect_list.setCurrentRow(-1)
 
     # ------------------------------------------------------------------ details
     def _update_status(self):
@@ -315,6 +318,10 @@ class CameraEffectEditorWidget(QWidget):
     def _show_selected(self, *_args):
         effect_id = self._selected_effect()
         if effect_id is None:
+            self._set_editors_enabled(False)
+            self._set_collection_widget(None)
+            self._set_script_texts("", "")
+            self.preview.set_track(None)
             return
         name = self.manager.effect_names.get(effect_id, "")
         track = self.manager.track(effect_id)

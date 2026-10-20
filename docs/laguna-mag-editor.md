@@ -1,14 +1,15 @@
-# Laguna: MAG section editor
+# MAG section editing inside Fujin
 
-Laguna opens MAG/MA8 files by their contents, including `.00`, `.01`, streamed numeric parts,
+The [Fujin effect workspace](fujin-effects.md) opens MAG/MA8 files by their contents, including `.00`, `.01`, streamed numeric parts,
 TIM textures with any suffix, indexed model/animation containers, SCOT/AKAO audio and undecoded
 data. The bundled vanilla catalog contains 790 file names. **Import** also accepts additional
-mod files; **Open folder** discovers MAG/MA8 names recursively. The searchable **File** selector
-keeps each loaded file's edits and undo history independently.
+mod files; **Open folder** discovers MAG/MA8 names recursively. **Files / sections → Source**
+keeps each loaded file's edits and undo history independently. Laguna is the internal document/
+cinematic component; it no longer has a separate main-window entry.
 
 ## Sections
 
-The **Sections** tab contains one tab per mapped section. Pages are built when selected, and
+The **Files / sections** page contains one tab per mapped section. Pages are built when selected, and
 large field/byte tables are paged rather than allocating a widget for every byte.
 
 - **Header/directories:** named offsets, counts and packed table entries.
@@ -69,7 +70,7 @@ byte outside the embedded track.
 CLI access works for every format:
 
 ```powershell
-python cli.py laguna info -i extracted_files/magic/MAG230_B.00
-python cli.py laguna section -i extracted_files/magic/MAG230_B.00 --at 0x870 --export camera.bin
-python cli.py laguna section -i extracted_files/magic/MAG230_B.00 --at 0x870 --replace camera.bin -o edited/MAG230_B.00
+python cli.py fujin info -i extracted_files/magic/MAG230_B.00
+python cli.py fujin section -i extracted_files/magic/MAG230_B.00 --at 0x870 --export camera.bin
+python cli.py fujin section -i extracted_files/magic/MAG230_B.00 --at 0x870 --replace camera.bin -o edited/MAG230_B.00
 ```

@@ -129,12 +129,12 @@ def test_gf_from_file_name():
 @needs_files
 def test_cli_info_and_disasm():
     for command in (["info"], ["disasm", "-x"]):
-        result = subprocess.run([sys.executable, "cli.py", "laguna", command[0], "-i",
+        result = subprocess.run([sys.executable, "cli.py", "fujin", command[0], "-i",
                                  str(MAGIC / "MAG200_B.00")] + command[1:],
                                 cwd=PROJECT_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0, result.stderr
     assert "0 decode errors" in subprocess.run(
-        [sys.executable, "cli.py", "laguna", "info", "-i", str(MAGIC / "MAG200_B.00")],
+        [sys.executable, "cli.py", "fujin", "info", "-i", str(MAGIC / "MAG200_B.00")],
         cwd=PROJECT_ROOT, capture_output=True, text=True, encoding="utf-8").stdout
 
 

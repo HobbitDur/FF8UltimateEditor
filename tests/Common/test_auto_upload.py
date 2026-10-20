@@ -237,7 +237,7 @@ def test_xu_auto_upload_sources_include_reference_and_all_preview_inputs(main_wi
     ("_alexander_widget", "open_files", "a0stg000.x", "Alexander battle stages"),
     ("_shumi_translator_widget", "open_files", "c0m000.dat", "ShumiTranslator battle text"),
     ("_xu_widget", "add_models", "d0c000.dat", "battle model (.dat)"),
-    ("_fujin_widget", "import_files", "mag001.tim", "FujinWidget"),
+    ("_fujin_widget", "import_paths", "mag001.tim", "Fujin effect files"),
 ])
 def test_custom_imports_use_the_existing_loader(main_window, tmp_path, monkeypatch,
                                               widget_name, method, filename, key):
@@ -248,9 +248,7 @@ def test_custom_imports_use_the_existing_loader(main_window, tmp_path, monkeypat
     registry.remember_folder(key, str(tmp_path))
     path = touch(tmp_path, filename)
     loader = Mock()
-    # Fujin's magic files are loaded by its Magic explorer tab
-    loader_owner = tool.magic_explorer if widget_name == "_fujin_widget" else tool
-    monkeypatch.setattr(loader_owner, method, loader)
+    monkeypatch.setattr(tool, method, loader)
     main_window.tool_stack.setCurrentWidget(tool)
     sources = main_window._file_toolbar._auto_import_sources()
     source = next(source for source in sources if source.key == key)

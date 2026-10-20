@@ -1,0 +1,654 @@
+{
+  "schema_version": 1,
+  "exe_sha256": "064d466b5fe2ba901fd44abf19f37c0fd6a2db40aabd95c9e5959195b6589570",
+  "language": "EN",
+  "provenance": "Named IDA model/TIM symbols, validated directories and TIM dimensions; addresses map to file offset VA - 0x400000 in this PE.",
+  "resources": [
+    {
+      "id": "Carbuncle_OpeningHeight",
+      "effect_ids": [
+        278
+      ],
+      "label": "Opening Y offset from floor",
+      "fmt": "i",
+      "address": "0x681D35",
+      "instruction_address": "0x681D34",
+      "instruction_hex": "05 B8 0B 00 00",
+      "note": "Tick 1: camera Y = floor + this value; original 3000.",
+      "kind": "camera_parameter",
+      "file_offset": 2628917,
+      "size": 4,
+      "sha256": "0521fc68c1190727bec26a9b3811dc0a0504d360ec040e1d7b228f4412ef0d5a"
+    },
+    {
+      "id": "Carbuncle_OpeningZ",
+      "effect_ids": [
+        278
+      ],
+      "label": "Opening camera Z",
+      "fmt": "h",
+      "address": "0x681D5E",
+      "instruction_address": "0x681D57",
+      "instruction_hex": "66 C7 05 F2 B7 B8 00 60 F0",
+      "note": "Tick 1: signed Z coordinate; original -4000.",
+      "kind": "camera_parameter",
+      "file_offset": 2628958,
+      "size": 2,
+      "sha256": "6a693b25d82a78c957812951129594b0ee44c2796448e0ca53ccfe45892f04be"
+    },
+    {
+      "id": "Carbuncle_OpeningRadius",
+      "effect_ids": [
+        278
+      ],
+      "label": "Opening orbit radius",
+      "fmt": "i",
+      "address": "0x681D93",
+      "instruction_address": "0x681D92",
+      "instruction_hex": "68 AA 0F 00 00",
+      "note": "Ticks 1\u201336: CameraSwingAboutLookAt radius; original 4010.",
+      "kind": "camera_parameter",
+      "file_offset": 2629011,
+      "size": 4,
+      "sha256": "85f44a0f58c8b501914f7995c4bf6043b5271a0f2212dd7dbe6577b2d43cd8db"
+    },
+    {
+      "id": "Carbuncle_MiddleRadius",
+      "effect_ids": [
+        278
+      ],
+      "label": "Middle orbit radius",
+      "fmt": "i",
+      "address": "0x681DE2",
+      "instruction_address": "0x681DE1",
+      "instruction_hex": "68 A0 0F 00 00",
+      "note": "Ticks 86\u2013109: CameraSwingAboutLookAt radius; original 4000.",
+      "kind": "camera_parameter",
+      "file_offset": 2629090,
+      "size": 4,
+      "sha256": "0773aa198bd368d4c283b5a1e666bf03fec9b4649c7d70ed7ed0e1ba732af246"
+    },
+    {
+      "id": "Carbuncle_MiddleAngleStep",
+      "effect_ids": [
+        278
+      ],
+      "label": "Middle orbit angle step",
+      "fmt": "b",
+      "address": "0x681DE7",
+      "instruction_address": "0x681DE6",
+      "instruction_hex": "6A E0",
+      "note": "Ticks 86\u2013109: signed orbit step; original -32.",
+      "kind": "camera_parameter",
+      "file_offset": 2629095,
+      "size": 1,
+      "sha256": "7d8c5da7fd418379048e430b33dc8ffcda739e44326b8a5d647dc0ad81ed2157"
+    },
+    {
+      "id": "Carbuncle_LateRadius",
+      "effect_ids": [
+        278
+      ],
+      "label": "Late orbit radius",
+      "fmt": "i",
+      "address": "0x681F67",
+      "instruction_address": "0x681F66",
+      "instruction_hex": "68 36 10 00 00",
+      "note": "From tick 247: CameraSwingAboutLookAt radius; original 4150.",
+      "kind": "camera_parameter",
+      "file_offset": 2629479,
+      "size": 4,
+      "sha256": "05238bc4a11eb9da1c71d522d7195d2ac78887af0744c55a94f6f36911989e1c"
+    },
+    {
+      "id": "MAG199_Cactuar_ModelContainer",
+      "effect_ids": [
+        199
+      ],
+      "kind": "model",
+      "address": "0xE94918",
+      "file_offset": 11094296,
+      "size": 8680,
+      "sha256": "eb5b59248192e43b73fa7975a4d495ce83004e22fdd3c7ee3304e5701d5bb487"
+    },
+    {
+      "id": "MAG199_Cactuar_BodyTIM",
+      "effect_ids": [
+        199
+      ],
+      "kind": "texture",
+      "address": "0xE96B00",
+      "file_offset": 11102976,
+      "size": 16928,
+      "sha256": "26aecfdd8ef122c3c3b3493fa183590a43a94055e74598d5d727ff28298d0777"
+    },
+    {
+      "id": "GF278_Carbuncle_ModelContainer",
+      "effect_ids": [
+        278
+      ],
+      "kind": "model",
+      "address": "0x10B6F94",
+      "file_offset": 13332372,
+      "size": 24324,
+      "sha256": "03e335ea2baf6453df018202879e0960f403e361c143e5e5227df5aabe6def26"
+    },
+    {
+      "id": "MAG140_Phoenix_ModelContainer",
+      "effect_ids": [
+        140
+      ],
+      "kind": "model",
+      "address": "0x11B537C",
+      "file_offset": 14373756,
+      "size": 71896,
+      "sha256": "617459cec25a26521830c5646f7930b081d12ed0f9a45176dc9fff86684cf6e0"
+    },
+    {
+      "id": "MAG338_Moomba_ModelContainer",
+      "effect_ids": [
+        338
+      ],
+      "kind": "model",
+      "address": "0x136BB30",
+      "file_offset": 16169776,
+      "size": 19920,
+      "sha256": "a3fd8a86c7913d3a151e3ffc804ccc7c94b2fa7b35bb70e6e7c721aa84ef5530"
+    },
+    {
+      "id": "MAG338_Moomba_BodyTIM",
+      "effect_ids": [
+        338
+      ],
+      "kind": "texture",
+      "address": "0x1376698",
+      "file_offset": 16213656,
+      "size": 16928,
+      "sha256": "133cf099791d130604c8a2b6889a04c1e6091aa2daa53bd418426574fefa2765"
+    },
+    {
+      "id": "MAG338_Moomba_EffectAtlas1TIM",
+      "effect_ids": [
+        338
+      ],
+      "kind": "texture",
+      "address": "0x137A8B8",
+      "file_offset": 16230584,
+      "size": 135200,
+      "sha256": "2f19284f8b6460eee1ee64a7ee697596929c322db5c21452bc5887a0d8d16083"
+    },
+    {
+      "id": "MAG338_Moomba_EffectAtlas2TIM",
+      "effect_ids": [
+        338
+      ],
+      "kind": "texture",
+      "address": "0x139B8D8",
+      "file_offset": 16365784,
+      "size": 16928,
+      "sha256": "bd4b5e7adc484d4704ceba289e03d4f834221d5c28243946ff467fbda1f210df"
+    },
+    {
+      "id": "MAG089_Angelo_ModelContainer",
+      "effect_ids": [
+        89
+      ],
+      "kind": "model",
+      "address": "0x14913FC",
+      "file_offset": 17372156,
+      "size": 16692,
+      "sha256": "f5a6a50f143147b641a5a766563c405150bc55aa8aaf4d7835a439fdd9a0e5df"
+    },
+    {
+      "id": "MAG089_Angelo_BodyTIM",
+      "effect_ids": [
+        89
+      ],
+      "kind": "texture",
+      "address": "0x14AF700",
+      "file_offset": 17495808,
+      "size": 33824,
+      "sha256": "8e5537a7e5c01508c544dc87cc6ccbf05af5f7ddfd8b2a1036b81820b2dbaac8"
+    },
+    {
+      "id": "MAG345_Reaper_ModelContainer",
+      "effect_ids": [
+        345
+      ],
+      "kind": "model",
+      "address": "0x1525754",
+      "file_offset": 17979220,
+      "size": 16332,
+      "sha256": "c832d96bc1472390bd2a6c3fe6a6835360abc7412fededaaef32212e41786507"
+    },
+    {
+      "id": "MAG096_Mog_ModelContainer",
+      "effect_ids": [
+        96
+      ],
+      "kind": "model",
+      "address": "0x152BC04",
+      "file_offset": 18004996,
+      "size": 28768,
+      "sha256": "9b6f04295571ff0496edb8ca7f28beafd86218297872e26b88eef6599635ba78"
+    },
+    {
+      "id": "MAG094_Angelo_ModelContainer",
+      "effect_ids": [
+        94
+      ],
+      "kind": "model",
+      "address": "0x153407C",
+      "file_offset": 18038908,
+      "size": 18068,
+      "sha256": "e8518d14a05e15d91dce77741806cb575f1e3fef9081437240a004d18e05e325"
+    },
+    {
+      "id": "MAG093_Angelo_ModelContainer",
+      "effect_ids": [
+        93
+      ],
+      "kind": "model",
+      "address": "0x1538B38",
+      "file_offset": 18058040,
+      "size": 18068,
+      "sha256": "e8518d14a05e15d91dce77741806cb575f1e3fef9081437240a004d18e05e325"
+    },
+    {
+      "id": "MAG092_Angelo_ModelContainer",
+      "effect_ids": [
+        92
+      ],
+      "kind": "model",
+      "address": "0x153D59C",
+      "file_offset": 18077084,
+      "size": 23352,
+      "sha256": "14c9f3910859b8116c291baa8fe4a65d65745ad0a7f926ccfc78ebb0b4b0e528"
+    },
+    {
+      "id": "MAG091_Angelo_ModelContainer",
+      "effect_ids": [
+        91
+      ],
+      "kind": "model",
+      "address": "0x1543880",
+      "file_offset": 18102400,
+      "size": 14516,
+      "sha256": "945e469dfb9a8ccf8b0b04eafa4fda2dab82245a785803e310c695b47a67b661"
+    },
+    {
+      "id": "MAG090_Tonberry_ModelContainer",
+      "effect_ids": [
+        90
+      ],
+      "kind": "model",
+      "address": "0x1547514",
+      "file_offset": 18117908,
+      "size": 29692,
+      "sha256": "33d90a992c6cb427f3662a8b8222880b260f72422ce967f1ddd7e2785a402001"
+    },
+    {
+      "id": "MAG088_Angelo_ModelContainer",
+      "effect_ids": [
+        88
+      ],
+      "kind": "model",
+      "address": "0x154F91C",
+      "file_offset": 18151708,
+      "size": 23840,
+      "sha256": "cf79185680eeabaf0c912671469571b8d036676a0a634460169be70d82690f0b"
+    },
+    {
+      "id": "MAG087_Angelo_ModelContainer",
+      "effect_ids": [
+        87
+      ],
+      "kind": "model",
+      "address": "0x155B1E4",
+      "file_offset": 18199012,
+      "size": 20240,
+      "sha256": "e1be0c09a5f6a3ff982a4d2dd3bd961e1e92d3cca952f03e7c201fdf9885db17"
+    },
+    {
+      "id": "MAG086_Angelo_ModelContainer",
+      "effect_ids": [
+        86
+      ],
+      "kind": "model",
+      "address": "0x1565EF4",
+      "file_offset": 18243316,
+      "size": 18740,
+      "sha256": "39cab4dc806500e72ea828ad97c298216c9796948a54d7889bfef51e5a3c168c"
+    },
+    {
+      "id": "MAG084_AngelWings_ModelContainer",
+      "effect_ids": [
+        84
+      ],
+      "kind": "model",
+      "address": "0x1572BB0",
+      "file_offset": 18295728,
+      "size": 12848,
+      "sha256": "2245ccc917856e7df31f5b43f143707e1174062b35ae7ceb1424be1bd990ba4b"
+    },
+    {
+      "id": "MAG083_Cherub_ModelContainer",
+      "effect_ids": [
+        83
+      ],
+      "kind": "model",
+      "address": "0x15786D4",
+      "file_offset": 18319060,
+      "size": 10252,
+      "sha256": "ff65667ad7b7d751b4707f7ae562a1fabebeec6535f68ac6215696e646381810"
+    },
+    {
+      "id": "MAG074_Reaper_ModelContainer",
+      "effect_ids": [
+        74
+      ],
+      "kind": "model",
+      "address": "0x158233C",
+      "file_offset": 18359100,
+      "size": 16332,
+      "sha256": "c832d96bc1472390bd2a6c3fe6a6835360abc7412fededaaef32212e41786507"
+    },
+    {
+      "id": "MAG014_Reaper_ModelContainer",
+      "effect_ids": [
+        14
+      ],
+      "kind": "model",
+      "address": "0x162C95C",
+      "file_offset": 19056988,
+      "size": 16332,
+      "sha256": "c832d96bc1472390bd2a6c3fe6a6835360abc7412fededaaef32212e41786507"
+    },
+    {
+      "id": "MAG008_Reaper_ModelContainer",
+      "effect_ids": [
+        8
+      ],
+      "kind": "model",
+      "address": "0x1636CE8",
+      "file_offset": 19098856,
+      "size": 16332,
+      "sha256": "c832d96bc1472390bd2a6c3fe6a6835360abc7412fededaaef32212e41786507"
+    },
+    {
+      "id": "MAG345_Reaper_BodyTIM",
+      "effect_ids": [
+        345
+      ],
+      "kind": "texture",
+      "address": "0x164A678",
+      "file_offset": 19179128,
+      "size": 33824,
+      "sha256": "796e1a39953f25f56230c4dd3411a732f5734ed2baa457541e31ecefdcbe9bce"
+    },
+    {
+      "id": "MAG345_Reaper_WingsTIM",
+      "effect_ids": [
+        345
+      ],
+      "kind": "texture",
+      "address": "0x1652A98",
+      "file_offset": 19212952,
+      "size": 16928,
+      "sha256": "a98212350b1a26a4163609eb179f7f2b39c6768e903813469a46de181b5d2a9b"
+    },
+    {
+      "id": "MAG100_Boko_ModelContainer",
+      "effect_ids": [
+        100
+      ],
+      "kind": "model",
+      "address": "0x1656DE4",
+      "file_offset": 19230180,
+      "size": 20200,
+      "sha256": "939ee4614a2cbbd194c8696efd8ece980fcc6d5ee9a45feeb2f5696c708963c9"
+    },
+    {
+      "id": "MAG100_Boko_BodyTIM",
+      "effect_ids": [
+        100
+      ],
+      "kind": "texture",
+      "address": "0x165BCCC",
+      "file_offset": 19250380,
+      "size": 16928,
+      "sha256": "83c999a76416e9042ad85d00a7d16028cca5a0e44d554ef9f058aae1c7e9ba53"
+    },
+    {
+      "id": "MAG099_Boko_ModelContainer",
+      "effect_ids": [
+        99
+      ],
+      "kind": "model",
+      "address": "0x1665B08",
+      "file_offset": 19290888,
+      "size": 20200,
+      "sha256": "939ee4614a2cbbd194c8696efd8ece980fcc6d5ee9a45feeb2f5696c708963c9"
+    },
+    {
+      "id": "MAG099_Boko_BodyTIM",
+      "effect_ids": [
+        99
+      ],
+      "kind": "texture",
+      "address": "0x16704DC",
+      "file_offset": 19334364,
+      "size": 16928,
+      "sha256": "83c999a76416e9042ad85d00a7d16028cca5a0e44d554ef9f058aae1c7e9ba53"
+    },
+    {
+      "id": "MAG098_Boko_ModelContainer",
+      "effect_ids": [
+        98
+      ],
+      "kind": "model",
+      "address": "0x167482C",
+      "file_offset": 19351596,
+      "size": 20200,
+      "sha256": "939ee4614a2cbbd194c8696efd8ece980fcc6d5ee9a45feeb2f5696c708963c9"
+    },
+    {
+      "id": "MAG098_Boko_BodyTIM",
+      "effect_ids": [
+        98
+      ],
+      "kind": "texture",
+      "address": "0x1679714",
+      "file_offset": 19371796,
+      "size": 16928,
+      "sha256": "83c999a76416e9042ad85d00a7d16028cca5a0e44d554ef9f058aae1c7e9ba53"
+    },
+    {
+      "id": "MAG097_Boko_ModelContainer",
+      "effect_ids": [
+        97
+      ],
+      "kind": "model",
+      "address": "0x168354C",
+      "file_offset": 19412300,
+      "size": 20200,
+      "sha256": "939ee4614a2cbbd194c8696efd8ece980fcc6d5ee9a45feeb2f5696c708963c9"
+    },
+    {
+      "id": "MAG097_Boko_BodyTIM",
+      "effect_ids": [
+        97
+      ],
+      "kind": "texture",
+      "address": "0x1688434",
+      "file_offset": 19432500,
+      "size": 16928,
+      "sha256": "83c999a76416e9042ad85d00a7d16028cca5a0e44d554ef9f058aae1c7e9ba53"
+    },
+    {
+      "id": "MAG094_Angelo_BodyTIM",
+      "effect_ids": [
+        94
+      ],
+      "kind": "texture",
+      "address": "0x16ADE90",
+      "file_offset": 19586704,
+      "size": 33824,
+      "sha256": "8e5537a7e5c01508c544dc87cc6ccbf05af5f7ddfd8b2a1036b81820b2dbaac8"
+    },
+    {
+      "id": "MAG093_Angelo_BodyTIM",
+      "effect_ids": [
+        93
+      ],
+      "kind": "texture",
+      "address": "0x16B8990",
+      "file_offset": 19630480,
+      "size": 33824,
+      "sha256": "8e5537a7e5c01508c544dc87cc6ccbf05af5f7ddfd8b2a1036b81820b2dbaac8"
+    },
+    {
+      "id": "MAG092_Angelo_BodyTIM",
+      "effect_ids": [
+        92
+      ],
+      "kind": "texture",
+      "address": "0x16C12C8",
+      "file_offset": 19665608,
+      "size": 33824,
+      "sha256": "8e5537a7e5c01508c544dc87cc6ccbf05af5f7ddfd8b2a1036b81820b2dbaac8"
+    },
+    {
+      "id": "MAG091_Angelo_BodyTIM",
+      "effect_ids": [
+        91
+      ],
+      "kind": "texture",
+      "address": "0x16CF8B0",
+      "file_offset": 19724464,
+      "size": 33824,
+      "sha256": "8e5537a7e5c01508c544dc87cc6ccbf05af5f7ddfd8b2a1036b81820b2dbaac8"
+    },
+    {
+      "id": "MAG088_Angelo_BodyTIM",
+      "effect_ids": [
+        88
+      ],
+      "kind": "texture",
+      "address": "0x16F3000",
+      "file_offset": 19869696,
+      "size": 33824,
+      "sha256": "8e5537a7e5c01508c544dc87cc6ccbf05af5f7ddfd8b2a1036b81820b2dbaac8"
+    },
+    {
+      "id": "MAG087_Angelo_BodyTIM",
+      "effect_ids": [
+        87
+      ],
+      "kind": "texture",
+      "address": "0x16FDF78",
+      "file_offset": 19914616,
+      "size": 33824,
+      "sha256": "8e5537a7e5c01508c544dc87cc6ccbf05af5f7ddfd8b2a1036b81820b2dbaac8"
+    },
+    {
+      "id": "MAG086_Angelo_BodyTIM",
+      "effect_ids": [
+        86
+      ],
+      "kind": "texture",
+      "address": "0x170CDCC",
+      "file_offset": 19975628,
+      "size": 33824,
+      "sha256": "8e5537a7e5c01508c544dc87cc6ccbf05af5f7ddfd8b2a1036b81820b2dbaac8"
+    },
+    {
+      "id": "MAG084_AngelWings_TIM",
+      "effect_ids": [
+        84
+      ],
+      "kind": "texture",
+      "address": "0x17243F8",
+      "file_offset": 20071416,
+      "size": 33824,
+      "sha256": "e7df7ea802996777db97a33e92066cbb7adc35469dba914bd3bd3d4c5d436304"
+    },
+    {
+      "id": "MAG083_Cherub_BodyTIM",
+      "effect_ids": [
+        83
+      ],
+      "kind": "texture",
+      "address": "0x1738C08",
+      "file_offset": 20155400,
+      "size": 33824,
+      "sha256": "e9c2fdce7bf9189eea2e476230a318ed76eb3501b6a32fddf47f797c1c491171"
+    },
+    {
+      "id": "MAG074_Reaper_BodyTIM",
+      "effect_ids": [
+        74
+      ],
+      "kind": "texture",
+      "address": "0x1778F3C",
+      "file_offset": 20418364,
+      "size": 33824,
+      "sha256": "796e1a39953f25f56230c4dd3411a732f5734ed2baa457541e31ecefdcbe9bce"
+    },
+    {
+      "id": "MAG074_Reaper_WingsTIM",
+      "effect_ids": [
+        74
+      ],
+      "kind": "texture",
+      "address": "0x178135C",
+      "file_offset": 20452188,
+      "size": 16928,
+      "sha256": "a98212350b1a26a4163609eb179f7f2b39c6768e903813469a46de181b5d2a9b"
+    },
+    {
+      "id": "MAG014_Reaper_BodyTIM",
+      "effect_ids": [
+        14
+      ],
+      "kind": "texture",
+      "address": "0x1808FB0",
+      "file_offset": 21008304,
+      "size": 33824,
+      "sha256": "796e1a39953f25f56230c4dd3411a732f5734ed2baa457541e31ecefdcbe9bce"
+    },
+    {
+      "id": "MAG014_Reaper_WingsTIM",
+      "effect_ids": [
+        14
+      ],
+      "kind": "texture",
+      "address": "0x18113D0",
+      "file_offset": 21042128,
+      "size": 16928,
+      "sha256": "a98212350b1a26a4163609eb179f7f2b39c6768e903813469a46de181b5d2a9b"
+    },
+    {
+      "id": "MAG008_Reaper_BodyTIM",
+      "effect_ids": [
+        8
+      ],
+      "kind": "texture",
+      "address": "0x181CFAC",
+      "file_offset": 21090220,
+      "size": 33824,
+      "sha256": "796e1a39953f25f56230c4dd3411a732f5734ed2baa457541e31ecefdcbe9bce"
+    },
+    {
+      "id": "MAG008_Reaper_WingsTIM",
+      "effect_ids": [
+        8
+      ],
+      "kind": "texture",
+      "address": "0x18253CC",
+      "file_offset": 21124044,
+      "size": 16928,
+      "sha256": "a98212350b1a26a4163609eb179f7f2b39c6768e903813469a46de181b5d2a9b"
+    }
+  ]
+}

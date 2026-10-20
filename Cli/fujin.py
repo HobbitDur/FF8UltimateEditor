@@ -1,6 +1,10 @@
-"""Laguna CLI: MAG section inspection/export/replacement and cinematic script tools."""
+"""Fujin CLI: effect sources, native camera constants and MAG section/cinematic tools."""
 import argparse
 import os
+import json
+import struct
+from pathlib import Path
+from dataclasses import asdict
 
 from .base import BaseCliTool
 
@@ -136,20 +140,74 @@ def _add_input(parser):
     parser.add_argument("--input", "-i", required=True, help="Path to any MAG file or streamed part")
 
 
-class LagunaCliTool(BaseCliTool):
-    """GF cinematic script editor (Ifrit/Leviathan/Bahamut/Cerberus/Alexander/Brothers/Eden)."""
+def _cmd_effect(args):
+    from Fujin.effectcatalog import EffectCatalog
+    catalog = EffectCatalog()
+    if args.id not in catalog.effect_ids():
+        raise ValueError("Effect ID must be between 1 and 400")
+    print(json.dumps(dict(effect_id=args.id, name=catalog.name(args.id), runtime=catalog.runtime(args.id),
+        note=catalog.notes(args.id), resources=[asdict(r) for r in catalog.resources(args.id)]), indent=2))
+    return 0
+
+
+def _cmd_native(args):
+    from FF8GameData.gamedata import GameData
+    from Fujin.cameraeffectmanager import CameraEffectManager
+    from Fujin.effectcatalog import EffectCatalog
+    from Fujin.nativeresources import NativeResourceStore
+    catalog = EffectCatalog()
+    cameras = CameraEffectManager(GameData("FF8GameData"))
+    cameras.load_exe(args.input)
+    native = NativeResourceStore(catalog.native)
+    native.load(Path(args.input).read_bytes(), cameras.language_name)
+    if args.parameter:
+        entry = native.entries.get(args.parameter)
+        if entry is None or entry["kind"] != "camera_parameter":
+            raise ValueError("Unknown native camera parameter; use native without --parameter to list them")
+        manager = native.managers.get(args.parameter)
+        if manager is None:
+            raise ValueError(native.unavailable[args.parameter])
+        if args.value is None or not args.output:
+            raise ValueError("Editing requires --value and --output (Hext destination)")
+        field = manager.document.fields_for(manager.document.sections[0])[0]
+        manager.set_field(field, args.value)
+        text = cameras.hext_text().replace("#Fujin camera effect patch", "#Fujin battle effect patch", 1)
+        Path(args.output).write_text(text+"\n"+"\n".join(native.hext_lines()), encoding="utf-8")
+        print(f"[ok] {entry['label']} = {args.value}; patch written to {args.output}")
+    else:
+        for key, entry in native.entries.items():
+            if args.effect is not None and args.effect not in entry["effect_ids"]:
+                continue
+            state = "available" if key in native.managers else native.unavailable[key]
+            print(f"{key}: {entry['kind']}, {entry['address']}, {entry['size']} bytes; {state}")
+    return 0
+
+
+class FujinCliTool(BaseCliTool):
+    """Effect source catalog, native resources, MAG sections and cinematic scripts."""
 
     @property
     def name(self) -> str:
-        return "laguna"
+        return "fujin"
 
     @property
     def description(self) -> str:
-        return "MAG section editor: inspect/export/replace sections, disassemble cinematic scripts and simulate supported GFs"
+        return "Battle effects: inspect sources, edit native camera constants, edit MAG sections and cinematic scripts"
 
     def build_parser(self) -> argparse.ArgumentParser:
-        parser = argparse.ArgumentParser(prog="ff8-cli laguna", description=self.description)
+        parser = argparse.ArgumentParser(prog="ff8-cli fujin", description=self.description)
         sub = parser.add_subparsers(dest="command", required=True)
+
+        effect = sub.add_parser("effect", help="List sources and provenance for an effect as JSON")
+        effect.add_argument("--id", required=True, type=int)
+        effect.set_defaults(func=_cmd_effect)
+        native = sub.add_parser("native", help="Inspect embedded assets or export a native camera constant edit as Hext")
+        native.add_argument("--input", "-i", required=True, help="2013 Steam FF8 executable")
+        native.add_argument("--effect", type=int, help="Filter the resource list by effect ID")
+        native.add_argument("--parameter", help="Native camera parameter ID from the resource list")
+        native.add_argument("--value", type=_int, help="New signed integer value")
+        native.add_argument("--output", "-o", help="Hext output path (the executable is never overwritten)")
+        native.set_defaults(func=_cmd_native)
 
         p_info = sub.add_parser("info", help="Header, script region and resources")
         _add_input(p_info)
@@ -196,6 +254,6 @@ class LagunaCliTool(BaseCliTool):
     def execute(self, args: argparse.Namespace) -> int:
         try:
             return args.func(args)
-        except (OSError, ValueError) as error:
+        except (OSError, ValueError, struct.error) as error:
             print(f"[error] {error}")
             return 1

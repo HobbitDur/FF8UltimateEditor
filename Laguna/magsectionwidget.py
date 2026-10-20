@@ -21,10 +21,11 @@ class MagSectionTabs(QTabWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.manager = None
+        self.camera_preview = None
         self.setUsesScrollButtons(True)
         self.currentChanged.connect(self._open_page)
 
-    def set_manager(self, manager):
+    def set_manager(self, manager, sections=None):
         selected = self.currentWidget()
         selected_start = selected.property("section_start") if selected else None
         with QSignalBlocker(self):
@@ -34,7 +35,7 @@ class MagSectionTabs(QTabWidget):
                 page.deleteLater()
             self.manager = manager
             if manager:
-                for section in manager.document.sections:
+                for section in manager.document.sections if sections is None else sections:
                     page = QWidget()
                     page.setProperty("section_start", section.start)
                     self.addTab(page, section.name)
@@ -50,7 +51,7 @@ class MagSectionTabs(QTabWidget):
         start = page.property("section_start")
         section = next(s for s in self.manager.document.sections if s.start == start)
         layout = QVBoxLayout(page)
-        editor = MagSectionEditor(self.manager, section)
+        editor = MagSectionEditor(self.manager, section, camera_preview=self.camera_preview)
         editor.data_changed.connect(self.data_changed)
         layout.addWidget(editor)
 
@@ -61,9 +62,10 @@ class MagSectionEditor(QWidget):
     PAGE_BYTES = 512
     PAGE_FIELDS = 256
 
-    def __init__(self, manager, section):
+    def __init__(self, manager, section, camera_preview=None):
         super().__init__()
         self.manager, self.section = manager, section
+        self.camera_preview = camera_preview
         self.fields = manager.document.fields_for(section)
         self.error = QLabel()
         self.error.setWordWrap(True)
@@ -215,7 +217,7 @@ class MagSectionEditor(QWidget):
     def _texture_view(self):
         from FF8GameData.tim.timfile import decode_tim
         try:
-            tim = decode_tim(bytes(self.manager.data))
+            tim = decode_tim(bytes(self.manager.data), self.section.meta.get("tim_offset", 0))
             if tim is None:
                 return
             rgba = tim.image.convert("RGBA")
@@ -250,8 +252,12 @@ class MagSectionEditor(QWidget):
         apply.clicked.connect(self._apply_camera_script)
         layout.addWidget(apply)
         self.views.addTab(script, "Camera script")
-        collection = CameraCollectionWidget(self.camera_track.collection, show_preview_buttons=False)
+        collection = CameraCollectionWidget(self.camera_track.collection,
+            show_preview_buttons=self.camera_preview is not None, expanded_sets=(0,))
         collection.data_changed.connect(self._apply_camera)
+        if self.camera_preview is not None:
+            collection.preview_requested.connect(self.camera_preview.preview_animation)
+            self.camera_preview.set_track(self.camera_track)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(collection)
@@ -273,5 +279,7 @@ class MagSectionEditor(QWidget):
         try:
             if self.manager.replace_section(self.section.start, self.camera_track.to_bytes()):
                 self._announce()
+                if self.camera_preview is not None:
+                    self.camera_preview.set_track(self.camera_track)
         except ValueError as error:
             self.error.setText(str(error))

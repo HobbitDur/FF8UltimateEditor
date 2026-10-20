@@ -1,0 +1,205 @@
+{
+  "comment": "Named native resource addresses read from the FF8_EN IDA database. These are IDA virtual addresses; the audited PE maps them to file offset address - 0x400000. Run build_effect_resources.py against the audited executable to validate and regenerate sizes and fingerprints.",
+  "symbols": [
+    {
+      "address": "0xe94918",
+      "name": "MAG199_Cactuar_ModelContainer"
+    },
+    {
+      "address": "0x10b6f94",
+      "name": "GF278_Carbuncle_ModelContainer"
+    },
+    {
+      "address": "0x11b537c",
+      "name": "MAG140_Phoenix_ModelContainer"
+    },
+    {
+      "address": "0x136bb30",
+      "name": "MAG338_Moomba_ModelContainer"
+    },
+    {
+      "address": "0x14913fc",
+      "name": "MAG089_Angelo_ModelContainer"
+    },
+    {
+      "address": "0x1525754",
+      "name": "MAG345_Reaper_ModelContainer"
+    },
+    {
+      "address": "0x152bc04",
+      "name": "MAG096_Mog_ModelContainer"
+    },
+    {
+      "address": "0x153407c",
+      "name": "MAG094_Angelo_ModelContainer"
+    },
+    {
+      "address": "0x1538b38",
+      "name": "MAG093_Angelo_ModelContainer"
+    },
+    {
+      "address": "0x153d59c",
+      "name": "MAG092_Angelo_ModelContainer"
+    },
+    {
+      "address": "0x1543880",
+      "name": "MAG091_Angelo_ModelContainer"
+    },
+    {
+      "address": "0x1547514",
+      "name": "MAG090_Tonberry_ModelContainer"
+    },
+    {
+      "address": "0x154f91c",
+      "name": "MAG088_Angelo_ModelContainer"
+    },
+    {
+      "address": "0x155b1e4",
+      "name": "MAG087_Angelo_ModelContainer"
+    },
+    {
+      "address": "0x1565ef4",
+      "name": "MAG086_Angelo_ModelContainer"
+    },
+    {
+      "address": "0x1572bb0",
+      "name": "MAG084_AngelWings_ModelContainer"
+    },
+    {
+      "address": "0x15786d4",
+      "name": "MAG083_Cherub_ModelContainer"
+    },
+    {
+      "address": "0x158233c",
+      "name": "MAG074_Reaper_ModelContainer"
+    },
+    {
+      "address": "0x162c95c",
+      "name": "MAG014_Reaper_ModelContainer"
+    },
+    {
+      "address": "0x1636ce8",
+      "name": "MAG008_Reaper_ModelContainer"
+    },
+    {
+      "address": "0x1656de4",
+      "name": "MAG100_Boko_ModelContainer"
+    },
+    {
+      "address": "0x1665b08",
+      "name": "MAG099_Boko_ModelContainer"
+    },
+    {
+      "address": "0x167482c",
+      "name": "MAG098_Boko_ModelContainer"
+    },
+    {
+      "address": "0x168354c",
+      "name": "MAG097_Boko_ModelContainer"
+    },
+    {
+      "address": "0xe96b00",
+      "name": "MAG199_Cactuar_BodyTIM"
+    },
+    {
+      "address": "0x1376698",
+      "name": "MAG338_Moomba_BodyTIM"
+    },
+    {
+      "address": "0x14af700",
+      "name": "MAG089_Angelo_BodyTIM"
+    },
+    {
+      "address": "0x164a678",
+      "name": "MAG345_Reaper_BodyTIM"
+    },
+    {
+      "address": "0x165bccc",
+      "name": "MAG100_Boko_BodyTIM"
+    },
+    {
+      "address": "0x16704dc",
+      "name": "MAG099_Boko_BodyTIM"
+    },
+    {
+      "address": "0x1679714",
+      "name": "MAG098_Boko_BodyTIM"
+    },
+    {
+      "address": "0x1688434",
+      "name": "MAG097_Boko_BodyTIM"
+    },
+    {
+      "address": "0x16ade90",
+      "name": "MAG094_Angelo_BodyTIM"
+    },
+    {
+      "address": "0x16b8990",
+      "name": "MAG093_Angelo_BodyTIM"
+    },
+    {
+      "address": "0x16c12c8",
+      "name": "MAG092_Angelo_BodyTIM"
+    },
+    {
+      "address": "0x16cf8b0",
+      "name": "MAG091_Angelo_BodyTIM"
+    },
+    {
+      "address": "0x16f3000",
+      "name": "MAG088_Angelo_BodyTIM"
+    },
+    {
+      "address": "0x16fdf78",
+      "name": "MAG087_Angelo_BodyTIM"
+    },
+    {
+      "address": "0x170cdcc",
+      "name": "MAG086_Angelo_BodyTIM"
+    },
+    {
+      "address": "0x1738c08",
+      "name": "MAG083_Cherub_BodyTIM"
+    },
+    {
+      "address": "0x1778f3c",
+      "name": "MAG074_Reaper_BodyTIM"
+    },
+    {
+      "address": "0x1808fb0",
+      "name": "MAG014_Reaper_BodyTIM"
+    },
+    {
+      "address": "0x181cfac",
+      "name": "MAG008_Reaper_BodyTIM"
+    },
+    {
+      "address": "0x1652a98",
+      "name": "MAG345_Reaper_WingsTIM"
+    },
+    {
+      "address": "0x178135c",
+      "name": "MAG074_Reaper_WingsTIM"
+    },
+    {
+      "address": "0x18113d0",
+      "name": "MAG014_Reaper_WingsTIM"
+    },
+    {
+      "address": "0x18253cc",
+      "name": "MAG008_Reaper_WingsTIM"
+    },
+    {
+      "address": "0x17243f8",
+      "name": "MAG084_AngelWings_TIM"
+    },
+    {
+      "address": "0x137a8b8",
+      "name": "MAG338_Moomba_EffectAtlas1TIM"
+    },
+    {
+      "address": "0x139b8d8",
+      "name": "MAG338_Moomba_EffectAtlas2TIM"
+    }
+  ]
+}

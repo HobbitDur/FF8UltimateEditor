@@ -1,0 +1,24 @@
+{
+  "comment": "Verified runtime facts from FF8ModdingWiki GFSummonRuntime and SummonCreatureModels, cross-checked against the English IDA database. Filename-family discovery is separate from this manifest.",
+  "effects": {
+    "69": {"runtime": "Native timeline / existing battle actors", "note": "The summon reuses battle instances in slots 1 and 2. Griever is c0m122.dat; there is no separate mag068 summon model. Edit the battle model in Ifrit."},
+    "95": {"runtime": "Native actor state machine", "files": [{"name": "mag094_b.2e0", "kind": "model"}]},
+    "96": {"runtime": "Native actor state machine", "note": "MiniMog's dance uses an executable model and textures loaded from mag095.tim."},
+    "116": {"runtime": "Native timeline", "files": [{"name": "mag115_h.07", "kind": "model"}]},
+    "140": {"runtime": "Native timeline", "note": "Phoenix's model is executable data; the texture loader opens mag139.tim."},
+    "185": {"runtime": "Native timeline", "files": [{"name": "mag184_e.dat", "kind": "model"}, {"name": "mag184_d.dat", "kind": "texture"}, {"name": "mag184_h.dat", "kind": "texture"}]},
+    "187": {"runtime": "Native timeline", "files": [{"name": "mag186_b.dat", "kind": "model"}]},
+    "191": {"runtime": "Native timeline", "files": [{"name": "mag190_b.dat", "kind": "model"}]},
+    "199": {"runtime": "Native timeline"},
+    "218": {"files": [{"name": "mag217_b.dat", "kind": "model", "note": "Gilgamesh model with six animations; separate from mag326_g.dat."}]},
+    "278": {"runtime": "Native timeline", "note": "Carbuncle's executable model uses the second TIM inside mag277.tim, beginning at file offset 172064."},
+    "291": {"runtime": "Native timeline", "files": [{"name": "mag290_h.03", "kind": "model"}]},
+    "325": {"runtime": "Native timeline", "files": [{"name": "mag324_h.02", "kind": "model"}]},
+    "326": {"runtime": "Native timeline", "files": [{"name": "mag186_b.dat", "kind": "model", "note": "Odin model shared with effect 187."}]},
+    "327": {"runtime": "Native timeline", "files": [{"name": "mag326_g.dat", "kind": "model"}]},
+    "328": {"runtime": "Native timeline", "files": [{"name": "mag326_g.dat", "kind": "model", "note": "Gilgamesh model shared by weapon effects 327–330."}]},
+    "329": {"runtime": "Native timeline", "files": [{"name": "mag326_g.dat", "kind": "model", "note": "Gilgamesh model shared by weapon effects 327–330."}]},
+    "330": {"runtime": "Native timeline", "files": [{"name": "mag326_g.dat", "kind": "model", "note": "Gilgamesh model shared by weapon effects 327–330."}]},
+    "338": {"runtime": "Native timeline", "note": "Moomba's creature, body texture and two effect atlases are embedded in the executable."}
+  }
+}

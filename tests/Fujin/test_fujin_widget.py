@@ -1,4 +1,4 @@
-"""Fujin GUI: the Magic explorer / Camera effect editor tabs and the camera .hext save."""
+"""Effect workspace entry point and reusable executable camera editor."""
 import sys
 
 import pytest
@@ -21,7 +21,9 @@ def fujin(qapp):
 
 def test_tabs_and_empty_camera_editor(fujin):
     assert [fujin.tabs.tabText(index) for index in range(fujin.tabs.count())] == \
-           ["Magic explorer", "Camera effect editor"]
+           ["Overview", "Camera", "Choreography", "Models / animation", "Textures / palettes",
+            "Sound", "Files / sections", "Pending changes"]
+    assert fujin.effect_list.count() == 400
     editor = fujin.camera_editor
     assert not editor.manager.loaded and not fujin.can_save_folder()
     assert editor.effect_list.count() == 345                  # every effect, with or without a track

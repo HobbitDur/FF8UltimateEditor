@@ -1,5 +1,8 @@
 # FF8 Ultimate Editor
 
+**Fujin — Battle effect editor** brings MAG sections, cinematic scripts, executable camera
+tracks and validated embedded assets into one workspace. See the [Fujin workflow](docs/fujin-effects.md).
+
 A collection of tools for modding **Final Fantasy VIII** (PC/Remaster), all bundled behind one
 launcher: `FF8UltimateEditor.exe` (or `python main.py`). Pick a tool from the "Hobbit tools" dropdown
 at the top of the window, or launch one of the external programs from the toolbar next to it.

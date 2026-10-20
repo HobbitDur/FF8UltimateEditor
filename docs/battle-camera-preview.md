@@ -75,8 +75,9 @@ Squall's first six opening shots include these holds.
 
 ## Fujin: effect cameras
 
-Fujin's **Camera effect editor** tab reuses the same player for the 221 spell/attack camera
-tracks stored in the exe, and only feeds the shared setup. Import characters (`d?c###.dat`),
+Fujin's **Camera** tab reuses the same player for the 221 spell/attack camera tracks stored
+in the exe and for normal tracks embedded in MAG files. See the [effect workspace guide](fujin-effects.md).
+Import characters (`d?c###.dat`),
 their weapons (`d?w###.dat`) and monsters (`c0m###.dat`) with **Import models…** or the header's
 **Import read-only**; they are read-only and remembered for Auto-upload. Each **Party** slot
 takes a character and one of its weapons. **Open scene.out** (the shared file, also in the
@@ -107,10 +108,11 @@ it *(.cam only)*, the .hext leaves it out, and **Export .cam…** saves it for F
 
 ### File cameras: Disease Breath (effect 231)
 
-The effect list distinguishes **file camera** from **no exe track**. A file camera can
-contain the same script/keyframe track format as an exe camera, or drive the view with
-cinematic commands. Fujin currently edits and previews only the tracks stored in the exe;
-the file-camera label does not mean that the effect has no camera movement.
+The effect workspace resolves camera sources per component. A file camera can contain the
+same script/keyframe track format as an exe camera, or drive the view with cinematic commands.
+Fujin edits and previews embedded tracks through **Camera → MAG track**, sharing the bytes
+with **Files / sections**. Procedural native parameters have their own guarded bindings;
+their surrounding code is not replayed by the track preview.
 
 Disease Breath has a normal camera track in `magic/MAG230_B.00` (the file number is one
 less than the effect ID). Verified against the English 2013 Steam exe and extracted files:
@@ -149,7 +151,7 @@ engine rounding. Use the game to verify final effect/animation handoffs.
 
 The Sequence tab already reads scene.out to place a monster in a real encounter; its
 shared encounter parser is reused here.
-Laguna already has Game/Free camera views for GF cinematics. Its engine look-at basis
+Fujin's cinematic component has Game/Free camera views for GF cinematics. Its engine look-at basis
 is reused here, along with Watts' existing easing/spline functions and Ifrit3D's posed
 body/weapon renderer. Watts keeps its existing pre-baked composite placement.
 

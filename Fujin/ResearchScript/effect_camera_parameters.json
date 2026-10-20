@@ -1,0 +1,11 @@
+{
+  "comment": "Carbuncle's GF_278Carbuncle_CreatureTask (0x681630): camera writes and MAG_278_CameraSwingAboutLookAt arguments verified by IDA decompilation and x86 disassembly. Each record owns only the immediate operand, not instruction bytes around it.",
+  "parameters": [
+    {"id":"Carbuncle_OpeningHeight","effect_ids":[278],"label":"Opening Y offset from floor","fmt":"i","address":"0x681D35","instruction_address":"0x681D34","instruction_hex":"05 B8 0B 00 00","note":"Tick 1: camera Y = floor + this value; original 3000."},
+    {"id":"Carbuncle_OpeningZ","effect_ids":[278],"label":"Opening camera Z","fmt":"h","address":"0x681D5E","instruction_address":"0x681D57","instruction_hex":"66 C7 05 F2 B7 B8 00 60 F0","note":"Tick 1: signed Z coordinate; original -4000."},
+    {"id":"Carbuncle_OpeningRadius","effect_ids":[278],"label":"Opening orbit radius","fmt":"i","address":"0x681D93","instruction_address":"0x681D92","instruction_hex":"68 AA 0F 00 00","note":"Ticks 1–36: CameraSwingAboutLookAt radius; original 4010."},
+    {"id":"Carbuncle_MiddleRadius","effect_ids":[278],"label":"Middle orbit radius","fmt":"i","address":"0x681DE2","instruction_address":"0x681DE1","instruction_hex":"68 A0 0F 00 00","note":"Ticks 86–109: CameraSwingAboutLookAt radius; original 4000."},
+    {"id":"Carbuncle_MiddleAngleStep","effect_ids":[278],"label":"Middle orbit angle step","fmt":"b","address":"0x681DE7","instruction_address":"0x681DE6","instruction_hex":"6A E0","note":"Ticks 86–109: signed orbit step; original -32."},
+    {"id":"Carbuncle_LateRadius","effect_ids":[278],"label":"Late orbit radius","fmt":"i","address":"0x681F67","instruction_address":"0x681F66","instruction_hex":"68 36 10 00 00","note":"From tick 247: CameraSwingAboutLookAt radius; original 4150."}
+  ]
+}
