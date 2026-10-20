@@ -18,14 +18,17 @@ further, by the per-track offsets of that json). A track is::
 Both offsets are relative to the track, the script jumps are relative and the engine only reads
 the track (the VM writes its variables elsewhere), so a track works wherever it is stored.
 
-Edits keep every track at its exe size (a script no longer than the exe's, filled up when shorter;
-the same keyframes and header): the exe has no free room after a track. They are saved as a .hext that FFNx applies to the running game; the
-.hext only fits the language of the exe it was made from, so it says which one it is for.
+An edited track that keeps its exe size (a script no longer than the exe's, filled up when
+shorter; the same keyframe layout) goes into the exe as a .hext that FFNx applies to the running
+game; the .hext only fits the language of the exe it was made from, so it says which one it is for.
+The exe has no free room after a track, so a track that grew (a longer script, keyframes or
+animations added) - or shrank - no longer fits it: the header is rebuilt from the parts, and the
+track can only be used as a .cam file.
 
-One effect's track can also be exported as a .cam file: the track bytes as the exe stores them,
-which FFNx loads from <direct_mode_path>/battle/effect_camera/effect_NNN.cam instead of the exe's
-(julianxhokaxhiu/FFNx#1047, docs/ff8/mods/effect_camera.md). Tracks are the same in every
-language, so a .cam works with every exe.
+One effect's track exported as a .cam file is the track bytes as the exe stores them: FFNx loads
+<direct_mode_path>/battle/effect_camera/effect_NNN.cam instead of the exe's track, with no size
+limit (FFNx docs/ff8/mods/effect_camera.md). Tracks are the same in every language, so a .cam
+works with every exe.
 """
 import json
 import re
@@ -103,6 +106,7 @@ class CameraTrack:
     script: bytes = b""        # camera script commands, without the alignment padding
     padding: bytes = b""
     collection: object = None  # CameraCollection over the keyframe part (edited in place)
+    exe_script_size: int = 0   # the script's length in the exe
     same_as: list = field(default_factory=list)  # other effects whose track has the same bytes
 
     @classmethod
@@ -125,22 +129,41 @@ class CameraTrack:
         if bytes(collection.get_bytes()) != bytes(data[keyframe_offset:]):
             raise ValueError(f"effect {self.effect_id}: the keyframes do not fill the track exactly")
         self.header, self.script, self.padding, self.collection = bytes(data[:SCRIPT_OFFSET]), script, padding, collection
+        if not self.exe_script_size:
+            self.exe_script_size = len(script)
 
     @property
     def size(self) -> int:
+        """The track's size in the exe: the room it has there."""
         return len(self.original)
 
     @property
+    def current_size(self) -> int:
+        return len(self.to_bytes())
+
+    @property
+    def fits_exe(self) -> bool:
+        """Still the exe's size and layout: it can go into the exe (.hext). Otherwise only a .cam can use it."""
+        return self.current_size == self.size
+
+    @property
     def script_room(self) -> int:
-        """Bytes the script may use: its exe length (the padding byte stays apart)."""
-        return len(self.script)
+        """Bytes the script may use in the exe: its exe length (the padding byte stays apart)."""
+        return self.exe_script_size
 
     def to_bytes(self) -> bytes:
-        data = self.header + self.script + self.padding + bytes(self.collection.get_bytes())
-        if len(data) != self.size:  # nothing should get here: every edit keeps the size
-            raise ValueError(f"effect {self.effect_id}: the track is {len(data)} bytes, "
-                             f"the exe has room for exactly {self.size}")
-        return data
+        """The track as it is now. The header is rebuilt from the parts: the keyframes start on
+        an even offset (one zero byte after an odd script), the size field is the whole track."""
+        padding = self.padding if len(self.script) == self.exe_script_size else b"\0" * (len(self.script) % 2)
+        keyframe_offset = SCRIPT_OFFSET + len(self.script) + len(padding)
+        collection = bytes(self.collection.get_bytes())
+        count = struct.unpack_from("<H", self.header)[0]
+        return (HEADER.pack(count, SCRIPT_OFFSET, keyframe_offset, keyframe_offset + len(collection))
+                + self.script + padding + collection)
+
+    def set_collection(self, data):
+        """Replace the keyframe collection (a structural edit: its size may change)."""
+        self.collection = parse_camera_collection(bytearray(data))
 
     @property
     def modified(self) -> bool:
@@ -289,16 +312,18 @@ class CameraEffectManager:
         return len(code_to_sequence(self.vm, code))
 
     def set_script_code(self, track: CameraTrack, code: str) -> int:
-        """Replace the script from code. The track cannot grow: a longer script is refused, a
-        shorter one is filled up to its exe length after its last command (an end() for an odd
-        byte, then nop(0)s), which never runs since the script stops before. Returns the filler size."""
+        """Replace the script from code. A shorter script is filled up to its exe length after its
+        last command (an end() for an odd byte, then nop(0)s), which never runs since the script
+        stops before, so the track still fits the exe. A longer one makes the track grow: it no
+        longer fits the exe, only a .cam file can use it. Returns the filler size."""
         script = bytes(code_to_sequence(self.vm, code))
-        filler = track.script_room - len(script)
-        if filler < 0:
-            raise ValueError(f"the script is {len(script)} bytes, the exe has room for "
-                             f"{track.script_room}: remove {-filler} byte(s)")
+        filler = max(0, track.script_room - len(script))
         track.script = script + b"\x01" * (filler % 2) + b"\x09\x00" * (filler // 2)
         return filler
+
+    def resized_tracks(self) -> list:
+        """The edited tracks whose size changed: they no longer fit the exe (.cam only)."""
+        return [track for track in self.modified_tracks() if not track.fits_exe]
 
     # ------------------------------------------------------------------ .cam (FFNx)
     @staticmethod
@@ -312,11 +337,19 @@ class CameraEffectManager:
 
     # ------------------------------------------------------------------ hext
     def hext_text(self) -> str:
-        """The .hext of every edited track (FFNx applies it to the running game)."""
+        """The .hext of every edited track that still fits the exe (FFNx applies it to the running
+        game). A resized track cannot go into the exe: it is only listed, for its .cam file."""
         lines = [f"#Fujin camera effect patch for the {self.language_name} FF8 exe - "
                  "addresses differ in the other languages, do not use it with them.",
                  f"+{IMAGE_BASE:X}", ""]
+        for track in self.resized_tracks():
+            lines.append(f"#Effect {track.effect_id} {track.name}: resized to {track.current_size} bytes "
+                         f"(exe room {track.size}), not in this patch - use its effect_{track.effect_id:03d}.cam")
+        if self.resized_tracks():
+            lines.append("")
         for track in self.modified_tracks():
+            if not track.fits_exe:
+                continue
             lines.append(f"#Effect {track.effect_id} {track.name}: camera track {track.label} "
                          f"at 0x{track.address:X}")
             for address, data in track.changed_runs():
@@ -349,7 +382,8 @@ class CameraEffectManager:
             if not match:
                 raise ValueError(f"line {line_number}: not an 'address = bytes' line: {raw}")
             writes.append((base + int(match.group(1), 16), bytes.fromhex(match.group(2))))
-        images = {effect_id: bytearray(track.to_bytes()) for effect_id, track in self.tracks.items()}
+        images = {effect_id: bytearray(track.to_bytes()) for effect_id, track in self.tracks.items()
+                  if track.fits_exe}
         touched = set()
         for address, data in writes:
             track = next((track for track in self.tracks.values()
@@ -357,6 +391,9 @@ class CameraEffectManager:
             if track is None:
                 raise ValueError(f"0x{address:X} is not inside a camera track of this {self.language_name} exe "
                                  "(a .hext made for another language, or not a camera patch)")
+            if track.effect_id not in images:
+                raise ValueError(f"effect {track.effect_id} was resized: it no longer fits the exe, reset it "
+                                 "before applying a .hext over it")
             offset = address - track.address
             images[track.effect_id][offset:offset + len(data)] = data
             touched.add(track.effect_id)
@@ -365,7 +402,8 @@ class CameraEffectManager:
         for effect_id in touched:
             track = self.tracks[effect_id]
             check = CameraTrack(effect_id=effect_id, name=track.name, label=track.label, address=track.address,
-                                push_operand=track.push_operand, original=track.original)
+                                push_operand=track.push_operand, original=track.original,
+                                exe_script_size=track.exe_script_size)
             check._set_parts(bytes(images[effect_id]), self.vm)
             checked[effect_id] = check
         for effect_id, check in checked.items():

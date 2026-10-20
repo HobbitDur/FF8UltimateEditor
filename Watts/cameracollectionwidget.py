@@ -7,11 +7,19 @@ model to film - so this is a keyframe value editor only.
 
 Each set is built lazily the first time it is expanded: the collection has dozens of
 animations and hundreds of keyframe fields, and building them all up front would be slow.
+
+A host whose collection may change size (Fujin's effect cameras saved as .cam files) turns on
+structure_edits: keyframes can then be duplicated or removed and slots filled or emptied. Those
+edits rebuild the collection bytes (FF8GameData.dat.cameracollection) and hand them over with
+collection_rebuilt; the host swaps its collection and builds a new widget.
 """
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
                              QPushButton, QSpinBox, QGroupBox, QSizePolicy,
-                             QGraphicsOpacityEffect)
+                             QGraphicsOpacityEffect, QMessageBox)
+
+from FF8GameData.dat.cameracollection import (build_default_animation, clear_slot, insert_keyframe,
+                                              remove_keyframe, set_slot_animation)
 
 
 class _NoWheelSpinBox(QSpinBox):
@@ -78,6 +86,7 @@ class CameraCollectionWidget(QWidget):
 
     data_changed = pyqtSignal()
     preview_requested = pyqtSignal(object)      # a CameraAnimation to play in the preview
+    collection_rebuilt = pyqtSignal(object)     # new collection bytes after a structural edit
 
     # (label, attribute on CameraFrame) in display order
     _FRAME_COLUMNS = [
@@ -102,10 +111,12 @@ class CameraCollectionWidget(QWidget):
         "look_z": "Look-at target Z (what the camera aims at).",
     }
 
-    def __init__(self, collection, set_notes=None, show_preview_buttons=True):
+    def __init__(self, collection, set_notes=None, show_preview_buttons=True, structure_edits=False,
+                 expanded_sets=()):
         QWidget.__init__(self)
         self._collection = collection
         self._show_preview_buttons = show_preview_buttons
+        self._structure_edits = structure_edits
         set_notes = set_notes or {}
         self._set_boxes = {}  # set index -> _CollapsibleBox, for enabling/greying out
         layout = QVBoxLayout()
@@ -124,6 +135,14 @@ class CameraCollectionWidget(QWidget):
             layout.addWidget(box)
         layout.addStretch(1)
         self.setLayout(layout)
+        for index in expanded_sets:
+            if index in self._set_boxes:
+                self._set_boxes[index]._toggle.setChecked(True)
+                self._set_boxes[index]._on_toggle(True)
+
+    def expanded_set_indices(self):
+        """The sets currently unfolded (to unfold them again in a rebuilt widget)."""
+        return [index for index, box in self._set_boxes.items() if box._toggle.isChecked()]
 
     def set_enabled_set_indices(self, indices):
         """Grey out the sets whose index is not in `indices` (None = all enabled), e.g. to
@@ -135,10 +154,22 @@ class CameraCollectionWidget(QWidget):
         def build(target_layout):
             for animation in camera_set.animations:
                 if animation.empty or not animation.blocks:
+                    if self._structure_edits:
+                        target_layout.addLayout(self._empty_slot_row(camera_set.index, animation.slot))
                     continue
                 frames = sum(len(block.frames) for block in animation.blocks)
                 slot_group = QGroupBox(f"Slot {animation.slot} - {frames} keyframes")
                 slot_layout = QVBoxLayout()
+                if self._structure_edits:
+                    clear_button = QPushButton("Clear slot")
+                    clear_button.setToolTip("Remove this camera animation (the slot plays nothing)")
+                    clear_button.setMaximumWidth(110)
+                    clear_button.clicked.connect(lambda _checked, s=camera_set.index, a=animation.slot:
+                                                 self._rebuild(clear_slot, s, a))
+                    clear_row = QHBoxLayout()
+                    clear_row.addWidget(clear_button)
+                    clear_row.addStretch(1)
+                    slot_layout.addLayout(clear_row)
                 if self._show_preview_buttons:
                     preview_button = QPushButton("▶ Preview")
                     preview_button.setToolTip("Play this camera animation on the imported "
@@ -151,12 +182,33 @@ class CameraCollectionWidget(QWidget):
                     preview_row.addStretch(1)
                     slot_layout.addLayout(preview_row)
                 for block_index, block in enumerate(animation.blocks):
-                    slot_layout.addWidget(self._build_block(block_index, block))
+                    slot_layout.addWidget(self._build_block(block_index, block,
+                                                            (camera_set.index, animation.slot)))
                 slot_group.setLayout(slot_layout)
                 target_layout.addWidget(slot_group)
         return build
 
-    def _build_block(self, block_index: int, block) -> QWidget:
+    def _empty_slot_row(self, set_index, slot):
+        row = QHBoxLayout()
+        row.addWidget(QLabel(f"Slot {slot} - empty"))
+        add_button = QPushButton("Add camera")
+        add_button.setToolTip("Put a new 2-keyframe camera animation in this slot, ready to edit")
+        add_button.clicked.connect(lambda _checked: self._rebuild(set_slot_animation, set_index, slot,
+                                                                  build_default_animation()))
+        row.addWidget(add_button)
+        row.addStretch(1)
+        return row
+
+    def _rebuild(self, edit, *args):
+        """Run a structural edit on the collection bytes and hand the result to the host."""
+        try:
+            data = edit(self._collection.get_bytes(), *args)
+        except ValueError as error:
+            QMessageBox.warning(self, "Camera keyframes", str(error))
+            return
+        self.collection_rebuilt.emit(data)
+
+    def _build_block(self, block_index: int, block, slot_key=None) -> QWidget:
         container = QWidget()
         container_layout = QVBoxLayout()
         container_layout.setContentsMargins(0, 0, 0, 0)
@@ -189,7 +241,9 @@ class CameraCollectionWidget(QWidget):
             header.setToolTip(self._COLUMN_TOOLTIPS.get(_attribute, ""))
             grid.addWidget(header, 0, column + 1)
         for row, frame in enumerate(block.frames):
-            grid.addWidget(QLabel(f"#{row}"), row + 1, 0)
+            grid.addWidget(self._frame_label(row, block, (*slot_key, block_index, row)
+                                             if self._structure_edits and slot_key is not None else None),
+                           row + 1, 0)
             for column, (label, _attribute) in enumerate(self._FRAME_COLUMNS):
                 field = getattr(frame, _attribute)
                 spin = self._spin_for(field)
@@ -203,6 +257,29 @@ class CameraCollectionWidget(QWidget):
         container_layout.addLayout(grid_row)
         container.setLayout(container_layout)
         return container
+
+    def _frame_label(self, row, block, key=None) -> QWidget:
+        """'#row', with the duplicate (+) / remove (-) buttons in front when structure edits are on
+        (left of the fields, so a narrow panel never hides them)."""
+        if key is None:
+            return QLabel(f"#{row}")
+        cell = QWidget()
+        cell_layout = QHBoxLayout(cell)
+        cell_layout.setContentsMargins(0, 0, 0, 0)
+        cell_layout.setSpacing(1)
+        add_button = QPushButton("+")
+        add_button.setToolTip("Duplicate this keyframe right after it")
+        add_button.setFixedWidth(22)
+        add_button.clicked.connect(lambda _checked: self._rebuild(insert_keyframe, *key))
+        remove_button = QPushButton("−")
+        remove_button.setToolTip("Remove this keyframe (a block keeps at least one)")
+        remove_button.setFixedWidth(22)
+        remove_button.setEnabled(len(block.frames) > 1)
+        remove_button.clicked.connect(lambda _checked: self._rebuild(remove_keyframe, *key))
+        cell_layout.addWidget(add_button)
+        cell_layout.addWidget(remove_button)
+        cell_layout.addWidget(QLabel(f"#{row}"))
+        return cell
 
     def _spin_for(self, field) -> QSpinBox:
         spin = _NoWheelSpinBox()

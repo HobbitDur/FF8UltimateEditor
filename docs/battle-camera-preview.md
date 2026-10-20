@@ -99,6 +99,12 @@ from the same tick.
 FFNx (`direct/battle/effect_camera/` in the game folder): FFNx plays it instead of the exe's
 track, with no .hext and in every exe language. The file is checked with FFNx's own rules first.
 
+A camera can also change size: **+** / **−** in front of a keyframe duplicates or removes it,
+**Clear slot** / **Add camera** empty or fill an animation slot, and a script longer than the
+exe's is applied. Such a track no longer fits the exe: a small warning says so, the list marks
+it *(.cam only)*, the .hext leaves it out, and **Export .cam…** saves it for FFNx, which plays
+.cam files of any size.
+
 ## Scope
 
 This is a preview of the selected DAT camera animation with manual or encounter placement,

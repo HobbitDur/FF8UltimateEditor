@@ -327,3 +327,112 @@ def add_animation_to_slot(data, set_index: int, slot: int) -> bytearray:
     struct.pack_into("<h", new_data, set_start + 2 * slot, pointer)   # repoint the slot
     struct.pack_into("<H", new_data, 2 + 2 * collection.nb_set, len(new_data))  # EOF == length
     return new_data
+
+
+# --------------------------------------------------------------------- structural edits
+# The edits below change the collection's length, so they rebuild it compactly instead of
+# patching it in place: each set is its 8 slot pointers followed by its animations (an animation
+# shared by several slots is written once, the empty slots share one 0xFFFF word), and the EOF
+# word is the new length. Unedited animations keep their bytes; only the layout moves.
+
+def _animation_bytes(collection, animation) -> bytes:
+    """An animation's bytes, its blocks and the 0xFFFF control word that ends it."""
+    end = animation.blocks[-1].end if animation.blocks else animation.offset
+    return bytes(collection.data[animation.offset:end + 2])
+
+
+def _slot_layout(collection):
+    """[[(key, bytes or None) x 8] per set]; slots sharing an animation share its key."""
+    return [[(None, None) if animation.empty else (animation.offset, _animation_bytes(collection, animation))
+             for animation in camera_set.animations] for camera_set in collection.sets]
+
+
+def _serialize(layout) -> bytearray:
+    data = bytearray(2 + 2 * len(layout) + 2)
+    set_pointers = []
+    for slots in layout:
+        set_start = len(data)
+        set_pointers.append(set_start)
+        data += bytes(2 * NB_SLOT_PER_SET)
+        written, empty_at = {}, None
+        for slot, (key, animation) in enumerate(slots):
+            if animation is None:
+                if empty_at is None:
+                    empty_at = len(data)
+                    data += struct.pack("<H", _END_OF_ANIMATION)
+                offset = empty_at
+            else:
+                if key not in written:
+                    written[key] = len(data)
+                    data += animation
+                offset = written[key]
+            pointer = (offset - set_start) // 2
+            if pointer > 32767:
+                raise ValueError("the camera collection is too large (a set holds at most 64 KB)")
+            struct.pack_into("<h", data, set_start + 2 * slot, pointer)
+    struct.pack_into("<H", data, 0, len(layout))
+    for index, pointer in enumerate(set_pointers):
+        struct.pack_into("<H", data, 2 + 2 * index, pointer)
+    if len(data) > 0xFFFF:
+        raise ValueError("the camera collection is too large (64 KB at most)")
+    struct.pack_into("<H", data, 2 + 2 * len(layout), len(data))
+    return data
+
+
+def _edit_slot(data, set_index: int, slot: int, edit) -> bytearray:
+    """Rebuild the collection with one slot's animation replaced by edit(collection, animation),
+    which returns the new animation bytes (None empties the slot)."""
+    collection = parse_camera_collection(data)
+    if not 0 <= set_index < collection.nb_set:
+        raise ValueError(f"set {set_index} does not exist")
+    if not 0 <= slot < NB_SLOT_PER_SET:
+        raise ValueError(f"slot {slot} is out of range")
+    layout = _slot_layout(collection)
+    animation = collection.sets[set_index].animations[slot]
+    layout[set_index][slot] = (object(), edit(collection, animation))  # its own copy from now on
+    return _serialize(layout)
+
+
+def rebuild_collection(data) -> bytearray:
+    """The same collection, rebuilt compactly (every slot keeps its animation bytes)."""
+    return _serialize(_slot_layout(parse_camera_collection(data)))
+
+
+def _frame_of(animation, block_index: int, frame_index: int):
+    if animation.empty or not 0 <= block_index < len(animation.blocks):
+        raise ValueError(f"block {block_index} does not exist")
+    frames = animation.blocks[block_index].frames
+    if not 0 <= frame_index < len(frames):
+        raise ValueError(f"keyframe {frame_index} does not exist")
+    return frames[frame_index]
+
+
+def insert_keyframe(data, set_index: int, slot: int, block_index: int, frame_index: int) -> bytearray:
+    """Duplicate a keyframe right after itself (the new one starts as an exact copy)."""
+    def edit(collection, animation):
+        frame = _frame_of(animation, block_index, frame_index)
+        raw = _animation_bytes(collection, animation)
+        at = frame.offset - animation.offset + FRAME_SIZE
+        return raw[:at] + raw[at - FRAME_SIZE:at] + raw[at:]
+    return _edit_slot(data, set_index, slot, edit)
+
+
+def remove_keyframe(data, set_index: int, slot: int, block_index: int, frame_index: int) -> bytearray:
+    """Remove a keyframe. A block keeps at least one."""
+    def edit(collection, animation):
+        frame = _frame_of(animation, block_index, frame_index)
+        if len(animation.blocks[block_index].frames) == 1:
+            raise ValueError("a block keeps at least one keyframe")
+        raw = _animation_bytes(collection, animation)
+        at = frame.offset - animation.offset
+        return raw[:at] + raw[at + FRAME_SIZE:]
+    return _edit_slot(data, set_index, slot, edit)
+
+
+def set_slot_animation(data, set_index: int, slot: int, animation: bytes = None) -> bytearray:
+    """Put an animation in a slot (default: build_default_animation()); None empties the slot."""
+    return _edit_slot(data, set_index, slot, lambda _collection, _old: animation)
+
+
+def clear_slot(data, set_index: int, slot: int) -> bytearray:
+    return set_slot_animation(data, set_index, slot, None)

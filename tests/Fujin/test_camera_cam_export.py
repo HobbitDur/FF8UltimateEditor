@@ -1,5 +1,5 @@
 """Fujin's .cam export: one effect's camera track as the FFNx effect_NNN.cam file
-(julianxhokaxhiu/FFNx#1047, docs/ff8/mods/effect_camera.md)."""
+(FFNx docs/ff8/mods/effect_camera.md)."""
 import struct
 import sys
 

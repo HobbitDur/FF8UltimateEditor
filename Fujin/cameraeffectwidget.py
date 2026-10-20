@@ -78,6 +78,11 @@ class CameraEffectEditorWidget(QWidget):
         info_buttons.addWidget(self.export_cam_button)
         info_buttons.addStretch(1)
         info_row.addLayout(info_buttons)
+        # A track that changed size no longer fits the exe: only a .cam file can use it
+        self.size_warning = QLabel()
+        self.size_warning.setWordWrap(True)
+        self.size_warning.setStyleSheet("color: #c77800; font-size: small;")
+        self.size_warning.hide()
 
         self.tabs = QTabWidget()
         self.keyframe_scroll = QScrollArea()
@@ -89,6 +94,7 @@ class CameraEffectEditorWidget(QWidget):
         details_layout = QVBoxLayout(details)
         details_layout.setContentsMargins(0, 0, 0, 0)
         details_layout.addLayout(info_row)
+        details_layout.addWidget(self.size_warning)
         details_layout.addWidget(self.tabs, 1)
 
         splitter = QSplitter()
@@ -114,8 +120,9 @@ class CameraEffectEditorWidget(QWidget):
         self.script_editor.setFont(monospace)
         self.script_editor.setToolTip("The camera script as code, one command per line. It picks which "
                                       "keyframe animation plays (play / play_var) from the attacker, the "
-                                      "target, random values... The track cannot grow: a script longer "
-                                      "than the exe's is refused, a shorter one is filled up on Apply.")
+                                      "target, random values... A shorter script is filled up on Apply "
+                                      "(the track keeps its exe size); a longer one makes the track grow: "
+                                      "the vanilla exe cannot use it any more, an FFNx .cam file can.")
         self.script_editor.textChanged.connect(self._update_script_size)
         self.apply_script_button = QPushButton("Apply script")
         self.apply_script_button.clicked.connect(self._apply_script)
@@ -194,6 +201,12 @@ class CameraEffectEditorWidget(QWidget):
         if not self.has_changes():
             QMessageBox.information(self, "Camera effect editor", "No camera track was changed: nothing to save.")
             return False
+        resized = self.manager.resized_tracks()
+        if len(resized) == len(self.manager.modified_tracks()):
+            QMessageBox.information(self, "Camera effect editor",
+                                    "Every changed camera track was resized: the exe has no room for them, so "
+                                    "there is nothing for a .hext. Export each one with Export .cam… (FFNx).")
+            return False
         if not path:
             default = os.path.join(self.file_registry.last_folder(HEXT_FOLDER_KEY) or os.getcwd(),
                                    f"camera_effects_{self.manager.language_name}.hext")
@@ -208,6 +221,10 @@ class CameraEffectEditorWidget(QWidget):
         with open(path, "w", encoding="utf-8") as file:
             file.write(text)
         self.file_registry.remember_folder(HEXT_FOLDER_KEY, os.path.dirname(path))
+        if resized:
+            names = ", ".join(str(track.effect_id) for track in resized)
+            self.status_label.setText(self.status_label.text() + f" - left out of the .hext (resized, "
+                                      f"export them as .cam): {names}.")
         return True
 
     def export_cam(self, path=None) -> bool:
@@ -258,6 +275,8 @@ class CameraEffectEditorWidget(QWidget):
         track = self.manager.track(effect_id)
         mark = "* " if track is not None and track.modified else ""
         suffix = "" if self.manager.camera_kind(effect_id) == "track" else " (no track)"
+        if track is not None and not track.fits_exe:
+            suffix = " (.cam only)"
         return f"{mark}{effect_id:3d} - {self.manager.effect_names.get(effect_id, '')}{suffix}"
 
     def _refresh_item(self, effect_id):
@@ -284,9 +303,12 @@ class CameraEffectEditorWidget(QWidget):
                                       "(EN, FR, DE, IT or ES 2013 Steam exe). Save writes a .hext.")
             return
         modified = len(self.manager.modified_tracks())
+        resized = len(self.manager.resized_tracks())
+        resized_text = f" ({resized} resized: .cam only)" if resized else ""
         self.status_label.setText(f"{self.manager.language_name} exe: {len(self.manager.tracks)} camera tracks, "
-                                  f"{modified} changed. Save writes a .hext for the {self.manager.language_name} "
-                                  "exe only (the addresses differ between languages).")
+                                  f"{modified} changed{resized_text}. Save writes a .hext for the "
+                                  f"{self.manager.language_name} exe only (the addresses differ between "
+                                  "languages); Export .cam… writes one effect for FFNx, any language.")
 
     def _show_selected(self, *_args):
         effect_id = self._selected_effect()
@@ -302,21 +324,33 @@ class CameraEffectEditorWidget(QWidget):
             else:
                 text = f"<b>Effect {effect_id} - {name}</b><br>{_NO_TRACK_TEXT[kind]}"
             self.info_label.setText(text)
+            self.size_warning.hide()
             self._set_collection_widget(None)
             self._set_script_texts("", "")
             self.preview.set_track(None)
             return
-        same = ", ".join(f"{other} {self.manager.effect_names.get(other, '')}" for other in track.same_as)
-        same_text = (f"<br>Same bytes in the exe as: {same} (separate copies: editing this one only "
-                     "changes this effect)") if same else ""
-        self.info_label.setText(
-            f"<b>Effect {effect_id} - {name}</b> &nbsp; <code>{track.label}</code><br>"
-            f"Track at 0x{track.address:X} ({self.manager.language_name} exe), {track.size} bytes: "
-            f"script {len(track.script)} bytes, {track.keyframe_count()} keyframes. "
-            f"Pushed by the effect's code at 0x{track.push_operand - 1:X}.{same_text}")
+        self._update_info(track)
         self._set_collection_widget(track)
         self._set_script_texts(self.manager.script_code(track), self.manager.script_text(track))
         self.preview.set_track(track)
+
+    def _update_info(self, track):
+        name = self.manager.effect_names.get(track.effect_id, "")
+        same = ", ".join(f"{other} {self.manager.effect_names.get(other, '')}" for other in track.same_as)
+        same_text = (f"<br>Same bytes in the exe as: {same} (separate copies: editing this one only "
+                     "changes this effect)") if same else ""
+        size = (f"{track.size} bytes" if track.fits_exe
+                else f"{track.size} bytes in the exe, now {track.current_size}")
+        self.info_label.setText(
+            f"<b>Effect {track.effect_id} - {name}</b> &nbsp; <code>{track.label}</code><br>"
+            f"Track at 0x{track.address:X} ({self.manager.language_name} exe), {size}: "
+            f"script {len(track.script)} bytes, {track.keyframe_count()} keyframes. "
+            f"Pushed by the effect's code at 0x{track.push_operand - 1:X}.{same_text}")
+        self.size_warning.setText(
+            f"⚠ This camera is now {track.current_size} bytes, its room in the exe is {track.size}: "
+            "the vanilla exe cannot use it, so it is left out of the .hext. Export it with Export .cam… - "
+            "FFNx plays .cam files of any size.")
+        self.size_warning.setVisible(not track.fits_exe)
 
     def _set_editors_enabled(self, enabled):
         self.reset_button.setEnabled(enabled)
@@ -324,14 +358,15 @@ class CameraEffectEditorWidget(QWidget):
         self.apply_script_button.setEnabled(enabled)
         self.script_editor.setReadOnly(not enabled)
 
-    def _set_collection_widget(self, track):
+    def _set_collection_widget(self, track, expanded_sets=()):
         self._collection_widget = None
         if track is None:
             placeholder = QLabel("")
             self.keyframe_scroll.setWidget(placeholder)
             return
-        widget = CameraCollectionWidget(track.collection)
+        widget = CameraCollectionWidget(track.collection, structure_edits=True, expanded_sets=expanded_sets)
         widget.data_changed.connect(self._on_keyframes_changed)
+        widget.collection_rebuilt.connect(self._on_collection_rebuilt)
         widget.preview_requested.connect(self.preview.preview_animation)
         self._collection_widget = widget
         self.keyframe_scroll.setWidget(widget)
@@ -356,21 +391,37 @@ class CameraEffectEditorWidget(QWidget):
             self.script_size_label.setText(f"Not valid code - room: {track.script_room} bytes")
             self.apply_script_button.setEnabled(True)  # Apply tells which line is wrong
             return
-        too_long = size > track.script_room
-        self.script_size_label.setStyleSheet("color: red;" if too_long else "")
-        if too_long:
-            text = f"{size} / {track.script_room} bytes: {size - track.script_room} too many (the track cannot grow)"
+        longer = size > track.script_room
+        self.script_size_label.setStyleSheet("color: #c77800;" if longer else "")
+        if longer:
+            text = (f"{size} / {track.script_room} bytes: {size - track.script_room} more than the exe has - "
+                    "the track grows, only an FFNx .cam file can use it")
         elif size < track.script_room:
             text = f"{size} / {track.script_room} bytes (Apply fills the {track.script_room - size} left)"
         else:
             text = f"{size} / {track.script_room} bytes"
         self.script_size_label.setText(text)
-        self.apply_script_button.setEnabled(not too_long)
+        self.apply_script_button.setEnabled(True)
 
     # ------------------------------------------------------------------ edits
     def _on_keyframes_changed(self):
         self._track_edited(self._selected_effect())
         self.preview.refresh()
+
+    def _on_collection_rebuilt(self, data):
+        """A keyframe or slot was added/removed: the track takes the new collection (its size may
+        change) and the editor is rebuilt where it was."""
+        effect_id = self._selected_effect()
+        track = self.manager.track(effect_id)
+        if track is None:
+            return
+        expanded = self._collection_widget.expanded_set_indices() if self._collection_widget else ()
+        scroll = self.keyframe_scroll.verticalScrollBar().value()
+        track.set_collection(data)
+        self._set_collection_widget(track, expanded)
+        self.keyframe_scroll.verticalScrollBar().setValue(scroll)
+        self._track_edited(effect_id)
+        self.preview.set_track(track)  # new animation objects: run the script again
 
     def _apply_script(self):
         effect_id = self._selected_effect()
@@ -397,6 +448,9 @@ class CameraEffectEditorWidget(QWidget):
     def _track_edited(self, effect_id):
         self._refresh_item(effect_id)
         self._update_status()
+        track = self.manager.track(effect_id)
+        if track is not None and effect_id == self._selected_effect():
+            self._update_info(track)
         self.modified_changed.emit()
 
     def _after_tracks_changed(self):

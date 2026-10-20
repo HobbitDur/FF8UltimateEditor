@@ -76,11 +76,16 @@ def test_script_code_round_trip(manager):
 
 
 @pytest.mark.ff8data(EXE)
-def test_script_keeps_its_exe_length(fresh_manager):
+def test_longer_script_grows_the_track_out_of_the_exe(fresh_manager):
+    from Fujin.cameraeffectmanager import cam_track_error
     track = fresh_manager.track(LIFE)
-    with pytest.raises(ValueError, match="remove 1 byte"):
-        fresh_manager.set_script_code(track, fresh_manager.script_code(track) + "\nend()")
-    assert not track.modified
+    assert track.fits_exe
+    fresh_manager.set_script_code(track, fresh_manager.script_code(track) + "\nend()")
+    assert track.modified and not track.fits_exe and track.current_size > track.size
+    assert cam_track_error(track.to_bytes()) is None          # a .cam can use it
+    assert fresh_manager.resized_tracks() == [track]
+    hext = fresh_manager.hext_text()                           # the exe cannot: listed, no bytes
+    assert "Effect 35 Life: resized" in hext and " = " not in hext
 
 
 @pytest.mark.ff8data(EXE)
@@ -106,9 +111,9 @@ def test_hext_cannot_change_a_track_size(fresh_manager):
     with pytest.raises(ValueError, match="header"):
         fresh_manager.apply_hext_text(f"+400000\n{keyframe_byte:X} = 7F\n{size_field:X} = FF 00\n")
     assert not fresh_manager.modified_tracks()
-    life.padding += b"\x00"                                   # a track that somehow grew
-    with pytest.raises(ValueError, match="room for exactly"):
-        life.to_bytes()
+    fresh_manager.set_script_code(life, fresh_manager.script_code(life) + "\nend()")  # resized
+    with pytest.raises(ValueError, match="resized"):
+        fresh_manager.apply_hext_text(f"+400000\n{life.address + 8 - 0x400000:X} = 02\n")
 
 
 @pytest.mark.ff8data(EXE)

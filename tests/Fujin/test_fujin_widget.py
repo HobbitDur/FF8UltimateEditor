@@ -50,18 +50,15 @@ def test_edit_keyframe_and_save_hext(fujin, tmp_path):
 
 
 @pytest.mark.ff8data(EXE)
-def test_script_apply_refuses_a_longer_script(fujin, monkeypatch):
-    from PyQt6.QtWidgets import QMessageBox
-    warnings = []
-    monkeypatch.setattr(QMessageBox, "warning", lambda *args: warnings.append(args[2]))
+def test_script_apply_grows_a_longer_script(fujin):
     editor = fujin.camera_editor
     editor.exe_binding.open_path(EXE)
     editor.select_effect(LIFE)
-    room = editor.manager.track(LIFE).script_room
+    track = editor.manager.track(LIFE)
+    room = track.script_room
     assert editor.script_size_label.text() == f"{room} / {room} bytes"
     editor.script_editor.setPlainText(editor.script_editor.toPlainText() + "\nend()")
-    assert "1 too many" in editor.script_size_label.text()
-    assert not editor.apply_script_button.isEnabled()          # Apply is off while too long
+    assert "1 more than the exe has" in editor.script_size_label.text()
+    assert editor.apply_script_button.isEnabled()              # a .cam can take it
     editor._apply_script()
-    assert warnings and "remove 1 byte" in warnings[0]
-    assert not editor.manager.track(LIFE).modified
+    assert track.modified and not track.fits_exe and not editor.size_warning.isHidden()
