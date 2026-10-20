@@ -16,8 +16,9 @@ HEXT_FOLDER_KEY = "camera effect .hext"
 CAM_FOLDER_KEY = "camera effect .cam"
 
 _NO_TRACK_TEXT = {
-    "file": "This effect has no camera track in the exe: it plays the camera stored in its own "
-            "loaded file (GF cinematics and a few story effects) - edit it in that file.",
+    "file": "This effect uses a file camera: its camera data or commands are stored in a loaded "
+            "cinematic file. Some files embed a normal camera track; others drive the view with "
+            "cinematic commands. This tab only edits and previews tracks stored in the exe.",
     "none": "This effect never starts a camera track (no Battle_PlayCameraAnimation call). With "
             "the Item command the battle view stays as it is; with Magic or a command that "
             "opened on the caster, the camera stays on the caster for the whole effect "
@@ -274,7 +275,8 @@ class CameraEffectEditorWidget(QWidget):
     def _item_text(self, effect_id):
         track = self.manager.track(effect_id)
         mark = "* " if track is not None and track.modified else ""
-        suffix = "" if self.manager.camera_kind(effect_id) == "track" else " (no track)"
+        suffix = {"track": "", "file": " (file camera)", "none": " (no exe track)"}[
+            self.manager.camera_kind(effect_id)]
         if track is not None and not track.fits_exe:
             suffix = " (.cam only)"
         return f"{mark}{effect_id:3d} - {self.manager.effect_names.get(effect_id, '')}{suffix}"

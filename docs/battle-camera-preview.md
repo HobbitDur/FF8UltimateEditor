@@ -105,6 +105,32 @@ exe's is applied. Such a track no longer fits the exe: a small warning says so, 
 it *(.cam only)*, the .hext leaves it out, and **Export .cam…** saves it for FFNx, which plays
 .cam files of any size.
 
+### File cameras: Disease Breath (effect 231)
+
+The effect list distinguishes **file camera** from **no exe track**. A file camera can
+contain the same script/keyframe track format as an exe camera, or drive the view with
+cinematic commands. Fujin currently edits and previews only the tracks stored in the exe;
+the file-camera label does not mean that the effect has no camera movement.
+
+Disease Breath has a normal camera track in `magic/MAG230_B.00` (the file number is one
+less than the effect ID). Verified against the English 2013 Steam exe and extracted files:
+
+- The texture/resource loader at `0xA66470` loads `MAG230_B.00` and `MAG230_B.01`.
+- The `.00` root program starts at `0x58`. At file offset `0x5A`, words `1039 0000`
+  invoke cinematic opcode `0x39`, sub-op 1 (`StageCameraAnim`).
+- The opcode handler's call at `0xA6C240` passes
+  `file_base + *(u32*)(file_base + 0x20)` to `Battle_PlayCameraAnimation` (`0x5099A0`).
+  This address is computed from the loaded file rather than pushed as a static exe address.
+- Header field `+0x20` is `0x870`. The embedded track occupies `[0x870, 0x930)`:
+  header words `0002 0008 0018 00C0`, 192 bytes total, with a 15-byte camera script,
+  one alignment byte and a keyframe collection starting at track offset `0x18`.
+  Set 0, slot 0 is populated with three blocks and five keyframe entries; the other slots
+  are empty. The existing camera parser rebuilds the track byte for byte.
+
+`effect_camera.json` already classifies 231 in `file_camera_effects`. The former
+**(no track)** list suffix hid that distinction. The exe extraction did not miss a static
+track: editing this camera requires reading and writing the embedded track in the `.00` file.
+
 ## Scope
 
 This is a preview of the selected DAT camera animation with manual or encounter placement,

@@ -5,7 +5,9 @@ Every packed file starts with the same 0x30-byte header of u32 offsets:
   0x0C object table: u32 count + u32 ofs[count] relative to the table start, 0 = not in this file
   0x10 sound-effect table (.00 only)        0x14 texture table (always 0x30)
   0x18 music-stream table                   0x1C end of the tables (.01: the engine's RAM area)
-  0x20 stage camera animation (unused)      0x24 voice bank (.00 only)
+  0x20 stage camera track (.00, when used)  0x24 voice bank (.00 only)
+The cinematic opcode 0x39 sub-op 1 plays the track at file + *(u32*)(file + 0x20).
+For example, effect 231 Disease Breath uses the track at MAG230_B.00 + 0x870.
 Resource tables are GLOBAL-index tables shared by all the GF's files: resource i has an entry only
 in the file that holds it (the exe's per-GF descriptor says which file slot that is).
 
