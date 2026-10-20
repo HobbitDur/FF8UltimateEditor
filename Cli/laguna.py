@@ -1,16 +1,4 @@
-"""Laguna - GF cinematic script (MAGxxx_B.00) CLI tool.
-
-The seven summons sharing Ifrit's engine (Ifrit MAG200, Leviathan MAG005, Bahamut MAG201,
-Cerberus MAG202, Alexander MAG203, Brothers MAG204, Eden MAG205) keep their choreography as byte
-code in their .00 mag file.
-
-Commands:
-    • info      - header, script region, reachable instructions, resources
-    • disasm    - disassemble the reachable scripts (or --linear from an offset)
-    • timeline  - simulate the scripts tick by tick: bone spawns/deaths and notable events
-    • opcodes   - print the decoded instruction set
-    • patch     - rewrite one instruction in place (same length): --at 0x1C0 --op 0x0409 --words 1,2
-"""
+"""Laguna CLI: MAG section inspection/export/replacement and cinematic script tools."""
 import argparse
 import os
 
@@ -32,11 +20,19 @@ def _cmd_info(args) -> int:
     from FF8GameData.magcine.magcontainer import MagContainer, HEADER_FIELDS
     manager = _load(args)
     program = manager.program
-    print(f"{os.path.basename(args.input)} - GF {manager.gf or '(unknown: not a vanilla file name)'}")
+    print(f"{os.path.basename(args.input)} - {manager.document.format}, {len(manager.data)} bytes")
+    for section in manager.document.sections:
+        print(f"  0x{section.start:06X}-0x{section.end:06X} {section.kind:14} {section.name} ({section.size} bytes)")
+    for warning in manager.document.warnings:
+        print(f"  warning: {warning}")
+    if manager.document.format != "Packed MAG":
+        return 0
     container = MagContainer(bytes(manager.data))
     for offset, label in HEADER_FIELDS:
         value = container.header[offset // 4]
         print(f"  header +{offset:02X} {label:28} {f'0x{value:X}' if value else '-'}")
+    if program is None:
+        return 0
     unreached = sum(end - start for start, end in manager.unreached_ranges())
     print(f"  script region 0x{manager.root:X}-0x{manager.script_end:X}: {len(program.instructions)} reachable "
           f"instructions, {len(program.blocks())} blocks, {len(program.particle_scripts)} particle scripts, "
@@ -52,6 +48,8 @@ def _cmd_info(args) -> int:
 
 def _cmd_disasm(args) -> int:
     manager = _load(args)
+    if manager.program is None:
+        raise ValueError("This file has no cinematic script; use info or section")
     labels = manager.labels()
     if args.linear is not None:
         start = _int(args.linear)
@@ -66,6 +64,24 @@ def _cmd_disasm(args) -> int:
         if args.explain:
             line += f"    ; {manager.describe(instruction)[:110]}"
         print(line)
+    return 0
+
+
+def _cmd_section(args) -> int:
+    manager = _load(args)
+    start = _int(args.at)
+    section = next((s for s in manager.document.sections if s.start == start), None)
+    if section is None:
+        raise ValueError("No section starts at that offset; use info to list the sections")
+    if args.export:
+        with open(args.export, "wb") as f:
+            f.write(manager.data[section.start:section.end])
+        print(f"[ok] exported {section.name}: {section.size} bytes")
+    else:
+        with open(args.replace, "rb") as f:
+            manager.replace_section(start, f.read())
+        manager.save_file(args.output or args.input)
+        print(f"[ok] replaced {section.name} without moving following offsets")
     return 0
 
 
@@ -117,7 +133,7 @@ def _cmd_patch(args) -> int:
 
 
 def _add_input(parser):
-    parser.add_argument("--input", "-i", required=True, help="Path to MAGxxx_B.00")
+    parser.add_argument("--input", "-i", required=True, help="Path to any MAG file or streamed part")
 
 
 class LagunaCliTool(BaseCliTool):
@@ -129,8 +145,7 @@ class LagunaCliTool(BaseCliTool):
 
     @property
     def description(self) -> str:
-        return ("GF cinematic script editor (MAGxxx_B.00 of Ifrit, Leviathan, Bahamut, Cerberus, "
-                "Alexander, Brothers, Eden): disassemble, simulate, patch")
+        return "MAG section editor: inspect/export/replace sections, disassemble cinematic scripts and simulate supported GFs"
 
     def build_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(prog="ff8-cli laguna", description=self.description)
@@ -139,6 +154,15 @@ class LagunaCliTool(BaseCliTool):
         p_info = sub.add_parser("info", help="Header, script region and resources")
         _add_input(p_info)
         p_info.set_defaults(func=_cmd_info)
+
+        p_section = sub.add_parser("section", help="Export or replace one section, preserving byte size")
+        _add_input(p_section)
+        p_section.add_argument("--at", required=True, help="Section start offset from info (e.g. 0x870)")
+        action = p_section.add_mutually_exclusive_group(required=True)
+        action.add_argument("--export", help="Destination for the section bytes")
+        action.add_argument("--replace", help="File containing the replacement section bytes")
+        p_section.add_argument("--output", "-o", help="Destination for the edited MAG file (default: input)")
+        p_section.set_defaults(func=_cmd_section)
 
         p_dis = sub.add_parser("disasm", help="Disassemble the reachable scripts")
         _add_input(p_dis)

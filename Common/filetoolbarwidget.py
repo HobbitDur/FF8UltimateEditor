@@ -260,7 +260,8 @@ class FileToolbarWidget(QWidget):
         active = self.tool_stack.currentWidget()
         save_files = getattr(active, "save_files", None)
         if callable(save_files):
-            save_files()
+            if save_files() is False:
+                return  # a tool reported a failed save; keep its unsaved-change marker
         else:
             for binding in self._main_bindings():
                 binding.save()          # the tool's single-file bindings

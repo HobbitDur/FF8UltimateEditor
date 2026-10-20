@@ -1,0 +1,6276 @@
+{
+ "scope": "Extracted PC magic/ and battle/ MAG/MA8 files; content-based structural audit, not game playback.",
+ "total": 790,
+ "formats": {
+  "AKAO audio": 1,
+  "Four-byte reference": 32,
+  "Indexed MAG container": 61,
+  "Packed MAG": 180,
+  "PlayStation TIM": 387,
+  "Raw / undecoded": 105,
+  "SCOT sound": 24
+ },
+ "cinematic_files": 58,
+ "camera_tracks": 46,
+ "failures": [],
+ "files": [
+  {
+   "file": "battle/ma8def_0.tim",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0c4486d30cf7e884f2464081c512e308fe843e85e21508d93466ddabe0ef47a1"
+  },
+  {
+   "file": "battle/ma8def_1.tim",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0d62ab52c578067373496d3f3355c6e1c1a3f9f0b241558023a0f8ce97def532"
+  },
+  {
+   "file": "battle/ma8def_2.tim",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "aef504cdc1c96811a34db148af3fc6d9ea45344b292b4a37c4820805dfb9f34d"
+  },
+  {
+   "file": "battle/ma8def_p.0",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "8ef481aa61b5eb1a64de7e7b6b37a633b6e1565aa04e37f8e53ac1bdcb3984a3"
+  },
+  {
+   "file": "battle/ma8def_p.1",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "38c0762bd290f5640496b73d39420bf53ee9caf2efbac06bb4ebcd7acb1c38dc"
+  },
+  {
+   "file": "battle/ma8def_p.2",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "c527f2ef21d814b7a25bec43caf34fc4b821ddd9fa3d6f8fd96148c58ff23a81"
+  },
+  {
+   "file": "battle/ma8def_p.3",
+   "size": 1024,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "03f1eccf3e14841bee2992ce6efacafb28c4190fc4fc675eba117e84518cc093"
+  },
+  {
+   "file": "battle/mag005_b.02",
+   "size": 64444,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "7b7d91b6e13d3901baabee040b372df47abe17db9704973903bad875206bfb63"
+  },
+  {
+   "file": "battle/mag005_b.03",
+   "size": 16384,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "419c81cf1c24ed314c6dbef97d884abf70272e1df0a3771e99b735eca661ca34"
+  },
+  {
+   "file": "battle/mag005_b.04",
+   "size": 16384,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "5bf6382cebeadadde22f96d0e4fade989f43df5043ba82b5cc9a471a7ba2be0c"
+  },
+  {
+   "file": "battle/mag005_b.05",
+   "size": 62276,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "1affc8872fe14766bb369cbad715c742d348c04070d288773307e4a648cabe01"
+  },
+  {
+   "file": "battle/mag005_b.06",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "dbed98b0ad794059f85f7b9b359506afd178b88d0c1c27ab78f6edfbc9c84d86"
+  },
+  {
+   "file": "battle/mag005_b.07",
+   "size": 65536,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "c45ea826d6f6f953ef1e8f996743fdaaf9a3b9653971eac8bed4023b2b69328c"
+  },
+  {
+   "file": "battle/mag005_b.08",
+   "size": 26448,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "8d2d8baa568fbe4f6ba2690c98e42008ff472bd3baa252c3b862776457237670"
+  },
+  {
+   "file": "battle/mag005_b.09",
+   "size": 27988,
+   "format": "Packed MAG",
+   "sections": 11,
+   "sha256": "1cfb11a39805fa46ca432015d089cf6c8c124810dc3303e1566b5f3eadf7897b"
+  },
+  {
+   "file": "battle/mag005_b.10",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "cea49becf92484772ab6966a286a681200827b16d88ce8b5bb468253da904654"
+  },
+  {
+   "file": "battle/mag005_b.11",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "0693e910262eff07cd92a18f34b259bfe1a6f26cc2925285bc57c2276757e6cf"
+  },
+  {
+   "file": "battle/mag005_b.12",
+   "size": 35840,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "3238fbbd4b17b850655660d83950b2e1f4d11a3d36beb0d25e0180e692e4931e"
+  },
+  {
+   "file": "battle/mag005_b.13",
+   "size": 27336,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "bfdd16793e236b605773c4e28b854c881a8a353ca855664f06986f05f5dc051a"
+  },
+  {
+   "file": "battle/mag005_b.14",
+   "size": 24412,
+   "format": "Packed MAG",
+   "sections": 17,
+   "sha256": "cd8eddd7c196a4d19e856a85a0a9615c4c6cd0f39b02b747e8c1802e6e46790e"
+  },
+  {
+   "file": "battle/mag005_b.15",
+   "size": 65536,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "c9545d56a0fdd1a56e289099ecd4bc353806084271ce1da2f9b8d49f4709bf2d"
+  },
+  {
+   "file": "battle/mag005_b.16",
+   "size": 34656,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "2eef4ed79e57f866f0b385d035d1c86694f87cf2dc7e3bea918ce41382c415f3"
+  },
+  {
+   "file": "battle/mag005_b.17",
+   "size": 38384,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "cdc48499727464b8ffb49d25389062906e9f5bce2f8a62961833f5cb1b580d0f"
+  },
+  {
+   "file": "battle/mag007_b.1s0",
+   "size": 7072,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "16156ed6818a0d24811ad61fedb9cb2e8c7e560bbce4d987eb2eb223cae526e1"
+  },
+  {
+   "file": "battle/mag007_b.1s1",
+   "size": 3204,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "e9111bf3a3db98f068c70acf668d2db34890d0dc23ed20fd25fb7546c0836dfd"
+  },
+  {
+   "file": "battle/mag007_b.1s2",
+   "size": 10984,
+   "format": "Indexed MAG container",
+   "sections": 7,
+   "sha256": "ff1a18ef441381bfb62967206be1a8c49eef850e44a7c9e3a04166ea044dd890"
+  },
+  {
+   "file": "battle/mag007_b.1t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "02ec90df9293de98136f64f5943387da0f4ab493e6d0069f3f840f1cde3ded3a"
+  },
+  {
+   "file": "battle/mag007_b.1t1",
+   "size": 14880,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "b5fb7d197e34c4f7145ac88ff7729346534173ccb4dc2c05ba3bda3e5dce2dc8"
+  },
+  {
+   "file": "battle/mag046_b.1t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "92ffbff0f1782c09b1d1eb9eac5b534c77c9710760ba496a06064e11dc2932b3"
+  },
+  {
+   "file": "battle/mag046_b.1t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "bc801dc7be4dfa35f57b2d7c16b1646956867aa3e20c08e5e7b0954439661da7"
+  },
+  {
+   "file": "battle/mag046_b.1t2",
+   "size": 32832,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "02bb55eb80e666b7af9973b44fa1f2c7a1014e8eeafe61da102e28fc33c95c5c"
+  },
+  {
+   "file": "battle/mag064_h.00",
+   "size": 66592,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "858978166715920a72f1d24eb64eb2f58cfc4c239ef3ac13cd3e8b53327f0512"
+  },
+  {
+   "file": "battle/mag064_h.01",
+   "size": 66592,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1b1560bd49551391a930c35211f379d68ac24c31c02fadfd63c7c800d6da443d"
+  },
+  {
+   "file": "battle/mag064_h.02",
+   "size": 94152,
+   "format": "Indexed MAG container",
+   "sections": 7,
+   "sha256": "5fa0cd50ea856dd1350eb43cd8255829940c03f919e83140dd2bcccb255141be"
+  },
+  {
+   "file": "battle/mag064_h.03",
+   "size": 81568,
+   "format": "Indexed MAG container",
+   "sections": 8,
+   "sha256": "2ad2e515f2791d36866a3e110b9cddc13483921b32c50e5bc8d3b4fec548a6f6"
+  },
+  {
+   "file": "battle/mag076_b.02",
+   "size": 73440,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "15a77d45456e6e3f19e04ddc4c564e146f47b1096acd0357ba2f6b5340355fde"
+  },
+  {
+   "file": "battle/mag076_b.03",
+   "size": 35238,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "9d24f9ea9f25858c7574db99212a52ce28b9d9b7784eda081247126589f83051"
+  },
+  {
+   "file": "battle/mag076_b.04",
+   "size": 35238,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "9d24f9ea9f25858c7574db99212a52ce28b9d9b7784eda081247126589f83051"
+  },
+  {
+   "file": "battle/mag076_b.05",
+   "size": 35238,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "9d24f9ea9f25858c7574db99212a52ce28b9d9b7784eda081247126589f83051"
+  },
+  {
+   "file": "battle/mag078_b.1s0",
+   "size": 5292,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "0150c9823bad8738a2489a3602325e56e55e301b03076cadeb756d39acf59eb3"
+  },
+  {
+   "file": "battle/mag078_b.1s1",
+   "size": 4604,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "59f3ce6847923f5233aa10f9e9c9697dc51831d37f0293892aa05d45d05a5036"
+  },
+  {
+   "file": "battle/mag078_b.1s2",
+   "size": 4544,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "b8e9577b62e14d04885f7c5f55d47234fca655f1f8c0b78b64757bd7ef36d2a0"
+  },
+  {
+   "file": "battle/mag078_b.1s3",
+   "size": 6092,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "bb907a4117c013191a5af75a2c787cfd55dfeb83e89886b34a9d0c3b954033c0"
+  },
+  {
+   "file": "battle/mag078_b.1t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "df20cb1dc54b287c5a98154652715fe201efbcfb668bd088d127ec6db3b15a6d"
+  },
+  {
+   "file": "battle/mag078_b.9m0",
+   "size": 136136,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "21b72c3c576725bab01feba8ad180b40315983dcf7eda50f5500cedfb14c46d3"
+  },
+  {
+   "file": "battle/mag084_b.1t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "5dd472371c443f1c5e32ccec6e29c2d182462e569dd7010ac28a668fee3d745c"
+  },
+  {
+   "file": "battle/mag084_b.1t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "315bede6e58abf8f94a628bd188aa4cf57f9d26a0055d3b16b88135eee190f12"
+  },
+  {
+   "file": "battle/mag084_b.1t2",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "be3b762258153a7f52cc660c9bab432d677be328d19205c5ee01ab98ca54453f"
+  },
+  {
+   "file": "battle/mag085_b.1t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "b3be9ab91dfb7149d3907e8e170ce9969820707f173b5a617f8ab4c7c47182fc"
+  },
+  {
+   "file": "battle/mag085_b.1t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f20b8dea8d736da2953358fe021be10885012f76ab4dc1541ae336c76af7e3fe"
+  },
+  {
+   "file": "battle/mag086_b.1s0",
+   "size": 18524,
+   "format": "Indexed MAG container",
+   "sections": 8,
+   "sha256": "321db1ea2df0a184f64124d030b55f00cbc07ab93262a78865aa2207b4e9c52e"
+  },
+  {
+   "file": "battle/mag086_b.1t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4b53afab61c752479ebd3d9291a51636da79ea21d611155147226ac3a54d4a0b"
+  },
+  {
+   "file": "battle/mag086_b.1t1",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "705cb88ce7f53c3df7b519dc88f564b1d7b0f12f6bcee573912d6149865f6bb2"
+  },
+  {
+   "file": "battle/mag087_b.1p0",
+   "size": 8356,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "238f58ffb67b3351f45f43911241b26e5c74e05ed945435d9eb43e858af9b3ef"
+  },
+  {
+   "file": "battle/mag087_b.1r0",
+   "size": 10912,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "7841d16bdcd2d310228bd273f1a080f2d11ba21cbd88bddd68a6f6a04412593b"
+  },
+  {
+   "file": "battle/mag087_b.1r1",
+   "size": 7984,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "c3752cabeea76a5ea9cedcbff06a9835d43df4b3dfb080e6eee9b4387671a56a"
+  },
+  {
+   "file": "battle/mag087_b.1s0",
+   "size": 12944,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "dd4266cdf317eb0eff463e91c72c2ea3875a33ae8178ad397de4b473f82a2621"
+  },
+  {
+   "file": "battle/mag087_b.1t0",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c5ecf56dbae8e187cf291643b6292239ab7e62f369acc5fe87307f8f18fe6976"
+  },
+  {
+   "file": "battle/mag087_b.1t1",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "04438fffdd50638805227ca26807ea7694b23bfa55bd8ee2c6ddedf94957ddac"
+  },
+  {
+   "file": "battle/mag088_b.1s0",
+   "size": 28560,
+   "format": "Indexed MAG container",
+   "sections": 8,
+   "sha256": "1ed863d8d975ca365db4b2576e00442038b6f405deda716bb7f8c074c0a9abcf"
+  },
+  {
+   "file": "battle/mag088_b.1s1",
+   "size": 656,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "356cd12c22975a8737715e9b6fd5e6f16fe8c40ac06dfa1a02e7db1278706407"
+  },
+  {
+   "file": "battle/mag088_b.1t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e9275fc15c3e4ccd3e98f89ac01b292f698cc6116bdc48c5d150ae7d90fa890e"
+  },
+  {
+   "file": "battle/mag088_b.1t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0f51ab7925599d4021eeababa934f6a1a8c5be35c0cb6447de8f02442ba320f4"
+  },
+  {
+   "file": "battle/mag088_b.2p0",
+   "size": 4736,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "02eef09c27cb8013d4b06a3b5e2afdf4ec2c6b0ed6131bce6bbca2af08822d59"
+  },
+  {
+   "file": "battle/mag088_b.2p1",
+   "size": 9076,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "72243dfed75bf6784c8915f9ee55ff76d717aadb3be06f26a3cd820cf18e8770"
+  },
+  {
+   "file": "battle/mag088_b.2s0",
+   "size": 8872,
+   "format": "Indexed MAG container",
+   "sections": 6,
+   "sha256": "d3609c648f7fab0d3efaf50bc66aee6fc7d4fec58fb60238bdb7d41555c2ea8f"
+  },
+  {
+   "file": "battle/mag088_b.2s1",
+   "size": 14832,
+   "format": "Indexed MAG container",
+   "sections": 7,
+   "sha256": "f4e1756dea446a2c4008ad08877d98bdae2d3651a8fe18528da03eee7886ae97"
+  },
+  {
+   "file": "battle/mag088_b.2t0",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2b5fc84b22643ff99e8640308f3db3778736e9d594d5c32b05513a547c30fb74"
+  },
+  {
+   "file": "battle/mag088_b.2t1",
+   "size": 17440,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e67ef46bb3d01763fbc4f11a361e019e7da5aab0883fd574ed7a70ade16333dd"
+  },
+  {
+   "file": "battle/mag089_b.1t0",
+   "size": 7776,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "687e99e0c86f6cc3a2a233a9704704f8af9dfba2621589ad23c8a1af609a7eb2"
+  },
+  {
+   "file": "battle/mag089_b.1z0",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "4c4345f384ed79daef9758767f4605082e8c80ab2088473f057951566ca97134"
+  },
+  {
+   "file": "battle/mag094_b.1s0",
+   "size": 13824,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "b8e125490bc3450cb2d9400ce079502305bd422d36545ef79c5a9fe8dab99324"
+  },
+  {
+   "file": "battle/mag094_b.1t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1454991070ed297881c14aa99c6343fc589f52f08bb92c7cc5370226e6801595"
+  },
+  {
+   "file": "battle/mag094_b.1t1",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "58f09e8048ae78e4c00e3ee267e0fa2ccd87eb279b318ab7a35c0a8c734eaa8b"
+  },
+  {
+   "file": "battle/mag094_b.1t2",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "fac39a79a922ac1b6162429897fcfab22f9f6d7d4ad19112dc1cfa89a4935a22"
+  },
+  {
+   "file": "battle/mag094_b.1t3",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "268f1830bf9aac39beb39bef02547eaa691c1c602506f0afc97689ec9c553616"
+  },
+  {
+   "file": "battle/mag094_b.1t4",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "082faa8fdb3be95dd8ac80e874e46f32a09ac15898b3396fd8ae58e9b455bd2a"
+  },
+  {
+   "file": "battle/mag094_b.1t5",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "cfb78db7caba79c2abcf3dc26e8d85a9f3251a96eac0522aece8a888d5743ca3"
+  },
+  {
+   "file": "battle/mag094_b.2e0",
+   "size": 60588,
+   "format": "Indexed MAG container",
+   "sections": 5,
+   "sha256": "2aff203c347fbb7b52567fa1bdd9a330f97d1caf5bdf7a67a84dcd29db82c954"
+  },
+  {
+   "file": "battle/mag094_b.2p0",
+   "size": 4756,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "32be122836a872689fa8c0373b2a23a16e0d6e387cac9092b95f2811c280ab77"
+  },
+  {
+   "file": "battle/mag094_b.2r0",
+   "size": 208,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "d3e6659a2e2ccd4637cb0ddcdd3abf843581898f8ac539f8a534b7733d401471"
+  },
+  {
+   "file": "battle/mag094_b.2r1",
+   "size": 208,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "7e65fa34c8b0692347d059d80f78eb9bec4aa3724e7352e5877d8651c4a37c79"
+  },
+  {
+   "file": "battle/mag094_b.2s0",
+   "size": 44600,
+   "format": "Indexed MAG container",
+   "sections": 7,
+   "sha256": "ddbc116292eeb9ce72a7b2a8dbb517f6be7256ff053d18218528ac656d6f38df"
+  },
+  {
+   "file": "battle/mag094_b.2s1",
+   "size": 4816,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "19483b1898472b2a05e0964d903de6559ffad0131c718fec78bb23c569297972"
+  },
+  {
+   "file": "battle/mag094_b.2s2",
+   "size": 4816,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "f83dcc7ba69d782e6ec75c43a7ae08108343d7de44ae27ed817b3bdfbeb3c4d3"
+  },
+  {
+   "file": "battle/mag094_b.2s3",
+   "size": 6836,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "93e7f8e2b141d12bc7cdb84a5e49353d222ca06582857cfb1fa3413016376bdb"
+  },
+  {
+   "file": "battle/mag094_b.2z0",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "ca3f01b2c6041ca6a606a0030c559f468d0e1d68d8eb724a0b60c0ff3b11ce7a"
+  },
+  {
+   "file": "battle/mag094_b.3p0",
+   "size": 2468,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "70f68da57f586ff3fa7b8527c82a51f03025be4d3f99ccc077c7141354576514"
+  },
+  {
+   "file": "battle/mag094_b.3s0",
+   "size": 7404,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "778e9d703752e710eb3423e45a0231c39f1624ec060238ca9c15c4da160bf87c"
+  },
+  {
+   "file": "battle/mag094_b.3t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f043b7bdd09b301c4d58af784e0e6c8e3e4cd97a76aa454a885b463e7692bf55"
+  },
+  {
+   "file": "battle/mag094_b.3t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "12a6a64151b276680a9c529aa17083160b0ec8414dc4ca36f969b6eba0fddb2e"
+  },
+  {
+   "file": "battle/mag095_b.1t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2a263e854e666b34151b17a2f6b1fd4f16a7fabcae559c1a259ab21371b35b41"
+  },
+  {
+   "file": "battle/mag095_b.1t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "60afde91b041fbc2795174427db8eb6e63954878f469c676da7dff942d85153d"
+  },
+  {
+   "file": "battle/mag095_b.1t2",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e43bf5559cde3df0d58ec5304505e9ac10d3758269e649a1f7e40eac203490cd"
+  },
+  {
+   "file": "battle/mag095_b.1t3",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2f862b8d4153aea1ce6780247ee8ca9a221ce5379a96cd13b7da6c0aab2d0846"
+  },
+  {
+   "file": "battle/mag096_b.1t0",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f79b33c42a425c92d614dcab0fa8418913e6f44860ffcebc58dea152c698e08d"
+  },
+  {
+   "file": "battle/mag096_b.1t1",
+   "size": 34336,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c7b0049f3ae6a218f4d0ef0f2051eb64041799a11a5ca1267fd9b2557da5f4c9"
+  },
+  {
+   "file": "battle/mag096_b.1t2",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2c93df5de7cd4c9537442ae2614b9b7fb2f9d068d25e9ef4419b80f3a0c1930f"
+  },
+  {
+   "file": "battle/mag096_b.2s0",
+   "size": 20192,
+   "format": "Indexed MAG container",
+   "sections": 6,
+   "sha256": "5c4fe56dd1eb59f1b01a28400faeeb805313cf78b64b425f05d95ec1b5146ac7"
+  },
+  {
+   "file": "battle/mag096_b.2t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1cf58b02601db1051c9a864d8c411bdde683e313ef984ab35fb97de1977f6a83"
+  },
+  {
+   "file": "battle/mag096_b.2t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "30c8413fed1c3a5f0067cf2364aae446079ba30e2c35b20d1b6bb10702d28ae8"
+  },
+  {
+   "file": "battle/mag096_b.3p0",
+   "size": 19040,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "2a2ff41d2e37709412a06fda93e74bd65e0bde88dd9af1c252cd97fb6d4f0c05"
+  },
+  {
+   "file": "battle/mag096_b.3s0",
+   "size": 15624,
+   "format": "Indexed MAG container",
+   "sections": 7,
+   "sha256": "66c965eb9f014f7562a5d394cdba2a96e534d31f8c203dbffede995b2eba3703"
+  },
+  {
+   "file": "battle/mag096_b.3s1",
+   "size": 25632,
+   "format": "Indexed MAG container",
+   "sections": 9,
+   "sha256": "4af7105b883a5f4aba31609d984e98aca243781aab42adb6587b06c2861897d9"
+  },
+  {
+   "file": "battle/mag096_b.3t0",
+   "size": 17952,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "652100e2a39a78962fb124470a8e1e04bb1e819a5c12da8c9be68fd8f025722a"
+  },
+  {
+   "file": "battle/mag096_b.3t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4598fb394e07fb391eb09ccad7f0c85fe3bc1407fbfce77919d7c3bd179f2894"
+  },
+  {
+   "file": "battle/mag096_b.3t2",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "de278ac279139e75c9391b731912a026343276f2c28d71ce2815a43724eb3338"
+  },
+  {
+   "file": "battle/mag097_b.1t0",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f79b33c42a425c92d614dcab0fa8418913e6f44860ffcebc58dea152c698e08d"
+  },
+  {
+   "file": "battle/mag097_b.1t1",
+   "size": 34336,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c7b0049f3ae6a218f4d0ef0f2051eb64041799a11a5ca1267fd9b2557da5f4c9"
+  },
+  {
+   "file": "battle/mag097_b.1t2",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2c93df5de7cd4c9537442ae2614b9b7fb2f9d068d25e9ef4419b80f3a0c1930f"
+  },
+  {
+   "file": "battle/mag097_b.2s0",
+   "size": 20192,
+   "format": "Indexed MAG container",
+   "sections": 6,
+   "sha256": "5c4fe56dd1eb59f1b01a28400faeeb805313cf78b64b425f05d95ec1b5146ac7"
+  },
+  {
+   "file": "battle/mag097_b.2t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1cf58b02601db1051c9a864d8c411bdde683e313ef984ab35fb97de1977f6a83"
+  },
+  {
+   "file": "battle/mag097_b.2t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "30c8413fed1c3a5f0067cf2364aae446079ba30e2c35b20d1b6bb10702d28ae8"
+  },
+  {
+   "file": "battle/mag097_b.3p0",
+   "size": 6532,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "1b4726cf10352bb398f615d7372184d8644ea9a0eb70407d18b4143800ac6114"
+  },
+  {
+   "file": "battle/mag097_b.3s0",
+   "size": 15624,
+   "format": "Indexed MAG container",
+   "sections": 7,
+   "sha256": "66c965eb9f014f7562a5d394cdba2a96e534d31f8c203dbffede995b2eba3703"
+  },
+  {
+   "file": "battle/mag097_b.3s1",
+   "size": 14572,
+   "format": "Indexed MAG container",
+   "sections": 7,
+   "sha256": "9c5f440f00416e47c7a8e09cf6be379c7db6609c35d5ca89d9ed81d8d5531188"
+  },
+  {
+   "file": "battle/mag097_b.3s2",
+   "size": 21292,
+   "format": "Indexed MAG container",
+   "sections": 8,
+   "sha256": "d9e39b46f12c0a0f272189f0b4be9e4ed7e6ee65e1de6e0d193aeaea9e533ec1"
+  },
+  {
+   "file": "battle/mag097_b.3t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "299f2246099b31b999758e6507b8c8a9b80274a4d7d7b135a27f570a94e5dcfb"
+  },
+  {
+   "file": "battle/mag097_b.3t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "fc89f5a438a2393227d269e5ec683e20b1c3f2a539afa89279489fb04cc48fdb"
+  },
+  {
+   "file": "battle/mag097_b.3t2",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "47909ffd38254e312ef9140294499ec8698e9a737f45e156f4a5c7f725d6bbe5"
+  },
+  {
+   "file": "battle/mag097_b.3t3",
+   "size": 17952,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ccb0837ac1fcf398118aed6855373a48ede1ee16920a820c0220c41cf712873d"
+  },
+  {
+   "file": "battle/mag098_b.1t0",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f79b33c42a425c92d614dcab0fa8418913e6f44860ffcebc58dea152c698e08d"
+  },
+  {
+   "file": "battle/mag098_b.1t1",
+   "size": 34336,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c7b0049f3ae6a218f4d0ef0f2051eb64041799a11a5ca1267fd9b2557da5f4c9"
+  },
+  {
+   "file": "battle/mag098_b.1t2",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2c93df5de7cd4c9537442ae2614b9b7fb2f9d068d25e9ef4419b80f3a0c1930f"
+  },
+  {
+   "file": "battle/mag098_b.2s0",
+   "size": 20192,
+   "format": "Indexed MAG container",
+   "sections": 6,
+   "sha256": "5c4fe56dd1eb59f1b01a28400faeeb805313cf78b64b425f05d95ec1b5146ac7"
+  },
+  {
+   "file": "battle/mag098_b.2t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1cf58b02601db1051c9a864d8c411bdde683e313ef984ab35fb97de1977f6a83"
+  },
+  {
+   "file": "battle/mag098_b.2t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "30c8413fed1c3a5f0067cf2364aae446079ba30e2c35b20d1b6bb10702d28ae8"
+  },
+  {
+   "file": "battle/mag098_b.3s0",
+   "size": 15624,
+   "format": "Indexed MAG container",
+   "sections": 7,
+   "sha256": "66c965eb9f014f7562a5d394cdba2a96e534d31f8c203dbffede995b2eba3703"
+  },
+  {
+   "file": "battle/mag098_b.3s1",
+   "size": 8736,
+   "format": "Indexed MAG container",
+   "sections": 7,
+   "sha256": "69e0b55642ef99a59805761dbe132bb8ac68e95fe4ee1059a2a0f36bf44aece5"
+  },
+  {
+   "file": "battle/mag098_b.3s2",
+   "size": 5688,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "28e3bf71c2c002e767b639d665f839c3db4105a70374e87a6b83fa7b02280cb1"
+  },
+  {
+   "file": "battle/mag098_b.3t0",
+   "size": 17440,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c401367f7ab4e2d1cba327e39d14a82b2516ddfe77e6942eaaf86d1dc5b6b546"
+  },
+  {
+   "file": "battle/mag098_b.3t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0607639d2bb79d42422f5281b2dd0c0b1bddfa99c0431f6250c5f116cb7128d5"
+  },
+  {
+   "file": "battle/mag098_b.4p0",
+   "size": 41656,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "7cb63fe054ef9e8fa58cc9ee3d96dd22e3f3758b04a343e07305c4ff007f3172"
+  },
+  {
+   "file": "battle/mag098_b.4r0",
+   "size": 4672,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "9968871e1a9e0b73c64984808d79b268ea6ccf9d141251b4fd699bdae985bf8c"
+  },
+  {
+   "file": "battle/mag098_b.4r1",
+   "size": 3696,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "87bba3fa9b662918f4a729611168afdc7982f876af7cb43b9a5a2cdc6c70d130"
+  },
+  {
+   "file": "battle/mag098_b.4s0",
+   "size": 11476,
+   "format": "Indexed MAG container",
+   "sections": 7,
+   "sha256": "822f99092e581bd5ecc883d0ae617c3dd52863450020b3257b917f0eaae5f16a"
+  },
+  {
+   "file": "battle/mag098_b.4s1",
+   "size": 10020,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "0c7f8f5fa3a436194fc3b45b8a8423cfb6bbd4ef8ff4a228a81694539f640b4b"
+  },
+  {
+   "file": "battle/mag098_b.4s2",
+   "size": 4148,
+   "format": "Indexed MAG container",
+   "sections": 3,
+   "sha256": "44f7cde6a98b168dafa8b0abe8ff4bde99f23a63a2114cce2ab504de5e622672"
+  },
+  {
+   "file": "battle/mag098_b.4t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "98fb4b52d8d839d4359e17a2894d3be4c36c10deef40b7bab269a3f45e658fcb"
+  },
+  {
+   "file": "battle/mag098_b.4t1",
+   "size": 34336,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "07383162bccd6ff288e925df866285768b027e38949e3162beaa94236d539c33"
+  },
+  {
+   "file": "battle/mag098_b.4t2",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "3dd7526eb27a4163bf239efd141a17309b4a3625fd8de50761f8053139583a12"
+  },
+  {
+   "file": "battle/mag098_b.4t3",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "a3311755fd9e66f5e1af401358c72cd29648863095829b18ffedb38c5543126b"
+  },
+  {
+   "file": "battle/mag099_b.1t0",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f79b33c42a425c92d614dcab0fa8418913e6f44860ffcebc58dea152c698e08d"
+  },
+  {
+   "file": "battle/mag099_b.1t1",
+   "size": 34336,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c7b0049f3ae6a218f4d0ef0f2051eb64041799a11a5ca1267fd9b2557da5f4c9"
+  },
+  {
+   "file": "battle/mag099_b.1t2",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2c93df5de7cd4c9537442ae2614b9b7fb2f9d068d25e9ef4419b80f3a0c1930f"
+  },
+  {
+   "file": "battle/mag099_b.2s0",
+   "size": 20192,
+   "format": "Indexed MAG container",
+   "sections": 6,
+   "sha256": "5c4fe56dd1eb59f1b01a28400faeeb805313cf78b64b425f05d95ec1b5146ac7"
+  },
+  {
+   "file": "battle/mag099_b.2t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1cf58b02601db1051c9a864d8c411bdde683e313ef984ab35fb97de1977f6a83"
+  },
+  {
+   "file": "battle/mag099_b.2t1",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "30c8413fed1c3a5f0067cf2364aae446079ba30e2c35b20d1b6bb10702d28ae8"
+  },
+  {
+   "file": "battle/mag099_b.3p0",
+   "size": 6488,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "5e00751fcbd1ec4be6ebed5295b1f9bd671ed10ae02c70bed60f8d3786c9d310"
+  },
+  {
+   "file": "battle/mag099_b.3s0",
+   "size": 15624,
+   "format": "Indexed MAG container",
+   "sections": 7,
+   "sha256": "66c965eb9f014f7562a5d394cdba2a96e534d31f8c203dbffede995b2eba3703"
+  },
+  {
+   "file": "battle/mag099_b.3t0",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "5521562f9fdb81f36e588229b61b72419fc4fcbcef0cb3833b14ba2240037d54"
+  },
+  {
+   "file": "battle/mag099_b.4e0",
+   "size": 20624,
+   "format": "Indexed MAG container",
+   "sections": 5,
+   "sha256": "a2c1e8f3a24530e12794e958d59eb7e25493ae8a41c9eb13ba01d875913f3da2"
+  },
+  {
+   "file": "battle/mag099_b.4t0",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c71737b5a779c2787fc4af368256a16d9b3c61d78e96a68c3d3dc99f12f6d97d"
+  },
+  {
+   "file": "battle/mag099_b.4t1",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "520e7bbbc87c1b698df9c5a4166ffae38939101f4177b0023d04c1076f475be7"
+  },
+  {
+   "file": "battle/mag099_b.5p0",
+   "size": 30304,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "a5fe1d66b617b74f9fc98960705fd74052e2fbb5118c050bad1a4be653a6b76e"
+  },
+  {
+   "file": "battle/mag099_b.5s0",
+   "size": 25484,
+   "format": "Indexed MAG container",
+   "sections": 13,
+   "sha256": "3598d64f7895160084599629f51d92a590add0796ba35813d02f18745bf1306a"
+  },
+  {
+   "file": "battle/mag099_b.5t0",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "8c002951f0d2a958b38a98ba146ef75c8ed5ac5ebef951c2eca08e53545a68db"
+  },
+  {
+   "file": "battle/mag099_b.5t1",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "6433b5ee9401a029ab105f570a33fb01c7ce9a9fb5a74fa15fc5a3f1a3c54e3a"
+  },
+  {
+   "file": "battle/mag115_h.00",
+   "size": 66080,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "5bf7f45cfd949664e6728d31024f8529d52bc1adaa586d5b5b180c1b3f50af93"
+  },
+  {
+   "file": "battle/mag115_h.01",
+   "size": 66592,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "82fb4b0b72e5b0b245effd73b98f5c8e9a219acca644c5001aa37ee1d8d0a7b5"
+  },
+  {
+   "file": "battle/mag115_h.02",
+   "size": 8736,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "64d8ef89d4057f51d22af841967db1c5a3b25f5df33920ac7e2f90f79d27eb20"
+  },
+  {
+   "file": "battle/mag115_h.03",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1f1bc353fe13165cdce9bf45f5b281d9c2cd980abce247b38a34ec0c5e578c86"
+  },
+  {
+   "file": "battle/mag115_h.04",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "a347ed14d90d71558274c4869642548d2b560875f7429d9e5af4224ae39d5d63"
+  },
+  {
+   "file": "battle/mag115_h.05",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "3aeafee1e1d75bc3e6e86b332352ed62c7c2ff29c76cc399c8596f8dd1ed36f2"
+  },
+  {
+   "file": "battle/mag115_h.06",
+   "size": 69152,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "79571751ab6c186cbe1b07150a191589bea5858fb8884d51df319453ba3fd017"
+  },
+  {
+   "file": "battle/mag115_h.07",
+   "size": 41920,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "fd77f4adb73088a904414308e0fdcca9229a86cb9612b865f2b464e20b4e11cb"
+  },
+  {
+   "file": "battle/mag115_h.08",
+   "size": 8096,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "8e08e7fca1f95e8151debc2ce1d2c0ce44012150f0a28bf0d124c4d736d528e2"
+  },
+  {
+   "file": "battle/mag115_h.09",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "21b7a6b7ab5b43c1d712b1c9c7d39e84ad8ede280a98e2cc815049b0d88d1050"
+  },
+  {
+   "file": "battle/mag115_h.10",
+   "size": 8088,
+   "format": "Indexed MAG container",
+   "sections": 5,
+   "sha256": "de043aaaee0048fca4711b8bcedfb89b4249c11041e63cd3113ed8cf938ac6e8"
+  },
+  {
+   "file": "battle/mag115_h.11",
+   "size": 25120,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "3e25e41c74817b63fc9cb7fd2fbfb8d63853d441e44618e60f2d873eae918a60"
+  },
+  {
+   "file": "battle/mag115_h.12",
+   "size": 11192,
+   "format": "Indexed MAG container",
+   "sections": 6,
+   "sha256": "b3bdaad5ebeac3dc2aa71658bc508dc0eac2c14ee5b14aa094484907eaf9b3f5"
+  },
+  {
+   "file": "battle/mag115_h.13",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1402e7d60d8cc279a31151bdb0781d603ac6427d85eb2c8085bda8f200aa98bc"
+  },
+  {
+   "file": "battle/mag115_h.14",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4c14853e89b0913f50f3e65ed99ab9fbc6f4c9890e06beefe672baad57827a5c"
+  },
+  {
+   "file": "battle/mag115_h.15",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "8a1d1c75d88492991a3bbe608ef19ed6e2c5bdf8177b25e0862e2464a9eb2b2f"
+  },
+  {
+   "file": "battle/mag115_h.16",
+   "size": 26752,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "bd70ae826a4cd3fc2f9db46e0cdf3bfc09612a856ad61b6bb242cc4da683999c"
+  },
+  {
+   "file": "battle/mag115_h.17",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1b8f74e666d9e7c77cf816fe9ec2b6253c37487dbd4734826be4b53f51f6ea55"
+  },
+  {
+   "file": "battle/mag115_h.18",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "14e43d24fcfc65cb10190675a5916817046bc298ce9145e82a11dc458cb19477"
+  },
+  {
+   "file": "battle/mag115_h.19",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "66a0b53312c1d72c6bdc384d5a7e06a470c8a118c9599f59efe112a66cf85c37"
+  },
+  {
+   "file": "battle/mag115_h.20",
+   "size": 13260,
+   "format": "Indexed MAG container",
+   "sections": 5,
+   "sha256": "243f07217b87f91197163f255236db79ba35d81c221f4ba8c205bfb1c9fc5110"
+  },
+  {
+   "file": "battle/mag115_h.21",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "a544f633b2134e2b2707493d4ee88a136d7ffeb2284676453223634314b56e1d"
+  },
+  {
+   "file": "battle/mag115_h.22",
+   "size": 97896,
+   "format": "Indexed MAG container",
+   "sections": 6,
+   "sha256": "112f9dcb8a82f902b3d3aabfa7ef3e487d34d0fa01e74eb5800a54c29928d639"
+  },
+  {
+   "file": "battle/mag139_h.00",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0afdcd9feb746f5580cc0180b80b4e0b8fee294c4098a7efa0bf79a039273170"
+  },
+  {
+   "file": "battle/mag139_h.01",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "3c5708a005f0f94c925100c98af681cd651f0568a575ce2e4f311ed20cd6e1c6"
+  },
+  {
+   "file": "battle/mag139_h.02",
+   "size": 34400,
+   "format": "PlayStation TIM",
+   "sections": 6,
+   "sha256": "e66e7f228c8617dee7c397a55bd099f1161bd54135c780561341e24f3e7f2ce7"
+  },
+  {
+   "file": "battle/mag139_h.03",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "eb3ecaa1e9f79bcd0a8d3db97c2569c3af511359537a2dc77800fd5391cb1b14"
+  },
+  {
+   "file": "battle/mag139_h.04",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "93b90139aba4e567186a6fae2b606870484f229c73171d4663b28742c9518d7a"
+  },
+  {
+   "file": "battle/mag139_h.05",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "a89f4d51a46398cd4521b9587e4e3cd890599a3c1b87849b9a80b69a6abc3594"
+  },
+  {
+   "file": "battle/mag139_h.06",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ceb6059abf46ca1c2ac0a27114c20d542246ae897dbfb8075d323279d4082e84"
+  },
+  {
+   "file": "battle/mag139_h.07",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "66b86384ff39f64c709b3f3f5a8cb98a429c04cb7297bf03e650cea7dbe32c04"
+  },
+  {
+   "file": "battle/mag139_h.08",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f564be01055bd9b6aa58596c7da6db0860a4c2fdc2f6b1195dc759b573547aab"
+  },
+  {
+   "file": "battle/mag161_a.dat",
+   "size": 66080,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0c3c6aa906a21e6a4b3161571d423f34de11d4b37a66fc18b7636d6947633945"
+  },
+  {
+   "file": "battle/mag163_a.dat",
+   "size": 117280,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "8813ff3787a634ce14d565f535924ea8cc50397dd61f5e443a76a18a4085a33b"
+  },
+  {
+   "file": "battle/mag163_b.dat",
+   "size": 99872,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7aeecbc35777231293bda4bb659db95e7b8cca47532abbc74bc4261f6fa1112f"
+  },
+  {
+   "file": "battle/mag164_a.dat",
+   "size": 66592,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f23919a77e940d30ba7dd9948a360373a6ba291892fa0c5fcc39fcd96c286509"
+  },
+  {
+   "file": "battle/mag164_b.dat",
+   "size": 68128,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "04972e90b7b5380bccdfe6a75b5f2a4c926e30750918a97df9fac0c189749f85"
+  },
+  {
+   "file": "battle/mag164_c.dat",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "9e3ab590908967685de154c3fe4412291aac835083657eb06a2325bed920fa15"
+  },
+  {
+   "file": "battle/mag184_d.dat",
+   "size": 100384,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4c8845956e044e5689a056742c50d43357e761bdcb33f99803569e469b6e5ffc"
+  },
+  {
+   "file": "battle/mag184_e.dat",
+   "size": 57256,
+   "format": "Indexed MAG container",
+   "sections": 5,
+   "sha256": "76378f9896329a489e9ed5849ea63f46e81b6f3d4f8d7baa4645a746af4ffc4f"
+  },
+  {
+   "file": "battle/mag184_f.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "dd5e8ff17033e3d207902e855fc1f6d5ff1b0b34c5edfb94234d9e86078aca5a"
+  },
+  {
+   "file": "battle/mag184_g.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "76803349baeb5f1ce6a8194b832de56fcdc6d0f8d14fe8cb2687956374bfda10"
+  },
+  {
+   "file": "battle/mag184_h.dat",
+   "size": 99360,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "508ac5efda7479f16e49e9d6c3c84c732ee77e7b705feb8a3605647ec443747d"
+  },
+  {
+   "file": "battle/mag184_i.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "a5dcf5b8418dfafec16079148ec90cf81dfc6276c1cce220017c782ecb7d7aea"
+  },
+  {
+   "file": "battle/mag186_a.dat",
+   "size": 100896,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "86b71b39f4f244288c21e3bfa44c6f8bc11047242981b9cbb590243f72f2a6fa"
+  },
+  {
+   "file": "battle/mag186_b.dat",
+   "size": 79664,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "f39a8d94d915924fcc4b65b37b2a49fabc6dbb49815dbdd27705c18be16a9637"
+  },
+  {
+   "file": "battle/mag186_c.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "c40f565ed2d504c2d594598745e2886754111946c68db0b79622eb86621fd505"
+  },
+  {
+   "file": "battle/mag186_d.dat",
+   "size": 65696,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "8a6d155c1ce45a4753204ccb6f736f00e1618912f437bf1c61cbfdd581cf8014"
+  },
+  {
+   "file": "battle/mag186_e.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "c7a63b0847b8493deba5cdaec17040b2d20c5b8b3056f00db390a2fd2c221012"
+  },
+  {
+   "file": "battle/mag186_f.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "a0c29024d3ec6e3a16e4140a0f99885fbb44fa6182331a70ab4ca0886f93bad5"
+  },
+  {
+   "file": "battle/mag186_g.dat",
+   "size": 36512,
+   "format": "AKAO audio",
+   "sections": 1,
+   "sha256": "bcb5c04f14e1cdcdd86b427de032cde52043bb5932e39ed2b4c7b63f9d2e0300"
+  },
+  {
+   "file": "battle/mag190_a.dat",
+   "size": 94240,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "28fb86bfbe2c59820ad0e89e7950fd47b2fe2d847ced0502245030b4ae55d590"
+  },
+  {
+   "file": "battle/mag190_b.dat",
+   "size": 56340,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "d6c331a80f906e73930c3e433df05e6c400c40f8221f5fdddb0035291e396592"
+  },
+  {
+   "file": "battle/mag190_c.dat",
+   "size": 49696,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ba1ca3f4e34903e3fe508508379f97a9b062e22df4e5348aea08116c0aae6b5d"
+  },
+  {
+   "file": "battle/mag190_d.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "f00061f6703ccf02a5d5d1ad9d83f2d4db90c9481268364eccdada3e2214d0fe"
+  },
+  {
+   "file": "battle/mag190_e.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "817582fca69e4a353868466d3a02114f3f7b945fad73b96be37523d1c0e18b70"
+  },
+  {
+   "file": "battle/mag190_f.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "10e39f6489dd137dfd75a85143577a057ec560ea8f054bfe7e2f35268ddf9c58"
+  },
+  {
+   "file": "battle/mag190_g.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "97a324f513203dd6f9235f7f81572f727a0d5839d391ca942bd53392a85a4dd0"
+  },
+  {
+   "file": "battle/mag199_a.dat",
+   "size": 101056,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "b015107378e5fdccd657016b75147ae0940afcc1631035128e516a6f6384e0df"
+  },
+  {
+   "file": "battle/mag199_b.dat",
+   "size": 133664,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "18b1b5ecb2ab19ec71e46f4d66ce2d62ff9fc212a06813fe7fe825765c3de961"
+  },
+  {
+   "file": "battle/mag199_c.dat",
+   "size": 66080,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "fe0e59549672fa6dc59616c58cc620882ea1a1bc287173b196f380ac01d62ddc"
+  },
+  {
+   "file": "battle/mag200_b.02",
+   "size": 65536,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "db5f4b4640c2de4ea0475caad4e87e20dec65b223e4cfc0be9b13b3489914d74"
+  },
+  {
+   "file": "battle/mag200_b.03",
+   "size": 55980,
+   "format": "Packed MAG",
+   "sections": 5,
+   "sha256": "19f9e7e8ac8312b739e4acc5e433b8ffba580e3221d487986effa105300ef0a3"
+  },
+  {
+   "file": "battle/mag200_b.04",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "fec794b0fbca97a4abcea2c34485a688c44c75368fdafd387e3734c5e9b81493"
+  },
+  {
+   "file": "battle/mag200_b.05",
+   "size": 25312,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "7e6eb54b317c6c9b62e0293d0b0f9aa360715fdbb249b1a24a2af08e57895f68"
+  },
+  {
+   "file": "battle/mag200_b.06",
+   "size": 67976,
+   "format": "Packed MAG",
+   "sections": 23,
+   "sha256": "8b7ba7a6825b17f6b2334cbd24c307c92ec048649640835388040fe18fa12283"
+  },
+  {
+   "file": "battle/mag200_b.07",
+   "size": 65536,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "f6adb1bfd4cb4a1ce9cf621be00aad7cc8d3aa4eec1cc8915de6ed205e606ab4"
+  },
+  {
+   "file": "battle/mag200_b.08",
+   "size": 35648,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "919898fd6b41cff4d486b0be8cba02a1e9b815ae5d93dad9ec4b4293a50f9da2"
+  },
+  {
+   "file": "battle/mag200_b.09",
+   "size": 41212,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "6c9d34ca3cb2e9efd0fcfc8d62277e38ab28dbabd798d2945f9bc2889ad3eaf8"
+  },
+  {
+   "file": "battle/mag200_b.10",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "adb3fe457ce7f642be7b2a30710eeedf79786cba4e960c2f2fd245f35ac29f64"
+  },
+  {
+   "file": "battle/mag200_b.11",
+   "size": 38480,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "c69c9d38c2cea1b206bff772e80ec3c8daba8e50de19dbc82f3b41d94ad5c6b3"
+  },
+  {
+   "file": "battle/mag200_b.12",
+   "size": 65536,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "8973b0323185ee081500cd29fd4973ba8fc6af378593f4c04ef825552071956f"
+  },
+  {
+   "file": "battle/mag201_b.02",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "56fba1c009eb47a8f136e2c1850ec48d94d7663e0b99edda25701c89390404b4"
+  },
+  {
+   "file": "battle/mag201_b.03",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "395d2913b01841ad1bfcb15451a37233fdeb1c6de62e0f5944fa7cd127b7b100"
+  },
+  {
+   "file": "battle/mag201_b.04",
+   "size": 33148,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "de7e12422f597d21a72954dcc941c1a97399cee3e33956ccd3d2396dec3f7024"
+  },
+  {
+   "file": "battle/mag201_b.05",
+   "size": 33148,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "43cf60c264878ff9af21f338748573c02896ad80b66d0ff9d77cc1e9da1e2409"
+  },
+  {
+   "file": "battle/mag201_b.06",
+   "size": 36320,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "9570cb881d26cc71cf0ce95d73dcb924ab575012fa4b10b3a317d4574b9f6681"
+  },
+  {
+   "file": "battle/mag201_b.07",
+   "size": 17276,
+   "format": "Packed MAG",
+   "sections": 7,
+   "sha256": "be561fed5ea834bb5d48d5d4210c76ee29dd63f39da0d6480a9e0985955b7964"
+  },
+  {
+   "file": "battle/mag201_b.08",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "f8dbf0cf579457e0489fe09c92dcfe71151ecb83e7ef30ca973be04b360a12ec"
+  },
+  {
+   "file": "battle/mag201_b.09",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "6fa206aaffd6dc2cac5ffdf7ad25a63b224ade6e429295bbb2e3574f86f50b8f"
+  },
+  {
+   "file": "battle/mag201_b.10",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "3f13d2b14a136a5cd9034226df0d91d6cd3fe80e1bb97750e6e1f0b229972bc1"
+  },
+  {
+   "file": "battle/mag201_b.11",
+   "size": 8572,
+   "format": "Packed MAG",
+   "sections": 5,
+   "sha256": "5d924a5970ff5c72fda05161e8458a77c42affe534d74209b1ca0d9b4c05765e"
+  },
+  {
+   "file": "battle/mag201_b.12",
+   "size": 62640,
+   "format": "Packed MAG",
+   "sections": 9,
+   "sha256": "9eccefa23599c876ea72cfa7e506068c459e9b401c5f97ec2dcce6f296e65941"
+  },
+  {
+   "file": "battle/mag201_b.13",
+   "size": 17736,
+   "format": "Packed MAG",
+   "sections": 19,
+   "sha256": "a38948a83c29b6789b9388799cdbe01d863578b3a4faec9afcd890f19f49adb4"
+  },
+  {
+   "file": "battle/mag201_b.14",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "b305e3fef3f57868fbc654c2eb95153853f2e8cebcf12b903063b7bf373e6160"
+  },
+  {
+   "file": "battle/mag201_b.15",
+   "size": 33148,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "8255817f7b1c7458197872a4f4d07b3388ec0ea6afc1526bec9adab43d00fba5"
+  },
+  {
+   "file": "battle/mag201_b.16",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "e6efaac89c0f72ceb780fca2ca179b4b9211edb3136cf15a7b0bf2d5f47e5fdc"
+  },
+  {
+   "file": "battle/mag201_b.17",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "ae9c29f2fba92df379326a76a84108cb219ceb78b1177d01483f8e7f01899630"
+  },
+  {
+   "file": "battle/mag201_b.18",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "cd7c35730214f994a6b581cb5004ccf4a9775056d6a9cfc103c9263ce5682839"
+  },
+  {
+   "file": "battle/mag201_b.19",
+   "size": 22732,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "3a97fabd8df4a6565c7b9b9639f28c1adc5ee0a1bbf49e39e7c6832c76e2ebf3"
+  },
+  {
+   "file": "battle/mag201_b.20",
+   "size": 7548,
+   "format": "Packed MAG",
+   "sections": 18,
+   "sha256": "c5981d94518e1e7bc86ec92c1c8f1be5b0d1d6d1dfdfe0719e208b4df1076a3b"
+  },
+  {
+   "file": "battle/mag201_b.21",
+   "size": 36912,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "a23a4163880143fa881c7e432d73a4cef603ab8e057559320d49f7db80b6db40"
+  },
+  {
+   "file": "battle/mag201_b.22",
+   "size": 16384,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "2e1d9513a4a6d9c601ac68ec79f7475ae98805628ff81e3087530673208ccfa4"
+  },
+  {
+   "file": "battle/mag201_b.23",
+   "size": 16764,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "f665282c19061745e5f0f1728bf8dd457de4050af9ecda52d6ff14dd3323b778"
+  },
+  {
+   "file": "battle/mag201_b.24",
+   "size": 16384,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "c3131ff854e8d042489915277a6a20daa7254bf6379a210af607c483d681f76e"
+  },
+  {
+   "file": "battle/mag201_b.25",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "b9cb782eee381371edb11d5d8f0f437babf7c19da6ee59cf3dbf26a807991c80"
+  },
+  {
+   "file": "battle/mag201_b.26",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "9214d92dc82d30629fa85b8b3408f18016909451d0293d4b11c9b5266d2815ef"
+  },
+  {
+   "file": "battle/mag201_b.27",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "bdd0faee97bbebd8d0ea9d07abeeaf5d173cf39603057e5b7b63e2d9712c0305"
+  },
+  {
+   "file": "battle/mag201_b.28",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "8de8f7a603889588353aad56c13d5b62fc8f830c14e570977cc445ded7790e47"
+  },
+  {
+   "file": "battle/mag201_b.29",
+   "size": 16384,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "fc0d18b9c470c551c43027536900f925b2c54028f473de87acdbe0affcef22ac"
+  },
+  {
+   "file": "battle/mag201_b.30",
+   "size": 21660,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "cf210326bb193033a924b98ef54ad06458bf11fd62442b8169fdd57093359258"
+  },
+  {
+   "file": "battle/mag201_b.31",
+   "size": 36480,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "9dae75091ffb07a824189a7ba552eeeb4c0da9851168989f68b221312c1252e0"
+  },
+  {
+   "file": "battle/mag201_b.32",
+   "size": 10620,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "16bc3ec807d88cb5c4398177bb8407035d6e7a5038c1218378e0596d41378d83"
+  },
+  {
+   "file": "battle/mag201_b.33",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "fc00afd145b13db447ec1ad5e069fdbf393b7ee15d32f24bdd5293c099b3748b"
+  },
+  {
+   "file": "battle/mag201_b.34",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "581ad3d2a5d19300753b6fcc8fd98e3282ed02ca5e812e5695f36dc43bf0e9b8"
+  },
+  {
+   "file": "battle/mag201_b.35",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "dc48fd6676ae9381ed9047f8b68d6b3c3bdea899b86bb8e44e7259fbde58dd57"
+  },
+  {
+   "file": "battle/mag201_b.36",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "11e8c4afd540a5d688c0d1505b566b8865db70ce88f4ebc5b5bfed378ba850d6"
+  },
+  {
+   "file": "battle/mag201_b.37",
+   "size": 33148,
+   "format": "Packed MAG",
+   "sections": 5,
+   "sha256": "265a9bdc42ed1d35d2c8e11fbf67f0c4e4a7eb07fabb08181eed9b8c018d1566"
+  },
+  {
+   "file": "battle/mag201_b.38",
+   "size": 23996,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "f6998e03d3e51aae4c1e3b8633694a246c63e7fb5d6faadc3fd747ce95f468f6"
+  },
+  {
+   "file": "battle/mag201_b.39",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "fc00afd145b13db447ec1ad5e069fdbf393b7ee15d32f24bdd5293c099b3748b"
+  },
+  {
+   "file": "battle/mag202_b.02",
+   "size": 36480,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "7fd252e01d505391f9c92ff28096e36e8d6fd78bef426cad14bda6a84068afcb"
+  },
+  {
+   "file": "battle/mag202_b.03",
+   "size": 16384,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "da49d584321eaee3e32c60c946f4fd73dfa002f763d65565dce4094185850004"
+  },
+  {
+   "file": "battle/mag202_b.04",
+   "size": 32976,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "564cbe5c8223ff00b7b8e33ed2b9d1f658f4be2c5a8ebd4f3b362ee52681deff"
+  },
+  {
+   "file": "battle/mag202_b.05",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "fcfc6fe9b4a66f9c3cb104f823b25ce4c046637ff2ca831ba7a9b21871f9c5f4"
+  },
+  {
+   "file": "battle/mag202_b.06",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "74c7e1a33068cb0a6a9f5cf05605e7ef6c1a2041a3118152da77d0bb6d5571ad"
+  },
+  {
+   "file": "battle/mag202_b.07",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "4bff38d6390e80523862a762fb97e9e5bf23a8b1c11fd3b6485ec96c1bdee33c"
+  },
+  {
+   "file": "battle/mag202_b.08",
+   "size": 16384,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "df53b6c622c4d665a26c1cc1fe8ac4d0db4a4da72153b6f3085221332e415f7a"
+  },
+  {
+   "file": "battle/mag202_b.09",
+   "size": 10792,
+   "format": "Packed MAG",
+   "sections": 7,
+   "sha256": "f74d04bb76c16ead848e874d1003b857eaf87578b19bc2b36917ca1bb74a30fe"
+  },
+  {
+   "file": "battle/mag202_b.10",
+   "size": 36560,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "ef6cefc09f72afa4d24c734dcc3ec0f5c31949450fa27c2e86258a70963c406c"
+  },
+  {
+   "file": "battle/mag202_b.11",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "4a9793d8571acbe1db84a01cdc092ff91e0f96b435b6692e35400d2c4d0a5df8"
+  },
+  {
+   "file": "battle/mag202_b.12",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "130f692364a1faa8fe49385c4b5df01c81ff4085ab186437b21b3b93618964a8"
+  },
+  {
+   "file": "battle/mag203_b.02",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "5e0860fd85b26f02aa5055b8b23fd6dcb20823f9aac123df14abcf6170bbc023"
+  },
+  {
+   "file": "battle/mag203_b.03",
+   "size": 16384,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "3e59da6c33f7e357b402859e3542a25d0323be1f67ead5ae896b80b8e53248af"
+  },
+  {
+   "file": "battle/mag203_b.04",
+   "size": 36656,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "aa88b598cfcac829fce23a43d18ed2e4c97603dba576b154c688bc30b0bb0a4d"
+  },
+  {
+   "file": "battle/mag203_b.05",
+   "size": 32968,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "36db32967583a7344dbcf2edb68734ed760e79c87d9be1cbe2df93a4b1285e64"
+  },
+  {
+   "file": "battle/mag203_b.06",
+   "size": 31944,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "fad2b15217b05952952c58f7ac22d3c530fe291cd944febdf95ac587dbf0e9f1"
+  },
+  {
+   "file": "battle/mag203_b.07",
+   "size": 36128,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "c392a29cb7e614a92c2622048a2a50721572c07ffdb4314f564a9056a5640453"
+  },
+  {
+   "file": "battle/mag203_b.08",
+   "size": 65536,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "a86fe9e156eeb011a4f2b6ae658aaf395bde928b9b7757ccc816549b4df8b92f"
+  },
+  {
+   "file": "battle/mag203_b.09",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "fcfc6fe9b4a66f9c3cb104f823b25ce4c046637ff2ca831ba7a9b21871f9c5f4"
+  },
+  {
+   "file": "battle/mag203_b.10",
+   "size": 27632,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "13c5f6c654649639291062a08c448089065813fe2fcdbb6124ade21effaa25b3"
+  },
+  {
+   "file": "battle/mag203_b.11",
+   "size": 26824,
+   "format": "Packed MAG",
+   "sections": 7,
+   "sha256": "2c43840a831bc34b2625edbb03d63396528b85d8fbb92ab873ac7756f91d4d4a"
+  },
+  {
+   "file": "battle/mag203_b.12",
+   "size": 28500,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "5a9a397fa65908e4a4fd042f53f6d3fdc3303f89314a6fcaeb76c6e87e7adf6d"
+  },
+  {
+   "file": "battle/mag203_b.13",
+   "size": 24576,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "924f6eddbee4a16167e8334f808d7b1c23915992edbf5f3ddbb28cbd145a0efd"
+  },
+  {
+   "file": "battle/mag203_b.14",
+   "size": 36592,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "b6530ed96677007efffb92823c6ae6e6e836cb6df6947fc26e60c7139d447540"
+  },
+  {
+   "file": "battle/mag203_b.15",
+   "size": 73928,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "b9792a2cff070a47d7f258e2ec54281c767c1f3656bb86b16239cb35e33280f6"
+  },
+  {
+   "file": "battle/mag204_b.02",
+   "size": 36940,
+   "format": "Packed MAG",
+   "sections": 5,
+   "sha256": "6efe1b224927eb1d27b2e3daf5de44e9528bc987c6dd0e37028371d605230662"
+  },
+  {
+   "file": "battle/mag204_b.03",
+   "size": 31268,
+   "format": "Packed MAG",
+   "sections": 9,
+   "sha256": "067127af0cae45dbdc87f5604d434e73d204d3113986dc83e0167e8094b2638b"
+  },
+  {
+   "file": "battle/mag204_b.04",
+   "size": 19480,
+   "format": "Packed MAG",
+   "sections": 17,
+   "sha256": "6bc64001b3d1b2eec2b939631ac5c832cc8151203ad597751695c53143643a09"
+  },
+  {
+   "file": "battle/mag204_b.05",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "12e0ec4717ac322a161431808a9faa5a1f5528fabdd767618ef78687835a5852"
+  },
+  {
+   "file": "battle/mag204_b.06",
+   "size": 35996,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "acf36b0f31883c348166d40f338354d2466e5a54903b6e291b25303f866de43a"
+  },
+  {
+   "file": "battle/mag204_b.07",
+   "size": 25408,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "1a01a744fab78862679ef902cb2b2342279cf5068241ab790f9e4e5519f2fd13"
+  },
+  {
+   "file": "battle/mag204_b.08",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "f9ccd8e59540ae50915803b890b4206252ecf54029db628cb32f38c1c423bc4f"
+  },
+  {
+   "file": "battle/mag204_b.09",
+   "size": 8192,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "2583c790b2d90b1e2a057be1eb507e295ba185a019843b3228e721bbee0aabdf"
+  },
+  {
+   "file": "battle/mag204_b.10",
+   "size": 36032,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "75e950ac4591f4448deed43cfa36a7665a21c7d8b316c962b8157d2d4c32951b"
+  },
+  {
+   "file": "battle/mag204_b.11",
+   "size": 21184,
+   "format": "Packed MAG",
+   "sections": 43,
+   "sha256": "c1f61c366a989cfab820bb5701dd7101ac06d5bcaa06927f78fa44b25000c11f"
+  },
+  {
+   "file": "battle/mag205_b.02",
+   "size": 35776,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "ace5fdcda85cc60b9df3c33627e059727400cd21e309c2891772812be1bdf8e3"
+  },
+  {
+   "file": "battle/mag205_b.03",
+   "size": 33448,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "6af3cb2282d6f40dcbd9cc6d0392f0c9efe042f226f0c9443970fdbb954e258f"
+  },
+  {
+   "file": "battle/mag205_b.04",
+   "size": 33320,
+   "format": "Packed MAG",
+   "sections": 7,
+   "sha256": "786544cebd52574c552c967203b1696bb62f6f347ad3189a865775322d2f9a76"
+  },
+  {
+   "file": "battle/mag205_b.05",
+   "size": 33320,
+   "format": "Packed MAG",
+   "sections": 7,
+   "sha256": "d82f76d533c60db2bab486be84ef4d022a71990281cf830534dd019d02dead7e"
+  },
+  {
+   "file": "battle/mag205_b.06",
+   "size": 33320,
+   "format": "Packed MAG",
+   "sections": 7,
+   "sha256": "18ff535d21bb0e453369f97cc2cc25a4fd5ad2248e08fbc423f6738f7b536140"
+  },
+  {
+   "file": "battle/mag205_b.07",
+   "size": 11560,
+   "format": "Packed MAG",
+   "sections": 5,
+   "sha256": "586653ef445c758cb25f097c1ef69bc28b57b380461fe857225b565574cbef4b"
+  },
+  {
+   "file": "battle/mag205_b.08",
+   "size": 34472,
+   "format": "Packed MAG",
+   "sections": 7,
+   "sha256": "fdb4ea91465707f070811f8bd21988ae0c2e2d0001c413da606578915554efca"
+  },
+  {
+   "file": "battle/mag205_b.09",
+   "size": 19336,
+   "format": "Packed MAG",
+   "sections": 8,
+   "sha256": "784507fc4e339753ee1203e4c9864f0e5f7a09eb83f5f1e9c414207d118ca00d"
+  },
+  {
+   "file": "battle/mag205_b.10",
+   "size": 33448,
+   "format": "Packed MAG",
+   "sections": 5,
+   "sha256": "15430a84658cc4bfd3bb57dff1e628bd9904172fcd0225116e06cd8be2aaaf5b"
+  },
+  {
+   "file": "battle/mag205_b.11",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "e88ead57fac9a6323761c23abd9e2b22eb67000d35121278ccddba8a568401fb"
+  },
+  {
+   "file": "battle/mag205_b.12",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "6cb3504cc48cffd421172f47f02dbd0c2b2beed1d2fa6ba6aa21a701117c5cad"
+  },
+  {
+   "file": "battle/mag205_b.13",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "2271a9ae946deda2d17774977df25fb68452069870653412ec793b99cfae9ea9"
+  },
+  {
+   "file": "battle/mag205_b.14",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "27bd719650ad36e43594c7e26104ae785bf5a1527d8a18e7dac2705167f15921"
+  },
+  {
+   "file": "battle/mag205_b.15",
+   "size": 34984,
+   "format": "Packed MAG",
+   "sections": 8,
+   "sha256": "019c100db96cb0709f1f3d7d49094f20df9c5b69b5f223ade0b390cd4cad95c6"
+  },
+  {
+   "file": "battle/mag205_b.16",
+   "size": 4996,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "add181983f608fff041ff778bff10c3aa6634142fbc1c6e9d9e0ff0ca22e8018"
+  },
+  {
+   "file": "battle/mag205_b.17",
+   "size": 33448,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "9b18e1a74388f91fb989f18de7bee384a2b610d55a4b67de71409069810f6fd6"
+  },
+  {
+   "file": "battle/mag205_b.18",
+   "size": 33448,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "e0ee0d09d2f89d45d5610ad0dd5815eb1f996e1303295bd0ded23f938bfaaab0"
+  },
+  {
+   "file": "battle/mag205_b.19",
+   "size": 33448,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "f7b4f56e604964bd4a6cd8a8e6d2fff612087b3ef89d2faa0a9dd3bad656c5cc"
+  },
+  {
+   "file": "battle/mag205_b.20",
+   "size": 35888,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "f3794d5fec39025ab968597f102e9a4f9023a42ed882204635baf9155eb49632"
+  },
+  {
+   "file": "battle/mag205_b.21",
+   "size": 34472,
+   "format": "Packed MAG",
+   "sections": 7,
+   "sha256": "031e0de77deb7e2dd7c0121df7795cceab64659199571b44f58ba8c2fad0b870"
+  },
+  {
+   "file": "battle/mag205_b.22",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "51d91bec8cd6a41caa42bbb35f1837257859c121c2303c2a94391d6edf5c98f0"
+  },
+  {
+   "file": "battle/mag205_b.23",
+   "size": 33448,
+   "format": "Packed MAG",
+   "sections": 5,
+   "sha256": "3a4faa566d22f14c99b4118f80487501bcee3eba6711d5373bb956abdcb0959f"
+  },
+  {
+   "file": "battle/mag205_b.24",
+   "size": 13912,
+   "format": "Packed MAG",
+   "sections": 11,
+   "sha256": "104f42ad825d278f054fea10b4f35c6375bc5035e91bf872937688f3c1cf84bb"
+  },
+  {
+   "file": "battle/mag205_b.25",
+   "size": 18816,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "92c03b92d7f9a39e7592b6d326e69d97ab680b74f0c7ecf9ae444e5bc371ad2e"
+  },
+  {
+   "file": "battle/mag205_b.26",
+   "size": 33960,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "4f60e0bea05919c85b4e4429d550c4bb91fbd68b039ea0c4c77db06869c782e2"
+  },
+  {
+   "file": "battle/mag205_b.27",
+   "size": 14416,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "b4023747cbe2c8e5fdc63eafec4b8753cca987f4001534438e8ff707a583b7f7"
+  },
+  {
+   "file": "battle/mag205_b.28",
+   "size": 25256,
+   "format": "Packed MAG",
+   "sections": 7,
+   "sha256": "e82481613c17eaf335beb5854ee1ab660ea13ab9adb8b828cc72aef5c016f936"
+  },
+  {
+   "file": "battle/mag205_b.29",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "be4e1e35a45922c37a5db9aeb5b4ab7e3e0d960ddf12bb3c5588e22a1b550594"
+  },
+  {
+   "file": "battle/mag205_b.30",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "ef26f39c371f2024e254150f263d7d954082c72131efcab2e183cf91a3481e08"
+  },
+  {
+   "file": "battle/mag205_b.31",
+   "size": 7336,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "5da0c210ada92d6847f0ad9ee5bd47f44481e9c186f90a4eb9ec1a3e7df94ee4"
+  },
+  {
+   "file": "battle/mag205_b.32",
+   "size": 49984,
+   "format": "Packed MAG",
+   "sections": 11,
+   "sha256": "2ff0b2fc4b27941499e2759b4d745bf0652536cdbc059a84b62a8a0ee3fc09d8"
+  },
+  {
+   "file": "battle/mag205_b.33",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "58510fe9a7b7697e1a9aace57f3da0e0b00812c93fed160e766b6eb668a2d9e8"
+  },
+  {
+   "file": "battle/mag205_b.34",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "5c63d600e4f730940d5d2c5b7235be2544cec42fd1446d0f41c395483301dba5"
+  },
+  {
+   "file": "battle/mag205_b.35",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "01914e3b67bf2310ecf044bbac9091ef50813c369a6fca51470db26fb8e19202"
+  },
+  {
+   "file": "battle/mag205_b.36",
+   "size": 4776,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "f48b57cd4a3da88ab164c03aae5f1aa14d99fa3d870391e6963179b3a22a45e2"
+  },
+  {
+   "file": "battle/mag205_b.37",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "4e1927b4fc31016c5937854671bcbf8b82a62a1e1fd12aeff377717083a1c2d9"
+  },
+  {
+   "file": "battle/mag205_b.38",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "d64ea6aa6344e1474fce80ace1facee9efc88ef3300b4bbc5f4effe94e76e1a1"
+  },
+  {
+   "file": "battle/mag205_b.39",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "25a7956bcecfa4053b0ff5ce8e6ef9f0445a5d8279d146f866d526b99c8f57f1"
+  },
+  {
+   "file": "battle/mag205_b.40",
+   "size": 16384,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "8756fbb5c21658c674987b3b7d25cb34fe64608db1bf9cf9da4dffeb7ce1da1a"
+  },
+  {
+   "file": "battle/mag205_b.41",
+   "size": 16384,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "8af533c0da2cd3d0968c208c5c4ce5ae986e83ad6b821d04ef3b3fa8e9563c03"
+  },
+  {
+   "file": "battle/mag205_b.42",
+   "size": 36160,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "bade70b64df4b09dfbff099df7a0db4892f14fcf8f152df6f6b2815f04e98840"
+  },
+  {
+   "file": "battle/mag205_b.43",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "be4e1e35a45922c37a5db9aeb5b4ab7e3e0d960ddf12bb3c5588e22a1b550594"
+  },
+  {
+   "file": "battle/mag205_b.44",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "ef26f39c371f2024e254150f263d7d954082c72131efcab2e183cf91a3481e08"
+  },
+  {
+   "file": "battle/mag205_b.45",
+   "size": 16384,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "f3ac3658164cf82fa10fe615ad7ec91ecbcca541f9dadb74ef7d4020472621f6"
+  },
+  {
+   "file": "battle/mag205_b.46",
+   "size": 15160,
+   "format": "Packed MAG",
+   "sections": 7,
+   "sha256": "f191752e902ecdd0632fd793825a8414118ea79c898e1a194cd596f72ac937f7"
+  },
+  {
+   "file": "battle/mag205_b.47",
+   "size": 11236,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "299258c7a89cc0c0bc5853863c96964ce565e66d8841f3a2667813175c2cd05b"
+  },
+  {
+   "file": "battle/mag205_b.48",
+   "size": 33448,
+   "format": "Packed MAG",
+   "sections": 8,
+   "sha256": "647afeeebd792998b5c4d5ec5bd2e5dd1c0412f6e4d569f522b39eae3c5436d7"
+  },
+  {
+   "file": "battle/mag205_b.49",
+   "size": 20136,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "bae5fc1eef337468f8a6b1b677a054a2adc5e58349dae17100262fc61319caa6"
+  },
+  {
+   "file": "battle/mag205_b.50",
+   "size": 13312,
+   "format": "Packed MAG",
+   "sections": 11,
+   "sha256": "168580538ae1ffc5891a3d24883fea6febef7351f5d0cebf8a7a9901c0bea959"
+  },
+  {
+   "file": "battle/mag205_b.51",
+   "size": 36608,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "0afc645a700b6f69c6c537e0f0f7b70af1e9ce76d7ce33564b880bc46295e3f5"
+  },
+  {
+   "file": "battle/mag205_b.52",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "03843817afa55ea99e7d303880bbf5cd1bcce528ce2f4fa95918a401d0497a3a"
+  },
+  {
+   "file": "battle/mag205_b.53",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "0603143cb9ae585d064e2389010a8ff80ef038d03701b677ed210882a49504f8"
+  },
+  {
+   "file": "battle/mag205_b.54",
+   "size": 5800,
+   "format": "Packed MAG",
+   "sections": 7,
+   "sha256": "1505a76d628cd427866ba54fc140fe0d58d776b5da8c27052a2524cfd2f74d2a"
+  },
+  {
+   "file": "battle/mag205_b.55",
+   "size": 25928,
+   "format": "Packed MAG",
+   "sections": 11,
+   "sha256": "c942bdcb2a3999f1cff996e16b63e9788c2b2f4b1e0f22cb70f47339c5bd5e37"
+  },
+  {
+   "file": "battle/mag205_b.56",
+   "size": 30928,
+   "format": "SCOT sound",
+   "sections": 2,
+   "sha256": "297c52a3a18f9250908aa0c324db4e4873d2c5d5ceb557eb72aad3fa4b1df73f"
+  },
+  {
+   "file": "battle/mag209_h.00",
+   "size": 168480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ec68e746c7c118d11234c06a00961a2eed45830ab99076f544bd798cb03fa7fb"
+  },
+  {
+   "file": "battle/mag217_a.dat",
+   "size": 104480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "80635f23ef56d285025ae378eeef94b8ad8d8be51f1958213967398614748f53"
+  },
+  {
+   "file": "battle/mag217_b.dat",
+   "size": 68356,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "6a94774478a2c547cc7dc3a2663f3e245ea737572ac386dc1f45f4db29f12efa"
+  },
+  {
+   "file": "battle/mag217_c.dat",
+   "size": 16960,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e005ef27b4acbd8be4290634157d6987125a7a90f297329da801e9788fe105d2"
+  },
+  {
+   "file": "battle/mag217_d.dat",
+   "size": 98880,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "d1855dc0a89198901f578f7ebf28775e8e892673a94286eae70aa71605ebf83a"
+  },
+  {
+   "file": "battle/mag217_e.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "8eeb772b34c1bb487f9670fccb46de75f970a3d037862ef8131e094f5544fc00"
+  },
+  {
+   "file": "battle/mag218_b.02",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "8234eb9bdb64a3754eba69e67b8ae84c2614775df45020a11156fb92b1013cc1"
+  },
+  {
+   "file": "battle/mag218_b.03",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "aa1241375178e52f1cdb0cb8cc95be1f9427300a6ce86eddb66d08d37c8797ee"
+  },
+  {
+   "file": "battle/mag218_b.04",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "6a39bb9afb22a6099c70edc56708ee186333d5e2e19fbef6f7bffba900977685"
+  },
+  {
+   "file": "battle/mag222_b.02",
+   "size": 65536,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "4b6938b75e88100939fe5cf7957a2427c14ed0c406f4ad9a543ede8691487028"
+  },
+  {
+   "file": "battle/mag222_b.03",
+   "size": 65536,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "45bad1778cd240602d716ba641914e4d5c08c380c7b74ffa802de4404147f2ea"
+  },
+  {
+   "file": "battle/mag250_h.00",
+   "size": 168480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f9c1339b9799756fdf934bb52570fae2c2c785dd3c6411e788eb4c4006fb4303"
+  },
+  {
+   "file": "battle/mag260_b.02",
+   "size": 32768,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "0875f2fc399074461ceb7122eab13125aeeb4315cff22d7c5b343952bc975a0c"
+  },
+  {
+   "file": "battle/mag273_h.00",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e1225accc624feb40b55e7d3c2a019ea16b4af2938d9112ed73823f133eaeb70"
+  },
+  {
+   "file": "battle/mag273_h.01",
+   "size": 33856,
+   "format": "PlayStation TIM",
+   "sections": 6,
+   "sha256": "7d31879a6e04201afd71871cd9f1bf1589fb21ccbfb7b1ae50d79302f17093fe"
+  },
+  {
+   "file": "battle/mag277_h.00",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "39e9936530cd2c1b7445ee8c7ed0bba626c38c85fb0e8282dd1c9774860e0c1b"
+  },
+  {
+   "file": "battle/mag277_h.01",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "551826d138923ce6f7a163727f6beca2508b02c51cc26c8b9d89bc966f86913b"
+  },
+  {
+   "file": "battle/mag290_h.00",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1be5002d9e2f16faf7db25e5c0a934b70318b141dabdfa30c846c8d267e72c02"
+  },
+  {
+   "file": "battle/mag290_h.01",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "03bcd509c2abc034c4b309011544c43ff970c61a90725aba8f65a1557a892968"
+  },
+  {
+   "file": "battle/mag290_h.02",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "4c15c9849b70c65c12734b218ee591ce9fe8e74d78d53b832160b8a24e8d11b2"
+  },
+  {
+   "file": "battle/mag290_h.03",
+   "size": 76616,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "e403eb4c8dd3c491a75b7179cd662accea3743c62c64117c6b4da33130b31a21"
+  },
+  {
+   "file": "battle/mag290_h.04",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "191949ff18d4ffd269d06c4b0bcd641257c885d3ea94c7556134740595c2d3fc"
+  },
+  {
+   "file": "battle/mag290_h.05",
+   "size": 33828,
+   "format": "Indexed MAG container",
+   "sections": 5,
+   "sha256": "69176769bfd2318d7937b302da08bc5c8e08584e1e5171330b2aa851de6233c0"
+  },
+  {
+   "file": "battle/mag290_h.06",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "3e319ce95c67010ec1de0f761ecac25551319fdb7e95886e420c22594cc484bf"
+  },
+  {
+   "file": "battle/mag290_h.07",
+   "size": 55884,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "1534bb05fbfaf91ee3f3997782bd88677b9d98bc38ac70d1a5ea56c35e58e6b3"
+  },
+  {
+   "file": "battle/mag290_h.t00",
+   "size": 65728,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "21bd50e712ba5052ae0d4a656acda5c1b5d16c55e7b3fa4d4ca3392f7f2701fa"
+  },
+  {
+   "file": "battle/mag324_h.00",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "ceefa8283e78fd307bf718b0c172727783b0bc99576d1ea1974b98ee70f5fa1b"
+  },
+  {
+   "file": "battle/mag324_h.01",
+   "size": 67616,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "840f7fee77e3df9a9e6057a12dfb7e49d48b84bf2b4ac93ad956398f4ee6cda4"
+  },
+  {
+   "file": "battle/mag324_h.02",
+   "size": 78008,
+   "format": "Indexed MAG container",
+   "sections": 5,
+   "sha256": "2f8d9aaa3b6f9a6a69456eb43347062cb4fdf016fdb259895bbc540e057110fb"
+  },
+  {
+   "file": "battle/mag324_h.03",
+   "size": 94696,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "e76b37c1acecf14c6f6352f6198b424bdcceef3dc68276bd2bec212c881ccd29"
+  },
+  {
+   "file": "battle/mag324_h.04",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "77f21bfb1847d74d16cd3bce4c78919601008e6b3098f6cc937febe1ff8028e8"
+  },
+  {
+   "file": "battle/mag324_h.05",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "b8cf8d39fff93dbc366f6c73d66adc3069947008d3cb11bcf56778f29460c4f6"
+  },
+  {
+   "file": "battle/mag324_h.06",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "bba246edccf55e8d2a63a283c3785e78e82ec5034955e73fb92ba291ed3464df"
+  },
+  {
+   "file": "battle/mag324_h.07",
+   "size": 121508,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "89c93e07086e6dda052d6b665d597c45afa78f69387c9d698224943b7bc10fa3"
+  },
+  {
+   "file": "battle/mag324_h.08",
+   "size": 122552,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "09f7ba43a74a6253748db9bb02ce98a05a08b798433408b390b77b986cca8de9"
+  },
+  {
+   "file": "battle/mag324_h.09",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "709eddfc631541f3ecea46e733bbf3043279bddfb51fdfd7be60efbc2714537e"
+  },
+  {
+   "file": "battle/mag324_h.m00",
+   "size": 78008,
+   "format": "Indexed MAG container",
+   "sections": 5,
+   "sha256": "2f8d9aaa3b6f9a6a69456eb43347062cb4fdf016fdb259895bbc540e057110fb"
+  },
+  {
+   "file": "battle/mag324_h.s00",
+   "size": 94696,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "e76b37c1acecf14c6f6352f6198b424bdcceef3dc68276bd2bec212c881ccd29"
+  },
+  {
+   "file": "battle/mag324_h.s01",
+   "size": 121508,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "89c93e07086e6dda052d6b665d597c45afa78f69387c9d698224943b7bc10fa3"
+  },
+  {
+   "file": "battle/mag324_h.s02",
+   "size": 122552,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "09f7ba43a74a6253748db9bb02ce98a05a08b798433408b390b77b986cca8de9"
+  },
+  {
+   "file": "battle/mag324_h.t00",
+   "size": 67616,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "cd72b91d3bd59631d515c526ccc70520894a15d4d464720bd16bcd5645a90ca5"
+  },
+  {
+   "file": "battle/mag325_a.dat",
+   "size": 100896,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "46a79ccdabe9584ba75dc48d07bf86df6d2d8a853bfda8f9616396d8ae01dbeb"
+  },
+  {
+   "file": "battle/mag325_b.dat",
+   "size": 83680,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "6cdd1f77442a8470aec233f0fb45d187454a0c651976b531ee8e71e32d1ebdf0"
+  },
+  {
+   "file": "battle/mag325_c.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "c40f565ed2d504c2d594598745e2886754111946c68db0b79622eb86621fd505"
+  },
+  {
+   "file": "battle/mag325_d.dat",
+   "size": 101056,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "637aa50b27430ada044639916be1cb7388b197fdd22e263860e017dede524cda"
+  },
+  {
+   "file": "battle/mag325_e.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "b202c25d3eadd61c87a3a0cd25df5a2527731241a8307c86843670eb6ea8c8da"
+  },
+  {
+   "file": "battle/mag325_f.dat",
+   "size": 19488,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "393d66790c0822bcbc894177a0a2078cf6f5cb2c69afe7b23a3dbafdb59da2a2"
+  },
+  {
+   "file": "battle/mag325_g.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "97d9e77242b7286d9cd95210158d544b3ceefc01c7238788d5fd55550041d035"
+  },
+  {
+   "file": "battle/mag325_h.dat",
+   "size": 13084,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "4fcdae4488651862bb08b8a3de10eb142deb0d1587cf7bdfd295f0c0429098c9"
+  },
+  {
+   "file": "battle/mag326_a.dat",
+   "size": 103968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ca7709daf5cb8cfadd8d554e7b18f765ceb2e3af75abe619cc237c582be44459"
+  },
+  {
+   "file": "battle/mag326_b.dat",
+   "size": 30688,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "a06d3bf02f2723bbe1f94c76e2ab5f2d6413940032c7d6a0322414327e3a3a8b"
+  },
+  {
+   "file": "battle/mag326_c.dat",
+   "size": 132640,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e8218c9c92fbf4d3fb240088f043d75be34e684d87bba669d1dd7a0a522b6892"
+  },
+  {
+   "file": "battle/mag326_d.dat",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2af8896d2a927a1e19ca1d325b7357a2bfb1aa451c1df28dad8d6355c4b70fcc"
+  },
+  {
+   "file": "battle/mag326_e.dat",
+   "size": 31004,
+   "format": "Indexed MAG container",
+   "sections": 5,
+   "sha256": "4f35be3308f5b1b0681a2092ddef7df053503d6a529d54b2ecf844ec782269fe"
+  },
+  {
+   "file": "battle/mag326_f.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "491f7ccc725c89ea7323512eb0aa8c0d212d0229d436b98a8cdb12bd202bb3fa"
+  },
+  {
+   "file": "battle/mag326_g.dat",
+   "size": 50592,
+   "format": "Indexed MAG container",
+   "sections": 4,
+   "sha256": "784b5c77830bf0a1293317693c0c62502cc7280db8bda9f14ed579252ff46a9f"
+  },
+  {
+   "file": "battle/mag326_h.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "c0ce89a219e7539bfb93afeec42af8b690da11c50c9838c207a4e1ac52e79ac8"
+  },
+  {
+   "file": "battle/mag326_k.dat",
+   "size": 4,
+   "format": "Four-byte reference",
+   "sections": 1,
+   "sha256": "c7a63b0847b8493deba5cdaec17040b2d20c5b8b3056f00db390a2fd2c221012"
+  },
+  {
+   "file": "battle/mag327_h.dat",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "215a4e24c43fb393c6ed5ab44d101c86d98279196c9825d0d7cf875b5439e789"
+  },
+  {
+   "file": "battle/mag327_j.dat",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "215a4e24c43fb393c6ed5ab44d101c86d98279196c9825d0d7cf875b5439e789"
+  },
+  {
+   "file": "battle/mag328_g.dat",
+   "size": 34336,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "616082d9819f3d962c970a1da55d10cbbd0e8de79d2eeef36f78006f952e4ad7"
+  },
+  {
+   "file": "battle/mag328_h.dat",
+   "size": 99360,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2437bb67e55715537447f9c83d90cc981634bf431f58e681ba23e7184a3ee0b6"
+  },
+  {
+   "file": "battle/mag328_i.dat",
+   "size": 34336,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "616082d9819f3d962c970a1da55d10cbbd0e8de79d2eeef36f78006f952e4ad7"
+  },
+  {
+   "file": "battle/mag328_j.dat",
+   "size": 99360,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2437bb67e55715537447f9c83d90cc981634bf431f58e681ba23e7184a3ee0b6"
+  },
+  {
+   "file": "battle/mag329_h.dat",
+   "size": 99360,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "37f5044ce4baf4c9dd85c66048a8a2263ba1ea8eaa218cbdf4c221c20fd5af18"
+  },
+  {
+   "file": "battle/mag329_j.dat",
+   "size": 99360,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "37f5044ce4baf4c9dd85c66048a8a2263ba1ea8eaa218cbdf4c221c20fd5af18"
+  },
+  {
+   "file": "battle/mag337_h.t00",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e9275fc15c3e4ccd3e98f89ac01b292f698cc6116bdc48c5d150ae7d90fa890e"
+  },
+  {
+   "file": "battle/mag337_h.t01",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "de47ca7f95e7f1eb1ff3c60a5d7679723deeb8bb056911c985355a5b6322d79e"
+  },
+  {
+   "file": "battle/mag337_h.t02",
+   "size": 30848,
+   "format": "PlayStation TIM",
+   "sections": 6,
+   "sha256": "d4fd482f852bff1cb279bfa22d054974ae8198428963378f74b3d85d6198cccd"
+  },
+  {
+   "file": "battle/mag337_h.t03",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7a556099e3aa53faac4d3736a58ee69d7f3303537a2649186ae504827c49fb15"
+  },
+  {
+   "file": "battle/mag337_h.t04",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "8e1eb71a7826d6d87728b1111484bada314cd628e041976ccf672b3cf7f237bc"
+  },
+  {
+   "file": "battle/mag337_h.t05",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "752d76a5a67eb3a08c763b99fa0100bbbb9e7d8a951d26346992b9f5c0962fab"
+  },
+  {
+   "file": "battle/mag337_h.t06",
+   "size": 26176,
+   "format": "PlayStation TIM",
+   "sections": 6,
+   "sha256": "fcde3013d235e67156aea879caada94cada1e963a0393c4ca17b180c9ab90054"
+  },
+  {
+   "file": "battle/mag339_a.dat",
+   "size": 66592,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f23919a77e940d30ba7dd9948a360373a6ba291892fa0c5fcc39fcd96c286509"
+  },
+  {
+   "file": "battle/mag339_b.dat",
+   "size": 68128,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "04972e90b7b5380bccdfe6a75b5f2a4c926e30750918a97df9fac0c189749f85"
+  },
+  {
+   "file": "battle/mag339_c.dat",
+   "size": 33312,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "9e3ab590908967685de154c3fe4412291aac835083657eb06a2325bed920fa15"
+  },
+  {
+   "file": "battle/mag999_a.dat",
+   "size": 1847296,
+   "format": "Raw / undecoded",
+   "sections": 1,
+   "sha256": "cd8acb843c8a1cd125af34500c1f617427d9e048a08e0fb10f1aaf70dd22ef08"
+  },
+  {
+   "file": "magic/mag000-049.tim",
+   "size": 132128,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1718fc7ebf61d53f73e9c11c7e30b49e15f49602d1faf4b599441249d7ded607"
+  },
+  {
+   "file": "magic/mag001.tim",
+   "size": 132640,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "eee0c78f798826b5f1bc6cf4ba3370dd3405a530e531d3615220f66aaec2f2fb"
+  },
+  {
+   "file": "magic/mag003.tim",
+   "size": 134688,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "eb90fe37b89be8dafb5224a8b354aba993e8edfa92dff057cd9b342626508771"
+  },
+  {
+   "file": "magic/mag004-034.tim",
+   "size": 134176,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0f29d4cb357077de3837139ac790319e79a2d497eb24f8c6231193261bc10bff"
+  },
+  {
+   "file": "magic/MAG005_B.00",
+   "size": 13600,
+   "format": "Packed MAG",
+   "sections": 11,
+   "sha256": "3a97b336d96c673bbec4a052a6b52f6e216d4c33869dc4d4f02b99176433fc70",
+   "cinematic": {
+    "effect_id": 6,
+    "root": 172,
+    "end": 8328,
+    "instructions": 1595,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG005_B.01",
+   "size": 212992,
+   "format": "Packed MAG",
+   "sections": 29,
+   "sha256": "9f3735d162e78068d0b0bc1d124c831bdc550f10dab55905a260cc6ad5492de3"
+  },
+  {
+   "file": "magic/mag006.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "20daa9f0ef8f16ec48b4b62e66edfe65d5ed61f481e4cee3eeb4850c57d76210"
+  },
+  {
+   "file": "magic/mag007.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "5c596d58c9d5c65457f2fc78f601497d5dccf941cda49c4a69fb3e569e7c74e1"
+  },
+  {
+   "file": "magic/mag008.tim",
+   "size": 168480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "bedd6e17579c56c7aaa31eb03fd351800e4da7a50d8f8b3763b393bcf31ef430"
+  },
+  {
+   "file": "magic/mag009.tim",
+   "size": 199200,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4fc21c5f8a79cb6c3c0efee67d3773ca35a773fb73342c4e1b21d399222549c7"
+  },
+  {
+   "file": "magic/Mag010.tim",
+   "size": 170016,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "51ff3d5648bf7731117010c9a5623e73c2847e808decaab81a9fea4bf31752f1"
+  },
+  {
+   "file": "magic/Mag011.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7af82c51935cf2c1b73fdb17d3507cb66b90210b4f8c18a17e9bd11f0635c800"
+  },
+  {
+   "file": "magic/mag012.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "245c1469d5ec26c339eaf40666eda9a44ca791b230d71ee97d7d42bdd3875cff"
+  },
+  {
+   "file": "magic/mag013-073-344.tim",
+   "size": 167456,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "61967aee1ac73a135d42e20abbdda6aa7c3021cca165246c7e672673bf2c74fc"
+  },
+  {
+   "file": "magic/mag014.tim",
+   "size": 169504,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "bc9720cd28fd27aaa118ef86297de4e5d2d4c6872f1f7ef522f9d3ab777bfa74"
+  },
+  {
+   "file": "magic/mag015.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "312af17d6b3c79efc6eb34abfee36ec367896dd08f29383aaaffcfcd11992b1d"
+  },
+  {
+   "file": "magic/MAG017_B.00",
+   "size": 146600,
+   "format": "Packed MAG",
+   "sections": 28,
+   "sha256": "40d66677455b1cdd17ffb236e96731d1f99170c1ca3e668f28a8c62f5a87c421",
+   "cinematic": {
+    "effect_id": 18,
+    "root": 96,
+    "end": 3792,
+    "instructions": 578,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG017_B.01",
+   "size": 24672,
+   "format": "Packed MAG",
+   "sections": 4,
+   "sha256": "3b9861d646146b04e60083c384a76a7295676a73d4f6e9bc4530f27f7512f9ec"
+  },
+  {
+   "file": "magic/mag018.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2d645d4b13d26fc46e9acf54e15068ddfe8bd6b4c9775afb5e9bfebd7e6385ca"
+  },
+  {
+   "file": "magic/mag019.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "3ca2194c7857ab3e6558b5d53da5008d085652f41789ca7adfd187a7a8419b9a"
+  },
+  {
+   "file": "magic/mag020.tim",
+   "size": 134176,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "3c63bf78affa521615511d901f7e636337f31e2ddfc3c211427314eee4b1635a"
+  },
+  {
+   "file": "magic/mag021.tim",
+   "size": 166432,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "a5fc4a653fe0d53e485264039cc2110adba61ad2eb46de2b8b460457e94da733"
+  },
+  {
+   "file": "magic/mag022.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "269d495ebfabf39b4a6e841da23dccfe51b72a7f25a0f101f9effcbf59bd8e6e"
+  },
+  {
+   "file": "magic/mag023-066.tim",
+   "size": 168992,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "cb32f02a1b571a57732188f3f95cdb2e7625acaf4418cf4cf72989aa0694207d"
+  },
+  {
+   "file": "magic/mag024-050.tim",
+   "size": 166432,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "b722dcad050a94438cd78cb7572eabb838ed7b503e35ebd0ff33c9e9b7fa8d46"
+  },
+  {
+   "file": "magic/mag025.tim",
+   "size": 134176,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "cb9eeb4779bdc9bede00e81056e2004217e3935b3db4d7b330ac39c95c0a2373"
+  },
+  {
+   "file": "magic/mag026.tim",
+   "size": 167456,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "edbd22f50ec5e9ec517806ba8fb1fef3d87f120a32d7890e2ad4368c78148718"
+  },
+  {
+   "file": "magic/mag027-051.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "d9bcada7d0cbcd9e5e55d10d8f3fee616d5d5136c4e3e13e80c812eb65b128b1"
+  },
+  {
+   "file": "magic/mag028.tim",
+   "size": 166432,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0ce2d613e1992e5b463c60827d51b7a70d055f81faaaa173172034cceddf4667"
+  },
+  {
+   "file": "magic/mag029.tim",
+   "size": 168480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2005be25db6506f794776e3261542561ae64c770b12dac4e0c7b04ff96ff4c4e"
+  },
+  {
+   "file": "magic/mag030.tim",
+   "size": 166432,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "40398825ebdbb8257eecd035818334185bd94ad9121965dbd786de824a52f462"
+  },
+  {
+   "file": "magic/mag031.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c90b0004dabae6cb531cf63167b508b86f90f3997771260d4f0681bf9d7656b7"
+  },
+  {
+   "file": "magic/mag032.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "6a278f43fc2dd2e3908286579ad7ca7841d27a6fbd39bd84da88b223a3c0e09d"
+  },
+  {
+   "file": "magic/mag033.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "81f5653f4eec5c74d9d6adec09ea2a9437f07f47f0590fd58791f10ae990496b"
+  },
+  {
+   "file": "magic/mag035.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "691203f38fa2c89e25f181f8fa799edf8c7082899ff95cdcb2db02547eacda60"
+  },
+  {
+   "file": "magic/mag036.tim",
+   "size": 168992,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "71200e89d751ebf466a48b19441fa942238a7ff2639c5cb0ac8b1fd682fc8715"
+  },
+  {
+   "file": "magic/mag037.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "490db2e3d811aba241e84abe417c2bbea402bf66c7c035d0a50894d3441e39d9"
+  },
+  {
+   "file": "magic/mag038-055.tim",
+   "size": 167456,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "a23c9e58086733bca8bcbc9e6d46eb64a1d29df9838d425717afe9d723c1e00a"
+  },
+  {
+   "file": "magic/mag039-067.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "66e1062d9d71e1072bbb33148a0385590ae3ce7c877108100fd396a14e51ab6d"
+  },
+  {
+   "file": "magic/mag040.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "bfafe54bc0904df349cff6d8d818f9985b7f2b47e5ebcccfd604ee63412ec1b4"
+  },
+  {
+   "file": "magic/mag041.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "a7e86e8108b941190be5284937de6097f63cd3332fe6ba1f06965acbceea7da3"
+  },
+  {
+   "file": "magic/mag042.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "42cde8175faf38d1ed55ec01e85025f4f10686391f750dde5485e6721f611254"
+  },
+  {
+   "file": "magic/Mag043.tim",
+   "size": 213536,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "3d6baa125bb28f597d3ea2330b60cb93ca68f01a4233ec1ac167cbe2d73255e6"
+  },
+  {
+   "file": "magic/mag044.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2a01e217025819f8f6c6936cfc12a51c7b0df94b8d1a48cbdb54fdbc2970502a"
+  },
+  {
+   "file": "magic/mag045.tim",
+   "size": 167456,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "392fcbb6c9aa36886593daf419068036c671dc47ae14cde545d4900b360ae958"
+  },
+  {
+   "file": "magic/mag046.tim",
+   "size": 168480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c76411d21b960b66b39bb0660487b4203061e1c15dcafd3c6370a14a703ba3c7"
+  },
+  {
+   "file": "magic/mag047.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "5f81e12042135799bddf9418a75f739cb7722ec413b869690f003b59d6b4f49b"
+  },
+  {
+   "file": "magic/mag048.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "b8ae0d2c31958f06bab9ef90eae41a848385a97de4360ade64c2c3471690215e"
+  },
+  {
+   "file": "magic/mag052.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "aa4e57fe9127f586fa5c2b81028885f639723130b2a25d68dd77ffba0c12f71e"
+  },
+  {
+   "file": "magic/mag053.tim",
+   "size": 165408,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "308d5486642dc9669cb12659dafad7f841f24ab78ddc7c86cbdb5d6893a24e66"
+  },
+  {
+   "file": "magic/mag054-071.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "70982fb228a3f473c9b83bea2181ab9f1f3ffd0757b24c5c06c26e1c35b336e6"
+  },
+  {
+   "file": "magic/mag056.tim",
+   "size": 168992,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "d8e0ddc3ff1033af8514e12ee56665b97c030b8b1c6aad992219da50221950fa"
+  },
+  {
+   "file": "magic/mag057-058.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0f2eb7a4c94c2046788c6efdda222e5a4062df6dc57ccfabb62228dc29646d1f"
+  },
+  {
+   "file": "magic/mag059.tim",
+   "size": 166432,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "010ac0faba39deac7e65ccbb5381b8249bc7799d9897254f6c4a76b21524fb02"
+  },
+  {
+   "file": "magic/mag060.tim",
+   "size": 167456,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ac7ceead434712263156e00edce5f4ff8d5557928494d62ed6bfdb5b0a0ad77d"
+  },
+  {
+   "file": "magic/mag061.tim",
+   "size": 132128,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1718fc7ebf61d53f73e9c11c7e30b49e15f49602d1faf4b599441249d7ded607"
+  },
+  {
+   "file": "magic/Mag061_0de.tim",
+   "size": 18464,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "57336e93668dff8d106cc4d7b3c46f00d78f1cedf5dc073f61def2aa0bbc02e9"
+  },
+  {
+   "file": "magic/Mag061_0es.tim",
+   "size": 18464,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "bfa8ef326a0910baf49a6088da9793435246a503b2dc1e450b1733d5306cb914"
+  },
+  {
+   "file": "magic/Mag061_0it.tim",
+   "size": 18464,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f92c73f921657248c3706f1984f0dc37c82923f52f6efa0f60b242596c47b3fc"
+  },
+  {
+   "file": "magic/Mag061_0jp.tim",
+   "size": 13344,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "8ecc9edcdf375b974534e62f6ed3b53f4bff5b8ae64962f3c9f89f40f47df611"
+  },
+  {
+   "file": "magic/Mag061_0us.tim",
+   "size": 18464,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "bfa8ef326a0910baf49a6088da9793435246a503b2dc1e450b1733d5306cb914"
+  },
+  {
+   "file": "magic/Mag061_1.tim",
+   "size": 69664,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "36a9622fba1e5b24314adbcc11615896c0a4068d2b02c04d0575942e2159aca6"
+  },
+  {
+   "file": "magic/Mag061_2.tim",
+   "size": 69664,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f2715ee8981564eeabfabded71fb5d2ebe8dd9464e69a9d921d16d773e74780c"
+  },
+  {
+   "file": "magic/Mag061_3.tim",
+   "size": 69664,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "76a526751425293a29ec76008db0c26624c9f62a4d66fe7c0b9126b04d053c0e"
+  },
+  {
+   "file": "magic/Mag062.tim",
+   "size": 168480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2d13f5b67bbcdb4086a7015978dce4308addc94e2cb98149c62c39501fd1d201"
+  },
+  {
+   "file": "magic/Mag063.tim",
+   "size": 133664,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "9cfbe41fba4122ae2a5a9d60522957674d5cc6c0a5df589300a40f189755a865"
+  },
+  {
+   "file": "magic/Mag064.tim",
+   "size": 138272,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "21064d48ecde6ed4b1fd0af012528d751424d9448f6291c8c89c8dd8b3cd8d6a"
+  },
+  {
+   "file": "magic/mag065.tim",
+   "size": 134176,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "5a29630d7460f9426de4358bc9b6f6cd4a287b94386265b84ac881ed6542ff5c"
+  },
+  {
+   "file": "magic/Mag069-259.tim",
+   "size": 234016,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "007bc944eb20566e767c24c48d8d9dfa1cc45100d1347ed7c33baae93ce672ea"
+  },
+  {
+   "file": "magic/mag070.tim",
+   "size": 168480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4c7ec5d8af6155b1f1776cadc9c4d4939b3514f9bbf57290a134c8519b07d522"
+  },
+  {
+   "file": "magic/mag072-077.tim",
+   "size": 166432,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "42e4b904c80e94ab4b5ce4a07c6cff99591fe3dba21a344321a7849fe7976215"
+  },
+  {
+   "file": "magic/MAG074_B.00",
+   "size": 51924,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "4b288afffceb90b6bfeafb2c43d7c765d1219be622697c245158fcc8260c0f6e",
+   "cinematic": {
+    "effect_id": 75,
+    "root": 80,
+    "end": 2040,
+    "instructions": 204,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 18380,
+     "size": 264,
+     "keyframes": 8
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG074_B.01",
+   "size": 101968,
+   "format": "Packed MAG",
+   "sections": 9,
+   "sha256": "7fd26a5fbf9e31ea9338f29aea7dd3643b7e55ed4fe519c5aa4593e9c02db1f2"
+  },
+  {
+   "file": "magic/mag075.tim",
+   "size": 67104,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "40958be6df917b84ae9126e9b07afc0c25019051e1acbff560cbd87078df5de6"
+  },
+  {
+   "file": "magic/MAG076_B.00",
+   "size": 73056,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "56f9112ec476ba61646046c7a266d298a34031ffd4b7107f58cfbbaab892c2e1",
+   "cinematic": {
+    "effect_id": 77,
+    "root": 124,
+    "end": 7088,
+    "instructions": 1413,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG076_B.01",
+   "size": 193920,
+   "format": "Packed MAG",
+   "sections": 34,
+   "sha256": "df7afbdc4da624cd0e1df64aa9b56e2f90ce695417d4c24e846ba97c94b424d9"
+  },
+  {
+   "file": "magic/mag078.tim",
+   "size": 168992,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e76a545df60f2b34bbbcb9886dcc68e916baa80e6c53cbf3949daa9d2d4e7322"
+  },
+  {
+   "file": "magic/mag079.tim",
+   "size": 137760,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "867be0d3c1f776968fb02d066d3a69d741633333f9bfcb8b95efa8a69e31abca"
+  },
+  {
+   "file": "magic/mag080.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f880b23154c2ebdfa76d50374709e7614bdfe7162e20a1f2625273c3bad94be6"
+  },
+  {
+   "file": "magic/mag081.tim",
+   "size": 169504,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "108f836840007687e8505db0277f918750a86b9c1e53e42fa35b511db88508e9"
+  },
+  {
+   "file": "magic/mag082.tim",
+   "size": 164896,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "b33ed995264a15e14d498f9e4aa5de9eb5a1d90df2a99376a007ef0cc4729ab9"
+  },
+  {
+   "file": "magic/mag083.tim",
+   "size": 165408,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0b27e70c8522aa84cbd0b9024d302be455d52394dac9a23ab916ec221fc2b657"
+  },
+  {
+   "file": "magic/mag084.tim",
+   "size": 168480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1e6af9750ce7b572e8aec35a39d3e656d71c1cc02e0d69ef3eddc295d9e8cd2d"
+  },
+  {
+   "file": "magic/mag085.tim",
+   "size": 168992,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "62c15714ff0d51c1b66467d42d5f605a35f9d8bfe65383c00b7f28a916a3611c"
+  },
+  {
+   "file": "magic/mag086.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e3a8b81d3d14b320c1871da9a2e1d83c7c6c624eb09bcb9854c6a55fe8ec3ba9"
+  },
+  {
+   "file": "magic/mag087.tim",
+   "size": 168992,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "460ae2d2083c12ef4a3138b2fe2e8fe1a17e472a0b800985c6e1cc2a051a323a"
+  },
+  {
+   "file": "magic/mag089_0.tim",
+   "size": 66592,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "bbef24f36d0d0bbd79ead2521a14983f3f4520b160a9eeb7a03e76e498b4e4d2"
+  },
+  {
+   "file": "magic/mag089_1.tim",
+   "size": 33824,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "40e5d5ac65f1b8024987cd643e8814770cd38bad4ce27520167d0b73e4fda013"
+  },
+  {
+   "file": "magic/mag089_2.tim",
+   "size": 17952,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e46ea7387b65772c02f6f691e98a45971583b55e08d179434b3dceb2d730ee82"
+  },
+  {
+   "file": "magic/mag090.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "a284ad9af971469cf8aff6e474ec4de501a00e97c0b3115d9a32b0c7cb88ebe5"
+  },
+  {
+   "file": "magic/mag091.tim",
+   "size": 166432,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "d9a250809fc634ebd1ed501313bb28d1e4ca7409a39f036fc3c99c6920593cb8"
+  },
+  {
+   "file": "magic/mag092.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1d4bd1eb132706a583cf27e53fc17bd00f5da125ee42c09f06ded5d2c4dc25c6"
+  },
+  {
+   "file": "magic/mag093.tim",
+   "size": 167456,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "28826544325e133e15a6b1a6315e9c2f34ed30aad20a8e46d39ea29fb7cbd30a"
+  },
+  {
+   "file": "magic/mag094.tim",
+   "size": 102944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "8b3418342bbe167cf619b549904cf606b3c5ff8bc2cb66130b78ac7f492c0477"
+  },
+  {
+   "file": "magic/mag095.tim",
+   "size": 168992,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f5317ea74ac238bc1e15f143d4bc269dd1114725d42bdd2109feb460fc7c95bf"
+  },
+  {
+   "file": "magic/mag096-097-098-099.tim",
+   "size": 167456,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7e92e173a1b3f4a8fa352a011efb51b3fa7783db113e30078b72f4d9d4e0a1a5"
+  },
+  {
+   "file": "magic/Mag100.tim",
+   "size": 133664,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c9890149ad5001841513e7276785fdcca2f9b40e8ed7a41cd6ce0de37fe13e5a"
+  },
+  {
+   "file": "magic/Mag101.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "d2b3017a16d71470e437f813844b82a252abfb34b120e691b00fd18080743c82"
+  },
+  {
+   "file": "magic/Mag102.tim",
+   "size": 149536,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "849905c539ab6391762dcb1c827d7dc767d6cbd9d34b4120bf815eed27387db6"
+  },
+  {
+   "file": "magic/Mag103.tim",
+   "size": 168480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "028379907b9e61226574c855799116fe8e06120fba584d741d357e70371b962a"
+  },
+  {
+   "file": "magic/Mag104.tim",
+   "size": 234528,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "51628f5599fcc8215300f37dbd066a1334af9c036b639ee8a1f1bdd4afb81b55"
+  },
+  {
+   "file": "magic/Mag105.tim",
+   "size": 30752,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2c391074c5efc83aa5a14d3221ae8d300586b4662e066fc0c896bda2c91a8c82"
+  },
+  {
+   "file": "magic/Mag106.tim",
+   "size": 167456,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "3bf6fc9e4fa1adec733f9cc8e38accc27df159cfef4d17793b8368fdde06a75c"
+  },
+  {
+   "file": "magic/Mag107.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "135a9bca8b2dc2600d2c66217e3f304cf05ef862c84c75e9eec4660caa8a8d31"
+  },
+  {
+   "file": "magic/Mag108.tim",
+   "size": 134688,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7279c851b82667f4b54e96f7b4120feaaaff57cc8b0c0ea2cd84daeab1d7de6b"
+  },
+  {
+   "file": "magic/Mag110.tim",
+   "size": 137248,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "776fd59efab0f2e9444751d7e560b07583e2b947f904ec6df8be3a1e1be2aec0"
+  },
+  {
+   "file": "magic/Mag111.tim",
+   "size": 201760,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e7be0b386a85f12da0a59ab14e471fb494af4fbfa0159c459e4d1c54c7b95b25"
+  },
+  {
+   "file": "magic/Mag112.tim",
+   "size": 150560,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ffc754404e62de8aa4e446dd08ae494034070fe31205221e48ade8dc1f5ac7b9"
+  },
+  {
+   "file": "magic/Mag113.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "638603db2878abef0ff042800c81f83fea89e8701899739a7c335de49ca8bc88"
+  },
+  {
+   "file": "magic/Mag114.tim",
+   "size": 67104,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ada926234b0397c0c4667545be366faf0054bcb19d5b14f0d79cf3d36e295250"
+  },
+  {
+   "file": "magic/Mag115.tim",
+   "size": 66080,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2fed2c3d0aaf72023ad4b74a4d1329c86b7e23930d59f275a02d6f796e7dbe2c"
+  },
+  {
+   "file": "magic/Mag116.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "be709b16cb133ad1db441f073ffc4dd6588c40deda19cb5d3509400d2a2b20fd"
+  },
+  {
+   "file": "magic/Mag117.tim",
+   "size": 134176,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e5c499e5117916189a4ea13328ae316bad6e7b5ca74dbbbee8859d4d572f3fe5"
+  },
+  {
+   "file": "magic/Mag118.tim",
+   "size": 132128,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "62a4e8b3b60a3c9188204320d98d953ca60119c8d2e8781ad01ffb75c830e0be"
+  },
+  {
+   "file": "magic/Mag119.tim",
+   "size": 132640,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2472ecd42aa70dcfcc9aea2a485ee39aaefb727d1a54777471a55fbe3b485638"
+  },
+  {
+   "file": "magic/Mag120.tim",
+   "size": 132640,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0feaf2f938a6e1113970cdf5ef6c85c8ad4e844d633ee5531d775b42e9403a5b"
+  },
+  {
+   "file": "magic/Mag121.tim",
+   "size": 133664,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "cae7e198c52054d9d13e5fdfc05b0adabb8b652cafc1fd5d448f034ddda6b85e"
+  },
+  {
+   "file": "magic/Mag122.tim",
+   "size": 165408,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "96ed8e65097faf42a9816bf2f760fa08eabaa648c0e7bf55a9dc42dd34c21384"
+  },
+  {
+   "file": "magic/Mag123.tim",
+   "size": 101408,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2a3a451f3a9b62177a09a7376bf75fbbbd554165ac638c96741c43aee064980c"
+  },
+  {
+   "file": "magic/Mag124.tim",
+   "size": 165408,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e723ee27907d0769201a0787d1755e96ccd59d03b69cd01288a87cdcefd6819b"
+  },
+  {
+   "file": "magic/Mag125.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c240fd37fb4d4b0ae8e7053e00d896b9baf97749cf8998e381f384d88f335b0c"
+  },
+  {
+   "file": "magic/Mag126.tim",
+   "size": 99360,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "6bb54adfc4beb5b8e37ed2a975230ff7fb36bd895251b659ace960931549dd83"
+  },
+  {
+   "file": "magic/Mag127.tim",
+   "size": 166432,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "94a9dde8d9cf9087d44ab1eebf121ac1bf41f1346fd5d35558c9861dfaa65408"
+  },
+  {
+   "file": "magic/Mag128.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "31d988afb29097d0692503d2c66e222f0e0c35754eef2b511a55fcc57b7f37ba"
+  },
+  {
+   "file": "magic/Mag129.tim",
+   "size": 99360,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "467c988933c44d858da15fdddce8f1c5369fe98189dc30368632843244a13e7b"
+  },
+  {
+   "file": "magic/Mag130-299.tim",
+   "size": 132640,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c947745f168193ca2c809ea0423ab0abc21a05b70c05904078bd49aa0e92ff54"
+  },
+  {
+   "file": "magic/Mag131.tim",
+   "size": 150048,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "d14ee174742123532b84ee1a0ed0c837e026c6f2b1fd2e82c8f33c56a70e8eb2"
+  },
+  {
+   "file": "magic/Mag132.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "94bb57364d7b7a7db7263dbb695a907f7b99ec6354be783fee68c91c716da71c"
+  },
+  {
+   "file": "magic/Mag133.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f44c39eebf924b097951e94bfe7d8af68063ec2c34f299b5474c5d146625912d"
+  },
+  {
+   "file": "magic/Mag134.tim",
+   "size": 170016,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4902b43673ef94c5d2328da3e0d825284945d955275652bdd34e35d0cea7ddcb"
+  },
+  {
+   "file": "magic/Mag135.tim",
+   "size": 134176,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ea96acc02771eec5ebc5aea51825ede124531d367e2bc2cc9bcb151d8ec5be1b"
+  },
+  {
+   "file": "magic/Mag136.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2a10eadf91830aa2ae105156155a5417963fb700022dd17a211c3457e1e5d979"
+  },
+  {
+   "file": "magic/Mag137.tim",
+   "size": 166432,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "b0695a6014a9d597423baebc63a3bf5c25baa266505d8b91e22c6582c4ac06e1"
+  },
+  {
+   "file": "magic/Mag138.tim",
+   "size": 99872,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "686b1b8a43938acc8d486376e4593dccb1737c5657cf0662e4ff8f2c3ffcf0e3"
+  },
+  {
+   "file": "magic/Mag139.tim",
+   "size": 136224,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "96920d4ad10a86bc8aba1408051e51658890597635cd077d00e11fe093b29b57"
+  },
+  {
+   "file": "magic/mag140-158-159-258-331-332.tim",
+   "size": 172064,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2b07276c7dcf6a91a01047ce134d123bebfe4d67088109dcf56240d038ec20cf"
+  },
+  {
+   "file": "magic/mag141.tim",
+   "size": 199200,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c3cb2a7d687a48a9040a43fbc92348b7a43733207bcec33e3fa6cb51102d617a"
+  },
+  {
+   "file": "magic/mag142.tim",
+   "size": 165408,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "69544a0e83d2b11cbd8a1ac83f45f58833b1a59de1f1f111449654b90186da43"
+  },
+  {
+   "file": "magic/mag143.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4f7d6ae232756dcca417d1f24957e8a86dfb8dad78547b2674f22cff1eb4b309"
+  },
+  {
+   "file": "magic/mag144.tim",
+   "size": 99360,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "6695ac5ed8e3042fdc0050195553455cce3e6b4a941a88a9ce59192b76d20a08"
+  },
+  {
+   "file": "magic/mag145.tim",
+   "size": 132640,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7b9687b1f9e00733686cfb31bed1ab933ad3b38a9dcf30cd7a03766d5915e489"
+  },
+  {
+   "file": "magic/mag146.tim",
+   "size": 67104,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "fe787098a01a6ec7ca88a0ebdf1ab2b1eac4ddfa40711aa4df839c10810e3873"
+  },
+  {
+   "file": "magic/mag147.tim",
+   "size": 68640,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0a720ed50c3e99aefcc619ed9a57fdd58071cda465bb46edfd82c6b07764a923"
+  },
+  {
+   "file": "magic/mag148.tim",
+   "size": 200736,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "44f9a5343f86fde78a6613cb38acb66cff61d3283d08c3206090847db17f266a"
+  },
+  {
+   "file": "magic/mag149.tim",
+   "size": 68128,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4672251a6bcde73adb81c1316757d472f5d27aa8ced098c024c6ebe95424cd8c"
+  },
+  {
+   "file": "magic/mag150.tim",
+   "size": 234016,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "38f696dd102d7848114c58f0efb7db57c391afb35c3455350aece0faa851e5e5"
+  },
+  {
+   "file": "magic/mag151.tim",
+   "size": 199200,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "8563a9a7641588aa2a03f94b3221d9746418388581da1bff749cc3bbee31ac57"
+  },
+  {
+   "file": "magic/mag152.tim",
+   "size": 99360,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2491744b85da35c77f9d054d9f7adef5e21a3c340e4cf7901787cd5ae42c866b"
+  },
+  {
+   "file": "magic/mag153.tim",
+   "size": 16928,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "bcd2949519454b155cf0b78f09ed014135f9cb718b52d170d29745bbccb595e5"
+  },
+  {
+   "file": "magic/mag154.tim",
+   "size": 108064,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "de8da0ed646c9d9c862ce7cc5ffbeaf54bc4bde36852b2113921041dde74a0a8"
+  },
+  {
+   "file": "magic/mag156.tim",
+   "size": 266784,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1c3229dc67ce6901012358a99bd1212fdb6b9716dcce906d72d4805f866b3e84"
+  },
+  {
+   "file": "magic/mag157.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "b9c67047b2f3e7582d2f40840dcbe0a21fa73a7816e66bd487e01704e3dead3f"
+  },
+  {
+   "file": "magic/mag160.tim",
+   "size": 172064,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "533d6c2483c8a235a106128fb2e998351bb4ed5c6f1a66ae7dd354f2e1546f88"
+  },
+  {
+   "file": "magic/mag161.tim",
+   "size": 168480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "cbe2f84354c4bc726678f6d13c7f1aa5e3b1e0fcd419afb7e07cb965cd967270"
+  },
+  {
+   "file": "magic/mag162.tim",
+   "size": 200736,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "6b9b086fe59ef31a82dfeb22ddf69d924c2ba57a3e0b46b8bf6310ea477f5e18"
+  },
+  {
+   "file": "magic/mag163.tim",
+   "size": 135712,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "06bb59e954e526902d71d1b53aa18f5fc78d9bbe82dcabd56e75fae0b9a25ea8"
+  },
+  {
+   "file": "magic/mag164.tim",
+   "size": 136000,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "8d260d347bf016a7a59720ea30c2502a7c15c5aa2c426cd5539200b728024fb5"
+  },
+  {
+   "file": "magic/mag166.tim",
+   "size": 132640,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "b0f7569936b1ed15be24b7a80e37a2a520b7988dbd40fb7826774063520fa331"
+  },
+  {
+   "file": "magic/mag167.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "9aa4ed9dbbb5a796da597fc5c56607e45554918cbb57a9c4d6f261be2ab946dd"
+  },
+  {
+   "file": "magic/mag168.tim",
+   "size": 165408,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "dabcdabceed838bdee5bcbd7c671165f0da2483476211687b4d91350e89f65be"
+  },
+  {
+   "file": "magic/mag169.tim",
+   "size": 165408,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0d5d158923f560d1eb913afcc9315e376cac9b731e80055f281155bd76ab7599"
+  },
+  {
+   "file": "magic/mag170.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f1d0bdb3cf9af95b7232ac171892950a35591e346fb5b4194355630cbd5878c6"
+  },
+  {
+   "file": "magic/mag171.tim",
+   "size": 132640,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "558cb86be8d1bc1541aaf39d204e2c564b92389abd10edf8d31a2bb41a179d1d"
+  },
+  {
+   "file": "magic/mag172.tim",
+   "size": 264224,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "eb6cb19adab58d1b8e27a8bf959430747859ed965c4a8d959b769d42c1b631e1"
+  },
+  {
+   "file": "magic/mag173.tim",
+   "size": 232480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2c794305394e1f6451af1a7c3919a78c55aa6c8205bf214359ee655285ffd853"
+  },
+  {
+   "file": "magic/mag174.tim",
+   "size": 100896,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e17ce94eadb900b2cd6676260ed72ecc58be6348236f7d148b06e70a7535c419"
+  },
+  {
+   "file": "magic/mag175.tim",
+   "size": 132640,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "707a712b65ae9738a76c951a2e6ce2f72fa31ff983f5d51b8ebaa1833f5168fa"
+  },
+  {
+   "file": "magic/mag176.tim",
+   "size": 192,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "3f7c4ce68817ec337cec0055e271a3ed0e873f317d8aae69cfaf11ae17ca18e5"
+  },
+  {
+   "file": "magic/mag178.tim",
+   "size": 149024,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "68364fc310961255395556f5103544862e35ed4baba8f390708eff7062214328"
+  },
+  {
+   "file": "magic/mag179.tim",
+   "size": 165504,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7cc233fc5dc469846d61bf5522642ec1b802b4f317c00e261c8ad656f1299db0"
+  },
+  {
+   "file": "magic/mag180.tim",
+   "size": 165504,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "37c1614680f369b214c505a4deaee5c18521f67a3618bc298ed2f8aea1fe6e41"
+  },
+  {
+   "file": "magic/mag181.tim",
+   "size": 165504,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "64cef004e4c7ada43dd72c9ada32f136a325c7cd117534098091d283745264f5"
+  },
+  {
+   "file": "magic/mag182.tim",
+   "size": 17440,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "aa4e4905edd015a5f3ab688cda7fccfcbc772761626afc496186c887ff9d53a8"
+  },
+  {
+   "file": "magic/mag184.tim",
+   "size": 170528,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "db540f0499cbc6b9dca1dcaf2498ca8db78d8b51645281e65ee2b6768a5392ae"
+  },
+  {
+   "file": "magic/mag185.tim",
+   "size": 231584,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c6815bcd828b583bf28cf0e3b3f0eb3f4ce399876218e59112dd668384b7844d"
+  },
+  {
+   "file": "magic/mag186.tim",
+   "size": 168224,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ae69c5bacae6ed203a85d318574902cde1ebb6aa9f0ff6e390e4dac95e1555b1"
+  },
+  {
+   "file": "magic/mag187.tim",
+   "size": 167136,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "98eca2e9d4eb4b35109787a40ba65475287bcb0d2799ebd80e0e7a68bc499914"
+  },
+  {
+   "file": "magic/mag188.tim",
+   "size": 66080,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ca6a779cce4ac09cb3c9deece7cf620628a0e501476d980613d2ee0cd2c41f4d"
+  },
+  {
+   "file": "magic/mag190.tim",
+   "size": 184608,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "27d1711d74453fb22057ad60b49b0bd21dc0e067b1be1061a56258a18764144b"
+  },
+  {
+   "file": "magic/mag191.tim",
+   "size": 200448,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "6c8247b2341e07f08ac7971d84979f87fc82b286b85a22e251ef69bb1137d0b8"
+  },
+  {
+   "file": "magic/mag192.tim",
+   "size": 200448,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "5e0cefd6588a474445ede26a5d4b371308a22936b6ce2d7a68b3a348b655af82"
+  },
+  {
+   "file": "magic/mag193.tim",
+   "size": 233504,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1d1b3224df3b3283ce37163e5abbc294a9e1a4fc0821be9ad80621271f1f6583"
+  },
+  {
+   "file": "magic/mag194.tim",
+   "size": 167680,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0b272b361b793d98e50480dfc731912173097b6b3e3f7a7e32880100f40a939b"
+  },
+  {
+   "file": "magic/mag195.tim",
+   "size": 133664,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f4eee730e4c11bc7bf7190475ada11ba6636e17258198391505536299d73cf90"
+  },
+  {
+   "file": "magic/mag196.tim",
+   "size": 235040,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "fcd4e3c70504a86dbc6278bb7ebf1b9c7a2fdb41ed5509dad0ee723192e35a34"
+  },
+  {
+   "file": "magic/mag197.tim",
+   "size": 134176,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "17092b4da797f13f738dbd4e741641c56e881403859ef336ef1b538366ab4298"
+  },
+  {
+   "file": "magic/mag198.tim",
+   "size": 103968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "872e59ad6ba89bc3b48ff7583ce32f4d39a33761c94f51f90eae0070c8734f7c"
+  },
+  {
+   "file": "magic/mag199.tim",
+   "size": 132640,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "25a20255c541663bcfb6e67ccbf594dc909de8ca774965e6f9d41e9ab12f0e54"
+  },
+  {
+   "file": "magic/MAG200_B.00",
+   "size": 69608,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "691671fbfd8911f5e798134da598fe25df4bd7fb7a502401233c42ad2998b3ac",
+   "cinematic": {
+    "effect_id": 201,
+    "root": 252,
+    "end": 7496,
+    "instructions": 1401,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG200_B.01",
+   "size": 229804,
+   "format": "Packed MAG",
+   "sections": 27,
+   "sha256": "82729b1eb11ff7efcd8648570608a76c37362fae650fc1345c47c78d46c0b963"
+  },
+  {
+   "file": "magic/MAG201_B.00",
+   "size": 99240,
+   "format": "Packed MAG",
+   "sections": 22,
+   "sha256": "061252d5b2aa63a5ebc223326d24bce722640b64591baf38ef5a61eb6e5b59b8",
+   "cinematic": {
+    "effect_id": 202,
+    "root": 380,
+    "end": 14140,
+    "instructions": 3070,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG201_B.01",
+   "size": 182272,
+   "format": "Packed MAG",
+   "sections": 39,
+   "sha256": "88fb75e1961ffe9def9247bf9807693ca912c54f2460b3f49dcb648b25119a82"
+  },
+  {
+   "file": "magic/MAG202_B.00",
+   "size": 136648,
+   "format": "Packed MAG",
+   "sections": 27,
+   "sha256": "003191585efcc151fcb0b84e2a87d1042dacdf7062be6a3fbb3accb95fc1a036",
+   "cinematic": {
+    "effect_id": 203,
+    "root": 208,
+    "end": 5340,
+    "instructions": 975,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG202_B.01",
+   "size": 143872,
+   "format": "Packed MAG",
+   "sections": 30,
+   "sha256": "fcf79898b9bc82898a86c5c7596ce137dd559e6bc93ec034a150109b19ebabf9"
+  },
+  {
+   "file": "magic/MAG203_B.00",
+   "size": 73444,
+   "format": "Packed MAG",
+   "sections": 19,
+   "sha256": "cc9293eb29c7a47e1d3170b284a5f390dc1bdc3abf7db8941a038fef0a4412c1",
+   "cinematic": {
+    "effect_id": 204,
+    "root": 200,
+    "end": 12884,
+    "instructions": 2152,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG203_B.01",
+   "size": 205056,
+   "format": "Packed MAG",
+   "sections": 37,
+   "sha256": "c7bef01c2f23dc7adc4f595c0b2f68311e366899260ef91ce895f24db5370c5f"
+  },
+  {
+   "file": "magic/MAG204_B.00",
+   "size": 78860,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "4a93532348e2419763ee3dc643ff4ad60b3bf90f3b8bc67543916e331f4265c2",
+   "cinematic": {
+    "effect_id": 205,
+    "root": 156,
+    "end": 9140,
+    "instructions": 1832,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG204_B.01",
+   "size": 119724,
+   "format": "Packed MAG",
+   "sections": 30,
+   "sha256": "9e3197a8264d96558732702a9c12457318f8f5d41da9c1ed60e1e47afea59dde"
+  },
+  {
+   "file": "magic/MAG205_B.00",
+   "size": 114520,
+   "format": "Packed MAG",
+   "sections": 31,
+   "sha256": "6f95fa8af0dead2b3dbc0e47f7b9c37bee3fc02686898f06641eb8c8eb578cb2",
+   "cinematic": {
+    "effect_id": 206,
+    "root": 680,
+    "end": 18128,
+    "instructions": 3533,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG205_B.01",
+   "size": 151100,
+   "format": "Packed MAG",
+   "sections": 43,
+   "sha256": "271ecb9ac48966aa6bb4be616d0d58193e29a6bd1ff52eaf419822709877a798"
+  },
+  {
+   "file": "magic/Mag206.tim",
+   "size": 101408,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "95f0a20984500b8d2327771239b34e159738b5eb68dfd0bfba508d118783b173"
+  },
+  {
+   "file": "magic/MAG207_B.00",
+   "size": 41464,
+   "format": "Packed MAG",
+   "sections": 24,
+   "sha256": "208e05775739e1a62db08f5209d4452bc73ddeac6704b3014c52f8cbc19e19e7",
+   "cinematic": {
+    "effect_id": 208,
+    "root": 128,
+    "end": 3748,
+    "instructions": 561,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 24388,
+     "size": 396,
+     "keyframes": 13
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG207_B.01",
+   "size": 181888,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "f65d635bf84a766fee46d578fb9e991c429c354b0398dd42bd48d0132d9caf95"
+  },
+  {
+   "file": "magic/mag208.tim",
+   "size": 68128,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "bd8906c41cf4f2a270e42bd5d333ae1541bba0e70974ac5c9dabe8d747188b27"
+  },
+  {
+   "file": "magic/MAG210_B.00",
+   "size": 41732,
+   "format": "Packed MAG",
+   "sections": 24,
+   "sha256": "e938117ea2e1ec54d24935f657baa2d79a5da8225d99efc2d66f824620bbfa31",
+   "cinematic": {
+    "effect_id": 211,
+    "root": 120,
+    "end": 3952,
+    "instructions": 554,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 24456,
+     "size": 580,
+     "keyframes": 20
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG210_B.01",
+   "size": 169080,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "2f85551541a284cac3e99969c3b153732f745822cc3b528f2322b532ed1e1b56"
+  },
+  {
+   "file": "magic/Mag211.tim",
+   "size": 134176,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "f67106418bee7cf025ae14ad4c09e4e0c37bf113946f2a3b7d3ff4e391b166f9"
+  },
+  {
+   "file": "magic/Mag212.tim",
+   "size": 137248,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "5cd2c27c044075b0d81b2cfed1555554711d9f3ce2efafa3d27e886b062b0558"
+  },
+  {
+   "file": "magic/Mag213-310.tim",
+   "size": 101920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "04f65be917c32150df198bdee88b5b1e97c1bc1f7465771f3e716ef02118180c"
+  },
+  {
+   "file": "magic/Mag213.tim",
+   "size": 101920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "04f65be917c32150df198bdee88b5b1e97c1bc1f7465771f3e716ef02118180c"
+  },
+  {
+   "file": "magic/Mag214.tim",
+   "size": 234528,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4bbadb2f7cb6abc5662cf915f1adef4d6b10721fcdd22ae51320a353cf7736f9"
+  },
+  {
+   "file": "magic/Mag215.tim",
+   "size": 234528,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ef83cfeb720bfa04138803918e525aaafe2e355a9b0e9a0d63ea73b1056a6424"
+  },
+  {
+   "file": "magic/Mag216.tim",
+   "size": 135712,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "74b8957039e2229569b3f6cd3dabdbd3cb00f91e6089be7486d8aa952daec73d"
+  },
+  {
+   "file": "magic/mag217.tim",
+   "size": 166432,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "8d4a904d4ae5eee1951023d59fbadc96ca2bbb37d270ce2f73b07b910f25ed20"
+  },
+  {
+   "file": "magic/MAG218_B.00",
+   "size": 92072,
+   "format": "Packed MAG",
+   "sections": 28,
+   "sha256": "24ee6d9054ff2f2eb15787f1469897a38e96a0cce5f3f284cdc57137d33639a8",
+   "cinematic": {
+    "effect_id": 219,
+    "root": 168,
+    "end": 4988,
+    "instructions": 899,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 46160,
+     "size": 856,
+     "keyframes": 30
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG218_B.01",
+   "size": 189096,
+   "format": "Packed MAG",
+   "sections": 23,
+   "sha256": "597e59cf6fbc729f902cc8f6d8b0bde2b325fa53880f7f8635c3dac35439e1a1"
+  },
+  {
+   "file": "magic/MAG219_B.00",
+   "size": 29620,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "6ceace4ac38f0ec9ffe5476a7182806266523d5c635c9978a1a30e023a733949",
+   "cinematic": {
+    "effect_id": 220,
+    "root": 88,
+    "end": 2716,
+    "instructions": 434,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 3064,
+     "size": 596,
+     "keyframes": 20
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG219_B.01",
+   "size": 129624,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "bd0dff23507a5231fdda21e6d95d395b05968998cbf8168a87cf8e1f4739fa27"
+  },
+  {
+   "file": "magic/MAG220_B.00",
+   "size": 73236,
+   "format": "Packed MAG",
+   "sections": 28,
+   "sha256": "f344a2320dd72c6208e5d2889b1897acad6509212d3c543a672a6d190b2c3fca",
+   "cinematic": {
+    "effect_id": 221,
+    "root": 112,
+    "end": 6228,
+    "instructions": 1298,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 8120,
+     "size": 3300,
+     "keyframes": 130
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG220_B.01",
+   "size": 165488,
+   "format": "Packed MAG",
+   "sections": 17,
+   "sha256": "f27d960420f19d8a9fa03d86b6895dc137b3a1cabe5954d1dfbaa4d8528756f8"
+  },
+  {
+   "file": "magic/MAG221_B.00",
+   "size": 96668,
+   "format": "Packed MAG",
+   "sections": 22,
+   "sha256": "85ce25166261bfab826483a313144feea154007c0d2ad3701c8375f714042b79",
+   "cinematic": {
+    "effect_id": 222,
+    "root": 88,
+    "end": 3028,
+    "instructions": 462,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 3028,
+     "size": 4696,
+     "keyframes": 176
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG221_B.01",
+   "size": 156248,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "d5774004d42f47e841cfed017ea2ada1d5a6d7c7e3c17c60a0f7e834b1f2fbfc"
+  },
+  {
+   "file": "magic/MAG222_B.00",
+   "size": 59012,
+   "format": "Packed MAG",
+   "sections": 20,
+   "sha256": "7c0f694e3be12231a8aad5736b7f948e9cc0b18e35f81063d6d9ef3ef9d9c4a7",
+   "cinematic": {
+    "effect_id": 223,
+    "root": 104,
+    "end": 4040,
+    "instructions": 545,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 5016,
+     "size": 2348,
+     "keyframes": 84
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG222_B.01",
+   "size": 234600,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "ea2c5303a5cb19699f03d6ea8bdfd3564e56a5b4393a07b82b69bc8256f6bca0"
+  },
+  {
+   "file": "magic/Mag226.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4299bb9f5ebaa28f764c669e59821f891bb56792b4434fc2fdd6fcfa015dca01"
+  },
+  {
+   "file": "magic/MAG227_B.00",
+   "size": 46804,
+   "format": "Packed MAG",
+   "sections": 19,
+   "sha256": "41374343eb6ad8fed73626044273d4fb0c928efeb73b7a74890156d87956019c",
+   "cinematic": {
+    "effect_id": 228,
+    "root": 96,
+    "end": 3260,
+    "instructions": 577,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 4012,
+     "size": 2388,
+     "keyframes": 93
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG227_B.01",
+   "size": 111712,
+   "format": "Packed MAG",
+   "sections": 15,
+   "sha256": "736bfd6be1f443d853f2c9599594db2aeb1068ef745e86ef6ac3bb616e058e31"
+  },
+  {
+   "file": "magic/MAG228_B.00",
+   "size": 10084,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "7cb21fa5484916162ef5aab85bf473606ae9eb0d427ba8c88ba22c1281aa4337",
+   "cinematic": {
+    "effect_id": 229,
+    "root": 96,
+    "end": 2916,
+    "instructions": 478,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 3252,
+     "size": 1096,
+     "keyframes": 42
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG228_B.01",
+   "size": 152672,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "89b4ff5c74c813cba21cec053c88515f78b6b24352b9d66c68894dbd1c8921da"
+  },
+  {
+   "file": "magic/MAG229_B.00",
+   "size": 23792,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "8f73018aadd60644c538af5ab4a87e3e9b34f2e79abf64dc021f3a0375618aa9",
+   "cinematic": {
+    "effect_id": 230,
+    "root": 104,
+    "end": 2408,
+    "instructions": 352,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 3092,
+     "size": 488,
+     "keyframes": 17
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG229_B.01",
+   "size": 204392,
+   "format": "Packed MAG",
+   "sections": 17,
+   "sha256": "e2a371bb8ffd2f54588b2e27a0bbdb7145cfb02d1393db273f63c719293ed9c4"
+  },
+  {
+   "file": "magic/MAG230_B.00",
+   "size": 9268,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "493536af867842ef6526e392f8549e4d54bcadcaa890745df10a130545e14133",
+   "cinematic": {
+    "effect_id": 231,
+    "root": 88,
+    "end": 2160,
+    "instructions": 196,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2160,
+     "size": 192,
+     "keyframes": 5
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG230_B.01",
+   "size": 151608,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "7f152bf3c71db21ae9945ab39c2662732819624757cb011dd53cfdfe66f915cf"
+  },
+  {
+   "file": "magic/MAG231_B.00",
+   "size": 16816,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "07afcaf7badc15eaf50a6c2fc7bb9f825fce6a8d9ac1e0c5bc3a6ca79258a5b7",
+   "cinematic": {
+    "effect_id": 232,
+    "root": 80,
+    "end": 2288,
+    "instructions": 282,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2288,
+     "size": 404,
+     "keyframes": 14
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG231_B.01",
+   "size": 153744,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "378047a8de497346a5ec4ebef57ae09feada05f6b27ae4e94f6e61a8454cacc3"
+  },
+  {
+   "file": "magic/MAG232_B.00",
+   "size": 12288,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "9aa224b20af2844f0e8ab6bc67f2b0789528aa366a816018f70175fe585edffc",
+   "cinematic": {
+    "effect_id": 233,
+    "root": 64,
+    "end": 2192,
+    "instructions": 276,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2600,
+     "size": 360,
+     "keyframes": 12
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG232_B.01",
+   "size": 134208,
+   "format": "Packed MAG",
+   "sections": 8,
+   "sha256": "fae3afa66fce457b64a380c864d4a8b159c2261e205f148161b221e95fdd5d85"
+  },
+  {
+   "file": "magic/MAG233_B.00",
+   "size": 4732,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "cea3cdcebfab757d8021db1fc385598e124b08589e848d5b81466cf7f193253f",
+   "cinematic": {
+    "effect_id": 234,
+    "root": 72,
+    "end": 1664,
+    "instructions": 112,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 1664,
+     "size": 596,
+     "keyframes": 20
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG233_B.01",
+   "size": 85576,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "dc2a9143b6c09af6932231d52691b662bce029a33c5e2e438da3bc27a5ff3589"
+  },
+  {
+   "file": "magic/MAG234_B.00",
+   "size": 19136,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "f8cab829271261f17324d7445d5d5999daef771e0ee2d3ba7cbe3e42e9975dcf",
+   "cinematic": {
+    "effect_id": 235,
+    "root": 96,
+    "end": 2036,
+    "instructions": 280,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2036,
+     "size": 268,
+     "keyframes": 8
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG234_B.01",
+   "size": 197216,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "6608bf6e2d527fd51845e69933d9814eb73dfb96c15a61b4ede3ef24fe0d3cc0"
+  },
+  {
+   "file": "magic/MAG235_B.00",
+   "size": 20860,
+   "format": "Packed MAG",
+   "sections": 18,
+   "sha256": "706b9f9067f1841a8e9565c3aeb9644dbab53cde953a51c009972bc5d2be7391",
+   "cinematic": {
+    "effect_id": 236,
+    "root": 96,
+    "end": 1960,
+    "instructions": 209,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2296,
+     "size": 196,
+     "keyframes": 6
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG235_B.01",
+   "size": 261216,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "7286d6e9e5d549952e65f70c68f7ace78c521d459dd1f8481becb1a5233cba29"
+  },
+  {
+   "file": "magic/MAG236_B.00",
+   "size": 22016,
+   "format": "Packed MAG",
+   "sections": 18,
+   "sha256": "b381fd71a0781514ee343ef1acf4e51f141b5f4952479a002093963ddeaa6de4",
+   "cinematic": {
+    "effect_id": 237,
+    "root": 96,
+    "end": 2804,
+    "instructions": 405,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 3380,
+     "size": 268,
+     "keyframes": 8
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG236_B.01",
+   "size": 261216,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "539378cdcccc2f4521310295c564ca9e67800b32fdd1dc65589af14f62cdd339"
+  },
+  {
+   "file": "magic/MAG237_B.00",
+   "size": 23564,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "cd9eb3b0421e4ef37c2053ae35dad2b2c25cdfb63b4789162df703d454a9a014",
+   "cinematic": {
+    "effect_id": 238,
+    "root": 104,
+    "end": 2344,
+    "instructions": 323,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 3028,
+     "size": 324,
+     "keyframes": 10
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG237_B.01",
+   "size": 204392,
+   "format": "Packed MAG",
+   "sections": 17,
+   "sha256": "51d30d9ff8738c607ec048d5c931eafcd60f529f95aacbac4030f3e0516224ce"
+  },
+  {
+   "file": "magic/MAG238_B.00",
+   "size": 22984,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "1f5d1448306d217744f44ff4b9b8bd80dc94d333f085309864a0c493c93db2d5",
+   "cinematic": {
+    "effect_id": 239,
+    "root": 96,
+    "end": 2192,
+    "instructions": 268,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2896,
+     "size": 256,
+     "keyframes": 8
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG238_B.01",
+   "size": 170592,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "4b4f5ba568a58ead0a5e68c2b208a94808b642e6cedb9c53eb45ada78f531430"
+  },
+  {
+   "file": "magic/MAG239_B.00",
+   "size": 21204,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "d7ab7cb0b306ae0984c387337d2493051e9cab94cc43e6a7ffaea08d69f3d0fb",
+   "cinematic": {
+    "effect_id": 240,
+    "root": 72,
+    "end": 2176,
+    "instructions": 295,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2600,
+     "size": 324,
+     "keyframes": 10
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG239_B.01",
+   "size": 134728,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "0ba3f38e24d4608ac9cbabe43d0357d08b7e504e6550ec995729404c59f1aad6"
+  },
+  {
+   "file": "magic/MAG240_B.00",
+   "size": 7756,
+   "format": "Packed MAG",
+   "sections": 11,
+   "sha256": "867fc0dfdc3ddaf5c18f6d4a2f37516ee0e02756101e8dfb4e151dd46558381e",
+   "cinematic": {
+    "effect_id": 241,
+    "root": 88,
+    "end": 1492,
+    "instructions": 144,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 1776,
+     "size": 272,
+     "keyframes": 8
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG240_B.01",
+   "size": 143960,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "f38b39c7fa29b0ea266682b0eb123103121a62da853eb15767925e6a761029bc"
+  },
+  {
+   "file": "magic/MAG241_B.00",
+   "size": 29736,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "c863402a4ffb901c5ee8c7073a6dcc4382eec20aa7e60e9d2e081d2015835d30",
+   "cinematic": {
+    "effect_id": 242,
+    "root": 88,
+    "end": 2708,
+    "instructions": 433,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 3060,
+     "size": 716,
+     "keyframes": 26
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG241_B.01",
+   "size": 129624,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "1346026a5f631f199ec8cfb85df9230a69def5d4571a7f967e2f5371125cc1b7"
+  },
+  {
+   "file": "magic/MAG242_B.00",
+   "size": 3560,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "a95c104664a2f0b3c8cbb03c91cfa9f273c0b155ef18a9a4ae8eb22b534454e7",
+   "cinematic": {
+    "effect_id": 243,
+    "root": 80,
+    "end": 1616,
+    "instructions": 132,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 1616,
+     "size": 112,
+     "keyframes": 2
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG242_B.01",
+   "size": 118864,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "540f3c352082261d3769db8409464486f523672275aa849efc1bceb0128d61a1"
+  },
+  {
+   "file": "magic/MAG243_B.00",
+   "size": 3560,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "d3f7772f6f00f3d6672d076646a3cdc65f25f50847002a002f5a91582c08f1cd",
+   "cinematic": {
+    "effect_id": 244,
+    "root": 80,
+    "end": 1616,
+    "instructions": 132,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 1616,
+     "size": 112,
+     "keyframes": 2
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG243_B.01",
+   "size": 118864,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "d379b7a697c6a8c1c1154e3b696a6ef754dd82878d65dffedc1e207c79533db0"
+  },
+  {
+   "file": "magic/MAG244_B.00",
+   "size": 3560,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "afd8c3382c4d754b3fe2192e11d60ee919057f1de5bb0668e4a375594862b5d1",
+   "cinematic": {
+    "effect_id": 245,
+    "root": 80,
+    "end": 1616,
+    "instructions": 132,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 1616,
+     "size": 112,
+     "keyframes": 2
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG244_B.01",
+   "size": 118864,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "d524830e9c32d02bbfdd4262070ac66b64a51591555962a0df3bbf2b5882053a"
+  },
+  {
+   "file": "magic/MAG245_B.00",
+   "size": 3560,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "da39f908c3bb818d6ce2b88334bece22b4085534f703214617594be757f1fb57",
+   "cinematic": {
+    "effect_id": 246,
+    "root": 80,
+    "end": 1616,
+    "instructions": 132,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 1616,
+     "size": 112,
+     "keyframes": 2
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG245_B.01",
+   "size": 118864,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "634975bb4955f606e0a0d5c492e130b95ecd7b7e4c4f7a42dc999f1a51e0c7fb"
+  },
+  {
+   "file": "magic/MAG246_B.00",
+   "size": 15540,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "d962c57a28ce7f769b27e717cdc66877c3c291d872681be7d85cd38626e17a0e",
+   "cinematic": {
+    "effect_id": 247,
+    "root": 96,
+    "end": 2808,
+    "instructions": 402,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG246_B.01",
+   "size": 250976,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "0f4b32ea2727538130f1feea0ab96682dbb3a545c7c2ed6675fd3aa99a728194"
+  },
+  {
+   "file": "magic/MAG247_B.00",
+   "size": 3588,
+   "format": "Packed MAG",
+   "sections": 8,
+   "sha256": "1ee54cd1cb43ad9ef296c7e5c236f576f991d608602f7472c5b3478821986cd6",
+   "cinematic": {
+    "effect_id": 248,
+    "root": 72,
+    "end": 2060,
+    "instructions": 243,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG247_B.01",
+   "size": 101960,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "66bd24543d71d5091ffb72c4d512824f554a78b5e63061093353bbbacec015e3"
+  },
+  {
+   "file": "magic/MAG248_B.00",
+   "size": 7764,
+   "format": "Packed MAG",
+   "sections": 11,
+   "sha256": "8efe9d33baead7ff7be702a2991e009ef023e50c463ccad1b5b4631b3e6eb214",
+   "cinematic": {
+    "effect_id": 249,
+    "root": 88,
+    "end": 1512,
+    "instructions": 148,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 1784,
+     "size": 272,
+     "keyframes": 8
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG248_B.01",
+   "size": 143960,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "5cf0706c42da057dc351249f7899b3213d948af8dbc6f76853762dbd8119ac68"
+  },
+  {
+   "file": "magic/MAG249_B.00",
+   "size": 29784,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "fcfbb501512da00d13ce721361274024804f2e9169354e3f88422034c3222cd1",
+   "cinematic": {
+    "effect_id": 250,
+    "root": 88,
+    "end": 2732,
+    "instructions": 424,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 3132,
+     "size": 692,
+     "keyframes": 24
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG249_B.01",
+   "size": 129624,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "1fc896afead1361a7e1e54b5d916fbdb52cc82966800767bebf2ee6b3fb2271c"
+  },
+  {
+   "file": "magic/MAG251_B.00",
+   "size": 11308,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "f80153f7b5ba4d78de5426509aa15854b43d1f967d7edec5e038a6063e0e9760",
+   "cinematic": {
+    "effect_id": 252,
+    "root": 56,
+    "end": 1992,
+    "instructions": 227,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2252,
+     "size": 764,
+     "keyframes": 28
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG251_B.01",
+   "size": 27192,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "fa4996d988b921af13d339dbcc490883e6e75deea5ca1fd5544f4b97363e97dd"
+  },
+  {
+   "file": "magic/MAG252_B.00",
+   "size": 9032,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "35f0feafe2e1aed8cb1ce4ca6b203ed43dce1904dfdf65e6504272830e8be0e5",
+   "cinematic": {
+    "effect_id": 253,
+    "root": 96,
+    "end": 2532,
+    "instructions": 329,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2856,
+     "size": 440,
+     "keyframes": 14
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG252_B.01",
+   "size": 135776,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "b7071382e60a6c5ec9f2f836ec8483d105b2b93f0a46df61c0b6478aae76820f"
+  },
+  {
+   "file": "magic/MAG253_B.00",
+   "size": 8712,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "6424fa7da30fc921f8ef91d6d3c5520aa9228d497aa7a084b773f1f874ca3cdc",
+   "cinematic": {
+    "effect_id": 254,
+    "root": 88,
+    "end": 2212,
+    "instructions": 259,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2536,
+     "size": 440,
+     "keyframes": 14
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG253_B.01",
+   "size": 135768,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "09b40b625efd33d4a06d442aa043c8618cdf7a82e170fe85889efe9d30d2b621"
+  },
+  {
+   "file": "magic/MAG254_B.00",
+   "size": 8776,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "c68b57a46787d13ccc3cbfd4518f0a4383fde8cc6dad371e5ede8572b21a34b4",
+   "cinematic": {
+    "effect_id": 255,
+    "root": 88,
+    "end": 2252,
+    "instructions": 259,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2576,
+     "size": 464,
+     "keyframes": 14
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG254_B.01",
+   "size": 135768,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "080dabc8a8fa927d7c8476f5a80763c58ddff6e015ef511bdcd8ef1646e30f17"
+  },
+  {
+   "file": "magic/MAG255_B.00",
+   "size": 2764,
+   "format": "Packed MAG",
+   "sections": 8,
+   "sha256": "c6779e937160fab007e4fee29e0e73e952716e89f31a5e24f48656b1d277f50b",
+   "cinematic": {
+    "effect_id": 256,
+    "root": 56,
+    "end": 1632,
+    "instructions": 159,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2124,
+     "size": 112,
+     "keyframes": 2
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG255_B.01",
+   "size": 68152,
+   "format": "Packed MAG",
+   "sections": 6,
+   "sha256": "5c3abcba56f20e59e4181cd0f471993af929d68c88e77a9478caaa76890e1ce9"
+  },
+  {
+   "file": "magic/MAG256_B.00",
+   "size": 26092,
+   "format": "Packed MAG",
+   "sections": 21,
+   "sha256": "fc33bea9bc8290aebe2b2ed0774f64577dfda695a3c1fa759ed008e0a4026944",
+   "cinematic": {
+    "effect_id": 257,
+    "root": 112,
+    "end": 3064,
+    "instructions": 505,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 3724,
+     "size": 672,
+     "keyframes": 24
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG256_B.01",
+   "size": 227440,
+   "format": "Packed MAG",
+   "sections": 20,
+   "sha256": "c617cb3c19bf6c7b1a353a04e712f9513e56ae6d3e871749bf51c3d1aa5328f6"
+  },
+  {
+   "file": "magic/MAG257_B.00",
+   "size": 6552,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "2679d1dcbc23de1a299c508e586cb250543257fa287bf8c7fe34891266c64d88",
+   "cinematic": {
+    "effect_id": 258,
+    "root": 64,
+    "end": 2292,
+    "instructions": 321,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 2676,
+     "size": 260,
+     "keyframes": 7
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG257_B.01",
+   "size": 85056,
+   "format": "Packed MAG",
+   "sections": 8,
+   "sha256": "90309c6770ae8aeff743499c0505df819762ea0a8014062e10e356dc4af56555"
+  },
+  {
+   "file": "magic/MAG260_B.00",
+   "size": 39260,
+   "format": "Packed MAG",
+   "sections": 25,
+   "sha256": "afac15c39c54b205cf37d8a4bfcd978149cc36501449145bc3213842c1cd0dab",
+   "cinematic": {
+    "effect_id": 261,
+    "root": 176,
+    "end": 3328,
+    "instructions": 530,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 35120,
+     "size": 1368,
+     "keyframes": 51
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG260_B.01",
+   "size": 239280,
+   "format": "Packed MAG",
+   "sections": 31,
+   "sha256": "e31dacde25dfd4801e0656a1bf6b75271c9bb0e7f6e4af66da3f412fa9c0ddac"
+  },
+  {
+   "file": "magic/MAG261_B.00",
+   "size": 11080,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "decc12cea3a07179e12e24776f5c230b3fc659eafa0361759fef7c97368f3aff",
+   "cinematic": {
+    "effect_id": 262,
+    "root": 112,
+    "end": 2948,
+    "instructions": 458,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 9912,
+     "size": 1168,
+     "keyframes": 42
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG261_B.01",
+   "size": 182384,
+   "format": "Packed MAG",
+   "sections": 20,
+   "sha256": "b7a464cb6a03eb920c110a956b1bd879ef81b119d34b2c74ca48178979f8cc02"
+  },
+  {
+   "file": "magic/MAG262_B.00",
+   "size": 45560,
+   "format": "Packed MAG",
+   "sections": 19,
+   "sha256": "694bfc0c324858eaffde3201dbfd6c6f2327bc59b4d2e3d4b51b110a379630ee",
+   "cinematic": {
+    "effect_id": 263,
+    "root": 112,
+    "end": 2928,
+    "instructions": 440,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 35784,
+     "size": 952,
+     "keyframes": 34
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG262_B.01",
+   "size": 185968,
+   "format": "Packed MAG",
+   "sections": 17,
+   "sha256": "e0123c7e19478f40218bfd02426e68bcd24739daa54742a50135ed6c6537870e"
+  },
+  {
+   "file": "magic/MAG263_B.00",
+   "size": 42124,
+   "format": "Packed MAG",
+   "sections": 24,
+   "sha256": "e54e989fdb68ac35d3798d60749f0f2bb67fbfbcbf05f71fc6e8c9f05107eae1",
+   "cinematic": {
+    "effect_id": 264,
+    "root": 120,
+    "end": 4780,
+    "instructions": 648,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 25044,
+     "size": 396,
+     "keyframes": 13
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG263_B.01",
+   "size": 119416,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "68bff9e388db300c866a9250eaf4789d3a3af366d602102b9b4a48e5c7b33416"
+  },
+  {
+   "file": "magic/MAG264_B.00",
+   "size": 41212,
+   "format": "Packed MAG",
+   "sections": 24,
+   "sha256": "21f8180551479ccc1cebe58f35db99592b92f375e2a181f7fce024288210a371",
+   "cinematic": {
+    "effect_id": 265,
+    "root": 120,
+    "end": 3632,
+    "instructions": 564,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 24244,
+     "size": 288,
+     "keyframes": 9
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG264_B.01",
+   "size": 173688,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "e706407e0e3f16cbfad20582dfe6e3df06bff3a82a63841bf2d8113ac34bb50c"
+  },
+  {
+   "file": "magic/MAG265_B.00",
+   "size": 41064,
+   "format": "Packed MAG",
+   "sections": 24,
+   "sha256": "09c65d21b696bf6b56b49c17d287262b82bc07ff92d345813e4c901fc6c8d75c",
+   "cinematic": {
+    "effect_id": 266,
+    "root": 120,
+    "end": 3836,
+    "instructions": 540,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 24056,
+     "size": 316,
+     "keyframes": 10
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG265_B.01",
+   "size": 169080,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "984269675715c766c2bdca5f8cbf316b6d1233f80277080ab01a2898661a19f1"
+  },
+  {
+   "file": "magic/MAG266_B.00",
+   "size": 41008,
+   "format": "Packed MAG",
+   "sections": 24,
+   "sha256": "ec45a79892696e8ffb3a8cba00cc3b0d89b53d0fdbb95f059722c0a7a288d4b3",
+   "cinematic": {
+    "effect_id": 267,
+    "root": 120,
+    "end": 3748,
+    "instructions": 564,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 23820,
+     "size": 508,
+     "keyframes": 18
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG266_B.01",
+   "size": 173688,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "2725eb51ef2934cf8670abecdcaa470ca3253ab5c090f84da9522869244aef9e"
+  },
+  {
+   "file": "magic/MAG267_B.00",
+   "size": 40516,
+   "format": "Packed MAG",
+   "sections": 24,
+   "sha256": "92051c85405b31a879bb28fc1cc48337d105863c9d56fb5290174d37f6dfadd3",
+   "cinematic": {
+    "effect_id": 268,
+    "root": 120,
+    "end": 3652,
+    "instructions": 483,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 23576,
+     "size": 264,
+     "keyframes": 7
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG267_B.01",
+   "size": 173688,
+   "format": "Packed MAG",
+   "sections": 16,
+   "sha256": "5bde974482a5b6e345efcc16de4c2538159215a9d4b1be90430891f613ce338a"
+  },
+  {
+   "file": "magic/MAG268_B.00",
+   "size": 31964,
+   "format": "Packed MAG",
+   "sections": 23,
+   "sha256": "9359d7a762120aa62d431ccbf5bbb869543602dddc9dfb90ae9c3cd5758875a4",
+   "cinematic": {
+    "effect_id": 269,
+    "root": 120,
+    "end": 3064,
+    "instructions": 357,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 23100,
+     "size": 384,
+     "keyframes": 13
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG268_B.01",
+   "size": 127608,
+   "format": "Packed MAG",
+   "sections": 13,
+   "sha256": "8d1f959baf4617b7ff7fed04b4cdfd338092ab496b6f91ef626dce0168cdf412"
+  },
+  {
+   "file": "magic/MAG269_B.00",
+   "size": 41008,
+   "format": "Packed MAG",
+   "sections": 24,
+   "sha256": "2f4644b6ab79b19bd1490d47244f3e7ee19aa2adf5a6dee56628256a55b41c41",
+   "cinematic": {
+    "effect_id": 270,
+    "root": 120,
+    "end": 3868,
+    "instructions": 538,
+    "errors": []
+   },
+   "cameras": [
+    {
+     "offset": 23956,
+     "size": 364,
+     "keyframes": 12
+    }
+   ]
+  },
+  {
+   "file": "magic/MAG269_B.01",
+   "size": 124024,
+   "format": "Packed MAG",
+   "sections": 14,
+   "sha256": "1288b71f5a5c8191a200456542e0c7e3610da376a93564a4f6672fb4f6adb342"
+  },
+  {
+   "file": "magic/Mag270.tim",
+   "size": 67104,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "62433721a66551c338c7dd37890423e5aad5bd540f6c85d0e4738aef0f4a391d"
+  },
+  {
+   "file": "magic/Mag271.tim",
+   "size": 67104,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ede5e51b4be51083cc6cf05367480088899246adb1a5296d913083c2fe546383"
+  },
+  {
+   "file": "magic/Mag272.tim",
+   "size": 103456,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c24df647b30182ae82d053c66ddb2da83c2eb2b318fd806c5ae36a3e0397a680"
+  },
+  {
+   "file": "magic/Mag273.tim",
+   "size": 169504,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "58e37938462b40ec2c7efe9ff9b8046795395b22429996a3a9e1ef310a3082e2"
+  },
+  {
+   "file": "magic/Mag275.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "a4cfdada025e262f8aec93b3ad51e4ff8c667391f16769c2006fe79c554be276"
+  },
+  {
+   "file": "magic/Mag276-301.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e239d84be971e4205fbc1a9a6634cf9d5352f6659691b1434ca4146a9d1ee1d9"
+  },
+  {
+   "file": "magic/Mag277.tim",
+   "size": 205888,
+   "format": "PlayStation TIM",
+   "sections": 6,
+   "sha256": "02035a7d4588d764eaf446a1598544a4bfad50f4f83aff71ec536922ac97be21"
+  },
+  {
+   "file": "magic/Mag278.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e224186df0f4ba323ef23af7ffb5b88825574fdf6d5a47bac8d7f3a4ea984a86"
+  },
+  {
+   "file": "magic/Mag279.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "48380e215e4f8b03cb8abd9eca28c71ecefd7c30d0d64e455eefe18ae2a12fca"
+  },
+  {
+   "file": "magic/Mag280.tim",
+   "size": 100896,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "6a883b8edaa50f037d771248cc3ba8058227afdad0603668ad4c3b336343ead4"
+  },
+  {
+   "file": "magic/Mag281.tim",
+   "size": 166432,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "99cb6d2ccc0e034b5928258cf81799768b77b91b11276a2873b33d5684ec6524"
+  },
+  {
+   "file": "magic/Mag282.tim",
+   "size": 100384,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "79b57fbea0bbed70bcdd53872d1292f4d113b89fe43aa0f667b97de6a300aac2"
+  },
+  {
+   "file": "magic/Mag283-298.tim",
+   "size": 167456,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "c85c4e5340f3d3cf2997a33f8608a2e12a0ec9c62f37277b864bf7791c986103"
+  },
+  {
+   "file": "magic/Mag284.tim",
+   "size": 185888,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "64779655ecb422bc45c5be513ea222f8b3916facdbf0fe67c11d1e47ad048d52"
+  },
+  {
+   "file": "magic/Mag285.tim",
+   "size": 167968,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "17173346e86836d19dad1ae40c252d8a30857bee43ee768a03e6145ec080d551"
+  },
+  {
+   "file": "magic/Mag286.tim",
+   "size": 168480,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7a97cb62b5e95117c20539c6481a7a7af00683da5376338fef6b45d2cfe4f1f2"
+  },
+  {
+   "file": "magic/Mag287.tim",
+   "size": 119328,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "47db91c2d7bd1e5c453bf533780dccb25ea5931c1a9c5670458c4005af207619"
+  },
+  {
+   "file": "magic/Mag288.tim",
+   "size": 165920,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "8692a6d5bbe4c47b944fad70859b28ae1fad1f662d938355cdc32ce0e30878b5"
+  },
+  {
+   "file": "magic/Mag289.tim",
+   "size": 199200,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "1d3003a62f7eb00eac99e905d2cce48e039a01c17fdaf0e825512f2d3efe2672"
+  },
+  {
+   "file": "magic/Mag290.tim",
+   "size": 202272,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "0c41fb8c673cef0288eb70dd6625d2dea40726492930d9d2b3f848c7655b8c28"
+  },
+  {
+   "file": "magic/Mag291.tim",
+   "size": 99872,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7d7ce0a74efb981fe3277ae36300a4e463129f960b4ed955c379ecbcc95b469a"
+  },
+  {
+   "file": "magic/Mag292.tim",
+   "size": 133152,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ce5a15fcb69163a49c765ba6a66b6302c173cc69387bfa62c4525ea9e46d9540"
+  },
+  {
+   "file": "magic/Mag293.tim",
+   "size": 133152,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "385051cf92fb3f6a2968e03deca09572eeb2e3793b1d1df37362b8866fcd2c0e"
+  },
+  {
+   "file": "magic/Mag294.tim",
+   "size": 67104,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "31dd8ac86a110ce05616c0fa76f26e1f99d9962a62159280ae0c4cc6a0a7eb6d"
+  },
+  {
+   "file": "magic/Mag295.tim",
+   "size": 99872,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "d3cdcd6f279a19be7b56ae11f0de58b34cef621f13e69bc2a8102a828fe7d723"
+  },
+  {
+   "file": "magic/Mag296.tim",
+   "size": 166944,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "acafbaa1bedaf34d3e14ce2926d988a93c93337571b27123ed0d65629c215eca"
+  },
+  {
+   "file": "magic/Mag297.tim",
+   "size": 199712,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "061a29c783d0daccc8515acc97ebd39e861ba0535b2814c12917955c86b539f6"
+  },
+  {
+   "file": "magic/Mag300.tim",
+   "size": 132128,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "6898fc2e28d958a8a87de4b154b7b6b812558462090894dc8d6a89dc0fa4e2e5"
+  },
+  {
+   "file": "magic/Mag302.tim",
+   "size": 200736,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ec5dbae0d6cfca43206b2ffc3e91b2a7670122f49ea46aa63a7890ceb3253416"
+  },
+  {
+   "file": "magic/Mag303.tim",
+   "size": 170016,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7ffa5e8b4f9859ff35a72f5558070ae204c8968287dc3906514a5bb50559a052"
+  },
+  {
+   "file": "magic/Mag307.tim",
+   "size": 232992,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ef3d9ae7743fab5d0020c002597ac661bf655229b754856af889c72837cb4b7d"
+  },
+  {
+   "file": "magic/Mag308.tim",
+   "size": 99872,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "9f7fe69bc50860857179af79793522f416666d304f019cab34c928f196d9ca13"
+  },
+  {
+   "file": "magic/mag311.tim",
+   "size": 133664,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "2498b5bd6b437309f3294737ebb1ac658203f4c8c2c246d69abcfc108d0f1e28"
+  },
+  {
+   "file": "magic/mag312.tim",
+   "size": 199200,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e924ac93c86574fa5ee58c177af45f66e6a91694f6e0c72b9a853b0822faacc7"
+  },
+  {
+   "file": "magic/Mag313.tim",
+   "size": 199712,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "e2d58d3e8b2183d6382fc1e2e589ee7e4c5f123c958bc3faf97b6fd5cbe7dbb7"
+  },
+  {
+   "file": "magic/mag314.tim",
+   "size": 199712,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7d147c93e8ee3754999dea4e157a927a8781246b8c1292388691b2f5110b2875"
+  },
+  {
+   "file": "magic/Mag315.tim",
+   "size": 67616,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7b93106fecca04dc495b542ed6b86de2f709fb6df518c270c47632563f755032"
+  },
+  {
+   "file": "magic/Mag317.tim",
+   "size": 202784,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "bd0f20f4d0ff74b8a93b6818796a90ec03dc20c2310b788016c2f0f26d4b063d"
+  },
+  {
+   "file": "magic/Mag318.tim",
+   "size": 202784,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "fa2bfc6ce8835899528547041f1fc9917f3c5ac74a996864012d03fe1e452586"
+  },
+  {
+   "file": "magic/Mag319.tim",
+   "size": 167456,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "dbaa1cc36cfa1929d0fe69594e53e2bcf0db46b3b41f2db48330cad29c6722d1"
+  },
+  {
+   "file": "magic/mag320.tim",
+   "size": 99872,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "71aa329a367c89505f420a1d784f7e7c983a49d24e8257dd2cefb1a1246ddff4"
+  },
+  {
+   "file": "magic/Mag321.tim",
+   "size": 202272,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "237af620d271269dbde5d5ad6a1a3b062a168d32cf6ea5da37a9bca635c241d2"
+  },
+  {
+   "file": "magic/Mag322.tim",
+   "size": 169504,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "d15caf7504eb44fae1d462bf7a5fbccc09cca5ad7b7ed465b5aaab332bc3afb7"
+  },
+  {
+   "file": "magic/mag323.tim",
+   "size": 66656,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "7918b3100e5bb89234875d704d4b502bf356ddae7a7ce68184cdf7d4b151a6a7"
+  },
+  {
+   "file": "magic/Mag324.tim",
+   "size": 201248,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "437cfd6fd1f1da51449648986ef7f6ad426391a5cc471217c287d467365f5b26"
+  },
+  {
+   "file": "magic/mag325.tim",
+   "size": 168224,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "4612a9128943b6e9fa9a38bc58d1edf4efa447f6f684b4ce0d735baa976da3b2"
+  },
+  {
+   "file": "magic/mag326-329.tim",
+   "size": 167136,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "ee5a01cccc91ef4f27cbd249538ae0e44496b950f6e8d2dea3a00b154bca2c52"
+  },
+  {
+   "file": "magic/MAG330_B.00",
+   "size": 5968,
+   "format": "Packed MAG",
+   "sections": 10,
+   "sha256": "c58448c2f045bdb63813ed7663966364d166550fecc8b175c443d8ee3ee75dcf",
+   "cinematic": {
+    "effect_id": 331,
+    "root": 80,
+    "end": 2688,
+    "instructions": 324,
+    "errors": []
+   }
+  },
+  {
+   "file": "magic/MAG330_B.01",
+   "size": 159824,
+   "format": "Packed MAG",
+   "sections": 12,
+   "sha256": "2b30cf9334560d0e1a3ad29907bafdd97006f747a32ab9a38a87ce685b2ec3ca"
+  },
+  {
+   "file": "magic/mag333.tim",
+   "size": 172064,
+   "format": "PlayStation TIM",
+   "sections": 5,
+   "sha256": "818b3903909b83d5678c939bd2521f28b2a010a9120b6951fcaac5e92d8df4e2"
+  }
+ ]
+}

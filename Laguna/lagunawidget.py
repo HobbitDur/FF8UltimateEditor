@@ -1,6 +1,8 @@
 import os
+import json
+import re
 
-from PyQt6.QtCore import Qt, QSignalBlocker, QTimer
+from PyQt6.QtCore import Qt, QSignalBlocker, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon, QColor, QFont
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QTabWidget,
                              QTreeWidget, QTreeWidgetItem, QTableWidget, QTableWidgetItem, QSplitter,
@@ -10,7 +12,9 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBo
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
-from Laguna.lagunamanager import LagunaManager, CINEMATIC_GFS, streamed_part_names
+from Laguna.lagunamanager import LagunaManager, CINEMATIC_GFS, streamed_part_names, gf_from_file_name
+from Laguna.magsectionwidget import MagSectionTabs
+from FF8GameData.packagepath import RESOURCES_JSON_FOLDER
 from Laguna.timelinewidget import TimelineCanvas, MotionCanvas, CATEGORY_COLORS, TICKS_PER_SECOND
 from Laguna.meshpreview import MeshPreview
 from Laguna.sceneview import SceneView
@@ -28,33 +32,30 @@ class _NoWheelSpinBox(QSpinBox):
 
 
 class LagunaWidget(QWidget):
-    """GF cinematic script editor: the byte-code choreography of the seven summons that share
-    Ifrit's engine (Ifrit, Leviathan, Bahamut, Cerberus, Alexander, Brothers, Eden), stored in
-    their MAGxxx_B.00 mag file.
+    """MAG-family editor: content detection, lossless section tabs and cinematic tools.
 
-    - Script: every script reachable from the root program (bone programs, subroutines, jump
-      targets) disassembled with named opcodes, plus the unreached bytes (particle scripts, dead
-      code); an instruction's modifier bits and operands are edited in place.
-    - Playback: the scripts replayed tick by tick without the game (re-run after every edit), shown
-      in 3D (meshes, the animated creature, the battle camera) and as a timeline of the bones (who
-      spawns when, camera cuts, sounds, draw setup, particles) with each bone's motion curves.
-    - Resources: the meshes, embedded creature model and sprite lists of the .00 and of the
-      companion .01 (read-only), with an untextured 3D preview of the meshes.
-    - Opcodes: the decoded instruction set.
+    Every loaded part has its own byte image and undo history. Known structures expose named
+    fields; all sections support bounded byte edits and fixed-size export/replacement. Script
+    disassembly uses effect-specific profiles; scene playback remains limited to verified GFs.
+    """
 
-    Named after Laguna Loire, who made his film debut as the hero of a cinematic."""
+    file_bindings_changed = pyqtSignal()
 
     def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
+        # Dirty state follows the byte images. Navigating previews/fields is not an edit.
+        self.setProperty("read_only_preview", True)
         if file_registry is None:  # The tool is used alone, it shares its files with nobody
             file_registry = FileRegistry()
         self._registry = file_registry
+        self.file_bindings_changed.connect(lambda: QTimer.singleShot(0, self._sync_dirty_marker))
         self.setWindowTitle("Laguna")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        self.managers = {}          # gf -> LagunaManager (one per loaded file)
-        self.companions = {}        # gf -> MagContainer of its .01 (read-only)
+        self.managers = {}          # file key -> independent LagunaManager
+        self.companions = {}        # gf -> current edited image of its .01
         self.current_gf = ""
+        self.game_data_folder = game_data_folder
         self._labels = {}
         self._simulation = None
         self._refresh_pending = False
@@ -68,14 +69,15 @@ class LagunaWidget(QWidget):
             binding.file_opened.connect(lambda path, g=gf: self.load_file(path, g))
             binding.file_closed.connect(lambda _path, g=gf: self._close_gf(g))
             self.bindings[gf] = binding
-        # The .01 carries most meshes and textures: shown in Resources, never written.
+        # The .01 carries most meshes and textures and is independently editable.
         self.companion_bindings = {}
         for gf, (_effect, file_name) in CINEMATIC_GFS.items():
-            binding = FileBinding(file_name[:-2] + "01", file_registry, read_only=True)
+            name = file_name[:-2] + "01"
+            binding = FileBinding(name, file_registry, save_callback=lambda k=name: self.save_file(k))
             binding.file_opened.connect(lambda path, g=gf: self._load_companion(path, g))
             binding.file_closed.connect(lambda _path, g=gf: self._close_companion(g))
             self.companion_bindings[gf] = binding
-        # The parts streamed in during the summon (battle/magNNN_b.02...): more meshes, read-only.
+        # Streamed parts have independent editors and also feed the GF preview.
         # Like every file here they come through the shared registry, so "Open folder" on the game
         # data folder brings the whole set at once.
         self.parts = {}             # gf -> {part number: MagContainer} (packed parts: objects)
@@ -83,25 +85,39 @@ class LagunaWidget(QWidget):
         self.part_bindings = {}
         for gf in CINEMATIC_GFS:
             for number, name in streamed_part_names(gf).items():
-                binding = FileBinding(name, file_registry, read_only=True)
+                binding = FileBinding(name, file_registry, save_callback=lambda k=name: self.save_file(k))
                 binding.file_opened.connect(lambda path, g=gf, k=number: self._load_part(path, g, k))
                 binding.file_closed.connect(lambda _path, g=gf, k=number: self._close_part(g, k))
                 self.part_bindings[(gf, number)] = binding
 
+        # Content, not the suffix, decides which editors are available. Fixed names let the
+        # shared Open-folder scan find the full vanilla corpus; imports can add mod names too.
+        self.generic_bindings = {}
+        known = {b.file_name.lower() for b in self.file_bindings()}
+        with open(RESOURCES_JSON_FOLDER / "mag_file_catalog.json", encoding="utf-8") as f:
+            for name in json.load(f)["files"]:
+                if name.lower() not in known:
+                    self._add_generic_binding(name)
+
         # ---- top bar
         self.gf_selector = QComboBox()
-        self.gf_selector.setToolTip("Which loaded GF mag file is shown (import them with the toolbar)")
+        self.gf_selector.setEditable(True)
+        self.gf_selector.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.gf_selector.completer().setFilterMode(Qt.MatchFlag.MatchContains)
+        self.gf_selector.setToolTip("Choose any loaded MAG file or streamed part")
         self.gf_selector.activated.connect(lambda _i: self._show_gf(self.gf_selector.currentData()))
-        self.file_label = QLabel("No file loaded: Import a MAGnnn_B.00 (Ifrit MAG200, Leviathan MAG005, Bahamut "
-                                 "... Eden MAG201-205), or Open folder on the game data folder to load every GF "
-                                 "with its .01 and streamed parts (meshes and textures)")
+        self.file_label = QLabel("Import MAG files, or Open folder on extracted game data. "
+                                "The format is detected from the contents; each section has an editor tab.")
         self.file_label.setWordWrap(True)
         top = QHBoxLayout()
-        top.addWidget(QLabel("GF:"))
+        top.addWidget(QLabel("File:"))
         top.addWidget(self.gf_selector)
         top.addWidget(self.file_label, 1)
 
         self.tabs = QTabWidget()
+        self.section_tabs = MagSectionTabs()
+        self.section_tabs.data_changed.connect(self._section_edited)
+        self.tabs.addTab(self.section_tabs, "Sections")
         self.tabs.addTab(self._build_script_tab(), "Script")
         self.tabs.addTab(self._build_timeline_tab(), "Playback (3D + timeline)")
         self.tabs.addTab(self._build_resource_tab(), "Resources")
@@ -117,33 +133,56 @@ class LagunaWidget(QWidget):
             binding.load_opened_file()  # Another tool may have opened these files already
 
     def import_files(self):
-        """The toolbar's Import: one file dialog listing every file Laguna reads (the .00 of the seven
-        GFs, their .01 and streamed parts); pick any of them (several at once is fine), each goes to
-        its place by name. Open folder on the game data folder still loads the whole set at once."""
+        """Import any MAG family member, including names added by a mod."""
         key = type(self).__name__
         paths, _filter = QFileDialog.getOpenFileNames(
-            self, "Laguna - open GF cinematic files (MAGnnn_B.00 = the script; .01 and battle/magnnn_b.0k = "
-                  "meshes and textures)", self._registry.last_folder(key),
-            "GF cinematic files (MAG005_B.* MAG200_B.* MAG201_B.* MAG202_B.* MAG203_B.* MAG204_B.* "
-            "MAG205_B.*);;All files (*)")
+            self, "Laguna - open MAG files and streamed parts", self._registry.last_folder(key),
+            "MAG files (MAG* mag* MA8* ma8*);;All files (*)")
         if not paths:
             return
         self._registry.remember_folder(key, os.path.dirname(paths[0]))
         by_name = {binding.file_name.lower(): binding for binding in self.file_bindings()}
-        unknown = []
         for path in paths:
             binding = by_name.get(os.path.basename(path).lower())
             if binding is None:
-                unknown.append(os.path.basename(path))
-            else:
-                binding.open_path(path)
-        if unknown:
-            QMessageBox.information(self, "Laguna", "Not a GF cinematic file (MAG005/MAG200-205):\n"
-                                    + "\n".join(unknown))
+                binding = self._add_generic_binding(os.path.basename(path))
+                by_name[os.path.basename(path).lower()] = binding
+            binding.open_path(path)
+        self.file_bindings_changed.emit()
+
+    def _add_generic_binding(self, name):
+        binding = FileBinding(name, self._registry, save_callback=lambda k=name: self.save_file(k))
+        binding.file_opened.connect(lambda path, k=name: self.load_file(path, k))
+        binding.file_closed.connect(lambda _path, k=name: self._close_gf(k))
+        self.generic_bindings[name] = binding
+        # During construction the toolbar/closed-file wrapper has not been installed yet.
+        if hasattr(self, "section_tabs"):
+            self.file_bindings_changed.emit()
+        return binding
+
+    def load_folder(self, folder):
+        """Also discover mod-added MAG names which are absent from the vanilla catalog."""
+        by_name = {b.file_name.lower(): b for b in self.file_bindings()}
+        seen = set()
+        for root, _dirs, names in os.walk(folder):
+            for name in sorted(names, key=str.lower):
+                if not re.match(r"^(mag|ma8).+\.[^.]+$", name, re.IGNORECASE):
+                    continue
+                if name.lower() in seen:
+                    continue
+                seen.add(name.lower())
+                binding = by_name.get(name.lower())
+                if binding is None:
+                    binding = self._add_generic_binding(name)
+                    by_name[name.lower()] = binding
+                path = os.path.join(root, name)
+                if not binding.is_loaded or os.path.normcase(os.path.abspath(binding.current_path)) != os.path.normcase(os.path.abspath(path)):
+                    binding.open_path(path)
+        self.file_bindings_changed.emit()
 
     def file_bindings(self):
         return (list(self.bindings.values()) + list(self.companion_bindings.values())
-                + list(self.part_bindings.values()))
+                + list(self.part_bindings.values()) + list(getattr(self, "generic_bindings", {}).values()))
 
     @property
     def manager(self):
@@ -364,7 +403,9 @@ class LagunaWidget(QWidget):
         table = CineOpcodeTable.default()
         opcodes = [opcode for _code, opcode in sorted(table.opcodes.items()) if opcode.valid]
         widget = QTableWidget(len(opcodes), 6)
-        widget.setHorizontalHeaderLabels(["Op", "Name", "Length (bytes)", "Operands", "GFs", "Meaning"])
+        self.opcode_table = widget
+        self._opcode_profile = None
+        widget.setHorizontalHeaderLabels(["Op", "Name", "Length (bytes)", "Operands", "Availability", "Meaning"])
         widget.verticalHeader().setVisible(False)
         widget.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         for row, opcode in enumerate(opcodes):
@@ -384,6 +425,25 @@ class LagunaWidget(QWidget):
         for column in range(5):
             widget.setColumnWidth(column, min(widget.columnWidth(column), 320))
         return widget
+
+    def _fill_opcode_profile(self):
+        from FF8GameData.magcine.cinescript import CineOpcodeTable
+        table = self.manager.table
+        if table is self._opcode_profile:
+            return
+        self._opcode_profile = table
+        opcodes = [o for _code, o in sorted(table.opcodes.items()) if o.valid]
+        widget = self.opcode_table
+        widget.setRowCount(len(opcodes))
+        for row, opcode in enumerate(opcodes):
+            operands = ", ".join(f"{o['name']}:{o['type']}" for o in opcode.operands)
+            values = (f"0x{opcode.code:03X}", opcode.name, opcode.length_expr, operands,
+                      "selected effect" if table is not CineOpcodeTable.default() else "base table",
+                      opcode.semantics+f"\nModifiers: {opcode.high_bits}")
+            for column, value in enumerate(values):
+                item = QTableWidgetItem(value)
+                item.setToolTip(value)
+                widget.setItem(row, column, item)
 
     def _build_resource_tab(self):
         self.resource_tree = QTreeWidget()
@@ -418,13 +478,13 @@ class LagunaWidget(QWidget):
         self.resource_tree.clear()
         self.mesh_preview.set_mesh(None)
         manager = self.manager
-        if manager is None:
+        if manager is None or manager.document.format != "Packed MAG":
             return
-        file_name = CINEMATIC_GFS[self.current_gf][1]
+        file_name = os.path.basename(manager.file_path)
         files = [(file_name, MagContainer(bytes(manager.data)))]
         if self.current_gf in self.companions:
             files.append((file_name[:-2] + "01", self.companions[self.current_gf]))
-        part_names = streamed_part_names(self.current_gf)
+        part_names = streamed_part_names(self.current_gf) if self.current_gf in CINEMATIC_GFS else {}
         for number, container in sorted(self.parts.get(self.current_gf, {}).items()):
             files.append((part_names[number] + " (streamed)", container))
         missing = self._missing_files()
@@ -475,6 +535,10 @@ class LagunaWidget(QWidget):
         obj = item.data(0, Qt.ItemDataRole.UserRole)
         if obj is None:
             return
+        if obj.error:
+            self.mesh_preview.set_mesh(None)
+            self.resource_info.setText("Resource could not be decoded: " + obj.error)
+            return
         self.mesh_preview.set_mesh(obj.mesh if obj.kind == "mesh" else None)
         if obj.kind == "model":
             self._preview_creature(obj.index)
@@ -506,20 +570,31 @@ class LagunaWidget(QWidget):
 
     def _load_companion(self, path, gf):
         try:
-            with open(path, "rb") as f:
-                self.companions[gf] = MagContainer(f.read())
-        except OSError as error:
+            key = CINEMATIC_GFS[gf][1][:-2] + "01"
+            manager = LagunaManager()
+            manager.game_data_folder = self.game_data_folder
+            manager.load_file(path)
+            self.managers[key] = manager
+            self.companions[gf] = MagContainer(bytes(manager.data))
+        except (OSError, ValueError, IndexError) as error:
             QMessageBox.critical(self, "Laguna", f"Cannot read {path}:\n{error}")
             return
+        self._refresh_gf_selector()
+        if self.current_gf in ("", key):
+            self._show_gf(key)
         self._schedule_refresh(gf)  # its meshes join the 3D scene
+        self.file_bindings_changed.emit()
 
     def _close_companion(self, gf):
         self.companions.pop(gf, None)
+        self._close_gf(CINEMATIC_GFS[gf][1][:-2] + "01")
         self._schedule_refresh(gf)
 
     # ------------------------------------------------------------------ files
-    def load_file(self, path, gf):
+    def load_file(self, path, gf=""):
+        gf = gf or gf_from_file_name(path) or os.path.basename(path)
         manager = LagunaManager()
+        manager.game_data_folder = self.game_data_folder
         try:
             manager.load_file(path, gf)
         except (OSError, ValueError) as error:
@@ -530,6 +605,7 @@ class LagunaWidget(QWidget):
         # Open folder brings all seven GFs: show the first, the others wait in the GF selector
         if self.current_gf in ("", gf):
             self._show_gf(gf)
+        self.file_bindings_changed.emit()
 
     def save_file(self, gf):
         manager = self.managers.get(gf)
@@ -537,8 +613,21 @@ class LagunaWidget(QWidget):
             return
         try:
             manager.save_file()
+            self._refresh_gf_selector()
         except OSError as error:
             QMessageBox.critical(self, "Laguna", f"Cannot save {manager.file_path}:\n{error}")
+            return False
+        return True
+
+    def save_files(self):
+        for key, manager in self.managers.items():
+            if manager.modified and self.save_file(key) is False:
+                return False
+        self.file_bindings_changed.emit()
+        return True
+
+    def can_save_folder(self):
+        return any(m.modified for m in self.managers.values())
 
     def _close_gf(self, gf):
         self.managers.pop(gf, None)
@@ -546,14 +635,18 @@ class LagunaWidget(QWidget):
         if self.current_gf == gf:
             self.current_gf = ""
             self._show_gf(next(iter(self.managers), ""))
+        self.file_bindings_changed.emit()
 
     def _refresh_gf_selector(self):
         with QSignalBlocker(self.gf_selector):
             self.gf_selector.clear()
-            for gf in CINEMATIC_GFS:
-                if gf in self.managers:
+            for gf, manager in self.managers.items():
+                mark = "* " if manager.modified else ""
+                if gf in CINEMATIC_GFS:
                     effect, file_name = CINEMATIC_GFS[gf]
-                    self.gf_selector.addItem(f"{gf} ({file_name}, effect {effect})", gf)
+                    self.gf_selector.addItem(f"{mark}{gf} ({file_name}, effect {effect})", gf)
+                else:
+                    self.gf_selector.addItem(f"{mark}{os.path.basename(manager.file_path)}", gf)
             index = self.gf_selector.findData(self.current_gf)
             if index >= 0:
                 self.gf_selector.setCurrentIndex(index)
@@ -574,16 +667,60 @@ class LagunaWidget(QWidget):
             self._set_enabled(False)
             self.block_tree.clear()
             self.listing.setRowCount(0)
+            self.section_tabs.set_manager(None)
             return
         index = self.gf_selector.findData(gf)
         if index >= 0:
             with QSignalBlocker(self.gf_selector):
                 self.gf_selector.setCurrentIndex(index)
         self._set_enabled(True)
-        self.file_label.setText(manager.file_path)
-        self._refresh_program()
-        self._run_simulation()
+        doc = manager.document
+        message = f"{manager.file_path} — {doc.format}, {len(manager.data):,} bytes, {len(doc.sections)} sections"
+        if doc.warnings:
+            message += ". " + "; ".join(doc.warnings)
+        self.file_label.setText(message)
+        self.section_tabs.set_manager(manager)
+        self._fill_opcode_profile()
+        self.tabs.setTabEnabled(1, manager.program is not None)
+        self.tabs.setTabEnabled(2, gf in CINEMATIC_GFS)
+        self.tabs.setTabEnabled(3, doc.format == "Packed MAG")
+        if not self.tabs.isTabEnabled(self.tabs.currentIndex()):
+            self.tabs.setCurrentIndex(0)
+        if manager.program is not None:
+            self._refresh_program()
+            self._run_simulation()
+        else:
+            self._labels = {}
+            self.block_tree.clear()
+            self.listing.setRowCount(0)
         self._fill_resources()
+        self._sync_dirty_marker()
+        QTimer.singleShot(0, self._sync_dirty_marker)
+
+    def _section_edited(self):
+        self._mark_dirty()
+        self._creature_loader_key = None
+        self._sync_resource_images()
+        self._refresh_gf_selector()
+        self.file_bindings_changed.emit()
+        # Defer rebuilding the current section until its editor has finished its signal.
+        key = self.current_gf
+        QTimer.singleShot(0, lambda: self._show_gf(key) if self.current_gf == key else None)
+
+    def _sync_resource_images(self):
+        """Playback reads edited companions/parts, not their original on-disk snapshots."""
+        for gf, binding in self.companion_bindings.items():
+            manager = self.managers.get(binding.file_name)
+            if manager:
+                self.companions[gf] = MagContainer(bytes(manager.data))
+        for (gf, number), binding in self.part_bindings.items():
+            manager = self.managers.get(binding.file_name)
+            if manager:
+                container = MagContainer(bytes(manager.data))
+                self.part_data.setdefault(gf, {})[number] = bytes(manager.data)
+                self.parts.setdefault(gf, {}).pop(number, None)
+                if container.packed:
+                    self.parts[gf][number] = container
 
     # ------------------------------------------------------------------ script view
     def _refresh_program(self, keep_offset=None):
@@ -783,6 +920,9 @@ class LagunaWidget(QWidget):
         self._mark_dirty()
         self._refresh_program(keep_offset=self._editing_offset)
         self._run_simulation(keep_tick=True)  # show the change right away
+        self.section_tabs.set_manager(manager)
+        self._refresh_gf_selector()
+        self.file_bindings_changed.emit()
 
     def _follow_reference(self):
         instruction = self.manager.instruction_at(self._editing_offset) if self.manager else None
@@ -801,7 +941,11 @@ class LagunaWidget(QWidget):
     def _run_simulation(self, keep_tick=False):
         """Replay the script (runs by itself on load, after every edit, and when seed/targets change)."""
         manager = self.manager
-        if manager is None:
+        if manager is None or manager.program is None:
+            return
+        if self.current_gf not in CINEMATIC_GFS:
+            self.sim_label.setText("Cinematic playback is verified for the seven supported GF summons only. "
+                                   "This effect's script and other sections can be edited in their tabs.")
             return
         tick = self.tick_slider.value() if keep_tick else 0
         self._simulation = manager.simulate(seed=self.seed_spin.value(), target_count=self.target_spin.value())
@@ -897,19 +1041,30 @@ class LagunaWidget(QWidget):
 
     def _load_part(self, path, gf, number):
         try:
-            with open(path, "rb") as f:
-                container = MagContainer(f.read())
-        except OSError as error:
+            manager = LagunaManager()
+            manager.game_data_folder = self.game_data_folder
+            manager.load_file(path)
+            key = streamed_part_names(gf)[number]
+            self.managers[key] = manager
+            container = MagContainer(bytes(manager.data))
+        except (OSError, ValueError, IndexError) as error:
             QMessageBox.warning(self, "Laguna", f"Cannot read {path}:\n{error}")
             return
         self.part_data.setdefault(gf, {})[number] = container.data
         if container.packed:  # the raw ones are VRAM pages: no objects to show
             self.parts.setdefault(gf, {})[number] = container
+        else:
+            self.parts.setdefault(gf, {}).pop(number, None)
+        self._refresh_gf_selector()
+        if self.current_gf in ("", key):
+            self._show_gf(key)
         self._schedule_refresh(gf)
+        self.file_bindings_changed.emit()
 
     def _close_part(self, gf, number):
         self.parts.get(gf, {}).pop(number, None)
         self.part_data.get(gf, {}).pop(number, None)
+        self._close_gf(streamed_part_names(gf)[number])
         self._schedule_refresh(gf)
 
     def _schedule_refresh(self, gf):
@@ -927,6 +1082,8 @@ class LagunaWidget(QWidget):
     def _missing_files(self):
         """Names of the .01 and streamed parts of the current GF that are not loaded."""
         missing = []
+        if self.current_gf not in CINEMATIC_GFS:
+            return missing
         if self.current_gf not in self.companions:
             missing.append(CINEMATIC_GFS[self.current_gf][1][:-2] + "01")
         loaded = set(self.parts.get(self.current_gf, {}))
@@ -989,18 +1146,27 @@ class LagunaWidget(QWidget):
 
     # ------------------------------------------------------------------ undo / dirty
     def _mark_dirty(self):
+        self._sync_dirty_marker()
+
+    def _sync_dirty_marker(self):
         state = getattr(self, "dirty_state", None)
         if state is not None:
-            state.mark()
+            (state.mark if self.can_save_folder() else state.clear)()
 
     def undo(self):
         if self.manager and self.manager.undo():
             self._mark_dirty()
-            self._refresh_program(keep_offset=self._editing_offset)
-            self._run_simulation(keep_tick=True)
+            self._sync_resource_images()
+            self._creature_loader_key = None
+            self._refresh_gf_selector()
+            self._show_gf(self.current_gf)
+            self.file_bindings_changed.emit()
 
     def redo(self):
         if self.manager and self.manager.redo():
             self._mark_dirty()
-            self._refresh_program(keep_offset=self._editing_offset)
-            self._run_simulation(keep_tick=True)
+            self._sync_resource_images()
+            self._creature_loader_key = None
+            self._refresh_gf_selector()
+            self._show_gf(self.current_gf)
+            self.file_bindings_changed.emit()

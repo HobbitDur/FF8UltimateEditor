@@ -95,7 +95,7 @@ class FF8UltimateEditorWidget(QWidget):
             "Fujin (Effect explorer)",
             "Watts (r0win.dat victory editor)",
             "Xu (Scan camera editor)",
-            "Laguna (GF cinematic script editor)",
+            "Laguna (MAG section editor)",
             "Chocoboy (World map script editor)",
             "Hyne (.ff8 save editor)"
         ]
@@ -120,7 +120,7 @@ class FF8UltimateEditorWidget(QWidget):
                       "Julia (Sound editor)"]),
             ("Multi", ["Cid (Draw editor)", "ShumiTranslator(All text editor)"]),
             ("Other", ["Hyne (.ff8 save editor)", "Fujin (Effect explorer)",
-                       "Laguna (GF cinematic script editor)"]),
+                       "Laguna (MAG section editor)"]),
         ]
         self.HIDDEN_CATEGORIES = set()  # every category has a tool and is shown in the selector
 
@@ -294,7 +294,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._fujin_widget) # Index 21
         self.tool_stack.addWidget(self._watts_widget) # Watts (r0win.dat)
         self.tool_stack.addWidget(self._xu_widget) # Xu (battle_scan_cameras.bin)
-        self.tool_stack.addWidget(self._laguna_widget) # Laguna (GF cinematic MAGxxx_B.00 scripts)
+        self.tool_stack.addWidget(self._laguna_widget) # Laguna (MAG sections and cinematic scripts)
         self.tool_stack.addWidget(self._chocoboy_widget) # Chocoboy (wmsetxx.obj world map scripts)
         self.tool_stack.addWidget(self._hyne_widget) # Hyne (.ff8 save editor), keep last in HOBBIT_OPTION_ITEMS
         self._piet_widget.view_in_zone_requested.connect(self._view_mmag_entry_in_zone)

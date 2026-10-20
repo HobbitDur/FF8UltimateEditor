@@ -40,6 +40,8 @@ class CineOpcode:
         self.notes = data.get("notes", "")
         self.gfs = data.get("gfs")  # None = every GF
         self.fallthrough = data.get("fallthrough", True)
+        self.invalid_when = [(compile(v["condition"], "<opcode validation>", "eval"), v["error"])
+                             for v in data.get("invalid_when", [])]
         self.length_expr = data["length"]
         self._length = compile(self.length_expr, f"<len 0x{code:X}>", "eval")
         self.refs = []
@@ -70,6 +72,8 @@ class CineOpcode:
 
 class CineOpcodeTable:
     _cache = None
+    _effect_cache = {}
+    _profiles = None
 
     def __init__(self, path: str = _SPEC_PATH):
         with open(path, encoding="utf-8") as f:
@@ -82,6 +86,30 @@ class CineOpcodeTable:
         if cls._cache is None:
             cls._cache = CineOpcodeTable()
         return cls._cache
+
+    @classmethod
+    def for_effect(cls, effect_id):
+        if cls._profiles is None:
+            with open(RESOURCES_JSON_FOLDER / "mag_cinematic_profiles.json", encoding="utf-8") as f:
+                cls._profiles = json.load(f)["effects"]
+        profile = cls._profiles.get(str(effect_id))
+        if not profile:
+            return cls.default()
+        if effect_id not in cls._effect_cache:
+            table = object.__new__(cls)
+            base = cls.default()
+            table.gf_order = base.gf_order
+            table.opcodes = dict(base.opcodes)
+            for code in profile["disabled"]:
+                data = dict(name="UnavailableInThisEffect", length="2", operands=[], high_bits="",
+                            flow="invalid", semantics="The selected effect's runtime table has a null or return-only handler.",
+                            fallthrough=False)
+                table.opcodes[code] = CineOpcode(code, data)
+            for key, data in profile["overrides"].items():
+                code = int(key, 16)
+                table.opcodes[code] = CineOpcode(code, data)
+            cls._effect_cache[effect_id] = table
+        return cls._effect_cache[effect_id]
 
     def get(self, code: int):
         return self.opcodes.get(code)
@@ -140,6 +168,10 @@ def decode_instruction(data: bytes, offset: int, table: CineOpcodeTable = None) 
     instruction = CineInstruction(offset, op, words, opcode)
     if not opcode.valid:
         instruction.error = f"opcode 0x{instruction.code:X} is not implemented (would hang the VM)"
+    for condition, message in opcode.invalid_when:
+        if eval(condition, {}, {"op": op, "w": words}):
+            instruction.error = message
+            break
     instruction.refs = opcode.references(op, offset, words)
     return instruction
 

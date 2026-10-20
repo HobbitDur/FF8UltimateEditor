@@ -1,22 +1,18 @@
-"""GF cinematic mag file manager (Qt-free): the script half of MAGxxx_B.00.
+"""Lossless MAG document and undo history, with cinematic instruction editing when present.
 
-Seven GF summons share one animation engine: Ifrit (effect 201), Leviathan (6), Bahamut (202),
-Cerberus (203), Alexander (204), the Brothers (205) and Eden (206). Their choreography is not
-keyframed - it is byte code in the summon's mag file (MAG<effect-1>_B.00): a root program at
-*(u32*)(file+4) that spawns "bones" (meshes, particle emitters, sprites, camera, lights, the
-creature) and gives each of them up to three scripts that set velocities, accelerations and
-waits. See FF8GameData/magcine/cinescript.py for the byte code and cinesim.py for the scheduler.
-
-Edits are made in place: an instruction keeps its length, so no offset of the file moves and
-every relative jump stays valid. An unmodified load/save is byte-exact.
+Content detection maps packed cinematics, TIMs, indexed containers, audio and undecoded parts.
+All writes keep the byte size and preserve untouched data. Per-effect profiles describe native
+opcode availability; scene simulation is restricted to the seven verified GF summons.
 """
 import ntpath
 import os
 import struct
+import re
 
 from FF8GameData.magcine.cinescript import (CineOpcodeTable, CineProgram, decode_instruction,
                                             format_instruction)
 from FF8GameData.magcine.cinesim import CineSimulation
+from FF8GameData.magcine.magfile import MagFile
 
 # GF name -> (magic effect id, mag file of the script)
 CINEMATIC_GFS = {
@@ -60,6 +56,7 @@ class LagunaManager:
         self.data = bytearray()
         self.original = b""
         self.program = None
+        self.document = MagFile(b"")
         self._undo = []  # data snapshots before each edit
         self._redo = []
 
@@ -67,20 +64,19 @@ class LagunaManager:
     def load_file(self, path, gf=""):
         with open(path, "rb") as f:
             raw = f.read()
-        self.load_bytes(raw, gf or gf_from_file_name(path))
+        self.load_bytes(raw, gf or gf_from_file_name(path), name=ntpath.basename(path))
         self.file_path = path
 
-    def load_bytes(self, raw, gf=""):
-        if len(raw) < 0x30:
-            raise ValueError("file too small for a mag header")
-        root = struct.unpack_from("<I", raw, 4)[0]
-        if not (0x30 <= root < len(raw)):
-            raise ValueError(f"root program offset 0x{root:X} is outside the file: not a cinematic GF mag file")
+    def load_bytes(self, raw, gf="", name=""):
         self.data = bytearray(raw)
         self.original = bytes(raw)
         self._undo.clear()
         self._redo.clear()
         self.gf = gf
+        self.name = name
+        match = re.match(r"mag(\d{3})(?:_|[.-])", name, re.IGNORECASE)
+        self.effect_id = int(match[1])+1 if match else None
+        self.table = CineOpcodeTable.for_effect(self.effect_id)
         self.file_path = ""
         self.analyse()
 
@@ -100,29 +96,45 @@ class LagunaManager:
     # ------------------------------------------------------------------ analysis
     @property
     def header(self):
-        return struct.unpack_from(f"<{self.HEADER_FIELDS}I", self.data, 0)
+        return self.document.header
 
     @property
     def root(self):
-        return self.header[1]
+        return self.document.root
 
     @property
     def script_end(self):
-        """End of the script region: header +0x10 (the next section) when it is past the root."""
-        end = self.header[4]
-        return end if self.root < end <= len(self.data) else len(self.data)
+        """The next mapped section boundary, which may be a camera before the sound table."""
+        return self.document.script.end if self.document.script else 0
 
     def analyse(self):
-        self.program = CineProgram(bytes(self.data), self.root, self.table)
+        self.document = MagFile(self.data, getattr(self, "name", ""))
+        self.program = (CineProgram(bytes(self.data[:self.script_end]), self.root, self.table)
+                        if self.document.script else None)
+        if self.program is not None and self.gf not in CINEMATIC_GFS:
+            # A stub in the Ifrit-family table can be a real handler in another effect.
+            # Stop at it rather than guessing a length or claiming the game would hang.
+            for instruction in self.program.instructions.values():
+                if instruction.error and instruction.opcode and not instruction.opcode.valid:
+                    instruction.error = f"Opcode 0x{instruction.code:X}: this effect's variant is not decoded"
+            self.program.errors = [(offset, self.program.instructions[offset].error
+                                    if offset in self.program.instructions else message)
+                                   for offset, message in self.program.errors]
 
     def simulate(self, seed=0, target_count=1, max_ticks=3000):
-        return CineSimulation(bytes(self.data), self.root, max_ticks=max_ticks,
+        if self.program is None:
+            raise ValueError("This file has no validated cinematic script")
+        if self.effect_id is not None and self.effect_id not in {effect for effect, _file in CINEMATIC_GFS.values()}:
+            raise ValueError("Playback is verified only for the seven supported GF summons; this effect remains editable")
+        return CineSimulation(bytes(self.data[:self.script_end]), self.root, max_ticks=max_ticks,
                               target_count=target_count, table=self.table, seed=seed)
 
     def unreached_ranges(self):
         """Byte ranges of the script region no reachable instruction covers: particle scripts,
         inline data and dead code (routines nothing references)."""
         covered = bytearray(len(self.data))
+        if self.program is None:
+            return []
         for instruction in self.program.instructions.values():
             covered[instruction.offset:instruction.offset + instruction.length] = b"\1" * instruction.length
         ranges = []
@@ -154,6 +166,8 @@ class LagunaManager:
         """Readable names for every referenced offset: sub_/bone_/loc_/pfx_ + offset."""
         prefix = {"spawn": "bone", "code": "loc", "root": "root"}
         labels = {}
+        if self.program is None:
+            return labels
         for offset, kinds in self.program.entry_kinds.items():
             for kind in ("root", "spawn", "code"):
                 if kind in kinds:
@@ -176,8 +190,10 @@ class LagunaManager:
         opcode = instruction.opcode
         if opcode is None:
             return ""
+        if not opcode.valid and self.gf not in CINEMATIC_GFS:
+            return "Effect-specific variant not decoded. Inspect/edit the original bytes in Sections."
         text = opcode.semantics
-        if opcode.gfs and self.gf and self.gf not in opcode.gfs:
+        if opcode.gfs and self.gf in CINEMATIC_GFS and self.gf not in opcode.gfs:
             text = f"[NOT IMPLEMENTED IN {self.gf.upper()} - hangs the VM] " + text
         return text
 
@@ -191,6 +207,8 @@ class LagunaManager:
     def replace_instruction(self, offset, op, words):
         """Overwrite the instruction at offset with (op, words). It must keep the same length -
         the new encoding's own length rule is checked too, so the stream stays decodable."""
+        if self.program is None or not self.root <= offset < self.script_end:
+            raise ValueError("The offset is outside the cinematic script")
         old = self.instruction_at(offset)
         if old.error and old.opcode is None:
             raise ValueError(f"no instruction at 0x{offset:X}")
@@ -198,6 +216,8 @@ class LagunaManager:
         if len(raw) != old.length:
             raise ValueError(f"the instruction is {old.length} bytes, the new one {len(raw)}: "
                              "edits must keep the length (every jump is relative)")
+        if offset+len(raw) > self.script_end:
+            raise ValueError("The instruction crosses the script boundary")
         probe = bytearray(self.data)
         probe[offset:offset + len(raw)] = raw
         new = decode_instruction(bytes(probe), offset, self.table)
@@ -213,9 +233,32 @@ class LagunaManager:
 
     def patch_word(self, offset, value):
         """Raw 16-bit write (inline data, particle scripts...)."""
+        self.patch_bytes(offset, struct.pack("<H", value & 0xFFFF))
+
+    def patch_bytes(self, offset, raw):
+        """Fixed-size write; refuses out-of-file writes and records one atomic undo step."""
+        raw = bytes(raw)
+        if offset < 0 or offset+len(raw) > len(self.data):
+            raise ValueError("The edit is outside the file")
+        if self.data[offset:offset+len(raw)] == raw:
+            return False
         self._push_undo()
-        struct.pack_into("<H", self.data, offset, value & 0xFFFF)
+        self.data[offset:offset+len(raw)] = raw
         self.analyse()
+        return True
+
+    def replace_section(self, start, raw):
+        section = next((s for s in self.document.sections if s.start == start), None)
+        if section is None or len(raw) != section.size:
+            raise ValueError("A section replacement must keep its exact byte size; offsets are not relocated")
+        return self.patch_bytes(start, raw)
+
+    def set_field(self, field, value):
+        try:
+            raw = struct.pack("<" + field.fmt, value)
+        except struct.error as error:
+            raise ValueError(f"Value does not fit {field.fmt}: {error}") from error
+        return self.patch_bytes(field.offset, raw)
 
     def _push_undo(self):
         self._undo.append(bytes(self.data))

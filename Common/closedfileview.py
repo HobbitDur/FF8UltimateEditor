@@ -17,11 +17,14 @@ class ClosedFileView(QObject):
 
     def __init__(self, tool: QWidget, bindings):
         QObject.__init__(self, tool)
+        self._tool = tool
         self._bindings = [binding for binding in bindings
                           if not binding.read_only and not getattr(binding, "complementary", False)]
         self.content = QWidget()
         self.content.setLayout(tool.layout())  # re-hosts the layout AND its widgets in the page
-        names = ", ".join(binding.file_name for binding in self._bindings)
+        names = ", ".join(binding.file_name for binding in self._bindings[:5])
+        if len(self._bindings) > 5:
+            names += f" and {len(self._bindings)-5} other files"
         verb = "were" if len(self._bindings) > 1 else "was"
         self.placeholder = QLabel(f"No file loaded - {names} {verb} removed from the opened files.\n"
                                   "Use Import to open one.")
@@ -37,6 +40,20 @@ class ClosedFileView(QObject):
         for binding in self._bindings:
             binding.file_closed.connect(self._on_file_closed)
             binding.file_opened.connect(self._on_file_opened)
+        changed = getattr(tool, "file_bindings_changed", None)
+        if changed is not None:
+            changed.connect(self._add_discovered_bindings)
+
+    def _add_discovered_bindings(self):
+        """Tools such as Laguna can discover additional mod files after construction."""
+        for binding in self._tool.file_bindings():
+            if binding in self._bindings or binding.read_only or getattr(binding, "complementary", False):
+                continue
+            self._bindings.append(binding)
+            binding.file_closed.connect(self._on_file_closed)
+            binding.file_opened.connect(self._on_file_opened)
+        if any(binding.is_loaded for binding in self._bindings):
+            self.stack.setCurrentWidget(self.content)
 
     @property
     def is_blank(self):

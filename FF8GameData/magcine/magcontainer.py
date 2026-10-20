@@ -81,19 +81,21 @@ class CineObject:
 class MagContainer:
     def __init__(self, data: bytes):
         self.data = bytes(data)
-        self.packed = len(self.data) >= 0x30 and _u32(self.data, 0x14) == 0x30 and _u32(self.data, 0x08) > 0x30
         self.header = struct.unpack_from("<12I", self.data, 0) if len(self.data) >= 0x30 else ()
+        h = self.header
+        self.packed = bool(h and h[0] == 0 and h[5] == 0x30
+                           and 0x30 <= h[2] <= h[6] <= h[7] <= len(self.data))
         self.objects = []
         if self.packed:
             self._read_objects()
 
     @property
     def texture_count(self):
-        return (self.header[2] - self.header[5]) // 4
+        return (self.header[2] - self.header[5]) // 4 if self.packed else 0
 
     @property
     def clut_count(self):
-        return (self.header[6] - self.header[2]) // 4
+        return (self.header[6] - self.header[2]) // 4 if self.packed else 0
 
     def texture_entries(self):
         """(global texture id, absolute offset) for the textures stored in this file."""
@@ -110,15 +112,16 @@ class MagContainer:
             return
         count = _u32(self.data, table)
         offsets = []
-        for index in range(min(count, 1024)):
+        for index in range(min(count, 4096, (len(self.data)-table-4)//4)):
             relative = _u32(self.data, table + 4 + 4 * index)
-            if relative:
+            if relative and table + relative < len(self.data):
                 offsets.append((index, table + relative))
         ends = sorted({offset for _i, offset in offsets} | {len(self.data)})
         for index, offset in offsets:
             end = next(e for e in ends if e > offset)
-            obj = CineObject(index, offset, self._classify(offset), end - offset)
+            obj = CineObject(index, offset, "unknown", end - offset)
             try:
+                obj.kind = self._classify(offset)
                 if obj.kind == "mesh":
                     obj.mesh = self._parse_mesh(offset)
                 elif obj.kind == "model":

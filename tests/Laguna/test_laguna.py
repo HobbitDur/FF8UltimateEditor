@@ -208,7 +208,7 @@ def test_open_folder_brings_every_gf_file():
     widget = LagunaWidget(file_registry=registry)
     folder = PROJECT_ROOT / "extracted_files"
     found = FileToolbarWidget.scan_folder(str(folder), {b.file_name for b in widget.file_bindings()})
-    assert len(found) == 169  # 7 x (.00 + .01) + 155 streamed parts
+    assert len(found) == 790  # all MAG families, including the original 169 GF parts
     for name in ("MAG200_B.00", "MAG200_B.01") + tuple(n for n in found if n.startswith("mag200_b.")):
         registry.open_file(name, found[name])
     from PyQt6.QtWidgets import QApplication
