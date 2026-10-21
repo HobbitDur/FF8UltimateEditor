@@ -1,5 +1,5 @@
 """Resizing an effect camera: keyframes and slots added or removed, longer scripts. A resized track
-no longer fits the exe (.hext) and says so; it still exports as an FFNx .cam file."""
+no longer fits the exe (.hext) and says so; it still exports as an FFNx .bcam file."""
 import struct
 import sys
 
@@ -97,14 +97,14 @@ def test_resize_in_the_editor_warns_and_exports(qapp, tmp_path, monkeypatch):
     widget = editor._collection_widget
     widget._rebuild(insert_keyframe, 0, 0, 0, 0)
     assert not track.fits_exe and editor._collection_widget is not widget
-    assert not editor.size_warning.isHidden() and ".cam" in editor.size_warning.text()
+    assert not editor.size_warning.isHidden() and ".bcam" in editor.size_warning.text()
     assert "exe" in editor.size_warning.text() and "PR" not in editor.size_warning.text()
-    assert editor.effect_list.currentItem().text().endswith("(.cam only)")
+    assert editor.effect_list.currentItem().text().endswith("(.bcam only)")
     assert editor.preview.track is track
 
-    # The .hext has nothing for it, the .cam has it all
-    assert not editor.save_hext(str(tmp_path / "camera.hext")) and "Export .cam" in messages[-1]
-    path = tmp_path / "effect_035.cam"
+    # The .hext has nothing for it, the .bcam has it all
+    assert not editor.save_hext(str(tmp_path / "camera.hext")) and "Export .bcam" in messages[-1]
+    path = tmp_path / "effect_035.bcam"
     assert editor.export_cam(str(path)) and path.read_bytes() == track.to_bytes()
     assert cam_track_error(path.read_bytes()) is None
 
@@ -112,6 +112,6 @@ def test_resize_in_the_editor_warns_and_exports(qapp, tmp_path, monkeypatch):
     editor._reset_selected()
     assert track.fits_exe and editor.size_warning.isHidden()
     editor.script_editor.setPlainText(editor.script_editor.toPlainText() + "\nplay(1)\nend_clear()")
-    assert editor.apply_script_button.isEnabled() and ".cam" in editor.script_size_label.text()
+    assert editor.apply_script_button.isEnabled() and ".bcam" in editor.script_size_label.text()
     editor._apply_script()
     assert not track.fits_exe and not editor.size_warning.isHidden()

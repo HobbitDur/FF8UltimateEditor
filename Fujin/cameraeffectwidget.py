@@ -13,7 +13,7 @@ from SmallWidget.listsearchbar import ListSearchBar
 from Watts.cameracollectionwidget import CameraCollectionWidget
 
 HEXT_FOLDER_KEY = "camera effect .hext"
-CAM_FOLDER_KEY = "camera effect .cam"
+CAM_FOLDER_KEY = "camera effect .bcam"
 
 _NO_TRACK_TEXT = {
     "file": "This effect uses a file camera: its camera data or commands are stored in a loaded "
@@ -66,9 +66,9 @@ class CameraEffectEditorWidget(QWidget):
         self.reset_button = QPushButton("Reset to the exe values")
         self.reset_button.setToolTip("Undo every change made to this effect's camera track")
         self.reset_button.clicked.connect(self._reset_selected)
-        self.export_cam_button = QPushButton("Export .cam…")
+        self.export_cam_button = QPushButton("Export .bcam…")
         self.export_cam_button.setToolTip(
-            "Save this effect's camera track (with its edits) as an FFNx camera file, effect_NNN.cam.\n"
+            "Save this effect's camera track (with its edits) as an FFNx camera file, effect_NNN.bcam.\n"
             f"FFNx plays it instead of the exe's from the game folder's {CAM_FFNX_FOLDER}/ - works with\n"
             "every exe language, and needs no .hext.")
         self.export_cam_button.clicked.connect(lambda: self.export_cam())
@@ -79,7 +79,7 @@ class CameraEffectEditorWidget(QWidget):
         info_buttons.addWidget(self.export_cam_button)
         info_buttons.addStretch(1)
         info_row.addLayout(info_buttons)
-        # A track that changed size no longer fits the exe: only a .cam file can use it
+        # A track that changed size no longer fits the exe: only a .bcam file can use it
         self.size_warning = QLabel()
         self.size_warning.setWordWrap(True)
         self.size_warning.setStyleSheet("color: #c77800; font-size: small;")
@@ -125,7 +125,7 @@ class CameraEffectEditorWidget(QWidget):
                                       "keyframe animation plays (play / play_var) from the attacker, the "
                                       "target, random values... A shorter script is filled up on Apply "
                                       "(the track keeps its exe size); a longer one makes the track grow: "
-                                      "the vanilla exe cannot use it any more, an FFNx .cam file can.")
+                                      "the vanilla exe cannot use it any more, an FFNx .bcam file can.")
         self.script_editor.textChanged.connect(self._update_script_size)
         self.apply_script_button = QPushButton("Apply script")
         self.apply_script_button.clicked.connect(self._apply_script)
@@ -208,7 +208,7 @@ class CameraEffectEditorWidget(QWidget):
         if len(resized) == len(self.manager.modified_tracks()):
             QMessageBox.information(self, "Camera effect editor",
                                     "Every changed camera track was resized: the exe has no room for them, so "
-                                    "there is nothing for a .hext. Export each one with Export .cam… (FFNx).")
+                                    "there is nothing for a .hext. Export each one with Export .bcam… (FFNx).")
             return False
         if not path:
             default = os.path.join(self.file_registry.last_folder(HEXT_FOLDER_KEY) or os.getcwd(),
@@ -227,11 +227,11 @@ class CameraEffectEditorWidget(QWidget):
         if resized:
             names = ", ".join(str(track.effect_id) for track in resized)
             self.status_label.setText(self.status_label.text() + f" - left out of the .hext (resized, "
-                                      f"export them as .cam): {names}.")
+                                      f"export them as .bcam): {names}.")
         return True
 
     def export_cam(self, path=None) -> bool:
-        """Write the selected effect's track as an FFNx effect_NNN.cam file."""
+        """Write the selected effect's track as an FFNx effect_NNN.bcam file."""
         effect_id = self._selected_effect()
         track = self.manager.track(effect_id)
         if track is None:
@@ -246,7 +246,7 @@ class CameraEffectEditorWidget(QWidget):
                                    cam_file_name(effect_id))
             path = QFileDialog.getSaveFileName(
                 self, f"Export the camera of effect {effect_id} for FFNx ({CAM_FFNX_FOLDER}/)",
-                default, "FFNx effect camera (*.cam)")[0]
+                default, "FFNx effect camera (*.bcam)")[0]
         if not path:
             return False
         with open(path, "wb") as file:
@@ -280,7 +280,7 @@ class CameraEffectEditorWidget(QWidget):
         suffix = {"track": "", "file": " (file camera)", "none": " (no exe track)"}[
             self.manager.camera_kind(effect_id)]
         if track is not None and not track.fits_exe:
-            suffix = " (.cam only)"
+            suffix = " (.bcam only)"
         return f"{mark}{effect_id:3d} - {self.manager.effect_names.get(effect_id, '')}{suffix}"
 
     def _refresh_item(self, effect_id):
@@ -309,11 +309,11 @@ class CameraEffectEditorWidget(QWidget):
             return
         modified = len(self.manager.modified_tracks())
         resized = len(self.manager.resized_tracks())
-        resized_text = f" ({resized} resized: .cam only)" if resized else ""
+        resized_text = f" ({resized} resized: .bcam only)" if resized else ""
         self.status_label.setText(f"{self.manager.language_name} exe: {len(self.manager.tracks)} camera tracks, "
                                   f"{modified} changed{resized_text}. Save writes a .hext for the "
                                   f"{self.manager.language_name} exe only (the addresses differ between "
-                                  "languages); Export .cam… writes one effect for FFNx, any language.")
+                                  "languages); Export .bcam… writes one effect for FFNx, any language.")
 
     def _show_selected(self, *_args):
         effect_id = self._selected_effect()
@@ -357,8 +357,8 @@ class CameraEffectEditorWidget(QWidget):
             f"Pushed by the effect's code at 0x{track.push_operand - 1:X}.{same_text}")
         self.size_warning.setText(
             f"⚠ This camera is now {track.current_size} bytes, its room in the exe is {track.size}: "
-            "the vanilla exe cannot use it, so it is left out of the .hext. Export it with Export .cam… - "
-            "FFNx plays .cam files of any size.")
+            "the vanilla exe cannot use it, so it is left out of the .hext. Export it with Export .bcam… - "
+            "FFNx plays .bcam files of any size.")
         self.size_warning.setVisible(not track.fits_exe)
 
     def _set_editors_enabled(self, enabled):
@@ -404,7 +404,7 @@ class CameraEffectEditorWidget(QWidget):
         self.script_size_label.setStyleSheet("color: #c77800;" if longer else "")
         if longer:
             text = (f"{size} / {track.script_room} bytes: {size - track.script_room} more than the exe has - "
-                    "the track grows, only an FFNx .cam file can use it")
+                    "the track grows, only an FFNx .bcam file can use it")
         elif size < track.script_room:
             text = f"{size} / {track.script_room} bytes (Apply fills the {track.script_room - size} left)"
         else:

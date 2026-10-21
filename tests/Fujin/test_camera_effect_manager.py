@@ -82,7 +82,7 @@ def test_longer_script_grows_the_track_out_of_the_exe(fresh_manager):
     assert track.fits_exe
     fresh_manager.set_script_code(track, fresh_manager.script_code(track) + "\nend()")
     assert track.modified and not track.fits_exe and track.current_size > track.size
-    assert cam_track_error(track.to_bytes()) is None          # a .cam can use it
+    assert cam_track_error(track.to_bytes()) is None          # a .bcam can use it
     assert fresh_manager.resized_tracks() == [track]
     hext = fresh_manager.hext_text()                           # the exe cannot: listed, no bytes
     assert "Effect 35 Life: resized" in hext and " = " not in hext

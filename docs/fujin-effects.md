@@ -57,11 +57,11 @@ of looking for a dedicated `mag068` model.
 
 **Save** writes modified MAG files to imported paths. Executable edits request one export
 folder: `effects_EN.hext` (or the loaded language) combines camera/native data differences.
-Resized tracks write `direct/battle/effect_camera/effect_NNN.cam` under that folder. The
+Resized tracks write `direct/exe/effect_NNN.bcam` under that folder. The
 executable is never overwritten. Patches are cumulative against the loaded executable;
 successful export clears unsaved state without losing that baseline. Failed/canceled saves
 retain unsaved state. Reimport a saved effect Hext over the matching executable to continue;
-all lines are validated before applying, including resource ownership. Structural `.cam`
+all lines are validated before applying, including resource ownership. Structural `.bcam`
 reimport is not implemented. Reverting a resized camera removes that session's old export
 when saving to the same folder, provided it was not changed externally.
 

@@ -61,6 +61,6 @@ def test_script_apply_grows_a_longer_script(fujin):
     assert editor.script_size_label.text() == f"{room} / {room} bytes"
     editor.script_editor.setPlainText(editor.script_editor.toPlainText() + "\nend()")
     assert "1 more than the exe has" in editor.script_size_label.text()
-    assert editor.apply_script_button.isEnabled()              # a .cam can take it
+    assert editor.apply_script_button.isEnabled()              # a .bcam can take it
     editor._apply_script()
     assert track.modified and not track.fits_exe and not editor.size_warning.isHidden()

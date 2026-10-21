@@ -14,7 +14,7 @@ from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Fujin.cameraeffectpreview import MODEL_FOLDER_KEY, MODEL_PATTERNS, MODEL_SELECTION_KEY
 from Fujin.cameraeffectwidget import CameraEffectEditorWidget
-from Fujin.cameraeffectmanager import cam_file_name, CAM_FFNX_FOLDER
+from Fujin.cameraeffectmanager import cam_file_name, CAM_EXTENSION, CAM_FFNX_FOLDER
 from Fujin.effectcatalog import EffectCatalog, EffectResource
 from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
@@ -289,7 +289,7 @@ class FujinWidget(QWidget):
         self.camera_sources.setTabVisible(1, (exe is None and not parameters) or self.mag_camera.sources.count() > 0)
         self.camera_sources.setTabVisible(2, parameters)
         if exe is not None:
-            self.camera_note.setText("Executable track. Keyframes and script export as Hext; resized tracks export as FFNx .cam files.")
+            self.camera_note.setText("Executable track. Keyframes and script export as Hext; resized tracks export as FFNx .bcam files.")
         elif parameters:
             self.camera_note.setText("Procedural camera. Six verified native constants expose Carbuncle's orbit and opening position. "
                                     "Import the English exe to edit them; Save exports Hext. Other camera logic remains compiled code.")
@@ -470,7 +470,7 @@ class FujinWidget(QWidget):
             self._exported_signature = self._native_signature()
             for path in stale:
                 self._owned_cam_exports.pop(path, None)
-            self._owned_cam_exports.update({p: hashlib.sha256(data).digest() for p, data in outputs.items() if p.suffix == ".cam"})
+            self._owned_cam_exports.update({p: hashlib.sha256(data).digest() for p, data in outputs.items() if p.suffix == CAM_EXTENSION})
         self._refresh()
         return True
 

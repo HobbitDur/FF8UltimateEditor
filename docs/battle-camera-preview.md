@@ -96,15 +96,15 @@ C3 1C-22 use it modulo 2-8). The line under the inputs names the chosen animatio
 runs it again; a slot's **▶ Preview** plays that slot as is. Keyframe edits replay at once
 from the same tick.
 
-**Export .cam…** saves the selected effect's track, edits included, as `effect_NNN.cam` for
-FFNx (`direct/battle/effect_camera/` in the game folder): FFNx plays it instead of the exe's
+**Export .bcam…** saves the selected effect's track, edits included, as `effect_NNN.bcam` for
+FFNx (`direct/exe/` in the game folder): FFNx plays it instead of the exe's
 track, with no .hext and in every exe language. The file is checked with FFNx's own rules first.
 
 A camera can also change size: **+** / **−** in front of a keyframe duplicates or removes it,
 **Clear slot** / **Add camera** empty or fill an animation slot, and a script longer than the
 exe's is applied. Such a track no longer fits the exe: a small warning says so, the list marks
-it *(.cam only)*, the .hext leaves it out, and **Export .cam…** saves it for FFNx, which plays
-.cam files of any size.
+it *(.bcam only)*, the .hext leaves it out, and **Export .bcam…** saves it for FFNx, which plays
+.bcam files of any size.
 
 ### File cameras: Disease Breath (effect 231)
 

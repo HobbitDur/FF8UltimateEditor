@@ -193,7 +193,7 @@ def test_resized_camera_export_and_revert_cleanup(workspace, tmp_path):
     editor.manager.set_script_code(track, editor.manager.script_code(track)+"\nend()")
     assert not track.fits_exe and workspace.can_save_folder()
     assert workspace.save_files(tmp_path)
-    cam = tmp_path / "direct/battle/effect_camera/effect_035.cam"
+    cam = tmp_path / "direct/exe/effect_035.bcam"
     assert cam.read_bytes() == track.to_bytes()
     assert not workspace.can_save_folder()
     editor.manager.reset_track(35)

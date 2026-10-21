@@ -1,4 +1,4 @@
-"""Fujin's .cam export: one effect's camera track as the FFNx effect_NNN.cam file
+"""Fujin's .bcam export: one effect's camera track as the FFNx effect_NNN.bcam file
 (FFNx docs/ff8/mods/effect_camera.md)."""
 import struct
 import sys
@@ -21,7 +21,7 @@ def minimal_track():
 
 
 def test_cam_name_and_ffnx_checks():
-    assert cam_file_name(1) == "effect_001.cam" and cam_file_name(345) == "effect_345.cam"
+    assert cam_file_name(1) == "effect_001.bcam" and cam_file_name(345) == "effect_345.bcam"
     track = minimal_track()
     assert cam_track_error(track) is None
     assert cam_track_error(b"") == "file too small"
@@ -74,7 +74,7 @@ def test_export_button_writes_the_selected_effect(qapp, tmp_path):
     path = tmp_path / cam_file_name(LIFE)
     assert editor.export_cam(str(path))
     assert path.read_bytes() == editor.manager.cam_bytes(editor.manager.track(LIFE))
-    assert fujin.file_registry.last_folder("camera effect .cam") == str(tmp_path)
+    assert fujin.file_registry.last_folder("camera effect .bcam") == str(tmp_path)
     editor.select_effect(PHOENIX_DOWN)                       # no camera track to export
     assert not editor.export_cam_button.isEnabled()
     assert not editor.export_cam(str(tmp_path / cam_file_name(PHOENIX_DOWN)))

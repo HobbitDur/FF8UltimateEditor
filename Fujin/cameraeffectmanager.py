@@ -23,11 +23,11 @@ shorter; the same keyframe layout) goes into the exe as a .hext that FFNx applie
 game; the .hext only fits the language of the exe it was made from, so it says which one it is for.
 The exe has no free room after a track, so a track that grew (a longer script, keyframes or
 animations added) - or shrank - no longer fits it: the header is rebuilt from the parts, and the
-track can only be used as a .cam file.
+track can only be used as a .bcam file.
 
-One effect's track exported as a .cam file is the track bytes as the exe stores them: FFNx loads
-<direct_mode_path>/battle/effect_camera/effect_NNN.cam instead of the exe's track, with no size
-limit (FFNx docs/ff8/mods/effect_camera.md). Tracks are the same in every language, so a .cam
+One effect's track exported as a .bcam file is the track bytes as the exe stores them: FFNx loads
+<direct_mode_path>/exe/effect_NNN.bcam instead of the exe's track, with no size
+limit (FFNx docs/ff8/mods/effect_camera.md). Tracks are the same in every language, so a .bcam
 works with every exe.
 """
 import json
@@ -49,7 +49,8 @@ SCRIPT_OFFSET = 8
 HEXT_BYTES_PER_LINE = 16
 CAM_POINTER_COUNT = 2           # every track: script + keyframe collection
 CAM_MAX_SIZE = 0xFFFF           # the header size field is a u16
-CAM_FFNX_FOLDER = "direct/battle/effect_camera"  # where FFNx reads them, in the game folder
+CAM_FFNX_FOLDER = "direct/exe"  # where FFNx reads them, in the game folder
+CAM_EXTENSION = ".bcam"  # not .cam: that is already the FF8 movie camera format
 
 # exe.json "lang" value keys -> offset key prefix (None = English), like the other exe readers
 _EXE_LANGUAGES = {"english_value": None, "french_value": "fr", "italian_value": "it",
@@ -143,7 +144,7 @@ class CameraTrack:
 
     @property
     def fits_exe(self) -> bool:
-        """Still the exe's size and layout: it can go into the exe (.hext). Otherwise only a .cam can use it."""
+        """Still the exe's size and layout: it can go into the exe (.hext). Otherwise only a .bcam can use it."""
         return self.current_size == self.size
 
     @property
@@ -187,12 +188,12 @@ class CameraTrack:
 
 
 def cam_file_name(effect_id: int) -> str:
-    """The name FFNx looks for: effect_NNN.cam, NNN = the effect id (1 = Cure)."""
-    return f"effect_{effect_id:03d}.cam"
+    """The name FFNx looks for: effect_NNN.bcam, NNN = the effect id (1 = Cure)."""
+    return f"effect_{effect_id:03d}{CAM_EXTENSION}"
 
 
 def cam_track_error(data: bytes):
-    """Why FFNx would ignore this .cam file, or None when it loads it. The same checks as
+    """Why FFNx would ignore this .bcam file, or None when it loads it. The same checks as
     ff8_effect_camera_is_valid (FFNx src/ff8/battle/effect_camera.cpp)."""
     if not 0 < len(data) <= CAM_MAX_SIZE:
         return "file too big" if data else "file too small"
@@ -315,20 +316,20 @@ class CameraEffectManager:
         """Replace the script from code. A shorter script is filled up to its exe length after its
         last command (an end() for an odd byte, then nop(0)s), which never runs since the script
         stops before, so the track still fits the exe. A longer one makes the track grow: it no
-        longer fits the exe, only a .cam file can use it. Returns the filler size."""
+        longer fits the exe, only a .bcam file can use it. Returns the filler size."""
         script = bytes(code_to_sequence(self.vm, code))
         filler = max(0, track.script_room - len(script))
         track.script = script + b"\x01" * (filler % 2) + b"\x09\x00" * (filler // 2)
         return filler
 
     def resized_tracks(self) -> list:
-        """The edited tracks whose size changed: they no longer fit the exe (.cam only)."""
+        """The edited tracks whose size changed: they no longer fit the exe (.bcam only)."""
         return [track for track in self.modified_tracks() if not track.fits_exe]
 
-    # ------------------------------------------------------------------ .cam (FFNx)
+    # ------------------------------------------------------------------ .bcam (FFNx)
     @staticmethod
     def cam_bytes(track: CameraTrack) -> bytes:
-        """The track as it is now (edits included), as an FFNx effect_NNN.cam file."""
+        """The track as it is now (edits included), as an FFNx effect_NNN.bcam file."""
         data = track.to_bytes()
         error = cam_track_error(data)
         if error is not None:
@@ -338,13 +339,13 @@ class CameraEffectManager:
     # ------------------------------------------------------------------ hext
     def hext_text(self) -> str:
         """The .hext of every edited track that still fits the exe (FFNx applies it to the running
-        game). A resized track cannot go into the exe: it is only listed, for its .cam file."""
+        game). A resized track cannot go into the exe: it is only listed, for its .bcam file."""
         lines = [f"#Fujin camera effect patch for the {self.language_name} FF8 exe - "
                  "addresses differ in the other languages, do not use it with them.",
                  f"+{IMAGE_BASE:X}", ""]
         for track in self.resized_tracks():
             lines.append(f"#Effect {track.effect_id} {track.name}: resized to {track.current_size} bytes "
-                         f"(exe room {track.size}), not in this patch - use its effect_{track.effect_id:03d}.cam")
+                         f"(exe room {track.size}), not in this patch - use its effect_{track.effect_id:03d}.bcam")
         if self.resized_tracks():
             lines.append("")
         for track in self.modified_tracks():

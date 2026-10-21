@@ -68,7 +68,7 @@ MEMBER_COMMENTS = [
     ("FF8EffectPackedMAGHeader", "end_of_tables", "End of initial tables / runtime RAM boundary. Do not treat as the complete file size."),
     ("FF8EffectCameraTrackHeader", "script_offset", "Camera bytecode begins at track-relative +8. This VM is distinct from the 16-bit cinematic VM."),
     ("FF8EffectCameraTrackHeader", "keyframe_collection_offset", "Track-relative offset to the set/slot/block/keyframe collection; follows camera script and alignment padding."),
-    ("FF8EffectCameraTrackHeader", "byte_size", "Complete track size. The same relocatable format appears in exe data, packed MAG files and FFNx .cam files."),
+    ("FF8EffectCameraTrackHeader", "byte_size", "Complete track size. The same relocatable format appears in exe data, packed MAG files and FFNx .bcam files."),
     ("FF8EffectModelDirectory", "skeleton_offset", "Container-relative offset. Skeleton header is 16 bytes: u8 bone count, u8 extra flag, signed scales at +8/+A/+C, followed by 48-byte bone records."),
     ("FF8EffectModelDirectory", "animation_offset", "Container-relative u32 animation count plus relative offsets to bit-packed skeletal clips. Distinct from cinematic choreography."),
     ("FF8EffectTIMHeader", "flags", "PSX TIM depth in low bits, bit 3 = CLUT present. Walk complete block lengths; a file may concatenate more TIMs (Carbuncle mag277.tim body image begins at 172064)."),
@@ -171,7 +171,7 @@ def build_plan(exe_path=None):
         raw = exe.offset(address)
         count, script, keyframes, size = struct.unpack_from("<4H", exe.data, raw)
         add(address, f"Effect {track['effect_id']} ({track['name']}): normal static camera track in exe data. Header: count={count}, script=+0x{script:X}, keyframe collection=+0x{keyframes:X}, total {size} bytes.\n"
-            "Same relocatable camera format as the tracks embedded in MAG files and FFNx .cam files. A same-byte sibling at another address remains independent. Hext must use this executable's language-specific address; a resized track requires FFNx .cam export.",
+            "Same relocatable camera format as the tracks embedded in MAG files and FFNx .bcam files. A same-byte sibling at another address remains independent. Hext must use this executable's language-specific address; a resized track requires FFNx .bcam export.",
             track["label"], type_name="FF8EffectCameraTrackHeader", size=size)
 
     for key, fact in facts.items():
