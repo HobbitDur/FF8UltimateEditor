@@ -40,6 +40,11 @@ class EffectCatalog:
         self.native = json.loads((folder / "effect_resources.json").read_text(encoding="utf-8"))
         self.facts = json.loads((folder / "effect_runtime.json").read_text(encoding="utf-8"))["effects"]
         self.files = json.loads((folder / "mag_file_catalog.json").read_text(encoding="utf-8"))["files"]
+        # effect id -> catalog file names of its mag family, sorted (built once: resources() is
+        # asked for every effect, and matching the whole catalog each time made that slow)
+        self._families = {}
+        for name in sorted(set(self.files), key=str.lower):
+            self._families.setdefault(filename_effect(name), []).append(name)
 
     def effect_ids(self):
         return sorted({int(k) for k in self.dump} | {i for i in self.names if i > 0})
@@ -80,8 +85,10 @@ class EffectCatalog:
             name = entry["name"]
             result[name.lower()] = EffectResource(name.lower(), name, "File", "Verified runtime resource",
                                                   entry.get("kind", "file"), entry.get("note", ""))
-        for name in sorted(set(self.files) | set(extra_names), key=str.lower):
-            if filename_effect(name) == effect and name.lower() not in result:
+        family = self._families.get(effect, [])
+        extra = [name for name in extra_names if filename_effect(name) == effect]
+        for name in sorted(set(family) | set(extra), key=str.lower):
+            if name.lower() not in result:
                 result[name.lower()] = EffectResource(name.lower(), name, "File", "Filename family only",
                                                       note="Association is a discovery hint; loading by this effect is not proven.")
         for entry in self.native["resources"]:

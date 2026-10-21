@@ -152,8 +152,10 @@ class BattlePreviewSetup(QWidget):
             slot_row.addWidget(QLabel(label))
             slot_row.addWidget(spin)
         options.addLayout(slot_row)
+        # The label on its own line: beside the three spins it was cut off in a narrow panel
+        self.position_label = QLabel('Opponent position:')
+        options.addWidget(self.position_label)
         position_row = QHBoxLayout()
-        position_row.addWidget(QLabel('Opponent position:'))
         self.position = []
         for axis, default in zip('XYZ', (0, 0, 5000 if is_monster else -5000)):
             position_row.addWidget(QLabel(axis))
@@ -167,7 +169,6 @@ class BattlePreviewSetup(QWidget):
             position_row.addWidget(spin)
             self.position.append(spin)
         options.addLayout(position_row)
-        self.position_label = position_row.itemAt(0).widget()
         initial_row = QHBoxLayout()
         initial_row.addWidget(QLabel('Starting view:'))
         self.initial_view = QComboBox()
@@ -185,6 +186,7 @@ class BattlePreviewSetup(QWidget):
         options.addLayout(import_row)
         self.status = QLabel('Opponent model not loaded. Manual placement.')
         self.status.setWordWrap(True)
+        self.status.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)  # never clipped
         options.addWidget(self.status)
         if host_cast:
             for host_row in (party_row, role_row, slot_row, import_row):

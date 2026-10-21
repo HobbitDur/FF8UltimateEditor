@@ -59,9 +59,10 @@ class FujinWidget(QWidget):
         self.camera_editor.exe_binding.file_closed.connect(self._close_native)
 
         self.effect_list = QListWidget()
-        self.effect_list.setMinimumWidth(225)
+        self.effect_list.setMinimumWidth(260)
         self.effect_list.currentRowChanged.connect(self._selection_changed)
-        self.effect_search = ListSearchBar.wrap(self.effect_list)
+        self.effect_search = ListSearchBar.wrap(self.effect_list,
+                                                placeholder="Search: name, user, camera, MAG, unused (Ctrl+F)")
         self.title = QLabel()
         self.title.setStyleSheet("font-size: 15pt; font-weight: bold")
         self.context = QLabel()
@@ -139,6 +140,7 @@ class FujinWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(splitter)
         self._fill_effects()
+        self._update_effect_rows(refresh=False)
         self.effect_list.setCurrentRow(0)
         self.kernel_binding.load_opened_file()
         self.camera_editor.exe_binding.load_opened_file()
@@ -192,30 +194,56 @@ class FujinWidget(QWidget):
         except Exception as error:  # noqa: BLE001 - a kernel.bin it cannot read gives no users
             self.effect_users = {}
             QMessageBox.warning(self, "Fujin", f"Cannot read the effect users from {os.path.basename(path)}:\n{error}")
-        self._update_effect_users()
+        self._update_effect_rows()
 
     def _close_kernel(self, *_args):
         self.effect_users = {}
-        self._update_effect_users()
+        self._update_effect_rows()
 
     def users(self, effect):
         """The kernel.bin entries playing an effect ([] without a kernel.bin)."""
         return self.effect_users.get(effect, [])
 
-    def _update_effect_users(self):
-        """Tooltip and search words of every effect row, then the Overview."""
+    def effect_tags(self, effect):
+        """What an effect has, in a few words (shown in its tooltip; the search finds them too)."""
+        tags = []
+        if self.catalog.camera_entry(effect) is not None:
+            tags.append("exe camera track")
+        if effect in self.catalog.camera["file_camera_effects"]:
+            tags.append("MAG camera / cinematic")
+        resources = self.catalog.resources(effect)
+        if any(resource.source == "File" for resource in resources):
+            tags.append("MAG files")
+        if any(resource.source == "Executable" for resource in resources):
+            tags.append("editable exe values")
+        if self.catalog.info(effect).get("free"):
+            tags.append("unused slot")
+        return tags
+
+    def _update_effect_rows(self, refresh=True):
+        """Tooltip and search words of every effect row: full name, tags, users; then the Overview."""
+        if not hasattr(self, "_tags"):
+            self._tags = {effect: self.effect_tags(effect) for effect in self.catalog.effect_ids()}
         for row in range(self.effect_list.count()):
             item = self.effect_list.item(row)
-            users = self.users(item.data(Qt.ItemDataRole.UserRole))
-            item.setData(SEARCH_TEXT_ROLE, " ".join(user.name for user in users))
+            effect = item.data(Qt.ItemDataRole.UserRole)
+            users, tags = self.users(effect), self._tags.get(effect, [])
+            item.setData(SEARCH_TEXT_ROLE, " ".join(tags + [user.name for user in users]))
+            lines = [f"{effect:03d} — {self.catalog.name(effect)}"]
+            if tags:
+                lines.append("Has: " + ", ".join(tags))
             labels = [user.label() for user in users]
             if labels:
                 more = f" and {len(labels) - 12} more" if len(labels) > 12 else ""
-                item.setToolTip("Used by: " + ", ".join(labels[:12]) + more)
+                lines.append("Used by: " + ", ".join(labels[:12]) + more)
+            elif self.effect_users:
+                lines.append("No kernel.bin entry plays this effect")
             else:
-                item.setToolTip("No kernel.bin entry plays this effect" if self.effect_users else "")
+                lines.append("Used by: open kernel.bin (header's Import complementary)")
+            item.setToolTip("\n".join(lines))
         self.effect_search.search()
-        self._refresh_summary()
+        if refresh:
+            self._refresh_summary()
 
     def _users_html(self, effect):
         esc = lambda value: html.escape(str(value))
@@ -364,8 +392,8 @@ class FujinWidget(QWidget):
             view.set_resources(selected)
         self.title.setText(f"{effect:03d} — {self.catalog.name(effect)}")
         loaded = sum(self.resolve(r) is not None for r in resources)
-        self.context.setText(f"{self.catalog.runtime(effect)} · {loaded} / {len(resources)} resources imported. "
-                             "Views share editable bytes. Save destinations appear in Pending changes.")
+        self.context.setText(f"{self.catalog.runtime(effect)} · {loaded} of {len(resources)} files imported"
+                             + (" · unsaved changes: see Pending changes" if self.can_save_folder() else ""))
         self._refresh_camera()
         self._refresh_choreography()
         self._refresh_summary()
@@ -378,22 +406,31 @@ class FujinWidget(QWidget):
         self.camera_sources.setTabVisible(0, exe is not None)
         self.camera_sources.setTabVisible(1, (exe is None and not parameters) or self.mag_camera.sources.count() > 0)
         self.camera_sources.setTabVisible(2, parameters)
+        mag_tracks = self.mag_camera.sources.count() > 0
+        file_camera = effect in self.catalog.camera["file_camera_effects"]
+        # No track anywhere: say so instead of showing an empty editor and an empty 3D view
+        self.camera_sources.setVisible(exe is not None or parameters or mag_tracks or file_camera)
         if exe is not None:
-            self.camera_note.setText("Executable track. Keyframes and script export as Hext; resized tracks export as FFNx .bcam files.")
+            self.camera_note.setText("Camera track stored in the exe. Save writes your changes as a .hext patch; "
+                                     "a track that grew is saved as an FFNx .bcam file instead.")
         elif parameters:
-            self.camera_note.setText("Procedural camera. Six verified native constants expose Carbuncle's orbit and opening position. "
-                                    "Import the English exe to edit them; Save exports Hext. Other camera logic remains compiled code.")
+            self.camera_note.setText("The game code computes this camera. Six of its numbers can be edited below "
+                                     "(opening position, orbit radius and step); Save writes them as a .hext patch. "
+                                     "The rest of the camera motion is compiled code.")
             self.camera_sources.setCurrentIndex(2)
-        elif self.mag_camera.sources.count():
-            self.camera_note.setText("Embedded MAG camera track. Edits share the section in Files / sections and save into its MAG file.")
+        elif mag_tracks:
+            self.camera_note.setText("Camera track inside the effect's MAG file. Save writes it back into that file "
+                                     "(the same bytes as in Files / sections).")
             self.camera_sources.setCurrentIndex(1)
-        elif effect in self.catalog.camera["file_camera_effects"]:
-            self.camera_note.setText("This effect can use cinematic camera commands or a MAG track. Import its files to locate embedded tracks. "
-                                    "Bone-driven camera motion is edited in Choreography.")
+        elif file_camera:
+            self.camera_note.setText("This effect's camera comes from its MAG files (a camera track or cinematic camera "
+                                     "commands). Import them with the header's Import (Effect files) to edit it; camera "
+                                     "moves driven by the cinematic script are in Choreography.")
         else:
-            self.camera_note.setText("No static track is cataloged. Camera motion can be procedural or inherited from the action. "
-                                    "Inspect Native code in Choreography; absence of a track does not mean a stationary camera. "
-                                    + self.catalog.notes(effect))
+            self.camera_note.setText("<b>This effect plays no camera track of its own.</b> It never starts the battle "
+                                     "camera player, so the camera of the action (or the stage camera) stays while it "
+                                     "plays, as for Phoenix Down and Mega Phoenix. Its game code can still move the "
+                                     "camera: see Choreography, Native code. " + html.escape(self.catalog.notes(effect)))
 
     def _refresh_choreography(self):
         candidates = [(key, m) for key, m in self.mag_editor.managers.items()
@@ -433,17 +470,18 @@ class FujinWidget(QWidget):
             if view.isVisible() and view._pending:
                 view.activate()
         if self.tabs.currentIndex() == 1:
-            source = self.camera_sources.currentWidget()
-            self.camera_editor.preview.setVisible(source is self.camera_editor or source is self.mag_camera)
+            source = None if self.camera_sources.isHidden() else self.camera_sources.currentWidget()
+            track = None
             if source is self.camera_editor:
-                self.camera_editor.preview.set_track(self.camera_editor.manager.track(self.current_effect))
+                track = self.camera_editor.manager.track(self.current_effect)
             elif source is self.mag_camera:
                 page = self.mag_camera.sections.currentWidget()
                 from Fujin.magsectionwidget import MagSectionEditor
                 editor = page.findChild(MagSectionEditor) if page else None
-                self.camera_editor.preview.set_track(getattr(editor, "camera_track", None))
-            else:
-                self.camera_editor.preview.set_track(None)
+                track = getattr(editor, "camera_track", None)
+            self.camera_editor.preview.set_track(track)
+            # The 3D preview only when there is a camera to play (no empty view beside a note)
+            self.camera_editor.preview.setVisible(track is not None or source is self.camera_editor)
 
     def _refresh_summary(self):
         if self.current_effect is None:
@@ -453,24 +491,29 @@ class FujinWidget(QWidget):
         rows = []
         for resource in getattr(self, "resources", []):
             manager = self.resolve(resource)
-            availability = ("Loaded: " + manager.document.format if manager else
-                self.native.unavailable.get(resource.key, "Import executable" if resource.source == "Executable" else "Not imported"))
+            availability = ("Imported (" + manager.document.format + ")" if manager else
+                self.native.unavailable.get(resource.key, "Import the exe" if resource.source == "Executable"
+                                            else "Not imported: header's Import (Effect files)"))
             rows.append("<tr>" + "".join(f"<td>{esc(value)}</td>" for value in (
                 resource.name, resource.source, resource.evidence, availability)) + "</tr>")
         aliases = self.catalog.aliases(effect)
         self.overview.setHtml(
             f"<h2>{effect:03d} — {esc(self.catalog.name(effect))}</h2>"
-            f"<p><b>Runtime:</b> {esc(self.catalog.runtime(effect))}<br>"
-            f"<b>Initializer (EN):</b> {esc(info.get('logic_name', 'Unresolved'))} {esc(info.get('logic_addr', ''))}<br>"
-            f"<b>Loader (EN):</b> {esc(info.get('fl_name', 'Unresolved'))} {esc(info.get('fl_addr', ''))}</p>"
+            f"<p><b>How it runs:</b> {esc(self.catalog.runtime(effect))}<br>"
+            f"<b>Start function (EN exe):</b> {esc(info.get('logic_name', 'not found'))} {esc(info.get('logic_addr', ''))}<br>"
+            f"<b>File loader (EN exe):</b> {esc(info.get('fl_name', 'not found'))} {esc(info.get('fl_addr', ''))}</p>"
             f"<p>{esc(self.catalog.notes(effect))}</p>"
             + self._users_html(effect)
-            + (f"<p>Same initializer: {esc(', '.join(str(i) for i in aliases))}. Resource ownership is listed separately.</p>" if aliases else "")
-            + ("<p>This slot is unused in the audited dispatch table.</p>" if info.get("free") else "")
-            + "<table border='1' cellspacing='0' cellpadding='6'><tr><th>Resource</th><th>Source</th><th>Evidence</th><th>Availability</th></tr>"
-            + "".join(rows) + "</table><p>Filename-family matches are discovery hints. Loader string extraction is partial; "
-              "missing references do not prove an effect is unused. Decoded sections expose named fields; "
-              "other sections retain bounded byte editing. Native choreography remains read-only.</p>")
+            + (f"<p>Effects {esc(', '.join(str(i) for i in aliases))} run the same game code; each one still has "
+               "its own files below.</p>" if aliases else "")
+            + ("<p><b>Unused slot:</b> the game's effect table points to no effect here.</p>" if info.get("free") else "")
+            + "<h3>Files</h3><table border='1' cellspacing='0' cellpadding='6'><tr><th>File</th><th>Stored in</th>"
+              "<th>How it is linked</th><th>Status</th></tr>"
+            + "".join(rows) + "</table><p style='color:gray'>How it is linked: <i>Verified runtime resource</i> = "
+              "seen in use; <i>Loader reference</i> = named by the effect's file loader; <i>Filename family only</i> = "
+              "its name carries the effect's number, a hint, not a proof. A file missing here can still be used. "
+              "Files with decoded sections show named fields, the others their bytes; the game code "
+              "(Choreography, Native code) is read-only.</p>")
         pending = []
         for manager in self.mag_editor.managers.values():
             if manager.modified:
@@ -483,9 +526,11 @@ class FujinWidget(QWidget):
                 pending.append(f"<li>{esc(key)}: effects_EN.hext (native data)</li>")
         unsaved = self.can_save_folder()
         self.changes.setHtml(f"<h2>{'Unsaved changes' if unsaved else 'All changes saved'}</h2>"
-            "<p>MAG edits write to imported files. Executable edits export together into a selected folder. "
-            "Patches contain cumulative differences from the loaded executable; the executable itself is unchanged.</p>"
-            + ("<ul>" + "".join(pending) + "</ul>" if pending else "<p>No modified resources.</p>"))
+            "<p>Save (header toolbar or Ctrl+S) writes MAG edits into the imported files. Exe edits (camera tracks, "
+            "native values) go to a folder you choose: one .hext patch holding every change made to the loaded exe, "
+            "and an FFNx .bcam file for each camera track that grew. The exe itself is never modified.</p>"
+            + ("<p><b>What Save writes:</b></p><ul>" + "".join(pending) + "</ul>" if pending
+               else "<p>Nothing is changed.</p>"))
         state = getattr(self, "dirty_state", None)
         if state is not None:
             (state.mark if unsaved else state.clear)()

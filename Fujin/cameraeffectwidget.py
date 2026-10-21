@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWid
                              QMessageBox, QFileDialog)
 
 from Common.filebinding import FileBinding
+from FF8GameData.dat.camerascript import animation_index_parts
 from Fujin.cameraeffectmanager import CAM_FFNX_FOLDER, CameraEffectManager, cam_file_name
 from Fujin.cameraeffectpreview import CameraEffectPreview
 from SmallWidget.listsearchbar import ListSearchBar
@@ -51,6 +52,7 @@ class CameraEffectEditorWidget(QWidget):
         self.setProperty("read_only_preview", True)
         self._collection_widget = None
         self.preview = CameraEffectPreview(self.manager, file_registry)
+        self.preview.animation_chosen.connect(self._show_chosen_slot)
 
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
@@ -379,6 +381,16 @@ class CameraEffectEditorWidget(QWidget):
         widget.preview_requested.connect(self.preview.preview_animation)
         self._collection_widget = widget
         self.keyframe_scroll.setWidget(widget)
+
+    def _show_chosen_slot(self, chosen):
+        """Unfold and mark, in the keyframes, the animation the camera script plays."""
+        if self._collection_widget is None:
+            return
+        if chosen is None:
+            self._collection_widget.highlight_slot(None, None)
+        else:
+            set_index, slot = animation_index_parts(chosen)
+            self._collection_widget.highlight_slot(set_index, slot)
 
     def _set_script_texts(self, code, description):
         self.script_editor.blockSignals(True)

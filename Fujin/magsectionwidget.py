@@ -97,6 +97,11 @@ class MagSectionEditor(QWidget):
         if manager.document.format == "PlayStation TIM":
             self._texture_view()
         self._bytes_view()
+        # Show the picture first, when there is one: the header fields are rarely what one looks for
+        picture = next((index for index in range(self.views.count())
+                        if self.views.tabText(index).startswith("Texture preview")), None)
+        if picture is not None:
+            self.views.setCurrentIndex(picture)
         layout.addWidget(self.views, 1)
         layout.addWidget(self.error)
 

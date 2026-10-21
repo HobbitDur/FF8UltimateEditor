@@ -97,7 +97,8 @@ monster's Magic, -1 for none), target status (C3 16), target camera category (C3
 target monster's byte 246), affected targets, action count and the random value (C3 11;
 C3 1C-22 use it modulo 2-8). The line under the inputs names the chosen animation index
 (set = index >> 4, slot = index & 7) and the values the script read. **▶ Play effect camera**
-runs it again; a slot's **▶ Preview** plays that slot as is. Keyframe edits replay at once
+runs it again; a slot's **▶ Preview** plays that slot as is. The Keyframes tab unfolds the slot
+the script plays and marks it "played by the script". Keyframe edits replay at once
 from the same tick.
 
 **Export .bcam…** saves the selected effect's track, edits included, as `effect_NNN.bcam` for

@@ -222,7 +222,7 @@ class MagDocumentWidget(QWidget):
 
         # instruction editor
         self.editor_group = QGroupBox("Instruction")
-        self.editor_title = QLabel("")
+        self.editor_title = QLabel("Select an instruction in the list to see what it does and edit its values.")
         self.editor_title.setWordWrap(True)
         self.editor_doc = QLabel("")
         self.editor_doc.setWordWrap(True)
@@ -683,9 +683,14 @@ class MagDocumentWidget(QWidget):
         self._fill_opcode_profile()
         self.tabs.setTabEnabled(1, manager.program is not None)
         self.tabs.setTabEnabled(2, gf in CINEMATIC_GFS)
+        self.tabs.setTabToolTip(2, "" if gf in CINEMATIC_GFS else
+                                "3D playback replays the GF summons' cinematic files only; this file's "
+                                "script and sections are still editable in the other tabs.")
         self.tabs.setTabEnabled(3, doc.format == "Packed MAG")
         if not self.tabs.isTabEnabled(self.tabs.currentIndex()):
-            self.tabs.setCurrentIndex(0)
+            # the first tab still usable (a host such as Fujin hides some of them)
+            self.tabs.setCurrentIndex(next((index for index in range(self.tabs.count())
+                                            if self.tabs.isTabEnabled(index) and self.tabs.isTabVisible(index)), 0))
         if manager.program is not None:
             self._refresh_program()
             self._run_simulation()
@@ -832,7 +837,10 @@ class MagDocumentWidget(QWidget):
                 self.listing.setItem(row, column, item)
         for column in range(4):
             self.listing.resizeColumnToContents(column)
-        self.listing.setColumnWidth(3, min(self.listing.columnWidth(3), 420))
+        # Long byte runs and instructions would push Meaning out of view: cap them (a column can
+        # still be widened by hand)
+        self.listing.setColumnWidth(2, min(self.listing.columnWidth(2), 190))
+        self.listing.setColumnWidth(3, min(self.listing.columnWidth(3), 300))
         self.listing.setUpdatesEnabled(True)
 
     def _on_block_clicked(self, item, _column):

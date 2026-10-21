@@ -79,6 +79,7 @@ class CameraEffectPreview(QWidget):
     """
 
     models_changed = pyqtSignal()
+    animation_chosen = pyqtSignal(object)   # the animation index the script chose (None: none)
 
     def __init__(self, camera_manager, file_registry, parent=None):
         QWidget.__init__(self, parent)
@@ -594,9 +595,20 @@ class CameraEffectPreview(QWidget):
         self.last_run = run
         animation = camera_animation_at(self.track.collection, run.chosen) if run.chosen is not None else None
         self._show_run(run, animation)
+        self.animation_chosen.emit(run.chosen)
         return run, animation
 
+    # The script inputs by the names the form gives them (the VM's own names are for research)
+    _INPUT_NAMES = {0x00: "Opening shot", 0x10: "a script shot already playing", 0x11: "Random value",
+                    0x13: "party members alive", 0x15: "Target camera category", 0x16: "Target status",
+                    0x17: "Action count - 1", 0x18: "attacker slot", 0x19: "target slot",
+                    0x1A: "Affected targets", 0x1B: "party members with no status"}
+
     def _input_name(self, parameter):
+        if parameter in self._INPUT_NAMES:
+            return self._INPUT_NAMES[parameter]
+        if 0x1C <= parameter <= 0x22:
+            return f"Random value mod {parameter - 0x1A}"
         for entry in self.camera_manager.vm.data_json.get("special_change_current_value_params", []):
             param_id = entry["param_id"]
             if (int(param_id, 16) if isinstance(param_id, str) else param_id) == parameter:

@@ -3,7 +3,7 @@ from pathlib import Path
 import struct
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QLabel
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QLabel, QSizePolicy
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -46,6 +46,8 @@ class EncounterPicker(QWidget):
         layout.addLayout(row)
         self.status = QLabel('Open scene.out to use encounter placement.')
         self.status.setWordWrap(True)
+        # A wrapped line keeps all its lines: the 3D view above gives up the height instead
+        self.status.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
         layout.addWidget(self.status)
         self.encounter.currentIndexChanged.connect(self._picked)
         self.enemy_slot.currentIndexChanged.connect(lambda _i: self.changed.emit())

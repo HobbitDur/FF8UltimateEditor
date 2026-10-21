@@ -6,6 +6,8 @@ from PyQt6.QtWidgets import QApplication
 
 EXE = "extracted_files/FF8_EN.exe"
 LIFE = 35
+CURE, PHOENIX_DOWN = 1, 5
+TIM = "extracted_files/magic/mag000-049.tim"
 
 
 @pytest.fixture(scope="module")
@@ -93,3 +95,48 @@ def test_script_apply_grows_a_longer_script(fujin):
     assert editor.apply_script_button.isEnabled()              # a .bcam can take it
     editor._apply_script()
     assert track.modified and not track.fits_exe and not editor.size_warning.isHidden()
+
+
+def test_effect_rows_tell_what_each_effect_has(fujin):
+    assert "exe camera track" in fujin.effect_tags(LIFE)
+    fujin.select_effect(LIFE)
+    tooltip = fujin.effect_list.currentItem().toolTip()
+    assert tooltip.startswith("035") and "Has: exe camera track" in tooltip and "open kernel.bin" in tooltip
+    fujin.effect_search.search_field.setText("unused slot")      # tags are searchable
+    shown = [fujin.effect_list.item(row).data(256) for row in range(fujin.effect_list.count())
+             if not fujin.effect_list.item(row).isHidden()]
+    assert shown and all(fujin.catalog.info(effect).get("free") for effect in shown)
+    fujin.effect_search.clear_search()
+
+
+def test_an_effect_without_camera_says_so(fujin):
+    fujin.tabs.setCurrentIndex(1)
+    fujin.select_effect(PHOENIX_DOWN)
+    assert fujin.camera_sources.isHidden() and fujin.camera_editor.preview.isHidden()
+    assert "plays no camera track" in fujin.camera_note.text()
+    fujin.select_effect(LIFE)
+    assert not fujin.camera_sources.isHidden() and not fujin.camera_editor.preview.isHidden()
+
+
+@pytest.mark.ff8data(EXE)
+def test_the_chosen_animation_is_marked_in_the_keyframes(fujin):
+    editor = fujin.camera_editor
+    editor.exe_binding.open_path(EXE)
+    fujin.tabs.setCurrentIndex(1)
+    fujin.select_effect(LIFE)
+    widget = editor._collection_widget
+    assert editor.preview.last_run.chosen == 23                  # set 1, slot 7 with the default inputs
+    assert widget._highlighted == (1, 7) and 1 in widget.expanded_set_indices()
+    assert "played by the script" in widget._slot_groups[(1, 7)].title()
+    assert "Opening shot = " in editor.preview.result_label.text()   # the form's names, not the VM's
+
+
+@pytest.mark.ff8data(TIM)
+def test_textures_open_on_the_picture(fujin):
+    from Fujin.magsectionwidget import MagSectionEditor
+    fujin.import_paths([TIM])
+    fujin.select_effect(CURE)
+    fujin.tabs.setCurrentIndex(4)
+    fujin.textures.activate()
+    editor = fujin.textures.sections.currentWidget().findChild(MagSectionEditor)
+    assert editor.views.tabText(editor.views.currentIndex()).startswith("Texture preview")

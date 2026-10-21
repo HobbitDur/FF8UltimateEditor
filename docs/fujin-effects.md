@@ -14,7 +14,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   battle items, command abilities and limit breaks, each with its index in its kernel section.
   Open kernel.bin with the header's **Import complementary** (it is shared, so a kernel.bin
   opened in SolomonRing works too). The effect list then shows them as a tooltip, and its
-  search also finds an effect by a user's name ("Phoenix Pinion" finds 001 Cure). The fields
+  search also finds an effect by a user's name ("Phoenix Pinion" finds 001 Cure) or by what it
+  has ("exe camera track", "MAG files", "editable exe values", "unused slot": also listed in
+  each row's tooltip). An effect with no camera track says so in the Camera tab. The fields
   read are every "Attack animation" field of `kernel_section_fields.json`
   (`Fujin/effectusers.py`).
 - **Camera:** executable tracks, embedded MAG tracks, and verified native parameters. MAG and

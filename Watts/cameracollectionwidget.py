@@ -13,10 +13,10 @@ structure_edits: keyframes can then be duplicated or removed and slots filled or
 edits rebuild the collection bytes (FF8GameData.dat.cameracollection) and hand them over with
 collection_rebuilt; the host swaps its collection and builds a new widget.
 """
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import QPoint, pyqtSignal, Qt
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
                              QPushButton, QSpinBox, QGroupBox, QSizePolicy,
-                             QGraphicsOpacityEffect, QMessageBox)
+                             QGraphicsOpacityEffect, QMessageBox, QScrollArea)
 
 from FF8GameData.dat.cameracollection import (build_default_animation, clear_slot, insert_keyframe,
                                               remove_keyframe, set_slot_animation)
@@ -119,6 +119,8 @@ class CameraCollectionWidget(QWidget):
         self._structure_edits = structure_edits
         set_notes = set_notes or {}
         self._set_boxes = {}  # set index -> _CollapsibleBox, for enabling/greying out
+        self._slot_groups = {}  # (set index, slot) -> its QGroupBox, once its set is unfolded
+        self._highlighted = None  # (set index, slot) marked by highlight_slot
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         for camera_set in collection.sets:
@@ -140,6 +142,35 @@ class CameraCollectionWidget(QWidget):
                 self._set_boxes[index]._toggle.setChecked(True)
                 self._set_boxes[index]._on_toggle(True)
 
+    def highlight_slot(self, set_index, slot, note="played by the script"):
+        """Mark one slot (unfolding its set and scrolling to it), e.g. the animation a camera script
+        chose; None clears the mark."""
+        previous = self._slot_groups.get(self._highlighted)
+        if previous is not None:
+            previous.setTitle(previous.property("plain_title"))
+            previous.setStyleSheet("")
+        self._highlighted = (set_index, slot) if set_index is not None else None
+        box = self._set_boxes.get(set_index)
+        if box is None:
+            return
+        if not box._toggle.isChecked():
+            box._toggle.setChecked(True)
+            box._on_toggle(True)
+        group = self._slot_groups.get(self._highlighted)
+        if group is None:
+            return
+        group.setTitle(f"{group.property('plain_title')}  ◀ {note}")
+        group.setStyleSheet("QGroupBox { border: 2px solid #3d7bd9; border-radius: 4px; margin-top: 8px; }"
+                            "QGroupBox::title { color: #3d7bd9; font-weight: bold; }")
+        scroll = self.parentWidget()
+        while scroll is not None and not isinstance(scroll, QScrollArea):
+            scroll = scroll.parentWidget()
+        if scroll is not None and scroll.widget() is not None:
+            # vertically only: ensureWidgetVisible also scrolled sideways, hiding the left columns
+            scroll.widget().layout().activate()
+            top = group.mapTo(scroll.widget(), QPoint(0, 0)).y()
+            scroll.verticalScrollBar().setValue(max(0, top - 40))
+
     def expanded_set_indices(self):
         """The sets currently unfolded (to unfold them again in a rebuilt widget)."""
         return [index for index, box in self._set_boxes.items() if box._toggle.isChecked()]
@@ -159,6 +190,8 @@ class CameraCollectionWidget(QWidget):
                     continue
                 frames = sum(len(block.frames) for block in animation.blocks)
                 slot_group = QGroupBox(f"Slot {animation.slot} - {frames} keyframes")
+                slot_group.setProperty("plain_title", slot_group.title())
+                self._slot_groups[(camera_set.index, animation.slot)] = slot_group
                 slot_layout = QVBoxLayout()
                 if self._structure_edits:
                     clear_button = QPushButton("Clear slot")
@@ -285,7 +318,10 @@ class CameraCollectionWidget(QWidget):
         spin = _NoWheelSpinBox()
         spin.setRange(field.minimum, field.maximum)
         spin.setValue(field.get())
-        spin.setFixedWidth(70)
+        # Wide enough for the longest value of its range next to the arrows (a fixed 70 px left
+        # two digits visible with the Windows 11 style)
+        widest = max(len(str(field.minimum)), len(str(field.maximum)))
+        spin.setFixedWidth(spin.fontMetrics().horizontalAdvance("8" * widest) + 64)
         spin.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         spin.valueChanged.connect(lambda value, f=field: self._on_field_changed(f, value))
         return spin

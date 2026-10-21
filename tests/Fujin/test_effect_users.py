@@ -42,7 +42,7 @@ def test_overview_tooltip_and_search_show_the_users(qapp):
     text = fujin.overview.toPlainText()
     assert "Used by" in text and "Phoenix Pinion" in text and "Open kernel.bin" not in text
     item = fujin.effect_list.currentItem()
-    assert item.toolTip().startswith("Used by: Cure (Magic 21)")
+    assert "Used by: Cure (Magic 21)" in item.toolTip() and item.toolTip().startswith("001")
 
     fujin.effect_search.search_field.setText("phoenix pinion")    # found by a user, not its name
     visible = [fujin.effect_list.item(row).data(256) for row in range(fujin.effect_list.count())
