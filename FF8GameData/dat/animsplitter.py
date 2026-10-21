@@ -25,8 +25,8 @@ reads the frame count as a byte.)
 import copy
 
 from . import interpolation
-from .sequencecommand import (read_sequence_command_list, get_jump_target, is_jump,
-                              is_jump_int16)
+from .sequencecommand import read_sequence_command_list, get_jump_target
+from .sequencerelink import insert_and_fix_jump, SequenceRelinkError
 
 MAX_ANIMATION_FRAME = 255       # frame count is one byte
 # Under Slow status the engine plays every frame twice and computes the frame count as
@@ -37,8 +37,6 @@ MAX_ANIMATION_FRAME = 255       # frame count is one byte
 # (Battle_QueueAnimation @0x509520), so a loopable animation must stay under this.
 MAX_SLOW_SAFE_ANIMATION_FRAME = 128
 MAX_ANIMATION_ID = 0x7F         # a bare op code IS the animation id, so it stops at 0x7F
-_INT8_RANGE = (-128, 127)
-_INT16_RANGE = (-32768, 32767)
 
 
 def get_max_frame_for_animation(can_be_slowed: bool, max_frame: int = MAX_ANIMATION_FRAME,
@@ -186,7 +184,7 @@ def rewrite_sequence_list_for_split(game_data, seq_animation_data: dict, anim_id
                 insertion_dict[address + 1] = bytes(new_id_list)
         if not insertion_dict:
             continue
-        sequence['data'] = bytearray(_insert_and_fix_jump(data, command_list, insertion_dict))
+        sequence['data'] = bytearray(_insert_and_fix_jump(game_data, data, insertion_dict))
         nb_rewritten += len(insertion_dict)
     return nb_rewritten
 
@@ -231,46 +229,14 @@ def split_and_convert_animation(game_data, animation_section, seq_animation_data
             'nb_rewritten': nb_rewritten}
 
 
-def _new_address(old_address: int, insertion_dict: dict) -> int:
-    """Address of an op code once the bytes have been inserted."""
-    return old_address + sum(len(inserted) for offset, inserted in insertion_dict.items()
-                             if offset <= old_address)
-
-
-def _insert_and_fix_jump(data: bytes, command_list: list, insertion_dict: dict) -> bytearray:
+def _insert_and_fix_jump(game_data, data: bytes, insertion_dict: dict) -> bytearray:
     """Insert bytes in a sequence and recompute every relative jump offset.
 
-    insertion_dict maps an offset in the ORIGINAL data to the bytes to insert before it.
+    insertion_dict maps an offset in the ORIGINAL data to the bytes to insert before it. The
+    relinking itself lives in sequencerelink (shared with the 30 fps sequence rewriter); a
+    jump that no longer fits its size is refused here, as before, rather than promoted.
     """
-    new_data = bytearray()
-    jump_fix_list = []  # (offset of the parameter in new_data, op code, new offset value)
-
-    for address, op_code, parameters in command_list:
-        if address in insertion_dict:
-            new_data.extend(insertion_dict[address])
-        target = get_jump_target(address, op_code, parameters)
-        new_data.append(op_code)
-        if target is not None:
-            new_offset = _new_address(target, insertion_dict) - _new_address(address, insertion_dict)
-            jump_fix_list.append((len(new_data), op_code, new_offset))
-            size = 2 if is_jump_int16(op_code) else 1
-            new_data.extend(bytes(size))  # placeholder, written below
-        elif parameters:
-            new_data.extend(parameters)
-    # bytes inserted at the very end of the sequence
-    end_offset = len(data)
-    if end_offset in insertion_dict:
-        new_data.extend(insertion_dict[end_offset])
-
-    for offset, op_code, new_offset in jump_fix_list:
-        if is_jump_int16(op_code):
-            low, high = _INT16_RANGE
-            size = 2
-        else:
-            low, high = _INT8_RANGE
-            size = 1
-        if not low <= new_offset <= high:
-            raise ValueError(f"jump offset {new_offset} does not fit in {size} byte(s) after "
-                             f"the split")
-        new_data[offset:offset + size] = new_offset.to_bytes(size, byteorder="little", signed=True)
-    return new_data
+    try:
+        return insert_and_fix_jump(game_data, data, insertion_dict, promote_jump=False)
+    except SequenceRelinkError as error:
+        raise ValueError(f"{error} after the split") from error
