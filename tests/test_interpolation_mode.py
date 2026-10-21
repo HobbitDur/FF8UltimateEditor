@@ -200,7 +200,7 @@ def test_the_original_frames_survive_the_conversion_untouched(mode):
     anim, bones = _straight_line_animation()
     anim.create_interpolated_frames(bones, factor, smooth_loop=False, mode=mode)
 
-    assert len(anim.frames) == (len(original) - 1) * factor + 1
+    assert len(anim.frames) == len(original) * factor
     for source_index, expected in enumerate(original):
         frame = anim.frames[source_index * factor]
         assert (frame.position[2].get_pos_raw(),
@@ -213,7 +213,21 @@ def test_every_mode_produces_the_same_frame_count(mode):
     animation's duration for the engine (one frame per tick)."""
     anim, bones = _straight_line_animation()
     anim.create_interpolated_frames(bones, 4, smooth_loop=False, mode=mode)
-    assert len(anim.frames) == 17
+    assert len(anim.frames) == 20
+
+
+def test_a_one_shot_animation_holds_its_last_pose_for_the_whole_tick():
+    """n frames last n ticks, the last one included: the converted one-shot animation ends on
+    (factor - 1) copies of its last pose, so it lasts factor * n frames at factor times the rate."""
+    source, _ = _straight_line_animation()
+    last = (source.frames[-1].position[2].get_pos_raw(),
+            int(source.frames[-1].rotation_vector_data[1][2].get_rotate_raw()))
+    anim, bones = _straight_line_animation()
+    anim.create_interpolated_frames(bones, 2, smooth_loop=False)
+    assert len(anim.frames) == len(source.frames) * 2
+    for frame in anim.frames[-2:]:
+        assert (frame.position[2].get_pos_raw(),
+                int(frame.rotation_vector_data[1][2].get_rotate_raw())) == last
 
 
 def test_hold_leaves_the_inserted_frames_on_the_pose_before_them():
@@ -256,7 +270,7 @@ def test_spline_eases_out_of_the_ends_of_a_one_shot_animation():
     straight. That is deliberate - the animation does start and stop there."""
     linear_frames, spline_frames = _converted_pair(interpolation.LINEAR, interpolation.SPLINE)
     first_inserted = 1
-    last_inserted = len(linear_frames) - 2
+    last_inserted = len(linear_frames) - 4 - 1  # before the 3 frames holding the last pose
     assert (spline_frames[first_inserted].position[2].get_pos_raw()
             < linear_frames[first_inserted].position[2].get_pos_raw())
     assert (spline_frames[last_inserted].position[2].get_pos_raw()

@@ -342,7 +342,7 @@ def test_the_original_frames_survive_whatever_the_settings():
                  interpolation.InterpolationMode(interpolation.SMOOTH, {"bias": -1.0})):
         anim, bones = _straight_line_animation()
         anim.create_interpolated_frames(bones, 4, smooth_loop=False, mode=mode)
-        assert len(anim.frames) == (len(original) - 1) * 4 + 1
+        assert len(anim.frames) == len(original) * 4
         for source_index, value in enumerate(original):
             assert anim.frames[source_index * 4].position[2].get_pos_raw() == value
 

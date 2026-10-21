@@ -78,16 +78,17 @@ class TestPartCount:
 
     def test_an_animation_that_fits_needs_no_part(self):
         assert splitter.get_nb_part_needed(30, 4, True) == 1
-        assert splitter.get_nb_part_needed(64, 4, False) == 1
+        assert splitter.get_nb_part_needed(63, 4, False) == 1  # 252 frames
+        assert splitter.get_nb_part_needed(64, 4, False) == 2  # 256: one over the limit
 
     def test_two_parts_are_enough_for_a_medium_animation(self):
-        # 72 frames one-shot at 60 fps -> 285 frames, over the 255 limit
-        assert splitter.get_converted_frame_count(72, 4, False) == 285
+        # 72 frames one-shot at 60 fps -> 288 frames, over the 255 limit
+        assert splitter.get_converted_frame_count(72, 4, False) == 288
         assert splitter.get_nb_part_needed(72, 4, False) == 2
 
     def test_a_very_long_animation_needs_three_parts(self):
         """Elvoret's animation 27: 140 frames. Half of it is still too long at 60 fps."""
-        assert splitter.get_converted_frame_count(140, 4, False) == 557
+        assert splitter.get_converted_frame_count(140, 4, False) == 560
         assert splitter.get_nb_part_needed(140, 4, False) == 3
 
     def test_every_part_fits_once_converted(self):
@@ -110,9 +111,9 @@ class TestPartBoundary:
         assert splitter.get_part_frame_count_list(255) == [255]
 
     def test_elvoret_at_30fps_is_cut_in_two_without_a_repeated_frame(self):
-        """140 frames one-shot -> 279 converted -> 140 + 139, and 140 + 139 == 279."""
-        assert splitter.get_converted_frame_count(140, 2, False) == 279
-        assert splitter.get_part_frame_count_list(279) == [140, 139]
+        """140 frames one-shot -> 280 converted -> 140 + 140, and 140 + 140 == 280."""
+        assert splitter.get_converted_frame_count(140, 2, False) == 280
+        assert splitter.get_part_frame_count_list(280) == [140, 140]
 
     def test_the_parts_are_balanced(self):
         assert splitter.get_part_frame_count_list(557) == [186, 186, 185]
@@ -234,7 +235,7 @@ class TestRealFile:
         No frame repeated at the cut, no interpolated frame missing: the parts are slices
         of the very stream an unsplit conversion would produce.
         """
-        anim_id, factor = 17, 4  # Jelleye: 72 frames one-shot, 285 frames at 60 fps
+        anim_id, factor = 17, 4  # Jelleye: 72 frames one-shot, 288 frames at 60 fps
         ideal = self._load(game_data, "c0m029.dat")
         ideal.animation_data.animations[anim_id].create_interpolated_frames(
             ideal.bone_data.bones, factor, False)

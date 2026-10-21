@@ -1461,6 +1461,11 @@ class Animation:
         If smooth_loop is True, frames are also inserted between the last and the first
         frame (nice for looping animations like the idle stance, wrong for one-shot
         animations like a death animation).
+        A one-shot animation instead gets its last pose repeated (factor - 1) times, so it
+        ends with factor * n frames like a loop: the engine shows each of the n original
+        frames for one tick, the last one included (the sequence resumes on the tick AFTER
+        it, FF8_EN.exe AnimSeq_UpdateEntityPerFrame @0x504290), so the converted animation
+        must last factor * n ticks to keep its duration and the timing of the sequence.
         wrap_frame is the frame the loop goes back to, when it is not this animation's own
         first frame: a looping animation split in several parts wraps back to the first
         frame of its FIRST part (see FF8GameData/dat/animsplitter.py).
@@ -1477,6 +1482,8 @@ class Animation:
 
             is_last_frame = (frame_index == len(source_frames) - 1)
             if is_last_frame and not smooth_loop:
+                # Hold the last pose for the rest of its tick (see the docstring)
+                new_frames.extend(copy.deepcopy(frame) for _ in range(factor - 1))
                 continue
 
             if is_last_frame:

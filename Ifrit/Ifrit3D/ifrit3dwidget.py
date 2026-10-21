@@ -69,6 +69,7 @@ from FF8GameData.dat.animloopdetector import (is_looping, analyse_animation_usag
                                               get_animation_usage_from_weapon_file,
                                               ANIM_LOOP, ANIM_ONE_SHOT, ANIM_BOTH, ANIM_UNUSED)
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_nb_part_needed,
+                                          get_converted_frame_count,
                                           get_max_frame_for_animation,
                                           MAX_ANIMATION_FRAME, MAX_SLOW_SAFE_ANIMATION_FRAME)
 from Ifrit.ifritmanager import IfritManager
@@ -1618,13 +1619,12 @@ class Ifrit3DWidget(QWidget):
 
     @staticmethod
     def _nb_frames_after_conversion(nb_frames: int, factor: int, smooth_loop: bool) -> int:
-        """Frame count once (factor - 1) frames are inserted between each pair of frames.
+        """Frame count once converted: factor * nb_frames, loop or not.
 
-        A smoothed loop also gets frames inserted between the last and the first one.
+        A smoothed loop gets frames inserted between the last and the first one, a one-shot
+        animation its last pose repeated, so the animation keeps its duration in ticks.
         """
-        if smooth_loop:
-            return nb_frames * factor
-        return (nb_frames - 1) * factor + 1
+        return get_converted_frame_count(nb_frames, factor, smooth_loop)
 
     def _ask_target_fps(self, title: str):
         """Ask the frame rate to convert to AND the curve the inserted frames follow, in one

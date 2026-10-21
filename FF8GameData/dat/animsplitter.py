@@ -57,10 +57,14 @@ def get_max_frame_for_animation(can_be_slowed: bool, max_frame: int = MAX_ANIMAT
 
 
 def get_converted_frame_count(nb_frame: int, factor: int, smooth_loop: bool) -> int:
-    """Frame count once (factor - 1) frames are inserted between each pair of frames."""
-    if smooth_loop:
-        return nb_frame * factor
-    return (nb_frame - 1) * factor + 1
+    """Frame count once converted: factor * nb_frame, loop or not.
+
+    An animation of n frames lasts n ticks (its last frame is shown for a whole tick), so
+    keeping its duration at factor times the tick rate takes factor * n frames. A loop gets
+    frames inserted back to its first frame, a one-shot animation its last pose repeated
+    (Animation.create_interpolated_frames). smooth_loop no longer changes the count.
+    """
+    return nb_frame * factor
 
 
 def get_part_frame_count_list(nb_converted_frame: int, max_frame: int = MAX_ANIMATION_FRAME) -> list:

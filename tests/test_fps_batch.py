@@ -133,8 +133,8 @@ class TestBatchConversion:
         assert report['error'] == ""
         assert report['nb_converted'] > 0
         assert report['skipped_list'] == []
-        # a one-shot animation of n frames becomes 2n-1, a looping one 2n
-        assert after[1] == before[1] * 2 - 1
+        # every animation of n frames becomes 2n (a one-shot one holds its last pose)
+        assert after[1] == before[1] * 2
         assert after[0] == before[0] * 2  # animation 0 is the idle loop
 
     def test_an_animation_too_long_is_split(self, manager, game_data, tmp_path):
@@ -145,7 +145,7 @@ class TestBatchConversion:
         assert (anim_id, nb_frame, nb_part) == (27, 140, 2)
         after = _frame_count_list(game_data, path)
         # the parts add up to the unsplit conversion, without a repeated frame
-        assert after[27] + after[new_id_list[0]] == 140 * 2 - 1
+        assert after[27] + after[new_id_list[0]] == 140 * 2
 
     def test_a_garbage_file_is_reported_not_crashed(self, manager, tmp_path):
         path = _copy(tmp_path, "c0m127.dat")[0]
