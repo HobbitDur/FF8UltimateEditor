@@ -195,6 +195,24 @@ def build_plan(exe_path=None):
                 references=references, type_declarations=TYPE_DECLARATIONS, member_comments=MEMBER_COMMENTS)
 
 
+def add_directory_reference(ref, ida_bytes, ida_xref, data_refs_from):
+    """Anchor references to defined items, including structured directory tails."""
+    source = int(ref["from_address"], 16)
+    target = int(ref["to_address"], 16)
+    if ida_bytes.get_dword(source) != target:
+        raise ValueError("Directory pointer differs at "+ref["from_address"])
+    if ida_bytes.is_unknown(ida_bytes.get_full_flags(source)):
+        if not ida_bytes.create_dword(source, 4):
+            raise ValueError("Could not define directory pointer at "+ref["from_address"])
+    anchor = ida_bytes.get_item_head(source)
+    if not ida_bytes.is_head(ida_bytes.get_full_flags(anchor)):
+        raise ValueError("No defined directory item at "+ref["from_address"])
+    existing = target in data_refs_from(anchor)
+    if not existing and not ida_xref.add_dref(anchor, target, ida_xref.dr_O | ida_xref.XREF_USER):
+        raise ValueError("Could not reference directory handler at "+ref["from_address"])
+    return dict(source=hex(source), anchor=hex(anchor), target=hex(target), existing=existing)
+
+
 def apply_in_ida(plan, backup_folder=None):
     import ida_auto
     import ida_bytes
@@ -205,6 +223,7 @@ def apply_in_ida(plan, backup_folder=None):
     import ida_typeinf
     import ida_xref
     import idc
+    import idautils
     if ida_nalt.retrieve_input_file_sha256().hex().lower() != plan["exe_sha256"]:
         raise ValueError("The current IDB does not match the audited English executable")
     # Complete all byte validation before saving/backing up or changing any annotations.
@@ -258,8 +277,8 @@ def apply_in_ida(plan, backup_folder=None):
             if not idc.SetType(ea, declaration):
                 report["warnings"].append("Could not apply type at "+entry["address"])
         report["changes"].append(dict(address=entry["address"], name=ida_name.get_name(ea), comment_verified=BEGIN in (ida_bytes.get_cmt(ea, False) or "")))
-    for ref in plan["references"]:
-        ida_xref.add_dref(int(ref["from_address"], 16), int(ref["to_address"], 16), ida_xref.dr_O | ida_xref.XREF_USER)
+    report["references"] = [add_directory_reference(ref, ida_bytes, ida_xref, idautils.DataRefsFrom)
+                            for ref in plan["references"]]
     # Member comments are also visible independently of any particular resource instance.
     for type_name, member, comment in plan["member_comments"]:
         tif = ida_typeinf.tinfo_t()

@@ -100,6 +100,11 @@ the backup. A failed save or byte mismatch prevents annotation changes.
 The plan covers 631 addresses: cinematic directories/handlers, native resource and camera
 data, procedural camera operands, runtime/source relationships and Disease Breath's file
 camera. It also defines five format types and adds 96 verified opcode-directory references.
+References inside a directory structure are anchored to its defined item head, as required
+by IDA; the report retains the exact source slot and handler address. Existing references
+are reused. An undefined pointer is defined as a dword before adding a reference, and its
+value is checked first. This avoids IDA's modal `bad call add_dref: no defined item at 'from'`
+warning without splitting a directory structure.
 Generate the plan without IDA to inspect it:
 
 ```powershell
