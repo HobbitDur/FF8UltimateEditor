@@ -23,14 +23,24 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   executable tracks share the battle-context preview and caster/target imports. This previews
   the selected track, not additional procedural writes. Disease Breath (231) has a camera in
   `MAG230_B.00` at `0x870`: 3 blocks, 5 keyframe entries. Bone-driven motion is edited in scripts.
-- **Choreography:** editable MAG instructions using each effect's opcode profile, seven-GF
-  scene playback, and native decompilation read-only.
-- **Models / animation:** file and embedded model sections, skeleton scales and bone
-  parent/length/rotations, animation directories/frame counts, plus bounded byte editing.
-  Compressed skeletal animation authoring is not fully decoded here.
+- **Choreography:** editable MAG instructions using each effect's opcode profile, scene
+  playback (verified for the seven GFs; every other cinematic script replays with the same
+  engine model as a labelled, untextured approximation that names the draw handlers it shows as
+  markers only), and native decompilation read-only.
+- **Models / animation:** a 3D view of every object of the selected file (meshes, morph
+  targets as points, embedded battle models and the standard battle models of indexed
+  containers such as `mag186_b.dat`, which play their own animations). Untextured: texture
+  placement is known for the seven GFs only; sprite lists are listed, not drawn. The byte
+  sections stay editable: skeleton scales and bone parent/length/rotations, animation
+  directories/frame counts. Compressed skeletal animation authoring is not fully decoded here.
 - **Textures / palettes:** complete consecutive TIM images, including Carbuncle's second
   image in `mag277.tim`. Palette words and pixel bytes are editable; this is not an image painter.
-- **Sound:** recognized audio sections and bounded bytes; audio encoding remains undecoded.
+- **Sound:** each sound block `{u32 world sound id, "SCOT", PlayStation data}` resolved to its
+  `audio.dat` entry (PlaySE -> BdPlaySE -> PlayWorldSound reads only the id) and played with
+  the archive opened from the header (Import complementary: audio.fmt, shared with Julia).
+  Music-table blocks and streamed SCOT parts are played as unverified. The header +0x24 bank
+  is controller vibration (left/right motor envelopes), drawn as curves. AKAO banks are not
+  played by the PC build.
 - **Files / sections:** every section, raw editing, export and equal-size replacement.
   **Browse all imported files** exposes MA8 files and unresolved associations.
 - **Pending changes:** destinations across all effects, including edits made before switching.

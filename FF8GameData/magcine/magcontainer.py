@@ -5,7 +5,7 @@ Every packed file starts with the same 0x30-byte header of u32 offsets:
   0x0C object table: u32 count + u32 ofs[count] relative to the table start, 0 = not in this file
   0x10 sound-effect table (.00 only)        0x14 texture table (always 0x30)
   0x18 music-stream table                   0x1C end of the tables (.01: the engine's RAM area)
-  0x20 stage camera track (.00, when used)  0x24 voice bank (.00 only)
+  0x20 stage camera track (.00, when used)  0x24 controller vibration bank (.00 only)
 The cinematic opcode 0x39 sub-op 1 plays the track at file + *(u32*)(file + 0x20).
 For example, effect 231 Disease Breath uses the track at MAG230_B.00 + 0x870.
 Resource tables are GLOBAL-index tables shared by all the GF's files: resource i has an entry only
@@ -40,7 +40,7 @@ PRIM_TEXTURE_FIELDS = {8: ((4, 6, 8), 16, 18), 9: ((12, 14, 16), 24, 26),
 HEADER_FIELDS = [
     (0x04, "script (root program)"), (0x08, "CLUT table"), (0x0C, "object table"),
     (0x10, "sound-effect table"), (0x14, "texture table"), (0x18, "music-stream table"),
-    (0x1C, "end of tables / RAM area"), (0x20, "stage camera animation"), (0x24, "voice bank"),
+    (0x1C, "end of tables / RAM area"), (0x20, "stage camera animation"), (0x24, "controller vibration bank"),
 ]
 
 

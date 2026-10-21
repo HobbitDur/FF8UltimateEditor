@@ -9,9 +9,11 @@ from Fujin.magsectionwidget import MagSectionTabs
 class EffectResourceView(QWidget):
     data_changed = pyqtSignal()
 
-    def __init__(self, mode, resolve):
+    def __init__(self, mode, resolve, panel=None, panel_title=""):
+        """panel: an optional decoded view (set_manager(manager)) shown before the byte sections."""
         super().__init__()
         self.mode, self.resolve = mode, resolve
+        self.panel = panel
         self._pending = True
         self.sources = QComboBox()
         self.sources.setMinimumContentsLength(18)
@@ -44,6 +46,11 @@ class EffectResourceView(QWidget):
             display.addTab(self.parameter_table, "Parameters")
             display.addTab(self.sections, "Operand sections")
             layout.addWidget(display, 1)
+        elif panel is not None:
+            self.display = QTabWidget()
+            self.display.addTab(panel, panel_title)
+            self.display.addTab(self.sections, "Sections (bytes)")
+            layout.addWidget(self.display, 1)
         else:
             layout.addWidget(self.sections, 1)
 
@@ -58,7 +65,7 @@ class EffectResourceView(QWidget):
         kinds = {"camera": {"camera"},
             "models": {"model_header", "skeleton", "geometry", "animation", "model_trailer", "object"},
             "textures": {"texture", "palette", "texture_table", "clut_table", "pixels", "tim_block"},
-            "sound": {"sound", "audio", "voice", "music_table"}}.get(self.mode, set())
+            "sound": {"sound", "audio", "vibration", "music_table"}}.get(self.mode, set())
         return [s for s in sections if s.kind in kinds]
 
     def set_resources(self, resources):
@@ -92,6 +99,8 @@ class EffectResourceView(QWidget):
         self.sections.set_manager(manager, self._sections(resource, manager) if manager else None)
         if self.mode == "parameters":
             self._fill_parameters()
+        if self.panel is not None:
+            self.panel.set_manager(manager)
         self._pending = False
 
     def _fill_parameters(self):

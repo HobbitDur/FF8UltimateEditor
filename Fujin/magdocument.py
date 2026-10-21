@@ -2,7 +2,8 @@
 
 Content detection maps packed cinematics, TIMs, indexed containers, audio and undecoded parts.
 All writes keep the byte size and preserve untouched data. Per-effect profiles describe native
-opcode availability; scene simulation is restricted to the seven verified GF summons.
+opcode availability. Scene simulation is verified for the seven GF summons; other effects' scripts
+replay with the same engine model only when the caller asks for an unverified approximation.
 """
 import ntpath
 import os
@@ -121,10 +122,17 @@ class MagDocument:
                                     if offset in self.program.instructions else message)
                                    for offset, message in self.program.errors]
 
-    def simulate(self, seed=0, target_count=1, max_ticks=3000):
+    @property
+    def playback_verified(self):
+        """The scene simulation was checked against the game for this file (the seven GF summons)."""
+        return self.effect_id is None or self.effect_id in {effect for effect, _file in CINEMATIC_GFS.values()}
+
+    def simulate(self, seed=0, target_count=1, max_ticks=3000, allow_unverified=False):
+        """allow_unverified: replay another effect's script with the GF engine model anyway (every
+        non-GF script of the vanilla corpus runs; its draw handlers are only partly modelled)."""
         if self.program is None:
             raise ValueError("This file has no validated cinematic script")
-        if self.effect_id is not None and self.effect_id not in {effect for effect, _file in CINEMATIC_GFS.values()}:
+        if not self.playback_verified and not allow_unverified:
             raise ValueError("Playback is verified only for the seven supported GF summons; this effect remains editable")
         return CineSimulation(bytes(self.data[:self.script_end]), self.root, max_ticks=max_ticks,
                               target_count=target_count, table=self.table, seed=seed)

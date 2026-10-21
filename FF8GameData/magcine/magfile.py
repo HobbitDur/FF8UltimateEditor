@@ -37,7 +37,7 @@ class MagSection:
 
 HEADER_NAMES = ("Reserved / unknown", "Root script offset", "CLUT table offset", "Object table offset",
                 "Sound table offset", "Texture table offset", "Music table offset", "End of tables / RAM offset",
-                "Stage camera offset", "Voice bank offset", "Reserved / unknown", "Reserved / unknown")
+                "Stage camera offset", "Controller vibration bank offset", "Reserved / unknown", "Reserved / unknown")
 
 
 class MagFile:
@@ -116,10 +116,10 @@ class MagFile:
                             else:
                                 self._mark(target, f"{'Texture' if kind == 'texture_table' else 'Palette'} {i}",
                                            "texture" if kind == "texture_table" else "palette", resource_id=i)
-        for index, name, kind in ((4, "Sound effects", "sound"), (9, "Voice bank", "voice")):
+        for index, name, kind in ((4, "Sound effects", "sound"), (9, "Controller vibration", "vibration")):
             if h[index]:
                 self._mark(h[index], name, kind,
-                           note="Audio bytes and tables; use the field/byte editor or export a block.")
+                           note="Sound effects: {u32 world sound id, SCOT block} per entry. Controller vibration: left/right motor envelopes (not audio). The Sound tab plays / draws them.")
         if h[3] and h[3] + 4 <= len(self.data):
             table = h[3]
             count = self._u32(table)

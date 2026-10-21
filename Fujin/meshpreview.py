@@ -16,22 +16,28 @@ class MeshPreview(QWidget):
         self.mesh = None
         self.yaw, self.pitch, self.zoom = 0.6, -0.4, 1.0
         self.wireframe = False
+        self.bounds = None  # (low xyz, high xyz) framing every frame of an animation, None = this mesh
         self._drag = None
         self.setMinimumSize(300, 300)
 
-    def set_mesh(self, mesh):
+    def set_mesh(self, mesh, keep_view=False):
+        """keep_view: next frame of the same animation (keep the zoom and the framing)."""
         self.mesh = mesh
-        self.zoom = 1.0
+        if not keep_view:
+            self.zoom = 1.0
+            self.bounds = None
         self.update()
 
     def _project(self):
         vertices = self.mesh.vertices
         cy, sy, cp, sp = math.cos(self.yaw), math.sin(self.yaw), math.cos(self.pitch), math.sin(self.pitch)
-        xs = [v[0] for v in vertices] or [0]
-        ys = [v[1] for v in vertices] or [0]
-        zs = [v[2] for v in vertices] or [0]
-        centre = ((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2, (min(zs) + max(zs)) / 2)
-        radius = max(max(xs) - min(xs), max(ys) - min(ys), max(zs) - min(zs), 1) / 2
+        if self.bounds is not None:
+            low, high = self.bounds
+        else:
+            low = [min((v[k] for v in vertices), default=0) for k in range(3)]
+            high = [max((v[k] for v in vertices), default=0) for k in range(3)]
+        centre = tuple((low[k] + high[k]) / 2 for k in range(3))
+        radius = max(max(high[k] - low[k] for k in range(3)), 1) / 2
         scale = min(self.width(), self.height()) * 0.42 / radius * self.zoom
         out = []
         for x, y, z in vertices:

@@ -18,12 +18,17 @@ from FF8GameData.packagepath import RESOURCES_JSON_FOLDER
 from Fujin.timelinewidget import TimelineCanvas, MotionCanvas, CATEGORY_COLORS, TICKS_PER_SECOND
 from Fujin.meshpreview import MeshPreview
 from Fujin.sceneview import SceneView
-from FF8GameData.magcine.cinescene import CineScene
+from FF8GameData.magcine.cinescene import CineScene, unrendered_draw_handlers
 from FF8GameData.magcine.cinevram import CineVram
 from FF8GameData.magcine.magcontainer import MagContainer, PRIM_NAME, HEADER_FIELDS
 
 _KIND_COLORS = {"code": None, "spawn": QColor(15, 157, 88), "particle": QColor(244, 160, 0),
                 "data": QColor(120, 120, 120)}
+
+
+DRAW_HANDLER_NAMES = {0: "draws nothing (helper / camera / sound)", 1: "mesh", 2: "scaled mesh", 3: "the creature",
+                      4: "screen tint", 5: "animated sprite", 6: "particle emitter", 7: "mesh under the camera",
+                      9: "clipped mesh", 21: "texture scroll", 27: "billboard mesh"}
 
 
 class _NoWheelSpinBox(QSpinBox):
@@ -36,7 +41,8 @@ class MagDocumentWidget(QWidget):
 
     Every loaded part has its own byte image and undo history. Known structures expose named
     fields; all sections support bounded byte edits and fixed-size export/replacement. Script
-    disassembly uses effect-specific profiles; scene playback remains limited to verified GFs.
+    disassembly uses effect-specific profiles; scene playback is verified for the seven GF summons and
+    offered for the other cinematic scripts as a labelled, unverified approximation.
     """
 
     file_bindings_changed = pyqtSignal()
@@ -284,6 +290,7 @@ class MagDocumentWidget(QWidget):
         self.target_spin.setToolTip("Number of targets of the summon (per-target spawns and target loops)")
         self.target_spin.valueChanged.connect(lambda _v: self._run_simulation())
         self.sim_label = QLabel("")
+        self.sim_label.setWordWrap(True)
         self.sim_label.setToolTip("The simulation replays the script without the game. It runs by itself when a "
                                   "file is loaded and after every edit; seed and targets re-run it too.")
         settings = QHBoxLayout()
@@ -682,10 +689,10 @@ class MagDocumentWidget(QWidget):
         self.section_tabs.set_manager(manager)
         self._fill_opcode_profile()
         self.tabs.setTabEnabled(1, manager.program is not None)
-        self.tabs.setTabEnabled(2, gf in CINEMATIC_GFS)
-        self.tabs.setTabToolTip(2, "" if gf in CINEMATIC_GFS else
-                                "3D playback replays the GF summons' cinematic files only; this file's "
-                                "script and sections are still editable in the other tabs.")
+        self.tabs.setTabEnabled(2, manager.program is not None)
+        self.tabs.setTabToolTip(2, "" if manager.playback_verified else
+                                "Unverified approximation: the 3D playback is checked against the game for the "
+                                "seven GF summons; this script is replayed with the same engine model.")
         self.tabs.setTabEnabled(3, doc.format == "Packed MAG")
         if not self.tabs.isTabEnabled(self.tabs.currentIndex()):
             # the first tab still usable (a host such as Fujin hides some of them)
@@ -951,19 +958,26 @@ class MagDocumentWidget(QWidget):
         manager = self.manager
         if manager is None or manager.program is None:
             return
-        if self.current_gf not in CINEMATIC_GFS:
-            self.sim_label.setText("Cinematic playback is verified for the seven supported GF summons only. "
-                                   "This effect's script and other sections can be edited in their tabs.")
-            return
         tick = self.tick_slider.value() if keep_tick else 0
-        self._simulation = manager.simulate(seed=self.seed_spin.value(), target_count=self.target_spin.value())
+        verified = manager.playback_verified
+        self._simulation = manager.simulate(seed=self.seed_spin.value(), target_count=self.target_spin.value(),
+                                            allow_unverified=True)
         sim = self._simulation
         end = sim.finished_tick if sim.finished_tick >= 0 else sim.tick
         state = "ends (op 0x01)" if sim.finished_tick >= 0 else "did not end (stopped)"
-        self.sim_label.setText(f"Simulation: {len(sim.bones)} bones, the summon {state} at tick {end} "
-                               f"= {end / TICKS_PER_SECOND:.1f} s"
-                               + (f" - {len(sim.warnings)} warnings (first: {sim.warnings[0][2]} at "
-                                  f"{sim.warnings[0][1]:05X})" if sim.warnings else ""))
+        text = (f"Simulation: {len(sim.bones)} bones, the {'summon' if verified else 'effect'} {state} at tick "
+                f"{end} = {end / TICKS_PER_SECOND:.1f} s"
+                + (f" - {len(sim.warnings)} warnings (first: {sim.warnings[0][2]} at "
+                   f"{sim.warnings[0][1]:05X})" if sim.warnings else ""))
+        if not verified:
+            markers = unrendered_draw_handlers(sim)
+            text = ("<b>UNVERIFIED approximation</b> (playback is checked against the game for the seven GF "
+                    "summons; this script is replayed with the same engine model, untextured). " + text)
+            if markers:
+                text += (". Shown as markers only - draw handlers not modelled: "
+                         + ", ".join(f"{handler} {DRAW_HANDLER_NAMES.get(handler, '(effect-specific)')} "
+                                     f"x{count}" for handler, count in markers.items()))
+        self.sim_label.setText(text)
         self.timeline.set_simulation(sim, self._labels)
         self.motion.set_bone(None, 1)
         vram = CineVram(self.current_gf, self._scene_files(), sim.vram_events)
@@ -1129,9 +1143,7 @@ class MagDocumentWidget(QWidget):
         draw = bone.prop("draw", tick, 0)
         mesh = bone.prop("mesh", tick)
         model = bone.prop("model", tick)
-        what = {0: "draws nothing (helper / camera / sound)", 1: "mesh", 2: "scaled mesh", 3: "the creature",
-                4: "screen tint", 5: "animated sprite", 6: "particle emitter", 7: "mesh under the camera",
-                9: "clipped mesh", 21: "texture scroll", 27: "billboard mesh"}.get(draw, f"draw handler {draw}")
+        what = DRAW_HANDLER_NAMES.get(draw, f"draw handler {draw}")
         if mesh is not None and draw in (1, 2, 7, 9, 27):
             what += f" (object {mesh})"
         if model is not None and draw == 3:

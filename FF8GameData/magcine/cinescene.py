@@ -83,6 +83,23 @@ class CreatureFrame:
     textures: list = None     # per face: ([uv words], CLUT word, tpage word) or None
 
 
+# Draw handlers items() turns into geometry: meshes (1, 2, 7, 9, 27) and the creature (3). The
+# others (sprites, particles, screen effects and the effect-specific handlers set by 0x43/0x44)
+# are drawn as bone markers.
+RENDERED_DRAW_HANDLERS = frozenset((1, 2, 3, 7, 9, 27))
+
+
+def unrendered_draw_handlers(simulation):
+    """{draw handler id: bone count} of the handlers the simulated script uses that the scene
+    shows as markers only."""
+    counts = {}
+    for bone in simulation.bones:
+        for handler in {value for _tick, key, value in bone.props if key == "draw" and value}:
+            if handler not in RENDERED_DRAW_HANDLERS:
+                counts[handler] = counts.get(handler, 0) + 1
+    return dict(sorted(counts.items()))
+
+
 class CineScene:
     def __init__(self, simulation, containers, creature_provider=None, vram=None):
         """containers: MagContainers (the .00 first, then .01 and streamed parts), searched in

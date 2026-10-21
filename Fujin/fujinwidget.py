@@ -20,6 +20,8 @@ from Fujin.effectcatalog import EffectCatalog, EffectResource, filename_effect
 from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
+from Fujin.soundpanel import SoundPanel
+from Fujin.objectview import MagObjectView
 from SmallWidget.listsearchbar import ListSearchBar, SEARCH_TEXT_ROLE
 
 USERS_SHOWN = 24    # entries listed per kind in the Overview's Used by (effect 0 has hundreds)
@@ -105,9 +107,11 @@ class FujinWidget(QWidget):
         native_layout.addWidget(self.native_code, 1)
         self.choreography.addTab(native_page, "Native code")
         self.tabs.addTab(self.choreography, "Choreography")
-        self.models = EffectResourceView("models", self.resolve)
+        self.object_view = MagObjectView()
+        self.models = EffectResourceView("models", self.resolve, self.object_view, "3D view")
         self.textures = EffectResourceView("textures", self.resolve)
-        self.sound = EffectResourceView("sound", self.resolve)
+        self.sound_panel = SoundPanel(self.file_registry)
+        self.sound = EffectResourceView("sound", self.resolve, self.sound_panel, "Sounds and vibration")
         self.tabs.addTab(self.models, "Models / animation")
         self.tabs.addTab(self.textures, "Textures / palettes")
         self.tabs.addTab(self.sound, "Sound")
@@ -150,7 +154,7 @@ class FujinWidget(QWidget):
 
     def file_bindings(self):
         return ([self.camera_editor.exe_binding, self.camera_editor.preview.sceneout_binding, self.kernel_binding]
-                + self.mag_editor.file_bindings())
+                + self.sound_panel.file_bindings() + self.mag_editor.file_bindings())
 
     def import_entries(self):
         return [("FF8 exe (camera tracks and embedded effect assets)", self.camera_editor.open_exe),
@@ -161,7 +165,8 @@ class FujinWidget(QWidget):
         preview = self.camera_editor.preview
         return [("Camera preview models: characters, weapons and monsters", preview.import_models),
                 ("Camera preview encounters: scene.out", preview.import_sceneout),
-                ("Effect users: kernel.bin (spells, items, GFs, enemy attacks, limit breaks)", self.import_kernel)]
+                ("Effect users: kernel.bin (spells, items, GFs, enemy attacks, limit breaks)", self.import_kernel),
+                ("Sound preview: audio.fmt + audio.dat (battle sound archive)", self.sound_panel.import_archive)]
 
     def auto_import_sources(self):
         preview = self.camera_editor.preview
@@ -170,6 +175,7 @@ class FujinWidget(QWidget):
                                  selection_only=True, selection_key=MODEL_SELECTION_KEY),
                 AutoImportSource.for_binding(preview.sceneout_binding, self.file_registry.last_folder("scene.out")),
                 AutoImportSource.for_binding(self.kernel_binding, self.file_registry.last_folder("kernel.bin")),
+                AutoImportSource.for_binding(self.sound_panel.audio_binding, self.file_registry.last_folder("audio.fmt")),
                 AutoImportSource("Fujin effect files", ("mag*", "MAG*", "ma8*", "MA8*"),
                                  self.import_paths, selection_only=True)]
 
