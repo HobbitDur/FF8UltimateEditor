@@ -132,11 +132,46 @@ def test_the_chosen_animation_is_marked_in_the_keyframes(fujin):
 
 
 @pytest.mark.ff8data(TIM)
-def test_textures_open_on_the_picture(fujin):
-    from Fujin.magsectionwidget import MagSectionEditor
+def test_textures_are_pictures_not_a_files_copy(fujin):
     fujin.import_paths([TIM])
     fujin.select_effect(CURE)
     fujin.tabs.setCurrentIndex(4)
     fujin.textures.activate()
-    editor = fujin.textures.sections.currentWidget().findChild(MagSectionEditor)
-    assert editor.views.tabText(editor.views.currentIndex()).startswith("Texture preview")
+    pictures = fujin.textures.panel
+    assert fujin.textures.display.currentWidget() is pictures and pictures.cards
+    card = pictures.cards[0]
+    assert card.picture.pixmap() is not None and "texels" in card.info.text()
+    if card.rows:                                              # palette rows change the drawing
+        card.palette.setCurrentIndex(card.palette.count() - 1)
+    kinds = {fujin.textures.sections.tabText(i) for i in range(fujin.textures.sections.count())}
+    assert kinds and not any("header" in name.lower() for name in kinds)   # header fields: Files only
+    fujin.files.activate()
+    assert any("header" in fujin.files.sections.tabText(i).lower() for i in range(fujin.files.sections.count()))
+
+
+@pytest.mark.ff8data(TIM)
+def test_empty_tabs_say_why(fujin):
+    fujin.select_effect(CURE)
+    assert "mag000-049.tim" in fujin.models.empty_text            # its file is not imported yet
+    fujin.import_paths([TIM])
+    fujin.select_effect(CURE)
+    assert fujin.models.empty_text.startswith("This effect stores no model of its own")
+    assert "MAG_001_CURE_DrawTargetModelWithOverlay" in fujin.models.empty_text   # named in the snapshot
+    assert "ComputeModelBounds" not in fujin.models.empty_text                     # draws nothing
+    assert fujin.sound.empty_text.startswith("No sound data in this effect's files")
+    fujin.tabs.setCurrentIndex(3)
+    fujin.models.activate()
+    assert fujin.models.status.text() == fujin.models.empty_text
+    assert not fujin.choreography.isTabEnabled(0) and "run by the exe's own code" in fujin.choreography.tabToolTip(0)
+    assert "No MAG script" in fujin.choreography_note.text()
+
+
+def test_native_snapshot_lists_named_functions(fujin):
+    snapshot = fujin.catalog.snapshot()
+    assert snapshot.get("idb_saved") and snapshot.get("script", "").endswith("export_effect_functions.py")
+    functions = fujin.catalog.functions(CURE)
+    names = [function["name"] for function in functions]
+    assert "MAG_001_CURE_Init" in names and not any(name.startswith("sub_") for name in names)
+    assert "pseudocode" not in functions[0]                                  # code: in the gzip, on demand
+    assert "MAG_001_CURE_Init" in fujin.catalog.pseudocode(functions[0])
+    assert "_snapshot" not in map(str, fujin.catalog.effect_ids())

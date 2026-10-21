@@ -33,8 +33,17 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   placement is known for the seven GFs only; sprite lists are listed, not drawn. The byte
   sections stay editable: skeleton scales and bone parent/length/rotations, animation
   directories/frame counts. Compressed skeletal animation authoring is not fully decoded here.
-- **Textures / palettes:** complete consecutive TIM images, including Carbuncle's second
-  image in `mag277.tim`. Palette words and pixel bytes are editable; this is not an image painter.
+- **Textures / palettes:** opens on **Pictures**: every TIM of the file (Carbuncle's
+  `mag277.tim` holds two) drawn over a checkerboard, with its size, depth, VRAM place, a palette
+  row picker and the palette as swatches. The next tab lists only the palette and pixel bytes,
+  which stay editable (this is not an image painter); the TIM header fields are in Files /
+  sections. A MAG file's textures are raw VRAM blocks whose size and depth come from the game
+  code, so they are listed as data.
+- **Empty tabs say why.** Models, Textures and Sound name the effect's files still to import;
+  once nothing is missing, they say what the effect has no data for, and point to the native
+  functions that do the work when the snapshot names them (Cure: "stores no model of its own",
+  `MAG_001_CURE_DrawTargetModelWithOverlay`). The greyed MAG script tab of a native effect says
+  it is run by the exe's own code.
 - **Sound:** each sound block `{u32 world sound id, "SCOT", PlayStation data}` resolved to its
   `audio.dat` entry (PlaySE -> BdPlaySE -> PlayWorldSound reads only the id) and played with
   the archive opened from the header (Import complementary: audio.fmt, shared with Julia).
@@ -97,6 +106,27 @@ python -m pytest tests/Fujin
 `section`, `disasm`, `patch`, `timeline` and `opcodes` are also under `fujin`.
 The former standalone `laguna` command, GUI entry and package have been removed: Fujin is the
 only battle effect tool.
+
+## Refresh the native code snapshot
+
+Choreography → Native code shows `FF8GameData/Resources/json/magic_effect.json`: per effect,
+its initializer and loader, the files the loader names, and each of its own functions (name,
+address, function comment, Hex-Rays pseudocode). Its `_snapshot` entry records the database and
+the date it was saved; Fujin never needs IDA. After improving the IDB (names, comments), save it
+in IDA and re-export. The script opens a temporary copy with IDA 9's idalib, so the open
+database is never touched, and it changes nothing in the IDB:
+
+```powershell
+$env:IDADIR = "C:\Program Files\IDA Professional 9.2"
+$env:PYTHONPATH = "$env:IDADIR\idalib\python"
+$env:IDAUSR = "$env:TEMP\idausr-empty"   # an empty folder: no user plugins (MCP server) start
+python Fujin/ResearchScript/export_effect_functions.py --idb D:\FF8_EN.exe.i64
+```
+
+Run it with a Python that idalib supports (3.12 works). Inside IDA it also runs from **File →
+Script file**. An effect's functions are those reached from its initializer (calls and task
+callbacks, as `dump_magic_effects.py` walks them) plus every function named `MAG_<effect>_*`.
+`dump_magic_effects.py` remains the script that also renames variables in the IDB.
 
 ## Synchronize the IDA research database
 

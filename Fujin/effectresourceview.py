@@ -15,6 +15,7 @@ class EffectResourceView(QWidget):
         self.mode, self.resolve = mode, resolve
         self.panel = panel
         self._pending = True
+        self.empty_text = ""    # set by the host: why this tab has nothing for the current effect
         self.sources = QComboBox()
         self.sources.setMinimumContentsLength(18)
         self.sources.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
@@ -25,6 +26,7 @@ class EffectResourceView(QWidget):
         self.redo_button.clicked.connect(lambda: self._history(True))
         self.status = QLabel()
         self.status.setWordWrap(True)
+        self.status.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)  # alone, it stays on top
         self.sections = MagSectionTabs()
         self.sections.data_changed.connect(self.data_changed)
         row = QHBoxLayout()
@@ -59,7 +61,9 @@ class EffectResourceView(QWidget):
         if self.mode == "files" or self.mode == "models" and resource.kind == "model":
             return sections
         if self.mode == "textures" and manager.document.format == "PlayStation TIM":
-            return sections
+            # the pictures panel draws them; the bytes worth editing are the palettes and pixels
+            # (the header field tables stay in Files / sections)
+            return [s for s in sections if s.kind in ("palette", "pixels")]
         if self.mode == "parameters" and resource.kind == "camera_parameter":
             return sections
         kinds = {"camera": {"camera"},
@@ -90,7 +94,8 @@ class EffectResourceView(QWidget):
         self.undo_button.setEnabled(bool(manager and manager._undo))
         self.redo_button.setEnabled(bool(manager and manager._redo))
         if resource is None:
-            self.status.setText("No loaded resource for this component. Overview lists known sources and unresolved dependencies.")
+            self.status.setText(self.empty_text or "Nothing for this tab in the imported files. The Overview "
+                                "lists the effect's known files.")
         else:
             location = (f"{resource.address:#x} in EN exe → Hext export" if resource.source == "Executable"
                         else manager.file_path if manager else
@@ -101,6 +106,8 @@ class EffectResourceView(QWidget):
             self._fill_parameters()
         if self.panel is not None:
             self.panel.set_manager(manager)
+            # nothing to show: the status line says why, instead of an empty 3D view or table
+            self.display.setVisible(resource is not None)
         self._pending = False
 
     def _fill_parameters(self):

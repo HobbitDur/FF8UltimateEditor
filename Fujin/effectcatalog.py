@@ -31,6 +31,8 @@ def filename_effect(name):
 class EffectCatalog:
     def __init__(self, resource_folder=None):
         folder = Path(resource_folder or RESOURCES_JSON_FOLDER)
+        self._folder = folder
+        self._code = None        # address -> pseudocode, read from the gzip on first use
         self.names = {e["id"]: e["name"] for e in json.loads(
             (folder / "attack_animation.json").read_text(encoding="utf-8"))["attack_animation"]}
         self.dump = json.loads((folder / "magic_effect.json").read_text(encoding="utf-8"))
@@ -47,7 +49,11 @@ class EffectCatalog:
             self._families.setdefault(filename_effect(name), []).append(name)
 
     def effect_ids(self):
-        return sorted({int(k) for k in self.dump} | {i for i in self.names if i > 0})
+        return sorted({int(k) for k in self.dump if k.isdigit()} | {i for i in self.names if i > 0})
+
+    def snapshot(self):
+        """Where magic_effect.json's native functions come from ({} for a snapshot without it)."""
+        return self.dump.get("_snapshot", {})
 
     def name(self, effect):
         return self.names.get(effect, "Free slot" if self.info(effect).get("free") else "Unidentified effect")
@@ -57,6 +63,20 @@ class EffectCatalog:
 
     def functions(self, effect):
         return self.info(effect).get("functions", []) + self.research.get(str(effect), [])
+
+    def pseudocode(self, function):
+        """A function's decompiled code: inline (research entries) or from magic_effect_code.json.gz,
+        which is opened the first time some code is shown."""
+        if "pseudocode" in function:
+            return function["pseudocode"]
+        if self._code is None:
+            import gzip
+            path = self._folder / self.snapshot().get("code", "magic_effect_code.json.gz")
+            try:
+                self._code = json.loads(gzip.decompress(path.read_bytes()).decode("utf-8"))
+            except (OSError, ValueError):
+                self._code = {}
+        return self._code.get(function.get("addr", ""), "No decompiled source available.")
 
     def runtime(self, effect):
         if str(effect) in self.profiles:
@@ -71,7 +91,7 @@ class EffectCatalog:
 
     def aliases(self, effect):
         address = self.info(effect).get("logic_addr")
-        return [int(k) for k, v in self.dump.items() if int(k) != effect and address
+        return [int(k) for k, v in self.dump.items() if k.isdigit() and int(k) != effect and address
                 and v.get("logic_addr") == address and not v.get("free")]
 
     def resources(self, effect, extra_names=()):

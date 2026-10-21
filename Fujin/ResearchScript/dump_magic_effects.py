@@ -391,4 +391,5 @@ def main():
             print("could not write %s: %s" % (path, error))
 
 
-main()
+if __name__ == "__main__":  # IDA runs it as a script; export_effect_functions imports its helpers
+    main()

@@ -2,6 +2,7 @@
 import hashlib
 import html
 import os
+import re
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QSignalBlocker, QTimer, pyqtSignal
@@ -20,6 +21,7 @@ from Fujin.effectcatalog import EffectCatalog, EffectResource, filename_effect
 from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
+from Fujin.texturepictureview import TexturePictureView
 from Fujin.soundpanel import SoundPanel
 from Fujin.objectview import MagObjectView
 from SmallWidget.listsearchbar import ListSearchBar, SEARCH_TEXT_ROLE
@@ -102,14 +104,26 @@ class FujinWidget(QWidget):
         self.native_code = QPlainTextEdit()
         self.native_code.setReadOnly(True)
         self.native_code.setFont(QFont("Consolas", 10))
-        native_layout.addWidget(QLabel("English IDA research snapshot — compiled choreography is read-only."))
+        snapshot = self.catalog.snapshot()
+        native_layout.addWidget(QLabel(
+            "The effect's game code, decompiled from the English exe's research database"
+            + (f" (saved {snapshot['idb_saved']})" if snapshot.get("idb_saved") else "")
+            + ". Read-only: the exe's code is not edited here."))
         native_layout.addWidget(self.function_selector)
         native_layout.addWidget(self.native_code, 1)
         self.choreography.addTab(native_page, "Native code")
-        self.tabs.addTab(self.choreography, "Choreography")
+        # Why there is no MAG script, when there is none (the greyed tab says it too)
+        self.choreography_note = QLabel()
+        self.choreography_note.setWordWrap(True)
+        choreography_page = QWidget()
+        choreography_layout = QVBoxLayout(choreography_page)
+        choreography_layout.setContentsMargins(0, 0, 0, 0)
+        choreography_layout.addWidget(self.choreography_note)
+        choreography_layout.addWidget(self.choreography, 1)
+        self.tabs.addTab(choreography_page, "Choreography")
         self.object_view = MagObjectView()
         self.models = EffectResourceView("models", self.resolve, self.object_view, "3D view")
-        self.textures = EffectResourceView("textures", self.resolve)
+        self.textures = EffectResourceView("textures", self.resolve, TexturePictureView(), "Pictures")
         self.sound_panel = SoundPanel(self.file_registry)
         self.sound = EffectResourceView("sound", self.resolve, self.sound_panel, "Sounds and vibration")
         self.tabs.addTab(self.models, "Models / animation")
@@ -386,6 +400,7 @@ class FujinWidget(QWidget):
         extra = [os.path.basename(m.file_path) for m in self.mag_editor.managers.values()]
         resources = self.catalog.resources(effect, extra)
         self.resources = resources
+        self._set_empty_texts(effect, resources)
         for view in self.component_views:
             selected = resources
             if view is self.files and self.all_files.isChecked():
@@ -452,6 +467,10 @@ class FujinWidget(QWidget):
                 self.mag_editor.gf_selector.addItem(os.path.basename(manager.file_path), key)
             self.mag_editor.gf_selector.setCurrentIndex(self.mag_editor.gf_selector.findData(self.mag_editor.current_gf))
         self.choreography.setTabEnabled(0, bool(candidates))
+        note = "" if candidates else self._no_script_text(self.current_effect)
+        self.choreography.setTabToolTip(0, note)
+        self.choreography_note.setText(note)
+        self.choreography_note.setVisible(bool(note))
         if not candidates:
             self.choreography.setCurrentIndex(1)
         functions = self.catalog.functions(self.current_effect)
@@ -466,8 +485,57 @@ class FujinWidget(QWidget):
 
     def _show_function(self, *_args):
         function = self.function_selector.currentData()
-        self.native_code.setPlainText(function.get("pseudocode", "No decompiled source available.") if function
-                                      else "No native research snapshot for this effect.")
+        if not function:
+            self.native_code.setPlainText("No native research snapshot for this effect.")
+            return
+        code = self.catalog.pseudocode(function)
+        comment = function.get("comment", "")
+        # Hex-Rays prints the function comment above the code itself: add it only when it does not
+        shown = comment and comment.splitlines()[0].strip() in code
+        header = "/* " + comment.replace("*/", "* /") + " */\n\n" if comment and not shown else ""
+        self.native_code.setPlainText(header + code)
+
+    # ------------------------------------------------------------------ empty tabs, said plainly
+    def _no_script_text(self, effect):
+        if self.catalog.runtime(effect).startswith("MAG cinematic"):
+            return ("This effect runs a MAG cinematic script: import its MAG files (header's Import, "
+                    "Effect files) to read, edit and play it here.")
+        return ("No MAG script: this effect is run by the exe's own code (see Native code). Only cinematic "
+                "effects, the GF summons and the other MAG-script effects, have a MAG script.")
+
+    def _native_functions(self, effect, pattern):
+        """Names of the effect's native functions whose name matches `pattern` (the research names
+        say what a function does: MAG_001_CURE_DrawTargetModelWithOverlay)."""
+        return [function["name"] for function in self.catalog.functions(effect)
+                if re.search(pattern, function.get("name", ""))]
+
+    def _set_empty_texts(self, effect, resources):
+        """What each component tab says when the effect has nothing for it: missing imports first,
+        then what is known from its files and its native code - never a guess."""
+        missing = [r.name for r in resources if r.source == "File" and self.resolve(r) is None]
+        if missing:
+            text = ("Not imported yet: " + ", ".join(missing[:6]) + (" ..." if len(missing) > 6 else "")
+                    + ". Open them with the header's Import (Effect files).")
+            for view in (self.models, self.textures, self.sound):
+                view.empty_text = text
+            return
+        native = not self.catalog.runtime(effect).startswith("MAG cinematic")
+        drawers = self._native_functions(effect, r"(Draw|Render)\w*Model|Model\w*(Draw|Render)") if native else []
+        models = "This effect stores no model of its own."
+        if drawers:
+            models += (" Its game code draws battle models already on screen: "
+                       + ", ".join(drawers[:4]) + (" ..." if len(drawers) > 4 else "") + " (Choreography, Native code).")
+        elif native:
+            models += " Its game code draws its visuals itself (Choreography, Native code)."
+        self.models.empty_text = models
+        self.textures.empty_text = ("No texture file is known for this effect." if not any(
+            r.source in ("File", "Executable") for r in resources) else
+            "None of this effect's files holds a texture.")
+        players = self._native_functions(effect, r"PlaySE|PlaySound|Sound_") if native else []
+        sound = "No sound data in this effect's files."
+        if players:
+            sound += " Its game code plays sounds in: " + ", ".join(players[:4]) + (" ..." if len(players) > 4 else "") + "."
+        self.sound.empty_text = sound
 
     def _activate_tab(self, *_args):
         if not hasattr(self, "component_views"):
