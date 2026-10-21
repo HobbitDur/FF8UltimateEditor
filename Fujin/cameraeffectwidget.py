@@ -1,17 +1,15 @@
 import os
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor, QFont
+from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
-                             QTabWidget, QPlainTextEdit, QPushButton, QScrollArea, QSplitter,
-                             QMessageBox, QFileDialog)
+                             QPushButton, QSplitter, QMessageBox, QFileDialog)
 
 from Common.filebinding import FileBinding
-from FF8GameData.dat.camerascript import animation_index_parts
 from Fujin.cameraeffectmanager import CAM_FFNX_FOLDER, CameraEffectManager, cam_file_name
 from Fujin.cameraeffectpreview import CameraEffectPreview
+from Fujin.cameratrackeditor import CameraTrackEditor
 from SmallWidget.listsearchbar import ListSearchBar
-from Watts.cameracollectionwidget import CameraCollectionWidget
 
 HEXT_FOLDER_KEY = "camera effect .hext"
 CAM_FOLDER_KEY = "camera effect .bcam"
@@ -50,9 +48,16 @@ class CameraEffectEditorWidget(QWidget):
         # The unsaved-changes '*' follows the tracks' real state (modified_changed), not every
         # keystroke in the script editor before Apply.
         self.setProperty("read_only_preview", True)
-        self._collection_widget = None
         self.preview = CameraEffectPreview(self.manager, file_registry)
-        self.preview.animation_chosen.connect(self._show_chosen_slot)
+        self.track_editor = CameraTrackEditor(self.manager, self.preview)
+        self.track_editor.keyframes_changed.connect(lambda: self._track_edited(self._selected_effect()))
+        self.track_editor.track_changed.connect(lambda: self._track_edited(self._selected_effect()))
+        self.tabs = self.track_editor.tabs
+        self.keyframe_scroll = self.track_editor.keyframe_scroll
+        self.script_editor = self.track_editor.script_editor
+        self.apply_script_button = self.track_editor.apply_script_button
+        self.script_size_label = self.track_editor.script_size_label
+        self.script_description = self.track_editor.script_description
 
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
@@ -87,18 +92,12 @@ class CameraEffectEditorWidget(QWidget):
         self.size_warning.setStyleSheet("color: #c77800; font-size: small;")
         self.size_warning.hide()
 
-        self.tabs = QTabWidget()
-        self.keyframe_scroll = QScrollArea()
-        self.keyframe_scroll.setWidgetResizable(True)
-        self.tabs.addTab(self.keyframe_scroll, "Keyframes")
-        self.tabs.addTab(self._build_script_tab(), "Script")
-
         details = QWidget()
         details_layout = QVBoxLayout(details)
         details_layout.setContentsMargins(0, 0, 0, 0)
         details_layout.addLayout(info_row)
         details_layout.addWidget(self.size_warning)
-        details_layout.addWidget(self.tabs, 1)
+        details_layout.addWidget(self.track_editor, 1)
 
         splitter = QSplitter()
         splitter.addWidget(self.effect_search.column)
@@ -117,46 +116,6 @@ class CameraEffectEditorWidget(QWidget):
         self._fill_list()
         self._update_status()
         self.effect_list.setCurrentRow(0)
-
-    def _build_script_tab(self):
-        monospace = QFont("Courier New")
-        monospace.setStyleHint(QFont.StyleHint.Monospace)
-        self.script_editor = QPlainTextEdit()
-        self.script_editor.setFont(monospace)
-        self.script_editor.setToolTip("The camera script as code, one command per line. It picks which "
-                                      "keyframe animation plays (play / play_var) from the attacker, the "
-                                      "target, random values... A shorter script is filled up on Apply "
-                                      "(the track keeps its exe size); a longer one makes the track grow: "
-                                      "the vanilla exe cannot use it any more, an FFNx .bcam file can.")
-        self.script_editor.textChanged.connect(self._update_script_size)
-        self.apply_script_button = QPushButton("Apply script")
-        self.apply_script_button.clicked.connect(self._apply_script)
-        self.script_size_label = QLabel()
-        self.script_description = QPlainTextEdit()
-        self.script_description.setReadOnly(True)
-        self.script_description.setFont(monospace)
-        self.script_description.setToolTip("What each command does (bytes, then meaning)")
-
-        editor_side = QWidget()
-        editor_layout = QVBoxLayout(editor_side)
-        editor_layout.setContentsMargins(0, 0, 0, 0)
-        editor_layout.addWidget(QLabel("Code (editable)"))
-        editor_layout.addWidget(self.script_editor, 1)
-        apply_row = QHBoxLayout()
-        apply_row.addWidget(self.apply_script_button)
-        apply_row.addWidget(self.script_size_label, 1)
-        editor_layout.addLayout(apply_row)
-        description_side = QWidget()
-        description_layout = QVBoxLayout(description_side)
-        description_layout.setContentsMargins(0, 0, 0, 0)
-        description_layout.addWidget(QLabel("Meaning"))
-        description_layout.addWidget(self.script_description, 1)
-
-        splitter = QSplitter()
-        splitter.addWidget(editor_side)
-        splitter.addWidget(description_side)
-        splitter.setStretchFactor(1, 2)
-        return splitter
 
     # ------------------------------------------------------------------ files
     def load_exe(self, path):
@@ -321,9 +280,7 @@ class CameraEffectEditorWidget(QWidget):
         effect_id = self._selected_effect()
         if effect_id is None:
             self._set_editors_enabled(False)
-            self._set_collection_widget(None)
-            self._set_script_texts("", "")
-            self.preview.set_track(None)
+            self.track_editor.set_track(None)
             return
         name = self.manager.effect_names.get(effect_id, "")
         track = self.manager.track(effect_id)
@@ -336,14 +293,10 @@ class CameraEffectEditorWidget(QWidget):
                 text = f"<b>Effect {effect_id} - {name}</b><br>{_NO_TRACK_TEXT[kind]}"
             self.info_label.setText(text)
             self.size_warning.hide()
-            self._set_collection_widget(None)
-            self._set_script_texts("", "")
-            self.preview.set_track(None)
+            self.track_editor.set_track(None)
             return
         self._update_info(track)
-        self._set_collection_widget(track)
-        self._set_script_texts(self.manager.script_code(track), self.manager.script_text(track))
-        self.preview.set_track(track)
+        self.track_editor.set_track(track)
 
     def _update_info(self, track):
         name = self.manager.effect_names.get(track.effect_id, "")
@@ -366,97 +319,15 @@ class CameraEffectEditorWidget(QWidget):
     def _set_editors_enabled(self, enabled):
         self.reset_button.setEnabled(enabled)
         self.export_cam_button.setEnabled(enabled)
-        self.apply_script_button.setEnabled(enabled)
-        self.script_editor.setReadOnly(not enabled)
+        self.track_editor.set_enabled(enabled)
 
-    def _set_collection_widget(self, track, expanded_sets=()):
-        self._collection_widget = None
-        if track is None:
-            placeholder = QLabel("")
-            self.keyframe_scroll.setWidget(placeholder)
-            return
-        widget = CameraCollectionWidget(track.collection, structure_edits=True, expanded_sets=expanded_sets)
-        widget.data_changed.connect(self._on_keyframes_changed)
-        widget.collection_rebuilt.connect(self._on_collection_rebuilt)
-        widget.preview_requested.connect(self.preview.preview_animation)
-        self._collection_widget = widget
-        self.keyframe_scroll.setWidget(widget)
-
-    def _show_chosen_slot(self, chosen):
-        """Unfold and mark, in the keyframes, the animation the camera script plays."""
-        if self._collection_widget is None:
-            return
-        if chosen is None:
-            self._collection_widget.highlight_slot(None, None)
-        else:
-            set_index, slot = animation_index_parts(chosen)
-            self._collection_widget.highlight_slot(set_index, slot)
-
-    def _set_script_texts(self, code, description):
-        self.script_editor.blockSignals(True)
-        self.script_editor.setPlainText(code)
-        self.script_editor.blockSignals(False)
-        self.script_description.setPlainText(description)
-        self._update_script_size()
-
-    def _update_script_size(self):
-        """Live 'used / room' byte count; Apply is off while the script is too long for the track."""
-        track = self.manager.track(self._selected_effect())
-        if track is None:
-            self.script_size_label.setText("")
-            return
-        try:
-            size = self.manager.script_size(self.script_editor.toPlainText())
-        except ValueError:
-            self.script_size_label.setStyleSheet("color: red;")
-            self.script_size_label.setText(f"Not valid code - room: {track.script_room} bytes")
-            self.apply_script_button.setEnabled(True)  # Apply tells which line is wrong
-            return
-        longer = size > track.script_room
-        self.script_size_label.setStyleSheet("color: #c77800;" if longer else "")
-        if longer:
-            text = (f"{size} / {track.script_room} bytes: {size - track.script_room} more than the exe has - "
-                    "the track grows, only an FFNx .bcam file can use it")
-        elif size < track.script_room:
-            text = f"{size} / {track.script_room} bytes (Apply fills the {track.script_room - size} left)"
-        else:
-            text = f"{size} / {track.script_room} bytes"
-        self.script_size_label.setText(text)
-        self.apply_script_button.setEnabled(True)
+    @property
+    def _collection_widget(self):
+        return self.track_editor._collection_widget
 
     # ------------------------------------------------------------------ edits
-    def _on_keyframes_changed(self):
-        self._track_edited(self._selected_effect())
-        self.preview.refresh()
-
-    def _on_collection_rebuilt(self, data):
-        """A keyframe or slot was added/removed: the track takes the new collection (its size may
-        change) and the editor is rebuilt where it was."""
-        effect_id = self._selected_effect()
-        track = self.manager.track(effect_id)
-        if track is None:
-            return
-        expanded = self._collection_widget.expanded_set_indices() if self._collection_widget else ()
-        scroll = self.keyframe_scroll.verticalScrollBar().value()
-        track.set_collection(data)
-        self._set_collection_widget(track, expanded)
-        self.keyframe_scroll.verticalScrollBar().setValue(scroll)
-        self._track_edited(effect_id)
-        self.preview.set_track(track)  # new animation objects: run the script again
-
     def _apply_script(self):
-        effect_id = self._selected_effect()
-        track = self.manager.track(effect_id)
-        if track is None:
-            return
-        try:
-            self.manager.set_script_code(track, self.script_editor.toPlainText())
-        except ValueError as error:
-            QMessageBox.warning(self, "Camera effect editor", f"The script was not applied:\n{error}")
-            return
-        self._set_script_texts(self.manager.script_code(track), self.manager.script_text(track))
-        self._track_edited(effect_id)
-        self.preview.set_track(track)  # the script may now choose another animation
+        self.track_editor._apply_script()
 
     def _reset_selected(self):
         effect_id = self._selected_effect()

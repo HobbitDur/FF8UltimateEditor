@@ -169,8 +169,8 @@ def test_disease_breath_camera_script_and_keyframes_save_in_the_mag(tmp_path):
     widget.section_tabs.setCurrentIndex(index)
     editor = widget.section_tabs.currentWidget().findChild(MagSectionEditor)
     assert editor.camera_track.keyframe_count() == 5
-    editor.camera_script.setPlainText("end_clear()")
-    editor._apply_camera_script()
+    editor.camera_editor.script_editor.setPlainText("end_clear()")
+    editor.camera_editor._apply_script()
     QApplication.processEvents()
     edited = bytes(widget.manager.data)
     assert edited[:0x870] == original[:0x870] and edited[0x930:] == original[0x930:]

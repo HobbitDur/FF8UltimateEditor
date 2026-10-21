@@ -37,7 +37,7 @@ from dataclasses import dataclass, field
 
 from FF8GameData.dat.cameracollection import parse_camera_collection
 from FF8GameData.dat.sequencecodec import code_to_sequence, sequence_to_code
-from FF8GameData.dat.sequencecommand import read_sequence
+from FF8GameData.dat.sequencecommand import is_jump, is_jump_int16, read_sequence
 from FF8GameData.dat.sequenceanalyser import SequenceAnalyser
 from FF8GameData.dat.sequencevm import camera_sequence_vm
 from FF8GameData.packagepath import RESOURCES_JSON_FOLDER
@@ -320,6 +320,51 @@ class CameraEffectManager:
         script = bytes(code_to_sequence(self.vm, code))
         filler = max(0, track.script_room - len(script))
         track.script = script + b"\x01" * (filler % 2) + b"\x09\x00" * (filler // 2)
+        return filler
+
+    def script_without_filler(self, script: bytes) -> bytes:
+        """`script` without the trailing nop(0)s that fill it up (set_script_code, fit_track_to_size):
+        room the keyframes can use in a fixed-size track. Nops a jump lands on are kept."""
+        commands, address = [], 0
+        for command in read_sequence(self.vm, script):
+            parameters = bytes(command.parameters or b"")
+            commands.append((address, command.op_code, parameters))
+            address += 1 + len(parameters)
+        if address != len(script):
+            return bytes(script)  # not plain commands to the end: leave it as it is
+        cut = len(script)
+        for start, op_code, parameters in reversed(commands):
+            if (op_code, parameters) != (0x09, b"\x00"):
+                break
+            cut = start
+        for start, op_code, parameters in commands:
+            if is_jump(op_code):
+                offset = struct.unpack("<h" if is_jump_int16(op_code) else "<b", parameters)[0]
+                if start + offset >= cut:
+                    cut = max(cut, start + offset + 2)
+        return bytes(script[:min(cut, len(script))])
+
+    @staticmethod
+    def fixed_script_room(track: CameraTrack, size: int) -> int:
+        """Bytes left for the script when the track must be `size` bytes with its current keyframes."""
+        return size - SCRIPT_OFFSET - len(track.collection.get_bytes())
+
+    def fit_track_to_size(self, track: CameraTrack, script: bytes, size: int) -> int:
+        """Lay `script` and the track's current keyframes out in exactly `size` bytes, for a track
+        stored in a fixed room (a MAG section). The script is filled up after its last command like
+        set_script_code. ValueError, the track unchanged, when they need more than `size`. Returns
+        the filler size. An odd filler starts with the zero alignment byte before the keyframes,
+        as the game files store it, so an unchanged script lays out as it was read."""
+        room = self.fixed_script_room(track, size)
+        if len(script) > room:
+            raise ValueError(f"the script and the keyframes need {len(script) - room} more bytes "
+                             f"than the camera's {size}")
+        if (SCRIPT_OFFSET + room) % 2:
+            raise ValueError("the keyframes would not start on an even offset")
+        filler = room - len(script)
+        track.script = bytes(script) + b"\x09\x00" * (filler // 2)
+        track.padding = b"\0" * (filler % 2)
+        track.exe_script_size = len(track.script)
         return filler
 
     def resized_tracks(self) -> list:

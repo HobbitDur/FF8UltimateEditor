@@ -5,8 +5,8 @@ import struct
 from PyQt6.QtCore import Qt, QSignalBlocker, pyqtSignal
 from PyQt6.QtGui import QFont, QImage, QPixmap
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTabWidget, QTableWidget,
-                             QTableWidgetItem, QSpinBox, QPushButton, QFileDialog, QPlainTextEdit,
-                             QScrollArea, QHeaderView)
+                             QTableWidgetItem, QSpinBox, QPushButton, QFileDialog, QScrollArea,
+                             QHeaderView)
 
 
 def _readonly(text):
@@ -239,7 +239,7 @@ class MagSectionEditor(QWidget):
     def _camera_view(self):
         from FF8GameData.gamedata import GameData
         from Fujin.cameraeffectmanager import CameraEffectManager, CameraTrack
-        from Watts.cameracollectionwidget import CameraCollectionWidget
+        from Fujin.cameratrackeditor import CameraTrackEditor
         try:
             self.camera_manager = CameraEffectManager(GameData(getattr(self.manager, "game_data_folder", "FF8GameData")))
             self.camera_track = CameraTrack.from_bytes(
@@ -248,43 +248,34 @@ class MagSectionEditor(QWidget):
         except (ValueError, IndexError, struct.error) as error:
             self.error.setText(f"Camera could not be decoded: {error}. The raw bytes remain available.")
             return
-        script = QWidget()
-        layout = QVBoxLayout(script)
-        self.camera_script = QPlainTextEdit(self.camera_manager.script_code(self.camera_track))
-        self.camera_script.setFont(QFont("Consolas", 10))
-        layout.addWidget(self.camera_script)
-        apply = QPushButton("Apply camera script (same size)")
-        apply.clicked.connect(self._apply_camera_script)
-        layout.addWidget(apply)
-        self.views.addTab(script, "Camera script")
-        collection = CameraCollectionWidget(self.camera_track.collection,
-            show_preview_buttons=self.camera_preview is not None, expanded_sets=(0,))
-        collection.data_changed.connect(self._apply_camera)
-        if self.camera_preview is not None:
-            collection.preview_requested.connect(self.camera_preview.preview_animation)
-            self.camera_preview.set_track(self.camera_track)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(collection)
-        self.views.addTab(scroll, "Keyframes")
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.camera_info = QLabel()
+        self.camera_info.setWordWrap(True)
+        self.camera_info.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(self.camera_info)
+        self.camera_editor = CameraTrackEditor(self.camera_manager, self.camera_preview, room_name="MAG file")
+        self.camera_editor.keyframes_changed.connect(self._apply_camera)
+        self.camera_editor.track_changed.connect(self._apply_camera)
+        layout.addWidget(self.camera_editor, 1)
+        self.views.addTab(page, "Camera")
+        self.camera_editor.set_track(self.camera_track, fixed_size=self.section.size)
+        self._update_camera_info()
 
-    def _apply_camera_script(self):
-        try:
-            track = self.camera_track
-            before = track.script
-            self.camera_manager.set_script_code(track, self.camera_script.toPlainText())
-            if len(track.to_bytes()) != self.section.size:
-                track.script = before
-                raise ValueError("The camera script must fit its current space in the MAG file")
-            self._apply_camera()
-        except ValueError as error:
-            self.error.setText(str(error))
+    def _update_camera_info(self):
+        track = self.camera_track
+        self.camera_info.setText(
+            f"<b>MAG camera</b> at 0x{self.section.start:X}, {self.section.size} bytes: script "
+            f"{len(track.script)} bytes, {track.keyframe_count()} keyframes.<br>The camera keeps its "
+            f"{self.section.size} bytes (the MAG file's following offsets are not moved), so the script "
+            "and the keyframes share them: keyframes and slots can be added once removed keyframes or "
+            "a shorter script have left room. Changes go into this MAG file (no .bcam).")
 
     def _apply_camera(self):
         try:
             if self.manager.replace_section(self.section.start, self.camera_track.to_bytes()):
                 self._announce()
-                if self.camera_preview is not None:
-                    self.camera_preview.set_track(self.camera_track)
+                self._update_camera_info()
         except ValueError as error:
             self.error.setText(str(error))
