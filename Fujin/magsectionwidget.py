@@ -1,4 +1,4 @@
-"""Lazy, bounded section editors sharing the LagunaManager byte image and undo history."""
+"""Lazy, bounded section editors sharing the MagDocument byte image and undo history."""
 import math
 import struct
 

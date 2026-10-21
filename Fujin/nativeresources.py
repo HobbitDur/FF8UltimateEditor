@@ -2,12 +2,12 @@
 import hashlib
 import re
 
-from Laguna.lagunamanager import LagunaManager
+from Fujin.magdocument import MagDocument
 from Fujin.cameraeffectmanager import CameraTrack
 from FF8GameData.magcine.magfile import MagField
 
 
-class NativeDocument(LagunaManager):
+class NativeDocument(MagDocument):
     def __init__(self, entry):
         self.entry = entry
         super().__init__()

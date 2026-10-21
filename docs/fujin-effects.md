@@ -1,8 +1,9 @@
 # Fujin: battle effect workspace
 
 Select **Battle → Fujin (Battle effect editor)**, then an effect ID. Fujin replaces the
-separate effect explorer and Laguna GUI. The 400-slot list uses shared attack-animation
-names. The underlying Laguna modules provide MAG documents and cinematic tools.
+former separate effect explorer and GF cinematic editor: everything lives in the `Fujin`
+package. The 400-slot list uses shared attack-animation names. `Fujin/magdocument.py` and
+`Fujin/magdocumentwidget.py` provide the MAG documents and the cinematic tools.
 
 ## Components
 
@@ -28,7 +29,7 @@ names. The underlying Laguna modules provide MAG documents and cinematic tools.
 All views share one manager/byte image per resource, including undo/redo and the cinematic
 engine. Separate identical executable blobs remain independent. Edits preserve section sizes;
 there is no relocation/growth. The original MAG sweep covers 790 files, 58 cinematic roots
-and 46 embedded tracks; see [MAG section formats](laguna-mag-editor.md).
+and 46 embedded tracks; see [MAG section formats](fujin-mag-sections.md).
 
 ## Native data
 
@@ -71,11 +72,12 @@ python cli.py fujin effect --id 231
 python cli.py fujin info -i extracted_files/magic/MAG230_B.00
 python cli.py fujin native -i extracted_files/FF8_EN.exe --effect 278
 python cli.py fujin native -i extracted_files/FF8_EN.exe --parameter Carbuncle_OpeningHeight --value 3500 -o camera.hext
-python -m pytest tests/Fujin tests/Laguna
+python -m pytest tests/Fujin
 ```
 
 `section`, `disasm`, `patch`, `timeline` and `opcodes` are also under `fujin`.
-The former standalone `laguna` command and GUI entry have been removed.
+The former standalone `laguna` command, GUI entry and package have been removed: Fujin is the
+only battle effect tool.
 
 ## Synchronize the IDA research database
 

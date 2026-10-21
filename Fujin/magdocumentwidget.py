@@ -12,12 +12,12 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBo
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
-from Laguna.lagunamanager import LagunaManager, CINEMATIC_GFS, streamed_part_names, gf_from_file_name
-from Laguna.magsectionwidget import MagSectionTabs
+from Fujin.magdocument import MagDocument, CINEMATIC_GFS, streamed_part_names, gf_from_file_name
+from Fujin.magsectionwidget import MagSectionTabs
 from FF8GameData.packagepath import RESOURCES_JSON_FOLDER
-from Laguna.timelinewidget import TimelineCanvas, MotionCanvas, CATEGORY_COLORS, TICKS_PER_SECOND
-from Laguna.meshpreview import MeshPreview
-from Laguna.sceneview import SceneView
+from Fujin.timelinewidget import TimelineCanvas, MotionCanvas, CATEGORY_COLORS, TICKS_PER_SECOND
+from Fujin.meshpreview import MeshPreview
+from Fujin.sceneview import SceneView
 from FF8GameData.magcine.cinescene import CineScene
 from FF8GameData.magcine.cinevram import CineVram
 from FF8GameData.magcine.magcontainer import MagContainer, PRIM_NAME, HEADER_FIELDS
@@ -31,7 +31,7 @@ class _NoWheelSpinBox(QSpinBox):
         event.ignore()
 
 
-class LagunaWidget(QWidget):
+class MagDocumentWidget(QWidget):
     """MAG-family editor: content detection, lossless section tabs and cinematic tools.
 
     Every loaded part has its own byte image and undo history. Known structures expose named
@@ -49,10 +49,10 @@ class LagunaWidget(QWidget):
             file_registry = FileRegistry()
         self._registry = file_registry
         self.file_bindings_changed.connect(lambda: QTimer.singleShot(0, self._sync_dirty_marker))
-        self.setWindowTitle("Laguna")
+        self.setWindowTitle("Fujin - MAG files")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        self.managers = {}          # file key -> independent LagunaManager
+        self.managers = {}          # file key -> independent MagDocument
         self.companions = {}        # gf -> current edited image of its .01
         self.current_gf = ""
         self.game_data_folder = game_data_folder
@@ -136,7 +136,7 @@ class LagunaWidget(QWidget):
         """Import any MAG family member, including names added by a mod."""
         key = type(self).__name__
         paths, _filter = QFileDialog.getOpenFileNames(
-            self, "Laguna - open MAG files and streamed parts", self._registry.last_folder(key),
+            self, "Fujin - open MAG files and streamed parts", self._registry.last_folder(key),
             "MAG files (MAG* mag* MA8* ma8*);;All files (*)")
         if not paths:
             return
@@ -571,13 +571,13 @@ class LagunaWidget(QWidget):
     def _load_companion(self, path, gf):
         try:
             key = CINEMATIC_GFS[gf][1][:-2] + "01"
-            manager = LagunaManager()
+            manager = MagDocument()
             manager.game_data_folder = self.game_data_folder
             manager.load_file(path)
             self.managers[key] = manager
             self.companions[gf] = MagContainer(bytes(manager.data))
         except (OSError, ValueError, IndexError) as error:
-            QMessageBox.critical(self, "Laguna", f"Cannot read {path}:\n{error}")
+            QMessageBox.critical(self, "Fujin", f"Cannot read {path}:\n{error}")
             return
         self._refresh_gf_selector()
         if self.current_gf in ("", key):
@@ -593,12 +593,12 @@ class LagunaWidget(QWidget):
     # ------------------------------------------------------------------ files
     def load_file(self, path, gf=""):
         gf = gf or gf_from_file_name(path) or os.path.basename(path)
-        manager = LagunaManager()
+        manager = MagDocument()
         manager.game_data_folder = self.game_data_folder
         try:
             manager.load_file(path, gf)
         except (OSError, ValueError) as error:
-            QMessageBox.critical(self, "Laguna", f"Cannot load {path}:\n{error}")
+            QMessageBox.critical(self, "Fujin", f"Cannot load {path}:\n{error}")
             return
         self.managers[gf] = manager
         self._refresh_gf_selector()
@@ -615,7 +615,7 @@ class LagunaWidget(QWidget):
             manager.save_file()
             self._refresh_gf_selector()
         except OSError as error:
-            QMessageBox.critical(self, "Laguna", f"Cannot save {manager.file_path}:\n{error}")
+            QMessageBox.critical(self, "Fujin", f"Cannot save {manager.file_path}:\n{error}")
             return False
         return True
 
@@ -915,7 +915,7 @@ class LagunaWidget(QWidget):
         try:
             manager.replace_instruction(self._editing_offset, op, words)
         except ValueError as error:
-            QMessageBox.warning(self, "Laguna", str(error))
+            QMessageBox.warning(self, "Fujin", str(error))
             return
         self._mark_dirty()
         self._refresh_program(keep_offset=self._editing_offset)
@@ -984,7 +984,7 @@ class LagunaWidget(QWidget):
         return files
 
     def _creature_loader(self):
-        from Laguna.creature import CreatureLoader
+        from Fujin.creature import CreatureLoader
         key = (self.current_gf, len(self._scene_containers()))
         if getattr(self, "_creature_loader_key", None) != key:
             self._creature_loader_key = key
@@ -1041,14 +1041,14 @@ class LagunaWidget(QWidget):
 
     def _load_part(self, path, gf, number):
         try:
-            manager = LagunaManager()
+            manager = MagDocument()
             manager.game_data_folder = self.game_data_folder
             manager.load_file(path)
             key = streamed_part_names(gf)[number]
             self.managers[key] = manager
             container = MagContainer(bytes(manager.data))
         except (OSError, ValueError, IndexError) as error:
-            QMessageBox.warning(self, "Laguna", f"Cannot read {path}:\n{error}")
+            QMessageBox.warning(self, "Fujin", f"Cannot read {path}:\n{error}")
             return
         self.part_data.setdefault(gf, {})[number] = container.data
         if container.packed:  # the raw ones are VRAM pages: no objects to show

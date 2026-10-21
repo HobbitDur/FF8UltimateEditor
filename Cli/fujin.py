@@ -10,8 +10,8 @@ from .base import BaseCliTool
 
 
 def _load(args):
-    from Laguna.lagunamanager import LagunaManager
-    manager = LagunaManager()
+    from Fujin.magdocument import MagDocument
+    manager = MagDocument()
     manager.load_file(args.input)
     return manager
 

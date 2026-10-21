@@ -7,7 +7,7 @@ import struct
 import pytest
 
 from FF8GameData.magcine.magfile import MagFile, MagField
-from Laguna.lagunamanager import LagunaManager
+from Fujin.magdocument import MagDocument
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MAGIC = ROOT / "extracted_files/magic"
@@ -67,7 +67,7 @@ def test_script_does_not_decode_following_camera_as_cinematic_code():
     # A fall-through wait followed by a camera; the cinematic decoder must stop at the boundary.
     collection = struct.pack("<3H8hH", 1, 6, 24, *([8]*8), 0xFFFF)
     camera = struct.pack("<4H", 2, 8, 10, 10+len(collection))+b"\x02\0"+collection
-    manager = LagunaManager()
+    manager = MagDocument()
     manager.load_bytes(_packed(b"\x09\x02", camera))
     assert manager.script_end == 50
     assert all(i.offset < 50 for i in manager.program.instructions.values())
@@ -75,7 +75,7 @@ def test_script_does_not_decode_following_camera_as_cinematic_code():
 
 
 def test_fixed_size_edits_are_atomic_and_reversible(tmp_path):
-    manager = LagunaManager()
+    manager = MagDocument()
     original = _tim()
     manager.load_bytes(original)
     section = manager.document.sections[-1]
@@ -115,14 +115,14 @@ def test_indexed_directory_aliases_and_trailing_data():
 def test_widget_edits_tim_fields_and_bytes_and_keeps_other_files(tmp_path):
     from Common.dirtytracking import install_dirty_tracking
     from Common.fileregistry import FileRegistry
-    from Laguna.lagunawidget import LagunaWidget
-    from Laguna.magsectionwidget import MagSectionEditor
+    from Fujin.magdocumentwidget import MagDocumentWidget
+    from Fujin.magsectionwidget import MagSectionEditor
     from PyQt6.QtWidgets import QApplication
     first, second = tmp_path/"MAG900_B.00", tmp_path/"MAG901_B.01"
     first.write_bytes(_tim())
     second.write_bytes(b"raw streamed bytes")
     registry = FileRegistry()
-    widget = LagunaWidget(file_registry=registry)
+    widget = MagDocumentWidget(file_registry=registry)
     install_dirty_tracking(widget)
     widget.load_folder(str(tmp_path))
     QApplication.processEvents()
@@ -156,13 +156,13 @@ def test_widget_edits_tim_fields_and_bytes_and_keeps_other_files(tmp_path):
 @pytest.mark.ff8data("extracted_files/magic/MAG230_B.00")
 def test_disease_breath_camera_script_and_keyframes_save_in_the_mag(tmp_path):
     from Common.fileregistry import FileRegistry
-    from Laguna.lagunawidget import LagunaWidget
-    from Laguna.magsectionwidget import MagSectionEditor
+    from Fujin.magdocumentwidget import MagDocumentWidget
+    from Fujin.magsectionwidget import MagSectionEditor
     from PyQt6.QtWidgets import QApplication
     path = tmp_path/"MAG230_B.00"
     original = (MAGIC/path.name).read_bytes()
     path.write_bytes(original)
-    widget = LagunaWidget(file_registry=FileRegistry())
+    widget = MagDocumentWidget(file_registry=FileRegistry())
     widget.load_file(str(path))
     assert widget.manager.root == 0x58 and widget.manager.script_end == 0x870
     index = next(i for i in range(widget.section_tabs.count()) if widget.section_tabs.tabText(i) == "Camera")
@@ -186,7 +186,7 @@ def test_disease_breath_camera_script_and_keyframes_save_in_the_mag(tmp_path):
     saved = path.read_bytes()
     assert saved != original and len(saved) == len(original)
     assert saved[:0x870] == original[:0x870] and saved[0x930:] == original[0x930:]
-    reopened = LagunaManager()
+    reopened = MagDocument()
     reopened.load_file(str(path))
     assert bytes(reopened.data) == saved
     widget.deleteLater()
@@ -200,7 +200,7 @@ def test_entire_mag_corpus_opens_partitions_saves_and_undoes(tmp_path):
     assert {p.name for p in files} == set(catalog["files"])
     assert len(files) == 790
     for p in files:
-        m = LagunaManager()
+        m = MagDocument()
         m.load_file(str(p))
         _assert_partition(m.document)
         if m.program:
@@ -249,14 +249,14 @@ def test_effect_profiles_separate_real_handlers_from_ifrit_stubs():
 
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe")
 def test_native_effect_profiles_are_reproducible():
-    from Laguna.ResearchScript.dump_mag_profiles import build
+    from Fujin.ResearchScript.dump_mag_profiles import build
     expected = json.loads((ROOT/"FF8GameData/Resources/json/mag_cinematic_profiles.json").read_text())
     assert build(str(ROOT/"extracted_files/FF8_EN.exe")) == expected
 
 
 @pytest.mark.ff8data("extracted_files/magic/MAG230_B.00")
 def test_unverified_effect_playback_is_explicit():
-    manager = LagunaManager()
+    manager = MagDocument()
     manager.load_file(str(MAGIC/"MAG230_B.00"))
     with pytest.raises(ValueError, match="Playback is verified only"):
         manager.simulate()
@@ -265,10 +265,10 @@ def test_unverified_effect_playback_is_explicit():
 def test_new_mod_binding_reopens_a_closed_tool(tmp_path):
     from Common.closedfileview import install_closed_file_view
     from Common.fileregistry import FileRegistry
-    from Laguna.lagunawidget import LagunaWidget
+    from Fujin.magdocumentwidget import MagDocumentWidget
     from PyQt6.QtWidgets import QApplication
     registry = FileRegistry()
-    widget = LagunaWidget(file_registry=registry)
+    widget = MagDocumentWidget(file_registry=registry)
     view = install_closed_file_view(widget)
     first = tmp_path/"MAG900_B.00"
     first.write_bytes(_tim())
@@ -291,10 +291,10 @@ def test_failed_save_keeps_unsaved_bytes_and_dirty_marker(tmp_path, monkeypatch)
     from Common.dirtytracking import install_dirty_tracking
     from Common.filetoolbarwidget import FileToolbarWidget
     from Common.fileregistry import FileRegistry
-    from Laguna.lagunawidget import LagunaWidget
+    from Fujin.magdocumentwidget import MagDocumentWidget
     from PyQt6.QtWidgets import QStackedWidget, QMessageBox, QApplication
     registry = FileRegistry()
-    widget = LagunaWidget(file_registry=registry)
+    widget = MagDocumentWidget(file_registry=registry)
     install_dirty_tracking(widget)
     path = tmp_path/"MAG900_B.00"
     path.write_bytes(_tim())
@@ -319,13 +319,13 @@ def test_failed_save_keeps_unsaved_bytes_and_dirty_marker(tmp_path, monkeypatch)
 
 def test_companion_opens_edits_and_saves_without_its_root_file(tmp_path):
     from Common.fileregistry import FileRegistry
-    from Laguna.lagunawidget import LagunaWidget
+    from Fujin.magdocumentwidget import MagDocumentWidget
     path = tmp_path/"MAG200_B.01"
     original = bytearray(_packed(b"resource bytes"))
     struct.pack_into("<I", original, 4, 0)  # a resource-only part, with no cinematic root
     path.write_bytes(original)
     registry = FileRegistry()
-    widget = LagunaWidget(file_registry=registry)
+    widget = MagDocumentWidget(file_registry=registry)
     widget.companion_bindings["Ifrit"].open_path(str(path))
     assert widget.manager is not None and widget.manager.program is None
     assert widget.current_gf == path.name

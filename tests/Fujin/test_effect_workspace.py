@@ -84,7 +84,7 @@ def test_disease_camera_and_section_views_share_one_document(workspace, tmp_path
     workspace.mag_camera.activate()
     manager = workspace.mag_camera.sections.manager
     page = workspace.mag_camera.sections.currentWidget()
-    from Laguna.magsectionwidget import MagSectionEditor
+    from Fujin.magsectionwidget import MagSectionEditor
     editor = page.findChild(MagSectionEditor)
     assert editor.camera_track.keyframe_count() == 5
     assert workspace.camera_editor.preview.track is editor.camera_track
@@ -112,7 +112,7 @@ def test_disease_camera_and_section_views_share_one_document(workspace, tmp_path
 
 @pytest.mark.ff8data(EXE)
 def test_native_camera_fields_edit_signed_values_and_undo(workspace):
-    from Laguna.magsectionwidget import MagSectionEditor
+    from Fujin.magsectionwidget import MagSectionEditor
     workspace.camera_editor.exe_binding.open_path(str(ROOT / EXE))
     workspace.select_effect(278)
     view = workspace.native_camera

@@ -46,7 +46,7 @@ def gf_from_file_name(path):
     return ""
 
 
-class LagunaManager:
+class MagDocument:
     HEADER_FIELDS = 12  # u32 pointer header
 
     def __init__(self):

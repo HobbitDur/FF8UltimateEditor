@@ -1,7 +1,7 @@
 """Battle-context playback for DAT camera collections.
 
 Coordinates here are engine XYZ (+Y down), not the editor's historical field names
-(pos_z, pos_x, pos_y). Reuses Laguna's engine look-at basis and Watts' timing/easing
+(pos_z, pos_x, pos_y). Reuses the GF cinematic scene's engine look-at basis (magcine.cinescene) and Watts' timing/easing
 and spline implementation. References: EN 503520, 5035E0, 503C70, 50D300, 50D790.
 Actor poses/placements are supplied by the preview, not inferred from an isolated DAT.
 Floating-point matrices/splines approximate the engine's fixed-point rounding.

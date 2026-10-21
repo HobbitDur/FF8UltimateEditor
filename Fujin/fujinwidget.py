@@ -18,7 +18,7 @@ from Fujin.cameraeffectmanager import cam_file_name, CAM_EXTENSION, CAM_FFNX_FOL
 from Fujin.effectcatalog import EffectCatalog, EffectResource
 from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
-from Laguna.lagunawidget import LagunaWidget
+from Fujin.magdocumentwidget import MagDocumentWidget
 from SmallWidget.listsearchbar import ListSearchBar
 
 
@@ -38,7 +38,7 @@ class FujinWidget(QWidget):
         self._exported_signature = ()
         self._owned_cam_exports = {}
         self.camera_editor = CameraEffectEditorWidget(GameData(game_data_folder), self.file_registry, embedded=True)
-        self.mag_editor = LagunaWidget(icon_path, game_data_folder, self.file_registry)
+        self.mag_editor = MagDocumentWidget(icon_path, game_data_folder, self.file_registry)
         self.mag_editor.tabs.setTabVisible(0, False)
         self.mag_editor.tabs.setTabVisible(3, False)
         self.mag_editor.tabs.setCurrentIndex(1)
@@ -349,7 +349,7 @@ class FujinWidget(QWidget):
                 self.camera_editor.preview.set_track(self.camera_editor.manager.track(self.current_effect))
             elif source is self.mag_camera:
                 page = self.mag_camera.sections.currentWidget()
-                from Laguna.magsectionwidget import MagSectionEditor
+                from Fujin.magsectionwidget import MagSectionEditor
                 editor = page.findChild(MagSectionEditor) if page else None
                 self.camera_editor.preview.set_track(getattr(editor, "camera_track", None))
             else:

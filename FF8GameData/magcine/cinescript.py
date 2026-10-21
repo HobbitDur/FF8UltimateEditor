@@ -10,7 +10,7 @@ call and "start a script" offset is relative to the instruction's first word.
 The opcode table lives in Resources/json/gf_cinematic_opcodes.json (decoded from FF8_EN.exe, all
 seven GFs share the numbering; a dozen opcodes only exist in some of them - `gfs`).
 
-Qt-free: used by the Laguna tool and the CLI.
+Qt-free: used by Fujin's MAG editor and the CLI.
 """
 import json
 import os

@@ -135,7 +135,7 @@ class FileToolbarWidget(QWidget):
         coexist in the same menu: a tool with several fixed-name files and a wildcard multi-select
         (ShumiTranslator) offers every one of them side by side, none more special than another.
 
-        A tool whose files only make sense as a whole set (Laguna: every GF's .00, .01 and streamed
+        A tool whose files only make sense as a whole set (Fujin: every GF's .00, .01 and streamed
         parts) defines import_files() instead: Import then runs that one action, no file menu."""
         whole_set = getattr(self.tool_stack.currentWidget(), "import_files", None)
         if callable(whole_set):
@@ -179,7 +179,7 @@ class FileToolbarWidget(QWidget):
         active = self.tool_stack.currentWidget()
         getter = getattr(active, "auto_import_bindings", None)
         bindings = list(getter()) if callable(getter) else self._bindings()
-        # Whole-set imports historically remembered only a tool-level directory (Laguna).
+        # Whole-set imports historically remembered only a tool-level directory (the former GF cinematic tool).
         folder = (self.registry.last_folder(self._folder_scan_key())
                   if callable(getattr(active, "import_files", None)) else "")
         sources = [AutoImportSource.for_binding(binding, folder) for binding in bindings]
@@ -243,7 +243,7 @@ class FileToolbarWidget(QWidget):
         folder memory (they're usually side by side, but keyed per file type all the same)."""
         names = [binding.file_name for binding in bindings]
         start = self.registry.last_folder(bindings[0].file_name) if bindings else ""
-        # A long list of exact names (Laguna reads ~180 GF mag parts) makes an unusable filter: past
+        # A long list of exact names (Fujin reads ~180 GF mag parts) makes an unusable filter: past
         # a handful, filter by extension; every pick is still routed by its exact name below.
         patterns = names if len(names) <= 12 else sorted({"*" + os.path.splitext(n)[1] for n in names})
         file_paths = QFileDialog.getOpenFileNames(

@@ -58,7 +58,7 @@ class CreatureLoader:
         skeleton, geometry, animation = obj.info["sections"]
         end = obj.offset + obj.info["size"]
         data = container.data
-        path = os.path.join(tempfile.gettempdir(), f"laguna_creature_{os.getpid()}_{object_id}.dat")
+        path = os.path.join(tempfile.gettempdir(), f"fujin_creature_{os.getpid()}_{object_id}.dat")
         with open(path, "wb") as f:
             f.write(build_dat([data[skeleton:geometry], data[geometry:animation], data[animation:end]]))
         manager = self._ifrit_manager()

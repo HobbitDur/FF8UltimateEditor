@@ -45,7 +45,7 @@ class ClosedFileView(QObject):
             changed.connect(self._add_discovered_bindings)
 
     def _add_discovered_bindings(self):
-        """Tools such as Laguna can discover additional mod files after construction."""
+        """Tools such as Fujin can discover additional mod files after construction."""
         for binding in self._tool.file_bindings():
             if binding in self._bindings or binding.read_only or getattr(binding, "complementary", False):
                 continue

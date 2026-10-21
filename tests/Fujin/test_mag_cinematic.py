@@ -1,4 +1,4 @@
-"""Laguna - GF cinematic script (MAGxxx_B.00) decoding, simulation, in-place edits and the tool."""
+"""Fujin MAG documents - GF cinematic script (MAGxxx_B.00) decoding, simulation, in-place edits and the editor."""
 import pathlib
 import struct
 import subprocess
@@ -10,7 +10,7 @@ from FF8GameData.magcine.cinescript import (CineOpcodeTable, CineProgram, decode
                                             format_instruction)
 from FF8GameData.magcine.cinesim import CineSimulation, root_program_offset
 from FF8GameData.magcine.magcontainer import MagContainer
-from Laguna.lagunamanager import LagunaManager, CINEMATIC_GFS, gf_from_file_name
+from Fujin.magdocument import MagDocument, CINEMATIC_GFS, gf_from_file_name
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 MAGIC = PROJECT_ROOT / "extracted_files" / "magic"
@@ -100,7 +100,7 @@ def test_mag_resources_parse(gf, path):
 
 @needs_files
 def test_unmodified_save_is_byte_exact(tmp_path):
-    manager = LagunaManager()
+    manager = MagDocument()
     manager.load_file(str(MAGIC / "MAG205_B.00"))
     assert manager.gf == "Eden"
     out = tmp_path / "MAG205_B.00"
@@ -110,7 +110,7 @@ def test_unmodified_save_is_byte_exact(tmp_path):
 
 @needs_files
 def test_in_place_edit_keeps_length_and_undoes():
-    manager = LagunaManager()
+    manager = MagDocument()
     manager.load_file(str(MAGIC / "MAG200_B.00"))
     wait = next(i for i in manager.program.sorted_instructions() if i.code == 0x09)
     manager.replace_instruction(wait.offset, 0x09 | (5 << 9), [])
@@ -142,9 +142,9 @@ def test_cli_info_and_disasm():
 @needs_files
 def test_widget_loads_edits_and_simulates():
     from Common.fileregistry import FileRegistry
-    from Laguna.lagunawidget import LagunaWidget
+    from Fujin.magdocumentwidget import MagDocumentWidget
     registry = FileRegistry()
-    widget = LagunaWidget(file_registry=registry)
+    widget = MagDocumentWidget(file_registry=registry)
     registry.open_file("MAG200_B.00", str(MAGIC / "MAG200_B.00"))
     registry.open_file("MAG200_B.01", str(MAGIC / "MAG200_B.01"))
     assert widget.current_gf == "Ifrit"
@@ -165,7 +165,7 @@ def test_widget_loads_edits_and_simulates():
 @needs_files
 def test_scene_places_the_creature_and_the_camera():
     from FF8GameData.magcine.cinescene import CineScene
-    from Laguna.creature import CreatureLoader
+    from Fujin.creature import CreatureLoader
     data00 = (MAGIC / "MAG200_B.00").read_bytes()
     containers = [MagContainer(data00), MagContainer((MAGIC / "MAG200_B.01").read_bytes())]
     simulation = CineSimulation(data00, root_program_offset(data00))
@@ -183,9 +183,9 @@ def test_scene_places_the_creature_and_the_camera():
 @needs_files
 def test_widget_playback_follows_edits():
     from Common.fileregistry import FileRegistry
-    from Laguna.lagunawidget import LagunaWidget
+    from Fujin.magdocumentwidget import MagDocumentWidget
     registry = FileRegistry()
-    widget = LagunaWidget(file_registry=registry)
+    widget = MagDocumentWidget(file_registry=registry)
     registry.open_file("MAG200_B.00", str(MAGIC / "MAG200_B.00"))
     widget._on_timeline_picked(17, 120)
     assert widget.tick_slider.value() == 120 and widget.scene_view.selected_bone == 17
@@ -203,9 +203,9 @@ def test_open_folder_brings_every_gf_file():
     """The shared Open-folder scan finds the .00, .01 and every streamed part, and the scene uses them."""
     from Common.fileregistry import FileRegistry
     from Common.filetoolbarwidget import FileToolbarWidget
-    from Laguna.lagunawidget import LagunaWidget
+    from Fujin.magdocumentwidget import MagDocumentWidget
     registry = FileRegistry()
-    widget = LagunaWidget(file_registry=registry)
+    widget = MagDocumentWidget(file_registry=registry)
     folder = PROJECT_ROOT / "extracted_files"
     found = FileToolbarWidget.scan_folder(str(folder), {b.file_name for b in widget.file_bindings()})
     assert len(found) == 790  # all MAG families, including the original 169 GF parts
@@ -223,13 +223,13 @@ def test_open_folder_brings_every_gf_file():
 
 @needs_files
 def test_import_is_one_file_dialog(monkeypatch):
-    """Import offers no menu of file names for Laguna: one file dialog, the picked files load."""
+    """Import offers no menu of file names for MAG files: one file dialog, the picked files load."""
     from PyQt6.QtWidgets import QFileDialog, QStackedWidget, QApplication
     from Common.fileregistry import FileRegistry
     from Common.filetoolbarwidget import FileToolbarWidget
-    from Laguna.lagunawidget import LagunaWidget
+    from Fujin.magdocumentwidget import MagDocumentWidget
     registry = FileRegistry()
-    widget = LagunaWidget(file_registry=registry)
+    widget = MagDocumentWidget(file_registry=registry)
     stack = QStackedWidget()
     stack.addWidget(widget)
     toolbar = FileToolbarWidget(stack, registry)

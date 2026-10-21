@@ -3,7 +3,7 @@ import struct
 from PyQt6.QtCore import Qt, QSignalBlocker, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton,
                             QTableWidget, QTableWidgetItem, QHeaderView, QTabWidget)
-from Laguna.magsectionwidget import MagSectionTabs
+from Fujin.magsectionwidget import MagSectionTabs
 
 
 class EffectResourceView(QWidget):

@@ -1,6 +1,6 @@
 """Audit all extracted MAG/MA8 files without distributing game assets.
 
-python -m Laguna.ResearchScript.sweep_mag_files extracted_files --out docs/mag-file-census.json
+python -m Fujin.ResearchScript.sweep_mag_files extracted_files --out docs/mag-file-census.json
 Reports content classification, section coverage, script decode errors and embedded cameras.
 This is a structural/round-trip audit, not an in-game playback certification.
 """
@@ -12,7 +12,7 @@ from pathlib import Path
 
 from FF8GameData.gamedata import GameData
 from Fujin.cameraeffectmanager import CameraEffectManager, CameraTrack
-from Laguna.lagunamanager import LagunaManager
+from Fujin.magdocument import MagDocument
 
 
 def sweep(root):
@@ -26,7 +26,7 @@ def sweep(root):
     for path in sorted(paths, key=lambda p: str(p).lower()):
         if not path.is_file() or not path.name.lower().startswith(("mag", "ma8")):
             continue
-        manager = LagunaManager()
+        manager = MagDocument()
         manager.load_file(str(path))
         doc = manager.document
         spans = doc.sections

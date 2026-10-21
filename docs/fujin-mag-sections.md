@@ -4,8 +4,8 @@ The [Fujin effect workspace](fujin-effects.md) opens MAG/MA8 files by their cont
 TIM textures with any suffix, indexed model/animation containers, SCOT/AKAO audio and undecoded
 data. The bundled vanilla catalog contains 790 file names. **Import** also accepts additional
 mod files; **Open folder** discovers MAG/MA8 names recursively. **Files / sections → Source**
-keeps each loaded file's edits and undo history independently. Laguna is the internal document/
-cinematic component; it no longer has a separate main-window entry.
+keeps each loaded file's edits and undo history independently. The MAG document
+(`Fujin/magdocument.py`) and its editor (`Fujin/magdocumentwidget.py`) are part of Fujin.
 
 ## Sections
 
@@ -57,9 +57,9 @@ editable without presenting an unverified simulation as game behavior. The **Opc
 From the repository root, with original extracted game files available:
 
 ```powershell
-python -m Laguna.ResearchScript.dump_mag_profiles extracted_files/FF8_EN.exe --out FF8GameData/Resources/json/mag_cinematic_profiles.json
-python -m Laguna.ResearchScript.sweep_mag_files extracted_files --out docs/mag-file-census.json
-python -m pytest tests/Laguna
+python -m Fujin.ResearchScript.dump_mag_profiles extracted_files/FF8_EN.exe --out FF8GameData/Resources/json/mag_cinematic_profiles.json
+python -m Fujin.ResearchScript.sweep_mag_files extracted_files --out docs/mag-file-census.json
+python -m pytest tests/Fujin/test_mag_sections.py tests/Fujin/test_mag_cinematic.py
 ```
 
 The census contains file names, hashes, sizes, format/section counts, script results and camera
