@@ -76,3 +76,22 @@ python -m pytest tests/Fujin tests/Laguna
 
 `section`, `disasm`, `patch`, `timeline` and `opcodes` are also under `fujin`.
 The former standalone `laguna` command and GUI entry have been removed.
+
+## Synchronize the IDA research database
+
+In the audited English IDA database, run **File → Script file** and select
+`Fujin/ResearchScript/sync_effect_ida.py`. It validates the IDB input hash and all referenced
+source bytes, saves the current database, makes a timestamped SHA-256-verified copy under
+`Desktop/IDA_Backups`, and only then changes annotations. It preserves existing descriptive
+names and unrelated comments. It saves again and writes an `effect-update-report.json` beside
+the backup. A failed save or byte mismatch prevents annotation changes.
+
+The plan covers 631 addresses: cinematic directories/handlers, native resource and camera
+data, procedural camera operands, runtime/source relationships and Disease Breath's file
+camera. It also defines five format types and adds 96 verified opcode-directory references.
+Generate the plan without IDA to inspect it:
+
+```powershell
+python -m Fujin.ResearchScript.sync_effect_ida --emit-plan Temp/ida-effect-plan.json
+python -m pytest tests/Fujin/test_ida_effect_annotations.py
+```
