@@ -10,6 +10,13 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
 - **Overview:** native initializer/loader, runtime family and dependencies. Loader references,
   verified runtime resources and filename-family hints are distinct. A matching filename does
   not prove ownership; verified shared resources can appear under several effect IDs.
+  **Used by** lists the kernel.bin entries that play the effect: spells, GFs, enemy attacks,
+  battle items, command abilities and limit breaks, each with its index in its kernel section.
+  Open kernel.bin with the header's **Import complementary** (it is shared, so a kernel.bin
+  opened in SolomonRing works too). The effect list then shows them as a tooltip, and its
+  search also finds an effect by a user's name ("Phoenix Pinion" finds 001 Cure). The fields
+  read are every "Attack animation" field of `kernel_section_fields.json`
+  (`Fujin/effectusers.py`).
 - **Camera:** executable tracks, embedded MAG tracks, and verified native parameters. MAG and
   executable tracks share the battle-context preview and caster/target imports. This previews
   the selected track, not additional procedural writes. Disease Breath (231) has a camera in

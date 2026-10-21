@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWid
     QListWidgetItem, QTabWidget, QPlainTextEdit, QComboBox, QSplitter, QTextBrowser,
     QCheckBox, QFileDialog, QMessageBox)
 from Common.autoimport import AutoImportSource
+from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Fujin.cameraeffectpreview import MODEL_FOLDER_KEY, MODEL_PATTERNS, MODEL_SELECTION_KEY
@@ -19,7 +20,9 @@ from Fujin.effectcatalog import EffectCatalog, EffectResource, filename_effect
 from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
-from SmallWidget.listsearchbar import ListSearchBar
+from SmallWidget.listsearchbar import ListSearchBar, SEARCH_TEXT_ROLE
+
+USERS_SHOWN = 24    # entries listed per kind in the Overview's Used by (effect 0 has hundreds)
 
 
 class FujinWidget(QWidget):
@@ -39,6 +42,11 @@ class FujinWidget(QWidget):
         self._owned_cam_exports = {}
         self._resource_effects = None          # resource key -> effect ids using it (built once)
         self.camera_editor = CameraEffectEditorWidget(GameData(game_data_folder), self.file_registry, embedded=True)
+        # kernel.bin (read-only, shared): which spells, items, GFs, enemy attacks... play each effect
+        self.effect_users = {}
+        self.kernel_binding = FileBinding("kernel.bin", self.file_registry, load_callback=self._load_kernel,
+                                          file_filter="*kernel*.bin", read_only=True)
+        self.kernel_binding.file_closed.connect(self._close_kernel)
         self.mag_editor = MagDocumentWidget(icon_path, game_data_folder, self.file_registry)
         self.mag_editor.tabs.setTabVisible(0, False)
         self.mag_editor.tabs.setTabVisible(3, False)
@@ -132,13 +140,15 @@ class FujinWidget(QWidget):
         layout.addWidget(splitter)
         self._fill_effects()
         self.effect_list.setCurrentRow(0)
+        self.kernel_binding.load_opened_file()
         self.camera_editor.exe_binding.load_opened_file()
         if self.camera_editor.manager.exe_path and not self.native.managers:
             self._load_native(self.camera_editor.manager.exe_path)
         self._exported_signature = self._native_signature()
 
     def file_bindings(self):
-        return [self.camera_editor.exe_binding, self.camera_editor.preview.sceneout_binding] + self.mag_editor.file_bindings()
+        return ([self.camera_editor.exe_binding, self.camera_editor.preview.sceneout_binding, self.kernel_binding]
+                + self.mag_editor.file_bindings())
 
     def import_entries(self):
         return [("FF8 exe (camera tracks and embedded effect assets)", self.camera_editor.open_exe),
@@ -148,7 +158,8 @@ class FujinWidget(QWidget):
     def complementary_entries(self):
         preview = self.camera_editor.preview
         return [("Camera preview models: characters, weapons and monsters", preview.import_models),
-                ("Camera preview encounters: scene.out", preview.import_sceneout)]
+                ("Camera preview encounters: scene.out", preview.import_sceneout),
+                ("Effect users: kernel.bin (spells, items, GFs, enemy attacks, limit breaks)", self.import_kernel)]
 
     def auto_import_sources(self):
         preview = self.camera_editor.preview
@@ -156,6 +167,7 @@ class FujinWidget(QWidget):
                 AutoImportSource(MODEL_FOLDER_KEY, MODEL_PATTERNS, preview.add_models,
                                  selection_only=True, selection_key=MODEL_SELECTION_KEY),
                 AutoImportSource.for_binding(preview.sceneout_binding, self.file_registry.last_folder("scene.out")),
+                AutoImportSource.for_binding(self.kernel_binding, self.file_registry.last_folder("kernel.bin")),
                 AutoImportSource("Fujin effect files", ("mag*", "MAG*", "ma8*", "MA8*"),
                                  self.import_paths, selection_only=True)]
 
@@ -167,6 +179,64 @@ class FujinWidget(QWidget):
             self.file_registry.last_folder("Fujin effect files"), "Effect files (MAG* mag* MA8* ma8*);;All files (*)")
         if paths:
             self.import_paths(paths)
+
+    def import_kernel(self):
+        path = self.kernel_binding.open_dialog(self, default_dir=self.file_registry.last_folder("kernel.bin"))
+        if path:
+            self.file_registry.remember_folder("kernel.bin", os.path.dirname(path))
+
+    def _load_kernel(self, path):
+        from Fujin.effectusers import read_effect_users
+        try:
+            self.effect_users = read_effect_users(self.camera_editor.manager.game_data, path)
+        except Exception as error:  # noqa: BLE001 - a kernel.bin it cannot read gives no users
+            self.effect_users = {}
+            QMessageBox.warning(self, "Fujin", f"Cannot read the effect users from {os.path.basename(path)}:\n{error}")
+        self._update_effect_users()
+
+    def _close_kernel(self, *_args):
+        self.effect_users = {}
+        self._update_effect_users()
+
+    def users(self, effect):
+        """The kernel.bin entries playing an effect ([] without a kernel.bin)."""
+        return self.effect_users.get(effect, [])
+
+    def _update_effect_users(self):
+        """Tooltip and search words of every effect row, then the Overview."""
+        for row in range(self.effect_list.count()):
+            item = self.effect_list.item(row)
+            users = self.users(item.data(Qt.ItemDataRole.UserRole))
+            item.setData(SEARCH_TEXT_ROLE, " ".join(user.name for user in users))
+            labels = [user.label() for user in users]
+            if labels:
+                more = f" and {len(labels) - 12} more" if len(labels) > 12 else ""
+                item.setToolTip("Used by: " + ", ".join(labels[:12]) + more)
+            else:
+                item.setToolTip("No kernel.bin entry plays this effect" if self.effect_users else "")
+        self.effect_search.search()
+        self._refresh_summary()
+
+    def _users_html(self, effect):
+        esc = lambda value: html.escape(str(value))
+        if not self.effect_users:
+            return ("<h3>Used by</h3><p style='color:#c0392b'>Open kernel.bin with the header's Import "
+                    "complementary to see which spells, items, GFs, enemy attacks and limit breaks play this effect.</p>")
+        users = self.users(effect)
+        if not users:
+            return ("<h3>Used by</h3><p>No kernel.bin entry plays this effect. It can still be played by the "
+                    "game code, a monster's AI or another effect.</p>")
+        groups = {}
+        for user in users:
+            groups.setdefault(user.kind, []).append(user)
+        rows = []
+        for kind, entries in groups.items():
+            names = [f"{esc(u.name)} <span style='color:gray'>({u.entry_id})</span>" for u in entries[:USERS_SHOWN]]
+            more = f" and {len(entries) - USERS_SHOWN} more" if len(entries) > USERS_SHOWN else ""
+            rows.append(f"<tr><td><b>{esc(kind)}</b></td><td>{', '.join(names)}{more}</td></tr>")
+        return ("<h3>Used by</h3><table cellspacing='0' cellpadding='4'>" + "".join(rows) + "</table>"
+                "<p style='color:gray'>From the kernel.bin entries whose attack animation is this effect "
+                "(in brackets: the entry's index in its kernel section).</p>")
 
     def load_folder(self, folder):
         self.mag_editor.load_folder(folder)
@@ -394,6 +464,7 @@ class FujinWidget(QWidget):
             f"<b>Initializer (EN):</b> {esc(info.get('logic_name', 'Unresolved'))} {esc(info.get('logic_addr', ''))}<br>"
             f"<b>Loader (EN):</b> {esc(info.get('fl_name', 'Unresolved'))} {esc(info.get('fl_addr', ''))}</p>"
             f"<p>{esc(self.catalog.notes(effect))}</p>"
+            + self._users_html(effect)
             + (f"<p>Same initializer: {esc(', '.join(str(i) for i in aliases))}. Resource ownership is listed separately.</p>" if aliases else "")
             + ("<p>This slot is unused in the audited dispatch table.</p>" if info.get("free") else "")
             + "<table border='1' cellspacing='0' cellpadding='6'><tr><th>Resource</th><th>Source</th><th>Evidence</th><th>Availability</th></tr>"

@@ -3,6 +3,11 @@ from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget
 
 
+# Item data role holding more text a row matches, beyond its label (Fujin: the spells, items...
+# that play an effect, so searching "Potion" finds its effect)
+SEARCH_TEXT_ROLE = Qt.ItemDataRole.UserRole + 50
+
+
 class ListSearchBar(QWidget):
     """A Ctrl+F search bar filtering the QListWidget it is attached to.
 
@@ -122,6 +127,9 @@ class ListSearchBar(QWidget):
 
     def _matches(self, row, item, search_text):
         if search_text in item.text().lower():
+            return True
+        extra = item.data(SEARCH_TEXT_ROLE)   # more words a row is found by (not shown in it)
+        if extra and search_text in str(extra).lower():
             return True
         return self.match_index and search_text == str(row)
 
