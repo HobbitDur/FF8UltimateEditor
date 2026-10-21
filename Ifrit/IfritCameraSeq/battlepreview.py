@@ -81,7 +81,9 @@ def actor_from_model(manager, position=(0., 0., 0.), yaw=0., animation=0, animat
 class BattlePreviewSetup(QWidget):
     changed = pyqtSignal()
 
-    def __init__(self, manager, parent=None, file_registry=None):
+    def __init__(self, manager, parent=None, file_registry=None, host_cast=False):
+        """host_cast: the host tool feeds the actors and slots itself (Fujin's party, Caster and
+        Target) and opens files from the header toolbar, so those controls are hidden here."""
         super().__init__(parent)
         self.manager = manager
         self.opponent = None
@@ -114,7 +116,7 @@ class BattlePreviewSetup(QWidget):
         options = QVBoxLayout(self.options)
         options.setContentsMargins(0, 0, 0, 0)
         from .encounterpreview import EncounterPicker
-        self.encounters = EncounterPicker(manager, file_registry)
+        self.encounters = EncounterPicker(manager, file_registry, host_cast=host_cast)
         self.encounters.changed.connect(self._encounter_changed)
         options.addWidget(self.encounters)
         party_row = QHBoxLayout()
@@ -184,6 +186,12 @@ class BattlePreviewSetup(QWidget):
         self.status = QLabel('Opponent model not loaded. Manual placement.')
         self.status.setWordWrap(True)
         options.addWidget(self.status)
+        if host_cast:
+            for host_row in (party_row, role_row, slot_row, import_row):
+                for index in range(host_row.count()):
+                    if host_row.itemAt(index).widget() is not None:
+                        host_row.itemAt(index).widget().hide()
+            self.status.hide()
         self.role.currentIndexChanged.connect(lambda _value: self._roles_changed())
         self.initial_view.currentIndexChanged.connect(lambda _value: self.changed.emit())
         self.view_mode.currentIndexChanged.connect(lambda _value: self.changed.emit())

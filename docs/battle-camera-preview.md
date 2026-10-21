@@ -78,12 +78,16 @@ Squall's first six opening shots include these holds.
 Fujin's **Camera** tab reuses the same player for the 221 spell/attack camera tracks stored
 in the exe and for normal tracks embedded in MAG files. See the [effect workspace guide](fujin-effects.md).
 Import characters (`d?c###.dat`),
-their weapons (`d?w###.dat`) and monsters (`c0m###.dat`) with **Import models…** or the header's
-**Import read-only**; they are read-only and remembered for Auto-upload. Each **Party** slot
-takes a character and one of its weapons. **Open scene.out** (the shared file, also in the
-setup's encounter picker) places a real encounter: pick it in **Battle setup**, and **Caster** /
-**Target** then list its battle slots, party members and enemies alike. Without scene.out the
-setup's manual placement puts the caster and an imported monster face to face.
+their weapons (`d?w###.dat`) and monsters (`c0m###.dat`) with the header's **Import
+complementary** (Camera preview models); they are read-only and remembered for Auto-upload.
+Fujin has no file buttons of its own: every file opens from the header toolbar. Each **Party**
+slot takes a character and one of its weapons. scene.out (the shared file, also in the header's
+Import complementary) places a real encounter: pick it in **Battle setup**, and **Caster** /
+**Target** then list its battle slots, party members and enemies alike. Fujin's party and
+Caster/Target place the actors, so its Battle setup only keeps the encounter, the manual
+placement and the starting view (no Open scene.out, Load opponent or slot controls there).
+Without scene.out the setup's manual placement puts the caster and an imported monster face to
+face. An effect with unsaved changes shows a `*` in front of it in the effect list.
 
 An effect track starts with a camera script that chooses the animation to play. Fujin runs it
 (`FF8GameData/dat/camerascript.py`, the shared VM's arithmetic and jumps plus the camera

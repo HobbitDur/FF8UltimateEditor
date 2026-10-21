@@ -30,6 +30,35 @@ def test_tabs_and_empty_camera_editor(fujin):
     assert [label for label, _callback in fujin.import_entries()][0].startswith("FF8 exe")
 
 
+def test_files_open_from_the_header_toolbar_only(fujin):
+    """No Import / Open / Load / Reload button inside the tool: the header toolbar's Import,
+    Import complementary and Reload do it (import_entries / complementary_entries / bindings)."""
+    import re
+    from PyQt6.QtWidgets import QPushButton
+    buttons = [button.text() for button in fujin.findChildren(QPushButton) if not button.isHidden()]
+    assert not [text for text in buttons if re.match(r"(Import|Open|Load|Reload)", text)], buttons
+    assert len(fujin.import_entries()) == 3 and len(fujin.complementary_entries()) == 2
+    fujin.select_effect(LIFE)                                     # mag004-034.tim, not imported
+    fujin.files.activate()
+    assert "header's Import" in fujin.files.status.text()       # what to do with a missing file
+
+
+@pytest.mark.ff8data(EXE)
+def test_effect_list_marks_unsaved_effects(fujin, tmp_path):
+    editor = fujin.camera_editor
+    editor.exe_binding.open_path(EXE)
+    fujin.select_effect(LIFE)
+    item = fujin.effect_list.currentItem()
+    assert not item.text().startswith("* ") and not fujin.modified_effects()
+    frame = editor.manager.track(LIFE).collection.sets[0].animations[0].blocks[0].frames[0]
+    editor._collection_widget._on_field_changed(frame.pos_x, frame.pos_x.get() + 50)
+    assert fujin.modified_effects() == {LIFE} and item.text().startswith("* 035")
+    assert fujin.save_files(tmp_path)
+    assert not fujin.modified_effects() and item.text().startswith("035")
+    editor._reset_selected()                                      # back to the exe bytes: unsaved again
+    assert item.text().startswith("* 035")
+
+
 @pytest.mark.ff8data(EXE)
 def test_edit_keyframe_and_save_hext(fujin, tmp_path):
     editor = fujin.camera_editor

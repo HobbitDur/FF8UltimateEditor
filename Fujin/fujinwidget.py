@@ -15,7 +15,7 @@ from FF8GameData.gamedata import GameData
 from Fujin.cameraeffectpreview import MODEL_FOLDER_KEY, MODEL_PATTERNS, MODEL_SELECTION_KEY
 from Fujin.cameraeffectwidget import CameraEffectEditorWidget
 from Fujin.cameraeffectmanager import cam_file_name, CAM_EXTENSION, CAM_FFNX_FOLDER
-from Fujin.effectcatalog import EffectCatalog, EffectResource
+from Fujin.effectcatalog import EffectCatalog, EffectResource, filename_effect
 from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
@@ -37,6 +37,7 @@ class FujinWidget(QWidget):
         self._refresh_pending = False
         self._exported_signature = ()
         self._owned_cam_exports = {}
+        self._resource_effects = None          # resource key -> effect ids using it (built once)
         self.camera_editor = CameraEffectEditorWidget(GameData(game_data_folder), self.file_registry, embedded=True)
         self.mag_editor = MagDocumentWidget(icon_path, game_data_folder, self.file_registry)
         self.mag_editor.tabs.setTabVisible(0, False)
@@ -114,7 +115,6 @@ class FujinWidget(QWidget):
         self.component_views = (self.mag_camera, self.native_camera, self.models, self.textures, self.sound, self.files)
         for view in self.component_views:
             view.data_changed.connect(self._resource_changed)
-            view.import_requested.connect(self._import_resource)
         self.camera_sources.currentChanged.connect(self._activate_tab)
         right = QWidget()
         layout = QVBoxLayout(right)
@@ -183,16 +183,6 @@ class FujinWidget(QWidget):
         self.file_registry.remember_files("Fujin effect files", [str(p) for p in paths])
         self._refresh()
 
-    def _import_resource(self, resource):
-        path, _ = QFileDialog.getOpenFileName(self, f"Import {resource.name}",
-            self.file_registry.last_folder(resource.name), f"Effect resource ({resource.name});;All files (*)")
-        if not path:
-            return
-        if os.path.basename(path).lower() != resource.name.lower():
-            QMessageBox.warning(self, "Fujin", f"Select {resource.name}. Use Import effect files for other filenames.")
-            return
-        self.import_paths([path])
-
     def _load_native(self, path):
         if self.camera_editor.manager.loaded:
             self.native.load(Path(path).read_bytes(), self.camera_editor.manager.language_name)
@@ -220,9 +210,39 @@ class FujinWidget(QWidget):
         with QSignalBlocker(self.effect_list):
             self.effect_list.clear()
             for effect in self.catalog.effect_ids():
-                item = QListWidgetItem(f"{effect:03d} — {self.catalog.name(effect)}")
+                item = QListWidgetItem(self._effect_text(effect))
                 item.setData(Qt.ItemDataRole.UserRole, effect)
                 self.effect_list.addItem(item)
+
+    def _effect_text(self, effect, modified=False):
+        return f"{'* ' if modified else ''}{effect:03d} — {self.catalog.name(effect)}"
+
+    def modified_effects(self):
+        """The effects with unsaved changes: a camera track or a native resource changed since the
+        last export, or a modified MAG file that the effect uses."""
+        exported = dict(self._exported_signature)
+        unsaved = {key for key, digest in self._native_signature() if exported.get(key) != digest}
+        effects = {int(key.split(":", 1)[1]) for key in unsaved if key.startswith("camera:")}
+        dirty = {os.path.basename(m.file_path).lower() for m in self.mag_editor.managers.values() if m.modified}
+        dirty |= {key for key in unsaved if not key.startswith("camera:")}
+        if dirty and self._resource_effects is None:
+            self._resource_effects = {}
+            for effect in self.catalog.effect_ids():
+                for resource in self.catalog.resources(effect):
+                    self._resource_effects.setdefault(resource.key, set()).add(effect)
+        for key in dirty:
+            family = filename_effect(key)       # an imported file of the effect's mag family
+            effects |= self._resource_effects.get(key, {family} if family is not None else set())
+        return effects
+
+    def _mark_modified_effects(self):
+        modified = self.modified_effects()
+        for row in range(self.effect_list.count()):
+            item = self.effect_list.item(row)
+            effect = item.data(Qt.ItemDataRole.UserRole)
+            text = self._effect_text(effect, effect in modified)
+            if item.text() != text:
+                item.setText(text)
 
     def select_effect(self, effect):
         for row in range(self.effect_list.count()):
@@ -398,6 +418,7 @@ class FujinWidget(QWidget):
         state = getattr(self, "dirty_state", None)
         if state is not None:
             (state.mark if unsaved else state.clear)()
+        self._mark_modified_effects()
 
     def _native_signature(self):
         result = [(f"camera:{effect}", hashlib.sha256(t.to_bytes()).digest())

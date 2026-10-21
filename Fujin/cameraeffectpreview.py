@@ -12,8 +12,9 @@ state (FF8GameData.dat.camerascript). The attacker/target slots come from the se
 inputs set the rest - opening shot, target status, random value... - and the result line tells
 which animation index the script chose and what it read to choose it.
 
-Every model is imported read-only through Import models or the header's Import read-only (shared
-FileRegistry memory, never a guessed folder); this tool never writes them.
+Every file the preview uses (the models, scene.out) is imported read-only from the header
+toolbar's Import complementary (shared FileRegistry memory, never a guessed folder); the preview
+has no file buttons of its own and never writes them.
 """
 import os
 import random
@@ -125,23 +126,9 @@ class CameraEffectPreview(QWidget):
         self.target_combo.setToolTip("The battle slot the effect is cast on")
         self.caster_combo.currentIndexChanged.connect(lambda _index: self._caster_changed())
         self.target_combo.currentIndexChanged.connect(lambda _index: self._cast_changed())
-        self.import_button = QPushButton("Import models…")
-        self.import_button.setToolTip("Characters, their weapons and monsters, read-only (also in the "
-                                      "header's Import read-only)")
-        self.import_button.clicked.connect(self.import_models)
-        self.sceneout_button = QPushButton("Open scene.out…")
-        self.sceneout_button.setToolTip("Place the actors of a real encounter (shared with Ifrit and Xu)")
-        self.sceneout_button.clicked.connect(self.import_sceneout)
         cast = QFormLayout()
         cast.addRow("Caster:", self.caster_combo)
         cast.addRow("Target:", self.target_combo)
-        buttons = QVBoxLayout()
-        buttons.addWidget(self.import_button)
-        buttons.addWidget(self.sceneout_button)
-        buttons.addStretch(1)
-        top = QHBoxLayout()
-        top.addLayout(party, 1)
-        top.addLayout(buttons)
 
         self.inputs_section = CollapsibleSection(
             "Script inputs", expanded=True,
@@ -189,8 +176,9 @@ class CameraEffectPreview(QWidget):
                                     "it chooses")
         self.play_button.clicked.connect(self.play_effect)
 
-        self.placeholder = QLabel("Import a caster and a target with Import models… (or the header's "
-                                  "Import read-only), and scene.out to place them in a real encounter.")
+        self.placeholder = QLabel("Import a caster and a target with the header's Import complementary "
+                                  "(Camera preview models), and scene.out to place them in a real "
+                                  "encounter.")
         self.placeholder.setWordWrap(True)
         self.placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.placeholder.setStyleSheet("color: gray")
@@ -202,7 +190,7 @@ class CameraEffectPreview(QWidget):
         self.settings_section.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         settings_layout = self.settings_section.content_layout()
         settings_layout.setContentsMargins(0, 0, 0, 0)
-        settings_layout.addLayout(top)
+        settings_layout.addLayout(party)
         settings_layout.addLayout(cast)
         settings_layout.addWidget(self.inputs_section)
         settings = getattr(file_registry, "settings", None)
@@ -475,7 +463,9 @@ class CameraEffectPreview(QWidget):
         from Ifrit.ifritmanager import IfritManager
         from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
         self._stage = IfritManager(game_data=self._shared_game_data())
-        self.panel = CameraPreviewPanel(self._stage, file_registry=self.file_registry)
+        # Fujin's party and Caster/Target place the actors: the setup keeps only the encounter,
+        # the manual placement and the views
+        self.panel = CameraPreviewPanel(self._stage, file_registry=self.file_registry, host_cast=True)
         from Ifrit.IfritCameraSeq.camerapreview import BATTLE_SETUP_STATE_KEY
         setup = self.panel._battle_setup
         settings = getattr(self.file_registry, "settings", None)
@@ -664,7 +654,8 @@ class CameraEffectPreview(QWidget):
         """A slot's ▶ Preview: play that animation as is, whatever the script would choose."""
         if self.panel is None:
             QMessageBox.information(self, "Camera effect preview",
-                                    "Import a caster and a target first (Import models…).")
+                                    "Import a caster and a target first (header's Import complementary: "
+                                    "Camera preview models).")
             return
         set_index = slot = None
         for index, camera_set in enumerate(self.track.collection.sets if self.track else []):

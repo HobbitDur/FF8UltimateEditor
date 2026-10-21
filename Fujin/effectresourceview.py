@@ -8,7 +8,6 @@ from Fujin.magsectionwidget import MagSectionTabs
 
 class EffectResourceView(QWidget):
     data_changed = pyqtSignal()
-    import_requested = pyqtSignal(object)
 
     def __init__(self, mode, resolve):
         super().__init__()
@@ -18,8 +17,6 @@ class EffectResourceView(QWidget):
         self.sources.setMinimumContentsLength(18)
         self.sources.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.sources.currentIndexChanged.connect(self.activate)
-        self.import_button = QPushButton("Import this file…")
-        self.import_button.clicked.connect(self._import)
         self.undo_button = QPushButton("Undo")
         self.redo_button = QPushButton("Redo")
         self.undo_button.clicked.connect(lambda: self._history(False))
@@ -31,7 +28,6 @@ class EffectResourceView(QWidget):
         row = QHBoxLayout()
         row.addWidget(QLabel("Source:"))
         row.addWidget(self.sources, 1)
-        row.addWidget(self.import_button)
         row.addWidget(self.undo_button)
         row.addWidget(self.redo_button)
         layout = QVBoxLayout(self)
@@ -84,16 +80,14 @@ class EffectResourceView(QWidget):
     def activate(self, *_args):
         resource = self.sources.currentData()
         manager = self.resolve(resource) if resource else None
-        self.import_button.setVisible(bool(resource and resource.source == "File"))
-        self.import_button.setText("Reload this file…" if manager else "Import this file…")
-        self.import_button.setEnabled(resource is not None)
         self.undo_button.setEnabled(bool(manager and manager._undo))
         self.redo_button.setEnabled(bool(manager and manager._redo))
         if resource is None:
             self.status.setText("No loaded resource for this component. Overview lists known sources and unresolved dependencies.")
         else:
             location = (f"{resource.address:#x} in EN exe → Hext export" if resource.source == "Executable"
-                        else manager.file_path if manager else "File not imported")
+                        else manager.file_path if manager else
+                        "Not imported: open it with the header's Import (Effect files).")
             self.status.setText(f"{resource.evidence}. {resource.note}\n{location}")
         self.sections.set_manager(manager, self._sections(resource, manager) if manager else None)
         if self.mode == "parameters":
@@ -136,8 +130,3 @@ class EffectResourceView(QWidget):
         manager = self.resolve(resource) if resource else None
         if manager and (manager.redo() if redo else manager.undo()):
             self.data_changed.emit()
-
-    def _import(self):
-        resource = self.sources.currentData()
-        if resource:
-            self.import_requested.emit(resource)

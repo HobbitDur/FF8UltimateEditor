@@ -13,20 +13,24 @@ from FF8GameData.sceneout import read_encounters, ENCOUNTER_SIZE, NB_ENCOUNTER
 class EncounterPicker(QWidget):
     changed = pyqtSignal()
 
-    def __init__(self, manager, registry=None, parent=None):
+    def __init__(self, manager, registry=None, parent=None, host_cast=False):
+        """host_cast: the host tool opens scene.out from the header toolbar and picks the
+        actors itself (Fujin's Caster/Target), so the Open button and the slot pick are hidden."""
         super().__init__(parent)
         self.manager = manager
         self.encounters = []
         self.path = None
         self._model_key = None
         self._name_cache = {}
+        self.host_cast = host_cast
         self.registry = registry if registry is not None else FileRegistry()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         row = QHBoxLayout()
-        open_button = QPushButton('Open scene.out…')
-        open_button.clicked.connect(self._choose)
-        row.addWidget(open_button)
+        self.open_button = QPushButton('Open scene.out…')
+        self.open_button.clicked.connect(self._choose)
+        self.open_button.setVisible(not host_cast)
+        row.addWidget(self.open_button)
         self.encounter = QComboBox()
         self.encounter.setMinimumContentsLength(20)
         self.encounter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
@@ -163,12 +167,13 @@ class EncounterPicker(QWidget):
                     self.enemy_slot.setCurrentIndex(self.enemy_slot.count() - 1)
         self.enemy_slot.blockSignals(False)
         self.slot_label.setText('Loaded monster:' if self.is_monster else 'Enemy opponent:')
-        self.slot_label.setVisible(encounter is not None)
-        self.enemy_slot.setVisible(encounter is not None)
+        self.slot_label.setVisible(encounter is not None and not self.host_cast)
+        self.enemy_slot.setVisible(encounter is not None and not self.host_cast)
         if encounter is None:
             count = self.encounter.count() - 1
             self.status.setText(f'{count} matching encounters. Manual placement.' if self.path else
-                                'Open scene.out to use encounter placement.')
+                                "Import scene.out (header's Import complementary) to use encounter placement."
+                                if self.host_cast else 'Open scene.out to use encounter placement.')
         else:
             self.status.setText(f'Encounter {encounter.index} · stage {encounter.stage_id} · '
                                 'Enemy positions from scene.out; normal party formation.')

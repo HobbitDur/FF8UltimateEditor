@@ -164,6 +164,11 @@ def test_scene_out_places_party_and_enemies(fujin, tmp_path):
     picker = setup.encounters
     picker.encounter.setCurrentIndex(1)
     preview.panel._timer.stop()
+    # Fujin's party and Caster/Target place the actors, and the header toolbar opens the files:
+    # the shared setup's own file buttons and slot controls are hidden here
+    assert picker.open_button.isHidden() and all(button.isHidden() for button in setup.opponent_buttons)
+    assert setup.role.isHidden() and setup.caster_slot.isHidden() and setup.party_size.isHidden()
+    assert picker.enemy_slot.isHidden() and not picker.encounter.isHidden()
 
     # Enemies stand at their scene.out slots, the party in the game's formation
     labels = [preview.caster_combo.itemText(row) for row in range(preview.caster_combo.count())]
