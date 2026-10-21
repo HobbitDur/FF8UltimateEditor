@@ -19,6 +19,7 @@ from FF8GameData.dat.animloopdetector import analyse_animation_usage, is_looping
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
                                           get_max_frame_for_animation, get_nb_part_needed,
                                           can_split_animation, MAX_ANIMATION_ID, MAX_ANIMATION_FRAME)
+from FF8GameData.dat import dat30
 from FF8GameData.tim.timfile import (decode_tim, force_opaque, word_to_rgba, PalettedTim,
                                      encode_clut, encode_indices)
 from FF8GameData.gamedata import GameData
@@ -416,6 +417,11 @@ class IfritManager:
                                  mode: str = interpolation.LINEAR) -> list:
         """Convert every .dat of file_list to target_fps, in place.
 
+        30 fps is the real conversion for FFNx True30FPS (_convert_file_list_to_real30): the
+        animations get 2n frames AND the sequences are rewritten for a VM ticking at 30 Hz, a
+        character family is converted whole or not at all. 60 fps only interpolates the
+        animations (no engine runs the sequences at 60 Hz).
+
         `mode` is the interpolation curve the inserted frames follow, the same for every file of
         the batch (FF8GameData/dat/interpolation.py).
         Returns one report dict per file: file, name, nb_converted, split_list,
@@ -423,6 +429,9 @@ class IfritManager:
         progress_callback(index, file_name) may return False to stop early.
         """
         factor = max(1, target_fps // self.BATTLE_NATIVE_FPS)
+        if factor == dat30.FACTOR:
+            return self._convert_file_list_to_real30(file_list, split_when_too_long,
+                                                     progress_callback, mode)
         report_list = []
         for index, file_path in enumerate(file_list):
             if progress_callback and progress_callback(index, os.path.basename(file_path)) is False:
@@ -523,6 +532,145 @@ class IfritManager:
         except Exception as e:
             report['error'] = f"the file cannot be saved ({type(e).__name__}: {e})"
         return report
+
+    # â”€â”€ Real 30 fps (FFNx True30FPS): animations + sequences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+    @staticmethod
+    def _new_fps_report(file_path) -> dict:
+        return {'file': os.path.basename(str(file_path)), 'name': "", 'nb_converted': 0,
+                'split_list': [], 'skipped_list': [], 'error': "", 'source': "",
+                'real30': True, 'sequence_report': None, 'nb_extra': 0, 'warning_list': []}
+
+    def _group_families(self, file_list) -> list:
+        """The files of file_list grouped so a character body and its weapons are converted
+        together (or not at all); a monster is a group of its own. Order kept."""
+        group_by_key = {}
+        group_list = []
+        for file_path in file_list:
+            slot = self.character_slot_of(file_path)
+            if slot is not None:
+                key = ("character", os.path.normcase(os.path.dirname(os.path.abspath(str(file_path)))),
+                       slot)
+            else:
+                key = ("file", os.path.normcase(str(file_path)))
+            if key not in group_by_key:
+                group_by_key[key] = []
+                group_list.append(group_by_key[key])
+            group_by_key[key].append(file_path)
+        return group_list
+
+    def _convert_file_list_to_real30(self, file_list, split_when_too_long: bool,
+                                     progress_callback=None, mode: str = interpolation.LINEAR) -> list:
+        """30 fps for FFNx True30FPS: section 3 doubled (2n frames), the sequences rewritten
+        (FF8GameData/dat/seqrewrite30.py), the battle-entry block of a character doubled
+        (FF8GameData/dat/dat30.py). A character family (body + every weapon in the list) is
+        converted whole or not at all."""
+        report_list = []
+        index = 0
+        for group in self._group_families(file_list):
+            group_report = []
+            for file_path in group:
+                if progress_callback and progress_callback(index, os.path.basename(str(file_path))) is False:
+                    for report in group_report:
+                        report.pop('_monster', None)
+                    return report_list
+                index += 1
+                group_report.append(self._convert_one_file_to_real30(file_path, split_when_too_long,
+                                                                     mode))
+            self._write_real30_group(group_report)
+            report_list.extend(group_report)
+        return report_list
+
+    def _write_real30_group(self, group_report):
+        """Save every converted file of a family, or none when one of them was refused. A file
+        that is not a model at all (d0w007, the empty placeholder) does not block its family."""
+        blocking = [report for report in group_report
+                    if report['skipped_list']
+                    or (report.get('_monster') is None and not report.get('_not_a_model'))]
+        for report in group_report:
+            monster = report.pop('_monster', None)
+            report.pop('_not_a_model', None)
+            if monster is None:
+                continue
+            if blocking:
+                report['error'] = ("left untouched: its character family cannot be converted "
+                                   f"({', '.join(r['file'] for r in blocking)})")
+                report['nb_converted'] = 0
+                report['split_list'] = []
+                report['sequence_report'] = None
+                report['nb_extra'] = 0
+                continue
+            try:
+                monster.write_data_to_file(self.game_data, monster.origin_path)
+            except Exception as e:
+                report['error'] = f"the file cannot be saved ({type(e).__name__}: {e})"
+
+    def _convert_one_file_to_real30(self, file_path, split_when_too_long: bool,
+                                    mode: str = interpolation.LINEAR) -> dict:
+        """Convert one file IN MEMORY. The report carries the analyser under '_monster' for
+        _write_real30_group, which saves the family or nothing."""
+        report = self._new_fps_report(file_path)
+        if not self.is_battle_model_file(file_path):
+            report['error'] = ("not a monster (c0mXXX.dat), character (dXcYYY.dat) or weapon "
+                               "(dXwYYY.dat) file: it holds no model animation")
+            report['_not_a_model'] = True
+            return report
+        try:
+            monster = MonsterAnalyser(self.game_data)
+            monster.load_file_data(str(file_path), self.game_data)
+            monster.analyse_loaded_data(self.game_data)
+        except Exception as e:
+            report['error'] = f"the file cannot be read ({type(e).__name__})"
+            report['_not_a_model'] = True
+            return report
+        report['name'] = str(monster.info_stat_data.get('monster_name', "") or "")
+        report['_monster'] = monster
+        message = self.convert_loaded_monster_to_real30(monster, split_when_too_long, mode, report)
+        if message:
+            report['error'] = message
+            report.pop('_monster', None)
+            if message == self._NO_MODEL_MESSAGE:
+                report['_not_a_model'] = True
+        elif report['skipped_list']:
+            report.pop('_monster', None)
+        return report
+
+    _NO_MODEL_MESSAGE = "no animation and no sequence in this file"
+
+    def convert_loaded_monster_to_real30(self, monster, split_when_too_long: bool = True,
+                                         mode: str = interpolation.LINEAR, report: dict = None) -> str:
+        """Convert a loaded analyser to real 30 fps in memory (nothing saved). Fills `report`
+        (see _new_fps_report) and returns an error message, or "" when it worked or when an
+        animation cannot make it (then 'skipped_list' says which, and nothing was touched)."""
+        if report is None:
+            report = self._new_fps_report(getattr(monster, 'origin_path', "") or "")
+        has_sequence = bool((monster.seq_animation_data or {}).get('seq_animation_data'))
+        has_animation = bool(monster.animation_data.nb_animations and monster.bone_data
+                             and monster.bone_data.bones)
+        if not has_animation and not has_sequence:
+            return self._NO_MODEL_MESSAGE
+        kind_dict = {}
+        if has_animation:
+            usage = analyse_animation_usage(self.game_data, monster)
+            report['source'] = usage['source']
+            kind_dict = usage['kind_dict']
+            if not kind_dict:
+                return ("the looping animations cannot be detected: no animation sequence "
+                        "section, and no weapon file of this character next to it")
+            if dat30.looks_already_converted(monster, kind_dict):
+                report['warning_list'].append(
+                    "looks already converted (every animation has an even frame count and its "
+                    "one-shot animations end on a held pose): converting twice doubles again")
+        origin = getattr(monster, 'origin_path', "") or ""
+        allow_split = split_when_too_long and not self.is_character_family_file(origin)
+        try:
+            result = dat30.convert_monster_to_real30(self.game_data, monster, kind_dict,
+                                                     allow_split, mode)
+        except Exception as e:
+            return f"the conversion failed ({type(e).__name__}: {e})"
+        for key in ('nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra'):
+            report[key] = result[key]
+        return ""
 
     def _get_no_split_reason(self, monster, anim_id, nb_frame, factor, smooth_loop, max_frame,
                              allow_split, is_family) -> str:

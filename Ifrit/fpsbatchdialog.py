@@ -33,12 +33,15 @@ class FpsBatchDialog(QDialog):
         layout.addWidget(QLabel("Convert the animations to:"))
         fps_layout = QHBoxLayout()
         self._fps_group = QButtonGroup(self)
-        self._fps_30 = QRadioButton("30 FPS (recommended)")
-        self._fps_30.setToolTip("Twice the frames. Every animation of the vanilla game fits, "
-                                "except two that are split automatically.")
+        self._fps_30 = QRadioButton("30 FPS - FFNx True30FPS (recommended)")
+        self._fps_30.setToolTip("The real 30 fps conversion: twice the frames (every animation "
+                                "of the vanilla game fits,\nthree are split automatically) AND "
+                                "the sequences rewritten for a battle VM running at 30 Hz.\n"
+                                "A character body and its weapons are converted together.")
         self._fps_60 = QRadioButton("60 FPS")
-        self._fps_60.setToolTip("Four times the frames. Some animations do not fit the format "
-                                "and cannot all be split: the report lists them.")
+        self._fps_60.setToolTip("Four times the frames, animations only (the sequences are left "
+                                "alone). Some animations do not fit\nthe format and cannot all be "
+                                "split: the report lists them.")
         self._fps_30.setChecked(True)
         self._fps_group.addButton(self._fps_30)
         self._fps_group.addButton(self._fps_60)
@@ -65,8 +68,12 @@ class FpsBatchDialog(QDialog):
                          "(at 60 fps that happens on ~50 monsters, whose idle is too long — "
                          "converting those files to 30 fps works).\n\n"
                          "The selected files are modified in place. Keep a backup of your "
-                         "files, and only run this once per file: converting an already "
-                         "converted file would interpolate the interpolated frames.")
+                         "files.\n\n"
+                         "Convert only vanilla, unconverted files: converting twice doubles "
+                         "again (frames, waits and loop counters). Nothing in a converted file "
+                         "marks it as converted; the report warns when a file looks like it "
+                         "already was. Under FFNx True30FPS with 30 fps on, EVERY battle file "
+                         "is expected to be converted.")
         warning.setWordWrap(True)
         warning.setStyleSheet("color:#c8a24a;")
         layout.addWidget(warning)
@@ -243,7 +250,36 @@ class FpsBatchReportDialog(QDialog):
                 line_list.append(f"    animation {anim_id} ({nb_frame} frames) split in "
                                  f"{nb_part} parts: {anim_id}, "
                                  f"{', '.join(str(i) for i in new_id_list)}")
+            line_list.extend(FpsBatchReportDialog.build_real30_line_list(report))
         return "\n".join(line_list)
+
+    @staticmethod
+    def build_real30_line_list(report: dict) -> list:
+        """The sequence part of a real 30 fps report: what was rewritten, and every sequence
+        that is not fully automatic (kept at 15 Hz cadence, or a manual decision)."""
+        line_list = []
+        for warning in report.get('warning_list', []):
+            line_list.append(f"    WARNING: {warning}")
+        if report.get('nb_extra'):
+            line_list.append(f"    battle-entry animation block converted")
+        sequence_report = report.get('sequence_report')
+        if sequence_report is None:
+            return line_list
+        count = sequence_report.count()
+        line_list.append(f"    sequences: {count.get('rewritten', 0)} rewritten, "
+                         f"{count.get('unchanged', 0)} correct as they are"
+                         + (f", {count.get('fallback', 0)} with a loop kept at 15 Hz cadence"
+                            if count.get('fallback') else "")
+                         + (f", {count.get('manual', 0) + count.get('refused', 0)} NEED A MANUAL "
+                            f"DECISION" if count.get('manual') or count.get('refused') else ""))
+        for seq_report in sorted(sequence_report.sequence_report.values(), key=lambda r: r.seq_id):
+            if seq_report.status in ('manual', 'refused', 'fallback'):
+                reason = "; ".join(seq_report.manual_list or seq_report.note_list)
+                line_list.append(f"      sequence {seq_report.seq_id} ({seq_report.status}): {reason}")
+            for offset, step, rounded in seq_report.odd_step_list:
+                line_list.append(f"      sequence {seq_report.seq_id}: odd per-tick step {step} at "
+                                 f"offset {offset} rounded to {rounded} per 30 Hz tick")
+        return line_list
 
     def _save(self, report_list, target_fps):
         path, _ = QFileDialog.getSaveFileName(self, "Save report", f"fps_{target_fps}_report.txt",

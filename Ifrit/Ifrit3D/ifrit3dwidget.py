@@ -1869,6 +1869,13 @@ class Ifrit3DWidget(QWidget):
             return
         target_fps, interpolation_mode = answer
 
+        # A battle .dat at 30 fps is the real conversion for FFNx True30FPS: animations AND
+        # sequences (Ifrit/ifritmanager.py convert_loaded_monster_to_real30).
+        if (target_fps == 30 and getattr(self.ifrit_manager, 'anim_native_fps', 15) == 15
+                and hasattr(self.ifrit_manager, 'convert_loaded_monster_to_real30')):
+            self._convert_loaded_file_to_real30(title, interpolation_mode)
+            return
+
         # A looping animation gets its last frame interpolated back to the first one, a
         # one-shot one does not. Without a sequence section, fall back on one answer for
         # the whole file.
@@ -1997,6 +2004,60 @@ class Ifrit3DWidget(QWidget):
         report.append(f"\nThe viewer playback speed has been set to {target_fps} fps.\n"
                       "Save the file to keep the new frames.")
         QMessageBox.information(self, title, "\n".join(report))
+
+    def _convert_loaded_file_to_real30(self, title: str, interpolation_mode):
+        """30 fps for FFNx True30FPS on the open file: every animation gets 2n frames and the
+        sequences are rewritten for a VM ticking at 30 Hz (FF8GameData/dat/dat30.py). A
+        character body and its weapons share the animation ids and must be converted
+        together: that goes through the batch conversion, which takes the whole family."""
+        enemy = self.ifrit_manager.enemy
+        origin = getattr(enemy, 'origin_path', "") or ""
+        if IfritManager.is_character_family_file(origin):
+            QMessageBox.information(
+                self, title,
+                "A character body and its weapon files play the same animation ids and the "
+                "sequences live in the weapon: they must be converted together.\n\n"
+                "Use \"Convert files to 30/60 FPS...\" (file menu), which converts the whole "
+                "family at once.")
+            return
+        report = IfritManager._new_fps_report(origin)
+        error = self.ifrit_manager.convert_loaded_monster_to_real30(enemy, True, interpolation_mode,
+                                                                    report)
+        if error:
+            QMessageBox.warning(self, title, f"Not converted: {error}.")
+            return
+        if report['skipped_list']:
+            QMessageBox.warning(self, title, "Not converted, nothing was changed:\n" + "\n".join(
+                f"  animation {anim_id}: {reason}" for anim_id, reason in report['skipped_list']))
+            return
+        self._refresh_animation_count()
+        self.current_frame = 0
+        self.next_frame_index = 1
+        self.interp_step = 0.0
+        if hasattr(self, 'frame_slider'):
+            self.frame_slider.setRange(0, self.get_max_frames() - 1)
+        self.update_animated_mesh()
+        self.update_skeleton()
+        self.animation_changed.emit()
+        self.set_fps(30)
+        line_list = [f"{report['nb_converted']} animation(s) converted to 30 fps (2n frames)."]
+        for anim_id, nb_frame, nb_part, new_id_list in report['split_list']:
+            line_list.append(f"  animation {anim_id} ({nb_frame} frames) split in {nb_part} parts: "
+                             f"{', '.join(str(i) for i in [anim_id] + new_id_list)}")
+        sequence_report = report['sequence_report']
+        if sequence_report is not None:
+            count = sequence_report.count()
+            line_list.append(f"Sequences: {count.get('rewritten', 0)} rewritten, "
+                             f"{count.get('unchanged', 0)} correct as they are.")
+            for seq_report in sorted(sequence_report.not_fully_automatic_list(),
+                                     key=lambda r: r.seq_id):
+                reason = "; ".join(seq_report.manual_list or seq_report.note_list)
+                line_list.append(f"  sequence {seq_report.seq_id} ({seq_report.status}): {reason}")
+        for warning in report['warning_list']:
+            line_list.append(f"Warning: {warning}")
+        line_list.append("\nFor FFNx True30FPS: convert only vanilla, unconverted files - "
+                         "converting twice doubles again. Save the file to keep the result.")
+        QMessageBox.information(self, title, "\n".join(line_list))
 
     # ── Frame / animation authoring ───────────────────────────────────
     def _current_animation_or_warn(self, title):
