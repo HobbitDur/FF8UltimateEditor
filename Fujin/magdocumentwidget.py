@@ -65,6 +65,7 @@ class MagDocumentWidget(QWidget):
         self._labels = {}
         self._simulation = None
         self._refresh_pending = False
+        self._deferred = []         # (key, gf) loaded while the registry opens many files at once
         self._row_of_offset = {}
         self._editing_offset = -1
 
@@ -586,6 +587,8 @@ class MagDocumentWidget(QWidget):
         except (OSError, ValueError, IndexError) as error:
             QMessageBox.critical(self, "Fujin", f"Cannot read {path}:\n{error}")
             return
+        if self._defer(key, gf):
+            return
         self._refresh_gf_selector()
         if self.current_gf in ("", key):
             self._show_gf(key)
@@ -608,6 +611,8 @@ class MagDocumentWidget(QWidget):
             QMessageBox.critical(self, "Fujin", f"Cannot load {path}:\n{error}")
             return
         self.managers[gf] = manager
+        if self._defer(gf, None):
+            return
         self._refresh_gf_selector()
         # Open folder brings all seven GFs: show the first, the others wait in the GF selector
         if self.current_gf in ("", gf):
@@ -1077,6 +1082,8 @@ class MagDocumentWidget(QWidget):
             self.parts.setdefault(gf, {})[number] = container
         else:
             self.parts.setdefault(gf, {}).pop(number, None)
+        if self._defer(key, gf):
+            return
         self._refresh_gf_selector()
         if self.current_gf in ("", key):
             self._show_gf(key)
@@ -1088,6 +1095,28 @@ class MagDocumentWidget(QWidget):
         self.part_data.get(gf, {}).pop(number, None)
         self._close_gf(streamed_part_names(gf)[number])
         self._schedule_refresh(gf)
+
+    def _defer(self, key, gf):
+        """While the registry opens many files at once, only note what loaded: the selector, the
+        shown file and the scene are updated once when the batch ends (_end_batch)."""
+        batching = getattr(self._registry, "batching", False)
+        if batching and not self._deferred:
+            self._registry.batch_finished.connect(self._end_batch, Qt.ConnectionType.SingleShotConnection)
+        if batching:
+            self._deferred.append((key, gf))
+        return batching
+
+    def _end_batch(self):
+        loaded, self._deferred = self._deferred, []
+        if not loaded:
+            return
+        self._refresh_gf_selector()
+        keys = [key for key, _gf in loaded]
+        if self.current_gf in keys or not self.current_gf:
+            self._show_gf(self.current_gf if self.current_gf in keys else keys[0])
+        for gf in dict.fromkeys(gf for _key, gf in loaded if gf):
+            self._schedule_refresh(gf)
+        self.file_bindings_changed.emit()
 
     def _schedule_refresh(self, gf):
         """Open folder delivers dozens of parts one by one: rebuild the scene once, afterwards."""

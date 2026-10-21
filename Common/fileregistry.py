@@ -1,4 +1,5 @@
 import os
+from contextlib import contextmanager
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -16,10 +17,13 @@ class FileRegistry(QObject):
     # (FF8 file name, path it had): the file was removed from the opened files - every tool must
     # stop using it (no save, no reload, no pick-up by a tool opened later).
     file_closed = pyqtSignal(str, str)
+    # A batch of opens (batch()) ended: the views that skipped refreshing during it refresh now
+    batch_finished = pyqtSignal()
 
     def __init__(self, settings=None):
         QObject.__init__(self)
         self.paths = {}  # FF8 file name -> path of the file currently opened
+        self._batch_depth = 0
         self.bindings = []  # every FileBinding created on this registry (registers itself)
         # Per-tool memory of the last folder an Open dialog was used in, so it re-opens there next
         # time - within the session and, when settings is a QSettings, across future sessions too.
@@ -82,6 +86,25 @@ class FileRegistry(QObject):
         Bindings whose filter is a wildcard (e.g. Ifrit's *.dat, CCGroup's *.exe) match no single
         name, so they are left out - a folder scan can't pick one file among many."""
         return {binding.file_name for binding in self.bindings if "*" not in binding.file_filter}
+
+    @property
+    def batching(self):
+        """True while many files are being opened at once (see batch())."""
+        return self._batch_depth > 0
+
+    @contextmanager
+    def batch(self):
+        """Open many files at once: every binding still loads its own file as it opens, but the
+        views that list or count the opened files (header toolbar, Opened files panel) skip their
+        refresh until the batch ends, then refresh once (batch_finished). Without it, opening N
+        files rebuilt those views N times."""
+        self._batch_depth += 1
+        try:
+            yield self
+        finally:
+            self._batch_depth -= 1
+            if self._batch_depth == 0:
+                self.batch_finished.emit()
 
     def get_path(self, file_name):
         """Path currently opened for that FF8 file, or an empty string if no file is opened."""

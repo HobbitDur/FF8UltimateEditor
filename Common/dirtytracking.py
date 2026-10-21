@@ -17,7 +17,7 @@ Design notes:
 - The Save button is NOT gated on this (it stays enabled while a file is loaded), so a missed edit
   signal can never leave the user unable to save - the worst case is a missing/extra ``*``.
 """
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, Qt, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox,
                              QComboBox, QAbstractButton, QAbstractSlider, QListWidget, QTableWidget)
 
@@ -98,11 +98,33 @@ def install_dirty_tracking(tool):
         if binding.read_only or getattr(binding, "complementary", False):
             # A complementary file (kernel.bin naming things...) only re-labels the tool: its
             # unsaved edits are still there, so keep the '*' - just track any new widgets.
-            binding.file_opened.connect(lambda _path, t=tool, s=state: s.track(t))
+            binding.file_opened.connect(lambda _path, t=tool, s=state, b=binding: _after_load(b, t, s, False))
             continue
         # After a file loads (populate has already run and may have marked dirty), pick up any new
         # widgets and reset to clean. file_opened carries the path; we ignore it.
-        binding.file_opened.connect(lambda _path, t=tool, s=state: (s.track(t), s.clear()))
+        binding.file_opened.connect(lambda _path, t=tool, s=state, b=binding: _after_load(b, t, s, True))
         # Removed from the opened files: its unsaved edits can no longer be saved, so no '*'.
         binding.file_closed.connect(lambda _path, s=state: s.clear())
     return state
+
+
+def _after_load(binding, tool, state, clear):
+    """Track the tool's new widgets (and reset to clean) after a file loads. While the registry
+    opens many files at once (FileRegistry.batch), scanning the whole tool after each one cost
+    seconds: do it once when the batch ends."""
+    registry = binding.registry
+    if not getattr(registry, "batching", False):
+        state.track(tool)
+        if clear:
+            state.clear()
+        return
+    if not getattr(state, "_batch_waiting", False):
+        state._batch_waiting, state._batch_clear = True, False
+
+        def finish():
+            state._batch_waiting = False
+            state.track(tool)
+            if state._batch_clear:
+                state.clear()
+        registry.batch_finished.connect(finish, Qt.ConnectionType.SingleShotConnection)
+    state._batch_clear = state._batch_clear or clear

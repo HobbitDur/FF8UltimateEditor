@@ -175,3 +175,32 @@ def test_native_snapshot_lists_named_functions(fujin):
     assert "pseudocode" not in functions[0]                                  # code: in the gzip, on demand
     assert "MAG_001_CURE_Init" in fujin.catalog.pseudocode(functions[0])
     assert "_snapshot" not in map(str, fujin.catalog.effect_ids())
+
+
+def test_tabs_without_content_are_greyed(fujin):
+    fujin.tabs.setCurrentIndex(3)
+    fujin.select_effect(PHOENIX_DOWN)                             # no camera, no file imported
+    assert not fujin.tabs.isTabEnabled(1) and "plays no camera track" in fujin.tabs.tabToolTip(1)
+    for index in (3, 4, 5):                                      # Models, Textures, Sound
+        assert not fujin.tabs.isTabEnabled(index) and fujin.tabs.tabToolTip(index)
+    assert fujin.tabs.currentIndex() == 0                       # a greyed tab hands over to Overview
+    assert "Greyed tabs" in fujin.overview.toPlainText()
+    fujin.select_effect(LIFE)
+    assert fujin.tabs.isTabEnabled(1) and fujin.tabs.tabToolTip(1) == ""
+    fujin.tabs.setCurrentIndex(1)                                # the user picks Camera...
+    fujin.select_effect(PHOENIX_DOWN)
+    assert fujin.tabs.currentIndex() == 0
+    fujin.select_effect(LIFE)
+    assert fujin.tabs.currentIndex() == 1                       # ...and gets it back with a camera
+
+
+@pytest.mark.ff8data("extracted_files/magic/MAG230_B.00")
+def test_many_effect_files_open_in_one_batch(fujin, monkeypatch):
+    import glob
+    paths = sorted(glob.glob("extracted_files/magic/MAG2*"))[:20]
+    shown = []
+    monkeypatch.setattr(fujin.mag_editor, "_show_gf", lambda gf, real=fujin.mag_editor._show_gf: (shown.append(gf), real(gf)))
+    fujin.import_paths(paths)
+    assert not fujin.file_registry.batching
+    assert len(fujin.mag_editor.managers) == len(paths)
+    assert len([gf for gf in shown if gf]) == 1                # one file shown, once, at the end

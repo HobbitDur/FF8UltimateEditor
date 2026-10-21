@@ -42,7 +42,8 @@ class OpenedFilesPanel(QWidget):
         layout.addStretch(1)
         self.setLayout(layout)
 
-        self.registry.file_changed.connect(self._refresh)
+        self.registry.file_changed.connect(lambda _name: None if self.registry.batching else self._refresh())
+        self.registry.batch_finished.connect(self._refresh)
         self._refresh()
 
     def _set_expanded(self, expanded):

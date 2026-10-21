@@ -73,6 +73,7 @@ class FujinWidget(QWidget):
         self.context.setWordWrap(True)
         self.tabs = QTabWidget()
         self.tabs.currentChanged.connect(self._activate_tab)
+        self.tabs.currentChanged.connect(self._remember_tab)
         self.overview = QTextBrowser()
         self.tabs.addTab(self.overview, "Overview")
         self.camera_sources = QTabWidget()
@@ -290,15 +291,27 @@ class FujinWidget(QWidget):
         self.mag_editor.load_folder(folder)
 
     def import_paths(self, paths):
+        """Open effect files with a progress bar (Cancel stops before the next file). The registry
+        batches the opens: views refresh once at the end instead of after every file."""
+        from Common.filetoolbarwidget import FileToolbarWidget
         by_name = {b.file_name.lower(): b for b in self.mag_editor.file_bindings()}
-        for path in paths:
-            name = os.path.basename(path)
-            binding = by_name.get(name.lower())
-            if binding is None:
-                binding = self.mag_editor._add_generic_binding(name)
-                by_name[name.lower()] = binding
-            binding.open_path(str(path))
-        self.file_registry.remember_files("Fujin effect files", [str(p) for p in paths])
+        opened = []
+        progress = FileToolbarWidget.open_progress(self, len(paths), "Opening effect files")
+        with self.file_registry.batch():
+            for index, path in enumerate(paths):
+                if progress.wasCanceled():
+                    break
+                name = os.path.basename(path)
+                progress.setLabelText(f"Opening {name} ({index + 1} / {len(paths)})")
+                progress.setValue(index)
+                binding = by_name.get(name.lower())
+                if binding is None:
+                    binding = self.mag_editor._add_generic_binding(name)
+                    by_name[name.lower()] = binding
+                binding.open_path(str(path))
+                opened.append(str(path))
+            progress.setValue(len(paths))
+        self.file_registry.remember_files("Fujin effect files", opened)
         self._refresh()
 
     def _load_native(self, path):
@@ -417,6 +430,7 @@ class FujinWidget(QWidget):
                              + (" · unsaved changes: see Pending changes" if self.can_save_folder() else ""))
         self._refresh_camera()
         self._refresh_choreography()
+        self._grey_unused_tabs()
         self._refresh_summary()
         self._activate_tab()
 
@@ -452,6 +466,46 @@ class FujinWidget(QWidget):
                                      "camera player, so the camera of the action (or the stage camera) stays while it "
                                      "plays, as for Phoenix Down and Mega Phoenix. Its game code can still move the "
                                      "camera: see Choreography, Native code. " + html.escape(self.catalog.notes(effect)))
+
+    def _grey_unused_tabs(self):
+        """Grey the tabs with nothing for this effect; the reason is the tab's tooltip (and listed
+        in the Overview). A greyed current tab hands over to the Overview."""
+        camera = not self.camera_sources.isHidden()
+        reasons = {
+            1: None if camera else self.camera_note.text().replace("<b>", "").replace("</b>", ""),
+            2: None if (self.choreography.isTabEnabled(0) or self.function_selector.count())
+            else "No MAG script and no native code snapshot for this effect.",
+            3: None if self.models.sources.count() else self.models.empty_text,
+            4: None if self.textures.sources.count() else self.textures.empty_text,
+            5: None if self.sound.sources.count() else self.sound.empty_text,
+        }
+        self.greyed_tabs = {}
+        wanted = getattr(self, "_wanted_tab", self.tabs.currentIndex())
+        self._greying = True    # Qt moves off a tab it disables: not the user's choice
+        try:
+            for index, reason in reasons.items():
+                self.tabs.setTabEnabled(index, reason is None)
+                self.tabs.setTabToolTip(index, reason or "")
+                if reason is not None:
+                    self.greyed_tabs[self.tabs.tabText(index)] = reason or "Nothing for this effect."
+            # The tab the user chose comes back as soon as an effect has something for it
+            self.tabs.setCurrentIndex(wanted if self.tabs.isTabEnabled(wanted) else 0)
+        finally:
+            self._greying = False
+        self._wanted_tab = wanted
+
+    def _remember_tab(self, index):
+        if not getattr(self, "_greying", False):
+            self._wanted_tab = index
+
+    def _greyed_tabs_html(self):
+        greyed = getattr(self, "greyed_tabs", {})
+        if not greyed:
+            return ""
+        esc = lambda value: html.escape(str(value))
+        return ("<h3>Greyed tabs</h3><table cellspacing='0' cellpadding='4'>"
+                + "".join(f"<tr><td><b>{esc(name)}</b></td><td>{esc(reason)}</td></tr>" for name, reason in greyed.items())
+                + "</table>")
 
     def _refresh_choreography(self):
         candidates = [(key, m) for key, m in self.mag_editor.managers.items()
@@ -578,6 +632,7 @@ class FujinWidget(QWidget):
             f"<b>File loader (EN exe):</b> {esc(info.get('fl_name', 'not found'))} {esc(info.get('fl_addr', ''))}</p>"
             f"<p>{esc(self.catalog.notes(effect))}</p>"
             + self._users_html(effect)
+            + self._greyed_tabs_html()
             + (f"<p>Effects {esc(', '.join(str(i) for i in aliases))} run the same game code; each one still has "
                "its own files below.</p>" if aliases else "")
             + ("<p><b>Unused slot:</b> the game's effect table points to no effect here.</p>" if info.get("free") else "")

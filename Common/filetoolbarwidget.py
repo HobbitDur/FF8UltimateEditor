@@ -101,6 +101,7 @@ class FileToolbarWidget(QWidget):
 
         self.tool_stack.currentChanged.connect(self._on_tool_changed)
         registry.file_changed.connect(self._on_registry_changed)
+        registry.batch_finished.connect(self._refresh)
         self._on_tool_changed()
 
     @staticmethod
@@ -201,12 +202,13 @@ class FileToolbarWidget(QWidget):
                     pending.append((source, paths))
             except (OSError, ValueError) as error:
                 problems.append(f"{source.key}: {error}")
-        for source, paths in pending:
-            try:
-                source.loader(paths)
-                opened += len(paths)
-            except Exception as error:
-                problems.append(f"{source.key}: {error}")
+        with self.registry.batch():   # the views refresh once, after the last file
+            for source, paths in pending:
+                try:
+                    source.loader(paths)
+                    opened += len(paths)
+                except Exception as error:
+                    problems.append(f"{source.key}: {error}")
         self._refresh()
         if problems:
             QMessageBox.warning(self, "Auto-upload", "Could not import:\n" + "\n".join(problems))
@@ -349,22 +351,42 @@ class FileToolbarWidget(QWidget):
         self.registry.remember_folder(key, folder)
         found = self.scan_folder(folder, self.registry.accepted_file_names())
         opened, problems = [], []
-        for file_name, path in found.items():
-            try:
-                self.registry.open_file(file_name, path)  # -> every tool bound to it loads it
-                opened.append(file_name)
-            except Exception as error:  # a matching name but unreadable content: keep going
-                problems.append(f"{file_name}: {error}")
-
-        # Folder-based tools load the whole folder themselves and show their own result.
         folder_loader = getattr(self.tool_stack.currentWidget(), "load_folder", None)
         loaded_folder = callable(folder_loader)
+        progress = self.open_progress(self, len(found), "Opening the folder's files")
+        with self.registry.batch():   # the views refresh once, after the last file
+            for index, (file_name, path) in enumerate(found.items()):
+                if progress.wasCanceled():
+                    break
+                progress.setLabelText(f"Opening {os.path.basename(path)} ({index + 1} / {len(found)})")
+                progress.setValue(index)
+                try:
+                    self.registry.open_file(file_name, path)  # -> every tool bound to it loads it
+                    opened.append(file_name)
+                except Exception as error:  # a matching name but unreadable content: keep going
+                    problems.append(f"{file_name}: {error}")
+            progress.setValue(len(found))
+            # Folder-based tools load the whole folder themselves and show their own result.
+            if loaded_folder and not progress.wasCanceled():
+                folder_loader(folder)
         if loaded_folder:
-            folder_loader(folder)
             self._refresh()  # a folder-based tool may now have something to Save
         # Only pop the generic summary when the active tool won't report the outcome itself.
         if opened or problems or not loaded_folder:
             self._report_open_folder(folder, opened, problems)
+
+    @staticmethod
+    def open_progress(parent, total, title):
+        """A modal progress bar for opening many files (shown only if it takes over half a second);
+        Cancel stops before the next file."""
+        from PyQt6.QtCore import Qt
+        from PyQt6.QtWidgets import QProgressDialog
+        progress = QProgressDialog(title, "Cancel", 0, max(total, 1), parent)
+        progress.setWindowTitle(title)
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(500)
+        progress.setValue(0)
+        return progress
 
     @staticmethod
     def scan_folder(folder, accepted_names):
@@ -430,6 +452,8 @@ class FileToolbarWidget(QWidget):
         self._refresh()  # a file just loaded/opened somewhere: Save may now have something to do
 
     def _refresh(self):
+        if getattr(self.registry, "batching", False):
+            return  # many files are opening: refreshed once by batch_finished
         main_bindings = self._main_bindings()
         complementary_bindings = self._complementary_bindings()
         self.import_button.setEnabled(bool(self._import_entries()))
