@@ -199,3 +199,39 @@ def test_object_view_explains_files_without_objects(qapp):
     view = MagObjectView()
     view.set_manager(manager)
     assert view.tree.topLevelItemCount() == 0 and "Textures" in view.family.text()
+
+
+def test_sound_and_vibration_edits_in_place(qapp):
+    """High-level edits: a block plays another audio.dat entry; a vibration point takes a new
+    strength / ramp. Same file size, undoable."""
+    from Common.fileregistry import FileRegistry
+    from Fujin.magdocument import MagDocument
+    from Fujin.soundpanel import SoundPanel, level_for_percent
+    from FF8GameData.magcine.magsound import world_id_for_archive
+    manager = MagDocument()
+    manager.load_bytes(_sound_mag(), name="MAG230_B.00")
+    size = len(manager.data)
+    panel = SoundPanel(FileRegistry())
+    changes = []
+    panel.data_changed.connect(lambda: changes.append(1))
+    panel.set_manager(manager)
+    panel.table.selectRow(0)
+    assert panel.entry_spin.value() == 1398 and not panel.use_button.isEnabled()
+    panel.entry_spin.setValue(1300)
+    assert panel.use_button.isEnabled() and panel.use_entry()
+    assert panel.entries[0].archive_id == 1300 and panel.entries[0].sound_id == 400070   # category 40 kept
+    assert world_id_for_archive(100, 400168) == 100                                        # below it: category 0
+    assert len(manager.data) == size and manager.modified and changes
+    manager.undo()
+    assert not manager.modified
+    panel.set_manager(manager)
+    pattern = panel.patterns[0]
+    first = pattern.left_points[0]
+    panel.point_tables["left"].cellWidget(0, 0).setValue(50)
+    assert panel.patterns[0].left_points[0][0] == level_for_percent(50) and len(manager.data) == size
+    if first[1] != 0xFF:
+        panel.point_tables["left"].cellWidget(0, 1).setValue(10)
+        assert panel.patterns[0].left_points[0][1] == 9
+    manager.undo()
+    manager.undo()
+    assert not manager.modified

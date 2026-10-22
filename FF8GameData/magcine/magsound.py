@@ -25,7 +25,7 @@ No Qt here: only "which entry / what envelope", so it is testable without audio.
 import struct
 from dataclasses import dataclass, field
 
-from Julia.actorsoundtable import world_sound_to_archive_id
+from Julia.actorsoundtable import WORLD_SOUND_BASES, world_sound_to_archive_id
 
 SCOT = b"SCOT"
 SOUND_TABLE, MUSIC_TABLE, STREAM, AKAO = "Sound effect", "Music table", "Streamed sound", "AKAO bank"
@@ -48,6 +48,10 @@ class VibrationPattern:
     offset: int
     left: list = field(default_factory=list)    # per-tick motor level 0-255
     right: list = field(default_factory=list)
+    left_points: list = field(default_factory=list)    # [(level, frames)], the last frames = 0xFF
+    right_points: list = field(default_factory=list)
+    left_size: int = 0    # bytes of each stream (the u16 lengths)
+    right_size: int = 0
 
     @property
     def ticks(self):
@@ -107,6 +111,67 @@ def sound_entries(data):
     return entries
 
 
+def world_id_for_archive(archive_id, current_world_id=None):
+    """The world sound id that plays audio.dat entry `archive_id`: in the category of
+    `current_world_id` when that category reaches it (the file keeps its style), else category 0
+    (GetSoundID_ForWorld maps 0-9999 to themselves)."""
+    if not 0 <= archive_id < 10000:
+        raise ValueError("an audio.dat entry is between 0 and 9999")
+    if current_world_id is not None:
+        category = current_world_id // 10000
+        base = WORLD_SOUND_BASES.get(category)
+        if base is not None and 0 <= archive_id - base < 10000:
+            return category * 10000 + archive_id - base
+    return archive_id
+
+
+def set_sound(data, entry, archive_id):
+    """New bytes of the block of `entry` (a SoundEntry with an id) playing `archive_id`: only its
+    leading u32 changes."""
+    if entry.sound_id is None or bytes(data[entry.offset + 4:entry.offset + 8]) != SCOT:
+        raise ValueError("this entry is not a sound block")
+    world = world_id_for_archive(archive_id, entry.sound_id)
+    assert world_sound_to_archive_id(world) == archive_id
+    return struct.pack("<I", world)
+
+
+def _points(stream):
+    """[(level, frames)] of one envelope stream, up to and with its frames-0xFF end point."""
+    points = []
+    for position in range(0, len(stream) - 1, 2):
+        points.append((stream[position], stream[position + 1]))
+        if stream[position + 1] == 0xFF:
+            break
+    return points
+
+
+def encode_points(points, size):
+    """The `size` bytes of a stream holding `points` (same count as before: the bytes after the
+    end point are kept by the caller). Levels 0-255, frames 0-254, the last frames is 0xFF."""
+    raw = bytearray()
+    for number, (level, frames) in enumerate(points):
+        last = number == len(points) - 1
+        if not 0 <= level <= 255:
+            raise ValueError("a vibration level is between 0 and 255")
+        if not last and not 0 <= frames <= 254:
+            raise ValueError("a segment lasts 0 to 254 ticks")
+        raw += bytes((level, 0xFF if last else frames))
+    if len(raw) > size:
+        raise ValueError("the pattern would grow")
+    return bytes(raw)
+
+
+def set_vibration(data, pattern, side, points):
+    """(offset, new bytes) writing `points` into the left or right stream of `pattern`, keeping
+    its size and segment count."""
+    old = pattern.left_points if side == "left" else pattern.right_points
+    if len(points) != len(old):
+        raise ValueError(f"the {side} motor has {len(old)} points; their number cannot change in place")
+    start = pattern.offset + 4 + (0 if side == "left" else pattern.left_size)
+    raw = encode_points(points, pattern.left_size if side == "left" else pattern.right_size)
+    return start, raw
+
+
 def _envelope(stream):
     """Per-tick motor levels of one byte stream, stepped like BdVibration_StepEnvelope: the
     claim sets the tick counter to -1, each finished segment resets it to 0."""
@@ -154,5 +219,6 @@ def vibration_patterns(data):
         left_size, right_size = struct.unpack_from("<HH", data, at)
         left = data[at + 4:at + 4 + left_size]
         right = data[at + 4 + left_size:at + 4 + left_size + right_size]
-        patterns.append(VibrationPattern(index, at, _envelope(left), _envelope(right)))
+        patterns.append(VibrationPattern(index, at, _envelope(left), _envelope(right), _points(left),
+                                         _points(right), left_size, right_size))
     return patterns

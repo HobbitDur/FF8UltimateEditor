@@ -124,7 +124,7 @@ class FujinWidget(QWidget):
         choreography_layout.addWidget(self.choreography_note)
         choreography_layout.addWidget(self.choreography, 1)
         self.tabs.addTab(choreography_page, "Choreography")
-        self.object_view = MagObjectView()
+        self.object_view = MagObjectView(self.file_registry)
         self.models = EffectResourceView("models", self.resolve, self.object_view, "3D view")
         self.textures = EffectResourceView("textures", self.resolve, TexturePictureView(self.file_registry), "Textures")
         self.sound_panel = SoundPanel(self.file_registry)

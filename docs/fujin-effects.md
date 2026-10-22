@@ -30,9 +30,13 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
 - **Models / animation:** a 3D view of every object of the selected file (meshes, morph
   targets as points, embedded battle models and the standard battle models of indexed
   containers such as `mag186_b.dat`, which play their own animations). Untextured: texture
-  placement is known for the seven GFs only; sprite lists are listed, not drawn. The byte
-  sections stay editable: skeleton scales and bone parent/length/rotations, animation
-  directories/frame counts. Compressed skeletal animation authoring is not fully decoded here.
+  placement is known for the seven GFs only; sprite lists are listed, not drawn.
+  **Export .glb…** writes the selected mesh, morph target or battle model (with its
+  animations, through Ifrit's exporter) for Blender; **Import .glb…** brings an edited file
+  back by moving the vertices in place: the MAG keeps its size, so no face may be added,
+  removed or split (the triangles are matched in order; a changed file is refused with the
+  reason), and faces, colours, UVs, bones and animations stay. One import is one Undo step.
+  Skeleton and animation values have no editor yet (their sections are a read-only reference).
 - **Textures:** every TIM of the selected file (Carbuncle's `mag277.tim` holds two) as its
   picture over a checkerboard and its palette (CLUT: the colours a 4/8-bit TIM's texels index,
   one row per alternate colouring; the game picks a row per sprite; a 16-bit TIM has none).
@@ -63,7 +67,11 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   the archive opened from the header (Import complementary: audio.fmt, shared with Julia).
   Music-table blocks and streamed SCOT parts are played as unverified. The header +0x24 bank
   is controller vibration (left/right motor envelopes), drawn as curves. AKAO banks are not
-  played by the PC build.
+  played by the PC build. **Change to** points the selected block at another `audio.dat`
+  entry (Preview plays it first; the world id is rewritten in its category when that reaches
+  the entry, else as category 0). Each vibration point has a **Strength %** (the level the
+  engine sends x2, max 255) and a **Ramp to next** in ticks (15 per second); the number of
+  points is fixed, the curve follows every edit.
 - **Files / sections:** every section of the effect's files as a read-only reference (named
   fields and bytes) with export; Fujin edits only through its decoded views (a camera section
   keeps its camera editor). A TIM is not repeated there: it points to Textures, and the tab

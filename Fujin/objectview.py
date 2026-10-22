@@ -7,19 +7,27 @@
 Battle models play their own animations (.dat section 3), posed by IfritManager through
 CreatureLoader, the same code as the GF Playback. Where the script moves objects, the motion is in
 Choreography > Playback. Faces are untextured: an effect's texture placement in VRAM is known only
-for the seven GF summons (their exe descriptors), so faces show their primitive colour."""
+for the seven GF summons (their exe descriptors), so faces show their primitive colour.
+
+Editing goes through Blender: Export .glb writes the selected object, Import .glb brings back its
+vertex positions (the MAG keeps its size, so faces, colours, UVs, bones and animations stay)."""
+import os
 from types import SimpleNamespace
 
 import numpy as np
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSlider, QPushButton,
-                             QCheckBox, QSplitter, QTreeWidget, QTreeWidgetItem, QHeaderView)
+                             QCheckBox, QSplitter, QTreeWidget, QTreeWidgetItem, QHeaderView, QFileDialog,
+                             QMessageBox)
 
 from FF8GameData.magcine.magcontainer import MagContainer, PRIM_NAME
+from FF8GameData.magcine import magmeshgltf
 from Fujin.creature import CreatureLoader
 from Fujin.meshpreview import MeshPreview
 
 TICKS_PER_SECOND = 15
+GLB_FILTER = "glTF binary (*.glb)"
+GLB_FOLDER_KEY = "Fujin model glb"
 _FAMILY_NOTES = {
     "PlayStation TIM": "A texture file: see Textures. It holds no 3D object.",
     "SCOT sound": "A streamed sound part: see Sound. It holds no 3D object.",
@@ -64,8 +72,12 @@ def model_sources(data, document):
 
 
 class MagObjectView(QWidget):
-    def __init__(self):
+    data_changed = pyqtSignal()
+
+    def __init__(self, registry=None):
         super().__init__()
+        self.registry = registry
+        self.manager = None
         self._sources = []
         self._animations = None      # [[CreatureFrame]] of the selected model
         self._loaders = {}           # id(container) -> CreatureLoader (posing is costly)
@@ -90,6 +102,15 @@ class MagObjectView(QWidget):
         self.wireframe.toggled.connect(self._wireframe)
         self.info = QLabel()
         self.info.setWordWrap(True)
+        self.export_button = QPushButton("Export .glb…")
+        self.export_button.setToolTip("Save the selected object as a glTF file (Blender: File > Import > glTF 2.0)")
+        self.export_button.clicked.connect(lambda: self.export_glb())
+        self.import_button = QPushButton("Import .glb…")
+        self.import_button.setToolTip(
+            "Bring back an edited .glb of this object: its vertices move to the new positions. Keep the faces "
+            "(no face added, removed or split): the MAG keeps its size, so faces, colours, bones and animations "
+            "stay as they are. Undo / Redo above, Save in the header.")
+        self.import_button.clicked.connect(lambda: self.import_glb())
         self.timer = QTimer(self)
         self.timer.setInterval(int(1000 / TICKS_PER_SECOND))
         self.timer.timeout.connect(self._advance)
@@ -109,8 +130,17 @@ class MagObjectView(QWidget):
         right_layout.addWidget(self.preview, 1)
         right_layout.addWidget(self.controls)
         right_layout.addWidget(self.info)
+        edit_row = QHBoxLayout()
+        edit_row.addWidget(self.export_button)
+        edit_row.addWidget(self.import_button)
+        edit_row.addStretch(1)
+        left = QWidget()
+        left_layout = QVBoxLayout(left)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.addWidget(self.tree, 1)
+        left_layout.addLayout(edit_row)
         splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.addWidget(self.tree)
+        splitter.addWidget(left)
         splitter.addWidget(right)
         splitter.setSizes([380, 700])
         layout = QVBoxLayout(self)
@@ -123,6 +153,8 @@ class MagObjectView(QWidget):
     def set_manager(self, manager):
         """EffectResourceView hook: show the objects of the selected source file."""
         self.play_button.setChecked(False)
+        selected = self.tree.currentItem().text(0) if self.tree.currentItem() and manager is self.manager else None
+        self.manager = manager
         self.tree.clear()
         self._loaders = {}
         self._sources = model_sources(manager.data, manager.document) if manager is not None else []
@@ -148,9 +180,13 @@ class MagObjectView(QWidget):
         self.controls.setVisible(False)
         self.info.setText("Select an object. Drag to rotate, wheel to zoom." if self._sources else "")
         first = next((i for i in range(self.tree.topLevelItemCount())
-                      if self.tree.topLevelItem(i).text(1) in ("mesh", "model")), None)
+                      if self.tree.topLevelItem(i).text(0) == selected), None)
+        if first is None:
+            first = next((i for i in range(self.tree.topLevelItemCount())
+                          if self.tree.topLevelItem(i).text(1) in ("mesh", "model")), None)
         if first is not None:
             self.tree.setCurrentItem(self.tree.topLevelItem(first))
+        self._update_edit_buttons()
 
     @staticmethod
     def _details(kind, payload):
@@ -173,10 +209,99 @@ class MagObjectView(QWidget):
         return f"sprite frame list: {len(payload.info.get('frames', []))} entries"
 
     # ------------------------------------------------------------------ selection
+    def _selected_object(self):
+        item = self.tree.currentItem()
+        if item is None:
+            return None, None
+        return item.data(0, Qt.ItemDataRole.UserRole)
+
+    def _update_edit_buttons(self):
+        kind, _payload = self._selected_object()
+        editable = kind in ("mesh", "morph", "model")
+        self.export_button.setEnabled(editable)
+        self.import_button.setEnabled(editable and self.manager is not None)
+
+    def _folder(self):
+        return self.registry.last_folder(GLB_FOLDER_KEY) if self.registry else ""
+
+    def _remember(self, path):
+        if self.registry:
+            self.registry.remember_folder(GLB_FOLDER_KEY, os.path.dirname(path))
+
+    def _default_name(self):
+        item = self.tree.currentItem()
+        name = os.path.splitext(os.path.basename(self.manager.file_path))[0] if self.manager else "mag"
+        return f"{name}_{item.text(0).lower().replace(' ', '')}.glb" if item else name + ".glb"
+
+    def export_glb(self, path=None):
+        """Write the selected object as a .glb (a battle model with its animations)."""
+        kind, payload = self._selected_object()
+        if kind not in ("mesh", "morph", "model"):
+            return None
+        if not path:
+            path = QFileDialog.getSaveFileName(self, "Export the object as glTF",
+                                               os.path.join(self._folder(), self._default_name()), GLB_FILTER)[0]
+            if not path:
+                return None
+            self._remember(path)
+        try:
+            if kind == "model":
+                from Fujin.modelgltf import export_model
+                container, object_id = payload
+                export_model(self._loaders.setdefault(id(container), CreatureLoader([container])), object_id, path)
+            else:
+                magmeshgltf.export_mesh(payload.mesh, path, self.tree.currentItem().text(0))
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Fujin", f"Not exported: {error}")
+            return None
+        self.info.setText(f"Exported {path}. Edit it in Blender (move vertices; keep every face), export it as "
+                          "glTF binary, then Import .glb.")
+        return path
+
+    def import_glb(self, path=None):
+        """Move the selected object's vertices to an edited .glb's positions (same faces)."""
+        kind, payload = self._selected_object()
+        if kind not in ("mesh", "morph", "model") or self.manager is None:
+            return False
+        if not path:
+            path = QFileDialog.getOpenFileName(self, "Import the edited glTF", self._folder(), GLB_FILTER)[0]
+            if not path:
+                return False
+            self._remember(path)
+        try:
+            if kind == "model":
+                from Fujin.modelgltf import export_model, import_positions, vertex_patches
+                container, object_id = payload
+                loader = self._loaders.setdefault(id(container), CreatureLoader([container]))
+                loader(object_id)
+                obj = next(o for o in container.objects if o.index == object_id)
+                positions = import_positions(loader._ifrit_manager(), path)
+                patches = vertex_patches(self.manager.data, obj.info["sections"][1], positions)
+            else:
+                positions = magmeshgltf.import_positions(payload.mesh, path)
+                patches = [magmeshgltf.vertex_bytes(self.manager.data, payload.offset, positions)]
+        except (OSError, ValueError, KeyError, IndexError) as error:
+            QMessageBox.warning(self, "Fujin", f"Not imported: {error}")
+            return False
+        patches = [(at, raw) for at, raw in patches if bytes(self.manager.data[at:at + len(raw)]) != raw]
+        if not patches:
+            self.info.setText("The file holds the same vertices: nothing changed.")
+            return True
+        start, end = min(at for at, _raw in patches), max(at + len(raw) for at, raw in patches)
+        block = bytearray(self.manager.data[start:end])           # one write: one Undo step
+        for at, raw in patches:
+            block[at - start:at - start + len(raw)] = raw
+        self.manager.patch_bytes(start, bytes(block))
+        self.set_manager(self.manager)
+        self.info.setText(f"Imported {os.path.basename(path)}: the vertices moved in place (Undo above).")
+        self.data_changed.emit()
+        return True
+
     def _selected(self, item, _previous=None):
         self.play_button.setChecked(False)
         self._animations = None
         self.controls.setVisible(False)
+        self._update_edit_buttons()
         if item is None:
             return
         kind, payload = item.data(0, Qt.ItemDataRole.UserRole)

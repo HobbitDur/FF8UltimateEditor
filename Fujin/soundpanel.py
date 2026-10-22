@@ -4,16 +4,21 @@ Julia's archive, plus the controller vibration patterns the "voice bank" really 
 The archive (audio.fmt + audio.dat) comes from the shared file bank only: the header's Import
 menu opens it (complementary files), and an archive Julia or the IfritSeq preview opened is
 picked up as well. Playback uses Julia's construction (unparented QMediaPlayer + QAudioOutput,
-the buffer kept alive until the next sound replaces it)."""
+the buffer kept alive until the next sound replaces it).
+
+Edits are high level and keep the file's size: a sound block is pointed at another audio.dat entry
+(its world sound id is rewritten, in the same category when it reaches the entry), and a vibration
+pattern's points take a new strength and ramp length (their number is fixed)."""
 import os
 
-from PyQt6.QtCore import Qt, QBuffer, QByteArray, QUrl, QLoggingCategory, QPointF
+from PyQt6.QtCore import Qt, QBuffer, QByteArray, QUrl, QLoggingCategory, QPointF, pyqtSignal
 from PyQt6.QtGui import QColor, QPainter, QPen, QPolygonF
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTableWidget,
-                             QTableWidgetItem, QHeaderView, QSplitter, QAbstractItemView)
+                             QTableWidgetItem, QHeaderView, QSplitter, QAbstractItemView, QSpinBox,
+                             QMessageBox)
 
 from Common.filebinding import FileBinding
-from FF8GameData.magcine.magsound import sound_entries, vibration_patterns, AKAO
+from FF8GameData.magcine.magsound import sound_entries, vibration_patterns, set_sound, set_vibration, AKAO
 from Julia.juliamanager import JuliaManager
 
 try:
@@ -24,6 +29,15 @@ except ImportError:  # pragma: no cover - depends on the installed Qt build
     MULTIMEDIA_AVAILABLE = False
 
 TICKS_PER_SECOND = 15
+
+
+def strength_percent(level):
+    """A pattern level as the motor strength the engine sends (level x 2, max 255), in %."""
+    return min(100, round(level * 200 / 255))
+
+
+def level_for_percent(percent):
+    return min(255, round(percent * 255 / 200))
 
 
 class VibrationCurve(QWidget):
@@ -59,10 +73,12 @@ class VibrationCurve(QWidget):
 
 class SoundPanel(QWidget):
     HEADERS = ["Table", "#", "Offset", "Sound id", "audio.dat entry", "Length", "How the PC plays it"]
+    data_changed = pyqtSignal()
 
     def __init__(self, file_registry, game_data=None):
         super().__init__()
         self.game_data = game_data
+        self.manager = None
         self.julia = None
         self.entries = []
         self.patterns = []
@@ -90,6 +106,18 @@ class SoundPanel(QWidget):
         self.stop_button.clicked.connect(self.stop)
         self.status = QLabel()
         self.status.setWordWrap(True)
+        self.entry_spin = QSpinBox()
+        self.entry_spin.setRange(0, 9999)
+        self.entry_spin.setPrefix("audio.dat entry #")
+        self.entry_spin.setToolTip("The audio.dat entry the selected block should play")
+        self.entry_spin.valueChanged.connect(self._update_buttons)
+        self.preview_button = QPushButton("Preview")
+        self.preview_button.setToolTip("Play that entry before using it")
+        self.preview_button.clicked.connect(lambda: self.play(self.entry_spin.value()))
+        self.use_button = QPushButton("Use for this block")
+        self.use_button.setToolTip("The selected block plays this entry from now on (Undo / Redo above, "
+                                   "Save in the header)")
+        self.use_button.clicked.connect(self.use_entry)
         self.vibration_table = QTableWidget(0, 5)
         self.vibration_table.setHorizontalHeaderLabels(["Slot", "Offset", "Ticks", "Peak left", "Peak right"])
         self.vibration_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -97,6 +125,16 @@ class SoundPanel(QWidget):
         self.vibration_table.verticalHeader().hide()
         self.vibration_table.itemSelectionChanged.connect(self._show_pattern)
         self.curve = VibrationCurve()
+        self.point_tables = {}
+        for side in ("left", "right"):
+            table = QTableWidget(0, 2)
+            table.setHorizontalHeaderLabels(["Strength %", "Ramp to next (ticks)"])
+            table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+            table.verticalHeader().setDefaultSectionSize(26)
+            table.setToolTip("Each point: the motor strength, then how many ticks (15 per second) it takes "
+                             "to reach the next point. The last point ends the pattern. The number of points "
+                             "is fixed (the file keeps its size).")
+            self.point_tables[side] = table
         self.vibration_label = QLabel(
             "Controller vibration (header +0x24, often called the voice bank): not sound. Cinematic opcode "
             "0x39 sub-op 2 starts a pattern; the engine steps its two envelopes every tick into the pad's "
@@ -106,6 +144,10 @@ class SoundPanel(QWidget):
         buttons = QHBoxLayout()
         buttons.addWidget(self.play_button)
         buttons.addWidget(self.stop_button)
+        buttons.addWidget(QLabel("  Change to:"))
+        buttons.addWidget(self.entry_spin)
+        buttons.addWidget(self.preview_button)
+        buttons.addWidget(self.use_button)
         buttons.addWidget(self.status, 1)
         sounds = QWidget()
         sounds_layout = QVBoxLayout(sounds)
@@ -119,13 +161,22 @@ class SoundPanel(QWidget):
         vibration_layout.addWidget(self.vibration_label)
         row = QHBoxLayout()
         row.addWidget(self.vibration_table, 1)
-        row.addWidget(self.curve, 2)
+        right = QVBoxLayout()
+        right.addWidget(self.curve, 1)
+        motors = QHBoxLayout()
+        for side, title in (("left", "Left motor (orange)"), ("right", "Right motor (blue)")):
+            column = QVBoxLayout()
+            column.addWidget(QLabel(title))
+            column.addWidget(self.point_tables[side])
+            motors.addLayout(column)
+        right.addLayout(motors, 1)
+        row.addLayout(right, 2)
         vibration_layout.addLayout(row, 1)
         self.vibration_box = vibration
         splitter = QSplitter(Qt.Orientation.Vertical)
         splitter.addWidget(sounds)
         splitter.addWidget(vibration)
-        splitter.setSizes([400, 160])
+        splitter.setSizes([300, 300])
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(splitter)
@@ -169,6 +220,7 @@ class SoundPanel(QWidget):
     # ------------------------------------------------------------------ content
     def set_manager(self, manager):
         """EffectResourceView hook: the selected source file (None = no MAG file with sounds)."""
+        self.manager = manager
         self.set_data(manager.data if manager is not None else None)
         if manager is None:
             self.status.setText("No imported MAG file of this effect holds sounds. Effects driven by game code "
@@ -187,7 +239,8 @@ class SoundPanel(QWidget):
         self.vibration_box.setVisible(bool(self.patterns))
         self.curve.set_pattern(self.patterns[0] if self.patterns else None)
         if self.patterns:
-            self.vibration_table.selectRow(0)
+            self.vibration_table.selectRow(min(getattr(self, "_pattern_row", 0), len(self.patterns) - 1))
+        self._fill_points()
 
     def _duration(self, archive_id):
         if self.julia is None or archive_id is None or not 0 <= archive_id < len(self.julia.sounds):
@@ -214,7 +267,7 @@ class SoundPanel(QWidget):
                 self.table.setItem(row, column, item)
         self.table.resizeColumnsToContents()
         if self.entries and not self.table.selectionModel().selectedRows():
-            self.table.selectRow(0)
+            self.table.selectRow(min(getattr(self, "_entry_row", 0), len(self.entries) - 1))
         if not self.entries:
             self.status.setText("This file has no sound blocks.")
         elif not self.status.text().startswith("Sound archive could not"):
@@ -225,8 +278,20 @@ class SoundPanel(QWidget):
         rows = self.table.selectionModel().selectedRows()
         return self.entries[rows[0].row()] if rows else None
 
-    def _update_buttons(self):
+    def _editable(self, entry):
+        return bool(self.manager is not None and entry is not None and entry.sound_id is not None
+                    and entry.archive_id is not None)
+
+    def _update_buttons(self, *_args):
         entry = self._selected_entry()
+        if entry is not None and entry.archive_id is not None and self.sender() is not self.entry_spin:
+            self.entry_spin.blockSignals(True)
+            self.entry_spin.setValue(entry.archive_id)
+            self.entry_spin.blockSignals(False)
+        editable = self._editable(entry)
+        self.entry_spin.setEnabled(editable)
+        self.use_button.setEnabled(editable and self.entry_spin.value() != entry.archive_id)
+        self.preview_button.setEnabled(editable and self._can_play(self.entry_spin.value()))
         playable = bool(entry and entry.archive_id is not None and self.julia is not None and MULTIMEDIA_AVAILABLE
                         and 0 <= entry.archive_id < len(self.julia.sounds)
                         and self.julia.sounds[entry.archive_id].is_valid)
@@ -240,9 +305,92 @@ class SoundPanel(QWidget):
         else:
             self.play_button.setToolTip("Play the selected block's audio.dat entry (double-click a row too)")
 
+    def _can_play(self, archive_id):
+        return bool(self.julia is not None and MULTIMEDIA_AVAILABLE and 0 <= archive_id < len(self.julia.sounds)
+                    and self.julia.sounds[archive_id].is_valid)
+
     def _show_pattern(self):
         rows = self.vibration_table.selectionModel().selectedRows()
         self.curve.set_pattern(self.patterns[rows[0].row()] if rows else None)
+        self._fill_points()
+
+    def _selected_pattern(self):
+        rows = self.vibration_table.selectionModel().selectedRows()
+        return self.patterns[rows[0].row()] if rows and rows[0].row() < len(self.patterns) else None
+
+    def _fill_points(self):
+        pattern = self._selected_pattern()
+        for side, table in self.point_tables.items():
+            points = getattr(pattern, side + "_points") if pattern is not None else []
+            table.clearContents()
+            table.setRowCount(len(points))
+            for row, (level, frames) in enumerate(points):
+                strength = QSpinBox()
+                strength.setRange(0, 100)
+                strength.setSuffix(" %")
+                strength.setValue(strength_percent(level))
+                strength.setKeyboardTracking(False)
+                strength.setEnabled(self.manager is not None)
+                strength.valueChanged.connect(lambda _v, s=side, r=row: self._point_changed(s, r))
+                table.setCellWidget(row, 0, strength)
+                if frames == 0xFF:
+                    item = QTableWidgetItem("end")
+                    item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+                    table.setItem(row, 1, item)
+                    continue
+                ramp = QSpinBox()
+                ramp.setRange(1, 255)
+                ramp.setValue(frames + 1)
+                ramp.setKeyboardTracking(False)
+                ramp.setEnabled(self.manager is not None)
+                ramp.valueChanged.connect(lambda _v, s=side, r=row: self._point_changed(s, r))
+                table.setCellWidget(row, 1, ramp)
+            if not points:
+                table.setRowCount(1)
+                item = QTableWidgetItem("unused")
+                item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+                table.setItem(0, 0, item)
+
+    def _point_changed(self, side, row):
+        pattern = self._selected_pattern()
+        if pattern is None or self.manager is None:
+            return
+        table = self.point_tables[side]
+        points = list(getattr(pattern, side + "_points"))
+        level, frames = points[row]
+        percent = table.cellWidget(row, 0).value()
+        if percent != strength_percent(level):
+            level = level_for_percent(percent)
+        ramp = table.cellWidget(row, 1)
+        if ramp is not None:
+            frames = ramp.value() - 1
+        points[row] = (level, frames)
+        self._write(lambda: set_vibration(self.manager.data, pattern, side, points))
+
+    def use_entry(self):
+        entry = self._selected_entry()
+        if not self._editable(entry):
+            return False
+        archive_id = self.entry_spin.value()
+        return self._write(lambda: (entry.offset, set_sound(self.manager.data, entry, archive_id)))
+
+    def _write(self, edit):
+        """Apply (offset, bytes) from `edit` to the file, keep the selections, tell the host."""
+        try:
+            offset, raw = edit()
+        except ValueError as error:
+            QMessageBox.warning(self, "Fujin", f"Not applied: {error}")
+            self.set_data(self.manager.data)
+            return False
+        rows = self.table.selectionModel().selectedRows()
+        self._entry_row = rows[0].row() if rows else 0
+        rows = self.vibration_table.selectionModel().selectedRows()
+        self._pattern_row = rows[0].row() if rows else 0
+        self.manager.patch_bytes(offset, raw)
+        self.table.clearSelection()
+        self.set_data(self.manager.data)
+        self.data_changed.emit()
+        return True
 
     # ------------------------------------------------------------------ playback
     def play_selected(self):
