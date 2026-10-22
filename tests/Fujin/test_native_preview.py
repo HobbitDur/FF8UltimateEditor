@@ -164,8 +164,8 @@ def test_effect_preview_records_the_camera_preview_battle(qapp):
                      "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
                      "extracted_files/battle/c0m014.dat")
 def test_effect_preview_plays_a_scene_out_encounter(qapp):
-    """Only files opened one by one: without models Play is off, a8def.tim is offered but
-    optional; the Battle picker is the Camera tab setup's encounter list, its enemies placed where
+    """Only files opened one by one: without models Play is off, a8def.tim is an optional side
+    file; the Battle picker is the Camera tab setup's encounter list, its enemies placed where
     scene.out has them - an enemy not imported is named and left out (no target: no Record); Play
     records first."""
     from Fujin import nativepreview
@@ -178,9 +178,8 @@ def test_effect_preview_plays_a_scene_out_encounter(qapp):
     fujin.select_effect(1)
     view = fujin.native_preview
     assert not view.play_button.isEnabled() and any("caster model" in need for need in view.missing())
-    assert not view.open_textures_button.isHidden()
+    assert any("a8def.tim" in label for label, _cb in fujin.complementary_entries())   # a side file
     view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
-    assert view.open_textures_button.isHidden()
     preview = fujin.camera_editor.preview
     preview.sceneout_binding.open_path(str(BATTLE / "scene.out"))
     preview.add_models([str(BATTLE / "d0c000.dat"), str(BATTLE / "d0w000.dat")])

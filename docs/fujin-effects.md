@@ -51,7 +51,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   Fujin holds them, unsaved edits included, staged privately; a file the effect asks for and was not
   imported is named in the status), the models from Import complementary (Camera preview models),
   scene.out from Import complementary for the encounters, and optionally `a8def.tim` from Import
-  complementary or the preview's **Open a8def.tim…** (battle file 163, the battle's shared effect
+  complementary (a side file; battle file 163, the battle's shared effect
   textures the game loads at every battle start, `load_aA8defTim` 0x508660; without it the parts
   of an effect drawn with them are flat grey).
   Exact: shapes, colours, blending, timing. Approximated: actors hold their first pose, the camera

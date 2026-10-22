@@ -215,11 +215,6 @@ class NativePreviewView(QWidget):
                                         "Same list as the Camera tab's preview. Record again to apply.")
         self.encounter_combo.activated.connect(lambda _i: self._pick_encounter())
         self._watched_encounters = None
-        self.open_textures_button = QPushButton(f"Open {SHARED_TEXTURES}…")
-        self.open_textures_button.setToolTip(f"{SHARED_TEXTURES}: the battle's shared effect textures (battle file "
-                                             "163, loaded at every battle start). Without it the parts of an "
-                                             "effect drawn with them are flat grey.")
-        self.open_textures_button.clicked.connect(self.import_shared_textures)
         if cast_source is not None:
             for combo in (cast_source.caster_combo, cast_source.target_combo):
                 combo.currentIndexChanged.connect(lambda _i: self._cast_refresh.start())
@@ -258,7 +253,6 @@ class NativePreviewView(QWidget):
         cast_row.addWidget(QLabel("Target:"))
         cast_row.addWidget(self.target_combo, 1)
         controls = QHBoxLayout()
-        controls.addWidget(self.open_textures_button)
         controls.addWidget(self.record_button)
         controls.addWidget(self.view_mode)
         controls.addWidget(self.play_button)
@@ -659,7 +653,6 @@ class NativePreviewView(QWidget):
         can_record = not needs and self.effect_id is not None and not busy
         self.record_button.setEnabled(can_record)
         self.record_button.setText("Record again" if recording else "Record")
-        self.open_textures_button.setVisible(not self.textures_binding.current_path)
         for widget in (self.view_mode, self.slider):
             widget.setEnabled(recording and not busy)
         # Play records first when there is no recording yet
