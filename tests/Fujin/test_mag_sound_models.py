@@ -198,4 +198,4 @@ def test_object_view_explains_files_without_objects(qapp):
     manager.load_file(str(MAGIC / "mag000-049.tim"))
     view = MagObjectView()
     view.set_manager(manager)
-    assert view.tree.topLevelItemCount() == 0 and "Textures / palettes" in view.family.text()
+    assert view.tree.topLevelItemCount() == 0 and "Textures" in view.family.text()

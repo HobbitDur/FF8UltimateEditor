@@ -21,7 +21,7 @@ from Fujin.meshpreview import MeshPreview
 
 TICKS_PER_SECOND = 15
 _FAMILY_NOTES = {
-    "PlayStation TIM": "A texture file: see Textures / palettes. It holds no 3D object.",
+    "PlayStation TIM": "A texture file: see Textures. It holds no 3D object.",
     "SCOT sound": "A streamed sound part: see Sound. It holds no 3D object.",
     "AKAO audio": "A PlayStation sample bank: see Sound. It holds no 3D object.",
     "Four-byte reference": "A four-byte reference read by the effect's code: no 3D object.",

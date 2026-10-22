@@ -14,6 +14,8 @@ class EffectResourceView(QWidget):
         super().__init__()
         self.mode, self.resolve = mode, resolve
         self.panel = panel
+        if panel is not None and hasattr(panel, "data_changed"):
+            panel.data_changed.connect(self.data_changed)   # a panel that edits (Textures)
         self._pending = True
         self.empty_text = ""    # set by the host: why this tab has nothing for the current effect
         self.sources = QComboBox()
@@ -48,6 +50,11 @@ class EffectResourceView(QWidget):
             display.addTab(self.parameter_table, "Parameters")
             display.addTab(self.sections, "Operand sections")
             layout.addWidget(display, 1)
+        elif panel is not None and mode == "textures":
+            # High-level only: pictures and palettes edited through PNG files; the raw sections
+            # are in Files / sections
+            self.display = panel
+            layout.addWidget(panel, 1)
         elif panel is not None:
             self.display = QTabWidget()
             self.display.addTab(panel, panel_title)
@@ -101,7 +108,8 @@ class EffectResourceView(QWidget):
                         else manager.file_path if manager else
                         "Not imported: open it with the header's Import (Effect files).")
             self.status.setText(f"{resource.evidence}. {resource.note}\n{location}")
-        self.sections.set_manager(manager, self._sections(resource, manager) if manager else None)
+        if self.mode != "textures":
+            self.sections.set_manager(manager, self._sections(resource, manager) if manager else None)
         if self.mode == "parameters":
             self._fill_parameters()
         if self.panel is not None:

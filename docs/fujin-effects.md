@@ -33,12 +33,17 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   placement is known for the seven GFs only; sprite lists are listed, not drawn. The byte
   sections stay editable: skeleton scales and bone parent/length/rotations, animation
   directories/frame counts. Compressed skeletal animation authoring is not fully decoded here.
-- **Textures / palettes:** opens on **Pictures**: every TIM of the file (Carbuncle's
-  `mag277.tim` holds two) drawn over a checkerboard, with its size, depth, VRAM place, a palette
-  row picker and the palette as swatches. The next tab lists only the palette and pixel bytes,
-  which stay editable (this is not an image painter); the TIM header fields are in Files /
-  sections. A MAG file's textures are raw VRAM blocks whose size and depth come from the game
-  code, so they are listed as data.
+- **Textures:** every TIM of the selected file (Carbuncle's `mag277.tim` holds two) as its
+  picture over a checkerboard and its palette (CLUT: the colours a 4/8-bit TIM's texels index,
+  one row per alternate colouring; the game picks a row per sprite; a 16-bit TIM has none).
+  Double-click the picture or the palette (or use its buttons) to replace it with a PNG of the
+  same size: a new picture is mapped onto the selected palette row (texels that kept their
+  colour keep their index), a new palette keeps each colour's transparency bit, and fewer rows
+  than the palette replace the rows you pick. **Export PNGs…** writes `<name>.png` (the picture
+  in the selected row) and `<name>_palette.png` (colours wide, rows tall), the format the import
+  takes back. **Restore original** puts the TIM back as it is on disk; Undo / Redo cover every
+  edit. The raw sections stay in Files / sections. A MAG file's textures are raw VRAM blocks
+  whose size and depth come from the game code, so they are not drawn here.
 - **Empty tabs say why.** Models, Textures and Sound name the effect's files still to import;
   once nothing is missing, they say what the effect has no data for, and point to the native
   functions that do the work when the snapshot names them (Cure: "stores no model of its own",

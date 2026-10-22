@@ -23,7 +23,7 @@ def fujin(qapp):
 
 def test_tabs_and_empty_camera_editor(fujin):
     assert [fujin.tabs.tabText(index) for index in range(fujin.tabs.count())] == \
-           ["Overview", "Camera", "Choreography", "Models / animation", "Textures / palettes",
+           ["Overview", "Camera", "Choreography", "Models / animation", "Textures",
             "Sound", "Files / sections", "Pending changes"]
     assert fujin.effect_list.count() == 400
     editor = fujin.camera_editor
@@ -138,14 +138,12 @@ def test_textures_are_pictures_not_a_files_copy(fujin):
     fujin.tabs.setCurrentIndex(4)
     fujin.textures.activate()
     pictures = fujin.textures.panel
-    assert fujin.textures.display.currentWidget() is pictures and pictures.cards
+    assert fujin.textures.display is pictures and pictures.cards        # pictures only, no byte tabs
     card = pictures.cards[0]
     assert card.picture.pixmap() is not None and "texels" in card.info.text()
     if card.rows:                                              # palette rows change the drawing
         card.palette.setCurrentIndex(card.palette.count() - 1)
-    kinds = {fujin.textures.sections.tabText(i) for i in range(fujin.textures.sections.count())}
-    assert kinds and not any("header" in name.lower() for name in kinds)   # header fields: Files only
-    fujin.files.activate()
+    fujin.files.activate()                                     # header fields and raw bytes: Files
     assert any("header" in fujin.files.sections.tabText(i).lower() for i in range(fujin.files.sections.count()))
 
 
