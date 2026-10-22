@@ -36,6 +36,18 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   playback (verified for the seven GFs; every other cinematic script replays with the same
   engine model as a labelled, untextured approximation that names the draw handlers it shows as
   markers only), and native decompilation read-only.
+  **Native preview** shows what an effect run by the exe's own code (Cure, Fire, most spells,
+  enemy attacks) draws, tick by tick at 15 per second. **Record** runs the effect's original
+  code in the FFNx effect harness (`fxaudit_held.exe`, opened from the header's Import
+  complementary; it needs its `vram=1` option, added 2026-10-22 in
+  `D:\FFNxMenu30fps\harness\fxaudit\harness.cpp`), which records every PlayStation GPU packet
+  and the VRAM uploads the effect queues (`Battle_FlushVramCommandQueue` 0x505D20). Fujin draws
+  them with a software GPU (`FF8GameData/psxgpu`: polygons, sprites, lines, CLUT textures,
+  the four semi-transparency modes). Exact: shapes, colours, blending, timing. Approximated: the
+  fake battle (stand-in actors, a fixed camera - the effect's own camera moves are not applied,
+  so **Fit the effect** frames what it draws; **Game window** shows the 320 x 224 screen as
+  recorded) and textures the effect does not upload itself (the target's model, the battle's
+  shared effect textures), drawn flat grey and named in the status line.
 - **Models / animation:** a 3D view of every object of the selected file (meshes, morph
   targets as points, embedded battle models and the standard battle models of indexed
   containers such as `mag186_b.dat`, which play their own animations). Untextured: texture

@@ -23,6 +23,7 @@ from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
 from Fujin.texturepictureview import TexturePictureView
+from Fujin.nativepreview import NativePreviewView
 from Fujin.soundpanel import SoundPanel
 from Fujin.objectview import MagObjectView
 from SmallWidget.listsearchbar import ListSearchBar, SEARCH_TEXT_ROLE
@@ -115,6 +116,8 @@ class FujinWidget(QWidget):
         native_layout.addWidget(self.function_selector)
         native_layout.addWidget(self.native_code, 1)
         self.choreography.addTab(native_page, "Native code")
+        self.native_preview = NativePreviewView(self.file_registry)
+        self.choreography.addTab(self.native_preview, "Native preview")
         # Why there is no MAG script, when there is none (the greyed tab says it too)
         self.choreography_note = QLabel()
         self.choreography_note.setWordWrap(True)
@@ -171,7 +174,8 @@ class FujinWidget(QWidget):
 
     def file_bindings(self):
         return ([self.camera_editor.exe_binding, self.camera_editor.preview.sceneout_binding, self.kernel_binding]
-                + self.sound_panel.file_bindings() + self.mag_editor.file_bindings())
+                + self.sound_panel.file_bindings() + [self.native_preview.harness_binding]
+                + self.mag_editor.file_bindings())
 
     def import_entries(self):
         return [("FF8 exe (camera tracks and embedded effect assets)", self.camera_editor.open_exe),
@@ -201,7 +205,8 @@ class FujinWidget(QWidget):
         return [("Camera preview models: characters, weapons and monsters", preview.import_models),
                 ("Camera preview encounters: scene.out", preview.import_sceneout),
                 ("Effect users: kernel.bin (spells, items, GFs, enemy attacks, limit breaks)", self.import_kernel),
-                ("Sound preview: audio.fmt + audio.dat (battle sound archive)", self.sound_panel.import_archive)]
+                ("Sound preview: audio.fmt + audio.dat (battle sound archive)", self.sound_panel.import_archive),
+                ("Native preview: FFNx effect harness (fxaudit_held.exe)", self.native_preview.import_harness)]
 
     def auto_import_sources(self):
         preview = self.camera_editor.preview
@@ -408,6 +413,7 @@ class FujinWidget(QWidget):
         if item:
             self.current_effect = item.data(Qt.ItemDataRole.UserRole)
             self.camera_editor.select_effect(self.current_effect)
+            self.native_preview.set_effect(self.current_effect, self.catalog.name(self.current_effect))
             self._refresh()
 
     def _schedule_refresh(self):
