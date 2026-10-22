@@ -29,13 +29,22 @@ One effect's track exported as a .bcam file is the track bytes as the exe stores
 <direct_mode_path>/exe/effect_NNN.bcam instead of the exe's track, with no size
 limit (FFNx docs/ff8/mods/effect_camera.md). Tracks are the same in every language, so a .bcam
 works with every exe.
+
+An effect that starts no camera at all (5 Phoenix Down, 7 Mega Phoenix, Scan, Defend...) can be
+given one: FFNx starts an effect_NNN.bcam right after such an effect starts (FFNx #1047, "Add").
+Fujin creates it from another effect's track or from a minimal one; it has no exe address, so it
+lives only as a .bcam. Only the item/command effects known to be camera-less are offered: many
+effects with no track move the camera with their own code (GF summons, Shot, Duel, Zell's
+finishers, Angelo, Gilgamesh...), and a camera added there would fight it.
+A .bcam file read back (load_bcam) becomes that effect's track: an override of its exe track, or a
+created camera.
 """
 import json
 import re
 import struct
 from dataclasses import dataclass, field
 
-from FF8GameData.dat.cameracollection import parse_camera_collection
+from FF8GameData.dat.cameracollection import build_default_animation, parse_camera_collection, NB_SLOT_PER_SET
 from FF8GameData.dat.sequencecodec import code_to_sequence, sequence_to_code
 from FF8GameData.dat.sequencecommand import is_jump, is_jump_int16, read_sequence
 from FF8GameData.dat.sequenceanalyser import SequenceAnalyser
@@ -51,6 +60,13 @@ CAM_POINTER_COUNT = 2           # every track: script + keyframe collection
 CAM_MAX_SIZE = 0xFFFF           # the header size field is a u16
 CAM_FFNX_FOLDER = "direct/exe"  # where FFNx reads them, in the game folder
 CAM_EXTENSION = ".bcam"  # not .cam: that is already the FF8 movie camera format
+
+# Effects that start no camera and do not move it with their own code: a camera can be created for
+# them (items and commands). 5/7 cast like Life (35), whose camera is the natural start.
+CREATABLE_CAMERA_EFFECTS = (5, 7, 40, 53, 58, 59, 183, 292, 293, 294, 295, 296)
+DEFAULT_CAMERA_SOURCE = {5: 35, 7: 35}
+MINIMAL_SCRIPT = b"\x00\x00\x02"     # play(0), end_clear(): the shortest vanilla scripts (85 The End)
+CAM_FILE_PATTERN = re.compile(r"effect_(\d{3})\.bcam", re.IGNORECASE)
 
 # exe.json "lang" value keys -> offset key prefix (None = English), like the other exe readers
 _EXE_LANGUAGES = {"english_value": None, "french_value": "fr", "italian_value": "it",
@@ -134,8 +150,26 @@ class CameraTrack:
             self.exe_script_size = len(script)
 
     @property
+    def created(self) -> bool:
+        """A camera made for an effect that has none in the exe (no address): .bcam only."""
+        return not self.address
+
+    def replace_bytes(self, data: bytes, vm):
+        """Take a whole track (a .bcam file) as this track's content - its header may differ from the
+        exe's. All or nothing: ValueError, and the track unchanged, when FFNx would refuse it."""
+        error = cam_track_error(bytes(data))
+        if error is not None:
+            raise ValueError(f"effect {self.effect_id}: {error}")
+        _count, _script_offset, keyframe_offset, _size = HEADER.unpack_from(data)
+        script, padding = split_script(vm, bytes(data[SCRIPT_OFFSET:keyframe_offset]))
+        collection = parse_camera_collection(bytearray(data[keyframe_offset:]))
+        if bytes(collection.get_bytes()) != bytes(data[keyframe_offset:]):
+            raise ValueError(f"effect {self.effect_id}: the keyframes do not fill the track exactly")
+        self.header, self.script, self.padding, self.collection = bytes(data[:SCRIPT_OFFSET]), script, padding, collection
+
+    @property
     def size(self) -> int:
-        """The track's size in the exe: the room it has there."""
+        """The track's size in the exe: the room it has there (0: a created camera)."""
         return len(self.original)
 
     @property
@@ -155,7 +189,9 @@ class CameraTrack:
     def to_bytes(self) -> bytes:
         """The track as it is now. The header is rebuilt from the parts: the keyframes start on
         an even offset (one zero byte after an odd script), the size field is the whole track."""
-        padding = self.padding if len(self.script) == self.exe_script_size else b"\0" * (len(self.script) % 2)
+        # the stored padding while it still aligns the keyframes (a .bcam read back keeps its bytes)
+        padding = (self.padding if len(self.script) == self.exe_script_size
+                   or (len(self.script) + len(self.padding)) % 2 == 0 else b"\0" * (len(self.script) % 2))
         keyframe_offset = SCRIPT_OFFSET + len(self.script) + len(padding)
         collection = bytes(self.collection.get_bytes())
         count = struct.unpack_from("<H", self.header)[0]
@@ -237,7 +273,11 @@ class CameraEffectManager:
 
     @property
     def loaded(self) -> bool:
-        return bool(self.tracks)
+        """The exe's tracks are read (created cameras alone do not count)."""
+        return any(not track.created for track in self.tracks.values())
+
+    def created_tracks(self) -> dict:
+        return {effect_id: track for effect_id, track in self.tracks.items() if track.created}
 
     @property
     def language_name(self) -> str:
@@ -248,7 +288,10 @@ class CameraEffectManager:
         return sorted(effect_id for effect_id in self.effect_names if effect_id > 0)
 
     def camera_kind(self, effect_id: int) -> str:
-        if effect_id in self.tracks or any(entry["effect_id"] == effect_id for entry in self.data["tracks"]):
+        track = self.tracks.get(effect_id)
+        if track is not None and track.created:
+            return "created"
+        if track is not None or any(entry["effect_id"] == effect_id for entry in self.data["tracks"]):
             return "track"
         if effect_id in self.file_camera_effects:
             return "file"
@@ -282,12 +325,98 @@ class CameraEffectManager:
         for track in tracks.values():
             track.same_as = [other for other in by_bytes[track.original] if other != track.effect_id]
         self.language = language
-        self.tracks = tracks
+        self.tracks = {**self.created_tracks(), **tracks}    # created cameras do not depend on the exe
 
     def close(self):
-        self.tracks = {}
+        self.tracks = self.created_tracks()
         self.language = None
         self.exe_path = ""
+
+    # ------------------------------------------------------------------ created cameras
+    def can_create(self, effect_id: int) -> bool:
+        return effect_id in CREATABLE_CAMERA_EFFECTS and effect_id not in self.tracks
+
+    @staticmethod
+    def minimal_track_bytes() -> bytes:
+        """A ready-to-edit track: play(0) then end_clear(), one set whose slot 0 is a 2-keyframe
+        camera (the default animation of the track editor)."""
+        from FF8GameData.dat.cameracollection import _serialize
+        collection = bytes(_serialize([[(object(), build_default_animation())]
+                                       + [(None, None)] * (NB_SLOT_PER_SET - 1)]))
+        script = MINIMAL_SCRIPT + b"\0" * (len(MINIMAL_SCRIPT) % 2)
+        keyframe_offset = SCRIPT_OFFSET + len(script)
+        return HEADER.pack(CAM_POINTER_COUNT, SCRIPT_OFFSET, keyframe_offset,
+                           keyframe_offset + len(collection)) + script + collection
+
+    def _created_track(self, effect_id: int, data: bytes) -> CameraTrack:
+        track = CameraTrack(effect_id=effect_id, name=self.effect_names.get(effect_id, ""),
+                            label="created camera (.bcam only)", address=0, push_operand=0, original=b"")
+        track.replace_bytes(data, self.vm)
+        return track
+
+    def create_track(self, effect_id: int, source_effect: int = None) -> CameraTrack:
+        """Give a camera-less effect a camera: a copy of `source_effect`'s track as it is now (edits
+        included), or the minimal track. It is .bcam only (no exe address)."""
+        if not self.can_create(effect_id):
+            raise ValueError(f"effect {effect_id} cannot get a created camera")
+        if source_effect is None:
+            data = self.minimal_track_bytes()
+        else:
+            source = self.tracks.get(source_effect)
+            if source is None:
+                raise ValueError(f"effect {source_effect} has no camera track to copy (open the exe)")
+            data = source.to_bytes()
+        track = self._created_track(effect_id, data)
+        self.tracks[effect_id] = track
+        return track
+
+    def remove_track(self, effect_id: int):
+        """Drop a created camera (an exe track is only reset)."""
+        track = self.tracks.get(effect_id)
+        if track is not None and track.created:
+            del self.tracks[effect_id]
+
+    # ------------------------------------------------------------------ .bcam import
+    def load_bcam(self, effect_id: int, data: bytes) -> CameraTrack:
+        """A .bcam file as `effect_id`'s camera: it overrides the exe track (still a .hext edit
+        when it keeps the exe's size and layout, else .bcam only), or becomes a created camera.
+        ValueError with the reason, nothing changed, when FFNx would refuse the file."""
+        if effect_id not in self.effect_names or effect_id <= 0:
+            raise ValueError(f"no effect {effect_id}")
+        track = self.tracks.get(effect_id)
+        if track is None:
+            track = self._created_track(effect_id, data)
+            self.tracks[effect_id] = track
+        else:
+            track.replace_bytes(data, self.vm)
+        return track
+
+    def load_bcam_files(self, paths):
+        """Read effect_NNN.bcam files (and the effect_NNN.bcam files of folders, FFNx's
+        direct/exe or direct/<lang>/exe included). Returns ([loaded effect ids], [(path, reason)])."""
+        import os
+        files = []
+        for path in paths:
+            if os.path.isdir(path):
+                for root, _dirs, names in os.walk(path):
+                    files += [os.path.join(root, name) for name in sorted(names) if name.lower().endswith(CAM_EXTENSION)]
+            else:
+                files.append(path)
+        loaded, refused = [], []
+        for path in files:
+            match = CAM_FILE_PATTERN.fullmatch(os.path.basename(path))
+            if match is None:
+                refused.append((path, "not named effect_NNN.bcam (NNN = the effect id), so no effect to load it on"))
+                continue
+            try:
+                with open(path, "rb") as file:
+                    data = file.read()
+                self.load_bcam(int(match.group(1)), data)
+            except (OSError, ValueError, struct.error) as error:
+                refused.append((path, str(error)))
+                continue
+            loaded.append(int(match.group(1)))
+        return loaded, refused
 
     # ------------------------------------------------------------------ editing
     def track(self, effect_id: int):
@@ -298,6 +427,9 @@ class CameraEffectManager:
 
     def reset_track(self, effect_id: int):
         track = self.tracks[effect_id]
+        if track.created:
+            self.remove_track(effect_id)
+            return
         track._set_parts(track.original, self.vm)
 
     def script_text(self, track: CameraTrack) -> str:
@@ -389,6 +521,10 @@ class CameraEffectManager:
                  "addresses differ in the other languages, do not use it with them.",
                  f"+{IMAGE_BASE:X}", ""]
         for track in self.resized_tracks():
+            if track.created:
+                lines.append(f"#Effect {track.effect_id} {track.name}: created camera (no exe track), not in "
+                             f"this patch - use its effect_{track.effect_id:03d}.bcam")
+                continue
             lines.append(f"#Effect {track.effect_id} {track.name}: resized to {track.current_size} bytes "
                          f"(exe room {track.size}), not in this patch - use its effect_{track.effect_id:03d}.bcam")
         if self.resized_tracks():

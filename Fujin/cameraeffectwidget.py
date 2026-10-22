@@ -3,10 +3,11 @@ import os
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
-                             QPushButton, QSplitter, QMessageBox, QFileDialog)
+                             QPushButton, QSplitter, QMessageBox, QFileDialog, QComboBox)
 
 from Common.filebinding import FileBinding
-from Fujin.cameraeffectmanager import CAM_FFNX_FOLDER, CameraEffectManager, cam_file_name
+from Fujin.cameraeffectmanager import (CAM_FFNX_FOLDER, CREATABLE_CAMERA_EFFECTS, DEFAULT_CAMERA_SOURCE,
+                                       CameraEffectManager, cam_file_name)
 from Fujin.cameraeffectpreview import CameraEffectPreview
 from Fujin.cameratrackeditor import CameraTrackEditor
 from SmallWidget.listsearchbar import ListSearchBar
@@ -23,6 +24,11 @@ _NO_TRACK_TEXT = {
             "opened on the caster, the camera stays on the caster for the whole effect "
             "(e.g. 5 Phoenix Down, 7 Mega Phoenix). Some effects move the camera with their own code.",
 }
+_NOT_CREATABLE_TEXT = (
+    "No camera can be created here: an effect with no track may move the camera with its own code "
+    "(GF summons, Shot, Duel, Zell's finishers, Angelo, Gilgamesh...), and FFNx would start the created "
+    "camera on top of it. Only the items and commands known to start no camera at all can get one: "
+    + ", ".join(str(effect) for effect in CREATABLE_CAMERA_EFFECTS) + ".")
 
 
 class CameraEffectEditorWidget(QWidget):
@@ -79,6 +85,22 @@ class CameraEffectEditorWidget(QWidget):
             f"FFNx plays it instead of the exe's from the game folder's {CAM_FFNX_FOLDER}/ - works with\n"
             "every exe language, and needs no .hext.")
         self.export_cam_button.clicked.connect(lambda: self.export_cam())
+        # An effect that starts no camera (items, commands) can be given one, .bcam only
+        self.create_source = QComboBox()
+        self.create_source.setToolTip("What the new camera starts as: a copy of another effect's camera track "
+                                      "(with its edits), or a minimal one (slot 0 played, 2 keyframes)")
+        self.create_button = QPushButton("Create a camera")
+        self.create_button.setToolTip(
+            "Give this effect a camera of its own. It has no place in the exe: Save writes it as\n"
+            f"{CAM_FFNX_FOLDER}/effect_NNN.bcam, which FFNx starts right after the effect starts.")
+        self.create_button.clicked.connect(lambda: self.create_camera())
+        create_row = QHBoxLayout()
+        create_row.addWidget(QLabel("Start from:"))
+        create_row.addWidget(self.create_source, 1)
+        create_row.addWidget(self.create_button)
+        self.create_box = QWidget()
+        self.create_box.setLayout(create_row)
+        self.create_box.hide()
         info_row = QHBoxLayout()
         info_row.addWidget(self.info_label, 1)
         info_buttons = QVBoxLayout()
@@ -96,6 +118,7 @@ class CameraEffectEditorWidget(QWidget):
         details_layout = QVBoxLayout(details)
         details_layout.setContentsMargins(0, 0, 0, 0)
         details_layout.addLayout(info_row)
+        details_layout.addWidget(self.create_box)
         details_layout.addWidget(self.size_warning)
         details_layout.addWidget(self.track_editor, 1)
 
@@ -227,7 +250,7 @@ class CameraEffectEditorWidget(QWidget):
             kind = self.manager.camera_kind(effect_id)
             item = QListWidgetItem(self._item_text(effect_id))
             item.setData(Qt.ItemDataRole.UserRole, effect_id)
-            if kind != "track":
+            if kind not in ("track", "created"):
                 item.setForeground(QBrush(QColor("gray")))
                 item.setToolTip(_NO_TRACK_TEXT[kind])
             self.effect_list.addItem(item)
@@ -238,9 +261,9 @@ class CameraEffectEditorWidget(QWidget):
     def _item_text(self, effect_id):
         track = self.manager.track(effect_id)
         mark = "* " if track is not None and track.modified else ""
-        suffix = {"track": "", "file": " (file camera)", "none": " (no exe track)"}[
+        suffix = {"track": "", "file": " (file camera)", "none": " (no exe track)", "created": " (.bcam camera)"}[
             self.manager.camera_kind(effect_id)]
-        if track is not None and not track.fits_exe:
+        if track is not None and not track.created and not track.fits_exe:
             suffix = " (.bcam only)"
         return f"{mark}{effect_id:3d} - {self.manager.effect_names.get(effect_id, '')}{suffix}"
 
@@ -268,11 +291,13 @@ class CameraEffectEditorWidget(QWidget):
             self.status_label.setText("Open the FF8 exe with Import to read its 221 effect camera tracks "
                                       "(EN, FR, DE, IT or ES 2013 Steam exe). Save writes a .hext.")
             return
-        modified = len(self.manager.modified_tracks())
-        resized = len(self.manager.resized_tracks())
+        created = len(self.manager.created_tracks())
+        modified = len(self.manager.modified_tracks()) - created
+        resized = len(self.manager.resized_tracks()) - created
         resized_text = f" ({resized} resized: .bcam only)" if resized else ""
-        self.status_label.setText(f"{self.manager.language_name} exe: {len(self.manager.tracks)} camera tracks, "
-                                  f"{modified} changed{resized_text}. Save writes a .hext for the "
+        created_text = f", {created} created camera{'s' if created > 1 else ''} (.bcam)" if created else ""
+        self.status_label.setText(f"{self.manager.language_name} exe: {len(self.manager.tracks) - created} camera "
+                                  f"tracks, {modified} changed{resized_text}{created_text}. Save writes a .hext for the "
                                   f"{self.manager.language_name} exe only (the addresses differ between "
                                   "languages); Export .bcam… writes one effect for FFNx, any language.")
 
@@ -286,20 +311,39 @@ class CameraEffectEditorWidget(QWidget):
         track = self.manager.track(effect_id)
         kind = self.manager.camera_kind(effect_id)
         self._set_editors_enabled(track is not None)
+        self.create_box.setVisible(track is None and self.manager.can_create(effect_id))
         if track is None:
             if kind == "track":
                 text = f"<b>Effect {effect_id} - {name}</b><br>Open the FF8 exe to edit its camera track."
             else:
                 text = f"<b>Effect {effect_id} - {name}</b><br>{_NO_TRACK_TEXT[kind]}"
+                if kind == "none":
+                    text += "<br><br>" + (
+                        "<b>It can be given a camera:</b> Create a camera (below) makes one for FFNx, which plays "
+                        f"it from {CAM_FFNX_FOLDER}/{cam_file_name(effect_id)} right after the effect starts."
+                        if self.manager.can_create(effect_id) else _NOT_CREATABLE_TEXT)
             self.info_label.setText(text)
             self.size_warning.hide()
             self.track_editor.set_track(None)
+            self._fill_create_sources(effect_id)
             return
         self._update_info(track)
         self.track_editor.set_track(track)
 
     def _update_info(self, track):
         name = self.manager.effect_names.get(track.effect_id, "")
+        self.reset_button.setText("Remove this camera" if track.created else "Reset to the exe values")
+        self.reset_button.setToolTip("Delete the created camera: the effect starts no camera again" if track.created
+                                     else "Undo every change made to this effect's camera track")
+        if track.created:
+            self.info_label.setText(
+                f"<b>Effect {track.effect_id} - {name}</b> &nbsp; created camera<br>"
+                f"No camera in the exe: FFNx starts this one from {CAM_FFNX_FOLDER}/{cam_file_name(track.effect_id)} "
+                f"right after the effect starts (Save or Export .bcam… writes it). {track.current_size} bytes: script "
+                f"{len(track.script)} bytes, {track.keyframe_count()} keyframes. The vanilla game, without FFNx, "
+                "ignores it.")
+            self.size_warning.hide()
+            return
         same = ", ".join(f"{other} {self.manager.effect_names.get(other, '')}" for other in track.same_as)
         same_text = (f"<br>Same bytes in the exe as: {same} (separate copies: editing this one only "
                      "changes this effect)") if same else ""
@@ -331,11 +375,86 @@ class CameraEffectEditorWidget(QWidget):
 
     def _reset_selected(self):
         effect_id = self._selected_effect()
-        if self.manager.track(effect_id) is None:
+        track = self.manager.track(effect_id)
+        if track is None:
+            return
+        if track.created and QMessageBox.question(
+                self, "Camera effect editor", f"Remove the camera created for effect {effect_id}? Its edits are lost "
+                "(a .bcam already written stays on disk).") != QMessageBox.StandardButton.Yes:
             return
         self.manager.reset_track(effect_id)
         self._show_selected()
         self._track_edited(effect_id)
+
+    # ------------------------------------------------------------------ created cameras
+    def _fill_create_sources(self, effect_id):
+        self.create_source.clear()
+        default = DEFAULT_CAMERA_SOURCE.get(effect_id)
+        names = self.manager.effect_names
+        exe_tracks = sorted(e for e, t in self.manager.tracks.items() if not t.created)
+        if default in exe_tracks:
+            self.create_source.addItem(f"Copy of {default} {names.get(default, '')} (suggested: same kind of cast)",
+                                       default)
+        self.create_source.addItem("Minimal camera: plays slot 0, one 2-keyframe shot", None)
+        for other in exe_tracks:
+            if other != default:
+                self.create_source.addItem(f"Copy of {other} {names.get(other, '')}", other)
+        if not exe_tracks:
+            self.create_source.setToolTip("Open the FF8 exe (Import) to start from another effect's camera; "
+                                          "without it only the minimal camera is offered.")
+
+    def create_camera(self, source_effect="selected"):
+        """Create the selected effect's camera from the chosen source (an effect id or None = minimal)."""
+        effect_id = self._selected_effect()
+        if effect_id is None or not self.manager.can_create(effect_id):
+            return None
+        if source_effect == "selected":
+            source_effect = self.create_source.currentData()
+        try:
+            track = self.manager.create_track(effect_id, source_effect)
+        except ValueError as error:
+            QMessageBox.warning(self, "Camera effect editor", f"No camera created:\n{error}")
+            return None
+        self._fill_list()
+        self.select_effect(effect_id)
+        self._show_selected()
+        self._track_edited(effect_id)
+        return track
+
+    # ------------------------------------------------------------------ .bcam import
+    def import_bcam(self, paths=None):
+        """Header Import: effect_NNN.bcam files (several at once) as their effects' cameras."""
+        if paths is None:
+            paths = QFileDialog.getOpenFileNames(self, "Import FFNx effect cameras (effect_NNN.bcam)",
+                                                 self.file_registry.last_folder(CAM_FOLDER_KEY) or os.getcwd(),
+                                                 "FFNx effect camera (*.bcam)")[0]
+        if not paths:
+            return [], []
+        return self._load_bcam_paths(paths)
+
+    def import_bcam_folder(self, folder=None):
+        """Header Import: every effect_NNN.bcam of a folder (FFNx's direct/exe, its language folders too)."""
+        if folder is None:
+            folder = QFileDialog.getExistingDirectory(self, f"Import the FFNx effect cameras of a folder ({CAM_FFNX_FOLDER})",
+                                                      self.file_registry.last_folder(CAM_FOLDER_KEY) or os.getcwd())
+        if not folder:
+            return [], []
+        return self._load_bcam_paths([folder])
+
+    def _load_bcam_paths(self, paths):
+        loaded, refused = self.manager.load_bcam_files(paths)
+        first = paths[0]
+        self.file_registry.remember_folder(CAM_FOLDER_KEY, first if os.path.isdir(first) else os.path.dirname(first))
+        self._after_tracks_changed()
+        if loaded:
+            self.select_effect(loaded[0])
+        if refused:
+            QMessageBox.warning(self, "Camera effect editor",
+                                f"{len(loaded)} camera(s) loaded, {len(refused)} refused:\n"
+                                + "\n".join(f"{os.path.basename(path)}: {reason}" for path, reason in refused[:20]))
+        elif not loaded:
+            QMessageBox.information(self, "Camera effect editor", "No effect_NNN.bcam file found.")
+        return loaded, refused
 
     def _track_edited(self, effect_id):
         self._refresh_item(effect_id)

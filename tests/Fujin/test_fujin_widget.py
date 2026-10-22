@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QApplication
 EXE = "extracted_files/FF8_EN.exe"
 LIFE = 35
 CURE, PHOENIX_DOWN = 1, 5
+CLASH = 26                       # no camera track, and none can be created (not an item/command)
 TIM = "extracted_files/magic/mag000-049.tim"
 
 
@@ -39,7 +40,7 @@ def test_files_open_from_the_header_toolbar_only(fujin):
     from PyQt6.QtWidgets import QPushButton
     buttons = [button.text() for button in fujin.findChildren(QPushButton) if not button.isHidden()]
     assert not [text for text in buttons if re.match(r"(Import|Open|Load|Reload)", text)], buttons
-    assert len(fujin.import_entries()) == 3 and len(fujin.complementary_entries()) == 4
+    assert len(fujin.import_entries()) == 5 and len(fujin.complementary_entries()) == 4   # + .bcam files / folder
     fujin.select_effect(LIFE)                                     # mag004-034.tim, not imported
     fujin.files.activate()
     assert "header's Import" in fujin.files.status.text()       # what to do with a missing file
@@ -111,9 +112,12 @@ def test_effect_rows_tell_what_each_effect_has(fujin):
 
 def test_an_effect_without_camera_says_so(fujin):
     fujin.tabs.setCurrentIndex(1)
-    fujin.select_effect(PHOENIX_DOWN)
+    fujin.select_effect(CLASH)                                   # no camera, and none can be created
     assert fujin.camera_sources.isHidden() and fujin.camera_editor.preview.isHidden()
     assert "plays no camera track" in fujin.camera_note.text()
+    fujin.select_effect(PHOENIX_DOWN)                            # no camera, but one can be created
+    assert not fujin.camera_sources.isHidden() and "can be given one" in fujin.camera_note.text()
+    assert fujin.camera_editor.create_box.isVisibleTo(fujin.camera_editor)
     fujin.select_effect(LIFE)
     assert not fujin.camera_sources.isHidden() and not fujin.camera_editor.preview.isHidden()
 
@@ -178,16 +182,18 @@ def test_native_snapshot_lists_named_functions(fujin):
 
 def test_tabs_without_content_are_greyed(fujin):
     fujin.tabs.setCurrentIndex(3)
-    fujin.select_effect(PHOENIX_DOWN)                             # no camera, no file imported
-    assert not fujin.tabs.isTabEnabled(1) and "plays no camera track" in fujin.tabs.tabToolTip(1)
+    fujin.select_effect(PHOENIX_DOWN)                             # no file imported
+    assert fujin.tabs.isTabEnabled(1)                            # Camera: "Create a camera" is offered
     for index in (3, 4, 5):                                      # Models, Textures, Sound
         assert not fujin.tabs.isTabEnabled(index) and fujin.tabs.tabToolTip(index)
     assert fujin.tabs.currentIndex() == 0                       # a greyed tab hands over to Overview
     assert "Greyed tabs" in fujin.overview.toPlainText()
+    fujin.select_effect(CLASH)                                   # no camera, none can be created
+    assert not fujin.tabs.isTabEnabled(1) and "plays no camera track" in fujin.tabs.tabToolTip(1)
     fujin.select_effect(LIFE)
     assert fujin.tabs.isTabEnabled(1) and fujin.tabs.tabToolTip(1) == ""
     fujin.tabs.setCurrentIndex(1)                                # the user picks Camera...
-    fujin.select_effect(PHOENIX_DOWN)
+    fujin.select_effect(CLASH)
     assert fujin.tabs.currentIndex() == 0
     fujin.select_effect(LIFE)
     assert fujin.tabs.currentIndex() == 1                       # ...and gets it back with a camera

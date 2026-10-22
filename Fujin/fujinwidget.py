@@ -176,7 +176,25 @@ class FujinWidget(QWidget):
     def import_entries(self):
         return [("FF8 exe (camera tracks and embedded effect assets)", self.camera_editor.open_exe),
                 ("Effect files (MAG / MA8, all sections)", self.open_effect_files),
-                ("Fujin effect patch (.hext)", self.import_hext)]
+                ("Fujin effect patch (.hext)", self.import_hext),
+                ("FFNx effect cameras (effect_NNN.bcam files)", self._import_bcam),
+                ("FFNx effect cameras folder (direct/exe)", self._import_bcam_folder)]
+
+    def _import_bcam(self, paths=None):
+        result = self.camera_editor.import_bcam(paths)
+        self._after_bcam_import(result[0])
+        return result
+
+    def _import_bcam_folder(self, folder=None):
+        result = self.camera_editor.import_bcam_folder(folder)
+        self._after_bcam_import(result[0])
+        return result
+
+    def _after_bcam_import(self, loaded):
+        if loaded:
+            self.select_effect(loaded[0])
+            self.tabs.setCurrentIndex(1)
+        self._refresh()
 
     def complementary_entries(self):
         preview = self.camera_editor.preview
@@ -348,7 +366,8 @@ class FujinWidget(QWidget):
                 self.effect_list.addItem(item)
 
     def _effect_text(self, effect, modified=False):
-        return f"{'* ' if modified else ''}{effect:03d} — {self.catalog.name(effect)}"
+        created = self.camera_editor.manager.camera_kind(effect) == "created"
+        return f"{'* ' if modified else ''}{effect:03d} — {self.catalog.name(effect)}" + (" (.bcam camera)" if created else "")
 
     def modified_effects(self):
         """The effects with unsaved changes: a camera track or a native resource changed since the
@@ -404,6 +423,8 @@ class FujinWidget(QWidget):
 
     def _camera_changed(self):
         if hasattr(self, "changes"):
+            if self.current_effect is not None and hasattr(self, "resources"):
+                self._refresh_camera()            # a camera created or removed changes the tab
             self._refresh_summary()
             self.file_bindings_changed.emit()
 
@@ -440,15 +461,29 @@ class FujinWidget(QWidget):
     def _refresh_camera(self):
         effect = self.current_effect
         exe = self.catalog.camera_entry(effect)
+        manager = self.camera_editor.manager
+        created = manager.camera_kind(effect) == "created"
+        creatable = manager.can_create(effect)
         parameters = any(r.kind == "camera_parameter" for r in self.resources)
-        self.camera_sources.setTabVisible(0, exe is not None)
-        self.camera_sources.setTabVisible(1, (exe is None and not parameters) or self.mag_camera.sources.count() > 0)
+        self.camera_sources.setTabVisible(0, exe is not None or created or creatable)
+        self.camera_sources.setTabVisible(1, (exe is None and not parameters and not (created or creatable))
+                                          or self.mag_camera.sources.count() > 0)
         self.camera_sources.setTabVisible(2, parameters)
         mag_tracks = self.mag_camera.sources.count() > 0
         file_camera = effect in self.catalog.camera["file_camera_effects"]
         # No track anywhere: say so instead of showing an empty editor and an empty 3D view
-        self.camera_sources.setVisible(exe is not None or parameters or mag_tracks or file_camera)
-        if exe is not None:
+        self.camera_sources.setVisible(exe is not None or parameters or mag_tracks or file_camera or created or creatable)
+        if created:
+            self.camera_note.setText("<b>Created camera.</b> This effect has no camera in the exe; FFNx plays this one "
+                                     "from direct/exe/" + cam_file_name(effect) + " right after the effect starts. Save "
+                                     "writes it (Pending changes lists it); Remove this camera deletes it.")
+            self.camera_sources.setCurrentIndex(0)
+        elif creatable and exe is None:
+            self.camera_note.setText("<b>This effect plays no camera track of its own</b> (as for Phoenix Down and Mega "
+                                     "Phoenix, the camera of the action stays). It can be given one: Create a camera "
+                                     "below makes an FFNx .bcam camera, from another effect's track or a minimal one.")
+            self.camera_sources.setCurrentIndex(0)
+        elif exe is not None:
             self.camera_note.setText("Camera track stored in the exe. Save writes your changes as a .hext patch; "
                                      "a track that grew is saved as an FFNx .bcam file instead.")
         elif parameters:
@@ -663,7 +698,7 @@ class FujinWidget(QWidget):
                 pending.append(f"<li>File: {esc(manager.file_path)} ({len(manager.data):,} bytes; original section sizes)</li>")
         for track in self.camera_editor.manager.modified_tracks():
             destination = "effects_" + self.camera_editor.manager.language_name + ".hext" if track.fits_exe else CAM_FFNX_FOLDER + "/" + cam_file_name(track.effect_id)
-            pending.append(f"<li>Camera {track.effect_id}: {esc(destination)}</li>")
+            pending.append(f"<li>Camera {track.effect_id}{' (created)' if track.created else ''}: {esc(destination)}</li>")
         for key, manager in self.native.managers.items():
             if manager.modified:
                 pending.append(f"<li>{esc(key)}: effects_EN.hext (native data)</li>")

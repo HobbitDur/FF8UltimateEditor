@@ -23,6 +23,15 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   executable tracks share the battle-context preview and caster/target imports. This previews
   the selected track, not additional procedural writes. Disease Breath (231) has a camera in
   `MAG230_B.00` at `0x870`: 3 blocks, 5 keyframe entries. Bone-driven motion is edited in scripts.
+  **Create a camera:** an item/command effect that starts no camera (5 Phoenix Down, 7 Mega
+  Phoenix, 40 Scan, 53, 58, 59, 183 Defend, 292-296) can be given one, from a copy of another
+  effect's track (Life, 35, is suggested for 5 and 7) or a minimal one (`play(0)`,
+  `end_clear()`, one slot with a 2-keyframe shot). It has no exe address: it is edited and
+  previewed like any track, listed as ".bcam camera" and in Pending changes, and saved as
+  `direct/exe/effect_NNN.bcam`, which FFNx (#1047) starts right after the effect starts;
+  **Remove this camera** deletes it. Other camera-less effects are not offered one: they may
+  move the camera with their own code (GF summons, Shot, Duel, Zell's finishers, Angelo,
+  Gilgamesh...), and the Camera tab says so.
 - **Choreography:** editable MAG instructions using each effect's opcode profile, scene
   playback (verified for the seven GFs; every other cinematic script replays with the same
   engine model as a labelled, untextured approximation that names the draw handlers it shows as
@@ -116,9 +125,14 @@ Resized tracks write `direct/exe/effect_NNN.bcam` under that folder. The
 executable is never overwritten. Patches are cumulative against the loaded executable;
 successful export clears unsaved state without losing that baseline. Failed/canceled saves
 retain unsaved state. Reimport a saved effect Hext over the matching executable to continue;
-all lines are validated before applying, including resource ownership. Structural `.bcam`
-reimport is not implemented. Reverting a resized camera removes that session's old export
-when saving to the same folder, provided it was not changed externally.
+all lines are validated before applying, including resource ownership. **Import** (header) also
+takes `effect_NNN.bcam` files, several at once, or a folder (FFNx's `direct/exe` and
+`direct/<lang>/exe` included): each becomes that effect's camera - an override of its exe track
+(".bcam only" when it no longer fits the exe) or a created camera. A file FFNx would refuse
+(header count 2 and script offset 8, size field = file size, keyframe offset and sets inside,
+keyframes filling the file exactly), or not named `effect_NNN.bcam`, is refused with the reason.
+Export, reimport and save give the same bytes back. Reverting a resized camera removes that
+session's old export when saving to the same folder, provided it was not changed externally.
 
 ```powershell
 python Fujin/ResearchScript/build_effect_resources.py extracted_files/FF8_EN.exe
