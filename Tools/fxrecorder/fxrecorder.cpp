@@ -24,6 +24,11 @@
 // files> out=<file> [model=N: every slot gets c0mN.dat (default 0; -1 = no model)] [ticks=N]
 // [modelfile=<file>: that .dat is read for the model instead of <battle>/c0mN.dat] [actors=0: the
 // models are loaded but not drawn; by default each tick draws them as the battle does]
+// [slotK=<file> (K = 0-2 party, 3-6 enemies, as the battle's entities): the battle's cast instead of model=, one body per
+// slot - a monster c0mNNN.dat or a character d?cNNN.dat (its d?wNNN.dat with weaponK=<file>);
+// slots without a file stay empty] [target=K[,K..]: the effect's targets, any slot] [posK=x,y,z /
+// yawK=N (4096ths of a turn): where slot K stands and faces, default fixed places, party facing
+// the enemies]
 // [overrides=<folder>: unsaved effect-file snapshots, preferred over magic= without changing it]
 // [targets=N] [caster=slot] [seed=N] [camera=<file>: per tick "t ex ey ez ax ay az roll H" - the
 // view the camera player would show, set before the tick; without it a fixed default view]
@@ -45,6 +50,10 @@ struct Opt
 	int eff = 0, ticks = 3000, targets = 1, caster = 0, model = 0;
 	uint32_t seed = 12345;
 	std::string exe, magic, battle, out, camera, overrides;
+	std::string body[7], weapon[7];   // slotK= / weaponK=: the battle's cast, one file per slot
+	std::vector<int> target_slots;    // target=K[,K..]: the effect's targets (default: enemy slots 3..)
+	bool placed[7] = {}; int pos[7][3] = {}; int yaw[7] = { 0, 0, 0, 2048, 2048, 2048, 2048 }; // posK= / yawK=
+	bool cast() const { for (int k = 0; k < 7; k++) if (!body[k].empty()) return true; return false; }
 };
 static Opt O;
 static FILE *g_out = nullptr;
@@ -307,18 +316,32 @@ static void env_reset()
 }
 
 static std::string g_modelfile;   // modelfile=: the target model's .dat, read instead of <battle>/c0mNNN.dat
+static std::string g_serve;       // the file a load in progress reads instead of the battle file it names
 static int g_actors = 1;          // actors=0: do not draw the battle's models
+static bool g_drawn_slot[7];      // the slots holding a model
+// a party slot's weapon (BattleAnimHeader + its anim cmd + attach rotation/offset: 68 bytes at
+// TASK_QUEUE_BATTLE_ENTITY.data + 17 dwords per slot), 0 for monsters, Zell, Edea and Kiros
+static uint32_t weapon_header(uint32_t e) { return *(uint32_t *)(e + 0x78); }
 // the battle's models, as each entity's task draws them every tick (pre_pre_linkedToAnimationSequence
 // 0x502AB0: BattleEntity_ComputeViewBounds 0x5086F0 + BS_RenderBattleEntity 0x502D40) unless the entity
 // is hidden - an effect that redraws its target (Cure's overlay) hides it for that time. The draw
-// composes the bone matrices in place, so the pose (animation 0 frame 0) is rebuilt first every
-// tick, as the entity's animation task does before the draw
+// composes the bone matrices in place, so the pose (animation 0 frame 0, body and weapon:
+// Battle_QueueAnimation 0x509520) is rebuilt first every tick, as the entity's animation task does
+// before the draw (BattleModel_RebuildBodyAndWeaponMatrices 0x508F60), with the weapon's attach
+// transform (pre_pre_linkedToAnimationSequence 0x502CEA)
 static bool render_actor(uint32_t e)
 {
 	__try
 	{
-		((int (__cdecl *)(uint32_t, uint32_t, uint32_t))0x509440)(e + 0x60, e + 0x6C, 0);
-		((int (__cdecl *)(uint32_t))0x508C90)(e + 0x60);
+		((int (__cdecl *)(uint32_t, int))0x509520)(e, 0);
+		((int (__cdecl *)(uint32_t))0x508F60)(e);
+		if (uint32_t w = weapon_header(e))
+		{
+			((void (__cdecl *)(uint32_t, uint32_t))0x56CE30)(w + 20, w + 36);   // ComposeZYXRotationMatrix
+			*(int32_t *)(w + 56) = *(int16_t *)(w + 28);
+			*(int32_t *)(w + 60) = *(int16_t *)(w + 30);
+			*(int32_t *)(w + 64) = *(int16_t *)(w + 32);
+		}
 		((int (__cdecl *)(uint32_t))0x5086F0)(e);
 		((int (__cdecl *)(uint32_t))0x502D40)(e);
 		return true;
@@ -327,10 +350,10 @@ static bool render_actor(uint32_t e)
 }
 static void render_actors()
 {
-	if (!g_actors || O.model < 0) return;
+	if (!g_actors) return;
 	for (int k = 0; k < 7; k++)
 	{
-		if (k == 3) continue;
+		if (!g_drawn_slot[k]) continue;
 		uint32_t e = 0x1D972C0 + 0x9C * k;
 		uint8_t flags = *(uint8_t *)e;
 		uint16_t combat = *(uint16_t *)(e + 2);
@@ -355,7 +378,8 @@ static void apply_pending(std::vector<Pending> v)
 		{
 			const char *name = *(const char **)(0xB84CCC + 4 * p.a); // battle file name table
 			std::vector<uint8_t> f;
-			if (!g_modelfile.empty() && _strnicmp(name, "c0m", 3) == 0) f = readfile(g_modelfile); // the chosen .dat
+			if (!g_serve.empty()) f = readfile(g_serve);                     // the slot's chosen file
+			else if (!g_modelfile.empty() && _strnicmp(name, "c0m", 3) == 0) f = readfile(g_modelfile); // the chosen .dat
 			if (f.empty()) f = readfile(join(O.battle, name));
 			if (!f.empty()) memcpy((void *)p.b, f.data(), f.size());
 			if (p.c) ((void (__cdecl *)())p.c)();
@@ -373,15 +397,16 @@ static void build_battle()
 	int nt = O.targets < 1 ? 1 : (O.targets > 3 ? 3 : O.targets);
 	uint16_t mask = 0;
 	// one action (BattleActionTaskData, 20 bytes): +0 attacker, +1 command (2 = magic), +6 effect,
-	// +8 target data (24-byte records, +0 slot), +0x10 target count; targets = enemy slots 4, 5, 6
+	// +8 target data (24-byte records, +0 slot), +0x10 target count; targets = enemy slots 3, 4, 5 unless target= names them
 	act[0] = (uint8_t)O.caster;
 	act[1] = 2;
 	*(uint16_t *)(act + 6) = (uint16_t)O.eff;
 	*(uint8_t **)(act + 8) = tg;
 	act[0x10] = (uint8_t)nt;
+	if (!O.target_slots.empty()) nt = (int)O.target_slots.size() > 3 ? 3 : (int)O.target_slots.size();
 	for (int k = 0; k < nt; k++)
 	{
-		int slot = 4 + k % 3;
+		int slot = O.target_slots.empty() ? 3 + k % 4 : O.target_slots[k];
 		tg[0x18 * k] = (uint8_t)slot;
 		mask |= (uint16_t)(1 << slot);
 	}
@@ -397,18 +422,20 @@ static void build_battle()
 	for (int slot = 3; slot < 7; slot++) *(uint8_t ***)(0x1D27B10 + 0xD0 * slot) = &name_ptr;
 	static uint8_t e74[7][0x100];            // per-entity state block (Pandemona reads it)
 	for (int k = 0; k < 7; k++) *(uint8_t **)(0x1D972C0 + 0x9C * k + 0x74) = e74[k];
-	// entities 0x1D972C0 + 0x9C * slot: party 0..2, enemies 4..6
-	static const int16_t POS[7][3] = { { -1500, 0, 3000 }, { 0, 0, 3200 }, { 1500, 0, 3000 }, { 0, 0, 0 }, { 0, 0, -3000 }, { -1800, 0, -3200 }, { 1800, 0, -3200 } };
+	// entities 0x1D972C0 + 0x9C * slot: party 0..2, enemies 3..6 (the game's layout)
+	static const int16_t POS[7][3] = { { -1500, 0, 3000 }, { 0, 0, 3200 }, { 1500, 0, 3000 }, { 0, 0, -3000 }, { -1800, 0, -3200 }, { 1800, 0, -3200 }, { 0, 0, -4600 } };
 	for (int k = 0; k < 7; k++)
 	{
 		uint8_t *e = (uint8_t *)(0x1D972C0 + 0x9C * k);
 		uint8_t *m = mdl + 0x4000 * k;
-		e[0] = (k == 3) ? 0 : 2;
-		*(int16_t *)(e + 0x1C) = POS[k][0]; *(int16_t *)(e + 0x1E) = POS[k][1]; *(int16_t *)(e + 0x20) = POS[k][2];
+		e[0] = 2;
+		const int *at = O.placed[k] ? O.pos[k] : nullptr;
+		int16_t x = at ? (int16_t)at[0] : POS[k][0], y = at ? (int16_t)at[1] : POS[k][1], z = at ? (int16_t)at[2] : POS[k][2];
+		*(int16_t *)(e + 0x1C) = x; *(int16_t *)(e + 0x1E) = y; *(int16_t *)(e + 0x20) = z;
 		*(int16_t *)(e + 0x24) = (int16_t)(-1200 - 100 * k);
 		*(int16_t *)(e + 0x26) = (int16_t)(900 + 150 * k);
 		*(int16_t *)(e + 0x40) = 0x1000; *(int16_t *)(e + 0x48) = 0x1000; *(int16_t *)(e + 0x50) = 0x1000;
-		*(int32_t *)(e + 0x54) = POS[k][0]; *(int32_t *)(e + 0x58) = POS[k][1]; *(int32_t *)(e + 0x5C) = POS[k][2];
+		*(int32_t *)(e + 0x54) = x; *(int32_t *)(e + 0x58) = y; *(int32_t *)(e + 0x5C) = z;
 		*(uint8_t **)(e + 0x64) = m;
 		*(uint8_t **)m = m + 0x100;
 		m[0x100] = 32;
@@ -443,7 +470,7 @@ static bool run_queue(uint32_t q, int *r)
 	__except (filter(GetExceptionInformation())) { return false; }
 }
 static bool call0(uint32_t fn) { __try { ((void (__cdecl *)())fn)(); return true; } __except (filter(GetExceptionInformation())) { return false; } }
-// model=N: every slot but 3 gets c0mN.dat through the game's loader (BattleTask_DispatchComEntityLoad
+// model=N: every slot gets c0mN.dat through the game's loader (BattleTask_DispatchComEntityLoad
 // 0x507080 queues battle_monster_dat_loader in queue 0x1D98B40), posed on animation 0 frame 0
 static bool pose_model(uint32_t e)
 {
@@ -455,28 +482,88 @@ static bool pose_model(uint32_t e)
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
 }
+// one queued load (BattleTask_DispatchComEntityLoad 0x507080) run to its end, file requests
+// answered with serve (or the battle file named)
+static bool load_entity(int com_id, int slot, const std::string &serve)
+{
+	static uint32_t out[7][2];
+	g_serve = serve;
+	((void (__cdecl *)(uint32_t, uint32_t, uint32_t *))0x507080)((uint32_t)com_id, (uint32_t)slot, out[slot]);
+	bool done = false;
+	for (int it = 0; it < 16 && !done; it++)
+	{
+		apply_pending(g_pending);
+		int r = 0;
+		if (!run_queue(0x1D98B40, &r)) { printf("model load (slot %d) faulted %08lX at eip %08lX\n", slot, g_fault_code, g_fault_eip); g_serve.clear(); return false; }
+		done = r == 0;
+	}
+	g_serve.clear();
+	if (!done) printf("model load (slot %d) did not finish\n", slot);
+	// its texture uploads now: they point into the file buffer the next load overwrites
+	dump_vram_queue();
+	return done;
+}
+// the com id of a body file: c0mNNN.dat = monster 0x10 + NNN, d<X>c###.dat = character X (Squall 0
+// .. Ward 10: PartyModelsArray 0xB8B914's order), -1 otherwise
+static int body_com_id(const std::string &path)
+{
+	size_t cut = path.find_last_of("/\\");
+	std::string name = path.substr(cut == std::string::npos ? 0 : cut + 1);
+	if (name.size() >= 6 && _strnicmp(name.c_str(), "c0m", 3) == 0) return 0x10 + atoi(name.c_str() + 3);
+	if (name.size() >= 3 && tolower(name[0]) == 'd' && tolower(name[2]) == 'c' && isxdigit((unsigned char)name[1]))
+		return (int)strtol(name.substr(1, 1).c_str(), nullptr, 16);
+	return -1;
+}
+// a party slot as initWeaponAnim 0x502670 + initAnimationSequenceAtStartBattle 0x5027D0 set it: com
+// id, weapon slot, then the body (Battle_isLoadSquallEtc) and its weapon file (Battle_LoadWeaponry,
+// com id + 0x1000), bound with their animations (setComFileData 0x502270, mask 4)
+static bool load_character(uint32_t e, int slot, int com, const std::string &body, const std::string &weapon)
+{
+	*(uint8_t *)(e + 4) = (uint8_t)com;
+	*(uint8_t *)(e + 0x80) = 0;                                      // weaponTier
+	*(uint8_t *)(e + 0x81) = 0;                                      // linkedAltModel
+	bool armed = com != 1 && com != 7 && com != 9;                   // Zell, Edea, Kiros: no weapon model
+	uint32_t w = armed ? 0x1D971F0 + 68 * slot : 0;
+	*(uint32_t *)(e + 0x78) = w;
+	if (w) memset((void *)w, 0, 68);
+	*(uint32_t *)(e + 0x74) = 0x1D96ED0 + 64 * slot;                // BattleStateEntity[slot]
+	if (!load_entity(com, slot, body)) return false;
+	if (com != 7 && !load_entity(0x1000 + com, slot, weapon)) return false;
+	uint32_t extra = *(uint32_t *)0x1D999BC + 12320 * slot;          // g_PartyExtraAnimSlots[slot]
+	auto bind = (void (__cdecl *)(uint32_t, uint32_t, int))0x502270;
+	if (*(uint32_t *)(extra + 8))
+	{
+		bind(e + 0x60, extra, 4);
+		if (w) bind(w, extra + 16, 4);
+	}
+	*(uint32_t *)(e + 0x68) = *(uint32_t *)(e + 0x64);              // comFileDataBis
+	if (w) *(uint32_t *)(w + 8) = *(uint32_t *)(w + 4);
+	return true;
+}
 static bool load_models()
 {
 	g_modelmem = (uint8_t *)VirtualAlloc(nullptr, MODELMEM_SIZE + MODELWORK_SIZE, MEM_COMMIT, PAGE_READWRITE);
+	call0(0x508260);   // BS_SetLocation1: command queue table, texture slots 0-5 kept for the party
 	((void (__cdecl *)(uint32_t))0x507050)((uint32_t)g_modelmem);
 	*(uint32_t *)0x1D98B3C = (uint32_t)g_modelmem + MODELMEM_SIZE;
 	*(uint32_t *)0xB6D080 = (uint32_t)g_modelmem + MODELMEM_SIZE;
-	static uint32_t out[7][2];
+	bool cast = O.cast();
 	for (int slot = 0; slot < 7; slot++)
 	{
-		if (slot == 3) continue;
-		((void (__cdecl *)(uint32_t, uint32_t, uint32_t *))0x507080)(0x10 + O.model, (uint32_t)slot, out[slot]);
-		bool done = false;
-		for (int it = 0; it < 16 && !done; it++)
-		{
-			apply_pending(g_pending);
-			int r = 0;
-			if (!run_queue(0x1D98B40, &r)) { printf("model load (slot %d) faulted %08lX at eip %08lX\n", slot, g_fault_code, g_fault_eip); return false; }
-			done = r == 0;
-		}
-		if (!done) { printf("model load (slot %d) did not finish\n", slot); return false; }
 		uint32_t e = 0x1D972C0 + 0x9C * slot;
+		if (cast)
+		{
+			if (O.body[slot].empty()) continue;
+			int com = body_com_id(O.body[slot]);
+			if (com < 0) { printf("slot %d: %s is neither c0mNNN.dat nor d?c###.dat\n", slot, O.body[slot].c_str()); continue; }
+			if (com < 0x10 ? !load_character(e, slot, com, O.body[slot], O.weapon[slot]) : !load_entity(com, slot, O.body[slot])) return false;
+		}
+		else if (!load_entity(0x10 + O.model, slot, "")) return false;
+		g_drawn_slot[slot] = true;
 		*(uint32_t *)(e + 0x7C) = 0xFFFFFFFF;       // every object visible
+		// the neutral battle facing (resetBasedRotation 0x502070): party 0, monsters turned to them
+		*(int16_t *)(e + 12) = 0; *(int16_t *)(e + 14) = (int16_t)O.yaw[slot]; *(int16_t *)(e + 16) = 0;
+		((void (__cdecl *)(uint32_t, uint32_t))0x56CE30)(e + 12, e + 0x40);
 		env_reset();
 		pose_model(e);
 		*(uint32_t *)(e + 0x28) = 0x808080;          // neutral model tint
@@ -566,6 +653,23 @@ static bool parse(int argc, char **argv)
 		else if (k == "targets") O.targets = atoi(v.c_str());
 		else if (k == "caster") O.caster = atoi(v.c_str());
 		else if (k == "seed") O.seed = (uint32_t)strtoul(v.c_str(), nullptr, 10);
+		else if (k == "target")
+		{
+			for (size_t at = 0; at < v.size();)
+			{
+				size_t comma = v.find(',', at);
+				O.target_slots.push_back(atoi(v.substr(at, comma - at).c_str()));
+				at = comma == std::string::npos ? v.size() : comma + 1;
+			}
+		}
+		else if (k.size() == 5 && k.compare(0, 4, "slot") == 0 && k[4] >= '0' && k[4] <= '6') O.body[k[4] - '0'] = v;
+		else if (k.size() == 4 && k.compare(0, 3, "pos") == 0 && k[3] >= '0' && k[3] <= '6')
+		{
+			int s = k[3] - '0';
+			O.placed[s] = sscanf(v.c_str(), "%d,%d,%d", &O.pos[s][0], &O.pos[s][1], &O.pos[s][2]) == 3;
+		}
+		else if (k.size() == 4 && k.compare(0, 3, "yaw") == 0 && k[3] >= '0' && k[3] <= '6') O.yaw[k[3] - '0'] = atoi(v.c_str()) & 4095;
+		else if (k.size() == 7 && k.compare(0, 6, "weapon") == 0 && k[6] >= '0' && k[6] <= '6') O.weapon[k[6] - '0'] = v;
 	}
 	return O.eff > 0 && O.eff < 400 && !O.exe.empty() && !O.out.empty();
 }
@@ -575,7 +679,7 @@ int main(int argc, char **argv)
 	setvbuf(stdout, nullptr, _IONBF, 0);
 	if (!parse(argc, argv))
 	{
-		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [overrides=<dir>] [model=N] [modelfile=<file>] [actors=0|1] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
+		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [overrides=<dir>] [model=N] [modelfile=<file>] [slotK=<file>] [weaponK=<file>] [target=K,..] [actors=0|1] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
 		return 1;
 	}
 	if (strcmp(argv[argc - 1], "child") != 0)
@@ -652,7 +756,7 @@ int main(int argc, char **argv)
 	std::vector<uint8_t> a8def = readfile(join(O.battle, "a8def.tim"));
 	if (!a8def.empty()) dump_tim(0, a8def.data());
 	else printf("no a8def.tim in %s: the battle's shared effect textures are missing\n", O.battle.c_str());
-	if (O.model >= 0 && !load_models()) return 1;
+	if ((O.cast() || O.model >= 0) && !load_models()) return 1;
 	call0(0x56F9A0); // BS_memsetVars2: hit-effect queue (screen fades...)
 	env_reset();
 	if (!run_setup()) { printf("setup faulted %08lX at eip %08lX addr %08lX\n", g_fault_code, g_fault_eip, g_fault_addr); return 1; }

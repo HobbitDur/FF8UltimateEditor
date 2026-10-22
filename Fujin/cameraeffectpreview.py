@@ -455,6 +455,56 @@ class CameraEffectPreview(QWidget):
             return None
         return self.model(self.party_members().get(key[1], (None, None))[1])
 
+    def battle_cast(self, placed=False):
+        """The battle this preview films, for the effect recorder (Fujin.nativepreview.BattleCast):
+        the party with its weapons, the encounter's enemies (an enemy not imported is named,
+        c0mNNN.dat, for the battle folder) or the imported caster / target monsters, in their
+        battle slots (0-6: an enemy past the 4th is left out). placed: also where the setup stands
+        them and the effect camera it plays (_place_cast). None without a caster."""
+        from Fujin.nativepreview import BattleCast
+        caster_key, target_key = self.caster_key(), self.target_key()
+        if caster_key is None:
+            return None
+        slots = {slot: (body, weapon) for slot, (body, weapon) in self.party_members().items()}
+        encounter = self._encounter()
+        if encounter is not None:
+            for enemy in encounter.enabled_slots():
+                key = ("enemy", enemy.slot_index)
+                slots[self._slot_of(key)] = (self._actor_path(key) or f"c0m{enemy.com_file_id:03}.dat", None)
+        for key, other in ((caster_key, target_key), (target_key, caster_key)):
+            if key is not None and key[0] == "monster":
+                slots[self._slot_of(key, other)] = (key[1], None)
+        slots = {slot: files for slot, files in slots.items() if slot <= 6}
+        cast = BattleCast(slots, self._slot_of(caster_key, target_key), self._slot_of(target_key, caster_key))
+        if placed:
+            self._place_cast(cast)
+        return cast
+
+    def _place_cast(self, cast):
+        """Where this preview's battle setup stands each actor and the effect camera it plays there:
+        the effect preview then shows the same shot. Models still waiting to be cast (imported
+        while hidden) are loaded now."""
+        if self._cast_pending:
+            self._cast_pending = False
+            self._cast_changed(defaults=True)
+        if self.panel is None:
+            return
+        from FF8GameData.dat.battlecamera import play_camera_animation
+        try:
+            context = self.panel._battle_setup.build(0, False)
+        except Exception:
+            return       # a setup the camera preview cannot build either: the recorder's places
+        actors = {slot: actor for slot, actor in context.slots.items() if 0 <= slot <= 6}
+        if cast.caster not in actors:
+            return
+        # one frame of reference: the actors the setup placed (manual placement is around the caster)
+        cast.slots = {slot: files for slot, files in cast.slots.items() if slot in actors}
+        cast.positions = {slot: tuple(float(v) for v in actor.position) for slot, actor in actors.items()}
+        cast.yaws = {slot: float(actor.yaw) for slot, actor in actors.items()}
+        _run, animation = self.resolve()
+        if self.track is not None and animation is not None:
+            cast.camera = play_camera_animation(animation, context) or None
+
     @staticmethod
     def _slot_of(key, other_key=None):
         """The battle slot id of an actor key (an imported monster in manual placement takes the

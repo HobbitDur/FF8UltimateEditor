@@ -1,5 +1,6 @@
-"""Fujin's Choreography > Native preview: what an effect whose behaviour is compiled in the exe
-(Cure, Fire, most spells and enemy attacks) draws, frame by frame, from the game's own code.
+"""Fujin's Overview > Effect preview: what an effect whose behaviour is compiled in the exe
+(Cure, Fire, most spells and enemy attacks) draws, frame by frame, from the game's own code, in
+the battle the Camera tab's preview sets up (party, encounter or monsters, caster and target).
 
 FF8UltimateEditor's effect recorder (Tools/fxrecorder, a small 32-bit program shipped with the
 release; from source, build it with Tools/fxrecorder/build.bat) maps the opened FF8_EN.exe, fakes a
@@ -16,9 +17,10 @@ what the player would see. An effect with no camera track keeps the default batt
 Files: FF8_EN.exe (the header's Import, as for the camera tracks), the effect's files (the folder
 the effect files were imported from) and the battle folder, found through a8def.tim - the battle's
 shared effect textures, opened from the header's Import complementary (shared file bank, never a
-guessed folder). The target model is one of the monster .dat files imported in the Camera tab's
-preview (or the battle folder's c0m000.dat test dummy); every slot of the fake battle gets it and
-the recorder draws those models each tick as the battle does, so the effect is seen on them.
+guessed folder). The cast is the Camera tab preview's: its party (characters with their weapons),
+its encounter's enemies or its imported monsters, its caster and target; each actor stands in its
+battle slot and the recorder loads and draws it each tick as the battle does (the battle folder's
+c0m000.dat test dummy stands in when nothing is imported).
 Unsaved effect-file edits are passed to the recorder as private temporary overrides. Once an
 effect is recorded, edits and Undo / Redo refresh it without writing the imported files.
 
@@ -27,11 +29,12 @@ Approximated: the fake battle (actors stand at fixed places), the camera player 
 (floating point), and an effect that reads the real battle state may differ.
 """
 import hashlib
+import math
 import os
-import re
 import shutil
 import struct
 import tempfile
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from PyQt6.QtCore import QProcess, Qt, QTimer
@@ -49,36 +52,53 @@ SHARED_TEXTURES = "a8def.tim"
 TICKS_PER_SECOND = 15
 FIT_WIDTH = 560          # pixels of the "Fit the effect" picture
 GAME_SCALE = 0.25        # the game window (2560 x 1792 units: eighths of a pixel) drawn 640 x 448
-# the recorder's fake battle (Tools/fxrecorder build_battle): entity positions, the caster and target
-SLOT_POSITIONS = {0: (-1500, 0, 3000), 1: (0, 0, 3200), 2: (1500, 0, 3000), 4: (0, 0, -3000),
-                  5: (-1800, 0, -3200), 6: (1800, 0, -3200)}
-CASTER_SLOT, TARGET_SLOT = 0, 4
+# the recorder's battle (Tools/fxrecorder build_battle): the entity slots as the game lays them out
+# (party 0-2, enemies 3-6, the camera scripts' slot ids too) and where each one stands
+SLOT_POSITIONS = {0: (-1500, 0, 3000), 1: (0, 0, 3200), 2: (1500, 0, 3000), 3: (0, 0, -3000),
+                  4: (-1800, 0, -3200), 5: (1800, 0, -3200), 6: (0, 0, -4600)}
 INITIAL_EYE, INITIAL_TARGET = (10000, -3000, 5000), (0, -500, 0)   # the battle camera words at the start
-DUMMY_MODEL = "c0m000.dat"   # the game's test dummy, from the battle folder when no monster is imported
-_MONSTER_FILE = re.compile(r"^c0m(\d{3})\.dat$", re.IGNORECASE)
+DUMMY_MODEL = "c0m000.dat"   # the game's test dummy, from the battle folder when nothing is imported
 
 
-def model_key(model_path):
-    """The cache tag of a target model: its name plus a hash of where it is and its state on disk."""
-    if not model_path:
-        return "none"
-    try:
-        stat = os.stat(model_path)
-        state = f"{os.path.abspath(model_path)}|{stat.st_size}|{stat.st_mtime_ns}"
-    except OSError:
-        state = os.path.abspath(model_path)
-    stem = os.path.splitext(os.path.basename(model_path))[0]
-    return f"{stem}_{hashlib.sha256(state.encode('utf-8')).hexdigest()[:8]}"
+@dataclass
+class BattleCast:
+    """The battle an effect is recorded in: {slot: (body .dat, weapon .dat or None)}, the caster's
+    slot and the target's (a slot with no model when there is no target actor). From the Camera
+    tab's preview also where each actor stands and faces ({slot: engine xyz}, {slot: yaw radians})
+    and the effect camera it plays there (camera poses), so both previews show the same shot;
+    without them the recorder's fixed places (SLOT_POSITIONS) and Fujin's camera player are used."""
+    slots: dict = field(default_factory=dict)
+    caster: int = 0
+    target: int = 3
+    positions: dict = field(default_factory=dict)
+    yaws: dict = field(default_factory=dict)
+    camera: list = None
+
+    def key(self):
+        """The cache tag of this cast: its files (where they are and their state on disk) and roles."""
+        parts = [f"c{self.caster}t{self.target}"]
+        for slot, files in sorted(self.slots.items()):
+            for path in files:
+                if not path:
+                    continue
+                try:
+                    stat = os.stat(path)
+                    parts.append(f"{slot}|{os.path.abspath(path)}|{stat.st_size}|{stat.st_mtime_ns}")
+                except OSError:
+                    parts.append(f"{slot}|{os.path.abspath(path)}")
+        names = "_".join(os.path.splitext(os.path.basename(self.slots[slot][0]))[0]
+                         for slot in (self.caster, self.target) if slot in self.slots) or "none"
+        return f"{names}_{hashlib.sha256('/'.join(parts).encode('utf-8')).hexdigest()[:10]}"
 
 
-def recording_path(effect_id, model="none"):
+def recording_path(effect_id, cast_key="none"):
     folder = os.path.join(tempfile.gettempdir(), "fujin_native_preview")
     os.makedirs(folder, exist_ok=True)
-    return os.path.join(folder, f"effect_{effect_id:03d}_{model}.txt")
+    return os.path.join(folder, f"effect_{effect_id:03d}_{cast_key}.txt")
 
 
 def model_scale(path):
-    """The camera offset scale of a monster .dat (skeleton scale / 512), 0.5 without one."""
+    """The camera offset scale of a battle .dat (skeleton scale / 512), 0.5 without one."""
     if not path:
         return 0.5
     try:
@@ -90,36 +110,43 @@ def model_scale(path):
         return 0.5
 
 
-def camera_lines(manager, track, model_path=None, ticks=600):
-    """Per-tick camera of an effect's track played around the recorder's fake battle, as the lines
-    the recorder reads: "t ex ey ez ax ay az roll H". [] when the script plays nothing."""
+def pose_lines(poses, ticks=600):
+    """Camera poses as the lines the recorder reads: "t ex ey ez ax ay az roll H"."""
+    clamp = lambda value: max(-32768, min(32767, int(round(value))))
+    return [f"{tick} {' '.join(str(clamp(v)) for v in (*pose.eye, *pose.target))} {clamp(pose.roll)} "
+            f"{max(1, clamp(pose.projection))}" for tick, pose in enumerate(poses[:ticks])]
+
+
+def camera_lines(manager, track, cast=None, ticks=600):
+    """Per-tick camera of an effect's track played around the recorder's battle (cast: a BattleCast,
+    each actor framed with its own model's scale), as the lines the recorder reads:
+    "t ex ey ez ax ay az roll H". [] when the script plays nothing."""
     from FF8GameData.dat.battlecamera import BattleCameraContext, CameraActor, CameraPose, play_camera_animation
     from FF8GameData.dat.camerascript import CameraScriptInputs, camera_animation_at, run_camera_script
+    cast = cast or BattleCast()
     run = run_camera_script(manager.vm, track.script, CameraScriptInputs(
-        opening=0, attacker_slot=CASTER_SLOT, target_slot=TARGET_SLOT, affected_targets=1))
+        opening=0, attacker_slot=cast.caster, target_slot=cast.target, affected_targets=1))
     if run.chosen is None:
         return []
     animation = camera_animation_at(track.collection, run.chosen)
     if animation is None:
         return []
-    scale = model_scale(model_path)
-    actors = {slot: CameraActor(position, 0.0, scale) for slot, position in SLOT_POSITIONS.items()}
-    context = BattleCameraContext(actors[CASTER_SLOT], actors[TARGET_SLOT],
+    actors = {slot: CameraActor(position, 0.0, model_scale(cast.slots.get(slot, (None, None))[0]))
+              for slot, position in SLOT_POSITIONS.items()}
+    context = BattleCameraContext(actors[cast.caster], actors[cast.target],
                                   CameraPose(INITIAL_EYE, INITIAL_TARGET), actors)
-    poses = play_camera_animation(animation, context)[:ticks]
-    clamp = lambda value: max(-32768, min(32767, int(round(value))))
-    return [f"{tick} {' '.join(str(clamp(v)) for v in (*pose.eye, *pose.target))} {clamp(pose.roll)} "
-            f"{max(1, clamp(pose.projection))}" for tick, pose in enumerate(poses)]
+    return pose_lines(play_camera_animation(animation, context), ticks)
 
 
 class NativePreviewView(QWidget):
     """providers: exe_path() -> the opened FF8_EN.exe; magic_folder() -> the effect files' folder;
     camera_track(effect_id) -> (camera manager, track) or (None, None);
     file_edits() -> {file name: unsaved bytes}, staged privately for the recorder;
-    model_paths() -> the imported monster .dat paths (the Camera tab preview's), offered as target."""
+    cast_source: the Camera tab's preview (its caster / target pickers are mirrored here and
+    battle_cast() gives the battle), or None for the battle folder's test dummy."""
 
     def __init__(self, file_registry, exe_path=None, magic_folder=None, camera_track=None, file_edits=None,
-                 model_paths=None):
+                 cast_source=None):
         super().__init__()
         self.effect_id, self.effect_name = None, ""
         self.recording = None
@@ -139,27 +166,37 @@ class NativePreviewView(QWidget):
         self.magic_folder = magic_folder or (lambda: "")
         self.camera_track = camera_track or (lambda _effect: (None, None))
         self.file_edits = file_edits or (lambda: {})
-        self.model_paths = model_paths or (lambda: [])
+        self.cast_source = cast_source
+        self._cast_refresh = QTimer(self)
+        self._cast_refresh.setSingleShot(True)
+        self._cast_refresh.setInterval(0)
+        self._cast_refresh.timeout.connect(self.refresh_cast)
         self.textures_binding = FileBinding(SHARED_TEXTURES, file_registry, file_filter=SHARED_TEXTURES,
                                             read_only=True, complementary=True)
-        self.textures_binding.file_opened.connect(lambda _path: (self.refresh_models(), self._update_controls()))
+        self.textures_binding.file_opened.connect(lambda _path: (self.refresh_cast(), self._update_controls()))
         self.intro = QLabel(
-            "What the effect draws, from the game's own code: FF8UltimateEditor's effect recorder runs it in a "
-            "fake battle and records every primitive and texture it sends to the PlayStation GPU, seen through "
-            "the effect's own camera (Camera tab). Exact: shapes, colours, blending, timing. Approximated: the "
-            "battle around it (actors at fixed places). Unsaved effect-file edits are included; after the first "
-            "recording, editing a texture or using Undo / Redo refreshes this preview automatically.")
+            "What the effect draws, from the game's own code: FF8UltimateEditor's effect recorder runs it in the "
+            "battle of the Camera tab's preview (its party, encounter or monsters, caster and target) and records "
+            "every primitive and texture it sends to the PlayStation GPU, seen through the effect's own camera. "
+            "Exact: shapes, colours, blending, timing. Approximated: where the actors stand. Unsaved effect-file "
+            "edits are included; after the first recording, editing a texture or using Undo / Redo refreshes "
+            "this preview automatically.")
         self.intro.setWordWrap(True)
         self.record_button = QPushButton("Record")
         self.record_button.setToolTip("Preview the current edits, including unsaved effect files")
         self.record_button.clicked.connect(lambda: self.record())
-        self.model_combo = QComboBox()
-        self.model_combo.setToolTip("The model every slot of the fake battle gets: a monster .dat imported in the "
-                                    "Camera tab's preview, or the battle folder's c0m000.dat (the game's test "
-                                    "dummy). Record again to apply.")
-        self.model_combo.currentIndexChanged.connect(self._model_changed)
-        self.model_combo.activated.connect(lambda _i: setattr(self, "_chosen_model", self.model_combo.currentData()))
-        self._chosen_model = None   # the user's pick, kept while it is offered (else the first entry)
+        # the Camera tab preview's caster and target pickers, mirrored: one battle for both previews
+        self.caster_combo, self.target_combo = QComboBox(), QComboBox()
+        self.caster_combo.setToolTip("Who casts the effect: a party member, an enemy of the encounter or an "
+                                     "imported monster (the Camera tab's preview: Import complementary, Camera "
+                                     "preview models). Record again to apply.")
+        self.target_combo.setToolTip("Who the effect is cast on. Record again to apply.")
+        self.caster_combo.activated.connect(lambda _i: self._pick(self.caster_combo, "caster_combo"))
+        self.target_combo.activated.connect(lambda _i: self._pick(self.target_combo, "target_combo"))
+        if cast_source is not None:
+            for combo in (cast_source.caster_combo, cast_source.target_combo):
+                combo.currentIndexChanged.connect(lambda _i: self._cast_refresh.start())
+            cast_source.models_changed.connect(self._cast_refresh.start)
         self.view_mode = QComboBox()
         self.view_mode.addItem("Game window (320 × 224)", "game")
         self.view_mode.addItem("Fit the effect", "fit")
@@ -186,20 +223,25 @@ class NativePreviewView(QWidget):
         self._prerender = QTimer(self)
         self._prerender.setInterval(0)
         self._prerender.timeout.connect(self._prerender_step)
+        cast_row = QHBoxLayout()
+        cast_row.addWidget(QLabel("Caster:"))
+        cast_row.addWidget(self.caster_combo, 1)
+        cast_row.addWidget(QLabel("Target:"))
+        cast_row.addWidget(self.target_combo, 1)
         controls = QHBoxLayout()
         controls.addWidget(self.record_button)
-        controls.addWidget(self.model_combo)
         controls.addWidget(self.view_mode)
         controls.addWidget(self.play_button)
         controls.addWidget(self.slider, 1)
         controls.addWidget(self.frame_label)
         layout = QVBoxLayout(self)
         layout.addWidget(self.intro)
+        layout.addLayout(cast_row)
         layout.addLayout(controls)
         layout.addWidget(self.scroll, 1)
         layout.addWidget(self.status)
         self.textures_binding.load_opened_file()
-        self.refresh_models()
+        self.refresh_cast()
         self._update_controls()
 
     # ------------------------------------------------------------------ files
@@ -214,34 +256,60 @@ class NativePreviewView(QWidget):
         path = self.textures_binding.current_path
         return os.path.dirname(path) if path else ""
 
-    def refresh_models(self):
-        """List the imported monster .dat files (then the battle folder's dummy, then no model); the
-        user's choice is kept while it is still offered, else the first entry is used."""
-        current = self.model_combo.currentData()
-        options = [(os.path.basename(path), path) for path in self.model_paths()]
-        names = {name.lower() for name, _path in options}
-        dummy = os.path.join(self.battle_folder(), DUMMY_MODEL) if self.battle_folder() else ""
-        if dummy and DUMMY_MODEL not in names and os.path.isfile(dummy):
-            options.append((f"{DUMMY_MODEL} (test dummy, battle folder)", dummy))
-        options.append(("No model", ""))
-        self.model_combo.blockSignals(True)
-        try:
-            self.model_combo.clear()
-            for label, path in options:
-                self.model_combo.addItem(label, path)
-            index = self.model_combo.findData(self._chosen_model) if self._chosen_model is not None else -1
-            self.model_combo.setCurrentIndex(max(0, index))
-        finally:
-            self.model_combo.blockSignals(False)
-        if self.model_combo.currentData() != current:
-            self._model_changed()
+    def refresh_cast(self):
+        """Mirror the Camera tab preview's caster / target pickers; a new cast shows the recording
+        already made with it, if any."""
+        before = self.cast().key()
+        for mine, name in ((self.caster_combo, "caster_combo"), (self.target_combo, "target_combo")):
+            source = getattr(self.cast_source, name, None)
+            mine.blockSignals(True)
+            try:
+                mine.clear()
+                if source is None or source.count() == 0 or source.currentData() is None and source.count() == 1:
+                    mine.addItem(f"{DUMMY_MODEL} (test dummy: import models in the Camera tab's preview)", None)
+                else:
+                    for index in range(source.count()):
+                        mine.addItem(source.itemText(index), source.itemData(index))
+                    mine.setCurrentIndex(source.currentIndex())
+            finally:
+                mine.blockSignals(False)
+        if self.cast().key() != before:
+            self._cast_changed()
 
-    def model_path(self):
-        """The target model's .dat path, "" for none."""
-        return self.model_combo.currentData() or ""
+    def _pick(self, mine, name):
+        """A pick here is the Camera tab preview's pick (it moves the other role when needed)."""
+        source = getattr(self.cast_source, name, None)
+        if source is None:
+            return
+        # the actor keys are Python tuples: compared here (QComboBox.findData does not match them)
+        index = next((i for i in range(source.count()) if source.itemData(i) == mine.currentData()), -1)
+        if index >= 0:
+            source.setCurrentIndex(index)
+        self.refresh_cast()
 
-    def _model_changed(self, _index=None):
-        """Show the recording already made with this model, if any."""
+    def cast(self, placed=False):
+        """The battle to record: the Camera tab preview's (placed: with where its setup stands the
+        actors and its effect camera - built, so only when recording), encounter enemies that are
+        not imported read from the battle folder; the battle folder's test dummy as caster and
+        target without one."""
+        folder = self.battle_folder()
+        cast = self.cast_source.battle_cast(placed) if self.cast_source is not None else None
+        if cast is not None:
+            slots = {}
+            for slot, (body, weapon) in cast.slots.items():
+                if body and not os.path.dirname(body):
+                    body = os.path.join(folder, body) if folder else ""
+                if body and os.path.isfile(body):
+                    slots[slot] = (body, weapon if weapon and os.path.isfile(weapon) else None)
+            if cast.caster in slots:
+                return BattleCast(slots, cast.caster, cast.target, cast.positions, cast.yaws, cast.camera)
+        dummy = os.path.join(folder, DUMMY_MODEL) if folder else ""
+        if dummy and os.path.isfile(dummy):
+            return BattleCast({0: (dummy, None), 3: (dummy, None)}, 0, 3)
+        return BattleCast({}, 0, 3)
+
+    def _cast_changed(self):
+        """Show the recording already made with this cast, if any."""
         if self.effect_id is None or self._process is not None:
             return
         effect_id, name = self.effect_id, self.effect_name
@@ -285,7 +353,7 @@ class NativePreviewView(QWidget):
         self._preview_requested = False
         self._prerender.stop()
         self._prerender_tick = 0
-        path = recording_path(effect_id, model_key(self.model_path())) if effect_id is not None else None
+        path = recording_path(effect_id, self.cast().key()) if effect_id is not None else None
         if path and os.path.isfile(path):
             self.load_recording_file(path)       # recorded earlier: shown again, Record redoes it
         else:
@@ -298,8 +366,8 @@ class NativePreviewView(QWidget):
         if self.effect_id is None or self.missing() or self._process is not None:
             self._update_controls()
             return False
-        model_path = self.model_path()
-        model = model_key(model_path)
+        cast = self.cast(placed=True)
+        model = cast.key()
         self._preview_requested = True
         edits = self.file_edits()
         signature = self._edit_signature(edits)
@@ -319,24 +387,34 @@ class NativePreviewView(QWidget):
         args = [str(self.effect_id), f"exe={os.path.abspath(self.exe_path())}",
                 f"magic={os.path.abspath(self.magic_folder())}", f"battle={os.path.abspath(self.battle_folder())}",
                 f"out={output}"]
-        if model_path:
-            # the recorder loads it as c0mNNN (its number, 0 for another name) from this file
-            match = _MONSTER_FILE.match(os.path.basename(model_path))
-            args += [f"model={int(match.group(1)) if match else 0}", f"modelfile={os.path.abspath(model_path)}"]
-        else:
+        # the cast: each slot's body (and weapon) through the game's own loaders, caster and target
+        for slot, (body, weapon) in sorted(cast.slots.items()):
+            args.append(f"slot{slot}={os.path.abspath(body)}")
+            if weapon:
+                args.append(f"weapon{slot}={os.path.abspath(weapon)}")
+        args += [f"caster={cast.caster}", f"target={cast.target}"]
+        # where the Camera tab's preview puts each actor (engine units; yaw in 4096ths of a turn)
+        for slot, xyz in sorted(cast.positions.items()):
+            args.append(f"pos{slot}={','.join(str(int(round(v))) for v in xyz)}")
+            args.append(f"yaw{slot}={int(round(cast.yaws.get(slot, 0.0) / (2 * math.pi) * 4096)) & 4095}")
+        if not cast.slots:
             args.append("model=-1")
         if edits:
             args.append(f"overrides={scratch.name}")
         self.camera_used = False
         manager, track = self.camera_track(self.effect_id)
-        if track is not None:
-            lines = camera_lines(manager, track, model_path)
-            if lines:
-                camera = output[:-4] + "_camera.txt"
-                with open(camera, "w", encoding="ascii") as file:
-                    file.write("\n".join(lines) + "\n")
-                args.append(f"camera={camera}")
-                self.camera_used = True
+        if cast.camera is not None:
+            lines = pose_lines(cast.camera)            # the Camera tab preview's own shot
+        elif track is not None:
+            lines = camera_lines(manager, track, cast)
+        else:
+            lines = []
+        if lines:
+            camera = output[:-4] + "_camera.txt"
+            with open(camera, "w", encoding="ascii") as file:
+                file.write("\n".join(lines) + "\n")
+            args.append(f"camera={camera}")
+            self.camera_used = True
         tick = self.slider.value() if keep_tick else 0
         self.timer.stop()
         self._prerender.stop()

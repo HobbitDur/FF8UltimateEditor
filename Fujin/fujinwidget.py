@@ -78,7 +78,19 @@ class FujinWidget(QWidget):
         self.tabs.currentChanged.connect(self._activate_tab)
         self.tabs.currentChanged.connect(self._remember_tab)
         self.overview = QTextBrowser()
-        self.tabs.addTab(self.overview, "Overview")
+        # The effect itself, played by the game's own code in the Camera tab preview's battle
+        self.native_preview = NativePreviewView(
+            self.file_registry, exe_path=lambda: self.camera_editor.exe_binding.current_path or "",
+            magic_folder=self._effect_files_folder,
+            file_edits=self._preview_file_edits,
+            cast_source=self.camera_editor.preview,
+            camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)))
+        self.overview_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.overview_splitter.addWidget(self.overview)
+        self.overview_splitter.addWidget(self.native_preview)
+        self.overview_splitter.setStretchFactor(0, 1)
+        self.overview_splitter.setStretchFactor(1, 3)
+        self.tabs.addTab(self.overview_splitter, "Overview")
         self.camera_sources = QTabWidget()
         self.camera_sources.addTab(self.camera_editor, "Executable track")
         self.mag_camera = EffectResourceView("camera", self.resolve)
@@ -116,14 +128,6 @@ class FujinWidget(QWidget):
         native_layout.addWidget(self.function_selector)
         native_layout.addWidget(self.native_code, 1)
         self.choreography.addTab(native_page, "Native code")
-        self.native_preview = NativePreviewView(
-            self.file_registry, exe_path=lambda: self.camera_editor.exe_binding.current_path or "",
-            magic_folder=self._effect_files_folder,
-            file_edits=self._preview_file_edits,
-            model_paths=self.camera_editor.preview.monster_paths,
-            camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)))
-        self.camera_editor.preview.models_changed.connect(self.native_preview.refresh_models)
-        self.choreography.addTab(self.native_preview, "Native preview")
         # Why there is no MAG script, when there is none (the greyed tab says it too)
         self.choreography_note = QLabel()
         self.choreography_note.setWordWrap(True)
@@ -212,7 +216,7 @@ class FujinWidget(QWidget):
                 ("Camera preview encounters: scene.out", preview.import_sceneout),
                 ("Effect users: kernel.bin (spells, items, GFs, enemy attacks, limit breaks)", self.import_kernel),
                 ("Sound preview: audio.fmt + audio.dat (battle sound archive)", self.sound_panel.import_archive),
-                ("Native preview: a8def.tim (battle folder: shared effect textures, target models)",
+                ("Effect preview: a8def.tim (battle folder: shared effect textures, encounter enemies)",
                  self.native_preview.import_shared_textures)]
 
     def auto_import_sources(self):

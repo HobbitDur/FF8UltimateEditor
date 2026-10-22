@@ -19,6 +19,34 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   each row's tooltip). An effect with no camera track says so in the Camera tab. The fields
   read are every "Attack animation" field of `kernel_section_fields.json`
   (`Fujin/effectusers.py`).
+  **Effect preview** (below the Overview) shows what an effect run by the exe's own code (Cure,
+  Fire, most spells, enemy attacks) draws, tick by tick at 15 per second, in a real battle: the
+  Camera tab preview's (its party with their weapons, its encounter's enemies or its imported
+  monsters, its caster and target - the **Caster** / **Target** pickers here are the same ones).
+  **Record** runs the effect's original code in FF8UltimateEditor's effect recorder
+  (`Tools/fxrecorder`, a 32-bit program shipped with the Windows release; from source,
+  `Tools/fxrecorder/build.bat` builds it with Visual Studio's C++ tools - no FFNx needed). It maps
+  the opened FF8_EN.exe and loads each actor through the game's own loaders into its battle slot
+  (party 0-2, enemies 3-6): monsters with `battle_monster_dat_loader`, characters as the battle
+  start does (`initWeaponAnim` 0x502670: body `Battle_isLoadSquallEtc` 0x5077B0, weapon
+  `Battle_LoadWeaponry` 0x507BF0, animations bound by `setComFileData` 0x502270), each standing
+  and facing where the Camera tab's setup puts it. Without imported models the battle folder's
+  `c0m000.dat` (the game's test dummy) is caster and target. It runs the effect and records every
+  PlayStation GPU packet and texture upload (the battle VRAM queue `Battle_FlushVramCommandQueue`
+  0x505D20, read after each model load, direct uploads, and the battle's shared effect textures
+  `a8def.tim`). Each tick also draws the battle's models as the entity task does (body and weapon
+  on animation 0: `Battle_QueueAnimation` 0x509520, `BattleModel_RebuildBodyAndWeaponMatrices`
+  0x508F60, `BattleEntity_ComputeViewBounds` 0x5086F0, `BS_RenderBattleEntity` 0x502D40) unless the
+  effect hides them, and orders everything by depth from the GPU emulation's execution list. The
+  camera is the shot the Camera tab's preview plays for the effect (its track: exe, created or
+  `.bcam`), so both previews show the same view. Fujin draws the recording with a software GPU
+  (`FF8GameData/psxgpu`: polygons, sprites, lines, CLUT textures, the four semi-transparency modes;
+  FF8 PC's 3D output is in eighths of a pixel, the 320 x 224 window being 2560 x 1792 units).
+  Files: FF8_EN.exe and the effect files from the header's Import, `a8def.tim` from Import
+  complementary (it gives the battle folder, where encounter enemies not imported are read).
+  Exact: shapes, colours, blending, timing. Approximated: actors hold their first pose, the camera
+  player is Fujin's (floating point). **Game window** shows the screen; **Fit the effect** frames
+  everything drawn.
 - **Camera:** executable tracks, embedded MAG tracks, and verified native parameters. MAG and
   executable tracks share the battle-context preview and caster/target imports. This previews
   the selected track, not additional procedural writes. Disease Breath (231) has a camera in
@@ -36,27 +64,6 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   playback (verified for the seven GFs; every other cinematic script replays with the same
   engine model as a labelled, untextured approximation that names the draw handlers it shows as
   markers only), and native decompilation read-only.
-  **Native preview** shows what an effect run by the exe's own code (Cure, Fire, most spells,
-  enemy attacks) draws, tick by tick at 15 per second. **Record** runs the effect's original
-  code in FF8UltimateEditor's effect recorder (`Tools/fxrecorder`, a 32-bit program shipped with
-  the Windows release; from source, `Tools/fxrecorder/build.bat` builds it with Visual Studio's
-  C++ tools - no FFNx needed). It maps the opened FF8_EN.exe, fakes a battle (every slot gets the
-  target model: one of the monster `.dat` files imported in the Camera tab's preview, or the
-  battle folder's `c0m000.dat`, the game's test dummy), runs the effect, and records every
-  PlayStation GPU packet and texture upload (the battle VRAM queue `Battle_FlushVramCommandQueue`
-  0x505D20, direct uploads, and the battle's shared effect textures `a8def.tim`). Each tick also
-  draws the battle's models as the entity task does (pose, `BattleEntity_ComputeViewBounds`
-  0x5086F0, `BS_RenderBattleEntity` 0x502D40) unless the effect hides them, and orders everything
-  by depth from the GPU emulation's execution list, so the effect is seen on its target. The camera is
-  the effect's own: its track (exe, created or `.bcam`, from the Camera tab) is played by Fujin's
-  camera player around the fake battle and the recorder views each tick through it. Fujin draws
-  the recording with a software GPU (`FF8GameData/psxgpu`: polygons, sprites, lines, CLUT
-  textures, the four semi-transparency modes; FF8 PC's 3D output is in eighths of a pixel, the
-  320 x 224 window being 2560 x 1792 units). Files: FF8_EN.exe and the effect files from the
-  header's Import, `a8def.tim` from Import complementary (it gives the battle folder). Exact:
-  shapes, colours, blending, timing. Approximated: the fake battle (actors at fixed places), the
-  camera player (Fujin's, floating point). **Game window** shows the screen; **Fit the effect**
-  frames everything drawn.
 - **Models / animation:** a 3D view of every object of the selected file (meshes, morph
   targets as points, embedded battle models and the standard battle models of indexed
   containers such as `mag186_b.dat`, which play their own animations). Untextured: texture

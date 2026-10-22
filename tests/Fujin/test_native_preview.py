@@ -1,4 +1,4 @@
-"""Choreography > Native preview: a native effect drawn from the game's own code. FF8UltimateEditor's
+"""Overview > Effect preview: an effect drawn from the game's own code, in the Camera tab preview's battle. FF8UltimateEditor's
 effect recorder (Tools/fxrecorder) records the PlayStation GPU packets and VRAM uploads of each tick,
 through the effect's own camera; FF8GameData.psxgpu draws them (decoder + software rasteriser), Fujin
 plays them."""
@@ -90,7 +90,8 @@ def test_fujin_native_preview_view(qapp):
     from Fujin.fujinwidget import FujinWidget
     fujin = FujinWidget()
     view = fujin.native_preview
-    assert fujin.choreography.tabText(2) == "Native preview"
+    assert fujin.tabs.widget(0) is fujin.overview_splitter and fujin.overview_splitter.widget(1) is view
+    assert "Native preview" not in [fujin.choreography.tabText(i) for i in range(fujin.choreography.count())]
     assert any("a8def.tim" in label for label, _cb in fujin.complementary_entries())
     assert view.textures_binding in fujin.file_bindings()
     fujin.select_effect(1)
@@ -107,10 +108,11 @@ def test_fujin_native_preview_view(qapp):
 def test_effect_camera_lines():
     from FF8GameData.gamedata import GameData
     from Fujin.cameraeffectmanager import CameraEffectManager
-    from Fujin.nativepreview import camera_lines
+    from Fujin.nativepreview import BattleCast, camera_lines
     cameras = CameraEffectManager(GameData(str(ROOT / "FF8GameData")))
     cameras.load_exe(str(EXE))
-    lines = camera_lines(cameras, cameras.track(1), str(BATTLE / "c0m000.dat"))
+    dummy = str(BATTLE / "c0m000.dat")
+    lines = camera_lines(cameras, cameras.track(1), BattleCast({0: (dummy, None), 3: (dummy, None)}, 0, 3))
     assert len(lines) > 10 and all(len(line.split()) == 9 for line in lines)
     first = [int(value) for value in lines[0].split()]
     assert first[0] == 0 and first[4:7] == [0, 0, -3000]               # Cure's camera looks at the target
@@ -121,7 +123,7 @@ def test_record_cure_with_the_recorder(qapp):
     from Common.fileregistry import FileRegistry
     from FF8GameData.gamedata import GameData
     from Fujin.cameraeffectmanager import CameraEffectManager
-    from Fujin.nativepreview import RECORDER, NativePreviewView, model_key, recording_path
+    from Fujin.nativepreview import RECORDER, BattleCast, NativePreviewView, recording_path
     if not RECORDER.is_file():
         pytest.skip("the effect recorder is not built (Tools/fxrecorder/build.bat)")
     cameras = CameraEffectManager(GameData(str(ROOT / "FF8GameData")))
@@ -130,8 +132,9 @@ def test_record_cure_with_the_recorder(qapp):
                              camera_track=lambda effect: (cameras, cameras.track(effect)))
     view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
     assert view.missing() == []
-    assert view.model_combo.currentText().startswith("c0m000.dat")              # the battle folder's dummy
-    cached = recording_path(1, model_key(view.model_path()))
+    dummy = str(BATTLE / "c0m000.dat")
+    assert view.cast() == BattleCast({0: (dummy, None), 3: (dummy, None)}, 0, 3)  # nothing imported: the dummy
+    cached = recording_path(1, view.cast().key())
     if os.path.exists(cached):
         os.remove(cached)
     view.set_effect(1, "Cure")
@@ -146,30 +149,42 @@ def test_record_cure_with_the_recorder(qapp):
 
 
 
-@pytest.mark.ff8data("extracted_files/battle/a8def.tim", "extracted_files/battle/c0m000.dat",
-                     "extracted_files/battle/c0m009.dat")
-def test_target_models_are_the_imported_dats(qapp):
-    from Common.fileregistry import FileRegistry
-    from Fujin.nativepreview import NativePreviewView
-    imported = []
-    view = NativePreviewView(FileRegistry(), model_paths=lambda: list(imported))
-    assert [view.model_combo.itemText(i) for i in range(view.model_combo.count())] == ["No model"]
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim",
+                     "extracted_files/battle/a8def.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+def test_effect_preview_records_the_camera_preview_battle(qapp):
+    """The cast is the Camera tab preview's: Squall (with his gunblade) in party slot 0, an imported
+    monster in enemy slot 3; picking the caster here picks it there; the recording draws both."""
+    from Fujin import nativepreview
+    from Fujin.fujinwidget import FujinWidget
+    if not nativepreview.RECORDER.is_file():
+        pytest.skip("the effect recorder is not built")
+    fujin = FujinWidget()
+    fujin.import_paths([str(MAGIC / "mag000-049.tim")])
+    fujin.camera_editor.exe_binding.open_path(str(EXE))
+    view = fujin.native_preview
     view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
-    assert view.model_path() == str(BATTLE / "c0m000.dat")                    # the dummy until one is imported
-    imported.append(str(BATTLE / "c0m009.dat"))
-    view.refresh_models()
-    assert [view.model_combo.itemText(i) for i in range(view.model_combo.count())] == [
-        "c0m009.dat", "c0m000.dat (test dummy, battle folder)", "No model"]
-    assert view.model_path() == str(BATTLE / "c0m009.dat")                    # an imported monster first
-    view.model_combo.setCurrentIndex(1)
-    view.model_combo.activated.emit(1)                                        # the user picks the dummy
-    imported.append(str(BATTLE / "c0m010.dat"))
-    view.refresh_models()
-    assert view.model_path() == str(BATTLE / "c0m000.dat")                    # the pick is kept
-    view.model_combo.activated.emit(0)
-    imported.clear()
-    view.refresh_models()
-    assert view.model_path() == str(BATTLE / "c0m000.dat")                    # a removed pick falls back
+    squall, gunblade, monster = (str(BATTLE / name) for name in ("d0c000.dat", "d0w000.dat", "c0m009.dat"))
+    preview = fujin.camera_editor.preview
+    preview.add_models([squall, gunblade, monster])
+    view.refresh_cast()
+    assert [view.caster_combo.itemText(i) for i in range(view.caster_combo.count())] ==         [preview.caster_combo.itemText(i) for i in range(preview.caster_combo.count())]
+    assert view.cast().slots == {0: (squall, gunblade), 3: (monster, None)}
+    assert (view.cast().caster, view.cast().target) == (0, 3)
+    view.caster_combo.setCurrentIndex(next(i for i in range(view.caster_combo.count())
+                                           if view.caster_combo.itemData(i) == ("monster", monster)))
+    view.caster_combo.activated.emit(view.caster_combo.currentIndex())          # the monster casts, on Squall
+    assert preview.caster_key() == ("monster", monster) and preview.target_key() == ("party", 0)
+    assert (view.cast().caster, view.cast().target) == (3, 0)
+    fujin.select_effect(1)
+    if os.path.exists(nativepreview.recording_path(1, view.cast().key())):
+        os.remove(nativepreview.recording_path(1, view.cast().key()))
+    assert view.record()
+    wait_for_preview(qapp, view)
+    assert view.recording is not None and len(view.recording.ticks) == 51
+    image, gpu = view.recording.frame(0, scale=0.125)
+    assert not gpu.missing_pages and gpu.counts["polygons"] > 150              # Squall drawn, textured
+
 
 def wait_for_preview(qapp, view):
     """Wait for both the debounced edit and its recorder, including an edit queued mid-record."""
