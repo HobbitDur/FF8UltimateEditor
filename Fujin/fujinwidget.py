@@ -3,6 +3,7 @@ import hashlib
 import html
 import os
 import re
+import time
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QSignalBlocker, QTimer, pyqtSignal
@@ -44,6 +45,7 @@ class FujinWidget(QWidget):
         self._refresh_pending = False
         self._exported_signature = ()
         self._owned_cam_exports = {}
+        self._saved_note = ""            # what the last Save wrote, shown until the next change
         self._resource_effects = None          # resource key -> effect ids using it (built once)
         self.camera_editor = CameraEffectEditorWidget(GameData(game_data_folder), self.file_registry, embedded=True)
         # kernel.bin (read-only, shared): which spells, items, GFs, enemy attacks... play each effect
@@ -427,7 +429,8 @@ class FujinWidget(QWidget):
         self.title.setText(f"{effect:03d} — {self.catalog.name(effect)}")
         loaded = sum(self.resolve(r) is not None for r in resources)
         self.context.setText(f"{self.catalog.runtime(effect)} · {loaded} of {len(resources)} files imported"
-                             + (" · unsaved changes: see Pending changes" if self.can_save_folder() else ""))
+                             + (" · unsaved changes: see Pending changes" if self.can_save_folder()
+                                else f" · {self._saved_note}" if self._saved_note else ""))
         self._refresh_camera()
         self._refresh_choreography()
         self._grey_unused_tabs()
@@ -695,6 +698,7 @@ class FujinWidget(QWidget):
 
     def save_files(self, output_dir=None):
         native_dirty = self._native_signature() != self._exported_signature
+        written = [m.file_path for m in self.mag_editor.managers.values() if m.modified]
         outputs, stale = {}, []
         if native_dirty:
             if output_dir is None:
@@ -737,6 +741,10 @@ class FujinWidget(QWidget):
             for path in stale:
                 self._owned_cam_exports.pop(path, None)
             self._owned_cam_exports.update({p: hashlib.sha256(data).digest() for p, data in outputs.items() if p.suffix == CAM_EXTENSION})
+        written += [str(path) for path in outputs]
+        self._saved_note = (f"saved {', '.join(os.path.basename(p) for p in written)} at {time.strftime('%H:%M')}"
+                            if written else "nothing to save")
+        self.context.setToolTip("Written by the last Save:\n" + "\n".join(written) if written else "")
         self._refresh()
         return True
 

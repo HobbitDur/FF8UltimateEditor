@@ -11,7 +11,7 @@ from PIL import Image
 from PyQt6.QtWidgets import QApplication
 
 from Fujin.magdocument import MagDocument
-from Fujin.texturepictureview import TimTexture, tim_blocks
+from Fujin.texturepictureview import TimTexture, palette_from_image, palette_grid, tim_blocks
 
 ROOT = Path(__file__).resolve().parents[2]
 ATLAS = "extracted_files/magic/mag000-049.tim"     # 8-bit, 2 palette rows (Cure's atlas)
@@ -110,10 +110,28 @@ def test_textures_tab_exports_and_imports_png(qapp, tmp_path):
     assert fujin.textures.display is fujin.textures.panel       # no raw byte tab here
     card = fujin.textures.panel.cards[0]
     picture_png, palette_png = card.export_pngs(str(tmp_path), "atlas")
-    assert Image.open(picture_png).size == (512, 256) and Image.open(palette_png).size == (256, 2)
+    # the palette PNG is laid out like the swatches: 16 colours per line, 2 rows of 256 = 32 lines
+    assert Image.open(picture_png).size == (512, 256) and Image.open(palette_png).size == (16, 32)
+    palette = palette_from_image(np.asarray(Image.open(palette_png).convert("RGBA")), 256)
     pixels = np.asarray(Image.open(picture_png).convert("RGBA")).copy()
-    pixels[:2, :2] = next(colour for colour in np.asarray(Image.open(palette_png).convert("RGBA"))[0]
-                          if colour[3] and tuple(colour) != tuple(pixels[0, 0]))
+    pixels[:2, :2] = next(colour for colour in palette[0] if colour[3] and tuple(colour) != tuple(pixels[0, 0]))
     Image.fromarray(pixels, "RGBA").save(tmp_path / "edited.png")
     assert card.import_picture(str(tmp_path / "edited.png"))
     assert fujin.can_save_folder() and fujin.modified_effects() and "modified" in fujin.textures.panel.cards[0].info.text()
+    assert card.import_palette(palette_png)                   # its own export back: nothing moves
+    assert fujin.save_files()                                  # Save writes the .tim in place and says so
+    assert path.read_bytes() != (ROOT / ATLAS).read_bytes() and not fujin.can_save_folder()
+    assert "saved mag000-049.tim" in fujin.context.text() and str(path) in fujin.context.toolTip()
+    fujin.textures.activate()
+    assert "modified" not in fujin.textures.panel.cards[0].info.text()
+
+
+def test_palette_png_layouts():
+    palette = np.arange(2 * 256 * 4, dtype=np.uint32).astype(np.uint8).reshape(2, 256, 4)
+    grid = palette_grid(palette)
+    assert grid.shape == (32, 16, 4) and (grid[16] == palette[1, :16]).all()
+    assert (palette_from_image(grid, 256) == palette).all()          # the on-screen layout
+    assert (palette_from_image(palette, 256) == palette).all()       # one row per line (older exports)
+    assert palette_grid(palette[:, :16]).shape == (2, 16, 4)         # 4-bit: a row is one line
+    with pytest.raises(ValueError, match="16 pixels wide"):
+        palette_from_image(grid[:20], 256)

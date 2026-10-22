@@ -40,9 +40,11 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   same size: a new picture is mapped onto the selected palette row (texels that kept their
   colour keep their index), a new palette keeps each colour's transparency bit, and fewer rows
   than the palette replace the rows you pick. **Export PNGs…** writes `<name>.png` (the picture
-  in the selected row) and `<name>_palette.png` (colours wide, rows tall), the format the import
-  takes back. **Restore original** puts the TIM back as it is on disk; Undo / Redo cover every
-  edit. The raw sections stay in Files / sections. A MAG file's textures are raw VRAM blocks
+  in the selected row) and `<name>_palette.png`, laid out like the swatches: 16 colours per
+  line, each palette row under the previous one (a 256-colour row is 16 lines). The import takes
+  that layout back, or one palette row per line. The CLUT bytes are written from the palette
+  image (5 bits per channel, pure black kept opaque, fully transparent = colour 0).
+  **Restore original** puts the TIM back as it is on disk; Undo / Redo cover every edit. The raw sections stay in Files / sections. A MAG file's textures are raw VRAM blocks
   whose size and depth come from the game code, so they are not drawn here.
 - **Empty tabs say why.** Models, Textures and Sound name the effect's files still to import;
   once nothing is missing, they say what the effect has no data for, and point to the native
@@ -89,7 +91,8 @@ of looking for a dedicated `mag068` model.
 
 ## Saving and CLI
 
-**Save** writes modified MAG files to imported paths. Executable edits request one export
+**Save** writes modified MAG and TIM files over the imported files (the header line then says
+what was saved; its tooltip lists the paths). Executable edits request one export
 folder: `effects_EN.hext` (or the loaded language) combines camera/native data differences.
 Resized tracks write `direct/exe/effect_NNN.bcam` under that folder. The
 executable is never overwritten. Patches are cumulative against the loaded executable;

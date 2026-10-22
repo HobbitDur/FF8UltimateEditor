@@ -79,6 +79,28 @@ def _png_rgba(path):
         return np.asarray(image.convert("RGBA"), dtype=np.uint8)
 
 
+def palette_grid(palette):
+    """The palette PNG: (rows, colours, 4) laid out as on screen, PER_LINE colours per line, each
+    palette row under the previous one (a 256-colour row = 16 lines, a 16-colour row = 1 line)."""
+    rows, colours = palette.shape[:2]
+    if colours <= PER_LINE:
+        return palette
+    return palette.reshape(rows * colours // PER_LINE, PER_LINE, 4)
+
+
+def palette_from_image(rgba, colours):
+    """(rows, colours, 4) from a palette PNG: the on-screen grid (PER_LINE wide) or one palette
+    row per line (`colours` wide, the layout older exports and other tools use)."""
+    height, width = rgba.shape[:2]
+    if width == colours:
+        return rgba
+    lines = colours // PER_LINE
+    if width == PER_LINE and colours % PER_LINE == 0 and height % lines == 0:
+        return rgba.reshape(height // lines, colours, 4)
+    raise ValueError(f"a palette image is {PER_LINE} pixels wide with {lines} lines per palette row "
+                     f"(or {colours} wide, one row per line), not {width} × {height}")
+
+
 class TimTexture:
     """One TIM of a document: decode, export and re-encode it in place (same byte size)."""
 
@@ -340,7 +362,11 @@ class _TimCard(QGroupBox):
         if not path:
             return False
         self._remember(path)
-        rgba = _png_rgba(path)
+        try:
+            rgba = palette_from_image(_png_rgba(path), len(self.rows[0]))
+        except (ValueError, OSError) as error:
+            QMessageBox.warning(self, "Fujin", f"Not applied: {error}")
+            return False
         if start_row is None:
             start_row = 0
             if rgba.shape[0] < len(self.rows):
@@ -360,7 +386,8 @@ class _TimCard(QGroupBox):
         return f"{name}_{self.title().split(' ')[0].lower()}"
 
     def export_pngs(self, folder=None, stem=None):
-        """Write <stem>.png (the picture in the selected palette row) and <stem>_palette.png."""
+        """Write <stem>.png (the picture in the selected palette row) and <stem>_palette.png (laid
+        out like the swatches: 16 colours per line, palette rows one under the other)."""
         stem = stem or self.default_stem()
         if not folder:
             path = QFileDialog.getSaveFileName(self, "Export the picture and its palette",
@@ -377,7 +404,7 @@ class _TimCard(QGroupBox):
         palette = self.texture.palette_image()
         if palette is not None:
             written.append(os.path.join(folder, stem + "_palette.png"))
-            Image.fromarray(np.ascontiguousarray(palette), "RGBA").save(written[-1])
+            Image.fromarray(np.ascontiguousarray(palette_grid(palette)), "RGBA").save(written[-1])
         return written
 
     def restore(self):
