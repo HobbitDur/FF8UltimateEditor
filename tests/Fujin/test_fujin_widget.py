@@ -145,6 +145,7 @@ def test_textures_are_pictures_not_a_files_copy(fujin):
         card.palette.setCurrentIndex(card.palette.count() - 1)
     fujin.files.activate()                                     # Files does not repeat a TIM
     assert fujin.files.sections.count() == 0 and "edited in Textures" in fujin.files.status.text()
+    assert not fujin.tabs.isTabEnabled(6) and "Textures" in fujin.tabs.tabToolTip(6)   # so it is greyed
 
 
 @pytest.mark.ff8data(TIM)

@@ -481,6 +481,7 @@ class FujinWidget(QWidget):
             3: None if self.models.sources.count() else self.models.empty_text,
             4: None if self.textures.sources.count() else self.textures.empty_text,
             5: None if self.sound.sources.count() else self.sound.empty_text,
+            6: self._files_unused(),
         }
         self.greyed_tabs = {}
         wanted = getattr(self, "_wanted_tab", self.tabs.currentIndex())
@@ -496,6 +497,16 @@ class FujinWidget(QWidget):
         finally:
             self._greying = False
         self._wanted_tab = wanted
+
+    def _files_unused(self):
+        """Why Files / sections has nothing to add, or None. It shows the sections of MAG files
+        (and of imported files with no effect association); a TIM is all in Textures."""
+        managers = list(self.mag_editor.managers.values())
+        if any(m.document.format != "PlayStation TIM" for m in managers):
+            return None
+        if not managers:
+            return "No effect file is imported (the Overview lists this effect's files)."
+        return "Only TIM files are imported, and Textures shows and edits everything they hold."
 
     def _remember_tab(self, index):
         if not getattr(self, "_greying", False):

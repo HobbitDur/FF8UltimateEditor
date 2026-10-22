@@ -66,7 +66,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   played by the PC build.
 - **Files / sections:** every section of the effect's files as a read-only reference (named
   fields and bytes) with export; Fujin edits only through its decoded views (a camera section
-  keeps its camera editor). A TIM is not repeated there: it points to Textures.
+  keeps its camera editor). A TIM is not repeated there: it points to Textures, and the tab
+  is greyed while only TIM files are imported.
   **Browse all imported files** exposes MA8 files and unresolved associations.
 - **Pending changes:** destinations across all effects, including edits made before switching.
 
