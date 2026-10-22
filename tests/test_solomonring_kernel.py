@@ -8,6 +8,7 @@ import json
 import pathlib
 
 import pytest
+from PyQt6.QtCore import QEvent
 from PyQt6.QtWidgets import QApplication, QMessageBox, QPushButton
 
 from FF8GameData.gamedata import GameData, SectionType
@@ -26,6 +27,21 @@ GAME_DATA_FOLDER = str(PROJECT_ROOT / "FF8GameData")
 def qapp():
     app = QApplication.instance() or QApplication([])
     yield app
+
+
+@pytest.fixture(autouse=True)
+def _close_solomonring_windows():
+    """Each test builds a whole SolomonRing window and drops it. Deleted only by the suite's
+    collector (sip.delete, any order), its tree kept C++-held references to its Python half, so
+    every window stayed alive: each new one was slower to build (2 s, then a minute after a
+    dozen) and the worker finally crashed in test_add_entry_button_actually_adds. Qt's own
+    deferred deletion takes the tree down in order and frees it all."""
+    yield
+    for widget in QApplication.topLevelWidgets():
+        if isinstance(widget, SolomonRingWidget):
+            widget.deleteLater()
+    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
+    QApplication.processEvents()
 
 
 @pytest.fixture(scope="module")

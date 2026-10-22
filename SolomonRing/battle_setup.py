@@ -8,6 +8,9 @@ stats then replace the typed assumptions of the formula being shown, on the side
 on: the character attacks in a spell's / weapon's / GF's formula, the monster in an enemy
 attack's.
 """
+import inspect
+import weakref
+
 from FF8GameData.dat.monsterstatcurve import monster_stat, monster_hp  # noqa: F401 (re-exported)
 
 from . import formula_specs as fs
@@ -18,6 +21,17 @@ MONSTER_ATTACKS = {"monster_damage", "monster_hit", "monster_crit"}
 SETUP_FORMULAS = CHARACTER_ATTACKS | MONSTER_ATTACKS
 
 BONUS_STATS = ("str", "vit", "mag", "spr")
+
+
+def _held(provider):
+    """How SETUP keeps a provider: a widget's bound method weakly - this module-level object must
+    not keep a closed SolomonRing / Ifrit window alive (every window ever opened, with its
+    popups, stayed in memory and slowed each new one) - anything else as it is."""
+    if provider is None:
+        return None
+    if inspect.ismethod(provider):
+        return weakref.WeakMethod(provider)
+    return lambda: provider
 
 
 def _cap(value):
@@ -38,11 +52,29 @@ class BattleSetup:
         self.monster = None        # index into monsters(), None: typed stats
         self.monster_level = 30
 
+    @property
+    def characters_provider(self):
+        return self._characters_provider() if self._characters_provider else None
+
+    @characters_provider.setter
+    def characters_provider(self, provider):
+        self._characters_provider = _held(provider)
+
+    @property
+    def monsters_provider(self):
+        return self._monsters_provider() if self._monsters_provider else None
+
+    @monsters_provider.setter
+    def monsters_provider(self, provider):
+        self._monsters_provider = _held(provider)
+
     def characters(self):
-        return self.characters_provider() if self.characters_provider else []
+        provider = self.characters_provider
+        return provider() if provider else []
 
     def monsters(self):
-        return self.monsters_provider() if self.monsters_provider else []
+        provider = self.monsters_provider
+        return provider() if provider else []
 
     def character_stats(self):
         """{stat: value} of the chosen character with its bonuses, or None."""
