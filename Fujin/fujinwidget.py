@@ -81,7 +81,7 @@ class FujinWidget(QWidget):
         # The effect itself, played by the game's own code in the Camera tab preview's battle
         self.native_preview = NativePreviewView(
             self.file_registry, exe_path=lambda: self.camera_editor.exe_binding.current_path or "",
-            magic_folder=self._effect_files_folder,
+            effect_files=self._preview_effect_files,
             file_edits=self._preview_file_edits,
             cast_source=self.camera_editor.preview,
             camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)))
@@ -216,7 +216,7 @@ class FujinWidget(QWidget):
                 ("Camera preview encounters: scene.out", preview.import_sceneout),
                 ("Effect users: kernel.bin (spells, items, GFs, enemy attacks, limit breaks)", self.import_kernel),
                 ("Sound preview: audio.fmt + audio.dat (battle sound archive)", self.sound_panel.import_archive),
-                ("Effect preview: a8def.tim (battle folder: shared effect textures, encounter enemies)",
+                ("Effect preview: a8def.tim (the battle's shared effect textures)",
                  self.native_preview.import_shared_textures)]
 
     def auto_import_sources(self):
@@ -429,6 +429,16 @@ class FujinWidget(QWidget):
             if manager.file_path:
                 return os.path.dirname(manager.file_path)
         return self.file_registry.last_folder("Fujin effect files") or ""
+
+    def _preview_effect_files(self):
+        """The current effect's imported files as Fujin holds them (unsaved edits included): all
+        the effect preview's recorder reads of them - never their folder."""
+        if self.current_effect is None:
+            return {}
+        extra = [os.path.basename(m.file_path) for m in self.mag_editor.managers.values()]
+        return {resource.key: bytes(manager.data)
+                for resource in self.catalog.resources(self.current_effect, extra)
+                if resource.source == "File" and (manager := self.resolve(resource)) is not None}
 
     def _preview_file_edits(self):
         """Current effect's unsaved file bytes, for preview without saving the imported files."""

@@ -130,7 +130,7 @@ static uint32_t __cdecl s_loadtex(const char *name, uint8_t *dst, uint32_t max, 
 	std::vector<uint8_t> v;
 	if (!O.overrides.empty()) v = readfile(join(O.overrides, name));
 	if (v.empty()) v = readfile(join(O.magic, name));
-	if (v.empty()) { printf("load %s failed\n", name); return 0; }
+	if (v.empty()) { printf("missing effect file %s\n", name); return 0; }
 	if (!dst)
 	{
 		// dst == 0: the original allocates size + max bytes and records the block in its table
@@ -380,8 +380,9 @@ static void apply_pending(std::vector<Pending> v)
 			std::vector<uint8_t> f;
 			if (!g_serve.empty()) f = readfile(g_serve);                     // the slot's chosen file
 			else if (!g_modelfile.empty() && _strnicmp(name, "c0m", 3) == 0) f = readfile(g_modelfile); // the chosen .dat
-			if (f.empty()) f = readfile(join(O.battle, name));
+			if (f.empty() && g_serve.empty()) f = readfile(join(O.battle, name));
 			if (!f.empty()) memcpy((void *)p.b, f.data(), f.size());
+			else printf("missing battle file %s\n", g_serve.empty() ? name : g_serve.c_str());
 			if (p.c) ((void (__cdecl *)())p.c)();
 		}
 		for (const Pending &q : g_pending) v.push_back(q);
@@ -522,13 +523,14 @@ static bool load_character(uint32_t e, int slot, int com, const std::string &bod
 	*(uint8_t *)(e + 4) = (uint8_t)com;
 	*(uint8_t *)(e + 0x80) = 0;                                      // weaponTier
 	*(uint8_t *)(e + 0x81) = 0;                                      // linkedAltModel
-	bool armed = com != 1 && com != 7 && com != 9;                   // Zell, Edea, Kiros: no weapon model
+	// Zell, Edea, Kiros: no weapon model; nor a character whose weapon file is not given
+	bool armed = com != 1 && com != 7 && com != 9 && !weapon.empty();
 	uint32_t w = armed ? 0x1D971F0 + 68 * slot : 0;
 	*(uint32_t *)(e + 0x78) = w;
 	if (w) memset((void *)w, 0, 68);
 	*(uint32_t *)(e + 0x74) = 0x1D96ED0 + 64 * slot;                // BattleStateEntity[slot]
 	if (!load_entity(com, slot, body)) return false;
-	if (com != 7 && !load_entity(0x1000 + com, slot, weapon)) return false;
+	if (com != 7 && !weapon.empty() && !load_entity(0x1000 + com, slot, weapon)) return false;
 	uint32_t extra = *(uint32_t *)0x1D999BC + 12320 * slot;          // g_PartyExtraAnimSlots[slot]
 	auto bind = (void (__cdecl *)(uint32_t, uint32_t, int))0x502270;
 	if (*(uint32_t *)(extra + 8))
@@ -755,7 +757,7 @@ int main(int argc, char **argv)
 	// the battle's shared effect textures (load_aA8defTim 0x508660: battle file 163, a8def.tim)
 	std::vector<uint8_t> a8def = readfile(join(O.battle, "a8def.tim"));
 	if (!a8def.empty()) dump_tim(0, a8def.data());
-	else printf("no a8def.tim in %s: the battle's shared effect textures are missing\n", O.battle.c_str());
+	else printf("missing battle file a8def.tim (the battle's shared effect textures)\n");
 	if ((O.cast() || O.model >= 0) && !load_models()) return 1;
 	call0(0x56F9A0); // BS_memsetVars2: hit-effect queue (screen fades...)
 	env_reset();

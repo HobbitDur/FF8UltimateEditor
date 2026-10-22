@@ -32,8 +32,10 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   (party 0-2, enemies 3-6): monsters with `battle_monster_dat_loader`, characters as the battle
   start does (`initWeaponAnim` 0x502670: body `Battle_isLoadSquallEtc` 0x5077B0, weapon
   `Battle_LoadWeaponry` 0x507BF0, animations bound by `setComFileData` 0x502270), each standing
-  and facing where the Camera tab's setup puts it. Without imported models the battle folder's
-  `c0m000.dat` (the game's test dummy) is caster and target. It runs the effect and records every
+  and facing where the Camera tab's setup puts it. Record needs an imported caster and target
+  model (an effect draws on its target: Cure redraws it); an actor the battle names but whose file
+  is not imported (an encounter enemy, a weapon) is left out and named in the status. It runs the
+  effect and records every
   PlayStation GPU packet and texture upload (the battle VRAM queue `Battle_FlushVramCommandQueue`
   0x505D20, read after each model load, direct uploads, and the battle's shared effect textures
   `a8def.tim`). Each tick also draws the battle's models as the entity task does (body and weapon
@@ -44,11 +46,14 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   `.bcam`), so both previews show the same view. Fujin draws the recording with a software GPU
   (`FF8GameData/psxgpu`: polygons, sprites, lines, CLUT textures, the four semi-transparency modes;
   FF8 PC's 3D output is in eighths of a pixel, the 320 x 224 window being 2560 x 1792 units).
-  Files: FF8_EN.exe and the effect files from the header's Import, `a8def.tim` from Import
+  Files: only those opened in Fujin, one by one - nothing is read from their folders. FF8_EN.exe
+  and the effect files from the header's Import (the recorder gets the effect's imported files as
+  Fujin holds them, unsaved edits included, staged privately; a file the effect asks for and was not
+  imported is named in the status), the models from Import complementary (Camera preview models),
+  scene.out from Import complementary for the encounters, and optionally `a8def.tim` from Import
   complementary or the preview's **Open a8def.tim…** (battle file 163, the battle's shared effect
-  textures the game loads at every battle start, `load_aA8defTim` 0x508660; it also gives the
-  battle folder, where encounter enemies not imported and the test dummy are read), scene.out
-  from Import complementary for the encounters.
+  textures the game loads at every battle start, `load_aA8defTim` 0x508660; without it the parts
+  of an effect drawn with them are flat grey).
   Exact: shapes, colours, blending, timing. Approximated: actors hold their first pose, the camera
   player is Fujin's (floating point). **Game window** shows the screen; **Fit the effect** frames
   everything drawn.

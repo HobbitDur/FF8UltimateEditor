@@ -14,15 +14,16 @@ tab's) is played by Fujin's camera player (FF8GameData.dat.camerascript / battle
 recorder's fake battle, and the recorder views each tick through that pose, so "Game window" shows
 what the player would see. An effect with no camera track keeps the default battle view.
 
-Files: FF8_EN.exe (the header's Import, as for the camera tracks), the effect's files (the folder
-the effect files were imported from) and the battle folder, found through a8def.tim - the battle's
-shared effect textures, opened from the header's Import complementary (shared file bank, never a
-guessed folder). The cast is the Camera tab preview's: its party (characters with their weapons),
-its encounter's enemies or its imported monsters, its caster and target; each actor stands in its
-battle slot and the recorder loads and draws it each tick as the battle does (the battle folder's
-c0m000.dat test dummy stands in when nothing is imported).
-Unsaved effect-file edits are passed to the recorder as private temporary overrides. Once an
-effect is recorded, edits and Undo / Redo refresh it without writing the imported files.
+Files: only the files opened in Fujin, one by one - nothing is read from their folders. FF8_EN.exe
+(the header's Import), the effect's imported files as Fujin holds them (unsaved edits included,
+staged in a private temporary folder: the imported files are never written), a8def.tim when opened
+(Import complementary: the battle's shared effect textures; without it those parts are flat grey)
+and the models imported in the Camera tab's preview. The cast is that preview's: its party
+(characters with their imported weapons), its encounter's enemies or its imported monsters, its
+caster and target; each actor stands in its battle slot and the recorder loads and draws it each
+tick as the battle does. An actor whose file is not imported is left out (the status names it), a
+file the effect asks for and was not imported too. Once an effect is recorded, edits and Undo /
+Redo refresh it.
 
 Exact: what is drawn, where, its colours, blending and timing (the game's code ran).
 Approximated: the fake battle (actors stand at fixed places), the camera player is Fujin's
@@ -57,7 +58,6 @@ GAME_SCALE = 0.25        # the game window (2560 x 1792 units: eighths of a pixe
 SLOT_POSITIONS = {0: (-1500, 0, 3000), 1: (0, 0, 3200), 2: (1500, 0, 3000), 3: (0, 0, -3000),
                   4: (-1800, 0, -3200), 5: (1800, 0, -3200), 6: (0, 0, -4600)}
 INITIAL_EYE, INITIAL_TARGET = (10000, -3000, 5000), (0, -500, 0)   # the battle camera words at the start
-DUMMY_MODEL = "c0m000.dat"   # the game's test dummy, from the battle folder when nothing is imported
 
 
 @dataclass
@@ -73,6 +73,7 @@ class BattleCast:
     positions: dict = field(default_factory=dict)
     yaws: dict = field(default_factory=dict)
     camera: list = None
+    not_imported: list = field(default_factory=list)   # actors' files the cast names, not imported
 
     def key(self):
         """The cache tag of this cast: its files (where they are and their state on disk) and roles."""
@@ -151,13 +152,14 @@ class _BattleCombo(QComboBox):
 
 
 class NativePreviewView(QWidget):
-    """providers: exe_path() -> the opened FF8_EN.exe; magic_folder() -> the effect files' folder;
+    """providers: exe_path() -> the opened FF8_EN.exe; effect_files() -> {file name: bytes} of the
+    effect's imported files as Fujin holds them (unsaved edits included);
     camera_track(effect_id) -> (camera manager, track) or (None, None);
     file_edits() -> {file name: unsaved bytes}, staged privately for the recorder;
     cast_source: the Camera tab's preview (its caster / target pickers are mirrored here and
     battle_cast() gives the battle), or None for the battle folder's test dummy."""
 
-    def __init__(self, file_registry, exe_path=None, magic_folder=None, camera_track=None, file_edits=None,
+    def __init__(self, file_registry, exe_path=None, effect_files=None, camera_track=None, file_edits=None,
                  cast_source=None):
         super().__init__()
         self.effect_id, self.effect_name = None, ""
@@ -175,7 +177,7 @@ class NativePreviewView(QWidget):
         self._prerender_tick = 0
         self.camera_used = False
         self.exe_path = exe_path or (lambda: "")
-        self.magic_folder = magic_folder or (lambda: "")
+        self.effect_files = effect_files or (lambda: {})
         self.camera_track = camera_track or (lambda _effect: (None, None))
         self.file_edits = file_edits or (lambda: {})
         self.cast_source = cast_source
@@ -214,9 +216,9 @@ class NativePreviewView(QWidget):
         self.encounter_combo.activated.connect(lambda _i: self._pick_encounter())
         self._watched_encounters = None
         self.open_textures_button = QPushButton(f"Open {SHARED_TEXTURES}…")
-        self.open_textures_button.setToolTip(f"{SHARED_TEXTURES} (the battle folder's shared effect textures) is "
-                                             "what Record still needs: it also tells the battle folder, where "
-                                             "encounter enemies and the test dummy are read")
+        self.open_textures_button.setToolTip(f"{SHARED_TEXTURES}: the battle's shared effect textures (battle file "
+                                             "163, loaded at every battle start). Without it the parts of an "
+                                             "effect drawn with them are flat grey.")
         self.open_textures_button.clicked.connect(self.import_shared_textures)
         if cast_source is not None:
             for combo in (cast_source.caster_combo, cast_source.target_combo):
@@ -274,15 +276,11 @@ class NativePreviewView(QWidget):
 
     # ------------------------------------------------------------------ files
     def import_shared_textures(self):
-        """Header Import complementary: a8def.tim, which also tells the battle folder."""
+        """Header Import complementary: a8def.tim, the battle's shared effect textures."""
         registry = self.textures_binding.registry
         path = self.textures_binding.open_dialog(self, registry.last_folder(SHARED_TEXTURES))
         if path:
             registry.remember_folder(SHARED_TEXTURES, os.path.dirname(path))
-
-    def battle_folder(self):
-        path = self.textures_binding.current_path
-        return os.path.dirname(path) if path else ""
 
     def refresh_cast(self):
         """Mirror the Camera tab preview's caster / target pickers; a new cast shows the recording
@@ -294,7 +292,7 @@ class NativePreviewView(QWidget):
             try:
                 mine.clear()
                 if source is None or source.count() == 0 or source.currentData() is None and source.count() == 1:
-                    mine.addItem(f"{DUMMY_MODEL} (test dummy: import models in the Camera tab's preview)", None)
+                    mine.addItem("(import models: Import complementary, Camera preview models)", None)
                 else:
                     for index in range(source.count()):
                         mine.addItem(source.itemText(index), source.itemData(index))
@@ -304,6 +302,7 @@ class NativePreviewView(QWidget):
         self._refresh_encounters()
         if self.cast().key() != before:
             self._cast_changed()
+        self._update_controls()          # a newly imported actor can make Record possible
 
     def _refresh_encounters(self):
         source = self.cast_source.encounter_combo() if self.cast_source is not None else None
@@ -359,24 +358,20 @@ class NativePreviewView(QWidget):
 
     def cast(self, placed=False):
         """The battle to record: the Camera tab preview's (placed: with where its setup stands the
-        actors and its effect camera - built, so only when recording), encounter enemies that are
-        not imported read from the battle folder; the battle folder's test dummy as caster and
-        target without one."""
-        folder = self.battle_folder()
+        actors and its effect camera - built, so only when recording). Only imported files: an
+        actor the battle names but whose file is not imported (an encounter enemy) is left out and
+        listed in not_imported; no caster = nothing to record."""
         cast = self.cast_source.battle_cast(placed) if self.cast_source is not None else None
-        if cast is not None:
-            slots = {}
-            for slot, (body, weapon) in cast.slots.items():
-                if body and not os.path.dirname(body):
-                    body = os.path.join(folder, body) if folder else ""
-                if body and os.path.isfile(body):
-                    slots[slot] = (body, weapon if weapon and os.path.isfile(weapon) else None)
-            if cast.caster in slots:
-                return BattleCast(slots, cast.caster, cast.target, cast.positions, cast.yaws, cast.camera)
-        dummy = os.path.join(folder, DUMMY_MODEL) if folder else ""
-        if dummy and os.path.isfile(dummy):
-            return BattleCast({0: (dummy, None), 3: (dummy, None)}, 0, 3)
-        return BattleCast({}, 0, 3)
+        if cast is None:
+            return BattleCast({}, 0, 3)
+        slots, not_imported = {}, []
+        for slot, (body, weapon) in cast.slots.items():
+            if body and os.path.dirname(body) and os.path.isfile(body):
+                slots[slot] = (body, weapon if weapon and os.path.isfile(weapon) else None)
+            elif body:
+                not_imported.append(os.path.basename(body))
+        return BattleCast(slots, cast.caster, cast.target, cast.positions, cast.yaws, cast.camera,
+                          sorted(set(not_imported)))
 
     def _cast_changed(self):
         """Show the recording already made with this cast, if any."""
@@ -393,10 +388,15 @@ class NativePreviewView(QWidget):
             needs.append(f"the effect recorder ({RECORDER}; from source, run Tools/fxrecorder/build.bat)")
         if not self.exe_path():
             needs.append("FF8_EN.exe (the header's Import)")
-        if not self.magic_folder():
-            needs.append("the effect files' folder (the header's Import, Effect files)")
-        if not self.battle_folder():
-            needs.append(f"the battle folder ({SHARED_TEXTURES} from the header's Import complementary)")
+        if not self.effect_files():
+            needs.append("the effect's files (the header's Import)")
+        cast = self.cast()
+        imported = (f" - {', '.join(cast.not_imported)}" if cast.not_imported else "") + ")"
+        if cast.caster not in cast.slots:
+            needs.append("a caster model (Import complementary: Camera preview models" + imported)
+        elif cast.target not in cast.slots:
+            # the effects draw on their target's model (Cure redraws it): a battle always has one
+            needs.append("a target model (Target above; Import complementary: Camera preview models" + imported)
         return needs
 
     # ------------------------------------------------------------------ effect / recording
@@ -444,19 +444,25 @@ class NativePreviewView(QWidget):
         scratch = tempfile.TemporaryDirectory(prefix="fujin_preview_")
         self._scratch = scratch
         output = os.path.join(scratch.name, "recording.txt")
+        # The recorder reads only what was opened in Fujin: the effect's imported files as Fujin
+        # holds them (unsaved edits included) and a8def.tim, staged privately; models by path
+        effect_folder, battle_folder = Path(scratch.name, "effect"), Path(scratch.name, "battle")
         try:
-            for name, data in edits.items():
+            effect_folder.mkdir()
+            battle_folder.mkdir()
+            for name, data in self.effect_files().items():
                 if name != os.path.basename(name) or name in ("", ".", ".."):
                     raise ValueError(f"invalid effect file name: {name}")
-                Path(scratch.name, name).write_bytes(data)
+                (effect_folder / name).write_bytes(data)
+            if self.textures_binding.current_path:
+                shutil.copyfile(self.textures_binding.current_path, battle_folder / SHARED_TEXTURES)
         except (OSError, ValueError) as error:
             self._clean_scratch()
             self.status.setText(f"Could not prepare the preview: {error}")
             return False
         # absolute paths: the recorder runs from its own folder
         args = [str(self.effect_id), f"exe={os.path.abspath(self.exe_path())}",
-                f"magic={os.path.abspath(self.magic_folder())}", f"battle={os.path.abspath(self.battle_folder())}",
-                f"out={output}"]
+                f"magic={effect_folder}", f"battle={battle_folder}", f"out={output}"]
         # the cast: each slot's body (and weapon) through the game's own loaders, caster and target
         for slot, (body, weapon) in sorted(cast.slots.items()):
             args.append(f"slot{slot}={os.path.abspath(body)}")
@@ -469,8 +475,7 @@ class NativePreviewView(QWidget):
             args.append(f"yaw{slot}={int(round(cast.yaws.get(slot, 0.0) / (2 * math.pi) * 4096)) & 4095}")
         if not cast.slots:
             args.append("model=-1")
-        if edits:
-            args.append(f"overrides={scratch.name}")
+        self._not_imported = cast.not_imported
         self.camera_used = False
         manager, track = self.camera_track(self.effect_id)
         if cast.camera is not None:
@@ -547,7 +552,15 @@ class NativePreviewView(QWidget):
                 pass  # caching is optional; the in-memory preview is already loaded
         if self.play_button.isChecked():
             self.timer.start()
-        problems = [line for line in log.splitlines() if "faulted" in line or "failed" in line or "missing" in line]
+        lines = log.splitlines()
+        missing = sorted({line.split(" file ", 1)[1].split(" (")[0] for line in lines if line.startswith("missing ")})
+        not_imported = getattr(self, "_not_imported", [])
+        if not_imported:
+            self.status.setText(self.status.text() + " Not drawn (not imported): " + ", ".join(not_imported) + ".")
+        if missing:
+            self.status.setText(self.status.text() + " Not imported, asked for by the effect: "
+                                + ", ".join(os.path.basename(name) for name in missing) + ".")
+        problems = [line for line in lines if "faulted" in line or "failed" in line]
         if problems:
             self.status.setText(self.status.text() + " Recorder: " + "; ".join(problems[:3]))
 
@@ -646,7 +659,7 @@ class NativePreviewView(QWidget):
         can_record = not needs and self.effect_id is not None and not busy
         self.record_button.setEnabled(can_record)
         self.record_button.setText("Record again" if recording else "Record")
-        self.open_textures_button.setVisible(not self.battle_folder())
+        self.open_textures_button.setVisible(not self.textures_binding.current_path)
         for widget in (self.view_mode, self.slider):
             widget.setEnabled(recording and not busy)
         # Play records first when there is no recording yet

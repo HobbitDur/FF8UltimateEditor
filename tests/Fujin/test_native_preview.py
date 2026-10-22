@@ -118,36 +118,6 @@ def test_effect_camera_lines():
     assert first[0] == 0 and first[4:7] == [0, 0, -3000]               # Cure's camera looks at the target
 
 
-@pytest.mark.skipif(not EXE.exists(), reason="FF8_EN.exe not extracted")
-def test_record_cure_with_the_recorder(qapp):
-    from Common.fileregistry import FileRegistry
-    from FF8GameData.gamedata import GameData
-    from Fujin.cameraeffectmanager import CameraEffectManager
-    from Fujin.nativepreview import RECORDER, BattleCast, NativePreviewView, recording_path
-    if not RECORDER.is_file():
-        pytest.skip("the effect recorder is not built (Tools/fxrecorder/build.bat)")
-    cameras = CameraEffectManager(GameData(str(ROOT / "FF8GameData")))
-    cameras.load_exe(str(EXE))
-    view = NativePreviewView(FileRegistry(), exe_path=lambda: str(EXE), magic_folder=lambda: str(MAGIC),
-                             camera_track=lambda effect: (cameras, cameras.track(effect)))
-    view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
-    assert view.missing() == []
-    dummy = str(BATTLE / "c0m000.dat")
-    assert view.cast() == BattleCast({0: (dummy, None), 3: (dummy, None)}, 0, 3)  # nothing imported: the dummy
-    cached = recording_path(1, view.cast().key())
-    if os.path.exists(cached):
-        os.remove(cached)
-    view.set_effect(1, "Cure")
-    assert view.record() and view.camera_used
-    assert view._process.waitForFinished(60000)
-    QApplication.processEvents()
-    recording = view.recording
-    assert recording is not None and len(recording.ticks) == 51 and recording.has_vram
-    image, gpu = recording.frame(16, scale=0.125)
-    assert not gpu.missing_pages and gpu.counts["polygons"] > 100                     # all textured
-    assert (image.astype(int).sum(axis=2) > 200).mean() > 0.01                         # in the game window
-
-
 
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim",
                      "extracted_files/battle/a8def.tim", "extracted_files/battle/d0c000.dat",
@@ -181,9 +151,12 @@ def test_effect_preview_records_the_camera_preview_battle(qapp):
         os.remove(nativepreview.recording_path(1, view.cast().key()))
     assert view.record()
     wait_for_preview(qapp, view)
-    assert view.recording is not None and len(view.recording.ticks) == 51
+    assert view.recording is not None and len(view.recording.ticks) == 51 and view.camera_used
     image, gpu = view.recording.frame(0, scale=0.125)
     assert not gpu.missing_pages and gpu.counts["polygons"] > 150              # Squall drawn, textured
+    image, gpu = view.recording.frame(16, scale=0.125)
+    assert not gpu.missing_pages and gpu.counts["polygons"] > 100              # the effect, all textured
+    assert (image.astype(int).sum(axis=2) > 200).mean() > 0.01                 # in the game window
 
 
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim",
@@ -191,9 +164,10 @@ def test_effect_preview_records_the_camera_preview_battle(qapp):
                      "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
                      "extracted_files/battle/c0m014.dat")
 def test_effect_preview_plays_a_scene_out_encounter(qapp):
-    """Without a8def.tim the preview offers to open it and Play is off; the Battle picker is the
-    Camera tab setup's encounter list, its enemies read from the battle folder and placed where
-    scene.out has them; Play records first."""
+    """Only files opened one by one: without models Play is off, a8def.tim is offered but
+    optional; the Battle picker is the Camera tab setup's encounter list, its enemies placed where
+    scene.out has them - an enemy not imported is named and left out (no target: no Record); Play
+    records first."""
     from Fujin import nativepreview
     from Fujin.fujinwidget import FujinWidget
     if not nativepreview.RECORDER.is_file():
@@ -203,9 +177,10 @@ def test_effect_preview_plays_a_scene_out_encounter(qapp):
     fujin.camera_editor.exe_binding.open_path(str(EXE))
     fujin.select_effect(1)
     view = fujin.native_preview
-    assert not view.open_textures_button.isHidden() and not view.play_button.isEnabled()
+    assert not view.play_button.isEnabled() and any("caster model" in need for need in view.missing())
+    assert not view.open_textures_button.isHidden()
     view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
-    assert view.open_textures_button.isHidden() and view.play_button.isEnabled()
+    assert view.open_textures_button.isHidden()
     preview = fujin.camera_editor.preview
     preview.sceneout_binding.open_path(str(BATTLE / "scene.out"))
     preview.add_models([str(BATTLE / "d0c000.dat"), str(BATTLE / "d0w000.dat")])
@@ -215,6 +190,12 @@ def test_effect_preview_plays_a_scene_out_encounter(qapp):
     view.encounter_combo.setCurrentIndex(index)
     view.encounter_combo.activated.emit(index)
     assert preview.encounter_combo().currentIndex() == index                    # the Camera tab's pick too
+    assert view.cast().not_imported == ["c0m014.dat"] and 3 not in view.cast().slots   # never read from a folder
+    assert any("target model" in need and "c0m014.dat" in need for need in view.missing())
+    assert not view.play_button.isEnabled()
+    preview.add_models([str(BATTLE / "c0m014.dat")])
+    view.refresh_cast()
+    assert view.play_button.isEnabled()
     cast = view.cast(placed=True)
     assert cast.slots[3] == (str(BATTLE / "c0m014.dat"), None) and (cast.caster, cast.target) == (0, 3)
     assert cast.positions[3] == (-500.0, 0.0, -2500.0)                          # scene.out's place
@@ -241,7 +222,8 @@ def wait_for_preview(qapp, view):
 
 
 @pytest.mark.ff8data("extracted_files/magic/mag000-049.tim", "extracted_files/FF8_EN.exe",
-                     "extracted_files/battle/a8def.tim", "extracted_files/battle/c0m000.dat")
+                     "extracted_files/battle/a8def.tim", "extracted_files/battle/c0m000.dat",
+                     "extracted_files/battle/d0c000.dat")
 def test_cure_previews_unsaved_png_and_undo(qapp, tmp_path, monkeypatch):
     from Fujin import nativepreview
     from Fujin.fujinwidget import FujinWidget
@@ -259,6 +241,8 @@ def test_cure_previews_unsaved_png_and_undo(qapp, tmp_path, monkeypatch):
     fujin.select_effect(1)
     view = fujin.native_preview
     view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
+    fujin.camera_editor.preview.add_models([str(BATTLE / "d0c000.dat"), str(BATTLE / "c0m000.dat")])
+    view.refresh_cast()
     assert view.record()
     wait_for_preview(qapp, view)
     assert len(view.recording.ticks) == 51
