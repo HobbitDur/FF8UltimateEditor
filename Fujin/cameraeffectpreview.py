@@ -534,11 +534,12 @@ class CameraEffectPreview(QWidget):
             other_key = target_key if main_key == caster_key else caster_key
             setup.opponent = self._actor_model(other_key) if other_key != main_key else None
             setup.opponent_weapon = self._actor_weapon(other_key)
+            if main_key[0] == "party":
+                # the formation depends on the party size, with an encounter or without
+                setup.party_size.setValue(max(members) + 1 if members else 1)
+                setup.party_slot.setValue(main_key[1])
             if self._encounter() is not None:
-                if main_key[0] == "party":
-                    setup.party_size.setValue(max(members) + 1 if members else 1)
-                    setup.party_slot.setValue(main_key[1])
-                elif main_key[0] == "enemy":
+                if main_key[0] == "enemy":
                     picker = setup.encounters
                     picker.enemy_slot.setCurrentIndex(max(0, next(
                         (index for index in range(picker.enemy_slot.count())

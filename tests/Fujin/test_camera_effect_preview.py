@@ -213,3 +213,25 @@ def test_monster_caster_defaults(fujin):
     assert preview.target_key() is None                     # no second model: a marker
     assert preview.opening_spin.value() == 8 and preview.battle_slots() == (3, 0)
     assert preview.last_run.chosen is not None and preview.panel._animation is preview.previewed
+
+
+def test_party_member_casting_on_another_stands_beside_it(fujin):
+    """Caster party 0, target party 1, no encounter: side by side in the battle formation (both
+    facing the enemies), as in the game - not face to face."""
+    from Ifrit.IfritCameraSeq.battlepreview import PARTY_FORMATIONS
+    editor = fujin.camera_editor
+    preview = editor.preview
+    editor.exe_binding.open_path(EXE)
+    editor.select_effect(CURE)
+    preview.add_models(paths(SQUALL, GUNBLADE, ZELL, GLOVES))
+    preview.panel._timer.stop()
+    assert set(preview.party_members()) == {0, 1}
+    target = next(row for row in range(preview.target_combo.count())
+                  if preview.target_combo.itemData(row) == ("party", 1))
+    preview.target_combo.setCurrentIndex(target)
+    preview.panel._timer.stop()
+    setup = preview.panel._battle_setup
+    assert preview.battle_slots() == (0, 1) and setup.party_size.value() == 2
+    context = setup.context
+    np.testing.assert_allclose(context.target.position, np.subtract(PARTY_FORMATIONS[2][1], PARTY_FORMATIONS[2][0]))
+    assert context.caster.yaw == context.target.yaw == 0.

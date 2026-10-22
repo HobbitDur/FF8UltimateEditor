@@ -86,6 +86,7 @@ class BattlePreviewSetup(QWidget):
         Target) and opens files from the header toolbar, so those controls are hidden here."""
         super().__init__(parent)
         self.manager = manager
+        self.host_cast = host_cast
         self.opponent = None
         self.context = None
         self.unit = 1.
@@ -247,7 +248,7 @@ class BattlePreviewSetup(QWidget):
             return
         self._kind = is_monster
         defaults = [(self.position[2], 5000 if is_monster else -5000)]
-        if self.encounter_roles() is None:  # an encounter sets the slots itself
+        if self.encounter_roles() is None and not self.host_cast:  # an encounter / the host sets them
             defaults += [(self.caster_slot, 3 if is_monster else 0), (self.target_slot, 0 if is_monster else 3)]
         for spin, value in defaults:
             spin.blockSignals(True)
@@ -305,19 +306,52 @@ class BattlePreviewSetup(QWidget):
         other_yaw = 0. if self.encounters.is_monster else math.pi
         main = actor_from_model(self.manager, yaw=self.main_yaw, animation=animation, animate=animate)
         position = tuple(spin.value() for spin in self.position)
-        other = (actor_from_model(self.opponent, position, other_yaw, animate=animate)
-                 if self.opponent is not None else CameraActor(position, other_yaw))
-        if self.opponent is None:
-            other.anchor = lambda selector, tick: np.asarray(position) + np.array((0., -800. if selector == 0 else -400., 0.))
+        ids = (self.caster_slot.value(), self.target_slot.value())
+        main_id, other_id = ids if self.role.currentIndex() == 0 else ids[::-1]
+        same_side = main_id != other_id and (main_id < 3) == (other_id < 3)
+        formation, origin = None, np.zeros(3)
+        if main_id < 3:
+            # The party stands in the game's formation, every member facing the enemies (yaw 0):
+            # the loaded model at the origin, the others where the formation puts them
+            size = max(self.party_size.value(), main_id + 1, other_id + 1 if other_id < 3 else 0)
+            formation = PARTY_FORMATIONS[min(3, size)]
+            origin = np.asarray(formation[main_id], float)
+        if same_side:
+            # Two allies (a party member casting on another, a monster on a monster): side by
+            # side, looking the same way - not face to face
+            other_yaw = self.main_yaw
+            position = (tuple((np.asarray(formation[other_id], float) - origin).tolist()) if formation else
+                        (1600. if other_id > main_id else -1600., 0., 0.))
+            self.status.setText(self.status.text().replace('Manual placement.', 'Manual placement: allies side by '
+                                                           'side (battle formation).' if formation else
+                                                           'Manual placement: allies side by side.'))
+        if main_id == other_id:                 # the caster targets itself
+            other = main
+        else:
+            other = (actor_from_model(self.opponent, position, other_yaw, animate=animate)
+                     if self.opponent is not None else CameraActor(position, other_yaw))
+            if self.opponent is None:
+                other.anchor = lambda selector, tick: np.asarray(position) + np.array((0., -800. if selector == 0 else -400., 0.))
         caster, target = (main, other) if self.role.currentIndex() == 0 else (other, main)
         centre = (main.point(0, 0) + other.point(0, 0)) / 2
         if self.initial_view.currentIndex() == 1:
             centre = main.point(0, 0)
         eye = centre + np.array((-4000., -2000., -7000.))
         slots = {self.caster_slot.value(): caster, self.target_slot.value(): target}
+        if formation is not None:
+            # the host's other party members in their formation places, for context
+            for party_slot, (body, weapon) in self.party_models.items():
+                if party_slot in slots or party_slot >= len(formation) or body is None:
+                    continue
+                actor = actor_from_model(body, tuple((np.asarray(formation[party_slot], float) - origin).tolist()),
+                                         animate=animate)
+                self._scene_mesh_actors.append((body, actor))
+                if weapon is not None:
+                    self._scene_weapons.append((weapon, actor, body))
+                slots[party_slot] = actor
         self.context = BattleCameraContext(caster, target, CameraPose(tuple(eye), tuple(centre)), slots)
         self._other = other
-        if self.opponent is not None:
+        if self.opponent is not None and other is not main:
             self._scene_mesh_actors.append((self.opponent, other))
             if self.opponent_weapon is not None:
                 self._scene_weapons.append((self.opponent_weapon, other, self.opponent))
