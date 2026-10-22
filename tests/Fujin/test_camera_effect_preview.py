@@ -202,6 +202,32 @@ def test_scene_out_places_party_and_enemies(fujin, tmp_path):
     assert scene.read_bytes()[:8] == bytes(7) + b"\xC0"     # read-only
 
 
+@pytest.mark.ff8data(EXE, SQUALL, SOLDIER)
+def test_encounter_enemy_not_imported_is_a_named_marker(fujin, tmp_path):
+    """Only Squall imported: the soldiers of the encounter are markers at their scene.out places,
+    named in the status - the c0m071.dat beside scene.out (and Squall) is never read."""
+    import shutil
+    editor = fujin.camera_editor
+    preview = editor.preview
+    editor.exe_binding.open_path(EXE)
+    editor.select_effect(CURE)
+    preview.add_models(paths(SQUALL))
+    preview.panel._timer.stop()
+    scene = _scene_out(tmp_path)
+    shutil.copy(ROOT / SOLDIER, tmp_path / "c0m071.dat")
+    fujin.file_registry.open_file("scene.out", str(scene))
+    setup = preview.panel._battle_setup
+    picker = setup.encounters
+    picker.encounter.setCurrentIndex(1)
+    preview.panel._timer.stop()
+    assert preview.caster_key() == ("party", 0) and preview.target_key() == ("enemy", 0)
+    assert setup.context.target.position == (-1100, 77, -2900)
+    assert setup.context.slots[4].position == (1300, 0, -4200)
+    assert [manager for manager, _actor in setup._scene_mesh_actors] == []      # markers only
+    assert "c0m071.dat: not imported" in picker.status.text()
+    assert all("c0m071" not in path for path in preview._models)
+
+
 @pytest.mark.ff8data(EXE, SOLDIER)
 def test_monster_caster_defaults(fujin):
     editor = fujin.camera_editor

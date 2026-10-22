@@ -1,11 +1,13 @@
 """Read-only caster/target setup for the shared DAT camera preview.
 
 A host (Ifrit's Camera tab, SolomonRing, Fujin's effect cameras) gives the model it films; the
-setup places it with an opponent by hand or in a scene.out encounter. A host that imported other
-models offers them through `models` (file name -> manager: the encounter's enemies, the default
-player), `party_models` (party slot -> (body, weapon)) and `opponent_weapon`, before the setup
-falls back to the DATs beside scene.out. In an encounter every battle slot is placed, and the
-caster/target slot spins pick any of them (defaults: the loaded model and its opponent)."""
+setup places it with an opponent by hand or in a scene.out encounter. The other models are only
+the ones the host's user opened one by one: `models` / `model_source` (file name -> manager: the
+encounter's enemies, the default player), `party_models` (party slot -> (body, weapon)) and
+`opponent_weapon`. Nothing is read from scene.out's folder or the loaded model's: an encounter
+enemy whose file is not opened stays a marker at its scene.out place, named in the status. In an
+encounter every battle slot is placed, and the caster/target slot spins pick any of them
+(defaults: the loaded model and its opponent)."""
 import math
 from pathlib import Path
 
@@ -98,6 +100,9 @@ class BattlePreviewSetup(QWidget):
         self.main_position = (0., 0., 0.)
         self.main_yaw = 0.
         self.models = {}                # lower-case file name -> manager imported by the host
+        # or a callable: lower-case file name -> a manager or the path of a file the host opened
+        # (its model list), None when not opened
+        self.model_source = None
         self.party_models = {}          # party slot -> (body manager, weapon manager or None)
         self.opponent_weapon = None     # weapon of a character opponent (manual / monster encounters)
         self._kind = None               # whether the defaults below were set for a monster
@@ -216,7 +221,7 @@ class BattlePreviewSetup(QWidget):
         self.position_label.setEnabled(not active)
         for button in self.opponent_buttons:
             button.setEnabled(not active or self.encounters.is_monster)
-            button.setToolTip('Load a party stand-in for a monster preview. Encounter enemies are loaded automatically.')
+            button.setToolTip('Load a party stand-in for a monster preview. Encounter enemies are the opened models.')
         self.reset_encounter_slots()
         self.changed.emit()
 
@@ -358,13 +363,14 @@ class BattlePreviewSetup(QWidget):
         return self.context
 
     def _asset(self, name):
+        """The model of a file the host opened (`models`, then `model_source`), or None: never a
+        file looked up in a folder."""
         if name.lower() in self.models:  # imported by the host
             return self.models[name.lower()]
-        folders = [self.encounters.path.parent,
-                   Path(getattr(self.manager.enemy, 'origin_path', '')).parent]
-        path = next((folder / name for folder in folders if (folder / name).is_file()), None)
-        if path is None:
-            return None
+        found = self.model_source(name.lower()) if self.model_source is not None else None
+        if found is None or not isinstance(found, (str, Path)):
+            return found
+        path = Path(found)
         key = (path, path.stat().st_mtime_ns)
         if key not in self._asset_cache:
             manager = self._load_model(path, self.manager.game_data)
@@ -394,7 +400,8 @@ class BattlePreviewSetup(QWidget):
                     manager = (self.manager if monster and slot.com_file_id == self.manager.enemy.id else
                                self._asset(name)) if slot.loaded else None
                     if manager is None:
-                        notes.append(f'{name}: missing model' if slot.loaded else f'{name}: not initially loaded')
+                        notes.append(f'{name}: not imported (a marker)' if slot.loaded else
+                                     f'{name}: not initially loaded')
                 except Exception as error:
                     manager = None
                     notes.append(f'{name}: {error}')
@@ -413,7 +420,7 @@ class BattlePreviewSetup(QWidget):
                     notes.append(f'Player model: {error}')
             party[player_slot] = (player, self.opponent_weapon if player is self.opponent else None)
             if player is None:
-                notes.append('Player model missing; load a player DAT')
+                notes.append('Player: d0c000.dat not imported (a marker); load a player DAT')
         for party_slot, position in enumerate(PARTY_FORMATIONS[self.party_size.value()]):
             if not monster and party_slot == player_slot:
                 slots[party_slot] = main
@@ -445,8 +452,8 @@ class BattlePreviewSetup(QWidget):
         self.encounters.status.setText(
             f'Encounter {encounter.index}. Party {self.party_size.value()}, player slot {player_slot}: '
             f'{player_position}. ' + '; '.join(notes))
-        self.status.setText('Player: imported model or Squall from the battle folder.' if monster else
-                            'Enemy models and textures are loaded from the selected encounter.')
+        self.status.setText('Player: the loaded opponent, else an opened d0c000.dat.' if monster else
+                            'Enemies: the opened models of the encounter; the others are markers.')
         return self.context
 
     def to_viewer(self, point):

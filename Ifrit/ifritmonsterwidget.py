@@ -398,6 +398,10 @@ class IfritFilePane(QWidget):
         except Exception:
             return ""
 
+    def set_model_source(self, source):
+        """The session's opened models, for the Camera tab's encounter preview."""
+        self._camera_widget.set_model_source(source)
+
     def show_saved_tab(self):
         """Select the tab the user last had open (shared preference across panes)."""
         idx = self.settings.value("ifrit/current_tab", defaultValue=0, type=int)
@@ -1300,12 +1304,19 @@ class IfritMonsterWidget(QWidget):
                              file_registry=self.file_registry)
         pane.dirty_changed.connect(lambda entry=f: self._on_pane_dirty(entry))
         pane.edited.connect(self._on_active_edited)          # every edit -> (debounced) undo snapshot
+        pane.set_model_source(self._opened_model_path)
         f['pane'] = pane
         self._ensure_undo_stack(f)   # baseline = the just-loaded (== on-disk) model; kept across rebuilds
         self._stack.addWidget(pane)
         # Adding a widget doesn't make it current (no currentChanged fires), so keep the stack's
         # min-size floored to the shown page (see _shrink_stack_to_current).
         _shrink_stack_to_current(self._stack, self._stack_size_policies)
+
+    def _opened_model_path(self, name):
+        """The path of the opened model named `name` (lower case), else None: the Camera tab's
+        encounters draw only the files opened in this session, never ones found on disk."""
+        return next((f['path'] for f in self._files
+                     if not f.get('blank') and os.path.basename(f['path']).lower() == name), None)
 
     def _autoload_character_weapons(self, body_path):
         """Bring a character's weapon .dat files into the session automatically.

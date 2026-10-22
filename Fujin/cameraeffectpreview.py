@@ -437,18 +437,15 @@ class CameraEffectPreview(QWidget):
         return next((path for path in self.monster_paths() if _name(path).lower() == name), None)
 
     def _actor_model(self, key):
-        """The model of an actor: its imported file, or (an encounter enemy) the setup's lookup."""
-        path = self._actor_path(key)
-        if path is not None:
-            return self.model(path)
-        if key is not None and key[0] == "enemy" and self.panel is not None:
-            encounter = self._encounter()
-            slot = next(slot for slot in encounter.enabled_slots() if slot.slot_index == key[1])
-            try:
-                return self.panel._battle_setup._asset(f"c0m{slot.com_file_id:03}.dat")
-            except Exception:
-                return None
-        return None
+        """The model of an actor: its imported file, else None (an encounter enemy not imported
+        is a marker the setup names)."""
+        return self.model(self._actor_path(key))
+
+    def _imported_model(self, name):
+        """The setup's model_source: the imported model of that file name (lower case: an encounter's
+        c0mNNN.dat, the default player d0c000.dat), or None."""
+        path = next((path for path in self.model_paths() if _name(path).lower() == name), None)
+        return self.model(path)
 
     def _actor_weapon(self, key):
         if key is None or key[0] != "party":
@@ -458,7 +455,7 @@ class CameraEffectPreview(QWidget):
     def battle_cast(self, placed=False):
         """The battle this preview films, for the effect recorder (Fujin.nativepreview.BattleCast):
         the party with its weapons, the encounter's enemies (an enemy not imported is named,
-        c0mNNN.dat, for the battle folder) or the imported caster / target monsters, in their
+        c0mNNN.dat, and left out) or the imported caster / target monsters, in their
         battle slots (0-6: an enemy past the 4th is left out). placed: also where the setup stands
         them and the effect camera it plays (_place_cast). None without a caster."""
         from Fujin.nativepreview import BattleCast
@@ -595,8 +592,7 @@ class CameraEffectPreview(QWidget):
                 panel.invalidate()
             panel.set_weapon(self._actor_weapon(main_key))
             members = self.party_members()
-            setup.models = {_name(path).lower(): self._models[path] for path in self.monster_paths()
-                            if path in self._models}
+            setup.model_source = self._imported_model    # only imported models, loaded when placed
             setup.party_models = {slot: (self.model(body), self.model(weapon))
                                   for slot, (body, weapon) in members.items()
                                   if main_key != ("party", slot) and self.model(body) is not None}

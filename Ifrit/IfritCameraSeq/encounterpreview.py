@@ -1,6 +1,5 @@
 """Read-only encounter picker shared by monster and character camera previews."""
 from pathlib import Path
-import struct
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QLabel, QSizePolicy
@@ -94,11 +93,8 @@ class EncounterPicker(QWidget):
         self.refresh_model(force=True)
 
     def monster_name(self, com_id):
-        """Prefer the edited/current DAT name, then loose DAT names, then the catalog.
-
-        Only read the section-7 name bytes; building a list must not expand every
-        monster's geometry, animations or AI (including mod-added monsters).
-        """
+        """The edited/current DAT name, else the monster catalog's. No c0mNNN.dat is read: only
+        the files the user opened one by one are used, never ones beside scene.out."""
         enemy = self.manager.enemy
         if self.is_monster and com_id == getattr(enemy, 'id', None):
             name = getattr(enemy, 'info_stat_data', {}).get('monster_name')
@@ -107,23 +103,6 @@ class EncounterPicker(QWidget):
         if com_id in self._name_cache:
             return self._name_cache[com_id]
         game_data = getattr(self.manager, 'game_data', None)
-        folders = ([self.path.parent] if self.path else []) + [
-            Path(getattr(enemy, 'origin_path', '')).parent]
-        for folder in folders:
-            try:
-                with (folder / f'c0m{com_id:03}.dat').open('rb') as source:
-                    header = source.read(32)
-                    if len(header) != 32 or struct.unpack_from('<I', header)[0] < 7:
-                        continue
-                    # Section 0 is the header itself; section N's pointer is DWORD N.
-                    source.seek(struct.unpack_from('<I', header, 28)[0])
-                    raw = source.read(24).split(b'\0', 1)[0]
-                name = game_data.translate_hex_to_str(bytearray(raw)).strip()
-                if name:
-                    self._name_cache[com_id] = name
-                    return name
-            except (OSError, ValueError, AttributeError):
-                continue
         catalog = getattr(game_data, 'monster_data_json', {}).get('monster', [])
         name = next((m['name'] for m in catalog if m['com_id'] == com_id), f'Monster {com_id}')
         self._name_cache[com_id] = name

@@ -117,7 +117,9 @@ def test_encounter_picker_filters_monsters_and_shares_read_only_scene(tmp_path):
     picker.close()
 
 
-def test_encounter_labels_prefer_modded_dat_names_to_catalog_ids(tmp_path):
+def test_encounter_labels_never_read_dats_beside_scene_out(tmp_path):
+    """Names: the loaded model's, else the catalog's. A c0mNNN.dat beside scene.out was not
+    opened by the user, so it is not read (not even its name)."""
     from Ifrit.IfritCameraSeq.encounterpreview import EncounterPicker
     model = bytearray(88)
     struct.pack_into('<I', model, 0, 8)
@@ -135,10 +137,16 @@ def test_encounter_labels_prefer_modded_dat_names_to_catalog_ids(tmp_path):
     enemy = SimpleNamespace(entity_type=SimpleNamespace(name='CHARACTER'), id=0, origin_path='')
     picker = EncounterPicker(SimpleNamespace(enemy=enemy, game_data=game_data))
     assert picker.load(scene)
-    assert 'Medic' in picker.encounter.itemText(1)
-    assert 'Catalog name' not in picker.encounter.itemText(1)
+    assert 'Catalog name' in picker.encounter.itemText(1)
+    assert 'Medic' not in picker.encounter.itemText(1)
     picker.encounter.setCurrentIndex(1)
-    assert 'Medic' in picker.enemy_slot.currentText()
+    assert 'Catalog name' in picker.enemy_slot.currentText()
+    picker.close()
+    # the loaded (edited) monster's own name comes first
+    enemy = SimpleNamespace(entity_type=SimpleNamespace(name='MONSTER'), id=145, origin_path='',
+                            info_stat_data={'monster_name': 'Edited'})
+    picker = EncounterPicker(SimpleNamespace(enemy=enemy, game_data=game_data))
+    assert picker.load(scene) and 'Edited' in picker.encounter.itemText(1)
     picker.close()
 
 
@@ -269,6 +277,9 @@ def test_scene_picker_places_world_actors_without_environment_or_file_edits(tmp_
     panel.preview(animation)
     panel._timer.stop()
     setup = panel._battle_setup
+    # the host's opened models (Ifrit's file list): nothing is read from scene.out's folder
+    opened = {'c0m071.dat': str(ROOT / 'extracted_files/battle/c0m071.dat'), 'd0c000.dat': str(BODY)}
+    setup.model_source = opened.get
     assert setup.group._toggle.arrowType() == Qt.ArrowType.RightArrow
     assert setup.options.isAncestorOf(setup.encounters)
     assert setup.options.isEnabled()  # folding hides; it never disables controls
