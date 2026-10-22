@@ -47,18 +47,23 @@ class SectionData(Section):
             offset_list.append(ff8_data.get_offset_value())
         return offset_list
 
-    def set_all_offset_by_text_list(self, text_list, shift=0):
-        # Only the offsets that are not empty get a text: an empty one keeps its place with no
-        # string, so the text list is shorter than the offset list when ignore_empty_offset is off.
-        if len(text_list) != self.get_nb_offset_not_empty():
+    def set_all_offset_by_text_list(self, text_list, shift=0, zero_is_text=False):
+        """Rewrite the offsets from the texts' lengths. Only the offsets that are not empty get a
+        text: an empty one keeps its place with no string, so the text list is shorter than the
+        offset list when ignore_empty_offset is off.
+
+        zero_is_text: the offsets count from the first text itself (the exe's Scan text), so the
+        first text's offset IS 0 and every slot holds a text - none is an empty one."""
+        holding = len(self._offset_list) if zero_is_text else self.get_nb_offset_not_empty()
+        if len(text_list) != holding:
             print(f"The size of the text list ({len(text_list)}) is different than the nb of "
-                  f"offset holding a text ({self.get_nb_offset_not_empty()})")
+                  f"offset holding a text ({holding})")
 
         new_list = []
         index_value_list = 0
         current_offset = shift
         for i in range(len(self._offset_list)):  # Assuming offset data is always at the beginning of the subsection
-            if self._offset_list[i].get_offset_value() == 0:
+            if (not zero_is_text and self._offset_list[i].get_offset_value() == 0) or index_value_list >= len(text_list):
                 new_hex = bytes([0, 0])
             else:
                 new_hex = current_offset.to_bytes(length=self.OFFSET_SIZE, byteorder='little')
