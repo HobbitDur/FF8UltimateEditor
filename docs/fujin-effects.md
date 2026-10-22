@@ -22,7 +22,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   **Effect preview** (below the Overview) shows what an effect run by the exe's own code (Cure,
   Fire, most spells, enemy attacks) draws, tick by tick at 15 per second, in a real battle: the
   Camera tab preview's (its party with their weapons, its encounter's enemies or its imported
-  monsters, its caster and target - the **Caster** / **Target** pickers here are the same ones).
+  monsters, its caster and target - the **Battle** (scene.out encounter or manual placement),
+  **Caster** and **Target** pickers here are the same ones; opening Battle sets the battle up when
+  its models are still waiting). **Play** records first when there is no recording yet.
   **Record** runs the effect's original code in FF8UltimateEditor's effect recorder
   (`Tools/fxrecorder`, a 32-bit program shipped with the Windows release; from source,
   `Tools/fxrecorder/build.bat` builds it with Visual Studio's C++ tools - no FFNx needed). It maps
@@ -43,7 +45,10 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   (`FF8GameData/psxgpu`: polygons, sprites, lines, CLUT textures, the four semi-transparency modes;
   FF8 PC's 3D output is in eighths of a pixel, the 320 x 224 window being 2560 x 1792 units).
   Files: FF8_EN.exe and the effect files from the header's Import, `a8def.tim` from Import
-  complementary (it gives the battle folder, where encounter enemies not imported are read).
+  complementary or the preview's **Open a8def.tim…** (battle file 163, the battle's shared effect
+  textures the game loads at every battle start, `load_aA8defTim` 0x508660; it also gives the
+  battle folder, where encounter enemies not imported and the test dummy are read), scene.out
+  from Import complementary for the encounters.
   Exact: shapes, colours, blending, timing. Approximated: actors hold their first pose, the camera
   player is Fujin's (floating point). **Game window** shows the screen; **Fit the effect** frames
   everything drawn.

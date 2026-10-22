@@ -480,13 +480,22 @@ class CameraEffectPreview(QWidget):
             self._place_cast(cast)
         return cast
 
+    def load_battle(self):
+        """Cast the models imported while this preview was hidden, now (the effect preview needs
+        the battle: its encounter picker, its placement)."""
+        if self._cast_pending:
+            self._cast_pending = False
+            self._cast_changed(defaults=True)
+
+    def encounter_combo(self):
+        """The setup's scene.out encounter list (None before the battle is set up)."""
+        return self.panel._battle_setup.encounters.encounter if self.panel is not None else None
+
     def _place_cast(self, cast):
         """Where this preview's battle setup stands each actor and the effect camera it plays there:
         the effect preview then shows the same shot. Models still waiting to be cast (imported
         while hidden) are loaded now."""
-        if self._cast_pending:
-            self._cast_pending = False
-            self._cast_changed(defaults=True)
+        self.load_battle()
         if self.panel is None:
             return
         from FF8GameData.dat.battlecamera import play_camera_animation

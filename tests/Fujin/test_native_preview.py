@@ -186,6 +186,49 @@ def test_effect_preview_records_the_camera_preview_battle(qapp):
     assert not gpu.missing_pages and gpu.counts["polygons"] > 150              # Squall drawn, textured
 
 
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim",
+                     "extracted_files/battle/a8def.tim", "extracted_files/battle/scene.out",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m014.dat")
+def test_effect_preview_plays_a_scene_out_encounter(qapp):
+    """Without a8def.tim the preview offers to open it and Play is off; the Battle picker is the
+    Camera tab setup's encounter list, its enemies read from the battle folder and placed where
+    scene.out has them; Play records first."""
+    from Fujin import nativepreview
+    from Fujin.fujinwidget import FujinWidget
+    if not nativepreview.RECORDER.is_file():
+        pytest.skip("the effect recorder is not built")
+    fujin = FujinWidget()
+    fujin.import_paths([str(MAGIC / "mag000-049.tim")])
+    fujin.camera_editor.exe_binding.open_path(str(EXE))
+    fujin.select_effect(1)
+    view = fujin.native_preview
+    assert not view.open_textures_button.isHidden() and not view.play_button.isEnabled()
+    view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
+    assert view.open_textures_button.isHidden() and view.play_button.isEnabled()
+    preview = fujin.camera_editor.preview
+    preview.sceneout_binding.open_path(str(BATTLE / "scene.out"))
+    preview.add_models([str(BATTLE / "d0c000.dat"), str(BATTLE / "d0w000.dat")])
+    view._load_battle()
+    index = next(i for i in range(view.encounter_combo.count())
+                 if view.encounter_combo.itemText(i).startswith("Encounter 20 "))
+    view.encounter_combo.setCurrentIndex(index)
+    view.encounter_combo.activated.emit(index)
+    assert preview.encounter_combo().currentIndex() == index                    # the Camera tab's pick too
+    cast = view.cast(placed=True)
+    assert cast.slots[3] == (str(BATTLE / "c0m014.dat"), None) and (cast.caster, cast.target) == (0, 3)
+    assert cast.positions[3] == (-500.0, 0.0, -2500.0)                          # scene.out's place
+    cached = nativepreview.recording_path(1, cast.key())
+    if os.path.exists(cached):
+        os.remove(cached)
+    view.set_effect(None)
+    view.set_effect(1, "Cure")
+    view.play_button.setChecked(True)                                           # records, then plays
+    wait_for_preview(qapp, view)
+    assert view.recording is not None and len(view.recording.ticks) == 51 and view.timer.isActive()
+    view.play_button.setChecked(False)
+
+
 def wait_for_preview(qapp, view):
     """Wait for both the debounced edit and its recorder, including an edit queued mid-record."""
     deadline = time.monotonic() + 30

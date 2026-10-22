@@ -38,8 +38,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from PyQt6.QtCore import QProcess, Qt, QTimer
-from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtWidgets import (QComboBox, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSlider,
+from PyQt6.QtGui import QCursor, QImage, QPixmap
+from PyQt6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSlider,
                              QVBoxLayout, QWidget)
 
 from Common.apppaths import app_path
@@ -138,6 +138,18 @@ def camera_lines(manager, track, cast=None, ticks=600):
     return pose_lines(play_camera_animation(animation, context), ticks)
 
 
+class _BattleCombo(QComboBox):
+    """A picker that sets the battle up (before_popup) the moment it is opened."""
+
+    def __init__(self, before_popup):
+        super().__init__()
+        self._before_popup = before_popup
+
+    def showPopup(self):
+        self._before_popup()
+        super().showPopup()
+
+
 class NativePreviewView(QWidget):
     """providers: exe_path() -> the opened FF8_EN.exe; magic_folder() -> the effect files' folder;
     camera_track(effect_id) -> (camera manager, track) or (None, None);
@@ -193,6 +205,19 @@ class NativePreviewView(QWidget):
         self.target_combo.setToolTip("Who the effect is cast on. Record again to apply.")
         self.caster_combo.activated.connect(lambda _i: self._pick(self.caster_combo, "caster_combo"))
         self.target_combo.activated.connect(lambda _i: self._pick(self.target_combo, "target_combo"))
+        # the Camera tab setup's scene.out encounter: enemies and party where that battle puts them
+        self.encounter_combo = _BattleCombo(self._load_battle)
+        self.encounter_combo.setToolTip("Where the actors stand: an encounter of scene.out (Import complementary: "
+                                        "scene.out) puts the enemies where that battle has them and the party in "
+                                        "its formation; Manual placement puts the target across from the caster. "
+                                        "Same list as the Camera tab's preview. Record again to apply.")
+        self.encounter_combo.activated.connect(lambda _i: self._pick_encounter())
+        self._watched_encounters = None
+        self.open_textures_button = QPushButton(f"Open {SHARED_TEXTURES}…")
+        self.open_textures_button.setToolTip(f"{SHARED_TEXTURES} (the battle folder's shared effect textures) is "
+                                             "what Record still needs: it also tells the battle folder, where "
+                                             "encounter enemies and the test dummy are read")
+        self.open_textures_button.clicked.connect(self.import_shared_textures)
         if cast_source is not None:
             for combo in (cast_source.caster_combo, cast_source.target_combo):
                 combo.currentIndexChanged.connect(lambda _i: self._cast_refresh.start())
@@ -224,11 +249,14 @@ class NativePreviewView(QWidget):
         self._prerender.setInterval(0)
         self._prerender.timeout.connect(self._prerender_step)
         cast_row = QHBoxLayout()
+        cast_row.addWidget(QLabel("Battle:"))
+        cast_row.addWidget(self.encounter_combo, 2)
         cast_row.addWidget(QLabel("Caster:"))
         cast_row.addWidget(self.caster_combo, 1)
         cast_row.addWidget(QLabel("Target:"))
         cast_row.addWidget(self.target_combo, 1)
         controls = QHBoxLayout()
+        controls.addWidget(self.open_textures_button)
         controls.addWidget(self.record_button)
         controls.addWidget(self.view_mode)
         controls.addWidget(self.play_button)
@@ -273,8 +301,50 @@ class NativePreviewView(QWidget):
                     mine.setCurrentIndex(source.currentIndex())
             finally:
                 mine.blockSignals(False)
+        self._refresh_encounters()
         if self.cast().key() != before:
             self._cast_changed()
+
+    def _refresh_encounters(self):
+        source = self.cast_source.encounter_combo() if self.cast_source is not None else None
+        if source is not None and source is not self._watched_encounters:
+            source.currentIndexChanged.connect(lambda _i: self._cast_refresh.start())
+            self._watched_encounters = source
+        combo = self.encounter_combo
+        combo.blockSignals(True)
+        try:
+            combo.clear()
+            if source is None:
+                combo.addItem("Manual placement (the battle is set up when a model is imported in the Camera "
+                              "tab's preview)", None)
+            elif source.count() <= 1:
+                combo.addItem("Manual placement (Import complementary: scene.out for its encounters)", None)
+            else:
+                for index in range(source.count()):
+                    combo.addItem(source.itemText(index), source.itemData(index))
+                combo.setCurrentIndex(source.currentIndex())
+        finally:
+            combo.blockSignals(False)
+
+    def _load_battle(self):
+        """The encounter list is the Camera tab setup's: set the battle up first if it waits."""
+        if self.cast_source is None:
+            return
+        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
+        try:
+            self.cast_source.load_battle()
+        finally:
+            QApplication.restoreOverrideCursor()
+        self.refresh_cast()
+
+    def _pick_encounter(self):
+        source = self.cast_source.encounter_combo() if self.cast_source is not None else None
+        if source is None:
+            return
+        picked = self.encounter_combo.currentData()
+        index = next((i for i in range(source.count()) if source.itemData(i) is picked), 0)
+        source.setCurrentIndex(index)
+        self.refresh_cast()
 
     def _pick(self, mine, name):
         """A pick here is the Camera tab preview's pick (it moves the other role when needed)."""
@@ -557,6 +627,9 @@ class NativePreviewView(QWidget):
 
     def _toggle_play(self, playing):
         self.play_button.setText("Pause" if playing else "Play")
+        if playing and self.recording is None and self._process is None and not self.record():
+            self.play_button.setChecked(False)   # nothing to record yet: the status says what is missing
+            return
         if playing and self.recording is not None:
             self.timer.start()
         else:
@@ -570,10 +643,14 @@ class NativePreviewView(QWidget):
         needs = self.missing()
         recording = self.recording is not None
         busy = self._process is not None
-        self.record_button.setEnabled(not needs and self.effect_id is not None and not busy)
+        can_record = not needs and self.effect_id is not None and not busy
+        self.record_button.setEnabled(can_record)
         self.record_button.setText("Record again" if recording else "Record")
-        for widget in (self.view_mode, self.play_button, self.slider):
+        self.open_textures_button.setVisible(not self.battle_folder())
+        for widget in (self.view_mode, self.slider):
             widget.setEnabled(recording and not busy)
+        # Play records first when there is no recording yet
+        self.play_button.setEnabled((recording or can_record) and not busy or self.play_button.isChecked())
         if needs and not recording:
             self.status.setText("To record, open: " + "; ".join(needs) + ".")
         elif not recording and not busy:
