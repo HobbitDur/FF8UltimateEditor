@@ -24,10 +24,10 @@ def _load_manager(shop_bin_path: str):
 
 
 def _item_id_from_name(manager, name: str) -> int:
-    for item_id, item_name in manager.item_values.items():
-        if item_name == name:
-            return item_id
-    raise ValueError(f"Unknown item name '{name}'")
+    matches = [item_id for item_id, item_name in manager.item_values.items() if item_name == name]
+    if len(matches) != 1:
+        raise ValueError(f"Unknown or ambiguous item name '{name}'; supply its item ID")
+    return matches[0]
 
 
 def _cmd_export_csv(args) -> int:
@@ -37,7 +37,7 @@ def _cmd_export_csv(args) -> int:
     for shop_index, shop in enumerate(manager.shop_info):
         for slot in range(Shop.NB_ITEM_PER_SHOP):
             item_name = shop.item[slot]
-            item_id = _item_id_from_name(manager, item_name)
+            item_id = shop.item_ids[slot]
             rows.append([shop_index, TonberryManager.SHOP_NAME_LIST[shop_index], slot,
                          item_id, item_name, int(shop.rare[slot])])
     write_csv(args.output, CSV_HEADER, rows)
@@ -54,9 +54,11 @@ def _cmd_import_csv(args) -> int:
         shop_index = int(row[0])
         slot = int(row[2])
         item_id = int(row[3]) if str(row[3]).strip() else _item_id_from_name(manager, row[4])
-        if item_id not in manager.item_values:
-            raise ValueError(f"Unknown item id {item_id} (shop {shop_index}, slot {slot})")
+        if not 0 <= item_id <= 255:
+            raise ValueError(f"Invalid item id {item_id} (shop {shop_index}, slot {slot})")
+        manager.item_values.setdefault(item_id, f"Item {item_id}")
         shop = manager.shop_info[shop_index]
+        shop.item_ids[slot] = item_id
         shop.item[slot] = manager.item_values[item_id]
         shop.rare[slot] = parse_bool(row[5])
         applied += 1

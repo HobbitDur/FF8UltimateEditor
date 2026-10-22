@@ -5,6 +5,7 @@ class Shop():
     NB_ITEM_PER_SHOP = 16
 
     def __init__(self):
+        self.item_ids = [0] * self.NB_ITEM_PER_SHOP
         self.item = [""] * self.NB_ITEM_PER_SHOP
         self.rare = [False] * self.NB_ITEM_PER_SHOP
 
@@ -34,6 +35,7 @@ class TonberryManager():
         self.item_values = {}
         self._item_file = os.path.join(resource_folder, "item.txt")
         self.__load_item_data(self._item_file)
+        self._baseline_item_values = dict(self.item_values)
 
 
     def __load_item_data(self, file):
@@ -46,6 +48,7 @@ class TonberryManager():
     def read_shop_file(self, file_path):
         if file_path:
             self.file_path = file_path
+            self.shop_file_data = bytearray()
             with open(file_path, "rb") as in_file:
                 while el := in_file.read(1):
                     self.shop_file_data.extend(el)
@@ -54,7 +57,10 @@ class TonberryManager():
         for shop_index in range(self.NB_SHOP):
             for item_index in range(Shop.NB_ITEM_PER_SHOP):
                 current_data_index = shop_index * Shop.NB_ITEM_PER_SHOP * self.NB_BYTE_PER_ITEM + item_index * self.NB_BYTE_PER_ITEM
-                self.shop_info[shop_index].item[item_index] = self.item_values[self.shop_file_data[current_data_index]]
+                item_id = self.shop_file_data[current_data_index]
+                self.item_values.setdefault(item_id, f"Item {item_id}")
+                self.shop_info[shop_index].item_ids[item_index] = item_id
+                self.shop_info[shop_index].item[item_index] = self.item_values[item_id]
                 if self.shop_file_data[current_data_index + 1] == 0xFF:
                     rare = False
                 elif self.shop_file_data[current_data_index + 1] == 0x00:
@@ -70,10 +76,14 @@ class TonberryManager():
         for shop_index in range(self.NB_SHOP):
             for item_index in range(Shop.NB_ITEM_PER_SHOP):
                 current_data_index = shop_index * Shop.NB_ITEM_PER_SHOP * self.NB_BYTE_PER_ITEM + item_index * self.NB_BYTE_PER_ITEM
-                for key, value in self.item_values.items():
-                    if value == self.shop_info[shop_index].item[item_index]:
-                        self.shop_file_data[current_data_index] = key
-                        break
+                shop = self.shop_info[shop_index]
+                item_id = shop.item_ids[item_index]
+                if self.item_values.get(item_id) != shop.item[item_index]:
+                    matches = [key for key, value in self.item_values.items() if value == shop.item[item_index]]
+                    if len(matches) != 1:
+                        raise ValueError("Select the shop item by ID; its name is missing or ambiguous.")
+                    item_id = shop.item_ids[item_index] = matches[0]
+                self.shop_file_data[current_data_index] = item_id
                 if self.shop_info[shop_index].rare[item_index]:
                     rare = 0x00
                 else:

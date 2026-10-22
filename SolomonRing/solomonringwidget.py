@@ -1,11 +1,14 @@
 import json
 import os
 
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, QSignalBlocker
 from PyQt6.QtWidgets import (
-    QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QMessageBox, QGroupBox, QPushButton
+    QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QMessageBox, QGroupBox, QPushButton, QLabel, QDialog
 )
 
+from Common.itemfiles import ItemFiles
+from FF8GameData.itemdefinitions import ItemDefinitions, battle_item_id, battle_item_row
+from SolomonRing.itemdialog import ItemCreationDialog
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
@@ -80,8 +83,11 @@ class SolomonRingWidget(QWidget):
         self.game_data.load_all()
 
         self.kernel_manager = KernelManager(self.game_data)
+        self.items = ItemDefinitions(self.kernel_manager)
+        self.item_files = ItemFiles.for_registry(file_registry, game_data_folder)
         self.registry = LookupRegistry(self.game_data, game_data_folder)
         self.loaded_filename = None
+        self._item_names_cache = None
 
         with open(os.path.join(game_data_folder, "Resources", "json", "kernel_section_fields.json"),
                   encoding="utf-8") as f:
@@ -103,6 +109,7 @@ class SolomonRingWidget(QWidget):
         # shown only for tools that have them). Nothing tool-specific left to show here.
         self.kernel_binding = FileBinding("kernel.bin", file_registry,
                                           load_callback=self.load_file, save_callback=self._save_kernel)
+        self.kernel_binding.file_closed.connect(self._item_kernel_closed)
 
         # --- Unlock switch ----------------------------------------------------
         # Fields the unmodified game never reads (padding, dead bytes, flags with no consumer,
@@ -129,8 +136,11 @@ class SolomonRingWidget(QWidget):
                 self._tab_index_by_section[section_id] = index
         main_layout.addWidget(self.tabs)
         self._add_cronos_extension()
+        self._add_item_actions()
         self._restore_current_tab()
         self.tabs.currentChanged.connect(self._remember_current_tab)
+        self._item_previous_tab = self.tabs.currentIndex()
+        self.tabs.currentChanged.connect(self._commit_item_tab_on_change)
 
         self.setLayout(main_layout)
         self.tabs.setEnabled(False)
@@ -171,7 +181,7 @@ class SolomonRingWidget(QWidget):
     def file_bindings(self):
         """kernel.bin and the read-only battle files imported for animation previews."""
         preview = self.command_animation_panel
-        return [self.kernel_binding] + (preview.file_bindings() if preview else [])
+        return [self.kernel_binding, self.item_files.mitem_complementary, self.item_files.price_complementary] + (preview.file_bindings() if preview else [])
 
     def _build_group(self, entries):
         if len(entries) == 1:
@@ -243,6 +253,11 @@ class SolomonRingWidget(QWidget):
 
     def _make_section_tab(self, section_id):
         config = dict(self._section_configs[str(section_id)])
+        if section_id == 8:
+            config["entry_id"] = battle_item_id
+            config["entry_text_source"] = lambda row, text: self.items.text_source(battle_item_id(row)) if row >= 33 else (text, row)
+        elif section_id == 9:
+            config["entry_id"] = lambda row: row + 33
         config["compact_form"] = section_id == self.BATTLE_COMMAND_SECTION
         config["entry_fallback_name"] = self._section_name(section_id)
         if section_id in self.REMOVABLE_ENGINE_SECTIONS:
@@ -281,6 +296,8 @@ class SolomonRingWidget(QWidget):
         # A group paste / "Apply to..." writes the data without typing in a field, so it marks
         # the unsaved-edit state itself (dirty_state is installed on this tool by the main window).
         tab.edited.connect(self._mark_edited)
+        if section_id in (8, 9):
+            tab.entry_committed.connect(lambda row, sid=section_id: self._item_text_committed(sid, row))
         if section_id == self.BATTLE_COMMAND_SECTION:
             # The data picker names each entry by the commands using it; a pick made on one
             # command is written back when another is selected, so relabel right then -
@@ -395,6 +412,8 @@ class SolomonRingWidget(QWidget):
         self._refresh_command_lookups()
         self._refresh_entry_budgets()
         self._refresh_slot_set_summaries()
+        self._refresh_item_names()
+        self._refresh_item_actions()
 
     def _refresh_slot_set_summaries(self):
         """Slot array's set-id fields reference Slot Sets (section 28), whose content is
@@ -1026,6 +1045,7 @@ class SolomonRingWidget(QWidget):
     def _save_kernel(self):
         if not self.loaded_filename:
             return
+        self._commit_current_item_tab()
         for tab in self._section_tabs.values():
             tab.commit()
         # Any magic name typed this session (including newly-added spells) needs to be
@@ -1038,5 +1058,168 @@ class SolomonRingWidget(QWidget):
             QMessageBox.warning(self, "Added battle commands",
                                 "FFNx's AddMoreCommand will ignore the added battle commands "
                                 "until this is fixed:\n\n" + "\n".join(problems))
+        self.items.validate()
+        self.items.sync_battle_text()
+        self._refresh_item_names()
         self.kernel_manager.save_file(self.loaded_filename)
         print(f"Saved to {self.loaded_filename}")
+
+    # ---- FFNx item definitions and their shared menu/price files ----------------
+    def _add_item_actions(self):
+        self._item_actions = {}
+        for section_id in (8, 9):
+            tab = self._section_tabs[section_id]
+            column = tab.layout().itemAt(0).layout()
+            add = QPushButton("Add item...")
+            add.setToolTip("Create the next stable item ID, with matching field metadata and price.")
+            add.clicked.connect(lambda _checked=False, sid=section_id: self._add_item_dialog(sid))
+            battle = QPushButton("Battle settings")
+            battle.setToolTip("Edit battle settings for IDs1-32 or199-254. Item255 is field-only.")
+            battle.clicked.connect(lambda _checked=False, sid=section_id: self._open_item_battle(sid))
+            note = QLabel()
+            note.setWordWrap(True)
+            note.setFixedWidth(180)
+            add.setFixedWidth(180)
+            battle.setFixedWidth(180)
+            column.addWidget(add)
+            column.addWidget(battle)
+            column.addWidget(note)
+            self._item_actions[section_id] = (add, battle, note)
+            tab.list_widget.currentRowChanged.connect(lambda _row: self._refresh_item_actions())
+        self.item_files.mitem_changed.connect(self._refresh_item_actions)
+        self.item_files.price_changed.connect(self._refresh_item_actions)
+        self._refresh_item_actions()
+
+    def _selected_item_id(self, section_id):
+        row = self._section_tabs[section_id].current_entry_index()
+        if row is None:
+            return None
+        return battle_item_id(row) if section_id == 8 else row + 33
+
+    def _refresh_item_actions(self):
+        loaded = bool(self.loaded_filename)
+        count = self.items.count if loaded else 199
+        for section_id, (add, battle, note) in self._item_actions.items():
+            item_id = self._selected_item_id(section_id)
+            add.setEnabled(loaded and self.item_files.ready and count <= 255)
+            battle.setEnabled(loaded and item_id is not None and battle_item_row(item_id) is not None)
+            note.setText("Open kernel.bin to edit items." if not loaded else
+                         f"{count - 1} / 255 items. " +
+                         ("Open mitem.bin and price.bin with Import complementary to add items."
+                          if not self.item_files.ready else
+                          "Requires FFNx AddMoreItems. Save writes the kernel, field metadata and prices."))
+
+    def _commit_current_item_tab(self):
+        index = self.tabs.currentIndex()
+        for section_id in (8, 9):
+            if self._tab_index_by_section[section_id] == index:
+                self._section_tabs[section_id].commit()
+
+    def _commit_item_tab_on_change(self, index):
+        previous = self._item_previous_tab
+        self._item_previous_tab = index
+        for section_id in (8, 9):
+            if self._tab_index_by_section[section_id] == previous:
+                self._section_tabs[section_id].commit()
+
+    def _refresh_item_names(self):
+        if not self.loaded_filename:
+            return
+        names = self.items.names()
+        if names == self._item_names_cache:
+            return
+        self._item_names_cache = names
+        self.item_files.set_names(names)
+        self.item_files.apply_names(self.game_data)
+        self.registry.set_dynamic("item", [
+            {"value": item_id, "name": name or f"Item {item_id}"}
+            for item_id, name in names.items()])
+        for tab in self._section_tabs.values():
+            tab.refresh_dynamic_combos("item")
+
+    def _item_text_committed(self, section_id, row):
+        item_id = battle_item_id(row) if section_id == 8 else row + 33
+        other_id = 9 if section_id == 8 else 8
+        other_row = (item_id - 33 if item_id >= 33 else None) if other_id == 9 else self.items.existing_battle_row(item_id)
+        other = self._section_tabs.get(other_id)
+        if other is not None and other_row is not None and other_row in other._visible_indices:
+            visible = other._visible_indices.index(other_row)
+            other.list_widget.item(visible).setText(other._entry_label(other_row, other._entries[other_row]))
+            if other.current_entry_index() == other_row:
+                other._load_entry(visible)  # Prevent a stale second name form overwriting this edit.
+        self._refresh_item_names()
+
+    def _add_item_dialog(self, section_id):
+        self._commit_current_item_tab()
+        if not self.item_files.ready or self.items.count > 255:
+            return
+        template_id = self._selected_item_id(section_id) or 1
+        dialog = ItemCreationDialog(self.items, template_id, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        try:
+            self.add_item(dialog.name.text(), dialog.description.text(),
+                          dialog.template.currentData(), dialog.battle.isChecked())
+        except ValueError as error:
+            QMessageBox.warning(self, "Add item", str(error))
+
+    def add_item(self, name, description="", template_id=1, battle=True):
+        if not self.loaded_filename:
+            raise ValueError("Open kernel.bin before adding an item.")
+        self._commit_current_item_tab()
+        item_id = self.item_files.create(self.items, name, description, template_id, battle)
+        self._reload_item_tabs()
+        self._show_item_tab(9)
+        tab = self._section_tabs[9]
+        tab.list_widget.setCurrentRow(tab._visible_indices.index(item_id - 33))
+        self._mark_edited()
+        return item_id
+
+    def _reload_item_tabs(self):
+        for section_id in (8, 9):
+            section = self.items.section(section_id)
+            self._section_tabs[section_id].load_section(section, section.section_text_linked)
+        self._refresh_item_names()
+        self._refresh_item_actions()
+
+    def _open_item_battle(self, section_id):
+        self._commit_current_item_tab()
+        item_id = self._selected_item_id(section_id)
+        if item_id is None or battle_item_row(item_id) is None:
+            return
+        existed = self.items.existing_battle_row(item_id) is not None
+        row = self.items.ensure_battle(item_id)
+        self._reload_item_tabs()
+        self._show_item_tab(8)
+        tab = self._section_tabs[8]
+        tab.list_widget.setCurrentRow(tab._visible_indices.index(row))
+        if not existed:
+            self._mark_edited()
+
+    def save_files(self):
+        """The header Save includes editable complementary item files."""
+        if not self.loaded_filename:
+            return False
+        try:
+            self.kernel_binding.save()
+            self.item_files.mitem_binding.save()
+            self.item_files.price_binding.save()
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Save item project", str(error))
+            return False
+        return True
+
+
+    def _show_item_tab(self, section_id):
+        index = self._tab_index_by_section[section_id]
+        with QSignalBlocker(self.tabs):
+            self.tabs.setCurrentIndex(index)
+        self._item_previous_tab = index
+        if self.settings is not None:
+            self.settings.setValue(self.CURRENT_TAB_KEY, index)
+
+    def _item_kernel_closed(self, _path):
+        self.loaded_filename = None
+        self._item_names_cache = None
+        self.tabs.setEnabled(False)
+        self._refresh_item_actions()

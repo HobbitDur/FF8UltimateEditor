@@ -115,6 +115,10 @@ def read_names(game_data, kernel_file, keep_unnamed=False) -> dict:
         reserved = _reserved_ids(game_data, name_list.section_id)
         found = names.setdefault(name_list.name, {})
         for index, name in enumerate(section_names):
+            # Appended battle rows use global IDs199+, whose canonical names are
+            # in section9. They must never overwrite original item IDs33..88.
+            if name_list.name == "item" and name_list.section_id == 8 and index >= 33:
+                continue
             id_ = name_list.first_id + index
             if id_ not in reserved and (name or keep_unnamed):
                 found[id_] = name

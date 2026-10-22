@@ -5,10 +5,8 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QSpinBox, QGroupBox, QFormLayout)
 
-from Common.filebinding import FileBinding
+from Common.itemfiles import ItemFiles
 from Common.fileregistry import FileRegistry
-from FF8GameData.gamedata import GameData
-from Siren.sirenmanager import SirenManager
 from SmallWidget.listsearchbar import ListSearchBar
 
 
@@ -24,17 +22,16 @@ class SirenWidget(QWidget):
         if file_registry is None:  # The tool is used alone, it shares its files with nobody
             file_registry = FileRegistry()
 
-        self.game_data = GameData(game_data_folder)
-        self.game_data.load_item_data()
-        self.manager = SirenManager(self.game_data)
+        self.item_files = ItemFiles.for_registry(file_registry, game_data_folder)
+        self.game_data = self.item_files.game_data
+        self.manager = self.item_files.price
 
         self.setWindowTitle("Siren")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'siren.ico')))
 
         # File section: price.bin is this tool's one editable file, driven by the shared
         # header toolbar (Import / Save) through the registry.
-        self.price_binding = FileBinding("price.bin", file_registry,
-                                         load_callback=self.load_file, save_callback=self.save_file)
+        self.price_binding = self.item_files.price_binding
 
         # Item list (left side), with a Ctrl+F search bar filtering it (item name or item id)
         self.item_list = QListWidget()
@@ -85,6 +82,9 @@ class SirenWidget(QWidget):
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
 
+        self.item_files.price_changed.connect(self._refresh_item_list)
+        self.item_files.names_changed.connect(self._refresh_item_list)
+        self._refresh_item_list()
         self.price_binding.load_opened_file()  # Another tool may have opened price.bin already
 
     def file_bindings(self):
@@ -92,12 +92,17 @@ class SirenWidget(QWidget):
         return [self.price_binding]
 
     def load_file(self, file_name):
-        self.manager.load_file(file_name)
-        self.editor_container.setEnabled(True)
+        self.item_files.load_price(file_name)
+
+    def _refresh_item_list(self):
+        previous = self.item_list.currentRow()
+        self.editor_container.setEnabled(bool(self.manager.file_path))
         with QSignalBlocker(self.item_list):
             self.item_list.clear()
-            self.item_list.addItems([price_entry.name for price_entry in self.manager.price_entries])
-        self.item_search.select_first_match()  # Row 0, or the first match if a search is typed in
+            self.item_list.addItems([item.name for item in self.manager.price_entries])
+        if self.item_list.count():
+            self.item_list.setCurrentRow(min(max(previous, 0), self.item_list.count() - 1))
+            self.reload_selected_item()
 
     def save_file(self):
         if self.manager.file_path:

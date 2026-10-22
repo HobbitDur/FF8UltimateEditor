@@ -50,3 +50,6 @@ ToolDownload/*
 # Fujin's effect recorder: built by Tools/fxrecorder/build.bat (CI builds it for releases)
 Tools/fxrecorder/*.exe
 Tools/fxrecorder/obj/
+
+# Local build and regression artifacts
+.build/

@@ -100,6 +100,7 @@ class KernelSectionTab(QWidget):
     # A change made by code rather than by typing in a field (a group paste / "Apply to..."):
     # the widget listening marks the file as having unsaved edits.
     edited = pyqtSignal()
+    entry_committed = pyqtSignal(int)
     command_type_requested = pyqtSignal()
 
     def __init__(self, game_data, registry, config, game_data_folder="FF8GameData", jump_callback=None,
@@ -979,8 +980,10 @@ class KernelSectionTab(QWidget):
         nb_text = len(self.text_labels)
         subsections = section.get_subsection_list()
         for i, subsection in enumerate(subsections):
+            source = self.config.get("entry_text_source")
+            entry_text, text_index = source(i, text_section) if source else (text_section, i)
             self._entries.append(
-                KernelEntry(subsection, text_section, nb_text, i, self.fields, self.game_data))
+                KernelEntry(subsection, entry_text, nb_text, text_index, self.fields, self.game_data))
 
         # A "hidden" id range (today: Magic ids 64-79, permanently reserved for GFs by the
         # exe's own id<64/id>=64 classification - real magic data can never live there, per
@@ -1025,6 +1028,7 @@ class KernelSectionTab(QWidget):
             self.list_widget.verticalScrollBar().setValue(prev_scroll)
 
     def _entry_label(self, index, entry):
+        index = self.config.get("entry_id", lambda value: value)(index)
         if self.entry_disabled(index):
             return f"{index}: {entry.display_name(self.config.get('entry_fallback_name', 'Entry'))} (disabled)"
         text_name = entry.display_name("") if (self.text_labels and entry.has_text(0)) else ""
@@ -1253,22 +1257,31 @@ class KernelSectionTab(QWidget):
                               | (widget._cam_index.value() & 0x7F))
         # Refresh the list label in case the name changed.
         self.list_widget.item(row).setText(self._entry_label(entry_index, entry))
+        self.entry_committed.emit(entry_index)
 
     def commit(self):
         """Flush the currently selected entry back to the underlying data."""
         if self._current_index >= 0:
             self._save_entry(self._current_index)
 
-    def refresh_dynamic_combos(self):
+    def refresh_dynamic_combos(self, lookup_name=None):
         """Re-populate every combo built from a "dynamic_lookup" field (content computed
         from another section's just-loaded data, e.g. Slot array's per-set summaries) with
         the registry's current entries for that lookup, preserving the selected value."""
         for name, (kind, field, widget) in self._field_widgets.items():
-            if kind != "enum" or not field.get("dynamic_lookup"):
+            if lookup_name is not None and field.get("lookup") != lookup_name:
+                continue
+            if kind != "enum" or not (field.get("dynamic_lookup") or field.get("lookup") == "item"):
                 continue
             lookup = self.registry.resolve(field["lookup"])
             if not lookup:
                 continue
+            # Several dependent sections refresh during one load/tab change.
+            # Rebuilding an identical Qt model for every GF learn slot is costly.
+            snapshot = tuple((entry["value"], entry["name"]) for entry in lookup["entries"])
+            if getattr(widget, "_lookup_snapshot", None) == snapshot:
+                continue
+            widget._lookup_snapshot = snapshot
             current = widget.currentData()
             widget.blockSignals(True)
             widget.clear()

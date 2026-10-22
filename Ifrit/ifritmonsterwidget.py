@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 from Common.filebinding import FileBinding
 from Common.autoimport import AutoImportSource
 from Common.fileregistry import FileRegistry
+from Common.itemfiles import ItemFiles
 from Common.undo import UndoStack
 from FF8GameData.dat.monsteranalyser import GarbageFileError, MonsterAnalyser
 from FF8GameData.dat.animloopdetector import find_character_weapon_file_list
@@ -838,6 +839,9 @@ class IfritMonsterWidget(QWidget):
         self._apply_cronos_data(self._cronos_checkbox.isChecked())
         self._update_section_buttons()   # nothing shown yet -> both off
         self.kernel_binding.load_opened_file()   # another tool may have opened a kernel.bin already
+        self.item_files = ItemFiles.for_registry(file_registry, game_data_folder)
+        self.item_files.names_changed.connect(self._on_live_item_names)
+        self._on_live_item_names()
 
     def file_bindings(self):
         """The one fixed-name file of this tool: kernel.bin, complementary (read-only). The .dat
@@ -1595,8 +1599,18 @@ class IfritMonsterWidget(QWidget):
         disk, so its unsaved edits stay."""
         self._game_data.load_names()
         self._apply_kernel_names()
+        if hasattr(self, "item_files"):
+            self.item_files.apply_names(self._game_data)
         if 0 <= self._active_index < len(self._files):
             pane = self._files[self._active_index].get('pane')
+            if pane is not None:
+                pane._commit(include_texture=False)
+                pane.reload_from_model()
+
+    def _on_live_item_names(self):
+        self.item_files.apply_names(self._game_data)
+        if 0 <= self._active_index < len(self._files):
+            pane = self._files[self._active_index].get("pane")
             if pane is not None:
                 pane._commit(include_texture=False)
                 pane.reload_from_model()

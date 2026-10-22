@@ -85,6 +85,11 @@ class KernelManager():
                 # count from the actual byte range between this section and the next
                 # (already correctly read from the file's own header offsets above) instead
                 # of trusting the static vanilla count.
+                if section_id in (8, 9):
+                    minimum, maximum = (33, 89) if section_id == 8 else (166, 223)
+                    count, remainder = divmod(len(data_hex), section_info["sub_section_size"])
+                    if remainder or not minimum <= count <= maximum:
+                        raise ValueError("Unsupported FFNx item record count in kernel section " + str(section_id))
                 if section_info.get('growable'):
                     nb_subsection = len(data_hex) // section_info['sub_section_size']
                 else:

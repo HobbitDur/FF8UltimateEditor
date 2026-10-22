@@ -87,6 +87,10 @@ See [CID files, map positions and world phases](docs/Cid.md).
 ### SolomonRing — Guardian Force editor (`kernel.bin`)
 Edits GF data: general stats, learnable abilities, and character/GF junction compatibility.
 
+With FFNx AddMoreItems, the Battle Items and Item Names tabs can create IDs 199-255,
+with matching field behavior and prices shared with PuPuCargo and Siren.
+See [adding items and defining their effects](docs/items.md).
+
 <img src="Resources/screenshots/solomonring.png" width="800">
 
 ### PuPuCargo — item menu editor (`mitem.bin`)

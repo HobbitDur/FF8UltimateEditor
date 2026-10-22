@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QList
                              QAbstractItemView, QFileDialog, QListWidgetItem)
 
 from Common.filebinding import FileBinding
+from Common.itemfiles import ItemFiles
 from Common.undo import UndoStack
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
@@ -90,12 +91,15 @@ class ChocoboyWidget(QWidget):
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
 
+        self.item_files = ItemFiles.for_registry(file_registry, game_data_folder)
+        self.item_files.names_changed.connect(self._on_item_names_changed)
+        self._on_item_names_changed()
         for binding in self.file_bindings():
             binding.load_opened_file()  # another tool may have opened one of these already
 
     def file_bindings(self):
         """The wmset this tool edits, and the two read-only files that put names on its numbers."""
-        return [self.wmset_binding, self.wm2field_binding, self.maplist_binding]
+        return [self.wmset_binding, self.wm2field_binding, self.maplist_binding, self.item_files.kernel_binding]
 
     def undo(self):
         """Ctrl+Z, routed here by the main window when this tool is the one shown."""
@@ -636,11 +640,16 @@ class ChocoboyWidget(QWidget):
             return f"lands on {landing}, in no script of this section"
         return f"lands on {landing}, in script #{owners[0]}"
 
+    def _on_item_names_changed(self):
+        self.item_files.apply_names(self.game_data)
+        row = self.instruction_table.currentRow()
+        self._reload_instructions()
+        if 0 <= row < self.instruction_table.rowCount():
+            self.instruction_table.setCurrentCell(row, 0)
+
     def _item_name(self, item_id):
         items = getattr(self.game_data, "item_data_json", {}).get("items", [])
-        if 0 <= item_id < len(items):
-            return items[item_id]["name"]
-        return f"item {item_id}"
+        return next((item["name"] for item in items if item["id"] == item_id), f"item {item_id}")
 
     def _instruction_index(self, row):
         """The stream index the table row stands for, or None when the row is not one.
