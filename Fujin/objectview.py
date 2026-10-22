@@ -10,7 +10,9 @@ Choreography > Playback. Faces are untextured: an effect's texture placement in 
 for the seven GF summons (their exe descriptors), so faces show their primitive colour.
 
 Editing goes through Blender: Export .glb writes the selected object, Import .glb brings back its
-vertex positions (the MAG keeps its size, so faces, colours, UVs, bones and animations stay)."""
+vertex positions (the MAG keeps its size, so faces, colours, UVs, bones and animations stay).
+A battle model's bones (length, rotation) and the pose of each animation frame (bone rotations,
+root position) are edited in the Skeleton and Pose tables (Fujin.modeledit)."""
 import os
 from types import SimpleNamespace
 
@@ -18,7 +20,7 @@ import numpy as np
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSlider, QPushButton,
                              QCheckBox, QSplitter, QTreeWidget, QTreeWidgetItem, QHeaderView, QFileDialog,
-                             QMessageBox)
+                             QMessageBox, QTabWidget, QTableWidget, QTableWidgetItem, QSpinBox, QDoubleSpinBox)
 
 from FF8GameData.magcine.magcontainer import MagContainer, PRIM_NAME
 from FF8GameData.magcine import magmeshgltf
@@ -27,6 +29,7 @@ from Fujin.meshpreview import MeshPreview
 
 TICKS_PER_SECOND = 15
 GLB_FILTER = "glTF binary (*.glb)"
+RAW_PER_DEGREE = 4096 / 360.0
 GLB_FOLDER_KEY = "Fujin model glb"
 _FAMILY_NOTES = {
     "PlayStation TIM": "A texture file: see Textures. It holds no 3D object.",
@@ -130,6 +133,36 @@ class MagObjectView(QWidget):
         right_layout.addWidget(self.preview, 1)
         right_layout.addWidget(self.controls)
         right_layout.addWidget(self.info)
+        self._edit_model = None        # EmbeddedModel of the selected battle model, for its tables
+        self._edit_key = None
+        self.model_edit = QTabWidget()
+        self.skeleton_table = QTableWidget(0, 6)
+        self.skeleton_table.setHorizontalHeaderLabels(["Bone", "Parent", "Length", "Rot X°", "Rot Y°", "Rot Z°"])
+        self.skeleton_table.setToolTip("The bones as the skeleton stores them: length (2048 = one unit) and rest "
+                                       "rotation. Every animation poses the bones from here.")
+        self.pose_table = QTableWidget(0, 4)
+        self.pose_table.setHorizontalHeaderLabels(["", "X", "Y", "Z"])
+        self.pose_table.setToolTip(
+            "This frame of the animation: the root position (raw units), then each bone's rotation (degrees). "
+            "A frame is stored as "
+            "the change from the previous one: an edit re-encodes this animation only, and it must still fit "
+            "the model's animation section (the MAG keeps its size; the room left is shown above).")
+        for table in (self.skeleton_table, self.pose_table):
+            table.verticalHeader().hide()
+            table.verticalHeader().setDefaultSectionSize(26)
+            table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.pose_label = QLabel()
+        self.pose_label.setWordWrap(True)
+        pose_page = QWidget()
+        pose_layout = QVBoxLayout(pose_page)
+        pose_layout.setContentsMargins(0, 0, 0, 0)
+        pose_layout.addWidget(self.pose_label)
+        pose_layout.addWidget(self.pose_table, 1)
+        self.model_edit.addTab(self.skeleton_table, "Skeleton")
+        self.model_edit.addTab(pose_page, "Pose (this frame)")
+        self.model_edit.currentChanged.connect(lambda _index: self._fill_pose())
+        self.model_edit.hide()
+        right_layout.addWidget(self.model_edit, 1)
         edit_row = QHBoxLayout()
         edit_row.addWidget(self.export_button)
         edit_row.addWidget(self.import_button)
@@ -302,8 +335,12 @@ class MagObjectView(QWidget):
         self._animations = None
         self.controls.setVisible(False)
         self._update_edit_buttons()
+        kind = item.data(0, Qt.ItemDataRole.UserRole)[0] if item is not None else None
+        self.model_edit.setVisible(kind == "model" and self.manager is not None)
         if item is None:
             return
+        if kind == "model" and self.manager is not None:
+            self._fill_skeleton()
         kind, payload = item.data(0, Qt.ItemDataRole.UserRole)
         if kind in ("mesh", "morph"):
             self.preview.set_mesh(payload.mesh)
@@ -320,6 +357,142 @@ class MagObjectView(QWidget):
                 "placement in VRAM, which is extracted for the seven GF summons only. Frames (duration in ticks / "
                 "then): " + ", ".join(f"{f['duration']}/{ {0: 'next', 1: 'end', 2: 'loop'}.get(f['code'], f['code'])}"
                                       for f in payload.info.get("frames", [])[:24])))
+
+    # ------------------------------------------------------------------ skeleton / pose editing
+    def _model_for_edit(self):
+        """EmbeddedModel of the selected battle model (decoded once per selection and per edit)."""
+        kind, payload = self._selected_object()
+        if kind != "model" or self.manager is None:
+            return None
+        container, object_id = payload
+        obj = next(o for o in container.objects if o.index == object_id)
+        key = (id(self.manager), object_id, bytes(self.manager.data[obj.offset:obj.offset + obj.info["size"]]))
+        if self._edit_key != key:
+            from Fujin.modeledit import EmbeddedModel
+            self._edit_model = EmbeddedModel(self.manager.data, obj.info["sections"], obj.offset + obj.info["size"])
+            self._edit_key = key
+        return self._edit_model
+
+    @staticmethod
+    def _degree_spin(raw, slot):
+        spin = QDoubleSpinBox()
+        spin.setRange(-32768 / RAW_PER_DEGREE, 32767 / RAW_PER_DEGREE)
+        spin.setDecimals(2)
+        spin.setSingleStep(1.0)
+        spin.setKeyboardTracking(False)
+        spin.setValue(raw / RAW_PER_DEGREE)
+        spin.valueChanged.connect(slot)
+        return spin
+
+    def _fill_skeleton(self):
+        model = self._model_for_edit()
+        self.skeleton_table.setRowCount(0)
+        if model is None:
+            return
+        self.skeleton_table.setRowCount(len(model.bones))
+        for row, bone in enumerate(model.bones):
+            self.skeleton_table.setItem(row, 0, QTableWidgetItem(str(row)))
+            parent = "root" if bone.parent_id == 0xFFFF else str(bone.parent_id)
+            self.skeleton_table.setItem(row, 1, QTableWidgetItem(parent))
+            for column in (0, 1):
+                self.skeleton_table.item(row, column).setFlags(Qt.ItemFlag.ItemIsEnabled)
+            length = QSpinBox()
+            length.setRange(-32768, 32767)
+            length.setKeyboardTracking(False)
+            length.setValue(bone.get_size_raw())
+            length.valueChanged.connect(lambda _v, r=row: self._bone_edited(r))
+            self.skeleton_table.setCellWidget(row, 2, length)
+            for axis, raw in enumerate((bone._rotX, bone._rotY, bone._rotZ)):
+                self.skeleton_table.setCellWidget(row, 3 + axis, self._degree_spin(raw, lambda _v, r=row: self._bone_edited(r)))
+
+    def _bone_edited(self, row):
+        model = self._model_for_edit()
+        if model is None:
+            return
+        rotation = tuple(round(self.skeleton_table.cellWidget(row, 3 + axis).value() * RAW_PER_DEGREE) for axis in range(3))
+        self._write_model(lambda: [model.set_bone(row, self.skeleton_table.cellWidget(row, 2).value(), rotation)])
+
+    def _current_frame(self):
+        return max(0, self.animation_combo.currentIndex()), self.frame_slider.value()
+
+    def _fill_pose(self):
+        if self.model_edit.currentIndex() != 1 or self.play_button.isChecked():
+            return
+        model = self._model_for_edit()
+        self.pose_table.setRowCount(0)
+        if model is None or not model.animations:
+            self.pose_label.setText("This model has no animation frame.")
+            return
+        animation, frame = self._current_frame()
+        if animation >= len(model.animations) or frame >= len(model.animations[animation].frames):
+            return
+        data = model.animations[animation].frames[frame]
+        self.pose_label.setText(f"Animation {animation}, frame {frame + 1} of {len(model.animations[animation].frames)} "
+                                f"(pick them above). Room left in the animation section: {model.free_bytes()} bytes.")
+        self.pose_table.setRowCount(1 + len(data.rotation_vector_data))
+        root = QTableWidgetItem("Root position")
+        root.setFlags(Qt.ItemFlag.ItemIsEnabled)
+        self.pose_table.setItem(0, 0, root)
+        for axis in range(3):
+            spin = QSpinBox()
+            spin.setRange(-32768, 32767)
+            spin.setKeyboardTracking(False)
+            spin.setValue(data.position[axis].get_pos_raw())
+            spin.valueChanged.connect(lambda _v: self._pose_edited(None))
+            self.pose_table.setCellWidget(0, 1 + axis, spin)
+        for bone, axes in enumerate(data.rotation_vector_data):
+            item = QTableWidgetItem(f"Bone {bone}")
+            item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            self.pose_table.setItem(1 + bone, 0, item)
+            for axis in range(3):
+                self.pose_table.setCellWidget(1 + bone, 1 + axis, self._degree_spin(
+                    int(axes[axis].get_rotate_raw()), lambda _v, b=bone: self._pose_edited(b)))
+
+    def _pose_edited(self, bone):
+        model = self._model_for_edit()
+        if model is None:
+            return
+        animation, frame = self._current_frame()
+        if bone is None:
+            position = tuple(self.pose_table.cellWidget(0, 1 + axis).value() for axis in range(3))
+            edit = lambda: model.set_frame(animation, frame, position=position)
+        else:
+            values = tuple(round(self.pose_table.cellWidget(1 + bone, 1 + axis).value() * RAW_PER_DEGREE)
+                           for axis in range(3))
+            edit = lambda: model.set_frame(animation, frame, rotations={bone: values})
+
+        def patches():
+            edit()
+            return [model.animation_patch()]
+        self._write_model(patches)
+
+    def _write_model(self, patches_of):
+        """Apply [(offset, bytes)] (one Undo step each), then show the model again where it was."""
+        animation, frame = self._current_frame()
+        try:
+            patches = patches_of()
+        except ValueError as error:
+            QMessageBox.warning(self, "Fujin", f"Not applied: {error}")
+            self._edit_key = None                     # decode again from the file: the edit is dropped
+            self._fill_skeleton()
+            self._fill_pose()
+            return False
+        changed = False
+        for offset, raw in patches:
+            if bytes(self.manager.data[offset:offset + len(raw)]) != raw:
+                self.manager.patch_bytes(offset, raw)
+                changed = True
+        if not changed:
+            return True
+        tab = self.model_edit.currentIndex()
+        self.set_manager(self.manager)
+        if self._animations:
+            self.animation_combo.setCurrentIndex(min(animation, self.animation_combo.count() - 1))
+            self.frame_slider.setValue(frame)
+        self.model_edit.setCurrentIndex(tab)
+        self._fill_pose()
+        self.data_changed.emit()
+        return True
 
     def _show_model(self, container, object_id):
         loader = self._loaders.setdefault(id(container), CreatureLoader([container]))
@@ -365,6 +538,8 @@ class MagObjectView(QWidget):
     def _show_frame(self, frame_id, keep_view=True):
         if not self._animations:
             return
+        if self.model_edit.isVisible() and self.model_edit.currentIndex() == 1 and not self.play_button.isChecked():
+            self._fill_pose()
         frames = self._animations[max(0, self.animation_combo.currentIndex())]
         if not frames:
             return

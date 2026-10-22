@@ -45,7 +45,15 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   back by moving the vertices in place: the MAG keeps its size, so no face may be added,
   removed or split (the triangles are matched in order; a changed file is refused with the
   reason), and faces, colours, UVs, bones and animations stay. One import is one Undo step.
-  Skeleton and animation values have no editor yet (their sections are a read-only reference).
+  A battle model (the 8 embedded in packed MAGs, and the indexed containers' models such as
+  `mag186_b.dat`: 28 in the vanilla files) also has a **Skeleton** table (each bone's length and
+  rest rotation, written in place) and a **Pose (this frame)** table for the animation and frame
+  picked above (root position, bone rotations). A frame stores the change from the previous one,
+  so an edit re-encodes that animation only (the others keep their exact bytes) and must fit the
+  model's animation section: the MAG keeps its size, and the room left (often 0-3 bytes, the
+  slack after the animations) is shown; an edit needing more is refused with the bytes missing.
+  Every vanilla model round-trips byte-identical. glTF import does not bring animations back:
+  the exporter bakes rotations into float quaternions that do not map back to FF8's raw values.
 - **Textures:** every TIM of the selected file (Carbuncle's `mag277.tim` holds two) as its
   picture over a checkerboard and its palette (CLUT: the colours a 4/8-bit TIM's texels index,
   one row per alternate colouring; the game picks a row per sprite; a 16-bit TIM has none).
