@@ -5,10 +5,13 @@ plays them."""
 import os
 import struct
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
 import pytest
+from PIL import Image
+from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QApplication
 
 from FF8GameData.psxgpu.fxdump import load_recording, parse_recording
@@ -138,3 +141,116 @@ def test_record_cure_with_the_recorder(qapp):
     image, gpu = recording.frame(16, scale=0.125)
     assert not gpu.missing_pages and gpu.counts["polygons"] > 100                     # all textured
     assert (image.astype(int).sum(axis=2) > 200).mean() > 0.01                         # in the game window
+
+
+def wait_for_preview(qapp, view):
+    """Wait for both the debounced edit and its recorder, including an edit queued mid-record."""
+    deadline = time.monotonic() + 30
+    while view._process is not None or view._edit_refresh.isActive():
+        assert time.monotonic() < deadline, view.status.text()
+        if view._process is not None:
+            view._process.waitForFinished(1000)
+        QTest.qWait(20)
+        qapp.processEvents()
+
+
+@pytest.mark.ff8data("extracted_files/magic/mag000-049.tim", "extracted_files/FF8_EN.exe",
+                     "extracted_files/battle/a8def.tim", "extracted_files/battle/c0m000.dat")
+def test_cure_previews_unsaved_png_and_undo(qapp, tmp_path, monkeypatch):
+    from Fujin import nativepreview
+    from Fujin.fujinwidget import FujinWidget
+    if not nativepreview.RECORDER.is_file():
+        pytest.skip("the effect recorder is not built")
+    # Isolate the disk cache too: unsaved previews must not replace a clean recording.
+    cached = tmp_path / "clean_recording.txt"
+    monkeypatch.setattr(nativepreview, "recording_path", lambda *_args: str(cached))
+    path = tmp_path / "mag000-049.tim"
+    original = (MAGIC / path.name).read_bytes()
+    path.write_bytes(original)
+    fujin = FujinWidget()
+    fujin.import_paths([str(path)])
+    fujin.camera_editor.exe_binding.open_path(str(EXE))
+    fujin.select_effect(1)
+    view = fujin.native_preview
+    view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
+    assert view.record()
+    wait_for_preview(qapp, view)
+    assert len(view.recording.ticks) == 51
+    baseline, _gpu = view.recording.frame(16, scale=0.125)
+    clean_cache = cached.read_bytes()
+    view.slider.setValue(16)
+
+    fujin.tabs.setCurrentIndex(4)
+    fujin.textures.activate()
+    card = fujin.textures.panel.cards[0]
+    picture = card.texture.picture().copy()
+    picture[64:128, :64] = 0                         # remove Cure's little sparkles
+    yy, xx = np.mgrid[:64, :64]
+    picture[:64, :64] = 0
+    picture[:64, :64][np.abs(xx-32)+np.abs(yy-32) < 20] = (0, 255, 255, 128)
+    png = tmp_path / "diamonds.png"
+    Image.fromarray(picture).save(png)
+    assert card.import_picture(str(png))              # the real UI signal schedules the refresh
+    assert view._edit_refresh.isActive()
+    wait_for_preview(qapp, view)
+    changed, gpu = view.recording.frame(16, scale=0.125)
+    assert not np.array_equal(changed, baseline) and not gpu.missing_pages
+    assert view.slider.value() == 16 and "unsaved" in view.status.text()
+    assert card.texture.manager.modified and path.read_bytes() == original
+    assert cached.read_bytes() == clean_cache and view._scratch is None
+
+    fujin.show()                                     # Undo routes to the visible resource editor
+    qapp.processEvents()
+    assert fujin.undo()                              # no Save, Undo also refreshes the preview
+    wait_for_preview(qapp, view)
+    restored, _gpu = view.recording.frame(16, scale=0.125)
+    assert np.array_equal(restored, baseline)
+    assert view.slider.value() == 16 and not view._recorded_edits
+    assert not card.texture.manager.modified and path.read_bytes() == original
+    assert fujin.redo()
+    wait_for_preview(qapp, view)
+    redone, _gpu = view.recording.frame(16, scale=0.125)
+    assert np.array_equal(redone, changed) and view.slider.value() == 16
+    assert card.texture.manager.modified and path.read_bytes() == original
+
+
+@pytest.mark.parametrize("latest", [b"latest", None])
+def test_edits_during_first_recording_request_a_fresh_snapshot(qapp, monkeypatch, latest):
+    from Common.fileregistry import FileRegistry
+    from Fujin.nativepreview import NativePreviewView
+    edits = {"atlas.tim": b"first"}
+    view = NativePreviewView(FileRegistry(), file_edits=lambda: edits)
+    view.effect_id = 1
+    view._preview_requested = True
+    old_signature = view._edit_signature(edits)
+    if latest is None:
+        edits.clear()                               # Undo to clean before the first run finishes
+    else:
+        edits["atlas.tim"] = latest
+    requests = []
+    monkeypatch.setattr(view, "record", lambda keep_tick=False: requests.append(keep_tick))
+    view._load_recorded(1, "discarded-recording.txt", 0, old_signature, 16, 0, "")
+    QTest.qWait(300)
+    assert requests == [True] and view.recording is None
+
+
+def test_failed_recorder_releases_unsaved_snapshot(qapp, tmp_path, monkeypatch):
+    from Common.fileregistry import FileRegistry
+    from Fujin import nativepreview
+    view = nativepreview.NativePreviewView(FileRegistry(), file_edits=lambda: {"atlas.tim": b"edit"})
+    view.effect_id = 1
+    monkeypatch.setattr(view, "missing", lambda: [])
+    monkeypatch.setattr(nativepreview, "RECORDER", tmp_path / "missing-recorder.exe")
+    snapshots = []
+    temporary_directory = nativepreview.tempfile.TemporaryDirectory
+
+    def snapshot_directory(**kwargs):
+        scratch = temporary_directory(dir=tmp_path, **kwargs)
+        snapshots.append(Path(scratch.name))
+        return scratch
+
+    monkeypatch.setattr(nativepreview.tempfile, "TemporaryDirectory", snapshot_directory)
+    assert view.record()
+    wait_for_preview(qapp, view)
+    assert snapshots and not snapshots[0].exists() and view._scratch is None
+    assert "Could not start" in view.status.text() and view.record_button.isEnabled()

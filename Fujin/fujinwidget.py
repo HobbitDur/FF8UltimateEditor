@@ -119,6 +119,7 @@ class FujinWidget(QWidget):
         self.native_preview = NativePreviewView(
             self.file_registry, exe_path=lambda: self.camera_editor.exe_binding.current_path or "",
             magic_folder=self._effect_files_folder,
+            file_edits=self._preview_file_edits,
             camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)))
         self.choreography.addTab(self.native_preview, "Native preview")
         # Why there is no MAG script, when there is none (the greyed tab says it too)
@@ -419,6 +420,16 @@ class FujinWidget(QWidget):
                 return os.path.dirname(manager.file_path)
         return self.file_registry.last_folder("Fujin effect files") or ""
 
+    def _preview_file_edits(self):
+        """Current effect's unsaved file bytes, for preview without saving the imported files."""
+        if self.current_effect is None:
+            return {}
+        extra = [os.path.basename(m.file_path) for m in self.mag_editor.managers.values()]
+        return {resource.key: bytes(manager.data)
+                for resource in self.catalog.resources(self.current_effect, extra)
+                if resource.source == "File" and (manager := self.resolve(resource)) is not None
+                and manager.modified}
+
     def _selection_changed(self, *_args):
         item = self.effect_list.currentItem()
         if item:
@@ -428,6 +439,8 @@ class FujinWidget(QWidget):
             self._refresh()
 
     def _schedule_refresh(self):
+        if hasattr(self, "native_preview"):
+            self.native_preview.edits_changed()
         self.file_bindings_changed.emit()
         if not self._refresh_pending:
             self._refresh_pending = True

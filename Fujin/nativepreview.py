@@ -17,14 +17,19 @@ Files: FF8_EN.exe (the header's Import, as for the camera tracks), the effect's 
 the effect files were imported from) and the battle folder, found through a8def.tim - the battle's
 shared effect textures, opened from the header's Import complementary (shared file bank, never a
 guessed folder); the target model c0mNNN.dat is read from that folder.
+Unsaved effect-file edits are passed to the recorder as private temporary overrides. Once an
+effect is recorded, edits and Undo / Redo refresh it without writing the imported files.
 
 Exact: what is drawn, where, its colours, blending and timing (the game's code ran).
 Approximated: the fake battle (actors stand at fixed places), the camera player is Fujin's
 (floating point), and an effect that reads the real battle state may differ.
 """
+import hashlib
 import os
+import shutil
 import struct
 import tempfile
+from pathlib import Path
 
 from PyQt6.QtCore import QProcess, Qt, QTimer
 from PyQt6.QtGui import QImage, QPixmap
@@ -90,19 +95,28 @@ def camera_lines(manager, track, battle_folder="", model=0, ticks=600):
 
 class NativePreviewView(QWidget):
     """providers: exe_path() -> the opened FF8_EN.exe; magic_folder() -> the effect files' folder;
-    camera_track(effect_id) -> (camera manager, track) or (None, None)."""
+    camera_track(effect_id) -> (camera manager, track) or (None, None);
+    file_edits() -> {file name: unsaved bytes}, staged privately for the recorder."""
 
-    def __init__(self, file_registry, exe_path=None, magic_folder=None, camera_track=None):
+    def __init__(self, file_registry, exe_path=None, magic_folder=None, camera_track=None, file_edits=None):
         super().__init__()
         self.effect_id, self.effect_name = None, ""
         self.recording = None
         self._frames = {}           # (tick, view mode) -> (QPixmap, Gpu)
         self._process = None
+        self._scratch = None
+        self._recorded_edits = None
+        self._preview_requested = False
+        self._edit_refresh = QTimer(self)
+        self._edit_refresh.setSingleShot(True)
+        self._edit_refresh.setInterval(250)
+        self._edit_refresh.timeout.connect(self._refresh_edits)
         self._fit = GAME_WINDOW
         self.camera_used = False
         self.exe_path = exe_path or (lambda: "")
         self.magic_folder = magic_folder or (lambda: "")
         self.camera_track = camera_track or (lambda _effect: (None, None))
+        self.file_edits = file_edits or (lambda: {})
         self.textures_binding = FileBinding(SHARED_TEXTURES, file_registry, file_filter=SHARED_TEXTURES,
                                             read_only=True, complementary=True)
         self.textures_binding.file_opened.connect(lambda _path: self._update_controls())
@@ -110,10 +124,11 @@ class NativePreviewView(QWidget):
             "What the effect draws, from the game's own code: FF8UltimateEditor's effect recorder runs it in a "
             "fake battle and records every primitive and texture it sends to the PlayStation GPU, seen through "
             "the effect's own camera (Camera tab). Exact: shapes, colours, blending, timing. Approximated: the "
-            "battle around it (actors at fixed places).")
+            "battle around it (actors at fixed places). Unsaved effect-file edits are included; after the first "
+            "recording, editing a texture or using Undo / Redo refreshes this preview automatically.")
         self.intro.setWordWrap(True)
         self.record_button = QPushButton("Record")
-        self.record_button.setToolTip("Run the effect's code in the recorder and record what it draws")
+        self.record_button.setToolTip("Preview the current edits, including unsaved effect files")
         self.record_button.clicked.connect(lambda: self.record())
         self.model_spin = QSpinBox()
         self.model_spin.setRange(-1, 199)
@@ -189,12 +204,27 @@ class NativePreviewView(QWidget):
         return needs
 
     # ------------------------------------------------------------------ effect / recording
+    @staticmethod
+    def _edit_signature(edits):
+        return tuple((name, hashlib.sha256(data).digest()) for name, data in sorted(edits.items()))
+
+    def edits_changed(self):
+        """Coalesce edits/Undo/Redo; keep the current frame when refreshing an existing preview."""
+        self._edit_refresh.start()
+
+    def _refresh_edits(self):
+        if ((self.recording is not None or self._preview_requested) and self._process is None
+                and self._edit_signature(self.file_edits()) != self._recorded_edits):
+            self.record(keep_tick=True)
+
     def set_effect(self, effect_id, name=""):
         if effect_id == self.effect_id:
             return
         self.play_button.setChecked(False)
         self.effect_id, self.effect_name = effect_id, name
         self.recording, self._frames = None, {}
+        self._recorded_edits = None
+        self._preview_requested = False
         self._prerender.stop()
         path = recording_path(effect_id, self.model_spin.value()) if effect_id is not None else None
         if path and os.path.isfile(path):
@@ -202,20 +232,35 @@ class NativePreviewView(QWidget):
         else:
             self.picture.clear()
             self._update_controls()
+        self.edits_changed()
 
-    def record(self):
-        """Run the recorder for the selected effect in the background; the recording loads when done."""
+    def record(self, keep_tick=False):
+        """Record a private snapshot of the working edits; never save the imported effect files."""
         if self.effect_id is None or self.missing() or self._process is not None:
             self._update_controls()
             return False
         model = self.model_spin.value()
-        output = recording_path(self.effect_id, model)
-        if os.path.isfile(output):
-            os.remove(output)
+        self._preview_requested = True
+        edits = self.file_edits()
+        signature = self._edit_signature(edits)
+        scratch = tempfile.TemporaryDirectory(prefix="fujin_preview_")
+        self._scratch = scratch
+        output = os.path.join(scratch.name, "recording.txt")
+        try:
+            for name, data in edits.items():
+                if name != os.path.basename(name) or name in ("", ".", ".."):
+                    raise ValueError(f"invalid effect file name: {name}")
+                Path(scratch.name, name).write_bytes(data)
+        except (OSError, ValueError) as error:
+            self._clean_scratch()
+            self.status.setText(f"Could not prepare the preview: {error}")
+            return False
         # absolute paths: the recorder runs from its own folder
         args = [str(self.effect_id), f"exe={os.path.abspath(self.exe_path())}",
                 f"magic={os.path.abspath(self.magic_folder())}", f"battle={os.path.abspath(self.battle_folder())}",
                 f"out={output}", f"model={model}"]
+        if edits:
+            args.append(f"overrides={scratch.name}")
         self.camera_used = False
         manager, track = self.camera_track(self.effect_id)
         if track is not None:
@@ -226,41 +271,83 @@ class NativePreviewView(QWidget):
                     file.write("\n".join(lines) + "\n")
                 args.append(f"camera={camera}")
                 self.camera_used = True
+        tick = self.slider.value() if keep_tick else 0
+        self.timer.stop()
+        self._prerender.stop()
         self._process = QProcess(self)
         self._process.setWorkingDirectory(str(RECORDER.parent))
         self._process.finished.connect(lambda code, _status, out=output, effect=self.effect_id:
-                                       self._recorded(effect, out, code))
-        self._process.start(str(RECORDER), args)
+                                       self._recorded(effect, out, code, signature, tick, model))
+        self._process.errorOccurred.connect(self._record_error)
         self.status.setText(f"Recording effect {self.effect_id}…")
         self._update_controls()
+        self._process.start(str(RECORDER), args)
         return True
 
-    def _recorded(self, effect_id, output, code):
-        log = bytes(self._process.readAllStandardOutput()).decode("ascii", "replace") if self._process else ""
+    def _clean_scratch(self):
+        if self._scratch is not None:
+            self._scratch.cleanup()
+            self._scratch = None
+
+    def _record_error(self, error):
+        if error != QProcess.ProcessError.FailedToStart:
+            return  # a crash/exit is handled by finished
+        message = self._process.errorString()
+        self._process.deleteLater()
         self._process = None
+        self._clean_scratch()
+        self._update_controls()
+        self.status.setText(f"Could not start the effect recorder: {message}")
+
+    def _recorded(self, effect_id, output, code, signature=(), tick=0, model=0):
+        process, self._process = self._process, None
+        log = bytes(process.readAllStandardOutput()).decode("ascii", "replace") if process else ""
+        if process is not None:
+            process.deleteLater()
+        try:
+            self._load_recorded(effect_id, output, code, signature, tick, model, log)
+        finally:
+            self._clean_scratch()
+
+    def _load_recorded(self, effect_id, output, code, signature, tick, model, log):
         if effect_id != self.effect_id:
             self._update_controls()
+            self.edits_changed()
+            return
+        if signature != self._edit_signature(self.file_edits()):
+            # Edits arrived during the run: draw only the newest snapshot.
+            self._update_controls()
+            self.edits_changed()
             return
         if not os.path.isfile(output) or (code != 0 and not os.path.getsize(output)):
             last = [line for line in log.splitlines() if line.strip()][-1:] or [f"exit code {code}"]
             self._update_controls()
             self.status.setText(f"The recorder made no recording: {last[0]}")
             return
-        self.load_recording_file(output)
+        self.load_recording_file(output, tick=tick, signature=signature)
+        if not signature:
+            # Shared cached recordings must never contain another editor's unsaved texture.
+            try:
+                shutil.copyfile(output, recording_path(effect_id, model))
+            except OSError:
+                pass  # caching is optional; the in-memory preview is already loaded
+        if self.play_button.isChecked():
+            self.timer.start()
         problems = [line for line in log.splitlines() if "faulted" in line or "failed" in line or "missing" in line]
         if problems:
             self.status.setText(self.status.text() + " Recorder: " + "; ".join(problems[:3]))
 
-    def load_recording_file(self, path):
+    def load_recording_file(self, path, tick=0, signature=()):
         """Show a recording (made by Record, or any recorder / harness dump)."""
         self.recording = load_recording(path, self.effect_id)
+        self._recorded_edits = signature
         self._frames = {}
         self.slider.blockSignals(True)
         self.slider.setRange(0, max(0, len(self.recording.ticks) - 1))
-        self.slider.setValue(0)
+        self.slider.setValue(min(tick, self.slider.maximum()))
         self.slider.blockSignals(False)
         self._fit = self.recording.fit_view()
-        self._show(0)
+        self._show(self.slider.value())
         self._prerender_tick = 0
         self._prerender.start()
         self._update_controls()
@@ -310,6 +397,8 @@ class NativePreviewView(QWidget):
                "Camera: the default battle view (no camera track played).")
             + (f" Flat grey: texture pages {missing} were never uploaded." if missing else "")
             + ("" if self.recording.has_vram else " No textures in this recording."))
+        if self._recorded_edits:
+            self.status.setText(self.status.text() + " Includes unsaved effect-file edits.")
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

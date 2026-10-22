@@ -22,6 +22,7 @@
 //
 // Arguments: <effect id> exe=FF8_EN.exe magic=<folder of the mag files> battle=<folder of the battle
 // files> out=<file> [model=N: every slot gets c0mN.dat (default 0; -1 = no model)] [ticks=N]
+// [overrides=<folder>: unsaved effect-file snapshots, preferred over magic= without changing it]
 // [targets=N] [caster=slot] [seed=N] [camera=<file>: per tick "t ex ey ez ax ay az roll H" - the
 // view the camera player would show, set before the tick; without it a fixed default view]
 //
@@ -40,7 +41,7 @@ struct Opt
 {
 	int eff = 0, ticks = 3000, targets = 1, caster = 0, model = 0;
 	uint32_t seed = 12345;
-	std::string exe, magic, battle, out, camera;
+	std::string exe, magic, battle, out, camera, overrides;
 };
 static Opt O;
 static FILE *g_out = nullptr;
@@ -114,7 +115,9 @@ static int __cdecl my_rand()
 // Magic_LoadTexture_IO_GetsFile (0x571900): name -> <magic folder>/<name>
 static uint32_t __cdecl s_loadtex(const char *name, uint8_t *dst, uint32_t max, uint32_t *psize)
 {
-	std::vector<uint8_t> v = readfile(join(O.magic, name));
+	std::vector<uint8_t> v;
+	if (!O.overrides.empty()) v = readfile(join(O.overrides, name));
+	if (v.empty()) v = readfile(join(O.magic, name));
 	if (v.empty()) { printf("load %s failed\n", name); return 0; }
 	if (!dst)
 	{
@@ -474,6 +477,7 @@ static bool parse(int argc, char **argv)
 		std::string k = a.substr(0, eq), v = a.substr(eq + 1);
 		if (k == "exe") O.exe = v;
 		else if (k == "magic") O.magic = v;
+		else if (k == "overrides") O.overrides = v;
 		else if (k == "battle") O.battle = v;
 		else if (k == "out") O.out = v;
 		else if (k == "camera") O.camera = v;
@@ -491,7 +495,7 @@ int main(int argc, char **argv)
 	setvbuf(stdout, nullptr, _IONBF, 0);
 	if (!parse(argc, argv))
 	{
-		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [model=N] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
+		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [overrides=<dir>] [model=N] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
 		return 1;
 	}
 	if (strcmp(argv[argc - 1], "child") != 0)
