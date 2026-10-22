@@ -114,7 +114,7 @@ class MagDocumentWidget(QWidget):
         self.gf_selector.setToolTip("Choose any loaded MAG file or streamed part")
         self.gf_selector.activated.connect(lambda _i: self._show_gf(self.gf_selector.currentData()))
         self.file_label = QLabel("Import MAG files, or Open folder on extracted game data. "
-                                "The format is detected from the contents; each section has an editor tab.")
+                                "The format is detected from the contents; each section has a read-only tab.")
         self.file_label.setWordWrap(True)
         top = QHBoxLayout()
         top.addWidget(QLabel("File:"))

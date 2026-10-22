@@ -143,8 +143,8 @@ def test_textures_are_pictures_not_a_files_copy(fujin):
     assert card.picture.pixmap() is not None and "texels" in card.info.text()
     if card.rows:                                              # palette rows change the drawing
         card.palette.setCurrentIndex(card.palette.count() - 1)
-    fujin.files.activate()                                     # header fields and raw bytes: Files
-    assert any("header" in fujin.files.sections.tabText(i).lower() for i in range(fujin.files.sections.count()))
+    fujin.files.activate()                                     # Files does not repeat a TIM
+    assert fujin.files.sections.count() == 0 and "edited in Textures" in fujin.files.status.text()
 
 
 @pytest.mark.ff8data(TIM)

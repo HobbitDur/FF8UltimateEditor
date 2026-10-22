@@ -38,14 +38,21 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   one row per alternate colouring; the game picks a row per sprite; a 16-bit TIM has none).
   Double-click the picture or the palette (or use its buttons) to replace it with a PNG of the
   same size: a new picture is mapped onto the selected palette row (texels that kept their
-  colour keep their index), a new palette keeps each colour's transparency bit, and fewer rows
-  than the palette replace the rows you pick. **Export PNGs…** writes `<name>.png` (the picture
+  colour keep their index), and a palette PNG with fewer rows than the TIM replaces the rows
+  you pick. **Export PNGs…** writes `<name>.png` (the picture
   in the selected row) and `<name>_palette.png`, laid out like the swatches: 16 colours per
   line, each palette row under the previous one (a 256-colour row is 16 lines). The import takes
   that layout back, or one palette row per line. The CLUT bytes are written from the palette
-  image (5 bits per channel, pure black kept opaque, fully transparent = colour 0).
-  **Restore original** puts the TIM back as it is on disk; Undo / Redo cover every edit. The raw sections stay in Files / sections. A MAG file's textures are raw VRAM blocks
-  whose size and depth come from the game code, so they are not drawn here.
+  image (5 bits per channel, fully transparent = colour 0).
+  **Semi-transparency** (the PSX STP bit: blended when the effect draws the sprite with
+  blending on) travels as PNG alpha: 128 = semi-transparent, 255 = opaque, 0 = transparent;
+  black always keeps the bit (without it, it would be transparent). Click a palette colour to
+  see it and switch its **Semi-transparent** box; a corner dot marks those colours.
+  **Video memory position** sets where the TIM asks for its picture and palette to be loaded
+  (1024 × 512 16-bit units; a palette's X is a multiple of 16).
+  **Restore original** puts the TIM back as it is on disk; Undo / Redo cover every edit. No raw
+  bytes are edited. A MAG file's textures are raw VRAM blocks whose size and depth come from
+  the game code, so they are not drawn here.
 - **Empty tabs say why.** Models, Textures and Sound name the effect's files still to import;
   once nothing is missing, they say what the effect has no data for, and point to the native
   functions that do the work when the snapshot names them (Cure: "stores no model of its own",
@@ -57,7 +64,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   Music-table blocks and streamed SCOT parts are played as unverified. The header +0x24 bank
   is controller vibration (left/right motor envelopes), drawn as curves. AKAO banks are not
   played by the PC build.
-- **Files / sections:** every section, raw editing, export and equal-size replacement.
+- **Files / sections:** every section of the effect's files as a read-only reference (named
+  fields and bytes) with export; Fujin edits only through its decoded views (a camera section
+  keeps its camera editor). A TIM is not repeated there: it points to Textures.
   **Browse all imported files** exposes MA8 files and unresolved associations.
 - **Pending changes:** destinations across all effects, including edits made before switching.
 

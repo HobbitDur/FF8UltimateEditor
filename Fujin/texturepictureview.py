@@ -8,18 +8,21 @@ row per sprite. A 16-bit TIM stores its colours directly and has no CLUT.
 Editing is high level, like Ifrit's texture tab: double-click the picture (or the palette) to
 replace it with a PNG of the same size, export both as PNG files, or restore the file's original
 TIM. A new picture is mapped onto the existing palette (texels that kept their colour keep their
-index); a new palette keeps each colour's transparency bit. The raw sections stay in
-Files / sections.
+index). Semi-transparency (the PSX STP bit) travels as PNG alpha: 128 = semi-transparent,
+255 = opaque, 0 = fully transparent; a palette colour can also be switched on its own. The card
+also sets where the TIM asks to be loaded in video memory. No raw bytes are edited here.
 """
 import copy
 import os
+import struct
 
 import numpy as np
 from PIL import Image
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, QSignalBlocker, pyqtSignal
 from PyQt6.QtGui import QColor, QImage, QPainter, QPixmap
-from PyQt6.QtWidgets import (QComboBox, QFileDialog, QFrame, QGroupBox, QHBoxLayout, QInputDialog, QLabel,
-                             QMenu, QMessageBox, QPushButton, QScrollArea, QVBoxLayout, QWidget)
+from PyQt6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QFrame, QGroupBox, QHBoxLayout, QInputDialog,
+                             QLabel, QMenu, QMessageBox, QPushButton, QScrollArea, QSpinBox, QVBoxLayout,
+                             QWidget)
 
 from FF8GameData.tim.timfile import PalettedTim, decode_tim, encode_clut, encode_indices, word_to_rgba
 
@@ -31,6 +34,22 @@ MAG_TEXTURE_NOTE = ("A MAG file's textures are raw VRAM blocks: their size and c
                     "effect's game code, so they cannot be shown as pictures here (their bytes are in "
                     "Files / sections). Choreography's 3D playback draws the GF summons' textures.")
 PNG_FILTER = "PNG image (*.png)"
+VRAM_WIDTH, VRAM_HEIGHT = 1024, 512     # PlayStation video memory, in 16-bit units
+STP = 0x8000
+STP_HELP = ('Semi-transparent: the colour is blended with what is behind it when the effect draws the '
+            'sprite with blending on (otherwise it draws opaque). In PNG files alpha 128 = semi-'
+            'transparent, 255 = opaque, 0 = fully transparent. Black always carries the flag: a black '
+            'without it would be fully transparent.')
+
+
+def _stp_from_alpha(word, alpha):
+    """A colour's STP bit from its PNG alpha: 1-254 semi-transparent, 255 opaque (black keeps
+    the bit: 0x0000 would be transparent), 0 left to the caller (fully transparent)."""
+    if word == 0 or alpha == 0:
+        return word
+    if alpha == 255 and word & 0x7FFF:
+        return word & 0x7FFF
+    return word | STP
 
 
 def tim_blocks(manager):
@@ -118,6 +137,48 @@ class TimTexture:
     def paletted(self):
         return PalettedTim.parse(self.data)
 
+    def _blocks(self):
+        """{"palette": offset of its block or None, "picture": offset of its block}, file offsets."""
+        clut = self.offset + 8 if _u32(self.manager.data, self.offset + 4) & 8 else None
+        picture = self.offset + 8 + (_u32(self.manager.data, clut) if clut is not None else 0)
+        return {"palette": clut, "picture": picture}
+
+    def vram(self):
+        """{"picture": (x, y, width, height), "palette": (...) or None}: where the TIM asks to be
+        loaded in video memory, in 16-bit units (a 4/8-bit picture is 4/2 texels per unit)."""
+        data = self.manager.data
+        return {part: None if block is None else tuple(_u16(data, block + 4 + 2 * k) for k in range(4))
+                for part, block in self._blocks().items()}
+
+    def set_vram(self, part, x, y):
+        block = self._blocks()[part]
+        if block is None:
+            raise ValueError("this TIM has no palette")
+        _x, _y, width, height = self.vram()[part]
+        if part == "palette" and x % 16:
+            raise ValueError("a palette's X position is a multiple of 16")
+        if not (0 <= x and x + width <= VRAM_WIDTH and 0 <= y and y + height <= VRAM_HEIGHT):
+            raise ValueError(f"a {width} × {height} block at ({x}, {y}) leaves the {VRAM_WIDTH} × {VRAM_HEIGHT} "
+                             "video memory")
+        raw = bytearray(self.data)
+        at = block - self.offset + 4
+        raw[at:at + 4] = struct.pack("<HH", x, y)
+        self._write(bytes(raw))
+
+    def semi_transparent(self, row, index):
+        return bool(self.palette_rows()[row][index] & STP)
+
+    def set_semi_transparent(self, row, index, on):
+        tim = self.paletted()
+        word = tim.clut_rows[row][index]
+        if word == 0:
+            raise ValueError("this colour is fully transparent: give it a colour first (Replace palette…)")
+        if not on and not word & 0x7FFF:
+            raise ValueError("black is always stored semi-transparent: without the flag it would be fully "
+                             "transparent")
+        tim.clut_rows[row][index] = word | STP if on else word & 0x7FFF
+        self._write(tim.to_bytes())
+
     def palette_rows(self):
         tim = self.paletted()
         return tim.clut_rows if tim else []
@@ -161,9 +222,9 @@ class TimTexture:
             raise ValueError(f"the picture must be {width} × {height} pixels, not {rgba.shape[1]} × {rgba.shape[0]}")
         five = np.rint(rgba[:, :, :3].astype(np.float64) * 31 / 255).astype(np.uint16)
         words = five[:, :, 0] | (five[:, :, 1] << 5) | (five[:, :, 2] << 10)
-        old = np.frombuffer(bytes(data[position + 12:position + 12 + width * height * 2]), "<u2").reshape(height, width)
-        words = np.where(words == 0, 0x8000, words | (old & 0x8000))   # black stays opaque, STP kept
-        words = np.where(rgba[:, :, 3] == 0, 0, words)
+        alpha = rgba[:, :, 3]
+        words = np.where((words == 0) | ((alpha > 0) & (alpha < 255)), words | STP, words)  # see _stp_from_alpha
+        words = np.where(alpha == 0, 0, words)
         data[position + 12:position + 12 + width * height * 2] = words.astype("<u2").tobytes()
         self._write(bytes(data))
 
@@ -179,7 +240,9 @@ class TimTexture:
         if start_row + rgba_rows.shape[0] > len(tim.clut_rows):
             raise ValueError(f"the palette has {len(tim.clut_rows)} rows; the image has {rgba_rows.shape[0]}")
         end = start_row + rgba_rows.shape[0]
-        tim.clut_rows[start_row:end] = encode_clut(rgba_rows, tim.clut_rows[start_row:end])
+        rows = encode_clut(rgba_rows, tim.clut_rows[start_row:end])
+        tim.clut_rows[start_row:end] = [[_stp_from_alpha(word, int(rgba_rows[r, i, 3])) for i, word in enumerate(row)]
+                                        for r, row in enumerate(rows)]
         self._write(tim.to_bytes())
 
     def original(self):
@@ -196,6 +259,13 @@ class _ImageLabel(QLabel):
     """A picture that opens a PNG on double-click (and a menu on right-click)."""
     replace_requested = pyqtSignal()
     menu_requested = pyqtSignal(object)
+    clicked = pyqtSignal(int, int)          # position in the pixmap
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            point = event.position().toPoint() - self.contentsRect().topLeft()
+            self.clicked.emit(point.x(), point.y())
+        super().mousePressEvent(event)
 
     def __init__(self, tooltip):
         super().__init__()
@@ -233,9 +303,40 @@ class _TimCard(QGroupBox):
         self.picture.replace_requested.connect(self.import_picture)
         self.picture.menu_requested.connect(self._menu)
         self.swatches = _ImageLabel("The palette (CLUT): a block per row, one square per colour, the selected row "
-                                    "framed. Double-click to replace it with a PNG (colours wide, rows tall)")
+                                    "framed; a corner mark = semi-transparent. Click a colour to see it, "
+                                    "double-click to replace the palette with a PNG (16 colours per line)")
         self.swatches.replace_requested.connect(self.import_palette)
         self.swatches.menu_requested.connect(self._menu)
+        self.swatches.clicked.connect(self._pick_colour)
+        self.colour = None                  # (row, index) of the clicked swatch
+        self.colour_info = QLabel("Click a colour of the palette.")
+        self.colour_info.setWordWrap(True)
+        self.semi = QCheckBox("Semi-transparent")
+        self.semi.setToolTip(STP_HELP)
+        self.semi.setEnabled(False)
+        self.semi.toggled.connect(self._semi_toggled)
+        self.vram_boxes = {}
+        vram_row = QHBoxLayout()
+        vram_label = QLabel("Video memory position:")
+        vram_label.setToolTip("Where the TIM asks to be loaded in the PlayStation video memory (1024 × 512, "
+                              "in 16-bit units; a palette's X is a multiple of 16). The size is the TIM's own.")
+        vram_row.addWidget(vram_label)
+        for part, name in (("picture", "picture"), ("palette", "palette")):
+            if texture.vram()[part] is None:
+                continue
+            vram_row.addWidget(QLabel(f"{name} X"))
+            for axis in (0, 1):
+                if axis:
+                    vram_row.addWidget(QLabel("Y"))
+                box = QSpinBox()
+                box.setRange(0, (VRAM_WIDTH if axis == 0 else VRAM_HEIGHT) - 1)
+                box.setSingleStep(16 if (part, axis) == ("palette", 0) else 1)
+                box.setKeyboardTracking(False)
+                box.setToolTip(vram_label.toolTip())
+                box.valueChanged.connect(lambda _value, p=part: self._vram_changed(p))
+                vram_row.addWidget(box)
+                self.vram_boxes[part, axis] = box
+        vram_row.addStretch(1)
         buttons = QHBoxLayout()
         self.buttons = {}
         for text, tooltip, slot in (
@@ -258,12 +359,17 @@ class _TimCard(QGroupBox):
         top.addWidget(self.info, 1)
         layout = QVBoxLayout(self)
         layout.addLayout(top)
+        layout.addLayout(vram_row)
         body = QHBoxLayout()
         body.addWidget(self.picture, 0, Qt.AlignmentFlag.AlignTop)
         if self.rows:
             palette_column = QVBoxLayout()
-            palette_column.addWidget(QLabel("Palette (CLUT)"))
+            legend = QLabel("Palette (CLUT) · corner dot = semi-transparent")
+            legend.setToolTip(STP_HELP)
+            palette_column.addWidget(legend)
             palette_column.addWidget(self.swatches)
+            palette_column.addWidget(self.colour_info)
+            palette_column.addWidget(self.semi)
             palette_column.addStretch(1)
             body.addLayout(palette_column)
         body.addStretch(1)
@@ -297,9 +403,13 @@ class _TimCard(QGroupBox):
         painter.drawImage(canvas.rect(), _qimage(rgba))
         painter.end()
         self.picture.setPixmap(QPixmap.fromImage(canvas))
+        for (part, axis), box in self.vram_boxes.items():
+            with QSignalBlocker(box):
+                box.setValue(self.texture.vram()[part][axis])
         palette = self.texture.palette_image()
         if palette is None:
             return
+        self._show_colour()
         rows, colours = palette.shape[:2]
         lines = (colours + PER_LINE - 1) // PER_LINE          # swatch lines per palette row
         gap = 4
@@ -312,11 +422,59 @@ class _TimCard(QGroupBox):
                 red, green, blue, alpha = (int(v) for v in palette[row, index])
                 x, y = 1 + (index % PER_LINE) * SWATCH, top + (index // PER_LINE) * SWATCH
                 painter.fillRect(x, y, SWATCH - 1, SWATCH - 1, QColor(red, green, blue, max(alpha, 60)))
+                if 0 < alpha < 255:             # semi-transparent: a corner mark
+                    painter.fillRect(x + SWATCH - 5, y, 4, 4, QColor(255, 255, 255))
+                    painter.fillRect(x + SWATCH - 4, y + 1, 2, 2, QColor(0, 0, 0))
+                if self.colour == (row, index):
+                    painter.setPen(QColor(0, 0, 0))
+                    painter.drawRect(x - 1, y - 1, SWATCH, SWATCH)
+                    painter.setPen(QColor(255, 255, 255))
+                    painter.drawRect(x, y, SWATCH - 2, SWATCH - 2)
             if row == self.row and rows > 1:
                 painter.setPen(QColor(61, 123, 217))
                 painter.drawRect(0, top - 1, PER_LINE * SWATCH + 1, lines * SWATCH + 1)
         painter.end()
         self.swatches.setPixmap(QPixmap.fromImage(strip))
+
+    def _swatch_layout(self):
+        colours = len(self.rows[0])
+        lines = (colours + PER_LINE - 1) // PER_LINE
+        return colours, lines, lines * SWATCH + 4          # colours per row, lines per row, row pitch
+
+    def _pick_colour(self, x, y):
+        if not self.rows:
+            return
+        colours, lines, pitch = self._swatch_layout()
+        row, inside = divmod(y - 1, pitch)
+        column, line = (x - 1) // SWATCH, inside // SWATCH
+        index = line * PER_LINE + column
+        if 0 <= row < len(self.rows) and 0 <= column < PER_LINE and line < lines and index < colours:
+            self.colour = (row, index)
+            self._draw()
+
+    def _show_colour(self):
+        if self.colour is None or self.colour[0] >= len(self.rows):
+            self.colour = None
+            self.semi.setEnabled(False)
+            return
+        row, index = self.colour
+        word = self.texture.palette_rows()[row][index]
+        red, green, blue, _alpha = word_to_rgba(word)
+        state = ("fully transparent" if word == 0 else "semi-transparent" if word & STP else "opaque")
+        self.colour_info.setText(f"Row {row}, colour {index}: RGB {red}, {green}, {blue} · {state}")
+        with QSignalBlocker(self.semi):
+            self.semi.setChecked(bool(word & STP))
+        self.semi.setEnabled(word != 0 and bool(word & 0x7FFF or not word & STP))
+
+    def _semi_toggled(self, on):
+        if self.colour is not None:
+            row, index = self.colour
+            self._apply(lambda: self.texture.set_semi_transparent(row, index, on))
+
+    def _vram_changed(self, part):
+        x, y = self.vram_boxes[part, 0].value(), self.vram_boxes[part, 1].value()
+        if (x, y) != self.texture.vram()[part][:2]:
+            self._apply(lambda: self.texture.set_vram(part, x, y))
 
     def _menu(self, position):
         menu = QMenu(self)
@@ -340,6 +498,7 @@ class _TimCard(QGroupBox):
             edit()
         except (ValueError, OSError) as error:
             QMessageBox.warning(self, "Fujin", f"Not applied: {error}")
+            self._draw()                                    # back to the stored values
             return False
         self.rows = self.texture.palette_rows()
         self._draw()
@@ -446,6 +605,7 @@ class TexturePictureView(QWidget):
         """Draw the pictures of a file (EffectResourceView calls it with the selected source)."""
         rows = [card.palette.currentIndex() for card in self.cards]
         for card in self.cards:
+            card.hide()                 # gone at once, not when the deferred delete runs
             card.deleteLater()
         self.cards = []
         is_tim = manager is not None and manager.document.format == "PlayStation TIM"

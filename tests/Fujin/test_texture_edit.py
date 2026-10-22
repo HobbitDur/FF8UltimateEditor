@@ -77,6 +77,53 @@ def test_palette_rows_replace(tmp_path):
         tim.set_palette(palette[:, :16])
 
 
+@pytest.mark.ff8data(ATLAS)
+def test_video_memory_position(tmp_path):
+    manager = document(tmp_path, ATLAS)
+    tim = texture(manager)
+    vram = tim.vram()
+    assert vram["picture"][2:] == (256, 256) and vram["palette"][2:] == (256, 2)   # 512 texels = 256 units
+    tim.set_vram("picture", 640, 0)
+    tim.set_vram("palette", 512, 480)
+    assert tim.vram()["picture"][:2] == (640, 0) and tim.vram()["palette"][:2] == (512, 480)
+    assert tim.picture(0).shape == (256, 512, 4)               # the picture itself does not move
+    with pytest.raises(ValueError, match="multiple of 16"):
+        tim.set_vram("palette", 520, 0)
+    with pytest.raises(ValueError, match="leaves"):
+        tim.set_vram("picture", 800, 0)
+    manager.undo()
+    manager.undo()
+    assert tim.vram() == vram and not manager.modified
+
+
+@pytest.mark.ff8data(ATLAS)
+def test_semi_transparency(tmp_path):
+    manager = document(tmp_path, ATLAS)
+    tim = texture(manager)
+    rows = tim.palette_rows()
+    # Cure's sprites are blended: every visible colour of its atlas is semi-transparent
+    index = next(i for i, word in enumerate(rows[0]) if word & 0x7FFF)
+    assert tim.semi_transparent(0, index) and tim.palette_image()[0, index, 3] == 128
+    tim.set_semi_transparent(0, index, False)
+    assert not tim.semi_transparent(0, index) and tim.palette_image()[0, index, 3] == 255
+    tim.set_semi_transparent(0, index, True)
+    assert not manager.modified
+    if 0x8000 in rows[0]:
+        with pytest.raises(ValueError, match="black"):
+            tim.set_semi_transparent(0, rows[0].index(0x8000), False)
+    if 0 in rows[0]:
+        with pytest.raises(ValueError, match="fully transparent"):
+            tim.set_semi_transparent(0, rows[0].index(0), True)
+    # PNG alpha carries it: 128 = semi-transparent, 255 = opaque
+    palette = tim.palette_image()
+    palette[0, index, 3] = 255
+    tim.set_palette(palette)
+    assert not tim.semi_transparent(0, index)
+    palette[0, index, 3] = 128
+    tim.set_palette(palette)
+    assert not manager.modified
+
+
 def test_sixteen_bit_picture(tmp_path):
     width, height = 4, 2
     words = [0x7FFF, 0x001F, 0x0000, 0x8000] * 2
@@ -94,6 +141,9 @@ def test_sixteen_bit_picture(tmp_path):
     picture[0, 0] = (0, 255, 0, 255)
     tim.set_picture(picture)
     assert tuple(tim.picture()[0, 0]) == (0, 255, 0, 255)
+    picture[0, 1] = (255, 0, 0, 128)                  # alpha 128: semi-transparent texel
+    tim.set_picture(picture)
+    assert tim.picture()[0, 1, 3] == 128
 
 
 @pytest.mark.ff8data(ATLAS)
@@ -119,6 +169,13 @@ def test_textures_tab_exports_and_imports_png(qapp, tmp_path):
     assert card.import_picture(str(tmp_path / "edited.png"))
     assert fujin.can_save_folder() and fujin.modified_effects() and "modified" in fujin.textures.panel.cards[0].info.text()
     assert card.import_palette(palette_png)                   # its own export back: nothing moves
+    card._pick_colour(1 + 3 * 12 + 2, 1 + 1 * 12 + 2)          # palette row 0, line 1, column 3
+    assert card.colour == (0, 19) and "Row 0, colour 19" in card.colour_info.text()
+    card._pick_colour(1 + 3 * 12 + 2, 1 + (16 * 12 + 4) + 2)    # second row block
+    assert card.colour == (1, 3)
+    card.vram_boxes["picture", 0].setValue(640)
+    assert card.texture.vram()["picture"][:2][0] == 640
+    card.texture.manager.undo()
     assert fujin.save_files()                                  # Save writes the .tim in place and says so
     assert path.read_bytes() != (ROOT / ATLAS).read_bytes() and not fujin.can_save_folder()
     assert "saved mag000-049.tim" in fujin.context.text() and str(path) in fujin.context.toolTip()

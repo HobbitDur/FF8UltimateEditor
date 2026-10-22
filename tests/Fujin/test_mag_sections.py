@@ -112,12 +112,12 @@ def test_indexed_directory_aliases_and_trailing_data():
     _assert_partition(doc)
 
 
-def test_widget_edits_tim_fields_and_bytes_and_keeps_other_files(tmp_path):
+def test_widget_sections_are_read_only_and_edits_keep_other_files(tmp_path):
     from Common.dirtytracking import install_dirty_tracking
     from Common.fileregistry import FileRegistry
     from Fujin.magdocumentwidget import MagDocumentWidget
     from Fujin.magsectionwidget import MagSectionEditor
-    from PyQt6.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication, QPushButton
     first, second = tmp_path/"MAG900_B.00", tmp_path/"MAG901_B.01"
     first.write_bytes(_tim())
     second.write_bytes(b"raw streamed bytes")
@@ -132,14 +132,20 @@ def test_widget_edits_tim_fields_and_bytes_and_keeps_other_files(tmp_path):
     widget.section_tabs.setCurrentIndex(1)  # image header
     page = widget.section_tabs.currentWidget()
     editor = page.findChild(MagSectionEditor)
-    editor.field_table.item(1, 3).setText("321")  # VRAM X
+    # no raw editing: the fields and bytes are a reference, and there is no "Replace section"
+    assert editor.read_only and editor.field_table.editTriggers() == editor.field_table.EditTrigger.NoEditTriggers
+    assert editor.byte_table.editTriggers() == editor.byte_table.EditTrigger.NoEditTriggers
+    assert not any(b.text().startswith("Replace") for b in editor.findChildren(QPushButton))
+    widget.manager.patch_bytes(12, struct.pack("<H", 321))      # a high-level edit (VRAM X)
+    widget._section_edited()
     QApplication.processEvents()
     assert struct.unpack_from("<H", widget.manager.data, 12)[0] == 321
     assert widget.can_save_folder() and widget.dirty_state.dirty
     widget._show_gf(second.name)
     QApplication.processEvents()
     assert widget.dirty_state.dirty  # changing files preserves the first file's edits
-    widget.section_tabs.currentWidget().findChild(MagSectionEditor).byte_table.item(0, 1).setText("41")
+    widget.manager.patch_bytes(0, b"\x41")
+    widget._section_edited()
     QApplication.processEvents()
     assert widget.manager.data[0] == 0x41
     widget.undo()

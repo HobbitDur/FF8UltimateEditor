@@ -16,10 +16,13 @@ def _readonly(text):
 
 
 class MagSectionTabs(QTabWidget):
+    """One tab per section. Read-only by default: Fujin edits through its high-level views (the
+    camera editor of a camera section stays editable); the fields and bytes are a reference."""
     data_changed = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, read_only=True):
         super().__init__(parent)
+        self.read_only = read_only
         self.manager = None
         self.camera_preview = None
         self.setUsesScrollButtons(True)
@@ -51,7 +54,8 @@ class MagSectionTabs(QTabWidget):
         start = page.property("section_start")
         section = next(s for s in self.manager.document.sections if s.start == start)
         layout = QVBoxLayout(page)
-        editor = MagSectionEditor(self.manager, section, camera_preview=self.camera_preview)
+        editor = MagSectionEditor(self.manager, section, camera_preview=self.camera_preview,
+                                  read_only=self.read_only)
         editor.data_changed.connect(self.data_changed)
         layout.addWidget(editor)
 
@@ -62,9 +66,10 @@ class MagSectionEditor(QWidget):
     PAGE_BYTES = 512
     PAGE_FIELDS = 256
 
-    def __init__(self, manager, section, camera_preview=None):
+    def __init__(self, manager, section, camera_preview=None, read_only=False):
         super().__init__()
         self.manager, self.section = manager, section
+        self.read_only = read_only
         self.camera_preview = camera_preview
         self.fields = manager.document.fields_for(section)
         self.error = QLabel()
@@ -72,7 +77,8 @@ class MagSectionEditor(QWidget):
         self.error.setStyleSheet("color: #d45c4c")
         layout = QVBoxLayout(self)
         info = QLabel(f"{section.name} — 0x{section.start:X} to 0x{section.end:X}, {section.size:,} bytes. "
-                      "Edits keep the size and all following offsets.")
+                      + ("Read only: a reference of what the file holds; edits are made in the tabs that "
+                         "show it decoded." if read_only else "Edits keep the size and all following offsets."))
         info.setWordWrap(True)
         info.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         layout.addWidget(info)
@@ -86,7 +92,8 @@ class MagSectionEditor(QWidget):
         replace = QPushButton("Replace section…")
         replace.clicked.connect(self._replace)
         buttons.addWidget(export)
-        buttons.addWidget(replace)
+        if not read_only:
+            buttons.addWidget(replace)
         buttons.addStretch()
         layout.addLayout(buttons)
         self.views = QTabWidget()
@@ -122,6 +129,8 @@ class MagSectionEditor(QWidget):
         layout.addWidget(self.field_page)
         self.field_table = QTableWidget(0, 4)
         self.field_table.setHorizontalHeaderLabels(["Field", "File offset", "Type", "Value"])
+        if self.read_only:
+            self.field_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.field_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.field_table.cellChanged.connect(self._field_changed)
         layout.addWidget(self.field_table)
@@ -162,6 +171,8 @@ class MagSectionEditor(QWidget):
         layout.addWidget(self.byte_page)
         self.byte_table = QTableWidget(0, 17)
         self.byte_table.setHorizontalHeaderLabels(["File offset"]+[f"{i:X}" for i in range(16)])
+        if self.read_only:
+            self.byte_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.byte_table.setFont(QFont("Consolas", 10))
         self.byte_table.horizontalHeader().setDefaultSectionSize(38)
         self.byte_table.setColumnWidth(0, 110)
