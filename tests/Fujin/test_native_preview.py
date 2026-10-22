@@ -168,6 +168,46 @@ def test_effect_preview_records_the_camera_preview_battle(qapp):
 
 
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim",
+                     "extracted_files/battle/a8def.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0c001.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/d1c003.dat", "extracted_files/battle/c0m009.dat")
+def test_effect_preview_party_pickers_and_effect_alone(qapp):
+    """The party is one file per character by default (d0c000 and d0c001 are both Squall) and any
+    imported character can be picked from the Overview; the effect alone (Battle actors off) is
+    its own recording, the actors loaded but not drawn and no cast before it."""
+    from Fujin import nativepreview
+    from Fujin.fujinwidget import FujinWidget
+    if not nativepreview.RECORDER.is_file():
+        pytest.skip("the effect recorder is not built")
+    fujin = FujinWidget()
+    fujin.import_paths([str(MAGIC / "mag000-049.tim")])
+    fujin.camera_editor.exe_binding.open_path(str(EXE))
+    view = fujin.native_preview
+    view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
+    squall, squall2, gunblade, zell, monster = (str(BATTLE / name) for name in (
+        "d0c000.dat", "d0c001.dat", "d0w000.dat", "d1c003.dat", "c0m009.dat"))
+    preview = fujin.camera_editor.preview
+    preview.add_models([squall, squall2, gunblade, zell, monster])
+    view.refresh_cast()
+    assert [combo.currentData() for combo in view.party_combos] == [squall, zell, None]
+    combo = view.party_combos[2]
+    combo.setCurrentIndex(combo.findData(squall2))
+    combo.activated.emit(combo.currentIndex())                                  # picked here, set there
+    assert preview.party_members()[2] == (squall2, gunblade)
+    assert ("party", 2) in [view.caster_combo.itemData(i) for i in range(view.caster_combo.count())]
+    fujin.select_effect(1)
+    with_actors = view.cast().key()
+    view.actors_check.setChecked(False)
+    assert view.cast().key() != with_actors and not view.cast().actors
+    if os.path.exists(nativepreview.recording_path(1, view.cast().key())):
+        os.remove(nativepreview.recording_path(1, view.cast().key()))
+    assert view.record()
+    wait_for_preview(qapp, view)
+    assert len(view.recording.ticks) == 51                                      # Cure alone, no cast
+    assert view.recording.frame(0, scale=0.125)[1].counts["polygons"] == 0      # no actor drawn
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim",
                      "extracted_files/battle/a8def.tim", "extracted_files/battle/scene.out",
                      "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
                      "extracted_files/battle/c0m014.dat")

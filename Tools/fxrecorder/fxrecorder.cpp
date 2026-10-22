@@ -33,6 +33,8 @@
 // plays before it starts the effect (worked out by Fujin from the dat's sequences); those ticks are
 // recorded too, seen from castcam=ex,ey,ez,ax,ay,az; the camera file's tick 0 is the effect's first]
 // [castafter=a:n,..: the caster's animations while the effect runs, n = 0 looping to the end]
+// [each a:n can be a:n:x:y:z: the caster stands at that model-local offset meanwhile - AnimSeq
+// variables 0x0D-0x0F, the step forward of a cast (Squall's 0, 0, -792), default 0, 0, 0]
 // [overrides=<folder>: unsaved effect-file snapshots, preferred over magic= without changing it]
 // [targets=N] [caster=slot] [seed=N] [camera=<file>: per tick "t ex ey ez ax ay az roll H" - the
 // view the camera player would show, set before the tick; without it a fixed default view]
@@ -58,8 +60,9 @@ struct Opt
 	std::vector<int> target_slots;    // target=K[,K..]: the effect's targets (default: enemy slots 3..)
 	bool placed[7] = {}; int pos[7][3] = {}; int yaw[7] = { 0, 0, 0, 2048, 2048, 2048, 2048 }; // posK= / yawK=
 	int idle[7] = {};                 // idleK=N: the animation each actor loops
-	std::vector<std::pair<int, int>> castplan;  // castplan=a:n,..: (animation, ticks) before the effect
-	std::vector<std::pair<int, int>> castafter; // castafter=a:n,..: while it runs (n = 0: loop it to the end)
+	struct Step { int anim, ticks, offset[3]; };
+	std::vector<Step> castplan;       // castplan=a:n[:x:y:z],..: (animation, ticks, offset) before the effect
+	std::vector<Step> castafter;      // castafter=..: while it runs (n = 0: loop it to the end)
 	bool castcam = false; int16_t castcam_pose[6] = {}; // castcam=ex,ey,ez,ax,ay,az: the view while casting
 	bool cast() const { for (int k = 0; k < 7; k++) if (!body[k].empty()) return true; return false; }
 };
@@ -378,6 +381,36 @@ static bool render_actor(uint32_t e)
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
 }
+// where an actor stands: its based position plus its model-local offset (AnimSeq E5 0x0D-0x0F,
+// BattleStateEntity.model_local_offset) turned by its facing - pre_pre_linkedToAnimationSequence
+// 0x502C25 (TransformCoordinateToCameraSpace with the entity's matrix) every tick
+static void place_actor(uint32_t e, const int offset[3])
+{
+	const int16_t *m = (const int16_t *)(e + 0x40);
+	for (int r = 0; r < 3; r++)
+		*(int32_t *)(e + 0x54 + 4 * r) = *(int16_t *)(e + 0x1C + 2 * r)
+			+ ((m[3 * r] * offset[0] + m[3 * r + 1] * offset[1] + m[3 * r + 2] * offset[2]) >> 12);
+}
+// an actor an effect hides (Cure redraws its target itself) still moves on: its pose is rebuilt
+// and its animation advances, as the entity task does for a hidden entity (0x502BBE)
+static bool advance_actor(uint32_t e)
+{
+	__try
+	{
+		((int (__cdecl *)(uint32_t))0x508F60)(e);
+		if (uint32_t w = weapon_header(e))
+		{
+			((void (__cdecl *)(uint32_t, uint32_t))0x56CE30)(w + 20, w + 36);
+			*(int32_t *)(w + 56) = *(int16_t *)(w + 28);
+			*(int32_t *)(w + 60) = *(int16_t *)(w + 30);
+			*(int32_t *)(w + 64) = *(int16_t *)(w + 32);
+		}
+		if (((int (__cdecl *)(uint32_t))0x5094F0)(e) == 1)
+			((int (__cdecl *)(uint32_t, int))0x509520)(e, *(uint8_t *)(e + 0x6C));
+		return true;
+	}
+	__except (filter(GetExceptionInformation())) { return false; }
+}
 static void render_actors()
 {
 	if (!g_actors) return;
@@ -389,7 +422,7 @@ static void render_actors()
 		uint16_t combat = *(uint16_t *)(e + 2);
 		bool drawn = (flags & 0x02) && !(flags & 0x04) && !(combat & (0x04 | 0x80));
 		uint32_t cur0 = *(uint32_t *)0x1CA8828, pk0 = *(uint32_t *)0x1D8E054;
-		bool ok = drawn ? render_actor(e) : true;
+		bool ok = drawn ? render_actor(e) : advance_actor(e);
 		if (getenv("FXR_ACTORS") && g_tick < 3)
 			printf("tick %d slot %d flags %02X combat %04X drawn %d ok %d nodes +%u packets +%u\n", g_tick, k, flags, combat, drawn, ok,
 				(*(uint32_t *)0x1CA8828 - cur0) / 24, *(uint32_t *)0x1D8E054 - pk0);
@@ -718,13 +751,15 @@ static bool parse(int argc, char **argv)
 		else if (k.size() == 5 && k.compare(0, 4, "idle") == 0 && k[4] >= '0' && k[4] <= '6') O.idle[k[4] - '0'] = atoi(v.c_str());
 		else if (k == "castplan" || k == "castafter")
 		{
-			std::vector<std::pair<int, int>> &plan = k == "castplan" ? O.castplan : O.castafter;
+			std::vector<Opt::Step> &plan = k == "castplan" ? O.castplan : O.castafter;
 			for (size_t at = 0; at < v.size();)
 			{
 				size_t comma = v.find(',', at);
 				std::string part = v.substr(at, comma - at);
-				int anim = 0, ticks = 0;
-				if (sscanf(part.c_str(), "%d:%d", &anim, &ticks) == 2 && ticks >= 0) plan.push_back({ anim, ticks });
+				Opt::Step step = {};
+				if (sscanf(part.c_str(), "%d:%d:%d:%d:%d", &step.anim, &step.ticks, &step.offset[0], &step.offset[1],
+				           &step.offset[2]) >= 2 && step.ticks >= 0)
+					plan.push_back(step);
 				at = comma == std::string::npos ? v.size() : comma + 1;
 			}
 		}
@@ -829,15 +864,19 @@ int main(int argc, char **argv)
 	// effect starts and the caster goes back to its idle animation
 	uint32_t caster = 0x1D972C0 + 0x9C * O.caster;
 	// the caster's playlist: each entry its animation for n ticks (0 = to the end), then the next
-	const std::vector<std::pair<int, int>> *plan = nullptr;
+	const std::vector<Opt::Step> *plan = nullptr;
 	size_t segment = 0;
 	int left = 0;
+	bool resume = false;              // the effect's first step: an animation already playing goes on
 	auto step_plan = [&]() {
 		if (!plan || !g_drawn_slot[O.caster]) return;
 		while (left == 0 && segment < plan->size())
 		{
-			play_animation(caster, (*plan)[segment].first);
-			left = (*plan)[segment].second;
+			const Opt::Step &step = (*plan)[segment];
+			if (!(resume && *(uint8_t *)(caster + 0x6C) == step.anim)) play_animation(caster, step.anim);
+			resume = false;
+			place_actor(caster, step.offset);
+			left = step.ticks;
 			if (left == 0) { plan = nullptr; return; }       // looped to the end
 		}
 	};
@@ -870,7 +909,7 @@ int main(int argc, char **argv)
 		printf("cast: %d ticks before the effect\n", cast_ticks);
 	}
 	// while the effect runs: the caster's castafter (else back to its idle loop)
-	plan = O.castafter.empty() ? nullptr : &O.castafter; segment = 0; left = 0;
+	plan = O.castafter.empty() ? nullptr : &O.castafter; segment = 0; left = 0; resume = true;
 	if (!plan && !O.castplan.empty() && g_drawn_slot[O.caster]) play_animation(caster, O.idle[O.caster]);
 	env_reset();
 	if (!run_setup()) { printf("setup faulted %08lX at eip %08lX addr %08lX\n", g_fault_code, g_fault_eip, g_fault_addr); return 1; }

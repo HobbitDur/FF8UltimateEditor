@@ -11,9 +11,11 @@ restores the normal animations of section 3 afterwards.)
 A Magic cast runs sequence 11 for a character (computeCommandAction 0x48D200: byte_B8150C[command],
 11 for Magic 2). The sequence and BattleActionSequence_Tick_MagicCast 0x50A9A0 talk through the
 actor's state flags (C3 08 / E5 08): 0x10 = the effect's files are loaded, the sequence sets 0x20 to
-start the effect, 0x200 = the effect is over. Squall's: animations 18 and 19, 19 looped until
-0x10, 20 for 13 frames, sets 0x20 (the effect starts), 20 for 3 more, 21 looped until 0x200, then
-22 and 9 back to his stance.
+start the effect, 0x200 = the effect is over. Squall's: animation 8 (the step forward), then
+variable 0x0F = -792 (he now stands that far forward: E5 0x0D-0x0F are the model-local offset the
+entity task adds, turned by the facing), animations 18 and 19, 19 looped until 0x10, 20 for 13
+frames, sets 0x20 (the effect starts), 20 for 3 more, 21 looped until 0x200, then 22 and 9 (the
+step back) and 0x0F = 0.
 
 cast_plan interprets that path - animations played once (the sequence waits for them), A0 (loop
 one and go on), A1 (one frame), B9 (wait), the value opcodes C0-E3 (set / + / - / * / / / and / or
@@ -30,6 +32,7 @@ SEQUENCE_SECTION = {11: 5, 10: 6, 8: 4, 5: 2}       # monster, Edea, weapon, red
 ANIMATION_SECTION = {11: 3, 10: 3, 8: 3, 7: 3}      # monster, Edea, weapon, character body
 MAGIC_SEQUENCE, BASE_SEQUENCE = 11, 1
 STATE_FLAGS = 0x08                                  # C3 08 / E5 08: the actor's state flags
+OFFSET_VARIABLES = (0x0D, 0x0E, 0x0F)               # E5: the model-local offset x, y, z (z = forward)
 LOADED, START_EFFECT, EFFECT_OVER = 0x10, 0x20, 0x200
 END, TERMINATE = 0xA2, 0xA9
 _JUMP_CONDITION = {0xE6: lambda v: True, 0xE7: lambda v: v > 0, 0xE8: lambda v: v >= 0, 0xE9: lambda v: v == 0,
@@ -116,9 +119,10 @@ def idle_animation(vm, sequences):
 
 
 def cast_plan(vm, sequences, frame_counts, sequence_id=MAGIC_SEQUENCE, max_ticks=150):
-    """(before, during): [(animation, ticks)] the actor plays from the start of its action sequence
-    to the start of the effect, and from there while the effect runs - its last entry has 0 ticks
-    when the sequence loops it until the effect is over. ([], []) when the sequence is missing."""
+    """(before, during): [(animation, ticks, (x, y, z) offset)] the actor plays from the start of
+    its action sequence to the start of the effect, and from there while the effect runs - its last
+    entry has 0 ticks when the sequence loops it until the effect is over; the offset is where it
+    stands meanwhile (model-local, from its place). ([], []) when the sequence is missing."""
     sequence = sequences.get(sequence_id, b"")
     commands = list(iter_command(vm, sequence))
     index_of = {address: index for index, (address, _op, _parameters) in enumerate(commands)}
@@ -132,10 +136,11 @@ def cast_plan(vm, sequences, frame_counts, sequence_id=MAGIC_SEQUENCE, max_ticks
         count = min(count, max_ticks - ticks)
         if animation is None or count <= 0:
             return
-        if plan and plan[-1][0] == animation:
-            plan[-1] = (animation, plan[-1][1] + count)
+        offset = tuple(variables.get(variable, 0) for variable in OFFSET_VARIABLES)
+        if plan and plan[-1][0] == animation and plan[-1][2] == offset:
+            plan[-1] = (animation, plan[-1][1] + count, offset)
         else:
-            plan.append((animation, count))
+            plan.append((animation, count, offset))
         ticks += count
 
     while 0 <= index < len(commands) and steps < 5000 and ticks < max_ticks:
@@ -189,6 +194,6 @@ def cast_plan(vm, sequences, frame_counts, sequence_id=MAGIC_SEQUENCE, max_ticks
                 if started and target < address and during and during[-1][1] >= 30:
                     break                                       # waiting for the effect to end
                 index = index_of[target]
-    if started and during:
-        during[-1] = (during[-1][0], 0) if during[-1][1] >= 30 else during[-1]
+    if started and during and during[-1][1] >= 30:
+        during[-1] = (during[-1][0], 0, during[-1][2])
     return (before, during) if started else (before, [])

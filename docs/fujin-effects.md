@@ -22,9 +22,12 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   **Effect preview** (below the Overview) shows what an effect run by the exe's own code (Cure,
   Fire, most spells, enemy attacks) draws, tick by tick at 15 per second, in a real battle: the
   Camera tab preview's (its party with their weapons, its encounter's enemies or its imported
-  monsters, its caster and target - the **Battle** (scene.out encounter or manual placement),
-  **Caster** and **Target** pickers here are the same ones; opening Battle sets the battle up when
-  its models are still waiting). **Play** records first when there is no recording yet; edits of
+  monsters, its caster and target - the **Party**, **Battle** (scene.out encounter or manual
+  placement), **Caster** and **Target** pickers here are the same ones; opening Battle sets the
+  battle up when its models are still waiting; imported characters fill the party one file per
+  character, any other is picked in Party, its weapon in the Camera tab). **Battle actors** off
+  records the effect alone: the actors are loaded but not drawn and no cast plays (what the effect
+  redraws itself, as Cure its target, stays). **Play** records first when there is no recording yet; edits of
   the effect's files refresh the recording by themselves, **Record again** is for what Fujin does
   not see change (a camera keyframe, the Camera tab's script inputs). Recording runs the effect's
   original code in FF8UltimateEditor's effect recorder
@@ -33,7 +36,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   the opened FF8_EN.exe and loads each actor through the game's own loaders into its battle slot
   (party 0-2, enemies 3-6): monsters with `battle_monster_dat_loader`, characters as the battle
   start does (`initWeaponAnim` 0x502670: body `Battle_isLoadSquallEtc` 0x5077B0, weapon
-  `Battle_LoadWeaponry` 0x507BF0, animations bound by `setComFileData` 0x502270), each standing
+  `Battle_LoadWeaponry` 0x507BF0, on their normal animations), each standing
   and facing where the Camera tab's setup puts it. Record needs an imported caster and target
   model (an effect draws on its target: Cure redraws it); an actor the battle names but whose file
   is not imported (an encounter enemy, a weapon) is left out and named in the status. A battle
@@ -52,10 +55,13 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   `byte_B8150C`): what it plays until it sets the "start the effect" state flag 0x20
   (`BattleActionSequence_Tick_MagicCast` 0x50A9A0; the effect's files count as loaded at once),
   recorded too and seen wide (the Camera tab setup's starting view), then while the effect runs -
-  Squall: animations 8, 18, 19, 20, then 21 looped
+  Squall: animation 8, the step forward, after which he stands 792 units forward (the sequence's
+  model-local offset, `E5 0x0D-0x0F`, turned by his facing as the entity task does at 0x502C25),
+  18, 19, 20 (going on into the effect), then 21 looped
   (`Battle_QueueAnimation` 0x509520, `AdvanceAnimationBy1AndCheckCompletion` 0x5094F0,
   `BattleModel_RebuildBodyAndWeaponMatrices` 0x508F60, `BattleEntity_ComputeViewBounds` 0x5086F0,
-  `BS_RenderBattleEntity` 0x502D40) unless the effect hides them, and orders everything by depth
+  `BS_RenderBattleEntity` 0x502D40) unless the effect hides them (a hidden one still moves on,
+  as the entity task does: Cure redraws its target in its current pose), and orders everything by depth
   from the GPU emulation's execution list; a draw-mode packet (E1, no depth) goes right before the
   primitives inserted ahead of it, which the console's ordering table runs after it (Cure's rays
   take their additive mode from one). The

@@ -41,8 +41,8 @@ from pathlib import Path
 
 from PyQt6.QtCore import QProcess, Qt, QTimer
 from PyQt6.QtGui import QCursor, QImage, QPixmap
-from PyQt6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSlider,
-                             QVBoxLayout, QWidget)
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
+                             QSlider, QVBoxLayout, QWidget)
 
 from Common.apppaths import app_path
 from Common.filebinding import FileBinding
@@ -86,13 +86,19 @@ class BattleCast:
     camera: list = None
     not_imported: list = field(default_factory=list)   # actors' files the cast names, not imported
     idle: dict = field(default_factory=dict)           # {slot: the animation it loops}
-    cast_before: list = field(default_factory=list)    # [(animation, ticks)] the caster plays before the effect
+    cast_before: list = field(default_factory=list)    # [(animation, ticks, offset)] the caster plays before the effect
     cast_during: list = field(default_factory=list)    # ... while it runs (last ticks 0 = to the end)
     cast_camera: tuple = None                          # (eye, target) seen during the cast
+    actors: bool = True                                # False: the actors are loaded, not drawn (the effect alone)
 
     def key(self):
-        """The cache tag of this cast: its files (where they are and their state on disk) and roles."""
-        parts = [f"c{self.caster}t{self.target}"]
+        """The cache tag of this cast: its files (where they are and their state on disk), roles,
+        whether the actors are drawn and the recorder build (a new one records anew)."""
+        parts = [f"c{self.caster}t{self.target}a{int(self.actors)}"]
+        try:
+            parts.append(f"recorder|{RECORDER.stat().st_mtime_ns}")
+        except OSError:
+            pass
         for slot, files in sorted(self.slots.items()):
             for path in files:
                 if not path:
@@ -105,6 +111,12 @@ class BattleCast:
         names = "_".join(os.path.splitext(os.path.basename(self.slots[slot][0]))[0]
                          for slot in (self.caster, self.target) if slot in self.slots) or "none"
         return f"{names}_{hashlib.sha256('/'.join(parts).encode('utf-8')).hexdigest()[:10]}"
+
+
+def _plan_text(plan):
+    """The recorder's a:n[:x:y:z] list of a cast plan (the offset only when it moves)."""
+    return ",".join(f"{animation}:{ticks}" + ("".join(f":{v}" for v in offset) if any(offset) else "")
+                    for animation, ticks, offset in plan)
 
 
 def recording_path(effect_id, cast_key="none"):
@@ -224,6 +236,20 @@ class NativePreviewView(QWidget):
         self.target_combo.setToolTip("Who the effect is cast on. Record again to apply.")
         self.caster_combo.activated.connect(lambda _i: self._pick(self.caster_combo, "caster_combo"))
         self.target_combo.activated.connect(lambda _i: self._pick(self.target_combo, "target_combo"))
+        # the Camera tab preview's party, mirrored too (its weapons are chosen there)
+        self.party_combos = [QComboBox() for _slot in range(3)]
+        for slot, combo in enumerate(self.party_combos):
+            combo.setToolTip(f"Party slot {slot}: any imported character (Import complementary: Camera preview "
+                             f"models), with its first imported weapon - the Camera tab's preview picks another. "
+                             f"Record again to apply.")
+            combo.activated.connect(lambda _i, row=slot: self._pick_party(row))
+        self.actors_check = QCheckBox("Battle actors")
+        self.actors_check.setChecked(True)
+        self.actors_check.setToolTip("Draw the caster, the target and the others, with the caster's cast before the "
+                                     "effect. Unchecked: the effect alone (the actors are still loaded, unseen: "
+                                     "the effect's code places itself on them; one it redraws itself, as Cure "
+                                     "does its target, stays).")
+        self.actors_check.toggled.connect(lambda _on: (self._cast_changed(), self._update_controls()))
         # the Camera tab setup's scene.out encounter: enemies and party where that battle puts them
         self.encounter_combo = _BattleCombo(self._load_battle)
         self.encounter_combo.setToolTip("Where the actors stand: an encounter of scene.out (Import complementary: "
@@ -233,7 +259,7 @@ class NativePreviewView(QWidget):
         self.encounter_combo.activated.connect(lambda _i: self._pick_encounter())
         self._watched_encounters = None
         if cast_source is not None:
-            for combo in (cast_source.caster_combo, cast_source.target_combo):
+            for combo in (cast_source.caster_combo, cast_source.target_combo, *cast_source.party_combos):
                 combo.currentIndexChanged.connect(lambda _i: self._cast_refresh.start())
             cast_source.models_changed.connect(self._cast_refresh.start)
         self.view_mode = QComboBox()
@@ -262,6 +288,11 @@ class NativePreviewView(QWidget):
         self._prerender = QTimer(self)
         self._prerender.setInterval(0)
         self._prerender.timeout.connect(self._prerender_step)
+        party_row = QHBoxLayout()
+        party_row.addWidget(QLabel("Party:"))
+        for combo in self.party_combos:
+            party_row.addWidget(combo, 1)
+        party_row.addWidget(self.actors_check)
         cast_row = QHBoxLayout()
         cast_row.addWidget(QLabel("Battle:"))
         cast_row.addWidget(self.encounter_combo, 2)
@@ -277,6 +308,7 @@ class NativePreviewView(QWidget):
         controls.addWidget(self.frame_label)
         layout = QVBoxLayout(self)
         layout.addWidget(self.intro)
+        layout.addLayout(party_row)
         layout.addLayout(cast_row)
         layout.addLayout(controls)
         layout.addWidget(self.scroll, 1)
@@ -308,6 +340,18 @@ class NativePreviewView(QWidget):
                     for index in range(source.count()):
                         mine.addItem(source.itemText(index), source.itemData(index))
                     mine.setCurrentIndex(source.currentIndex())
+            finally:
+                mine.blockSignals(False)
+        for slot, mine in enumerate(self.party_combos):
+            source = self.cast_source.party_combos[slot] if self.cast_source is not None else None
+            mine.blockSignals(True)
+            try:
+                mine.clear()
+                if source is not None:
+                    for index in range(source.count()):
+                        mine.addItem(source.itemText(index), source.itemData(index))
+                    mine.setCurrentIndex(source.currentIndex())
+                mine.setEnabled(source is not None and source.count() > 1)
             finally:
                 mine.blockSignals(False)
         self._refresh_encounters()
@@ -356,6 +400,16 @@ class NativePreviewView(QWidget):
         source.setCurrentIndex(index)
         self.refresh_cast()
 
+    def _pick_party(self, slot):
+        """A party pick here is the Camera tab preview's (it fills the caster / target pickers)."""
+        if self.cast_source is None:
+            return
+        source = self.cast_source.party_combos[slot]
+        index = source.findData(self.party_combos[slot].currentData())
+        if index >= 0:
+            source.setCurrentIndex(index)
+        self.refresh_cast()
+
     def _pick(self, mine, name):
         """A pick here is the Camera tab preview's pick (it moves the other role when needed)."""
         source = getattr(self.cast_source, name, None)
@@ -382,7 +436,8 @@ class NativePreviewView(QWidget):
             elif body:
                 not_imported.append(os.path.basename(body))
         return BattleCast(slots, cast.caster, cast.target, cast.positions, cast.yaws, cast.camera,
-                          sorted(set(not_imported)), cast.idle, cast.cast_before, cast.cast_during, cast.cast_camera)
+                          sorted(set(not_imported)), cast.idle, cast.cast_before, cast.cast_during, cast.cast_camera,
+                          self.actors_check.isChecked())
 
     def _cast_changed(self):
         """Show the recording already made with this cast, if any."""
@@ -486,15 +541,17 @@ class NativePreviewView(QWidget):
             args.append(f"yaw{slot}={int(round(cast.yaws.get(slot, 0.0) / (2 * math.pi) * 4096)) & 4095}")
         if not cast.slots:
             args.append("model=-1")
+        if not cast.actors:
+            args.append("actors=0")          # the effect alone: no cast either
         # what each actor plays (worked out from its dat's sequences, FF8GameData.dat.actoranimplan):
         # its idle loop, and the caster's cast before and while the effect runs, seen wide
         args += [f"idle{slot}={animation}" for slot, animation in sorted(cast.idle.items()) if slot in cast.slots]
-        if cast.cast_before:
-            args.append("castplan=" + ",".join(f"{animation}:{ticks}" for animation, ticks in cast.cast_before))
+        if cast.cast_before and cast.actors:
+            args.append("castplan=" + _plan_text(cast.cast_before))
             eye, target = cast.cast_camera or (INITIAL_EYE, INITIAL_TARGET)
             args.append("castcam=" + ",".join(str(int(round(v))) for v in (*eye, *target)))
-        if cast.cast_during:
-            args.append("castafter=" + ",".join(f"{animation}:{ticks}" for animation, ticks in cast.cast_during))
+        if cast.cast_during and cast.actors:
+            args.append("castafter=" + _plan_text(cast.cast_during))
         self._not_imported = cast.not_imported
         self.camera_used = False
         manager, track = self.camera_track(self.effect_id)

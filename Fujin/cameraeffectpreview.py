@@ -59,6 +59,11 @@ def _name(path):
     return os.path.basename(path)
 
 
+def _character_digit(path):
+    """The character a d?c###.dat is (its ? digit: 0 Squall, 1 Zell...)."""
+    return _CHARACTER_FILE.match(_name(path)).group(1).lower()
+
+
 def _index_of(combo, data):
     """The row whose data equals data (QComboBox.findData only matches the very same Python object)."""
     return next((row for row in range(combo.count()) if combo.itemData(row) == data), -1)
@@ -238,7 +243,8 @@ class CameraEffectPreview(QWidget):
 
     def add_models(self, paths):
         """Offer characters (d?c), their weapons (d?w) and monsters (c0m), loaded when used. New
-        characters fill the empty party slots, each with its first weapon."""
+        characters fill the empty party slots, each with its first weapon - one file per character
+        (d0c000 and d0c001 are both Squall), as a battle's party."""
         added = [path for path in dict.fromkeys(paths) if path not in self._model_paths
                  and (_MONSTER_FILE.match(_name(path)) or _CHARACTER_FILE.match(_name(path))
                       or _WEAPON_FILE.match(_name(path)))]
@@ -250,7 +256,8 @@ class CameraEffectPreview(QWidget):
         self._model_paths.extend(added)
         party = [combo.currentData() for combo in self.party_combos]
         for path in self.character_paths():
-            if path not in party and None in party:
+            in_party = {_character_digit(member) for member in party if member}
+            if path not in party and None in party and _character_digit(path) not in in_party:
                 party[party.index(None)] = path
         weapons = [combo.currentData() for combo in self.weapon_combos]
         self._updating = True
@@ -283,7 +290,7 @@ class CameraEffectPreview(QWidget):
 
     def weapon_paths(self, character_path):
         """The imported weapons of a character: d?w###.dat with its d?c digit."""
-        digit = _CHARACTER_FILE.match(_name(character_path)).group(1).lower()
+        digit = _character_digit(character_path)
         return [path for path in self._model_paths
                 if (match := _WEAPON_FILE.match(_name(path))) and match.group(1).lower() == digit]
 
