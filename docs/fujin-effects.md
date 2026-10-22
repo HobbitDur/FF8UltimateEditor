@@ -48,7 +48,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   (`Battle_QueueAnimation` 0x509520, `AdvanceAnimationBy1AndCheckCompletion` 0x5094F0,
   `BattleModel_RebuildBodyAndWeaponMatrices` 0x508F60, `BattleEntity_ComputeViewBounds` 0x5086F0,
   `BS_RenderBattleEntity` 0x502D40) unless the effect hides them, and orders everything by depth
-  from the GPU emulation's execution list. The
+  from the GPU emulation's execution list; a draw-mode packet (E1, no depth) goes right before the
+  primitives inserted ahead of it, which the console's ordering table runs after it (Cure's rays
+  take their additive mode from one). The
   camera is the shot the Camera tab's preview plays for the effect (its track: exe, created or
   `.bcam`), so both previews show the same view. Fujin draws the recording with OpenGL at the
   battle's 15 frames per second (`FF8GameData/psxgpu/glrender.py`: VRAM as a 16-bit integer

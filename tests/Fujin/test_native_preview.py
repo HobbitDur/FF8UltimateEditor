@@ -156,6 +156,12 @@ def test_effect_preview_records_the_camera_preview_battle(qapp):
     assert not gpu.missing_pages and gpu.counts["polygons"] > 150              # Squall drawn, textured
     image, gpu = view.recording.frame(16, scale=0.125)
     assert not gpu.missing_pages and gpu.counts["polygons"] > 100              # the effect, all textured
+    # Cure's rays (untextured semi-transparent polygons) take their mode from the draw-mode packet
+    # inserted after them, which the console runs first: B + F, light added, not a darkening B/2 + F/2
+    ordered = [words for tick in view.recording.ticks for _bucket, _order, words in tick.packets]
+    rays = [index for index, words in enumerate(ordered) if words and words[0] >> 24 in (0x32, 0x3A)]
+    assert rays and all(ordered[index - 1][0] >> 24 == 0xE1 and (ordered[index - 1][0] >> 5) & 3 == 1
+                        for index in rays)
     assert (image.astype(int).sum(axis=2) > 200).mean() > 0.01                 # in the game window
 
 
