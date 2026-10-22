@@ -151,10 +151,12 @@ def test_effect_preview_records_the_camera_preview_battle(qapp):
         os.remove(nativepreview.recording_path(1, view.cast().key()))
     assert view.record()
     wait_for_preview(qapp, view)
-    assert view.recording is not None and len(view.recording.ticks) == 51 and view.camera_used
+    # the monster's cast (its sequence 11, seen wide), then Cure's 51 ticks
+    cast_ticks = len(view.recording.ticks) - 51
+    assert view.recording is not None and cast_ticks > 0 and view.camera_used
     image, gpu = view.recording.frame(0, scale=0.125)
     assert not gpu.missing_pages and gpu.counts["polygons"] > 150              # Squall drawn, textured
-    image, gpu = view.recording.frame(16, scale=0.125)
+    image, gpu = view.recording.frame(cast_ticks + 16, scale=0.125)
     assert not gpu.missing_pages and gpu.counts["polygons"] > 100              # the effect, all textured
     # Cure's rays (untextured semi-transparent polygons) take their mode from the draw-mode packet
     # inserted after them, which the console runs first: B + F, light added, not a darkening B/2 + F/2
@@ -211,7 +213,7 @@ def test_effect_preview_plays_a_scene_out_encounter(qapp):
     view.set_effect(1, "Cure")
     view.play_button.setChecked(True)                                           # records, then plays
     wait_for_preview(qapp, view)
-    assert view.recording is not None and len(view.recording.ticks) == 51 and view.timer.isActive()
+    assert view.recording is not None and len(view.recording.ticks) > 51 and view.timer.isActive()   # cast + Cure
     view.play_button.setChecked(False)
 
 

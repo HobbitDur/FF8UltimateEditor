@@ -28,7 +28,11 @@
 // slot - a monster c0mNNN.dat or a character d?cNNN.dat (its d?wNNN.dat with weaponK=<file>);
 // slots without a file stay empty] [target=K[,K..]: the effect's targets, any slot] [posK=x,y,z /
 // yawK=N (4096ths of a turn): where slot K stands and faces, default fixed places, party facing
-// the enemies]
+// the enemies] [idleK=N: the animation slot K loops, default 0] [castplan=a:n,b:n,..: before the
+// effect the caster plays animation a for n ticks (looping), then b... - what its action sequence
+// plays before it starts the effect (worked out by Fujin from the dat's sequences); those ticks are
+// recorded too, seen from castcam=ex,ey,ez,ax,ay,az; the camera file's tick 0 is the effect's first]
+// [castafter=a:n,..: the caster's animations while the effect runs, n = 0 looping to the end]
 // [overrides=<folder>: unsaved effect-file snapshots, preferred over magic= without changing it]
 // [targets=N] [caster=slot] [seed=N] [camera=<file>: per tick "t ex ey ez ax ay az roll H" - the
 // view the camera player would show, set before the tick; without it a fixed default view]
@@ -53,6 +57,10 @@ struct Opt
 	std::string body[7], weapon[7];   // slotK= / weaponK=: the battle's cast, one file per slot
 	std::vector<int> target_slots;    // target=K[,K..]: the effect's targets (default: enemy slots 3..)
 	bool placed[7] = {}; int pos[7][3] = {}; int yaw[7] = { 0, 0, 0, 2048, 2048, 2048, 2048 }; // posK= / yawK=
+	int idle[7] = {};                 // idleK=N: the animation each actor loops
+	std::vector<std::pair<int, int>> castplan;  // castplan=a:n,..: (animation, ticks) before the effect
+	std::vector<std::pair<int, int>> castafter; // castafter=a:n,..: while it runs (n = 0: loop it to the end)
+	bool castcam = false; int16_t castcam_pose[6] = {}; // castcam=ex,ey,ez,ax,ay,az: the view while casting
 	bool cast() const { for (int k = 0; k < 7; k++) if (!body[k].empty()) return true; return false; }
 };
 static Opt O;
@@ -344,12 +352,12 @@ static uint32_t weapon_header(uint32_t e) { return *(uint32_t *)(e + 0x78); }
 // the battle's models, as each entity's task draws them every tick (pre_pre_linkedToAnimationSequence
 // 0x502AB0: BattleEntity_ComputeViewBounds 0x5086F0 + BS_RenderBattleEntity 0x502D40) unless the entity
 // is hidden - an effect that redraws its target (Cure's overlay) hides it for that time. Each
-// actor plays animation 0 (the wait pose) in a loop, body and weapon in lockstep, one frame per
-// tick as the battle does: the tick's frame is drawn, then the animation advances
-// (AdvanceAnimationBy1AndCheckCompletion 0x5094F0; at its end Battle_QueueAnimation 0x509520
-// starts it again). The draw composes the bone matrices in place, so they are rebuilt from the
-// pose first (BattleModel_RebuildBodyAndWeaponMatrices 0x508F60), with the weapon's attach
-// transform (pre_pre_linkedToAnimationSequence 0x502CEA)
+// actor plays its animation (idleK, or the caster's cast plan) in a loop, body and weapon in
+// lockstep, one frame per tick as the battle does: the tick's frame is drawn, then the animation
+// advances (AdvanceAnimationBy1AndCheckCompletion 0x5094F0; at its end Battle_QueueAnimation
+// 0x509520 starts it again) - no sequence VM. The draw composes the bone matrices in place, so they
+// are rebuilt from the pose first (BattleModel_RebuildBodyAndWeaponMatrices 0x508F60), with the
+// weapon's attach transform (pre_pre_linkedToAnimationSequence 0x502CEA)
 static bool render_actor(uint32_t e)
 {
 	__try
@@ -365,7 +373,7 @@ static bool render_actor(uint32_t e)
 		((int (__cdecl *)(uint32_t))0x5086F0)(e);
 		((int (__cdecl *)(uint32_t))0x502D40)(e);
 		if (((int (__cdecl *)(uint32_t))0x5094F0)(e) == 1)                    // READ_ANIMATION_RETURN_ANIMATION_COMPLETE
-			((int (__cdecl *)(uint32_t, int))0x509520)(e, 0);
+			((int (__cdecl *)(uint32_t, int))0x509520)(e, *(uint8_t *)(e + 0x6C));   // anim_cmd.current_animation_id (BYTE)
 		return true;
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
@@ -495,11 +503,12 @@ static bool run_queue(uint32_t q, int *r)
 static bool call0(uint32_t fn) { __try { ((void (__cdecl *)())fn)(); return true; } __except (filter(GetExceptionInformation())) { return false; } }
 // model=N: every slot gets c0mN.dat through the game's loader (BattleTask_DispatchComEntityLoad
 // 0x507080 queues battle_monster_dat_loader in queue 0x1D98B40), posed on animation 0 frame 0
-static bool pose_model(uint32_t e)
+// Battle_QueueAnimation 0x509520: body and weapon on animation `anim`, frame 0 (anim_cmd +0 keeps it)
+static bool play_animation(uint32_t e, int anim)
 {
 	__try
 	{
-		((int (__cdecl *)(uint32_t, int))0x509520)(e, 0);   // Battle_QueueAnimation: body and weapon, frame 0
+		((int (__cdecl *)(uint32_t, int))0x509520)(e, anim);
 		return true;
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
@@ -538,7 +547,7 @@ static int body_com_id(const std::string &path)
 }
 // a party slot as initWeaponAnim 0x502670 + initAnimationSequenceAtStartBattle 0x5027D0 set it: com
 // id, weapon slot, then the body (Battle_isLoadSquallEtc) and its weapon file (Battle_LoadWeaponry,
-// com id + 0x1000), bound with their animations (setComFileData 0x502270, mask 4)
+// com id + 0x1000), on their normal animations
 static bool load_character(uint32_t e, int slot, int com, const std::string &body, const std::string &weapon)
 {
 	*(uint8_t *)(e + 4) = (uint8_t)com;
@@ -552,13 +561,9 @@ static bool load_character(uint32_t e, int slot, int com, const std::string &bod
 	*(uint32_t *)(e + 0x74) = 0x1D96ED0 + 64 * slot;                // BattleStateEntity[slot]
 	if (!load_entity(com, slot, body)) return false;
 	if (com != 7 && !weapon.empty() && !load_entity(0x1000 + com, slot, weapon)) return false;
-	uint32_t extra = *(uint32_t *)0x1D999BC + 12320 * slot;          // g_PartyExtraAnimSlots[slot]
-	auto bind = (void (__cdecl *)(uint32_t, uint32_t, int))0x502270;
-	if (*(uint32_t *)(extra + 8))
-	{
-		bind(e + 0x60, extra, 4);
-		if (w) bind(w, extra + 16, 4);
-	}
+	// No setComFileData 0x502270 binding: initAnimationSequenceAtStartBattle binds the body's
+	// section 7 (g_PartyExtraAnimSlots: ONE animation, the battle entrance) for sequence 8, whose
+	// "AC 00" restores the 42 normal ones (section 3) afterwards - the actors here are past that
 	*(uint32_t *)(e + 0x68) = *(uint32_t *)(e + 0x64);              // comFileDataBis
 	if (w) *(uint32_t *)(w + 8) = *(uint32_t *)(w + 4);
 	return true;
@@ -597,11 +602,16 @@ static bool load_models()
 		else if (!load_entity(0x10 + O.model, slot, "")) return false;
 		g_drawn_slot[slot] = true;
 		*(uint32_t *)(e + 0x7C) = 0xFFFFFFFF;       // every object visible
+		// its state block (BattleStateEntity[slot]): read by the animation code, no sequence runs
+		uint8_t *state = (uint8_t *)(0x1D96ED0 + 64 * slot);
+		memset(state, 0, 64);
+		*(uint32_t *)(e + 0x74) = (uint32_t)state;
+		*(uint32_t *)(e + 8) = 0;                    // anim_status
 		// the neutral battle facing (resetBasedRotation 0x502070): party 0, monsters turned to them
 		*(int16_t *)(e + 12) = 0; *(int16_t *)(e + 14) = (int16_t)O.yaw[slot]; *(int16_t *)(e + 16) = 0;
 		((void (__cdecl *)(uint32_t, uint32_t))0x56CE30)(e + 12, e + 0x40);
 		env_reset();
-		pose_model(e);
+		play_animation(e, O.idle[slot]);
 		*(uint32_t *)(e + 0x28) = 0x808080;          // neutral model tint
 	}
 	g_pending.clear();
@@ -705,6 +715,25 @@ static bool parse(int argc, char **argv)
 			O.placed[s] = sscanf(v.c_str(), "%d,%d,%d", &O.pos[s][0], &O.pos[s][1], &O.pos[s][2]) == 3;
 		}
 		else if (k.size() == 4 && k.compare(0, 3, "yaw") == 0 && k[3] >= '0' && k[3] <= '6') O.yaw[k[3] - '0'] = atoi(v.c_str()) & 4095;
+		else if (k.size() == 5 && k.compare(0, 4, "idle") == 0 && k[4] >= '0' && k[4] <= '6') O.idle[k[4] - '0'] = atoi(v.c_str());
+		else if (k == "castplan" || k == "castafter")
+		{
+			std::vector<std::pair<int, int>> &plan = k == "castplan" ? O.castplan : O.castafter;
+			for (size_t at = 0; at < v.size();)
+			{
+				size_t comma = v.find(',', at);
+				std::string part = v.substr(at, comma - at);
+				int anim = 0, ticks = 0;
+				if (sscanf(part.c_str(), "%d:%d", &anim, &ticks) == 2 && ticks >= 0) plan.push_back({ anim, ticks });
+				at = comma == std::string::npos ? v.size() : comma + 1;
+			}
+		}
+		else if (k == "castcam")
+		{
+			int c[6];
+			O.castcam = sscanf(v.c_str(), "%d,%d,%d,%d,%d,%d", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5]) == 6;
+			for (int i = 0; i < 6; i++) O.castcam_pose[i] = (int16_t)c[i];
+		}
 		else if (k.size() == 7 && k.compare(0, 6, "weapon") == 0 && k[6] >= '0' && k[6] <= '6') O.weapon[k[6] - '0'] = v;
 	}
 	return O.eff > 0 && O.eff < 400 && !O.exe.empty() && !O.out.empty();
@@ -715,7 +744,7 @@ int main(int argc, char **argv)
 	setvbuf(stdout, nullptr, _IONBF, 0);
 	if (!parse(argc, argv))
 	{
-		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [overrides=<dir>] [model=N] [modelfile=<file>] [slotK=<file>] [weaponK=<file>] [target=K,..] [actors=0|1] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
+		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [overrides=<dir>] [model=N] [modelfile=<file>] [slotK=<file>] [weaponK=<file>] [target=K,..] [idleK=N] [castplan=a:n,..] [castafter=a:n,..] [castcam=ex,ey,ez,ax,ay,az] [actors=0|1] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
 		return 1;
 	}
 	if (strcmp(argv[argc - 1], "child") != 0)
@@ -794,24 +823,74 @@ int main(int argc, char **argv)
 	else printf("missing battle file a8def.tim (the battle's shared effect textures)\n");
 	if ((O.cast() || O.model >= 0) && !load_models()) return 1;
 	call0(0x56F9A0); // BS_memsetVars2: hit-effect queue (screen fades...)
+	int t = 0, cast_ticks = 0;
+	// The cast: the caster plays its cast plan (what its action sequence plays before the effect
+	// starts, BattleActionSequence_Tick_MagicCast 0x50A9A0), the ticks recorded from castcam; then the
+	// effect starts and the caster goes back to its idle animation
+	uint32_t caster = 0x1D972C0 + 0x9C * O.caster;
+	// the caster's playlist: each entry its animation for n ticks (0 = to the end), then the next
+	const std::vector<std::pair<int, int>> *plan = nullptr;
+	size_t segment = 0;
+	int left = 0;
+	auto step_plan = [&]() {
+		if (!plan || !g_drawn_slot[O.caster]) return;
+		while (left == 0 && segment < plan->size())
+		{
+			play_animation(caster, (*plan)[segment].first);
+			left = (*plan)[segment].second;
+			if (left == 0) { plan = nullptr; return; }       // looped to the end
+		}
+	};
+	auto spend_plan = [&]() { if (plan && left > 0 && --left == 0) { segment++; if (segment >= plan->size()) plan = nullptr; } };
+	if (!O.castplan.empty() && g_drawn_slot[O.caster])
+	{
+		plan = &O.castplan; segment = 0; left = 0;
+		for (; plan && t < 300; t++)
+		{
+			step_plan();
+			g_tick = t;
+			dump_vram_queue();
+			env_reset();
+			if (O.castcam)
+			{
+				memcpy((void *)0xB8B7F0, O.castcam_pose, 6);
+				memcpy((void *)0xB8B7F8, O.castcam_pose + 3, 6);
+				*(int16_t *)0x1D977A2 = 0;
+				call0(0x5033E0);
+			}
+			g_ins.clear(); g_pending.clear();
+			g_rec = true;
+			render_actors();
+			g_rec = false;
+			dump_vram_queue();
+			write_tick(t);
+			spend_plan();
+		}
+		cast_ticks = t;
+		printf("cast: %d ticks before the effect\n", cast_ticks);
+	}
+	// while the effect runs: the caster's castafter (else back to its idle loop)
+	plan = O.castafter.empty() ? nullptr : &O.castafter; segment = 0; left = 0;
+	if (!plan && !O.castplan.empty() && g_drawn_slot[O.caster]) play_animation(caster, O.idle[O.caster]);
 	env_reset();
 	if (!run_setup()) { printf("setup faulted %08lX at eip %08lX addr %08lX\n", g_fault_code, g_fault_eip, g_fault_addr); return 1; }
 	printf("effect %d: setup ok\n", O.eff);
 	std::vector<Pending> keep = g_pending;
-	int t = 0;
 	for (; t < O.ticks; t++)
 	{
 		g_tick = t;
-		g_cur_tick_pad = t;
+		g_cur_tick_pad = t - cast_ticks;
 		apply_pending(keep);
 		dump_vram_queue();                 // uploads queued by the setup / the loads applied before this tick
 		env_reset();
-		set_camera(t);
+		set_camera(t - cast_ticks);
 		g_ins.clear(); g_pending.clear();
 		g_rec = true;
 		int r = 0;
+		step_plan();
 		bool ok = run_tick(&r);
 		if (ok) render_actors();
+		spend_plan();
 		g_rec = false;
 		if (!ok) { printf("tick %d faulted %08lX at eip %08lX addr %08lX\n", t, g_fault_code, g_fault_eip, g_fault_addr); break; }
 		dump_vram_queue();                 // uploads this tick queued

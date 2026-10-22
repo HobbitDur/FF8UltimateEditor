@@ -85,6 +85,10 @@ class BattleCast:
     yaws: dict = field(default_factory=dict)
     camera: list = None
     not_imported: list = field(default_factory=list)   # actors' files the cast names, not imported
+    idle: dict = field(default_factory=dict)           # {slot: the animation it loops}
+    cast_before: list = field(default_factory=list)    # [(animation, ticks)] the caster plays before the effect
+    cast_during: list = field(default_factory=list)    # ... while it runs (last ticks 0 = to the end)
+    cast_camera: tuple = None                          # (eye, target) seen during the cast
 
     def key(self):
         """The cache tag of this cast: its files (where they are and their state on disk) and roles."""
@@ -378,7 +382,7 @@ class NativePreviewView(QWidget):
             elif body:
                 not_imported.append(os.path.basename(body))
         return BattleCast(slots, cast.caster, cast.target, cast.positions, cast.yaws, cast.camera,
-                          sorted(set(not_imported)))
+                          sorted(set(not_imported)), cast.idle, cast.cast_before, cast.cast_during, cast.cast_camera)
 
     def _cast_changed(self):
         """Show the recording already made with this cast, if any."""
@@ -482,6 +486,15 @@ class NativePreviewView(QWidget):
             args.append(f"yaw{slot}={int(round(cast.yaws.get(slot, 0.0) / (2 * math.pi) * 4096)) & 4095}")
         if not cast.slots:
             args.append("model=-1")
+        # what each actor plays (worked out from its dat's sequences, FF8GameData.dat.actoranimplan):
+        # its idle loop, and the caster's cast before and while the effect runs, seen wide
+        args += [f"idle{slot}={animation}" for slot, animation in sorted(cast.idle.items()) if slot in cast.slots]
+        if cast.cast_before:
+            args.append("castplan=" + ",".join(f"{animation}:{ticks}" for animation, ticks in cast.cast_before))
+            eye, target = cast.cast_camera or (INITIAL_EYE, INITIAL_TARGET)
+            args.append("castcam=" + ",".join(str(int(round(v))) for v in (*eye, *target)))
+        if cast.cast_during:
+            args.append("castafter=" + ",".join(f"{animation}:{ticks}" for animation, ticks in cast.cast_during))
         self._not_imported = cast.not_imported
         self.camera_used = False
         manager, track = self.camera_track(self.effect_id)

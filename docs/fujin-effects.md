@@ -43,8 +43,16 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   effect and records every
   PlayStation GPU packet and texture upload (the battle VRAM queue `Battle_FlushVramCommandQueue`
   0x505D20, read after each model load, direct uploads, and the battle's shared effect textures
-  `a8def.tim`). Each tick also draws the battle's models as the entity task does, each playing
-  its animation 0 (the wait pose) in a loop, body and weapon in lockstep, one frame per tick
+  `a8def.tim`). Each tick also draws the battle's models as the entity task does, body and weapon
+  in lockstep, one frame per tick, each playing what its sequences say - read by Fujin, not run
+  (`FF8GameData/dat/actoranimplan.py`; a character's sequences are in its weapon file): its idle
+  is sequence 1's loop (animation 0 of the normal set; the battle entrance, sequence 8, plays the
+  body's section 7 animation and its `AC 00` restores the normal ones). The caster first plays
+  its Magic cast, sequence 11 for a character (`computeCommandAction` 0x48D200 table
+  `byte_B8150C`): what it plays until it sets the "start the effect" state flag 0x20
+  (`BattleActionSequence_Tick_MagicCast` 0x50A9A0; the effect's files count as loaded at once),
+  recorded too and seen wide (the Camera tab setup's starting view), then while the effect runs -
+  Squall: animations 8, 18, 19, 20, then 21 looped
   (`Battle_QueueAnimation` 0x509520, `AdvanceAnimationBy1AndCheckCompletion` 0x5094F0,
   `BattleModel_RebuildBodyAndWeaponMatrices` 0x508F60, `BattleEntity_ComputeViewBounds` 0x5086F0,
   `BS_RenderBattleEntity` 0x502D40) unless the effect hides them, and orders everything by depth
@@ -66,8 +74,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   complementary (a side file; battle file 163, the battle's shared effect
   textures the game loads at every battle start, `load_aA8defTim` 0x508660; without it the parts
   of an effect drawn with them are flat grey).
-  Exact: shapes, colours, blending, timing. Approximated: actors play their wait pose (not the
-  caster's casting animation), the camera player is Fujin's (floating point). **Game window** shows the screen; **Fit the effect** frames
+  Exact: shapes, colours, blending, timing. Approximated: the sequences' other actions (the
+  cast's own small effect, sounds, moves) are not run, the camera during the cast is a fixed
+  wide view (not the game's opening shot), the camera player is Fujin's (floating point). **Game window** shows the screen; **Fit the effect** frames
   everything drawn.
 - **Camera:** executable tracks, embedded MAG tracks, and verified native parameters. MAG and
   executable tracks share the battle-context preview and caster/target imports. This previews

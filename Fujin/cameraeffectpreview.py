@@ -488,6 +488,19 @@ class CameraEffectPreview(QWidget):
         """The setup's scene.out encounter list (None before the battle is set up)."""
         return self.panel._battle_setup.encounters.encounter if self.panel is not None else None
 
+    def _plan_animations(self, cast):
+        """Each actor's idle animation and the caster's Magic cast, read from its sequences (a
+        character's are in its weapon file: without one imported it stands in animation 0)."""
+        from FF8GameData.dat.actoranimplan import cast_plan, idle_animation, read_frame_counts, read_sequences
+        from FF8GameData.dat.sequencevm import as_sequence_vm
+        vm = as_sequence_vm(self._shared_game_data())
+        for slot, (body, weapon) in cast.slots.items():
+            sequences = read_sequences(weapon if _CHARACTER_FILE.match(_name(body)) else body) \
+                if (weapon or not _CHARACTER_FILE.match(_name(body))) else {}
+            cast.idle[slot] = idle_animation(vm, sequences)
+            if slot == cast.caster and sequences:
+                cast.cast_before, cast.cast_during = cast_plan(vm, sequences, read_frame_counts(body))
+
     def _place_cast(self, cast):
         """Where this preview's battle setup stands each actor and the effect camera it plays there:
         the effect preview then shows the same shot. Models still waiting to be cast (imported
@@ -507,6 +520,8 @@ class CameraEffectPreview(QWidget):
         cast.slots = {slot: files for slot, files in cast.slots.items() if slot in actors}
         cast.positions = {slot: tuple(float(v) for v in actor.position) for slot, actor in actors.items()}
         cast.yaws = {slot: float(actor.yaw) for slot, actor in actors.items()}
+        cast.cast_camera = (tuple(float(v) for v in context.initial.eye), tuple(float(v) for v in context.initial.target))
+        self._plan_animations(cast)
         _run, animation = self.resolve()
         if self.track is not None and animation is not None:
             cast.camera = play_camera_animation(animation, context) or None
