@@ -38,10 +38,10 @@ class EffectRecording:
     def fit_view(self, margin=0.08):
         """(x, y, width, height) of the screen-plane window holding what the effect draws over all its
         ticks (2nd to 98th percentile of the polygon / sprite points, plus a margin), at least the
-        game's 320 x 224 and at most 1024 x 1024 - the harness camera is a fixed default view, so
-        the effect is often off the game's own window."""
+        320 x 224 units and at most the game window x 2 (GAME_WINDOW: the effect may be framed by
+        a camera that does not show it all)."""
         import numpy as np
-        from FF8GameData.psxgpu.gpu import SCREEN_H, SCREEN_W, _raw_xy
+        from FF8GameData.psxgpu.gpu import GAME_WINDOW, SCREEN_H, SCREEN_W, _raw_xy
         points = []
         for tick in self.ticks:
             for _bucket, _order, words in tick.packets:
@@ -62,16 +62,17 @@ class EffectRecording:
         low_x, high_x = np.percentile(xs, (2, 98))
         low_y, high_y = np.percentile(ys, (2, 98))
         width, height = (high_x - low_x) * (1 + 2 * margin), (high_y - low_y) * (1 + 2 * margin)
-        width, height = min(max(width, SCREEN_W), 1024), min(max(height, SCREEN_H), 1024)
+        width, height = min(max(width, SCREEN_W), 2 * GAME_WINDOW[2]), min(max(height, SCREEN_H), 2 * GAME_WINDOW[3])
         centre_x, centre_y = (low_x + high_x) / 2, (low_y + high_y) / 2
         return int(centre_x - width / 2), int(centre_y - height / 2), int(width), int(height)
 
     def frame(self, tick_index, vram=None, view=None, scale=1.0):
         """The RGB image of tick `tick_index` and the Gpu that drew it (its missing_pages / counts).
-        view: (x, y, width, height) of the screen plane to draw, None = the game's 320 x 224 window;
-        scale: image pixels per screen unit."""
+        view: (x, y, width, height) of the screen plane to draw, None = the game's window
+        (GAME_WINDOW); scale: image pixels per packet unit."""
+        from FF8GameData.psxgpu.gpu import GAME_WINDOW
         vram = vram or self.vram_at(tick_index)
-        x, y, width, height = view or (0, 0, 320, 224)
+        x, y, width, height = view or GAME_WINDOW
         gpu = Gpu(vram, max(1, round(width * scale)), max(1, round(height * scale)), origin=(x, y), scale=scale)
         tick = self.ticks[tick_index]
         for _bucket, _order, words in sorted(tick.packets, key=lambda p: (-p[0], -p[1])):

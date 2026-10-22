@@ -229,10 +229,21 @@ jobs:
         ls -al
         cd ..
 
+    - name: Set up MSVC (x86) for the effect recorder
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x86
+
+    - name: Build the effect recorder (Fujin Native preview)
+      shell: cmd
+      run: Toolsxrecorderuild.bat
+
     - name: Create release
       shell: bash
       run: |
         pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
+        mkdir -p release/Tools/fxrecorder
+        cp Tools/fxrecorder/fxrecorder.exe release/Tools/fxrecorder/
         mkdir -p release/Resources
         mkdir -p release/ExternalTools/Junkshop
         mkdir -p release/ExternalTools/Quezacotl

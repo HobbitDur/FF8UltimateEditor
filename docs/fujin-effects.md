@@ -38,16 +38,21 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   markers only), and native decompilation read-only.
   **Native preview** shows what an effect run by the exe's own code (Cure, Fire, most spells,
   enemy attacks) draws, tick by tick at 15 per second. **Record** runs the effect's original
-  code in the FFNx effect harness (`fxaudit_held.exe`, opened from the header's Import
-  complementary; it needs its `vram=1` option, added 2026-10-22 in
-  `D:\FFNxMenu30fps\harness\fxaudit\harness.cpp`), which records every PlayStation GPU packet
-  and the VRAM uploads the effect queues (`Battle_FlushVramCommandQueue` 0x505D20). Fujin draws
-  them with a software GPU (`FF8GameData/psxgpu`: polygons, sprites, lines, CLUT textures,
-  the four semi-transparency modes). Exact: shapes, colours, blending, timing. Approximated: the
-  fake battle (stand-in actors, a fixed camera - the effect's own camera moves are not applied,
-  so **Fit the effect** frames what it draws; **Game window** shows the 320 x 224 screen as
-  recorded) and textures the effect does not upload itself (the target's model, the battle's
-  shared effect textures), drawn flat grey and named in the status line.
+  code in FF8UltimateEditor's effect recorder (`Tools/fxrecorder`, a 32-bit program shipped with
+  the Windows release; from source, `Tools/fxrecorder/build.bat` builds it with Visual Studio's
+  C++ tools - no FFNx needed). It maps the opened FF8_EN.exe, fakes a battle (the target model
+  `c0mNNN.dat` of your choice, c0m000 = the game's test dummy), runs the effect, and records every
+  PlayStation GPU packet and texture upload (the battle VRAM queue `Battle_FlushVramCommandQueue`
+  0x505D20, direct uploads, and the battle's shared effect textures `a8def.tim`). The camera is
+  the effect's own: its track (exe, created or `.bcam`, from the Camera tab) is played by Fujin's
+  camera player around the fake battle and the recorder views each tick through it. Fujin draws
+  the recording with a software GPU (`FF8GameData/psxgpu`: polygons, sprites, lines, CLUT
+  textures, the four semi-transparency modes; FF8 PC's 3D output is in eighths of a pixel, the
+  320 x 224 window being 2560 x 1792 units). Files: FF8_EN.exe and the effect files from the
+  header's Import, `a8def.tim` from Import complementary (it gives the battle folder). Exact:
+  shapes, colours, blending, timing. Approximated: the fake battle (actors at fixed places), the
+  camera player (Fujin's, floating point). **Game window** shows the screen; **Fit the effect**
+  frames everything drawn.
 - **Models / animation:** a 3D view of every object of the selected file (meshes, morph
   targets as points, embedded battle models and the standard battle models of indexed
   containers such as `mag186_b.dat`, which play their own animations). Untextured: texture

@@ -5,9 +5,9 @@ Square's GPU emulation): polygons (flat / Gouraud, 3 or 4 points, textured or no
 lines and draw-mode words. This module decodes those packets and rasterises them the way the
 console does, close enough to preview an effect:
 
- - screen space: the GTE already projected every point; the game's window is 320 x 224 (GTE OFX
-   160, OFY 112 in battle). A Gpu draws any window of that plane (origin, width, height), so
-   geometry the game would clip can be shown too;
+ - screen space: the GTE already projected every point, in eighths of a pixel on FF8 PC (the
+   320 x 224 window is GAME_WINDOW, 2560 x 1792 units). A Gpu draws any window of that plane
+   (origin, width, height, scale), so geometry the game would clip can be shown too;
  - textures come from a 1024 x 512 16-bit VRAM image (Vram): tpage = 64-pixel column x 256-line
    row + colour depth (4/8-bit through a CLUT, or 15-bit direct), a texel 0x0000 is transparent;
  - a textured colour is modulated by the vertex colour (128 = unchanged) unless the packet says
@@ -22,6 +22,11 @@ No Qt here (numpy only), so it is testable without a window.
 import numpy as np
 
 SCREEN_W, SCREEN_H = 320, 224
+# FF8 PC's 3D output (the GTE projection the effects use) is in eighths of a pixel: the 320 x 224
+# battle window is 2560 x 1792 packet units, centred on (1280, 896) - measured with the effect
+# recorder: a camera aimed at the target puts it there, whatever the camera
+SUBPIXEL = 8
+GAME_WINDOW = (0, 0, SCREEN_W * SUBPIXEL, SCREEN_H * SUBPIXEL)
 VRAM_W, VRAM_H = 1024, 512
 
 

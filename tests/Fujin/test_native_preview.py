@@ -1,6 +1,7 @@
-"""Choreography > Native preview: a native effect drawn from the game's own code. The FFNx effect
-harness records the PlayStation GPU packets and VRAM uploads of each tick; FF8GameData.psxgpu
-draws them (decoder + software rasteriser), Fujin plays them."""
+"""Choreography > Native preview: a native effect drawn from the game's own code. FF8UltimateEditor's
+effect recorder (Tools/fxrecorder) records the PlayStation GPU packets and VRAM uploads of each tick,
+through the effect's own camera; FF8GameData.psxgpu draws them (decoder + software rasteriser), Fujin
+plays them."""
 import os
 import struct
 import sys
@@ -15,7 +16,8 @@ from FF8GameData.psxgpu.gpu import Gpu, Vram
 
 ROOT = Path(__file__).resolve().parents[2]
 SAMPLE = Path(__file__).parent / "data" / "cure_native_sample.txt.gz"   # Cure, ticks 0, 1, 15, 16
-HARNESS = Path("D:/FFNxMenu30fps/harness/fxaudit/fxaudit_held.exe")
+EXE = ROOT / "extracted_files/FF8_EN.exe"
+MAGIC, BATTLE = ROOT / "extracted_files/magic", ROOT / "extracted_files/battle"
 
 
 @pytest.fixture(scope="module")
@@ -76,7 +78,7 @@ def test_cure_sample_draws_its_sparkles():
     lit = image.astype(int).sum(axis=2) > 200
     assert lit.mean() > 0.02 and image[..., 2].mean() > image[..., 0].mean()             # blue light, plenty
     assert gpu.counts["polygons"] > 100 and gpu.missing_pages                              # the target model: grey
-    game, _gpu = recording.frame(3)
+    game, _gpu = recording.frame(3, scale=0.125)            # the game window: 2560 x 1792 units
     assert game.shape == (224, 320, 3)
 
 
@@ -86,32 +88,53 @@ def test_fujin_native_preview_view(qapp):
     fujin = FujinWidget()
     view = fujin.native_preview
     assert fujin.choreography.tabText(2) == "Native preview"
-    assert any("fxaudit_held.exe" in label for label, _cb in fujin.complementary_entries())
-    assert view.harness_binding in fujin.file_bindings()
+    assert any("a8def.tim" in label for label, _cb in fujin.complementary_entries())
+    assert view.textures_binding in fujin.file_bindings()
     fujin.select_effect(1)
     view.load_recording_file(str(SAMPLE))
     assert view.slider.maximum() == 3 and "Effect 1" in view.status.text()
     view.slider.setValue(3)
-    assert view.picture.pixmap() is not None and view.frame(3)[0].width() == 560
+    assert view.picture.pixmap() is not None and view.frame(3)[0].width() == 640   # the game window
     view.view_mode.setCurrentIndex(1)
-    assert view.frame(3)[0].width() == 640                            # the game window, x2
+    assert view.frame(3)[0].width() == 560                            # fit the effect
     assert "Flat grey" in view.status.text()
 
 
-@pytest.mark.skipif(not HARNESS.exists() or not (ROOT / "extracted_files/FF8_EN.exe").exists(),
-                    reason="FFNx effect harness not on this PC")
-def test_record_cure_with_the_harness(qapp):
+@pytest.mark.skipif(not EXE.exists(), reason="FF8_EN.exe not extracted")
+def test_effect_camera_lines():
+    from FF8GameData.gamedata import GameData
+    from Fujin.cameraeffectmanager import CameraEffectManager
+    from Fujin.nativepreview import camera_lines
+    cameras = CameraEffectManager(GameData(str(ROOT / "FF8GameData")))
+    cameras.load_exe(str(EXE))
+    lines = camera_lines(cameras, cameras.track(1), str(BATTLE), 0)
+    assert len(lines) > 10 and all(len(line.split()) == 9 for line in lines)
+    first = [int(value) for value in lines[0].split()]
+    assert first[0] == 0 and first[4:7] == [0, 0, -3000]               # Cure's camera looks at the target
+
+
+@pytest.mark.skipif(not EXE.exists(), reason="FF8_EN.exe not extracted")
+def test_record_cure_with_the_recorder(qapp):
     from Common.fileregistry import FileRegistry
-    from Fujin.nativepreview import NativePreviewView, recording_path
-    registry = FileRegistry()
-    view = NativePreviewView(registry)
-    view.harness_binding.open_path(str(HARNESS))
+    from FF8GameData.gamedata import GameData
+    from Fujin.cameraeffectmanager import CameraEffectManager
+    from Fujin.nativepreview import RECORDER, NativePreviewView, recording_path
+    if not RECORDER.is_file():
+        pytest.skip("the effect recorder is not built (Tools/fxrecorder/build.bat)")
+    cameras = CameraEffectManager(GameData(str(ROOT / "FF8GameData")))
+    cameras.load_exe(str(EXE))
+    view = NativePreviewView(FileRegistry(), exe_path=lambda: str(EXE), magic_folder=lambda: str(MAGIC),
+                             camera_track=lambda effect: (cameras, cameras.track(effect)))
+    view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
+    assert view.missing() == []
+    if os.path.exists(recording_path(1, 0)):
+        os.remove(recording_path(1, 0))
     view.set_effect(1, "Cure")
-    if os.path.exists(recording_path(1)):
-        os.remove(recording_path(1))
-    view.set_effect(None)
-    view.set_effect(1, "Cure")
-    assert view.record()
-    assert view._process.waitForFinished(120000)
+    assert view.record() and view.camera_used
+    assert view._process.waitForFinished(60000)
     QApplication.processEvents()
-    assert view.recording is not None and len(view.recording.ticks) == 51 and view.recording.has_vram
+    recording = view.recording
+    assert recording is not None and len(recording.ticks) == 51 and recording.has_vram
+    image, gpu = recording.frame(16, scale=0.125)
+    assert not gpu.missing_pages and gpu.counts["polygons"] > 100                     # all textured
+    assert (image.astype(int).sum(axis=2) > 200).mean() > 0.01                         # in the game window

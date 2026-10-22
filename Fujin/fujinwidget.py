@@ -116,7 +116,10 @@ class FujinWidget(QWidget):
         native_layout.addWidget(self.function_selector)
         native_layout.addWidget(self.native_code, 1)
         self.choreography.addTab(native_page, "Native code")
-        self.native_preview = NativePreviewView(self.file_registry)
+        self.native_preview = NativePreviewView(
+            self.file_registry, exe_path=lambda: self.camera_editor.exe_binding.current_path or "",
+            magic_folder=self._effect_files_folder,
+            camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)))
         self.choreography.addTab(self.native_preview, "Native preview")
         # Why there is no MAG script, when there is none (the greyed tab says it too)
         self.choreography_note = QLabel()
@@ -174,7 +177,7 @@ class FujinWidget(QWidget):
 
     def file_bindings(self):
         return ([self.camera_editor.exe_binding, self.camera_editor.preview.sceneout_binding, self.kernel_binding]
-                + self.sound_panel.file_bindings() + [self.native_preview.harness_binding]
+                + self.sound_panel.file_bindings() + [self.native_preview.textures_binding]
                 + self.mag_editor.file_bindings())
 
     def import_entries(self):
@@ -206,7 +209,8 @@ class FujinWidget(QWidget):
                 ("Camera preview encounters: scene.out", preview.import_sceneout),
                 ("Effect users: kernel.bin (spells, items, GFs, enemy attacks, limit breaks)", self.import_kernel),
                 ("Sound preview: audio.fmt + audio.dat (battle sound archive)", self.sound_panel.import_archive),
-                ("Native preview: FFNx effect harness (fxaudit_held.exe)", self.native_preview.import_harness)]
+                ("Native preview: a8def.tim (battle folder: shared effect textures, target models)",
+                 self.native_preview.import_shared_textures)]
 
     def auto_import_sources(self):
         preview = self.camera_editor.preview
@@ -407,6 +411,13 @@ class FujinWidget(QWidget):
                 self.effect_list.setCurrentRow(row)
                 return
         raise ValueError(f"Unknown effect ID: {effect}")
+
+    def _effect_files_folder(self):
+        """Where the effect files come from: the folder of an imported MAG file, or the remembered one."""
+        for manager in self.mag_editor.managers.values():
+            if manager.file_path:
+                return os.path.dirname(manager.file_path)
+        return self.file_registry.last_folder("Fujin effect files") or ""
 
     def _selection_changed(self, *_args):
         item = self.effect_list.currentItem()
