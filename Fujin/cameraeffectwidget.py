@@ -14,6 +14,7 @@ from SmallWidget.listsearchbar import ListSearchBar
 
 HEXT_FOLDER_KEY = "camera effect .hext"
 CAM_FOLDER_KEY = "camera effect .bcam"
+CAM_SELECTION_KEY = "camera effect .bcam files"   # the .bcam files last imported, reloaded by Import previous
 
 _NO_TRACK_TEXT = {
     "file": "This effect uses a file camera: its camera data or commands are stored in a loaded "
@@ -441,12 +442,19 @@ class CameraEffectEditorWidget(QWidget):
             return [], []
         return self._load_bcam_paths([folder])
 
-    def _load_bcam_paths(self, paths):
-        loaded, refused = self.manager.load_bcam_files(paths)
+    def reload_bcam(self, paths):
+        """Import previous: the .bcam files last imported, without changing the selected effect."""
+        return self._load_bcam_paths(paths, select=False) if paths else ([], [])
+
+    def _load_bcam_paths(self, paths, select=True):
+        files = self.manager.bcam_files(paths)
+        loaded, refused = self.manager.load_bcam_files(files)
         first = paths[0]
         self.file_registry.remember_folder(CAM_FOLDER_KEY, first if os.path.isdir(first) else os.path.dirname(first))
+        refused_paths = {path for path, _reason in refused}
+        self.file_registry.remember_files(CAM_SELECTION_KEY, [path for path in files if path not in refused_paths])
         self._after_tracks_changed()
-        if loaded:
+        if loaded and select:
             self.select_effect(loaded[0])
         if refused:
             QMessageBox.warning(self, "Camera effect editor",

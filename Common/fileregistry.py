@@ -25,17 +25,49 @@ class FileRegistry(QObject):
         self.paths = {}  # FF8 file name -> path of the file currently opened
         self._batch_depth = 0
         self.bindings = []  # every FileBinding created on this registry (registers itself)
+        # file name -> its bindings: a change goes straight to the bindings of that file. Every
+        # binding listening to every change was quadratic - opening Fujin's 355 effect files made
+        # 280 000 slot calls (seconds) for nothing
+        self._routes = {}
+        self.file_changed.connect(self._route_changed)
+        self.file_closed.connect(self._route_closed)
         # Per-tool memory of the last folder an Open dialog was used in, so it re-opens there next
         # time - within the session and, when settings is a QSettings, across future sessions too.
         self.settings = settings
         self._last_folders = {}  # in-memory fallback when used without QSettings (tools alone)
         self._last_files = {}
         self._last_selections = {}
+        # settings written during a batch, stored when it ends: QSettings writes the whole store
+        # back after each change, and a progress bar's event processing after every file made
+        # that 80 ms per file - most of the 50 s Fujin took to reopen its 355 effect files
+        self._pending_settings = {}
+
+    def route(self, binding):
+        """Deliver this file's changes and closes to `binding` (FileBinding registers itself)."""
+        self._routes.setdefault(binding.file_name, []).append(binding)
+
+    def _routed(self, file_name):
+        from PyQt6 import sip
+        bindings = self._routes.get(file_name, [])
+        alive = [binding for binding in bindings if not sip.isdeleted(binding)]
+        if len(alive) != len(bindings):
+            self._routes[file_name] = alive
+        return list(alive)
+
+    def _route_changed(self, file_name):
+        for binding in self._routed(file_name):
+            binding._on_registry_changed(file_name)
+
+    def _route_closed(self, file_name, file_path):
+        for binding in self._routed(file_name):
+            binding._on_registry_closed(file_name, file_path)
 
     def last_files(self, file_key):
         """Last explicit selection, or None when this input has no saved selection yet."""
         if self.settings is not None:
             key = f"last_files/{file_key}"
+            if key in self._pending_settings:
+                return list(self._pending_settings[key])
             return self.settings.value(key, [], type=list) if self.settings.contains(key) else None
         paths = self._last_selections.get(file_key)
         return list(paths) if paths is not None else None
@@ -53,8 +85,8 @@ class FileRegistry(QObject):
             return  # cancelling a picker must not erase the previous selection
         self.remember_folder(file_key, os.path.dirname(selected[0]))
         if self.settings is not None:
-            self.settings.setValue(f"last_files/{file_key}", selected)
-            self.settings.setValue(f"last_file/{file_key}", selected[0])
+            self._store(f"last_files/{file_key}", selected)
+            self._store(f"last_file/{file_key}", selected[0])
         else:
             self._last_selections[file_key] = selected
             self._last_files[file_key] = selected[0]
@@ -62,13 +94,13 @@ class FileRegistry(QObject):
     def last_file(self, file_key):
         """Last selected path, used to disambiguate wildcard imports across sessions."""
         if self.settings is not None:
-            return self.settings.value(f"last_file/{file_key}", "", type=str)
+            return self._setting(f"last_file/{file_key}")
         return self._last_files.get(file_key, "")
 
     def last_folder(self, tool_key):
         """The folder an Open dialog for tool_key should start in (empty if none remembered yet)."""
         if self.settings is not None:
-            return self.settings.value(f"last_folder/{tool_key}", "", type=str)
+            return self._setting(f"last_folder/{tool_key}")
         return self._last_folders.get(tool_key, "")
 
     def remember_folder(self, tool_key, folder):
@@ -76,9 +108,21 @@ class FileRegistry(QObject):
         if not folder:
             return
         if self.settings is not None:
-            self.settings.setValue(f"last_folder/{tool_key}", folder)
+            self._store(f"last_folder/{tool_key}", folder)
         else:
             self._last_folders[tool_key] = folder
+
+    def _store(self, key, value):
+        if self.batching:
+            self._pending_settings[key] = value
+        else:
+            self.settings.setValue(key, value)
+
+    def _setting(self, key):
+        """A string setting, the batch's pending value first."""
+        if key in self._pending_settings:
+            return self._pending_settings[key]
+        return self.settings.value(key, "", type=str)
 
     def accepted_file_names(self):
         """The concrete FF8 file names every tool can open (for the "Open folder" scan).
@@ -104,6 +148,9 @@ class FileRegistry(QObject):
         finally:
             self._batch_depth -= 1
             if self._batch_depth == 0:
+                pending, self._pending_settings = self._pending_settings, {}
+                for key, value in pending.items():
+                    self.settings.setValue(key, value)
                 self.batch_finished.emit()
 
     def get_path(self, file_name):

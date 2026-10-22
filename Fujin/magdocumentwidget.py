@@ -63,6 +63,7 @@ class MagDocumentWidget(QWidget):
         self.current_gf = ""
         self.game_data_folder = game_data_folder
         self._labels = {}
+        self._sim_pending = None    # keep_tick of a replay asked for while the Playback tab is hidden
         self._simulation = None
         self._refresh_pending = False
         self._deferred = []         # (key, gf) loaded while the registry opens many files at once
@@ -127,6 +128,7 @@ class MagDocumentWidget(QWidget):
         self.tabs.addTab(self.section_tabs, "Sections")
         self.tabs.addTab(self._build_script_tab(), "Script")
         self.tabs.addTab(self._build_timeline_tab(), "Playback (3D + timeline)")
+        self.tabs.currentChanged.connect(self._flush_simulation)
         self.tabs.addTab(self._build_resource_tab(), "Resources")
         self.tabs.addTab(self._build_opcode_tab(), "Opcodes")
 
@@ -669,6 +671,7 @@ class MagDocumentWidget(QWidget):
     def _show_gf(self, gf):
         self.current_gf = gf or ""
         manager = self.manager
+        self._sim_pending = None
         self._simulation = None
         self.play_button.setChecked(False)
         self.timeline.set_simulation(None)
@@ -958,8 +961,48 @@ class MagDocumentWidget(QWidget):
             self._select_offset(instruction.refs[0][1])
 
     # ------------------------------------------------------------------ timeline
+    @property
+    def _simulation(self):
+        """The script's replay. Replaying a GF script takes seconds, so while the Playback tab is
+        not shown a replay waits (_sim_pending) and runs the first time it is needed: the tab shown,
+        or the value read."""
+        if self._sim_pending is not None:
+            keep_tick, self._sim_pending = self._sim_pending, None
+            self._run_simulation_now(keep_tick)
+        return self._sim_result
+
+    @_simulation.setter
+    def _simulation(self, value):
+        self._sim_result = value
+
+    def _playback_shown(self):
+        """Whether a replay must run now: the Playback tab is on screen - or no window is (a script
+        or a test drives the widget, reading the playback state directly)."""
+        if not self.window().isVisible():
+            return True
+        return self.isVisible() and self.tabs.currentIndex() == 2
+
+    def _flush_simulation(self, *_args):
+        if self._sim_pending is not None and self._playback_shown():
+            self._simulation  # noqa: B018 - runs the pending replay
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._flush_simulation()
+
     def _run_simulation(self, keep_tick=False):
-        """Replay the script (runs by itself on load, after every edit, and when seed/targets change)."""
+        """Replay the script (on load, after every edit, and when seed/targets change) - at once when
+        the Playback tab is shown, else when it is (see _simulation)."""
+        manager = self.manager
+        if manager is None or manager.program is None:
+            return
+        if not self._playback_shown():
+            self._sim_pending = keep_tick
+            return
+        self._sim_pending = None
+        self._run_simulation_now(keep_tick)
+
+    def _run_simulation_now(self, keep_tick=False):
         manager = self.manager
         if manager is None or manager.program is None:
             return

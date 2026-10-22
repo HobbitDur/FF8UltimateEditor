@@ -4,7 +4,8 @@ read as frames a viewer can draw.
 The harness maps FF8_EN.exe, fakes a battle and runs one effect's ORIGINAL code tick by tick (15 per
 second); its "between" dump lists, per real tick:
 
-    R t n                 the original pass of tick t, then its n OT insertions:
+    R t n [ordered]       the original pass of tick t, then its n OT insertions ("ordered": listed in
+                          draw order - Tools/fxrecorder walks the PC's render list):
     P f n sub obj lay mdl gfc fn bucket len words...   one GPU packet (words in hex; up to 16)
     C t ex ey ez ax ay az the battle camera after the tick (eye, look-at)
     V t x y w h hexwords  (vram=1) a VRAM upload the tick queued: a w x h rectangle at (x, y)
@@ -26,6 +27,7 @@ class EffectTick:
     packets: list = field(default_factory=list)     # [(bucket, insertion order, [words])]
     camera: tuple = None                            # (eye xyz, look-at xyz)
     uploads: list = field(default_factory=list)     # [("V", x, y, w, h, words) | ("B", x, y, w, h, u, v)]
+    ordered: bool = False   # the packets are in draw order already ("R t n ordered": the recorder's walk)
 
 
 @dataclass
@@ -75,7 +77,8 @@ class EffectRecording:
         x, y, width, height = view or GAME_WINDOW
         gpu = Gpu(vram, max(1, round(width * scale)), max(1, round(height * scale)), origin=(x, y), scale=scale)
         tick = self.ticks[tick_index]
-        for _bucket, _order, words in sorted(tick.packets, key=lambda p: (-p[0], -p[1])):
+        packets = tick.packets if tick.ordered else sorted(tick.packets, key=lambda p: (-p[0], -p[1]))
+        for _bucket, _order, words in packets:
             gpu.draw_packet(words)
         return gpu.image(), gpu
 
@@ -120,6 +123,7 @@ def parse_recording(lines, effect_id=None) -> EffectRecording:
             index = int(parts[1])
             current = by_index.setdefault(index, EffectTick(index))
             current.packets = []
+            current.ordered = len(parts) > 3 and parts[3] == "ordered"
         elif kind in ("H", "Z", "O", "HC"):
             current = None                          # held frames: not the game's own ticks
         elif kind == "P" and current is not None and len(parts) >= 11:

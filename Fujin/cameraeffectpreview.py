@@ -88,6 +88,7 @@ class CameraEffectPreview(QWidget):
         self._model_paths = []                 # imported d?c / c0m / d?w paths, in import order
         self._models = {}                      # path -> loaded IfritManager (read-only)
         self._failed = set()                   # paths that could not be loaded (reported once)
+        self._cast_pending = False             # models added while hidden: cast when first shown
         self._game_data = None                 # one load_all()ed GameData for every model
         self._stage = None                     # IfritManager the panel films: holds the main model
         self.panel = None                      # CameraPreviewPanel, built with the first model
@@ -259,7 +260,17 @@ class CameraEffectPreview(QWidget):
         finally:
             self._updating = False
         self.models_changed.emit()
-        self._cast_changed(defaults=True)
+        if self.window().isVisible() and not self.isVisible():
+            # Import previous: loading the cast's models takes seconds; do it when first shown
+            self._cast_pending = True
+        else:
+            self._cast_changed(defaults=True)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self._cast_pending:
+            self._cast_pending = False
+            self._cast_changed(defaults=True)
 
     def model_paths(self):
         return list(self._model_paths)

@@ -40,10 +40,14 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   enemy attacks) draws, tick by tick at 15 per second. **Record** runs the effect's original
   code in FF8UltimateEditor's effect recorder (`Tools/fxrecorder`, a 32-bit program shipped with
   the Windows release; from source, `Tools/fxrecorder/build.bat` builds it with Visual Studio's
-  C++ tools - no FFNx needed). It maps the opened FF8_EN.exe, fakes a battle (the target model
-  `c0mNNN.dat` of your choice, c0m000 = the game's test dummy), runs the effect, and records every
+  C++ tools - no FFNx needed). It maps the opened FF8_EN.exe, fakes a battle (every slot gets the
+  target model: one of the monster `.dat` files imported in the Camera tab's preview, or the
+  battle folder's `c0m000.dat`, the game's test dummy), runs the effect, and records every
   PlayStation GPU packet and texture upload (the battle VRAM queue `Battle_FlushVramCommandQueue`
-  0x505D20, direct uploads, and the battle's shared effect textures `a8def.tim`). The camera is
+  0x505D20, direct uploads, and the battle's shared effect textures `a8def.tim`). Each tick also
+  draws the battle's models as the entity task does (pose, `BattleEntity_ComputeViewBounds`
+  0x5086F0, `BS_RenderBattleEntity` 0x502D40) unless the effect hides them, and orders everything
+  by depth from the GPU emulation's execution list, so the effect is seen on its target. The camera is
   the effect's own: its track (exe, created or `.bcam`, from the Camera tab) is played by Fujin's
   camera player around the fake battle and the recorder views each tick through it. Fujin draws
   the recording with a software GPU (`FF8GameData/psxgpu`: polygons, sprites, lines, CLUT
@@ -152,7 +156,7 @@ successful export clears unsaved state without losing that baseline. Failed/canc
 retain unsaved state. Reimport a saved effect Hext over the matching executable to continue;
 all lines are validated before applying, including resource ownership. **Import** (header) also
 takes `effect_NNN.bcam` files, several at once, or a folder (FFNx's `direct/exe` and
-`direct/<lang>/exe` included): each becomes that effect's camera - an override of its exe track
+`direct/<lang>/exe` included), and **Import previous** loads the same `.bcam` files again: each becomes that effect's camera - an override of its exe track
 (".bcam only" when it no longer fits the exe) or a created camera. A file FFNx would refuse
 (header count 2 and script offset 8, size field = file size, keyframe offset and sets inside,
 keyframes filling the file exactly), or not named `effect_NNN.bcam`, is refused with the reason.

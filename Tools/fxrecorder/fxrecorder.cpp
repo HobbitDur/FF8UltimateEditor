@@ -22,6 +22,8 @@
 //
 // Arguments: <effect id> exe=FF8_EN.exe magic=<folder of the mag files> battle=<folder of the battle
 // files> out=<file> [model=N: every slot gets c0mN.dat (default 0; -1 = no model)] [ticks=N]
+// [modelfile=<file>: that .dat is read for the model instead of <battle>/c0mN.dat] [actors=0: the
+// models are loaded but not drawn; by default each tick draws them as the battle does]
 // [overrides=<folder>: unsaved effect-file snapshots, preferred over magic= without changing it]
 // [targets=N] [caster=slot] [seed=N] [camera=<file>: per tick "t ex ey ez ax ay az roll H" - the
 // view the camera player would show, set before the tick; without it a fixed default view]
@@ -35,6 +37,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <algorithm>
 
 // ---------------------------------------------------------------- options
 struct Opt
@@ -209,9 +212,11 @@ static int filter(EXCEPTION_POINTERS *e)
 	return EXCEPTION_EXECUTE_HANDLER;
 }
 // engine functions that run for real but may fault on the fake battle's data: guarded
+static int g_guard_faults = 0;
 #define GUARDED(ADDR, CALL, FALLBACK) \
 	unpatch(ADDR); uint32_t r; \
-	__try { r = (uint32_t)(CALL); } __except (filter(GetExceptionInformation())) { r = (uint32_t)(FALLBACK); } \
+	__try { r = (uint32_t)(CALL); } __except (filter(GetExceptionInformation())) { r = (uint32_t)(FALLBACK); \
+		if (getenv("FXR_GUARD") && g_guard_faults++ < 12) printf("guarded %06X faulted %08lX at eip %08lX addr %08lX\n", ADDR, g_fault_code, g_fault_eip, g_fault_addr); } \
 	repatch(ADDR); return r;
 static uint32_t __cdecl s_5099D0(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e)
 { GUARDED(0x5099D0, ((uint32_t (__cdecl *)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t))0x5099D0)(a, b, c, d, e), e) }
@@ -234,19 +239,28 @@ static void __cdecl s_45C7A0(uint32_t a, uint32_t b) { INS_WRAP(0x45C7A0, uint32
 static void __cdecl s_45C870(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f)
 { INS_WRAP(0x45C870, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)(a, b, c, d, e, f); repatch(0x45C870); note_ins(0x45C870, a, b); }
 static void __cdecl s_45C8E0(uint32_t a, uint32_t b) { INS_WRAP(0x45C8E0, uint32_t, uint32_t)(a, b); repatch(0x45C8E0); note_ins(0x45C8E0, a, b); }
+static void write_packet(uint32_t fn, uint32_t bucket, uint32_t pkt)
+{
+	if (IsBadReadPtr((void *)pkt, 4)) return;
+	uint32_t len = *(const uint8_t *)(pkt + 3);
+	if (IsBadReadPtr((void *)(pkt + 4), len * 4)) return;
+	fprintf(g_out, "P 0 0 0 0 0 0 0 %X %X %u", fn, bucket, len);
+	for (uint32_t k = 0; k < len; k++) fprintf(g_out, " %X", *(const uint32_t *)(pkt + 4 + 4 * k));
+	fprintf(g_out, "\n");
+}
+static void walk_render_list(std::vector<Ins> &out); // the PC draw order (below, after the battle memory)
 static void write_tick(int t)
 {
 	if (!g_out) return;
-	fprintf(g_out, "R %d %u\n", t, (unsigned)g_ins.size());
-	for (const Ins &r : g_ins)
-	{
-		if (IsBadReadPtr((void *)r.pkt, 4)) continue;
-		uint32_t len = *(const uint8_t *)(r.pkt + 3);
-		if (IsBadReadPtr((void *)(r.pkt + 4), len * 4)) continue;
-		fprintf(g_out, "P 0 0 0 0 0 0 0 %X %X %u", r.fn, r.bucket, len);
-		for (uint32_t k = 0; k < len; k++) fprintf(g_out, " %X", *(const uint32_t *)(r.pkt + 4 + 4 * k));
-		fprintf(g_out, "\n");
-	}
+	// Everything the tick drew, in the order the PC draws it (the render list walk), then any hooked
+	// insertion the walk did not reach (a list outside the frame's ordering table)
+	std::vector<Ins> drawn;
+	walk_render_list(drawn);
+	std::map<uint32_t, bool> seen;
+	for (const Ins &r : drawn) seen[r.pkt] = true;
+	for (const Ins &r : g_ins) if (!seen.count(r.pkt)) { drawn.push_back(r); seen[r.pkt] = true; }
+	fprintf(g_out, "R %d %u ordered\n", t, (unsigned)drawn.size());
+	for (const Ins &r : drawn) write_packet(r.fn, r.bucket, r.pkt);
 	const int16_t *eye = (const int16_t *)0xB8B7F0, *at = (const int16_t *)0xB8B7F8;
 	fprintf(g_out, "C %d %d %d %d %d %d %d\n", t, eye[0], eye[1], eye[2], at[0], at[1], at[2]);
 }
@@ -257,6 +271,31 @@ static const uint32_t OT_SIZE = 0x20000, PKT_SIZE = 0x400000, SCR_SIZE = 0x40000
 static const uint32_t MODELMEM_SIZE = 0x400000, MODELWORK_SIZE = 0x40000;
 static const uint32_t C3_28 = 0x1D96AAC; // running effect root queue
 
+// Everything the frame draws, as SSIGPU keeps it: every insert (SSIGPU_InsertPrim* 0x45C740.., and
+// the model renderer's own inline inserts, which the hooks above never see) appends an
+// SSIGPU_ExecNode {pkt, 4 depth keys = the GTE SZ of its points, msk, prev head byte} at the cursor
+// 0x1CA8828. Listed far to near by their deepest key (what the PlayStation's depth buckets do), in
+// insertion order among equals; prims with no depth keys (2D) last, on top.
+static const uint32_t EXEC_START = 0x1C48828, EXEC_CURSOR = 0x1CA8828;
+static void walk_render_list(std::vector<Ins> &out)
+{
+	uint32_t start = EXEC_START, end = *(const uint32_t *)EXEC_CURSOR;
+	if (end <= start || end - start > 0x60000) return;
+	struct Node { int32_t depth; uint32_t order, pkt; };
+	std::vector<Node> nodes;
+	for (uint32_t node = start; node + 24 <= end; node += 24)
+	{
+		uint32_t pkt = *(const uint32_t *)node;
+		if (IsBadReadPtr((void *)pkt, 8)) continue;
+		const int32_t *k = (const int32_t *)(node + 4);
+		int32_t depth = k[0];
+		for (int i = 1; i < 4; i++) if (k[i] > depth) depth = k[i];
+		nodes.push_back({ depth > 0 ? depth : -1, (uint32_t)nodes.size(), pkt });
+	}
+	std::stable_sort(nodes.begin(), nodes.end(), [](const Node &a, const Node &b) { return a.depth > b.depth; });
+	for (const Node &n : nodes) out.push_back({ 0, (uint32_t)n.depth, n.pkt });
+}
+
 static void env_reset()
 {
 	*(uint32_t *)0x1CA8828 = 0x1C48828;       // SSIGPU prim pool cursor
@@ -265,6 +304,43 @@ static void env_reset()
 	*(uint32_t *)0x1D8E054 = (uint32_t)g_pkt;  // frame packet cursor
 	*(uint32_t *)0x1D969A8 = (uint32_t)g_pkt + PKT_SIZE;
 	*(uint32_t *)0x1D999C4 = (uint32_t)g_scr;  // Field_Alloc stack
+}
+
+static std::string g_modelfile;   // modelfile=: the target model's .dat, read instead of <battle>/c0mNNN.dat
+static int g_actors = 1;          // actors=0: do not draw the battle's models
+// the battle's models, as each entity's task draws them every tick (pre_pre_linkedToAnimationSequence
+// 0x502AB0: BattleEntity_ComputeViewBounds 0x5086F0 + BS_RenderBattleEntity 0x502D40) unless the entity
+// is hidden - an effect that redraws its target (Cure's overlay) hides it for that time. The draw
+// composes the bone matrices in place, so the pose (animation 0 frame 0) is rebuilt first every
+// tick, as the entity's animation task does before the draw
+static bool render_actor(uint32_t e)
+{
+	__try
+	{
+		((int (__cdecl *)(uint32_t, uint32_t, uint32_t))0x509440)(e + 0x60, e + 0x6C, 0);
+		((int (__cdecl *)(uint32_t))0x508C90)(e + 0x60);
+		((int (__cdecl *)(uint32_t))0x5086F0)(e);
+		((int (__cdecl *)(uint32_t))0x502D40)(e);
+		return true;
+	}
+	__except (filter(GetExceptionInformation())) { return false; }
+}
+static void render_actors()
+{
+	if (!g_actors || O.model < 0) return;
+	for (int k = 0; k < 7; k++)
+	{
+		if (k == 3) continue;
+		uint32_t e = 0x1D972C0 + 0x9C * k;
+		uint8_t flags = *(uint8_t *)e;
+		uint16_t combat = *(uint16_t *)(e + 2);
+		bool drawn = (flags & 0x02) && !(flags & 0x04) && !(combat & (0x04 | 0x80));
+		uint32_t cur0 = *(uint32_t *)0x1CA8828, pk0 = *(uint32_t *)0x1D8E054;
+		bool ok = drawn ? render_actor(e) : true;
+		if (getenv("FXR_ACTORS") && g_tick < 3)
+			printf("tick %d slot %d flags %02X combat %04X drawn %d ok %d nodes +%u packets +%u\n", g_tick, k, flags, combat, drawn, ok,
+				(*(uint32_t *)0x1CA8828 - cur0) / 24, *(uint32_t *)0x1D8E054 - pk0);
+	}
 }
 
 static void apply_pending(std::vector<Pending> v)
@@ -278,7 +354,9 @@ static void apply_pending(std::vector<Pending> v)
 		else if (p.kind == 2)
 		{
 			const char *name = *(const char **)(0xB84CCC + 4 * p.a); // battle file name table
-			std::vector<uint8_t> f = readfile(join(O.battle, name));
+			std::vector<uint8_t> f;
+			if (!g_modelfile.empty() && _strnicmp(name, "c0m", 3) == 0) f = readfile(g_modelfile); // the chosen .dat
+			if (f.empty()) f = readfile(join(O.battle, name));
 			if (!f.empty()) memcpy((void *)p.b, f.data(), f.size());
 			if (p.c) ((void (__cdecl *)())p.c)();
 		}
@@ -481,6 +559,8 @@ static bool parse(int argc, char **argv)
 		else if (k == "battle") O.battle = v;
 		else if (k == "out") O.out = v;
 		else if (k == "camera") O.camera = v;
+		else if (k == "modelfile") g_modelfile = v;
+		else if (k == "actors") g_actors = atoi(v.c_str());
 		else if (k == "model") O.model = atoi(v.c_str());
 		else if (k == "ticks") O.ticks = atoi(v.c_str());
 		else if (k == "targets") O.targets = atoi(v.c_str());
@@ -495,7 +575,7 @@ int main(int argc, char **argv)
 	setvbuf(stdout, nullptr, _IONBF, 0);
 	if (!parse(argc, argv))
 	{
-		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [overrides=<dir>] [model=N] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
+		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [overrides=<dir>] [model=N] [modelfile=<file>] [actors=0|1] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
 		return 1;
 	}
 	if (strcmp(argv[argc - 1], "child") != 0)
@@ -591,6 +671,7 @@ int main(int argc, char **argv)
 		g_rec = true;
 		int r = 0;
 		bool ok = run_tick(&r);
+		if (ok) render_actors();
 		g_rec = false;
 		if (!ok) { printf("tick %d faulted %08lX at eip %08lX addr %08lX\n", t, g_fault_code, g_fault_eip, g_fault_addr); break; }
 		dump_vram_queue();                 // uploads this tick queued

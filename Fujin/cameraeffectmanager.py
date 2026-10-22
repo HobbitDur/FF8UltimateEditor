@@ -40,6 +40,7 @@ A .bcam file read back (load_bcam) becomes that effect's track: an override of i
 created camera.
 """
 import json
+import os
 import re
 import struct
 from dataclasses import dataclass, field
@@ -391,10 +392,9 @@ class CameraEffectManager:
             track.replace_bytes(data, self.vm)
         return track
 
-    def load_bcam_files(self, paths):
-        """Read effect_NNN.bcam files (and the effect_NNN.bcam files of folders, FFNx's
-        direct/exe or direct/<lang>/exe included). Returns ([loaded effect ids], [(path, reason)])."""
-        import os
+    @staticmethod
+    def bcam_files(paths):
+        """The files of paths, a folder giving its .bcam files (its subfolders too)."""
         files = []
         for path in paths:
             if os.path.isdir(path):
@@ -402,8 +402,13 @@ class CameraEffectManager:
                     files += [os.path.join(root, name) for name in sorted(names) if name.lower().endswith(CAM_EXTENSION)]
             else:
                 files.append(path)
+        return files
+
+    def load_bcam_files(self, paths):
+        """Read effect_NNN.bcam files (and the effect_NNN.bcam files of folders, FFNx's
+        direct/exe or direct/<lang>/exe included). Returns ([loaded effect ids], [(path, reason)])."""
         loaded, refused = [], []
-        for path in files:
+        for path in self.bcam_files(paths):
             match = CAM_FILE_PATTERN.fullmatch(os.path.basename(path))
             if match is None:
                 refused.append((path, "not named effect_NNN.bcam (NNN = the effect id), so no effect to load it on"))

@@ -119,3 +119,12 @@ def test_fujin_creates_saves_and_reimports_a_camera(qapp, tmp_path, monkeypatch)
     assert loaded == [PHOENIX_DOWN] and not refused
     assert other.camera_editor.manager.track(PHOENIX_DOWN).to_bytes() == written.read_bytes()
     assert other.current_effect == PHOENIX_DOWN and other.tabs.currentIndex() == 1
+
+    # Import previous reloads the imported .bcam files, without changing the selected effect
+    from Fujin.cameraeffectwidget import CAM_FOLDER_KEY
+    again = FujinWidget(file_registry=other.file_registry)
+    again.camera_editor.exe_binding.open_path(str(ROOT / EXE))
+    source = next(source for source in again.auto_import_sources() if source.key == CAM_FOLDER_KEY)
+    assert source.find_paths(again.file_registry) == [str(written)]
+    source.loader(source.find_paths(again.file_registry))
+    assert again.camera_editor.manager.track(PHOENIX_DOWN).to_bytes() == written.read_bytes()

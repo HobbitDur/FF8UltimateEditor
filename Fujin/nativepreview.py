@@ -16,7 +16,9 @@ what the player would see. An effect with no camera track keeps the default batt
 Files: FF8_EN.exe (the header's Import, as for the camera tracks), the effect's files (the folder
 the effect files were imported from) and the battle folder, found through a8def.tim - the battle's
 shared effect textures, opened from the header's Import complementary (shared file bank, never a
-guessed folder); the target model c0mNNN.dat is read from that folder.
+guessed folder). The target model is one of the monster .dat files imported in the Camera tab's
+preview (or the battle folder's c0m000.dat test dummy); every slot of the fake battle gets it and
+the recorder draws those models each tick as the battle does, so the effect is seen on them.
 Unsaved effect-file edits are passed to the recorder as private temporary overrides. Once an
 effect is recorded, edits and Undo / Redo refresh it without writing the imported files.
 
@@ -26,6 +28,7 @@ Approximated: the fake battle (actors stand at fixed places), the camera player 
 """
 import hashlib
 import os
+import re
 import shutil
 import struct
 import tempfile
@@ -33,7 +36,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import QProcess, Qt, QTimer
 from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtWidgets import (QComboBox, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSlider, QSpinBox,
+from PyQt6.QtWidgets import (QComboBox, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSlider,
                              QVBoxLayout, QWidget)
 
 from Common.apppaths import app_path
@@ -51,17 +54,33 @@ SLOT_POSITIONS = {0: (-1500, 0, 3000), 1: (0, 0, 3200), 2: (1500, 0, 3000), 4: (
                   5: (-1800, 0, -3200), 6: (1800, 0, -3200)}
 CASTER_SLOT, TARGET_SLOT = 0, 4
 INITIAL_EYE, INITIAL_TARGET = (10000, -3000, 5000), (0, -500, 0)   # the battle camera words at the start
+DUMMY_MODEL = "c0m000.dat"   # the game's test dummy, from the battle folder when no monster is imported
+_MONSTER_FILE = re.compile(r"^c0m(\d{3})\.dat$", re.IGNORECASE)
 
 
-def recording_path(effect_id, model=0):
+def model_key(model_path):
+    """The cache tag of a target model: its name plus a hash of where it is and its state on disk."""
+    if not model_path:
+        return "none"
+    try:
+        stat = os.stat(model_path)
+        state = f"{os.path.abspath(model_path)}|{stat.st_size}|{stat.st_mtime_ns}"
+    except OSError:
+        state = os.path.abspath(model_path)
+    stem = os.path.splitext(os.path.basename(model_path))[0]
+    return f"{stem}_{hashlib.sha256(state.encode('utf-8')).hexdigest()[:8]}"
+
+
+def recording_path(effect_id, model="none"):
     folder = os.path.join(tempfile.gettempdir(), "fujin_native_preview")
     os.makedirs(folder, exist_ok=True)
-    return os.path.join(folder, f"effect_{effect_id:03d}_m{model}.txt")
+    return os.path.join(folder, f"effect_{effect_id:03d}_{model}.txt")
 
 
-def model_scale(battle_folder, model):
-    """The camera offset scale of a c0mNNN.dat (skeleton scale / 512), 0.5 for the recorder's stand-in."""
-    path = os.path.join(battle_folder or "", f"c0m{model:03d}.dat")
+def model_scale(path):
+    """The camera offset scale of a monster .dat (skeleton scale / 512), 0.5 without one."""
+    if not path:
+        return 0.5
     try:
         with open(path, "rb") as file:
             data = file.read(4096)
@@ -71,7 +90,7 @@ def model_scale(battle_folder, model):
         return 0.5
 
 
-def camera_lines(manager, track, battle_folder="", model=0, ticks=600):
+def camera_lines(manager, track, model_path=None, ticks=600):
     """Per-tick camera of an effect's track played around the recorder's fake battle, as the lines
     the recorder reads: "t ex ey ez ax ay az roll H". [] when the script plays nothing."""
     from FF8GameData.dat.battlecamera import BattleCameraContext, CameraActor, CameraPose, play_camera_animation
@@ -83,7 +102,7 @@ def camera_lines(manager, track, battle_folder="", model=0, ticks=600):
     animation = camera_animation_at(track.collection, run.chosen)
     if animation is None:
         return []
-    scale = model_scale(battle_folder, model) if model >= 0 else 0.5
+    scale = model_scale(model_path)
     actors = {slot: CameraActor(position, 0.0, scale) for slot, position in SLOT_POSITIONS.items()}
     context = BattleCameraContext(actors[CASTER_SLOT], actors[TARGET_SLOT],
                                   CameraPose(INITIAL_EYE, INITIAL_TARGET), actors)
@@ -96,9 +115,11 @@ def camera_lines(manager, track, battle_folder="", model=0, ticks=600):
 class NativePreviewView(QWidget):
     """providers: exe_path() -> the opened FF8_EN.exe; magic_folder() -> the effect files' folder;
     camera_track(effect_id) -> (camera manager, track) or (None, None);
-    file_edits() -> {file name: unsaved bytes}, staged privately for the recorder."""
+    file_edits() -> {file name: unsaved bytes}, staged privately for the recorder;
+    model_paths() -> the imported monster .dat paths (the Camera tab preview's), offered as target."""
 
-    def __init__(self, file_registry, exe_path=None, magic_folder=None, camera_track=None, file_edits=None):
+    def __init__(self, file_registry, exe_path=None, magic_folder=None, camera_track=None, file_edits=None,
+                 model_paths=None):
         super().__init__()
         self.effect_id, self.effect_name = None, ""
         self.recording = None
@@ -112,14 +133,16 @@ class NativePreviewView(QWidget):
         self._edit_refresh.setInterval(250)
         self._edit_refresh.timeout.connect(self._refresh_edits)
         self._fit = GAME_WINDOW
+        self._prerender_tick = 0
         self.camera_used = False
         self.exe_path = exe_path or (lambda: "")
         self.magic_folder = magic_folder or (lambda: "")
         self.camera_track = camera_track or (lambda _effect: (None, None))
         self.file_edits = file_edits or (lambda: {})
+        self.model_paths = model_paths or (lambda: [])
         self.textures_binding = FileBinding(SHARED_TEXTURES, file_registry, file_filter=SHARED_TEXTURES,
                                             read_only=True, complementary=True)
-        self.textures_binding.file_opened.connect(lambda _path: self._update_controls())
+        self.textures_binding.file_opened.connect(lambda _path: (self.refresh_models(), self._update_controls()))
         self.intro = QLabel(
             "What the effect draws, from the game's own code: FF8UltimateEditor's effect recorder runs it in a "
             "fake battle and records every primitive and texture it sends to the PlayStation GPU, seen through "
@@ -130,13 +153,13 @@ class NativePreviewView(QWidget):
         self.record_button = QPushButton("Record")
         self.record_button.setToolTip("Preview the current edits, including unsaved effect files")
         self.record_button.clicked.connect(lambda: self.record())
-        self.model_spin = QSpinBox()
-        self.model_spin.setRange(-1, 199)
-        self.model_spin.setValue(0)
-        self.model_spin.setPrefix("Target c0m")
-        self.model_spin.setSpecialValueText("No target model")
-        self.model_spin.setToolTip("The monster model every slot of the fake battle gets (read from the battle "
-                                   "folder; c0m000 is the game's test dummy). Record again to apply.")
+        self.model_combo = QComboBox()
+        self.model_combo.setToolTip("The model every slot of the fake battle gets: a monster .dat imported in the "
+                                    "Camera tab's preview, or the battle folder's c0m000.dat (the game's test "
+                                    "dummy). Record again to apply.")
+        self.model_combo.currentIndexChanged.connect(self._model_changed)
+        self.model_combo.activated.connect(lambda _i: setattr(self, "_chosen_model", self.model_combo.currentData()))
+        self._chosen_model = None   # the user's pick, kept while it is offered (else the first entry)
         self.view_mode = QComboBox()
         self.view_mode.addItem("Game window (320 × 224)", "game")
         self.view_mode.addItem("Fit the effect", "fit")
@@ -165,7 +188,7 @@ class NativePreviewView(QWidget):
         self._prerender.timeout.connect(self._prerender_step)
         controls = QHBoxLayout()
         controls.addWidget(self.record_button)
-        controls.addWidget(self.model_spin)
+        controls.addWidget(self.model_combo)
         controls.addWidget(self.view_mode)
         controls.addWidget(self.play_button)
         controls.addWidget(self.slider, 1)
@@ -176,6 +199,7 @@ class NativePreviewView(QWidget):
         layout.addWidget(self.scroll, 1)
         layout.addWidget(self.status)
         self.textures_binding.load_opened_file()
+        self.refresh_models()
         self._update_controls()
 
     # ------------------------------------------------------------------ files
@@ -189,6 +213,40 @@ class NativePreviewView(QWidget):
     def battle_folder(self):
         path = self.textures_binding.current_path
         return os.path.dirname(path) if path else ""
+
+    def refresh_models(self):
+        """List the imported monster .dat files (then the battle folder's dummy, then no model); the
+        user's choice is kept while it is still offered, else the first entry is used."""
+        current = self.model_combo.currentData()
+        options = [(os.path.basename(path), path) for path in self.model_paths()]
+        names = {name.lower() for name, _path in options}
+        dummy = os.path.join(self.battle_folder(), DUMMY_MODEL) if self.battle_folder() else ""
+        if dummy and DUMMY_MODEL not in names and os.path.isfile(dummy):
+            options.append((f"{DUMMY_MODEL} (test dummy, battle folder)", dummy))
+        options.append(("No model", ""))
+        self.model_combo.blockSignals(True)
+        try:
+            self.model_combo.clear()
+            for label, path in options:
+                self.model_combo.addItem(label, path)
+            index = self.model_combo.findData(self._chosen_model) if self._chosen_model is not None else -1
+            self.model_combo.setCurrentIndex(max(0, index))
+        finally:
+            self.model_combo.blockSignals(False)
+        if self.model_combo.currentData() != current:
+            self._model_changed()
+
+    def model_path(self):
+        """The target model's .dat path, "" for none."""
+        return self.model_combo.currentData() or ""
+
+    def _model_changed(self, _index=None):
+        """Show the recording already made with this model, if any."""
+        if self.effect_id is None or self._process is not None:
+            return
+        effect_id, name = self.effect_id, self.effect_name
+        self.effect_id = None
+        self.set_effect(effect_id, name)
 
     def missing(self):
         """What Record still needs, in words ([] = ready)."""
@@ -226,7 +284,8 @@ class NativePreviewView(QWidget):
         self._recorded_edits = None
         self._preview_requested = False
         self._prerender.stop()
-        path = recording_path(effect_id, self.model_spin.value()) if effect_id is not None else None
+        self._prerender_tick = 0
+        path = recording_path(effect_id, model_key(self.model_path())) if effect_id is not None else None
         if path and os.path.isfile(path):
             self.load_recording_file(path)       # recorded earlier: shown again, Record redoes it
         else:
@@ -239,7 +298,8 @@ class NativePreviewView(QWidget):
         if self.effect_id is None or self.missing() or self._process is not None:
             self._update_controls()
             return False
-        model = self.model_spin.value()
+        model_path = self.model_path()
+        model = model_key(model_path)
         self._preview_requested = True
         edits = self.file_edits()
         signature = self._edit_signature(edits)
@@ -258,13 +318,19 @@ class NativePreviewView(QWidget):
         # absolute paths: the recorder runs from its own folder
         args = [str(self.effect_id), f"exe={os.path.abspath(self.exe_path())}",
                 f"magic={os.path.abspath(self.magic_folder())}", f"battle={os.path.abspath(self.battle_folder())}",
-                f"out={output}", f"model={model}"]
+                f"out={output}"]
+        if model_path:
+            # the recorder loads it as c0mNNN (its number, 0 for another name) from this file
+            match = _MONSTER_FILE.match(os.path.basename(model_path))
+            args += [f"model={int(match.group(1)) if match else 0}", f"modelfile={os.path.abspath(model_path)}"]
+        else:
+            args.append("model=-1")
         if edits:
             args.append(f"overrides={scratch.name}")
         self.camera_used = False
         manager, track = self.camera_track(self.effect_id)
         if track is not None:
-            lines = camera_lines(manager, track, self.battle_folder(), model)
+            lines = camera_lines(manager, track, model_path)
             if lines:
                 camera = output[:-4] + "_camera.txt"
                 with open(camera, "w", encoding="ascii") as file:
@@ -299,7 +365,7 @@ class NativePreviewView(QWidget):
         self._update_controls()
         self.status.setText(f"Could not start the effect recorder: {message}")
 
-    def _recorded(self, effect_id, output, code, signature=(), tick=0, model=0):
+    def _recorded(self, effect_id, output, code, signature=(), tick=0, model="none"):
         process, self._process = self._process, None
         log = bytes(process.readAllStandardOutput()).decode("ascii", "replace") if process else ""
         if process is not None:
@@ -349,7 +415,8 @@ class NativePreviewView(QWidget):
         self._fit = self.recording.fit_view()
         self._show(self.slider.value())
         self._prerender_tick = 0
-        self._prerender.start()
+        if self.isVisible():            # drawing every tick takes seconds: only for a shown view
+            self._prerender.start()
         self._update_controls()
         return self.recording
 
@@ -371,7 +438,7 @@ class NativePreviewView(QWidget):
         return self._frames[key]
 
     def _prerender_step(self):
-        if self.recording is None or self._prerender_tick >= len(self.recording.ticks):
+        if self.recording is None or self._prerender_tick >= len(self.recording.ticks) or not self.isVisible():
             self._prerender.stop()
             return
         self.frame(self._prerender_tick)
@@ -399,6 +466,11 @@ class NativePreviewView(QWidget):
             + ("" if self.recording.has_vram else " No textures in this recording."))
         if self._recorded_edits:
             self.status.setText(self.status.text() + " Includes unsaved effect-file edits.")
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self.recording is not None and self._prerender_tick < len(self.recording.ticks):
+            self._prerender.start()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

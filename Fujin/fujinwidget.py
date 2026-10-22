@@ -16,7 +16,7 @@ from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from Fujin.cameraeffectpreview import MODEL_FOLDER_KEY, MODEL_PATTERNS, MODEL_SELECTION_KEY
-from Fujin.cameraeffectwidget import CameraEffectEditorWidget
+from Fujin.cameraeffectwidget import CAM_FOLDER_KEY, CAM_SELECTION_KEY, CameraEffectEditorWidget
 from Fujin.cameraeffectmanager import cam_file_name, CAM_EXTENSION, CAM_FFNX_FOLDER
 from Fujin.effectcatalog import EffectCatalog, EffectResource, filename_effect
 from Fujin.effectresourceview import EffectResourceView
@@ -120,7 +120,9 @@ class FujinWidget(QWidget):
             self.file_registry, exe_path=lambda: self.camera_editor.exe_binding.current_path or "",
             magic_folder=self._effect_files_folder,
             file_edits=self._preview_file_edits,
+            model_paths=self.camera_editor.preview.monster_paths,
             camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)))
+        self.camera_editor.preview.models_changed.connect(self.native_preview.refresh_models)
         self.choreography.addTab(self.native_preview, "Native preview")
         # Why there is no MAG script, when there is none (the greyed tab says it too)
         self.choreography_note = QLabel()
@@ -221,6 +223,10 @@ class FujinWidget(QWidget):
                 AutoImportSource.for_binding(preview.sceneout_binding, self.file_registry.last_folder("scene.out")),
                 AutoImportSource.for_binding(self.kernel_binding, self.file_registry.last_folder("kernel.bin")),
                 AutoImportSource.for_binding(self.sound_panel.audio_binding, self.file_registry.last_folder("audio.fmt")),
+                AutoImportSource.for_binding(self.native_preview.textures_binding,
+                                             self.file_registry.last_folder(self.native_preview.textures_binding.file_name)),
+                AutoImportSource(CAM_FOLDER_KEY, ("effect_*.bcam",), self.camera_editor.reload_bcam,
+                                 selection_only=True, selection_key=CAM_SELECTION_KEY),
                 AutoImportSource("Fujin effect files", ("mag*", "MAG*", "ma8*", "MA8*"),
                                  self.import_paths, selection_only=True)]
 

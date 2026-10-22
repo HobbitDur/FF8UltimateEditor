@@ -38,8 +38,7 @@ class FileBinding(QObject):
         if load_callback is not None:
             self.file_opened.connect(load_callback)
         registry.bindings.append(self)  # so "Open folder" knows every file the tools accept
-        registry.file_changed.connect(self._on_registry_changed)
-        registry.file_closed.connect(self._on_registry_closed)
+        registry.route(self)            # this file's changes and closes come here (and only those)
 
     @property
     def is_loaded(self):

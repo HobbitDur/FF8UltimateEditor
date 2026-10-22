@@ -110,7 +110,7 @@ def test_effect_camera_lines():
     from Fujin.nativepreview import camera_lines
     cameras = CameraEffectManager(GameData(str(ROOT / "FF8GameData")))
     cameras.load_exe(str(EXE))
-    lines = camera_lines(cameras, cameras.track(1), str(BATTLE), 0)
+    lines = camera_lines(cameras, cameras.track(1), str(BATTLE / "c0m000.dat"))
     assert len(lines) > 10 and all(len(line.split()) == 9 for line in lines)
     first = [int(value) for value in lines[0].split()]
     assert first[0] == 0 and first[4:7] == [0, 0, -3000]               # Cure's camera looks at the target
@@ -121,7 +121,7 @@ def test_record_cure_with_the_recorder(qapp):
     from Common.fileregistry import FileRegistry
     from FF8GameData.gamedata import GameData
     from Fujin.cameraeffectmanager import CameraEffectManager
-    from Fujin.nativepreview import RECORDER, NativePreviewView, recording_path
+    from Fujin.nativepreview import RECORDER, NativePreviewView, model_key, recording_path
     if not RECORDER.is_file():
         pytest.skip("the effect recorder is not built (Tools/fxrecorder/build.bat)")
     cameras = CameraEffectManager(GameData(str(ROOT / "FF8GameData")))
@@ -130,8 +130,10 @@ def test_record_cure_with_the_recorder(qapp):
                              camera_track=lambda effect: (cameras, cameras.track(effect)))
     view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
     assert view.missing() == []
-    if os.path.exists(recording_path(1, 0)):
-        os.remove(recording_path(1, 0))
+    assert view.model_combo.currentText().startswith("c0m000.dat")              # the battle folder's dummy
+    cached = recording_path(1, model_key(view.model_path()))
+    if os.path.exists(cached):
+        os.remove(cached)
     view.set_effect(1, "Cure")
     assert view.record() and view.camera_used
     assert view._process.waitForFinished(60000)
@@ -142,6 +144,32 @@ def test_record_cure_with_the_recorder(qapp):
     assert not gpu.missing_pages and gpu.counts["polygons"] > 100                     # all textured
     assert (image.astype(int).sum(axis=2) > 200).mean() > 0.01                         # in the game window
 
+
+
+@pytest.mark.ff8data("extracted_files/battle/a8def.tim", "extracted_files/battle/c0m000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_target_models_are_the_imported_dats(qapp):
+    from Common.fileregistry import FileRegistry
+    from Fujin.nativepreview import NativePreviewView
+    imported = []
+    view = NativePreviewView(FileRegistry(), model_paths=lambda: list(imported))
+    assert [view.model_combo.itemText(i) for i in range(view.model_combo.count())] == ["No model"]
+    view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
+    assert view.model_path() == str(BATTLE / "c0m000.dat")                    # the dummy until one is imported
+    imported.append(str(BATTLE / "c0m009.dat"))
+    view.refresh_models()
+    assert [view.model_combo.itemText(i) for i in range(view.model_combo.count())] == [
+        "c0m009.dat", "c0m000.dat (test dummy, battle folder)", "No model"]
+    assert view.model_path() == str(BATTLE / "c0m009.dat")                    # an imported monster first
+    view.model_combo.setCurrentIndex(1)
+    view.model_combo.activated.emit(1)                                        # the user picks the dummy
+    imported.append(str(BATTLE / "c0m010.dat"))
+    view.refresh_models()
+    assert view.model_path() == str(BATTLE / "c0m000.dat")                    # the pick is kept
+    view.model_combo.activated.emit(0)
+    imported.clear()
+    view.refresh_models()
+    assert view.model_path() == str(BATTLE / "c0m000.dat")                    # a removed pick falls back
 
 def wait_for_preview(qapp, view):
     """Wait for both the debounced edit and its recorder, including an edit queued mid-record."""
