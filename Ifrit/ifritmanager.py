@@ -20,6 +20,7 @@ from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_conve
                                           get_max_frame_for_animation, get_nb_part_needed,
                                           can_split_animation, MAX_ANIMATION_ID, MAX_ANIMATION_FRAME)
 from FF8GameData.dat import dat30
+from FF8GameData.dat.entranceanimation import get_entrance_section_index, make_entrance_view
 from FF8GameData.tim.timfile import (decode_tim, force_opaque, word_to_rgba, PalettedTim,
                                      encode_clut, encode_indices)
 from FF8GameData.gamedata import GameData
@@ -291,6 +292,21 @@ class IfritManager:
     def init_from_file(self, file_path):
         """Parse a single file and make it active (parse + activate in one call)."""
         self.set_active_enemy(self.parse_file(file_path), file_path)
+
+    def entrance_section_index(self):
+        """Section of the active file's battle-entrance animation (character body 7, weapon 8,
+        Edea 10), or None when it has none."""
+        return get_entrance_section_index(self.enemy)
+
+    def make_entrance_view(self):
+        """A read-only copy of this manager showing the battle-entrance animation as its only
+        animation (same skeleton, mesh and textures), or None. See dat/entranceanimation.py."""
+        view_enemy = make_entrance_view(self.enemy)
+        if view_enemy is None:
+            return None
+        view = copy.copy(self)
+        view.enemy = view_enemy
+        return view
 
     @staticmethod
     def entity_type_from_filename(file_path):
