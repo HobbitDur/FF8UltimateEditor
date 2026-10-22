@@ -322,4 +322,33 @@ def test_failed_recorder_releases_unsaved_snapshot(qapp, tmp_path, monkeypatch):
     assert view.record()
     wait_for_preview(qapp, view)
     assert snapshots and not snapshots[0].exists() and view._scratch is None
-    assert "Could not start" in view.status.text() and view.record_button.isEnabled()
+    assert "Could not start" in view.status.text() and view.play_button.isEnabled()
+
+
+def test_opengl_draws_the_same_picture_as_the_software_gpu():
+    """The OpenGL renderer (what plays the preview at 15 frames per second) against the software
+    Gpu on Cure's sample. OpenGL needs a real window platform: run apart (the tests' platform is
+    offscreen); skipped without OpenGL 3.3."""
+    import subprocess
+    script = (
+        "import sys, numpy as np\n"
+        "from PyQt6.QtWidgets import QApplication\n"
+        "app = QApplication([])\n"
+        "from FF8GameData.psxgpu.fxdump import load_recording\n"
+        "from FF8GameData.psxgpu.glrender import PsxGlRenderer\n"
+        "renderer = PsxGlRenderer.create()\n"
+        "if renderer is None:\n"
+        "    print('NO-GL'); sys.exit(0)\n"
+        "recording = load_recording(sys.argv[1], 1)\n"
+        "for tick in range(len(recording.ticks)):\n"
+        "    gl, gl_gpu = recording.frame(tick, scale=0.25, renderer=renderer)\n"
+        "    soft, soft_gpu = recording.frame(tick, scale=0.25)\n"
+        "    off = (np.abs(gl.astype(int) - soft.astype(int)).max(axis=2) > 24).mean()\n"
+        "    assert gl.shape == soft.shape and gl_gpu.counts == soft_gpu.counts and off < 0.01, (tick, off)\n"
+        "print('SAME')\n")
+    environment = dict(os.environ, QT_QPA_PLATFORM="windows" if sys.platform == "win32" else "xcb")
+    result = subprocess.run([sys.executable, "-c", script, str(SAMPLE)], cwd=str(ROOT), env=environment,
+                            capture_output=True, text=True, timeout=300)
+    if "NO-GL" in result.stdout or (result.returncode and "could not connect to display" in result.stderr):
+        pytest.skip("no OpenGL 3.3 context here")
+    assert "SAME" in result.stdout, result.stdout + result.stderr

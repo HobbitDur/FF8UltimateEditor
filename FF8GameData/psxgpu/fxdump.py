@@ -36,6 +36,7 @@ class EffectRecording:
     ticks: list = field(default_factory=list)
     pre_uploads: list = field(default_factory=list)  # queued before tick 0 (setup, file loads)
     summary: str = ""
+    _vram_cache: tuple = field(default=None, repr=False, compare=False)   # (uploads key, Vram) of the last frame
 
     def fit_view(self, margin=0.08):
         """(x, y, width, height) of the screen-plane window holding what the effect draws over all its
@@ -68,19 +69,38 @@ class EffectRecording:
         centre_x, centre_y = (low_x + high_x) / 2, (low_y + high_y) / 2
         return int(centre_x - width / 2), int(centre_y - height / 2), int(width), int(height)
 
-    def frame(self, tick_index, vram=None, view=None, scale=1.0):
+    def frame(self, tick_index, vram=None, view=None, scale=1.0, renderer=None):
         """The RGB image of tick `tick_index` and the Gpu that drew it (its missing_pages / counts).
         view: (x, y, width, height) of the screen plane to draw, None = the game's window
-        (GAME_WINDOW); scale: image pixels per packet unit."""
+        (GAME_WINDOW); scale: image pixels per packet unit; renderer: a glrender.PsxGlRenderer to
+        draw with OpenGL (the same picture, fast enough to play), None = the software Gpu."""
         from FF8GameData.psxgpu.gpu import GAME_WINDOW
-        vram = vram or self.vram_at(tick_index)
+        key = None
+        if vram is None:
+            key = (id(self), self._uploads_through(tick_index))
+            vram = self._vram_cache[1] if self._vram_cache and self._vram_cache[0] == key else None
+            if vram is None:
+                vram = self.vram_at(tick_index)
+                self._vram_cache = (key, vram)
         x, y, width, height = view or GAME_WINDOW
-        gpu = Gpu(vram, max(1, round(width * scale)), max(1, round(height * scale)), origin=(x, y), scale=scale)
+        size = max(1, round(width * scale)), max(1, round(height * scale))
+        if renderer is not None:
+            from FF8GameData.psxgpu.glrender import PrimitiveCollector
+            gpu = PrimitiveCollector(vram, *size, origin=(x, y), scale=scale)
+        else:
+            gpu = Gpu(vram, *size, origin=(x, y), scale=scale)
         tick = self.ticks[tick_index]
         packets = tick.packets if tick.ordered else sorted(tick.packets, key=lambda p: (-p[0], -p[1]))
         for _bucket, _order, words in packets:
             gpu.draw_packet(words)
+        if renderer is not None:
+            return renderer.draw(gpu, vram_key=key), gpu
         return gpu.image(), gpu
+
+    def _uploads_through(self, tick_index):
+        """How many uploads change VRAM up to tick `tick_index`: the VRAM of two ticks with the same
+        count is the same."""
+        return len(self.pre_uploads) + sum(len(tick.uploads) for tick in self.ticks[:tick_index + 1])
 
     def vram_at(self, tick_index):
         """VRAM as the uploads queued up to tick `tick_index` (included) leave it."""

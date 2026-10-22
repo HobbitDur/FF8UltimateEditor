@@ -324,16 +324,17 @@ static bool g_drawn_slot[7];      // the slots holding a model
 static uint32_t weapon_header(uint32_t e) { return *(uint32_t *)(e + 0x78); }
 // the battle's models, as each entity's task draws them every tick (pre_pre_linkedToAnimationSequence
 // 0x502AB0: BattleEntity_ComputeViewBounds 0x5086F0 + BS_RenderBattleEntity 0x502D40) unless the entity
-// is hidden - an effect that redraws its target (Cure's overlay) hides it for that time. The draw
-// composes the bone matrices in place, so the pose (animation 0 frame 0, body and weapon:
-// Battle_QueueAnimation 0x509520) is rebuilt first every tick, as the entity's animation task does
-// before the draw (BattleModel_RebuildBodyAndWeaponMatrices 0x508F60), with the weapon's attach
+// is hidden - an effect that redraws its target (Cure's overlay) hides it for that time. Each
+// actor plays animation 0 (the wait pose) in a loop, body and weapon in lockstep, one frame per
+// tick as the battle does: the tick's frame is drawn, then the animation advances
+// (AdvanceAnimationBy1AndCheckCompletion 0x5094F0; at its end Battle_QueueAnimation 0x509520
+// starts it again). The draw composes the bone matrices in place, so they are rebuilt from the
+// pose first (BattleModel_RebuildBodyAndWeaponMatrices 0x508F60), with the weapon's attach
 // transform (pre_pre_linkedToAnimationSequence 0x502CEA)
 static bool render_actor(uint32_t e)
 {
 	__try
 	{
-		((int (__cdecl *)(uint32_t, int))0x509520)(e, 0);
 		((int (__cdecl *)(uint32_t))0x508F60)(e);
 		if (uint32_t w = weapon_header(e))
 		{
@@ -344,6 +345,8 @@ static bool render_actor(uint32_t e)
 		}
 		((int (__cdecl *)(uint32_t))0x5086F0)(e);
 		((int (__cdecl *)(uint32_t))0x502D40)(e);
+		if (((int (__cdecl *)(uint32_t))0x5094F0)(e) == 1)                    // READ_ANIMATION_RETURN_ANIMATION_COMPLETE
+			((int (__cdecl *)(uint32_t, int))0x509520)(e, 0);
 		return true;
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
@@ -477,8 +480,7 @@ static bool pose_model(uint32_t e)
 {
 	__try
 	{
-		((int (__cdecl *)(uint32_t, uint32_t, uint32_t))0x509440)(e + 0x60, e + 0x6C, 0);
-		((int (__cdecl *)(uint32_t))0x508C90)(e + 0x60);
+		((int (__cdecl *)(uint32_t, int))0x509520)(e, 0);   // Battle_QueueAnimation: body and weapon, frame 0
 		return true;
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
@@ -550,6 +552,10 @@ static bool load_models()
 	*(uint32_t *)0x1D98B3C = (uint32_t)g_modelmem + MODELMEM_SIZE;
 	*(uint32_t *)0xB6D080 = (uint32_t)g_modelmem + MODELMEM_SIZE;
 	bool cast = O.cast();
+	// the game keeps a character's model data under its com id (COMMAND_QUEUE_TABLE): a battle never
+	// has one character twice, so a second Squall (d0c001 and d0c000) gets a free character id - its
+	// files are given here, the id only keeps the two apart
+	bool char_used[16] = {};
 	for (int slot = 0; slot < 7; slot++)
 	{
 		uint32_t e = 0x1D972C0 + 0x9C * slot;
@@ -558,6 +564,15 @@ static bool load_models()
 			if (O.body[slot].empty()) continue;
 			int com = body_com_id(O.body[slot]);
 			if (com < 0) { printf("slot %d: %s is neither c0mNNN.dat nor d?c###.dat\n", slot, O.body[slot].c_str()); continue; }
+			if (com < 0x10 && char_used[com])
+			{
+				// the same kind: armed (weapon model) or not (Zell 1, Kiros 9); never Edea's own loader (7)
+				static const int ARMED[] = { 0, 2, 3, 4, 5, 6, 8, 10 }, BARE[] = { 1, 9 };
+				bool armed = com != 1 && com != 9 && com != 7;
+				const int *free_ids = armed ? ARMED : BARE; int n = armed ? 8 : 2;
+				for (int i = 0; i < n; i++) if (!char_used[free_ids[i]]) { com = free_ids[i]; break; }
+			}
+			if (com < 0x10) char_used[com] = true;
 			if (com < 0x10 ? !load_character(e, slot, com, O.body[slot], O.weapon[slot]) : !load_entity(com, slot, O.body[slot])) return false;
 		}
 		else if (!load_entity(0x10 + O.model, slot, "")) return false;

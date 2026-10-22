@@ -24,8 +24,10 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   Camera tab preview's (its party with their weapons, its encounter's enemies or its imported
   monsters, its caster and target - the **Battle** (scene.out encounter or manual placement),
   **Caster** and **Target** pickers here are the same ones; opening Battle sets the battle up when
-  its models are still waiting). **Play** records first when there is no recording yet.
-  **Record** runs the effect's original code in FF8UltimateEditor's effect recorder
+  its models are still waiting). **Play** records first when there is no recording yet; edits of
+  the effect's files refresh the recording by themselves, **Record again** is for what Fujin does
+  not see change (a camera keyframe, the Camera tab's script inputs). Recording runs the effect's
+  original code in FF8UltimateEditor's effect recorder
   (`Tools/fxrecorder`, a 32-bit program shipped with the Windows release; from source,
   `Tools/fxrecorder/build.bat` builds it with Visual Studio's C++ tools - no FFNx needed). It maps
   the opened FF8_EN.exe and loads each actor through the game's own loaders into its battle slot
@@ -34,18 +36,26 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   `Battle_LoadWeaponry` 0x507BF0, animations bound by `setComFileData` 0x502270), each standing
   and facing where the Camera tab's setup puts it. Record needs an imported caster and target
   model (an effect draws on its target: Cure redraws it); an actor the battle names but whose file
-  is not imported (an encounter enemy, a weapon) is left out and named in the status. It runs the
+  is not imported (an encounter enemy, a weapon) is left out and named in the status. A battle
+  never has one character twice (the game keeps a character's model data under its com id in
+  `COMMAND_QUEUE_TABLE`), so a second one of the same character (Squall `d0c000` and his SeeD
+  uniform `d0c001`) gets a free character id: the recorder gives its files itself. It runs the
   effect and records every
   PlayStation GPU packet and texture upload (the battle VRAM queue `Battle_FlushVramCommandQueue`
   0x505D20, read after each model load, direct uploads, and the battle's shared effect textures
-  `a8def.tim`). Each tick also draws the battle's models as the entity task does (body and weapon
-  on animation 0: `Battle_QueueAnimation` 0x509520, `BattleModel_RebuildBodyAndWeaponMatrices`
-  0x508F60, `BattleEntity_ComputeViewBounds` 0x5086F0, `BS_RenderBattleEntity` 0x502D40) unless the
-  effect hides them, and orders everything by depth from the GPU emulation's execution list. The
+  `a8def.tim`). Each tick also draws the battle's models as the entity task does, each playing
+  its animation 0 (the wait pose) in a loop, body and weapon in lockstep, one frame per tick
+  (`Battle_QueueAnimation` 0x509520, `AdvanceAnimationBy1AndCheckCompletion` 0x5094F0,
+  `BattleModel_RebuildBodyAndWeaponMatrices` 0x508F60, `BattleEntity_ComputeViewBounds` 0x5086F0,
+  `BS_RenderBattleEntity` 0x502D40) unless the effect hides them, and orders everything by depth
+  from the GPU emulation's execution list. The
   camera is the shot the Camera tab's preview plays for the effect (its track: exe, created or
-  `.bcam`), so both previews show the same view. Fujin draws the recording with a software GPU
-  (`FF8GameData/psxgpu`: polygons, sprites, lines, CLUT textures, the four semi-transparency modes;
-  FF8 PC's 3D output is in eighths of a pixel, the 320 x 224 window being 2560 x 1792 units).
+  `.bcam`), so both previews show the same view. Fujin draws the recording with OpenGL at the
+  battle's 15 frames per second (`FF8GameData/psxgpu/glrender.py`: VRAM as a 16-bit integer
+  texture, the CLUT lookup and the four semi-transparency modes in the shader; about 40 ms a
+  frame), or with the software GPU without OpenGL 3.3 (`FF8GameData/psxgpu/gpu.py`, the same
+  picture, about 1 s a frame): polygons, sprites, lines, CLUT textures; FF8 PC's 3D output is in
+  eighths of a pixel, the 320 x 224 window being 2560 x 1792 units.
   Files: only those opened in Fujin, one by one - nothing is read from their folders. FF8_EN.exe
   and the effect files from the header's Import (the recorder gets the effect's imported files as
   Fujin holds them, unsaved edits included, staged privately; a file the effect asks for and was not
@@ -54,8 +64,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   complementary (a side file; battle file 163, the battle's shared effect
   textures the game loads at every battle start, `load_aA8defTim` 0x508660; without it the parts
   of an effect drawn with them are flat grey).
-  Exact: shapes, colours, blending, timing. Approximated: actors hold their first pose, the camera
-  player is Fujin's (floating point). **Game window** shows the screen; **Fit the effect** frames
+  Exact: shapes, colours, blending, timing. Approximated: actors play their wait pose (not the
+  caster's casting animation), the camera player is Fujin's (floating point). **Game window** shows the screen; **Fit the effect** frames
   everything drawn.
 - **Camera:** executable tracks, embedded MAG tracks, and verified native parameters. MAG and
   executable tracks share the battle-context preview and caster/target imports. This previews

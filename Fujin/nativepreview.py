@@ -5,9 +5,10 @@ the battle the Camera tab's preview sets up (party, encounter or monsters, caste
 FF8UltimateEditor's effect recorder (Tools/fxrecorder, a small 32-bit program shipped with the
 release; from source, build it with Tools/fxrecorder/build.bat) maps the opened FF8_EN.exe, fakes a
 battle and runs the effect's ORIGINAL code tick by tick, recording every PlayStation GPU packet it
-queues and every texture it uploads (FF8GameData.psxgpu.fxdump). This view runs it for the selected
-effect (Record), then draws the recording with the software GPU (FF8GameData.psxgpu.gpu) at the
-battle's 15 frames per second.
+queues and every texture it uploads (FF8GameData.psxgpu.fxdump). Play runs it for the selected
+effect when there is no recording yet (Record again runs it anew), then draws the recording at the
+battle's 15 frames per second with OpenGL (FF8GameData.psxgpu.glrender; the software GPU,
+FF8GameData.psxgpu.gpu, without OpenGL 3.3).
 
 The camera is the effect's own: its camera track (the exe's, a created one or a .bcam - the Camera
 tab's) is played by Fujin's camera player (FF8GameData.dat.camerascript / battlecamera) around the
@@ -49,6 +50,16 @@ from FF8GameData.psxgpu.fxdump import load_recording
 from FF8GameData.psxgpu.gpu import GAME_WINDOW
 
 RECORDER = app_path("Tools", "fxrecorder", "fxrecorder.exe")
+_GL_RENDERER = []   # [PsxGlRenderer or None]: made on the first frame drawn (None = no OpenGL 3.3)
+
+
+def gl_renderer():
+    """The shared OpenGL renderer (a frame in ~40 ms instead of ~1 s), None without OpenGL 3.3:
+    the software Gpu draws then."""
+    if not _GL_RENDERER:
+        from FF8GameData.psxgpu.glrender import PsxGlRenderer
+        _GL_RENDERER.append(PsxGlRenderer.create())
+    return _GL_RENDERER[0]
 SHARED_TEXTURES = "a8def.tim"
 TICKS_PER_SECOND = 15
 FIT_WIDTH = 560          # pixels of the "Fit the effect" picture
@@ -196,8 +207,10 @@ class NativePreviewView(QWidget):
             "edits are included; after the first recording, editing a texture or using Undo / Redo refreshes "
             "this preview automatically.")
         self.intro.setWordWrap(True)
-        self.record_button = QPushButton("Record")
-        self.record_button.setToolTip("Preview the current edits, including unsaved effect files")
+        self.record_button = QPushButton("Record again")
+        self.record_button.setToolTip("Run the effect's code again: Play records it the first time, and edits of "
+                                      "its files refresh it by themselves; this is for what Fujin does not see "
+                                      "change (a camera keyframe, the Camera tab's script inputs...)")
         self.record_button.clicked.connect(lambda: self.record())
         # the Camera tab preview's caster and target pickers, mirrored: one battle for both previews
         self.caster_combo, self.target_combo = QComboBox(), QComboBox()
@@ -586,7 +599,7 @@ class NativePreviewView(QWidget):
         key = (tick, self.view_mode.currentData())
         if key not in self._frames:
             view, scale = self._view()
-            image, gpu = self.recording.frame(tick, view=view, scale=scale)
+            image, gpu = self.recording.frame(tick, view=view, scale=scale, renderer=gl_renderer())
             height, width = image.shape[:2]
             qimage = QImage(image.tobytes(), width, height, width * 3, QImage.Format.Format_RGB888).copy()
             self._frames[key] = (QPixmap.fromImage(qimage), gpu)
@@ -652,7 +665,7 @@ class NativePreviewView(QWidget):
         busy = self._process is not None
         can_record = not needs and self.effect_id is not None and not busy
         self.record_button.setEnabled(can_record)
-        self.record_button.setText("Record again" if recording else "Record")
+        self.record_button.setVisible(recording)        # the first recording is Play's
         for widget in (self.view_mode, self.slider):
             widget.setEnabled(recording and not busy)
         # Play records first when there is no recording yet
@@ -660,4 +673,4 @@ class NativePreviewView(QWidget):
         if needs and not recording:
             self.status.setText("To record, open: " + "; ".join(needs) + ".")
         elif not recording and not busy:
-            self.status.setText("Record runs this effect's code (a second or less) and shows what it draws.")
+            self.status.setText("Play runs this effect's code (a second or less), then plays what it draws.")
