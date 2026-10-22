@@ -191,16 +191,10 @@ class FujinWidget(QWidget):
         return [("FF8 exe (camera tracks and embedded effect assets)", self.camera_editor.open_exe),
                 ("Effect files (MAG / MA8, all sections)", self.open_effect_files),
                 ("Fujin effect patch (.hext)", self.import_hext),
-                ("FFNx effect cameras (effect_NNN.bcam files)", self._import_bcam),
-                ("FFNx effect cameras folder (direct/exe)", self._import_bcam_folder)]
+                ("FFNx effect cameras (effect_NNN.bcam files)", self._import_bcam)]
 
     def _import_bcam(self, paths=None):
         result = self.camera_editor.import_bcam(paths)
-        self._after_bcam_import(result[0])
-        return result
-
-    def _import_bcam_folder(self, folder=None):
-        result = self.camera_editor.import_bcam_folder(folder)
         self._after_bcam_import(result[0])
         return result
 

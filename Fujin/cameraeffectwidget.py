@@ -433,24 +433,14 @@ class CameraEffectEditorWidget(QWidget):
             return [], []
         return self._load_bcam_paths(paths)
 
-    def import_bcam_folder(self, folder=None):
-        """Header Import: every effect_NNN.bcam of a folder (FFNx's direct/exe, its language folders too)."""
-        if folder is None:
-            folder = QFileDialog.getExistingDirectory(self, f"Import the FFNx effect cameras of a folder ({CAM_FFNX_FOLDER})",
-                                                      self.file_registry.last_folder(CAM_FOLDER_KEY) or os.getcwd())
-        if not folder:
-            return [], []
-        return self._load_bcam_paths([folder])
-
     def reload_bcam(self, paths):
         """Import previous: the .bcam files last imported, without changing the selected effect."""
         return self._load_bcam_paths(paths, select=False) if paths else ([], [])
 
     def _load_bcam_paths(self, paths, select=True):
-        files = self.manager.bcam_files(paths)
+        files = list(paths)
         loaded, refused = self.manager.load_bcam_files(files)
-        first = paths[0]
-        self.file_registry.remember_folder(CAM_FOLDER_KEY, first if os.path.isdir(first) else os.path.dirname(first))
+        self.file_registry.remember_folder(CAM_FOLDER_KEY, os.path.dirname(files[0]))
         refused_paths = {path for path, _reason in refused}
         self.file_registry.remember_files(CAM_SELECTION_KEY, [path for path in files if path not in refused_paths])
         self._after_tracks_changed()

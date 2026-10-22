@@ -392,23 +392,11 @@ class CameraEffectManager:
             track.replace_bytes(data, self.vm)
         return track
 
-    @staticmethod
-    def bcam_files(paths):
-        """The files of paths, a folder giving its .bcam files (its subfolders too)."""
-        files = []
-        for path in paths:
-            if os.path.isdir(path):
-                for root, _dirs, names in os.walk(path):
-                    files += [os.path.join(root, name) for name in sorted(names) if name.lower().endswith(CAM_EXTENSION)]
-            else:
-                files.append(path)
-        return files
-
     def load_bcam_files(self, paths):
-        """Read effect_NNN.bcam files (and the effect_NNN.bcam files of folders, FFNx's
-        direct/exe or direct/<lang>/exe included). Returns ([loaded effect ids], [(path, reason)])."""
+        """Read effect_NNN.bcam files, each opened by the user (never the files of a folder).
+        Returns ([loaded effect ids], [(path, reason)])."""
         loaded, refused = [], []
-        for path in self.bcam_files(paths):
+        for path in paths:
             match = CAM_FILE_PATTERN.fullmatch(os.path.basename(path))
             if match is None:
                 refused.append((path, "not named effect_NNN.bcam (NNN = the effect id), so no effect to load it on"))

@@ -172,8 +172,8 @@ executable is never overwritten. Patches are cumulative against the loaded execu
 successful export clears unsaved state without losing that baseline. Failed/canceled saves
 retain unsaved state. Reimport a saved effect Hext over the matching executable to continue;
 all lines are validated before applying, including resource ownership. **Import** (header) also
-takes `effect_NNN.bcam` files, several at once, or a folder (FFNx's `direct/exe` and
-`direct/<lang>/exe` included), and **Import previous** loads the same `.bcam` files again: each becomes that effect's camera - an override of its exe track
+takes `effect_NNN.bcam` files, picked one by one (several at once in the dialog, never a whole
+folder), and **Import previous** loads the same `.bcam` files again: each becomes that effect's camera - an override of its exe track
 (".bcam only" when it no longer fits the exe) or a created camera. A file FFNx would refuse
 (header count 2 and script offset 8, size field = file size, keyframe offset and sets inside,
 keyframes filling the file exactly), or not named `effect_NNN.bcam`, is refused with the reason.

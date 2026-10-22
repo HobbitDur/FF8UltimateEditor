@@ -84,7 +84,7 @@ def test_bad_files_are_refused_with_the_reason(game_data, tmp_path):
     (tmp_path / cam_file_name(MEGA_PHOENIX)).write_bytes(good + b"\0\0")              # size field != file
     (tmp_path / "effect_040.bcam").write_bytes(struct.pack("<4H", 3, 8, 12, len(good)) + good[8:])
     (tmp_path / "phoenix.bcam").write_bytes(good)
-    loaded, refused = cameras.load_bcam_files([str(tmp_path)])
+    loaded, refused = cameras.load_bcam_files(sorted(str(path) for path in tmp_path.iterdir()))
     reasons = {Path(path).name: reason for path, reason in refused}
     assert loaded == [PHOENIX_DOWN]
     assert "size does not match" in reasons[cam_file_name(MEGA_PHOENIX)]
@@ -115,7 +115,8 @@ def test_fujin_creates_saves_and_reimports_a_camera(qapp, tmp_path, monkeypatch)
     assert written.read_bytes() == track.to_bytes()
 
     other = FujinWidget()
-    loaded, refused = other._import_bcam_folder(str(tmp_path))
+    assert all("folder" not in label for label, _callback in other.import_entries())   # files one by one
+    loaded, refused = other._import_bcam([str(written)])
     assert loaded == [PHOENIX_DOWN] and not refused
     assert other.camera_editor.manager.track(PHOENIX_DOWN).to_bytes() == written.read_bytes()
     assert other.current_effect == PHOENIX_DOWN and other.tabs.currentIndex() == 1
