@@ -32,10 +32,6 @@ import sys
 from .base import BaseCliTool
 from .common import load_game_data, read_csv, write_csv
 
-REFINE_CSV_HEADER = ["Bin", "Section", "Entry", "Text",
-                     "Input ID", "Amount required", "Output ID", "Amount received",
-                     "Required GF level"]
-
 
 def _load_manager(mngrp_path: str, mngrphd_path: str = ""):
     from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
@@ -50,43 +46,19 @@ def _load_manager(mngrp_path: str, mngrphd_path: str = ""):
 
 
 def _cmd_export_refine_csv(args) -> int:
+    from Shiva.ShivaRefine.refinecsv import write_refine_csv
     from Shiva.ShivaRefine.refineview import build_refine_views
     manager, _ = _load_manager(args.input, args.mngrphd)
-    rows = []
-    for refine_view in build_refine_views(manager):
-        for entry_index, entry in enumerate(refine_view.entries):
-            rows.append([refine_view.bin_name, refine_view.name, entry_index,
-                         refine_view.texts[entry_index].get_str(),
-                         entry.element_in_id, entry.amount_required,
-                         entry.element_out_id, entry.amount_received, entry.required_gf_level])
-    write_csv(args.output, REFINE_CSV_HEADER, rows)
-    print(f"[ok] {len(rows)} refine entries exported to {args.output}")
+    count = write_refine_csv(args.output, build_refine_views(manager))
+    print(f"[ok] {count} refine entries exported to {args.output}")
     return 0
 
 
 def _cmd_import_refine_csv(args) -> int:
+    from Shiva.ShivaRefine.refinecsv import read_refine_csv
     from Shiva.ShivaRefine.refineview import build_refine_views
     manager, mngrphd_path = _load_manager(args.input, args.mngrphd)
-    refine_views = {(view.bin_name, view.name): view for view in build_refine_views(manager)}
-    applied = 0
-    for row in read_csv(args.csv):
-        if not row or not str(row[0]).strip():
-            continue
-        key = (row[0], row[1])
-        if key not in refine_views:
-            raise ValueError(f"Unknown refine section {key[0]}/{key[1]}")
-        refine_view = refine_views[key]
-        entry_index = int(row[2])
-        entry = refine_view.entries[entry_index]
-        refine_view.texts[entry_index].set_str(row[3])
-        entry.element_in_id = int(row[4])
-        entry.amount_required = int(row[5])
-        entry.element_out_id = int(row[6])
-        entry.amount_received = int(row[7])
-        # Older CSVs had an "Unknown" column = bytes 0x03-0x04 as a little-endian u16: its high byte
-        # is the level (byte 0x03, the high byte of the amount, is 0 in every vanilla entry).
-        entry.required_gf_level = int(row[8]) if int(row[8]) < 256 else int(row[8]) >> 8
-        applied += 1
+    applied = read_refine_csv(args.csv, build_refine_views(manager))
     manager.save_file(args.output or args.input, args.output_mngrphd or mngrphd_path)
     out_name = args.output or args.input
     print(f"[ok] {applied} refine entries applied, written to {out_name} (+ mngrphd)")

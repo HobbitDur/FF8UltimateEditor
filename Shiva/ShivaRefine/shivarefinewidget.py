@@ -1,10 +1,12 @@
 from functools import partial
 
 from PyQt6.QtCore import QSignalBlocker
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
-                             QComboBox, QSpinBox, QLineEdit, QTableWidget, QHeaderView)
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QPushButton,
+                             QComboBox, QSpinBox, QLineEdit, QTableWidget, QHeaderView, QFileDialog,
+                             QMessageBox)
 
 from FF8GameData.m00x.dataclass import TypeId
+from Shiva.ShivaRefine.refinecsv import read_refine_csv, write_refine_csv
 from Shiva.ShivaRefine.refineview import build_refine_views
 from SmallWidget.listsearchbar import ListSearchBar
 
@@ -56,8 +58,21 @@ class ShivaRefineWidget(QWidget):
         self.entry_table.horizontalHeader().setSectionResizeMode(self.COLUMN_OUTPUT, QHeaderView.ResizeMode.Stretch)
         self.entry_table.verticalHeader().setVisible(True)
 
+        # CSV of every refine entry: same file as the shiva CLI export-refine-csv / import-refine-csv
+        self.export_csv_button = QPushButton("Export CSV")
+        self.export_csv_button.setToolTip("Export every refine entry (all abilities) to a CSV file, editable in Excel")
+        self.export_csv_button.clicked.connect(self.export_csv)
+        self.import_csv_button = QPushButton("Import CSV")
+        self.import_csv_button.setToolTip("Load a refine CSV (UTF-8) exported here or by the shiva CLI")
+        self.import_csv_button.clicked.connect(self.import_csv)
+        csv_layout = QHBoxLayout()
+        csv_layout.addWidget(self.export_csv_button)
+        csv_layout.addWidget(self.import_csv_button)
+        csv_layout.addStretch(1)
+
         self.editor_container = QWidget()
         editor_layout = QVBoxLayout()
+        editor_layout.addLayout(csv_layout)
         editor_layout.addWidget(self.section_name_label)
         editor_layout.addWidget(self.section_description_label)
         editor_layout.addWidget(self.entry_table)
@@ -89,6 +104,28 @@ class ShivaRefineWidget(QWidget):
     def save_to_mngrp(self, manager):
         """Nothing to do: the entries and texts edited here are the ones of the shared mngrp,
         and their offsets are recomputed when the file is written."""
+
+    def export_csv(self):
+        if not self.refine_views:
+            return
+        file_name = QFileDialog.getSaveFileName(self, "Export refine entries to CSV", "refine.csv", "*.csv")[0]
+        if file_name:
+            write_refine_csv(file_name, self.refine_views)
+
+    def import_csv(self):
+        if not self.refine_views:
+            return
+        file_name = QFileDialog.getOpenFileName(self, "Import refine entries from CSV (UTF-8)", "", "*.csv")[0]
+        if not file_name:
+            return
+        try:
+            applied = read_refine_csv(file_name, self.refine_views)
+        except (UnicodeDecodeError, ValueError, KeyError, IndexError) as error:
+            QMessageBox.critical(self, "Shiva - Refine", f"Could not import the CSV:\n{error}")
+            return
+        self.reload_selected_section()
+        QMessageBox.information(self, "Shiva - Refine",
+                                f"{applied} refine entries imported. Use the save button to write them into mngrp.bin.")
 
     def reload_selected_section(self):
         """Rebuild the entry table from the selected refine ability data."""

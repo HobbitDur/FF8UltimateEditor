@@ -308,3 +308,44 @@ def test_seed_add_choice_persists(qapp, game_data, tmp_path):
     assert three.get_choices()[2][1] == "MAYBE"
     for test in reloaded_tests.test_list:  # untouched tests keep their question count
         assert len(test.strings) == SeedTestSet.QUESTIONS_PER_TEST
+
+
+@pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin")
+def test_refine_csv_roundtrip_and_old_format(game_data, tmp_path):
+    """The refine CSV (Shiva tab + CLI) round-trips, and an old CSV (amount received = byte 0x02,
+    "Unknown" = bytes 0x03-0x04 as a u16) still imports through the temporary layer."""
+    import csv
+    from Shiva.ShivaRefine.refinecsv import REFINE_CSV_HEADER, read_refine_csv, write_refine_csv
+    from Shiva.ShivaRefine.refineview import build_refine_views
+
+    manager = MngrpManager(game_data=game_data)
+    manager.load_file(str(MENU / "mngrphd.bin"), str(MENU / "mngrp.bin"))
+    views = build_refine_views(manager)
+    csv_path = tmp_path / "refine.csv"
+    assert write_refine_csv(csv_path, views) == 377
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        assert next(csv.reader(f, delimiter="|")) == REFINE_CSV_HEADER
+    assert read_refine_csv(csv_path, views) == 377
+    again = tmp_path / "again.csv"
+    write_refine_csv(again, views)
+    assert again.read_bytes() == csv_path.read_bytes()
+
+    # Old format: same rows, "Amount received" holding byte 0x02 only and "Unknown" = level << 8 | byte 0x03.
+    old_path = tmp_path / "old.csv"
+    with open(old_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f, delimiter="|")
+        writer.writerow(["Bin", "Section", "Entry", "Text", "Input ID", "Amount required", "Output ID",
+                         "Amount received", "Unknown"])
+        for view in views:
+            for index, entry in enumerate(view.entries):
+                level = 42 if (entry.element_in_id, entry.element_out_id) == (129, 141) else entry.required_gf_level
+                writer.writerow([view.bin_name, view.name, index, view.texts[index].get_str(), entry.element_in_id,
+                                 entry.amount_required, entry.element_out_id, entry.amount_received & 0xFF,
+                                 level << 8 | entry.amount_received >> 8])
+    assert read_refine_csv(old_path, views) == 377
+    dark_matter = [entry for view in views for entry in view.entries
+                   if (entry.element_in_id, entry.element_out_id) == (129, 141)]
+    assert [entry.required_gf_level for entry in dark_matter] == [42]
+    dark_matter[0].required_gf_level = 100
+    write_refine_csv(again, views)
+    assert again.read_bytes() == csv_path.read_bytes(), "the old CSV must give back the same entries"
