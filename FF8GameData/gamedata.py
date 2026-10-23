@@ -55,6 +55,26 @@ class SectionType(Enum):
     SIZE_AND_OFFSET_AND_TEXT = 11
 
 
+# Card art tiles, shared by every GameData of the process: each tool holds its own GameData, and
+# decoding the four card atlases (the remaster ones are large PNGs) cost ~0.4 s per load_card_data,
+# five times over at startup. Every user only reads the tiles (resize/convert make copies).
+_CARD_ATLASES = {}   # atlas path -> decoded PIL image
+_CARD_TILES = {}     # (atlas path, tile size, x, y) -> cropped PIL image
+
+
+def _card_tile(atlas_path, tile_size, x, y):
+    key = (atlas_path, tile_size, x, y)
+    tile = _CARD_TILES.get(key)
+    if tile is None:
+        atlas = _CARD_ATLASES.get(atlas_path)
+        if atlas is None:
+            atlas = _CARD_ATLASES[atlas_path] = Image.open(atlas_path)
+            atlas.load()
+        left, upper = x * tile_size, y * tile_size
+        tile = _CARD_TILES[key] = atlas.crop((left, upper, left + tile_size, upper + tile_size))
+    return tile
+
+
 class GameData:
     def __init__(self, game_data_submodule_path="FF8GameData", ai_file: str = "ai_vanilla.json"):
         self.resource_folder_json = os.path.join(game_data_submodule_path, "Resources", "json")
@@ -425,58 +445,18 @@ class GameData:
 
     def __load_cards(self):
         # Thank you Maki !
-        img = Image.open(os.path.join(self.resource_folder_image, "text_0.png"))
-        TILES_WIDTH_EL = 128
-        TILES_HEIGHT_EL = 128
-        for i, list_el in enumerate(self.card_data_json["card_type"]):
-            # Calculate the bounding box of the tile
-            left = list_el["img_x"] * TILES_WIDTH_EL
-            upper = list_el["img_y"] * TILES_HEIGHT_EL
-            right = left + TILES_WIDTH_EL
-            lower = upper + TILES_HEIGHT_EL
-            # Extract the tile using cropping
-            tile = img.crop((left, upper, right, lower))
-            self.card_data_json["card_type"][i]["img"] = tile
+        # The tiles come from a process-wide cache (_card_tile): the JSON is still read fresh for
+        # each GameData, only the decoded art is shared.
+        def atlas(name):
+            return os.path.join(self.resource_folder_image, name)
 
-        img = Image.open(os.path.join(self.resource_folder_image, "cards_00.png"))
-        img_remaster = Image.open(os.path.join(self.resource_folder_image, "cards_00_remaster.png"))
-        img_xylomod = Image.open(os.path.join(self.resource_folder_image, "cards_00_xylomod.png"))
-
-        TILES_WIDTH = 64
-        TILES_HEIGHT = 64
-        for i, list_el in enumerate(self.card_data_json["card_info"]):
-            # Calculate the bounding box of the tile
-            left = list_el["img_x"] * TILES_WIDTH
-            upper = list_el["img_y"] * TILES_HEIGHT
-            right = left + TILES_WIDTH
-            lower = upper + TILES_HEIGHT
-            # Extract the tile using cropping
-            tile = img.crop((left, upper, right, lower))
-            self.card_data_json["card_info"][i]["img"] = tile
-
-        TILES_WIDTH = 256
-        TILES_HEIGHT = 256
-        for i, list_el in enumerate(self.card_data_json["card_info"]):
-            # Calculate the bounding box of the tile
-            left = list_el["img_x"] * TILES_WIDTH
-            upper = list_el["img_y"] * TILES_HEIGHT
-            right = left + TILES_WIDTH
-            lower = upper + TILES_HEIGHT
-            # Extract the tile using cropping
-            tile_remaster = img_remaster.crop((left, upper, right, lower))
-            self.card_data_json["card_info"][i]["img_remaster"] = tile_remaster
-
-        TILES_WIDTH = 256
-        TILES_HEIGHT = 256
-        for i, list_el in enumerate(self.card_data_json["card_info"]):
-            # Calculate the bounding box of the tile
-            left = list_el["img_x"] * TILES_WIDTH
-            upper = list_el["img_y"] * TILES_HEIGHT
-            right = left + TILES_WIDTH
-            lower = upper + TILES_HEIGHT
-            # Extract the tile using cropping
-            tile_xylomod = img_xylomod.crop((left, upper, right, lower))
-            self.card_data_json["card_info"][i]["img_xylomod"] = tile_xylomod
+        for card_type in self.card_data_json["card_type"]:
+            card_type["img"] = _card_tile(atlas("text_0.png"), 128, card_type["img_x"], card_type["img_y"])
+        for card in self.card_data_json["card_info"]:
+            x, y = card["img_x"], card["img_y"]
+            card["img"] = _card_tile(atlas("cards_00.png"), 64, x, y)
+            card["img_remaster"] = _card_tile(atlas("cards_00_remaster.png"), 256, x, y)
+            card["img_xylomod"] = _card_tile(atlas("cards_00_xylomod.png"), 256, x, y)
 
     def translate_str_to_hex(self, string):
         c = 0
