@@ -24,7 +24,7 @@ from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
 from Fujin.texturepictureview import TexturePictureView
-from Fujin.effectparts import PartTab, defaults as schema_defaults, effect_schema
+from Fujin.effectparts import PORTS_MISSING, PartTab, defaults as schema_defaults, effect_schema, recorder_has_ports
 from Fujin.nativepreview import NativePreviewView, gl_renderer
 from Fujin.soundpanel import SoundPanel
 from Fujin.objectview import MagObjectView
@@ -158,6 +158,11 @@ class FujinWidget(QWidget):
         choreography_layout = QVBoxLayout(choreography_page)
         choreography_layout.setContentsMargins(0, 0, 0, 0)
         choreography_layout.addWidget(self.choreography_note)
+        # why there are no part tabs: the effect recorder lacks FFNx's effect sources
+        self.parts_note = QLabel()
+        self.parts_note.setWordWrap(True)
+        self.parts_note.hide()
+        choreography_layout.addWidget(self.parts_note)
         choreography_layout.addWidget(self.choreography, 1)
         self.tabs.addTab(choreography_page, "Choreography")
         self.object_view = MagObjectView(self.file_registry)
@@ -780,6 +785,8 @@ class FujinWidget(QWidget):
         self.part_tabs = []
         effect = self.current_effect
         schema = effect_schema(effect) if effect is not None else None
+        self.parts_note.setText("" if schema is not None or recorder_has_ports() else PORTS_MISSING)
+        self.parts_note.setVisible(bool(self.parts_note.text()))
         if schema is None:
             return
         values = self.effect_params.get(effect, {})

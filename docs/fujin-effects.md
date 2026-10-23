@@ -125,7 +125,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   Overview's preview runs the port with the edited parameters too. Save writes them as
   `effect_NNN.fxparams` (JSON, only the values not at the game's) into the export folder, with
   the patch; Import complementary reads them back. The ports come from FFNx's effect sources:
-  the updater's **FFNxEffects** (Update downloads the folder `src/ff8/battle/fx` of FFNx's
+  the header's **FFNx** button in the External program bar (tick it, then Update; clicking it says
+  what is installed - Choreography says so too when the recorder has no ports), the updater's
+  **FFNxEffects** (Update downloads the folder `src/ff8/battle/fx` of FFNx's
   source - for now the `VanillaDecompiledForFutur30FPS` branch of HobbitDur/FFNx for both
   channels - into `ExternalTools/FFNx/fx`, `SOURCE.txt` naming the commit, and the recorder is
   built again with them); the release's CI does the same before building the recorder.

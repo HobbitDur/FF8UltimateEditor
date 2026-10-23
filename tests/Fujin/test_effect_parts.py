@@ -188,3 +188,18 @@ def test_recorder_rebuilt_when_ffnx_effect_sources_change(tmp_path, monkeypatch)
     assert not recorderbuild.needs_build()
     os.utime(fx / "mag001_cure.cpp", (3000, 3000))                 # the updater brought newer sources
     assert recorderbuild.needs_build()
+
+
+def test_choreography_says_how_to_get_the_part_tabs(qapp, monkeypatch):
+    """A recorder built without FFNx's effect sources (a fresh clone: they come from the updater)
+    gives no part tabs; Choreography says how to get them."""
+    from Fujin import fujinwidget
+    monkeypatch.setattr(fujinwidget, "effect_schema", lambda _effect: None)
+    monkeypatch.setattr(fujinwidget, "recorder_has_ports", lambda: False)
+    fujin = fujinwidget.FujinWidget()
+    fujin.select_effect(1)
+    assert fujin.part_tabs == [] and not fujin.parts_note.isHidden()
+    assert "FFNx button" in fujin.parts_note.text() and "Update" in fujin.parts_note.text()
+    monkeypatch.setattr(fujinwidget, "recorder_has_ports", lambda: True)    # built with them: no part for it
+    fujin.select_effect(2)
+    assert fujin.parts_note.isHidden()

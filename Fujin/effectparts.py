@@ -18,12 +18,44 @@ from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import (QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSlider, QSpinBox,
                              QVBoxLayout, QWidget)
 
-from Fujin.recorderbuild import RECORDER
+from Fujin.recorderbuild import FFNX_EFFECTS, RECORDER
 
 PREVIEW_WIDTH = 320                 # the part preview's picture width (pixels)
 TICKS_PER_SECOND = 15
 
 _SCHEMAS = {}                       # (recorder build, effect) -> schema or None
+_PORTS = {}                         # recorder build -> whether it has FFNx's effect ports
+PORTS_MISSING = ("Part tabs (an effect part by part, with its parameters - Cure for now) need FFNx's effect "
+                 "sources: tick the FFNx button in the header's External program bar, then Update (it downloads "
+                 "them and builds Fujin's effect recorder with them; Visual Studio's C++ tools are needed when "
+                 "running from source).")
+
+
+def recorder_has_ports():
+    """Whether the effect recorder was built with FFNx's effect sources (its C++ ports and their
+    parameters): the updater's FFNxEffects, or a release's recorder."""
+    try:
+        build = RECORDER.stat().st_mtime_ns
+    except OSError:
+        return False
+    if build not in _PORTS:
+        try:
+            run = subprocess.run([str(RECORDER), "1", "schema=" + os.devnull], cwd=str(RECORDER.parent),
+                                 capture_output=True, text=True, timeout=30,
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            _PORTS[build] = "without FFNx" not in run.stdout
+        except (OSError, subprocess.SubprocessError):
+            _PORTS[build] = False
+    return _PORTS[build]
+
+
+def ffnx_sources():
+    """(repository, ref, commit) of the FFNx effect sources the updater installed, or None."""
+    try:
+        lines = (FFNX_EFFECTS / "SOURCE.txt").read_text(encoding="utf-8").splitlines()
+        return lines[0], lines[1], lines[2]
+    except (OSError, IndexError):
+        return None
 
 
 def effect_schema(effect_id):

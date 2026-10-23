@@ -195,6 +195,9 @@ class FF8UltimateEditorWidget(QWidget):
         self._cactilio_button = ExternalToolWidget(os.path.join(resources_path, 'jumbo_cactuar.ico'), self._launch_cactilio, "Launch Jumbo cactuar (Scene.out editor)")
         self._deling_button = ExternalToolWidget(os.path.join(resources_path, 'deling.ico'), self._launch_deling, "Launch deling (Archive editor)")
         self._hyne_button = ExternalToolWidget(os.path.join(resources_path, 'hyne.ico'), self._launch_hyne, "Launch hyne (Save editor)")
+        self._ffnx_button = ExternalToolWidget(os.path.join(resources_path, 'ffnx.ico'), self._show_ffnx_effects,
+                                               "FFNx's effect sources (Fujin's effect part tabs): tick, then Update "
+                                               "downloads them and builds Fujin's effect recorder with them")
 
         # Temporarily hidden (kept in case they get re-enabled later)
         #self._Quezacotl_button.hide()
@@ -215,6 +218,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._external_program_layout.addWidget(self._cactilio_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._hyne_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._deling_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._external_program_layout.addWidget(self._ffnx_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addStretch(1)
 
         # Combine Header Layouts
@@ -500,6 +504,24 @@ class FF8UltimateEditorWidget(QWidget):
         self._zone_widget.tabs.setCurrentWidget(self._zone_widget.mmag_widget)
         self._zone_widget.mmag_widget.select_entry(entry_index)
 
+    def _show_ffnx_effects(self):
+        """FFNx's effect sources: what is installed, and how to get them."""
+        from Fujin.effectparts import ffnx_sources, recorder_has_ports
+        from PyQt6.QtWidgets import QMessageBox
+        from Fujin.recorderbuild import recorder_build
+        source = ffnx_sources()
+        installed = (f"Installed: {source[0]}, {source[1]} (commit {source[2][:10]})." if source else
+                     "Not installed: tick the box above this button, then Update.")
+        build = recorder_build()
+        recorder = ("Fujin's effect recorder is being built with them." if build.building else
+                    "Fujin's effect recorder includes them: Fujin shows the part tabs (Choreography)."
+                    if recorder_has_ports() else
+                    "Fujin's effect recorder does not include them yet" + (f": {build.error}" if build.error else "."))
+        QMessageBox.information(self, "FFNx effect sources",
+                                "FFNx's battle effects ported to C++ (src/ff8/battle/fx), built into Fujin's effect "
+                                "recorder: Fujin's Choreography shows an effect part by part with its parameters "
+                                f"(Cure for now).\n\n{installed}\n{recorder}")
+
     def tools_to_update(self):
         tool_list = []
         if self._ifrit_gui_button.update_selected:
@@ -520,7 +542,8 @@ class FF8UltimateEditorWidget(QWidget):
             tool_list.append("Deling")
             tool_list.append("DelingCli")
         tool_list.append("VincentTim")
-        tool_list.append("FFNxEffects")      # FFNx's effect sources: built into Fujin's effect recorder
+        if self._ffnx_button.update_selected:
+            tool_list.append("FFNxEffects")  # FFNx's effect sources: built into Fujin's effect recorder
         return tool_list
 
     @staticmethod
