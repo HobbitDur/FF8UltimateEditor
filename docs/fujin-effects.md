@@ -27,7 +27,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   battle up when its models are still waiting; imported characters fill the party one file per
   character, any other is picked in Party, its weapon in the Camera tab). **Battle actors** off
   records the effect alone: the actors are loaded but not drawn and no cast plays (what the effect
-  redraws itself, as Cure its target, stays). **Play** records first when there is no recording yet; edits of
+  redraws itself, as Cure its target, is left out too: the recorder drops the primitives drawn with
+  the actors' palettes, so the effect's own models, as Protect's shield, stay). **Play** records first when there is no recording yet; edits of
   the effect's files refresh the recording by themselves, **Record again** is for what Fujin does
   not see change (a camera keyframe, the Camera tab's script inputs). Recording runs the effect's
   original code in FF8UltimateEditor's effect recorder

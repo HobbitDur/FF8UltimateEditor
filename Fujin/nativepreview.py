@@ -247,7 +247,8 @@ class NativePreviewView(QWidget):
         self.actors_check.setToolTip("Draw the caster, the target and the others, with the caster's cast before the "
                                      "effect. Unchecked: the effect alone (the actors are still loaded, unseen: "
                                      "the effect's code places itself on them; one it redraws itself, as Cure "
-                                     "does its target, stays).")
+                                     "does its target, is left out too - its own models, as Protect's shield, "
+                                     "stay).")
         self.actors_check.toggled.connect(lambda _on: (self._cast_changed(), self._update_controls()))
         # the Camera tab setup's scene.out encounter: enemies and party where that battle puts them
         self.encounter_combo = _BattleCombo(self._load_battle)
