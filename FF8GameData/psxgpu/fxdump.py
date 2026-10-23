@@ -6,7 +6,9 @@ second); its "between" dump lists, per real tick:
 
     R t n [ordered]       the original pass of tick t, then its n OT insertions ("ordered": listed in
                           draw order - Tools/fxrecorder walks the PC's render list):
-    P f n sub obj lay mdl gfc fn bucket len words...   one GPU packet (words in hex; up to 16)
+    P f n sub obj lay mdl gfc fn bucket len words...   one GPU packet (words in hex; up to 16); from
+                          Tools/fxrecorder, f = the effect part that drew it (a port's FX_PART, 0
+                          for none: FFNx fx_params.h)
     C t ex ey ez ax ay az the battle camera after the tick (eye, look-at)
     V t x y w h hexwords  (vram=1) a VRAM upload the tick queued: a w x h rectangle at (x, y)
     B t x y w h u v       (vram=1) a VRAM-to-VRAM copy the tick queued
@@ -25,9 +27,20 @@ from FF8GameData.psxgpu.gpu import Gpu, Vram
 class EffectTick:
     index: int
     packets: list = field(default_factory=list)     # [(bucket, insertion order, [words])]
+    parts: list = field(default_factory=list)       # the effect part of each packet (0: none)
     camera: tuple = None                            # (eye xyz, look-at xyz)
     uploads: list = field(default_factory=list)     # [("V", x, y, w, h, words) | ("B", x, y, w, h, u, v)]
     ordered: bool = False   # the packets are in draw order already ("R t n ordered": the recorder's walk)
+
+    def part_packets(self, parts=None):
+        """The packets of these effect parts (all of them for None)."""
+        if parts is None:
+            return self.packets
+        return [packet for packet, part in zip(self.packets, self.parts) if part in parts]
+
+    @property
+    def part_ids(self):
+        return set(self.parts)
 
 
 @dataclass
@@ -38,16 +51,16 @@ class EffectRecording:
     summary: str = ""
     _vram_cache: tuple = field(default=None, repr=False, compare=False)   # (uploads key, Vram) of the last frame
 
-    def fit_view(self, margin=0.08):
+    def fit_view(self, margin=0.08, parts=None):
         """(x, y, width, height) of the screen-plane window holding what the effect draws over all its
         ticks (2nd to 98th percentile of the polygon / sprite points, plus a margin), at least the
         320 x 224 units and at most the game window x 2 (GAME_WINDOW: the effect may be framed by
-        a camera that does not show it all)."""
+        a camera that does not show it all). parts: only the packets of these effect parts."""
         import numpy as np
         from FF8GameData.psxgpu.gpu import GAME_WINDOW, SCREEN_H, SCREEN_W, _raw_xy
         points = []
         for tick in self.ticks:
-            for _bucket, _order, words in tick.packets:
+            for _bucket, _order, words in tick.part_packets(parts):
                 code = words[0] >> 24 if words else 0
                 if 0x20 <= code < 0x40:
                     count, index = (4 if code & 8 else 3), 1
@@ -69,11 +82,12 @@ class EffectRecording:
         centre_x, centre_y = (low_x + high_x) / 2, (low_y + high_y) / 2
         return int(centre_x - width / 2), int(centre_y - height / 2), int(width), int(height)
 
-    def frame(self, tick_index, vram=None, view=None, scale=1.0, renderer=None):
+    def frame(self, tick_index, vram=None, view=None, scale=1.0, renderer=None, parts=None):
         """The RGB image of tick `tick_index` and the Gpu that drew it (its missing_pages / counts).
         view: (x, y, width, height) of the screen plane to draw, None = the game's window
         (GAME_WINDOW); scale: image pixels per packet unit; renderer: a glrender.PsxGlRenderer to
-        draw with OpenGL (the same picture, fast enough to play), None = the software Gpu."""
+        draw with OpenGL (the same picture, fast enough to play), None = the software Gpu; parts:
+        draw only the packets of these effect parts (the uploads stay whole)."""
         from FF8GameData.psxgpu.gpu import GAME_WINDOW
         key = None
         if vram is None:
@@ -90,7 +104,8 @@ class EffectRecording:
         else:
             gpu = Gpu(vram, *size, origin=(x, y), scale=scale)
         tick = self.ticks[tick_index]
-        packets = tick.packets if tick.ordered else sorted(tick.packets, key=lambda p: (-p[0], -p[1]))
+        packets = tick.part_packets(parts)
+        packets = packets if tick.ordered else sorted(packets, key=lambda p: (-p[0], -p[1]))
         for _bucket, _order, words in packets:
             gpu.draw_packet(words)
         if renderer is not None:
@@ -143,12 +158,14 @@ def parse_recording(lines, effect_id=None) -> EffectRecording:
             index = int(parts[1])
             current = by_index.setdefault(index, EffectTick(index))
             current.packets = []
+            current.parts = []
             current.ordered = len(parts) > 3 and parts[3] == "ordered"
         elif kind in ("H", "Z", "O", "HC"):
             current = None                          # held frames: not the game's own ticks
         elif kind == "P" and current is not None and len(parts) >= 11:
             words = [int(word, 16) for word in parts[11:]]
             current.packets.append((int(parts[9], 16), len(current.packets), words))
+            current.parts.append(int(parts[1]) if parts[1].isdigit() else 0)
         elif kind == "C" and len(parts) >= 8:
             index = int(parts[1])
             values = tuple(int(value) for value in parts[2:8])

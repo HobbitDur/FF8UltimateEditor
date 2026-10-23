@@ -37,6 +37,13 @@
 // [each a:n can be a:n:x:y:z: the caster stands at that model-local offset meanwhile - AnimSeq
 // variables 0x0D-0x0F, the step forward of a cast (Squall's 0, 0, -792), default 0, 0, 0]
 // [overrides=<folder>: unsaved effect-file snapshots, preferred over magic= without changing it]
+// Effect lab (built with FFNx's effect sources, see build.bat; FF8_FX_LAB): [native=1: the effect
+// runs its C++ port (FFNx src/ff8/battle/fx) instead of the exe's code] [params=<file>: "key value"
+// lines, the port's parameters (fx_params.h) instead of the game's] [schema=<file>: write the
+// effect's parameter table as JSON and stop - no exe needed]. Each primitive a port draws carries
+// the part it belongs to (FX_PART): the P lines' first number. [keepparts=1: with actors=0, what a
+// part draws stays even in an actor's texture (Cure's overlay redraws its target): only the actors'
+// own drawing goes]
 // [targets=N] [caster=slot] [seed=N] [camera=<file>: per tick "t ex ey ez ax ay az roll H" - the
 // view the camera player would show, set before the tick; without it a fixed default view]
 //
@@ -50,6 +57,9 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#ifdef FF8_FX_LAB
+#include "fx_params.h"
+#endif
 
 // ---------------------------------------------------------------- options
 struct Opt
@@ -65,6 +75,8 @@ struct Opt
 	std::vector<Step> castplan;       // castplan=a:n[:x:y:z],..: (animation, ticks, offset) before the effect
 	std::vector<Step> castafter;      // castafter=..: while it runs (n = 0: loop it to the end)
 	bool castcam = false; int16_t castcam_pose[6] = {}; // castcam=ex,ey,ez,ax,ay,az: the view while casting
+	bool native = false;              // native=1: the effect's C++ port (effect lab builds)
+	std::string params, schema;       // params=<file>: its parameters / schema=<file>: write their table
 	bool cast() const { for (int k = 0; k < 7; k++) if (!body[k].empty()) return true; return false; }
 };
 static Opt O;
@@ -216,7 +228,7 @@ static int32_t __cdecl s_49F0A0(uint32_t, uint32_t, uint32_t) { return (int16_t)
 
 // ---------------------------------------------------------------- patches
 struct Patch { uint32_t at; uint8_t orig[5], jmp[5]; };
-static Patch g_patches[96];
+static Patch g_patches[192];
 static int g_npatches = 0;
 static Patch *find_patch(uint32_t at) { for (int i = 0; i < g_npatches; i++) if (g_patches[i].at == at) return &g_patches[i]; return nullptr; }
 static void unpatch(uint32_t at) { memcpy((void *)at, find_patch(at)->orig, 5); }
@@ -224,7 +236,7 @@ static void repatch(uint32_t at) { memcpy((void *)at, find_patch(at)->jmp, 5); }
 static void patch_jmp(uint32_t at, void *to)
 {
 	uint8_t *p = (uint8_t *)at;
-	Patch &pt = g_patches[g_npatches < 96 ? g_npatches++ : 95];
+	Patch &pt = g_patches[g_npatches < 192 ? g_npatches++ : 191];
 	pt.at = at;
 	memcpy(pt.orig, p, 5);
 	p[0] = 0xE9;
@@ -257,7 +269,7 @@ static uint32_t __cdecl s_509440(uint32_t a, uint32_t b, uint32_t c) { GUARDED(0
 // SSIGPU_InsertPrimNoDepth 0x45C740 / AutoDepth 0x45C7A0 / DepthKeys 0x45C870 / AltViewport 0x45C8E0:
 // arg1 = OT bucket, arg2 = packet. The packet words are read after the tick (renderers set the
 // length / tpage after inserting).
-struct Ins { uint32_t fn, bucket, pkt; };
+struct Ins { uint32_t fn, bucket, pkt; int part = 0; };
 static std::vector<Ins> g_ins;
 static bool g_rec = false;
 static void note_ins(uint32_t fn, uint32_t bucket, uint32_t packet) { if (g_rec) g_ins.push_back({ fn, bucket, packet }); }
@@ -267,30 +279,54 @@ static void __cdecl s_45C7A0(uint32_t a, uint32_t b) { INS_WRAP(0x45C7A0, uint32
 static void __cdecl s_45C870(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f)
 { INS_WRAP(0x45C870, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)(a, b, c, d, e, f); repatch(0x45C870); note_ins(0x45C870, a, b); }
 static void __cdecl s_45C8E0(uint32_t a, uint32_t b) { INS_WRAP(0x45C8E0, uint32_t, uint32_t)(a, b); repatch(0x45C8E0); note_ins(0x45C8E0, a, b); }
-static void write_packet(uint32_t fn, uint32_t bucket, uint32_t pkt)
+// the effect part drawing now (FX_PART in a port, effect lab builds): where the render list's cursor
+// was when each part started; a node belongs to the last part started before it
+static std::vector<std::pair<uint32_t, int>> g_part_marks;
+#ifdef FF8_FX_LAB
+namespace ff8fx { void fx_part(int id) { g_part_marks.push_back({ *(const uint32_t *)0x1CA8828, id }); } }
+#endif
+static int part_at(uint32_t node)
+{
+	int part = 0;
+	for (const auto &m : g_part_marks)
+		if (m.first <= node) part = m.second;
+		else break;
+	return part;
+}
+static void write_packet(uint32_t fn, uint32_t bucket, uint32_t pkt, int part = 0)
 {
 	if (IsBadReadPtr((void *)pkt, 4)) return;
 	uint32_t len = *(const uint8_t *)(pkt + 3);
 	if (IsBadReadPtr((void *)(pkt + 4), len * 4)) return;
-	fprintf(g_out, "P 0 0 0 0 0 0 0 %X %X %u", fn, bucket, len);
+	fprintf(g_out, "P %d 0 0 0 0 0 0 %X %X %u", part, fn, bucket, len);
 	for (uint32_t k = 0; k < len; k++) fprintf(g_out, " %X", *(const uint32_t *)(pkt + 4 + 4 * k));
 	fprintf(g_out, "\n");
 }
 static void walk_render_list(std::vector<Ins> &out); // the PC draw order (below, after the battle memory)
 static int g_actors = 1;          // actors=0: do not draw the battle's models
+static int g_keep_parts = 0;      // keepparts=1 (with actors=0): what an effect part draws stays, even an actor's redraw
 // a textured polygon / sprite whose CLUT (the word after its first vertex: cmd, xy, uv + clut) lies in
 // the actors' VRAM: part of an actor's model
 static bool is_actor_packet(uint32_t pkt)
 {
-	if (IsBadReadPtr((void *)pkt, 16) || *(const uint8_t *)(pkt + 3) < 3) return false;
+	if (IsBadReadPtr((void *)pkt, 32) || *(const uint8_t *)(pkt + 3) < 3) return false;
 	const uint32_t *w = (const uint32_t *)(pkt + 4);
 	uint32_t code = w[0] >> 24;
 	if (!(code & 4) || !((code >= 0x20 && code < 0x40) || (code >= 0x60 && code < 0x80))) return false;
+	auto in_actor_vram = [](int x, int y) {
+		for (const VramRect &r : g_actor_vram)
+			if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) return true;
+		return false;
+	};
 	uint32_t clut = w[2] >> 16;
-	int x = (clut & 0x3F) * 16, y = (clut >> 6) & 0x1FF;
-	for (const VramRect &r : g_actor_vram)
-		if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) return true;
-	return false;
+	if (!in_actor_vram((clut & 0x3F) * 16, (clut >> 6) & 0x1FF)) return false;
+	if (code >= 0x60) return true;                  // a sprite: no texture page of its own
+	// a polygon: its first texel too (its texture page is the word after the 2nd vertex's uv) - an
+	// effect may keep a palette where the fake battle put an actor's (Cure's projected light)
+	uint32_t page = (code & 0x10 ? w[5] : w[4]) >> 16;
+	int depth = (page >> 7) & 3, u = w[2] & 0xFF, v = (w[2] >> 8) & 0xFF;
+	int tx = (page & 0xF) * 64 + (depth == 0 ? u / 4 : depth == 1 ? u / 2 : u), ty = ((page >> 4) & 1) * 256 + v;
+	return in_actor_vram(tx, ty);
 }
 static void write_tick(int t)
 {
@@ -303,9 +339,10 @@ static void write_tick(int t)
 	for (const Ins &r : drawn) seen[r.pkt] = true;
 	for (const Ins &r : g_ins) if (!seen.count(r.pkt)) { drawn.push_back(r); seen[r.pkt] = true; }
 	if (!g_actors)
-		drawn.erase(std::remove_if(drawn.begin(), drawn.end(), [](const Ins &r) { return is_actor_packet(r.pkt); }), drawn.end());
+		drawn.erase(std::remove_if(drawn.begin(), drawn.end(), [](const Ins &r) {
+			return !(g_keep_parts && r.part) && is_actor_packet(r.pkt); }), drawn.end());
 	fprintf(g_out, "R %d %u ordered\n", t, (unsigned)drawn.size());
-	for (const Ins &r : drawn) write_packet(r.fn, r.bucket, r.pkt);
+	for (const Ins &r : drawn) write_packet(r.fn, r.bucket, r.pkt, r.part);
 	const int16_t *eye = (const int16_t *)0xB8B7F0, *at = (const int16_t *)0xB8B7F8;
 	fprintf(g_out, "C %d %d %d %d %d %d %d\n", t, eye[0], eye[1], eye[2], at[0], at[1], at[2]);
 }
@@ -330,7 +367,7 @@ static void walk_render_list(std::vector<Ins> &out)
 {
 	uint32_t start = EXEC_START, end = *(const uint32_t *)EXEC_CURSOR;
 	if (end <= start || end - start > 0x60000) return;
-	struct Node { int32_t depth; uint32_t order, pkt, state; };
+	struct Node { int32_t depth; uint32_t order, pkt, state; int part; };
 	std::vector<Node> nodes;
 	size_t group = 0;           // the first primitive a coming draw-mode packet applies to
 	for (uint32_t node = start; node + 24 <= end; node += 24)
@@ -350,19 +387,20 @@ static void walk_render_list(std::vector<Ins> &out)
 			group = nodes.size();
 			continue;
 		}
-		nodes.push_back({ depth > 0 ? depth : -1, (uint32_t)nodes.size(), pkt, 0 });
+		nodes.push_back({ depth > 0 ? depth : -1, (uint32_t)nodes.size(), pkt, 0, part_at(node) });
 	}
 	std::stable_sort(nodes.begin(), nodes.end(), [](const Node &a, const Node &b) { return a.depth > b.depth; });
 	for (const Node &n : nodes)
 	{
-		if (n.state) out.push_back({ 0, (uint32_t)n.depth, n.state });
-		out.push_back({ 0, (uint32_t)n.depth, n.pkt });
+		if (n.state) out.push_back({ 0, (uint32_t)n.depth, n.state, n.part });
+		out.push_back({ 0, (uint32_t)n.depth, n.pkt, n.part });
 	}
 }
 
 static void env_reset()
 {
 	*(uint32_t *)0x1CA8828 = 0x1C48828;       // SSIGPU prim pool cursor
+	g_part_marks.clear();
 	memset(g_ot, 0, OT_SIZE);
 	*(uint32_t *)0x1D8E04C = (uint32_t)g_ot;   // g_Battle_FrameRenderListBase
 	*(uint32_t *)0x1D8E054 = (uint32_t)g_pkt;  // frame packet cursor
@@ -751,6 +789,10 @@ static bool parse(int argc, char **argv)
 		else if (k == "camera") O.camera = v;
 		else if (k == "modelfile") g_modelfile = v;
 		else if (k == "actors") g_actors = atoi(v.c_str());
+		else if (k == "native") O.native = atoi(v.c_str()) != 0;
+		else if (k == "keepparts") g_keep_parts = atoi(v.c_str());
+		else if (k == "params") O.params = v;
+		else if (k == "schema") O.schema = v;
 		else if (k == "model") O.model = atoi(v.c_str());
 		else if (k == "ticks") O.ticks = atoi(v.c_str());
 		else if (k == "targets") O.targets = atoi(v.c_str());
@@ -795,15 +837,115 @@ static bool parse(int argc, char **argv)
 		}
 		else if (k.size() == 7 && k.compare(0, 6, "weapon") == 0 && k[6] >= '0' && k[6] <= '6') O.weapon[k[6] - '0'] = v;
 	}
-	return O.eff > 0 && O.eff < 400 && !O.exe.empty() && !O.out.empty();
+	return O.eff > 0 && O.eff < 400 && (!O.schema.empty() || (!O.exe.empty() && !O.out.empty()));
 }
+
+// ---------------------------------------------------------------- effect lab (FFNx's effect ports)
+// The ports register their twins of the original task functions (FFNx fx_port.h register_port);
+// here a twin replaces its original with a jump, so the exe's own task executor runs the port.
+#ifdef FF8_FX_LAB
+struct LabPort { uint32_t orig; void *port; int effect; };
+static std::vector<LabPort> g_lab_ports;
+namespace ff8fx
+{
+	void register_port(uint32_t orig, void *port, const char *, int effect_id) { g_lab_ports.push_back({ orig, port, effect_id }); }
+	void register_mag001_cure();
+}
+static void lab_register()
+{
+	static bool done = false;
+	if (done) return;
+	done = true;
+	ff8fx::register_mag001_cure();
+}
+static int32_t field_value(const void *base, const ff8fx::fxp::Field &f)
+{
+	const uint8_t *at = (const uint8_t *)base + f.offset;
+	return f.type == ff8fx::fxp::I16 ? *(const int16_t *)at : f.type == ff8fx::fxp::U8 ? *at : *(const int32_t *)at;
+}
+static std::string json_text(const char *t)
+{
+	std::string out = "\"";
+	for (; t && *t; t++)
+	{
+		if (*t == '"' || *t == '\\') out += '\\';
+		out += *t;
+	}
+	return out + "\"";
+}
+// schema=<file>: the effect's parts and parameter fields with the game's values, as JSON
+static int lab_schema()
+{
+	lab_register();
+	const ff8fx::fxp::Module *m = ff8fx::fxp::find_params(O.eff);
+	FILE *f = fopen(O.schema.c_str(), "w");
+	if (!f) { printf("cannot write %s\n", O.schema.c_str()); return 1; }
+	if (!m) { fprintf(f, "{\"effect\": %d, \"parts\": [], \"fields\": []}\n", O.eff); fclose(f); printf("no parameters for effect %d\n", O.eff); return 0; }
+	fprintf(f, "{\"effect\": %d, \"name\": %s,\n \"parts\": [", m->effect_id, json_text(m->name).c_str());
+	for (int i = 0; i < m->part_count; i++)
+		fprintf(f, "%s\n  {\"id\": %d, \"key\": %s, \"title\": %s, \"doc\": %s}", i ? "," : "", m->parts[i].id,
+		        json_text(m->parts[i].key).c_str(), json_text(m->parts[i].title).c_str(), json_text(m->parts[i].doc).c_str());
+	fprintf(f, "],\n \"fields\": [");
+	for (int i = 0; i < m->field_count; i++)
+	{
+		const ff8fx::fxp::Field &d = m->fields[i];
+		fprintf(f, "%s\n  {\"part\": %s, \"key\": %s, \"label\": %s, \"doc\": %s, \"type\": %s, \"min\": %d, \"max\": %d, \"default\": %d}",
+		        i ? "," : "", json_text(d.part).c_str(), json_text(d.key).c_str(), json_text(d.label).c_str(), json_text(d.doc).c_str(),
+		        d.type == ff8fx::fxp::I16 ? "\"i16\"" : d.type == ff8fx::fxp::U8 ? "\"u8\"" : "\"i32\"", d.min, d.max, field_value(m->defaults, d));
+	}
+	fprintf(f, "]}\n");
+	fclose(f);
+	printf("schema: effect %d, %d parts, %d fields\n", O.eff, m->part_count, m->field_count);
+	return 0;
+}
+// native=1: the effect's ports replace its task functions; params=<file> sets their parameters
+static void lab_install()
+{
+	lab_register();
+	int ported = 0;
+	for (const LabPort &p : g_lab_ports)
+		if (p.effect == O.eff) { patch_jmp(p.orig, p.port); ported++; }
+	printf("native: %d ported task functions for effect %d\n", ported, O.eff);
+	const ff8fx::fxp::Module *m = ff8fx::fxp::find_params(O.eff);
+	if (O.params.empty()) return;
+	if (!m) { printf("params: effect %d has no parameters\n", O.eff); return; }
+	FILE *f = fopen(O.params.c_str(), "r");
+	if (!f) { printf("cannot read %s\n", O.params.c_str()); return; }
+	char key[128];
+	long value;
+	int set = 0;
+	while (fscanf(f, "%127s %ld", key, &value) == 2)
+	{
+		const ff8fx::fxp::Field *d = nullptr;
+		for (int i = 0; i < m->field_count && !d; i++) if (strcmp(m->fields[i].key, key) == 0) d = &m->fields[i];
+		if (!d) { printf("params: unknown %s\n", key); continue; }
+		uint8_t *at = (uint8_t *)m->params + d->offset;
+		if (d->type == ff8fx::fxp::I16) *(int16_t *)at = (int16_t)value;
+		else if (d->type == ff8fx::fxp::U8) *at = (uint8_t)value;
+		else *(int32_t *)at = (int32_t)value;
+		set++;
+	}
+	fclose(f);
+	printf("params: %d values set\n", set);
+}
+#endif
 
 int main(int argc, char **argv)
 {
 	setvbuf(stdout, nullptr, _IONBF, 0);
-	if (!parse(argc, argv))
+	const bool parsed = parse(argc, argv);
+	if (parsed && !O.schema.empty())
 	{
-		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [overrides=<dir>] [model=N] [modelfile=<file>] [slotK=<file>] [weaponK=<file>] [target=K,..] [idleK=N] [castplan=a:n,..] [castafter=a:n,..] [castcam=ex,ey,ez,ax,ay,az] [actors=0|1] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
+#ifdef FF8_FX_LAB
+		return lab_schema();
+#else
+		printf("schema: this recorder was built without FFNx's effect sources\n");
+		return 1;
+#endif
+	}
+	if (!parsed)
+	{
+		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [overrides=<dir>] [model=N] [modelfile=<file>] [slotK=<file>] [weaponK=<file>] [target=K,..] [idleK=N] [castplan=a:n,..] [castafter=a:n,..] [castcam=ex,ey,ez,ax,ay,az] [actors=0|1] [native=1] [keepparts=1] [params=<file>] [schema=<file>] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
 		return 1;
 	}
 	if (strcmp(argv[argc - 1], "child") != 0)
@@ -867,6 +1009,14 @@ int main(int argc, char **argv)
 	patch_jmp(0x49ED30, (void *)s_49ED30); patch_jmp(0x4A2D60, (void *)s_4A2D60); patch_jmp(0x49F0A0, (void *)s_49F0A0);
 	patch_jmp(0x5099D0, (void *)s_5099D0); patch_jmp(0x508C90, (void *)s_508C90); patch_jmp(0x5095B0, (void *)s_5095B0);
 	patch_jmp(0x508F90, (void *)s_508F90); patch_jmp(0x509440, (void *)s_509440);
+	if (O.native)
+	{
+#ifdef FF8_FX_LAB
+		lab_install();
+#else
+		printf("native: this recorder was built without FFNx's effect sources\n");
+#endif
+	}
 	*(uint32_t *)(g_ptd + 0x14) = O.seed;
 
 	g_ot = (uint8_t *)VirtualAlloc(nullptr, OT_SIZE, MEM_COMMIT, PAGE_READWRITE);

@@ -39,7 +39,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from PyQt6.QtCore import QProcess, Qt, QTimer
+from PyQt6.QtCore import QProcess, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QCursor, QImage, QPixmap
 from PyQt6.QtWidgets import (QApplication, QComboBox, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
                              QSlider, QVBoxLayout, QWidget)
@@ -89,11 +89,15 @@ class BattleCast:
     cast_during: list = field(default_factory=list)    # ... while it runs (last ticks 0 = to the end)
     cast_camera: tuple = None                          # (eye, target) seen during the cast
     actors: bool = True                                # False: the actors are loaded, not drawn (the effect alone)
+    native: bool = False                               # the effect's C++ port (FFNx) instead of the exe's code
+    params: tuple = ()                                 # ((key, value), ..) its parameters not at the game's value
+    lab: bool = False                                  # parts kept whole (keepparts=1): Choreography's part tabs
 
     def key(self):
         """The cache tag of this cast: its files (where they are and their state on disk), roles,
         whether the actors are drawn and the recorder build (a new one records anew)."""
-        parts = [f"c{self.caster}t{self.target}a{int(self.actors)}"]
+        parts = [f"c{self.caster}t{self.target}a{int(self.actors)}n{int(self.native)}l{int(self.lab)}"]
+        parts += [f"{key}={value}" for key, value in self.params]
         try:
             parts.append(f"recorder|{RECORDER.stat().st_mtime_ns}")
         except OSError:
@@ -183,16 +187,24 @@ class _BattleCombo(QComboBox):
 
 
 class NativePreviewView(QWidget):
+    recording_changed = pyqtSignal()        # another recording is shown (or none)
+
     """providers: exe_path() -> the opened FF8_EN.exe; effect_files() -> {file name: bytes} of the
     effect's imported files as Fujin holds them (unsaved edits included);
     camera_track(effect_id) -> (camera manager, track) or (None, None);
     file_edits() -> {file name: unsaved bytes}, staged privately for the recorder;
     cast_source: the Camera tab's preview (its caster / target pickers are mirrored here and
-    battle_cast() gives the battle), or None for the battle folder's test dummy."""
+    battle_cast() gives the battle), or None for the battle folder's test dummy;
+    params(effect_id) -> {key: value} of the effect's edited parameters (FFNx fx_params.h): when
+    there are some, the recorder runs the effect's C++ port with them (native=1);
+    lab: always the C++ port and never the actors - the effect alone, its parts tagged (Fujin's
+    Choreography part tabs show it part by part)."""
 
     def __init__(self, file_registry, exe_path=None, effect_files=None, camera_track=None, file_edits=None,
-                 cast_source=None):
+                 cast_source=None, params=None, lab=False):
         super().__init__()
+        self.params = params or (lambda _effect: {})
+        self.lab = lab
         self.effect_id, self.effect_name = None, ""
         self.recording = None
         self._frames = {}           # (tick, view mode) -> (QPixmap, Gpu)
@@ -448,9 +460,10 @@ class NativePreviewView(QWidget):
                 slots[slot] = (body, weapon if weapon and os.path.isfile(weapon) else None)
             elif body:
                 not_imported.append(os.path.basename(body))
+        params = tuple(sorted(self.params(self.effect_id).items())) if self.effect_id is not None else ()
         return BattleCast(slots, cast.caster, cast.target, cast.positions, cast.yaws, cast.camera,
                           sorted(set(not_imported)), cast.idle, cast.cast_before, cast.cast_during, cast.cast_camera,
-                          self.actors_group.isChecked())
+                          self.actors_group.isChecked() and not self.lab, self.lab or bool(params), params, self.lab)
 
     def _cast_changed(self):
         """Show the recording already made with this cast, if any."""
@@ -524,6 +537,7 @@ class NativePreviewView(QWidget):
         self.play_button.setChecked(False)
         self.effect_id, self.effect_name = effect_id, name
         self.recording, self._frames = None, {}
+        self.recording_changed.emit()
         self._recorded_edits = None
         self._preview_requested = False
         self._prerender.stop()
@@ -587,6 +601,15 @@ class NativePreviewView(QWidget):
             args.append("model=-1")
         if not cast.actors:
             args.append("actors=0")          # the effect alone: no cast either
+        if cast.native:
+            args.append("native=1")          # the effect's C++ port (FFNx), with its parameters
+            if cast.lab:
+                args.append("keepparts=1")   # a part redrawing its target (Cure's overlay) stays
+            if cast.params:
+                path = os.path.join(scratch.name, "params.txt")
+                with open(path, "w", encoding="ascii") as file:
+                    file.write("".join(f"{key} {int(value)}\n" for key, value in cast.params))
+                args.append(f"params={path}")
         # what each actor plays (worked out from its dat's sequences, FF8GameData.dat.actoranimplan):
         # its idle loop, and the caster's cast before and while the effect runs, seen wide
         args += [f"idle{slot}={animation}" for slot, animation in sorted(cast.idle.items()) if slot in cast.slots]
@@ -682,9 +705,22 @@ class NativePreviewView(QWidget):
         if problems:
             self.status.setText(self.status.text() + " Recorder: " + "; ".join(problems[:3]))
 
+    def params_changed(self):
+        """The effect's parameters changed: a recording made with these is shown if there is one,
+        else (when one was shown) it is made again."""
+        if self.effect_id is None or self._process is not None:
+            return
+        shown = self.recording is not None or self._preview_requested
+        effect_id, name = self.effect_id, self.effect_name
+        self.effect_id = None
+        self.set_effect(effect_id, name)
+        if shown and self.recording is None:
+            self.record()
+
     def load_recording_file(self, path, tick=0, signature=()):
         """Show a recording (made by Record, or any recorder / harness dump)."""
         self.recording = load_recording(path, self.effect_id)
+        self.recording_changed.emit()
         self._recorded_edits = signature
         self._frames = {}
         self.slider.blockSignals(True)

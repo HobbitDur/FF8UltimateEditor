@@ -23,7 +23,12 @@ echo no Visual Studio C++ build tools found (cl.exe)
 exit /b 9009
 :build
 if not exist obj mkdir obj
-cl /nologo /std:c++17 /EHa /W3 /O1 /MT /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS fxrecorder.cpp /Foobj\ /Fefxrecorder.exe /link /BASE:0x10000000 /DYNAMICBASE:NO /FIXED /LARGEADDRESSAWARE
+rem Effect lab: with FFNx's effect sources (ExternalTools\FFNx\fx, from the updater), the effect
+rem ports that have parameters are built in (native=1, params=, schema=)
+set "FX=%~dp0..\..\ExternalTools\FFNx\fx"
+set LAB=
+if exist "%FX%\fx_params.h" set LAB=/DFF8_FX_LAB /I"%FX%" "%FX%\mag001_cure.cpp"
+cl /nologo /std:c++20 /EHa /W3 /O1 /MT /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS fxrecorder.cpp %LAB% /Foobj\ /Fefxrecorder.exe /link /BASE:0x10000000 /DYNAMICBASE:NO /FIXED /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%
 echo build fxrecorder.exe exit %E%
 exit /b %E%

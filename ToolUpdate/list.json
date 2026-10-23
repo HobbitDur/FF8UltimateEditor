@@ -54,6 +54,12 @@
 	"VincentTim":  {
 	  "link":        "https://github.com/myst6re/vincent-tim",
 	  "install_path":"ExternalTools/VincentTim"
+	},
+	"FFNxEffects": {
+	  "link":         "https://github.com/HobbitDur/FFNx",
+	  "install_path": "ExternalTools/FFNx/fx",
+	  "source":       {"stable": "branch:VanillaDecompiledForFutur30FPS", "canary": "branch:VanillaDecompiledForFutur30FPS"},
+	  "source_folder":"src/ff8/battle/fx"
 	}
   },
   "7zip":         {

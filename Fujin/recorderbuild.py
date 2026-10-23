@@ -1,8 +1,10 @@
 """Fujin's effect recorder (Tools/fxrecorder/fxrecorder.exe) is built from its source and never
 kept in git. The Windows release ships the one its CI builds; run from source, FF8UltimateEditor
 builds it when it starts, in the background, whenever it is missing or older than its source
-(a fresh clone, a pull that changed it), with the local Visual Studio C++ tools
-(Tools/fxrecorder/build.bat). The effect preview waits for it and says why when it cannot be built.
+(a fresh clone, a pull that changed it, FFNx's effect sources updated), with the local Visual
+Studio C++ tools (Tools/fxrecorder/build.bat). The effect preview waits for it and says why when it
+cannot be built. FFNx's effect sources (ExternalTools/FFNx/fx, the updater's FFNxEffects) are
+built in when present: the effects' C++ ports and their parameters (Choreography's part tabs).
 """
 import subprocess
 import sys
@@ -15,6 +17,7 @@ from Common.apppaths import app_path
 FOLDER = app_path("Tools", "fxrecorder")
 RECORDER = FOLDER / "fxrecorder.exe"
 SOURCES = (FOLDER / "fxrecorder.cpp", FOLDER / "build.bat")
+FFNX_EFFECTS = app_path("ExternalTools", "FFNx", "fx")     # FFNx's effect sources (the updater)
 NO_COMPILER = 9009                  # build.bat's exit code when no Visual Studio C++ tools are found
 
 
@@ -27,7 +30,8 @@ def needs_build():
         built = RECORDER.stat().st_mtime
     except OSError:
         return True
-    return any(source.is_file() and source.stat().st_mtime > built for source in SOURCES)
+    sources = list(SOURCES) + (list(FFNX_EFFECTS.iterdir()) if FFNX_EFFECTS.is_dir() else [])
+    return any(source.is_file() and source.stat().st_mtime > built for source in sources)
 
 
 class RecorderBuild(QObject):

@@ -234,6 +234,10 @@ jobs:
       with:
         arch: x86
 
+    - name: Fetch FFNx's effect sources (Fujin's effect lab, built into the recorder)
+      shell: bash
+      run: python -c "from ToolUpdate.toolupdate import ToolDownloader; ToolDownloader().update_one_tool('FFNxEffects')"
+
     - name: Build the effect recorder (Fujin Native preview)
       shell: cmd
       run: Tools\fxrecorder\build.bat

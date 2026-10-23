@@ -109,6 +109,28 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   playback (verified for the seven GFs; every other cinematic script replays with the same
   engine model as a labelled, untextured approximation that names the draw handlers it shows as
   markers only), and native decompilation read-only.
+  **Part tabs** (one per part of an effect FFNx has a C++ port with parameters for; Cure:
+  Emitter, Ring, Ground glow, Overlay, Sparkles, Motes, Glints): the part's parameters as a form
+  (bold = not the game's value, **Game values** resets them) beside a small preview of that part
+  alone, framed on where it goes. The numbers come out of the port's code into one struct per
+  part (FFNx `src/ff8/battle/fx/fx_params.h`: generic blocks every module can reuse - a tick
+  window, a count per tick, a random range, a fraction, the effect library's glint style -
+  `CureParams` in `mag001_cure.cpp`, defaults = the game's values) with a field table the
+  recorder writes out (`fxrecorder <effect> schema=<file>`), so the forms are always those of
+  the port it runs. The previews are one more recording: the recorder runs the port instead of
+  the exe's code (`native=1`; with the game's values it draws exactly what the original does,
+  checked by the tests) with the edited parameters (`params=`), no actors, and each primitive
+  tagged with the part that drew it (`FX_PART`, nothing in the game's build); a part redrawing
+  an actor (Cure's overlay: its target) keeps that (`keepparts=1`). An edit records again; the
+  Overview's preview runs the port with the edited parameters too. Save writes them as
+  `effect_NNN.fxparams` (JSON, only the values not at the game's) into the export folder, with
+  the patch; Import complementary reads them back. The ports come from FFNx's effect sources:
+  the updater's **FFNxEffects** (Update downloads the folder `src/ff8/battle/fx` of FFNx's
+  source - for now the `VanillaDecompiledForFutur30FPS` branch of HobbitDur/FFNx for both
+  channels - into `ExternalTools/FFNx/fx`, `SOURCE.txt` naming the commit, and the recorder is
+  built again with them); the release's CI does the same before building the recorder.
+  Open: Cure's projected light (the overlay's second pass, its texture projected from the ring
+  onto the target) never lands in the recorder, with the original code as well.
 - **Models / animation:** a 3D view of every object of the selected file (meshes, morph
   targets as points, embedded battle models and the standard battle models of indexed
   containers such as `mag186_b.dat`, which play their own animations). Untextured: texture

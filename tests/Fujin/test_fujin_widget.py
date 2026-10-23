@@ -41,7 +41,7 @@ def test_files_open_from_the_header_toolbar_only(fujin):
     from PyQt6.QtWidgets import QPushButton
     buttons = [button.text() for button in fujin.findChildren(QPushButton) if not button.isHidden()]
     assert not [text for text in buttons if re.match(r"(Import|Open|Load|Reload)", text)], buttons
-    assert len(fujin.import_entries()) == 4 and len(fujin.complementary_entries()) == 5   # + .bcam files
+    assert len(fujin.import_entries()) == 4 and len(fujin.complementary_entries()) == 6   # + .bcam files
     fujin.select_effect(LIFE)                                     # mag004-034.tim, not imported
     fujin.textures.activate()
     assert "header's Import" in fujin.textures.status.text()    # what to do with a missing file

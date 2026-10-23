@@ -16,6 +16,7 @@ def folder(tmp_path, monkeypatch):
     monkeypatch.setattr(recorderbuild, "FOLDER", tmp_path)
     monkeypatch.setattr(recorderbuild, "RECORDER", exe)
     monkeypatch.setattr(recorderbuild, "SOURCES", (source, script))
+    monkeypatch.setattr(recorderbuild, "FFNX_EFFECTS", tmp_path / "no-ffnx-sources")
     monkeypatch.setattr(sys, "platform", "win32")
     return source, exe
 

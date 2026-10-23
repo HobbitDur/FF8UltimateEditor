@@ -233,6 +233,10 @@ class ToolUpdateWidget(QWidget):
         self.progress_current_download.hide()
         self.download_button_widget.setEnabled(True)
         self.self_download_button_widget.setEnabled(True)
+        if "FFNxEffects" in self._current_tool_list:
+            # FFNx's effect sources are built into Fujin's effect recorder: build it with them
+            from Fujin.recorderbuild import ensure_recorder
+            ensure_recorder()
         if self.self_update_request:
             self.start_self_update_process()
         self.self_update_request = False

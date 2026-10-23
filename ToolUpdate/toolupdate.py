@@ -21,6 +21,8 @@ class ToolDownloader:
             self.update_one_tool(tool_name, download_update_func, canary)
 
     def update_one_tool(self, tool_name: str, download_update_func: types.MethodType = None, canary=False):
+        if "source" in self.json_data['ExternalTools'][tool_name]:
+            return self.update_source_tool(tool_name, download_update_func, canary)
         os.makedirs(self.FOLDER_DOWNLOAD, exist_ok=True)
         dd_url = self.__get_github_url_file(self.json_data['ExternalTools'][tool_name], "assets_url", canary)
         json_file = self.__download_file(dd_url, download_update_func, headers={'content-type': 'application/json'})[0].json()
@@ -49,6 +51,43 @@ class ToolDownloader:
             ignore_first_folder = False
         self._unzip_tool(dd_file_name, install_path, ignore_first_folder)
         shutil.rmtree(self.FOLDER_DOWNLOAD)
+
+    def update_source_tool(self, tool_name: str, download_update_func: types.MethodType = None, canary=False):
+        """A tool taken as source code, not a release asset: one folder of a GitHub repository
+        ("source_folder") at the channel's "source" - "branch:<name>" (that branch's latest
+        commit) or "release" (the source of the latest release, or pre-release for canary) - into
+        "install_path", replacing what was there; SOURCE.txt says where it came from. FFNx's
+        effect sources (FFNxEffects): built into Fujin's effect recorder (Tools/fxrecorder)."""
+        entry = self.json_data['ExternalTools'][tool_name]
+        source = entry["source"]["canary" if canary else "stable"]
+        if source.startswith("branch:"):
+            ref = source.split(":", 1)[1]
+            link = f"{entry['link']}/archive/refs/heads/{ref}.zip"
+        else:
+            ref = "release"
+            link = self.__get_github_url_file(entry, "zipball_url", canary)
+        os.makedirs(self.FOLDER_DOWNLOAD, exist_ok=True)
+        try:
+            file_name = self.__download_file(link, download_update_func, write_file=True, file_name=f"{tool_name}.zip")[1]
+            install_path, folder = entry["install_path"], entry["source_folder"].strip("/") + "/"
+            with ZipFile(os.path.join(self.FOLDER_DOWNLOAD, file_name)) as archive:
+                members = [name for name in archive.namelist() if name.split("/", 1)[-1].startswith(folder)
+                           and not name.endswith("/")]
+                if not members:
+                    raise ValueError(f"{folder} is not in {link}")
+                shutil.rmtree(install_path, ignore_errors=True)
+                os.makedirs(install_path, exist_ok=True)
+                for name in members:
+                    relative = name.split("/", 1)[-1][len(folder):]
+                    target = os.path.join(install_path, *relative.split("/"))
+                    os.makedirs(os.path.dirname(target), exist_ok=True)
+                    with archive.open(name) as source_file, open(target, "wb") as out:
+                        shutil.copyfileobj(source_file, out)
+                commit = archive.comment.decode("ascii", "replace").strip()     # GitHub: the commit
+            with open(os.path.join(install_path, "SOURCE.txt"), "w", encoding="utf-8") as info:
+                info.write(f"{entry['link']}\n{ref}\n{commit}\n{folder}\n")
+        finally:
+            shutil.rmtree(self.FOLDER_DOWNLOAD, ignore_errors=True)
 
     def download_self(self, download_update_func: types.MethodType = None, canary=True):
         os.makedirs(self.FOLDER_DOWNLOAD, exist_ok=True)
