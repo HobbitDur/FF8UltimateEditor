@@ -163,3 +163,32 @@ def test_entrance_tab_plays_the_weapon_entrance_in_lockstep(qapp):
     widget.set_frame(widget.get_max_frames() // 2)
     assert len(widget._current_weapon_verts()) == len(weapon.enemy.geometry_data.get_vertices())
     widget.deleteLater()
+
+
+def test_3d_and_entrance_tabs_share_their_view_toggles(qapp):
+    from PyQt6.QtCore import QSettings
+    from Ifrit.ifritmonsterwidget import IfritFilePane
+    settings = QSettings("FF8UltimateEditor", "FF8UltimateEditor")
+    keys = ("ifrit/3d/show_skeleton", "ifrit/3d/show_wireframe", "ifrit/3d/show_gizmo")
+    saved = {key: settings.value(key) for key in keys}     # the user's own, put back after
+    try:
+        manager = _manager("d0c000")
+        pane = IfritFilePane(manager, _path("d0c000"), QSettings("FF8UltimateEditorTest", "entrance"))
+        main, entrance = pane._3d_widget, pane._entrance_widget
+        for name in ("cb_skeleton", "cb_wire", "_gizmo_action"):
+            first, second = getattr(main, name), getattr(entrance, name)
+            assert first.isChecked() == second.isChecked()
+            first.setChecked(not first.isChecked())
+            assert second.isChecked() == first.isChecked()
+            second.setChecked(not second.isChecked())                       # and the other way
+            assert first.isChecked() == second.isChecked()
+        assert entrance.gl_widget.show_skeleton == main.cb_skeleton.isChecked()
+        main.fps_slider.setValue(30)
+        assert entrance.fps_slider.value() == 30
+        pane.deleteLater()
+    finally:
+        for key, value in saved.items():
+            if value is None:
+                settings.remove(key)
+            else:
+                settings.setValue(key, value)

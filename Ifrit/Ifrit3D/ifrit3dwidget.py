@@ -1470,6 +1470,21 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget.set_show_gizmo(checked)
         self.settings.setValue("ifrit/3d/show_gizmo", checked)      # remembered across files/sessions
 
+    def share_view_toggles(self, other):
+        """Keep the view toggles of this view and `other` in step (two views of the same file:
+        Ifrit's 3D and Entrance tabs): texture, wireframe, hidden faces, axis, skeleton, rotation
+        handle and playback fps. Both start from the same saved settings; changing one changes
+        the other (setChecked / setValue of an unchanged value emits nothing: no loop)."""
+        if not hasattr(self, 'cb_texture') or not hasattr(other, 'cb_texture'):
+            return
+        for name in ('cb_texture', 'cb_wire', 'cb_hidden_faces', 'cb_axis', 'cb_skeleton',
+                     '_gizmo_action'):
+            mine, theirs = getattr(self, name), getattr(other, name)
+            mine.toggled.connect(theirs.setChecked)
+            theirs.toggled.connect(mine.setChecked)
+        self.fps_slider.valueChanged.connect(other.fps_slider.setValue)
+        other.fps_slider.valueChanged.connect(self.fps_slider.setValue)
+
     def set_show_skeleton(self, show):
         self.gl_widget.set_show_skeleton(show)
         if hasattr(self, 'cb_skeleton'):

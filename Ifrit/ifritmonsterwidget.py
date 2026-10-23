@@ -269,6 +269,7 @@ class IfritFilePane(QWidget):
         # on the same file, through a manager view whose animation list is that block.
         self._entrance_widget = Ifrit3DWidget(ifrit_manager.entrance_view(), show_controls=True)
         self._entrance_widget.set_single_animation_block()
+        self._3d_widget.share_view_toggles(self._entrance_widget)   # one Skeleton/Texture... switch
         self._texture_widget = IfritTextureWidget(ifrit_manager)
         self._xlsx_widget = IfritXlsxWidget(ifrit_manager)
         self._stat_widget = IfritStatWidget(ifrit_manager, icon_path=icon_path)
