@@ -236,7 +236,7 @@ jobs:
 
     - name: Build the effect recorder (Fujin Native preview)
       shell: cmd
-      run: Toolsxrecorderuild.bat
+      run: Tools\fxrecorder\build.bat
 
     - name: Create release
       shell: bash
