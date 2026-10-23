@@ -1,4 +1,4 @@
-"""The battle-entrance animation of a character body or weapon, as something to look at.
+"""The battle-entrance animation of a character body or weapon.
 
 A character body (section 7), a standard weapon (section 8) and Edea (section 10) end with an
 extra single-animation block: the animation the character plays when the battle starts.
@@ -7,11 +7,11 @@ setComFileData (0x502270) for sequence 8, whose AC 00 then puts the section 3 an
 The block uses the section 3 format (offset table + animations) on the file's own skeleton, and
 the body and its weapon play their blocks in lockstep like any other animation index.
 
-The block is only READ here: a view never writes it back, so the saved file keeps the raw
-section bytes exactly (dat30.convert_extra_animation_block is the only writer).
+MonsterAnalyser.ensure_entrance_animation() parses it once; the file is then saved from that
+object (the re-encoding of an unedited block is byte-exact on every vanilla file).
+EntranceAnimationView shows the file with that block as its animation list, for an editor that
+works on `enemy.animation_data` (Ifrit's 3D view).
 """
-import copy
-
 from .dat30 import get_extra_animation_section_index
 from ..monsterdata import AnimationSection
 
@@ -37,16 +37,31 @@ def parse_entrance_animation(monster):
     return section if section.animations else None
 
 
-def make_entrance_view(monster):
-    """A shallow copy of `monster` whose animation_data is the entrance block, or None.
+class EntranceAnimationView:
+    """The SAME file, seen with its entrance block as `animation_data`.
 
-    Everything else (skeleton, geometry, textures, raw sections) is the SAME object as the
-    file's, so the view poses the real mesh; only the animation list differs. The view is for
-    display: it is never saved, and edits to its animation are not kept."""
-    section = parse_entrance_animation(monster)
-    if section is None:
-        return None
-    view = copy.copy(monster)
-    view.animation_data = section
-    view._animation_expanded = True   # nothing to re-expand: ensure_animation_expanded no-op
-    return view
+    Every other attribute and method is the file's own (read and written through), so an edit to
+    the skeleton or the mesh goes to the file, and saving, undo and re-expansion keep working on
+    section 3. Only `animation_data` is the entrance block (the file's entrance_animation_data,
+    an empty section when the file has none)."""
+
+    def __init__(self, monster):
+        object.__setattr__(self, 'monster', monster)
+        object.__setattr__(self, '_empty', AnimationSection())
+
+    @property
+    def animation_data(self):
+        return self.monster.ensure_entrance_animation() or self._empty
+
+    @animation_data.setter
+    def animation_data(self, value):
+        self.monster.entrance_animation_data = value
+
+    def __getattr__(self, name):
+        return getattr(self.monster, name)
+
+    def __setattr__(self, name, value):
+        if name == 'animation_data':
+            object.__setattr__(self, name, value)   # goes through the property setter
+        else:
+            setattr(self.monster, name, value)

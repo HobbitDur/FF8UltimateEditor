@@ -130,11 +130,15 @@ def convert_extra_animation_block(monster, mode=interpolation.LINEAR) -> int:
     index = get_extra_animation_section_index(monster)
     if index is None or index >= len(monster.section_raw_data):
         return 0
-    raw = bytes(monster.section_raw_data[index])
-    if len(raw) < 8:
-        return 0
-    section = AnimationSection()
-    section.analyze(raw, monster.bone_data)
+    # Once parsed (an editor shows it), the file is saved from its entrance_animation_data:
+    # convert that very object, or the save would write the unconverted one back.
+    section = getattr(monster, 'entrance_animation_data', None)
+    if section is None:
+        raw = bytes(monster.section_raw_data[index])
+        if len(raw) < 8:
+            return 0
+        section = AnimationSection()
+        section.analyze(raw, monster.bone_data)
     if not section.animations:
         return 0
     for animation in section.animations:

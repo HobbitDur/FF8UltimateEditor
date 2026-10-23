@@ -1,5 +1,5 @@
-"""The battle-entrance animation (character body section 7, weapon section 8, Edea section 10)
-listed and played in Ifrit's 3D tab, read-only, without touching the saved bytes."""
+"""The battle-entrance animation (character body section 7, weapon section 8, Edea section 10):
+its own "N - Entrance" tab in Ifrit, edited like section 3 and saved with the file."""
 import os
 import sys
 
@@ -14,13 +14,17 @@ def qapp():
     return QApplication.instance() or QApplication(sys.argv)
 
 
-def _manager(name):
+def _path(name):
     path = os.path.join(BATTLE, f"{name}.dat")
     if not os.path.isfile(path):
         pytest.skip("needs the game's battle files in extracted_files/battle")
+    return os.path.abspath(path)
+
+
+def _manager(name):
     from Ifrit.ifritmanager import IfritManager
     manager = IfritManager("FF8GameData")
-    manager.init_from_file(os.path.abspath(path))
+    manager.init_from_file(_path(name))
     manager._ensure_matrices()
     return manager
 
@@ -30,37 +34,34 @@ def _saved_bytes(manager):
 
 
 def _untouched_save(name):
-    """What saving the file gives when the entrance was never shown (section 3 re-encodes
-    with zeroed alignment slack, so this is the reference, not the file itself)."""
+    """What saving gives when the entrance was never parsed (section 3 re-encodes with zeroed
+    alignment slack, so this is the reference, not the file itself)."""
     return _saved_bytes(_manager(name))
 
 
 @pytest.mark.parametrize("name, section", [("d0c000", 7), ("d0w000", 8), ("d1c003", 7),
                                            ("d7c016", 10)])
-def test_entrance_view_holds_the_extra_block(qapp, name, section):
+def test_entrance_view_is_the_extra_block_and_saves_byte_exact(qapp, name, section):
     from FF8GameData.monsterdata import AnimationSection
     manager = _manager(name)
     assert manager.entrance_section_index() == section
     raw = bytes(manager.enemy.section_raw_data[section])
-    view = manager.make_entrance_view()
-    assert view is not None and view is not manager and view.enemy is not manager.enemy
+    view = manager.entrance_view()
 
     entrance = view.enemy.animation_data
     expected = AnimationSection()
     expected.analyze(raw, manager.enemy.bone_data)
-    assert entrance.nb_animations == expected.nb_animations >= 1
-    assert [a.get_nb_frame() for a in entrance.animations] == \
-           [a.get_nb_frame() for a in expected.animations]
-    assert entrance.animations[0].get_nb_frame() > 1
-    # Same model: only the animation list differs.
+    assert entrance is manager.enemy.entrance_animation_data
+    assert entrance.nb_animations == expected.nb_animations == 1
+    assert entrance.animations[0].get_nb_frame() == expected.animations[0].get_nb_frame() > 1
+    # Same file: everything but the animation list is the manager's own.
     assert view.enemy.bone_data is manager.enemy.bone_data
     assert view.enemy.geometry_data is manager.enemy.geometry_data
+    assert view.game_data is manager.game_data
     assert manager.enemy.animation_data is not entrance
-    # The block re-encodes byte-exact, and is posable on the file's skeleton.
-    assert bytes(expected.to_binary()) == raw
     verts = view.get_animated_vertices(anim_id=0, frame_id=0)
     assert len(verts) == len(manager.get_animated_vertices(anim_id=0, frame_id=0))
-    # Showing it changes nothing in the saved file; the block's raw bytes are written as read.
+    # Parsed and re-encoded on save: unchanged bytes.
     saved = _saved_bytes(manager)
     assert saved == _untouched_save(name)
     assert raw in saved
@@ -69,49 +70,96 @@ def test_entrance_view_holds_the_extra_block(qapp, name, section):
 def test_reduced_weapon_has_no_entrance(qapp):
     manager = _manager("d1w008")      # Zell's gloves: posed by the body's bones
     assert manager.entrance_section_index() is None
-    assert manager.make_entrance_view() is None
+    assert manager.entrance_view().enemy.animation_data.nb_animations == 0
 
 
-def test_3d_tab_lists_and_plays_the_entrance_with_the_weapon(qapp):
+def test_entrance_edit_is_saved_and_undoable(qapp, tmp_path):
+    from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+    manager = _manager("d0c000")
+    before = _saved_bytes(manager)
+    view = manager.entrance_view()
+    rotation = view.enemy.animation_data.animations[0].frames[10].rotation_vector_data[3]
+    original = [axis.get_rotate_deg() for axis in rotation]
+    view.set_animation_frame_bone_rotation(0, 10, 3, original[0] + 30.0, original[1], original[2])
+    # main animations untouched, the entrance changed
+    path = tmp_path / "d0c000.dat"
+    manager.save_file(str(path))
+    saved = MonsterAnalyser(manager.game_data)
+    saved.load_file_data(str(path), manager.game_data)
+    saved.analyse_loaded_data(manager.game_data)
+    assert saved.section_raw_data[3] == manager.enemy.section_raw_data[3]
+    reread = saved.ensure_entrance_animation().animations[0].frames[10].rotation_vector_data[3]
+    assert abs(reread[0].get_rotate_deg() - (original[0] + 30.0)) % 360 < 0.1
+    # Undo (section-targeted restore) puts the old block back into the SAME object.
+    entrance = manager.enemy.entrance_animation_data
+    manager.enemy.restore_sections_from_snapshot(before, [7], manager.game_data)
+    assert manager.enemy.entrance_animation_data is entrance
+    back = entrance.animations[0].frames[10].rotation_vector_data[3]
+    assert [axis.get_rotate_deg() for axis in back] == pytest.approx(original)
+    assert _saved_bytes(manager) == before
+
+
+def test_new_bone_reshapes_both_blocks(qapp):
+    manager = _manager("d0c000")
+    entrance = manager.entrance_view().enemy.animation_data
+    nb_bones = len(manager.enemy.bone_data.bones)
+    manager.add_bone(parent_id=0)
+    assert len(entrance.animations[0].frames[0].rotation_vector_data) == nb_bones + 1
+    assert len(manager.enemy.animation_data.animations[0].frames[0].rotation_vector_data) == nb_bones + 1
+
+
+def test_dat30_conversion_converts_the_parsed_block(qapp):
+    from FF8GameData.dat.dat30 import convert_extra_animation_block
+    manager = _manager("d0c000")
+    entrance = manager.entrance_view().enemy.animation_data
+    nb_frame = entrance.animations[0].get_nb_frame()
+    assert convert_extra_animation_block(manager.enemy) == 1
+    assert manager.enemy.entrance_animation_data is entrance
+    assert entrance.animations[0].get_nb_frame() == 2 * nb_frame
+    assert manager.enemy.ensure_entrance_animation().animations[0].get_nb_frame() == 2 * nb_frame
+    saved = _saved_bytes(manager)
+    assert bytes(entrance.to_binary()) in saved
+
+
+@pytest.mark.parametrize("name, label", [("d0c000", "7 - Entrance"), ("d1c003", "7 - Entrance"),
+                                         ("d7c016", "10 - Entrance"), ("d0w000", "8 - Entrance")])
+def test_pane_has_an_entrance_tab(qapp, name, label):
+    from PyQt6.QtCore import QSettings
+    from Ifrit.ifritmonsterwidget import IfritFilePane
+    manager = _manager(name)
+    pane = IfritFilePane(manager, _path(name), QSettings("FF8UltimateEditorTest", "entrance"))
+    tabs = pane._tabs
+    index = tabs.indexOf(pane._entrance_widget)
+    assert tabs.isTabVisible(index) and tabs.tabText(index) == label
+    widget = pane._entrance_widget
+    assert widget.ifrit_manager.enemy.animation_data is manager.enemy.entrance_animation_data
+    assert widget.get_max_frames() == manager.enemy.entrance_animation_data.animations[0].get_nb_frame()
+    assert not any(action.isVisible() for action in widget._animation_list_actions)
+    # Editing it is an edit of the 3D sections and of the entrance section.
+    section = manager.entrance_section_index()
+    assert set(pane._sections_for_tab(widget)) == {1, 2, 3, section}
+    pane.deleteLater()
+
+
+def test_monster_pane_hides_the_entrance_tab(qapp):
+    from PyQt6.QtCore import QSettings
+    from Ifrit.ifritmonsterwidget import IfritFilePane
+    manager = _manager("c0m001")
+    pane = IfritFilePane(manager, _path("c0m001"), QSettings("FF8UltimateEditorTest", "entrance"))
+    assert not pane._tabs.isTabVisible(pane._tabs.indexOf(pane._entrance_widget))
+    pane.deleteLater()
+
+
+def test_entrance_tab_plays_the_weapon_entrance_in_lockstep(qapp):
     from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
     body, weapon = _manager("d0c000"), _manager("d0w000")
-    widget = Ifrit3DWidget(body, show_controls=True)
+    widget = Ifrit3DWidget(body.entrance_view(), show_controls=True)
+    widget.set_single_animation_block()
     widget.load_file()
-    widget.set_weapon_options([("None", None), ("d0w000", weapon)], default_index=1)
-    nb = len(body.enemy.animation_data.animations)
-    selector = widget.anim_selector
-    assert selector.maximum() == nb                      # the extra entry after the animations
-    assert selector.textFromValue(nb) == "Entrance (section 7)"
-    assert selector.textFromValue(nb - 1) == str(nb - 1)
-
-    selector.setValue(nb)
-    entrance_frames = body.make_entrance_view().enemy.animation_data.animations[0].get_nb_frame()
-    assert widget.ifrit_manager is not body and widget.current_anim_id == 0
-    assert widget.get_max_frames() == entrance_frames
-    # The weapon plays its own section 8 entrance in lockstep.
-    shown_weapon = widget._weapon_manager
-    assert shown_weapon is not weapon and shown_weapon.enemy.section_raw_data is weapon.enemy.section_raw_data
-    assert shown_weapon.enemy.animation_data.nb_animations >= 1
-    widget.set_frame(entrance_frames // 2)
-    widget.update_animated_mesh()
+    widget.set_weapon_options([("None", None), ("d0w000", weapon.entrance_view())], default_index=1)
+    shown = widget._weapon_manager
+    assert shown.enemy.animation_data is weapon.enemy.entrance_animation_data
+    assert widget.get_max_frames() == body.enemy.entrance_animation_data.animations[0].get_nb_frame()
+    widget.set_frame(widget.get_max_frames() // 2)
     assert len(widget._current_weapon_verts()) == len(weapon.enemy.geometry_data.get_vertices())
-    assert not widget.anim_tools_btn.isEnabled()        # read-only view
-
-    # Switching weapon keeps the entrance on the new one too.
-    widget.weapon_selector.setCurrentIndex(0)
-    assert widget._weapon_manager is None
-    widget.weapon_selector.setCurrentIndex(1)
-    assert widget._weapon_manager is not weapon
-
-    # Back to a section 3 animation: the real managers are back.
-    selector.setValue(3)
-    assert widget.ifrit_manager is body and widget._weapon_manager is weapon
-    assert widget.current_anim_id == 3 and widget.anim_tools_btn.isEnabled()
-    assert widget.get_max_frames() == body.enemy.animation_data.animations[3].get_nb_frame()
-
-    # A reload while the entrance is shown goes back to the real file first.
-    selector.setValue(nb)
-    widget.load_file(keep_view=True)
-    assert widget.ifrit_manager is body
-    assert _saved_bytes(body) == _untouched_save("d0c000")
     widget.deleteLater()

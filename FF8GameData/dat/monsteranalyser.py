@@ -82,6 +82,9 @@ class MonsterAnalyser:
         # before any edit - edits live in the expanded objects, the raw bytes are the original.
         self._animation_section_index = None   # which section the animation came from (set on parse)
         self._animation_expanded = True
+        # The battle-entrance block (character section 7, weapon 8, Edea 10), parsed on first use
+        # (ensure_entrance_animation) and from then on saved from this object, like section 3.
+        self.entrance_animation_data = None
 
     def __str__(self):
         return "Name: {} \nData:{}".format(self.info_stat_data['monster_name'],
@@ -129,6 +132,7 @@ class MonsterAnalyser:
         self.info_stat_data = copy.deepcopy(AIData.SECTION_INFO_STAT_DICT)
         self.battle_script_data = copy.deepcopy(AIData.SECTION_BATTLE_SCRIPT_DICT)
         self.texture_data = copy.deepcopy(AIData.SECTION_TEXTURE_DICT)
+        self.entrance_animation_data = None
         self.file_raw_data = bytearray()
         with open(file, "rb") as f:
             while el := f.read(1):
@@ -233,6 +237,11 @@ class MonsterAnalyser:
         enough and their widgets read it directly. Mirrors analyse_loaded_data exactly; keep in sync."""
         et = self.entity_type
         n = section_number
+        if self.entrance_animation_data is not None and n == self.entrance_section_index():
+            # Re-parsed IN PLACE: the Entrance tab's view holds this very object.
+            self.entrance_animation_data.analyze(bytes(self.section_raw_data[n]), self.bone_data)
+            self.entrance_animation_data.matrices_built = True
+            return
         if et == EntityType.MONSTER:
             if   n == 1:  self.__analyze_bone_section(1)
             elif n == 2:  self.__analyze_geometry_section(2)
@@ -453,6 +462,28 @@ class MonsterAnalyser:
 
         raw_data_to_write.extend(self.section_raw_data[section_position])
 
+    def entrance_section_index(self):
+        """Section of the battle-entrance block (character 7, weapon 8, Edea 10), or None."""
+        from .entranceanimation import get_entrance_section_index
+        return get_entrance_section_index(self)
+
+    def ensure_entrance_animation(self):
+        """The battle-entrance block as an AnimationSection (parsed once, then edited in place and
+        saved from it), or None when the file has none."""
+        if self.entrance_animation_data is None:
+            from .entranceanimation import parse_entrance_animation
+            self.entrance_animation_data = parse_entrance_animation(self)
+        return self.entrance_animation_data
+
+    def _store_entrance_animation(self):
+        """Re-encode the entrance block into its raw section once it has been parsed (the
+        re-encoding of an unedited block is byte-exact, so a file only viewed saves unchanged)."""
+        if self.entrance_animation_data is None:
+            return
+        index = self.entrance_section_index()
+        if index is not None:
+            self.section_raw_data[index] = bytearray(self.entrance_animation_data.to_binary())
+
     def get_bytes(self, game_data: GameData) -> bytearray:
         """Serialize the whole enemy to its .dat byte stream - exactly what gets written to disk.
 
@@ -464,6 +495,7 @@ class MonsterAnalyser:
         # so a file whose animation was freed to save RAM must be re-expanded first. No-op unless
         # it was freed.
         self.ensure_animation_expanded()
+        self._store_entrance_animation()
         raw_data_to_write = bytearray()
 
         # Section 0: Header (fix size, will be modified later) - the only part truly common

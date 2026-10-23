@@ -73,7 +73,6 @@ from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_nb_pa
                                           get_max_frame_for_animation,
                                           MAX_ANIMATION_FRAME, MAX_SLOW_SAFE_ANIMATION_FRAME)
 from Ifrit.ifritmanager import IfritManager
-from Ifrit.Ifrit3D.animationselector import AnimationSelector
 from Ifrit.Ifrit3D.boneeditorwidget import AnimEditor
 from Ifrit.Ifrit3D.ff8openwidget import FF8OpenGLWidget
 from Ifrit.Ifrit3D.gltfexporter import GltfExporter
@@ -134,10 +133,6 @@ class Ifrit3DWidget(QWidget):
         self._weapon_manager = None      # sibling IfritManager whose enemy is the weapon, or None
         self._weapon_options = []        # [(label, manager_or_None)] shown in the Weapon selector
         self._body_vertex_count = 0      # #verts in the body mesh; weapon indices start here
-        # Battle-entrance view (the selector's last entry): while it is shown, ifrit_manager and
-        # _weapon_manager are read-only views whose only animation is the entrance block, and
-        # this keeps the real (manager, weapon manager) to put back. None when not shown.
-        self._entrance_main = None
         # Weapon placement is automatic: the weapon's own animation carries a per-frame root
         # position that traces the hand (the game applies each model's own root - see
         # _current_weapon_verts), so no user-picked attach bone is needed.
@@ -296,7 +291,7 @@ class Ifrit3DWidget(QWidget):
             self.anim_label.setStyleSheet("color:white; padding:4px 4px;")
             toolbar_layout.addWidget(self.anim_label)
 
-            self.anim_selector = AnimationSelector()
+            self.anim_selector = QSpinBox()
             self.anim_selector.setValue(0)
             self.anim_selector.setStyleSheet("color:white; background:#333; padding:2px;")
             self.anim_selector.valueChanged.connect(self.set_animation)
@@ -351,6 +346,9 @@ class Ifrit3DWidget(QWidget):
                                    "(asked on click). Save afterwards to write the new frames.")
             act_fps_all.triggered.connect(self.convert_all_anims_to_60fps)
             self._anim_tools_menu.addAction(act_fps_all)
+            # Hidden for a block that holds one fixed animation (set_single_animation_block)
+            self._animation_list_actions = [act_new_from_range, act_dup_anim, act_del_anim,
+                                            act_fps, act_fps_all]
             self._anim_tools_menu.setToolTipsVisible(True)   # show the per-action tooltips above
 
             self.anim_tools_btn = QToolButton()
@@ -848,7 +846,6 @@ class Ifrit3DWidget(QWidget):
         were, merely clamped to what the model now holds. Loading a file for the first time keeps
         the default: front view, animation 0 / frame 0, root joint selected.
         """
-        self._leave_entrance_view()
         if self.animating:
             self.timer.stop()
             if hasattr(self, 'play_btn'):
@@ -886,7 +883,7 @@ class Ifrit3DWidget(QWidget):
         if hasattr(self, 'anim_selector'):
             if self.ifrit_manager.enemy.animation_data.nb_animations:
                 nb = len(anim_list)
-                self._set_anim_selector_range(nb)
+                self.anim_selector.setRange(0, nb - 1)
                 self.anim_selector.setValue(self.current_anim_id if keep_view else 0)
                 self.anim_selector.setToolTip(f"Nb animation: {nb}")
             else:
@@ -1239,10 +1236,6 @@ class Ifrit3DWidget(QWidget):
     def _apply_weapon_option(self, index):
         manager = (self._weapon_options[index][1]
                    if 0 <= index < len(self._weapon_options) else None)
-        if self._entrance_main is not None:
-            # Entrance shown: the new weapon plays its own entrance block in lockstep.
-            self._entrance_main = (self._entrance_main[0], manager)
-            manager = self._weapon_entrance_view(manager)
         self._set_weapon_manager(manager)
 
     def _set_weapon_manager(self, manager):
@@ -1276,63 +1269,16 @@ class Ifrit3DWidget(QWidget):
 
         self.gl_widget.set_reference_position(pos_x, pos_y, pos_z)
 
-    # ── Battle-entrance animation (character section 7, weapon 8, Edea 10) ──
-
-    def _set_anim_selector_range(self, nb: int):
-        """Animations 0..nb-1, plus the battle-entrance entry (value nb) when the file has one."""
-        manager = self._entrance_main[0] if self._entrance_main is not None else self.ifrit_manager
-        section = manager.entrance_section_index()
-        self.anim_selector.set_extra_entry(nb if section is not None else None,
-                                           f"Entrance (section {section})")
-        self.anim_selector.setRange(0, nb if section is not None else nb - 1)
-
-    def _route_entrance_selection(self, anim_id: int) -> int:
-        """Enter the entrance view when the selector's entrance entry is picked (it then plays as
-        animation 0 of the view), leave it for any other animation."""
-        if (hasattr(self, 'anim_selector') and self.anim_selector.is_extra(anim_id)
-                and self.anim_selector.value() == anim_id):
-            self._enter_entrance_view()
-            if self._entrance_main is not None:
-                return 0
-        self._leave_entrance_view()
-        return anim_id
-
-    @staticmethod
-    def _weapon_entrance_view(manager):
-        """The weapon's own entrance view; a weapon without one (Zell/Kiros reduced weapon,
-        posed by the body's bones) is shown as it is."""
-        if manager is None:
-            return None
-        return manager.make_entrance_view() or manager
-
-    def _enter_entrance_view(self):
-        if self._entrance_main is not None:
-            return
-        view = self.ifrit_manager.make_entrance_view()
-        if view is None:
-            return
-        self._entrance_main = (self.ifrit_manager, self._weapon_manager)
-        self.ifrit_manager = view
-        self._weapon_manager = self._weapon_entrance_view(self._weapon_manager)
-        self._set_entrance_editing_enabled(False)
-
-    def _leave_entrance_view(self):
-        if self._entrance_main is None:
-            return
-        self.ifrit_manager, self._weapon_manager = self._entrance_main
-        self._entrance_main = None
-        self._set_entrance_editing_enabled(True)
-
-    def _set_entrance_editing_enabled(self, enabled: bool):
-        """The entrance view is read-only: its edits would never be saved."""
-        for name in ('bone_editor', 'anim_tools_btn', 'files_btn'):
-            widget = getattr(self, name, None)
-            if widget is not None:
-                widget.setEnabled(enabled)
+    def set_single_animation_block(self):
+        """Edit a block holding exactly one animation the game plays by its own (the battle
+        entrance, character section 7 / weapon 8 / Edea 10): frames and poses stay editable, but
+        the actions adding or removing animations, and the fps conversions (they also rewrite the
+        file's sequences, which belong to section 3), are hidden."""
+        for action in getattr(self, '_animation_list_actions', []):
+            action.setVisible(False)
 
     def set_animation(self, anim_id: int):
         """Switch to a different animation while preserving playback state."""
-        anim_id = self._route_entrance_selection(anim_id)
         # Store the current animation state
         was_animating = self.animating
 
@@ -1663,7 +1609,7 @@ class Ifrit3DWidget(QWidget):
             return
         nb = len(self.ifrit_manager.enemy.animation_data.animations)
         if nb:
-            self._set_anim_selector_range(nb)
+            self.anim_selector.setRange(0, nb - 1)
             self.anim_selector.setToolTip(f"Nb animation: {nb}")
 
     def _split_animation_to_fit(self, anim_id: int, factor: int, smooth_loop: bool, max_frames: int,
@@ -2272,8 +2218,6 @@ class Ifrit3DWidget(QWidget):
     def paste_frames(self):
         """Ctrl+V: insert the copied frames right after the current frame."""
         title = "Paste frames"
-        if self._entrance_main is not None:
-            return   # the entrance view is read-only
         if not self._frame_clipboard:
             QMessageBox.information(self, title, "The frame clipboard is empty. Copy frames first "
                                                  "with Ctrl+C.")
@@ -2704,7 +2648,7 @@ class Ifrit3DWidget(QWidget):
         """Shift+drag in the 3D view: change the selected bone's length.
         During the drag only the displayed frame is recomputed (cheap); the
         full rebuild of every animation happens once, on release."""
-        if self.animating or not hasattr(self, 'bone_editor') or self._entrance_main is not None:
+        if self.animating or not hasattr(self, 'bone_editor'):
             return
         if not self.ifrit_manager.enemy.bone_data:
             return
@@ -2756,7 +2700,7 @@ class Ifrit3DWidget(QWidget):
 
     def _rotation_drag_target(self):
         """(anim, frame, bone_id) currently being posed, or None."""
-        if self.animating or not hasattr(self, 'bone_editor') or self._entrance_main is not None:
+        if self.animating or not hasattr(self, 'bone_editor'):
             return None
         if not self.ifrit_manager.enemy.bone_data or not self.ifrit_manager.enemy.animation_data.nb_animations:
             return None

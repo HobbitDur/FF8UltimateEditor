@@ -265,6 +265,10 @@ class IfritFilePane(QWidget):
         # Camera also writes the model live and self-reports (same as seq).
         self._camera_widget.data_edited.connect(self._on_edit)
         self._3d_widget = Ifrit3DWidget(ifrit_manager, show_controls=True)
+        # The battle-entrance block (character section 7, weapon 8, Edea 10): the same 3D editor
+        # on the same file, through a manager view whose animation list is that block.
+        self._entrance_widget = Ifrit3DWidget(ifrit_manager.entrance_view(), show_controls=True)
+        self._entrance_widget.set_single_animation_block()
         self._texture_widget = IfritTextureWidget(ifrit_manager)
         self._xlsx_widget = IfritXlsxWidget(ifrit_manager)
         self._stat_widget = IfritStatWidget(ifrit_manager, icon_path=icon_path)
@@ -300,6 +304,7 @@ class IfritFilePane(QWidget):
         self._tabs.addTab(self._dynamic_texture_widget, "4 - Dynamic Texture")
         self._tabs.addTab(self._seq_widget, "5 - Sequence")
         self._tabs.addTab(self._camera_widget, "6 - Camera")
+        self._tabs.addTab(self._entrance_widget, "7 - Entrance")
         self._tabs.addTab(self._stat_container, "7 - Stat")
         self._tabs.addTab(self._ai_container, "8 - AI")
         self._tabs.addTab(self._texture_widget, "11 - Static Texture")
@@ -362,6 +367,9 @@ class IfritFilePane(QWidget):
             m[ai_sec] = self._ai_container
         if et == EntityType.MONSTER:
             m[11] = self._texture_widget
+        entrance = self.ifrit_manager.entrance_section_index()
+        if entrance is not None:
+            m[entrance] = self._entrance_widget
         return m
 
     def reload_from_model(self, changed_sections=None, focus_tab_index=None):
@@ -421,6 +429,8 @@ class IfritFilePane(QWidget):
         self._tabs.setTabVisible(self._tabs.indexOf(self._3d_widget), et in _3D_SECTIONS_BY_ENTITY)
         self._tabs.setTabVisible(self._tabs.indexOf(self._seq_widget), et in _SEQ_SECTION_BY_ENTITY)
         self._tabs.setTabVisible(self._tabs.indexOf(self._camera_widget), et in _CAMERA_SECTION_BY_ENTITY)
+        self._tabs.setTabVisible(self._tabs.indexOf(self._entrance_widget),
+                                 self.ifrit_manager.entrance_section_index() is not None)
         self._tabs.setTabVisible(self._tabs.indexOf(self._dynamic_texture_widget),
                                  et in _DYNAMIC_TEXTURE_SECTION_BY_ENTITY)
         self._update_section_tab_labels()
@@ -435,6 +445,8 @@ class IfritFilePane(QWidget):
                               f"{_CAMERA_SECTION_BY_ENTITY.get(et, 6)} - Camera")
         self._tabs.setTabText(self._tabs.indexOf(self._dynamic_texture_widget),
                               f"{_DYNAMIC_TEXTURE_SECTION_BY_ENTITY.get(et, 4)} - Dynamic Texture")
+        self._tabs.setTabText(self._tabs.indexOf(self._entrance_widget),
+                              f"{self.ifrit_manager.entrance_section_index() or 7} - Entrance")
 
     def _shrink_tabs_to_current(self, tabs: QTabWidget):
         _shrink_stack_to_current(tabs, self._tab_size_policies)
@@ -464,6 +476,19 @@ class IfritFilePane(QWidget):
                     if result is not None:
                         options, default_index = result
                         self._3d_widget.set_weapon_options(options, default_index)
+        elif widget is self._entrance_widget:
+            if self.ifrit_manager.entrance_section_index() is not None:
+                self._entrance_widget.ifrit_manager._ensure_matrices()
+                self._entrance_widget.load_file(keep_view=is_reload)
+                # The weapon plays its own entrance block in lockstep with the body's.
+                if et == EntityType.CHARACTER and self._weapon_provider is not None:
+                    result = self._weapon_provider(path)
+                    if result is not None:
+                        options, default_index = result
+                        options = [(label, manager.entrance_view()
+                                    if manager is not None and manager.entrance_section_index()
+                                    is not None else manager) for label, manager in options]
+                        self._entrance_widget.set_weapon_options(options, default_index)
         elif widget is self._texture_widget:
             if et == EntityType.MONSTER:
                 self._texture_widget.show_current()   # textures already in the manager
@@ -509,7 +534,11 @@ class IfritFilePane(QWidget):
     # ── Dirty tracking ────────────────────────────────────────────────
 
     def _connect_3d_edit_signals(self):
-        bone_editor = getattr(self._3d_widget, 'bone_editor', None)
+        for view in (self._3d_widget, self._entrance_widget):
+            self._connect_3d_view_edit_signals(view)
+
+    def _connect_3d_view_edit_signals(self, view):
+        bone_editor = getattr(view, 'bone_editor', None)
         if bone_editor is not None:
             for sig_name in ('bone_length_changed', 'bone_parent_changed', 'add_bone_requested',
                              'reset_skeleton_requested', 'animation_rotation_changed',
@@ -523,7 +552,7 @@ class IfritFilePane(QWidget):
         # dragging (rotate ring / Ctrl+drag length), and glTF mesh import - fires this one on a
         # real, committed change ONLY (a click that ends in a cancelled dialog never emits it, so
         # cancelling never dirties the file).
-        model_edited = getattr(self._3d_widget, 'model_edited', None)
+        model_edited = getattr(view, 'model_edited', None)
         if model_edited is not None:
             model_edited.connect(self._on_edit)
 
@@ -537,8 +566,8 @@ class IfritFilePane(QWidget):
         `root` scopes the scan to one just-(re)loaded tab; without it the whole pane's widget tree is
         walked, which is ~0.2 s and pointless when only one tab changed (undo/redo)."""
         scope = root if root is not None else self._tabs
-        excluded_roots = [self._3d_widget, self._seq_widget, self._camera_widget,
-                          self._dynamic_texture_widget]
+        excluded_roots = [self._3d_widget, self._entrance_widget, self._seq_widget,
+                          self._camera_widget, self._dynamic_texture_widget]
         excluded_roots += scope.findChildren(CameraPreviewPanel)
         excluded_roots += scope.findChildren(TexturePreviewWidget)
         excluded_roots += scope.findChildren(CommandWidget)
@@ -590,8 +619,13 @@ class IfritFilePane(QWidget):
         return None
 
     def _sections_for_tab(self, tab_widget):
-        """The .dat section number(s) a tab edits (3D spans 1/2/3), inverse of _section_to_tab_map."""
-        return [sec for sec, w in self._section_to_tab_map().items() if w is tab_widget]
+        """The .dat section number(s) a tab edits (3D spans 1/2/3), inverse of _section_to_tab_map.
+        The 3D and Entrance tabs edit the same skeleton and mesh, and a skeleton edit reshapes both
+        animation blocks: each counts for the other's sections too."""
+        tabs = {tab_widget}
+        if tab_widget in (self._3d_widget, self._entrance_widget):
+            tabs = {self._3d_widget, self._entrance_widget}
+        return [sec for sec, w in self._section_to_tab_map().items() if w in tabs]
 
     def _on_edit(self, *args):
         if self._loading:

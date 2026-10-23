@@ -20,7 +20,7 @@ from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_conve
                                           get_max_frame_for_animation, get_nb_part_needed,
                                           can_split_animation, MAX_ANIMATION_ID, MAX_ANIMATION_FRAME)
 from FF8GameData.dat import dat30
-from FF8GameData.dat.entranceanimation import get_entrance_section_index, make_entrance_view
+from FF8GameData.dat.entranceanimation import EntranceAnimationView
 from FF8GameData.tim.timfile import (decode_tim, force_opaque, word_to_rgba, PalettedTim,
                                      encode_clut, encode_indices)
 from FF8GameData.gamedata import GameData
@@ -214,9 +214,9 @@ class IfritManager:
         before any 3D/skeleton read or edit. No-op once ready."""
         if hasattr(self.enemy, 'ensure_animation_expanded'):
             self.enemy.ensure_animation_expanded()   # re-expands source AND builds matrices
-        ad = getattr(self.enemy, 'animation_data', None)
-        if ad is not None and not getattr(ad, 'matrices_built', True) and self.enemy.bone_data:
-            ad.build_bone_matrices(self.enemy.bone_data.bones)
+        for ad in self._animation_sections():
+            if ad is not None and not getattr(ad, 'matrices_built', True) and self.enemy.bone_data:
+                ad.build_bone_matrices(self.enemy.bone_data.bones)
 
     def free_matrices(self):
         """Drop the active enemy's derived bone matrices (rebuilt on the next 3D read)."""
@@ -296,17 +296,22 @@ class IfritManager:
     def entrance_section_index(self):
         """Section of the active file's battle-entrance animation (character body 7, weapon 8,
         Edea 10), or None when it has none."""
-        return get_entrance_section_index(self.enemy)
+        return self.enemy.entrance_section_index()
 
-    def make_entrance_view(self):
-        """A read-only copy of this manager showing the battle-entrance animation as its only
-        animation (same skeleton, mesh and textures), or None. See dat/entranceanimation.py."""
-        view_enemy = make_entrance_view(self.enemy)
-        if view_enemy is None:
-            return None
-        view = copy.copy(self)
-        view.enemy = view_enemy
-        return view
+    def entrance_view(self):
+        """This manager seen through its file's battle-entrance block: same state, same file,
+        but `enemy.animation_data` is the entrance animation. Edits made through it are the
+        file's and are saved with it. See FF8GameData/dat/entranceanimation.py."""
+        return _EntranceManagerView(self)
+
+    def _animation_sections(self):
+        """Every parsed animation block of the file: section 3, plus the entrance block once
+        parsed. A skeleton edit reshapes / reposes them all, whichever one is on screen."""
+        monster = getattr(self.enemy, 'monster', self.enemy)
+        sections = [monster.animation_data]
+        if getattr(monster, 'entrance_animation_data', None) is not None:
+            sections.append(monster.entrance_animation_data)
+        return sections
 
     @staticmethod
     def entity_type_from_filename(file_path):
@@ -1362,7 +1367,7 @@ class IfritManager:
         bone_section.bones.append(bone)
         bone_section.nb_bone = len(bone_section.bones)
 
-        for anim in self.enemy.animation_data.animations:
+        for anim in [a for section in self._animation_sections() for a in section.animations]:
             for frame in anim.frames:
                 frame.rotation_vector_data.append(
                     [RotationType(True, 0, 0) for _ in range(3)])
@@ -1393,7 +1398,7 @@ class IfritManager:
         bone_section.bones = [root]
         bone_section.nb_bone = 1
 
-        for anim in self.enemy.animation_data.animations:
+        for anim in [a for section in self._animation_sections() for a in section.animations]:
             for frame in anim.frames:
                 frame.rotation_vector_data = frame.rotation_vector_data[:1]
                 frame.rotation_vector_data_supp = frame.rotation_vector_data_supp[:1]
@@ -1787,8 +1792,8 @@ class IfritManager:
         return True
 
     def _recompute_all_animation_matrices(self):
-        """Rebuild bone matrices for every frame of every animation."""
-        for anim in self.enemy.animation_data.animations:
+        """Rebuild bone matrices for every frame of every animation (every block)."""
+        for anim in [a for section in self._animation_sections() for a in section.animations]:
             for frame_id in range(anim.get_nb_frame()):
                 self._recompute_frame_matrices(anim, frame_id, None)
 
@@ -1922,3 +1927,23 @@ class IfritManager:
         return monster_list
 
 
+class _EntranceManagerView(IfritManager):
+    """An IfritManager sharing ANOTHER manager's whole state (its very attribute dict) whose
+    `enemy` is that manager's file seen through its entrance block (EntranceAnimationView).
+    Every IfritManager method works unchanged on the entrance animation."""
+    __slots__ = ('_enemy_view',)
+
+    def __init__(self, manager):   # noqa - shares the manager's state instead of building one
+        self.__dict__ = manager.__dict__
+        self._enemy_view = None
+
+    @property
+    def enemy(self):
+        monster = self.__dict__.get('enemy')
+        if self._enemy_view is None or self._enemy_view.monster is not monster:
+            self._enemy_view = EntranceAnimationView(monster)
+        return self._enemy_view
+
+    @enemy.setter
+    def enemy(self, value):
+        self.__dict__['enemy'] = getattr(value, 'monster', value)
