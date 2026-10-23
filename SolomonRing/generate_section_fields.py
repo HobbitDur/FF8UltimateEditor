@@ -730,6 +730,16 @@ _TARGET_SIDE_HELP = (
     "decoders ignore bits 2-3 entirely. Vanilla: 0x00 on 56 entries, 0x04 on 100 (only battle "
     "commands, magic and battle items), 0x08 on 53, 0x0C on none."
 )
+_COMMAND_SKIP_TARGET_HELP = (
+    "Target byte bit 0x80, read only on the \"Instant (no submenu)\" path: "
+    "BattleMenu_ExecuteSelectedCommand checks menu bit 0x20 first, and only then tests the target "
+    "byte as a SIGNED char. Ticked: no target cursor - the game picks the target itself (the first "
+    "enemy when \"Opposing side\" is ticked, otherwise the acting character) and queues the "
+    "command at once. Unticked: the target cursor opens.\n"
+    "Without Instant the command opens its Submenu and the byte is never read: the spell, item or "
+    "GF chosen there brings its own targeting. Vanilla has the bit on Magic, GF, Item, #8 (Monster "
+    "Attack) and Stock, but only #8 and Stock are Instant, so it is dormant on Magic, GF and Item.")
+
 _TARGET_INFO_HELP = (
     "Default targeting behaviour for the bits that are plain flags. Bits 2-3 and 4-5 are the "
     "separate Cursor sides and Target scope fields.\n"
@@ -1554,6 +1564,14 @@ for cfg in sections.values():
                     scope[key] = f[key]
             new_fields.append(side)
             new_fields.append(scope)
+            if cfg["section_id"] == 1:
+                # On a battle command, 0x80 is only read on the "Instant (no submenu)" path, so it
+                # leaves Target info for a checkbox next to Instant, greyed while Instant is off.
+                rest["mask"] = 0x43
+                new_fields.append({"name": "skip_target_selection", "offset": f["offset"], "size": f["size"],
+                                   "mask": 0x80, "bool": True, "label": "Skip target selection (auto-pick)",
+                                   "enabled_if_bit": {"field": "menu_bits", "mask": 0x20},
+                                   "help": _COMMAND_SKIP_TARGET_HELP})
             new_fields.append(rest)
         elif f.get("lookup") == "attack_flags":
             dt = {"name": f["name"] + "_type", "offset": f["offset"], "size": f["size"],

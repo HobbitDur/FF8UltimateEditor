@@ -40,6 +40,12 @@ def _wrap_tooltip(text: str, width: int = 62) -> str:
     return "\n".join(lines)
 
 
+
+def _gating_bit(field):
+    """The {"field", "mask"} checkbox a field is greyed by: "enabled_unless_bit" (enabled while
+    unticked) or "enabled_if_bit" (enabled while ticked), or None."""
+    return field.get("enabled_unless_bit") or field.get("enabled_if_bit")
+
 class _ContentWidthScrollArea(QScrollArea):
     """Reserve the form's natural width, leaving spare space for its preview."""
 
@@ -501,13 +507,14 @@ class KernelSectionTab(QWidget):
 
         # Fields are nested inside a flags field's box instead of getting a separate block
         # when they say so: "embed_in" names the host outright (a sub-field carved out of the
-        # same byte, e.g. Cursor sides out of Target info), while "enabled_unless_bit" both
-        # picks the host and couples the field to one of its checkboxes (a battle command's
-        # Submenu picker, greyed by the "Instant" bit).
+        # same byte, e.g. Cursor sides out of Target info), while "enabled_unless_bit" /
+        # "enabled_if_bit" both pick the host and couple the field to one of its checkboxes (a
+        # battle command's Submenu picker, greyed while "Instant" is ticked, and its "Skip target
+        # selection", greyed while it is not).
         embed_map = {}
         embedded_names = set()
         for field in fields:
-            dep = field.get("enabled_unless_bit")
+            dep = _gating_bit(field)
             host = field.get("embed_in") or (dep["field"] if dep else None)
             if host:
                 embed_map.setdefault(host, []).append(field)
@@ -809,14 +816,17 @@ class KernelSectionTab(QWidget):
             # together with what they gate, so the coupling reads as one unit rather
             # than being lost among the other independent flags.
             embedded = self._embed_map.get(name, [])
-            coupling_masks = {dep_field["enabled_unless_bit"]["mask"] for dep_field in embedded
-                              if dep_field.get("enabled_unless_bit")}
+            coupling_masks = {_gating_bit(dep_field)["mask"] for dep_field in embedded if _gating_bit(dep_field)}
 
             grid = QGridLayout()
             checks = []
             coupled_checks = {}
             grid_i = 0
             for entry in lookup["entries"]:
+                # A field carved out of a shared byte only shows its own bits (the battle command
+                # Target info leaves 0x80 to its own "Skip target selection" checkbox).
+                if "mask" in field and not entry["mask"] & field["mask"]:
+                    continue
                 cb = QCheckBox(entry["name"])
                 # Individual bits proven unused/inert here are shown (so the current value is
                 # visible) but not editable: "unused"/"padding" names, or an explicit
@@ -835,36 +845,43 @@ class KernelSectionTab(QWidget):
             outer.addLayout(grid)
             self._field_widgets[name] = ("flags", field, checks)
 
+            # Each gating checkbox sits in a box of its own, above every widget it greys out.
+            sub_boxes = {}
             for dep_field in embedded:
-                # A plain "embed_in" field has no gating checkbox; only "enabled_unless_bit"
-                # pulls one out of the grid to sit above the widget it greys out.
-                dep = dep_field.get("enabled_unless_bit")
+                dep = _gating_bit(dep_field)
                 cb = coupled_checks.get(dep["mask"]) if dep else None
                 lbl, wdg = self._labeled_widget(dep_field)
                 row = QHBoxLayout()
                 row.setSpacing(6)
-                row.addWidget(lbl)
+                if lbl is not None:
+                    row.addWidget(lbl)
                 row.addWidget(wdg)
                 row.addStretch(1)
                 if cb:
-                    # The gating checkbox and the widget it greys out read as one unit, so
-                    # they keep a box around the pair.
-                    sub_box = QGroupBox()
-                    sub_vbox = QVBoxLayout(sub_box)
-                    sub_vbox.setSpacing(4)
-                    sub_vbox.addWidget(cb)
-                    sub_vbox.addLayout(row)
-                    outer.addWidget(sub_box)
+                    # The gating checkbox and the widgets it greys out read as one unit, so
+                    # they keep a box around them.
+                    if dep["mask"] not in sub_boxes:
+                        sub_box = QGroupBox()
+                        sub_vbox = QVBoxLayout(sub_box)
+                        sub_vbox.setSpacing(4)
+                        sub_vbox.addWidget(cb)
+                        outer.addWidget(sub_box)
+                        sub_boxes[dep["mask"]] = sub_vbox
+                    sub_boxes[dep["mask"]].addLayout(row)
+                    when_checked = bool(dep_field.get("enabled_if_bit"))
+
+                    def _sync(_=None, widget=wdg, label=lbl, box=cb, when_checked=when_checked):
+                        enabled = self._unlock_all or box.isChecked() == when_checked
+                        widget.setEnabled(enabled)
+                        if label is not None:
+                            label.setEnabled(enabled)
+                    cb.toggled.connect(_sync)
+                    self._enable_syncs.append(_sync)
+                    _sync()
                 else:
                     # A plain embedded field is one labelled control; a box of its own around
                     # it is pure chrome (Cursor sides / Target scope inside Target info).
                     outer.addLayout(row)
-                if cb:
-                    def _sync(_=None, widget=wdg, box=cb):
-                        widget.setEnabled(self._unlock_all or not box.isChecked())
-                    cb.toggled.connect(_sync)
-                    self._enable_syncs.append(_sync)
-                    _sync()
             return box
 
         if lookup and lookup["type"] == "enum":

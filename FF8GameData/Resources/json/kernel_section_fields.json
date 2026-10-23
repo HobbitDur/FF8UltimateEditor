@@ -87,13 +87,26 @@
     "group": "Data"
    },
    {
+    "name": "skip_target_selection",
+    "offset": 6,
+    "size": 1,
+    "mask": 128,
+    "bool": true,
+    "label": "Skip target selection (auto-pick)",
+    "enabled_if_bit": {
+     "field": "menu_bits",
+     "mask": 32
+    },
+    "help": "Target byte bit 0x80, read only on the \"Instant (no submenu)\" path: BattleMenu_ExecuteSelectedCommand checks menu bit 0x20 first, and only then tests the target byte as a SIGNED char. Ticked: no target cursor - the game picks the target itself (the first enemy when \"Opposing side\" is ticked, otherwise the acting character) and queues the command at once. Unticked: the target cursor opens.\nWithout Instant the command opens its Submenu and the byte is never read: the spell, item or GF chosen there brings its own targeting. Vanilla has the bit on Magic, GF, Item, #8 (Monster Attack) and Stock, but only #8 and Stock are Instant, so it is dormant on Magic, GF and Item."
+   },
+   {
     "name": "target_info",
     "offset": 6,
     "size": 1,
     "group": "Data",
     "lookup": "target_info",
     "help": "Default targeting behaviour for the bits that are plain flags. Bits 2-3 and 4-5 are the separate Cursor sides and Target scope fields.\n0x01 Dead - adds the revive bit 0x4000 to an auto-resolved target mask. In the player battle menu it only takes effect when the entry also has Attack flag 0x80, which is what opens the cursor to KO'd units in the first place.\n0x02 Multi-target spread - adds mask bit 0x2000.\n0x40 Enemy - the ONLY bit that decides which side is targeted. In the player menu sub_4AB190 sets the cursor's starting side straight from it: (target_info & 0x40) ? 0x78 (monster slots) : 7 (party slots). The Cursor sides field does NOT name a side - it only says whether the player may leave the one this bit picked.\nOn the AI auto-resolve path the bit is relative to WHOEVER IS ACTING, and the two decoders mirror each other: getMagicTargetMask (called only by MonsterAI) maps 0x40 -> the party, while getTargetMaskFromInfo (player commands) maps 0x40 -> the monsters. The helpers are absolute (all-chara = slots 0-2, all-enemy = slots 3-7), so the bit means 'the side opposing the actor' and the same byte points at different slots for a character than for a monster. (MonsterAI_DispatchSection uses the player decoder, but only for the non-junctionable GF table - the player-side auto-summons - so that is consistent: Moogle Dance and the three Angelo support moves lack 0x40 and target the party, every attacking summon has it and targets monsters.)\n0x80 Skip target selection - the command takes NO target: BattleMenu_ExecuteSelectedCommand tests the byte as a SIGNED char (`if (targetInfo >= 0)`), and when 0x80 is set it skips BattleMenu_OpenTargetSelection entirely, computes a target mask itself (first enemy slot when 0x40 Enemy is set, otherwise the acting character) and pushes the selection straight into BattleMenu_PendingSelections. The same sign test suppresses the cursor UI in sub_4A9DF0 (no cursor finger) and sub_4AA1D0 (no open animation). Vanilla sets it on five battle commands - Magic, GF, Item, nomsg(#8) and Stock - but it is only REACHED by nomsg and Stock, the two that also have menu bit 0x20 (direct targeting); Magic/GF/Item take the sub-list branch instead, so their copy of the bit is dormant. Stock is the clear case: stocking a drawn spell has no target to pick.",
-    "mask": 195
+    "mask": 67
    }
   ],
   "growable": true,

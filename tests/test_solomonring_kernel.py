@@ -1263,3 +1263,48 @@ def test_new_command_data_can_be_found_selected_and_saved(qapp, tmp_path, monkey
     assert combo.currentData() == 12
     assert combo.currentText() == "12: Stone"
     assert reloaded._section_entries(1)[24].get("ability_data_id") == 3
+
+
+def _battle_command_bytes(kernel_path, command):
+    data = pathlib.Path(kernel_path).read_bytes()
+    section_offset = int.from_bytes(data[4:8], "little")   # section 1 (battle commands) is the first
+    entry = section_offset + 8 * command
+    return data[entry + 5], data[entry + 6]                 # menu byte, target byte
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_skip_target_selection_sits_with_instant(qapp, tmp_path):
+    """Battle command target bit 0x80 is only read on the Instant (menu bit 0x20) path
+    (BattleMenu_ExecuteSelectedCommand), so it is its own checkbox next to Instant, greyed while
+    Instant is off, and Target info no longer shows it. Item has the bit (dormant), Stock uses it."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    item, stock = 4, 10
+    assert _battle_command_bytes(work, item) == (0x82, 0xD4)
+    assert _battle_command_bytes(work, stock) == (0xA0, 0xD4)
+
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    commands = widget._section_tabs[1]
+    assert 0x80 not in [mask for mask, _cb in commands._field_widgets["target_info"][2]]
+    instant = dict(commands._field_widgets["menu_bits"][2])[0x20]
+    kind, _field, skip = commands._field_widgets["skip_target_selection"]
+    submenu = commands._field_widgets["menu_submenu"][2]
+    assert kind == "bool"
+
+    commands.list_widget.setCurrentRow(item)
+    assert not instant.isChecked() and skip.isChecked()
+    assert not skip.isEnabled() and submenu.isEnabled()
+    commands.list_widget.setCurrentRow(stock)
+    assert instant.isChecked() and skip.isChecked()
+    assert skip.isEnabled() and not submenu.isEnabled()
+
+    # Item made Instant, without auto-pick: only bits 0x20 (menu) and 0x80 (target) change.
+    commands.list_widget.setCurrentRow(item)
+    instant.setChecked(True)
+    assert skip.isEnabled() and not submenu.isEnabled()
+    skip.setChecked(False)
+    commands.list_widget.setCurrentRow(stock)            # commits Item
+    widget._save_kernel()
+    assert _battle_command_bytes(work, item) == (0xA2, 0x54)
+    assert _battle_command_bytes(work, stock) == (0xA0, 0xD4)
