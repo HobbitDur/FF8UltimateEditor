@@ -10,7 +10,7 @@ from PyQt6.QtCore import Qt, QSignalBlocker, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon, QFont
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QListWidgetItem, QTabWidget, QPlainTextEdit, QComboBox, QSplitter, QTextBrowser,
-    QCheckBox, QFileDialog, QMessageBox)
+    QFileDialog, QMessageBox)
 from Common.autoimport import AutoImportSource
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -18,7 +18,7 @@ from FF8GameData.gamedata import GameData
 from Fujin.cameraeffectpreview import MODEL_FOLDER_KEY, MODEL_PATTERNS, MODEL_SELECTION_KEY
 from Fujin.cameraeffectwidget import CAM_FOLDER_KEY, CAM_SELECTION_KEY, CameraEffectEditorWidget
 from Fujin.cameraeffectmanager import cam_file_name, CAM_EXTENSION, CAM_FFNX_FOLDER
-from Fujin.effectcatalog import EffectCatalog, EffectResource, filename_effect
+from Fujin.effectcatalog import EffectCatalog, filename_effect
 from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
@@ -129,6 +129,10 @@ class FujinWidget(QWidget):
         native_layout.addWidget(self.function_selector)
         native_layout.addWidget(self.native_code, 1)
         self.choreography.addTab(native_page, "Native code")
+        # the effect's MAG workspace: data its code works on, not decoded yet (only when it has some)
+        self.workspace = EffectResourceView("workspace", self.resolve)
+        self.workspace_tab = self.choreography.addTab(self.workspace, "Workspace data")
+        self.choreography.currentChanged.connect(self._activate_tab)
         # Why there is no MAG script, when there is none (the greyed tab says it too)
         self.choreography_note = QLabel()
         self.choreography_note.setWordWrap(True)
@@ -146,17 +150,10 @@ class FujinWidget(QWidget):
         self.tabs.addTab(self.models, "Models / animation")
         self.tabs.addTab(self.textures, "Textures")
         self.tabs.addTab(self.sound, "Sound")
-        files_page = QWidget()
-        files_layout = QVBoxLayout(files_page)
-        self.all_files = QCheckBox("Browse all imported files (including files without an effect association)")
-        self.all_files.toggled.connect(self._refresh)
-        self.files = EffectResourceView("files", self.resolve)
-        files_layout.addWidget(self.all_files)
-        files_layout.addWidget(self.files, 1)
-        self.tabs.addTab(files_page, "Files / sections")
         self.changes = QTextBrowser()
         self.tabs.addTab(self.changes, "Pending changes")
-        self.component_views = (self.mag_camera, self.native_camera, self.models, self.textures, self.sound, self.files)
+        self.component_views = (self.mag_camera, self.native_camera, self.models, self.textures, self.sound,
+                                self.workspace)
         for view in self.component_views:
             view.data_changed.connect(self._resource_changed)
         self.camera_sources.currentChanged.connect(self._activate_tab)
@@ -483,15 +480,8 @@ class FujinWidget(QWidget):
         self.resources = resources
         self._set_empty_texts(effect, resources)
         for view in self.component_views:
-            selected = resources
-            if view is self.files and self.all_files.isChecked():
-                selected = list(resources)
-                keys = {r.key for r in selected}
-                for manager in self.mag_editor.managers.values():
-                    name = os.path.basename(manager.file_path)
-                    if name.lower() not in keys:
-                        selected.append(EffectResource(name.lower(), name, "File", "Imported file; association unresolved"))
-            view.set_resources(selected)
+            view.set_resources(resources)
+        self.choreography.setTabVisible(self.workspace_tab, self.workspace.sources.count() > 0)
         self.title.setText(f"{effect:03d} — {self.catalog.name(effect)}")
         loaded = sum(self.resolve(r) is not None for r in resources)
         self.context.setText(f"{self.catalog.runtime(effect)} · {loaded} of {len(resources)} files imported"
@@ -537,8 +527,7 @@ class FujinWidget(QWidget):
                                      "The rest of the camera motion is compiled code.")
             self.camera_sources.setCurrentIndex(2)
         elif mag_tracks:
-            self.camera_note.setText("Camera track inside the effect's MAG file. Save writes it back into that file "
-                                     "(the same bytes as in Files / sections).")
+            self.camera_note.setText("Camera track inside the effect's MAG file. Save writes it back into that file.")
             self.camera_sources.setCurrentIndex(1)
         elif file_camera:
             self.camera_note.setText("This effect's camera comes from its MAG files (a camera track or cinematic camera "
@@ -556,12 +545,12 @@ class FujinWidget(QWidget):
         camera = not self.camera_sources.isHidden()
         reasons = {
             1: None if camera else self.camera_note.text().replace("<b>", "").replace("</b>", ""),
-            2: None if (self.choreography.isTabEnabled(0) or self.function_selector.count())
+            2: None if (self.choreography.isTabEnabled(0) or self.function_selector.count()
+                        or self.workspace.sources.count())
             else "No MAG script and no native code snapshot for this effect.",
             3: None if self.models.sources.count() else self.models.empty_text,
             4: None if self.textures.sources.count() else self.textures.empty_text,
             5: None if self.sound.sources.count() else self.sound.empty_text,
-            6: self._files_unused(),
         }
         self.greyed_tabs = {}
         wanted = getattr(self, "_wanted_tab", self.tabs.currentIndex())
@@ -577,16 +566,6 @@ class FujinWidget(QWidget):
         finally:
             self._greying = False
         self._wanted_tab = wanted
-
-    def _files_unused(self):
-        """Why Files / sections has nothing to add, or None. It shows the sections of MAG files
-        (and of imported files with no effect association); a TIM is all in Textures."""
-        managers = list(self.mag_editor.managers.values())
-        if any(m.document.format != "PlayStation TIM" for m in managers):
-            return None
-        if not managers:
-            return "No effect file is imported (the Overview lists this effect's files)."
-        return "Only TIM files are imported, and Textures shows and edits everything they hold."
 
     def _remember_tab(self, index):
         if not getattr(self, "_greying", False):

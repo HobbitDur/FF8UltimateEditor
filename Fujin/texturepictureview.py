@@ -32,7 +32,7 @@ SWATCH = 12
 PER_LINE = 16       # swatches per line of the palette view (a 256-colour row takes 16 lines)
 MAG_TEXTURE_NOTE = ("A MAG file's textures are raw VRAM blocks: their size and colour depth come from the "
                     "effect's game code, so they cannot be shown as pictures here (their bytes are in "
-                    "Files / sections). Choreography's 3D playback draws the GF summons' textures.")
+                    "this tab's Sections). Choreography's 3D playback draws the GF summons' textures.")
 PNG_FILTER = "PNG image (*.png)"
 VRAM_WIDTH, VRAM_HEIGHT = 1024, 512     # PlayStation video memory, in 16-bit units
 STP = 0x8000
@@ -388,7 +388,7 @@ class _TimCard(QGroupBox):
     def _draw(self):
         rgba = self.texture.picture(self.row)
         if rgba is None:
-            self.picture.setText("This TIM cannot be decoded (see its bytes in Files / sections).")
+            self.picture.setText("This TIM cannot be decoded (see its bytes in this tab's Sections).")
             self.info.setText("")
             return
         height, width = rgba.shape[:2]

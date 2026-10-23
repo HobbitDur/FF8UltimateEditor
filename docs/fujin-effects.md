@@ -162,11 +162,12 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   the entry, else as category 0). Each vibration point has a **Strength %** (the level the
   engine sends x2, max 255) and a **Ramp to next** in ticks (15 per second); the number of
   points is fixed, the curve follows every edit.
-- **Files / sections:** every section of the effect's files as a read-only reference (named
-  fields and bytes) with export; Fujin edits only through its decoded views (a camera section
-  keeps its camera editor). A TIM is not repeated there: it points to Textures, and the tab
-  is greyed while only TIM files are imported.
-  **Browse all imported files** exposes MA8 files and unresolved associations.
+- **Every section has its tool tab** (no separate file tab): each tool's **Sections** sub-tab is
+  the read-only reference of the sections it covers (named fields and bytes, with export) - a
+  MAG file's header and object table (where its parts are) in Models / animation, a TIM's
+  headers with its palettes and pixels in Textures, a MAG file's raw texture blocks in Textures
+  too, and the undecoded workspace data of a MAG file in **Choreography → Workspace data**
+  (shown only for the effects that have some). Every vanilla effect file belongs to an effect.
 - **Pending changes:** destinations across all effects, including edits made before switching.
 
 All views share one manager/byte image per resource, including undo/redo and the cinematic

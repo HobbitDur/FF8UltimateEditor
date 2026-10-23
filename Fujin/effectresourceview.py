@@ -6,8 +6,6 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBo
 from Fujin.magsectionwidget import MagSectionTabs
 
 
-TIM_IN_TEXTURES = ("\nA PlayStation TIM: its picture, palette, semi-transparency and video-memory position "
-                   "are all shown and edited in Textures.")
 
 
 class EffectResourceView(QWidget):
@@ -54,11 +52,6 @@ class EffectResourceView(QWidget):
             display.addTab(self.parameter_table, "Parameters")
             display.addTab(self.sections, "Operand sections (read only)")
             layout.addWidget(display, 1)
-        elif panel is not None and mode == "textures":
-            # High-level only: pictures and palettes edited through PNG files; the raw sections
-            # are in Files / sections
-            self.display = panel
-            layout.addWidget(panel, 1)
         elif panel is not None:
             self.display = QTabWidget()
             self.display.addTab(panel, panel_title)
@@ -68,19 +61,20 @@ class EffectResourceView(QWidget):
             layout.addWidget(self.sections, 1)
 
     def _sections(self, resource, manager):
+        # Every section has its tool: a model file's all in Models, a TIM's all in Textures, a MAG
+        # file's header and object table (where its parts are) in Models, its undecoded workspace
+        # in Choreography (Workspace data)
         sections = manager.document.sections
-        if self.mode == "files" and manager.document.format == "PlayStation TIM":
-            return []           # all of it is edited in Textures (see TIM_IN_TEXTURES)
-        if self.mode == "files" or self.mode == "models" and resource.kind == "model":
+        if self.mode == "models" and resource.kind == "model":
             return sections
-        if self.mode == "textures" and manager.document.format == "PlayStation TIM":
-            # the pictures panel draws them; the bytes worth editing are the palettes and pixels
-            # (the header field tables stay in Files / sections)
-            return [s for s in sections if s.kind in ("palette", "pixels")]
+        if manager.document.format == "PlayStation TIM":
+            return sections if self.mode == "textures" else []
         if self.mode == "parameters" and resource.kind == "camera_parameter":
             return sections
         kinds = {"camera": {"camera"},
-            "models": {"model_header", "skeleton", "geometry", "animation", "model_trailer", "object"},
+            "models": {"model_header", "skeleton", "geometry", "animation", "model_trailer", "object", "header",
+                       "object_table"},
+            "workspace": {"raw"},
             "textures": {"texture", "palette", "texture_table", "clut_table", "pixels", "tim_block"},
             "sound": {"sound", "audio", "vibration", "music_table"}}.get(self.mode, set())
         return [s for s in sections if s.kind in kinds]
@@ -92,7 +86,7 @@ class EffectResourceView(QWidget):
             self.sources.clear()
             for resource in resources:
                 manager = self.resolve(resource)
-                if self.mode != "files" and (manager is None or not self._sections(resource, manager)):
+                if manager is None or not self._sections(resource, manager):
                     continue
                 mark = "* " if manager and manager.modified else ""
                 detail = manager.document.format if manager else "not imported"
@@ -113,13 +107,8 @@ class EffectResourceView(QWidget):
             location = (f"{resource.address:#x} in EN exe → Hext export" if resource.source == "Executable"
                         else manager.file_path if manager else
                         "Not imported: open it with the header's Import (Effect files).")
-            self.status.setText(f"{resource.evidence}. {resource.note}\n{location}"
-                                + (TIM_IN_TEXTURES if self.mode == "files" and manager
-                                   and manager.document.format == "PlayStation TIM" else ""))
-        if self.mode != "textures":
-            self.sections.set_manager(manager, self._sections(resource, manager) if manager else None)
-        if self.mode == "files":
-            self.sections.setVisible(self.sections.count() > 0)   # a TIM: only the line pointing to Textures
+            self.status.setText(f"{resource.evidence}. {resource.note}\n{location}")
+        self.sections.set_manager(manager, self._sections(resource, manager) if manager else None)
         if self.mode == "parameters":
             self._fill_parameters()
         if self.panel is not None:

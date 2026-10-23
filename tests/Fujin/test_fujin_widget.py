@@ -1,5 +1,6 @@
 """Effect workspace entry point and reusable executable camera editor."""
 import sys
+from pathlib import Path
 
 import pytest
 from PyQt6.QtWidgets import QApplication
@@ -25,7 +26,7 @@ def fujin(qapp):
 def test_tabs_and_empty_camera_editor(fujin):
     assert [fujin.tabs.tabText(index) for index in range(fujin.tabs.count())] == \
            ["Overview", "Camera", "Choreography", "Models / animation", "Textures",
-            "Sound", "Files / sections", "Pending changes"]
+            "Sound", "Pending changes"]
     assert fujin.effect_list.count() == 400
     editor = fujin.camera_editor
     assert not editor.manager.loaded and not fujin.can_save_folder()
@@ -42,8 +43,8 @@ def test_files_open_from_the_header_toolbar_only(fujin):
     assert not [text for text in buttons if re.match(r"(Import|Open|Load|Reload)", text)], buttons
     assert len(fujin.import_entries()) == 4 and len(fujin.complementary_entries()) == 5   # + .bcam files
     fujin.select_effect(LIFE)                                     # mag004-034.tim, not imported
-    fujin.files.activate()
-    assert "header's Import" in fujin.files.status.text()       # what to do with a missing file
+    fujin.textures.activate()
+    assert "header's Import" in fujin.textures.status.text()    # what to do with a missing file
 
 
 @pytest.mark.ff8data(EXE)
@@ -136,20 +137,19 @@ def test_the_chosen_animation_is_marked_in_the_keyframes(fujin):
 
 
 @pytest.mark.ff8data(TIM)
-def test_textures_are_pictures_not_a_files_copy(fujin):
+def test_textures_are_pictures_then_their_sections(fujin):
     fujin.import_paths([TIM])
     fujin.select_effect(CURE)
     fujin.tabs.setCurrentIndex(4)
     fujin.textures.activate()
     pictures = fujin.textures.panel
-    assert fujin.textures.display is pictures and pictures.cards        # pictures only, no byte tabs
+    assert fujin.textures.display.widget(0) is pictures and pictures.cards   # the pictures first
+    assert fujin.textures.display.tabText(1) == "Sections (read only)"      # then every TIM section
     card = pictures.cards[0]
     assert card.picture.pixmap() is not None and "texels" in card.info.text()
     if card.rows:                                              # palette rows change the drawing
         card.palette.setCurrentIndex(card.palette.count() - 1)
-    fujin.files.activate()                                     # Files does not repeat a TIM
-    assert fujin.files.sections.count() == 0 and "edited in Textures" in fujin.files.status.text()
-    assert not fujin.tabs.isTabEnabled(6) and "Textures" in fujin.tabs.tabToolTip(6)   # so it is greyed
+    assert fujin.models.sources.count() == 0                   # a TIM is all Textures'
 
 
 @pytest.mark.ff8data(TIM)
@@ -209,3 +209,26 @@ def test_many_effect_files_open_in_one_batch(fujin, monkeypatch):
     assert not fujin.file_registry.batching
     assert len(fujin.mag_editor.managers) == len(paths)
     assert len([gf for gf in shown if gf]) == 1                # one file shown, once, at the end
+
+
+@pytest.mark.ff8data("extracted_files/magic/MAG005_B.00", "extracted_files/magic/MAG005_B.01",
+                     "extracted_files/magic/mag000-049.tim")
+def test_every_section_has_a_tool_tab(fujin):
+    """No Files / sections tab: a MAG file's header and object table are in Models, its undecoded
+    workspace in Choreography (Workspace data), a TIM's header in Textures with its pictures."""
+    magic = Path(__file__).resolve().parents[2] / "extracted_files" / "magic"
+    fujin.import_paths([str(magic / name) for name in ("MAG005_B.00", "MAG005_B.01", "mag000-049.tim")])
+
+    def kinds(view, file_name):
+        resource = next(view.sources.itemData(i) for i in range(view.sources.count())
+                        if view.sources.itemData(i).key.lower() == file_name.lower())
+        return {section.kind for section in view._sections(resource, fujin.resolve(resource))}
+
+    fujin.select_effect(6)                                          # Leviathan: MAG005_B.00 / .01
+    assert {"header", "object_table"} <= kinds(fujin.models, "MAG005_B.00")
+    assert kinds(fujin.workspace, "MAG005_B.01") == {"raw"}
+    assert fujin.choreography.isTabVisible(fujin.workspace_tab)
+    fujin.select_effect(1)                                          # Cure: mag000-049.tim
+    assert {"header", "tim_block", "palette", "pixels"} <= kinds(fujin.textures, "mag000-049.tim")
+    assert fujin.textures.display.tabText(1) == "Sections (read only)"
+    assert not fujin.choreography.isTabVisible(fujin.workspace_tab)  # Cure has no workspace data

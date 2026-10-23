@@ -157,7 +157,7 @@ def test_textures_tab_exports_and_imports_png(qapp, tmp_path):
     fujin.select_effect(CURE)
     fujin.tabs.setCurrentIndex(4)
     fujin.textures.activate()
-    assert fujin.textures.display is fujin.textures.panel       # no raw byte tab here
+    assert fujin.textures.display.widget(0) is fujin.textures.panel   # the pictures first, then the sections
     card = fujin.textures.panel.cards[0]
     picture_png, palette_png = card.export_pngs(str(tmp_path), "atlas")
     # the palette PNG is laid out like the swatches: 16 colours per line, 2 rows of 256 = 32 lines

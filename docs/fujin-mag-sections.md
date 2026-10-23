@@ -3,13 +3,14 @@
 The [Fujin effect workspace](fujin-effects.md) opens MAG/MA8 files by their contents, including `.00`, `.01`, streamed numeric parts,
 TIM textures with any suffix, indexed model/animation containers, SCOT/AKAO audio and undecoded
 data. The bundled vanilla catalog contains 790 file names. **Import** also accepts additional
-mod files; **Open folder** discovers MAG/MA8 names recursively. **Files / sections → Source**
+mod files; **Open folder** discovers MAG/MA8 names recursively. Each tool tab's **Source** picker
 keeps each loaded file's edits and undo history independently. The MAG document
 (`Fujin/magdocument.py`) and its editor (`Fujin/magdocumentwidget.py`) are part of Fujin.
 
 ## Sections
 
-The **Files / sections** page contains one tab per mapped section. Pages are built when selected, and
+Each tool tab's **Sections** sub-tab holds one tab per mapped section it covers (the header and
+object table in Models / animation, undecoded workspace data in Choreography → Workspace data). Pages are built when selected, and
 large field/byte tables are paged rather than allocating a widget for every byte.
 
 - **Header/directories:** named offsets, counts and packed table entries.

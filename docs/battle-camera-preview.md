@@ -115,8 +115,8 @@ it *(.bcam only)*, the .hext leaves it out, and **Export .bcam…** saves it for
 
 The effect workspace resolves camera sources per component. A file camera can contain the
 same script/keyframe track format as an exe camera, or drive the view with cinematic commands.
-Fujin edits and previews embedded tracks through **Camera → MAG track**, sharing the bytes
-with **Files / sections**. Procedural native parameters have their own guarded bindings;
+Fujin edits and previews embedded tracks through **Camera → MAG track**, one byte image per
+file shared by every tool tab. Procedural native parameters have their own guarded bindings;
 their surrounding code is not replayed by the track preview.
 
 Disease Breath has a normal camera track in `magic/MAG230_B.00` (the file number is one

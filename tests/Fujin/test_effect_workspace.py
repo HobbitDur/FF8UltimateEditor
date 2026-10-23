@@ -94,12 +94,12 @@ def test_disease_camera_and_section_views_share_one_document(workspace, tmp_path
     frame.pos_x.set(frame.pos_x.get()+20)
     editor._apply_camera()
     QApplication.processEvents()
-    workspace.files.activate()
-    index = next(i for i in range(workspace.files.sources.count())
-                 if workspace.files.sources.itemData(i).key == "mag230_b.00")
-    workspace.files.sources.setCurrentIndex(index)
-    workspace.files.activate()
-    assert workspace.files.sections.manager is manager
+    workspace.models.activate()                       # its header and object table: Models
+    index = next(i for i in range(workspace.models.sources.count())
+                 if workspace.models.sources.itemData(i).key == "mag230_b.00")
+    workspace.models.sources.setCurrentIndex(index)
+    workspace.models.activate()
+    assert workspace.models.sections.manager is manager
     assert workspace.can_save_folder()
     assert workspace.save_files()
     assert path.read_bytes() == bytes(manager.data) != original
