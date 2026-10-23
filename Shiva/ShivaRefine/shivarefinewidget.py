@@ -21,7 +21,14 @@ class ShivaRefineWidget(QWidget):
     COLUMN_AMOUNT_REQUIRED = 2
     COLUMN_OUTPUT = 3
     COLUMN_AMOUNT_RECEIVED = 4
-    COLUMN_UNK = 5
+    COLUMN_GF_LEVEL = 5
+    COLUMN_UNKNOWN_0X03 = 6
+
+    GF_LEVEL_TOOLTIP = ("Required GF level: the refine is only offered when a GF that learned this refine "
+                        "ability is at this level or higher.\n"
+                        "Vanilla: 1, except 100 for Curse Spike -> Dark Matter and Shaman Stone -> Hero-trial.\n"
+                        "The PC game ignores it (every refine counts as level 100) unless FF8 Gameplay "
+                        "Customizer's Archeology > Refine GF level option is on.")
 
     def __init__(self, game_data):
         QWidget.__init__(self)
@@ -41,9 +48,10 @@ class ShivaRefineWidget(QWidget):
         self.section_description_label.setStyleSheet("font-style: italic;")
 
         self.entry_table = QTableWidget()
-        self.entry_table.setColumnCount(6)
+        self.entry_table.setColumnCount(7)
         self.entry_table.setHorizontalHeaderLabels(["Text", "Input", "Amount required", "Output",
-                                                    "Amount received", "Unknown"])
+                                                    "Amount received", "Required GF level", "Unknown 0x03"])
+        self.entry_table.horizontalHeaderItem(self.COLUMN_GF_LEVEL).setToolTip(self.GF_LEVEL_TOOLTIP)
         self.entry_table.horizontalHeader().setSectionResizeMode(self.COLUMN_TEXT, QHeaderView.ResizeMode.Stretch)
         self.entry_table.horizontalHeader().setSectionResizeMode(self.COLUMN_INPUT, QHeaderView.ResizeMode.Stretch)
         self.entry_table.horizontalHeader().setSectionResizeMode(self.COLUMN_OUTPUT, QHeaderView.ResizeMode.Stretch)
@@ -119,12 +127,19 @@ class ShivaRefineWidget(QWidget):
             amount_received_spin.valueChanged.connect(partial(self._on_amount_changed, entry, 'amount_received'))
             self.entry_table.setCellWidget(row, self.COLUMN_AMOUNT_RECEIVED, amount_received_spin)
 
-            unk_spin = QSpinBox()
-            unk_spin.setRange(0, 65535)
-            unk_spin.setValue(entry.unk)
-            unk_spin.setToolTip("Unknown data")
-            unk_spin.valueChanged.connect(partial(self._on_amount_changed, entry, 'unk'))
-            self.entry_table.setCellWidget(row, self.COLUMN_UNK, unk_spin)
+            gf_level_spin = QSpinBox()
+            gf_level_spin.setRange(0, 255)
+            gf_level_spin.setValue(entry.required_gf_level)
+            gf_level_spin.setToolTip(self.GF_LEVEL_TOOLTIP)
+            gf_level_spin.valueChanged.connect(partial(self._on_amount_changed, entry, 'required_gf_level'))
+            self.entry_table.setCellWidget(row, self.COLUMN_GF_LEVEL, gf_level_spin)
+
+            unknown_spin = QSpinBox()
+            unknown_spin.setRange(0, 255)
+            unknown_spin.setValue(entry.unknown_0x03)
+            unknown_spin.setToolTip("Unknown byte (0 in every vanilla entry)")
+            unknown_spin.valueChanged.connect(partial(self._on_amount_changed, entry, 'unknown_0x03'))
+            self.entry_table.setCellWidget(row, self.COLUMN_UNKNOWN_0X03, unknown_spin)
 
     def _selected_refine_view(self):
         index = self.section_list.currentRow()

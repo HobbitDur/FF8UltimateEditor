@@ -34,7 +34,8 @@ class Sectionm00Bin(Section):
             for entry in data.entries:
                 entry.text_offset = int.from_bytes(bytearray(self._data_hex[index:index + 2]), byteorder='little')
                 entry.amount_received = int(self._data_hex[index + 2])
-                entry.unk = int.from_bytes(bytearray(self._data_hex[index + 3:index + 5]), byteorder='little')
+                entry.unknown_0x03 = int(self._data_hex[index + 3])
+                entry.required_gf_level = int(self._data_hex[index + 4])
                 entry.element_in_id = int(self._data_hex[index + 5])
                 entry.amount_required = int(self._data_hex[index + 6])
                 entry.element_out_id = int(self._data_hex[index + 7])
@@ -65,7 +66,8 @@ class Sectionm00Bin(Section):
             for nb_entry, entry in enumerate(data.entries):
                 self._data_hex.extend(entry.text_offset.to_bytes(length=2, byteorder="little"))
                 self._data_hex.extend(entry.amount_received.to_bytes(length=1, byteorder="little"))
-                self._data_hex.extend(entry.unk.to_bytes(length=2, byteorder="little"))
+                self._data_hex.extend(entry.unknown_0x03.to_bytes(length=1, byteorder="little"))
+                self._data_hex.extend(entry.required_gf_level.to_bytes(length=1, byteorder="little"))
                 self._data_hex.extend(entry.element_in_id.to_bytes(length=1, byteorder="little"))
                 self._data_hex.extend(entry.amount_required.to_bytes(length=1, byteorder="little"))
                 self._data_hex.extend(entry.element_out_id.to_bytes(length=1, byteorder="little"))

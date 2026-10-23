@@ -164,6 +164,34 @@ def test_refine_tab_edit_survives_a_save(game_data, tmp_path):
 
 
 @pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin")
+def test_refine_required_gf_level_is_byte_4(game_data, tmp_path):
+    """Byte 0x04 of a refine entry is the GF level the refine needs (byte 0x03 is separate and 0).
+    Vanilla: level 1 everywhere except the two PS1 level-100 refines; an edit must survive a save."""
+    from Shiva.ShivaRefine.refineview import build_refine_views
+
+    manager = MngrpManager(game_data=game_data)
+    manager.load_file(str(MENU / "mngrphd.bin"), str(MENU / "mngrp.bin"))
+    views = {(view.bin_name, view.name): view for view in build_refine_views(manager)}
+    entries = [entry for view in views.values() for entry in view.entries]
+    assert all(entry.unknown_0x03 == 0 for entry in entries)
+    level_100 = sorted((entry.element_in_id, entry.amount_required, entry.element_out_id)
+                       for entry in entries if entry.required_gf_level == 100)
+    assert level_100 == [(129, 100, 141), (161, 10, 18)]  # Curse Spike -> Dark Matter, Shaman Stone -> Hero-trial
+    assert all(entry.required_gf_level in (1, 100) for entry in entries)
+
+    tool_rf = next(view for view in views.values() if view.name == "tool_rf" or "Tool" in view.name)
+    dark_matter = next(entry for entry in tool_rf.entries if entry.element_out_id == 141)
+    dark_matter.required_gf_level = 50
+    out_mngrp, out_mngrphd = tmp_path / "mngrp.bin", tmp_path / "mngrphd.bin"
+    manager.save_file(str(out_mngrp), str(out_mngrphd))
+    reloaded = MngrpManager(game_data=game_data)
+    reloaded.load_file(str(out_mngrphd), str(out_mngrp))
+    reloaded_entries = [entry for view in build_refine_views(reloaded) for entry in view.entries]
+    assert [entry.required_gf_level for entry in reloaded_entries if entry.element_out_id == 141
+            and entry.element_in_id == 129] == [50]
+
+
+@pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin")
 def test_full_widget_noedit_save_is_byte_exact(qapp, game_data, tmp_path):
     """The whole tool, every tab loaded: saving without editing must reproduce mngrp.bin and
     mngrphd.bin byte for byte. The tabs write their own sections back unchanged, and the raw
