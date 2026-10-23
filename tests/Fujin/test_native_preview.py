@@ -133,6 +133,7 @@ def test_effect_preview_records_the_camera_preview_battle(qapp):
     fujin.import_paths([str(MAGIC / "mag000-049.tim")])
     fujin.camera_editor.exe_binding.open_path(str(EXE))
     view = fujin.native_preview
+    view.actors_group.setChecked(True)                                          # drawn, with the cast
     view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
     squall, gunblade, monster = (str(BATTLE / name) for name in ("d0c000.dat", "d0w000.dat", "c0m009.dat"))
     preview = fujin.camera_editor.preview
@@ -196,8 +197,11 @@ def test_effect_preview_party_pickers_and_effect_alone(qapp):
     assert preview.party_members()[2] == (squall2, gunblade)
     assert ("party", 2) in [view.caster_combo.itemData(i) for i in range(view.caster_combo.count())]
     fujin.select_effect(1)
+    assert not view.actors_group.isChecked() and not view.party_combos[0].isEnabled()   # off by default: greyed
+    view.actors_group.setChecked(True)
+    assert view.party_combos[0].isEnabled() and view.caster_combo.isEnabled()
     with_actors = view.cast().key()
-    view.actors_check.setChecked(False)
+    view.actors_group.setChecked(False)
     assert view.cast().key() != with_actors and not view.cast().actors
     if os.path.exists(nativepreview.recording_path(1, view.cast().key())):
         os.remove(nativepreview.recording_path(1, view.cast().key()))
@@ -208,7 +212,7 @@ def test_effect_preview_party_pickers_and_effect_alone(qapp):
     # ... nor the target Cure redraws itself (its own inline renderer, ticks 3-28): no primitive of
     # the effect alone uses an actor's palette - the ones the actors are drawn with before Cure
     alone = view.recording
-    view.actors_check.setChecked(True)
+    view.actors_group.setChecked(True)
     if os.path.exists(nativepreview.recording_path(1, view.cast().key())):
         os.remove(nativepreview.recording_path(1, view.cast().key()))
     assert view.record()
@@ -263,6 +267,7 @@ def test_effect_preview_plays_a_scene_out_encounter(qapp):
         os.remove(cached)
     view.set_effect(None)
     view.set_effect(1, "Cure")
+    view.actors_group.setChecked(True)
     view.play_button.setChecked(True)                                           # records, then plays
     wait_for_preview(qapp, view)
     assert view.recording is not None and len(view.recording.ticks) > 51 and view.timer.isActive()   # cast + Cure
@@ -418,3 +423,24 @@ def test_opengl_draws_the_same_picture_as_the_software_gpu():
     if "NO-GL" in result.stdout or (result.returncode and "could not connect to display" in result.stderr):
         pytest.skip("no OpenGL 3.3 context here")
     assert "SAME" in result.stdout, result.stdout + result.stderr
+
+
+def test_camera_edits_record_anew(qapp, monkeypatch):
+    """No Record again button: a camera keyframe or script input change records the effect again
+    when its camera is not the one the shown recording was made with."""
+    from Common.fileregistry import FileRegistry
+    from Fujin.nativepreview import NativePreviewView
+    view = NativePreviewView(FileRegistry())
+    assert not hasattr(view, "record_button")
+    recorded = []
+    monkeypatch.setattr(view, "missing", lambda: [])
+    monkeypatch.setattr(view, "record", lambda keep_tick=False: recorded.append(keep_tick) or True)
+    camera = ["0 1 2 3 4 5 6 0 640"]
+    monkeypatch.setattr(view, "_camera_lines", lambda _cast: camera)
+    view.effect_id, view.recording, view._recorded_camera = 1, object(), list(camera)
+    view.camera_changed()
+    view._refresh_camera()
+    assert recorded == []                                       # the same shot: kept
+    camera[0] = "0 9 9 9 4 5 6 0 640"
+    view._refresh_camera()
+    assert recorded == [True]                                   # a new shot: recorded again, same tick

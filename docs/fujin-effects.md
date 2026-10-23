@@ -25,12 +25,15 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   monsters, its caster and target - the **Party**, **Battle** (scene.out encounter or manual
   placement), **Caster** and **Target** pickers here are the same ones; opening Battle sets the
   battle up when its models are still waiting; imported characters fill the party one file per
-  character, any other is picked in Party, its weapon in the Camera tab). **Battle actors** off
-  records the effect alone: the actors are loaded but not drawn and no cast plays (what the effect
+  character, any other is picked in Party, its weapon in the Camera tab). These pickers sit in the
+  **Battle actors** group, off by default and greyed while off: the effect alone is recorded, the
+  actors picked there loaded but not drawn (the effect's code places itself on its caster and
+  target) and no cast plays (what the effect
   redraws itself, as Cure its target, is left out too: the recorder drops the primitives drawn with
   the actors' palettes, so the effect's own models, as Protect's shield, stay). **Play** records first when there is no recording yet; edits of
-  the effect's files refresh the recording by themselves, **Record again** is for what Fujin does
-  not see change (a camera keyframe, the Camera tab's script inputs). Recording runs the effect's
+  the effect's files, and of its camera (a keyframe, the Camera tab's script inputs: recorded again
+  when the shot is not the one the recording was made with, each cached recording keeping its
+  `.camera` lines), refresh the recording by themselves. Recording runs the effect's
   original code in FF8UltimateEditor's effect recorder
   (`Tools/fxrecorder`, a 32-bit program, never kept in git: the Windows release ships the one its
   CI builds; run from source, FF8UltimateEditor builds it in the background when it starts and

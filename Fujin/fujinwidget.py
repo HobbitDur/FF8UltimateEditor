@@ -85,6 +85,7 @@ class FujinWidget(QWidget):
             file_edits=self._preview_file_edits,
             cast_source=self.camera_editor.preview,
             camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)))
+        self.camera_editor.modified_changed.connect(self.native_preview.camera_changed)   # a keyframe edit records anew
         self.overview_splitter = QSplitter(Qt.Orientation.Vertical)
         self.overview_splitter.addWidget(self.overview)
         self.overview_splitter.addWidget(self.native_preview)

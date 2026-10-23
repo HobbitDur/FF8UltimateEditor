@@ -6,7 +6,7 @@ FF8UltimateEditor's effect recorder (Tools/fxrecorder, a small 32-bit program sh
 release; from source, build it with Tools/fxrecorder/build.bat) maps the opened FF8_EN.exe, fakes a
 battle and runs the effect's ORIGINAL code tick by tick, recording every PlayStation GPU packet it
 queues and every texture it uploads (FF8GameData.psxgpu.fxdump). Play runs it for the selected
-effect when there is no recording yet (Record again runs it anew), then draws the recording at the
+effect when there is no recording yet (edits of its files or its camera record it anew), then draws the recording at the
 battle's 15 frames per second with OpenGL (FF8GameData.psxgpu.glrender; the software GPU,
 FF8GameData.psxgpu.gpu, without OpenGL 3.3).
 
@@ -41,7 +41,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import QProcess, Qt, QTimer
 from PyQt6.QtGui import QCursor, QImage, QPixmap
-from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
+from PyQt6.QtWidgets import (QApplication, QComboBox, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
                              QSlider, QVBoxLayout, QWidget)
 
 from Common.filebinding import FileBinding
@@ -116,6 +116,11 @@ def _plan_text(plan):
     """The recorder's a:n[:x:y:z] list of a cast plan (the offset only when it moves)."""
     return ",".join(f"{animation}:{ticks}" + ("".join(f":{v}" for v in offset) if any(offset) else "")
                     for animation, ticks, offset in plan)
+
+
+def camera_path(recording):
+    """The camera lines a cached recording was made with, kept next to it."""
+    return os.path.splitext(recording)[0] + ".camera"
 
 
 def recording_path(effect_id, cast_key="none"):
@@ -194,11 +199,16 @@ class NativePreviewView(QWidget):
         self._process = None
         self._scratch = None
         self._recorded_edits = None
+        self._recorded_camera = None    # the camera lines the shown recording was made with
         self._preview_requested = False
         self._edit_refresh = QTimer(self)
         self._edit_refresh.setSingleShot(True)
         self._edit_refresh.setInterval(250)
         self._edit_refresh.timeout.connect(self._refresh_edits)
+        self._camera_refresh = QTimer(self)
+        self._camera_refresh.setSingleShot(True)
+        self._camera_refresh.setInterval(250)
+        self._camera_refresh.timeout.connect(self._refresh_camera)
         self._fit = GAME_WINDOW
         self._prerender_tick = 0
         self.camera_used = False
@@ -222,46 +232,44 @@ class NativePreviewView(QWidget):
             "edits are included; after the first recording, editing a texture or using Undo / Redo refreshes "
             "this preview automatically.")
         self.intro.setWordWrap(True)
-        self.record_button = QPushButton("Record again")
-        self.record_button.setToolTip("Run the effect's code again: Play records it the first time, and edits of "
-                                      "its files refresh it by themselves; this is for what Fujin does not see "
-                                      "change (a camera keyframe, the Camera tab's script inputs...)")
-        self.record_button.clicked.connect(lambda: self.record())
         # the Camera tab preview's caster and target pickers, mirrored: one battle for both previews
         self.caster_combo, self.target_combo = QComboBox(), QComboBox()
         self.caster_combo.setToolTip("Who casts the effect: a party member, an enemy of the encounter or an "
                                      "imported monster (the Camera tab's preview: Import complementary, Camera "
-                                     "preview models). Record again to apply.")
-        self.target_combo.setToolTip("Who the effect is cast on. Record again to apply.")
+                                     "preview models).")
+        self.target_combo.setToolTip("Who the effect is cast on.")
         self.caster_combo.activated.connect(lambda _i: self._pick(self.caster_combo, "caster_combo"))
         self.target_combo.activated.connect(lambda _i: self._pick(self.target_combo, "target_combo"))
         # the Camera tab preview's party, mirrored too (its weapons are chosen there)
         self.party_combos = [QComboBox() for _slot in range(3)]
         for slot, combo in enumerate(self.party_combos):
             combo.setToolTip(f"Party slot {slot}: any imported character (Import complementary: Camera preview "
-                             f"models), with its first imported weapon - the Camera tab's preview picks another. "
-                             f"Record again to apply.")
+                             f"models), with its first imported weapon - the Camera tab's preview picks another.")
             combo.activated.connect(lambda _i, row=slot: self._pick_party(row))
-        self.actors_check = QCheckBox("Battle actors")
-        self.actors_check.setChecked(True)
-        self.actors_check.setToolTip("Draw the caster, the target and the others, with the caster's cast before the "
-                                     "effect. Unchecked: the effect alone (the actors are still loaded, unseen: "
-                                     "the effect's code places itself on them; one it redraws itself, as Cure "
-                                     "does its target, is left out too - its own models, as Protect's shield, "
-                                     "stay).")
-        self.actors_check.toggled.connect(lambda _on: (self._cast_changed(), self._update_controls()))
+        # the battle's actors, drawn or not: their pickers live in this group, greyed while it is off
+        self.actors_group = QGroupBox("Battle actors")
+        self.actors_group.setCheckable(True)
+        self.actors_group.setChecked(False)
+        self.actors_group.setToolTip("On: draw the party and enemies, the caster playing its cast before the "
+                                     "effect. Off: the effect alone - the actors picked here are still loaded, "
+                                     "unseen (the effect's code places itself on its caster and target; one it "
+                                     "redraws itself, as Cure does its target, is left out too - its own models, "
+                                     "as Protect's shield, stay).")
+        self.actors_group.toggled.connect(lambda _on: (self._cast_changed(), self._update_controls()))
         # the Camera tab setup's scene.out encounter: enemies and party where that battle puts them
         self.encounter_combo = _BattleCombo(self._load_battle)
         self.encounter_combo.setToolTip("Where the actors stand: an encounter of scene.out (Import complementary: "
                                         "scene.out) puts the enemies where that battle has them and the party in "
                                         "its formation; Manual placement puts the target across from the caster. "
-                                        "Same list as the Camera tab's preview. Record again to apply.")
+                                        "Same list as the Camera tab's preview.")
         self.encounter_combo.activated.connect(lambda _i: self._pick_encounter())
         self._watched_encounters = None
         if cast_source is not None:
             for combo in (cast_source.caster_combo, cast_source.target_combo, *cast_source.party_combos):
                 combo.currentIndexChanged.connect(lambda _i: self._cast_refresh.start())
             cast_source.models_changed.connect(self._cast_refresh.start)
+            # the Camera tab's script inputs choose the camera animation: a new one records anew
+            cast_source.animation_chosen.connect(lambda _chosen: self.camera_changed())
         self.view_mode = QComboBox()
         self.view_mode.addItem("Game window (320 × 224)", "game")
         self.view_mode.addItem("Fit the effect", "fit")
@@ -292,7 +300,6 @@ class NativePreviewView(QWidget):
         party_row.addWidget(QLabel("Party:"))
         for combo in self.party_combos:
             party_row.addWidget(combo, 1)
-        party_row.addWidget(self.actors_check)
         cast_row = QHBoxLayout()
         cast_row.addWidget(QLabel("Battle:"))
         cast_row.addWidget(self.encounter_combo, 2)
@@ -300,16 +307,21 @@ class NativePreviewView(QWidget):
         cast_row.addWidget(self.caster_combo, 1)
         cast_row.addWidget(QLabel("Target:"))
         cast_row.addWidget(self.target_combo, 1)
+        # one inner widget: the group greys it whole (a picker enabling itself stays greyed inside)
+        actors = QWidget()
+        rows = QVBoxLayout(actors)
+        rows.setContentsMargins(0, 0, 0, 0)
+        rows.addLayout(party_row)
+        rows.addLayout(cast_row)
+        QVBoxLayout(self.actors_group).addWidget(actors)
         controls = QHBoxLayout()
-        controls.addWidget(self.record_button)
         controls.addWidget(self.view_mode)
         controls.addWidget(self.play_button)
         controls.addWidget(self.slider, 1)
         controls.addWidget(self.frame_label)
         layout = QVBoxLayout(self)
         layout.addWidget(self.intro)
-        layout.addLayout(party_row)
-        layout.addLayout(cast_row)
+        layout.addWidget(self.actors_group)
         layout.addLayout(controls)
         layout.addWidget(self.scroll, 1)
         layout.addWidget(self.status)
@@ -438,7 +450,7 @@ class NativePreviewView(QWidget):
                 not_imported.append(os.path.basename(body))
         return BattleCast(slots, cast.caster, cast.target, cast.positions, cast.yaws, cast.camera,
                           sorted(set(not_imported)), cast.idle, cast.cast_before, cast.cast_during, cast.cast_camera,
-                          self.actors_check.isChecked())
+                          self.actors_group.isChecked())
 
     def _cast_changed(self):
         """Show the recording already made with this cast, if any."""
@@ -480,6 +492,27 @@ class NativePreviewView(QWidget):
         """Coalesce edits/Undo/Redo; keep the current frame when refreshing an existing preview."""
         self._edit_refresh.start()
 
+    def camera_changed(self):
+        """A camera keyframe or a Camera tab script input changed: coalesced, then the recording
+        is made again if its camera is not the one it would now get."""
+        self._camera_refresh.start()
+
+    def _refresh_camera(self):
+        if self.recording is None or self._process is not None or self.effect_id is None or self.missing():
+            return
+        if self._camera_lines(self.cast(placed=True)) != self._recorded_camera:
+            self.record(keep_tick=True)
+
+    def _camera_lines(self, cast):
+        """The camera file lines a recording of this cast gets (the Camera tab preview's own shot,
+        else the effect's track played by Fujin, else none)."""
+        manager, track = self.camera_track(self.effect_id)
+        if cast.camera is not None:
+            return pose_lines(cast.camera)
+        if track is not None:
+            return camera_lines(manager, track, cast)
+        return []
+
     def _refresh_edits(self):
         if ((self.recording is not None or self._preview_requested) and self._process is None
                 and self._edit_signature(self.file_edits()) != self._recorded_edits):
@@ -497,7 +530,12 @@ class NativePreviewView(QWidget):
         self._prerender_tick = 0
         path = recording_path(effect_id, self.cast().key()) if effect_id is not None else None
         if path and os.path.isfile(path):
-            self.load_recording_file(path)       # recorded earlier: shown again, Record redoes it
+            self.load_recording_file(path)       # recorded earlier: shown again, a camera edit redoes it
+            try:
+                with open(camera_path(path), encoding="ascii") as file:
+                    self._recorded_camera = file.read().splitlines()
+            except OSError:
+                self._recorded_camera = None
         else:
             self.picture.clear()
             self._update_controls()
@@ -560,13 +598,7 @@ class NativePreviewView(QWidget):
             args.append("castafter=" + _plan_text(cast.cast_during))
         self._not_imported = cast.not_imported
         self.camera_used = False
-        manager, track = self.camera_track(self.effect_id)
-        if cast.camera is not None:
-            lines = pose_lines(cast.camera)            # the Camera tab preview's own shot
-        elif track is not None:
-            lines = camera_lines(manager, track, cast)
-        else:
-            lines = []
+        lines = self._camera_lines(cast)
         if lines:
             camera = output[:-4] + "_camera.txt"
             with open(camera, "w", encoding="ascii") as file:
@@ -578,8 +610,8 @@ class NativePreviewView(QWidget):
         self._prerender.stop()
         self._process = QProcess(self)
         self._process.setWorkingDirectory(str(RECORDER.parent))
-        self._process.finished.connect(lambda code, _status, out=output, effect=self.effect_id:
-                                       self._recorded(effect, out, code, signature, tick, model))
+        self._process.finished.connect(lambda code, _status, out=output, effect=self.effect_id, camera=lines:
+                                       self._recorded(effect, out, code, signature, tick, model, camera))
         self._process.errorOccurred.connect(self._record_error)
         self.status.setText(f"Recording effect {self.effect_id}…")
         self._update_controls()
@@ -601,17 +633,17 @@ class NativePreviewView(QWidget):
         self._update_controls()
         self.status.setText(f"Could not start the effect recorder: {message}")
 
-    def _recorded(self, effect_id, output, code, signature=(), tick=0, model="none"):
+    def _recorded(self, effect_id, output, code, signature=(), tick=0, model="none", camera=None):
         process, self._process = self._process, None
         log = bytes(process.readAllStandardOutput()).decode("ascii", "replace") if process else ""
         if process is not None:
             process.deleteLater()
         try:
-            self._load_recorded(effect_id, output, code, signature, tick, model, log)
+            self._load_recorded(effect_id, output, code, signature, tick, model, log, camera)
         finally:
             self._clean_scratch()
 
-    def _load_recorded(self, effect_id, output, code, signature, tick, model, log):
+    def _load_recorded(self, effect_id, output, code, signature, tick, model, log, camera=None):
         if effect_id != self.effect_id:
             self._update_controls()
             self.edits_changed()
@@ -627,10 +659,13 @@ class NativePreviewView(QWidget):
             self.status.setText(f"The recorder made no recording: {last[0]}")
             return
         self.load_recording_file(output, tick=tick, signature=signature)
+        self._recorded_camera = camera
         if not signature:
             # Shared cached recordings must never contain another editor's unsaved texture.
             try:
                 shutil.copyfile(output, recording_path(effect_id, model))
+                with open(camera_path(recording_path(effect_id, model)), "w", encoding="ascii") as file:
+                    file.write("\n".join(camera or []))
             except OSError:
                 pass  # caching is optional; the in-memory preview is already loaded
         if self.play_button.isChecked():
@@ -740,8 +775,6 @@ class NativePreviewView(QWidget):
         recording = self.recording is not None
         busy = self._process is not None
         can_record = not needs and self.effect_id is not None and not busy
-        self.record_button.setEnabled(can_record)
-        self.record_button.setVisible(recording)        # the first recording is Play's
         for widget in (self.view_mode, self.slider):
             widget.setEnabled(recording and not busy)
         # Play records first when there is no recording yet
