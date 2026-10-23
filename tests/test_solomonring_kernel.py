@@ -875,7 +875,7 @@ def test_a_renamed_ability_reaches_the_gf_learn_slot_pickers(qapp, tmp_path):
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
 def test_gf_learn_slots_edit_as_choices(qapp, tmp_path):
-    """A GF learn slot's two unlock bytes are picked as "GF level" / "After ability" and
+    """A GF learn slot's two unlock bytes are picked as "At GF level" / "After ability" and
     "Hidden once learned", read back from the file as the same choices, flagged when the
     ability can never be learned, and drawn as a learn tree."""
     work = tmp_path / "kernel.bin"
@@ -908,6 +908,9 @@ def test_gf_learn_slots_edit_as_choices(qapp, tmp_path):
     assert "loop" in panel._warnings[0].toolTip()
     never = panel.tree.topLevelItem(panel.tree.topLevelItemCount() - 1)
     assert never.text(0) == "Never learnable" and never.childCount() == 3
+    assert unlock[0].mode.itemText(0) == "At GF level"
+    unlock[0].mode.setCurrentIndex(unlock[0].mode.findData("never"))
+    assert unlock[0].never.text() == "", "0xFF needs no explanation"
     unlock[0].mode.setCurrentIndex(unlock[0].mode.findData("level"))
     widget._save_kernel()
 

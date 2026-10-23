@@ -1,6 +1,6 @@
 """The G-Forces tab's learn list: 21 ability slots, each with what unlocks it, plus a learn tree.
 
-The two raw unlock bytes of a slot (see gf_learn.py) are edited as choices: "GF level" with a
+The two raw unlock bytes of a slot (see gf_learn.py) are edited as choices: "At GF level" with a
 level, "After ability" with a slot of the same GF, or "Never"; then "Hidden once learned" with a
 slot or None. The ability pickers stay the tab's ordinary "enum" fields (the renaming and
 renumbering code finds them by that); the unlock editors register as "custom" fields, which
@@ -15,7 +15,7 @@ from SolomonRing import gf_learn
 
 UNLOCK_HELP = ("What this ability needs before the GF offers it (BuildGFAbilityList, the Junction "
                "menu's learn list):\n"
-               "GF level = the GF must be at least this level (0 or 1 = from the start).\n"
+               "At GF level = the GF must be at least this level (0 or 1 = from the start).\n"
                "After ability = another ability of this GF must be fully learned first, like "
                "SumMag+20% after SumMag+10%.\n"
                "Never = the game never offers it (a raw value above 121).\n"
@@ -50,7 +50,7 @@ class GfUnlockEditor(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
         self.mode = NoWheelComboBox()
-        self.mode.addItem("GF level", gf_learn.LEVEL)
+        self.mode.addItem("At GF level", gf_learn.LEVEL)
         self.mode.addItem("After ability", gf_learn.AFTER)
         self.mode.addItem("Never", gf_learn.NEVER)
         self.level = NoWheelSpinBox()
@@ -114,7 +114,9 @@ class GfUnlockEditor(QWidget):
 
     def _show_mode(self, _index=None):
         self.stack.setCurrentIndex(max(self.mode.currentIndex(), 0))
-        self.never.setText(f"raw {self._never_raw}")
+        # 0xFF is the plain "never" value: nothing to add. Any other never-value (122-254) is
+        # shown so it is not mistaken for 0xFF - it is kept as is on save.
+        self.never.setText("" if self._never_raw == gf_learn.NEVER_DEFAULT else f"raw {self._never_raw}")
 
 
 class GfHiddenEditor(NoWheelComboBox):
