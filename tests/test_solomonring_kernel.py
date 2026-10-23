@@ -1308,3 +1308,25 @@ def test_skip_target_selection_sits_with_instant(qapp, tmp_path):
     widget._save_kernel()
     assert _battle_command_bytes(work, item) == (0xA2, 0x54)
     assert _battle_command_bytes(work, stock) == (0xA0, 0xD4)
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+@pytest.mark.parametrize("action", ["compress_text", "uncompress_text"])
+def test_compress_keeps_a_name_typed_before_it(qapp, tmp_path, action):
+    """Rename the "Empty" command ability (W-Item) and its description, then Compress/Uncompress
+    straight away: both rebuild the forms from the data, and the typed texts used to come back as
+    "Empty" until a save had written the form back."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    tab = widget._section_tabs[13]
+    tab.list_widget.setCurrentRow(4)
+    assert tab._text_widgets[0].text() == "Empty"
+    tab._text_widgets[0].setText("W-Item")
+    tab._text_widgets[1].setText("Use two items")
+    getattr(widget, action)()
+    tab = widget._section_tabs[13]
+    tab.list_widget.setCurrentRow(4)
+    assert tab._text_widgets[0].text() == "W-Item"
+    assert tab._text_widgets[1].text().replace("{", "").replace("}", "") == "Use two items"  # compressed: Us{e }tw{o }items

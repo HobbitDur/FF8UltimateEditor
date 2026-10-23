@@ -997,6 +997,7 @@ class SolomonRingWidget(QWidget):
         """Compress all kernel text (the shared toolbar's Compress button calls this)."""
         if not self.loaded_filename:
             return
+        self._commit_all_tabs()
         by_id = {s.id: s for s in self.kernel_manager.section_list if s is not None}
         for data_id, text_id in self._text_link.items():
             text_section = by_id.get(text_id) if text_id else None
@@ -1014,10 +1015,18 @@ class SolomonRingWidget(QWidget):
         """Uncompress all kernel text (the shared toolbar's Uncompress button calls this)."""
         if not self.loaded_filename:
             return
+        self._commit_all_tabs()
         for text_section in self._all_text_sections():
             for text in text_section.get_text_list():
                 text.uncompress_str()
         self._populate_tabs()
+
+    def _commit_all_tabs(self):
+        """Write every form back to the data first: (un)compressing rebuilds the forms from the
+        data, and a field only reaches it on a row change or a save - a name or description just
+        typed would come back as the old text."""
+        for tab in self._section_tabs.values():
+            tab.commit()
 
     def _all_text_sections(self):
         linked_ids = {tid for tid in self._text_link.values() if tid}
