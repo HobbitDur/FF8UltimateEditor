@@ -1043,25 +1043,32 @@ def _status_accuracy(value, P, entry):
                 "latex": r"resistance \geq 100\% \Rightarrow 0\%",
                 "latex_sub": rf"{res_pct}\% \geq 100\% \Rightarrow \text{{immune}}",
             }
+        # "score" is not a percentage: 250-254 only need it above 0, and below 250 it becomes a
+        # roll of floor(score*255/100) against rand(0..255), so 100 or more always lands.
+        # Printing it with a "%" made Siren's 254 read as "154%".
         chance = value + _idiv(atk_stat, 4) - _idiv(tgt_stat, 4) - res
         if chance <= 0:
             pct = 0.0
+            how = "score <= 0: never lands"
         elif 250 <= value <= 254:
             pct = 100.0
+            how = "accuracy 250-254 and score > 0: always lands"
         else:
             thr = _idiv(chance * 255, 100)
             pct = min(100.0, (thr + 1) / 256 * 100) if thr > 0 else 0.0
+            how = ("score >= 100: always lands" if chance >= 100 else
+                   f"lands if {thr} (= {chance} × 255 / 100) >= rand(0..255)")
         return {
             "params": params, "note": note,
-            "symbolic": f"chance = accuracy + {stat_label.split('/')[0]}/4 − "
-                        f"{stat_label.split('/')[1]}/4 − (resistance% + 100)  (255 = guaranteed, "
-                        "250-254 = guaranteed-if-positive, else rolled)",
-            "substituted": f"{value} + {atk_stat}/4 − {tgt_stat}/4 − ({res_pct} + 100) = {chance}%",
+            "symbolic": f"score = accuracy + {stat_label.split('/')[0]}/4 − "
+                        f"{stat_label.split('/')[1]}/4 − (resistance% + 100). Accuracy 255 = always; "
+                        "250-254 = lands if score > 0; below 250 = about score % (100+ = always)",
+            "substituted": f"{value} + {atk_stat}/4 − {tgt_stat}/4 − ({res_pct} + 100) = {chance}  →  {how}",
             "result": f"≈ {pct:.1f}% chance to inflict  (before target-already-has-it / "
                       "immunity checks)",
-            "latex": r"chance = accuracy + \frac{atkStat}{4} - \frac{tgtStat}{4} - (resistance\% + 100)",
+            "latex": r"score = accuracy + \frac{atkStat}{4} - \frac{tgtStat}{4} - (resistance\% + 100)",
             "latex_sub": rf"{value} + \frac{{{atk_stat}}}{{4}} - \frac{{{tgt_stat}}}{{4}} "
-                         rf"- ({res_pct} + 100) = {chance}\%",
+                         rf"- ({res_pct} + 100) = {chance}",
         }
 
     if atk_type in _CURE_FLAT_TYPES:

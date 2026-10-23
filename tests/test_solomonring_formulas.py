@@ -47,7 +47,13 @@ def test_status_resistance_is_the_ifrit_percentage():
     try:
         formula_specs.PARAM_VALUES["target_resistance"] = 0
         # accuracy 150 + STR 128/4 - VIT 64/4 - (0 + 100) = 66
-        assert "= 66%" in formula_specs.compute("status_accuracy", 150, _Entry(attack_type=1))["substituted"]
+        assert "= 66  →" in formula_specs.compute("status_accuracy", 150, _Entry(attack_type=1))["substituted"]
+        # The score is not a percentage: 254 gives a score of 170 here, and simply always lands.
+        siren = formula_specs.compute("status_accuracy", 254, _Entry(attack_type=1))
+        assert "= 170  →" in siren["substituted"] and "%" not in siren["substituted"]
+        assert siren["result"].startswith("≈ 100.0%")
+        # Below 250 a score of 100 or more always lands too (200 against a neutral target).
+        assert formula_specs.compute("status_accuracy", 200, _Entry(attack_type=1))["result"].startswith("≈ 100.0%")
         formula_specs.PARAM_VALUES["target_resistance"] = 100
         assert "immune" in formula_specs.compute("status_accuracy", 150, _Entry(attack_type=1))["result"]
     finally:
