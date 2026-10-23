@@ -11,6 +11,8 @@ kernel_section_fields.json defines every editable field of the 31 sections):
   • import-csv     (CSV → kernel.bin, applied onto a base kernel)
 
 Fields are addressed exactly like the GUI: section id → entry index → field name.
+A GF learn slot's unlock bytes (section 3, abilityN_level_or_prereq / abilityN_alt_prereq)
+also take the GUI's choices: level:N, after:N or never, and none or N (N = Ability 1-21).
 """
 
 import argparse
@@ -19,6 +21,7 @@ import sys
 
 from .base import BaseCliTool
 from .common import PROJECT_ROOT, load_game_data, read_csv, write_csv
+from SolomonRing import gf_learn
 
 
 def _load_section_configs() -> dict:
@@ -99,6 +102,24 @@ def _cmd_list_fields(args) -> int:
     return 0
 
 
+def _field_value(name, text):
+    """A --value: a number, or for a GF learn slot's unlock bytes the readable forms."""
+    if name.endswith("_level_or_prereq"):
+        return gf_learn.parse_unlock_text(text)
+    if name.endswith("_alt_prereq"):
+        return gf_learn.parse_hidden_text(text)
+    return int(text, 0)
+
+
+def _field_note(name, value):
+    """What a GF learn slot's unlock byte means, printed after its raw value by get."""
+    if name.endswith("_level_or_prereq"):
+        return f"  ({gf_learn.describe_unlock(value)})"
+    if name.endswith("_alt_prereq"):
+        return f"  ({gf_learn.describe_hidden(value)})"
+    return ""
+
+
 def _cmd_get(args) -> int:
     kernel = _KernelFile(args.input)
     entries = kernel.entries(args.section)
@@ -113,7 +134,8 @@ def _cmd_get(args) -> int:
     for index, label in enumerate(config.get("text_labels", [])):
         print(f"text {index} ({label}): {entry.get_text(index)}")
     for field in config.get("fields", []):
-        print(f"{field['name']}: {entry.get(field['name'])}")
+        value = entry.get(field["name"])
+        print(f"{field['name']}: {value}{_field_note(field['name'], value)}")
     return 0
 
 
@@ -127,7 +149,7 @@ def _cmd_set(args) -> int:
         if args.value is None:
             print("[error] --field needs --value", file=sys.stderr)
             return 1
-        entry.set(args.field, int(args.value, 0))
+        entry.set(args.field, _field_value(args.field, args.value))
     if args.text_index is not None:
         if args.text is None:
             print("[error] --text-index needs --text", file=sys.stderr)
@@ -219,7 +241,9 @@ class SolomonRingCliTool(BaseCliTool):
         p_set.add_argument("--section", "-s", type=int, required=True, help="Section id (1-31)")
         p_set.add_argument("--entry", "-e", type=int, required=True, help="Entry index in the section")
         p_set.add_argument("--field", help="Field name (see list-fields)")
-        p_set.add_argument("--value", help="Field value (decimal or 0x hex)")
+        p_set.add_argument("--value", help="Field value (decimal or 0x hex). GF learn slots also "
+                                           "take level:N / after:N / never (Level/prereq) and "
+                                           "none / N (Excluded slot), N = Ability 1-21")
         p_set.add_argument("--text-index", type=int, help="Text index (0=Name, 1=Description)")
         p_set.add_argument("--text", help="New text value")
         p_set.add_argument("--output", "-o", help="Output kernel.bin (overwrites input if omitted)")

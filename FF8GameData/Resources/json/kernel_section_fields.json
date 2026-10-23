@@ -666,7 +666,8 @@
     "group": "General",
     "lookup": "status_1",
     "label": "Status 1",
-    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status."
+    "help": "Statuses 0-15 inflicted / affected. Bitfield: tick each status.",
+    "subgroup": "Summon status"
    },
    {
     "name": "status_2",
@@ -675,7 +676,8 @@
     "group": "General",
     "lookup": "status_2",
     "label": "Status 2",
-    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status."
+    "help": "Statuses 16-47 inflicted / affected. Bitfield: tick each status.",
+    "subgroup": "Summon status"
    },
    {
     "name": "gf_hp_modifier_1",
@@ -735,7 +737,8 @@
     "size": 1,
     "group": "General",
     "label": "Unused status attack accuracy",
-    "help": "Byte 0x1A (IDA unusedStatusAttackAccuracy) is unused, read by nothing. Deep-audited: 0 field xrefs, 0 direct-address xrefs, AND all register-relative accesses checked (the case that hid the attack-flag 0x20 bug) - the 3 functions that hold a GF-entry pointer (incl. the GF/junction menu and ability-learn code) touch only offset 0 or 0x1B, never 0x1A; no aliases or bulk copies read it. The GF summon's real status-attack accuracy lives at 0x1B ('Ability 1' row's first byte).",
+    "help": "Byte 0x1A (IDA unusedStatusAttackAccuracy) is unused, read by nothing. Deep-audited: 0 field xrefs, 0 direct-address xrefs, AND all register-relative accesses checked (the case that hid the attack-flag 0x20 bug) - the 3 functions that hold a GF-entry pointer (incl. the GF/junction menu and ability-learn code) touch only offset 0 or 0x1B, never 0x1A; no aliases or bulk copies read it. The GF summon's real status-attack accuracy lives at 0x1B: the 'Status accuracy' field beside this one.",
+    "subgroup": "Summon status",
     "readonly": true
    },
    {
@@ -775,7 +778,9 @@
     "group": "Abilities",
     "label": "Padding",
     "readonly": true,
-    "help": "Unused padding - no code references this byte (IDA: 0 xrefs to FF8KernelJunctionableGF.padding2). Sits between the 21-entry ability array (ends 0x6E) and the GF compatibility block (starts 0x70)."
+    "help": "Unused padding - no code references this byte (IDA: 0 xrefs to FF8KernelJunctionableGF.padding2). Sits between the 21-entry ability array (ends 0x6E) and the GF compatibility block (starts 0x70).",
+    "subgroup": "Unused slot bytes",
+    "row": "unused_slot_bytes_4"
    },
    {
     "name": "ability1",
@@ -785,17 +790,22 @@
     "dynamic_lookup": true,
     "label": "Ability 1",
     "group": "Abilities",
-    "row": "ability1"
+    "row": "ability1",
+    "gf_learn": {
+     "slot": 0,
+     "role": "ability"
+    }
    },
    {
     "name": "ability1_unlocker",
     "offset": 27,
     "size": 1,
-    "label": "GF summon status accuracy",
-    "group": "Abilities",
-    "row": "ability1",
+    "label": "Status accuracy",
+    "group": "General",
+    "subgroup": "Summon status",
+    "order": -1,
     "formula": "status_accuracy",
-    "help": "GF summon status accuracy (0x1B; IDA abilityData[0].summonStatusAccuracyOrUnused). Battle_applyDamage's GF case reads it as HIT_ATTACK_ACCURACY (the dedicated 0x1A 'Status attack accuracy' field is dead). 0 = the summon inflicts no status (e.g. Ifrit); it only matters for GFs whose summon carries a Status 1/2. The ability-learning code (BuildGFAbilityList) never reads this byte. Click f(x)."
+    "help": "GF summon status accuracy (0x1B; IDA abilityData[0].summonStatusAccuracyOrUnused). Battle_applyDamage's GF case reads it as HIT_ATTACK_ACCURACY (the dedicated 0x1A 'Status attack accuracy' field is dead). 0 = the summon inflicts no status (e.g. Ifrit); it only matters for GFs whose summon carries a Status 1/2 (vanilla: 254 on Siren, Carbuncle, Cerberus and Doomtrain). 255 always lands; 250-254 land whenever the chance is above 0. It physically sits in the first learn slot's unused byte, which the ability-learning code (BuildGFAbilityList) never reads. Click f(x)."
    },
    {
     "name": "ability1_level_or_prereq",
@@ -804,6 +814,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability1",
+    "gf_learn": {
+     "slot": 0,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -813,6 +827,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability1",
+    "gf_learn": {
+     "slot": 0,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -823,15 +841,20 @@
     "dynamic_lookup": true,
     "label": "Ability 2",
     "group": "Abilities",
-    "row": "ability2"
+    "row": "ability2",
+    "gf_learn": {
+     "slot": 1,
+     "role": "ability"
+    }
    },
    {
     "name": "ability2_unlocker",
     "offset": 31,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 2",
     "group": "Abilities",
-    "row": "ability2",
+    "row": "unused_slot_bytes_0",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -842,6 +865,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability2",
+    "gf_learn": {
+     "slot": 1,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -851,6 +878,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability2",
+    "gf_learn": {
+     "slot": 1,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -861,15 +892,20 @@
     "dynamic_lookup": true,
     "label": "Ability 3",
     "group": "Abilities",
-    "row": "ability3"
+    "row": "ability3",
+    "gf_learn": {
+     "slot": 2,
+     "role": "ability"
+    }
    },
    {
     "name": "ability3_unlocker",
     "offset": 35,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 3",
     "group": "Abilities",
-    "row": "ability3",
+    "row": "unused_slot_bytes_0",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -880,6 +916,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability3",
+    "gf_learn": {
+     "slot": 2,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -889,6 +929,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability3",
+    "gf_learn": {
+     "slot": 2,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -899,15 +943,20 @@
     "dynamic_lookup": true,
     "label": "Ability 4",
     "group": "Abilities",
-    "row": "ability4"
+    "row": "ability4",
+    "gf_learn": {
+     "slot": 3,
+     "role": "ability"
+    }
    },
    {
     "name": "ability4_unlocker",
     "offset": 39,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 4",
     "group": "Abilities",
-    "row": "ability4",
+    "row": "unused_slot_bytes_0",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -918,6 +967,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability4",
+    "gf_learn": {
+     "slot": 3,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -927,6 +980,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability4",
+    "gf_learn": {
+     "slot": 3,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -937,15 +994,20 @@
     "dynamic_lookup": true,
     "label": "Ability 5",
     "group": "Abilities",
-    "row": "ability5"
+    "row": "ability5",
+    "gf_learn": {
+     "slot": 4,
+     "role": "ability"
+    }
    },
    {
     "name": "ability5_unlocker",
     "offset": 43,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 5",
     "group": "Abilities",
-    "row": "ability5",
+    "row": "unused_slot_bytes_0",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -956,6 +1018,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability5",
+    "gf_learn": {
+     "slot": 4,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -965,6 +1031,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability5",
+    "gf_learn": {
+     "slot": 4,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -975,15 +1045,20 @@
     "dynamic_lookup": true,
     "label": "Ability 6",
     "group": "Abilities",
-    "row": "ability6"
+    "row": "ability6",
+    "gf_learn": {
+     "slot": 5,
+     "role": "ability"
+    }
    },
    {
     "name": "ability6_unlocker",
     "offset": 47,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 6",
     "group": "Abilities",
-    "row": "ability6",
+    "row": "unused_slot_bytes_0",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -994,6 +1069,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability6",
+    "gf_learn": {
+     "slot": 5,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1003,6 +1082,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability6",
+    "gf_learn": {
+     "slot": 5,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1013,15 +1096,20 @@
     "dynamic_lookup": true,
     "label": "Ability 7",
     "group": "Abilities",
-    "row": "ability7"
+    "row": "ability7",
+    "gf_learn": {
+     "slot": 6,
+     "role": "ability"
+    }
    },
    {
     "name": "ability7_unlocker",
     "offset": 51,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 7",
     "group": "Abilities",
-    "row": "ability7",
+    "row": "unused_slot_bytes_1",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1032,6 +1120,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability7",
+    "gf_learn": {
+     "slot": 6,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1041,6 +1133,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability7",
+    "gf_learn": {
+     "slot": 6,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1051,15 +1147,20 @@
     "dynamic_lookup": true,
     "label": "Ability 8",
     "group": "Abilities",
-    "row": "ability8"
+    "row": "ability8",
+    "gf_learn": {
+     "slot": 7,
+     "role": "ability"
+    }
    },
    {
     "name": "ability8_unlocker",
     "offset": 55,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 8",
     "group": "Abilities",
-    "row": "ability8",
+    "row": "unused_slot_bytes_1",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1070,6 +1171,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability8",
+    "gf_learn": {
+     "slot": 7,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1079,6 +1184,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability8",
+    "gf_learn": {
+     "slot": 7,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1089,15 +1198,20 @@
     "dynamic_lookup": true,
     "label": "Ability 9",
     "group": "Abilities",
-    "row": "ability9"
+    "row": "ability9",
+    "gf_learn": {
+     "slot": 8,
+     "role": "ability"
+    }
    },
    {
     "name": "ability9_unlocker",
     "offset": 59,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 9",
     "group": "Abilities",
-    "row": "ability9",
+    "row": "unused_slot_bytes_1",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1108,6 +1222,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability9",
+    "gf_learn": {
+     "slot": 8,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1117,6 +1235,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability9",
+    "gf_learn": {
+     "slot": 8,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1127,15 +1249,20 @@
     "dynamic_lookup": true,
     "label": "Ability 10",
     "group": "Abilities",
-    "row": "ability10"
+    "row": "ability10",
+    "gf_learn": {
+     "slot": 9,
+     "role": "ability"
+    }
    },
    {
     "name": "ability10_unlocker",
     "offset": 63,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 10",
     "group": "Abilities",
-    "row": "ability10",
+    "row": "unused_slot_bytes_1",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1146,6 +1273,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability10",
+    "gf_learn": {
+     "slot": 9,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1155,6 +1286,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability10",
+    "gf_learn": {
+     "slot": 9,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1165,15 +1300,20 @@
     "dynamic_lookup": true,
     "label": "Ability 11",
     "group": "Abilities",
-    "row": "ability11"
+    "row": "ability11",
+    "gf_learn": {
+     "slot": 10,
+     "role": "ability"
+    }
    },
    {
     "name": "ability11_unlocker",
     "offset": 67,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 11",
     "group": "Abilities",
-    "row": "ability11",
+    "row": "unused_slot_bytes_1",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1184,6 +1324,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability11",
+    "gf_learn": {
+     "slot": 10,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1193,6 +1337,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability11",
+    "gf_learn": {
+     "slot": 10,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1203,15 +1351,20 @@
     "dynamic_lookup": true,
     "label": "Ability 12",
     "group": "Abilities",
-    "row": "ability12"
+    "row": "ability12",
+    "gf_learn": {
+     "slot": 11,
+     "role": "ability"
+    }
    },
    {
     "name": "ability12_unlocker",
     "offset": 71,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 12",
     "group": "Abilities",
-    "row": "ability12",
+    "row": "unused_slot_bytes_2",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1222,6 +1375,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability12",
+    "gf_learn": {
+     "slot": 11,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1231,6 +1388,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability12",
+    "gf_learn": {
+     "slot": 11,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1241,15 +1402,20 @@
     "dynamic_lookup": true,
     "label": "Ability 13",
     "group": "Abilities",
-    "row": "ability13"
+    "row": "ability13",
+    "gf_learn": {
+     "slot": 12,
+     "role": "ability"
+    }
    },
    {
     "name": "ability13_unlocker",
     "offset": 75,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 13",
     "group": "Abilities",
-    "row": "ability13",
+    "row": "unused_slot_bytes_2",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1260,6 +1426,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability13",
+    "gf_learn": {
+     "slot": 12,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1269,6 +1439,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability13",
+    "gf_learn": {
+     "slot": 12,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1279,15 +1453,20 @@
     "dynamic_lookup": true,
     "label": "Ability 14",
     "group": "Abilities",
-    "row": "ability14"
+    "row": "ability14",
+    "gf_learn": {
+     "slot": 13,
+     "role": "ability"
+    }
    },
    {
     "name": "ability14_unlocker",
     "offset": 79,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 14",
     "group": "Abilities",
-    "row": "ability14",
+    "row": "unused_slot_bytes_2",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1298,6 +1477,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability14",
+    "gf_learn": {
+     "slot": 13,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1307,6 +1490,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability14",
+    "gf_learn": {
+     "slot": 13,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1317,15 +1504,20 @@
     "dynamic_lookup": true,
     "label": "Ability 15",
     "group": "Abilities",
-    "row": "ability15"
+    "row": "ability15",
+    "gf_learn": {
+     "slot": 14,
+     "role": "ability"
+    }
    },
    {
     "name": "ability15_unlocker",
     "offset": 83,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 15",
     "group": "Abilities",
-    "row": "ability15",
+    "row": "unused_slot_bytes_2",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1336,6 +1528,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability15",
+    "gf_learn": {
+     "slot": 14,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1345,6 +1541,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability15",
+    "gf_learn": {
+     "slot": 14,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1355,15 +1555,20 @@
     "dynamic_lookup": true,
     "label": "Ability 16",
     "group": "Abilities",
-    "row": "ability16"
+    "row": "ability16",
+    "gf_learn": {
+     "slot": 15,
+     "role": "ability"
+    }
    },
    {
     "name": "ability16_unlocker",
     "offset": 87,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 16",
     "group": "Abilities",
-    "row": "ability16",
+    "row": "unused_slot_bytes_2",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1374,6 +1579,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability16",
+    "gf_learn": {
+     "slot": 15,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1383,6 +1592,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability16",
+    "gf_learn": {
+     "slot": 15,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1393,15 +1606,20 @@
     "dynamic_lookup": true,
     "label": "Ability 17",
     "group": "Abilities",
-    "row": "ability17"
+    "row": "ability17",
+    "gf_learn": {
+     "slot": 16,
+     "role": "ability"
+    }
    },
    {
     "name": "ability17_unlocker",
     "offset": 91,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 17",
     "group": "Abilities",
-    "row": "ability17",
+    "row": "unused_slot_bytes_3",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1412,6 +1630,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability17",
+    "gf_learn": {
+     "slot": 16,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1421,6 +1643,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability17",
+    "gf_learn": {
+     "slot": 16,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1431,15 +1657,20 @@
     "dynamic_lookup": true,
     "label": "Ability 18",
     "group": "Abilities",
-    "row": "ability18"
+    "row": "ability18",
+    "gf_learn": {
+     "slot": 17,
+     "role": "ability"
+    }
    },
    {
     "name": "ability18_unlocker",
     "offset": 95,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 18",
     "group": "Abilities",
-    "row": "ability18",
+    "row": "unused_slot_bytes_3",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1450,6 +1681,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability18",
+    "gf_learn": {
+     "slot": 17,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1459,6 +1694,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability18",
+    "gf_learn": {
+     "slot": 17,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1469,15 +1708,20 @@
     "dynamic_lookup": true,
     "label": "Ability 19",
     "group": "Abilities",
-    "row": "ability19"
+    "row": "ability19",
+    "gf_learn": {
+     "slot": 18,
+     "role": "ability"
+    }
    },
    {
     "name": "ability19_unlocker",
     "offset": 99,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 19",
     "group": "Abilities",
-    "row": "ability19",
+    "row": "unused_slot_bytes_3",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1488,6 +1732,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability19",
+    "gf_learn": {
+     "slot": 18,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1497,6 +1745,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability19",
+    "gf_learn": {
+     "slot": 18,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1507,15 +1759,20 @@
     "dynamic_lookup": true,
     "label": "Ability 20",
     "group": "Abilities",
-    "row": "ability20"
+    "row": "ability20",
+    "gf_learn": {
+     "slot": 19,
+     "role": "ability"
+    }
    },
    {
     "name": "ability20_unlocker",
     "offset": 103,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 20",
     "group": "Abilities",
-    "row": "ability20",
+    "row": "unused_slot_bytes_3",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1526,6 +1783,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability20",
+    "gf_learn": {
+     "slot": 19,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1535,6 +1796,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability20",
+    "gf_learn": {
+     "slot": 19,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {
@@ -1545,15 +1810,20 @@
     "dynamic_lookup": true,
     "label": "Ability 21",
     "group": "Abilities",
-    "row": "ability21"
+    "row": "ability21",
+    "gf_learn": {
+     "slot": 20,
+     "role": "ability"
+    }
    },
    {
     "name": "ability21_unlocker",
     "offset": 107,
     "size": 1,
-    "label": "Unused slot byte",
+    "label": "Slot 21",
     "group": "Abilities",
-    "row": "ability21",
+    "row": "unused_slot_bytes_3",
+    "subgroup": "Unused slot bytes",
     "readonly": true,
     "help": "Byte+0 of this ability slot. The ability-learning code (BuildGFAbilityList) never reads it - the REAL unlock condition is the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST slot's byte+0 is used, and for something unrelated: the GF summon's status-attack accuracy.)"
    },
@@ -1564,6 +1834,10 @@
     "label": "Level/prereq",
     "group": "Abilities",
     "row": "ability21",
+    "gf_learn": {
+     "slot": 20,
+     "role": "unlock"
+    },
     "help": "What this ability needs to unlock (read by BuildGFAbilityList, the Junction-menu ability list builder):\n0-100 = minimum GF level (0 means no level requirement).\n101-121 = instead of a level, ability slot (value-101) on this same GF must already be fully learned first - i.e. \"finish that ability before this one becomes available\" (a same-GF unlock chain, e.g. SumMag+20% requires SumMag+10% first)."
    },
    {
@@ -1573,6 +1847,10 @@
     "label": "Excluded slot",
     "group": "Abilities",
     "row": "ability21",
+    "gf_learn": {
+     "slot": 20,
+     "role": "hidden"
+    },
     "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). Points at another ability slot (0-20) on this same GF: this ability is no longer offered after that slot's ability is fully learned. 0xFF = no excluded slot (the normal case).\nAlways 0xFF in the vanilla kernel - a working feature the engine supports (BuildGFAbilityList) but the shipped data never turns on. (This is the byte that used to display as raw 0xFF for every ability before the fields were remapped - it was never the ability id.)"
    },
    {

@@ -205,13 +205,19 @@ for i in range(1, 22):
     # dynamic_lookup: the ability list is rebuilt from the loaded kernel.bin (names as the
     # file spells them, and any ability a mod added), and adding or removing one renumbers
     # every ability behind it - so these combos have to be repopulated, not just relabelled.
+    # "gf_learn": the G-Forces tab shows each slot as one row of its learn panel (ability +
+    # what unlocks it, beside the learn tree) instead of three loose fields - gf_learn_panel.py.
     gf_fields.append({"name": f"ability{i}", "offset": base + 3, "size": 1,
                       "lookup": "junctionable_ability", "dynamic_lookup": True,
-                      "label": f"Ability {i}", "group": "Abilities", "row": row})
+                      "label": f"Ability {i}", "group": "Abilities", "row": row,
+                      "gf_learn": {"slot": i - 1, "role": "ability"}})
+    # Byte+0: unused, except slot 1's, which is the summon's status accuracy (the
+    # sid == 3 pass below moves that one to the General group's "Summon status" box).
     gf_fields.append({"name": f"ability{i}_unlocker", "offset": base, "size": 1,
                       "label": "Unlocker", "group": "Abilities", "row": row})
     gf_fields.append({"name": f"ability{i}_level_or_prereq", "offset": base + 1, "size": 1,
                       "label": "Level/prereq", "group": "Abilities", "row": row,
+                      "gf_learn": {"slot": i - 1, "role": "unlock"},
                       "help": "What this ability needs to unlock (read by BuildGFAbilityList, "
                               "the Junction-menu ability list builder):\n"
                               "0-100 = minimum GF level (0 means no level requirement).\n"
@@ -221,6 +227,7 @@ for i in range(1, 22):
                               "unlock chain, e.g. SumMag+20% requires SumMag+10% first)."})
     gf_fields.append({"name": f"ability{i}_alt_prereq", "offset": base + 2, "size": 1,
                       "label": "Excluded slot", "group": "Abilities", "row": row,
+                      "gf_learn": {"slot": i - 1, "role": "hidden"},
                       "help": "Only checked for a prerequisite unlock (Level/prereq 101-121). "
                               "Points at another ability slot (0-20) on this same GF: this "
                               "ability is no longer offered after that slot's ability is "
@@ -1331,6 +1338,9 @@ for sid_s, cfg in sections.items():
             # 0x1B - abilityData[0].summonStatusAccuracyOrUnused (GF case @0x490043).
             # So move the status formula
             # off 0x1A and onto ability1_unlocker, and mark 0x1A unused.
+            # The summon's statuses and their accuracy read as one unit.
+            if f["name"] in ("status_1", "status_2", "status_attack_enabler", "ability1_unlocker"):
+                f["subgroup"] = "Summon status"
             if f["name"] == "status_attack_enabler":
                 f.pop("formula", None)
                 f["label"] = "Unused status attack accuracy"
@@ -1341,30 +1351,43 @@ for sid_s, cfg in sections.items():
                              "0x20 bug) - the 3 functions that hold a GF-entry pointer (incl. the GF/"
                              "junction menu and ability-learn code) touch only offset 0 or 0x1B, "
                              "never 0x1A; no aliases or bulk copies read it. The GF summon's real "
-                             "status-attack accuracy lives at 0x1B ('Ability 1' row's first byte).")
+                             "status-attack accuracy lives at 0x1B: the 'Status accuracy' field beside this one.")
             # The per-ability "unlocker" (byte+0 of each 4-byte slot) is NOT what unlocks the
             # ability - BuildGFAbilityList never reads it (the real condition is the next byte,
             # Level/prereq). It is 0 in every vanilla GF. The ONE exception is the first slot's
             # byte (ability1_unlocker, 0x1B), which the engine reuses as the GF summon's status
             # accuracy.
             if f["name"] == "ability1_unlocker":
-                f["label"] = "GF summon status accuracy"
+                f["group"] = "General"
+                f.pop("row", None)
+                f["label"] = "Status accuracy"
+                f["order"] = -1     # ahead of the dead 0x1A byte in the Summon status box
                 f["formula"] = "status_accuracy"
                 f["help"] = ("GF summon status accuracy (0x1B; IDA "
                              "abilityData[0].summonStatusAccuracyOrUnused). "
                              "Battle_applyDamage's GF case reads it as HIT_ATTACK_ACCURACY "
                              "(the dedicated 0x1A 'Status attack accuracy' field is dead). "
                              "0 = the summon inflicts no status (e.g. Ifrit); it only matters "
-                             "for GFs whose summon carries a Status 1/2. The ability-learning "
-                             "code (BuildGFAbilityList) never reads this byte. Click f(x).")
+                             "for GFs whose summon carries a Status 1/2 (vanilla: 254 on Siren, "
+                             "Carbuncle, Cerberus and Doomtrain). 255 always lands; 250-254 land "
+                             "whenever the chance is above 0. It physically sits in the first "
+                             "learn slot's unused byte, which the ability-learning code "
+                             "(BuildGFAbilityList) never reads. Click f(x).")
             elif f["name"].endswith("_unlocker"):
-                f["label"] = "Unused slot byte"
+                # Slots 2-21: five per line in a box of their own under the learn panel.
+                slot = int(f["name"][len("ability"):-len("_unlocker")])
+                f["label"] = f"Slot {slot}"
+                f["subgroup"] = "Unused slot bytes"
+                f["row"] = f"unused_slot_bytes_{(slot - 2) // 5}"
                 f["readonly"] = True
                 f["help"] = ("Byte+0 of this ability slot. The ability-learning code "
                              "(BuildGFAbilityList) never reads it - the REAL unlock condition is "
                              "the next byte, 'Level/prereq'. Always 0 in vanilla. (Only the FIRST "
                              "slot's byte+0 is used, and for something unrelated: the GF summon's "
                              "status-attack accuracy.)")
+            if f["name"] == "unknown_0x6f":
+                f["subgroup"] = "Unused slot bytes"
+                f["row"] = "unused_slot_bytes_4"
         # Magic damage reads spell power, attack type and hit count, but they're not a tightly-
         # coupled pair like Weapon's STR bonus (each is independently meaningful elsewhere -
         # attack_type also drives status accuracy's stat pair, hit_count is just hit count) - one

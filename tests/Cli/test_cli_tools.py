@@ -292,6 +292,17 @@ def test_solomon_ring_get_set_and_csv(tmp_path):
     assert entry.get("spell_power") == 99
     assert entry.get_text(0) == "Fire"
 
+    # A GF learn slot takes the GUI's choices: Quezacotl's GFHP+10% (Ability 4) from level 20,
+    # hidden once Ability 3 is learned (that needs an "after" unlock: after Ability 1).
+    gf = tmp_path / "kernel_gf.bin"
+    assert _run(SolomonRingCliTool, ["set", "--input", str(out), "--section", "3", "--entry", "0",
+                                     "--field", "ability4_level_or_prereq", "--value", "after:1",
+                                     "--output", str(gf)]) == 0
+    assert _run(SolomonRingCliTool, ["set", "--input", str(gf), "--section", "3", "--entry", "0",
+                                     "--field", "ability4_alt_prereq", "--value", "3"]) == 0
+    slot = _KernelFile(str(gf)).entries(3)[0]
+    assert slot.get("ability4_level_or_prereq") == 101 and slot.get("ability4_alt_prereq") == 2
+
 
 @pytest.mark.ff8data("extracted_files/battle/c0m001.dat")
 def test_ifrit_seq_xml_roundtrip(tmp_path):

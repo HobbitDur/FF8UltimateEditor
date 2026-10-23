@@ -13,6 +13,7 @@ from SolomonRing.kernelentry import KernelEntry
 from SolomonRing.menu_refine_reference import MenuRefineReference
 from SolomonRing.formula_popup import FormulaPopup
 from SolomonRing.attack_behaviour import AttackBehaviourPanel
+from SolomonRing.gf_learn_panel import GfLearnPanel
 from SmallWidget.listsearchbar import ListSearchBar
 from SmallWidget.nowheel import NoWheelComboBox, NoWheelSpinBox
 
@@ -151,6 +152,7 @@ class KernelSectionTab(QWidget):
         self._menu_refine_button = None
         self._formula_popup = None       # single live formula preview window for this tab
         self._attack_behaviour_panel = None
+        self._learn_panel = None         # G-Forces: the learn slots + learn tree
 
         self._entries = []
         self._group_paste_buttons = {}   # group name -> its Paste button (enabled once copied)
@@ -534,6 +536,18 @@ class KernelSectionTab(QWidget):
             vbox.addWidget(self._attack_behaviour_panel)
             fields = [f for f in fields if f is not calculation and f is not category]
 
+        # A GF's 21 learn slots: one row per slot (ability + what unlocks it) beside the learn
+        # tree, instead of three loose fields per slot.
+        learn_fields = [f for f in fields if f.get("gf_learn")]
+        if learn_fields:
+            rows = [{} for _ in range(max(f["gf_learn"]["slot"] for f in learn_fields) + 1)]
+            for f in learn_fields:
+                rows[f["gf_learn"]["slot"]][f["gf_learn"]["role"]] = f
+            self._learn_panel = GfLearnPanel(self, rows)
+            self._enable_syncs.append(self._learn_panel.refresh)
+            vbox.addWidget(self._learn_panel)
+            fields = [f for f in fields if not f.get("gf_learn")]
+
         # Group fields by editor kind so like-widgets line up: spinboxes, then combos, then
         # bitfields; fields sharing a "row" stay on one line together.
         row_order = []
@@ -554,6 +568,9 @@ class KernelSectionTab(QWidget):
                 combos.append(field)
             else:
                 spins.append(field)
+        # "order" moves a field ahead of its neighbours on screen without moving it in the
+        # field list, whose order the CSV export/import columns follow.
+        spins.sort(key=lambda f: f.get("order", 0))
 
         # Convention: Status 1 is always displayed before Status 2, regardless of their
         # physical byte order (some sections store Status 2 first).
@@ -1160,6 +1177,8 @@ class KernelSectionTab(QWidget):
                         cb.setChecked(bool(value & mask))
                 elif kind == "bool":
                     widget.setChecked(bool(value))
+                elif kind == "custom":
+                    widget.set_value(value)
                 elif kind == "camera":
                     widget._cam_unused.setChecked(value == 0xFF)
                     widget._cam_force.setChecked(bool(value & 0x80))
@@ -1189,11 +1208,14 @@ class KernelSectionTab(QWidget):
     @staticmethod
     def _concrete_widgets(kind, widget):
         """The real QWidgets behind a field descriptor - "flags" holds a list of (mask,
-        checkbox) pairs and "camera" a box with three named children, not a single widget."""
+        checkbox) pairs, "camera" a box with three named children and "custom" a composite
+        editor that lists its own, not a single widget."""
         if kind == "flags":
             return [cb for _mask, cb in widget]
         if kind == "camera":
             return [widget._cam_unused, widget._cam_force, widget._cam_index]
+        if kind == "custom":
+            return widget.concrete_widgets()
         return [widget]
 
     def _load_menu_refine_reference(self):
@@ -1262,6 +1284,8 @@ class KernelSectionTab(QWidget):
                 # bit 0x100 of sequence button 1), so ticking it writes that bit, not 1.
                 on_value = field.get("mask") or 1
                 entry.set(name, on_value if widget.isChecked() else 0)
+            elif kind == "custom":
+                entry.set(name, widget.value())
             elif kind == "camera":
                 if widget._cam_unused.isChecked():
                     entry.set(name, 0xFF)
@@ -1305,3 +1329,5 @@ class KernelSectionTab(QWidget):
             if pos >= 0:
                 widget.setCurrentIndex(pos)
             widget.blockSignals(False)
+        if self._learn_panel is not None:
+            self._learn_panel.refresh()

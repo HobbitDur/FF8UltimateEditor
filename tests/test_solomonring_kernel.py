@@ -9,7 +9,7 @@ import pathlib
 
 import pytest
 from PyQt6.QtCore import QEvent
-from PyQt6.QtWidgets import QApplication, QMessageBox, QPushButton
+from PyQt6.QtWidgets import QApplication, QGroupBox, QMessageBox, QPushButton
 
 from FF8GameData.gamedata import GameData, SectionType
 from ShumiTranslator.model.kernel.kernelmanager import KernelManager
@@ -871,6 +871,86 @@ def test_a_renamed_ability_reaches_the_gf_learn_slot_pickers(qapp, tmp_path):
     assert combo.currentData() == new_id
     assert combo.currentText() == "SumMag+50%"
 
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_gf_learn_slots_edit_as_choices(qapp, tmp_path):
+    """A GF learn slot's two unlock bytes are picked as "GF level" / "After ability" and
+    "Hidden once learned", read back from the file as the same choices, flagged when the
+    ability can never be learned, and drawn as a learn tree."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    gforces = widget._section_tabs[3]
+    gforces.list_widget.setCurrentRow(0)                       # Quezacotl
+    panel = gforces._learn_panel
+    unlock = [gforces._field_widgets[f"ability{i}_level_or_prereq"][2] for i in range(1, 22)]
+    hidden = [gforces._field_widgets[f"ability{i}_alt_prereq"][2] for i in range(1, 22)]
+
+    # SumMag+20% (slot 2) waits for SumMag+10% (Ability 1): raw 101.
+    assert unlock[1].kind() == "after" and unlock[1].after.currentData() == 0
+    assert unlock[1].after.currentText() == "Ability 1 - SumMag+10%"
+    assert unlock[0].kind() == "level" and unlock[0].level.value() == 1
+    assert not hidden[0].isEnabled() and hidden[1].isEnabled(), "Hidden only applies after an ability"
+    assert not any(w.isVisibleTo(panel) for w in panel._warnings)
+    top = panel.tree.topLevelItem(0)
+    assert top.text(0) == "1. SumMag+10%" and top.child(0).text(0) == "2. SumMag+20%"
+
+    # Slot 4 (GFHP+10%) from level 20; slot 5 hidden once Ability 3 is learned.
+    unlock[3].level.setValue(20)
+    hidden[4].setCurrentIndex(hidden[4].findData(2))
+    # Slot 1 after Ability 2 closes a loop: slots 1-3 can never be learned.
+    unlock[0].mode.setCurrentIndex(unlock[0].mode.findData("after"))
+    unlock[0].after.setCurrentIndex(1)
+    panel.refresh()
+    assert [panel._warnings[i].isVisibleTo(panel) for i in range(4)] == [True, True, True, False]
+    assert "loop" in panel._warnings[0].toolTip()
+    never = panel.tree.topLevelItem(panel.tree.topLevelItemCount() - 1)
+    assert never.text(0) == "Never learnable" and never.childCount() == 3
+    unlock[0].mode.setCurrentIndex(unlock[0].mode.findData("level"))
+    widget._save_kernel()
+
+    entry = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    entry.load_file(str(work))
+    saved = entry._section_entries(3)[0]
+    assert saved.get("ability1_level_or_prereq") == 1
+    assert saved.get("ability2_level_or_prereq") == 101
+    assert saved.get("ability4_level_or_prereq") == 20
+    assert saved.get("ability5_alt_prereq") == 2
+    assert saved.get("ability6_alt_prereq") == 0xFF
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_gf_summon_status_accuracy_sits_with_the_summon_status(qapp, tmp_path):
+    """The summon's status accuracy lives in the first learn slot's spare byte, but it is
+    shown with Status 1/2, and saving without an edit keeps every GF byte."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    gforces = widget._section_tabs[3]
+    gforces.list_widget.setCurrentRow(3)                       # Siren: Silence
+    field = next(f for f in gforces.fields if f["name"] == "ability1_unlocker")
+    assert (field["group"], field["subgroup"], field["label"]) == ("General", "Summon status", "Status accuracy")
+    spin = gforces._field_widgets["ability1_unlocker"][2]
+    assert spin.value() == 254 and spin.isEnabled()
+    titles, parent = [], spin.parentWidget()
+    while parent is not None:
+        titles.append(parent.title() if isinstance(parent, QGroupBox) else None)
+        parent = parent.parentWidget()
+    assert "Summon status" in titles
+    assert gforces._field_widgets["ability2_unlocker"][1]["subgroup"] == "Unused slot bytes"
+
+    def gf_values(tool):
+        return [[entry.get(f["name"]) for f in gforces.fields] for entry in tool._section_entries(3)]
+
+    before = gf_values(widget)
+    gforces.list_widget.setCurrentRow(0)                       # writes Siren's form back
+    widget._save_kernel()
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    assert gf_values(reloaded) == before
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
