@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QPixmap, QColor
+from PyQt6.QtGui import QPixmap, QColor, QPainter
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QScrollArea, QLabel, QGroupBox, QSplitter, QComboBox, QHBoxLayout, QPushButton
 
 from FF8GameData.monsterdata import DynamicTextureSection, UV, DynamicTextureData
@@ -9,7 +9,9 @@ from Ifrit.IfritDynamicTexture.texturepreviewwidget import TexturePreviewWidget
 
 
 class DynamicTextureSectionWidget(QWidget):
-    """Widget for managing DynamicTextureSection (dynamic texture animations)"""
+    """Widget for managing DynamicTextureSection (section 4: the eye blink and other repainted
+    texture spots). Each entry is a destination rectangle the model's polygons sample, and sprites
+    the game copies onto it one at a time (VRAM-to-VRAM, QueueTextureAnimation 0x50C780)."""
 
     # Emitted on a real data edit (entry field changed / entry added / removed). All three already
     # mutate enemy.dynamic_texture_data in place, so the model is live; this just lets the host pane
@@ -48,6 +50,13 @@ class DynamicTextureSectionWidget(QWidget):
         self.add_entry_btn.clicked.connect(self._add_entry)
         controls_layout.addWidget(self.add_entry_btn)
         layout.addLayout(controls_layout)
+        hint = QLabel("The game repaints the <b>destination</b> (green: what the model's polygons sample) "
+                      "by copying one <b>sprite</b> onto it: sprite 0 at rest, the others in turn "
+                      "(the eye blink: the closed eye every 15-59 ticks; the sequences' opcodes "
+                      "80 / 9B / 9F / BD / BE). Entry numbers are the ids the sequences use.")
+        hint.setWordWrap(True)
+        hint.setStyleSheet("color: gray")
+        layout.addWidget(hint)
 
         # Main splitter — no more tabs, just preview + editor side by side
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -57,6 +66,7 @@ class DynamicTextureSectionWidget(QWidget):
         self.texture_preview = TexturePreviewWidget()
         self.texture_preview.rectangleClicked.connect(self._on_rectangle_clicked)
         self.texture_preview.legendSelectionChanged.connect(self._on_legend_selection_changed)
+        self.texture_preview.spriteShown.connect(self._show_sprite_on_destination)
         preview_layout.addWidget(self.texture_preview)
         splitter.addWidget(preview_group)
 
@@ -71,7 +81,7 @@ class DynamicTextureSectionWidget(QWidget):
         splitter.addWidget(editor_group)
 
         splitter.setSizes([500, 400])
-        layout.addWidget(splitter)
+        layout.addWidget(splitter, 1)   # the preview + editor take the height, not the hint
 
     def _on_legend_selection_changed(self, selected_frame_indices: set, anchor_selected: bool):
         self.selected_frames = selected_frame_indices
@@ -119,12 +129,40 @@ class DynamicTextureSectionWidget(QWidget):
         self._update_texture_preview()
         self._load_animation_entries()
 
-    def _update_texture_preview(self):
+    def _current_texture_image(self):
         if 0 <= self.current_texture_index < self._texture_count():
             texture_data = self.ifrit_manager.texture_data[self.current_texture_index]
             if texture_data and texture_data.texture_image:
-                self.texture_preview.set_texture(texture_data.texture_image)
-                self._update_rectangles()
+                return texture_data.texture_image
+        return None
+
+    def _update_texture_preview(self):
+        image = self._current_texture_image()
+        if image is not None:
+            self.texture_preview.set_texture(image)
+            self._update_rectangles()
+
+    def _show_sprite_on_destination(self, sprite_index: int):
+        """Play: show the texture as the game has it after copying that sprite onto the
+        destination (-1: as in the file)."""
+        image = self._current_texture_image()
+        entries = self._get_entries_for_current_texture()
+        if image is None:
+            return
+        if sprite_index < 0 or not (0 <= self.current_entry_index < len(entries)):
+            self.texture_preview.set_texture(image)
+            return
+        entry = entries[self.current_entry_index]
+        if sprite_index >= len(entry.sprites):
+            return
+        sprite = entry.sprites[sprite_index]
+        composed = QPixmap(image)
+        painter = QPainter(composed)
+        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Source)
+        painter.drawPixmap(entry.destination.get_u_pixel(), entry.destination.get_v_pixel(), image,
+                           sprite.get_u_pixel(), sprite.get_v_pixel(), entry.sprite_width, entry.sprite_height)
+        painter.end()
+        self.texture_preview.set_texture(composed)
 
     def _update_rectangles(self):
         self.texture_preview.clear_rectangles()
@@ -134,16 +172,16 @@ class DynamicTextureSectionWidget(QWidget):
 
         entry = entries[self.current_entry_index]
         self.texture_preview.add_rectangle(
-            entry.anchor_uv.get_u_pixel(), entry.anchor_uv.get_v_pixel(),
+            entry.destination.get_u_pixel(), entry.destination.get_v_pixel(),
             entry.sprite_width, entry.sprite_height,
-            QColor(0, 0, 255, 255), 3, "Anchor",
+            QColor(60, 220, 120, 255), 3, "Destination",
             self.current_entry_index, -1
         )
-        for frame_idx, frame_uv in enumerate(entry.frames):
+        for frame_idx, sprite_uv in enumerate(entry.sprites):
             self.texture_preview.add_rectangle(
-                frame_uv.get_u_pixel(), frame_uv.get_v_pixel(),
+                sprite_uv.get_u_pixel(), sprite_uv.get_v_pixel(),
                 entry.sprite_width, entry.sprite_height,
-                QColor(255, 0, 0, 255), 3, f"Frame {frame_idx}",
+                QColor(255, 0, 0, 255), 3, "Sprite 0 (rest)" if frame_idx == 0 else f"Sprite {frame_idx}",
                 self.current_entry_index, frame_idx
             )
 
@@ -160,7 +198,7 @@ class DynamicTextureSectionWidget(QWidget):
         self.entry_indices.clear()
 
         for i, entry in enumerate(entries):
-            self.entry_combo.addItem(f"Entry {i}")
+            self.entry_combo.addItem(f"Entry {entry.table_index}")
             self.entry_indices.append(i)
 
         if self.entry_combo.count() > 0:
@@ -170,8 +208,8 @@ class DynamicTextureSectionWidget(QWidget):
 
             # Initialize with all frames selected
             entry = entries[0]
-            if len(entry.frames) > 0:
-                self.selected_frames = set(range(len(entry.frames)))
+            if len(entry.sprites) > 0:
+                self.selected_frames = set(range(len(entry.sprites)))
         else:
             self.current_entry_index = 0
             self.selected_frames = set()
@@ -189,7 +227,7 @@ class DynamicTextureSectionWidget(QWidget):
             return
 
         entry = entries[self.current_entry_index]
-        frame_count = len(entry.frames)
+        frame_count = len(entry.sprites)
 
     def _on_frame_selection_changed(self):
         """Handle frame selection changes"""
@@ -211,7 +249,7 @@ class DynamicTextureSectionWidget(QWidget):
         entries = self._get_entries_for_current_texture()
         if entries and 0 <= self.current_entry_index < len(entries):
             entry = entries[self.current_entry_index]
-            self.selected_frames = set(range(len(entry.frames)))
+            self.selected_frames = set(range(len(entry.sprites)))
         self.anchor_selected = True  # ← reset on entry change
         self._load_current_entry_editor()
         self._update_rectangles()
@@ -229,19 +267,14 @@ class DynamicTextureSectionWidget(QWidget):
                 widget.deleteLater()
 
         entry = entries[self.current_entry_index]
-        entry_widget = DynamicTextureEntryWidget(self.current_entry_index)
-
-        # Build frame list
-        frames = []
-        for frame_uv in entry.frames:
-            frames.append({'x': frame_uv.get_u_pixel(), 'y': frame_uv.get_v_pixel()})
-
+        entry_widget = DynamicTextureEntryWidget(entry.table_index)
         entry_widget.set_data(
-            entry.anchor_uv.get_u_pixel(),
-            entry.anchor_uv.get_v_pixel(),
+            entry.destination.get_u_pixel(),
+            entry.destination.get_v_pixel(),
             entry.sprite_width,
             entry.sprite_height,
-            frames
+            [{'x': sprite.get_u_pixel(), 'y': sprite.get_v_pixel()} for sprite in entry.sprites],
+            entry.anim_speed,
         )
 
         entry_widget.dataChanged.connect(lambda: self._on_entry_data_changed(entry_widget))
@@ -259,24 +292,21 @@ class DynamicTextureSectionWidget(QWidget):
         data = entry_widget.get_data()
 
         # Update entry data
-        entry.anchor_uv.set_u_pixel(data['anchor_x'])
-        entry.anchor_uv.set_v_pixel(data['anchor_y'])
-        entry.sprite_width = data['anchor_width']
-        entry.sprite_height = data['anchor_height']
+        entry.destination.set_u_pixel(data['destination_x'])
+        entry.destination.set_v_pixel(data['destination_y'])
+        entry.sprite_width = data['width']
+        entry.sprite_height = data['height']
+        entry.anim_speed = data['anim_speed']
         entry.texture_num = self.current_texture_index  # Ensure texture_num is set
-
-        # Update frames
-        entry.frames.clear()
-        for frame in data['frames']:
-            from FF8GameData.monsterdata import UV
+        entry.sprites = []
+        for sprite in data['sprites']:
             uv = UV(member_size=1, vram_size=True)
-            uv.set_u_pixel(frame['x'])
-            uv.set_v_pixel(frame['y'])
-            entry.frames.append(uv)
-        entry.number_frames = len(entry.frames)  # ← THIS LINE is what's still missing
+            uv.set_u_pixel(sprite['x'])
+            uv.set_v_pixel(sprite['y'])
+            entry.sprites.append(uv)
 
-        # Select all frames by default
-        new_frame_count = len(entry.frames)
+        # Select all sprites by default
+        new_frame_count = len(entry.sprites)
         if new_frame_count > 0:
             self.selected_frames = set(range(new_frame_count))
         else:
@@ -298,17 +328,11 @@ class DynamicTextureSectionWidget(QWidget):
     def _add_entry(self):
         dynamic_texture: DynamicTextureSection = self.ifrit_manager.enemy.dynamic_texture_data
         new_entry = DynamicTextureData()
-        new_entry.anchor_uv = UV(member_size=1, vram_size=True)
-        new_entry.anchor_uv.set_u_pixel(0)
-        new_entry.anchor_uv.set_v_pixel(0)
         new_entry.sprite_width = 32
         new_entry.sprite_height = 32
-        frame = UV(member_size=1, vram_size=True)
-        frame.set_u_pixel(0)
-        frame.set_v_pixel(0)
-        new_entry.frames = [frame]
-        new_entry.number_frames = 1
+        new_entry.sprites = [UV(member_size=1, vram_size=True), UV(member_size=1, vram_size=True)]
         new_entry.texture_num = self.current_texture_index
+        new_entry.table_index = dynamic_texture.next_table_index()
 
         dynamic_texture.dynamic_texture_data.append(new_entry)
 

@@ -103,3 +103,51 @@ def test_eye_blink_tab_opens_on_the_texture_it_animates(qapp):
     assert dynamic.texture_combo.count() == 2
     assert dynamic.current_texture_index == 1 and dynamic._get_entries_for_current_texture() == [entry]
     pane.deleteLater()
+
+
+def test_squall_eye_blink_entry(qapp):
+    """Section 4 entry = a destination the polygons sample + the sprites copied onto it
+    (QueueTextureAnimation 0x50C780): Squall's right painted eye, open eye 0, closed eye 1."""
+    manager = _manager("d0c000")
+    entry = manager.enemy.dynamic_texture_data.dynamic_texture_data[0]
+    assert entry.table_index == 0 and entry.texture_num == 1
+    assert (entry.destination.get_u_pixel(), entry.destination.get_v_pixel()) == (64, 29)
+    assert (entry.sprite_width, entry.sprite_height) == (12, 6)
+    assert [(sprite.get_u_pixel(), sprite.get_v_pixel()) for sprite in entry.sprites] == [(44, 90), (58, 90)]
+    assert entry.anim_speed == 0
+
+
+def test_an_edit_keeps_the_entry_ids_the_sequences_use(qapp):
+    """c0m056 has no entry 0 (offset table [0, 4]): its only entry is entry 1, and stays entry 1
+    when an edit rebuilds the section (the engine reads offset[n] positionally)."""
+    from FF8GameData.monsterdata import DynamicTextureSection
+    raw = bytes(_manager("c0m056").enemy.section_raw_data[4])
+    section = DynamicTextureSection()
+    section.analyze(raw)
+    assert [entry.table_index for entry in section.dynamic_texture_data] == [1]
+    section.dynamic_texture_data[0].destination.set_v_pixel(7)
+    rebuilt = bytes(section.to_binary())
+    assert rebuilt != raw and int.from_bytes(rebuilt[0:2], "little") == 0
+    again = DynamicTextureSection()
+    again.analyze(rebuilt)
+    assert [entry.table_index for entry in again.dynamic_texture_data] == [1]
+    assert again.dynamic_texture_data[0].destination.get_v_pixel() == 7
+
+
+def test_play_paints_each_sprite_onto_the_destination(qapp):
+    manager = _manager("d0c000")
+    pane = _pane(manager, "d0c000")
+    dynamic = pane._dynamic_texture_widget.dynamic_texture_widget
+    entry = dynamic._get_entries_for_current_texture()[0]
+    image = dynamic._current_texture_image().toImage()
+    dynamic._show_sprite_on_destination(1)                  # the closed eye copied onto the eye
+    shown = dynamic.texture_preview.original_pixmap.toImage()
+    dx, dy = entry.destination.get_u_pixel(), entry.destination.get_v_pixel()
+    sx, sy = entry.sprites[1].get_u_pixel(), entry.sprites[1].get_v_pixel()
+    for x in range(entry.sprite_width):
+        for y in range(entry.sprite_height):
+            assert shown.pixel(dx + x, dy + y) == image.pixel(sx + x, sy + y)
+    assert shown.pixel(0, 0) == image.pixel(0, 0)          # the rest untouched
+    dynamic._show_sprite_on_destination(-1)                 # stopped: as in the file
+    assert dynamic.texture_preview.original_pixmap.toImage() == image
+    pane.deleteLater()

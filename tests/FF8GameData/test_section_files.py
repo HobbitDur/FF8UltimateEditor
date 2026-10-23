@@ -285,19 +285,41 @@ def test_camera_xml_value_edit_is_applied(tools, tmp_path):
 
 
 @pytest.mark.ff8data(_battle_file(DYNAMIC_TEXTURE))
-def test_dynamic_texture_xml_frame_edit_is_applied(tools, tmp_path):
+def test_dynamic_texture_xml_sprite_edit_is_applied(tools, tmp_path):
     folder = _export(tools, tmp_path, DYNAMIC_TEXTURE, ["dynamic_texture"])
     xml_text = (folder / "dynamic_texture.xml").read_text(encoding="utf-8")
-    frame_start = xml_text.index("<frame ")
-    frame_end = xml_text.index("/>", frame_start) + 2
+    sprite_start = xml_text.index("<sprite ", xml_text.index("<sprite ") + 1)     # sprite 1
+    sprite_end = xml_text.index("/>", sprite_start) + 2
     (folder / "dynamic_texture.xml").write_text(
-        xml_text[:frame_start] + '<frame u="123" v="45" /><frame u="1" v="2" />' + xml_text[frame_end:], encoding="utf-8")
+        xml_text[:sprite_start] + '<sprite u="123" v="45" /><sprite u="1" v="2" />' + xml_text[sprite_end:],
+        encoding="utf-8")
     monster = _load(tools, DYNAMIC_TEXTURE)
-    frame_count = len(monster.dynamic_texture_data.dynamic_texture_data[0].frames)
+    sprite_count = len(monster.dynamic_texture_data.dynamic_texture_data[0].sprites)
     _quiet(apply_sections, monster, folder, tools)
     entry = monster.dynamic_texture_data.dynamic_texture_data[0]
-    assert (entry.frames[0].get_u_raw(), entry.frames[0].get_v_raw()) == (123, 45)
-    assert len(entry.frames) == frame_count + 1
+    assert (entry.sprites[1].get_u_raw(), entry.sprites[1].get_v_raw()) == (123, 45)
+    assert len(entry.sprites) == sprite_count + 1
+
+
+@pytest.mark.ff8data(_battle_file(DYNAMIC_TEXTURE))
+def test_dynamic_texture_xml_with_the_old_field_names_still_applies(tools, tmp_path):
+    """An xml written before the fields were understood (clut_info / unk1 / unk2 / anchor_u /
+    <frame>) gives the same bytes."""
+    from FF8GameData.dat.sectionfiles import dynamictexturefile
+    from FF8GameData.dat.sectionfiles.common import bytes_to_hex
+    monster = _load(tools, DYNAMIC_TEXTURE)
+    section = bytes(monster.section_raw_data[4])
+    entry = monster.dynamic_texture_data.dynamic_texture_data[0]
+    raw = section[monster.dynamic_texture_data.offset[entry.table_index]:]
+    first_word = int.from_bytes(raw[0:2], "little")
+    frames = "".join(f'<frame u="{raw[10 + 2 * k]}" v="{raw[11 + 2 * k]}"/>' for k in range(raw[5]))
+    xml_file = tmp_path / "dynamic_texture.xml"
+    xml_file.write_text(
+        f'<dynamic_texture><raw>{bytes_to_hex(section)}</raw>'
+        f'<entry index="0" texture_num="{first_word & 0x3F}" clut_info="0x{first_word & 0xFFC0:04X}" unk1="{raw[2]}" '
+        f'sprite_width="{raw[3] * 2}" sprite_height="{raw[4]}" unk2="{int.from_bytes(raw[6:8], "little")}" '
+        f'anchor_u="{raw[8]}" anchor_v="{raw[9]}">{frames}</entry></dynamic_texture>', encoding="utf-8")
+    assert bytes(dynamictexturefile.read_section_bytes(xml_file)) == section
 
 
 def test_folder_name_is_the_dat_name():

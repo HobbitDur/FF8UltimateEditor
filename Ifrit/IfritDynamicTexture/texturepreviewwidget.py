@@ -12,7 +12,8 @@ FRAME_PALETTE = [
     QColor(255, 100, 200),
     QColor(180, 255, 100),
 ]
-ANCHOR_COLOR = QColor(80, 140, 255)
+# The destination rectangle (the spot the polygons sample), drawn solid; the sprites dashed
+ANCHOR_COLOR = QColor(60, 220, 120)
 LEGEND_WIDTH = 140
 LEGEND_PADDING = 8
 LEGEND_ROW_H = 24
@@ -30,6 +31,8 @@ class TexturePreviewWidget(QLabel):
     rectangleClicked = pyqtSignal(int, int)
     # Emits (selected_frame_indices: set, anchor_selected: bool)
     legendSelectionChanged = pyqtSignal(object, bool)
+    # Play: the sprite now copied onto the destination (-1 = stopped, the texture as in the file)
+    spriteShown = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -102,13 +105,10 @@ class TexturePreviewWidget(QLabel):
 
         # Build steps: anchor first, then each frame in order
         self._anim_steps = []
-        has_anchor = any(color == QColor(0, 0, 255, 255)
-                         for _, _, _, _, color, _, _, _, _ in self.rectangles)
-        if has_anchor:
-            self._anim_steps.append(('anchor', -1))
+        # Play = what the game does: each sprite in turn copied onto the destination
         for rect in self.rectangles:
             x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
-            if color != QColor(0, 0, 255, 255):
+            if frame_idx >= 0:
                 self._anim_steps.append(('frame', frame_idx))
 
         if not self._anim_steps:
@@ -122,7 +122,10 @@ class TexturePreviewWidget(QLabel):
 
     def stop_animation(self):
         """Stop and restore saved selection."""
+        was_playing = self._anim_timer.isActive()
         self._anim_timer.stop()
+        if was_playing:
+            self.spriteShown.emit(-1)
         self.selected_frame_indices = set(self._anim_saved_frames)
         self.anchor_selected = self._anim_saved_anchor
         self.legendSelectionChanged.emit(
@@ -141,12 +144,9 @@ class TexturePreviewWidget(QLabel):
     def _apply_animation_step(self, step_idx: int):
         """Show only the rect for this step."""
         kind, frame_idx = self._anim_steps[step_idx]
-        if kind == 'anchor':
-            self.anchor_selected = True
-            self.selected_frame_indices = set()
-        else:
-            self.anchor_selected = False
-            self.selected_frame_indices = {frame_idx}
+        self.anchor_selected = True
+        self.selected_frame_indices = {frame_idx}
+        self.spriteShown.emit(frame_idx)
         self.legendSelectionChanged.emit(
             set(self.selected_frame_indices), self.anchor_selected)
         self.update_display()
@@ -223,7 +223,7 @@ class TexturePreviewWidget(QLabel):
         selected_here = []
         for rect in self.rectangles:
             x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
-            is_anchor = color == QColor(0, 0, 255, 255)
+            is_anchor = frame_idx < 0
             sx = int(x * self.scale_factor)
             sy = int(y * self.scale_factor)
             sw = max(1, int(w * self.scale_factor))
@@ -287,14 +287,14 @@ class TexturePreviewWidget(QLabel):
         coord_labels: dict = {}
         for rect in self.rectangles:
             x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
-            is_anchor = color == QColor(0, 0, 255, 255)
-            text = label if label else ("Anchor" if is_anchor else f"Frame {frame_idx}")
+            is_anchor = frame_idx < 0
+            text = label if label else ("Destination" if is_anchor else f"Sprite {frame_idx}")
             coord_labels.setdefault((x, y, w, h), []).append(text)
 
         coord_groups: dict = {}
         for rect in self.rectangles:
             x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
-            is_anchor = color == QColor(0, 0, 255, 255)
+            is_anchor = frame_idx < 0
             sx = self._texture_offset_x + int(x * self.scale_factor)
             sy = self._texture_offset_y + int(y * self.scale_factor)
             sw = max(1, int(w * self.scale_factor))
@@ -305,7 +305,7 @@ class TexturePreviewWidget(QLabel):
         for pass_name in ["frame", "anchor"]:
             for rect in self.rectangles:
                 x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
-                is_anchor = color == QColor(0, 0, 255, 255)
+                is_anchor = frame_idx < 0
 
                 if pass_name == "anchor" and not is_anchor:
                     continue
@@ -346,9 +346,9 @@ class TexturePreviewWidget(QLabel):
         legend_entries = []
         for rect in self.rectangles:
             x, y, w, h, color, line_width, label, entry_idx, frame_idx = rect
-            is_anchor = color == QColor(0, 0, 255, 255)
+            is_anchor = frame_idx < 0
             draw_color = ANCHOR_COLOR if is_anchor else self._frame_color(frame_idx)
-            text = label if label else ("Anchor" if is_anchor else f"Frame {frame_idx}")
+            text = label if label else ("Destination" if is_anchor else f"Sprite {frame_idx}")
             overlapping = coord_labels[(x, y, w, h)]
             tooltip = ""
             if len(overlapping) > 1:
@@ -414,7 +414,7 @@ class TexturePreviewWidget(QLabel):
         painter.setPen(QPen(QColor(100, 100, 100), 1))
         painter.drawText(QRect(self._legend_x + LEGEND_PADDING, hint_y,
                                LEGEND_WIDTH - LEGEND_PADDING, 16),
-                         Qt.AlignmentFlag.AlignLeft, "Play anim + speed")
+                         Qt.AlignmentFlag.AlignLeft, "Play: sprites copied in turn")
 
         painter.end()
         self.setPixmap(canvas)

@@ -1809,62 +1809,70 @@ class AnimationSection:
 # Section 4: Texture animation
 
 class DynamicTextureData:
-    """One VRAM texture-animation entry: a fixed on-model `anchor_uv` position
-    (what the monster's polygons actually sample) whose content is replaced by
-    each `frames` entry in turn, cycling over time. Confirmed by inspecting
-    real monster data (e.g. PuPu, com_id 60): the frame-position sequences show
-    smooth sweeping paths with consecutive *duplicate* positions used to hold a
-    frame for longer (no separate speed/counter field exists, unlike the
-    structurally similar but unrelated stage texture-animator
-    BS_Effect_DeformCompression @0x50cb20), and the sequence frequently starts
-    or ends back at `anchor_uv`. This entire feature is vestigial in the
-    retail PC build though (see DynamicTextureSection docstring) -- section 4's
-    pointer is computed at load time but sits outside the address range of the
-    struct any renderer actually receives, so nothing here is ever displayed
-    in-game; this naming is the best-supported reading of the file format, not
-    an observed runtime behavior.
+    """One section-4 entry: a small texture rectangle the game repaints at runtime (the eye blink).
+
+    The engine never animates UVs: QueueTextureAnimation (0x50C780) copies one SPRITE of the entry
+    (a rectangle stored elsewhere in the same texture) ONTO the fixed `destination` rectangle in
+    VRAM, a VRAM-to-VRAM blit, so every polygon sampling the destination shows that sprite. Sprite 0
+    is the resting picture (Squall: the open eye), sprites 1.. the others (the closed eye).
+
+    File layout (all x values in VRAM halfwords = 2 pixels of an 8-bit texture, y in pixels):
+      0 texture_num   which of the model's 128x128 texture slots (= its texture, in file order)
+      1 destination   u, v of the rectangle the polygons sample
+      3 width, height size of the destination and of every sprite
+      5 nb_sprite - 1 ("number_destination" on the wiki)
+      6 anim_speed    for AnimSeq opcode 80: 8 = one sprite per tick, other = 1/8-sprite steps,
+                      0 = scroll the destination instead of swapping sprites
+      7 frame_counter runtime accumulator, 0 in the file
+      8 sprites       u, v of each sprite (sprite 0, then the others)
+
+    Who copies: the sequences (opcodes 80 step, 9B / BD set a sprite, 9F a sprite timeline, BE
+    restore sprite 0 + switch the idle blink on/off) and, while the idle blink is on, the entity
+    task 0x502AB0 (sprite 1 then sprite 0 every 15-59 ticks); a character's Sleep / KO too.
     """
     def __init__(self, data:bytes=bytes()):
         self.texture_num:int = 0
-        self.clut_info:int= 0
-        self.anchor_uv = UV(member_size=1, vram_size=True)
-        self.sprite_width = 0
-        self.sprite_height=0
-        self.number_frames = 0
-        self.unk1=0
-        self.unk2=0
-        self.frames: List[UV] = []
+        self.destination = UV(member_size=1, vram_size=True)
+        self.sprite_width = 0            # pixels (the file holds halfwords)
+        self.sprite_height = 0
+        self.anim_speed = 0
+        self.frame_counter = 0
+        self.sprites: List[UV] = []
+        self.table_index = 0             # its index in the section's offset table = the engine's id
         if data:
             self.analyze(data)
+
     def analyze(self, data:bytes):
-        self.texture_num = int.from_bytes(data[0: 2], byteorder='little') & 0x3F
-        self.clut_info = int.from_bytes(data[0: 2], byteorder='little') & 0xFFC0
-        self.unk1 = int.from_bytes(data[2: 3], byteorder='little')
-        self.sprite_width = int.from_bytes(data[3: 4], byteorder='little')*2 # The size is in VRAM-X ref, and a texel is on 2 bytes.
-        self.sprite_height = int.from_bytes(data[4: 5], byteorder='little')
-        self.number_frames = int.from_bytes(data[5: 6], byteorder='little')
-        self.unk2 = int.from_bytes(data[6: 8], byteorder='little')
-        self.anchor_uv.analyze(data[8: 10])
-        for i in range(self.number_frames):
+        self.texture_num = data[0]
+        self.destination = UV(member_size=1, vram_size=True)
+        self.destination.analyze(data[1:3])
+        self.sprite_width = data[3] * 2  # The size is in VRAM-X ref, and a texel is on 2 bytes.
+        self.sprite_height = data[4]
+        nb_sprite = data[5] + 1
+        self.anim_speed = data[6]
+        self.frame_counter = data[7]
+        self.sprites = []
+        for i in range(nb_sprite):
             uv = UV(member_size=1, vram_size=True)
-            uv.analyze(data[10+i*2: 10+(i+1)*2])
-            self.frames.append(uv)
+            uv.analyze(data[8 + i * 2: 8 + (i + 1) * 2])
+            self.sprites.append(uv)
+
     def to_binary(self):
         data = bytearray()
-        data.extend(((self.clut_info & 0xFFC0) | (self.texture_num & 0x3F)).to_bytes(2, byteorder='little'))
-        data.extend(self.unk1.to_bytes(1, byteorder='little'))
-        data.extend(int(self.sprite_width/2).to_bytes(1, byteorder='little'))
-        data.extend(self.sprite_height.to_bytes(1, byteorder='little'))
-        data.extend(self.number_frames.to_bytes(1, byteorder='little'))
-        data.extend(self.unk2.to_bytes(2, byteorder='little'))
-        data.extend(self.anchor_uv.to_binary())
-        for i in range(self.number_frames):
-            data.extend(self.frames[i].to_binary())
+        data.append(self.texture_num & 0xFF)
+        data.extend(self.destination.to_binary())
+        data.append(int(self.sprite_width / 2) & 0xFF)
+        data.append(self.sprite_height & 0xFF)
+        data.append(max(0, len(self.sprites) - 1) & 0xFF)
+        data.append(self.anim_speed & 0xFF)
+        data.append(self.frame_counter & 0xFF)
+        for sprite in self.sprites:
+            data.extend(sprite.to_binary())
         return data
 
-
     def __str__(self):
-       return f"TextureAnimData(ID:{self.texture_num}, anchorUV:{self.anchor_uv}, SpriteSize:({ self.sprite_width},{ self.sprite_height}), NbFrames:{self.number_frames}), unk1:{self.unk1}, unk2:{self.unk2}, frames:{self.frames}"
+        return (f"TextureAnimData(texture:{self.texture_num}, destination:{self.destination}, "
+                f"size:({self.sprite_width},{self.sprite_height}), speed:{self.anim_speed}, sprites:{self.sprites})")
     def __repr__(self):
         return self.__str__()
 
@@ -1873,19 +1881,12 @@ class DynamicTextureSection:
         self.offset:List[int] = []
         self.dynamic_texture_data: List[DynamicTextureData] = []
         # Exact original section bytes, and a to_binary() snapshot of each
-        # parsed entry, captured right after analyze(). A header slot whose
-        # offset is 0 is a legitimate, position-significant "no animation for
-        # this slot" marker rather than end-of-table padding -- confirmed
-        # against the game's identical stage texture-animation reader
-        # (BS_Effect_DeformCompression @0x50cb20), which indexes its own
-        # u16 entryOffset[n] table positionally and treats 0 that way -- but no
-        # monster-file consumer of this vestigial section exists to confirm
-        # how many header slots there are meant to be, so reconstructing the
-        # header from scratch can't reliably tell a real zero slot apart from
-        # a coincidental zero word inside entry data. Rather than guess, an
-        # unedited section (no entry's fields changed, none added/removed) is
-        # written back byte-for-byte; only an actual edit falls back to a
-        # freshly generated (dense, no zero slots) header.
+        # parsed entry, captured right after analyze(). The engine indexes the
+        # u16 offset table positionally (QueueTextureAnimation 0x50C780: entry n
+        # = offset[n], 0 = no entry n) and the sequences name entries by that
+        # index (opcodes 80 / 9B / BD), so an edited section keeps every entry
+        # at its table_index (a 0 slot stays a hole). An unedited section is
+        # written back byte-for-byte.
         self._original_bytes: bytes = b""
         self._original_entry_snapshot: List[bytes] = []
 
@@ -1894,20 +1895,25 @@ class DynamicTextureSection:
         # undo/redo re-analyses this section on the same object.
         self.offset = []
         self.dynamic_texture_data = []
-        for i in range(0, len(data)):
+        # The u16 offset table runs up to the first entry's data (0 = a hole: no entry there)
+        first_entry = None
+        i = 0
+        while 2 * i + 2 <= len(data) and (first_entry is None or 2 * i < first_entry):
             offset = int.from_bytes(data[2*i: 2*(i+1)], byteorder='little')
-            if offset < len(data) - 1:
-                if not self.offset or self.offset[-1] < offset:
-                    self.offset.append(offset)
-            else:
+            if offset >= len(data) - 1:
                 break
-        for i in range(len(self.offset)):
-            if self.offset[i] == 0:
+            self.offset.append(offset)
+            if offset and (first_entry is None or offset < first_entry):
+                first_entry = offset
+            i += 1
+        starts = sorted(offset for offset in self.offset if offset)
+        for i, offset in enumerate(self.offset):
+            if offset == 0:
                 continue
-            if i == len(self.offset)-1:
-                self.dynamic_texture_data.append(DynamicTextureData(data[self.offset[i]:]))
-            else:
-                self.dynamic_texture_data.append(DynamicTextureData(data[self.offset[i]:self.offset[i + 1]]))
+            following = [start for start in starts if start > offset]
+            entry = DynamicTextureData(data[offset:following[0] if following else len(data)])
+            entry.table_index = i      # the id the sequences / the engine use (a 0 slot stays a hole)
+            self.dynamic_texture_data.append(entry)
         self._original_bytes = bytes(data)
         self._original_entry_snapshot = [bytes(entry.to_binary()) for entry in self.dynamic_texture_data]
 
@@ -1917,14 +1923,15 @@ class DynamicTextureSection:
             return bytearray(self._original_bytes)
 
         data = bytearray()
-        # Write header
-        offset_computed = []
+        # Write header: one slot per table index, the engine's entry ids (holes stay 0)
+        nb_slot = max([entry.table_index for entry in self.dynamic_texture_data], default=-1) + 1
+        offset_computed = [0] * nb_slot
         data_computed = []
-        current_offset = len(self.dynamic_texture_data)*2
-        for i in range(0, len(self.dynamic_texture_data)):
-            current_data = self.dynamic_texture_data[i].to_binary()
+        current_offset = nb_slot * 2
+        for entry in self.dynamic_texture_data:
+            current_data = entry.to_binary()
             data_computed.append(current_data)
-            offset_computed.append(current_offset)
+            offset_computed[entry.table_index] = current_offset
             current_offset += len(current_data)
         for offset in offset_computed:
             data.extend(offset.to_bytes(2, byteorder='little'))
@@ -1934,6 +1941,10 @@ class DynamicTextureSection:
         padding = (4 - len(data) % 4) % 4  # Calculate how many zeros needed
         data.extend([0] * padding)
         return data
+
+    def next_table_index(self) -> int:
+        """The id a new entry gets: after every existing one."""
+        return max([entry.table_index for entry in self.dynamic_texture_data], default=-1) + 1
 
     def __str__(self):
         return f"TextureAnimSection(offset:{self.offset}, data:{self.dynamic_texture_data})"

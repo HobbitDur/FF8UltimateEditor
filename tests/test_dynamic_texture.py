@@ -145,26 +145,26 @@ class TestDynamicTextureDataModel:
         section = DynamicTextureSection()
         section.analyze(PUPU_DATA)
         entry = section.dynamic_texture_data[0]
-        original_y = entry.anchor_uv.get_v_pixel()
-        entry.anchor_uv.set_u_pixel(100)
+        original_y = entry.destination.get_v_pixel()
+        entry.destination.set_u_pixel(100)
         result = section.to_binary()
         # Re-parse and verify the change persisted
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert section2.dynamic_texture_data[0].anchor_uv.get_u_pixel() == 100
-        assert section2.dynamic_texture_data[0].anchor_uv.get_v_pixel() == original_y
+        assert section2.dynamic_texture_data[0].destination.get_u_pixel() == 100
+        assert section2.dynamic_texture_data[0].destination.get_v_pixel() == original_y
 
     def test_modify_anchor_uv_y(self):
         section = DynamicTextureSection()
         section.analyze(PUPU_DATA)
         entry = section.dynamic_texture_data[0]
-        original_x = entry.anchor_uv.get_u_pixel()
-        entry.anchor_uv.set_v_pixel(200)
+        original_x = entry.destination.get_u_pixel()
+        entry.destination.set_v_pixel(200)
         result = section.to_binary()
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert section2.dynamic_texture_data[0].anchor_uv.get_u_pixel() == original_x
-        assert section2.dynamic_texture_data[0].anchor_uv.get_v_pixel() == 200
+        assert section2.dynamic_texture_data[0].destination.get_u_pixel() == original_x
+        assert section2.dynamic_texture_data[0].destination.get_v_pixel() == 200
 
     # --- sprite size modification ---
 
@@ -192,13 +192,13 @@ class TestDynamicTextureDataModel:
         section = DynamicTextureSection()
         section.analyze(PUPU_DATA)
         entry = section.dynamic_texture_data[0]
-        entry.frames[0].set_u_pixel(50)
-        entry.frames[0].set_v_pixel(75)
+        entry.sprites[0].set_u_pixel(50)
+        entry.sprites[0].set_v_pixel(75)
         result = section.to_binary()
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert section2.dynamic_texture_data[0].frames[0].get_u_pixel() == 50
-        assert section2.dynamic_texture_data[0].frames[0].get_v_pixel() == 75
+        assert section2.dynamic_texture_data[0].sprites[0].get_u_pixel() == 50
+        assert section2.dynamic_texture_data[0].sprites[0].get_v_pixel() == 75
 
     # --- add / remove entry ---
 
@@ -209,19 +209,11 @@ class TestDynamicTextureDataModel:
 
         new_entry = DynamicTextureData()
         new_entry.texture_num = 0
-        new_entry.clut_info = 0
-        new_entry.anchor_uv = UV(member_size=1, vram_size=True)
-        new_entry.anchor_uv.set_u_pixel(0)
-        new_entry.anchor_uv.set_v_pixel(0)
+        new_entry.destination = UV(member_size=1, vram_size=True)
         new_entry.sprite_width = 32
         new_entry.sprite_height = 32
-        new_entry.number_frames = 1
-        new_entry.unk1 = 0
-        new_entry.unk2 = 0
-        dest = UV(member_size=1, vram_size=True)
-        dest.set_u_pixel(0)
-        dest.set_v_pixel(0)
-        new_entry.frames = [dest]
+        new_entry.sprites = [UV(member_size=1, vram_size=True), UV(member_size=1, vram_size=True)]
+        new_entry.table_index = section.next_table_index()
         section.dynamic_texture_data.append(new_entry)
 
         result = section.to_binary()
@@ -246,35 +238,33 @@ class TestDynamicTextureDataModel:
         section = DynamicTextureSection()
         section.analyze(PUPU_DATA)
         entry = section.dynamic_texture_data[0]
-        original_frame_count = len(entry.frames)
+        original_frame_count = len(entry.sprites)
 
         new_dest = UV(member_size=1, vram_size=True)
         new_dest.set_u_pixel(10)
         new_dest.set_v_pixel(20)
-        entry.frames.append(new_dest)
-        entry.number_frames = len(entry.frames)
+        entry.sprites.append(new_dest)
 
         result = section.to_binary()
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert len(section2.dynamic_texture_data[0].frames) == original_frame_count + 1
-        assert section2.dynamic_texture_data[0].frames[-1].get_u_pixel() == 10
-        assert section2.dynamic_texture_data[0].frames[-1].get_v_pixel() == 20
+        assert len(section2.dynamic_texture_data[0].sprites) == original_frame_count + 1
+        assert section2.dynamic_texture_data[0].sprites[-1].get_u_pixel() == 10
+        assert section2.dynamic_texture_data[0].sprites[-1].get_v_pixel() == 20
 
     def test_remove_frame(self):
         section = DynamicTextureSection()
         section.analyze(PUPU_DATA)
         entry = section.dynamic_texture_data[0]
-        original_frame_count = len(entry.frames)
+        original_frame_count = len(entry.sprites)
         assert original_frame_count > 1, "Need at least 2 frames to test removal"
 
-        entry.frames.pop(0)
-        entry.number_frames = len(entry.frames)
+        entry.sprites.pop(0)
 
         result = section.to_binary()
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert len(section2.dynamic_texture_data[0].frames) == original_frame_count - 1
+        assert len(section2.dynamic_texture_data[0].sprites) == original_frame_count - 1
 
 
 # ===========================================================================
@@ -329,24 +319,24 @@ class TestDynamicTextureEntryWidget:
     def test_default_values(self, qapp):
         w = self._make_entry_widget()
         data = w.get_data()
-        assert data['anchor_x'] == 0
-        assert data['anchor_y'] == 0
-        assert data['anchor_width'] == 32
-        assert data['anchor_height'] == 32
-        assert data['frames'] == []
+        assert data['destination_x'] == 0
+        assert data['destination_y'] == 0
+        assert data['width'] == 32
+        assert data['height'] == 32
+        assert data['sprites'] == []
 
     def test_set_data_roundtrip(self, qapp):
         w = self._make_entry_widget()
         frames = [{'x': 10, 'y': 20}, {'x': 30, 'y': 40}]
-        w.set_data(anchor_x=16, anchor_y=32, anchor_width=64, anchor_height=48, frames=frames)
+        w.set_data(destination_x=16, destination_y=32, width=64, height=48, sprites=frames)
         data = w.get_data()
-        assert data['anchor_x'] == 16
-        assert data['anchor_y'] == 32
-        assert data['anchor_width'] == 64
-        assert data['anchor_height'] == 48
-        assert len(data['frames']) == 2
-        assert data['frames'][0] == {'x': 10, 'y': 20}
-        assert data['frames'][1] == {'x': 30, 'y': 40}
+        assert data['destination_x'] == 16
+        assert data['destination_y'] == 32
+        assert data['width'] == 64
+        assert data['height'] == 48
+        assert len(data['sprites']) == 2
+        assert data['sprites'][0] == {'x': 10, 'y': 20}
+        assert data['sprites'][1] == {'x': 30, 'y': 40}
 
     def test_add_frame(self, qapp):
         w = self._make_entry_widget()
@@ -423,8 +413,8 @@ class TestWidgetIntegration:
         result = _dynamic_data(manager).to_binary()
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert section2.dynamic_texture_data[0].anchor_uv.get_u_pixel() == 100
-        assert section2.dynamic_texture_data[0].anchor_uv.get_v_pixel() == original_y
+        assert section2.dynamic_texture_data[0].destination.get_u_pixel() == 100
+        assert section2.dynamic_texture_data[0].destination.get_v_pixel() == original_y
 
     def test_widget_modify_anchor_y(self, qapp):
         widget, manager = _make_widget(PUPU_DATA)
@@ -439,8 +429,8 @@ class TestWidgetIntegration:
         result = _dynamic_data(manager).to_binary()
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert section2.dynamic_texture_data[0].anchor_uv.get_u_pixel() == original_x
-        assert section2.dynamic_texture_data[0].anchor_uv.get_v_pixel() == 200
+        assert section2.dynamic_texture_data[0].destination.get_u_pixel() == original_x
+        assert section2.dynamic_texture_data[0].destination.get_v_pixel() == 200
 
     # --- Modify sprite size via widget ---
 
@@ -485,7 +475,7 @@ class TestWidgetIntegration:
         result = _dynamic_data(manager).to_binary()
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert section2.dynamic_texture_data[0].frames[0].get_u_pixel() == 88
+        assert section2.dynamic_texture_data[0].sprites[0].get_u_pixel() == 88
 
     def test_widget_modify_frame_y(self, qapp):
         widget, manager = _make_widget(PUPU_DATA)
@@ -499,7 +489,7 @@ class TestWidgetIntegration:
         result = _dynamic_data(manager).to_binary()
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert section2.dynamic_texture_data[0].frames[0].get_v_pixel() == 66
+        assert section2.dynamic_texture_data[0].sprites[0].get_v_pixel() == 66
 
     # --- Add frame via widget ---
 
@@ -517,7 +507,7 @@ class TestWidgetIntegration:
         result = _dynamic_data(manager).to_binary()
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert len(section2.dynamic_texture_data[0].frames) == original_count + 1
+        assert len(section2.dynamic_texture_data[0].sprites) == original_count + 1
 
     # --- Remove frame via widget ---
 
@@ -536,7 +526,7 @@ class TestWidgetIntegration:
         result = _dynamic_data(manager).to_binary()
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert len(section2.dynamic_texture_data[0].frames) == original_count - 1
+        assert len(section2.dynamic_texture_data[0].sprites) == original_count - 1
 
     # --- Add entry via widget ---
 
@@ -590,8 +580,8 @@ class TestWidgetIntegration:
         section2 = DynamicTextureSection()
         section2.analyze(result)
         new_entry = section2.dynamic_texture_data[-1]
-        assert new_entry.anchor_uv.get_u_pixel() == 32
-        assert new_entry.anchor_uv.get_v_pixel() == 64
+        assert new_entry.destination.get_u_pixel() == 32
+        assert new_entry.destination.get_v_pixel() == 64
 
     # --- Switch entries and verify independent edits ---
 
@@ -612,5 +602,5 @@ class TestWidgetIntegration:
         result = _dynamic_data(manager).to_binary()
         section2 = DynamicTextureSection()
         section2.analyze(result)
-        assert section2.dynamic_texture_data[0].anchor_uv.get_u_pixel() == 10
-        assert section2.dynamic_texture_data[1].anchor_uv.get_u_pixel() == 20
+        assert section2.dynamic_texture_data[0].destination.get_u_pixel() == 10
+        assert section2.dynamic_texture_data[1].destination.get_u_pixel() == 20
