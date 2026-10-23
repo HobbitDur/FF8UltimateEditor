@@ -31,8 +31,12 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   the effect's files refresh the recording by themselves, **Record again** is for what Fujin does
   not see change (a camera keyframe, the Camera tab's script inputs). Recording runs the effect's
   original code in FF8UltimateEditor's effect recorder
-  (`Tools/fxrecorder`, a 32-bit program shipped with the Windows release; from source,
-  `Tools/fxrecorder/build.bat` builds it with Visual Studio's C++ tools - no FFNx needed). It maps
+  (`Tools/fxrecorder`, a 32-bit program, never kept in git: the Windows release ships the one its
+  CI builds; run from source, FF8UltimateEditor builds it in the background when it starts and
+  the exe is missing or older than its source - a fresh clone, a pull that changed it - with the
+  local Visual Studio C++ build tools, any version, through `Tools/fxrecorder/build.bat`
+  (`Fujin/recorderbuild.py`; meanwhile Play waits and the status says so, and without the tools
+  it says what to install; no FFNx needed). It maps
   the opened FF8_EN.exe and loads each actor through the game's own loaders into its battle slot
   (party 0-2, enemies 3-6): monsters with `battle_monster_dat_loader`, characters as the battle
   start does (`initWeaponAnim` 0x502670: body `Battle_isLoadSquallEtc` 0x5077B0, weapon

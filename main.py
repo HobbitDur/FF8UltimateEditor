@@ -39,4 +39,8 @@ if __name__ == '__main__':
             app.setStyle("Fusion")
     main_window = FF8UltimateEditorWidget(resource_path, ff8gamedata_path)
     main_window.show()
+    # From source: Fujin's effect recorder (not in git) is built in the background when missing or
+    # older than its source; the release ships it
+    from Fujin.recorderbuild import ensure_recorder
+    ensure_recorder()
     sys.exit(app.exec())

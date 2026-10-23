@@ -44,12 +44,11 @@ from PyQt6.QtGui import QCursor, QImage, QPixmap
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
                              QSlider, QVBoxLayout, QWidget)
 
-from Common.apppaths import app_path
 from Common.filebinding import FileBinding
+from Fujin.recorderbuild import RECORDER, recorder_build    # built from source at startup, never in git
 from FF8GameData.psxgpu.fxdump import load_recording
 from FF8GameData.psxgpu.gpu import GAME_WINDOW
 
-RECORDER = app_path("Tools", "fxrecorder", "fxrecorder.exe")
 _GL_RENDERER = []   # [PsxGlRenderer or None]: made on the first frame drawn (None = no OpenGL 3.3)
 
 
@@ -313,6 +312,7 @@ class NativePreviewView(QWidget):
         layout.addLayout(controls)
         layout.addWidget(self.scroll, 1)
         layout.addWidget(self.status)
+        recorder_build().changed.connect(self._update_controls)
         self.textures_binding.load_opened_file()
         self.refresh_cast()
         self._update_controls()
@@ -450,8 +450,13 @@ class NativePreviewView(QWidget):
     def missing(self):
         """What Record still needs, in words ([] = ready)."""
         needs = []
-        if not RECORDER.is_file():
-            needs.append(f"the effect recorder ({RECORDER}; from source, run Tools/fxrecorder/build.bat)")
+        build = recorder_build()
+        if build.building:
+            needs.append("the effect recorder, being built from its source (Tools/fxrecorder, under a minute)")
+        elif not RECORDER.is_file():
+            needs.append(f"the effect recorder ({RECORDER}): " + (
+                build.error or "FF8UltimateEditor builds it from its source when it starts (Visual Studio C++ "
+                               "build tools needed); restart it"))
         if not self.exe_path():
             needs.append("FF8_EN.exe (the header's Import)")
         if not self.effect_files():

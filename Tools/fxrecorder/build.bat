@@ -1,16 +1,27 @@
 @echo off
 rem Builds fxrecorder.exe (32-bit: it runs FF8_EN.exe's code in its own process).
-rem Needs the Visual Studio C++ build tools. The image is based at 0x10000000 so 0x400000 stays
-rem free for the game exe.
+rem Needs the Visual Studio C++ build tools (any version: found with vswhere). The image is based
+rem at 0x10000000 so 0x400000 stays free for the game exe. FF8UltimateEditor runs this by itself
+rem when started from source (Fujin/recorderbuild.py); the release ships the exe its CI builds.
 setlocal
 cd /d %~dp0
 where cl >nul 2>nul
-if errorlevel 1 (
-  for %%v in (2022 2019) do for %%e in (Community Professional Enterprise BuildTools) do (
-    if exist "C:\Program Files\Microsoft Visual Studio\%%v\%%e\VC\Auxiliary\Build\vcvarsall.bat" call "C:\Program Files\Microsoft Visual Studio\%%v\%%e\VC\Auxiliary\Build\vcvarsall.bat" x86 >nul
-    if exist "C:\Program Files (x86)\Microsoft Visual Studio\%%v\%%e\VC\Auxiliary\Build\vcvarsall.bat" call "C:\Program Files (x86)\Microsoft Visual Studio\%%v\%%e\VC\Auxiliary\Build\vcvarsall.bat" x86 >nul
-  )
+if not errorlevel 1 goto build
+set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+if exist "%VSWHERE%" for /f "usebackq delims=" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+  if exist "%%i\VC\Auxiliary\Build\vcvarsall.bat" call "%%i\VC\Auxiliary\Build\vcvarsall.bat" x86 >nul
 )
+where cl >nul 2>nul
+if not errorlevel 1 goto build
+for %%v in (2022 2019) do for %%e in (Community Professional Enterprise BuildTools) do (
+  if exist "C:\Program Files\Microsoft Visual Studio\%%v\%%e\VC\Auxiliary\Build\vcvarsall.bat" call "C:\Program Files\Microsoft Visual Studio\%%v\%%e\VC\Auxiliary\Build\vcvarsall.bat" x86 >nul
+  if exist "C:\Program Files (x86)\Microsoft Visual Studio\%%v\%%e\VC\Auxiliary\Build\vcvarsall.bat" call "C:\Program Files (x86)\Microsoft Visual Studio\%%v\%%e\VC\Auxiliary\Build\vcvarsall.bat" x86 >nul
+)
+where cl >nul 2>nul
+if not errorlevel 1 goto build
+echo no Visual Studio C++ build tools found (cl.exe)
+exit /b 9009
+:build
 if not exist obj mkdir obj
 cl /nologo /std:c++17 /EHa /W3 /O1 /MT /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS fxrecorder.cpp /Foobj\ /Fefxrecorder.exe /link /BASE:0x10000000 /DYNAMICBASE:NO /FIXED /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%
