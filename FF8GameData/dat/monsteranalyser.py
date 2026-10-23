@@ -200,6 +200,8 @@ class MonsterAnalyser:
                 self.analyze_battle_script_section(game_data, decompiler, 2)
             else:
                 print(f"Unexpected entity type: {self.entity_type}")
+            for section_number in self._character_texture_sections():
+                self.reanalyze_section(section_number, game_data, decompiler)
         except IndexError as e:
             print(f"Garbage file {self.origin_file_name}")
             raise GarbageFileError
@@ -241,6 +243,13 @@ class MonsterAnalyser:
             # Re-parsed IN PLACE: the Entrance tab's view holds this very object.
             self.entrance_animation_data.analyze(bytes(self.section_raw_data[n]), self.bone_data)
             self.entrance_animation_data.matrices_built = True
+            return
+        layout = self.SECTION_INDEX_BY_ENTITY.get(et, {})
+        if n in self._character_texture_sections():
+            if n == layout.get('texture'):
+                self._analyze_texture_section(n)
+            else:
+                self.__analyze_section_texture_anim(n)
             return
         if et == EntityType.MONSTER:
             if   n == 1:  self.__analyze_bone_section(1)
@@ -462,6 +471,28 @@ class MonsterAnalyser:
 
         raw_data_to_write.extend(self.section_raw_data[section_position])
 
+    def _character_texture_sections(self):
+        """The texture section and the eye-blink dynamic texture of a character / weapon file
+        (same formats as monster sections 11 and 4), parsed and saved like a monster's: character
+        6 + 4, Edea 9 + 4, weapon 7, reduced weapon 5. A monster's own code paths handle its own."""
+        if self.entity_type in (EntityType.MONSTER, EntityType.MONSTER_NO_MODEL):
+            return []
+        layout = self.SECTION_INDEX_BY_ENTITY.get(self.entity_type, {})
+        return [layout[name] for name in ('dynamic_texture', 'texture')
+                if name in layout and layout[name] < len(self.section_raw_data)]
+
+    def _store_character_texture_sections(self):
+        """Re-encode a character / weapon file's texture and eye-blink sections from the parsed
+        data into their raw sections, which the per-type writer copies. Byte-exact unedited (both
+        round-trip every vanilla file); an empty section is left as it is."""
+        layout = self.SECTION_INDEX_BY_ENTITY.get(self.entity_type, {})
+        for n in self._character_texture_sections():
+            if n == layout.get('texture'):
+                if self.texture_data.get('texture_data'):
+                    self.prepare_texture(bytearray(), n)
+            elif self.section_raw_data[n] or self.dynamic_texture_data.dynamic_texture_data:
+                self.section_raw_data[n] = bytearray(self.dynamic_texture_data.to_binary())
+
     def entrance_section_index(self):
         """Section of the battle-entrance block (character 7, weapon 8, Edea 10), or None."""
         from .entranceanimation import get_entrance_section_index
@@ -496,6 +527,7 @@ class MonsterAnalyser:
         # it was freed.
         self.ensure_animation_expanded()
         self._store_entrance_animation()
+        self._store_character_texture_sections()
         raw_data_to_write = bytearray()
 
         # Section 0: Header (fix size, will be modified later) - the only part truly common

@@ -57,7 +57,15 @@ _SEQ_SECTION_BY_ENTITY = {
 # rather than show an empty/non-functional editor.
 _DYNAMIC_TEXTURE_SECTION_BY_ENTITY = {
     EntityType.MONSTER: 4,
+    EntityType.CHARACTER: 4,            # the eye blink, same format
+    EntityType.CHARACTER_NO_WEAPON: 4,  # Edea
 }
+
+
+def _section_of(entity_type, name):
+    """The .dat section holding `name` ('texture', 'info_stat', 'battle_script'...) for this file
+    type (MonsterAnalyser.SECTION_INDEX_BY_ENTITY), None when the type has none."""
+    return MonsterAnalyser.SECTION_INDEX_BY_ENTITY.get(entity_type, {}).get(name)
 
 # Which entity types carry real info_stat + AI/battle_script data (Stat/StatExcel/AI/Battle
 # text tabs). MONSTER_NO_MODEL has both despite having no model at all - see
@@ -309,6 +317,7 @@ class IfritFilePane(QWidget):
         self._tabs.addTab(self._stat_container, "7 - Stat")
         self._tabs.addTab(self._ai_container, "8 - AI")
         self._tabs.addTab(self._texture_widget, "11 - Static Texture")
+        self._order_tabs_by_section()
         self._tabs.setCurrentIndex(settings.value("ifrit/current_tab", defaultValue=0, type=int))
         self._tabs.currentChanged.connect(self._on_tab_changed)
         layout.addWidget(self._tabs)
@@ -363,11 +372,10 @@ class IfritFilePane(QWidget):
         if et in _CAMERA_SECTION_BY_ENTITY:
             m[_CAMERA_SECTION_BY_ENTITY[et]] = self._camera_widget
         if et in _STAT_AI_CAPABLE_ENTITY_TYPES:
-            stat_sec, ai_sec = (1, 2) if et == EntityType.MONSTER_NO_MODEL else (7, 8)
-            m[stat_sec] = self._stat_container
-            m[ai_sec] = self._ai_container
-        if et == EntityType.MONSTER:
-            m[11] = self._texture_widget
+            m[_section_of(et, 'info_stat')] = self._stat_container
+            m[_section_of(et, 'battle_script')] = self._ai_container
+        if _section_of(et, 'texture') is not None:
+            m[_section_of(et, 'texture')] = self._texture_widget
         entrance = self.ifrit_manager.entrance_section_index()
         if entrance is not None:
             m[entrance] = self._entrance_widget
@@ -426,7 +434,7 @@ class IfritFilePane(QWidget):
         stat_ai = et in _STAT_AI_CAPABLE_ENTITY_TYPES
         for w in (self._stat_container, self._ai_container):
             self._tabs.setTabVisible(self._tabs.indexOf(w), stat_ai)
-        self._tabs.setTabVisible(self._tabs.indexOf(self._texture_widget), et == EntityType.MONSTER)
+        self._tabs.setTabVisible(self._tabs.indexOf(self._texture_widget), _section_of(et, 'texture') is not None)
         self._tabs.setTabVisible(self._tabs.indexOf(self._3d_widget), et in _3D_SECTIONS_BY_ENTITY)
         self._tabs.setTabVisible(self._tabs.indexOf(self._seq_widget), et in _SEQ_SECTION_BY_ENTITY)
         self._tabs.setTabVisible(self._tabs.indexOf(self._camera_widget), et in _CAMERA_SECTION_BY_ENTITY)
@@ -448,6 +456,25 @@ class IfritFilePane(QWidget):
                               f"{_DYNAMIC_TEXTURE_SECTION_BY_ENTITY.get(et, 4)} - Dynamic Texture")
         self._tabs.setTabText(self._tabs.indexOf(self._entrance_widget),
                               f"{self.ifrit_manager.entrance_section_index() or 7} - Entrance")
+        # c0m127 (no model) holds its stats and AI as sections 1 and 2
+        for widget, name, label in ((self._stat_container, 'info_stat', "Stat"),
+                                    (self._ai_container, 'battle_script', "AI"),
+                                    (self._texture_widget, 'texture', "Static Texture")):
+            section = _section_of(et, name)
+            if section is not None:
+                self._tabs.setTabText(self._tabs.indexOf(widget), f"{section} - {label}")
+
+    def _order_tabs_by_section(self):
+        """Put the tabs in the order of the sections they edit for this file type (its first
+        section; tabs this type has not, last). The type never changes for a pane: done once."""
+        sections = {}
+        for section, widget in self._section_to_tab_map().items():
+            sections[id(widget)] = min(section, sections.get(id(widget), section))
+        order = sorted(range(self._tabs.count()),
+                       key=lambda index: (sections.get(id(self._tabs.widget(index)), 1000), index))
+        widgets = [self._tabs.widget(index) for index in order]
+        for target, widget in enumerate(widgets):
+            self._tabs.tabBar().moveTab(self._tabs.indexOf(widget), target)
 
     def _shrink_tabs_to_current(self, tabs: QTabWidget):
         _shrink_stack_to_current(tabs, self._tab_size_policies)
@@ -491,7 +518,7 @@ class IfritFilePane(QWidget):
                                     is not None else manager) for label, manager in options]
                         self._entrance_widget.set_weapon_options(options, default_index)
         elif widget is self._texture_widget:
-            if et == EntityType.MONSTER:
+            if _section_of(et, 'texture') is not None:
                 self._texture_widget.show_current()   # textures already in the manager
         elif widget is self._seq_widget:
             self._seq_widget.load_file(path)
@@ -656,7 +683,7 @@ class IfritFilePane(QWidget):
         et = self.ifrit_manager.enemy.entity_type
         # Seq/Camera/DynTex/Stat/Name/AI/3D all write the model live - only the Static Texture inject
         # (VincentTim) is still deferred, because it is far too heavy to run on every edit/snapshot.
-        if include_texture and 'texture' in self._edited and et == EntityType.MONSTER:
+        if include_texture and 'texture' in self._edited and _section_of(et, 'texture') is not None:
             self._texture_widget.save_file()
 
     def save(self):

@@ -916,10 +916,21 @@ class IfritManager:
     def _analyze_native(self, file_path_to_analyze) -> bool:
         """Monster textures read straight from the TIMs: one TextureData per TIM, a multi-row
         CLUT kept as one palette image (one pixel row per CLUT row), real per-texel alpha.
-        False (nothing added) when the file does not hold plain 4/8bpp TIMs."""
-        if self.enemy.entity_type != EntityType.MONSTER:
+        False (nothing added) when the file does not hold plain 4/8bpp TIMs.
+
+        A character / weapon file's TIMs come from its parsed texture section (character 6, weapon
+        7, Edea 9, reduced weapon 5), each drawn on a 128 x 128 canvas at its place in the texture
+        page - the layout its geometry's UVs address (as the VincentTim path's
+        _create_bigger_image_with_placement); saving crops it back (_build_tims_native)."""
+        if self.enemy.entity_type == EntityType.MONSTER:
+            tims = self._tims_in_file(pathlib.Path(file_path_to_analyze).read_bytes())
+        elif self.enemy.entity_type in self._PLACED_TEXTURE_TYPES:
+            entries = (self.enemy.texture_data or {}).get('texture_data') or []
+            tims = [(bytes(entry['data']), PalettedTim.parse(bytes(entry['data']))) for entry in entries]
+            if not tims or any(tim is None for _raw, tim in tims):
+                return False
+        else:
             return False
-        tims = self._tims_in_file(pathlib.Path(file_path_to_analyze).read_bytes())
         if not tims:
             return False
         textures = []
@@ -933,7 +944,12 @@ class IfritManager:
             meta.paletteX, meta.paletteY = tim.clut_x, tim.clut_y
             texture = TextureData(meta)
             # Monster faces do not enable ABE by default, so STP texels render opaque
-            texture.texture_image = self._pil_to_pixmap(force_opaque(decoded.image))
+            image = force_opaque(decoded.image)
+            if self.enemy.entity_type in self._PLACED_TEXTURE_TYPES:
+                canvas = Image.new('RGBA', (self._PLACED_TEXTURE_SIZE, self._PLACED_TEXTURE_SIZE), (0, 0, 0, 0))
+                canvas.paste(image, self._texture_place(meta))
+                image = canvas
+            texture.texture_image = self._pil_to_pixmap(image)
             palette = Image.new('RGBA', (len(tim.clut_rows[0]), len(tim.clut_rows)))
             palette.putdata([(r, g, b, 255 if a else 0) for row in tim.clut_rows
                              for r, g, b, a in map(word_to_rgba, row)])
@@ -943,6 +959,15 @@ class IfritManager:
         self.texture_data.extend(textures)
         self.texture_black_is_transparent = False
         return True
+
+    # character / weapon textures: drawn at their place on a 128 x 128 canvas (see _analyze_native)
+    _PLACED_TEXTURE_TYPES = (EntityType.CHARACTER, EntityType.CHARACTER_NO_WEAPON, EntityType.WEAPON,
+                             EntityType.WEAPON_NO_ANIM)
+    _PLACED_TEXTURE_SIZE = 128
+
+    @staticmethod
+    def _texture_place(meta):
+        return meta.imageX % 128, meta.imageY % 128
 
     @staticmethod
     def _pil_to_pixmap(img: Image.Image) -> QPixmap:
@@ -1232,8 +1257,10 @@ class IfritManager:
         CLUT slots whose color did not change keep their exact word, texels that still show what
         the source TIM rendered keep their index (see encode_indices), and every row of a
         multi-row palette is written. None when this cannot apply (not a monster, 16bpp...),
-        so the caller falls back to VincentTim."""
-        if self.enemy.entity_type != EntityType.MONSTER:
+        so the caller falls back to VincentTim. A character / weapon texture is cropped back from
+        its 128 x 128 canvas (see _analyze_native) to the TIM it was drawn from."""
+        placed = self.enemy.entity_type in self._PLACED_TEXTURE_TYPES
+        if self.enemy.entity_type != EntityType.MONSTER and not placed:
             return None
         metas = {}
         for meta_path in self.temp_path.glob("texture_*.meta"):
@@ -1261,6 +1288,13 @@ class IfritManager:
                 source = getattr(self.texture_data[index], 'source_tim', None)
             if source is not None and source.bpp != bpp:
                 source = None
+            if placed:
+                if source is None:
+                    return None          # no TIM to crop back to
+                x, y = self._texture_place(meta)
+                texture = texture[y:y + source.height, x:x + source.width]
+                if texture.shape[:2] != (source.height, source.width):
+                    return None
             clut_rows = encode_clut(palette, source.clut_rows if source else None)
             height, width = texture.shape[:2]
             indices = encode_indices(texture, clut_rows[0], source)

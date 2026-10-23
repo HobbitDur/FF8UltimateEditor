@@ -87,19 +87,31 @@ class DynamicTextureSectionWidget(QWidget):
         return [entry for entry in dynamic_texture.dynamic_texture_data
                 if entry.texture_num == self.current_texture_index]
 
+    def _texture_count(self) -> int:
+        """The file's textures, without the Static Texture grid's empty "Add New" slot (no image),
+        which may or may not be appended yet depending on which tab loaded first."""
+        textures = self.ifrit_manager.texture_data
+        return sum(1 for texture in textures if getattr(texture, 'texture_image', None) is not None)
+
     def _load_data(self):
         self.texture_combo.clear()
         if self.ifrit_manager.texture_data:
-            for i in range(len(self.ifrit_manager.texture_data) - 1):
+            for i in range(self._texture_count()):
                 self.texture_combo.addItem(f"Texture {i}")
 
             if self.texture_combo.count() > 0:
+                # Open on the first texture that has entries (a character's eye blink is on its
+                # second texture)
+                dynamic_texture = self.ifrit_manager.enemy.dynamic_texture_data
+                used = [entry.texture_num for entry in getattr(dynamic_texture, 'dynamic_texture_data', [])
+                        if 0 <= entry.texture_num < self.texture_combo.count()]
+                first = min(used) if used else 0
                 # Block signals to prevent _on_texture_changed from being called
                 self.texture_combo.blockSignals(True)
-                self.texture_combo.setCurrentIndex(0)
+                self.texture_combo.setCurrentIndex(first)
                 self.texture_combo.blockSignals(False)
                 # Manually call after ensuring data is ready
-                self._on_texture_changed(0)
+                self._on_texture_changed(first)
 
     def _on_texture_changed(self, index):
         self.texture_preview.stop_animation()
@@ -108,7 +120,7 @@ class DynamicTextureSectionWidget(QWidget):
         self._load_animation_entries()
 
     def _update_texture_preview(self):
-        if 0 <= self.current_texture_index < len(self.ifrit_manager.texture_data) - 1:
+        if 0 <= self.current_texture_index < self._texture_count():
             texture_data = self.ifrit_manager.texture_data[self.current_texture_index]
             if texture_data and texture_data.texture_image:
                 self.texture_preview.set_texture(texture_data.texture_image)
