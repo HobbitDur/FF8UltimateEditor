@@ -34,7 +34,7 @@ from .common import load_game_data, read_csv, write_csv
 
 REFINE_CSV_HEADER = ["Bin", "Section", "Entry", "Text",
                      "Input ID", "Amount required", "Output ID", "Amount received",
-                     "Required GF level", "Unknown 0x03"]
+                     "Required GF level"]
 
 
 def _load_manager(mngrp_path: str, mngrphd_path: str = ""):
@@ -58,8 +58,7 @@ def _cmd_export_refine_csv(args) -> int:
             rows.append([refine_view.bin_name, refine_view.name, entry_index,
                          refine_view.texts[entry_index].get_str(),
                          entry.element_in_id, entry.amount_required,
-                         entry.element_out_id, entry.amount_received, entry.required_gf_level,
-                         entry.unknown_0x03])
+                         entry.element_out_id, entry.amount_received, entry.required_gf_level])
     write_csv(args.output, REFINE_CSV_HEADER, rows)
     print(f"[ok] {len(rows)} refine entries exported to {args.output}")
     return 0
@@ -84,12 +83,9 @@ def _cmd_import_refine_csv(args) -> int:
         entry.amount_required = int(row[5])
         entry.element_out_id = int(row[6])
         entry.amount_received = int(row[7])
-        if len(row) > 9:
-            entry.required_gf_level = int(row[8])
-            entry.unknown_0x03 = int(row[9])
-        else:  # Older CSV: one "Unknown" column = bytes 0x03-0x04 as a little-endian u16
-            entry.unknown_0x03 = int(row[8]) & 0xFF
-            entry.required_gf_level = int(row[8]) >> 8
+        # Older CSVs had an "Unknown" column = bytes 0x03-0x04 as a little-endian u16: its high byte
+        # is the level (byte 0x03, the high byte of the amount, is 0 in every vanilla entry).
+        entry.required_gf_level = int(row[8]) if int(row[8]) < 256 else int(row[8]) >> 8
         applied += 1
     manager.save_file(args.output or args.input, args.output_mngrphd or mngrphd_path)
     out_name = args.output or args.input

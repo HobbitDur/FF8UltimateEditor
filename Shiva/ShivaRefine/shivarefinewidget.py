@@ -22,7 +22,6 @@ class ShivaRefineWidget(QWidget):
     COLUMN_OUTPUT = 3
     COLUMN_AMOUNT_RECEIVED = 4
     COLUMN_GF_LEVEL = 5
-    COLUMN_UNKNOWN_0X03 = 6
 
     GF_LEVEL_TOOLTIP = ("Required GF level: the refine is only offered when a GF that learned this refine "
                         "ability is at this level or higher.\n"
@@ -48,9 +47,9 @@ class ShivaRefineWidget(QWidget):
         self.section_description_label.setStyleSheet("font-style: italic;")
 
         self.entry_table = QTableWidget()
-        self.entry_table.setColumnCount(7)
+        self.entry_table.setColumnCount(6)
         self.entry_table.setHorizontalHeaderLabels(["Text", "Input", "Amount required", "Output",
-                                                    "Amount received", "Required GF level", "Unknown 0x03"])
+                                                    "Amount received", "Required GF level"])
         self.entry_table.horizontalHeaderItem(self.COLUMN_GF_LEVEL).setToolTip(self.GF_LEVEL_TOOLTIP)
         self.entry_table.horizontalHeader().setSectionResizeMode(self.COLUMN_TEXT, QHeaderView.ResizeMode.Stretch)
         self.entry_table.horizontalHeader().setSectionResizeMode(self.COLUMN_INPUT, QHeaderView.ResizeMode.Stretch)
@@ -123,7 +122,8 @@ class ShivaRefineWidget(QWidget):
             output_combo.activated.connect(partial(self._on_element_changed, entry, 'element_out_id', output_combo))
             self.entry_table.setCellWidget(row, self.COLUMN_OUTPUT, output_combo)
 
-            amount_received_spin = self._create_amount_spinbox(entry.amount_received)
+            amount_received_spin = self._create_amount_spinbox(entry.amount_received, 65535)
+            amount_received_spin.setToolTip("Amount received (2 bytes in the file); the result is still capped at 100")
             amount_received_spin.valueChanged.connect(partial(self._on_amount_changed, entry, 'amount_received'))
             self.entry_table.setCellWidget(row, self.COLUMN_AMOUNT_RECEIVED, amount_received_spin)
 
@@ -134,12 +134,6 @@ class ShivaRefineWidget(QWidget):
             gf_level_spin.valueChanged.connect(partial(self._on_amount_changed, entry, 'required_gf_level'))
             self.entry_table.setCellWidget(row, self.COLUMN_GF_LEVEL, gf_level_spin)
 
-            unknown_spin = QSpinBox()
-            unknown_spin.setRange(0, 255)
-            unknown_spin.setValue(entry.unknown_0x03)
-            unknown_spin.setToolTip("Unknown byte (0 in every vanilla entry)")
-            unknown_spin.valueChanged.connect(partial(self._on_amount_changed, entry, 'unknown_0x03'))
-            self.entry_table.setCellWidget(row, self.COLUMN_UNKNOWN_0X03, unknown_spin)
 
     def _selected_refine_view(self):
         index = self.section_list.currentRow()
@@ -167,9 +161,9 @@ class ShivaRefineWidget(QWidget):
         return combo
 
     @staticmethod
-    def _create_amount_spinbox(value):
+    def _create_amount_spinbox(value, maximum=255):
         spinbox = QSpinBox()
-        spinbox.setRange(0, 255)
+        spinbox.setRange(0, maximum)
         spinbox.setValue(value)
         return spinbox
 

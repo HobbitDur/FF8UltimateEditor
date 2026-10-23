@@ -15,6 +15,7 @@ from Common.dirtytracking import install_dirty_tracking
 from Common.fileregistry import FileRegistry
 from Common.filetoolbarwidget import FileToolbarWidget
 from Common.openedfilespanel import OpenedFilesPanel
+from Common.wheelguard import WheelGuard
 from ExeLauncher.cactiliolauncher import CactilioLauncher
 from ExeLauncher.delinglauncher import DelingLauncher
 from ExeLauncher.doomtrainlauncher import DoomtrainLauncher
@@ -347,6 +348,10 @@ class FF8UltimateEditorWidget(QWidget):
         # filter sees the KeyPress before the focused field does, so it wins regardless of focus.
         QApplication.instance().installEventFilter(self)
 
+        # The mouse wheel scrolls forms instead of changing the combo/spin box under the cursor.
+        self._wheel_guard = WheelGuard(self)
+        QApplication.instance().installEventFilter(self._wheel_guard)
+
         # Show a "*" in the window title whenever the active tool has something to save.
         self._file_toolbar.save_state_changed.connect(self._update_title_save_marker)
         self._update_title_save_marker(self._file_toolbar.save_button.isEnabled())
@@ -515,6 +520,7 @@ class FF8UltimateEditorWidget(QWidget):
             tool_list.append("Deling")
             tool_list.append("DelingCli")
         tool_list.append("VincentTim")
+        tool_list.append("FFNxEffects")      # FFNx's effect sources: built into Fujin's effect recorder
         return tool_list
 
     @staticmethod

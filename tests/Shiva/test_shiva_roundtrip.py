@@ -165,7 +165,7 @@ def test_refine_tab_edit_survives_a_save(game_data, tmp_path):
 
 @pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin")
 def test_refine_required_gf_level_is_byte_4(game_data, tmp_path):
-    """Byte 0x04 of a refine entry is the GF level the refine needs (byte 0x03 is separate and 0).
+    """Byte 0x04 of a refine entry is the GF level the refine needs (bytes 0x02-0x03 = amount received).
     Vanilla: level 1 everywhere except the two PS1 level-100 refines; an edit must survive a save."""
     from Shiva.ShivaRefine.refineview import build_refine_views
 
@@ -173,7 +173,7 @@ def test_refine_required_gf_level_is_byte_4(game_data, tmp_path):
     manager.load_file(str(MENU / "mngrphd.bin"), str(MENU / "mngrp.bin"))
     views = {(view.bin_name, view.name): view for view in build_refine_views(manager)}
     entries = [entry for view in views.values() for entry in view.entries]
-    assert all(entry.unknown_0x03 == 0 for entry in entries)
+    assert all(entry.amount_received <= 255 for entry in entries)
     level_100 = sorted((entry.element_in_id, entry.amount_required, entry.element_out_id)
                        for entry in entries if entry.required_gf_level == 100)
     assert level_100 == [(129, 100, 141), (161, 10, 18)]  # Curse Spike -> Dark Matter, Shaman Stone -> Hero-trial

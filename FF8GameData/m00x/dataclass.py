@@ -12,8 +12,7 @@ class TypeId:
 class Entry:
     text_offset: int = 0
     text_offset_size = 2
-    amount_received: int = 0
-    unknown_0x03: int = 0
+    amount_received: int = 0  # u16 at 0x02 (the refine and its menu window both read 2 bytes)
     # Byte 0x04: the refine needs a GF that learned the refine ability at this level or higher
     # (Menu_Prog19_RefineMenu_Init, max level -> task+0x47, compared `>=` in the refine update).
     # The PC exe forces that level to 100, so it is ignored unless the Customizer's
