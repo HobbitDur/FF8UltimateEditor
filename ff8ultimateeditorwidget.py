@@ -515,6 +515,7 @@ class FF8UltimateEditorWidget(QWidget):
             tool_list.append("Deling")
             tool_list.append("DelingCli")
         tool_list.append("VincentTim")
+        tool_list.append("FFNxEffects")      # FFNx's effect sources: built into Fujin's effect recorder
         return tool_list
 
     @staticmethod

@@ -106,7 +106,7 @@ def test_section_folder_rebuilds_the_monster_on_another_file(tools, tmp_path, mo
 
 
 @pytest.mark.ff8data(_battle_file(0), _battle_file(1))
-def test_dummy_monster_round_trips_every_section_but_its_ai(tools, tmp_path):
+def test_dummy_monster_round_trips_every_section(tools, tmp_path):
     source = _load(tools, 0)
     expected = _sections(source, tools)
     folder = tmp_path / "c0m000"
@@ -124,8 +124,19 @@ def test_dummy_monster_round_trips_every_section_but_its_ai(tools, tmp_path):
     for index in range(1, 7):   # 7, the stats, is not in `names`: the xlsx has no sheet for c0m000
         assert rebuilt_sections[index] == expected[index], f"section {index} differs"
     assert rebuilt_sections[9:] == expected[9:]
-    with pytest.raises(SectionFileError, match="does not compile"):
-        _quiet(apply_sections, rebuilt, folder, tools, ["ai"])
+    # Its AI prints texts by number (printAndLock("0"), "2") and c0m000 has no battle texts: a
+    # numeric text id is kept as it is (the texts can live elsewhere, 82c09b0), so it compiles -
+    # and, like every monster's, md -> dat -> md is stable once compiled (the compile keeps 2 of
+    # the enemy turn's 7 padding stops)
+    _quiet(apply_sections, rebuilt, folder, tools, ["ai"])
+    second_folder = tmp_path / "second"
+    _quiet(export_sections, rebuilt, second_folder, tools, ["ai"])
+    again = _load(tools, 1)
+    _quiet(apply_sections, again, second_folder, tools, ["ai"])
+    third_folder = tmp_path / "third"
+    _quiet(export_sections, again, third_folder, tools, ["ai"])
+    assert (third_folder / "ai.md").read_text(encoding="utf-8") == (second_folder / "ai.md").read_text(encoding="utf-8")
+    assert 'printAndLock("0")' in (second_folder / "ai.md").read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------------------------
