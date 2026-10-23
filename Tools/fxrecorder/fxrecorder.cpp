@@ -23,7 +23,8 @@
 // Arguments: <effect id> exe=FF8_EN.exe magic=<folder of the mag files> battle=<folder of the battle
 // files> out=<file> [model=N: every slot gets c0mN.dat (default 0; -1 = no model)] [ticks=N]
 // [modelfile=<file>: that .dat is read for the model instead of <battle>/c0mN.dat] [actors=0: the
-// models are loaded but not drawn; by default each tick draws them as the battle does]
+// models are loaded but not drawn, nor the parts of them an effect draws itself (Cure redraws its
+// target): the effect alone; by default each tick draws them as the battle does]
 // [slotK=<file> (K = 0-2 party, 3-6 enemies, as the battle's entities): the battle's cast instead of model=, one body per
 // slot - a monster c0mNNN.dat or a character d?cNNN.dat (its d?wNNN.dat with weaponK=<file>);
 // slots without a file stay empty] [target=K[,K..]: the effect's targets, any slot] [posK=x,y,z /
@@ -89,9 +90,16 @@ static std::string join(const std::string &dir, const std::string &name)
 }
 
 // ---------------------------------------------------------------- VRAM recording
+// where the actors' textures went (their files' palettes and pages, uploaded while load_models runs):
+// with actors=0 a primitive drawn with one of those CLUTs is an actor's model the effect draws itself
+// (Cure, Sleep, Meltdown... redraw their target, tinted, with their own inline renderer) and is left out
+struct VramRect { int x, y, w, h; };
+static std::vector<VramRect> g_actor_vram;
+static bool g_loading_actors = false;
 static void dump_rect(int t, const int16_t *rect, const uint16_t *data)
 {
 	int w = rect[2], h = rect[3];
+	if (g_loading_actors && w > 0 && h > 0) g_actor_vram.push_back({ rect[0], rect[1], w, h });
 	if (!g_out || w <= 0 || h <= 0 || w > 1024 || h > 512 || IsBadReadPtr(data, (size_t)w * h * 2)) return;
 	fprintf(g_out, "V %d %d %d %d %d ", t, rect[0], rect[1], w, h);
 	for (int i = 0; i < w * h; i++) fprintf(g_out, "%04X", data[i]);
@@ -269,6 +277,21 @@ static void write_packet(uint32_t fn, uint32_t bucket, uint32_t pkt)
 	fprintf(g_out, "\n");
 }
 static void walk_render_list(std::vector<Ins> &out); // the PC draw order (below, after the battle memory)
+static int g_actors = 1;          // actors=0: do not draw the battle's models
+// a textured polygon / sprite whose CLUT (the word after its first vertex: cmd, xy, uv + clut) lies in
+// the actors' VRAM: part of an actor's model
+static bool is_actor_packet(uint32_t pkt)
+{
+	if (IsBadReadPtr((void *)pkt, 16) || *(const uint8_t *)(pkt + 3) < 3) return false;
+	const uint32_t *w = (const uint32_t *)(pkt + 4);
+	uint32_t code = w[0] >> 24;
+	if (!(code & 4) || !((code >= 0x20 && code < 0x40) || (code >= 0x60 && code < 0x80))) return false;
+	uint32_t clut = w[2] >> 16;
+	int x = (clut & 0x3F) * 16, y = (clut >> 6) & 0x1FF;
+	for (const VramRect &r : g_actor_vram)
+		if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) return true;
+	return false;
+}
 static void write_tick(int t)
 {
 	if (!g_out) return;
@@ -279,6 +302,8 @@ static void write_tick(int t)
 	std::map<uint32_t, bool> seen;
 	for (const Ins &r : drawn) seen[r.pkt] = true;
 	for (const Ins &r : g_ins) if (!seen.count(r.pkt)) { drawn.push_back(r); seen[r.pkt] = true; }
+	if (!g_actors)
+		drawn.erase(std::remove_if(drawn.begin(), drawn.end(), [](const Ins &r) { return is_actor_packet(r.pkt); }), drawn.end());
 	fprintf(g_out, "R %d %u ordered\n", t, (unsigned)drawn.size());
 	for (const Ins &r : drawn) write_packet(r.fn, r.bucket, r.pkt);
 	const int16_t *eye = (const int16_t *)0xB8B7F0, *at = (const int16_t *)0xB8B7F8;
@@ -347,7 +372,6 @@ static void env_reset()
 
 static std::string g_modelfile;   // modelfile=: the target model's .dat, read instead of <battle>/c0mNNN.dat
 static std::string g_serve;       // the file a load in progress reads instead of the battle file it names
-static int g_actors = 1;          // actors=0: do not draw the battle's models
 static bool g_drawn_slot[7];      // the slots holding a model
 // a party slot's weapon (BattleAnimHeader + its anim cmd + attach rotation/offset: 68 bytes at
 // TASK_QUEUE_BATTLE_ENTITY.data + 17 dwords per slot), 0 for monsters, Zell, Edea and Kiros
@@ -856,7 +880,10 @@ int main(int argc, char **argv)
 	std::vector<uint8_t> a8def = readfile(join(O.battle, "a8def.tim"));
 	if (!a8def.empty()) dump_tim(0, a8def.data());
 	else printf("missing battle file a8def.tim (the battle's shared effect textures)\n");
-	if ((O.cast() || O.model >= 0) && !load_models()) return 1;
+	g_loading_actors = true;
+	bool loaded = !(O.cast() || O.model >= 0) || load_models();
+	g_loading_actors = false;
+	if (!loaded) return 1;
 	call0(0x56F9A0); // BS_memsetVars2: hit-effect queue (screen fades...)
 	int t = 0, cast_ticks = 0;
 	// The cast: the caster plays its cast plan (what its action sequence plays before the effect

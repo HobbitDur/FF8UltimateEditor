@@ -205,6 +205,18 @@ def test_effect_preview_party_pickers_and_effect_alone(qapp):
     wait_for_preview(qapp, view)
     assert len(view.recording.ticks) == 51                                      # Cure alone, no cast
     assert view.recording.frame(0, scale=0.125)[1].counts["polygons"] == 0      # no actor drawn
+    # ... nor the target Cure redraws itself (its own inline renderer, ticks 3-28): no primitive of
+    # the effect alone uses an actor's palette - the ones the actors are drawn with before Cure
+    alone = view.recording
+    view.actors_check.setChecked(True)
+    if os.path.exists(nativepreview.recording_path(1, view.cast().key())):
+        os.remove(nativepreview.recording_path(1, view.cast().key()))
+    assert view.record()
+    wait_for_preview(qapp, view)
+    actor_cluts = _textured_cluts(view.recording.ticks[0].packets)              # the cast: actors only
+    assert actor_cluts
+    assert not any(_textured_cluts(tick.packets) & actor_cluts for tick in alone.ticks)
+    assert sum(len(tick.packets) for tick in alone.ticks[3:29]) > 0             # Cure's light is there
 
 
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim",
@@ -255,6 +267,12 @@ def test_effect_preview_plays_a_scene_out_encounter(qapp):
     wait_for_preview(qapp, view)
     assert view.recording is not None and len(view.recording.ticks) > 51 and view.timer.isActive()   # cast + Cure
     view.play_button.setChecked(False)
+
+
+def _textured_cluts(packets):
+    """The CLUT words of the textured polygons / sprites of a tick (after the first vertex)."""
+    return {words[2] >> 16 for _bucket, _order, words in packets
+            if len(words) > 2 and words[0] >> 24 & 4 and (0x20 <= words[0] >> 24 < 0x40 or 0x60 <= words[0] >> 24 < 0x80)}
 
 
 def wait_for_preview(qapp, view):
