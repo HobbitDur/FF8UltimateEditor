@@ -12,9 +12,10 @@ import struct
 
 from PyQt6.QtCore import QBuffer, QByteArray, QLoggingCategory, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
+from PyQt6.QtMultimedia import QAudioOutput, QMediaDevices, QMediaPlayer
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
-                             QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QAbstractItemView, QTabWidget)
+                             QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QAbstractItemView, QTabWidget,
+                             QComboBox)
 
 from Common.filebinding import FileBinding
 from Common.autoimport import AutoImportSource
@@ -23,9 +24,9 @@ from FF8GameData.gamedata import GameData
 from Julia.juliamanager import JuliaManager
 from Julia.actorsoundwidget import ActorSoundWidget
 
-# Qt's FFmpeg backend dumps the stream layout to the console on every play.
+# Keep Qt's FFmpeg debug/info chatter quiet, but retain warnings and errors.
 # QT_LOGGING_RULES still overrides this, so it can be turned back on to debug.
-QLoggingCategory.setFilterRules("qt.multimedia.ffmpeg*=false")
+QLoggingCategory.setFilterRules("qt.multimedia.ffmpeg*.debug=false\nqt.multimedia.ffmpeg*.info=false")
 
 
 class JuliaWidget(QWidget):
@@ -55,10 +56,12 @@ class JuliaWidget(QWidget):
 
         # The buffer must outlive the play() call: the player streams from it.
         self._play_buffer = None
-        self.audio_output = QAudioOutput()
-        self.player = QMediaPlayer()
+        self.audio_output = QAudioOutput(self)
+        self.player = QMediaPlayer(self)
         self.player.setAudioOutput(self.audio_output)
         self.player.errorOccurred.connect(self._on_player_error)
+        self.player.mediaStatusChanged.connect(self._on_media_status)
+        self._playing_index = None
 
         self.setWindowTitle("Julia")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
@@ -132,7 +135,23 @@ class JuliaWidget(QWidget):
         self.archive_label = QLabel("Main files: audio.fmt + audio.dat — Import opens both files.")
         self.archive_label.setWordWrap(True)
         main_layout.addWidget(self.archive_label)
+        output_layout = QHBoxLayout()
+        output_layout.addWidget(QLabel("Audio output:"))
+        self.output_combo = QComboBox()
+        self.output_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.output_combo.setMinimumContentsLength(25)
+        self.output_combo.setToolTip("Choose the speakers or headphones used by both Julia tabs.")
+        self.output_combo.currentIndexChanged.connect(self._apply_audio_output)
+        output_layout.addWidget(self.output_combo, 1)
+        main_layout.addLayout(output_layout)
+        self.playback_label = QLabel()
+        self.playback_label.setWordWrap(True)
+        main_layout.addWidget(self.playback_label)
         main_layout.addWidget(self.tabs)
+
+        self.media_devices = QMediaDevices(self)
+        self.media_devices.audioOutputsChanged.connect(self._refresh_audio_outputs)
+        self._refresh_audio_outputs()
 
         self._update_action_buttons()
         self.audio_binding.load_opened_file()  # another tool instance may have opened one already
@@ -189,6 +208,35 @@ class JuliaWidget(QWidget):
         self.load_archive(fmt if os.path.isfile(fmt) else self.audio_binding.current_path, path)
 
     # ------------------------------------------------------------------ helpers
+    def _refresh_audio_outputs(self):
+        """Follow the system default, retaining an explicit choice while it exists."""
+        selected_id = self.output_combo.currentData()
+        devices = QMediaDevices.audioOutputs()
+        default = QMediaDevices.defaultAudioOutput()
+        self._audio_devices = {bytes(device.id()): device for device in devices}
+        self.output_combo.blockSignals(True)
+        try:
+            self.output_combo.clear()
+            self.output_combo.addItem(f"System default — {default.description() or 'no audio device'}", b"")
+            for device in devices:
+                self.output_combo.addItem(device.description(), bytes(device.id()))
+            selected = self.output_combo.findData(selected_id) if selected_id else 0
+            self.output_combo.setCurrentIndex(max(0, selected))
+        finally:
+            self.output_combo.blockSignals(False)
+        self._apply_audio_output()
+
+    def _selected_audio_device(self):
+        return self._audio_devices.get(self.output_combo.currentData(), QMediaDevices.defaultAudioOutput())
+
+    def _apply_audio_output(self):
+        device = self._selected_audio_device()
+        self.audio_output.setDevice(device)
+        if device.isNull():
+            self.playback_label.setText("No audio output detected. Connect speakers or headphones, then try Play again.")
+        else:
+            self.playback_label.setText(f"Audio output: {device.description()}")
+
     def _selected_index(self):
         rows = self.table.selectionModel().selectedRows()
         if not rows:
@@ -196,8 +244,9 @@ class JuliaWidget(QWidget):
         return rows[0].row()
 
     def _update_action_buttons(self):
-        has_selection = self._selected_index() is not None
-        self.play_button.setEnabled(has_selection)
+        index = self._selected_index()
+        has_selection = index is not None and index < len(self.manager.sounds)
+        self.play_button.setEnabled(has_selection and self.manager.sounds[index].is_valid)
         self.export_button.setEnabled(has_selection)
         self.replace_button.setEnabled(has_selection)
 
@@ -268,12 +317,25 @@ class JuliaWidget(QWidget):
 
     def play_sound(self, index):
         """Play an archive entry using the same player for both Julia tabs."""
+        if not 0 <= index < len(self.manager.sounds) or not self.manager.sounds[index].is_valid:
+            self.playback_label.setText(f"Sound #{index} has no audio data in the loaded archive.")
+            return
+        device = self._selected_audio_device()
+        if device.isNull():
+            self._apply_audio_output()
+            return
+        if not self.player.isAvailable():
+            self.playback_label.setText("Audio playback is unavailable. Check the PyQt6 multimedia installation and console output.")
+            return
         try:
             wav = self.manager.get_wav(index)
         except Exception as error:  # noqa: BLE001 - decoding can fail on exotic formats
             QMessageBox.warning(self, "Julia", f"Could not read this sound:\n{error}")
             return
         self.player.stop()
+        self._playing_index = index
+        self.audio_output.setDevice(device)
+        self.playback_label.setText(f"Loading sound #{index} — {device.description()}")
         buffer = QBuffer(self)
         buffer.setData(QByteArray(wav))
         buffer.open(QBuffer.OpenModeFlag.ReadOnly)
@@ -286,9 +348,21 @@ class JuliaWidget(QWidget):
             previous.deleteLater()
         self.player.play()
 
+    def _on_media_status(self, status):
+        if self._playing_index is None:
+            return
+        if status == QMediaPlayer.MediaStatus.BufferedMedia:
+            if self.player.hasAudio():
+                self.playback_label.setText(f"Playing sound #{self._playing_index} — {self.audio_output.device().description()}")
+            else:
+                self.playback_label.setText("The sound loaded without a playable audio track. Check the console for multimedia warnings.")
+        elif status == QMediaPlayer.MediaStatus.EndOfMedia:
+            self.playback_label.setText(f"Finished sound #{self._playing_index} — {self.audio_output.device().description()}")
+
     def _on_player_error(self, _error, error_string):
         # Playback is asynchronous, so failures arrive here rather than as an
         # exception out of play().
+        self.playback_label.setText(f"Could not play this sound: {error_string}")
         QMessageBox.warning(self, "Julia", f"Could not play this sound:\n{error_string}")
 
     def closeEvent(self, event):
@@ -326,6 +400,7 @@ class JuliaWidget(QWidget):
             QMessageBox.critical(self, "Julia", f"Could not import this WAV:\n{error}")
             return
         self._refresh_row(index)
+        self._update_action_buttons()
         self.info_label.setText(f"Sound {index} replaced (not saved yet - use the save button).")
 
     def export_all(self):

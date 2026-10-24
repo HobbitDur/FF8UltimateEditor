@@ -115,6 +115,8 @@ Edits the battle sound archive (`audio.fmt` / `audio.dat`), the main files on bo
 
 <img src="Resources/screenshots/julia.png" width="800">
 
+Use **Audio output** to select your speakers or headphones for either Julia tab. The system default follows changes to the default output, and the device list updates when devices are connected or disconnected. The playback status shows the selected output, loading/completion, missing devices, and playback errors. Empty archive entries cannot be played. If a sound finishes but is inaudible, select your listening device explicitly and check the system volume mixer. Multimedia warnings and errors remain visible in the Python console.
+
 ### Siren — item price editor (`price.bin`)
 Edits each item's buy price and sell price multiplier (the sell price the shop pays back is
 `round((buy price / 10 / 2) * sell multiplier)`). Ported from the original Siren tool.

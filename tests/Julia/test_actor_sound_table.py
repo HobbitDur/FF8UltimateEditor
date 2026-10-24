@@ -131,7 +131,7 @@ def test_widget_rejects_invalid_id_and_preserves_file_on_new_cancel(monkeypatch)
         app.processEvents()
 
 
-def test_slot_preview_uses_shared_archive_player_and_updates_after_edit():
+def test_slot_preview_uses_shared_archive_player_and_updates_after_edit(monkeypatch):
     app = QApplication.instance() or QApplication([])
     widget = JuliaWidget(game_data_folder=str(ROOT / "FF8GameData"))
     try:
@@ -146,7 +146,10 @@ def test_slot_preview_uses_shared_archive_player_and_updates_after_edit():
         sound.data_length = 2
         widget.manager.sounds = [sound] * 1232
         widget.manager.get_wav = lambda index: calls.append(("read", index)) or b"test wav"
-        widget.player = SimpleNamespace(stop=lambda: calls.append("stop"),
+        device = SimpleNamespace(isNull=lambda: False, description=lambda: "Test speakers")
+        monkeypatch.setattr(widget, "_selected_audio_device", lambda: device)
+        monkeypatch.setattr(widget.audio_output, "setDevice", lambda _device: None)
+        widget.player = SimpleNamespace(isAvailable=lambda: True, stop=lambda: calls.append("stop"),
                                         setSourceDevice=lambda *_args: calls.append("buffer"),
                                         play=lambda: calls.append("play"))
         editor.update_preview()

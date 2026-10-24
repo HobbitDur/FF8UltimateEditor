@@ -55,9 +55,9 @@ from Julia.juliamanager import JuliaManager
 # only its sound toggle is disabled (same soft dependency Julia has).
 try:
     from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
-    # Qt's FFmpeg backend dumps the stream layout to the console on every play (see
-    # Julia); QT_LOGGING_RULES still overrides this for debugging.
-    QLoggingCategory.setFilterRules("qt.multimedia.ffmpeg*=false")
+    # Keep debug/info chatter quiet (see Julia), retaining warnings and errors.
+    # QT_LOGGING_RULES still overrides this for debugging.
+    QLoggingCategory.setFilterRules("qt.multimedia.ffmpeg*.debug=false\nqt.multimedia.ffmpeg*.info=false")
     _MULTIMEDIA_AVAILABLE = True
 except ImportError:  # pragma: no cover - depends on the installed Qt build
     _MULTIMEDIA_AVAILABLE = False

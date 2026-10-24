@@ -23,7 +23,7 @@ from Julia.juliamanager import JuliaManager
 
 try:
     from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
-    QLoggingCategory.setFilterRules("qt.multimedia.ffmpeg*=false")
+    QLoggingCategory.setFilterRules("qt.multimedia.ffmpeg*.debug=false\nqt.multimedia.ffmpeg*.info=false")
     MULTIMEDIA_AVAILABLE = True
 except ImportError:  # pragma: no cover - depends on the installed Qt build
     MULTIMEDIA_AVAILABLE = False
