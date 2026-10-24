@@ -3,7 +3,7 @@ Tests for TonberryShop (shop file editor).
 
 The shop file is a flat array of NB_SHOP (20) shops, each holding
 NB_ITEM_PER_SHOP (16) two-byte entries:
-    - byte 0: item id (resolved to a name through Resources/item.txt)
+    - byte 0: item id (named through Resources/item.txt, or an opened kernel.bin)
     - byte 1: 0xFF => normal item, 0x00 => rare item
 
 A small synthetic shop file is built with known entries so the tests don't need
@@ -62,12 +62,12 @@ class TestTonberryManager:
 
         assert len(manager.shop_info) == NB_SHOP
         shop0 = manager.shop_info[0]
-        assert shop0.item[0] == "Potion"
+        assert shop0.item_id[0] == 0x01
         assert shop0.rare[0] is False
-        assert shop0.item[1] == "Phoenix Down"
+        assert shop0.item_id[1] == 0x07
         assert shop0.rare[1] is True
         # untouched slot
-        assert shop0.item[2] == "Nothing"
+        assert shop0.item_id[2] == 0x00
         assert shop0.rare[2] is False
 
     def test_write_without_modification_is_identical(self, manager, shop_file, tmp_path):
@@ -80,7 +80,7 @@ class TestTonberryManager:
     def test_modify_item_and_rarity(self, manager, shop_file, tmp_path):
         manager.read_shop_file(str(shop_file))
         manager.analyze_shop_file()
-        manager.shop_info[0].item[0] = "Hi-Potion"  # id 3
+        manager.shop_info[0].item_id[0] = 0x03  # Hi-Potion
         manager.shop_info[0].rare[0] = True
         saved = tmp_path / "saved_shop.bin"
         manager.write_shop_file(str(saved))
@@ -95,14 +95,14 @@ class TestTonberryManager:
     def test_write_defaults_to_loaded_path(self, manager, shop_file):
         manager.read_shop_file(str(shop_file))
         manager.analyze_shop_file()
-        manager.shop_info[0].item[0] = "Nothing"
+        manager.shop_info[0].item_id[0] = 0x00
         manager.write_shop_file()
         assert shop_file.read_bytes()[0] == 0x00
 
     def test_reload_roundtrip(self, manager, shop_file):
         manager.read_shop_file(str(shop_file))
         manager.analyze_shop_file()
-        manager.shop_info[NB_SHOP - 1].item[NB_ITEM - 1] = "Hi-Potion"
+        manager.shop_info[NB_SHOP - 1].item_id[NB_ITEM - 1] = 0x03
         manager.shop_info[NB_SHOP - 1].rare[NB_ITEM - 1] = True
         manager.write_shop_file()
 
@@ -110,5 +110,24 @@ class TestTonberryManager:
         reloaded.read_shop_file(str(shop_file))
         reloaded.analyze_shop_file()
         last = reloaded.shop_info[NB_SHOP - 1]
-        assert last.item[NB_ITEM - 1] == "Hi-Potion"
+        assert last.item_id[NB_ITEM - 1] == 0x03
         assert last.rare[NB_ITEM - 1] is True
+
+
+def test_items_past_the_game_ones_are_kept_and_named(manager, shop_file, tmp_path):
+    """FFNx's AddMoreItems adds items 199-255, named only by a kernel.bin: a shop holding one
+    keeps it (it used to be a KeyError), and the kernel names offer it."""
+    data = bytearray(shop_file.read_bytes())
+    data[4] = 230
+    shop_file.write_bytes(data)
+    manager.read_shop_file(str(shop_file))
+    manager.analyze_shop_file()
+    assert manager.shop_info[0].item_id[2] == 230
+    assert manager.item_name(230) == "Item 230"
+    manager.kernel_item_names = {230: "Mega Tonic", 1: "Potion"}
+    assert (230, "Mega Tonic") in manager.item_choices()
+    assert manager.item_id_from_name("Mega Tonic") == 230
+    manager.shop_info[0].item_id[3] = 231
+    saved = tmp_path / "saved.bin"
+    manager.write_shop_file(str(saved))
+    assert saved.read_bytes()[4] == 230 and saved.read_bytes()[6] == 231

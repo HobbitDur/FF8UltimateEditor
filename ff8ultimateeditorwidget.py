@@ -244,7 +244,8 @@ class FF8UltimateEditorWidget(QWidget):
 
         # Initialize internal tools
         self._shumi_translator_widget = ShumiTranslator(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
-        self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path), file_registry=self.file_registry)
+        self._tonberry_shop_widget = TonberryShop(resource_folder=os.path.join(resources_path), file_registry=self.file_registry,
+                                                 game_data_folder=os.path.join(game_data_path))
         self._ccgroup_widget = CCGroupWidget(icon_path=os.path.join(resources_path), game_data_path=os.path.join(game_data_path), settings=self.settings, file_registry=self.file_registry)
         self._cid_widget = CidWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._solomonring_widget = SolomonRingWidget(game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry,

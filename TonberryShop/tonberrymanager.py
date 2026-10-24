@@ -5,13 +5,15 @@ class Shop():
     NB_ITEM_PER_SHOP = 16
 
     def __init__(self):
-        self.item = [""] * self.NB_ITEM_PER_SHOP
+        # Item ids, as the file stores them: a name can be shared (or be an item FFNx's
+        # AddMoreItems adds, 199-255, which only a kernel.bin names), an id cannot.
+        self.item_id = [0] * self.NB_ITEM_PER_SHOP
         self.rare = [False] * self.NB_ITEM_PER_SHOP
 
     def __str__(self):
         str_return = ""
         for i in range(self.NB_ITEM_PER_SHOP):
-            str_return += f"Item{i + 1}: {self.item[i]}, rare: {str(self.rare[i])}\n"
+            str_return += f"Item{i + 1}: {self.item_id[i]}, rare: {str(self.rare[i])}\n"
         return str_return
 
 
@@ -31,9 +33,26 @@ class TonberryManager():
         self.shop_file_data = bytearray()
         self.file_path = ""
         self.shop_info = [Shop() for x in range(self.NB_SHOP)]
-        self.item_values = {}
+        self.item_values = {}   # the game's item names by id (item.txt, 0-198)
+        # Names from an opened kernel.bin ({id: name}), over item.txt's: a mod's renames, and the
+        # items FFNx's AddMoreItems adds (199-255).
+        self.kernel_item_names = {}
         self._item_file = os.path.join(resource_folder, "item.txt")
         self.__load_item_data(self._item_file)
+
+    def item_name(self, item_id):
+        return self.kernel_item_names.get(item_id) or self.item_values.get(item_id) or f"Item {item_id}"
+
+    def item_choices(self):
+        """[(id, name)] a shop slot can hold: the game's items, then those the kernel.bin adds."""
+        ids = sorted(set(self.item_values) | set(self.kernel_item_names))
+        return [(item_id, self.item_name(item_id)) for item_id in ids]
+
+    def item_id_from_name(self, name):
+        for item_id, item_name in self.item_choices():
+            if item_name == name:
+                return item_id
+        raise ValueError(f"Unknown item name '{name}'")
 
 
     def __load_item_data(self, file):
@@ -53,7 +72,7 @@ class TonberryManager():
         for shop_index in range(self.NB_SHOP):
             for item_index in range(Shop.NB_ITEM_PER_SHOP):
                 current_data_index = shop_index * Shop.NB_ITEM_PER_SHOP * self.NB_BYTE_PER_ITEM + item_index * self.NB_BYTE_PER_ITEM
-                self.shop_info[shop_index].item[item_index] = self.item_values[self.shop_file_data[current_data_index]]
+                self.shop_info[shop_index].item_id[item_index] = self.shop_file_data[current_data_index]
                 if self.shop_file_data[current_data_index + 1] == 0xFF:
                     rare = False
                 elif self.shop_file_data[current_data_index + 1] == 0x00:
@@ -69,10 +88,7 @@ class TonberryManager():
         for shop_index in range(self.NB_SHOP):
             for item_index in range(Shop.NB_ITEM_PER_SHOP):
                 current_data_index = shop_index * Shop.NB_ITEM_PER_SHOP * self.NB_BYTE_PER_ITEM + item_index * self.NB_BYTE_PER_ITEM
-                for key, value in self.item_values.items():
-                    if value == self.shop_info[shop_index].item[item_index]:
-                        self.shop_file_data[current_data_index] = key
-                        break
+                self.shop_file_data[current_data_index] = self.shop_info[shop_index].item_id[item_index] & 0xFF
                 if self.shop_info[shop_index].rare[item_index]:
                     rare = 0x00
                 else:

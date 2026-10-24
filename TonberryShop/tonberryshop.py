@@ -6,6 +6,8 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QCheckBox, QLabel, QFrame, QCo
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
+from Common.kernelnamesource import KernelNameSource
+from FF8GameData.gamedata import GameData
 from TonberryShop.tonberrymanager import TonberryManager, Shop
 
 
@@ -16,7 +18,7 @@ class TonberryShop(QWidget):
                   "shop-winhill-laguna.png", "", "", "shop-man-from-garden", "shops-esthar.png", "shops-esthar.png",
                   "shops-esthar.png"]
 
-    def __init__(self, resource_folder='Resources', file_registry=None):
+    def __init__(self, resource_folder='Resources', file_registry=None, game_data_folder="FF8GameData"):
 
         QWidget.__init__(self)
         if file_registry is None:  # The tool is used alone, it shares its files with nobody
@@ -36,6 +38,10 @@ class TonberryShop(QWidget):
         # shop.bin, this tool's one editable file, driven by the shared header toolbar.
         self.shop_binding = FileBinding("shop.bin", file_registry,
                                         load_callback=self.load_file, save_callback=self.save_file)
+        # kernel.bin, complementary: the names of the items a mod adds (FFNx AddMoreItems, 199+)
+        # or renames, so they can be put in a shop.
+        self.kernel_names = KernelNameSource(GameData(game_data_folder), file_registry)
+        self.kernel_names.changed.connect(self._on_kernel_names_changed)
 
         self.shop_list = QComboBox()
         self.shop_list.addItems(self.tonberry_manager.SHOP_NAME_LIST)
@@ -47,7 +53,6 @@ class TonberryShop(QWidget):
         self.item_label = [QLabel(f"Item n°{i + 1}: ") for i in range(Shop.NB_ITEM_PER_SHOP)]
         self.layout_single_item = [QHBoxLayout() for i in range(Shop.NB_ITEM_PER_SHOP)]
         for i in range(Shop.NB_ITEM_PER_SHOP):
-            self.item_combo[i].addItems(list(self.tonberry_manager.item_values.values()))
             self.item_combo[i].activated.connect(self.__item_combo_activated)
             self.item_rare[i].toggled.connect(self.__item_rare_activated)
 
@@ -86,11 +91,26 @@ class TonberryShop(QWidget):
         self.setLayout(self.layout_main)
         #self.show()
 
+        self._fill_item_combos()
         self.shop_binding.load_opened_file()  # Another tool may have opened shop.bin already
+        self.kernel_names.binding.load_opened_file()  # ...or a kernel.bin
 
     def file_bindings(self):
-        """The files the shared header toolbar drives for this tool (just shop.bin)."""
-        return [self.shop_binding]
+        """The files the shared header toolbar drives for this tool: shop.bin, and kernel.bin as a
+        complementary file naming the items."""
+        return [self.shop_binding, self.kernel_names.binding]
+
+    def _on_kernel_names_changed(self):
+        self.tonberry_manager.kernel_item_names = dict(self.kernel_names.items)
+        self._fill_item_combos()
+        self.reload_item()
+
+    def _fill_item_combos(self):
+        for combo in self.item_combo:
+            with QSignalBlocker(combo):
+                combo.clear()
+                for item_id, name in self.tonberry_manager.item_choices():
+                    combo.addItem(f"{item_id}: {name}" if item_id >= 199 else name, item_id)
 
     def load_file(self, file_name):
         self.file_path = file_name
@@ -111,8 +131,8 @@ class TonberryShop(QWidget):
 
     def __save_to_shop_info(self):
         for item_index in range(Shop.NB_ITEM_PER_SHOP):
-            self.tonberry_manager.shop_info[self.current_shop_index].item[item_index] = self.item_combo[
-                item_index].currentText()
+            self.tonberry_manager.shop_info[self.current_shop_index].item_id[item_index] = self.item_combo[
+                item_index].currentData()
             self.tonberry_manager.shop_info[self.current_shop_index].rare[item_index] = self.item_rare[
                 item_index].isChecked()
 
@@ -120,9 +140,12 @@ class TonberryShop(QWidget):
     def reload_item(self):
         self.current_shop_index = self.shop_list.currentIndex()
         for item_index in range(Shop.NB_ITEM_PER_SHOP):
-            with QSignalBlocker(self.item_combo[item_index]):
-                self.item_combo[item_index].setCurrentText(
-                    self.tonberry_manager.shop_info[self.current_shop_index].item[item_index])
+            combo = self.item_combo[item_index]
+            item_id = self.tonberry_manager.shop_info[self.current_shop_index].item_id[item_index]
+            with QSignalBlocker(combo):
+                if combo.findData(item_id) < 0:   # an item no list names: kept, by its id
+                    combo.addItem(f"{item_id}: {self.tonberry_manager.item_name(item_id)}", item_id)
+                combo.setCurrentIndex(combo.findData(item_id))
             with QSignalBlocker(self.item_rare[item_index]):
                 self.item_rare[item_index].setChecked(
                     self.tonberry_manager.shop_info[self.current_shop_index].rare[item_index])

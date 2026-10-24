@@ -1,9 +1,7 @@
 """Real-file round-trip test for TonberryShop (menu/shop.bin editor).
 
 Loads the original game shop.bin from extracted_files/ and checks the read/analyze/write
-cycle is stable (idempotent). shop.bin stores item names via an id->name table, so a
-name that maps back to a different id can shift bytes on the first save; what must hold
-is that a second identical round-trip produces exactly the same bytes.
+cycle is stable (idempotent): shops hold item ids, so the file comes back byte for byte.
 
 Needs the real file, skipped otherwise (ff8data marker).
 """
@@ -37,7 +35,7 @@ def test_real_shop_bin_roundtrip_is_idempotent(tmp_path):
     out2 = tmp_path / "shop2.bin"
     second.write_shop_file(str(out2))
 
-    assert out1.read_bytes() == out2.read_bytes()
+    assert out1.read_bytes() == out2.read_bytes() == SHOP_BIN.read_bytes()
     # Same size as the original (write patches in place, never grows the file)
     assert len(out1.read_bytes()) == len(SHOP_BIN.read_bytes())
 
@@ -45,7 +43,7 @@ def test_real_shop_bin_roundtrip_is_idempotent(tmp_path):
 @pytest.mark.ff8data("extracted_files/menu/shop.bin")
 def test_real_shop_parsed_shops_survive_reload(tmp_path):
     first = _read_analyze_write(None)
-    parsed = [(shop.item[:], shop.rare[:]) for shop in first.shop_info]
+    parsed = [(shop.item_id[:], shop.rare[:]) for shop in first.shop_info]
 
     out = tmp_path / "shop.bin"
     first.write_shop_file(str(out))
@@ -53,5 +51,5 @@ def test_real_shop_parsed_shops_survive_reload(tmp_path):
     reloaded = TonberryManager(resource_folder=RESOURCE_FOLDER)
     reloaded.read_shop_file(str(out))
     reloaded.analyze_shop_file()
-    reparsed = [(shop.item[:], shop.rare[:]) for shop in reloaded.shop_info]
+    reparsed = [(shop.item_id[:], shop.rare[:]) for shop in reloaded.shop_info]
     assert parsed == reparsed

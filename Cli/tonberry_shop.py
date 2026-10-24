@@ -23,23 +23,15 @@ def _load_manager(shop_bin_path: str):
     return manager
 
 
-def _item_id_from_name(manager, name: str) -> int:
-    for item_id, item_name in manager.item_values.items():
-        if item_name == name:
-            return item_id
-    raise ValueError(f"Unknown item name '{name}'")
-
-
 def _cmd_export_csv(args) -> int:
     from TonberryShop.tonberrymanager import Shop, TonberryManager
     manager = _load_manager(args.input)
     rows = []
     for shop_index, shop in enumerate(manager.shop_info):
         for slot in range(Shop.NB_ITEM_PER_SHOP):
-            item_name = shop.item[slot]
-            item_id = _item_id_from_name(manager, item_name)
+            item_id = shop.item_id[slot]
             rows.append([shop_index, TonberryManager.SHOP_NAME_LIST[shop_index], slot,
-                         item_id, item_name, int(shop.rare[slot])])
+                         item_id, manager.item_name(item_id), int(shop.rare[slot])])
     write_csv(args.output, CSV_HEADER, rows)
     print(f"[ok] {len(rows)} shop slots exported to {args.output}")
     return 0
@@ -53,11 +45,11 @@ def _cmd_import_csv(args) -> int:
             continue
         shop_index = int(row[0])
         slot = int(row[2])
-        item_id = int(row[3]) if str(row[3]).strip() else _item_id_from_name(manager, row[4])
-        if item_id not in manager.item_values:
-            raise ValueError(f"Unknown item id {item_id} (shop {shop_index}, slot {slot})")
+        item_id = int(row[3]) if str(row[3]).strip() else manager.item_id_from_name(row[4])
+        if not 0 <= item_id <= 255:   # FFNx AddMoreItems: ids up to 255
+            raise ValueError(f"Invalid item id {item_id} (shop {shop_index}, slot {slot})")
         shop = manager.shop_info[shop_index]
-        shop.item[slot] = manager.item_values[item_id]
+        shop.item_id[slot] = item_id
         shop.rare[slot] = parse_bool(row[5])
         applied += 1
     manager.write_shop_file(args.output or args.input)
