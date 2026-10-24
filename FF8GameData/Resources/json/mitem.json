@@ -2,10 +2,10 @@
 "item_type": [
     {"id": 0,  "name": "Heal character",       "description": "Restore HP and cure statuses of a character. HP restored = param1 x 50 (clamped to max HP).", "param1": "heal_amount", "param2": "status_mask"},
     {"id": 1,  "name": "Revive character",     "description": "Revive a KO character with 1/8 of max HP and cure statuses.", "param1": "unused", "param2": "status_mask"},
-    {"id": 2,  "name": "Full revive character","description": "Revive a KO character with full HP (Mega Phoenix like).", "param1": "unused", "param2": "unused"},
+    {"id": 2,  "name": "Full revive character","description": "Revive a KO character with full HP (field-menu Full-Life). Unused in vanilla: no item has this type (Phoenix Down and Mega Phoenix are type 1, 1/8 HP); the handler is complete. For the same effect in battle, set the kernel battle item attack type to 6 (Full-Life) instead of 5 (Life).", "param1": "unused", "param2": "unused"},
     {"id": 3,  "name": "Heal GF",              "description": "Restore HP of a Guardian Force. HP restored = param1 x 50.", "param1": "heal_amount", "param2": "unused"},
     {"id": 4,  "name": "Revive GF",            "description": "Revive a KO Guardian Force with 1/8 of max HP.", "param1": "unused", "param2": "unused"},
-    {"id": 5,  "name": "Full revive GF",       "description": "Revive a KO Guardian Force with full HP.", "param1": "unused", "param2": "unused"},
+    {"id": 5,  "name": "Full revive GF",       "description": "Revive a KO Guardian Force with full HP. Unused in vanilla: no item has this type (G-Returner is type 4, 1/8 HP); the handler is complete.", "param1": "unused", "param2": "unused"},
     {"id": 6,  "name": "Full restore",         "description": "Fully restore HP and cure statuses (Elixir/Megalixir like). Param2 is usually 0x7F (all curable statuses).", "param1": "unused", "param2": "status_mask"},
     {"id": 7,  "name": "Battle only",          "description": "Item only usable in battle (stones, Hero, Holy War...). The menu only checks the type, the battle effect is defined elsewhere.", "param1": "unused", "param2": "unused"},
     {"id": 8,  "name": "Ammo",                 "description": "Ammunition for Irvine's Shot limit break.", "param1": "unused", "param2": "unused"},
