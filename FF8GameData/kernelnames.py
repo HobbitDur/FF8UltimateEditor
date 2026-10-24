@@ -33,18 +33,21 @@ class NameList:
     """One list of names: where FF8GameData keeps it, and the kernel.bin section it comes from.
 
     The ids of a section are consecutive from `first_id`, which is not always 0: the item names
-    live in two sections, the 33 battle items (ids 0-32) and then all the others."""
+    live in two sections, the 33 battle items (ids 0-32) and then all the others. `count` stops a
+    list early: FFNx's AddMoreItems appends battle records for ids 199-254, which the item names
+    section already names (FF8GameData/itemids.py), so only the first 33 battle records name items."""
     name: str            # How this list is named in a changes file
     game_data_field: str  # The GameData attribute holding it
     json_key: str        # The key of the list inside it
     section_id: int      # The kernel.bin data section the names come from
     first_id: int = 0    # The id of that section's first entry
+    count: int = None    # How many of its entries name something (None: all of them)
 
 
 # Every name list a kernel.bin owns and a tool of this repository shows.
 NAME_LISTS = (
     NameList("magic", "magic_data_json", "magic", section_id=2),
-    NameList("item", "item_data_json", "items", section_id=8),
+    NameList("item", "item_data_json", "items", section_id=8, count=33),
     NameList("item", "item_data_json", "items", section_id=9, first_id=33),
     NameList("enemy_ability", "enemy_abilities_data_json", "abilities", section_id=4),
 )
@@ -109,9 +112,15 @@ def read_names(game_data, kernel_file, keep_unnamed=False) -> dict:
 
     kernel_manager = KernelManager(game_data)
     kernel_manager.load_file(str(kernel_file))
+    return _read_names(game_data, kernel_manager, keep_unnamed)
+
+
+def _read_names(game_data, kernel_manager, keep_unnamed=False) -> dict:
     names = {}
     for name_list in NAME_LISTS:
         section_names = _section_names(game_data, kernel_manager, name_list.section_id)
+        if name_list.count is not None:
+            section_names = section_names[:name_list.count]
         reserved = _reserved_ids(game_data, name_list.section_id)
         found = names.setdefault(name_list.name, {})
         for index, name in enumerate(section_names):
@@ -233,8 +242,9 @@ ABILITY_SECTION_IDS = (12, 13, 14, 15, 16, 17, 18)
 
 
 def read_weapon_and_ability_names(game_data, kernel_file) -> dict:
-    """{"weapon": [name by weapon id], "ability": [name by ability id]} of a kernel.bin, exactly
-    as the file holds them (an entry the file leaves unnamed has an empty name)."""
+    """{"weapon": [name by weapon id], "ability": [name by ability id], "item": {id: name}} of a
+    kernel.bin, exactly as the file holds them (an entry the file leaves unnamed has an empty
+    name). The items run to the last one the file defines, ids 199-255 with FFNx's AddMoreItems."""
     from ShumiTranslator.model.kernel.kernelmanager import KernelManager
 
     kernel_manager = KernelManager(game_data)
@@ -243,4 +253,5 @@ def read_weapon_and_ability_names(game_data, kernel_file) -> dict:
     for section_id in ABILITY_SECTION_IDS:
         abilities.extend(_section_names(game_data, kernel_manager, section_id))
     return {"weapon": _section_names(game_data, kernel_manager, WEAPON_SECTION_ID),
-            "ability": abilities}
+            "ability": abilities,
+            "item": _read_names(game_data, kernel_manager, keep_unnamed=True).get("item", {})}

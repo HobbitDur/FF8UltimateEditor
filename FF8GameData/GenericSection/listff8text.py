@@ -40,6 +40,13 @@ class ListFF8Text(Section):
                     if offset_list[j] != 0xFFFF:  # Unused data:
                         next_offset = offset_list[j]
                         break
+                # Entries may share a string or point back at an earlier one (FFNx's AddMoreItems
+                # test kernel names 57 items with one string): the next offset is then not where
+                # this string ends, and reading up to it gave an empty string - lost on save.
+                # The string runs to its terminator instead.
+                if offset != 0xFFFF and next_offset <= offset:
+                    end = self._data_hex.find(b"\x00", offset)
+                    next_offset = end + 1 if end >= 0 else len(self._data_hex)
             text_hex = self._data_hex[offset:next_offset]
             self.add_text(text_hex)
 

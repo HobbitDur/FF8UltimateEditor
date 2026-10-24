@@ -155,7 +155,8 @@ class KernelSectionTab(QWidget):
         self._learn_panel = None         # G-Forces: the learn slots + learn tree
 
         self._entries = []
-        self._group_paste_buttons = {}   # group name -> its Paste button (enabled once copied)
+        self._borrowed_names = {}        # entry index -> name from another section (set_borrowed_names)
+        self._group_paste_buttons = {}  # group name -> its Paste button (enabled once copied)
         self._unit_hints = []            # callables refreshing the "≈ N s" hints from their spinbox
         self._visible_indices = []       # list_widget row -> self._entries index (hides reserved ids)
         self._current_index = -1
@@ -1058,20 +1059,43 @@ class KernelSectionTab(QWidget):
             self._current_index = target_row
             self.list_widget.verticalScrollBar().setValue(prev_scroll)
 
+    def entry_id(self, index):
+        """The id an entry is known by: its position, unless the section numbers its entries
+        from elsewhere (the item names start at item 33, and the battle items added by FFNx's
+        AddMoreItems jump to 199 after the original 33 - "first_entry_id" / "appended_first_id")."""
+        appended_first = self.config.get("appended_first_id")
+        vanilla_count = self.config.get("vanilla_count")
+        if appended_first is not None and vanilla_count is not None and index >= vanilla_count:
+            return appended_first + index - vanilla_count
+        return self.config.get("first_entry_id", 0) + index
+
+    def set_borrowed_names(self, names):
+        """{entry index: name} shown for entries whose own text the game never displays (an added
+        battle item is named by its Item Names row); it is shown instead of their own text."""
+        self._borrowed_names = dict(names)
+        for row, entry_index in enumerate(self._visible_indices):
+            item = self.list_widget.item(row)
+            if item is not None:
+                item.setText(self._entry_label(entry_index, self._entries[entry_index]))
+
     def _entry_label(self, index, entry):
+        shown_id = self.entry_id(index)
         if self.entry_disabled(index):
-            return f"{index}: {entry.display_name(self.config.get('entry_fallback_name', 'Entry'))} (disabled)"
+            return f"{shown_id}: {entry.display_name(self.config.get('entry_fallback_name', 'Entry'))} (disabled)"
         text_name = entry.display_name("") if (self.text_labels and entry.has_text(0)) else ""
         static = self.entry_names[index] if (self.entry_names and index < len(self.entry_names)) else ""
+        if self._borrowed_names.get(index):
+            # The name the game shows wins over the entry's own, never-shown text.
+            return f"{shown_id}: {self._borrowed_names[index]}"
         # entry_name_primary: the static name (e.g. the GF name) is the identity; the
         # editable text (its attack name) is shown in parentheses.
         if self.config.get("entry_name_primary") and static:
-            return f"{index}: {static}" + (f" ({text_name})" if text_name else "")
+            return f"{shown_id}: {static}" + (f" ({text_name})" if text_name else "")
         if text_name:
-            return f"{index}: {text_name}"
+            return f"{shown_id}: {text_name}"
         if static:
-            return f"{index}: {static}"
-        return f"{index}: {self.config.get('entry_fallback_name', 'Entry')}"
+            return f"{shown_id}: {static}"
+        return f"{shown_id}: {self.config.get('entry_fallback_name', 'Entry')}"
 
     def current_entry_index(self):
         """``self._entries`` index of the selected row, or None when nothing is selected."""
@@ -1112,6 +1136,10 @@ class KernelSectionTab(QWidget):
         if len(self._entries) <= self.config.get("min_count", 0):
             return False
         if index is None or index < self._protected_count:
+            return False
+        # An id other data stores (an item) may only go from the end: removing one in the
+        # middle would hand every later id's inventory, shop and drop entries to its neighbour.
+        if self.config.get("remove_last_only") and index != len(self._entries) - 1:
             return False
         reserved_start = self.config.get("hidden_id_start")
         reserved_count = self.config.get("hidden_id_count") or 0

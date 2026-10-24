@@ -357,6 +357,21 @@ sec(8, 2, NAMEDESC, [("Data", [
 # 9: Non-battle item name/description offsets --------------------------------
 sec(9, 2, NAMEDESC, [], sub_size=4)
 
+# Both item sections may grow with FFNx's AddMoreItems patch (FF8GameData/itemids.py): the
+# names gain ids 199-255, the battle records ids 199-254. An item id is a position, used by
+# every inventory, shop, drop and script, so only the last entry may go ("remove_last_only").
+# "first_entry_id" / "appended_first_id" label each entry with its item id: section 9 row 0 is
+# item 33, and section 8's added records jump to 199 after the original 33.
+sections["8"]["growable"] = True
+sections["8"]["max_count"] = 89
+sections["8"]["vanilla_count"] = 33
+sections["8"]["appended_first_id"] = 199
+sections["8"]["remove_last_only"] = True
+sections["9"]["growable"] = True
+sections["9"]["max_count"] = 223
+sections["9"]["first_entry_id"] = 33
+sections["9"]["remove_last_only"] = True
+
 # 10: Non-junctionable GF attacks --------------------------------------------
 sec(10, 1, ["Name"], [("Data", [
     ("attack_animation", 2, "attack_animation", "Attack animation"),
@@ -1627,6 +1642,10 @@ for cfg in sections.values():
 for cfg in sections.values():
     for f in cfg["fields"]:
         if f.get("lookup") in ("battle_command", "command_ability_ref", "command_family"):
+            f["dynamic_lookup"] = True
+        # The items too (FFNx AddMoreItems): the picker offers the names the file holds,
+        # ids 199-255 included.
+        if f.get("lookup") == "item":
             f["dynamic_lookup"] = True
 
 with open(DEST, "w", encoding="utf-8") as f:

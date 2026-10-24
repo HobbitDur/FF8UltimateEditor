@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
+from FF8GameData import itemids
 from ShumiTranslator.model.kernel.kernelmanager import KernelManager
 from SolomonRing.kernellookups import LookupRegistry
 from SolomonRing.kernelentry import KernelEntry
@@ -238,6 +239,7 @@ class SolomonRingWidget(QWidget):
     def _remember_current_tab(self, index):
         self._commit_ability_tabs()
         self._commit_command_tab()
+        self._commit_item_tabs()
         if self.settings is not None:
             self.settings.setValue(self.CURRENT_TAB_KEY, index)
 
@@ -395,6 +397,7 @@ class SolomonRingWidget(QWidget):
         self._refresh_command_lookups()
         self._refresh_entry_budgets()
         self._refresh_slot_set_summaries()
+        self._refresh_item_names()
 
     def _refresh_slot_set_summaries(self):
         """Slot array's set-id fields reference Slot Sets (section 28), whose content is
@@ -601,6 +604,17 @@ class SolomonRingWidget(QWidget):
         COMMAND_DATA_SECTION:
             "Up to 255 entries: a battle command stores which one it uses in a byte where\n"
             "0xFF means \"none\".",
+        itemids.BATTLE_ITEM_SECTION:
+            "FFNx's AddMoreItems takes up to 56 added battle items, ids 199-254 (255 is the\n"
+            "engine's \"no item\" result of a random item pick). Every added battle item is\n"
+            "named by its Item Names row, created with it when missing; this tab's own name\n"
+            "and description of an added item are never shown. Only the last item can be\n"
+            "removed: inventories, shops and drops store items by id.",
+        itemids.NON_BATTLE_ITEM_SECTION:
+            "FFNx's AddMoreItems takes up to 57 added items, ids 199-255. Their field use\n"
+            "comes from mitem.bin (Kadowaki) and their price from price.bin (Siren), both\n"
+            "extended to the same id. Only the last item can be removed: inventories, shops\n"
+            "and drops store items by id.",
     }
 
     REMOVED_ENTRY = 0xFE
@@ -794,6 +808,80 @@ class SolomonRingWidget(QWidget):
                                 "command dispatch and loader compatibility.")
         return problems
 
+    # ---- items (FFNx AddMoreItems) ----------------------------------------------
+    # Item ids are positions in two sections: battle records 0-32 (section 8) and the names of
+    # 33-198 (section 9). AddMoreItems appends to both: section 9 row k is always item 33 + k,
+    # and the added battle records 33 + k are items 199 + k - so an added battle item needs its
+    # Item Names row, which holds its name (FF8GameData/itemids.py).
+
+    def _item_name_rows(self):
+        return self._ability_entry_count(itemids.NON_BATTLE_ITEM_SECTION)
+
+    def _battle_item_rows(self):
+        return self._ability_entry_count(itemids.BATTLE_ITEM_SECTION)
+
+    def item_problems(self):
+        """What FFNx's AddMoreItems loader would refuse in the current file (it then rejects the
+        whole kernel.bin), shown before saving."""
+        if not self.loaded_filename:
+            return []
+        return itemids.item_problems(self._battle_item_rows(), self._item_name_rows())
+
+    def _commit_item_tabs(self):
+        if not self.loaded_filename:
+            return
+        for section_id in (itemids.BATTLE_ITEM_SECTION, itemids.NON_BATTLE_ITEM_SECTION):
+            tab = self._section_tabs.get(section_id)
+            if tab is not None:
+                tab.commit()
+        self._refresh_item_names()
+
+    def _refresh_item_names(self):
+        """The "item" lookup (Shot's ammo picker) offers the items this file holds - renamed,
+        and ids 199-255 once added - and the added battle items show their Item Names name."""
+        battle_tab = self._section_tabs.get(itemids.BATTLE_ITEM_SECTION)
+        names_tab = self._section_tabs.get(itemids.NON_BATTLE_ITEM_SECTION)
+        if not self.loaded_filename or battle_tab is None or names_tab is None:
+            return
+        fallback = {entry["id"]: entry["name"] for entry in self.game_data.item_data_json["items"]}
+        names = {}
+        for index, entry in enumerate(battle_tab._entries[:itemids.VANILLA_BATTLE_ITEMS]):
+            names[index] = entry.get_text(0).strip() if entry.has_text(0) else ""
+        for index, entry in enumerate(names_tab._entries):
+            names[itemids.non_battle_row_to_item_id(index)] = entry.get_text(0).strip() if entry.has_text(0) else ""
+        entries = [{"value": item_id, "name": name or fallback.get(item_id) or f"Item {item_id}"}
+                   for item_id, name in sorted(names.items())]
+        self.registry.set_dynamic("item", entries)
+        by_id = {entry["value"]: entry["name"] for entry in entries}
+        battle_tab.set_borrowed_names({row: by_id.get(itemids.battle_row_to_item_id(row), "")
+                                       for row in range(itemids.VANILLA_BATTLE_ITEMS, len(battle_tab._entries))})
+        for tab in self._section_tabs.values():
+            tab.refresh_dynamic_combos()
+
+    def _add_item_name_rows_up_to(self, item_id):
+        """Give `item_id` its Item Names row (and every id before it), so an added battle item is
+        named. Returns how many rows were added."""
+        section = self._section_by_id(itemids.NON_BATTLE_ITEM_SECTION)
+        tab = self._section_tabs.get(itemids.NON_BATTLE_ITEM_SECTION)
+        if section is None or tab is None or section.section_text_linked is None:
+            return 0
+        tab.commit()
+        text_section = section.section_text_linked
+        nb_text = len(tab.text_labels) or 1
+        added = 0
+        while itemids.item_count(len(section.get_subsection_list())) <= item_id:
+            section.append_blank_subsection()
+            for _ in range(nb_text):
+                text_section.add_text(bytearray([0x00]))
+            new_index = len(section.get_subsection_list()) - 1
+            text_section.get_text_list()[new_index * nb_text].set_str(
+                f"Item {itemids.non_battle_row_to_item_id(new_index)}")
+            added += 1
+        if added:
+            tab.load_section(section, text_section)
+            tab.refresh_pool_status()
+        return added
+
     def _add_growable_entry(self, section_id):
         """Append one new blank entry to a "growable" data section (today, only Magic -
         kernel_bin_data.json "growable": true) and its linked name/description text,
@@ -846,6 +934,9 @@ class SolomonRingWidget(QWidget):
             for i in range(nb_text if text_section is not None else 0):
                 text_section.insert_text(index * nb_text + i, bytearray([0x00]))
 
+        if section_id == itemids.BATTLE_ITEM_SECTION:
+            self._add_item_name_rows_up_to(itemids.battle_row_to_item_id(len(section.get_subsection_list())))
+
         pad = 0
         if pooled:
             _insert_one(insert_index)
@@ -872,12 +963,15 @@ class SolomonRingWidget(QWidget):
         new_index = insert_index if pooled else len(section.get_subsection_list()) - 1
         if section_id == self.BATTLE_COMMAND_SECTION:
             self._init_new_battle_command(new_index, selected)
-        elif section_id == self.COMMAND_DATA_SECTION and selected is not None:
+        elif section_id in (self.COMMAND_DATA_SECTION, itemids.BATTLE_ITEM_SECTION) and selected is not None:
+            # A new effect / battle item starts as a copy of the selected one.
             subsections = section.get_subsection_list()
             subsections[new_index].get_data_list()[-1].get_data_hex()[:] = subsections[selected].get_data_list()[-1].get_data_hex()
-        if text_section is not None:
-            name_id = new_ability_id if pooled else new_index
-            text_section.get_text_list()[new_index * nb_text].set_str(f"{self._section_name(section_id)} {name_id}")
+        # An added battle item is named by its Item Names row: its own name would never show.
+        if text_section is not None and section_id != itemids.BATTLE_ITEM_SECTION:
+            name_id = new_ability_id if pooled else tab.entry_id(new_index)
+            prefix = "Item" if section_id == itemids.NON_BATTLE_ITEM_SECTION else self._section_name(section_id)
+            text_section.get_text_list()[new_index * nb_text].set_str(f"{prefix} {name_id}")
 
         tab.load_section(section, text_section)
         if insert_index is not None and insert_index in tab._visible_indices:
@@ -892,6 +986,9 @@ class SolomonRingWidget(QWidget):
         if section_id in (self.BATTLE_COMMAND_SECTION, self.COMMAND_DATA_SECTION):
             self._refresh_command_lookups()
             self._refresh_entry_budgets()
+        if section_id in (itemids.BATTLE_ITEM_SECTION, itemids.NON_BATTLE_ITEM_SECTION):
+            self._refresh_entry_budgets()
+            self._refresh_item_names()
 
     def _remove_growable_entry(self, section_id):
         """Delete the selected entry of a "growable" data section together with its linked
@@ -918,6 +1015,15 @@ class SolomonRingWidget(QWidget):
             self._refresh_entry_budgets()
             self._mark_edited()
             return
+        if section_id == itemids.NON_BATTLE_ITEM_SECTION and self._battle_item_rows() > itemids.VANILLA_BATTLE_ITEMS:
+            removed_item = itemids.non_battle_row_to_item_id(entry_index)
+            last_battle_item = itemids.battle_row_to_item_id(self._battle_item_rows() - 1)
+            if removed_item <= last_battle_item:
+                QMessageBox.information(
+                    self, "Remove item",
+                    f"Item {removed_item} has a battle record (Battle Items tab), which needs this name. "
+                    f"Remove battle item {last_battle_item} first.")
+                return
         tab.commit()  # same as adding: load_section() below rebuilds the entries from the data
         text_section = section.section_text_linked if tab.text_labels else None
         nb_text = len(tab.text_labels) or 1
@@ -992,6 +1098,9 @@ class SolomonRingWidget(QWidget):
         if commands:
             self._refresh_command_lookups()
             self._refresh_entry_budgets()
+        if section_id in (itemids.BATTLE_ITEM_SECTION, itemids.NON_BATTLE_ITEM_SECTION):
+            self._refresh_entry_budgets()
+            self._refresh_item_names()
 
     def compress_text(self):
         """Compress all kernel text (the shared toolbar's Compress button calls this)."""
@@ -1047,5 +1156,11 @@ class SolomonRingWidget(QWidget):
             QMessageBox.warning(self, "Added battle commands",
                                 "FFNx's AddMoreCommand will ignore the added battle commands "
                                 "until this is fixed:\n\n" + "\n".join(problems))
+        self._refresh_item_names()
+        problems = self.item_problems()
+        if problems:
+            QMessageBox.warning(self, "Added items",
+                                "FFNx's AddMoreItems will refuse this kernel.bin until this is fixed:\n\n"
+                                + "\n".join(problems))
         self.kernel_manager.save_file(self.loaded_filename)
         print(f"Saved to {self.loaded_filename}")
