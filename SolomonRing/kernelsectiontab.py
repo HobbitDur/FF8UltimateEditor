@@ -221,6 +221,7 @@ class KernelSectionTab(QWidget):
                     "like, and free some again by removing entries from another one.")
                 list_col.addWidget(self._pool_label)
                 self.refresh_pool_status()
+        self._list_col = list_col
         layout.addLayout(list_col)
 
         scroll = self._form_scroll = _ContentWidthScrollArea() if config.get("compact_form") else QScrollArea()
@@ -1080,6 +1081,8 @@ class KernelSectionTab(QWidget):
 
     def _entry_label(self, index, entry):
         shown_id = self.entry_id(index)
+        if self.entry_placeholder(index):
+            return f"{shown_id}: {self._borrowed_names.get(index) or 'Item'} (field item)"
         if self.entry_disabled(index):
             return f"{shown_id}: {entry.display_name(self.config.get('entry_fallback_name', 'Entry'))} (disabled)"
         text_name = entry.display_name("") if (self.text_labels and entry.has_text(0)) else ""
@@ -1104,7 +1107,21 @@ class KernelSectionTab(QWidget):
             return None
         return self._visible_indices[row]
 
+    def add_list_widget(self, widget):
+        """Put a widget of the owner's under the entry list (and its Add / Remove buttons)."""
+        self._list_col.insertWidget(self._list_col.indexOf(self._remove_btn) + 1
+                                    if self._remove_btn is not None else self._list_col.count(), widget)
+
+    def entry_placeholder(self, index):
+        """An added entry with all-zero data that only keeps the ids after it in place (a battle
+        item record of an item with no battle use - "placeholder_from_index")."""
+        start = self.config.get("placeholder_from_index")
+        return (start is not None and index is not None and index >= start
+                and not any(self._entries[index]._payload))
+
     def entry_disabled(self, index):
+        if self.entry_placeholder(index):
+            return True
         field = self.config.get("removed_entry_field")
         if not self.config.get("keep_removed_entries") or not field or index is None:
             return False

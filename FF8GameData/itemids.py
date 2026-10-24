@@ -13,8 +13,11 @@ AddMoreItems (FFNx branch AddMoreItems) grows both without moving any original i
   the engine's "no item" result of the random battle-item pick, so it never has a battle record.
 
 Every id from 33 up, the added battle items included, is named by its section 9 row; the
-section 8 text of an added record is never shown. FFNx refuses a kernel.bin whose added battle
-records reach past the last section 9 row, since that item would have no name.
+section 8 text of an added record is never shown. An added record whose data (everything after
+its two text offsets) is all zero is a placeholder: that item has no battle use. That is how an
+item past the first added ones gets battle use while the ones before it stay field-only. FFNx
+refuses a kernel.bin whose added battle records reach past the last section 9 row, since that
+item would have no name.
 
 menu/mitem.bin and menu/price.bin are flat 4-byte rows by item id: 199 rows vanilla, up to 256.
 A save keeps the vanilla 198 inventory slots, plus all 255 in a block AddMoreItems writes in the

@@ -1,7 +1,7 @@
 import json
 import os
 
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, QSignalBlocker
 from PyQt6.QtWidgets import (
     QTabWidget, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QMessageBox, QGroupBox, QPushButton
 )
@@ -199,6 +199,8 @@ class SolomonRingWidget(QWidget):
                 tab.command_type_requested.connect(self._add_command_type)
                 preview_layout(False)
                 return container
+            if section_id == itemids.BATTLE_ITEM_SECTION:
+                self._add_battle_use_button(tab)
             return tab
         inner = QTabWidget()
         inner.setTabPosition(QTabWidget.TabPosition.West)
@@ -323,6 +325,8 @@ class SolomonRingWidget(QWidget):
     def load_file(self, filename):
         self.loaded_filename = filename
         self.kernel_manager.load_file(filename)
+        self._battle_data_kept = {}   # item id -> battle data switched off since the last save
+        self._sync_battle_rows()
         self._populate_tabs()
         self.tabs.setEnabled(True)
         for button in self.elemdef_buttons.values():
@@ -398,6 +402,7 @@ class SolomonRingWidget(QWidget):
         self._refresh_entry_budgets()
         self._refresh_slot_set_summaries()
         self._refresh_item_names()
+        self._refresh_battle_use_button()
 
     def _refresh_slot_set_summaries(self):
         """Slot array's set-id fields reference Slot Sets (section 28), whose content is
@@ -605,16 +610,16 @@ class SolomonRingWidget(QWidget):
             "Up to 255 entries: a battle command stores which one it uses in a byte where\n"
             "0xFF means \"none\".",
         itemids.BATTLE_ITEM_SECTION:
-            "FFNx's AddMoreItems takes up to 56 added battle items, ids 199-254 (255 is the\n"
-            "engine's \"no item\" result of a random item pick). Every added battle item is\n"
-            "named by its Item Names row, created with it when missing; this tab's own name\n"
-            "and description of an added item are never shown. Only the last item can be\n"
-            "removed: inventories, shops and drops store items by id.",
+            "FFNx's AddMoreItems gives battle use to items 199-254 (255 is the engine's\n"
+            "\"no item\" result of a random item pick). Every added item has a record here,\n"
+            "greyed until \"Usable in battle\" is on. Its name and description are on Item Names\n"
+            "(this tab's own name of an added item is never shown). \"+ Add entry\" adds a new\n"
+            "item on both tabs; only the last item can be removed, as items are stored by id.",
         itemids.NON_BATTLE_ITEM_SECTION:
             "FFNx's AddMoreItems takes up to 57 added items, ids 199-255. Their field use\n"
             "comes from mitem.bin (Kadowaki) and their price from price.bin (Siren), both\n"
-            "extended to the same id. Only the last item can be removed: inventories, shops\n"
-            "and drops store items by id.",
+            "extended to the same id; battle use is switched on, on Battle Items. Only the last\n"
+            "item can be removed: inventories, shops and drops store items by id.",
     }
 
     REMOVED_ENTRY = 0xFE
@@ -635,6 +640,13 @@ class SolomonRingWidget(QWidget):
         """(counter text, may another entry be added) for a section with a "max_count"."""
         if not self.loaded_filename:
             return "", False
+        if section_id == itemids.BATTLE_ITEM_SECTION:
+            added = len(self._section_entries(section_id)) - itemids.VANILLA_BATTLE_ITEMS
+            battle = sum(1 for item_id in range(itemids.FIRST_ADDED_ITEM, itemids.LAST_ITEM_ID)
+                         if self.item_has_battle_use(item_id))
+            next_id = itemids.item_count(self._item_name_rows())
+            return (f"{battle} of {added} added items usable in battle",
+                    next_id <= itemids.LAST_ITEM_ID)
         used = self._ability_entry_count(section_id)
         maximum = self._section_configs[str(section_id)]["max_count"]
         removed = sum(self._entry_removed(section_id, i, e)
@@ -858,29 +870,187 @@ class SolomonRingWidget(QWidget):
         for tab in self._section_tabs.values():
             tab.refresh_dynamic_combos()
 
-    def _add_item_name_rows_up_to(self, item_id):
-        """Give `item_id` its Item Names row (and every id before it), so an added battle item is
-        named. Returns how many rows were added."""
-        section = self._section_by_id(itemids.NON_BATTLE_ITEM_SECTION)
-        tab = self._section_tabs.get(itemids.NON_BATTLE_ITEM_SECTION)
-        if section is None or tab is None or section.section_text_linked is None:
-            return 0
-        tab.commit()
+    def item_has_battle_use(self, item_id):
+        """Whether an item has a real battle record (not none, not a placeholder)."""
+        row = itemids.item_id_to_battle_row(item_id)
+        entries = self._section_entries(itemids.BATTLE_ITEM_SECTION)
+        return row is not None and row < len(entries) and any(entries[row]._payload)
+
+    def _item_texts_per_entry(self, section_id):
+        return len(self._section_configs[str(section_id)].get("text_labels") or []) or 1
+
+    def _sync_battle_rows(self):
+        """Every added item that can have a battle record (199-254) has one, a placeholder (all
+        zero: no battle use, greyed on Battle Items) unless it is usable in battle; the records of
+        items that no longer exist go. So both tabs list the same items."""
+        section = self._section_by_id(itemids.BATTLE_ITEM_SECTION)
+        if section is None or section.section_text_linked is None:
+            return
         text_section = section.section_text_linked
-        nb_text = len(tab.text_labels) or 1
-        added = 0
-        while itemids.item_count(len(section.get_subsection_list())) <= item_id:
+        nb_text = self._item_texts_per_entry(itemids.BATTLE_ITEM_SECTION)
+        added = max(0, min(self._item_name_rows() - itemids.VANILLA_NON_BATTLE_ITEMS,
+                           itemids.MAX_ADDED_BATTLE_ITEMS))
+        target = itemids.VANILLA_BATTLE_ITEMS + added
+        while len(section.get_subsection_list()) < target:
             section.append_blank_subsection()
             for _ in range(nb_text):
                 text_section.add_text(bytearray([0x00]))
-            new_index = len(section.get_subsection_list()) - 1
-            text_section.get_text_list()[new_index * nb_text].set_str(
-                f"Item {itemids.non_battle_row_to_item_id(new_index)}")
-            added += 1
-        if added:
-            tab.load_section(section, text_section)
-            tab.refresh_pool_status()
-        return added
+        entries = self._section_entries(itemids.BATTLE_ITEM_SECTION)
+        while len(entries) > target and not any(entries[-1]._payload):
+            section.remove_subsection(len(entries) - 1)
+            for _ in range(nb_text):
+                text_section.remove_text((len(entries) - 1) * nb_text)
+            entries = self._section_entries(itemids.BATTLE_ITEM_SECTION)
+
+    def set_item_battle_use(self, item_id, usable):
+        """Give an added item (199-254) battle use - its record gets back the data it had before
+        it was switched off this session, or the Potion's - or take it away: the record becomes a
+        placeholder, its data kept until the next save in case it is switched back on.
+        Returns whether anything changed."""
+        row = itemids.item_id_to_battle_row(item_id)
+        section = self._section_by_id(itemids.BATTLE_ITEM_SECTION)
+        tab = self._section_tabs.get(itemids.BATTLE_ITEM_SECTION)
+        if row is None or row < itemids.VANILLA_BATTLE_ITEMS or section is None or tab is None \
+                or row >= len(section.get_subsection_list()) or usable == self.item_has_battle_use(item_id):
+            return False
+        tab.commit()
+        subsections = section.get_subsection_list()
+        payload = subsections[row].get_data_list()[-1].get_data_hex()
+        if usable:
+            payload[:] = self._battle_data_kept.pop(item_id, None) or \
+                subsections[1].get_data_list()[-1].get_data_hex()
+        else:
+            self._battle_data_kept[item_id] = bytes(payload)
+            payload[:] = bytes(len(payload))
+        tab.load_section(section, section.section_text_linked)
+        if row in tab._visible_indices:
+            tab.list_widget.setCurrentRow(tab._visible_indices.index(row))
+        self._refresh_entry_budgets()
+        self._refresh_item_names()
+        self._refresh_battle_use_button()
+        self._mark_edited()
+        return True
+
+    def _add_battle_use_button(self, tab):
+        """The "Usable in battle" switch under Battle Items' Add / Remove entry."""
+        button = self.battle_use_button = QPushButton("Usable in battle")
+        button.setCheckable(True)
+        button.setToolTip(
+            "An item added to the game (199-254) has a Battle Items record, greyed while it is not\n"
+            "usable in battle. Switching this on makes it a battle item (FFNx AddMoreItems): it\n"
+            "appears in the battle Item menu, after the game's own battle items, with the battle data\n"
+            "edited here (the Potion's at first). Switching it off makes it a field item again; its\n"
+            "battle data is erased when the file is saved. 255 can never be a battle item.")
+        button.clicked.connect(self._on_battle_use_clicked)
+        tab.list_widget.currentRowChanged.connect(lambda _row: self._refresh_battle_use_button())
+        tab.add_list_widget(button)
+        self._refresh_battle_use_button()
+
+    def _selected_battle_item_id(self):
+        tab = self._section_tabs.get(itemids.BATTLE_ITEM_SECTION)
+        index = tab.current_entry_index() if tab else None
+        return None if index is None else itemids.battle_row_to_item_id(index)
+
+    def _refresh_battle_use_button(self):
+        button = getattr(self, "battle_use_button", None)
+        if button is None:
+            return
+        item_id = self._selected_battle_item_id()
+        added = bool(self.loaded_filename) and item_id is not None and item_id >= itemids.FIRST_ADDED_ITEM
+        with QSignalBlocker(button):
+            button.setChecked(bool(added and self.item_has_battle_use(item_id)))
+        button.setEnabled(added)
+
+    def _on_battle_use_clicked(self, usable):
+        item_id = self._selected_battle_item_id()
+        if item_id is None:
+            return
+        if not usable and QMessageBox.question(
+                self, "Field item",
+                f"Item {item_id} will no longer be usable in battle. All its battle data will be lost "
+                "when the file is saved. Continue?") != QMessageBox.StandardButton.Yes:
+            self._refresh_battle_use_button()
+            return
+        self.set_item_battle_use(item_id, usable)
+
+    def _add_item(self, section_id):
+        """"+ Add entry" on either item tab: a new item at the next free id, with its name row and,
+        up to 254, its Battle Items record - not usable in battle until switched on."""
+        if self._item_name_rows() >= itemids.MAX_NON_BATTLE_ITEM_ROWS:
+            return
+        names_section = self._section_by_id(itemids.NON_BATTLE_ITEM_SECTION)
+        names_tab = self._section_tabs[itemids.NON_BATTLE_ITEM_SECTION]
+        battle_section = self._section_by_id(itemids.BATTLE_ITEM_SECTION)
+        battle_tab = self._section_tabs[itemids.BATTLE_ITEM_SECTION]
+        if names_section is None or names_section.section_text_linked is None:
+            return
+        names_tab.commit()
+        battle_tab.commit()
+        text_section = names_section.section_text_linked
+        nb_text = self._item_texts_per_entry(itemids.NON_BATTLE_ITEM_SECTION)
+        names_section.append_blank_subsection()
+        for _ in range(nb_text):
+            text_section.add_text(bytearray([0x00]))
+        new_row = len(names_section.get_subsection_list()) - 1
+        item_id = itemids.non_battle_row_to_item_id(new_row)
+        text_section.get_text_list()[new_row * nb_text].set_str(f"Item {item_id}")
+        self._sync_battle_rows()
+        names_tab.load_section(names_section, text_section)
+        battle_tab.load_section(battle_section, battle_section.section_text_linked)
+        self._select_item(section_id, item_id)
+        self._after_item_change()
+
+    def _remove_last_item(self, section_id):
+        """"- Remove entry" on either item tab: the last added item goes, name and battle record
+        (an id is a position: one in the middle would shift every item after it)."""
+        item_id = itemids.item_count(self._item_name_rows()) - 1
+        if item_id < itemids.FIRST_ADDED_ITEM:
+            return
+        if section_id == itemids.BATTLE_ITEM_SECTION and self._selected_battle_item_id() != item_id:
+            QMessageBox.information(self, "Remove item",
+                                    f"Only the last item, {item_id}, can be removed: its id is its place.")
+            return
+        if self.item_has_battle_use(item_id) and QMessageBox.question(
+                self, "Remove item",
+                f"Item {item_id} is usable in battle. Removing it loses its name and its battle data. "
+                "Continue?") != QMessageBox.StandardButton.Yes:
+            return
+        names_section = self._section_by_id(itemids.NON_BATTLE_ITEM_SECTION)
+        names_tab = self._section_tabs[itemids.NON_BATTLE_ITEM_SECTION]
+        battle_section = self._section_by_id(itemids.BATTLE_ITEM_SECTION)
+        battle_tab = self._section_tabs[itemids.BATTLE_ITEM_SECTION]
+        names_tab.commit()
+        battle_tab.commit()
+        row = itemids.item_id_to_battle_row(item_id)
+        if row is not None and row < len(battle_section.get_subsection_list()):
+            payload = battle_section.get_subsection_list()[row].get_data_list()[-1].get_data_hex()
+            payload[:] = bytes(len(payload))      # so _sync_battle_rows drops the record
+        self._battle_data_kept.pop(item_id, None)
+        nb_text = self._item_texts_per_entry(itemids.NON_BATTLE_ITEM_SECTION)
+        last = len(names_section.get_subsection_list()) - 1
+        names_section.remove_subsection(last)
+        for _ in range(nb_text):
+            names_section.section_text_linked.remove_text(last * nb_text)
+        self._sync_battle_rows()
+        names_tab.load_section(names_section, names_section.section_text_linked)
+        battle_tab.load_section(battle_section, battle_section.section_text_linked)
+        self._select_item(section_id, item_id - 1)
+        self._after_item_change()
+
+    def _select_item(self, section_id, item_id):
+        tab = self._section_tabs[section_id]
+        row = (itemids.item_id_to_battle_row(item_id) if section_id == itemids.BATTLE_ITEM_SECTION
+               else item_id - itemids.VANILLA_BATTLE_ITEMS)
+        if row is not None and row in tab._visible_indices:
+            tab.list_widget.setCurrentRow(tab._visible_indices.index(row))
+        elif tab._visible_indices:
+            tab.list_widget.setCurrentRow(len(tab._visible_indices) - 1)
+
+    def _after_item_change(self):
+        self._refresh_entry_budgets()
+        self._refresh_item_names()
+        self._refresh_battle_use_button()
+        self._mark_edited()
 
     def _add_growable_entry(self, section_id):
         """Append one new blank entry to a "growable" data section (today, only Magic -
@@ -892,6 +1062,9 @@ class SolomonRingWidget(QWidget):
         hides that id range from its list entirely (kernel_section_fields.json's
         hidden_id_start/count), so the placeholder rows never actually appear - they're
         only labelled here for anyone inspecting the raw file outside SolomonRing."""
+        if section_id in (itemids.BATTLE_ITEM_SECTION, itemids.NON_BATTLE_ITEM_SECTION):
+            self._add_item(section_id)
+            return
         section = next((s for s in self.kernel_manager.section_list if s is not None and s.id == section_id), None)
         tab = self._section_tabs.get(section_id)
         # Command ability data is the one growable section without any text.
@@ -934,9 +1107,6 @@ class SolomonRingWidget(QWidget):
             for i in range(nb_text if text_section is not None else 0):
                 text_section.insert_text(index * nb_text + i, bytearray([0x00]))
 
-        if section_id == itemids.BATTLE_ITEM_SECTION:
-            self._add_item_name_rows_up_to(itemids.battle_row_to_item_id(len(section.get_subsection_list())))
-
         pad = 0
         if pooled:
             _insert_one(insert_index)
@@ -963,12 +1133,11 @@ class SolomonRingWidget(QWidget):
         new_index = insert_index if pooled else len(section.get_subsection_list()) - 1
         if section_id == self.BATTLE_COMMAND_SECTION:
             self._init_new_battle_command(new_index, selected)
-        elif section_id in (self.COMMAND_DATA_SECTION, itemids.BATTLE_ITEM_SECTION) and selected is not None:
-            # A new effect / battle item starts as a copy of the selected one.
+        elif section_id == self.COMMAND_DATA_SECTION and selected is not None:
+            # A new effect starts as a copy of the selected one.
             subsections = section.get_subsection_list()
             subsections[new_index].get_data_list()[-1].get_data_hex()[:] = subsections[selected].get_data_list()[-1].get_data_hex()
-        # An added battle item is named by its Item Names row: its own name would never show.
-        if text_section is not None and section_id != itemids.BATTLE_ITEM_SECTION:
+        if text_section is not None:
             name_id = new_ability_id if pooled else tab.entry_id(new_index)
             prefix = "Item" if section_id == itemids.NON_BATTLE_ITEM_SECTION else self._section_name(section_id)
             text_section.get_text_list()[new_index * nb_text].set_str(f"{prefix} {name_id}")
@@ -1005,6 +1174,9 @@ class SolomonRingWidget(QWidget):
         entry_index = tab.current_entry_index()
         if not tab.can_remove(entry_index):
             return
+        if section_id in (itemids.BATTLE_ITEM_SECTION, itemids.NON_BATTLE_ITEM_SECTION):
+            self._remove_last_item(section_id)
+            return
         if section_id == self.BATTLE_COMMAND_SECTION and entry_index < self.VANILLA_COMMAND_COUNT:
             tab.commit()
             entry = self._section_entries(section_id)[entry_index]
@@ -1015,15 +1187,6 @@ class SolomonRingWidget(QWidget):
             self._refresh_entry_budgets()
             self._mark_edited()
             return
-        if section_id == itemids.NON_BATTLE_ITEM_SECTION and self._battle_item_rows() > itemids.VANILLA_BATTLE_ITEMS:
-            removed_item = itemids.non_battle_row_to_item_id(entry_index)
-            last_battle_item = itemids.battle_row_to_item_id(self._battle_item_rows() - 1)
-            if removed_item <= last_battle_item:
-                QMessageBox.information(
-                    self, "Remove item",
-                    f"Item {removed_item} has a battle record (Battle Items tab), which needs this name. "
-                    f"Remove battle item {last_battle_item} first.")
-                return
         tab.commit()  # same as adding: load_section() below rebuilds the entries from the data
         text_section = section.section_text_linked if tab.text_labels else None
         nb_text = len(tab.text_labels) or 1
@@ -1101,6 +1264,7 @@ class SolomonRingWidget(QWidget):
         if section_id in (itemids.BATTLE_ITEM_SECTION, itemids.NON_BATTLE_ITEM_SECTION):
             self._refresh_entry_budgets()
             self._refresh_item_names()
+            self._refresh_battle_use_button()
 
     def compress_text(self):
         """Compress all kernel text (the shared toolbar's Compress button calls this)."""
@@ -1163,4 +1327,5 @@ class SolomonRingWidget(QWidget):
                                 "FFNx's AddMoreItems will refuse this kernel.bin until this is fixed:\n\n"
                                 + "\n".join(problems))
         self.kernel_manager.save_file(self.loaded_filename)
+        self._battle_data_kept = {}   # the placeholders' data is gone from the file now
         print(f"Saved to {self.loaded_filename}")

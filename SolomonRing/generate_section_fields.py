@@ -359,13 +359,16 @@ sec(9, 2, NAMEDESC, [], sub_size=4)
 
 # Both item sections may grow with FFNx's AddMoreItems patch (FF8GameData/itemids.py): the
 # names gain ids 199-255, the battle records ids 199-254. An item id is a position, used by
-# every inventory, shop, drop and script, so only the last entry may go ("remove_last_only").
+# every inventory, shop, drop and script, so only the last item may go ("remove_last_only").
 # "first_entry_id" / "appended_first_id" label each entry with its item id: section 9 row 0 is
-# item 33, and section 8's added records jump to 199 after the original 33.
+# item 33, and section 8's added records jump to 199 after the original 33. Every added item
+# (up to 254) has a battle record; one whose data is all zero is a placeholder - that item has
+# no battle use - shown greyed until "Usable in battle" is switched on ("placeholder_from_index").
 sections["8"]["growable"] = True
 sections["8"]["max_count"] = 89
 sections["8"]["vanilla_count"] = 33
 sections["8"]["appended_first_id"] = 199
+sections["8"]["placeholder_from_index"] = 33
 sections["8"]["remove_last_only"] = True
 sections["9"]["growable"] = True
 sections["9"]["max_count"] = 223

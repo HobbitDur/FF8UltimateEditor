@@ -122,9 +122,10 @@ Edits each item's buy price and sell price multiplier (the sell price the shop p
 ### Adding items (FFNx AddMoreItems)
 FFNx's AddMoreItems lets a mod add items 199-255 and gives the player 255 inventory slots
 (English 2013 executable). Item ids are positions, so items are only added and removed at the end:
-- **SolomonRing**: *Item Names* gets the name and description of every new item (199-255). An
-  item usable in battle also gets a *Battle Items* record (199-254), which adds its *Item Names*
-  row when missing. Saving warns about anything FFNx would refuse.
+- **SolomonRing**: **+ Add entry** (on *Item Names* or *Battle Items*) adds the next item to both
+  tabs. Its name and description are on *Item Names*. On *Battle Items* it stays greyed (a field
+  item) until **Usable in battle** is switched on (199-254); its battle data is edited there.
+  Saving warns about anything FFNx would refuse.
 - **Kadowaki** (`mitem.bin`) and **Siren** (`price.bin`): **+ Add item** gives the new item its
   field use and price, up to item 255.
 - Open the mod's `kernel.bin` as a complementary file and the new items are named and offered

@@ -142,55 +142,120 @@ def test_solomonring_shows_and_keeps_the_added_items(qapp, tmp_path):
     assert reloaded._section_tabs[9].list_widget.item(222).text() == "255: Hero Drink"
 
 
+def _yes(monkeypatch, answers):
+    """QMessageBox.question answering from `answers` (Yes / No), and recording what it asked."""
+    asked = []
+
+    def question(*args, **kwargs):
+        asked.append(args[2])
+        return QMessageBox.StandardButton.Yes if answers.pop(0) else QMessageBox.StandardButton.No
+    monkeypatch.setattr(QMessageBox, "question", question)
+    return asked
+
+
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
-def test_adding_a_battle_item_gives_it_a_name_row(qapp, tmp_path):
-    """A new battle record is item 199; FFNx needs an Item Names row for it, so one is added."""
+def test_a_new_item_is_on_both_tabs_and_greyed_until_usable_in_battle(qapp, tmp_path):
+    """"+ Add entry" on either tab adds the next item to both: its name, and its Battle Items
+    record greyed (a placeholder: no battle use, nothing to edit) until "Usable in battle" is on.
+    Records are tied to ids by position, so any added item can be a battle item."""
     work = tmp_path / "kernel.bin"
     work.write_bytes(KERNEL.read_bytes())
     widget = _widget(work)
     battle, names = widget._section_tabs[8], widget._section_tabs[9]
-    battle.list_widget.setCurrentRow(1)              # Potion: the new record copies it
-    battle._add_btn.click()
-    assert len(battle._entries) == 34 and len(names._entries) == 167
-    assert battle.current_entry_index() == 33
-    assert battle.list_widget.item(33).text() == "199: Item 199"
-    assert bytes(battle._entries[33]._payload) == bytes(battle._entries[1]._payload)
-    assert widget.item_problems() == []
+    button = widget.battle_use_button
+    battle.list_widget.setCurrentRow(1)
+    assert not button.isEnabled()                        # the game's own battle items
+    battle._add_btn.click()                              # item 199, from Battle Items
+    names._add_btn.click()                               # item 200, from Item Names
+    assert len(names._entries) == 168 and len(battle._entries) == 35
+    assert battle.list_widget.item(33).text() == "199: Item 199 (field item)"
+    assert battle.entry_disabled(33) and battle.entry_disabled(34)
+    assert names.current_entry_index() == 167
+    battle.list_widget.setCurrentRow(34)                 # item 200
+    assert button.isEnabled() and not button.isChecked()
+    assert not battle._form_host.isEnabled()
 
-    names.list_widget.setCurrentRow(166)
+    button.click()                                       # usable in battle: the Potion's data
+    assert widget.item_has_battle_use(200) and not widget.item_has_battle_use(199)
+    assert bytes(battle._entries[34]._payload) == bytes(battle._entries[1]._payload)
+    assert battle.list_widget.item(34).text() == "200: Item 200" and battle._form_host.isEnabled()
+    names.list_widget.setCurrentRow(167)
     names._text_widgets[0].setText("Mega Tonic")
     widget._commit_item_tabs()
-    assert battle.list_widget.item(33).text() == "199: Mega Tonic"
+    assert battle.list_widget.item(34).text() == "200: Mega Tonic"
+    assert widget.item_problems() == []
     widget._save_kernel()
-    assert _item_sections(work) == (34, 167, True)
+    assert _item_sections(work) == (35, 168, True)
+
+    reloaded = _widget(work)
+    assert [reloaded.item_has_battle_use(i) for i in (199, 200)] == [False, True]
+    assert reloaded._section_tabs[8].list_widget.count() == 35
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_switching_battle_use_off_asks_and_erases_the_data_on_save(qapp, tmp_path, monkeypatch):
+    asked = _yes(monkeypatch, [False, True, True])
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(extended_kernel(KERNEL.read_bytes(), added_names=1, added_battle=1))
+    widget = _widget(work)
+    battle, button = widget._section_tabs[8], widget.battle_use_button
+    battle.list_widget.setCurrentRow(33)                 # item 199, a battle item
+    assert button.isChecked()
+    battle._field_widgets["attack_power"][2].setValue(77)   # typed in the form
+    button.click()                                       # "No": still a battle item
+    assert "lost when the file is saved" in asked[-1] and button.isChecked()
+    assert widget.item_has_battle_use(199)
+    button.click()                                       # "Yes": a field item
+    assert not widget.item_has_battle_use(199) and not button.isChecked()
+    button.click()                                       # back on before saving: its data is back
+    assert widget.item_has_battle_use(199) and battle._entries[33].get("attack_power") == 77
+    battle.list_widget.setCurrentRow(33)
+    button.click()                                       # "Yes" again, then save
+    widget._save_kernel()
+    assert _item_contents(work)[0][33][0] == bytes(20)
+    reloaded = _widget(work)
+    reloaded._section_tabs[8].list_widget.setCurrentRow(33)
+    reloaded.battle_use_button.click()                   # the old data is gone: the Potion's
+    assert bytes(reloaded._section_tabs[8]._entries[33]._payload) == \
+        bytes(reloaded._section_tabs[8]._entries[1]._payload)
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
 def test_only_the_last_item_can_be_removed(qapp, tmp_path, monkeypatch):
+    """An id is a position: only the last item goes, from either tab, name and record together
+    (asking first when it is a battle item)."""
+    asked = _yes(monkeypatch, [True])
     shown = []
     monkeypatch.setattr(QMessageBox, "information", lambda *args, **kwargs: shown.append(args[2]))
     work = tmp_path / "kernel.bin"
     work.write_bytes(extended_kernel(KERNEL.read_bytes(), added_names=3, added_battle=2))
     widget = _widget(work)
     battle, names = widget._section_tabs[8], widget._section_tabs[9]
-    for tab, vanilla_row in ((battle, 32), (names, 165)):
-        tab.list_widget.setCurrentRow(vanilla_row)
+    assert len(battle._entries) == 36                    # 201 gets its (greyed) record on load
+    for tab, row in ((battle, 32), (names, 165), (battle, 33), (names, 166)):
+        tab.list_widget.setCurrentRow(row)
         assert not tab._remove_btn.isEnabled()
-    names.list_widget.setCurrentRow(166)                 # item 199, not the last
-    assert not names._remove_btn.isEnabled()
-
-    names.list_widget.setCurrentRow(168)                 # item 201: no battle record, free to go
-    names._remove_btn.click()
-    assert len(names._entries) == 168
-    names.list_widget.setCurrentRow(167)                 # item 200 still has a battle record
-    names._remove_btn.click()
-    assert len(names._entries) == 168 and "Remove battle item 200 first" in shown[-1]
-
-    battle.list_widget.setCurrentRow(34)
+    battle.list_widget.setCurrentRow(35)                 # item 201, a field item: no question
     battle._remove_btn.click()
-    assert len(battle._entries) == 34
+    assert len(names._entries) == 168 and len(battle._entries) == 35 and not asked
+    names.list_widget.setCurrentRow(167)                 # item 200, a battle item: asked
     names._remove_btn.click()
-    assert len(names._entries) == 167
+    assert "usable in battle" in asked[-1]
+    assert len(names._entries) == 167 and len(battle._entries) == 34
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_item_255_has_no_battle_record(qapp, tmp_path, monkeypatch):
+    shown = []
+    monkeypatch.setattr(QMessageBox, "information", lambda *args, **kwargs: shown.append(args[2]))
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(extended_kernel(KERNEL.read_bytes(), added_names=57, added_battle=0))
+    widget = _widget(work)
+    battle = widget._section_tabs[8]
+    assert len(battle._entries) == 89 and not battle._add_btn.isEnabled()
+    battle.list_widget.setCurrentRow(88)                 # item 254, while 255 is the last item
+    battle._remove_btn.click()
+    assert "Only the last item, 255" in shown[-1] and len(battle._entries) == 89
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
