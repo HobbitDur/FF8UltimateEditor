@@ -42,6 +42,16 @@ class KernelNameSource(QObject):
     def loaded(self):
         return bool(self.weapons or self.abilities)
 
+    def item_entries(self):
+        """[{"value", "name"}] of the items a tool offers: the game's 0-198 (item.json, renamed by
+        the kernel.bin), then the ones the kernel.bin adds with FFNx's AddMoreItems (199-255)."""
+        entries = [{"value": item["id"], "name": self.items.get(item["id"]) or item["name"]}
+                   for item in (getattr(self.game_data, "item_data_json", None) or {}).get("items", [])
+                   if item["id"] < 199]
+        entries += [{"value": item_id, "name": name or f"Item {item_id}"}
+                    for item_id, name in sorted(self.items.items()) if item_id >= 199]
+        return entries
+
     def item_name(self, item_id):
         """The kernel.bin name of an item, else item.json's, else "Item <id>"."""
         name = self.items.get(item_id)

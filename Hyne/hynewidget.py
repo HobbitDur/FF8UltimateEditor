@@ -20,7 +20,6 @@ RESERVED_TOOLTIP = ("Read-only: this byte has no meaning in the game (confirmed 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
-from FF8GameData import itemids
 from FF8GameData.gamedata import GameData
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
@@ -224,12 +223,7 @@ class HyneWidget(QWidget):
         there is one, then the items it adds with FFNx's AddMoreItems (199-255) - which only a
         kernel.bin names, so without one they are not offered (a slot already holding one keeps
         it, shown by its id)."""
-        kernel = self.kernel_names.items
-        choices = [{"value": e["value"], "name": kernel.get(e["value"]) or e["name"]}
-                   for e in self._item_entries if e["value"] < itemids.VANILLA_ITEM_COUNT]
-        choices += [{"value": item_id, "name": name or f"Item {item_id}"}
-                    for item_id, name in sorted(kernel.items()) if item_id >= itemids.VANILLA_ITEM_COUNT]
-        return choices
+        return self.kernel_names.item_entries()
 
     # ── Small widget helpers ─────────────────────────────────────────────
 

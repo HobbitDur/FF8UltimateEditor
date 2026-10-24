@@ -30,10 +30,6 @@ class JunkshopWidget(QWidget):
         self.game_data.load_item_data()
         self.manager = JunkshopManager(self.game_data)
 
-        # Ordered item id/name lists so a combo box index maps to the real item id
-        self.item_ids = [item["id"] for item in self.game_data.item_data_json["items"]]
-        self.item_names = [item["name"] for item in self.game_data.item_data_json["items"]]
-
         self.setWindowTitle("Junkshop")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'junkshop.ico')))
 
@@ -80,8 +76,7 @@ class JunkshopWidget(QWidget):
         self.quantity_spinboxes = []
         recipe_form = QFormLayout()
         for i in range(WeaponUpgrade.NB_ITEM):
-            item_combobox = QComboBox()
-            item_combobox.addItems(self.item_names)
+            item_combobox = QComboBox()   # filled by _fill_item_combos: the item id is each entry's data
             item_combobox.setToolTip("Item consumed by this recipe slot (Nothing = slot disabled)")
             item_combobox.currentIndexChanged.connect(self._on_data_changed)
 
@@ -120,6 +115,7 @@ class JunkshopWidget(QWidget):
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
 
+        self._fill_item_combos()
         self.mwepon_binding.load_opened_file()  # Another tool may have opened mwepon.bin already
         self.kernel_names.binding.load_opened_file()  # ...or a kernel.bin
 
@@ -128,8 +124,21 @@ class JunkshopWidget(QWidget):
         a complementary file naming the weapons."""
         return [self.mwepon_binding, self.kernel_names.binding]
 
+    def _fill_item_combos(self):
+        """The recipe items: the game's, then those a kernel.bin adds (FFNx AddMoreItems, 199+)."""
+        entries = self.kernel_names.item_entries()
+        for combo in self.item_comboboxes:
+            with QSignalBlocker(combo):
+                combo.clear()
+                for entry in entries:
+                    combo.addItem(f"{entry['value']}: {entry['name']}" if entry["value"] >= 199
+                                  else entry["name"], entry["value"])
+
     def _on_kernel_names_changed(self):
-        """A kernel.bin was opened or removed: re-label the weapons (their data is untouched)."""
+        """A kernel.bin was opened or removed: re-label the weapons and items (their data is
+        untouched)."""
+        self._fill_item_combos()
+        self.reload_selected_weapon()
         self.weapon_notice.setVisible(not self.kernel_names.weapons)
         self.manager.set_weapon_names(self.kernel_names.weapons)
         for row, weapon in enumerate(self.manager.weapon_upgrades):
@@ -163,8 +172,11 @@ class JunkshopWidget(QWidget):
         self.name_offset_label.setText(f"0x{weapon.name_offset:04X}")
         for i in range(WeaponUpgrade.NB_ITEM):
             item_id, quantity = weapon.items[i]
-            with QSignalBlocker(self.item_comboboxes[i]):
-                self.item_comboboxes[i].setCurrentIndex(self._combo_index_for_item(item_id))
+            combo = self.item_comboboxes[i]
+            with QSignalBlocker(combo):
+                if combo.findData(item_id) < 0:   # no list names it: kept, by its id
+                    combo.addItem(f"{item_id}: (unknown)", item_id)
+                combo.setCurrentIndex(combo.findData(item_id))
             with QSignalBlocker(self.quantity_spinboxes[i]):
                 self.quantity_spinboxes[i].setValue(quantity)
 
@@ -174,16 +186,11 @@ class JunkshopWidget(QWidget):
             return self.manager.weapon_upgrades[index]
         return None
 
-    def _combo_index_for_item(self, item_id):
-        if item_id in self.item_ids:
-            return self.item_ids.index(item_id)
-        return 0
-
     def _on_data_changed(self):
         weapon = self._selected_weapon()
         if not weapon:
             return
         weapon.price = self.price_spinbox.value()
         for i in range(WeaponUpgrade.NB_ITEM):
-            weapon.items[i][0] = self.item_ids[self.item_comboboxes[i].currentIndex()]
+            weapon.items[i][0] = self.item_comboboxes[i].currentData()
             weapon.items[i][1] = self.quantity_spinboxes[i].value()

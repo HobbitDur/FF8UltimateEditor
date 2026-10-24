@@ -160,3 +160,34 @@ class TestJunkshopManager:
         reloaded.load_file(str(file_path))
         assert reloaded.weapon_upgrades[0].price == 2500
         assert reloaded.weapon_upgrades[0].items[3] == [11, 22]
+
+
+@pytest.fixture(scope="module")
+def qapp():
+    from PyQt6.QtWidgets import QApplication
+    app = QApplication.instance() or QApplication([])
+    yield app
+
+
+def test_a_recipe_item_past_the_game_ones_survives_an_edit(qapp, tmp_path):
+    """FFNx's AddMoreItems adds items 199-255. A recipe using one was shown as the first entry of
+    the list and written back as item 0 on the next edit; it is kept now, and a kernel.bin that
+    defines it names it and offers it."""
+    from Junkshop.junkshopwidget import JunkshopWidget
+    path = tmp_path / "mwepon.bin"
+    path.write_bytes(_weapon_bytes(0x10, 0, 80, [(230, 2), (1, 1), (0, 0), (0, 0)]))
+    widget = JunkshopWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
+    widget.load_file(str(path))
+    combo = widget.item_comboboxes[0]
+    assert combo.currentData() == 230 and combo.currentText() == "230: (unknown)"
+    widget.quantity_spinboxes[0].setValue(3)
+    widget.save_file()
+    assert path.read_bytes()[4:6] == bytes([230, 3])
+
+    widget.kernel_names.items = {230: "Mega Tonic"}
+    widget.kernel_names.changed.emit()
+    combo = widget.item_comboboxes[0]
+    assert combo.currentText() == "230: Mega Tonic"
+    combo.setCurrentIndex(combo.findData(1))
+    widget.save_file()
+    assert path.read_bytes()[4] == 1
