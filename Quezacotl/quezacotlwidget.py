@@ -180,6 +180,8 @@ class QuezacotlWidget(QWidget):
             check.setText(f"{name} ({self._weapon_characters.get(bit, '?')})" if name
                           else f"Weapon {bit}")
             check.setEnabled(bool(names.weapons))
+        if self.manager.item_entries:
+            self._reload_items()   # the item names, and the items 199-255 a mod adds, come from it too
 
     # ── Small widget helpers ─────────────────────────────────────────────
 
@@ -1053,7 +1055,9 @@ class QuezacotlWidget(QWidget):
         self.items_table.setRowCount(0)
         self.items_table.setRowCount(len(self.manager.item_entries))
         for row, entry in enumerate(self.manager.item_entries):
-            combo = self._enum_combo(self._item_entries, adjust_size=True)
+            # The game's items, renamed by an open kernel.bin, then the ones it adds with FFNx's
+            # AddMoreItems (199-255) - a starting inventory may hold those too.
+            combo = self._enum_combo(self.kernel_names.item_entries(), adjust_size=True)
             self._select_combo(combo, entry.item_id)
             combo.currentIndexChanged.connect(self._make_item_id_handler(entry, combo))
             self.items_table.setCellWidget(row, 0, combo)
