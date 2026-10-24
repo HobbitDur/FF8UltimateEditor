@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QSpinBox, QDoubleSpinBox, QLineEdit, QGroupBox, QFormLayout, QTabWidget, QCheckBox,
     QGridLayout, QScrollArea, QComboBox, QTableWidget, QHeaderView, QAbstractSpinBox,
-    QSizePolicy, QMessageBox,
+    QSizePolicy, QMessageBox, QPushButton,
 )
 
 U32_MAX = 0xFFFFFFFF
@@ -20,6 +20,7 @@ RESERVED_TOOLTIP = ("Read-only: this byte has no meaning in the game (confirmed 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
+from FF8GameData import itemids
 from FF8GameData.gamedata import GameData
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
@@ -215,6 +216,20 @@ class HyneWidget(QWidget):
             check.setText(f"{name} ({self._weapon_characters.get(bit, '?')})" if name
                           else f"Weapon {bit}")
             check.setEnabled(bool(names.weapons))
+        if self.manager.item_entries:
+            self._reload_items()   # the item names (and ids 199-255) come from it too
+
+    def _item_choices(self):
+        """The items an inventory slot offers: the game's 0-198, named by the open kernel.bin when
+        there is one, then the items it adds with FFNx's AddMoreItems (199-255) - which only a
+        kernel.bin names, so without one they are not offered (a slot already holding one keeps
+        it, shown by its id)."""
+        kernel = self.kernel_names.items
+        choices = [{"value": e["value"], "name": kernel.get(e["value"]) or e["name"]}
+                   for e in self._item_entries if e["value"] < itemids.VANILLA_ITEM_COUNT]
+        choices += [{"value": item_id, "name": name or f"Item {item_id}"}
+                    for item_id, name in sorted(kernel.items()) if item_id >= itemids.VANILLA_ITEM_COUNT]
+        return choices
 
     # ── Small widget helpers ─────────────────────────────────────────────
 
@@ -1106,22 +1121,57 @@ class HyneWidget(QWidget):
 
     # ── Items tab ────────────────────────────────────────────────────────
 
+    ITEM_EXTENSION_TEXT = {
+        "none": "198 inventory slots.",
+        "stale": ("198 inventory slots. The save has an FFNx AddMoreItems block that FFNx ignores "
+                  "(damaged, or the inventory changed after it): FFNx empties slots 199-255."),
+        "extended": ("255 inventory slots (FFNx AddMoreItems). The first 198 are also the save's "
+                     "own inventory, which the game without FFNx reads."),
+    }
+
     def _build_items_tab(self):
         self.items_table = QTableWidget(0, 2)
         self.items_table.setHorizontalHeaderLabels(["Item", "Quantity"])
         self._configure_list_table(self.items_table)
-        return self.items_table
+        self.item_extension_label = QLabel()
+        self.item_extension_label.setWordWrap(True)
+        self.item_extension_button = QPushButton("Use 255 slots (FFNx AddMoreItems)")
+        self.item_extension_button.setToolTip(
+            "Add FFNx AddMoreItems' inventory block to this save: slots 199-255, after the 198 the\n"
+            "game has. Only FFNx with AddMoreItems uses them; the game without it keeps the first 198.\n"
+            "Items 199-255 themselves come from a kernel.bin made with SolomonRing.")
+        self.item_extension_button.clicked.connect(self._enable_item_extension)
+        top = QHBoxLayout()
+        top.addWidget(self.item_extension_label, 1)
+        top.addWidget(self.item_extension_button)
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.addLayout(top)
+        layout.addWidget(self.items_table)
+        return tab
+
+    def _enable_item_extension(self):
+        self.manager.enable_item_extension()
+        self._reload_items()
+        dirty_state = getattr(self, "dirty_state", None)
+        if dirty_state is not None:
+            dirty_state.mark()
 
     def _reload_items(self):
+        state = self.manager.item_extension
+        self.item_extension_label.setText(self.ITEM_EXTENSION_TEXT[state])
+        self.item_extension_button.setVisible(state != "extended")
+        choices = self._item_choices()
         self.items_table.setRowCount(0)
         self.items_table.setRowCount(len(self.manager.item_entries))
         for row, entry in enumerate(self.manager.item_entries):
-            combo = self._enum_combo(self._item_entries, adjust_size=True)
+            combo = self._enum_combo(choices, adjust_size=True)
             self._select_combo(combo, entry.item_id)
             combo.currentIndexChanged.connect(self._make_item_id_handler(entry, combo))
             self.items_table.setCellWidget(row, 0, combo)
 
-            qty = self._spinbox(0, 0xFF, tooltip="Amount held")
+            # FFNx's 255-slot block accepts at most 100 of an item (it keeps an item's slots valid).
+            qty = self._spinbox(0, 100 if state == "extended" else 0xFF, tooltip="Amount held")
             self._set_spin_value(qty, entry.quantity)
             qty.valueChanged.connect(self._make_item_qty_handler(entry))
             self.items_table.setCellWidget(row, 1, qty)

@@ -24,6 +24,15 @@ Bytes outside the parsed entries (shops cache, worldmap/chocobo-world/script-var
 past the item table, the header) are preserved byte-for-byte: the manager keeps the whole
 8192-byte image in one buffer and every entry is a thin view over it, so anything never
 decoded is simply never touched.
+
+FFNx's AddMoreItems (255 inventory slots instead of 198, FF8GameData/itemids.py) keeps all its
+slots in a 522-byte block in the image's unused tail, outside the CRC:
+  [0x1600..0x1603] magic 0x4D495846, [0x1604] u16 version 1, [0x1606] u16 slot count 255,
+  [0x1608] u32 FNV-1a over the 510 slot bytes, [0x160C..] 255 x (u8 item id, u8 quantity).
+FFNx uses the block only when it is valid AND its first 198 slots equal the savemap's own item
+table (otherwise the vanilla table was changed after it, by the game or a tool, and FFNx takes
+that table and empties slots 199-255). So with a block this tool edits its 255 slots and copies
+the first 198 into the savemap's table on save; without one the save is edited as vanilla.
 """
 import os
 import re
@@ -54,6 +63,43 @@ CRC_OFFSET_1 = HEADER_SIZE + 0        # savemap+0
 CRC_OFFSET_2 = HEADER_SIZE + 5024     # savemap+5024
 CRC_SPAN_START = GAMESTATE_BASE       # image offset 464 == savemap+80
 CRC_SPAN_LEN = 4944                   # covers savemap+80..5023
+
+ITEM_EXT_OFFSET = 0x1600              # FFNx AddMoreItems inventory block (see the docstring)
+ITEM_EXT_MAGIC = 0x4D495846
+ITEM_EXT_VERSION = 1
+ITEM_EXT_SLOTS = 255
+ITEM_EXT_HEADER_SIZE = 12
+ITEM_EXT_SIZE = ITEM_EXT_HEADER_SIZE + 2 * ITEM_EXT_SLOTS   # 522
+ITEM_MAX_QUANTITY = 100
+
+
+def item_extension_checksum(slot_bytes) -> int:
+    """FNV-1a (32-bit) over the slots' bytes, item id then quantity, as FFNx computes it."""
+    value = 2166136261
+    for byte in slot_bytes:
+        value = ((value ^ byte) * 16777619) & 0xFFFFFFFF
+    return value
+
+
+def normalize_item_slots(slots):
+    """[(id, quantity)] made acceptable to FFNx, as FFNx itself does before saving: an empty
+    id or quantity empties the slot, quantities stop at 100, and a second slot of the same item
+    adds to the first. Slots keep their places."""
+    first = {}
+    result = []
+    for item_id, quantity in slots:
+        if not item_id or not quantity:
+            result.append((0, 0))
+            continue
+        quantity = min(ITEM_MAX_QUANTITY, quantity)
+        if item_id in first:
+            index = first[item_id]
+            result[index] = (item_id, min(ITEM_MAX_QUANTITY, result[index][1] + quantity))
+            result.append((0, 0))
+        else:
+            first[item_id] = len(result)
+            result.append((item_id, quantity))
+    return result
 
 
 def lzss_decompress(payload: bytes) -> bytes:
@@ -310,6 +356,9 @@ class HyneManager:
         self.config = None
         self.misc = None
         self.item_entries = []
+        # "extended": the FFNx AddMoreItems block is in use (255 slots); "stale": a block is
+        # there but FFNx would ignore it (damaged, or the item table changed since); "none".
+        self.item_extension = "none"
 
     def load_file(self, file_path):
         self.file_path = file_path
@@ -350,10 +399,68 @@ class HyneManager:
         ]
         self.config = ConfigEntry(self.buffer, GAMESTATE_BASE + CONFIG_DATA_OFFSET)
         self.misc = MiscEntry(self.buffer, GAMESTATE_BASE + MISC_DATA_OFFSET, self.game_data)
-        self.item_entries = [
-            ItemEntry(self.buffer, GAMESTATE_BASE + ITEMS_DATA_OFFSET + i * ITEM_ENTRY_SIZE, i, self.game_data)
-            for i in range(NB_ITEMS)
-        ]
+        self.item_extension = self._item_extension_state()
+        if self.item_extension == "extended":
+            self.item_entries = [
+                ItemEntry(self.buffer, ITEM_EXT_OFFSET + ITEM_EXT_HEADER_SIZE + i * ITEM_ENTRY_SIZE, i,
+                          self.game_data)
+                for i in range(ITEM_EXT_SLOTS)
+            ]
+        else:
+            self.item_entries = [
+                ItemEntry(self.buffer, GAMESTATE_BASE + ITEMS_DATA_OFFSET + i * ITEM_ENTRY_SIZE, i,
+                          self.game_data)
+                for i in range(NB_ITEMS)
+            ]
+
+    # ── FFNx AddMoreItems inventory block ────────────────────────────────
+
+    def _native_item_bytes(self):
+        start = GAMESTATE_BASE + ITEMS_DATA_OFFSET
+        return bytes(self.buffer[start:start + NB_ITEMS * ITEM_ENTRY_SIZE])
+
+    def _item_extension_state(self):
+        """What FFNx would make of the block (see the module docstring)."""
+        magic, version, slots, checksum = struct.unpack_from("<IHHI", self.buffer, ITEM_EXT_OFFSET)
+        if magic != ITEM_EXT_MAGIC:
+            return "none"
+        slot_bytes = bytes(self.buffer[ITEM_EXT_OFFSET + ITEM_EXT_HEADER_SIZE:ITEM_EXT_OFFSET + ITEM_EXT_SIZE])
+        if version != ITEM_EXT_VERSION or slots != ITEM_EXT_SLOTS or checksum != item_extension_checksum(slot_bytes):
+            return "stale"
+        pairs = list(zip(slot_bytes[0::2], slot_bytes[1::2]))
+        ids = [item_id for item_id, _ in pairs if item_id]
+        if (any(q > ITEM_MAX_QUANTITY or (not i and q) or (i and not q) for i, q in pairs)
+                or len(ids) != len(set(ids))):
+            return "stale"
+        if slot_bytes[:NB_ITEMS * ITEM_ENTRY_SIZE] != self._native_item_bytes():
+            return "stale"
+        return "extended"
+
+    def enable_item_extension(self):
+        """Give the save FFNx AddMoreItems' 255 slots: a new block holding the item table's 198
+        slots, then 57 empty ones. A stale block is replaced the same way FFNx would."""
+        if self.item_extension == "extended":
+            return
+        slot_bytes = self._native_item_bytes() + bytes(2 * (ITEM_EXT_SLOTS - NB_ITEMS))
+        self._write_item_extension(slot_bytes)
+        self._parse()
+
+    def _write_item_extension(self, slot_bytes):
+        struct.pack_into("<IHHI", self.buffer, ITEM_EXT_OFFSET, ITEM_EXT_MAGIC, ITEM_EXT_VERSION,
+                         ITEM_EXT_SLOTS, item_extension_checksum(slot_bytes))
+        self.buffer[ITEM_EXT_OFFSET + ITEM_EXT_HEADER_SIZE:ITEM_EXT_OFFSET + ITEM_EXT_SIZE] = slot_bytes
+
+    def _sync_item_extension(self):
+        """Before a save with the block: make its slots valid for FFNx, copy the first 198 into the
+        savemap's item table (which FFNx compares them with, and the vanilla game reads), and
+        recompute its checksum."""
+        start = ITEM_EXT_OFFSET + ITEM_EXT_HEADER_SIZE
+        slot_bytes = bytes(self.buffer[start:start + 2 * ITEM_EXT_SLOTS])
+        pairs = normalize_item_slots(list(zip(slot_bytes[0::2], slot_bytes[1::2])))
+        slot_bytes = bytes(byte for pair in pairs for byte in pair)
+        native = GAMESTATE_BASE + ITEMS_DATA_OFFSET
+        self.buffer[native:native + NB_ITEMS * ITEM_ENTRY_SIZE] = slot_bytes[:NB_ITEMS * ITEM_ENTRY_SIZE]
+        self._write_item_extension(slot_bytes)
 
     def save_file(self, file_path="", backup=True):
         if not file_path:
@@ -361,6 +468,8 @@ class HyneManager:
         if backup and os.path.exists(file_path):
             shutil.copy2(file_path, file_path + ".bak")
 
+        if self.item_extension == "extended":
+            self._sync_item_extension()   # before the CRC: it covers the item table
         crc = crc16_ff8(bytes(self.buffer[CRC_SPAN_START:CRC_SPAN_START + CRC_SPAN_LEN]))
         struct.pack_into("<H", self.buffer, CRC_OFFSET_1, crc)
         struct.pack_into("<H", self.buffer, CRC_OFFSET_2, crc)
