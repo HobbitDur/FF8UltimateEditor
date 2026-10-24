@@ -10,6 +10,8 @@ at the top of the window, or launch one of the external programs from the toolba
 A command-line interface (`cli.py`) is also available for scripting text import/export without
 opening the GUI (see [CLI](#cli) below).
 
+The main window starts at up to 1200×640, reduced further to fit the available desktop with room for window borders and the taskbar. It can be enlarged, maximized, and shrunk again. Oversized editors and the header scroll independently, so all controls remain reachable on a 720p screen.
+
 Make your choice!
 
 ## Tools made by HobbitDur

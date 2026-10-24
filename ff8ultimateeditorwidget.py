@@ -2,10 +2,10 @@ import os
 import sys
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, QSettings, QEvent
+from PyQt6.QtCore import Qt, QSettings, QEvent, QSize
 from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QWidget, QMenuBar, QHBoxLayout, QVBoxLayout, QLabel, QFrame,
-                             QStackedWidget, QSizePolicy, QApplication)
+                             QStackedWidget, QSizePolicy, QApplication, QScrollArea)
 
 from CCGroup.ccgroup import CCGroupWidget
 from Chocoboy.chocoboywidget import ChocoboyWidget
@@ -327,6 +327,12 @@ class FF8UltimateEditorWidget(QWidget):
             if callable(getattr(tool, "file_bindings", None)) and tool is not self._ifrit_widget:
                 install_dirty_tracking(tool)
 
+        # QStackedLayout includes hidden pages in its minimum size. Only the active tool
+        # should determine the scrollable content's size, rather than the largest editor.
+        self._tool_size_policies = {}
+        self.tool_stack.currentChanged.connect(self._size_stack_for_current_tool)
+        self._size_stack_for_current_tool()
+
         saved_tool_index = self.settings.value("main/program_option", defaultValue=0, type=int)
         if not 0 <= saved_tool_index < len(self.HOBBIT_OPTION_ITEMS):
             saved_tool_index = 0
@@ -361,11 +367,22 @@ class FF8UltimateEditorWidget(QWidget):
         self._file_toolbar.save_state_changed.connect(self._update_title_save_marker)
         self._update_title_save_marker(self._file_toolbar.save_button.isEnabled())
 
-        # 6. Final UI Assembly - the tool stack takes ALL the spare vertical space (stretch 1); the
-        # header strip and separator stay at their natural height on top.
-        self._main_layout.addWidget(self._enhance_container)
+        # 6. Oversized forms and the wide header scroll instead of forcing the window beyond
+        # the desktop. Keep the header independent so tool scrolling leaves Import/Save visible.
+        self._header_scroll = QScrollArea()
+        self._header_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self._header_scroll.setWidgetResizable(True)
+        self._header_scroll.setWidget(self._enhance_container)
+        self._header_scroll.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+        self._header_scroll.setMaximumHeight(180)
+        self._fit_header_height()
+        self._tool_scroll = QScrollArea()
+        self._tool_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self._tool_scroll.setWidgetResizable(True)
+        self._tool_scroll.setWidget(self.tool_stack)
+        self._main_layout.addWidget(self._header_scroll)
         self._main_layout.addWidget(self._enhance_end_separator_line)
-        self._main_layout.addWidget(self.tool_stack, 1)
+        self._main_layout.addWidget(self._tool_scroll, 1)
 
         # 7. Initialize Launchers
         self.ifritGui_launcher = IfritGuiLauncher(os.path.join("ExternalTools", "IfritGui", "Ifrit.exe"), callback=None)
@@ -386,7 +403,35 @@ class FF8UltimateEditorWidget(QWidget):
         self._tool_update_widget.progress.hide()
         self._tool_update_widget.progress_current_download.hide()
 
-        #self.debug_widget_sizes()
+        self._resize_for_screen()
+
+    def _size_stack_for_current_tool(self):
+        current = self.tool_stack.currentWidget()
+        for index in range(self.tool_stack.count()):
+            tool = self.tool_stack.widget(index)
+            policy = self._tool_size_policies.setdefault(tool, tool.sizePolicy())
+            if tool is current:
+                tool.setSizePolicy(policy)
+            else:
+                tool.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
+        self.tool_stack.updateGeometry()
+
+    def _resize_for_screen(self):
+        # Client size leaves room for window decorations and a taskbar on a 720p desktop.
+        # This is an initial size only: larger monitors can still expand/maximize the window.
+        initial = QSize(1200, 640)
+        screen = self.screen()
+        if screen is not None:
+            available = screen.availableGeometry().size() - QSize(40, 80)
+            initial = initial.boundedTo(available.expandedTo(QSize(1, 1)))
+        self.resize(initial)
+
+    def _fit_header_height(self):
+        # Reserve the horizontal scrollbar's height so the collapsed header needs no
+        # vertical scrolling. A long expanded file list scrolls within the bounded strip.
+        height = (self._enhance_container.minimumSizeHint().height()
+                  + self._header_scroll.horizontalScrollBar().sizeHint().height())
+        self._header_scroll.setMinimumHeight(min(180, height))
 
     def _launch_ifritGui(self):
         self.ifritGui_launcher.launch()
@@ -450,6 +495,9 @@ class FF8UltimateEditorWidget(QWidget):
         keystroke undo; only once its history is exhausted (or focus isn't a text field) does it
         reach the tool's snapshot undo. So typing in the code editor undoes character by character,
         as in any editor, while structural edits still undo at the tool level."""
+        if (event.type() == QEvent.Type.LayoutRequest and obj is self._enhance_container
+                and hasattr(self, "_header_scroll")):
+            self._fit_header_height()
         if event.type() == QEvent.Type.KeyPress and QApplication.activeModalWidget() is None:
             mods = event.modifiers()
             if mods & Qt.KeyboardModifier.ControlModifier:
