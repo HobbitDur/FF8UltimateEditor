@@ -1,8 +1,9 @@
 import os
 
-from PyQt6.QtCore import QSize, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout, QFileDialog, QMessageBox, QMenu
+from PyQt6.QtWidgets import (QApplication, QWidget, QPushButton, QHBoxLayout, QFileDialog,
+                             QMessageBox, QMenu, QProgressDialog)
 
 from Common.fileregistry import FileRegistry
 from Common.autoimport import AutoImportSource
@@ -202,20 +203,55 @@ class FileToolbarWidget(QWidget):
                     pending.append((source, paths))
             except (OSError, ValueError) as error:
                 problems.append(f"{source.key}: {error}")
+        total = sum(len(paths) for _source, paths in pending)
+        progress = self._auto_upload_progress(total) if total else None
+        done, stopped = 0, False
         with self.registry.batch():   # the views refresh once, after the last file
             for source, paths in pending:
+                if progress is not None:
+                    if progress.wasCanceled():
+                        stopped = True
+                        break
+                    progress.setValue(done)
+                    progress.setLabelText(self._auto_upload_step_text(done, total, paths))
+                    QApplication.processEvents()   # loaders block the UI: repaint before each one
                 try:
                     source.loader(paths)
                     opened += len(paths)
                 except Exception as error:
                     problems.append(f"{source.key}: {error}")
+                done += len(paths)
+        if progress is not None:
+            progress.close()
         self._refresh()
         if problems:
             QMessageBox.warning(self, "Auto-upload", "Could not import:\n" + "\n".join(problems))
-        elif not opened:
+        elif not opened and not stopped:
             QMessageBox.information(
                 self, "Auto-upload", "No previously selected files or expected files were found.\n"
                 "Use Import to select the files you want Auto-upload to reopen.")
+
+    def _auto_upload_progress(self, total):
+        """Modal bar shown while Auto-upload loads, so the blocked window says what it is doing.
+        Stop skips the inputs not started yet; a loader already running finishes first."""
+        progress = QProgressDialog("Preparing...", "Stop", 0, total, self)
+        progress.setWindowTitle("Auto-upload")
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(0)   # show at once: each loader blocks, so Qt can't time it
+        progress.setAutoClose(False)
+        progress.setAutoReset(False)
+        progress.setMinimumWidth(420)
+        progress.setValue(0)
+        return progress
+
+    @staticmethod
+    def _auto_upload_step_text(done, total, paths):
+        """'Loading 2/5' + the file name; a multi-file input (several models) shows its range."""
+        names = [os.path.basename(path) for path in paths]
+        if len(names) == 1:
+            return f"Loading {done + 1}/{total}\n{names[0]}"
+        shown = f"{names[0]} ... {names[-1]}"
+        return f"Loading {done + 1}-{done + len(names)}/{total}\n{shown}  ({len(names)} files)"
 
     def _import_complementary(self):
         # A tool whose side files have no fixed names (Xu's preview models, c0m###.dat) lists its

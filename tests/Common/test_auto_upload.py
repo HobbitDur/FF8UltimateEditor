@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 from PyQt6.QtCore import QSettings, pyqtSignal
-from PyQt6.QtWidgets import QStackedWidget, QWidget, QMessageBox
+from PyQt6.QtWidgets import QStackedWidget, QWidget, QMessageBox, QProgressDialog
 
 from Common.autoimport import AutoImportSource
 from Common.filebinding import FileBinding
@@ -329,3 +329,44 @@ def test_cancelled_import_does_not_clear_previous_selection(tmp_path):
     registry.remember_files("models", [selected, selected])
     registry.remember_files("models", [])
     assert registry.last_files("models") == [selected]
+
+
+def test_progress_bar_counts_files_and_names_the_one_loading(tmp_path):
+    registry = FileRegistry()
+    single = touch(tmp_path / "single", "kernel.bin")
+    models = [touch(tmp_path / "models", name) for name in ("c0m000.dat", "c0m001.dat", "c0m002.dat")]
+    registry.remember_folder("kernel", str(Path(single).parent))
+    registry.remember_folder("models", str(Path(models[0]).parent))
+    steps = []
+
+    def record(_paths):
+        progress = bar.findChild(QProgressDialog)
+        steps.append((progress.value(), progress.maximum(), progress.labelText()))
+
+    tool = Tool()
+    tool.auto_import_sources = lambda: [
+        AutoImportSource("kernel", ("kernel.bin",), record, multiple=False),
+        AutoImportSource("models", ("c0m*.dat",), record)]
+    bar, stack = toolbar(registry, tool)
+    bar.auto_upload_button.click()
+    assert steps == [(0, 4, "Loading 1/4\nkernel.bin"),
+                     (1, 4, "Loading 2-4/4\nc0m000.dat ... c0m002.dat  (3 files)")]
+    assert not bar.findChild(QProgressDialog).isVisible()
+
+
+def test_stop_skips_the_inputs_not_started_yet(tmp_path, monkeypatch):
+    registry = FileRegistry()
+    paths = [touch(tmp_path, name) for name in ("a.bin", "b.bin")]
+    registry.remember_folder("files", str(tmp_path))
+    second = Mock()
+    tool = Tool()
+    tool.auto_import_sources = lambda: [
+        AutoImportSource("files", ("a.bin",), lambda _p: bar.findChild(QProgressDialog).cancel()),
+        AutoImportSource("files", ("b.bin",), second)]
+    bar, stack = toolbar(registry, tool)
+    information = Mock()
+    monkeypatch.setattr(QMessageBox, "information", information)
+    bar.auto_upload_button.click()
+    assert bar.findChild(QProgressDialog).wasCanceled()
+    second.assert_not_called()
+    information.assert_not_called()
