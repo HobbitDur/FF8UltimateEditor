@@ -1,5 +1,6 @@
 import os
 import pathlib
+from struct import error as struct_error
 from PyQt6 import sip
 from PyQt6.QtCore import QSettings, Qt, pyqtSignal, QTimer, QEvent, QRect, QPointF
 from PyQt6.QtGui import QPainter, QPen, QColor
@@ -16,6 +17,8 @@ from Common.fileregistry import FileRegistry
 from Common.undo import UndoStack
 from FF8GameData.dat.monsteranalyser import GarbageFileError, MonsterAnalyser
 from FF8GameData.dat.animloopdetector import find_character_weapon_file_list
+from FF8GameData.dat.linkedparts import (animation_map, c0m_number, link_targets, linked_part_setups,
+                                         read_sequences)
 from FF8GameData.dat.sectionfiles import (SECTION_FILES, SectionTools, SectionFileError,
                                           export_sections, apply_section_files, folder_name_for,
                                           section_file_for_path, layout_names)
@@ -236,7 +239,8 @@ class IfritFilePane(QWidget):
     edited = pyqtSignal()          # emitted on EVERY real edit (drives undo snapshots)
 
     def __init__(self, ifrit_manager: IfritManager, path: str, settings: QSettings,
-                 icon_path="Resources", weapon_provider=None, file_registry=None):
+                 icon_path="Resources", weapon_provider=None, file_registry=None,
+                 linked_parts_provider=None):
         super().__init__()
         self.ifrit_manager = ifrit_manager   # its enemy + textures are already set for `path`
         self.path = path
@@ -245,6 +249,9 @@ class IfritFilePane(QWidget):
         # Callback(body_path) -> (options, default_index) or None, listing the weapon models loaded
         # in the session so a character body can show one in its hand (see set_weapon_options).
         self._weapon_provider = weapon_provider
+        # Callback(monster_path) -> [(IfritManager, {anim: part anim})]: the monsters linked to
+        # this one in its encounters (Seifer's Gunblade...), drawn with it like the game does.
+        self._linked_parts_provider = linked_parts_provider
         self.dirty = False
         self._edited = set()              # commit-needing sections the user changed (seq/camera/...)
         self._last_edited_tab_index = None  # which tab the most recent edit happened on (undo focus)
@@ -485,6 +492,14 @@ class IfritFilePane(QWidget):
         self.settings.setValue("ifrit/current_tab", self._tabs.currentIndex())
         self._ensure_tab_loaded(self._tabs.currentWidget())
 
+    def refresh_linked_parts(self):
+        """Draw the monsters linked to this one (AnimSeq opcode 90 chain, e.g. Seifer's Gunblade)
+        in the 3D view, as the game draws them with it. Only once the 3D tab is loaded."""
+        if (getattr(self, "_linked_parts_shown", False)
+                and self.ifrit_manager.enemy.entity_type == EntityType.MONSTER
+                and self._linked_parts_provider is not None):
+            self._3d_widget.set_linked_parts(self._linked_parts_provider(self.path))
+
     def _load_tab(self, widget, is_reload=False):
         """Populate one tab from the model. `is_reload` = this tab was already loaded and is being
         refreshed after an undo/redo, so the tab keeps what the user set up in it (the 3D view its
@@ -504,6 +519,8 @@ class IfritFilePane(QWidget):
                     if result is not None:
                         options, default_index = result
                         self._3d_widget.set_weapon_options(options, default_index)
+                self._linked_parts_shown = True
+                self.refresh_linked_parts()
         elif widget is self._entrance_widget:
             if self.ifrit_manager.entrance_section_index() is not None:
                 self._entrance_widget.ifrit_manager._ensure_matrices()
@@ -765,6 +782,12 @@ class IfritMonsterWidget(QWidget):
                                           load_callback=self._on_kernel_names_changed,
                                           file_filter="*kernel*.bin", read_only=True)
         self.kernel_binding.file_closed.connect(self._on_kernel_names_changed)
+        # scene.out, complementary: which monsters the game links into one body (Seifer + his
+        # Gunblade monster, Mobile Type 8 + probes...), so the 3D view draws them together.
+        self.sceneout_binding = FileBinding("scene.out", file_registry, load_callback=self._on_sceneout_changed,
+                                            file_filter="scene.out", read_only=True)
+        self.sceneout_binding.file_closed.connect(lambda _path: self._set_encounters([]))
+        self._encounters = []
         # Ifrit is an Alexander-pattern tool with no per-file FileBinding, so the shared-toolbar
         # Reload button reaches it through the reload_files() / can_reload_files() hooks below
         # rather than through a binding (otherwise Reload would be a no-op for it).
@@ -908,7 +931,7 @@ class IfritMonsterWidget(QWidget):
     def file_bindings(self):
         """The one fixed-name file of this tool: kernel.bin, complementary (read-only). The .dat
         models have no fixed name - they go through open_files() / save_folder()."""
-        return [self.kernel_binding]
+        return [self.kernel_binding, self.sceneout_binding]
 
     STAT_CURVES = ('hp', 'str', 'vit', 'mag', 'spr', 'spd', 'eva')
 
@@ -1363,7 +1386,8 @@ class IfritMonsterWidget(QWidget):
             pass
         pane = IfritFilePane(manager, f['path'], self.settings, self.icon_path,
                              weapon_provider=self._weapon_options_for,
-                             file_registry=self.file_registry)
+                             file_registry=self.file_registry,
+                             linked_parts_provider=self._linked_parts_for)
         pane.dirty_changed.connect(lambda entry=f: self._on_pane_dirty(entry))
         pane.edited.connect(self._on_active_edited)          # every edit -> (debounced) undo snapshot
         pane.set_model_source(self._opened_model_path)
@@ -1473,6 +1497,89 @@ class IfritMonsterWidget(QWidget):
             if matches and default_index == 0:
                 default_index = i + 1                  # +1 for the leading "None" entry
         return options, default_index
+
+    # -- Linked monster parts (scene.out + AnimSeq opcode 90) ---------
+
+    def _on_sceneout_changed(self, path):
+        from FF8GameData.sceneout import read_encounters
+        try:
+            with open(path, "rb") as file:
+                encounters = read_encounters(file.read())
+        except OSError as error:
+            QMessageBox.warning(self, "Ifrit - scene.out", f"Could not read {path}: {error}")
+            encounters = []
+        self._set_encounters(encounters)
+
+    def _set_encounters(self, encounters):
+        self._encounters = encounters
+        if 0 <= self._active_index < len(self._files):
+            pane = self._files[self._active_index].get('pane')
+            if pane is not None:
+                pane.refresh_linked_parts()
+
+    def _monster_file(self, monster_path, c0m):
+        """(session entry or None, path or None) of c0mNNN.dat: the opened one, else the one next
+        to the shown monster on disk (like a character's weapons, _autoload_character_weapons)."""
+        name = f"c0m{c0m:03d}.dat"
+        for f in self._files:
+            if os.path.basename(f['path']).lower() == name:
+                return f, f['path']
+        path = os.path.join(os.path.dirname(monster_path), name)
+        return None, (path if os.path.isfile(path) else None)
+
+    def _linked_parts_for(self, monster_path):
+        """[(IfritManager, {anim: part anim})] for a monster pane: the parts linked to it in its
+        first encounter setup (scene.out), added to the session from next to it if needed."""
+        c0m = c0m_number(monster_path)
+        if c0m is None or not self._encounters:
+            return []
+        if not self._game_data.anim_sequence_data_json:
+            self._game_data.load_anim_sequence_data()   # the AnimSeq op code sizes
+        cache = {}
+
+        def targets_of(number):
+            if number not in cache:
+                _entry, path = self._monster_file(monster_path, number)
+                try:
+                    with open(path, "rb") as file:
+                        cache[number] = link_targets(self._game_data, read_sequences(file.read()))
+                except (OSError, TypeError, ValueError, IndexError, struct_error):
+                    cache[number] = None
+            return cache[number]
+
+        setups = linked_part_setups(self._encounters, c0m, targets_of)
+        if not setups:
+            return []
+        with open(monster_path, "rb") as file:
+            head_bytes = file.read()
+        parts = []
+        for number in setups[0][1]:
+            entry, path = self._monster_file(monster_path, number)
+            if path is None:
+                continue
+            if entry is None:
+                entry = self._add_lean_file(path)
+                if entry is None:
+                    continue
+            self._ensure_weapon_textures(entry)   # an overlay needs its textures
+            with open(path, "rb") as file:
+                parts.append((entry['manager'], animation_map(self._game_data, head_bytes, file.read())))
+        return parts
+
+    def _add_lean_file(self, path):
+        """Add a .dat to the session, parsed lean (like _autoload_character_weapons)."""
+        manager = IfritManager(game_data=self._game_data)
+        try:
+            enemy = manager.parse_file(path, free_animation=True)
+        except Exception as e:
+            print(f"[linked part] {path}: {e}")
+            return None
+        manager.set_active_enemy(enemy, path, textures=([], True))
+        entry = {'path': path, 'manager': manager, 'pane': None, 'name': ''}
+        self._files.append(entry)
+        self._file_list.addItem(self._list_label(len(self._files) - 1))
+        self.file_bindings_changed.emit()
+        return entry
 
     def _on_pane_dirty(self, entry):
         if entry in self._files:

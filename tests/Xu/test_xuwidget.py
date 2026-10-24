@@ -171,7 +171,9 @@ def test_header_toolbar_lines(qapp, tmp_path, monkeypatch):
     assert side[0].startswith("Game font: mngrp.bin") and side[1].startswith("Battle models:")
     assert side[2].startswith("Info bar texts: kernel.bin") and side[3].startswith("Info bar icons: icon.sp1")
     assert side[4].startswith("Stat board texture: mag039-067.tim")
+    assert side[5].startswith("Linked parts (e.g. Seifer's Gunblade): scene.out")
     assert w.kernel_binding.read_only and w.icon_binding.read_only and w.scan_texture_binding.read_only
+    assert w.sceneout_binding.read_only
 
     models = tmp_path / "battle"
     models.mkdir()
@@ -312,3 +314,29 @@ def test_background_from_the_opened_files(widget):
     assert values.spd == monster_stat('spd', list(stats['spd'][:4]), level)
     w.file_registry.close_file("mag039-067.tim")  # removed from the opened files: no board labels
     assert w.preview._background.texture is None
+
+
+def test_linked_parts_listed_like_the_game(qapp):
+    """With scene.out open, Seifer's rows list his Gunblade monster (the game draws his gunblade
+    as a linked monster); the choice survives moving to another Seifer row."""
+    import os
+    battle = "extracted_files/battle"
+    if not os.path.isfile(os.path.join(battle, "scene.out")):
+        pytest.skip("needs the game's battle files in extracted_files/battle")
+    from Common.fileregistry import FileRegistry
+    from Xu.xuwidget import XuWidget
+    w = XuWidget(file_registry=FileRegistry())
+    w.sceneout_binding.open_path(os.path.abspath(os.path.join(battle, "scene.out")))
+    w.add_models([os.path.abspath(os.path.join(battle, f"c0m{n:03d}.dat")) for n in (85, 86, 82, 87)])
+    assert w.linked_part_setups(102) == [([119], [82])]
+    assert w.linked_part_setups(103) == [([120], [142])]
+    w.show()
+    combo = w.preview.parts_combo
+    w.row_list.setCurrentRow(101)
+    assert combo.count() == 2 and combo.currentIndex() == 1 and "c0m082.dat" in combo.currentText()
+    w.row_list.setCurrentRow(102)  # same part: still shown
+    assert combo.currentIndex() == 1 and "encounter 119" in combo.currentText()
+    assert [len(animations) > 0 for _manager, animations in w.preview._view._linked_parts] == [True]
+    w.row_list.setCurrentRow(103)  # its Gunblade (c0m142) is not open: said, nothing listed
+    assert combo.count() == 0 and "c0m142.dat" in w.model_label.text()
+    w.hide()

@@ -133,6 +133,11 @@ class Ifrit3DWidget(QWidget):
         self._weapon_manager = None      # sibling IfritManager whose enemy is the weapon, or None
         self._weapon_options = []        # [(label, manager_or_None)] shown in the Weapon selector
         self._body_vertex_count = 0      # #verts in the body mesh; weapon indices start here
+        # Linked monster parts (AnimSeq opcode 90 multi-part chains, e.g. Seifer's Gunblade
+        # monster): [(manager, {body animation: part animation})]. Each part copies the body's
+        # transform and plays its own animation (the one of its sequence with the same index,
+        # see FF8GameData.dat.linkedparts.animation_map), placed by its own root like a weapon.
+        self._linked_parts = []
         # Weapon placement is automatic: the weapon's own animation carries a per-frame root
         # position that traces the hand (the game applies each model's own root - see
         # _current_weapon_verts), so no user-picked attach bone is needed.
@@ -942,9 +947,7 @@ class Ifrit3DWidget(QWidget):
             real per-frame cost. This is why the % moves as the model rotates/animates - that is
             the real per-frame packet-buffer load. Raw is still shown alongside for reference.
         Counts the overlaid weapon too (merged into the same GL lists / same scene budget)."""
-        managers = [self.ifrit_manager]
-        if self._weapon_manager is not None:
-            managers.append(self._weapon_manager)
+        managers = [self.ifrit_manager] + [manager for manager, _anim in self._attached_models()]
 
         total_verts = worst_obj_verts = nb_objects = total_prims = 0
         for mgr in managers:
@@ -1024,21 +1027,23 @@ class Ifrit3DWidget(QWidget):
                    [raw_id for (_, _, raw_id, _b) in self.gl_widget.quads_uv])
         WT = FF8OpenGLWidget._WEAPON_TEX_OFFSET
 
-        if self._weapon_manager is None:
+        attached = self._attached_models()
+        if not attached:
             if not body_pix:
                 return
             self.gl_widget.set_texture_pixmaps(body_pix, all_ids)
             return
 
-        weapon_pix = [td.texture_image for td in self._weapon_manager.texture_data
-                      if td.texture_image is not None]
-        # Split the merged face ids back into body (< offset) and weapon (>= offset), and map each
-        # model's ids onto its own slice of the combined pixmap list.
-        body_ids = [i for i in all_ids if i < WT]
-        weapon_ids = [i for i in all_ids if i >= WT]
-        tex_map = FF8OpenGLWidget._rank_texture_map(body_ids, len(body_pix), 0)
-        tex_map.update(FF8OpenGLWidget._rank_texture_map(weapon_ids, len(weapon_pix), len(body_pix)))
-        self.gl_widget.set_texture_pixmaps_explicit(body_pix + weapon_pix, tex_map)
+        # Split the merged face ids back per model (model k's ids are shifted by k * offset), and
+        # map each model's ids onto its own slice of the combined pixmap list.
+        pixmaps = list(body_pix)
+        tex_map = FF8OpenGLWidget._rank_texture_map([i for i in all_ids if i < WT], len(body_pix), 0)
+        for k, (manager, _anim) in enumerate(attached, start=1):
+            model_pix = [td.texture_image for td in manager.texture_data if td.texture_image is not None]
+            model_ids = [i for i in all_ids if k * WT <= i < (k + 1) * WT]
+            tex_map.update(FF8OpenGLWidget._rank_texture_map(model_ids, len(model_pix), len(pixmaps)))
+            pixmaps += model_pix
+        self.gl_widget.set_texture_pixmaps_explicit(pixmaps, tex_map)
 
     # ── Composite (body + weapon) rendering ───────────────────────────
     @staticmethod
@@ -1072,10 +1077,10 @@ class Ifrit3DWidget(QWidget):
         tri_hidden = body.get_triangles_hidden_mask(include_hidden=ih)
         quad_hidden = body.get_quads_hidden_mask(include_hidden=ih)
 
-        if self._weapon_manager is not None:
-            wgeo = self._weapon_manager.enemy.geometry_data
-            off = self._body_vertex_count
-            wt = FF8OpenGLWidget._WEAPON_TEX_OFFSET
+        off = self._body_vertex_count
+        for k, (manager, _anim) in enumerate(self._attached_models(), start=1):
+            wgeo = manager.enemy.geometry_data
+            wt = k * FF8OpenGLWidget._WEAPON_TEX_OFFSET
             tris = tris + [tuple(i + off for i in t) for t in wgeo.get_triangles(include_hidden=ih)]
             quads = quads + [tuple(i + off for i in q) for q in wgeo.get_quads(include_hidden=ih)]
             tri_uv = tri_uv + [self._offset_uv(e, off, wt)
@@ -1088,6 +1093,7 @@ class Ifrit3DWidget(QWidget):
                                    for e in wgeo.get_colored_quads_with_color(include_hidden=ih)]
             tri_hidden = tri_hidden + wgeo.get_triangles_hidden_mask(include_hidden=ih)
             quad_hidden = quad_hidden + wgeo.get_quads_hidden_mask(include_hidden=ih)
+            off += len(wgeo.get_vertices())
 
         self.gl_widget.set_triangles(tris)
         self.gl_widget.set_quads(quads)
@@ -1112,7 +1118,30 @@ class Ifrit3DWidget(QWidget):
             anim_id=self.current_anim_id, frame_id=self.current_frame,
             next_frame_id=next_frame, step=self.interp_step)
 
+    def _attached_models(self):
+        """[(manager, anim_id or None)] drawn with the body: the weapon (None = the body's
+        animation index), then the linked monster parts (the animation their map gives for the
+        body's current one; the same index when the map has none)."""
+        attached = [(self._weapon_manager, None)] if self._weapon_manager is not None else []
+        return attached + [(manager, animations.get(self.current_anim_id))
+                           for manager, animations in self._linked_parts]
+
+    def set_linked_parts(self, parts):
+        """Show linked monster parts with the body: [(IfritManager, {body anim: part anim})]
+        (empty = none). A part copies the body's transform (the chain head's matrix block,
+        AnimSeq opcode 90) and plays its own animation, placed by its own root like a weapon."""
+        self._linked_parts = [(manager, dict(animations or {})) for manager, animations in parts
+                              if manager is not None]
+        for manager, _anim in self._linked_parts:
+            manager._ensure_matrices()
+        self._refresh_static_geometry()
+        self.update_animated_mesh()
+        self._update_info_label()
+
     def _current_weapon_verts(self):
+        return self._current_attached_verts(self._weapon_manager, None)
+
+    def _current_attached_verts(self, wm, anim_id=None):
         """The weapon's vertices for the current frame, posed on the SAME animation index as the
         body (each model by its own frame count - see the composite-animation wiki), then
         translated by the weapon-root minus body-root delta - the game's actual placement rule.
@@ -1126,7 +1155,6 @@ class Ifrit3DWidget(QWidget):
         bakes no root into bone matrices and applies only the BODY's root globally (paintGL
         model_translation), so the weapon must be shifted by (weapon_root - body_root) here to
         land where the game puts it. No hand-bone attach exists in the files at all."""
-        wm = self._weapon_manager
         en = wm.enemy
         if en.entity_type == EntityType.WEAPON_NO_ANIM:
             # Reduced weapon (Zell's gloves, Kiros's katals): no skeleton/animation of its own -
@@ -1145,7 +1173,9 @@ class Ifrit3DWidget(QWidget):
         wm._ensure_matrices()          # re-expand the weapon anim (freed on multi-file load)
         if not en.animation_data.nb_animations:
             return en.geometry_data.get_vertices()
-        wanim = self.current_anim_id if self.current_anim_id < en.animation_data.nb_animations else 0
+        wanim = self.current_anim_id if anim_id is None else anim_id
+        if wanim >= en.animation_data.nb_animations:
+            wanim = 0
         wmax = en.animation_data.animations[wanim].get_nb_frame()
         if wmax == 0:
             return en.geometry_data.get_vertices()
@@ -1165,14 +1195,30 @@ class Ifrit3DWidget(QWidget):
         # vertex to the body's hand bone with a constant offset (std 0.004-0.005 world units over
         # 5-unit swing arcs, all three characters, best k = 1.60 exactly for each). k is
         # model_scale-independent.
+        #
+        # Each model is posed in its OWN units: BattleModel_BuildBoneMatricesFromPose (0x508C90)
+        # scales the root bone by that model's skeleton scale (skeleton header +2) and places its
+        # root at scale * root_pos >> 8. The viewer leaves that scale out of the posed vertices,
+        # so a model of another scale is brought into the body's units by k = its scale / the
+        # body's, vertices and root alike. k = 1 for every character weapon (same scale as the
+        # body); Seifer's Gunblade monster (c0m082/c0m142) is 195 for Seifer's 188, with its root
+        # track stored divided by the same ratio, so k puts it back in his hands.
+        k = self._model_scale(wm) / self._model_scale(self.ifrit_manager)
         s = self._ROOT_DELTA_TO_VERTEX_SCALE
-        dx = s * (wroot[0] - broot[0])
-        dy = s * (wroot[1] - broot[1])
-        dz = s * (wroot[2] - broot[2])
-        return [(x + dx, y + dy, z + dz) for (x, y, z) in verts]
+        dx = s * (k * wroot[0] - broot[0])
+        dy = s * (k * wroot[1] - broot[1])
+        dz = s * (k * wroot[2] - broot[2])
+        return [(k * x + dx, k * y + dy, k * z + dz) for (x, y, z) in verts]
 
     # get_pos_world (raw/204.8) -> vertex/bone-matrix units (raw/128): 204.8/128, exact.
     _ROOT_DELTA_TO_VERTEX_SCALE = 1.6
+
+    @staticmethod
+    def _model_scale(manager):
+        """The skeleton scale the engine poses a model with (skeleton section header +2)."""
+        raw = manager.enemy.section_raw_data[1] if len(manager.enemy.section_raw_data) > 1 else b""
+        scale = int.from_bytes(raw[2:4], "little") if len(raw) >= 4 else 0
+        return scale or 1
 
     @staticmethod
     def _frame_root(manager, anim_id, frame_id, next_frame_id=None, step=0.0):
@@ -1400,8 +1446,11 @@ class Ifrit3DWidget(QWidget):
             return
         body_verts = self._current_body_verts()
         self.current_animated_vertices = body_verts   # body only (used by gizmo/export)
-        if self._weapon_manager is not None:
-            verts = list(body_verts) + list(self._current_weapon_verts())
+        attached = self._attached_models()
+        if attached:
+            verts = list(body_verts)
+            for manager, anim_id in attached:
+                verts += list(self._current_attached_verts(manager, anim_id))
         else:
             verts = body_verts
         self.gl_widget.set_vertices(verts)

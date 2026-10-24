@@ -106,9 +106,10 @@ def test_ifrit_open_save_are_on_the_shared_toolbar(main_window):
     main_window.tool_stack.setCurrentWidget(ifrit)
     tb._on_tool_changed()
     # No main binding - Import runs through the open_files() hook, Save through save_folder(). Its
-    # one binding is the complementary kernel.bin, which names the spells/items/enemy attacks.
+    # bindings are complementary: kernel.bin names the spells/items/enemy attacks, scene.out
+    # gives the linked monster parts drawn in the 3D view (Seifer's Gunblade...).
     assert tb._main_bindings() == []
-    assert [b.file_name for b in tb._complementary_bindings()] == ["kernel.bin"]
+    assert [b.file_name for b in tb._complementary_bindings()] == ["kernel.bin", "scene.out"]
     assert callable(getattr(ifrit, "open_files", None)) and callable(getattr(ifrit, "save_folder", None))
     assert tb.import_button.isEnabled()          # enabled via open_files(), no bindings needed
     assert tb.save_button.isEnabled() is False   # nothing changed/loaded yet (can_save_folder False)

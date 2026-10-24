@@ -15,6 +15,7 @@ from FF8GameData.gamedata import GameData
 from Xu.xubackground import background_from_exe, TimTexture
 from Xu.xuhud import ScanHud
 from Xu.xuinfobar import misc_texts_from_kernel, icon_table_from_exe
+from FF8GameData.dat.linkedparts import link_targets, linked_part_setups, read_sequences
 from Xu.xumanager import (XuManager, FILE_NAME, ROW_COUNT, ALTERNATE_ROWS, FIRST_MONSTER_ROW,
                           LAST_C0M_FILE, CHARACTER_NAMES, c0m_for_row, com_id_for_row)
 from Xu.xupreview import XuPreviewPanel
@@ -126,6 +127,13 @@ class XuWidget(QWidget):
         self.scan_texture_binding = FileBinding(SCAN_TEXTURE_NAME, file_registry,
                                                 load_callback=self._on_scan_texture_opened, read_only=True)
         self.scan_texture_binding.file_closed.connect(lambda _path: self.preview.set_background_texture(None))
+        # The encounters: which monsters are linked parts of one another (Seifer + Gunblade...),
+        # shared with IfritSeq's real-battle placement.
+        self.sceneout_binding = FileBinding("scene.out", file_registry, load_callback=self._on_sceneout_opened,
+                                            file_filter="scene.out", read_only=True)
+        self.sceneout_binding.file_closed.connect(lambda _path: self._set_encounters([]))
+        self._encounters = []
+        self._link_targets = {}          # path -> link targets of its sequences (opcode 90)
         self._spinboxes = {}
         self._checkboxes = {}
         self._model_paths = {}           # com_id -> opened c0m###.dat / d?c###.dat
@@ -212,6 +220,7 @@ class XuWidget(QWidget):
         self.kernel_binding.load_opened_file()
         self.icon_binding.load_opened_file()
         self.scan_texture_binding.load_opened_file()
+        self.sceneout_binding.load_opened_file()
 
     def _build_camera_tab(self):
         form = QFormLayout()
@@ -298,7 +307,7 @@ class XuWidget(QWidget):
         """The files the shared header toolbar drives for this tool (Save, Reload). The exe is
         left out: it is opened through the camera Import line (see import_entries)."""
         return [self.binding, self.text_binding, self.mngrp_binding, self.kernel_binding, self.icon_binding,
-                self.scan_texture_binding]
+                self.scan_texture_binding, self.sceneout_binding]
 
     def import_entries(self):
         """The header Import menu: one line for the camera rows (the FFNx .bin, or the exe's
@@ -327,7 +336,67 @@ class XuWidget(QWidget):
                 ("Battle models: c0m###.dat / d?c###.dat, weapons d?w###.dat (several, Ctrl+A for all)", self._import_models),
                 ("Info bar texts: kernel.bin", self._import_kernel),
                 ("Info bar icons: icon.sp1 (icon.TEX next to it)", self._import_icons),
-                (f"Stat board texture: {SCAN_TEXTURE_NAME}", self._import_scan_texture)]
+                (f"Stat board texture: {SCAN_TEXTURE_NAME}", self._import_scan_texture),
+                ("Linked parts (e.g. Seifer's Gunblade): scene.out", self._import_sceneout)]
+
+    def _import_sceneout(self):
+        path = self.sceneout_binding.open_dialog(self, default_dir=self.file_registry.last_folder("scene.out"))
+        if path:
+            self.file_registry.remember_folder("scene.out", os.path.dirname(path))
+
+    def _on_sceneout_opened(self, path):
+        from FF8GameData.sceneout import read_encounters
+        try:
+            with open(path, "rb") as file:
+                encounters = read_encounters(file.read())
+        except OSError as error:
+            QMessageBox.warning(self, "Xu", f"Cannot read {path}: {error}")
+            encounters = []
+        self._set_encounters(encounters)
+
+    def _set_encounters(self, encounters):
+        self._encounters = encounters
+        self._follow_model(self.current_row())
+
+    def _targets_of(self, c0m):
+        """Link targets (opcode 90) of an opened monster's sequences; None when not open."""
+        path = self._model_paths.get(c0m + FIRST_MONSTER_ROW)
+        if path is None:
+            return None
+        if path not in self._link_targets:
+            try:
+                if not self.game_data.anim_sequence_data_json:
+                    self.game_data.load_anim_sequence_data()  # the AnimSeq op code sizes
+                with open(path, "rb") as file:
+                    self._link_targets[path] = link_targets(self.game_data, read_sequences(file.read()))
+            except (OSError, ValueError, IndexError):
+                self._link_targets[path] = set()
+        return self._link_targets[path]
+
+    def linked_part_setups(self, com_id):
+        """[(encounter ids, [part c0m numbers])] for a monster: one entry per distinct set of
+        parts linked to it in its encounters, in encounter order."""
+        if com_id is None or com_id < FIRST_MONSTER_ROW or not self._encounters:
+            return []
+        return linked_part_setups(self._encounters, com_id - FIRST_MONSTER_ROW, self._targets_of)
+
+    def _part_choices(self, com_id):
+        """The preview's linked-part list for a monster, and the part files still to open."""
+        choices, missing = [], []
+        for encounters, parts in self.linked_part_setups(com_id):
+            paths = [self._model_paths.get(c0m + FIRST_MONSTER_ROW) for c0m in parts]
+            missing += [f"c0m{c0m:03d}.dat" for c0m, path in zip(parts, paths) if path is None]
+            paths = [path for path in paths if path is not None]
+            if paths:
+                names = " + ".join(self._part_name(path) for path in paths)
+                shown = ", ".join(map(str, encounters[:3])) + (", ..." if len(encounters) > 3 else "")
+                choices.append((f"{names} (encounter {shown})", paths))
+        return choices, sorted(set(missing))
+
+    def _part_name(self, path):
+        c0m = int(_C0M_FILE.match(os.path.basename(path)).group(1))
+        name = self.manager.monster_name(c0m)
+        return os.path.basename(path) if name == f"c0m{c0m:03d}" else f"{name} ({os.path.basename(path)})"
 
     def _import_font(self):
         path = self.mngrp_binding.open_dialog(self, default_dir=self.file_registry.last_folder("mngrp.bin"))
@@ -836,6 +905,9 @@ class XuWidget(QWidget):
         # A character's imported weapons (optional): the preview lists them, first one shown
         weapons = self._weapon_paths.get(com_id, []) if com_id is not None and com_id < FIRST_MONSTER_ROW else []
         self.preview.set_weapon_choices([(os.path.basename(path), path) for path in weapons])
+        # A monster's linked parts (Seifer's Gunblade...): from the encounters, when open
+        part_choices, missing_parts = self._part_choices(com_id)
+        self.preview.set_part_choices(part_choices)
         if com_id is None or com_id > LAST_C0M_FILE + FIRST_MONSTER_ROW:
             self._set_model_status("No battle model for this row.")
             return
@@ -851,6 +923,9 @@ class XuWidget(QWidget):
             self._load_model(path)
         else:
             self._set_model_status(os.path.basename(path))
+        if missing_parts and self.preview.has_model:
+            self._set_model_status(f"{os.path.basename(path)} - linked part {', '.join(missing_parts)} not open: "
+                                   "open it with the header's Import read-only", warning=True)
 
     def _set_model_status(self, text, warning=False):
         self.model_label.setText(text)

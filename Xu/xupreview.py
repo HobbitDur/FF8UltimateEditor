@@ -193,6 +193,18 @@ class XuPreviewPanel(QWidget):
         self.weapon_combo.currentIndexChanged.connect(lambda _i: self._apply_weapon())
         self._weapon_managers = {}  # path -> IfritManager, loaded once
 
+        # Linked monster parts (AnimSeq opcode 90): e.g. Seifer's gunblade is the "Gunblade"
+        # monster of his encounters. The Scan screen moves the whole chain with the scanned
+        # monster (MAG_040_SCAN_FindScannedEntities), so the preview shows the parts too.
+        self.parts_label = QLabel("Linked parts:")
+        self.parts_combo = QComboBox()
+        self.parts_combo.setToolTip(
+            "Monsters linked to this one in its encounters (scene.out + the link opcode 90 of\n"
+            "their animation sequences), e.g. Seifer's Gunblade. The game draws them with the\n"
+            "monster and the Scan screen turns them together; each plays its own idle animation.")
+        self.parts_combo.currentIndexChanged.connect(lambda _i: self._apply_parts())
+        self._idle_anim = 0          # the animation the shown monster stands in (its sequence 0)
+
         controls = QHBoxLayout()
         controls.addWidget(self.mode_combo)
         controls.addWidget(self.turn_check)
@@ -201,8 +213,11 @@ class XuPreviewPanel(QWidget):
         controls.addWidget(self.background_check)
         controls.addWidget(self.weapon_label)
         controls.addWidget(self.weapon_combo)
+        controls.addWidget(self.parts_label)
+        controls.addWidget(self.parts_combo)
         controls.addStretch(1)
         self.set_weapon_choices([])
+        self.set_part_choices([])
 
         # The info bar: which line is up (the game turns to the next one every 45 ticks), and the
         # battle slot values the lines read that a .dat does not fix
@@ -287,7 +302,9 @@ class XuPreviewPanel(QWidget):
             self._view.timer.stop()  # frames are driven here
         self._placeholder.hide()
         self.model_path = path
+        self._idle_anim = self._idle_animation_of(path)
         self._apply_weapon()  # the new body gets the selected weapon back
+        self._apply_parts()
         self._on_new_subject()
         self._restart()
 
@@ -338,6 +355,58 @@ class XuPreviewPanel(QWidget):
                     manager = None
         if manager is not getattr(self._view, "_weapon_manager", None):
             self._view.set_weapon_options([("Weapon", manager)])
+            self._apply()
+
+    # ------------------------------------------------------------- linked parts
+    def _idle_animation_of(self, path) -> int:
+        from FF8GameData.dat.linkedparts import idle_animation
+        try:
+            with open(path, "rb") as file:
+                return idle_animation(self._game_data, file.read())
+        except Exception:
+            return 0
+
+    def _animation_map(self, part_path):
+        """{shown animation: part animation}: the part plays its sequence with the same index."""
+        from FF8GameData.dat.linkedparts import animation_map
+        try:
+            with open(self.model_path, "rb") as head, open(part_path, "rb") as part:
+                return animation_map(self._game_data, head.read(), part.read())
+        except Exception:
+            return {}
+
+    def set_part_choices(self, choices):
+        """[(label, [part .dat paths])], one entry per encounter setup; the first is shown."""
+        current = self.parts_combo.currentData()
+        with QSignalBlocker(self.parts_combo):
+            self.parts_combo.clear()
+            if choices:
+                self.parts_combo.addItem("No linked part", None)
+            for label, paths in choices:
+                self.parts_combo.addItem(label, tuple(paths))
+            options = [tuple(paths) for _label, paths in choices]
+            # findData cannot match a Python tuple: look the kept choice up here
+            self.parts_combo.setCurrentIndex(
+                options.index(current) + 1 if current in options else (1 if choices else 0))
+        visible = bool(choices)
+        self.parts_label.setVisible(visible)
+        self.parts_combo.setVisible(visible)
+        self._apply_parts()
+
+    def _apply_parts(self):
+        if self._view is None:
+            return
+        parts = []
+        for path in self.parts_combo.currentData() or ():
+            manager = self._weapon_managers.get(path)
+            if manager is None:
+                try:
+                    manager = self._weapon_managers[path] = self._new_manager(path)
+                except Exception:  # a part the viewer cannot read: show the others
+                    continue
+            parts.append((manager, self._animation_map(path)))
+        if parts != getattr(self._view, "_linked_parts", []):
+            self._view.set_linked_parts(parts)
             self._apply()
 
     def model_name(self) -> str:
@@ -672,7 +741,7 @@ class XuPreviewPanel(QWidget):
         if not self.animate_check.isChecked():
             return 0
         try:
-            frames = len(self._manager.enemy.animation_data.animations[0].frames)
+            frames = len(self._manager.enemy.animation_data.animations[self._idle_anim].frames)
         except (AttributeError, IndexError):
             return 0
         return self._tick % max(frames, 1)
@@ -684,8 +753,8 @@ class XuPreviewPanel(QWidget):
         frame = self._frame()
         try:
             if self._manager.enemy.animation_data.animations:
-                if self._view.current_anim_id != 0:
-                    self._view.set_animation(0)
+                if self._view.current_anim_id != self._idle_anim:
+                    self._view.set_animation(self._idle_anim)
                 self._view.set_frame(frame)
         except Exception:
             pass
@@ -700,9 +769,9 @@ class XuPreviewPanel(QWidget):
             orbit = (self._short_tick * SCAN_SPIN_PER_TICK) % 4096 if self._row.short_scan_orbit == 1 else 0
             height = short_scan_height(self._row, self._short_tick)
         # The camera aims at the pose the scan starts on (frame 0, before any turn).
-        eye, target = scan_camera(self._row, centre_point(self._manager), zoom_in=mode != MODE_SCAN_SCREEN,
+        eye, target = scan_camera(self._row, centre_point(self._manager, self._idle_anim), zoom_in=mode != MODE_SCAN_SCREEN,
                                   orbit=orbit, height=height)
-        self._gl.set_model_translation(*model_root(self._manager, 0, frame))
+        self._gl.set_model_translation(*model_root(self._manager, self._idle_anim, frame))
         linear, position = self.viewer_transform()
         flip = np.diag((-1., -1., 1.))  # battle axes -> viewer axes (the same flip as to_viewer)
         yaw = MONSTER_YAW + self._spin * 2 * math.pi / 4096
