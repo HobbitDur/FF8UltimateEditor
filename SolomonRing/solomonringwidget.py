@@ -865,8 +865,17 @@ class SolomonRingWidget(QWidget):
                    for item_id, name in sorted(names.items())]
         self.registry.set_dynamic("item", entries)
         by_id = {entry["value"]: entry["name"] for entry in entries}
-        battle_tab.set_borrowed_names({row: by_id.get(itemids.battle_row_to_item_id(row), "")
-                                       for row in range(itemids.VANILLA_BATTLE_ITEMS, len(battle_tab._entries))})
+        added_rows = range(itemids.VANILLA_BATTLE_ITEMS, len(battle_tab._entries))
+        # An added battle item's name and description are its Item Names row's (the game never
+        # shows the record's own): shown greyed in its fields, edited on Item Names.
+        texts = {}
+        for row in added_rows:
+            name_row = itemids.battle_row_to_item_id(row) - itemids.VANILLA_BATTLE_ITEMS
+            entry = names_tab._entries[name_row] if name_row < len(names_tab._entries) else None
+            texts[row] = [entry.get_text(i) if entry is not None and entry.has_text(i) else ""
+                          for i in range(len(names_tab.text_labels))]
+        battle_tab.set_borrowed_names({row: by_id.get(itemids.battle_row_to_item_id(row), "") for row in added_rows},
+                                      texts, source="Item Names")
         for tab in self._section_tabs.values():
             tab.refresh_dynamic_combos()
 

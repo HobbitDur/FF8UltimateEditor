@@ -183,6 +183,15 @@ def test_a_new_item_is_on_both_tabs_and_greyed_until_usable_in_battle(qapp, tmp_
     names._text_widgets[0].setText("Mega Tonic")
     widget._commit_item_tabs()
     assert battle.list_widget.item(34).text() == "200: Mega Tonic"
+    # Its name and description are Item Names': shown greyed here, never written to the record.
+    battle.list_widget.setCurrentRow(34)
+    name_edit, description_edit = battle._text_widgets
+    assert name_edit.text() == "Mega Tonic" and not name_edit.isEnabled()
+    assert not description_edit.isEnabled() and "Item Names" in name_edit.toolTip()
+    own_name = battle._entries[34].get_text(0)
+    battle.list_widget.setCurrentRow(1)                  # writes item 200's form back
+    assert battle._entries[34].get_text(0) == own_name
+    assert battle._text_widgets[0].text() == "Potion" and battle._text_widgets[0].isEnabled()
     assert widget.item_problems() == []
     widget._save_kernel()
     assert _item_sections(work) == (35, 168, True)

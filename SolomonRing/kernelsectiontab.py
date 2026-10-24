@@ -156,6 +156,7 @@ class KernelSectionTab(QWidget):
 
         self._entries = []
         self._borrowed_names = {}        # entry index -> name from another section (set_borrowed_names)
+        self._borrowed_texts = {}        # entry index -> [texts] shown greyed in its text fields
         self._group_paste_buttons = {}  # group name -> its Paste button (enabled once copied)
         self._unit_hints = []            # callables refreshing the "≈ N s" hints from their spinbox
         self._visible_indices = []       # list_widget row -> self._entries index (hides reserved ids)
@@ -1070,14 +1071,38 @@ class KernelSectionTab(QWidget):
             return appended_first + index - vanilla_count
         return self.config.get("first_entry_id", 0) + index
 
-    def set_borrowed_names(self, names):
+    BORROWED_TEXT_TOOLTIP = ("The game never shows this entry's own {label}: it is edited on {source}.")
+
+    def set_borrowed_names(self, names, texts=None, source=""):
         """{entry index: name} shown for entries whose own text the game never displays (an added
-        battle item is named by its Item Names row); it is shown instead of their own text."""
+        battle item is named by its Item Names row); it is shown instead of their own text.
+        `texts` ({entry index: [name, description...]}) fills those entries' text fields with
+        what the game shows, greyed: they are edited on `source`, not here."""
         self._borrowed_names = dict(names)
+        self._borrowed_texts = dict(texts or {})
+        self._borrowed_source = source
         for row, entry_index in enumerate(self._visible_indices):
             item = self.list_widget.item(row)
             if item is not None:
                 item.setText(self._entry_label(entry_index, self._entries[entry_index]))
+        if 0 <= self._current_index < len(self._visible_indices):
+            self._load_texts(self._visible_indices[self._current_index])
+
+    def _load_texts(self, entry_index):
+        entry = self._entries[entry_index]
+        borrowed = self._borrowed_texts.get(entry_index)
+        for i, edit in enumerate(self._text_widgets):
+            edit.blockSignals(True)
+            if borrowed is not None:
+                edit.setEnabled(False)
+                edit.setText(borrowed[i] if i < len(borrowed) else "")
+                edit.setToolTip(self.BORROWED_TEXT_TOOLTIP.format(
+                    label=self.text_labels[i].lower(), source=getattr(self, "_borrowed_source", "") or "another tab"))
+            else:
+                edit.setEnabled(entry.has_text(i))
+                edit.setText(entry.get_text(i))
+                edit.setToolTip(f"{self.text_labels[i]} string for this entry.")
+            edit.blockSignals(False)
 
     def _entry_label(self, index, entry):
         shown_id = self.entry_id(index)
@@ -1193,11 +1218,7 @@ class KernelSectionTab(QWidget):
     def _load_entry(self, row):
         entry = self._entries[self._visible_indices[row]]
         self._form_host.setEnabled(not self.entry_disabled(self._visible_indices[row]))
-        for i, edit in enumerate(self._text_widgets):
-            edit.blockSignals(True)
-            edit.setEnabled(entry.has_text(i))
-            edit.setText(entry.get_text(i))
-            edit.blockSignals(False)
+        self._load_texts(self._visible_indices[row])
         # Signals stay blocked for the whole repopulation: merely SELECTING another entry must
         # not look like an edit. DirtyState listens to user-only signals where Qt offers one
         # (textEdited / activated / clicked), but a QSpinBox has none - its valueChanged fires
@@ -1300,7 +1321,8 @@ class KernelSectionTab(QWidget):
             return
         entry = self._entries[entry_index]
         for i, edit in enumerate(self._text_widgets):
-            if entry.has_text(i):
+            # Borrowed texts are shown, not this entry's: writing them back would copy them in.
+            if entry.has_text(i) and entry_index not in self._borrowed_texts:
                 entry.set_text(i, edit.text())
         for name, (kind, field, widget) in self._field_widgets.items():
             # The hidden twin of a shared byte still holds that byte's loaded value, and
