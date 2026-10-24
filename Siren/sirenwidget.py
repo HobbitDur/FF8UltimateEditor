@@ -7,6 +7,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
+from Common.itemrowcontrols import ItemRowControls
+from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
 from Siren.sirenmanager import SirenManager
 from SmallWidget.listsearchbar import ListSearchBar
@@ -35,12 +37,21 @@ class SirenWidget(QWidget):
         # header toolbar (Import / Save) through the registry.
         self.price_binding = FileBinding("price.bin", file_registry,
                                          load_callback=self.load_file, save_callback=self.save_file)
+        # kernel.bin, complementary: the names of the items a mod adds (FFNx AddMoreItems, 199+)
+        # and of the ones it renames.
+        self.kernel_names = KernelNameSource(self.game_data, file_registry)
+        self.kernel_names.changed.connect(self._on_kernel_names_changed)
 
         # Item list (left side), with a Ctrl+F search bar filtering it (item name or item id)
         self.item_list = QListWidget()
         self.item_list.setFixedWidth(180)
         self.item_list.currentRowChanged.connect(self.reload_selected_item)
         self.item_search = ListSearchBar.wrap(self.item_list, match_index=True)
+        # Items 199-255 (FFNx AddMoreItems): rows added or removed at the end of the list.
+        self.item_rows = ItemRowControls("price")
+        self.item_rows.add_requested.connect(self._add_item)
+        self.item_rows.remove_requested.connect(self._remove_last_item)
+        self.item_search.column.layout().addWidget(self.item_rows)
 
         # Editor (right side)
         self.item_name_label = QLabel("")
@@ -86,17 +97,55 @@ class SirenWidget(QWidget):
         self.setLayout(main_layout)
 
         self.price_binding.load_opened_file()  # Another tool may have opened price.bin already
+        self.kernel_names.binding.load_opened_file()  # ...or a kernel.bin
 
     def file_bindings(self):
-        """The files the shared header toolbar drives for this tool (just price.bin)."""
-        return [self.price_binding]
+        """The files the shared header toolbar drives for this tool: price.bin, and kernel.bin as
+        a complementary file naming the items."""
+        return [self.price_binding, self.kernel_names.binding]
+
+    def _on_kernel_names_changed(self):
+        self.manager.item_names = dict(self.kernel_names.items)
+        self.manager.rename_items()
+        for row, price_entry in enumerate(self.manager.price_entries):
+            item = self.item_list.item(row)
+            if item is not None:
+                item.setText(self._item_label(price_entry))
+        price_entry = self._selected_price_entry()
+        if price_entry:
+            self.item_name_label.setText(price_entry.name)
+
+    @staticmethod
+    def _item_label(price_entry):
+        return f"{price_entry.item_id}: {price_entry.name}" if price_entry.item_id >= 199 else price_entry.name
+
+    def _add_item(self):
+        if self.manager.append_item() is None:
+            return
+        self.item_list.addItem(self._item_label(self.manager.price_entries[-1]))
+        self.item_list.setCurrentRow(self.item_list.count() - 1)
+        self.item_rows.set_row_count(len(self.manager.price_entries))
+        self._mark_edited()
+
+    def _remove_last_item(self):
+        if not self.manager.remove_last_item():
+            return
+        self.item_list.takeItem(self.item_list.count() - 1)
+        self.item_rows.set_row_count(len(self.manager.price_entries))
+        self._mark_edited()
+
+    def _mark_edited(self):
+        dirty_state = getattr(self, "dirty_state", None)
+        if dirty_state is not None:
+            dirty_state.mark()
 
     def load_file(self, file_name):
         self.manager.load_file(file_name)
         self.editor_container.setEnabled(True)
         with QSignalBlocker(self.item_list):
             self.item_list.clear()
-            self.item_list.addItems([price_entry.name for price_entry in self.manager.price_entries])
+            self.item_list.addItems([self._item_label(price_entry) for price_entry in self.manager.price_entries])
+        self.item_rows.set_row_count(len(self.manager.price_entries))
         self.item_search.select_first_match()  # Row 0, or the first match if a search is typed in
 
     def save_file(self):

@@ -1,3 +1,4 @@
+from FF8GameData import itemids
 from FF8GameData.gamedata import GameData
 
 
@@ -57,6 +58,9 @@ class SirenManager:
         self.game_data = game_data
         self.file_path = ""
         self.price_entries = []
+        # Item names of an opened kernel.bin ({id: name}), over item.json's: the only names of
+        # the items FFNx's AddMoreItems adds (199-255).
+        self.item_names = {}
 
     def load_file(self, file_path):
         self.file_path = file_path
@@ -81,8 +85,31 @@ class SirenManager:
         with open(file_path, "wb") as out_file:
             out_file.write(file_data)
 
+    def append_item(self):
+        """One more row, for the next item id (FFNx AddMoreItems reads up to id 255), priced 0 -
+        what FFNx gives an item whose row is missing."""
+        if len(self.price_entries) >= itemids.ITEM_ID_COUNT:
+            return None
+        item_id = len(self.price_entries)
+        self.price_entries.append(PriceEntry(item_id, self.get_item_name(item_id)))
+        return self.price_entries[-1]
+
+    def remove_last_item(self):
+        """Drop the last row, only one the game never had (ids 199+)."""
+        if len(self.price_entries) <= itemids.VANILLA_ITEM_COUNT:
+            return False
+        self.price_entries.pop()
+        return True
+
+    def rename_items(self):
+        for price_entry in self.price_entries:
+            price_entry.name = self.get_item_name(price_entry.item_id)
+
     def get_item_name(self, item_id):
+        if self.item_names.get(item_id):
+            return self.item_names[item_id]
         for item in self.game_data.item_data_json["items"]:
-            if item["id"] == item_id:
+            # item.json goes on past the game's items (255 "Immune" is a monster data label)
+            if item["id"] == item_id and item_id < itemids.VANILLA_ITEM_COUNT:
                 return item["name"]
         return f"Item {item_id}"

@@ -1,6 +1,7 @@
 import json
 import os
 
+from FF8GameData import itemids
 from FF8GameData.gamedata import GameData
 
 
@@ -33,6 +34,9 @@ class KadowakiManager:
         self._lookup_json_cache = {}
         # The ability names come only from a kernel.bin (the tool sets them) - none built in.
         self.ability_names = []
+        # Item names of an opened kernel.bin ({id: name}), over item.json's: the only names of
+        # the items FFNx's AddMoreItems adds (199-255).
+        self.item_names = {}
 
     def load_file(self, file_path):
         self.file_path = file_path
@@ -54,9 +58,32 @@ class KadowakiManager:
         with open(file_path, "wb") as out_file:
             out_file.write(file_data)
 
+    def append_item(self):
+        """One more row, for the next item id (FFNx AddMoreItems reads up to id 255). It starts
+        as "Refine only" with no field use - what FFNx gives an item whose row is missing."""
+        if len(self.menu_items) >= itemids.ITEM_ID_COUNT:
+            return None
+        item_id = len(self.menu_items)
+        self.menu_items.append(MenuItem(item_id, self.get_item_name(item_id), type_id=10))
+        return self.menu_items[-1]
+
+    def remove_last_item(self):
+        """Drop the last row, only one the game never had (ids 199+)."""
+        if len(self.menu_items) <= itemids.VANILLA_ITEM_COUNT:
+            return False
+        self.menu_items.pop()
+        return True
+
+    def rename_items(self):
+        for menu_item in self.menu_items:
+            menu_item.name = self.get_item_name(menu_item.item_id)
+
     def get_item_name(self, item_id):
+        if self.item_names.get(item_id):
+            return self.item_names[item_id]
         for item in self.game_data.item_data_json["items"]:
-            if item["id"] == item_id:
+            # item.json goes on past the game's items (255 "Immune" is a monster data label)
+            if item["id"] == item_id and item_id < itemids.VANILLA_ITEM_COUNT:
                 return item["name"]
         return f"Item {item_id}"
 

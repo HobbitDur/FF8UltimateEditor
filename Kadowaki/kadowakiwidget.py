@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWid
                              QComboBox, QCheckBox, QGroupBox, QSpinBox, QGridLayout)
 
 from Common.filebinding import FileBinding
+from Common.itemrowcontrols import ItemRowControls
 from Common.kernelnamesource import KernelNameSource
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
@@ -166,6 +167,11 @@ class KadowakiWidget(QWidget):
         self.item_list.setFixedWidth(180)
         self.item_list.currentRowChanged.connect(self.reload_selected_item)
         self.item_search = ListSearchBar.wrap(self.item_list, match_index=True)
+        # Items 199-255 (FFNx AddMoreItems): rows added or removed at the end of the list.
+        self.item_rows = ItemRowControls("field use")
+        self.item_rows.add_requested.connect(self._add_item)
+        self.item_rows.remove_requested.connect(self._remove_last_item)
+        self.item_search.column.layout().addWidget(self.item_rows)
 
         # Editor (right side)
         self.item_name_label = QLabel("")
@@ -231,16 +237,50 @@ class KadowakiWidget(QWidget):
         """A kernel.bin was opened or removed: re-label the ability choices of the shown item
         (edits are already in the item data, so nothing is lost)."""
         self.manager.ability_names = list(self.kernel_names.abilities)
+        self.manager.item_names = dict(self.kernel_names.items)
+        self.manager.rename_items()
+        self._relabel_items()
         menu_item = self._selected_menu_item()
         if menu_item:
+            self.item_name_label.setText(menu_item.name)
             self._update_param_widgets(menu_item)
+
+    def _item_label(self, menu_item):
+        return f"{menu_item.item_id}: {menu_item.name}" if menu_item.item_id >= 199 else menu_item.name
+
+    def _relabel_items(self):
+        for row, menu_item in enumerate(self.manager.menu_items):
+            item = self.item_list.item(row)
+            if item is not None:
+                item.setText(self._item_label(menu_item))
+
+    def _add_item(self):
+        if self.manager.append_item() is None:
+            return
+        self.item_list.addItem(self._item_label(self.manager.menu_items[-1]))
+        self.item_list.setCurrentRow(self.item_list.count() - 1)
+        self.item_rows.set_row_count(len(self.manager.menu_items))
+        self._mark_edited()
+
+    def _remove_last_item(self):
+        if not self.manager.remove_last_item():
+            return
+        self.item_list.takeItem(self.item_list.count() - 1)
+        self.item_rows.set_row_count(len(self.manager.menu_items))
+        self._mark_edited()
+
+    def _mark_edited(self):
+        dirty_state = getattr(self, "dirty_state", None)
+        if dirty_state is not None:
+            dirty_state.mark()
 
     def load_file(self, file_name):
         self.manager.load_file(file_name)
         self.editor_container.setEnabled(True)
         with QSignalBlocker(self.item_list):
             self.item_list.clear()
-            self.item_list.addItems([menu_item.name for menu_item in self.manager.menu_items])
+            self.item_list.addItems([self._item_label(menu_item) for menu_item in self.manager.menu_items])
+        self.item_rows.set_row_count(len(self.manager.menu_items))
         self.item_search.select_first_match()  # Row 0, or the first match if a search is typed in
 
     def save_file(self):
