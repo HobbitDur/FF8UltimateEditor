@@ -74,9 +74,9 @@ def test_opened_files_panel_list_fits_its_content(qapp):
 
 def test_complementary_button_present_but_disabled_without_companions(main_window):
     tb = main_window._file_toolbar
-    main_window.tool_stack.setCurrentWidget(main_window._siren_widget)
+    main_window.tool_stack.setCurrentWidget(main_window._piet_widget)
     assert tb.import_button.isEnabled()
-    assert tb.import_complementary_button.isEnabled() is False  # Siren has no companions
+    assert tb.import_complementary_button.isEnabled() is False  # Piet has no companions
 
 
 def test_import_and_save_follow_zones_active_tab(main_window):

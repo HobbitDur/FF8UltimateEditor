@@ -57,7 +57,8 @@ def test_kernel_bin_names_the_draws_and_goes_away_with_it(app, renamed_kernel, m
                                game_data_folder=str(PROJECT_ROOT / "FF8GameData"),
                                file_registry=registry)
     ifrit._cronos_checkbox.setChecked(False)
-    assert ifrit.kernel_binding.read_only and ifrit.file_bindings() == [ifrit.kernel_binding]
+    # kernel.bin is one of its complementary files (scene.out, for linked parts, is another)
+    assert ifrit.kernel_binding.read_only and ifrit.kernel_binding in ifrit.file_bindings()
     ifrit.load_file(str(MODEL))
     pane = ifrit._files[0]['pane']
     stats = pane._stat_widget
