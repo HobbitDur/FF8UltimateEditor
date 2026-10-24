@@ -758,7 +758,7 @@ class CommandAnalyser:
                             if self.info_stat_data['abilities_high'][i]['type'] == 2:  # Magic
                                 high_text = self.game_data.magic_data_json["magic"][self.info_stat_data['abilities_high'][i]['id']]['name']
                             elif self.info_stat_data['abilities_high'][i]['type'] == 4:  # Item
-                                high_text = self.game_data.item_data_json["items"][self.info_stat_data['abilities_high'][i]['id']]['name']
+                                high_text = self.__item_name(self.info_stat_data['abilities_high'][i]['id'])
                             elif self.info_stat_data['abilities_high'][i]['type'] in (8, 236):  # Ability
                                 high_text = self.game_data.enemy_abilities_data_json["abilities"][self.info_stat_data['abilities_high'][i]['id']]['name']
                             elif self.info_stat_data['abilities_high'][i]['type'] == 0:  # Emptyness
@@ -771,7 +771,7 @@ class CommandAnalyser:
                             if self.info_stat_data['abilities_med'][i]['type'] == 2:  # Magic
                                 med_text = self.game_data.magic_data_json["magic"][self.info_stat_data['abilities_med'][i]['id']]['name']
                             elif self.info_stat_data['abilities_med'][i]['type'] == 4:  # Item
-                                med_text = self.game_data.item_data_json["items"][self.info_stat_data['abilities_med'][i]['id']]['name']
+                                med_text = self.__item_name(self.info_stat_data['abilities_med'][i]['id'])
                             elif self.info_stat_data['abilities_med'][i]['type'] in (8, 236):  # Ability
                                 med_text = self.game_data.enemy_abilities_data_json["abilities"][self.info_stat_data['abilities_med'][i]['id']]['name']
                             elif self.info_stat_data['abilities_med'][i]['type'] == 0:  # Emptyness
@@ -784,7 +784,7 @@ class CommandAnalyser:
                             if self.info_stat_data['abilities_low'][i]['type'] == 2:  # Magic
                                 low_text = self.game_data.magic_data_json["magic"][self.info_stat_data['abilities_low'][i]['id']]['name']
                             elif self.info_stat_data['abilities_low'][i]['type'] == 4:  # Item
-                                low_text = self.game_data.item_data_json["items"][self.info_stat_data['abilities_low'][i]['id']]['name']
+                                low_text = self.__item_name(self.info_stat_data['abilities_low'][i]['id'])
                             elif self.info_stat_data['abilities_low'][i]['type'] in (8, 236):  # Ability
                                 low_text = self.game_data.enemy_abilities_data_json["abilities"][self.info_stat_data['abilities_low'][i]['id']]['name']
                             elif self.info_stat_data['abilities_low'][i]['type'] == 0:  # Emptyness
@@ -849,8 +849,8 @@ class CommandAnalyser:
                     else:
                         param_value.append("UNKNOWN MONSTER")
                 elif type == "item":
-                    if self.__op_code[op_index] < len(self.game_data.item_data_json["items"]):
-                        param_value.append(self.game_data.item_data_json["items"][self.__op_code[op_index]]['name'])
+                    if self.__item_name(self.__op_code[op_index], None) is not None:
+                        param_value.append(self.__item_name(self.__op_code[op_index]))
                         self.param_possible_list.append(self.__get_possible_item())
                     else:
                         param_value.append("UNKNOWN ITEM")
@@ -946,6 +946,15 @@ class CommandAnalyser:
     def __get_possible_magic_type(self):
         return [{'id': val_dict['id'], 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.magic_data_json["magic_type"])]
 
+
+    def __item_name(self, item_id, default="UNKNOWN ITEM"):
+        """The name of an item id. item.json is a list of ids, not a list indexed by them: it goes on
+        past the game's 0-198 (255 "Immune"), and the names of a mod's kernel.bin add the items FFNx's
+        AddMoreItems adds (199-255) in id order."""
+        for item in self.game_data.item_data_json["items"]:
+            if item["id"] == item_id:
+                return item["name"]
+        return default
     def __get_possible_item(self):
         return [{'id': val_dict['id'], 'data': val_dict['name']} for id, val_dict in enumerate(self.game_data.item_data_json["items"])]
 

@@ -637,10 +637,11 @@ class ChocoboyWidget(QWidget):
         return f"lands on {landing}, in script #{owners[0]}"
 
     def _item_name(self, item_id):
+        # By id: item.json goes on past the game's 0-198 (255 "Immune" right after 198), so a
+        # position in it is not an id from 199 on - FFNx AddMoreItems' 199-255 included.
         items = getattr(self.game_data, "item_data_json", {}).get("items", [])
-        if 0 <= item_id < len(items):
-            return items[item_id]["name"]
-        return f"item {item_id}"
+        return next((item["name"] for item in items if item["id"] == item_id and item_id < 199),
+                    f"item {item_id}")
 
     def _instruction_index(self, row):
         """The stream index the table row stands for, or None when the row is not one.

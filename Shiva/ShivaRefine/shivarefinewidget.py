@@ -35,6 +35,10 @@ class ShivaRefineWidget(QWidget):
         QWidget.__init__(self)
         self.game_data = game_data
         self.refine_views = []
+        # The items a refine can take or give: the game's 0-198 until set_item_entries hands over
+        # those of an opened kernel.bin (renamed, and FFNx AddMoreItems' 199-255).
+        self._item_entries = [{"value": item["id"], "name": item["name"]}
+                              for item in self.game_data.item_data_json["items"] if item["id"] < 199]
 
         # Refine ability list (left side), with a Ctrl+F search bar filtering it
         self.section_list = QListWidget()
@@ -100,6 +104,11 @@ class ShivaRefineWidget(QWidget):
             for index, refine_view in enumerate(self.refine_views):
                 self.section_list.item(index).setToolTip(refine_view.description)
         self.section_list.setCurrentRow(0)
+
+    def set_item_entries(self, entries):
+        """[{"value", "name"}] of the items offered (KernelNameSource.item_entries)."""
+        self._item_entries = list(entries)
+        self.reload_selected_section()
 
     def save_to_mngrp(self, manager):
         """Nothing to do: the entries and texts edited here are the ones of the shared mngrp,
@@ -179,22 +188,24 @@ class ShivaRefineWidget(QWidget):
         return None
 
     def _element_names(self, type_id):
-        """Names of the input/output elements of a refine section (index in the list == game ID)."""
+        """[(game ID, name)] of the input/output elements of a refine section."""
         if type_id == TypeId.CARD:
             element_list = self.game_data.card_data_json["card_info"]
         elif type_id == TypeId.SPELL:
             element_list = self.game_data.magic_data_json["magic"]
         else:  # TypeId.ITEM
-            element_list = self.game_data.item_data_json["items"]
-        return [element["name"] for element in element_list]
+            return [(entry["value"], f"{entry['value']}: {entry['name']}" if entry["value"] >= 199
+                     else entry["name"]) for entry in self._item_entries]
+        return [(element["id"], element["name"]) for element in element_list]
 
     @staticmethod
     def _create_element_combo(names, element_id):
         combo = QComboBox()
-        combo.addItems(names)
-        if element_id >= len(names):  # Unknown value, add a temporary entry to not lose it
-            combo.addItem(f"Unknown ({element_id})")
-        combo.setCurrentIndex(min(element_id, combo.count() - 1))
+        for game_id, name in names:
+            combo.addItem(name, game_id)
+        if combo.findData(element_id) < 0:  # Unknown value, add a temporary entry to not lose it
+            combo.addItem(f"Unknown ({element_id})", element_id)
+        combo.setCurrentIndex(combo.findData(element_id))
         return combo
 
     @staticmethod
@@ -210,9 +221,7 @@ class ShivaRefineWidget(QWidget):
 
     @staticmethod
     def _on_element_changed(entry, attribute_name, combo, index):
-        if combo.itemText(index).startswith("Unknown ("):  # Temporary entry, keep the original unknown ID
-            return
-        setattr(entry, attribute_name, index)
+        setattr(entry, attribute_name, combo.itemData(index))
 
     @staticmethod
     def _on_amount_changed(entry, attribute_name, value):

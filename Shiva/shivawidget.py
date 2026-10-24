@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QMessageBox
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
+from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
 from Shiva.mngrpsave import keep_unowned_sections_raw
@@ -57,7 +58,13 @@ class ShivaWidget(QWidget):
         self.section_tabs = []
         self.tabs.setEnabled(False)
 
-        self.add_section_tab(ShivaRefineWidget(self.game_data), "Refine")
+        self.refine_tab = ShivaRefineWidget(self.game_data)
+        self.add_section_tab(self.refine_tab, "Refine")
+        # kernel.bin, complementary: names the items a refine takes or gives, the ones a mod adds
+        # with FFNx's AddMoreItems (199-255) included.
+        self.kernel_names = KernelNameSource(self.game_data, file_registry)
+        self.kernel_names.changed.connect(
+            lambda: self.refine_tab.set_item_entries(self.kernel_names.item_entries()))
         self.add_section_tab(ShivaSeedTestWidget(self.game_data), "SeeD tests")
         self.add_section_tab(ShivaSpriteWidget(), "Sprites")
         self.add_section_tab(ShivaTutorialWidget(self.game_data), "Tutorial demos")
@@ -67,10 +74,12 @@ class ShivaWidget(QWidget):
         self.setLayout(main_layout)
 
         self.mngrp_binding.load_opened_file()  # Another tool may have opened mngrp.bin already
+        self.kernel_names.binding.load_opened_file()  # ...or a kernel.bin
 
     def file_bindings(self):
-        """The files the shared header toolbar drives for this tool (just mngrp.bin)."""
-        return [self.mngrp_binding]
+        """The files the shared header toolbar drives for this tool: mngrp.bin, and kernel.bin as
+        a complementary file naming the items."""
+        return [self.mngrp_binding, self.kernel_names.binding]
 
     def add_section_tab(self, tab, title):
         """Add a tab editing its own sections of the shared mngrp.
