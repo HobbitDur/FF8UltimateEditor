@@ -180,8 +180,7 @@ class CCGroupWidget(QWidget):
                 card_widget.deleteLater()
             self.__card_widget_list = []
             with open(self.file_loaded, "rb") as in_file:
-                while el := in_file.read(1):
-                    self.current_file_data.extend(el)
+                self.current_file_data.extend(in_file.read())  # one read: byte by byte took seconds on the exe
 
             menu_offset = self.game_data.exe_data_json["card_data_offset"]["eng_menu"]
             menu_offset += self.__get_lang_offset()

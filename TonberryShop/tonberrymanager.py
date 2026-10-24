@@ -47,8 +47,7 @@ class TonberryManager():
         if file_path:
             self.file_path = file_path
             with open(file_path, "rb") as in_file:
-                while el := in_file.read(1):
-                    self.shop_file_data.extend(el)
+                self.shop_file_data.extend(in_file.read())  # one read: byte by byte took seconds on the exe
 
     def analyze_shop_file(self):
         for shop_index in range(self.NB_SHOP):

@@ -742,8 +742,7 @@ if __name__ == "__main__":
     print(f"Reading the file: {file_to_load}")
     current_file_data = bytearray()
     with open(file_to_load, "rb") as in_file:
-        while el := in_file.read(1):
-            current_file_data.extend(el)
+        current_file_data.extend(in_file.read())  # one read: byte by byte took seconds on the exe
 
     # Ignoring not wanted values (for example only alphabet)
     # EOL => 0x00

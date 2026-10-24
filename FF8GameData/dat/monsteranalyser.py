@@ -135,8 +135,7 @@ class MonsterAnalyser:
         self.entrance_animation_data = None
         self.file_raw_data = bytearray()
         with open(file, "rb") as f:
-            while el := f.read(1):
-                self.file_raw_data.extend(el)
+            self.file_raw_data.extend(f.read())  # one read: byte by byte took seconds on the exe
         self.__analyze_header_section()
         self.section_raw_data = [bytearray()] * self.header_data['nb_section']
         self.origin_file_name = os.path.basename(file)

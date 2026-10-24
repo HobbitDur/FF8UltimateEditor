@@ -1,7 +1,22 @@
 import os
 from contextlib import contextmanager
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, Qt, pyqtSignal
+from PyQt6.QtGui import QGuiApplication
+
+
+@contextmanager
+def busy_cursor():
+    """Wait cursor while the UI thread is blocked loading a file, so the app doesn't look hung."""
+    app = QGuiApplication.instance()
+    if not isinstance(app, QGuiApplication):
+        yield
+        return
+    QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+    try:
+        yield
+    finally:
+        QGuiApplication.restoreOverrideCursor()
 
 
 class FileRegistry(QObject):
@@ -163,7 +178,8 @@ class FileRegistry(QObject):
         if os.path.isfile(file_path):
             self.remember_files(file_name, [file_path])
         self.paths[file_name] = file_path
-        self.file_changed.emit(file_name)
+        with busy_cursor():   # every tool using this file loads it now, on the UI thread
+            self.file_changed.emit(file_name)
 
     def close_file(self, file_name):
         """Remove a file from the opened files: file_closed tells every tool to drop it, then

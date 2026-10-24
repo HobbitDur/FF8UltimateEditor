@@ -62,3 +62,17 @@ def test_settings_are_written_once_the_batch_ends(qapp, tmp_path):
         assert registry.last_folder("effects") == str(tmp_path)
     assert settings.value("last_files/effects", [], type=list) == paths      # written at the end
     assert registry.last_file("mag") == paths[-1] and registry._pending_settings == {}
+
+
+def test_wait_cursor_while_tools_load_the_opened_file(qapp, tmp_path):
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtGui import QGuiApplication
+    registry = FileRegistry()
+    path = tmp_path / "main.bin"
+    path.write_bytes(b"x")
+    cursors = []
+    FileBinding("main.bin", registry, load_callback=lambda _p: cursors.append(
+        QGuiApplication.overrideCursor().shape()))
+    registry.open_file("main.bin", str(path))
+    assert cursors == [Qt.CursorShape.WaitCursor]
+    assert QGuiApplication.overrideCursor() is None

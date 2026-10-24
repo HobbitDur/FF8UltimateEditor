@@ -42,12 +42,16 @@ class DrawWidget(QTableWidget):
         self.game_data = game_data
         self._loading = False
         self._exe_loaded = False
+        self._names_shown = None   # the magic names the combos show (rename only on change)
         self.setup_table()
         self.currentCellChanged.connect(self._on_current_cell_changed)
 
     def set_draw(self, draw_list: [Draw]):
         self._draw = list(draw_list)
-        self._populate_table()
+        if self.rowCount() == len(self._draw) and self._draw and self.cellWidget(0, 1) is not None:
+            self._update_rows()   # a reload (exe, kernel, wmset): the rows are already built
+        else:
+            self._populate_table()
 
     def get_draw(self) -> [Draw]:
         return self._draw
@@ -95,8 +99,7 @@ class DrawWidget(QTableWidget):
             combo = QComboBox()
             # The EXE stores six bits, even if the complementary kernel has more spells.
             for magic_id in range(64):
-                name = names.get(magic_id, '')
-                combo.addItem(f"{magic_id}: {name}" if name else str(magic_id), magic_id)
+                combo.addItem(self._magic_label(magic_id, names), magic_id)
             combo.setCurrentIndex(draw.magic_index)
             combo.setEnabled(self._exe_loaded)
             combo.currentIndexChanged.connect(lambda state, r=row: self._magic_changed(state, r))
@@ -131,16 +134,58 @@ class DrawWidget(QTableWidget):
             self.setItem(row, 8, phase_item)
         self.setEnabled(True)
         self._loading = False
+        self._names_shown = dict(names)
+
+    def _update_rows(self):
+        """Refresh the existing rows in place, without emitting edits. Rebuilding the 256 rows of
+        editors (1536 widgets, 16k combo entries) froze the app for seconds on every load."""
+        self._loading = True
+        names = self.game_data.kernel_names.get('magic', {})
+        rename = names != self._names_shown
+        for row, draw in enumerate(self._draw):
+            self.item(row, 0).setText(f"{draw.get_id()}")
+            combo = self.cellWidget(row, 1)
+            with QSignalBlocker(combo):
+                if rename:
+                    for magic_id in range(combo.count()):
+                        combo.setItemText(magic_id, self._magic_label(magic_id, names))
+                combo.setCurrentIndex(draw.magic_index)
+            combo.setEnabled(self._exe_loaded)
+            for column, checked in ((2, draw.high_yield), (3, draw.refill)):
+                check = self.cellWidget(row, column)
+                with QSignalBlocker(check.checkbox):
+                    check.setChecked(checked)
+                check.setEnabled(self._exe_loaded)
+            is_world = draw.is_world() and draw.position_loaded
+            for column, value in ((self.COL_X, draw.x), (self.COL_Y, draw.y), (self.COL_SUB, draw.sub_id)):
+                spin = self.cellWidget(row, column)
+                with QSignalBlocker(spin):
+                    spin.setValue(value)
+                self._enable_position_spin(spin, is_world)
+            self.item(row, 7).setText(f"{draw.get_location()}")
+            phases = (', '.join(map(str, draw.world_phases)) if draw.world_phases else 'Not scanned')
+            self.item(row, 8).setText(phases if is_world else '')
+        self._loading = False
+        self._names_shown = dict(names)
 
     @staticmethod
-    def _make_byte_spinbox(value, row, callback, enabled):
+    def _magic_label(magic_id, names):
+        name = names.get(magic_id, '')
+        return f"{magic_id}: {name}" if name else str(magic_id)
+
+    @staticmethod
+    def _enable_position_spin(spin, enabled):
+        spin.setEnabled(enabled)
+        spin.setToolTip("" if enabled else
+                        "World positions require a loaded wmsetxx.obj; field points have no world position")
+
+    @classmethod
+    def _make_byte_spinbox(cls, value, row, callback, enabled):
         spin = QSpinBox()
         spin.setRange(0, 255)
         spin.setKeyboardTracking(False)
         spin.setValue(value)
-        spin.setEnabled(enabled)
-        if not enabled:
-            spin.setToolTip("World positions require a loaded wmsetxx.obj; field points have no world position")
+        cls._enable_position_spin(spin, enabled)
         spin.valueChanged.connect(lambda new_value, r=row: callback(new_value, r))
         return spin
 

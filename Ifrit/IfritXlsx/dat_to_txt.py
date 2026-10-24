@@ -48,8 +48,7 @@ if __name__ == '__main__':
             futur_file_name = original_file_name + '.txt'
             index = 0
             with open(file, "rb") as f:
-                while el := f.read(1):
-                    file_raw_data.append(int.from_bytes(el))
+                file_raw_data.extend(f.read())  # one read: byte by byte took seconds on the exe
 
             translated_data = game_data.translate_hex_to_str(file_raw_data)
             os.makedirs('temp', exist_ok=True)

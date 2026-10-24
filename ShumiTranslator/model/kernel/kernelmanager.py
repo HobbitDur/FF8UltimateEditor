@@ -47,8 +47,7 @@ class KernelManager():
     def load_file(self, file):
         current_file_data = bytearray()
         with open(file, "rb") as in_file:
-            while el := in_file.read(1):
-                current_file_data.extend(el)
+            current_file_data.extend(in_file.read())  # one read: byte by byte took seconds on the exe
         # First we read all offset section
         self.section_list = []
         # +1 for the number of section

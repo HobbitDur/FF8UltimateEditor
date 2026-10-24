@@ -40,8 +40,7 @@ class SectionString(Section):
     def load_file(self, file):
         current_file_data = bytearray()
         with open(file, "rb") as in_file:
-            while el := in_file.read(1):
-                current_file_data.extend(el)
+            current_file_data.extend(in_file.read())  # one read: byte by byte took seconds on the exe
         self._set_data_hex(current_file_data)
         self.__analyse_data()
 
