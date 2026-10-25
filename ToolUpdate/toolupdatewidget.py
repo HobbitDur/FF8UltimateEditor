@@ -19,16 +19,23 @@ class OpIdChangedEmitter(QObject):
 class Installer(QObject):
     progress = pyqtSignal(int)
     completed = pyqtSignal(int)
+    failed = pyqtSignal(str, str)
     download_progress = pyqtSignal(int, int)
     update_mod_list_completed = pyqtSignal()
 
     @pyqtSlot(ToolDownloader, bool, list)
     def install(self, tool_updater:ToolDownloader, canary:bool, tool_list:list):
+        # Any error has to come back as a signal: an exception escaping this slot only dies in
+        # the worker thread, completed is never sent and the widget waits on it forever.
         for index, tool_name in enumerate(tool_list):
-            if tool_name == "Self":
-                tool_updater.download_self(self.download_progress.emit, canary=canary)
-            else:
-                tool_updater.update_one_tool(tool_name, self.download_progress.emit, canary=canary)
+            try:
+                if tool_name == "Self":
+                    tool_updater.download_self(self.download_progress.emit, canary=canary)
+                else:
+                    tool_updater.update_one_tool(tool_name, self.download_progress.emit, canary=canary)
+            except Exception as error:
+                self.failed.emit(tool_name, f"{type(error).__name__}: {error}")
+                return
             self.progress.emit(index + 1)
 
         self.completed.emit(len(tool_list))
@@ -54,6 +61,7 @@ class ToolUpdateWidget(QWidget):
         self.installer_thread = QThread()
         self.installer.progress.connect(self.install_progress)
         self.installer.completed.connect(self.install_completed)
+        self.installer.failed.connect(self.install_failed)
         self.installer.download_progress.connect(self.update_download)
         self.install_requested.connect(self.installer.install)
         self.installer.moveToThread(self.installer_thread)
@@ -221,10 +229,7 @@ class ToolUpdateWidget(QWidget):
         self.progress_install_index +=1
 
 
-    def install_completed(self, nb_install_done):
-        self.progress.setValue(nb_install_done)
-        #self.install_over.exec()
-
+    def _reset_install_ui(self):
         self.progress.setValue(0)
         self.progress_current_download.setValue(0)
         self.progress_current_download.setFormat("Current download status")
@@ -233,6 +238,12 @@ class ToolUpdateWidget(QWidget):
         self.progress_current_download.hide()
         self.download_button_widget.setEnabled(True)
         self.self_download_button_widget.setEnabled(True)
+
+    def install_completed(self, nb_install_done):
+        self.progress.setValue(nb_install_done)
+        #self.install_over.exec()
+
+        self._reset_install_ui()
         if "FFNxEffects" in self._current_tool_list:
             # FFNx's effect sources are built into Fujin's effect recorder: build it with them
             from Fujin.recorderbuild import ensure_recorder
@@ -240,6 +251,14 @@ class ToolUpdateWidget(QWidget):
         if self.self_update_request:
             self.start_self_update_process()
         self.self_update_request = False
+
+    def install_failed(self, tool_name: str, error: str):
+        self._reset_install_ui()
+        self.self_update_request = False
+        if tool_name == "Self":  # Never let the Patcher apply a half-downloaded update
+            shutil.rmtree("SelfUpdate", ignore_errors=True)
+            tool_name = "FF8UltimateEditor"
+        QMessageBox.critical(self, "Update failed", f"Updating {tool_name} failed:\n{error}")
 
     def update_download(self, advancement: int, max_size: int):
         tool_list = self._current_tool_list

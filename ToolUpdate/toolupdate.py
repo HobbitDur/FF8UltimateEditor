@@ -2,6 +2,8 @@ import json
 import os
 import re
 import shutil
+import sys
+import tarfile
 import types
 from zipfile import ZipFile
 import requests
@@ -11,6 +13,7 @@ class ToolDownloader:
     GITHUB_RELEASE_TAG_PATH = "/releases/tag/"
     GITHUB_RELEASE_PATH = "/releases"
     FOLDER_DOWNLOAD = "ToolDownload"
+    TIMEOUT = 30  # Seconds without an answer before a request fails, instead of hanging forever
 
     def __init__(self):
         with open(os.path.join("ToolUpdate", "list.json")) as f:
@@ -91,23 +94,26 @@ class ToolDownloader:
 
     def download_self(self, download_update_func: types.MethodType = None, canary=True):
         os.makedirs(self.FOLDER_DOWNLOAD, exist_ok=True)
-        dd_url = self.__get_github_url_file(self.json_data['SelfUpdate'], "assets_url", canary)
-        json_file = self.__download_file(dd_url, download_update_func, headers={'content-type': 'application/json'})[0].json()
-        asset_link = ""
-        if len(json_file) == 1:
-            asset_link = json_file[0]['browser_download_url']
-        else:  # Releases contain both the GUI and the CLI zip, we want the GUI one
-            for json_asset in json_file:
-                asset_name = json_asset['name']
-                if asset_name.startswith("FF8UltimateEditor") and "cli" not in asset_name.lower():
-                    asset_link = json_asset['browser_download_url']
-                    break
-        if asset_link == "" and len(json_file) > 0:
-            asset_link = json_file[0]['browser_download_url']
-        dd_file_name = self.__download_file(asset_link, download_update_func, write_file=True)[1]
-        self._unzip_tool(dd_file_name, "SelfUpdate")
-        shutil.rmtree(self.FOLDER_DOWNLOAD)
+        try:
+            dd_url = self.__get_github_url_file(self.json_data['SelfUpdate'], "assets_url", canary)
+            json_file = self.__download_file(dd_url, download_update_func, headers={'content-type': 'application/json'})[0].json()
+            asset_link = self._self_asset_link(json_file)
+            dd_file_name = self.__download_file(asset_link, download_update_func, write_file=True)[1]
+            self._unzip_tool(dd_file_name, "SelfUpdate")
+        finally:
+            shutil.rmtree(self.FOLDER_DOWNLOAD, ignore_errors=True)
 
+    @staticmethod
+    def _self_asset_link(assets: list) -> str:
+        """The GUI build for this platform among a release's assets. A release holds the GUI and
+        the CLI, each as a Windows .zip and a Linux .tar.gz, and GitHub lists them in upload
+        order, which changes from one build to the next: the asset is picked by name only."""
+        linux = sys.platform != "win32"
+        for asset in assets:
+            name = asset['name'].lower()
+            if name.startswith("ff8ultimateeditor") and "cli" not in name and ("linux" in name) == linux:
+                return asset['browser_download_url']
+        raise RuntimeError("This release has no FF8UltimateEditor build for " + ("Linux" if linux else "Windows"))
 
 
     def __download_file(self, link, download_update_func: types.MethodType = None, headers={}, write_file=False, file_name=None, dest_path=FOLDER_DOWNLOAD) -> (
@@ -118,7 +124,8 @@ class ToolDownloader:
         else:
             stream = False
 
-        request_return = requests.get(link, headers=headers, stream=stream)
+        request_return = requests.get(link, headers=headers, stream=stream, timeout=self.TIMEOUT)
+        request_return.raise_for_status()  # An error page (rate limit, missing asset) is not the file
 
         if not file_name:
             if "Content-Disposition" in request_return.headers.keys():
@@ -192,26 +199,38 @@ class ToolDownloader:
 
     def _unzip_tool(self, dd_file_name: str, tool_folder: str, ignore_first_folder = False):
         # Unzip locally then copy all files, so we don't have problem erasing files while unziping
-        if '.zip' in dd_file_name:
-            archive = "tempzip"
-            os.makedirs(archive, exist_ok=True)
-            with ZipFile(os.path.join(self.FOLDER_DOWNLOAD, dd_file_name), 'r') as zip_ref:
-                zip_ref.extractall(archive)
-        list_dir = os.listdir(archive)
-        try:
-            index_folder = os.listdir(archive).index(dd_file_name.rsplit('.', 1)[0])
-        except ValueError:
-            index_folder = -1
-        if index_folder >= 0:  # If the extract contain the folder name itself
-            archive_to_copy = os.path.join(archive, list_dir[index_folder])
-        elif ignore_first_folder:
-            archive_to_copy = os.path.join(archive, list_dir[0])
+        archive = "tempzip"
+        archive_path = os.path.join(self.FOLDER_DOWNLOAD, dd_file_name)
+        lower_name = dd_file_name.lower()
+        if lower_name.endswith('.zip'):
+            archive_stem = dd_file_name[:-len('.zip')]
+        elif lower_name.endswith('.tar.gz'):  # The Linux builds
+            archive_stem = dd_file_name[:-len('.tar.gz')]
         else:
-            archive_to_copy = archive
-        futur_path = tool_folder
+            raise ValueError(f"Cannot extract {dd_file_name}: only .zip and .tar.gz archives are supported")
+        os.makedirs(archive, exist_ok=True)
+        try:
+            if lower_name.endswith('.zip'):
+                with ZipFile(archive_path, 'r') as zip_ref:
+                    zip_ref.extractall(archive)
+            else:
+                with tarfile.open(archive_path, 'r:gz') as tar_ref:
+                    tar_ref.extractall(archive, filter='data')
+            list_dir = os.listdir(archive)
+            try:
+                index_folder = list_dir.index(archive_stem)
+            except ValueError:
+                index_folder = -1
+            if index_folder >= 0:  # If the extract contain the folder name itself
+                archive_to_copy = os.path.join(archive, list_dir[index_folder])
+            elif ignore_first_folder:
+                archive_to_copy = os.path.join(archive, list_dir[0])
+            else:
+                archive_to_copy = archive
+            futur_path = tool_folder
 
-        if archive_to_copy and futur_path:
-            shutil.copytree(archive_to_copy, futur_path, dirs_exist_ok=True,
-                            copy_function=shutil.copy)  # shutil.copy to make it works on linux proton
-        if archive != "":
-            shutil.rmtree(archive)
+            if archive_to_copy and futur_path:
+                shutil.copytree(archive_to_copy, futur_path, dirs_exist_ok=True,
+                                copy_function=shutil.copy)  # shutil.copy to make it works on linux proton
+        finally:
+            shutil.rmtree(archive, ignore_errors=True)

@@ -4,6 +4,7 @@ import io
 import json
 import subprocess
 import sys
+import tarfile
 import zipfile
 from pathlib import Path
 
@@ -19,6 +20,8 @@ GUI_ZIP_URL = "https://fake.download/FF8UltimateEditor-1.10.0.zip"
 CLI_ZIP_URL = "https://fake.download/FF8UltimateEditor-cli-1.10.0.zip"
 CANARY_GUI_ZIP_URL = "https://fake.download/FF8UltimateEditor-continuous-abc1234.zip"
 CANARY_CLI_ZIP_URL = "https://fake.download/FF8UltimateEditor-cli-continuous-abc1234.zip"
+CANARY_LINUX_URL = "https://fake.download/FF8UltimateEditor-linux_x64-continuous-abc1234.tar.gz"
+CANARY_CLI_LINUX_URL = "https://fake.download/FF8UltimateEditor-cli-linux_x64-continuous-abc1234.tar.gz"
 
 
 def make_release_zip(exe_content: bytes = b"new exe") -> bytes:
@@ -28,6 +31,18 @@ def make_release_zip(exe_content: bytes = b"new exe") -> bytes:
         zip_file.writestr("FF8UltimateEditor.exe", exe_content)
         zip_file.writestr("Resources/hobbitdur.ico", b"icon")
         zip_file.writestr("ToolUpdate/list.json", b"{}")
+    return buffer.getvalue()
+
+
+def make_release_tar_gz(exe_content: bytes = b"new exe") -> bytes:
+    """Build an in-memory .tar.gz laid out like the Linux release (tar -C release .)."""
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w:gz") as tar_file:
+        for name, content in (("./FF8UltimateEditor", exe_content), ("./Resources/hobbitdur.ico", b"icon")):
+            info = tarfile.TarInfo(name)
+            info.size = len(content)
+            info.mode = 0o755
+            tar_file.addfile(info, io.BytesIO(content))
     return buffer.getvalue()
 
 
@@ -41,6 +56,9 @@ class FakeResponse:
 
     def json(self):
         return self._json_data
+
+    def raise_for_status(self):
+        pass
 
     def iter_content(self, chunk_size=4096):
         for i in range(0, len(self._content), chunk_size):
@@ -82,17 +100,21 @@ def fake_github(monkeypatch, tmp_path):
             {"name": "FF8UltimateEditor-cli-1.10.0.zip", "browser_download_url": CLI_ZIP_URL},
             {"name": "FF8UltimateEditor-1.10.0.zip", "browser_download_url": GUI_ZIP_URL},
         ]),
-        CANARY_ASSETS_URL: FakeResponse(json_data=[
+        CANARY_ASSETS_URL: FakeResponse(json_data=[  # Real upload order: the Linux build first
             {"name": "FF8UltimateEditor-cli-continuous-abc1234.zip", "browser_download_url": CANARY_CLI_ZIP_URL},
+            {"name": "FF8UltimateEditor-linux_x64-continuous-abc1234.tar.gz", "browser_download_url": CANARY_LINUX_URL},
             {"name": "FF8UltimateEditor-continuous-abc1234.zip", "browser_download_url": CANARY_GUI_ZIP_URL},
+            {"name": "FF8UltimateEditor-cli-linux_x64-continuous-abc1234.tar.gz", "browser_download_url": CANARY_CLI_LINUX_URL},
         ]),
         GUI_ZIP_URL: FakeResponse(content=make_release_zip(b"stable exe")),
         CANARY_GUI_ZIP_URL: FakeResponse(content=make_release_zip(b"canary exe")),
+        CANARY_LINUX_URL: FakeResponse(content=make_release_tar_gz(b"canary linux exe")),
     }
 
     requested_links = []
 
-    def fake_get(link, headers={}, stream=False):
+    def fake_get(link, headers={}, stream=False, timeout=None):
+        assert timeout, "every request needs a timeout, or a dead connection hangs the update"
         requested_links.append(link)
         if link not in responses:
             raise AssertionError(f"Unexpected download link requested: '{link}'")
@@ -122,6 +144,49 @@ def test_download_self_canary_picks_prerelease(fake_github, tmp_path):
 
     assert CANARY_ASSETS_URL in fake_github
     assert (tmp_path / "SelfUpdate" / "FF8UltimateEditor.exe").read_bytes() == b"canary exe"
+
+
+def test_download_self_canary_picks_windows_zip_even_after_linux_asset(fake_github, tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "platform", "win32")
+    ToolDownloader().download_self(canary=True)
+
+    assert CANARY_LINUX_URL not in fake_github
+    assert (tmp_path / "SelfUpdate" / "FF8UltimateEditor.exe").read_bytes() == b"canary exe"
+
+
+def test_download_self_canary_on_linux_extracts_tar_gz(fake_github, tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "platform", "linux")
+    ToolDownloader().download_self(canary=True)
+
+    assert CANARY_GUI_ZIP_URL not in fake_github
+    assert (tmp_path / "SelfUpdate" / "FF8UltimateEditor").read_bytes() == b"canary linux exe"
+    assert (tmp_path / "SelfUpdate" / "Resources" / "hobbitdur.ico").exists()
+
+
+def test_download_self_without_build_for_platform_fails_and_cleans(fake_github, tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "platform", "linux")  # The stable release has no Linux build
+    with pytest.raises(RuntimeError, match="Linux"):
+        ToolDownloader().download_self(canary=False)
+
+    assert not (tmp_path / "SelfUpdate").exists()
+    assert not (tmp_path / ToolDownloader.FOLDER_DOWNLOAD).exists()
+
+
+def test_installer_reports_failure_instead_of_hanging():
+    from ToolUpdate.toolupdatewidget import Installer
+
+    class BrokenDownloader:
+        def download_self(self, *args, **kwargs):
+            raise ConnectionError("no network")
+
+    installer = Installer()
+    failed, completed = [], []
+    installer.failed.connect(lambda tool, error: failed.append((tool, error)))
+    installer.completed.connect(completed.append)
+    installer.install(BrokenDownloader(), False, ["Self"])
+
+    assert failed == [("Self", "ConnectionError: no network")]
+    assert completed == []
 
 
 def test_download_self_cleans_temporary_folders(fake_github, tmp_path):
