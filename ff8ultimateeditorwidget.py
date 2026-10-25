@@ -51,6 +51,39 @@ from Watts.wattswidget import WattsWidget
 from Xu.xuwidget import XuWidget
 
 
+class _ToolHost(QWidget):
+    """Holds the tool stack, filling the tool area, without reporting height-for-width.
+
+    QStackedLayout answers height-for-width as the maximum over EVERY tool (hidden ones measured
+    at stale widths), and a resizable scroll area stretches a height-for-width widget to that
+    height: a word-wrapped label anywhere made the current tool far taller than the window, with
+    an empty space to scroll into. The host only ever has the viewport's height; on_hint_changed
+    is called whenever the current tool's minimum size may have changed."""
+
+    def __init__(self, stack, on_hint_changed):
+        super().__init__()
+        self._stack = stack
+        self._on_hint_changed = on_hint_changed
+        stack.setParent(self)
+
+    def resizeEvent(self, event):
+        self._stack.setGeometry(self.rect())
+        super().resizeEvent(event)
+        self._on_hint_changed()  # a narrower window may now need the horizontal scrollbar
+
+    def minimumSizeHint(self):
+        return self._stack.minimumSizeHint()
+
+    def sizeHint(self):
+        return self._stack.sizeHint()
+
+    def event(self, event):
+        if event.type() == QEvent.Type.LayoutRequest:  # a tool's size hints changed
+            self.updateGeometry()
+            self._on_hint_changed()
+        return super().event(event)
+
+
 class FF8UltimateEditorWidget(QWidget):
 
     def __init__(self, resources_path='Resources', game_data_path='FF8GameData'):
@@ -367,8 +400,9 @@ class FF8UltimateEditorWidget(QWidget):
         self._file_toolbar.save_state_changed.connect(self._update_title_save_marker)
         self._update_title_save_marker(self._file_toolbar.save_button.isEnabled())
 
-        # 6. Oversized forms and the wide header scroll instead of forcing the window beyond
-        # the desktop. Keep the header independent so tool scrolling leaves Import/Save visible.
+        # 6. The wide header and a tool wider than the window scroll horizontally instead of
+        # forcing the window beyond the desktop. Never vertically: every tool fits a 1080p screen,
+        # and the tool area's minimum height follows the current tool (_fit_tool_height).
         self._header_scroll = QScrollArea()
         self._header_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self._header_scroll.setWidgetResizable(True)
@@ -379,7 +413,10 @@ class FF8UltimateEditorWidget(QWidget):
         self._tool_scroll = QScrollArea()
         self._tool_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self._tool_scroll.setWidgetResizable(True)
-        self._tool_scroll.setWidget(self.tool_stack)
+        self._tool_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._tool_host = _ToolHost(self.tool_stack, self._fit_tool_height)
+        self._tool_scroll.setWidget(self._tool_host)
+        self._fit_tool_height()
         self._main_layout.addWidget(self._header_scroll)
         self._main_layout.addWidget(self._enhance_end_separator_line)
         self._main_layout.addWidget(self._tool_scroll, 1)
@@ -415,6 +452,19 @@ class FF8UltimateEditorWidget(QWidget):
             else:
                 tool.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         self.tool_stack.updateGeometry()
+        self._fit_tool_height()
+
+    def _fit_tool_height(self):
+        # No vertical scrollbar: the window may not get shorter than the current tool needs
+        # (plus the horizontal scrollbar when the tool is wider than the window).
+        scroll = getattr(self, "_tool_scroll", None)
+        if scroll is None:  # tools switched before the tool area exists
+            return
+        height = self._tool_host.minimumSizeHint().height()
+        if self._tool_host.minimumSizeHint().width() > scroll.viewport().width():
+            height += scroll.horizontalScrollBar().sizeHint().height()
+        if scroll.minimumHeight() != height:
+            scroll.setMinimumHeight(height)
 
     def _resize_for_screen(self):
         # Client size leaves room for window decorations and a taskbar on a 720p desktop.

@@ -249,7 +249,7 @@ class MotionCanvas(QWidget):
         self.bone = None
         self.total_ticks = 1
         self.visible = [True] * 6
-        self.setMinimumHeight(180)
+        self.setMinimumHeight(140)  # Fujin's Playback tab must fit a 1080p screen
 
     def set_bone(self, bone, total_ticks):
         self.bone = bone

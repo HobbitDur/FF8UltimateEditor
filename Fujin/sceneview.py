@@ -39,7 +39,7 @@ class SceneView(QWidget):
         self._drag = None
         self._drag_button = None
         self._picks = []      # (screen x, y, bone) of the last paint
-        self.setMinimumSize(400, 300)
+        self.setMinimumSize(400, 240)  # Fujin's Playback tab must fit a 1080p screen
         self.setMouseTracking(False)
 
     # ------------------------------------------------------------------ state

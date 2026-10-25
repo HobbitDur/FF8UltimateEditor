@@ -61,7 +61,10 @@ class DrawGroupsWidget(QWidget):
             first.valueChanged.connect(lambda _value, g=group: self._range_edited(g, 'first'))
             last.valueChanged.connect(lambda _value, g=group: self._range_edited(g, 'last'))
         self.groups.currentCellChanged.connect(lambda *_: self.refresh_members())
-        split.addWidget(group_box)
+        # The two 5-row tables side by side: stacked, the tab would not fit a 1080p screen
+        tables = QSplitter(Qt.Orientation.Horizontal)
+        tables.addWidget(group_box)
+        split.addWidget(tables)
 
         phase_box = QGroupBox('Phase searches - exported in the EXE .hext patch')
         phase_layout = QVBoxLayout(phase_box)
@@ -88,7 +91,7 @@ class DrawGroupsWidget(QWidget):
                 row.append(combo)
             self._searches.append(row)
         phase_layout.addWidget(self.phases)
-        split.addWidget(phase_box)
+        tables.addWidget(phase_box)
 
         members_box = QGroupBox('Selected group members')
         members_layout = QVBoxLayout(members_box)

@@ -94,6 +94,27 @@ class _ContentWidthScrollArea(QScrollArea):
         return hint
 
 
+class _FixedWidthWrapLabel(QLabel):
+    """Word-wrapped label of a fixed width that does NOT report height-for-width: one such
+    widget makes its whole page height-for-width, and the main window's resizable tool scroll
+    area then stretches the page to its full preferred height (a long empty scroll). The
+    width being fixed, its height is simply the wrapped text's height at that width."""
+
+    def __init__(self, width):
+        super().__init__()
+        self.setWordWrap(True)
+        self.setFixedWidth(width)
+
+    def hasHeightForWidth(self):
+        return False
+
+    def sizeHint(self):
+        return QSize(self.width(), super().heightForWidth(self.width()))
+
+    def minimumSizeHint(self):
+        return self.sizeHint()
+
+
 class KernelSectionTab(QWidget):
     """Generic list + form editor for one kernel data section, driven by JSON field defs.
 
@@ -211,10 +232,9 @@ class KernelSectionTab(QWidget):
                 self._remove_btn.clicked.connect(self._remove_entry_callback)
                 list_col.addWidget(self._remove_btn)
             if self._pool_callback:
-                self._pool_label = QLabel()
+                self._pool_label = _FixedWidthWrapLabel(self.list_widget.width())
                 # No colour: a hardcoded grey vanishes into the dark theme's background.
                 self._pool_label.setStyleSheet("font-size: 9pt;")
-                self._pool_label.setWordWrap(True)
                 self._pool_label.setToolTip(self._pool_tooltip or
                     "The seven ability sections share one id space - the engine reads\n"
                     "them as a single array - and a savegame stores 128 learned-ability\n"
@@ -1157,6 +1177,7 @@ class KernelSectionTab(QWidget):
         spent. No-op on a tab that does not share one."""
         if self._pool_label is not None:
             self._pool_label.setText(text)
+            self._pool_label.updateGeometry()  # its wrapped height may change with the text
         if self._add_btn is not None:
             self._add_btn.setEnabled(can_add)
 

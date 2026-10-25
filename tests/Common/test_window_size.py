@@ -1,8 +1,8 @@
-"""All tools must remain accessible in a window that fits a 720p desktop."""
+"""Every tool fits a 1080p desktop without vertical scrolling; the default window fits 720p."""
 from types import SimpleNamespace
 
 import pytest
-from PyQt6.QtCore import QRect, QSize
+from PyQt6.QtCore import QRect, QSize, Qt
 from PyQt6.QtWidgets import QApplication
 
 from ff8ultimateeditorwidget import FF8UltimateEditorWidget
@@ -36,35 +36,30 @@ def test_default_fits_720p_and_reserves_desktop_space(window, monkeypatch):
     assert window.frameGeometry().height() < 720
 
 
-def test_every_tool_can_expand_then_shrink_below_720p(window):
+def test_every_tool_fits_1080p_without_vertical_scroll(window):
+    # 1920x1080 maximized: the taskbar and the title bar leave a 1920x1001 client area
+    assert window._tool_scroll.verticalScrollBarPolicy() == Qt.ScrollBarPolicy.ScrollBarAlwaysOff
     for index in range(window.tool_stack.count()):
         window.tool_stack.setCurrentIndex(index)
-        window.resize(1600, 1000)
-        settle()
-        assert window.size() == QSize(1600, 1000)
-        window.resize(1200, 640)
+        window.resize(1920, 1001)
         settle()
         name = type(window.tool_stack.currentWidget()).__name__
-        assert window.size() == QSize(1200, 640), name
-        assert window.minimumSizeHint().height() < 640, name
-        assert window._tool_scroll.viewport().height() > 300, name
+        assert window.minimumSizeHint().height() <= 1001, name
+        assert window.size() == QSize(1920, 1001), name
+        # The tool fills the window exactly: nothing hidden below, no blank space to scroll into
+        assert window._tool_scroll.widget().height() == window._tool_scroll.viewport().height(), name
 
 
-def test_tall_editor_scrolls_and_hidden_tools_stop_contributing(window):
-    window.resize(1200, 640)
+def test_hidden_tools_stop_contributing(window):
+    window.resize(1920, 1001)
     window.tool_stack.setCurrentWidget(window._cid_widget)
     settle()
-    area = window._tool_scroll
-    bar = area.verticalScrollBar()
-    assert bar.maximum() > 0  # Cid's form needs more than the available height.
-    bar.setValue(bar.maximum())
-    settle()
-    assert area.widget().geometry().bottom() <= area.viewport().height()
-
     window.tool_stack.setCurrentWidget(window._ifrit_widget)
     settle()
     assert window.tool_stack.minimumSizeHint().height() < 640
-    assert bar.maximum() == 0  # Hidden Cid/Fujin forms must not leave a tall blank canvas.
+    # A word-wrapped label in another tool (height-for-width) must not stretch this one
+    assert not window._tool_scroll.widget().hasHeightForWidth()
+    assert window._tool_scroll.widget().height() == window._tool_scroll.viewport().height()
 
 
 def test_expanded_file_list_cannot_force_window_beyond_desktop(window):
