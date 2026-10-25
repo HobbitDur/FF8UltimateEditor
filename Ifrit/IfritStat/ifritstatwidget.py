@@ -659,6 +659,7 @@ class IfritStatWidget(QWidget):
             grid.addWidget(id_combo, row + 1, 2)
             grid.addWidget(anim_spin, row + 1, 3)
             self._ability_widgets[key].append((type_combo, id_combo, anim_spin))
+        grid.setRowStretch(17, 1)  # trailing spacer soaks leftover height: rows stay at the top
 
         # Pin the rows panel to its content width so it never grows beyond what
         # the 16 rows need — all the leftover horizontal space goes to the
