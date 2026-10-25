@@ -1713,6 +1713,35 @@ class TestAIDecompiler:
         )
         assert expected == normalized
 
+    def test_decompile_else_starting_with_several_ifs(self, decompiler: AIDecompiler):
+        """An else whose body is several IFs in a row is not an elseif (only the first IF would
+        stay in the chain, the others would run after the whole if/else)"""
+        bytecode = [2, 1, 2, 3, 2, 0, 4, 0, 8, 35, 26, 0,
+                    2, 1, 2, 3, 2, 0, 4, 0, 8, 35, 0, 0,
+                    2, 1, 2, 3, 2, 0, 6, 0, 40, 4, 5, 35, 0, 0]
+        code = decompiler.decompile(bytecode)
+        normalized = self.normalize_code(code)
+        expected = self.normalize_code(
+            """
+            if(HP_IN,IRVINE,≠,20%)
+            {
+                die();
+            }
+            else
+            {
+                if(HP_IN,IRVINE,≠,20%)
+                {
+                    die();
+                }
+                if(HP_IN,IRVINE,≠,20%)
+                {
+                    statChange(SPEED,50%);
+                }
+            }
+            """
+        )
+        assert expected == normalized
+
     def test_decompile_if_elseif_else_statement(self, decompiler: AIDecompiler):
         """Test decompiling if-else statement"""
         bytecode = [2, 1, 2, 3, 2, 0, 4, 0, 8, 35, 17, 0, 2, 1, 2, 3, 1, 0, 6, 0, 40, 3, 2, 35, 3, 0, 40, 4, 5]

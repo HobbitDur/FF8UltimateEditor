@@ -129,9 +129,9 @@ class AIDecompiler:
                     func_list.append(func_line_text)
 
                 elif jump_value > 0:
-                    # Check if next command is an IF (would be elseif)
-                    if (command_index + 1 < len(command_list) and
-                            command_list[command_index + 1].get_id() == 2):
+                    # JUMP + next IF = elseif, but only when that IF (with its own else) is the
+                    # WHOLE else body: else { if {..} if {..} } must stay an else block
+                    if AIDecompiler._if_chain_size(command_list, command_index + 1) == jump_value:
                         # This JUMP + next IF = elseif
                         # Don't output "else" now, just mark that we expect an elseif
                         pending_elseif = True
@@ -172,6 +172,30 @@ class AIDecompiler:
             code_text += func_name
             code_text += '\n'
         return code_text
+
+    @staticmethod
+    def _if_chain_size(command_list: List[CommandAnalyser], if_index: int) -> int:
+        """Bytes covered by the IF at if_index and its else (if any), or -1 when it is not an IF.
+        The IF jump counts from the end of the IF; an else is a forward JUMP closing its body."""
+        if if_index >= len(command_list) or command_list[if_index].get_id() != 2:
+            return -1
+        if_command = command_list[if_index]
+        op_list = if_command.get_op_code()
+        body_size = int.from_bytes(bytearray([op_list[5], op_list[6]]), byteorder='little')
+        covered = 0
+        last_command = None
+        index = if_index + 1
+        while covered < body_size and index < len(command_list):
+            last_command = command_list[index]
+            covered += last_command.get_size()
+            index += 1
+        else_size = 0
+        if last_command is not None and last_command.get_id() == 35:
+            jump_list = last_command.get_op_code()
+            jump_value = int.from_bytes(bytearray([jump_list[0], jump_list[1]]), byteorder='little')
+            if jump_value & 0x8000 == 0:
+                else_size = jump_value
+        return if_command.get_size() + body_size + else_size
 
     @staticmethod
     def compute_indent_bracket(func_list: List, html=False):
