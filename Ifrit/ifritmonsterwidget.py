@@ -280,6 +280,11 @@ class IfritFilePane(QWidget):
         # Camera also writes the model live and self-reports (same as seq).
         self._camera_widget.data_edited.connect(self._on_edit)
         self._3d_widget = Ifrit3DWidget(ifrit_manager, show_controls=True)
+        # Its "Battle view" toggle: the model in a scene.out encounter (monsters and character
+        # bodies, the ones a battle places on a slot)
+        if ifrit_manager.enemy.entity_type in (EntityType.MONSTER, EntityType.CHARACTER,
+                                               EntityType.CHARACTER_NO_WEAPON):
+            self._3d_widget.enable_battle_view(file_registry)
         # The battle-entrance block (character section 7, weapon 8, Edea 10): the same 3D editor
         # on the same file, through a manager view whose animation list is that block.
         self._entrance_widget = Ifrit3DWidget(ifrit_manager.entrance_view(), show_controls=True)
@@ -423,8 +428,9 @@ class IfritFilePane(QWidget):
             return ""
 
     def set_model_source(self, source):
-        """The session's opened models, for the Camera tab's encounter preview."""
+        """The session's opened models, for the Camera tab's and the 3D battle view's encounters."""
         self._camera_widget.set_model_source(source)
+        self._3d_widget.set_battle_model_source(source)
 
     def show_saved_tab(self):
         """Select the tab the user last had open (shared preference across panes)."""

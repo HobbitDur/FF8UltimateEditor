@@ -83,14 +83,17 @@ def actor_from_model(manager, position=(0., 0., 0.), yaw=0., animation=0, animat
 class BattlePreviewSetup(QWidget):
     changed = pyqtSignal()
 
-    def __init__(self, manager, parent=None, file_registry=None, host_cast=False):
+    def __init__(self, manager, parent=None, file_registry=None, host_cast=False, model_view=False):
         """host_cast: the host tool feeds the actors and slots itself (Fujin's party, Caster and
-        Target) and opens files from the header toolbar, so those controls are hidden here."""
+        Target) and opens files from the header toolbar, so those controls are hidden here.
+        model_view: no camera is played (Ifrit3D's battle view, a free camera on the encounter),
+        so the camera-only controls - game/free camera, caster/target, starting view - are hidden."""
         super().__init__(parent)
         self.manager = manager
         self.host_cast = host_cast
         self.opponent = None
         self.context = None
+        self._main = None               # the loaded model's actor, after build()
         self.unit = 1.
         self._asset_cache = {}
         self._scene_mesh_actors = []
@@ -200,6 +203,12 @@ class BattlePreviewSetup(QWidget):
                     if host_row.itemAt(index).widget() is not None:
                         host_row.itemAt(index).widget().hide()
             self.status.hide()
+        if model_view:
+            self.view_mode.setCurrentIndex(1)
+            for camera_row in (row, role_row, slot_row, initial_row):
+                for index in range(camera_row.count()):
+                    if camera_row.itemAt(index).widget() is not None:
+                        camera_row.itemAt(index).widget().hide()
         self.role.currentIndexChanged.connect(lambda _value: self._roles_changed())
         self.initial_view.currentIndexChanged.connect(lambda _value: self.changed.emit())
         self.view_mode.currentIndexChanged.connect(lambda _value: self.changed.emit())
@@ -310,6 +319,7 @@ class BattlePreviewSetup(QWidget):
         self.main_yaw = math.pi if self.encounters.is_monster else 0.
         other_yaw = 0. if self.encounters.is_monster else math.pi
         main = actor_from_model(self.manager, yaw=self.main_yaw, animation=animation, animate=animate)
+        self._main = main
         position = tuple(spin.value() for spin in self.position)
         ids = (self.caster_slot.value(), self.target_slot.value())
         main_id, other_id = ids if self.role.currentIndex() == 0 else ids[::-1]
@@ -390,6 +400,7 @@ class BattlePreviewSetup(QWidget):
         # resetBasedRotation (EN 502070): party=0, monster=2048.
         self.main_yaw = math.pi if monster else 0.
         main = actor_from_model(self.manager, self.main_position, self.main_yaw, animation, animate)
+        self._main = main
         slots, notes = {}, []
         for slot in encounter.enabled_slots():
             if monster and slot.slot_index == selected.slot_index:
@@ -455,6 +466,14 @@ class BattlePreviewSetup(QWidget):
         self.status.setText('Player: the loaded opponent, else an opened d0c000.dat.' if monster else
                             'Enemies: the opened models of the encounter; the others are markers.')
         return self.context
+
+    def marker_positions(self):
+        """Battle positions of the slots placed but not drawn (no model opened for them), after
+        build(): the loaded model and the drawn actors are left out."""
+        if self.context is None:
+            return []
+        drawn = {id(actor) for _manager, actor in self._scene_mesh_actors} | {id(self._main)}
+        return [actor.position for _slot, actor in sorted(self.context.slots.items()) if id(actor) not in drawn]
 
     def to_viewer(self, point):
         return np.asarray(point) * np.array((-1., -1., 1.)) * self.unit

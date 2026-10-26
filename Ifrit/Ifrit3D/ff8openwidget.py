@@ -494,6 +494,41 @@ class FF8OpenGLWidget(QOpenGLWidget):
         self._preview_markers = (ground_y, target)
         self.update()
 
+    def set_preview_slot_markers(self, points=(), height=1.0, grid_half_size=None, grid_step=1.0, ground_y=0.0):
+        """The battle view's fixed scene (viewer world coordinates, like the preview actor): a post
+        at each battle slot no model stands on, `height` tall, and a ground grid (y = 0) of
+        `grid_half_size` around the field (at `ground_y`), None for none."""
+        self._preview_slots = (tuple(tuple(p) for p in points), float(height), grid_half_size, float(grid_step))
+        self._preview_ground_y = float(ground_y)
+        self.update()
+
+    def _draw_preview_slots(self):
+        points, height, grid_half_size, step = getattr(self, '_preview_slots', ((), 1., None, 1.))
+        if not points and grid_half_size is None:
+            return
+        glDisable(GL_TEXTURE_2D)
+        glBegin(GL_LINES)
+        if grid_half_size is not None:
+            glColor3f(0.32, 0.32, 0.38)
+            ground_y = getattr(self, '_preview_ground_y', 0.)
+            line = -grid_half_size
+            while line <= grid_half_size + 1e-6:
+                glVertex3f(line, ground_y, -grid_half_size)
+                glVertex3f(line, ground_y, grid_half_size)
+                glVertex3f(-grid_half_size, ground_y, line)
+                glVertex3f(grid_half_size, ground_y, line)
+                line += step
+        glColor3f(0.85, 0.35, 0.3)
+        arm = height / 4
+        for x, y, z in points:
+            glVertex3f(x, y, z)             # a post from the ground...
+            glVertex3f(x, y + height, z)
+            glVertex3f(x - arm, y, z)       # ...on a small ground cross
+            glVertex3f(x + arm, y, z)
+            glVertex3f(x, y, z - arm)
+            glVertex3f(x, y, z + arm)
+        glEnd()
+
     def set_effect_flash(self, position, life):
         """A symbolic burst where an effect command just fired (the real particle code is
         procedural in the exe, so the preview shows THAT an effect happened, and where).
@@ -756,7 +791,8 @@ class FF8OpenGLWidget(QOpenGLWidget):
             self.draw_axis()
         if (getattr(self, '_preview_markers', (None, None)) != (None, None)
                 or getattr(self, '_effect_flash', None) is not None
-                or getattr(self, '_preview_actor', None) is not None):
+                or getattr(self, '_preview_actor', None) is not None
+                or getattr(self, '_preview_slots', ((), 1., None, 1.))[::2] != ((), None)):
             # The markers are the scene's FIXED reference, so they must not ride along
             # with the model translation applied just above: undo it around them.
             glPushMatrix()
@@ -765,6 +801,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
             glRotatef(-yaw, 0., 1., 0.)
             glTranslatef(*(-np.asarray(placement)))
             self._draw_preview_markers()
+            self._draw_preview_slots()
             self._draw_effect_flash()
             self._draw_preview_actor()
             glPopMatrix()

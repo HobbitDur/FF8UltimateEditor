@@ -85,7 +85,7 @@ STAGE_ZOOM_FACTOR = 1.6
 
 # Ifrit3DWidget child widgets that only make sense for animated models; battle
 # stages are static, so they are hidden.
-_ANIM_WIDGETS = ("play_btn", "reset_anim_btn", "fps_label", "fps_slider",
+_ANIM_WIDGETS = ("play_btn", "reset_anim_btn", "fps_label", "fps_slider", "cb_ground",
                  "frame_label", "frame_slider", "anim_label", "anim_selector",
                  "bone_editor", "playlist_container",
                  # The "Frames ▾" menu (frame/animation authoring + fps conversion) is meaningless

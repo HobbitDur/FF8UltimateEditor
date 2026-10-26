@@ -138,6 +138,11 @@ class Ifrit3DWidget(QWidget):
         # transform and plays its own animation (the one of its sequence with the same index,
         # see FF8GameData.dat.linkedparts.animation_map), placed by its own root like a weapon.
         self._linked_parts = []
+        # Battle view (enable_battle_view): the model inside a scene.out encounter, free camera.
+        self._battle_view = None         # BattleView, built on the first toggle
+        self._battle_view_cb = None      # its toolbar toggle, only on a tab that offers it
+        self._battle_registry = None
+        self._battle_model_source = None
         # Weapon placement is automatic: the weapon's own animation carries a per-frame root
         # position that traces the hand (the game applies each model's own root - see
         # _current_weapon_verts), so no user-picked attach bone is needed.
@@ -184,6 +189,7 @@ class Ifrit3DWidget(QWidget):
             toolbar.setStyleSheet(
                 "QToolBar{background:#2a2a2f; padding:5px; spacing:4px; border:none;}"
                 "QToolBar::separator{background:#444; width:1px; margin:2px 4px;}")
+            self._toolbar = toolbar
             toolbar_layout = toolbar   # every earlier `toolbar_layout.addWidget(x)` below still
                                        # works unchanged: QToolBar.addWidget has the same signature
 
@@ -215,6 +221,16 @@ class Ifrit3DWidget(QWidget):
             self.cb_axis.setStyleSheet("color:white;")
             self.cb_axis.toggled.connect(self._on_axis_toggle)
             toolbar_layout.addWidget(self.cb_axis)
+
+            self.cb_ground = QCheckBox("Ground")
+            self.cb_ground.setChecked(self.settings.value("ifrit/3d/show_ground", True, type=bool))
+            self.cb_ground.setStyleSheet("color:white;")
+            self.cb_ground.setToolTip(
+                "A grid on the battle ground, where the game stands the model (its feet at the\n"
+                "animation's first frame). In the battle view, the ground of the whole field.")
+            self.cb_ground.toggled.connect(self._on_ground_toggle)
+            # Battle models only (shown by load_file): a stage or a field model has no battle ground
+            self._ground_action = toolbar_layout.addWidget(self.cb_ground)
 
             self.cb_skeleton = QCheckBox("Skeleton")
             self.cb_skeleton.setChecked(self.settings.value("ifrit/3d/show_skeleton", False, type=bool))
@@ -418,7 +434,7 @@ class Ifrit3DWidget(QWidget):
             # an expanding empty widget instead (the standard Qt trick for a toolbar spacer).
             spacer = QWidget()
             spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-            toolbar_layout.addWidget(spacer)
+            self._toolbar_spacer_action = toolbar_layout.addWidget(spacer)
 
             # Right side controls
             reset_btn = QPushButton("Reset View")
@@ -924,6 +940,19 @@ class Ifrit3DWidget(QWidget):
         self._set_reference_position()
         if not keep_view:
             self.gl_widget.reset_view()
+        if hasattr(self, '_ground_action'):
+            # A battle model has a battle ground; a stage (Alexander) or a field model (Seed) has not
+            self._ground_action.setVisible(isinstance(getattr(self.ifrit_manager.enemy, 'entity_type', None),
+                                                      EntityType))
+            if not self.battle_view_active():
+                self._update_ground()   # reset_view sized the model: the grid follows its size
+        if self._battle_view_cb is not None and self._battle_view_cb.isChecked() and self._battle_view is None:
+            self._create_battle_view()   # left on with the previous file
+        if self.battle_view_active():
+            # A new file, or a reload: rebuild the encounter around it (framed again on a new file)
+            self._battle_view.model_loaded()
+            self._battle_view.reframe_needed = not keep_view
+            self._update_model_translation()
 
     # ── Vertex / primitive budget readout (info bar) ──────────────────
     # The engine limits these are checked against were measured in FF8_EN.exe:
@@ -1305,6 +1334,8 @@ class Ifrit3DWidget(QWidget):
 
     def _set_reference_position(self):
         """Set the reference position from frame 0 of current animation"""
+        if self.battle_view_active():
+            return   # the battle view keeps the camera on the field (BattleView.frame)
         pos_x, pos_y, pos_z = 0, 0, 0
         if self.current_anim_id < len(self.ifrit_manager.enemy.animation_data.animations):
             anim = self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id]
@@ -1360,8 +1391,80 @@ class Ifrit3DWidget(QWidget):
                 self.play_btn.setText("Pause")
             self.animating = True
 
+    # ── Battle view ──────────────────────────────────────────────────
+    def enable_battle_view(self, file_registry=None):
+        """Offer the "Battle view" toggle: the model in a scene.out encounter, with the encounter's
+        other enemies and the party around it, under the same free camera. Unchecked, the model
+        is alone as before. For the main 3D tab of a monster or a character body."""
+        if self._battle_view_cb is not None or not hasattr(self, '_toolbar'):
+            return
+        self._battle_registry = file_registry
+        self._battle_view_cb = QCheckBox("Battle view")
+        self._battle_view_cb.setStyleSheet("color:white;")
+        self._battle_view_cb.setToolTip(
+            "Show the model in a battle: pick a scene.out encounter (or place it by hand) and see\n"
+            "it animated on its slot, with the encounter's other enemies and the party around it.\n"
+            "Only the models opened in Ifrit are drawn; a slot without one is a post.\n"
+            "The camera stays free.")
+        # Kept on from one file to the next (a pane is rebuilt per shown file): checked here, the
+        # view itself is built when the file is first loaded into this viewer (load_file)
+        self._battle_view_cb.blockSignals(True)
+        self._battle_view_cb.setChecked(self.settings.value("ifrit/3d/battle_view", False, type=bool))
+        self._battle_view_cb.blockSignals(False)
+        self._battle_view_cb.toggled.connect(self._on_battle_view_toggled)
+        self._toolbar.insertWidget(self._toolbar_spacer_action, self._battle_view_cb)
+
+    def set_battle_model_source(self, source):
+        """The session's opened models (file name -> path), the only ones the encounter draws."""
+        self._battle_model_source = source
+        if self._battle_view is not None:
+            self._battle_view.set_model_source(source)
+
+    def battle_view_active(self):
+        return self._battle_view is not None and self._battle_view_cb.isChecked()
+
+    def _create_battle_view(self):
+        from Ifrit.Ifrit3D.battleview import BattleView
+        self._battle_view = BattleView(self.ifrit_manager, self._battle_registry, settings=self.settings)
+        if self._battle_model_source is not None:
+            self._battle_view.set_model_source(self._battle_model_source)
+        self._battle_view.changed.connect(self._on_battle_view_changed)
+        self._main_layout.insertWidget(self._gl_layout_index + 1, self._battle_view)
+
+    def _on_battle_view_toggled(self, checked):
+        self.settings.setValue("ifrit/3d/battle_view", checked)
+        if checked and self._battle_view is None:
+            self._create_battle_view()
+        if self._battle_view is not None:
+            self._battle_view.setVisible(checked)
+        if self.gl_widget is None:
+            return
+        if checked:
+            self._battle_view.model_loaded()
+            self._battle_view.reframe_needed = True
+            self._update_model_translation()
+        else:
+            from Ifrit.Ifrit3D.battleview import BattleView
+            BattleView.clear(self.gl_widget)
+            self._set_reference_position()
+            self._update_model_translation()
+            self.gl_widget.reset_view()
+
+    def _on_battle_view_changed(self):
+        if self.battle_view_active() and self.gl_widget is not None:
+            self._update_model_translation()
+
+    def _apply_battle_view(self):
+        self._battle_view.apply(self.gl_widget, self.current_anim_id, self.current_frame,
+                                show_ground=self.show_ground())
+        if self._battle_view.reframe_needed:
+            self._battle_view.frame(self.gl_widget)
+
     def _update_model_translation(self):
         """Update the model translation based on current frame position"""
+        if self.battle_view_active():
+            self._apply_battle_view()   # the engine's root offset, on the model's encounter slot
+            return
         pos_x, pos_y, pos_z = 0, 0, 0
         if (self.current_anim_id < len(self.ifrit_manager.enemy.animation_data.animations) and
                 self.current_frame < len(self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames)):
@@ -1373,6 +1476,8 @@ class Ifrit3DWidget(QWidget):
 
 
         self.gl_widget.set_model_translation(pos_x, pos_y, pos_z)
+        if hasattr(self, 'cb_ground'):
+            self._update_ground()
 
     def _update_frame_indicator(self):
         """Refresh the frame label and slider from current_frame. Kept separate from
@@ -1509,6 +1614,31 @@ class Ifrit3DWidget(QWidget):
         self.gl_widget.set_show_axis(checked)
         self.settings.setValue("ifrit/3d/show_axis", checked)
 
+    def _on_ground_toggle(self, checked):
+        self.settings.setValue("ifrit/3d/show_ground", checked)
+        if self.gl_widget is not None:
+            self._update_model_translation()   # draws or clears the ground of either view
+
+    def show_ground(self):
+        return (hasattr(self, 'cb_ground') and self.cb_ground.isChecked() and self._ground_action.isVisible()
+                and isinstance(getattr(self.ifrit_manager.enemy, 'entity_type', None), EntityType))
+
+    def _update_ground(self):
+        """The model alone: the engine's ground under it. The game places the root at raw/128 vertex
+        units (its feet then stand on y = 0); this view moves it by get_pos_world (raw/204.8), so the
+        ground is drawn where the engine's is at the animation's first frame, and stays there."""
+        if not self.show_ground():
+            self.gl_widget.set_preview_slot_markers()
+            return
+        ground_y = 0.
+        animations = self.ifrit_manager.enemy.animation_data.animations
+        if self.current_anim_id < len(animations) and animations[self.current_anim_id].frames:
+            position = animations[self.current_anim_id].frames[0].position
+            if len(position) >= 2:
+                ground_y = position[1].get_pos_world() + position[1].get_pos_raw() / 128
+        half = max(2., float(getattr(self.gl_widget, 'MODEL_SIZE', 1.)) * 2.)
+        self.gl_widget.set_preview_slot_markers(grid_half_size=half, grid_step=half / 8, ground_y=ground_y)
+
     def _on_skeleton_toggle(self, checked):
         self.gl_widget.set_show_skeleton(checked)
         self.settings.setValue("ifrit/3d/show_skeleton", checked)   # remembered across files/sessions
@@ -1526,7 +1656,7 @@ class Ifrit3DWidget(QWidget):
         the other (setChecked / setValue of an unchanged value emits nothing: no loop)."""
         if not hasattr(self, 'cb_texture') or not hasattr(other, 'cb_texture'):
             return
-        for name in ('cb_texture', 'cb_wire', 'cb_hidden_faces', 'cb_axis', 'cb_skeleton',
+        for name in ('cb_texture', 'cb_wire', 'cb_hidden_faces', 'cb_axis', 'cb_ground', 'cb_skeleton',
                      '_gizmo_action'):
             mine, theirs = getattr(self, name), getattr(other, name)
             mine.toggled.connect(theirs.setChecked)
