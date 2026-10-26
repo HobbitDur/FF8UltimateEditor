@@ -1,8 +1,9 @@
-"""Read-only encounter picker shared by monster and character camera previews."""
+"""Read-only encounter picker shared by every battle preview. scene.out comes from the header
+toolbar's Import complementary (the shared file bank): the picker has no file button of its own."""
 from pathlib import Path
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox, QLabel, QSizePolicy
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSizePolicy
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -11,10 +12,11 @@ from FF8GameData.sceneout import read_encounters, ENCOUNTER_SIZE, NB_ENCOUNTER
 
 class EncounterPicker(QWidget):
     changed = pyqtSignal()
+    NO_SCENE_TEXT = "Import scene.out (header's Import complementary) to place the models in an encounter."
 
     def __init__(self, manager, registry=None, parent=None, host_cast=False):
-        """host_cast: the host tool opens scene.out from the header toolbar and picks the
-        actors itself (Fujin's Caster/Target), so the Open button and the slot pick are hidden."""
+        """host_cast: the host picks the actors itself (Fujin's Caster/Target), so the slot pick
+        is hidden."""
         super().__init__(parent)
         self.manager = manager
         self.encounters = []
@@ -26,24 +28,23 @@ class EncounterPicker(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         row = QHBoxLayout()
-        self.open_button = QPushButton('Open scene.out…')
-        self.open_button.clicked.connect(self._choose)
-        self.open_button.setVisible(not host_cast)
-        row.addWidget(self.open_button)
+        row.addWidget(QLabel('Encounter:'))
         self.encounter = QComboBox()
-        self.encounter.setMinimumContentsLength(20)
-        self.encounter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.encounter.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.encounter.addItem('Manual placement', None)
         self.encounter.setToolTip('Encounter IDs are zero-based scene.out record numbers.')
-        row.addWidget(self.encounter, 1)
+        row.addWidget(self.encounter)
+        row.addStretch(1)
         layout.addLayout(row)
         row = QHBoxLayout()
         self.slot_label = QLabel('Enemy:')
         row.addWidget(self.slot_label)
         self.enemy_slot = QComboBox()
-        row.addWidget(self.enemy_slot, 1)
+        self.enemy_slot.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        row.addWidget(self.enemy_slot)
+        row.addStretch(1)
         layout.addLayout(row)
-        self.status = QLabel('Open scene.out to use encounter placement.')
+        self.status = QLabel(self.NO_SCENE_TEXT)
         self.status.setWordWrap(True)
         # A wrapped line keeps all its lines: the 3D view above gives up the height instead
         self.status.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
@@ -67,11 +68,6 @@ class EncounterPicker(QWidget):
     @property
     def selected_slot(self):
         return self.enemy_slot.currentData()
-
-    def _choose(self):
-        path = self.binding.open_dialog(self, self.registry.last_folder('scene.out'))
-        if path:
-            self.registry.remember_folder('scene.out', str(Path(path).parent))
 
     def load(self, path):
         try:
@@ -153,8 +149,7 @@ class EncounterPicker(QWidget):
         if encounter is None:
             count = self.encounter.count() - 1
             self.status.setText(f'{count} matching encounters. Manual placement.' if self.path else
-                                "Import scene.out (header's Import complementary) to use encounter placement."
-                                if self.host_cast else 'Open scene.out to use encounter placement.')
+                                self.NO_SCENE_TEXT)
         else:
             self.status.setText(f'Encounter {encounter.index} · stage {encounter.stage_id} · '
                                 'Enemy positions from scene.out; normal party formation.')

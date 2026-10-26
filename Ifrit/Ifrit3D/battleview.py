@@ -37,8 +37,8 @@ class BattleView(QWidget):
         self._scene_key = None      # (encounter, slot) the view was last framed on
         self.reframe_needed = True  # the field moved: centre the camera on it again
 
-    def set_model_source(self, source):
-        self.setup.model_source = source
+    def set_model_paths(self, paths):
+        self.setup.set_model_paths(paths)
         self.mark_dirty()
 
     def mark_dirty(self):
@@ -51,6 +51,8 @@ class BattleView(QWidget):
         if key != self._scene_key:
             self._scene_key = key
             self.reframe_needed = True
+        # In an encounter every actor stands where it belongs: no other model to pick
+        self.setup.cast.set_cast_visible(key[0] is None)
         if self._settings is not None and not self._restoring:
             self._settings.setValue(self._encounter_setting(), -1 if key[0] is None else key[0])
         self.changed.emit()

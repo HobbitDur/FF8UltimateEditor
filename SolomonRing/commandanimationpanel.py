@@ -288,6 +288,9 @@ class CommandAnimationPanel(QWidget):
             self._ensure_textures(source)
             self._preview = CameraPreviewPanel(manager, show_model_animation=False,
                                                file_registry=self.file_registry)
+            # the battle setup stands only the files imported here
+            self._preview._battle_setup.set_model_paths(
+                lambda: [source['path'] for source in self._sources.values()])
             self._preview._animate_model.setChecked(False)
             self._camera_layout.addWidget(self._preview, 1)
             self._preview_source = source

@@ -427,10 +427,12 @@ class IfritFilePane(QWidget):
         except Exception:
             return ""
 
-    def set_model_source(self, source):
-        """The session's opened models, for the Camera tab's and the 3D battle view's encounters."""
-        self._camera_widget.set_model_source(source)
-        self._3d_widget.set_battle_model_source(source)
+    def set_model_paths(self, paths):
+        """The session's opened models (callable -> paths): the only ones the battle previews (Camera
+        tab, Sequence tab, 3D battle view) stand in their party and encounters."""
+        self._camera_widget.set_model_paths(paths)
+        self._seq_widget.set_model_paths(paths)
+        self._3d_widget.set_battle_model_paths(paths)
 
     def show_saved_tab(self):
         """Select the tab the user last had open (shared preference across panes)."""
@@ -793,6 +795,11 @@ class IfritMonsterWidget(QWidget):
         self.sceneout_binding = FileBinding("scene.out", file_registry, load_callback=self._on_sceneout_changed,
                                             file_filter="scene.out", read_only=True)
         self.sceneout_binding.file_closed.connect(lambda _path: self._set_encounters([]))
+        # Side files of the Sequence tab's preview, complementary (read-only): its sounds
+        # (audio.fmt) and the game font beside mngrp.bin for its text banner. The preview binds
+        # them itself; they are offered here so the header imports them, as every other file.
+        self.audio_binding = FileBinding("audio.fmt", file_registry, file_filter="audio.fmt", read_only=True)
+        self.mngrp_binding = FileBinding("mngrp.bin", file_registry, file_filter="mngrp.bin", read_only=True)
         self._encounters = []
         # Ifrit is an Alexander-pattern tool with no per-file FileBinding, so the shared-toolbar
         # Reload button reaches it through the reload_files() / can_reload_files() hooks below
@@ -935,9 +942,10 @@ class IfritMonsterWidget(QWidget):
         self.kernel_binding.load_opened_file()   # another tool may have opened a kernel.bin already
 
     def file_bindings(self):
-        """The one fixed-name file of this tool: kernel.bin, complementary (read-only). The .dat
-        models have no fixed name - they go through open_files() / save_folder()."""
-        return [self.kernel_binding, self.sceneout_binding]
+        """The fixed-name files of this tool, all complementary (read-only): kernel.bin, scene.out
+        and the Sequence preview's audio.fmt and mngrp.bin. The .dat models have no fixed name -
+        they go through open_files() / save_folder()."""
+        return [self.kernel_binding, self.sceneout_binding, self.audio_binding, self.mngrp_binding]
 
     STAT_CURVES = ('hp', 'str', 'vit', 'mag', 'spr', 'spd', 'eva')
 
@@ -1399,7 +1407,7 @@ class IfritMonsterWidget(QWidget):
                              linked_parts_provider=self._linked_parts_for)
         pane.dirty_changed.connect(lambda entry=f: self._on_pane_dirty(entry))
         pane.edited.connect(self._on_active_edited)          # every edit -> (debounced) undo snapshot
-        pane.set_model_source(self._opened_model_path)
+        pane.set_model_paths(self._opened_model_paths)
         f['pane'] = pane
         self._ensure_undo_stack(f)   # baseline = the just-loaded (== on-disk) model; kept across rebuilds
         self._stack.addWidget(pane)
@@ -1407,11 +1415,10 @@ class IfritMonsterWidget(QWidget):
         # min-size floored to the shown page (see _shrink_stack_to_current).
         _shrink_stack_to_current(self._stack, self._stack_size_policies)
 
-    def _opened_model_path(self, name):
-        """The path of the opened model named `name` (lower case), else None: the Camera tab's
-        encounters draw only the files opened in this session, never ones found on disk."""
-        return next((f['path'] for f in self._files
-                     if not f.get('blank') and os.path.basename(f['path']).lower() == name), None)
+    def _opened_model_paths(self):
+        """The models opened in this session: the battle previews stand only these, never a file
+        found on disk."""
+        return [f['path'] for f in self._files if not f.get('blank')]
 
     def _autoload_character_weapons(self, body_path):
         """Bring a character's weapon .dat files into the session automatically.

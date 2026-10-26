@@ -1414,11 +1414,11 @@ class Ifrit3DWidget(QWidget):
         self._battle_view_cb.toggled.connect(self._on_battle_view_toggled)
         self._toolbar.insertWidget(self._toolbar_spacer_action, self._battle_view_cb)
 
-    def set_battle_model_source(self, source):
-        """The session's opened models (file name -> path), the only ones the encounter draws."""
-        self._battle_model_source = source
+    def set_battle_model_paths(self, paths):
+        """The session's opened models (callable -> paths), the only ones the battle view stands."""
+        self._battle_model_source = paths
         if self._battle_view is not None:
-            self._battle_view.set_model_source(source)
+            self._battle_view.set_model_paths(paths)
 
     def battle_view_active(self):
         return self._battle_view is not None and self._battle_view_cb.isChecked()
@@ -1427,7 +1427,7 @@ class Ifrit3DWidget(QWidget):
         from Ifrit.Ifrit3D.battleview import BattleView
         self._battle_view = BattleView(self.ifrit_manager, self._battle_registry, settings=self.settings)
         if self._battle_model_source is not None:
-            self._battle_view.set_model_source(self._battle_model_source)
+            self._battle_view.set_model_paths(self._battle_model_source)
         self._battle_view.changed.connect(self._on_battle_view_changed)
         self._main_layout.insertWidget(self._gl_layout_index + 1, self._battle_view)
 

@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
-                             QSpinBox, QPushButton, QFileDialog, QSizePolicy)
+                             QSpinBox, QSizePolicy)
 
 from FF8GameData.dat.battlecamera import BattleCameraContext, CameraActor, CameraPose
 from FF8GameData.monsterdata import EntityType
@@ -109,6 +109,7 @@ class BattlePreviewSetup(QWidget):
         self.party_models = {}          # party slot -> (body manager, weapon manager or None)
         self.opponent_weapon = None     # weapon of a character opponent (manual / monster encounters)
         self._kind = None               # whether the defaults below were set for a monster
+        self.model_paths = None         # callable -> the .dat paths the host loaded (the cast panel)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         row = QHBoxLayout()
@@ -116,6 +117,7 @@ class BattlePreviewSetup(QWidget):
         self.view_mode.addItems(['Game camera', 'Free camera'])
         self.view_mode.setToolTip('Free camera: orbit with the mouse to inspect the scene.')
         row.addWidget(self.view_mode)
+        row.addStretch(1)
         self.group = CollapsibleSection('Battle setup', expanded=False)
         self.group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.options = QWidget()
@@ -128,43 +130,40 @@ class BattlePreviewSetup(QWidget):
         self.encounters = EncounterPicker(manager, file_registry, host_cast=host_cast)
         self.encounters.changed.connect(self._encounter_changed)
         options.addWidget(self.encounters)
-        party_row = QHBoxLayout()
-        party_row.addWidget(QLabel('Party size:'))
-        self.party_size = QSpinBox()
+        # Who stands where: the shared cast panel (the host's own for host_cast, Fujin's). These
+        # are its state, set by it (BattleCastPanel.apply), never shown.
+        self.party_size, self.party_slot = QSpinBox(self), QSpinBox(self)
         self.party_size.setRange(1, 3)
         self.party_size.setValue(3)
-        party_row.addWidget(self.party_size)
-        party_row.addWidget(QLabel('Player slot:'))
-        self.party_slot = QSpinBox()
         self.party_slot.setRange(0, 2)
-        self.party_slot.setToolTip('Zero-based party order. Uses the game\'s normal battle formation.')
-        party_row.addWidget(self.party_slot)
-        options.addLayout(party_row)
         self.party_size.valueChanged.connect(self._party_changed)
         self.party_slot.valueChanged.connect(lambda _v: self._roles_changed())
-        role_row = QHBoxLayout()
-        role_row.addWidget(QLabel('Loaded model:'))
-        self.role = QComboBox()
+        self.role = QComboBox(self)
         self.role.addItems(['Caster', 'Target'])
-        role_row.addWidget(self.role)
-        options.addLayout(role_row)
-        slot_row = QHBoxLayout()
-        self.caster_slot, self.target_slot = QSpinBox(), QSpinBox()
+        self.caster_slot, self.target_slot = QSpinBox(self), QSpinBox(self)
         is_monster = getattr(self.manager.enemy.entity_type, 'name', '').startswith('MONSTER')
         self._kind = is_monster
-        for label, spin, default in (('Caster slot:', self.caster_slot, 3 if is_monster else 0),
-                                     ('Target slot:', self.target_slot, 0 if is_monster else 3)):
+        for spin, default in ((self.caster_slot, 3 if is_monster else 0), (self.target_slot, 0 if is_monster else 3)):
             spin.setRange(0, 10)
             spin.setValue(default)
-            spin.setToolTip('Battle slot: party 0-2, enemies 3-10. In an encounter, any placed slot.')
             spin.valueChanged.connect(lambda _value: self.changed.emit())
-            slot_row.addWidget(QLabel(label))
-            slot_row.addWidget(spin)
-        options.addLayout(slot_row)
-        # The label on its own line: beside the three spins it was cut off in a narrow panel
-        self.position_label = QLabel('Opponent position:')
-        options.addWidget(self.position_label)
+        for state in (self.party_size, self.party_slot, self.role, self.caster_slot, self.target_slot):
+            state.hide()
+        self.cast = None
+        if not host_cast:
+            from .battlecast import BattleCastPanel
+            self.cast = BattleCastPanel(getattr(manager, 'game_data', None), lambda: (self.model_paths() if
+                                        self.model_paths is not None else []),
+                                        mode="other" if model_view else "role", main_manager=manager,
+                                        main_path=getattr(manager.enemy, 'origin_path', None) or None)
+            self.cast.attach(self)
+            self.cast.changed.connect(self._cast_changed)
+            options.addWidget(self.cast)
+        # Manual placement (no encounter): where the other model stands
         position_row = QHBoxLayout()
+        self._position_row = position_row
+        self.position_label = QLabel('Other model position:')
+        position_row.addWidget(self.position_label)
         self.position = []
         for axis, default in zip('XYZ', (0, 0, 5000 if is_monster else -5000)):
             position_row.addWidget(QLabel(axis))
@@ -173,39 +172,24 @@ class BattlePreviewSetup(QWidget):
             spin.setValue(default)
             spin.setSingleStep(250)
             spin.setKeyboardTracking(False)
-            spin.setToolTip('Battle world units; Y points down. Preview placement only.')
+            spin.setToolTip('Manual placement: where the other model stands, in battle world units; Y points down.')
             spin.valueChanged.connect(lambda _value: self.changed.emit())
             position_row.addWidget(spin)
             self.position.append(spin)
+        position_row.addStretch(1)
         options.addLayout(position_row)
         initial_row = QHBoxLayout()
         initial_row.addWidget(QLabel('Starting view:'))
         self.initial_view = QComboBox()
         self.initial_view.addItems(['Battle overview', 'Loaded model'])
         initial_row.addWidget(self.initial_view)
+        initial_row.addStretch(1)
         options.addLayout(initial_row)
-        import_row = QHBoxLayout()
-        load = QPushButton('Load opponent…')
-        clear = QPushButton('Clear')
-        self.opponent_buttons = (load, clear)
-        load.clicked.connect(self._choose_opponent)
-        clear.clicked.connect(self._clear_opponent)
-        import_row.addWidget(load)
-        import_row.addWidget(clear)
-        options.addLayout(import_row)
-        self.status = QLabel('Opponent model not loaded. Manual placement.')
-        self.status.setWordWrap(True)
-        self.status.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)  # never clipped
-        options.addWidget(self.status)
-        if host_cast:
-            for host_row in (party_row, role_row, slot_row, import_row):
-                for index in range(host_row.count()):
-                    if host_row.itemAt(index).widget() is not None:
-                        host_row.itemAt(index).widget().hide()
-            self.status.hide()
+        self.status = QLabel('')  # the scene's notes are the encounter picker's and the cast panel's
+        self.status.hide()
         if model_view:
             self.view_mode.setCurrentIndex(1)
-            for camera_row in (row, role_row, slot_row, initial_row):
+            for camera_row in (row, initial_row):
                 for index in range(camera_row.count()):
                     if camera_row.itemAt(index).widget() is not None:
                         camera_row.itemAt(index).widget().hide()
@@ -228,9 +212,6 @@ class BattlePreviewSetup(QWidget):
         for spin in self.position:
             spin.setEnabled(not active)
         self.position_label.setEnabled(not active)
-        for button in self.opponent_buttons:
-            button.setEnabled(not active or self.encounters.is_monster)
-            button.setToolTip('Load a party stand-in for a monster preview. Encounter enemies are the opened models.')
         self.reset_encounter_slots()
         self.changed.emit()
 
@@ -283,28 +264,29 @@ class BattlePreviewSetup(QWidget):
         manager.texture_data, manager.texture_black_is_transparent = manager.extract_textures(manager.enemy, str(path))
         return manager
 
-    def _choose_opponent(self):
-        path, _ = QFileDialog.getOpenFileName(self, 'Load preview opponent (read-only)', '', 'Battle models (*.dat)')
-        if path:
-            self.load_opponent(path)
-
-    def load_opponent(self, path):
-        try:
-            manager = self._load_model(path, self.manager.game_data)
-        except Exception as error:
-            self.status.setText(f'Cannot load opponent: {error}')
-            return False
-        self.opponent = manager
-        self.status.setText(f'Opponent: {Path(path).name}. Preview placement.')
+    def _cast_changed(self):
+        self.cast.apply(self)
         self.changed.emit()
-        return True
 
-    def _clear_opponent(self):
-        self.opponent = None
-        self.status.setText('Opponent model not loaded. Manual placement.')
-        self.changed.emit()
+    def set_manual_position_visible(self, visible):
+        """Show the manual placement's position row (a host using its own default distance hides it)."""
+        for index in range(self._position_row.count()):
+            if self._position_row.itemAt(index).widget() is not None:
+                self._position_row.itemAt(index).widget().setVisible(visible)
+
+    def set_model_paths(self, model_paths):
+        """The .dat files the host loaded (callable -> paths): the only models the scene stands."""
+        self.model_paths = model_paths
+        if self.cast is not None:
+            self.cast.refresh()
 
     def build(self, animation=0, animate=False):
+        if self.cast is not None:
+            blocked = self.blockSignals(True)   # its state set again, not a change to rebuild for
+            try:
+                self.cast.apply(self)
+            finally:
+                self.blockSignals(blocked)
         self.unit = 2 / model_scale(self.manager)
         self._scene_mesh_actors = []
         self._scene_weapons = []

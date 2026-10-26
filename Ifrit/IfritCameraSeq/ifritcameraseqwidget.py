@@ -195,11 +195,11 @@ class IfritCameraSeqWidget(QWidget):
     def load_file(self, path: str = ""):
         self.__load()
 
-    def set_model_source(self, source):
-        """The models the user opened in the session (file name -> path), the only ones the
-        preview's encounters draw; see BattlePreviewSetup.model_source."""
+    def set_model_paths(self, paths):
+        """The models the user opened in the session (callable -> paths), the only ones the
+        preview's battle stands."""
         if self._preview_panel._battle_setup is not None:
-            self._preview_panel._battle_setup.model_source = source
+            self._preview_panel._battle_setup.set_model_paths(paths)
 
     def save_file(self):
         """Fold the edited bytes back into the model the file writer persists."""

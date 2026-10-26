@@ -103,6 +103,7 @@ class IfritSeqWidget(QWidget):
         self.preview_panel = SequencePreviewPanel(self.ifrit_manager, self.__bake_sequence,
                                                   file_registry=file_registry)
         self.preview_panel.hide()   # appears on the first ▶ Preview
+        self.set_model_paths = self.preview_panel.set_model_paths   # the session's loaded models
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
         self.splitter.addWidget(self.scroll_area)
         self.splitter.addWidget(self.preview_panel)

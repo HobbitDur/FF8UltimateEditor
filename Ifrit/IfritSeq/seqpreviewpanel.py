@@ -35,7 +35,7 @@ from PyQt6.QtCore import (Qt, QTimer, pyqtSignal, QBuffer, QByteArray, QUrl,
 from PyQt6.QtGui import QKeySequence, QShortcut, QBrush, QColor
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
                              QComboBox, QCheckBox, QScrollArea, QSizePolicy, QTextEdit,
-                             QMenu, QTreeWidget, QTreeWidgetItem)
+                             QTreeWidget, QTreeWidgetItem)
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -46,7 +46,6 @@ from FF8GameData.dat.sequencebake import (BattleContext, EVENT_EFFECT,
                                           SPECIAL_VAR_GLOSSARY, special_var_name,
                                           state_flags_text, STATE_FLAG_NAME)
 from FF8GameData.dat.sequencesound import SequenceSoundResolver, SOUND_OP_CODES
-from FF8GameData.sceneout import read_encounters, encounters_with_monster
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Ifrit.IfritSeq.seqtimelinewidget import SequenceTimelineWidget
 from Julia.juliamanager import JuliaManager
@@ -571,12 +570,11 @@ class SequencePreviewPanel(QWidget):
         self._seq_id = None
         self._result = None
         self._frame_index = 0
-        # Real-battle placement: encounters parsed from the bank's scene.out, and the
-        # context override built from the picked one (None = the plain defaults). Read
-        # by the tab's bake provider, so the whole run uses the real distance.
+        # Real-battle placement: the shared battle setup (an encounter of the bank's
+        # scene.out, the party, the model the sequence walks to) and the context override
+        # built from it (None = the plain defaults). Read by the tab's bake provider, so
+        # the whole run uses the real distance.
         self.battle_context = None
-        self._encounter_list = []
-        self._encounter_match_list = []   # [(encounter, slot)] featuring THIS monster
         # Sound: the archive (audio.fmt/audio.dat via JuliaManager) is shared by every
         # sound; the resolver maps THIS entity's B5/B6 local ids to archive entries.
         self._julia = None             # JuliaManager once an archive is open
@@ -600,29 +598,6 @@ class SequencePreviewPanel(QWidget):
         # ── Header ────────────────────────────────────────────────────
         self._title = QLabel("Sequence preview")
         self._title.setStyleSheet("font-weight: bold;")
-        # Offer the side files that make the preview complete (sounds, the game font).
-        # Only shown while something is missing from the shared file bank; each entry
-        # opens through its FileBinding, so the file lands in the bank for every tool.
-        self._side_files_button = QPushButton("⚠ Open side files")
-        self._side_files_button.setToolTip(
-            "Some of what this preview can show needs files the .dat does not contain. "
-            "Open them here: they go into the shared Opened-files bank, ready for the "
-            "other tools too.")
-        side_files_menu = QMenu(self)
-        self._open_audio_action = side_files_menu.addAction(
-            "Open audio.fmt… (battle sounds)")
-        self._open_audio_action.triggered.connect(self.__open_audio_from_menu)
-        self._open_mngrp_action = side_files_menu.addAction(
-            "Open mngrp.bin… (game font for the text banner)")
-        self._open_mngrp_action.triggered.connect(self.__open_mngrp_from_menu)
-        self._open_sceneout_action = side_files_menu.addAction(
-            "Open scene.out… (real encounter placement)")
-        self._open_sceneout_action.triggered.connect(self.__open_sceneout_from_menu)
-        self._open_character_action = side_files_menu.addAction(
-            "Open a character model… (stand-in at the target)")
-        self._open_character_action.triggered.connect(self.__open_character_from_menu)
-        self._side_files_button.setMenu(side_files_menu)
-        self._side_files_button.hide()
         self._variables_button = QPushButton("Variables")
         self._variables_button.setCheckable(True)
         self._variables_button.setToolTip(
@@ -643,7 +618,6 @@ class SequencePreviewPanel(QWidget):
         header_layout = QHBoxLayout()
         header_layout.addWidget(self._title)
         header_layout.addStretch(1)
-        header_layout.addWidget(self._side_files_button)
         header_layout.addWidget(self._variables_button)
         header_layout.addWidget(self._text_button)
         header_layout.addWidget(close_button)
@@ -684,16 +658,17 @@ class SequencePreviewPanel(QWidget):
         self._speed_selector.setToolTip("Playback speed (1× = the battle's 15 frames "
                                         "per second)")
         self._speed_selector.currentIndexChanged.connect(self.__apply_speed)
-        # Real-battle placement picker: the encounters of the bank's scene.out that
-        # actually field this monster. Choosing one feeds the target's real distance
-        # into the bake (BattleContext) and puts the stand-in there.
-        self._encounter_selector = QComboBox()
-        self._encounter_selector.setToolTip(
-            "Place the fight for real: pick an encounter from scene.out that fields "
-            "this monster. The target's distance comes from the encounter's own "
-            "coordinates, so approach moves cover the true distance.")
-        self._encounter_selector.setMinimumWidth(150)
-        self._encounter_selector.currentIndexChanged.connect(self.__on_encounter_picked)
+        # Real-battle placement: the battle setup every battle preview shares - an
+        # encounter of the bank's scene.out, the party and the model the sequence walks to
+        # (Other model), all from the loaded files. The distance from this model's slot
+        # to the other one feeds the bake (BattleContext); the other one stands there.
+        from Ifrit.IfritCameraSeq.battlepreview import BattlePreviewSetup
+        self._battle_setup = BattlePreviewSetup(ifrit_manager, file_registry=self._file_registry,
+                                                model_view=True)
+        self._battle_setup.set_manual_position_visible(False)   # no encounter: the assumed distance
+        self._battle_setup.group.remember(getattr(self._file_registry, "settings", None),
+                                          "sequence preview/battle setup expanded")
+        self._battle_setup.changed.connect(self.__on_battle_setup_changed)
         self._loop_checkbox = QCheckBox("Loop")
         self._loop_checkbox.setToolTip("Start over when the end is reached (checked "
                                        "automatically for a sequence that loops in game)")
@@ -714,7 +689,6 @@ class SequencePreviewPanel(QWidget):
         transport_layout.addWidget(step_forward_button)
         transport_layout.addWidget(self._frame_label)
         transport_layout.addStretch(1)
-        transport_layout.addWidget(self._encounter_selector)
         transport_layout.addWidget(self._sound_checkbox)
         transport_layout.addWidget(self._speed_selector)
         transport_layout.addWidget(self._loop_checkbox)
@@ -768,6 +742,7 @@ class SequencePreviewPanel(QWidget):
         self._layout.addLayout(header_layout)
         self._layout.addWidget(self._placeholder, 1)
         self._layout.addLayout(transport_layout)
+        self._layout.addWidget(self._battle_setup)
         # The watch column runs down the RIGHT of everything under the transport -
         # timeline included - so it gets real height for its ~20 rows; the timeline and
         # the detail tree don't need that width anyway.
@@ -793,18 +768,12 @@ class SequencePreviewPanel(QWidget):
                                           read_only=True)
         self._audio_binding.load_opened_file()   # an archive may already be in the bank
         # mngrp.bin only matters here for what sits NEXT to it (sysfnt.*, the game font);
-        # binding it means an mngrp opened anywhere upgrades the banner live, and the
-        # side-files menu can offer it through the same shared-bank route.
+        # binding it means an mngrp opened anywhere (Ifrit's header Import complementary)
+        # upgrades the banner live.
         self._mngrp_binding = FileBinding("mngrp.bin", self._file_registry,
                                           load_callback=self.__on_mngrp_opened,
                                           read_only=True)
         self._mngrp_binding.load_opened_file()
-        # scene.out: shared like every other side file (Cid and a future encounter
-        # editor read the same one).
-        self._sceneout_binding = FileBinding("scene.out", self._file_registry,
-                                             load_callback=self.__on_sceneout_opened,
-                                             file_filter="scene.out", read_only=True)
-        self._sceneout_binding.load_opened_file()
 
         # Watch panel on by default. Checked HERE, not where the button is built: the
         # toggle slot touches the watch tree, and a slot raising during construction is
@@ -829,13 +798,12 @@ class SequencePreviewPanel(QWidget):
         """Load sequence `seq_id` into the panel, show it, and start playing."""
         self._seq_id = seq_id
         self.__rebuild_sound_resolver()
-        if self._encounter_selector.count() <= 1:
-            self.__refresh_encounter_list()   # a scene.out may have arrived meanwhile
+        self._battle_setup.encounters.refresh_model()   # this file's encounters
         self.show()
         self.__ensure_model()
         # Sound on by default when the file bank already holds an archive (opened here
-        # before, or in Julia) - no dialog, no click. The checkbox stays the off switch,
-        # and enabling it with no archive in the bank asks for one.
+        # before, or in Julia) - no dialog, no click. The checkbox stays the off switch;
+        # with no archive in the bank, the summary says to import one.
         if (_MULTIMEDIA_AVAILABLE and not self._sound_auto_tried
                 and not self._sound_checkbox.isChecked()):
             self._sound_auto_tried = True
@@ -843,7 +811,6 @@ class SequencePreviewPanel(QWidget):
                 self._sound_checkbox.blockSignals(True)
                 self._sound_checkbox.setChecked(True)
                 self._sound_checkbox.blockSignals(False)
-        self.__update_side_files_button()
         if self.__rebake(keep_frame=False):
             # Frame 0 is REACHED when playback starts: its sounds and effects belong to
             # the run (a monster's entrance roar sits on frame 0) - the rebake's own
@@ -919,6 +886,8 @@ class SequencePreviewPanel(QWidget):
                 # Ground at the entity's resting spot, marker (and the stand-in, when
                 # one is loaded) where the target stands - the picked encounter's real
                 # distance, or the documented default.
+                cast = self._battle_setup.cast
+                self._view.set_companion(cast.actor_model(cast.other_key()))
                 self.__place_companion()
             self._placeholder.hide()
             self._view.show()
@@ -1325,62 +1294,46 @@ class SequencePreviewPanel(QWidget):
         except Exception as error:
             self._julia = None
             self._summary.setText(f"Sound archive could not be opened: {error}")
-        self.__update_side_files_button()
 
-    # ── Real-battle placement (scene.out + a character stand-in) ──────
+    # ── Real-battle placement (the shared battle setup) ──────────────
     # scene.out coordinates are battle world units on the same scale as the sequence's
-    # own position writes, so the target distance feeds BattleContext directly and the
+    # own position writes, so the distance feeds BattleContext directly and the
     # stand-in is placed with the shared raw->viewer mapping.
 
-    def __on_sceneout_opened(self, path):
+    def set_model_paths(self, paths):
+        """The models the user loaded (callable -> paths): the battle setup's party and
+        other model are only these."""
+        self._battle_setup.set_model_paths(paths)
+
+    def __on_battle_setup_changed(self):
+        """Build the battle context from the setup: in an encounter, this model stands at
+        its scene.out slot and the other model where the encounter or the battle formation
+        puts it, so the distance the sequence walks is the real one. The other model is the
+        stand-in at the target (a party character: the only honest scale reference)."""
+        setup = self._battle_setup
         try:
-            with open(path, "rb") as scene_file:
-                self._encounter_list = read_encounters(scene_file.read())
-        except OSError as error:
-            self._encounter_list = []
-            self._summary.setText(f"scene.out could not be read: {error}")
-        self.__refresh_encounter_list()
-        self.__update_side_files_button()
-
-    def __refresh_encounter_list(self):
-        """Fill the picker with the encounters fielding THIS monster."""
-        enemy = getattr(self.ifrit_manager, "enemy", None)
-        com_file_id = getattr(enemy, "id", None)
-        self._encounter_match_list = []
-        if self._encounter_list and com_file_id is not None:
-            self._encounter_match_list = encounters_with_monster(self._encounter_list,
-                                                                 com_file_id)
-        self._encounter_selector.blockSignals(True)
-        self._encounter_selector.clear()
-        self._encounter_selector.addItem("no placement (assumed distance)")
-        for encounter, slot in self._encounter_match_list:
-            distance = round(math.dist((0, 0, 0), slot.position))
-            self._encounter_selector.addItem(
-                f"enc {encounter.index} · stage {encounter.stage_id} · "
-                f"slot {slot.slot_index} · {distance} away")
-        self._encounter_selector.setCurrentIndex(0)
-        self._encounter_selector.blockSignals(False)
-        self._encounter_selector.setVisible(bool(self._encounter_match_list))
-
-    def __on_encounter_picked(self, index):
-        """Build the battle context (and place the stand-in) from the picked
-        encounter: the monster stands at its own scene.out spot, the party in front of
-        it at the party line, so the distance the sequence walks is the real one."""
-        if index <= 0 or index > len(self._encounter_match_list):
+            setup.build(0, False)
+        except Exception as error:
+            self._summary.setText(f"Battle setup: {error}")
+            return
+        main, other = setup._main, getattr(setup, "_other", None)
+        slot = setup.encounters.selected_slot
+        if setup.encounters.selected is None or main is None or other is None or other is main:
             self.battle_context = None
         else:
-            _encounter, slot = self._encounter_match_list[index - 1]
-            # The party stands on the +Z side of the arena, the monsters at negative Z
-            # (verified across scene.out: every enabled monster sits at z < 0). The
-            # target is therefore "ahead" of the monster by its own distance from the
-            # party line, which the engine's own C3 10/11 read scales the walk by.
-            distance = max(int(round(math.dist((0, 0, 0), slot.position))), 1)
+            dx = other.position[0] - main.position[0]
+            dz = other.position[2] - main.position[2]
+            distance = max(int(round(math.hypot(dx, dz))), 1)
             self.battle_context = BattleContext(
                 target_distance=distance,
                 target_position=(0, 0, -distance),
-                own_slot=slot.slot_index)
+                own_slot=slot.slot_index if slot is not None and setup.encounters.is_monster else 4,
+                target_slot=setup.target_slot.value())
+        if self._view is not None:
+            self._view.set_companion(setup.cast.actor_model(setup.cast.other_key()))
         self.__place_companion()
-        self.__rebake(keep_frame=True)
+        if self._seq_id is not None:
+            self.__rebake(keep_frame=True)
 
     def __place_companion(self):
         """Put the stand-in (and the target marker) where the current context says the
@@ -1392,76 +1345,17 @@ class SequencePreviewPanel(QWidget):
         self._view.gl_widget.set_preview_markers(ground_y=0.0, target=target)
         self._view.set_companion_offset(target)
 
-    def __open_sceneout_from_menu(self):
-        path = self._sceneout_binding.open_dialog(
-            self, self._file_registry.last_folder("scene.out"))
-        if path:
-            self._file_registry.remember_folder("scene.out", os.path.dirname(path))
-        self.__update_side_files_button()
-
-    def __open_character_from_menu(self):
-        """Load any battle model (a dXc character body) as the target stand-in - a real
-        body next to the monster is the only honest scale reference."""
-        from PyQt6.QtWidgets import QFileDialog
-        from Ifrit.ifritmanager import IfritManager
-        path, _filter = QFileDialog.getOpenFileName(
-            self, "Open a character model to stand at the target",
-            self._file_registry.last_folder("ifrit") or "", "Battle model (*.dat)")
-        if not path:
-            return
-        try:
-            manager = IfritManager(game_data=getattr(self.ifrit_manager, "game_data",
-                                                     None))
-            manager.init_from_file(path)
-            self.__ensure_model()
-            self._view.set_companion(manager)
-            self.__place_companion()
-        except Exception as error:
-            self._summary.setText(f"Stand-in model could not be loaded: {error}")
-
     def __on_mngrp_opened(self, _path):
         """mngrp.bin landed in the bank: the game font may now be available - redraw
         the banner of the current frame with it."""
-        self.__update_side_files_button()
-        self.__apply_overlay()
-
-    def __update_side_files_button(self):
-        """Show the header button only while something the preview could use is missing
-        from the bank, and only list the missing entries in its menu."""
-        sound_missing = _MULTIMEDIA_AVAILABLE and self._julia is None
-        font_missing = self.__menu_folder() is None
-        scene_missing = not self._encounter_list
-        companion_missing = self._view is None or self._view._companion is None
-        self._open_audio_action.setVisible(sound_missing)
-        self._open_mngrp_action.setVisible(font_missing)
-        self._open_sceneout_action.setVisible(scene_missing)
-        self._open_character_action.setVisible(companion_missing)
-        self._side_files_button.setVisible(sound_missing or font_missing
-                                           or scene_missing or companion_missing)
-
-    def __open_audio_from_menu(self):
-        if self.__ensure_sound_archive() and _MULTIMEDIA_AVAILABLE:
-            self._sound_checkbox.setChecked(True)   # opening it means "I want sound"
-        self.__update_side_files_button()
-
-    def __open_mngrp_from_menu(self):
-        path = self._mngrp_binding.open_dialog(
-            self, self._file_registry.last_folder("mngrp.bin"))
-        if path:
-            self._file_registry.remember_folder("mngrp.bin", os.path.dirname(path))
-        self.__update_side_files_button()
         self.__apply_overlay()
 
     def __ensure_sound_archive(self) -> bool:
-        """The archive comes from the shared file bank; when none is opened yet, ask
-        through the binding, which PUBLISHES the choice - it appears in the Opened-files
-        panel and every other tool bound to audio.fmt (Julia) loads it too."""
-        if self._julia is not None:
-            return True
-        path = self._audio_binding.open_dialog(
-            self, self._file_registry.last_folder("audio.fmt"))
-        if path:
-            self._file_registry.remember_folder("audio.fmt", os.path.dirname(path))
+        """The archive comes from the shared file bank (Ifrit's header Import complementary,
+        or Julia): without one, the summary says to import it."""
+        if self._julia is None:
+            self._summary.setText("No sound archive: import audio.fmt with the header's Import "
+                                  "complementary to hear the sounds.")
         return self._julia is not None
 
     def __play_frame_sounds(self, frame):
