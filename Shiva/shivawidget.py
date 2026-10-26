@@ -9,7 +9,6 @@ from Common.kernelnamesource import KernelNameSource
 from FF8GameData.FF8HexReader.mngrphd import MngrpPairError
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
-from Shiva.mngrpsave import keep_unowned_sections_raw
 from Shiva.ShivaRefine.shivarefinewidget import ShivaRefineWidget
 from Shiva.ShivaSeedTest.shivaseedtestwidget import ShivaSeedTestWidget
 from Shiva.ShivaSprite.shivaspritewidget import ShivaSpriteWidget
@@ -105,11 +104,8 @@ class ShivaWidget(QWidget):
             return
         self.mngrp_path = mngrp_path
         self.mngrphd_path = mngrphd_path
-        owned = set()
         for tab in self.section_tabs:
             tab.load_from_mngrp(self.manager)
-            owned |= tab.owned_section_ids(self.manager)
-        keep_unowned_sections_raw(self.game_data, self.manager.mngrp, owned)
         self.tabs.setEnabled(True)
 
     def save_file(self):

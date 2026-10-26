@@ -182,7 +182,7 @@ def test_scan_folder_finds_recognized_files_recursively(tmp_path):
     assert found["mitem.bin"].endswith(os.path.join("menu", "MITEM.BIN"))
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/menu/price.bin", "extracted_files/menu/mitem.bin")
 def test_open_folder_loads_the_files_it_finds(main_window):
     """The end of the Open-folder flow: opening each scanned file loads its tool."""
     from Common.filetoolbarwidget import FileToolbarWidget
@@ -790,7 +790,7 @@ def test_import_dialog_starts_in_and_updates_the_remembered_folder(main_window, 
         reg.settings.remove(f"last_folder/{key}")
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
 def test_ctrl_s_saves_the_active_tool_globally(main_window, monkeypatch):
     """A single global Ctrl+S on the main window saves whichever tool is showing, by clicking the
     shared Save button - and no tool keeps its own Save shortcut (which would be ambiguous)."""
@@ -825,7 +825,7 @@ def test_ctrl_s_saves_the_active_tool_globally(main_window, monkeypatch):
         assert saved == []                        # disabled Save -> Ctrl+S does nothing, no crash
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/menu/price.bin")
 def test_window_title_marks_unsaved(main_window, monkeypatch, tmp_path):
     """The title gets a leading '*' only on real unsaved EDITS (per-tool dirty_state), not merely
     when a file is loaded, and drops it on save. The signal itself drives the title."""
@@ -937,7 +937,7 @@ def test_dirty_state_marks_on_edit_and_clears():
     assert flips == [True, False]
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/menu/price.bin")
 def test_removing_a_fixed_file_clears_the_tool_and_disables_save(main_window, monkeypatch):
     """Every fixed-file tool (and Zone/Moomba/CCGroup's card tab) swaps to a "No file loaded"
     page once its file is removed from Opened files; Save then has nothing to write."""

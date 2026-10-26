@@ -1,7 +1,7 @@
 """TutorialManager tests against the real mngrp.bin/mngrphd.bin (migrated from Trepies).
 
-The tutorial editor now works on the shared MngrpManager: Shiva keeps the sections no editor
-touches byte for byte (keep_unowned_sections_raw), and the tutorial slots round-trip exactly,
+The tutorial editor now works on the shared MngrpManager: it writes the sections no editor
+touched byte for byte, and the tutorial slots round-trip exactly,
 so a no-edit save reproduces both files and a same-size edit touches only its own slots.
 
 Needs the real files, skipped otherwise (ff8data marker).
@@ -13,7 +13,6 @@ import pytest
 
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
-from Shiva.mngrpsave import keep_unowned_sections_raw
 from Shiva.ShivaTutorial.tutorialmanager import (TutorialManager, SCRIPT_SLOTS, MOCK_CHAR_SLOTS,
                                                  MOCK_GF_SLOTS, NB_CHARACTER_RECORDS, NB_GF_RECORDS)
 
@@ -41,8 +40,7 @@ def _load(game_data):
 
 
 def _save(mngrp_manager, tutorial, out_mngrp, out_mngrphd):
-    """Save like Shiva does: freeze the unowned sections, write the tutorial slots, write once."""
-    keep_unowned_sections_raw(mngrp_manager.game_data, mngrp_manager.mngrp, tutorial.owned_section_ids())
+    """Save like Shiva does: write the tutorial slots into the shared model, write once."""
     tutorial.save_to_mngrp(mngrp_manager.mngrp)
     mngrp_manager.save_file(str(out_mngrp), str(out_mngrphd))
 

@@ -21,6 +21,7 @@ from .model.kernel.kernelmanager import KernelManager
 from .model.world.worldfsmanager import WorldFsManager
 from .view.sectionwidget import SectionWidget
 from .view.tabholderwidget import TabHolderWidget
+from .view.textsearchbar import TextSearchBar
 
 # The per-kind warning shown at the top of the pane (was a hide/show label in the old single-file
 # widget; now each pane carries its own so it is always right for that tab).
@@ -88,6 +89,12 @@ class ShumiFilePane(QWidget):
         self._lines_container = QWidget()
         self._lines_layout = QVBoxLayout(self._lines_container)
         self._lines_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Ctrl+F over this file's lines (the fs kinds have none: they only export/import CSV)
+        self.search_bar = None
+        if file_type not in (FileType.FIELD_FS, FileType.WORLD_FS):
+            self.search_bar = TextSearchBar(self.section_widget_list)
+            outer.addWidget(self.search_bar)
 
         builder = {
             FileType.KERNEL: self._build_kernel,
@@ -161,7 +168,7 @@ class ShumiFilePane(QWidget):
         self.manager.load_file(self.file_mngrphd_loaded, self.file_loaded)
         tab_holder = TabHolderWidget(FileType.MNGRP)
         wanted = (SectionType.TKMNMES, SectionType.MNGRP_STRING, SectionType.FF8_TEXT,
-                  SectionType.MNGRP_TEXTBOX, SectionType.MNGRP_M00MSG)
+                  SectionType.MNGRP_TEXTBOX, SectionType.MNGRP_M00MSG, SectionType.MNGRP_SEED_TEST)
         sections = self.manager.mngrp.get_section_list()
         # Count the section widgets first (a TKMNMES expands to several) so the bar is determinate -
         # this is the heaviest pane, ~2600 text boxes over dozens of sections.
@@ -174,7 +181,8 @@ class ShumiFilePane(QWidget):
                 self.section_widget_list.append(SectionWidget(section.get_text_section(), first_section_line_index))
                 first_section_line_index += len(section.get_text_list())
                 self._tick()
-            elif section.type == SectionType.FF8_TEXT or section.type == SectionType.MNGRP_M00MSG:
+            elif section.type in (SectionType.FF8_TEXT, SectionType.MNGRP_M00MSG, SectionType.MNGRP_SEED_TEST):
+                # A SeeD question's text, without its expected-answer byte (Shiva edits that)
                 self.section_widget_list.append(SectionWidget(section, first_section_line_index))
                 first_section_line_index += len(section.get_text_list())
                 self._tick()
@@ -190,6 +198,7 @@ class ShumiFilePane(QWidget):
         for section_widget in self.section_widget_list:
             tab_holder.add_section(section_widget)
         outer.addWidget(tab_holder, 1)
+        self.search_bar.set_tab_holder(tab_holder)
 
     def _build_exe(self, outer):
         self.manager = ExeManager(game_data=self.game_data)

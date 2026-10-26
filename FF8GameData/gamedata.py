@@ -53,6 +53,7 @@ class SectionType(Enum):
     MNGRP_M00MSG = 9
     OFFSET_AND_TEXT = 10
     SIZE_AND_OFFSET_AND_TEXT = 11
+    MNGRP_SEED_TEST = 12
 
 
 # Card art tiles, shared by every GameData of the process: each tool holds its own GameData, and
@@ -403,6 +404,8 @@ class GameData:
                 self.mngrp_data_json["sections"][i]["data_type"] = SectionType.TKMNMES
             elif data_type_str == "mngrp_string":
                 self.mngrp_data_json["sections"][i]["data_type"] = SectionType.MNGRP_STRING
+            elif data_type_str == "mngrp_seed_test":
+                self.mngrp_data_json["sections"][i]["data_type"] = SectionType.MNGRP_SEED_TEST
             elif data_type_str == "data":
                 self.mngrp_data_json["sections"][i]["data_type"] = SectionType.DATA
             elif data_type_str == "text":

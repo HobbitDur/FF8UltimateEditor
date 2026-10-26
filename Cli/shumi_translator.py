@@ -116,7 +116,8 @@ def _iter_sections(gd, file_type: str, manager):
             if section.type == SectionType.MNGRP_STRING:
                 yield idx, section.get_text_section()
                 idx += 1
-            elif section.type in (SectionType.FF8_TEXT, SectionType.MNGRP_M00MSG, SectionType.MNGRP_TEXTBOX):
+            elif section.type in (SectionType.FF8_TEXT, SectionType.MNGRP_M00MSG, SectionType.MNGRP_TEXTBOX,
+                                  SectionType.MNGRP_SEED_TEST):
                 yield idx, section
                 idx += 1
             elif section.type == SectionType.TKMNMES:

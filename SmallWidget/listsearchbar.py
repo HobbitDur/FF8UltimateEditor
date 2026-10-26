@@ -8,7 +8,68 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit
 SEARCH_TEXT_ROLE = Qt.ItemDataRole.UserRole + 50
 
 
-class ListSearchBar(QWidget):
+class SearchBar(QWidget):
+    """The Ctrl+F search field every tool shows: a field, a "matches/total" count and the
+    shortcuts (Ctrl+F focuses the search, Enter goes to the results, Escape clears the search).
+
+    A subclass says what is searched: search() filters on search_text(), focus_results() and
+    results_widget() say where Enter and Escape go."""
+
+    def __init__(self, placeholder="Search (Ctrl+F)", tooltip="Filter", parent=None):
+        QWidget.__init__(self, parent)
+        self.search_field = QLineEdit()
+        self.search_field.setPlaceholderText(placeholder)
+        self.search_field.setClearButtonEnabled(True)
+        self.search_field.setToolTip(tooltip + ".\nCtrl+F: focus the search  -  Enter: go to the results  -  "
+                                               "Esc: clear")
+        self.search_field.textChanged.connect(self._on_text_changed)
+        self.search_field.returnPressed.connect(self.focus_results)
+
+        self.result_label = QLabel("")
+        self.result_label.setStyleSheet("color: gray;")
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.search_field)
+        layout.addWidget(self.result_label)
+        self.setLayout(layout)
+
+        self.search_shortcut = QShortcut(QKeySequence.StandardKey.Find, self)
+        self.search_shortcut.activated.connect(self.focus_search_field)
+        self.clear_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self.search_field)
+        self.clear_shortcut.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.clear_shortcut.activated.connect(self.clear_search)
+
+    def search_text(self):
+        """What is searched: the field's text, trimmed and lowercase (the search ignores case)."""
+        return self.search_field.text().strip().lower()
+
+    def _on_text_changed(self):
+        self.search()
+
+    def search(self):
+        raise NotImplementedError
+
+    def focus_results(self):
+        """Enter in the search field."""
+
+    def results_widget(self):
+        """The widget Escape gives the focus back to, None to keep it in the field."""
+        return None
+
+    def clear_search(self):
+        """Escape in the search field: drop the filter and go back to the results."""
+        self.search_field.clear()
+        if self.results_widget() is not None:
+            self.results_widget().setFocus()
+
+    def focus_search_field(self):
+        """Ctrl+F: put the caret in the search field, ready to type over the current search."""
+        self.search_field.setFocus()
+        self.search_field.selectAll()
+
+
+class ListSearchBar(SearchBar):
     """A Ctrl+F search bar filtering the QListWidget it is attached to.
 
     Put it right above the list it searches:
@@ -26,35 +87,13 @@ class ListSearchBar(QWidget):
     the search, Enter goes to the list to browse the matches, Escape clears the search."""
 
     def __init__(self, list_widget, match_index=False, placeholder="Search (Ctrl+F)", parent=None):
-        QWidget.__init__(self, parent)
+        SearchBar.__init__(self, placeholder=placeholder, parent=parent,
+                           tooltip="Filter the list" + (" by text or by index" if match_index else ""))
         self.list_widget = list_widget
         self.match_index = match_index  # A search that is only digits also matches the row number
         self.column = None  # Set by wrap() when it builds the search bar + list column
         self._has_hidden_rows = False  # Lets a refill of an unfiltered list skip the whole scan
         self._updating_selection = False
-
-        self.search_field = QLineEdit()
-        self.search_field.setPlaceholderText(placeholder)
-        self.search_field.setClearButtonEnabled(True)
-        self.search_field.setToolTip("Filter the list" + (" by text or by index" if match_index else "") +
-                                     ".\nCtrl+F: focus the search  -  Enter: go to the list  -  Esc: clear")
-        self.search_field.textChanged.connect(self.search)
-        self.search_field.returnPressed.connect(self.focus_list)
-
-        self.result_label = QLabel("")
-        self.result_label.setStyleSheet("color: gray;")
-
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.search_field)
-        layout.addWidget(self.result_label)
-        self.setLayout(layout)
-
-        self.search_shortcut = QShortcut(QKeySequence.StandardKey.Find, self)
-        self.search_shortcut.activated.connect(self.focus_search_field)
-        self.clear_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self.search_field)
-        self.clear_shortcut.setContext(Qt.ShortcutContext.WidgetShortcut)
-        self.clear_shortcut.activated.connect(self.clear_search)
 
         # The tool refills its list on import: filter the new rows and keep the selection visible
         self.list_widget.model().rowsInserted.connect(self.search)
@@ -82,7 +121,7 @@ class ListSearchBar(QWidget):
 
     def search(self):
         """Hide every row that doesn't match the search."""
-        search_text = self.search_field.text().strip().lower()
+        search_text = self.search_text()
         row_count = self.list_widget.count()
         if not search_text and not self._has_hidden_rows:
             self.result_label.setText("")  # Nothing to filter, a tool refilling its list lands here
@@ -98,15 +137,11 @@ class ListSearchBar(QWidget):
         self.result_label.setText("" if not search_text else f"{match_count}/{row_count}")
         self._keep_selection_visible()
 
-    def clear_search(self):
-        """Escape in the search field: drop the filter and go back to the list."""
-        self.search_field.clear()
-        self.list_widget.setFocus()
+    def results_widget(self):
+        return self.list_widget
 
-    def focus_search_field(self):
-        """Ctrl+F: put the caret in the search field, ready to type over the current search."""
-        self.search_field.setFocus()
-        self.search_field.selectAll()
+    def focus_results(self):
+        self.focus_list()
 
     def focus_list(self):
         """Enter in the search field: go to the list so the arrow keys browse the matches."""

@@ -191,8 +191,9 @@ def full_semantic_view(game_data, section_meta, hd: bytes, grp: bytes):
         if data_type == "tkmnmes":
             view[raw] = ("tkmnmes", tkmnmes_view(game_data, sec))
         elif data_type == "mngrp_string":
-            literal = "Test seed" in meta["section_name"]
-            view[raw] = ("string", string_section_view(game_data, sec, first_hex_literal=literal))
+            view[raw] = ("string", string_section_view(game_data, sec))
+        elif data_type == "mngrp_seed_test":  # {answer byte, text}: the answer shown as a literal
+            view[raw] = ("string", string_section_view(game_data, sec, first_hex_literal=True))
         elif data_type == TEXTBOX_MAP_TYPE:
             view[raw] = ("textbox_map_placeholder", None)  # resolved below
         elif data_type == TEXTBOX_TYPE:

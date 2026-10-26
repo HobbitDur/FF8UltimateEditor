@@ -24,10 +24,6 @@ class ShivaSpriteWidget(QWidget):
         main_layout.addWidget(self.sp2_editor)
         self.setLayout(main_layout)
 
-    def owned_section_ids(self, manager):
-        """The mngrp sections this tab edits, kept out of Shiva's raw-preserve pass."""
-        return {self.MNGRP_SP2_SECTION_ID}
-
     def load_from_mngrp(self, manager):
         section = manager.mngrp.get_section_by_id(self.MNGRP_SP2_SECTION_ID)
         self.sp2 = Sp2File.from_bytes(bytes(section.get_data_hex()))

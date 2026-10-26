@@ -12,10 +12,12 @@ class TabHolderWidget(QTabWidget):
         QTabWidget.__init__(self)
         self._file_type = file_type
         self._page_list = []
+        self._titles = []
         if file_type == FileType.MNGRP:
             self._add_page(SectionType.MNGRP_STRING, "Tkmnmes")
             self._add_page(SectionType.MNGRP_M00MSG, "GF Refining")
             self._add_page(SectionType.MNGRP_TEXTBOX, "Tutorial TextBox")
+            self._add_page(SectionType.MNGRP_SEED_TEST, "SeeD test")
             self._add_page(SectionType.FF8_TEXT, "Miscellaneous")
         # Expanding on BOTH axes so the tab holder fills the pane. It used to be Maximum vertically,
         # which was fine only because each sub-page's sizeHint was the full (huge) stacked height;
@@ -31,10 +33,20 @@ class TabHolderWidget(QTabWidget):
         _page_list keeps the inner SectionTypeTabWidget (what add_section fills), not the scroll."""
         page = SectionTypeTabWidget([], section_type=section_type)
         self._page_list.append(page)
+        self._titles.append(title)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(page)
         self.addTab(scroll, title)
+
+    def show_search_counts(self, searching: bool):
+        """Name each tab with its number of lines the search shows ("Tkmnmes (3)"), and leave a
+        tab with none for the first one that has some."""
+        counts = [page.shown_line_count() for page in self._page_list]
+        for index, (title, count) in enumerate(zip(self._titles, counts)):
+            self.setTabText(index, f"{title} ({count})" if searching else title)
+        if searching and counts and not counts[self.currentIndex()]:
+            self.setCurrentIndex(next((index for index, count in enumerate(counts) if count), self.currentIndex()))
 
     def add_section(self, section_widget:SectionWidget):
         for i in range(len(self._page_list)):

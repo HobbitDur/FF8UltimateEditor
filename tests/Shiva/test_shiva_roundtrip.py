@@ -245,7 +245,6 @@ def test_seed_tab_edit_survives_a_save(qapp, game_data, tmp_path):
     question.answer = 1 - question.answer
     question.set_text(question.get_text().replace("Question 3", "Question 3 edited"))
     new_answer = question.answer
-    seed_tests.save_to_mngrp(manager.mngrp)
 
     out_mngrp = tmp_path / "mngrp.bin"
     out_mngrphd = tmp_path / "mngrphd.bin"
@@ -293,7 +292,6 @@ def test_seed_add_choice_persists(qapp, game_data, tmp_path):
     seed_tests = SeedTestSet.from_mngrp(game_data, manager.mngrp)
     seed_tests.test_list[0].strings[0].add_choice("MAYBE")  # 3rd cursor stop on Test 1 question 1
     seed_tests.test_list[0].strings[0].answer = 2
-    seed_tests.save_to_mngrp(manager.mngrp)
 
     out_mngrp = tmp_path / "mngrp.bin"
     out_mngrphd = tmp_path / "mngrphd.bin"

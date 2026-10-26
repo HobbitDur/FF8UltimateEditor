@@ -89,11 +89,6 @@ class ShivaRefineWidget(QWidget):
         main_layout.addWidget(self.editor_container)
         self.setLayout(main_layout)
 
-    def owned_section_ids(self, manager):
-        """The m00x bin and msg sections this tab edits, kept out of Shiva's raw-preserve pass."""
-        return ({bin_section.id for bin_section in manager.m00_manager.get_bin_list()}
-                | {msg_section.id for msg_section in manager.m00_manager.get_msg_list()})
-
     def load_from_mngrp(self, manager):
         self.refine_views = build_refine_views(manager)
         self.editor_container.setEnabled(True)

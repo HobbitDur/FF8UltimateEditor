@@ -32,6 +32,10 @@ class SectionTypeTabWidget(QWidget):
         self._section_list.append(section_widget)
         self._main_layout.insertWidget(self._main_layout.count() - 1, section_widget)
 
+    def shown_line_count(self):
+        return sum(1 for section_widget in self._section_list if not section_widget.isHidden()
+                   for line in section_widget.translation_widget_list if not line.isHidden())
+
     def get_type(self):
         return self._type_tab
 

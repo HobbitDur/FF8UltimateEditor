@@ -264,11 +264,6 @@ class ShivaSeedTestWidget(QWidget):
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
 
-    def owned_section_ids(self, manager):
-        """The SeeD string sections this tab edits, kept out of Shiva's raw-preserve pass."""
-        return {SeedTestSet.GENERAL_SECTION_POS} | {SeedTestSet.FIRST_TEST_POS + index
-                                                    for index in range(SeedTestSet.NB_TESTS)}
-
     def load_from_mngrp(self, manager):
         self.seed_tests = SeedTestSet.from_mngrp(self.game_data, manager.mngrp)
         # sysfnt.tdw sits next to mngrp.bin, used for the exact preview widths
@@ -287,8 +282,7 @@ class ShivaSeedTestWidget(QWidget):
         self.reload_selected_section()
 
     def save_to_mngrp(self, manager):
-        if self.seed_tests:
-            self.seed_tests.save_to_mngrp(manager.mngrp)
+        """Nothing to do: the strings edited here are the shared mngrp's own SeeD sections."""
 
     def export_csv(self):
         if not self.seed_tests:

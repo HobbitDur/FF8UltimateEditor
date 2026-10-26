@@ -52,10 +52,6 @@ class ShivaTutorialWidget(QWidget):
 
     # ----------------------------------------------------------------- mngrp
 
-    def owned_section_ids(self, manager):
-        """The mngrp sections this tab edits, kept out of Shiva's raw-preserve pass."""
-        return self.manager.owned_section_ids() if self.manager else set()
-
     def load_from_mngrp(self, manager):
         self.manager = TutorialManager.from_mngrp(self.game_data, manager.mngrp)
         self._loaded = True

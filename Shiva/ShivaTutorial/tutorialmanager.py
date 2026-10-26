@@ -552,12 +552,6 @@ class TutorialManager:
                 self._captions[caption_slot] = self._parse_caption_section(caption_slot)
         return self
 
-    def owned_section_ids(self):
-        """The section ids of the slots this editor writes, for Shiva's raw-preserve pass.
-        The caption slots are read only, so they are not owned (kept raw like any other)."""
-        return {self._section_list[slot].id
-                for slot in set(SCRIPT_SLOTS) | set(MOCK_CHAR_SLOTS) | set(MOCK_GF_SLOTS)}
-
     def save_to_mngrp(self, mngrp):
         """Write each edited slot back into the shared mngrp. Shiva writes the file, and its
         update rebuilds the offsets and the header, so a slot may grow past its sector padding

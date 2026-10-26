@@ -28,6 +28,10 @@ class TextBoxManager:
         string_entry.init_section(offset_list)
         self._complex_string_entry_list.append(string_entry)
 
+    def get_section_list(self):
+        """The map section and the string entries: the offsets of one depend on the others."""
+        return ([self._map_section] if self._map_section else []) + self._complex_string_entry_list
+
     def get_text_section_by_id(self, section_id):
         return self._complex_string_entry_list[section_id].get_text_section()
 

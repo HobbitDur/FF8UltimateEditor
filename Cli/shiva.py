@@ -96,7 +96,6 @@ def _cmd_export_seed_csv(args) -> int:
 def _cmd_import_seed_csv(args) -> int:
     manager, seed_tests, mngrphd_path = _load_seed_tests(args.input, args.mngrphd)
     applied = seed_tests.apply_csv_rows(read_csv(args.csv))
-    seed_tests.save_to_mngrp(manager.mngrp)
     manager.save_file(args.output or args.input, args.output_mngrphd or mngrphd_path)
     out_name = args.output or args.input
     print(f"[ok] {applied} SeeD test strings applied, written to {out_name} (+ mngrphd)")
@@ -114,7 +113,6 @@ def _cmd_set_seed_answer(args) -> int:
         raise ValueError(f"{test.name} question {args.question} has {nb_choices} choices, "
                          f"answer {args.answer} is out of range")
     seed_string.answer = args.answer
-    seed_tests.save_to_mngrp(manager.mngrp)
     manager.save_file(args.output or args.input, args.output_mngrphd or mngrphd_path)
     out_name = args.output or args.input
     print(f"[ok] {test.name} question {args.question} expected answer set to {args.answer}, "
@@ -129,9 +127,7 @@ def _load_tutorial(mngrp_path: str, mngrphd_path: str = ""):
 
 
 def _save_tutorial(manager, tutorial, mngrphd_path, args):
-    """Write the tutorial slots back, keeping every other section byte for byte."""
-    from Shiva.mngrpsave import keep_unowned_sections_raw
-    keep_unowned_sections_raw(manager.game_data, manager.mngrp, tutorial.owned_section_ids())
+    """Write the tutorial slots back (MngrpManager keeps every untouched section byte for byte)."""
     tutorial.save_to_mngrp(manager.mngrp)
     manager.save_file(args.output or args.input, args.output_mngrphd or mngrphd_path)
     return args.output or args.input

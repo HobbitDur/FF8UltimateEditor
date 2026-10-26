@@ -69,6 +69,21 @@ class SectionWidget(QWidget):
         if id < len(self.translation_widget_list):
             self.translation_widget_list[id].get_custom_text()
 
+    def apply_search(self, search_text: str) -> int:
+        """Show only the lines the search appears in (every line for an empty search), and hide
+        the whole section when none does. Returns how many lines are shown."""
+        shown = 0
+        for translation_widget in self.translation_widget_list:
+            matched = not search_text or translation_widget.matches(search_text)
+            if translation_widget.isHidden() == matched:
+                translation_widget.setHidden(not matched)
+            shown += matched
+        self.setHidden(bool(search_text) and not shown)
+        return shown
+
+    def first_shown_line(self):
+        return next((widget for widget in self.translation_widget_list if not widget.isHidden()), None)
+
     def compress_str(self, compressible=3):
         for translation_widget in self.translation_widget_list:
             translation_widget.compress_str(compressible)

@@ -57,11 +57,7 @@ class ListFF8Text(Section):
         else:
             offset = 0
             id = 0
-        if "Test seed" in self.name:
-            first_hex_literal = True
-        else:
-            first_hex_literal = False
-        self._text_list.append(FF8Text(game_data=self._game_data, data_hex=text_hex, own_offset=offset, id=id, cursor_location_size=self.cursor_location_size, first_hex_literal=first_hex_literal,
+        self._text_list.append(FF8Text(game_data=self._game_data, data_hex=text_hex, own_offset=offset, id=id, cursor_location_size=self.cursor_location_size,
                                        terminate_empty=self.terminate_empty,
                                        special_value_context=self._game_data.special_value_context_for_section(self.name)))
 
@@ -72,11 +68,9 @@ class ListFF8Text(Section):
         section that may also grow in the MIDDLE - an ability inserted after the selected
         one, which pushes every later id up - needs its name and description to land at
         the matching position, or the entries and their strings drift apart."""
-        first_hex_literal = "Test seed" in self.name
         self._text_list.insert(index, FF8Text(game_data=self._game_data, data_hex=text_hex,
                                               own_offset=0, id=index,
                                               cursor_location_size=self.cursor_location_size,
-                                              first_hex_literal=first_hex_literal,
                                               terminate_empty=self.terminate_empty,
                                               special_value_context=self._game_data.special_value_context_for_section(self.name)))
         offset = 0

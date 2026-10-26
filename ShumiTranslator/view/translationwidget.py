@@ -10,6 +10,7 @@ class TranslationWidget(QWidget):
         QWidget.__init__(self)
         self.translation = translation
         self.__line_number = line_number
+        self.__text_read = translation.get_str()  # what "Data read" shows, searched too
 
         self.__label_line_widget = QLabel(f"Line {self.__line_number}")
         self.__file_text_description_widget = QLabel("<b>Data read: </b>")
@@ -82,6 +83,16 @@ class TranslationWidget(QWidget):
 
     def get_custom_text(self):
         self.__custom_text_widget.toPlainText()
+
+    def matches(self, search_text: str) -> bool:
+        """Does the search (lowercase) appear in the text as read or as modified? A search that
+        is only digits also finds the line number shown on the left."""
+        if search_text in self.__text_read.lower() or search_text in self.translation.get_str().lower():
+            return True
+        return search_text.isdigit() and search_text == str(self.__line_number)
+
+    def focus_editor(self):
+        self.__custom_text_widget.setFocus()
 
     def compress_str(self, compressible=3):
         self.translation.compress_str(compressible)
