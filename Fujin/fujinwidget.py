@@ -353,20 +353,22 @@ class FujinWidget(QWidget):
         by_name = {b.file_name.lower(): b for b in self.mag_editor.file_bindings()}
         opened = []
         progress = FileToolbarWidget.open_progress(self, len(paths), "Opening effect files")
-        with self.file_registry.batch():
-            for index, path in enumerate(paths):
-                if progress.wasCanceled():
-                    break
-                name = os.path.basename(path)
-                progress.setLabelText(f"Opening {name} ({index + 1} / {len(paths)})")
-                progress.setValue(index)
-                binding = by_name.get(name.lower())
-                if binding is None:
-                    binding = self.mag_editor._add_generic_binding(name)
-                    by_name[name.lower()] = binding
-                binding.open_path(str(path))
-                opened.append(str(path))
-            progress.setValue(len(paths))
+        try:
+            with self.file_registry.batch():
+                for index, path in enumerate(paths):
+                    if progress.wasCanceled():
+                        break
+                    name = os.path.basename(path)
+                    progress.setLabelText(f"Opening {name} ({index + 1} / {len(paths)})")
+                    progress.setValue(index)
+                    binding = by_name.get(name.lower())
+                    if binding is None:
+                        binding = self.mag_editor._add_generic_binding(name)
+                        by_name[name.lower()] = binding
+                    binding.open_path(str(path))
+                    opened.append(str(path))
+        finally:
+            FileToolbarWidget.close_progress(progress)
         self.file_registry.remember_files("Fujin effect files", opened)
         self._refresh()
 

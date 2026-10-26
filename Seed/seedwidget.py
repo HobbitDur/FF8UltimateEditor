@@ -144,15 +144,21 @@ class SeedWidget(QWidget):
         return [AutoImportSource(key, ("chara.one", "*.mch"), lambda _paths: self.load_folder(folder),
                                  folder=folder, recursive=True)] if folder else []
 
-    def load_folder(self, folder_path):
+    def load_folder(self, folder_path, progress=None):
         """The header's Open-folder button. Every chara.one inside the folder (e.g. the 'field'
         folder: one per field room) is listed under Fields; selecting one opens it. The main_chr
         folder (the d0xx.mch main character models) is found inside it too - or is the picked
-        folder itself when it holds .mch files, which still sets it by hand."""
+        folder itself when it holds .mch files, which still sets it by hand.
+
+        progress(text) - from the header toolbar - shows how the scan goes, and returns False
+        once it is stopped: the fields found until then are listed."""
+        report = progress or (lambda _text: True)
         main_chr = SeedManager.find_main_chr_folder_in(folder_path)
         if main_chr is not None:
             self._set_main_chr_folder(main_chr)
-        self._field_paths = SeedManager.find_chara_ones(folder_path)
+        self._field_paths = SeedManager.find_chara_ones(
+            folder_path, lambda root, found: report(f"Looking for fields: {found} chara.one found\n"
+                                                    f"{pathlib.Path(root).name}"))
         self.field_list.blockSignals(True)
         self.field_list.clear()
         for path in self._field_paths:
@@ -171,6 +177,7 @@ class SeedWidget(QWidget):
         if self.seed_manager.chara_one_path is not None:
             self._sync_field_row()
         if self._field_row < 0:
+            report(f"{len(self._field_paths)} fields found, opening the first one")
             self.field_search.select_first_match()
 
     def _set_main_chr_folder(self, folder):

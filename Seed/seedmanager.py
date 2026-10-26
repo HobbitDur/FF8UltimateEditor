@@ -1,3 +1,4 @@
+import os
 import pathlib
 from typing import List, Tuple
 
@@ -91,10 +92,17 @@ class SeedManager:
         return None
 
     @staticmethod
-    def find_chara_ones(folder) -> List[pathlib.Path]:
-        """Every chara.one found in folder or its subfolders, sorted by field (folder) name."""
-        found = [path for path in pathlib.Path(folder).rglob("*")
-                 if path.name.lower() == "chara.one" and path.is_file()]
+    def find_chara_ones(folder, on_folder=None) -> List[pathlib.Path]:
+        """Every chara.one found in folder or its subfolders, sorted by field (folder) name.
+
+        on_folder(folder, found_so_far) is called after each folder walked (the 'field' folder
+        holds ~1900); returning False stops the scan with what was found so far. os.walk already
+        tells files from folders, so no file is stat()ed one by one."""
+        found = []
+        for root, _dirs, files in os.walk(folder):
+            found.extend(pathlib.Path(root, name) for name in files if name.lower() == "chara.one")
+            if on_folder is not None and on_folder(root, len(found)) is False:
+                break
         return sorted(found, key=lambda path: (path.parent.name.lower(), str(path).lower()))
 
     def load_entry(self, index: int):

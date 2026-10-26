@@ -960,3 +960,35 @@ def test_removing_a_fixed_file_clears_the_tool_and_disables_save(main_window, mo
     assert tb.save_button.isEnabled() and not siren.closed_file_view.is_blank
     registry.close_file("price.bin")
     assert siren.closed_file_view.is_blank and not tb.save_button.isEnabled()
+
+
+def test_open_folder_progress_never_pops_back_up(qapp):
+    """A folder with no file a tool reads left the 'Opening the folder's files' bar at 0 / 1: Qt's
+    show-after-delay timer then popped it up, stuck, after the folder-based tool had finished."""
+    from PyQt6.QtTest import QTest
+    from PyQt6.QtWidgets import QProgressDialog, QWidget
+    from Common.filetoolbarwidget import FileToolbarWidget
+    parent = QWidget()
+    progress = FileToolbarWidget.open_progress(parent, 0, "Opening the folder's files")
+    FileToolbarWidget.close_progress(progress)
+    QTest.qWait(800)   # past open_progress's 500 ms delay
+    assert not [w for w in parent.findChildren(QProgressDialog) if w.isVisible()]
+
+
+def test_folder_tool_gets_a_progress_reporter_only_if_it_takes_one(qapp):
+    from PyQt6.QtWidgets import QWidget
+    from Common.filetoolbarwidget import FileToolbarWidget
+    parent = QWidget()
+    calls = []
+
+    def with_progress(folder, progress=None):
+        calls.append((folder, progress("step", 1, 2)))
+
+    def without_progress(folder):
+        calls.append((folder, None))
+
+    for loader in (with_progress, without_progress):
+        progress = FileToolbarWidget.open_progress(parent, 0, "Opening the folder's files")
+        FileToolbarWidget._load_tool_folder(loader, "some/field", progress)
+        FileToolbarWidget.close_progress(progress)
+    assert calls == [("some/field", True), ("some/field", None)]   # True: not canceled

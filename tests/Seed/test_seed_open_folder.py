@@ -86,3 +86,12 @@ def test_widget_open_field_folder_lists_all_fields():
     widget.field_list.setCurrentRow(row)
     assert widget.seed_manager.chara_one_path.parent.name == "bgroad_6"
     assert widget.model_list.count() > 0
+
+
+def test_find_chara_ones_reports_each_folder_and_can_stop(tmp_path):
+    field, _main_chr = _make_fake_field(tmp_path)
+    reports = []
+    found = SeedManager.find_chara_ones(field, lambda root, count: reports.append(count))
+    assert len(found) == 2 and reports and reports[-1] == 2
+    # Stopped at the first folder walked (the field folder itself, no chara.one directly in it)
+    assert SeedManager.find_chara_ones(field, lambda root, count: False) == []

@@ -1,4 +1,6 @@
+import inspect
 import os
+import time
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QIcon
@@ -390,21 +392,25 @@ class FileToolbarWidget(QWidget):
         folder_loader = getattr(self.tool_stack.currentWidget(), "load_folder", None)
         loaded_folder = callable(folder_loader)
         progress = self.open_progress(self, len(found), "Opening the folder's files")
-        with self.registry.batch():   # the views refresh once, after the last file
-            for index, (file_name, path) in enumerate(found.items()):
-                if progress.wasCanceled():
-                    break
-                progress.setLabelText(f"Opening {os.path.basename(path)} ({index + 1} / {len(found)})")
-                progress.setValue(index)
-                try:
-                    self.registry.open_file(file_name, path)  # -> every tool bound to it loads it
-                    opened.append(file_name)
-                except Exception as error:  # a matching name but unreadable content: keep going
-                    problems.append(f"{file_name}: {error}")
-            progress.setValue(len(found))
-            # Folder-based tools load the whole folder themselves and show their own result.
-            if loaded_folder and not progress.wasCanceled():
-                folder_loader(folder)
+        canceled = False
+        try:
+            with self.registry.batch():   # the views refresh once, after the last file
+                for index, (file_name, path) in enumerate(found.items()):
+                    if progress.wasCanceled():
+                        canceled = True
+                        break
+                    progress.setLabelText(f"Opening {os.path.basename(path)} ({index + 1} / {len(found)})")
+                    progress.setValue(index)
+                    try:
+                        self.registry.open_file(file_name, path)  # -> every tool bound to it loads it
+                        opened.append(file_name)
+                    except Exception as error:  # a matching name but unreadable content: keep going
+                        problems.append(f"{file_name}: {error}")
+                # Folder-based tools load the whole folder themselves and show their own result.
+                if loaded_folder and not canceled:
+                    self._load_tool_folder(folder_loader, folder, progress)
+        finally:
+            self.close_progress(progress)
         if loaded_folder:
             self._refresh()  # a folder-based tool may now have something to Save
         # Only pop the generic summary when the active tool won't report the outcome itself.
@@ -412,9 +418,47 @@ class FileToolbarWidget(QWidget):
             self._report_open_folder(folder, opened, problems)
 
     @staticmethod
+    def _load_tool_folder(folder_loader, folder, progress):
+        """Hand the folder to a folder-based tool, keeping the same progress dialog up. A tool
+        whose load_folder takes a ``progress`` argument is given a reporter for its own steps:
+        progress(text, done=0, total=0) shows text on the bar (total 0: a busy bar) and returns
+        False once Cancel is pressed. Updates are throttled, so it can be called on every step."""
+        progress.setRange(0, 0)
+        progress.setValue(0)
+        progress.setLabelText(f"Loading {os.path.basename(folder) or folder}...")
+        started = last_update = time.monotonic()
+
+        def report(text, done=0, total=0):
+            nonlocal last_update
+            now = time.monotonic()
+            if now - last_update >= 0.05:
+                last_update = now
+                progress.setRange(0, total)
+                progress.setValue(done)
+                progress.setLabelText(text)
+                if not progress.isVisible() and now - started >= 0.5:  # open_progress's delay
+                    progress.show()
+                QApplication.processEvents()   # the tool blocks the UI: repaint the bar
+            return not progress.wasCanceled()
+
+        if "progress" in inspect.signature(folder_loader).parameters:
+            folder_loader(folder, progress=report)
+        else:
+            folder_loader(folder)
+
+    @staticmethod
+    def close_progress(progress):
+        """Close an open_progress dialog for good. Hiding it is not enough: a dialog that never
+        reached its maximum still has Qt's show-after-delay timer running, which pops it back up,
+        stuck, once the work is over. reset() stops that timer."""
+        progress.reset()
+        progress.close()
+        progress.deleteLater()
+
+    @staticmethod
     def open_progress(parent, total, title):
         """A modal progress bar for opening many files (shown only if it takes over half a second);
-        Cancel stops before the next file."""
+        Cancel stops before the next file. Always end it with close_progress()."""
         from PyQt6.QtCore import Qt
         from PyQt6.QtWidgets import QProgressDialog
         progress = QProgressDialog(title, "Cancel", 0, max(total, 1), parent)
