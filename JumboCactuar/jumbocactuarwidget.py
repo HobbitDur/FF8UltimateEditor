@@ -1,3 +1,4 @@
+import fnmatch
 import os
 from contextlib import contextmanager
 
@@ -7,10 +8,14 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLa
                              QComboBox, QSpinBox, QCheckBox, QPushButton, QGroupBox, QLineEdit,
                              QFileDialog, QMessageBox, QDialog)
 
+from Common.autoimport import AutoImportSource
+from Common.battlescenepreview import BattleScenePreview, stage_file_name, model_file_name
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
-from FF8GameData.sceneout import (NB_SLOT, UNKNOWN_SIZE, BATTLE_FLAG_NAMES, CAMERA_SET_MAX,
-                                  CAMERA_ANIM_MAX, SlotData)
+from Common.filetoolbarwidget import FileToolbarWidget
+from FF8GameData.battlestage.stagecamera import INTRO_CAMERA_NOTE
+from FF8GameData.sceneout import (NB_SLOT, BATTLE_FLAG_NAMES, CAMERA_SET_MAX, CAMERA_ANIM_MAX,
+                                  ENEMY_ID_BASE, SlotData)
 from JumboCactuar.jumbocactuarmanager import JumboCactuarManager, FILE_NAME
 from SmallWidget.listsearchbar import ListSearchBar
 
@@ -20,6 +25,8 @@ SLOT_FLAGS = [("enabled", "Enabled"), ("not_targetable", "Not targetable"),
               ("not_visible", "Not visible"), ("not_loaded", "Not loaded")]
 UNKNOWN_ROWS = [(0, 16), (16, 16), (32, 16), (48, 8)]  # (start, size) of the 4 unknown fields
 CAMERA_NAMES = ["Main", "Secondary"]
+BATTLE_FILES_KEY = "JumboCactuar battle files"   # the Opened files entry of the preview's files
+BATTLE_FILE_PATTERNS = ("a0stg*.x", "c0m*.dat")
 WIKI_ENCOUNTERS = "https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/battle/encounter-codes/"
 WIKI_SCENE_OUT = "https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/battle/battle-structure-sceneout/"
 
@@ -52,46 +59,38 @@ class _StagePicture(QLabel):
         super().mousePressEvent(event)
 
 
-class _SlotPanel(QGroupBox):
-    """One of the 8 enemy slots of the shown encounter."""
+class _SlotRow:
+    """One of the 8 enemy slots of the shown encounter: a row of the enemy slot table."""
 
-    def __init__(self, slot_index, manager):
-        QGroupBox.__init__(self, f"Enemy slot {slot_index}")
+    def __init__(self, slot_index, manager, grid, copy_button, paste_button):
         self.slot_index = slot_index
+        self.select_box = QCheckBox(str(slot_index))
+        self.select_box.setToolTip(f"Slot {slot_index}: tick to select it for 'Copy selected slots' / "
+                                   "'Paste into selected slots'")
+        self.select_box.setProperty("read_only_preview", True)  # choosing slots is not an edit
         self.enemy_combo = QComboBox()
         for enemy_byte in range(256):  # index = the raw id byte (c0m number + 0x10)
             self.enemy_combo.addItem(manager.enemy_label(enemy_byte), enemy_byte)
-        self.enemy_combo.setMaximumWidth(230)
+        self.enemy_combo.setMaximumWidth(250)
         self.level_spin = QSpinBox()
         self.level_spin.setRange(0, 255)
-        self.flag_boxes = {name: QCheckBox(label) for name, label in SLOT_FLAGS}
+        self.flag_boxes = {name: QCheckBox() for name, _label in SLOT_FLAGS}
+        for name, label in SLOT_FLAGS:
+            self.flag_boxes[name].setToolTip(f"{label} (slot {slot_index})")
         self.position_spins = []
         for _axis in range(3):
             spin = QSpinBox()
             spin.setRange(-32768, 32767)
+            spin.setSingleStep(100)
             self.position_spins.append(spin)
-        self.select_box = QCheckBox("Select")
-        self.select_box.setToolTip("Select the slot for 'Copy selected slots' / 'Paste into selected slots'")
-        self.select_box.setProperty("read_only_preview", True)  # choosing slots is not an edit
-        self.copy_button = None
-        self.paste_button = None
 
-        grid = QGridLayout()
-        grid.addWidget(QLabel("Enemy:"), 0, 0)
-        grid.addWidget(self.enemy_combo, 0, 1, 1, 3)
-        grid.addWidget(QLabel("Level:"), 1, 0)
-        grid.addWidget(self.level_spin, 1, 1)
-        for row, (name, _label) in enumerate(SLOT_FLAGS):
-            grid.addWidget(self.flag_boxes[name], 2 + row, 0, 1, 2)
-        grid.addWidget(QLabel("Position"), 2, 2, 1, 2)
-        for axis, spin in enumerate(self.position_spins):
-            grid.addWidget(QLabel("xyz"[axis] + ":"), 3 + axis, 2)
-            grid.addWidget(spin, 3 + axis, 3)
-        self.button_row = QHBoxLayout()
-        self.button_row.addWidget(self.select_box)
-        self.button_row.addStretch(1)
-        grid.addLayout(self.button_row, 6, 0, 1, 4)
-        self.setLayout(grid)
+        row = slot_index + 1   # row 0: the column titles
+        widgets = [self.select_box, self.enemy_combo, self.level_spin, *self.flag_boxes.values(),
+                   *self.position_spins, copy_button, paste_button]
+        for column, widget in enumerate(widgets):
+            alignment = Qt.AlignmentFlag.AlignCenter if isinstance(widget, QCheckBox) and widget is not self.select_box \
+                else Qt.AlignmentFlag(0)
+            grid.addWidget(widget, row, column, alignment)
 
     def editors(self):
         return [self.enemy_combo, self.level_spin, *self.flag_boxes.values(), *self.position_spins]
@@ -170,36 +169,34 @@ class JumboCactuarWidget(QWidget):
         action_bar.addWidget(self.save_as_button)
         action_bar.addWidget(self.about_button)
 
+        # The battle as the encounter sets it up: stage, enemies, party places, intro cameras.
+        # Its files are this tool's battle files (open_files), never looked up in a folder.
+        self._battle_files = {}   # lower-case file name -> path (a0stgNNN.x, c0mNNN.dat)
+        self.preview = BattleScenePreview(game_data_folder)
+        self.preview.file_source = lambda name: self._battle_files.get(name.lower())
+        file_registry.file_closed.connect(self._on_registry_closed)
+
         self._build_stage_group()
         self._build_flags_group()
         self._build_camera_group()
         self._build_unknown_group()
-        self.slot_panels = []
-        slot_grid = QGridLayout()
-        for slot_index in range(NB_SLOT):
-            panel = _SlotPanel(slot_index, self.manager)
-            copy_button, paste_button = _copy_paste_buttons(
-                "this enemy slot", lambda _c=False, s=slot_index: self._copy_slot(s),
-                lambda _c=False, s=slot_index: self._paste_slot(s))
-            self._paste_buttons.setdefault("slot", []).append(paste_button)
-            panel.button_row.addWidget(copy_button)
-            panel.button_row.addWidget(paste_button)
-            self._connect_slot(panel)
-            self.slot_panels.append(panel)
-            slot_grid.addWidget(panel, slot_index // 4, slot_index % 4)
+        self._build_slot_group()
 
         left_column = QVBoxLayout()
         left_column.addWidget(self.stage_group)
         left_column.addWidget(self.flags_group)
         left_column.addWidget(self.camera_group)
+        left_column.addWidget(self.unknown_group)
         left_column.addStretch(1)
-        slot_column = QVBoxLayout()
-        slot_column.addLayout(slot_grid)
-        slot_column.addWidget(self.unknown_group, alignment=Qt.AlignmentFlag.AlignLeft)
-        slot_column.addStretch(1)
+        right_column = QVBoxLayout()
+        right_column.addWidget(self.slot_group)
+        preview_group = QGroupBox("Battle preview")
+        preview_layout = QVBoxLayout(preview_group)
+        preview_layout.addWidget(self.preview)
+        right_column.addWidget(preview_group, 1)
         body = QHBoxLayout()
         body.addLayout(left_column)
-        body.addLayout(slot_column, 1)
+        body.addLayout(right_column, 1)
 
         self.editor = QWidget()
         editor_layout = QVBoxLayout()
@@ -256,14 +253,14 @@ class JumboCactuarWidget(QWidget):
             box.setToolTip(f"Battle flags bit {bit} (0x{1 << bit:02X})")
             box.toggled.connect(lambda checked, b=bit: self._edit(f"flag{b}", lambda record: record.set_flag(b, checked)))
             self.flag_boxes.append(box)
-            grid.addWidget(box, bit, 0)
+            grid.addWidget(box, bit % 4, bit // 4)
         copy_button, paste_button = _copy_paste_buttons("the battle flags", self._copy_flags, self._paste_flags)
         self._paste_buttons["flags"] = [paste_button]
         buttons = QHBoxLayout()
         buttons.addStretch(1)
         buttons.addWidget(copy_button)
         buttons.addWidget(paste_button)
-        grid.addLayout(buttons, len(BATTLE_FLAG_NAMES), 0)
+        grid.addLayout(buttons, 4, 0, 1, 2)
         grid.setVerticalSpacing(2)
         self.flags_group = QGroupBox("Battle flags")
         self.flags_group.setLayout(grid)
@@ -286,13 +283,20 @@ class JumboCactuarWidget(QWidget):
                 f"the {name.lower()} intro camera", lambda _c=False, i=index: self._copy_camera(i),
                 lambda _c=False, i=index: self._paste_camera(i))
             self._paste_buttons.setdefault("camera", []).append(paste_button)
+            preview_button = QPushButton("▶ Preview")
+            preview_button.setToolTip(f"Play the {name.lower()} intro camera in the battle preview")
+            preview_button.clicked.connect(lambda _c=False, i=index: self.preview.play_intro(i))
             grid.addWidget(QLabel(name + ":"), index + 1, 0)
             grid.addWidget(set_spin, index + 1, 1)
             grid.addWidget(anim_spin, index + 1, 2)
             grid.addWidget(copy_button, index + 1, 3)
             grid.addWidget(paste_button, index + 1, 4)
+            grid.addWidget(preview_button, index + 1, 5)
+        self.camera_note = QLabel(INTRO_CAMERA_NOTE)
+        self.camera_note.setWordWrap(True)
+        self.camera_note.setStyleSheet("color: gray")
+        grid.addWidget(self.camera_note, 3, 0, 1, 6)
         self.camera_group = QGroupBox("Intro camera")
-        self.camera_group.setToolTip("The battle starts with one of the two, 50/50 (encounter 33 always uses the main one)")
         self.camera_group.setLayout(grid)
 
     def _build_unknown_group(self):
@@ -306,7 +310,7 @@ class JumboCactuarWidget(QWidget):
                             f"Applied when the field is left with all {size} bytes typed")
             edit.editingFinished.connect(self._edit_unknown)
             self.unknown_edits.append(edit)
-            grid.addWidget(QLabel(f"Unknown {row}:"), row, 0)
+            grid.addWidget(QLabel(f"{row}:"), row, 0)
             grid.addWidget(edit, row, 1)
         copy_button, paste_button = _copy_paste_buttons("the unknown bytes", self._copy_unknown, self._paste_unknown)
         self._paste_buttons["unknown"] = [paste_button]
@@ -316,9 +320,27 @@ class JumboCactuarWidget(QWidget):
         buttons.addWidget(paste_button)
         grid.addLayout(buttons, len(UNKNOWN_ROWS), 0, 1, 2)
         grid.setVerticalSpacing(2)
-        self.unknown_group = QGroupBox("Unknowns - edit with caution")
+        self.unknown_group = QGroupBox("Unknown bytes - edit with caution")
         self.unknown_group.setToolTip("Never read by FF8_EN.exe (PC): free for mods")
         self.unknown_group.setLayout(grid)
+
+    def _build_slot_group(self):
+        grid = QGridLayout()
+        titles = ["Slot", "Enemy", "Level", *(label for _name, label in SLOT_FLAGS), "x", "y", "z"]
+        for column, title in enumerate(titles):
+            grid.addWidget(QLabel(title), 0, column, Qt.AlignmentFlag.AlignCenter if column > 2 else Qt.AlignmentFlag(0))
+        self.slot_panels = []
+        for slot_index in range(NB_SLOT):
+            copy_button, paste_button = _copy_paste_buttons(
+                f"enemy slot {slot_index}", lambda _c=False, s=slot_index: self._copy_slot(s),
+                lambda _c=False, s=slot_index: self._paste_slot(s))
+            self._paste_buttons.setdefault("slot", []).append(paste_button)
+            panel = _SlotRow(slot_index, self.manager, grid, copy_button, paste_button)
+            self._connect_slot(panel)
+            self.slot_panels.append(panel)
+        grid.setVerticalSpacing(2)
+        self.slot_group = QGroupBox("Enemy slots")
+        self.slot_group.setLayout(grid)
 
     def _connect_slot(self, panel):
         index = panel.slot_index
@@ -357,6 +379,53 @@ class JumboCactuarWidget(QWidget):
         with QSignalBlocker(self.encounter_list):
             self.encounter_list.clear()
         self.editor.setEnabled(False)
+        self.preview.show_encounter(None)
+
+    # --- Battle files: the stages and monsters the battle preview draws ---
+
+    open_files_label = "Battle stages and monsters (a0stg*.x, c0m*.dat)"
+
+    def open_files(self, file_paths=None):
+        """Import the battle stages and monster models the battle preview draws (several at once,
+        added to the ones already opened)."""
+        if file_paths is None:
+            file_paths = QFileDialog.getOpenFileNames(
+                self, "Open battle stages and monsters", self.file_registry.last_folder(BATTLE_FILES_KEY),
+                f"Battle stages and monsters ({' '.join(BATTLE_FILE_PATTERNS)})")[0]
+        if not file_paths:
+            return
+        self.file_registry.remember_folder(BATTLE_FILES_KEY, os.path.dirname(file_paths[0]))
+        self._add_battle_files(file_paths)
+
+    def load_folder(self, folder):
+        """The header's Open folder: every battle stage and monster found in it (and below)."""
+        names = [stage_file_name(stage_id) for stage_id in range(256)] + \
+                [model_file_name(com_id) for com_id in range(256 - ENEMY_ID_BASE)]
+        found = FileToolbarWidget.scan_folder(folder, names)
+        if found:
+            self._add_battle_files(list(found.values()))
+
+    def auto_import_sources(self):
+        """The header's Auto-upload: scene.out and the battle files opened last time."""
+        return [AutoImportSource.for_binding(self.binding, self.file_registry.last_folder(FILE_NAME)),
+                AutoImportSource(BATTLE_FILES_KEY, BATTLE_FILE_PATTERNS, self._add_battle_files,
+                                 selection_only=True)]
+
+    def _add_battle_files(self, file_paths):
+        for path in file_paths:
+            name = os.path.basename(path).lower()
+            if any(fnmatch.fnmatch(name, pattern) for pattern in BATTLE_FILE_PATTERNS):
+                self._battle_files[name] = path
+        paths = list(self._battle_files.values())
+        self.file_registry.remember_files(BATTLE_FILES_KEY, paths)
+        # No fixed FF8 name: one summary entry in the Opened files panel (as Alexander's stages)
+        self.file_registry.open_file(BATTLE_FILES_KEY, FileRegistry.summarize_paths(paths, "battle file"))
+        self.preview.files_changed()
+
+    def _on_registry_closed(self, file_name, _path):
+        if file_name == BATTLE_FILES_KEY:   # removed from the Opened files panel
+            self._battle_files.clear()
+            self.preview.files_changed()
 
     def save_file(self):
         if not self.manager.loaded:
@@ -438,6 +507,7 @@ class JumboCactuarWidget(QWidget):
             for panel in self.slot_panels:
                 panel.show_slot(record.slot(panel.slot_index))
         self._show_stage_thumbnail(record.stage_id)
+        self.preview.show_encounter(record, self._current)
 
     def _stage_picture_path(self, stage_id):
         return os.path.join(self._picture_folder, f"{stage_id:03d}.jpg")
@@ -492,6 +562,8 @@ class JumboCactuarWidget(QWidget):
         item = self.encounter_list.item(index)
         if item is not None:
             item.setText(self._list_label(index))
+        if index == self._current:
+            self.preview.show_encounter(self.manager.records[index], index)
         state = getattr(self, "dirty_state", None)
         if state is not None:
             state.mark()

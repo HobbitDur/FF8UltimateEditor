@@ -189,6 +189,13 @@ of an encounter and paste it into another (or one enemy slot into another slot),
 can be copied at once. The encounter list says each encounter's stage and enemies, and Ctrl+F finds
 every encounter with a given monster. Revert an encounter, undo/redo, drop a `.out` file to open it.
 
+The **battle preview** shows the encounter as the battle sets it up: the battle stage, the enemies
+on their slots playing their idle animation, and the party's places. It follows every edit live.
+Each intro camera has a ▶ Preview button that films the encounter with the camera the battle starts
+with (the main or the secondary one, picked 50/50; set = the stage's camera animation set, anim =
+the animation in it). The stages and monsters it draws are the ones opened with Import → "Battle
+stages and monsters" (or Open folder on the `battle` folder); the others are posts on the ground.
+
 ## Other tools made by other modders (launched from the toolbar)
 
 These are external, standalone programs. The launcher can check for and download updates for them

@@ -186,3 +186,38 @@ def test_save_as_moves_the_shared_file(widget, monkeypatch, tmp_path):
     assert w.binding.current_path == saved
     assert _saved(type(tmp_path)(saved), 60).level(0) == 12
     assert w.encounter_list.currentRow() == 60 and not w.has_unsaved_changes()
+
+
+def test_battle_files_feed_the_preview(widget, tmp_path):
+    from JumboCactuar.jumbocactuarwidget import BATTLE_FILES_KEY
+    w, _path = widget
+    files = [tmp_path / name for name in ("a0stg001.x", "C0M084.DAT", "notes.txt")]
+    for file in files:
+        file.write_bytes(b"")
+    w._add_battle_files([str(file) for file in files])
+    assert w.preview.file_source("a0stg001.x") == str(files[0])
+    assert w.preview.file_source("c0m084.dat") == str(files[1])     # names match whatever their case
+    assert w.preview.file_source("notes.txt") is None
+    assert w.file_registry.get_path(BATTLE_FILES_KEY)               # listed in the Opened files panel
+    w.file_registry.close_file(BATTLE_FILES_KEY)
+    assert w.preview.file_source("a0stg001.x") is None
+
+
+def test_open_folder_finds_the_battle_files(widget, tmp_path):
+    w, _path = widget
+    battle = tmp_path / "data" / "battle"
+    battle.mkdir(parents=True)
+    for name in ("a0stg005.x", "c0m071.dat", "d0c000.dat"):
+        (battle / name).write_bytes(b"")
+    w.load_folder(str(tmp_path / "data"))
+    assert set(w._battle_files) == {"a0stg005.x", "c0m071.dat"}
+
+
+def test_preview_follows_the_shown_encounter(widget):
+    w, _path = widget
+    w.encounter_list.setCurrentRow(80)
+    assert w.preview._record is w.manager.records[80] and w.preview._encounter_index == 80
+    w.slot_panels[0].position_spins[0].setValue(1234)
+    assert w.preview._record.position(0)[0] == 1234
+    w.undo()
+    assert w.preview._record is w.manager.records[80]    # undo puts a new record in place: shown too
