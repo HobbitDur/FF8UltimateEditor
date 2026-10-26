@@ -97,7 +97,8 @@ class CameraEffectPreview(QWidget):
         # Who stands in the battle: the panel every battle preview shares (party, caster, target),
         # offering only the imported models
         from Ifrit.IfritCameraSeq.battlecast import BattleCastPanel
-        self.cast = BattleCastPanel(camera_manager.game_data, self.model_paths, mode="cast")
+        # its models are read with the game data loaded in full on first use
+        self.cast = BattleCastPanel(self._shared_game_data, self.model_paths, mode="cast")
         self.cast.changed.connect(lambda: self._cast_changed(defaults=True))
         self.party_combos, self.weapon_combos = self.cast.party_combos, self.cast.weapon_combos
         self.caster_combo, self.target_combo = self.cast.caster_combo, self.cast.target_combo
@@ -256,7 +257,6 @@ class CameraEffectPreview(QWidget):
 
     def model(self, path):
         """The loaded (read-only) model of an imported path, or None; loading errors are reported."""
-        self._shared_game_data()
         return self.cast.model(path)
 
     def party_members(self):

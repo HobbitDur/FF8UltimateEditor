@@ -71,8 +71,10 @@ class BattleCastPanel(QWidget):
 
     def __init__(self, game_data, model_paths=None, mode="cast", main_manager=None, main_path=None,
                  parent=None):
-        """model_paths: callable -> the loaded .dat paths (None: none). main_manager/main_path: the
-        host's own model (modes "role" and "other"), drawn live - its edits show."""
+        """game_data: the GameData the models are read with, or a callable returning it fully loaded
+        (Fujin loads its data on the first model). model_paths: callable -> the loaded .dat paths
+        (None: none). main_manager/main_path: the host's own model (modes "role" and "other"), drawn
+        live - its edits show."""
         super().__init__(parent)
         self.game_data = game_data
         self.model_paths_source = model_paths
@@ -175,7 +177,8 @@ class BattleCastPanel(QWidget):
             from Ifrit.IfritCameraSeq.battlepreview import BattlePreviewSetup
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             try:
-                self._models[path] = BattlePreviewSetup._load_model(path, self.game_data, weapon=is_weapon_file(path))
+                game_data = self.game_data() if callable(self.game_data) else self.game_data
+                self._models[path] = BattlePreviewSetup._load_model(path, game_data, weapon=is_weapon_file(path))
             except Exception as error:
                 self._failed.add(path)
                 QApplication.restoreOverrideCursor()
