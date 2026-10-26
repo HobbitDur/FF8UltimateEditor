@@ -238,7 +238,7 @@ def _parse_group(data, gstart, gend, bone_base):
     skel = gstart + skel_off
     nb_bones = _u16(data, skel)
 
-    bones, offsets = [], []
+    bones, offsets, sizes = [], [], []
     for i in range(nb_bones):
         bo = skel + 16 + 48 * i
         parent = _s16(data, bo)
@@ -247,9 +247,16 @@ def _parse_group(data, gstart, gend, bone_base):
         b.parent_id = 0xFFFF if parent < 0 else bone_base + parent
         b.set_size_raw(bone_size)
         bones.append(b)
-        base = list(offsets[parent]) if 0 <= parent < len(offsets) else [0, 0, 0]
-        base[2] += bone_size   # translation runs along Z (identity rotation)
+        # A bone starts where its parent ends (a root bone at the origin): its vertices are moved by
+        # its parents' sizes, not by its own. Translation runs along Z (identity rotation). Checked
+        # on all 163 stages: the floor under the scene.out slots is then at height 0, where the
+        # battle stands its actors (adding the bone's own size put it 600-700 units lower).
+        base = [0, 0, 0]
+        if 0 <= parent < len(offsets):
+            base = list(offsets[parent])
+            base[2] += sizes[parent]
         offsets.append((base[0], base[1], base[2]))
+        sizes.append(bone_size)
 
     ol = gstart + objlist_off
     nb_obj = _u32(data, ol)

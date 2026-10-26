@@ -207,10 +207,12 @@ def test_open_folder_finds_the_battle_files(widget, tmp_path):
     w, _path = widget
     battle = tmp_path / "data" / "battle"
     battle.mkdir(parents=True)
-    for name in ("a0stg005.x", "c0m071.dat", "d0c000.dat"):
+    for name in ("a0stg005.x", "c0m071.dat", "d0c000.dat", "d0w001.dat", "b0wave.dat"):
         (battle / name).write_bytes(b"")
     w.load_folder(str(tmp_path / "data"))
-    assert set(w._battle_files) == {"a0stg005.x", "c0m071.dat"}
+    assert set(w._battle_files) == {"a0stg005.x", "c0m071.dat", "d0c000.dat", "d0w001.dat"}
+    assert w.preview.party_combos[0].currentData() == str(battle / "d0c000.dat")   # Squall stands
+    assert w.preview.weapon_combos[0].currentData() == str(battle / "d0w001.dat")  # with his weapon
 
 
 def test_preview_follows_the_shown_encounter(widget):

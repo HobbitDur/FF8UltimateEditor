@@ -97,7 +97,7 @@ def test_intro_camera_plays_from_the_stage_file(qapp, tmp_path):
                      "extracted_files/battle/c0m071.dat")
 def test_real_encounter_stands_the_enemies_on_the_stage(qapp):
     import os
-    from Common.battlescenepreview import BattleScenePreview
+    from Common.battlescenepreview import BattleScenePreview, UNIT
     from JumboCactuar.jumbocactuarmanager import JumboCactuarManager
     manager = JumboCactuarManager()
     manager.load_file("extracted_files/battle/scene.out")
@@ -108,8 +108,60 @@ def test_real_encounter_stands_the_enemies_on_the_stage(qapp):
     preview._rebuild()
     assert len(preview._actors) == 2 and len(preview.gl._preview_slots[0]) == 3   # party posts only
     assert preview.gl._preview_slots[2] is None                                    # the stage, no grid
-    feet = [preview._mesh.vertices[dest][:, 1].min() for _model, _actor, dest in preview._actors]
-    assert all(abs(foot) < 0.2 for foot in feet)       # standing on the ground (y = 0), not in the air
+    stage = preview._stage.vertices
+    for _model, actor, dest, _body in preview._actors:
+        x, z = -actor.position[0] * UNIT, actor.position[2] * UNIT
+        floor = stage[(np.abs(stage[:, 0] - x) < 600 * UNIT) & (np.abs(stage[:, 2] - z) < 600 * UNIT)]
+        foot = preview._mesh.vertices[dest][:, 1].min()
+        assert abs(foot - np.median(floor[:, 1])) < 50 * UNIT   # on the cobbles, not floating above them
     preview.play_intro(0)
     preview._timer.stop()
     assert len(preview._poses) > 1
+
+
+def test_party_picks_among_the_opened_characters(qapp, tmp_path):
+    from Common.battlescenepreview import BattleScenePreview
+    paths = [str(tmp_path / name) for name in ("d1c003.dat", "d0c000.dat", "d0w000.dat", "d0w001.dat", "d1w008.dat")]
+    preview = BattleScenePreview()
+    preview.set_party_files(paths)
+    characters = [combo.currentData() for combo in preview.party_combos]
+    assert characters == [paths[1], paths[0], None]                 # Squall then Zell, the third slot empty
+    assert preview.party_combos[0].currentText() == "Squall (d0c000.dat)"
+    assert preview.weapon_combos[0].currentData() == paths[2]        # his first weapon
+    assert [preview.weapon_combos[0].itemData(i) for i in range(preview.weapon_combos[0].count())] == \
+           [None, paths[2], paths[3]]                                # only Squall's weapons
+    preview.party_combos[1].setCurrentIndex(0)                       # the user empties slot 2...
+    preview.set_party_files(paths + [str(tmp_path / "d2c006.dat")])
+    assert preview.party_combos[1].currentData() is None             # ...it stays as they set it
+    assert preview.party_combos[2].currentData() == str(tmp_path / "d2c006.dat")
+
+
+@pytest.mark.ff8data("extracted_files/battle/scene.out", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/d1c003.dat",
+                     "extracted_files/battle/d1w008.dat")
+def test_real_party_stands_in_formation(qapp):
+    import glob
+    from Common.battlescenepreview import BattleScenePreview, UNIT
+    from FF8GameData.sceneout import EncounterRecord
+    preview = BattleScenePreview()
+    preview.set_party_files(glob.glob("extracted_files/battle/d0c000.dat") + glob.glob("extracted_files/battle/d0w000.dat")
+                            + glob.glob("extracted_files/battle/d1c003.dat") + glob.glob("extracted_files/battle/d1w008.dat"))
+    preview.show_encounter(EncounterRecord(), 0)
+    preview._rebuild()
+    drawn = [(model, body) for model, _actor, _dest, body in preview._actors]
+    assert len(drawn) == 4 and sum(body is not None for _model, body in drawn) == 2   # 2 bodies, 2 weapons
+    assert any(model.reduced for model, _body in drawn)                 # Zell's gloves: posed by his bones
+    assert "2 of 3 member(s) drawn" in preview.status.text()
+    assert len(preview.gl._preview_slots[0]) == 1                       # the empty third place is a post
+    for model, actor, dest, body in preview._actors:
+        if body is None:
+            assert abs(preview._mesh.vertices[dest][:, 1].min()) < 50 * UNIT   # feet on y = 0
+
+
+def test_party_prefers_other_characters_to_other_costumes(qapp, tmp_path):
+    from Common.battlescenepreview import BattleScenePreview
+    names = ("d0c000.dat", "d0c001.dat", "d1c003.dat", "d5c011.dat")
+    preview = BattleScenePreview()
+    preview.set_party_files([str(tmp_path / name) for name in names])
+    assert [combo.currentText() for combo in preview.party_combos] == \
+           ["Squall (d0c000.dat)", "Zell (d1c003.dat)", "Selphie (d5c011.dat)"]

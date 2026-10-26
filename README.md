@@ -193,9 +193,10 @@ The **battle preview** shows the encounter as the battle sets it up: the battle 
 on their slots playing their idle animation, and the party's places. It follows every edit live.
 Each intro camera has a ▶ Preview button that films the encounter with the camera the battle starts
 with (the main or the secondary one, picked 50/50; set = the stage's camera animation set, anim =
-the animation in it). The monsters and stages it draws are side files, opened with Import read-only
-(`c0m###.dat`, `a0stg###.x`, several at once) or Open folder on the `battle` folder; a monster not
-opened is a post on the ground.
+the animation in it). The monsters, party and stages it draws are side files, opened with Import
+read-only (`c0m###.dat`, characters `d?c###.dat` with their weapons `d?w###.dat`, `a0stg###.x`,
+several at once) or Open folder on the `battle` folder; the party picks a character and a weapon per
+place of the 3-member formation. A monster or party member not opened is a post on the ground.
 
 ## Other tools made by other modders (launched from the toolbar)
 

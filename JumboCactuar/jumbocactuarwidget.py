@@ -9,10 +9,9 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLa
                              QFileDialog, QMessageBox, QDialog)
 
 from Common.autoimport import AutoImportSource
-from Common.battlescenepreview import BattleScenePreview, stage_file_name, model_file_name
+from Common.battlescenepreview import BattleScenePreview
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
-from Common.filetoolbarwidget import FileToolbarWidget
 from FF8GameData.battlestage.stagecamera import INTRO_CAMERA_NOTE
 from FF8GameData.sceneout import (NB_SLOT, BATTLE_FLAG_NAMES, CAMERA_SET_MAX, CAMERA_ANIM_MAX,
                                   ENEMY_ID_BASE, SlotData)
@@ -26,7 +25,7 @@ SLOT_FLAGS = [("enabled", "Enabled"), ("not_targetable", "Not targetable"),
 UNKNOWN_ROWS = [(0, 16), (16, 16), (32, 16), (48, 8)]  # (start, size) of the 4 unknown fields
 CAMERA_NAMES = ["Main", "Secondary"]
 BATTLE_FILES_KEY = "JumboCactuar battle files"   # the Opened files entry of the preview's files
-BATTLE_FILE_PATTERNS = ("a0stg*.x", "c0m*.dat")
+BATTLE_FILE_PATTERNS = ("a0stg*.x", "c0m*.dat", "d?c*.dat", "d?w*.dat")
 MODEL_FOLDER_KEY = "battle model (.dat)"   # the monsters' folder, remembered with Ifrit's and Xu's
 STAGE_FOLDER_KEY = "battle stage (.x)"
 WIKI_ENCOUNTERS = "https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/battle/encounter-codes/"
@@ -390,11 +389,17 @@ class JumboCactuarWidget(QWidget):
         """The header's Import read-only menu: the files the battle preview draws, never edited here
         (several at once, added to the ones already opened)."""
         return [("Monsters: c0m###.dat (several, Ctrl+A for all)", self._import_monsters),
+                ("Party: characters d?c###.dat and their weapons d?w###.dat (several, Ctrl+A for all)",
+                 self._import_party),
                 ("Battle stages: a0stg###.x (several, Ctrl+A for all)", self._import_stages)]
 
     def _import_monsters(self):
         self._import_side_files("Monsters to show in the battle preview (Ctrl+A for all)", MODEL_FOLDER_KEY,
                                 "Monster battle models (c0m*.dat)")
+
+    def _import_party(self):
+        self._import_side_files("Characters and weapons to stand the party (Ctrl+A for all)", MODEL_FOLDER_KEY,
+                                "Character and weapon battle models (d?c*.dat d?w*.dat)")
 
     def _import_stages(self):
         self._import_side_files("Battle stages to show in the battle preview (Ctrl+A for all)", STAGE_FOLDER_KEY,
@@ -408,10 +413,13 @@ class JumboCactuarWidget(QWidget):
             self._add_battle_files(file_paths)
 
     def load_folder(self, folder):
-        """The header's Open folder: every battle stage and monster found in it (and below)."""
-        names = [stage_file_name(stage_id) for stage_id in range(256)] + \
-                [model_file_name(com_id) for com_id in range(256 - ENEMY_ID_BASE)]
-        found = FileToolbarWidget.scan_folder(folder, names)
+        """The header's Open folder: every battle stage, monster, character and weapon found in it
+        (and below; the first one of each name)."""
+        found = {}
+        for root, _folders, names in os.walk(folder):
+            for name in names:
+                if any(fnmatch.fnmatch(name.lower(), pattern) for pattern in BATTLE_FILE_PATTERNS):
+                    found.setdefault(name.lower(), os.path.join(root, name))
         if found:
             self._add_battle_files(list(found.values()))
 
@@ -430,11 +438,13 @@ class JumboCactuarWidget(QWidget):
         self.file_registry.remember_files(BATTLE_FILES_KEY, paths)
         # No fixed FF8 name: one summary entry in the Opened files panel (as Alexander's stages)
         self.file_registry.open_file(BATTLE_FILES_KEY, FileRegistry.summarize_paths(paths, "battle file"))
+        self.preview.set_party_files(paths)
         self.preview.files_changed()
 
     def _on_registry_closed(self, file_name, _path):
         if file_name == BATTLE_FILES_KEY:   # removed from the Opened files panel
             self._battle_files.clear()
+            self.preview.set_party_files([])
             self.preview.files_changed()
 
     def save_file(self):

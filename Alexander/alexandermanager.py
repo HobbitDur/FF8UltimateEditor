@@ -189,18 +189,13 @@ class AlexanderManager:
             data = serialize(model.raw)
             note = "saved (byte-exact copy of the loaded stage)"
         elif self._template_raw is not None:
-            from FF8GameData.battlestage.battlestagewriter import group_bone0_size
             layout = self._template_tex_layout            # tex_key -> (page, clut, w, h)
-            # per-group bone-0 vertical offset, subtracted so the reload's bone
-            # matrix cancels out (all objects are collapsed onto bone 0).
-            y_bias = [group_bone0_size(g.skeleton) if g else 0
-                      for g in self._template_raw.groups]
             # distribute the (full) objects back into their groups; the sky stays
             # in group 3 so the engine keeps rotating it.
             group_objects = {0: [], 1: [], 2: [], 3: []}
             for obj, gi in zip(self._all_objects, self._group_of_object):
                 gi = gi if 0 <= gi <= 3 else 0
-                group_objects[gi].append(encode_object(obj, layout, y_bias=y_bias[gi]))
+                group_objects[gi].append(encode_object(obj, layout))   # all on bone 0, the root
             data = serialize(self._template_raw, group_objects=group_objects)
             groups_used = sorted(g for g, b in group_objects.items() if b)
             note = ("saved (edited mesh written back into the loaded stage's "
