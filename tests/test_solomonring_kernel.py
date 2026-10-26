@@ -1417,13 +1417,17 @@ def test_compress_keeps_a_name_typed_before_it(qapp, tmp_path, action):
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
 def test_battle_message_texts_stay_uncompressed(qapp, tmp_path):
-    """The battle message window cannot draw a compressed pair (the game crashes at 0x49DEFB as a
-    battle fades out to its results): Compress leaves the misc battle texts, Devour messages and
-    Angelo descriptions alone, and a save uncompresses them in a file compressed before that."""
+    """Menu_DrawTextPrims draws a compressed pair byte as a raw glyph (pairs 0xF2+ crash the game at
+    0x49DEFB as a battle fades out to its results): the sections marked "text_compressible": false
+    (misc battle texts, Devour messages, Angelo descriptions) are left alone by Compress, and a
+    save uncompresses them in a file compressed before that."""
     work = tmp_path / "kernel.bin"
     work.write_bytes(KERNEL.read_bytes())
     widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
     widget.load_file(str(work))
+    marked = sorted(int(k) for k, cfg in widget._section_configs.items()
+                    if cfg.get("text_compressible") is False)
+    assert marked == [25, 29, 31]
 
     def texts(tool, data_id):
         by_id = {s.id: s for s in tool.kernel_manager.section_list if s is not None}

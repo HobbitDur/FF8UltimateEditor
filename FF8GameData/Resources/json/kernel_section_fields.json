@@ -5717,7 +5717,8 @@
   "text_labels": [
    "Name",
    "Description"
-  ]
+  ],
+  "text_compressible": false
  },
  "26": {
   "section_id": 26,
@@ -6748,7 +6749,8 @@
   ],
   "text_labels": [
    "Description"
-  ]
+  ],
+  "text_compressible": false
  },
  "30": {
   "section_id": 30,
@@ -7324,6 +7326,7 @@
   "fields": [],
   "text_labels": [
    "Text"
-  ]
+  ],
+  "text_compressible": false
  }
 }

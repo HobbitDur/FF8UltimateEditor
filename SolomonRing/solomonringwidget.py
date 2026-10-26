@@ -1275,11 +1275,12 @@ class SolomonRingWidget(QWidget):
             self._refresh_item_names()
             self._refresh_battle_use_button()
 
-    # Texts the battle message window draws: Rinoa's limit (Angelo) descriptions, Devour messages and
-    # the misc battle texts ("EXP received", ...). Vanilla ships them uncompressed, and that window
-    # cannot draw a compressed pair: the text renderer reads a null texture (0x49DEFB) and the game
-    # crashes, e.g. as the battle fades out to the results screen.
-    UNCOMPRESSED_TEXT_SECTIONS = (25, 29, 31)
+    def _text_compressible(self, data_id):
+        """False for the sections whose texts the game draws without expanding compressed pairs
+        ("text_compressible" in kernel_section_fields.json, see generate_section_fields.py): a
+        compressed one crashes the game."""
+        config = self._section_configs.get(str(data_id)) or {}
+        return config.get("text_compressible", True)
 
     def compress_text(self):
         """Compress all kernel text the game can draw compressed (the shared toolbar's Compress
@@ -1292,7 +1293,7 @@ class SolomonRingWidget(QWidget):
             text_section = by_id.get(text_id) if text_id else None
             config = self._section_configs.get(str(data_id))
             labels = config.get("text_labels", []) if config else []
-            if not text_section or not labels or data_id in self.UNCOMPRESSED_TEXT_SECTIONS:
+            if not text_section or not labels or not self._text_compressible(data_id):
                 continue
             # Compress every string except plain "Name" fields (which ship uncompressed).
             for index, text in enumerate(text_section.get_text_list()):
@@ -1317,11 +1318,11 @@ class SolomonRingWidget(QWidget):
         for tab in self._section_tabs.values():
             tab.commit()
 
-    def _uncompress_battle_message_texts(self):
+    def _uncompress_incompressible_texts(self):
         by_id = {s.id: s for s in self.kernel_manager.section_list if s is not None}
-        for data_id in self.UNCOMPRESSED_TEXT_SECTIONS:
-            text_section = by_id.get(self._text_link.get(data_id, 0))
-            if text_section:
+        for data_id, text_id in self._text_link.items():
+            text_section = by_id.get(text_id) if text_id else None
+            if text_section and not self._text_compressible(data_id):
                 for text in text_section.get_text_list():
                     text.uncompress_str()
 
@@ -1352,7 +1353,7 @@ class SolomonRingWidget(QWidget):
                                 + "\n".join(problems))
         # A kernel.bin compressed before these sections were left alone crashes the game: save them
         # uncompressed whatever the file had.
-        self._uncompress_battle_message_texts()
+        self._uncompress_incompressible_texts()
         self.kernel_manager.save_file(self.loaded_filename)
         self._battle_data_kept = {}   # the placeholders' data is gone from the file now
         print(f"Saved to {self.loaded_filename}")

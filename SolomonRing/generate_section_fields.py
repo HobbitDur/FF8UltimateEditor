@@ -1651,6 +1651,14 @@ for cfg in sections.values():
         if f.get("lookup") == "item":
             f["dynamic_lookup"] = True
 
+# Texts the game draws with Menu_DrawTextPrims (0x4A1020), which never expands compressed pairs:
+# a pair byte 0xE8-0xFF is drawn as a glyph of font rows 9-10, and row 10 (0xF2-0xFF) reads a
+# texture page the font never creates (null, crash at 0x49DEFB in hires). Vanilla ships them
+# uncompressed: Rinoa's limit (Angelo) descriptions, Devour messages and the misc battle texts
+# ("to confirm" on the results screen, ...). Compress skips them and a save uncompresses them.
+for section_id in (25, 29, 31):
+    sections[str(section_id)]["text_compressible"] = False
+
 with open(DEST, "w", encoding="utf-8") as f:
     json.dump(sections, f, indent=1, ensure_ascii=False)
 
