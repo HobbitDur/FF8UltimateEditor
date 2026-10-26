@@ -514,6 +514,9 @@ def test_direct_drag_supports_real_undo_redo_shortcuts_and_saved_state(widget, a
         widget.setParent(None)
         host.close()
         host.deleteLater()
+        # The Ctrl+Z/Ctrl+Y clicks leave Qt believing Ctrl is still held, and selections made by
+        # later tests (QTableView.selectRow toggles under Ctrl) would follow it.
+        QTest.keyRelease(view, Qt.Key.Key_Control)
 
 
 def test_geometry_uses_polygon_index_and_resolves_drop_to_triangle(tmp_path):

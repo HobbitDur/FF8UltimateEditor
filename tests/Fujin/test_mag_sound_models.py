@@ -235,3 +235,24 @@ def test_sound_and_vibration_edits_in_place(qapp):
     manager.undo()
     manager.undo()
     assert not manager.modified
+
+
+def test_an_edit_keeps_the_vibration_pattern_selected_with_ctrl_held(qapp):
+    """The tables are rebuilt after each edit and the selection restored. QTableView.selectRow
+    toggles under a held Ctrl, which deselected the pattern and emptied its point table."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtTest import QTest
+    from Common.fileregistry import FileRegistry
+    from Fujin.magdocument import MagDocument
+    from Fujin.soundpanel import SoundPanel
+    manager = MagDocument()
+    manager.load_bytes(_sound_mag(), name="MAG230_B.00")
+    panel = SoundPanel(FileRegistry())
+    panel.set_manager(manager)
+    QTest.keyPress(panel, Qt.Key.Key_Control, Qt.KeyboardModifier.ControlModifier)
+    try:
+        panel.point_tables["left"].cellWidget(0, 0).setValue(50)
+        assert panel._selected_pattern() is not None
+        assert panel.point_tables["left"].cellWidget(0, 1) is not None
+    finally:
+        QTest.keyRelease(panel, Qt.Key.Key_Control)

@@ -11,7 +11,8 @@ Edits are high level and keep the file's size: a sound block is pointed at anoth
 pattern's points take a new strength and ramp length (their number is fixed)."""
 import os
 
-from PyQt6.QtCore import Qt, QBuffer, QByteArray, QUrl, QLoggingCategory, QPointF, pyqtSignal
+from PyQt6.QtCore import (Qt, QBuffer, QByteArray, QUrl, QLoggingCategory, QPointF, pyqtSignal,
+                          QItemSelectionModel)
 from PyQt6.QtGui import QColor, QPainter, QPen, QPolygonF
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTableWidget,
                              QTableWidgetItem, QHeaderView, QSplitter, QAbstractItemView, QSpinBox,
@@ -69,6 +70,14 @@ class VibrationCurve(QWidget):
         painter.setPen(QColor(200, 200, 200))
         painter.drawText(6, self.height() - 4, f"left motor (orange) / right motor (blue) — {ticks} ticks "
                                                f"= {ticks / TICKS_PER_SECOND:.1f} s")
+
+
+def _select_row(table, row):
+    """Select exactly this row. QTableView.selectRow follows the keys held down: with Ctrl held it
+    TOGGLES the row, so restoring the selection after an edit could clear it instead."""
+    flags = QItemSelectionModel.SelectionFlag.ClearAndSelect | QItemSelectionModel.SelectionFlag.Rows
+    table.selectionModel().select(table.model().index(row, 0), flags)
+    table.setCurrentCell(row, 0, QItemSelectionModel.SelectionFlag.NoUpdate)
 
 
 class SoundPanel(QWidget):
@@ -239,7 +248,7 @@ class SoundPanel(QWidget):
         self.vibration_box.setVisible(bool(self.patterns))
         self.curve.set_pattern(self.patterns[0] if self.patterns else None)
         if self.patterns:
-            self.vibration_table.selectRow(min(getattr(self, "_pattern_row", 0), len(self.patterns) - 1))
+            _select_row(self.vibration_table, min(getattr(self, "_pattern_row", 0), len(self.patterns) - 1))
         self._fill_points()
 
     def _duration(self, archive_id):
@@ -267,7 +276,7 @@ class SoundPanel(QWidget):
                 self.table.setItem(row, column, item)
         self.table.resizeColumnsToContents()
         if self.entries and not self.table.selectionModel().selectedRows():
-            self.table.selectRow(min(getattr(self, "_entry_row", 0), len(self.entries) - 1))
+            _select_row(self.table, min(getattr(self, "_entry_row", 0), len(self.entries) - 1))
         if not self.entries:
             self.status.setText("This file has no sound blocks.")
         elif not self.status.text().startswith("Sound archive could not"):
