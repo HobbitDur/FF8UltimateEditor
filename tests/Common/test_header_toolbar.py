@@ -238,7 +238,7 @@ def test_shared_save_drives_the_npc_multi_file_save(main_window, monkeypatch):
     assert saved == [1]
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
 def test_cid_drives_two_inputs_and_shares_the_exe(main_window, monkeypatch):
     """Cid's FF8 exe + wmset both run from the shared toolbar (two main bindings); Save is its
     multi-file save; and the exe key is shared with CCGroup, so opening it feeds both tools."""
@@ -285,7 +285,7 @@ def test_compress_buttons_show_only_for_text_tools(main_window):
     assert not tb.uncompress_button.isVisibleTo(tb)
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/menu/icon.sp1")
 def test_minimog_main_and_complementary_bindings_share_with_zone(main_window):
     """icon.sp1 (edited in Minimog, read-only companion in Zone) and icon.TEX (Minimog's own
     preview companion) both run from the shared toolbar; opening icon.sp1 also auto-loads a
@@ -376,7 +376,7 @@ def test_compress_buttons_route_to_the_active_tool(main_window, monkeypatch):
     assert calls == ["c", "u"]
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/battle/a0stg000.x")
 def test_alexander_open_files_hook_and_auto_save_enable(main_window, monkeypatch):
     """Alexander has no FileBinding at all (a0stgXXX.x has no fixed name, and several are opened
     into a list at once): Import calls its open_files() hook, and Save enables itself via
@@ -419,7 +419,7 @@ def test_alexander_open_files_hook_and_auto_save_enable(main_window, monkeypatch
     assert dialog_called == [], "a known stage path must not prompt a Save-As dialog"
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/battle/a0stg000.x")
 def test_alexander_save_falls_back_to_a_dialog_without_a_known_stage_path(main_window, monkeypatch):
     """The one case Save can't write back directly: no stage was loaded this session with a known
     path (e.g. only a .glb was imported), so there is no "corresponding .x file" to write to."""
@@ -504,7 +504,7 @@ def test_hook_based_tools_register_a_summary_entry_in_opened_files(main_window, 
         assert any(key in panel.file_list.item(i).text() for i in range(panel.file_list.count()))
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/menu/face.sp2")
 def test_joker_sp2_open_and_direct_save(main_window, tmp_path):
     """Joker edits whichever .sp2 is picked (face.sp2 or cardanm.sp2, no fixed FF8 name) - a
     single-select wildcard binding, same shape as Ifrit's *.dat. Save writes straight back to the
@@ -540,7 +540,7 @@ def test_joker_sp2_open_and_direct_save(main_window, tmp_path):
     assert joker.manager.file_path == cardanm_copy
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/Sound/audio.fmt", "extracted_files/Sound/audio.dat")
 def test_julia_audio_fmt_open_and_direct_save(main_window, monkeypatch, tmp_path):
     """Julia exposes audio.fmt and audio.dat as the main pair on both tabs.
     Save on Audio archive writes straight back to the loaded paths (JuliaManager.save
@@ -579,7 +579,7 @@ def test_julia_audio_fmt_open_and_direct_save(main_window, monkeypatch, tmp_path
     assert len(reloaded.sounds) == nb_sounds
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/main/kernel.bin", "extracted_files/main/namedic.bin", "extracted_files/battle/c0m000.dat")
 def test_shumitranslator_opens_a_tab_per_file(main_window, monkeypatch, tmp_path):
     """ShumiTranslator's seven fixed-name kinds (kernel.bin, namedic.bin, mngrp.bin, FF8 exe,
     remaster .dat, field.fs, world.fs) plus the c0mxx.dat multi-select are eight *independent*
@@ -669,7 +669,7 @@ def test_shumitranslator_opens_a_tab_per_file(main_window, monkeypatch, tmp_path
     assert shumi.tab_widget.count() == 2
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/main/namedic.bin")
 def test_shumitranslator_does_not_build_a_pane_for_a_background_open(main_window):
     """The freeze fix: a ShumiFilePane is heavy (mngrp.bin ~2600 text boxes). A file opened in
     ANOTHER tool (Shiva editing mngrp.bin, SolomonRing the kernel) shares its path through the
@@ -701,7 +701,7 @@ def test_shumitranslator_does_not_build_a_pane_for_a_background_open(main_window
     assert shumi.tab_widget.currentWidget().file_type.name == "NAMEDIC"
 
 
-@pytest.mark.ff8data("extracted_files")
+@pytest.mark.ff8data("extracted_files/main/kernel.bin", "extracted_files/main/namedic.bin", "extracted_files/battle/c0m000.dat")
 def test_shumitranslator_single_multiselect_import_opens_a_tab_each(main_window, monkeypatch):
     """One Import = one multi-select dialog covering every kind. Picking kernel.bin + namedic.bin +
     two c0mxx.dat in a single go opens a kernel tab, a namedic tab and ONE battle-text tab (the c0m
