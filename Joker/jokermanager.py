@@ -191,6 +191,7 @@ class JokerManager:
             self._mngrphd_data = bytearray(in_file.read())
 
         mngrphd = Mngrphd(game_data=self.game_data, data_hex=bytearray(self._mngrphd_data))
+        mngrphd.check_matches(len(self._mngrp_data), mngrp_path)
         mngrp = Mngrp(game_data=self.game_data, data_hex=bytearray(self._mngrp_data),
                       header_entry_list=mngrphd.get_valid_entry_list())
         section_data = mngrp.get_section_by_id(self.MNGRP_SP2_SECTION_POS).get_data_hex()

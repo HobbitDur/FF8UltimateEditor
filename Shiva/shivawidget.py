@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QMessageBox
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
+from FF8GameData.FF8HexReader.mngrphd import MngrpPairError
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
 from Shiva.mngrpsave import keep_unowned_sections_raw
@@ -97,7 +98,11 @@ class ShivaWidget(QWidget):
                                 f"mngrphd.bin is needed to locate the sections of mngrp.bin, "
                                 f"it is not next to it:\n{mngrphd_path}")
             return
-        self.manager.load_file(mngrphd_path, mngrp_path)
+        try:
+            self.manager.load_file(mngrphd_path, mngrp_path)
+        except MngrpPairError as error:
+            QMessageBox.warning(self, "Shiva - mngrphd.bin does not match", str(error))
+            return
         self.mngrp_path = mngrp_path
         self.mngrphd_path = mngrphd_path
         owned = set()

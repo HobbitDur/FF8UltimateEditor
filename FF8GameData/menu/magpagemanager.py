@@ -98,7 +98,9 @@ class MagPageManager:
         with open(mngrphd_path, "rb") as in_file:
             header = Mngrphd(game_data=self.game_data, data_hex=bytearray(in_file.read()))
         with open(mngrp_path, "rb") as in_file:
-            self._mngrp_data = in_file.read()
+            mngrp_data = in_file.read()
+        header.check_matches(len(mngrp_data), mngrp_path)
+        self._mngrp_data = mngrp_data
         self._mngrp_header_entries = header.get_entry_list()
         self._sp2_sprites = None
         self._on_mngrp_loaded()

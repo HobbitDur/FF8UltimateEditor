@@ -5,6 +5,10 @@ from FF8GameData.GenericSection.section import Section
 from FF8GameData.gamedata import GameData
 
 
+class MngrpPairError(ValueError):
+    """mngrp.bin and mngrphd.bin do not come from the same save."""
+
+
 @dataclass
 class MngrphdEntry:
     seek: int
@@ -44,6 +48,19 @@ class Mngrphd(Section):
 
     def get_valid_entry_list(self):
         return self._mngprhd_entry_valid_list
+
+    def check_matches(self, mngrp_size: int, mngrp_path: str = "mngrp.bin"):
+        """Raise MngrpPairError unless this header describes a mngrp.bin of mngrp_size bytes.
+
+        Every save rewrites both files (sections move when one grows), so a mngrp.bin kept with
+        the mngrphd.bin of an older save points the game, and the tools, at the wrong data for
+        every section past the first change. Its last section always ends at the end of the file."""
+        data_end = max((entry.seek + entry.size for entry in self._mngprhd_entry_valid_list), default=0)
+        if data_end != mngrp_size:
+            raise MngrpPairError(
+                f"mngrphd.bin does not match {mngrp_path}: its sections end at byte {data_end}, the file is "
+                f"{mngrp_size} bytes. The two files are written together on every save - use the "
+                f"mngrphd.bin saved with this mngrp.bin.")
 
     def update_from_section_list(self, section_list):
         self._mngprhd_entry_list = []

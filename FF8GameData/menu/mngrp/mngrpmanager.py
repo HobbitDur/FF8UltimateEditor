@@ -60,6 +60,7 @@ class MngrpManager:
             mngrp_data_hex.extend(file.read())
 
         self.mngrphd = Mngrphd(self.game_data, mngrphd_data_hex)
+        self.mngrphd.check_matches(len(mngrp_data_hex), file_mngrp)
         self.mngrp = Mngrp(self.game_data, mngrp_data_hex, self.mngrphd.get_entry_list())
         self.text_box_manager = TextBoxManager()
         self.m00_manager = m00XManager()
