@@ -241,6 +241,7 @@ def test_monster_caster_defaults(fujin):
     assert preview.last_run.chosen is not None and preview.panel._animation is preview.previewed
 
 
+@pytest.mark.ff8data(EXE, SQUALL, GUNBLADE, ZELL, GLOVES)
 def test_party_member_casting_on_another_stands_beside_it(fujin):
     """Caster party 0, target party 1, no encounter: side by side in the battle formation (both
     facing the enemies), as in the game - not face to face."""

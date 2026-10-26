@@ -10,7 +10,9 @@ The CI excludes them completely with:   pytest -m "not ff8data"
 The run is also cut off from the machine's saved GUI preferences: see _isolate_qsettings.
 """
 import pathlib
+import sys
 import tempfile
+import traceback
 
 import pytest
 
@@ -103,6 +105,29 @@ def _no_blocking_dialog(monkeypatch):
     monkeypatch.setattr(QMessageBox, "exec", refuse("QMessageBox.exec"))
     for name in ("getOpenFileName", "getOpenFileNames", "getSaveFileName", "getExistingDirectory"):
         monkeypatch.setattr(QFileDialog, name, staticmethod(refuse(f"QFileDialog.{name}")))
+
+
+@pytest.fixture(autouse=True)
+def _qt_handler_errors_fail_the_test():
+    """Fail the test, with the traceback, when an exception is raised inside a Qt slot or event
+    handler (a file load callback, an eventFilter, a closeEvent...).
+
+    Such an exception never reaches the test: PyQt6 hands it to sys.excepthook and, with the
+    default hook, aborts the whole process - pytest-xdist only reports "worker crashed" with no
+    traceback, and a run without workers just stops. Collecting it here keeps the process alive
+    and names the error.
+    """
+    errors = []
+    previous = sys.excepthook
+    sys.excepthook = lambda *exc_info: errors.append(exc_info)
+    try:
+        yield
+    finally:
+        sys.excepthook = previous
+    if errors:
+        first = "".join(traceback.format_exception(*errors[0]))
+        pytest.fail(f"{len(errors)} exception(s) raised inside Qt slots/event handlers, "
+                    f"the first one:\n{first}", pytrace=False)
 
 
 def pytest_runtest_setup(item):
