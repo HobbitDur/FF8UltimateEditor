@@ -179,8 +179,7 @@ def test_refine_required_gf_level_is_byte_4(game_data, tmp_path):
     assert level_100 == [(129, 100, 141), (161, 10, 18)]  # Curse Spike -> Dark Matter, Shaman Stone -> Hero-trial
     assert all(entry.required_gf_level in (1, 100) for entry in entries)
 
-    tool_rf = next(view for view in views.values() if view.name == "tool_rf" or "Tool" in view.name)
-    dark_matter = next(entry for entry in tool_rf.entries if entry.element_out_id == 141)
+    dark_matter = next(entry for entry in views[("m001", "all recipes")].entries if entry.element_out_id == 141)
     dark_matter.required_gf_level = 50
     out_mngrp, out_mngrphd = tmp_path / "mngrp.bin", tmp_path / "mngrphd.bin"
     manager.save_file(str(out_mngrp), str(out_mngrphd))
@@ -310,40 +309,44 @@ def test_seed_add_choice_persists(qapp, game_data, tmp_path):
 
 @pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin")
 def test_refine_csv_roundtrip_and_old_format(game_data, tmp_path):
-    """The refine CSV (Shiva tab + CLI) round-trips, and an old CSV (amount received = byte 0x02,
-    "Unknown" = bytes 0x03-0x04 as a u16) still imports through the temporary layer."""
+    """The refine CSV (Shiva tab + CLI) round-trips, and the old CSVs still import through the
+    temporary layer: rows keyed by a Section (a block of the hardcoded vanilla layout) and their
+    entry in it, taken in file order; before that, amount received = byte 0x02 and "Unknown" =
+    bytes 0x03-0x04 as a u16."""
     import csv
     from Shiva.ShivaRefine.refinecsv import REFINE_CSV_HEADER, read_refine_csv, write_refine_csv
-    from Shiva.ShivaRefine.refineview import build_refine_views
+    from Shiva.ShivaRefine.refineview import RefineLayout
 
     manager = MngrpManager(game_data=game_data)
     manager.load_file(str(MENU / "mngrphd.bin"), str(MENU / "mngrp.bin"))
-    views = build_refine_views(manager)
+    layout = RefineLayout(manager)
     csv_path = tmp_path / "refine.csv"
-    assert write_refine_csv(csv_path, views) == 377
+    assert write_refine_csv(csv_path, layout) == 377
     with open(csv_path, newline="", encoding="utf-8") as f:
         assert next(csv.reader(f, delimiter="|")) == REFINE_CSV_HEADER
-    assert read_refine_csv(csv_path, views) == 377
+    assert read_refine_csv(csv_path, layout) == 377
     again = tmp_path / "again.csv"
-    write_refine_csv(again, views)
+    write_refine_csv(again, layout)
     assert again.read_bytes() == csv_path.read_bytes()
 
-    # Old format: same rows, "Amount received" holding byte 0x02 only and "Unknown" = level << 8 | byte 0x03.
-    old_path = tmp_path / "old.csv"
-    with open(old_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f, delimiter="|")
-        writer.writerow(["Bin", "Section", "Entry", "Text", "Input ID", "Amount required", "Output ID",
-                         "Amount received", "Unknown"])
-        for view in views:
-            for index, entry in enumerate(view.entries):
-                level = 42 if (entry.element_in_id, entry.element_out_id) == (129, 141) else entry.required_gf_level
-                writer.writerow([view.bin_name, view.name, index, view.texts[index].get_str(), entry.element_in_id,
-                                 entry.amount_required, entry.element_out_id, entry.amount_received & 0xFF,
-                                 level << 8 | entry.amount_received >> 8])
-    assert read_refine_csv(old_path, views) == 377
-    dark_matter = [entry for view in views for entry in view.entries
-                   if (entry.element_in_id, entry.element_out_id) == (129, 141)]
-    assert [entry.required_gf_level for entry in dark_matter] == [42]
-    dark_matter[0].required_gf_level = 100
-    write_refine_csv(again, views)
-    assert again.read_bytes() == csv_path.read_bytes(), "the old CSV must give back the same entries"
+    # Old formats: blocks of 10 entries standing for the vanilla Sections, entry numbers restarting
+    for old_amounts in (True, False):
+        old_path = tmp_path / "old.csv"
+        with open(old_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f, delimiter="|")
+            writer.writerow(["Bin", "Section", "Entry", "Text", "Input ID", "Amount required", "Output ID",
+                             "Amount received", "Unknown" if old_amounts else "Required GF level"])
+            for view in layout.views:
+                for index, entry in enumerate(view.entries):
+                    level = 42 if (entry.element_in_id, entry.element_out_id) == (129, 141) else entry.required_gf_level
+                    amount = entry.amount_received & 0xFF if old_amounts else entry.amount_received
+                    last = level << 8 | entry.amount_received >> 8 if old_amounts else level
+                    writer.writerow([view.bin_name, f"block_{index // 10}", index % 10, view.texts[index].get_str(),
+                                     entry.element_in_id, entry.amount_required, entry.element_out_id, amount, last])
+        assert read_refine_csv(old_path, layout) == 377
+        dark_matter = [entry for view in layout.views for entry in view.entries
+                       if (entry.element_in_id, entry.element_out_id) == (129, 141)]
+        assert [entry.required_gf_level for entry in dark_matter] == [42]
+        dark_matter[0].required_gf_level = 100
+        write_refine_csv(again, layout)
+        assert again.read_bytes() == csv_path.read_bytes(), "the old CSV must give back the same entries"

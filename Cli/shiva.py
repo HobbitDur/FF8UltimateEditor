@@ -7,6 +7,9 @@ sections; mngrphd.bin holds the section table and is rewritten together with it.
 Refine formulas (the m000-m004 sub-files):
   • export-refine-csv  (mngrp.bin → CSV: one row per refine formula entry)
   • import-refine-csv  (base mngrp.bin + CSV → new mngrp.bin + mngrphd.bin)
+  A row is a table entry (Bin + Entry). With --kernel, the Ability column names the abilities of
+  that kernel.bin offering it, and an import may add recipes (a row with an empty Entry, added at
+  the end of the ability it names): the moved ranges are written into kernel.bin too.
 
 SeeD written tests (the string sections 95-126, one answer byte before each text):
   • show-seed          (print the questions, choices and expected answer of one test)
@@ -45,23 +48,43 @@ def _load_manager(mngrp_path: str, mngrphd_path: str = ""):
     return manager, mngrphd_path
 
 
+def _refine_layout(manager, kernel_path):
+    """The refine abilities sliced as kernel_path says, or every table whole without one."""
+    from FF8GameData.menu.mngrp.m00x.refineabilities import read_refine_abilities
+    from Shiva.ShivaRefine.refineview import RefineLayout
+    abilities = read_refine_abilities(manager.game_data, kernel_path) if kernel_path else None
+    return RefineLayout(manager, abilities)
+
+
 def _cmd_export_refine_csv(args) -> int:
     from Shiva.ShivaRefine.refinecsv import write_refine_csv
-    from Shiva.ShivaRefine.refineview import build_refine_views
     manager, _ = _load_manager(args.input, args.mngrphd)
-    count = write_refine_csv(args.output, build_refine_views(manager))
+    count = write_refine_csv(args.output, _refine_layout(manager, args.kernel))
     print(f"[ok] {count} refine entries exported to {args.output}")
     return 0
 
 
 def _cmd_import_refine_csv(args) -> int:
+    import shutil
+    from FF8GameData.menu.mngrp.m00x.refineabilities import verify_refine_ranges, write_refine_ranges
     from Shiva.ShivaRefine.refinecsv import read_refine_csv
-    from Shiva.ShivaRefine.refineview import build_refine_views
     manager, mngrphd_path = _load_manager(args.input, args.mngrphd)
-    applied = read_refine_csv(args.csv, build_refine_views(manager))
+    layout = _refine_layout(manager, args.kernel)
+    applied = read_refine_csv(args.csv, layout)
+    errors = layout.check_game_limits()
+    if errors:
+        raise ValueError("\n".join(errors))
+    if layout.ranges_changed:  # checked before anything is written, so the two files stay in step
+        verify_refine_ranges(manager.game_data, args.kernel, layout.abilities)
     manager.save_file(args.output or args.input, args.output_mngrphd or mngrphd_path)
     out_name = args.output or args.input
     print(f"[ok] {applied} refine entries applied, written to {out_name} (+ mngrphd)")
+    if layout.ranges_changed:
+        kernel_out = args.output_kernel or args.kernel
+        if os.path.abspath(kernel_out) != os.path.abspath(args.kernel):
+            shutil.copyfile(args.kernel, kernel_out)
+        moved = write_refine_ranges(manager.game_data, kernel_out, layout.abilities)
+        print(f"[ok] {moved} refine ability ranges moved, written to {kernel_out}")
     return 0
 
 
@@ -211,6 +234,8 @@ class ShivaCliTool(BaseCliTool):
         p_export.add_argument("--input", "-i", required=True, help="Path to mngrp.bin")
         p_export.add_argument("--mngrphd", help="Path to mngrphd.bin (default: next to mngrp.bin)")
         p_export.add_argument("--output", "-o", required=True, help="Output CSV path")
+        p_export.add_argument("--kernel", "-k", help="kernel.bin giving each refine ability its recipes "
+                                                     "(default: none, every table whole)")
         p_export.set_defaults(func=_cmd_export_refine_csv)
 
         p_import = sub.add_parser("import-refine-csv", help="Apply a refine CSV onto mngrp.bin")
@@ -219,6 +244,10 @@ class ShivaCliTool(BaseCliTool):
         p_import.add_argument("--csv", "-c", required=True, help="CSV produced by export-refine-csv")
         p_import.add_argument("--output", "-o", help="Output mngrp.bin (overwrites input if omitted)")
         p_import.add_argument("--output-mngrphd", help="Output mngrphd.bin (overwrites the loaded one if omitted)")
+        p_import.add_argument("--kernel", "-k", help="kernel.bin giving each refine ability its recipes; "
+                                                     "needed to add recipes (default: none)")
+        p_import.add_argument("--output-kernel", help="Output kernel.bin when recipes were added "
+                                                      "(overwrites --kernel if omitted)")
         p_import.set_defaults(func=_cmd_import_refine_csv)
 
         # --- SeeD written tests (string sections 95-126) ---
