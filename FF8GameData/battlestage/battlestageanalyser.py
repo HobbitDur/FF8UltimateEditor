@@ -34,6 +34,16 @@ VERTEX_SCALE = 1.0 / 2048.0
 PAGE_WIDTH_HW = 64          # a PSX texture page is 64 VRAM halfwords wide
 PAGE_HEIGHT = 256
 
+# Draw order of the 4 groups, as a depth bias for a depth-buffered viewer (higher = drawn on top
+# of a coincident face). The engine has no depth test here: BS_RenderRelated @0x500FD0 sorts each
+# group's polygons into its own range of the ordering table, {OT base, depth shift} per group in
+# stru_B8A3F8 = group 0 {4126, 8}, group 1 {4122, 14}, group 2 {17, 4}, sky (3) {4382, 16}, slot =
+# base + (nearest depth >> shift) (ParsePolygons @0x50FDF0), drawn from the highest slot down. So
+# the sky is drawn first, then group 0, then group 1, then group 2 over all of them: stage 0's
+# paving and lights (group 2) on its sand (group 1). The per-face bias nibble ((w >> 12) - 8, added
+# to the depth keys within a group) is 0 on every face of the 163 stages, so it orders nothing.
+STAGE_GROUP_DRAW_RANK = {3: 0, 0: 1, 1: 2, 2: 3}
+
 # Per-stage geometry section offset, hardcoded in FF8_EN.exe (extracted from the
 # 163 BS_StageXXX handlers). Used when the stage id is known; loose files fall
 # back to find_geometry_offset scanning.
@@ -384,6 +394,9 @@ def build_stage_model(data: bytes, geometry_offset: Optional[int] = None,
         gend = geo + group_offs[i + 1]
         bone_base = len(combined_bones)
         bones, offsets, objects = _parse_group(data, gstart, gend, bone_base)
+        for obj in objects:   # coplanar faces of two groups: the later-drawn group wins
+            for face in obj.triangles + obj.quads:
+                face.depth_bias = STAGE_GROUP_DRAW_RANK[i]
         combined_bones.extend(bones)
         frame_offsets.extend(offsets)
         object_data_all.extend(objects)

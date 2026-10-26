@@ -491,8 +491,12 @@ class BattleScenePreview(QWidget):
             points += [self._mesh.vertices[dest] for _model, _actor, dest, _body in self._actors]
         points = np.vstack(points)
         low, high = points.min(axis=0), points.max(axis=0)
+        size = max(float(np.max(high - low)), 4.)
+        # The canvas sizes its wheel zoom range (0.3x - 10x) and clip planes on MODEL_SIZE, its main
+        # model's: there is none here, so the field is the model (else the first wheel turn snaps to 10)
+        self.gl.MODEL_SIZE = size
         self.gl.set_reference_position(*((low + high) / 2))
-        self.gl.zoom = max(float(np.max(high - low)) * 1.5, 6.)
+        self.gl.zoom = size * 1.5
         self.gl.rot_x, self.gl.rot_y = 25., 0.   # 0: from the party's side (+Z), the enemies ahead
         self.gl.pan_x = self.gl.pan_y = 0.
         self.gl.update()

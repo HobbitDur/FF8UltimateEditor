@@ -89,3 +89,17 @@ def test_real_stage_reload_matches(tmp_path):
     reloaded.load_stage_file(str(out))
     after = (len(reloaded._all_objects), list(reloaded._group_of_object))
     assert after == before
+
+
+@pytest.mark.ff8data("extracted_files/battle/a0stg000.x")
+def test_later_drawn_group_wins_coplanar_faces():
+    """Stage 0's paving at the foot of the stairs (group 2) lies on its sand (group 1), in the same
+    plane: the game draws group 2 after group 1, so its faces get the higher depth bias (no z-fight)."""
+    from FF8GameData.battlestage.battlestageanalyser import build_stage_model, STAGE_GROUP_DRAW_RANK
+    with open("extracted_files/battle/a0stg000.x", "rb") as file:
+        model = build_stage_model(file.read(), stage_id=0, name="a0stg000.x")
+    objects = model.geometry_data.object_data
+    sand, paving = objects[1].quads[42], objects[4].quads[24]
+    assert model.group_of_object[1] == 1 and model.group_of_object[4] == 2
+    assert paving.depth_bias > sand.depth_bias
+    assert [STAGE_GROUP_DRAW_RANK[group] for group in (3, 0, 1, 2)] == [0, 1, 2, 3]   # sky, 0, 1, 2

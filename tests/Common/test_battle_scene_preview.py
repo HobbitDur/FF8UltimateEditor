@@ -165,3 +165,36 @@ def test_party_prefers_other_characters_to_other_costumes(qapp, tmp_path):
     preview.set_party_files([str(tmp_path / name) for name in names])
     assert [combo.currentText() for combo in preview.party_combos] == \
            ["Squall (d0c000.dat)", "Zell (d1c003.dat)", "Selphie (d5c011.dat)"]
+
+
+def test_free_camera_wheel_zoom_and_right_drag_pan(qapp):
+    """The wheel zooms by steps around the framed distance (it used to snap to the size of a model
+    the preview does not have), and a right drag moves the view, as in the model viewers."""
+    from PyQt6.QtCore import QPoint, QPointF, Qt
+    from PyQt6.QtGui import QMouseEvent, QWheelEvent
+    from Common.battlescenepreview import BattleScenePreview
+    preview = BattleScenePreview()
+    preview.resize(640, 480)
+    preview.show_encounter(_record(enemies=((84, (0, 0, -9000)), (2, (6000, 0, -12000)))), 0)
+    preview._rebuild()
+    gl = preview.gl
+    framed = gl.zoom
+    assert framed > 10                                         # a wide field: further than 10 units
+
+    def wheel(steps):
+        gl.wheelEvent(QWheelEvent(QPointF(10, 10), QPointF(10, 10), QPoint(0, 0), QPoint(0, 120 * steps),
+                                  Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier,
+                                  Qt.ScrollPhase.NoScrollPhase, False))
+    wheel(-1)
+    assert abs(gl.zoom - framed * 1.1) < 1e-6                  # one step out, not snapped back in
+    wheel(2)
+    assert gl.zoom < framed
+
+    def mouse(kind, x, buttons):
+        return QMouseEvent(kind, QPointF(x, 100), QPointF(x, 100), Qt.MouseButton.RightButton, buttons,
+                           Qt.KeyboardModifier.NoModifier)
+    pan = gl.pan_x
+    gl.mousePressEvent(mouse(QMouseEvent.Type.MouseButtonPress, 100, Qt.MouseButton.RightButton))
+    gl.mouseMoveEvent(mouse(QMouseEvent.Type.MouseMove, 160, Qt.MouseButton.RightButton))
+    gl.mouseReleaseEvent(mouse(QMouseEvent.Type.MouseButtonRelease, 160, Qt.MouseButton.NoButton))
+    assert gl.pan_x > pan
