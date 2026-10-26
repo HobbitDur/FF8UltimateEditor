@@ -39,6 +39,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from PyQt6 import sip
 from PyQt6.QtCore import QProcess, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QCursor, QImage, QPixmap
 from PyQt6.QtWidgets import (QApplication, QComboBox, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
@@ -565,7 +566,8 @@ class NativePreviewView(QWidget):
         self._preview_requested = True
         edits = self.file_edits()
         signature = self._edit_signature(edits)
-        scratch = tempfile.TemporaryDirectory(prefix="fujin_preview_")
+        # A recorder killed with the preview can still hold its output open: never fail on cleanup
+        scratch = tempfile.TemporaryDirectory(prefix="fujin_preview_", ignore_cleanup_errors=True)
         self._scratch = scratch
         output = os.path.join(scratch.name, "recording.txt")
         # The recorder reads only what was opened in Fujin: the effect's imported files as Fujin
@@ -657,6 +659,10 @@ class NativePreviewView(QWidget):
         self.status.setText(f"Could not start the effect recorder: {message}")
 
     def _recorded(self, effect_id, output, code, signature=(), tick=0, model="none", camera=None):
+        if sip.isdeleted(self) or (self._process is not None and sip.isdeleted(self._process)):
+            # The preview is being destroyed with a recording running: Qt killed the recorder,
+            # whose finished signal still arrives here. There is no view left to show it in.
+            return
         process, self._process = self._process, None
         log = bytes(process.readAllStandardOutput()).decode("ascii", "replace") if process else ""
         if process is not None:
