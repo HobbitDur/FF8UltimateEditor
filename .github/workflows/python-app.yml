@@ -581,9 +581,17 @@ jobs:
           });
           
           const continuousRelease = releases.find(release => release.tag_name === 'continuous');
+          // release.assets leaves out uploads that never finished (state "starter"); the assets
+          // list has them, and left behind they are what the self update downloads (a 404)
+          const assets = continuousRelease ? await github.paginate(github.rest.repos.listReleaseAssets, {
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            release_id: continuousRelease.id,
+            per_page: 100,
+          }) : [];
           
-          if (continuousRelease && continuousRelease.assets.length > 0) {
-            for (const asset of continuousRelease.assets) {
+          if (assets.length > 0) {
+            for (const asset of assets) {
               console.log(`Deleting old asset: ${asset.name}`);
               await github.rest.repos.deleteReleaseAsset({
                 owner: context.repo.owner,
@@ -591,7 +599,7 @@ jobs:
                 asset_id: asset.id,
               });
             }
-            console.log(`Deleted ${continuousRelease.assets.length} old asset(s)`);
+            console.log(`Deleted ${assets.length} old asset(s)`);
           } else {
              console.log('No existing continuous release or no assets found');
            }
@@ -617,22 +625,9 @@ jobs:
         files: |
           release/FF8UltimateEditor-continuous-*.zip
           release/FF8UltimateEditor-cli-continuous-*.zip
-        generate_release_notes: false
-        make_latest: false
-
-    # The Linux archives go up in a step of their own, after the Windows zips: GitHub lists
-    # assets in upload order, and the self-update of versions up to 5.0 takes the first
-    # "FF8UltimateEditor-*" non-CLI asset, which has to be the Windows zip.
-    - name: Deploy Linux Package (Continuous)
-      if: github.event.ref_type != 'tag' && github.ref == 'refs/heads/master'
-      uses: softprops/action-gh-release@v1
-      with:
-        token: "${{ secrets.GITHUB_TOKEN }}"
-        tag_name: "continuous"
-        prerelease: true
-        files: |
           release-linux/FF8UltimateEditor-linux_x64-continuous-*.tar.gz
           release-linux/FF8UltimateEditor-cli-linux_x64-continuous-*.tar.gz
+        generate_release_notes: false
         make_latest: false
 
     - name: Deploy tag Package (Official)
@@ -647,15 +642,6 @@ jobs:
         files: |
           release/FF8UltimateEditor-*.zip
           release/FF8UltimateEditor-cli-*.zip
-        generate_release_notes: false
-
-    - name: Deploy tag Linux Package (Official)  # After the Windows zips, see the continuous step
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
-      with:
-        token: "${{ secrets.GITHUB_TOKEN }}"
-        tag_name: ${{ github.ref_name }}
-        prerelease: false
-        files: |
           release-linux/FF8UltimateEditor-linux_x64-*.tar.gz
           release-linux/FF8UltimateEditor-cli-linux_x64-*.tar.gz
+        generate_release_notes: false

@@ -106,10 +106,13 @@ class ToolDownloader:
     @staticmethod
     def _self_asset_link(assets: list) -> str:
         """The GUI build for this platform among a release's assets. A release holds the GUI and
-        the CLI, each as a Windows .zip and a Linux .tar.gz, and GitHub lists them in upload
-        order, which changes from one build to the next: the asset is picked by name only."""
+        the CLI, each as a Windows .zip and a Linux .tar.gz. The assets list also holds uploads
+        that never finished (state "starter", 404 when downloaded), which the release page hides:
+        only "uploaded" assets count."""
         linux = sys.platform != "win32"
         for asset in assets:
+            if asset.get('state', 'uploaded') != 'uploaded':
+                continue
             name = asset['name'].lower()
             if name.startswith("ff8ultimateeditor") and "cli" not in name and ("linux" in name) == linux:
                 return asset['browser_download_url']
