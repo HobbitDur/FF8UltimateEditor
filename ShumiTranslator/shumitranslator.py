@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBo
 
 from Common.filebinding import FileBinding
 from Common.autoimport import AutoImportSource
+from Common.dirtytracking import DirtyState
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData, FileType
 from .shumifilepane import ShumiFilePane
@@ -223,6 +224,7 @@ class ShumiTranslator(QWidget):
         except Exception as error:  # noqa: BLE001 - surface any manager save failure to the user
             QMessageBox.critical(self, "ShumiTranslator", f"Could not save:\n{error}")
             return
+        pane.dirty_state.clear()
         if message is not None:
             box = QMessageBox()
             box.setText(message)
@@ -234,6 +236,18 @@ class ShumiTranslator(QWidget):
     def can_save_folder(self):
         """The shared Save button is enabled whenever a file tab is open."""
         return self.__active_pane() is not None
+
+    def has_unsaved_changes(self):
+        """Whether any tab holds edits not saved yet (each tab tracks its own, see __track_edits)."""
+        return any(self.tab_widget.widget(index).dirty_state.dirty
+                   for index in range(self.tab_widget.count()))
+
+    def __track_edits(self, pane):
+        """Give a tab its own unsaved-edits tracker, set up once the pane is fully built so its
+        loading never counts: an edit in its text boxes marks it, its successful Save clears it."""
+        pane.dirty_state = DirtyState(pane)
+        pane.dirty_state.track(pane)
+        pane.dirty_state.changed.connect(lambda _dirty: self.file_bindings_changed.emit())
 
     # ── Per-kind load callbacks (each opens a tab) ───────────────────────
     def _load_kernel(self, file_name):
@@ -303,6 +317,7 @@ class ShumiTranslator(QWidget):
             QMessageBox.critical(self, "ShumiTranslator", f"Could not load this file:\n{error}")
             return
         progress.close()
+        self.__track_edits(pane)
         index = self.tab_widget.addTab(pane, pane.display_name)
         self.tab_widget.setTabToolTip(index, pane.display_name)
         self.tab_widget.setCurrentWidget(pane)
@@ -373,11 +388,13 @@ class ShumiTranslator(QWidget):
         pane = self.__active_pane()
         if pane is not None and pane.supports_compress:
             pane.compress()
+            pane.dirty_state.mark()
 
     def __uncompress_data(self):
         pane = self.__active_pane()
         if pane is not None and pane.supports_compress:
             pane.uncompress()
+            pane.dirty_state.mark()
 
     def __translator_toggled(self, checked):
         self.translator_widget.setVisible(checked)
@@ -409,9 +426,11 @@ class ShumiTranslator(QWidget):
                                  "In excel, you can go to the \"Data tab\", \"Import text file\" and "
                                  "choose UTF8 encoding")
             return
-        if was_fs:
+        if was_fs:  # written straight into the .fs archive
             QMessageBox.information(self, "ShumiTranslator - Data saved",
                                    "Csv uploaded to the fs file ! (Thanks for your patience)")
+        else:       # the texts are in the tab, not saved yet
+            pane.dirty_state.mark()
 
     def __jp_encoding_toggled(self, checked):
         self.game_data.jp_encoding = checked
@@ -426,6 +445,7 @@ class ShumiTranslator(QWidget):
             rebuilt = ShumiFilePane(self.game_data, pane.file_type, pane.file_loaded,
                                     pane.file_mngrphd_loaded, progress=self.__report_progress(progress))
             progress.close()
+            self.__track_edits(rebuilt)
             self.tab_widget.removeTab(index)
             pane.deleteLater()
             self.tab_widget.insertTab(index, rebuilt, rebuilt.display_name)

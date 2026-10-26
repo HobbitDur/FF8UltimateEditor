@@ -180,6 +180,10 @@ class SeedWidget(QWidget):
             report(f"{len(self._field_paths)} fields found, opening the first one")
             self.field_search.select_first_match()
 
+    def has_unsaved_changes(self):
+        """Animation/mesh edits are made in the 3D viewer, outside the tracked widgets."""
+        return bool(self.seed_manager.modified_entry_names())
+
     def _set_main_chr_folder(self, folder):
         folder = str(folder)
         self.seed_manager.main_chr_folder = pathlib.Path(folder)

@@ -5,13 +5,13 @@ from datetime import datetime
 from PyQt6.QtCore import Qt, QSettings, QEvent, QSize
 from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QWidget, QMenuBar, QHBoxLayout, QVBoxLayout, QLabel, QFrame,
-                             QStackedWidget, QSizePolicy, QApplication, QScrollArea)
+                             QStackedWidget, QSizePolicy, QApplication, QScrollArea, QMessageBox)
 
 from CCGroup.ccgroup import CCGroupWidget
 from Chocoboy.chocoboywidget import ChocoboyWidget
 from Cid.cidwidget import CidWidget
 from Common.closedfileview import install_closed_file_view
-from Common.dirtytracking import install_dirty_tracking
+from Common.dirtytracking import install_dirty_tracking, tool_has_unsaved_changes
 from Common.fileregistry import FileRegistry
 from Common.filetoolbarwidget import FileToolbarWidget
 from Common.openedfilespanel import OpenedFilesPanel
@@ -529,6 +529,28 @@ class FF8UltimateEditorWidget(QWidget):
         font = action.font()
         font.setBold(bold)
         action.setFont(font)
+
+    def unsaved_tool_names(self):
+        """The tools (as named in the tool menu) holding edits not written to disk yet."""
+        return [self.HOBBIT_OPTION_ITEMS[index] for index in range(self.tool_stack.count())
+                if tool_has_unsaved_changes(self.tool_stack.widget(index))]
+
+    def closeEvent(self, event):
+        """Closing with unsaved edits asks first: Discard closes and loses them, Cancel keeps the
+        window open so they can still be saved."""
+        unsaved = self.unsaved_tool_names()
+        if unsaved:
+            listed = "\n".join(f"  \u2022 {name}" for name in unsaved)
+            answer = QMessageBox.warning(
+                self, "Unsaved changes",
+                f"These tools have unsaved changes:\n{listed}\n\n"
+                "Close anyway and discard them?",
+                QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Cancel)
+            if answer != QMessageBox.StandardButton.Discard:
+                event.ignore()
+                return
+        super().closeEvent(event)
 
     def _update_title_save_marker(self, has_unsaved):
         """Prefix the window title with '*' while the active tool has something to save."""

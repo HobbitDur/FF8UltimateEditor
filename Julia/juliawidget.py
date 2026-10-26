@@ -183,6 +183,9 @@ class JuliaWidget(QWidget):
             raise ValueError("audio.dat was not found in its remembered folder")
         self.load_archive(paths[0], dat_paths[0])
 
+    def has_unsaved_changes(self):
+        return self.actor_sound_widget.dirty
+
     def can_save_folder(self):
         return (self.tabs.currentWidget() is self.actor_sound_widget
                 and (self.actor_sound_widget.path is None or self.actor_sound_widget.dirty))

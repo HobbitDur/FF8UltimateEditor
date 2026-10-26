@@ -7,6 +7,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QApplication, QWidget, QPushButton, QHBoxLayout, QFileDialog,
                              QMessageBox, QMenu, QProgressDialog)
 
+from Common.dirtytracking import ignoring_marks, tool_has_unsaved_changes
 from Common.fileregistry import FileRegistry
 from Common.autoimport import AutoImportSource
 
@@ -346,16 +347,10 @@ class FileToolbarWidget(QWidget):
         return bool(predicate()) if callable(predicate) else False
 
     def _active_is_dirty(self):
-        """Whether the active tool has UNSAVED edits, for the window-title * marker. A tool with
-        per-widget dirty tracking answers exactly (dirty_state); a folder/multi-file tool answers
-        with its can_save_folder() (which for Ifrit/Cid/Seed already means 'has changes'); anything
+        """Whether the active tool has UNSAVED edits, for the window-title * marker: its
+        dirty_state, or its own has_unsaved_changes() (see tool_has_unsaved_changes). Anything
         else reports clean (no *), never blocking anything since Save stays enabled on 'loaded'."""
-        active = self.tool_stack.currentWidget()
-        dirty_state = getattr(active, "dirty_state", None)
-        if dirty_state is not None:
-            return dirty_state.dirty
-        predicate = getattr(active, "can_save_folder", None)
-        return bool(predicate()) if callable(predicate) else False
+        return tool_has_unsaved_changes(self.tool_stack.currentWidget())
 
     def _supports_text_compression(self):
         """Whether the active tool carries compressible game text (kernel, ShumiTranslator...)."""
@@ -441,10 +436,11 @@ class FileToolbarWidget(QWidget):
                 QApplication.processEvents()   # the tool blocks the UI: repaint the bar
             return not progress.wasCanceled()
 
-        if "progress" in inspect.signature(folder_loader).parameters:
-            folder_loader(folder, progress=report)
-        else:
-            folder_loader(folder)
+        with ignoring_marks():   # the tool filling its widgets from the folder is not an edit
+            if "progress" in inspect.signature(folder_loader).parameters:
+                folder_loader(folder, progress=report)
+            else:
+                folder_loader(folder)
 
     @staticmethod
     def close_progress(progress):

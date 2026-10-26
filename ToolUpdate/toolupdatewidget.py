@@ -316,6 +316,10 @@ class ToolUpdateWidget(QWidget):
         if updater_path.exists():
             QMessageBox.information(self, "Update in progress",
                                  "Self updating, the program will restart")
+            # Closing the window first asks about unsaved changes: Cancel keeps the editor open,
+            # and the downloaded update waits in SelfUpdate for the next Self update.
+            if not self.window().close():
+                return
             subprocess.Popen([str(updater_path)])
             QApplication.quit()
         else:

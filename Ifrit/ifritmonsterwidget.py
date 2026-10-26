@@ -992,6 +992,9 @@ class IfritMonsterWidget(QWidget):
     def can_save_folder(self) -> bool:
         return any(f['pane'] is not None and f['pane'].dirty for f in self._files)
 
+    def has_unsaved_changes(self) -> bool:
+        return self.can_save_folder()   # Save is only enabled on a changed .dat
+
     # ── Loading ───────────────────────────────────────────────────────
 
     def load_file(self, path):

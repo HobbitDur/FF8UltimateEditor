@@ -3,6 +3,7 @@ import os
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QFileDialog
 
+from Common.dirtytracking import ignoring_marks
 from Common.fileregistry import FileRegistry
 
 
@@ -94,7 +95,8 @@ class FileBinding(QObject):
         if path and path != self._loaded_path:  # skip a redundant reload of the same path
             self._loaded_path = path
             self._closed = False
-            self.file_opened.emit(path)
+            with ignoring_marks():   # the tool filling its widgets is not an edit
+                self.file_opened.emit(path)
 
     def _on_registry_closed(self, file_name, file_path):
         """The file was removed from the opened files: this binding no longer has it loaded, so
@@ -114,4 +116,5 @@ class FileBinding(QObject):
         if path:
             self._loaded_path = path
             self._closed = False
-            self.file_opened.emit(path)
+            with ignoring_marks():
+                self.file_opened.emit(path)

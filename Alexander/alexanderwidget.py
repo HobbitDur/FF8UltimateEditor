@@ -323,6 +323,7 @@ class AlexanderWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Alexander", f"Could not save {file_path}:\n{e}")
             return
+        self._unsaved_import = False
         QMessageBox.information(self, "Alexander",
                                f"{os.path.basename(file_path)}\n\n{note}")
 
@@ -338,6 +339,7 @@ class AlexanderWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Alexander", f"Could not import {file_path}:\n{e}")
             return
+        self._unsaved_import = True   # the imported mesh exists only here until it is saved
         self._stage_names = []
         self.stage_list.blockSignals(True)
         self.stage_list.clear()
@@ -374,6 +376,7 @@ class AlexanderWidget(QWidget):
             self._close_stages()
 
     def _close_stages(self):
+        self._unsaved_import = False
         self.manager.close()
         self._stage_names = []
         self.stage_list.blockSignals(True)
@@ -387,6 +390,10 @@ class AlexanderWidget(QWidget):
     def can_save_folder(self):
         """Whether there is a loaded stage/mesh the shared header Save button can write."""
         return self.manager.can_save
+
+    def has_unsaved_changes(self):
+        """A loaded stage is only viewed; an imported .glb mesh is an edit until it is saved."""
+        return getattr(self, "_unsaved_import", False)
 
     def _on_stage_selected(self, row: int):
         if row < 0 or row >= len(self._stage_names):

@@ -14,12 +14,30 @@ Design notes:
   well-behaved tools also do with signals blocked - does not falsely mark dirty. For spin boxes /
   text edits / editable lists there is no user-only signal, so those rely on the tool blocking
   signals during programmatic updates (the common pattern) plus the clear-after-load.
+- Nothing marks while a file or folder loads (ignoring_marks): a tool filling its widgets from a
+  complementary file or a folder - loads that are not followed by a clear() - is not an edit.
 - The Save button is NOT gated on this (it stays enabled while a file is loaded), so a missed edit
   signal can never leave the user unable to save - the worst case is a missing/extra ``*``.
 """
+from contextlib import contextmanager
+
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox,
-                             QComboBox, QAbstractButton, QAbstractSlider, QListWidget, QTableWidget)
+                             QComboBox, QAbstractButton, QAbstractSlider, QListWidget, QTableWidget,
+                             QScrollBar)
+
+_marks_ignored = 0   # > 0 while a file or folder is loading (ignoring_marks)
+
+
+@contextmanager
+def ignoring_marks():
+    """Run a load: the widget signals it fires while populating mark nothing."""
+    global _marks_ignored
+    _marks_ignored += 1
+    try:
+        yield
+    finally:
+        _marks_ignored -= 1
 
 
 class DirtyState(QObject):
@@ -37,7 +55,7 @@ class DirtyState(QObject):
         return self._dirty
 
     def mark(self, *_args):
-        if not self._dirty:
+        if not self._dirty and not _marks_ignored:
             self._dirty = True
             self.changed.emit(True)
 
@@ -78,11 +96,23 @@ class DirtyState(QObject):
             return widget.textChanged
         if isinstance(widget, (QSpinBox, QDoubleSpinBox)):
             return widget.valueChanged
-        if isinstance(widget, QAbstractSlider):
-            return widget.valueChanged
+        if isinstance(widget, QAbstractSlider) and not isinstance(widget, QScrollBar):
+            return widget.valueChanged   # a scrollbar only moves the view
         if isinstance(widget, (QListWidget, QTableWidget)):
             return widget.itemChanged
         return None
+
+
+def tool_has_unsaved_changes(tool) -> bool:
+    """Whether a tool holds edits not written to disk yet (the window title's * and the
+    close-window prompt). Its dirty_state covers edits made in its widgets; a tool that also edits
+    outside them - a 3D viewer, an imported mesh, tabs of its own - answers through an optional
+    ``has_unsaved_changes()``."""
+    state = getattr(tool, "dirty_state", None)
+    if state is not None and state.dirty:
+        return True
+    hook = getattr(tool, "has_unsaved_changes", None)
+    return bool(hook()) if callable(hook) else False
 
 
 def install_dirty_tracking(tool):

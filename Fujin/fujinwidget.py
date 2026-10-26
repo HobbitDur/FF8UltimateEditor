@@ -851,6 +851,9 @@ class FujinWidget(QWidget):
     def can_save_folder(self):
         return self.mag_editor.can_save_folder() or self._native_signature() != self._exported_signature
 
+    def has_unsaved_changes(self):
+        return self.can_save_folder()   # a modified mag file or an unexported native preview
+
     def undo(self):
         return self._history(False)
 
