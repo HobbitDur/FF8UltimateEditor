@@ -69,7 +69,9 @@ class FakeResponse:
 @pytest.fixture
 def fake_github(monkeypatch, tmp_path):
     """Run in an isolated folder with a fake GitHub API answering all requests.get calls.
-    Returns the list of requested links so tests can assert which URLs were hit."""
+    Returns the list of requested links so tests can assert which URLs were hit.
+    Runs as on Windows (the Windows .zip is the build picked), whatever the test machine is."""
+    monkeypatch.setattr(sys, "platform", "win32")
     monkeypatch.chdir(tmp_path)
     tool_update_dir = tmp_path / "ToolUpdate"
     tool_update_dir.mkdir()
