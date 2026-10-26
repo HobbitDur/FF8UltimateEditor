@@ -221,3 +221,18 @@ def test_preview_follows_the_shown_encounter(widget):
     assert w.preview._record.position(0)[0] == 1234
     w.undo()
     assert w.preview._record is w.manager.records[80]    # undo puts a new record in place: shown too
+
+
+def test_monsters_and_stages_are_side_files(widget, monkeypatch, tmp_path):
+    """Import goes straight to scene.out; the monsters and stages come from Import read-only."""
+    from JumboCactuar import jumbocactuarwidget
+    w, _path = widget
+    assert not callable(getattr(w, "open_files", None))
+    labels = [label for label, _callback in w.complementary_entries()]
+    assert any("c0m###.dat" in label for label in labels) and any("a0stg###.x" in label for label in labels)
+    monster = tmp_path / "c0m071.dat"
+    monster.write_bytes(b"")
+    monkeypatch.setattr(jumbocactuarwidget.QFileDialog, "getOpenFileNames", lambda *args: ([str(monster)], ""))
+    w._import_monsters()
+    assert w.preview.file_source("c0m071.dat") == str(monster)
+    assert w.file_registry.last_folder(jumbocactuarwidget.MODEL_FOLDER_KEY) == str(tmp_path)

@@ -27,6 +27,8 @@ UNKNOWN_ROWS = [(0, 16), (16, 16), (32, 16), (48, 8)]  # (start, size) of the 4 
 CAMERA_NAMES = ["Main", "Secondary"]
 BATTLE_FILES_KEY = "JumboCactuar battle files"   # the Opened files entry of the preview's files
 BATTLE_FILE_PATTERNS = ("a0stg*.x", "c0m*.dat")
+MODEL_FOLDER_KEY = "battle model (.dat)"   # the monsters' folder, remembered with Ifrit's and Xu's
+STAGE_FOLDER_KEY = "battle stage (.x)"
 WIKI_ENCOUNTERS = "https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/battle/encounter-codes/"
 WIKI_SCENE_OUT = "https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/battle/battle-structure-sceneout/"
 
@@ -170,7 +172,8 @@ class JumboCactuarWidget(QWidget):
         action_bar.addWidget(self.about_button)
 
         # The battle as the encounter sets it up: stage, enemies, party places, intro cameras.
-        # Its files are this tool's battle files (open_files), never looked up in a folder.
+        # Its files are side files (complementary_entries: c0m###.dat, a0stg###.x), never looked up
+        # in a folder.
         self._battle_files = {}   # lower-case file name -> path (a0stgNNN.x, c0mNNN.dat)
         self.preview = BattleScenePreview(game_data_folder)
         self.preview.file_source = lambda name: self._battle_files.get(name.lower())
@@ -381,21 +384,28 @@ class JumboCactuarWidget(QWidget):
         self.editor.setEnabled(False)
         self.preview.show_encounter(None)
 
-    # --- Battle files: the stages and monsters the battle preview draws ---
+    # --- Side files: the monsters and stages the battle preview draws (only read) ---
 
-    open_files_label = "Battle stages and monsters (a0stg*.x, c0m*.dat)"
+    def complementary_entries(self):
+        """The header's Import read-only menu: the files the battle preview draws, never edited here
+        (several at once, added to the ones already opened)."""
+        return [("Monsters: c0m###.dat (several, Ctrl+A for all)", self._import_monsters),
+                ("Battle stages: a0stg###.x (several, Ctrl+A for all)", self._import_stages)]
 
-    def open_files(self, file_paths=None):
-        """Import the battle stages and monster models the battle preview draws (several at once,
-        added to the ones already opened)."""
-        if file_paths is None:
-            file_paths = QFileDialog.getOpenFileNames(
-                self, "Open battle stages and monsters", self.file_registry.last_folder(BATTLE_FILES_KEY),
-                f"Battle stages and monsters ({' '.join(BATTLE_FILE_PATTERNS)})")[0]
-        if not file_paths:
-            return
-        self.file_registry.remember_folder(BATTLE_FILES_KEY, os.path.dirname(file_paths[0]))
-        self._add_battle_files(file_paths)
+    def _import_monsters(self):
+        self._import_side_files("Monsters to show in the battle preview (Ctrl+A for all)", MODEL_FOLDER_KEY,
+                                "Monster battle models (c0m*.dat)")
+
+    def _import_stages(self):
+        self._import_side_files("Battle stages to show in the battle preview (Ctrl+A for all)", STAGE_FOLDER_KEY,
+                                "Battle stages (a0stg*.x)")
+
+    def _import_side_files(self, caption, folder_key, file_filter):
+        file_paths = QFileDialog.getOpenFileNames(self, caption, self.file_registry.last_folder(folder_key),
+                                                  file_filter)[0]
+        if file_paths:
+            self.file_registry.remember_folder(folder_key, os.path.dirname(file_paths[0]))
+            self._add_battle_files(file_paths)
 
     def load_folder(self, folder):
         """The header's Open folder: every battle stage and monster found in it (and below)."""
