@@ -1413,3 +1413,36 @@ def test_compress_keeps_a_name_typed_before_it(qapp, tmp_path, action):
     tab.list_widget.setCurrentRow(4)
     assert tab._text_widgets[0].text() == "W-Item"
     assert tab._text_widgets[1].text().replace("{", "").replace("}", "") == "Use two items"  # compressed: Us{e }tw{o }items
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_battle_message_texts_stay_uncompressed(qapp, tmp_path):
+    """The battle message window cannot draw a compressed pair (the game crashes at 0x49DEFB as a
+    battle fades out to its results): Compress leaves the misc battle texts, Devour messages and
+    Angelo descriptions alone, and a save uncompresses them in a file compressed before that."""
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+
+    def texts(tool, data_id):
+        by_id = {s.id: s for s in tool.kernel_manager.section_list if s is not None}
+        return [t.get_str() for t in by_id[tool._text_link[data_id]].get_text_list()]
+
+    vanilla = {data_id: texts(widget, data_id) for data_id in (25, 29, 31)}
+    widget.uncompress_text()
+    assert not any("{" in t for t in texts(widget, 1))
+    widget.compress_text()
+    for data_id in (25, 29, 31):
+        assert texts(widget, data_id) == vanilla[data_id], f"section {data_id} was compressed"
+    assert any("{" in t for t in texts(widget, 1)), "the other sections still compress"
+
+    # A kernel.bin compressed by an older SolomonRing: saving gives the battle texts back plain.
+    by_id = {s.id: s for s in widget.kernel_manager.section_list if s is not None}
+    for text in by_id[widget._text_link[31]].get_text_list():
+        text.compress_str(3)
+    assert any("{" in t for t in texts(widget, 31))
+    widget._save_kernel()
+    reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    reloaded.load_file(str(work))
+    assert texts(reloaded, 31) == vanilla[31]
