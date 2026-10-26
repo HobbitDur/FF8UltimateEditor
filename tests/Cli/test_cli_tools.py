@@ -54,6 +54,20 @@ def test_siren_roundtrip_and_set(tmp_path):
     assert edited.read_bytes()[4:6] == (123).to_bytes(2, "little")
 
 
+@pytest.mark.ff8data("extracted_files/battle/scene.out")
+def test_jumbo_cactuar_roundtrip_and_copy(tmp_path):
+    from Cli.jumbo_cactuar import JumboCactuarCliTool
+    source = EXTRACTED / "battle" / "scene.out"
+    original, rebuilt = _roundtrip_csv(JumboCactuarCliTool, source, tmp_path)
+    assert original == rebuilt
+
+    copied = tmp_path / "copied.out"
+    assert _run(JumboCactuarCliTool, ["copy", "--input", str(source), "--from", "712", "--to", "0",
+                                      "--output", str(copied)]) == 0
+    assert copied.read_bytes()[:128] == original[712 * 128:713 * 128]
+    assert copied.read_bytes()[128:] == original[128:]
+
+
 @pytest.mark.ff8data("extracted_files/menu/mwepon.bin")
 def test_junkshop_roundtrip(tmp_path):
     from Cli.junkshop import JunkshopCliTool
@@ -539,4 +553,4 @@ def test_all_tools_registered():
     assert {"shumi-translator", "ifrit-ai", "ifrit", "tonberry-shop", "siren",
             "junkshop", "quezacotl", "kadowaki", "minimog", "shiva", "ccgroup", "cid",
             "julia", "solomon-ring", "alexander", "seed", "piet", "moomba",
-            "zone", "watts"} <= names
+            "zone", "watts", "jumbo-cactuar"} <= names

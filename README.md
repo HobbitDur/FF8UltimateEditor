@@ -180,6 +180,15 @@ inserted, deleted, and whole scripts added or removed, and the jumps still land 
 meant to. Editing in the table does the same fix-ups in place. The dialog texts and location names
 the scripts show are on a second tab, each listed with the scripts that open it.
 
+### JumboCactuar — encounter editor (`scene.out`)
+Python port of Nihil's [Jumbo Cactuar](https://github.com/Nihil-1/JumboCactuar). Edits the 1024
+encounters of `scene.out`: the battle stage (with a picture of it, by Maki), the battle flags (no
+escape, surprise/back attack, timer, no EXP...), the two intro cameras and the 8 enemy slots
+(monster, level, position, enabled / targetable / visible / loaded). The C / P buttons copy one part
+of an encounter and paste it into another (or one enemy slot into another slot), and several slots
+can be copied at once. The encounter list says each encounter's stage and enemies, and Ctrl+F finds
+every encounter with a given monster. Revert an encounter, undo/redo, drop a `.out` file to open it.
+
 ## Other tools made by other modders (launched from the toolbar)
 
 These are external, standalone programs. The launcher can check for and download updates for them
@@ -206,7 +215,6 @@ automatically (see the update button in the toolbar).
 
   <img src="Resources/screenshots/quezacotl.png" width="800">
 
-- **Jumbo Cactuar** — `Scene.out` editor (field encounters).
 - **Deling** — archive editor (browse/extract/repack the game's `.fs`/`.fi`/`.fl` archives).
 - **Hyne** — save file editor.
 - **VincentTim** — command-line texture converter for FF7/FF8 `.tim`/`.tex` files (see its own
@@ -259,6 +267,7 @@ reference data load it automatically from `FF8GameData/`.
 | `julia` | battle sounds (`audio.fmt` / `audio.dat`) | `list`, `export-wav`, `export-all`, `replace` |
 | `alexander` | battle stages (`a0stgXXX.x`) | `export-glb`, `import-glb` |
 | `seed` | field model containers (`chara.one`) | `list-models` |
+| `jumbo-cactuar` | encounters (`scene.out`) | `list`, `show`, `export-csv`, `import-csv`, `copy` |
 | `jp-font-builder` | JP font atlas for the ILP-JP mod | `build`, `decode` |
 
 ### Examples

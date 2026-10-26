@@ -43,6 +43,7 @@ from Cli.joker import JokerCliTool
 from Cli.piet import PietCliTool
 from Cli.watts import WattsCliTool
 from Cli.fujin import FujinCliTool
+from Cli.jumbo_cactuar import JumboCactuarCliTool
 
 
 def _register_all_tools():
@@ -73,6 +74,7 @@ def _register_all_tools():
     registry.register(PietCliTool)
     registry.register(WattsCliTool)
     registry.register(FujinCliTool)
+    registry.register(JumboCactuarCliTool)
 
 
 def build_main_parser() -> argparse.ArgumentParser:

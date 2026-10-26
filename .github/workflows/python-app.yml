@@ -64,7 +64,6 @@ jobs:
         mkdir -p release/ExternalTools/Junkshop
         mkdir -p release/ExternalTools/Quezacotl
         mkdir -p release/ExternalTools/Doomtrain
-        mkdir -p release/ExternalTools/JumboCactuar
         mkdir -p release/ExternalTools/IfritGui
         mkdir -p release/ExternalTools/Siren
         mkdir -p release/ExternalTools/Hyne
@@ -256,7 +255,6 @@ jobs:
         mkdir -p release/ExternalTools/Junkshop
         mkdir -p release/ExternalTools/Quezacotl
         mkdir -p release/ExternalTools/Doomtrain
-        mkdir -p release/ExternalTools/JumboCactuar
         mkdir -p release/ExternalTools/IfritGui
         mkdir -p release/ExternalTools/Siren
         mkdir -p release/ExternalTools/Hyne

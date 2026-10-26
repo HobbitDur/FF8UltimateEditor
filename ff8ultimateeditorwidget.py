@@ -16,7 +16,6 @@ from Common.fileregistry import FileRegistry
 from Common.filetoolbarwidget import FileToolbarWidget
 from Common.openedfilespanel import OpenedFilesPanel
 from Common.wheelguard import WheelGuard
-from ExeLauncher.cactiliolauncher import CactilioLauncher
 from ExeLauncher.delinglauncher import DelingLauncher
 from ExeLauncher.doomtrainlauncher import DoomtrainLauncher
 from ExeLauncher.ff8ultimatelauncher import FF8UltimateLauncher
@@ -26,6 +25,7 @@ from ExeLauncher.junkshop import JunkshopLauncher
 from ExeLauncher.quezacotllauncher import QuezacotlLauncher
 from ExeLauncher.sirenlauncher import SirenLauncher
 from Ifrit.ifritmonsterwidget import IfritMonsterWidget
+from JumboCactuar.jumbocactuarwidget import JumboCactuarWidget
 from Julia.juliawidget import JuliaWidget
 from Odine.odinewidget import OdineWidget
 from Piet.pietwidget import PietWidget
@@ -129,6 +129,7 @@ class FF8UltimateEditorWidget(QWidget):
             "Watts (r0win.dat victory editor)",
             "Xu (Scan camera editor)",
             "Chocoboy (World map script editor)",
+            "JumboCactuar (scene.out encounter editor)",
             "Hyne (.ff8 save editor)"
         ]
 
@@ -141,7 +142,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.CATEGORY_DEFINITIONS = [
             ("Battle", ["Ifrit (3D/Stat/AI/Seq/Texture)", "Alexander (Battle stage viewer)",
                         "Watts (r0win.dat victory editor)", "Xu (Scan camera editor)",
-                        "Fujin (Battle effect editor)"]),
+                        "JumboCactuar (scene.out encounter editor)", "Fujin (Battle effect editor)"]),
             ("Field", ["Seed (Field model viewer)", "CCGroup (Card value editor)"]),
             ("Menu", ["Shiva (mngrp.bin editor: refine, SeeD tests, sprites)", "Siren (price.bin editor)",
                       "Kadowaki (Item menu editor)", "Minimog (icon.sp1 editor)",
@@ -225,7 +226,6 @@ class FF8UltimateEditorWidget(QWidget):
         self._siren_button = ExternalToolWidget(os.path.join(resources_path, 'siren.ico'), self._launch_siren, "Launch siren (price.bin editor)")
         self._junkshop_button = ExternalToolWidget(os.path.join(resources_path, 'junkshop.ico'), self._launch_junkshop, "Launch junkshop (mweapon.bin editor)")
         self._doomtrain_button = ExternalToolWidget(os.path.join(resources_path, 'doomtrain.ico'), self._launch_doomtrain, "Launch doomtrain (kernel.bin editor)")
-        self._cactilio_button = ExternalToolWidget(os.path.join(resources_path, 'jumbo_cactuar.ico'), self._launch_cactilio, "Launch Jumbo cactuar (Scene.out editor)")
         self._deling_button = ExternalToolWidget(os.path.join(resources_path, 'deling.ico'), self._launch_deling, "Launch deling (Archive editor)")
         self._hyne_button = ExternalToolWidget(os.path.join(resources_path, 'hyne.ico'), self._launch_hyne, "Launch hyne (Save editor)")
         self._ffnx_button = ExternalToolWidget(os.path.join(resources_path, 'ffnx.ico'), self._show_ffnx_effects,
@@ -248,7 +248,6 @@ class FF8UltimateEditorWidget(QWidget):
         self._external_program_layout.addWidget(self._siren_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._junkshop_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._doomtrain_button, alignment=Qt.AlignmentFlag.AlignCenter)
-        self._external_program_layout.addWidget(self._cactilio_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._hyne_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._deling_button, alignment=Qt.AlignmentFlag.AlignCenter)
         self._external_program_layout.addWidget(self._ffnx_button, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -304,6 +303,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._watts_widget = WattsWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._xu_widget = XuWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._chocoboy_widget = ChocoboyWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
+        self._jumbo_cactuar_widget = JumboCactuarWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._hyne_widget = HyneWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
 
 
@@ -331,6 +331,7 @@ class FF8UltimateEditorWidget(QWidget):
         self.tool_stack.addWidget(self._watts_widget) # Watts (r0win.dat)
         self.tool_stack.addWidget(self._xu_widget) # Xu (battle_scan_cameras.bin)
         self.tool_stack.addWidget(self._chocoboy_widget) # Chocoboy (wmsetxx.obj world map scripts)
+        self.tool_stack.addWidget(self._jumbo_cactuar_widget) # JumboCactuar (scene.out encounters)
         self.tool_stack.addWidget(self._hyne_widget) # Hyne (.ff8 save editor), keep last in HOBBIT_OPTION_ITEMS
         self._piet_widget.view_in_zone_requested.connect(self._view_mmag_entry_in_zone)
 
@@ -427,7 +428,6 @@ class FF8UltimateEditorWidget(QWidget):
         self.siren_launcher = SirenLauncher(os.path.join("ExternalTools", "Siren", "Siren.exe"), callback=None)
         self.junkshop_launcher = JunkshopLauncher(os.path.join("ExternalTools", "Junkshop", "Junkshop.exe"), callback=None)
         self.doomtrain_launcher = DoomtrainLauncher(os.path.join("ExternalTools", "Doomtrain", "Doomtrain.exe"), callback=None)
-        self.cactilio_launcher = CactilioLauncher(os.path.join("ExternalTools", "JumboCactuar", "JumboCactuar.exe"), callback=None)
         self.deling_launcher = DelingLauncher(os.path.join("ExternalTools", "Deling", "Deling.exe"), callback=None)
         self.hyne_launcher = HyneLauncher(os.path.join("ExternalTools", "Hyne", "Hyne.exe"), callback=None)
         ff8ultimate_exe_name = "FF8UltimateEditor.exe" if sys.platform == "win32" else "FF8UltimateEditor"
@@ -497,9 +497,6 @@ class FF8UltimateEditorWidget(QWidget):
 
     def _launch_doomtrain(self):
         self.doomtrain_launcher.launch()
-
-    def _launch_cactilio(self):
-        self.cactilio_launcher.launch()
 
     def _launch_deling(self):
         self.deling_launcher.launch()
@@ -655,8 +652,6 @@ class FF8UltimateEditorWidget(QWidget):
             tool_list.append("Junkshop")
         if self._doomtrain_button.update_selected:
             tool_list.append("Doomtrain")
-        if self._cactilio_button.update_selected:
-            tool_list.append("JumboCactuar")
         if self._hyne_button.update_selected:
             tool_list.append("Hyne")
         if self._deling_button.update_selected:

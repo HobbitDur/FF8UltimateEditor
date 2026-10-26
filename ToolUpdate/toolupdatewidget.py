@@ -157,13 +157,6 @@ class ToolUpdateWidget(QWidget):
             "Launch doomtrain (kernel.bin editor)"
         )
 
-        # Cactilio
-        self.checkboxes['cactilio'] = self.__create_checkbox(
-            'jumbo_cactuar.ico',
-            "Jumbo Cactuar",
-            "Launch Jumbo cactuar (Scene.out editor)"
-        )
-
         # Deling
         self.checkboxes['deling'] = self.__create_checkbox(
             'deling.ico',

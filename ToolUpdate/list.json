@@ -1,9 +1,5 @@
 {
   "ExternalTools":{
-	"JumboCactuar":{
-	  "link":        "https://github.com/Nihil-1/JumboCactuar",
-	  "install_path":"ExternalTools/JumboCactuar"
-	},
 	"Junkshop":    {
 	  "link":        "https://github.com/HobbitDur/junkshop-enhanced",
 	  "install_path":"ExternalTools/Junkshop"
